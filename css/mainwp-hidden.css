@@ -1,0 +1,25 @@
+#wphead { 
+    display: none; 
+}
+#footer {
+    display: none;
+}
+#adminmenuwrap {
+    display: none;
+}
+#adminmenuback {
+    display: none;
+}
+#wpcontent {
+    margin-left: 10px;
+}
+
+#wpcontent h2 {
+    display: none;
+}
+#wpcontent .icon32 {
+    display: none;
+}
+#screen-meta {
+    display: none;
+}

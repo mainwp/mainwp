@@ -1,4 +1,0 @@
-mainwp
-======
-
-MainWP Dashboard

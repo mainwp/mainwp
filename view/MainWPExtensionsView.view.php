@@ -106,7 +106,9 @@ class MainWPExtensionsView
                                 <?php if ($active) { ?>
                                     <a href="#" class="button mainwp-extensions-disable"><?php _e('Disable','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                     <img src="<?php echo plugins_url('images/extensions/unlock.png', dirname(__FILE__)); ?>" title="Activated" />
-                                    <?php if (isset($extension['callback'])) { ?>
+									<?php if (isset($extension['direct_page']) && !empty($extension['direct_page'])) { ?>
+                                        <a href="<?php echo admin_url('admin.php?page='.$extension['direct_page']); ?>"><img src="<?php echo plugins_url('images/extensions/settings.png', dirname(__FILE__)); ?>" title="Settings" /></a>
+                                    <?php } else if (isset($extension['callback'])) { ?>
                                         <a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>"><img src="<?php echo plugins_url('images/extensions/settings.png', dirname(__FILE__)); ?>" title="Settings" /></a>
                                     <?php } else { ?>
                                         <img src="<?php echo plugins_url('images/extensions/settings-freeze.png', dirname(__FILE__)); ?>" title="Settings" />

@@ -20,7 +20,7 @@ class MainWPUser
     public static function initMenu()
     {
         add_submenu_page('mainwp_tab', __('Users','mainwp'), '<span id="mainwp-Users">' . __('Users','mainwp') .'</span>', 'read', 'UserBulkManage', array(MainWPUser::getClassName(), 'render'));
-        add_submenu_page('mainwp_tab', __('Users','mainwp'), '<div class="mainwp-hidden">' . __('Add New','mainwp') . '</div>', 'read', 'UserBulkAdd', array(MainWPUser::getClassName(), 'renderBulkAdd'));
+        add_submenu_page('mainwp_tab', __('Users','mainwp'), '<div class="mainwp-hidden">' . __('Add New','mainwp') . '</div>', 'read', 'UserBulkAdd', array(MainWPUser::getClassName(), 'renderBulkAdd'));				
         add_submenu_page('mainwp_tab', __('Users Help','mainwp'), '<div class="mainwp-hidden">' . __('Users Help','mainwp') . '</div>', 'read', 'UsersHelp', array(MainWPUser::getClassName(), 'QSGManageUsers'));
 
         self::$subPages = apply_filters('mainwp-getsubpages-user', array());
@@ -42,6 +42,7 @@ class MainWPUser
                 <div class="mainwp_boxoutin"></div>
                 <a href="<?php echo admin_url('admin.php?page=UserBulkManage'); ?>" class="mainwp-submenu"><?php _e('All Users','mainwp'); ?></a>
                 <a href="<?php echo admin_url('admin.php?page=UserBulkAdd'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
+				<a href="<?php echo admin_url('admin.php?page=UpdateAdminPasswords'); ?>" class="mainwp-submenu"><?php _e('Bulk update admin passwords','mainwp'); ?></a>
                 <?php
                 if (isset(self::$subPages) && is_array(self::$subPages))
                 {
@@ -73,6 +74,7 @@ class MainWPUser
         <div class="mainwp-tabs" id="mainwp-tabs">
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == '') { echo "nav-tab-active"; } ?>" href="admin.php?page=UserBulkManage"><?php _e('Manage','mainwp'); ?></a>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Add') { echo "nav-tab-active"; } ?>" href="admin.php?page=UserBulkAdd"><?php _e('Add New','mainwp'); ?></a>
+			<a class="nav-tab pos-nav-tab <?php if ($shownPage == 'UpdateAdminPasswords') { echo "nav-tab-active"; } ?>" href="admin.php?page=UpdateAdminPasswords"><?php _e('Bulk update admin passwords','mainwp'); ?></a>
             <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage === 'UsersHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=UsersHelp"><?php _e('Help','mainwp'); ?></a>
             <?php if ($shownPage == 'UserBulkUpload') { ?><a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Bulk Upload','mainwp'); ?></a><?php } ?>
 
@@ -1048,7 +1050,7 @@ class MainWPUser
         self::renderHeader('UsersHelp');
     ?><div style="text-align: center"><a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e('Show Quick Start Guide','mainwp'); ?></a></div>
                       <div  class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
-                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Users','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="2"><?php _e('How to add an User','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="3"><?php _e('How to bulk add users','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><?php _e('Dismiss','mainwp'); ?></a></span>
+                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Users','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="2"><?php _e('How to add an User','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="3"><?php _e('How to bulk add users','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="4"><?php _e('Manage Admin Passwords','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><?php _e('Dismiss','mainwp'); ?></a></span>
                       <div class="clear"></div>
                       <div id="mainwp-qsgs">
                         <div class="mainwp-qsg" number="1">
@@ -1130,6 +1132,22 @@ class MainWPUser
                                             <li>Role â€“ The role you would like the new user to have (subscriber, administrator, editor, author, contributor)</li>
                                             <li>Child Site to add User to â€“ The site you would like the new user added to. (multiple sites can be chosen use ; to separate sites.  http://site1.com;http:site2.com;http://site3.com</li>
                                         </ol>
+                                    </li>
+                                </ol>
+                            </p>
+                        </div>
+						<div class="mainwp-qsg" number="4">
+                            <h3>Manage Admin Passwords</h3>
+                            <p>
+                                <ol>
+                                    <li>
+                                        Enter a new password twice
+                                    </li>
+                                    <li>
+                                        Select the sites in the Select Site Box
+                                    </li>
+                                    <li>
+                                        Click Update Now button
                                     </li>
                                 </ol>
                             </p>

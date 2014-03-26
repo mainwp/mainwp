@@ -74,7 +74,7 @@ class MainWPExtensions
             $extension['page'] = 'Extensions-' . str_replace(' ', '-', ucwords(str_replace('-', ' ', dirname($slug))));
 
             self::$extensions[] = $extension;
-            if (isset($extension['callback'])) add_submenu_page('mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback']);
+            if (isset($extension['callback'])) add_submenu_page('mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback']);			
         }
         update_option("mainwp_extensions", self::$extensions);
         self::$extensionsLoaded = true;
@@ -82,28 +82,30 @@ class MainWPExtensions
 
     public static function initMenuSubPages()
     {
-        if (true) return;
+        //if (true) return;
         if (empty(self::$extensions)) return;
-        ?>
-    <div id="menu-mainwp-Extensions" class="mainwp-submenu-wrapper" xmlns="http://www.w3.org/1999/html">
-        <div class="wp-submenu sub-open" style="">
-            <div class="mainwp_boxout">
-                <div class="mainwp_boxoutin"></div>
-        <?php
-            if (isset(self::$extensions) && is_array(self::$extensions))
+		$html = "";
+		if (isset(self::$extensions) && is_array(self::$extensions))
             {
                 foreach (self::$extensions as $extension)
                 {
-                    ?>
-                    <a href="<?php echo admin_url('admin.php?page=' . $extension['page']); ?>"
-                       class="mainwp-submenu"><?php echo $extension['name']; ?></a>
-                    <?php
+					if (MainWPExtensions::isExtensionEnabled($extension['plugin'])) {                
+                    $html .= '<a href="' . admin_url('admin.php?page=' . $extension['page']) . '"
+                       class="mainwp-submenu">' . $extension['name'] . '</a>';                    
+					}
                 }
-            }
-                ?>
-            </div>
-        </div>
-    </div>
+            }			
+		if (empty($html))	
+			return;
+        ?>
+		<div id="menu-mainwp-Extensions" class="mainwp-submenu-wrapper" xmlns="http://www.w3.org/1999/html">
+			<div class="wp-submenu sub-open" style="">
+				<div class="mainwp_boxout">
+					<div class="mainwp_boxoutin"></div>
+					<?php echo $html; ?>
+				</div>
+			</div>
+		</div>
     <?php
     }
 

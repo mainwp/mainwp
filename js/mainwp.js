@@ -184,6 +184,14 @@ jQuery(document).ready(function () {
         showRecentPostsList(jQuery(this), false, false, false, true);
         return false;
     });
+	jQuery('.plugins_actived_lnk').live('click', function () {
+        showPluginsList(jQuery(this), true, false);
+        return false;
+    });
+    jQuery('.plugins_inactive_lnk').live('click', function () {
+        showPluginsList(jQuery(this), false, true);
+        return false;
+    });
 });
 
 postAction = function (elem, what) {
@@ -212,6 +220,54 @@ postAction = function (elem, what) {
 
     return false;
 };
+
+
+
+/**
+ * Plugins Widget
+ */
+jQuery(document).ready(function () {
+    jQuery('.mainwp-plugin-deactivate').live('click', function () {
+        pluginAction(jQuery(this), 'deactivate');
+        return false;
+    });
+    jQuery('.mainwp-plugin-activate').live('click', function () {
+        pluginAction(jQuery(this), 'activate');
+        return false;
+    });
+    jQuery('.mainwp-plugin-delete').live('click', function () {
+        pluginAction(jQuery(this), 'delete');
+        return false;
+    });    
+});
+
+pluginAction = function (elem, what) {
+    var rowElement = jQuery(elem).parent().parent();
+    var plugin = rowElement.children('.pluginSlug').val();
+    var websiteId = rowElement.children('.websiteId').val();
+
+    var data = mainwp_secure_data({
+        action:'mainwp_widget_plugin_' + what,
+        plugin:plugin,
+        websiteId:websiteId
+    });    
+    rowElement.children('.mainwp-row-actions-working').show();
+    jQuery.post(ajaxurl, data, function (response) {
+        if (response && response.error) {
+            rowElement.html('<font color="red">'+response.error+'</font>');
+        }
+        else if (response && response.result) {
+            rowElement.html(response.result);
+        }
+        else {
+            rowElement.children('.mainwp-row-actions-working').hide();
+        }
+    }, 'json');
+
+    return false;
+};
+
+
 showRecentPostsList = function (pElement, published, draft, pending, trash) {
     var recent_posts_published_lnk = pElement.parent().find(".recent_posts_published_lnk");
     if (published) recent_posts_published_lnk.addClass('mainwp_action_down');
@@ -244,6 +300,27 @@ showRecentPostsList = function (pElement, published, draft, pending, trash) {
     if (!pending) recent_posts_pending.hide();
     if (!trash) recent_posts_trash.hide();
 };
+
+showPluginsList  = function (pElement, activate, inactivate) {
+    var plugins_actived_lnk = pElement.parent().find(".plugins_actived_lnk");
+    if (activate) plugins_actived_lnk.addClass('mainwp_action_down');
+    else plugins_actived_lnk.removeClass('mainwp_action_down');
+
+    var plugins_inactive_lnk = pElement.parent().find(".plugins_inactive_lnk");
+    if (inactivate) plugins_inactive_lnk.addClass('mainwp_action_down');
+    else plugins_inactive_lnk.removeClass('mainwp_action_down');
+
+    var plugins_activate = pElement.parent().find(".mainwp_plugins_active");
+    var plugins_inactivate = pElement.parent().find(".mainwp_plugins_inactive");
+
+    if (activate) plugins_activate.show();
+    if (inactivate) plugins_inactivate.show();
+
+    if (!activate) plugins_activate.hide();
+    if (!inactivate) plugins_inactivate.hide();
+
+};
+
 
 // offsetRelative (or, if you prefer, positionRelative)
 (function ($) {

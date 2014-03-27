@@ -150,6 +150,10 @@ class MainWPPostHandler
         $this->addAction('mainwp_widget_plugin_deactivate', array(&$this, 'mainwp_widget_plugin_deactivate'));
         $this->addAction('mainwp_widget_plugin_delete', array(&$this, 'mainwp_widget_plugin_delete'));        
 		
+		//Widget: Themes
+        $this->addAction('mainwp_widget_theme_activate', array(&$this, 'mainwp_widget_theme_activate'));        
+        $this->addAction('mainwp_widget_theme_delete', array(&$this, 'mainwp_widget_theme_delete'));        
+				
         //ServerInformation
         add_action('wp_ajax_mainwp_serverInformation', array(&$this, 'mainwp_serverInformation')); //ok
 
@@ -264,6 +268,18 @@ class MainWPPostHandler
 	function mainwp_widget_plugin_delete() {
 		$this->secure_request('mainwp_widget_plugin_delete');
 		MainWPWidgetPlugins::deletePlugin();		
+	}
+	
+	/**
+	* Widget: Themes
+	*/
+	function mainwp_widget_theme_activate() {
+		$this->secure_request('mainwp_widget_theme_activate');
+		MainWPWidgetThemes::activateTheme();
+	}	
+	function mainwp_widget_theme_delete() {
+		$this->secure_request('mainwp_widget_theme_delete');
+		MainWPWidgetThemes::deleteTheme();		
 	}
 	
 	

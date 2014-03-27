@@ -53,6 +53,7 @@ class MainWPWidgetPlugins
 		
 		$inactive_plugins = MainWPUtility::getSubArrayHaving($allPlugins, 'active', 0);
 		$inactive_plugins = MainWPUtility::sortmulti($inactive_plugins, 'name', 'desc');
+		
 	?>
         <div class="clear">            
             <a class="mainwp_action left mainwp_action_down plugins_actived_lnk" href="#"><?php _e('Active','mainwp'); ?> (<?php echo count($actived_plugins); ?>)</a><a class="mainwp_action mid plugins_inactive_lnk right" href="#" ><?php _e('Inactive','mainwp'); ?> (<?php echo count($inactive_plugins); ?>)</a><br/><br/>
@@ -65,7 +66,7 @@ class MainWPWidgetPlugins
                     <input class="pluginSlug" type="hidden" name="slug" value="<?php echo $actived_plugins[$i]['slug']; ?>"/>
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
                     <span class="mainwp-left-col">						
-						<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.$actived_plugins[$i]['slug'].'&url=' . (isset($actived_plugins[$i]['PluginURI']) ? rawurlencode($actived_plugins[$i]['PluginURI']) : '') . '&name='.rawurlencode($actived_plugins[$i]['name']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
+						<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.dirname($actived_plugins[$i]['slug']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
                                                                                                                         class="thickbox" title="More information about <?php echo $actived_plugins[$i]['name']; ?>">
                                 <?php echo $actived_plugins[$i]['name']; ?>
                             </a>							
@@ -90,7 +91,7 @@ class MainWPWidgetPlugins
                     <input class="pluginSlug" type="hidden" name="slug" value="<?php echo $inactive_plugins[$i]['slug']; ?>"/>
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
                     <span class="mainwp-left-col">
-					<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.$inactive_plugins[$i]['slug'].'&url=' . (isset($inactive_plugins[$i]['PluginURI']) ? rawurlencode($inactive_plugins[$i]['PluginURI']) : '') . '&name='.rawurlencode($inactive_plugins[$i]['name']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
+					<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.dirname($inactive_plugins[$i]['slug']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
 																													class="thickbox" title="More information about <?php echo $inactive_plugins[$i]['name']; ?>">
 							<?php echo $inactive_plugins[$i]['name']; ?>
 						</a>							

@@ -192,6 +192,15 @@ jQuery(document).ready(function () {
         showPluginsList(jQuery(this), false, true);
         return false;
     });
+	jQuery('.themes_actived_lnk').live('click', function () {
+        showThemesList(jQuery(this), true, false);
+        return false;
+    });
+    jQuery('.themes_inactive_lnk').live('click', function () {
+        showThemesList(jQuery(this), false, true);
+        return false;
+    });
+	
 });
 
 postAction = function (elem, what) {
@@ -267,6 +276,47 @@ pluginAction = function (elem, what) {
     return false;
 };
 
+/**
+ * Themes Widget
+ */
+jQuery(document).ready(function () {    
+    jQuery('.mainwp-theme-activate').live('click', function () {
+        themeAction(jQuery(this), 'activate');
+        return false;
+    });
+    jQuery('.mainwp-theme-delete').live('click', function () {
+        themeAction(jQuery(this), 'delete');
+        return false;
+    });    
+});
+
+themeAction = function (elem, what) {
+    var rowElement = jQuery(elem).parent().parent();
+    var theme = rowElement.children('.themeName').val();
+    var websiteId = rowElement.children('.websiteId').val();
+
+    var data = mainwp_secure_data({
+        action:'mainwp_widget_theme_' + what,
+        theme:theme,
+        websiteId:websiteId
+    });    
+    rowElement.children('.mainwp-row-actions-working').show();
+    jQuery.post(ajaxurl, data, function (response) {
+        if (response && response.error) {
+            rowElement.html('<font color="red">'+response.error+'</font>');
+        }
+        else if (response && response.result) {
+            rowElement.html(response.result);
+        }
+        else {
+            rowElement.children('.mainwp-row-actions-working').hide();
+        }
+    }, 'json');
+
+    return false;
+};
+
+
 
 showRecentPostsList = function (pElement, published, draft, pending, trash) {
     var recent_posts_published_lnk = pElement.parent().find(".recent_posts_published_lnk");
@@ -321,6 +371,26 @@ showPluginsList  = function (pElement, activate, inactivate) {
 
 };
 
+
+showThemesList  = function (pElement, activate, inactivate) {
+    var themes_actived_lnk = pElement.parent().find(".themes_actived_lnk");
+    if (activate) themes_actived_lnk.addClass('mainwp_action_down');
+    else themes_actived_lnk.removeClass('mainwp_action_down');
+
+    var themes_inactive_lnk = pElement.parent().find(".themes_inactive_lnk");
+    if (inactivate) themes_inactive_lnk.addClass('mainwp_action_down');
+    else themes_inactive_lnk.removeClass('mainwp_action_down');
+
+    var themes_activate = pElement.parent().find(".mainwp_themes_active");
+    var themes_inactivate = pElement.parent().find(".mainwp_themes_inactive");
+
+    if (activate) themes_activate.show();
+    if (inactivate) themes_inactivate.show();
+
+    if (!activate) themes_activate.hide();
+    if (!inactivate) themes_inactivate.hide();
+
+};
 
 // offsetRelative (or, if you prefer, positionRelative)
 (function ($) {

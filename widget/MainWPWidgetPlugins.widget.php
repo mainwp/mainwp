@@ -98,7 +98,7 @@ class MainWPWidgetPlugins
                     <span class="mainwp-mid-col">
                            <?php echo $inactive_plugins[$i]['version']?>						   
                     </span>                    
-                    <div class="mainwp-right-col pluginsAction"><a href="#" class="mainwp-plugin-activate"><?php _e('Activate','mainwp'); ?></a> | <a href="#" class="mainwp-plugin-delete"><?php _e('Delete','mainwp'); ?></a></div>
+                    <div class="mainwp-right-col pluginsAction"><a href="#" class="mainwp-plugin-activate"><?php _e('Activate','mainwp'); ?></a> | <a href="#" class="mainwp-plugin-delete mainwp-red"><?php _e('Delete','mainwp'); ?></a></div>
 					<div style="clear: left;"></div>
 				    <div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?></div>                    
 					<div>&nbsp;</div>

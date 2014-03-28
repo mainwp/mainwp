@@ -1,5 +1,5 @@
 ﻿=== MainWP ===
-Contributors: MainWP
+Contributors: mainwp
 Donate link: 
 Tags: WordPress Management, WordPress Controller
 Author URI: http://mainwp.com

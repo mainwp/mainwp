@@ -4,7 +4,7 @@ Donate link:
 Tags: WordPress Management, WordPress Controller
 Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
-Requires at least: 3.4
+Requires at least: 3.6
 Tested up to: 3.8
 Stable tag: 1.0.5
 License: GPLv2 or later

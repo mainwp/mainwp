@@ -1348,7 +1348,7 @@ class MainWPSystem
         wp_enqueue_script('jquery-ui-dialog');
         wp_enqueue_style('jquery-ui-style', '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/smoothness/jquery-ui.css');
 
-        wp_enqueue_script('mainwp', plugins_url('/js/mainwp.js', dirname(__FILE__)), array('jquery-ui-tooltip', 'jquery-ui-autocomplete', 'jquery-ui-progressbar', 'jquery-ui-dialog'));
+        wp_enqueue_script('mainwp', plugins_url('/js/mainwp.js', dirname(__FILE__)), array('jquery-ui-tooltip', 'jquery-ui-autocomplete', 'jquery-ui-progressbar', 'jquery-ui-dialog', 'jquery-ui-datepicker'));
         $mainwpParams = array('image_url' => plugins_url('/images/', dirname(__FILE__)), 'backup_before_upgrade' => (get_option('mainwp_backup_before_upgrade') == 1), 'admin_url' => admin_url(), 'date_format' => get_option('date_format'), 'time_format' => get_option('time_format'));
         wp_localize_script('mainwp', 'mainwpParams', $mainwpParams );
 

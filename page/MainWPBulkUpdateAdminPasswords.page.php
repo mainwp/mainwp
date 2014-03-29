@@ -2,6 +2,7 @@
 /**
  * @see MainWPBulkAdd
  */
+//todo: move this to User page
 class MainWPBulkUpdateAdminPasswords
 {
     public static function getClassName()

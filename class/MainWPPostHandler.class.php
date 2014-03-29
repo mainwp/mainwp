@@ -145,6 +145,15 @@ class MainWPPostHandler
         $this->addAction('mainwp_ignorepluginthemeconflict', array(&$this, 'mainwp_ignorepluginthemeconflict'));
         $this->addAction('mainwp_unignorepluginthemeconflicts', array(&$this, 'mainwp_unignorepluginthemeconflicts'));
 
+		//Widget: Plugins
+        $this->addAction('mainwp_widget_plugin_activate', array(&$this, 'mainwp_widget_plugin_activate'));
+        $this->addAction('mainwp_widget_plugin_deactivate', array(&$this, 'mainwp_widget_plugin_deactivate'));
+        $this->addAction('mainwp_widget_plugin_delete', array(&$this, 'mainwp_widget_plugin_delete'));        
+		
+		//Widget: Themes
+        $this->addAction('mainwp_widget_theme_activate', array(&$this, 'mainwp_widget_theme_activate'));        
+        $this->addAction('mainwp_widget_theme_delete', array(&$this, 'mainwp_widget_theme_delete'));        
+				
         //ServerInformation
         add_action('wp_ajax_mainwp_serverInformation', array(&$this, 'mainwp_serverInformation')); //ok
 
@@ -244,7 +253,36 @@ class MainWPPostHandler
         MainWPPlugins::saveTrustedPluginNote();
         die(json_encode(array('result' => 'SUCCESS')));
     }
-
+	
+	/**
+	* Widget: Plugins
+	*/
+	function mainwp_widget_plugin_activate() {
+		$this->secure_request('mainwp_widget_plugin_activate');
+		MainWPWidgetPlugins::activatePlugin();
+	}
+	function mainwp_widget_plugin_deactivate() {
+		$this->secure_request('mainwp_widget_plugin_deactivate');
+		MainWPWidgetPlugins::deactivatePlugin();
+	}
+	function mainwp_widget_plugin_delete() {
+		$this->secure_request('mainwp_widget_plugin_delete');
+		MainWPWidgetPlugins::deletePlugin();		
+	}
+	
+	/**
+	* Widget: Themes
+	*/
+	function mainwp_widget_theme_activate() {
+		$this->secure_request('mainwp_widget_theme_activate');
+		MainWPWidgetThemes::activateTheme();
+	}	
+	function mainwp_widget_theme_delete() {
+		$this->secure_request('mainwp_widget_theme_delete');
+		MainWPWidgetThemes::deleteTheme();		
+	}
+	
+	
     /**
      * Page: Posts
      */

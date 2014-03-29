@@ -1,10 +1,10 @@
 ﻿=== MainWP ===
-Contributors: mainwp
+Contributors: MainWP
 Donate link: 
 Tags: WordPress Management, WordPress Controller
 Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
-Requires at least: 3.6
+Requires at least: 3.4
 Tested up to: 3.8
 Stable tag: 1.0.5
 License: GPLv2 or later
@@ -14,7 +14,7 @@ Manage all of your WP sites, even those on different servers, from one central d
 
 == Description ==
 
-[MainWP](http://mainwp.com) let's you control virtually all aspects of your WordPress sites including scheduling and automated backups, up time monitoring of your sites, managing content for posts/pages and much more all from your own server.
+[MainWP](http://mainwp.com) is a free self-hosted WordPress management system that allows you to manage virtually all aspects of multiple WordPress sites including scheduling backups, up time monitoring of your sites, managing content for posts/pages and much more.
 
 **Note:  MainWP requires two (2) plugins.**
 

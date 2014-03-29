@@ -14,7 +14,7 @@ Manage all of your WP sites, even those on different servers, from one central d
 
 == Description ==
 
-[MainWP](http://mainwp.com) let's you control virtually all aspects of your WordPress sites including scheduling and automated backups, up time monitoring of your sites, managing content for posts/pages and much more all from your own server.
+[MainWP](http://mainwp.com) is a free self-hosted WordPress management system that allows you to manage virtually all aspects of multiple WordPress sites including scheduling backups, up time monitoring of your sites, managing content for posts/pages and much more.
 
 **Note:  MainWP requires two (2) plugins.**
 

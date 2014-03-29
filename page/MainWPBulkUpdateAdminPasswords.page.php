@@ -2,6 +2,7 @@
 /**
  * @see MainWPBulkAdd
  */
+//todo: move this to User page
 class MainWPBulkUpdateAdminPasswords
 {
     public static function getClassName()
@@ -11,8 +12,8 @@ class MainWPBulkUpdateAdminPasswords
 
     public static function initMenu()
     {
-        add_submenu_page('mainwp_tab', __('Admin Passwords','mainwp'), '<div class="mainwp-hidden">' . __('Admin Passwords','mainwp') . '</div>', 'read', 'UpdateAdminPasswords', array(MainWPBulkUpdateAdminPasswords::getClassName(), 'render'));
-        // add_submenu_page('mainwp_tab', __('Admin Passwords Help','mainwp'), '<div class="mainwp-hidden">' . __('Admin Passwords Help','mainwp') . '</div>', 'read', 'AdminPasswordsHelp', array(MainWPBulkUpdateAdminPasswords::getClassName(), 'QSGManageAdminPasswords'));
+        add_submenu_page('mainwp_tab', __('Admin Passwords','mainwp'), __('Admin Passwords','mainwp'), 'read', 'UpdateAdminPasswords', array(MainWPBulkUpdateAdminPasswords::getClassName(), 'render'));
+        add_submenu_page('mainwp_tab', __('Admin Passwords Help','mainwp'), '<div class="mainwp-hidden">' . __('Admin Passwords Help','mainwp') . '</div>', 'read', 'AdminPasswordsHelp', array(MainWPBulkUpdateAdminPasswords::getClassName(), 'QSGManageAdminPasswords'));
     }
 
     public static function renderHeader($shownPage) {
@@ -126,8 +127,7 @@ class MainWPBulkUpdateAdminPasswords
             </div>
             <?php
         } else {
-			// header in User page
-            MainWPUser::renderHeader('UpdateAdminPasswords');
+            self::renderHeader('UpdateAdminPasswords');
             ?>
             <form action="" method="post" name="createuser" id="createuser" class="add:users: validate">
 
@@ -156,12 +156,12 @@ class MainWPBulkUpdateAdminPasswords
 
             </form>
             <?php
-            MainWPUser::renderFooter('UpdateAdminPasswords');
+            self::renderFooter('UpdateAdminPasswords');
         }
     }
-	// this help moved to User page 
+
     public static function QSGManageAdminPasswords() {
-        MainWPUser::renderHeader('AdminPasswordsHelp');
+        self::renderHeader('AdminPasswordsHelp');
     ?><div style="text-align: center"><a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e('Show Quick Start Guide','mainwp'); ?></a></div>
                       <div  class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
                           <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Admin Passwords','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><?php _e('Dismiss','mainwp'); ?></a></span>
@@ -186,7 +186,7 @@ class MainWPBulkUpdateAdminPasswords
                       </div>
                     </div>
     <?php
-    MainWPUser::renderFooter('AdminPasswordsHelp');
+    self::renderFooter('AdminPasswordsHelp');
     }
 
 }

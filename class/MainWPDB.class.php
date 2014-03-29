@@ -759,7 +759,6 @@ class MainWPDB
 
         if (MainWPUtility::ctype_digit($websiteid)) {
             $nr = $wpdb->query('DELETE FROM ' . $this->tableName('wp') . ' WHERE id=' . $websiteid);
-            $wpdb->query('DELETE FROM ' . $this->tableName('wp_ga') . ' WHERE wpid=' . $websiteid);
             $wpdb->query('DELETE FROM ' . $this->tableName('wp_group') . ' WHERE wpid=' . $websiteid);
             return $nr;
         }

@@ -63,9 +63,11 @@ class MainWPManageSitesView
             {
                 foreach ($subPages as $subPage)
                 {
+                    if ($shownPage === $subPage['slug'] || !isset($subPage['menu_hidden']) || (isset($subPage['menu_hidden']) && $subPage['menu_hidden'] != true)) {
                 ?>
                     <a class="nav-tab pos-nav-tab <?php if ($shownPage === $subPage['slug']) { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageSites<?php echo $subPage['slug']; ?>"><?php echo $subPage['title']; ?></a>
                 <?php
+                    }
                 }
             }
             ?>

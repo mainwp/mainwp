@@ -1,12 +1,12 @@
 ﻿=== MainWP ===
-Contributors: MainWP
+Contributors: mainwp
 Donate link: 
 Tags: WordPress Management, WordPress Controller
 Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
 Requires at least: 3.4
 Tested up to: 3.8
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,8 @@ Building on the core principals of WordPress our Extension hooks allow third par
 
 [MainWP Codex](http://codex.mainwp.com/index.php?title=Main_Page)
 
+[MainWP on Github](http://mainwp.com/github/)
+
 == Installation ==
 
 1. We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.
@@ -108,8 +110,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 == Changelog ==
 
+
 = 1.0.6 =
-* Wordpress 3.9 changes
+* Code changes for WP 3.9 Compatibility 
+* Added Plugin Widget to Individual Dashboard screen
+* Added Theme Widget to Individual Dashboard screen
+* Moved Bulk Update Admin password to the Users screen
+* Changed Extension Menu Layout
 
 = 1.0.5 =
 * Minor fix for heatmap extension

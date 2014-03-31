@@ -1,10 +1,10 @@
 <?php
 if (session_id() == '') session_start();
-//ini_set('display_errors', true);
+ini_set('display_errors', true);
 //error_reporting(E_ALL);
 
-ini_set('display_errors', false);
-error_reporting(0);
+//ini_set('display_errors', false);
+//error_reporting(0);
 define('MAINWP_API_VALID', "VALID");
 define('MAINWP_API_INVALID', "INVALID");
 
@@ -1724,9 +1724,9 @@ class MainWPSystem
             MainWPManageGroups::initMenu();
             MainWPSettings::initMenu();
             MainWPExtensions::initMenu();
-            MainWPDocumentation::initMenu();
-            MainWPServerInformation::initMenu();
             do_action('mainwp_admin_menu');
+            MainWPDocumentation::initMenu();
+            MainWPServerInformation::initMenu();            
         }
 
         if (MainWPUtility::isAdmin())

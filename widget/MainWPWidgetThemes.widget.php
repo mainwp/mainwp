@@ -66,11 +66,8 @@ class MainWPWidgetThemes
                     <input class="themeName" type="hidden" name="name" value="<?php echo $actived_themes[$i]['name']; ?>"/>
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
                     <span class="mainwp-left-col">												
-						<?php echo $actived_themes[$i]['name']; ?>                            
-					</span>
-					<span class="mainwp-mid-col">
-						<?php echo $actived_themes[$i]['version']?>						
-                    </span>                    
+                            <?php echo $actived_themes[$i]['name']. " " . $actived_themes[$i]['version']; ?>                            
+                    </span>					       
                 </div>
                 <?php } ?>
             </div>
@@ -84,10 +81,7 @@ class MainWPWidgetThemes
                     <input class="themeName" type="hidden" name="name" value="<?php echo $inactive_themes[$i]['name']; ?>"/>
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
                     <span class="mainwp-left-col">					
-							<?php echo $inactive_themes[$i]['name']; ?>							
-					</span>
-                    <span class="mainwp-mid-col">
-                           <?php echo $inactive_themes[$i]['version']?>						   
+                        <?php echo $inactive_themes[$i]['name'] . " " . $inactive_themes[$i]['version']; ?>							
                     </span>                    
                     <div class="mainwp-right-col themesAction"><a href="#" class="mainwp-theme-activate"><?php _e('Activate','mainwp'); ?></a> | <a href="#" class="mainwp-theme-delete mainwp-red"><?php _e('Delete','mainwp'); ?></a></div>
 					<div style="clear: left;"></div>

@@ -1724,9 +1724,9 @@ class MainWPSystem
             MainWPManageGroups::initMenu();
             MainWPSettings::initMenu();
             MainWPExtensions::initMenu();
-            MainWPDocumentation::initMenu();
-            MainWPServerInformation::initMenu();
             do_action('mainwp_admin_menu');
+            MainWPDocumentation::initMenu();
+            MainWPServerInformation::initMenu();            
         }
 
         if (MainWPUtility::isAdmin())

@@ -42,7 +42,7 @@ class MainWPUser
                 <div class="mainwp_boxoutin"></div>
                 <a href="<?php echo admin_url('admin.php?page=UserBulkManage'); ?>" class="mainwp-submenu"><?php _e('All Users','mainwp'); ?></a>
                 <a href="<?php echo admin_url('admin.php?page=UserBulkAdd'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
-				<a href="<?php echo admin_url('admin.php?page=UpdateAdminPasswords'); ?>" class="mainwp-submenu"><?php _e('Bulk update admin passwords','mainwp'); ?></a>
+                <a href="<?php echo admin_url('admin.php?page=UpdateAdminPasswords'); ?>" class="mainwp-submenu"><?php _e('Admin Passwords','mainwp'); ?></a>
                 <?php
                 if (isset(self::$subPages) && is_array(self::$subPages))
                 {
@@ -74,7 +74,7 @@ class MainWPUser
         <div class="mainwp-tabs" id="mainwp-tabs">
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == '') { echo "nav-tab-active"; } ?>" href="admin.php?page=UserBulkManage"><?php _e('Manage','mainwp'); ?></a>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Add') { echo "nav-tab-active"; } ?>" href="admin.php?page=UserBulkAdd"><?php _e('Add New','mainwp'); ?></a>
-			<a class="nav-tab pos-nav-tab <?php if ($shownPage == 'UpdateAdminPasswords') { echo "nav-tab-active"; } ?>" href="admin.php?page=UpdateAdminPasswords"><?php _e('Bulk update admin passwords','mainwp'); ?></a>
+            <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'UpdateAdminPasswords') { echo "nav-tab-active"; } ?>" href="admin.php?page=UpdateAdminPasswords"><?php _e('Admin Passwords','mainwp'); ?></a>
             <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage === 'UsersHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=UsersHelp"><?php _e('Help','mainwp'); ?></a>
             <?php if ($shownPage == 'UserBulkUpload') { ?><a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Bulk Upload','mainwp'); ?></a><?php } ?>
 

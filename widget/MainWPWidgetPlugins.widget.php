@@ -66,14 +66,11 @@ class MainWPWidgetPlugins
                     <input class="pluginSlug" type="hidden" name="slug" value="<?php echo $actived_plugins[$i]['slug']; ?>"/>
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
                     <span class="mainwp-left-col">						
-						<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.dirname($actived_plugins[$i]['slug']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-                                                                                                                        class="thickbox" title="More information about <?php echo $actived_plugins[$i]['name']; ?>">
-                                <?php echo $actived_plugins[$i]['name']; ?>
-                            </a>							
-					</span>
-					<span class="mainwp-mid-col">
-						<?php echo $actived_plugins[$i]['version']?>						
-                    </span>                    
+                            <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.dirname($actived_plugins[$i]['slug']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
+                                                                                                                class="thickbox" title="More information about <?php echo $actived_plugins[$i]['name']; ?>">
+                        <?php echo $actived_plugins[$i]['name']; ?>
+                    </a><?php echo  " " . $actived_plugins[$i]['version']; ?> 
+					</span>					       
                     <div class="mainwp-right-col pluginsAction"><a href="#" class="mainwp-plugin-deactivate"><?php _e('Deactive','mainwp'); ?></a></div>                    
 					<div style="clear: left;"></div>
 					<div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?></div>                    
@@ -91,14 +88,11 @@ class MainWPWidgetPlugins
                     <input class="pluginSlug" type="hidden" name="slug" value="<?php echo $inactive_plugins[$i]['slug']; ?>"/>
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
                     <span class="mainwp-left-col">
-					<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.dirname($inactive_plugins[$i]['slug']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-																													class="thickbox" title="More information about <?php echo $inactive_plugins[$i]['name']; ?>">
-							<?php echo $inactive_plugins[$i]['name']; ?>
-						</a>							
-					</span>
-                    <span class="mainwp-mid-col">
-                           <?php echo $inactive_plugins[$i]['version']?>						   
-                    </span>                    
+                    <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.dirname($inactive_plugins[$i]['slug']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
+                                                                                                                                                                                                                    class="thickbox" title="More information about <?php echo $inactive_plugins[$i]['name']; ?>">
+                                    <?php echo $inactive_plugins[$i]['name']; ?>
+                            </a><?php echo  " " . $inactive_plugins[$i]['version']; ?> 							
+                    </span>                                       
                     <div class="mainwp-right-col pluginsAction"><a href="#" class="mainwp-plugin-activate"><?php _e('Activate','mainwp'); ?></a> | <a href="#" class="mainwp-plugin-delete mainwp-red"><?php _e('Delete','mainwp'); ?></a></div>
 					<div style="clear: left;"></div>
 				    <div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?></div>                    

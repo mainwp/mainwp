@@ -203,6 +203,36 @@ class MainWPServerInformation
     {
         self::renderHeader('ServerInformationCron');
 
+        $schedules = array(
+            'Backups' => 'mainwp_cron_last_backups',
+            'Backups continue' => 'mainwp_cron_last_backups_continue',
+            'Updates check' => 'mainwp_cron_last_updatescheck',
+            'Stats' => 'mainwp_cron_last_stats',
+            'Ping childs' => 'mainwp_cron_last_ping',
+            'Offline checks' => 'mainwp_cron_last_offlinecheck',
+            'Conflicts update' => 'mainwp_cron_last_cronconflicts'
+        );
+?>
+    <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+        <thead>
+            <tr>
+                <th scope="col" class="manage-column sorted" style=""><span><?php _e('Schedule','mainwp'); ?></span></th>
+                <th scope="col" class="manage-column column-posts" style=""><span><?php _e('Last run','mainwp'); ?></span></th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            foreach ($schedules as $schedule => $option)
+            {
+            ?>
+            <tr><td><?php echo $schedule; ?></td><td><?php echo (get_option($option) === false || get_option($option) == 0) ? 'Never run' : MainWPUtility::formatTimestamp(get_option($option)); ?></td></tr>
+            <?php
+            }
+            ?>
+        </tbody>
+    </table>
+        <br />
+            <?php
         $cron_array = _get_cron_array();
         $schedules = wp_get_schedules();
         ?>

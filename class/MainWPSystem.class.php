@@ -409,6 +409,7 @@ class MainWPSystem
 
     function mainwp_cronofflinecheck_action()
     {
+        update_option('mainwp_cron_last_offlinecheck', time());
         //Do cronjobs!
         //Config this in crontab: 0 0 * * * wget -q http://mainwp.com/wp-admin/?do=checkSites -O /dev/null 2>&1
         //this will execute once every day to check if websites are offline
@@ -432,6 +433,8 @@ class MainWPSystem
 
     function mainwp_cronupdatescheck_action()
     {
+        update_option('mainwp_cron_last_updatescheck', time());
+
         $mainwpAutomaticDailyUpdate = get_option('mainwp_automaticDailyUpdate');
         if ($mainwpAutomaticDailyUpdate !== false && $mainwpAutomaticDailyUpdate == 0) return;
 
@@ -1081,12 +1084,12 @@ class MainWPSystem
 
     function mainwp_cronpingchilds_action()
     {
-        $lastPing = get_option('last_ping');
+        $lastPing = get_option('mainwp_cron_last_ping');
         if ($lastPing !== false && (time() - $lastPing) < (60 * 60 * 23))
         {
             return;
         }
-        update_option('last_ping', time());
+        update_option('mainwp_cron_last_ping', time());
 
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsites());
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
@@ -1108,12 +1111,12 @@ class MainWPSystem
 
     function mainwp_cronconflicts_action()
     {
-        $lastCronConflicts = get_option('last_cronconflicts');
+        $lastCronConflicts = get_option('mainwp_cron_last_cronconflicts');
         if ($lastCronConflicts !== false && (time() - $lastCronConflicts) < (60 * 60 * 11))
         {
             return;
         }
-        update_option('last_cronconflicts', time());
+        update_option('mainwp_cron_last_cronconflicts', time());
 
         MainWPAPISettings::testAPIs();
 
@@ -1181,6 +1184,8 @@ class MainWPSystem
 
     function mainwp_cronbackups_continue_action()
     {
+        update_option('mainwp_cron_last_backups_continue', time());
+
         $chunkedBackupTasks = get_option('mainwp_chunkedBackupTasks');
         if ($chunkedBackupTasks == 0) return;
 
@@ -1200,6 +1205,8 @@ class MainWPSystem
 
     function mainwp_cronbackups_action()
     {
+        update_option('mainwp_cron_last_backups', time());
+
         //Do cronjobs!
         //Config this in crontab: 0 0 * * * wget -q http://mainwp.com/wp-admin/?do=cron -O /dev/null 2>&1
         //this will execute once every day to check to do the scheduled backups
@@ -1249,6 +1256,7 @@ class MainWPSystem
 
     function mainwp_cronstats_action()
     {
+        update_option('mainwp_cron_last_stats', time());
         if (get_option('mainwp_seo') != 1) return;
 
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getWebsitesStatsUpdateSQL());

@@ -100,7 +100,7 @@ class MainWPOptions
             </td>
         </tr>
         <tr>
-            <th scope="row"><?php _e('Allow Cron Jobs','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Enables the cron jobs triggered from the MainWP Member area. A MainWP login is required for this option.','mainwp')); ?></th>
+            <th scope="row"><?php _e('Use MainWP Cron Trigger','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Enables the cron jobs triggered from the MainWP Member area. A MainWP login is required for this option.','mainwp')); ?></th>
             <td>
                 <div class="mainwp-checkbox">
                 <input type="checkbox" name="mainwp_options_cron_jobs"
@@ -110,7 +110,7 @@ class MainWPOptions
             </td>
         </tr>
         <tr>
-            <th scope="row"><?php _e('Use WP-Cron','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('When not using WP-Cron you will need to set up a cron job via your hosting.','mainwp')); ?></th>
+            <th scope="row"><?php _e('Use WP-Cron','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('When not using WP-Cron you will need to set up a cron job via your hosting.','mainwp'), 'http://docs.mainwp.com/disable-wp-cron/'); ?></th>
             <td>
                 <div class="mainwp-checkbox">
                 <input type="checkbox" name="mainwp_options_wp_cron"

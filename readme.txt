@@ -2,6 +2,7 @@
 Contributors: mainwp
 Donate link: 
 Tags: WordPress Management, WordPress Controller
+Author: mainwp
 Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
 Requires at least: 3.4

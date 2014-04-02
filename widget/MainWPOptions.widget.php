@@ -28,6 +28,7 @@ class MainWPOptions
                 update_option('mainwp_maximumPosts', $_POST['mainwp_maximumPosts']);
                 update_option('mainwp_maximumComments', $_POST['mainwp_maximumComments']);
                 update_option('mainwp_cron_jobs', (!isset($_POST['mainwp_options_cron_jobs']) ? 0 : 1));
+                update_option('mainwp_wp_cron', (!isset($_POST['mainwp_options_wp_cron']) ? 0 : 1));
             }
 
             return true;
@@ -99,13 +100,23 @@ class MainWPOptions
             </td>
         </tr>
         <tr>
-            <th scope="row"><?php _e('Allow Cron Jobs','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('....','mainwp')); ?></th>
+            <th scope="row"><?php _e('Allow Cron Jobs','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Enables the cron jobs triggered from the MainWP Member area. A MainWP login is required for this option.','mainwp')); ?></th>
             <td>
                 <div class="mainwp-checkbox">
                 <input type="checkbox" name="mainwp_options_cron_jobs"
-                       id="mainwp_options_cron_jobs" <?php echo ((get_option('mainwp_cron_jobs') == 1) || (get_option('mainwp_cron_jobs') == '') ? 'checked="true"' : ''); ?>/>
+                       id="mainwp_options_cron_jobs" <?php echo ((get_option('mainwp_cron_jobs') == 1) ? 'checked="true"' : ''); ?>/>
                 <label for="mainwp_options_cron_jobs"></label>
                 </div><em style="display: inline;"><?php _e('Requires MainWP Login','mainwp'); ?></em>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row"><?php _e('Use WP-Cron','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('When not using WP-Cron you will need to set up a cron job via your hosting.','mainwp')); ?></th>
+            <td>
+                <div class="mainwp-checkbox">
+                <input type="checkbox" name="mainwp_options_wp_cron"
+                       id="mainwp_options_wp_cron" <?php echo ((get_option('mainwp_wp_cron') == 1) || (get_option('mainwp_wp_cron') === false) ? 'checked="true"' : ''); ?>/>
+                <label for="mainwp_options_wp_cron"></label>
+                </div>
             </td>
         </tr>
 <!--        todo: RS: Re-enable-->

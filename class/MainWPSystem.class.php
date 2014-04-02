@@ -156,41 +156,73 @@ class MainWPSystem
 
         add_filter('cron_schedules', array('MainWPUtility', 'getCronSchedules'));
 
-        if (!wp_next_scheduled('mainwp_cronofflinecheck_action')) {
-            wp_schedule_event(time(), '5minutely', 'mainwp_cronofflinecheck_action');
+        $useWPCron = (get_option('mainwp_wp_cron') === false) || (get_option('mainwp_wp_cron') == 1);
+
+        if (($sched = wp_next_scheduled('mainwp_cronofflinecheck_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), '5minutely', 'mainwp_cronofflinecheck_action');
+        }
+        else
+        {
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronofflinecheck_action');
         }
 
-        if (!wp_next_scheduled('mainwp_cronstats_action')) {
-            wp_schedule_event(time(), 'hourly', 'mainwp_cronstats_action');
+        if (($sched = wp_next_scheduled('mainwp_cronstats_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), 'hourly', 'mainwp_cronstats_action');
+        }
+        else
+        {
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronstats_action');
         }
 
-        if (!wp_next_scheduled('mainwp_cronbackups_action')) {
-            wp_schedule_event(time(), 'hourly', 'mainwp_cronbackups_action');
+        if (($sched = wp_next_scheduled('mainwp_cronbackups_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), 'hourly', 'mainwp_cronbackups_action');
+        }
+        else
+        {
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronbackups_action');
         }
 
-        if (!wp_next_scheduled('mainwp_cronbackups_continue_action')) {
-            wp_schedule_event(time(), '5minutely', 'mainwp_cronbackups_continue_action');
+        if (($sched = wp_next_scheduled('mainwp_cronbackups_continue_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), '5minutely', 'mainwp_cronbackups_continue_action');
+        }
+        else
+        {
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronbackups_continue_action');
         }
 
-        if (!wp_next_scheduled('mainwp_cronconflicts_action')) {
-            wp_schedule_event(time(), 'twicedaily', 'mainwp_cronconflicts_action');
+        if (($sched = wp_next_scheduled('mainwp_cronconflicts_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), 'twicedaily', 'mainwp_cronconflicts_action');
+        }
+        else
+        {
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronconflicts_action');
         }
 
         if (($sched = wp_next_scheduled('mainwp_cronremotedestinationcheck_action')) != false) {
             wp_unschedule_event($sched, 'mainwp_cronremotedestinationcheck_action');
         }
 
-        if (!wp_next_scheduled('mainwp_cronpingchilds_action')) {
-            wp_schedule_event(time(), 'daily', 'mainwp_cronpingchilds_action');
-        }
-
-        $sched = wp_next_scheduled('mainwp_cronupdatescheck_action');
-        if (!$sched) {
-            wp_schedule_event(time(), 'minutely', 'mainwp_cronupdatescheck_action');
+        if (($sched = wp_next_scheduled('mainwp_cronpingchilds_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), 'daily', 'mainwp_cronpingchilds_action');
         }
         else
         {
-//            wp_unschedule_event($sched, 'mainwp_cronupdatescheck_action');
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronpingchilds_action');
+        }
+
+        if (($sched = wp_next_scheduled('mainwp_cronupdatescheck_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), 'minutely', 'mainwp_cronupdatescheck_action');
+        }
+        else
+        {
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronupdatescheck_action');
         }
 
         add_action('plugin_action_links_' . $this->plugin_slug, array(&$this, 'plugin_action_links'));
@@ -1049,6 +1081,13 @@ class MainWPSystem
 
     function mainwp_cronpingchilds_action()
     {
+        $lastPing = get_option('last_ping');
+        if ($lastPing !== false && (time() - $lastPing) < (60 * 60 * 23))
+        {
+            return;
+        }
+        update_option('last_ping', time());
+
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsites());
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
         {
@@ -1069,6 +1108,13 @@ class MainWPSystem
 
     function mainwp_cronconflicts_action()
     {
+        $lastCronConflicts = get_option('last_cronconflicts');
+        if ($lastCronConflicts !== false && (time() - $lastCronConflicts) < (60 * 60 * 11))
+        {
+            return;
+        }
+        update_option('last_cronconflicts', time());
+
         MainWPAPISettings::testAPIs();
 
         if (true || $this->isAPIValid())
@@ -1078,6 +1124,7 @@ class MainWPSystem
             {
                 $cronjobs = get_option('mainwp_cron_jobs');
                 if ($cronjobs === false) $cronjobs = 0;
+                if ($cronjobs && !((get_option('mainwp_wp_cron') === false) || (get_option('mainwp_wp_cron') == 1))) $cronjobs = false;
                 $result = MainWPUtility::http_post("do=getConflicts&url=" . urlencode($url). "&username=" . urldecode(get_option('mainwp_api_username')) . "&cron=" . $cronjobs, "mainwp.com", "/versioncontrol/rqst.php", 80, 'main', true);
             }
             catch (Exception $e)

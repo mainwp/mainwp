@@ -21,10 +21,12 @@ class MainWPManageSitesView
                 {
                     foreach ($subPages as $subPage)
                     {
+                        if (!isset($subPage['menu_hidden']) || (isset($subPage['menu_hidden']) && $subPage['menu_hidden'] != true)) {
                     ?>
                         <a href="<?php echo admin_url('admin.php?page=ManageSites' . $subPage['slug']); ?>"
                            class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
                     <?php
+                        }
                     }
                 }
                 ?>

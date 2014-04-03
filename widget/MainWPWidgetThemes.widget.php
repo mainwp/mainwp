@@ -59,7 +59,7 @@ class MainWPWidgetThemes
             <a class="mainwp_action left mainwp_action_down themes_actived_lnk" href="#"><?php _e('Active','mainwp'); ?> (<?php echo count($actived_themes); ?>)</a><a class="mainwp_action mid themes_inactive_lnk right" href="#" ><?php _e('Inactive','mainwp'); ?> (<?php echo count($inactive_themes); ?>)</a><br/><br/>
             <div class="mainwp_themes_active">
                 <?php
-                for ($i = 0; $i < count($actived_themes) && $i < 5; $i++)
+                for ($i = 0; $i < count($actived_themes); $i++)
                 {                    
                 ?>
                 <div class="mainwp-row mainwp-active">
@@ -74,7 +74,7 @@ class MainWPWidgetThemes
 
             <div class="mainwp_themes_inactive" style="display: none">
                 <?php
-                for ($i = 0; $i < count($inactive_themes) && $i < 5; $i++)
+                for ($i = 0; $i < count($inactive_themes); $i++)
                 {                    
                 ?>
                 <div class="mainwp-row mainwp-inactive">

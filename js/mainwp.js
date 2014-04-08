@@ -3515,9 +3515,9 @@ mainwp_upload_bulk = function (type) {
         type = 'theme';
     }
 
-    if (typeof(mainwp_onPrepareBulkUploadPluginTheme) == 'function') {
-        mainwp_onPrepareBulkUploadPluginTheme(type, path = 'bulk');
-    }
+//    if (typeof(mainwp_onPrepareBulkUploadPluginTheme) == 'function') {
+//        mainwp_onPrepareBulkUploadPluginTheme(type, path = 'bulk');
+//    }
 
     var data = {
         action:'mainwp_preparebulkuploadplugintheme',

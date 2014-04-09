@@ -20,7 +20,7 @@ class MainWPSettings
         add_submenu_page('mainwp_tab', __('Settings Global options','mainwp'), ' <span id="mainwp-Settings">'. __('Settings','mainwp') .'</span>', 'read', 'Settings', array(MainWPSettings::getClassName(), 'render'));
         add_submenu_page('mainwp_tab', __('Settings Help','mainwp'), ' <div class="mainwp-hidden">'. __('Settings Help','mainwp') .'</div>', 'read', 'SettingsHelp', array(MainWPSettings::getClassName(), 'QSGManageSettings'));
 
-        self::$subPages = apply_filters('mainwp-getsubpages-settings', array());
+        self::$subPages = apply_filters('mainwp-getsubpages-settings', array(array('title'=> __('Advanced Options', 'mainwp'), 'slug' => 'Advanced', 'callback' =>  array(MainWPSettings::getClassName(), 'renderAdvanced'))));
         if (isset(self::$subPages) && is_array(self::$subPages))
         {
             foreach (self::$subPages as $subPage)
@@ -32,7 +32,6 @@ class MainWPSettings
 
     public static function initMenuSubPages()
     {
-
         if (isset(self::$subPages) && is_array(self::$subPages) && (count(self::$subPages) > 0))
         {
         ?>
@@ -92,6 +91,70 @@ class MainWPSettings
         </div>
     </div>
         <?php
+    }
+
+    public static function renderAdvanced()
+    {
+        if (isset($_POST['submit']))
+        {
+            update_option('mainwp_maximumRequests', $_POST['mainwp_maximumRequests']);
+            update_option('mainwp_minimumDelay', $_POST['mainwp_minimumDelay']);
+            update_option('mainwp_maximumIPRequests', $_POST['mainwp_maximumIPRequests']);
+            update_option('mainwp_minimumIPDelay', $_POST['mainwp_minimumIPDelay']);
+        }
+
+        self::renderHeader('Advanced');
+        ?>
+    <fieldset class="mainwp-fieldset-box">
+    <legend><?php _e('Advanced Options','mainwp'); ?></legend>
+    <form method="POST" action="" id="mainwp-settings-page-form">
+        <table class="form-table">
+            <tbody>
+                <tr>
+                    <th colspan="2">Cross IP Settings</th>
+                </tr>
+                <tr>
+                    <th scope="row"><?php _e('Maximum simultaneous requests','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Maximum simultaneous requests. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 4, set to 0 for unlimited.','mainwp')); ?></th>
+                    <td>
+                        <input type="text" name="mainwp_maximumRequests"
+                               id="mainwp_maximumRequests" value="<?php echo ((get_option('mainwp_maximumRequests') == false) ? 0 : get_option('mainwp_maximumRequests')); ?>"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php _e('Minimum delay between requests (milliseconds)','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Minimum delay between requests (milliseconds). With a typical shared host you should set this at 200.','mainwp')); ?></th>
+                    <td>
+                        <input type="text" name="mainwp_minimumDelay"
+                               id="mainwp_minimumDelay" value="<?php echo ((get_option('mainwp_minimumDelay') == false) ? 0 : get_option('mainwp_minimumDelay')); ?>"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th colspan="2">&nbsp;</th>
+                </tr>
+                <tr>
+                    <th colspan="2">IP settings</th>
+                </tr>
+                <tr>
+                    <th scope="row"><?php _e('Maximum simultaneous requests per ip','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Maximum simultaneous requests per IP. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 1, set to 0 for unlimited.','mainwp')); ?></th>
+                    <td>
+                        <input type="text" name="mainwp_maximumIPRequests"
+                               id="mainwp_maximumIPRequests" value="<?php echo ((get_option('mainwp_maximumIPRequests') == false) ? 0 : get_option('mainwp_maximumIPRequests')); ?>"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php _e('Minimum delay between requests to the same ip (milliseconds)','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Minimum delay between requests (milliseconds) per IP. With a typical shared host you should set this at 1000.','mainwp')); ?></th>
+                    <td>
+                        <input type="text" name="mainwp_minimumIPDelay"
+                               id="mainwp_minimumIPDelay" value="<?php echo ((get_option('mainwp_minimumIPDelay') == false) ? 0 : get_option('mainwp_minimumIPDelay')); ?>"/>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>"/>
+        </p>
+    </form>
+    </fieldset>
+        <?php
+        self::renderFooter('Advanced');
     }
 
     public static function render()

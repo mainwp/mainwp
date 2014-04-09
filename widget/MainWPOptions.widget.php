@@ -20,7 +20,6 @@ class MainWPOptions
             if (MainWPUtility::isAdmin()) {
                 update_option('mainwp_optimize', (!isset($_POST['mainwp_optimize']) ? 0 : 1));
                 update_option('mainwp_seo', (!isset($_POST['mainwp_seo']) ? 0 : 1));
-                update_option('mainwp_maximumRequests', $_POST['mainwp_maximumRequests']);
                 $val = (!isset($_POST['mainwp_automaticDailyUpdate']) ? 2 : $_POST['mainwp_automaticDailyUpdate']);
                 update_option('mainwp_automaticDailyUpdate', $val);
                 $val = (!isset($_POST['mainwp_backup_before_upgrade']) ? 0 : 1);
@@ -137,13 +136,6 @@ class MainWPOptions
                        id="mainwp_optimize" <?php echo ((get_option('mainwp_optimize') == 1) ? 'checked="true"' : ''); ?>"/>
                 <label for="mainwp_optimize"></label>
                </div>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row"><?php _e('Maximum requests / 30seconds','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Maximum requests sent out to child sites per 30 seconds. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 15, set to 0 for unlimited.','mainwp')); ?></th>
-            <td>
-                <input type="text" name="mainwp_maximumRequests"
-                       id="mainwp_maximumRequests" value="<?php echo ((get_option('mainwp_maximumRequests') == false) ? 0 : get_option('mainwp_maximumRequests')); ?>"/>
             </td>
         </tr>
         <tr>

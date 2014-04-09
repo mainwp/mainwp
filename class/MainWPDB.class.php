@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '5.7';
+    private $mainwp_db_version = '5.8';
     //Private
     private $table_prefix;
     //Singleton
@@ -110,7 +110,8 @@ class MainWPDB
   ignored_themeConflicts text NOT NULL,
   last_post_gmt int(11) NOT NULL,
   backups text NOT NULL,
-  mainwpdir int(11) NOT NULL';
+  mainwpdir int(11) NOT NULL,
+  ip text NOT NULL DEFAULT ""';
         if ($currentVersion == '') $tbl .= ',
   PRIMARY KEY  (id)  ';
         $tbl .= ')';
@@ -196,6 +197,16 @@ class MainWPDB
   paused tinyint(1) NOT NULL,
   template tinyint(1) DEFAULT 0';
           if ($currentVersion == '') $tbl .= ',
+  PRIMARY KEY  (id)  ';
+          $tbl .= ');';
+        $sql[] = $tbl;
+
+        $tbl = 'CREATE TABLE ' . $this->tableName('request_log') . ' (
+  id int(11) NOT NULL auto_increment,
+  ip text NOT NULL DEFAULT "",
+  subnet text NOT NULL DEFAULT "",
+  timestamp int(11) NOT NULL DEFAULT 0';
+          if ($currentVersion == '' || version_compare($currentVersion, '5.7', '<=')) $tbl .= ',
   PRIMARY KEY  (id)  ';
           $tbl .= ');';
         $sql[] = $tbl;
@@ -638,6 +649,31 @@ class MainWPDB
         return $sql;
     }
 
+    public function insertOrUpdateRequestLog($ip, $timestamp)
+    {
+        /** @var $wpdb wpdb */
+        global $wpdb;
+
+        $updated = $wpdb->update($this->tableName('request_log'), array('timestamp' => $timestamp), array('ip' => $ip));
+        if (($updated === false) || ($updated == 0))
+        {
+            $wpdb->insert($this->tableName('request_log'), array('ip' => $ip, 'timestamp' => $timestamp));
+        }
+    }
+
+    public function getLastRequestTimestamp($ip = null)
+    {
+        /** @var $wpdb wpdb */
+        global $wpdb;
+
+        if ($ip == null)
+        {
+            return $wpdb->get_var('select timestamp from ' . $this->tableName('request_log') . ' order by timestamp desc limit 1');
+        }
+
+        return $wpdb->get_var('SELECT timestamp FROM ' . $this->tableName('request_log') . ' WHERE ip = "'.esc_sql($ip).'"');
+    }
+
     public function addWebsite($userid, $name, $url, $admin, $pubkey, $privkey, $nossl, $nosslkey, $groupids, $groupnames)
     {
         /** @var $wpdb wpdb */
@@ -703,8 +739,8 @@ class MainWPDB
                 'last_post_gmt' => 0,
                 'backups' => '',
                 'mainwpdir' => 0);
-            if ($wpdb->insert($this->tableName('wp'), $values)
-            ) {
+            if ($wpdb->insert($this->tableName('wp'), $values))
+            {
                 $websiteid = $wpdb->insert_id;
                 foreach ($groupnames as $groupname)
                 {

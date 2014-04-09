@@ -436,7 +436,6 @@ class MainWPSystem
         update_option('mainwp_cron_last_updatescheck', time());
 
         $mainwpAutomaticDailyUpdate = get_option('mainwp_automaticDailyUpdate');
-        if ($mainwpAutomaticDailyUpdate !== false && $mainwpAutomaticDailyUpdate == 0) return;
 
         $mainwpLastAutomaticUpdate = get_option('mainwp_updatescheck_last');
         if ($mainwpLastAutomaticUpdate == date('d/m/Y')) return;
@@ -586,20 +585,23 @@ class MainWPSystem
 
                 update_option('mainwp_updatescheck_last', date('d/m/Y'));
 
-                //Create a nice email to send
-                //todo: RS: make this email global, not per user, or per user & allow better support for this
-                $email = get_option('mainwp_updatescheck_mail_email');
-                if ($email != false && $email != '') {
-                    $mail = '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="'.site_url().'">'.site_url().'</a>)</div>
-                             <div></div>
-                             ' . $mail.'
-                             Update Key: (<strong><span style="color:#008000">Trusted</span></strong>) will be auto updated within 24 hours. (<strong><span style="color:#ff0000">Not Trusted</span></strong>) you will need to log into your Main Dashboard and update
-                             <div> </div>
-                             <div>If your MainWP is configured to use Auto Updates these upgrades will be installed in the next 24 hours. To find out how to enable automatic updates please see the FAQs below.</div>
-                             <div><a href="http://docs.mainwp.com/marking-a-plugin-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-plugin-as-trusted/</a></div>
-                             <div><a href="http://docs.mainwp.com/marking-a-theme-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-theme-as-trusted/</a></div>
-                             <div><a href="http://docs.mainwp.com/marking-a-sites-wp-core-updates-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-sites-wp-core-updates-as-trusted/</a></div>';
-                    wp_mail($email, 'MainWP - Trusted Updates', MainWPUtility::formatEmail($email, $mail), array('From: "'.get_option('admin_email').'" <'.get_option('admin_email').'>', 'content-type: text/html'));
+                if ($mainwpAutomaticDailyUpdate !== false && $mainwpAutomaticDailyUpdate != 0)
+                {
+                    //Create a nice email to send
+                    //todo: RS: make this email global, not per user, or per user & allow better support for this
+                    $email = get_option('mainwp_updatescheck_mail_email');
+                    if ($email != false && $email != '') {
+                        $mail = '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="'.site_url().'">'.site_url().'</a>)</div>
+                                 <div></div>
+                                 ' . $mail.'
+                                 Update Key: (<strong><span style="color:#008000">Trusted</span></strong>) will be auto updated within 24 hours. (<strong><span style="color:#ff0000">Not Trusted</span></strong>) you will need to log into your Main Dashboard and update
+                                 <div> </div>
+                                 <div>If your MainWP is configured to use Auto Updates these upgrades will be installed in the next 24 hours. To find out how to enable automatic updates please see the FAQs below.</div>
+                                 <div><a href="http://docs.mainwp.com/marking-a-plugin-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-plugin-as-trusted/</a></div>
+                                 <div><a href="http://docs.mainwp.com/marking-a-theme-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-theme-as-trusted/</a></div>
+                                 <div><a href="http://docs.mainwp.com/marking-a-sites-wp-core-updates-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-sites-wp-core-updates-as-trusted/</a></div>';
+                        wp_mail($email, 'MainWP - Trusted Updates', MainWPUtility::formatEmail($email, $mail), array('From: "'.get_option('admin_email').'" <'.get_option('admin_email').'>', 'content-type: text/html'));
+                    }
                 }
             }
         }

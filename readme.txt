@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
 Requires at least: 3.4
-Tested up to: 3.8
-Stable tag: 1.0.6
+Tested up to: 3.9
+Stable tag: 1.0.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -110,7 +110,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
-
+= 1.0.7 =
+* Fix menu position, so menus created by extensions will be below Extensions menu item
+* Fix for Favorites Extension: bug upload long file name
+* Added support for custom crontab settings (may reduce timeouts on bigger sites)
+* Optimized the delay settings between requests and requests to the same ip to reduce timeouts
 
 = 1.0.6 =
 * Code changes for WP 3.9 Compatibility 

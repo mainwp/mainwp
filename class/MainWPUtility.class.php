@@ -425,13 +425,13 @@ class MainWPUtility
         return true;
     }
 
-    static function fetchUrlAuthed(&$website, $what, $params = null)
+    static function fetchUrlAuthed(&$website, $what, $params = null, $checkConstraints = false)
     {
         if ($params == null) $params = array();
         $params['optimize'] = ((get_option("mainwp_optimize") == 1) ? 1 : 0);
 
         $postdata = MainWPUtility::getPostDataAuthed($website, $what, $params);
-        $information = MainWPUtility::fetchUrl($website->url, $postdata);
+        $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints);
       
         if (is_array($information) && isset($information['sync']))
         {
@@ -445,7 +445,8 @@ class MainWPUtility
     static function fetchUrlNotAuthed($url, $admin, $what, $params = null)
     {
         $postdata = MainWPUtility::getPostDataNotAuthed($url, $admin, $what, $params);
-        return MainWPUtility::fetchUrl($url, $postdata);
+        $website = null;
+        return MainWPUtility::fetchUrl($website, $url, $postdata);
     }
 
     static function fetchUrlClean($url, $postdata)
@@ -469,20 +470,20 @@ class MainWPUtility
         }
     }
 
-    static function fetchUrl($url, $postdata)
+    static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false)
     {
         try
         {
             $tmpUrl = $url;
             if (substr($tmpUrl, -1) != '/') { $tmpUrl .= '/'; }
 
-            return self::_fetchUrl($tmpUrl . 'wp-admin/', $postdata);
+            return self::_fetchUrl($website, $tmpUrl . 'wp-admin/', $postdata, $checkConstraints);
         }
         catch (Exception $e)
         {
             try
             {
-                return self::_fetchUrl($url, $postdata);
+                return self::_fetchUrl($website, $url, $postdata, $checkConstraints);
             }
             catch (Exception $ex)
             {
@@ -491,9 +492,63 @@ class MainWPUtility
         }
     }
 
-    static function _fetchUrl($url, $postdata)
+    static function _fetchUrl(&$website, $url, $postdata, $checkConstraints = false)
     {
         $agent= 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+
+        //todo: finish
+        $identifier = null;
+        if ($checkConstraints)
+        {
+            $minimumDelay = ((get_option('mainwp_minimumDelay') == false) ? 0 : get_option('mainwp_minimumDelay'));
+            $minimumDelay = $minimumDelay / 1000;
+            $minimumIPDelay = ((get_option('mainwp_minimumIPDelay') == false) ? 0 : get_option('mainwp_minimumIPDelay'));
+            $minimumIPDelay = $minimumIPDelay / 1000;
+
+            $semLock = '103218'; //SNSyncLock
+            //Lock
+            $identifier = MainWPUtility::getLockIdentifier($semLock);
+
+            MainWPUtility::endSession();
+            $delay = true;
+            while ($delay)
+            {
+                MainWPUtility::lock($identifier);
+
+                //Check last request overall
+                $lastRequest = MainWPDB::Instance()->getLastRequestTimestamp();
+                if ($lastRequest > (time() - $minimumDelay))
+                {
+                    //Delay!
+                    MainWPUtility::release($identifier);
+                    usleep(($minimumDelay - (time() - $lastRequest)) * 1000 * 1000);
+                    continue;
+                }
+
+                if ($website != null)
+                {
+                    //Get ip of this site url
+                    $ip = $website->ip;
+
+                    if ($ip != '')
+                    {
+                        //Check last request for this site
+                        $lastRequest = MainWPDB::Instance()->getLastRequestTimestamp($ip);
+
+                        //Check last request for this subnet?
+                        if ($lastRequest > (time() - $minimumIPDelay))
+                        {
+                            //Delay!
+                            MainWPUtility::release($identifier);
+                            usleep(($minimumIPDelay - (time() - $lastRequest)) * 1000 * 1000);
+                            continue;
+                        }
+                    }
+                }
+
+                $delay = false;
+            }
+        }
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -509,7 +564,27 @@ class MainWPUtility
         $data = curl_exec($ch);
         $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $err = curl_error($ch);
+        $real_url = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
         curl_close($ch);
+
+        $host = parse_url($real_url, PHP_URL_HOST);
+        $ip = gethostbyname($host);
+
+        if ($website != null)
+        {
+            if ($ip != $website->ip)
+            {
+                MainWPDB::Instance()->updateWebsiteValues($website->id, array('ip' => $ip));
+            }
+        }
+
+        MainWPDB::Instance()->insertOrUpdateRequestLog($ip, time());
+        if ($identifier != null)
+        {
+            //Unlock
+            MainWPUtility::release($identifier);
+        }
+
         if (($data === false) && ($http_status == 0)) {
             throw new MainWPException('HTTPERROR', $err);
         }

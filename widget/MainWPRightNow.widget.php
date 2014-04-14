@@ -348,34 +348,34 @@ class MainWPRightNow
         MainWPUtility::endSession();
 
         $semLock = '103218'; //SNSyncLock
-        $identifier = null;
-        if ($maxRequestsInThirtySeconds != false || $maxRequestsInThirtySeconds != 0)
-        {
-            //Lock
-            $identifier = MainWPUtility::getLockIdentifier($semLock);
-            MainWPUtility::lock($identifier);
-
-            $req = MainWPDB::Instance()->getRequestsSince(30 / $maxRequestsInThirtySeconds);
-            MainWPUtility::endSession();
-
-            while ($req >= 1)
-            {
-                MainWPUtility::release($identifier);
-                //Unlock
-                sleep(2);
-
-                //Lock
-                MainWPUtility::lock($identifier);
-                $req = MainWPDB::Instance()->getRequestsSince(30 / $maxRequestsInThirtySeconds);
-                MainWPUtility::endSession();
-            }
-        }
+//        $identifier = null;
+//        if ($maxRequestsInThirtySeconds != false || $maxRequestsInThirtySeconds != 0)
+//        {
+//            //Lock
+//            $identifier = MainWPUtility::getLockIdentifier($semLock);
+//            MainWPUtility::lock($identifier);
+//
+//            $req = MainWPDB::Instance()->getRequestsSince(30 / $maxRequestsInThirtySeconds);
+//            MainWPUtility::endSession();
+//
+//            while ($req >= 1)
+//            {
+//                MainWPUtility::release($identifier);
+//                //Unlock
+//                sleep(2);
+//
+//                //Lock
+//                MainWPUtility::lock($identifier);
+//                $req = MainWPDB::Instance()->getRequestsSince(30 / $maxRequestsInThirtySeconds);
+//                MainWPUtility::endSession();
+//            }
+//        }
 
         MainWPDB::Instance()->updateWebsiteValues($website->id, array('dtsSyncStart' => time()));
         MainWPUtility::endSession();
 
         //Unlock
-        MainWPUtility::release($identifier);
+//        MainWPUtility::release($identifier);
         if (MainWPSync::syncSite($website))
         {
             die(json_encode(array('result' => 'SUCCESS')));

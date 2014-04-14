@@ -1,10 +1,10 @@
 <?php
 if (session_id() == '') session_start();
-ini_set('display_errors', true);
+//ini_set('display_errors', true);
 //error_reporting(E_ALL);
 
-//ini_set('display_errors', false);
-//error_reporting(0);
+ini_set('display_errors', false);
+error_reporting(0);
 define('MAINWP_API_VALID', "VALID");
 define('MAINWP_API_INVALID', "INVALID");
 
@@ -156,41 +156,73 @@ class MainWPSystem
 
         add_filter('cron_schedules', array('MainWPUtility', 'getCronSchedules'));
 
-        if (!wp_next_scheduled('mainwp_cronofflinecheck_action')) {
-            wp_schedule_event(time(), '5minutely', 'mainwp_cronofflinecheck_action');
+        $useWPCron = (get_option('mainwp_wp_cron') === false) || (get_option('mainwp_wp_cron') == 1);
+
+        if (($sched = wp_next_scheduled('mainwp_cronofflinecheck_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), '5minutely', 'mainwp_cronofflinecheck_action');
+        }
+        else
+        {
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronofflinecheck_action');
         }
 
-        if (!wp_next_scheduled('mainwp_cronstats_action')) {
-            wp_schedule_event(time(), 'hourly', 'mainwp_cronstats_action');
+        if (($sched = wp_next_scheduled('mainwp_cronstats_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), 'hourly', 'mainwp_cronstats_action');
+        }
+        else
+        {
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronstats_action');
         }
 
-        if (!wp_next_scheduled('mainwp_cronbackups_action')) {
-            wp_schedule_event(time(), 'hourly', 'mainwp_cronbackups_action');
+        if (($sched = wp_next_scheduled('mainwp_cronbackups_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), 'hourly', 'mainwp_cronbackups_action');
+        }
+        else
+        {
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronbackups_action');
         }
 
-        if (!wp_next_scheduled('mainwp_cronbackups_continue_action')) {
-            wp_schedule_event(time(), '5minutely', 'mainwp_cronbackups_continue_action');
+        if (($sched = wp_next_scheduled('mainwp_cronbackups_continue_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), '5minutely', 'mainwp_cronbackups_continue_action');
+        }
+        else
+        {
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronbackups_continue_action');
         }
 
-        if (!wp_next_scheduled('mainwp_cronconflicts_action')) {
-            wp_schedule_event(time(), 'twicedaily', 'mainwp_cronconflicts_action');
+        if (($sched = wp_next_scheduled('mainwp_cronconflicts_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), 'twicedaily', 'mainwp_cronconflicts_action');
+        }
+        else
+        {
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronconflicts_action');
         }
 
         if (($sched = wp_next_scheduled('mainwp_cronremotedestinationcheck_action')) != false) {
             wp_unschedule_event($sched, 'mainwp_cronremotedestinationcheck_action');
         }
 
-        if (!wp_next_scheduled('mainwp_cronpingchilds_action')) {
-            wp_schedule_event(time(), 'daily', 'mainwp_cronpingchilds_action');
-        }
-
-        $sched = wp_next_scheduled('mainwp_cronupdatescheck_action');
-        if (!$sched) {
-            wp_schedule_event(time(), 'minutely', 'mainwp_cronupdatescheck_action');
+        if (($sched = wp_next_scheduled('mainwp_cronpingchilds_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), 'daily', 'mainwp_cronpingchilds_action');
         }
         else
         {
-//            wp_unschedule_event($sched, 'mainwp_cronupdatescheck_action');
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronpingchilds_action');
+        }
+
+        if (($sched = wp_next_scheduled('mainwp_cronupdatescheck_action')) == false)
+        {
+            if ($useWPCron) wp_schedule_event(time(), 'minutely', 'mainwp_cronupdatescheck_action');
+        }
+        else
+        {
+            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronupdatescheck_action');
         }
 
         add_action('plugin_action_links_' . $this->plugin_slug, array(&$this, 'plugin_action_links'));
@@ -377,6 +409,7 @@ class MainWPSystem
 
     function mainwp_cronofflinecheck_action()
     {
+        update_option('mainwp_cron_last_offlinecheck', time());
         //Do cronjobs!
         //Config this in crontab: 0 0 * * * wget -q http://mainwp.com/wp-admin/?do=checkSites -O /dev/null 2>&1
         //this will execute once every day to check if websites are offline
@@ -400,8 +433,9 @@ class MainWPSystem
 
     function mainwp_cronupdatescheck_action()
     {
+        update_option('mainwp_cron_last_updatescheck', time());
+
         $mainwpAutomaticDailyUpdate = get_option('mainwp_automaticDailyUpdate');
-        if ($mainwpAutomaticDailyUpdate !== false && $mainwpAutomaticDailyUpdate == 0) return;
 
         $mainwpLastAutomaticUpdate = get_option('mainwp_updatescheck_last');
         if ($mainwpLastAutomaticUpdate == date('d/m/Y')) return;
@@ -551,20 +585,23 @@ class MainWPSystem
 
                 update_option('mainwp_updatescheck_last', date('d/m/Y'));
 
-                //Create a nice email to send
-                //todo: RS: make this email global, not per user, or per user & allow better support for this
-                $email = get_option('mainwp_updatescheck_mail_email');
-                if ($email != false && $email != '') {
-                    $mail = '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="'.site_url().'">'.site_url().'</a>)</div>
-                             <div></div>
-                             ' . $mail.'
-                             Update Key: (<strong><span style="color:#008000">Trusted</span></strong>) will be auto updated within 24 hours. (<strong><span style="color:#ff0000">Not Trusted</span></strong>) you will need to log into your Main Dashboard and update
-                             <div> </div>
-                             <div>If your MainWP is configured to use Auto Updates these upgrades will be installed in the next 24 hours. To find out how to enable automatic updates please see the FAQs below.</div>
-                             <div><a href="http://docs.mainwp.com/marking-a-plugin-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-plugin-as-trusted/</a></div>
-                             <div><a href="http://docs.mainwp.com/marking-a-theme-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-theme-as-trusted/</a></div>
-                             <div><a href="http://docs.mainwp.com/marking-a-sites-wp-core-updates-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-sites-wp-core-updates-as-trusted/</a></div>';
-                    wp_mail($email, 'MainWP - Trusted Updates', MainWPUtility::formatEmail($email, $mail), array('From: "'.get_option('admin_email').'" <'.get_option('admin_email').'>', 'content-type: text/html'));
+                if ($mainwpAutomaticDailyUpdate !== false && $mainwpAutomaticDailyUpdate != 0)
+                {
+                    //Create a nice email to send
+                    //todo: RS: make this email global, not per user, or per user & allow better support for this
+                    $email = get_option('mainwp_updatescheck_mail_email');
+                    if ($email != false && $email != '') {
+                        $mail = '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="'.site_url().'">'.site_url().'</a>)</div>
+                                 <div></div>
+                                 ' . $mail.'
+                                 Update Key: (<strong><span style="color:#008000">Trusted</span></strong>) will be auto updated within 24 hours. (<strong><span style="color:#ff0000">Not Trusted</span></strong>) you will need to log into your Main Dashboard and update
+                                 <div> </div>
+                                 <div>If your MainWP is configured to use Auto Updates these upgrades will be installed in the next 24 hours. To find out how to enable automatic updates please see the FAQs below.</div>
+                                 <div><a href="http://docs.mainwp.com/marking-a-plugin-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-plugin-as-trusted/</a></div>
+                                 <div><a href="http://docs.mainwp.com/marking-a-theme-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-theme-as-trusted/</a></div>
+                                 <div><a href="http://docs.mainwp.com/marking-a-sites-wp-core-updates-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-sites-wp-core-updates-as-trusted/</a></div>';
+                        wp_mail($email, 'MainWP - Trusted Updates', MainWPUtility::formatEmail($email, $mail), array('From: "'.get_option('admin_email').'" <'.get_option('admin_email').'>', 'content-type: text/html'));
+                    }
                 }
             }
         }
@@ -1049,6 +1086,13 @@ class MainWPSystem
 
     function mainwp_cronpingchilds_action()
     {
+        $lastPing = get_option('mainwp_cron_last_ping');
+        if ($lastPing !== false && (time() - $lastPing) < (60 * 60 * 23))
+        {
+            return;
+        }
+        update_option('mainwp_cron_last_ping', time());
+
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsites());
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
         {
@@ -1069,6 +1113,13 @@ class MainWPSystem
 
     function mainwp_cronconflicts_action()
     {
+        $lastCronConflicts = get_option('mainwp_cron_last_cronconflicts');
+        if ($lastCronConflicts !== false && (time() - $lastCronConflicts) < (60 * 60 * 11))
+        {
+            return;
+        }
+        update_option('mainwp_cron_last_cronconflicts', time());
+
         MainWPAPISettings::testAPIs();
 
         if (true || $this->isAPIValid())
@@ -1078,6 +1129,7 @@ class MainWPSystem
             {
                 $cronjobs = get_option('mainwp_cron_jobs');
                 if ($cronjobs === false) $cronjobs = 0;
+                if ($cronjobs && !((get_option('mainwp_wp_cron') === false) || (get_option('mainwp_wp_cron') == 1))) $cronjobs = false;
                 $result = MainWPUtility::http_post("do=getConflicts&url=" . urlencode($url). "&username=" . urldecode(get_option('mainwp_api_username')) . "&cron=" . $cronjobs, "mainwp.com", "/versioncontrol/rqst.php", 80, 'main', true);
             }
             catch (Exception $e)
@@ -1134,6 +1186,8 @@ class MainWPSystem
 
     function mainwp_cronbackups_continue_action()
     {
+        update_option('mainwp_cron_last_backups_continue', time());
+
         $chunkedBackupTasks = get_option('mainwp_chunkedBackupTasks');
         if ($chunkedBackupTasks == 0) return;
 
@@ -1153,6 +1207,8 @@ class MainWPSystem
 
     function mainwp_cronbackups_action()
     {
+        update_option('mainwp_cron_last_backups', time());
+
         //Do cronjobs!
         //Config this in crontab: 0 0 * * * wget -q http://mainwp.com/wp-admin/?do=cron -O /dev/null 2>&1
         //this will execute once every day to check to do the scheduled backups
@@ -1202,6 +1258,7 @@ class MainWPSystem
 
     function mainwp_cronstats_action()
     {
+        update_option('mainwp_cron_last_stats', time());
         if (get_option('mainwp_seo') != 1) return;
 
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getWebsitesStatsUpdateSQL());

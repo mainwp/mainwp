@@ -20,7 +20,6 @@ class MainWPOptions
             if (MainWPUtility::isAdmin()) {
                 update_option('mainwp_optimize', (!isset($_POST['mainwp_optimize']) ? 0 : 1));
                 update_option('mainwp_seo', (!isset($_POST['mainwp_seo']) ? 0 : 1));
-                update_option('mainwp_maximumRequests', $_POST['mainwp_maximumRequests']);
                 $val = (!isset($_POST['mainwp_automaticDailyUpdate']) ? 2 : $_POST['mainwp_automaticDailyUpdate']);
                 update_option('mainwp_automaticDailyUpdate', $val);
                 $val = (!isset($_POST['mainwp_backup_before_upgrade']) ? 0 : 1);
@@ -28,6 +27,7 @@ class MainWPOptions
                 update_option('mainwp_maximumPosts', $_POST['mainwp_maximumPosts']);
                 update_option('mainwp_maximumComments', $_POST['mainwp_maximumComments']);
                 update_option('mainwp_cron_jobs', (!isset($_POST['mainwp_options_cron_jobs']) ? 0 : 1));
+                update_option('mainwp_wp_cron', (!isset($_POST['mainwp_options_wp_cron']) ? 0 : 1));
             }
 
             return true;
@@ -99,13 +99,23 @@ class MainWPOptions
             </td>
         </tr>
         <tr>
-            <th scope="row"><?php _e('Allow Cron Jobs','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('....','mainwp')); ?></th>
+            <th scope="row"><?php _e('Use MainWP Cron Trigger','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Enables the cron jobs triggered from the MainWP Member area. A MainWP login is required for this option.','mainwp')); ?></th>
             <td>
                 <div class="mainwp-checkbox">
                 <input type="checkbox" name="mainwp_options_cron_jobs"
-                       id="mainwp_options_cron_jobs" <?php echo ((get_option('mainwp_cron_jobs') == 1) || (get_option('mainwp_cron_jobs') == '') ? 'checked="true"' : ''); ?>/>
+                       id="mainwp_options_cron_jobs" <?php echo ((get_option('mainwp_cron_jobs') == 1) ? 'checked="true"' : ''); ?>/>
                 <label for="mainwp_options_cron_jobs"></label>
                 </div><em style="display: inline;"><?php _e('Requires MainWP Login','mainwp'); ?></em>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row"><?php _e('Use WP-Cron','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('When not using WP-Cron you will need to set up a cron job via your hosting.','mainwp'), 'http://docs.mainwp.com/disable-wp-cron/'); ?></th>
+            <td>
+                <div class="mainwp-checkbox">
+                <input type="checkbox" name="mainwp_options_wp_cron"
+                       id="mainwp_options_wp_cron" <?php echo ((get_option('mainwp_wp_cron') == 1) || (get_option('mainwp_wp_cron') === false) ? 'checked="true"' : ''); ?>/>
+                <label for="mainwp_options_wp_cron"></label>
+                </div>
             </td>
         </tr>
 <!--        todo: RS: Re-enable-->
@@ -126,13 +136,6 @@ class MainWPOptions
                        id="mainwp_optimize" <?php echo ((get_option('mainwp_optimize') == 1) ? 'checked="true"' : ''); ?>"/>
                 <label for="mainwp_optimize"></label>
                </div>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row"><?php _e('Maximum requests / 30seconds','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Maximum requests sent out to child sites per 30 seconds. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 15, set to 0 for unlimited.','mainwp')); ?></th>
-            <td>
-                <input type="text" name="mainwp_maximumRequests"
-                       id="mainwp_maximumRequests" value="<?php echo ((get_option('mainwp_maximumRequests') == false) ? 0 : get_option('mainwp_maximumRequests')); ?>"/>
             </td>
         </tr>
         <tr>

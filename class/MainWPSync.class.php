@@ -80,7 +80,8 @@ class MainWPSync
                     'cloneSites' => (!$cloneEnabled ? 0 : urlencode(json_encode($cloneSites))),
                     'pluginConflicts' => json_encode($pluginConflicts),
                     'themeConflicts' => json_encode($themeConflicts)
-                )
+                ),
+                true
             );
 
             return self::syncInformationArray($pWebsite, $information);

@@ -613,12 +613,11 @@ qq.extend(qq.FileUploader.prototype, {
     },
     _onComplete: function(id, fileName, result){
         qq.FileUploaderBasic.prototype._onComplete.apply(this, arguments);
-
+       
         // mark completed
         var item = this._getItemByFileId(id);                
         qq.remove(this._find(item, 'cancel'));
-        qq.remove(this._find(item, 'spinner'));
-        
+        qq.remove(this._find(item, 'spinner'));        
         if (result.success){
             qq.addClass(item, this._classes.success);
             //MAINWP custom code
@@ -628,6 +627,7 @@ qq.extend(qq.FileUploader.prototype, {
             } else {
                 jQuery('#MainWPInstallBulkInstallNow').css('display', 'none');
             }
+            this._find(item, 'file').setAttribute('filename', fileName);
             //MAINWP custom code
         } else {
             qq.addClass(item, this._classes.fail);
@@ -1241,7 +1241,7 @@ qq.extend(qq.UploadHandlerXhr.prototype, {
         }
                 
         this._files[id] = null;
-        this._xhrs[id] = null;    
+        this._xhrs[id] = null;          
         this._dequeue(id);                    
     },
     _cancel: function(id){

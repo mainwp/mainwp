@@ -500,14 +500,16 @@ class MainWPUtility
         $identifier = null;
         if ($checkConstraints)
         {
-            $minimumDelay = ((get_option('mainwp_minimumDelay') == false) ? 0 : get_option('mainwp_minimumDelay'));
-            $minimumDelay = $minimumDelay / 1000;
-            $minimumIPDelay = ((get_option('mainwp_minimumIPDelay') == false) ? 0 : get_option('mainwp_minimumIPDelay'));
-            $minimumIPDelay = $minimumIPDelay / 1000;
-
             $semLock = '103218'; //SNSyncLock
             //Lock
             $identifier = MainWPUtility::getLockIdentifier($semLock);
+
+            //Check the delays
+            //In MS
+            $minimumDelay = ((get_option('mainwp_minimumDelay') == false) ? 0 : get_option('mainwp_minimumDelay'));
+            if ($minimumDelay > 0) $minimumDelay = $minimumDelay / 1000;
+            $minimumIPDelay = ((get_option('mainwp_minimumIPDelay') == false) ? 0 : get_option('mainwp_minimumIPDelay'));
+            if ($minimumIPDelay > 0) $minimumIPDelay = $minimumIPDelay / 1000;
 
             MainWPUtility::endSession();
             $delay = true;
@@ -515,32 +517,35 @@ class MainWPUtility
             {
                 MainWPUtility::lock($identifier);
 
-                //Check last request overall
-                $lastRequest = MainWPDB::Instance()->getLastRequestTimestamp();
-                if ($lastRequest > (time() - $minimumDelay))
+                if ($minimumDelay > 0)
                 {
-                    //Delay!
-                    MainWPUtility::release($identifier);
-                    usleep(($minimumDelay - (time() - $lastRequest)) * 1000 * 1000);
-                    continue;
+                    //Check last request overall
+                    $lastRequest = MainWPDB::Instance()->getLastRequestTimestamp();
+                    if ($lastRequest > ((microtime(true)) - $minimumDelay))
+                    {
+                        //Delay!
+                        MainWPUtility::release($identifier);
+                        usleep(($minimumDelay - ((microtime(true)) - $lastRequest)) * 1000 * 1000);
+                        continue;
+                    }
                 }
 
-                if ($website != null)
+                if ($minimumIPDelay > 0 && $website != null)
                 {
                     //Get ip of this site url
-                    $ip = $website->ip;
+                    $ip = MainWPDB::Instance()->getWPIp($website->id);
 
-                    if ($ip != '')
+                    if ($ip != null && $ip != '')
                     {
                         //Check last request for this site
                         $lastRequest = MainWPDB::Instance()->getLastRequestTimestamp($ip);
 
                         //Check last request for this subnet?
-                        if ($lastRequest > (time() - $minimumIPDelay))
+                        if ($lastRequest > ((microtime(true)) - $minimumIPDelay))
                         {
                             //Delay!
                             MainWPUtility::release($identifier);
-                            usleep(($minimumIPDelay - (time() - $lastRequest)) * 1000 * 1000);
+                            usleep(($minimumIPDelay - ((microtime(true)) - $lastRequest)) * 1000 * 1000);
                             continue;
                         }
                     }
@@ -548,6 +553,67 @@ class MainWPUtility
 
                 $delay = false;
             }
+
+            //Check the simultaneous requests
+            $maximumRequests = ((get_option('mainwp_maximumRequests') == false) ? 0 : get_option('mainwp_maximumRequests'));
+            $maximumIPRequests = ((get_option('mainwp_maximumIPRequests') == false) ? 0 : get_option('mainwp_maximumIPRequests'));
+
+            $first = true;
+            $delay = true;
+            while ($delay)
+            {
+                if (!$first) MainWPUtility::lock($identifier);
+                else $first = false;
+
+                //Clean old open requests (may have timed out or something..)
+                MainWPDB::Instance()->closeOpenRequests();
+
+                if ($maximumRequests > 0)
+                {
+                    $nrOfOpenRequests = MainWPDB::Instance()->getNrOfOpenRequests();
+                    if ($nrOfOpenRequests >= $maximumRequests)
+                    {
+                        //Delay!
+                        MainWPUtility::release($identifier);
+                        //Wait 200ms
+                        usleep(200000);
+                        continue;
+                    }
+                }
+
+                if ($maximumIPRequests > 0 && $website != null)
+                {
+                    //Get ip of this site url
+                    $ip = MainWPDB::Instance()->getWPIp($website->id);
+
+                    if ($ip != null && $ip != '')
+                    {
+                        $nrOfOpenRequests = MainWPDB::Instance()->getNrOfOpenRequests($ip);
+                        if ($nrOfOpenRequests >= $maximumIPRequests)
+                        {
+                            //Delay!
+                            MainWPUtility::release($identifier);
+                            //Wait 200ms
+                            usleep(200000);
+                            continue;
+                        }
+                    }
+                }
+
+                $delay = false;
+            }
+        }
+
+        if ($website != null)
+        {
+            //Log the start of this request!
+            MainWPDB::Instance()->insertOrUpdateRequestLog($website->id, null, microtime(true), null);
+        }
+
+        if ($identifier != null)
+        {
+            //Unlock
+            MainWPUtility::release($identifier);
         }
 
         $ch = curl_init();
@@ -572,17 +638,7 @@ class MainWPUtility
 
         if ($website != null)
         {
-            if ($ip != $website->ip)
-            {
-                MainWPDB::Instance()->updateWebsiteValues($website->id, array('ip' => $ip));
-            }
-        }
-
-        MainWPDB::Instance()->insertOrUpdateRequestLog($ip, time());
-        if ($identifier != null)
-        {
-            //Unlock
-            MainWPUtility::release($identifier);
+            MainWPDB::Instance()->insertOrUpdateRequestLog($website->id, $ip, null, microtime(true));
         }
 
         if (($data === false) && ($http_status == 0)) {

@@ -759,7 +759,7 @@ class MainWPManageSitesView
             <?php
         }
         ?>
-        <form method="POST" action="" id="mainwp-edit-single-site-form">
+        <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data">
             <fieldset class="mainwp-fieldset-box">
             <legend><?php _e('General Options','mainwp'); ?></legend>
             <table class="form-table">

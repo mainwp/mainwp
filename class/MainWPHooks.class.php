@@ -31,7 +31,10 @@ class MainWPHooks
         add_action('mainwp_cache_add_context', array(&$this, 'cache_add_context'), 10, 2);
         add_action('mainwp_cache_add_body', array(&$this, 'cache_add_body'), 10, 2);
 
-		add_filter('mainwp_getmetaboxes', array(&$this, 'getMetaBoxes'), 10, 0);
+        add_filter('mainwp_getmetaboxes', array(&$this, 'getMetaBoxes'), 10, 0);
+        add_filter('mainwp_getnotificationemail', array('MainWPUtility', 'getNotificationEmail'), 10, 0);
+        
+        
     }
 
     public function cache_getcontext($page)

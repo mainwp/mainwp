@@ -400,7 +400,7 @@ h3.mainwp_box_title {
     display: inline-block;
 }
 
-div.star-holder {
+div.legacy-star-holder {
     position: relative;
     height: 19px;
     width: 100px;
@@ -412,7 +412,7 @@ div.action-links {
     margin: 6px 0 0;
 }
 
-div.star {
+div.legacy-star {
     height: 100%;
     position: absolute;
     top: 0;
@@ -442,7 +442,7 @@ div.star {
     width: 100%;
 }
 
-.star img, div.star a, div.star a:hover, div.star a:visited {
+.legacy-star img, div.legacy-star a, div.legacy-star a:hover, div.legacy-star a:visited {
     display: block;
     position: absolute;
     right: 0;
@@ -450,7 +450,7 @@ div.star {
     text-decoration: none;
 }
 
-div.star img {
+div.legacy-star img {
     width: 19px;
     height: 19px;
 }
@@ -2514,4 +2514,8 @@ background-position: 0 -16px;
     background-image: url('../images/help-icon.png') !important;
     background-repeat: no-repeat !important;
     background-position: 8px 50% !important;
+}
+
+#mainwp-code-display code {
+    background: none !important;
 }

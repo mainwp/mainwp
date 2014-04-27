@@ -1,10 +1,10 @@
 <?php
 if (session_id() == '') session_start();
-//ini_set('display_errors', true);
-//error_reporting(E_ALL);
+ini_set('display_errors', true);
+error_reporting(E_ALL);
 
-ini_set('display_errors', false);
-error_reporting(0);
+//ini_set('display_errors', false);
+//error_reporting(0);
 define('MAINWP_API_VALID', "VALID");
 define('MAINWP_API_INVALID', "INVALID");
 
@@ -718,17 +718,17 @@ class MainWPSystem
                 $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
                 if (is_array($decodedPremiumUpgrades))
                 {
-                    foreach ($decodedPremiumUpgrades as $premiumUpgrade)
+                    foreach ($decodedPremiumUpgrades as $slug => $premiumUpgrade)
                     {
                         if ($premiumUpgrade['type'] == 'plugin')
                         {
                             if (!is_array($websitePlugins)) $websitePlugins = array();
-                            $websitePlugins[] = $premiumUpgrade;
+                            $websitePlugins[$slug] = $premiumUpgrade;
                         }
                         else if ($premiumUpgrade['type'] == 'theme')
                         {
                             if (!is_array($websiteThemes)) $websiteThemes = array();
-                            $websiteThemes[] = $premiumUpgrade;
+                            $websiteThemes[$slug] = $premiumUpgrade;
                         }
                     }
                 }

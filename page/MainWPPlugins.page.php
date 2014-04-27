@@ -682,14 +682,26 @@ class MainWPPlugins
                     </td>
                     <td class="vers column-version"><?php echo $plugin->version; ?></td>
                     <td class="vers column-rating">
-                        <div class="star-holder" title="(based on <?php echo $plugin->num_ratings; ?> rating<?php
+                        <?php
+                        if (function_exists('wp_star_rating'))
+                        {
+                            wp_star_rating(array('rating' => esc_attr($plugin->rating), 'type' => 'percent', 'number' => $plugin->num_ratings));
+                        }
+                        else
+                        {
+                        ?>
+
+                        <div class="legacy-star-holder star-holder" title="(based on <?php echo $plugin->num_ratings; ?> rating<?php
                             if ($plugin->num_ratings > 1) {
                                 echo 's';
                             }
                             ?>)">
-                            <div class="star star-rating"
+                            <div class="legacy-star legacy-star-rating star star-rating"
                                  style="width: <?php echo esc_attr($plugin->rating) ?>px"></div>
                         </div>
+                        <?php
+                        }
+                        ?>
                     </td>
                     <td class="desc column-description"><?php echo $description, $author; ?></td>
                 </tr>

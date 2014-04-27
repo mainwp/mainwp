@@ -748,11 +748,13 @@ jQuery(document).ready(function () {
 });
 mainwp_refresh_dashboard = function ()
 {
+    console.log(jQuery('.dashboard_wp_id'));
     var allWebsiteIds = jQuery('.dashboard_wp_id').map(function(indx, el){ return jQuery(el).val(); });
     for (var i = 0; i < allWebsiteIds.length; i++)
     {
         dashboard_update_site_status(allWebsiteIds[i], __('PENDING'));
     }
+    //console.log(allWebsiteIds);
     var nrOfWebsites = allWebsiteIds.length;
     jQuery('#refresh-status-progress').progressbar({value: 0, max: nrOfWebsites});
     jQuery('#refresh-status-box').dialog({
@@ -818,7 +820,7 @@ dashboard_update_done = function()
             }
             else
             {
-                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed Out / Errored. (<a href="'+mainwpParams['admin_url']+'admin.php?page=Settings">Try lowering your Maximum requests / 30 seconds</a>)';
+                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed Out / Errored. (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)';
                 jQuery('#refresh-status-content').prepend('<font color="red"><strong>' + message + '</strong></font><br /><br />');
                 jQuery('#mainwp-right-now-message-content').html(message);
                 jQuery('#mainwp-right-now-message').show();

@@ -110,6 +110,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+= 1.0.8 =
+* Added German translations
+* Added more information to the server information page
+
+
 = 1.0.7 =
 * Fix menu position, so menus created by extensions will be below Extensions menu item
 * Fix for Favorites Extension: bug upload long file name

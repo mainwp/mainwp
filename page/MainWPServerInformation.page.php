@@ -13,6 +13,7 @@ class MainWPServerInformation
         add_submenu_page('mainwp_tab', __('Cron Schedules','mainwp'), '<div class="mainwp-hidden">' . __('Cron Schedules','mainwp') . '</div>', 'read', 'ServerInformationCron', array(MainWPServerInformation::getClassName(), 'renderCron'));
         add_submenu_page('mainwp_tab', __('Child Site Information','mainwp'), '<div class="mainwp-hidden">' . __('Child Site Information','mainwp') . '</div>', 'read', 'ServerInformationChild', array(MainWPServerInformation::getClassName(), 'renderChild'));
         add_submenu_page('mainwp_tab', __('Error Log','mainwp'), '<div class="mainwp-hidden">' . __('Error Log','mainwp') . '</div>', 'read', 'ErrorLog', array(MainWPServerInformation::getClassName(), 'renderErrorLogPage'));
+        add_submenu_page('mainwp_tab', __('WP-Config File','mainwp'), '<div class="mainwp-hidden">' . __('WP-Config File','mainwp') . '</div>', 'read', 'WPConfig', array(MainWPServerInformation::getClassName(), 'renderWPConfig'));
     }
 
     public static function renderHeader($shownPage)
@@ -33,6 +34,7 @@ class MainWPServerInformation
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'ServerInformationCron') { echo "nav-tab-active"; } ?>" href="admin.php?page=ServerInformationCron"><?php _e('Cron Schedules','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'ServerInformationChild') { echo "nav-tab-active"; } ?>" href="admin.php?page=ServerInformationChild"><?php _e('Child Site Information','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'ErrorLog') { echo "nav-tab-active"; } ?>" href="admin.php?page=ErrorLog"><?php _e('Error Log','mainwp'); ?></a>
+                <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'WPConfig') { echo "nav-tab-active"; } ?>" href="admin.php?page=WPConfig"><?php _e('WP-Config File','mainwp'); ?></a>
             </div>
             <div id="mainwp_wrap-inside">
         <?php
@@ -728,6 +730,21 @@ class MainWPServerInformation
         fclose( $fh );
         // Usually, we will read too many lines, correct that here.
         return array_slice( $lines, 0, $line_count );
+    }
+
+    public static function renderWPConfig() {
+        self::renderHeader('WPConfig');
+        ?>
+        <div class="postbox" id="mainwp-code-display">
+            <h3 class="hndle" style="padding: 8px 12px; font-size: 14px;"><span>WP-Config.php</span></h3>
+            <div style="padding: 1em;">
+            <?php
+                show_source( ABSPATH . 'wp-config.php');
+            ?>
+            </div>
+        </div>
+        <?php
+        self::renderFooter('WPConfig');
     }
 
 }

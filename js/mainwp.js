@@ -748,13 +748,11 @@ jQuery(document).ready(function () {
 });
 mainwp_refresh_dashboard = function ()
 {
-    console.log(jQuery('.dashboard_wp_id'));
     var allWebsiteIds = jQuery('.dashboard_wp_id').map(function(indx, el){ return jQuery(el).val(); });
     for (var i = 0; i < allWebsiteIds.length; i++)
     {
         dashboard_update_site_status(allWebsiteIds[i], __('PENDING'));
     }
-    //console.log(allWebsiteIds);
     var nrOfWebsites = allWebsiteIds.length;
     jQuery('#refresh-status-progress').progressbar({value: 0, max: nrOfWebsites});
     jQuery('#refresh-status-box').dialog({

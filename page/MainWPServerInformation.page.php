@@ -167,6 +167,12 @@ class MainWPServerInformation
         <?php echo $serverInformation['information']; ?>
         <img src="<?php echo plugins_url('images/icons/mainwp-serverinfo.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px;" /> <h2><strong><?php echo $website->name; ?></strong>&nbsp;<?php _e('Cron Schedules'); ?></h2>
         <?php echo $serverInformation['cron']; ?>
+        <?php if (isset($serverInformation['wpconfig'])) { ?>
+        <img src="<?php echo plugins_url('images/icons/mainwp-serverinfo.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px;" /> <h2><strong><?php echo $website->name; ?></strong>&nbsp;<?php _e('WP-Config File'); ?></h2>
+        <?php echo $serverInformation['wpconfig']; ?>
+        <img src="<?php echo plugins_url('images/icons/mainwp-serverinfo.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px;" /> <h2><strong><?php echo $website->name; ?></strong>&nbsp;<?php _e('Error Log'); ?></h2>
+        <?php echo $serverInformation['error']; ?>
+        <?php } ?>
             <?php
         }
         catch (MainWPException $e)

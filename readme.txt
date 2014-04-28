@@ -112,18 +112,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
-= 1.0.9 =
+= 1.0.8 =
 * Added Minimum delay between requests to Settings Advanced Options
 * Added Minimum delay between requests to the same ip Settings Advanced Options
 * Fixed issue with some preimum plugins showing as Trusted in email when not Trusted
 * Added Wp-Config Page Viewer to Server Information
 * Added new German translations
-* Changed Max /Request Error Message to provide link to more information
-
-= 1.0.8 =
-* Added German translations
-* Added more information to the server information page
-
+* Changed Max Request Error Message to provide link to more information
 
 = 1.0.7 =
 * Fix menu position, so menus created by extensions will be below Extensions menu item

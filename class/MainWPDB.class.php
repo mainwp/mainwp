@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '6.0';
+    private $mainwp_db_version = '6.1';
     //Private
     private $table_prefix;
     //Singleton
@@ -206,8 +206,8 @@ class MainWPDB
   wpid int(11) NOT NULL,
   ip text NOT NULL DEFAULT "",
   subnet text NOT NULL DEFAULT "",
-  micro_timestamp_stop float NOT NULL DEFAULT 0,
-  micro_timestamp_start float NOT NULL DEFAULT 0';
+  micro_timestamp_stop DECIMAL( 12, 2 ) NOT NULL DEFAULT  0,
+  micro_timestamp_start DECIMAL( 12, 2 ) NOT NULL DEFAULT  0';
           if ($currentVersion == '' || version_compare($currentVersion, '5.7', '<=')) $tbl .= ',
   PRIMARY KEY  (id)  ';
           $tbl .= ');';
@@ -286,6 +286,16 @@ class MainWPDB
 
                 $wpdb->update($this->tableName('ga'), array('userid' => 0), array('userid' => $row->userid));
             }
+        }
+
+        if (version_compare($currentVersion, '6.0', '='))
+        {
+            /** @var $wpdb wpdb */
+            global $wpdb;
+
+            $wpdb->query('ALTER TABLE ' . $this->tableName('request_log') . ' CHANGE micro_timestamp_stop micro_timestamp_stop DECIMAL( 12, 2 ) NOT NULL DEFAULT 0');
+            $wpdb->query('ALTER TABLE ' . $this->tableName('request_log') . ' CHANGE micro_timestamp_start micro_timestamp_start DECIMAL( 12, 2 ) NOT NULL DEFAULT 0');
+            $wpdb->query('DELETE FROM ' . $this->tableName('request_log') . ' WHERE 1 ');
         }
     }
 

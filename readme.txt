@@ -5,9 +5,9 @@ Tags: WordPress Management, WordPress Controller
 Author: mainwp
 Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
-Requires at least: 3.4
+Requires at least: 3.6
 Tested up to: 3.9
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -77,6 +77,8 @@ If you are not sure how to set up a subdomain here is a quick step by step with 
 4. Add your first child site to the MainWP Dashboard - [Documentation](http://docs.mainwp.com/setting-up-your-mainwp/)
 5. Set your MainWP Settings - [Documentation](http://docs.mainwp.com/mainwp-settings-overview/)
 
+Note: MainWP is not tested on multisite installs, we have reports that most functions work but support will be limited.
+
 == Frequently Asked Questions ==
 = Do I need any other plugins for MainWP? =
 Yes you need to install the [MainWP Child Plugin](http://wordpress.org/plugins/mainwp-child/) on the sites you want to control with the Dashboard plugin.
@@ -110,6 +112,14 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+= 1.0.9 =
+* Added Minimum delay between requests to Settings Advanced Options
+* Added Minimum delay between requests to the same ip Settings Advanced Options
+* Fixed issue with some preimum plugins showing as Trusted in email when not Trusted
+* Added Wp-Config Page Viewer to Server Information
+* Added new German translations
+* Changed Max /Request Error Message to provide link to more information
+
 = 1.0.8 =
 * Added German translations
 * Added more information to the server information page

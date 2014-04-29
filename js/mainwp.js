@@ -818,7 +818,7 @@ dashboard_update_done = function()
             }
             else
             {
-                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed Out / Errored. (<a href="'+mainwpParams['admin_url']+'admin.php?page=Settings">Try lowering your Maximum requests / 30 seconds</a>)';
+                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed Out / Errored. (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)';
                 jQuery('#refresh-status-content').prepend('<font color="red"><strong>' + message + '</strong></font><br /><br />');
                 jQuery('#mainwp-right-now-message-content').html(message);
                 jQuery('#mainwp-right-now-message').show();

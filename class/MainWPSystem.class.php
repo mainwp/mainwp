@@ -388,7 +388,7 @@ class MainWPSystem
 
         if ($arg->slug === $this->slug)
         {
-            return MainWPAPISettings::getUpgradeInformation('MainWP');
+            return false;
         }
 
         $slugs = MainWPExtensions::getSlugs();
@@ -718,17 +718,17 @@ class MainWPSystem
                 $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
                 if (is_array($decodedPremiumUpgrades))
                 {
-                    foreach ($decodedPremiumUpgrades as $premiumUpgrade)
+                    foreach ($decodedPremiumUpgrades as $slug => $premiumUpgrade)
                     {
                         if ($premiumUpgrade['type'] == 'plugin')
                         {
                             if (!is_array($websitePlugins)) $websitePlugins = array();
-                            $websitePlugins[] = $premiumUpgrade;
+                            $websitePlugins[$slug] = $premiumUpgrade;
                         }
                         else if ($premiumUpgrade['type'] == 'theme')
                         {
                             if (!is_array($websiteThemes)) $websiteThemes = array();
-                            $websiteThemes[] = $premiumUpgrade;
+                            $websiteThemes[$slug] = $premiumUpgrade;
                         }
                     }
                 }

@@ -136,10 +136,19 @@ class MainWPManageSites
         {
             throw new MainWPException('Undefined error');
         }
+
+        $websiteCleanUrl = $website->url;
+        if (substr($websiteCleanUrl, -1) == '/')
+        {
+            $websiteCleanUrl = substr($websiteCleanUrl, 0, -1);
+        }
+        $websiteCleanUrl = str_replace(array('http://', 'https://', '/'), array('', '', '-'), $websiteCleanUrl);
+
         $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
         $maximumFileDescriptors = ($maximumFileDescriptors === false ? 0 : $maximumFileDescriptors);
+        $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, date('m-d-Y'), date('G\hi\ms\s'), $type), $pFilename) . '.zip';
 
-        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type, 'exclude' => $exclude, 'file_descriptors' => $maximumFileDescriptors));
+        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type, 'exclude' => $exclude, 'file_descriptors' => $maximumFileDescriptors, 'file' => $file));
         if (isset($information['error']))
         {
             throw new MainWPException($information['error']);
@@ -216,12 +225,6 @@ class MainWPManageSites
             }
 
             $localBackupFile = null;
-            $websiteCleanUrl = $website->url;
-            if (substr($websiteCleanUrl, -1) == '/')
-            {
-                $websiteCleanUrl = substr($websiteCleanUrl, 0, -1);
-            }
-            $websiteCleanUrl = str_replace(array('http://', 'https://', '/'), array('', '', '-'), $websiteCleanUrl);
 
             $what = null;
             $regexBackupFile = null;
@@ -376,11 +379,19 @@ class MainWPManageSites
             throw new MainWPException('You are not allowed to backup this site');
         }
 
+        $websiteCleanUrl = $website->url;
+        if (substr($websiteCleanUrl, -1) == '/')
+        {
+            $websiteCleanUrl = substr($websiteCleanUrl, 0, -1);
+        }
+        $websiteCleanUrl = str_replace(array('http://', 'https://', '/'), array('', '', '-'), $websiteCleanUrl);
+
         MainWPUtility::endSession();
         $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
         $maximumFileDescriptors = ($maximumFileDescriptors === false ? 0 : $maximumFileDescriptors);
+        $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, date('m-d-Y'), date('G\hi\ms\s'), $pType), $pFilename);
 
-        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'file_descriptors' => $maximumFileDescriptors));
+        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'file_descriptors' => $maximumFileDescriptors, 'file' => $file));
 
         if (isset($information['error']))
         {
@@ -414,13 +425,6 @@ class MainWPManageSites
             $backup_result['subfolder'] = $subfolder;
 
             $dir = MainWPUtility::getMainWPSpecificDir($pSiteId);
-
-            $websiteCleanUrl = $website->url;
-            if (substr($websiteCleanUrl, -1) == '/')
-            {
-                $websiteCleanUrl = substr($websiteCleanUrl, 0, -1);
-            }
-            $websiteCleanUrl = str_replace(array('http://', 'https://', '/'), array('', '', '-'), $websiteCleanUrl);
 
             if ($pType == 'db')
             {

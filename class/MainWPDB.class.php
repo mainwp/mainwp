@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '5.8';
+    private $mainwp_db_version = '6.1';
     //Private
     private $table_prefix;
     //Singleton
@@ -203,9 +203,11 @@ class MainWPDB
 
         $tbl = 'CREATE TABLE ' . $this->tableName('request_log') . ' (
   id int(11) NOT NULL auto_increment,
+  wpid int(11) NOT NULL,
   ip text NOT NULL DEFAULT "",
   subnet text NOT NULL DEFAULT "",
-  timestamp int(11) NOT NULL DEFAULT 0';
+  micro_timestamp_stop DECIMAL( 12, 2 ) NOT NULL DEFAULT  0,
+  micro_timestamp_start DECIMAL( 12, 2 ) NOT NULL DEFAULT  0';
           if ($currentVersion == '' || version_compare($currentVersion, '5.7', '<=')) $tbl .= ',
   PRIMARY KEY  (id)  ';
           $tbl .= ');';
@@ -284,6 +286,16 @@ class MainWPDB
 
                 $wpdb->update($this->tableName('ga'), array('userid' => 0), array('userid' => $row->userid));
             }
+        }
+
+        if (version_compare($currentVersion, '6.0', '='))
+        {
+            /** @var $wpdb wpdb */
+            global $wpdb;
+
+            $wpdb->query('ALTER TABLE ' . $this->tableName('request_log') . ' CHANGE micro_timestamp_stop micro_timestamp_stop DECIMAL( 12, 2 ) NOT NULL DEFAULT 0');
+            $wpdb->query('ALTER TABLE ' . $this->tableName('request_log') . ' CHANGE micro_timestamp_start micro_timestamp_start DECIMAL( 12, 2 ) NOT NULL DEFAULT 0');
+            $wpdb->query('DELETE FROM ' . $this->tableName('request_log') . ' WHERE 1 ');
         }
     }
 
@@ -649,16 +661,65 @@ class MainWPDB
         return $sql;
     }
 
-    public function insertOrUpdateRequestLog($ip, $timestamp)
+    public function getWPIp($wpid)
     {
         /** @var $wpdb wpdb */
         global $wpdb;
 
-        $updated = $wpdb->update($this->tableName('request_log'), array('timestamp' => $timestamp), array('ip' => $ip));
-        if (($updated === false) || ($updated == 0))
+        return $wpdb->get_var('SELECT ip FROM ' . $this->tableName('request_log') . ' WHERE wpid = "' . $wpid . '"');
+    }
+
+    public function insertOrUpdateRequestLog($wpid, $ip, $start, $stop)
+    {
+        /** @var $wpdb wpdb */
+        global $wpdb;
+
+        $updateValues = array();
+        if ($ip != null)
         {
-            $wpdb->insert($this->tableName('request_log'), array('ip' => $ip, 'timestamp' => $timestamp));
+            $updateValues['ip'] = $ip;
         }
+        if ($start != null)
+        {
+            $updateValues['micro_timestamp_start'] = $start;
+        }
+        if ($stop != null)
+        {
+            $updateValues['micro_timestamp_stop'] = $stop;
+        }
+
+        $var = $wpdb->get_var('SELECT id FROM ' . $this->tableName('request_log') . ' WHERE wpid = "' . $wpid . '"');
+        if ($var !== null)
+        {
+            $wpdb->update($this->tableName('request_log'), $updateValues, array('wpid' => $wpid));
+        }
+        else
+        {
+            $updateValues['wpid'] = $wpid;
+            $wpdb->insert($this->tableName('request_log'), $updateValues);
+        }
+    }
+
+    public function closeOpenRequests()
+    {
+        /** @var $wpdb wpdb */
+        global $wpdb;
+
+        //Close requests open longer then 7 seconds.. something is wrong here..
+        $wpdb->query('UPDATE '. $this->tableName('request_log') . ' SET micro_timestamp_stop = micro_timestamp_start WHERE micro_timestamp_stop < micro_timestamp_start and ' . microtime(true) . ' - micro_timestamp_start > 7');
+    }
+
+    public function getNrOfOpenRequests($ip = null)
+    {
+        /** @var $wpdb wpdb */
+        global $wpdb;
+
+        if ($ip == null)
+        {
+            return $wpdb->get_var('select count(id) from ' . $this->tableName('request_log') . ' where micro_timestamp_stop < micro_timestamp_start');
+        }
+
+        return $wpdb->get_var('select count(id) from ' . $this->tableName('request_log') . ' where micro_timestamp_stop < micro_timestamp_start and ip = "'.esc_sql($ip).'"');
     }
 
     public function getLastRequestTimestamp($ip = null)
@@ -668,10 +729,10 @@ class MainWPDB
 
         if ($ip == null)
         {
-            return $wpdb->get_var('select timestamp from ' . $this->tableName('request_log') . ' order by timestamp desc limit 1');
+            return $wpdb->get_var('select micro_timestamp_start from ' . $this->tableName('request_log') . ' order by micro_timestamp_start desc limit 1');
         }
 
-        return $wpdb->get_var('SELECT timestamp FROM ' . $this->tableName('request_log') . ' WHERE ip = "'.esc_sql($ip).'"');
+        return $wpdb->get_var('SELECT micro_timestamp_start FROM ' . $this->tableName('request_log') . ' WHERE ip = "'.esc_sql($ip).'" order by micro_timestamp_start desc limit 1');
     }
 
     public function addWebsite($userid, $name, $url, $admin, $pubkey, $privkey, $nossl, $nosslkey, $groupids, $groupnames)

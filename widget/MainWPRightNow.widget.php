@@ -553,9 +553,9 @@ class MainWPRightNow
         <div id="mainwp-right-now-message" class="mainwp-right-now-error" <?php if ($total_sync_errors <= 0 || ($globalView && $errorsDismissed)) echo ' style="display: none;"' ?>>
             <p>
                 <?php if ($globalView) { ?>
-                        <span id="mainwp-right-now-message-content"><?php echo $total_sync_errors; ?> <?php echo _n('Site Timed Out / Errored', 'Sites Timed Out / Errored', $total_sync_errors, 'mainwp'); ?> (<a href="<?php echo admin_url('admin.php?page=Settings') ?>"><?php _e('Try lowering your Maximum requests / 30 seconds','mainwp'); ?>)</a></span><span style="float: right;"><a href="#" id="mainwp-right-now-message-dismiss">Dismiss</a></span>
+                        <span id="mainwp-right-now-message-content"><?php echo $total_sync_errors; ?> <?php echo _n('Site Timed Out / Errored', 'Sites Timed Out / Errored', $total_sync_errors, 'mainwp'); ?> (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)</span><span style="float: right;"><a href="#" id="mainwp-right-now-message-dismiss">Dismiss</a></span>
                 <?php } else { ?>
-                    <span id="mainwp-right-now-message-content"><?php echo $currentSite->name; ?> <?php _e('Timed Out / Errored', 'mainwp'); ?> (<a href="<?php echo admin_url('admin.php?page=Settings') ?>"><?php _e('Try lowering your Maximum requests / 30 seconds','mainwp'); ?>)</a></span>
+                    <span id="mainwp-right-now-message-content"><?php echo $currentSite->name; ?> <?php _e('Timed Out / Errored', 'mainwp'); ?> (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)</span>
                 <?php } ?>
             </p>
         </div>
@@ -1064,7 +1064,7 @@ class MainWPRightNow
                                 if ($hasSyncErrors)
                                 {
                                     ?>
-                                    <img class="down-img" title="Site Disconnected" alt="Sync Errors" src="<?php echo plugins_url('images/disconnected.png', dirname(__FILE__)); ?>" />
+                                    <div style="position: absolute; padding-right: 10px; right: 50px;"><a href="#" class="mainwp_rightnow_site_reconnect" siteid="<?php echo $website->id; ?>"><?php _e('Reconnect','mainwp'); ?></a><br /></div> <img class="down-img" title="Site Disconnected" alt="Sync Errors" src="<?php echo plugins_url('images/disconnected.png', dirname(__FILE__)); ?>" />
                                     <?php
                                 }
                                 else if ($isConflict)

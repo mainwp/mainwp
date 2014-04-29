@@ -683,7 +683,7 @@ class MainWPUtility
 
         $fp = fopen($file, 'w');
         $agent= 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
-        $ch = curl_init($url);
+        $ch = curl_init(str_replace(' ', '%20', $url));
         curl_setopt($ch, CURLOPT_FILE, $fp);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
         curl_exec($ch);

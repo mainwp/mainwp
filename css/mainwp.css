@@ -2519,3 +2519,12 @@ background-position: 0 -16px;
 #mainwp-code-display code {
     background: none !important;
 }
+
+.mainwp-disconnected-reconnect
+{
+    background-image: url('../images/disconnected.png') !important;
+    background-repeat: no-repeat !important;
+    background-position: 8px 50% !important;
+    padding-top: 20px;
+    margin-bottom: -20px;
+}

@@ -506,9 +506,9 @@ class MainWPUtility
 
             //Check the delays
             //In MS
-            $minimumDelay = ((get_option('mainwp_minimumDelay') == false) ? 0 : get_option('mainwp_minimumDelay'));
+            $minimumDelay = ((get_option('mainwp_minimumDelay') === false) ? 200 : get_option('mainwp_minimumDelay'));
             if ($minimumDelay > 0) $minimumDelay = $minimumDelay / 1000;
-            $minimumIPDelay = ((get_option('mainwp_minimumIPDelay') == false) ? 0 : get_option('mainwp_minimumIPDelay'));
+            $minimumIPDelay = ((get_option('mainwp_minimumIPDelay') === false) ? 1000 : get_option('mainwp_minimumIPDelay'));
             if ($minimumIPDelay > 0) $minimumIPDelay = $minimumIPDelay / 1000;
 
             MainWPUtility::endSession();
@@ -555,8 +555,8 @@ class MainWPUtility
             }
 
             //Check the simultaneous requests
-            $maximumRequests = ((get_option('mainwp_maximumRequests') == false) ? 0 : get_option('mainwp_maximumRequests'));
-            $maximumIPRequests = ((get_option('mainwp_maximumIPRequests') == false) ? 0 : get_option('mainwp_maximumIPRequests'));
+            $maximumRequests = ((get_option('mainwp_maximumRequests') === false) ? 4 : get_option('mainwp_maximumRequests'));
+            $maximumIPRequests = ((get_option('mainwp_maximumIPRequests') === false) ? 1 : get_option('mainwp_maximumIPRequests'));
 
             $first = true;
             $delay = true;

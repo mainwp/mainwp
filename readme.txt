@@ -7,7 +7,7 @@ Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
 Requires at least: 3.6
 Tested up to: 3.9
-Stable tag: 1.0.8
+Stable tag: 1.0.8.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,10 +112,15 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 1.0.8.1 =
+* Fixed default values for minimum delays between requests
+* Fixed issue that prevented 0 as values for minimum delays between requests
+
 = 1.0.8 =
 * Added Minimum delay between requests to Settings Advanced Options
 * Added Minimum delay between requests to the same ip Settings Advanced Options
-* Fixed issue with some preimum plugins showing as Trusted in email when not Trusted
+* Fixed issue with some premium plugins showing as Trusted in email when not Trusted
 * Added Wp-Config Page Viewer to Server Information
 * Added new German translations
 * Changed Max Request Error Message to provide link to more information

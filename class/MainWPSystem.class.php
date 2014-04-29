@@ -388,7 +388,7 @@ class MainWPSystem
 
         if ($arg->slug === $this->slug)
         {
-            return MainWPAPISettings::getUpgradeInformation('MainWP');
+            return false;
         }
 
         $slugs = MainWPExtensions::getSlugs();

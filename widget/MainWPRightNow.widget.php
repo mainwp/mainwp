@@ -1064,7 +1064,7 @@ class MainWPRightNow
                                 if ($hasSyncErrors)
                                 {
                                     ?>
-                                    <img class="down-img" title="Site Disconnected" alt="Sync Errors" src="<?php echo plugins_url('images/disconnected.png', dirname(__FILE__)); ?>" />
+                                    <div style="position: absolute; padding-right: 10px; right: 50px;"><a href="#" class="mainwp_rightnow_site_reconnect" siteid="<?php echo $website->id; ?>"><?php _e('Reconnect','mainwp'); ?></a><br /></div> <img class="down-img" title="Site Disconnected" alt="Sync Errors" src="<?php echo plugins_url('images/disconnected.png', dirname(__FILE__)); ?>" />
                                     <?php
                                 }
                                 else if ($isConflict)

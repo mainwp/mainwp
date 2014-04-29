@@ -117,14 +117,14 @@ class MainWPSettings
                     <th scope="row"><?php _e('Maximum simultaneous requests','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Maximum simultaneous requests. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 4, set to 0 for unlimited.','mainwp')); ?></th>
                     <td>
                         <input type="text" name="mainwp_maximumRequests"
-                               id="mainwp_maximumRequests" value="<?php echo ((get_option('mainwp_maximumRequests') == false) ? 0 : get_option('mainwp_maximumRequests')); ?>"/> <i>Default: 0 (unlimited)</i>
+                               id="mainwp_maximumRequests" value="<?php echo ((get_option('mainwp_maximumRequests') === false) ? 4 : get_option('mainwp_maximumRequests')); ?>"/> <i>Default: 4</i>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><?php _e('Minimum delay between requests (milliseconds)','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Minimum delay between requests (milliseconds). With a typical shared host you should set this at 200.','mainwp')); ?></th>
                     <td>
                         <input type="text" name="mainwp_minimumDelay"
-                               id="mainwp_minimumDelay" value="<?php echo ((get_option('mainwp_minimumDelay') == false) ? 0 : get_option('mainwp_minimumDelay')); ?>"/> <i>Default: 0 (unlimited)</i>
+                               id="mainwp_minimumDelay" value="<?php echo ((get_option('mainwp_minimumDelay') === false) ? 200 : get_option('mainwp_minimumDelay')); ?>"/> <i>Default: 200</i>
                     </td>
                 </tr>
                 <tr>
@@ -137,14 +137,14 @@ class MainWPSettings
                     <th scope="row"><?php _e('Maximum simultaneous requests per ip','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Maximum simultaneous requests per IP. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 1, set to 0 for unlimited.','mainwp')); ?></th>
                     <td>
                         <input type="text" name="mainwp_maximumIPRequests"
-                               id="mainwp_maximumIPRequests" value="<?php echo ((get_option('mainwp_maximumIPRequests') == false) ? 0 : get_option('mainwp_maximumIPRequests')); ?>"/> <i>Default: 0 (unlimited)</i>
+                               id="mainwp_maximumIPRequests" value="<?php echo ((get_option('mainwp_maximumIPRequests') === false) ? 1 : get_option('mainwp_maximumIPRequests')); ?>"/> <i>Default: 1</i>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><?php _e('Minimum delay between requests to the same ip (milliseconds)','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Minimum delay between requests (milliseconds) per IP. With a typical shared host you should set this at 1000.','mainwp')); ?></th>
                     <td>
                         <input type="text" name="mainwp_minimumIPDelay"
-                               id="mainwp_minimumIPDelay" value="<?php echo ((get_option('mainwp_minimumIPDelay') == false) ? 0 : get_option('mainwp_minimumIPDelay')); ?>"/> <i>Default: 0 (unlimited)</i>
+                               id="mainwp_minimumIPDelay" value="<?php echo ((get_option('mainwp_minimumIPDelay') === false) ? 1000 : get_option('mainwp_minimumIPDelay')); ?>"/> <i>Default: 1000</i>
                     </td>
                 </tr>
             </tbody>

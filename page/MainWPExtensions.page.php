@@ -89,10 +89,15 @@ class MainWPExtensions
             {
                 foreach (self::$extensions as $extension)
                 {
-					if (MainWPExtensions::isExtensionEnabled($extension['plugin'])) {                
-                    $html .= '<a href="' . admin_url('admin.php?page=' . $extension['page']) . '"
-                       class="mainwp-submenu">' . $extension['name'] . '</a>';                    
-					}
+                    if (MainWPExtensions::isExtensionEnabled($extension['plugin'])) { 
+                        if (isset($extension['direct_page'])) {
+                            $html .= '<a href="' . admin_url('admin.php?page=' . $extension['direct_page']) . '"
+                               class="mainwp-submenu">' . $extension['name'] . '</a>';
+                        } else {
+                            $html .= '<a href="' . admin_url('admin.php?page=' . $extension['page']) . '"
+                               class="mainwp-submenu">' . $extension['name'] . '</a>';                    
+                        }
+                    }
                 }
             }			
 		if (empty($html))	

@@ -148,10 +148,6 @@ a.mainwp-comment-spam,a.mainwp-comment-trash,a.mainwp-post-trash,.mainwp-red
     transform: translate(181px);
 }
 
-#wpcontent, #footer {
-    margin-left: 165px;
-}
-
 .branch-3-3 #adminmenu li.wp-not-current-submenu .wp-submenu {
     left: 181px;
 }

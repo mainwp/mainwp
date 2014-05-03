@@ -148,6 +148,7 @@ a.mainwp-comment-spam,a.mainwp-comment-trash,a.mainwp-post-trash,.mainwp-red
     transform: translate(181px);
 }
 
+
 .branch-3-3 #adminmenu li.wp-not-current-submenu .wp-submenu {
     left: 181px;
 }
@@ -2253,6 +2254,11 @@ background-position: 0 -16px;
 }
 
 /* New Refresh Bar */
+
+#mainwp-refresh-bar-buttons {
+    text-align: right;
+    padding-right: 15px;
+}
 
 .mainwp-addsite-button {
    background-image: url('../images/add-icon.png') !important;

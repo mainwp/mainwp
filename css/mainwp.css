@@ -1094,11 +1094,21 @@ li.hoverli {
     background: #fff ;
 }
 
+.mainwp-ui #screen-meta-links + .wrap #mainwplogo {
+    margin-bottom: -27px;
+    margin-top: 10px;
+    clear: both;
+}
+
+.mainwp-ui #screen-meta-links + .wrap #mainwplogo + img {
+    margin-top: -13px !important;
+}
+
 #mainwplogo
 {
     float:right;
     position: relative ;
-    margin-bottom: .3em ;
+    margin-bottom: .3em;
 }
 
 /* Enhance Wordpress Admin UI */

@@ -36,7 +36,7 @@ class MainWPManageSites
         {
             global $current_user;
             delete_user_option($current_user->ID, 'screen_layout_toplevel_page_managesites');
-            add_filter('screen_layout_columns', array(self::getClassName(), 'on_screen_layout_columns'), 10, 2);
+            add_filter('screen_layout_columns', array($this, 'on_screen_layout_columns'), 10, 2);
 
             $val = get_user_option('screen_layout_' . self::$page);
             if (!MainWPUtility::ctype_digit($val))

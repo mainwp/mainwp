@@ -113,6 +113,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 == Changelog ==
 
+= 1.0.8.2 =
+* Fixed invalid link on Extensions Page
+* Fixed screen layout saving on manage sites page
+* Fixed various other CSS Layout issues
+
 = 1.0.8.1 =
 * Fixed default values for minimum delays between requests
 * Fixed issue that prevented 0 as values for minimum delays between requests

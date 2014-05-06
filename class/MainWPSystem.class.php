@@ -3,8 +3,13 @@ if (session_id() == '') session_start();
 ini_set('display_errors', true);
 error_reporting(E_ALL);
 
+<<<<<<< .mine
+@ini_set('display_errors', false);
+@error_reporting(0);
+=======
 //ini_set('display_errors', false);
 //error_reporting(0);
+>>>>>>> .r60
 define('MAINWP_API_VALID', "VALID");
 define('MAINWP_API_INVALID', "INVALID");
 
@@ -108,6 +113,9 @@ class MainWPSystem
 
         //Add js
         add_action('admin_head', array(&$this, 'admin_head'));
+        
+        //Add body class
+        add_action('admin_body_class', array(&$this, 'admin_body_class'));
 
         //Handle the bulkpost
         add_action('publish_bulkpost', array(&$this, 'publish_bulkpost'));
@@ -1663,6 +1671,15 @@ class MainWPSystem
 //        echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('mainwp-article-poster/css/datePicker.css', dirname(__FILE__)) . '" />';
 //        echo '<script type="text/javascript" src="' . plugins_url('mainwp-article-poster/js/date.js', dirname(__FILE__)) . '"></script>';
 //        echo '<script type="text/javascript" src="' . plugins_url('mainwp-article-poster/js/jquery.datePicker.min-2.1.2.js', dirname(__FILE__)) . '"></script>';
+    }
+    
+    function admin_body_class($class_string) {
+        $screen = get_current_screen();
+        
+        if($screen && strpos($screen->base, "mainwp_") !== false) 
+                $class_string .= "mainwp-ui";
+        
+        return $class_string;
     }
 
     function admin_menu()

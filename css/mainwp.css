@@ -2540,3 +2540,97 @@ background-position: 0 -16px;
     padding-top: 20px;
     margin-bottom: -20px;
 }
+
+/*  extensions search box  */
+
+.mainwp-ext-categories {
+  background-color: #1d1b1c !important;
+  border: none !important;
+}
+
+.mainwp-ext-categories a {
+    text-decoration: none !important;
+    color: #7fb100;
+}
+
+.mainwp-ext-categories a:hover {
+    color: #bb7239;
+}
+
+#mainwp-recent-extensions {
+  background-color: #f0efe9;
+  background-image: url('');
+  background-repeat: no-repeat;
+  background-position: top right;
+  margin-bottom: 1em;
+  padding: 0 20px 0 20px;
+  border: 1px Solid #ddd;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+}
+
+#mainwp-recent-extensions-title {
+  border-bottom: 1px Solid #ddd ;
+  padding: 15px 0;
+  font-size: 20px;
+  font-family: 'Open Sans', sans;
+}
+
+#mainwp-recent-extensions-products {
+  border-top: 1px Solid #fff ;
+  padding: 15px 0;
+}
+
+.mainwp-product-categories-list li {
+  list-style: none !important;
+  text-transform: uppercase;
+}
+
+.mainwp-administrative {
+  background-image: url('../images/administrative.png');
+  background-position: 0 50%;
+  background-repeat: no-repeat;
+  background-size: 18px;
+  padding-left: 2em;
+}
+
+.mainwp-content{
+  background-image: url('../images/content.png');
+  background-position: 0 50%;
+  background-repeat: no-repeat;
+  background-size: 18px;
+  padding-left: 2em;
+}
+
+.mainwp-visitor-data {
+  background-image: url('../images/visitor-data.png');
+  background-position: 0 50%;
+  background-repeat: no-repeat;
+  background-size: 18px;
+  padding-left: 2em;
+}
+
+.mainwp-free {
+  background-image: url('../images/free.png');
+  background-position: 0 50%;
+  background-repeat: no-repeat;
+  background-size: 18px;
+  padding-left: 2em;
+}
+
+.mainwp-all {
+  background-image: url('../images/all.png');
+  background-position: 0 50%;
+  background-repeat: no-repeat;
+  background-size: 18px;
+  padding-left: 2em;
+}
+
+.mainwp_fivecol_one {
+    float: left;
+    margin-right: 3%;
+    position: relative;
+    width: 16.8%;
+}
+

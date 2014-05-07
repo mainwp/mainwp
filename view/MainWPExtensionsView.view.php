@@ -16,6 +16,39 @@ class MainWPExtensionsView
         <img src="<?php echo plugins_url('images/icons/mainwp-extensions.png', dirname(__FILE__)); ?>"
              style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Extensions" height="32"/>
         <h2><?php _e('Extensions', 'mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
+        <?php if ($shownPage === '') { ?>
+        <div class="mainwp-ext-categories" id="mainwp-recent-extensions">
+            <div id="mainwp-recent-extensions-title" style="border-bottom: 1px Solid #000;"><span style="color: #f0efe9;">Get MainWP Extensions</span></div>
+            <div id="mainwp-recent-extensions-products" style="border-top: 1px Solid #555; padding-top: 1em;">
+            <span class="mainwp_fivecol_one">
+            <ul class="mainwp-product-categories-list">
+            <li><a class="mainwp-administrative" target="_blank" href="http://extensions.mainwp.com/administrative-extensions">Administrative</a></li>
+            </ul>
+            </span>
+            <span class="mainwp_fivecol_one">
+            <ul class="mainwp-product-categories-list">
+            <li><a class="mainwp-content" target="_blank" href="http://extensions.mainwp.com/content-extensions">Content</a></li>
+            </ul>
+            </span>
+            <span class="mainwp_fivecol_one">
+            <ul class="mainwp-product-categories-list">
+            <li><a class="mainwp-visitor-data" target="_blank" href="http://extensions.mainwp.com/visitor-data-extensions">Visitor Data</a></li>
+            </ul>
+            </span>
+            <span class="mainwp_fivecol_one">
+            <ul class="mainwp-product-categories-list">
+            <li><a class="mainwp-free" target="_blank" href="http://extensions.mainwp.com/free-extensions">Free Extensions</a></li>
+            </ul>
+            </span>
+            <span class="mainwp_fivecol_one">
+            <ul class="mainwp-product-categories-list">
+            <li><a class="mainwp-all" target="_blank" href="http://extensions.mainwp.com/shop">All Extensions</a></li>
+            </ul>
+            </span>
+            <div class="clear"></div>
+            </div>
+        </div>
+        <?php } ?>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <a class="nav-tab pos-nav-tab <?php if ($shownPage === '') { echo "nav-tab-active"; } ?>" href="admin.php?page=Extensions"><?php _e('Manage Extensions', 'mainwp'); ?></a>
             <?php
@@ -52,8 +85,9 @@ class MainWPExtensionsView
             <span><?php _e('To enable extensions you need to add your MainWP login info in the <a href="admin.php?page=Settings" style="text-decoration: none;">Settings Page</a>. &nbsp;&nbsp;For more help review <a href="http://docs.mainwp.com/how-to-install-mainwp-extensions/" target="_blank" style="text-decoration: none;">this document.</a>','mainwp'); ?></span>
             <span style="float: right;"><a id="mainwp-ext-dismiss" style="text-decoration: none;" href="#"><?php _e('Dismiss','mainwp'); ?></a></span>
         </div>
+
     <br/><br/><h2><?php printf(_n('%d Installed MainWP Extension', '%d Installed MainWP Extensions', (count($extensions) == 1 ? 1 : 2), 'mainwp'), count($extensions)); ?></h2>
-        <div id="mainwp-more-extensions-button"><a href="http://extensions.mainwp.com/" target="_blank" class="mainwp-more-extensions-button"><?php _e('Get more extensions', 'mainwp'); ?></a></div>
+
     <hr/>
 
     <?php

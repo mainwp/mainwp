@@ -115,7 +115,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 = 1.0.8.3 =
 * Fixed issue with some missing images
-* Fixed issue with Comments extension redirect 
+* Fixed issue with Comments extension redirect
+* Fixed PHP Notice on Sync Now when using strict 
+* Updated Test Connection to show the hostname
 * Added new German translations
 
 = 1.0.8.2 =

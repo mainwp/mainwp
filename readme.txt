@@ -7,7 +7,7 @@ Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
 Requires at least: 3.6
 Tested up to: 3.9
-Stable tag: 1.0.8.2
+Stable tag: 1.0.8.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 1.0.8.3 =
+* Fixed issue with some missing images
+* Fixed issue with Comments extension redirect
+* Fixed PHP Notice on Sync Now when using strict 
+* Updated Test Connection to show the hostname
+* Added new German translations
 
 = 1.0.8.2 =
 * Fixed invalid link on Extensions Page

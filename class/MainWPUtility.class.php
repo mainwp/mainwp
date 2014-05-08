@@ -138,7 +138,7 @@ class MainWPUtility
                 }
             }
         }
-        return array('httpCode' => $http_status, 'error' => $err, 'httpCodeString' => self::getHttpStatusErrorString($http_status));
+        return array('host' => $host, 'httpCode' => $http_status, 'error' => $err, 'httpCodeString' => self::getHttpStatusErrorString($http_status));
     }
 
 

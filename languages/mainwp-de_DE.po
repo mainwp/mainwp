@@ -1,9 +1,9 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: MainWP Dashboard v1.0.7\n"
+"Project-Id-Version: MainWP Dashboard v1.0.8.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2014-04-24 07:34:05+0000\n"
+"PO-Revision-Date: 2014-05-02 12:53:21+0000\n"
 "Last-Translator: JayJay <info@w-d-a.de>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -304,17 +304,17 @@ msgstr "Neu laden"
 msgid "<p>No selected categories.</p>"
 msgstr "<p>Keine ausgewählten Kategorien.</p>"
 
-#: class/MainWPUtility.class.php:625
+#: class/MainWPUtility.class.php:681
 #@ default
 msgid "Could not create directory to download the file."
-msgstr ""
+msgstr "Verzeichnis konnte nicht erstellt werden, um die Datei herunterzuladen."
 
-#: class/MainWPUtility.class.php:1262
+#: class/MainWPUtility.class.php:1318
 #@ mainwp
 msgid "Once every 5 minutes"
 msgstr "Einmal alle 5 Minuten"
 
-#: class/MainWPUtility.class.php:1266
+#: class/MainWPUtility.class.php:1322
 #@ mainwp
 msgid "Once every minute"
 msgstr "Einmal pro Minute"
@@ -565,8 +565,8 @@ msgstr "Datum"
 #: page/MainWPPage.page.php:229
 #: page/MainWPPost.page.php:213
 #: page/MainWPPost.page.php:248
-#: page/MainWPServerInformation.page.php:60
-#: page/MainWPServerInformation.page.php:88
+#: page/MainWPServerInformation.page.php:62
+#: page/MainWPServerInformation.page.php:90
 #: table/MainWPManageSites.table.php:77
 #: widget/MainWPRightNow.widget.php:1000
 #@ mainwp
@@ -768,7 +768,7 @@ msgstr "Jetzt installieren"
 #: page/MainWPInstallBulk.page.php:367
 #@ default
 msgid "Already installed"
-msgstr ""
+msgstr "bereits installierte"
 
 #: page/MainWPInstallBulk.page.php:548
 #@ mainwp
@@ -843,7 +843,7 @@ msgstr "Neue Seite hinzufügen"
 #: page/MainWPMain.page.php:183
 #@ default
 msgid "Cheatin&#8217; uh?"
-msgstr ""
+msgstr "Mogeln&#8217; uh?"
 
 #: page/MainWPManageBackups.page.php:21
 #: page/MainWPManageBackups.page.php:77
@@ -895,8 +895,8 @@ msgstr "Task Name"
 msgid "Type"
 msgstr "Typ"
 
-#: page/MainWPServerInformation.page.php:219
-#: page/MainWPServerInformation.page.php:243
+#: page/MainWPServerInformation.page.php:227
+#: page/MainWPServerInformation.page.php:251
 #: table/MainWPManageBackups.table.php:57
 #@ mainwp
 msgid "Schedule"
@@ -997,7 +997,7 @@ msgstr "jede Minute"
 #: table/MainWPManageBackups.table.php:125
 #@ default
 msgid "<br />CURRENTLY RUNNING: "
-msgstr ""
+msgstr "<br />Derzeit ausgeführt:"
 
 #: table/MainWPManageBackups.table.php:137
 #@ mainwp
@@ -1151,7 +1151,7 @@ msgstr "Umbenennen"
 #: page/MainWPManageGroups.page.php:332
 #@ default
 msgid "New Group"
-msgstr ""
+msgstr "Neue Gruppe"
 
 #: page/MainWPOfflineChecks.page.php:11
 #: page/MainWPOfflineChecks.page.php:19
@@ -1221,7 +1221,7 @@ msgid "Check All"
 msgstr "Alles prüfen"
 
 #: page/MainWPOfflineChecks.page.php:94
-#: page/MainWPServerInformation.page.php:86
+#: page/MainWPServerInformation.page.php:88
 #@ mainwp
 msgid "Check"
 msgstr "Prüfen"
@@ -1326,17 +1326,17 @@ msgstr "Ein nicht definierter Fehler ist aufgetreten."
 #: page/MainWPPlugins.page.php:25
 #: page/MainWPPlugins.page.php:26
 #: page/MainWPPlugins.page.php:74
-#: page/MainWPPlugins.page.php:929
-#: page/MainWPPlugins.page.php:968
-#: page/MainWPPlugins.page.php:1040
-#: page/MainWPPlugins.page.php:1079
+#: page/MainWPPlugins.page.php:941
+#: page/MainWPPlugins.page.php:980
+#: page/MainWPPlugins.page.php:1052
+#: page/MainWPPlugins.page.php:1091
 #: widget/MainWPWidgetPlugins.widget.php:17
 #@ mainwp
 msgid "Plugins"
 msgstr "Plugins"
 
 #: page/MainWPPlugins.page.php:46
-#: page/MainWPPlugins.page.php:1182
+#: page/MainWPPlugins.page.php:1194
 #@ mainwp
 msgid "Manage Plugins"
 msgstr "Verwalte Plaugins"
@@ -1398,7 +1398,7 @@ msgid "Inactive"
 msgstr "Inaktiv"
 
 #: page/MainWPPlugins.page.php:129
-#: page/MainWPPlugins.page.php:723
+#: page/MainWPPlugins.page.php:735
 #@ mainwp
 msgid "Show Plugins"
 msgstr "Plugins anzeigen"
@@ -1567,62 +1567,62 @@ msgstr "Keine Plugins passen auf Ihrer Anfrage."
 msgid "By %s"
 msgstr "von %s"
 
-#: page/MainWPPlugins.page.php:712
+#: page/MainWPPlugins.page.php:724
 #@ mainwp
 msgid "Plugin Automatic Update Trust List"
 msgstr "Automatisches Plugin-Update via Vertrauensliste"
 
-#: page/MainWPPlugins.page.php:715
+#: page/MainWPPlugins.page.php:727
 #: page/MainWPThemes.page.php:727
 #@ mainwp
 msgid "Auto Updates are ON and Trusted Plugins will be Automatically Updated"
 msgstr "Auto-Updates ist eingeschaltet und vertauten Plugins werden automatisch aktualisiert"
 
-#: page/MainWPPlugins.page.php:717
+#: page/MainWPPlugins.page.php:729
 #: page/MainWPThemes.page.php:729
 #@ mainwp
 msgid "Auto Updates are OFF - Email Update Notification is ON"
 msgstr "Auto-Updates ist ausgeschaltet - E-Mail-Update-Mitteilung ist eingeschaltet"
 
-#: page/MainWPPlugins.page.php:719
+#: page/MainWPPlugins.page.php:731
 #: page/MainWPThemes.page.php:731
 #@ mainwp
 msgid "Auto Updates are OFF - Email Update Notification is OFF"
 msgstr "Auto-Updates ist ausgeschaltet - E-Mail-Update-Mitteilung ist ausgeschaltet"
 
-#: page/MainWPPlugins.page.php:720
+#: page/MainWPPlugins.page.php:732
 #: page/MainWPThemes.page.php:732
 #@ mainwp
 msgid "Change this in Settings"
 msgstr "Ändern Sie diese Einstellungen in"
 
-#: page/MainWPPlugins.page.php:721
+#: page/MainWPPlugins.page.php:733
 #@ mainwp
 msgid "Only mark Plugins as Trusted if you are absolutely sure they can be updated without breaking your sites or your network."
 msgstr "Nur markierten Plugins wird vertraut, wenn Sie absolut sicher sind, dass sie ohne Ihre Webseiten oder Ihr Netzwerk aktualisiert werden."
 
-#: page/MainWPPlugins.page.php:721
+#: page/MainWPPlugins.page.php:733
 #@ mainwp
 msgid "Ignored Plugins can not be Automatically Updated."
 msgstr "Ignoriert Plugins können nicht automatisch aktualisiert werden."
 
-#: page/MainWPPlugins.page.php:924
+#: page/MainWPPlugins.page.php:936
 #@ mainwp
 msgid "Ignored Plugin Conflict List"
 msgstr "Ignorierte Plugin Konfliktliste"
 
-#: page/MainWPPlugins.page.php:926
-#: page/MainWPPlugins.page.php:1037
+#: page/MainWPPlugins.page.php:938
+#: page/MainWPPlugins.page.php:1049
 #: page/MainWPThemes.page.php:774
 #: page/MainWPThemes.page.php:884
 #@ mainwp
 msgid "Globally"
 msgstr "Global"
 
-#: page/MainWPPlugins.page.php:930
-#: page/MainWPPlugins.page.php:969
-#: page/MainWPPlugins.page.php:1041
-#: page/MainWPPlugins.page.php:1080
+#: page/MainWPPlugins.page.php:942
+#: page/MainWPPlugins.page.php:981
+#: page/MainWPPlugins.page.php:1053
+#: page/MainWPPlugins.page.php:1092
 #: page/MainWPThemes.page.php:778
 #: page/MainWPThemes.page.php:817
 #: page/MainWPThemes.page.php:888
@@ -1631,10 +1631,10 @@ msgstr "Global"
 msgid "Allow All"
 msgstr "Alle zulassen"
 
-#: page/MainWPPlugins.page.php:945
-#: page/MainWPPlugins.page.php:996
-#: page/MainWPPlugins.page.php:1056
-#: page/MainWPPlugins.page.php:1107
+#: page/MainWPPlugins.page.php:957
+#: page/MainWPPlugins.page.php:1008
+#: page/MainWPPlugins.page.php:1068
+#: page/MainWPPlugins.page.php:1119
 #: page/MainWPThemes.page.php:793
 #: page/MainWPThemes.page.php:844
 #: page/MainWPThemes.page.php:905
@@ -1643,22 +1643,22 @@ msgstr "Alle zulassen"
 msgid "ALLOW"
 msgstr "Zulassen"
 
-#: page/MainWPPlugins.page.php:956
-#: page/MainWPPlugins.page.php:1007
+#: page/MainWPPlugins.page.php:968
+#: page/MainWPPlugins.page.php:1019
 #@ mainwp
 msgid "No ignored plugin conflicts"
 msgstr "Keine ignorierten Plugin Konflikte"
 
-#: page/MainWPPlugins.page.php:964
-#: page/MainWPPlugins.page.php:1075
+#: page/MainWPPlugins.page.php:976
+#: page/MainWPPlugins.page.php:1087
 #: page/MainWPThemes.page.php:812
 #: page/MainWPThemes.page.php:924
 #@ mainwp
 msgid "Per Site"
 msgstr "pro Seite"
 
-#: page/MainWPPlugins.page.php:967
-#: page/MainWPPlugins.page.php:1078
+#: page/MainWPPlugins.page.php:979
+#: page/MainWPPlugins.page.php:1090
 #: page/MainWPThemes.page.php:815
 #: page/MainWPThemes.page.php:927
 #: table/MainWPManageSites.table.php:78
@@ -1666,14 +1666,14 @@ msgstr "pro Seite"
 msgid "Site"
 msgstr "Seite"
 
-#: page/MainWPPlugins.page.php:1035
+#: page/MainWPPlugins.page.php:1047
 #: widget/MainWPRightNow.widget.php:936
 #@ mainwp
 msgid "Plugin Ignore List"
 msgstr "Ignoriete Plugin Liste"
 
-#: page/MainWPPlugins.page.php:1067
-#: page/MainWPPlugins.page.php:1118
+#: page/MainWPPlugins.page.php:1079
+#: page/MainWPPlugins.page.php:1130
 #: view/MainWPSystemView.view.php:37
 #@ mainwp
 msgid "No ignored plugins"
@@ -1861,329 +1861,331 @@ msgid "Unfix All"
 msgstr "Alles nicht Reparieren"
 
 #: page/MainWPServerInformation.page.php:12
-#: page/MainWPServerInformation.page.php:27
-#: page/MainWPServerInformation.page.php:164
+#: page/MainWPServerInformation.page.php:28
+#: page/MainWPServerInformation.page.php:166
 #@ mainwp
 #@ default
 msgid "Server Information"
 msgstr "Server Informationen"
 
 #: page/MainWPServerInformation.page.php:13
-#: page/MainWPServerInformation.page.php:33
-#: page/MainWPServerInformation.page.php:166
+#: page/MainWPServerInformation.page.php:34
+#: page/MainWPServerInformation.page.php:168
 #@ mainwp
 #@ default
 msgid "Cron Schedules"
 msgstr "Zeitplan Aufträge (Cron)"
 
 #: page/MainWPServerInformation.page.php:14
-#: page/MainWPServerInformation.page.php:34
+#: page/MainWPServerInformation.page.php:35
 #@ mainwp
 msgid "Child Site Information"
 msgstr "Child Seiten Information"
 
 #: page/MainWPServerInformation.page.php:15
-#: page/MainWPServerInformation.page.php:35
+#: page/MainWPServerInformation.page.php:36
+#: page/MainWPServerInformation.page.php:173
 #@ mainwp
+#@ default
 msgid "Error Log"
 msgstr "Fehler Log"
 
-#: page/MainWPServerInformation.page.php:32
+#: page/MainWPServerInformation.page.php:33
 #@ mainwp
 msgid "Server"
 msgstr "Server"
 
-#: page/MainWPServerInformation.page.php:57
+#: page/MainWPServerInformation.page.php:59
 #@ mainwp
 msgid "Server Configuration"
 msgstr "Server Konfiguration"
 
-#: page/MainWPServerInformation.page.php:58
+#: page/MainWPServerInformation.page.php:60
 #@ mainwp
 msgid "Suggested Value"
 msgstr "Empfohlener Wert"
 
-#: page/MainWPServerInformation.page.php:59
-#: page/MainWPServerInformation.page.php:103
+#: page/MainWPServerInformation.page.php:61
+#: page/MainWPServerInformation.page.php:105
 #@ mainwp
 msgid "Value"
 msgstr "Wert"
 
-#: page/MainWPServerInformation.page.php:84
+#: page/MainWPServerInformation.page.php:86
 #@ mainwp
 msgid "Directory name"
 msgstr "Verzeichnisname"
 
-#: page/MainWPServerInformation.page.php:85
+#: page/MainWPServerInformation.page.php:87
 #@ mainwp
 msgid "Path"
 msgstr "Pfad"
 
-#: page/MainWPServerInformation.page.php:87
+#: page/MainWPServerInformation.page.php:89
 #@ mainwp
 msgid "Result"
 msgstr "Ergebnis"
 
-#: page/MainWPServerInformation.page.php:102
+#: page/MainWPServerInformation.page.php:104
 #@ mainwp
 msgid "Server Info"
 msgstr "Server Info"
 
-#: page/MainWPServerInformation.page.php:107
+#: page/MainWPServerInformation.page.php:109
 #@ mainwp
 msgid "WordPress Root Directory"
 msgstr "WordPress Root Verzeichnis"
 
-#: page/MainWPServerInformation.page.php:108
+#: page/MainWPServerInformation.page.php:110
 #@ mainwp
 msgid "Server Name"
 msgstr "Server Name"
 
-#: page/MainWPServerInformation.page.php:109
+#: page/MainWPServerInformation.page.php:111
 #@ mainwp
 msgid "Server Sofware"
 msgstr "Server Software"
 
-#: page/MainWPServerInformation.page.php:110
+#: page/MainWPServerInformation.page.php:112
 #@ mainwp
 msgid "Operating System"
 msgstr "Betriebssystem"
 
-#: page/MainWPServerInformation.page.php:111
+#: page/MainWPServerInformation.page.php:113
 #@ mainwp
 msgid "Architecture"
 msgstr "Architektur"
 
-#: page/MainWPServerInformation.page.php:112
+#: page/MainWPServerInformation.page.php:114
 #@ mainwp
 msgid "Server IP"
 msgstr "Server IP"
 
-#: page/MainWPServerInformation.page.php:113
+#: page/MainWPServerInformation.page.php:115
 #@ mainwp
 msgid "Server Protocol"
 msgstr "Server Protocol"
 
-#: page/MainWPServerInformation.page.php:114
+#: page/MainWPServerInformation.page.php:116
 #@ mainwp
 msgid "HTTP Host"
 msgstr "HTTP Host"
 
-#: page/MainWPServerInformation.page.php:115
+#: page/MainWPServerInformation.page.php:117
 #@ mainwp
 msgid "Server Admin"
 msgstr "Server Admin"
 
-#: page/MainWPServerInformation.page.php:116
+#: page/MainWPServerInformation.page.php:118
 #@ mainwp
 msgid "Server Port"
 msgstr "Server Port"
 
-#: page/MainWPServerInformation.page.php:117
+#: page/MainWPServerInformation.page.php:119
 #@ mainwp
 msgid "Getaway Interface"
 msgstr "Getaway-Schnittstelle"
 
-#: page/MainWPServerInformation.page.php:118
+#: page/MainWPServerInformation.page.php:120
 #@ mainwp
 msgid "Memory Usage"
 msgstr "Speicher Benutzung"
 
-#: page/MainWPServerInformation.page.php:119
+#: page/MainWPServerInformation.page.php:121
 #@ mainwp
 msgid "HTTPS"
 msgstr "HTTPS"
 
-#: page/MainWPServerInformation.page.php:120
+#: page/MainWPServerInformation.page.php:122
 #@ mainwp
 msgid "User Agent"
 msgstr "User Agent"
 
-#: page/MainWPServerInformation.page.php:121
+#: page/MainWPServerInformation.page.php:123
 #@ mainwp
 msgid "Complete URL"
 msgstr "Komplette URL"
 
-#: page/MainWPServerInformation.page.php:122
+#: page/MainWPServerInformation.page.php:124
 #@ mainwp
 msgid "Request Method"
 msgstr "Anfrage Methode"
 
-#: page/MainWPServerInformation.page.php:123
+#: page/MainWPServerInformation.page.php:125
 #@ mainwp
 msgid "Request Time"
 msgstr "Zeitanforderung"
 
-#: page/MainWPServerInformation.page.php:124
+#: page/MainWPServerInformation.page.php:126
 #@ mainwp
 msgid "Query String"
 msgstr "Abfrage Zeichenkette"
 
-#: page/MainWPServerInformation.page.php:125
+#: page/MainWPServerInformation.page.php:127
 #@ mainwp
 msgid "Accept Content"
 msgstr "Inhalt akzeptieren"
 
-#: page/MainWPServerInformation.page.php:126
+#: page/MainWPServerInformation.page.php:128
 #@ mainwp
 msgid "Accept-Charset Content"
 msgstr "Akzeptierter Inhalts-Zeichensatz "
 
-#: page/MainWPServerInformation.page.php:127
+#: page/MainWPServerInformation.page.php:129
 #@ mainwp
 msgid "Currently Executing Script Pathname"
 msgstr "Aktuell ausgeführter Skript-Pfadname"
 
-#: page/MainWPServerInformation.page.php:128
+#: page/MainWPServerInformation.page.php:130
 #@ mainwp
 msgid "Server Signature"
 msgstr "Signature Server"
 
-#: page/MainWPServerInformation.page.php:129
+#: page/MainWPServerInformation.page.php:131
 #@ mainwp
 msgid "Currently Executing Script"
 msgstr "Aktuell ausgeführte Skripts"
 
-#: page/MainWPServerInformation.page.php:130
+#: page/MainWPServerInformation.page.php:132
 #@ mainwp
 msgid "Path Translated"
 msgstr "Pfad übersetzt"
 
-#: page/MainWPServerInformation.page.php:131
+#: page/MainWPServerInformation.page.php:133
 #@ mainwp
 msgid "Current Script Path"
 msgstr "Aktueller Skript Pfad"
 
-#: page/MainWPServerInformation.page.php:132
+#: page/MainWPServerInformation.page.php:134
 #@ mainwp
 msgid "Current Page URI"
 msgstr "Aktuelle URI"
 
-#: page/MainWPServerInformation.page.php:133
+#: page/MainWPServerInformation.page.php:135
 #@ mainwp
 msgid "Remote Address"
 msgstr "Entfernte Adresse"
 
-#: page/MainWPServerInformation.page.php:134
+#: page/MainWPServerInformation.page.php:136
 #@ mainwp
 msgid "Remote Host"
 msgstr "Entfernter Host"
 
-#: page/MainWPServerInformation.page.php:135
+#: page/MainWPServerInformation.page.php:137
 #@ mainwp
 msgid "Remote Port"
 msgstr "Entfernter Port"
 
-#: page/MainWPServerInformation.page.php:136
+#: page/MainWPServerInformation.page.php:138
 #@ mainwp
 msgid "PHP Safe Mode"
 msgstr "PHP Safe Modus"
 
-#: page/MainWPServerInformation.page.php:137
+#: page/MainWPServerInformation.page.php:139
 #@ mainwp
 msgid "PHP Allow URL fopen"
 msgstr "PHP erlaubt URL fopen"
 
-#: page/MainWPServerInformation.page.php:138
+#: page/MainWPServerInformation.page.php:140
 #@ mainwp
 msgid "PHP Exif Support"
 msgstr "PHP Exif-Unterstützung"
 
-#: page/MainWPServerInformation.page.php:139
+#: page/MainWPServerInformation.page.php:141
 #@ mainwp
 msgid "PHP IPTC Support"
 msgstr "PHP IPTC-Unterstützung"
 
-#: page/MainWPServerInformation.page.php:140
+#: page/MainWPServerInformation.page.php:142
 #@ mainwp
 msgid "PHP XML Support"
 msgstr "PHP XML-Unterstützung"
 
-#: page/MainWPServerInformation.page.php:141
+#: page/MainWPServerInformation.page.php:143
 #@ mainwp
 msgid "SQL Mode"
 msgstr "SQL Modus"
 
-#: page/MainWPServerInformation.page.php:197
+#: page/MainWPServerInformation.page.php:205
 #@ mainwp
 msgid "Loading server information.."
 msgstr "Lädt Server Informationen.."
 
-#: page/MainWPServerInformation.page.php:242
+#: page/MainWPServerInformation.page.php:250
 #@ mainwp
 msgid "Next due"
 msgstr "Weiter durch"
 
-#: page/MainWPServerInformation.page.php:244
+#: page/MainWPServerInformation.page.php:252
 #@ mainwp
 msgid "Hook"
 msgstr "Haken"
 
-#: page/MainWPServerInformation.page.php:387
+#: page/MainWPServerInformation.page.php:395
 #@ default
 msgid " MB"
-msgstr ""
+msgstr " MB"
 
-#: page/MainWPServerInformation.page.php:388
-#: page/MainWPServerInformation.page.php:478
-#: page/MainWPServerInformation.page.php:513
-#: page/MainWPServerInformation.page.php:542
+#: page/MainWPServerInformation.page.php:396
+#: page/MainWPServerInformation.page.php:486
+#: page/MainWPServerInformation.page.php:521
+#: page/MainWPServerInformation.page.php:550
 #@ default
 #@ mainwp
 msgid "N/A"
 msgstr "N/A"
 
-#: page/MainWPServerInformation.page.php:397
-#: page/MainWPServerInformation.page.php:411
-#: page/MainWPServerInformation.page.php:500
+#: page/MainWPServerInformation.page.php:405
+#: page/MainWPServerInformation.page.php:419
+#: page/MainWPServerInformation.page.php:508
 #@ default
 #@ mainwp
 msgid "ON"
 msgstr "an"
 
-#: page/MainWPServerInformation.page.php:398
-#: page/MainWPServerInformation.page.php:412
-#: page/MainWPServerInformation.page.php:503
+#: page/MainWPServerInformation.page.php:406
+#: page/MainWPServerInformation.page.php:420
+#: page/MainWPServerInformation.page.php:511
 #@ default
 #@ mainwp
 msgid "OFF"
 msgstr "aus"
 
-#: page/MainWPServerInformation.page.php:406
+#: page/MainWPServerInformation.page.php:414
 #@ default
 msgid "NOT SET"
-msgstr ""
+msgstr "Nicht gesetzt"
 
-#: page/MainWPServerInformation.page.php:417
-#: page/MainWPServerInformation.page.php:423
-#: page/MainWPServerInformation.page.php:429
+#: page/MainWPServerInformation.page.php:425
+#: page/MainWPServerInformation.page.php:431
+#: page/MainWPServerInformation.page.php:437
 #@ default
 msgid "YES"
-msgstr ""
+msgstr "Ja"
 
-#: page/MainWPServerInformation.page.php:418
-#: page/MainWPServerInformation.page.php:424
-#: page/MainWPServerInformation.page.php:430
+#: page/MainWPServerInformation.page.php:426
+#: page/MainWPServerInformation.page.php:432
+#: page/MainWPServerInformation.page.php:438
 #@ default
 msgid "NO"
-msgstr ""
+msgstr "Nein"
 
-#: page/MainWPServerInformation.page.php:610
+#: page/MainWPServerInformation.page.php:618
 #@ mainwp
 msgid "Time"
 msgstr "Zeit"
 
-#: page/MainWPServerInformation.page.php:611
+#: page/MainWPServerInformation.page.php:619
 #@ mainwp
 msgid "Error"
 msgstr "Fehler"
 
-#: page/MainWPServerInformation.page.php:625
+#: page/MainWPServerInformation.page.php:633
 #@ mainwp
 msgid "Error logging disabled."
 msgstr "Fehlerprotokollierung deaktiviert."
 
-#: page/MainWPServerInformation.page.php:643
+#: page/MainWPServerInformation.page.php:651
 #@ mainwp
 msgid "No errors found... Yet."
 msgstr "Keine Fehler gefunden...bisher."
@@ -2277,60 +2279,60 @@ msgstr "Theme"
 #: page/MainWPThemes.page.php:673
 #@ default
 msgid "Version:"
-msgstr ""
+msgstr "Version:"
 
 #: page/MainWPThemes.page.php:677
 #@ default
 msgid "Author:"
-msgstr ""
+msgstr "Autor:"
 
 #: page/MainWPThemes.page.php:680
 #@ default
 msgid "Last Updated:"
-msgstr ""
+msgstr "Zuletzt aktualisiert:"
 
 #: page/MainWPThemes.page.php:681
 #, php-format
 #@ default
 msgid "%s ago"
-msgstr ""
+msgstr "%s vor"
 
 #: page/MainWPThemes.page.php:686
 #@ default
 msgid "Requires WordPress Version:"
-msgstr ""
+msgstr "Benötigt WordPress Version:"
 
 #: page/MainWPThemes.page.php:686
 #, php-format
 #@ default
 msgid "%s or higher"
-msgstr ""
+msgstr "%s oder höher"
 
 #: page/MainWPThemes.page.php:690
 #@ default
 msgid "Compatible up to:"
-msgstr ""
+msgstr "Kompatibel bis:"
 
 #: page/MainWPThemes.page.php:694
 #@ default
 msgid "Downloaded:"
-msgstr ""
+msgstr "heruntergeladen:"
 
 #: page/MainWPThemes.page.php:694
 #, php-format
 #@ default
 msgid "%s time"
 msgid_plural "%s times"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%s Zeit"
+msgstr[1] "%s Zeiten"
 
 #: page/MainWPThemes.page.php:698
 #, php-format
 #@ default
 msgid "(based on %s rating)"
 msgid_plural "(based on %s ratings)"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "(basierend auf der %s Bewertung)"
+msgstr[1] "(basierend auf die %s Bewertungen)"
 
 #: page/MainWPThemes.page.php:724
 #@ mainwp
@@ -2506,7 +2508,7 @@ msgstr "Dieser Benutzer wird von uns als sichere Verbindung verwendet  und kann 
 #: page/MainWPUser.page.php:554
 #@ default
 msgid "This user is used for our secure link, you can not change the role."
-msgstr ""
+msgstr "Dieser Benutzer wird für unsere sichere Verbindung verwendet, SIe können die Rolle nicht ändern."
 
 #: page/MainWPUser.page.php:590
 #@ mainwp
@@ -2663,7 +2665,7 @@ msgstr "Sicherungskopie Ausgaben"
 #: table/MainWPManageBackups.table.php:22
 #@ default
 msgid "No backup tasks found."
-msgstr ""
+msgstr "Keine Backup-Aufgaben gefunden."
 
 #: table/MainWPManageBackups.table.php:75
 #: view/MainWPSystemView.view.php:142
@@ -2684,7 +2686,7 @@ msgstr "Seiten"
 #: table/MainWPManageSites.table.php:40
 #@ default
 msgid "No sites found."
-msgstr ""
+msgstr "Seite nicht gefunden."
 
 #: table/MainWPManageSites.table.php:81
 #@ mainwp
@@ -2710,6 +2712,7 @@ msgstr "SEO"
 
 #: table/MainWPManageSites.table.php:161
 #: widget/MainWPRightNow.widget.php:962
+#: widget/MainWPRightNow.widget.php:1067
 #@ mainwp
 msgid "Reconnect"
 msgstr "Erneut verbinden"
@@ -2717,7 +2720,7 @@ msgstr "Erneut verbinden"
 #: table/MainWPManageSites.table.php:170
 #@ mainwp
 msgid "Open WP Admin"
-msgstr "Offene WP Admin"
+msgstr "Starte WP Admin"
 
 #: table/MainWPManageSites.table.php:170
 #@ mainwp
@@ -2740,12 +2743,12 @@ msgstr "Verbindung prüfen"
 #: table/MainWPManageSites.table.php:395
 #@ default
 msgid "Search Sites"
-msgstr ""
+msgstr "Suche Seite"
 
 #: table/MainWPManageSites.table.php:421
 #@ default
 msgid "Display"
-msgstr ""
+msgstr "Anzeige"
 
 #: view/MainWPAPISettingsView.view.php:11
 #@ mainwp
@@ -2906,7 +2909,7 @@ msgstr "Aktivieren"
 #: widget/MainWPHelp.widget.php:26
 #@ mainwp
 msgid "Sites"
-msgstr "Seiten"
+msgstr "WP-Seiten"
 
 #: view/MainWPManageSitesView.view.php:16
 #@ mainwp
@@ -3932,12 +3935,6 @@ msgid_plural "Sites Timed Out / Errored"
 msgstr[0] "Seite Timeout / Fehler"
 msgstr[1] "Seiten Timeout / Fehler"
 
-#: widget/MainWPRightNow.widget.php:556
-#: widget/MainWPRightNow.widget.php:558
-#@ mainwp
-msgid "Try lowering your Maximum requests / 30 seconds"
-msgstr "Versuchen Sie, Ihre Anfragen Maximale / 30 Sekunden"
-
 #: widget/MainWPRightNow.widget.php:558
 #@ mainwp
 msgid "Timed Out / Errored"
@@ -4094,7 +4091,7 @@ msgstr "Hinweis:"
 #: widget/MainWPShortcuts.widget.php:32
 #@ mainwp
 msgid "Open Notes"
-msgstr "Offene Hinweise"
+msgstr "&Ouml;ffene Hinweise"
 
 #: widget/MainWPShortcuts.widget.php:37
 #@ mainwp
@@ -4104,7 +4101,7 @@ msgstr "WP-Admin:"
 #: widget/MainWPShortcuts.widget.php:38
 #@ mainwp
 msgid "Open embedded"
-msgstr "Offen eingebettet"
+msgstr "&ouml;ffene eingebettet"
 
 #: widget/MainWPShortcuts.widget.php:38
 #@ mainwp
@@ -4132,61 +4129,61 @@ msgstr "Undefinierter Fehler - Bitte installieren Sie die MainWP Child Plugin au
 #@ default
 msgctxt "bulkpost"
 msgid "Bulkpost"
-msgstr ""
+msgstr "Massen Beitrag"
 
 #: class/MainWPSystem.class.php:1541
 #@ default
 msgctxt "bulkpost"
 msgid "Add New"
-msgstr ""
+msgstr "Neu"
 
 #: class/MainWPSystem.class.php:1542
 #@ default
 msgctxt "bulkpost"
 msgid "Add New Bulkpost"
-msgstr ""
+msgstr "Neuer Massen Beitrag"
 
 #: class/MainWPSystem.class.php:1543
 #@ default
 msgctxt "bulkpost"
 msgid "Edit Bulkpost"
-msgstr ""
+msgstr "ändern Massen Beitrag"
 
 #: class/MainWPSystem.class.php:1544
 #@ default
 msgctxt "bulkpost"
 msgid "New Bulkpost"
-msgstr ""
+msgstr "Neuer Massen Beitrag"
 
 #: class/MainWPSystem.class.php:1545
 #@ default
 msgctxt "bulkpost"
 msgid "View Bulkpost"
-msgstr ""
+msgstr "Massen Beitrag anzeigen"
 
 #: class/MainWPSystem.class.php:1546
 #@ default
 msgctxt "bulkpost"
 msgid "Search Bulkpost"
-msgstr ""
+msgstr "Suche Massen Beitrag"
 
 #: class/MainWPSystem.class.php:1547
 #@ default
 msgctxt "bulkpost"
 msgid "No bulkpost found"
-msgstr ""
+msgstr "Kein Massen Beitrag gefunden"
 
 #: class/MainWPSystem.class.php:1548
 #@ default
 msgctxt "bulkpost"
 msgid "No bulkpost found in Trash"
-msgstr ""
+msgstr "Kein Massen Beitrag im Papierkorb gefunden"
 
 #: class/MainWPSystem.class.php:1549
 #@ default
 msgctxt "bulkpost"
 msgid "Parent Bulkpost:"
-msgstr ""
+msgstr "Vorgänger Massen Beitrag"
 
 #: class/MainWPSystem.class.php:1584
 #: class/MainWPSystem.class.php:1585
@@ -4194,61 +4191,61 @@ msgstr ""
 #@ default
 msgctxt "bulkpage"
 msgid "Bulkpage"
-msgstr ""
+msgstr "Massen Seite"
 
 #: class/MainWPSystem.class.php:1586
 #@ default
 msgctxt "bulkpage"
 msgid "Add New"
-msgstr ""
+msgstr "Neu"
 
 #: class/MainWPSystem.class.php:1587
 #@ default
 msgctxt "bulkpage"
 msgid "Add New Bulkpage"
-msgstr ""
+msgstr "Neuer Massen Beitrag"
 
 #: class/MainWPSystem.class.php:1588
 #@ default
 msgctxt "bulkpage"
 msgid "Edit Bulkpage"
-msgstr ""
+msgstr "Massen Seite ändern"
 
 #: class/MainWPSystem.class.php:1589
 #@ default
 msgctxt "bulkpage"
 msgid "New Bulkpage"
-msgstr ""
+msgstr "Neue Massen Seite"
 
 #: class/MainWPSystem.class.php:1590
 #@ default
 msgctxt "bulkpage"
 msgid "View Bulkpage"
-msgstr ""
+msgstr "Massen Seite anzeigen"
 
 #: class/MainWPSystem.class.php:1591
 #@ default
 msgctxt "bulkpage"
 msgid "Search Bulkpage"
-msgstr ""
+msgstr "Suche Massen Seite"
 
 #: class/MainWPSystem.class.php:1592
 #@ default
 msgctxt "bulkpage"
 msgid "No bulkpage found"
-msgstr ""
+msgstr "Keine Massen Seite gefunden"
 
 #: class/MainWPSystem.class.php:1593
 #@ default
 msgctxt "bulkpage"
 msgid "No bulkpage found in Trash"
-msgstr ""
+msgstr "Keine Massen Seite im Papierkorb gefunden"
 
 #: class/MainWPSystem.class.php:1594
 #@ default
 msgctxt "bulkpage"
 msgid "Parent Bulkpage:"
-msgstr ""
+msgstr "Vorgänger Massen Seite"
 
 #: page/MainWPBulkAdd.page.php:26
 #: page/MainWPInstallBulk.page.php:371
@@ -4275,10 +4272,10 @@ msgstr "Hilfe"
 #: page/MainWPBulkUpdateAdminPasswords.page.php:164
 #: page/MainWPManageBackups.page.php:808
 #: page/MainWPManageGroups.page.php:415
-#: page/MainWPManageSites.page.php:965
+#: page/MainWPManageSites.page.php:969
 #: page/MainWPOfflineChecks.page.php:306
 #: page/MainWPPage.page.php:599
-#: page/MainWPPlugins.page.php:1180
+#: page/MainWPPlugins.page.php:1192
 #: page/MainWPPost.page.php:1030
 #: page/MainWPSettings.page.php:203
 #: page/MainWPThemes.page.php:1028
@@ -4297,10 +4294,10 @@ msgstr "Admin Passwörter verwalten"
 #: page/MainWPInstallBulk.page.php:128
 #: page/MainWPManageBackups.page.php:810
 #: page/MainWPManageGroups.page.php:417
-#: page/MainWPManageSites.page.php:967
+#: page/MainWPManageSites.page.php:971
 #: page/MainWPOfflineChecks.page.php:308
 #: page/MainWPPage.page.php:601
-#: page/MainWPPlugins.page.php:1182
+#: page/MainWPPlugins.page.php:1194
 #: page/MainWPPost.page.php:1032
 #: page/MainWPSettings.page.php:205
 #: page/MainWPThemes.page.php:1030
@@ -4363,22 +4360,22 @@ msgstr "Hinzufügen einer neuen Gruppe"
 msgid "Sites Help"
 msgstr "Seiten-Hilfe"
 
-#: page/MainWPManageSites.page.php:967
+#: page/MainWPManageSites.page.php:971
 #@ mainwp
 msgid "Adding a Site To MainWP Dashboard"
 msgstr "Hinzufügen einer Webseite zu MainWP-Dashboard"
 
-#: page/MainWPManageSites.page.php:967
+#: page/MainWPManageSites.page.php:971
 #@ mainwp
 msgid "How to use the Child Unique Security ID"
 msgstr "Wie die eindeutige Child Sicherheits-ID verwenden"
 
-#: page/MainWPManageSites.page.php:967
+#: page/MainWPManageSites.page.php:971
 #@ mainwp
 msgid "Individual Site Dashboard"
 msgstr "Individuelle Webseite-Dashboard"
 
-#: page/MainWPManageSites.page.php:967
+#: page/MainWPManageSites.page.php:971
 #@ mainwp
 msgid "How to test a Site Connection"
 msgstr "Wie testet man eine Standort-Verbindung"
@@ -4413,17 +4410,17 @@ msgstr "Erstellen einer neuen Seite"
 msgid "Plugins Help"
 msgstr "Plugins Hilfe"
 
-#: page/MainWPPlugins.page.php:1182
+#: page/MainWPPlugins.page.php:1194
 #@ mainwp
 msgid "How to install a Plugin"
 msgstr "Wie man ein Plugin installieren"
 
-#: page/MainWPPlugins.page.php:1182
+#: page/MainWPPlugins.page.php:1194
 #@ mainwp
 msgid "How to update Plugins"
 msgstr "Wie aktualisieren Sie Plugins"
 
-#: page/MainWPPlugins.page.php:1182
+#: page/MainWPPlugins.page.php:1194
 #@ mainwp
 msgid "Ignore a plugin update"
 msgstr "Ignorieren Sie ein Plugin-Update"
@@ -4644,7 +4641,7 @@ msgstr "Listen-Ansicht anzeigen"
 #: widget/MainWPExtensions.widget.php:158
 #@ default
 msgid "Invalid Request"
-msgstr ""
+msgstr "Ungültige Anfrage"
 
 #: widget/MainWPHelp.widget.php:26
 #@ mainwp
@@ -4706,7 +4703,7 @@ msgstr "Bitte besuchen Sie die Plugin Webseite für weitere Informationen."
 msgid "Please visit the Plugin website for more information: "
 msgstr "Bitte besuchen Sie die Plugin Website für weitere Informationen:"
 
-#: page/MainWPServerInformation.page.php:220
+#: page/MainWPServerInformation.page.php:228
 #@ mainwp
 msgid "Last run"
 msgstr "Letzte Ausführung"
@@ -4786,4 +4783,32 @@ msgstr "Theme wurde aktiviert"
 #@ mainwp
 msgid "Theme has been permanently deleted"
 msgstr "Thema wurde endgültig gelöscht"
+
+#: page/MainWPServerInformation.page.php:16
+#: page/MainWPServerInformation.page.php:37
+#: page/MainWPServerInformation.page.php:171
+#@ mainwp
+#@ default
+msgid "WP-Config File"
+msgstr "WP Konfigurationsdatei"
+
+#: page/MainWPSettings.page.php:117
+#@ mainwp
+msgid "Maximum simultaneous requests"
+msgstr "Maximale gleichzeitige Anfragen"
+
+#: page/MainWPSettings.page.php:117
+#@ mainwp
+msgid "Maximum simultaneous requests. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 4, set to 0 for unlimited."
+msgstr "Maximale gleichzeitige Anfragen. Wenn zu viele Anfragen ausgesendet werden,  es wird dann zu Zeitverzögerungen kommen. Dies führt dazu, untergeordnete Standorte als offline angezeigt werden, während sie online sind. Bei einem typischen Web-Hostern, sollten Sie dies bei 4 setzen, auf 0 für unbegrenzt."
+
+#: page/MainWPSettings.page.php:137
+#@ mainwp
+msgid "Maximum simultaneous requests per ip"
+msgstr "Maximale gleichzeitige Anfragen pro IP"
+
+#: page/MainWPSettings.page.php:137
+#@ mainwp
+msgid "Maximum simultaneous requests per IP. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 1, set to 0 for unlimited."
+msgstr "Maximale gleichzeitige Anfragen pro IP. Wenn zu viele Anfragen ausgesendet, es kommt dann zu Zeitverzögerungen. Dies führt dazu, untergeordnete Standorte als offline angezeigt werden, während sie online sind. Bei einem typischen Web-Hostern, sollten Sie dies bei 1 setzen, auf 0 für unbegrenzt."
 

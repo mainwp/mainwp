@@ -76,7 +76,7 @@ class MainWPExtensions
             self::$extensions[] = $extension;
             if (isset($extension['callback'])) add_submenu_page('mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback']);			
         }
-        update_option("mainwp_extensions", self::$extensions);
+        MainWPUtility::update_option("mainwp_extensions", self::$extensions);
         self::$extensionsLoaded = true;
     }
 
@@ -132,14 +132,14 @@ class MainWPExtensions
             $snEnabledExtensions[] = $slug;
         }
 
-        update_option('mainwp_extloaded', $snEnabledExtensions);
+        MainWPUtility::update_option('mainwp_extloaded', $snEnabledExtensions);
 
         die(json_encode(array('result' => 'SUCCESS')));
     }
 
     public static function disableAllExtensions()
     {
-        update_option('mainwp_extloaded', array());
+        MainWPUtility::update_option('mainwp_extloaded', array());
 
         die(json_encode(array('result' => 'SUCCESS')));
     }
@@ -151,7 +151,7 @@ class MainWPExtensions
 
         $snEnabledExtensions[] = $_POST['slug'];
 
-        update_option('mainwp_extloaded', $snEnabledExtensions);
+        MainWPUtility::update_option('mainwp_extloaded', $snEnabledExtensions);
 
         die(json_encode(array('result' => 'SUCCESS')));
     }
@@ -165,7 +165,7 @@ class MainWPExtensions
 
         if ($key !== false) unset($snEnabledExtensions[$key]);
 
-        update_option('mainwp_extloaded', $snEnabledExtensions);
+        MainWPUtility::update_option('mainwp_extloaded', $snEnabledExtensions);
 
         die(json_encode(array('result' => 'SUCCESS')));
     }

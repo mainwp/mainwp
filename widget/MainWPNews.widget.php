@@ -30,8 +30,8 @@ class MainWPNews
             if (isset($result[1]))
             {
                 $news = json_decode($result[1], true);
-                update_option('mainwp_news', $news);
-                update_option('mainwp_news_timestamp', time());
+                MainWPUtility::update_option('mainwp_news', $news);
+                MainWPUtility::update_option('mainwp_news_timestamp', time());
             }
         }
 

@@ -371,6 +371,10 @@ h3.mainwp_box_title {
     float: right;
 }
 
+.mainwp_select_sites_box .postbox {
+    max-width: 255px !important;
+}
+
 .mainwp_config_box_left {
     margin: 0 280px 0 0;
 }

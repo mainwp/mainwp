@@ -18,16 +18,16 @@ class MainWPOptions
 
             MainWPDB::Instance()->updateUserExtension($userExtension);
             if (MainWPUtility::isAdmin()) {
-                update_option('mainwp_optimize', (!isset($_POST['mainwp_optimize']) ? 0 : 1));
-                update_option('mainwp_seo', (!isset($_POST['mainwp_seo']) ? 0 : 1));
+                MainWPUtility::update_option('mainwp_optimize', (!isset($_POST['mainwp_optimize']) ? 0 : 1));
+                MainWPUtility::update_option('mainwp_seo', (!isset($_POST['mainwp_seo']) ? 0 : 1));
                 $val = (!isset($_POST['mainwp_automaticDailyUpdate']) ? 2 : $_POST['mainwp_automaticDailyUpdate']);
-                update_option('mainwp_automaticDailyUpdate', $val);
+                MainWPUtility::update_option('mainwp_automaticDailyUpdate', $val);
                 $val = (!isset($_POST['mainwp_backup_before_upgrade']) ? 0 : 1);
-                update_option('mainwp_backup_before_upgrade', $val);
-                update_option('mainwp_maximumPosts', $_POST['mainwp_maximumPosts']);
-                update_option('mainwp_maximumComments', $_POST['mainwp_maximumComments']);
-                update_option('mainwp_cron_jobs', (!isset($_POST['mainwp_options_cron_jobs']) ? 0 : 1));
-                update_option('mainwp_wp_cron', (!isset($_POST['mainwp_options_wp_cron']) ? 0 : 1));
+                MainWPUtility::update_option('mainwp_backup_before_upgrade', $val);
+                MainWPUtility::update_option('mainwp_maximumPosts', $_POST['mainwp_maximumPosts']);
+                MainWPUtility::update_option('mainwp_maximumComments', $_POST['mainwp_maximumComments']);
+                MainWPUtility::update_option('mainwp_cron_jobs', (!isset($_POST['mainwp_options_cron_jobs']) ? 0 : 1));
+                MainWPUtility::update_option('mainwp_wp_cron', (!isset($_POST['mainwp_options_wp_cron']) ? 0 : 1));
             }
 
             return true;

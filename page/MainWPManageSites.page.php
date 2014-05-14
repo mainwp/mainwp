@@ -865,19 +865,19 @@ class MainWPManageSites
             {
                 if (MainWPUtility::ctype_digit($_POST['mainwp_options_backupOnServer']) && $_POST['mainwp_options_backupOnServer'] > 0)
                 {
-                    update_option('mainwp_backupsOnServer', $_POST['mainwp_options_backupOnServer']);
+                    MainWPUtility::update_option('mainwp_backupsOnServer', $_POST['mainwp_options_backupOnServer']);
                 }
                 if (MainWPUtility::ctype_digit($_POST['mainwp_options_maximumFileDescriptors']) && $_POST['mainwp_options_maximumFileDescriptors'] > -1)
                 {
-                    update_option('mainwp_maximumFileDescriptors', $_POST['mainwp_options_maximumFileDescriptors']);
+                    MainWPUtility::update_option('mainwp_maximumFileDescriptors', $_POST['mainwp_options_maximumFileDescriptors']);
                 }
                 if (MainWPUtility::ctype_digit($_POST['mainwp_options_backupOnExternalSources']) && $_POST['mainwp_options_backupOnExternalSources'] >= 0)
                 {
-                    update_option('mainwp_backupOnExternalSources', $_POST['mainwp_options_backupOnExternalSources']);
+                    MainWPUtility::update_option('mainwp_backupOnExternalSources', $_POST['mainwp_options_backupOnExternalSources']);
                 }
-                update_option('mainwp_notificationOnBackupFail', (!isset($_POST['mainwp_options_notificationOnBackupFail']) ? 0 : 1));
-                update_option('mainwp_notificationOnBackupStart', (!isset($_POST['mainwp_options_notificationOnBackupStart']) ? 0 : 1));
-                update_option('mainwp_chunkedBackupTasks', (!isset($_POST['mainwp_options_chunkedBackupTasks']) ? 0 : 1));
+                MainWPUtility::update_option('mainwp_notificationOnBackupFail', (!isset($_POST['mainwp_options_notificationOnBackupFail']) ? 0 : 1));
+                MainWPUtility::update_option('mainwp_notificationOnBackupStart', (!isset($_POST['mainwp_options_notificationOnBackupStart']) ? 0 : 1));
+                MainWPUtility::update_option('mainwp_chunkedBackupTasks', (!isset($_POST['mainwp_options_chunkedBackupTasks']) ? 0 : 1));
 
                 return true;
             }

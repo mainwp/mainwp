@@ -21,8 +21,8 @@ class MainWPAPISettings
     {
         $username = $_POST['username'];
         $password = $_POST['password'];
-        update_option("mainwp_api_username", $username);
-        update_option("mainwp_api_password", $password);
+        MainWPUtility::update_option("mainwp_api_username", $username);
+        MainWPUtility::update_option("mainwp_api_password", $password);
 
         $userExtension = MainWPDB::Instance()->getUserExtension();
         $userExtension->pluginDir = (isset($_POST['footprint']) && $_POST['footprint'] == 'true' ? 'hidden' : 'default');
@@ -60,8 +60,8 @@ class MainWPAPISettings
 
         if (($output['api_status'] == MAINWP_API_VALID) && ($username == get_option('mainwp_api_username')))
         {
-            update_option("mainwp_api_username", $username);
-            update_option("mainwp_api_password", $password);
+            MainWPUtility::update_option("mainwp_api_username", $username);
+            MainWPUtility::update_option("mainwp_api_password", $password);
             MainWPAPISettings::testAPIs('main', true, $username, $password, false, true);
         }
 
@@ -187,7 +187,7 @@ class MainWPAPISettings
             }
 
             $requestsDB = array('lastRequest' => ($pAPI != null ? (isset($requests['lastRequest']) ? $requests['lastRequest'] : '') : time()), 'requests' => base64_encode(serialize($requests)), 'lastRequests' => base64_encode(serialize($lastRequests)), 'maxOccurences' => base64_encode(serialize($maxOccurences)));
-            update_option('mainwp_requests', $requestsDB);
+            MainWPUtility::update_option('mainwp_requests', $requestsDB);
         }
 
         return ($exclusiveResult != '' ? $exclusiveResult : ($pAPI == null ? null : $requests[$pAPI]));

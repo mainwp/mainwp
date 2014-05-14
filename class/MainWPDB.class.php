@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '6.1';
+    private $mainwp_db_version = '6.2';
     //Private
     private $table_prefix;
     //Singleton
@@ -219,7 +219,7 @@ class MainWPDB
             dbDelta($query);
         }
 
-        update_option('mainwp_db_version', $this->mainwp_db_version);
+        MainWPUtility::update_option('mainwp_db_version', $this->mainwp_db_version);
     }
 
     //Check for update - if required, update..
@@ -231,7 +231,7 @@ class MainWPDB
         if (version_compare($currentVersion, '2.5', '<'))
         {
             $requests = array('lastRequest' => time(), 'requests' => base64_encode(serialize(array('main' => MainWPSystem::Instance()->getAPIStatus()))));
-            update_option('mainwp_requests', $requests);
+            MainWPUtility::update_option('mainwp_requests', $requests);
         }
 
         if (version_compare($currentVersion, '2.8', '<')) {
@@ -296,6 +296,15 @@ class MainWPDB
             $wpdb->query('ALTER TABLE ' . $this->tableName('request_log') . ' CHANGE micro_timestamp_stop micro_timestamp_stop DECIMAL( 12, 2 ) NOT NULL DEFAULT 0');
             $wpdb->query('ALTER TABLE ' . $this->tableName('request_log') . ' CHANGE micro_timestamp_start micro_timestamp_start DECIMAL( 12, 2 ) NOT NULL DEFAULT 0');
             $wpdb->query('DELETE FROM ' . $this->tableName('request_log') . ' WHERE 1 ');
+        }
+
+        if (version_compare($currentVersion, '6.2', '<'))
+        {
+            $options = array('mainwp_db_version', 'mainwp_requests', 'mainwp_plugin_version', 'mainwp_upgradeVersionInfo', 'mainwp_cron_last_offlinecheck', 'mainwp_cron_last_updatescheck', 'mainwp_automaticUpdate_backupChecks', 'mainwp_updatescheck_mail_update_core_new', 'mainwp_updatescheck_mail_update_plugins_new', 'mainwp_updatescheck_mail_update_themes_new', 'mainwp_updatescheck_mail_update_core', 'mainwp_updatescheck_mail_update_plugins', 'mainwp_updatescheck_mail_update_themes', 'mainwp_updatescheck_mail_ignore_core', 'mainwp_updatescheck_mail_ignore_plugins', 'mainwp_updatescheck_mail_ignore_themes', 'mainwp_updatescheck_mail_ignore_core_new', 'mainwp_updatescheck_mail_ignore_plugins_new', 'mainwp_updatescheck_mail_ignore_themes_new', 'mainwp_updatescheck_mail_pluginconflicts', 'mainwp_updatescheck_mail_themeconflicts', 'mainwp_updatescheck_last', 'mainwp_updatescheck_mail_email', 'mainwp_cron_last_ping', 'mainwp_cron_last_cronconflicts', 'mainwp_pluginConflicts', 'mainwp_themeConflicts', 'mainwp_cron_last_backups_continue', 'mainwp_cron_last_backups', 'mainwp_cron_last_stats', 'mainwp_backupsOnServer', 'mainwp_maximumFileDescriptors', 'mainwp_backupOnExternalSources', 'mainwp_notificationOnBackupFail', 'mainwp_notificationOnBackupStart', 'mainwp_chunkedBackupTasks', 'mainwp_maximumRequests', 'mainwp_minimumDelay', 'mainwp_maximumIPRequests', 'mainwp_minimumIPDelay', 'mainwp_extensions', 'mainwp_extloaded', 'mainwp_api_username', 'mainwp_api_password', 'mainwp_extension_widget_view', 'mainwp_news', 'mainwp_news_timestamp', 'mainwp_optimize', 'mainwp_seo', 'mainwp_automaticDailyUpdate', 'mainwp_backup_before_upgrade', 'mainwp_maximumPosts', 'mainwp_maximumComments', 'mainwp_cron_jobs', 'mainwp_wp_cron');
+            foreach ($options as $option)
+            {
+                MainWPUtility::fix_option($option);
+            }
         }
     }
 

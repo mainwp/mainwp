@@ -1403,6 +1403,30 @@ class MainWPUtility
 
         return 'application/octet-stream';
     }
+
+    static function update_option($option_name, $option_value)
+    {
+        $success = add_option($option_name, $option_value, '', 'no');
+
+         if (!$success)
+         {
+             $success = update_option($option_name, $option_value);
+         }
+
+         return $success;
+    }
+
+    static function fix_option($option_name)
+    {
+        global $wpdb;
+
+        if ( 'yes' == $wpdb->get_var( "SELECT autoload FROM $wpdb->options WHERE option_name = '" . $option_name . "'" ) )
+        {
+            $option_value = get_option( $option_name );
+            delete_option( $option_name );
+            add_option( $option_name, $option_value, null, 'no' );
+        }
+    }
 }
 
 ?>

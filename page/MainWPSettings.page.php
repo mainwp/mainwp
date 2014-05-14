@@ -97,10 +97,10 @@ class MainWPSettings
     {
         if (isset($_POST['submit']))
         {
-            update_option('mainwp_maximumRequests', $_POST['mainwp_maximumRequests']);
-            update_option('mainwp_minimumDelay', $_POST['mainwp_minimumDelay']);
-            update_option('mainwp_maximumIPRequests', $_POST['mainwp_maximumIPRequests']);
-            update_option('mainwp_minimumIPDelay', $_POST['mainwp_minimumIPDelay']);
+            MainWPUtility::update_option('mainwp_maximumRequests', $_POST['mainwp_maximumRequests']);
+            MainWPUtility::update_option('mainwp_minimumDelay', $_POST['mainwp_minimumDelay']);
+            MainWPUtility::update_option('mainwp_maximumIPRequests', $_POST['mainwp_maximumIPRequests']);
+            MainWPUtility::update_option('mainwp_minimumIPDelay', $_POST['mainwp_minimumIPDelay']);
         }
 
         self::renderHeader('Advanced');

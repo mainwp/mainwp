@@ -157,8 +157,8 @@ class MainWPExtensionsWidget {
     {
         if (!isset($_POST['view'])) throw new Exception(__('Invalid Request'));
 
-        if ($_POST['view'] == 'list') update_option('mainwp_extension_widget_view', 'list');
-        else update_option('mainwp_extension_widget_view', 'grid');
+        if ($_POST['view'] == 'list') MainWPUtility::update_option('mainwp_extension_widget_view', 'list');
+        else MainWPUtility::update_option('mainwp_extension_widget_view', 'grid');
 
         return array('result' => 'SUCCESS');
     }

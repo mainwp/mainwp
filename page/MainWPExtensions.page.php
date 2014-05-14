@@ -340,7 +340,13 @@ class MainWPExtensions
         }
     }
 
-    public static function hookGetDBSites($pluginFile, $key, $sites, $groups)
+    private static $possible_options = array(
+        'plugin_upgrades' => 'plugin_upgrades',
+        'theme_upgrades' => 'theme_upgrades',
+        'premium_upgrades' => 'premium_upgrades'
+    );
+    
+    public static function hookGetDBSites($pluginFile, $key, $sites, $groups, $options = false)
     {
         if (!self::hookVerify($pluginFile, $key))
         {
@@ -348,22 +354,37 @@ class MainWPExtensions
         }
 
         $dbwebsites = array();
-        if ($sites != '') {
-            foreach ($sites as $k => $v) {
-                if (MainWPUtility::ctype_digit($v)) {
-                    $website = MainWPDB::Instance()->getWebsiteById($v);
-                    $dbwebsites[$website->id] = MainWPUtility::mapSite($website, array('id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey'));
+        $data = array('id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey');
+
+        if (is_array($options))
+        {
+            foreach ($options as $option_name => $value)
+            {
+                if (($value === true) && isset(self::$possible_options[$option_name]))
+                {
+                    $data[] = self::$possible_options[$option_name];
                 }
             }
         }
 
-        if ($groups != '') {
+        if ($sites != '')
+        {
+            foreach ($sites as $k => $v) {
+                if (MainWPUtility::ctype_digit($v)) {
+                    $website = MainWPDB::Instance()->getWebsiteById($v);
+                    $dbwebsites[$website->id] = MainWPUtility::mapSite($website, $data);
+                }
+            }
+        }
+
+        if ($groups != '')
+        {
             foreach ($groups as $k => $v) {
                 if (MainWPUtility::ctype_digit($v)) {
                     $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesByGroupId($v));
                     while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                     {
-                        $dbwebsites[$website->id] = MainWPUtility::mapSite($website, array('id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey'));
+                        $dbwebsites[$website->id] = MainWPUtility::mapSite($website, $data);
                     }
                     @MainWPDB::free_result($websites);
                 }

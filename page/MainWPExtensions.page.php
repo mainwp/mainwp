@@ -343,7 +343,9 @@ class MainWPExtensions
     private static $possible_options = array(
         'plugin_upgrades' => 'plugin_upgrades',
         'theme_upgrades' => 'theme_upgrades',
-        'premium_upgrades' => 'premium_upgrades'
+        'premium_upgrades' => 'premium_upgrades',
+        'plugins' => 'plugins',
+        'dtsSync' => 'dtsSync'
     );
     
     public static function hookGetDBSites($pluginFile, $key, $sites, $groups, $options = false)

@@ -43,7 +43,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
     function column_default($item, $column_name)
     {
 
-        $item = apply_filters('mainwp-sites-additem',$item, $item);
+        $item = apply_filters('mainwp-sitestable-item', $item, $item);
 
         switch ($column_name)
         {
@@ -91,7 +91,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
 
         if (get_option('mainwp_seo') != 1) unset($columns['seo']);
 
-        $columns = apply_filters('mainwp-sites-addcolumn',$columns, $columns);
+        $columns = apply_filters('mainwp-sitestable-getcolumns', $columns, $columns);
         return $columns;
     }
 

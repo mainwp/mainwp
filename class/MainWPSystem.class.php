@@ -1395,6 +1395,7 @@ class MainWPSystem
 
     function post_updated_messages($messages)
     {
+        $messages['post'][98] = 'Wordpress Seo values saved.';
         $messages['post'][99] = 'You have to select the sites you wish to publish to.';
         return $messages;
     }
@@ -1432,14 +1433,19 @@ class MainWPSystem
     //This function will read the metaboxes & save them to the post
     function publish_bulkpost($post_id)
     {
+        $save_seo_value = isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))? true : false;
+        $message_id = 99;
+        if ($save_seo_value)
+            $message_id = 98;
+
         //Read extra metabox
         $pid = $this->metaboxes->select_sites_handle($post_id, 'bulkpost');
 
-        if ($pid == $post_id) {
+        if ($save_seo_value || $pid == $post_id) {
             /** @var $wpdb wpdb */
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "99", "hideall" => 1), $location);'));
+            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
         }
         else
         {
@@ -1464,14 +1470,19 @@ class MainWPSystem
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
             return;
 
+        $save_seo_value = isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))? true : false;
+        $message_id = 99;
+        if ($save_seo_value)
+            $message_id = 98;
+
         //Read extra metabox
         $pid = $this->metaboxes->select_sites_handle($post_id, 'bulkpost');
 
-        if ($pid == $post_id) {
+        if ($save_seo_value || $pid == $post_id) {
             /** @var $wpdb wpdb */
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "99", "hideall" => 1), $location);'));
+            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
         }
         else
         {
@@ -1488,14 +1499,19 @@ class MainWPSystem
     //This function will read the metaboxes & save them to the post
     function publish_bulkpage($post_id)
     {
+        $save_seo_value = isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))? true : false;
+        $message_id = 99;
+        if ($save_seo_value)
+            $message_id = 98;
+
         //Read extra metabox
         $pid = $this->metaboxes->select_sites_handle($post_id, 'bulkpage');
 
-        if ($pid == $post_id) {
+        if ($save_seo_value || $pid == $post_id) {
             /** @var $wpdb wpdb */
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "99", "hideall" => 1), $location);'));
+            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
         }
         else
         {
@@ -1517,14 +1533,19 @@ class MainWPSystem
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
             return;
 
+        $save_seo_value = isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))? true : false;
+        $message_id = 99;
+        if ($save_seo_value)
+            $message_id = 98;
+
         //Read extra metabox
         $pid = $this->metaboxes->select_sites_handle($post_id, 'bulkpage');
 
-        if ($pid == $post_id) {
+        if ($save_seo_value || $pid == $post_id) {
             /** @var $wpdb wpdb */
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "99", "hideall" => 1), $location);'));
+            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
         }
         else
         {
@@ -1559,7 +1580,7 @@ class MainWPSystem
             'description' => 'description...',
             'supports' => array('title', 'editor', 'excerpt', 'thumbnail', 'custom-fields', 'comments', 'revisions'),
             //'taxonomies' => array('category', 'post_tag', 'page-category'),
-            'public' => false,
+            'public' => true,
             'show_ui' => true,
             //'show_in_menu' => 'index.php',
             'show_in_nav_menus' => false,
@@ -1604,7 +1625,7 @@ class MainWPSystem
             'description' => 'description...',
             'supports' => array('title', 'editor', 'excerpt', 'thumbnail', 'custom-fields', 'comments', 'revisions'),
             //'taxonomies' => array('category', 'post_tag', 'page-category'),
-            'public' => false,
+            'public' => true,
             'show_ui' => true,
             //'show_in_menu' => 'index.php',
             'show_in_nav_menus' => false,

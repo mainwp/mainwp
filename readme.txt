@@ -113,6 +113,10 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 == Changelog ==
 
+= 1.0.8.4 =
+* Now compatible with WPEngine-hosted child-sites
+* Added new hooks for upcoming extensions
+
 = 1.0.8.3 =
 * Fixed issue with some missing images
 * Fixed issue with Comments extension redirect

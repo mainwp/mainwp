@@ -89,7 +89,7 @@ rightnow_wordpress_global_upgrade_all = function ()
         jQuery('#rightnow-upgrade-status-progress').progressbar({value:0, max:pSitesCount});
         upgradeStatusBox.dialog({
             resizable:false,
-            height:320,
+            height:350,
             width:500,
             modal:true,
             close:function (event, ui)
@@ -276,7 +276,7 @@ rightnow_plugins_global_upgrade_all = function()
         jQuery('#rightnow-upgrade-status-progress').progressbar({value:0, max:pSitesCount});
         jQuery('#rightnow-upgrade-status-box').dialog({
             resizable:false,
-            height:320,
+            height:350,
             width:500,
             modal:true,
             close:function (event, ui)
@@ -329,7 +329,7 @@ rightnow_plugins_upgrade_all = function (slug, pluginName)
         jQuery('#rightnow-upgrade-status-progress').progressbar({value:0, max:pSitesCount});
         jQuery('#rightnow-upgrade-status-box').dialog({
             resizable:false,
-            height:320,
+            height:350,
             width:500,
             modal:true,
             close:function (event, ui)
@@ -568,7 +568,7 @@ rightnow_themes_global_upgrade_all = function ()
         jQuery('#rightnow-upgrade-status-progress').progressbar({value:0, max:pSitesCount});
         jQuery('#rightnow-upgrade-status-box').dialog({
             resizable:false,
-            height:320,
+            height:350,
             width:500,
             modal:true,
             close:function (event, ui)
@@ -618,7 +618,7 @@ rightnow_themes_upgrade_all = function (slug, themeName)
         jQuery('#rightnow-upgrade-status-progress').progressbar({value:0, max:pSitesCount});
         jQuery('#rightnow-upgrade-status-box').dialog({
             resizable:false,
-            height:320,
+            height:350,
             width:500,
             modal:true,
             close:function (event, ui)
@@ -937,7 +937,7 @@ rightnow_global_upgrade_all = function ()
     jQuery('#rightnow-upgrade-status-progress').progressbar({value:0, max:sitesCount});
     upgradeStatusBox.dialog({
         resizable:false,
-        height:320,
+        height:350,
         width:500,
         modal:true,
         close:function (event, ui)
@@ -1239,7 +1239,7 @@ mainwp_rightnow_checkBackups = function(sitesToUpdate, siteNames)
         {
             backupBox.dialog({
                 resizable:false,
-                height:320,
+                height:350,
                 width:500,
                 modal:true,
                 close:function (event, ui)
@@ -1314,7 +1314,7 @@ mainwp_rightnow_checkBackups = function(sitesToUpdate, siteNames)
               //backupBox = jQuery('#rightnow-backup-box');
               backupBox.dialog({
                   resizable:false,
-                  height:320,
+                  height:350,
                   width:500,
                   modal:true,
                   close:function (event, ui)
@@ -1361,7 +1361,7 @@ jQuery(document).on('click', '#rightnow-backup-all', function() {
     var backupNowBox = jQuery('#rightnow-backupnow-box');
     backupNowBox.dialog({
         resizable:false,
-        height:320,
+        height:350,
         width:500,
         modal:true,
         close:function (event, ui)

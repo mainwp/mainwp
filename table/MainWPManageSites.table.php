@@ -42,6 +42,9 @@ class MainWPManageSites_List_Table extends WP_List_Table
 
     function column_default($item, $column_name)
     {
+
+        $item = apply_filters('mainwp-sitestable-item', $item, $item);
+
         switch ($column_name)
         {
             case 'status':
@@ -55,7 +58,8 @@ class MainWPManageSites_List_Table extends WP_List_Table
             case 'notes':
                 return $item[$column_name];
             default:
-                return print_r($item, true); //Show the whole array for troubleshooting purposes
+                return $item[$column_name];
+               // return print_r($item, true); //Show the whole array for troubleshooting purposes
         }
     }
 
@@ -87,6 +91,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
 
         if (get_option('mainwp_seo') != 1) unset($columns['seo']);
 
+        $columns = apply_filters('mainwp-sitestable-getcolumns', $columns, $columns);
         return $columns;
     }
 

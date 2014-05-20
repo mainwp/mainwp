@@ -1557,7 +1557,7 @@ managebackups_run_now = function(el)
     jQuery('#managebackups-task-status-close').prop('value', __('Cancel'));
     jQuery('#managebackups-task-status-box').dialog({
         resizable: false,
-        height: 330,
+        height: 350,
         width: 750,
         modal: true,
         close: function(event, ui) { if (!manageBackupsError) { location.reload();}}});
@@ -3688,7 +3688,7 @@ backup = function ()
     jQuery('#managesite-backup-status-text').html(dateToHMS(new Date()) + ' '+__('Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient.'));
     jQuery('#managesite-backup-status-box').dialog({
         resizable: false,
-        height: 330,
+        height: 350,
         width: 500,
         modal: true,
         close: function(event, ui) { if (!backupError) { location.reload(); }}});

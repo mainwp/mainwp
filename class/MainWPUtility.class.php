@@ -377,6 +377,26 @@ class MainWPUtility
             }
 
             $ch = curl_init();
+
+            if ($website != null)
+            {
+                $dirs = self::getMainWPDir();
+                $cookieDir = $dirs[0] . 'cookies';
+                @mkdir($cookieDir, 0777, true);
+
+                $cookieFile = $cookieDir . '/' . sha1(sha1('mainwp' . $website->id) . 'WP_Cookie');
+                if (!file_exists($cookieFile))
+                {
+                    @file_put_contents($cookieFile, '');
+                }
+
+                if (file_exists($cookieFile))
+                {
+                    curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
+                    curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
+                }
+            }
+
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);

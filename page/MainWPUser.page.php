@@ -108,8 +108,9 @@ class MainWPUser
         self::renderHeader(''); ?>
         <div class="mainwp_info-box"><strong><?php _e('Use this to bulk change password, change role or delete users. To add new users click on the "Add New" tab.','mainwp'); ?></strong></div>
         <br/>
-        <div class="mainwp-update-password-form">
-            <h3><?php _e('Update Password','mainwp'); ?></h3>
+        <div class="postbox" style="float: right; width: 255px; margin-top: 1em;">
+            <h3 class="box_title mainwp_box_title"><?php _e('Update Password','mainwp'); ?></h3>
+            <div class="inside mainwp_inside" style="padding-bottom: .2em !important;">
             <div class="form-field">
                <label for="pass1"><?php _e('Twice Required','mainwp'); ?></label>
                 <input name="user_login" type="hidden" id="user_login" value="admin">
@@ -121,13 +122,14 @@ class MainWPUser
             <p class="description indicator-hint"><?php _e('Hint: The password should be at least seven
                 characters long. To make it stronger, use upper and lower case letters, numbers and
                 symbols like ! " ? $ % ^ &amp; ).','mainwp'); ?></p>
-             <p><input type="button" value="<?php _e('Update Password','mainwp'); ?>" class="button-primary"
+             <p style="text-align: center;"><input type="button" value="<?php _e('Update Password','mainwp'); ?>" class="button-primary"
                     id="mainwp_btn_update_password" name="mainwp_btn_update_password">
                 <span id="mainwp_users_password_updating">
                         <img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/>
                     </span>   
              </p> 
              <p><div id="mainwp_update_password_error" style="display: none"></div></p>
+             </div>
         </div>
         <div class="mainwp-search-form">
             <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right'); ?>

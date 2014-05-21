@@ -1762,7 +1762,7 @@ class MainWPSystem
             }
         }
         ?>
-        <div id="refresh-status-box" title="Updating Websites" style="display: none; text-align: center">
+        <div id="refresh-status-box" title="Syncing Websites" style="display: none; text-align: center">
             <div id="refresh-status-progress"></div>
             <span id="refresh-status-current">0</span> / <span id="refresh-status-total"><?php echo is_array($websites) ? count($websites) : MainWPDB::num_rows($websites); ?></span> updated
             <div style="height: 160px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="refresh-status-content">

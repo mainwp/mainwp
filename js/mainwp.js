@@ -834,7 +834,7 @@ dashboard_update_next = function()
     currentThreads++;
     websitesLeft--;
     var websiteId = websitesToUpdate[currentWebsite++];
-    dashboard_update_site_status(websiteId, __('UPDATING'));
+    dashboard_update_site_status(websiteId, __('SYNCING'));
     var data = mainwp_secure_data({
         action:'mainwp_syncsites',
         wp_id: websiteId
@@ -5397,7 +5397,8 @@ dateToHMS = function(date) {
         var time = moment(date);
         var format = mainwpParams['time_format'];
         format = format.replace('g', 'h');
-        format = format.replace('i', 'm');
+        format = format.replace('i', 'mm');
+        format = format.replace('s', 'ss');
         format = format.replace('F', 'MMMM');
         format = format.replace('j', 'D');
         format = format.replace('Y', 'YYYY');
@@ -5641,13 +5642,13 @@ mainwp_showhide_quick_guide = function(show, tut) {
         jQuery('#mainwp-qsg-tips').hide();
         jQuery('#mainwp-quick-start-guide').show();
  }
-}
+};
 
 mainwp_showhide_quick_tut = function() {
     var tut = mainwp_getCookie('qsg_number');
     jQuery('.mainwp-qsg').hide();
     jQuery('.mainwp-qsg[number="' + tut + '"]').show();
-}
+};
 
 
 function mainwp_setCookie(c_name, value, expiredays)

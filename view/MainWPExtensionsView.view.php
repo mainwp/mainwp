@@ -18,7 +18,7 @@ class MainWPExtensionsView
         <h2><?php _e('Extensions', 'mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
         <?php if ($shownPage === '') { ?>
         <div class="mainwp-ext-categories" id="mainwp-recent-extensions">
-            <div id="mainwp-recent-extensions-title" style="border-bottom: 1px Solid #000;"><span style="color: #f0efe9;">Get MainWP Extensions</span></div>
+            <div id="mainwp-recent-extensions-title" style="border-bottom: 1px Solid #000;"><span style="color: #f0efe9;">Get MainWP Extensions</span><span style="float: right;" class=""><a href="http://mainwp.com/member/signup/mainwpsignup" target="_blank" class="mainwp-upgrade-button button-primary button">Create MainWP Account</a></span></div>
             <div id="mainwp-recent-extensions-products" style="border-top: 1px Solid #555; padding-top: 1em;">
             <span class="mainwp_fivecol_one">
             <ul class="mainwp-product-categories-list">

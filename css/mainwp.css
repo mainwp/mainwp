@@ -1016,7 +1016,7 @@ li.hoverli {
     min-height: 500px ;
     height: auto ;
     width: auto ;
-    margin-top: 2em ;
+    margin-top: 5em ;
     padding: 10px ;
     background: #f9f9f9 ;
     border: 1px solid #7fb100;
@@ -1097,7 +1097,7 @@ li.hoverli {
 #selected_groups, .selected_groups {
     background: #fff ;
 }
-
+/*
 .mainwp-ui #screen-meta-links + .wrap #mainwplogo {
     margin-bottom: -27px;
     margin-top: 10px;
@@ -1107,12 +1107,17 @@ li.hoverli {
 .mainwp-ui #screen-meta-links + .wrap #mainwplogo + img {
     margin-top: -13px !important;
 }
-
+*/
 #mainwplogo
 {
-    float:right;
-    position: relative ;
-    margin-bottom: .3em;
+    position: absolute;
+    top:2.5em;
+    right: 2em;
+    display: block;
+}
+#mainwplogo img
+{
+    height: 40px !important;
 }
 
 /* Enhance Wordpress Admin UI */
@@ -2411,7 +2416,7 @@ background-position: 0 -16px;
 /*  Backups Table  */
 
 #mainwp_managebackups_content .column-task_name {
-    width: 16% !important;
+    width: 15% !important;
 }
 
 #mainwp_managebackups_content .column-type {
@@ -2419,7 +2424,7 @@ background-position: 0 -16px;
 }
 
 #mainwp_managebackups_content .column-schedule {
-    width: 8% !important;
+    width: 9% !important;
 }
 
 #mainwp_managebackups_content .column-destination {
@@ -2427,15 +2432,15 @@ background-position: 0 -16px;
 }
 
 #mainwp_managebackups_content .column-websites {
-    width: 6% !important;
+    width: 8% !important;
 }
 
 #mainwp_managebackups_content .column-details {
-    width: 30% !important;
+    width: 29% !important;
 }
 
 #mainwp_managebackups_content .column-trigger {
-    width: 10% !important;
+    width: 9% !important;
 }
 
 #mainwp-security-issues-table {

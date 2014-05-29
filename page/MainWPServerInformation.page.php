@@ -74,6 +74,7 @@ class MainWPServerInformation
 //                            self::renderRow('PHP Memory Limit', '>=', '128M', 'getPHPMemoryLimit', '(256M+ best for big backups)');
                         self::renderRow('PCRE Backtracking Limit', '>=', '10000', 'getOutputBufferSize');
                         self::renderRow('SSL Extension Enabled', '=', true, 'getSSLSupport');
+                        self::renderRow('SSL Warnings', '=', '', 'getSSLWarning', 'empty');
                         self::renderRow('Curl Extension Enabled', '=', true, 'getCurlSupport');
                         self::renderRow('Curl Timeout', '>=', '300', 'getCurlTimeout', 'seconds', '=', '0');
                         ?>
@@ -341,6 +342,16 @@ class MainWPServerInformation
     protected static function getSSLSupport()
     {
         return extension_loaded('openssl');
+    }
+
+    protected static function getSSLWarning()
+    {
+        $conf = array('private_key_bits' => 384);
+        $res = @openssl_pkey_new($conf);
+        @openssl_pkey_export($res, $privkey);
+
+    	$str = openssl_error_string();
+        return (stristr($str, 'NCONF_get_string:no value') ? '' : $str);
     }
 
     protected static function getCurlSupport()

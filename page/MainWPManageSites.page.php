@@ -188,7 +188,7 @@ class MainWPManageSites
                     if ($file != '.' && $file != '..')
                     {
                         $theFile = $dir . $file;
-                        if ($information['db'] && preg_match('/(.*).sql$/', $file))
+                        if ($information['db'] && (preg_match('/(.*).sql$/', $file) || preg_match('/(.*).sql.zip$/', $file)))
                         {
                             $dbBackups[filemtime($theFile) . $file] = $theFile;
                         }
@@ -232,12 +232,14 @@ class MainWPManageSites
             {
                 $what = 'db';
                 $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . date('m-d-Y') . '-' . time() . '.sql';
-                $regexBackupFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql';
+                $regexBackupFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip)?';
 
                 if ($pFilename != null)
                 {
                     $localBackupFile = $dir . str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, date('m-d-Y'), date('G\hi\ms\s'), $what), $pFilename) . '.sql';
                 }
+
+                if (MainWPUtility::endsWith($information['db'], 'zip')) $localBackupFile .= '.zip';
 
                 MainWPUtility::downloadToFile($information['db'], $localBackupFile);
             }
@@ -308,7 +310,7 @@ class MainWPManageSites
                 if ($file != '.' && $file != '..')
                 {
                     $theFile = $dir . $file;
-                    if ($pType == 'db' && preg_match('/(.*).sql$/', $file))
+                    if ($pType == 'db' && preg_match('/(.*).sql(\.zip)?$/', $file))
                     {
                         $dbBackups[filemtime($theFile) . $file] = $theFile;
                     }
@@ -429,7 +431,7 @@ class MainWPManageSites
             if ($pType == 'db')
             {
                 $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . date('m-d-Y') . '-' . time() . '.sql';
-                $localRegexFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql';
+                $localRegexFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip)?';
             }
             else
             {
@@ -450,6 +452,8 @@ class MainWPManageSites
                     $localBackupFile .= '.zip';
                 }
             }
+
+            if (($pType == 'db') && MainWPUtility::endsWith($information['db'], 'zip')) $localBackupFile .= '.zip';
 
             $backup_result['local'] = $localBackupFile;
             $backup_result['regexfile'] = $localRegexFile;
@@ -524,7 +528,7 @@ class MainWPManageSites
                 if ($file != '.' && $file != '..')
                 {
                     $theFile = $dir . $file;
-                    if (preg_match('/(.*)\.sql$/', $file))
+                    if (preg_match('/(.*)\.sql(\.zip)?$/', $file))
                     {
                         $dbBackups[filemtime($theFile) . $file] = $theFile;
                     }

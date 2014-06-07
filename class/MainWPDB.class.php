@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '6.2';
+    private $mainwp_db_version = '6.4';
     //Private
     private $table_prefix;
     //Singleton
@@ -103,6 +103,8 @@ class MainWPDB
   dtsSync int(11) NOT NULL,
   dtsSyncStart int(11) NOT NULL,
   totalsize int(11) NOT NULL,
+  dbsize int(11) NOT NULL,
+  last_db_backup_size int(11) NOT NULL,
   extauth text NOT NULL,
   pluginConflicts text NOT NULL,
   themeConflicts text NOT NULL,

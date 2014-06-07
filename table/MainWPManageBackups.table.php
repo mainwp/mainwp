@@ -134,7 +134,7 @@ class MainWPManageBackups_List_Table extends WP_List_Table
 
     function column_trigger($item)
     {
-        return '<span class="backup_run_loading"><img src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="'.$item->id.'">' . __('Run Now','mainwp') . '</a>';
+        return '<span class="backup_run_loading"><img src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="'.$item->id.'" task_type="'.$item->type.'">' . __('Run Now','mainwp') . '</a>';
     }
 
     function prepare_items()

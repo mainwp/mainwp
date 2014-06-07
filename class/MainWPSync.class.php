@@ -222,6 +222,12 @@ class MainWPSync
             $done = true;
         }
 
+        if (isset($information['dbsize']))
+        {
+            $websiteValues['dbsize'] = $information['dbsize'];
+            $done = true;
+        }
+
         if (isset($information['extauth']))
         {
             $websiteValues['extauth'] = $information['extauth'];

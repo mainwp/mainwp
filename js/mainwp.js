@@ -1546,6 +1546,7 @@ var manageBackupsTaskSites;
 var manageBackupsError = false;
 var manageBackupsTaskRemoteDestinations;
 var manageBackupsTaskId;
+var manageBackupsTaskType;
 var manageBackupsTaskError;
 managebackups_run_now = function(el)
 {
@@ -1563,6 +1564,7 @@ managebackups_run_now = function(el)
         close: function(event, ui) { if (!manageBackupsError) { location.reload();}}});
 
     var taskId = el.attr('task_id');
+    var taskType = el.attr('task_type');
     //Fetch the sites to backup
     var data = {
         action:'mainwp_backuptask_get_sites',
@@ -1571,14 +1573,15 @@ managebackups_run_now = function(el)
 
     manageBackupsError = false;
 
-    jQuery.post(ajaxurl, data, function(pTaskId) { return function (response) {
+    jQuery.post(ajaxurl, data, function(pTaskId, pTaskType) { return function (response) {
         manageBackupTaskSites = response.result.sites;
         manageBackupsTaskRemoteDestinations = response.result.remoteDestinations;
         manageBackupsTaskId = pTaskId;
+        manageBackupsTaskType = pTaskType;
         manageBackupsTaskError = false;
 
         managebackups_run_next();
-    } }(taskId), 'json');
+    } }(taskId, taskType), 'json');
 };
 managebackups_run_next = function()
 {
@@ -1597,32 +1600,69 @@ managebackups_run_next = function()
         return;
     }
 
-    var siteName = manageBackupTaskSites[0]['name'];
-    appendToDiv('#managebackups-task-status-text', '[' + siteName + '] '+__('Creating backupfile.'));
-
     var siteId = manageBackupTaskSites[0]['id'];
+    var siteName = manageBackupTaskSites[0]['name'];
+    var size = manageBackupTaskSites[0][manageBackupsTaskType + 'size'];
+    var fileNameUID = mainwp_uid();
+    appendToDiv('#managebackups-task-status-text', '[' + siteName + '] '+__('Creating backupfile.') + '<div id="managebackups-task-status-create-progress" siteId="'+siteId+'" style="margin-top: 1em;"></div>');
+
     manageBackupTaskSites.shift();
     var data = mainwp_secure_data({
         action: 'mainwp_backuptask_run_site',
         task_id: manageBackupsTaskId,
-        site_id: siteId
+        site_id: siteId,
+        fileNameUID: fileNameUID
     });
 
-    jQuery.post(ajaxurl, data, function(pTaskId, pSiteId, pSiteName, pRemoteDestinations) { return function (response) {
-        if (response.error)
-        {
-            appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] <font color="red">Error: ' + getErrorMessage(response.error) + '</font>');
-            manageBackupsTaskError = true;
-            managebackups_run_next();
-        }
-        else
-        {
-            appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] '+__('Backupfile created successfully.'));
+    jQuery('#managebackups-task-status-create-progress[siteId="'+siteId+'"]').progressbar({value: 0, max: size});
+    var interVal = setInterval(function() {
+        var data = mainwp_secure_data({
+            action:'mainwp_createbackup_getfilesize',
+            type: manageBackupsTaskType,
+            siteId: siteId,
+            fileName: '',
+            fileNameUID: fileNameUID
+        });
+        jQuery.post(ajaxurl, data, function(pSiteId) { return function (response) {
+            if (response.error) return;
 
-            managebackups_backup_download_file(pSiteId, pSiteName, response.result.type, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder, pRemoteDestinations);
-        }
+            if (backupCreateRunning)
+            {
+                var progressBar = jQuery('#managebackups-task-status-create-progress[siteId="'+pSiteId+'"]');
+                if (progressBar.progressbar('option', 'value') < progressBar.progressbar('option', 'max'))
+                {
+                    progressBar.progressbar('value', response.size);
+                }
+            }
+        } }(siteId), 'json');
+    }, 1000);
 
-    } }(manageBackupsTaskId, siteId, siteName, manageBackupsTaskRemoteDestinations.slice(0)), 'json');
+    backupCreateRunning = true;
+
+    jQuery.ajax({url: ajaxurl,
+                data: data,
+                method: 'POST',
+                success: function(pTaskId, pSiteId, pSiteName, pRemoteDestinations, pInterVal) { return function (response) {
+                        backupCreateRunning = false;
+                        clearInterval(pInterVal);
+
+                        var progressBar = jQuery('#managebackups-task-status-create-progress[siteId="'+pSiteId+'"]');
+                        progressBar.progressbar('value', parseFloat(progressBar.progressbar('option', 'max')));
+
+                        if (response.error)
+                        {
+                            appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] <font color="red">Error: ' + getErrorMessage(response.error) + '</font>');
+                            manageBackupsTaskError = true;
+                            managebackups_run_next();
+                        }
+                        else
+                        {
+                            appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] '+__('Backupfile created successfully.'));
+
+                            managebackups_backup_download_file(pSiteId, pSiteName, response.result.type, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder, pRemoteDestinations);
+                        }
+                    } }(manageBackupsTaskId, siteId, siteName, manageBackupsTaskRemoteDestinations.slice(0), interVal),
+                error: function(pInterVal) { return function() {backupCreateRunning = false;clearInterval(pInterVal);} }(interVal), dataType: 'json'});
 };
 
 managebackups_backup_download_file = function(pSiteId, pSiteName, type, url, file, regexfile, size, subfolder, remote_destinations)
@@ -3674,28 +3714,68 @@ backup = function ()
     jQuery('#backup_btnSubmit').attr('disabled', 'true');
     jQuery('#backup_loading').show();
     var remote_destinations = jQuery('#backup_location_remote').hasClass('mainwp_action_down') ? jQuery.map(jQuery('#backup_destination_list').find('input[name="remote_destinations[]"]'), function(el) { return {id: jQuery(el).val(), title: jQuery(el).attr('title'), type: jQuery(el).attr('destination_type')}; }) : [];
+
+    var type = (jQuery('#backup_type_full').hasClass('mainwp_action_down') ? 'full' : 'db');
+    var size = jQuery('#backup_site_' + type + '_size').val();
+    if (type == 'full')
+    {
+        size = size * 1024 * 1024 / 2.4; //Guessing how large the zip will be
+    }
+    var fileName = jQuery('#backup_filename').val();
+    var fileNameUID = mainwp_uid();
     var data = mainwp_secure_data({
         action:'mainwp_backup',
         site_id:jQuery('#backup_site_id').val(),
 
-        type:(jQuery('#backup_type_full').hasClass('mainwp_action_down') ? 'full' : 'db'),
+        type:type,
         exclude:jQuery('#excluded_folders_list').val(),
-        filename: jQuery('#backup_filename').val(),
+        filename: fileName,
+        fileNameUID: fileNameUID,
 
         subfolder:jQuery('#backup_subfolder').val()
     });
 
-    jQuery('#managesite-backup-status-text').html(dateToHMS(new Date()) + ' '+__('Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient.'));
+    jQuery('#managesite-backup-status-text').html(dateToHMS(new Date()) + ' '+__('Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient.') +' <div id="managesite-createbackup-status-progress" style="margin-top: 1em;"></div>');
+    jQuery('#managesite-createbackup-status-progress').progressbar({value: 0, max: size});
     jQuery('#managesite-backup-status-box').dialog({
         resizable: false,
         height: 350,
         width: 500,
         modal: true,
         close: function(event, ui) { if (!backupError) { location.reload(); }}});
+
+    var interVal = setInterval(function() {
+        var data = mainwp_secure_data({
+            action:'mainwp_createbackup_getfilesize',
+            siteId: jQuery('#backup_site_id').val(),
+            type: type,
+            fileName: fileName,
+            fileNameUID: fileNameUID
+        });
+        jQuery.post(ajaxurl, data,function (response) {
+            if (response.error) return;
+
+            if (backupCreateRunning)
+            {
+                var progressBar = jQuery('#managesite-createbackup-status-progress');
+                if (progressBar.progressbar('option', 'value') < progressBar.progressbar('option', 'max'))
+                {
+                    progressBar.progressbar('value', response.size);
+                }
+            }
+        }, 'json');
+    }, 1000);
+
+    backupCreateRunning = true;
     jQuery.ajax({url: ajaxurl,
                 data: data,
                 method: 'POST',
-                success: function(pSiteId, pRemoteDestinations) { return function (response) {
+                success: function(pSiteId, pRemoteDestinations, pInterVal) { return function (response) {
+                    backupCreateRunning = false;
+                    clearInterval(pInterVal);
+
+                    var progressBar = jQuery('#managesite-createbackup-status-progress');
+                    progressBar.progressbar('value', parseFloat(progressBar.progressbar('option', 'max')));
         if (response.error)
         {
             appendToDiv('#managesite-backup-status-text', ' <font color="red">Error:' + getErrorMessage(response.error) + '</font>');
@@ -3707,7 +3787,7 @@ backup = function ()
             backup_download_file(pSiteId, response.result.type, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder, pRemoteDestinations);
         }
 
-    } }(jQuery('#backup_site_id').val(), remote_destinations), dataType: 'json'});
+    } }(jQuery('#backup_site_id').val(), remote_destinations, interVal), error: function(pInterVal) { return function() {backupCreateRunning = false;clearInterval(pInterVal);} }(interVal), dataType: 'json'});
 };
 
 backup_download_file = function(pSiteId, type, url, file, regexfile, size, subfolder, remote_destinations)
@@ -5680,3 +5760,18 @@ jQuery(document).on('click', '#mainwp-ext-dismiss', function()
 
  return false;
 });
+
+mainwp_uid = function() {
+    // always start with a letter (for DOM friendlyness)
+    var idstr=String.fromCharCode(Math.floor((Math.random()*25)+65));
+    do {
+        // between numbers and characters (48 is 0 and 90 is Z (42-48 = 90)
+        var ascicode=Math.floor((Math.random()*42)+48);
+        if (ascicode<58 || ascicode>64){
+            // exclude all chars between : (58) and @ (64)
+            idstr+=String.fromCharCode(ascicode);
+        }
+    } while (idstr.length<32);
+
+    return (idstr);
+};

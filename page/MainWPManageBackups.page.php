@@ -610,13 +610,13 @@ class MainWPManageBackups
         return ($errorOutput == '');
     }
 
-    public static function backup($pTaskId, $pSiteId)
+    public static function backup($pTaskId, $pSiteId, $pFileNameUID)
     {
         $backupTask = MainWPDB::Instance()->getBackupTaskById($pTaskId);
 
         $subfolder = str_replace('%task%', MainWPUtility::sanitize($backupTask->name), $backupTask->subfolder);
 
-        return MainWPManageSites::backup($pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->filename);
+        return MainWPManageSites::backup($pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->filename, $pFileNameUID);
     }
 
     public static function getBackupTaskSites($pTaskId)
@@ -643,7 +643,7 @@ class MainWPManageBackups
         foreach ($sites as $site)
         {
             $website = MainWPDB::Instance()->getWebsiteById($site);
-            $allSites[] = array('id' => $website->id, 'name' => $website->name);
+            $allSites[] = array('id' => $website->id, 'name' => $website->name, 'fullsize' => $website->totalsize * 1024, 'dbsize' => $website->dbsize);
         }
 
         $remoteDestinations = apply_filters('mainwp_backuptask_remotedestinations', array(), $backupTask);

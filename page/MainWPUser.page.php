@@ -108,7 +108,7 @@ class MainWPUser
         self::renderHeader(''); ?>
         <div class="mainwp_info-box"><strong><?php _e('Use this to bulk change password, change role or delete users. To add new users click on the "Add New" tab.','mainwp'); ?></strong></div>
         <br/>
-        <div class="postbox" style="float: right; width: 255px; margin-top: 1em;">
+        <div class="postbox" style="float: right; width: 255px; margin-top: 1.2em;">
             <h3 class="box_title mainwp_box_title"><?php _e('Update Password','mainwp'); ?></h3>
             <div class="inside mainwp_inside" style="padding-bottom: .2em !important;">
             <div class="form-field">
@@ -602,8 +602,9 @@ class MainWPUser
                     <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp')); ?>
                 </div>
                 <div class="mainwp_config_box_left">
-                	<fieldset class="mainwp-fieldset-box">
-                	<legend><?php _e('Add a Single User','mainwp'); ?></legend>
+                	<div class="postbox">
+                	<h3 class="mainwp_box_title"><span><?php _e('Add a Single User','mainwp'); ?></span></h3>
+                    <div class="inside">
                     <table class="form-table">
                         <tr class="form-field form-required">
                             <th scope="row"><label for="user_login"><?php _e('Username','mainwp'); ?> <span class="description"><?php _e('(required)','mainwp'); ?></span></label>
@@ -708,9 +709,11 @@ class MainWPUser
                             </td>
                         </tr>
                         </table>
-                        </fieldset>
-                        <fieldset class="mainwp-fieldset-box">
-                        <legend><?php _e('Bulk Upload','mainwp'); ?></legend>
+                        </div>
+                        </div>
+                        <div class="postbox">
+                        <h3 class="mainwp_box_title"><span><?php _e('Bulk Upload','mainwp'); ?></span></h3>
+                        <div class="inside">
                         <table>
                         <tr>
                             <th scope="row"></th>
@@ -736,7 +739,8 @@ class MainWPUser
                         </tr>                    
                     
                     </table>
-                    </fieldset>
+                    </div>
+                </div>
                 </div>
 
                 <p class="submit"><input type="button" name="createuser" id="bulk_add_createuser" class="button-primary"

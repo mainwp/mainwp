@@ -3776,6 +3776,7 @@ backup = function ()
 
                     var progressBar = jQuery('#managesite-createbackup-status-progress');
                     progressBar.progressbar('value', parseFloat(progressBar.progressbar('option', 'max')));
+
         if (response.error)
         {
             appendToDiv('#managesite-backup-status-text', ' <font color="red">Error:' + getErrorMessage(response.error) + '</font>');

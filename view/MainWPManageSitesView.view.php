@@ -624,32 +624,31 @@ class MainWPManageSitesView
             src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP"/></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-sites.png', dirname(__FILE__)); ?>"
              style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Sites" height="32"/>
-
         <h2>Backup <?php echo $website->name; ?></h2>
 
         <?php
-        if ($website->totalsize > 100)
-        {
-            ?>
-            <div class="mainwp_info-box-yellow"><?php _e('A full backup might fail because the total file size of this website is','mainwp'); ?> <?php echo $website->totalsize; ?><?php _e('MB, you could exclude folders to decrease the filesize.','mainwp'); ?></div>
-            <?php
-        }
+//        if ($website->totalsize > 100)
+//        {
+//            ?>
+<!--            <div class="mainwp_info-box-yellow">--><?php //_e('A full backup might fail because the total file size of this website is','mainwp'); ?><!-- --><?php //echo $website->totalsize; ?><!----><?php //_e('MB, you could exclude folders to decrease the filesize.','mainwp'); ?><!--</div>-->
+<!--            --><?php
+//        }
         ?>
         <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
         <div id="mainwp_background-box">
         	<div class="postbox" id="mainwp-backup-details">
-            <h3 class="mainwp_box_title"><span><?php _e('Backup Details','mainwp'); ?></span></h3>
-            <div class="inside">
-            <?php
-            if (!MainWPUtility::can_edit_website($website))
-            {
-                die('This is not your website.');
-            }
+                <h3 class="mainwp_box_title"><span><?php _e('Backup Details','mainwp'); ?></span></h3>
+                <div class="inside">
+                <?php
+                if (!MainWPUtility::can_edit_website($website))
+                {
+                    die('This is not your website.');
+                }
 
-            MainWPManageSites::showBackups($website);
-            ?>
-            </div>
+                MainWPManageSites::showBackups($website);
+                ?>
+                </div>
             </div>
             <div class="postbox" id="mainwp-backup-optins-site">
             <h3 class="mainwp_box_title"><span><?php _e('Backup Options','mainwp'); ?></span></h3>
@@ -717,6 +716,7 @@ class MainWPManageSitesView
                                          class="button-primary"
                                          value="Backup Now"/></p>
             </form>
+            </div>
         </div>
     </div>
 

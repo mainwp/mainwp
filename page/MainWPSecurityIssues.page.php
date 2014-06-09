@@ -45,8 +45,8 @@ class MainWPSecurityIssues
                 <tr><td><span id="admin_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span><span id="admin_ok" style="display: none;"><img src="<?php echo plugins_url('images/ok.png', dirname(__FILE__)); ?>"/></span><span id="admin_nok"  style="display: none;"><img src="<?php echo plugins_url('images/nok.png', dirname(__FILE__)); ?>"/></span></td><td><?php _e('Administrator username should not be Admin','mainwp'); ?></td><td><span id="admin_fix" style="display: none"></span><ol><li><?php _e('If this user was used as your MainWP Secure Link Admin, you will need to change your Administrator Username in the MainWP Dashboard for the site.','mainwp'); ?> - <a href="http://docs.mainwp.com/deleting-secure-link-admin/" ><?php _e('Documentation','mainwp'); ?></a></li><li><?php _e('You have to change this yourself','mainwp'); ?> - <a href="http://blog.mainwp.com/change-default-wordpress-admin-username/" target="_blank"><?php _e('Tutorial','mainwp'); ?></a></li></ol></td></tr>
             </table>
             <br /><input type="button" id="securityIssues_fixAll" class="button-primary" value="<?php _e('Fix All','mainwp'); ?>"/> <input type="button" id="securityIssues_refresh" class="button" value="<?php _e('Refresh','mainwp'); ?>"/>
-        </div>
-        </div>
+            </div>
+            </div>
         </div>
     </div>
     <input type="hidden" id="securityIssueSite" value="<?php echo $_REQUEST['id']; ?>"/>

@@ -280,10 +280,9 @@ class MainWPManageBackups
         <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right', 'float: right !important;', $selected_websites, $selected_groups, true); ?>
         <div class="mainwp_config_box_left">
 
-            <fieldset class="mainwp-fieldset-box">
-
-                <legend><?php _e('Schedule Backup','mainwp'); ?></legend>
-
+        <div class="postbox">
+        <h3 class="mainwp_box_title"><span><?php _e('Schedule Backup','mainwp'); ?></span></h3>
+        <div class="inside">
         <table class="form-table" style="width: 100%">
             <tr class="form-field form-required">
                 <th scope="row"><?php _e('Task Name:','mainwp'); ?></th>
@@ -352,7 +351,8 @@ class MainWPManageBackups
             ?>
             <?php do_action('mainwp_backups_remote_settings', array('task' => $task)); ?>
         </table>
-        </fieldset>
+        </div>
+        </div>
         </div>
         <div class="clear"></div>
 

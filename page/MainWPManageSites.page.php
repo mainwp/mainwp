@@ -489,6 +489,7 @@ class MainWPManageSites
         add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPManageBackups::getMetaboxName(), array(MainWPManageBackups::getClassName(), 'renderMetabox'), self::$page, 'normal', 'core');
 		add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPWidgetPlugins::getName(), array(MainWPWidgetPlugins::getClassName(), 'render'), self::$page, 'normal', 'core');
 		add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPWidgetThemes::getName(), array(MainWPWidgetThemes::getClassName(), 'render'), self::$page, 'normal', 'core');
+        add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPNotes::getName(), array(MainWPNotes::getClassName(), 'render'), self::$page, 'normal', 'core');
 		
         $extMetaBoxs = MainWPSystem::Instance()->apply_filter('mainwp-getmetaboxes', array());
         $extMetaBoxs = apply_filters('mainwp-getmetaboxs', $extMetaBoxs);

@@ -90,6 +90,7 @@ class MainWPBulkUpdateAdminPasswords
                             $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesByGroupId($k));
                             while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                             {
+                                if ($website->sync_errors != '') continue;
                                 $dbwebsites[$website->id] = MainWPUtility::mapSite($website, array('id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey'));
                             }
                             @MainWPDB::free_result($websites);

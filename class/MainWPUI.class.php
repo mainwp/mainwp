@@ -1,14 +1,14 @@
 <?php
 class MainWPUI
 {
-	public static function select_sites_box( $title = "", $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array())
+	public static function select_sites_box( $title = "", $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false)
 	{
 		?>
 		<div class="mainwp_select_sites_box<?php if ( $class ) echo " $class"; ?>"<?php if ( $style ) echo ' style="'.$style.'"'; ?>>
             <div class="postbox">
                 <h3 class="box_title mainwp_box_title"><?php echo ( $title ) ? $title : translate('Select Sites', 'mainwp') ?> <div class="mainwp_sites_selectcount"><?php echo !is_array($selected_websites) ? '0' : count($selected_websites); ?></div></h3>
                 <div class="inside mainwp_inside">
-                    <?php self::select_sites_box_body($selected_websites, $selected_groups, $type, $show_group, $show_select_all); ?>
+                    <?php self::select_sites_box_body($selected_websites, $selected_groups, $type, $show_group, $show_select_all, false, $enableOfflineSites); ?>
                 </div>
             </div>
         </div>
@@ -16,10 +16,10 @@ class MainWPUI
 	}
         
 
-    public static function select_sites_box_body(&$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false)
+    public static function select_sites_box_body(&$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false)
     {
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
-        $groups = MainWPDB::Instance()->getNotEmptyGroups();
+        $groups = MainWPDB::Instance()->getNotEmptyGroups(null, $enableOfflineSites);
         ?>
         <input type="hidden" name="select_by" id="select_by" value="<?php echo (count($selected_groups) > 0 ? 'group' : 'site'); ?>" />
         <?php if ( $show_select_all ): ?>
@@ -37,9 +37,16 @@ class MainWPUI
             {
                 while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                 {
-                    $selected = ($selected_websites == 'all' || in_array($website->id, $selected_websites));
+                    if ($website->sync_errors == '' || $enableOfflineSites)
+                    {
+                        $selected = ($selected_websites == 'all' || in_array($website->id, $selected_websites));
 
-                    echo '<div class="mainwp_selected_sites_item '.($selected ? 'selected_sites_item_checked' : '').'"><input onClick="mainwp_site_select(this)" type="'.$type.'" name="' . ( $type == 'radio' ? 'selected_site' : 'selected_sites[]' ) . '" siteid="' . $website->id . '" value="' . $website->id . '" id="selected_sites_' . $website->id . '" '.($selected ? 'checked="true"' : '').'/> <label for="selected_sites_' . $website->id . '">' . $website->name . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+                        echo '<div class="mainwp_selected_sites_item '.($selected ? 'selected_sites_item_checked' : '').'"><input onClick="mainwp_site_select(this)" type="'.$type.'" name="' . ( $type == 'radio' ? 'selected_site' : 'selected_sites[]' ) . '" siteid="' . $website->id . '" value="' . $website->id . '" id="selected_sites_' . $website->id . '" '.($selected ? 'checked="true"' : '').'/> <label for="selected_sites_' . $website->id . '">' . $website->name . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+                    }
+                    else
+                    {
+                        echo '<div class="mainwp_selected_sites_item disabled"><input type="'.$type.'" disabled=disabled /> <label for="selected_sites_' . $website->id . '">' . $website->name . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+                    }
                 }
                 @MainWPDB::free_result($websites);
             }

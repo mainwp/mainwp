@@ -177,6 +177,7 @@ class MainWPThemes
                         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesByGroupId($v));
                         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                         {
+                            if ($website->sync_errors != '') continue;
                             $allThemes = json_decode($website->themes, true);
                             for ($i = 0; $i < count($allThemes); $i++) {
                                 $theme = $allThemes[$i];
@@ -214,6 +215,7 @@ class MainWPThemes
                         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesByGroupId($v));
                         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                         {
+                            if ($website->sync_errors != '') continue;
                             $dbwebsites[$website->id] = MainWPUtility::mapSite($website, array('id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey'));
                         }
                         @MainWPDB::free_result($websites);

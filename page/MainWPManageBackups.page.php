@@ -277,7 +277,7 @@ class MainWPManageBackups
             //to add CSS Styling to the select sites box use the one below (this adds the css class mainwp_select_sites_box_right to the box)
             //MainWPUI::select_sites_box(__("Select Sites"), 'checkbox', true, true, 'mainwp_select_sites_box_right', '', $selected_websites, $selected_groups);
         ?>
-        <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right', 'float: right !important;', $selected_websites, $selected_groups); ?>
+        <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right', 'float: right !important;', $selected_websites, $selected_groups, true); ?>
         <div class="mainwp_config_box_left">
 
             <fieldset class="mainwp-fieldset-box">

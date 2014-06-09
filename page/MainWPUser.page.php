@@ -334,6 +334,7 @@ class MainWPUser
                         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesByGroupId($v));
                         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                         {
+                            if ($website->sync_errors != '') continue;
                             $allUsers = json_decode($website->users, true);
                             for ($i = 0; $i < count($allUsers); $i++) {
                                 $user = $allUsers[$i];
@@ -395,6 +396,7 @@ class MainWPUser
                         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesByGroupId($v));
                         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                         {
+                            if ($website->sync_errors != '') continue;
                             $dbwebsites[$website->id] = MainWPUtility::mapSite($website, array('id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey'));
                         }
                         @MainWPDB::free_result($websites);

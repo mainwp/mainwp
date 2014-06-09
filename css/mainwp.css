@@ -308,6 +308,11 @@ h3.mainwp_box_title {
     background: rgba(127, 177, 0, 0.3);
 }
 
+.mainwp_selected_sites_item.disabled:hover
+{
+    background: #f3f3f3 !important;
+}
+
 .mainwp_selected_sites_item input {
     float: left;
     margin: 2px 0 0;

@@ -30,7 +30,9 @@ class MainWPSecurityIssues
         <img src="<?php echo plugins_url('images/icons/mainwp-security.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Security Issues" height="32"/><h2><?php _e('Security Issues','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div id="mainwp_background-box">
         	<div class="mainwp_info-box"><?php _e('We highly suggest you make a full backup before you run the Security Update.','mainwp'); ?></div>
-            <h3><?php echo $website->name; ?> (<?php echo $website->url; ?>)</h3>
+            <div class="postbox">
+            <h3 class="mainwp_box_title"><span><?php echo $website->name; ?> (<?php echo $website->url; ?>)</span></h3>
+            <div class="inside">
             <table id="mainwp-security-issues-table">
                 <tr><td><span id="listing_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span><span id="listing_ok" style="display: none;"><img src="<?php echo plugins_url('images/ok.png', dirname(__FILE__)); ?>"/></span><span id="listing_nok"  style="display: none;"><img src="<?php echo plugins_url('images/nok.png', dirname(__FILE__)); ?>"/></span></td><td><?php _e('Prevent listing wp-content, wp-content/plugins, wp-content/themes, wp-content/uploads','mainwp'); ?></td><td><span id="listing_fix" style="display: none"><a href="#"><?php _e('Fix','mainwp'); ?></a></span></td></tr>
                 <tr><td><span id="wp_version_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span><span id="wp_version_ok" style="display: none;"><img src="<?php echo plugins_url('images/ok.png', dirname(__FILE__)); ?>"/></span><span id="wp_version_nok"  style="display: none;"><img src="<?php echo plugins_url('images/nok.png', dirname(__FILE__)); ?>"/></span></td><td><?php _e('Removed wp-version','mainwp'); ?></td><td><span id="wp_version_fix" style="display: none"><a href="#"><?php _e('Fix','mainwp'); ?></a></span><span id="wp_version_unfix" style="display: none"><a href="#"><?php _e('Unfix','mainwp'); ?></a></span></td></tr>
@@ -43,6 +45,8 @@ class MainWPSecurityIssues
                 <tr><td><span id="admin_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span><span id="admin_ok" style="display: none;"><img src="<?php echo plugins_url('images/ok.png', dirname(__FILE__)); ?>"/></span><span id="admin_nok"  style="display: none;"><img src="<?php echo plugins_url('images/nok.png', dirname(__FILE__)); ?>"/></span></td><td><?php _e('Administrator username should not be Admin','mainwp'); ?></td><td><span id="admin_fix" style="display: none"></span><ol><li><?php _e('If this user was used as your MainWP Secure Link Admin, you will need to change your Administrator Username in the MainWP Dashboard for the site.','mainwp'); ?> - <a href="http://docs.mainwp.com/deleting-secure-link-admin/" ><?php _e('Documentation','mainwp'); ?></a></li><li><?php _e('You have to change this yourself','mainwp'); ?> - <a href="http://blog.mainwp.com/change-default-wordpress-admin-username/" target="_blank"><?php _e('Tutorial','mainwp'); ?></a></li></ol></td></tr>
             </table>
             <br /><input type="button" id="securityIssues_fixAll" class="button-primary" value="<?php _e('Fix All','mainwp'); ?>"/> <input type="button" id="securityIssues_refresh" class="button" value="<?php _e('Refresh','mainwp'); ?>"/>
+        </div>
+        </div>
         </div>
     </div>
     <input type="hidden" id="securityIssueSite" value="<?php echo $_REQUEST['id']; ?>"/>

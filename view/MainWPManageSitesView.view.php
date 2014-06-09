@@ -94,8 +94,9 @@ class MainWPManageSitesView
             <div id="mainwp_managesites_test_errors" class="mainwp_error error"></div>
             <div id="mainwp_managesites_test_message" class="mainwp_updated updated"></div>
             <div class="mainwp_info-box"><strong><?php _e('Please only use the domain URL, do not add /wp-admin.','mainwp'); ?></strong></div>
-            <h3><?php _e('Test a Site Connection','mainwp'); ?></h3>
-
+            <div class="postbox">
+            <h3 class="mainwp_box_title"><span><?php _e('Test a Site Connection','mainwp'); ?></span></h3>
+            <div class="inside">
             <form method="POST" action="" enctype="multipart/form-data" id="mainwp_testconnection_form">
                 <table class="form-table">
                     <tr class="form-field form-required">
@@ -121,6 +122,8 @@ class MainWPManageSitesView
                                          id="mainwp_managesites_test"
                                          class="button-primary" value="<?php _e('Test Connection','mainwp'); ?>"/></p>
             </form>
+        </div>
+    </div>
     <?php
     }
 
@@ -231,8 +234,9 @@ class MainWPManageSitesView
         ?>
        <div id="mainwp_managesites_add_errors" class="mainwp_error"></div>
        <div id="mainwp_managesites_add_message" class="mainwp_updated updated"></div>
-       <fieldset class="mainwp-fieldset-box">
-       <legend><?php _e('Add a Single Site','mainwp'); ?></legend>
+       <div class="postbox" id="mainwp-add-a-single-site">
+       <h3 class="mainwp_box_title"><span><?php _e('Add a Single Site','mainwp'); ?></span></h3>
+       <div class="inside">
        <div id="mainwp-add-site-notice-show" style="display: none; text-align: left;"><a href="#" class="button mainwp-button-red" id="mainwp-add-site-notice-show-link"><?php _e('Having trouble adding your site?','mainwp'); ?></a></div>
        <div id="mainwp-add-site-notice" class="mainwp_info-box-red" style="padding: 1em">
          <p>
@@ -297,9 +301,11 @@ class MainWPManageSitesView
                    </td>
                </tr>
                </table>
-               </fieldset>
-               <fieldset class="mainwp-fieldset-box">
-               <legend><?php _e('Bulk Upload','mainwp'); ?></legend>
+               </div>
+               </div>
+               <div class="postbox" id="mainwp-bulk-upload-sites">
+               <h3 class="mainwp_box_title"><span><?php _e('Bulk Upload','mainwp'); ?></span></h3>
+               <div class="inside">
                <table>
                    <th scope="row"></th>
                    <td>
@@ -328,7 +334,8 @@ class MainWPManageSitesView
                        </div>
                    </td>
            </table>
-           </fieldset>
+           </div>
+           </div>
 
 
            <p class="submit"><input type="button" name="mainwp_managesites_add"
@@ -471,8 +478,9 @@ class MainWPManageSitesView
         $notificationOnBackupStart = get_option('mainwp_notificationOnBackupStart');
         $chunkedBackupTasks = get_option('mainwp_chunkedBackupTasks');
         ?>
-    <fieldset class="mainwp-fieldset-box">
-    <legend>Backup options</legend>
+    <div class="postbox" id="mainwp-backup-options-settings">
+    <h3 class="mainwp_box_title"><span>Backup Options</span></h3>
+    <div class="inside">
     <table class="form-table">
         <tbody>
         <tr>
@@ -519,14 +527,15 @@ class MainWPManageSitesView
             <th scope="row"><?php _e('Execute backuptasks in chunks','mainwp'); ?></th>
                <td>
                  <div class="mainwp-checkbox">
-                   <input type="checkbox" id="mainwp_options_chunkedBackupTasks" name="mainwp_options_chunkedBackupTasks"  <?php echo ($chunkedBackupTasks == 0 ? '' : 'checked="checked"'); ?> "/>
+                   <input type="checkbox" id="mainwp_options_chunkedBackupTasks" name="mainwp_options_chunkedBackupTasks"  <?php echo ($chunkedBackupTasks == 0 ? '' : 'checked="checked"'); ?> />
                    <label for="mainwp_options_chunkedBackupTasks"></label>
                 </div>
             </td>
         </tr>
         </tbody>
     </table>
-    </fieldset>
+    </div>
+    </div>
     <?php
     }
 
@@ -629,8 +638,9 @@ class MainWPManageSitesView
         <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
         <div id="mainwp_background-box">
-        	<fieldset class="mainwp-fieldset-box">
-            <legend><?php _e('Backup Details','mainwp'); ?></legend>
+        	<div class="postbox" id="mainwp-backup-details">
+            <h3 class="mainwp_box_title"><span><?php _e('Backup Details','mainwp'); ?></span></h3>
+            <div class="inside">
             <?php
             if (!MainWPUtility::can_edit_website($website))
             {
@@ -639,9 +649,11 @@ class MainWPManageSitesView
 
             MainWPManageSites::showBackups($website);
             ?>
-            </fieldset>
-            <fieldset class="mainwp-fieldset-box">
-            <legend><?php _e('Backup Options','mainwp'); ?></legend>
+            </div>
+            </div>
+            <div class="postbox" id="mainwp-backup-optins-site">
+            <h3 class="mainwp_box_title"><span><?php _e('Backup Options','mainwp'); ?></span></h3>
+            <div class="inside">
             <form method="POST" action="" id="mainwp_backup_sites_page">
             <table class="form-table">
                 <tbody>
@@ -701,9 +713,6 @@ class MainWPManageSitesView
             </table>
 
                 <input type="hidden" name="site_id" id="backup_site_id" value="<?php echo $website->id; ?>"/>
-                <input type="hidden" name="backup_site_full_size" id="backup_site_full_size" value="<?php echo $website->totalsize; ?>"/>
-                <input type="hidden" name="backup_site_db_size" id="backup_site_db_size" value="<?php echo $website->dbsize; ?>"/>
-
                 <p class="submit"><input type="button" name="backup_btnSubmit" id="backup_btnSubmit"
                                          class="button-primary"
                                          value="Backup Now"/></p>
@@ -763,8 +772,9 @@ class MainWPManageSitesView
         }
         ?>
         <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data">
-            <fieldset class="mainwp-fieldset-box">
-            <legend><?php _e('General Options','mainwp'); ?></legend>
+            <div class="postbox">
+            <h3 class="mainwp_box_title"><?php _e('General Options','mainwp'); ?></h3>
+            <div class="inside">
             <table class="form-table">
                 <tbody>
                 <tr>
@@ -864,7 +874,7 @@ class MainWPManageSitesView
                     <td>
                         <div class="mainwp-checkbox">
                         <input type="checkbox" name="mainwp_backup_before_upgrade"
-                               id="mainwp_backup_before_upgrade" <?php echo ($website->backup_before_upgrade == 1 ? 'checked="true"' : ''); ?>"/>
+                               id="mainwp_backup_before_upgrade" <?php echo ($website->backup_before_upgrade == 1 ? 'checked="true"' : ''); ?>/>
                         <label for="mainwp_backup_before_upgrade"></label>
                         </div>
                     </td>
@@ -872,18 +882,21 @@ class MainWPManageSitesView
                 <?php do_action('mainwp_extension_sites_edit_tablerow', $website); ?>
                 </tbody>
             </table>
-            </fieldset>
+            </div>
+            </div>
             <?php
             if ($hasRemoteDestinations !== null)
             {
             ?>
             <div class="clear"></div>
-            <fieldset class="mainwp-fieldset-box">
-            <legend><?php _e('Backup Settings','mainwp'); ?></legend>
+            <div class="postbox">
+            <h3 class="mainwp_box_title"><span><?php _e('Backup Settings','mainwp'); ?></span></h3>
+            <div class="inside">
             <table class="form-table" style="width: 100%">
                 <?php do_action('mainwp_backups_remote_settings', array('website' => $website->id, 'hide' => 'no')); ?>
             </table>
-            </fieldset>
+            </div>
+            </div>
             <?php
             }
             ?>

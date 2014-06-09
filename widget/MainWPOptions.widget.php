@@ -61,8 +61,9 @@ class MainWPOptions
         if ($lastAutomaticUpdate == 0) $lastAutomaticUpdate = 'Never';
         else $lastAutomaticUpdate = MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp($lastAutomaticUpdate));
         ?>
-    <fieldset class="mainwp-fieldset-box">
-        <legend><?php _e('Hide MainWP Child Plugin','mainwp'); ?></legend>
+    <div class="postbox" id="mainwp-hide-child-plugin-settings">
+        <h3 class="mainwp_box_title"><span><?php _e('Hide MainWP Child Plugin','mainwp'); ?></span></h3>
+        <div class="inside">
         <div class="mainwp_info-box-red" style="margin-top: 5px;"><?php _e('<strong>STOP BEFORE TURNING ON!</strong> Hiding the Child Plugin does require the plugin to make changes to your .htaccess file that in rare instances or server configurations could cause problems.','mainwp'); ?></div>
         <table class="form-table">
             <tbody>
@@ -87,9 +88,12 @@ class MainWPOptions
             </tr>
             </tbody>
         </table>
-    </fieldset>
-    <fieldset class="mainwp-fieldset-box">
-    <legend><?php _e('Global Options','mainwp'); ?></legend>
+    </div>
+    </div>
+
+    <div class="postbox" id="mainwp-global-options-settings">
+    <h3 class="mainwp_box_title"><span><?php _e('Global Options','mainwp'); ?></span></h3>
+    <div class="inside">
     <table class="form-table">
         <tbody>
         <tr>
@@ -151,10 +155,12 @@ class MainWPOptions
         <?php } ?>
         </tbody>
     </table>
-    </fieldset>
-    <br />
-    <fieldset class="mainwp-fieldset-box">
-    <legend><?php _e('Upgrade Options','mainwp'); ?></legend>
+    </div>
+    </div>
+
+    <div class="postbox" id="mainwp-upgrade-options-settings">
+    <h3 class="mainwp_box_title"><span><?php _e('Upgrade Options','mainwp'); ?></span></h3>
+    <div class="inside">
     <table class="form-table">
         <tbody>
         <tr>
@@ -201,10 +207,12 @@ class MainWPOptions
         </tr>
         </tbody>
     </table>
-    </fieldset>
-    <br />
-    <fieldset class="mainwp-fieldset-box">
-    <legend><?php _e('Data Return Options','mainwp'); ?></legend>
+    </div>
+    </div>
+    
+    <div class="postbox" id="mainwp-date-return-options-settings">
+    <h3 class="mainwp_box_title"><span><?php _e('Data Return Options','mainwp'); ?></span></h3>
+    <div class="inside">
     <table class="form-table">
         <tbody>
         <tr>
@@ -223,7 +231,8 @@ class MainWPOptions
         </tr>
         </tbody>
     </table>
-    </fieldset>
+    </div>
+    </div>
     <?php
     }
 }

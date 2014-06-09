@@ -91,10 +91,12 @@ class MainWPAPISettingsView
         $username = get_option("mainwp_api_username");
         $password = get_option("mainwp_api_password");
         ?>
-        <fieldset class="mainwp-fieldset-box">
+        <div class="postbox" id="mainwp-account-information">
+        <h3 class="mainwp_box_title"><span><?php _e('MainWP Account Information','mainwp'); ?></span></h3>
+        <div class="inside">
         <div id="mainwp_api_errors" class="mainwp_error error" style="display: none"></div>
         <div id="mainwp_api_message" class="mainwp_updated updated" style="display: none"></div>
-        <legend><?php _e('MainWP Account Information','mainwp'); ?></legend>
+        
         <div id="" class="mainwp_info-box-red"><font size="3"><strong><?php _e('Stop, before installing!','mainwp'); ?></strong></font><br/><br/>
 
                             <strong><?php _e('We HIGHLY recommend a NEW WordPress install for your Main Dashboard.','mainwp'); ?></strong><br/><br/>
@@ -103,7 +105,7 @@ class MainWPAPISettingsView
 
                             If you are not sure how to set up a subdomain here is a quick step by step with <a href="http://docs.mainwp.com/creating-a-subdomain-in-cpanel/">cPanel</a>, <a href="http://docs.mainwp.com/creating-a-subdomain-in-plesk/">Plesk</a> or <a href="http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/">Direct Admin</a>. If you are not sure what you have, contact your hosting companies support.','mainwp'); ?></div>
         <br />
-        <h3><?php _e('MainWP Account - <em>Required for Support, Extensions, Ideas and Automated Cron Jobs</em>','mainwp'); ?>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://mainwp.com/dashboard-signup" target="_blank" class="button button-primary mainwp-upgrade-button button-hero" style="margin-top: -1em"><?php _e('Create MainWP Account', 'mainwp'); ?></a></h3>
+        <h3 style="border-bottom: none !important;"><?php _e('MainWP Account - <em>Required for Support, Extensions, Ideas and Automated Cron Jobs</em>','mainwp'); ?>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://mainwp.com/dashboard-signup" target="_blank" class="button button-primary mainwp-upgrade-button button-hero" style="margin-top: -1em"><?php _e('Create MainWP Account', 'mainwp'); ?></a></h3>
         <table class="form-table">
             <tbody>
             <tr>
@@ -131,7 +133,8 @@ class MainWPAPISettingsView
             </tbody>
             </table>
         </p>
-    </fieldset>
+    </div>
+    </div>
         <?php
     }
 }

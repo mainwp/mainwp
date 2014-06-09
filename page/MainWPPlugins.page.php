@@ -726,12 +726,12 @@ class MainWPPlugins
         <h2><?php _e('Plugin Automatic Update Trust List','mainwp'); ?></h2>
         <br />
         <div id="mainwp-au" class=""><strong><?php if ($snAutomaticDailyUpdate == 1) { ?>
-            <span class="mainwp-au-on"><?php _e('Auto Updates are ON and Trusted Plugins will be Automatically Updated','mainwp'); ?></span>
+            <div class="mainwp-au-on"><?php _e('Auto Updates are ON and Trusted Plugins will be Automatically Updated','mainwp'); ?> - <a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e('Change this in Settings','mainwp'); ?></a></div>
         <?php } elseif (($snAutomaticDailyUpdate === false) || ($snAutomaticDailyUpdate == 2)) { ?>
-            <span class="mainwp-au-email"><?php _e('Auto Updates are OFF - Email Update Notification is ON','mainwp'); ?></span>
+            <div class="mainwp-au-email"><?php _e('Auto Updates are OFF - Email Update Notification is ON','mainwp'); ?> - <a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e('Change this in Settings','mainwp'); ?></a></div>
         <?php } else { ?>
-            <span class="mainwp-au-off"><?php _e('Auto Updates are OFF - Email Update Notification is OFF','mainwp'); ?></span>
-        <?php } ?></strong> - <a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e('Change this in Settings','mainwp'); ?></a></div>
+            <div class="mainwp-au-off"><?php _e('Auto Updates are OFF - Email Update Notification is OFF','mainwp'); ?> - <a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e('Change this in Settings','mainwp'); ?></a></div>
+        <?php } ?></strong></div>
         <div class="mainwp_info-box"><?php _e('Only mark Plugins as Trusted if you are absolutely sure they can be updated without breaking your sites or your network.','mainwp'); ?> <strong><?php _e('Ignored Plugins can not be Automatically Updated.','mainwp'); ?></strong></div>
 
         <a href="#" class="button-primary" id="mainwp_show_all_active_plugins"><?php _e('Show Plugins','mainwp'); ?></a>

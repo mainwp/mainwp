@@ -53,7 +53,7 @@ class MainWPOfflineChecks
         <table class="wp-list-table widefat fixed" id="mainwp_offlinechecks">
             <thead>
                 <tr>
-                    <th class="manage-column column-empty"></th>
+                    <th scope="col" class="manage-column" style="text-align: left"><?php _e('Site','mainwp'); ?></th>
                     <th scope="col" id="col_status" class="manage-column"><?php _e('Status','mainwp'); ?></th>
                     <th scope="col" id="col_disabled" class="manage-column"><a href="#" class="mainwp_offline_check_bulk" value="disabled"><?php _e('Disabled','mainwp'); ?></a></th>
                     <th scope="col" id="col_hourly" class="manage-column"><a href="#" class="mainwp_offline_check_bulk" value="hourly"><?php _e('Hourly','mainwp'); ?></a></th>
@@ -71,7 +71,7 @@ class MainWPOfflineChecks
                 <tr>
                     <input type="hidden" name="offline_check_website_id" id="offline_check_website_id"
                            value="<?php echo $website->id; ?>" />
-                    <td class="url"><?php echo $website->name;?> <span class="offline_check_saved"><?php _e('Saved','mainwp'); ?></span></td>
+                    <td class="url"><a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php echo $website->name;?></a> <span class="offline_check_saved"><?php _e('Saved','mainwp'); ?></span></td>
                     <td>
                         <img class="down-img" title="Site Offline" src="<?php echo plugins_url('images/down.png', dirname(__FILE__)); ?>" <?php echo ($website->offline_check_result == -1 ? '' : 'style="display:none;"'); ?> />
                         <img class="up-img" title="Site Online" src="<?php echo plugins_url('images/up.png', dirname(__FILE__)); ?>" <?php echo ($website->offline_check_result == 1 ? '' : 'style="display:none;"'); ?> />
@@ -281,8 +281,9 @@ class MainWPOfflineChecks
         $userExtension = MainWPDB::Instance()->getUserExtension();
         $onlineNotifications = (($userExtension == null) || (($userExtension->offlineChecksOnlineNotification == null) || ($userExtension->offlineChecksOnlineNotification == '')) ? '0' : $userExtension->offlineChecksOnlineNotification);
         ?>
-    <fieldset class="mainwp-fieldset-box">
-    <legend><?php _e('Offline Check Options','mainwp'); ?></legend>
+    <div class="postbox" id="mainwp-offline-check-options-settings">
+    <h3 class="mainwp_box_title"><span><?php _e('Offline Check Options','mainwp'); ?></span></h3>
+    <div class="inside">
     <table class="form-table">
         <tbody>
         <tr>
@@ -297,7 +298,8 @@ class MainWPOfflineChecks
         </tr>
         </tbody>
     </table>
-    </fieldset>
+    </div>
+    </div>
     <?php
     }
 

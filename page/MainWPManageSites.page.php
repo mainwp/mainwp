@@ -188,7 +188,7 @@ class MainWPManageSites
                     if ($file != '.' && $file != '..')
                     {
                         $theFile = $dir . $file;
-                        if ($information['db'] && preg_match('/(.*).sql$/', $file))
+                        if ($information['db'] && (preg_match('/(.*).sql$/', $file) || preg_match('/(.*).sql.zip$/', $file)))
                         {
                             $dbBackups[filemtime($theFile) . $file] = $theFile;
                         }
@@ -232,12 +232,14 @@ class MainWPManageSites
             {
                 $what = 'db';
                 $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . date('m-d-Y') . '-' . time() . '.sql';
-                $regexBackupFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql';
+                $regexBackupFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip)?';
 
                 if ($pFilename != null)
                 {
                     $localBackupFile = $dir . str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, date('m-d-Y'), date('G\hi\ms\s'), $what), $pFilename) . '.sql';
                 }
+
+                if (MainWPUtility::endsWith($information['db'], 'zip')) $localBackupFile .= '.zip';
 
                 MainWPUtility::downloadToFile($information['db'], $localBackupFile);
             }
@@ -308,7 +310,7 @@ class MainWPManageSites
                 if ($file != '.' && $file != '..')
                 {
                     $theFile = $dir . $file;
-                    if ($pType == 'db' && preg_match('/(.*).sql$/', $file))
+                    if ($pType == 'db' && preg_match('/(.*).sql(\.zip)?$/', $file))
                     {
                         $dbBackups[filemtime($theFile) . $file] = $theFile;
                     }
@@ -360,7 +362,7 @@ class MainWPManageSites
         return true;
     }
 
-    public static function backup($pSiteId, $pType, $pSubfolder, $pExclude, $pFilename = null)
+    public static function backup($pSiteId, $pType, $pSubfolder, $pExclude, $pFilename = null, $pFileNameUID = '')
     {
         if (trim($pFilename) == '') $pFilename = null;
 
@@ -391,7 +393,7 @@ class MainWPManageSites
         $maximumFileDescriptors = ($maximumFileDescriptors === false ? 0 : $maximumFileDescriptors);
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, date('m-d-Y'), date('G\hi\ms\s'), $pType), $pFilename);
 
-        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'file_descriptors' => $maximumFileDescriptors, 'file' => $file));
+        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'file_descriptors' => $maximumFileDescriptors, 'file' => $file, 'fileUID' => $pFileNameUID));
 
         if (isset($information['error']))
         {
@@ -429,7 +431,7 @@ class MainWPManageSites
             if ($pType == 'db')
             {
                 $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . date('m-d-Y') . '-' . time() . '.sql';
-                $localRegexFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql';
+                $localRegexFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip)?';
             }
             else
             {
@@ -450,6 +452,8 @@ class MainWPManageSites
                     $localBackupFile .= '.zip';
                 }
             }
+
+            if (($pType == 'db') && MainWPUtility::endsWith($information['db'], 'zip')) $localBackupFile .= '.zip';
 
             $backup_result['local'] = $localBackupFile;
             $backup_result['regexfile'] = $localRegexFile;
@@ -485,6 +489,7 @@ class MainWPManageSites
         add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPManageBackups::getMetaboxName(), array(MainWPManageBackups::getClassName(), 'renderMetabox'), self::$page, 'normal', 'core');
 		add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPWidgetPlugins::getName(), array(MainWPWidgetPlugins::getClassName(), 'render'), self::$page, 'normal', 'core');
 		add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPWidgetThemes::getName(), array(MainWPWidgetThemes::getClassName(), 'render'), self::$page, 'normal', 'core');
+        add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPNotes::getName(), array(MainWPNotes::getClassName(), 'render'), self::$page, 'normal', 'core');
 		
         $extMetaBoxs = MainWPSystem::Instance()->apply_filter('mainwp-getmetaboxes', array());
         $extMetaBoxs = apply_filters('mainwp-getmetaboxs', $extMetaBoxs);
@@ -524,7 +529,7 @@ class MainWPManageSites
                 if ($file != '.' && $file != '..')
                 {
                     $theFile = $dir . $file;
-                    if (preg_match('/(.*)\.sql$/', $file))
+                    if (preg_match('/(.*)\.sql(\.zip)?$/', $file))
                     {
                         $dbBackups[filemtime($theFile) . $file] = $theFile;
                     }

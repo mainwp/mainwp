@@ -25,15 +25,17 @@ class MainWPFootprint
         if (!$filter) return;
 
         ?>
-        <fieldset class="mainwp-fieldset-box">
-    <legend><?php _e('Network Footprint','mainwp'); ?></legend><a name="network-footprint"></a>
+        <div class="postbox" id="mainwp-footprint-settings">
+    <h3 class="mainwp_box_title"><span><?php _e('Network Footprint','mainwp'); ?></span></h3><a name="network-footprint"></a>
+    <div class="inside">
     <table class="form-table">
         <tbody>
         <?php do_action('mainwp_settings_networkfootprint'); ?>
         </tbody>
     </table>
     <div class="mainwp_info-box"><strong>Note: </strong><i><?php _e('After pressing "Save Settings" below you will need to return to MainWP Dashboard and press the Sync Data button to synchronize the settings.','mainwp'); ?></i></div>
-    </fieldset>
+    </div>
+    </div>
 
     <?php
     }

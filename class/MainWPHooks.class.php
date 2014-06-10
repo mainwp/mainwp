@@ -16,11 +16,11 @@ class MainWPHooks
         add_action('mainwp_renderHeader', array('MainWPUI', 'renderHeader'), 10, 2);
         add_action('mainwp_renderFooter', array('MainWPUI', 'renderFooter'), 10, 0);
         add_action('mainwp_renderImage', array('MainWPUI', 'renderImage'), 10, 4);
-        add_action('mainwp_notify_user', array(&$this, 'notifyUser'), 10, 3);        
+        add_action('mainwp_notify_user', array(&$this, 'notifyUser'), 10, 3);
         add_action('mainwp_activePlugin', array(&$this, 'activePlugin'), 10, 0);
         add_action('mainwp_deactivePlugin', array(&$this, 'deactivePlugin'), 10, 0);
         add_action('mainwp_upgradePluginTheme', array(&$this, 'upgradePluginTheme'), 10, 0);
-        
+
         //Internal hook - deprecated
         add_filter('mainwp_getUserExtension', array(&$this, 'getUserExtension'));
         add_filter('mainwp_getwebsitesbyurl', array(&$this, 'getWebsitesByUrl'));
@@ -101,25 +101,25 @@ class MainWPHooks
     {
         return new qq2FileUploader($allowedExtensions, $sizeLimit);
     }
-    
+
     function getMetaBoxes() {
         return MainWPSystem::Instance()->metaboxes;
     }
-    
+
     function activePlugin()
     {
         MainWPPlugins::activatePlugins();
         die();
     }
-    
+
     function deactivePlugin()
     {
         MainWPPlugins::deactivatePlugins();
         die();
     }
-    
+
     function upgradePluginTheme()
-    {        
+    {
         try
         {
             $websiteId = $type = null;
@@ -131,20 +131,20 @@ class MainWPHooks
             if (isset($_POST['slugs']))
             {
                 $slugs = $_POST['slugs'];
-            }   
-            
+            }
+
             if (isset($_POST['type']))
             {
                 $type = $_POST['type'];
             }
-            
+
             if (MainWPUtility::ctype_digit($websiteId)) {
                $website = MainWPDB::Instance()->getWebsiteById($websiteId);
                if (MainWPUtility::can_edit_website($website)) {
                     $information = MainWPUtility::fetchUrlAuthed($website, 'upgradeplugintheme', array(
                                         'type' => $type,
                                         'list' => urldecode(implode(',', $slugs))
-                                    ));                    
+                                    ));
                     die(json_encode($information));
                }
             }
@@ -153,8 +153,8 @@ class MainWPHooks
         {
             die(json_encode(array('error' => $e->getMessage())));
         }
-        
+
         die();
     }
-    
+
 }

@@ -90,6 +90,7 @@ class MainWPBulkUpdateAdminPasswords
                             $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesByGroupId($k));
                             while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                             {
+                                if ($website->sync_errors != '') continue;
                                 $dbwebsites[$website->id] = MainWPUtility::mapSite($website, array('id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey'));
                             }
                             @MainWPDB::free_result($websites);
@@ -149,7 +150,7 @@ class MainWPBulkUpdateAdminPasswords
                             <p class="description indicator-hint" style="clear:both;"><?php _e('Hint: The password should be at least seven characters long. To make it stronger, use upper and lower case letters, numbers and symbols like ! " ? $ % ^ &amp; ).','mainwp'); ?></p>
                         </td>
                     </tr>
-                    <tr><td colspan="2"><input type="submit" name="updateadminpassword" id="bulk_updateadminpassword" class="button-primary" value="<?php _e('Update Now','mainwp'); ?>"  /></td></tr>
+                    <tr><td></td><td colspan="2"><input type="submit" name="updateadminpassword" id="bulk_updateadminpassword" class="button-primary" value="<?php _e('Update Now','mainwp'); ?>"  /></td></tr>
                 </table>
                 </div>
 

@@ -105,8 +105,9 @@ class MainWPSettings
 
         self::renderHeader('Advanced');
         ?>
-    <fieldset class="mainwp-fieldset-box">
-    <legend><?php _e('Advanced Options','mainwp'); ?></legend>
+    <div class="postbox" id="mainwp-advanced-options">
+        <h3 class="mainwp_box_title"><span><?php _e('Advanced Options','mainwp'); ?></span></h3>
+        <div class="inside">
     <form method="POST" action="" id="mainwp-settings-page-form">
         <table class="form-table">
             <tbody>
@@ -152,7 +153,8 @@ class MainWPSettings
         <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>"/>
         </p>
     </form>
-    </fieldset>
+    </div>
+    </div>
         <?php
         self::renderFooter('Advanced');
     }
@@ -182,13 +184,13 @@ class MainWPSettings
         <form method="POST" action="admin.php?page=Settings" id="mainwp-settings-page-form">
             <?php
             MainWPAPISettingsView::renderSettings();
-            echo '<br />';
+            
             MainWPOptions::renderSettings();
-            echo '<br />';
+            
             MainWPManageSites::renderSettings();
-            echo '<br />';
+            
             MainWPOfflineChecks::renderSettings();
-            echo '<br />';
+            
             MainWPFootprint::renderSettings();
             ?>
             <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>"/>

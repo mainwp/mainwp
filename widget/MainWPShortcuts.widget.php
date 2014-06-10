@@ -51,6 +51,7 @@ class MainWPShortcuts
             <textarea style="width: 580px !important; height: 300px;"
                       id="mainwp_notes_note"></textarea>
         </div>
+        <div><em>Allowed HTML Tags: &lt;p&gt;, &lt;srtong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
         <form>
             <div style="float: right" id="mainwp_notes_status"></div>
             <input type="button" class="button cont button-primary" id="mainwp_notes_save" value="<?php _e('Save Note','mainwp'); ?>"/>

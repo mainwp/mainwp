@@ -193,12 +193,12 @@ a.mainwp-comment-spam,a.mainwp-comment-trash,a.mainwp-post-trash,.mainwp-red
 }
 
 h3.mainwp_box_title {
-    font-family: Georgia, "Times New Roman", "Bitstream Charter", Times, serif;
-    font-size: 15px;
-    font-weight: normal;
-    line-height: 1;
-    margin: 0 0 5px;
-    padding: 7px 10px;
+    font-family: "Open Sans",sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin: 0;
+    padding: 8px 12px;
 }
 
 .mainwp_inside {
@@ -306,6 +306,11 @@ h3.mainwp_box_title {
 .mainwp_selected_sites_item:hover,
 .selected_sites_item_checked {
     background: rgba(127, 177, 0, 0.3);
+}
+
+.mainwp_selected_sites_item.disabled:hover
+{
+    background: #f3f3f3 !important;
 }
 
 .mainwp_selected_sites_item input {
@@ -847,10 +852,13 @@ table#mainwp_offlinechecks td.url {
 }
 
 #mainwp_availablethemes .available-theme {
-    padding-left: 2px;
-    padding-right: 2px;
     margin-right: 15px;
+    margin-bottom: 2em;
     width: 220px;
+    display: inline-block;
+    vertical-align: top;
+    overflow: hidden;
+    padding-top: 20px 20px 20px 0;
 }
 
 #mainwp_availablethemes .available-theme a.screenshot {
@@ -864,7 +872,7 @@ table#mainwp_offlinechecks td.url {
 .mainwp-tabs
 {
     margin-top: 2em;
-    border-bottom: 1px solid #7fb100;
+    border-bottom: 1px solid #e5e5e5;
     margin-bottom: 0;
 }
 .mainwp_checkboxes
@@ -971,87 +979,71 @@ li.hoverli {
 
 /* NEW */
 
-.mainwp_info-box {
+.mainwp_info-box, .mainwp-au-on {
     margin: 5px 0 15px;
     padding: .6em;
-    background: rgba(127, 177, 0, 0.3);
-    border: 1px solid #7fb100;
-    border-radius: 3px ;
-    -moz-border-radius: 3px ;
-    -webkit-border-radius: 3px ;
+    background: rgba(127, 177, 0, 1);
+    border-left: 4px solid #446200;
     clear: both ;
+    color:#fff;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
-.mainwp_info-box-red {
+.mainwp_info-box-red, .mainwp-au-off {
     margin: 5px 0 15px;
     padding: .6em;
-    background: #ffebe8;
-    border: 1px solid #c00;
-    border-radius: 3px ;
-    -moz-border-radius: 3px ;
-    -webkit-border-radius: 3px ;
+    background: #bb7239;
+    border-left: 4px solid #bb4539;
     clear: both ;
+    color:#fff;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
-.mainwp_info-box-yellow {
+.mainwp_info-box-yellow, .mainwp-au-email {
     margin: 5px 0 15px;
     padding: .6em;
-    background: #ffffe0;
-    border: 1px solid #e6db55;
-    border-radius: 3px ;
-    -moz-border-radius: 3px ;
-    -webkit-border-radius: 3px ;
+    background: #e6db55;
+    border-left: 4px solid #ffec00;
     clear: both ;
+    color:#fff;
+    text-shadow: 1px 1px 0px rgba(150, 150, 150, 1);
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
 
-.mainwp_select_sites_box {
-    margin-top: 1.5em ;
+.mainwp_info-box-yellow a, .mainwp-au-email a {
+    text-shadow: none;
+    text-decoration: none;
 }
+
 .mainwp_plugins_content,.mainwp_themes_content{
     background: #f9f9f9 ;
 }
-#mainwp_wrap-inside .mainwp_select_sites_box,
-#mainwp_background-box .mainwp_select_sites_box {
-    margin-top: 1em ;
-}
+
 #mainwp_background-box {
-    min-height: 500px ;
-    height: auto ;
+    min-height: 80vh;
+    height: 100% ;
     width: auto ;
-    margin-top: 2em ;
+    margin-top: 5em ;
     padding: 10px ;
-    background: #f9f9f9 ;
-    border: 1px solid #7fb100;
-    border-radius: 10px;
-    -moz-border-radius: 10px;
-    -webkit-border-radius: 10px;
+    background: #fafafa ;
+    border: 1px solid #e5e5e5;
     clear: both ;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
 #mainwp_wrap-inside {
-    min-height: 550px ;
-    height: auto ;
+    min-height: 80vh;
+    height: 100% ;
     margin-top: 0em ;
     padding: 10px ;
-    background: #f9f9f9 ;
+    background: #fafafa ;
     border-top: none ;
-    border-bottom: 1px solid #7fb100;
-    border-left: 1px solid #7fb100;
-    border-right: 1px solid #7fb100;
-    -moz-border-radius-bottomright: 10px;
-    -webkit-border-bottom-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    -moz-border-radius-bottomleft: 10px;
-    -webkit-border-bottom-left-radius: 10px;
-    border-bottom-left-radius: 10px;
+    border-bottom: 1px solid #e5e5e5;
+    border-left: 1px solid #e5e5e5;
+    border-right: 1px solid #e5e5e5;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
     position: relative;
 }
 #mainwp_wrap-inside.round-top {
     clear: both ;
-    border: 1px solid #7fb100 !important;
-    -moz-border-radius-topleft: 7px !important;
-    -webkit-border-top-left-radius: 7px !important;
-    border-top-left-radius: 7px !important;
-    -moz-border-radius-topright: 7px !important;
-    -webkit-border-top-right-radius: 7px !important;
-    border-top-right-radius: 7px !important;
+    border: 1px solid #e5e5e5 !important;
 }
 
 .mainwp-table-container .wp-list-table thead th,.mainwp-table-container .wp-list-table tfoot th,#mainwp-table thead th,#mainwp-table tfoot th {
@@ -1062,42 +1054,38 @@ li.hoverli {
     clear: both ;
 }
 #mainwp-tabs .nav-tab-active {
-    background: #f9f9f9 ;
-    border-top: 1px solid #7fb100;
-    border-left: 1px solid #7fb100;
-    border-right: 1px solid #7fb100;
-    border-bottom: 1px solid #f9f9f9 !important ;
-    -moz-border-radius-topleft: 7px;
-    -webkit-border-top-left-radius: 7px;
-     border-top-left-radius: 7px;
-    -moz-border-radius-topright: 7px;
-    -webkit-border-top-right-radius: 7px;
-    border-top-right-radius: 7px;
+    background: #fafafa ;
+    border-top: 1px solid #7fb100 !important;
+    border-left: 1px solid #e5e5e5;
+    border-right: 1px solid #e5e5e5;
+    border-bottom: 1px solid #fafafa !important ;
+    color: #7fb100;
 }
 
 #mainwp-tabs .nav-tab {
-    -moz-border-radius-topleft: 7px;
-    -webkit-border-top-left-radius: 7px;
-     border-top-left-radius: 7px;
-    -moz-border-radius-topright: 7px;
-    -webkit-border-top-right-radius: 7px;
-    border-top-right-radius: 7px;
+    border-top: 1px solid #e5e5e5;
+    border-left: 1px solid #e5e5e5;
+    border-right: 1px solid #e5e5e5;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 10px 16px;
+    font-size: 14px;
+    text-transform: uppercase;
 }
 
 #selected_sites {
     background: #ffffff ;
 }
-
+/*
 .mainwp-search-form h3 {
     margin-top: 0 !important ;
     font-size: 16px ;
     border-bottom: 0px ridge #bbb;
 }
-
+*/
 #selected_groups, .selected_groups {
     background: #fff ;
 }
-
+/*
 .mainwp-ui #screen-meta-links + .wrap #mainwplogo {
     margin-bottom: -27px;
     margin-top: 10px;
@@ -1107,12 +1095,17 @@ li.hoverli {
 .mainwp-ui #screen-meta-links + .wrap #mainwplogo + img {
     margin-top: -13px !important;
 }
-
+*/
 #mainwplogo
 {
-    float:right;
-    position: relative ;
-    margin-bottom: .3em;
+    position: absolute;
+    top:2.5em;
+    right: 2em;
+    display: block;
+}
+#mainwplogo img
+{
+    height: 40px !important;
 }
 
 /* Enhance Wordpress Admin UI */
@@ -1727,13 +1720,7 @@ background-position: 0 -16px;
 #mainwp_testconnection_form input[type=text],
 #mainwp_managebackups_add_form .mainwp-fieldset-box input[type=text],
 #mainwp_managesites_add_form input[type=text] {
-	height:27px;
-	margin-top: -4px ;
 	width:300px !important;
-	padding:5px 8px;
-	border:1px solid #bbb;
-	box-shadow: 0px 0px 2px #ddd, 0 10px 15px #fafafa inset;
-	border-radius:3px;
 }
 #mainwp-settings-page-form input[type=text]:focus,
 #mainwp-edit-single-site-form input[type=text]:focus,
@@ -1744,8 +1731,8 @@ background-position: 0 -16px;
 #mainwp_managebackups_add_form .mainwp-fieldset-box input[type=text]:focus,
 #mainwp_managesites_add_form input[type=text]:focus {
 	background: #fff;
-	border:2px solid #7fb100;
-	box-shadow: 0 0 3px #aaa;
+    border: 1px Solid #7fb100;
+	box-shadow: 0 0 3px #7fb100;
 	width:320px !important;
 	-moz-transition: padding .25s;
 	-webkit-transition: padding .25s;
@@ -1757,8 +1744,8 @@ background-position: 0 -16px;
 	background: #7fb100;
 	border-radius: 3px 3px 3px 3px;
 	color: white;
-	margin-top: -4px;
 	margin-left:8px;
+    margin-top: 3px;
 	padding: 3px 6px;
 	z-index: 999;
 	position: absolute;
@@ -1802,124 +1789,13 @@ background-position: 0 -16px;
 	width: 230px !important;
 }
 
-
-/* Dropdown SelectBox Style
-
-#mainwp-settings-page-form select, #sites-edit-site-ga select{
-	margin: 0px 5px 0 5px ;
-	width: auto;
-	height: 26px;
-	padding: 0 30px 0 10px;
-	border: none ;
-	border-radius: none ;
-	font: 13px/26px Arial, sans-serif;
-	color: #446200;
-	font-weight: bold;
-	text-shadow: 1px 1px 0px rgba(0,0,0,.15);
-    background: transparent ;
-    -webkit-appearance: none ;
-    -moz-appearance: a ;
-    -o-appearance: none ;	
-}
-
-#mainwp-settings-page-form option, #sites-edit-site-ga option {
-	color: #7fb100 ;
-}
-
-.mainwp-select-bg {
-   margin: -5px 5px 0 5px ;
-   display: inline-block ;
-   width: auto;
-   height: 26px;
-   overflow: hidden;
-   background: url('../images/dd-arrow.png') no-repeat right rgba(127,177,0,0.2);
-   border: 1px solid #ccc;
-   border-radius: 5px ;
-   -webkit-border-radius: 5px ;
-   -moz-border-radius: 5px ;
-   -webkit-box-shadow: inset 0px 1px 1px rgba(0,0,0,0.5), 0px 1px 0px rgba(255,255,255,0.2);
-	-moz-box-shadow: inset 0px 1px 1px rgba(0,0,0,0.5), 0px 1px 0px rgba(255,255,255,0.2);
-	box-shadow: inset 0px 1px 1px rgba(0,0,0,0.5), 0px 1px 0px rgba(255,255,255,0.2);
-}
-*/
-
 /* New Select Box Style */
 
 
-.mainwp-select-bg select {
-    padding: 5px ;
-    margin: none ;
-    -webkit-border-radius:5px;
-    -moz-border-radius:5px;
-    border-radius:5px;
-    border: none;
-    -webkit-box-shadow: inset 0px 1px 1px rgba(0,0,0,0.5), 0px 1px 0px rgba(255,255,255,0.2);
-    -moz-box-shadow: inset 0px 1px 1px rgba(0,0,0,0.5), 0px 1px 0px rgba(255,255,255,0.2);
-    box-shadow: inset 0px 1px 1px rgba(0,0,0,0.5), 0px 1px 0px rgba(255,255,255,0.2);
-    outline:none;
-    display: inline-block ;
-    cursor:pointer;
-    width: auto ;
-    height: 26px;
-    min-width: 40px ;
-    color: #446200;
-    font-weight: bold;
-    background: rgba(127,177,0,0.2) ;
+.mainwp-select-bg select:focus {
+    border: 1px Solid #7fb100;
+    box-shadow: 0 0 3px #7fb100;
 }
-.mainwp-select-bg option {
-    background: #fff;
-    color: #7fb100;
-}
-
-/* Targetting Webkit browsers only.
-@media screen and (-webkit-min-device-pixel-ratio:0) {
-    .mainwp-select-bg label:after { display: inline !important;}
-    .mainwp-select-bg label:before { display: inline-block !important ;}
-    .mainwp-select-bg select { padding: 3px 30px 3px 10px ; }
-}
-
-
-
-.mainwp-select-bg label {position:relative ;}
-.mainwp-select-bg label:after {
-    content:'<>';
-    font: 15px "Consolas", monospace;
-    font-weight: bold;
-    color: #446200;
-    -webkit-transform:rotate(90deg);
-    -moz-transform:rotate(90deg);
-    -ms-transform:rotate(90deg);
-    transform:rotate(90deg);
-    right: 5px; top: 0px;
-    padding: 0 0 2px;
-    position: absolute;
-    pointer-events: none;
-    display: none;
-}
-
-.mainwp-select-bg label:before {
-    content:'';
-    right: 0px; top: 0px;
-    width: 26px; height:26px;
-    background: #fcfff4;
-    background: -webkit-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-    background: -moz-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-    background: -o-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-    background: -ms-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-    background: linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfff4', endColorstr='#b3bead',GradientType=0 );
-    position:absolute;
-    pointer-events:none;
-    display:none;
-    -moz-border-radius-topright: 5px;
-    -webkit-border-top-right-radius: 5px;
-     border-top-right-radius: 5px;
-    -moz-border-radius-bottomright: 5px;
-    -webkit-border-bottom-right-radius: 5px;
-     border-bottom-right-radius: 5px;
-}
-
-*/
 
 /* Settings Boxes */
 
@@ -2009,34 +1885,17 @@ background-position: 0 -16px;
 }
 .mainwp_error {
     display: none;
-
-    background-color: #ffebe8;
-    border-color: #c00;
-    padding: 0 .6em;
+    padding: .6em;
     margin: 5px 0px 2px;
-
-    -webkit-border-radius: 3px;
-    border-radius: 3px;
-    border-width: 1px;
-    border-style: solid;
 }
 
-/* Auto Updates Style */
+/* Auto Updates Style 
 
-#mainwp-au {
-    display: block;
-    background-color: #ffffe0;
-    border:1px solid #e6db55;
-    margin: 5px 0 15px;
-    -webkit-border-radius: 3px;
-    -moz-border-radius: 3px;
-    border-radius: 3px;
-    padding: .6em ;
-
-}
 .mainwp-au-on { color: #7fb100; text-shadow:1px 1px 1px rgba(0,0,0,0.2);}
 .mainwp-au-email { color: orange; text-shadow:1px 1px 1px rgba(0,0,0,0.2);}
 .mainwp-au-off { color: red; text-shadow:1px 1px 1px rgba(0,0,0,0.2);}
+*/
+
 .mainwp-backlink {
     text-decoration: none;
 }
@@ -2411,7 +2270,7 @@ background-position: 0 -16px;
 /*  Backups Table  */
 
 #mainwp_managebackups_content .column-task_name {
-    width: 16% !important;
+    width: 15% !important;
 }
 
 #mainwp_managebackups_content .column-type {
@@ -2419,7 +2278,7 @@ background-position: 0 -16px;
 }
 
 #mainwp_managebackups_content .column-schedule {
-    width: 8% !important;
+    width: 9% !important;
 }
 
 #mainwp_managebackups_content .column-destination {
@@ -2427,15 +2286,15 @@ background-position: 0 -16px;
 }
 
 #mainwp_managebackups_content .column-websites {
-    width: 6% !important;
+    width: 8% !important;
 }
 
 #mainwp_managebackups_content .column-details {
-    width: 30% !important;
+    width: 29% !important;
 }
 
 #mainwp_managebackups_content .column-trigger {
-    width: 10% !important;
+    width: 9% !important;
 }
 
 #mainwp-security-issues-table {
@@ -2526,7 +2385,7 @@ background-position: 0 -16px;
 }
 
 .mainwp-help-tab {
-    padding-left: 2.5em ;
+    padding-left: 2em !important;
     background-image: url('../images/help-icon.png') !important;
     background-repeat: no-repeat !important;
     background-position: 8px 50% !important;

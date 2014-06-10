@@ -248,6 +248,7 @@ class MainWPInstallBulk
                     $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesByGroupId($groupid));
                     while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                     {
+                        if ($website->sync_errors != '') continue;
                         $output['sites'][$website->id] = MainWPUtility::mapSite($website, array('id', 'url', 'name'));
                     }
                     @MainWPDB::free_result($websites);
@@ -300,6 +301,7 @@ class MainWPInstallBulk
                     $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesByGroupId($groupid));
                     while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                     {
+                        if ($website->sync_errors != '') continue;
                         $output['sites'][$website->id] = MainWPUtility::mapSite($website, array('id', 'url', 'name'));
                     }
                     @MainWPDB::free_result($websites);

@@ -41,7 +41,23 @@ class MainWPBackupTasks {
 		<?php 
 
 		foreach ($tasks as $task) {
-			$sites = ($task->sites == '' ? array() : explode(',', $task->sites));
+            $sites = array();
+            if ($task->groups != '')
+            {
+                $groups = explode(',', $task->groups);
+                foreach ($groups as $groupid)
+                {
+                    $group_sites = MainWPDB::Instance()->getWebsitesByGroupId($groupid);
+                    foreach ($group_sites as $group_site)
+                    {
+                        $sites[] = $group_site->id;
+                    }
+                }
+            }
+            else if ($task->sites != '')
+            {
+			    $sites = explode(',', $task->sites);
+            }
 			?>
 			<div class="mainwp-row mainwp-recent">
 				<span class="mainwp-left-col" style="width: 40%">

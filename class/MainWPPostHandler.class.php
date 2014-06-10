@@ -62,6 +62,7 @@ class MainWPPostHandler
         //Page: backup
         $this->addAction('mainwp_backup_run_site', array(&$this, 'mainwp_backup_run_site'));
         $this->addAction('mainwp_backup', array(&$this, 'mainwp_backup'));
+        $this->addAction('mainwp_createbackup_getfilesize', array(&$this, 'mainwp_createbackup_getfilesize'));
         $this->addAction('mainwp_backup_download_file', array(&$this, 'mainwp_backup_download_file'));
         $this->addAction('mainwp_backup_getfilesize', array(&$this, 'mainwp_backup_getfilesize'));
         $this->addAction('mainwp_backup_upload_getprogress', array(&$this, 'mainwp_backup_upload_getprogress'));
@@ -574,7 +575,7 @@ class MainWPPostHandler
             $excludedFolder = array_map(array('MainWPUtility', 'trimSlashes'), $excludedFolder);
             $excludedFolder = implode(",", $excludedFolder);
 
-            die(json_encode(array('result' => MainWPManageSites::backup($_POST['site_id'], $_POST['type'], (isset($_POST['subfolder']) ? $_POST['subfolder'] : ''), $excludedFolder, $_POST['filename']))));
+            die(json_encode(array('result' => MainWPManageSites::backup($_POST['site_id'], $_POST['type'], (isset($_POST['subfolder']) ? $_POST['subfolder'] : ''), $excludedFolder, $_POST['filename'], isset($_POST['fileNameUID']) ? $_POST['fileNameUID'] : ''))));
         }
         catch (MainWPException $e)
         {
@@ -599,6 +600,38 @@ class MainWPPostHandler
         {
             die(json_encode(array('error' => array('message' => $e->getMessage(), 'extra' => $e->getMessageExtra()))));
         }
+    }
+
+    function mainwp_createbackup_getfilesize()
+    {
+        $this->secure_request('mainwp_createbackup_getfilesize');
+
+        try
+        {
+            if (!isset($_POST['siteId'])) throw new Exception(__('No site given','mainwp-child'));
+            $siteId = $_POST['siteId'];
+            $fileName = $_POST['fileName'];
+            $fileNameUID = $_POST['fileNameUID'];
+            $type = $_POST['type'];
+
+            $website = MainWPDB::Instance()->getWebsiteById($siteId);
+            if (!$website)  throw new Exception(__('No site given','mainwp-child'));
+
+            MainWPUtility::endSession();
+            //Send request to the childsite!
+            $result = MainWPUtility::fetchUrlAuthed($website, 'createBackupPoll', array('fileName' => $fileName, 'fileNameUID' => $fileNameUID, 'type' => $type));
+
+            if (!isset($result['size'])) throw new Exception(__('Invalid response','mainwp-child'));
+
+            if (MainWPUtility::ctype_digit($result['size'])) $output = array('size' => $result['size']);
+            else $output = array();
+        }
+        catch (Exception $e)
+        {
+            $output = array('error' => $e->getMessage());
+        }
+
+        die(json_encode($output));
     }
 
     function mainwp_backup_getfilesize()
@@ -827,7 +860,7 @@ class MainWPPostHandler
                 throw new MainWPException('Invalid request');
             }
 
-            die(json_encode(array('result' => MainWPManageBackups::backup($_POST['task_id'], $_POST['site_id']))));
+            die(json_encode(array('result' => MainWPManageBackups::backup($_POST['task_id'], $_POST['site_id'], $_POST['fileNameUID']))));
         }
         catch (MainWPException $e)
         {

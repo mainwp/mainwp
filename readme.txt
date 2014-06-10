@@ -7,7 +7,7 @@ Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
 Requires at least: 3.6
 Tested up to: 3.9
-Stable tag: 1.0.8.3
+Stable tag: 1.0.8.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,21 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 1.0.8.6 =
+* Added ping from dashboard during backups, to reduce timeouts and add better error reporting
+* Added intelligent checks to increase backup speed
+* Install New Extension button added to the Extensions page
+* Extension names tweaked to link to open the extension page
+* Notes widget added to Site Individual Dashboard
+* .htaccess file tab added to the server information page
+* CSS changes for a cleaner look
+* Hooks added for the upcoming extension
+
+= 1.0.8.5 =
+* Fixed warning with open basedir restriction in place
+* Added zip support to database backups
+* Added new hooks for upcoming extensions
 
 = 1.0.8.4 =
 * Now compatible with WPEngine-hosted child-sites

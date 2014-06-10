@@ -277,13 +277,12 @@ class MainWPManageBackups
             //to add CSS Styling to the select sites box use the one below (this adds the css class mainwp_select_sites_box_right to the box)
             //MainWPUI::select_sites_box(__("Select Sites"), 'checkbox', true, true, 'mainwp_select_sites_box_right', '', $selected_websites, $selected_groups);
         ?>
-        <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right', 'float: right !important;', $selected_websites, $selected_groups); ?>
+        <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right', 'float: right !important;', $selected_websites, $selected_groups, true); ?>
         <div class="mainwp_config_box_left">
 
-            <fieldset class="mainwp-fieldset-box">
-
-                <legend><?php _e('Schedule Backup','mainwp'); ?></legend>
-
+        <div class="postbox">
+        <h3 class="mainwp_box_title"><span><?php _e('Schedule Backup','mainwp'); ?></span></h3>
+        <div class="inside">
         <table class="form-table" style="width: 100%">
             <tr class="form-field form-required">
                 <th scope="row"><?php _e('Task Name:','mainwp'); ?></th>
@@ -352,7 +351,8 @@ class MainWPManageBackups
             ?>
             <?php do_action('mainwp_backups_remote_settings', array('task' => $task)); ?>
         </table>
-        </fieldset>
+        </div>
+        </div>
         </div>
         <div class="clear"></div>
 
@@ -610,13 +610,13 @@ class MainWPManageBackups
         return ($errorOutput == '');
     }
 
-    public static function backup($pTaskId, $pSiteId)
+    public static function backup($pTaskId, $pSiteId, $pFileNameUID)
     {
         $backupTask = MainWPDB::Instance()->getBackupTaskById($pTaskId);
 
         $subfolder = str_replace('%task%', MainWPUtility::sanitize($backupTask->name), $backupTask->subfolder);
 
-        return MainWPManageSites::backup($pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->filename);
+        return MainWPManageSites::backup($pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->filename, $pFileNameUID);
     }
 
     public static function getBackupTaskSites($pTaskId)
@@ -643,7 +643,7 @@ class MainWPManageBackups
         foreach ($sites as $site)
         {
             $website = MainWPDB::Instance()->getWebsiteById($site);
-            $allSites[] = array('id' => $website->id, 'name' => $website->name);
+            $allSites[] = array('id' => $website->id, 'name' => $website->name, 'fullsize' => $website->totalsize * 1024, 'dbsize' => $website->dbsize);
         }
 
         $remoteDestinations = apply_filters('mainwp_backuptask_remotedestinations', array(), $backupTask);

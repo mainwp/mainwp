@@ -18,7 +18,7 @@ class MainWPExtensionsView
         <h2><?php _e('Extensions', 'mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
         <?php if ($shownPage === '') { ?>
         <div class="mainwp-ext-categories" id="mainwp-recent-extensions">
-            <div id="mainwp-recent-extensions-title" style="border-bottom: 1px Solid #000;"><span style="color: #f0efe9;">Get MainWP Extensions</span></div>
+            <div id="mainwp-recent-extensions-title" style="border-bottom: 1px Solid #000;"><span style="color: #f0efe9;">Get MainWP Extensions</span><span style="float: right;" class=""><a href="http://mainwp.com/member/signup/mainwpsignup" target="_blank" class="mainwp-upgrade-button button-primary button">Create MainWP Account</a></span></div>
             <div id="mainwp-recent-extensions-products" style="border-top: 1px Solid #555; padding-top: 1em;">
             <span class="mainwp_fivecol_one">
             <ul class="mainwp-product-categories-list">
@@ -107,7 +107,7 @@ class MainWPExtensionsView
     {
 ?>
     <a class="mainwp_action left mainwp_action_down" href="#" id="mainwp-extensions-expand"><?php _e('Expand', 'mainwp'); ?></a><a class="mainwp_action right" href="#" id="mainwp-extensions-collapse"><?php _e('Collapse', 'mainwp'); ?></a>
-    <div style="float: right; padding-right: 2em;"><a href="#" class="button mainwp-extensions-disable-all"><?php _e('Disable All', 'mainwp'); ?></a> <a href="#" class="button-primary mainwp-extensions-enable-all"><?php _e('Enable All', 'mainwp'); ?></a></div>
+    <div style="float: right;"><a href="#" class="button mainwp-extensions-disable-all"><?php _e('Disable All', 'mainwp'); ?></a> <a href="#" class="button-primary mainwp-extensions-enable-all"><?php _e('Enable All', 'mainwp'); ?></a> <a href="<?php echo admin_url( 'plugin-install.php?tab=upload' ); ?>" class="mainwp-upgrade-button button-primary button"><?php _e('Install New Extension', 'mainwp'); ?></a></div>
 <div id="mainwp-extensions-list">
         <?php
     if (isset($extensions) && is_array($extensions))
@@ -134,7 +134,24 @@ class MainWPExtensionsView
                 <td valign="top">
                     <table style="width: 100%">
                         <tr>
-                            <td class="mainwp-extensions-childName"><?php echo $extension['name']; ?></td>
+                            <td class="mainwp-extensions-childName">
+                                <?php 
+                                    if (isset($extension['direct_page']) && !empty($extension['direct_page'])) { 
+                                        ?>
+                                        <a href="<?php echo admin_url('admin.php?page='.$extension['direct_page']); ?>" style="text-decoration: none;">
+                                            <?php echo $extension['name']; ?>
+                                        </a>
+                                <?php } 
+                                    else if (isset($extension['callback'])) { 
+                                ?>
+                                        <a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>" style="text-decoration: none;">    
+                                            <?php echo $extension['name']; ?>
+                                        </a>
+                                <?php } 
+                                    else {
+                                            echo $extension['name'];
+                                } ?>
+                            </td>
                             <td class="mainwp-extensions-childVersion">V. <?php echo $extension['version']; ?></td>
                             <td class="mainwp-extensions-childActions">
                                 <?php if ($active) { ?>

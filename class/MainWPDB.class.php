@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '6.2';
+    private $mainwp_db_version = '6.4';
     //Private
     private $table_prefix;
     //Singleton
@@ -103,6 +103,8 @@ class MainWPDB
   dtsSync int(11) NOT NULL,
   dtsSyncStart int(11) NOT NULL,
   totalsize int(11) NOT NULL,
+  dbsize int(11) NOT NULL,
+  last_db_backup_size int(11) NOT NULL,
   extauth text NOT NULL,
   pluginConflicts text NOT NULL,
   themeConflicts text NOT NULL,
@@ -527,7 +529,7 @@ class MainWPDB
     
     
 
-    public function getNotEmptyGroups($userid = null)
+    public function getNotEmptyGroups($userid = null, $enableOfflineSites  = true)
     {
         /** @var $wpdb wpdb */
         global $wpdb;
@@ -538,10 +540,15 @@ class MainWPDB
             $userid = $current_user->ID;
         }
 
+        $where = ' WHERE 1 ';
+        if ($userid != null) $where .= ' AND g.userid = ' . $userid;
+        if (!$enableOfflineSites) $where .= ' AND wpsite.sync_errors = ""';
+
         return $wpdb->get_results('SELECT DISTINCT(g.id), g.name, count(wp.wpid)
               FROM ' . $this->tableName('group') . ' g
               JOIN ' . $this->tableName('wp_group') . ' wp ON g.id = wp.groupid
-              ' . ($userid != null ? 'WHERE g.userid = ' . $userid : '') . '
+              JOIN ' . $this->tableName('wp') . ' wpsite ON wp.wpid = wpsite.id
+              ' . $where . '
               GROUP BY g.id
               HAVING count(wp.wpid) > 0
               ORDER BY g.name', OBJECT_K);

@@ -14,6 +14,7 @@ class MainWPServerInformation
         add_submenu_page('mainwp_tab', __('Child Site Information','mainwp'), '<div class="mainwp-hidden">' . __('Child Site Information','mainwp') . '</div>', 'read', 'ServerInformationChild', array(MainWPServerInformation::getClassName(), 'renderChild'));
         add_submenu_page('mainwp_tab', __('Error Log','mainwp'), '<div class="mainwp-hidden">' . __('Error Log','mainwp') . '</div>', 'read', 'ErrorLog', array(MainWPServerInformation::getClassName(), 'renderErrorLogPage'));
         add_submenu_page('mainwp_tab', __('WP-Config File','mainwp'), '<div class="mainwp-hidden">' . __('WP-Config File','mainwp') . '</div>', 'read', 'WPConfig', array(MainWPServerInformation::getClassName(), 'renderWPConfig'));
+        add_submenu_page('mainwp_tab', __('.htaccess File','mainwp'), '<div class="mainwp-hidden">' . __('.htaccess File','mainwp') . '</div>', 'read', '.htaccess', array(MainWPServerInformation::getClassName(), 'renderhtaccess'));
     }
 
     public static function renderHeader($shownPage)
@@ -32,9 +33,10 @@ class MainWPServerInformation
             <div class="mainwp-tabs" id="mainwp-tabs">
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === '') { echo "nav-tab-active"; } ?>" href="admin.php?page=ServerInformation"><?php _e('Server','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'ServerInformationCron') { echo "nav-tab-active"; } ?>" href="admin.php?page=ServerInformationCron"><?php _e('Cron Schedules','mainwp'); ?></a>
-                <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'ServerInformationChild') { echo "nav-tab-active"; } ?>" href="admin.php?page=ServerInformationChild"><?php _e('Child Site Information','mainwp'); ?></a>
+                <a style="float: right;" class="nav-tab pos-nav-tab <?php if ($shownPage === 'ServerInformationChild') { echo "nav-tab-active"; } ?>" href="admin.php?page=ServerInformationChild"><?php _e('Child Site Information','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'ErrorLog') { echo "nav-tab-active"; } ?>" href="admin.php?page=ErrorLog"><?php _e('Error Log','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'WPConfig') { echo "nav-tab-active"; } ?>" href="admin.php?page=WPConfig"><?php _e('WP-Config File','mainwp'); ?></a>
+                <a class="nav-tab pos-nav-tab <?php if ($shownPage === '.htaccess') { echo "nav-tab-active"; } ?>" href="admin.php?page=.htaccess"><?php _e('.htaccess File','mainwp'); ?></a>
             </div>
             <div id="mainwp_wrap-inside">
         <?php
@@ -74,6 +76,7 @@ class MainWPServerInformation
 //                            self::renderRow('PHP Memory Limit', '>=', '128M', 'getPHPMemoryLimit', '(256M+ best for big backups)');
                         self::renderRow('PCRE Backtracking Limit', '>=', '10000', 'getOutputBufferSize');
                         self::renderRow('SSL Extension Enabled', '=', true, 'getSSLSupport');
+                        self::renderRow('SSL Warnings', '=', '', 'getSSLWarning', 'empty');
                         self::renderRow('Curl Extension Enabled', '=', true, 'getCurlSupport');
                         self::renderRow('Curl Timeout', '>=', '300', 'getCurlTimeout', 'seconds', '=', '0');
                         ?>
@@ -341,6 +344,16 @@ class MainWPServerInformation
     protected static function getSSLSupport()
     {
         return extension_loaded('openssl');
+    }
+
+    protected static function getSSLWarning()
+    {
+        $conf = array('private_key_bits' => 384);
+        $res = @openssl_pkey_new($conf);
+        @openssl_pkey_export($res, $privkey);
+
+    	$str = openssl_error_string();
+        return (stristr($str, 'NCONF_get_string:no value') ? '' : $str);
     }
 
     protected static function getCurlSupport()
@@ -751,6 +764,21 @@ class MainWPServerInformation
         </div>
         <?php
         self::renderFooter('WPConfig');
+    }
+
+    public static function renderhtaccess() {
+        self::renderHeader('.htaccess');
+        ?>
+        <div class="postbox" id="mainwp-code-display">
+            <h3 class="hndle" style="padding: 8px 12px; font-size: 14px;"><span>.htaccess</span></h3>
+            <div style="padding: 1em;">
+            <?php
+                show_source( ABSPATH . '.htaccess');
+            ?>
+            </div>
+        </div>
+        <?php
+        self::renderFooter('.htaccess');
     }
 
 }

@@ -41,6 +41,7 @@ class MainWPShortcuts
         <div style="display: inline-block; width: 100px;"><?php _e('Frontpage:','mainwp'); ?></div>
         <a class="mainwp-open-link" target="_blank" href="<?php echo $website->url; ?>"><?php _e('Open','mainwp'); ?></a>
     </div>
+    <?php do_action("mainwp_shortcuts_widget", $website); ?>
     <div id="mainwp_notes_overlay" class="mainwp_overlay"></div>
     <div id="mainwp_notes" class="mainwp_popup">
         <a id="mainwp_notes_closeX" class="mainwp_closeX" style="display: inline; "></a>

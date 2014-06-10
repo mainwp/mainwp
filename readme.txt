@@ -113,6 +113,16 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 == Changelog ==
 
+= 1.0.8.6 =
+* Added ping from dashboard during backups, to reduce timeouts and add better error reporting
+* Added intelligent checks to increase backup speed
+* Install New Extension button added to the Extensions page
+* Extension names tweaked to link to open the extension page
+* Notes widget added to Site Individual Dashboard
+* .htacces file tab added to the server information page
+* CSS changes for a cleaner look
+* Hooks added for the upcoming extension
+
 = 1.0.8.5 =
 * Fixed warning with open basedir restriction in place
 * Added zip support to database backups

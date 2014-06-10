@@ -119,7 +119,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Install New Extension button added to the Extensions page
 * Extension names tweaked to link to open the extension page
 * Notes widget added to Site Individual Dashboard
-* .htacces file tab added to the server information page
+* .htaccess file tab added to the server information page
 * CSS changes for a cleaner look
 * Hooks added for the upcoming extension
 

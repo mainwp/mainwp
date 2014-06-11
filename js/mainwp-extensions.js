@@ -7,6 +7,7 @@ jQuery(document).on('click', '#mainwp-extensions-expand', function ()
     extensionImgs.removeClass('small');
     jQuery('.mainwp-extensions-extra').show();
     jQuery('.mainwp-extensions-childHolder').removeClass('collapsed');
+    mainwp_setCookie('mwp_ext_collapsed', '');
     return false;
 });
 
@@ -19,8 +20,16 @@ jQuery(document).on('click', '#mainwp-extensions-collapse', function ()
     extensionImgs.addClass('small');
     jQuery('.mainwp-extensions-extra').hide();
     jQuery('.mainwp-extensions-childHolder').addClass('collapsed');
+    mainwp_setCookie('mwp_ext_collapsed', 'yes');
     return false;
 });
+
+jQuery(document).ready(function () {
+    if (mainwp_getCookie('mwp_ext_collapsed') == 'yes')  
+        jQuery('#mainwp-extensions-collapse').click();
+    else
+        jQuery('#mainwp-extensions-expand').click();
+})
 
 jQuery(document).on('click', '.mainwp-extensions-enable-all', function ()
 {

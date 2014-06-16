@@ -1485,8 +1485,7 @@ class MainWPSystem
         
         if (isset($_POST['save'])) {
             global $wpdb;
-            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            update_post_meta($post_id, '_saved_as_draft', 'yes');
+            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));            
             add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));            
         }
         
@@ -1553,8 +1552,7 @@ class MainWPSystem
         
         if (isset($_POST['save'])) {
             global $wpdb;
-            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            update_post_meta($post_id, '_saved_as_draft', 'yes');
+            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));            
             add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));            
         }
         

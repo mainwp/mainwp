@@ -1,7 +1,7 @@
 <?php
 if (session_id() == '') session_start();
 //ini_set('display_errors', true);
-//error_reporting(E_ALL);
+//error_reporting(E_ALL | E_STRICT);
 
 @ini_set('display_errors', false);
 @error_reporting(0);
@@ -1321,12 +1321,14 @@ class MainWPSystem
     function admin_print_styles()
     {
         if (isset($_GET['hideall']) && $_GET['hideall'] == 1) {
+            $post_plus = apply_filters('mainwp-ext-post-plus-enabled', false);
             ?>
         <style>
+<?php   if (!$post_plus) { ?>
             #minor-publishing-actions {
                 display: none;
             }
-
+<?php   } ?>
             #screen-options-link-wrap {
                 display: none;
             }
@@ -1471,29 +1473,36 @@ class MainWPSystem
             return;
 
         $save_seo_value = isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))? true : false;
-        $message_id = 99;
+        $message_id = 96;
         if ($save_seo_value)
             $message_id = 98;
 
         //Read extra metabox
         $pid = $this->metaboxes->select_sites_handle($post_id, 'bulkpost');
-
-        if ($save_seo_value || $pid == $post_id) {
-            /** @var $wpdb wpdb */
+        $this->metaboxes->add_categories_handle($post_id, 'bulkpost');
+        $this->metaboxes->add_tags_handle($post_id, 'bulkpost');
+        $this->metaboxes->add_slug_handle($post_id, 'bulkpost');
+        
+        if (isset($_POST['save'])) {
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
+            update_post_meta($post_id, '_saved_as_draft', 'yes');
+            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));            
         }
-        else
-        {
-            $this->metaboxes->add_categories_handle($post_id, 'bulkpost');
-            $this->metaboxes->add_tags_handle($post_id, 'bulkpost');
-            $this->metaboxes->add_slug_handle($post_id, 'bulkpost');
-
-            //Redirect to handle page! (to actually post the messages)
-            wp_redirect(get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&hideall=1&id=' . $post_id);
-            die();
-        }
+        
+//        if ($save_seo_value || $pid == $post_id) {
+            /** @var $wpdb wpdb */
+//            global $wpdb;
+//            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
+//            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
+//        }
+//        else
+//        {
+//            //Redirect to handle page! (to actually post the messages)
+//            wp_redirect(get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&hideall=1&id=' . $post_id);
+//            die();
+//        }
+        
     }
 
     //This function will read the metaboxes & save them to the post
@@ -1534,31 +1543,39 @@ class MainWPSystem
             return;
 
         $save_seo_value = isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))? true : false;
-        $message_id = 99;
+        $message_id = 96;
         if ($save_seo_value)
             $message_id = 98;
 
         //Read extra metabox
         $pid = $this->metaboxes->select_sites_handle($post_id, 'bulkpage');
-
-        if ($save_seo_value || $pid == $post_id) {
-            /** @var $wpdb wpdb */
+        $this->metaboxes->add_slug_handle($post_id, 'bulkpage');
+        
+        if (isset($_POST['save'])) {
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
+            update_post_meta($post_id, '_saved_as_draft', 'yes');
+            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));            
         }
-        else
-        {
-            $this->metaboxes->add_slug_handle($post_id, 'bulkpage');
-
-            //Redirect to handle page! (to actually post the messages)
-            wp_redirect(get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&hideall=1&id=' . $post_id);
-            die();
-        }
+        
+//        if ($save_seo_value || $pid == $post_id) {
+//            /** @var $wpdb wpdb */
+//            global $wpdb;
+//            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
+//            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
+//        }
+//        else
+//        {
+//            //Redirect to handle page! (to actually post the messages)
+//            wp_redirect(get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&hideall=1&id=' . $post_id);
+//            die();
+//        }
     }
 
     function create_post_type()
     {
+        $queryable = ($post_plus = apply_filters('mainwp-ext-post-plus-enabled', false)) ? true : false;
+        
         $labels = array(
             'name' => _x('Bulkpost', 'bulkpost'),
             'singular_name' => _x('Bulkpost', 'bulkpost'),
@@ -1573,7 +1590,7 @@ class MainWPSystem
             'parent_item_colon' => _x('Parent Bulkpost:', 'bulkpost'),
             'menu_name' => _x('Bulkpost', 'bulkpost'),
         );
-
+        
         $args = array(
             'labels' => $labels,
             'hierarchical' => false,
@@ -1584,7 +1601,7 @@ class MainWPSystem
             'show_ui' => true,
             //'show_in_menu' => 'index.php',
             'show_in_nav_menus' => false,
-            'publicly_queryable' => false,
+            'publicly_queryable' => $queryable,
             'exclude_from_search' => true,
             'has_archive' => false,
             'query_var' => false,
@@ -1629,7 +1646,7 @@ class MainWPSystem
             'show_ui' => true,
             //'show_in_menu' => 'index.php',
             'show_in_nav_menus' => false,
-            'publicly_queryable' => false,
+            'publicly_queryable' => $queryable,
             'exclude_from_search' => true,
             'has_archive' => false,
             'query_var' => false,

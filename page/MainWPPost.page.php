@@ -652,16 +652,7 @@ class MainWPPost
                         do_action('mainwp-bulkposting-done', $post, $website, $output);
                     }
                 }
-                
-                $post_plus = apply_filters('mainwp-ext-post-plus-enabled', false);
-                $saved_draft = get_post_meta($id, '_saved_as_draft', true);                
-                if ($post_plus && $saved_draft === "yes") {        
-                    global $wpdb;
-                    $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $id));                    
-                } else {
-                    wp_delete_post($id, true);
-                }
-                
+                wp_delete_post($id, true);                                
             }
             ?>
             <div id="message" class="updated">

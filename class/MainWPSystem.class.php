@@ -1402,6 +1402,8 @@ class MainWPSystem
 
     function admin_init()
     {
+        $this->posthandler->init();
+
         wp_enqueue_script('jquery-ui-tooltip');
         wp_enqueue_script('jquery-ui-autocomplete');
         wp_enqueue_script('jquery-ui-progressbar');

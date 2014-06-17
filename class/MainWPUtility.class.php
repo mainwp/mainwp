@@ -1269,6 +1269,11 @@ class MainWPUtility
         return ($gmtOffset ? ($gmtOffset * HOUR_IN_SECONDS) + $timestamp : $timestamp);
     }
 
+    public static function date($format)
+    {
+        return date($format, self::getTimestamp(time()));
+    }
+
     public static function formatTimestamp($timestamp)
     {
         if (!is_long($timestamp)) return $timestamp;
@@ -1475,7 +1480,11 @@ class MainWPUtility
         if (!is_resource($resource))
             return false;
 
-        return array_pop(explode('#', (string)$resource));
+        $resourceString = (string)$resource;
+        $exploded = explode('#', $resourceString);
+        $result = array_pop($exploded);
+
+        return $result;
     }
 }
 

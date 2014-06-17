@@ -469,12 +469,14 @@ class MainWPPage
 
     public static function renderBulkAdd()
     {
+        $src = get_site_url() . '/wp-admin/post-new.php?post_type=bulkpage&hideall=1';        
+        $src = apply_filters('mainwp_bulkpost_edit_source', $src);
         //Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
         ?>
         <?php self::renderHeader('BulkAdd'); ?>
             <div class="mainwp_info-box"><strong><?php _e('Use this to add a new page. To bulk change pages click on the "Manage" tab.','mainwp'); ?></strong></div>
             <iframe scrolling="auto" id="mainwp_iframe"
-                    src="<?php echo get_site_url() . '/wp-admin/post-new.php?post_type=bulkpage&hideall=1'; ?>"></iframe>
+                    src="<?php echo $src; ?>"></iframe>
         </div>
     </div>
     <?php
@@ -494,7 +496,7 @@ class MainWPPage
             if ($post) {
                 $selected_by = get_post_meta($id, '_selected_by', true);
                 $selected_sites = unserialize(base64_decode(get_post_meta($id, '_selected_sites', true)));
-                $selected_groups = unserialize(base64_decode(get_post_meta($id, '_selected_groups', true)));
+                $selected_groups = unserialize(base64_decode(get_post_meta($id, '_selected_groups', true)));               
                 $post_slug = base64_decode(get_post_meta($id, '_slug', true));
                 $post_custom = get_post_custom($id);
                 include_once(ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php');
@@ -565,8 +567,7 @@ class MainWPPage
                         do_action('mainwp-bulkposting-done', $post, $website, $output);
                     }
                 }
-
-                wp_delete_post($id, true);
+                wp_delete_post($id, true);                
             }
             ?>
             <div id="message" class="updated">

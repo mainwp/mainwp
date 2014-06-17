@@ -75,7 +75,13 @@ class MainWPMetaBoxes
         return $post_id;
     }
 
-    function add_categories($post) {
+    function add_categories($post) {      
+        
+        $categories = apply_filters("mainwp_bulkpost_saved_categories", $post, array());
+        if (!is_array($categories)) 
+            $categories = array();        
+        $uncat = __('Uncategorized','mainwp');
+        
         ?>
         <input type="hidden" name="post_category_nonce" id="select_sites_nonce" value="<?php echo wp_create_nonce('post_category_' . $post->ID); ?>" />
 
@@ -86,7 +92,16 @@ class MainWPMetaBoxes
 
     		<div id="category-all" class="tabs-panel" style="display: block;">
                 <ul id="categorychecklist" data-wp-lists="list:category" class="categorychecklist form-no-clear post_add_categories">
-                    <li class="popular-category sitecategory"><label class="selectit"><input value="Uncategorized" type="checkbox" name="post_category[]"><?php _e(' Uncategorized','mainwp'); ?></label></li>
+                    <?php if (!in_array($uncat, $categories)) { ?>
+                          <li class="popular-category sitecategory"><label class="selectit"><input value="Uncategorized" type="checkbox" name="post_category[]"><?php _e('Uncategorized','mainwp'); ?></label></li>  
+                    <?php } ?>
+                    <?php foreach($categories as $cat) { 
+                          if (empty($cat))
+                              continue;
+                          $cat_name = rawurldecode($cat);
+                            ?>
+                          <li class="popular-category sitecategory"><label class="selectit"><input value="<?php echo $cat; ?>" type="checkbox" checked name="post_category[]"><?php echo $cat_name; ?></label></li>
+                    <?php } ?>
     			</ul>
     		</div>
 
@@ -126,6 +141,7 @@ class MainWPMetaBoxes
             if (isset($_POST['post_category']) && is_array($_POST['post_category']))
             {
                 update_post_meta($post_id, '_categories', base64_encode(implode(',', $_POST['post_category'])));
+                do_action('mainwp_bulkpost_categories_handle', $post_id, $_POST['post_category']);                
             }
             return;
         }
@@ -138,6 +154,8 @@ class MainWPMetaBoxes
 
     function add_tags_handle($post_id, $post_type) {
         $this->add_extra_handle('Tags', '_tags', 'add_tags', $post_id, $post_type);
+        if (isset($_POST['add_tags']))
+            do_action('mainwp_bulkpost_tags_handle', $post_id, $post_type, $_POST['add_tags']);
     }
 
     function add_slug($post) {
@@ -175,7 +193,7 @@ class MainWPMetaBoxes
         // OK, we're authenticated: we need to find and save the data	
         $post = get_post($post_id);
         if ($post->post_type == $post_type && isset($_POST[$prefix])) {
-            update_post_meta($post_id, $saveto, base64_encode($_POST[$prefix]));
+            update_post_meta($post_id, $saveto, base64_encode($_POST[$prefix]));            
             return base64_encode($_POST[$prefix]);
         }
         return $post_id;

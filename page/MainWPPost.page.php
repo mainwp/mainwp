@@ -487,11 +487,13 @@ class MainWPPost
 
     public static function renderBulkAdd()
     {
+        $src = get_site_url() . '/wp-admin/post-new.php?post_type=bulkpost&hideall=1' . (isset($_REQUEST['select']) ? '&select='.$_REQUEST['select'] : '');        
+        $src = apply_filters('mainwp_bulkpost_edit_source', $src);
         //Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
         self::renderHeader('BulkAdd'); ?>
         <div class="mainwp_info-box"><strong><?php _e('Use this to add new posts. To bulk change posts click on the "Manage" tab.','mainwp'); ?> </strong></div>
         <iframe scrolling="auto" id="mainwp_iframe"
-                src="<?php echo get_site_url() . '/wp-admin/post-new.php?post_type=bulkpost&hideall=1' . (isset($_REQUEST['select']) ? '&select='.$_REQUEST['select'] : ''); ?>"></iframe>
+                src="<?php echo $src; ?>"></iframe>
     <?php
         self::renderFooter('BulkAdd');
     }
@@ -572,7 +574,7 @@ class MainWPPost
                 $selected_by = get_post_meta($id, '_selected_by', true);
                 $selected_sites = unserialize(base64_decode(get_post_meta($id, '_selected_sites', true)));
                 $selected_groups = unserialize(base64_decode(get_post_meta($id, '_selected_groups', true)));
-
+               
                 /** @deprecated */
                 $post_category = base64_decode(get_post_meta($id, '_categories', true));
 
@@ -650,8 +652,7 @@ class MainWPPost
                         do_action('mainwp-bulkposting-done', $post, $website, $output);
                     }
                 }
-
-                wp_delete_post($id, true);
+                wp_delete_post($id, true);                                
             }
             ?>
             <div id="message" class="updated">

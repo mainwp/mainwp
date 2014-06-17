@@ -7,7 +7,7 @@ Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
 Requires at least: 3.6
 Tested up to: 3.9
-Stable tag: 1.0.8.6
+Stable tag: 1.0.8.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 1.0.8.7 =
+* Tweak for Backup file dates to match set timezone
+* Fix for uploads path outside the conventional path for backups
+* Fix for created category name and slug not handling spacing correctly
+* Fix for declaring wp_mail causing conflict with Mandrill
+* Added new hooks for upcoming extensions
 
 = 1.0.8.6 =
 * Added ping from dashboard during backups, to reduce timeouts and add better error reporting

@@ -1276,8 +1276,6 @@ class MainWPUtility
 
     public static function formatTimestamp($timestamp)
     {
-        if (!is_long($timestamp)) return $timestamp;
-
         return date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $timestamp);
     }
 

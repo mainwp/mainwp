@@ -115,6 +115,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 = 1.0.8.7 =
 * Tweak for Backup file dates to match set timezone
+* Fix for uploads path outside the conventional path for backups
 * Fix for created category name and slug not handling spacing correctly
 * Fix for declaring wp_mail causing conflict with Mandrill
 * Added new hooks for upcoming extensions

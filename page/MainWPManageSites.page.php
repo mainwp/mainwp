@@ -129,7 +129,7 @@ class MainWPManageSites
         $subfolder = str_replace('%sitename%', MainWPUtility::sanitize($website->name), $subfolder);
         $subfolder = str_replace('%url%', MainWPUtility::sanitize(MainWPUtility::getNiceURL($website->url)), $subfolder);
         $subfolder = str_replace('%type%', $type, $subfolder);
-        $subfolder = str_replace('%date%', date('Ymd'), $subfolder);
+        $subfolder = str_replace('%date%', MainWPUtility::date('Ymd'), $subfolder);
         $subfolder = str_replace('%task%', '', $subfolder);
 
         if (!MainWPSystem::Instance()->isSingleUser() && $userid != $website->userid)
@@ -146,7 +146,7 @@ class MainWPManageSites
 
         $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
         $maximumFileDescriptors = ($maximumFileDescriptors === false ? 0 : $maximumFileDescriptors);
-        $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, date('m-d-Y'), date('G\hi\ms\s'), $type), $pFilename) . '.zip';
+        $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $type), $pFilename) . '.zip';
 
         $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type, 'exclude' => $exclude, 'file_descriptors' => $maximumFileDescriptors, 'file' => $file));
         if (isset($information['error']))
@@ -231,12 +231,12 @@ class MainWPManageSites
             if ($information['db'])
             {
                 $what = 'db';
-                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . date('m-d-Y') . '-' . time() . '.sql';
+                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . MainWPUtility::date('m-d-Y') . '-' . time() . '.sql';
                 $regexBackupFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip)?';
 
                 if ($pFilename != null)
                 {
-                    $localBackupFile = $dir . str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, date('m-d-Y'), date('G\hi\ms\s'), $what), $pFilename) . '.sql';
+                    $localBackupFile = $dir . str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $what), $pFilename) . '.sql';
                 }
 
                 if (MainWPUtility::endsWith($information['db'], 'zip')) $localBackupFile .= '.zip';
@@ -247,12 +247,12 @@ class MainWPManageSites
             if ($information['full'])
             {
                 $what = 'full';
-                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . date('m-d-Y') . '-' . time() . '.zip';
+                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . MainWPUtility::date('m-d-Y') . '-' . time() . '.zip';
                 $regexBackupFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).zip';
 
                 if ($pFilename != null)
                 {
-                    $localBackupFile = $dir . str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, date('m-d-Y'), date('G\hi\ms\s'), $what), $pFilename) . '.zip';
+                    $localBackupFile = $dir . str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $what), $pFilename) . '.zip';
                 }
 
                 MainWPUtility::downloadToFile($information['full'], $localBackupFile);
@@ -373,7 +373,7 @@ class MainWPManageSites
         $subfolder = str_replace('%sitename%', MainWPUtility::sanitize($website->name), $pSubfolder);
         $subfolder = str_replace('%url%', MainWPUtility::sanitize(MainWPUtility::getNiceURL($website->url)), $subfolder);
         $subfolder = str_replace('%type%', $pType, $subfolder);
-        $subfolder = str_replace('%date%', date('Ymd'), $subfolder);
+        $subfolder = str_replace('%date%', MainWPUtility::date('Ymd'), $subfolder);
         $subfolder = str_replace('%task%', '', $subfolder);
 
         if (!MainWPUtility::can_edit_website($website))
@@ -391,7 +391,7 @@ class MainWPManageSites
         MainWPUtility::endSession();
         $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
         $maximumFileDescriptors = ($maximumFileDescriptors === false ? 0 : $maximumFileDescriptors);
-        $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, date('m-d-Y'), date('G\hi\ms\s'), $pType), $pFilename);
+        $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $pType), $pFilename);
 
         $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'file_descriptors' => $maximumFileDescriptors, 'file' => $file, 'fileUID' => $pFileNameUID));
 
@@ -430,18 +430,18 @@ class MainWPManageSites
 
             if ($pType == 'db')
             {
-                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . date('m-d-Y') . '-' . time() . '.sql';
+                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . MainWPUtility::date('m-d-Y') . '-' . time() . '.sql';
                 $localRegexFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip)?';
             }
             else
             {
-                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . date('m-d-Y') . '-' . time() . '.zip';
+                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . MainWPUtility::date('m-d-Y') . '-' . time() . '.zip';
                 $localRegexFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).zip';
             }
 
             if ($pFilename != null)
             {
-                $localBackupFile = $dir . str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, date('m-d-Y'), date('G\hi\ms\s'), $pType), $pFilename);
+                $localBackupFile = $dir . str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $pType), $pFilename);
 
                 if ($pType == 'db')
                 {

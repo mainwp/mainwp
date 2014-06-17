@@ -404,8 +404,8 @@ class MainWPUtility
             curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
             curl_setopt($ch, CURLOPT_USERAGENT, $agent);
             curl_multi_add_handle($mh, $ch);
-            $handleToWebsite[$ch] = $website;
-            $requestUrls[$ch] = $website->url;
+            $handleToWebsite[self::get_resource_id($ch)] = $website;
+            $requestUrls[self::get_resource_id($ch)] = $website->url;
 
             if ($_new_post != null) $params['new_post'] = $_new_post; // reassign new_post
         }
@@ -420,22 +420,22 @@ class MainWPUtility
                 $contains = (preg_match('/<mainwp>(.*)<\/mainwp>/', $data, $results) > 0);
                 curl_multi_remove_handle($mh, $info['handle']);
 
-                if (!$contains && isset($requestUrls[$info['handle']]))
+                if (!$contains && isset($requestUrls[self::get_resource_id($info['handle'])]))
                 {
-                  curl_setopt($info['handle'], CURLOPT_URL, $requestUrls[$info['handle']]);
+                  curl_setopt($info['handle'], CURLOPT_URL, $requestUrls[self::get_resource_id($info['handle'])]);
                   curl_multi_add_handle($mh, $info['handle']);
-                  unset($requestUrls[$info['handle']]);
+                  unset($requestUrls[self::get_resource_id($info['handle'])]);
                   $running++;
                   continue;
                 }
 
                 if ($handler != null)
                 {
-                    $site = &$handleToWebsite[$info['handle']];
+                    $site = &$handleToWebsite[self::get_resource_id($info['handle'])];
                     call_user_func($handler, $data, $site, $output);
                 }
 
-                unset($handleToWebsite[$info['handle']]);
+                unset($handleToWebsite[self::get_resource_id($info['handle'])]);
                 if (gettype($info['handle']) == 'resource') curl_close($info['handle']);
                 unset($info['handle']);
             }
@@ -1271,6 +1271,8 @@ class MainWPUtility
 
     public static function formatTimestamp($timestamp)
     {
+        if (!is_long($timestamp)) return $timestamp;
+
         return date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $timestamp);
     }
 
@@ -1466,6 +1468,14 @@ class MainWPUtility
             delete_option( $option_name );
             add_option( $option_name, $option_value, null, 'no' );
         }
+    }
+
+    static function get_resource_id($resource)
+    {
+        if (!is_resource($resource))
+            return false;
+
+        return array_pop(explode('#', (string)$resource));
     }
 }
 

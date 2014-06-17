@@ -5,6 +5,10 @@ class MainWPPostHandler
 
     function __construct()
     {
+    }
+
+    function init()
+    {
         //Page: ManageBackups
         $this->addAction('mainwp_addbackup', array(&$this, 'mainwp_addbackup'));
         $this->addAction('mainwp_updatebackup', array(&$this, 'mainwp_updatebackup'));

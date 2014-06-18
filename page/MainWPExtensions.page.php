@@ -280,13 +280,17 @@ class MainWPExtensions
             }
         }
 
-        if (!function_exists('wp_create_nonce')) include_once(ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'pluggable.php');
-        return ($active ? array('key' => wp_create_nonce($pluginFile . '-SNNonceAdder')) : false);
+        //return ($active ? array('key' => wp_create_nonce($pluginFile . '-SNNonceAdder')) : false);
+        return ($active ? array('key' => md5($pluginFile . '-SNNonceAdder')) : false);
+    }
+
+    public static function create_nonce_function()
+    {
     }
 
     public static function hookVerify($pluginFile, $key)
     {
-        return (self::isExtensionEnabled($pluginFile) && (wp_verify_nonce($key, $pluginFile . '-SNNonceAdder') == 1));
+        return (self::isExtensionEnabled($pluginFile) && ((wp_verify_nonce($key, $pluginFile . '-SNNonceAdder') == 1) || (md5($pluginFile.'-SNNonceAdder') == $key)));
     }
 
     public static function hookGetDashboardSites($pluginFile, $key)

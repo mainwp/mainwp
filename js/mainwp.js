@@ -772,7 +772,7 @@ var websitesError = 0;
 var currentWebsite = 0;
 var bulkTaskRunning = false;
 var currentThreads = 0;
-var maxThreads = 15;
+var maxThreads = 8;
 
 dashboard_update = function(websiteIds)
 {
@@ -836,15 +836,29 @@ dashboard_update_next = function()
     var websiteId = websitesToUpdate[currentWebsite++];
     dashboard_update_site_status(websiteId, __('SYNCING'));
     var data = mainwp_secure_data({
-        action:'mainwp_syncsites',
-        wp_id: websiteId
-    });
+            action:'mainwp_syncsites',
+            wp_id: websiteId
+        });
+    dashboard_update_next_int(websiteId, data, 0);
+};
+dashboard_update_next_int = function(websiteId, data, errors)
+{
     jQuery.ajax({
         type: 'POST',
         url: ajaxurl,
         data: data,
-        success: function(pWebsiteId) { return function(response) { if (response.error) { dashboard_update_site_status(websiteId, '<font color="red">' + __('ERROR') + '</font>'); websitesError++; } else {dashboard_update_site_status(websiteId, __('DONE'));} dashboard_update_done(); } }(websiteId),
-        error: function(pWebsiteId) { return function(response) { dashboard_update_site_status(websiteId, '<font color="red">' +  __('ERROR') + '</font>');  websitesError++; dashboard_update_done(); } }(websiteId),
+        success: function(pWebsiteId) { return function(response) { if (response.error) { dashboard_update_site_status(pWebsiteId, '<font color="red">' + __('ERROR') + '</font>'); websitesError++; } else {dashboard_update_site_status(websiteId, __('DONE'));} dashboard_update_done(); } }(websiteId),
+        error: function(pWebsiteId, pData, pErrors) { return function(response) {
+            if (pErrors > 5)
+            {
+                dashboard_update_site_status(pWebsiteId, '<font color="red">' +  __('TIMEOUT') + '</font>');  websitesError++; dashboard_update_done();
+            }
+            else
+            {
+                pErrors++;
+                dashboard_update_next_int(pWebsiteId, pData, pErrors);
+            }
+        } }(websiteId, data, errors),
         dataType: 'json'
     });
 };

@@ -982,29 +982,28 @@ li.hoverli {
 .mainwp_info-box, .mainwp-au-on {
     margin: 5px 0 15px;
     padding: .6em;
-    background: rgba(127, 177, 0, 1);
-    border-left: 4px solid #446200;
+    background: #fff;
+    border-left: 4px solid #7fb100;
     clear: both ;
-    color:#fff;
+    color:#333;
     box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
 .mainwp_info-box-red, .mainwp-au-off {
     margin: 5px 0 15px;
     padding: .6em;
-    background: #bb7239;
+    background: #fff;
     border-left: 4px solid #bb4539;
     clear: both ;
-    color:#fff;
+    color:#333;
     box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
 .mainwp_info-box-yellow, .mainwp-au-email {
     margin: 5px 0 15px;
     padding: .6em;
-    background: #e6db55;
+    background: #fff;
     border-left: 4px solid #ffec00;
     clear: both ;
-    color:#fff;
-    text-shadow: 1px 1px 0px rgba(150, 150, 150, 1);
+    color:#333;
     box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
 
@@ -2496,4 +2495,3 @@ background-position: 0 -16px;
     position: relative;
     width: 16.8%;
 }
-

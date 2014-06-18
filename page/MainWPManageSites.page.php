@@ -193,7 +193,7 @@ class MainWPManageSites
                             $dbBackups[filemtime($theFile) . $file] = $theFile;
                         }
 
-                        if ($information['full'] && preg_match('/(.*).zip/', $file))
+                        if ($information['full'] && preg_match('/(.*).zip/', $file) && !preg_match('/(.*).sql.zip$/', $file))
                         {
                             $fullBackups[filemtime($theFile) . $file] = $theFile;
                         }
@@ -315,7 +315,7 @@ class MainWPManageSites
                         $dbBackups[filemtime($theFile) . $file] = $theFile;
                     }
 
-                    if ($pType == 'full' && preg_match('/(.*).zip/', $file))
+                    if ($pType == 'full' && preg_match('/(.*).zip/', $file) && !preg_match('/(.*).sql.zip$/', $file))
                     {
                         $fullBackups[filemtime($theFile) . $file] = $theFile;
                     }

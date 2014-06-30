@@ -302,16 +302,20 @@ class MainWPManageBackups
                 <th scope="row"><?php _e('Backup Type:','mainwp'); ?></th>
                 <td>
                     <a class="mainwp_action left <?php echo (!isset($task) || $task->type != 'db' ? 'mainwp_action_down' : ''); ?>" href="#" id="backup_type_full"><?php _e('FULL BACKUP','mainwp'); ?></a><a class="mainwp_action right <?php echo (isset($task) && $task->type == 'db' ? 'mainwp_action_down' : ''); ?>" href="#" id="backup_type_db"><?php _e('DATABASE BACKUP','mainwp'); ?></a>
-                    <br /><a href="#" id="mainwp_backup_exclude_files" <?php echo (isset($task) && $task->type == 'db' ? 'style="display: none;"' : ''); ?>><?php _e('EXCLUDE FILES','mainwp'); ?></a>
                 </td>
             </tr>
-            <tr id="mainwp_backup_exclude_files_content" style="display: none;">
-                <th scope="row" style="vertical-align: top"></th>
+            <tr class="mainwp_backup_exclude_files_content" <?php echo (isset($task) && $task->type == 'db' ? 'style="display: none;"' : ''); ?>><td colspan="2"><hr /></td></tr>
+            <tr class="mainwp_backup_exclude_files_content" <?php echo (isset($task) && $task->type == 'db' ? 'style="display: none;"' : ''); ?>>
+                <th scope="row" style="vertical-align: top"><?php _e('Exclude files', 'mainwp'); ?>:</th>
                 <td>
+                    <span class="mainwp-form_hint" style="display: inline; max-width: 650px;"><?php _e('The Backup will attempt to backup the files below. Exclude any files that you do not need backed up for this site.', 'mainwp'); ?></span>
+                    <br />
+                    <br />
+                    <br />
+                    <?php _e('Click directories to navigate or click to exclude.','mainwp'); ?>
                     <table class="mainwp_excluded_folders_cont">
                         <tr>
                             <td style="width: 280px">
-                                <?php _e('Click directories to navigate or click to exclude.','mainwp'); ?>
                                 <div id="backup_exclude_folders" class="mainwp_excluded_folders"></div>
                             </td>
                             <td>

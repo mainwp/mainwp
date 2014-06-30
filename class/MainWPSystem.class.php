@@ -302,7 +302,7 @@ class MainWPSystem
         echo '<div id="message" class="mainwp-api-message-invalid updated fade" style="' . (true || $this->isAPIValid() ? 'display: none;' : '') . '"><p><strong>MainWP needs to be activated before using - <a href="' . admin_url() . 'admin.php?page=Settings">Activate Here</a>.</strong></p></div>';
 
         if (MainWPDB::Instance()->getWebsitesCount() == 0)
-            echo '<div id="message" class="mainwp-api-message-valid updated fade" style="' . ($this->isAPIValid() ? '' : 'display: none') . '"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';
+            echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';
     }
 
     public function getVersion()
@@ -1404,6 +1404,13 @@ class MainWPSystem
 
     function admin_init()
     {
+        if (get_option('mainwp_activated') == 'yes')
+        {
+            delete_option('mainwp_activated');
+            wp_redirect(admin_url('admin.php?page=Settings'));
+            return;
+        }
+
         $this->posthandler->init();
 
         wp_enqueue_script('jquery-ui-tooltip');
@@ -1842,13 +1849,15 @@ class MainWPSystem
         }
     }
 
-
     //On activation install the database
     function activation()
     {
         delete_option('mainwp_requests');
         MainWPDB::Instance()->update();
         MainWPDB::Instance()->install();
+
+        //Redirect to settings page
+        MainWPUtility::update_option('mainwp_activated', 'yes');
     }
 
     function deactivation()

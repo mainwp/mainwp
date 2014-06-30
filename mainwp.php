@@ -50,3 +50,12 @@ $mainWP = new MainWPSystem(WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename
 register_activation_hook(__FILE__, array($mainWP, 'activation'));
 register_deactivation_hook(__FILE__, array($mainWP, 'deactivation'));
 add_action('plugins_loaded', array($mainWP, 'update'));
+
+if (isset($_REQUEST['mainwptest']))
+{
+    $dnsRecord = dns_get_record('mainwp.com');
+    echo '<pre>';
+    print_r($dnsRecord);
+
+    die('</pre>');
+}

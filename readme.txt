@@ -117,6 +117,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Added redirect for user to add first site on activation
 * Cleaned up messages to user on initial activation
 * Fixed forms to move to the top and show messages on submit
+* Changed Backups to show exclude folders by default
 * Fixed PHP Strict Error
 
 = 1.0.8.8 =

@@ -119,6 +119,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Fixed forms to move to the top and show messages on submit
 * Changed Backups to show exclude folders by default
 * Fixed PHP Strict Error
+* Fixed Page and Post scheduling
 
 = 1.0.8.8 =
 * Fix for backups (database backups deleted incorrectly)

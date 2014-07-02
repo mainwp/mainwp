@@ -350,7 +350,8 @@ class MainWPUtility
             $loops = ceil($total / $chunkSize);
             for ($i = 0; $i < $loops; $i++)
             {
-                self::fetchUrlsAuthed(array_slice($websites, $i * $chunkSize, $chunkSize, true), $what, $params, $handler, $output, $whatPage);
+                $newSites = array_slice($websites, $i * $chunkSize, $chunkSize, true);
+                self::fetchUrlsAuthed($newSites, $what, $params, $handler, $output, $whatPage);
                 sleep(5);
             }
 

@@ -1407,7 +1407,7 @@ class MainWPSystem
         if (get_option('mainwp_activated') == 'yes')
         {
             delete_option('mainwp_activated');
-            wp_redirect(admin_url('admin.php?page=Settings'));
+            wp_redirect(admin_url('admin.php?page=managesites&do=new'));
             return;
         }
 
@@ -1494,22 +1494,21 @@ class MainWPSystem
         
         if (isset($_POST['save'])) {
             global $wpdb;
-            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));            
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));            
+            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
+            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
         }
-        
-//        if ($save_seo_value || $pid == $post_id) {
+        else if ($save_seo_value || $pid == $post_id) {
             /** @var $wpdb wpdb */
-//            global $wpdb;
-//            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-//            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
-//        }
-//        else
-//        {
-//            //Redirect to handle page! (to actually post the messages)
-//            wp_redirect(get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&hideall=1&id=' . $post_id);
-//            die();
-//        }
+            global $wpdb;
+            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
+            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
+        }
+        else if (isset($_POST['publish']))
+        {
+            //Redirect to handle page! (to actually post the messages)
+            wp_redirect(get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&hideall=1&id=' . $post_id);
+            die();
+        }
         
     }
 

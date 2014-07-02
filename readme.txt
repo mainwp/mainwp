@@ -113,6 +113,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 == Changelog ==
 
+= 1.0.8.9 =
+* Added redirect for user to add first site on activation
+* Cleaned up messages to user on initial activation
+* Fixed forms to move to the top and show messages on submit
+* Fixed PHP Strict Error
+
 = 1.0.8.8 =
 * Fix for backups (database backups deleted incorrectly)
 * Fix to reduce timeouts on sync

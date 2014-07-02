@@ -2106,10 +2106,6 @@ managebackups_pause = function (element) {
 /**
  * Manage sites page
  */
-jQuery(document).on('click', '#mainwp_backup_exclude_files', function() {
-    jQuery('#mainwp_backup_exclude_files_content').toggle();
-    return false;
-});
 jQuery(document).on('click', '#mainwp_backup_destinations', function() {
     jQuery('.mainwp_backup_destinations').toggle();
     return false;
@@ -2117,14 +2113,13 @@ jQuery(document).on('click', '#mainwp_backup_destinations', function() {
 jQuery(document).on('click', '.mainwp_action#backup_type_full', function() {
     jQuery('.mainwp_action#backup_type_db').removeClass('mainwp_action_down');
     jQuery(this).addClass('mainwp_action_down');
-    jQuery('#mainwp_backup_exclude_files').show();
+    jQuery('.mainwp_backup_exclude_files_content').show();
     return false;
 });
 jQuery(document).on('click', '.mainwp_action#backup_type_db', function() {
     jQuery('.mainwp_action#backup_type_full').removeClass('mainwp_action_down');
     jQuery(this).addClass('mainwp_action_down');
-    jQuery('#mainwp_backup_exclude_files').hide();
-    jQuery('#mainwp_backup_exclude_files_content').hide();
+    jQuery('.mainwp_backup_exclude_files_content').hide();
     return false;
 });
 jQuery(document).on('click', '.mainwp_action#backup_location_remote', function() {
@@ -4188,6 +4183,7 @@ function setVisible(what, vis) {
 function setHtml(what, text) {
     setVisible(what, true);
     jQuery(what).html('<p>' + text + '</p>');
+    scrollToElement(what);
 }
 function getUrlParameters() {
     var map = {};
@@ -5789,4 +5785,12 @@ mainwp_uid = function() {
     } while (idstr.length<32);
 
     return (idstr);
+};
+
+scrollToElement = function(pElement) {
+    jQuery('html,body').animate({
+      scrollTop: 0
+    }, 1000);
+
+    return false;
 };

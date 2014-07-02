@@ -5,7 +5,7 @@
   Description: Manage all of your WP sites, even those on different servers, from one central dashboard that runs off of your own self-hosted WordPress install.
   Author: MainWP
   Author URI: http://mainwp.com
-  Version: 1.0.8.9-beta
+  Version: 1.0.8.10-beta
  */
 include_once(ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'version.php'); //Version information from wordpress
 
@@ -50,3 +50,12 @@ $mainWP = new MainWPSystem(WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename
 register_activation_hook(__FILE__, array($mainWP, 'activation'));
 register_deactivation_hook(__FILE__, array($mainWP, 'deactivation'));
 add_action('plugins_loaded', array($mainWP, 'update'));
+
+if (isset($_REQUEST['mainwptest']))
+{
+    $dnsRecord = dns_get_record('mainwp.com');
+    echo '<pre>';
+    print_r($dnsRecord);
+
+    die('</pre>');
+}

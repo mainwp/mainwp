@@ -7,7 +7,7 @@ Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
 Requires at least: 3.6
 Tested up to: 3.9
-Stable tag: 1.0.8.8
+Stable tag: 1.0.8.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,14 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 1.0.8.9 =
+* Added redirect for user to add first site on activation
+* Cleaned up messages to user on initial activation
+* Fixed forms to move to the top and show messages on submit
+* Changed Backups to show exclude folders by default
+* Fixed PHP Strict Error
+* Fixed Page and Post scheduling
 
 = 1.0.8.8 =
 * Fix for backups (database backups deleted incorrectly)

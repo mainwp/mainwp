@@ -302,7 +302,7 @@ class MainWPSystem
         echo '<div id="message" class="mainwp-api-message-invalid updated fade" style="' . (true || $this->isAPIValid() ? 'display: none;' : '') . '"><p><strong>MainWP needs to be activated before using - <a href="' . admin_url() . 'admin.php?page=Settings">Activate Here</a>.</strong></p></div>';
 
         if (MainWPDB::Instance()->getWebsitesCount() == 0)
-            echo '<div id="message" class="mainwp-api-message-valid updated fade" style="' . ($this->isAPIValid() ? '' : 'display: none') . '"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';
+            echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';
     }
 
     public function getVersion()
@@ -1404,6 +1404,13 @@ class MainWPSystem
 
     function admin_init()
     {
+        if (get_option('mainwp_activated') == 'yes')
+        {
+            delete_option('mainwp_activated');
+            wp_redirect(admin_url('admin.php?page=managesites&do=new'));
+            return;
+        }
+
         $this->posthandler->init();
 
         wp_enqueue_script('jquery-ui-tooltip');
@@ -1487,22 +1494,21 @@ class MainWPSystem
         
         if (isset($_POST['save'])) {
             global $wpdb;
-            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));            
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));            
+            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
+            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
         }
-        
-//        if ($save_seo_value || $pid == $post_id) {
+        else if ($save_seo_value || $pid == $post_id) {
             /** @var $wpdb wpdb */
-//            global $wpdb;
-//            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-//            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
-//        }
-//        else
-//        {
-//            //Redirect to handle page! (to actually post the messages)
-//            wp_redirect(get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&hideall=1&id=' . $post_id);
-//            die();
-//        }
+            global $wpdb;
+            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
+            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
+        }
+        else if (isset($_POST['publish']))
+        {
+            //Redirect to handle page! (to actually post the messages)
+            wp_redirect(get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&hideall=1&id=' . $post_id);
+            die();
+        }
         
     }
 
@@ -1557,19 +1563,18 @@ class MainWPSystem
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));            
             add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));            
         }
-        
-//        if ($save_seo_value || $pid == $post_id) {
-//            /** @var $wpdb wpdb */
-//            global $wpdb;
-//            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-//            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
-//        }
-//        else
-//        {
-//            //Redirect to handle page! (to actually post the messages)
-//            wp_redirect(get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&hideall=1&id=' . $post_id);
-//            die();
-//        }
+        else if ($save_seo_value || $pid == $post_id) {
+            /** @var $wpdb wpdb */
+            global $wpdb;
+            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
+            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
+        }
+        else
+        {
+            //Redirect to handle page! (to actually post the messages)
+            wp_redirect(get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&hideall=1&id=' . $post_id);
+            die();
+        }
     }
 
     function create_post_type()
@@ -1842,13 +1847,15 @@ class MainWPSystem
         }
     }
 
-
     //On activation install the database
     function activation()
     {
         delete_option('mainwp_requests');
         MainWPDB::Instance()->update();
         MainWPDB::Instance()->install();
+
+        //Redirect to settings page
+        MainWPUtility::update_option('mainwp_activated', 'yes');
     }
 
     function deactivation()

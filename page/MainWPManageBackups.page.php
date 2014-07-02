@@ -277,7 +277,8 @@ class MainWPManageBackups
             //to add CSS Styling to the select sites box use the one below (this adds the css class mainwp_select_sites_box_right to the box)
             //MainWPUI::select_sites_box(__("Select Sites"), 'checkbox', true, true, 'mainwp_select_sites_box_right', '', $selected_websites, $selected_groups);
         ?>
-        <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right', 'float: right !important;', $selected_websites, $selected_groups, true); ?>
+        <div class="mainwp_info-box-yellow" style="float: right; width: 240px;"><?php _e('We recommend only scheduling 1 site per backup, multiples sites can cause unintended issues.','mainwp'); ?></div>
+        <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right', 'float: right !important; clear: both;', $selected_websites, $selected_groups, true); ?>
         <div class="mainwp_config_box_left">
 
         <div class="postbox">
@@ -302,16 +303,20 @@ class MainWPManageBackups
                 <th scope="row"><?php _e('Backup Type:','mainwp'); ?></th>
                 <td>
                     <a class="mainwp_action left <?php echo (!isset($task) || $task->type != 'db' ? 'mainwp_action_down' : ''); ?>" href="#" id="backup_type_full"><?php _e('FULL BACKUP','mainwp'); ?></a><a class="mainwp_action right <?php echo (isset($task) && $task->type == 'db' ? 'mainwp_action_down' : ''); ?>" href="#" id="backup_type_db"><?php _e('DATABASE BACKUP','mainwp'); ?></a>
-                    <br /><a href="#" id="mainwp_backup_exclude_files" <?php echo (isset($task) && $task->type == 'db' ? 'style="display: none;"' : ''); ?>><?php _e('EXCLUDE FILES','mainwp'); ?></a>
                 </td>
             </tr>
-            <tr id="mainwp_backup_exclude_files_content" style="display: none;">
-                <th scope="row" style="vertical-align: top"></th>
+            <tr class="mainwp_backup_exclude_files_content" <?php echo (isset($task) && $task->type == 'db' ? 'style="display: none;"' : ''); ?>><td colspan="2"><hr /></td></tr>
+            <tr class="mainwp_backup_exclude_files_content" <?php echo (isset($task) && $task->type == 'db' ? 'style="display: none;"' : ''); ?>>
+                <th scope="row" style="vertical-align: top"><?php _e('Exclude files', 'mainwp'); ?>:</th>
                 <td>
+                    <span class="mainwp-form_hint" style="display: inline; max-width: 650px;"><?php _e('The Backup will attempt to backup the files below. Exclude any files that you do not need backed up for this site.', 'mainwp'); ?></span>
+                    <br />
+                    <br />
+                    <br />
+                    <?php _e('Click directories to navigate or click to exclude.','mainwp'); ?>
                     <table class="mainwp_excluded_folders_cont">
                         <tr>
                             <td style="width: 280px">
-                                <?php _e('Click directories to navigate or click to exclude.','mainwp'); ?>
                                 <div id="backup_exclude_folders" class="mainwp_excluded_folders"></div>
                             </td>
                             <td>

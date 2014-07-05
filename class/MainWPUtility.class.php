@@ -404,6 +404,12 @@ class MainWPUtility
             $postdata = MainWPUtility::getPostDataAuthed($website, $what, $params);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
             curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+
+            $timeout = 20 * 60 * 60; //20 minutes
+            @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout); //20minutes
+            if (!ini_get('safe_mode')) @set_time_limit($timeout); //20minutes
+            @ini_set('max_execution_time', $timeout);
+
             curl_multi_add_handle($mh, $ch);
             $handleToWebsite[self::get_resource_id($ch)] = $website;
             $requestUrls[self::get_resource_id($ch)] = $website->url;
@@ -666,10 +672,15 @@ class MainWPUtility
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
-        if ((ini_get('max_execution_time') != 0) && (ini_get('max_execution_time') < 300))
-        {
-            curl_setopt($ch, CURLOPT_TIMEOUT, 300);
-        }
+//        if ((ini_get('max_execution_time') != 0) && (ini_get('max_execution_time') < 300))
+//        {
+//            curl_setopt($ch, CURLOPT_TIMEOUT, 300);
+//        }
+        $timeout = 20 * 60 * 60; //20 minutes
+        @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        if (!ini_get('safe_mode')) @set_time_limit($timeout);
+        @ini_set('max_execution_time', $timeout);
+
         $data = curl_exec($ch);
         $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $err = curl_error($ch);

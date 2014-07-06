@@ -3797,7 +3797,7 @@ backup = function ()
             backup_download_file(pSiteId, response.result.type, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder, pRemoteDestinations);
         }
 
-    } }(jQuery('#backup_site_id').val(), remote_destinations, interVal), error: function(pInterVal) { return function() {backupCreateRunning = false;clearInterval(pInterVal);} }(interVal), dataType: 'json'});
+    } }(jQuery('#backup_site_id').val(), remote_destinations, interVal), error: function(pInterVal) { return function() {backupCreateRunning = false;clearInterval(pInterVal);appendToDiv('#managesite-backup-status-text', ' <font color="red">Error: Backup timed out</font>');} }(interVal), dataType: 'json'});
 };
 
 backup_download_file = function(pSiteId, type, url, file, regexfile, size, subfolder, remote_destinations)

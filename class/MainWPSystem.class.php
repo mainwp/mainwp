@@ -436,6 +436,12 @@ class MainWPSystem
 
     function mainwp_cronupdatescheck_action()
     {
+        @ignore_user_abort(true);
+        @set_time_limit(0);
+        $mem =  '512M';
+        @ini_set('memory_limit', $mem);
+        @ini_set('max_execution_time', 0);
+
         MainWPUtility::update_option('mainwp_cron_last_updatescheck', time());
 
         $mainwpAutomaticDailyUpdate = get_option('mainwp_automaticDailyUpdate');
@@ -1189,6 +1195,12 @@ class MainWPSystem
 
     function mainwp_cronbackups_continue_action()
     {
+        @ignore_user_abort(true);
+        @set_time_limit(0);
+        $mem =  '512M';
+        @ini_set('memory_limit', $mem);
+        @ini_set('max_execution_time', 0);
+
         MainWPUtility::update_option('mainwp_cron_last_backups_continue', time());
 
         $chunkedBackupTasks = get_option('mainwp_chunkedBackupTasks');
@@ -1210,6 +1222,12 @@ class MainWPSystem
 
     function mainwp_cronbackups_action()
     {
+        @ignore_user_abort(true);
+        @set_time_limit(0);
+        $mem =  '512M';
+        @ini_set('memory_limit', $mem);
+        @ini_set('max_execution_time', 0);
+
         MainWPUtility::update_option('mainwp_cron_last_backups', time());
 
         //Do cronjobs!

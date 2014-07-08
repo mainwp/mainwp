@@ -104,7 +104,7 @@ class MainWPManageSitesView
                         <td>
                             <input type="text" id="mainwp_managesites_test_wpurl"
                                    name="mainwp_managesites_add_wpurl"
-                                   value="<?php if (isset($_REQUEST['site'])) echo $_REQUEST['site']; ?>" autocompletelist="mainwp-test-sites" class="mainwp_autocomplete" /><span class="mainwp-form_hint">Proper Format: <strong>http://address.com</strong> or <strong>http://www.address.com</strong></span>
+                                   value="<?php if (isset($_REQUEST['site'])) echo $_REQUEST['site']; ?>" autocompletelist="mainwp-test-sites" class="mainwp_autocomplete" /><span class="mainwp-form_hint">Proper Format: <strong>http://address.com/</strong> or <strong>http://www.address.com/</strong></span>
                             <datalist id="mainwp-test-sites">
                                <?php
                                 $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
@@ -264,7 +264,7 @@ class MainWPManageSitesView
                    <th scope="row"><?php _e('Site URL:','mainwp'); ?></th>
                    <td><input type="text" id="mainwp_managesites_add_wpurl"
                               name="mainwp_managesites_add_wpurl"
-                              value=""/><span class="mainwp-form_hint">Proper format "http://address.com"</span></td>
+                              value="http://"/><span class="mainwp-form_hint">Proper format "http://address.com/"</span></td>
                </tr>
                <tr class="form-field form-required">
                    <th scope="row"><?php _e('Administrator Username:','mainwp'); ?></th>

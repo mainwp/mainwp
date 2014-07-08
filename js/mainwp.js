@@ -1676,7 +1676,11 @@ managebackups_run_next = function()
                             managebackups_backup_download_file(pSiteId, pSiteName, response.result.type, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder, pRemoteDestinations);
                         }
                     } }(manageBackupsTaskId, siteId, siteName, manageBackupsTaskRemoteDestinations.slice(0), interVal),
-                error: function(pInterVal) { return function() {backupCreateRunning = false;clearInterval(pInterVal);} }(interVal), dataType: 'json'});
+                error: function(pInterVal, pSiteName) { return function() {
+                    backupCreateRunning = false;
+                    clearInterval(pInterVal);
+                    appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] ' + '<font color="red">Error: Backup timed out - <a href="http://docs.mainwp.com/backup-failed-php-ini-settings/">Please check this help document for more information and possible fixes</a></font>');
+                } }(interVal, siteName), dataType: 'json'});
 };
 
 managebackups_backup_download_file = function(pSiteId, pSiteName, type, url, file, regexfile, size, subfolder, remote_destinations)
@@ -3797,7 +3801,7 @@ backup = function ()
             backup_download_file(pSiteId, response.result.type, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder, pRemoteDestinations);
         }
 
-    } }(jQuery('#backup_site_id').val(), remote_destinations, interVal), error: function(pInterVal) { return function() {backupCreateRunning = false;clearInterval(pInterVal);} }(interVal), dataType: 'json'});
+    } }(jQuery('#backup_site_id').val(), remote_destinations, interVal), error: function(pInterVal) { return function() {backupCreateRunning = false;clearInterval(pInterVal);appendToDiv('#managesite-backup-status-text', ' <font color="red">Error: Backup timed out - <a href="http://docs.mainwp.com/backup-failed-php-ini-settings/">Please check this help document for more information and possible fixes</a></font>');} }(interVal), dataType: 'json'});
 };
 
 backup_download_file = function(pSiteId, type, url, file, regexfile, size, subfolder, remote_destinations)

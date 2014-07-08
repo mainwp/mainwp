@@ -2495,3 +2495,11 @@ background-position: 0 -16px;
     position: relative;
     width: 16.8%;
 }
+
+/*make dashboard boxes switch to 1 column style on mobile devices*/
+@media only screen and (max-width: 799px) {
+  #wpbody-content #mainwp_tab-general #dashboard-widgets.columns-2 #postbox-container-1, 
+  div#postbox-container-2.postbox-container {
+    width: 100% !important;
+  }
+}

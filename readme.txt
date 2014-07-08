@@ -117,7 +117,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Added additional pings to decrease Backup timeouts on slower servers
 * Added enhancement for sites having a timeout stuck while performing a backup
 * Added enhancement to decrease server load when searching for or posting posts/pages/users
-* Tweaked CSS for Dashboard boxes mobile devices - ht phalancs 
+* Tweaked CSS for Dashboard boxes mobile devices - ht phalancs
 
 = 1.0.8.9 =
 * Added redirect for user to add first site on activation

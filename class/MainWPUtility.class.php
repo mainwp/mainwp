@@ -361,6 +361,8 @@ class MainWPUtility
         $agent= 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
         $mh = curl_multi_init();
 
+        $timeout = 20 * 60 * 60; //20 minutes
+
         $handleToWebsite = array();
         $requestUrls = array();
         foreach ($websites as $website)
@@ -405,7 +407,6 @@ class MainWPUtility
             curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
             curl_setopt($ch, CURLOPT_USERAGENT, $agent);
 
-            $timeout = 20 * 60 * 60; //20 minutes
             @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout); //20minutes
             if (!ini_get('safe_mode')) @set_time_limit($timeout); //20minutes
             @ini_set('max_execution_time', $timeout);
@@ -417,8 +418,15 @@ class MainWPUtility
             if ($_new_post != null) $params['new_post'] = $_new_post; // reassign new_post
         }
 
+        $lastRun = 0;
         do
         {
+            if (time() - $lastRun > 20)
+            {
+                @set_time_limit($timeout); //reset timer..
+                $lastRun = time();
+            }
+
             curl_multi_exec($mh, $running); //Execute handlers
             //$ready = curl_multi_select($mh);
             while ($info = curl_multi_info_read($mh))
@@ -446,6 +454,7 @@ class MainWPUtility
                 if (gettype($info['handle']) == 'resource') curl_close($info['handle']);
                 unset($info['handle']);
             }
+            usleep(10000);
         } while ($running > 0);
 
         curl_multi_close($mh);
@@ -644,6 +653,8 @@ class MainWPUtility
             MainWPUtility::release($identifier);
         }
 
+        $mh = curl_multi_init();
+
         $ch = curl_init();
 
         if ($website != null)
@@ -672,20 +683,38 @@ class MainWPUtility
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
-//        if ((ini_get('max_execution_time') != 0) && (ini_get('max_execution_time') < 300))
-//        {
-//            curl_setopt($ch, CURLOPT_TIMEOUT, 300);
-//        }
         $timeout = 20 * 60 * 60; //20 minutes
         @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         if (!ini_get('safe_mode')) @set_time_limit($timeout);
         @ini_set('max_execution_time', $timeout);
 
-        $data = curl_exec($ch);
-        $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $err = curl_error($ch);
-        $real_url = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
-        curl_close($ch);
+        curl_multi_add_handle($mh, $ch);
+
+        $lastRun = 0;
+        do
+        {
+            if (time() - $lastRun > 20)
+            {
+                @set_time_limit($timeout); //reset timer..
+                $lastRun = time();
+            }
+            curl_multi_exec($mh, $running); //Execute handlers
+
+            //$ready = curl_multi_select($mh);
+            while ($info = curl_multi_info_read($mh))
+            {
+                $data = curl_multi_getcontent($info['handle']);
+
+                $http_status = curl_getinfo($info['handle'], CURLINFO_HTTP_CODE);
+                $err = curl_error($info['handle']);
+                $real_url = curl_getinfo($info['handle'], CURLINFO_EFFECTIVE_URL);
+
+                curl_multi_remove_handle($mh, $info['handle']);
+            }
+            usleep(10000);
+        } while ($running > 0);
+
+        curl_multi_close($mh);
 
         $host = parse_url($real_url, PHP_URL_HOST);
         $ip = gethostbyname($host);

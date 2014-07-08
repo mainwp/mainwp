@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
 Requires at least: 3.6
-Tested up to: 3.9
-Stable tag: 1.0.8.9
+Tested up to: 3.9.1
+Stable tag: 1.0.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 1.0.9 =
+* Added additional pings to decrease Backup timeouts on slower servers
+* Added enhancement for sites having a timeout stuck while performing a backup
+* Added enhancement to decrease server load when searching for or posting posts/pages/users
 
 = 1.0.8.9 =
 * Added redirect for user to add first site on activation

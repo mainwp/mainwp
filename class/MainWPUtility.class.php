@@ -365,6 +365,7 @@ class MainWPUtility
 
         $handleToWebsite = array();
         $requestUrls = array();
+        $requestHandles = array();
         foreach ($websites as $website)
         {
             $url = $website->url;
@@ -395,70 +396,82 @@ class MainWPUtility
 
                 if (file_exists($cookieFile))
                 {
-                    curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
-                    curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
+                    @curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
+                    @curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
                 }
             }
 
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
+            @curl_setopt($ch, CURLOPT_URL, $url);
+            @curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            @curl_setopt($ch, CURLOPT_POST, true);
             $postdata = MainWPUtility::getPostDataAuthed($website, $what, $params);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
-            curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+            @curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
+            @curl_setopt($ch, CURLOPT_USERAGENT, $agent);
 
             @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout); //20minutes
             if (!ini_get('safe_mode')) @set_time_limit($timeout); //20minutes
             @ini_set('max_execution_time', $timeout);
 
-            curl_multi_add_handle($mh, $ch);
+            @curl_multi_add_handle($mh, $ch);
             $handleToWebsite[self::get_resource_id($ch)] = $website;
             $requestUrls[self::get_resource_id($ch)] = $website->url;
+            $requestHandles[self::get_resource_id($ch)] = $ch;
 
             if ($_new_post != null) $params['new_post'] = $_new_post; // reassign new_post
         }
 
-        $lastRun = 0;
-        do
+
+        $disabled_functions = ini_get('disable_functions');
+        if (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false))
         {
-            if (time() - $lastRun > 20)
+            $lastRun = 0;
+            do
             {
-                @set_time_limit($timeout); //reset timer..
-                $lastRun = time();
-            }
-
-            curl_multi_exec($mh, $running); //Execute handlers
-            //$ready = curl_multi_select($mh);
-            while ($info = curl_multi_info_read($mh))
-            {
-                $data = curl_multi_getcontent($info['handle']);
-                $contains = (preg_match('/<mainwp>(.*)<\/mainwp>/', $data, $results) > 0);
-                curl_multi_remove_handle($mh, $info['handle']);
-
-                if (!$contains && isset($requestUrls[self::get_resource_id($info['handle'])]))
+                if (time() - $lastRun > 20)
                 {
-                  curl_setopt($info['handle'], CURLOPT_URL, $requestUrls[self::get_resource_id($info['handle'])]);
-                  curl_multi_add_handle($mh, $info['handle']);
-                  unset($requestUrls[self::get_resource_id($info['handle'])]);
-                  $running++;
-                  continue;
+                    @set_time_limit($timeout); //reset timer..
+                    $lastRun = time();
                 }
 
-                if ($handler != null)
+                curl_multi_exec($mh, $running); //Execute handlers
+                //$ready = curl_multi_select($mh);
+                while ($info = curl_multi_info_read($mh))
                 {
-                    $site = &$handleToWebsite[self::get_resource_id($info['handle'])];
-                    call_user_func($handler, $data, $site, $output);
+                    $data = curl_multi_getcontent($info['handle']);
+                    $contains = (preg_match('/<mainwp>(.*)<\/mainwp>/', $data, $results) > 0);
+                    curl_multi_remove_handle($mh, $info['handle']);
+
+                    if (!$contains && isset($requestUrls[self::get_resource_id($info['handle'])]))
+                    {
+                      curl_setopt($info['handle'], CURLOPT_URL, $requestUrls[self::get_resource_id($info['handle'])]);
+                      curl_multi_add_handle($mh, $info['handle']);
+                      unset($requestUrls[self::get_resource_id($info['handle'])]);
+                      $running++;
+                      continue;
+                    }
+
+                    if ($handler != null)
+                    {
+                        $site = &$handleToWebsite[self::get_resource_id($info['handle'])];
+                        call_user_func($handler, $data, $site, $output);
+                    }
+
+                    unset($handleToWebsite[self::get_resource_id($info['handle'])]);
+                    if (gettype($info['handle']) == 'resource') curl_close($info['handle']);
+                    unset($info['handle']);
                 }
+                usleep(10000);
+            } while ($running > 0);
 
-                unset($handleToWebsite[self::get_resource_id($info['handle'])]);
-                if (gettype($info['handle']) == 'resource') curl_close($info['handle']);
-                unset($info['handle']);
+            curl_multi_close($mh);
+        }
+        else
+        {
+            foreach ($requestHandles as $id => $ch)
+            {
+                $data = curl_exec($ch);
             }
-            usleep(10000);
-        } while ($running > 0);
-
-        curl_multi_close($mh);
-
+        }
         return true;
     }
 
@@ -653,8 +666,6 @@ class MainWPUtility
             MainWPUtility::release($identifier);
         }
 
-        $mh = curl_multi_init();
-
         $ch = curl_init();
 
         if ($website != null)
@@ -671,50 +682,62 @@ class MainWPUtility
 
             if (file_exists($cookieFile))
             {
-                curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
-                curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
+                @curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
+                @curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
             }
         }
 
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+        @curl_setopt($ch, CURLOPT_URL, $url);
+        @curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        @curl_setopt($ch, CURLOPT_POST, true);
+        @curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
+        @curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        @curl_setopt($ch, CURLOPT_USERAGENT, $agent);
         $timeout = 20 * 60 * 60; //20 minutes
         @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         if (!ini_get('safe_mode')) @set_time_limit($timeout);
         @ini_set('max_execution_time', $timeout);
 
-        curl_multi_add_handle($mh, $ch);
-
-        $lastRun = 0;
-        do
+        $disabled_functions = ini_get('disable_functions');
+        if (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false))
         {
-            if (time() - $lastRun > 20)
+            $mh = @curl_multi_init();
+            @curl_multi_add_handle($mh, $ch);
+
+            $lastRun = 0;
+            do
             {
-                @set_time_limit($timeout); //reset timer..
-                $lastRun = time();
-            }
-            curl_multi_exec($mh, $running); //Execute handlers
+                if (time() - $lastRun > 20)
+                {
+                    @set_time_limit($timeout); //reset timer..
+                    $lastRun = time();
+                }
+                @curl_multi_exec($mh, $running); //Execute handlers
 
-            //$ready = curl_multi_select($mh);
-            while ($info = curl_multi_info_read($mh))
-            {
-                $data = curl_multi_getcontent($info['handle']);
+                //$ready = curl_multi_select($mh);
+                while ($info = @curl_multi_info_read($mh))
+                {
+                    $data = @curl_multi_getcontent($info['handle']);
 
-                $http_status = curl_getinfo($info['handle'], CURLINFO_HTTP_CODE);
-                $err = curl_error($info['handle']);
-                $real_url = curl_getinfo($info['handle'], CURLINFO_EFFECTIVE_URL);
+                    $http_status = @curl_getinfo($info['handle'], CURLINFO_HTTP_CODE);
+                    $err = @curl_error($info['handle']);
+                    $real_url = @curl_getinfo($info['handle'], CURLINFO_EFFECTIVE_URL);
 
-                curl_multi_remove_handle($mh, $info['handle']);
-            }
-            usleep(10000);
-        } while ($running > 0);
+                    @curl_multi_remove_handle($mh, $info['handle']);
+                }
+                usleep(10000);
+            } while ($running > 0);
 
-        curl_multi_close($mh);
+            @curl_multi_close($mh);
+        }
+        else
+        {
+            $data = @curl_exec($ch);
+            $http_status = @curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $err = @curl_error($ch);
+            $real_url = @curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+        }
 
         $host = parse_url($real_url, PHP_URL_HOST);
         $ip = gethostbyname($host);

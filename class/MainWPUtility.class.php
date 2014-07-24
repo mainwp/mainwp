@@ -1548,6 +1548,13 @@ class MainWPUtility
 
         return $result;
     }
+
+    public static function getFileParameter(&$website)
+    {
+        if (!isset($website->version) || empty($website->version)) return 'file';
+        if (version_compare('0.29.13', $website->version) < 0) return 'f';
+        return 'file';
+    }
 }
 
 ?>

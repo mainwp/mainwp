@@ -127,7 +127,8 @@ class MainWPSync
             'categories' => $emptyArray,
             'pluginConflicts' => $emptyArray,
             'themeConflicts' => $emptyArray,
-            'offline_check_result' => $offline_check_result
+            'offline_check_result' => $offline_check_result,
+            'version' => 0
         );
 
         $done = false;
@@ -135,6 +136,12 @@ class MainWPSync
         if (isset($information['siteurl']))
         {
             $websiteValues['siteurl'] = $information['siteurl'];
+            $done = true;
+        }
+
+        if (isset($information['version']))
+        {
+            $websiteValues['version'] = $information['version'];
             $done = true;
         }
 

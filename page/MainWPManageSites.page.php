@@ -148,7 +148,7 @@ class MainWPManageSites
         $maximumFileDescriptors = ($maximumFileDescriptors === false ? 0 : $maximumFileDescriptors);
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $type), $pFilename) . '.zip';
 
-        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type, 'exclude' => $exclude, 'file_descriptors' => $maximumFileDescriptors, 'file' => $file));
+        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type, 'exclude' => $exclude, 'file_descriptors' => $maximumFileDescriptors, MainWPUtility::getFileParameter($website) => $file));
         if (isset($information['error']))
         {
             throw new MainWPException($information['error']);
@@ -393,7 +393,7 @@ class MainWPManageSites
         $maximumFileDescriptors = ($maximumFileDescriptors === false ? 0 : $maximumFileDescriptors);
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $pType), $pFilename);
 
-        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'file_descriptors' => $maximumFileDescriptors, 'file' => $file, 'fileUID' => $pFileNameUID));
+        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'file_descriptors' => $maximumFileDescriptors, MainWPUtility::getFileParameter($website) => $file, 'fileUID' => $pFileNameUID));
 
         if (isset($information['error']))
         {

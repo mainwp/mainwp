@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '6.4';
+    private $mainwp_db_version = '6.5';
     //Private
     private $table_prefix;
     //Singleton
@@ -61,6 +61,7 @@ class MainWPDB
   nossl tinyint(1) NOT NULL,
   nosslkey text NOT NULL,
   siteurl text NOT NULL,
+  version text NOT NULL,
   ga_id text NOT NULL,
   gas_id int(11) NOT NULL,
   offline_checks text NOT NULL,

@@ -555,7 +555,7 @@ class MainWPPostHandler
                 throw new MainWPException('Invalid request');
             }
 
-            die(json_encode(array('result' => MainWPManageSites::backup($_POST['site_id'], 'full', '', ''))));
+            die(json_encode(array('result' => MainWPManageSites::backup($_POST['site_id'], 'full', '', '', 0, 0, 0, 0))));
         }
         catch (MainWPException $e)
         {
@@ -579,7 +579,7 @@ class MainWPPostHandler
             $excludedFolder = array_map(array('MainWPUtility', 'trimSlashes'), $excludedFolder);
             $excludedFolder = implode(",", $excludedFolder);
 
-            die(json_encode(array('result' => MainWPManageSites::backup($_POST['site_id'], $_POST['type'], (isset($_POST['subfolder']) ? $_POST['subfolder'] : ''), $excludedFolder, $_POST['filename'], isset($_POST['fileNameUID']) ? $_POST['fileNameUID'] : ''))));
+            die(json_encode(array('result' => MainWPManageSites::backup($_POST['site_id'], $_POST['type'], (isset($_POST['subfolder']) ? $_POST['subfolder'] : ''), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset($_POST['fileNameUID']) ? $_POST['fileNameUID'] : ''))));
         }
         catch (MainWPException $e)
         {

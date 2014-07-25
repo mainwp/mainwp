@@ -2496,6 +2496,71 @@ background-position: 0 -16px;
     width: 16.8%;
 }
 
+/*  Exclude Section  */
+
+.mainwp-exclude-backup-locations,
+.mainwp-exclude-cache-locations,
+.mainwp-exclude-nonwp-folders,
+.mainwp-exclude-zips {
+    width: 100% !important;
+}
+
+.mainwp-exclude-backup-locations h4,
+.mainwp-exclude-cache-locations h4,
+.mainwp-exclude-nonwp-folders h4,
+.mainwp-exclude-zips h4 {
+    border-bottom: 0 !important;
+    padding-left: 25px;
+    margin-bottom: 5px !important;
+}
+
+.mainwp-exclude-backup-locations h4 {
+    background-image: url('../images/mainwp-exclude-backups.png');
+    background-repeat: no-repeat;
+    background-position: 0 50%;
+    background-size: 20px;
+}
+.mainwp-exclude-cache-locations h4 {
+    background-image: url('../images/mainwp-exclude-cache.png');
+    background-repeat: no-repeat;
+    background-position: 0 50%;
+    background-size: 20px;
+}
+.mainwp-exclude-nonwp-folders h4 {
+    background-image: url('../images/mainwp-exclude-nonwp.png');
+    background-repeat: no-repeat;
+    background-position: 0 50%;
+    background-size: 20px;
+}
+.mainwp-exclude-zips h4 {
+    background-image: url('../images/mainwp-exclude-zips.png');
+    background-repeat: no-repeat;
+    background-position: 0 50%;
+    background-size: 20px;
+}
+
+.mainwp-exclude-backup-locations td,
+.mainwp-exclude-cache-locations td,
+.mainwp-exclude-nonwp-folders td,
+.mainwp-exclude-zips td {
+    padding: .2em !important;
+}
+
+.mainwp-exclude-backup-locations td.mainwp-td-des,
+.mainwp-exclude-cache-locations td.mainwp-td-des,
+.mainwp-exclude-nonwp-folders td.mainwp-td-des,
+.mainwp-exclude-zips td.mainwp-td-des {
+    font-size: 13px;
+}
+
+.mainwp-exclude-backup-locations label,
+.mainwp-exclude-cache-locations label,
+.mainwp-exclude-nonwp-folders label,
+.mainwp-exclude-zips label {
+    margin-right: 1em !important;
+    padding-left: 2em;
+}
+
 /*make dashboard boxes switch to 1 column style on mobile devices*/
 @media only screen and (max-width: 799px) {
   #wpbody-content #mainwp_tab-general #dashboard-widgets.columns-2 #postbox-container-1, 

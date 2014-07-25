@@ -1021,7 +1021,7 @@ class MainWPSystem
 
                     try
                     {
-                        $result = MainWPManageSites::backup($siteId, 'full', '', '');
+                        $result = MainWPManageSites::backup($siteId, 'full', '', '', 0, 0, 0, 0);
                         MainWPManageSites::backupDownloadFile($siteId, 'full', $result['url'], $result['local']);
                         $sitesCheckCompleted[$siteId] = true;
                         MainWPUtility::update_option('mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted);

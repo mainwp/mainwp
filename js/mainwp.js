@@ -1871,6 +1871,10 @@ mainwp_managebackups_update = function (event) {
             schedule: (jQuery('#mainwp_managebackups_schedule_daily').hasClass('mainwp_action_down') ? 'daily' : (jQuery('#mainwp_managebackups_schedule_weekly').hasClass('mainwp_action_down') ? 'weekly' : 'monthly')),
             type:(jQuery('#backup_type_full').hasClass('mainwp_action_down') ? 'full' : 'db'),
             exclude:jQuery('#excluded_folders_list').val(),
+            excludebackup: (jQuery('#mainwp-known-backup-locations').attr('checked') ? 1 : 0),
+            excludecache: (jQuery('#mainwp-known-cache-locations').attr('checked') ? 1 : 0),
+            excludenonwp: (jQuery('#mainwp-non-wordpress-folders').attr('checked') ? 1 : 0),
+            excludezip: (jQuery('#mainwp-zip-archives').attr('checked') ? 1 : 0),
             'groups[]':selected_groups,
             'sites[]':selected_sites,
             subfolder:jQuery('#mainwp_managebackups_add_subfolder').val(),
@@ -1959,6 +1963,10 @@ mainwp_managebackups_add = function (event) {
             schedule:(jQuery('#mainwp_managebackups_schedule_daily').hasClass('mainwp_action_down') ? 'daily' : (jQuery('#mainwp_managebackups_schedule_weekly').hasClass('mainwp_action_down') ? 'weekly' : 'monthly')),
             type:(jQuery('#backup_type_full').hasClass('mainwp_action_down') ? 'full' : 'db'),
             exclude:(jQuery('#backup_type_full').hasClass('mainwp_action_down') ? jQuery('#excluded_folders_list').val() : ''),
+            excludebackup: (jQuery('#mainwp-known-backup-locations').attr('checked') ? 1 : 0),
+            excludecache: (jQuery('#mainwp-known-cache-locations').attr('checked') ? 1 : 0),
+            excludenonwp: (jQuery('#mainwp-non-wordpress-folders').attr('checked') ? 1 : 0),
+            excludezip: (jQuery('#mainwp-zip-archives').attr('checked') ? 1 : 0),
             'groups[]':selected_groups,
             'sites[]':selected_sites,
             subfolder: jQuery('#mainwp_managebackups_add_subfolder').val(),
@@ -2117,12 +2125,14 @@ jQuery(document).on('click', '#mainwp_backup_destinations', function() {
 jQuery(document).on('click', '.mainwp_action#backup_type_full', function() {
     jQuery('.mainwp_action#backup_type_db').removeClass('mainwp_action_down');
     jQuery(this).addClass('mainwp_action_down');
+    jQuery('[class^=mainwp-exclude]').show();
     jQuery('.mainwp_backup_exclude_files_content').show();
     return false;
 });
 jQuery(document).on('click', '.mainwp_action#backup_type_db', function() {
     jQuery('.mainwp_action#backup_type_full').removeClass('mainwp_action_down');
     jQuery(this).addClass('mainwp_action_down');
+    jQuery('[class^=mainwp-exclude]').hide();
     jQuery('.mainwp_backup_exclude_files_content').hide();
     return false;
 });
@@ -3742,6 +3752,10 @@ backup = function ()
 
         type:type,
         exclude:jQuery('#excluded_folders_list').val(),
+        excludebackup: (jQuery('#mainwp-known-backup-locations').attr('checked') ? 1 : 0),
+        excludecache: (jQuery('#mainwp-known-cache-locations').attr('checked') ? 1 : 0),
+        excludenonwp: (jQuery('#mainwp-non-wordpress-folders').attr('checked') ? 1 : 0),
+        excludezip: (jQuery('#mainwp-zip-archives').attr('checked') ? 1 : 0),
         filename: fileName,
         fileNameUID: fileNameUID,
 

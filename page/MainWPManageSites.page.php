@@ -118,7 +118,7 @@ class MainWPManageSites
     /**
      * @throws MainWPException
      */
-    public static function backupSite($siteid, $userid, $type, $exclude, $taskId, $subfolder, $pFilename = null)
+    public static function backupSite($siteid, $userid, $type, $exclude, $taskId, $subfolder, $excludebackup, $excludecache, $excludenonwp, $excludezip, $pFilename = null)
     {
         if (trim($pFilename) == '') $pFilename = null;
 
@@ -148,7 +148,7 @@ class MainWPManageSites
         $maximumFileDescriptors = ($maximumFileDescriptors === false ? 0 : $maximumFileDescriptors);
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $type), $pFilename) . '.zip';
 
-        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type, 'exclude' => $exclude, 'file_descriptors' => $maximumFileDescriptors, MainWPUtility::getFileParameter($website) => $file));
+        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type, 'exclude' => $exclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'file_descriptors' => $maximumFileDescriptors, MainWPUtility::getFileParameter($website) => $file));
         if (isset($information['error']))
         {
             throw new MainWPException($information['error']);
@@ -362,7 +362,7 @@ class MainWPManageSites
         return true;
     }
 
-    public static function backup($pSiteId, $pType, $pSubfolder, $pExclude, $pFilename = null, $pFileNameUID = '')
+    public static function backup($pSiteId, $pType, $pSubfolder, $pExclude, $excludebackup, $excludecache, $excludenonwp, $excludezip, $pFilename = null, $pFileNameUID = '')
     {
         if (trim($pFilename) == '') $pFilename = null;
 
@@ -393,7 +393,7 @@ class MainWPManageSites
         $maximumFileDescriptors = ($maximumFileDescriptors === false ? 0 : $maximumFileDescriptors);
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $pType), $pFilename);
 
-        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'file_descriptors' => $maximumFileDescriptors, MainWPUtility::getFileParameter($website) => $file, 'fileUID' => $pFileNameUID));
+        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'file_descriptors' => $maximumFileDescriptors, MainWPUtility::getFileParameter($website) => $file, 'fileUID' => $pFileNameUID));
 
         if (isset($information['error']))
         {
@@ -567,8 +567,8 @@ class MainWPManageSites
         self::$sitesTable->prepare_items($globalIgnoredPluginConflicts, $globalIgnoredThemeConflicts);
       ?>
         <div id="mainwp_managesites_content">
-            <div id="mainwp_managesites_add_errors" class="mainwp_error"></div>
-            <div id="mainwp_managesites_add_message" class="mainwp_updated updated"></div>
+            <div id="mainwp_managesites_add_errors" class="mainwp_error mainwp_info-box-red"></div>
+            <div id="mainwp_managesites_add_message" class="mainwp_updated updated mainwp_info-box"></div>
             <?php
             MainWPManageSitesView::_renderInfo();
 

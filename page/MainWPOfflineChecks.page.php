@@ -239,7 +239,7 @@ class MainWPOfflineChecks
         $result = MainWPUtility::isWebsiteAvailable($website->url);
         if (!$result || (isset($result['error']) && ($result['error'] != '')) || ($result['httpCode'] != '200')) {
             MainWPDB::Instance()->updateWebsiteValues($website->id, array('offline_check_result' => '-1', 'offline_checks_last' => time()));
-            $body = 'We\'ve had some issues tring to reach your website <a href="' . $website->url . '">' . $website->name . '</a>. ' . (isset($result['error']) && ($result['error'] != '') ? ' Error message: '. $result['error'] . '.' : 'Received HTTP-code: ' . $result['httpCode'] . ($result['httpCodeString'] != '' ? ' (' . $result['httpCodeString'] . ').' : ''));
+            $body = 'We\'ve had some issues trying to reach your website <a href="' . $website->url . '">' . $website->name . '</a>. ' . (isset($result['error']) && ($result['error'] != '') ? ' Error message: '. $result['error'] . '.' : 'Received HTTP-code: ' . $result['httpCode'] . ($result['httpCodeString'] != '' ? ' (' . $result['httpCodeString'] . ').' : ''));
             if ($emailOutput === null) {
                 $email = MainWPDB::Instance()->getUserNotificationEmail($website->userid);
                 wp_mail($email, 'Down Time Alert - MainWP', MainWPUtility::formatEmail($email, $body . '<br /><br />Please take a look at the <a href="' . $website->url . '">website</a> and make sure everything is ok.'), array('From: "'.get_option('admin_email').'" <'.get_option('admin_email').'>', 'content-type: text/html'));

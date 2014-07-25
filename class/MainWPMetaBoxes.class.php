@@ -75,11 +75,19 @@ class MainWPMetaBoxes
         return $post_id;
     }
 
-    function add_categories($post) {      
+    function add_categories($post) {
         
-        $categories = apply_filters("mainwp_bulkpost_saved_categories", $post, array());
+        // depdecated, 1.0.9.2-beta
+        $categories = apply_filters("mainwp_bulkpost_saved_categories", $post, array());        
+        if (empty($categories) || (is_array($categories) && count($categories) == 1 && empty($categories[0]))) { // to compatible          
+            if ($post) {
+                $categories = base64_decode(get_post_meta($post->ID, '_categories', true));                      
+                $categories = explode(",", $categories);                
+            }
+        }        
+        
         if (!is_array($categories)) 
-            $categories = array();        
+            $categories = array();                
         $uncat = __('Uncategorized','mainwp');
         
         ?>

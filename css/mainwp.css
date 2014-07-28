@@ -2403,97 +2403,101 @@ background-position: 0 -16px;
     margin-bottom: -20px;
 }
 
-/*  extensions search box  */
+/*  Extensions Shop Menu  */
 
-.mainwp-ext-categories {
-  background-color: #1d1b1c !important;
-  border: none !important;
+.mainwp-inside {
+    padding: 1em;
 }
 
-.mainwp-ext-categories a {
-    text-decoration: none !important;
+.mainwp-align-center {
+    width: 1035px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#mainwp-extensions-categories-menu.hoverli {
+    background: #fff !important;
+}
+
+#mainwp-extensions-menu-title {
+    font-size: 24px;
+    font-weight: lighter;
+}
+
+#mainwp-extensions-cat-menu {
+    text-align: center;
+}
+
+#mainwp-extensions-cat-menu-list {
+   width: auto;
+   margin-left: auto !important;
+   margin-right: auto !important;
+}
+
+#mainwp-extensions-cat-menu .mainwp-extensions-menu-item {
+    float: left;
+    padding: 5em 3.5em 0 3.5em;
+}
+
+#mainwp-extensions-cat-menu .mainwp-extensions-menu-item a {
+    text-transform: uppercase;
+    text-decoration: none;
+    font-size: 16px;
+    color: #333;
+}
+
+#mainwp-extensions-cat-menu .mainwp-extensions-menu-item a:hover {
     color: #7fb100;
 }
 
-.mainwp-ext-categories a:hover {
-    color: #bb7239;
+.mainwp-category-1 {
+    background-image: url('../images/administrative-top-menu-item.png');
+    background-repeat: no-repeat;
+    background-position: 50% 0;
 }
 
-#mainwp-recent-extensions {
-  background-color: #f0efe9;
-  background-image: url('');
-  background-repeat: no-repeat;
-  background-position: top right;
-  margin-bottom: 1em;
-  padding: 0 20px 0 20px;
-  border: 1px Solid #ddd;
-  border-radius: 10px;
-  -webkit-border-radius: 10px;
-  -moz-border-radius: 10px;
+.mainwp-category-1:hover {
+    background-image: url('../images/g-administrative-top-menu-item.png');
 }
 
-#mainwp-recent-extensions-title {
-  border-bottom: 1px Solid #ddd ;
-  padding: 15px 0;
-  font-size: 20px;
-  font-family: 'Open Sans', sans;
+.mainwp-category-2 {
+    background-image: url('../images/content-top-menu-item.png');
+    background-repeat: no-repeat;
+    background-position: 50% 0;
 }
 
-#mainwp-recent-extensions-products {
-  border-top: 1px Solid #fff ;
-  padding: 15px 0;
+.mainwp-category-2:hover {
+    background-image: url('../images/g-content-top-menu-item.png');
 }
 
-.mainwp-product-categories-list li {
-  list-style: none !important;
-  text-transform: uppercase;
+.mainwp-category-3 {
+    background-image: url('../images/visitor-top-menu-item.png');
+    background-repeat: no-repeat;
+    background-position: 50% 0;
 }
 
-.mainwp-administrative {
-  background-image: url('../images/administrative.png');
-  background-position: 0 50%;
-  background-repeat: no-repeat;
-  background-size: 18px;
-  padding-left: 2em;
+.mainwp-category-3:hover {
+    background-image: url('../images/g-visitor-top-menu-item.png');
 }
 
-.mainwp-content{
-  background-image: url('../images/content.png');
-  background-position: 0 50%;
-  background-repeat: no-repeat;
-  background-size: 18px;
-  padding-left: 2em;
+.mainwp-category-4 {
+    background-image: url('../images/free-top-menu-item.png');
+    background-repeat: no-repeat;
+    background-position: 50% 0;
 }
 
-.mainwp-visitor-data {
-  background-image: url('../images/visitor-data.png');
-  background-position: 0 50%;
-  background-repeat: no-repeat;
-  background-size: 18px;
-  padding-left: 2em;
+.mainwp-category-4:hover {
+    background-image: url('../images/g-free-top-menu-item.png');
 }
 
-.mainwp-free {
-  background-image: url('../images/free.png');
-  background-position: 0 50%;
-  background-repeat: no-repeat;
-  background-size: 18px;
-  padding-left: 2em;
+.mainwp-category-5 {
+    background-image: url('../images/all-top-menu-item.png');
+    background-repeat: no-repeat;
+    background-position: 50% 0;
 }
 
-.mainwp-all {
-  background-image: url('../images/all.png');
-  background-position: 0 50%;
-  background-repeat: no-repeat;
-  background-size: 18px;
-  padding-left: 2em;
-}
-
-.mainwp_fivecol_one {
-    float: left;
-    margin-right: 3%;
-    position: relative;
-    width: 16.8%;
+.mainwp-category-5:hover {
+    background-image: url('../images/g-all-top-menu-item.png');
 }
 
 /*  Exclude Section  */

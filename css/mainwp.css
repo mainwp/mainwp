@@ -2548,6 +2548,14 @@ background-position: 0 -16px;
 .mainwp-exclude-nonwp-folders td,
 .mainwp-exclude-zips td {
     padding: .2em !important;
+    vertical-align: top !important;
+}
+
+.mainwp-exclude-backup-locations td a,
+.mainwp-exclude-cache-locations td a,
+.mainwp-exclude-nonwp-folders td a,
+.mainwp-exclude-zips td a {
+    text-decoration: none;
 }
 
 .mainwp-exclude-backup-locations td.mainwp-td-des,
@@ -2562,9 +2570,24 @@ background-position: 0 -16px;
 .mainwp-exclude-nonwp-folders label,
 .mainwp-exclude-zips label {
     margin-right: 1em !important;
-    padding-left: 2em;
+    padding-left: 2.5em;
 }
 
+#mainwp-hide-kbl-folders,
+#mainwp-hide-kcl-folders,
+#mainwp-hide-nwl-folders,
+#mainwp-hide-zip-files {
+    display: none;
+}
+
+#mainwp-kbl-content,
+#mainwp-kcl-content,
+#mainwp-nwl-content {
+    display: none;
+    margin-top: 1em;
+    height: 140px;
+    width: 100% !important;
+}
 /*make dashboard boxes switch to 1 column style on mobile devices*/
 @media only screen and (max-width: 799px) {
   #wpbody-content #mainwp_tab-general #dashboard-widgets.columns-2 #postbox-container-1, 

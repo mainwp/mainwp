@@ -1544,7 +1544,7 @@ jQuery(document).ready(function () {
     var siteId = jQuery('#backup_exclude_folders').attr('siteid');
     var sites = jQuery('#backup_exclude_folders').attr('sites');
     var groups = jQuery('#backup_exclude_folders').attr('groups');
-    if (jQuery('#backup_task_id').val() == undefined) jQuery('#backup_exclude_folders').fileTree({ root: '', script: ajaxurl + '?action=mainwp_site_dirs&site='+encodeURIComponent(siteId == undefined ? '' : siteId)+'&sites='+encodeURIComponent(sites == undefined ? '' : sites)+'&groups='+encodeURIComponent(groups == undefined ? '' : groups), multiFolder: false });
+    if (jQuery('#backup_task_id').val() == undefined) jQuery('#backup_exclude_folders').fileTree({ root: '', script: ajaxurl + '?action=mainwp_site_dirs&site='+encodeURIComponent(siteId == undefined ? '' : siteId)+'&sites='+encodeURIComponent(sites == undefined ? '' : sites)+'&groups='+encodeURIComponent(groups == undefined ? '' : groups), multiFolder: false, postFunction: updateExcludedFolders});
     jQuery('.jqueryFileTree li a').live('mouseover', function() { jQuery(this).children('.exclude_folder_control').show() });
     jQuery('.jqueryFileTree li a').live('mouseout', function() { jQuery(this).children('.exclude_folder_control').hide() });
 });
@@ -2129,6 +2129,48 @@ jQuery(document).on('click', '.mainwp_action#backup_type_full', function() {
     jQuery('.mainwp_backup_exclude_files_content').show();
     return false;
 });
+
+/*   Suggested Excludes   */
+
+jQuery(document).on('click', '#mainwp-show-kbl-folders', function(){
+    jQuery('#mainwp-show-kbl-folders').hide();
+    jQuery('#mainwp-hide-kbl-folders').show();
+    jQuery('#mainwp-kbl-content').show();
+    return false;
+});
+jQuery(document).on('click', '#mainwp-hide-kbl-folders', function(){
+    jQuery('#mainwp-show-kbl-folders').show();
+    jQuery('#mainwp-hide-kbl-folders').hide();
+    jQuery('#mainwp-kbl-content').hide();
+    return false;
+});
+
+jQuery(document).on('click', '#mainwp-show-kcl-folders', function(){
+    jQuery('#mainwp-show-kcl-folders').hide();
+    jQuery('#mainwp-hide-kcl-folders').show();
+    jQuery('#mainwp-kcl-content').show();
+    return false;
+});
+jQuery(document).on('click', '#mainwp-hide-kcl-folders', function(){
+    jQuery('#mainwp-show-kcl-folders').show();
+    jQuery('#mainwp-hide-kcl-folders').hide();
+    jQuery('#mainwp-kcl-content').hide();
+    return false;
+});
+
+jQuery(document).on('click', '#mainwp-show-nwl-folders', function(){
+    jQuery('#mainwp-show-nwl-folders').hide();
+    jQuery('#mainwp-hide-nwl-folders').show();
+    jQuery('#mainwp-nwl-content').show();
+    return false;
+});
+jQuery(document).on('click', '#mainwp-hide-nwl-folders', function(){
+    jQuery('#mainwp-show-nwl-folders').show();
+    jQuery('#mainwp-hide-nwl-folders').hide();
+    jQuery('#mainwp-nwl-content').hide();
+    return false;
+});
+
 jQuery(document).on('click', '.mainwp_action#backup_type_db', function() {
     jQuery('.mainwp_action#backup_type_full').removeClass('mainwp_action_down');
     jQuery(this).addClass('mainwp_action_down');
@@ -2864,7 +2906,7 @@ mainwp_managebackups_updateExcludefolders = function()
         else { //group
             groups = jQuery.map(jQuery('#selected_groups INPUT:checkbox:checked'), function(el, i) { return jQuery(el).val(); });
         }
-        elem.fileTree({ root: '', script: ajaxurl + '?action=mainwp_site_dirs&sites='+encodeURIComponent(sites.join(','))+'&groups='+encodeURIComponent(groups.join(',')), multiFolder: false });
+        elem.fileTree({ root: '', script: ajaxurl + '?action=mainwp_site_dirs&sites='+encodeURIComponent(sites.join(','))+'&groups='+encodeURIComponent(groups.join(',')), multiFolder: false, postFunction: updateExcludedFolders});
     }
 };
 mainwp_newpost_updateCategories = function()
@@ -5812,3 +5854,15 @@ scrollToElement = function(pElement) {
 
     return false;
 };
+
+updateExcludedFolders = function()
+{
+    var excludedBackupFiles = jQuery('#excludedBackupFiles').html();
+    jQuery('#mainwp-kbl-content').val(excludedBackupFiles == undefined ? '' : excludedBackupFiles);
+
+    var excludedCacheFiles = jQuery('#excludedCacheFiles').html();
+    jQuery('#mainwp-kcl-content').val(excludedCacheFiles == undefined ? '' : excludedCacheFiles);
+
+    var excludedNonWPFiles = jQuery('#excludedNonWPFiles').html();
+    jQuery('#mainwp-nwl-content').val(excludedNonWPFiles == undefined ? '' : excludedNonWPFiles);
+}

@@ -2789,7 +2789,7 @@ jQuery(document).ready(function () {
 });
 mainwp_selected_refresh_count = function(me)
 {
-    var parent = jQuery(me).closest('.mainwp_select_sites_box');
+    var parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
     var value = 0;
     if (parent.find('#select_by').val() == 'site')
     {
@@ -2810,7 +2810,7 @@ mainwp_group_select = function (elem) {
     mainwp_newpost_updateCategories();
 };
 mainwp_ss_select = function (me, val) {  
-    var parent = jQuery(me).closest('.mainwp_select_sites_box');
+    var parent = jQuery(me).closest('.mainwp_select_sites_wrapper');    
     if (parent.find('#select_by').val() == 'site') {
         parent.find('#selected_sites INPUT:checkbox').attr('checked', val).change();
     }
@@ -2948,7 +2948,7 @@ jQuery(document).on('keyup', '#selected_groups-filter', function() {
     mainwp_newpost_updateCategories();
 });
 mainwp_ss_select_by = function (me, what) {
-    var parent = jQuery(me).closest('.mainwp_select_sites_box');
+    var parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
     parent.find('#mainwp_ss_site_link').css('display', (what == 'site' ? 'none' : 'inline'));
     parent.find('#mainwp_ss_site_text').css('display', (what == 'site' ? 'inline' : 'none'));
 

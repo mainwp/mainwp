@@ -4,7 +4,7 @@ class MainWPUI
 	public static function select_sites_box( $title = "", $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false)
 	{
 		?>
-		<div class="mainwp_select_sites_box<?php if ( $class ) echo " $class"; ?>"<?php if ( $style ) echo ' style="'.$style.'"'; ?>>
+		<div class="mainwp_select_sites_box<?php if ( $class ) echo " $class"; ?> mainwp_select_sites_wrapper"<?php if ( $style ) echo ' style="'.$style.'"'; ?>>
             <div class="postbox">
                 <h3 class="mainwp_box_title"><span><?php echo ( $title ) ? $title : translate('Select Sites', 'mainwp') ?> <div class="mainwp_sites_selectcount"><?php echo !is_array($selected_websites) ? '0' : count($selected_websites); ?></div></span></h3>
                 <div class="inside mainwp_inside">

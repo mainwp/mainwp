@@ -546,7 +546,8 @@ class MainWPManageBackups
         }
         $errorOutput = '';
 
-        if ($updateRun && (get_option('mainwp_notificationOnBackupStart') == 1))
+        $lastStartNotification = $task->lastStartNotificationSent;
+        if ($updateRun && (get_option('mainwp_notificationOnBackupStart') == 1) && ($lastStartNotification < $task->last_run))
         {
             $email = MainWPDB::Instance()->getUserNotificationEmail($task->userid);
             if ($email != '')
@@ -578,7 +579,7 @@ class MainWPManageBackups
             {
                 $subfolder = str_replace('%task%', MainWPUtility::sanitize($task->name), $task->subfolder);
 
-                $backupResult = MainWPManageSites::backupSite($siteid, $task->userid, $task->type, $task->exclude, $task->id, $subfolder, $task->excludebackup, $task->excludecache, $task->excludenonwp, $task->excludezip, $task->filename);
+                $backupResult = MainWPManageSites::backupSite($siteid, $task, $subfolder);
                 $error = false;
                 $tmpErrorOutput = '';
                 if (isset($backupResult['error']))

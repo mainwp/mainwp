@@ -546,7 +546,6 @@ class MainWPUtility
     {
         $agent= 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 
-        //todo: finish
         $identifier = null;
         if ($checkConstraints)
         {
@@ -672,7 +671,7 @@ class MainWPUtility
         {
             $dirs = self::getMainWPDir();
             $cookieDir = $dirs[0] . 'cookies';
-            @mkdir($cookieDir, 0777, true);
+            if (!@file_exists($cookieDir)) @mkdir($cookieDir, 0777, true);
 
             $cookieFile = $cookieDir . '/' . sha1(sha1('mainwp' . $website->id) . 'WP_Cookie');
             if (!file_exists($cookieFile))
@@ -694,6 +693,8 @@ class MainWPUtility
         @curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         @curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
         @curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+        //@curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        //@curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, 0);
         $timeout = 20 * 60 * 60; //20 minutes
         @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         if (!ini_get('safe_mode')) @set_time_limit($timeout);
@@ -748,6 +749,10 @@ class MainWPUtility
         }
 
         if (($data === false) && ($http_status == 0)) {
+            throw new MainWPException('HTTPERROR', $err);
+        }
+        else if (empty($data) && !empty($err))
+        {
             throw new MainWPException('HTTPERROR', $err);
         }
         else if (preg_match('/<mainwp>(.*)<\/mainwp>/', $data, $results) > 0) {

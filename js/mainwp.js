@@ -1333,12 +1333,10 @@ rightnow_themes_unignore_globally = function (slug) {
     return false;
 };
 rightnow_plugins_upgrade = function (slug, websiteid) {
-    //todo: RS: add check for backups
     return rightnow_plugins_upgrade_int(slug, websiteid);
 };
 
 rightnow_themes_upgrade = function (slug, websiteid) {
-    //todo: RS: add check for backups
     return rightnow_themes_upgrade_int(slug, websiteid);
 };
 

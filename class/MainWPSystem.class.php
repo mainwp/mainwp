@@ -1794,7 +1794,7 @@ class MainWPSystem
                 echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="'.$website->id.'" />';
             }
         }
-        else
+        else if ($websites !== false)
         {
             while ($website = @MainWPDB::fetch_object($websites))
             {

@@ -150,6 +150,11 @@ class MainWPSync
             $websiteValues['directories'] = json_encode($information['directories']);
             $done = true;
         }
+        else if (isset($information['directories']))
+        {
+            $websiteValues['directories'] = $information['directories'];
+            $done = true;
+        }
 
         if (isset($information['wp_updates']) && $information['wp_updates'] != null)
         {

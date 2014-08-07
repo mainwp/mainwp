@@ -1717,7 +1717,7 @@ managebackups_backup_download_file = function(pSiteId, pSiteName, type, url, fil
         clearInterval(pInterVal);
         jQuery('#managebackups-task-status-progress[siteId="'+pSiteId+'"]').progressbar();
         jQuery('#managebackups-task-status-progress[siteId="'+pSiteId+'"]').progressbar('value', pSize);
-        appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] '+__('Download from site child completed.'));
+        appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] '+__('Download from child site completed.'));
         managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize);
     } }(file, regexfile, subfolder, remote_destinations, size, type, interVal, pSiteName, pSiteId), 'json');
 };
@@ -2891,8 +2891,18 @@ mainwp_remove_all_cats = function (me) {
         parent.find('.selected_cats').html('<p class="remove">'+__('No selected Categories')+'</p>');  // remove all categories
 };
 
+var executingUpdateExcludeFolders = false;
+var queueUpdateExcludeFolders = 0;
 mainwp_managebackups_updateExcludefolders = function()
 {
+    if (executingUpdateExcludeFolders)
+    {
+        queueUpdateExcludeFolders++;
+        return;
+    }
+
+    executingUpdateExcludeFolders = true;
+
     var elem = jQuery('#backup_exclude_folders');
     if (elem)
     {
@@ -2904,11 +2914,35 @@ mainwp_managebackups_updateExcludefolders = function()
         else { //group
             groups = jQuery.map(jQuery('#selected_groups INPUT:checkbox:checked'), function(el, i) { return jQuery(el).val(); });
         }
-        elem.fileTree({ root: '', script: ajaxurl + '?action=mainwp_site_dirs&sites='+encodeURIComponent(sites.join(','))+'&groups='+encodeURIComponent(groups.join(',')), multiFolder: false, postFunction: updateExcludedFolders});
+        elem.fileTree({ root: '', script: ajaxurl + '?action=mainwp_site_dirs&sites='+encodeURIComponent(sites.join(','))+'&groups='+encodeURIComponent(groups.join(',')), multiFolder: false, postFunction: updateExcludedFoldersPostFunc});
     }
 };
+updateExcludedFoldersPostFunc = function()
+{
+    if (queueUpdateExcludeFolders > 0)
+    {
+        queueUpdateExcludeFolders--;
+        executingUpdateExcludeFolders = false;
+        mainwp_managebackups_updateExcludefolders();
+    }
+    else
+    {
+        executingUpdateExcludeFolders = false;
+        updateExcludedFolders();
+    }
+};
+var executingUpdateCategories = false;
+var queueUpdateCategories = 0;
 mainwp_newpost_updateCategories = function()
 {
+    if (executingUpdateCategories)
+    {
+        queueUpdateCategories++;
+        return;
+    }
+
+    executingUpdateCategories = true;
+
     var elem = jQuery('.post_add_categories');
     if (elem)
     {
@@ -2938,8 +2972,26 @@ mainwp_newpost_updateCategories = function()
                 jQuery(pSiteCategories).each(function (key, value) { jQuery(value).parent().parent().remove() });
 
                 jQuery('#categorychecklist').append(response);
+                updateCategoriesPostFunc();
             }
         }(site_categories));
+    }
+    else
+    {
+        updateCategoriesPostFunc();
+    }
+};
+updateCategoriesPostFunc = function()
+{
+    if (queueUpdateCategories > 0)
+    {
+        queueUpdateCategories--;
+        executingUpdateCategories = false;
+        mainwp_newpost_updateCategories();
+    }
+    else
+    {
+        executingUpdateCategories = false;
     }
 };
 
@@ -3894,7 +3946,7 @@ backup_download_file = function(pSiteId, type, url, file, regexfile, size, subfo
         clearInterval(pInterVal);
         jQuery('#managesite-backup-status-progress').progressbar();
         jQuery('#managesite-backup-status-progress').progressbar('value', pSize);
-        appendToDiv('#managesite-backup-status-text', __('Download from site child completed.'));
+        appendToDiv('#managesite-backup-status-text', __('Download from child site completed.'));
         backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize);
     } }(pSiteId, file, regexfile, subfolder, remote_destinations, size, type, interVal), 'json');
 };
@@ -5852,6 +5904,27 @@ scrollToElement = function(pElement) {
 
     return false;
 };
+
+jQuery(document).ready(function() {
+    jQuery('#backup_filename').keypress(function (e)
+    {
+        var chr = String.fromCharCode(e.which);
+        return ("$%^&*/".indexOf(chr) < 0);
+    });
+    jQuery('#backup_filename').change( function() {
+        var value = jQuery(this).val();
+        var notAllowed = ['$', '%', '^', '&', '*', '/'];
+        for (var i = 0; i < notAllowed.length; i++)
+        {
+            var char = notAllowed[i];
+            if (value.indexOf(char) >= 0)
+            {
+                value = value.replace(new RegExp('\\' + char, 'g'), '');
+                jQuery(this).val(value);
+            }
+        }
+    });
+});
 
 updateExcludedFolders = function()
 {

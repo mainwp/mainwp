@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
 Requires at least: 3.6
-Tested up to: 3.9.1
-Stable tag: 1.0.9.1
+Tested up to: 3.9.2
+Stable tag: 1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,20 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 1.1 =
+* Added: Option to automatically exclude common backup locations from Backups
+* Added: Option to automatically exclude common cahce locations from Backups
+* Added: Option to automatically exclude non-WordPress folders from Backups
+* Added: Option to automatically exclude Zip Archives from Backups
+* Added: New Hooks for Extensions
+* Fixed: Backups allowing special characters that caused backups to fail
+* Fixed: Text on Backup popup 
+* Fixed: Issue in how categories tree displayed
+* Fixed: Restore on Child not timing out
+* Fixed: Error on first install that occurred on some Dashboards
+* Fixed: Issue on some Dashboard where the upper sync button did not activate
+* Additional CSS and Cosmetic Tweaks
 
 = 1.0.9.1 =
 * Added support for servers blocking curl_multi_exec calls

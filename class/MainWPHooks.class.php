@@ -36,7 +36,7 @@ class MainWPHooks
 
         add_filter('mainwp_getmetaboxes', array(&$this, 'getMetaBoxes'), 10, 0);
         add_filter('mainwp_getnotificationemail', array('MainWPUtility', 'getNotificationEmail'), 10, 0);
-        
+        add_filter('mainwp-extension-available-check', array(MainWPExtensions::getClassName(), 'isExtensionAvailable'));
         
     }
 

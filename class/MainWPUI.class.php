@@ -4,7 +4,7 @@ class MainWPUI
 	public static function select_sites_box( $title = "", $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false)
 	{
 		?>
-		<div class="mainwp_select_sites_box<?php if ( $class ) echo " $class"; ?>"<?php if ( $style ) echo ' style="'.$style.'"'; ?>>
+		<div class="mainwp_select_sites_box<?php if ( $class ) echo " $class"; ?> mainwp_select_sites_wrapper"<?php if ( $style ) echo ' style="'.$style.'"'; ?>>
             <div class="postbox">
                 <h3 class="mainwp_box_title"><span><?php echo ( $title ) ? $title : translate('Select Sites', 'mainwp') ?> <div class="mainwp_sites_selectcount"><?php echo !is_array($selected_websites) ? '0' : count($selected_websites); ?></div></span></h3>
                 <div class="inside mainwp_inside">
@@ -23,10 +23,10 @@ class MainWPUI
         ?>
         <input type="hidden" name="select_by" id="select_by" value="<?php echo (count($selected_groups) > 0 ? 'group' : 'site'); ?>" />
         <?php if ( $show_select_all ): ?>
-        <div style="float:right"><?php _e('Select: ','mainwp'); ?><a href="#" onClick="return mainwp_ss_select(true)"><?php _e('All','mainwp'); ?></a> | <a href="#" onClick="return mainwp_ss_select(false)"><?php _e('None','mainwp'); ?></a></div>
+        <div style="float:right"><?php _e('Select: ','mainwp'); ?><a href="#" onClick="return mainwp_ss_select(this, true)"><?php _e('All','mainwp'); ?></a> | <a href="#" onClick="return mainwp_ss_select(this, false)"><?php _e('None','mainwp'); ?></a></div>
         <?php endif ?>
         <?php if ( $show_group ): ?>
-        <div id="mainwp_ss_site_link" <?php echo (count($selected_groups) > 0 ? 'style="display: inline-block;"' : ''); ?>><a href="#" onClick="return mainwp_ss_select_by('site')"><?php _e('By site','mainwp'); ?></a></div><div id="mainwp_ss_site_text" <?php echo (count($selected_groups) > 0 ? 'style="display: none;"' : ''); ?>><?php _e('By site','mainwp'); ?></div> | <div id="mainwp_ss_group_link" <?php echo (count($selected_groups) > 0 ? 'style="display: none;"' : ''); ?>><a href="#" onClick="return mainwp_ss_select_by('group')"><?php _e('By group','mainwp'); ?></a></div><div id="mainwp_ss_group_text" <?php echo (count($selected_groups) > 0 ? 'style="display: inline-block;"' : ''); ?>><?php _e('By group','mainwp'); ?></div>
+        <div id="mainwp_ss_site_link" <?php echo (count($selected_groups) > 0 ? 'style="display: inline-block;"' : ''); ?>><a href="#" onClick="return mainwp_ss_select_by(this, 'site')"><?php _e('By site','mainwp'); ?></a></div><div id="mainwp_ss_site_text" <?php echo (count($selected_groups) > 0 ? 'style="display: none;"' : ''); ?>><?php _e('By site','mainwp'); ?></div> | <div id="mainwp_ss_group_link" <?php echo (count($selected_groups) > 0 ? 'style="display: none;"' : ''); ?>><a href="#" onClick="return mainwp_ss_select_by(this, 'group')"><?php _e('By group','mainwp'); ?></a></div><div id="mainwp_ss_group_text" <?php echo (count($selected_groups) > 0 ? 'style="display: inline-block;"' : ''); ?>><?php _e('By group','mainwp'); ?></div>
         <?php endif ?>
         <div id="selected_sites" <?php echo (count($selected_groups) > 0 ? 'style="display: none;"' : ''); ?>>
             <?php

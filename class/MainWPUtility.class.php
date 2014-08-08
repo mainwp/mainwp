@@ -1560,6 +1560,15 @@ class MainWPUtility
         if (version_compare('0.29.13', $website->version) < 0) return 'f';
         return 'file';
     }
+
+    public static function removePreSlashSpaces($text)
+    {
+        while (stristr($text, ' /'))
+        {
+            $text = str_replace(' /', '/', $text);
+        }
+        return $text;
+    }
 }
 
 ?>

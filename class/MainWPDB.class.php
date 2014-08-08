@@ -1097,7 +1097,7 @@ class MainWPDB
                 'completed_sites' => '',
                 'completed' => 0,
                 'backup_errors' => '',
-                'subfolder' => $subfolder,
+                'subfolder' => MainWPUtility::removePreSlashSpaces($subfolder),
                 'filename' => $filename,
                 'paused' => 0,
                 'template' => $template,
@@ -1115,7 +1115,7 @@ class MainWPDB
         global $wpdb;
 
         if (MainWPUtility::ctype_digit($userid) && MainWPUtility::ctype_digit($id)) {
-            return $wpdb->update($this->tableName('wp_backup'), array('userid' => $userid, 'name' => $name, 'schedule' => $schedule, 'type' => $type, 'exclude' => $exclude, 'sites' => $sites, 'groups' => $groups, 'subfolder' => $subfolder, 'filename' => $filename, 'ftp_enabled' => $ftp_enabled, 'ftp_address' => $ftp_address, 'ftp_username' => $ftp_username, 'ftp_password' => $ftp_password, 'ftp_path' => $ftp_path, 'ftp_port' => $ftp_port, 'ftp_ssl' => $ftp_ssl, 'amazon_enabled' => $amazon_enabled, 'amazon_access' => $amazon_access, 'amazon_secret' => $amazon_secret, 'amazon_bucket' => $amazon_bucket, 'amazon_dir' => $amazon_dir, 'dropbox_enabled' => $dropbox_enabled, 'dropbox_username' => $dropbox_username, 'dropbox_password' => $dropbox_password, 'dropbox_dir' => $dropbox_dir,
+            return $wpdb->update($this->tableName('wp_backup'), array('userid' => $userid, 'name' => $name, 'schedule' => $schedule, 'type' => $type, 'exclude' => $exclude, 'sites' => $sites, 'groups' => $groups, 'subfolder' => MainWPUtility::removePreSlashSpaces($subfolder), 'filename' => $filename, 'ftp_enabled' => $ftp_enabled, 'ftp_address' => $ftp_address, 'ftp_username' => $ftp_username, 'ftp_password' => $ftp_password, 'ftp_path' => $ftp_path, 'ftp_port' => $ftp_port, 'ftp_ssl' => $ftp_ssl, 'amazon_enabled' => $amazon_enabled, 'amazon_access' => $amazon_access, 'amazon_secret' => $amazon_secret, 'amazon_bucket' => $amazon_bucket, 'amazon_dir' => $amazon_dir, 'dropbox_enabled' => $dropbox_enabled, 'dropbox_username' => $dropbox_username, 'dropbox_password' => $dropbox_password, 'dropbox_dir' => $dropbox_dir,
                             'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip), array('id' => $id));
         }
         return false;

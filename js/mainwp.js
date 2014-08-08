@@ -5912,11 +5912,11 @@ jQuery(document).ready(function() {
     jQuery('#backup_filename').keypress(function (e)
     {
         var chr = String.fromCharCode(e.which);
-        return ("$%^&*/".indexOf(chr) < 0);
+        return ("$^&*/".indexOf(chr) < 0);
     });
     jQuery('#backup_filename').change( function() {
         var value = jQuery(this).val();
-        var notAllowed = ['$', '%', '^', '&', '*', '/'];
+        var notAllowed = ['$', '^', '&', '*', '/'];
         for (var i = 0; i < notAllowed.length; i++)
         {
             var char = notAllowed[i];

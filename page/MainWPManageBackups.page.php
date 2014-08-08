@@ -353,7 +353,7 @@ class MainWPManageBackups
                 <td>
                     <p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e('Exclude any additional files that you do not need backed up for this site. Click a folder name to drill down into the directory.', 'mainwp'); ?></p>
                     <br />
-                    <?php _e('Click directories to navigate. Click the red sign ( <img style="margin-bottom: -3px;" src="/wp-content/plugins/mainwp/images/exclude.png"> ) to exclude a folder.','mainwp'); ?><br /><br />
+                    <?php printf(__('Click directories to navigate. Click the red sign ( <img style="margin-bottom: -3px;" src="%s"> ) to exclude a folder.','mainwp'), plugins_url('images/exclude.png', dirname(__FILE__))); ?><br /><br />
                     <table class="mainwp_excluded_folders_cont">
                         <tr>
                             <td style="width: 280px">

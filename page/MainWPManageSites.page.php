@@ -141,6 +141,8 @@ class MainWPManageSites
         $subfolder = str_replace('%type%', $type, $subfolder);
         $subfolder = str_replace('%date%', MainWPUtility::date('Ymd'), $subfolder);
         $subfolder = str_replace('%task%', '', $subfolder);
+        $subfolder = str_replace('%', '', $subfolder);
+        $subfolder = MainWPUtility::removePreSlashSpaces($subfolder);
 
         if (!MainWPSystem::Instance()->isSingleUser() && $userid != $website->userid)
         {
@@ -157,6 +159,7 @@ class MainWPManageSites
         $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
         $maximumFileDescriptors = ($maximumFileDescriptors === false ? 0 : $maximumFileDescriptors);
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $type), $pFilename) . '.zip';
+        $file = str_replace('%', '', $file);
 
         $backupTaskProgress = MainWPDB::Instance()->getBackupTaskProgress($taskId, $website->id);
         if (empty($backupTaskProgress) || ($backupTaskProgress->dtsFetched < $pTask->last_run))
@@ -271,7 +274,9 @@ class MainWPManageSites
 
                     if ($pFilename != null)
                     {
-                        $localBackupFile = $dir . str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $what), $pFilename) . '.sql';
+                        $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $what), $pFilename);
+                        $filename = str_replace('%', '', $filename);
+                        $localBackupFile = $dir . $filename . '.sql';
                     }
 
                     if (MainWPUtility::endsWith($information['db'], 'zip')) $localBackupFile .= '.zip';
@@ -295,7 +300,9 @@ class MainWPManageSites
 
                     if ($pFilename != null)
                     {
-                        $localBackupFile = $dir . str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $what), $pFilename) . '.zip';
+                        $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $what), $pFilename);
+                        $filename = str_replace('%', '', $filename);
+                        $localBackupFile = $dir . $filename . '.zip';
                     }
 
                     MainWPUtility::downloadToFile($information['full'], $localBackupFile);
@@ -425,6 +432,8 @@ class MainWPManageSites
         $subfolder = str_replace('%type%', $pType, $subfolder);
         $subfolder = str_replace('%date%', MainWPUtility::date('Ymd'), $subfolder);
         $subfolder = str_replace('%task%', '', $subfolder);
+        $subfolder = str_replace('%', '', $subfolder);
+        $subfolder = MainWPUtility::removePreSlashSpaces($subfolder);
 
         if (!MainWPUtility::can_edit_website($website))
         {
@@ -442,6 +451,7 @@ class MainWPManageSites
         $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
         $maximumFileDescriptors = ($maximumFileDescriptors === false ? 0 : $maximumFileDescriptors);
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $pType), $pFilename);
+        $file = str_replace('%', '', $file);
 
         $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'file_descriptors' => $maximumFileDescriptors, MainWPUtility::getFileParameter($website) => $file, 'fileUID' => $pFileNameUID));
 
@@ -491,7 +501,9 @@ class MainWPManageSites
 
             if ($pFilename != null)
             {
-                $localBackupFile = $dir . str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $pType), $pFilename);
+                $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $pType), $pFilename);
+                $filename = str_replace('%', '', $filename);
+                $localBackupFile = $dir . $filename;
 
                 if ($pType == 'db')
                 {

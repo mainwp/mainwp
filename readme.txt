@@ -124,7 +124,6 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Fixed: Text on Backup popup 
 * Fixed: Issue in how categories tree displayed
 * Fixed: Exclude folders and categories duplicated in select list when selecting child sites fast
-* Fixed: Restore on Child site not timing out
 * Fixed: Error on first install that occurred on some Dashboards
 * Fixed: Issue where the upper sync button did not activate when there are posts/pages with html tags in title
 * Additional CSS and Cosmetic Tweaks

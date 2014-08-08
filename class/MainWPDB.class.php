@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '6.4';
+    private $mainwp_db_version = '6.8';
     //Private
     private $table_prefix;
     //Singleton
@@ -61,6 +61,7 @@ class MainWPDB
   nossl tinyint(1) NOT NULL,
   nosslkey text NOT NULL,
   siteurl text NOT NULL,
+  version text NOT NULL,
   ga_id text NOT NULL,
   gas_id int(11) NOT NULL,
   offline_checks text NOT NULL,
@@ -163,6 +164,17 @@ class MainWPDB
   groupid int(11) NOT NULL
         )';
 
+        $tbl = 'CREATE TABLE ' . $this->tableName('wp_backup_progress') . ' (
+  task_id int(11) NOT NULL,
+  wp_id int(11) NOT NULL,
+  dtsFetched int(11) NOT NULL DEFAULT 0,
+  fetchResult text NOT NULL DEFAULT "",
+  downloadedDB text NOT NULL DEFAULT "",
+  downloadedFULL text NOT NULL DEFAULT "",
+  removedFiles tinyint(1) NOT NULL DEFAULT 0
+         )';
+        $sql[] = $tbl;
+
         $tbl = 'CREATE TABLE ' . $this->tableName('wp_backup') . ' (
   id int(11) NOT NULL auto_increment,
   userid int(11) NOT NULL,
@@ -190,6 +202,7 @@ class MainWPDB
   dropbox_dir text NOT NULL,
   last int(11) NOT NULL,
   last_run int(11) NOT NULL,
+  lastStartNotificationSent int(11) NOT NULL DEFAULT 0,
   last_run_manually int(11) NOT NULL,
   completed_sites text NOT NULL,
   completed int(11) NOT NULL,
@@ -197,7 +210,11 @@ class MainWPDB
   subfolder text NOT NULL,
   filename text NOT NULL,
   paused tinyint(1) NOT NULL,
-  template tinyint(1) DEFAULT 0';
+  template tinyint(1) DEFAULT 0,
+  excludebackup tinyint(1) DEFAULT 0,
+  excludecache tinyint(1) DEFAULT 0,
+  excludenonwp tinyint(1) DEFAULT 0,
+  excludezip tinyint(1) DEFAULT 0';
           if ($currentVersion == '') $tbl .= ',
   PRIMARY KEY  (id)  ';
           $tbl .= ');';
@@ -965,6 +982,52 @@ class MainWPDB
         return false;
     }
 
+    public function updateBackupTaskProgress($task_id, $wp_id, $values)
+    {
+        /** @var $wpdb wpdb */
+        global $wpdb;
+
+        $wpdb->update($this->tableName('wp_backup_progress'), $values, array('task_id' => $task_id, 'wp_id' => $wp_id));
+
+        return $this->getBackupTaskProgress($task_id, $wp_id);
+    }
+
+    public function addBackupTaskProgress($task_id, $wp_id, $information)
+    {
+        /** @var $wpdb wpdb */
+        global $wpdb;
+
+        $values = array('task_id' => $task_id,
+                'wp_id' => $wp_id,
+                'dtsFetched' => time(),
+                'fetchResult' => json_encode($information),
+                'removedFiles' => 0,
+                'downloadedDB' => "",
+                'downloadedFULL' => "");
+
+        if ($wpdb->insert($this->tableName('wp_backup_progress'), $values))
+        {
+            return $this->getBackupTaskProgress($task_id, $wp_id);
+        }
+
+        return null;
+    }
+
+    public function getBackupTaskProgress($task_id, $wp_id)
+    {
+        /** @var $wpdb wpdb */
+        global $wpdb;
+
+        $progress = $wpdb->get_row('SELECT * FROM ' . $this->tableName('wp_backup_progress') . ' WHERE task_id= ' . $task_id . ' AND wp_id = ' . $wp_id);
+
+        if ($progress->fetchResult != '')
+        {
+            $progress->fetchResult = json_decode($progress->fetchResult, true);
+        }
+
+        return $progress;
+    }
+
     public function removeBackupTask($id)
     {
         /** @var $wpdb wpdb */
@@ -999,7 +1062,7 @@ class MainWPDB
         return $wpdb->get_results('SELECT * FROM ' . $this->tableName('wp_backup') . ' WHERE '.($userid == null ? '' : 'userid= ' . $userid . ' AND ') . ' template = 0 ' . ($orderBy != null ? 'ORDER BY ' . $orderBy : ''), OBJECT);
     }
 
-    public function addBackupTask($userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename, $template = 0)
+    public function addBackupTask($userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename, $template, $excludebackup, $excludecache, $excludenonwp, $excludezip)
     {
         /** @var $wpdb wpdb */
         global $wpdb;
@@ -1034,10 +1097,11 @@ class MainWPDB
                 'completed_sites' => '',
                 'completed' => 0,
                 'backup_errors' => '',
-                'subfolder' => $subfolder,
+                'subfolder' => MainWPUtility::removePreSlashSpaces($subfolder),
                 'filename' => $filename,
                 'paused' => 0,
-                'template' => $template);
+                'template' => $template,
+                'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip);
             if ($wpdb->insert($this->tableName('wp_backup'), $values)) {
                 return $this->getBackupTaskById($wpdb->insert_id);
             }
@@ -1045,13 +1109,14 @@ class MainWPDB
         return false;
     }
 
-    public function updateBackupTask($id, $userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename, $ftp_enabled, $ftp_address, $ftp_username, $ftp_password, $ftp_path, $ftp_port, $ftp_ssl, $amazon_enabled, $amazon_access, $amazon_secret, $amazon_bucket, $amazon_dir, $dropbox_enabled, $dropbox_username, $dropbox_password, $dropbox_dir)
+    public function updateBackupTask($id, $userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename, $ftp_enabled, $ftp_address, $ftp_username, $ftp_password, $ftp_path, $ftp_port, $ftp_ssl, $amazon_enabled, $amazon_access, $amazon_secret, $amazon_bucket, $amazon_dir, $dropbox_enabled, $dropbox_username, $dropbox_password, $dropbox_dir, $excludebackup, $excludecache, $excludenonwp, $excludezip)
     {
         /** @var $wpdb wpdb */
         global $wpdb;
 
         if (MainWPUtility::ctype_digit($userid) && MainWPUtility::ctype_digit($id)) {
-            return $wpdb->update($this->tableName('wp_backup'), array('userid' => $userid, 'name' => $name, 'schedule' => $schedule, 'type' => $type, 'exclude' => $exclude, 'sites' => $sites, 'groups' => $groups, 'subfolder' => $subfolder, 'filename' => $filename, 'ftp_enabled' => $ftp_enabled, 'ftp_address' => $ftp_address, 'ftp_username' => $ftp_username, 'ftp_password' => $ftp_password, 'ftp_path' => $ftp_path, 'ftp_port' => $ftp_port, 'ftp_ssl' => $ftp_ssl, 'amazon_enabled' => $amazon_enabled, 'amazon_access' => $amazon_access, 'amazon_secret' => $amazon_secret, 'amazon_bucket' => $amazon_bucket, 'amazon_dir' => $amazon_dir, 'dropbox_enabled' => $dropbox_enabled, 'dropbox_username' => $dropbox_username, 'dropbox_password' => $dropbox_password, 'dropbox_dir' => $dropbox_dir), array('id' => $id));
+            return $wpdb->update($this->tableName('wp_backup'), array('userid' => $userid, 'name' => $name, 'schedule' => $schedule, 'type' => $type, 'exclude' => $exclude, 'sites' => $sites, 'groups' => $groups, 'subfolder' => MainWPUtility::removePreSlashSpaces($subfolder), 'filename' => $filename, 'ftp_enabled' => $ftp_enabled, 'ftp_address' => $ftp_address, 'ftp_username' => $ftp_username, 'ftp_password' => $ftp_password, 'ftp_path' => $ftp_path, 'ftp_port' => $ftp_port, 'ftp_ssl' => $ftp_ssl, 'amazon_enabled' => $amazon_enabled, 'amazon_access' => $amazon_access, 'amazon_secret' => $amazon_secret, 'amazon_bucket' => $amazon_bucket, 'amazon_dir' => $amazon_dir, 'dropbox_enabled' => $dropbox_enabled, 'dropbox_username' => $dropbox_username, 'dropbox_password' => $dropbox_password, 'dropbox_dir' => $dropbox_dir,
+                            'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip), array('id' => $id));
         }
         return false;
     }
@@ -1209,7 +1274,8 @@ class MainWPDB
         /** @var $wpdb wpdb */
         global $wpdb;
 
-        return $wpdb->get_results('SELECT * FROM ' . $this->tableName('wp_backup') . ' WHERE paused = 0 AND completed < last_run AND '. time() . ' - last_run >= 120 AND ' . time() . ' - last >= 120', OBJECT);
+        return $wpdb->get_results('SELECT * FROM ' . $this->tableName('wp_backup') . ' WHERE paused = 0 AND completed < last_run'//AND '. time() . ' - last_run >= 120 AND ' . time() . ' - last >= 120'
+            , OBJECT);
     }
 
     public function getBackupTasksTodoDaily()
@@ -1446,6 +1512,8 @@ class MainWPDB
 
     public static function fetch_object($result)
     {
+		if ($result === false) return false;
+
         if (self::use_mysqli())
         {
             return mysqli_fetch_object($result);
@@ -1458,6 +1526,8 @@ class MainWPDB
 
     public static function free_result($result)
     {
+		if ($result === false) return false;
+
         if (self::use_mysqli())
         {
             return mysqli_free_result($result);
@@ -1470,6 +1540,8 @@ class MainWPDB
 
     public static function data_seek($result, $offset)
     {
+		if ($result === false) return false;
+
         if (self::use_mysqli())
         {
             return mysqli_data_seek($result, $offset);
@@ -1482,6 +1554,8 @@ class MainWPDB
 
     public static function fetch_array($result, $result_type = null)
     {
+		if ($result === false) return false;
+
         if (self::use_mysqli())
         {
             return mysqli_fetch_array($result, ($result_type == null ? MYSQLI_BOTH : $result_type));
@@ -1494,6 +1568,8 @@ class MainWPDB
 
     public static function num_rows($result)
     {
+		if ($result === false) return 0;
+
         if (self::use_mysqli())
         {
             return mysqli_num_rows($result);
@@ -1506,6 +1582,8 @@ class MainWPDB
 
     public static function is_result($result)
     {
+		if ($result === false) return false;
+
         if (self::use_mysqli())
         {
             return ($result instanceof mysqli_result);

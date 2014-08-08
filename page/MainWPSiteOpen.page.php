@@ -81,7 +81,7 @@ class MainWPSiteOpen
         if (!MainWPUtility::can_edit_website($website)) exit();
 
         $file = "";
-        if (isset($_GET['file'])) $file = base64_decode($_GET['file']);
+        if (isset($_GET['f'])) $file = base64_decode($_GET['f']);
 
         MainWPSiteOpen::openSiteRestore($website, $file);
     }
@@ -105,7 +105,7 @@ class MainWPSiteOpen
 
                 $size = filesize($upload_base_dir . urldecode($file));
                 $file = $upload_base_url . $file;
-                $postdata = MainWPUtility::getGetDataAuthed($website, $file, 'file', true);
+                $postdata = MainWPUtility::getGetDataAuthed($website, $file, MainWPUtility::getFileParameter($website), true);
                 $postdata['size'] = $size;
                 ?>
                 <form method="POST" action="<?php echo $url; ?>" id="redirectForm">

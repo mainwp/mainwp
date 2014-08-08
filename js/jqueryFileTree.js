@@ -48,7 +48,7 @@ if(jQuery) (function($){
 			
 			$(this).each( function() {
 				
-				function showTree(c, t) {
+				function showTree(c, t, callPostFunc) {
 					$(c).addClass('wait');
 					$(".jqueryFileTree.start").remove();
 					$.post(o.script, { dir: t }, function(data) {
@@ -56,6 +56,7 @@ if(jQuery) (function($){
 						$(c).removeClass('wait').append(data);
 						if( o.root == t ) $(c).find('UL:hidden').show(); else $(c).find('UL:hidden').slideDown({ duration: o.expandSpeed, easing: o.expandEasing });
 						bindTree(c);
+                        if (callPostFunc && o.postFunction != undefined) o.postFunction();
 					});
 				}
 				
@@ -77,7 +78,7 @@ if(jQuery) (function($){
 									$(this).parent().parent().find('LI.directory').removeClass('expanded').addClass('collapsed');
 								}
 								$(this).parent().find('UL').remove(); // cleanup
-								showTree( $(this).parent(), escape($(this).attr('rel').match( /.*\// )) );
+								showTree( $(this).parent(), escape($(this).attr('rel').match( /.*\// )), false );
 								$(this).parent().removeClass('collapsed').addClass('expanded');
 							} else {
 								// Collapse
@@ -95,7 +96,7 @@ if(jQuery) (function($){
 				// Loading message
 				$(this).html('<ul class="jqueryFileTree start"><li class="wait">' + o.loadMessage + '<li></ul>');
 				// Get the initial file list
-				showTree( $(this), escape(o.root) );
+				showTree( $(this), escape(o.root), true );
 			});
 		}
 	});

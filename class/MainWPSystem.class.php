@@ -1021,7 +1021,7 @@ class MainWPSystem
 
                     try
                     {
-                        $result = MainWPManageSites::backup($siteId, 'full', '', '');
+                        $result = MainWPManageSites::backup($siteId, 'full', '', '', 0, 0, 0, 0);
                         MainWPManageSites::backupDownloadFile($siteId, 'full', $result['url'], $result['local']);
                         $sitesCheckCompleted[$siteId] = true;
                         MainWPUtility::update_option('mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted);
@@ -1794,7 +1794,7 @@ class MainWPSystem
                 echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="'.$website->id.'" />';
             }
         }
-        else
+        else if ($websites !== false)
         {
             while ($website = @MainWPDB::fetch_object($websites))
             {

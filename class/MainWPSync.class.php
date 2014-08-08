@@ -127,7 +127,8 @@ class MainWPSync
             'categories' => $emptyArray,
             'pluginConflicts' => $emptyArray,
             'themeConflicts' => $emptyArray,
-            'offline_check_result' => $offline_check_result
+            'offline_check_result' => $offline_check_result,
+            'version' => 0
         );
 
         $done = false;
@@ -138,9 +139,20 @@ class MainWPSync
             $done = true;
         }
 
+        if (isset($information['version']))
+        {
+            $websiteValues['version'] = $information['version'];
+            $done = true;
+        }
+
         if (isset($information['directories']) && is_array($information['directories']))
         {
             $websiteValues['directories'] = json_encode($information['directories']);
+            $done = true;
+        }
+        else if (isset($information['directories']))
+        {
+            $websiteValues['directories'] = $information['directories'];
             $done = true;
         }
 

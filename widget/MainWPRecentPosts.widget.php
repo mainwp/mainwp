@@ -86,7 +86,7 @@ class MainWPRecentPosts
                 <div class="mainwp-row mainwp-recent">
                     <input class="postId" type="hidden" name="id" value="<?php echo $recent_posts_published[$i]['id']; ?>"/>
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $recent_posts_published[$i]['website']->id; ?>"/>
-                    <span class="mainwp-left-col"><a href="<?php echo $recent_posts_published[$i]['website']->url; ?>?p=<?php echo $recent_posts_published[$i]['id']; ?>" target="_blank"><?php echo $recent_posts_published[$i]['title']; ?></a></span>
+                    <span class="mainwp-left-col" style="width: 60% !important;  margin-right: 1em;"><a href="<?php echo $recent_posts_published[$i]['website']->url; ?>?p=<?php echo $recent_posts_published[$i]['id']; ?>" target="_blank"><?php echo htmlentities($recent_posts_published[$i]['title']); ?></a></span>
                     <span class="mainwp-mid-col">
                             <a href="<?php echo admin_url('admin.php?page=CommentBulkManage&siteid='.$recent_posts_published[$i]['website']->id.'&postid='.$recent_posts_published[$i]['id']); ?>" title="<?php echo $recent_posts_published[$i]['comment_count']; ?>" class="post-com-count" style="display: inline-block !important;">
                                 <span class="comment-count"><?php echo $recent_posts_published[$i]['comment_count']; ?></span>
@@ -119,7 +119,7 @@ class MainWPRecentPosts
                 <div class="mainwp-row mainwp-recent">
                     <input class="postId" type="hidden" name="id" value="<?php echo $recent_posts_draft[$i]['id']; ?>"/>
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $recent_posts_draft[$i]['website']->id; ?>"/>
-                    <span class="mainwp-left-col"><a href="<?php echo $recent_posts_draft[$i]['website']->url; ?>?p=<?php echo $recent_posts_draft[$i]['id']; ?>" target="_blank"><?php echo $recent_posts_draft[$i]['title']; ?></a></span>
+                    <span class="mainwp-left-col" style="width: 60% !important;  margin-right: 1em;"><a href="<?php echo $recent_posts_draft[$i]['website']->url; ?>?p=<?php echo $recent_posts_draft[$i]['id']; ?>" target="_blank"><?php echo htmlentities($recent_posts_draft[$i]['title']); ?></a></span>
                     <span class="mainwp-mid-col">
                             <a href="<?php echo admin_url('admin.php?page=CommentBulkManage&siteid='.$recent_posts_draft[$i]['website']->id.'&postid='.$recent_posts_draft[$i]['id']); ?>" title="<?php echo $recent_posts_draft[$i]['comment_count']; ?>" class="post-com-count" style="display: inline-block !important;">
                                 <span class="comment-count"><?php echo $recent_posts_draft[$i]['comment_count']; ?></span>
@@ -152,7 +152,7 @@ class MainWPRecentPosts
                 <div class="mainwp-row mainwp-recent">
                     <input class="postId" type="hidden" name="id" value="<?php echo $recent_posts_pending[$i]['id']; ?>"/>
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $recent_posts_pending[$i]['website']->id; ?>"/>
-                    <span class="mainwp-left-col"><a href="<?php echo $recent_posts_pending[$i]['website']->url; ?>?p=<?php echo $recent_posts_pending[$i]['id']; ?>" target="_blank"><?php echo $recent_posts_pending[$i]['title']; ?></a></span>
+                    <span class="mainwp-left-col" style="width: 60% !important;  margin-right: 1em;"><a href="<?php echo $recent_posts_pending[$i]['website']->url; ?>?p=<?php echo $recent_posts_pending[$i]['id']; ?>" target="_blank"><?php echo htmlentities($recent_posts_pending[$i]['title']); ?></a></span>
                     <span class="mainwp-mid-col">
                             <a href="<?php echo admin_url('admin.php?page=CommentBulkManage&siteid='.$recent_posts_pending[$i]['website']->id.'&postid='.$recent_posts_pending[$i]['id']); ?>" title="<?php echo $recent_posts_pending[$i]['comment_count']; ?>" class="post-com-count" style="display: inline-block !important;">
                                 <span class="comment-count"><?php echo $recent_posts_pending[$i]['comment_count']; ?></span>
@@ -184,7 +184,7 @@ class MainWPRecentPosts
                 <div class="mainwp-row mainwp-recent">
                     <input class="postId" type="hidden" name="id" value="<?php echo $recent_posts_trash[$i]['id']; ?>"/>
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $recent_posts_trash[$i]['website']->id; ?>"/>
-                    <span class="mainwp-left-col"><?php echo $recent_posts_trash[$i]['title']; ?></span>
+                    <span class="mainwp-left-col" style="width: 60% !important;  margin-right: 1em;"><?php echo htmlentities($recent_posts_trash[$i]['title']); ?></span>
                     <span class="mainwp-mid-col">
                             <a href="<?php echo admin_url('admin.php?page=CommentBulkManage&siteid='.$recent_posts_trash[$i]['website']->id.'&postid='.$recent_posts_trash[$i]['id']); ?>" title="<?php echo $recent_posts_trash[$i]['comment_count']; ?>" class="post-com-count" style="display: inline-block !important;">
                                 <span class="comment-count"><?php echo $recent_posts_trash[$i]['comment_count']; ?></span>

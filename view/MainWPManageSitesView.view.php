@@ -451,7 +451,7 @@ class MainWPManageSitesView
         {
             $output .= '<tr><td style="width: 400px;">' . MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp(filemtime($fullBackup))) . ' - ' . MainWPUtility::human_filesize(filesize($fullBackup));
             $output .= '</td><td><a title="'.basename($fullBackup).'" href="' . str_replace(array(basename($fullBackup), $upload_base_dir), array(rawurlencode(basename($fullBackup)), $upload_base_url), $fullBackup) . '" class="button">Download</a></td>';
-            $output .= '<td><a href="admin.php?page=SiteRestore&websiteid=' . $website->id.'&file='.base64_encode(str_replace(array(basename($fullBackup), $upload_base_dir), array(rawurlencode(basename($fullBackup)), ''), $fullBackup)) . '" class="mainwp-upgrade-button button" target="_blank" title="'.basename($fullBackup).'">Restore</a></td></tr>';
+            $output .= '<td><a href="admin.php?page=SiteRestore&websiteid=' . $website->id.'&f='.base64_encode(str_replace(array(basename($fullBackup), $upload_base_dir), array(rawurlencode(basename($fullBackup)), ''), $fullBackup)) . '" class="mainwp-upgrade-button button" target="_blank" title="'.basename($fullBackup).'">Restore</a></td></tr>';
         }
         if ($output == '') echo '<br />' . __('No full backup has been taken yet','mainwp') . '<br />';
         else echo '<strong style="font-size: 14px">'. __('Last backups from your files:','mainwp') . '</strong>' . $output;
@@ -669,17 +669,57 @@ class MainWPManageSitesView
                     </td>
                 </tr>
                 <tr class="mainwp_backup_exclude_files_content"><td colspan="2"><hr /></td></tr>
+                <tr class="mainwp-exclude-suggested">
+                    <th scope="row" style="vertical-align: top"><?php _e('Suggested Exclude', 'mainwp'); ?>:</th>
+                    <td><p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e('Every WordPress website is different but the sections below generally do not need to be backed up and since many of them are large in size they can even cause issues with your backup including server timeouts.', 'mainwp'); ?></p></td>
+                </tr>
+                <tr class="mainwp-exclude-backup-locations">
+                    <td colspan="2"><h4><?php _e('Known Backup Locations', 'mainwp'); ?></h4></td>
+                </tr>
+                <tr class="mainwp-exclude-backup-locations">
+                    <td><label for="mainwp-known-backup-locations"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-known-backup-locations" checked></td>
+                    <td class="mainwp-td-des"><a href="#" id="mainwp-show-kbl-folders"><?php _e('+ Show Excluded Folders', 'mainwp'); ?></a><a href="#" id="mainwp-hide-kbl-folders"><?php _e('- Hide Excluded Folders', 'mainwp'); ?></a><br/>
+                        <textarea id="mainwp-kbl-content" disabled></textarea>
+                        <br/><?php _e('This adds known backup locations of popular WordPress backup plugins to the exclude list.  Old backups can take up a lot of space and can cause your current MainWP backup to timeout.', 'mainwp'); ?></td>
+                </tr>
+                <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
+                <tr class="mainwp-exclude-cache-locations">
+                    <td colspan="2"><h4><?php _e('Known Cache Locations', 'mainwp'); ?></h4></td>
+                </tr>
+                <tr class="mainwp-exclude-cache-locations">
+                    <td><label for="mainwp-known-cache-locations"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-known-cache-locations" checked></td>
+                    <td class="mainwp-td-des"><a href="#" id="mainwp-show-kcl-folders"><?php _e('+ Show Excluded Folders', 'mainwp'); ?></a><a href="#" id="mainwp-hide-kcl-folders"><?php _e('- Hide Excluded Folders', 'mainwp'); ?></a><br/>
+                        <textarea id="mainwp-kcl-content" disabled></textarea>
+                        <br/><?php _e('This adds known cache locations of popular WordPress cache plugins to the exclude list.  A cache can be massive with thousands of files and can cause your current MainWP backup to timeout.  Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp'); ?></td>
+                </tr>
+                <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
+                <tr class="mainwp-exclude-nonwp-folders">
+                    <td colspan="2"><h4><?php _e('Non-WordPress Folders', 'mainwp'); ?></h4></td>
+                </tr>
+                <tr class="mainwp-exclude-nonwp-folders">
+                    <td><label for="mainwp-non-wordpress-folders"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-non-wordpress-folders" checked></td>
+                    <td class="mainwp-td-des"><a href="#" id="mainwp-show-nwl-folders"><?php _e('+ Show Excluded Folders', 'mainwp'); ?></a><a href="#" id="mainwp-hide-nwl-folders"><?php _e('- Hide Excluded Folders', 'mainwp'); ?></a><br/>
+                        <textarea id="mainwp-nwl-content" disabled></textarea>
+                        <br/><?php _e('This adds folders that are not part of the WordPress core (wp-admin, wp-content and wp-include) to the exclude list. Non-WordPress folders can contain a large amount of data or may be a sub-domain or add-on domain that should be backed up individually and not with this backup.', 'mainwp'); ?></td>
+                </tr>
+                <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
+                <tr class="mainwp-exclude-zips">
+                    <td colspan="2"><h4><?php _e('ZIP Archives', 'mainwp'); ?></h4></td>
+                </tr>
+                <tr class="mainwp-exclude-zips">
+                    <td><label for="mainwp-zip-archives"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-zip-archives" checked></td>
+                    <td class="mainwp-td-des"><?php _e('Zip files can be large and are often not needed for a WordPress backup. Be sure to deselect this option if you do have zip files you need backed up.', 'mainwp'); ?></td>
+                </tr>
+                <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
                 <tr class="mainwp_backup_exclude_files_content">
-                    <th scope="row" style="vertical-align: top"><?php _e('Exclude files', 'mainwp'); ?>:</th>
+                    <th scope="row" style="vertical-align: top"><h4 class="mainwp-custom-excludes"><?php _e('Custom Excludes', 'mainwp'); ?></h4></th>
                     <td>
-                        <span class="mainwp-form_hint" style="display: inline; max-width: 650px;"><?php _e('The Backup will attempt to backup the files below. Exclude any files that you do not need backed up for this site.', 'mainwp'); ?></span>
+                        <p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e('Exclude any additional files that you do not need backed up for this site. Click a folder name to drill down into the directory.', 'mainwp'); ?></p>
                         <br />
-                        <br />
-                        <br />
-                        <?php _e('Click directories to navigate or click to exclude.','mainwp'); ?>
+                        <?php printf(__('Click directories to navigate. Click the red sign ( <img style="margin-bottom: -3px;" src="%s"> ) to exclude a folder.','mainwp'), plugins_url('images/exclude.png', dirname(__FILE__))); ?><br /><br />
                         <table class="mainwp_excluded_folders_cont">
                             <tr>
-                                <td style="width: 280px">
+                                <td style="width: 280px;">
                                     <div id="backup_exclude_folders"
                                          siteid="<?php echo $website->id; ?>"
                                          class="mainwp_excluded_folders"></div>

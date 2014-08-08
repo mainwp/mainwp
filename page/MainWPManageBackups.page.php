@@ -306,14 +306,54 @@ class MainWPManageBackups
                 </td>
             </tr>
             <tr class="mainwp_backup_exclude_files_content" <?php echo (isset($task) && $task->type == 'db' ? 'style="display: none;"' : ''); ?>><td colspan="2"><hr /></td></tr>
+            <tr class="mainwp-exclude-suggested">
+                    <th scope="row" style="vertical-align: top"><?php _e('Suggested Exclude', 'mainwp'); ?>:</th>
+                    <td><p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e('Every WordPress website is different but the sections below generally do not need to be backed up and since many of them are large in size they can even cause issues with your backup including server timeouts.', 'mainwp'); ?></p></td>
+                </tr>
+                <tr class="mainwp-exclude-backup-locations">
+                    <td colspan="2"><h4><?php _e('Known Backup Locations', 'mainwp'); ?></h4></td>
+                </tr>
+                <tr class="mainwp-exclude-backup-locations">
+                    <td><label for="mainwp-known-backup-locations"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-known-backup-locations" <?php echo (!isset($task) || $task->excludebackup == 1 ? 'checked' : ''); ?>></td>
+                    <td class="mainwp-td-des"><a href="#" id="mainwp-show-kbl-folders"><?php _e('+ Show Excluded Folders', 'mainwp'); ?></a><a href="#" id="mainwp-hide-kbl-folders"><?php _e('- Hide Excluded Folders', 'mainwp'); ?></a><br/>
+                        <textarea id="mainwp-kbl-content" disabled></textarea>
+                        <br/><?php _e('This adds known backup locations of popular WordPress backup plugins to the exclude list.  Old backups can take up a lot of space and can cause your current MainWP backup to timeout.', 'mainwp'); ?></td>
+                </tr>
+                <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
+                <tr class="mainwp-exclude-cache-locations">
+                    <td colspan="2"><h4><?php _e('Known Cache Locations', 'mainwp'); ?></h4></td>
+                </tr>
+                <tr class="mainwp-exclude-cache-locations">
+                    <td><label for="mainwp-known-cache-locations"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-known-cache-locations" <?php echo (!isset($task) || $task->excludecache == 1 ? 'checked' : ''); ?>></td>
+                    <td class="mainwp-td-des"><a href="#" id="mainwp-show-kcl-folders"><?php _e('+ Show Excluded Folders', 'mainwp'); ?></a><a href="#" id="mainwp-hide-kcl-folders"><?php _e('- Hide Excluded Folders', 'mainwp'); ?></a><br/>
+                        <textarea id="mainwp-kcl-content" disabled></textarea>
+                        <br/><?php _e('This adds known cache locations of popular WordPress cache plugins to the exclude list.  A cache can be massive with thousands of files and can cause your current MainWP backup to timeout.  Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp'); ?></td>
+                </tr>
+                <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
+                <tr class="mainwp-exclude-nonwp-folders">
+                    <td colspan="2"><h4><?php _e('Non-WordPress Folders', 'mainwp'); ?></h4></td>
+                </tr>
+                <tr class="mainwp-exclude-nonwp-folders">
+                    <td><label for="mainwp-non-wordpress-folders"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-non-wordpress-folders" <?php echo (!isset($task) || $task->excludenonwp == 1 ? 'checked' : ''); ?>></td>
+                    <td class="mainwp-td-des"><a href="#" id="mainwp-show-nwl-folders"><?php _e('+ Show Excluded Folders', 'mainwp'); ?></a><a href="#" id="mainwp-hide-nwl-folders"><?php _e('- Hide Excluded Folders', 'mainwp'); ?></a><br/>
+                        <textarea id="mainwp-nwl-content" disabled></textarea>
+                        <br/><?php _e('This adds folders that are not part of the WordPress core (wp-admin, wp-content and wp-include) to the exclude list. Non-WordPress folders can contain a large amount of data or may be a sub-domain or add-on domain that should be backed up individually and not with this backup.', 'mainwp'); ?></td>
+                </tr>
+                <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
+                <tr class="mainwp-exclude-zips">
+                    <td colspan="2"><h4><?php _e('ZIP Archives', 'mainwp'); ?></h4></td>
+                </tr>
+                <tr class="mainwp-exclude-zips">
+                    <td><label for="mainwp-zip-archives"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-zip-archives" <?php echo (!isset($task) || $task->excludezip == 1 ? 'checked' : ''); ?>></td>
+                    <td class="mainwp-td-des"><?php _e('Zip files can be large and are often not needed for a WordPress backup. Be sure to deselect this option if you do have zip files you need backed up.', 'mainwp'); ?></td>
+                </tr>
+                <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
             <tr class="mainwp_backup_exclude_files_content" <?php echo (isset($task) && $task->type == 'db' ? 'style="display: none;"' : ''); ?>>
-                <th scope="row" style="vertical-align: top"><?php _e('Exclude files', 'mainwp'); ?>:</th>
+                <th scope="row" style="vertical-align: top"><h4 class="mainwp-custom-excludes"><?php _e('Custom Excludes', 'mainwp'); ?></h4></th>
                 <td>
-                    <span class="mainwp-form_hint" style="display: inline; max-width: 650px;"><?php _e('The Backup will attempt to backup the files below. Exclude any files that you do not need backed up for this site.', 'mainwp'); ?></span>
+                    <p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e('Exclude any additional files that you do not need backed up for this site. Click a folder name to drill down into the directory.', 'mainwp'); ?></p>
                     <br />
-                    <br />
-                    <br />
-                    <?php _e('Click directories to navigate or click to exclude.','mainwp'); ?>
+                    <?php printf(__('Click directories to navigate. Click the red sign ( <img style="margin-bottom: -3px;" src="%s"> ) to exclude a folder.','mainwp'), plugins_url('images/exclude.png', dirname(__FILE__))); ?><br /><br />
                     <table class="mainwp_excluded_folders_cont">
                         <tr>
                             <td style="width: 280px">
@@ -416,7 +456,7 @@ class MainWPManageBackups
 
         do_action('mainwp_update_backuptask', $task->id);
 
-        if (MainWPDB::Instance()->updateBackupTask($task->id, $current_user->ID, $name, $schedule, $type, $excludedFolder, $sites, $groups, $_POST['subfolder'], $_POST['filename'], 0, '', '', '', '', '', 0, 0, '', '', '', '', 0, '', '', '') === false)
+        if (MainWPDB::Instance()->updateBackupTask($task->id, $current_user->ID, $name, $schedule, $type, $excludedFolder, $sites, $groups, $_POST['subfolder'], $_POST['filename'], 0, '', '', '', '', '', 0, 0, '', '', '', '', 0, '', '', '', $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip']) === false)
         {
             die(json_encode(array('error' => 'An unspecified error occured.')));
         }
@@ -462,7 +502,7 @@ class MainWPManageBackups
             }
         }
 
-        $task = MainWPDB::Instance()->addBackupTask($current_user->ID, $name, $schedule, $type, $excludedFolder, $sites, $groups, (isset($_POST['subfolder']) ? $_POST['subfolder'] : ''), $_POST['filename']);
+        $task = MainWPDB::Instance()->addBackupTask($current_user->ID, $name, $schedule, $type, $excludedFolder, $sites, $groups, (isset($_POST['subfolder']) ? $_POST['subfolder'] : ''), $_POST['filename'], 0, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip']);
         if (!$task)
         {
             die(json_encode(array('error' => 'An unspecified error occured.')));
@@ -506,7 +546,8 @@ class MainWPManageBackups
         }
         $errorOutput = '';
 
-        if ($updateRun && (get_option('mainwp_notificationOnBackupStart') == 1))
+        $lastStartNotification = $task->lastStartNotificationSent;
+        if ($updateRun && (get_option('mainwp_notificationOnBackupStart') == 1) && ($lastStartNotification < $task->last_run))
         {
             $email = MainWPDB::Instance()->getUserNotificationEmail($task->userid);
             if ($email != '')
@@ -538,7 +579,7 @@ class MainWPManageBackups
             {
                 $subfolder = str_replace('%task%', MainWPUtility::sanitize($task->name), $task->subfolder);
 
-                $backupResult = MainWPManageSites::backupSite($siteid, $task->userid, $task->type, $task->exclude, $task->id, $subfolder, $task->filename);
+                $backupResult = MainWPManageSites::backupSite($siteid, $task, $subfolder);
                 $error = false;
                 $tmpErrorOutput = '';
                 if (isset($backupResult['error']))
@@ -621,7 +662,7 @@ class MainWPManageBackups
 
         $subfolder = str_replace('%task%', MainWPUtility::sanitize($backupTask->name), $backupTask->subfolder);
 
-        return MainWPManageSites::backup($pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->filename, $pFileNameUID);
+        return MainWPManageSites::backup($pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->excludebackup, $backupTask->excludecache, $backupTask->excludenonwp, $backupTask->excludezip, $backupTask->filename, $pFileNameUID);
     }
 
     public static function getBackupTaskSites($pTaskId)
@@ -697,6 +738,9 @@ class MainWPManageBackups
         if (count($websites) == 0) die('<i><strong>Select a site or group first</strong></i>'); //Nothing selected!
 
         $allFiles = array();
+        $excludedBackupFiles = array();
+        $excludedCacheFiles = array();
+        $excludedNonWPFiles = array();
         foreach ($websites as $website)
         {
             $files = null;
@@ -704,8 +748,15 @@ class MainWPManageBackups
             $result = json_decode($website->directories, TRUE);
             $dir = urldecode($_POST['dir']);
 
-            if ($dir == '') {
-                if (is_array($result)) $files = array_keys($result);
+            if ($dir == '')
+            {
+                if (is_array($result))
+                {
+                    $files = array_keys($result);
+                    self::addExcludedBackups($result, $excludedBackupFiles);
+                    self::addExcludedCache($result, $excludedCacheFiles);
+                    self::addExcludedNonWP($files, $excludedNonWPFiles);
+                }
             }
             else
             {
@@ -735,7 +786,8 @@ class MainWPManageBackups
             }
         }
 
-        if ($allFiles != null && count($allFiles) > 0 ) {
+        if ($allFiles != null && count($allFiles) > 0 )
+        {
             natcasesort($allFiles);
             echo "<ul class=\"jqueryFileTree\" style=\"display: none;\">";
             // All dirs
@@ -743,6 +795,203 @@ class MainWPManageBackups
                 echo "<li class=\"directory collapsed\"><a href=\"#\" rel=\"" . htmlentities($_POST['dir'] . $file) . "/\">" . htmlentities($file) . "<div title=\"Exclude form backup\" class=\"exclude_folder_control\"><img src=\"" . plugins_url('images/exclude.png', dirname(__FILE__)) . "\" /></div></a></li>";
             }
             echo "</ul>";
+
+            if (count($excludedBackupFiles) > 0)
+            {
+                echo '<div id="excludedBackupFiles" style="display:none">';
+                foreach ($excludedBackupFiles as $excludedBackupFile)
+                {
+                    echo $excludedBackupFile . "\n";
+                }
+                echo '</div>';
+            }
+
+            if (count($excludedCacheFiles) > 0)
+            {
+                echo '<div id="excludedCacheFiles" style="display:none">';
+                foreach ($excludedCacheFiles as $excludedCacheFile)
+                {
+                    echo $excludedCacheFile . "\n";
+                }
+                echo '</div>';
+            }
+
+            if (count($excludedNonWPFiles) > 0)
+            {
+                echo '<div id="excludedNonWPFiles" style="display:none">';
+                foreach ($excludedNonWPFiles as $excludedNonWPFile)
+                {
+                    echo $excludedNonWPFile . "\n";
+                }
+                echo '</div>';
+            }
+        }
+    }
+    
+    private static function addExcludedBackups(&$files, &$arr)
+    {
+        $newExcludes = array();
+
+        //Backup buddy
+        $newExcludes[] = 'wp-content/uploads/backupbuddy_backups';
+        $newExcludes[] = 'wp-content/uploads/backupbuddy_temp';
+
+        //ManageWP
+        $newExcludes[] = 'wp-content/managewp';
+
+        //InfiniteWP
+        $newExcludes[] = 'wp-content/infinitewp/backups';
+
+        //WordPress Backup to Dropbox
+        $newExcludes[] = 'wp-content/backups';
+
+        //BackWPUp
+        $newExcludes[] = 'wp-content/uploads/backwpup*';
+
+        //WP Complete Backup
+        $newExcludes[] = 'wp-content/plugins/wp-complete-backup/storage';
+
+        //Online Backup for WordPress
+        $newExcludes[] = 'wp-content/backups';
+
+        //XCloner
+        $newExcludes[] = 'administrator/backups';
+
+        foreach ($newExcludes as $newExclude)
+        {
+            $path = explode('/', $newExclude);
+            $found = true;
+            $newExcludeSuffix = null;
+
+            $currentArr = null;
+            foreach ($path as $pathPart)
+            {
+                if ($currentArr == null)
+                {
+                    if (isset($files[$pathPart]))
+                    {
+                        $currentArr = $files[$pathPart];
+                    }
+                }
+                else
+                {
+                    if (isset($currentArr[$pathPart]))
+                    {
+                        $currentArr = $currentArr[$pathPart];
+                    }
+                    else
+                    {
+                        if (MainWPUtility::endsWith($pathPart, "*"))
+                        {
+                            foreach ($currentArr as $key => $val)
+                            {
+                                if (MainWPUtility::startsWith($key, substr($pathPart, 0, strlen($pathPart) - 1)))
+                                {
+                                    if ($newExcludeSuffix == null) $newExcludeSuffix = array();
+                                    $newExcludeSuffix[] = $key;
+                                }
+                            }
+                            if ($newExcludeSuffix != null && count($newExcludeSuffix) > 0) break;
+                        }
+                        $currentArr = null;
+                    }
+                }
+
+                if (!is_array($currentArr))
+                {
+                    $found = false;
+                    break;
+                }
+            }
+
+            if ($found)
+            {
+                if ($newExcludeSuffix != null)
+                {
+                    $newExclude = substr($newExclude, 0, strrpos($newExclude, '/') + 1);
+                    foreach ($newExcludeSuffix as $newExcludeSuff)
+                    {
+                        $arr[] = $newExclude . $newExcludeSuff;
+                    }
+                }
+                else
+                {
+                    $arr[] = $newExclude;
+                }
+            }
+        }
+    }
+    
+    private static function addExcludedCache(&$files, &$arr)
+    {
+        $newExcludes = array();
+
+        //W3 Total Cache
+        $newExcludes[] = 'wp-content/w3tc-cache';
+        $newExcludes[] = 'wp-content/w3tc';
+        $newExcludes[] = 'wp-content/cache/config';
+        $newExcludes[] = 'wp-content/cache/minify';
+        $newExcludes[] = 'wp-content/cache/page_enhanced';
+        $newExcludes[] = 'wp-content/cache/tmp';
+
+        //WP Super Cache
+        $newExcludes[] = 'wp-content/cache/supercache';
+
+        //Quick Cache
+        $newExcludes[] = 'wp-content/cache/quick-cache';
+
+        //Hyper Cache
+        $newExcludes[] = 'wp-content/hyper-cache/cache';
+
+        //WP Fastest Cache
+        $newExcludes[] = 'wp-content/cache/all';
+
+        //WP-Rocket
+        $newExcludes[] = 'wp-content/cache/wp-rocket';
+
+        foreach ($newExcludes as $newExclude)
+        {
+            $path = explode('/', $newExclude);
+            $found = true;
+
+            $currentArr = null;
+            foreach ($path as $pathPart)
+            {
+                if ($currentArr == null)
+                {
+                    if (isset($files[$pathPart]))
+                    {
+                        $currentArr = $files[$pathPart];
+                    }
+                }
+                else
+                {
+                    if (isset($currentArr[$pathPart]))
+                    {
+                        $currentArr = $currentArr[$pathPart];
+                    }
+                    else $currentArr = null;
+                }
+
+                if (!is_array($currentArr))
+                {
+                    $found = false;
+                    break;
+                }
+            }
+
+            if ($found)
+            {
+                $arr[] = $newExclude;
+            }
+        }
+    }
+
+    private static function addExcludedNonWP(&$files, &$arr)
+    {
+        foreach ($files as $file)
+        {
+            if ($file != 'wp-content' && $file != 'wp-includes' && $file != 'wp-admin') $arr[] = $file;
         }
     }
 

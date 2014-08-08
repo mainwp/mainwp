@@ -55,7 +55,7 @@ class MainWPSystemView
         mainwpAddTranslation($mainwpTranslations, 'Close', __('Close', 'mainwp'));
         mainwpAddTranslation($mainwpTranslations, 'Creating backupfile.', __('Creating backupfile.', 'mainwp'));
         mainwpAddTranslation($mainwpTranslations, 'Backupfile created successfully.', __('Backupfile created successfully.', 'mainwp'));
-        mainwpAddTranslation($mainwpTranslations, 'Download from site child completed.', __('Download from site child completed.', 'mainwp'));
+        mainwpAddTranslation($mainwpTranslations, 'Download from child site completed.', __('Download from child site completed.', 'mainwp'));
         mainwpAddTranslation($mainwpTranslations, 'Uploading to remote destinations..', __('Uploading to remote destinations..', 'mainwp'));
         mainwpAddTranslation($mainwpTranslations, 'Backup complete.', __('Backup complete.', 'mainwp'));
         mainwpAddTranslation($mainwpTranslations, 'Upload to %1 (%2) failed:', __('Upload to %1 (%2) failed:', 'mainwp'));

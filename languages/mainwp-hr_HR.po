@@ -3996,7 +3996,7 @@ msgstr "Backup datoteka uspešno kreirana."
 #: class/MainWPSystem.class.php:1280
 #: class/MainWPSystem.class.php:1340
 #@ mainwp
-msgid "Download from site child completed."
+msgid "Download from child site completed."
 msgstr "Preuzimanje sa sajta završeno."
 
 #: class/MainWPSystem.class.php:1281

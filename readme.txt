@@ -115,16 +115,18 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 = 1.1 =
 * Added: Option to automatically exclude common backup locations from Backups
-* Added: Option to automatically exclude common cahce locations from Backups
+* Added: Option to automatically exclude common cache locations from Backups
 * Added: Option to automatically exclude non-WordPress folders from Backups
 * Added: Option to automatically exclude Zip Archives from Backups
+* Added: Several new subtasks to increase performance and reduce timeouts on Backups
 * Added: New Hooks for Extensions
 * Fixed: Backups allowing special characters that caused backups to fail
 * Fixed: Text on Backup popup 
 * Fixed: Issue in how categories tree displayed
-* Fixed: Restore on Child not timing out
+* Fixed: Exclude folders and categories duplicated in select list when selecting child sites fast
+* Fixed: Restore on Child site not timing out
 * Fixed: Error on first install that occurred on some Dashboards
-* Fixed: Issue on some Dashboard where the upper sync button did not activate
+* Fixed: Issue where the upper sync button did not activate when there are posts/pages with html tags in title
 * Additional CSS and Cosmetic Tweaks
 
 = 1.0.9.1 =

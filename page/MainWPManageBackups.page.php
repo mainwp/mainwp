@@ -349,11 +349,11 @@ class MainWPManageBackups
                 </tr>
                 <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
             <tr class="mainwp_backup_exclude_files_content" <?php echo (isset($task) && $task->type == 'db' ? 'style="display: none;"' : ''); ?>>
-                <th scope="row" style="vertical-align: top"><?php _e('Exclude files', 'mainwp'); ?>:</th>
+                <th scope="row" style="vertical-align: top"><h4 class="mainwp-custom-excludes"><?php _e('Custom Excludes', 'mainwp'); ?></h4></th>
                 <td>
-                    <p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e('The Backup will attempt to backup the files below. Exclude any files that you do not need backed up for this site.', 'mainwp'); ?></p>
+                    <p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e('Exclude any additional files that you do not need backed up for this site. Click a folder name to drill down into the directory.', 'mainwp'); ?></p>
                     <br />
-                    <?php _e('Click directories to navigate or click to exclude.','mainwp'); ?>
+                    <?php _e('Click directories to navigate. Click the red sign ( <img style="margin-bottom: -3px;" src="/wp-content/plugins/mainwp/images/exclude.png"> ) to exclude a folder.','mainwp'); ?><br /><br />
                     <table class="mainwp_excluded_folders_cont">
                         <tr>
                             <td style="width: 280px">

@@ -67,7 +67,7 @@ class MainWPServerInformation
 
                     <tbody id="the-sites-list" class="list:sites">
                         <?php
-                        self::renderRow('WordPress Version', '>=', '3.4', 'getWordpressVersion');
+                        self::renderRow('WordPress Version', '>=', '3.6', 'getWordpressVersion');
                         self::renderRow('PHP Version', '>=', '5.2.4', 'getPHPVersion');
                         self::renderRow('MySQL Version', '>=', '5.0', 'getMySQLVersion');
                         self::renderRow('PHP Max Execution Time', '>=', '30', 'getMaxExecutionTime', 'seconds', '=', '0');

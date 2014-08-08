@@ -15,8 +15,11 @@
 .mainwp_excluded_folders
 {
     width: 275px;
-    height: 150px;
+    height: 134px;
     overflow: auto;
+    background: #f4f4f4; 
+    margin-top: 17px;
+    padding: 3px;
 }
 #excluded_folders_list
 {
@@ -2541,6 +2544,16 @@ background-position: 0 -16px;
     background-repeat: no-repeat;
     background-position: 0 50%;
     background-size: 20px;
+}
+
+h4.mainwp-custom-excludes {
+    background-image: url('../images/custom-exclude.png');
+    background-repeat: no-repeat;
+    background-position: 0 50%;
+    background-size: 17px;
+    padding-left: 25px;
+    margin-left: 6px;
+    margin-top: 0 !important;
 }
 
 .mainwp-exclude-backup-locations td,

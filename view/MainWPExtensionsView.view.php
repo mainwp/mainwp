@@ -193,8 +193,8 @@ class MainWPExtensionsView
                         <tr class="mainwp-extensions-extra">
                             <td colspan="3"><br/>
                                 <?php printf(__('By %s', 'mainwp'), $extension['author']); ?>
-                                <?php echo (isset($extension['DocumentationURI']) && !empty($extension['DocumentationURI'])) ? ' | <a href="' . $extension['DocumentationURI'] . '" title="' . __("Documentation", "mainwp") . '">' . __("Documentation", "mainwp") . '</a>' : ""; ?>
-                                <?php echo (isset($extension['SupportForumURI']) && !empty($extension['SupportForumURI'])) ? ' | <a href="' . $extension['SupportForumURI'] . '" title="' . __("Support Forum", "mainwp") . '">' . __("Support Forum", "mainwp") . '</a>' : ""; ?>
+                                <?php echo (isset($extension['DocumentationURI']) && !empty($extension['DocumentationURI'])) ? ' | <a href="' . $extension['DocumentationURI'] . '" target="_blank" title="' . __("Documentation", "mainwp") . '">' . __("Documentation", "mainwp") . '</a>' : ""; ?>
+                                <?php echo (isset($extension['SupportForumURI']) && !empty($extension['SupportForumURI'])) ? ' | <a href="' . $extension['SupportForumURI'] . '" target="_blank" title="' . __("Support Forum", "mainwp") . '">' . __("Support Forum", "mainwp") . '</a>' : ""; ?>
                             </td></tr>
                     </table>
                 </td>

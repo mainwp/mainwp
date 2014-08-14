@@ -613,8 +613,12 @@ class MainWPManageBackups
             {
                 $errorOutput .= 'Site: <strong>'.MainWPUtility::getNiceURL($website->url). '</strong><br />';
                 $errorOutput .= MainWPErrorHelper::getErrorMessage($e) . '<br />';
+                $_error_output = MainWPErrorHelper::getErrorMessage($e);
             }
-
+            
+            $_backup_result = isset($backupResult) ? $backupResult : (isset($_error_output) ? $_error_output : "");
+            do_action('mainwp_managesite_schedule_backup', $website, array('type' => $task->type), $_backup_result);
+            
             $currentCount++;
 
             $task = MainWPDB::Instance()->getBackupTaskById($task->id);

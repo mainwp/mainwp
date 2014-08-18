@@ -90,7 +90,7 @@ class MainWPServerInformation
                 </table>
                 <br />
                 <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
-                    <thead>
+                    <thead class="mwp-not-download-row">
                     <tr>
                         <th scope="col" class="manage-column sorted" style=""><span><?php _e('Directory name','mainwp'); ?></span></th>
                         <th scope="col" class="manage-column sorted" style=""><span><?php _e('Path','mainwp'); ?></span></th>
@@ -100,7 +100,7 @@ class MainWPServerInformation
                     </tr>
                     </thead>
 
-                    <tbody id="the-sites-list" class="list:sites">
+                    <tbody id="the-sites-list" class="list:sites mwp-not-download-row">
                         <?php
                         self::checkDirectoryMainWPDirectory();
                         ?>
@@ -115,7 +115,7 @@ class MainWPServerInformation
                     </tr>
                 </thead>
                     <tbody id="the-sites-list" class="list:sites">
-                      <tr><td><?php _e('WordPress Root Directory','mainwp'); ?></td><td><?php self::getWPRoot(); ?></td></tr>
+                      <tr class="mwp-not-download-row"><td><?php _e('WordPress Root Directory','mainwp'); ?></td><td><?php self::getWPRoot(); ?></td></tr>
                       <tr><td><?php _e('Server Name','mainwp'); ?></td><td><?php self::getSeverName(); ?></td></tr>
                       <tr><td><?php _e('Server Sofware','mainwp'); ?></td><td><?php self::getServerSoftware(); ?></td></tr>
                       <tr><td><?php _e('Operating System','mainwp'); ?></td><td><?php self::getOS(); ?></td></tr>
@@ -139,9 +139,9 @@ class MainWPServerInformation
                       <tr><td><?php _e('Server Signature','mainwp'); ?></td><td><?php self::getServerSignature(); ?></td></tr>
                       <tr><td><?php _e('Currently Executing Script','mainwp'); ?></td><td><?php self::getCurrentlyExecutingScript(); ?></td></tr>
                       <tr><td><?php _e('Path Translated','mainwp'); ?></td><td><?php self::getServerPathTranslated(); ?></td></tr>
-                      <tr><td><?php _e('Current Script Path','mainwp'); ?></td><td><?php self::getScriptName(); ?></td></tr>
+                      <tr class="mwp-not-download-row"><td><?php _e('Current Script Path','mainwp'); ?></td><td><?php self::getScriptName(); ?></td></tr>
                       <tr><td><?php _e('Current Page URI','mainwp'); ?></td><td><?php self::getCurrentPageURI(); ?></td></tr>
-                      <tr><td><?php _e('Remote Address','mainwp'); ?></td><td><?php self::getRemoteAddress(); ?></td></tr>
+                      <tr class="mwp-not-download-row"><td><?php _e('Remote Address','mainwp'); ?></td><td><?php self::getRemoteAddress(); ?></td></tr>
                       <tr><td><?php _e('Remote Host','mainwp'); ?></td><td><?php self::getRemoteHost(); ?></td></tr>
                       <tr><td><?php _e('Remote Port','mainwp'); ?></td><td><?php self::getRemotePort(); ?></td></tr>
                       <tr><td><?php _e('PHP Safe Mode','mainwp'); ?></td><td><?php self::getPHPSafeMode(); ?></td></tr>
@@ -317,7 +317,7 @@ class MainWPServerInformation
     protected static function renderDirectoryRow($pName, $pDirectory, $pCheck, $pResult, $pPassed)
     {
         ?>
-    <tr>
+    <tr class="mwp-not-download-row">
         <td><?php echo $pName; ?></td>
         <td><?php echo $pDirectory; ?></td>
         <td><?php echo $pCheck; ?></td>
@@ -328,7 +328,7 @@ class MainWPServerInformation
       return true;
     }
 
-    protected static function renderRow($pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null)
+    protected static function renderRow($pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $pNoDownload = false)
     {
         $currentVersion = call_user_func(array(MainWPServerInformation::getClassName(), $pGetter));
 

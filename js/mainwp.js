@@ -5931,10 +5931,12 @@ jQuery(document).ready(function() {
     jQuery('a.mwp-server-information').live('click', function(){
         var report = "";
         jQuery('.mwp_server_info_box thead, .mwp_server_info_box tbody').each(function(){
+                if (jQuery( this ).hasClass('mwp-not-download-row'))
+                    return;
                 var th_len = [36, 55, 45, 8];
                 var td_len = [40, 55, 45, 12];               
                 var i;
-                if ( jQuery( this ).is('thead') ) {   
+                if ( jQuery( this ).is('thead') ) {
                     i = 0;
                     report = report + "\n### ";                                                         
                     jQuery( this ).find('th').each(function(){                        
@@ -5944,6 +5946,8 @@ jQuery(document).ready(function() {
                     report = report + " ###\n\n";
                 } else {
                         jQuery('tr', jQuery( this )).each(function(){
+                                if (jQuery( this ).hasClass('mwp-not-download-row'))
+                                    return;
                                 i = 0;                                                            
                                 jQuery( this ).find('td').each(function(){  
                                     report =  report + jQuery.mwp_strCut(jQuery.trim( jQuery( this ).text()), td_len[i], ' ' );
@@ -5972,8 +5976,7 @@ s    });
     })
     
     jQuery('#mwp_download_srv_info').live('click', function () {
-        var server_info = jQuery('#mwp-server-information textarea').val();    
-        console.log(server_info);
+        var server_info = jQuery('#mwp-server-information textarea').val();
         var blob = new Blob([server_info], {type: "text/plain;charset=utf-8"});
         saveAs(blob, "server_information.txt");
     });

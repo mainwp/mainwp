@@ -5928,11 +5928,11 @@ jQuery(document).ready(function() {
         }
     });
     
-    jQuery('a.mwp-server-information').click(function(){
+    jQuery('a.mwp-server-information').live('click', function(){
         var report = "";
         jQuery('.mwp_server_info_box thead, .mwp_server_info_box tbody').each(function(){
-                var th_len = [36, 45, 25, 21];
-                var td_len = [40, 45, 25, 25];               
+                var th_len = [36, 55, 45, 8];
+                var td_len = [40, 55, 45, 12];               
                 var i;
                 if ( jQuery( this ).is('thead') ) {   
                     i = 0;
@@ -5959,9 +5959,25 @@ jQuery(document).ready(function() {
             jQuery("#mwp-server-information").slideDown();
             jQuery("#mwp-server-information textarea").val( report ).focus().select();
             jQuery(this).fadeOut();
+            jQuery('.mwp_close_srv_info').show();
             return false;
         } catch(e){ console.log( e ); }
+s    });
+    
+    jQuery('a#mwp_close_srv_info').click(function(){
+        jQuery('#mwp-server-information').hide();
+        jQuery('.mwp_close_srv_info').hide();
+        jQuery('a.mwp-server-information').show();
+        return false;
+    })
+    
+    jQuery('#mwp_download_srv_info').live('click', function () {
+        var server_info = jQuery('#mwp-server-information textarea').val();    
+        console.log(server_info);
+        var blob = new Blob([server_info], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, "server_information.txt");
     });
+    
 });
 
 jQuery.mwp_strCut = function(i,l,s,w) {

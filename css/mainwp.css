@@ -2631,5 +2631,9 @@ h4.mainwp-custom-excludes {
     -moz-border-radius:0;
     -webkit-border-radius:0;
 }
-
+.mwp_close_srv_info {
+    display: none;
+    float: right;
+    margin:  5px 0 5px;
+}
                                                                                   

@@ -55,7 +55,7 @@ class MainWPServerInformation
         self::renderHeader('');
         ?>
         <div class="updated below-h2">
-            <p><?php _e("Please include this information when requesting support:", "mainwp"); ?></p>
+            <p><?php _e("Please include this information when requesting support:", "mainwp"); ?></p><span class="mwp_close_srv_info"><a href="#" id="mwp_download_srv_info"><?php _e("Download", "mainwp");?></a> | <a href="#" id="mwp_close_srv_info"><?php _e("Hide", "mainwp");?></a></span>
             <p class="submit"><a class="button-primary mwp-server-information" href="#"><?php _e("Get System Report", "mainwp"); ?></a></p>
             <div id="mwp-server-information"><textarea readonly="readonly"  wrap="off"></textarea></div>
         </div>            

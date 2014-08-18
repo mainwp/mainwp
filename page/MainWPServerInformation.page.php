@@ -54,7 +54,13 @@ class MainWPServerInformation
     {
         self::renderHeader('');
         ?>
-                <br />
+        <div class="updated below-h2">
+            <p><?php _e("Please include this information when requesting support:", "mainwp"); ?></p>
+            <p class="submit"><a class="button-primary mwp-server-information" href="#"><?php _e("Get System Report", "mainwp"); ?></a></p>
+            <div id="mwp-server-information"><textarea readonly="readonly"  wrap="off"></textarea></div>
+        </div>            
+        <br />
+        <div class="mwp_server_info_box">
                 <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
                     <thead>
                     <tr>
@@ -146,8 +152,9 @@ class MainWPServerInformation
                       <tr><td><?php _e('SQL Mode','mainwp'); ?></td><td><?php self::getSQLMode(); ?></td></tr>
                     </tbody>
                 </table>
-                <br />
-            </div>
+                </div>
+            <br />
+        </div>
     <?php
       self::renderFooter('');
     }

@@ -5927,8 +5927,57 @@ jQuery(document).ready(function() {
             }
         }
     });
+    
+    jQuery('a.mwp-server-information').click(function(){
+        var report = "";
+        jQuery('.mwp_server_info_box thead, .mwp_server_info_box tbody').each(function(){
+                var th_len = [36, 45, 25, 21];
+                var td_len = [40, 45, 25, 25];               
+                var i;
+                if ( jQuery( this ).is('thead') ) {   
+                    i = 0;
+                    report = report + "\n### ";                                                         
+                    jQuery( this ).find('th').each(function(){                        
+                        report =  report + jQuery.mwp_strCut(jQuery.trim( jQuery( this ).text()), th_len[i], ' ' );
+                        i++;
+                    });
+                    report = report + " ###\n\n";
+                } else {
+                        jQuery('tr', jQuery( this )).each(function(){
+                                i = 0;                                                            
+                                jQuery( this ).find('td').each(function(){  
+                                    report =  report + jQuery.mwp_strCut(jQuery.trim( jQuery( this ).text()), td_len[i], ' ' );
+                                    i++;                                   
+                                });                    
+                                report = report + "\n";
+                        });
+
+                }
+        } );
+
+        try {
+            jQuery("#mwp-server-information").slideDown();
+            jQuery("#mwp-server-information textarea").val( report ).focus().select();
+            jQuery(this).fadeOut();
+            return false;
+        } catch(e){ console.log( e ); }
+    });
 });
 
+jQuery.mwp_strCut = function(i,l,s,w) {
+        var o = i.toString();
+        if (!s) { s = '0'; }                
+        while (o.length < parseInt(l)) {                
+                // empty
+                if(w == 'undefined'){
+                        o = s + o;
+                }else{
+                        o = o + s;
+                }
+        }
+        return o;
+};
+        
 updateExcludedFolders = function()
 {
     var excludedBackupFiles = jQuery('#excludedBackupFiles').html();

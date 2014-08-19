@@ -5930,26 +5930,33 @@ jQuery(document).ready(function() {
     
     jQuery('a.mwp-server-information').live('click', function(){
         var report = "";
-        jQuery('.mwp_server_info_box thead, .mwp_server_info_box tbody').each(function(){
-                if (jQuery( this ).hasClass('mwp-not-download-row'))
-                    return;
-                var th_len = [36, 55, 45, 8];
-                var td_len = [40, 55, 45, 12];               
+        jQuery('.mwp_server_info_box thead, .mwp_server_info_box tbody').each(function(){                                
+                var td_len = [35, 55, 45, 12, 12];               
+                var th_count = 0;
                 var i;
                 if ( jQuery( this ).is('thead') ) {
                     i = 0;
                     report = report + "\n### ";                                                         
-                    jQuery( this ).find('th').each(function(){                        
-                        report =  report + jQuery.mwp_strCut(jQuery.trim( jQuery( this ).text()), th_len[i], ' ' );
+                    th_count = jQuery( this ).find('th').length;
+                    jQuery( this ).find('th').each(function(){  
+                        var len = td_len[i];
+                        if (i == 0 || i == th_count -1)
+                            len = len - 4; 
+                        report =  report + jQuery.mwp_strCut(jQuery.trim( jQuery( this ).text()), len, ' ' );
                         i++;
                     });
                     report = report + " ###\n\n";
-                } else {
+                } else {                        
                         jQuery('tr', jQuery( this )).each(function(){
                                 if (jQuery( this ).hasClass('mwp-not-download-row'))
-                                    return;
+                                    return;                                
                                 i = 0;                                                            
                                 jQuery( this ).find('td').each(function(){  
+                                    if (jQuery( this ).hasClass('mwp-not-download-row')) {
+                                        report =  report + jQuery.mwp_strCut(' ', td_len[i], ' ' );
+                                        i++;                                   
+                                        return;
+                                    }                                    
                                     report =  report + jQuery.mwp_strCut(jQuery.trim( jQuery( this ).text()), td_len[i], ' ' );
                                     i++;                                   
                                 });                    
@@ -5983,7 +5990,7 @@ s    });
     
 });
 
-jQuery.mwp_strCut = function(i,l,s,w) {
+jQuery.mwp_strCut = function(i,l,s,w) {        
         var o = i.toString();
         if (!s) { s = '0'; }                
         while (o.length < parseInt(l)) {                

@@ -90,7 +90,7 @@ class MainWPServerInformation
                 </table>
                 <br />
                 <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
-                    <thead class="mwp-not-download-row">
+                    <thead>
                     <tr>
                         <th scope="col" class="manage-column sorted" style=""><span><?php _e('Directory name','mainwp'); ?></span></th>
                         <th scope="col" class="manage-column sorted" style=""><span><?php _e('Path','mainwp'); ?></span></th>
@@ -100,7 +100,7 @@ class MainWPServerInformation
                     </tr>
                     </thead>
 
-                    <tbody id="the-sites-list" class="list:sites mwp-not-download-row">
+                    <tbody id="the-sites-list" class="list:sites">
                         <?php
                         self::checkDirectoryMainWPDirectory();
                         ?>
@@ -135,11 +135,11 @@ class MainWPServerInformation
                       <tr><td><?php _e('Query String','mainwp'); ?></td><td><?php self::getServerQueryString(); ?></td></tr>
                       <tr><td><?php _e('Accept Content','mainwp'); ?></td><td><?php self::getServerHTTPAccept(); ?></td></tr>
                       <tr><td><?php _e('Accept-Charset Content','mainwp'); ?></td><td><?php self::getServerAcceptCharset(); ?></td></tr>
-                      <tr><td><?php _e('Currently Executing Script Pathname','mainwp'); ?></td><td><?php self::getScriptFileName(); ?></td></tr>
+                      <tr class="mwp-not-download-row"><td><?php _e('Currently Executing Script Pathname','mainwp'); ?></td><td><?php self::getScriptFileName(); ?></td></tr>
                       <tr><td><?php _e('Server Signature','mainwp'); ?></td><td><?php self::getServerSignature(); ?></td></tr>
                       <tr><td><?php _e('Currently Executing Script','mainwp'); ?></td><td><?php self::getCurrentlyExecutingScript(); ?></td></tr>
                       <tr><td><?php _e('Path Translated','mainwp'); ?></td><td><?php self::getServerPathTranslated(); ?></td></tr>
-                      <tr class="mwp-not-download-row"><td><?php _e('Current Script Path','mainwp'); ?></td><td><?php self::getScriptName(); ?></td></tr>
+                      <tr><td><?php _e('Current Script Path','mainwp'); ?></td><td><?php self::getScriptName(); ?></td></tr>
                       <tr><td><?php _e('Current Page URI','mainwp'); ?></td><td><?php self::getCurrentPageURI(); ?></td></tr>
                       <tr class="mwp-not-download-row"><td><?php _e('Remote Address','mainwp'); ?></td><td><?php self::getRemoteAddress(); ?></td></tr>
                       <tr><td><?php _e('Remote Host','mainwp'); ?></td><td><?php self::getRemoteHost(); ?></td></tr>
@@ -317,9 +317,9 @@ class MainWPServerInformation
     protected static function renderDirectoryRow($pName, $pDirectory, $pCheck, $pResult, $pPassed)
     {
         ?>
-    <tr class="mwp-not-download-row">
+    <tr>
         <td><?php echo $pName; ?></td>
-        <td><?php echo $pDirectory; ?></td>
+        <td class="mwp-not-download-row"><?php echo $pDirectory; ?></td>
         <td><?php echo $pCheck; ?></td>
         <td><?php echo $pResult; ?></td>
         <td><?php echo ($pPassed ? '<span class="mainwp-pass">Pass</span>' : '<span class="mainwp-warning">Warning</span>'); ?></td>

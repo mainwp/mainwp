@@ -2415,10 +2415,11 @@ mainwp_managesites_add = function (event) {
                         //Message the WP was added
                         setHtml('#mainwp_managesites_add_message', response);
 
-                        //Empty fields
+                        //Reset fields
                         jQuery('#mainwp_managesites_add_wpname').val('');
-                        jQuery('#mainwp_managesites_add_wpurl').val('');
+                        jQuery('#mainwp_managesites_add_wpurl').val('http://');
                         jQuery('#mainwp_managesites_add_wpadmin').val('');
+                        jQuery('#mainwp_managesites_add_uniqueId').val('');
                         jQuery('#mainwp_managesites_add_addgroups').val('');
                         jQuery("input[name='selected_groups[]']:checked").attr('checked', false);
 

@@ -58,6 +58,7 @@ class MainWPServerInformation
                 <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
                     <thead>
                     <tr>
+                        <th scope="col" class="manage-column column-posts" style="width: 1px;"><?php _e('','mainwp'); ?></th>
                         <th scope="col" class="manage-column sorted" style=""><span><?php _e('Server Configuration','mainwp'); ?></span></th>
                         <th scope="col" class="manage-column column-posts" style=""><?php _e('Suggested Value','mainwp'); ?></th>
                         <th scope="col" class="manage-column column-posts" style=""><?php _e('Value','mainwp'); ?></th>
@@ -67,18 +68,18 @@ class MainWPServerInformation
 
                     <tbody id="the-sites-list" class="list:sites">
                         <?php
-                        self::renderRow('WordPress Version', '>=', '3.6', 'getWordpressVersion');
-                        self::renderRow('PHP Version', '>=', '5.2.4', 'getPHPVersion');
-                        self::renderRow('MySQL Version', '>=', '5.0', 'getMySQLVersion');
-                        self::renderRow('PHP Max Execution Time', '>=', '30', 'getMaxExecutionTime', 'seconds', '=', '0');
-                        self::renderRow('PHP Upload Max Filesize', '>=', '2M', 'getUploadMaxFilesize', '(2MB+ best for upload of big plugins)');
-                        self::renderRow('PHP Post Max Size', '>=', '2M', 'getPostMaxSize', '(2MB+ best for upload of big plugins)');
+                        self::renderRow('WordPress Version', '>=', '3.6', 'getWordpressVersion', '', '', null, 'MainWP requires the WordPress version 3.6 or higher. If the condition is not met, please update your Website. Click the help icon to read more.');
+                        self::renderRow('PHP Version', '>=', '5.2.4', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.24 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you. Click the help icon to read more.');
+                        self::renderRow('MySQL Version', '>=', '5.0', 'getMySQLVersion', '', '', null, 'MainWP requires the MySQL version 5.0 or higher. If the condition is not met, MySQL version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you. Click the help icon to read more.');
+                        self::renderRow('PHP Max Execution Time', '>=', '30', 'getMaxExecutionTime', 'seconds', '=', '0', 'Changed by modifying the value max_execution_time in your php.ini file. Click the help icon to read more.');
+                        self::renderRow('PHP Upload Max Filesize', '>=', '2M', 'getUploadMaxFilesize', '(2MB+ best for upload of big plugins)', '', null, 'Changed by modifying the value upload_max_filesize in your php.ini file. Click the help icon to read more.');
+                        self::renderRow('PHP Post Max Size', '>=', '2M', 'getPostMaxSize', '(2MB+ best for upload of big plugins)', '', null, 'Changed by modifying the value post_max_size in your php.ini file. Click the help icon to read more.');
 //                            self::renderRow('PHP Memory Limit', '>=', '128M', 'getPHPMemoryLimit', '(256M+ best for big backups)');
-                        self::renderRow('PCRE Backtracking Limit', '>=', '10000', 'getOutputBufferSize');
-                        self::renderRow('SSL Extension Enabled', '=', true, 'getSSLSupport');
-                        self::renderRow('SSL Warnings', '=', '', 'getSSLWarning', 'empty');
-                        self::renderRow('Curl Extension Enabled', '=', true, 'getCurlSupport');
-                        self::renderRow('Curl Timeout', '>=', '300', 'getCurlTimeout', 'seconds', '=', '0');
+                        self::renderRow('PCRE Backtracking Limit', '>=', '10000', 'getOutputBufferSize', '', '', null, 'Changed by modifying the value pcre.backtrack_limit in your php.ini file. Click the help icon to read more.');
+                        self::renderRow('SSL Extension Enabled', '=', true, 'getSSLSupport', '', '', null, 'Changed by uncommenting the ;extension=php_openssl.dll line in your php.ini file by removing the ";" character. Click the help icon to read more.');
+                        self::renderRow('SSL Warnings', '=', '', 'getSSLWarning', 'empty', '', null, 'If your SSL Warnings has any errors we suggest speaking with your web host so they can help troubleshoot the specific error you are getting. Click the help icon to read more.');
+                        self::renderRow('Curl Extension Enabled', '=', true, 'getCurlSupport', '', '', null, 'Changed by uncommenting the ;extension=php_curl.dll line in your php.ini file by removing the ";" character. Click the help icon to read more.');
+                        self::renderRow('Curl Timeout', '>=', '300', 'getCurlTimeout', 'seconds', '=', '0', 'Changed by modifying the value default_socket_timeout in your php.ini file. Click the help icon to read more.');
                         ?>
                     </tbody>
                 </table>
@@ -86,6 +87,7 @@ class MainWPServerInformation
                 <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
                     <thead>
                     <tr>
+                        <th scope="col" class="manage-column sorted" style="width: 1px;"></th>
                         <th scope="col" class="manage-column sorted" style=""><span><?php _e('Directory name','mainwp'); ?></span></th>
                         <th scope="col" class="manage-column sorted" style=""><span><?php _e('Path','mainwp'); ?></span></th>
                         <th scope="col" class="manage-column column-posts" style=""><?php _e('Check','mainwp'); ?></th>
@@ -311,6 +313,7 @@ class MainWPServerInformation
     {
         ?>
     <tr>
+        <td><a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWPUtility::renderToolTip('MainWP requires the ../wp-content/uploads/mainwp/ directory to be writable. If the condition is not met, you need to set permissions for the directory. You can do that by using an FTP program like FileZilla and connecting to your site. Go through the directory tree mentioned above and make sure the folders exist /wp-content/uploads/mainwp/. If they do not exist you can right click and create directory. Then name the folder to match the structure above. The permissions should be 755 or 777 depending on your host. We suggest trying 755 first. To check this right click the folder and go to permissions or chmod. Click the help icon to read more.'); ?></a></td>
         <td><?php echo $pName; ?></td>
         <td><?php echo $pDirectory; ?></td>
         <td><?php echo $pCheck; ?></td>
@@ -321,12 +324,13 @@ class MainWPServerInformation
       return true;
     }
 
-    protected static function renderRow($pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null)
+    protected static function renderRow($pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $toolTip = null)
     {
         $currentVersion = call_user_func(array(MainWPServerInformation::getClassName(), $pGetter));
 
         ?>
     <tr>
+        <td><?php if ($toolTip != null) { ?> <a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWPUtility::renderToolTip($toolTip); ?></a><?php } ?></td>
         <td><?php echo $pConfig; ?></td>
         <td><?php echo $pCompare; ?>  <?php echo ($pVersion === true ? 'true' : $pVersion) . ' ' . $pExtraText; ?></td>
         <td><?php echo ($currentVersion === true ? 'true' : $currentVersion); ?></td>

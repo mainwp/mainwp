@@ -101,6 +101,7 @@ class MainWPSettings
             MainWPUtility::update_option('mainwp_minimumDelay', $_POST['mainwp_minimumDelay']);
             MainWPUtility::update_option('mainwp_maximumIPRequests', $_POST['mainwp_maximumIPRequests']);
             MainWPUtility::update_option('mainwp_minimumIPDelay', $_POST['mainwp_minimumIPDelay']);
+            MainWPUtility::update_option('mainwp_sslVerifyCertificate', isset($_POST['mainwp_sslVerifyCertificate']) ? 1 : 0);
         }
 
         self::renderHeader('Advanced');
@@ -146,6 +147,19 @@ class MainWPSettings
                     <td>
                         <input type="text" name="mainwp_minimumIPDelay"
                                id="mainwp_minimumIPDelay" value="<?php echo ((get_option('mainwp_minimumIPDelay') === false) ? 1000 : get_option('mainwp_minimumIPDelay')); ?>"/> <i>Default: 1000</i>
+                    </td>
+                </tr>
+                <tr>
+                    <th colspan="2">&nbsp;</th>
+                </tr>
+                <tr>
+                    <th colspan="2">SSL settings</th>
+                </tr>
+                <tr>
+                    <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
+                    <td>
+                        <input type="checkbox" name="mainwp_sslVerifyCertificate"
+                               id="mainwp_sslVerifyCertificate" value="checked" <?php echo ((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)) ? 'checked="checked"' : ''; ?>"/> <i>(Default: true)</i>
                     </td>
                 </tr>
             </tbody>

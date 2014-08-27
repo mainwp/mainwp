@@ -94,8 +94,16 @@ class MainWPUtility
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+        {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        }
+        else
+        {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        }
         $data = curl_exec($ch);
         if ($data === FALSE)
         {
@@ -408,6 +416,17 @@ class MainWPUtility
             @curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
             @curl_setopt($ch, CURLOPT_USERAGENT, $agent);
 
+            if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+            {
+                @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 2);
+                @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, true);
+            }
+            else
+            {
+                @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, false);
+                @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, false);
+            }
+
             @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout); //20minutes
             if (!ini_get('safe_mode')) @set_time_limit($timeout); //20minutes
             @ini_set('max_execution_time', $timeout);
@@ -509,6 +528,18 @@ class MainWPUtility
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+
+        if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+        {
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 2);
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, true);
+        }
+        else
+        {
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, false);
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, false);
+        }
+
         $data = curl_exec($ch);
         curl_close($ch);
         if (!$data) {
@@ -698,8 +729,16 @@ class MainWPUtility
         @curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         @curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
         @curl_setopt($ch, CURLOPT_USERAGENT, $agent);
-        //@curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        //@curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+        {
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 2);
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, true);
+        }
+        else
+        {
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, false);
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, false);
+        }
         $timeout = 20 * 60 * 60; //20 minutes
         @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         if (!ini_get('safe_mode')) @set_time_limit($timeout);

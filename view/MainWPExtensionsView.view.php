@@ -108,7 +108,7 @@ class MainWPExtensionsView
                     <?php
                     if (isset($extension['iconURI']) && ($extension['iconURI'] != ''))
                     {
-                        ?><img title="<?php echo $extension['name']; ?>" src="<?php echo $extension['iconURI']; ?>" class="mainwp-extensions-img large <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /><?php
+                        ?><img title="<?php echo $extension['name']; ?>" src="<?php echo MainWPUtility::removeHttpPrefix($extension['iconURI']); ?>" class="mainwp-extensions-img large <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /><?php
                     }
                     else
                     {

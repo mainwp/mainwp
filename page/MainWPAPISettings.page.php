@@ -17,25 +17,15 @@ class MainWPAPISettings
         MainWPAPISettingsView::render();
     }
 
-    public static function saveSettings()
+    public static function testAndSaveLogin($username, $password)
     {
-        $username = $_POST['username'];
-        $password = $_POST['password'];
-        MainWPUtility::update_option("mainwp_api_username", $username);
-        MainWPUtility::update_option("mainwp_api_password", $password);
+        if (($username == '') && ($password == ''))
+        {
+            MainWPUtility::update_option("mainwp_api_username", $username);
+            MainWPUtility::update_option("mainwp_api_password", $password);
+            die(json_encode(array('saved' => 1)));
+        }
 
-        $userExtension = MainWPDB::Instance()->getUserExtension();
-        $userExtension->pluginDir = (isset($_POST['footprint']) && $_POST['footprint'] == 'true' ? 'hidden' : 'default');
-
-        MainWPDB::Instance()->updateUserExtension($userExtension);
-
-        MainWPAPISettings::testAPIs(null, false, null, null, true);
-
-        return array('result' => 'success', 'api' => MainWPAPISettings::testAPIs('main'));
-    }
-
-    public static function testLogin($username, $password)
-    {
         $output = array();
         $parseError = true;
 
@@ -58,7 +48,7 @@ class MainWPAPISettings
             }
         }
 
-        if (($output['api_status'] == MAINWP_API_VALID) && ($username == get_option('mainwp_api_username')))
+        if ($output['api_status'] == MAINWP_API_VALID)
         {
             MainWPUtility::update_option("mainwp_api_username", $username);
             MainWPUtility::update_option("mainwp_api_password", $password);

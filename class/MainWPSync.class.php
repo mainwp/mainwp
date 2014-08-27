@@ -2,7 +2,7 @@
 
 class MainWPSync
 {
-    public static function syncSite(&$pWebsite = null)
+    public static function syncSite(&$pWebsite = null, $pForceFetch = false)
     {
         if ($pWebsite == null) return false;
         $userExtension = MainWPDB::Instance()->getUserExtensionByUserId($pWebsite->userid);
@@ -81,7 +81,7 @@ class MainWPSync
                     'pluginConflicts' => json_encode($pluginConflicts),
                     'themeConflicts' => json_encode($themeConflicts)
                 ),
-                true
+                true, $pForceFetch
             );
 
             return self::syncInformationArray($pWebsite, $information);

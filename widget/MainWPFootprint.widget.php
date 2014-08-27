@@ -12,6 +12,7 @@ class MainWPFootprint
         if (isset($_POST['submit'])) {
             $userExtension = MainWPDB::Instance()->getUserExtension();
             $userExtension->heatMap = (!isset($_POST['mainwp_options_footprint_heatmap']) ? 1 : 0);
+            $userExtension->pluginDir = (!isset($_POST['mainwp_options_footprint_plugin_folder']) ? 'default' : 'hidden');
 
             MainWPDB::Instance()->updateUserExtension($userExtension);
             return true;

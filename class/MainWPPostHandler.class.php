@@ -114,7 +114,6 @@ class MainWPPostHandler
         $this->addAction('mainwp_user_update_password', array(&$this, 'mainwp_user_update_password'));
 
         //Page: API
-        add_action('wp_ajax_mainwp_api_save', array(&$this, 'mainwp_api_save')); //ok
         add_action('wp_ajax_mainwp_api_test', array(&$this, 'mainwp_api_test')); //ok
         add_action('wp_ajax_mainwp_api_refresh', array(&$this, 'mainwp_api_refresh')); //ok
 
@@ -324,14 +323,9 @@ class MainWPPostHandler
     /**
      * Page: API
      */
-    function mainwp_api_save()
-    {
-        die(json_encode(MainWPAPISettings::saveSettings()));
-    }
-
     function mainwp_api_test()
     {
-        die(json_encode(MainWPAPISettings::testLogin($_POST['username'], $_POST['password'])));
+        die(json_encode(MainWPAPISettings::testAndSaveLogin($_POST['username'], $_POST['password'])));
     }
 
     function mainwp_api_refresh()

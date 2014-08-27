@@ -475,13 +475,13 @@ class MainWPUtility
         return true;
     }
 
-    static function fetchUrlAuthed(&$website, $what, $params = null, $checkConstraints = false)
+    static function fetchUrlAuthed(&$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false)
     {
         if ($params == null) $params = array();
         $params['optimize'] = ((get_option("mainwp_optimize") == 1) ? 1 : 0);
 
         $postdata = MainWPUtility::getPostDataAuthed($website, $what, $params);
-        $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints);
+        $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints, $pForceFetch);
       
         if (is_array($information) && isset($information['sync']))
         {
@@ -492,11 +492,11 @@ class MainWPUtility
         return $information;
     }
 
-    static function fetchUrlNotAuthed($url, $admin, $what, $params = null)
+    static function fetchUrlNotAuthed($url, $admin, $what, $params = null, $pForceFetch = false)
     {
         $postdata = MainWPUtility::getPostDataNotAuthed($url, $admin, $what, $params);
         $website = null;
-        return MainWPUtility::fetchUrl($website, $url, $postdata);
+        return MainWPUtility::fetchUrl($website, $url, $postdata, $pForceFetch);
     }
 
     static function fetchUrlClean($url, $postdata)
@@ -520,20 +520,20 @@ class MainWPUtility
         }
     }
 
-    static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false)
+    static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false)
     {
         try
         {
             $tmpUrl = $url;
             if (substr($tmpUrl, -1) != '/') { $tmpUrl .= '/'; }
 
-            return self::_fetchUrl($website, $tmpUrl . 'wp-admin/', $postdata, $checkConstraints);
+            return self::_fetchUrl($website, $tmpUrl . 'wp-admin/', $postdata, $checkConstraints, $pForceFetch);
         }
         catch (Exception $e)
         {
             try
             {
-                return self::_fetchUrl($website, $url, $postdata, $checkConstraints);
+                return self::_fetchUrl($website, $url, $postdata, $checkConstraints, $pForceFetch);
             }
             catch (Exception $ex)
             {
@@ -542,10 +542,15 @@ class MainWPUtility
         }
     }
 
-    static function _fetchUrl(&$website, $url, $postdata, $checkConstraints = false)
+    static function _fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false)
     {
         $agent= 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 
+        if (!$pForceFetch)
+        {
+            //todo: RS:
+            //check if offline
+        }
         $identifier = null;
         if ($checkConstraints)
         {
@@ -1568,6 +1573,11 @@ class MainWPUtility
             $text = str_replace(' /', '/', $text);
         }
         return $text;
+    }
+
+    public static function removeHttpPrefix($pUrl)
+    {
+        return str_replace(array('http:', 'https:'), array('', ''), $pUrl);
     }
 }
 

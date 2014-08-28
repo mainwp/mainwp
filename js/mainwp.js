@@ -5928,7 +5928,7 @@ jQuery(document).ready(function() {
         }
     });
     
-    jQuery('a.mwp-server-information').live('click', function(){
+    jQuery('a.mwp-get-system-report-btn').live('click', function(){
         var report = "";
         jQuery('.mwp_server_info_box thead, .mwp_server_info_box tbody').each(function(){                                
                 var td_len = [35, 55, 45, 12, 12];               
@@ -5978,7 +5978,7 @@ s    });
     jQuery('a#mwp_close_srv_info').click(function(){
         jQuery('#mwp-server-information').hide();
         jQuery('.mwp_close_srv_info').hide();
-        jQuery('a.mwp-server-information').show();
+        jQuery('a.mwp-get-system-report-btn').show();
         return false;
     })
     

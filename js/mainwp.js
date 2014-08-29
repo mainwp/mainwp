@@ -5973,7 +5973,7 @@ jQuery(document).ready(function() {
             jQuery('.mwp_close_srv_info').show();
             return false;
         } catch(e){ console.log( e ); }
-s    });
+    });
     
     jQuery('a#mwp_close_srv_info').click(function(){
         jQuery('#mwp-server-information').hide();

@@ -5912,6 +5912,80 @@ jQuery(document).ready(function() {
     });
 });
 
+jQuery('a.mwp-get-system-report-btn').live('click', function(){
+    var report = "";
+    jQuery('.mwp_server_info_box thead, .mwp_server_info_box tbody').each(function(){
+            var td_len = [35, 55, 45, 12, 12];
+            var th_count = 0;
+            var i;
+            if ( jQuery( this ).is('thead') ) {
+                i = 0;
+                report = report + "\n### ";
+                th_count = jQuery( this ).find('th').length;
+                jQuery( this ).find('th').each(function(){
+                    var len = td_len[i];
+                    if (i == 0 || i == th_count -1)
+                        len = len - 4;
+                    report =  report + jQuery.mwp_strCut(jQuery.trim( jQuery( this ).text()), len, ' ' );
+                    i++;
+                });
+                report = report + " ###\n\n";
+            } else {
+                    jQuery('tr', jQuery( this )).each(function(){
+                            if (jQuery( this ).hasClass('mwp-not-download-row'))
+                                return;
+                            i = 0;
+                            jQuery( this ).find('td').each(function(){
+                                if (jQuery( this ).hasClass('mwp-not-download-row')) {
+                                    report =  report + jQuery.mwp_strCut(' ', td_len[i], ' ' );
+                                    i++;
+                                    return;
+                                }
+                                report =  report + jQuery.mwp_strCut(jQuery.trim( jQuery( this ).text()), td_len[i], ' ' );
+                                i++;
+                            });
+                            report = report + "\n";
+                    });
+
+            }
+    } );
+
+    try {
+        jQuery("#mwp-server-information").slideDown();
+        jQuery("#mwp-server-information textarea").val( report ).focus().select();
+        jQuery(this).fadeOut();
+        jQuery('.mwp_close_srv_info').show();
+        return false;
+    } catch(e){ console.log( e ); }
+});
+
+jQuery('a#mwp_close_srv_info').click(function(){
+    jQuery('#mwp-server-information').hide();
+    jQuery('.mwp_close_srv_info').hide();
+    jQuery('a.mwp-get-system-report-btn').show();
+    return false;
+});
+
+jQuery('#mwp_download_srv_info').live('click', function () {
+    var server_info = jQuery('#mwp-server-information textarea').val();
+    var blob = new Blob([server_info], {type: "text/plain;charset=utf-8"});
+    saveAs(blob, "server_information.txt");
+});
+
+jQuery.mwp_strCut = function(i,l,s,w) {
+    var o = i.toString();
+    if (!s) { s = '0'; }
+    while (o.length < parseInt(l)) {
+            // empty
+            if(w == 'undefined'){
+                    o = s + o;
+            }else{
+                    o = o + s;
+            }
+    }
+    return o;
+};
+
 updateExcludedFolders = function()
 {
     var excludedBackupFiles = jQuery('#excludedBackupFiles').html();
@@ -5922,4 +5996,4 @@ updateExcludedFolders = function()
 
     var excludedNonWPFiles = jQuery('#excludedNonWPFiles').html();
     jQuery('#mainwp-nwl-content').val(excludedNonWPFiles == undefined ? '' : excludedNonWPFiles);
-}
+};

@@ -202,6 +202,7 @@ h3.mainwp_box_title {
     line-height: 1.4;
     margin: 0;
     padding: 8px 12px;
+    border-bottom: 1px solid #eee;
 }
 
 .mainwp_inside {

@@ -54,7 +54,13 @@ class MainWPServerInformation
     {
         self::renderHeader('');
         ?>
-                <br />
+        <div class="updated below-h2">
+            <p><?php _e("Please include this information when requesting support:", "mainwp"); ?></p><span class="mwp_close_srv_info"><a href="#" id="mwp_download_srv_info"><?php _e("Download", "mainwp");?></a> | <a href="#" id="mwp_close_srv_info"><?php _e("Hide", "mainwp");?></a></span>
+            <p class="submit"><a class="button-primary mwp-get-system-report-btn" href="#"><?php _e("Get System Report", "mainwp"); ?></a></p>
+            <div id="mwp-server-information"><textarea readonly="readonly"  wrap="off"></textarea></div>
+        </div>
+        <br />
+        <div class="mwp_server_info_box">
                 <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
                     <thead>
                     <tr>
@@ -131,13 +137,13 @@ class MainWPServerInformation
                       <tr><td><?php _e('Query String','mainwp'); ?></td><td><?php self::getServerQueryString(); ?></td></tr>
                       <tr><td><?php _e('Accept Content','mainwp'); ?></td><td><?php self::getServerHTTPAccept(); ?></td></tr>
                       <tr><td><?php _e('Accept-Charset Content','mainwp'); ?></td><td><?php self::getServerAcceptCharset(); ?></td></tr>
-                      <tr><td><?php _e('Currently Executing Script Pathname','mainwp'); ?></td><td><?php self::getScriptFileName(); ?></td></tr>
+                      <tr class="mwp-not-download-row"><td><?php _e('Currently Executing Script Pathname','mainwp'); ?></td><td><?php self::getScriptFileName(); ?></td></tr>
                       <tr><td><?php _e('Server Signature','mainwp'); ?></td><td><?php self::getServerSignature(); ?></td></tr>
                       <tr><td><?php _e('Currently Executing Script','mainwp'); ?></td><td><?php self::getCurrentlyExecutingScript(); ?></td></tr>
                       <tr><td><?php _e('Path Translated','mainwp'); ?></td><td><?php self::getServerPathTranslated(); ?></td></tr>
                       <tr><td><?php _e('Current Script Path','mainwp'); ?></td><td><?php self::getScriptName(); ?></td></tr>
                       <tr><td><?php _e('Current Page URI','mainwp'); ?></td><td><?php self::getCurrentPageURI(); ?></td></tr>
-                      <tr><td><?php _e('Remote Address','mainwp'); ?></td><td><?php self::getRemoteAddress(); ?></td></tr>
+                      <tr class="mwp-not-download-row"><td><?php _e('Remote Address','mainwp'); ?></td><td><?php self::getRemoteAddress(); ?></td></tr>
                       <tr><td><?php _e('Remote Host','mainwp'); ?></td><td><?php self::getRemoteHost(); ?></td></tr>
                       <tr><td><?php _e('Remote Port','mainwp'); ?></td><td><?php self::getRemotePort(); ?></td></tr>
                       <tr><td><?php _e('PHP Safe Mode','mainwp'); ?></td><td><?php self::getPHPSafeMode(); ?></td></tr>
@@ -148,6 +154,7 @@ class MainWPServerInformation
                       <tr><td><?php _e('SQL Mode','mainwp'); ?></td><td><?php self::getSQLMode(); ?></td></tr>
                     </tbody>
                 </table>
+                </div>
                 <br />
             </div>
     <?php
@@ -315,7 +322,7 @@ class MainWPServerInformation
     <tr>
         <td><a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWPUtility::renderToolTip('MainWP requires the ../wp-content/uploads/mainwp/ directory to be writable. If the condition is not met, you need to set permissions for the directory. You can do that by using an FTP program like FileZilla and connecting to your site. Go through the directory tree mentioned above and make sure the folders exist /wp-content/uploads/mainwp/. If they do not exist you can right click and create directory. Then name the folder to match the structure above. The permissions should be 755 or 777 depending on your host. We suggest trying 755 first. To check this right click the folder and go to permissions or chmod. Click the help icon to read more.'); ?></a></td>
         <td><?php echo $pName; ?></td>
-        <td><?php echo $pDirectory; ?></td>
+        <td class="mwp-not-download-row"><?php echo $pDirectory; ?></td>
         <td><?php echo $pCheck; ?></td>
         <td><?php echo $pResult; ?></td>
         <td><?php echo ($pPassed ? '<span class="mainwp-pass">Pass</span>' : '<span class="mainwp-warning">Warning</span>'); ?></td>

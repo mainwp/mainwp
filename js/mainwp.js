@@ -1,10 +1,14 @@
-jQuery(document).tooltip({
-    items: "img.tooltip",
-    track: true,
-    content: function() {
-            var element = jQuery( this );
-        return element.parents('.tooltipcontainer').children('.tooltipcontent').html();
-          }
+jQuery(document).ready(function ()
+{
+    jQuery(document).tooltip({
+        items:"img.tooltip",
+        track:true,
+        content:function ()
+        {
+            var element = jQuery(this);
+            return element.parents('.tooltipcontainer').children('.tooltipcontent').html();
+        }
+    });
 });
 
 /**
@@ -12,57 +16,12 @@ jQuery(document).tooltip({
  */
 jQuery(document).ready(function () {
     jQuery('#mainwp-api-submit').live('click', function () {
-        return apiSave();
-    });
-    jQuery('#mainwp-api-test').live('click', function () {
         return apiTest();
     });
     jQuery('.mainwp-api-refresh').live('click', function () {
         return apiRefresh(jQuery(this));
     });
-    jQuery('#mainwp_api_username').live('change', function ()
-    {
-        jQuery('#mainwp-api-submit').attr('disabled', 'true'); //Disable
-    })
 });
-
-apiSave = function () {
-    var data = {
-        action:'mainwp_api_save',
-        username:jQuery('#mainwp_api_username').val(),
-        password:jQuery('#mainwp_api_password').val(),
-        footprint: (jQuery('#mainwp_options_footprint_plugin_folder_default').is(':checked') ? 'true' : 'false')
-    };
-
-    jQuery('#mainwp-api-submit').attr('disabled', 'true'); //Disable
-    jQuery('#mainwp-api-test').attr('disabled', 'true'); //Disable
-    setVisible('#mainwp_api_errors', false);
-    setHtml('#mainwp_api_message', __('Update settings.'));
-
-    jQuery.post(ajaxurl, data, function (response) {
-
-        if (response.result == "success") {
-            setVisible('#mainwp_api_errors', false);
-            setHtml('#mainwp_api_message', __('Settings have been updated.'));
-
-            if (response.api == 'VALID')
-            {
-                jQuery('.mainwp-api-message-invalid').hide();
-                jQuery('.mainwp-api-message-valid').show();
-            }
-        }
-        else
-        {
-            setVisible('#mainwp_api_message', false);
-            setHtml('#mainwp_api_errors', __('An error occured.'));
-        }
-
-        jQuery('#mainwp-api-submit').removeAttr('disabled'); //Enable
-        jQuery('#mainwp-api-test').removeAttr('disabled'); //Enable
-
-    }, 'json');
-    return false;
-};
 
 apiTest = function () {
     var data = {
@@ -70,16 +29,23 @@ apiTest = function () {
         username:jQuery('#mainwp_api_username').val(),
         password:jQuery('#mainwp_api_password').val()
     };
+
     jQuery('#mainwp-api-submit').attr('disabled', 'true'); //Disable
-    jQuery('#mainwp-api-test').attr('disabled', 'true'); //Disable
     setVisible('#mainwp_api_errors', false);
-    setHtml('#mainwp_api_message', __('Testing login.'));
+    if (data['username'] == '' && data['password'] == '')
+    {
+        setHtml('#mainwp_api_message', __('Updating settings.'));
+    }
+    else
+    {
+        setHtml('#mainwp_api_message', __('Testing login.'));
+    }
 
     jQuery.post(ajaxurl, data, function (response) {
         if (response['api_status'] == "VALID")
         {
             setVisible('#mainwp_api_errors', false);
-            setHtml('#mainwp_api_message', __('Your login is valid.'));
+            setHtml('#mainwp_api_message', __('Your login is valid, settings have been updated.'));
         }
         else if (response['api_status'] == "INVALID")
         {
@@ -93,17 +59,24 @@ apiTest = function () {
                 setHtml('#mainwp_api_message', __('Your login is invalid.'));
             }
         }
-        else if (response['api_status'] == "ERROR") {
+        else if (response['api_status'] == "ERROR")
+        {
             setVisible('#mainwp_api_message', false);
             setHtml('#mainwp_api_errors', response['error'] + ".");
         }
-        else {
+        else if (response['saved'] == 1)
+        {
+            setVisible('#mainwp_api_errors', false);
+            setHtml('#mainwp_api_message', __('Your settings have been updated.'));
+        }
+        else
+        {
             setVisible('#mainwp_api_message', false);
             setHtml('#mainwp_api_errors', __('An error occured, please contact us.'));
         }
         if (response['api_status'] == "VALID") jQuery('#mainwp-api-submit').removeAttr('disabled'); //Enable
 
-        jQuery('#mainwp-api-test').removeAttr('disabled'); //Enable
+        jQuery('#mainwp-api-submit').removeAttr('disabled'); //Enable
 
     }, 'json');
     return false;
@@ -783,7 +756,15 @@ dashboard_update = function(websiteIds)
     websitesTotal = websitesLeft = websitesToUpdate.length;
 
     bulkTaskRunning = true;
-    dashboard_loop_next();
+
+    if (websitesTotal == 0)
+    {
+        dashboard_update_done();
+    }
+    else
+    {
+        dashboard_loop_next();
+    }
 };
 
 dashboard_update_site_status = function(siteId, newStatus)
@@ -803,6 +784,7 @@ dashboard_update_done = function()
     currentThreads--;
     if (!bulkTaskRunning) return;
     websitesDone++;
+    if (websitesDone > websitesTotal) websitesDone = websitesTotal;
 
     jQuery('#refresh-status-progress').progressbar('value', websitesDone);
     jQuery('#refresh-status-current').html(websitesDone);
@@ -2437,10 +2419,11 @@ mainwp_managesites_add = function (event) {
                         //Message the WP was added
                         setHtml('#mainwp_managesites_add_message', response);
 
-                        //Empty fields
+                        //Reset fields
                         jQuery('#mainwp_managesites_add_wpname').val('');
-                        jQuery('#mainwp_managesites_add_wpurl').val('');
+                        jQuery('#mainwp_managesites_add_wpurl').val('http://');
                         jQuery('#mainwp_managesites_add_wpadmin').val('');
+                        jQuery('#mainwp_managesites_add_uniqueId').val('');
                         jQuery('#mainwp_managesites_add_addgroups').val('');
                         jQuery("input[name='selected_groups[]']:checked").attr('checked', false);
 
@@ -2862,10 +2845,10 @@ mainwp_group_select = function (elem) {
 mainwp_ss_select = function (me, val) {  
     var parent = jQuery(me).closest('.mainwp_select_sites_wrapper');    
     if (parent.find('#select_by').val() == 'site') {
-        parent.find('#selected_sites INPUT:checkbox').attr('checked', val).change();
+        parent.find('#selected_sites INPUT:enabled:checkbox').attr('checked', val).change();
     }
     else { //group
-        parent.find('#selected_groups INPUT:checkbox').attr('checked', val).change();
+        parent.find('#selected_groups INPUT:enabled:checkbox').attr('checked', val).change();
     }
     mainwp_managebackups_updateExcludefolders();
     mainwp_newpost_updateCategories();
@@ -2876,10 +2859,10 @@ mainwp_ss_select_mbox = function (me ,val) {
     mainwp_remove_all_cats(me);
     var parent  = jQuery(me).closest("div.mainwp_select_sites_box");    
     if (parent.find('.select_by').val() == 'site') {
-        parent.find('.selected_sites INPUT:checkbox').attr('checked', val).change();
+        parent.find('.selected_sites INPUT:enabled:checkbox').attr('checked', val).change();
     }
     else { //group
-        parent.find('.selected_groups INPUT:checkbox').attr('checked', val).change();
+        parent.find('.selected_groups INPUT:enabled:checkbox').attr('checked', val).change();
     }
     return false;
 };
@@ -5927,83 +5910,82 @@ jQuery(document).ready(function() {
             }
         }
     });
-    
-    jQuery('a.mwp-get-system-report-btn').live('click', function(){
-        var report = "";
-        jQuery('.mwp_server_info_box thead, .mwp_server_info_box tbody').each(function(){                                
-                var td_len = [35, 55, 45, 12, 12];               
-                var th_count = 0;
-                var i;
-                if ( jQuery( this ).is('thead') ) {
-                    i = 0;
-                    report = report + "\n### ";                                                         
-                    th_count = jQuery( this ).find('th').length;
-                    jQuery( this ).find('th').each(function(){  
-                        var len = td_len[i];
-                        if (i == 0 || i == th_count -1)
-                            len = len - 4; 
-                        report =  report + jQuery.mwp_strCut(jQuery.trim( jQuery( this ).text()), len, ' ' );
-                        i++;
-                    });
-                    report = report + " ###\n\n";
-                } else {                        
-                        jQuery('tr', jQuery( this )).each(function(){
-                                if (jQuery( this ).hasClass('mwp-not-download-row'))
-                                    return;                                
-                                i = 0;                                                            
-                                jQuery( this ).find('td').each(function(){  
-                                    if (jQuery( this ).hasClass('mwp-not-download-row')) {
-                                        report =  report + jQuery.mwp_strCut(' ', td_len[i], ' ' );
-                                        i++;                                   
-                                        return;
-                                    }                                    
-                                    report =  report + jQuery.mwp_strCut(jQuery.trim( jQuery( this ).text()), td_len[i], ' ' );
-                                    i++;                                   
-                                });                    
-                                report = report + "\n";
-                        });
-
-                }
-        } );
-
-        try {
-            jQuery("#mwp-server-information").slideDown();
-            jQuery("#mwp-server-information textarea").val( report ).focus().select();
-            jQuery(this).fadeOut();
-            jQuery('.mwp_close_srv_info').show();
-            return false;
-        } catch(e){ console.log( e ); }
-    });
-    
-    jQuery('a#mwp_close_srv_info').click(function(){
-        jQuery('#mwp-server-information').hide();
-        jQuery('.mwp_close_srv_info').hide();
-        jQuery('a.mwp-get-system-report-btn').show();
-        return false;
-    })
-    
-    jQuery('#mwp_download_srv_info').live('click', function () {
-        var server_info = jQuery('#mwp-server-information textarea').val();
-        var blob = new Blob([server_info], {type: "text/plain;charset=utf-8"});
-        saveAs(blob, "server_information.txt");
-    });
-    
 });
 
-jQuery.mwp_strCut = function(i,l,s,w) {        
-        var o = i.toString();
-        if (!s) { s = '0'; }                
-        while (o.length < parseInt(l)) {                
-                // empty
-                if(w == 'undefined'){
-                        o = s + o;
-                }else{
-                        o = o + s;
-                }
-        }
-        return o;
+jQuery('a.mwp-get-system-report-btn').live('click', function(){
+    var report = "";
+    jQuery('.mwp_server_info_box thead, .mwp_server_info_box tbody').each(function(){
+            var td_len = [35, 55, 45, 12, 12];
+            var th_count = 0;
+            var i;
+            if ( jQuery( this ).is('thead') ) {
+                i = 0;
+                report = report + "\n### ";
+                th_count = jQuery( this ).find('th').length;
+                jQuery( this ).find('th').each(function(){
+                    var len = td_len[i];
+                    if (i == 0 || i == th_count -1)
+                        len = len - 4;
+                    report =  report + jQuery.mwp_strCut(jQuery.trim( jQuery( this ).text()), len, ' ' );
+                    i++;
+                });
+                report = report + " ###\n\n";
+            } else {
+                    jQuery('tr', jQuery( this )).each(function(){
+                            if (jQuery( this ).hasClass('mwp-not-download-row'))
+                                return;
+                            i = 0;
+                            jQuery( this ).find('td').each(function(){
+                                if (jQuery( this ).hasClass('mwp-not-download-row')) {
+                                    report =  report + jQuery.mwp_strCut(' ', td_len[i], ' ' );
+                                    i++;
+                                    return;
+                                }
+                                report =  report + jQuery.mwp_strCut(jQuery.trim( jQuery( this ).text()), td_len[i], ' ' );
+                                i++;
+                            });
+                            report = report + "\n";
+                    });
+
+            }
+    } );
+
+    try {
+        jQuery("#mwp-server-information").slideDown();
+        jQuery("#mwp-server-information textarea").val( report ).focus().select();
+        jQuery(this).fadeOut();
+        jQuery('.mwp_close_srv_info').show();
+        return false;
+    } catch(e){ console.log( e ); }
+});
+
+jQuery('a#mwp_close_srv_info').click(function(){
+    jQuery('#mwp-server-information').hide();
+    jQuery('.mwp_close_srv_info').hide();
+    jQuery('a.mwp-get-system-report-btn').show();
+    return false;
+});
+
+jQuery('#mwp_download_srv_info').live('click', function () {
+    var server_info = jQuery('#mwp-server-information textarea').val();
+    var blob = new Blob([server_info], {type: "text/plain;charset=utf-8"});
+    saveAs(blob, "server_information.txt");
+});
+
+jQuery.mwp_strCut = function(i,l,s,w) {
+    var o = i.toString();
+    if (!s) { s = '0'; }
+    while (o.length < parseInt(l)) {
+            // empty
+            if(w == 'undefined'){
+                    o = s + o;
+            }else{
+                    o = o + s;
+            }
+    }
+    return o;
 };
-        
+
 updateExcludedFolders = function()
 {
     var excludedBackupFiles = jQuery('#excludedBackupFiles').html();
@@ -6014,4 +5996,4 @@ updateExcludedFolders = function()
 
     var excludedNonWPFiles = jQuery('#excludedNonWPFiles').html();
     jQuery('#mainwp-nwl-content').val(excludedNonWPFiles == undefined ? '' : excludedNonWPFiles);
-}
+};

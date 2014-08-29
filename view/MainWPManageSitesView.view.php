@@ -963,7 +963,7 @@ class MainWPManageSitesView
             try
             {
                 //Try to refresh stats first;
-                if (MainWPSync::syncSite($website))
+                if (MainWPSync::syncSite($website, true))
                 {
                     return true;
                 }
@@ -983,7 +983,7 @@ class MainWPManageSitesView
                     $pubkey = '-1';
                 }
 
-                $information = MainWPUtility::fetchUrlNotAuthed($website->url, $website->adminname, 'register', array('pubkey' => $pubkey, 'server' => get_admin_url()));
+                $information = MainWPUtility::fetchUrlNotAuthed($website->url, $website->adminname, 'register', array('pubkey' => $pubkey, 'server' => get_admin_url()), true);
 
                 if (isset($information['error']) && $information['error'] != '')
                 {

@@ -1436,7 +1436,18 @@ class MainWPSystem
         wp_enqueue_script('jquery-ui-progressbar');
         wp_enqueue_script('jquery-ui-datepicker');
         wp_enqueue_script('jquery-ui-dialog');
-        wp_enqueue_style('jquery-ui-style', '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/smoothness/jquery-ui.css');
+
+        global $wp_scripts;
+        $ui = $wp_scripts->query('jquery-ui-core');
+        $version = $ui->ver;
+        if (MainWPUtility::startsWith($version, '1.10'))
+        {
+            wp_enqueue_style('jquery-ui-style', plugins_url('/css/1.10.4/jquery-ui.min.css', dirname(__FILE__)));
+        }
+        else
+        {
+            wp_enqueue_style('jquery-ui-style', plugins_url('/css/1.11.1/jquery-ui.min.css', dirname(__FILE__)));
+        }
 
         wp_enqueue_script('mainwp', plugins_url('/js/mainwp.js', dirname(__FILE__)), array('jquery-ui-tooltip', 'jquery-ui-autocomplete', 'jquery-ui-progressbar', 'jquery-ui-dialog', 'jquery-ui-datepicker'));
         $mainwpParams = array('image_url' => plugins_url('/images/', dirname(__FILE__)), 'backup_before_upgrade' => (get_option('mainwp_backup_before_upgrade') == 1), 'admin_url' => admin_url(), 'date_format' => get_option('date_format'), 'time_format' => get_option('time_format'));
@@ -1786,25 +1797,35 @@ class MainWPSystem
         }
         ob_start();
 
+        $cntr = 0;
         if (is_array($websites))
         {
             for ($i = 0; $i < count($websites); $i++)
             {
                 $website = $websites[$i];
-                echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="'.$website->id.'" />';
+                if ($website->sync_errors == '')
+                {
+                    $cntr++;
+                    echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="'.$website->id.'" />';
+                }
             }
         }
         else if ($websites !== false)
         {
             while ($website = @MainWPDB::fetch_object($websites))
             {
-                echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="'.$website->id.'" />';
+                if ($website->sync_errors == '')
+                {
+                    $cntr++;
+                    echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="'.$website->id.'" />';
+                }
             }
         }
+
         ?>
         <div id="refresh-status-box" title="Syncing Websites" style="display: none; text-align: center">
             <div id="refresh-status-progress"></div>
-            <span id="refresh-status-current">0</span> / <span id="refresh-status-total"><?php echo is_array($websites) ? count($websites) : MainWPDB::num_rows($websites); ?></span> updated
+            <span id="refresh-status-current">0</span> / <span id="refresh-status-total"><?php echo $cntr; ?></span> updated
             <div style="height: 160px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="refresh-status-content">
                 <table style="width: 100%">
                 <?php
@@ -1813,7 +1834,14 @@ class MainWPSystem
                         for ($i = 0; $i < count($websites); $i++)
                         {
                             $website = $websites[$i];
-                           echo '<tr><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" siteid="'.$website->id.'">PENDING</span></td></tr>';
+                            if ($website->sync_errors == '')
+                            {
+                                echo '<tr><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" siteid="'.$website->id.'">PENDING</span></td></tr>';
+                            }
+                            else
+                            {
+                                echo '<tr class="mainwp_wp_offline"><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" siteid="'.$website->id.'">DISCONNECTED</span></td></tr>';
+                            }
                         }
                     }
                     else
@@ -1821,7 +1849,14 @@ class MainWPSystem
                         @MainWPDB::data_seek($websites, 0);
                         while ($website = @MainWPDB::fetch_object($websites))
                         {
-                           echo '<tr><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" siteid="'.$website->id.'">PENDING</span></td></tr>';
+                            if ($website->sync_errors == '')
+                            {
+                                echo '<tr><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" siteid="'.$website->id.'">PENDING</span></td></tr>';
+                            }
+                            else
+                            {
+                                echo '<tr class="mainwp_wp_offline"><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" siteid="'.$website->id.'">DISCONNECTED</span></td></tr>';
+                            }
                         }
                     }
                     ?>

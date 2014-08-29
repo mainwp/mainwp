@@ -2610,6 +2610,11 @@ h4.mainwp-custom-excludes {
   }
 }
 
+.mainwp_wp_offline td
+{
+    color: #ccc;
+    font-style: italic;
+}
 
 #mwp-server-information {
     display: none;
@@ -2632,9 +2637,9 @@ h4.mainwp-custom-excludes {
     -moz-border-radius:0;
     -webkit-border-radius:0;
 }
+
 .mwp_close_srv_info {
     display: none;
     float: right;
     margin:  5px 0 5px;
 }
-                                                                                  

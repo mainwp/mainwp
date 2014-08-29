@@ -455,7 +455,7 @@ class MainWPManageSites
 
         $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'file_descriptors' => $maximumFileDescriptors, MainWPUtility::getFileParameter($website) => $file, 'fileUID' => $pFileNameUID));
         do_action('mainwp_managesite_backup', $website, array('type' => $pType), $information);
-        
+
         if (isset($information['error']))
         {
             throw new MainWPException($information['error']);

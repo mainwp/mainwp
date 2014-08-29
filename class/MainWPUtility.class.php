@@ -94,8 +94,16 @@ class MainWPUtility
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+        {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        }
+        else
+        {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        }
         $data = curl_exec($ch);
         if ($data === FALSE)
         {
@@ -408,6 +416,17 @@ class MainWPUtility
             @curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
             @curl_setopt($ch, CURLOPT_USERAGENT, $agent);
 
+            if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+            {
+                @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 2);
+                @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, true);
+            }
+            else
+            {
+                @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, false);
+                @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, false);
+            }
+
             @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout); //20minutes
             if (!ini_get('safe_mode')) @set_time_limit($timeout); //20minutes
             @ini_set('max_execution_time', $timeout);
@@ -475,13 +494,13 @@ class MainWPUtility
         return true;
     }
 
-    static function fetchUrlAuthed(&$website, $what, $params = null, $checkConstraints = false)
+    static function fetchUrlAuthed(&$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false)
     {
         if ($params == null) $params = array();
         $params['optimize'] = ((get_option("mainwp_optimize") == 1) ? 1 : 0);
 
         $postdata = MainWPUtility::getPostDataAuthed($website, $what, $params);
-        $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints);
+        $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints, $pForceFetch);
       
         if (is_array($information) && isset($information['sync']))
         {
@@ -492,11 +511,11 @@ class MainWPUtility
         return $information;
     }
 
-    static function fetchUrlNotAuthed($url, $admin, $what, $params = null)
+    static function fetchUrlNotAuthed($url, $admin, $what, $params = null, $pForceFetch = false)
     {
         $postdata = MainWPUtility::getPostDataNotAuthed($url, $admin, $what, $params);
         $website = null;
-        return MainWPUtility::fetchUrl($website, $url, $postdata);
+        return MainWPUtility::fetchUrl($website, $url, $postdata, $pForceFetch);
     }
 
     static function fetchUrlClean($url, $postdata)
@@ -509,6 +528,18 @@ class MainWPUtility
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+
+        if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+        {
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 2);
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, true);
+        }
+        else
+        {
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, false);
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, false);
+        }
+
         $data = curl_exec($ch);
         curl_close($ch);
         if (!$data) {
@@ -520,20 +551,20 @@ class MainWPUtility
         }
     }
 
-    static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false)
+    static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false)
     {
         try
         {
             $tmpUrl = $url;
             if (substr($tmpUrl, -1) != '/') { $tmpUrl .= '/'; }
 
-            return self::_fetchUrl($website, $tmpUrl . 'wp-admin/', $postdata, $checkConstraints);
+            return self::_fetchUrl($website, $tmpUrl . 'wp-admin/', $postdata, $checkConstraints, $pForceFetch);
         }
         catch (Exception $e)
         {
             try
             {
-                return self::_fetchUrl($website, $url, $postdata, $checkConstraints);
+                return self::_fetchUrl($website, $url, $postdata, $checkConstraints, $pForceFetch);
             }
             catch (Exception $ex)
             {
@@ -542,10 +573,15 @@ class MainWPUtility
         }
     }
 
-    static function _fetchUrl(&$website, $url, $postdata, $checkConstraints = false)
+    static function _fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false)
     {
         $agent= 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 
+        if (!$pForceFetch)
+        {
+            //todo: RS:
+            //check if offline
+        }
         $identifier = null;
         if ($checkConstraints)
         {
@@ -693,8 +729,16 @@ class MainWPUtility
         @curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         @curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
         @curl_setopt($ch, CURLOPT_USERAGENT, $agent);
-        //@curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        //@curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+        {
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 2);
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, true);
+        }
+        else
+        {
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, false);
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, false);
+        }
         $timeout = 20 * 60 * 60; //20 minutes
         @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         if (!ini_get('safe_mode')) @set_time_limit($timeout);
@@ -1568,6 +1612,11 @@ class MainWPUtility
             $text = str_replace(' /', '/', $text);
         }
         return $text;
+    }
+
+    public static function removeHttpPrefix($pUrl)
+    {
+        return str_replace(array('http:', 'https:'), array('', ''), $pUrl);
     }
 }
 

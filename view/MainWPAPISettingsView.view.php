@@ -80,8 +80,7 @@ class MainWPAPISettingsView
             </tbody>
         </table>
         <p class="submit">
-            <span style="font-size: 14px; font-weight: bold; ">Step 1:  </span><input type="button" name="submit" id="mainwp-api-test" class="button-primary" value="<?php _e('Test Login','mainwp'); ?>"/><br/><br/>
-            <span style="font-size: 14px; font-weight: bold; ">Step 2:  </span><input type="button" name="submit" id="mainwp-api-submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>" <?php if (!MainWPSystem::Instance()->isAPIValid()) { ?> disabled="disabled" <?php } ?>/>
+            <input type="button" name="submit" id="mainwp-api-submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>"/>
         </p>
     </div>
     <?php
@@ -124,10 +123,7 @@ class MainWPAPISettingsView
             </tr>
             <span class="submit">
             <tr>
-            <th scope="row"><label style="font-size: 14px; font-weight: bold; ">Step 1:</label></th><td><input type="button" name="submit" id="mainwp-api-test" class="button-primary" value="<?php _e('Test Login','mainwp'); ?>"/></td>
-            </tr>
-            <tr>
-            <th scope="row"><label style="font-size: 14px; font-weight: bold; ">Step 2:</label></th><td><input type="button" name="submit" id="mainwp-api-submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>" <?php if (!MainWPSystem::Instance()->isAPIValid()) { ?> disabled="disabled" <?php } ?>/></td>
+            <th scope="row" colspan="2"><input type="button" name="submit" id="mainwp-api-submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>" /></th>
             </tr>
             </span>
             </tbody>

@@ -46,7 +46,7 @@ class MainWPExtensionsWidget {
                     <?php
                     if (isset($extension['iconURI']) && ($extension['iconURI'] != ''))
                     {
-                        ?><a href="<?php echo($active ? admin_url('admin.php?page='.$extension['page']) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo $extension['iconURI']; ?>" class="mainwp-widget-icon <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /></a><?php
+                        ?><a href="<?php echo($active ? admin_url('admin.php?page='.$extension['page']) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo MainWPUtility::removeHttpPrefix($extension['iconURI']); ?>" class="mainwp-widget-icon <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /></a><?php
                     }
                     else
                     {
@@ -71,7 +71,7 @@ class MainWPExtensionsWidget {
                          if (isset($extension['iconURI']) && ($extension['iconURI'] != ''))
                            {
                              ?>
-                             <td><a href="<?php echo($active ? admin_url('admin.php?page='.$extension['page']) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo $extension['iconURI']; ?>" class="mainwp-widget-icon-list <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /></a></td><td class="mainwp-extension-widget-title-list"><a href="<?php echo($active ? admin_url('admin.php?page='.$extension['page']) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><?php echo $extension['name']?></a></td><td class="mainwp-extension-widget-version"><?php echo $extension['version']; ?></td>
+                             <td><a href="<?php echo($active ? admin_url('admin.php?page='.$extension['page']) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo MainWPUtility::removeHttpPrefix($extension['iconURI']); ?>" class="mainwp-widget-icon-list <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /></a></td><td class="mainwp-extension-widget-title-list"><a href="<?php echo($active ? admin_url('admin.php?page='.$extension['page']) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><?php echo $extension['name']?></a></td><td class="mainwp-extension-widget-version"><?php echo $extension['version']; ?></td>
                              <td class="mainwp-extension-widget-button">
                                 <?php if ($active) { ?>
                                    <a href="#" class="button mainwp-extensions-disable"><?php _e('Disable','mainwp'); ?></a>
@@ -149,7 +149,7 @@ class MainWPExtensionsWidget {
             ?>
             </tbody>
             </table>
-            <div style="clear: both; text-align: left; font-size: 12px; padding: .5em; border-top: 1px Solid #dfdfdf;"><a href="http://extensions.mainwp.com/" target="_blank" class="button mainwp-upgrade-button"><?php _e('GET MORE EXTENSIONS', 'mainwp'); ?></a><span style="float: right;"><a href="#" class="mainwp-extension-widget-switch-grid" <?php echo (!$showList ? "style='display:none;'" : ''); ?>><?php _e('Show Grid View','mainwp'); ?></a><a href="#" class="mainwp-extension-widget-switch-list" <?php echo (!$showGrid ? "style='display:none;'" : ''); ?>><?php _e('Show List View','mainwp'); ?></a></span></div><?php
+            <div style="clear: both; text-align: left; font-size: 12px; padding: .5em; border-top: 1px solid #dfdfdf;"><a href="http://extensions.mainwp.com/" target="_blank" class="button mainwp-upgrade-button"><?php _e('GET MORE EXTENSIONS', 'mainwp'); ?></a><span style="float: right;"><a href="#" class="mainwp-extension-widget-switch-grid" <?php echo (!$showList ? "style='display:none;'" : ''); ?>><?php _e('Show Grid View','mainwp'); ?></a><a href="#" class="mainwp-extension-widget-switch-list" <?php echo (!$showGrid ? "style='display:none;'" : ''); ?>><?php _e('Show List View','mainwp'); ?></a></span></div><?php
         }
 	}
 

@@ -166,7 +166,7 @@ class MainWPUI
                                                 foreach ($websites as  $website)
                                                     {
                                                             $id = $website->id;
-                                                            $cats = is_array($selected_cats[$id]) ? $selected_cats[$id] : array();
+                                                            $cats = (isset($selected_cats[$id]) && is_array($selected_cats[$id])) ? $selected_cats[$id] : array();
 
                                                     ?>
                                                     <div class="categories_site_<?php echo $id;?>">

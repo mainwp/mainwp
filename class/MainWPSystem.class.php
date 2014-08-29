@@ -1,10 +1,10 @@
 <?php
 if (session_id() == '') session_start();
-ini_set('display_errors', true);
-error_reporting(E_ALL | E_STRICT);
-//
-//@ini_set('display_errors', false);
-//@error_reporting(0);
+//ini_set('display_errors', true);
+//error_reporting(E_ALL | E_STRICT);
+
+@ini_set('display_errors', false);
+@error_reporting(0);
 define('MAINWP_API_VALID', "VALID");
 define('MAINWP_API_INVALID', "INVALID");
 
@@ -1436,7 +1436,18 @@ class MainWPSystem
         wp_enqueue_script('jquery-ui-progressbar');
         wp_enqueue_script('jquery-ui-datepicker');
         wp_enqueue_script('jquery-ui-dialog');
-        wp_enqueue_style('jquery-ui-style', plugins_url('/css/jquery-ui-1.10.4.min.css'));
+
+        global $wp_scripts;
+        $ui = $wp_scripts->query('jquery-ui-core');
+        $version = $ui->ver;
+        if (MainWPUtility::startsWith($version, '1.10'))
+        {
+            wp_enqueue_style('jquery-ui-style', plugins_url('/css/1.10.4/jquery-ui.min.css', dirname(__FILE__)));
+        }
+        else
+        {
+            wp_enqueue_style('jquery-ui-style', plugins_url('/css/1.11.1/jquery-ui.min.css', dirname(__FILE__)));
+        }
 
         wp_enqueue_script('mainwp', plugins_url('/js/mainwp.js', dirname(__FILE__)), array('jquery-ui-tooltip', 'jquery-ui-autocomplete', 'jquery-ui-progressbar', 'jquery-ui-dialog', 'jquery-ui-datepicker'));
         $mainwpParams = array('image_url' => plugins_url('/images/', dirname(__FILE__)), 'backup_before_upgrade' => (get_option('mainwp_backup_before_upgrade') == 1), 'admin_url' => admin_url(), 'date_format' => get_option('date_format'), 'time_format' => get_option('time_format'));

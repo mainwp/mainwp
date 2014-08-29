@@ -31,7 +31,7 @@ class MainWPAPISettings
 
         try
         {
-            $output['api_status'] = MainWPAPISettings::testAPIs('main', true, $username, $password);
+            $output['api_status'] = MainWPAPISettings::testAPIs('main', true, $username, $password, false, true);
         }
         catch (Exception $e)
         {
@@ -52,7 +52,6 @@ class MainWPAPISettings
         {
             MainWPUtility::update_option("mainwp_api_username", $username);
             MainWPUtility::update_option("mainwp_api_password", $password);
-            MainWPAPISettings::testAPIs('main', true, $username, $password, false, true);
         }
 
        if ($parseError && stristr($output['api_status'], 'ERROR'))

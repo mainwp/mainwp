@@ -57,7 +57,7 @@ class MainWPExtensions
         self::$extensions = array();
 
         $newExtensions = apply_filters('mainwp-getextensions', array());
-        $extraHeaders = array('IconURI' => 'Icon URI');
+        $extraHeaders = array('IconURI' => 'Icon URI', 'SupportForumURI' => 'Support Forum URI', 'DocumentationURI' => 'Documentation URI');
         foreach ($newExtensions as $extension)
         {
             $slug = plugin_basename($extension['plugin']);
@@ -71,6 +71,8 @@ class MainWPExtensions
             $extension['description'] = $plugin_data['Description'];
             $extension['author'] = $plugin_data['Author'];
             $extension['iconURI'] = $file_data['IconURI'];
+            $extension['SupportForumURI'] = $file_data['SupportForumURI'];
+            $extension['DocumentationURI'] = $file_data['DocumentationURI'];
             $extension['page'] = 'Extensions-' . str_replace(' ', '-', ucwords(str_replace('-', ' ', dirname($slug))));
 
             self::$extensions[] = $extension;

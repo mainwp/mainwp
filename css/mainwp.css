@@ -2609,9 +2609,36 @@ h4.mainwp-custom-excludes {
   }
 }
 
-
 .mainwp_wp_offline td
 {
     color: #ccc;
     font-style: italic;
+}
+
+#mwp-server-information {
+    display: none;
+    margin: 10px 0;
+    padding: 0;
+    position: relative;
+}
+
+#mwp-server-information textarea {
+    border-radius: 0;
+    font-family: monospace;
+    font-size: 12px;
+    height: 300px;
+    line-height: 20px;
+    margin: 0;
+    outline: 0 none;
+    padding: 20px;
+    resize: none;
+    width: 100%;
+    -moz-border-radius:0;
+    -webkit-border-radius:0;
+}
+
+.mwp_close_srv_info {
+    display: none;
+    float: right;
+    margin:  5px 0 5px;
 }

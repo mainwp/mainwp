@@ -1,10 +1,14 @@
-jQuery(document).tooltip({
-    items: "img.tooltip",
-    track: true,
-    content: function() {
-            var element = jQuery( this );
-        return element.parents('.tooltipcontainer').children('.tooltipcontent').html();
-          }
+jQuery(document).ready(function ()
+{
+    jQuery(document).tooltip({
+        items:"img.tooltip",
+        track:true,
+        content:function ()
+        {
+            var element = jQuery(this);
+            return element.parents('.tooltipcontainer').children('.tooltipcontent').html();
+        }
+    });
 });
 
 /**

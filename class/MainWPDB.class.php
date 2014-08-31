@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '6.8';
+    private $mainwp_db_version = '6.9';
     //Private
     private $table_prefix;
     //Singleton
@@ -114,6 +114,7 @@ class MainWPDB
   last_post_gmt int(11) NOT NULL,
   backups text NOT NULL,
   mainwpdir int(11) NOT NULL,
+  loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,
   ip text NOT NULL DEFAULT ""';
         if ($currentVersion == '') $tbl .= ',
   PRIMARY KEY  (id)  ';

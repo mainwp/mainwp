@@ -9,6 +9,8 @@ jQuery(document).ready(function ()
             return element.parents('.tooltipcontainer').children('.tooltipcontent').html();
         }
     });
+
+    if (jQuery('#mainwp_options_loadFilesBeforeZip_container').length > 0) initTriStateCheckBox('mainwp_options_loadFilesBeforeZip_container', 'mainwp_options_loadFilesBeforeZip', true);
 });
 
 /**

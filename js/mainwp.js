@@ -5921,8 +5921,8 @@ jQuery('a.mwp-get-system-report-btn').live('click', function(){
             if ( jQuery( this ).is('thead') ) {
                 i = 0;
                 report = report + "\n### ";
-                th_count = jQuery( this ).find('th').length;
-                jQuery( this ).find('th').each(function(){
+                th_count = jQuery( this ).find('th:not(".mwp-not-generate-row")').length;                
+                jQuery( this ).find('th:not(".mwp-not-generate-row")').each(function(){
                     var len = td_len[i];
                     if (i == 0 || i == th_count -1)
                         len = len - 4;
@@ -5932,11 +5932,11 @@ jQuery('a.mwp-get-system-report-btn').live('click', function(){
                 report = report + " ###\n\n";
             } else {
                     jQuery('tr', jQuery( this )).each(function(){
-                            if (jQuery( this ).hasClass('mwp-not-download-row'))
+                            if (jQuery( this ).hasClass('mwp-not-generate-row'))
                                 return;
                             i = 0;
-                            jQuery( this ).find('td').each(function(){
-                                if (jQuery( this ).hasClass('mwp-not-download-row')) {
+                            jQuery( this ).find('td:not(".mwp-not-generate-row")').each(function(){
+                                if (jQuery( this ).hasClass('mwp-hide-generate-row')) {
                                     report =  report + jQuery.mwp_strCut(' ', td_len[i], ' ' );
                                     i++;
                                     return;
@@ -5959,7 +5959,7 @@ jQuery('a.mwp-get-system-report-btn').live('click', function(){
     } catch(e){ console.log( e ); }
 });
 
-jQuery('a#mwp_close_srv_info').click(function(){
+jQuery('a#mwp_close_srv_info').live('click', function(){
     jQuery('#mwp-server-information').hide();
     jQuery('.mwp_close_srv_info').hide();
     jQuery('a.mwp-get-system-report-btn').show();

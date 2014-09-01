@@ -48,6 +48,8 @@ class MainWPAPISettings
             }
         }
 
+        MainWPAPISettings::testAPIs(null, true, $username, $password, false, true);
+
         if ($output['api_status'] == MAINWP_API_VALID)
         {
             MainWPUtility::update_option("mainwp_api_username", $username);

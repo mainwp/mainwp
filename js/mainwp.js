@@ -5617,7 +5617,7 @@ jQuery(document).ready(function() {
        var autocompleteList = jQuery(value).attr('autocompletelist');
        var realList = jQuery('#' + autocompleteList);
        var text = [];
-       var foundOptions = realList.find('option:contains("ient")');
+       var foundOptions = realList.find('option');
 
        for (var i = 0; i < foundOptions.length; i++)
        {

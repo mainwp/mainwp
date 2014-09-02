@@ -98,10 +98,18 @@ class MainWPMetaBoxes
             $categories = array();                
         $uncat = __('Uncategorized','mainwp');
         
+        $post_only = false;
+        if ($post) {
+            $post_only = get_post_meta($post->ID, '_post_to_only_existing_categories', true);
+        }
+
         ?>
         <input type="hidden" name="post_category_nonce" id="select_sites_nonce" value="<?php echo wp_create_nonce('post_category_' . $post->ID); ?>" />
 
     	<div id="taxonomy-category" class="categorydiv">
+                <div>
+                    <label><input value="1" type="checkbox" <?php echo $post_only ? "checked" : ""; ?> name="post_only_existing"><?php echo __("Post only to existing Categories", "mainwp"); ?></label>
+                </div>
     		<ul id="category-tabs" class="category-tabs">
     			<li class="tabs"><a href="#category-all"><?php _e('All Categories' , 'mainwp'); ?></a></li>
     		</ul>
@@ -152,13 +160,16 @@ class MainWPMetaBoxes
 
         // OK, we're authenticated: we need to find and save the data
         $post = get_post($post_id);
-        if ($post->post_type == $post_type && isset($_POST['post_category'])) {
+        if ($post->post_type == $post_type) {
 //            update_post_meta($post_id, $saveto, base64_encode($_POST[$prefix]));
             if (isset($_POST['post_category']) && is_array($_POST['post_category']))
             {
                 update_post_meta($post_id, '_categories', base64_encode(implode(',', $_POST['post_category'])));
                 do_action('mainwp_bulkpost_categories_handle', $post_id, $_POST['post_category']);                
             }
+
+            $post_existing = (isset($_POST['post_only_existing']) && $_POST['post_only_existing']) ? 1 : 0;
+            update_post_meta($post_id, '_post_to_only_existing_categories', $post_existing);
             return;
         }
         return;

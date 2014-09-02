@@ -9,6 +9,8 @@ jQuery(document).ready(function ()
             return element.parents('.tooltipcontainer').children('.tooltipcontent').html();
         }
     });
+
+    if (jQuery('#mainwp_options_loadFilesBeforeZip_container').length > 0) initTriStateCheckBox('mainwp_options_loadFilesBeforeZip_container', 'mainwp_options_loadFilesBeforeZip', true);
 });
 
 /**
@@ -5615,7 +5617,7 @@ jQuery(document).ready(function() {
        var autocompleteList = jQuery(value).attr('autocompletelist');
        var realList = jQuery('#' + autocompleteList);
        var text = [];
-       var foundOptions = realList.find('option:contains("ient")');
+       var foundOptions = realList.find('option');
 
        for (var i = 0; i < foundOptions.length; i++)
        {
@@ -5921,7 +5923,7 @@ jQuery('a.mwp-get-system-report-btn').live('click', function(){
             if ( jQuery( this ).is('thead') ) {
                 i = 0;
                 report = report + "\n### ";
-                th_count = jQuery( this ).find('th:not(".mwp-not-generate-row")').length;                
+                th_count = jQuery( this ).find('th:not(".mwp-not-generate-row")').length;
                 jQuery( this ).find('th:not(".mwp-not-generate-row")').each(function(){
                     var len = td_len[i];
                     if (i == 0 || i == th_count -1)

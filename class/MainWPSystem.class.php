@@ -1452,6 +1452,7 @@ class MainWPSystem
         wp_enqueue_script('mainwp', plugins_url('/js/mainwp.js', dirname(__FILE__)), array('jquery-ui-tooltip', 'jquery-ui-autocomplete', 'jquery-ui-progressbar', 'jquery-ui-dialog', 'jquery-ui-datepicker'));
         $mainwpParams = array('image_url' => plugins_url('/images/', dirname(__FILE__)), 'backup_before_upgrade' => (get_option('mainwp_backup_before_upgrade') == 1), 'admin_url' => admin_url(), 'date_format' => get_option('date_format'), 'time_format' => get_option('time_format'));
         wp_localize_script('mainwp', 'mainwpParams', $mainwpParams );
+        wp_enqueue_script('mainwp-tristate', plugins_url('/js/tristate.min.js', dirname(__FILE__)), array('mainwp'));
 
         $mainwpTranslations = MainWPSystemView::getMainWPTranslations();
 

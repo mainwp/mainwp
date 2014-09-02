@@ -477,6 +477,9 @@ class MainWPManageSitesView
         $notificationOnBackupFail = get_option('mainwp_notificationOnBackupFail');
         $notificationOnBackupStart = get_option('mainwp_notificationOnBackupStart');
         $chunkedBackupTasks = get_option('mainwp_chunkedBackupTasks');
+
+        $loadFilesBeforeZip = get_option('mainwp_options_loadFilesBeforeZip');
+        $loadFilesBeforeZip = ($loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false);
         ?>
     <div class="postbox" id="mainwp-backup-options-settings">
     <h3 class="mainwp_box_title"><span>Backup Options</span></h3>
@@ -498,10 +501,19 @@ class MainWPManageSitesView
             </td>
         </tr>
         <tr>
-            <th scope="row">Maximum File Descriptors on Child <?php MainWPUtility::renderToolTip('The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
+            <th scope="row"><?php _e('Maximum File Descriptors on Child','mainwp'); ?> <?php MainWPUtility::renderToolTip('The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
             <td>
                 <input type="text" name="mainwp_options_maximumFileDescriptors"
-                       value="<?php echo ($maximumFileDescriptors === false ? 0 : $maximumFileDescriptors); ?>"/><span class="mainwp-form_hint"><?php _e('The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp'); ?></span>
+                       value="<?php echo ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors); ?>"/><span class="mainwp-form_hint"><?php _e('The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp'); ?></span>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row"><?php _e('Load files in memory before zipping','mainwp');?> <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advice to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
+            <td>
+                <div class="mainwp-checkbox">
+                <input type="checkbox" id="mainwp_options_loadFilesBeforeZip" name="mainwp_options_loadFilesBeforeZip" <?php echo ($loadFilesBeforeZip ? 'checked="checked"' : ''); ?>"/>
+                <label for="mainwp_options_loadFilesBeforeZip"></label>
+                </div>
             </td>
         </tr>
         <tr>
@@ -932,22 +944,21 @@ class MainWPManageSitesView
             </table>
             </div>
             </div>
-            <?php
-            if ($hasRemoteDestinations !== null)
-            {
-            ?>
             <div class="clear"></div>
             <div class="postbox">
             <h3 class="mainwp_box_title"><span><?php _e('Backup Settings','mainwp'); ?></span></h3>
             <div class="inside">
             <table class="form-table" style="width: 100%">
-                <?php do_action('mainwp_backups_remote_settings', array('website' => $website->id, 'hide' => 'no')); ?>
+                <tr>
+                    <th scope="row">Load files in memory before zipping <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advice to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
+                    <td>
+                        <span id="mainwp_options_loadFilesBeforeZip_container" style="cursor: default;"><input type="hidden" id="mainwp_options_loadFilesBeforeZip" name="mainwp_options_loadFilesBeforeZip" value="<?php echo $website->loadFilesBeforeZip; ?>"/></span> <i>(<?php _e('When not enabled or disabled the global setting will be used.', 'mainwp'); ?>)</i>
+                    </td>
+                </tr>
+                <?php if ($hasRemoteDestinations !== null) { do_action('mainwp_backups_remote_settings', array('website' => $website->id, 'hide' => 'no')); } ?>
             </table>
             </div>
             </div>
-            <?php
-            }
-            ?>
             <?php
             do_action('mainwp-extension-sites-edit', $website);
             ?><p class="submit"><input type="submit" name="submit" id="submit" class="button-primary"

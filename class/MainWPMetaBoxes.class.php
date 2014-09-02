@@ -100,9 +100,9 @@ class MainWPMetaBoxes
         
         $post_only = false;
         if ($post) {
-            $post_only = get_post_meta($post->ID, '_post_to_only_existing_categories', true);    
+            $post_only = get_post_meta($post->ID, '_post_to_only_existing_categories', true);
         }
-        
+
         ?>
         <input type="hidden" name="post_category_nonce" id="select_sites_nonce" value="<?php echo wp_create_nonce('post_category_' . $post->ID); ?>" />
 
@@ -167,7 +167,7 @@ class MainWPMetaBoxes
                 update_post_meta($post_id, '_categories', base64_encode(implode(',', $_POST['post_category'])));
                 do_action('mainwp_bulkpost_categories_handle', $post_id, $_POST['post_category']);                
             }
-            
+
             $post_existing = (isset($_POST['post_only_existing']) && $_POST['post_only_existing']) ? 1 : 0;
             update_post_meta($post_id, '_post_to_only_existing_categories', $post_existing);
             return;

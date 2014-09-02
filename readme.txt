@@ -117,7 +117,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Added Tooltips on server information page
 * Added auto save login after successful test
 * Added Additional tweaks for less Backup timeouts
-* Added new option to enable more IO instead of memory aproach for Backups
+* Added new option to enable more IO instead of memory approach for Backups
 * Fixed Dropbox error when directory ends with space
 * Fixed "current running" that is stuck (not continuing backups)
 * Fixed deprecated theme calls

@@ -1478,6 +1478,17 @@ rightnow_backupnow_download_file = function(pSiteId, pSiteName, type, url, file,
     jQuery.post(ajaxurl, data, function(pFile, pRegexFile, pSubfolder, pSize, pType, pInterVal, pSiteName, pSiteId) { return function (response) {
         rightnowBackupDownloadRunning = false;
         clearInterval(pInterVal);
+
+        if (response.error)
+        {
+            appendToDiv('#rightnow-backupnow-content', '[' + pSiteName + '] <font color="red">Error: '+ getErrorMessage(response.error) + '</font>');
+            appendToDiv('#rightnow-backupnow-content', '[' + pSiteName + '] <font color="red">'+__('Backup failed') + '</font>');
+
+            rightnowBackupError = true;
+            rightnow_backup_run_next();
+            return;
+        }
+
         jQuery('#rightnow-backupnow-status-progress[siteId="'+pSiteId+'"]').progressbar();
         jQuery('#rightnow-backupnow-status-progress[siteId="'+pSiteId+'"]').progressbar('value', pSize);
         appendToDiv('#rightnow-backupnow-content', '[' + pSiteName + '] '+__('Download from site child completed.'));

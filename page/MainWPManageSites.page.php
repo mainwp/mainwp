@@ -156,8 +156,17 @@ class MainWPManageSites
         }
         $websiteCleanUrl = str_replace(array('http://', 'https://', '/'), array('', '', '-'), $websiteCleanUrl);
 
-        $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
-        $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
+        if ($website->maximumFileDescriptorsOverride == 1)
+        {
+            $maximumFileDescriptorsAuto = ($website->maximumFileDescriptorsAuto == 1);
+            $maximumFileDescriptors = $website->maximumFileDescriptors;
+        }
+        else
+        {
+            $maximumFileDescriptorsAuto = get_option('mainwp_maximumFileDescriptorsAuto');
+            $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
+            $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
+        }
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $type), $pFilename) . '.zip';
         $file = str_replace('%', '', $file);
 
@@ -172,7 +181,7 @@ class MainWPManageSites
         $backupTaskProgress = MainWPDB::Instance()->getBackupTaskProgress($taskId, $website->id);
         if (empty($backupTaskProgress) || ($backupTaskProgress->dtsFetched < $pTask->last_run))
         {
-            $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type, 'exclude' => $exclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip, MainWPUtility::getFileParameter($website) => $file));
+            $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type, 'exclude' => $exclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'file_descriptors_auto' => $maximumFileDescriptorsAuto, 'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip, MainWPUtility::getFileParameter($website) => $file));
 
             $backupTaskProgress = MainWPDB::Instance()->getBackupTaskProgress($taskId, $website->id);
             if (empty($backupTaskProgress))
@@ -411,7 +420,7 @@ class MainWPManageSites
             }
         }
 
-        session_write_close();
+        MainWPUtility::endSession();
 
         $what = null;
         if ($pType == 'db')
@@ -456,8 +465,17 @@ class MainWPManageSites
         $websiteCleanUrl = str_replace(array('http://', 'https://', '/'), array('', '', '-'), $websiteCleanUrl);
 
         MainWPUtility::endSession();
-        $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
-        $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
+        if ($website->maximumFileDescriptorsOverride == 1)
+        {
+            $maximumFileDescriptorsAuto = ($website->maximumFileDescriptorsAuto == 1);
+            $maximumFileDescriptors = $website->maximumFileDescriptors;
+        }
+        else
+        {
+            $maximumFileDescriptorsAuto = get_option('mainwp_maximumFileDescriptorsAuto');
+            $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
+            $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
+        }
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $pType), $pFilename);
         $file = str_replace('%', '', $file);
 
@@ -470,7 +488,7 @@ class MainWPManageSites
         }
         else $loadFilesBeforeZip = ($loadFilesBeforeZip == 2);
 
-        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip, MainWPUtility::getFileParameter($website) => $file, 'fileUID' => $pFileNameUID));
+        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'file_descriptors_auto' => $maximumFileDescriptorsAuto, 'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip, MainWPUtility::getFileParameter($website) => $file, 'fileUID' => $pFileNameUID));
         do_action('mainwp_managesite_backup', $website, array('type' => $pType), $information);
 
         if (isset($information['error']))
@@ -772,7 +790,11 @@ class MainWPManageSites
                 }
                 $newPluginDir = (isset($_POST['mainwp_options_footprint_plugin_folder']) ? $_POST['mainwp_options_footprint_plugin_folder'] : '');
 
-                MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir);
+                $maximumFileDescriptorsOverride = isset($_POST['mainwp_options_maximumFileDescriptorsOverride']);
+                $maximumFileDescriptorsAuto = isset($_POST['mainwp_maximumFileDescriptorsAuto']);
+                $maximumFileDescriptors = isset($_POST['mainwp_options_maximumFileDescriptors']) && MainWPUtility::ctype_digit($_POST['mainwp_options_maximumFileDescriptors']) ? $_POST['mainwp_options_maximumFileDescriptors'] : 150;
+
+                MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors);
 
                 do_action('mainwp_update_site', $website->id);
 
@@ -957,6 +979,7 @@ class MainWPManageSites
                 {
                     MainWPUtility::update_option('mainwp_maximumFileDescriptors', $_POST['mainwp_options_maximumFileDescriptors']);
                 }
+                MainWPUtility::update_option('mainwp_maximumFileDescriptorsAuto', (!isset($_POST['mainwp_maximumFileDescriptorsAuto']) ? 0 : 1));
                 if (MainWPUtility::ctype_digit($_POST['mainwp_options_backupOnExternalSources']) && $_POST['mainwp_options_backupOnExternalSources'] >= 0)
                 {
                     MainWPUtility::update_option('mainwp_backupOnExternalSources', $_POST['mainwp_options_backupOnExternalSources']);

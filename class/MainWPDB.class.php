@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '6.9';
+    private $mainwp_db_version = '6.10';
     //Private
     private $table_prefix;
     //Singleton
@@ -115,7 +115,10 @@ class MainWPDB
   backups text NOT NULL,
   mainwpdir int(11) NOT NULL,
   loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,
-  ip text NOT NULL DEFAULT ""';
+  ip text NOT NULL DEFAULT "",
+  maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
+  maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
+  maximumFileDescriptors int(11) NOT NULL DEFAULT 150';
         if ($currentVersion == '') $tbl .= ',
   PRIMARY KEY  (id)  ';
         $tbl .= ')';
@@ -937,7 +940,7 @@ class MainWPDB
         return false;
     }
 
-    public function updateWebsite($websiteid, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir)
+    public function updateWebsite($websiteid, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors)
     {
         /** @var $wpdb wpdb */
         global $wpdb;
@@ -946,7 +949,7 @@ class MainWPDB
             $website = MainWPDB::Instance()->getWebsiteById($websiteid);
             if (MainWPUtility::can_edit_website($website)) {
                 //update admin
-                $wpdb->query('UPDATE ' . $this->tableName('wp') . ' SET name="' . $this->escape($name) . '", adminname="' . $this->escape($siteadmin) . '",offline_checks="' . $this->escape($offlineChecks) . '",pluginDir="'.$this->escape($pluginDir).'" WHERE id=' . $websiteid);
+                $wpdb->query('UPDATE ' . $this->tableName('wp') . ' SET name="' . $this->escape($name) . '", adminname="' . $this->escape($siteadmin) . '",offline_checks="' . $this->escape($offlineChecks) . '",pluginDir="'.$this->escape($pluginDir).'",maximumFileDescriptorsOverride = '.($maximumFileDescriptorsOverride ? 1 : 0) . ',maximumFileDescriptorsAuto= '.($maximumFileDescriptorsAuto ? 1 : 0) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ' WHERE id=' . $websiteid);
                 //remove groups
                 $wpdb->query('DELETE FROM ' . $this->tableName('wp_group') . ' WHERE wpid=' . $websiteid);
                 //Remove GA stats

@@ -1699,6 +1699,17 @@ managebackups_backup_download_file = function(pSiteId, pSiteName, type, url, fil
     jQuery.post(ajaxurl, data, function(pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pInterVal, pSiteName, pSiteId) { return function (response) {
         backupDownloadRunning = false;
         clearInterval(pInterVal);
+
+        if (response.error)
+        {
+            appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] <font color="red">Error: '+ getErrorMessage(response.error) + '</font>');
+            appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] <font color="red">'+__('Backup failed') + '</font>');
+
+            manageBackupsError = true;
+            managebackups_run_next();
+            return;
+        }
+
         jQuery('#managebackups-task-status-progress[siteId="'+pSiteId+'"]').progressbar();
         jQuery('#managebackups-task-status-progress[siteId="'+pSiteId+'"]').progressbar('value', pSize);
         appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] '+__('Download from child site completed.'));
@@ -3932,6 +3943,16 @@ backup_download_file = function(pSiteId, type, url, file, regexfile, size, subfo
     jQuery.post(ajaxurl, data, function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pInterVal) { return function (response) {
         backupDownloadRunning = false;
         clearInterval(pInterVal);
+
+        if (response.error)
+        {
+            appendToDiv('#managesite-backup-status-text', '<font color="red">Error: '+ getErrorMessage(response.error)+ '</font>');
+            appendToDiv('#managesite-backup-status-text', '<font color="red">'+__('Backup failed') + '</font>');
+
+            jQuery('#managesite-backup-status-close').prop('value', 'Close');
+            return;
+        }
+
         jQuery('#managesite-backup-status-progress').progressbar();
         jQuery('#managesite-backup-status-progress').progressbar('value', pSize);
         appendToDiv('#managesite-backup-status-text', __('Download from child site completed.'));

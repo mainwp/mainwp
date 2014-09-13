@@ -553,6 +553,8 @@ class MainWPUtility
 
     static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false)
     {
+        $start = time();
+
         try
         {
             $tmpUrl = $url;
@@ -562,6 +564,12 @@ class MainWPUtility
         }
         catch (Exception $e)
         {
+            if ((time() - $start) > (60 * 2))
+            {
+                //If more then 2minutes past since the initial request, do not retry this!
+                throw $e;
+            }
+
             try
             {
                 return self::_fetchUrl($website, $url, $postdata, $checkConstraints, $pForceFetch);
@@ -834,6 +842,11 @@ class MainWPUtility
         if (!file_exists(dirname($file)))
         {
             throw new MainWPException(__('Could not create directory to download the file.'));
+        }
+
+        if (!@is_writable(dirname($file)))
+        {
+            throw new MainWPException(__('MainWP upload directory is not writable.'));
         }
 
         $fp = fopen($file, 'w');

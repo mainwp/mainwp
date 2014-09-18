@@ -113,6 +113,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 == Changelog ==
 
+= 1.2.1 =
+* Added Auto detection of allowed File Descriptors during backups
+* Added Hide Dashboard from non-admins on Dashboard site
+* Fixed issue with some links in posts
+
 = 1.2 =
 * Added Tooltips on server information page
 * Added auto save login after successful test

@@ -473,6 +473,7 @@ class MainWPManageSitesView
     {
         $backupsOnServer = get_option('mainwp_backupsOnServer');
         $backupOnExternalSources = get_option('mainwp_backupOnExternalSources');
+        $archiveFormat = get_option('mainwp_archiveFormat');
         $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
         $maximumFileDescriptorsAuto = get_option('mainwp_maximumFileDescriptorsAuto');
         $maximumFileDescriptorsAuto = ($maximumFileDescriptorsAuto == 1 || $maximumFileDescriptorsAuto === false);
@@ -504,6 +505,31 @@ class MainWPManageSitesView
             </td>
         </tr>
         <tr>
+            <th scope="row"><?php _e('Archive format','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('','mainwp')); ?></th>
+            <td>
+                <table class="mainwp-nomarkup">
+                    <tr>
+                        <td valign="top">
+                            <span class="mainwp-select-bg"><select name="mainwp_archiveFormat" id="mainwp_archiveFormat">
+                                <option value="zip" <?php if ($archiveFormat == 'zip'): ?>selected<?php endif; ?>>Zip</option>
+                                <option value="tar" <?php if ($archiveFormat == 'tar'): ?>selected<?php endif; ?>>Tar</option>
+                                <option value="tar.gz" <?php if (($archiveFormat === false) || ($archiveFormat == 'tar.gz')): ?>selected<?php endif; ?>>Tar GZip</option>
+                                <option value="tar.bz2" <?php if ($archiveFormat == 'tar.bz2'): ?>selected<?php endif; ?>>Tar BZip2</option>
+                            </select><label></label></span>
+                        </td>
+                        <td>
+                            <i>
+                            <span id="info_zip" class="archive_info" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)</span>
+                            <span id="info_tar" class="archive_info" <?php if ($archiveFormat != 'tar'): ?>style="display: none;"<?php endif; ?>>Creates an uncompressed tar-archive. (No compression, fast, low memory usage)</span>
+                            <span id="info_tar.gz" class="archive_info" <?php if ($archiveFormat != 'tar.gz' && $archiveFormat !== false): ?>style="display: none;"<?php endif; ?>>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)</span>
+                            <span id="info_tar.bz2" class="archive_info" <?php if ($archiveFormat != 'tar.bz2'): ?>style="display: none;"<?php endif; ?>>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)</span>
+                            </i>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
             <th scope="row"><?php _e('Maximum File Descriptors on Child','mainwp'); ?> <?php MainWPUtility::renderToolTip('The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
             <td>
                 <div style="float: left">Auto detect:&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e('Enter a fallback value because not all hosts support this function.','mainwp'); ?>)</i></div><div style="clear:both"></div>
@@ -511,7 +537,7 @@ class MainWPManageSitesView
                        value="<?php echo ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors); ?>"/><span class="mainwp-form_hint"><?php _e('The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp'); ?></span>
             </td>
         </tr>
-        <tr>
+        <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
             <th scope="row"><?php _e('Load files in memory before zipping','mainwp');?> <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advise to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/load-files-memory/'); ?></th>
             <td>
                 <div class="mainwp-checkbox">

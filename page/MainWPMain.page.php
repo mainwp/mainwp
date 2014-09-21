@@ -34,7 +34,8 @@ class MainWPMain
 
     function on_admin_menu()
     {
-        if (true || MainWPSystem::Instance()->isAPIValid()) {
+        if (MainWPUtility::isAdmin())
+        {
             global $current_user;
             delete_user_option($current_user->ID, 'screen_layout_toplevel_page_mainwp_tab');
             $this->dashBoard = add_menu_page('MainWP', 'MainWP', 'read', 'mainwp_tab', array($this, 'on_show_page'), plugins_url('images/mainwpicon.png', dirname(__FILE__)), '2.00001');
@@ -46,10 +47,10 @@ class MainWPMain
             }
             add_action('load-' . $this->dashBoard, array(&$this, 'on_load_page'));
         }
-        else
-        {
-            $this->dashBoard = add_menu_page('MainWP', 'MainWP', 'read', 'mainwp_tab', array($this, 'require_registration'), plugins_url('images/mainwpicon.png', dirname(__FILE__)), '2.0001');
-        }
+//        else
+//        {
+//            $this->dashBoard = add_menu_page('MainWP', 'MainWP', 'read', 'mainwp_tab', array($this, 'require_registration'), plugins_url('images/mainwpicon.png', dirname(__FILE__)), '2.0001');
+//        }
     }
 
     function on_load_page()

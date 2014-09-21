@@ -810,6 +810,7 @@ class MainWPUtility
         else if (preg_match('/<mainwp>(.*)<\/mainwp>/', $data, $results) > 0) {
             $result = $results[1];
             $information = unserialize(base64_decode($result));
+
             return $information;
         }
         else
@@ -1631,6 +1632,37 @@ class MainWPUtility
     {
         return str_replace(array('http:', 'https:'), array('', ''), $pUrl);
     }
-}
 
-?>
+    public static function isArchive($pFileName, $pPrefix = '', $pSuffix = '')
+    {
+        return preg_match('/' . $pPrefix . '(.*).(zip|tar|tar.gz|tar.bz2)' . $pSuffix . '$/', $pFileName);
+    }
+
+    public static function getCurrentArchiveExtension()
+    {
+        $archiveFormat = get_option('mainwp_archiveFormat');
+        if ($archiveFormat === false) $archiveFormat = 'tar.gz';
+
+        return $archiveFormat;
+    }
+
+    public static function getRealExtension($path)
+    {
+        if (self::endsWith($path, '.sql.zip'))
+        {
+            return '.sql.zip';
+        }
+        if (self::endsWith($path, '.tar.gz'))
+        {
+            return '.tar.gz';
+        }
+        else if (self::endsWith($path, '.tar.bz2'))
+        {
+            return '.tar.bz2';
+        }
+        else
+        {
+            return '.' . pathinfo($path, PATHINFO_EXTENSION);
+        }
+    }
+}

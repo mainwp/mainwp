@@ -1001,7 +1001,7 @@ class MainWPSystem
                             if ($file != '.' && $file != '..')
                             {
                                 $theFile = $dir . $file;
-                                if (preg_match('/(.*)\.zip/', $file) && !preg_match('/(.*).sql.zip$/', $file) && (filemtime($theFile) > $lastBackup))
+                                if (MainWPUtility::isArchive($file) && !preg_match('/(.*).sql.zip$/', $file) && (filemtime($theFile) > $lastBackup))
                                 {
                                     $lastBackup = filemtime($theFile);
                                 }
@@ -1470,7 +1470,6 @@ class MainWPSystem
         if (!current_user_can('update_core')) remove_action('admin_notices', 'update_nag', 3);
     }
 
-
     //This function will read the metaboxes & save them to the post
     function publish_bulkpost($post_id)
     {
@@ -1590,8 +1589,8 @@ class MainWPSystem
         
         if (isset($_POST['save'])) {
             global $wpdb;
-            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));            
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));            
+            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
+            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
         }
         else if ($save_seo_value || $pid == $post_id) {
             /** @var $wpdb wpdb */
@@ -1873,7 +1872,7 @@ class MainWPSystem
 
     function new_menus()
     {
-        if (true || $this->isAPIValid())
+        if (MainWPUtility::isAdmin()) // || $this->isAPIValid())
         {
             //Adding the page to manage your added sites/groups
             //The first page which will display the post area etc..

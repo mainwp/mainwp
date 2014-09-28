@@ -892,8 +892,25 @@ class MainWPUtility
             global $current_user;
             $userid = $current_user->ID;
         }
+
         $dirs = self::getMainWPDir();
-        return $dirs[0] . $userid . ($dir != null ? DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR : '');
+        $newdir = $dirs[0] . $userid . ($dir != null ? DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR : '');
+
+        if ($dirs[0] . $userid != null && !file_exists(trailingslashit($dirs[0] . $userid) . '.htaccess'))
+        {
+            $file = @fopen(trailingslashit($dirs[0] . $userid) . '.htaccess', 'w+');
+            @fwrite($file, 'deny from all');
+            @fclose($file);
+        }
+
+        if ($dir == 'bulk'  && !file_exists(trailingslashit($newdir) . '.htaccess'))
+        {
+            $file = @fopen(trailingslashit($newdir) . '.htaccess', 'w+');
+            @fwrite($file, 'allow from all');
+            @fclose($file);
+        }
+
+        return $newdir;
     }
 
     public static function getMainWPSpecificUrl($dir)
@@ -1665,4 +1682,6 @@ class MainWPUtility
             return '.' . pathinfo($path, PATHINFO_EXTENSION);
         }
     }
+
+
 }

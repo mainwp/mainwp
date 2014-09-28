@@ -308,7 +308,7 @@ class MainWPManageSites
 
                     if (MainWPUtility::endsWith($information['db'], 'zip')) $localBackupFile .= '.zip';
 
-                    MainWPUtility::downloadToFile($information['db'], $localBackupFile);
+                    MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $information['db'], 'fdl'), $localBackupFile);
                     $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadedDB' => $localBackupFile));
                 }
                 else
@@ -333,7 +333,7 @@ class MainWPManageSites
                         $localBackupFile = $dir . $filename . $realExt;
                     }
 
-                    MainWPUtility::downloadToFile($information['full'], $localBackupFile);
+                    MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $information['full'], 'fdl'), $localBackupFile);
                     $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadedFULL' => $localBackupFile));
                 }
                 else
@@ -431,17 +431,18 @@ class MainWPManageSites
             }
         }
 
+        $website = MainWPDB::Instance()->getWebsiteById($pSiteId);
         MainWPUtility::endSession();
 
         $what = null;
         if ($pType == 'db')
         {
-            MainWPUtility::downloadToFile($pUrl, $pFile);
+            MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $pUrl, 'fdl'), $pFile);
         }
 
         if ($pType == 'full')
         {
-            MainWPUtility::downloadToFile($pUrl, $pFile);
+            MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $pUrl, 'fdl'), $pFile);
         }
 
         return true;

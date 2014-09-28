@@ -440,18 +440,17 @@ class MainWPManageSitesView
 
     public static function showBackups(&$website, $fullBackups, $dbBackups)
     {
-        $upload_dir = wp_upload_dir();
-        $upload_base_dir = $upload_dir['basedir'];
-        $upload_base_url = $upload_dir['baseurl'];
-
         $output = '';
         echo '<table>';
 
+        $mwpDir = MainWPUtility::getMainWPDir();
+        $mwpDir = $mwpDir[0];
         foreach ($fullBackups as $key => $fullBackup)
         {
+            $downloadLink = admin_url('?sig=' . md5(filesize($fullBackup)) . '&mwpdl=' . rawurlencode(str_replace($mwpDir, "", $fullBackup)));
             $output .= '<tr><td style="width: 400px;">' . MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp(filemtime($fullBackup))) . ' - ' . MainWPUtility::human_filesize(filesize($fullBackup));
-            $output .= '</td><td><a title="'.basename($fullBackup).'" href="' . str_replace(array(basename($fullBackup), $upload_base_dir), array(rawurlencode(basename($fullBackup)), $upload_base_url), $fullBackup) . '" class="button">Download</a></td>';
-            $output .= '<td><a href="admin.php?page=SiteRestore&websiteid=' . $website->id.'&f='.base64_encode(str_replace(array(basename($fullBackup), $upload_base_dir), array(rawurlencode(basename($fullBackup)), ''), $fullBackup)) . '" class="mainwp-upgrade-button button" target="_blank" title="'.basename($fullBackup).'">Restore</a></td></tr>';
+            $output .= '</td><td><a title="'.basename($fullBackup).'" href="' . $downloadLink . '" class="button">Download</a></td>';
+            $output .= '<td><a href="admin.php?page=SiteRestore&websiteid=' . $website->id . '&f=' . base64_encode($downloadLink) . '&size='.filesize($fullBackup).'" class="mainwp-upgrade-button button" target="_blank" title="' . basename($fullBackup) . '">Restore</a></td></tr>';
         }
         if ($output == '') echo '<br />' . __('No full backup has been taken yet','mainwp') . '<br />';
         else echo '<strong style="font-size: 14px">'. __('Last backups from your files:','mainwp') . '</strong>' . $output;
@@ -461,7 +460,8 @@ class MainWPManageSitesView
         $output = '';
         foreach ($dbBackups as $key => $dbBackup)
         {
-            $output .= '<tr><td style="width: 400px;">' . MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp(filemtime($dbBackup))) . ' - ' . MainWPUtility::human_filesize(filesize($dbBackup)) . '</td><td><a title="'.basename($dbBackup).'" href="' . str_replace(array(basename($dbBackup), $upload_base_dir), array(rawurlencode(basename($dbBackup)), $upload_base_url), $dbBackup) . '" download class="button">Download</a></td></tr>';
+            $downloadLink = admin_url('?sig=' . md5(filesize($dbBackup)) . '&mwpdl=' . rawurlencode(str_replace($mwpDir, "", $dbBackup)));
+            $output .= '<tr><td style="width: 400px;">' . MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp(filemtime($dbBackup))) . ' - ' . MainWPUtility::human_filesize(filesize($dbBackup)) . '</td><td><a title="'.basename($dbBackup).'" href="' . $downloadLink . '" download class="button">Download</a></td></tr>';
         }
         if ($output == '') echo '<br />'. __('No database only backup has been taken yet','mainwp') . '<br /><br />';
         else echo '<strong style="font-size: 14px">'. __('Last backups from your database:','mainwp') . '</strong>' . $output;

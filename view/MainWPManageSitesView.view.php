@@ -1081,6 +1081,12 @@ class MainWPManageSitesView
                     $themeConflicts = array_keys($themeConflicts);
                 }
 
+                 // to fix bug
+                if (is_array($pluginConflicts))
+                    $pluginConflicts = array_filter($pluginConflicts);
+                if (is_array($themeConflicts))
+                    $themeConflicts = array_filter($themeConflicts);
+                
                 $information = MainWPUtility::fetchUrlNotAuthed($url, $_POST['managesites_add_wpadmin'], 'register',
                     array('pubkey' => $pubkey,
                         'server' => get_admin_url(),

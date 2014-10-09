@@ -448,6 +448,14 @@ class MainWPManageSites
         return true;
     }
 
+    public static function backupDeleteFile($pSiteId, $pFile)
+    {
+        $website = MainWPDB::Instance()->getWebsiteById($pSiteId);
+        MainWPUtility::fetchUrlAuthed($website, 'delete_backup', array('del' => $pFile));
+
+        return true;
+    }
+
     public static function backup($pSiteId, $pType, $pSubfolder, $pExclude, $excludebackup, $excludecache, $excludenonwp, $excludezip, $pFilename = null, $pFileNameUID = '')
     {
         if (trim($pFilename) == '') $pFilename = null;

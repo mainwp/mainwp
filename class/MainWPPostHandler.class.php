@@ -68,6 +68,7 @@ class MainWPPostHandler
         $this->addAction('mainwp_backup', array(&$this, 'mainwp_backup'));
         $this->addAction('mainwp_createbackup_getfilesize', array(&$this, 'mainwp_createbackup_getfilesize'));
         $this->addAction('mainwp_backup_download_file', array(&$this, 'mainwp_backup_download_file'));
+        $this->addAction('mainwp_backup_delete_file', array(&$this, 'mainwp_backup_delete_file'));
         $this->addAction('mainwp_backup_getfilesize', array(&$this, 'mainwp_backup_getfilesize'));
         $this->addAction('mainwp_backup_upload_getprogress', array(&$this, 'mainwp_backup_upload_getprogress'));
 
@@ -593,6 +594,25 @@ class MainWPPostHandler
             }
 
             die(json_encode(array('result' => MainWPManageSites::backupDownloadFile($_POST['site_id'], $_POST['type'], $_POST['url'], $_POST['local']))));
+        }
+        catch (MainWPException $e)
+        {
+            die(json_encode(array('error' => array('message' => $e->getMessage(), 'extra' => $e->getMessageExtra()))));
+        }
+    }
+
+    function mainwp_backup_delete_file()
+    {
+        $this->secure_request('mainwp_backup_delete_file');
+
+        try
+        {
+            if (!isset($_POST['site_id']) || !MainWPUtility::ctype_digit($_POST['site_id']))
+            {
+                throw new MainWPException('Invalid request');
+            }
+
+            die(json_encode(array('result' => MainWPManageSites::backupDeleteFile($_POST['site_id'], $_POST['file']))));
         }
         catch (MainWPException $e)
         {

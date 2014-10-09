@@ -1475,7 +1475,7 @@ rightnow_backupnow_download_file = function(pSiteId, pSiteName, type, url, file,
         local: file
     });
     rightnowBackupDownloadRunning = true;
-    jQuery.post(ajaxurl, data, function(pFile, pRegexFile, pSubfolder, pSize, pType, pInterVal, pSiteName, pSiteId) { return function (response) {
+    jQuery.post(ajaxurl, data, function(pFile, pRegexFile, pSubfolder, pSize, pType, pInterVal, pSiteName, pSiteId, pUrl) { return function (response) {
         rightnowBackupDownloadRunning = false;
         clearInterval(pInterVal);
 
@@ -1493,8 +1493,16 @@ rightnow_backupnow_download_file = function(pSiteId, pSiteName, type, url, file,
         jQuery('#rightnow-backupnow-status-progress[siteId="'+pSiteId+'"]').progressbar('value', pSize);
         appendToDiv('#rightnow-backupnow-content', '[' + pSiteName + '] '+__('Download from site child completed.'));
         appendToDiv('#rightnow-backupnow-content', '[' + pSiteName + '] '+__('Backup complete.'));
+
+        var newData = mainwp_secure_data({
+            action:'mainwp_backup_delete_file',
+            site_id: pSiteId,
+            file: pUrl
+        });
+        jQuery.post(ajaxurl, newData, function() {}, 'json');
+
         rightnow_backup_run_next();
-    } }(file, regexfile, subfolder, size, type, interVal, pSiteName, pSiteId), 'json');
+    } }(file, regexfile, subfolder, size, type, interVal, pSiteName, pSiteId, url), 'json');
 };
 
 jQuery(document).on('click', '#mainwp-right-now-message-dismiss', function()

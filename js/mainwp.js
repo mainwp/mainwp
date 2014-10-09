@@ -1696,7 +1696,7 @@ managebackups_backup_download_file = function(pSiteId, pSiteName, type, url, fil
         local: file
     });
     backupDownloadRunning = true;
-    jQuery.post(ajaxurl, data, function(pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pInterVal, pSiteName, pSiteId) { return function (response) {
+    jQuery.post(ajaxurl, data, function(pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pInterVal, pSiteName, pSiteId, pUrl) { return function (response) {
         backupDownloadRunning = false;
         clearInterval(pInterVal);
 
@@ -1713,8 +1713,17 @@ managebackups_backup_download_file = function(pSiteId, pSiteName, type, url, fil
         jQuery('#managebackups-task-status-progress[siteId="'+pSiteId+'"]').progressbar();
         jQuery('#managebackups-task-status-progress[siteId="'+pSiteId+'"]').progressbar('value', pSize);
         appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] '+__('Download from child site completed.'));
+
+
+        var newData = mainwp_secure_data({
+            action:'mainwp_backup_delete_file',
+            site_id: pSiteId,
+            file: pUrl
+        });
+        jQuery.post(ajaxurl, newData, function() {}, 'json');
+
         managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize);
-    } }(file, regexfile, subfolder, remote_destinations, size, type, interVal, pSiteName, pSiteId), 'json');
+    } }(file, regexfile, subfolder, remote_destinations, size, type, interVal, pSiteName, pSiteId, url), 'json');
 };
 
 managebackups_backup_upload_file = function(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize)
@@ -3940,7 +3949,7 @@ backup_download_file = function(pSiteId, type, url, file, regexfile, size, subfo
         local: file
     });
     backupDownloadRunning = true;
-    jQuery.post(ajaxurl, data, function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pInterVal) { return function (response) {
+    jQuery.post(ajaxurl, data, function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pInterVal, pUrl) { return function (response) {
         backupDownloadRunning = false;
         clearInterval(pInterVal);
 
@@ -3956,8 +3965,15 @@ backup_download_file = function(pSiteId, type, url, file, regexfile, size, subfo
         jQuery('#managesite-backup-status-progress').progressbar();
         jQuery('#managesite-backup-status-progress').progressbar('value', pSize);
         appendToDiv('#managesite-backup-status-text', __('Download from child site completed.'));
+
+        var newData = mainwp_secure_data({
+            action:'mainwp_backup_delete_file',
+            site_id: pSiteId,
+            file: pUrl
+        });
+        jQuery.post(ajaxurl, newData, function() {}, 'json');
         backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize);
-    } }(pSiteId, file, regexfile, subfolder, remote_destinations, size, type, interVal), 'json');
+    } }(pSiteId, file, regexfile, subfolder, remote_destinations, size, type, interVal, url), 'json');
 };
 
 var backupUploadRunning = [];

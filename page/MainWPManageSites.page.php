@@ -334,6 +334,8 @@ class MainWPManageSites
                     }
 
                     MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $information['full'], 'fdl'), $localBackupFile);
+                    MainWPUtility::fetchUrlAuthed($website, 'delete_backup', array('del' => $information['full']));
+
                     $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadedFULL' => $localBackupFile));
                 }
                 else

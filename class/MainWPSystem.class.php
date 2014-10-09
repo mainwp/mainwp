@@ -1389,7 +1389,24 @@ class MainWPSystem
         header('Cache-Control: must-revalidate');
         header('Pragma: public');
         header('Content-Length: ' . filesize($file));
-        readfile($file);
+        $this->readfile_chunked($file);
+    }
+
+    function readfile_chunked($filename)
+    {
+        $chunksize = 1024; // how many bytes per chunk
+        $handle = @fopen($filename, 'rb');
+        if ($handle === false) return false;
+
+        while (!@feof($handle))
+        {
+            $buffer = @fread($handle, $chunksize);
+            echo $buffer;
+            @ob_flush();
+            @flush();
+            $buffer = null;
+        }
+        return @fclose($handle);
     }
 
     function parse_init()

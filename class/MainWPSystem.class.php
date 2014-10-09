@@ -301,8 +301,21 @@ class MainWPSystem
 
         echo '<div id="message" class="mainwp-api-message-invalid updated fade" style="' . (true || $this->isAPIValid() ? 'display: none;' : '') . '"><p><strong>MainWP needs to be activated before using - <a href="' . admin_url() . 'admin.php?page=Settings">Activate Here</a>.</strong></p></div>';
 
-        if (MainWPDB::Instance()->getWebsitesCount() == 0)
-            echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';
+        if (MainWPDB::Instance()->getWebsitesCount() == 0) {
+            echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';            
+            update_option('mainwp_first_site_events_notice', 'yes');
+        } else {
+            if (get_option('mainwp_first_site_events_notice') == 'yes') { 
+                ?>
+                <div id="mainwp-events-notice" class="updated fade">
+                    <span><strong><?php _e('Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">Scheduled Events</a>'); ?></strong></span>
+                    <span style="float: right;" ><a id="mainwp-events-notice-dismiss" style="text-decoration: none;" href="#"><?php _e('Dismiss','mainwp'); ?></a></span>                    
+                    <br class="clear">
+                </div>                    
+                <?php
+            }
+        }
+        
     }
 
     public function getVersion()

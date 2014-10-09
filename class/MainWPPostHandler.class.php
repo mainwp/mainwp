@@ -136,6 +136,7 @@ class MainWPPostHandler
         $this->addAction('mainwp_theme_activate', array(&$this, 'mainwp_theme_activate'));
         $this->addAction('mainwp_theme_delete', array(&$this, 'mainwp_theme_delete'));
         $this->addAction('mainwp_trusted_theme_notes_save', array(&$this, 'mainwp_trusted_theme_notes_save'));
+        $this->addAction('mainwp_theme_ignore_updates', array(&$this, 'mainwp_theme_ignore_updates'));
 
         //Page: Plugins
         add_action('wp_ajax_mainwp_plugins_search', array(&$this, 'mainwp_plugins_search')); //ok
@@ -143,6 +144,7 @@ class MainWPPostHandler
         $this->addAction('mainwp_plugin_activate', array(&$this, 'mainwp_plugin_activate'));
         $this->addAction('mainwp_plugin_deactivate', array(&$this, 'mainwp_plugin_deactivate'));
         $this->addAction('mainwp_plugin_delete', array(&$this, 'mainwp_plugin_delete'));
+        $this->addAction('mainwp_plugin_ignore_updates', array(&$this, 'mainwp_plugin_ignore_updates'));
         $this->addAction('mainwp_trusted_plugin_notes_save', array(&$this, 'mainwp_trusted_plugin_notes_save'));
 
         //Plugins
@@ -162,7 +164,7 @@ class MainWPPostHandler
         add_action('wp_ajax_mainwp_serverInformation', array(&$this, 'mainwp_serverInformation')); //ok
 
         $this->addAction('mainwp_extension_change_view', array(&$this, 'mainwp_extension_change_view'));
-
+        $this->addAction('mainwp_events_notice_hide', array(&$this, 'mainwp_events_notice_hide'));
         MainWPExtensions::initAjaxHandlers();
     }
 
@@ -202,6 +204,13 @@ class MainWPPostHandler
         $this->secure_request('mainwp_theme_delete');
 
         MainWPThemes::deleteThemes();
+        die();
+    }
+    function mainwp_theme_ignore_updates()
+    {
+        $this->secure_request('mainwp_theme_ignore_updates');
+
+        MainWPThemes::ignoreUpdates();
         die();
     }
     function mainwp_themes_search_all()
@@ -250,6 +259,14 @@ class MainWPPostHandler
         MainWPPlugins::deletePlugins();
         die();
     }
+    
+    function mainwp_plugin_ignore_updates()
+    {
+        $this->secure_request('mainwp_plugin_ignore_updates');
+        MainWPPlugins::ignoreUpdates();
+        die();
+    }
+    
     function mainwp_trusted_plugin_notes_save()
     {
         $this->secure_request('mainwp_trusted_plugin_notes_save');
@@ -1143,7 +1160,12 @@ class MainWPPostHandler
             die(json_encode(array('error' => array('message' => $e->getMessage()))));
         }
     }
-
+    
+    function mainwp_events_notice_hide() {
+        update_option("mainwp_first_site_events_notice", "");
+        die('ok');
+    }
+    
     function secure_request($action, $query_arg = 'security')
     {
         if (!$this->check_security($action, $query_arg)) die(json_encode(array('error' => 'Invalid request')));

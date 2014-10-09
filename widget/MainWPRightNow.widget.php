@@ -438,10 +438,19 @@ class MainWPRightNow
             if (!$globalView) $currentSite = $website;
 
             $wp_upgrades = json_decode($website->wp_upgrades, true);
+            if ($website->is_ignoreCoreUpdates)
+                $wp_upgrades = array();
+            
             if (is_array($wp_upgrades) && count($wp_upgrades) > 0) $total_wp_upgrades++;
 
-            $plugin_upgrades = json_decode($website->plugin_upgrades, true);
+            $plugin_upgrades = json_decode($website->plugin_upgrades, true);     
+            if ($website->is_ignorePluginUpdates)
+                $plugin_upgrades = array();
+            
             $theme_upgrades = json_decode($website->theme_upgrades, true);
+            if ($website->is_ignoreThemeUpdates)
+                $theme_upgrades = array();
+            
             $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
             if (is_array($decodedPremiumUpgrades))
             {
@@ -452,12 +461,14 @@ class MainWPRightNow
                     if ($premiumUpgrade['type'] == 'plugin')
                     {
                         if (!is_array($plugin_upgrades)) $plugin_upgrades = array();
-                        $plugin_upgrades[$crrSlug] = $premiumUpgrade;
+                        if (!$website->is_ignorePluginUpdates)
+                            $plugin_upgrades[$crrSlug] = $premiumUpgrade;
                     }
                     else if ($premiumUpgrade['type'] == 'theme')
                     {
                         if (!is_array($theme_upgrades)) $theme_upgrades = array();
-                        $theme_upgrades[$crrSlug] = $premiumUpgrade;
+                        if (!$website->is_ignoreThemeUpdates)
+                            $theme_upgrades[$crrSlug] = $premiumUpgrade;
                     }
                 }
             }
@@ -575,6 +586,8 @@ class MainWPRightNow
             @MainWPDB::data_seek($websites, 0);
             while ($websites && ($website = @MainWPDB::fetch_object($websites)))
             {
+                if ($website->is_ignoreCoreUpdates) continue;                    
+                    
                 $wp_upgrades = json_decode($website->wp_upgrades, true);
 
                 if ((count($wp_upgrades) == 0) && ($website->sync_errors == '')) continue;
@@ -623,6 +636,8 @@ class MainWPRightNow
                 @MainWPDB::data_seek($websites, 0);
                 while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                 {
+                    if ($website->is_ignorePluginUpdates) continue;
+                    
                     $plugin_upgrades = json_decode($website->plugin_upgrades, true);
                     $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
                     if (is_array($decodedPremiumUpgrades))
@@ -725,6 +740,7 @@ class MainWPRightNow
                         @MainWPDB::data_seek($websites, 0);
                         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                         {
+                             if ($website->is_ignorePluginUpdates) continue;
                             $plugin_upgrades = json_decode($website->plugin_upgrades, true);
                             $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
                             if (is_array($decodedPremiumUpgrades))
@@ -793,6 +809,8 @@ class MainWPRightNow
                 @MainWPDB::data_seek($websites, 0);
                 while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                 {
+                    if ($website->is_ignoreThemeUpdates) continue;
+                    
                     $theme_upgrades = json_decode($website->theme_upgrades, true);
                     $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
                     if (is_array($decodedPremiumUpgrades))
@@ -884,6 +902,8 @@ class MainWPRightNow
                         @MainWPDB::data_seek($websites, 0);
                         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                         {
+                            if ($website->is_ignoreThemeUpdates) continue;
+                            
                             $theme_upgrades = json_decode($website->theme_upgrades, true);
                             $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
                             if (is_array($decodedPremiumUpgrades))

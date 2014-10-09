@@ -778,7 +778,12 @@ class MainWPManageSites
 
                 $newValues = array('automatic_update' => (!isset($_POST['mainwp_automaticDailyUpdate']) ? 0 : 1),
                     'backup_before_upgrade' => (!isset($_POST['mainwp_backup_before_upgrade']) ? 0 : 1),
-                    'loadFilesBeforeZip' => $_POST['mainwp_options_loadFilesBeforeZip']);
+                    'loadFilesBeforeZip' => $_POST['mainwp_options_loadFilesBeforeZip'],
+                    'is_ignoreCoreUpdates' => $_POST['mainwp_is_ignoreCoreUpdates'] ? 1 : 0,
+                    'is_ignorePluginUpdates' => $_POST['mainwp_is_ignorePluginUpdates'] ? 1 : 0,
+                    'is_ignoreThemeUpdates' => $_POST['mainwp_is_ignoreThemeUpdates'] ? 1 : 0                    
+                );
+                
                 MainWPDB::Instance()->updateWebsiteValues($website->id, $newValues);
                 $updated = true;
                 //Reload the site

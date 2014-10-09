@@ -939,6 +939,36 @@ class MainWPManageSitesView
                         </div>
                     </td>
                 </tr>
+                <tr>
+                    <th scope="row">Ignore Core Updates <?php MainWPUtility::renderToolTip('Set to YES if you want to Ignore Core Updates.'); ?></th>
+                    <td>
+                        <div class="mainwp-checkbox">
+                        <input type="checkbox" name="mainwp_is_ignoreCoreUpdates"
+                               id="mainwp_is_ignoreCoreUpdates" <?php echo ($website->is_ignoreCoreUpdates == 1 ? 'checked="true"' : ''); ?>"/>
+                        <label for="mainwp_is_ignoreCoreUpdates"></label>
+                        </div>
+                    </td>
+                </tr>  
+                <tr>
+                    <th scope="row">Ignore All Plugin Updates <?php MainWPUtility::renderToolTip('Set to YES if you want to Ignore All Plugin Updates.'); ?></th>
+                    <td>
+                        <div class="mainwp-checkbox">
+                        <input type="checkbox" name="mainwp_is_ignorePluginUpdates"
+                               id="mainwp_is_ignorePluginUpdates" <?php echo ($website->is_ignorePluginUpdates == 1 ? 'checked="true"' : ''); ?>"/>
+                        <label for="mainwp_is_ignorePluginUpdates"></label>
+                        </div>
+                    </td>
+                </tr>  
+                <tr>
+                    <th scope="row">Ignore All Theme Updates <?php MainWPUtility::renderToolTip('Set to YES if you want to Ignore All Theme Updates.'); ?></th>
+                    <td>
+                        <div class="mainwp-checkbox">
+                        <input type="checkbox" name="mainwp_is_ignoreThemeUpdates"
+                               id="mainwp_is_ignoreThemeUpdates" <?php echo ($website->is_ignoreThemeUpdates == 1 ? 'checked="true"' : ''); ?>"/>
+                        <label for="mainwp_is_ignoreThemeUpdates"></label>
+                        </div>
+                    </td>
+                </tr>  
                 <?php do_action('mainwp_extension_sites_edit_tablerow', $website); ?>
                 </tbody>
             </table>
@@ -959,6 +989,17 @@ class MainWPManageSitesView
             </table>
             </div>
             </div>
+            
+            <?php
+                
+                $plugin_upgrades = json_decode($website->plugin_upgrades, true);
+                if (!is_array($plugin_upgrades)) $plugin_upgrades = array();
+                error_log(print_r($plugin_upgrades, true));
+                
+                $userExtension = MainWPDB::Instance()->getUserExtension();
+                $globalIgnoredPluginConflicts = json_decode($userExtension->ignored_pluginConflicts, true);
+                
+            ?>
             <?php
             do_action('mainwp-extension-sites-edit', $website);
             ?><p class="submit"><input type="submit" name="submit" id="submit" class="button-primary"

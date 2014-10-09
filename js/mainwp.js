@@ -4600,16 +4600,23 @@ jQuery(document).ready(function () {
             var selectedPlugins = rowElement.find('.selected_plugin:checked');
             if (selectedPlugins.length == 0) return;
 
-            if ((action == 'activate') || (action == 'delete') || (action == 'deactivate')) {
+            if ((action == 'activate') || (action == 'delete') || (action == 'deactivate') || (action == 'ignore_updates')) {
                 var pluginsToSend = [];
+                var namesToSend = [];
                 for (var i = 0; i < selectedPlugins.length; i++) {
                     pluginsToSend.push(jQuery(selectedPlugins[i]).val());
+                    namesToSend.push(jQuery(selectedPlugins[i]).attr('name'));
                 }
+                
                 var data = mainwp_secure_data({
                     action:'mainwp_plugin_'+action,
-                    plugins:pluginsToSend,
+                    plugins:pluginsToSend,                    
                     websiteId:websiteId
                 });
+                
+                if (action == 'ignore_updates') {
+                    data['names'] = namesToSend;
+                }                
 
                 pluginCountSent++;
                 jQuery.post(ajaxurl, data, function (response) {
@@ -5072,14 +5079,28 @@ jQuery(document).ready(function () {
             var selectedThemes = rowElement.find('.selected_theme:checked');
             if (selectedThemes.length == 0) return;
 
-            if (action == 'activate') {
+            if (action == 'activate' || action == 'ignore_updates') {
                 //Only activate the first
                 var themeToActivate = jQuery(selectedThemes[0]).val();
+                var themesToSend = [];
+                var namesToSend = [];
+                
                 var data = mainwp_secure_data({
-                    action:'mainwp_theme_activate',
-                    theme:themeToActivate,
+                    action:'mainwp_theme_' + action,                
                     websiteId:websiteId
                 });
+                
+                if (action == 'ignore_updates') {
+                    for (var i = 0; i < selectedThemes.length; i++) {
+                        themesToSend.push(jQuery(selectedThemes[i]).attr('slug'));
+                        namesToSend.push(jQuery(selectedThemes[i]).val());
+                    }
+                    data['themes'] = themesToSend;
+                    data['names'] = namesToSend;
+                } else {
+                    data['theme'] = themeToActivate;
+                }
+                
 
                 themeCountSent++;
                 jQuery.post(ajaxurl, data, function (response) {
@@ -5999,3 +6020,15 @@ updateExcludedFolders = function()
     var excludedNonWPFiles = jQuery('#excludedNonWPFiles').html();
     jQuery('#mainwp-nwl-content').val(excludedNonWPFiles == undefined ? '' : excludedNonWPFiles);
 };
+
+
+jQuery(document).on('click', '#mainwp-events-notice-dismiss', function()
+{
+    jQuery('#mainwp-events-notice').hide();
+    var data = {
+        action:'mainwp_events_notice_hide'        
+    };
+    jQuery.post(ajaxurl, data, function (res) {
+    });
+    return false;
+});

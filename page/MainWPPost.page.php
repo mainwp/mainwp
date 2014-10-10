@@ -643,16 +643,34 @@ class MainWPPost
 
                     MainWPUtility::fetchUrlsAuthed($dbwebsites, 'newpost', $post_data, array(MainWPBulkAdd::getClassName(), 'PostingBulk_handler'), $output);
                 }
-
+                
+                $failed_posts = array();            
                 foreach ($dbwebsites as $website)
                 {
                     if (($output->ok[$website->id] == 1) && (isset($output->added_id[$website->id])))
                     {
                         do_action('mainwp-post-posting-post', $website, $output->added_id[$website->id], (isset($output->link[$website->id]) ? $output->link[$website->id] : null));
                         do_action('mainwp-bulkposting-done', $post, $website, $output);
+                    } else {
+                        $failed_posts[] =  $website->id;
+                    }               
+                }
+                
+                $del_post = true;
+                $saved_draft = get_post_meta($id, "_saved_as_draft", true);               
+                if ($saved_draft == "yes") {
+                    if (count($failed_posts) > 0) {
+                        $del_post = false;
+                        update_post_meta($post->ID, "_selected_sites", base64_encode(serialize($failed_posts)));
+                        update_post_meta($post->ID, "_selected_groups", "");                        
+                        wp_update_post( array("ID" => $id, 'post_status' => 'draft') ); 
                     }
                 }
-                wp_delete_post($id, true);                                
+                
+                if ($del_post) {                      
+                    wp_delete_post($id, true);    
+                }
+                
             }
             ?>
             <div id="message" class="updated">

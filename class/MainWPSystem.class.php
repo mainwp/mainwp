@@ -308,8 +308,8 @@ class MainWPSystem
             if (get_option('mainwp_first_site_events_notice') == 'yes') { 
                 ?>
                 <div id="mainwp-events-notice" class="updated fade">
-                    <span><strong><?php _e('Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">Scheduled Events</a>'); ?></strong></span>
-                    <span style="float: right;" ><a id="mainwp-events-notice-dismiss" style="text-decoration: none;" href="#"><?php _e('Dismiss','mainwp'); ?></a></span>                    
+                    <span><strong><?php _e('Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">Scheduled Events</a>'); ?></strong><span style="float: right;" ><a id="mainwp-events-notice-dismiss" style="text-decoration: none;" href="#"><?php _e('Dismiss','mainwp'); ?></a></span></span>
+                                        
                     <br class="clear">
                 </div>                    
                 <?php

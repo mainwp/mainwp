@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '6.10';
+    private $mainwp_db_version = '7.2';
     //Private
     private $table_prefix;
     //Singleton
@@ -114,7 +114,11 @@ class MainWPDB
   last_post_gmt int(11) NOT NULL,
   backups text NOT NULL,
   mainwpdir int(11) NOT NULL,
-  loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,
+  loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,  
+  is_ignoreCoreUpdates tinyint(1) NOT NULL DEFAULT 0,
+  is_ignorePluginUpdates tinyint(1) NOT NULL DEFAULT 0,
+  is_ignoreThemeUpdates tinyint(1) NOT NULL DEFAULT 0,
+  verify_certificate tinyint(1) NOT NULL DEFAULT 1,
   ip text NOT NULL DEFAULT "",
   maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
   maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
@@ -772,7 +776,7 @@ class MainWPDB
         return $wpdb->get_var('SELECT micro_timestamp_start FROM ' . $this->tableName('request_log') . ' WHERE ip = "'.esc_sql($ip).'" order by micro_timestamp_start desc limit 1');
     }
 
-    public function addWebsite($userid, $name, $url, $admin, $pubkey, $privkey, $nossl, $nosslkey, $groupids, $groupnames)
+    public function addWebsite($userid, $name, $url, $admin, $pubkey, $privkey, $nossl, $nosslkey, $groupids, $groupnames, $verifyCertificate = 1)
     {
         /** @var $wpdb wpdb */
         global $wpdb;
@@ -836,6 +840,7 @@ class MainWPDB
                 'ignored_themeConflicts' => '',
                 'last_post_gmt' => 0,
                 'backups' => '',
+                'verify_certificate' => $verifyCertificate,
                 'mainwpdir' => 0);
             if ($wpdb->insert($this->tableName('wp'), $values))
             {
@@ -940,7 +945,7 @@ class MainWPDB
         return false;
     }
 
-    public function updateWebsite($websiteid, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors)
+    public function updateWebsite($websiteid, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifyCertificate = 1)
     {
         /** @var $wpdb wpdb */
         global $wpdb;
@@ -949,7 +954,7 @@ class MainWPDB
             $website = MainWPDB::Instance()->getWebsiteById($websiteid);
             if (MainWPUtility::can_edit_website($website)) {
                 //update admin
-                $wpdb->query('UPDATE ' . $this->tableName('wp') . ' SET name="' . $this->escape($name) . '", adminname="' . $this->escape($siteadmin) . '",offline_checks="' . $this->escape($offlineChecks) . '",pluginDir="'.$this->escape($pluginDir).'",maximumFileDescriptorsOverride = '.($maximumFileDescriptorsOverride ? 1 : 0) . ',maximumFileDescriptorsAuto= '.($maximumFileDescriptorsAuto ? 1 : 0) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ' WHERE id=' . $websiteid);
+                $wpdb->query('UPDATE ' . $this->tableName('wp') . ' SET name="' . $this->escape($name) . '", adminname="' . $this->escape($siteadmin) . '",offline_checks="' . $this->escape($offlineChecks) . '",pluginDir="'.$this->escape($pluginDir).'",maximumFileDescriptorsOverride = '.($maximumFileDescriptorsOverride ? 1 : 0) . ',maximumFileDescriptorsAuto= '.($maximumFileDescriptorsAuto ? 1 : 0) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="'.intval($verifyCertificate).'"  WHERE id=' . $websiteid);
                 //remove groups
                 $wpdb->query('DELETE FROM ' . $this->tableName('wp_group') . ' WHERE wpid=' . $websiteid);
                 //Remove GA stats

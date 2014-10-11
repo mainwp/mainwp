@@ -117,6 +117,16 @@ class MainWPManageSitesView
                             </datalist>
                         </td>
                     </tr>
+                    <tr class="form-field form-required">
+                       <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
+                        <td>
+                            <select id="mainwp_managesites_test_verifycertificate" name="mainwp_managesites_test_verifycertificate">
+                                 <option selected value="1"><?php _e('Yes','mainwp'); ?></option>
+                                 <option value="0"><?php _e('No','mainwp'); ?></option>
+                                 <option value="2"><?php _e('Use Global Setting','mainwp'); ?></option>
+                             </select> <i>(Default: Yes)</i>
+                        </td>
+                    </tr>
                 </table>
                 <p class="submit"><input type="button" name="mainwp_managesites_test"
                                          id="mainwp_managesites_test"
@@ -303,6 +313,25 @@ class MainWPManageSitesView
                </table>
                </div>
                </div>
+                
+            <div class="postbox" id="mainwp-managesites-adv-options">
+                <h3 class="mainwp_box_title"><span><?php _e('Advanced Options','mainwp'); ?></span></h3>
+                <div class="inside">
+                    <table class="form-table">
+                            <tr class="form-field form-required">
+                            <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
+                            <td>
+                                <select id="mainwp_managesites_verify_certificate" name="mainwp_managesites_verify_certificate">
+                                     <option selected value="1"><?php _e('Yes','mainwp'); ?></option>
+                                     <option value="0"><?php _e('No','mainwp'); ?></option>
+                                     <option value="2"><?php _e('Use Global Setting','mainwp'); ?></option>
+                                 </select> <i>(Default: Yes)</i>
+                            </td>
+                            </tr>
+                    </table>
+                    </div>
+                </div>
+
                <div class="postbox" id="mainwp-bulk-upload-sites">
                <h3 class="mainwp_box_title"><span><?php _e('Bulk Upload','mainwp'); ?></span></h3>
                <div class="inside">
@@ -336,7 +365,8 @@ class MainWPManageSitesView
            </table>
            </div>
            </div>
-
+        
+       
 
            <p class="submit"><input type="button" name="mainwp_managesites_add"
                                     id="mainwp_managesites_add"
@@ -969,11 +999,60 @@ class MainWPManageSitesView
                         </div>
                     </td>
                 </tr>
+                <tr>
+                    <th scope="row">Ignore Core Updates <?php MainWPUtility::renderToolTip('Set to YES if you want to Ignore Core Updates.'); ?></th>
+                    <td>
+                        <div class="mainwp-checkbox">
+                        <input type="checkbox" name="mainwp_is_ignoreCoreUpdates"
+                               id="mainwp_is_ignoreCoreUpdates" <?php echo ($website->is_ignoreCoreUpdates == 1 ? 'checked="true"' : ''); ?>"/>
+                        <label for="mainwp_is_ignoreCoreUpdates"></label>
+                        </div>
+                    </td>
+                </tr>  
+                <tr>
+                    <th scope="row">Ignore All Plugin Updates <?php MainWPUtility::renderToolTip('Set to YES if you want to Ignore All Plugin Updates.'); ?></th>
+                    <td>
+                        <div class="mainwp-checkbox">
+                        <input type="checkbox" name="mainwp_is_ignorePluginUpdates"
+                               id="mainwp_is_ignorePluginUpdates" <?php echo ($website->is_ignorePluginUpdates == 1 ? 'checked="true"' : ''); ?>"/>
+                        <label for="mainwp_is_ignorePluginUpdates"></label>
+                        </div>
+                    </td>
+                </tr>  
+                <tr>
+                    <th scope="row">Ignore All Theme Updates <?php MainWPUtility::renderToolTip('Set to YES if you want to Ignore All Theme Updates.'); ?></th>
+                    <td>
+                        <div class="mainwp-checkbox">
+                        <input type="checkbox" name="mainwp_is_ignoreThemeUpdates"
+                               id="mainwp_is_ignoreThemeUpdates" <?php echo ($website->is_ignoreThemeUpdates == 1 ? 'checked="true"' : ''); ?>"/>
+                        <label for="mainwp_is_ignoreThemeUpdates"></label>
+                        </div>
+                    </td>
+                </tr>  
                 <?php do_action('mainwp_extension_sites_edit_tablerow', $website); ?>
                 </tbody>
             </table>
             </div>
             </div>
+            <div class="clear"></div>
+            <div class="postbox">
+            <h3 class="mainwp_box_title"><span><?php _e('Advanced Options','mainwp'); ?></span></h3>
+            <div class="inside">
+            <table class="form-table" style="width: 100%">
+                 <tr class="form-field form-required">
+                    <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
+                    <td>
+                        <select id="mainwp_managesites_edit_verifycertificate" name="mainwp_managesites_edit_verifycertificate">
+                             <option <?php echo ($website->verify_certificate == 1) ? "selected" : ""; ?> value="1"><?php _e('Yes','mainwp'); ?></option>
+                             <option <?php echo ($website->verify_certificate == 0) ? "selected" : ""; ?> value="0"><?php _e('No','mainwp'); ?></option>
+                             <option <?php echo ($website->verify_certificate == 2) ? "selected" : ""; ?> value="2"><?php _e('Use Global Setting','mainwp'); ?></option>
+                         </select> <i>(Default: Yes)</i>
+                    </td>
+                </tr>
+            </table>
+            </div>
+            </div>
+            
             <div class="clear"></div>
             <div class="postbox">
             <h3 class="mainwp_box_title"><span><?php _e('Backup Settings','mainwp'); ?></span></h3>
@@ -1011,6 +1090,17 @@ class MainWPManageSitesView
             </table>
             </div>
             </div>
+            
+            <?php
+                
+                $plugin_upgrades = json_decode($website->plugin_upgrades, true);
+                if (!is_array($plugin_upgrades)) $plugin_upgrades = array();
+                error_log(print_r($plugin_upgrades, true));
+                
+                $userExtension = MainWPDB::Instance()->getUserExtension();
+                $globalIgnoredPluginConflicts = json_decode($userExtension->ignored_pluginConflicts, true);
+                
+            ?>
             <?php
             do_action('mainwp-extension-sites-edit', $website);
             ?><p class="submit"><input type="submit" name="submit" id="submit" class="button-primary"
@@ -1033,10 +1123,10 @@ class MainWPManageSitesView
 
                 //Add
                 if (function_exists('openssl_pkey_new'))
-                {
-                    $conf = array('private_key_bits' => 384);
-                    $res = openssl_pkey_new($conf);
-                    openssl_pkey_export($res, $privkey);
+                {                    
+                    $conf = array('private_key_bits' => 384);                    
+                    $res = openssl_pkey_new($conf);                                                          
+                    @openssl_pkey_export($res, $privkey, NULL, $conf);                    
                     $pubkey = openssl_pkey_get_details($res);
                     $pubkey = $pubkey["key"];
                 }
@@ -1046,7 +1136,7 @@ class MainWPManageSitesView
                     $pubkey = '-1';
                 }
 
-                $information = MainWPUtility::fetchUrlNotAuthed($website->url, $website->adminname, 'register', array('pubkey' => $pubkey, 'server' => get_admin_url()), true);
+                $information = MainWPUtility::fetchUrlNotAuthed($website->url, $website->adminname, 'register', array('pubkey' => $pubkey, 'server' => get_admin_url()), true, $website->verify_certificate);
 
                 if (isset($information['error']) && $information['error'] != '')
                 {
@@ -1107,9 +1197,9 @@ class MainWPManageSitesView
                 //Add
                 if (function_exists('openssl_pkey_new'))
                 {
-                    $conf = array('private_key_bits' => 384);
-                    $res = openssl_pkey_new($conf);
-                    openssl_pkey_export($res, $privkey);
+                    $conf = array('private_key_bits' => 384);                    
+                    $res = openssl_pkey_new($conf);                                                          
+                    @openssl_pkey_export($res, $privkey, NULL, $conf);
                     $pubkey = openssl_pkey_get_details($res);
                     $pubkey = $pubkey["key"];
                 }
@@ -1133,13 +1223,24 @@ class MainWPManageSitesView
                     $themeConflicts = array_keys($themeConflicts);
                 }
 
+                 // to fix bug
+                if (is_array($pluginConflicts))
+                    $pluginConflicts = array_filter($pluginConflicts);
+                if (is_array($themeConflicts))
+                    $themeConflicts = array_filter($themeConflicts);
+                $verifyCertificate = $_POST['verify_certificate'];
                 $information = MainWPUtility::fetchUrlNotAuthed($url, $_POST['managesites_add_wpadmin'], 'register',
                     array('pubkey' => $pubkey,
                         'server' => get_admin_url(),
                         'uniqueId' => $_POST['managesites_add_uniqueId'],
                         'pluginConflicts' => json_encode($pluginConflicts),
-                        'themeConflicts' => json_encode($themeConflicts)));
-
+                        'themeConflicts' => json_encode($themeConflicts)), 
+                    false,
+                    $verifyCertificate    
+                );
+                
+                error_log(print_r($information, true));
+                
                 if (isset($information['error']) && $information['error'] != '')
                 {
                     $error = $information['error'];
@@ -1184,7 +1285,7 @@ class MainWPManageSitesView
 
                         global $current_user;
                         $id = MainWPDB::Instance()->addWebsite($current_user->ID, $_POST['managesites_add_wpname'], $_POST['managesites_add_wpurl'], $_POST['managesites_add_wpadmin'], base64_encode($pubkey), base64_encode($privkey), $information['nossl'], (isset($information['nosslkey'])
-                                ? $information['nosslkey'] : null), $groupids, $groupnames);
+                                ? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate);
                         $message = 'Site successfully added';
                         $website = MainWPDB::Instance()->getWebsiteById($id);
                         MainWPSync::syncInformationArray($website, $information);

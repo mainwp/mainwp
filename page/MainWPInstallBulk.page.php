@@ -266,8 +266,7 @@ class MainWPInstallBulk
         //Fetch info..
         $post_data = array(
             'url' => json_encode($_POST['url']),
-            'type' => $_POST['type'],
-            'sslVerify' => ((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)) ? 1 : 0);
+            'type' => $_POST['type']);
         if ($_POST['activatePlugin'] == 'true') $post_data['activatePlugin'] = 'yes';
         if ($_POST['overwrite'] == 'true') $post_data['overwrite'] = true;
         $output = new stdClass();
@@ -328,8 +327,7 @@ class MainWPInstallBulk
         //Fetch info..
         $post_data = array(
             'url' => json_encode(explode('||', $_POST['urls'])),
-            'type' => $_POST['type'],
-            'sslVerify' => ((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)) ? 1 : 0);
+            'type' => $_POST['type']);
         if ($_POST['activatePlugin'] == 'true') $post_data['activatePlugin'] = 'yes';
         if ($_POST['overwrite'] == 'true') $post_data['overwrite'] = true;
         $output = new stdClass();

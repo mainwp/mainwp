@@ -302,7 +302,7 @@ class MainWPSystem
         echo '<div id="message" class="mainwp-api-message-invalid updated fade" style="' . (true || $this->isAPIValid() ? 'display: none;' : '') . '"><p><strong>MainWP needs to be activated before using - <a href="' . admin_url() . 'admin.php?page=Settings">Activate Here</a>.</strong></p></div>';
 
         if (MainWPDB::Instance()->getWebsitesCount() == 0)
-            echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';
+            echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';            
     }
 
     public function getVersion()
@@ -1001,7 +1001,7 @@ class MainWPSystem
                             if ($file != '.' && $file != '..')
                             {
                                 $theFile = $dir . $file;
-                                if (MainWPUtility::isArchive($file) && !preg_match('/(.*).sql.zip$/', $file) && (filemtime($theFile) > $lastBackup))
+                                if (preg_match('/(.*)\.zip/', $file) && !preg_match('/(.*).sql.zip$/', $file) && (filemtime($theFile) > $lastBackup))
                                 {
                                     $lastBackup = filemtime($theFile);
                                 }
@@ -1380,35 +1380,6 @@ class MainWPSystem
         add_filter('admin_footer_text', array(&$this, 'admin_footer_text'));
     }
 
-    function uploadFile($file)
-    {
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename=' . basename($file));
-        header('Expires: 0');
-        header('Cache-Control: must-revalidate');
-        header('Pragma: public');
-        header('Content-Length: ' . filesize($file));
-        $this->readfile_chunked($file);
-    }
-
-    function readfile_chunked($filename)
-    {
-        $chunksize = 1024; // how many bytes per chunk
-        $handle = @fopen($filename, 'rb');
-        if ($handle === false) return false;
-
-        while (!@feof($handle))
-        {
-            $buffer = @fread($handle, $chunksize);
-            echo $buffer;
-            @ob_flush();
-            @flush();
-            $buffer = null;
-        }
-        return @fclose($handle);
-    }
-
     function parse_init()
     {
         if (isset($_GET['do']) && $_GET['do'] == 'testLog') {
@@ -1431,17 +1402,6 @@ class MainWPSystem
         }
         else if (isset($_GET['do']) && $_GET['do'] == 'cronUpdatesCheck') {
             $this->mainwp_cronupdatescheck_action();
-        }
-        else if (isset($_GET['mwpdl']) && isset($_GET['sig']))
-        {
-            $mwpDir = MainWPUtility::getMainWPDir();
-            $mwpDir = $mwpDir[0];
-            $file = trailingslashit($mwpDir) . rawurldecode($_GET['mwpdl']);
-            if (file_exists($file) && md5(filesize($file)) == $_GET['sig'])
-            {
-                $this->uploadFile($file);
-                exit();
-            }
         }
     }
 
@@ -1509,6 +1469,7 @@ class MainWPSystem
 
         if (!current_user_can('update_core')) remove_action('admin_notices', 'update_nag', 3);
     }
+
 
     //This function will read the metaboxes & save them to the post
     function publish_bulkpost($post_id)
@@ -1629,8 +1590,8 @@ class MainWPSystem
         
         if (isset($_POST['save'])) {
             global $wpdb;
-            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
+            $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));            
+            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));            
         }
         else if ($save_seo_value || $pid == $post_id) {
             /** @var $wpdb wpdb */
@@ -1773,7 +1734,7 @@ class MainWPSystem
         echo '<script type="text/javascript" src="' . plugins_url('js/FileSaver.js', dirname(__FILE__)) . '"></script>';
         echo '<script type="text/javascript" src="' . plugins_url('js/jqueryFileTree.js', dirname(__FILE__)) . '"></script>';
         echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('css/jqueryFileTree.css', dirname(__FILE__)) . '" />';
-        // mainwp-article-postere
+        // mainwp-article-poster
 //        echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('mainwp-article-poster/css/admin.css', dirname(__FILE__)) . '" />';
 //        echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('mainwp-article-poster/css/datePicker.css', dirname(__FILE__)) . '" />';
 //        echo '<script type="text/javascript" src="' . plugins_url('mainwp-article-poster/js/date.js', dirname(__FILE__)) . '"></script>';

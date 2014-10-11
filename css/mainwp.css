@@ -1102,7 +1102,7 @@ li.hoverli {
 #mainwplogo
 {
     position: absolute;
-    top: 2.5em;
+    top:2.5em;
     right: 2em;
     display: block;
     z-index: -1 !important;

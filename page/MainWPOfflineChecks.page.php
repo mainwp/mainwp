@@ -200,9 +200,9 @@ class MainWPOfflineChecks
                     //Add
                     if (function_exists('openssl_pkey_new'))
                     {
-                        $conf = array('private_key_bits' => 384);
-                        $res = openssl_pkey_new($conf);
-                        openssl_pkey_export($res, $privkey);
+                        $conf = array('private_key_bits' => 384);                                                 
+                        $res = openssl_pkey_new($conf);                                                          
+                        @openssl_pkey_export($res, $privkey, NULL, $conf);
                         $pubkey = openssl_pkey_get_details($res);
                         $pubkey = $pubkey["key"];
                     }
@@ -212,7 +212,7 @@ class MainWPOfflineChecks
                         $pubkey = '-1';
                     }
 
-                    $information = MainWPUtility::fetchUrlNotAuthed($website->url, $website->adminname, 'register', array('pubkey' => $pubkey, 'server' => get_admin_url()));
+                    $information = MainWPUtility::fetchUrlNotAuthed($website->url, $website->adminname, 'register', array('pubkey' => $pubkey, 'server' => get_admin_url()), false, $website->verify_certificate);
 
                     if (!isset($information['error']) || ($information['error'] == ''))
                     {
@@ -236,7 +236,7 @@ class MainWPOfflineChecks
 
     public static function performCheck($website, $sendOnline = false, &$emailOutput = null)
     {
-        $result = MainWPUtility::isWebsiteAvailable($website->url);
+        $result = MainWPUtility::isWebsiteAvailable($website);
         if (!$result || (isset($result['error']) && ($result['error'] != '')) || ($result['httpCode'] != '200')) {
             MainWPDB::Instance()->updateWebsiteValues($website->id, array('offline_check_result' => '-1', 'offline_checks_last' => time()));
             $body = 'We\'ve had some issues trying to reach your website <a href="' . $website->url . '">' . $website->name . '</a>. ' . (isset($result['error']) && ($result['error'] != '') ? ' Error message: '. $result['error'] . '.' : 'Received HTTP-code: ' . $result['httpCode'] . ($result['httpCodeString'] != '' ? ' (' . $result['httpCodeString'] . ').' : ''));

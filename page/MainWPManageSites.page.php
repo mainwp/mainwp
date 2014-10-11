@@ -164,8 +164,8 @@ class MainWPManageSites
         else
         {
             $maximumFileDescriptorsAuto = get_option('mainwp_maximumFileDescriptorsAuto');
-            $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
-            $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
+        $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
+        $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
         }
 
         if ($type == 'db')
@@ -495,8 +495,8 @@ class MainWPManageSites
         else
         {
             $maximumFileDescriptorsAuto = get_option('mainwp_maximumFileDescriptorsAuto');
-            $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
-            $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
+        $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
+        $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
         }
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $pType), $pFilename);
         $file = str_replace('%', '', $file);
@@ -814,13 +814,18 @@ class MainWPManageSites
                 $maximumFileDescriptorsAuto = isset($_POST['mainwp_maximumFileDescriptorsAuto']);
                 $maximumFileDescriptors = isset($_POST['mainwp_options_maximumFileDescriptors']) && MainWPUtility::ctype_digit($_POST['mainwp_options_maximumFileDescriptors']) ? $_POST['mainwp_options_maximumFileDescriptors'] : 150;
 
-                MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors);
+                MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate']);
 
                 do_action('mainwp_update_site', $website->id);
 
                 $newValues = array('automatic_update' => (!isset($_POST['mainwp_automaticDailyUpdate']) ? 0 : 1),
                     'backup_before_upgrade' => (!isset($_POST['mainwp_backup_before_upgrade']) ? 0 : 1),
-                    'loadFilesBeforeZip' => $_POST['mainwp_options_loadFilesBeforeZip']);
+                    'loadFilesBeforeZip' => $_POST['mainwp_options_loadFilesBeforeZip'],
+                    'is_ignoreCoreUpdates' => $_POST['mainwp_is_ignoreCoreUpdates'] ? 1 : 0,
+                    'is_ignorePluginUpdates' => $_POST['mainwp_is_ignorePluginUpdates'] ? 1 : 0,
+                    'is_ignoreThemeUpdates' => $_POST['mainwp_is_ignoreThemeUpdates'] ? 1 : 0                    
+                );
+                
                 MainWPDB::Instance()->updateWebsiteValues($website->id, $newValues);
                 $updated = true;
                 //Reload the site

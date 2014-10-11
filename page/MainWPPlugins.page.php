@@ -465,8 +465,9 @@ class MainWPPlugins
             <?php } ?>
             <?php if ($status == 'inactive') { ?>
             <option value="activate"><?php _e('Activate','mainwp'); ?></option>
-            <option value="delete"><?php _e('Delete','mainwp'); ?></option>
+            <option value="delete"><?php _e('Delete','mainwp'); ?></option>            
             <?php } ?>
+            <option value="ignore_updates"><?php _e('Ignore Updates','mainwp'); ?></option>            
         </select> <input type="button" name="" id="mainwp_bulk_plugins_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>&nbsp;<span><a href="http://docs.mainwp.com/why-does-the-mainwp-client-plugin-not-show-up-on-the-plugin-list-for-my-managed-site/" target="_blank"><?php _e('Why does the MainWP Child Plugin NOT show here?','mainwp'); ?></a></span>
     </div>
     <div class="clear"></div>
@@ -487,10 +488,11 @@ class MainWPPlugins
         $sites = array(); //id -> url
         $sitePlugins = array(); //site_id -> plugin_version_name -> plugin obj
         $plugins = array(); //name_version -> slug
-        $pluginsVersion = array(); //name_version -> title_version
+        $pluginsVersion = $pluginsName = array(); //name_version -> title_version
         foreach ($output->plugins as $plugin) {
             $sites[$plugin['websiteid']] = $plugin['websiteurl'];
             $plugins[$plugin['name'] . '_' . $plugin['version']] = $plugin['slug'];
+            $pluginsName[$plugin['name'] . '_' . $plugin['version']] = $plugin['name'];
             $pluginsVersion[$plugin['name'] . '_' . $plugin['version']] = $plugin['name'] . ' ' . $plugin['version'];
             if (!isset($sitePlugins[$plugin['websiteid']]) || !is_array($sitePlugins[$plugin['websiteid']])) $sitePlugins[$plugin['websiteid']] = array();
             $sitePlugins[$plugin['websiteid']][$plugin['name'] . '_' . $plugin['version']] = $plugin;
@@ -528,7 +530,7 @@ class MainWPPlugins
                 foreach ($pluginsVersion as $plugin_name => $plugin_title) {
                     echo '<td class="long" style="text-align: center">';
                     if (isset($sitePlugins[$site_id]) && isset($sitePlugins[$site_id][$plugin_name])) {
-                        echo '<input type="checkbox" value="' . $plugins[$plugin_name] . '" class="selected_plugin" />';
+                        echo '<input type="checkbox" value="' . $plugins[$plugin_name] . '" name="'. $pluginsName[$plugin_name].'" class="selected_plugin" />';
                     }
                     echo '</td>';
                 }
@@ -585,6 +587,39 @@ class MainWPPlugins
     {
         MainWPPlugins::action('delete');
     }
+    
+    public static function ignoreUpdates()
+    {
+        $websiteIdEnc = $_POST['websiteId'];
+
+        $websiteId = $websiteIdEnc;
+        if (!MainWPUtility::ctype_digit($websiteId)) die(json_encode(array('error' => 'Invalid request.')));
+
+        $website = MainWPDB::Instance()->getWebsiteById($websiteId);
+        if (!MainWPUtility::can_edit_website($website)) die(json_encode(array('error' => 'You can not edit this website.')));
+
+        $plugins = $_POST['plugins'];  
+        $names = $_POST['names'];  
+        
+        $decodedIgnoredPlugins = json_decode($website->ignored_plugins, true);
+        if (!is_array($decodedIgnoredPlugins)) $decodedIgnoredPlugins = array();            
+        
+                    
+        if (is_array($plugins)) {
+            for($i = 0; $i < count($plugins); $i++) {
+                $slug = $plugins[$i];
+                $name = $names[$i];
+                if (!isset($decodedIgnoredPlugins[$slug]))
+                {
+                    $decodedIgnoredPlugins[$slug] = urldecode($name);
+                }
+            }
+            MainWPDB::Instance()->updateWebsiteValues($website->id, array('ignored_plugins' => json_encode($decodedIgnoredPlugins)));
+        }
+        
+        die(json_encode(array('result' => true)));
+    }
+    
 
     public static function action($pAction)
     {
@@ -989,7 +1024,7 @@ class MainWPPlugins
             {
                 @MainWPDB::data_seek($websites, 0);
                 while ($websites && ($website = @MainWPDB::fetch_object($websites)))
-                {
+                {                    
                     $decodedIgnoredPluginConflicts = json_decode($website->ignored_pluginConflicts, true);
                     if (!is_array($decodedIgnoredPluginConflicts) || count($decodedIgnoredPluginConflicts) == 0) continue;
                     $first = true;
@@ -1039,6 +1074,7 @@ class MainWPPlugins
         $cnt = 0;
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
         {
+            if ($website->is_ignorePluginUpdates) continue;
             $tmpDecodedIgnoredPlugins = json_decode($website->ignored_plugins, true);
             if (!is_array($tmpDecodedIgnoredPlugins) || count($tmpDecodedIgnoredPlugins) == 0) continue;
             $cnt++;
@@ -1101,6 +1137,7 @@ class MainWPPlugins
                 @MainWPDB::data_seek($websites, 0);
                 while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                 {
+                    if ($website->is_ignorePluginUpdates) continue;
                     $decodedIgnoredPlugins = json_decode($website->ignored_plugins, true);
                     if (!is_array($decodedIgnoredPlugins) || count($decodedIgnoredPlugins) == 0) continue;
                     $first = true;

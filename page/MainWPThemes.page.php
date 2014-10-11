@@ -248,16 +248,19 @@ class MainWPThemes
 
         ob_start();
         ?>
-    <?php if ($status == 'inactive') { ?>
+   
     <div class="alignleft">
         <select name="bulk_action" id="mainwp_bulk_action">
             <option value="none"><?php _e('Choose Action','mainwp'); ?></option>
-            <option value="activate"><?php _e('Activate','mainwp'); ?></option>
-            <option value="delete"><?php _e('Delete','mainwp'); ?></option>
+             <?php if ($status == 'inactive') { ?>
+                <option value="activate"><?php _e('Activate','mainwp'); ?></option>
+                <option value="delete"><?php _e('Delete','mainwp'); ?></option>
+            <?php } ?>
+                <option value="ignore_updates"><?php _e('Ignore Updates','mainwp'); ?></option>
         </select> <input type="button" name="" id="mainwp_bulk_theme_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
     </div>
     <div class="clear"></div>
-    <?php } ?>
+    
 
 
     <?php
@@ -276,10 +279,11 @@ class MainWPThemes
         $siteThemes = array(); //site_id -> theme_version_name -> theme obj
         $themes = array(); //name_version -> name
         $themesVersion = array(); //name_version -> title_version
-        $themesRealVersion = array(); //name_version -> title_version
+        $themesRealVersion = $themesSlug = array(); //name_version -> title_version
         foreach ($output->themes as $theme) {
             $sites[$theme['websiteid']] = $theme['websiteurl'];
             $themes[$theme['name'] . '_' . $theme['version']] = $theme['name'];
+            $themesSlug[$theme['name'] . '_' . $theme['version']] = $theme['slug'];
             $themesVersion[$theme['name'] . '_' . $theme['version']] = $theme['title'] . ' ' . $theme['version'];
             $themesRealVersion[$theme['name'] . '_' . $theme['version']] = $theme['version'];
             if (!isset($siteThemes[$theme['websiteid']]) || !is_array($siteThemes[$theme['websiteid']])) $siteThemes[$theme['websiteid']] = array();
@@ -319,7 +323,7 @@ class MainWPThemes
                 foreach ($themesVersion as $theme_name => $theme_title) {
                     echo '<td style="text-align: center">';
                     if (isset($siteThemes[$site_id]) && isset($siteThemes[$site_id][$theme_name])) {
-                        echo '<input type="checkbox" value="' . $themes[$theme_name] . '" version="'.$themesRealVersion[$theme_name].'" class="selected_theme" />';
+                        echo '<input type="checkbox" value="' . $themes[$theme_name] . '" version="'.$themesRealVersion[$theme_name].'" slug="' . $themesSlug[$theme_name]. '" class="selected_theme" />';
                     }
                     echo '</td>';
                 }
@@ -601,6 +605,37 @@ class MainWPThemes
         die($information['out']);
     }
 
+     public static function ignoreUpdates()
+    {
+        $websiteIdEnc = $_POST['websiteId'];
+
+        $websiteId = $websiteIdEnc;
+        if (!MainWPUtility::ctype_digit($websiteId)) die('FAIL');
+
+        $website = MainWPDB::Instance()->getWebsiteById($websiteId);
+        if (!MainWPUtility::can_edit_website($website)) die('FAIL');
+
+        $themes = $_POST['themes'];  
+        $names = $_POST['names'];  
+        
+        $decodedIgnoredThemes = json_decode($website->ignored_themes, true);
+        if (!is_array($decodedIgnoredThemes)) $decodedIgnoredThemes = array();  
+                    
+        if (is_array($themes)) {
+            for($i = 0; $i < count($themes); $i++) {
+                $slug = $themes[$i];
+                $name = $names[$i];
+                if (!isset($decodedIgnoredThemes[$slug]))
+                {
+                    $decodedIgnoredThemes[$slug] = urldecode($name);
+                }
+            }
+            MainWPDB::Instance()->updateWebsiteValues($website->id, array('ignored_themes' => json_encode($decodedIgnoredThemes)));
+        }
+        
+        die(json_encode(array('result' => true)));
+    }
+    
     //@see MainWPInstallBulk
     public static function renderInstall()
     {
@@ -763,7 +798,7 @@ class MainWPThemes
 
         $cnt = 0;
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
-        {
+        {            
             $tmpDecodedIgnoredThemeConflicts = json_decode($website->ignored_themeConflicts, true);
             if (!is_array($tmpDecodedIgnoredThemeConflicts) || count($tmpDecodedIgnoredThemeConflicts) == 0) continue;
             $cnt++;
@@ -874,6 +909,7 @@ class MainWPThemes
         $cnt = 0;
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
         {
+            if ($website->is_ignoreThemeUpdates) continue;
             $tmpDecodedIgnoredThemes = json_decode($website->ignored_themes, true);
             if (!is_array($tmpDecodedIgnoredThemes) || count($tmpDecodedIgnoredThemes) == 0) continue;
             $cnt++;
@@ -938,6 +974,8 @@ class MainWPThemes
             @MainWPDB::data_seek($websites, 0);
             while ($websites && ($website = @MainWPDB::fetch_object($websites)))
             {
+               if ($website->is_ignoreThemeUpdates) continue;
+                
                $decodedIgnoredThemes = json_decode($website->ignored_themes, true);
                if (!is_array($decodedIgnoredThemes) || count($decodedIgnoredThemes) == 0) continue;
                $first = true;

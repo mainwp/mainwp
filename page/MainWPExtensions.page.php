@@ -362,7 +362,7 @@ class MainWPExtensions
         }
 
         $dbwebsites = array();
-        $data = array('id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey');
+        $data = array('id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate');
 
         if (is_array($options))
         {

@@ -2360,7 +2360,8 @@ mainwp_managesites_add = function (event) {
             action:'mainwp_checkwp',
             name:jQuery('#mainwp_managesites_add_wpname').val(),
             url:url,
-            admin:jQuery('#mainwp_managesites_add_wpadmin').val()
+            admin:jQuery('#mainwp_managesites_add_wpadmin').val(),
+            verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val()
         });
 
         jQuery.post(ajaxurl, data, function (res_things) {
@@ -2399,7 +2400,8 @@ mainwp_managesites_add = function (event) {
                     managesites_add_wpadmin:jQuery('#mainwp_managesites_add_wpadmin').val(),
                     managesites_add_uniqueId:jQuery('#mainwp_managesites_add_uniqueId').val(),
                     'groupids[]':groupids,
-                    groupnames:jQuery('#mainwp_managesites_add_addgroups').val()
+                    groupnames:jQuery('#mainwp_managesites_add_addgroups').val(),
+                    verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val()
                 });
 
                 jQuery.post(ajaxurl, data, function (res_things) {
@@ -2428,7 +2430,7 @@ mainwp_managesites_add = function (event) {
                         jQuery('#mainwp_managesites_add_uniqueId').val('');
                         jQuery('#mainwp_managesites_add_addgroups').val('');
                         jQuery("input[name='selected_groups[]']:checked").attr('checked', false);
-
+                        jQuery('#mainwp_managesites_verify_certificate').val(1);                        
                         if (res_things.redirectUrl != undefined)
                         {
                             setTimeout(function(pUrl) { return function() { location.href = pUrl; } }(res_things.redirectUrl), 1000);
@@ -2486,7 +2488,8 @@ mainwp_managesites_test = function (event) {
         }
         var data = mainwp_secure_data({
             action:'mainwp_testwp',
-            url:url
+            url:url,
+            test_verify_cert: jQuery('#mainwp_managesites_test_verifycertificate').val()
         });
         jQuery.post(ajaxurl, data, function (response) {
             managesites_init();
@@ -2731,7 +2734,7 @@ mainwp_managesites_import_sites = function () {
                     managesites_add_uniqueId: import_uniqueId,
                     'groupids[]':groupids,
                     groupnames_import: import_wpgroups,
-                    add_me: import_current 
+                    add_me: import_current                    
                 });
 
                 jQuery.post(ajaxurl, data, function (res_things) {

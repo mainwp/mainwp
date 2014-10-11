@@ -67,11 +67,19 @@ class MainWPUtility
         return false;
     }
 
-    public static function isWebsiteAvailable($url)
+    public static function isWebsiteAvailable($website)
     {
+        if (is_object($website) && isset($website->url)) {
+            $url = $website->url;
+            $verifyCertificate = isset($website->verify_certificate) ? $website->verify_certificate : null;
+        } else {
+            $url = $website;
+            $verifyCertificate = null;
+        }
+        
         if (!MainWPUtility::isDomainValid($url)) return false;
 
-        return MainWPUtility::tryVisit($url);
+        return MainWPUtility::tryVisit($url, $verifyCertificate);
     }
 
     private static function isDomainValid($url)
@@ -81,7 +89,7 @@ class MainWPUtility
     }
 
 
-    public static function tryVisit($url)
+    public static function tryVisit($url, $verifyCertificate = null)
     {
         $agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
         $postdata = array('test' => 'yes');
@@ -94,16 +102,35 @@ class MainWPUtility
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
-        if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+        
+        $ssl_verifyhost = false;        
+        if ($verifyCertificate !== null) { 
+            if ($verifyCertificate == 1) {
+                $ssl_verifyhost = true;
+            } else if ($verifyCertificate == 2) { // use global setting
+                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+                {
+                    $ssl_verifyhost = true;
+                }                
+            } 
+        } else {            
+            if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+            {
+                $ssl_verifyhost = true;
+            }            
+        }
+        
+        if ($ssl_verifyhost)
         {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 2);
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, true);
         }
         else
         {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, false);
+            @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, false);
         }
+        
         $data = curl_exec($ch);
         if ($data === FALSE)
         {
@@ -415,8 +442,26 @@ class MainWPUtility
             $postdata = MainWPUtility::getPostDataAuthed($website, $what, $params);
             @curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
             @curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+            
+            $ssl_verifyhost = false;
+            $verifyCertificate = isset($website->verify_certificate) ? $website->verify_certificate : null ;
+            if ($verifyCertificate !== null) { 
+                if ($verifyCertificate == 1) {
+                    $ssl_verifyhost = true;
+                } else if ($verifyCertificate == 2) { // use global setting
+                    if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+                    {
+                        $ssl_verifyhost = true;
+                    }                
+                } 
+            } else {            
+                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+                {
+                    $ssl_verifyhost = true;
+                }            
+            }
 
-            if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+            if ($ssl_verifyhost)
             {
                 @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 2);
                 @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, true);
@@ -500,7 +545,7 @@ class MainWPUtility
         $params['optimize'] = ((get_option("mainwp_optimize") == 1) ? 1 : 0);
 
         $postdata = MainWPUtility::getPostDataAuthed($website, $what, $params);
-        $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints, $pForceFetch);
+        $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate);
       
         if (is_array($information) && isset($information['sync']))
         {
@@ -511,11 +556,11 @@ class MainWPUtility
         return $information;
     }
 
-    static function fetchUrlNotAuthed($url, $admin, $what, $params = null, $pForceFetch = false)
+    static function fetchUrlNotAuthed($url, $admin, $what, $params = null, $pForceFetch = false, $verifyCertificate = null)
     {
         $postdata = MainWPUtility::getPostDataNotAuthed($url, $admin, $what, $params);
         $website = null;
-        return MainWPUtility::fetchUrl($website, $url, $postdata, $pForceFetch);
+        return MainWPUtility::fetchUrl($website, $url, $postdata, $pForceFetch, false, $verifyCertificate);
     }
 
     static function fetchUrlClean($url, $postdata)
@@ -551,20 +596,20 @@ class MainWPUtility
         }
     }
 
-    static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false)
+    static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null)
     {
         try
         {
             $tmpUrl = $url;
             if (substr($tmpUrl, -1) != '/') { $tmpUrl .= '/'; }
 
-            return self::_fetchUrl($website, $tmpUrl . 'wp-admin/', $postdata, $checkConstraints, $pForceFetch);
+            return self::_fetchUrl($website, $tmpUrl . 'wp-admin/', $postdata, $checkConstraints, $pForceFetch, $verifyCertificate);
         }
         catch (Exception $e)
         {
             try
             {
-                return self::_fetchUrl($website, $url, $postdata, $checkConstraints, $pForceFetch);
+                return self::_fetchUrl($website, $url, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate);
             }
             catch (Exception $ex)
             {
@@ -573,7 +618,7 @@ class MainWPUtility
         }
     }
 
-    static function _fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false)
+    static function _fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null)
     {
         $agent= 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 
@@ -729,7 +774,25 @@ class MainWPUtility
         @curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         @curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
         @curl_setopt($ch, CURLOPT_USERAGENT, $agent);
-        if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+        
+        $ssl_verifyhost = false;
+        if ($verifyCertificate !== null) { 
+            if ($verifyCertificate == 1) {
+                $ssl_verifyhost = true;
+            } else if ($verifyCertificate == 2) { // use global setting
+                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+                {
+                    $ssl_verifyhost = true;
+                }                
+            } 
+        } else {            
+            if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+            {
+                $ssl_verifyhost = true;
+            }            
+        }
+        
+        if ($ssl_verifyhost)
         {
             @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 2);
             @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, true);
@@ -739,6 +802,7 @@ class MainWPUtility
             @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, false);
             @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, false);
         }
+            
         $timeout = 20 * 60 * 60; //20 minutes
         @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         if (!ini_get('safe_mode')) @set_time_limit($timeout);

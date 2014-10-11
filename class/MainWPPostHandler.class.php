@@ -935,9 +935,11 @@ class MainWPPostHandler
 
         $url = null;
         $name = null;
+        $verifyCertificate = 1;
         if (isset($_POST['url']))
         {
             $url = $_POST['url'];
+            $verifyCertificate = $_POST['test_verify_cert'];
         }
         else if (isset($_POST['siteid']))
         {
@@ -946,16 +948,17 @@ class MainWPPostHandler
             {
                 $url = $website->url;
                 $name = $website->name;
+                $verifyCertificate = $website->verify_certificate;
             }
         }
 
-        $rslt = MainWPUtility::tryVisit($url);
+        $rslt = MainWPUtility::tryVisit($url, $verifyCertificate);
 
         if (isset($rslt['error']) && ($rslt['error'] != '') && (substr($url, -9) != 'wp-admin/'))
         {
             if (substr($url, -1) != '/') { $url .= '/'; }
             $url .= 'wp-admin/';
-            $newrslt = MainWPUtility::tryVisit($url);
+            $newrslt = MainWPUtility::tryVisit($url, $verifyCertificate);
             if (isset($newrslt['error']) && ($rslt['error'] != '')) $rslt = $newrslt;
         }
 

@@ -772,7 +772,7 @@ class MainWPManageSites
                 }
                 $newPluginDir = (isset($_POST['mainwp_options_footprint_plugin_folder']) ? $_POST['mainwp_options_footprint_plugin_folder'] : '');
 
-                MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir);
+                MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $_POST['mainwp_managesites_edit_verifycertificate']);
 
                 do_action('mainwp_update_site', $website->id);
 

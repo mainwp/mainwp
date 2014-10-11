@@ -1001,7 +1001,7 @@ class MainWPSystem
                             if ($file != '.' && $file != '..')
                             {
                                 $theFile = $dir . $file;
-                                if (preg_match('/(.*)\.zip/', $file) && !preg_match('/(.*).sql.zip$/', $file) && (filemtime($theFile) > $lastBackup))
+                                if (MainWPUtility::isArchive($file) && !preg_match('/(.*).sql.zip$/', $file) && (filemtime($theFile) > $lastBackup))
                                 {
                                     $lastBackup = filemtime($theFile);
                                 }
@@ -1380,6 +1380,35 @@ class MainWPSystem
         add_filter('admin_footer_text', array(&$this, 'admin_footer_text'));
     }
 
+    function uploadFile($file)
+    {
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename=' . basename($file));
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($file));
+        $this->readfile_chunked($file);
+    }
+
+    function readfile_chunked($filename)
+    {
+        $chunksize = 1024; // how many bytes per chunk
+        $handle = @fopen($filename, 'rb');
+        if ($handle === false) return false;
+
+        while (!@feof($handle))
+        {
+            $buffer = @fread($handle, $chunksize);
+            echo $buffer;
+            @ob_flush();
+            @flush();
+            $buffer = null;
+        }
+        return @fclose($handle);
+    }
+
     function parse_init()
     {
         if (isset($_GET['do']) && $_GET['do'] == 'testLog') {
@@ -1402,6 +1431,17 @@ class MainWPSystem
         }
         else if (isset($_GET['do']) && $_GET['do'] == 'cronUpdatesCheck') {
             $this->mainwp_cronupdatescheck_action();
+        }
+        else if (isset($_GET['mwpdl']) && isset($_GET['sig']))
+        {
+            $mwpDir = MainWPUtility::getMainWPDir();
+            $mwpDir = $mwpDir[0];
+            $file = trailingslashit($mwpDir) . rawurldecode($_GET['mwpdl']);
+            if (file_exists($file) && md5(filesize($file)) == $_GET['sig'])
+            {
+                $this->uploadFile($file);
+                exit();
+            }
         }
     }
 

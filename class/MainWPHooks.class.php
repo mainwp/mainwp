@@ -12,6 +12,7 @@ class MainWPHooks
         add_action('mainwp_performinstallplugintheme', array('MainWPInstallBulk', 'performInstall'));
         add_filter('mainwp_getwpfilesystem', array('MainWPUtility', 'getWPFilesystem'));
         add_filter('mainwp_getspecificurl', array('MainWPUtility', 'getMainWPSpecificUrl'), 10, 1);
+        add_filter('mainwp_getdownloadurl', array('MainWPUtility', 'getDownloadUrl'), 10, 2);
         add_action('mainwp_renderToolTip', array('MainWPUtility', 'renderToolTip'), 10, 4);
         add_action('mainwp_renderHeader', array('MainWPUI', 'renderHeader'), 10, 2);
         add_action('mainwp_renderFooter', array('MainWPUI', 'renderFooter'), 10, 0);

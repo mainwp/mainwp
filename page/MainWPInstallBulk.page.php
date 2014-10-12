@@ -45,7 +45,7 @@ class MainWPInstallBulk
         ?>
             <?php
             if ($tab == 'install') {
-                
+
             } else {
                 ?>
                 <a href="#" class="mainwp_action left <?php if ($tab == 'search') { echo 'mainwp_action_down'; } ?>" id="MainWPInstallBulkNavSearch"><?php _e('Search','mainwp'); ?></a><a href="#" class="mainwp_action right <?php if ($tab == 'upload') { echo 'mainwp_action_down'; } ?>" id="MainWPInstallBulkNavUpload"><?php _e('Upload','mainwp'); ?></a>
@@ -221,6 +221,14 @@ class MainWPInstallBulk
             $url = $api->download_link;
         } else {
             $url = $_POST['url'];
+
+            $mwpDir = MainWPUtility::getMainWPDir();
+            $mwpUrl = $mwpDir[1];
+            if (stristr($url, $mwpUrl))
+            {
+                $fullFile = $mwpDir[0] . str_replace($mwpUrl, '', $url);
+                $url = admin_url('?sig=' . md5(filesize($fullFile)) . '&mwpdl=' . rawurlencode(str_replace($mwpDir[0], "", $fullFile)));
+            }
         }
 
         $output = array();
@@ -310,9 +318,9 @@ class MainWPInstallBulk
         }
 
         $output['urls'] = array();
-        $url = MainWPUtility::getMainWPSpecificUrl('bulk');
+
         foreach ($_POST['files'] as $file) {
-            $output['urls'][] = $url . rawurlencode($file);
+            $output['urls'][] = MainWPUtility::getDownloadUrl('bulk', $file);
         }
         $output['urls'] = implode('||', $output['urls']);
         $output['urls'] = apply_filters('mainwp_installbulk_prepareupload', $output['urls']);
@@ -378,9 +386,9 @@ class MainWPInstallBulk
     }
 }
 /**
- * 
+ *
  * DO NOT TOUCH - part of http://github.com/valums/file-uploader ! (@see js/fileuploader.js)
- * 
+ *
  */
 /**
  * Handle file uploads via XMLHttpRequest
@@ -446,7 +454,7 @@ class qq2UploadedFileXhr {
             return (int)$_SERVER["CONTENT_LENGTH"];
         } else {
             throw new Exception('Getting content length is not supported.');
-         } 
+         }
     }
 }
 /**

@@ -944,6 +944,16 @@ class MainWPUtility
         return array($dir, $url);
     }
 
+    public static function getDownloadUrl($what, $filename)
+    {
+        $specificDir = MainWPUtility::getMainWPSpecificDir($what);
+        $mwpDir = MainWPUtility::getMainWPDir();
+        $mwpDir = $mwpDir[0];
+        $fullFile = $specificDir . $filename;
+
+        return admin_url('?sig=' . md5(filesize($fullFile)) . '&mwpdl=' . rawurlencode(str_replace($mwpDir, "", $fullFile)));
+    }
+
     public static function getMainWPSpecificDir($dir = null)
     {
         if (MainWPSystem::Instance()->isSingleUser())
@@ -963,13 +973,6 @@ class MainWPUtility
         {
             $file = @fopen(trailingslashit($dirs[0] . $userid) . '.htaccess', 'w+');
             @fwrite($file, 'deny from all');
-            @fclose($file);
-        }
-
-        if ($dir == 'bulk'  && !file_exists(trailingslashit($newdir) . '.htaccess'))
-        {
-            $file = @fopen(trailingslashit($newdir) . '.htaccess', 'w+');
-            @fwrite($file, 'allow from all');
             @fclose($file);
         }
 

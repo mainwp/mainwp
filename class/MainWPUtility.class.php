@@ -969,6 +969,11 @@ class MainWPUtility
         $dirs = self::getMainWPDir();
         $newdir = $dirs[0] . $userid . ($dir != null ? DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR : '');
 
+        if (!file_exists($newdir))
+        {
+            @mkdir($newdir, 0777, true);
+        }
+
         if ($dirs[0] . $userid != null && !file_exists(trailingslashit($dirs[0] . $userid) . '.htaccess'))
         {
             $file = @fopen(trailingslashit($dirs[0] . $userid) . '.htaccess', 'w+');

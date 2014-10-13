@@ -269,6 +269,10 @@ class MainWPManageSites
 
             $localBackupFile = null;
 
+            $cr_time = time();
+            $fm_date = MainWPUtility::date(get_option('date_format'), $cr_time);
+            $fm_time = MainWPUtility::date(get_option('time_format'), $cr_time);
+            
             $what = null;
             $regexBackupFile = null;
 
@@ -278,11 +282,11 @@ class MainWPManageSites
                 $regexBackupFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip)?';
                 if ($backupTaskProgress->downloadedDB == "")
                 {
-                    $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . MainWPUtility::date('m-d-Y') . '-' . time() . '.sql';
+                    $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . '.sql';
 
                     if ($pFilename != null)
                     {
-                        $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $what), $pFilename);
+                        $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, $fm_date, $fm_time, $what), $pFilename);
                         $filename = str_replace('%', '', $filename);
                         $localBackupFile = $dir . $filename . '.sql';
                     }
@@ -304,11 +308,11 @@ class MainWPManageSites
                 $regexBackupFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).zip';
                 if ($backupTaskProgress->downloadedFULL == "")
                 {
-                    $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . MainWPUtility::date('m-d-Y') . '-' . time() . '.zip';
+                    $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . '.zip';
 
                     if ($pFilename != null)
                     {
-                        $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $what), $pFilename);
+                        $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, $fm_date, $fm_time, $what), $pFilename);
                         $filename = str_replace('%', '', $filename);
                         $localBackupFile = $dir . $filename . '.zip';
                     }
@@ -505,21 +509,25 @@ class MainWPManageSites
             $backup_result['subfolder'] = $subfolder;
 
             $dir = MainWPUtility::getMainWPSpecificDir($pSiteId);
-
+            
+            $cr_time = time();
+            $fm_date = MainWPUtility::date(get_option('date_format'), $cr_time);
+            $fm_time = MainWPUtility::date(get_option('time_format'), $cr_time);
+                
             if ($pType == 'db')
             {
-                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . MainWPUtility::date('m-d-Y') . '-' . time() . '.sql';
+                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . '.sql';
                 $localRegexFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip)?';
             }
             else
             {
-                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . MainWPUtility::date('m-d-Y') . '-' . time() . '.zip';
+                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . '.zip';
                 $localRegexFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).zip';
             }
 
             if ($pFilename != null)
-            {
-                $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $pType), $pFilename);
+            {   
+                $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, $fm_date, $fm_time, $pType), $pFilename);
                 $filename = str_replace('%', '', $filename);
                 $localBackupFile = $dir . $filename;
 

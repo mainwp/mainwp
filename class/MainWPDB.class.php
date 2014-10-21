@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '7.2';
+    private $mainwp_db_version = '7.3';
     //Private
     private $table_prefix;
     //Singleton
@@ -128,6 +128,14 @@ class MainWPDB
         $tbl .= ')';
         $sql[] = $tbl;
 
+        $tbl = 'CREATE TABLE ' . $this->tableName('wp_settings_backup') . ' (
+  wpid int(11) NOT NULL,
+  archiveFormat text NOT NULL';
+          if ($currentVersion == '') $tbl .= ',
+  PRIMARY KEY  (id)  ';
+          $tbl .= ')';
+          $sql[] = $tbl;
+
         $tbl = 'CREATE TABLE ' . $this->tableName('tips') . ' (
   id int(11) NOT NULL auto_increment,
   seq int(11) NOT NULL,
@@ -246,11 +254,18 @@ class MainWPDB
             dbDelta($query);
         }
 
+        $this->post_update();
+
         MainWPUtility::update_option('mainwp_db_version', $this->mainwp_db_version);
     }
 
     //Check for update - if required, update..
     function update()
+    {
+
+    }
+
+    function post_update()
     {
         $currentVersion = get_site_option('mainwp_db_version');
         if ($currentVersion === false) return;
@@ -278,30 +293,6 @@ class MainWPDB
                 $this->updateUserExtension($row);
             }
         }
-
-//        if (version_compare($currentVersion, '4.4', '<'))
-//        {
-//            global $wpdb;
-//            $results = $wpdb->get_results('SELECT * FROM ' . $this->tableName('remote_dest'), OBJECT);
-//            if ($results)
-//            {
-//                foreach ($results as $result)
-//                {
-//                    if ($result->type == 'dropbox')
-//                    {
-//                        $wpdb->update($this->tableName('remote_dest'), array('field2' => MainWPUtility::encrypt(MainWPUtility::decrypt_legacy($result->field2, MainWPRemoteDestination::$ENCRYPT), MainWPRemoteDestination::$ENCRYPT)), array('id' => $result->id));
-//                    }
-//                    else if ($result->type == 'ftp')
-//                    {
-//                        $wpdb->update($this->tableName('remote_dest'), array('field3' => MainWPUtility::encrypt(MainWPUtility::decrypt_legacy($result->field3, MainWPRemoteDestination::$ENCRYPT), MainWPRemoteDestination::$ENCRYPT)), array('id' => $result->id));
-//                    }
-//                    else if ($result->type == 'amazon')
-//                    {
-//                        $wpdb->update($this->tableName('remote_dest'), array('field2' => MainWPUtility::encrypt(MainWPUtility::decrypt_legacy($result->field2, MainWPRemoteDestination::$ENCRYPT), MainWPRemoteDestination::$ENCRYPT)), array('id' => $result->id));
-//                    }
-//                }
-//            }
-//        }
 
         if (version_compare($currentVersion, '5.3', '<'))
         {
@@ -331,6 +322,22 @@ class MainWPDB
             foreach ($options as $option)
             {
                 MainWPUtility::fix_option($option);
+            }
+        }
+
+        if (version_compare($currentVersion, '7.3', '<'))
+        {
+            /** @var $wpdb wpdb */
+            global $wpdb;
+
+            //get all sites
+            $sites = $wpdb->get_results('SELECT id FROM ' . $this->tableName('wp'));
+            if (!empty($sites))
+            {
+                foreach ($sites as $site)
+                {
+                    $wpdb->insert($this->tableName('wp_settings_backup'), array('wpid' => $site->id, 'archiveFormat' => 'global'));
+                }
             }
         }
     }
@@ -602,6 +609,13 @@ class MainWPDB
         return $wpdb->get_results('SELECT * FROM ' . $this->tableName('wp') . ' WHERE url = "' . $this->escape($url) . '"', OBJECT);
     }
 
+    public function getWebsiteBackupSettings($websiteid)
+    {
+        if (!MainWPUtility::ctype_digit($websiteid)) return null;
+
+        return $this->getRowResult('SELECT * FROM ' . $this->tableName('wp_settings_backup') . ' WHERE wpid = ' . $websiteid);
+    }
+
     public function getWebsiteById($id, $selectGroups = false)
     {
         return $this->getRowResult($this->getSQLWebsiteById($id, $selectGroups));
@@ -845,6 +859,8 @@ class MainWPDB
             if ($wpdb->insert($this->tableName('wp'), $values))
             {
                 $websiteid = $wpdb->insert_id;
+                $wpdb->insert($this->tableName('wp_settings_backup'), array('wpid' => $websiteid, 'archiveFormat' => 'global'));
+
                 foreach ($groupnames as $groupname)
                 {
                     if ($wpdb->insert($this->tableName('group'), array('userid' => $userid, 'name' => $this->escape(htmlspecialchars($groupname))))) {
@@ -945,7 +961,7 @@ class MainWPDB
         return false;
     }
 
-    public function updateWebsite($websiteid, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifyCertificate = 1)
+    public function updateWebsite($websiteid, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifyCertificate = 1, $archiveFormat)
     {
         /** @var $wpdb wpdb */
         global $wpdb;
@@ -955,10 +971,13 @@ class MainWPDB
             if (MainWPUtility::can_edit_website($website)) {
                 //update admin
                 $wpdb->query('UPDATE ' . $this->tableName('wp') . ' SET name="' . $this->escape($name) . '", adminname="' . $this->escape($siteadmin) . '",offline_checks="' . $this->escape($offlineChecks) . '",pluginDir="'.$this->escape($pluginDir).'",maximumFileDescriptorsOverride = '.($maximumFileDescriptorsOverride ? 1 : 0) . ',maximumFileDescriptorsAuto= '.($maximumFileDescriptorsAuto ? 1 : 0) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="'.intval($verifyCertificate).'"  WHERE id=' . $websiteid);
+                $wpdb->query('UPDATE ' . $this->tableName('wp_settings_backup') . ' SET archiveFormat = "' . $this->escape($archiveFormat) . '" WHERE wpid=' . $websiteid);
                 //remove groups
                 $wpdb->query('DELETE FROM ' . $this->tableName('wp_group') . ' WHERE wpid=' . $websiteid);
                 //Remove GA stats
+                $showErrors = $wpdb->hide_errors();
                 $wpdb->query('DELETE FROM ' . $this->tableName('wp_ga') . ' WHERE wpid=' . $websiteid);
+                if ($showErrors) $wpdb->show_errors();
                 //add groups with groupnames
                 foreach ($groupnames as $groupname)
                 {

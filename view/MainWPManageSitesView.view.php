@@ -1059,6 +1059,62 @@ class MainWPManageSitesView
             <div class="inside">
             <table class="form-table" style="width: 100%">
                 <?php
+                $globalArchiveFormat = get_option('mainwp_archiveFormat');
+                if ($globalArchiveFormat == false) $globalArchiveFormat = 'tar.gz';
+                if ($globalArchiveFormat == 'zip')
+                {
+                    $globalArchiveFormatText = 'Zip';
+                }
+                else if ($globalArchiveFormat == 'tar')
+                {
+                    $globalArchiveFormatText = 'Tar';
+                }
+                else if ($globalArchiveFormat == 'tar.gz')
+                {
+                    $globalArchiveFormatText = 'Tar GZip';
+                }
+                else if ($globalArchiveFormat == 'tar.bz2')
+                {
+                    $globalArchiveFormatText = 'Tar BZip2';
+                }
+
+                $backupSettings = MainWPDB::Instance()->getWebsiteBackupSettings($website->id);
+                $archiveFormat = $backupSettings->archiveFormat;
+                $useGlobal = ($archiveFormat == 'global');
+                ?>
+                <tr>
+                    <th scope="row"><?php _e('Archive format','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('','mainwp')); ?></th>
+                    <td>
+                        <table class="mainwp-nomarkup">
+                            <tr>
+                                <td valign="top">
+                                    <span class="mainwp-select-bg"><select name="mainwp_archiveFormat" id="mainwp_archiveFormat">
+                                        <option value="global" <?php if ($useGlobal): ?>selected<?php endif; ?>>Global setting (<?php echo $globalArchiveFormatText; ?>)</option>
+                                        <option value="zip" <?php if ($archiveFormat == 'zip'): ?>selected<?php endif; ?>>Zip</option>
+                                        <option value="tar" <?php if ($archiveFormat == 'tar'): ?>selected<?php endif; ?>>Tar</option>
+                                        <option value="tar.gz" <?php if ($archiveFormat == 'tar.gz'): ?>selected<?php endif; ?>>Tar GZip</option>
+                                        <option value="tar.bz2" <?php if ($archiveFormat == 'tar.bz2'): ?>selected<?php endif; ?>>Tar BZip2</option>
+                                    </select><label></label></span>
+                                </td>
+                                <td>
+                                    <i>
+                                    <span id="info_global" class="archive_info" <?php if ($useGlobal): ?>style="display: none;"<?php endif; ?>><?php
+                                        if ($globalArchiveFormat == 'zip'): ?>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)<?php
+                                        elseif ($globalArchiveFormat == 'tar'): ?>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)<?php
+                                        elseif ($globalArchiveFormat == 'tar.gz'): ?>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)<?php
+                                        elseif ($globalArchiveFormat == 'tar.bz2'): ?>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)<?php endif; ?></span>
+                                    <span id="info_zip" class="archive_info" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)</span>
+                                    <span id="info_tar" class="archive_info" <?php if ($archiveFormat != 'tar'): ?>style="display: none;"<?php endif; ?>>Creates an uncompressed tar-archive. (No compression, fast, low memory usage)</span>
+                                    <span id="info_tar.gz" class="archive_info" <?php if ($archiveFormat != 'tar.gz'): ?>style="display: none;"<?php endif; ?>>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)</span>
+                                    <span id="info_tar.bz2" class="archive_info" <?php if ($archiveFormat != 'tar.bz2'): ?>style="display: none;"<?php endif; ?>>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)</span>
+                                    </i>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <?php
                 $maximumFileDescriptorsOverride = ($website->maximumFileDescriptorsOverride == 1);
                 $maximumFileDescriptorsAuto= ($website->maximumFileDescriptorsAuto == 1);
                 $maximumFileDescriptors = $website->maximumFileDescriptors;

@@ -143,6 +143,7 @@ class MainWPUtility
         curl_close($ch);
 
         $host = parse_url($realurl, PHP_URL_HOST);
+        $ip = false;
         if ($http_status == '200')
         {
             $dnsRecord = dns_get_record($host);
@@ -152,6 +153,22 @@ class MainWPUtility
             }
             else
             {
+                if (!isset($dnsRecord['ip']))
+                {
+                    foreach ($dnsRecord as $dnsRec)
+                    {
+                        if (isset($dnsRec['ip']))
+                        {
+                            $ip = $dnsRec['ip'];
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    $ip = $dnsRecord['ip'];
+                }
+
                 $found = false;
                 if (!isset($dnsRecord['host']))
                 {
@@ -174,7 +191,11 @@ class MainWPUtility
                 }
             }
         }
-        return array('host' => $host, 'httpCode' => $http_status, 'error' => $err, 'httpCodeString' => self::getHttpStatusErrorString($http_status));
+
+        $out = array('host' => $host, 'httpCode' => $http_status, 'error' => $err, 'httpCodeString' => self::getHttpStatusErrorString($http_status));
+        if ($ip !== false) $out['ip'] = $ip;
+
+        return $out;
     }
 
 
@@ -1726,33 +1747,39 @@ class MainWPUtility
         return preg_match('/' . $pPrefix . '(.*).(zip|tar|tar.gz|tar.bz2)' . $pSuffix . '$/', $pFileName);
     }
 
-    public static function getCurrentArchiveExtension()
+    public static function isSQLFile($pFileName)
     {
-        $archiveFormat = get_option('mainwp_archiveFormat');
-        if ($archiveFormat === false) $archiveFormat = 'tar.gz';
+        return preg_match('/(.*).sql$/', $pFileName) || self::isSQLArchive($pFileName);
+    }
+
+    public static function isSQLArchive($pFileName)
+    {
+        return preg_match('/(.*).sql.(zip|tar|tar.gz|tar.bz2)$/', $pFileName);
+    }
+
+    public static function getCurrentArchiveExtension($website)
+    {
+        $backupSettings = MainWPDB::Instance()->getWebsiteBackupSettings($website->id);
+        $archiveFormat = $backupSettings->archiveFormat;
+        $useGlobal = ($archiveFormat == 'global');
+
+        if ($useGlobal)
+        {
+            $archiveFormat = get_option('mainwp_archiveFormat');
+            if ($archiveFormat === false) $archiveFormat = 'tar.gz';
+        }
 
         return $archiveFormat;
     }
 
     public static function getRealExtension($path)
     {
-        if (self::endsWith($path, '.sql.zip'))
+        $checks = array('.sql.zip', '.sql.tar', '.sql.tar.gz', '.sql.tar.bz2', '.tar.gz', '.tar.bz2');
+        foreach ($checks as $check)
         {
-            return '.sql.zip';
+            if (self::endsWith($path, $check)) return $check;
         }
-        if (self::endsWith($path, '.tar.gz'))
-        {
-            return '.tar.gz';
-        }
-        else if (self::endsWith($path, '.tar.bz2'))
-        {
-            return '.tar.bz2';
-        }
-        else
-        {
-            return '.' . pathinfo($path, PATHINFO_EXTENSION);
-        }
+
+        return '.' . pathinfo($path, PATHINFO_EXTENSION);
     }
-
-
 }

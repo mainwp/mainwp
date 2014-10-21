@@ -839,12 +839,13 @@ class MainWPManageBackups
         //Backup buddy
         $newExcludes[] = 'wp-content/uploads/backupbuddy_backups';
         $newExcludes[] = 'wp-content/uploads/backupbuddy_temp';
+        $newExcludes[] = 'wp-content/uploads/pb_backupbuddy';
 
         //ManageWP
         $newExcludes[] = 'wp-content/managewp';
 
         //InfiniteWP
-        $newExcludes[] = 'wp-content/infinitewp/backups';
+        $newExcludes[] = 'wp-content/infinitewp';
 
         //WordPress Backup to Dropbox
         $newExcludes[] = 'wp-content/backups';

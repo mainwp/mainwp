@@ -243,9 +243,9 @@ class MainWPServerInformation
         <tbody>
             <?php
             foreach ($schedules as $schedule => $option)
-            {
+            {   
             ?>
-            <tr><td><?php echo $schedule; ?></td><td><?php echo (get_option($option) === false || get_option($option) == 0) ? 'Never run' : MainWPUtility::formatTimestamp(get_option($option)); ?></td></tr>
+            <tr><td><?php echo $schedule; ?></td><td><?php echo (get_option($option) === false || get_option($option) == 0) ? 'Never run' : MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp(get_option($option))); ?></td></tr>
             <?php
             }
             ?>

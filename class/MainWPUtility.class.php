@@ -836,6 +836,7 @@ class MainWPUtility
         @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         if (!ini_get('safe_mode')) @set_time_limit($timeout);
         @ini_set('max_execution_time', $timeout);
+        MainWPUtility::endSession();
 
         $disabled_functions = ini_get('disable_functions');
         if (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false))
@@ -1788,5 +1789,11 @@ class MainWPUtility
         }
 
         return '.' . pathinfo($path, PATHINFO_EXTENSION);
+    }
+
+    public static function sanitize_file_name($filename)
+    {
+        $filename = str_replace(array('|', '/', '\\', ' ', ':'), array('-', '-', '-', '-', '-'), $filename);
+        return sanitize_file_name($filename);
     }
 }

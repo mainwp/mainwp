@@ -1757,11 +1757,18 @@ class MainWPUtility
         return preg_match('/(.*).sql.(zip|tar|tar.gz|tar.bz2)$/', $pFileName);
     }
 
-    public static function getCurrentArchiveExtension($website)
+    public static function getCurrentArchiveExtension($website = false)
     {
-        $backupSettings = MainWPDB::Instance()->getWebsiteBackupSettings($website->id);
-        $archiveFormat = $backupSettings->archiveFormat;
-        $useGlobal = ($archiveFormat == 'global');
+        if ($website == false)
+        {
+            $useGlobal = true;
+        }
+        else
+        {
+            $backupSettings = MainWPDB::Instance()->getWebsiteBackupSettings($website->id);
+            $archiveFormat = $backupSettings->archiveFormat;
+            $useGlobal = ($archiveFormat == 'global');
+        }
 
         if ($useGlobal)
         {

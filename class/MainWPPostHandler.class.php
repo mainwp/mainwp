@@ -591,7 +591,7 @@ class MainWPPostHandler
             $excludedFolder = array_map(array('MainWPUtility', 'trimSlashes'), $excludedFolder);
             $excludedFolder = implode(",", $excludedFolder);
 
-            die(json_encode(array('result' => MainWPManageSites::backup($_POST['site_id'], $_POST['type'], (isset($_POST['subfolder']) ? $_POST['subfolder'] : ''), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset($_POST['fileNameUID']) ? $_POST['fileNameUID'] : ''))));
+            die(json_encode(array('result' => MainWPManageSites::backup($_POST['site_id'], $_POST['type'], (isset($_POST['subfolder']) ? $_POST['subfolder'] : ''), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset($_POST['fileNameUID']) ? $_POST['fileNameUID'] : '', $_POST['archiveFormat'], $_POST['maximumFileDescriptorsOverride'], $_POST['maximumFileDescriptorsAuto'], $_POST['maximumFileDescriptors'], $_POST['loadFilesBeforeZip']))));
         }
         catch (MainWPException $e)
         {

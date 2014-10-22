@@ -3866,6 +3866,12 @@ backup = function ()
         filename: fileName,
         fileNameUID: fileNameUID,
 
+        archiveFormat: jQuery('#mainwp_archiveFormat').val(),
+        maximumFileDescriptorsOverride: jQuery('#mainwp_options_maximumFileDescriptorsOverride').val(),
+        maximumFileDescriptorsAuto: (jQuery('#mainwp_maximumFileDescriptorsAuto').attr('checked') ? 1 : 0),
+        maximumFileDescriptors: jQuery('#mainwp_options_maximumFileDescriptors').val(),
+        loadFilesBeforeZip: jQuery('#mainwp_options_loadFilesBeforeZip').val(),
+
         subfolder:jQuery('#backup_subfolder').val()
     });
 

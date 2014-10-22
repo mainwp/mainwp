@@ -457,7 +457,7 @@ class MainWPManageSites
         return true;
     }
 
-    public static function backup($pSiteId, $pType, $pSubfolder, $pExclude, $excludebackup, $excludecache, $excludenonwp, $excludezip, $pFilename = null, $pFileNameUID = '')
+    public static function backup($pSiteId, $pType, $pSubfolder, $pExclude, $excludebackup, $excludecache, $excludenonwp, $excludezip, $pFilename = null, $pFileNameUID = '', $pArchiveFormat = false, $pMaximumFileDescriptorsOverride = false, $pMaximumFileDescriptorsAuto = false, $pMaximumFileDescriptors = false, $pLoadFilesBeforeZip = false)
     {
         if (trim($pFilename) == '') $pFilename = null;
 
@@ -486,30 +486,76 @@ class MainWPManageSites
         $websiteCleanUrl = str_replace(array('http://', 'https://', '/'), array('', '', '-'), $websiteCleanUrl);
 
         MainWPUtility::endSession();
-        if ($website->maximumFileDescriptorsOverride == 1)
+        //Normal flow: use website & fallback to global
+        if ($pMaximumFileDescriptorsOverride == false)
         {
-            $maximumFileDescriptorsAuto = ($website->maximumFileDescriptorsAuto == 1);
-            $maximumFileDescriptors = $website->maximumFileDescriptors;
+            if ($website->maximumFileDescriptorsOverride == 1)
+            {
+                $maximumFileDescriptorsAuto = ($website->maximumFileDescriptorsAuto == 1);
+                $maximumFileDescriptors = $website->maximumFileDescriptors;
+            }
+            else
+            {
+                $maximumFileDescriptorsAuto = get_option('mainwp_maximumFileDescriptorsAuto');
+                $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
+                $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
+            }
         }
+        //If not set to global & overriden, use these settings
+        else if (($pArchiveFormat != 'global') && ($pMaximumFileDescriptorsOverride == 1))
+        {
+            $maximumFileDescriptorsAuto = ($pMaximumFileDescriptorsAuto == 1);
+            $maximumFileDescriptors = $pMaximumFileDescriptors;
+        }
+        //Set to global or not overriden, use global settings
         else
         {
             $maximumFileDescriptorsAuto = get_option('mainwp_maximumFileDescriptorsAuto');
-        $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
-        $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
+            $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
+            $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
         }
+
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $pType), $pFilename);
         $file = str_replace('%', '', $file);
 
-
-        $loadFilesBeforeZip = $website->loadFilesBeforeZip;
-        if ($loadFilesBeforeZip == 1)
+        //Normal flow: check site settings & fallback to global
+        if ($pLoadFilesBeforeZip == false)
+        {
+            $loadFilesBeforeZip = $website->loadFilesBeforeZip;
+            if ($loadFilesBeforeZip == 1)
+            {
+                $loadFilesBeforeZip = get_option('mainwp_options_loadFilesBeforeZip');
+                $loadFilesBeforeZip = ($loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false);
+            }
+            else $loadFilesBeforeZip = ($loadFilesBeforeZip == 2);
+        }
+        //Overriden flow: only fallback to global
+        else if ($pArchiveFormat == 'global' || $pLoadFilesBeforeZip == 1)
         {
             $loadFilesBeforeZip = get_option('mainwp_options_loadFilesBeforeZip');
             $loadFilesBeforeZip = ($loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false);
         }
-        else $loadFilesBeforeZip = ($loadFilesBeforeZip == 2);
+        else
+        {
+            $loadFilesBeforeZip = ($pLoadFilesBeforeZip == 2);
+        }
 
-        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'ext' => MainWPUtility::getCurrentArchiveExtension($website), 'file_descriptors_auto' => $maximumFileDescriptorsAuto, 'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip, MainWPUtility::getFileParameter($website) => $file, 'fileUID' => $pFileNameUID));
+        //Nomral flow: check site settings & fallback to global
+        if ($pArchiveFormat == false)
+        {
+            $archiveFormat = MainWPUtility::getCurrentArchiveExtension($website);
+        }
+        //Overriden flow: only fallback to global
+        else if  ($pArchiveFormat == 'global')
+        {
+            $archiveFormat = MainWPUtility::getCurrentArchiveExtension();
+        }
+        else
+        {
+            $archiveFormat = $pArchiveFormat;
+        }
+
+        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'ext' => $archiveFormat, 'file_descriptors_auto' => $maximumFileDescriptorsAuto, 'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip, MainWPUtility::getFileParameter($website) => $file, 'fileUID' => $pFileNameUID));
         do_action('mainwp_managesite_backup', $website, array('type' => $pType), $information);
 
         if (isset($information['error']))

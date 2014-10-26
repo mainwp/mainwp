@@ -156,31 +156,31 @@ class MainWPManageSites
         }
         $websiteCleanUrl = str_replace(array('http://', 'https://', '/'), array('', '', '-'), $websiteCleanUrl);
 
-        if ($website->maximumFileDescriptorsOverride == 1)
-        {
-            $maximumFileDescriptorsAuto = ($website->maximumFileDescriptorsAuto == 1);
-            $maximumFileDescriptors = $website->maximumFileDescriptors;
-        }
-        else
-        {
-            $maximumFileDescriptorsAuto = get_option('mainwp_maximumFileDescriptorsAuto');
-        $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
-        $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
-        }
-
         if ($type == 'db')
         {
-            $ext = '.sql.' . MainWPUtility::getCurrentArchiveExtension($website);
+            $ext = '.sql.' . MainWPUtility::getCurrentArchiveExtension($website, $pTask);
         }
         else
         {
-            $ext = '.' . MainWPUtility::getCurrentArchiveExtension($website);
+            $ext = '.' . MainWPUtility::getCurrentArchiveExtension($website, $pTask);
         }
 
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $type), $pFilename) . $ext;
         $file = str_replace('%', '', $file);
 
-        $loadFilesBeforeZip = $website->loadFilesBeforeZip;
+        if ($pTask->archiveFormat == 'zip')
+        {
+            $loadFilesBeforeZip = $pTask->loadFilesBeforeZip;
+        }
+        else if ($pTask->archiveFormat == '' || $pTask->archiveFormat == 'site')
+        {
+            $loadFilesBeforeZip = $website->loadFilesBeforeZip;
+        }
+        else
+        {
+            $loadFilesBeforeZip = 1;
+        }
+
         if ($loadFilesBeforeZip == 1)
         {
             $loadFilesBeforeZip = get_option('mainwp_options_loadFilesBeforeZip');
@@ -188,10 +188,27 @@ class MainWPManageSites
         }
         else $loadFilesBeforeZip = ($loadFilesBeforeZip == 2);
 
+        if (($pTask->archiveFormat == 'zip') && ($pTask->maximumFileDescriptorsOverride == 1))
+        {
+            $maximumFileDescriptorsAuto = ($pTask->maximumFileDescriptorsAuto == 1);
+            $maximumFileDescriptors = $pTask->maximumFileDescriptors;
+        }
+        else if (($pTask->archiveFormat == '' || $pTask->archiveFormat == 'site') && ($website->maximumFileDescriptorsOverride == 1))
+        {
+            $maximumFileDescriptorsAuto = ($website->maximumFileDescriptorsAuto == 1);
+            $maximumFileDescriptors = $website->maximumFileDescriptors;
+        }
+        else
+        {
+            $maximumFileDescriptorsAuto = get_option('mainwp_maximumFileDescriptorsAuto');
+            $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
+            $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
+        }
+
         $backupTaskProgress = MainWPDB::Instance()->getBackupTaskProgress($taskId, $website->id);
         if (empty($backupTaskProgress) || ($backupTaskProgress->dtsFetched < $pTask->last_run))
         {
-            $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type, 'exclude' => $exclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'ext' => MainWPUtility::getCurrentArchiveExtension($website), 'file_descriptors_auto' => $maximumFileDescriptorsAuto, 'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip, MainWPUtility::getFileParameter($website) => $file));
+            $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type, 'exclude' => $exclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'ext' => MainWPUtility::getCurrentArchiveExtension($website, $pTask), 'file_descriptors_auto' => $maximumFileDescriptorsAuto, 'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip, MainWPUtility::getFileParameter($website) => $file));
 
             $backupTaskProgress = MainWPDB::Instance()->getBackupTaskProgress($taskId, $website->id);
             if (empty($backupTaskProgress))

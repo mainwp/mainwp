@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '7.3';
+    private $mainwp_db_version = '7.5';
     //Private
     private $table_prefix;
     //Singleton
@@ -200,22 +200,6 @@ class MainWPDB
   exclude text NOT NULL,
   sites text NOT NULL,
   groups text NOT NULL,
-  ftp_enabled tinyint(1) NOT NULL,
-  ftp_address text NOT NULL,
-  ftp_username text NOT NULL,
-  ftp_password text NOT NULL,
-  ftp_path text NOT NULL,
-  ftp_port text NOT NULL,
-  ftp_ssl tinyint(1) NOT NULL,
-  amazon_enabled tinyint(1) NOT NULL,
-  amazon_access text NOT NULL,
-  amazon_secret text NOT NULL,
-  amazon_bucket text NOT NULL,
-  amazon_dir text NOT NULL,
-  dropbox_enabled tinyint(1) NOT NULL,
-  dropbox_username text NOT NULL,
-  dropbox_password text NOT NULL,
-  dropbox_dir text NOT NULL,
   last int(11) NOT NULL,
   last_run int(11) NOT NULL,
   lastStartNotificationSent int(11) NOT NULL DEFAULT 0,
@@ -230,7 +214,12 @@ class MainWPDB
   excludebackup tinyint(1) DEFAULT 0,
   excludecache tinyint(1) DEFAULT 0,
   excludenonwp tinyint(1) DEFAULT 0,
-  excludezip tinyint(1) DEFAULT 0';
+  excludezip tinyint(1) DEFAULT 0,
+  archiveFormat text NOT NULL,
+  loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,
+  maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
+  maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
+  maximumFileDescriptors int(11) NOT NULL DEFAULT 150';
           if ($currentVersion == '') $tbl .= ',
   PRIMARY KEY  (id)  ';
           $tbl .= ');';
@@ -1090,7 +1079,7 @@ class MainWPDB
         return $wpdb->get_results('SELECT * FROM ' . $this->tableName('wp_backup') . ' WHERE '.($userid == null ? '' : 'userid= ' . $userid . ' AND ') . ' template = 0 ' . ($orderBy != null ? 'ORDER BY ' . $orderBy : ''), OBJECT);
     }
 
-    public function addBackupTask($userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename, $template, $excludebackup, $excludecache, $excludenonwp, $excludezip)
+    public function addBackupTask($userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename, $template, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip)
     {
         /** @var $wpdb wpdb */
         global $wpdb;
@@ -1103,22 +1092,6 @@ class MainWPDB
                 'exclude' => $exclude,
                 'sites' => $sites,
                 'groups' => $groups,
-                'ftp_enabled' => 0,
-                'ftp_address' => '',
-                'ftp_username' => '',
-                'ftp_password' => '',
-                'ftp_path' => '',
-                'ftp_port' => '',
-                'ftp_ssl' => 0,
-                'amazon_enabled' => 0,
-                'amazon_access' => '',
-                'amazon_secret' => '',
-                'amazon_bucket' => '',
-                'amazon_dir' => '',
-                'dropbox_enabled' => 0,
-                'dropbox_username' => '',
-                'dropbox_password' => '',
-                'dropbox_dir' => '',
                 'last' => 0,
                 'last_run' => 0,
                 'last_run_manually' => 0,
@@ -1129,7 +1102,9 @@ class MainWPDB
                 'filename' => $filename,
                 'paused' => 0,
                 'template' => $template,
-                'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip);
+                'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip,
+                'archiveFormat' =>$archiveFormat, 'loadFilesBeforeZip' => $loadFilesBeforeZip, 'maximumFileDescriptorsOverride' => $maximumFileDescriptorsOverride, 'maximumFileDescriptorsAuto' => $maximumFileDescriptorsAuto, 'maximumFileDescriptors' => $maximumFileDescriptors);
+
             if ($wpdb->insert($this->tableName('wp_backup'), $values)) {
                 return $this->getBackupTaskById($wpdb->insert_id);
             }
@@ -1137,14 +1112,16 @@ class MainWPDB
         return false;
     }
 
-    public function updateBackupTask($id, $userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename, $ftp_enabled, $ftp_address, $ftp_username, $ftp_password, $ftp_path, $ftp_port, $ftp_ssl, $amazon_enabled, $amazon_access, $amazon_secret, $amazon_bucket, $amazon_dir, $dropbox_enabled, $dropbox_username, $dropbox_password, $dropbox_dir, $excludebackup, $excludecache, $excludenonwp, $excludezip)
+    public function updateBackupTask($id, $userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip)
     {
         /** @var $wpdb wpdb */
         global $wpdb;
 
         if (MainWPUtility::ctype_digit($userid) && MainWPUtility::ctype_digit($id)) {
-            return $wpdb->update($this->tableName('wp_backup'), array('userid' => $userid, 'name' => $name, 'schedule' => $schedule, 'type' => $type, 'exclude' => $exclude, 'sites' => $sites, 'groups' => $groups, 'subfolder' => MainWPUtility::removePreSlashSpaces($subfolder), 'filename' => $filename, 'ftp_enabled' => $ftp_enabled, 'ftp_address' => $ftp_address, 'ftp_username' => $ftp_username, 'ftp_password' => $ftp_password, 'ftp_path' => $ftp_path, 'ftp_port' => $ftp_port, 'ftp_ssl' => $ftp_ssl, 'amazon_enabled' => $amazon_enabled, 'amazon_access' => $amazon_access, 'amazon_secret' => $amazon_secret, 'amazon_bucket' => $amazon_bucket, 'amazon_dir' => $amazon_dir, 'dropbox_enabled' => $dropbox_enabled, 'dropbox_username' => $dropbox_username, 'dropbox_password' => $dropbox_password, 'dropbox_dir' => $dropbox_dir,
-                            'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip), array('id' => $id));
+            return $wpdb->update($this->tableName('wp_backup'), array('userid' => $userid, 'name' => $name, 'schedule' => $schedule, 'type' => $type, 'exclude' => $exclude, 'sites' => $sites, 'groups' => $groups, 'subfolder' => MainWPUtility::removePreSlashSpaces($subfolder), 'filename' => $filename,
+                            'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip,
+                            'archiveFormat' =>$archiveFormat, 'loadFilesBeforeZip' => $loadFilesBeforeZip, 'maximumFileDescriptorsOverride' => $maximumFileDescriptorsOverride,
+                'maximumFileDescriptorsAuto' => $maximumFileDescriptorsAuto, 'maximumFileDescriptors' => $maximumFileDescriptors), array('id' => $id));
         }
         return false;
     }

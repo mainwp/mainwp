@@ -10,7 +10,7 @@ jQuery(document).ready(function ()
         }
     });
 
-    if (jQuery('#mainwp_options_loadFilesBeforeZip_container').length > 0) initTriStateCheckBox('mainwp_options_loadFilesBeforeZip_container', 'mainwp_options_loadFilesBeforeZip', true);
+//    if (jQuery('#mainwp_options_loadFilesBeforeZip_container').length > 0) initTriStateCheckBox('mainwp_options_loadFilesBeforeZip_container', 'mainwp_options_loadFilesBeforeZip', true);
 });
 
 /**
@@ -1866,6 +1866,7 @@ mainwp_managebackups_update = function (event) {
 
         jQuery('#mainwp_managebackups_update').attr('disabled', 'true'); //disable button to add..
 
+        var loadFilesBeforeZip = jQuery('[name="mainwp_options_loadFilesBeforeZip"]:checked').val();
         var data = mainwp_secure_data({
             action:'mainwp_updatebackup',
             id:jQuery('#mainwp_managebackups_edit_id').val(),
@@ -1881,7 +1882,12 @@ mainwp_managebackups_update = function (event) {
             'sites[]':selected_sites,
             subfolder:jQuery('#mainwp_managebackups_add_subfolder').val(),
             remote_destinations:(jQuery('#backup_location_remote').hasClass('mainwp_action_down') ? jQuery.map(jQuery('#backup_destination_list').find('input[name="remote_destinations[]"]'), function(el) { return jQuery(el).val(); }) : []),
-            filename: jQuery('#backup_filename').val()
+            filename: jQuery('#backup_filename').val(),
+            archiveFormat: jQuery('#mainwp_archiveFormat').val(),
+            maximumFileDescriptorsOverride: jQuery('#mainwp_options_maximumFileDescriptorsOverride_override').is(':checked') ? 1 : 0,
+            maximumFileDescriptorsAuto: (jQuery('#mainwp_maximumFileDescriptorsAuto').attr('checked') ? 1 : 0),
+            maximumFileDescriptors: jQuery('#mainwp_options_maximumFileDescriptors').val(),
+            loadFilesBeforeZip: loadFilesBeforeZip
         });
         jQuery.post(ajaxurl, data, function (response) {
             managebackups_init();
@@ -1959,6 +1965,7 @@ mainwp_managebackups_add = function (event) {
         jQuery('#mainwp_managebackups_add').attr('disabled', 'true'); //disable button to add..
 
         jQuery('#mainwp_managesites_add').attr('disabled', 'true'); //Disable add button
+        var loadFilesBeforeZip = jQuery('[name="mainwp_options_loadFilesBeforeZip"]:checked').val();
         var data = mainwp_secure_data({
             action:'mainwp_addbackup',
             name:jQuery('#mainwp_managebackups_add_name').val(),
@@ -1973,7 +1980,12 @@ mainwp_managebackups_add = function (event) {
             'sites[]':selected_sites,
             subfolder: jQuery('#mainwp_managebackups_add_subfolder').val(),
             remote_destinations:(jQuery('#backup_location_remote').hasClass('mainwp_action_down') ? jQuery.map(jQuery('#backup_destination_list').find('input[name="remote_destinations[]"]'), function(el) { return jQuery(el).val(); }) : []),
-            filename: jQuery('#backup_filename').val()
+            filename: jQuery('#backup_filename').val(),
+            archiveFormat: jQuery('#mainwp_archiveFormat').val(),
+            maximumFileDescriptorsOverride: jQuery('#mainwp_options_maximumFileDescriptorsOverride_override').is(':checked') ? 1 : 0,
+            maximumFileDescriptorsAuto: (jQuery('#mainwp_maximumFileDescriptorsAuto').attr('checked') ? 1 : 0),
+            maximumFileDescriptors: jQuery('#mainwp_options_maximumFileDescriptors').val(),
+            loadFilesBeforeZip: loadFilesBeforeZip
         });
         jQuery.post(ajaxurl, data, function (response) {
             managebackups_init();
@@ -3841,7 +3853,7 @@ jQuery(document).ready(function () {
 backup = function ()
 {
     backupError = false;
-    jQuery('#backup_btnSubmit').attr('disabled', 'true');
+    //jQuery('#backup_btnSubmit').attr('disabled', 'true');
     jQuery('#backup_loading').show();
     var remote_destinations = jQuery('#backup_location_remote').hasClass('mainwp_action_down') ? jQuery.map(jQuery('#backup_destination_list').find('input[name="remote_destinations[]"]'), function(el) { return {id: jQuery(el).val(), title: jQuery(el).attr('title'), type: jQuery(el).attr('destination_type')}; }) : [];
 
@@ -3853,6 +3865,8 @@ backup = function ()
     }
     var fileName = jQuery('#backup_filename').val();
     var fileNameUID = mainwp_uid();
+    var loadFilesBeforeZip = jQuery('[name="mainwp_options_loadFilesBeforeZip"]:checked').val();
+
     var data = mainwp_secure_data({
         action:'mainwp_backup',
         site_id:jQuery('#backup_site_id').val(),
@@ -3867,10 +3881,10 @@ backup = function ()
         fileNameUID: fileNameUID,
 
         archiveFormat: jQuery('#mainwp_archiveFormat').val(),
-        maximumFileDescriptorsOverride: jQuery('#mainwp_options_maximumFileDescriptorsOverride').val(),
+        maximumFileDescriptorsOverride: jQuery('#mainwp_options_maximumFileDescriptorsOverride_override').is(':checked') ? 1 : 0,
         maximumFileDescriptorsAuto: (jQuery('#mainwp_maximumFileDescriptorsAuto').attr('checked') ? 1 : 0),
         maximumFileDescriptors: jQuery('#mainwp_options_maximumFileDescriptors').val(),
-        loadFilesBeforeZip: jQuery('#mainwp_options_loadFilesBeforeZip').val(),
+        loadFilesBeforeZip: loadFilesBeforeZip,
 
         subfolder:jQuery('#backup_subfolder').val()
     });

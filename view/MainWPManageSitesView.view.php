@@ -563,7 +563,7 @@ class MainWPManageSitesView
             <th scope="row"><?php _e('Maximum File Descriptors on Child','mainwp'); ?> <?php MainWPUtility::renderToolTip('The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
             <td>
                 <div style="float: left">Auto detect:&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e('Enter a fallback value because not all hosts support this function.','mainwp'); ?>)</i></div><div style="clear:both"></div>
-                <input type="text" name="mainwp_options_maximumFileDescriptors"
+                <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors"
                        value="<?php echo ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors); ?>"/><span class="mainwp-form_hint"><?php _e('The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp'); ?></span>
             </td>
         </tr>
@@ -901,14 +901,16 @@ class MainWPManageSitesView
                         </div>Override<br/><br />
 
                         <div style="float: left">Auto detect:&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e('Enter a fallback value because not all hosts support this function.','mainwp'); ?>)</i></div><div style="clear:both"></div>
-                        <input type="text" name="mainwp_options_maximumFileDescriptors"
+                        <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors"
                                value="<?php echo $maximumFileDescriptors; ?>"/><span class="mainwp-form_hint"><?php _e('The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp'); ?></span>
                     </td>
                 </tr>
                 <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
                     <th scope="row">Load files in memory before zipping <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advise to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/load-files-memory/'); ?></th>
                     <td>
-                        <span id="mainwp_options_loadFilesBeforeZip_container" style="cursor: default;"><input type="hidden" id="mainwp_options_loadFilesBeforeZip" name="mainwp_options_loadFilesBeforeZip" value="<?php echo $website->loadFilesBeforeZip; ?>"/></span> <i>(<?php _e('When not enabled or disabled the global setting will be used.', 'mainwp'); ?>)</i>
+                        <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_global" value="1" <?php if ($website->loadFilesBeforeZip == false || $website->loadFilesBeforeZip == 1): ?>checked="true"<?php endif; ?>/> Global setting (<a href="<?php echo admin_url('admin.php?page=Settings'); ?>">Change Here</a>)<br />
+                        <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_yes" value="2" <?php if ($website->loadFilesBeforeZip == 2): ?>checked="true"<?php endif; ?>/> Yes<br />
+                        <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_no" value="0" <?php if ($website->loadFilesBeforeZip == 0): ?>checked="true"<?php endif; ?>/> No<br />
                     </td>
                 </tr>
             </table>
@@ -1218,14 +1220,16 @@ class MainWPManageSitesView
                         </div>Override<br/><br />
 
                         <div style="float: left">Auto detect:&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e('Enter a fallback value because not all hosts support this function.','mainwp'); ?>)</i></div><div style="clear:both"></div>
-                        <input type="text" name="mainwp_options_maximumFileDescriptors"
+                        <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors"
                                value="<?php echo $maximumFileDescriptors; ?>"/><span class="mainwp-form_hint"><?php _e('The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp'); ?></span>
                     </td>
                 </tr>
                 <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
                     <th scope="row">Load files in memory before zipping <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advise to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/load-files-memory/'); ?></th>
                     <td>
-                        <span id="mainwp_options_loadFilesBeforeZip_container" style="cursor: default;"><input type="hidden" id="mainwp_options_loadFilesBeforeZip" name="mainwp_options_loadFilesBeforeZip" value="<?php echo $website->loadFilesBeforeZip; ?>"/></span> <i>(<?php _e('When not enabled or disabled the global setting will be used.', 'mainwp'); ?>)</i>
+                        <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_global" value="1" <?php if ($website->loadFilesBeforeZip == false || $website->loadFilesBeforeZip == 1): ?>checked="true"<?php endif; ?>/> Global setting (<a href="<?php echo admin_url('admin.php?page=Settings'); ?>">Change Here</a>)<br />
+                        <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_yes" value="2" <?php if ($website->loadFilesBeforeZip == 2): ?>checked="true"<?php endif; ?>/> Yes<br />
+                        <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_no" value="0" <?php if ($website->loadFilesBeforeZip == 0): ?>checked="true"<?php endif; ?>/> No<br />
                     </td>
                 </tr>
                 <?php if ($hasRemoteDestinations !== null) { do_action('mainwp_backups_remote_settings', array('website' => $website->id, 'hide' => 'no')); } ?>

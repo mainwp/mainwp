@@ -38,7 +38,11 @@ class MainWPMain
             global $current_user;
             delete_user_option($current_user->ID, 'screen_layout_toplevel_page_mainwp_tab');
             $this->dashBoard = add_menu_page('MainWP', 'MainWP', 'read', 'mainwp_tab', array($this, 'on_show_page'), plugins_url('images/mainwpicon.png', dirname(__FILE__)), '2.00001');
-            add_submenu_page('mainwp_tab', 'MainWP', __('Dashboard','mainwp'), 'read', 'mainwp_tab', array($this, 'on_show_page'));
+            
+            if (mainwp_current_user_can("access_global_dashboard", "dashboard")) {
+                add_submenu_page('mainwp_tab', 'MainWP', __('Dashboard','mainwp'), 'read', 'mainwp_tab', array($this, 'on_show_page'));
+            }
+            
             $val = get_user_option('screen_layout_' . $this->dashBoard);
             if (!MainWPUtility::ctype_digit($val))
             {
@@ -70,9 +74,15 @@ class MainWPMain
 
         add_meta_box($page.'-contentbox-' . $i++, MainWPRecentPosts::getName(), array(MainWPRecentPosts::getClassName(), 'render'), $page, 'normal', 'core');
         add_meta_box($page.'-contentbox-' . $i++, MainWPRecentPages::getName(), array(MainWPRecentPages::getClassName(), 'render'), $page, 'normal', 'core');
-        add_meta_box($page.'-contentbox-' . $i++, MainWPSecurityIssues::getMetaboxName(), array(MainWPSecurityIssues::getClassName(), 'renderMetabox'), $page, 'normal', 'core');
+
+        if (mainwp_current_user_can("manage_security_issues", "dashboard")) {
+            add_meta_box($page.'-contentbox-' . $i++, MainWPSecurityIssues::getMetaboxName(), array(MainWPSecurityIssues::getClassName(), 'renderMetabox'), $page, 'normal', 'core');
+        }
+        
         add_meta_box($page.'-contentbox-' . $i++, MainWPBackupTasks::getName(), array(MainWPBackupTasks::getClassName(), 'render'), $page, 'normal', 'core');
-        if (get_option('mainwp_seo') == 1) add_meta_box($page.'-contentbox-' . $i++, MainWPSEO::getName(), array(MainWPSEO::getClassName(), 'render'), $page, 'normal', 'core');
+        if (mainwp_current_user_can("see_seo_statistics", "dashboard")) {
+            if (get_option('mainwp_seo') == 1) add_meta_box($page.'-contentbox-' . $i++, MainWPSEO::getName(), array(MainWPSEO::getClassName(), 'render'), $page, 'normal', 'core');        
+        }
         add_meta_box($page.'-contentbox-' . $i++, MainWPExtensionsWidget::getName(), array(MainWPExtensionsWidget::getClassName(), 'render'), $page, 'normal', 'core');
         add_meta_box($page.'-contentbox-' . $i++, MainWPHelp::getName(), array(MainWPHelp::getClassName(), 'render'), $page, 'normal', 'core');
         add_meta_box($page.'-contentbox-' . $i++, MainWPNews::getName(), array(MainWPNews::getClassName(), 'render'), $page, 'normal', 'core');
@@ -95,6 +105,11 @@ class MainWPMain
 
     function on_show_page()
     {
+       if (!mainwp_current_user_can("access_global_dashboard", "dashboard")) {
+           mainwp_do_not_have_permissions("global dashboard");
+           return;
+       }
+               
         global $screen_layout_columns;
         ?>
     <div id="mainwp_tab-general" class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>

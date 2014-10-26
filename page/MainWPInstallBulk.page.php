@@ -35,8 +35,14 @@ class MainWPInstallBulk
     }
 
     //Renders the main page in the WP admin part
-    public static function render($title)
+    public static function render($title, $type = "plugin")
     {
+        if (($type == "plugin" && !mainwp_current_user_can("install_plugins", "dashboard")) ||
+            ($type == "theme" && !mainwp_current_user_can("install_themes", "dashboard"))) {
+            mainwp_do_not_have_permissions("install plugins");  
+            return;
+        }
+        
         $tab = 'search';
         if (isset($_REQUEST['tab'])) {
             $tab = $_REQUEST['tab'];
@@ -46,18 +52,18 @@ class MainWPInstallBulk
             <?php
             if ($tab == 'install') {
                 
-            } else {
+            } else {             
                 ?>
                 <a href="#" class="mainwp_action left <?php if ($tab == 'search') { echo 'mainwp_action_down'; } ?>" id="MainWPInstallBulkNavSearch"><?php _e('Search','mainwp'); ?></a><a href="#" class="mainwp_action right <?php if ($tab == 'upload') { echo 'mainwp_action_down'; } ?>" id="MainWPInstallBulkNavUpload"><?php _e('Upload','mainwp'); ?></a>
 
 
                 <br class="clear" />
                 <form method="POST" action="">
-					<div class="mainwp_config_box_right stick-to-window">
+                    <div class="mainwp_config_box_right stick-to-window">
 <!--                    <div>-->
-                  		<?php MainWPUI::select_sites_box() ?>
+                        <?php MainWPUI::select_sites_box() ?>
                   	</div>
-					<div class="mainwp_config_box_left">
+                        <div class="mainwp_config_box_left">
                	 	<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
                     <div id="MainWPInstallBulkAjax">
                         <?php

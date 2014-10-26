@@ -437,7 +437,22 @@ class MainWPDB
         {
             $where .= ' AND ' . $extraWhere;
         }
+        
+        $allowed_sites = apply_filters("mainwp_currentuserallowedaccesssites", "all");
+        
+        if ($allowed_sites !== "all") {
+            if (is_array($allowed_sites) && count($allowed_sites) > 0) {
+                $allowed_sites = implode(",", $allowed_sites);
+            } else {
+                $allowed_sites = "";
+            }
 
+            if (!empty($allowed_sites))
+                $where .= ' 1 AND wp.id IN (' . $allowed_sites . ') ';
+            else 
+                $where .= ' 1 AND (1 = 2) ';
+        }
+        
         if ($selectgroups) {
             $qry = 'SELECT wp.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
             FROM ' . $this->tableName('wp') . ' wp
@@ -530,11 +545,34 @@ class MainWPDB
             global $current_user;
             $userid = $current_user->ID;
         }
+        
+        $where = "";
+        
+        if ($userid != null) {
+            $where = ' AND gr.userid = ' . $userid ;
+        }
+            
+        $allowed_groups = apply_filters("mainwp_currentuserallowedaccessgroups", "all");
+        
+        if ($allowed_groups !== "all") {
+            if (is_array($allowed_groups) && count($allowed_groups) > 0) {
+                $allowed_groups = implode(",", $allowed_groups);
+            } else {
+                $allowed_groups = "";
+            }
 
+            $where = "";
+            if (!empty($allowed_groups)) {               
+                    $where .= ' AND gr.id IN (' . $allowed_groups . ') ';
+            } else {
+                    $where .= ' AND (1 = 2)'; 
+            }                
+        }
+        
         return $wpdb->get_results('SELECT gr.*, COUNT(DISTINCT(wpgr.wpid)) as nrsites
                 FROM ' . $this->tableName('group') . ' gr 
                 LEFT JOIN ' . $this->tableName('wp_group') . ' wpgr ON gr.id = wpgr.groupid
-                ' . ($userid != null ? ' WHERE gr.userid = ' . $userid : '') . '
+                WHERE 1 ' . $where . '
                 GROUP BY gr.id
                 ORDER BY gr.name', OBJECT_K);
     }

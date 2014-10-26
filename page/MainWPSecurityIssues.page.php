@@ -9,7 +9,9 @@ class MainWPSecurityIssues
 
     public static function initMenu()
     {
-        add_submenu_page('mainwp_tab', 'SecurityIssues', '<div class="mainwp-hidden">'.__('SecurityIssues','mainwp').'</div>', 'read', 'SecurityIssues', array(MainWPSecurityIssues::getClassName(), 'render'));
+        if (mainwp_current_user_can("manage_security_issues", "dashboard")) {
+            add_submenu_page('mainwp_tab', 'SecurityIssues', '<div class="mainwp-hidden">'.__('SecurityIssues','mainwp').'</div>', 'read', 'SecurityIssues', array(MainWPSecurityIssues::getClassName(), 'render'));
+        }
     }
 
     public static function render()

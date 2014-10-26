@@ -18,9 +18,9 @@ class MainWPPost
     }
 
     public static function initMenu()
-    {
-        add_submenu_page('mainwp_tab', __('Posts','mainwp'), '<span id="mainwp-Posts">'.__('Posts','mainwp').'</span>', 'read', 'PostBulkManage', array(MainWPPost::getClassName(), 'render'));
-        add_submenu_page('mainwp_tab', 'Posts', '<div class="mainwp-hidden">Add New</div>', 'read', 'PostBulkAdd', array(MainWPPost::getClassName(), 'renderBulkAdd'));
+    {        
+        add_submenu_page('mainwp_tab', __('Posts','mainwp'), '<span id="mainwp-Posts">'.__('Posts','mainwp').'</span>', 'read', 'PostBulkManage', array(MainWPPost::getClassName(), 'render'));        
+        add_submenu_page('mainwp_tab', 'Posts', '<div class="mainwp-hidden">Add New</div>', 'read', 'PostBulkAdd', array(MainWPPost::getClassName(), 'renderBulkAdd'));        
         add_submenu_page('mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">Posts</div>', 'read', 'PostingBulkPost', array(MainWPPost::getClassName(), 'posting')); //removed from menu afterwards
         add_submenu_page('mainwp_tab', __('Posts Help','mainwp'), '<div class="mainwp-hidden">'.__('Posts Help','mainwp').'</div>', 'read', 'PostsHelp', array(MainWPPost::getClassName(), 'QSGManagePosts'));
 
@@ -41,7 +41,9 @@ class MainWPPost
             <div class="wp-submenu sub-open" style="">
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
+                    <?php if (mainwp_current_user_can("manage_posts", "dashboard")) { ?>
                     <a href="<?php echo admin_url('admin.php?page=PostBulkManage'); ?>" class="mainwp-submenu"><?php _e('All Posts','mainwp'); ?></a>
+                    <?php } ?>
                     <a href="<?php echo admin_url('admin.php?page=PostBulkAdd'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
                     <?php
                     if (isset(self::$subPages) && is_array(self::$subPages))
@@ -71,7 +73,9 @@ class MainWPPost
         <img src="<?php echo plugins_url('images/icons/mainwp-post.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Post" height="32"/>
         <h2><?php _e('Posts','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
+                <?php if (mainwp_current_user_can("manage_posts", "dashboard")) { ?>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'BulkManage') { echo "nav-tab-active"; } ?>" href="admin.php?page=PostBulkManage"><?php _e('Manage','mainwp'); ?></a>
+                <?php } ?>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'BulkAdd') { echo "nav-tab-active"; } ?>" href="admin.php?page=PostBulkAdd"><?php _e('Add New','mainwp'); ?></a>
                 <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage === 'PostsHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=PostsHelp"><?php _e('Help','mainwp'); ?></a>
         <?php
@@ -104,6 +108,13 @@ class MainWPPost
 
     public static function render()
     {
+        if (!mainwp_current_user_can("manage_posts", "dashboard")) {            
+            mainwp_do_not_have_permissions("manage posts");
+            return;
+        }
+        global $mainwp_current_user;
+        error_log(print_r($mainwp_current_user, true));
+        
         $cachedSearch = MainWPCache::getCachedContext('Post');
 
         //Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites

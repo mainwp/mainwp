@@ -55,7 +55,8 @@ class MainWPExtensions
         MainWPExtensionsView::initMenu();
 
         self::$extensions = array();
-
+        $all_extensions = array();
+        
         $newExtensions = apply_filters('mainwp-getextensions', array());
         $extraHeaders = array('IconURI' => 'Icon URI', 'SupportForumURI' => 'Support Forum URI', 'DocumentationURI' => 'Documentation URI');
         foreach ($newExtensions as $extension)
@@ -74,11 +75,15 @@ class MainWPExtensions
             $extension['SupportForumURI'] = $file_data['SupportForumURI'];
             $extension['DocumentationURI'] = $file_data['DocumentationURI'];
             $extension['page'] = 'Extensions-' . str_replace(' ', '-', ucwords(str_replace('-', ' ', dirname($slug))));
-
-            self::$extensions[] = $extension;
-            if (isset($extension['callback'])) add_submenu_page('mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback']);			
+            
+            $all_extensions[] = $extension;
+            if (mainwp_current_user_can(dirname($slug), "extension")) {
+                self::$extensions[] = $extension;            
+                if (isset($extension['callback'])) add_submenu_page('mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback']);			            
+            }
         }
         MainWPUtility::update_option("mainwp_extensions", self::$extensions);
+        MainWPUtility::update_option("mainwp_all_extensions", $all_extensions);
         self::$extensionsLoaded = true;
     }
 
@@ -414,6 +419,8 @@ class MainWPExtensions
             $website = MainWPDB::Instance()->getWebsiteById($websiteid);
 
             if (!MainWPUtility::can_edit_website($website)) return false;
+            
+            if (!mainwp_current_user_can($websiteid, "site")) return false;
 
             return array(array('id' => $websiteid, 'url' => MainWPUtility::getNiceURL($website->url, true), 'name' => $website->name, 'totalsize' => $website->totalsize));
         }
@@ -467,4 +474,11 @@ class MainWPExtensions
 
         return $output;
     }
+         
+    public static function hookGetAllExtensions()
+    {
+        return get_option('mainwp_all_extensions');                   
+    }
+    
+    
 }

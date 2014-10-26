@@ -14,7 +14,9 @@ class MainWPManageSitesView
             <div class="mainwp_boxout">
                 <div class="mainwp_boxoutin"></div>
                 <a href="<?php echo admin_url('admin.php?page=managesites'); ?>" class="mainwp-submenu"><?php _e('All Sites','mainwp'); ?></a>
+                <?php if (mainwp_current_user_can("add_sites", "dashboard")) { ?>
                 <a href="<?php echo admin_url('admin.php?page=managesites&do=new'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
+                <?php } ?>
                 <a href="<?php echo admin_url('admin.php?page=managesites&do=test'); ?>" class="mainwp-submenu"><?php _e('Test Connection','mainwp'); ?></a>
                 <?php
                 if (isset($subPages) && is_array($subPages))
@@ -48,7 +50,9 @@ class MainWPManageSitesView
         <h2><?php _e('Sites','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == '') { echo "nav-tab-active"; } ?>" href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
+            <?php if (mainwp_current_user_can("add_sites", "dashboard")) { ?>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'AddNew') { echo "nav-tab-active"; } ?>" href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
+            <?php } ?>
             <?php if ($shownPage == 'ManageSitesBulkUpload') { ?><a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Bulk upload','mainwp'); ?></a><?php } ?>
             <?php if ($shownPage == 'ManageSitesEdit') { ?>
                 <a class="nav-tab pos-nav-tab" href="admin.php?page=managesites&dashboard=<?php echo $_GET['id'] ?>"><?php _e('Dashboard','mainwp'); ?></a>
@@ -240,7 +244,12 @@ class MainWPManageSitesView
     }
 
     public static function _renderNewSite(&$groups)
-    {
+    { 
+        if (!mainwp_current_user_can("add_sites", "dashboard")) {            
+            mainwp_do_not_have_permissions("add sites");
+            return;
+        }
+        
         ?>
        <div id="mainwp_managesites_add_errors" class="mainwp_error"></div>
        <div id="mainwp_managesites_add_message" class="mainwp_updated updated"></div>
@@ -377,6 +386,10 @@ class MainWPManageSitesView
 
     public static function renderSeoPage(&$website)
       {
+        if (!mainwp_current_user_can("see_seo_statistics", "dashboard")) {
+            mainwp_do_not_have_permissions("see seo statistics");
+            return;
+        }
           ?>
       <div class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
               src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP"/></a>
@@ -583,7 +596,12 @@ class MainWPManageSitesView
 
 
     public static function renderDashboard(&$website, &$page)
-    {
+    {        
+       if (!mainwp_current_user_can("access_individual_dashboard", "dashboard")) {
+           mainwp_do_not_have_permissions("individual dashboard");
+           return;
+       }
+       
         ?>
             <div id="howto-metaboxes-general" class="wrap">
                 <?php
@@ -800,10 +818,11 @@ class MainWPManageSitesView
                 <input type="hidden" name="site_id" id="backup_site_id" value="<?php echo $website->id; ?>"/>
                 <input type="hidden" name="backup_site_full_size" id="backup_site_full_size" value="<?php echo $website->totalsize; ?>"/>
                 <input type="hidden" name="backup_site_db_size" id="backup_site_db_size" value="<?php echo $website->dbsize; ?>"/>
-
+                <?php if (mainwp_current_user_can("run_backup_tasks", "dashboard")) {?>
                 <p class="submit"><input type="button" name="backup_btnSubmit" id="backup_btnSubmit"
                                          class="button-primary"
                                          value="Backup Now"/></p>
+                <?php } ?>
             </form>
             </div>
         </div>
@@ -848,6 +867,11 @@ class MainWPManageSitesView
 
     public static function renderAllSites(&$website, $updated, $groups, $statusses, $pluginDir)
     {
+        if (!mainwp_current_user_can("edit_sites", "dashboard")) {
+            mainwp_do_not_have_permissions("edit sites");
+            return;
+        }
+        
         $remote_destinations = apply_filters('mainwp_backups_remote_get_destinations', null, array('website' => $website->id));
         $hasRemoteDestinations = ($remote_destinations == null ? $remote_destinations : count($remote_destinations));
         ?>

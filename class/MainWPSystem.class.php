@@ -1,10 +1,10 @@
 <?php
 if (session_id() == '') session_start();
-//ini_set('display_errors', true);
-//error_reporting(E_ALL | E_STRICT);
+ini_set('display_errors', true);
+error_reporting(E_ALL | E_STRICT);
 
-@ini_set('display_errors', false);
-@error_reporting(0);
+//@ini_set('display_errors', false);
+//@error_reporting(0);
 define('MAINWP_API_VALID', "VALID");
 define('MAINWP_API_INVALID', "INVALID");
 
@@ -240,7 +240,8 @@ class MainWPSystem
         add_action('mainwp_fetchurlsauthed', array(&$this, 'filter_fetchUrlsAuthed'), 10, 7);
         add_filter('mainwp_fetchurlauthed', array(&$this, 'filter_fetchUrlAuthed'), 10, 5);
         add_filter('mainwp_getdashboardsites', array(MainWPExtensions::getClassName(), 'hookGetDashboardSites'), 10, 7);
-
+        add_filter('mainwp-getallextensions', array(MainWPExtensions::getClassName(), 'hookGetAllExtensions'));
+        
         $this->posthandler = new MainWPPostHandler();
 
         do_action('mainwp-activated');

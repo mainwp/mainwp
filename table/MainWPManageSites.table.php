@@ -88,7 +88,10 @@ class MainWPManageSites_List_Table extends WP_List_Table
             'seo' => __('SEO', 'mainwp'),
             'notes' => __('Notes', 'mainwp')
         );
-
+        
+        if (!mainwp_current_user_can("see_seo_statistics", "dashboard")) {
+            unset($columns['seo']);
+        }
         if (get_option('mainwp_seo') != 1) unset($columns['seo']);
 
         $columns = apply_filters('mainwp-sitestable-getcolumns', $columns, $columns);
@@ -160,7 +163,19 @@ class MainWPManageSites_List_Table extends WP_List_Table
             'edit' => sprintf('<a href="admin.php?page=managesites&id=%s">' . __('Edit', 'mainwp') . '</a>', $item['id']),
             'delete' => sprintf('<a class="submitdelete" href="#" onClick="return managesites_remove('."'".'%s'."'".');">' . __('Delete', 'mainwp') . '</a>', $item['id'])
         );
+        
+        if (!mainwp_current_user_can("access_individual_dashboard", "dashboard")) {
+            unset($actions['dashboard']);
+        }
+        
+        if (!mainwp_current_user_can("edit_sites", "dashboard")) {
+            unset($actions['edit']);
+        }
 
+        if (!mainwp_current_user_can("delete_sites", "dashboard")) {
+            unset($actions['delete']);
+        }
+        
         if ($item['sync_errors'] != '')
         {
             $actions['reconnect'] = sprintf('<a class="mainwp_site_reconnect" href="#" siteid="%s">' . __('Reconnect', 'mainwp') . '</a>', $item['id']);
@@ -202,7 +217,10 @@ class MainWPManageSites_List_Table extends WP_List_Table
         $output = '';
         if ($lastbackup > 0) $output = MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp($lastbackup)) . '<br />';
         else $output = '<span class="mainwp-red">Never</span><br/>';
-        $output .= sprintf('<a href="admin.php?page=managesites&backupid=%s">' . __('Backup Now','mainwp') . '</a>', $item['id']);
+        
+        if (mainwp_current_user_can("run_backup_tasks", "dashboard")) {
+            $output .= sprintf('<a href="admin.php?page=managesites&backupid=%s">' . __('Backup Now','mainwp') . '</a>', $item['id']);
+        }
 
         return $output;
     }

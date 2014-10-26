@@ -17,9 +17,10 @@ class MainWPSettings
 
     public static function initMenu()
     {
-        add_submenu_page('mainwp_tab', __('Settings Global options','mainwp'), ' <span id="mainwp-Settings">'. __('Settings','mainwp') .'</span>', 'read', 'Settings', array(MainWPSettings::getClassName(), 'render'));
-        add_submenu_page('mainwp_tab', __('Settings Help','mainwp'), ' <div class="mainwp-hidden">'. __('Settings Help','mainwp') .'</div>', 'read', 'SettingsHelp', array(MainWPSettings::getClassName(), 'QSGManageSettings'));
-
+        if (mainwp_current_user_can("manage_dashboard_settings", "dashboard")) {
+            add_submenu_page('mainwp_tab', __('Settings Global options','mainwp'), ' <span id="mainwp-Settings">'. __('Settings','mainwp') .'</span>', 'read', 'Settings', array(MainWPSettings::getClassName(), 'render'));
+            add_submenu_page('mainwp_tab', __('Settings Help','mainwp'), ' <div class="mainwp-hidden">'. __('Settings Help','mainwp') .'</div>', 'read', 'SettingsHelp', array(MainWPSettings::getClassName(), 'QSGManageSettings'));
+        }
         self::$subPages = apply_filters('mainwp-getsubpages-settings', array(array('title'=> __('Advanced Options', 'mainwp'), 'slug' => 'Advanced', 'callback' =>  array(MainWPSettings::getClassName(), 'renderAdvanced'))));
         if (isset(self::$subPages) && is_array(self::$subPages))
         {
@@ -95,6 +96,11 @@ class MainWPSettings
 
     public static function renderAdvanced()
     {
+        if (!mainwp_current_user_can("manage_dashboard_settings", "dashboard")) {
+            mainwp_do_not_have_permissions("manage dashboard settings");
+            return;
+        }
+                
         if (isset($_POST['submit']))
         {
             MainWPUtility::update_option('mainwp_maximumRequests', $_POST['mainwp_maximumRequests']);
@@ -175,6 +181,11 @@ class MainWPSettings
 
     public static function render()
     {
+        if (!mainwp_current_user_can("manage_dashboard_settings", "dashboard")) {
+            mainwp_do_not_have_permissions("manage dashboard settings");
+            return;
+        }
+        
         $updated = MainWPOptions::handleSettingsPost();
         $updated |= MainWPManageSites::handleSettingsPost();
         $updated |= MainWPOfflineChecks::handleSettingsPost();

@@ -20,7 +20,9 @@ class MainWPManageBackups
     {
         $page = add_submenu_page('mainwp_tab', __('Backups','mainwp'), '<span id="mainwp-Backups">'. __('Backups','mainwp') . '</span>', 'read', 'ManageBackups', array(MainWPManageBackups::getClassName(), 'renderManager'));
         add_action('load-' . $page, array(MainWPManageBackups::getClassName(), 'load_page'));
-        add_submenu_page('mainwp_tab', __('Add New Schedule','mainwp'), '<div class="mainwp-hidden">' . __('Add New','mainwp') . '</div>', 'read', 'ManageBackupsAddNew', array(MainWPManageBackups::getClassName(), 'renderNew'));
+        if (mainwp_current_user_can("add_backup_tasks", "dashboard")) {
+            add_submenu_page('mainwp_tab', __('Add New Schedule','mainwp'), '<div class="mainwp-hidden">' . __('Add New','mainwp') . '</div>', 'read', 'ManageBackupsAddNew', array(MainWPManageBackups::getClassName(), 'renderNew'));
+        }
         add_submenu_page('mainwp_tab', __('Backups Help','mainwp'), '<div class="mainwp-hidden">' . __('Backups Help','mainwp') . '</div>', 'read', 'BackupsHelp', array(MainWPManageBackups::getClassName(), 'QSGManageBackups'));
 
         self::$subPages = apply_filters('mainwp-getsubpages-backups', array());
@@ -46,7 +48,9 @@ class MainWPManageBackups
             <div class="mainwp_boxout">
                 <div class="mainwp_boxoutin"></div>
                 <a href="<?php echo admin_url('admin.php?page=ManageBackups'); ?>" class="mainwp-submenu"><?php _e('All Backups','mainwp'); ?></a>
+                <?php if (mainwp_current_user_can("add_backup_tasks", "dashboard")) { ?>
                 <a href="<?php echo admin_url('admin.php?page=ManageBackupsAddNew'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
+                <?php } ?>
                 <?php
                 if (isset(self::$subPages) && is_array(self::$subPages))
                 {
@@ -77,7 +81,9 @@ class MainWPManageBackups
         <h2><?php _e('Backups','mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == '') { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageBackups"><?php _e('Manage','mainwp'); ?></a>
+            <?php if (mainwp_current_user_can("add_backup_tasks", "dashboard")) { ?> 
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'AddNew') { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageBackupsAddNew"><?php _e('Add New','mainwp'); ?></a>
+            <?php } ?>
             <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage === 'BackupsHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=BackupsHelp"><?php _e('Help','mainwp'); ?></a>
             <?php if ($shownPage == 'ManageBackupsEdit') {  ?><a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Edit','mainwp'); ?></a><?php } ?>
             <?php
@@ -163,6 +169,10 @@ class MainWPManageBackups
         $backupTask = null;
         if (isset($_GET['id']) && MainWPUtility::ctype_digit($_GET['id']))
         {
+            if (!mainwp_current_user_can("edit_backup_tasks", "dashboard")) {
+                mainwp_do_not_have_permissions("edit backup tasks");
+                return;
+            }
             $backupTaskId = $_GET['id'];
 
             $backupTask = MainWPDB::Instance()->getBackupTaskById($backupTaskId);
@@ -238,6 +248,11 @@ class MainWPManageBackups
 
     public static function renderNew()
     {
+        if (!mainwp_current_user_can("add_backup_tasks", "dashboard")) {
+            mainwp_do_not_have_permissions("add backup tasks");
+            return;            
+        }
+        
         self::renderHeader('AddNew'); ?>
         <div class="mainwp_info-box"><strong><?php _e('Use these backup tasks to run backups at different times on different days. To backup a site right away please go to the','mainwp'); ?> <a href="<?php echo admin_url(); ?>admin.php?page=managesites"><?php _e('Sites page','mainwp'); ?></a> <?php _e('and select Backup Now.','mainwp'); ?></strong></div>
         <div id="mainwp_managebackups_add_errors" class="mainwp_error error"></div>

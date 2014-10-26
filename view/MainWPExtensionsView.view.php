@@ -2,12 +2,12 @@
 class MainWPExtensionsView
 {
     public static function initMenu()
-    {
-        add_submenu_page('mainwp_tab', __('Extensions', 'mainwp'), ' <span id="mainwp-Extensions">' . __('Extensions', 'mainwp') . '</span>', 'read', 'Extensions', array(MainWPExtensions::getClassName(), 'render'));
+    {        
+        add_submenu_page('mainwp_tab', __('Extensions', 'mainwp'), ' <span id="mainwp-Extensions">' . __('Extensions', 'mainwp') . '</span>', 'read', 'Extensions', array(MainWPExtensions::getClassName(), 'render'));     
     }
 
     public static function renderHeader($shownPage, &$extensions)
-    {
+    {        
         ?>
     <div class="wrap">
         <a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
@@ -34,8 +34,8 @@ class MainWPExtensionsView
                 </div>
         </div>        
         <?php } ?>
-        <div class="mainwp-tabs" id="mainwp-tabs">
-            <a class="nav-tab pos-nav-tab <?php if ($shownPage === '') { echo "nav-tab-active"; } ?>" href="admin.php?page=Extensions"><?php _e('Manage Extensions', 'mainwp'); ?></a>
+        <div class="mainwp-tabs" id="mainwp-tabs">            
+            <a class="nav-tab pos-nav-tab <?php if ($shownPage === '') { echo "nav-tab-active"; } ?>" href="admin.php?page=Extensions"><?php _e('Manage Extensions', 'mainwp'); ?></a>            
             <?php
             if (isset($extensions) && is_array($extensions))
             {
@@ -64,12 +64,14 @@ class MainWPExtensionsView
     }
 
     public static function render(&$extensions)
-    {
+    {       
         ?>
+        <?php if (mainwp_current_user_can("manage_extensions", "dashboard")) { ?>
         <div class="mainwp_info-box" id="mainwp-ext-notice">
             <span><?php _e('To enable extensions you need to add your MainWP login info in the <a href="admin.php?page=Settings" style="text-decoration: none;">Settings Page</a>. &nbsp;&nbsp;For more help review <a href="http://docs.mainwp.com/how-to-install-mainwp-extensions/" target="_blank" style="text-decoration: none;">this document.</a>','mainwp'); ?></span>
             <span style="float: right;"><a id="mainwp-ext-dismiss" style="text-decoration: none;" href="#"><?php _e('Dismiss','mainwp'); ?></a></span>
         </div>
+        <?php } ?>
 
     <br/><br/><h2><?php printf(_n('%d Installed MainWP Extension', '%d Installed MainWP Extensions', (count($extensions) == 1 ? 1 : 2), 'mainwp'), count($extensions)); ?></h2>
 
@@ -92,7 +94,9 @@ class MainWPExtensionsView
     {
 ?>
     <a class="mainwp_action left mainwp_action_down" href="#" id="mainwp-extensions-expand"><?php _e('Expand', 'mainwp'); ?></a><a class="mainwp_action right" href="#" id="mainwp-extensions-collapse"><?php _e('Collapse', 'mainwp'); ?></a>
+    <?php if (mainwp_current_user_can("manage_extensions", "dashboard")) { ?>
     <div style="float: right;"><a href="#" class="button mainwp-extensions-disable-all"><?php _e('Disable All', 'mainwp'); ?></a> <a href="#" class="button-primary mainwp-extensions-enable-all"><?php _e('Enable All', 'mainwp'); ?></a> <a href="<?php echo admin_url( 'plugin-install.php?tab=upload' ); ?>" class="mainwp-upgrade-button button-primary button"><?php _e('Install New Extension', 'mainwp'); ?></a></div>
+    <?php } ?>
 <div id="mainwp-extensions-list">
         <?php
     if (isset($extensions) && is_array($extensions))
@@ -101,7 +105,6 @@ class MainWPExtensionsView
         {
             $active = MainWPExtensions::isExtensionEnabled($extension['plugin']);
 ?>
-
         <div class="mainwp-extensions-childHolder" extension_slug="<?php echo $extension['slug']; ?>">
             <table style="width: 100%">
                 <td class="mainwp-extensions-childIcon">
@@ -140,16 +143,20 @@ class MainWPExtensionsView
                             <td class="mainwp-extensions-childVersion">V. <?php echo $extension['version']; ?></td>
                             <td class="mainwp-extensions-childActions">
                                 <?php if ($active) { ?>
+                                    <?php if (mainwp_current_user_can("manage_extensions", "dashboard")) { ?>
                                     <a href="#" class="button mainwp-extensions-disable"><?php _e('Disable','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                     <img src="<?php echo plugins_url('images/extensions/unlock.png', dirname(__FILE__)); ?>" title="Activated" />
-									<?php if (isset($extension['direct_page']) && !empty($extension['direct_page'])) { ?>
+                                    <?php } // mainwp_current_user_can ?>
+                                    <?php if (isset($extension['direct_page']) && !empty($extension['direct_page'])) { ?>
                                         <a href="<?php echo admin_url('admin.php?page='.$extension['direct_page']); ?>"><img src="<?php echo plugins_url('images/extensions/settings.png', dirname(__FILE__)); ?>" title="Settings" /></a>
                                     <?php } else if (isset($extension['callback'])) { ?>
                                         <a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>"><img src="<?php echo plugins_url('images/extensions/settings.png', dirname(__FILE__)); ?>" title="Settings" /></a>
                                     <?php } else { ?>
                                         <img src="<?php echo plugins_url('images/extensions/settings-freeze.png', dirname(__FILE__)); ?>" title="Settings" />
                                     <?php } ?>
+                                    <?php if (mainwp_current_user_can("manage_extensions", "dashboard")) { ?>
                                     <img src="<?php echo plugins_url('images/extensions/trash-freeze.png', dirname(__FILE__)); ?>" title="Delete" />
+                                    <?php } // mainwp_current_user_can ?>
                                 <?php } else {
                                     $apilink = '';
                                     $locked = false;
@@ -174,18 +181,22 @@ class MainWPExtensionsView
                                         }
                                     }
                                     ?>
+                                    <?php if (mainwp_current_user_can("manage_extensions", "dashboard")) { ?>
                                     <button class="button-primary mainwp-extensions-enable" <?php echo ($locked ? 'disabled' : ''); ?>><?php _e('Enable','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                     <?php if ($apilink != '') { ?>
                                     <a href="<?php echo $apilink; ?>"><img src="<?php echo plugins_url('images/extensions/'.(!$locked ? 'un' : '') . 'lock.png', dirname(__FILE__)); ?>" title="Not Activated" /></a>
                                     <?php } else { ?>
                                     <img src="<?php echo plugins_url('images/extensions/unlock.png', dirname(__FILE__)); ?>" title="Activated" /></a>
                                     <?php }?>
+                                    <?php } // mainwp_current_user_can ?>
                                     <?php if (isset($extension['callback'])) { ?>
                                         <a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>"><img src="<?php echo plugins_url('images/extensions/settings.png', dirname(__FILE__)); ?>" title="Settings" /></a>
                                     <?php } else { ?>
                                         <img src="<?php echo plugins_url('images/extensions/settings-freeze.png', dirname(__FILE__)); ?>" title="Settings" />
                                     <?php } ?>
+                                    <?php if (mainwp_current_user_can("manage_extensions", "dashboard")) { ?>
                                     <a href="#" class="mainwp-extensions-trash"><img src="<?php echo plugins_url('images/extensions/trash.png', dirname(__FILE__)); ?>" title="Delete" /></a>
+                                    <?php } ?>
                                 <?php } ?>
                             </td>
                         </tr>

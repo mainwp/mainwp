@@ -2558,8 +2558,11 @@ managesites_remove = function (id) {
             if (result != '') {
                 setHtml('#mainwp_managesites_add_message', result);
             }
-            jQuery('#site-status-' + id).html('');
-            jQuery('tr[siteid=' + id + ']').remove();
+            
+            if (error == '') {
+                jQuery('#site-status-' + id).html('');
+                jQuery('tr[siteid=' + id + ']').remove();
+            }
         }, 'json');
     }
 };

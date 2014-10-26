@@ -640,7 +640,7 @@ class MainWPThemes
     public static function renderInstall()
     {
         self::renderHeader('Install');
-        MainWPInstallBulk::render('Themes');
+        MainWPInstallBulk::render('Themes', 'theme');
         self::renderFooter('Install');
     }
 
@@ -755,36 +755,40 @@ class MainWPThemes
     public static function renderAutoUpdate()
     {
         self::renderHeader('AutoUpdate');
-
-        $snAutomaticDailyUpdate = get_option('mainwp_automaticDailyUpdate');
-        ?>
-        <h2><?php _e('Theme Automatic Update Trust List','mainwp'); ?></h2>
-        <br />
-        <div id="mainwp-au" class=""><strong><?php if ($snAutomaticDailyUpdate == 1) { ?>
-            <div class="mainwp-au-on"><?php _e('Auto Updates are ON and Trusted Plugins will be Automatically Updated','mainwp'); ?> - <a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e('Change this in Settings','mainwp'); ?></a></div>
-        <?php } elseif (($snAutomaticDailyUpdate === false) || ($snAutomaticDailyUpdate == 2)) { ?>
-            <div class="mainwp-au-email"><?php _e('Auto Updates are OFF - Email Update Notification is ON','mainwp'); ?> - <a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e('Change this in Settings','mainwp'); ?></a></div>
-        <?php } else { ?>
-            <div class="mainwp-au-off"><?php _e('Auto Updates are OFF - Email Update Notification is OFF','mainwp'); ?> - <a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e('Change this in Settings','mainwp'); ?></a></div>
-        <?php } ?></strong></div>
-        <div class="mainwp_info-box"><?php _e('Only mark Themes as Trusted if you are absolutely sure they can be updated','mainwp'); ?></div>
-
-        <a href="#" class="button-primary" id="mainwp_show_all_themes"><?php _e('Show Themes','mainwp'); ?></a>
-        <span id="mainwp_themes_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
-
-
-        <div id="mainwp_themes_main" style="display: block; margin-top: 1.5em ;">
-            <div id="mainwp_themes_content">
-            <?php
-                if (session_id() == '') session_start();
-                if (isset($_SESSION['SNThemesAll'])) {
-                    self::renderAllThemesTable($_SESSION['SNThemesAll']);
-                    echo '<script>mainwp_themes_all_table_reinit();</script>';
-                }
+        if (!mainwp_current_user_can("trust_untrust_updates", "dashboard")) {
+            mainwp_do_not_have_permissions("Trust/Untrust updates");
+            return;
+        } else {
+            $snAutomaticDailyUpdate = get_option('mainwp_automaticDailyUpdate');
             ?>
+            <h2><?php _e('Theme Automatic Update Trust List','mainwp'); ?></h2>
+            <br />
+            <div id="mainwp-au" class=""><strong><?php if ($snAutomaticDailyUpdate == 1) { ?>
+                <div class="mainwp-au-on"><?php _e('Auto Updates are ON and Trusted Plugins will be Automatically Updated','mainwp'); ?> - <a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e('Change this in Settings','mainwp'); ?></a></div>
+            <?php } elseif (($snAutomaticDailyUpdate === false) || ($snAutomaticDailyUpdate == 2)) { ?>
+                <div class="mainwp-au-email"><?php _e('Auto Updates are OFF - Email Update Notification is ON','mainwp'); ?> - <a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e('Change this in Settings','mainwp'); ?></a></div>
+            <?php } else { ?>
+                <div class="mainwp-au-off"><?php _e('Auto Updates are OFF - Email Update Notification is OFF','mainwp'); ?> - <a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e('Change this in Settings','mainwp'); ?></a></div>
+            <?php } ?></strong></div>
+            <div class="mainwp_info-box"><?php _e('Only mark Themes as Trusted if you are absolutely sure they can be updated','mainwp'); ?></div>
+
+            <a href="#" class="button-primary" id="mainwp_show_all_themes"><?php _e('Show Themes','mainwp'); ?></a>
+            <span id="mainwp_themes_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+
+
+            <div id="mainwp_themes_main" style="display: block; margin-top: 1.5em ;">
+                <div id="mainwp_themes_content">
+                <?php
+                    if (session_id() == '') session_start();
+                    if (isset($_SESSION['SNThemesAll'])) {
+                        self::renderAllThemesTable($_SESSION['SNThemesAll']);
+                        echo '<script>mainwp_themes_all_table_reinit();</script>';
+                    }
+                ?>
+                </div>
             </div>
-        </div>
-        <?php
+            <?php
+        }
         self::renderFooter('AutoUpdate');
     }
 
@@ -940,7 +944,9 @@ class MainWPThemes
                              <strong><?php echo $ignoredThemeName; ?></strong> (<?php echo $ignoredTheme; ?>)
                          </td>
                         <td style="text-align: right; padding-right: 30px">
+                            <?php if (mainwp_current_user_can("ignore_unignor_updates", "dashboard")) { ?>
                             <a href="#" onClick="return rightnow_themes_unignore_globally('<?php echo urlencode($ignoredTheme); ?>')"><?php _e('ALLOW','mainwp'); ?></a>
+                            <?php } ?>
                         </td>
                     </tr>
                 <?php
@@ -964,7 +970,7 @@ class MainWPThemes
             <tr>
                 <th scope="col" class="manage-column" style="width: 250px"><?php _e('Site','mainwp'); ?></th>
                 <th scope="col" class="manage-column" style="width: 400px"><?php _e('Themes','mainwp'); ?></th>
-                <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ($cnt > 0) { ?><a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return rightnow_themes_unignore_detail_all();"><?php _e('Allow All','mainwp'); ?></a><?php } ?></th>
+                <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if (mainwp_current_user_can("ignore_unignor_updates", "dashboard")) { if ($cnt > 0) { ?><a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return rightnow_themes_unignore_detail_all();"><?php _e('Allow All','mainwp'); ?></a><?php } } ?></th>
             </tr>
         </thead>
         <tbody id="ignored-themes-list" class="list:sites">
@@ -992,7 +998,9 @@ class MainWPThemes
                        <strong><?php echo $ignoredThemeName; ?></strong> (<?php echo $ignoredTheme; ?>)
                    </td>
                    <td style="text-align: right; padding-right: 30px">
-                       <a href="#" onClick="return rightnow_themes_unignore_detail('<?php echo urlencode($ignoredTheme); ?>', <?php echo $website->id; ?>)"><?php _e('ALLOW','mainwp'); ?></a>
+                        <?php if (mainwp_current_user_can("ignore_unignor_updates", "dashboard")) { ?>
+                        <a href="#" onClick="return rightnow_themes_unignore_detail('<?php echo urlencode($ignoredTheme); ?>', <?php echo $website->id; ?>)"><?php _e('ALLOW','mainwp'); ?></a>
+                        <?php } ?>
                    </td>
                </tr>
                  <?php

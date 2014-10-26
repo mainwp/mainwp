@@ -8,6 +8,10 @@ class MainWPSiteOpen
 
     public static function render()
     {
+        if (!mainwp_current_user_can("access_wpadmin_on_child_sites", "dashboard")) {
+            mainwp_do_not_have_permissions("WP-Admin on child sites");
+            return;
+        }        
         if (!isset($_GET['websiteid'])) exit();
 
         $id = $_GET['websiteid'];

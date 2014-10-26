@@ -137,6 +137,11 @@ class MainWPHooks
             {
                 $type = $_POST['type'];
             }
+            
+            if (($type == "plugin" && !mainwp_current_user_can("update_plugins", "dashboard")) || 
+                ($type == "theme" && !mainwp_current_user_can("update_themes", "dashboard"))) {
+                
+            }                    
 
             if (MainWPUtility::ctype_digit($websiteId)) {
                $website = MainWPDB::Instance()->getWebsiteById($websiteId);

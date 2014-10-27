@@ -40,6 +40,8 @@ class MainWPExtensionsWidget {
           <div id="mainwp-extensions-widget-grid" <?php echo (!$showGrid ? "style='display:none;'" : ''); ?>>
             <?php
         	    foreach ($currentExtensions as $extension) {
+                        if (!mainwp_current_user_can("extension", dirname($extension['slug'])))
+                            continue;
         	    	 $active = MainWPExtensions::isExtensionEnabled($extension['plugin']); 
         	    	?>
         	    	<span class="mainwp-widget-extensions">
@@ -64,6 +66,8 @@ class MainWPExtensionsWidget {
             <tbody>
                 <?php
                    foreach ($currentExtensions as $extension) {
+                       if (!mainwp_current_user_can("extension", dirname($extension['slug'])))
+                            continue;
                    $active = MainWPExtensions::isExtensionEnabled($extension['plugin']);
                    ?>
                      <tr class="mainwp-widget-extensions-list mainwp-extensions-childHolder" extension_slug="<?php echo $extension['slug']; ?>">

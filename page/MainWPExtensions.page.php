@@ -77,7 +77,7 @@ class MainWPExtensions
             $extension['page'] = 'Extensions-' . str_replace(' ', '-', ucwords(str_replace('-', ' ', dirname($slug))));
             
             $all_extensions[] = $extension;            
-            if ((defined("MWP_UMAN_PLUGIN_SLUG") && MWP_UMAN_PLUGIN_SLUG == $slug) || 
+            if ((defined("MWP_TEAMCONTROL_PLUGIN_SLUG") && MWP_TEAMCONTROL_PLUGIN_SLUG == $slug) || 
                     mainwp_current_user_can("extension", dirname($slug))) {
                 self::$extensions[] = $extension;  
                 if (mainwp_current_user_can("extension", dirname($slug))) {
@@ -101,7 +101,7 @@ class MainWPExtensions
                 {
                     if (MainWPExtensions::isExtensionEnabled($extension['plugin'])) {                         
                     
-                        if (defined("MWP_UMAN_PLUGIN_SLUG") && (MWP_UMAN_PLUGIN_SLUG == $extension['slug']) && !mainwp_current_user_can("extension", dirname(MWP_UMAN_PLUGIN_SLUG))) 
+                        if (defined("MWP_TEAMCONTROL_PLUGIN_SLUG") && (MWP_TEAMCONTROL_PLUGIN_SLUG == $extension['slug']) && !mainwp_current_user_can("extension", dirname(MWP_TEAMCONTROL_PLUGIN_SLUG))) 
                                 continue;
                                                           
                         if (isset($extension['direct_page'])) {
@@ -422,7 +422,7 @@ class MainWPExtensions
             return false;
         }
         
-        if ($for_manager && (!defined("MWP_UMAN_PLUGIN_SLUG") || !mainwp_current_user_can("extension", dirname(MWP_UMAN_PLUGIN_SLUG)))) {                                             
+        if ($for_manager && (!defined("MWP_TEAMCONTROL_PLUGIN_SLUG") || !mainwp_current_user_can("extension", dirname(MWP_TEAMCONTROL_PLUGIN_SLUG)))) {                                             
             return false;            
         }
         
@@ -455,7 +455,7 @@ class MainWPExtensions
             return false;
         }
         
-        if ($for_manager && (!defined("MWP_UMAN_PLUGIN_SLUG") || !mainwp_current_user_can("extension", dirname(MWP_UMAN_PLUGIN_SLUG)))) {            
+        if ($for_manager && (!defined("MWP_TEAMCONTROL_PLUGIN_SLUG") || !mainwp_current_user_can("extension", dirname(MWP_TEAMCONTROL_PLUGIN_SLUG)))) {            
             return false;            
         }
         

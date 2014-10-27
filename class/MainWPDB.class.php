@@ -342,7 +342,7 @@ class MainWPDB
             $userId = $current_user->ID;
         }
         $where = ($userId != null) ? ' userid = ' . $userId : '';
-        $where .= $this->getWhereAllowAccessGroupsSites();
+        $where .= $this->getWhereAllowAccessGroupsSites("site", $this->tableName('wp'));
         $qry = 'SELECT dtsSync FROM '.$this->tableName('wp'). ' WHERE 1 ' . $where . ' ORDER BY dtsSync ASC LIMIT 1';
 
         return $wpdb->get_var($qry);
@@ -352,7 +352,7 @@ class MainWPDB
     {
         /** @var $wpdb wpdb */
         global $wpdb;
-        $where = $this->getWhereAllowAccessGroupsSites();
+        $where = $this->getWhereAllowAccessGroupsSites("site", $this->tableName('wp'));
         $qry = 'SELECT count(*) FROM '.$this->tableName('wp').' WHERE dtsSyncStart > ' . (time() - $pSeconds) . $where;
 
         return $wpdb->get_var($qry);
@@ -370,7 +370,7 @@ class MainWPDB
             $userId = $current_user->ID;
         }
         $where = ($userId == null ? '' : ' wp.userid = '.$userId);
-        $where .= $this->getWhereAllowAccessGroupsSites("site");
+        $where .= $this->getWhereAllowAccessGroupsSites("site", "wp");
         $qry = 'SELECT COUNT(wp.id) FROM ' . $this->tableName('wp') . ' wp WHERE 1 ' . $where;
 
         return $wpdb->get_var($qry);
@@ -384,7 +384,7 @@ class MainWPDB
 
     public function getSQLWebsites()
     {
-        $where = $this->getWhereAllowAccessGroupsSites("site");
+        $where = $this->getWhereAllowAccessGroupsSites("site", "wp");
         return 'SELECT wp.* FROM ' . $this->tableName('wp') . ' wp' . $where;
     }
 
@@ -397,7 +397,7 @@ class MainWPDB
                 $where = ' AND (wp.name LIKE "%'.$search_site.'%" OR wp.url LIKE  "%'.$search_site.'%") ';
             }
             
-            $where .= $this->getWhereAllowAccessGroupsSites();
+            $where .= $this->getWhereAllowAccessGroupsSites("", "wp");
             
             if ($selectgroups) {
                 $qry = 'SELECT wp.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
@@ -444,7 +444,7 @@ class MainWPDB
         }
         
         if (!$for_manager) {
-            $where .= $this->getWhereAllowAccessGroupsSites();
+            $where .= $this->getWhereAllowAccessGroupsSites("site", "wp");
         }
         
         if ($selectgroups) {
@@ -468,10 +468,16 @@ class MainWPDB
         return $qry;
     }
     
-    public function getWhereAllowAccessGroupsSites($type = "") {
+    public function getWhereAllowAccessGroupsSites($type = "", $site_table_alias = "", $group_table_alias = "") {
         
         $allowed_sites = apply_filters("mainwp_currentuserallowedaccesssites", "all");
-        $where_site = $where_group = "";    
+        $where_site = $where_group = ""; 
+        
+        if (empty($site_table_alias))
+            $site_table_alias = $this->tableName("wp"); 
+        
+        if (empty($group_table_alias))
+            $group_table_alias = $this->tableName("group"); 
         
         if ($allowed_sites !== "all") {
             if (is_array($allowed_sites) && count($allowed_sites) > 0) {
@@ -481,7 +487,7 @@ class MainWPDB
             }
             
             if (!empty($allowed_sites))
-                $where_site = ' AND ' . $this->tableName('wp'). '.id IN (' . $allowed_sites . ') ';
+                $where_site = ' AND ' . $site_table_alias. '.id IN (' . $allowed_sites . ') ';
             else 
                 $where_site = ' AND 0 ';            
         } 
@@ -495,7 +501,7 @@ class MainWPDB
             }
             
             if (!empty($allowed_groups)) {               
-                    $where_group = ' AND ' . $this->tableName('group'). '.id IN (' . $allowed_groups . ') ';
+                    $where_group = ' AND ' . $group_table_alias. '.id IN (' . $allowed_groups . ') ';
             } else {
                     $where_group = ' AND 0'; 
             } 
@@ -509,7 +515,7 @@ class MainWPDB
         } else if (empty($type)){ // all sites and groups
             $where = $where_site . $where_group;
         }        
-        //error_log($where);
+        error_log($where);
         return $where;
     }
     
@@ -573,7 +579,7 @@ class MainWPDB
         global $wpdb;
 
         if (MainWPUtility::ctype_digit($websiteid)) {
-            $where = $this->getWhereAllowAccessGroupsSites("group"); 
+            $where = $this->getWhereAllowAccessGroupsSites("group", "", "gr"); 
             return $wpdb->get_results('SELECT * FROM ' . $this->tableName('group') . ' gr
                 JOIN ' . $this->tableName('wp_group') . ' wpgr ON gr.id = wpgr.groupid
                 WHERE wpgr.wpid = ' . $websiteid . $where . ' ORDER BY name', OBJECT_K);
@@ -599,7 +605,7 @@ class MainWPDB
         }
            
         if (!$for_manager) {
-            $where .= $this->getWhereAllowAccessGroupsSites("group");
+            $where .= $this->getWhereAllowAccessGroupsSites("group", "", "gr");
         }
        
         return $wpdb->get_results('SELECT gr.*, COUNT(DISTINCT(wpgr.wpid)) as nrsites
@@ -614,7 +620,7 @@ class MainWPDB
     {
         /** @var $wpdb wpdb */
         global $wpdb;
-        $where = $this->getWhereAllowAccessGroupsSites("group");
+        $where = $this->getWhereAllowAccessGroupsSites("group", "", "gr");
         return $wpdb->get_results('SELECT gr.*
             FROM ' . $this->tableName('group') . ' gr
             WHERE gr.name = "' . $this->escape($name) . '" 
@@ -635,7 +641,7 @@ class MainWPDB
         }
 
         $where = ' WHERE 1 ';
-        $where .= $this->getWhereAllowAccessGroupsSites(); 
+        $where .= $this->getWhereAllowAccessGroupsSites("group", "", "g"); 
         
         if ($userid != null) $where .= ' AND g.userid = ' . $userid;
         if (!$enableOfflineSites) $where .= ' AND wpsite.sync_errors = ""';
@@ -684,7 +690,7 @@ class MainWPDB
         if (MainWPUtility::ctype_digit($id))
         {                        
             if ($selectGroups) {       
-                $where = $this->getWhereAllowAccessGroupsSites("group");
+                $where = $this->getWhereAllowAccessGroupsSites("group", "wp", "gr");
                 return 'SELECT wp.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
                 FROM ' . $this->tableName('wp') . ' wp
                 LEFT JOIN ' . $this->tableName('wp_group') . ' wpgr ON wp.id = wpgr.wpid
@@ -707,7 +713,7 @@ class MainWPDB
             global $current_user;
             $userId = $current_user->ID;
         }
-        $where = $this->getWhereAllowAccessGroupsSites();
+        $where = $this->getWhereAllowAccessGroupsSites("site");
         return $wpdb->get_results('SELECT * FROM ' . $this->tableName('wp') . ' WHERE id IN (' . implode(',', $ids) . ')' . ($userId != null ? ' AND userid = '.$userId : '') . $where, OBJECT);
     }
 
@@ -720,7 +726,7 @@ class MainWPDB
             global $current_user;
             $userId = $current_user->ID;
         }
-        $where = $this->getWhereAllowAccessGroupsSites();
+        $where = $this->getWhereAllowAccessGroupsSites("site", "wp");
         return $wpdb->get_results('SELECT * FROM ' . $this->tableName('wp') . ' wp JOIN ' . $this->tableName('wp_group') . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . implode(',', $ids) .') '.($userId != null ? ' AND wp.userid = '.$userId : '') . $where, OBJECT);
     }
 
@@ -733,7 +739,7 @@ class MainWPDB
     {
         if (MainWPUtility::ctype_digit($id))
         {
-            $where_allowed = $this->getWhereAllowAccessGroupsSites();
+            $where_allowed = $this->getWhereAllowAccessGroupsSites("site", "wp");
             if ($selectgroups)
             {  
                 $qry = 'SELECT wp.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
@@ -772,7 +778,7 @@ class MainWPDB
             global $current_user;
             $userid = $current_user->ID;
         }
-        $where = $this->getWhereAllowAccessGroupsSites();
+        $where = $this->getWhereAllowAccessGroupsSites("", "wp");
         $sql = 'SELECT wp.* FROM ' . $this->tableName('wp') . ' wp INNER JOIN ' . $this->tableName('wp_group') . ' wpgroup ON wp.id = wpgroup.wpid JOIN ' . $this->tableName('group') . ' g ON wpgroup.groupid = g.id WHERE g.name="' . $this->escape($groupname). '"' . $where;
         if ($userid != null) $sql .= ' AND g.userid = "' . $userid . '"';
         return $sql;

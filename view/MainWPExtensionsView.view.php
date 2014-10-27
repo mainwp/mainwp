@@ -103,6 +103,8 @@ class MainWPExtensionsView
     {
         foreach ($extensions as $extension)
         {
+            if (!mainwp_current_user_can("extension", dirname($extension['slug'])))
+               continue;
             $active = MainWPExtensions::isExtensionEnabled($extension['plugin']);
 ?>
         <div class="mainwp-extensions-childHolder" extension_slug="<?php echo $extension['slug']; ?>">

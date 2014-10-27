@@ -39,7 +39,7 @@ class MainWPMain
             delete_user_option($current_user->ID, 'screen_layout_toplevel_page_mainwp_tab');
             $this->dashBoard = add_menu_page('MainWP', 'MainWP', 'read', 'mainwp_tab', array($this, 'on_show_page'), plugins_url('images/mainwpicon.png', dirname(__FILE__)), '2.00001');
             
-            if (mainwp_current_user_can("access_global_dashboard", "dashboard")) {
+            if (mainwp_current_user_can("dashboard", "access_global_dashboard")) {
                 add_submenu_page('mainwp_tab', 'MainWP', __('Dashboard','mainwp'), 'read', 'mainwp_tab', array($this, 'on_show_page'));
             }
             
@@ -75,12 +75,12 @@ class MainWPMain
         add_meta_box($page.'-contentbox-' . $i++, MainWPRecentPosts::getName(), array(MainWPRecentPosts::getClassName(), 'render'), $page, 'normal', 'core');
         add_meta_box($page.'-contentbox-' . $i++, MainWPRecentPages::getName(), array(MainWPRecentPages::getClassName(), 'render'), $page, 'normal', 'core');
 
-        if (mainwp_current_user_can("manage_security_issues", "dashboard")) {
+        if (mainwp_current_user_can("dashboard", "manage_security_issues")) {
             add_meta_box($page.'-contentbox-' . $i++, MainWPSecurityIssues::getMetaboxName(), array(MainWPSecurityIssues::getClassName(), 'renderMetabox'), $page, 'normal', 'core');
         }
         
         add_meta_box($page.'-contentbox-' . $i++, MainWPBackupTasks::getName(), array(MainWPBackupTasks::getClassName(), 'render'), $page, 'normal', 'core');
-        if (mainwp_current_user_can("see_seo_statistics", "dashboard")) {
+        if (mainwp_current_user_can("dashboard", "see_seo_statistics")) {
             if (get_option('mainwp_seo') == 1) add_meta_box($page.'-contentbox-' . $i++, MainWPSEO::getName(), array(MainWPSEO::getClassName(), 'render'), $page, 'normal', 'core');        
         }
         add_meta_box($page.'-contentbox-' . $i++, MainWPExtensionsWidget::getName(), array(MainWPExtensionsWidget::getClassName(), 'render'), $page, 'normal', 'core');
@@ -105,7 +105,7 @@ class MainWPMain
 
     function on_show_page()
     {
-       if (!mainwp_current_user_can("access_global_dashboard", "dashboard")) {
+       if (!mainwp_current_user_can("dashboard", "access_global_dashboard")) {
            mainwp_do_not_have_permissions("global dashboard");
            return;
        }

@@ -14,7 +14,7 @@ class MainWPManageSitesView
             <div class="mainwp_boxout">
                 <div class="mainwp_boxoutin"></div>
                 <a href="<?php echo admin_url('admin.php?page=managesites'); ?>" class="mainwp-submenu"><?php _e('All Sites','mainwp'); ?></a>
-                <?php if (mainwp_current_user_can("add_sites", "dashboard")) { ?>
+                <?php if (mainwp_current_user_can("dashboard", "add_sites")) { ?>
                 <a href="<?php echo admin_url('admin.php?page=managesites&do=new'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
                 <?php } ?>
                 <a href="<?php echo admin_url('admin.php?page=managesites&do=test'); ?>" class="mainwp-submenu"><?php _e('Test Connection','mainwp'); ?></a>
@@ -50,7 +50,7 @@ class MainWPManageSitesView
         <h2><?php _e('Sites','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == '') { echo "nav-tab-active"; } ?>" href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
-            <?php if (mainwp_current_user_can("add_sites", "dashboard")) { ?>
+            <?php if (mainwp_current_user_can("dashboard", "add_sites")) { ?>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'AddNew') { echo "nav-tab-active"; } ?>" href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
             <?php } ?>
             <?php if ($shownPage == 'ManageSitesBulkUpload') { ?><a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Bulk upload','mainwp'); ?></a><?php } ?>
@@ -245,7 +245,7 @@ class MainWPManageSitesView
 
     public static function _renderNewSite(&$groups)
     { 
-        if (!mainwp_current_user_can("add_sites", "dashboard")) {            
+        if (!mainwp_current_user_can("dashboard", "add_sites")) {            
             mainwp_do_not_have_permissions("add sites");
             return;
         }
@@ -386,7 +386,7 @@ class MainWPManageSitesView
 
     public static function renderSeoPage(&$website)
       {
-        if (!mainwp_current_user_can("see_seo_statistics", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "see_seo_statistics")) {
             mainwp_do_not_have_permissions("see seo statistics");
             return;
         }
@@ -597,7 +597,7 @@ class MainWPManageSitesView
 
     public static function renderDashboard(&$website, &$page)
     {        
-       if (!mainwp_current_user_can("access_individual_dashboard", "dashboard")) {
+       if (!mainwp_current_user_can("dashboard", "access_individual_dashboard")) {
            mainwp_do_not_have_permissions("individual dashboard");
            return;
        }
@@ -818,7 +818,7 @@ class MainWPManageSitesView
                 <input type="hidden" name="site_id" id="backup_site_id" value="<?php echo $website->id; ?>"/>
                 <input type="hidden" name="backup_site_full_size" id="backup_site_full_size" value="<?php echo $website->totalsize; ?>"/>
                 <input type="hidden" name="backup_site_db_size" id="backup_site_db_size" value="<?php echo $website->dbsize; ?>"/>
-                <?php if (mainwp_current_user_can("run_backup_tasks", "dashboard")) {?>
+                <?php if (mainwp_current_user_can("dashboard", "run_backup_tasks")) {?>
                 <p class="submit"><input type="button" name="backup_btnSubmit" id="backup_btnSubmit"
                                          class="button-primary"
                                          value="Backup Now"/></p>
@@ -867,7 +867,7 @@ class MainWPManageSitesView
 
     public static function renderAllSites(&$website, $updated, $groups, $statusses, $pluginDir)
     {
-        if (!mainwp_current_user_can("edit_sites", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "edit_sites")) {
             mainwp_do_not_have_permissions("edit sites");
             return;
         }
@@ -1067,7 +1067,6 @@ class MainWPManageSitesView
                 
                 $plugin_upgrades = json_decode($website->plugin_upgrades, true);
                 if (!is_array($plugin_upgrades)) $plugin_upgrades = array();
-                error_log(print_r($plugin_upgrades, true));
                 
                 $userExtension = MainWPDB::Instance()->getUserExtension();
                 $globalIgnoredPluginConflicts = json_decode($userExtension->ignored_pluginConflicts, true);
@@ -1210,8 +1209,6 @@ class MainWPManageSitesView
                     false,
                     $verifyCertificate    
                 );
-                
-                error_log(print_r($information, true));
                 
                 if (isset($information['error']) && $information['error'] != '')
                 {

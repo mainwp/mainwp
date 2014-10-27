@@ -572,7 +572,7 @@ class MainWPManageSites
         add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPRecentPosts::getName(), array(MainWPRecentPosts::getClassName(), 'render'), self::$page, 'normal', 'core');
         add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPRecentPages::getName(), array(MainWPRecentPages::getClassName(), 'render'), self::$page, 'normal', 'core');
         add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPShortcuts::getName(), array(MainWPShortcuts::getClassName(), 'render'), self::$page, 'normal', 'core');
-        if (mainwp_current_user_can("manage_security_issues", "dashboard")) {
+        if (mainwp_current_user_can("dashboard", "manage_security_issues")) {
             add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPSecurityIssues::getMetaboxName(), array(MainWPSecurityIssues::getClassName(), 'renderMetabox'), self::$page, 'normal', 'core');
         }
         if (get_option('mainwp_seo') == 1) add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPManageSites::getMetaboxName(), array(MainWPManageSites::getClassName(), 'renderMetabox'), self::$page, 'normal', 'core');

@@ -40,7 +40,7 @@ class MainWPUser
         <div class="wp-submenu sub-open" style="">
             <div class="mainwp_boxout">
                 <div class="mainwp_boxoutin"></div>
-                <?php if (mainwp_current_user_can("manage_users", "dashboard")) { ?>
+                <?php if (mainwp_current_user_can("dashboard", "manage_users")) { ?>
                 <a href="<?php echo admin_url('admin.php?page=UserBulkManage'); ?>" class="mainwp-submenu"><?php _e('All Users','mainwp'); ?></a>
                 <?php } ?>
                 <a href="<?php echo admin_url('admin.php?page=UserBulkAdd'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
@@ -74,7 +74,7 @@ class MainWPUser
              style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP User" height="32"/>
         <h2><?php _e('Users','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
-            <?php if (mainwp_current_user_can("manage_users", "dashboard")) { ?>
+            <?php if (mainwp_current_user_can("dashboard", "manage_users")) { ?>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == '') { echo "nav-tab-active"; } ?>" href="admin.php?page=UserBulkManage"><?php _e('Manage','mainwp'); ?></a>
             <?php } ?>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Add') { echo "nav-tab-active"; } ?>" href="admin.php?page=UserBulkAdd"><?php _e('Add New','mainwp'); ?></a>
@@ -108,7 +108,7 @@ class MainWPUser
 
     public static function render()
     {
-        if (!mainwp_current_user_can("manage_users", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "manage_users")) {
             mainwp_do_not_have_permissions("manage users");
             return;
         }

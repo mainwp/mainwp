@@ -37,8 +37,8 @@ class MainWPInstallBulk
     //Renders the main page in the WP admin part
     public static function render($title, $type = "plugin")
     {
-        if (($type == "plugin" && !mainwp_current_user_can("install_plugins", "dashboard")) ||
-            ($type == "theme" && !mainwp_current_user_can("install_themes", "dashboard"))) {
+        if (($type == "plugin" && !mainwp_current_user_can("dashboard", "install_plugins")) ||
+            ($type == "theme" && !mainwp_current_user_can("dashboard", "install_themes"))) {
             mainwp_do_not_have_permissions("install plugins");  
             return;
         }

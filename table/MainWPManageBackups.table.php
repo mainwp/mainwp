@@ -61,7 +61,7 @@ class MainWPManageBackups_List_Table extends WP_List_Table
             'trigger' => __('Trigger', 'mainwp'),
         );
         
-        if (!mainwp_current_user_can("run_backup_tasks", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "run_backup_tasks")) {
             unset($columns["trigger"]);
         }
         
@@ -75,11 +75,11 @@ class MainWPManageBackups_List_Table extends WP_List_Table
             'delete' => sprintf('<a class="submitdelete" href="#" task_id="%s" onClick="return managebackups_remove(this);">' . __('Delete','mainwp') . '</a>', $item->id)
         );
         
-        if (!mainwp_current_user_can("edit_backup_tasks", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "edit_backup_tasks")) {
             unset($actions['edit']);
         }
         
-        if (!mainwp_current_user_can("delete_backup_tasks", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "delete_backup_tasks")) {
             unset($actions['delete']);
         }
         
@@ -147,7 +147,7 @@ class MainWPManageBackups_List_Table extends WP_List_Table
 
     function column_trigger($item)
     {
-        if (mainwp_current_user_can("run_backup_tasks", "dashboard")) {
+        if (mainwp_current_user_can("dashboard", "run_backup_tasks")) {
             return '<span class="backup_run_loading"><img src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="'.$item->id.'" task_type="'.$item->type.'">' . __('Run Now','mainwp') . '</a>';
         }
     }

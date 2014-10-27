@@ -8,14 +8,14 @@ class MainWPOfflineChecks
 
     public static function initMenu()
     {
-        if (mainwp_current_user_can("manage_offline_checks", "dashboard")) {
+        if (mainwp_current_user_can("dashboard", "manage_offline_checks")) {
             add_submenu_page('mainwp_tab', __('Offline Checks','mainwp'), __('Offline Checks','mainwp'), 'read', 'OfflineChecks', array(MainWPOfflineChecks::getClassName(), 'render'));
             add_submenu_page('mainwp_tab', __('Offline Checks Help','mainwp'), '<div class="mainwp-hidden">' .__('Offline Checks Help','mainwp').'</div>', 'read', 'OfflineChecksHelp', array(MainWPOfflineChecks::getClassName(), 'QSGManageOfflineChecks'));
         }
     }
 
     public static function renderHeader($shownPage) {
-        if (!mainwp_current_user_can("manage_offline_checks", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "manage_offline_checks")) {
             mainwp_do_not_have_permissions("manage offline checks");
             return;
         }

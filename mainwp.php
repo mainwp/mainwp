@@ -46,8 +46,7 @@ if (!function_exists('mainwpdir'))
     }
 }
 
-function mainwp_do_not_have_permissions($where = "", $echo = true) {
-    
+function mainwp_do_not_have_permissions($where = "", $echo = true) {    
     $msg = __("Error: You do not have sufficient permissions to access " . $where, "mainwp");
     if ($echo)
         echo '<div class="error"><p>' . $msg . '</p></a>';  
@@ -55,12 +54,12 @@ function mainwp_do_not_have_permissions($where = "", $echo = true) {
         return $msg;          
 }
 
-function mainwp_current_user_can($cap, $cap_type = "") {    
+function mainwp_current_user_can($cap_type = "", $cap) {    
     require_once(ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'pluggable.php'); 
     $current_user = wp_get_current_user();            
     if ( empty( $current_user ) )
             return false;    
-    return apply_filters("mainwp_currentusercan", true, $cap, $cap_type);       
+    return apply_filters("mainwp_currentusercan", true, $cap_type, $cap);       
 }
 
 $mainWP = new MainWPSystem(WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename(__FILE__));

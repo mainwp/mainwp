@@ -9,7 +9,7 @@ class MainWPSecurityIssues
 
     public static function initMenu()
     {
-        if (mainwp_current_user_can("manage_security_issues", "dashboard")) {
+        if (mainwp_current_user_can("dashboard", "manage_security_issues")) {
             add_submenu_page('mainwp_tab', 'SecurityIssues', '<div class="mainwp-hidden">'.__('SecurityIssues','mainwp').'</div>', 'read', 'SecurityIssues', array(MainWPSecurityIssues::getClassName(), 'render'));
         }
     }

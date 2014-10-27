@@ -66,7 +66,7 @@ class MainWPExtensionsView
     public static function render(&$extensions)
     {       
         ?>
-        <?php if (mainwp_current_user_can("manage_extensions", "dashboard")) { ?>
+        <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
         <div class="mainwp_info-box" id="mainwp-ext-notice">
             <span><?php _e('To enable extensions you need to add your MainWP login info in the <a href="admin.php?page=Settings" style="text-decoration: none;">Settings Page</a>. &nbsp;&nbsp;For more help review <a href="http://docs.mainwp.com/how-to-install-mainwp-extensions/" target="_blank" style="text-decoration: none;">this document.</a>','mainwp'); ?></span>
             <span style="float: right;"><a id="mainwp-ext-dismiss" style="text-decoration: none;" href="#"><?php _e('Dismiss','mainwp'); ?></a></span>
@@ -94,7 +94,7 @@ class MainWPExtensionsView
     {
 ?>
     <a class="mainwp_action left mainwp_action_down" href="#" id="mainwp-extensions-expand"><?php _e('Expand', 'mainwp'); ?></a><a class="mainwp_action right" href="#" id="mainwp-extensions-collapse"><?php _e('Collapse', 'mainwp'); ?></a>
-    <?php if (mainwp_current_user_can("manage_extensions", "dashboard")) { ?>
+    <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
     <div style="float: right;"><a href="#" class="button mainwp-extensions-disable-all"><?php _e('Disable All', 'mainwp'); ?></a> <a href="#" class="button-primary mainwp-extensions-enable-all"><?php _e('Enable All', 'mainwp'); ?></a> <a href="<?php echo admin_url( 'plugin-install.php?tab=upload' ); ?>" class="mainwp-upgrade-button button-primary button"><?php _e('Install New Extension', 'mainwp'); ?></a></div>
     <?php } ?>
 <div id="mainwp-extensions-list">
@@ -143,10 +143,10 @@ class MainWPExtensionsView
                             <td class="mainwp-extensions-childVersion">V. <?php echo $extension['version']; ?></td>
                             <td class="mainwp-extensions-childActions">
                                 <?php if ($active) { ?>
-                                    <?php if (mainwp_current_user_can("manage_extensions", "dashboard")) { ?>
+                                    <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
                                     <a href="#" class="button mainwp-extensions-disable"><?php _e('Disable','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                     <img src="<?php echo plugins_url('images/extensions/unlock.png', dirname(__FILE__)); ?>" title="Activated" />
-                                    <?php } // mainwp_current_user_can ?>
+                                    <?php } //  ?>
                                     <?php if (isset($extension['direct_page']) && !empty($extension['direct_page'])) { ?>
                                         <a href="<?php echo admin_url('admin.php?page='.$extension['direct_page']); ?>"><img src="<?php echo plugins_url('images/extensions/settings.png', dirname(__FILE__)); ?>" title="Settings" /></a>
                                     <?php } else if (isset($extension['callback'])) { ?>
@@ -154,9 +154,9 @@ class MainWPExtensionsView
                                     <?php } else { ?>
                                         <img src="<?php echo plugins_url('images/extensions/settings-freeze.png', dirname(__FILE__)); ?>" title="Settings" />
                                     <?php } ?>
-                                    <?php if (mainwp_current_user_can("manage_extensions", "dashboard")) { ?>
+                                    <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
                                     <img src="<?php echo plugins_url('images/extensions/trash-freeze.png', dirname(__FILE__)); ?>" title="Delete" />
-                                    <?php } // mainwp_current_user_can ?>
+                                    <?php } //  ?>
                                 <?php } else {
                                     $apilink = '';
                                     $locked = false;
@@ -181,20 +181,20 @@ class MainWPExtensionsView
                                         }
                                     }
                                     ?>
-                                    <?php if (mainwp_current_user_can("manage_extensions", "dashboard")) { ?>
+                                    <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
                                     <button class="button-primary mainwp-extensions-enable" <?php echo ($locked ? 'disabled' : ''); ?>><?php _e('Enable','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                     <?php if ($apilink != '') { ?>
                                     <a href="<?php echo $apilink; ?>"><img src="<?php echo plugins_url('images/extensions/'.(!$locked ? 'un' : '') . 'lock.png', dirname(__FILE__)); ?>" title="Not Activated" /></a>
                                     <?php } else { ?>
                                     <img src="<?php echo plugins_url('images/extensions/unlock.png', dirname(__FILE__)); ?>" title="Activated" /></a>
                                     <?php }?>
-                                    <?php } // mainwp_current_user_can ?>
+                                    <?php } //  ?>
                                     <?php if (isset($extension['callback'])) { ?>
                                         <a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>"><img src="<?php echo plugins_url('images/extensions/settings.png', dirname(__FILE__)); ?>" title="Settings" /></a>
                                     <?php } else { ?>
                                         <img src="<?php echo plugins_url('images/extensions/settings-freeze.png', dirname(__FILE__)); ?>" title="Settings" />
                                     <?php } ?>
-                                    <?php if (mainwp_current_user_can("manage_extensions", "dashboard")) { ?>
+                                    <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
                                     <a href="#" class="mainwp-extensions-trash"><img src="<?php echo plugins_url('images/extensions/trash.png', dirname(__FILE__)); ?>" title="Delete" /></a>
                                     <?php } ?>
                                 <?php } ?>

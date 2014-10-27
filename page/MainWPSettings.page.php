@@ -17,7 +17,7 @@ class MainWPSettings
 
     public static function initMenu()
     {
-        if (mainwp_current_user_can("manage_dashboard_settings", "dashboard")) {
+        if (mainwp_current_user_can("dashboard", "manage_dashboard_settings")) {
             add_submenu_page('mainwp_tab', __('Settings Global options','mainwp'), ' <span id="mainwp-Settings">'. __('Settings','mainwp') .'</span>', 'read', 'Settings', array(MainWPSettings::getClassName(), 'render'));
             add_submenu_page('mainwp_tab', __('Settings Help','mainwp'), ' <div class="mainwp-hidden">'. __('Settings Help','mainwp') .'</div>', 'read', 'SettingsHelp', array(MainWPSettings::getClassName(), 'QSGManageSettings'));
         }
@@ -96,7 +96,7 @@ class MainWPSettings
 
     public static function renderAdvanced()
     {
-        if (!mainwp_current_user_can("manage_dashboard_settings", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "manage_dashboard_settings")) {
             mainwp_do_not_have_permissions("manage dashboard settings");
             return;
         }
@@ -181,7 +181,7 @@ class MainWPSettings
 
     public static function render()
     {
-        if (!mainwp_current_user_can("manage_dashboard_settings", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "manage_dashboard_settings")) {
             mainwp_do_not_have_permissions("manage dashboard settings");
             return;
         }

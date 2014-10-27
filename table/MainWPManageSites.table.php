@@ -89,7 +89,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
             'notes' => __('Notes', 'mainwp')
         );
         
-        if (!mainwp_current_user_can("see_seo_statistics", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "see_seo_statistics")) {
             unset($columns['seo']);
         }
         if (get_option('mainwp_seo') != 1) unset($columns['seo']);
@@ -164,15 +164,15 @@ class MainWPManageSites_List_Table extends WP_List_Table
             'delete' => sprintf('<a class="submitdelete" href="#" onClick="return managesites_remove('."'".'%s'."'".');">' . __('Delete', 'mainwp') . '</a>', $item['id'])
         );
         
-        if (!mainwp_current_user_can("access_individual_dashboard", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "access_individual_dashboard")) {
             unset($actions['dashboard']);
         }
         
-        if (!mainwp_current_user_can("edit_sites", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "edit_sites")) {
             unset($actions['edit']);
         }
 
-        if (!mainwp_current_user_can("delete_sites", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "delete_sites")) {
             unset($actions['delete']);
         }
         
@@ -218,7 +218,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
         if ($lastbackup > 0) $output = MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp($lastbackup)) . '<br />';
         else $output = '<span class="mainwp-red">Never</span><br/>';
         
-        if (mainwp_current_user_can("run_backup_tasks", "dashboard")) {
+        if (mainwp_current_user_can("dashboard", "run_backup_tasks")) {
             $output .= sprintf('<a href="admin.php?page=managesites&backupid=%s">' . __('Backup Now','mainwp') . '</a>', $item['id']);
         }
 

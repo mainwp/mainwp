@@ -755,7 +755,7 @@ class MainWPThemes
     public static function renderAutoUpdate()
     {
         self::renderHeader('AutoUpdate');
-        if (!mainwp_current_user_can("trust_untrust_updates", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "trust_untrust_updates")) {
             mainwp_do_not_have_permissions("Trust/Untrust updates");
             return;
         } else {
@@ -944,7 +944,7 @@ class MainWPThemes
                              <strong><?php echo $ignoredThemeName; ?></strong> (<?php echo $ignoredTheme; ?>)
                          </td>
                         <td style="text-align: right; padding-right: 30px">
-                            <?php if (mainwp_current_user_can("ignore_unignor_updates", "dashboard")) { ?>
+                            <?php if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) { ?>
                             <a href="#" onClick="return rightnow_themes_unignore_globally('<?php echo urlencode($ignoredTheme); ?>')"><?php _e('ALLOW','mainwp'); ?></a>
                             <?php } ?>
                         </td>
@@ -970,7 +970,7 @@ class MainWPThemes
             <tr>
                 <th scope="col" class="manage-column" style="width: 250px"><?php _e('Site','mainwp'); ?></th>
                 <th scope="col" class="manage-column" style="width: 400px"><?php _e('Themes','mainwp'); ?></th>
-                <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if (mainwp_current_user_can("ignore_unignor_updates", "dashboard")) { if ($cnt > 0) { ?><a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return rightnow_themes_unignore_detail_all();"><?php _e('Allow All','mainwp'); ?></a><?php } } ?></th>
+                <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) { if ($cnt > 0) { ?><a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return rightnow_themes_unignore_detail_all();"><?php _e('Allow All','mainwp'); ?></a><?php } } ?></th>
             </tr>
         </thead>
         <tbody id="ignored-themes-list" class="list:sites">
@@ -998,7 +998,7 @@ class MainWPThemes
                        <strong><?php echo $ignoredThemeName; ?></strong> (<?php echo $ignoredTheme; ?>)
                    </td>
                    <td style="text-align: right; padding-right: 30px">
-                        <?php if (mainwp_current_user_can("ignore_unignor_updates", "dashboard")) { ?>
+                        <?php if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) { ?>
                         <a href="#" onClick="return rightnow_themes_unignore_detail('<?php echo urlencode($ignoredTheme); ?>', <?php echo $website->id; ?>)"><?php _e('ALLOW','mainwp'); ?></a>
                         <?php } ?>
                    </td>

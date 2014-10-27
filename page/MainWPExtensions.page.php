@@ -76,14 +76,17 @@ class MainWPExtensions
             $extension['DocumentationURI'] = $file_data['DocumentationURI'];
             $extension['page'] = 'Extensions-' . str_replace(' ', '-', ucwords(str_replace('-', ' ', dirname($slug))));
             
-            $all_extensions[] = $extension;
-            if (mainwp_current_user_can(dirname($slug), "extension")) {
-                self::$extensions[] = $extension;            
-                if (isset($extension['callback'])) add_submenu_page('mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback']);			            
+            $all_extensions[] = $extension;            
+            if ((defined("MWP_UMAN_PLUGIN_SLUG") && MWP_UMAN_PLUGIN_SLUG == $slug) || 
+                    mainwp_current_user_can("extension", dirname($slug))) {
+                self::$extensions[] = $extension;  
+                if (mainwp_current_user_can("extension", dirname($slug))) {
+                    if (isset($extension['callback'])) add_submenu_page('mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback']);			            
+                }
             }
         }
         MainWPUtility::update_option("mainwp_extensions", self::$extensions);
-        MainWPUtility::update_option("mainwp_all_extensions", $all_extensions);
+        MainWPUtility::update_option("mainwp_manager_extensions", $all_extensions);
         self::$extensionsLoaded = true;
     }
 
@@ -96,7 +99,11 @@ class MainWPExtensions
             {
                 foreach (self::$extensions as $extension)
                 {
-                    if (MainWPExtensions::isExtensionEnabled($extension['plugin'])) { 
+                    if (MainWPExtensions::isExtensionEnabled($extension['plugin'])) {                         
+                    
+                        if (defined("MWP_UMAN_PLUGIN_SLUG") && (MWP_UMAN_PLUGIN_SLUG == $extension['slug']) && !mainwp_current_user_can("extension", dirname(MWP_UMAN_PLUGIN_SLUG))) 
+                                continue;
+                                                          
                         if (isset($extension['direct_page'])) {
                             $html .= '<a href="' . admin_url('admin.php?page=' . $extension['direct_page']) . '"
                                class="mainwp-submenu">' . $extension['name'] . '</a>';
@@ -297,6 +304,7 @@ class MainWPExtensions
 
     public static function hookVerify($pluginFile, $key)
     {
+        if (!function_exists('wp_create_nonce')) include_once(ABSPATH . WPINC . '/pluggable.php');
         return (self::isExtensionEnabled($pluginFile) && ((wp_verify_nonce($key, $pluginFile . '-SNNonceAdder') == 1) || (md5($pluginFile.'-SNNonceAdder') == $key)));
     }
 
@@ -407,26 +415,29 @@ class MainWPExtensions
         return $dbwebsites;
     }
 
-    public static function hookGetSites($pluginFile, $key, $websiteid)
+    public static function hookGetSites($pluginFile, $key, $websiteid, $for_manager = false)
     {
         if (!self::hookVerify($pluginFile, $key))
         {
             return false;
         }
-
+        
+        if ($for_manager && (!defined("MWP_UMAN_PLUGIN_SLUG") || !mainwp_current_user_can("extension", dirname(MWP_UMAN_PLUGIN_SLUG)))) {                                             
+            return false;            
+        }
+        
         if (isset($websiteid) && ($websiteid != null))
         {
             $website = MainWPDB::Instance()->getWebsiteById($websiteid);
 
             if (!MainWPUtility::can_edit_website($website)) return false;
             
-            if (!mainwp_current_user_can($websiteid, "site")) return false;
+            if (!mainwp_current_user_can("site", $websiteid)) return false;
 
             return array(array('id' => $websiteid, 'url' => MainWPUtility::getNiceURL($website->url, true), 'name' => $website->name, 'totalsize' => $website->totalsize));
         }
 
-
-        $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
+        $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, $for_manager));       
         $output = array();
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
         {
@@ -437,13 +448,17 @@ class MainWPExtensions
         return $output;
     }
 
-    public static function hookGetGroups($pluginFile, $key, $groupid)
+    public static function hookGetGroups($pluginFile, $key, $groupid, $for_manager = false)
     {
         if (!self::hookVerify($pluginFile, $key))
         {
             return false;
         }
-
+        
+        if ($for_manager && (!defined("MWP_UMAN_PLUGIN_SLUG") || !mainwp_current_user_can("extension", dirname(MWP_UMAN_PLUGIN_SLUG)))) {            
+            return false;            
+        }
+        
         if (isset($groupid))
         {
             $group = MainWPDB::Instance()->getGroupById($groupid);
@@ -459,7 +474,7 @@ class MainWPExtensions
         }
 
 
-        $groups = MainWPDB::Instance()->getGroupsAndCount();
+        $groups = MainWPDB::Instance()->getGroupsAndCount(null, $for_manager);
         $output = array();
         foreach ($groups as $group)
         {
@@ -475,9 +490,9 @@ class MainWPExtensions
         return $output;
     }
          
-    public static function hookGetAllExtensions()
+    public static function hookManagerGetExtensions()
     {
-        return get_option('mainwp_all_extensions');                   
+        return get_option('mainwp_manager_extensions');                   
     }
     
     

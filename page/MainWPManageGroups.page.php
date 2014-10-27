@@ -8,7 +8,7 @@ class MainWPManageGroups
 
     public static function initMenu()
     {
-        if (mainwp_current_user_can("manage_groups", "dashboard")) {                
+        if (mainwp_current_user_can("dashboard", "manage_groups")) {                
             add_submenu_page('mainwp_tab', __('Groups','mainwp'), '<span id="mainwp-Groups">'. __('Groups','mainwp') .'</span>', 'read', 'ManageGroups', array(MainWPManageGroups::getClassName(), 'renderAllGroups'));
             add_submenu_page('mainwp_tab', __('Add New Group','mainwp'), '<div class="mainwp-hidden">Add New</div>', 'read', 'ManageGroupsAddNew', array(MainWPManageGroups::getClassName(), 'renderNewGroup'));
             add_submenu_page('mainwp_tab', __('Groups Help','mainwp'), '<div class="mainwp-hidden">Groups Help</div>', 'read', 'GroupsHelp', array(MainWPManageGroups::getClassName(), 'QSGManageGroups'));
@@ -21,7 +21,7 @@ class MainWPManageGroups
         <img src="<?php echo plugins_url('images/icons/mainwp-group.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Groups" height="32"/>
         <h2>Groups</h2><div style="clear: both;"></div><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
-            <?php if (mainwp_current_user_can("manage_groups", "dashboard")) { ?>
+            <?php if (mainwp_current_user_can("dashboard", "manage_groups")) { ?>
                 <a class="nav-tab pos-nav-tab <?php if ($pManage) { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageGroups"><?php _e('Manage','mainwp'); ?></a>
             <?php } ?>
                 <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab" href="admin.php?page=GroupsHelp"><?php _e('Help','mainwp'); ?></a>
@@ -30,7 +30,7 @@ class MainWPManageGroups
     }
 
     public static function renderAllGroups() {
-        if (!mainwp_current_user_can("manage_groups", "dashboard")) {
+        if (!mainwp_current_user_can("dashboard", "manage_groups")) {
             mainwp_do_not_have_permissions("manage groups");
             return;
         }

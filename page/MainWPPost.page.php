@@ -41,7 +41,7 @@ class MainWPPost
             <div class="wp-submenu sub-open" style="">
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
-                    <?php if (mainwp_current_user_can("manage_posts", "dashboard")) { ?>
+                    <?php if (mainwp_current_user_can("dashboard", "manage_posts")) { ?>
                     <a href="<?php echo admin_url('admin.php?page=PostBulkManage'); ?>" class="mainwp-submenu"><?php _e('All Posts','mainwp'); ?></a>
                     <?php } ?>
                     <a href="<?php echo admin_url('admin.php?page=PostBulkAdd'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
@@ -73,7 +73,7 @@ class MainWPPost
         <img src="<?php echo plugins_url('images/icons/mainwp-post.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Post" height="32"/>
         <h2><?php _e('Posts','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
-                <?php if (mainwp_current_user_can("manage_posts", "dashboard")) { ?>
+                <?php if (mainwp_current_user_can("dashboard", "manage_posts")) { ?>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'BulkManage') { echo "nav-tab-active"; } ?>" href="admin.php?page=PostBulkManage"><?php _e('Manage','mainwp'); ?></a>
                 <?php } ?>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'BulkAdd') { echo "nav-tab-active"; } ?>" href="admin.php?page=PostBulkAdd"><?php _e('Add New','mainwp'); ?></a>
@@ -108,12 +108,11 @@ class MainWPPost
 
     public static function render()
     {
-        if (!mainwp_current_user_can("manage_posts", "dashboard")) {            
+        if (!mainwp_current_user_can("dashboard", "manage_posts")) {            
             mainwp_do_not_have_permissions("manage posts");
             return;
         }
         global $mainwp_current_user;
-        error_log(print_r($mainwp_current_user, true));
         
         $cachedSearch = MainWPCache::getCachedContext('Post');
 

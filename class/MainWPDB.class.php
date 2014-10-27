@@ -515,7 +515,7 @@ class MainWPDB
         } else if (empty($type)){ // all sites and groups
             $where = $where_site . $where_group;
         }        
-        error_log($where);
+        //error_log($where);
         return $where;
     }
     

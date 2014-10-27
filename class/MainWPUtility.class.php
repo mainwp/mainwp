@@ -108,13 +108,13 @@ class MainWPUtility
             if ($verifyCertificate == 1) {
                 $ssl_verifyhost = true;
             } else if ($verifyCertificate == 2) { // use global setting
-                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
                 {
                     $ssl_verifyhost = true;
                 }                
             } 
         } else {            
-            if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+            if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
             {
                 $ssl_verifyhost = true;
             }            
@@ -470,13 +470,13 @@ class MainWPUtility
                 if ($verifyCertificate == 1) {
                     $ssl_verifyhost = true;
                 } else if ($verifyCertificate == 2) { // use global setting
-                    if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+                    if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
                     {
                         $ssl_verifyhost = true;
                     }                
                 } 
             } else {            
-                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
                 {
                     $ssl_verifyhost = true;
                 }            
@@ -595,7 +595,7 @@ class MainWPUtility
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
 
-        if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+        if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
         {
             @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 2);
             @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, true);
@@ -809,13 +809,13 @@ class MainWPUtility
             if ($verifyCertificate == 1) {
                 $ssl_verifyhost = true;
             } else if ($verifyCertificate == 2) { // use global setting
-                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
                 {
                     $ssl_verifyhost = true;
                 }                
             } 
         } else {            
-            if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+            if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
             {
                 $ssl_verifyhost = true;
             }            

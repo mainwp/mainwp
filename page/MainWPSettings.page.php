@@ -159,7 +159,7 @@ class MainWPSettings
                     <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
                     <td>
                         <input type="checkbox" name="mainwp_sslVerifyCertificate"
-                               id="mainwp_sslVerifyCertificate" value="checked" <?php echo ((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)) ? 'checked="checked"' : ''; ?>"/> <i>(Default: true)</i>
+                               id="mainwp_sslVerifyCertificate" value="checked" <?php echo ((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)) ? 'checked="checked"' : ''; ?>"/> <i>(Default: true)</i>
                     </td>
                 </tr>
             </tbody>

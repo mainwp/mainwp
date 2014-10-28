@@ -7,19 +7,12 @@ class MainWPOfflineChecks
     }
 
     public static function initMenu()
-    {
-        if (mainwp_current_user_can("dashboard", "manage_offline_checks")) {
-            add_submenu_page('mainwp_tab', __('Offline Checks','mainwp'), __('Offline Checks','mainwp'), 'read', 'OfflineChecks', array(MainWPOfflineChecks::getClassName(), 'render'));
-            add_submenu_page('mainwp_tab', __('Offline Checks Help','mainwp'), '<div class="mainwp-hidden">' .__('Offline Checks Help','mainwp').'</div>', 'read', 'OfflineChecksHelp', array(MainWPOfflineChecks::getClassName(), 'QSGManageOfflineChecks'));
-        }
+    {       
+        add_submenu_page('mainwp_tab', __('Offline Checks','mainwp'), __('Offline Checks','mainwp'), 'read', 'OfflineChecks', array(MainWPOfflineChecks::getClassName(), 'render'));
+        add_submenu_page('mainwp_tab', __('Offline Checks Help','mainwp'), '<div class="mainwp-hidden">' .__('Offline Checks Help','mainwp').'</div>', 'read', 'OfflineChecksHelp', array(MainWPOfflineChecks::getClassName(), 'QSGManageOfflineChecks'));    
     }
 
-    public static function renderHeader($shownPage) {
-        if (!mainwp_current_user_can("dashboard", "manage_offline_checks")) {
-            mainwp_do_not_have_permissions("manage offline checks");
-            return;
-        }
-        
+    public static function renderHeader($shownPage) {                
         ?>
         <div class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-offline.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Offline Checks" height="32"/>
@@ -41,6 +34,10 @@ class MainWPOfflineChecks
 
     public static function render()
     {
+        if (!mainwp_current_user_can("dashboard", "manage_offline_checks")) {
+            mainwp_do_not_have_permissions("manage offline checks");
+            return;
+        }
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
         $statusses = array('hourly', '2xday', 'daily', 'weekly');
 

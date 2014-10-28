@@ -9,14 +9,12 @@ class MainWPServerInformation
 
     public static function initMenu()
     {
-        if (mainwp_current_user_can("dashboard", "see_server_information")) {
-            add_submenu_page('mainwp_tab', __('Server Information','mainwp'), __('Server Information','mainwp'), 'read', 'ServerInformation', array(MainWPServerInformation::getClassName(), 'render'));
-            add_submenu_page('mainwp_tab', __('Cron Schedules','mainwp'), '<div class="mainwp-hidden">' . __('Cron Schedules','mainwp') . '</div>', 'read', 'ServerInformationCron', array(MainWPServerInformation::getClassName(), 'renderCron'));
-            add_submenu_page('mainwp_tab', __('Child Site Information','mainwp'), '<div class="mainwp-hidden">' . __('Child Site Information','mainwp') . '</div>', 'read', 'ServerInformationChild', array(MainWPServerInformation::getClassName(), 'renderChild'));
-            add_submenu_page('mainwp_tab', __('Error Log','mainwp'), '<div class="mainwp-hidden">' . __('Error Log','mainwp') . '</div>', 'read', 'ErrorLog', array(MainWPServerInformation::getClassName(), 'renderErrorLogPage'));
-            add_submenu_page('mainwp_tab', __('WP-Config File','mainwp'), '<div class="mainwp-hidden">' . __('WP-Config File','mainwp') . '</div>', 'read', 'WPConfig', array(MainWPServerInformation::getClassName(), 'renderWPConfig'));
-            add_submenu_page('mainwp_tab', __('.htaccess File','mainwp'), '<div class="mainwp-hidden">' . __('.htaccess File','mainwp') . '</div>', 'read', '.htaccess', array(MainWPServerInformation::getClassName(), 'renderhtaccess'));
-        }
+        add_submenu_page('mainwp_tab', __('Server Information','mainwp'), __('Server Information','mainwp'), 'read', 'ServerInformation', array(MainWPServerInformation::getClassName(), 'render'));
+        add_submenu_page('mainwp_tab', __('Cron Schedules','mainwp'), '<div class="mainwp-hidden">' . __('Cron Schedules','mainwp') . '</div>', 'read', 'ServerInformationCron', array(MainWPServerInformation::getClassName(), 'renderCron'));
+        add_submenu_page('mainwp_tab', __('Child Site Information','mainwp'), '<div class="mainwp-hidden">' . __('Child Site Information','mainwp') . '</div>', 'read', 'ServerInformationChild', array(MainWPServerInformation::getClassName(), 'renderChild'));
+        add_submenu_page('mainwp_tab', __('Error Log','mainwp'), '<div class="mainwp-hidden">' . __('Error Log','mainwp') . '</div>', 'read', 'ErrorLog', array(MainWPServerInformation::getClassName(), 'renderErrorLogPage'));
+        add_submenu_page('mainwp_tab', __('WP-Config File','mainwp'), '<div class="mainwp-hidden">' . __('WP-Config File','mainwp') . '</div>', 'read', 'WPConfig', array(MainWPServerInformation::getClassName(), 'renderWPConfig'));
+        add_submenu_page('mainwp_tab', __('.htaccess File','mainwp'), '<div class="mainwp-hidden">' . __('.htaccess File','mainwp') . '</div>', 'read', '.htaccess', array(MainWPServerInformation::getClassName(), 'renderhtaccess'));
     }
 
     public static function renderHeader($shownPage)
@@ -53,7 +51,12 @@ class MainWPServerInformation
     }
 
     public static function render()
-    {
+    {        
+        if (!mainwp_current_user_can("dashboard", "see_server_information")) {
+            mainwp_do_not_have_permissions("server information");
+            return;
+        }
+        
         self::renderHeader('');
         ?>
         <div class="updated below-h2">

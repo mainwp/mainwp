@@ -85,14 +85,16 @@ class MainWPManageBackups_List_Table extends WP_List_Table
         
         if ($item->paused == 1)
         {
-            $actions['resume'] = sprintf('<a href="#" task_id="%s" onClick="return managebackups_resume(this)">' . __('Resume','mainwp') . '</a>', $item->id);
+            if (mainwp_current_user_can("dashboard", "pause_resume_backup_tasks"))
+                $actions['resume'] = sprintf('<a href="#" task_id="%s" onClick="return managebackups_resume(this)">' . __('Resume','mainwp') . '</a>', $item->id);
             return sprintf('<strong><a style="color: #999;" href="admin.php?page=ManageBackups&id=%s" title="Paused">%s</a></strong><br /><div id="task-status-%s" style="float: left; padding-right: 20px"></div>%s', $item->id, $item->name, $item->id, $this->row_actions($actions));
         }
         else
         {
-            $actions['pause'] = sprintf('<a href="#" task_id="%s" onClick="return managebackups_pause(this)">' . __('Pause','mainwp') . '</a>', $item->id);
+            if (mainwp_current_user_can("dashboard", "pause_resume_backup_tasks"))
+                $actions['pause'] = sprintf('<a href="#" task_id="%s" onClick="return managebackups_pause(this)">' . __('Pause','mainwp') . '</a>', $item->id);
             return sprintf('<strong><a href="admin.php?page=ManageBackups&id=%s">%s</a></strong><br /><div id="task-status-%s" style="float: left; padding-right: 20px"></div>%s', $item->id, $item->name, $item->id, $this->row_actions($actions));
-        }
+        }         
     }
 
     function column_type($item)

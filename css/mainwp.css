@@ -2643,3 +2643,15 @@ h4.mainwp-custom-excludes {
     float: right;
     margin:  5px 0 5px;
 }
+.mainwp_breadcrumb {
+    font-size: 14px;
+}
+.mainwp_breadcrumb a{
+    text-decoration: none;
+}
+.mainwp_breadcrumb a:hover{
+    text-decoration: underline;
+}
+.mainwp_breadcrumb .separator{
+    font-size: 20px;
+}

@@ -37,9 +37,119 @@ class MainWPManageSitesView
     </div>
     <?php
     }
-
+    
+    public function getBreadcrumb($pShowpage, $pSubPages){
+        $extra = array();  
+        if (isset($pSubPages) && is_array($pSubPages)) {
+            foreach ($pSubPages as $sub) {
+                if ($pShowpage === $sub['slug']) {
+                    $extra['text'] = $sub['title'];
+                    break;
+                }
+            }                                           
+        }           
+        
+        $site_name = "";
+        $page = "";
+        switch ($pShowpage) {
+            case "":
+                $page = "manage";
+                break;
+            case "ManageSitesDashboard":
+                $site_id = $_GET['dashboard'];             
+                $page = "dashboard";
+                break; 
+            case "ManageSitesBulkUpload":
+                $page = "bulkupload";
+                break; 
+            case "ManageSitesEdit":
+                $site_id = $_GET['id'];                
+                $page = "edit";
+                break;
+            case "ManageSitesBackups":
+                $site_id = $_GET['backupid'];        
+                $page = "backup";
+                break; 
+             case "Test":
+                $page = "test";
+                break;
+            case "SitesHelp":
+                $page = "help";
+                break;
+            default:  
+                $page = "subpage";
+                break;
+        }
+        
+        if ($site_id) {
+            $website = MainWPDB::Instance()->getWebsiteById($site_id);
+            $site_name  = !empty($website) ? $website->name ." " : ""; 
+        }
+        
+        $page_links = array(
+            "site" => array("href" => '', 
+                            "text" => __("Sites", "mainwp"),                            
+                            "parent" => ""
+                            ),
+            "manage" => array( "href" => 'admin.php?page=managesites', 
+                            "text" => __("Manage", "mainwp"),
+                            "alt" => __("Manage", "mainwp"),
+                            "parent" => "site"
+                            ),
+            "dashboard" => array( "href" => '' , 
+                            "text" => $site_name . __("Dashboard", "mainwp"),                            
+                            "parent" => "manage"
+                            ),
+            "bulkupload" => array( "href" => '' , 
+                            "text" => __("Bulk Upload", "mainwp"),                            
+                            "parent" => "manage"
+                            ),
+            "edit" => array( "href" => '' , 
+                            "text" => $site_name . __("Edit", "mainwp"),                            
+                            "parent" => "manage"
+                            ),
+            "backup" => array( "href" => '' , 
+                            "text" => $site_name . __("Backups", "mainwp"),                            
+                            "parent" => "manage"
+                            ),
+            "test" => array( "href" => '' , 
+                            "text" => __("Test Connection", "mainwp"),                            
+                            "parent" => "manage"
+                            ),
+            "help" => array( "href" => '' , 
+                            "text" => __("Help", "mainwp"),                            
+                            "parent" => "manage"
+                            ),
+            "subpage" => array( "href" => (isset($extra['href']) ? $extra['href'] : ""),                           
+                            "text" => (isset($extra['text']) ? $extra['text'] : ""),                           
+                            "alt" => (isset($extra['alt']) ? $extra['alt'] : ""),                           
+                            "parent" => "manage"
+                        )
+        );
+        
+        $str_breadcrumb = ""; 
+        $separator = '<span class="separator">&nbsp;&rsaquo;&nbsp;</span>'; 
+        $first = true;
+        while(isset($page_links[$page])) {
+            if ($first) {
+                $str_breadcrumb = $page_links[$page]["text"] . $str_breadcrumb ;                
+                $first = false;
+            } else {
+                $str_breadcrumb = $separator . $str_breadcrumb;            
+                if (!empty($page_links[$page]["href"]))
+                    $str_breadcrumb  =  '<a href="' . $page_links[$page]["href"] . '" alt="' . $page_links[$page]["alt"] . '">' . $page_links[$page]["text"] . "</a>" . $str_breadcrumb ;         
+                else
+                    $str_breadcrumb = $page_links[$page]["text"] . $str_breadcrumb ;
+            }
+            $page = $page_links[$page]["parent"];
+        }
+        
+        return $str_breadcrumb;
+    }
+    
     public static function renderHeader($shownPage, &$subPages)
     {
+        $breadcrumd = self::getBreadcrumb($shownPage, $subPages);                      
         ?>
     <div class="wrap">
         <a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
@@ -49,18 +159,27 @@ class MainWPManageSitesView
              style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Sites" height="32"/>
         <h2><?php _e('Sites','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
-            <a class="nav-tab pos-nav-tab <?php if ($shownPage == '') { echo "nav-tab-active"; } ?>" href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
-            <?php if (mainwp_current_user_can("dashboard", "add_sites")) { ?>
-            <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'AddNew') { echo "nav-tab-active"; } ?>" href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
-            <?php } ?>
-            <?php if ($shownPage == 'ManageSitesBulkUpload') { ?><a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Bulk upload','mainwp'); ?></a><?php } ?>
+            <div class="mainwp_breadcrumb"><?php echo $breadcrumd; ?></div><br/>
+            <?php if ($shownPage == '') {?>
+            <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
+            <?php } ?>        
+              <?php if ($shownPage == 'ManageSitesBulkUpload') { ?>
+                <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Bulk upload','mainwp'); ?></a>                
+                <?php } ?>
+            <?php if ($shownPage == 'ManageSitesBackups') { ?>
+                <a class="nav-tab pos-nav-tab" href="admin.php?page=managesites&dashboard=<?php echo $_GET['backupid'] ?>"><?php _e('Dashboard','mainwp'); ?></a>
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&id=<?php echo $_GET['backupid'] ?>"><?php _e('Edit','mainwp'); ?></a>                
+                <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Backups','mainwp'); ?></a>                                
+                <?php } ?>
             <?php if ($shownPage == 'ManageSitesEdit') { ?>
                 <a class="nav-tab pos-nav-tab" href="admin.php?page=managesites&dashboard=<?php echo $_GET['id'] ?>"><?php _e('Dashboard','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Edit','mainwp'); ?></a>
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['id'] ?>"><?php _e('Backups','mainwp'); ?></a>                                
             <?php } ?>
             <?php if ($shownPage == 'ManageSitesDashboard') { ?>
                 <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Dashboard','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&id=<?php echo $_GET['dashboard'] ?>"><?php _e('Edit','mainwp'); ?></a>
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['dashboard'] ?>"><?php _e('Backups','mainwp'); ?></a>                                
             <?php } ?>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Test') { echo "nav-tab-active"; } ?>" href="admin.php?page=managesites&do=test"><?php _e('Test Connection','mainwp'); ?></a>
             <a style="float: right;" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage == 'SitesHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=SitesHelp"><?php _e('Help','mainwp'); ?></a>
@@ -680,11 +799,6 @@ class MainWPManageSitesView
         $remote_destinations = apply_filters('mainwp_backups_remote_get_destinations', null, array('website' => $website->id));
         $hasRemoteDestinations = ($remote_destinations == null ? $remote_destinations : count($remote_destinations));
         ?>
-    <div class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
-            src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP"/></a>
-        <img src="<?php echo plugins_url('images/icons/mainwp-sites.png', dirname(__FILE__)); ?>"
-             style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Sites" height="32"/>
-        <h2>Backup <?php echo $website->name; ?></h2>
 
         <?php
 //        if ($website->totalsize > 100)
@@ -696,7 +810,7 @@ class MainWPManageSitesView
         ?>
         <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
-        <div id="mainwp_background-box">
+        
         	<div class="postbox" id="mainwp-backup-details">
                 <h3 class="mainwp_box_title"><span><?php _e('Backup Details','mainwp'); ?></span></h3>
                 <div class="inside">
@@ -826,8 +940,7 @@ class MainWPManageSitesView
             </form>
             </div>
         </div>
-    </div>
-
+    
     <div id="managesite-backup-status-box" title="Backup <?php echo $website->name; ?>" style="display: none; text-align: center">
         <div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesite-backup-status-text">
         </div>

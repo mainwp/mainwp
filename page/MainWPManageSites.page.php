@@ -599,7 +599,9 @@ class MainWPManageSites
 
     public static function renderBackupSite($website)
     {
+        self::renderHeader('ManageSitesBackups');
         MainWPManageSitesView::renderBackupSite($website);
+        self::renderFooter('ManageSitesBackups');
     }
 
     public static function showBackups(&$website)

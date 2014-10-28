@@ -342,7 +342,7 @@ class MainWPUtility
 
             $params = array(
                 'login_required' => 1,
-                'user' => $website->adminname,
+                'user' => rawurlencode($website->adminname),
                 'mainwpsignature' => rawurlencode($signature),
                 'nonce' => $nonce,
                 'nossl' => $nossl,

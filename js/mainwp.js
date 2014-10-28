@@ -1797,6 +1797,21 @@ managebackups_backup_upload_file = function(pSiteId, pSiteName, pFile, pRegexFil
                 }
                 managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize)
             } }(pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, interVal, unique),
+            error: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pInterval, pUnique) { return function (response) {
+                if (pInterval != undefined)
+                {
+                    backupUploadRunning[pUnique] = false;
+                    clearInterval(pInterval);
+                    var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
+                    progressBar.progressbar();
+                    progressBar.progressbar('value', pSize);
+                }
+
+                manageBackupsError = true;
+                appendToDiv('#managebackups-task-status-text', '<font color="red">[' + pSiteName + '] '+__('Upload failed.') + '</font>');
+
+                managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize)
+            } }(pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, interVal, unique),
             dataType: 'json'
         });
     }
@@ -4074,6 +4089,22 @@ backup_upload_file = function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDes
                 {
                     appendToDiv('#managesite-backup-status-text', __('Upload to %1 (%2) successful.', obj.title, obj.type));
                 }
+
+                backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
+            } }(pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, interVal, unique),
+            error: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pInterVal, pUnique) { return function (response) {
+                if (interVal != undefined)
+                {
+                    backupUploadRunning[pUnique] = false;
+                    clearInterval(pInterVal);
+                    var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
+                    progressBar.progressbar();
+                    progressBar.progressbar('value', 0);
+                }
+
+                backupError = true;
+                appendToDiv('#managesite-backup-status-text', '<font color="red">' + __('Upload failed.') + '</font>');
+
                 backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
             } }(pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, interVal, unique),
             dataType: 'json'

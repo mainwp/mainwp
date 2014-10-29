@@ -2643,9 +2643,23 @@ h4.mainwp-custom-excludes {
     float: right;
     margin:  5px 0 5px;
 }
-.mainwp_breadcrumb {
-    font-size: 14px;
+
+.mainwp-permission-error {
+    padding: 2em;
+    width: 70%;
+    margin: 4em auto;
+    background: #fff;
+    border: 1px Solid #e5e5e5;
+    font-size: 13px;
+    text-align: center;
+    color: #999;
 }
+
+.mainwp-permission-error p {
+    font-size: 16px;
+    color: #333;
+}
+
 .mainwp_breadcrumb a{
     text-decoration: none;
 }

@@ -190,6 +190,15 @@ class MainWPManageSites_List_Table extends WP_List_Table
             'open' => sprintf('<a href="admin.php?page=SiteOpen&websiteid=%1$s">' . __('Open WP Admin', 'mainwp') . '</a> (<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=%1$s" target="_blank">' . __('New Window', 'mainwp') . '</a>)', $item['id']),
             'test' => '<a href="#" class="mainwp_site_testconnection">' . __('Test Connection', 'mainwp') . '</a> <span style="display: none;"><img src="' . plugins_url('images/loading.gif', dirname(__FILE__)) . '""/>' . __('Testing Connection', 'mainwp') . '</span>'
         );
+        
+        if (!mainwp_current_user_can("dashboard", "access_wpadmin_on_child_sites")) {
+            unset($actions['open']);
+        }
+        
+        if (!mainwp_current_user_can("dashboard", "test_connection")) {
+            unset($actions['test']);
+        }            
+        
         $actions = apply_filters('mainwp_managesites_column_url', $actions, $item['id']); 
         return sprintf('<strong><a target="_blank" href="%1$s">%1$s</a></strong>%2$s', $item['url'], $this->row_actions($actions));
     }
@@ -218,7 +227,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
         if ($lastbackup > 0) $output = MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp($lastbackup)) . '<br />';
         else $output = '<span class="mainwp-red">Never</span><br/>';
         
-        if (mainwp_current_user_can("dashboard", "run_backup_tasks")) {
+        if (mainwp_current_user_can("dashboard", "execute_backups")) {
             $output .= sprintf('<a href="admin.php?page=managesites&backupid=%s">' . __('Backup Now','mainwp') . '</a>', $item['id']);
         }
 

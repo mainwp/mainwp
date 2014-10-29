@@ -213,6 +213,10 @@ class MainWPManageSitesView
 
     public static function renderTest()
     {
+        if (!mainwp_current_user_can("dashboard", "test_connection")) {
+           mainwp_do_not_have_permissions("test connection");
+           return;
+        }    
         ?>
             <div id="mainwp_managesites_test_errors" class="mainwp_error error"></div>
             <div id="mainwp_managesites_test_message" class="mainwp_updated updated"></div>
@@ -608,12 +612,15 @@ class MainWPManageSitesView
 
         $output = '';
         echo '<table>';
-
+        $can_restore = mainwp_current_user_can("dashboard", "restore_backups");
         foreach ($fullBackups as $key => $fullBackup)
         {
             $output .= '<tr><td style="width: 400px;">' . MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp(filemtime($fullBackup))) . ' - ' . MainWPUtility::human_filesize(filesize($fullBackup));
             $output .= '</td><td><a title="'.basename($fullBackup).'" href="' . str_replace(array(basename($fullBackup), $upload_base_dir), array(rawurlencode(basename($fullBackup)), $upload_base_url), $fullBackup) . '" class="button">Download</a></td>';
-            $output .= '<td><a href="admin.php?page=SiteRestore&websiteid=' . $website->id.'&f='.base64_encode(str_replace(array(basename($fullBackup), $upload_base_dir), array(rawurlencode(basename($fullBackup)), ''), $fullBackup)) . '" class="mainwp-upgrade-button button" target="_blank" title="'.basename($fullBackup).'">Restore</a></td></tr>';
+            $output .= '<td>';
+            if ($can_restore)
+                $output .= '<a href="admin.php?page=SiteRestore&websiteid=' . $website->id.'&f='.base64_encode(str_replace(array(basename($fullBackup), $upload_base_dir), array(rawurlencode(basename($fullBackup)), ''), $fullBackup)) . '" class="mainwp-upgrade-button button" target="_blank" title="'.basename($fullBackup).'">Restore</a>';
+            $output .= '</td></tr>';
         }
         if ($output == '') echo '<br />' . __('No full backup has been taken yet','mainwp') . '<br />';
         else echo '<strong style="font-size: 14px">'. __('Last backups from your files:','mainwp') . '</strong>' . $output;
@@ -932,7 +939,7 @@ class MainWPManageSitesView
                 <input type="hidden" name="site_id" id="backup_site_id" value="<?php echo $website->id; ?>"/>
                 <input type="hidden" name="backup_site_full_size" id="backup_site_full_size" value="<?php echo $website->totalsize; ?>"/>
                 <input type="hidden" name="backup_site_db_size" id="backup_site_db_size" value="<?php echo $website->dbsize; ?>"/>
-                <?php if (mainwp_current_user_can("dashboard", "run_backup_tasks")) {?>
+                <?php if (mainwp_current_user_can("dashboard", "execute_backups")) {?>
                 <p class="submit"><input type="button" name="backup_btnSubmit" id="backup_btnSubmit"
                                          class="button-primary"
                                          value="Backup Now"/></p>

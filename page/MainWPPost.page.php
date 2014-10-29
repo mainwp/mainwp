@@ -42,9 +42,9 @@ class MainWPPost
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
                     <?php if (mainwp_current_user_can("dashboard", "manage_posts")) { ?>
-                    <a href="<?php echo admin_url('admin.php?page=PostBulkManage'); ?>" class="mainwp-submenu"><?php _e('All Posts','mainwp'); ?></a>
-                    <?php } ?>
+                    <a href="<?php echo admin_url('admin.php?page=PostBulkManage'); ?>" class="mainwp-submenu"><?php _e('All Posts','mainwp'); ?></a>                    
                     <a href="<?php echo admin_url('admin.php?page=PostBulkAdd'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
+                    <?php } ?>
                     <?php
                     if (isset(self::$subPages) && is_array(self::$subPages))
                     {
@@ -74,9 +74,9 @@ class MainWPPost
         <h2><?php _e('Posts','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
                 <?php if (mainwp_current_user_can("dashboard", "manage_posts")) { ?>
-                <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'BulkManage') { echo "nav-tab-active"; } ?>" href="admin.php?page=PostBulkManage"><?php _e('Manage','mainwp'); ?></a>
-                <?php } ?>
+                <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'BulkManage') { echo "nav-tab-active"; } ?>" href="admin.php?page=PostBulkManage"><?php _e('Manage','mainwp'); ?></a>                
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'BulkAdd') { echo "nav-tab-active"; } ?>" href="admin.php?page=PostBulkAdd"><?php _e('Add New','mainwp'); ?></a>
+                <?php } ?>
                 <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage === 'PostsHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=PostsHelp"><?php _e('Help','mainwp'); ?></a>
         <?php
                 if (isset(self::$subPages) && is_array(self::$subPages))
@@ -497,6 +497,10 @@ class MainWPPost
 
     public static function renderBulkAdd()
     {
+        if (!mainwp_current_user_can("dashboard", "manage_posts")) {            
+            mainwp_do_not_have_permissions("manage posts");
+            return;
+        }
         $src = get_site_url() . '/wp-admin/post-new.php?post_type=bulkpost&hideall=1' . (isset($_REQUEST['select']) ? '&select='.$_REQUEST['select'] : '');        
         $src = apply_filters('mainwp_bulkpost_edit_source', $src);
         //Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites

@@ -68,7 +68,9 @@ class MainWPRecentPosts
 
             ?>
         <div class="clear">
+            <?php if(mainwp_current_user_can("dashboard", "manage_posts")) { ?>
             <a href="<?php echo admin_url('admin.php?page=PostBulkAdd&select=' . ($current_wpid ? $current_wpid : 'all')); ?>" class="button-primary" style="float: right"><?php _e('Add New','mainwp'); ?></a>
+            <?php } ?>
             <a class="mainwp_action left mainwp_action_down recent_posts_published_lnk" href="#"><?php _e('Published','mainwp'); ?> (<?php echo count($recent_posts_published); ?>)</a><a class="mainwp_action mid recent_posts_draft_lnk" href="#" ><?php _e('Draft','mainwp'); ?> (<?php echo count($recent_posts_draft); ?>)</a><a class="mainwp_action mid recent_posts_pending_lnk" href="#"><?php _e('Pending','mainwp'); ?> (<?php echo count($recent_posts_pending); ?>)</a><a class="mainwp_action right recent_posts_trash_lnk" href="#"><?php _e('Trash','mainwp'); ?> (<?php echo count($recent_posts_trash); ?>)</a><br/><br/>
             <div class="recent_posts_published">
                 <?php

@@ -45,7 +45,9 @@ class MainWPThemes
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
                     <a href="<?php echo admin_url('admin.php?page=ThemesManage'); ?>" class="mainwp-submenu"><?php _e('Manage Themes','mainwp'); ?></a>
+                    <?php if (mainwp_current_user_can("dashboard", "install_themes")) { ?>
                     <a href="<?php echo admin_url('admin.php?page=ThemesInstall'); ?>" class="mainwp-submenu"><?php _e('Install','mainwp'); ?></a>
+                    <?php } ?>
                     <a href="<?php echo admin_url('admin.php?page=ThemesAutoUpdate'); ?>" class="mainwp-submenu"><?php _e('Auto Update Trust','mainwp'); ?></a>
                     <a href="<?php echo admin_url('admin.php?page=ThemesIgnore'); ?>" class="mainwp-submenu"><?php _e('Ignored Updates','mainwp'); ?></a>
                     <a href="<?php echo admin_url('admin.php?page=ThemesIgnoredConflicts'); ?>" class="mainwp-submenu"><?php _e('Ignored Conflicts','mainwp'); ?></a>
@@ -75,7 +77,9 @@ class MainWPThemes
         <h2><?php _e('Themes','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Manage') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesManage"><?php _e('Manage','mainwp'); ?></a>
+            <?php if (mainwp_current_user_can("dashboard", "install_themes")) { ?>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Install') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesInstall"><?php _e('Install','mainwp'); ?></a>
+            <?php } ?>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'AutoUpdate') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesAutoUpdate"><?php _e('Auto Update Trust','mainwp'); ?></a>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Ignore') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesIgnore"><?php _e('Ignored Updates','mainwp'); ?></a>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'IgnoredConflicts') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesIgnoredConflicts"><?php _e('Ignored Conflicts','mainwp'); ?></a>
@@ -253,10 +257,16 @@ class MainWPThemes
         <select name="bulk_action" id="mainwp_bulk_action">
             <option value="none"><?php _e('Choose Action','mainwp'); ?></option>
              <?php if ($status == 'inactive') { ?>
-                <option value="activate"><?php _e('Activate','mainwp'); ?></option>
-                <option value="delete"><?php _e('Delete','mainwp'); ?></option>
+                <?php if (mainwp_current_user_can("dashboard", "activate_themes")) { ?>
+                    <option value="activate"><?php _e('Activate','mainwp'); ?></option>
+                <?php } ?>
+                <?php if (mainwp_current_user_can("dashboard", "delete_themes")) { ?>    
+                    <option value="delete"><?php _e('Delete','mainwp'); ?></option>
+                <?php } ?>                
             <?php } ?>
+            <?php if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) { ?>       
                 <option value="ignore_updates"><?php _e('Ignore Updates','mainwp'); ?></option>
+            <?php } ?>
         </select> <input type="button" name="" id="mainwp_bulk_theme_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
     </div>
     <div class="clear"></div>

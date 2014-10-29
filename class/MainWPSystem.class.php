@@ -1,10 +1,10 @@
 <?php
 if (session_id() == '') session_start();
-//ini_set('display_errors', true);
-//error_reporting(E_ALL | E_STRICT);
+ini_set('display_errors', true);
+error_reporting(E_ALL | E_STRICT);
 
-@ini_set('display_errors', false);
-@error_reporting(0);
+//@ini_set('display_errors', false);
+//@error_reporting(0);
 define('MAINWP_API_VALID', "VALID");
 define('MAINWP_API_INVALID', "INVALID");
 

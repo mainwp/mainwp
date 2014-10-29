@@ -30,7 +30,11 @@ class MainWPPostHandler
         //Page: ManageSites
         $this->addAction('mainwp_checkwp', array(&$this, 'mainwp_checkwp'));
         $this->addAction('mainwp_addwp', array(&$this, 'mainwp_addwp'));
-        $this->addAction('mainwp_testwp', array(&$this, 'mainwp_testwp'));
+        
+        if (mainwp_current_user_can("dashboard", "test_connection")) {
+            $this->addAction('mainwp_testwp', array(&$this, 'mainwp_testwp'));
+        }
+        
         $this->addAction('mainwp_removesite', array(&$this, 'mainwp_removesite'));
         $this->addAction('mainwp_notes_save', array(&$this, 'mainwp_notes_save'));
         add_action('wp_ajax_mainwp_reconnectwp', array(&$this, 'mainwp_reconnectwp')); //ok
@@ -72,9 +76,11 @@ class MainWPPostHandler
 
         //Page: backup
         if (mainwp_current_user_can("dashboard", "run_backup_tasks")) {
-            $this->addAction('mainwp_backup_run_site', array(&$this, 'mainwp_backup_run_site'));
-            $this->addAction('mainwp_backup', array(&$this, 'mainwp_backup'));
+            $this->addAction('mainwp_backup_run_site', array(&$this, 'mainwp_backup_run_site'));            
         }
+        if (mainwp_current_user_can("dashboard", "execute_backups")) {
+            $this->addAction('mainwp_backup', array(&$this, 'mainwp_backup'));
+        }        
         $this->addAction('mainwp_createbackup_getfilesize', array(&$this, 'mainwp_createbackup_getfilesize'));
         $this->addAction('mainwp_backup_download_file', array(&$this, 'mainwp_backup_download_file'));
         $this->addAction('mainwp_backup_getfilesize', array(&$this, 'mainwp_backup_getfilesize'));
@@ -146,10 +152,16 @@ class MainWPPostHandler
         //Page: Themes
         add_action('wp_ajax_mainwp_themes_search', array(&$this, 'mainwp_themes_search')); //ok
         add_action('wp_ajax_mainwp_themes_search_all', array(&$this, 'mainwp_themes_search_all')); //ok
-        $this->addAction('mainwp_theme_activate', array(&$this, 'mainwp_theme_activate'));
-        $this->addAction('mainwp_theme_delete', array(&$this, 'mainwp_theme_delete'));
+        if (mainwp_current_user_can("dashboard", "activate_themes")) { 
+            $this->addAction('mainwp_theme_activate', array(&$this, 'mainwp_theme_activate'));
+        }
+        if (mainwp_current_user_can("dashboard", "delete_themes")) { 
+            $this->addAction('mainwp_theme_delete', array(&$this, 'mainwp_theme_delete'));
+        }        
         $this->addAction('mainwp_trusted_theme_notes_save', array(&$this, 'mainwp_trusted_theme_notes_save'));
-        $this->addAction('mainwp_theme_ignore_updates', array(&$this, 'mainwp_theme_ignore_updates'));
+        if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) { 
+            $this->addAction('mainwp_theme_ignore_updates', array(&$this, 'mainwp_theme_ignore_updates'));
+        }
 
         //Page: Plugins
         add_action('wp_ajax_mainwp_plugins_search', array(&$this, 'mainwp_plugins_search')); //ok

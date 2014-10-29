@@ -1071,8 +1071,10 @@ class MainWPManageBackups
 
         MainWPManageSites::showBackups($website);
         ?>
-        <hr />
+        <?php if (mainwp_current_user_can("dashboard", "execute_backups")) { ?>
+        <hr />        
         <div style="text-align: center;"><a href="<?php echo admin_url('admin.php?page=managesites&backupid='.$website->id); ?>" class="button-primary"><?php _e('Backup Now','mainwp'); ?></a></div>
+        <?php } ?>
         <?php
     }
 

@@ -71,9 +71,12 @@ class MainWPMain
     {
         $i = 1;
         add_meta_box($page.'-contentbox-' . $i++, MainWPRightNow::getName(), array(MainWPRightNow::getClassName(), 'render'), $page, 'normal', 'core');
-
-        add_meta_box($page.'-contentbox-' . $i++, MainWPRecentPosts::getName(), array(MainWPRecentPosts::getClassName(), 'render'), $page, 'normal', 'core');
-        add_meta_box($page.'-contentbox-' . $i++, MainWPRecentPages::getName(), array(MainWPRecentPages::getClassName(), 'render'), $page, 'normal', 'core');
+        if (mainwp_current_user_can("dashboard", "manage_posts")) {
+            add_meta_box($page.'-contentbox-' . $i++, MainWPRecentPosts::getName(), array(MainWPRecentPosts::getClassName(), 'render'), $page, 'normal', 'core');
+        }
+        if (mainwp_current_user_can("dashboard", "manage_pages")) {
+            add_meta_box($page.'-contentbox-' . $i++, MainWPRecentPages::getName(), array(MainWPRecentPages::getClassName(), 'render'), $page, 'normal', 'core');
+        }
 
         if (mainwp_current_user_can("dashboard", "manage_security_issues")) {
             add_meta_box($page.'-contentbox-' . $i++, MainWPSecurityIssues::getMetaboxName(), array(MainWPSecurityIssues::getClassName(), 'renderMetabox'), $page, 'normal', 'core');

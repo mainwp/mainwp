@@ -721,7 +721,7 @@ class MainWPRightNow
                                 <span class="mainwp-mid-col pluginsInfo" id="wp_upgrade_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>"><?php echo $plugin_upgrade['Version']; ?> to <?php echo $plugin_upgrade['update']['new_version']; ?></span>
                                 <span class="mainwp-right-col pluginsAction">
                                     <div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
-                                    <?php if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) { ?>
+                                    <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
                                         <a href="#" onClick="return rightnow_plugins_ignore_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode($plugin_upgrade['Name']); ?>', <?php echo $website->id; ?>)" class="button"><?php _e('Ignore','mainwp'); ?></a> 
                                     <?php } ?>
                                     <?php if (mainwp_current_user_can("dashboard", "update_plugins")) { ?>
@@ -757,7 +757,7 @@ class MainWPRightNow
                             </a>
                         </span>
                         <span class="mainwp-right-col">
-                            <?php if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) { ?>
+                            <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
                                 <a href="#" class="button" onClick="return rightnow_plugins_ignore_all('<?php echo $plugin_name; ?>', '<?php echo urlencode($pluginsInfo[$slug]['name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a>
                             <?php } ?>
                             <?php if (mainwp_current_user_can("dashboard", "update_plugins")) { ?>
@@ -812,7 +812,7 @@ class MainWPRightNow
                                 </span>
                                 <span class="mainwp-mid-col pluginsInfo"><?php echo $plugin_upgrade['Version']; ?> to <?php echo $plugin_upgrade['update']['new_version']; ?></span>
                                 <span class="mainwp-right-col pluginsAction">
-                                    <?php if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) { ?>
+                                    <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
                                     <a href="#" class="button" onClick="return rightnow_plugins_ignore_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode($plugin_upgrade['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Ignore','mainwp'); ?></a> 
                                     <?php } ?>
                                     <?php if (mainwp_current_user_can("dashboard", "update_plugins")) { ?>
@@ -920,7 +920,7 @@ class MainWPRightNow
                             <span class="mainwp-mid-col pluginsInfo" id="wp_upgrade_theme_<?php echo $website->id; ?>_<?php echo $theme_name; ?>"><?php echo $theme_upgrade['Version']; ?> to <?php echo $theme_upgrade['update']['new_version']; ?></span>
                             <span class="mainwp-right-col pluginsAction">
                                 <div id="wp_upgradebuttons_theme_<?php echo $website->id; ?>_<?php echo $theme_name; ?>">
-                                    <?php if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) { ?>
+                                    <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
                                     <a href="#" class="button" onClick="return rightnow_themes_ignore_detail('<?php echo $theme_name; ?>', '<?php echo urlencode($theme_upgrade['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Ignore','mainwp'); ?></a>
                                      <?php } ?>
                                     <?php if (mainwp_current_user_can("dashboard", "update_themes")) { ?>
@@ -952,7 +952,7 @@ class MainWPRightNow
                             </a>
                         </span>
                         <span class="mainwp-right-col">
-                            <?php if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) {?>
+                            <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) {?>
                             <a href="#" class="button" onClick="return rightnow_themes_ignore_all('<?php echo $theme_name; ?>', '<?php echo urlencode($themesInfo[$slug]['name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a>
                             <?php } ?>
                             <?php if (mainwp_current_user_can("dashboard", "update_themes")) {?>
@@ -1004,7 +1004,7 @@ class MainWPRightNow
                                     } ?></span>
                                 <span class="mainwp-mid-col pluginsInfo"><?php echo $theme_upgrade['Version']; ?> to <?php echo $theme_upgrade['update']['new_version']; ?></span>
                                 <span class="mainwp-right-col pluginsAction">
-                                    <?php if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) {?>
+                                    <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) {?>
                                     <a href="#" class="button" onClick="return rightnow_themes_ignore_detail('<?php echo $theme_name; ?>', '<?php echo urlencode($theme_upgrade['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Ignore','mainwp'); ?></a>
                                      <?php } ?>
                                     <?php if (mainwp_current_user_can("dashboard", "update_themes")) {?>

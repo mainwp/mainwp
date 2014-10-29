@@ -478,8 +478,10 @@ class MainWPPlugins
             <?php if (mainwp_current_user_can("dashboard", "delete_plugins")) { ?>
             <option value="delete"><?php _e('Delete','mainwp'); ?></option>            
             <?php } // ?>
-            <?php } ?>            
-            <option value="ignore_updates"><?php _e('Ignore Updates','mainwp'); ?></option>            
+            <?php } ?>  
+            <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>   
+            <option value="ignore_updates"><?php _e('Ignore Updates','mainwp'); ?></option>    
+            <?php } ?>  
         </select> <input type="button" name="" id="mainwp_bulk_plugins_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>&nbsp;<span><a href="http://docs.mainwp.com/why-does-the-mainwp-client-plugin-not-show-up-on-the-plugin-list-for-my-managed-site/" target="_blank"><?php _e('Why does the MainWP Child Plugin NOT show here?','mainwp'); ?></a></span>
     </div>
     <div class="clear"></div>
@@ -1103,7 +1105,7 @@ class MainWPPlugins
             <thead>
                 <tr>
                     <th scope="col" class="manage-column" style="width: 650px"><?php _e('Plugins','mainwp'); ?></th>
-                    <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) { if ($ignoredPlugins) { ?><a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return rightnow_plugins_unignore_globally_all();"><?php _e('Allow All','mainwp'); ?></a><?php } } ?></th>
+                    <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { if ($ignoredPlugins) { ?><a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return rightnow_plugins_unignore_globally_all();"><?php _e('Allow All','mainwp'); ?></a><?php } } ?></th>
                 </tr>
             </thead>
             <tbody id="globally-ignored-plugins-list" class="list:sites">
@@ -1118,7 +1120,7 @@ class MainWPPlugins
                                 <strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.urlencode(dirname($ignoredPlugin)).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $ignoredPluginName; ?>"><?php echo $ignoredPluginName; ?></a></strong> (<?php echo $ignoredPlugin; ?>)
                             </td>
                             <td style="text-align: right; padding-right: 30px">
-                                <?php if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) { ?>
+                                <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
                                 <a href="#" onClick="return rightnow_plugins_unignore_globally('<?php echo urlencode($ignoredPlugin); ?>')"><?php _e('ALLOW','mainwp'); ?></a>
                                 <?php } ?>
                             </td>

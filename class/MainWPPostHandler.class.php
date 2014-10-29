@@ -109,20 +109,22 @@ class MainWPPostHandler
         }
         
         //Page: Recent Posts
-        $this->addAction('mainwp_post_unpublish', array(&$this, 'mainwp_post_unpublish'));
-        $this->addAction('mainwp_post_publish', array(&$this, 'mainwp_post_publish'));
-        $this->addAction('mainwp_post_trash', array(&$this, 'mainwp_post_trash'));
-        $this->addAction('mainwp_post_delete', array(&$this, 'mainwp_post_delete'));
-        $this->addAction('mainwp_post_restore', array(&$this, 'mainwp_post_restore'));
-        $this->addAction('mainwp_post_approve', array(&$this, 'mainwp_post_approve'));
-
+        if (mainwp_current_user_can("dashboard", "manage_posts")) {
+            $this->addAction('mainwp_post_unpublish', array(&$this, 'mainwp_post_unpublish'));
+            $this->addAction('mainwp_post_publish', array(&$this, 'mainwp_post_publish'));
+            $this->addAction('mainwp_post_trash', array(&$this, 'mainwp_post_trash'));
+            $this->addAction('mainwp_post_delete', array(&$this, 'mainwp_post_delete'));
+            $this->addAction('mainwp_post_restore', array(&$this, 'mainwp_post_restore'));
+            $this->addAction('mainwp_post_approve', array(&$this, 'mainwp_post_approve'));
+        }
         //Page: Pages
-        $this->addAction('mainwp_page_unpublish', array(&$this, 'mainwp_page_unpublish'));
-        $this->addAction('mainwp_page_publish', array(&$this, 'mainwp_page_publish'));
-        $this->addAction('mainwp_page_trash', array(&$this, 'mainwp_page_trash'));
-        $this->addAction('mainwp_page_delete', array(&$this, 'mainwp_page_delete'));
-        $this->addAction('mainwp_page_restore', array(&$this, 'mainwp_page_restore'));
-
+        if (mainwp_current_user_can("dashboard", "manage_pages")) {
+            $this->addAction('mainwp_page_unpublish', array(&$this, 'mainwp_page_unpublish'));
+            $this->addAction('mainwp_page_publish', array(&$this, 'mainwp_page_publish'));
+            $this->addAction('mainwp_page_trash', array(&$this, 'mainwp_page_trash'));
+            $this->addAction('mainwp_page_delete', array(&$this, 'mainwp_page_delete'));
+            $this->addAction('mainwp_page_restore', array(&$this, 'mainwp_page_restore'));
+        }
         //Page: Users
         $this->addAction('mainwp_user_delete', array(&$this, 'mainwp_user_delete'));
         $this->addAction('mainwp_user_role_to_administrator', array(&$this, 'mainwp_user_role_to_administrator'));
@@ -159,7 +161,7 @@ class MainWPPostHandler
             $this->addAction('mainwp_theme_delete', array(&$this, 'mainwp_theme_delete'));
         }        
         $this->addAction('mainwp_trusted_theme_notes_save', array(&$this, 'mainwp_trusted_theme_notes_save'));
-        if (mainwp_current_user_can("dashboard", "ignore_unignor_updates")) { 
+        if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { 
             $this->addAction('mainwp_theme_ignore_updates', array(&$this, 'mainwp_theme_ignore_updates'));
         }
 
@@ -174,7 +176,9 @@ class MainWPPostHandler
             $this->addAction('mainwp_plugin_delete', array(&$this, 'mainwp_plugin_delete'));
         }
         
-        $this->addAction('mainwp_plugin_ignore_updates', array(&$this, 'mainwp_plugin_ignore_updates'));
+        if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { 
+            $this->addAction('mainwp_plugin_ignore_updates', array(&$this, 'mainwp_plugin_ignore_updates'));
+        }
         $this->addAction('mainwp_trusted_plugin_notes_save', array(&$this, 'mainwp_trusted_plugin_notes_save'));
 
         //Plugins
@@ -1130,7 +1134,7 @@ class MainWPPostHandler
 
     function mainwp_ignorepluginsthemes()
     {
-        if (!mainwp_current_user_can("dashboard", "ignore_unignor_updates")) {
+        if (!mainwp_current_user_can("dashboard", "ignore_unignore_updates")) {
              die(json_encode(array('error' => mainwp_do_not_have_permissions("ignore/unignor updates"))));
         }
         

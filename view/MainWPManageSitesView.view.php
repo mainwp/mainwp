@@ -38,7 +38,7 @@ class MainWPManageSitesView
     <?php
     }
     
-    public function getBreadcrumb($pShowpage, $pSubPages){
+    static function getBreadcrumb($pShowpage, $pSubPages){
         $extra = array();  
         if (isset($pSubPages) && is_array($pSubPages)) {
             foreach ($pSubPages as $sub) {
@@ -48,7 +48,7 @@ class MainWPManageSitesView
                 }
             }                                           
         }           
-        
+        $site_id = null;
         $site_name = "";
         $page = "";
         switch ($pShowpage) {
@@ -613,10 +613,16 @@ class MainWPManageSitesView
         $output = '';
         echo '<table>';
         $can_restore = mainwp_current_user_can("dashboard", "restore_backups");
+        $can_download = mainwp_current_user_can("dashboard", "download_backups");
+        
         foreach ($fullBackups as $key => $fullBackup)
         {
             $output .= '<tr><td style="width: 400px;">' . MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp(filemtime($fullBackup))) . ' - ' . MainWPUtility::human_filesize(filesize($fullBackup));
-            $output .= '</td><td><a title="'.basename($fullBackup).'" href="' . str_replace(array(basename($fullBackup), $upload_base_dir), array(rawurlencode(basename($fullBackup)), $upload_base_url), $fullBackup) . '" class="button">Download</a></td>';
+            $output .= '</td><td>';
+            if ($can_download) {
+                $output .= '<a title="'.basename($fullBackup).'" href="' . str_replace(array(basename($fullBackup), $upload_base_dir), array(rawurlencode(basename($fullBackup)), $upload_base_url), $fullBackup) . '" class="button">Download</a>';
+            }
+            $output .= '</td>';
             $output .= '<td>';
             if ($can_restore)
                 $output .= '<a href="admin.php?page=SiteRestore&websiteid=' . $website->id.'&f='.base64_encode(str_replace(array(basename($fullBackup), $upload_base_dir), array(rawurlencode(basename($fullBackup)), ''), $fullBackup)) . '" class="mainwp-upgrade-button button" target="_blank" title="'.basename($fullBackup).'">Restore</a>';
@@ -630,7 +636,11 @@ class MainWPManageSitesView
         $output = '';
         foreach ($dbBackups as $key => $dbBackup)
         {
-            $output .= '<tr><td style="width: 400px;">' . MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp(filemtime($dbBackup))) . ' - ' . MainWPUtility::human_filesize(filesize($dbBackup)) . '</td><td><a title="'.basename($dbBackup).'" href="' . str_replace(array(basename($dbBackup), $upload_base_dir), array(rawurlencode(basename($dbBackup)), $upload_base_url), $dbBackup) . '" download class="button">Download</a></td></tr>';
+            $output .= '<tr><td style="width: 400px;">' . MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp(filemtime($dbBackup))) . ' - ' . MainWPUtility::human_filesize(filesize($dbBackup)) . '</td><td>';
+            if ($can_download) {
+                $output .= '<a title="'.basename($dbBackup).'" href="' . str_replace(array(basename($dbBackup), $upload_base_dir), array(rawurlencode(basename($dbBackup)), $upload_base_url), $dbBackup) . '" download class="button">Download</a>';
+            }
+            $output .= '</td></tr>';
         }
         if ($output == '') echo '<br />'. __('No database only backup has been taken yet','mainwp') . '<br /><br />';
         else echo '<strong style="font-size: 14px">'. __('Last backups from your database:','mainwp') . '</strong>' . $output;
@@ -803,6 +813,11 @@ class MainWPManageSitesView
 
     public static function renderBackupSite(&$website)
     {
+        if (!mainwp_current_user_can("dashboard", "execute_backups")) {
+            mainwp_do_not_have_permissions("execute backups");
+            return;        
+        }
+      
         $remote_destinations = apply_filters('mainwp_backups_remote_get_destinations', null, array('website' => $website->id));
         $hasRemoteDestinations = ($remote_destinations == null ? $remote_destinations : count($remote_destinations));
         ?>
@@ -939,11 +954,11 @@ class MainWPManageSitesView
                 <input type="hidden" name="site_id" id="backup_site_id" value="<?php echo $website->id; ?>"/>
                 <input type="hidden" name="backup_site_full_size" id="backup_site_full_size" value="<?php echo $website->totalsize; ?>"/>
                 <input type="hidden" name="backup_site_db_size" id="backup_site_db_size" value="<?php echo $website->dbsize; ?>"/>
-                <?php if (mainwp_current_user_can("dashboard", "execute_backups")) {?>
+                
                 <p class="submit"><input type="button" name="backup_btnSubmit" id="backup_btnSubmit"
                                          class="button-primary"
                                          value="Backup Now"/></p>
-                <?php } ?>
+                
             </form>
             </div>
         </div>
@@ -1113,6 +1128,7 @@ class MainWPManageSitesView
                         </div>
                     </td>
                 </tr>
+                <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
                 <tr>
                     <th scope="row">Ignore Core Updates <?php MainWPUtility::renderToolTip('Set to YES if you want to Ignore Core Updates.'); ?></th>
                     <td>
@@ -1142,7 +1158,8 @@ class MainWPManageSitesView
                         <label for="mainwp_is_ignoreThemeUpdates"></label>
                         </div>
                     </td>
-                </tr>  
+                </tr> 
+                <?php } ?>
                 <?php do_action('mainwp_extension_sites_edit_tablerow', $website); ?>
                 </tbody>
             </table>

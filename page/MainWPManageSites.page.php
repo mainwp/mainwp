@@ -17,6 +17,7 @@ class MainWPManageSites
         add_action('mainwp-pagefooter-sites', array(MainWPManageSites::getClassName(), 'renderFooter'));
 
         add_filter('set-screen-option', array(MainWPManageSites::getClassName(), 'setScreenOption'), 10, 3);
+        add_action('mainwp-securityissues-sites', array(MainWPSecurityIssues::getClassName(), 'render'));
     }
 
     static function on_screen_layout_columns($columns, $screen)
@@ -607,7 +608,14 @@ class MainWPManageSites
         MainWPManageSitesView::renderBackupSite($website);
         self::renderFooter('ManageSitesBackups');
     }
-
+    
+    public static function renderScanSite($website)
+    {
+        self::renderHeader('SecurityScan');
+        MainWPManageSitesView::renderScanSite($website);
+        self::renderFooter('SecurityScan');
+    }
+    
     public static function showBackups(&$website)
     {
         $dir = MainWPUtility::getMainWPSpecificDir($website->id);
@@ -711,6 +719,19 @@ class MainWPManageSites
                 return;
             }
         }
+        
+        if (isset($_GET['scanid']) && MainWPUtility::ctype_digit($_GET['scanid']))
+        {
+            $websiteid = $_GET['scanid'];
+
+            $scanwebsite = MainWPDB::Instance()->getWebsiteById($websiteid);
+            if (MainWPUtility::can_edit_website($scanwebsite))
+            {
+                MainWPManageSites::renderScanSite($scanwebsite);
+                return;
+            }
+        }
+        
 
         if (isset($_GET['seowebsiteid']) && MainWPUtility::ctype_digit($_GET['seowebsiteid']))
         {

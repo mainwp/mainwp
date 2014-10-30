@@ -62,6 +62,9 @@ class MainWPManageSitesView
             case "ManageSitesBulkUpload":
                 $page = "bulkupload";
                 break; 
+            case "SecurityScan":
+                $page = "scan";
+                break; 
             case "ManageSitesEdit":
                 $site_id = $_GET['id'];                
                 $page = "edit";
@@ -112,6 +115,10 @@ class MainWPManageSitesView
                             "text" => $site_name . __("Backups", "mainwp"),                            
                             "parent" => "manage"
                             ),
+            "scan" => array( "href" => '' , 
+                            "text" => __("Security Scan", "mainwp"),                            
+                            "parent" => "manage"
+                            ),
             "test" => array( "href" => '' , 
                             "text" => __("Test Connection", "mainwp"),                            
                             "parent" => "manage"
@@ -149,7 +156,10 @@ class MainWPManageSitesView
     
     public static function renderHeader($shownPage, &$subPages)
     {
-        $breadcrumd = self::getBreadcrumb($shownPage, $subPages);                      
+        if ($shownPage != '' && $shownPage != 'Test' && $shownPage != 'SitesHelp' && $shownPage != 'AddNew') {
+            $breadcrumd = self::getBreadcrumb($shownPage, $subPages);                      
+        }
+        
         ?>
     <div class="wrap">
         <a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
@@ -160,8 +170,9 @@ class MainWPManageSitesView
         <h2><?php _e('Sites','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <div class="mainwp_breadcrumb"><?php echo $breadcrumd; ?></div><br/>
-            <?php if ($shownPage == '') {?>
+            <?php if ($shownPage == '') {?>            
             <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
+            <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
             <?php } ?>        
               <?php if ($shownPage == 'ManageSitesBulkUpload') { ?>
                 <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Bulk upload','mainwp'); ?></a>                
@@ -170,16 +181,25 @@ class MainWPManageSitesView
                 <a class="nav-tab pos-nav-tab" href="admin.php?page=managesites&dashboard=<?php echo $_GET['backupid'] ?>"><?php _e('Dashboard','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&id=<?php echo $_GET['backupid'] ?>"><?php _e('Edit','mainwp'); ?></a>                
                 <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Backups','mainwp'); ?></a>                                
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&websiteid=<?php echo $_GET['backupid'] ?>"><?php _e('Security Scan','mainwp'); ?></a>
                 <?php } ?>
             <?php if ($shownPage == 'ManageSitesEdit') { ?>
                 <a class="nav-tab pos-nav-tab" href="admin.php?page=managesites&dashboard=<?php echo $_GET['id'] ?>"><?php _e('Dashboard','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Edit','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['id'] ?>"><?php _e('Backups','mainwp'); ?></a>                                
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&websiteid=<?php echo $_GET['id'] ?>"><?php _e('Security Scan','mainwp'); ?></a>
             <?php } ?>
             <?php if ($shownPage == 'ManageSitesDashboard') { ?>
                 <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Dashboard','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&id=<?php echo $_GET['dashboard'] ?>"><?php _e('Edit','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['dashboard'] ?>"><?php _e('Backups','mainwp'); ?></a>                                
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&websiteid=<?php echo $_GET['dashboard'] ?>"><?php _e('Security Scan','mainwp'); ?></a>
+            <?php } ?>
+            <?php if ($shownPage == 'SecurityScan') { ?>
+                <a class="nav-tab pos-nav-tab" href="admin.php?page=managesites&dashboard=<?php echo $_GET['scanid'] ?>"><?php _e('Dashboard','mainwp'); ?></a>
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&id=<?php echo $_GET['scanid'] ?>"><?php _e('Edit','mainwp'); ?></a>                
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['scanid'] ?>"><?php _e('Backups','mainwp'); ?></a>                                
+                <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Security Scan','mainwp'); ?></a>
             <?php } ?>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Test') { echo "nav-tab-active"; } ?>" href="admin.php?page=managesites&do=test"><?php _e('Test Connection','mainwp'); ?></a>
             <a style="float: right;" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage == 'SitesHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=SitesHelp"><?php _e('Help','mainwp'); ?></a>
@@ -969,6 +989,40 @@ class MainWPManageSitesView
         <input id="managesite-backup-status-close" type="button" name="Close" value="Cancel" class="button" />
     </div>
     <?php
+    }
+        
+    public static function renderScanSite(&$website) {       
+        if (mainwp_current_user_can("dashboard", "manage_security_issues"))
+            do_action('mainwp-securityissues-sites', $website);
+        
+        if (mainwp_current_user_can("extension", "mainwp-sucuri-extension")) {
+            if (apply_filters('mainwp-extension-available-check', 'mainwp-sucuri-extension')) {
+                do_action('mainwp-sucuriscan-sites', $website);
+            } else {
+                ?>
+                <div class="postbox">
+                    <h3 class="mainwp_box_title"><span>Wordfence Security Scan</span></h3>
+                    <div class="inside">
+                        <?php  _e('The Sucuri Scan requires the free Sucuri Extension, please download from <a href="https://extensions.mainwp.com/product/mainwp-sucuri-extension/" title="Sucuri">here</a>', "mainwp"); ?>
+                    </div>
+                </div>
+                <?php                                
+            }            
+        }   
+        
+        if (mainwp_current_user_can("extension", "mainwp-wordfence-extension")) {
+            if (apply_filters('mainwp-extension-available-check', 'mainwp-wordfence-extension')) {
+                do_action('mainwp-wordfence-sites', $website);
+            } else {  ?>
+                <div class="postbox">
+                    <h3 class="mainwp_box_title"><span>Wordfence Security Scan</span></h3>
+                    <div class="inside">
+                        <?php  _e('Wordfence status requires the Wordfence Extension, please order from <a href="https://extensions.mainwp.com/product/mainwp-wordfence-extension/" title="Wordfence">here</a>.', 'mainwp'); ?>
+                    </div>
+                </div>
+        <?php }            
+       }        
+                    
     }
 
     public static function _renderInfo()

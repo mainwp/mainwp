@@ -188,7 +188,8 @@ class MainWPManageSites_List_Table extends WP_List_Table
     {
         $actions = array(
             'open' => sprintf('<a href="admin.php?page=SiteOpen&websiteid=%1$s">' . __('Open WP Admin', 'mainwp') . '</a> (<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=%1$s" target="_blank">' . __('New Window', 'mainwp') . '</a>)', $item['id']),
-            'test' => '<a href="#" class="mainwp_site_testconnection">' . __('Test Connection', 'mainwp') . '</a> <span style="display: none;"><img src="' . plugins_url('images/loading.gif', dirname(__FILE__)) . '""/>' . __('Testing Connection', 'mainwp') . '</span>'
+            'test' => '<a href="#" class="mainwp_site_testconnection">' . __('Test Connection', 'mainwp') . '</a> <span style="display: none;"><img src="' . plugins_url('images/loading.gif', dirname(__FILE__)) . '""/>' . __('Testing Connection', 'mainwp') . '</span>',
+            'scan' => '<a href="admin.php?page=managesites&scanid=' . $item['id'] . '">' . __('Security Scan', 'mainwp') . '</a>'            
         );
         
         if (!mainwp_current_user_can("dashboard", "access_wpadmin_on_child_sites")) {

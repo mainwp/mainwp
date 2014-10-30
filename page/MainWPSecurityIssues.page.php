@@ -14,23 +14,29 @@ class MainWPSecurityIssues
         }
     }
 
-    public static function render()
+    public static function render($website = null)
     {
-        if (!isset($_REQUEST['id']) || !MainWPUtility::ctype_digit($_REQUEST['id']))
-        {
-            return;
+        $with_header = true;
+        if (empty($website)) {
+            if (!isset($_REQUEST['id']) || !MainWPUtility::ctype_digit($_REQUEST['id']))
+            {
+                return;
+            }
+            $website = MainWPDB::Instance()->getWebsiteById($_REQUEST['id']);
+        } else {
+            $with_header = false;
         }
-        $website = MainWPDB::Instance()->getWebsiteById($_REQUEST['id']);
-
+        
         if (!MainWPUtility::can_edit_website($website)) {
             return;
         }
 
-
-        ?>
+        if ($with_header) { 
+        ?>        
     <div class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-security.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Security Issues" height="32"/><h2><?php _e('Security Issues','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div id="mainwp_background-box">
+        <?php } ?>
         	<div class="mainwp_info-box"><?php _e('We highly suggest you make a full backup before you run the Security Update.','mainwp'); ?></div>
             <div class="postbox">
             <h3 class="mainwp_box_title"><span><?php echo $website->name; ?> (<?php echo $website->url; ?>)</span></h3>
@@ -49,9 +55,11 @@ class MainWPSecurityIssues
             <br /><input type="button" id="securityIssues_fixAll" class="button-primary" value="<?php _e('Fix All','mainwp'); ?>"/> <input type="button" id="securityIssues_refresh" class="button" value="<?php _e('Refresh','mainwp'); ?>"/>
             </div>
             </div>
+   <?php if ($with_header) { ?>
         </div>
     </div>
-    <input type="hidden" id="securityIssueSite" value="<?php echo $_REQUEST['id']; ?>"/>
+<?php } ?>
+    <input type="hidden" id="securityIssueSite" value="<?php echo $website->id; ?>"/>
     <?php
     }
 

@@ -180,7 +180,7 @@ class MainWPSecurityIssues
                     if (!MainWPUtility::ctype_digit($website->securityIssues) || $website->securityIssues == 0) continue;
                 ?>
                 <div class="mainwp-row" siteid="<?php echo $website->id; ?>">
-                    <span class="mainwp-left-col"><a href="admin.php?page=SecurityIssues&id=<?php echo $website->id; ?>"><?php echo $website->name; ?></a></span>
+                    <span class="mainwp-left-col"><a href="admin.php?page=managesites&scanid=<?php echo $website->id; ?>"><?php echo $website->name; ?></a></span>
                     <span class="mainwp-mid-col"><span class="<?php echo ($website->securityIssues > 0 ? 'darkred' : 'mainwp_ga_plus'); ?>"><span class="mainwp-rightnow-number"><?php echo $website->securityIssues; ?></span> Issue<?php echo (($website->securityIssues > 1) ? 's' : ''); ?></span></span>
                     <span class="mainwp-right-col"><?php if ($website->securityIssues == 0) { ?>
                             <input type="button" class="securityIssues_dashboard_unfixAll button" value="<?php _e('Unfix All','mainwp'); ?>"/>

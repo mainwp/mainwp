@@ -158,6 +158,7 @@ class MainWPManageSitesView
         $can_edit = mainwp_current_user_can("dashboard", "edit_sites");
         $can_view_dashboard = mainwp_current_user_can("dashboard", "access_individual_dashboard");
         $can_execute_backups = mainwp_current_user_can("dashboard", "execute_backups");
+        $can_test_connection = mainwp_current_user_can("dashboard", "test_connection");
         
         
         ?>
@@ -231,8 +232,16 @@ class MainWPManageSitesView
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
                 <?php } ?>   
             <?php } ?>   
+            <?php if ($shownPage == 'SitesHelp') {?>            
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
+                <?php if ($can_add) { ?>
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
+                <?php } ?>   
+            <?php } ?>  
             <?php if ($shownPage == '' || $shownPage == 'AddNew' || $shownPage == 'SitesHelp' || $shownPage == 'Test') { ?>
-            <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Test') { echo "nav-tab-active"; } ?>" href="admin.php?page=managesites&do=test"><?php _e('Test Connection','mainwp'); ?></a>
+                <?php if ($can_test_connection) { ?>
+                <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Test') { echo "nav-tab-active"; } ?>" href="admin.php?page=managesites&do=test"><?php _e('Test Connection','mainwp'); ?></a>
+                <?php } ?>
             <?php } ?>
             <a style="float: right;" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage == 'SitesHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=SitesHelp"><?php _e('Help','mainwp'); ?></a>
             <?php

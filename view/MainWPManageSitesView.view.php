@@ -85,9 +85,11 @@ class MainWPManageSitesView
                 break;
         }
         
+        $separator = '<span class="separator">&nbsp;&rsaquo;&nbsp;</span>'; 
+        
         if ($site_id) {
             $website = MainWPDB::Instance()->getWebsiteById($site_id);
-            $site_name  = !empty($website) ? $website->name ." " : ""; 
+            $site_name  = !empty($website) ? $website->name . $separator : ""; 
         }
         
         $page_links = array(
@@ -128,7 +130,7 @@ class MainWPManageSitesView
         );
         
         $str_breadcrumb = ""; 
-        $separator = '<span class="separator">&nbsp;&rsaquo;&nbsp;</span>'; 
+       
         $first = true;
         while(isset($page_links[$page])) {
             if ($first) {

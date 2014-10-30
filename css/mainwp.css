@@ -2660,6 +2660,12 @@ h4.mainwp-custom-excludes {
     color: #333;
 }
 
+.mainwp_breadcrumb {
+    background: #fff;
+    border: 1px Solid #e5e5e5;
+    padding: .5em 1em;
+}
+
 .mainwp_breadcrumb a{
     text-decoration: none;
 }

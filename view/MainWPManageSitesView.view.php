@@ -172,7 +172,7 @@ class MainWPManageSitesView
         <h2><?php _e('Sites','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <?php if (!empty($breadcrumd)) { ?>
-            <div class="mainwp_breadcrumb"><?php echo $breadcrumd; ?></div><br/>
+            <div class="mainwp_breadcrumb"><strong>You are here:</strong> &nbsp;&nbsp;MainWP > <?php echo $breadcrumd; ?></div><br/>
             <?php } ?>
             <?php if ($shownPage == '') {?>            
             <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>

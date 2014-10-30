@@ -85,47 +85,45 @@ class MainWPManageSitesView
                 break;
         }
         
-        $separator = '<span class="separator">&nbsp;&rsaquo;&nbsp;</span>'; 
-        
+        $separator = '<span class="separator">&nbsp;&rsaquo;&nbsp;</span>';         
         if ($site_id) {
-            $website = MainWPDB::Instance()->getWebsiteById($site_id);
-            $site_name  = !empty($website) ? $website->name . $separator : ""; 
+            $website = MainWPDB::Instance()->getWebsiteById($site_id);                        
+            $site_name  = '<a href="admin.php?page=managesites&dashboard=' . $site_id . '">' . $website->name . '</a>' . $separator;
         }
         
-        $page_links = array(
-            "site" => array("href" => '', 
-                            "text" => __("Sites", "mainwp"),                            
+        $page_links = array(            
+            "mainwp" => array("href" => 'admin.php?page=mainwp_tab', 
+                            "text" => __("MainWP", "mainwp"),                            
                             "parent" => ""
                             ),
-            "manage" => array( "href" => 'admin.php?page=managesites', 
-                            "text" => __("Manage", "mainwp"),
-                            "alt" => __("Manage", "mainwp"),
-                            "parent" => "site"
-                            ),
+            "site" => array("href" => 'admin.php?page=managesites', 
+                            "text" => __("Sites", "mainwp"),                            
+                            "parent" => "mainwp"
+                            ),            
             "dashboard" => array( "href" => '' , 
                             "text" => $site_name . __("Dashboard", "mainwp"),                            
-                            "parent" => "manage"
+                            "parent" => "site"
                             ),
             "bulkupload" => array( "href" => '' , 
                             "text" => __("Bulk Upload", "mainwp"),                            
-                            "parent" => "manage"
+                            "parent" => "site"
                             ),
             "edit" => array( "href" => '' , 
                             "text" => $site_name . __("Edit", "mainwp"),                            
-                            "parent" => "manage"
+                            "parent" => "site"
                             ),
             "backup" => array( "href" => '' , 
                             "text" => $site_name . __("Backups", "mainwp"),                            
-                            "parent" => "manage"
+                            "parent" => "site"
                             ),
             "scan" => array( "href" => '' , 
                             "text" => $site_name . __("Security Scan", "mainwp"),                            
-                            "parent" => "manage"
+                            "parent" => "site"
                             ),
             "subpage" => array( "href" => (isset($extra['href']) ? $extra['href'] : ""),                           
                             "text" => (isset($extra['text']) ? $extra['text'] : ""),                           
                             "alt" => (isset($extra['alt']) ? $extra['alt'] : ""),                           
-                            "parent" => "manage"
+                            "parent" => "site"
                         )
         );
         
@@ -172,7 +170,7 @@ class MainWPManageSitesView
         <h2><?php _e('Sites','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <?php if (!empty($breadcrumd)) { ?>
-            <div class="mainwp_breadcrumb"><strong>You are here:</strong> &nbsp;&nbsp;MainWP > <?php echo $breadcrumd; ?></div><br/>
+            <div class="mainwp_breadcrumb"><strong>You are here:</strong> &nbsp;&nbsp;<?php echo $breadcrumd; ?></div><br/>
             <?php } ?>
             <?php if ($shownPage == '') {?>            
             <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>

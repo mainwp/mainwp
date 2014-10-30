@@ -1007,7 +1007,7 @@ class MainWPManageSitesView
             } else {
                 ?>
                 <div class="postbox">
-                    <h3 class="mainwp_box_title"><span>Wordfence Security Scan</span></h3>
+                    <h3 class="mainwp_box_title"><span>Sucuri Scan</span></h3>
                     <div class="inside">
                         <?php  _e('The Sucuri Scan requires the free Sucuri Extension, please download from <a href="https://extensions.mainwp.com/product/mainwp-sucuri-extension/" title="Sucuri">here</a>', "mainwp"); ?>
                     </div>

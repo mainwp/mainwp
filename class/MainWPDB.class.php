@@ -397,7 +397,7 @@ class MainWPDB
                 $where = ' AND (wp.name LIKE "%'.$search_site.'%" OR wp.url LIKE  "%'.$search_site.'%") ';
             }
             
-            $where .= $this->getWhereAllowAccessGroupsSites("", "wp");
+            $where .= $this->getWhereAllowAccessGroupsSites("site", "wp");
             
             if ($selectgroups) {
                 $qry = 'SELECT wp.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
@@ -778,7 +778,7 @@ class MainWPDB
             global $current_user;
             $userid = $current_user->ID;
         }
-        $where = $this->getWhereAllowAccessGroupsSites("", "wp");
+        $where = $this->getWhereAllowAccessGroupsSites("site", "wp");
         $sql = 'SELECT wp.* FROM ' . $this->tableName('wp') . ' wp INNER JOIN ' . $this->tableName('wp_group') . ' wpgroup ON wp.id = wpgroup.wpid JOIN ' . $this->tableName('group') . ' g ON wpgroup.groupid = g.id WHERE g.name="' . $this->escape($groupname). '"' . $where;
         if ($userid != null) $sql .= ' AND g.userid = "' . $userid . '"';
         return $sql;

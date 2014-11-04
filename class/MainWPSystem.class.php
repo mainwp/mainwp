@@ -147,7 +147,9 @@ class MainWPSystem
         //MainWPAjax::Instance();
 
         MainWPInstallBulk::init();
-
+    
+        do_action('mainwp_cronload_action');      
+        
         //Cron every 5 minutes
         add_action('mainwp_cronofflinecheck_action', array($this, 'mainwp_cronofflinecheck_action'));
         add_action('mainwp_cronstats_action', array($this, 'mainwp_cronstats_action'));

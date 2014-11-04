@@ -470,6 +470,11 @@ class MainWPDB
     
     public function getWhereAllowAccessGroupsSites($type = "", $site_table_alias = "", $group_table_alias = "") {
         
+        // To fix bug run from cron job
+        global $current_user;        
+        if ($current_user->ID == 0)
+            return "";
+   
         $allowed_sites = apply_filters("mainwp_currentuserallowedaccesssites", "all");
         $where_site = $where_group = ""; 
         

@@ -94,30 +94,37 @@ class MainWPManageSitesView
         $page_links = array(            
             "mainwp" => array("href" => 'admin.php?page=mainwp_tab', 
                             "text" => __("MainWP", "mainwp"),                            
-                            "parent" => ""
+                            "alt" => "",
+                            "parent" => ""                            
                             ),
             "site" => array("href" => 'admin.php?page=managesites', 
-                            "text" => __("Sites", "mainwp"),                            
+                            "text" => __("Sites", "mainwp"), 
+                            "alt" => "",
                             "parent" => "mainwp"
                             ),            
             "dashboard" => array( "href" => '' , 
-                            "text" => $site_name . __("Dashboard", "mainwp"),                            
+                            "text" => $site_name . __("Dashboard", "mainwp"),      
+                            "alt" => "",
                             "parent" => "site"
                             ),
             "bulkupload" => array( "href" => '' , 
-                            "text" => __("Bulk Upload", "mainwp"),                            
+                            "text" => __("Bulk Upload", "mainwp"),      
+                            "alt" => "",
                             "parent" => "site"
                             ),
             "edit" => array( "href" => '' , 
-                            "text" => $site_name . __("Edit", "mainwp"),                            
+                            "text" => $site_name . __("Edit", "mainwp"),
+                            "alt" => "",
                             "parent" => "site"
                             ),
             "backup" => array( "href" => '' , 
-                            "text" => $site_name . __("Backups", "mainwp"),                            
+                            "text" => $site_name . __("Backups", "mainwp"),    
+                            "alt" => "",
                             "parent" => "site"
                             ),
             "scan" => array( "href" => '' , 
-                            "text" => $site_name . __("Security Scan", "mainwp"),                            
+                            "text" => $site_name . __("Security Scan", "mainwp"),   
+                            "alt" => "",
                             "parent" => "site"
                             ),
             "subpage" => array( "href" => (isset($extra['href']) ? $extra['href'] : ""),                           

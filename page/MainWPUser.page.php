@@ -41,7 +41,7 @@ class MainWPUser
             <div class="mainwp_boxout">
                 <div class="mainwp_boxoutin"></div>
                 <?php if (mainwp_current_user_can("dashboard", "manage_users")) { ?>
-                <a href="<?php echo admin_url('admin.php?page=UserBulkManage'); ?>" class="mainwp-submenu"><?php _e('All Users','mainwp'); ?></a>
+                <a href="<?php echo admin_url('admin.php?page=UserBulkManage'); ?>" class="mainwp-submenu"><?php _e('Manage Users','mainwp'); ?></a>
                 <?php } ?>
                 <a href="<?php echo admin_url('admin.php?page=UserBulkAdd'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
                 <a href="<?php echo admin_url('admin.php?page=UpdateAdminPasswords'); ?>" class="mainwp-submenu"><?php _e('Admin Passwords','mainwp'); ?></a>
@@ -117,33 +117,11 @@ class MainWPUser
         self::renderHeader(''); ?>
         <div class="mainwp_info-box"><strong><?php _e('Use this to bulk change password, change role or delete users. To add new users click on the "Add New" tab.','mainwp'); ?></strong></div>
         <br/>
-        <div class="postbox" style="float: right; width: 255px; margin-top: 1.2em;">
-            <h3 class="box_title mainwp_box_title"><?php _e('Update Password','mainwp'); ?></h3>
-            <div class="inside mainwp_inside" style="padding-bottom: .2em !important;">
-            <div class="form-field">
-               <label for="pass1"><?php _e('Twice Required','mainwp'); ?></label>
-                <input name="user_login" type="hidden" id="user_login" value="admin">
-               <div><input name="pass1" type="password" id="pass1" autocomplete="off"/></div>
-               <div><input name="pass2" type="password" id="pass2" autocomplete="off"/></div>
-            </div>
-            <div id="pass-strength-result" style="display: block"><?php _e('Strength Indicator','mainwp'); ?></div>
-            <br><br>
-            <p class="description indicator-hint"><?php _e('Hint: The password should be at least seven
-                characters long. To make it stronger, use upper and lower case letters, numbers and
-                symbols like ! " ? $ % ^ &amp; ).','mainwp'); ?></p>
-             <p style="text-align: center;"><input type="button" value="<?php _e('Update Password','mainwp'); ?>" class="button-primary"
-                    id="mainwp_btn_update_password" name="mainwp_btn_update_password">
-                <span id="mainwp_users_password_updating">
-                        <img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/>
-                    </span>   
-             </p> 
-             <p><div id="mainwp_update_password_error" style="display: none"></div></p>
-             </div>
-        </div>
-        <div class="mainwp-search-form">
-            <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right'); ?>
-
-            <h3><?php _e('Search Users','mainwp'); ?></h3>
+         <div>
+            <div class="postbox mainwp-postbox" style="width: 555px !important;">
+            <h3 class="mainwp_box_title"><?php _e('Search Users','mainwp'); ?></h3>
+            <div class="inside">
+        <div class="mainwp-search-form">            
             <div class="mainwp-search-box">
                 <input type="text" aria-required="true" value="<?php if ($cachedSearch != null && isset($cachedSearch['keyword'])) { echo $cachedSearch['keyword']; } ?>"
                         id="mainwp_search_users" name="mainwp_search_users">
@@ -176,9 +154,36 @@ class MainWPUser
                     <label for="mainwp_user_role_subscriber" class="mainwp-label2"><?php _e('Subscriber','mainwp'); ?></label>
                 </li>
             </ul>
-            <p>&nbsp;</p>
+            </div>
+            </div>
+            <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
+            <div class="postbox" style="float: left; width: 255px; margin-left: 2em;">
+            <h3 class="box_title mainwp_box_title"><?php _e('Update Password','mainwp'); ?></h3>
+            <div class="inside mainwp_inside" style="padding-bottom: .2em !important;">
+            <div class="form-field">
+               <label for="pass1"><?php _e('Twice Required','mainwp'); ?></label>
+                <input name="user_login" type="hidden" id="user_login" value="admin">
+               <div><input name="pass1" type="password" id="pass1" autocomplete="off"/></div>
+               <div><input name="pass2" type="password" id="pass2" autocomplete="off"/></div>
+            </div>
+            <div id="pass-strength-result" style="display: block"><?php _e('Strength Indicator','mainwp'); ?></div>
+            <br><br>
+            <p class="description indicator-hint"><?php _e('Hint: The password should be at least seven
+                characters long. To make it stronger, use upper and lower case letters, numbers and
+                symbols like ! " ? $ % ^ &amp; ).','mainwp'); ?></p>
+             <p style="text-align: center;"><input type="button" value="<?php _e('Update Password','mainwp'); ?>" class="button-primary"
+                    id="mainwp_btn_update_password" name="mainwp_btn_update_password">
+                <span id="mainwp_users_password_updating">
+                        <img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/>
+                    </span>   
+             </p> 
+             <p><div id="mainwp_update_password_error" style="display: none"></div></p>
+             </div>
+        </div>
+            <div style="clear: both;"></div>
             <input type="button" name="mainwp_show_users" id="mainwp_show_users" class="button-primary" value="<?php _e('Show Users','mainwp'); ?>"/>
             <span id="mainwp_users_loading">&nbsp;<em><?php _e('Grabbing information from Child Sites','mainwp') ?></em>&nbsp;&nbsp;<img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+            <br/><br/>
         </div>
         <div class="clear"></div>
 
@@ -618,7 +623,7 @@ class MainWPUser
                         <tr class="form-field form-required">
                             <th scope="row"><label for="user_login"><?php _e('Username','mainwp'); ?> <span class="description"><?php _e('(required)','mainwp'); ?></span></label>
                             </th>
-                            <td><input name="user_login" type="text" id="user_login" value="<?php
+                            <td><input  class="mainwp-field mainwp-username"  name="user_login" type="text" id="user_login" value="<?php
                                 if (isset($_POST['user_login'])) {
                                     echo $_POST['user_login'];
                                 }
@@ -627,7 +632,7 @@ class MainWPUser
                         <tr class="form-field form-required">
                             <th scope="row"><label for="email"><?php _e('E-mail','mainwp'); ?> <span
                                     class="description"><?php _e('(required)','mainwp'); ?></span></label></th>
-                            <td><input name="email" type="text" id="email" value="<?php
+                            <td><input class="mainwp-field mainwp-email" name="email" type="text" id="email" value="<?php
                                 if (isset($_POST['email'])) {
                                     echo $_POST['email'];
                                 }
@@ -635,7 +640,7 @@ class MainWPUser
                         </tr>
                         <tr class="form-field">
                             <th scope="row"><label for="first_name"><?php _e('First Name','mainwp'); ?> </label></th>
-                            <td><input name="first_name" type="text" id="first_name" value="<?php
+                            <td><input class="mainwp-field mainwp-name" name="first_name" type="text" id="first_name" value="<?php
                                 if (isset($_POST['first_name'])) {
                                     echo $_POST['first_name'];
                                 }
@@ -643,7 +648,7 @@ class MainWPUser
                         </tr>
                         <tr class="form-field">
                             <th scope="row"><label for="last_name"><?php _e('Last Name','mainwp'); ?> </label></th>
-                            <td><input name="last_name" type="text" id="last_name" value="<?php
+                            <td><input class="mainwp-field mainwp-name" name="last_name" type="text" id="last_name" value="<?php
                                 if (isset($_POST['last_name'])) {
                                     echo $_POST['last_name'];
                                 }
@@ -651,7 +656,7 @@ class MainWPUser
                         </tr>
                         <tr class="form-field">
                             <th scope="row"><label for="url"><?php _e('Website','mainwp'); ?></label></th>
-                            <td><input name="url" type="text" id="url" class="code" value="<?php
+                            <td><input class="mainwp-field mainwp-site" name="url" type="text" id="url" class="code" value="<?php
                                 if (isset($_POST['url'])) {
                                     echo $_POST['url'];
                                 }
@@ -660,9 +665,9 @@ class MainWPUser
                         <tr class="form-field form-required">
                             <th scope="row"><label for="pass1"><?php _e('Password','mainwp'); ?> <span
                                     class="description"><?php _e('(twice, required)','mainwp'); ?></span></label></th>
-                            <td><input name="pass1" type="password" id="pass1" autocomplete="off"/>
+                            <td><input class="mainwp-field mainwp-password" name="pass1" type="password" id="pass1" autocomplete="off"/>
                                 <br/>
-                                <input name="pass2" type="password" id="pass2" autocomplete="off"/>
+                                <input class="mainwp-field mainwp-password" name="pass2" type="password" id="pass2" autocomplete="off"/>
                                 <br/>
 
                                 <div id="pass-strength-result" style="display: block"><?php _e('Strength Indicator','mainwp'); ?></div><br><br>

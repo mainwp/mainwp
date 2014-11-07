@@ -8,7 +8,7 @@ class MainWPManageGroups
 
     public static function initMenu()
     {
-        add_submenu_page('mainwp_tab', __('Groups','mainwp'), '<span id="mainwp-Groups">'. __('Groups','mainwp') .'</span>', 'read', 'ManageGroups', array(MainWPManageGroups::getClassName(), 'renderAllGroups'));
+        add_submenu_page('mainwp_tab', __('Groups','mainwp'), '<div id="mainwp-Groups" class="mainwp-hidden">'. __('Groups','mainwp') .'</div>', 'read', 'ManageGroups', array(MainWPManageGroups::getClassName(), 'renderAllGroups'));
         add_submenu_page('mainwp_tab', __('Add New Group','mainwp'), '<div class="mainwp-hidden">Add New</div>', 'read', 'ManageGroupsAddNew', array(MainWPManageGroups::getClassName(), 'renderNewGroup'));
         add_submenu_page('mainwp_tab', __('Groups Help','mainwp'), '<div class="mainwp-hidden">Groups Help</div>', 'read', 'GroupsHelp', array(MainWPManageGroups::getClassName(), 'QSGManageGroups'));    
     }
@@ -31,10 +31,8 @@ class MainWPManageGroups
             return;
         }                
         ?>
-        <div class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
-            <?php self::renderHeader(true, false); ?>
-
-            <div id="mainwp_wrap-inside">
+        <div class="wrap">
+            <?php do_action("mainwp-pageheader-sites", "ManageGroups"); ?>
                 <div class="mainwp_managegroups-outsidebox">
                     <span id="mainwp_managegroups-addnew-container"><input type="button" name="Add new" value="<?php _e('Add New','mainwp'); ?>" class="managegroups-addnew button" /></span>
                     <h3><?php _e('Groups','mainwp'); ?></h3>
@@ -61,8 +59,8 @@ class MainWPManageGroups
                 <div style="clear: both;"></div>
                 <br />
                 <input type="button" name="Save selection" value="<?php _e('Save Selection','mainwp'); ?>" class="managegroups-saveAll button-primary" /> <span id="managegroups-saved"><?php _e('Saved','mainwp'); ?></span>
-            </div>
         </div>
+        <?php do_action("mainwp-pagefooter-sites", "ManageGroups"); ?>
         <script type="text/javascript">
             jQuery(document).ready(function () {
                 jQuery('#group_sites_by_name').live('click', function(event)

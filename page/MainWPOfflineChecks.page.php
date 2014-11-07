@@ -8,7 +8,7 @@ class MainWPOfflineChecks
 
     public static function initMenu()
     {       
-        add_submenu_page('mainwp_tab', __('Offline Checks','mainwp'), __('Offline Checks','mainwp'), 'read', 'OfflineChecks', array(MainWPOfflineChecks::getClassName(), 'render'));
+        add_submenu_page('mainwp_tab', __('Offline Checks','mainwp'), ' <div class="mainwp-hidden">' . __('Offline Checks','mainwp') . '</div>', 'read', 'OfflineChecks', array(MainWPOfflineChecks::getClassName(), 'render'));
         add_submenu_page('mainwp_tab', __('Offline Checks Help','mainwp'), '<div class="mainwp-hidden">' .__('Offline Checks Help','mainwp').'</div>', 'read', 'OfflineChecksHelp', array(MainWPOfflineChecks::getClassName(), 'QSGManageOfflineChecks'));    
     }
 
@@ -41,7 +41,7 @@ class MainWPOfflineChecks
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
         $statusses = array('hourly', '2xday', 'daily', 'weekly');
 
-        self::renderHeader('OfflineChecks');
+         do_action("mainwp-pageheader-settings", "OfflineChecks");
 
         ?>
         <div class="mainwp_info-box">
@@ -103,7 +103,7 @@ class MainWPOfflineChecks
             </tbody>
         </table>
     <?php
-        self::renderFooter('OfflineChecks');
+        do_action("mainwp-pagefooter-settings", "OfflineChecks");
     }
 
     public static function updateWebsite()

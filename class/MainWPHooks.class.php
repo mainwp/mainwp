@@ -138,10 +138,15 @@ class MainWPHooks
                 $type = $_POST['type'];
             }
             
-            if (($type == "plugin" && !mainwp_current_user_can("dashboard", "update_plugins")) || 
-                ($type == "theme" && !mainwp_current_user_can("dashboard", "update_themes"))) {
-                
-            }                    
+            $error = "";
+            if ($type == "plugin" && !mainwp_current_user_can("dashboard", "update_plugins")) {
+                $error = mainwp_do_not_have_permissions("Update Plugins", false);
+            } else if ($type == "theme" && !mainwp_current_user_can("dashboard", "update_themes")) {
+                $error = mainwp_do_not_have_permissions("Update Themes", false);                
+            }      
+            
+            if (!empty($error))
+                die(json_encode(array('error' => $error)));
 
             if (MainWPUtility::ctype_digit($websiteId)) {
                $website = MainWPDB::Instance()->getWebsiteById($websiteId);

@@ -37,7 +37,7 @@ class MainWPSiteOpen
             if ($pNewWindow == 'yes')
             {
             ?>
-                <?php _e('Will redirect to your website immediately.','mainwp'); ?>
+                 <div style="font-size: 30px; text-align: center; margin-top: 5em;"><?php _e('You will be redirected to your website immediately.','mainwp'); ?></div>
                 <form method="POST" action="<?php echo MainWPUtility::getGetDataAuthed($website, ($location == null || $location == '') ? 'index.php' : $location); ?>" id="redirectForm">
                 </form>
             <?php

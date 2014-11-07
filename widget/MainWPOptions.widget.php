@@ -99,7 +99,7 @@ class MainWPOptions
         <tr>
             <th scope="row"><?php _e('Notification Email','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('This address is used to send monitoring alerts.','mainwp')); ?></th>
             <td>
-                <input type="text" name="mainwp_options_email" size="35" value="<?php echo $user_email; ?>"/><span class="mainwp-form_hint"><?php _e('This address is used to send monitoring alerts.','mainwp'); ?></span>
+                <input type="text"  class="mainwp-field mainwp-email" name="mainwp_options_email" size="35" value="<?php echo $user_email; ?>"/><span class="mainwp-form_hint"><?php _e('This address is used to send monitoring alerts.','mainwp'); ?></span>
             </td>
         </tr>
         <tr>
@@ -218,14 +218,14 @@ class MainWPOptions
         <tr>
             <th scope="row"><?php _e('Maximum number of Posts/Pages','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.','mainwp')); ?></th>
             <td>
-                <input type="text" name="mainwp_maximumPosts"
+                <input type="text" name="mainwp_maximumPosts"  class="mainwp-field mainwp-settings-icon"
                        id="mainwp_maximumPosts" value="<?php echo ((get_option('mainwp_maximumPosts') === false) ? 50 : get_option('mainwp_maximumPosts')); ?>"/>
             </td>
         </tr>
         <tr>
             <th scope="row"><?php _e('Maximum number of Comments','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.','mainwp')); ?></th>
             <td>
-                <input type="text" name="mainwp_maximumComments"
+                <input type="text" name="mainwp_maximumComments" class="mainwp-field mainwp-settings-icon"
                        id="mainwp_maximumComments" value="<?php echo ((get_option('mainwp_maximumComments') === false) ? 50 : get_option('mainwp_maximumComments')); ?>"/>
             </td>
         </tr>

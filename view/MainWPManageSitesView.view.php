@@ -13,11 +13,12 @@ class MainWPManageSitesView
         <div class="wp-submenu sub-open" style="">
             <div class="mainwp_boxout">
                 <div class="mainwp_boxoutin"></div>
-                <a href="<?php echo admin_url('admin.php?page=managesites'); ?>" class="mainwp-submenu"><?php _e('All Sites','mainwp'); ?></a>
+                <a href="<?php echo admin_url('admin.php?page=managesites'); ?>" class="mainwp-submenu"><?php _e('Manage Sites','mainwp'); ?></a>
                 <?php if (mainwp_current_user_can("dashboard", "add_sites")) { ?>
                 <a href="<?php echo admin_url('admin.php?page=managesites&do=new'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
                 <?php } ?>
-                <a href="<?php echo admin_url('admin.php?page=managesites&do=test'); ?>" class="mainwp-submenu"><?php _e('Test Connection','mainwp'); ?></a>
+                <a href="<?php echo admin_url('admin.php?page=managesites&do=test'); ?>" class="mainwp-submenu"><?php _e('Test Connection','mainwp'); ?></a>                
+                <a href="<?php echo admin_url('admin.php?page=ManageGroups'); ?>" class="mainwp-submenu"><?php _e('Groups','mainwp'); ?></a>
                 <?php
                 if (isset($subPages) && is_array($subPages))
                 {
@@ -157,7 +158,7 @@ class MainWPManageSitesView
     public static function renderHeader($shownPage, &$subPages)
     {
         $breadcrumd = "";
-        if ($shownPage != '' && $shownPage != 'Test' && $shownPage != 'SitesHelp' && $shownPage != 'AddNew') {
+        if ($shownPage != '' && $shownPage != 'Test' && $shownPage != 'SitesHelp' && $shownPage != 'AddNew' && $shownPage != 'ManageGroups') {
             $breadcrumd = self::getBreadcrumb($shownPage, $subPages);                      
         }
         
@@ -176,6 +177,14 @@ class MainWPManageSitesView
         <img src="<?php echo plugins_url('images/icons/mainwp-sites.png', dirname(__FILE__)); ?>"
              style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Sites" height="32"/>
         <h2><?php _e('Sites','mainwp'); ?></h2><div style="clear: both;"></div><br/>
+         <div id="mainwp-tip-zone">
+          <?php if ($shownPage == '') { ?> 
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can show more or less information per row by selecting "Screen Options" on the top right.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+          <?php } ?>
+          <?php if ($shownPage == 'ManageSitesDashboard') { ?> 
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can move the Widgets around to fit your needs and even adjust the number of columns by selecting "Screen Options" on the top right.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+          <?php } ?>
+        </div>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <?php if (!empty($breadcrumd)) { ?>
             <div class="mainwp_breadcrumb"><strong>You are here:</strong> &nbsp;&nbsp;<?php echo $breadcrumd; ?></div><br/>
@@ -233,6 +242,12 @@ class MainWPManageSitesView
             <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
             <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Add New','mainwp'); ?></a>
             <?php } ?> 
+            <?php if ($shownPage == 'ManageGroups') {?>            
+            <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
+            <?php if ($can_add) { ?>
+            <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
+            <?php } ?> 
+            <?php } ?> 
             <?php if ($shownPage == 'Test') {?>            
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
                 <?php if ($can_add) { ?>
@@ -245,10 +260,11 @@ class MainWPManageSitesView
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
                 <?php } ?>   
             <?php } ?>  
-            <?php if ($shownPage == '' || $shownPage == 'AddNew' || $shownPage == 'SitesHelp' || $shownPage == 'Test') { ?>
+            <?php if ($shownPage == '' || $shownPage == 'AddNew' || $shownPage == 'SitesHelp' || $shownPage == 'Test' || $shownPage == 'ManageGroups') { ?>
                 <?php if ($can_test_connection) { ?>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Test') { echo "nav-tab-active"; } ?>" href="admin.php?page=managesites&do=test"><?php _e('Test Connection','mainwp'); ?></a>
                 <?php } ?>
+                <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'ManageGroups') { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageGroups"><?php _e('Groups','mainwp'); ?></a>
             <?php } ?>
             <a style="float: right;" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage == 'SitesHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=SitesHelp"><?php _e('Help','mainwp'); ?></a>
             <?php
@@ -447,8 +463,9 @@ class MainWPManageSitesView
        <div class="postbox" id="mainwp-add-a-single-site">
        <h3 class="mainwp_box_title"><span><?php _e('Add a Single Site','mainwp'); ?></span></h3>
        <div class="inside">
-       <div id="mainwp-add-site-notice-show" style="display: none; text-align: left;"><a href="#" class="button mainwp-button-red" id="mainwp-add-site-notice-show-link"><?php _e('Having trouble adding your site?','mainwp'); ?></a></div>
-       <div id="mainwp-add-site-notice" class="mainwp_info-box-red" style="padding: 1em">
+        <div id="mainwp-add-site-notice-box" >
+       <div id="mainwp-add-site-notice-show" class="mainwp_info-box-blue" style="background-position: 10px 10px !important; display: none; text-align: center;"><a href="#" class="button button-primary" id="mainwp-add-site-notice-show-link"><?php _e('Having trouble adding your site?','mainwp'); ?></a></div>
+       <div id="mainwp-add-site-notice" class="mainwp_info-box-blue" style="background-position: 10px 25px !important;">
          <p>
            <?php _e('If you are having trouble adding your site please use the Test Connection tab. This tells you the header response being received by your dashboard from that child site. The Test Connection feature is specifically testing what your Dashboard can "see" and what your Dashboard "sees" and what my Dashboard "sees" or what your browser "sees" can be completely different things.','mainwp'); ?>
          </p>
@@ -461,38 +478,32 @@ class MainWPManageSitesView
          </p>
          <p style="text-align: center;"><a href="#" class="button button-primary" style="text-decoration: none;" id="mainwp-add-site-notice-dismiss"><?php _e('Hide this message','mainwp'); ?></a></p>
        </div>
-
+        </div>
        <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
            <table class="form-table">
                <tr class="form-field form-required">
                    <th scope="row"><?php _e('Site Name:','mainwp'); ?></th>
                    <td><input type="text" id="mainwp_managesites_add_wpname"
                               name="mainwp_managesites_add_wpname"
-                              value=""/></td>
+                              value="" class="mainwp-field mainwp-site"/></td>
                </tr>
                <tr class="form-field form-required">
                    <th scope="row"><?php _e('Site URL:','mainwp'); ?></th>
                    <td><input type="text" id="mainwp_managesites_add_wpurl"
                               name="mainwp_managesites_add_wpurl"
-                              value="http://"/><span class="mainwp-form_hint">Proper format "http://address.com/"</span></td>
+                              value="http://" class="mainwp-field mainwp-url" /><span class="mainwp-form_hint">Proper format "http://address.com/"</span></td>
                </tr>
                <tr class="form-field form-required">
                    <th scope="row"><?php _e('Administrator Username:','mainwp'); ?></th>
                    <td><input type="text" id="mainwp_managesites_add_wpadmin"
-                              name="mainwp_managesites_add_wpadmin" value=""/></td>
-               </tr>
-               <tr class="form-field form-required">
-                   <th scope="row"><?php _e('Child Unique Security
-                       ID: ','mainwp'); ?><?php MainWPUtility::renderToolTip('The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.'); ?></th>
-                   <td><input type="text" id="mainwp_managesites_add_uniqueId"
-                              name="mainwp_managesites_add_uniqueId" value=""/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
-               </tr>
+                              name="mainwp_managesites_add_wpadmin" value="" class="mainwp-field mainwp-username" /></td>
+               </tr>               
                <tr>
                    <th scope="row"><?php _e('Groups','mainwp'); ?></th>
                    <td>
                        <input type="text" name="mainwp_managesites_add_addgroups"
                               id="mainwp_managesites_add_addgroups" value=""
-                              class="regular-text"/> <span
+                              class="regular-text mainwp-field mainwp-groups" /> <span
                            class="mainwp-form_hint">Separate groups by commas (e.g. Group 1, Group 2).</span>
 
                        <div id="selected_groups" style="display: block; width: 25em">
@@ -518,6 +529,12 @@ class MainWPManageSitesView
                 <h3 class="mainwp_box_title"><span><?php _e('Advanced Options','mainwp'); ?></span></h3>
                 <div class="inside">
                     <table class="form-table">
+                        <tr class="form-field form-required">
+                             <th scope="row"><?php _e('Child Unique Security
+                               ID: ','mainwp'); ?><?php MainWPUtility::renderToolTip('The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.'); ?></th>
+                             <td><input type="text" id="mainwp_managesites_add_uniqueId" style="width: 350px;"
+                                      name="mainwp_managesites_add_uniqueId" value="" class="mainwp-field mainwp-unique-id"/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
+                        </tr>
                             <tr class="form-field form-required">
                             <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
                             <td>
@@ -736,14 +753,14 @@ class MainWPManageSitesView
         <tr>
             <th scope="row">Backups on Server <?php MainWPUtility::renderToolTip('The number of backups to keep on your server.  This does not affect external sources.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/'); ?></th>
             <td>
-                <input type="text" name="mainwp_options_backupOnServer"
+                <input type="text" name="mainwp_options_backupOnServer"  class="mainwp-field mainwp-settings-icon"
                        value="<?php echo ($backupsOnServer === false ? 1 : $backupsOnServer); ?>"/><span class="mainwp-form_hint"><?php _e('The number of backups to keep on your server.  This does not affect external sources.','mainwp'); ?></span>
             </td>
         </tr>
         <tr>
             <th scope="row"><?php _e('Backups on external sources','mainwp'); ?> <?php MainWPUtility::renderToolTip('The number of backups to keep on your external sources.  This does not affect backups on the server.  0 sets unlimited.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/'); ?></th>
             <td>
-                <input type="text" name="mainwp_options_backupOnExternalSources"
+                <input type="text" name="mainwp_options_backupOnExternalSources"  class="mainwp-field mainwp-settings-icon"
                        value="<?php echo ($backupOnExternalSources === false ? 1 : $backupOnExternalSources); ?>"/><span class="mainwp-form_hint"><?php _e('The number of backups to keep on your external sources.  This does not affect backups on the server.  0 sets unlimited.','mainwp'); ?></span>
             </td>
         </tr>
@@ -922,7 +939,7 @@ class MainWPManageSitesView
                 <tbody>
                 <tr>
                     <th scope="row"><?php _e('Backup File Name:','mainwp'); ?></th>
-                    <td><input type="text" name="backup_filename" id="backup_filename" value="" /><span class="mainwp-form_hint" style="display: inline; max-width: 500px;"><?php _e('Allowed Structure Tags:','mainwp'); ?> <strong>%sitename%</strong>, <strong>%url%</strong>, <strong>%date%</strong>, <strong>%time%</strong>, <strong>%type%</strong></span>
+                    <td><input type="text" name="backup_filename" id="backup_filename" value="" class="mainwp-field mainwp-file-name" /><span class="mainwp-form_hint" style="display: inline; max-width: 500px;"><?php _e('Allowed Structure Tags:','mainwp'); ?> <strong>%sitename%</strong>, <strong>%url%</strong>, <strong>%date%</strong>, <strong>%time%</strong>, <strong>%type%</strong></span>
                     </td>
                 </tr>
                 <tr><td colspan="2"><hr /></td></tr>
@@ -1131,12 +1148,12 @@ class MainWPManageSitesView
                 <tr>
                     <th scope="row"><?php _e('Site Name','mainwp'); ?></th>
                     <td><input type="text" name="mainwp_managesites_edit_sitename"
-                               value="<?php echo $website->name; ?>" class="regular-text"/></td>
+                               value="<?php echo $website->name; ?>" class="regular-text mainwp-field mainwp-site"/></td>
                 </tr>
                 <tr>
                     <th scope="row"><?php _e('Site URL','mainwp'); ?></th>
                     <td><input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled"
-                               value="<?php echo $website->url; ?>" class="regular-text"/> <span
+                               value="<?php echo $website->url; ?>" class="regular-text mainwp-field mainwp-url"/> <span
                             class="mainwp-form_hint-display"><?php _e('Site URL cannot be changed.','mainwp'); ?></span></td>
                 </tr>
                 <tr>
@@ -1144,14 +1161,14 @@ class MainWPManageSitesView
                     <td><input type="text" name="mainwp_managesites_edit_siteadmin"
                                id="mainwp_managesites_edit_siteadmin"
                                value="<?php echo $website->adminname; ?>"
-                               class="regular-text"/></td>
+                               class="regular-text  mainwp-field mainwp-username"/></td>
                 </tr>
                 <tr>
                     <th scope="row"><?php _e('Groups','mainwp'); ?></th>
                     <td>
                         <input type="text" name="mainwp_managesites_edit_addgroups"
                                id="mainwp_managesites_edit_addgroups" value=""
-                               class="regular-text"/> <span
+                               class="regular-text  mainwp-field mainwp-groups"/> <span
                             class="mainwp-form_hint"><?php _e('Separate groups by commas (e.g. Group 1, Group 2).','mainwp'); ?></span>
 
                         <div id="selected_groups" style="display: block; width: 25em">

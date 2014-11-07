@@ -1435,6 +1435,19 @@ class MainWPSystem
         $messages['post'][99] = 'You have to select the sites you wish to publish to.';
         return $messages;
     }
+    
+      function mainwp_warning_notice() {
+        if (get_option('mainwp_installation_warning_hide_the_notice')  == 'yes') 
+            return;
+        ?>
+        <div id="mainwp-installation-warning" class="mainwp_info-box-red">
+            <h3><?php _e('Stop! Before you continue,','mainwp'); ?></h3>
+            <strong><?php _e('We HIGHLY recommend a NEW WordPress install for your Main Dashboard.','mainwp'); ?></strong><br/><br/>
+            <?php _e('Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard off an active site. Most hosting companies provide free subdomains ("<strong>demo.yourdomain.com</strong>") and we recommend creating one if you do not have a specific dedicated domain to run your Network Main Dashboard.<br/><br/> If you are not sure how to set up a subdomain here is a quick step by step with <a href="http://docs.mainwp.com/creating-a-subdomain-in-cpanel/">cPanel</a>, <a href="http://docs.mainwp.com/creating-a-subdomain-in-plesk/">Plesk</a> or <a href="http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/">Direct Admin</a>. If you are not sure what you have, contact your hosting companies support.','mainwp'); ?>
+        <br/><br/><div style="text-align: center"><a href="#" class="button button-primary" id="remove-mainwp-installation-warning">I have read the warning and I want to proceed</a></div>
+        </div>
+        <?php
+    }
 
     function admin_init()
     {
@@ -1444,7 +1457,7 @@ class MainWPSystem
             wp_redirect(admin_url('admin.php?page=managesites&do=new'));
             return;
         }
-
+        add_action( 'admin_notices', array($this, 'mainwp_warning_notice' ));
         $this->posthandler->init();
 
         wp_enqueue_script('jquery-ui-tooltip');

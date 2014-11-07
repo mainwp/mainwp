@@ -199,8 +199,14 @@ class MainWPPostHandler
 
         $this->addAction('mainwp_extension_change_view', array(&$this, 'mainwp_extension_change_view'));
         $this->addAction('mainwp_events_notice_hide', array(&$this, 'mainwp_events_notice_hide'));
+        $this->addAction('mainwp_installation_warning_hide', array(&$this, 'mainwp_installation_warning_hide'));        
         MainWPExtensions::initAjaxHandlers();
     }
+
+    function mainwp_installation_warning_hide() {
+        update_option("mainwp_installation_warning_hide_the_notice", "yes");
+        die('ok');
+    }    
 
     /**
      * Page: Users

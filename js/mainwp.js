@@ -6038,3 +6038,19 @@ jQuery(document).on('click', '#mainwp-events-notice-dismiss', function()
     });
     return false;
 });
+
+jQuery(document).on('click', '#remove-mainwp-installation-warning', function()
+{
+    jQuery('#mainwp-installation-warning').hide();
+    var data = {
+        action:'mainwp_installation_warning_hide'       
+    };
+    jQuery.post(ajaxurl, data, function (res) {
+    });
+    return false;
+});
+
+jQuery(document).on('click', '.mainwp-dismiss', function(){
+    jQuery('.mainwp-tips').fadeOut("slow");
+    return false;
+});

@@ -128,8 +128,7 @@ class MainWPInstallBulk
 
      //Renders the upload sub part
     public static function renderUpload($title) {
-        ?>
-         ?>
+        ?>       
         <?php if ($title == 'Plugins') { ?>
         <div class="mainwp_info-box-red" id="mainwp-ext-notice" style="margin-top: 1em;">
             <span><?php _e('<strong>Do Not upload extensions here</strong>, they do not go on the child sites, upload and activate them via your dashboard sites <a href="/wp-admin/plugin-install.php" style="text-decoration: none;">plugin screen.</a>','mainwp'); ?></span>

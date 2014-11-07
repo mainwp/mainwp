@@ -76,6 +76,9 @@ class MainWPExtensions
             $extension['DocumentationURI'] = $file_data['DocumentationURI'];
             $extension['page'] = 'Extensions-' . str_replace(' ', '-', ucwords(str_replace('-', ' ', dirname($slug))));
             
+//            if (isset($extension['api_activated_key']))
+//                $extension['api_activated'] = get_option($extension['api_activated_key']);
+            
             $all_extensions[] = $extension;            
             if ((defined("MWP_TEAMCONTROL_PLUGIN_SLUG") && MWP_TEAMCONTROL_PLUGIN_SLUG == $slug) || 
                     mainwp_current_user_can("extension", dirname($slug))) {
@@ -268,7 +271,7 @@ class MainWPExtensions
         if (!is_array($snEnabledExtensions)) $snEnabledExtensions = array();
 
         $active = in_array($slug, $snEnabledExtensions);
-
+        
         if (isset(self::$extensions))
         {
             foreach(self::$extensions as $extension)
@@ -276,7 +279,10 @@ class MainWPExtensions
                 if ($extension['plugin'] == $pluginFile)
                 {
                     if (isset($extension['mainwp']) && ($extension['mainwp'] == true))
-                    {
+                    {   
+//                        if (isset($extension['api_activated']) && ($extension['api_activated'] != 'Activated')) {                                             
+//                                $active = false;
+//                        } else 
                         if (isset($extension['api']) && (MainWPAPISettings::testAPIs($extension['api']) != 'VALID'))
                         {
                             $active = false;

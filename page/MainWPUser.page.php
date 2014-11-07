@@ -120,8 +120,7 @@ class MainWPUser
          <div>
             <div class="postbox mainwp-postbox" style="width: 555px !important;">
             <h3 class="mainwp_box_title"><?php _e('Search Users','mainwp'); ?></h3>
-            <div class="inside">
-        <div class="mainwp-search-form">            
+            <div class="inside">                  
             <div class="mainwp-search-box">
                 <input type="text" aria-required="true" value="<?php if ($cachedSearch != null && isset($cachedSearch['keyword'])) { echo $cachedSearch['keyword']; } ?>"
                         id="mainwp_search_users" name="mainwp_search_users">

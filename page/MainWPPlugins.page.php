@@ -137,7 +137,7 @@ class MainWPPlugins
             </p>
             <p>
                 <?php _e('Containing Keyword:','mainwp'); ?><br/>
-                <input type="text" id="mainwp_plugin_search_by_keyword" size="50" value="<?php if ($cachedSearch != null) { echo $cachedSearch['keyword']; } ?>"/>
+                <input type="text" id="mainwp_plugin_search_by_keyword"  class="mainwp-field mainwp-keyword"  size="50" value="<?php if ($cachedSearch != null) { echo $cachedSearch['keyword']; } ?>"/>
             </p>
             </div>
             </div>

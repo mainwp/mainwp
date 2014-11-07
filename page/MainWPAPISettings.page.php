@@ -146,6 +146,17 @@ class MainWPAPISettings
             }
             else
             {
+            /*    $activated_keys = get_option("mainwp_api_manager_activated_keys");
+                if (!is_array($activated_keys))
+                    $activated_keys = array();
+                
+                if (isset($activated_keys[$pAPI])) {
+                    if ($activated_keys[$pAPI] == 'Activated')
+                        $exclusiveResult = MAINWP_API_VALID;
+                    else 
+                        $exclusiveResult = MAINWP_API_INVALID;
+                    
+                } else  */
                 //If it was forced or the API is not yet fetched or (invalid && last fetched later then 10 minutes ago)
                 if ($forceRequest || !isset($requests[$pAPI]) || ($requests[$pAPI] == MAINWP_API_INVALID && ($pIgnoreLastCheckTime || (!isset($lastRequests[$pAPI]) || ((time() - $lastRequests[$pAPI]) > (10 * 60))))))
                 {

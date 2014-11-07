@@ -157,11 +157,11 @@ class MainWPPost
             </ul>
             <p>
                 <?php _e('Containing Keyword:','mainwp'); ?><br />
-                <input type="text" id="mainwp_post_search_by_keyword" size="50" value="<?php if ($cachedSearch != null) { echo $cachedSearch['keyword']; } ?>"/>
+                <input type="text" id="mainwp_post_search_by_keyword" class="mainwp-field mainwp-keyword" size="50" value="<?php if ($cachedSearch != null) { echo $cachedSearch['keyword']; } ?>"/>
             </p>
             <p>
                 <?php _e('Date Range:','mainwp'); ?><br />
-                <input type="text" id="mainwp_post_search_by_dtsstart" class="mainwp_datepicker" size="12" value="<?php if ($cachedSearch != null) { echo $cachedSearch['dtsstart']; } ?>"/> <?php _e('to','mainwp'); ?> <input type="text" id="mainwp_post_search_by_dtsstop" class="mainwp_datepicker" size="12" value="<?php if ($cachedSearch != null) { echo $cachedSearch['dtsstop']; } ?>"/>
+                <input type="text" id="mainwp_post_search_by_dtsstart" class="mainwp_datepicker mainwp-field mainwp-date" size="12" value="<?php if ($cachedSearch != null) { echo $cachedSearch['dtsstart']; } ?>"/> <?php _e('to','mainwp'); ?> <input type="text" id="mainwp_post_search_by_dtsstop" class="mainwp_datepicker mainwp-field mainwp-date" size="12" value="<?php if ($cachedSearch != null) { echo $cachedSearch['dtsstop']; } ?>"/>
             </p>
             </div>
             </div>

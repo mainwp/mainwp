@@ -1153,7 +1153,7 @@ class MainWPManageSitesView
                 <tr>
                     <th scope="row"><?php _e('Site URL','mainwp'); ?></th>
                     <td><input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled"
-                               value="<?php echo $website->url; ?>" class="regular-text mainwp-field mainwp-url"/> <span
+                               value="<?php echo $website->url; ?>" class="regular-text mainwp-field mainwp-url" /> <span
                             class="mainwp-form_hint-display"><?php _e('Site URL cannot be changed.','mainwp'); ?></span></td>
                 </tr>
                 <tr>

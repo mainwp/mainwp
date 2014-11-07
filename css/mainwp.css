@@ -2673,3 +2673,37 @@ input.mainwp-field:-webkit-autofill {
     top: 10px;
     width: 450px;
 }
+
+
+.mainwp-permission-error {
+    padding: 2em;
+    width: 70%;
+    margin: 4em auto;
+    background: #fff;
+    border: 1px Solid #e5e5e5;
+    font-size: 13px;
+    text-align: center;
+    color: #999;
+}
+
+.mainwp-permission-error p {
+    font-size: 16px;
+    color: #333;
+}
+
+.mainwp_breadcrumb {
+    background: #fff;
+    border: 1px Solid #e5e5e5;
+    padding: .5em 1em;
+}
+
+.mainwp_breadcrumb a{
+    text-decoration: none;
+}
+.mainwp_breadcrumb a:hover{
+    text-decoration: underline;
+}
+.mainwp_breadcrumb .separator{
+    font-size: 20px;
+}
+

@@ -56,6 +56,7 @@ class MainWPExtensions
 
         self::$extensions = array();
         $all_extensions = array();
+        //$ext_activated_keys = array();
         
         $newExtensions = apply_filters('mainwp-getextensions', array());
         $extraHeaders = array('IconURI' => 'Icon URI', 'SupportForumURI' => 'Support Forum URI', 'DocumentationURI' => 'Documentation URI');
@@ -76,8 +77,8 @@ class MainWPExtensions
             $extension['DocumentationURI'] = $file_data['DocumentationURI'];
             $extension['page'] = 'Extensions-' . str_replace(' ', '-', ucwords(str_replace('-', ' ', dirname($slug))));
             
-//            if (isset($extension['api_activated_key']))
-//                $extension['api_activated'] = get_option($extension['api_activated_key']);
+            //if (isset($extension['api_activated_key']))
+            //    $extension['api_activated'] = $ext_activated_keys[$slug] = get_option($extension['api_activated_key']);
             
             $all_extensions[] = $extension;            
             if ((defined("MWP_TEAMCONTROL_PLUGIN_SLUG") && MWP_TEAMCONTROL_PLUGIN_SLUG == $slug) || 
@@ -90,6 +91,8 @@ class MainWPExtensions
         }
         MainWPUtility::update_option("mainwp_extensions", self::$extensions);
         MainWPUtility::update_option("mainwp_manager_extensions", $all_extensions);
+        //MainWPUtility::update_option("mainwp_api_manager_activated_keys", $ext_activated_keys);
+                
         self::$extensionsLoaded = true;
     }
 
@@ -280,9 +283,9 @@ class MainWPExtensions
                 {
                     if (isset($extension['mainwp']) && ($extension['mainwp'] == true))
                     {   
-//                        if (isset($extension['api_activated']) && ($extension['api_activated'] != 'Activated')) {                                             
-//                                $active = false;
-//                        } else 
+                        //if (isset($extension['api_activated']) && ($extension['api_activated'] != 'Activated')) {                                             
+                        //        $active = false;
+                        //} else 
                         if (isset($extension['api']) && (MainWPAPISettings::testAPIs($extension['api']) != 'VALID'))
                         {
                             $active = false;

@@ -3853,6 +3853,8 @@ mainwp_upload_bulk_start_specific = function (pType, pUrls, pActivatePlugin, pOv
  */
 var backupDownloadRunning = false;
 var backupError = false;
+var backupContinueRetries = 0;
+
 jQuery(document).ready(function () {
     jQuery('#backup_btnSubmit').live('click', function () {
         backup();
@@ -3868,7 +3870,8 @@ jQuery(document).ready(function () {
 backup = function ()
 {
     backupError = false;
-    //jQuery('#backup_btnSubmit').attr('disabled', 'true');
+    backupContinueRetries = 0;
+
     jQuery('#backup_loading').show();
     var remote_destinations = jQuery('#backup_location_remote').hasClass('mainwp_action_down') ? jQuery.map(jQuery('#backup_destination_list').find('input[name="remote_destinations[]"]'), function(el) { return {id: jQuery(el).val(), title: jQuery(el).attr('title'), type: jQuery(el).attr('destination_type')}; }) : [];
 
@@ -3882,10 +3885,11 @@ backup = function ()
     var fileNameUID = mainwp_uid();
     var loadFilesBeforeZip = jQuery('[name="mainwp_options_loadFilesBeforeZip"]:checked').val();
 
+    var backupPid = Math.round(new Date().getTime() / 1000);
     var data = mainwp_secure_data({
         action:'mainwp_backup',
         site_id:jQuery('#backup_site_id').val(),
-
+        pid: backupPid,
         type:type,
         exclude:jQuery('#excluded_folders_list').val(),
         excludebackup: (jQuery('#mainwp-known-backup-locations').attr('checked') ? 1 : 0),
@@ -3913,75 +3917,244 @@ backup = function ()
         modal: true,
         close: function(event, ui) { if (!backupError) { location.reload(); }}});
 
-    var interVal = setInterval(function() {
-        var data = mainwp_secure_data({
+    var fnc = function(pSiteId, pType, pFileName, pFileNameUID) { return function(pFunction) {
+        var data2 = mainwp_secure_data({
             action:'mainwp_createbackup_getfilesize',
-            siteId: jQuery('#backup_site_id').val(),
-            type: type,
-            fileName: fileName,
-            fileNameUID: fileNameUID
-        });
-        jQuery.post(ajaxurl, data,function (response) {
-            if (response.error) return;
+            siteId: pSiteId,
+            type: pType,
+            fileName: pFileName,
+            fileNameUID: pFileNameUID
+        }, false);
 
-            if (backupCreateRunning)
-            {
-                var progressBar = jQuery('#managesite-createbackup-status-progress');
-                if (progressBar.progressbar('option', 'value') < progressBar.progressbar('option', 'max'))
+        jQuery.ajax({
+            url: ajaxurl,
+            data: data2,
+            method: 'POST',
+            success: function(pFunc) { return function (response) {
+                if (backupCreateRunning && response.error)
                 {
-                    progressBar.progressbar('value', response.size);
+                    setTimeout(function() { pFunc(pFunc); }, 1000);
+                    return;
                 }
-            }
-        }, 'json');
-    }, 1000);
+
+                if (backupCreateRunning)
+                {
+                    var progressBar = jQuery('#managesite-createbackup-status-progress');
+                    if (progressBar.progressbar('option', 'value') < progressBar.progressbar('option', 'max'))
+                    {
+                        progressBar.progressbar('value', response.size);
+                    }
+
+                    setTimeout(function() { pFunc(pFunc); }, 1000);
+                }
+            } }(pFunction),
+            error:function(pFunc) { return function() {
+                if (backupCreateRunning) { setTimeout(function() { pFunc(pFunc); }, 10000); }
+            } }(pFunction),
+            dataType: 'json'});
+    } }(jQuery('#backup_site_id').val(), type, fileName, fileNameUID);
+
+    setTimeout(function() { fnc(fnc); }, 1000);
 
     backupCreateRunning = true;
-    jQuery.ajax({url: ajaxurl,
-                data: data,
-                method: 'POST',
-                success: function(pSiteId, pRemoteDestinations, pInterVal) { return function (response) {
-                    backupCreateRunning = false;
-                    clearInterval(pInterVal);
+    jQuery.ajax({
+        url: ajaxurl,
+        data: data,
+        method: 'POST',
+        success: function(pSiteId, pRemoteDestinations, pBackupPid, pType, pSubfolder, pFilename, pData) { return function (response) {
+            if (response.error)
+            {
+                backup_retry_fail(pSiteId, pData, pRemoteDestinations, pBackupPid, pType, pSubfolder, pFilename, response.error);
+            }
+            else
+            {
+                backupCreateRunning = false;
 
-                    var progressBar = jQuery('#managesite-createbackup-status-progress');
-                    progressBar.progressbar('value', parseFloat(progressBar.progressbar('option', 'max')));
+                var progressBar = jQuery('#managesite-createbackup-status-progress');
+                progressBar.progressbar('value', parseFloat(progressBar.progressbar('option', 'max')));
 
-        if (response.error)
-        {
-            appendToDiv('#managesite-backup-status-text', ' <font color="red">Error:' + getErrorMessage(response.error) + '</font>');
-        }
-        else
-        {
-            appendToDiv('#managesite-backup-status-text', __('Backupfile on child site created successfully.'));
+                appendToDiv('#managesite-backup-status-text', __('Backupfile on child site created successfully.'));
 
-            backup_download_file(pSiteId, response.result.type, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder, pRemoteDestinations);
-        }
+                backup_download_file(pSiteId, pType, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder, pRemoteDestinations);
+            }
+        } }(jQuery('#backup_site_id').val(), remote_destinations, backupPid, type, jQuery('#backup_subfolder').val(), fileName, data),
+        error: function(pSiteId, pRemoteDestinations, pBackupPid, pType, pSubfolder, pFilename, pData) { return function() {
+            backup_retry_fail(pSiteId, pData, pRemoteDestinations, pBackupPid, pType, pSubfolder, pFilename);
+        } }(jQuery('#backup_site_id').val(), remote_destinations, backupPid, type, jQuery('#backup_subfolder').val(), fileName, data),
+        dataType: 'json'
+    });
+};
 
-    } }(jQuery('#backup_site_id').val(), remote_destinations, interVal), error: function(pInterVal) { return function() {backupCreateRunning = false;clearInterval(pInterVal);appendToDiv('#managesite-backup-status-text', ' <font color="red">Error: Backup timed out - <a href="http://docs.mainwp.com/backup-failed-php-ini-settings/">Please check this help document for more information and possible fixes</a></font>');} }(interVal), dataType: 'json'});
+backup_retry_fail = function(siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError)
+{
+    if (console.log)console.log('Retrying for site ' + siteId);
+
+    //we've got the pid file!!!!
+    var data = mainwp_secure_data({
+        action:'mainwp_backup_checkpid',
+        site_id: siteId,
+        pid: pid,
+        type: type,
+        subfolder: subfolder,
+        filename: filename
+    });
+
+    jQuery.ajax({
+        url: ajaxurl,
+        data: data,
+        method: 'POST',
+        success: function(response) {
+            if (response.status == 'done')
+            {
+                if (console.log)console.log('Status done, continue download');
+
+                backupCreateRunning = false;
+
+                var progressBar = jQuery('#managesite-createbackup-status-progress');
+                progressBar.progressbar('value', parseFloat(progressBar.progressbar('option', 'max')));
+
+                //download!!!
+                appendToDiv('#managesite-backup-status-text', __('Backupfile on child site created successfully.'));
+
+                backup_download_file(siteId, type, response.result.file, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder, remoteDestinations);
+            }
+            else if (response.status == 'busy')
+            {
+                if (console.log)console.log('Status busy, retry in 10');
+
+                //Try again in 5seconds
+                setTimeout(function() {
+                    backup_retry_fail(siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError);
+                },10000);
+            }
+            else if (response.status == 'stalled')
+            {
+                if (console.log)console.log('stalled, trying to continue the backup');
+
+                backupContinueRetries++;
+                if (console.log)console.log('backupContinueRetries: ' + backupContinueRetries);
+
+                if (backupContinueRetries > 10)
+                {
+                    if (responseError != undefined)
+                    {
+                        appendToDiv('#managesite-backup-status-text', ' <font color="red">Error:' + getErrorMessage(responseError) + '</font>');
+                    }
+                    else
+                    {
+                        appendToDiv('#managesite-backup-status-text', ' <font color="red">Error: Backup timed out - <a href="http://docs.mainwp.com/backup-failed-php-ini-settings/">Please check this help document for more information and possible fixes</a></font>');
+                    }
+                }
+                else
+                {
+                    appendToDiv('#managesite-backup-status-text', ' Backup stalled, trying to resume from last file.');
+                    //retrying file: response.result.file !
+
+                    pData['filename'] = response.result.file;
+                    pData['append'] = 1;
+                    jQuery.ajax({
+                        url: ajaxurl,
+                        data: pData,
+                        method: 'POST',
+                        success: function(pSiteId, pRemoteDestinations, pBackupPid, pType, pSubfolder, pFilename, pData) { return function (response) {
+                            if (response.error)
+                            {
+                                backup_retry_fail(pSiteId, pData, pRemoteDestinations, pBackupPid, pType, pSubfolder, pFilename, response.error);
+                            }
+                            else
+                            {
+                                backupCreateRunning = false;
+
+                                var progressBar = jQuery('#managesite-createbackup-status-progress');
+                                progressBar.progressbar('value', parseFloat(progressBar.progressbar('option', 'max')));
+
+                                appendToDiv('#managesite-backup-status-text', __('Backupfile on child site created successfully.'));
+
+                                backup_download_file(pSiteId, pType, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder, pRemoteDestinations);
+                            }
+                        } }(siteId, remoteDestinations, pid, type, subfolder, filename, pData),
+                        error: function(pSiteId, pRemoteDestinations, pBackupPid, pType, pSubfolder, pFilename, pData) { return function() {
+                            backup_retry_fail(pSiteId, pData, pRemoteDestinations, pBackupPid, pType, pSubfolder, pFilename);
+                        } }(siteId, remoteDestinations, pid, type, subfolder, filename, pData),
+                        dataType: 'json'
+                    });
+                }
+            }
+            else if (response.status == 'invalid')
+            {
+                if (console.log)console.log('no status?');
+
+                backupCreateRunning = false;
+
+                if (responseError != undefined)
+                {
+                    appendToDiv('#managesite-backup-status-text', ' <font color="red">Error:' + getErrorMessage(responseError) + '</font>');
+                }
+                else
+                {
+                    appendToDiv('#managesite-backup-status-text', ' <font color="red">Error: Backup timed out - <a href="http://docs.mainwp.com/backup-failed-php-ini-settings/">Please check this help document for more information and possible fixes</a></font>');
+                }
+            }
+            else
+            {
+                if (console.log)console.log('WOD?');
+                //Try again in 5seconds
+                setTimeout(function() {
+                    backup_retry_fail(siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError);
+                },10000);
+            }
+        },
+        error: function() {
+            if (console.log)console.log('Error!');
+            //Try again in 5seconds
+            setTimeout(function() {
+                backup_retry_fail(siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError);
+            },10000);
+        },
+        dataType: 'json'
+    });
 };
 
 backup_download_file = function(pSiteId, type, url, file, regexfile, size, subfolder, remote_destinations)
 {
     appendToDiv('#managesite-backup-status-text', __('Downloading the file.')+' <div id="managesite-backup-status-progress" style="margin-top: 1em;"></div>');
     jQuery('#managesite-backup-status-progress').progressbar({value: 0, max: size});
-    var interVal = setInterval(function() {
+
+    var fnc = function(pFile) { return function(pFunction) {
         var data = mainwp_secure_data({
             action:'mainwp_backup_getfilesize',
             local: file
         });
-        jQuery.post(ajaxurl, data,function (response) {
-            if (response.error) return;
-
-            if (backupDownloadRunning)
-            {
-                var progressBar = jQuery('#managesite-backup-status-progress');
-                if (progressBar.progressbar('option', 'value') < progressBar.progressbar('option', 'max'))
+        jQuery.ajax({
+            url: ajaxurl,
+            data: data,
+            method: 'POST',
+            success: function(pFunc) { return function (response) {
+                if (backupCreateRunning && response.error)
                 {
-                    progressBar.progressbar('value', response.result);
+                    setTimeout(function() { pFunc(pFunc); }, 1000);
+                    return;
                 }
-            }
-        }, 'json');
-    }, 500);
+
+                if (backupDownloadRunning)
+                {
+                    var progressBar = jQuery('#managesite-backup-status-progress');
+                    if (progressBar.progressbar('option', 'value') < progressBar.progressbar('option', 'max'))
+                    {
+                        progressBar.progressbar('value', response.result);
+                    }
+
+                    setTimeout(function() { pFunc(pFunc); }, 1000);
+                }
+            } }(pFunction),
+            error:function(pFunc) { return function() {
+                if (backupCreateRunning) { setTimeout(function() { pFunc(pFunc); }, 10000); }
+            } }(pFunction),
+            dataType: 'json'
+        });
+    } }(file);
+
+    setTimeout(function() { fnc(fnc); }, 1000);
 
     var data = mainwp_secure_data({
         action:'mainwp_backup_download_file',
@@ -3991,9 +4164,8 @@ backup_download_file = function(pSiteId, type, url, file, regexfile, size, subfo
         local: file
     });
     backupDownloadRunning = true;
-    jQuery.post(ajaxurl, data, function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pInterVal, pUrl) { return function (response) {
+    jQuery.post(ajaxurl, data, function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pUrl) { return function (response) {
         backupDownloadRunning = false;
-        clearInterval(pInterVal);
 
         if (response.error)
         {
@@ -4015,7 +4187,7 @@ backup_download_file = function(pSiteId, type, url, file, regexfile, size, subfo
         });
         jQuery.post(ajaxurl, newData, function() {}, 'json');
         backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize);
-    } }(pSiteId, file, regexfile, subfolder, remote_destinations, size, type, interVal, url), 'json');
+    } }(pSiteId, file, regexfile, subfolder, remote_destinations, size, type, url), 'json');
 };
 
 var backupUploadRunning = [];
@@ -5782,11 +5954,12 @@ jQuery(document).on('change', '#mainwp_serverInformation_child', function()
     }, 'html');
 });
 
-mainwp_secure_data = function(data)
+mainwp_secure_data = function(data, excludeDts)
 {
     if (data['action'] == undefined) return data;
 
     data['security'] = security_nonces[data['action']];
+    if (excludeDts == undefined) data['dts'] = Math.round(new Date().getTime() / 1000);
     return data;
 };
 
@@ -6074,7 +6247,7 @@ jQuery('a.mwp-get-system-report-btn').live('click', function(){
         jQuery(this).fadeOut();
         jQuery('.mwp_close_srv_info').show();
         return false;
-    } catch(e){ console.log( e ); }
+    } catch(e){ }
 });
 
 jQuery('a#mwp_close_srv_info').live('click', function(){

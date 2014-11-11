@@ -66,6 +66,7 @@ class MainWPPostHandler
         //Page: backup
         $this->addAction('mainwp_backup_run_site', array(&$this, 'mainwp_backup_run_site'));
         $this->addAction('mainwp_backup', array(&$this, 'mainwp_backup'));
+        $this->addAction('mainwp_backup_checkpid', array(&$this, 'mainwp_backup_checkpid'));
         $this->addAction('mainwp_createbackup_getfilesize', array(&$this, 'mainwp_createbackup_getfilesize'));
         $this->addAction('mainwp_backup_download_file', array(&$this, 'mainwp_backup_download_file'));
         $this->addAction('mainwp_backup_delete_file', array(&$this, 'mainwp_backup_delete_file'));
@@ -591,7 +592,27 @@ class MainWPPostHandler
             $excludedFolder = array_map(array('MainWPUtility', 'trimSlashes'), $excludedFolder);
             $excludedFolder = implode(",", $excludedFolder);
 
-            die(json_encode(array('result' => MainWPManageSites::backup($_POST['site_id'], $_POST['type'], (isset($_POST['subfolder']) ? $_POST['subfolder'] : ''), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset($_POST['fileNameUID']) ? $_POST['fileNameUID'] : '', $_POST['archiveFormat'], ($_POST['maximumFileDescriptorsOverride'] == 1), ($_POST['maximumFileDescriptorsAuto'] == 1), $_POST['maximumFileDescriptors'], $_POST['loadFilesBeforeZip']))));
+            $result = MainWPManageSites::backup($_POST['site_id'], $_POST['type'], (isset($_POST['subfolder']) ? $_POST['subfolder'] : ''), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset($_POST['fileNameUID']) ? $_POST['fileNameUID'] : '', $_POST['archiveFormat'], ($_POST['maximumFileDescriptorsOverride'] == 1), ($_POST['maximumFileDescriptorsAuto'] == 1), $_POST['maximumFileDescriptors'], $_POST['loadFilesBeforeZip'], $_POST['pid'], (isset($_POST['append']) && ($_POST['append'] == 1)));
+            die(json_encode(array('result' => $result)));
+        }
+        catch (MainWPException $e)
+        {
+            die(json_encode(array('error' => array('message' => $e->getMessage(), 'extra' => $e->getMessageExtra()))));
+        }
+    }
+
+    function mainwp_backup_checkpid()
+    {
+        $this->secure_request('mainwp_backup_checkpid');
+
+        try
+        {
+            if (!isset($_POST['site_id']) || !MainWPUtility::ctype_digit($_POST['site_id']))
+            {
+                throw new MainWPException('Invalid request');
+            }
+
+            die(json_encode(MainWPManageSites::backupCheckpid($_POST['site_id'], $_POST['pid'], $_POST['type'], $_POST['subfolder'], $_POST['filename'])));
         }
         catch (MainWPException $e)
         {
@@ -643,7 +664,7 @@ class MainWPPostHandler
 
         try
         {
-            if (!isset($_POST['siteId'])) throw new Exception(__('No site given','mainwp-child'));
+            if (!isset($_POST['siteId'])) throw new Exception(__('No site given'.print_r($_POST,1),'mainwp-child'));
             $siteId = $_POST['siteId'];
             $fileName = $_POST['fileName'];
             $fileNameUID = $_POST['fileNameUID'];
@@ -1192,6 +1213,18 @@ class MainWPPostHandler
     function secure_request($action, $query_arg = 'security')
     {
         if (!$this->check_security($action, $query_arg)) die(json_encode(array('error' => 'Invalid request')));
+
+        if (isset($_POST['dts']))
+        {
+            $ajaxPosts = get_option('mainwp_ajaxposts');
+            if (!is_array($ajaxPosts)) $ajaxPosts = array();
+
+            //If already processed, just quit!
+            if (isset($ajaxPosts[$action]) && ($ajaxPosts[$action] == $_POST['dts'])) die(json_encode(array('error' => 'Double request')));
+
+            $ajaxPosts[$action] = $_POST['dts'];
+            MainWPUtility::update_option('mainwp_ajaxposts', $ajaxPosts);
+        }
     }
 
     function check_security($action = -1, $query_arg = 'security')

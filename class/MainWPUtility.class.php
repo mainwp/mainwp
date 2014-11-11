@@ -560,13 +560,13 @@ class MainWPUtility
         return true;
     }
 
-    static function fetchUrlAuthed(&$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false)
+    static function fetchUrlAuthed(&$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true)
     {
         if ($params == null) $params = array();
         $params['optimize'] = ((get_option("mainwp_optimize") == 1) ? 1 : 0);
 
         $postdata = MainWPUtility::getPostDataAuthed($website, $what, $params);
-        $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate);
+        $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed);
       
         if (is_array($information) && isset($information['sync']))
         {
@@ -617,7 +617,7 @@ class MainWPUtility
         }
     }
 
-    static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null)
+    static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $pRetryFailed = true)
     {
         $start = time();
 
@@ -630,7 +630,7 @@ class MainWPUtility
         }
         catch (Exception $e)
         {
-            if ((time() - $start) > (60 * 2))
+            if (!$pRetryFailed || ((time() - $start) > (60 * 2)))
             {
                 //If more then 2minutes past since the initial request, do not retry this!
                 throw $e;
@@ -839,7 +839,7 @@ class MainWPUtility
         MainWPUtility::endSession();
 
         $disabled_functions = ini_get('disable_functions');
-        if (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false))
+        if (false && (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false)))
         {
             $mh = @curl_multi_init();
             @curl_multi_add_handle($mh, $ch);
@@ -914,29 +914,38 @@ class MainWPUtility
 
     }
 
-    public static function downloadToFile($url, $file)
+    public static function downloadToFile($url, $file, $size = false)
     {
-        if (file_exists($file)) {
+        if (@file_exists($file) && (($size === false) || (@filesize($file) > $size)))
+        {
             @unlink($file);
         }
 
-        if (!file_exists(dirname($file)))
+        if (!@file_exists(@dirname($file)))
         {
-            @mkdir(dirname($file), 0777, true);
+            @mkdir(@dirname($file), 0777, true);
         }
 
-        if (!file_exists(dirname($file)))
+        if (!@file_exists(@dirname($file)))
         {
             throw new MainWPException(__('Could not create directory to download the file.'));
         }
 
-        if (!@is_writable(dirname($file)))
+        if (!@is_writable(@dirname($file)))
         {
             throw new MainWPException(__('MainWP upload directory is not writable.'));
         }
 
-        $fp = fopen($file, 'w');
+        $fp = fopen($file, 'a');
         $agent= 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+        if ($size !== false)
+        {
+            if (@file_exists($file))
+            {
+                $size = @filesize($file);
+                $url .= '&foffset='.$size;
+            }
+        }
         $ch = curl_init(str_replace(' ', '%20', $url));
         curl_setopt($ch, CURLOPT_FILE, $fp);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);

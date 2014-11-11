@@ -617,7 +617,7 @@ class MainWPManageBackups
     public static function executeBackupTask($task, $nrOfSites = 0, $updateRun = true)
     {
         if ($updateRun) MainWPDB::Instance()->updateBackupRun($task->id);
-        MainWPDB::Instance()->updateBackupLast($task->id);
+//        MainWPDB::Instance()->updateBackupLast($task->id);
 
         $task = MainWPDB::Instance()->getBackupTaskById($task->id);
 
@@ -628,7 +628,8 @@ class MainWPManageBackups
 
         $sites = array();
 
-        if ($task->groups == '') {
+        if ($task->groups == '')
+        {
             if ($task->sites != '') $sites = explode(',', $task->sites);
         }
         else
@@ -643,7 +644,7 @@ class MainWPManageBackups
                 }
             }
         }
-        $errorOutput = '';
+        $errorOutput = null;
 
         $lastStartNotification = $task->lastStartNotificationSent;
         if ($updateRun && (get_option('mainwp_notificationOnBackupStart') == 1) && ($lastStartNotification < $task->last_run))
@@ -665,6 +666,7 @@ class MainWPManageBackups
                 $output .= '<strong>Backup Schedule</strong>' . ' - ' . strtoupper($task->schedule) . '<br />';
 
                 wp_mail($email, 'A Scheduled Backup has been Started - MainWP', MainWPUtility::formatEmail($email, $output), 'content-type: text/html');
+                MainWPDB::Instance()->updateBackupTaskWithValues($task->id, array('lastStartNotificationSent' => time()));
             }
         }
 
@@ -679,6 +681,11 @@ class MainWPManageBackups
                 $subfolder = str_replace('%task%', MainWPUtility::sanitize($task->name), $task->subfolder);
 
                 $backupResult = MainWPManageSites::backupSite($siteid, $task, $subfolder);
+
+                //When we receive a timeout, we return false..
+                if ($backupResult === false) continue;
+
+                if ($errorOutput == null) $errorOutput = '';
                 $error = false;
                 $tmpErrorOutput = '';
                 if (isset($backupResult['error']))
@@ -710,6 +717,7 @@ class MainWPManageBackups
             }
             catch (Exception $e)
             {
+                if ($errorOutput == null) $errorOutput = '';
                 $errorOutput .= 'Site: <strong>'.MainWPUtility::getNiceURL($website->url). '</strong><br />';
                 $errorOutput .= MainWPErrorHelper::getErrorMessage($e) . '<br />';
                 $_error_output = MainWPErrorHelper::getErrorMessage($e);
@@ -730,11 +738,11 @@ class MainWPManageBackups
             $completed_sites[$siteid] = true;
             MainWPDB::Instance()->updateCompletedSites($task->id, $completed_sites);
 
-            if (($nrOfSites != 0) && ($nrOfSites == $currentCount)) break;
+            if (($nrOfSites != 0) && ($nrOfSites <= $currentCount)) break;
         }
 
         //update completed sites
-        MainWPDB::Instance()->updateBackupErrors($task->id, $errorOutput);
+        if ($errorOutput != null) MainWPDB::Instance()->updateBackupErrors($task->id, $errorOutput);
 
         if (count($completed_sites) == count($sites))
         {
@@ -751,6 +759,8 @@ class MainWPManageBackups
                         $errorOutput = 'Errors occurred while executing task: <strong>' . $task->name . '</strong><br /><br />' . $task->backup_errors;
 
                         wp_mail($email, 'A Scheduled Backup had an Error - MainWP', MainWPUtility::formatEmail($email, $errorOutput), 'content-type: text/html');
+
+                        MainWPDB::Instance()->updateBackupErrors($task->id, '');
                     }
                 }
             }

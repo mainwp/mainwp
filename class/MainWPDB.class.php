@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '7.5';
+    private $mainwp_db_version = '7.6';
     //Private
     private $table_prefix;
     //Singleton
@@ -187,7 +187,12 @@ class MainWPDB
   fetchResult text NOT NULL DEFAULT "",
   downloadedDB text NOT NULL DEFAULT "",
   downloadedFULL text NOT NULL DEFAULT "",
-  removedFiles tinyint(1) NOT NULL DEFAULT 0
+  downloadedDBComplete tinyint(1) NOT NULL DEFAULT 0,
+  downloadedFULLComplete tinyint(1) NOT NULL DEFAULT0,
+  removedFiles tinyint(1) NOT NULL DEFAULT 0,
+  attempts int(11) NOT NULL DEFAULT 0,
+  last_error text NOT NULL DEFAULT "",
+  pid int(11) NOT NULL DEFAULT 0
          )';
         $sql[] = $tbl;
 
@@ -1160,17 +1165,17 @@ class MainWPDB
         return false;
     }
 
-    public function updateBackupLast($id)
-    {
-        /** @var $wpdb wpdb */
-        global $wpdb;
-
-        if (MainWPUtility::ctype_digit($id))
-        {
-            return $wpdb->update($this->tableName('wp_backup'), array('last' => time()), array('id' => $id));
-        }
-        return false;
-    }
+//    public function updateBackupLast($id)
+//    {
+//        /** @var $wpdb wpdb */
+//        global $wpdb;
+//
+//        if (MainWPUtility::ctype_digit($id))
+//        {
+//            return $wpdb->update($this->tableName('wp_backup'), array('last' => time()), array('id' => $id));
+//        }
+//        return false;
+//    }
 
     public function updateBackupCompleted($id)
     {
@@ -1191,7 +1196,7 @@ class MainWPDB
 
         if (MainWPUtility::ctype_digit($id))
         {
-            if (($errors == null) || ($errors == ''))
+            if ($errors == '')
             {
                 return $wpdb->update($this->tableName('wp_backup'), array('backup_errors' => ''), array('id' => $id));
             }

@@ -18,9 +18,11 @@ class MainWPManageBackups
 
     public static function initMenu()
     {
-        $page = add_submenu_page('mainwp_tab', __('Backups','mainwp'), '<span id="mainwp-Backups">'. __('Backups','mainwp') . '</span>', 'read', 'ManageBackups', array(MainWPManageBackups::getClassName(), 'renderManager'));
+        $page = add_submenu_page('mainwp_tab', __('Schedule Backup','mainwp'), '<span id="mainwp-Backups">'. __('Schedule Backup','mainwp') . '</span>', 'read', 'ManageBackups', array(MainWPManageBackups::getClassName(), 'renderManager'));
         add_action('load-' . $page, array(MainWPManageBackups::getClassName(), 'load_page'));
-        add_submenu_page('mainwp_tab', __('Add New Schedule','mainwp'), '<div class="mainwp-hidden">' . __('Add New','mainwp') . '</div>', 'read', 'ManageBackupsAddNew', array(MainWPManageBackups::getClassName(), 'renderNew'));
+        if (mainwp_current_user_can("dashboard", "add_backup_tasks")) {
+            add_submenu_page('mainwp_tab', __('Add New Schedule','mainwp'), '<div class="mainwp-hidden">' . __('Add New','mainwp') . '</div>', 'read', 'ManageBackupsAddNew', array(MainWPManageBackups::getClassName(), 'renderNew'));
+        }
         add_submenu_page('mainwp_tab', __('Backups Help','mainwp'), '<div class="mainwp-hidden">' . __('Backups Help','mainwp') . '</div>', 'read', 'BackupsHelp', array(MainWPManageBackups::getClassName(), 'QSGManageBackups'));
 
         self::$subPages = apply_filters('mainwp-getsubpages-backups', array());
@@ -45,8 +47,10 @@ class MainWPManageBackups
         <div class="wp-submenu sub-open" style="">
             <div class="mainwp_boxout">
                 <div class="mainwp_boxoutin"></div>
-                <a href="<?php echo admin_url('admin.php?page=ManageBackups'); ?>" class="mainwp-submenu"><?php _e('All Backups','mainwp'); ?></a>
+                <a href="<?php echo admin_url('admin.php?page=ManageBackups'); ?>" class="mainwp-submenu"><?php _e('Manage Backups','mainwp'); ?></a>
+                <?php if (mainwp_current_user_can("dashboard", "add_backup_tasks")) { ?>
                 <a href="<?php echo admin_url('admin.php?page=ManageBackupsAddNew'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
+                <?php } ?>
                 <?php
                 if (isset(self::$subPages) && is_array(self::$subPages))
                 {
@@ -77,7 +81,9 @@ class MainWPManageBackups
         <h2><?php _e('Backups','mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == '') { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageBackups"><?php _e('Manage','mainwp'); ?></a>
+            <?php if (mainwp_current_user_can("dashboard", "add_backup_tasks")) { ?>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'AddNew') { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageBackupsAddNew"><?php _e('Add New','mainwp'); ?></a>
+            <?php } ?>
             <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage === 'BackupsHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=BackupsHelp"><?php _e('Help','mainwp'); ?></a>
             <?php if ($shownPage == 'ManageBackupsEdit') {  ?><a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Edit','mainwp'); ?></a><?php } ?>
             <?php
@@ -163,6 +169,10 @@ class MainWPManageBackups
         $backupTask = null;
         if (isset($_GET['id']) && MainWPUtility::ctype_digit($_GET['id']))
         {
+            if (!mainwp_current_user_can("dashboard", "edit_backup_tasks")) {
+                mainwp_do_not_have_permissions("edit backup tasks");
+                return;
+            }
             $backupTaskId = $_GET['id'];
 
             $backupTask = MainWPDB::Instance()->getBackupTaskById($backupTaskId);
@@ -238,6 +248,11 @@ class MainWPManageBackups
 
     public static function renderNew()
     {
+        if (!mainwp_current_user_can("dashboard", "add_backup_tasks")) {
+            mainwp_do_not_have_permissions("add backup tasks");
+            return;
+        }
+
         self::renderHeader('AddNew'); ?>
         <div class="mainwp_info-box"><strong><?php _e('Use these backup tasks to run backups at different times on different days. To backup a site right away please go to the','mainwp'); ?> <a href="<?php echo admin_url(); ?>admin.php?page=managesites"><?php _e('Sites page','mainwp'); ?></a> <?php _e('and select Backup Now.','mainwp'); ?></strong></div>
         <div id="mainwp_managebackups_add_errors" class="mainwp_error error"></div>
@@ -287,7 +302,7 @@ class MainWPManageBackups
         <table class="form-table" style="width: 100%">
             <tr class="form-field form-required">
                 <th scope="row"><?php _e('Task Name:','mainwp'); ?></th>
-                <td><input type="text" id="mainwp_managebackups_add_name" name="mainwp_managebackups_add_name" value="<?php echo (isset($task) ? $task->name : ''); ?>" /><span class="mainwp-form_hint">e.g. Site1 Daily, Site1 Full Weekly, ...</span></td>
+                <td><input type="text" id="mainwp_managebackups_add_name" class="mainwp-field mainwp-task-name" name="mainwp_managebackups_add_name" value="<?php echo (isset($task) ? $task->name : ''); ?>" /><span class="mainwp-form_hint">e.g. Site1 Daily, Site1 Full Weekly, ...</span></td>
             </tr>
             <tr>
                 <th scope="row"><?php _e('Task Schedule:','mainwp'); ?></th>
@@ -295,7 +310,7 @@ class MainWPManageBackups
             </tr>
             <tr>
                 <th scope="row"><?php _e('Backup File Name:','mainwp'); ?></th>
-                <td><input type="text" name="backup_filename" id="backup_filename" value="<?php echo (isset($task) ? $task->filename : ''); ?>" /><span class="mainwp-form_hint" style="display: inline; max-width: 500px;">Allowed Structure Tags: <strong>%url%</strong>, <strong>%date%</strong>, <strong>%time%</strong>, <strong>%type%</strong></span>
+                <td><input type="text" name="backup_filename" id="backup_filename" class="mainwp-field mainwp-file-name" value="<?php echo (isset($task) ? $task->filename : ''); ?>" /><span class="mainwp-form_hint" style="display: inline; max-width: 500px;">Allowed Structure Tags: <strong>%url%</strong>, <strong>%date%</strong>, <strong>%time%</strong>, <strong>%type%</strong></span>
                 </td>
             </tr>
             <tr><td colspan="2"><hr /></td></tr>
@@ -1191,8 +1206,10 @@ class MainWPManageBackups
 
         MainWPManageSites::showBackups($website);
         ?>
+        <?php if (mainwp_current_user_can("dashboard", "execute_backups")) { ?>
         <hr />
         <div style="text-align: center;"><a href="<?php echo admin_url('admin.php?page=managesites&backupid='.$website->id); ?>" class="button-primary"><?php _e('Backup Now','mainwp'); ?></a></div>
+        <?php } ?>
         <?php
     }
 

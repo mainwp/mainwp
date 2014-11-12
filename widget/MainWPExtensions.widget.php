@@ -14,10 +14,9 @@ class MainWPExtensionsWidget {
 	}
 
 	public static function render() {
-
-        $currentExtensions = (self::$extensionsLoaded ? self::$extensions : get_option('mainwp_extensions'));
-
-		if (count($currentExtensions) == 0)
+            
+        $currentExtensions = (self::$extensionsLoaded ? self::$extensions : get_option('mainwp_extensions'));        
+        if (count($currentExtensions) == 0)
         {
             ?>
             <span class="mainwp-no-extensions">
@@ -40,20 +39,29 @@ class MainWPExtensionsWidget {
           <div id="mainwp-extensions-widget-grid" <?php echo (!$showGrid ? "style='display:none;'" : ''); ?>>
             <?php
         	    foreach ($currentExtensions as $extension) {
+                        if (!mainwp_current_user_can("extension", dirname($extension['slug'])))
+                            continue;
+                      
+                        if (isset($extension['direct_page']) && !empty($extension['direct_page'])) {
+                            $ext_page = $extension['direct_page'];    
+                        } else {
+                            $ext_page = $extension['page'];    
+                        }
+                        
         	    	 $active = MainWPExtensions::isExtensionEnabled($extension['plugin']); 
         	    	?>
         	    	<span class="mainwp-widget-extensions">
                     <?php
                     if (isset($extension['iconURI']) && ($extension['iconURI'] != ''))
                     {
-                        ?><a href="<?php echo($active ? admin_url('admin.php?page='.$extension['page']) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo MainWPUtility::removeHttpPrefix($extension['iconURI']); ?>" class="mainwp-widget-icon <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /></a><?php
+                        ?><a href="<?php echo($active ? admin_url('admin.php?page='.$ext_page) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo MainWPUtility::removeHttpPrefix($extension['iconURI']); ?>" class="mainwp-widget-icon <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /></a><?php
                     }
                     else
                     {
-                        ?><a href="<?php echo($active ? admin_url('admin.php?page='.$extension['page']) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><img title="MainWP Placeholder" src="<?php echo plugins_url('images/extensions/placeholder.png', dirname(__FILE__)); ?>" class="mainwp-widget-icon <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /></a><?php
+                        ?><a href="<?php echo($active ? admin_url('admin.php?page='.$ext_page) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><img title="MainWP Placeholder" src="<?php echo plugins_url('images/extensions/placeholder.png', dirname(__FILE__)); ?>" class="mainwp-widget-icon <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /></a><?php
                     }
                     ?>
-                    <h4><a href="<?php echo($active ? admin_url('admin.php?page='.$extension['page']) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><?php echo $extension['name']?></a></h4>
+                    <h4><a href="<?php echo($active ? admin_url('admin.php?page='.$ext_page) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><?php echo $extension['name']?></a></h4>
                     </span>
                     <?php
         	    }
@@ -64,6 +72,15 @@ class MainWPExtensionsWidget {
             <tbody>
                 <?php
                    foreach ($currentExtensions as $extension) {
+                       if (!mainwp_current_user_can("extension", dirname($extension['slug'])))
+                            continue;
+                       
+                        if (isset($extension['direct_page']) && !empty($extension['direct_page'])) {
+                            $ext_page = $extension['direct_page'];    
+                        } else {
+                            $ext_page = $extension['page'];    
+                        }
+                        
                    $active = MainWPExtensions::isExtensionEnabled($extension['plugin']);
                    ?>
                      <tr class="mainwp-widget-extensions-list mainwp-extensions-childHolder" extension_slug="<?php echo $extension['slug']; ?>">
@@ -71,10 +88,12 @@ class MainWPExtensionsWidget {
                          if (isset($extension['iconURI']) && ($extension['iconURI'] != ''))
                            {
                              ?>
-                             <td><a href="<?php echo($active ? admin_url('admin.php?page='.$extension['page']) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo MainWPUtility::removeHttpPrefix($extension['iconURI']); ?>" class="mainwp-widget-icon-list <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /></a></td><td class="mainwp-extension-widget-title-list"><a href="<?php echo($active ? admin_url('admin.php?page='.$extension['page']) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><?php echo $extension['name']?></a></td><td class="mainwp-extension-widget-version"><?php echo $extension['version']; ?></td>
+                             <td><a href="<?php echo($active ? admin_url('admin.php?page='.$ext_page) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo MainWPUtility::removeHttpPrefix($extension['iconURI']); ?>" class="mainwp-widget-icon-list <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /></a></td><td class="mainwp-extension-widget-title-list"><a href="<?php echo($active ? admin_url('admin.php?page='.$ext_page) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><?php echo $extension['name']?></a></td><td class="mainwp-extension-widget-version"><?php echo $extension['version']; ?></td>
                              <td class="mainwp-extension-widget-button">
                                 <?php if ($active) { ?>
+                                 <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) {?>
                                    <a href="#" class="button mainwp-extensions-disable"><?php _e('Disable','mainwp'); ?></a>
+                                 <?php } ?>
                                    <?php } else {
                                            $apilink = '';
                                            $locked = false;
@@ -107,10 +126,12 @@ class MainWPExtensionsWidget {
                            else
                            {
                            ?>
-                           <td><a href="<?php echo($active ? admin_url('admin.php?page='.$extension['page']) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><img title="MainWP Placeholder" src="<?php echo plugins_url('images/extensions/placeholder.png', dirname(__FILE__)); ?>" class="mainwp-widget-icon-list <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /></a></td><td class="mainwp-extension-widget-title-list"><a href="<?php echo($active ? admin_url('admin.php?page='.$extension['page']) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><?php echo $extension['name']?></a></td><td class="mainwp-extension-widget-version"><?php echo $extension['version']; ?></td>
+                           <td><a href="<?php echo($active ? admin_url('admin.php?page='.$ext_page) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><img title="MainWP Placeholder" src="<?php echo plugins_url('images/extensions/placeholder.png', dirname(__FILE__)); ?>" class="mainwp-widget-icon-list <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /></a></td><td class="mainwp-extension-widget-title-list"><a href="<?php echo($active ? admin_url('admin.php?page='.$ext_page) : '') ?>" style="<?php echo($active ? '' : 'pointer-events: none;') ?>"><?php echo $extension['name']?></a></td><td class="mainwp-extension-widget-version"><?php echo $extension['version']; ?></td>
                            <td class="mainwp-extension-widget-button">
                            <?php if ($active) { ?>
+                               <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) {?>
                               <a href="#" class="button mainwp-extensions-disable"><?php _e('Disable','mainwp'); ?></a>
+                               <?php } ?>
                               <?php } else {
                                 $apilink = '';
                                 $locked = false;

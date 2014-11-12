@@ -49,6 +49,7 @@ class MainWPSettings
                         <?php
                         }
                     ?>
+                    <a href="<?php echo admin_url('admin.php?page=OfflineChecks'); ?>" class="mainwp-submenu"><?php _e('Offline Checks','mainwp'); ?></a>
                 </div>
             </div>
         </div>
@@ -66,6 +67,14 @@ class MainWPSettings
         <img src="<?php echo plugins_url('images/icons/mainwp-settings.png', dirname(__FILE__)); ?>"
              style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Settings" height="32"/>
         <h2><?php _e('MainWP Settings','mainwp'); ?></h2><div style="clear: both;"></div><br/>
+         <div id="mainwp-tip-zone">
+          <?php if ($shownPage == '') { ?>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('The majority of these default settings can also be tweaked on the Site level by visiting Manage Sites &rarr; Edit Site.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+          <?php } ?>
+          <?php if ($shownPage == 'OfflineChecks') { ?>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('We currently recommend the free <a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/" target="_blank">Advanced Uptime Monitor Extension</a> to perform more frequent tests.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+          <?php } ?>
+        </div>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <a class="nav-tab pos-nav-tab <?php if ($shownPage === '') { echo "nav-tab-active"; } ?>" href="admin.php?page=Settings"><?php _e('Global Options','mainwp'); ?></a>
             <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage === 'SettingsHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=SettingsHelp"><?php _e('Help','mainwp'); ?></a>
@@ -80,6 +89,7 @@ class MainWPSettings
                 }
             }
             ?>
+            <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'OfflineChecks') { echo "nav-tab-active"; } ?>" href="admin.php?page=OfflineChecks"><?php _e('Offline Checks','mainwp'); ?></a>
         </div>
         <div id="mainwp_wrap-inside">
         <?php
@@ -95,6 +105,11 @@ class MainWPSettings
 
     public static function renderAdvanced()
     {
+        if (!mainwp_current_user_can("dashboard", "manage_dashboard_settings")) {
+            mainwp_do_not_have_permissions("manage dashboard settings");
+            return;
+        }
+
         if (isset($_POST['submit']))
         {
             MainWPUtility::update_option('mainwp_maximumRequests', $_POST['mainwp_maximumRequests']);
@@ -106,75 +121,85 @@ class MainWPSettings
 
         self::renderHeader('Advanced');
         ?>
-    <div class="postbox" id="mainwp-advanced-options">
-        <h3 class="mainwp_box_title"><span><?php _e('Advanced Options','mainwp'); ?></span></h3>
-        <div class="inside">
     <form method="POST" action="" id="mainwp-settings-page-form">
+    <div class="postbox" id="mainwp-advanced-options">
+        <h3 class="mainwp_box_title"><span><?php _e('Cross IP Settings','mainwp'); ?></span></h3>
+        <div class="inside">
+
         <table class="form-table">
             <tbody>
                 <tr>
-                    <th colspan="2">Cross IP Settings</th>
-                </tr>
-                <tr>
                     <th scope="row"><?php _e('Maximum simultaneous requests','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Maximum simultaneous requests. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 4, set to 0 for unlimited.','mainwp')); ?></th>
                     <td>
-                        <input type="text" name="mainwp_maximumRequests"
+                        <input type="text" name="mainwp_maximumRequests" class="mainwp-field mainwp-settings-icon"
                                id="mainwp_maximumRequests" value="<?php echo ((get_option('mainwp_maximumRequests') === false) ? 4 : get_option('mainwp_maximumRequests')); ?>"/> <i>Default: 4</i>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><?php _e('Minimum delay between requests (milliseconds)','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Minimum delay between requests (milliseconds). With a typical shared host you should set this at 200.','mainwp')); ?></th>
                     <td>
-                        <input type="text" name="mainwp_minimumDelay"
+                        <input type="text" name="mainwp_minimumDelay"  class="mainwp-field mainwp-settings-icon"
                                id="mainwp_minimumDelay" value="<?php echo ((get_option('mainwp_minimumDelay') === false) ? 200 : get_option('mainwp_minimumDelay')); ?>"/> <i>Default: 200</i>
                     </td>
                 </tr>
-                <tr>
-                    <th colspan="2">&nbsp;</th>
-                </tr>
-                <tr>
-                    <th colspan="2">IP settings</th>
-                </tr>
+                 </tbody>
+        </table>
+        </div>
+    </div>
+    <div class="postbox" id="mainwp-advanced-options">
+        <h3 class="mainwp_box_title"><span><?php _e('IP Settings','mainwp'); ?></span></h3>
+        <div class="inside">
+        <table class="form-table">
+            <tbody>
                 <tr>
                     <th scope="row"><?php _e('Maximum simultaneous requests per ip','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Maximum simultaneous requests per IP. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 1, set to 0 for unlimited.','mainwp')); ?></th>
                     <td>
-                        <input type="text" name="mainwp_maximumIPRequests"
+                        <input type="text" name="mainwp_maximumIPRequests"  class="mainwp-field mainwp-settings-icon"
                                id="mainwp_maximumIPRequests" value="<?php echo ((get_option('mainwp_maximumIPRequests') === false) ? 1 : get_option('mainwp_maximumIPRequests')); ?>"/> <i>Default: 1</i>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><?php _e('Minimum delay between requests to the same ip (milliseconds)','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Minimum delay between requests (milliseconds) per IP. With a typical shared host you should set this at 1000.','mainwp')); ?></th>
                     <td>
-                        <input type="text" name="mainwp_minimumIPDelay"
+                        <input type="text" name="mainwp_minimumIPDelay"  class="mainwp-field mainwp-settings-icon"
                                id="mainwp_minimumIPDelay" value="<?php echo ((get_option('mainwp_minimumIPDelay') === false) ? 1000 : get_option('mainwp_minimumIPDelay')); ?>"/> <i>Default: 1000</i>
                     </td>
                 </tr>
-                <tr>
-                    <th colspan="2">&nbsp;</th>
-                </tr>
-                <tr>
-                    <th colspan="2">SSL settings</th>
-                </tr>
-                <tr>
-                    <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
-                    <td>
-                        <input type="checkbox" name="mainwp_sslVerifyCertificate"
-                               id="mainwp_sslVerifyCertificate" value="checked" <?php echo ((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)) ? 'checked="checked"' : ''; ?>"/> <i>(Default: true)</i>
-                    </td>
+                </tbody>
+        </table>
+        </div>
+    </div>
+    <div class="postbox" id="mainwp-advanced-options">
+        <h3 class="mainwp_box_title"><span><?php _e('SSL Settings','mainwp'); ?></span></h3>
+        <div class="inside">
+        <table class="form-table">
+            </tbody>
+                <tr><th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
+                   <td  style="width: 100px;">
+                        <div class="mainwp-checkbox">
+                            <input type="checkbox" name="mainwp_sslVerifyCertificate"
+                               id="mainwp_sslVerifyCertificate" value="checked" <?php echo ((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)) ? 'checked="checked"' : ''; ?>/><label for="mainwp_sslVerifyCertificate"></label>
+                        </div>
+                   </td>
+                   <td><em><?php _e('Default: YES','mainwp'); ?></em></td>
                 </tr>
             </tbody>
         </table>
-        <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>"/>
-        </p>
+    </div>
+    </div>
+    <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>"/></p>
     </form>
-    </div>
-    </div>
         <?php
         self::renderFooter('Advanced');
     }
 
     public static function render()
     {
+        if (!mainwp_current_user_can("dashboard", "manage_dashboard_settings")) {
+            mainwp_do_not_have_permissions("manage dashboard settings");
+            return;
+        }
+
         $updated = MainWPOptions::handleSettingsPost();
         $updated |= MainWPManageSites::handleSettingsPost();
         $updated |= MainWPOfflineChecks::handleSettingsPost();

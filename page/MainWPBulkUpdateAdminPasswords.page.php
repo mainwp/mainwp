@@ -142,9 +142,9 @@ class MainWPBulkUpdateAdminPasswords
                     <tr class="form-field form-required">
                         <th scope="row"><label for="pass1"><?php _e('Enter New Password ','mainwp'); ?><br /><span class="description"><?php _e('(twice, required)','mainwp'); ?></span></label></th>
                         <td><input name="user_login" type="hidden" id="user_login" value="admin">
-                            <input name="pass1" type="password" id="pass1" autocomplete="off" />
+                            <input class="mainwp-field mainwp-password" name="pass1" type="password" id="pass1" autocomplete="off" />
                             <br />
-                            <input name="pass2" type="password" id="pass2" autocomplete="off" />
+                            <input class="mainwp-field mainwp-password" name="pass2" type="password" id="pass2" autocomplete="off" />
                             <br />
                             <div id="pass-strength-result" style="display: block;"><?php _e('Strength indicator','mainwp'); ?></div>
                             <p class="description indicator-hint" style="clear:both;"><?php _e('Hint: The password should be at least seven characters long. To make it stronger, use upper and lower case letters, numbers and symbols like ! " ? $ % ^ &amp; ).','mainwp'); ?></p>

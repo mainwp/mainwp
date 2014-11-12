@@ -8,6 +8,10 @@ class MainWPSiteOpen
 
     public static function render()
     {
+        if (!mainwp_current_user_can("dashboard", "access_wpadmin_on_child_sites")) {
+            mainwp_do_not_have_permissions("WP-Admin on child sites");
+            return;
+        }
         if (!isset($_GET['websiteid'])) exit();
 
         $id = $_GET['websiteid'];
@@ -33,7 +37,7 @@ class MainWPSiteOpen
             if ($pNewWindow == 'yes')
             {
             ?>
-                <?php _e('Will redirect to your website immediately.','mainwp'); ?>
+                 <div style="font-size: 30px; text-align: center; margin-top: 5em;"><?php _e('You will be redirected to your website immediately.','mainwp'); ?></div>
                 <form method="POST" action="<?php echo MainWPUtility::getGetDataAuthed($website, ($location == null || $location == '') ? 'index.php' : $location); ?>" id="redirectForm">
                 </form>
             <?php

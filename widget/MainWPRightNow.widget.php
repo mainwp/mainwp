@@ -571,15 +571,22 @@ class MainWPRightNow
             </p>
         </div>
     </div>
-    <?php
-        //WP Upgrades part:
-        ?>
-    <div class="clear">
+    <?php    
+    //WP Upgrades part:  
+    ?>
+    <div class="clear">        
         <div class="mainwp-row-top">
             <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_wp_upgrades; ?></span> <?php _e('WordPress upgrade','mainwp'); ?><?php if (count($total_wp_upgrades) > 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?></span>
             <span class="mainwp-mid-col">&nbsp;</span>
             <span class="mainwp-right-col">
-                <a href="#" id="mainwp_upgrades_show" onClick="return rightnow_show('upgrades');"><?php _e('Show','mainwp'); ?></a><?php if ($total_wp_upgrades > 0) { ?> &nbsp; <a href="#" onClick="return rightnow_wordpress_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_wp_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } ?></span>
+                <a href="#" id="mainwp_upgrades_show" onClick="return rightnow_show('upgrades');"><?php _e('Show','mainwp'); ?></a>
+                <?php if (mainwp_current_user_can("dashboard", "update_wordpress")) { 
+                    if ($total_wp_upgrades > 0) { ?>
+                    &nbsp; <a href="#" onClick="return rightnow_wordpress_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_wp_upgrades, 'mainwp'); ?></a>
+                        <?php } else { ?>
+                    &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } ?> 
+                <?php } ?>
+            </span>
         </div>
         <div id="wp_upgrades" style="display: none">
             <?php
@@ -588,8 +595,7 @@ class MainWPRightNow
             {
                 if ($website->is_ignoreCoreUpdates) continue;                    
                     
-                $wp_upgrades = json_decode($website->wp_upgrades, true);
-
+                $wp_upgrades = json_decode($website->wp_upgrades, true);                
                 if ((count($wp_upgrades) == 0) && ($website->sync_errors == '')) continue;
 
                 ?>
@@ -606,12 +612,17 @@ class MainWPRightNow
                             else echo __("Hooray, No Updates Available!",'mainwp');
                         }
                         ?></span>
-                    <span class="mainwp-right-col wordpressAction"><div id="wp_upgradebuttons_<?php echo $website->id; ?>"><?php
-                        if (count($wp_upgrades) > 0)
-                        {
-                            ?>
-                            <a href="#" class="mainwp-upgrade-button button" onClick="rightnow_upgrade(<?php echo $website->id; ?>)"><?php _e('Upgrade','mainwp'); ?></a> &nbsp; <?php
-                        } ?><a href="<?php echo $website->url; ?>" target="_blank" class="mainwp-open-button button" ><?php _e('Open','mainwp'); ?></a></div></span>
+                    <span class="mainwp-right-col wordpressAction"><div id="wp_upgradebuttons_<?php echo $website->id; ?>">
+                        <?php                             
+                            if (mainwp_current_user_can("dashboard", "update_wordpress")) { 
+                                if (count($wp_upgrades) > 0)
+                                {?>
+                                    <a href="#" class="mainwp-upgrade-button button" onClick="rightnow_upgrade(<?php echo $website->id; ?>)"><?php _e('Upgrade','mainwp'); ?></a>
+                                <?php
+                                }                                 
+                            }
+                        ?>   
+                        &nbsp; <a href="<?php echo $website->url; ?>" target="_blank" class="mainwp-open-button button" ><?php _e('Open','mainwp'); ?></a></div></span>
                 </div>
             <?php
             }
@@ -619,15 +630,15 @@ class MainWPRightNow
         </div>
     </div>
 
-
     <?php
-        //WP plugin upgrades!
+        //WP plugin upgrades!         
         ?>
     <div class="clear">
         <div class="mainwp-row">
             <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_plugin_upgrades; ?> </span> <?php _e('Plugin upgrade','mainwp'); ?><?php if ($total_plugin_upgrades > 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?></span>
-            <span class="mainwp-mid-col">&nbsp;</span>
-            <span class="mainwp-right-col"><a href="#" id="mainwp_plugin_upgrades_show" onClick="return rightnow_show('plugin_upgrades');"><?php _e('Show','mainwp'); ?></a> <?php if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } ?></span>
+            <span class="mainwp-mid-col">&nbsp;</span>            
+            <span class="mainwp-right-col"><a href="#" id="mainwp_plugin_upgrades_show" onClick="return rightnow_show('plugin_upgrades');"><?php _e('Show','mainwp'); ?></a> <?php if (mainwp_current_user_can("dashboard", "update_plugins")) {  ?><?php if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } }?></span>
+            
         </div>
         <div id="wp_plugin_upgrades" style="display: none">
             <?php
@@ -684,7 +695,15 @@ class MainWPRightNow
                         }
                         ?>
                     </span>
-                    <span class="mainwp-right-col"><div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>"><?php if (count($plugin_upgrades) > 0) { ?><a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_plugin_all(<?php echo $website->id; ?>)"><?php echo _n('Upgrade', 'Upgrade All', count($plugin_upgrades), 'mainwp'); ?></a> &nbsp; <?php } ?><a href="<?php echo $website->url; ?>" target="_blank" class="mainwp-open-button button"><?php _e('Open','mainwp'); ?></a></div></span>
+                    <span class="mainwp-right-col"><div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>">
+                        <?php 
+                        if (mainwp_current_user_can("dashboard", "update_plugins")) {
+                                if (count($plugin_upgrades) > 0) { ?>
+                                    <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_plugin_all(<?php echo $website->id; ?>)"><?php echo _n('Upgrade', 'Upgrade All', count($plugin_upgrades), 'mainwp'); ?></a> &nbsp;                                 
+                            <?php } ?>
+                        <?php } ?>
+                            <a href="<?php echo $website->url; ?>" target="_blank" class="mainwp-open-button button"><?php _e('Open','mainwp'); ?></a>
+                    </div></span>
                 </div>
                 <?php
                     }
@@ -700,7 +719,16 @@ class MainWPRightNow
                                     <?php if ($globalView) { ?>&nbsp;&nbsp;&nbsp;<?php } ?><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.$plugin_upgrade['update']['slug'].'&url=' . (isset($plugin_upgrade['PluginURI']) ? rawurlencode($plugin_upgrade['PluginURI']) : '') . '&name='.rawurlencode($plugin_upgrade['Name']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
                                                                                         class="thickbox" title="More information about <?php echo $plugin_upgrade['Name']; ?>"><?php echo $plugin_upgrade['Name']; ?></a><input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" value="0"/></span>
                                 <span class="mainwp-mid-col pluginsInfo" id="wp_upgrade_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>"><?php echo $plugin_upgrade['Version']; ?> to <?php echo $plugin_upgrade['update']['new_version']; ?></span>
-                                <span class="mainwp-right-col pluginsAction"><div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>"><a href="#" onClick="return rightnow_plugins_ignore_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode($plugin_upgrade['Name']); ?>', <?php echo $website->id; ?>)" class="button"><?php _e('Ignore','mainwp'); ?></a> &nbsp; <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_plugin(<?php echo $website->id; ?>, '<?php echo $plugin_name; ?>')"><?php _e('Upgrade','mainwp'); ?></a></div></span>
+                                <span class="mainwp-right-col pluginsAction">
+                                    <div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
+                                    <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
+                                        <a href="#" onClick="return rightnow_plugins_ignore_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode($plugin_upgrade['Name']); ?>', <?php echo $website->id; ?>)" class="button"><?php _e('Ignore','mainwp'); ?></a> 
+                                    <?php } ?>
+                                    <?php if (mainwp_current_user_can("dashboard", "update_plugins")) { ?>
+                                         &nbsp;<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_plugin(<?php echo $website->id; ?>, '<?php echo $plugin_name; ?>')"><?php _e('Upgrade','mainwp'); ?></a>
+                                    <?php } ?>
+                                    </div>
+                                </span>
                         </div>
                     <?php }
                     ?>
@@ -729,7 +757,12 @@ class MainWPRightNow
                             </a>
                         </span>
                         <span class="mainwp-right-col">
-                            <a href="#" class="button" onClick="return rightnow_plugins_ignore_all('<?php echo $plugin_name; ?>', '<?php echo urlencode($pluginsInfo[$slug]['name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a> &nbsp; <?php if ($cnt > 0) { ?><a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_plugins_upgrade_all('<?php echo $plugin_name; ?>', '<?php echo urlencode($pluginsInfo[$slug]['name']); ?>')"><?php echo _n('Upgrade', 'Upgrade All', $cnt, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } ?>
+                            <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
+                                <a href="#" class="button" onClick="return rightnow_plugins_ignore_all('<?php echo $plugin_name; ?>', '<?php echo urlencode($pluginsInfo[$slug]['name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a>
+                            <?php } ?>
+                            <?php if (mainwp_current_user_can("dashboard", "update_plugins")) { ?>
+                                &nbsp; <?php if ($cnt > 0) { ?><a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_plugins_upgrade_all('<?php echo $plugin_name; ?>', '<?php echo urlencode($pluginsInfo[$slug]['name']); ?>')"><?php echo _n('Upgrade', 'Upgrade All', $cnt, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } ?>                            
+                            <?php } ?>                            
                         </span>
                     </div>
                     <?php
@@ -779,7 +812,12 @@ class MainWPRightNow
                                 </span>
                                 <span class="mainwp-mid-col pluginsInfo"><?php echo $plugin_upgrade['Version']; ?> to <?php echo $plugin_upgrade['update']['new_version']; ?></span>
                                 <span class="mainwp-right-col pluginsAction">
-                                    <a href="#" class="button" onClick="return rightnow_plugins_ignore_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode($plugin_upgrade['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Ignore','mainwp'); ?></a> &nbsp; <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_plugins_upgrade('<?php echo $plugin_name; ?>', <?php echo $website->id; ?>)"><?php _e('Upgrade','mainwp'); ?></a>
+                                    <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
+                                    <a href="#" class="button" onClick="return rightnow_plugins_ignore_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode($plugin_upgrade['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Ignore','mainwp'); ?></a> 
+                                    <?php } ?>
+                                    <?php if (mainwp_current_user_can("dashboard", "update_plugins")) { ?>
+                                    &nbsp; <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_plugins_upgrade('<?php echo $plugin_name; ?>', <?php echo $website->id; ?>)"><?php _e('Upgrade','mainwp'); ?></a>
+                                    <?php } ?>
                                 </span>
                             </div>
                         <?php
@@ -792,18 +830,23 @@ class MainWPRightNow
             ?>
         </div>
     </div>
-
+    
     <?php
         //WP theme upgrades!
-        ?>
+    ?>    
     <div class="clear">
         <div class="mainwp-row">
             <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_theme_upgrades; ?> </span> <?php _e('Theme upgrade','mainwp'); ?><?php if ($total_theme_upgrades > 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?></span>
-            <span class="mainwp-mid-col">&nbsp;</span>
-            <span class="mainwp-right-col"><a href="#" id="mainwp_theme_upgrades_show" onClick="return rightnow_show('theme_upgrades');"><?php _e('Show','mainwp'); ?></a> <?php if ($total_theme_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_theme_upgrades, 'mainwp'); ?></a><?php } else if ($total_theme_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_theme_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } ?></span>
+            <span class="mainwp-mid-col">&nbsp;</span>            
+            <span class="mainwp-right-col"><a href="#" id="mainwp_theme_upgrades_show" onClick="return rightnow_show('theme_upgrades');"><?php _e('Show','mainwp'); ?></a> 
+                <?php if (mainwp_current_user_can("dashboard", "update_themes")) { ?>
+                    <?php if ($total_theme_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_theme_upgrades, 'mainwp'); ?></a><?php } else if ($total_theme_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_theme_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } ?>
+                <?php } ?>
+            </span>
+                
         </div>
         <div id="wp_theme_upgrades" style="display: none">
-            <?php
+            <?php             
             if ($userExtension->site_view == 1)
             {
                 @MainWPDB::data_seek($websites, 0);
@@ -811,7 +854,7 @@ class MainWPRightNow
                 {
                     if ($website->is_ignoreThemeUpdates) continue;
                     
-                    $theme_upgrades = json_decode($website->theme_upgrades, true);
+                    $theme_upgrades = json_decode($website->theme_upgrades, true);                    
                     $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
                     if (is_array($decodedPremiumUpgrades))
                     {
@@ -852,7 +895,16 @@ class MainWPRightNow
                         }
                         ?>
                     </span>
-                    <span class="mainwp-right-col"><div id="wp_upgradebuttons_theme_<?php echo $website->id; ?>"> <?php  if (count($theme_upgrades) > 0) { ?> <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_theme_all(<?php echo $website->id; ?>)"><?php echo _n('Upgrade', 'Upgrade All', count($theme_upgrades), 'mainwp'); ?></a> &nbsp; <?php } ?><a href="<?php echo $website->url; ?>" target="_blank" class="mainwp-open-button button"><?php _e('Open','mainwp'); ?></a></div></span>
+                    <span class="mainwp-right-col">
+                        <div id="wp_upgradebuttons_theme_<?php echo $website->id; ?>"> 
+                        <?php if (mainwp_current_user_can("dashboard", "update_themes")) { ?>
+                        <?php  if (count($theme_upgrades) > 0) { ?> 
+                            <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_theme_all(<?php echo $website->id; ?>)"><?php echo _n('Upgrade', 'Upgrade All', count($theme_upgrades), 'mainwp'); ?></a> &nbsp; 
+                                <?php } ?>
+                        <?php } ?>
+                            <a href="<?php echo $website->url; ?>" target="_blank" class="mainwp-open-button button"><?php _e('Open','mainwp'); ?></a>
+                        </div>
+                    </span>
                 </div>
                 <?php
                     }
@@ -866,7 +918,16 @@ class MainWPRightNow
                         <div class="mainwp-row" theme_slug="<?php echo $theme_name; ?>"  theme_name="<?php echo urlencode($themesInfo[$slug]['name']); ?>" premium="<?php echo $themesInfo[$slug]['premium'] ? 1 : 0; ?>" updated="0">
                             <span class="mainwp-left-col"><?php if ($globalView) { ?>&nbsp;&nbsp;&nbsp;<?php } ?><?php echo $theme_upgrade['Name']; ?><input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>_<?php echo $theme_name; ?>" value="0"/></span>
                             <span class="mainwp-mid-col pluginsInfo" id="wp_upgrade_theme_<?php echo $website->id; ?>_<?php echo $theme_name; ?>"><?php echo $theme_upgrade['Version']; ?> to <?php echo $theme_upgrade['update']['new_version']; ?></span>
-                            <span class="mainwp-right-col pluginsAction"><div id="wp_upgradebuttons_theme_<?php echo $website->id; ?>_<?php echo $theme_name; ?>"><a href="#" class="button" onClick="return rightnow_themes_ignore_detail('<?php echo $theme_name; ?>', '<?php echo urlencode($theme_upgrade['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Ignore','mainwp'); ?></a> &nbsp; <a href="#" class="mainwp-upgrade-button button" onClick="rightnow_upgrade_theme(<?php echo $website->id; ?>, '<?php echo $theme_name; ?>')"><?php _e('Upgrade','mainwp'); ?></a> </div></span>
+                            <span class="mainwp-right-col pluginsAction">
+                                <div id="wp_upgradebuttons_theme_<?php echo $website->id; ?>_<?php echo $theme_name; ?>">
+                                    <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
+                                    <a href="#" class="button" onClick="return rightnow_themes_ignore_detail('<?php echo $theme_name; ?>', '<?php echo urlencode($theme_upgrade['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Ignore','mainwp'); ?></a>
+                                     <?php } ?>
+                                    <?php if (mainwp_current_user_can("dashboard", "update_themes")) { ?>
+                                    &nbsp; <a href="#" class="mainwp-upgrade-button button" onClick="rightnow_upgrade_theme(<?php echo $website->id; ?>, '<?php echo $theme_name; ?>')"><?php _e('Upgrade','mainwp'); ?></a> 
+                                    <?php } ?>
+                                </div>
+                            </span>
                         </div>
                     <?php } ?>
                 </div>
@@ -891,7 +952,12 @@ class MainWPRightNow
                             </a>
                         </span>
                         <span class="mainwp-right-col">
-                            <a href="#" class="button" onClick="return rightnow_themes_ignore_all('<?php echo $theme_name; ?>', '<?php echo urlencode($themesInfo[$slug]['name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a> &nbsp; <?php if ($cnt > 0) { ?><a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_themes_upgrade_all('<?php echo $theme_name; ?>', '<?php echo urlencode($themesInfo[$slug]['name']); ?>')"><?php echo _n('Upgrade', 'Upgrade All', $cnt, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } ?>
+                            <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) {?>
+                            <a href="#" class="button" onClick="return rightnow_themes_ignore_all('<?php echo $theme_name; ?>', '<?php echo urlencode($themesInfo[$slug]['name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a>
+                            <?php } ?>
+                            <?php if (mainwp_current_user_can("dashboard", "update_themes")) {?>
+                            &nbsp; <?php if ($cnt > 0) { ?><a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_themes_upgrade_all('<?php echo $theme_name; ?>', '<?php echo urlencode($themesInfo[$slug]['name']); ?>')"><?php echo _n('Upgrade', 'Upgrade All', $cnt, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } ?>
+                            <?php } ?>
                         </span>
                     </div>
                     <?php
@@ -938,7 +1004,12 @@ class MainWPRightNow
                                     } ?></span>
                                 <span class="mainwp-mid-col pluginsInfo"><?php echo $theme_upgrade['Version']; ?> to <?php echo $theme_upgrade['update']['new_version']; ?></span>
                                 <span class="mainwp-right-col pluginsAction">
-                                    <a href="#" class="button" onClick="return rightnow_themes_ignore_detail('<?php echo $theme_name; ?>', '<?php echo urlencode($theme_upgrade['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Ignore','mainwp'); ?></a> &nbsp; <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_themes_upgrade('<?php echo $theme_name; ?>', <?php echo $website->id; ?>)"><?php _e('Upgrade','mainwp'); ?></a>
+                                    <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) {?>
+                                    <a href="#" class="button" onClick="return rightnow_themes_ignore_detail('<?php echo $theme_name; ?>', '<?php echo urlencode($theme_upgrade['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Ignore','mainwp'); ?></a>
+                                     <?php } ?>
+                                    <?php if (mainwp_current_user_can("dashboard", "update_themes")) {?>
+                                    &nbsp; <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_themes_upgrade('<?php echo $theme_name; ?>', <?php echo $website->id; ?>)"><?php _e('Upgrade','mainwp'); ?></a>
+                                    <?php } ?>
                                 </span>
                             </div>
                         <?php
@@ -951,11 +1022,14 @@ class MainWPRightNow
             ?>
         </div>
     </div>
+    
     <div class="clear">
         <div class="mainwp-row">
             <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=PluginsIgnore'); ?>"><?php _e('Plugin Ignore List','mainwp'); ?></a> / <a href="<?php echo admin_url('admin.php?page=ThemesIgnore'); ?>"><?php _e('Theme Ignore List','mainwp'); ?></a></span>
             <span class="mainwp-mid-col">&nbsp;</span>
+            <?php if (mainwp_current_user_can("dashboard", "update_wordpress") && mainwp_current_user_can("dashboard", "update_plugins") && mainwp_current_user_can("dashboard", "update_themes")) { ?>
             <span class="mainwp-right-col"><?php if (($total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades) == 0) { ?><a class="button" disabled="disabled"><?php _e('Upgrade Everything','mainwp'); ?></a><?php } else { ?><a href="#" onClick="return rightnow_global_upgrade_all();" class="mainwp-upgrade-button button"><?php _e('Upgrade Everything','mainwp'); ?></a><?php } ?></span>
+            <?php } ?>
         </div>
     </div>
 

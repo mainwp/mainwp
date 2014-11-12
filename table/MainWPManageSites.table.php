@@ -88,7 +88,10 @@ class MainWPManageSites_List_Table extends WP_List_Table
             'seo' => __('SEO', 'mainwp'),
             'notes' => __('Notes', 'mainwp')
         );
-
+        
+        if (!mainwp_current_user_can("dashboard", "see_seo_statistics")) {
+            unset($columns['seo']);
+        }
         if (get_option('mainwp_seo') != 1) unset($columns['seo']);
 
         $columns = apply_filters('mainwp-sitestable-getcolumns', $columns, $columns);
@@ -160,7 +163,19 @@ class MainWPManageSites_List_Table extends WP_List_Table
             'edit' => sprintf('<a href="admin.php?page=managesites&id=%s">' . __('Edit', 'mainwp') . '</a>', $item['id']),
             'delete' => sprintf('<a class="submitdelete" href="#" onClick="return managesites_remove('."'".'%s'."'".');">' . __('Delete', 'mainwp') . '</a>', $item['id'])
         );
+        
+        if (!mainwp_current_user_can("dashboard", "access_individual_dashboard")) {
+            unset($actions['dashboard']);
+        }
+        
+        if (!mainwp_current_user_can("dashboard", "edit_sites")) {
+            unset($actions['edit']);
+        }
 
+        if (!mainwp_current_user_can("dashboard", "delete_sites")) {
+            unset($actions['delete']);
+        }
+        
         if ($item['sync_errors'] != '')
         {
             $actions['reconnect'] = sprintf('<a class="mainwp_site_reconnect" href="#" siteid="%s">' . __('Reconnect', 'mainwp') . '</a>', $item['id']);
@@ -173,8 +188,18 @@ class MainWPManageSites_List_Table extends WP_List_Table
     {
         $actions = array(
             'open' => sprintf('<a href="admin.php?page=SiteOpen&websiteid=%1$s">' . __('Open WP Admin', 'mainwp') . '</a> (<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=%1$s" target="_blank">' . __('New Window', 'mainwp') . '</a>)', $item['id']),
-            'test' => '<a href="#" class="mainwp_site_testconnection">' . __('Test Connection', 'mainwp') . '</a> <span style="display: none;"><img src="' . plugins_url('images/loading.gif', dirname(__FILE__)) . '""/>' . __('Testing Connection', 'mainwp') . '</span>'
+            'test' => '<a href="#" class="mainwp_site_testconnection">' . __('Test Connection', 'mainwp') . '</a> <span style="display: none;"><img src="' . plugins_url('images/loading.gif', dirname(__FILE__)) . '""/>' . __('Testing Connection', 'mainwp') . '</span>',
+            'scan' => '<a href="admin.php?page=managesites&scanid=' . $item['id'] . '">' . __('Security Scan', 'mainwp') . '</a>'            
         );
+        
+        if (!mainwp_current_user_can("dashboard", "access_wpadmin_on_child_sites")) {
+            unset($actions['open']);
+        }
+        
+        if (!mainwp_current_user_can("dashboard", "test_connection")) {
+            unset($actions['test']);
+        }            
+        
         $actions = apply_filters('mainwp_managesites_column_url', $actions, $item['id']); 
         return sprintf('<strong><a target="_blank" href="%1$s">%1$s</a></strong>%2$s', $item['url'], $this->row_actions($actions));
     }
@@ -190,7 +215,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
                 if ($file != '.' && $file != '..')
                 {
                     $theFile = $dir . $file;
-                    if (MainWPUtility::isArchive($file) && !MainWPUtility::isSQLArchive($file))
+                    if (preg_match('/(.*)\.zip/', $file) && !preg_match('/(.*).sql.zip$/', $file))
                     {
                         if (filemtime($theFile) > $lastbackup) $lastbackup = filemtime($theFile);
                     }
@@ -202,7 +227,10 @@ class MainWPManageSites_List_Table extends WP_List_Table
         $output = '';
         if ($lastbackup > 0) $output = MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp($lastbackup)) . '<br />';
         else $output = '<span class="mainwp-red">Never</span><br/>';
-        $output .= sprintf('<a href="admin.php?page=managesites&backupid=%s">' . __('Backup Now','mainwp') . '</a>', $item['id']);
+        
+        if (mainwp_current_user_can("dashboard", "execute_backups")) {
+            $output .= sprintf('<a href="admin.php?page=managesites&backupid=%s">' . __('Backup Now','mainwp') . '</a>', $item['id']);
+        }
 
         return $output;
     }

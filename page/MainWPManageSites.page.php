@@ -17,6 +17,7 @@ class MainWPManageSites
         add_action('mainwp-pagefooter-sites', array(MainWPManageSites::getClassName(), 'renderFooter'));
 
         add_filter('set-screen-option', array(MainWPManageSites::getClassName(), 'setScreenOption'), 10, 3);
+        add_action('mainwp-securityissues-sites', array(MainWPSecurityIssues::getClassName(), 'render'));
     }
 
     static function on_screen_layout_columns($columns, $screen)
@@ -880,10 +881,16 @@ class MainWPManageSites
 
         $i = 1;
         add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPRightNow::getName(), array(MainWPRightNow::getClassName(), 'render'), self::$page, 'normal', 'core');
-        add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPRecentPosts::getName(), array(MainWPRecentPosts::getClassName(), 'render'), self::$page, 'normal', 'core');
-        add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPRecentPages::getName(), array(MainWPRecentPages::getClassName(), 'render'), self::$page, 'normal', 'core');
+        if (mainwp_current_user_can("dashboard", "manage_posts")) {
+            add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPRecentPosts::getName(), array(MainWPRecentPosts::getClassName(), 'render'), self::$page, 'normal', 'core');
+        }
+        if (mainwp_current_user_can("dashboard", "manage_pages")) {
+            add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPRecentPages::getName(), array(MainWPRecentPages::getClassName(), 'render'), self::$page, 'normal', 'core');
+        }
         add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPShortcuts::getName(), array(MainWPShortcuts::getClassName(), 'render'), self::$page, 'normal', 'core');
-        add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPSecurityIssues::getMetaboxName(), array(MainWPSecurityIssues::getClassName(), 'renderMetabox'), self::$page, 'normal', 'core');
+        if (mainwp_current_user_can("dashboard", "manage_security_issues")) {
+            add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPSecurityIssues::getMetaboxName(), array(MainWPSecurityIssues::getClassName(), 'renderMetabox'), self::$page, 'normal', 'core');
+        }
         if (get_option('mainwp_seo') == 1) add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPManageSites::getMetaboxName(), array(MainWPManageSites::getClassName(), 'renderMetabox'), self::$page, 'normal', 'core');
         add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPManageBackups::getMetaboxName(), array(MainWPManageBackups::getClassName(), 'renderMetabox'), self::$page, 'normal', 'core');
 		add_meta_box(self::$page . '-metaboxes-contentbox-' . $i++, MainWPWidgetPlugins::getName(), array(MainWPWidgetPlugins::getClassName(), 'render'), self::$page, 'normal', 'core');
@@ -908,7 +915,16 @@ class MainWPManageSites
 
     public static function renderBackupSite($website)
     {
+        self::renderHeader('ManageSitesBackups');
         MainWPManageSitesView::renderBackupSite($website);
+        self::renderFooter('ManageSitesBackups');
+    }
+
+    public static function renderScanSite($website)
+    {
+        self::renderHeader('SecurityScan');
+        MainWPManageSitesView::renderScanSite($website);
+        self::renderFooter('SecurityScan');
     }
 
     public static function showBackups(&$website)
@@ -1015,6 +1031,19 @@ class MainWPManageSites
             }
         }
 
+        if (isset($_GET['scanid']) && MainWPUtility::ctype_digit($_GET['scanid']))
+        {
+            $websiteid = $_GET['scanid'];
+
+            $scanwebsite = MainWPDB::Instance()->getWebsiteById($websiteid);
+            if (MainWPUtility::can_edit_website($scanwebsite))
+            {
+                MainWPManageSites::renderScanSite($scanwebsite);
+                return;
+            }
+        }
+
+
         if (isset($_GET['seowebsiteid']) && MainWPUtility::ctype_digit($_GET['seowebsiteid']))
         {
             $websiteid = $_GET['seowebsiteid'];
@@ -1103,12 +1132,15 @@ class MainWPManageSites
 
                 $newValues = array('automatic_update' => (!isset($_POST['mainwp_automaticDailyUpdate']) ? 0 : 1),
                     'backup_before_upgrade' => (!isset($_POST['mainwp_backup_before_upgrade']) ? 0 : 1),
-                    'loadFilesBeforeZip' => $_POST['mainwp_options_loadFilesBeforeZip'],
-                    'is_ignoreCoreUpdates' => $_POST['mainwp_is_ignoreCoreUpdates'] ? 1 : 0,
-                    'is_ignorePluginUpdates' => $_POST['mainwp_is_ignorePluginUpdates'] ? 1 : 0,
-                    'is_ignoreThemeUpdates' => $_POST['mainwp_is_ignoreThemeUpdates'] ? 1 : 0                    
+                    'loadFilesBeforeZip' => $_POST['mainwp_options_loadFilesBeforeZip']
                 );
                 
+                if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) {
+                    $newValues['is_ignoreCoreUpdates'] = (isset($_POST['mainwp_is_ignoreCoreUpdates']) && $_POST['mainwp_is_ignoreCoreUpdates']) ? 1 : 0;
+                    $newValues['is_ignorePluginUpdates'] = (isset($_POST['mainwp_is_ignorePluginUpdates']) && ($_POST['mainwp_is_ignorePluginUpdates'])) ? 1 : 0;
+                    $newValues['is_ignoreThemeUpdates'] = (isset($_POST['mainwp_is_ignoreThemeUpdates']) && ($_POST['mainwp_is_ignoreThemeUpdates'])) ? 1 : 0;
+                }
+
                 MainWPDB::Instance()->updateWebsiteValues($website->id, $newValues);
                 $updated = true;
                 //Reload the site

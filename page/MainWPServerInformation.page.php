@@ -51,7 +51,12 @@ class MainWPServerInformation
     }
 
     public static function render()
-    {
+    {        
+        if (!mainwp_current_user_can("dashboard", "see_server_information")) {
+            mainwp_do_not_have_permissions("server information");
+            return;
+        }
+        
         self::renderHeader('');
         ?>
         <div class="updated below-h2">

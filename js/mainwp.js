@@ -2609,8 +2609,10 @@ managesites_remove = function (id) {
             if (result != '') {
                 setHtml('#mainwp_managesites_add_message', result);
             }
-            jQuery('#site-status-' + id).html('');
-            jQuery('tr[siteid=' + id + ']').remove();
+            if (error == '') {
+                jQuery('#site-status-' + id).html('');
+                jQuery('tr[siteid=' + id + ']').remove();
+            }
         }, 'json');
     }
 };
@@ -5954,12 +5956,12 @@ jQuery(document).on('change', '#mainwp_serverInformation_child', function()
     }, 'html');
 });
 
-mainwp_secure_data = function(data, excludeDts)
+mainwp_secure_data = function(data, includeDts)
 {
     if (data['action'] == undefined) return data;
 
     data['security'] = security_nonces[data['action']];
-    if (excludeDts == undefined) data['dts'] = Math.round(new Date().getTime() / 1000);
+    if (includeDts) data['dts'] = Math.round(new Date().getTime() / 1000);
     return data;
 };
 
@@ -6298,5 +6300,21 @@ jQuery(document).on('click', '#mainwp-events-notice-dismiss', function()
     };
     jQuery.post(ajaxurl, data, function (res) {
     });
+    return false;
+});
+
+jQuery(document).on('click', '#remove-mainwp-installation-warning', function()
+{
+    jQuery('#mainwp-installation-warning').hide();
+    var data = {
+        action:'mainwp_installation_warning_hide'
+    };
+    jQuery.post(ajaxurl, data, function (res) {
+    });
+    return false;
+});
+
+jQuery(document).on('click', '.mainwp-dismiss', function(){
+    jQuery('.mainwp-tips').fadeOut("slow");
     return false;
 });

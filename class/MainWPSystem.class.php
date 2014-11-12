@@ -148,6 +148,8 @@ class MainWPSystem
 
         MainWPInstallBulk::init();
 
+        do_action('mainwp_cronload_action');
+
         //Cron every 5 minutes
         add_action('mainwp_cronofflinecheck_action', array($this, 'mainwp_cronofflinecheck_action'));
         add_action('mainwp_cronstats_action', array($this, 'mainwp_cronstats_action'));
@@ -234,12 +236,13 @@ class MainWPSystem
         add_filter('mainwp-activated-check', array(&$this, 'activated_check'));
         add_filter('mainwp-activated-sub-check', array(&$this, 'activated_sub_check'));
         add_filter('mainwp-extension-enabled-check', array(MainWPExtensions::getClassName(), 'isExtensionEnabled'));
-        add_filter('mainwp-getsites', array(MainWPExtensions::getClassName(), 'hookGetSites'), 10, 3);
+        add_filter('mainwp-getsites', array(MainWPExtensions::getClassName(), 'hookGetSites'), 10, 4);
         add_filter('mainwp-getdbsites', array(MainWPExtensions::getClassName(), 'hookGetDBSites'), 10, 5);
-        add_filter('mainwp-getgroups', array(MainWPExtensions::getClassName(), 'hookGetGroups'), 10, 3);
+        add_filter('mainwp-getgroups', array(MainWPExtensions::getClassName(), 'hookGetGroups'), 10, 4);
         add_action('mainwp_fetchurlsauthed', array(&$this, 'filter_fetchUrlsAuthed'), 10, 7);
         add_filter('mainwp_fetchurlauthed', array(&$this, 'filter_fetchUrlAuthed'), 10, 5);
         add_filter('mainwp_getdashboardsites', array(MainWPExtensions::getClassName(), 'hookGetDashboardSites'), 10, 7);
+        add_filter('mainwp-manager-getextensions', array(MainWPExtensions::getClassName(), 'hookManagerGetExtensions'));
 
         $this->posthandler = new MainWPPostHandler();
 
@@ -301,8 +304,21 @@ class MainWPSystem
 
         echo '<div id="message" class="mainwp-api-message-invalid updated fade" style="' . (true || $this->isAPIValid() ? 'display: none;' : '') . '"><p><strong>MainWP needs to be activated before using - <a href="' . admin_url() . 'admin.php?page=Settings">Activate Here</a>.</strong></p></div>';
 
-        if (MainWPDB::Instance()->getWebsitesCount() == 0)
+        if (MainWPDB::Instance()->getWebsitesCount() == 0) {
             echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';            
+            update_option('mainwp_first_site_events_notice', 'yes');
+        } else {
+            if (get_option('mainwp_first_site_events_notice') == 'yes') {
+                ?>
+                <div id="mainwp-events-notice" class="updated fade">
+                	<p>
+                    	<span style="float: right;" ><a id="mainwp-events-notice-dismiss" style="text-decoration: none;" href="#"><?php _e('Dismiss','mainwp'); ?></a></span><span><strong><?php _e('Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">Scheduled Events</a>'); ?></strong></span>
+                    	</p>
+                </div>
+                <?php
+            }
+        }
+
     }
 
     public function getVersion()
@@ -1460,6 +1476,19 @@ class MainWPSystem
         return $messages;
     }
 
+      function mainwp_warning_notice() {
+        if (get_option('mainwp_installation_warning_hide_the_notice')  == 'yes')
+            return;
+        ?>
+        <div id="mainwp-installation-warning" class="mainwp_info-box-red">
+            <h3><?php _e('Stop! Before you continue,','mainwp'); ?></h3>
+            <strong><?php _e('We HIGHLY recommend a NEW WordPress install for your Main Dashboard.','mainwp'); ?></strong><br/><br/>
+            <?php _e('Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard off an active site. Most hosting companies provide free subdomains ("<strong>demo.yourdomain.com</strong>") and we recommend creating one if you do not have a specific dedicated domain to run your Network Main Dashboard.<br/><br/> If you are not sure how to set up a subdomain here is a quick step by step with <a href="http://docs.mainwp.com/creating-a-subdomain-in-cpanel/">cPanel</a>, <a href="http://docs.mainwp.com/creating-a-subdomain-in-plesk/">Plesk</a> or <a href="http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/">Direct Admin</a>. If you are not sure what you have, contact your hosting companies support.','mainwp'); ?>
+        <br/><br/><div style="text-align: center"><a href="#" class="button button-primary" id="remove-mainwp-installation-warning">I have read the warning and I want to proceed</a></div>
+        </div>
+        <?php
+    }
+
     function admin_init()
     {
         if (get_option('mainwp_activated') == 'yes')
@@ -1468,7 +1497,7 @@ class MainWPSystem
             wp_redirect(admin_url('admin.php?page=managesites&do=new'));
             return;
         }
-
+        add_action( 'admin_notices', array($this, 'mainwp_warning_notice' ));
         $this->posthandler->init();
 
         wp_enqueue_script('jquery-ui-tooltip');

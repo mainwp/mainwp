@@ -35,8 +35,14 @@ class MainWPInstallBulk
     }
 
     //Renders the main page in the WP admin part
-    public static function render($title)
+    public static function render($title, $type = "plugin")
     {
+        if (($type == "plugin" && !mainwp_current_user_can("dashboard", "install_plugins")) ||
+            ($type == "theme" && !mainwp_current_user_can("dashboard", "install_themes"))) {
+            mainwp_do_not_have_permissions("install plugins");
+            return;
+        }
+
         $tab = 'search';
         if (isset($_REQUEST['tab'])) {
             $tab = $_REQUEST['tab'];
@@ -53,11 +59,11 @@ class MainWPInstallBulk
 
                 <br class="clear" />
                 <form method="POST" action="">
-					<div class="mainwp_config_box_right stick-to-window">
+                    <div class="mainwp_config_box_right stick-to-window">
 <!--                    <div>-->
-                  		<?php MainWPUI::select_sites_box() ?>
+                        <?php MainWPUI::select_sites_box() ?>
                   	</div>
-					<div class="mainwp_config_box_left">
+                        <div class="mainwp_config_box_left">
                	 	<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
                     <div id="MainWPInstallBulkAjax">
                         <?php
@@ -124,12 +130,11 @@ class MainWPInstallBulk
     public static function renderUpload($title) {
         ?>
         <?php if ($title == 'Plugins') { ?>
-        <div class="mainwp_info-box-red" id="mainwp-ext-notice">
-            <span><?php _e('<strong>Do Not upload extensions here</strong>, they do not go on the child sites, upload and activate them via your dashboard sites <a href="/wp-admin/plugin-install.php" style="text-decoration: none;">plugin screen.</a>','mainwp'); ?></span><span style="float: right;"><a href="#" style="text-decoration: none;" id="mainwp-ext-dismiss"><?php _e('Dismiss','mainwp'); ?></a></span>
+        <div class="mainwp_info-box-red" id="mainwp-ext-notice" style="margin-top: 1em;">
+            <span><?php _e('<strong>Do Not upload extensions here</strong>, they do not go on the child sites, upload and activate them via your dashboard sites <a href="/wp-admin/plugin-install.php" style="text-decoration: none;">plugin screen.</a>','mainwp'); ?></span>
         </div>
         <?php } ?>
-        <h4 style="margin: 8px 0 8px;"><?php _e('Install','mainwp'); ?> <?php echo strtolower($title); ?> <?php _e('in .zip format','mainwp'); ?></h4>
-        <p class="install-help"><?php _e('If you have','mainwp'); ?> <?php echo strtolower($title); ?> <?php _e('in a .zip format, you may install it by uploading it here.','mainwp'); ?></p>
+        <div style="font-size: 20px; text-align: center; margin: 3em 0;"><?php _e('If you have','mainwp'); ?> <?php echo strtolower($title); ?> <?php _e('in a .zip format, you may install it by uploading it here.','mainwp'); ?></div>
         <div id="mainwp-file-uploader">
             <noscript>
             <p><?php _e('Please enable JavaScript to use file uploader.','mainwp'); ?></p>
@@ -156,10 +161,10 @@ class MainWPInstallBulk
         // don't wait for the window to load
         createUploader();
     </script>
-        <div id="MainWPInstallBulkInstallNow" style="display: none">
-            <input type="button" class="button" value="<?php _e('Install Now','mainwp'); ?>" id="mainwp_upload_bulk_button" onClick="mainwp_upload_bulk('<?php echo strtolower($title); ?>');">
-            <br /><?php if ($title == 'Plugins') { echo '<br />&nbsp;&nbsp;<input type="checkbox" value="1" checked id="chk_activate_plugin_upload" /> <label for="chk_activate_plugin_upload">Activate plugin after installation</label>'; } ?>
+         <div id="MainWPInstallBulkInstallNow" style="display: none">
+            <?php if ($title == 'Plugins') { echo '<br />&nbsp;&nbsp;<input type="checkbox" value="1" checked id="chk_activate_plugin_upload" /> <label for="chk_activate_plugin_upload">Activate plugin after installation</label>'; } ?>
             <br />&nbsp;&nbsp;<input type="checkbox" value="2" checked id="chk_overwrite_upload" /> <label for="chk_overwrite_upload"><?php _e('Overwrite existing', 'mainwp'); ?></label><br />
+            <br /><input type="button" class="button" value="<?php _e('Install Now','mainwp'); ?>" id="mainwp_upload_bulk_button" onClick="mainwp_upload_bulk('<?php echo strtolower($title); ?>');">
         </div>
         <?php
     }

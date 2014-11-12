@@ -9,26 +9,34 @@ class MainWPSecurityIssues
 
     public static function initMenu()
     {
-        add_submenu_page('mainwp_tab', 'SecurityIssues', '<div class="mainwp-hidden">'.__('SecurityIssues','mainwp').'</div>', 'read', 'SecurityIssues', array(MainWPSecurityIssues::getClassName(), 'render'));
+        if (mainwp_current_user_can("dashboard", "manage_security_issues")) {
+            add_submenu_page('mainwp_tab', 'SecurityIssues', '<div class="mainwp-hidden">'.__('SecurityIssues','mainwp').'</div>', 'read', 'SecurityIssues', array(MainWPSecurityIssues::getClassName(), 'render'));
+        }
     }
 
-    public static function render()
+    public static function render($website = null)
     {
-        if (!isset($_REQUEST['id']) || !MainWPUtility::ctype_digit($_REQUEST['id']))
-        {
-            return;
+        $with_header = true;
+        if (empty($website)) {
+            if (!isset($_REQUEST['id']) || !MainWPUtility::ctype_digit($_REQUEST['id']))
+            {
+                return;
+            }
+            $website = MainWPDB::Instance()->getWebsiteById($_REQUEST['id']);
+        } else {
+            $with_header = false;
         }
-        $website = MainWPDB::Instance()->getWebsiteById($_REQUEST['id']);
-
+        
         if (!MainWPUtility::can_edit_website($website)) {
             return;
         }
 
-
-        ?>
+        if ($with_header) { 
+        ?>        
     <div class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-security.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Security Issues" height="32"/><h2><?php _e('Security Issues','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div id="mainwp_background-box">
+        <?php } ?>
         	<div class="mainwp_info-box"><?php _e('We highly suggest you make a full backup before you run the Security Update.','mainwp'); ?></div>
             <div class="postbox">
             <h3 class="mainwp_box_title"><span><?php echo $website->name; ?> (<?php echo $website->url; ?>)</span></h3>
@@ -47,9 +55,11 @@ class MainWPSecurityIssues
             <br /><input type="button" id="securityIssues_fixAll" class="button-primary" value="<?php _e('Fix All','mainwp'); ?>"/> <input type="button" id="securityIssues_refresh" class="button" value="<?php _e('Refresh','mainwp'); ?>"/>
             </div>
             </div>
+   <?php if ($with_header) { ?>
         </div>
     </div>
-    <input type="hidden" id="securityIssueSite" value="<?php echo $_REQUEST['id']; ?>"/>
+<?php } ?>
+    <input type="hidden" id="securityIssueSite" value="<?php echo $website->id; ?>"/>
     <?php
     }
 
@@ -170,7 +180,7 @@ class MainWPSecurityIssues
                     if (!MainWPUtility::ctype_digit($website->securityIssues) || $website->securityIssues == 0) continue;
                 ?>
                 <div class="mainwp-row" siteid="<?php echo $website->id; ?>">
-                    <span class="mainwp-left-col"><a href="admin.php?page=SecurityIssues&id=<?php echo $website->id; ?>"><?php echo $website->name; ?></a></span>
+                    <span class="mainwp-left-col"><a href="admin.php?page=managesites&scanid=<?php echo $website->id; ?>"><?php echo $website->name; ?></a></span>
                     <span class="mainwp-mid-col"><span class="<?php echo ($website->securityIssues > 0 ? 'darkred' : 'mainwp_ga_plus'); ?>"><span class="mainwp-rightnow-number"><?php echo $website->securityIssues; ?></span> Issue<?php echo (($website->securityIssues > 1) ? 's' : ''); ?></span></span>
                     <span class="mainwp-right-col"><?php if ($website->securityIssues == 0) { ?>
                             <input type="button" class="securityIssues_dashboard_unfixAll button" value="<?php _e('Unfix All','mainwp'); ?>"/>

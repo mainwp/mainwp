@@ -42,9 +42,10 @@ class MainWPPage
             <div class="wp-submenu sub-open" style="">
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
-                    <a href="<?php echo admin_url('admin.php?page=PageBulkManage'); ?>" class="mainwp-submenu"><?php _e('All
-                        Pages','mainwp'); ?></a>
+                    <?php if (mainwp_current_user_can("dashboard", "manage_pages")) { ?>
+                    <a href="<?php echo admin_url('admin.php?page=PageBulkManage'); ?>" class="mainwp-submenu"><?php _e('Manage Pages','mainwp'); ?></a>                    
                     <a href="<?php echo admin_url('admin.php?page=PageBulkAdd'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
+                    <?php } ?>
                         <?php
                         if (isset(self::$subPages) && is_array(self::$subPages))
                         {
@@ -72,9 +73,16 @@ class MainWPPage
         <a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-page.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Page" height="32"/>
         <h2><?php _e('Pages','mainwp'); ?></h2><div style="clear: both;"></div><br/>
+        <div id="mainwp-tip-zone">
+          <?php if ($shownPage == 'BulkManage') { ?> 
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can also quickly see all Published, Draft, Pending and Trash Pages for a single site from your Individual Site Dashboard Recent Pages widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Dashboard.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+          <?php } ?>
+        </div>
         <div class="mainwp-tabs" id="mainwp-tabs">
-                <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'BulkManage') { echo "nav-tab-active"; } ?>" href="admin.php?page=PageBulkManage"><?php _e('Manage','mainwp'); ?></a>
+                <?php if (mainwp_current_user_can("dashboard", "manage_pages")) { ?>
+                <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'BulkManage') { echo "nav-tab-active"; } ?>" href="admin.php?page=PageBulkManage"><?php _e('Manage','mainwp'); ?></a>                
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'BulkAdd') { echo "nav-tab-active"; } ?>" href="admin.php?page=PageBulkAdd"><?php _e('Add New','mainwp'); ?></a>
+                <?php } ?>
                 <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage === 'PagesHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=PagesHelp"><?php _e('Help','mainwp'); ?></a>
 
                 <?php
@@ -107,6 +115,11 @@ class MainWPPage
     
     public static function render()
     {
+        if (!mainwp_current_user_can("dashboard", "manage_pages")) {
+            mainwp_do_not_have_permissions ("manage pages");
+            return;
+        }
+        
         $cachedSearch = MainWPCache::getCachedContext('Page');
 
         //Loads the page screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
@@ -116,9 +129,9 @@ class MainWPPage
             <div class="mainwp_info-box"><strong><?php _e('Use this to bulk change pages. To add new pages click on the "Add New" tab.','mainwp'); ?></strong></div>
         <br/>
         <div class="mainwp-search-form">
-            <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right'); ?>
-
-            <h3><?php _e('Search Pages','mainwp'); ?></h3>
+               <div class="postbox mainwp-postbox">
+            <h3 class="mainwp_box_title"><?php _e('Search Pages','mainwp'); ?></h3>
+            <div class="inside">
             <ul class="mainwp_checkboxes">
                 <li>
                     <input type="checkbox" id="mainwp_page_search_type_publish" <?php echo ($cachedSearch == null || ($cachedSearch != null && in_array('publish', $cachedSearch['status']))) ? 'checked="checked"' : ''; ?> class="mainwp-checkbox2"/>
@@ -147,15 +160,19 @@ class MainWPPage
             </ul>
             <p>
                 <?php _e('Containing Keyword:','mainwp'); ?><br />
-                <input type="text" id="mainwp_page_search_by_keyword" size="50" value="<?php if ($cachedSearch != null) { echo $cachedSearch['keyword']; } ?>"/>
+                <input type="text" id="mainwp_page_search_by_keyword" class="mainwp-field mainwp-keyword" size="50" value="<?php if ($cachedSearch != null) { echo $cachedSearch['keyword']; } ?>"/>
             </p>
             <p>
                 <?php _e('Date Range:','mainwp'); ?><br />
-                <input type="text" id="mainwp_page_search_by_dtsstart" class="mainwp_datepicker" size="12" value="<?php if ($cachedSearch != null) { echo $cachedSearch['dtsstart']; } ?>"/> to <input type="text" id="mainwp_page_search_by_dtsstop" class="mainwp_datepicker" size="12" value="<?php if ($cachedSearch != null) { echo $cachedSearch['dtsstop']; } ?>"/>
+                <input type="text" id="mainwp_page_search_by_dtsstart" class="mainwp_datepicker  mainwp-field mainwp-date" size="12" value="<?php if ($cachedSearch != null) { echo $cachedSearch['dtsstart']; } ?>"/> to <input type="text" id="mainwp_page_search_by_dtsstop" class="mainwp_datepicker  mainwp-field mainwp-date" size="12" value="<?php if ($cachedSearch != null) { echo $cachedSearch['dtsstop']; } ?>"/>
             </p>
-            <p>&nbsp;</p>
+             </div>
+            </div>
+            <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
+            <div style="clear: both;"></div>
             <input type="button" name="mainwp_show_pages" id="mainwp_show_pages" class="button-primary" value="<?php _e('Show Pages','mainwp'); ?>"/>
             <span id="mainwp_pages_loading">&nbsp;<em><?php _e('Grabbing information from Child Sites','mainwp') ?></em>&nbsp;&nbsp;<img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+            <br/><br/>
         </div>
         <div class="clear"></div>
 
@@ -469,6 +486,11 @@ class MainWPPage
 
     public static function renderBulkAdd()
     {
+        if (!mainwp_current_user_can("dashboard", "manage_pages")) {            
+            mainwp_do_not_have_permissions("manage pages");
+            return;
+        }
+        
         $src = get_site_url() . '/wp-admin/post-new.php?post_type=bulkpage&hideall=1';        
         $src = apply_filters('mainwp_bulkpost_edit_source', $src);
         //Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites

@@ -71,10 +71,14 @@ class MainWPWidgetPlugins
                         <?php echo $actived_plugins[$i]['name']; ?>
                     </a><?php echo  " " . $actived_plugins[$i]['version']; ?> 
 					</span>					       
-                    <div class="mainwp-right-col pluginsAction"><a href="#" class="mainwp-plugin-deactivate"><?php _e('Deactive','mainwp'); ?></a></div>                    
-					<div style="clear: left;"></div>
-					<div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?></div>                    
-					<div>&nbsp;</div>
+                    <div class="mainwp-right-col pluginsAction">
+                        <?php if (mainwp_current_user_can("dashboard", "activate_deactivate_plugins")) { ?>
+                            <a href="#" class="mainwp-plugin-deactivate"><?php _e('Deactive','mainwp'); ?></a>
+                        <?php } ?>
+                    </div>                    
+                    <div style="clear: left;"></div>
+                    <div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?></div>                    
+                    <div>&nbsp;</div>
                 </div>
                 <?php } ?>
             </div>
@@ -93,10 +97,17 @@ class MainWPWidgetPlugins
                                     <?php echo $inactive_plugins[$i]['name']; ?>
                             </a><?php echo  " " . $inactive_plugins[$i]['version']; ?> 							
                     </span>                                       
-                    <div class="mainwp-right-col pluginsAction"><a href="#" class="mainwp-plugin-activate"><?php _e('Activate','mainwp'); ?></a> | <a href="#" class="mainwp-plugin-delete mainwp-red"><?php _e('Delete','mainwp'); ?></a></div>
-					<div style="clear: left;"></div>
-				    <div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?></div>                    
-					<div>&nbsp;</div>
+                    <div class="mainwp-right-col pluginsAction">
+                        <?php if (mainwp_current_user_can("dashboard", "activate_deactivate_plugins")) { ?>
+                        <a href="#" class="mainwp-plugin-activate"><?php _e('Activate','mainwp'); ?></a> | 
+                        <?php } ?>
+                        <?php if (mainwp_current_user_can("dashboard", "delete_plugins")) { ?>
+                        <a href="#" class="mainwp-plugin-delete mainwp-red"><?php _e('Delete','mainwp'); ?></a>
+                        <?php } ?>
+                    </div>
+                        <div style="clear: left;"></div>
+                    <div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?></div>                    
+                        <div>&nbsp;</div>
                 </div>
                 <?php } ?>
             </div>

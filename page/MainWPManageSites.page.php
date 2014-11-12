@@ -145,7 +145,7 @@ class MainWPManageSites
         $subfolder = str_replace('%', '', $subfolder);
         $subfolder = MainWPUtility::removePreSlashSpaces($subfolder);
 
-        if (!MainWPSystem::Instance()->isSingleUser() && $userid != $website->userid)
+        if (!MainWPSystem::Instance()->isSingleUser() && ($userid != $website->userid))
         {
             throw new MainWPException('Undefined error');
         }
@@ -157,12 +157,31 @@ class MainWPManageSites
         }
         $websiteCleanUrl = str_replace(array('http://', 'https://', '/'), array('', '', '-'), $websiteCleanUrl);
 
-        $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
-        $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
-        $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $type), $pFilename) . '.zip';
+        if ($type == 'db')
+        {
+            $ext = '.sql.' . MainWPUtility::getCurrentArchiveExtension($website, $pTask);
+        }
+        else
+        {
+            $ext = '.' . MainWPUtility::getCurrentArchiveExtension($website, $pTask);
+        }
+
+        $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $type), $pFilename) . $ext;
         $file = str_replace('%', '', $file);
 
-        $loadFilesBeforeZip = $website->loadFilesBeforeZip;
+        if ($pTask->archiveFormat == 'zip')
+        {
+            $loadFilesBeforeZip = $pTask->loadFilesBeforeZip;
+        }
+        else if ($pTask->archiveFormat == '' || $pTask->archiveFormat == 'site')
+        {
+            $loadFilesBeforeZip = $website->loadFilesBeforeZip;
+        }
+        else
+        {
+            $loadFilesBeforeZip = 1;
+        }
+
         if ($loadFilesBeforeZip == 1)
         {
             $loadFilesBeforeZip = get_option('mainwp_options_loadFilesBeforeZip');
@@ -170,22 +189,158 @@ class MainWPManageSites
         }
         else $loadFilesBeforeZip = ($loadFilesBeforeZip == 2);
 
+        if (($pTask->archiveFormat == 'zip') && ($pTask->maximumFileDescriptorsOverride == 1))
+        {
+            $maximumFileDescriptorsAuto = ($pTask->maximumFileDescriptorsAuto == 1);
+            $maximumFileDescriptors = $pTask->maximumFileDescriptors;
+        }
+        else if (($pTask->archiveFormat == '' || $pTask->archiveFormat == 'site') && ($website->maximumFileDescriptorsOverride == 1))
+        {
+            $maximumFileDescriptorsAuto = ($website->maximumFileDescriptorsAuto == 1);
+            $maximumFileDescriptors = $website->maximumFileDescriptors;
+        }
+        else
+        {
+            $maximumFileDescriptorsAuto = get_option('mainwp_maximumFileDescriptorsAuto');
+            $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
+            $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
+        }
+
+        $information = false;
         $backupTaskProgress = MainWPDB::Instance()->getBackupTaskProgress($taskId, $website->id);
         if (empty($backupTaskProgress) || ($backupTaskProgress->dtsFetched < $pTask->last_run))
         {
-            $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type, 'exclude' => $exclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip, MainWPUtility::getFileParameter($website) => $file));
-
-            $backupTaskProgress = MainWPDB::Instance()->getBackupTaskProgress($taskId, $website->id);
-            if (empty($backupTaskProgress))
+            $start = microtime(true);
+            try
             {
-                $backupTaskProgress = MainWPDB::Instance()->addBackupTaskProgress($taskId, $website->id, $information);
+                $pid = time();
+
+                if (empty($backupTaskProgress))
+                {
+                    MainWPDB::Instance()->addBackupTaskProgress($taskId, $website->id, array());
+                }
+
+                MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('dtsFetched' => time(), 'fetchResult' => json_encode(array()), 'downloadedDB' => "", 'downloadedDBComplete' => 0, 'downloadedFULL' => "", 'downloadedFULLComplete' => 0, 'removedFiles' => 0, 'attempts' => 0, 'last_error' => '', 'pid' => $pid));
+
+                $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type,
+                    'exclude' => $exclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache,
+                    'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip,
+                    'ext' => MainWPUtility::getCurrentArchiveExtension($website, $pTask),
+                    'file_descriptors_auto' => $maximumFileDescriptorsAuto,
+                    'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip,
+                    'pid' => $pid, MainWPUtility::getFileParameter($website) => $file), false, false, false);
+            }
+            catch (MainWPException $e)
+            {
+                $stop = microtime(true);
+                //Bigger then 30 seconds means a timeout
+                if (($stop - $start) > 30)
+                {
+                    MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id,
+                        array('last_error' => json_encode(array('message' => $e->getMessage(), 'extra' => $e->getMessageExtra()))));
+
+                    return false;
+                }
+
+                throw $e;
+            }
+
+            $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('fetchResult' => json_encode($information)));
+        }
+        //If not fetchResult, we had a timeout.. Retry this!
+        else if ($backupTaskProgress->fetchResult == '[]')
+        {
+            try
+            {
+                //We had some attempts, check if we have information..
+                $temp = MainWPUtility::fetchUrlAuthed($website, 'backup_checkpid', array('pid' => $backupTaskProgress->pid));
+            }
+            catch (Exception $e)
+            {
+
+            }
+
+            if (!empty($temp))
+            {
+                if ($temp['status'] == 'stalled')
+                {
+                    if ($backupTaskProgress->attempts < 5)
+                    {
+                        $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('attempts' => $backupTaskProgress->attempts++));
+
+                        try
+                        {
+                            //reinitiate the request!
+                            $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $type,
+                                'exclude' => $exclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache,
+                                'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip,
+                                'ext' => MainWPUtility::getCurrentArchiveExtension($website, $pTask),
+                                'file_descriptors_auto' => $maximumFileDescriptorsAuto,
+                                'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip,
+                                'pid' => $backupTaskProgress->pid, 'append' => '1',
+                                MainWPUtility::getFileParameter($website) => $file), false, false, false);
+                        }
+                        catch (MainWPException $e)
+                        {
+                            return false;
+                        }
+
+                        $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('fetchResult' => json_encode($information)));
+                    }
+                    else
+                    {
+                        throw new MainWPException('Backup failed after 5 retries.');
+                    }
+                }
+                //No retries on invalid status!
+                else if ($temp['status'] == 'invalid')
+                {
+                    $error = json_decode($backupTaskProgress->last_error);
+                    if (!is_array($error))
+                    {
+                        throw new MainWPException('Backup failed.');
+                    }
+                    else
+                    {
+                        throw new MainWPException($error['message'], $error['extra']);
+                    }
+                }
+                else if ($temp['status'] == 'busy')
+                {
+                    return false;
+                }
+                else if ($temp['status'] == 'done')
+                {
+                    if ($type == 'full')
+                    {
+                        $information['full'] = $temp['file'];
+                        $information['db'] = false;
+                    }
+                    else
+                    {
+                        $information['full'] = false;
+                        $information['db'] = $temp['file'];
+                    }
+
+                    $information['size'] = $temp['size'];
+
+                    $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('fetchResult' => json_encode($information)));
+                }
             }
             else
             {
-                $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('dtsFetched' => time(), 'fetchResult' => json_encode($information), 'downloadedDB' => "", 'downloadedFULL' => "", 'removedFiles' => 0));
+                if ($backupTaskProgress->attempts < 5)
+                {
+                    $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('attempts' => $backupTaskProgress->attempts++));
+                }
+                else
+                {
+                    throw new MainWPException('Backup failed after 5 retries.');
+                }
             }
         }
-        else
+
+        if ($information === false)
         {
             $information = $backupTaskProgress->fetchResult;
         }
@@ -204,8 +359,6 @@ class MainWPManageSites
         }
         else if (isset($information['db']))
         {
-            $http = new WP_Http();
-
             $dir = MainWPUtility::getMainWPSpecificDir($website->id);
 
             @mkdir($dir, 0777, true);
@@ -230,12 +383,12 @@ class MainWPManageSites
                         if ($file != '.' && $file != '..')
                         {
                             $theFile = $dir . $file;
-                            if ($information['db'] && (preg_match('/(.*).sql$/', $file) || preg_match('/(.*).sql.zip$/', $file)))
+                            if ($information['db'] && MainWPUtility::isSQLFile($file))
                             {
                                 $dbBackups[filemtime($theFile) . $file] = $theFile;
                             }
 
-                            if ($information['full'] && preg_match('/(.*).zip/', $file) && !preg_match('/(.*).sql.zip$/', $file))
+                            if ($information['full'] && MainWPUtility::isArchive($file) && !MainWPUtility::isSQLArchive($file))
                             {
                                 $fullBackups[filemtime($theFile) . $file] = $theFile;
                             }
@@ -270,60 +423,71 @@ class MainWPManageSites
 
             $localBackupFile = null;
 
-            $cr_time = time();
-            $fm_date = MainWPUtility::date(get_option('date_format'), $cr_time);
-            $fm_time = MainWPUtility::date(get_option('time_format'), $cr_time);
-            
+            $fm_date = MainWPUtility::sanitize_file_name(MainWPUtility::date(get_option('date_format')));
+            $fm_time = MainWPUtility::sanitize_file_name(MainWPUtility::date(get_option('time_format')));
+
             $what = null;
             $regexBackupFile = null;
 
             if ($information['db'])
             {
                 $what = 'db';
-                $regexBackupFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip)?';
+                $regexBackupFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
                 if ($backupTaskProgress->downloadedDB == "")
                 {
-                    $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . '.sql';
+                    $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time;
 
                     if ($pFilename != null)
                     {
                         $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, $fm_date, $fm_time, $what), $pFilename);
                         $filename = str_replace('%', '', $filename);
-                        $localBackupFile = $dir . $filename . '.sql';
+                        $localBackupFile = $dir . $filename;
                     }
+                    $localBackupFile .= MainWPUtility::getRealExtension($information['db']);
 
-                    if (MainWPUtility::endsWith($information['db'], 'zip')) $localBackupFile .= '.zip';
-
-                    MainWPUtility::downloadToFile($information['db'], $localBackupFile);
                     $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadedDB' => $localBackupFile));
                 }
                 else
                 {
                     $localBackupFile = $backupTaskProgress->downloadedDB;
                 }
+
+                if ($backupTaskProgress->downloadDBComplete == 0)
+                {
+                    MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $information['db'], 'fdl'), $localBackupFile, $information['size']);
+                    $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadDBComplete' => 1));
+                }
             }
 
             if ($information['full'])
             {
+                $realExt = MainWPUtility::getRealExtension($information['full']);
                 $what = 'full';
-                $regexBackupFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).zip';
+                $regexBackupFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
                 if ($backupTaskProgress->downloadedFULL == "")
                 {
-                    $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . '.zip';
+                    $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . $realExt;
 
                     if ($pFilename != null)
                     {
                         $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, $fm_date, $fm_time, $what), $pFilename);
                         $filename = str_replace('%', '', $filename);
-                        $localBackupFile = $dir . $filename . '.zip';
+                        $localBackupFile = $dir . $filename . $realExt;
                     }
 
-                    MainWPUtility::downloadToFile($information['full'], $localBackupFile);
                     $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadedFULL' => $localBackupFile));
                 }
                 else
                 {
                     $localBackupFile = $backupTaskProgress->downloadedFULL;
+                }
+
+
+                if ($backupTaskProgress->downloadDBComplete == 0)
+                {
+                    MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $information['full'], 'fdl'), $localBackupFile, $information['size']);
+                    MainWPUtility::fetchUrlAuthed($website, 'delete_backup', array('del' => $information['full']));
+                    $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadDBComplete' => 1));
                 }
             }
 
@@ -380,12 +544,12 @@ class MainWPManageSites
                 if ($file != '.' && $file != '..')
                 {
                     $theFile = $dir . $file;
-                    if ($pType == 'db' && preg_match('/(.*).sql(\.zip)?$/', $file))
+                    if ($pType == 'db' && MainWPUtility::isSQLFile($file))
                     {
                         $dbBackups[filemtime($theFile) . $file] = $theFile;
                     }
 
-                    if ($pType == 'full' && preg_match('/(.*).zip/', $file) && !preg_match('/(.*).sql.zip$/', $file))
+                    if ($pType == 'full' && MainWPUtility::isArchive($file) && !MainWPUtility::isSQLArchive($file))
                     {
                         $fullBackups[filemtime($theFile) . $file] = $theFile;
                     }
@@ -416,23 +580,104 @@ class MainWPManageSites
             }
         }
 
-        session_write_close();
+        $website = MainWPDB::Instance()->getWebsiteById($pSiteId);
+        MainWPUtility::endSession();
 
         $what = null;
         if ($pType == 'db')
         {
-            MainWPUtility::downloadToFile($pUrl, $pFile);
+            MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $pUrl, 'fdl'), $pFile);
         }
 
         if ($pType == 'full')
         {
-            MainWPUtility::downloadToFile($pUrl, $pFile);
+            MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $pUrl, 'fdl'), $pFile);
         }
 
         return true;
     }
 
-    public static function backup($pSiteId, $pType, $pSubfolder, $pExclude, $excludebackup, $excludecache, $excludenonwp, $excludezip, $pFilename = null, $pFileNameUID = '')
+    public static function backupDeleteFile($pSiteId, $pFile)
+    {
+        $website = MainWPDB::Instance()->getWebsiteById($pSiteId);
+        MainWPUtility::fetchUrlAuthed($website, 'delete_backup', array('del' => $pFile));
+
+        return true;
+    }
+
+    public static function backupCheckpid($pSiteId, $pid, $type, $subfolder, $pFilename)
+    {
+        $website = MainWPDB::Instance()->getWebsiteById($pSiteId);
+
+        MainWPUtility::endSession();
+        $information = MainWPUtility::fetchUrlAuthed($website, 'backup_checkpid', array('pid' => $pid));
+
+        //key: status/file
+        $status = $information['status'];
+
+        $result = array('file' => $information['file']);
+        if ($status == 'done')
+        {
+            $result['file'] = $information['file'];
+            $result['size'] = $information['size'];
+
+            $subfolder = str_replace('%sitename%', MainWPUtility::sanitize($website->name), $subfolder);
+            $subfolder = str_replace('%url%', MainWPUtility::sanitize(MainWPUtility::getNiceURL($website->url)), $subfolder);
+            $subfolder = str_replace('%type%', $type, $subfolder);
+            $subfolder = str_replace('%date%', MainWPUtility::date('Ymd'), $subfolder);
+            $subfolder = str_replace('%task%', '', $subfolder);
+            $subfolder = str_replace('%', '', $subfolder);
+            $subfolder = MainWPUtility::removePreSlashSpaces($subfolder);
+
+            $result['subfolder'] = $subfolder;
+
+            $websiteCleanUrl = $website->url;
+            if (substr($websiteCleanUrl, -1) == '/')
+            {
+                $websiteCleanUrl = substr($websiteCleanUrl, 0, -1);
+            }
+            $websiteCleanUrl = str_replace(array('http://', 'https://', '/'), array('', '', '-'), $websiteCleanUrl);
+
+            $dir = MainWPUtility::getMainWPSpecificDir($pSiteId);
+
+            $fm_date = MainWPUtility::sanitize_file_name(MainWPUtility::date(get_option('date_format')));
+            $fm_time = MainWPUtility::sanitize_file_name(MainWPUtility::date(get_option('time_format')));
+
+            if ($type == 'db')
+            {
+                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWPUtility::getRealExtension($information['file']);
+                $localRegexFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
+            }
+            else
+            {
+                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWPUtility::getRealExtension($information['file']);
+                $localRegexFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
+            }
+
+            if ($pFilename != null)
+            {
+                $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, $fm_date, $fm_time, $type), $pFilename);
+                $filename = str_replace('%', '', $filename);
+                $localBackupFile = $dir . $filename;
+
+                if ($type == 'db')
+                {
+                    $localBackupFile .= MainWPUtility::getRealExtension($information['file']);
+                }
+                else
+                {
+                    $localBackupFile .= MainWPUtility::getRealExtension($information['file']);
+                }
+            }
+
+            $result['local'] = $localBackupFile;
+            $result['regexfile'] = $localRegexFile;
+        }
+
+        return array('status' => $status, 'result' => $result);
+    }
+
+    public static function backup($pSiteId, $pType, $pSubfolder, $pExclude, $excludebackup, $excludecache, $excludenonwp, $excludezip, $pFilename = null, $pFileNameUID = '', $pArchiveFormat = false, $pMaximumFileDescriptorsOverride = false, $pMaximumFileDescriptorsAuto = false, $pMaximumFileDescriptors = false, $pLoadFilesBeforeZip = false, $pid = false, $append = false)
     {
         if (trim($pFilename) == '') $pFilename = null;
 
@@ -460,22 +705,91 @@ class MainWPManageSites
         }
         $websiteCleanUrl = str_replace(array('http://', 'https://', '/'), array('', '', '-'), $websiteCleanUrl);
 
-        MainWPUtility::endSession();
-        $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
-        $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
+        //Normal flow: use website & fallback to global
+        if ($pMaximumFileDescriptorsOverride == false)
+        {
+            if ($website->maximumFileDescriptorsOverride == 1)
+            {
+                $maximumFileDescriptorsAuto = ($website->maximumFileDescriptorsAuto == 1);
+                $maximumFileDescriptors = $website->maximumFileDescriptors;
+            }
+            else
+            {
+                $maximumFileDescriptorsAuto = get_option('mainwp_maximumFileDescriptorsAuto');
+                $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
+                $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
+            }
+        }
+        //If not set to global & overriden, use these settings
+        else if (($pArchiveFormat != 'global') && ($pMaximumFileDescriptorsOverride == 1))
+        {
+            $maximumFileDescriptorsAuto = ($pMaximumFileDescriptorsAuto == 1);
+            $maximumFileDescriptors = $pMaximumFileDescriptors;
+        }
+        //Set to global or not overriden, use global settings
+        else
+        {
+            $maximumFileDescriptorsAuto = get_option('mainwp_maximumFileDescriptorsAuto');
+            $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
+            $maximumFileDescriptors = ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors);
+        }
+
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $pType), $pFilename);
         $file = str_replace('%', '', $file);
 
-
-        $loadFilesBeforeZip = $website->loadFilesBeforeZip;
-        if ($loadFilesBeforeZip == 1)
+        //Normal flow: check site settings & fallback to global
+        if ($pLoadFilesBeforeZip == false)
+        {
+            $loadFilesBeforeZip = $website->loadFilesBeforeZip;
+            if ($loadFilesBeforeZip == 1)
+            {
+                $loadFilesBeforeZip = get_option('mainwp_options_loadFilesBeforeZip');
+                $loadFilesBeforeZip = ($loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false);
+            }
+            else $loadFilesBeforeZip = ($loadFilesBeforeZip == 2);
+        }
+        //Overriden flow: only fallback to global
+        else if ($pArchiveFormat == 'global' || $pLoadFilesBeforeZip == 1)
         {
             $loadFilesBeforeZip = get_option('mainwp_options_loadFilesBeforeZip');
             $loadFilesBeforeZip = ($loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false);
         }
-        else $loadFilesBeforeZip = ($loadFilesBeforeZip == 2);
+        else
+        {
+            $loadFilesBeforeZip = ($pLoadFilesBeforeZip == 2);
+        }
 
-        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array('type' => $pType, 'exclude' => $pExclude, 'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip, 'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip, MainWPUtility::getFileParameter($website) => $file, 'fileUID' => $pFileNameUID));
+        //Nomral flow: check site settings & fallback to global
+        if ($pArchiveFormat == false)
+        {
+            $archiveFormat = MainWPUtility::getCurrentArchiveExtension($website);
+        }
+        //Overriden flow: only fallback to global
+        else if  ($pArchiveFormat == 'global')
+        {
+            $archiveFormat = MainWPUtility::getCurrentArchiveExtension();
+        }
+        else
+        {
+            $archiveFormat = $pArchiveFormat;
+        }
+
+        MainWPUtility::endSession();
+        $information = MainWPUtility::fetchUrlAuthed($website, 'backup', array(
+            'type' => $pType,
+            'exclude' => $pExclude,
+            'excludebackup' => $excludebackup,
+            'excludecache' => $excludecache,
+            'excludenonwp' => $excludenonwp,
+            'excludezip' => $excludezip,
+            'ext' => $archiveFormat,
+            'file_descriptors_auto' => $maximumFileDescriptorsAuto,
+            'file_descriptors' => $maximumFileDescriptors,
+            'loadFilesBeforeZip' => $loadFilesBeforeZip,
+            MainWPUtility::getFileParameter($website) => $file,
+            'fileUID' => $pFileNameUID,
+            'pid' => $pid,
+            'append' => ($append ? 1 : 0)), false, false, false);
         do_action('mainwp_managesite_backup', $website, array('type' => $pType), $information);
 
         if (isset($information['error']))
@@ -510,39 +824,36 @@ class MainWPManageSites
             $backup_result['subfolder'] = $subfolder;
 
             $dir = MainWPUtility::getMainWPSpecificDir($pSiteId);
-            
-            $cr_time = time();
-            $fm_date = MainWPUtility::date(get_option('date_format'), $cr_time);
-            $fm_time = MainWPUtility::date(get_option('time_format'), $cr_time);
-                
+
+            $fm_date = MainWPUtility::sanitize_file_name(MainWPUtility::date(get_option('date_format')));
+            $fm_time = MainWPUtility::sanitize_file_name(MainWPUtility::date(get_option('time_format')));
+
             if ($pType == 'db')
             {
-                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . '.sql';
-                $localRegexFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip)?';
+                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWPUtility::getRealExtension($information['db']);
+                $localRegexFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
             }
             else
             {
-                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . '.zip';
-                $localRegexFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).zip';
+                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWPUtility::getRealExtension($information['full']);
+                $localRegexFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
             }
 
             if ($pFilename != null)
-            {   
+            {
                 $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, $fm_date, $fm_time, $pType), $pFilename);
                 $filename = str_replace('%', '', $filename);
                 $localBackupFile = $dir . $filename;
 
                 if ($pType == 'db')
                 {
-                    $localBackupFile .= '.sql';
+                    $localBackupFile .= MainWPUtility::getRealExtension($information['db']);
                 }
                 else
                 {
-                    $localBackupFile .= '.zip';
+                    $localBackupFile .= MainWPUtility::getRealExtension($information['full']);
                 }
             }
-
-            if (($pType == 'db') && MainWPUtility::endsWith($information['db'], 'zip')) $localBackupFile .= '.zip';
 
             $backup_result['local'] = $localBackupFile;
             $backup_result['regexfile'] = $localRegexFile;
@@ -608,14 +919,14 @@ class MainWPManageSites
         MainWPManageSitesView::renderBackupSite($website);
         self::renderFooter('ManageSitesBackups');
     }
-    
+
     public static function renderScanSite($website)
     {
         self::renderHeader('SecurityScan');
         MainWPManageSitesView::renderScanSite($website);
         self::renderFooter('SecurityScan');
     }
-    
+
     public static function showBackups(&$website)
     {
         $dir = MainWPUtility::getMainWPSpecificDir($website->id);
@@ -633,11 +944,11 @@ class MainWPManageSites
                 if ($file != '.' && $file != '..')
                 {
                     $theFile = $dir . $file;
-                    if (preg_match('/(.*)\.sql(\.zip)?$/', $file))
+                    if (MainWPUtility::isSQLFile($file))
                     {
                         $dbBackups[filemtime($theFile) . $file] = $theFile;
                     }
-                    else if (preg_match('/(.*)\.zip/', $file))
+                    else if (MainWPUtility::isArchive($file))
                     {
                         $fullBackups[filemtime($theFile) . $file] = $theFile;
                     }
@@ -719,7 +1030,7 @@ class MainWPManageSites
                 return;
             }
         }
-        
+
         if (isset($_GET['scanid']) && MainWPUtility::ctype_digit($_GET['scanid']))
         {
             $websiteid = $_GET['scanid'];
@@ -731,7 +1042,7 @@ class MainWPManageSites
                 return;
             }
         }
-        
+
 
         if (isset($_GET['seowebsiteid']) && MainWPUtility::ctype_digit($_GET['seowebsiteid']))
         {
@@ -809,13 +1120,19 @@ class MainWPManageSites
                 }
                 $newPluginDir = (isset($_POST['mainwp_options_footprint_plugin_folder']) ? $_POST['mainwp_options_footprint_plugin_folder'] : '');
 
-                MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $_POST['mainwp_managesites_edit_verifycertificate']);
+                $maximumFileDescriptorsOverride = isset($_POST['mainwp_options_maximumFileDescriptorsOverride']);
+                $maximumFileDescriptorsAuto = isset($_POST['mainwp_maximumFileDescriptorsAuto']);
+                $maximumFileDescriptors = isset($_POST['mainwp_options_maximumFileDescriptors']) && MainWPUtility::ctype_digit($_POST['mainwp_options_maximumFileDescriptors']) ? $_POST['mainwp_options_maximumFileDescriptors'] : 150;
+
+                $archiveFormat = isset($_POST['mainwp_archiveFormat']) ? $_POST['mainwp_archiveFormat'] : 'global';
+
+                MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat);
 
                 do_action('mainwp_update_site', $website->id);
 
                 $newValues = array('automatic_update' => (!isset($_POST['mainwp_automaticDailyUpdate']) ? 0 : 1),
                     'backup_before_upgrade' => (!isset($_POST['mainwp_backup_before_upgrade']) ? 0 : 1),
-                    'loadFilesBeforeZip' => $_POST['mainwp_options_loadFilesBeforeZip']                    
+                    'loadFilesBeforeZip' => $_POST['mainwp_options_loadFilesBeforeZip']
                 );
                 
                 if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) {
@@ -823,7 +1140,7 @@ class MainWPManageSites
                     $newValues['is_ignorePluginUpdates'] = (isset($_POST['mainwp_is_ignorePluginUpdates']) && ($_POST['mainwp_is_ignorePluginUpdates'])) ? 1 : 0;
                     $newValues['is_ignoreThemeUpdates'] = (isset($_POST['mainwp_is_ignoreThemeUpdates']) && ($_POST['mainwp_is_ignoreThemeUpdates'])) ? 1 : 0;
                 }
-                
+
                 MainWPDB::Instance()->updateWebsiteValues($website->id, $newValues);
                 $updated = true;
                 //Reload the site
@@ -1001,11 +1318,13 @@ class MainWPManageSites
                 if (MainWPUtility::ctype_digit($_POST['mainwp_options_maximumFileDescriptors']) && $_POST['mainwp_options_maximumFileDescriptors'] > -1)
                 {
                     MainWPUtility::update_option('mainwp_maximumFileDescriptors', $_POST['mainwp_options_maximumFileDescriptors']);
-                }                
+                }
+                MainWPUtility::update_option('mainwp_maximumFileDescriptorsAuto', (!isset($_POST['mainwp_maximumFileDescriptorsAuto']) ? 0 : 1));
                 if (MainWPUtility::ctype_digit($_POST['mainwp_options_backupOnExternalSources']) && $_POST['mainwp_options_backupOnExternalSources'] >= 0)
                 {
                     MainWPUtility::update_option('mainwp_backupOnExternalSources', $_POST['mainwp_options_backupOnExternalSources']);
-                }                
+                }
+                MainWPUtility::update_option('mainwp_archiveFormat', $_POST['mainwp_archiveFormat']);
                 MainWPUtility::update_option('mainwp_options_loadFilesBeforeZip', (!isset($_POST['mainwp_options_loadFilesBeforeZip']) ? 0 : 1));
                 MainWPUtility::update_option('mainwp_notificationOnBackupFail', (!isset($_POST['mainwp_options_notificationOnBackupFail']) ? 0 : 1));
                 MainWPUtility::update_option('mainwp_notificationOnBackupStart', (!isset($_POST['mainwp_options_notificationOnBackupStart']) ? 0 : 1));

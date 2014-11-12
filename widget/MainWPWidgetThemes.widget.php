@@ -85,14 +85,14 @@ class MainWPWidgetThemes
                     </span>                    
                     <div class="mainwp-right-col themesAction">
                         <?php if (mainwp_current_user_can("dashboard", "activate_themes")) { ?>
-                        <a href="#" class="mainwp-theme-activate"><?php _e('Activate','mainwp'); ?></a> | 
+                        <a href="#" class="mainwp-theme-activate"><?php _e('Activate','mainwp'); ?></a> |
                         <?php } ?>
                         <?php if (mainwp_current_user_can("dashboard", "delete_themes")) { ?>
                         <a href="#" class="mainwp-theme-delete mainwp-red"><?php _e('Delete','mainwp'); ?></a>
                         <?php } ?>
                     </div>
                     <div style="clear: left;"></div>
-                    <div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?></div>                    
+                    <div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?></div>
                     <div>&nbsp;</div>
                 </div>
                 <?php } ?>

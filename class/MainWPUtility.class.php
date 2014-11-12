@@ -108,13 +108,13 @@ class MainWPUtility
             if ($verifyCertificate == 1) {
                 $ssl_verifyhost = true;
             } else if ($verifyCertificate == 2) { // use global setting
-                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
                 {
                     $ssl_verifyhost = true;
                 }                
             } 
         } else {            
-            if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+            if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
             {
                 $ssl_verifyhost = true;
             }            
@@ -143,6 +143,7 @@ class MainWPUtility
         curl_close($ch);
 
         $host = parse_url($realurl, PHP_URL_HOST);
+        $ip = false;
         if ($http_status == '200')
         {
             $dnsRecord = dns_get_record($host);
@@ -152,6 +153,22 @@ class MainWPUtility
             }
             else
             {
+                if (!isset($dnsRecord['ip']))
+                {
+                    foreach ($dnsRecord as $dnsRec)
+                    {
+                        if (isset($dnsRec['ip']))
+                        {
+                            $ip = $dnsRec['ip'];
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    $ip = $dnsRecord['ip'];
+                }
+
                 $found = false;
                 if (!isset($dnsRecord['host']))
                 {
@@ -174,7 +191,11 @@ class MainWPUtility
                 }
             }
         }
-        return array('host' => $host, 'httpCode' => $http_status, 'error' => $err, 'httpCodeString' => self::getHttpStatusErrorString($http_status));
+
+        $out = array('host' => $host, 'httpCode' => $http_status, 'error' => $err, 'httpCodeString' => self::getHttpStatusErrorString($http_status));
+        if ($ip !== false) $out['ip'] = $ip;
+
+        return $out;
     }
 
 
@@ -321,7 +342,7 @@ class MainWPUtility
 
             $params = array(
                 'login_required' => 1,
-                'user' => $website->adminname,
+                'user' => rawurlencode($website->adminname),
                 'mainwpsignature' => rawurlencode($signature),
                 'nonce' => $nonce,
                 'nossl' => $nossl,
@@ -449,13 +470,13 @@ class MainWPUtility
                 if ($verifyCertificate == 1) {
                     $ssl_verifyhost = true;
                 } else if ($verifyCertificate == 2) { // use global setting
-                    if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+                    if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
                     {
                         $ssl_verifyhost = true;
                     }                
                 } 
             } else {            
-                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
                 {
                     $ssl_verifyhost = true;
                 }            
@@ -539,13 +560,13 @@ class MainWPUtility
         return true;
     }
 
-    static function fetchUrlAuthed(&$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false)
+    static function fetchUrlAuthed(&$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true)
     {
         if ($params == null) $params = array();
         $params['optimize'] = ((get_option("mainwp_optimize") == 1) ? 1 : 0);
 
         $postdata = MainWPUtility::getPostDataAuthed($website, $what, $params);
-        $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate);
+        $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed);
       
         if (is_array($information) && isset($information['sync']))
         {
@@ -574,7 +595,7 @@ class MainWPUtility
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
 
-        if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+        if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
         {
             @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 2);
             @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, true);
@@ -596,8 +617,10 @@ class MainWPUtility
         }
     }
 
-    static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null)
+    static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $pRetryFailed = true)
     {
+        $start = time();
+
         try
         {
             $tmpUrl = $url;
@@ -607,6 +630,12 @@ class MainWPUtility
         }
         catch (Exception $e)
         {
+            if (!$pRetryFailed || ((time() - $start) > (60 * 2)))
+            {
+                //If more then 2minutes past since the initial request, do not retry this!
+                throw $e;
+            }
+
             try
             {
                 return self::_fetchUrl($website, $url, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate);
@@ -780,13 +809,13 @@ class MainWPUtility
             if ($verifyCertificate == 1) {
                 $ssl_verifyhost = true;
             } else if ($verifyCertificate == 2) { // use global setting
-                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
                 {
                     $ssl_verifyhost = true;
                 }                
             } 
         } else {            
-            if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') === 1)))
+            if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
             {
                 $ssl_verifyhost = true;
             }            
@@ -807,9 +836,10 @@ class MainWPUtility
         @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         if (!ini_get('safe_mode')) @set_time_limit($timeout);
         @ini_set('max_execution_time', $timeout);
+        MainWPUtility::endSession();
 
         $disabled_functions = ini_get('disable_functions');
-        if (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false))
+        if (false && (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false)))
         {
             $mh = @curl_multi_init();
             @curl_multi_add_handle($mh, $ch);
@@ -884,24 +914,38 @@ class MainWPUtility
 
     }
 
-    public static function downloadToFile($url, $file)
+    public static function downloadToFile($url, $file, $size = false)
     {
-        if (file_exists($file)) {
+        if (@file_exists($file) && (($size === false) || (@filesize($file) > $size)))
+        {
             @unlink($file);
         }
 
-        if (!file_exists(dirname($file)))
+        if (!@file_exists(@dirname($file)))
         {
-            @mkdir(dirname($file), 0777, true);
+            @mkdir(@dirname($file), 0777, true);
         }
 
-        if (!file_exists(dirname($file)))
+        if (!@file_exists(@dirname($file)))
         {
             throw new MainWPException(__('Could not create directory to download the file.'));
         }
 
-        $fp = fopen($file, 'w');
+        if (!@is_writable(@dirname($file)))
+        {
+            throw new MainWPException(__('MainWP upload directory is not writable.'));
+        }
+
+        $fp = fopen($file, 'a');
         $agent= 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+        if ($size !== false)
+        {
+            if (@file_exists($file))
+            {
+                $size = @filesize($file);
+                $url .= '&foffset='.$size;
+            }
+        }
         $ch = curl_init(str_replace(' ', '%20', $url));
         curl_setopt($ch, CURLOPT_FILE, $fp);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
@@ -931,6 +975,16 @@ class MainWPUtility
         return array($dir, $url);
     }
 
+    public static function getDownloadUrl($what, $filename)
+    {
+        $specificDir = MainWPUtility::getMainWPSpecificDir($what);
+        $mwpDir = MainWPUtility::getMainWPDir();
+        $mwpDir = $mwpDir[0];
+        $fullFile = $specificDir . $filename;
+
+        return admin_url('?sig=' . md5(filesize($fullFile)) . '&mwpdl=' . rawurlencode(str_replace($mwpDir, "", $fullFile)));
+    }
+
     public static function getMainWPSpecificDir($dir = null)
     {
         if (MainWPSystem::Instance()->isSingleUser())
@@ -942,8 +996,23 @@ class MainWPUtility
             global $current_user;
             $userid = $current_user->ID;
         }
+
         $dirs = self::getMainWPDir();
-        return $dirs[0] . $userid . ($dir != null ? DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR : '');
+        $newdir = $dirs[0] . $userid . ($dir != null ? DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR : '');
+
+        if (!file_exists($newdir))
+        {
+            @mkdir($newdir, 0777, true);
+        }
+
+        if ($dirs[0] . $userid != null && !file_exists(trailingslashit($dirs[0] . $userid) . '.htaccess'))
+        {
+            $file = @fopen(trailingslashit($dirs[0] . $userid) . '.htaccess', 'w+');
+            @fwrite($file, 'deny from all');
+            @fclose($file);
+        }
+
+        return $newdir;
     }
 
     public static function getMainWPSpecificUrl($dir)
@@ -1682,6 +1751,82 @@ class MainWPUtility
     {
         return str_replace(array('http:', 'https:'), array('', ''), $pUrl);
     }
-}
 
-?>
+    public static function isArchive($pFileName, $pPrefix = '', $pSuffix = '')
+    {
+        return preg_match('/' . $pPrefix . '(.*).(zip|tar|tar.gz|tar.bz2)' . $pSuffix . '$/', $pFileName);
+    }
+
+    public static function isSQLFile($pFileName)
+    {
+        return preg_match('/(.*).sql$/', $pFileName) || self::isSQLArchive($pFileName);
+    }
+
+    public static function isSQLArchive($pFileName)
+    {
+        return preg_match('/(.*).sql.(zip|tar|tar.gz|tar.bz2)$/', $pFileName);
+    }
+
+    public static function getCurrentArchiveExtension($website = false, $task = false)
+    {
+        $useSite = true;
+        if ($task != false)
+        {
+            if ($task->archiveFormat == 'global')
+            {
+                $useGlobal = true;
+                $useSite = false;
+            }
+            else if ($task->archiveFormat == '' || $task->archiveFormat == 'site')
+            {
+                $useGlobal = false;
+                $useSite = true;
+            }
+            else
+            {
+                $archiveFormat = $task->archiveFormat;
+                $useGlobal = false;
+                $useSite = false;
+            }
+        }
+
+        if ($useSite)
+        {
+            if ($website == false)
+            {
+                $useGlobal = true;
+            }
+            else
+            {
+                $backupSettings = MainWPDB::Instance()->getWebsiteBackupSettings($website->id);
+                $archiveFormat = $backupSettings->archiveFormat;
+                $useGlobal = ($archiveFormat == 'global');
+            }
+        }
+
+        if ($useGlobal)
+        {
+            $archiveFormat = get_option('mainwp_archiveFormat');
+            if ($archiveFormat === false) $archiveFormat = 'tar.gz';
+        }
+
+        return $archiveFormat;
+    }
+
+    public static function getRealExtension($path)
+    {
+        $checks = array('.sql.zip', '.sql.tar', '.sql.tar.gz', '.sql.tar.bz2', '.tar.gz', '.tar.bz2');
+        foreach ($checks as $check)
+        {
+            if (self::endsWith($path, $check)) return $check;
+        }
+
+        return '.' . pathinfo($path, PATHINFO_EXTENSION);
+    }
+
+    public static function sanitize_file_name($filename)
+    {
+        $filename = str_replace(array('|', '/', '\\', ' ', ':'), array('-', '-', '-', '-', '-'), $filename);
+        return sanitize_file_name($filename);
+    }
+}

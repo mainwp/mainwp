@@ -16,7 +16,7 @@ class MainWPSettings
     }
 
     public static function initMenu()
-    {       
+    {
         add_submenu_page('mainwp_tab', __('Settings Global options','mainwp'), ' <span id="mainwp-Settings">'. __('Settings','mainwp') .'</span>', 'read', 'Settings', array(MainWPSettings::getClassName(), 'render'));
         add_submenu_page('mainwp_tab', __('Settings Help','mainwp'), ' <div class="mainwp-hidden">'. __('Settings Help','mainwp') .'</div>', 'read', 'SettingsHelp', array(MainWPSettings::getClassName(), 'QSGManageSettings'));
 
@@ -68,10 +68,10 @@ class MainWPSettings
              style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Settings" height="32"/>
         <h2><?php _e('MainWP Settings','mainwp'); ?></h2><div style="clear: both;"></div><br/>
          <div id="mainwp-tip-zone">
-          <?php if ($shownPage == '') { ?> 
+          <?php if ($shownPage == '') { ?>
                 <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('The majority of these default settings can also be tweaked on the Site level by visiting Manage Sites &rarr; Edit Site.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
           <?php } ?>
-          <?php if ($shownPage == 'OfflineChecks') { ?> 
+          <?php if ($shownPage == 'OfflineChecks') { ?>
                 <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('We currently recommend the free <a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/" target="_blank">Advanced Uptime Monitor Extension</a> to perform more frequent tests.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
           <?php } ?>
         </div>
@@ -109,7 +109,7 @@ class MainWPSettings
             mainwp_do_not_have_permissions("manage dashboard settings");
             return;
         }
-                
+
         if (isset($_POST['submit']))
         {
             MainWPUtility::update_option('mainwp_maximumRequests', $_POST['mainwp_maximumRequests']);
@@ -125,7 +125,7 @@ class MainWPSettings
     <div class="postbox" id="mainwp-advanced-options">
         <h3 class="mainwp_box_title"><span><?php _e('Cross IP Settings','mainwp'); ?></span></h3>
         <div class="inside">
-    
+
         <table class="form-table">
             <tbody>
                 <tr>
@@ -151,7 +151,7 @@ class MainWPSettings
         <div class="inside">
         <table class="form-table">
             <tbody>
-                <tr>                    
+                <tr>
                     <th scope="row"><?php _e('Maximum simultaneous requests per ip','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Maximum simultaneous requests per IP. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 1, set to 0 for unlimited.','mainwp')); ?></th>
                     <td>
                         <input type="text" name="mainwp_maximumIPRequests"  class="mainwp-field mainwp-settings-icon"
@@ -178,13 +178,13 @@ class MainWPSettings
                    <td  style="width: 100px;">
                         <div class="mainwp-checkbox">
                             <input type="checkbox" name="mainwp_sslVerifyCertificate"
-                               id="mainwp_sslVerifyCertificate" value="checked" <?php echo ((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)) ? 'checked="checked"' : ''; ?>/><label for="mainwp_sslVerifyCertificate"></label> 
+                               id="mainwp_sslVerifyCertificate" value="checked" <?php echo ((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)) ? 'checked="checked"' : ''; ?>/><label for="mainwp_sslVerifyCertificate"></label>
                         </div>
                    </td>
                    <td><em><?php _e('Default: YES','mainwp'); ?></em></td>
                 </tr>
             </tbody>
-        </table>        
+        </table>
     </div>
     </div>
     <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>"/></p>
@@ -199,7 +199,7 @@ class MainWPSettings
             mainwp_do_not_have_permissions("manage dashboard settings");
             return;
         }
-        
+
         $updated = MainWPOptions::handleSettingsPost();
         $updated |= MainWPManageSites::handleSettingsPost();
         $updated |= MainWPOfflineChecks::handleSettingsPost();

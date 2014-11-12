@@ -12,6 +12,7 @@ class MainWPHooks
         add_action('mainwp_performinstallplugintheme', array('MainWPInstallBulk', 'performInstall'));
         add_filter('mainwp_getwpfilesystem', array('MainWPUtility', 'getWPFilesystem'));
         add_filter('mainwp_getspecificurl', array('MainWPUtility', 'getMainWPSpecificUrl'), 10, 1);
+        add_filter('mainwp_getdownloadurl', array('MainWPUtility', 'getDownloadUrl'), 10, 2);
         add_action('mainwp_renderToolTip', array('MainWPUtility', 'renderToolTip'), 10, 4);
         add_action('mainwp_renderHeader', array('MainWPUI', 'renderHeader'), 10, 2);
         add_action('mainwp_renderFooter', array('MainWPUI', 'renderFooter'), 10, 0);
@@ -137,14 +138,14 @@ class MainWPHooks
             {
                 $type = $_POST['type'];
             }
-            
+
             $error = "";
             if ($type == "plugin" && !mainwp_current_user_can("dashboard", "update_plugins")) {
                 $error = mainwp_do_not_have_permissions("Update Plugins", false);
             } else if ($type == "theme" && !mainwp_current_user_can("dashboard", "update_themes")) {
-                $error = mainwp_do_not_have_permissions("Update Themes", false);                
-            }      
-            
+                $error = mainwp_do_not_have_permissions("Update Themes", false);
+            }
+
             if (!empty($error))
                 die(json_encode(array('error' => $error)));
 

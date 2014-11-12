@@ -17,7 +17,7 @@ class MainWPManageSitesView
                 <?php if (mainwp_current_user_can("dashboard", "add_sites")) { ?>
                 <a href="<?php echo admin_url('admin.php?page=managesites&do=new'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
                 <?php } ?>
-                <a href="<?php echo admin_url('admin.php?page=managesites&do=test'); ?>" class="mainwp-submenu"><?php _e('Test Connection','mainwp'); ?></a>                
+                <a href="<?php echo admin_url('admin.php?page=managesites&do=test'); ?>" class="mainwp-submenu"><?php _e('Test Connection','mainwp'); ?></a>
                 <a href="<?php echo admin_url('admin.php?page=ManageGroups'); ?>" class="mainwp-submenu"><?php _e('Groups','mainwp'); ?></a>
                 <?php
                 if (isset($subPages) && is_array($subPages))
@@ -38,17 +38,17 @@ class MainWPManageSitesView
     </div>
     <?php
     }
-    
+
     static function getBreadcrumb($pShowpage, $pSubPages){
-        $extra = array();  
+        $extra = array();
         if (isset($pSubPages) && is_array($pSubPages)) {
             foreach ($pSubPages as $sub) {
                 if ($pShowpage === $sub['slug']) {
                     $extra['text'] = $sub['title'];
                     break;
                 }
-            }                                           
-        }           
+            }
+        }
         $site_id = null;
         $site_name = "";
         $page = "";
@@ -57,118 +57,118 @@ class MainWPManageSitesView
                 $page = "manage";
                 break;
             case "ManageSitesDashboard":
-                $site_id = $_GET['dashboard'];             
+                $site_id = $_GET['dashboard'];
                 $page = "dashboard";
-                break; 
+                break;
             case "ManageSitesBulkUpload":
                 $page = "bulkupload";
-                break; 
+                break;
             case "SecurityScan":
-                $site_id = $_GET['scanid'];  
+                $site_id = $_GET['scanid'];
                 $page = "scan";
-                break; 
+                break;
             case "ManageSitesEdit":
-                $site_id = $_GET['id'];                
+                $site_id = $_GET['id'];
                 $page = "edit";
                 break;
             case "ManageSitesBackups":
-                $site_id = $_GET['backupid'];        
+                $site_id = $_GET['backupid'];
                 $page = "backup";
-                break; 
+                break;
              case "Test":
                 $page = "test";
                 break;
             case "SitesHelp":
                 $page = "help";
                 break;
-            default:  
+            default:
                 $page = "subpage";
                 break;
         }
-        
-        $separator = '<span class="separator">&nbsp;&rsaquo;&nbsp;</span>';         
+
+        $separator = '<span class="separator">&nbsp;&rsaquo;&nbsp;</span>';
         if ($site_id) {
-            $website = MainWPDB::Instance()->getWebsiteById($site_id);                        
+            $website = MainWPDB::Instance()->getWebsiteById($site_id);
             $site_name  = '<a href="admin.php?page=managesites&dashboard=' . $site_id . '">' . $website->name . '</a>' . $separator;
         }
-        
-        $page_links = array(            
-            "mainwp" => array("href" => 'admin.php?page=mainwp_tab', 
-                            "text" => __("MainWP", "mainwp"),                            
+
+        $page_links = array(
+            "mainwp" => array("href" => 'admin.php?page=mainwp_tab',
+                            "text" => __("MainWP", "mainwp"),
                             "alt" => "",
-                            "parent" => ""                            
+                            "parent" => ""
                             ),
-            "site" => array("href" => 'admin.php?page=managesites', 
-                            "text" => __("Sites", "mainwp"), 
+            "site" => array("href" => 'admin.php?page=managesites',
+                            "text" => __("Sites", "mainwp"),
                             "alt" => "",
                             "parent" => "mainwp"
-                            ),            
-            "dashboard" => array( "href" => '' , 
-                            "text" => $site_name . __("Dashboard", "mainwp"),      
+                            ),
+            "dashboard" => array( "href" => '' ,
+                            "text" => $site_name . __("Dashboard", "mainwp"),
                             "alt" => "",
                             "parent" => "site"
                             ),
-            "bulkupload" => array( "href" => '' , 
-                            "text" => __("Bulk Upload", "mainwp"),      
+            "bulkupload" => array( "href" => '' ,
+                            "text" => __("Bulk Upload", "mainwp"),
                             "alt" => "",
                             "parent" => "site"
                             ),
-            "edit" => array( "href" => '' , 
+            "edit" => array( "href" => '' ,
                             "text" => $site_name . __("Edit", "mainwp"),
                             "alt" => "",
                             "parent" => "site"
                             ),
-            "backup" => array( "href" => '' , 
-                            "text" => $site_name . __("Backups", "mainwp"),    
+            "backup" => array( "href" => '' ,
+                            "text" => $site_name . __("Backups", "mainwp"),
                             "alt" => "",
                             "parent" => "site"
                             ),
-            "scan" => array( "href" => '' , 
-                            "text" => $site_name . __("Security Scan", "mainwp"),   
+            "scan" => array( "href" => '' ,
+                            "text" => $site_name . __("Security Scan", "mainwp"),
                             "alt" => "",
                             "parent" => "site"
                             ),
-            "subpage" => array( "href" => (isset($extra['href']) ? $extra['href'] : ""),                           
-                            "text" => (isset($extra['text']) ? $extra['text'] : ""),                           
-                            "alt" => (isset($extra['alt']) ? $extra['alt'] : ""),                           
+            "subpage" => array( "href" => (isset($extra['href']) ? $extra['href'] : ""),
+                            "text" => (isset($extra['text']) ? $extra['text'] : ""),
+                            "alt" => (isset($extra['alt']) ? $extra['alt'] : ""),
                             "parent" => "site"
                         )
         );
-        
-        $str_breadcrumb = ""; 
-       
+
+        $str_breadcrumb = "";
+
         $first = true;
         while(isset($page_links[$page])) {
             if ($first) {
-                $str_breadcrumb = $page_links[$page]["text"] . $str_breadcrumb ;                
+                $str_breadcrumb = $page_links[$page]["text"] . $str_breadcrumb ;
                 $first = false;
             } else {
-                $str_breadcrumb = $separator . $str_breadcrumb;            
+                $str_breadcrumb = $separator . $str_breadcrumb;
                 if (!empty($page_links[$page]["href"]))
-                    $str_breadcrumb  =  '<a href="' . $page_links[$page]["href"] . '" alt="' . $page_links[$page]["alt"] . '">' . $page_links[$page]["text"] . "</a>" . $str_breadcrumb ;         
+                    $str_breadcrumb  =  '<a href="' . $page_links[$page]["href"] . '" alt="' . $page_links[$page]["alt"] . '">' . $page_links[$page]["text"] . "</a>" . $str_breadcrumb ;
                 else
                     $str_breadcrumb = $page_links[$page]["text"] . $str_breadcrumb ;
             }
             $page = $page_links[$page]["parent"];
         }
-        
+
         return $str_breadcrumb;
     }
-    
+
     public static function renderHeader($shownPage, &$subPages)
     {
         $breadcrumd = "";
         if ($shownPage != '' && $shownPage != 'Test' && $shownPage != 'SitesHelp' && $shownPage != 'AddNew' && $shownPage != 'ManageGroups') {
-            $breadcrumd = self::getBreadcrumb($shownPage, $subPages);                      
+            $breadcrumd = self::getBreadcrumb($shownPage, $subPages);
         }
-        
+
         $can_add = mainwp_current_user_can("dashboard", "add_sites");
         $can_edit = mainwp_current_user_can("dashboard", "edit_sites");
         $can_view_dashboard = mainwp_current_user_can("dashboard", "access_individual_dashboard");
         $can_execute_backups = mainwp_current_user_can("dashboard", "execute_backups");
         $can_test_connection = mainwp_current_user_can("dashboard", "test_connection");
-        
-        
+
+
         ?>
     <div class="wrap">
         <a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
@@ -178,10 +178,10 @@ class MainWPManageSitesView
              style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Sites" height="32"/>
         <h2><?php _e('Sites','mainwp'); ?></h2><div style="clear: both;"></div><br/>
          <div id="mainwp-tip-zone">
-          <?php if ($shownPage == '') { ?> 
+          <?php if ($shownPage == '') { ?>
                 <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can show more or less information per row by selecting "Screen Options" on the top right.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
           <?php } ?>
-          <?php if ($shownPage == 'ManageSitesDashboard') { ?> 
+          <?php if ($shownPage == 'ManageSitesDashboard') { ?>
                 <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can move the Widgets around to fit your needs and even adjust the number of columns by selecting "Screen Options" on the top right.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
           <?php } ?>
         </div>
@@ -189,21 +189,21 @@ class MainWPManageSitesView
             <?php if (!empty($breadcrumd)) { ?>
             <div class="mainwp_breadcrumb"><strong>You are here:</strong> &nbsp;&nbsp;<?php echo $breadcrumd; ?></div><br/>
             <?php } ?>
-            <?php if ($shownPage == '') {?>            
+            <?php if ($shownPage == '') {?>
             <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
             <?php if ($can_add) { ?>
             <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
-            <?php } ?>        
-            <?php } ?>        
+            <?php } ?>
+            <?php } ?>
               <?php if ($shownPage == 'ManageSitesBulkUpload') { ?>
-                <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Bulk upload','mainwp'); ?></a>                
+                <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Bulk upload','mainwp'); ?></a>
                 <?php } ?>
             <?php if ($shownPage == 'ManageSitesBackups') { ?>
                 <a class="nav-tab pos-nav-tab" href="admin.php?page=managesites&dashboard=<?php echo $_GET['backupid'] ?>"><?php _e('Dashboard','mainwp'); ?></a>
                 <?php if ($can_edit) { ?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&id=<?php echo $_GET['backupid'] ?>"><?php _e('Edit','mainwp'); ?></a>                
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&id=<?php echo $_GET['backupid'] ?>"><?php _e('Edit','mainwp'); ?></a>
                 <?php } ?>
-                <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Backups','mainwp'); ?></a>                                
+                <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Backups','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&scanid=<?php echo $_GET['backupid'] ?>"><?php _e('Security Scan','mainwp'); ?></a>
                 <?php } ?>
             <?php if ($shownPage == 'ManageSitesEdit') { ?>
@@ -212,7 +212,7 @@ class MainWPManageSitesView
                 <?php } ?>
                 <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Edit','mainwp'); ?></a>
                 <?php if ($can_execute_backups) { ?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['id'] ?>"><?php _e('Backups','mainwp'); ?></a>                                
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['id'] ?>"><?php _e('Backups','mainwp'); ?></a>
                 <?php } ?>
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&scanid=<?php echo $_GET['id'] ?>"><?php _e('Security Scan','mainwp'); ?></a>
             <?php } ?>
@@ -222,7 +222,7 @@ class MainWPManageSitesView
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&id=<?php echo $_GET['dashboard'] ?>"><?php _e('Edit','mainwp'); ?></a>
                 <?php } ?>
                 <?php if ($can_execute_backups) { ?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['dashboard'] ?>"><?php _e('Backups','mainwp'); ?></a>                                
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['dashboard'] ?>"><?php _e('Backups','mainwp'); ?></a>
                 <?php } ?>
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&scanid=<?php echo $_GET['dashboard'] ?>"><?php _e('Security Scan','mainwp'); ?></a>
             <?php } ?>
@@ -231,35 +231,35 @@ class MainWPManageSitesView
                 <a class="nav-tab pos-nav-tab" href="admin.php?page=managesites&dashboard=<?php echo $_GET['scanid'] ?>"><?php _e('Dashboard','mainwp'); ?></a>
                 <?php } ?>
                 <?php if ($can_edit) { ?>
-                    <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&id=<?php echo $_GET['scanid'] ?>"><?php _e('Edit','mainwp'); ?></a>                
+                    <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&id=<?php echo $_GET['scanid'] ?>"><?php _e('Edit','mainwp'); ?></a>
                  <?php } ?>
                 <?php if ($can_execute_backups) { ?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['scanid'] ?>"><?php _e('Backups','mainwp'); ?></a>                                
+                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['scanid'] ?>"><?php _e('Backups','mainwp'); ?></a>
                  <?php } ?>
                 <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Security Scan','mainwp'); ?></a>
-            <?php } ?> 
-            <?php if ($shownPage == 'AddNew') {?>            
+            <?php } ?>
+            <?php if ($shownPage == 'AddNew') {?>
             <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
             <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Add New','mainwp'); ?></a>
-            <?php } ?> 
-            <?php if ($shownPage == 'ManageGroups') {?>            
+            <?php } ?>
+            <?php if ($shownPage == 'ManageGroups') {?>
             <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
             <?php if ($can_add) { ?>
             <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
-            <?php } ?> 
-            <?php } ?> 
-            <?php if ($shownPage == 'Test') {?>            
+            <?php } ?>
+            <?php } ?>
+            <?php if ($shownPage == 'Test') {?>
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
                 <?php if ($can_add) { ?>
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
-                <?php } ?>   
-            <?php } ?>   
-            <?php if ($shownPage == 'SitesHelp') {?>            
+                <?php } ?>
+            <?php } ?>
+            <?php if ($shownPage == 'SitesHelp') {?>
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
                 <?php if ($can_add) { ?>
                 <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
-                <?php } ?>   
-            <?php } ?>  
+                <?php } ?>
+            <?php } ?>
             <?php if ($shownPage == '' || $shownPage == 'AddNew' || $shownPage == 'SitesHelp' || $shownPage == 'Test' || $shownPage == 'ManageGroups') { ?>
                 <?php if ($can_test_connection) { ?>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Test') { echo "nav-tab-active"; } ?>" href="admin.php?page=managesites&do=test"><?php _e('Test Connection','mainwp'); ?></a>
@@ -300,7 +300,7 @@ class MainWPManageSitesView
         if (!mainwp_current_user_can("dashboard", "test_connection")) {
            mainwp_do_not_have_permissions("test connection");
            return;
-        }    
+        }
         ?>
             <div id="mainwp_managesites_test_errors" class="mainwp_error error"></div>
             <div id="mainwp_managesites_test_message" class="mainwp_updated updated"></div>
@@ -451,12 +451,12 @@ class MainWPManageSitesView
     }
 
     public static function _renderNewSite(&$groups)
-    { 
-        if (!mainwp_current_user_can("dashboard", "add_sites")) {            
+    {
+        if (!mainwp_current_user_can("dashboard", "add_sites")) {
             mainwp_do_not_have_permissions("add sites");
             return;
         }
-        
+
         ?>
        <div id="mainwp_managesites_add_errors" class="mainwp_error"></div>
        <div id="mainwp_managesites_add_message" class="mainwp_updated updated"></div>
@@ -497,7 +497,7 @@ class MainWPManageSitesView
                    <th scope="row"><?php _e('Administrator Username:','mainwp'); ?></th>
                    <td><input type="text" id="mainwp_managesites_add_wpadmin"
                               name="mainwp_managesites_add_wpadmin" value="" class="mainwp-field mainwp-username" /></td>
-               </tr>               
+               </tr>
                <tr>
                    <th scope="row"><?php _e('Groups','mainwp'); ?></th>
                    <td>
@@ -691,27 +691,17 @@ class MainWPManageSitesView
 
     public static function showBackups(&$website, $fullBackups, $dbBackups)
     {
-        $upload_dir = wp_upload_dir();
-        $upload_base_dir = $upload_dir['basedir'];
-        $upload_base_url = $upload_dir['baseurl'];
-
         $output = '';
         echo '<table>';
-        $can_restore = mainwp_current_user_can("dashboard", "restore_backups");
-        $can_download = mainwp_current_user_can("dashboard", "download_backups");
-        
+
+        $mwpDir = MainWPUtility::getMainWPDir();
+        $mwpDir = $mwpDir[0];
         foreach ($fullBackups as $key => $fullBackup)
         {
+            $downloadLink = admin_url('?sig=' . md5(filesize($fullBackup)) . '&mwpdl=' . rawurlencode(str_replace($mwpDir, "", $fullBackup)));
             $output .= '<tr><td style="width: 400px;">' . MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp(filemtime($fullBackup))) . ' - ' . MainWPUtility::human_filesize(filesize($fullBackup));
-            $output .= '</td><td>';
-            if ($can_download) {
-                $output .= '<a title="'.basename($fullBackup).'" href="' . str_replace(array(basename($fullBackup), $upload_base_dir), array(rawurlencode(basename($fullBackup)), $upload_base_url), $fullBackup) . '" class="button">Download</a>';
-            }
-            $output .= '</td>';
-            $output .= '<td>';
-            if ($can_restore)
-                $output .= '<a href="admin.php?page=SiteRestore&websiteid=' . $website->id.'&f='.base64_encode(str_replace(array(basename($fullBackup), $upload_base_dir), array(rawurlencode(basename($fullBackup)), ''), $fullBackup)) . '" class="mainwp-upgrade-button button" target="_blank" title="'.basename($fullBackup).'">Restore</a>';
-            $output .= '</td></tr>';
+            $output .= '</td><td><a title="'.basename($fullBackup).'" href="' . $downloadLink . '" class="button">Download</a></td>';
+            $output .= '<td><a href="admin.php?page=SiteRestore&websiteid=' . $website->id . '&f=' . base64_encode($downloadLink) . '&size='.filesize($fullBackup).'" class="mainwp-upgrade-button button" target="_blank" title="' . basename($fullBackup) . '">Restore</a></td></tr>';
         }
         if ($output == '') echo '<br />' . __('No full backup has been taken yet','mainwp') . '<br />';
         else echo '<strong style="font-size: 14px">'. __('Last backups from your files:','mainwp') . '</strong>' . $output;
@@ -721,11 +711,8 @@ class MainWPManageSitesView
         $output = '';
         foreach ($dbBackups as $key => $dbBackup)
         {
-            $output .= '<tr><td style="width: 400px;">' . MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp(filemtime($dbBackup))) . ' - ' . MainWPUtility::human_filesize(filesize($dbBackup)) . '</td><td>';
-            if ($can_download) {
-                $output .= '<a title="'.basename($dbBackup).'" href="' . str_replace(array(basename($dbBackup), $upload_base_dir), array(rawurlencode(basename($dbBackup)), $upload_base_url), $dbBackup) . '" download class="button">Download</a>';
-            }
-            $output .= '</td></tr>';
+            $downloadLink = admin_url('?sig=' . md5(filesize($dbBackup)) . '&mwpdl=' . rawurlencode(str_replace($mwpDir, "", $dbBackup)));
+            $output .= '<tr><td style="width: 400px;">' . MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp(filemtime($dbBackup))) . ' - ' . MainWPUtility::human_filesize(filesize($dbBackup)) . '</td><td><a title="'.basename($dbBackup).'" href="' . $downloadLink . '" download class="button">Download</a></td></tr>';
         }
         if ($output == '') echo '<br />'. __('No database only backup has been taken yet','mainwp') . '<br /><br />';
         else echo '<strong style="font-size: 14px">'. __('Last backups from your database:','mainwp') . '</strong>' . $output;
@@ -737,7 +724,11 @@ class MainWPManageSitesView
     {
         $backupsOnServer = get_option('mainwp_backupsOnServer');
         $backupOnExternalSources = get_option('mainwp_backupOnExternalSources');
+        $archiveFormat = get_option('mainwp_archiveFormat');
         $maximumFileDescriptors = get_option('mainwp_maximumFileDescriptors');
+        $maximumFileDescriptorsAuto = get_option('mainwp_maximumFileDescriptorsAuto');
+        $maximumFileDescriptorsAuto = ($maximumFileDescriptorsAuto == 1 || $maximumFileDescriptorsAuto === false);
+
         $notificationOnBackupFail = get_option('mainwp_notificationOnBackupFail');
         $notificationOnBackupStart = get_option('mainwp_notificationOnBackupStart');
         $chunkedBackupTasks = get_option('mainwp_chunkedBackupTasks');
@@ -765,13 +756,39 @@ class MainWPManageSitesView
             </td>
         </tr>
         <tr>
+            <th scope="row"><?php _e('Archive format','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('','mainwp')); ?></th>
+            <td>
+                <table class="mainwp-nomarkup">
+                    <tr>
+                        <td valign="top">
+                            <span class="mainwp-select-bg"><select name="mainwp_archiveFormat" id="mainwp_archiveFormat">
+                                <option value="zip" <?php if ($archiveFormat == 'zip'): ?>selected<?php endif; ?>>Zip</option>
+                                <option value="tar" <?php if ($archiveFormat == 'tar'): ?>selected<?php endif; ?>>Tar</option>
+                                <option value="tar.gz" <?php if (($archiveFormat === false) || ($archiveFormat == 'tar.gz')): ?>selected<?php endif; ?>>Tar GZip</option>
+                                <option value="tar.bz2" <?php if ($archiveFormat == 'tar.bz2'): ?>selected<?php endif; ?>>Tar BZip2</option>
+                            </select><label></label></span>
+                        </td>
+                        <td>
+                            <i>
+                            <span id="info_zip" class="archive_info" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)</span>
+                            <span id="info_tar" class="archive_info" <?php if ($archiveFormat != 'tar'): ?>style="display: none;"<?php endif; ?>>Creates an uncompressed tar-archive. (No compression, fast, low memory usage)</span>
+                            <span id="info_tar.gz" class="archive_info" <?php if ($archiveFormat != 'tar.gz' && $archiveFormat !== false): ?>style="display: none;"<?php endif; ?>>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)</span>
+                            <span id="info_tar.bz2" class="archive_info" <?php if ($archiveFormat != 'tar.bz2'): ?>style="display: none;"<?php endif; ?>>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)</span>
+                            </i>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
             <th scope="row"><?php _e('Maximum File Descriptors on Child','mainwp'); ?> <?php MainWPUtility::renderToolTip('The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
             <td>
-                <input type="text" name="mainwp_options_maximumFileDescriptors"
+                <div style="float: left">Auto detect:&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e('Enter a fallback value because not all hosts support this function.','mainwp'); ?>)</i></div><div style="clear:both"></div>
+                <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors"
                        value="<?php echo ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors); ?>"/><span class="mainwp-form_hint"><?php _e('The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp'); ?></span>
             </td>
         </tr>
-        <tr>
+        <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
             <th scope="row"><?php _e('Load files in memory before zipping','mainwp');?> <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advice to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
             <td>
                 <div class="mainwp-checkbox">
@@ -817,12 +834,12 @@ class MainWPManageSitesView
 
 
     public static function renderDashboard(&$website, &$page)
-    {        
+    {
        if (!mainwp_current_user_can("dashboard", "access_individual_dashboard")) {
            mainwp_do_not_have_permissions("individual dashboard");
            return;
        }
-       
+
         ?>
             <div id="howto-metaboxes-general" class="wrap">
                 <?php
@@ -900,9 +917,9 @@ class MainWPManageSitesView
     {
         if (!mainwp_current_user_can("dashboard", "execute_backups")) {
             mainwp_do_not_have_permissions("execute backups");
-            return;        
+            return;
         }
-      
+
         $remote_destinations = apply_filters('mainwp_backups_remote_get_destinations', null, array('website' => $website->id));
         $hasRemoteDestinations = ($remote_destinations == null ? $remote_destinations : count($remote_destinations));
         ?>
@@ -917,7 +934,7 @@ class MainWPManageSitesView
         ?>
         <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
-        
+
         	<div class="postbox" id="mainwp-backup-details">
                 <h3 class="mainwp_box_title"><span><?php _e('Backup Details','mainwp'); ?></span></h3>
                 <div class="inside">
@@ -1034,20 +1051,108 @@ class MainWPManageSitesView
                 }
                 ?>
                     <?php do_action('mainwp_backups_remote_settings', array('website' => $website->id)); ?>
+
+                <?php
+                $globalArchiveFormat = get_option('mainwp_archiveFormat');
+                if ($globalArchiveFormat == false) $globalArchiveFormat = 'tar.gz';
+                if ($globalArchiveFormat == 'zip')
+                {
+                    $globalArchiveFormatText = 'Zip';
+                }
+                else if ($globalArchiveFormat == 'tar')
+                {
+                    $globalArchiveFormatText = 'Tar';
+                }
+                else if ($globalArchiveFormat == 'tar.gz')
+                {
+                    $globalArchiveFormatText = 'Tar GZip';
+                }
+                else if ($globalArchiveFormat == 'tar.bz2')
+                {
+                    $globalArchiveFormatText = 'Tar BZip2';
+                }
+
+                $backupSettings = MainWPDB::Instance()->getWebsiteBackupSettings($website->id);
+                $archiveFormat = $backupSettings->archiveFormat;
+                $useGlobal = ($archiveFormat == 'global');
+                ?>
+                <tr><td colspan="2"><hr /></td></tr>
+                <tr>
+                    <th scope="row"><?php _e('Archive format','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('','mainwp')); ?></th>
+                    <td>
+                        <table class="mainwp-nomarkup">
+                            <tr>
+                                <td valign="top">
+                                    <span class="mainwp-select-bg"><select name="mainwp_archiveFormat" id="mainwp_archiveFormat">
+                                        <option value="global" <?php if ($useGlobal): ?>selected<?php endif; ?>>Global setting (<?php echo $globalArchiveFormatText; ?>)</option>
+                                        <option value="zip" <?php if ($archiveFormat == 'zip'): ?>selected<?php endif; ?>>Zip</option>
+                                        <option value="tar" <?php if ($archiveFormat == 'tar'): ?>selected<?php endif; ?>>Tar</option>
+                                        <option value="tar.gz" <?php if ($archiveFormat == 'tar.gz'): ?>selected<?php endif; ?>>Tar GZip</option>
+                                        <option value="tar.bz2" <?php if ($archiveFormat == 'tar.bz2'): ?>selected<?php endif; ?>>Tar BZip2</option>
+                                    </select><label></label></span>
+                                </td>
+                                <td>
+                                    <i>
+                                    <span id="info_global" class="archive_info" <?php if (!$useGlobal): ?>style="display: none;"<?php endif; ?>><?php
+                                        if ($globalArchiveFormat == 'zip'): ?>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)<?php
+                                        elseif ($globalArchiveFormat == 'tar'): ?>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)<?php
+                                        elseif ($globalArchiveFormat == 'tar.gz'): ?>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)<?php
+                                        elseif ($globalArchiveFormat == 'tar.bz2'): ?>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)<?php endif; ?></span>
+                                    <span id="info_zip" class="archive_info" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)</span>
+                                    <span id="info_tar" class="archive_info" <?php if ($archiveFormat != 'tar'): ?>style="display: none;"<?php endif; ?>>Creates an uncompressed tar-archive. (No compression, fast, low memory usage)</span>
+                                    <span id="info_tar.gz" class="archive_info" <?php if ($archiveFormat != 'tar.gz'): ?>style="display: none;"<?php endif; ?>>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)</span>
+                                    <span id="info_tar.bz2" class="archive_info" <?php if ($archiveFormat != 'tar.bz2'): ?>style="display: none;"<?php endif; ?>>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)</span>
+                                    </i>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <?php
+                $maximumFileDescriptorsOverride = ($website->maximumFileDescriptorsOverride == 1);
+                $maximumFileDescriptorsAuto= ($website->maximumFileDescriptorsAuto == 1);
+                $maximumFileDescriptors = $website->maximumFileDescriptors;
+                ?>
+                <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
+                    <th scope="row"><?php _e('Maximum File Descriptors on Child','mainwp'); ?> <?php MainWPUtility::renderToolTip('The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
+                    <td>
+                        <div class="mainwp-radio" style="float: left;">
+                          <input type="radio" value="" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_global" <?php echo (!$maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?>"/>
+                          <label for="mainwp_options_maximumFileDescriptorsOverride_global"></label>
+                        </div>Global Setting (<a href="<?php echo admin_url('admin.php?page=Settings'); ?>">Change Here</a>)<br/>
+                        <div class="mainwp-radio" style="float: left;">
+                          <input type="radio" value="override" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_override" <?php echo ($maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?>"/>
+                          <label for="mainwp_options_maximumFileDescriptorsOverride_override"></label>
+                        </div>Override<br/><br />
+
+                        <div style="float: left">Auto detect:&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e('Enter a fallback value because not all hosts support this function.','mainwp'); ?>)</i></div><div style="clear:both"></div>
+                        <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors"
+                               value="<?php echo $maximumFileDescriptors; ?>"/><span class="mainwp-form_hint"><?php _e('The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp'); ?></span>
+                    </td>
+                </tr>
+                <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
+                    <th scope="row">Load files in memory before zipping <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advise to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/load-files-memory/'); ?></th>
+                    <td>
+                        <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_global" value="1" <?php if ($website->loadFilesBeforeZip == false || $website->loadFilesBeforeZip == 1): ?>checked="true"<?php endif; ?>/> Global setting (<a href="<?php echo admin_url('admin.php?page=Settings'); ?>">Change Here</a>)<br />
+                        <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_yes" value="2" <?php if ($website->loadFilesBeforeZip == 2): ?>checked="true"<?php endif; ?>/> Yes<br />
+                        <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_no" value="0" <?php if ($website->loadFilesBeforeZip == 0): ?>checked="true"<?php endif; ?>/> No<br />
+                    </td>
+                </tr>
             </table>
 
                 <input type="hidden" name="site_id" id="backup_site_id" value="<?php echo $website->id; ?>"/>
                 <input type="hidden" name="backup_site_full_size" id="backup_site_full_size" value="<?php echo $website->totalsize; ?>"/>
                 <input type="hidden" name="backup_site_db_size" id="backup_site_db_size" value="<?php echo $website->dbsize; ?>"/>
-                
+
                 <p class="submit"><input type="button" name="backup_btnSubmit" id="backup_btnSubmit"
                                          class="button-primary"
                                          value="Backup Now"/></p>
-                
+
             </form>
             </div>
         </div>
-    
+
     <div id="managesite-backup-status-box" title="Backup <?php echo $website->name; ?>" style="display: none; text-align: center">
         <div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesite-backup-status-text">
         </div>
@@ -1055,11 +1160,11 @@ class MainWPManageSitesView
     </div>
     <?php
     }
-        
-    public static function renderScanSite(&$website) {       
+
+    public static function renderScanSite(&$website) {
         if (mainwp_current_user_can("dashboard", "manage_security_issues"))
             do_action('mainwp-securityissues-sites', $website);
-        
+
         if (mainwp_current_user_can("extension", "mainwp-sucuri-extension")) {
             if (apply_filters('mainwp-extension-available-check', 'mainwp-sucuri-extension')) {
                 do_action('mainwp-sucuriscan-sites', $website);
@@ -1071,10 +1176,10 @@ class MainWPManageSitesView
                         <?php  _e('The Sucuri Scan requires the free Sucuri Extension, please download from <a href="https://extensions.mainwp.com/product/mainwp-sucuri-extension/" title="Sucuri">here</a>', "mainwp"); ?>
                     </div>
                 </div>
-                <?php                                
-            }            
-        }   
-        
+                <?php
+            }
+        }
+
         if (mainwp_current_user_can("extension", "mainwp-wordfence-extension")) {
             if (apply_filters('mainwp-extension-available-check', 'mainwp-wordfence-extension')) {
                 do_action('mainwp-wordfence-sites', $website);
@@ -1085,9 +1190,9 @@ class MainWPManageSitesView
                         <?php  _e('Wordfence status requires the Wordfence Extension, please order from <a href="https://extensions.mainwp.com/product/mainwp-wordfence-extension/" title="Wordfence">here</a>.', 'mainwp'); ?>
                     </div>
                 </div>
-        <?php }            
-       }        
-                    
+        <?php }
+       }
+
     }
 
     public static function _renderInfo()
@@ -1125,7 +1230,7 @@ class MainWPManageSitesView
             mainwp_do_not_have_permissions("edit sites");
             return;
         }
-        
+
         $remote_destinations = apply_filters('mainwp_backups_remote_get_destinations', null, array('website' => $website->id));
         $hasRemoteDestinations = ($remote_destinations == null ? $remote_destinations : count($remote_destinations));
         ?>
@@ -1277,7 +1382,7 @@ class MainWPManageSitesView
                         <label for="mainwp_is_ignoreThemeUpdates"></label>
                         </div>
                     </td>
-                </tr> 
+                </tr>
                 <?php } ?>
                 <?php do_action('mainwp_extension_sites_edit_tablerow', $website); ?>
                 </tbody>
@@ -1308,10 +1413,90 @@ class MainWPManageSitesView
             <h3 class="mainwp_box_title"><span><?php _e('Backup Settings','mainwp'); ?></span></h3>
             <div class="inside">
             <table class="form-table" style="width: 100%">
+                <?php
+                $globalArchiveFormat = get_option('mainwp_archiveFormat');
+                if ($globalArchiveFormat == false) $globalArchiveFormat = 'tar.gz';
+                if ($globalArchiveFormat == 'zip')
+                {
+                    $globalArchiveFormatText = 'Zip';
+                }
+                else if ($globalArchiveFormat == 'tar')
+                {
+                    $globalArchiveFormatText = 'Tar';
+                }
+                else if ($globalArchiveFormat == 'tar.gz')
+                {
+                    $globalArchiveFormatText = 'Tar GZip';
+                }
+                else if ($globalArchiveFormat == 'tar.bz2')
+                {
+                    $globalArchiveFormatText = 'Tar BZip2';
+                }
+
+                $backupSettings = MainWPDB::Instance()->getWebsiteBackupSettings($website->id);
+                $archiveFormat = $backupSettings->archiveFormat;
+                $useGlobal = ($archiveFormat == 'global');
+                ?>
                 <tr>
-                    <th scope="row">Load files in memory before zipping <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advice to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
+                    <th scope="row"><?php _e('Archive format','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('','mainwp')); ?></th>
                     <td>
-                        <span id="mainwp_options_loadFilesBeforeZip_container" style="cursor: default;"><input type="hidden" id="mainwp_options_loadFilesBeforeZip" name="mainwp_options_loadFilesBeforeZip" value="<?php echo $website->loadFilesBeforeZip; ?>"/></span> <i>(<?php _e('When not enabled or disabled the global setting will be used.', 'mainwp'); ?>)</i>
+                        <table class="mainwp-nomarkup">
+                            <tr>
+                                <td valign="top">
+                                    <span class="mainwp-select-bg"><select name="mainwp_archiveFormat" id="mainwp_archiveFormat">
+                                        <option value="global" <?php if ($useGlobal): ?>selected<?php endif; ?>>Global setting (<?php echo $globalArchiveFormatText; ?>)</option>
+                                        <option value="zip" <?php if ($archiveFormat == 'zip'): ?>selected<?php endif; ?>>Zip</option>
+                                        <option value="tar" <?php if ($archiveFormat == 'tar'): ?>selected<?php endif; ?>>Tar</option>
+                                        <option value="tar.gz" <?php if ($archiveFormat == 'tar.gz'): ?>selected<?php endif; ?>>Tar GZip</option>
+                                        <option value="tar.bz2" <?php if ($archiveFormat == 'tar.bz2'): ?>selected<?php endif; ?>>Tar BZip2</option>
+                                    </select><label></label></span>
+                                </td>
+                                <td>
+                                    <i>
+                                    <span id="info_global" class="archive_info" <?php if (!$useGlobal): ?>style="display: none;"<?php endif; ?>><?php
+                                        if ($globalArchiveFormat == 'zip'): ?>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)<?php
+                                        elseif ($globalArchiveFormat == 'tar'): ?>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)<?php
+                                        elseif ($globalArchiveFormat == 'tar.gz'): ?>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)<?php
+                                        elseif ($globalArchiveFormat == 'tar.bz2'): ?>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)<?php endif; ?></span>
+                                    <span id="info_zip" class="archive_info" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)</span>
+                                    <span id="info_tar" class="archive_info" <?php if ($archiveFormat != 'tar'): ?>style="display: none;"<?php endif; ?>>Creates an uncompressed tar-archive. (No compression, fast, low memory usage)</span>
+                                    <span id="info_tar.gz" class="archive_info" <?php if ($archiveFormat != 'tar.gz'): ?>style="display: none;"<?php endif; ?>>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)</span>
+                                    <span id="info_tar.bz2" class="archive_info" <?php if ($archiveFormat != 'tar.bz2'): ?>style="display: none;"<?php endif; ?>>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)</span>
+                                    </i>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <?php
+                $maximumFileDescriptorsOverride = ($website->maximumFileDescriptorsOverride == 1);
+                $maximumFileDescriptorsAuto= ($website->maximumFileDescriptorsAuto == 1);
+                $maximumFileDescriptors = $website->maximumFileDescriptors;
+                ?>
+                <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
+                    <th scope="row"><?php _e('Maximum File Descriptors on Child','mainwp'); ?> <?php MainWPUtility::renderToolTip('The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
+                    <td>
+                        <div class="mainwp-radio" style="float: left;">
+                          <input type="radio" value="" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_global" <?php echo (!$maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?>"/>
+                          <label for="mainwp_options_maximumFileDescriptorsOverride_global"></label>
+                        </div>Global Setting (<a href="<?php echo admin_url('admin.php?page=Settings'); ?>">Change Here</a>)<br/>
+                        <div class="mainwp-radio" style="float: left;">
+                          <input type="radio" value="override" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_override" <?php echo ($maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?>"/>
+                          <label for="mainwp_options_maximumFileDescriptorsOverride_override"></label>
+                        </div>Override<br/><br />
+
+                        <div style="float: left">Auto detect:&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e('Enter a fallback value because not all hosts support this function.','mainwp'); ?>)</i></div><div style="clear:both"></div>
+                        <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors"
+                               value="<?php echo $maximumFileDescriptors; ?>"/><span class="mainwp-form_hint"><?php _e('The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp'); ?></span>
+                    </td>
+                </tr>
+                <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
+                    <th scope="row">Load files in memory before zipping <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advise to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/load-files-memory/'); ?></th>
+                    <td>
+                        <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_global" value="1" <?php if ($website->loadFilesBeforeZip == false || $website->loadFilesBeforeZip == 1): ?>checked="true"<?php endif; ?>/> Global setting (<a href="<?php echo admin_url('admin.php?page=Settings'); ?>">Change Here</a>)<br />
+                        <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_yes" value="2" <?php if ($website->loadFilesBeforeZip == 2): ?>checked="true"<?php endif; ?>/> Yes<br />
+                        <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_no" value="0" <?php if ($website->loadFilesBeforeZip == 0): ?>checked="true"<?php endif; ?>/> No<br />
                     </td>
                 </tr>
                 <?php if ($hasRemoteDestinations !== null) { do_action('mainwp_backups_remote_settings', array('website' => $website->id, 'hide' => 'no')); } ?>
@@ -1323,7 +1508,7 @@ class MainWPManageSitesView
                 
                 $plugin_upgrades = json_decode($website->plugin_upgrades, true);
                 if (!is_array($plugin_upgrades)) $plugin_upgrades = array();
-                
+
                 $userExtension = MainWPDB::Instance()->getUserExtension();
                 $globalIgnoredPluginConflicts = json_decode($userExtension->ignored_pluginConflicts, true);
                 
@@ -1465,7 +1650,7 @@ class MainWPManageSitesView
                     false,
                     $verifyCertificate    
                 );
-                
+
                 if (isset($information['error']) && $information['error'] != '')
                 {
                     $error = $information['error'];

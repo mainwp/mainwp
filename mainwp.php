@@ -5,7 +5,7 @@
   Description: Manage all of your WP sites, even those on different servers, from one central dashboard that runs off of your own self-hosted WordPress install.
   Author: MainWP
   Author URI: http://mainwp.com
-  Version: 1.2
+  Version: 1.3-beta5
  */
 include_once(ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'version.php'); //Version information from wordpress
 
@@ -46,20 +46,36 @@ if (!function_exists('mainwpdir'))
     }
 }
 
-function mainwp_do_not_have_permissions($where = "", $echo = true) {    
-    $msg = __("You do not have sufficient permissions to access this page (" . ucwords($where) . ").", "mainwp");
-    if ($echo)
-        echo '<div class="mainwp-permission-error"><p>' . $msg . '</p>If you need access to this page please contact the Dashboard Administrator.</div>';  
-    else 
-        return $msg;          
+if (!function_exists('mainwp_do_not_have_permissions'))
+{
+    function mainwp_do_not_have_permissions($where = "", $echo = true)
+    {
+        $msg = __("You do not have sufficient permissions to access this page (" . ucwords($where) . ").", "mainwp");
+        if ($echo)
+        {
+            echo '<div class="mainwp-permission-error"><p>' . $msg . '</p>If you need access to this page please contact the Dashboard Administrator.</div>';
+        }
+        else
+        {
+            return $msg;
+        }
+        return false;
+    }
 }
 
-function mainwp_current_user_can($cap_type = "", $cap) {    
-    require_once(ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'pluggable.php'); 
-    $current_user = wp_get_current_user();            
-    if ( empty( $current_user ) )
-            return false;    
-    return apply_filters("mainwp_currentusercan", true, $cap_type, $cap);       
+if (!function_exists('mainwp_current_user_can'))
+{
+    function mainwp_current_user_can($cap_type = "", $cap)
+    {
+        require_once(ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'pluggable.php');
+        $current_user = wp_get_current_user();
+        if (empty($current_user))
+        {
+            return false;
+        }
+
+        return apply_filters("mainwp_currentusercan", true, $cap_type, $cap);
+    }
 }
 
 $mainWP = new MainWPSystem(WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename(__FILE__));

@@ -1,10 +1,10 @@
 <?php
 if (session_id() == '') session_start();
-ini_set('display_errors', true);
-error_reporting(E_ALL | E_STRICT);
+//ini_set('display_errors', true);
+//error_reporting(E_ALL | E_STRICT);
 
-//@ini_set('display_errors', false);
-//@error_reporting(0);
+@ini_set('display_errors', false);
+@error_reporting(0);
 define('MAINWP_API_VALID', "VALID");
 define('MAINWP_API_INVALID', "INVALID");
 
@@ -147,9 +147,9 @@ class MainWPSystem
         //MainWPAjax::Instance();
 
         MainWPInstallBulk::init();
-    
-        do_action('mainwp_cronload_action');      
-        
+
+        do_action('mainwp_cronload_action');
+
         //Cron every 5 minutes
         add_action('mainwp_cronofflinecheck_action', array($this, 'mainwp_cronofflinecheck_action'));
         add_action('mainwp_cronstats_action', array($this, 'mainwp_cronstats_action'));
@@ -242,8 +242,8 @@ class MainWPSystem
         add_action('mainwp_fetchurlsauthed', array(&$this, 'filter_fetchUrlsAuthed'), 10, 7);
         add_filter('mainwp_fetchurlauthed', array(&$this, 'filter_fetchUrlAuthed'), 10, 5);
         add_filter('mainwp_getdashboardsites', array(MainWPExtensions::getClassName(), 'hookGetDashboardSites'), 10, 7);
-        add_filter('mainwp-manager-getextensions', array(MainWPExtensions::getClassName(), 'hookManagerGetExtensions'));        
-        
+        add_filter('mainwp-manager-getextensions', array(MainWPExtensions::getClassName(), 'hookManagerGetExtensions'));
+
         $this->posthandler = new MainWPPostHandler();
 
         do_action('mainwp-activated');
@@ -308,17 +308,17 @@ class MainWPSystem
             echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';            
             update_option('mainwp_first_site_events_notice', 'yes');
         } else {
-            if (get_option('mainwp_first_site_events_notice') == 'yes') { 
+            if (get_option('mainwp_first_site_events_notice') == 'yes') {
                 ?>
                 <div id="mainwp-events-notice" class="updated fade">
                 	<p>
                     	<span style="float: right;" ><a id="mainwp-events-notice-dismiss" style="text-decoration: none;" href="#"><?php _e('Dismiss','mainwp'); ?></a></span><span><strong><?php _e('Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">Scheduled Events</a>'); ?></strong></span>
                     	</p>
-                </div>                    
+                </div>
                 <?php
             }
         }
-        
+
     }
 
     public function getVersion()
@@ -1017,7 +1017,7 @@ class MainWPSystem
                             if ($file != '.' && $file != '..')
                             {
                                 $theFile = $dir . $file;
-                                if (preg_match('/(.*)\.zip/', $file) && !preg_match('/(.*).sql.zip$/', $file) && (filemtime($theFile) > $lastBackup))
+                                if (MainWPUtility::isArchive($file) && !MainWPUtility::isSQLArchive($file) && (filemtime($theFile) > $lastBackup))
                                 {
                                     $lastBackup = filemtime($theFile);
                                 }
@@ -1396,6 +1396,35 @@ class MainWPSystem
         add_filter('admin_footer_text', array(&$this, 'admin_footer_text'));
     }
 
+    function uploadFile($file)
+    {
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename=' . basename($file));
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($file));
+        $this->readfile_chunked($file);
+    }
+
+    function readfile_chunked($filename)
+    {
+        $chunksize = 1024; // how many bytes per chunk
+        $handle = @fopen($filename, 'rb');
+        if ($handle === false) return false;
+
+        while (!@feof($handle))
+        {
+            $buffer = @fread($handle, $chunksize);
+            echo $buffer;
+            @ob_flush();
+            @flush();
+            $buffer = null;
+        }
+        return @fclose($handle);
+    }
+
     function parse_init()
     {
         if (isset($_GET['do']) && $_GET['do'] == 'testLog') {
@@ -1419,6 +1448,17 @@ class MainWPSystem
         else if (isset($_GET['do']) && $_GET['do'] == 'cronUpdatesCheck') {
             $this->mainwp_cronupdatescheck_action();
         }
+        else if (isset($_GET['mwpdl']) && isset($_GET['sig']))
+        {
+            $mwpDir = MainWPUtility::getMainWPDir();
+            $mwpDir = $mwpDir[0];
+            $file = trailingslashit($mwpDir) . rawurldecode($_GET['mwpdl']);
+            if (file_exists($file) && md5(filesize($file)) == $_GET['sig'])
+            {
+                $this->uploadFile($file);
+                exit();
+            }
+        }
     }
 
     function login_form()
@@ -1435,9 +1475,9 @@ class MainWPSystem
         $messages['post'][99] = 'You have to select the sites you wish to publish to.';
         return $messages;
     }
-    
+
       function mainwp_warning_notice() {
-        if (get_option('mainwp_installation_warning_hide_the_notice')  == 'yes') 
+        if (get_option('mainwp_installation_warning_hide_the_notice')  == 'yes')
             return;
         ?>
         <div id="mainwp-installation-warning" class="mainwp_info-box-red">
@@ -1902,7 +1942,7 @@ class MainWPSystem
 
     function new_menus()
     {
-        if (true || $this->isAPIValid())
+        if (MainWPUtility::isAdmin()) // || $this->isAPIValid())
         {
             //Adding the page to manage your added sites/groups
             //The first page which will display the post area etc..

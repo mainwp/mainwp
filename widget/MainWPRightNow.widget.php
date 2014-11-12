@@ -1250,7 +1250,7 @@ class MainWPRightNow
                     if ($file != '.' && $file != '..')
                     {
                         $theFile = $dir . $file;
-                        if (preg_match('/(.*)\.zip/', $file) && !preg_match('/(.*).sql.zip$/', $file) && (filemtime($theFile) > $lastBackup))
+                        if (MainWPUtility::isArchive($file) && !MainWPUtility::isSQLArchive($file) && (filemtime($theFile) > $lastBackup))
                         {
                             $lastBackup = filemtime($theFile);
                         }

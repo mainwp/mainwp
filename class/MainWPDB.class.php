@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '7.1';
+    private $mainwp_db_version = '7.7';
     //Private
     private $table_prefix;
     //Singleton
@@ -119,11 +119,22 @@ class MainWPDB
   is_ignorePluginUpdates tinyint(1) NOT NULL DEFAULT 0,
   is_ignoreThemeUpdates tinyint(1) NOT NULL DEFAULT 0,
   verify_certificate tinyint(1) NOT NULL DEFAULT 1,
-  ip text NOT NULL DEFAULT ""';
+  ip text NOT NULL DEFAULT "",
+  maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
+  maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
+  maximumFileDescriptors int(11) NOT NULL DEFAULT 150';
         if ($currentVersion == '') $tbl .= ',
   PRIMARY KEY  (id)  ';
         $tbl .= ')';
         $sql[] = $tbl;
+
+        $tbl = 'CREATE TABLE ' . $this->tableName('wp_settings_backup') . ' (
+  wpid int(11) NOT NULL,
+  archiveFormat text NOT NULL';
+          if ($currentVersion == '') $tbl .= ',
+  PRIMARY KEY  (id)  ';
+          $tbl .= ')';
+          $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->tableName('tips') . ' (
   id int(11) NOT NULL auto_increment,
@@ -176,7 +187,12 @@ class MainWPDB
   fetchResult text NOT NULL DEFAULT "",
   downloadedDB text NOT NULL DEFAULT "",
   downloadedFULL text NOT NULL DEFAULT "",
-  removedFiles tinyint(1) NOT NULL DEFAULT 0
+  downloadedDBComplete tinyint(1) NOT NULL DEFAULT 0,
+  downloadedFULLComplete tinyint(1) NOT NULL DEFAULT 0,
+  removedFiles tinyint(1) NOT NULL DEFAULT 0,
+  attempts int(11) NOT NULL DEFAULT 0,
+  last_error text NOT NULL DEFAULT "",
+  pid int(11) NOT NULL DEFAULT 0
          )';
         $sql[] = $tbl;
 
@@ -189,22 +205,6 @@ class MainWPDB
   exclude text NOT NULL,
   sites text NOT NULL,
   groups text NOT NULL,
-  ftp_enabled tinyint(1) NOT NULL,
-  ftp_address text NOT NULL,
-  ftp_username text NOT NULL,
-  ftp_password text NOT NULL,
-  ftp_path text NOT NULL,
-  ftp_port text NOT NULL,
-  ftp_ssl tinyint(1) NOT NULL,
-  amazon_enabled tinyint(1) NOT NULL,
-  amazon_access text NOT NULL,
-  amazon_secret text NOT NULL,
-  amazon_bucket text NOT NULL,
-  amazon_dir text NOT NULL,
-  dropbox_enabled tinyint(1) NOT NULL,
-  dropbox_username text NOT NULL,
-  dropbox_password text NOT NULL,
-  dropbox_dir text NOT NULL,
   last int(11) NOT NULL,
   last_run int(11) NOT NULL,
   lastStartNotificationSent int(11) NOT NULL DEFAULT 0,
@@ -219,7 +219,12 @@ class MainWPDB
   excludebackup tinyint(1) DEFAULT 0,
   excludecache tinyint(1) DEFAULT 0,
   excludenonwp tinyint(1) DEFAULT 0,
-  excludezip tinyint(1) DEFAULT 0';
+  excludezip tinyint(1) DEFAULT 0,
+  archiveFormat text NOT NULL,
+  loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,
+  maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
+  maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
+  maximumFileDescriptors int(11) NOT NULL DEFAULT 150';
           if ($currentVersion == '') $tbl .= ',
   PRIMARY KEY  (id)  ';
           $tbl .= ');';
@@ -243,11 +248,18 @@ class MainWPDB
             dbDelta($query);
         }
 
+        $this->post_update();
+
         MainWPUtility::update_option('mainwp_db_version', $this->mainwp_db_version);
     }
 
     //Check for update - if required, update..
     function update()
+    {
+
+    }
+
+    function post_update()
     {
         $currentVersion = get_site_option('mainwp_db_version');
         if ($currentVersion === false) return;
@@ -275,30 +287,6 @@ class MainWPDB
                 $this->updateUserExtension($row);
             }
         }
-
-//        if (version_compare($currentVersion, '4.4', '<'))
-//        {
-//            global $wpdb;
-//            $results = $wpdb->get_results('SELECT * FROM ' . $this->tableName('remote_dest'), OBJECT);
-//            if ($results)
-//            {
-//                foreach ($results as $result)
-//                {
-//                    if ($result->type == 'dropbox')
-//                    {
-//                        $wpdb->update($this->tableName('remote_dest'), array('field2' => MainWPUtility::encrypt(MainWPUtility::decrypt_legacy($result->field2, MainWPRemoteDestination::$ENCRYPT), MainWPRemoteDestination::$ENCRYPT)), array('id' => $result->id));
-//                    }
-//                    else if ($result->type == 'ftp')
-//                    {
-//                        $wpdb->update($this->tableName('remote_dest'), array('field3' => MainWPUtility::encrypt(MainWPUtility::decrypt_legacy($result->field3, MainWPRemoteDestination::$ENCRYPT), MainWPRemoteDestination::$ENCRYPT)), array('id' => $result->id));
-//                    }
-//                    else if ($result->type == 'amazon')
-//                    {
-//                        $wpdb->update($this->tableName('remote_dest'), array('field2' => MainWPUtility::encrypt(MainWPUtility::decrypt_legacy($result->field2, MainWPRemoteDestination::$ENCRYPT), MainWPRemoteDestination::$ENCRYPT)), array('id' => $result->id));
-//                    }
-//                }
-//            }
-//        }
 
         if (version_compare($currentVersion, '5.3', '<'))
         {
@@ -328,6 +316,22 @@ class MainWPDB
             foreach ($options as $option)
             {
                 MainWPUtility::fix_option($option);
+            }
+        }
+
+        if (version_compare($currentVersion, '7.3', '<'))
+        {
+            /** @var $wpdb wpdb */
+            global $wpdb;
+
+            //get all sites
+            $sites = $wpdb->get_results('SELECT id FROM ' . $this->tableName('wp'));
+            if (!empty($sites))
+            {
+                foreach ($sites as $site)
+                {
+                    $wpdb->insert($this->tableName('wp_settings_backup'), array('wpid' => $site->id, 'archiveFormat' => 'global'));
+                }
             }
         }
     }
@@ -396,9 +400,9 @@ class MainWPDB
                 $search_site = trim($search_site);
                 $where = ' AND (wp.name LIKE "%'.$search_site.'%" OR wp.url LIKE  "%'.$search_site.'%") ';
             }
-            
+
             $where .= $this->getWhereAllowAccessGroupsSites("site", "wp");
-            
+
             if ($selectgroups) {
                 $qry = 'SELECT wp.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
                 FROM ' . $this->tableName('wp') . ' wp
@@ -442,11 +446,11 @@ class MainWPDB
         {
             $where .= ' AND ' . $extraWhere;
         }
-        
+
         if (!$for_manager) {
             $where .= $this->getWhereAllowAccessGroupsSites("site", "wp");
         }
-        
+
         if ($selectgroups) {
             $qry = 'SELECT wp.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
             FROM ' . $this->tableName('wp') . ' wp
@@ -467,63 +471,63 @@ class MainWPDB
         if (($offset !== false) && ($rowcount !== false)) $qry .= ' LIMIT ' . $offset . ', ' . $rowcount;
         return $qry;
     }
-    
+
     public function getWhereAllowAccessGroupsSites($type = "", $site_table_alias = "", $group_table_alias = "") {
-        
+
         // To fix bug run from cron job
-        global $current_user;        
+        global $current_user;
         if ($current_user->ID == 0)
             return "";
-   
+
         $allowed_sites = apply_filters("mainwp_currentuserallowedaccesssites", "all");
-        $where_site = $where_group = ""; 
-        
+        $where_site = $where_group = "";
+
         if (empty($site_table_alias))
-            $site_table_alias = $this->tableName("wp"); 
-        
+            $site_table_alias = $this->tableName("wp");
+
         if (empty($group_table_alias))
-            $group_table_alias = $this->tableName("group"); 
-        
+            $group_table_alias = $this->tableName("group");
+
         if ($allowed_sites !== "all") {
             if (is_array($allowed_sites) && count($allowed_sites) > 0) {
                 $allowed_sites = implode(",", $allowed_sites);
             } else {
                 $allowed_sites = "";
             }
-            
+
             if (!empty($allowed_sites))
                 $where_site = ' AND ' . $site_table_alias. '.id IN (' . $allowed_sites . ') ';
-            else 
-                $where_site = ' AND 0 ';            
-        } 
-        
-        $allowed_groups = apply_filters("mainwp_currentuserallowedaccessgroups", "all");  
+            else
+                $where_site = ' AND 0 ';
+        }
+
+        $allowed_groups = apply_filters("mainwp_currentuserallowedaccessgroups", "all");
         if ($allowed_groups !== "all") {
             if (is_array($allowed_groups) && count($allowed_groups) > 0) {
                 $allowed_groups = implode(",", $allowed_groups);
             } else {
                 $allowed_groups = "";
             }
-            
-            if (!empty($allowed_groups)) {               
+
+            if (!empty($allowed_groups)) {
                     $where_group = ' AND ' . $group_table_alias. '.id IN (' . $allowed_groups . ') ';
             } else {
-                    $where_group = ' AND 0'; 
-            } 
-        }  
-        
-        $where = "";        
+                    $where_group = ' AND 0';
+            }
+        }
+
+        $where = "";
         if ($type == "site") {
             $where = $where_site;
         } else if ($type == "group") {
             $where = $where_group;
         } else if (empty($type)){ // all sites and groups
             $where = $where_site . $where_group;
-        }        
+        }
         //error_log($where);
         return $where;
     }
-    
+
     public function getGroupByNameForUser($name, $userid = null)
     {
         /** @var $wpdb wpdb */
@@ -556,7 +560,7 @@ class MainWPDB
         /** @var $wpdb wpdb */
         global $wpdb;
 
-        if (MainWPUtility::ctype_digit($userid)) {       
+        if (MainWPUtility::ctype_digit($userid)) {
             $where = $this->getWhereAllowAccessGroupsSites("group");
             return $wpdb->get_results('SELECT * FROM ' . $this->tableName('group') . ' WHERE userid = ' . $userid . $where . ' ORDER BY name', OBJECT_K);
         }
@@ -584,7 +588,7 @@ class MainWPDB
         global $wpdb;
 
         if (MainWPUtility::ctype_digit($websiteid)) {
-            $where = $this->getWhereAllowAccessGroupsSites("group", "", "gr"); 
+            $where = $this->getWhereAllowAccessGroupsSites("group", "", "gr");
             return $wpdb->get_results('SELECT * FROM ' . $this->tableName('group') . ' gr
                 JOIN ' . $this->tableName('wp_group') . ' wpgr ON gr.id = wpgr.groupid
                 WHERE wpgr.wpid = ' . $websiteid . $where . ' ORDER BY name', OBJECT_K);
@@ -602,17 +606,17 @@ class MainWPDB
             global $current_user;
             $userid = $current_user->ID;
         }
-        
+
         $where = "";
-        
+
         if ($userid != null) {
             $where = ' AND gr.userid = ' . $userid ;
         }
-           
+
         if (!$for_manager) {
             $where .= $this->getWhereAllowAccessGroupsSites("group", "", "gr");
         }
-       
+
         return $wpdb->get_results('SELECT gr.*, COUNT(DISTINCT(wpgr.wpid)) as nrsites
                 FROM ' . $this->tableName('group') . ' gr 
                 LEFT JOIN ' . $this->tableName('wp_group') . ' wpgr ON gr.id = wpgr.groupid
@@ -628,8 +632,8 @@ class MainWPDB
         $where = $this->getWhereAllowAccessGroupsSites("group", "", "gr");
         return $wpdb->get_results('SELECT gr.*
             FROM ' . $this->tableName('group') . ' gr
-            WHERE gr.name = "' . $this->escape($name) . '" 
-            ' . $where, OBJECT_K);        
+            WHERE gr.name = "' . $this->escape($name) . '"
+            ' . $where, OBJECT_K);
     }
     
     
@@ -646,8 +650,8 @@ class MainWPDB
         }
 
         $where = ' WHERE 1 ';
-        $where .= $this->getWhereAllowAccessGroupsSites("group", "", "g"); 
-        
+        $where .= $this->getWhereAllowAccessGroupsSites("group", "", "g");
+
         if ($userid != null) $where .= ' AND g.userid = ' . $userid;
         if (!$enableOfflineSites) $where .= ' AND wpsite.sync_errors = ""';
 
@@ -685,6 +689,13 @@ class MainWPDB
         return $wpdb->get_results('SELECT * FROM ' . $this->tableName('wp') . ' WHERE url = "' . $this->escape($url) . '"' . $where, OBJECT);
     }
 
+    public function getWebsiteBackupSettings($websiteid)
+    {
+        if (!MainWPUtility::ctype_digit($websiteid)) return null;
+
+        return $this->getRowResult('SELECT * FROM ' . $this->tableName('wp_settings_backup') . ' WHERE wpid = ' . $websiteid);
+    }
+
     public function getWebsiteById($id, $selectGroups = false)
     {
         return $this->getRowResult($this->getSQLWebsiteById($id, $selectGroups));
@@ -693,8 +704,8 @@ class MainWPDB
     public function getSQLWebsiteById($id, $selectGroups = false)
     {
         if (MainWPUtility::ctype_digit($id))
-        {                        
-            if ($selectGroups) {       
+        {
+            if ($selectGroups) {
                 $where = $this->getWhereAllowAccessGroupsSites("group", "wp", "gr");
                 return 'SELECT wp.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
                 FROM ' . $this->tableName('wp') . ' wp
@@ -703,7 +714,7 @@ class MainWPDB
                 WHERE wp.id = ' . $id . $where . '
                 GROUP BY wp.id';
             }
-            $where = $this->getWhereAllowAccessGroupsSites("site"); 
+            $where = $this->getWhereAllowAccessGroupsSites("site");
             return 'SELECT * FROM ' . $this->tableName('wp') . ' WHERE id = ' . $id . $where;
         }
         return null;
@@ -746,7 +757,7 @@ class MainWPDB
         {
             $where_allowed = $this->getWhereAllowAccessGroupsSites("site", "wp");
             if ($selectgroups)
-            {  
+            {
                 $qry = 'SELECT wp.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
                  FROM ' . $this->tableName('wp') . ' wp
                  JOIN ' . $this->tableName('wp_group') . ' wpgroup ON wp.id = wpgroup.wpid
@@ -759,7 +770,7 @@ class MainWPDB
             }
             else
             {
-                $qry = 'SELECT * FROM ' . $this->tableName('wp') . ' wp JOIN ' . $this->tableName('wp_group') . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid = ' . $id . ' ' . $where_allowed . 
+                $qry = 'SELECT * FROM ' . $this->tableName('wp') . ' wp JOIN ' . $this->tableName('wp_group') . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid = ' . $id . ' ' . $where_allowed .
                                  ($where == null ? '' : ' AND ' . $where) . ' ORDER BY ' . $orderBy;
             }
             if (($offset !== false) && ($rowcount !== false)) $qry .= ' LIMIT ' . $offset . ', ' . $rowcount;
@@ -932,6 +943,8 @@ class MainWPDB
             if ($wpdb->insert($this->tableName('wp'), $values))
             {
                 $websiteid = $wpdb->insert_id;
+                $wpdb->insert($this->tableName('wp_settings_backup'), array('wpid' => $websiteid, 'archiveFormat' => 'global'));
+
                 foreach ($groupnames as $groupname)
                 {
                     if ($wpdb->insert($this->tableName('group'), array('userid' => $userid, 'name' => $this->escape(htmlspecialchars($groupname))))) {
@@ -983,9 +996,9 @@ class MainWPDB
         /** @var $wpdb wpdb */
         global $wpdb;
 
-        if (MainWPUtility::ctype_digit($websiteid)) {            
-            $nr = $wpdb->query('DELETE FROM ' . $this->tableName('wp') . ' WHERE id=' . $websiteid . $where);            
-            $wpdb->query('DELETE FROM ' . $this->tableName('wp_group') . ' WHERE wpid=' . $websiteid . $where);
+        if (MainWPUtility::ctype_digit($websiteid)) {
+            $nr = $wpdb->query('DELETE FROM ' . $this->tableName('wp') . ' WHERE id=' . $websiteid);
+            $wpdb->query('DELETE FROM ' . $this->tableName('wp_group') . ' WHERE wpid=' . $websiteid);
             return $nr;
         }
         return false;
@@ -996,7 +1009,7 @@ class MainWPDB
         /** @var $wpdb wpdb */
         global $wpdb;
 
-        if (MainWPUtility::ctype_digit($groupid)) {            
+        if (MainWPUtility::ctype_digit($groupid)) {
             $nr = $wpdb->query('DELETE FROM ' . $this->tableName('group') . ' WHERE id=' . $groupid);
             $wpdb->query('DELETE FROM ' . $this->tableName('wp_group') . ' WHERE groupid=' . $groupid);
             return $nr;
@@ -1032,7 +1045,7 @@ class MainWPDB
         return false;
     }
 
-    public function updateWebsite($websiteid, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir, $verifyCertificate = 1)
+    public function updateWebsite($websiteid, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifyCertificate = 1, $archiveFormat)
     {
         /** @var $wpdb wpdb */
         global $wpdb;
@@ -1041,11 +1054,14 @@ class MainWPDB
             $website = MainWPDB::Instance()->getWebsiteById($websiteid);
             if (MainWPUtility::can_edit_website($website)) {
                 //update admin
-                $wpdb->query('UPDATE ' . $this->tableName('wp') . ' SET name="' . $this->escape($name) . '", adminname="' . $this->escape($siteadmin) . '",offline_checks="' . $this->escape($offlineChecks) . '",pluginDir="'.$this->escape($pluginDir).'", verify_certificate="'.intval($verifyCertificate).'"  WHERE id=' . $websiteid);
+                $wpdb->query('UPDATE ' . $this->tableName('wp') . ' SET name="' . $this->escape($name) . '", adminname="' . $this->escape($siteadmin) . '",offline_checks="' . $this->escape($offlineChecks) . '",pluginDir="'.$this->escape($pluginDir).'",maximumFileDescriptorsOverride = '.($maximumFileDescriptorsOverride ? 1 : 0) . ',maximumFileDescriptorsAuto= '.($maximumFileDescriptorsAuto ? 1 : 0) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="'.intval($verifyCertificate).'"  WHERE id=' . $websiteid);
+                $wpdb->query('UPDATE ' . $this->tableName('wp_settings_backup') . ' SET archiveFormat = "' . $this->escape($archiveFormat) . '" WHERE wpid=' . $websiteid);
                 //remove groups
                 $wpdb->query('DELETE FROM ' . $this->tableName('wp_group') . ' WHERE wpid=' . $websiteid);
                 //Remove GA stats
+                $showErrors = $wpdb->hide_errors();
                 $wpdb->query('DELETE FROM ' . $this->tableName('wp_ga') . ' WHERE wpid=' . $websiteid);
+                if ($showErrors) $wpdb->show_errors();
                 //add groups with groupnames
                 foreach ($groupnames as $groupname)
                 {
@@ -1158,7 +1174,7 @@ class MainWPDB
         return $wpdb->get_results('SELECT * FROM ' . $this->tableName('wp_backup') . ' WHERE '.($userid == null ? '' : 'userid= ' . $userid . ' AND ') . ' template = 0 ' . ($orderBy != null ? 'ORDER BY ' . $orderBy : ''), OBJECT);
     }
 
-    public function addBackupTask($userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename, $template, $excludebackup, $excludecache, $excludenonwp, $excludezip)
+    public function addBackupTask($userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename, $template, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip)
     {
         /** @var $wpdb wpdb */
         global $wpdb;
@@ -1171,22 +1187,6 @@ class MainWPDB
                 'exclude' => $exclude,
                 'sites' => $sites,
                 'groups' => $groups,
-                'ftp_enabled' => 0,
-                'ftp_address' => '',
-                'ftp_username' => '',
-                'ftp_password' => '',
-                'ftp_path' => '',
-                'ftp_port' => '',
-                'ftp_ssl' => 0,
-                'amazon_enabled' => 0,
-                'amazon_access' => '',
-                'amazon_secret' => '',
-                'amazon_bucket' => '',
-                'amazon_dir' => '',
-                'dropbox_enabled' => 0,
-                'dropbox_username' => '',
-                'dropbox_password' => '',
-                'dropbox_dir' => '',
                 'last' => 0,
                 'last_run' => 0,
                 'last_run_manually' => 0,
@@ -1197,7 +1197,9 @@ class MainWPDB
                 'filename' => $filename,
                 'paused' => 0,
                 'template' => $template,
-                'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip);
+                'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip,
+                'archiveFormat' =>$archiveFormat, 'loadFilesBeforeZip' => $loadFilesBeforeZip, 'maximumFileDescriptorsOverride' => $maximumFileDescriptorsOverride, 'maximumFileDescriptorsAuto' => $maximumFileDescriptorsAuto, 'maximumFileDescriptors' => $maximumFileDescriptors);
+
             if ($wpdb->insert($this->tableName('wp_backup'), $values)) {
                 return $this->getBackupTaskById($wpdb->insert_id);
             }
@@ -1205,14 +1207,16 @@ class MainWPDB
         return false;
     }
 
-    public function updateBackupTask($id, $userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename, $ftp_enabled, $ftp_address, $ftp_username, $ftp_password, $ftp_path, $ftp_port, $ftp_ssl, $amazon_enabled, $amazon_access, $amazon_secret, $amazon_bucket, $amazon_dir, $dropbox_enabled, $dropbox_username, $dropbox_password, $dropbox_dir, $excludebackup, $excludecache, $excludenonwp, $excludezip)
+    public function updateBackupTask($id, $userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip)
     {
         /** @var $wpdb wpdb */
         global $wpdb;
 
         if (MainWPUtility::ctype_digit($userid) && MainWPUtility::ctype_digit($id)) {
-            return $wpdb->update($this->tableName('wp_backup'), array('userid' => $userid, 'name' => $name, 'schedule' => $schedule, 'type' => $type, 'exclude' => $exclude, 'sites' => $sites, 'groups' => $groups, 'subfolder' => MainWPUtility::removePreSlashSpaces($subfolder), 'filename' => $filename, 'ftp_enabled' => $ftp_enabled, 'ftp_address' => $ftp_address, 'ftp_username' => $ftp_username, 'ftp_password' => $ftp_password, 'ftp_path' => $ftp_path, 'ftp_port' => $ftp_port, 'ftp_ssl' => $ftp_ssl, 'amazon_enabled' => $amazon_enabled, 'amazon_access' => $amazon_access, 'amazon_secret' => $amazon_secret, 'amazon_bucket' => $amazon_bucket, 'amazon_dir' => $amazon_dir, 'dropbox_enabled' => $dropbox_enabled, 'dropbox_username' => $dropbox_username, 'dropbox_password' => $dropbox_password, 'dropbox_dir' => $dropbox_dir,
-                            'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip), array('id' => $id));
+            return $wpdb->update($this->tableName('wp_backup'), array('userid' => $userid, 'name' => $name, 'schedule' => $schedule, 'type' => $type, 'exclude' => $exclude, 'sites' => $sites, 'groups' => $groups, 'subfolder' => MainWPUtility::removePreSlashSpaces($subfolder), 'filename' => $filename,
+                            'excludebackup' => $excludebackup, 'excludecache' => $excludecache, 'excludenonwp' => $excludenonwp, 'excludezip' => $excludezip,
+                            'archiveFormat' =>$archiveFormat, 'loadFilesBeforeZip' => $loadFilesBeforeZip, 'maximumFileDescriptorsOverride' => $maximumFileDescriptorsOverride,
+                'maximumFileDescriptorsAuto' => $maximumFileDescriptorsAuto, 'maximumFileDescriptors' => $maximumFileDescriptors), array('id' => $id));
         }
         return false;
     }
@@ -1251,17 +1255,17 @@ class MainWPDB
         return false;
     }
 
-    public function updateBackupLast($id)
-    {
-        /** @var $wpdb wpdb */
-        global $wpdb;
-
-        if (MainWPUtility::ctype_digit($id))
-        {
-            return $wpdb->update($this->tableName('wp_backup'), array('last' => time()), array('id' => $id));
-        }
-        return false;
-    }
+//    public function updateBackupLast($id)
+//    {
+//        /** @var $wpdb wpdb */
+//        global $wpdb;
+//
+//        if (MainWPUtility::ctype_digit($id))
+//        {
+//            return $wpdb->update($this->tableName('wp_backup'), array('last' => time()), array('id' => $id));
+//        }
+//        return false;
+//    }
 
     public function updateBackupCompleted($id)
     {
@@ -1282,7 +1286,7 @@ class MainWPDB
 
         if (MainWPUtility::ctype_digit($id))
         {
-            if (($errors == null) || ($errors == ''))
+            if ($errors == '')
             {
                 return $wpdb->update($this->tableName('wp_backup'), array('backup_errors' => ''), array('id' => $id));
             }
@@ -1361,7 +1365,7 @@ class MainWPDB
     {
         /** @var $wpdb wpdb */
         global $wpdb;
-        
+
         return $wpdb->update($this->tableName('wp'), array('statsUpdate' => time(), 'pagerank' => $pageRank, 'indexed' => $indexed, 'alexia' => $alexia,
             'pagerank_old' => $pageRank_old, 'indexed_old' => $indexed_old, 'alexia_old' => $alexia_old), array('id' => $websiteid));
     }
@@ -1370,7 +1374,7 @@ class MainWPDB
     {
         /** @var $wpdb wpdb */
         global $wpdb;
-        
+
         return $wpdb->get_results('SELECT * FROM ' . $this->tableName('wp_backup') . ' WHERE paused = 0 AND completed < last_run'//AND '. time() . ' - last_run >= 120 AND ' . time() . ' - last >= 120'
             , OBJECT);
     }

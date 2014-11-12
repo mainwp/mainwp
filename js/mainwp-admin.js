@@ -26,5 +26,14 @@ mainwp_managetips_removeTip = function(_this)
     container.find('.mainwp_managetips_tip_seq').val('');
     container.find('.mainwp_managetips_tip_content').val('');
 };
+jQuery(document).on('change', '#mainwp_archiveFormat', function()
+{
+    var zipMethod = jQuery(this).val();
+    zipMethod = zipMethod.replace(/\./g,'\\.');
+    jQuery('span.archive_info').hide();
+    jQuery('span#info_'+zipMethod).show();
 
+    jQuery('tr.archive_method').hide();
+    jQuery('tr.archive_'+zipMethod).show();
+});
 

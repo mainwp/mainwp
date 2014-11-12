@@ -39,10 +39,10 @@ class MainWPInstallBulk
     {
         if (($type == "plugin" && !mainwp_current_user_can("dashboard", "install_plugins")) ||
             ($type == "theme" && !mainwp_current_user_can("dashboard", "install_themes"))) {
-            mainwp_do_not_have_permissions("install plugins");  
+            mainwp_do_not_have_permissions("install plugins");
             return;
         }
-        
+
         $tab = 'search';
         if (isset($_REQUEST['tab'])) {
             $tab = $_REQUEST['tab'];
@@ -51,8 +51,8 @@ class MainWPInstallBulk
         ?>
             <?php
             if ($tab == 'install') {
-                
-            } else {             
+
+            } else {
                 ?>
                 <a href="#" class="mainwp_action left <?php if ($tab == 'search') { echo 'mainwp_action_down'; } ?>" id="MainWPInstallBulkNavSearch"><?php _e('Search','mainwp'); ?></a><a href="#" class="mainwp_action right <?php if ($tab == 'upload') { echo 'mainwp_action_down'; } ?>" id="MainWPInstallBulkNavUpload"><?php _e('Upload','mainwp'); ?></a>
 
@@ -128,7 +128,7 @@ class MainWPInstallBulk
 
      //Renders the upload sub part
     public static function renderUpload($title) {
-        ?>       
+        ?>
         <?php if ($title == 'Plugins') { ?>
         <div class="mainwp_info-box-red" id="mainwp-ext-notice" style="margin-top: 1em;">
             <span><?php _e('<strong>Do Not upload extensions here</strong>, they do not go on the child sites, upload and activate them via your dashboard sites <a href="/wp-admin/plugin-install.php" style="text-decoration: none;">plugin screen.</a>','mainwp'); ?></span>
@@ -226,6 +226,14 @@ class MainWPInstallBulk
             $url = $api->download_link;
         } else {
             $url = $_POST['url'];
+
+            $mwpDir = MainWPUtility::getMainWPDir();
+            $mwpUrl = $mwpDir[1];
+            if (stristr($url, $mwpUrl))
+            {
+                $fullFile = $mwpDir[0] . str_replace($mwpUrl, '', $url);
+                $url = admin_url('?sig=' . md5(filesize($fullFile)) . '&mwpdl=' . rawurlencode(str_replace($mwpDir[0], "", $fullFile)));
+            }
         }
 
         $output = array();
@@ -315,9 +323,9 @@ class MainWPInstallBulk
         }
 
         $output['urls'] = array();
-        $url = MainWPUtility::getMainWPSpecificUrl('bulk');
+
         foreach ($_POST['files'] as $file) {
-            $output['urls'][] = $url . rawurlencode($file);
+            $output['urls'][] = MainWPUtility::getDownloadUrl('bulk', $file);
         }
         $output['urls'] = implode('||', $output['urls']);
         $output['urls'] = apply_filters('mainwp_installbulk_prepareupload', $output['urls']);
@@ -383,9 +391,9 @@ class MainWPInstallBulk
     }
 }
 /**
- * 
+ *
  * DO NOT TOUCH - part of http://github.com/valums/file-uploader ! (@see js/fileuploader.js)
- * 
+ *
  */
 /**
  * Handle file uploads via XMLHttpRequest
@@ -451,7 +459,7 @@ class qq2UploadedFileXhr {
             return (int)$_SERVER["CONTENT_LENGTH"];
         } else {
             throw new Exception('Getting content length is not supported.');
-         } 
+         }
     }
 }
 /**

@@ -10,18 +10,18 @@ class MainWPPostHandler
     function init()
     {
         //Page: ManageBackups
-        $this->addAction('mainwp_addbackup', array(&$this, 'mainwp_addbackup'));        
+        $this->addAction('mainwp_addbackup', array(&$this, 'mainwp_addbackup'));
         if (mainwp_current_user_can("dashboard", "edit_backup_tasks")) {
             $this->addAction('mainwp_updatebackup', array(&$this, 'mainwp_updatebackup'));
-        }        
+        }
         if (mainwp_current_user_can("dashboard", "delete_backup_tasks")) {
             $this->addAction('mainwp_removebackup', array(&$this, 'mainwp_removebackup'));
-        }        
+        }
         $this->addAction('mainwp_pausebackup', array(&$this, 'mainwp_pausebackup'));
         $this->addAction('mainwp_resumebackup', array(&$this, 'mainwp_resumebackup'));
-        add_action('wp_ajax_mainwp_site_dirs', array(&$this, 'mainwp_site_dirs')); //ok        
+        add_action('wp_ajax_mainwp_site_dirs', array(&$this, 'mainwp_site_dirs')); //ok
         add_action('wp_ajax_mainwp_backuptask_get_sites', array(&$this, 'mainwp_backuptask_get_sites')); //ok
-        
+
         if (mainwp_current_user_can("dashboard", "run_backup_tasks")) {
             $this->addAction('mainwp_backuptask_run_site', array(&$this, 'mainwp_backuptask_run_site'));
         }
@@ -30,11 +30,11 @@ class MainWPPostHandler
         //Page: ManageSites
         $this->addAction('mainwp_checkwp', array(&$this, 'mainwp_checkwp'));
         $this->addAction('mainwp_addwp', array(&$this, 'mainwp_addwp'));
-        
+
         if (mainwp_current_user_can("dashboard", "test_connection")) {
             $this->addAction('mainwp_testwp', array(&$this, 'mainwp_testwp'));
         }
-        
+
         $this->addAction('mainwp_removesite', array(&$this, 'mainwp_removesite'));
         $this->addAction('mainwp_notes_save', array(&$this, 'mainwp_notes_save'));
         add_action('wp_ajax_mainwp_reconnectwp', array(&$this, 'mainwp_reconnectwp')); //ok
@@ -76,13 +76,15 @@ class MainWPPostHandler
 
         //Page: backup
         if (mainwp_current_user_can("dashboard", "run_backup_tasks")) {
-            $this->addAction('mainwp_backup_run_site', array(&$this, 'mainwp_backup_run_site'));            
+            $this->addAction('mainwp_backup_run_site', array(&$this, 'mainwp_backup_run_site'));
         }
         if (mainwp_current_user_can("dashboard", "execute_backups")) {
             $this->addAction('mainwp_backup', array(&$this, 'mainwp_backup'));
-        }        
+        }
+        $this->addAction('mainwp_backup_checkpid', array(&$this, 'mainwp_backup_checkpid'));
         $this->addAction('mainwp_createbackup_getfilesize', array(&$this, 'mainwp_createbackup_getfilesize'));
         $this->addAction('mainwp_backup_download_file', array(&$this, 'mainwp_backup_download_file'));
+        $this->addAction('mainwp_backup_delete_file', array(&$this, 'mainwp_backup_delete_file'));
         $this->addAction('mainwp_backup_getfilesize', array(&$this, 'mainwp_backup_getfilesize'));
         $this->addAction('mainwp_backup_upload_getprogress', array(&$this, 'mainwp_backup_upload_getprogress'));
 
@@ -100,14 +102,14 @@ class MainWPPostHandler
 
         //Page: ManageTips
         add_action('wp_ajax_mainwp_managetips_update', array(&$this, 'mainwp_managetips_update')); //ok
-        
+
         //Page: OfflineChecks
         if (mainwp_current_user_can("dashboard", "manage_offline_checks")) {
             add_action('wp_ajax_mainwp_offline_check_save', array(&$this, 'mainwp_offline_check_save')); //ok
             add_action('wp_ajax_mainwp_offline_check_save_bulk', array(&$this, 'mainwp_offline_check_save_bulk')); //ok
             add_action('wp_ajax_mainwp_offline_check_check', array(&$this, 'mainwp_offline_check_check')); //ok
         }
-        
+
         //Page: Recent Posts
         if (mainwp_current_user_can("dashboard", "manage_posts")) {
             $this->addAction('mainwp_post_unpublish', array(&$this, 'mainwp_post_unpublish'));
@@ -154,14 +156,14 @@ class MainWPPostHandler
         //Page: Themes
         add_action('wp_ajax_mainwp_themes_search', array(&$this, 'mainwp_themes_search')); //ok
         add_action('wp_ajax_mainwp_themes_search_all', array(&$this, 'mainwp_themes_search_all')); //ok
-        if (mainwp_current_user_can("dashboard", "activate_themes")) { 
+        if (mainwp_current_user_can("dashboard", "activate_themes")) {
             $this->addAction('mainwp_theme_activate', array(&$this, 'mainwp_theme_activate'));
         }
-        if (mainwp_current_user_can("dashboard", "delete_themes")) { 
+        if (mainwp_current_user_can("dashboard", "delete_themes")) {
             $this->addAction('mainwp_theme_delete', array(&$this, 'mainwp_theme_delete'));
-        }        
+        }
         $this->addAction('mainwp_trusted_theme_notes_save', array(&$this, 'mainwp_trusted_theme_notes_save'));
-        if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { 
+        if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) {
             $this->addAction('mainwp_theme_ignore_updates', array(&$this, 'mainwp_theme_ignore_updates'));
         }
 
@@ -175,8 +177,8 @@ class MainWPPostHandler
         if (mainwp_current_user_can("dashboard", "delete_plugins")) {
             $this->addAction('mainwp_plugin_delete', array(&$this, 'mainwp_plugin_delete'));
         }
-        
-        if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { 
+
+        if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) {
             $this->addAction('mainwp_plugin_ignore_updates', array(&$this, 'mainwp_plugin_ignore_updates'));
         }
         $this->addAction('mainwp_trusted_plugin_notes_save', array(&$this, 'mainwp_trusted_plugin_notes_save'));
@@ -199,14 +201,14 @@ class MainWPPostHandler
 
         $this->addAction('mainwp_extension_change_view', array(&$this, 'mainwp_extension_change_view'));
         $this->addAction('mainwp_events_notice_hide', array(&$this, 'mainwp_events_notice_hide'));
-        $this->addAction('mainwp_installation_warning_hide', array(&$this, 'mainwp_installation_warning_hide'));        
+        $this->addAction('mainwp_installation_warning_hide', array(&$this, 'mainwp_installation_warning_hide'));
         MainWPExtensions::initAjaxHandlers();
     }
 
     function mainwp_installation_warning_hide() {
         update_option("mainwp_installation_warning_hide_the_notice", "yes");
         die('ok');
-    }    
+    }
 
     /**
      * Page: Users
@@ -630,7 +632,27 @@ class MainWPPostHandler
             $excludedFolder = array_map(array('MainWPUtility', 'trimSlashes'), $excludedFolder);
             $excludedFolder = implode(",", $excludedFolder);
 
-            die(json_encode(array('result' => MainWPManageSites::backup($_POST['site_id'], $_POST['type'], (isset($_POST['subfolder']) ? $_POST['subfolder'] : ''), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset($_POST['fileNameUID']) ? $_POST['fileNameUID'] : ''))));
+            $result = MainWPManageSites::backup($_POST['site_id'], $_POST['type'], (isset($_POST['subfolder']) ? $_POST['subfolder'] : ''), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset($_POST['fileNameUID']) ? $_POST['fileNameUID'] : '', $_POST['archiveFormat'], ($_POST['maximumFileDescriptorsOverride'] == 1), ($_POST['maximumFileDescriptorsAuto'] == 1), $_POST['maximumFileDescriptors'], $_POST['loadFilesBeforeZip'], $_POST['pid'], (isset($_POST['append']) && ($_POST['append'] == 1)));
+            die(json_encode(array('result' => $result)));
+        }
+        catch (MainWPException $e)
+        {
+            die(json_encode(array('error' => array('message' => $e->getMessage(), 'extra' => $e->getMessageExtra()))));
+        }
+    }
+
+    function mainwp_backup_checkpid()
+    {
+        $this->secure_request('mainwp_backup_checkpid');
+
+        try
+        {
+            if (!isset($_POST['site_id']) || !MainWPUtility::ctype_digit($_POST['site_id']))
+            {
+                throw new MainWPException('Invalid request');
+            }
+
+            die(json_encode(MainWPManageSites::backupCheckpid($_POST['site_id'], $_POST['pid'], $_POST['type'], $_POST['subfolder'], $_POST['filename'])));
         }
         catch (MainWPException $e)
         {
@@ -650,6 +672,25 @@ class MainWPPostHandler
             }
 
             die(json_encode(array('result' => MainWPManageSites::backupDownloadFile($_POST['site_id'], $_POST['type'], $_POST['url'], $_POST['local']))));
+        }
+        catch (MainWPException $e)
+        {
+            die(json_encode(array('error' => array('message' => $e->getMessage(), 'extra' => $e->getMessageExtra()))));
+        }
+    }
+
+    function mainwp_backup_delete_file()
+    {
+        $this->secure_request('mainwp_backup_delete_file');
+
+        try
+        {
+            if (!isset($_POST['site_id']) || !MainWPUtility::ctype_digit($_POST['site_id']))
+            {
+                throw new MainWPException('Invalid request');
+            }
+
+            die(json_encode(array('result' => MainWPManageSites::backupDeleteFile($_POST['site_id'], $_POST['file']))));
         }
         catch (MainWPException $e)
         {
@@ -1020,7 +1061,7 @@ class MainWPPostHandler
     {
         if (!mainwp_current_user_can("dashboard", "delete_sites"))
             die(json_encode(array('error' => mainwp_do_not_have_permissions("delete sites", false))));
-        
+
         $this->secure_request('mainwp_removesite');
 
         MainWPManageSites::removeSite();
@@ -1056,7 +1097,7 @@ class MainWPPostHandler
     {
         if (!mainwp_current_user_can("dashboard", "update_wordpress"))
             die(json_encode(array('error' => mainwp_do_not_have_permissions("update Wordpress", $echo = false))));
-        
+
         $this->secure_request('mainwp_upgradewp');
 
         try
@@ -1078,10 +1119,10 @@ class MainWPPostHandler
     {
         if ($_POST['type'] == "plugin" && !mainwp_current_user_can("dashboard", "update_plugins"))
             die(json_encode(array('error' => mainwp_do_not_have_permissions("update plugins", $echo = false))));
-        
+
         if ($_POST['type'] == "theme" && !mainwp_current_user_can("dashboard", "update_themes"))
             die(json_encode(array('error' => mainwp_do_not_have_permissions("update themes", $echo = false))));
-        
+
         $this->secure_request('mainwp_upgradeplugintheme');
 
         try
@@ -1143,7 +1184,7 @@ class MainWPPostHandler
         if (!mainwp_current_user_can("dashboard", "ignore_unignore_updates")) {
              die(json_encode(array('error' => mainwp_do_not_have_permissions("ignore/unignor updates"))));
         }
-        
+
         if (!isset($_POST['slug']))
         {
             die(json_encode(array('error' => 'Invalid request')));
@@ -1236,6 +1277,18 @@ class MainWPPostHandler
     function secure_request($action, $query_arg = 'security')
     {
         if (!$this->check_security($action, $query_arg)) die(json_encode(array('error' => 'Invalid request')));
+
+        if (isset($_POST['dts']))
+        {
+            $ajaxPosts = get_option('mainwp_ajaxposts');
+            if (!is_array($ajaxPosts)) $ajaxPosts = array();
+
+            //If already processed, just quit!
+            if (isset($ajaxPosts[$action]) && ($ajaxPosts[$action] == $_POST['dts'])) die(json_encode(array('error' => 'Double request')));
+
+            $ajaxPosts[$action] = $_POST['dts'];
+            MainWPUtility::update_option('mainwp_ajaxposts', $ajaxPosts);
+        }
     }
 
     function check_security($action = -1, $query_arg = 'security')

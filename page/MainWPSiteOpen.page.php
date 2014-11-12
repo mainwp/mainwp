@@ -11,7 +11,7 @@ class MainWPSiteOpen
         if (!mainwp_current_user_can("dashboard", "access_wpadmin_on_child_sites")) {
             mainwp_do_not_have_permissions("WP-Admin on child sites");
             return;
-        }        
+        }
         if (!isset($_GET['websiteid'])) exit();
 
         $id = $_GET['websiteid'];
@@ -87,10 +87,10 @@ class MainWPSiteOpen
         $file = "";
         if (isset($_GET['f'])) $file = base64_decode($_GET['f']);
 
-        MainWPSiteOpen::openSiteRestore($website, $file);
+        MainWPSiteOpen::openSiteRestore($website, $file, $_GET['size']);
     }
 
-    public static function openSiteRestore($website, $file)
+    public static function openSiteRestore($website, $file, $size)
     {
         ?>
     <div class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
@@ -103,12 +103,6 @@ class MainWPSiteOpen
                 $url = (isset($website->siteurl) && $website->siteurl != '' ? $website->siteurl : $website->url);
                 $url .= (substr($url, -1) != '/' ? '/' : '');
 
-                $upload_dir = wp_upload_dir();
-                $upload_base_dir = $upload_dir['basedir'];
-                $upload_base_url = $upload_dir['baseurl'];
-
-                $size = filesize($upload_base_dir . urldecode($file));
-                $file = $upload_base_url . $file;
                 $postdata = MainWPUtility::getGetDataAuthed($website, $file, MainWPUtility::getFileParameter($website), true);
                 $postdata['size'] = $size;
                 ?>

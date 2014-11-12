@@ -28,7 +28,7 @@ class MainWPAPISettingsView
         <div id="mainwp_api_errors" class="mainwp_error error" style="display: none"></div>
         <div id="mainwp_api_message" class="mainwp_updated updated" style="display: none"></div>
         <br />
-        
+
         <h3><?php _e('Initial MainWP Settings','mainwp'); ?></h3>
         <table class="form-table">
             <tbody>
@@ -88,7 +88,7 @@ class MainWPAPISettingsView
         <div class="inside">
         <div id="mainwp_api_errors" class="mainwp_error error" style="display: none"></div>
         <div id="mainwp_api_message" class="mainwp_updated updated" style="display: none"></div>
-       
+
         <h3 style="border-bottom: none !important;"><?php _e('MainWP Account - <em>Required for Support, Extensions, Ideas and Automated Cron Jobs</em>','mainwp'); ?>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://mainwp.com/dashboard-signup" target="_blank" class="button button-primary mainwp-upgrade-button button-hero" style="margin-top: -1em"><?php _e('Create MainWP Account', 'mainwp'); ?></a></h3>
         <table class="form-table">
             <tbody>

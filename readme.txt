@@ -7,7 +7,7 @@ Author URI: http://mainwp.com
 Plugin URI: http://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.0
-Stable tag: 1.2
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 1.2.1 =
+* Added Auto detection of allowed File Descriptors during backups
+* Added Hide Dashboard from non-admins on Dashboard site
+* Fixed issue with some links in posts
 
 = 1.2 =
 * Added Tooltips on server information page

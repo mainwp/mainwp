@@ -166,8 +166,10 @@ class MainWPManageSites
             $ext = '.' . MainWPUtility::getCurrentArchiveExtension($website, $pTask);
         }
 
-        $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $type), $pFilename) . $ext;
+        $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $type), $pFilename);
         $file = str_replace('%', '', $file);
+
+        if (!empty($file)) $file .= $ext;
 
         if ($pTask->archiveFormat == 'zip')
         {
@@ -248,7 +250,7 @@ class MainWPManageSites
             $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('fetchResult' => json_encode($information)));
         }
         //If not fetchResult, we had a timeout.. Retry this!
-        else if ($backupTaskProgress->fetchResult == '[]')
+        else if (empty($backupTaskProgress->fetchResult))
         {
             try
             {
@@ -278,7 +280,7 @@ class MainWPManageSites
                                 'file_descriptors_auto' => $maximumFileDescriptorsAuto,
                                 'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip,
                                 'pid' => $backupTaskProgress->pid, 'append' => '1',
-                                MainWPUtility::getFileParameter($website) => $file), false, false, false);
+                                MainWPUtility::getFileParameter($website) => $temp['file']), false, false, false);
                         }
                         catch (MainWPException $e)
                         {
@@ -296,6 +298,7 @@ class MainWPManageSites
                 else if ($temp['status'] == 'invalid')
                 {
                     $error = json_decode($backupTaskProgress->last_error);
+
                     if (!is_array($error))
                     {
                         throw new MainWPException('Backup failed.');
@@ -452,10 +455,10 @@ class MainWPManageSites
                     $localBackupFile = $backupTaskProgress->downloadedDB;
                 }
 
-                if ($backupTaskProgress->downloadDBComplete == 0)
+                if ($backupTaskProgress->downloadedDBComplete == 0)
                 {
                     MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $information['db'], 'fdl'), $localBackupFile, $information['size']);
-                    $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadDBComplete' => 1));
+                    $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadedDBComplete' => 1));
                 }
             }
 
@@ -483,11 +486,32 @@ class MainWPManageSites
                 }
 
 
-                if ($backupTaskProgress->downloadDBComplete == 0)
+                if ($backupTaskProgress->downloadedFULLComplete == 0)
                 {
+                    if (@file_exists($localBackupFile))
+                    {
+                        $time = @filemtime($localBackupFile);
+
+                        $minutes = date('i', time());
+                        $seconds = date('s', time());
+
+                        $file_minutes = date('i', $time);
+                        $file_seconds = date('s', $time);
+
+                        $minuteDiff = $minutes - $file_minutes;
+                        if ($minuteDiff == 59) $minuteDiff = 1;
+                        $secondsdiff = ($minuteDiff * 60) + $seconds - $file_seconds;
+
+                        if ($secondsdiff < 60)
+                        {
+                            //still downloading..
+                            return false;
+                        }
+                    }
+
                     MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $information['full'], 'fdl'), $localBackupFile, $information['size']);
                     MainWPUtility::fetchUrlAuthed($website, 'delete_backup', array('del' => $information['full']));
-                    $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadDBComplete' => 1));
+                    $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadedFULLComplete' => 1));
                 }
             }
 

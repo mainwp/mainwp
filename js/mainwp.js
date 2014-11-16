@@ -4826,11 +4826,11 @@ jQuery(document).ready(function () {
         mainwp_fetch_plugins();
     });
     jQuery('#mainwp_show_all_themes').live('click', function () {
-        mainwp_fetch_all_themes();
+        mainwp_fetch_all_themes(true);
         return false;
     });
     jQuery('#mainwp_show_all_active_plugins').live('click', function () {
-        mainwp_fetch_all_active_plugins();
+        mainwp_fetch_all_active_plugins(true);
         return false;
     });
     jQuery('.mainwp_plugin_check_all').live('change', function () {
@@ -5060,10 +5060,15 @@ mainwp_fetch_plugins = function () {
     });
 };
 
-mainwp_fetch_all_active_plugins = function () {
+mainwp_fetch_all_active_plugins = function (pSearch) {
     var data = {
-        action:'mainwp_plugins_search_all_active'
+        action:'mainwp_plugins_search_all_active',
     };
+    
+    if (pSearch) {
+        data['keyword'] = jQuery("#mainwp_au_plugin_keyword").val();
+        data['status'] = jQuery("#mainwp_au_plugin_status").val();
+    }
 
     jQuery('#mainwp_plugins_loading').show();
     jQuery.post(ajaxurl, data, function (response) {
@@ -5075,11 +5080,16 @@ mainwp_fetch_all_active_plugins = function () {
     });
 };
 
-mainwp_fetch_all_themes = function () {
+mainwp_fetch_all_themes = function (pSearch) {
     var data = {
         action:'mainwp_themes_search_all'
     };
 
+    if (pSearch) {
+        data['keyword'] = jQuery("#mainwp_au_theme_keyword").val();
+        data['status'] = jQuery("#mainwp_au_theme_status").val();
+    }
+    
     jQuery('#mainwp_themes_loading').show();
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);

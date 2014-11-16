@@ -23,7 +23,7 @@ class MainWPPlugins
         if (mainwp_current_user_can("dashboard", "install_plugins")) {
             add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<div class="mainwp-hidden">Install</div>', 'read', 'PluginsInstall', array(MainWPPlugins::getClassName(), 'renderInstall'));
         }
-        add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<div class="mainwp-hidden">Auto Update Trust</div>', 'read', 'PluginsAutoUpdate', array(MainWPPlugins::getClassName(), 'renderAutoUpdate'));
+        add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<div class="mainwp-hidden">Auto Updates</div>', 'read', 'PluginsAutoUpdate', array(MainWPPlugins::getClassName(), 'renderAutoUpdate'));
         add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<div class="mainwp-hidden">Ignored Updates</div>', 'read', 'PluginsIgnore', array(MainWPPlugins::getClassName(), 'renderIgnore'));
         add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<div class="mainwp-hidden">Ignored Conflicts</div>', 'read', 'PluginsIgnoredConflicts', array(MainWPPlugins::getClassName(), 'renderIgnoredConflicts'));
         add_submenu_page('mainwp_tab', __('Plugins Help','mainwp'), '<div class="mainwp-hidden">Plugins Help</div>', 'read', 'PluginsHelp', array(MainWPPlugins::getClassName(), 'QSGManagePlugins'));
@@ -49,7 +49,7 @@ class MainWPPlugins
                     <?php if (mainwp_current_user_can("dashboard", "install_plugins")) { ?>
                     <a href="<?php echo admin_url('admin.php?page=PluginsInstall'); ?>" class="mainwp-submenu"><?php _e('Install','mainwp'); ?></a>
                     <?php } ?>
-                    <a href="<?php echo admin_url('admin.php?page=PluginsAutoUpdate'); ?>" class="mainwp-submenu"><?php _e('Auto Update Trust','mainwp'); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=PluginsAutoUpdate'); ?>" class="mainwp-submenu"><?php _e('Auto Updates','mainwp'); ?></a>
                     <a href="<?php echo admin_url('admin.php?page=PluginsIgnore'); ?>" class="mainwp-submenu"><?php _e('Ignored Updates','mainwp'); ?></a>
                     <a href="<?php echo admin_url('admin.php?page=PluginsIgnoredConflicts'); ?>" class="mainwp-submenu"><?php _e('Ignored Conflicts','mainwp'); ?></a>
                     <?php
@@ -89,7 +89,7 @@ class MainWPPlugins
                 <?php if (mainwp_current_user_can("dashboard", "install_plugins")) { ?>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Install') { echo "nav-tab-active"; } ?>" href="admin.php?page=PluginsInstall"><?php _e('Install','mainwp'); ?></a>
                 <?php } ?>
-                <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'AutoUpdate') { echo "nav-tab-active"; } ?>" href="admin.php?page=PluginsAutoUpdate"><?php _e('Auto Update Trust','mainwp'); ?></a>
+                <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'AutoUpdate') { echo "nav-tab-active"; } ?>" href="admin.php?page=PluginsAutoUpdate"><?php _e('Auto Updates','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Ignore') { echo "nav-tab-active"; } ?>" href="admin.php?page=PluginsIgnore"><?php _e('Ignored Updates','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'IgnoredConflicts') { echo "nav-tab-active"; } ?>" href="admin.php?page=PluginsIgnoredConflicts"><?php _e('Ignored Conflicts','mainwp'); ?></a>
                 <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage === 'PluginsHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=PluginsHelp"><?php _e('Help','mainwp'); ?></a>
@@ -160,9 +160,15 @@ class MainWPPlugins
     }
 
     public static function renderAllActiveTable($output = null)
-    {
+    {  
+        $keyword = null;
+        $search_status = 'all';
+        
         if ($output == null)
         {
+            $keyword = isset($_POST['keyword']) && !empty($_POST['keyword']) ? trim($_POST["keyword"]) : null;
+            $search_status = isset($_POST['status']) ? $_POST['status'] : "all";
+            
             $output = new stdClass();
             $output->errors = array();
             $output->plugins = array();
@@ -180,7 +186,8 @@ class MainWPPlugins
                     {
                         $plugin = $allPlugins[$i];
                         if ($plugin['active'] != 1) continue;
-
+                        if ($keyword != '' && stristr($theme['name'], $keyword) === false) 
+                            continue;
                         $plugin['websiteid'] = $website->id;
                         $plugin['websiteurl'] = $website->url;
                         $output->plugins[] = $plugin;
@@ -201,7 +208,7 @@ class MainWPPlugins
                 @MainWPDB::free_result($websites);
 
                 $post_data = array(
-                    'keyword' => '',
+                    'keyword' => $keyword,
                     'status' => 'active'
                 );
                 MainWPUtility::fetchUrlsAuthed($dbwebsites, 'get_all_plugins', $post_data, array(MainWPPlugins::getClassName(), 'PluginsSearch_handler'), $output);
@@ -218,6 +225,7 @@ class MainWPPlugins
                     {
                         session_start();
                         $_SESSION['MainWPPluginsActive'] = $output;
+                        $_SESSION['MainWPPluginsActiveStatus'] = array('keyword' => $keyword, 'status' => $search_status);
                         return;
                     }
                 }
@@ -225,8 +233,20 @@ class MainWPPlugins
 
             if (session_id() == '') session_start();
             $_SESSION['MainWPPluginsActive'] = $output;
+            $_SESSION['MainWPPluginsActiveStatus'] = array('keyword' => $keyword, 'status' => $search_status);
+            
+        } else {
+            if (isset($_SESSION['MainWPPluginsActiveStatus'])) {
+                $keyword = $_SESSION['MainWPPluginsActiveStatus']['keyword'];
+                $search_status = $_SESSION['MainWPPluginsActiveStatus']['status'];
+            }
         }
-
+        
+        if (!empty($keyword)) {
+            if (stristr("MainWP Child", $keyword) !== false) 
+                $output->plugins[] = array('slug' => 'mainwp-child/mainwp-child.php', 'name' => 'MainWP Child');
+        }
+        
         if (count($output->plugins) == 0)
         {
             _e('No plugins found', 'mainwp');
@@ -242,16 +262,7 @@ class MainWPPlugins
     </div>
     <div class="clear"></div>
 
-
-    <?php
-        $output->plugins[] = array('slug' => 'mainwp-child/mainwp-child.php', 'name' => 'MainWP Child');
-        if (count($output->plugins) == 0) {
-            ?>
-        No plugins found
-        <?php
-            return;
-        }
-
+    <?php        
         //Map per siteId
         $plugins = array(); //name_version -> slug
         foreach ($output->plugins as $plugin) {
@@ -289,7 +300,7 @@ class MainWPPlugins
             <tr>
                 <th scope="col" class="manage-column column-cb check-column" style=""><input name="plugins" type="checkbox"></th>
                 <th scope="col" id="info_footer" class="manage-column column-cb check-column" style=""></th>
-                <th scope="col" id="plugin_footer" class="manage-column column-title sortable desc" style=""><span><?php _e('Plugin','mainwp'); ?></span></th>
+                <th scope="col" id="plugin_footer" class="manage-column column-title desc" style=""><span><?php _e('Plugin','mainwp'); ?></span></th>
                 <th scope="col" id="trustlvl_footer" class="manage-column column-posts" style=""><?php _e('Trust Level','mainwp'); ?></th>
                 <th scope="col" id="ignoredstatus_footer" class="manage-column column-posts" style=""><?php _e('Ignored Status','mainwp'); ?></th>
                 <th scope="col" id="notes_footer" class="manage-column column-posts" style=""><?php _e('Notes','mainwp'); ?></th>
@@ -300,6 +311,14 @@ class MainWPPlugins
                 <?php
                     foreach ($plugins as $slug => $name)
                     {
+                        if (!empty($search_status) && $search_status != "all") {
+                            if ($search_status == "trust" && !in_array($slug, $trustedPlugins))
+                                continue;
+                            else if ($search_status == "untrust" && in_array($slug, $trustedPlugins))
+                                continue;
+                            else if ($search_status == "ignored" && !isset($decodedIgnoredPlugins[$slug]))
+                                continue;
+                        }
                      ?>
                     <tr id="post-1" class="post-1 post type-post status-publish format-standard hentry category-uncategorized alternate iedit author-self" valign="top" plugin_slug="<?php echo rawurlencode($slug); ?>" plugin_name="<?php echo urlencode($name); ?>">
                         <th scope="row" class="check-column"><input type="checkbox" name="plugin[]" value="<?php echo urlencode($slug); ?>"></th>
@@ -780,6 +799,10 @@ class MainWPPlugins
 
     public static function renderAutoUpdate()
     {
+        $cachedAUSearch = null;
+        if (isset($_SESSION['MainWPPluginsActiveStatus'])) {
+            $cachedAUSearch = $_SESSION['MainWPPluginsActiveStatus'];          
+        }            
         self::renderHeader('AutoUpdate');
         if (!mainwp_current_user_can("dashboard", "trust_untrust_updates")) {
             mainwp_do_not_have_permissions("Trust/Untrust updates");
@@ -796,9 +819,23 @@ class MainWPPlugins
                 <div class="mainwp-au-off"><?php _e('Auto Updates are OFF - Email Update Notification is OFF','mainwp'); ?> - <a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e('Change this in Settings','mainwp'); ?></a></div>
             <?php } ?></strong></div>
             <div class="mainwp_info-box"><?php _e('Only mark Plugins as Trusted if you are absolutely sure they can be updated without breaking your sites or your network.','mainwp'); ?> <strong><?php _e('Ignored Plugins can not be Automatically Updated.','mainwp'); ?></strong></div>
+            <div class="postbox">
+                <h3 class="mainwp_box_title"><?php _e('Search Plugins','mainwp'); ?></h3>
+            <div class="inside">
+                    <span>Status: </span>
+                        <select name="autoupdate_status" id="mainwp_au_plugin_status">
+                            <option value="all" <?php if ($cachedAUSearch != null && $cachedAUSearch['status'] == 'all') { echo 'selected'; } ?>><?php _e('All Plugins','mainwp'); ?></option>
+                            <option value="trust" <?php if ($cachedAUSearch != null && $cachedAUSearch['status'] == 'trust') { echo 'selected'; } ?>><?php _e('Trusted Plugins','mainwp'); ?></option>
+                            <option value="untrust" <?php if ($cachedAUSearch != null && $cachedAUSearch['status'] == 'untrust') { echo 'selected'; } ?>><?php _e('Not Trusted Plugins','mainwp'); ?></option>
+                            <option value="ignored" <?php if ($cachedAUSearch != null && $cachedAUSearch['status'] == 'ignored') { echo 'selected'; } ?>><?php _e('Ignored Plugins','mainwp'); ?></option>
+                        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+                    <span><?php _e("Containing Keywords:", "mainwp"); ?> </span>
+                    <input type="text" class="mainwp-field mainwp-keyword" id="mainwp_au_plugin_keyword" style="width: 350px;" value="<?php echo ($cachedAUSearch !== null) ? $cachedAUSearch['keyword'] : "";?>">&nbsp;&nbsp;
+                    <a href="#" class="button-primary" id="mainwp_show_all_active_plugins"><?php _e('Show Plugins','mainwp'); ?></a>
+                    <span id="mainwp_plugins_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+            </div>
+            </div>
 
-            <a href="#" class="button-primary" id="mainwp_show_all_active_plugins"><?php _e('Show Plugins','mainwp'); ?></a>
-            <span id="mainwp_plugins_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
 
 
             <div id="mainwp_plugins_main" style="display: block; margin-top: 1.5em ;">

@@ -137,7 +137,9 @@ class MainWPBulkUpdateAdminPasswords
                     <?php MainWPUI::select_sites_box(__("Select Sites to Update", 'mainwp')); ?>
                 </div>
 
-                <div class="mainwp_config_box_left">
+                <div class="mainwp_config_box_left postbox mainwp-postbox">
+                <h3 class="mainwp_box_title"><?php _e('Bulk Update Administrator Passwords','mainwp'); ?></h3>
+                <div class="inside">
                 <table class="form-table">
                     <tr class="form-field form-required">
                         <th scope="row"><label for="pass1"><?php _e('Enter New Password ','mainwp'); ?><br /><span class="description"><?php _e('(twice, required)','mainwp'); ?></span></label></th>
@@ -152,6 +154,7 @@ class MainWPBulkUpdateAdminPasswords
                     </tr>
                     <tr><td></td><td colspan="2"><input type="submit" name="updateadminpassword" id="bulk_updateadminpassword" class="button-primary" value="<?php _e('Update Now','mainwp'); ?>"  /></td></tr>
                 </table>
+                </div>
                 </div>
 
             </form>

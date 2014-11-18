@@ -117,7 +117,7 @@ class MainWPBulkUpdateAdminPasswords
                 <img src="<?php echo plugins_url('images/icons/mainwp-passwords.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Passwords" height="32"/><h2 id="add-new-user"> Update Admin Passwords</h2>
                 <div id="message" class="updated">
                     <?php foreach ($dbwebsites as $website) { ?>
-                        <p><?php echo $website->name; ?>: <?php echo (isset($output->ok[$website->id]) && $output->ok[$website->id] == 1 ? __('Admin password updated.','mainwp') : __('ERROR: ','mainwp') . $output->errors[$website->id]); ?></p>
+                        <p><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a>: <?php echo (isset($output->ok[$website->id]) && $output->ok[$website->id] == 1 ? __('Admin password updated.','mainwp') : __('ERROR: ','mainwp') . $output->errors[$website->id]); ?></p>
             <?php } ?>
                 </div>
                 <br />

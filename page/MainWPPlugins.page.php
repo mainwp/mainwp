@@ -1101,7 +1101,7 @@ class MainWPPlugins
                     <tr site_id="<?php echo $website->id; ?>" plugin="<?php echo urlencode($ignoredPluginConflictName); ?>">
                         <td>
                             <span class="websitename" <?php if (!$first) { echo 'style="display: none;"'; } else { $first = false; }?>>
-                                <?php echo $website->name; ?>
+                                <a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a>
                             </span>
                         </td>
                         <td>
@@ -1216,7 +1216,7 @@ class MainWPPlugins
                     <tr site_id="<?php echo $website->id; ?>" plugin_slug="<?php echo urlencode($ignoredPlugin); ?>">
                         <td>
                             <span class="websitename" <?php if (!$first) { echo 'style="display: none;"'; } else { $first = false; }?>>
-                                <?php echo $website->name; ?>
+                                <a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a>
                             </span>
                         </td>
                         <td>

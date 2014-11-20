@@ -256,7 +256,7 @@ class MainWPPlugins
             }
         }
         
-        if ($search_plugin_status == 'active') {
+        if ($search_plugin_status != 'inactive') {
             if (empty($keyword) || (!empty($keyword) && stristr("MainWP Child", $keyword) !== false)) 
                 $output->plugins[] = array('slug' => 'mainwp-child/mainwp-child.php', 'name' => 'MainWP Child', 'active' => 1);
         }

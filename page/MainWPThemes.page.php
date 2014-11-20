@@ -369,7 +369,8 @@ class MainWPThemes
         if ($output == null)
         {
             $keyword = isset($_POST['keyword']) && !empty($_POST['keyword']) ? trim($_POST["keyword"]) : null;
-            $search_status = isset($_POST['status']) ? $_POST['status'] : "all";
+            $search_status = isset($_POST['status']) ? $_POST['status'] : "all";            
+            $search_theme_status = isset($_POST['theme_status']) ? $_POST['theme_status'] : "all";
           
             $output = new stdClass();
             $output->errors = array();
@@ -385,8 +386,13 @@ class MainWPThemes
                 {
                     $allThemes = json_decode($website->themes, true);
                     for ($i = 0; $i < count($allThemes); $i++) {
-                        $theme = $allThemes[$i];
-                        if ($theme['active'] != 1) continue;
+                        $theme = $allThemes[$i];                        
+                        if ($search_theme_status != "all") {
+                            if ($theme['active'] == 1 && $search_theme_status !== "active")
+                                continue;
+                            else if ($theme['active'] != 1 && $search_theme_status !== "inactive")
+                                continue;
+                        }
                         
                         if ($keyword != '' && stristr($theme['name'], $keyword) === false) 
                             continue;
@@ -411,9 +417,16 @@ class MainWPThemes
                 @MainWPDB::free_result($websites);
 
                 $post_data = array(
-                    'keyword' => $keyword,
-                    'status' => 'active'
+                    'keyword' => $keyword                    
                 );
+                
+                if ($search_theme_status == "active" || $search_theme_status == "inactive") {
+                    $post_data['status'] = $search_theme_status;
+                    $post_data['filter'] = true;
+                } else {
+                    $post_data['filter'] = false;
+                } 
+                
                 MainWPUtility::fetchUrlsAuthed($dbwebsites, 'get_all_themes', $post_data, array(MainWPThemes::getClassName(), 'ThemesSearch_handler'), $output);
 
                 if (count($output->errors) > 0)
@@ -435,11 +448,12 @@ class MainWPThemes
 
             if (session_id() == '') session_start();
             $_SESSION['SNThemesAll'] = $output;
-            $_SESSION['SNThemesAllStatus'] = array('keyword' => $keyword, 'status' => $search_status);
+            $_SESSION['SNThemesAllStatus'] = array('keyword' => $keyword, 'status' => $search_status, 'theme_status' => $search_theme_status);
         } else {
             if (isset($_SESSION['SNThemesAllStatus'])) {
                 $keyword = $_SESSION['SNThemesAllStatus']['keyword'];
                 $search_status = $_SESSION['SNThemesAllStatus']['status'];
+                $search_theme_status = $_SESSION['SNThemesAllStatus']['theme_status'];                
             }
         }
 
@@ -820,13 +834,19 @@ class MainWPThemes
             <div class="postbox">
                 <h3 class="mainwp_box_title"><?php _e('Search Themes','mainwp'); ?></h3>
                 <div class="inside">
-                        <span>Status: </span>
-                            <select name="autoupdate_status" id="mainwp_au_theme_status">
+                            <span><?php _e("Status:", "mainwp"); ?> </span>
+                                <select id="mainwp_au_theme_status">
+                                    <option value="all" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['theme_status'] == 'all') { echo 'selected'; } ?>><?php _e('All Themes','mainwp'); ?></option>
+                                    <option value="active" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['theme_status'] == 'active') { echo 'selected'; } ?>><?php _e('Active Themes','mainwp'); ?></option>
+                                    <option value="inactive" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['theme_status'] == 'inactive') { echo 'selected'; } ?>><?php _e('Inactive Themes','mainwp'); ?></option>                        
+                                </select>&nbsp;&nbsp;
+                            <span><?php _e("Trust Status:", "mainwp"); ?> </span>
+                            <select id="mainwp_au_theme_trust_status">
                                 <option value="all" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['status'] == 'all') { echo 'selected'; } ?>><?php _e('All Themes','mainwp'); ?></option>
                                 <option value="trust" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['status'] == 'trust') { echo 'selected'; } ?>><?php _e('Trusted Themes','mainwp'); ?></option>
                                 <option value="untrust" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['status'] == 'untrust') { echo 'selected'; } ?>><?php _e('Not Trusted Themes','mainwp'); ?></option>
                                 <option value="ignored" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['status'] == 'ignored') { echo 'selected'; } ?>><?php _e('Ignored Themes','mainwp'); ?></option>
-                            </select>&nbsp;&nbsp;&nbsp;&nbsp;
+                            </select>&nbsp;&nbsp;
                         <span><?php _e("Containing Keywords:", "mainwp"); ?> </span>
                         <input type="text" class="mainwp-field mainwp-keyword" id="mainwp_au_theme_keyword" style="width: 350px;" value="<?php echo ($cachedThemesSearch !== null) ? $cachedThemesSearch['keyword'] : "";?>">&nbsp;&nbsp;
                         <a href="#" class="button-primary" id="mainwp_show_all_themes"><?php _e('Show Themes','mainwp'); ?></a>

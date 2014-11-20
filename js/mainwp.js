@@ -4826,11 +4826,11 @@ jQuery(document).ready(function () {
         mainwp_fetch_plugins();
     });
     jQuery('#mainwp_show_all_themes').live('click', function () {
-        mainwp_fetch_all_themes(true);
+        mainwp_fetch_all_themes();
         return false;
     });
     jQuery('#mainwp_show_all_active_plugins').live('click', function () {
-        mainwp_fetch_all_active_plugins(true);
+        mainwp_fetch_all_active_plugins();
         return false;
     });
     jQuery('.mainwp_plugin_check_all').live('change', function () {
@@ -4890,7 +4890,6 @@ jQuery(document).ready(function () {
                 pluginCountSent++;
                 jQuery.post(ajaxurl, data, function (response) {
                     pluginCountReceived++;
-
                     if (pluginResetAllowed && pluginCountReceived == pluginCountSent) {
                         pluginCountReceived = 0;
                         pluginCountSent = 0;
@@ -5060,16 +5059,14 @@ mainwp_fetch_plugins = function () {
     });
 };
 
-mainwp_fetch_all_active_plugins = function (pSearch) {
+mainwp_fetch_all_active_plugins = function () {
     var data = {
         action:'mainwp_plugins_search_all_active',
+        keyword: jQuery("#mainwp_au_plugin_keyword").val(),
+        status: jQuery("#mainwp_au_plugin_trust_status").val(),
+        plugin_status: jQuery("#mainwp_au_plugin_status").val()
     };
     
-    if (pSearch) {
-        data['keyword'] = jQuery("#mainwp_au_plugin_keyword").val();
-        data['status'] = jQuery("#mainwp_au_plugin_status").val();
-    }
-
     jQuery('#mainwp_plugins_loading').show();
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -5082,13 +5079,11 @@ mainwp_fetch_all_active_plugins = function (pSearch) {
 
 mainwp_fetch_all_themes = function (pSearch) {
     var data = {
-        action:'mainwp_themes_search_all'
+        action:'mainwp_themes_search_all',
+        keyword: jQuery("#mainwp_au_theme_keyword").val(),
+        status: jQuery("#mainwp_au_theme_trust_status").val(),        
+        theme_status: jQuery("#mainwp_au_theme_status").val()        
     };
-
-    if (pSearch) {
-        data['keyword'] = jQuery("#mainwp_au_theme_keyword").val();
-        data['status'] = jQuery("#mainwp_au_theme_status").val();
-    }
     
     jQuery('#mainwp_themes_loading').show();
     jQuery.post(ajaxurl, data, function (response) {
@@ -6327,4 +6322,12 @@ jQuery(document).on('click', '#remove-mainwp-installation-warning', function()
 jQuery(document).on('click', '.mainwp-dismiss', function(){
     jQuery('.mainwp-tips').fadeOut("slow");
     return false;
+});
+
+jQuery(document).on('change', '#mainwp-quick-jump-child', function()
+{
+    var siteId = jQuery(this).val();
+
+    window.location = 'admin.php?page=managesites&dashboard=' + siteId;
+
 });

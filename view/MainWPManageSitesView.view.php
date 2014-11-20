@@ -162,6 +162,8 @@ class MainWPManageSitesView
             $breadcrumd = self::getBreadcrumb($shownPage, $subPages);
         }
 
+        $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
+
         $can_add = mainwp_current_user_can("dashboard", "add_sites");
         $can_edit = mainwp_current_user_can("dashboard", "edit_sites");
         $can_view_dashboard = mainwp_current_user_can("dashboard", "access_individual_dashboard");
@@ -187,7 +189,23 @@ class MainWPManageSitesView
         </div>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <?php if (!empty($breadcrumd)) { ?>
-            <div class="mainwp_breadcrumb"><strong>You are here:</strong> &nbsp;&nbsp;<?php echo $breadcrumd; ?></div><br/>
+            <div class="mainwp_breadcrumb"><strong><?php _e('You are here: ','mainwp'); ?></strong> &nbsp;&nbsp;<?php echo $breadcrumd; ?>
+                <span id="mainwp-ind-dash-quick-jump" style="float: right;"><strong><?php _e('Jump to ','mainwp'); ?></strong>
+                    <select id="mainwp-quick-jump-child" name="">
+                        <option value=""><?php _e('Select Site ','mainwp'); ?></option>
+                        <?php
+                        while ($websites && ($website = @MainWPDB::fetch_object($websites)))
+                        {
+                        echo '<option value="'.$website->id.'">' . $website->name . '</option>';
+                        }
+                        @MainWPDB::free_result($websites);
+                        ?>
+                    </select>
+                    <strong><?php _e(' dashboard','mainwp'); ?></strong>
+                </span>
+                <div style="clear: both;"></div>
+            </div>
+            <br/>
             <?php } ?>
             <?php if ($shownPage == '') {?>
             <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>

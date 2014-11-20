@@ -168,6 +168,7 @@ class MainWPPlugins
         {
             $keyword = isset($_POST['keyword']) && !empty($_POST['keyword']) ? trim($_POST["keyword"]) : null;
             $search_status = isset($_POST['status']) ? $_POST['status'] : "all";
+            $search_plugin_status = isset($_POST['plugin_status']) ? $_POST['plugin_status'] : "all";
             
             $output = new stdClass();
             $output->errors = array();
@@ -184,8 +185,14 @@ class MainWPPlugins
                     $allPlugins = json_decode($website->plugins, true);
                     for ($i = 0; $i < count($allPlugins); $i++)
                     {
-                        $plugin = $allPlugins[$i];
-                        if ($plugin['active'] != 1) continue;
+                        $plugin = $allPlugins[$i];                        
+                        if ($search_plugin_status != "all") {
+                            if ($plugin['active'] == 1 && $search_plugin_status !== "active")
+                                continue;
+                            else if ($plugin['active'] != 1 && $search_plugin_status !== "inactive")
+                                continue;
+                        }
+                        
                         if ($keyword != '' && stristr($theme['name'], $keyword) === false) 
                             continue;
                         $plugin['websiteid'] = $website->id;
@@ -208,9 +215,15 @@ class MainWPPlugins
                 @MainWPDB::free_result($websites);
 
                 $post_data = array(
-                    'keyword' => $keyword,
-                    'status' => 'active'
+                    'keyword' => $keyword                    
                 );
+                
+                if ($search_plugin_status == "active" || $search_plugin_status == "inactive") {
+                    $post_data['status'] = $search_plugin_status;
+                    $post_data['filter'] = true;
+                } else {
+                    $post_data['filter'] = false;
+                } 
                 MainWPUtility::fetchUrlsAuthed($dbwebsites, 'get_all_plugins', $post_data, array(MainWPPlugins::getClassName(), 'PluginsSearch_handler'), $output);
 
                 if (count($output->errors) > 0)
@@ -225,7 +238,7 @@ class MainWPPlugins
                     {
                         session_start();
                         $_SESSION['MainWPPluginsActive'] = $output;
-                        $_SESSION['MainWPPluginsActiveStatus'] = array('keyword' => $keyword, 'status' => $search_status);
+                        $_SESSION['MainWPPluginsActiveStatus'] = array('keyword' => $keyword, 'status' => $search_status , 'plugin_status' => $search_plugin_status);
                         return;
                     }
                 }
@@ -233,17 +246,18 @@ class MainWPPlugins
 
             if (session_id() == '') session_start();
             $_SESSION['MainWPPluginsActive'] = $output;
-            $_SESSION['MainWPPluginsActiveStatus'] = array('keyword' => $keyword, 'status' => $search_status);
+            $_SESSION['MainWPPluginsActiveStatus'] = array('keyword' => $keyword, 'status' => $search_status, 'plugin_status' => $search_plugin_status);
             
         } else {
             if (isset($_SESSION['MainWPPluginsActiveStatus'])) {
                 $keyword = $_SESSION['MainWPPluginsActiveStatus']['keyword'];
                 $search_status = $_SESSION['MainWPPluginsActiveStatus']['status'];
+                $search_plugin_status = $_SESSION['MainWPPluginsActiveStatus']['plugin_status'];               
             }
         }
         
-        if (!empty($keyword)) {
-            if (stristr("MainWP Child", $keyword) !== false) 
+        if ($search_plugin_status == 'active') {
+            if (empty($keyword) || (!empty($keyword) && stristr("MainWP Child", $keyword) !== false)) 
                 $output->plugins[] = array('slug' => 'mainwp-child/mainwp-child.php', 'name' => 'MainWP Child');
         }
         
@@ -822,13 +836,19 @@ class MainWPPlugins
             <div class="postbox">
                 <h3 class="mainwp_box_title"><?php _e('Search Plugins','mainwp'); ?></h3>
             <div class="inside">
-                    <span>Status: </span>
-                        <select name="autoupdate_status" id="mainwp_au_plugin_status">
+                    <span><?php _e("Status:", "mainwp"); ?> </span>
+                    <select id="mainwp_au_plugin_status">
+                        <option value="all" <?php if ($cachedAUSearch != null && $cachedAUSearch['plugin_status'] == 'all') { echo 'selected'; } ?>><?php _e('All Plugins','mainwp'); ?></option>
+                        <option value="active" <?php if ($cachedAUSearch != null && $cachedAUSearch['plugin_status'] == 'active') { echo 'selected'; } ?>><?php _e('Active Plugins','mainwp'); ?></option>
+                        <option value="inactive" <?php if ($cachedAUSearch != null && $cachedAUSearch['plugin_status'] == 'inactive') { echo 'selected'; } ?>><?php _e('Inactive Plugins','mainwp'); ?></option>                        
+                    </select>&nbsp;&nbsp;
+                    <span><?php _e("Trust Status:", "mainwp"); ?> </span>
+                        <select id="mainwp_au_plugin_trust_status">
                             <option value="all" <?php if ($cachedAUSearch != null && $cachedAUSearch['status'] == 'all') { echo 'selected'; } ?>><?php _e('All Plugins','mainwp'); ?></option>
                             <option value="trust" <?php if ($cachedAUSearch != null && $cachedAUSearch['status'] == 'trust') { echo 'selected'; } ?>><?php _e('Trusted Plugins','mainwp'); ?></option>
                             <option value="untrust" <?php if ($cachedAUSearch != null && $cachedAUSearch['status'] == 'untrust') { echo 'selected'; } ?>><?php _e('Not Trusted Plugins','mainwp'); ?></option>
                             <option value="ignored" <?php if ($cachedAUSearch != null && $cachedAUSearch['status'] == 'ignored') { echo 'selected'; } ?>><?php _e('Ignored Plugins','mainwp'); ?></option>
-                        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+                        </select>&nbsp;&nbsp;
                     <span><?php _e("Containing Keywords:", "mainwp"); ?> </span>
                     <input type="text" class="mainwp-field mainwp-keyword" id="mainwp_au_plugin_keyword" style="width: 350px;" value="<?php echo ($cachedAUSearch !== null) ? $cachedAUSearch['keyword'] : "";?>">&nbsp;&nbsp;
                     <a href="#" class="button-primary" id="mainwp_show_all_active_plugins"><?php _e('Show Plugins','mainwp'); ?></a>

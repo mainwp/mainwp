@@ -478,7 +478,7 @@ class MainWPThemes
         //Map per siteId
         $themes = array(); //name_version -> slug
         foreach ($output->themes as $theme) {
-            $themes[$theme['slug']] = $theme['name'];
+            $themes[$theme['slug']] = $theme;            
         }
         asort($themes);
 
@@ -498,6 +498,9 @@ class MainWPThemes
                 <th scope="col" id="theme" class="manage-column column-title sortable desc" style="">
                     <a href="#"><span><?php _e('Theme','mainwp'); ?></span><span class="sorting-indicator"></span></a>
                 </th>
+                 <th scope="col" id="thmstatus" class="manage-column column-title sortable desc" style="">
+                    <a href="#"><span><?php _e('Status','mainwp'); ?></span><span class="sorting-indicator"></span></a>
+                </th>
                 <th scope="col" id="trustlvl" class="manage-column column-title sortable desc" style="">
                     <a href="#"><span><?php _e('Trust Level','mainwp'); ?></span><span class="sorting-indicator"></span></a>
                 </th>
@@ -513,6 +516,7 @@ class MainWPThemes
                 <th scope="col" class="manage-column column-cb check-column" style=""><input name="themes" type="checkbox"></th>
                 <th scope="col" id="info_footer" class="manage-column column-cb check-column" style=""></th>
                 <th scope="col" id="theme_footer" class="manage-column column-title sortable desc" style=""><span><?php _e('Theme','mainwp'); ?></span></th>
+                <th scope="col" id="thmstatus_footer" class="manage-column column-posts" style=""><?php _e('Status','mainwp'); ?></th>
                 <th scope="col" id="trustlvl_footer" class="manage-column column-posts" style=""><?php _e('Trust Level','mainwp'); ?></th>
                 <th scope="col" id="ignoredstatus_footer" class="manage-column column-posts" style=""><?php _e('Ignored Status','mainwp'); ?></th>
                 <th scope="col" id="notes_footer" class="manage-column column-posts" style=""><?php _e('Notes','mainwp'); ?></th>
@@ -521,8 +525,9 @@ class MainWPThemes
 
             <tbody id="the-posts-list" class="list:posts">
                 <?php
-                    foreach ($themes as $slug => $name)
-                    {                        
+                    foreach ($themes as $slug => $theme)
+                    {         
+                        $name = $theme['name'];
                         if (!empty($search_status) && $search_status != "all") {
                             if ($search_status == "trust" && !in_array($slug, $trustedThemes))
                                 continue;
@@ -537,6 +542,9 @@ class MainWPThemes
                         <td scope="col" id="info_content" class="manage-column" style=""> <?php if (isset($decodedIgnoredThemes[$slug])) { MainWPUtility::renderToolTip('Ignored themes will NOT be auto-updated.', null, 'images/icons/mainwp-red-info-16.png'); } ?></td>
                         <td scope="col" id="theme_content" class="manage-column sorted" style="">
                             <?php echo $name; ?>
+                        </td>
+                        <td scope="col" id="plgstatus_content" class="manage-column" style="">
+                            <?php echo ($theme['active'] == 1) ? __("Active", "mainwp") : __("Inactive", "mainwp"); ?>
                         </td>
                         <td scope="col" id="trustlvl_content" class="manage-column" style="">
                             <?php

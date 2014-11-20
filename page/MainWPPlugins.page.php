@@ -258,7 +258,7 @@ class MainWPPlugins
         
         if ($search_plugin_status == 'active') {
             if (empty($keyword) || (!empty($keyword) && stristr("MainWP Child", $keyword) !== false)) 
-                $output->plugins[] = array('slug' => 'mainwp-child/mainwp-child.php', 'name' => 'MainWP Child');
+                $output->plugins[] = array('slug' => 'mainwp-child/mainwp-child.php', 'name' => 'MainWP Child', 'active' => 1);
         }
         
         if (count($output->plugins) == 0)
@@ -280,7 +280,7 @@ class MainWPPlugins
         //Map per siteId
         $plugins = array(); //name_version -> slug
         foreach ($output->plugins as $plugin) {
-            $plugins[$plugin['slug']] = $plugin['name'];
+            $plugins[$plugin['slug']] = $plugin;
         }
         asort($plugins);
 
@@ -300,6 +300,9 @@ class MainWPPlugins
                 <th scope="col" id="plugin" class="manage-column column-title sortable desc" style="">
                     <a href="#"><span><?php _e('Plugin','mainwp'); ?></span><span class="sorting-indicator"></span></a>
                 </th>
+                <th scope="col" id="plgstatus" class="manage-column column-title sortable desc" style="">
+                    <a href="#"><span><?php _e('Status','mainwp'); ?></span><span class="sorting-indicator"></span></a>
+                </th>
                 <th scope="col" id="trustlvl" class="manage-column column-title sortable desc" style="">
                     <a href="#"><span><?php _e('Trust Level','mainwp'); ?></span><span class="sorting-indicator"></span></a>
                 </th>
@@ -315,6 +318,7 @@ class MainWPPlugins
                 <th scope="col" class="manage-column column-cb check-column" style=""><input name="plugins" type="checkbox"></th>
                 <th scope="col" id="info_footer" class="manage-column column-cb check-column" style=""></th>
                 <th scope="col" id="plugin_footer" class="manage-column column-title desc" style=""><span><?php _e('Plugin','mainwp'); ?></span></th>
+                <th scope="col" id="plgstatus_footer" class="manage-column column-posts" style=""><?php _e('Status','mainwp'); ?></th>
                 <th scope="col" id="trustlvl_footer" class="manage-column column-posts" style=""><?php _e('Trust Level','mainwp'); ?></th>
                 <th scope="col" id="ignoredstatus_footer" class="manage-column column-posts" style=""><?php _e('Ignored Status','mainwp'); ?></th>
                 <th scope="col" id="notes_footer" class="manage-column column-posts" style=""><?php _e('Notes','mainwp'); ?></th>
@@ -323,8 +327,9 @@ class MainWPPlugins
 
             <tbody id="the-posts-list" class="list:posts">
                 <?php
-                    foreach ($plugins as $slug => $name)
+                    foreach ($plugins as $slug => $plugin)
                     {
+                        $name = $plugin['name'];
                         if (!empty($search_status) && $search_status != "all") {
                             if ($search_status == "trust" && !in_array($slug, $trustedPlugins))
                                 continue;
@@ -339,6 +344,9 @@ class MainWPPlugins
                         <td scope="col" id="info_content" class="manage-column" style=""> <?php if (isset($decodedIgnoredPlugins[$slug])) { MainWPUtility::renderToolTip('Ignored plugins will NOT be auto-updated.', null, 'images/icons/mainwp-red-info-16.png'); } ?></td>
                         <td scope="col" id="plugin_content" class="manage-column sorted" style="">
                             <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.urlencode(dirname($slug)).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $name; ?>"><?php echo $name; ?></a>
+                        </td>
+                        <td scope="col" id="plgstatus_content" class="manage-column" style="">
+                            <?php echo ($plugin['active'] == 1) ? __("Active", "mainwp") : __("Inactive", "mainwp"); ?>
                         </td>
                         <td scope="col" id="trustlvl_content" class="manage-column" style="">
                             <?php

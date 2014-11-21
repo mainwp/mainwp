@@ -6343,3 +6343,51 @@ mainwp_managesites_update_childsite_value = function(siteId, uniqueId) {
     });
     return false;   
 }
+
+jQuery(document).on('keyup', '#managegroups-filter', function() {
+    var filter = jQuery(this).val();
+    var groupItems = jQuery(this).parent().find('li.managegroups-listitem');
+    for (var i = 0; i < groupItems.length; i++)
+    {        
+        var currentElement = jQuery(groupItems[i]);
+        if (currentElement.hasClass('managegroups-group-add'))
+            continue;
+        var value = currentElement.find('span.text').text();
+        console.log(value);
+        if (value.indexOf(filter) > -1)
+        {
+            currentElement.show();
+        }
+        else
+        {
+            currentElement.hide();
+        }
+    }
+});
+
+jQuery(document).on('keyup', '#managegroups_site-filter', function() {
+    var filter = jQuery(this).val();
+    var siteItems = jQuery(this).parent().find('li.managegroups_site-listitem');
+    for (var i = 0; i < siteItems.length; i++)
+    {
+        var currentElement = jQuery(siteItems[i]);
+        var value = currentElement.find('span.website_name').text();
+        console.log(value);
+        if (value.indexOf(filter) > -1)
+        {
+            currentElement.show();
+        }
+        else
+        {
+            currentElement.hide();
+        }
+    }
+
+
+});
+
+mainwp_managegroups_ss_select = function (me, val) {  
+    var parent = jQuery(me).closest('.mainwp_managegroups-insidebox').find('#managegroups-listsites');    
+    parent.find('INPUT:checkbox').attr('checked', val).change();    
+    return false;
+};

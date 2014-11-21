@@ -37,6 +37,8 @@ class MainWPManageGroups
                     <span id="mainwp_managegroups-addnew-container"><input type="button" name="Add new" value="<?php _e('Add New','mainwp'); ?>" class="managegroups-addnew button" /></span>
                     <h3><?php _e('Groups','mainwp'); ?></h3>
                     <div class="mainwp_managegroups-insidebox">
+                        <input id="managegroups-filter" style="margin-top: .5em;" type="text" value="" placeholder="Type here to filter groups" />
+                        <hr>
                         <ul id="managegroups-list">
                             <li class="managegroups-listitem managegroups-group-add hidden">
                                 <span class="mainwp_group-actions actions-input"><a href="#" class="managegroups-savenew"><?php _e('Save','mainwp'); ?></a> | <a href="#" class="managegroups-cancel"><?php _e('Cancel','mainwp'); ?></a></span>
@@ -51,7 +53,10 @@ class MainWPManageGroups
                     <div style="float: right; margin-top: 12px;"><?php _e('Display by:','mainwp'); ?> <a href="#" class="mainwp_action left mainwp_action_down" id="group_sites_by_name"><strong><?php _e('Site Name','mainwp'); ?></strong></a><a href="#" class="mainwp_action right" id="group_sites_by_url"><?php _e('URL','mainwp'); ?></a></div>
                     <h3><?php _e('Websites','mainwp'); ?></h3>
                     <div class="mainwp_managegroups-insidebox" id="managegroups-sites-list">
-                        <ul>
+                        <input id="managegroups_site-filter" style="margin-top: .5em;" type="text" value="" placeholder="Type here to filter sites" />
+                        <div style="float:right; margin-top: .7em"><?php _e('Select: ','mainwp'); ?><a href="#" onClick="return mainwp_managegroups_ss_select(this, true)"><?php _e('All','mainwp'); ?></a> | <a href="#" onClick="return mainwp_managegroups_ss_select(this, false)"><?php _e('None','mainwp'); ?></a></div>
+                        <hr>
+                        <ul id="managegroups-listsites">
                             <?php echo MainWPManageGroups::getWebsiteListContent(); ?>
                         </ul>
                     </div>
@@ -289,7 +294,7 @@ class MainWPManageGroups
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
         {
             ?>
-            <li><input type="checkbox" name="sites" value="<?php echo $website->id; ?>" id="<?php echo MainWPUtility::getNiceURL($website->url); ?>" class="mainwp-checkbox2"><label for="<?php echo MainWPUtility::getNiceURL($website->url); ?>" class="mainwp-label2"><span class="website_url" style="display: none;"><?php echo MainWPUtility::getNiceURL($website->url); ?></span><span class="website_name"><?php echo $website->name; ?></span></label></li>
+            <li class="managegroups_site-listitem"><input type="checkbox" name="sites" value="<?php echo $website->id; ?>" id="<?php echo MainWPUtility::getNiceURL($website->url); ?>" class="mainwp-checkbox2"><label for="<?php echo MainWPUtility::getNiceURL($website->url); ?>" class="mainwp-label2"><span class="website_url" style="display: none;"><?php echo MainWPUtility::getNiceURL($website->url); ?></span><span class="website_name"><?php echo $website->name; ?></span></label></li>
             <?php
         }
         @MainWPDB::free_result($websites);

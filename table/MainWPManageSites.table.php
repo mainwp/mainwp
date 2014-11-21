@@ -284,6 +284,18 @@ class MainWPManageSites_List_Table extends WP_List_Table
         $this->globalIgnoredThemeConflicts = $globalIgnoredThemeConflicts;
 
         $orderby = 'wp.url';
+        
+        if (!isset($_GET['orderby'])) {
+            $_order_by = get_option('mainwp_managesites_orderby');
+            $_order = get_option('mainwp_managesites_order');
+            if (!empty($_order_by)) {
+                $_GET['orderby'] = $_order_by;
+                $_GET['order'] = $_order;
+            }
+        } else {            
+            MainWPUtility::update_option('mainwp_managesites_orderby', $_GET['orderby']);
+            MainWPUtility::update_option('mainwp_managesites_order', $_GET['order']);
+        }
 
         if (isset($_GET['orderby']))
         {
@@ -318,7 +330,9 @@ class MainWPManageSites_List_Table extends WP_List_Table
             {
                 $orderby = 'wp.last_post_gmt ' . ($_GET['order'] == 'asc' ? 'asc' : 'desc');
             }
-        }
+            
+            
+        } 
 
         $perPage = $this->get_items_per_page('mainwp_managesites_per_page');
         $currentPage = $this->get_pagenum();

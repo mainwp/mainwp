@@ -129,6 +129,7 @@ class MainWPThemes
             <p>
                 <?php _e('Status:','mainwp'); ?><br />
                 <select name="mainwp_theme_search_by_status" id="mainwp_theme_search_by_status">
+                    <option value="all" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'all') { echo 'selected'; } ?>><?php _e('All Themes','mainwp'); ?></option>
                     <option value="active" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'active') { echo 'selected'; } ?>><?php _e('Active','mainwp'); ?></option>
                     <option value="inactive" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'inactive') { echo 'selected'; } ?>><?php _e('Inactive','mainwp'); ?></option>
                 </select>
@@ -176,7 +177,14 @@ class MainWPThemes
                         $allThemes = json_decode($website->themes, true);
                         for ($i = 0; $i < count($allThemes); $i++) {
                             $theme = $allThemes[$i];
-                            if ($theme['active'] != (($status == 'active') ? 1 : 0)) continue;
+                            
+                            if ($status == "active" || $status == "inactive") {
+                                if ($theme['active'] == 1 && $status !== "active")
+                                    continue;
+                                else if ($theme['active'] != 1 && $status !== "inactive")
+                                    continue;
+                            }
+                                
                             if ($keyword != '' && !stristr($theme['title'], $keyword)) continue;
 
                             $theme['websiteid'] = $website->id;
@@ -197,7 +205,12 @@ class MainWPThemes
                             $allThemes = json_decode($website->themes, true);
                             for ($i = 0; $i < count($allThemes); $i++) {
                                 $theme = $allThemes[$i];
-                                if ($theme['active'] != (($status == 'active') ? 1 : 0)) continue;
+                                if ($status == "active" || $status == "inactive") {
+                                    if ($theme['active'] == 1 && $status !== "active")
+                                        continue;
+                                    else if ($theme['active'] != 1 && $status !== "inactive")
+                                        continue;
+                                }
                                 if ($keyword != '' && !stristr($theme['title'], $keyword)) continue;
 
                                 $theme['websiteid'] = $website->id;
@@ -240,9 +253,17 @@ class MainWPThemes
             }
 
             $post_data = array(
-                'keyword' => $keyword,
-                'status' => $status
+                'keyword' => $keyword                
             );
+            
+            if ($status == "active" || $status == "inactive") {
+                $post_data['status'] = $status;
+                $post_data['filter'] = true;
+            } else {
+                $post_data['status'] = "";
+                $post_data['filter'] = false;
+            }
+                
             MainWPUtility::fetchUrlsAuthed($dbwebsites, 'get_all_themes', $post_data, array(MainWPThemes::getClassName(), 'ThemesSearch_handler'), $output);
 
             if (count($output->errors) > 0)
@@ -424,6 +445,7 @@ class MainWPThemes
                     $post_data['status'] = $search_theme_status;
                     $post_data['filter'] = true;
                 } else {
+                    $post_data['status'] = "";
                     $post_data['filter'] = false;
                 } 
                 

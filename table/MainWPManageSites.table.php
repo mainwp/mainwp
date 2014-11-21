@@ -336,7 +336,25 @@ class MainWPManageSites_List_Table extends WP_List_Table
 
         $perPage = $this->get_items_per_page('mainwp_managesites_per_page');
         $currentPage = $this->get_pagenum();
-
+        
+        if (!isset($_REQUEST['status'])) {
+            $_status = get_option('mainwp_managesites_filter_status');
+            if (!empty($_status)) {
+               $_REQUEST['status'] = $_status;
+            }
+        } else {
+            MainWPUtility::update_option('mainwp_managesites_filter_status', $_REQUEST['status']);
+        }
+        
+        if (!isset($_REQUEST['g'])) {
+            $_g = get_option('mainwp_managesites_filter_group');
+            if (!empty($_status)) {
+               $_REQUEST['g'] = $_g;
+            }
+        } else {
+            MainWPUtility::update_option('mainwp_managesites_filter_group', $_REQUEST['g']);
+        }
+        
 
         $where = null;
         if (isset($_REQUEST['status']) && ($_REQUEST['status'] != ''))

@@ -131,6 +131,7 @@ class MainWPPlugins
             <p>
                 <?php _e('Status:','mainwp'); ?><br />
                 <select name="mainwp_plugin_search_by_status" id="mainwp_plugin_search_by_status">
+                    <option value="all" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'all') { echo 'selected'; } ?>><?php _e('All Plugins','mainwp'); ?></option>
                     <option value="active" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'active') { echo 'selected'; } ?>><?php _e('Active','mainwp'); ?></option>
                     <option value="inactive" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'inactive') { echo 'selected'; } ?>><?php _e('Inactive','mainwp'); ?></option>
                 </select>
@@ -222,6 +223,7 @@ class MainWPPlugins
                     $post_data['status'] = $search_plugin_status;
                     $post_data['filter'] = true;
                 } else {
+                    $post_data['status'] = "";
                     $post_data['filter'] = false;
                 } 
                 MainWPUtility::fetchUrlsAuthed($dbwebsites, 'get_all_plugins', $post_data, array(MainWPPlugins::getClassName(), 'PluginsSearch_handler'), $output);
@@ -429,7 +431,9 @@ class MainWPPlugins
                         $allPlugins = json_decode($website->plugins, true);
                         for ($i = 0; $i < count($allPlugins); $i++) {
                             $plugin = $allPlugins[$i];
-                            if ($plugin['active'] != (($status == 'active') ? 1 : 0)) continue;
+                            if (($status == "active") || ($status == "inactive")) {
+                                if ($plugin['active'] != (($status == 'active') ? 1 : 0)) continue;
+                            }
                             if ($keyword != '' && !stristr($plugin['name'], $keyword)) continue;
 
                             $plugin['websiteid'] = $website->id;
@@ -450,7 +454,9 @@ class MainWPPlugins
                             $allPlugins = json_decode($website->plugins, true);
                             for ($i = 0; $i < count($allPlugins); $i++) {
                                 $plugin = $allPlugins[$i];
-                                if ($plugin['active'] != (($status == 'active') ? 1 : 0)) continue;
+                                if (($status == "active") || ($status == "inactive")) {
+                                    if ($plugin['active'] != (($status == 'active') ? 1 : 0)) continue;
+                                }
                                 if ($keyword != '' && !stristr($plugin['name'], $keyword)) continue;
 
                                 $plugin['websiteid'] = $website->id;
@@ -492,9 +498,17 @@ class MainWPPlugins
             }
 
             $post_data = array(
-                'keyword' => $keyword,
-                'status' => $status
+                'keyword' => $keyword                
             );
+            
+            if ($status == "active" || $status == "inactive") {
+                $post_data['status'] = $status;
+                $post_data['filter'] = true;
+            } else {
+                $post_data['status'] = "";
+                $post_data['filter'] = false;                
+            } 
+                
             MainWPUtility::fetchUrlsAuthed($dbwebsites, 'get_all_plugins', $post_data, array(MainWPPlugins::getClassName(), 'PluginsSearch_handler'), $output);
 
             if (count($output->errors) > 0)

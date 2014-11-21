@@ -18,8 +18,9 @@ class MainWPManageSites
 
         add_filter('set-screen-option', array(MainWPManageSites::getClassName(), 'setScreenOption'), 10, 3);
         add_action('mainwp-securityissues-sites', array(MainWPSecurityIssues::getClassName(), 'render'));
+        add_action('mainwp-extension-sites-edit', array(MainWPManageSites::getClassName(), 'on_edit_site'));
     }
-
+    
     static function on_screen_layout_columns($columns, $screen)
     {
         if ($screen == self::$page) {
@@ -1126,8 +1127,7 @@ class MainWPManageSites
 
                 $archiveFormat = isset($_POST['mainwp_archiveFormat']) ? $_POST['mainwp_archiveFormat'] : 'global';
 
-                MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat);
-
+                MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, $_POST['mainwp_managesites_edit_uniqueId']);                
                 do_action('mainwp_update_site', $website->id);
 
                 $newValues = array('automatic_update' => (!isset($_POST['mainwp_automaticDailyUpdate']) ? 0 : 1),
@@ -1372,6 +1372,55 @@ class MainWPManageSites
         add_screen_option('per_page', $args);
     }
 
+    
+    function on_edit_site($website) {        
+        if (isset($_POST['submit']) && isset($_POST['mainwp_managesites_edit_siteadmin']) && $_POST['mainwp_managesites_edit_siteadmin'] != '') {
+            if (isset($_POST['mainwp_managesites_edit_uniqueId'])) {
+                ?>
+                 <script type="text/javascript">
+                    jQuery(document).ready(function() { 
+                        mainwp_managesites_update_childsite_value(<?php echo $website->id; ?>, '<?php echo $website->uniqueId; ?>');
+                    });
+                </script>
+                <?php
+            }
+        }
+    }
+
+    public static function updateChildsiteValue() {
+        if (isset($_POST['site_id']) && MainWPUtility::ctype_digit($_POST['site_id']))
+        {
+            $website = MainWPDB::Instance()->getWebsiteById($_POST['site_id']);
+            if (MainWPUtility::can_edit_website($website))
+            {
+                $error = '';
+                $uniqueId = isset($_POST['unique_id']) ? $_POST['unique_id'] : "";
+                try
+                {
+                    $information = MainWPUtility::fetchUrlAuthed($website, 'update_values', array('uniqueId' => $uniqueId));
+                }
+                catch (MainWPException $e)
+                {
+                    $error = $e->getMessage();
+                }
+
+                if ($error != '')
+                {
+                    die(json_encode(array('error' => $error)));
+                }
+                else if (isset($information['result']) && ($information['result'] == 'ok'))
+                {
+                    die(json_encode(array('result' => 'SUCCESS')));
+                }
+                else
+                {
+                    die(json_encode(array('undefined_error' => true)));
+                }
+            }
+        }
+        die(json_encode(array('error' => 'NO_SIDE_ID')));
+    }
+    
     public static function setScreenOption($status, $option, $value)
     {
         if ('mainwp_managesites_per_page' == $option) return $value;

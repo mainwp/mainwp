@@ -6331,3 +6331,15 @@ jQuery(document).on('change', '#mainwp-quick-jump-child', function()
     window.location = 'admin.php?page=managesites&dashboard=' + siteId;
 
 });
+
+
+mainwp_managesites_update_childsite_value = function(siteId, uniqueId) {    
+    var data = {
+        action:'mainwp_updatechildsite_value',
+        site_id: siteId,
+        unique_id: uniqueId
+    };
+    jQuery.post(ajaxurl, data, function (res) {
+    });
+    return false;   
+}

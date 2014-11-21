@@ -38,7 +38,8 @@ class MainWPPostHandler
         $this->addAction('mainwp_removesite', array(&$this, 'mainwp_removesite'));
         $this->addAction('mainwp_notes_save', array(&$this, 'mainwp_notes_save'));
         add_action('wp_ajax_mainwp_reconnectwp', array(&$this, 'mainwp_reconnectwp')); //ok
-
+        add_action('wp_ajax_mainwp_updatechildsite_value', array(&$this, 'mainwp_updatechildsite_value')); //ok
+        
         //Page: ManageGroups
         $this->addAction('mainwp_group_rename', array(&$this, 'mainwp_group_rename'));
         add_action('wp_ajax_mainwp_group_delete', array(&$this, 'mainwp_group_delete')); //ok
@@ -1080,6 +1081,11 @@ class MainWPPostHandler
         MainWPManageSites::reconnectSite();
     }
 
+    function mainwp_updatechildsite_value()
+    {
+        MainWPManageSites::updateChildsiteValue();
+    }
+    
     /*
      * Widget: RightNow
      */

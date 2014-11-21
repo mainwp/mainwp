@@ -223,7 +223,7 @@ class MainWPOfflineChecks
                         if (isset($information['register']) && $information['register'] == 'OK')
                         {
                             //Update website
-                            MainWPDB::Instance()->updateWebsiteValues($website->id, array('pubkey' => base64_encode($pubkey), 'privkey' => base64_encode($privkey), 'nossl' => $information['nossl'], 'nosslkey' => (isset($information['nosslkey']) ? $information['nosslkey'] : '')));
+                            MainWPDB::Instance()->updateWebsiteValues($website->id, array('pubkey' => base64_encode($pubkey), 'privkey' => base64_encode($privkey), 'nossl' => $information['nossl'], 'nosslkey' => (isset($information['nosslkey']) ? $information['nosslkey'] : ''), 'uniqueId' =>  (isset($information['uniqueId']) ? $information['uniqueId'] : '')));
                             $message = 'Site successfully reconnected';
                             MainWPSync::syncInformationArray($website, $information);
                         }

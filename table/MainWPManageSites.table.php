@@ -348,7 +348,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
         
         if (!isset($_REQUEST['g'])) {
             $_g = get_option('mainwp_managesites_filter_group');
-            if (!empty($_status)) {
+            if (!empty($_g)) {
                $_REQUEST['g'] = $_g;
             }
         } else {

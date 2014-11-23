@@ -6428,7 +6428,7 @@ managesites_bulk_init = function () {
     jQuery('#mainwp_managesites_add_other_message').hide();
     
     if (bulkManageSitesRunning == false) {
-        bulkManageSitesMaxThreads = 2;
+        bulkManageSitesMaxThreads = 3;
         bulkManageSitesCurrentThreads = 0;
         bulkManageSitesTotal = 0;
         bulkManageSitesFinished = 0;    

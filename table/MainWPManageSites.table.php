@@ -65,7 +65,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
 
     function get_sortable_columns()
     {
-        $sortable_columns = array(
+        $sortable_columns = array(            
             'site' => array('site', false),
             'url' => array('url', false),
             'groups' => array('groups', false),
@@ -78,6 +78,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
     function get_columns()
     {
         $columns = array(
+            'cb' => '<input type="checkbox" />',
             'status' => __('Status', 'mainwp'),
             'site' => __('Site', 'mainwp'),
             'url' => __('URL', 'mainwp'),
@@ -97,7 +98,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
         $columns = apply_filters('mainwp-sitestable-getcolumns', $columns, $columns);
         return $columns;
     }
-
+        
     function column_status($item)
     {
         $pluginConflicts = json_decode($item['pluginConflicts'], true);
@@ -180,15 +181,15 @@ class MainWPManageSites_List_Table extends WP_List_Table
         {
             $actions['reconnect'] = sprintf('<a class="mainwp_site_reconnect" href="#" siteid="%s">' . __('Reconnect', 'mainwp') . '</a>', $item['id']);
         }
-
-        return sprintf('<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s', $item['id'], $item['id'], $item['name'], $this->row_actions($actions));
+        $loader = '<span class="bulk_running"><img src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '"  class="hidden" /><span class="status hidden"></span></span>';
+        return sprintf('<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], $item['name'], $this->row_actions($actions));
     }
 
     function column_url($item)
     {
         $actions = array(
-            'open' => sprintf('<a href="admin.php?page=SiteOpen&websiteid=%1$s">' . __('Open WP Admin', 'mainwp') . '</a> (<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=%1$s" target="_blank">' . __('New Window', 'mainwp') . '</a>)', $item['id']),
-            'test' => '<a href="#" class="mainwp_site_testconnection">' . __('Test Connection', 'mainwp') . '</a> <span style="display: none;"><img src="' . plugins_url('images/loading.gif', dirname(__FILE__)) . '""/>' . __('Testing Connection', 'mainwp') . '</span>',
+            'open' => sprintf('<a href="admin.php?page=SiteOpen&websiteid=%1$s" class="open_wpadmin">' . __('Open WP Admin', 'mainwp') . '</a> (<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=%1$s" class="open_newwindow_wpadmin" target="_blank">' . __('New Window', 'mainwp') . '</a>)', $item['id']),
+            'test' => '<a href="#" class="mainwp_site_testconnection" class="test_connection">' . __('Test Connection', 'mainwp') . '</a> <span style="display: none;"><img src="' . plugins_url('images/loading.gif', dirname(__FILE__)) . '""/>' . __('Testing Connection', 'mainwp') . '</span>',
             'scan' => '<a href="admin.php?page=managesites&scanid=' . $item['id'] . '">' . __('Security Scan', 'mainwp') . '</a>'            
         );
         
@@ -201,7 +202,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
         }            
         
         $actions = apply_filters('mainwp_managesites_column_url', $actions, $item['id']); 
-        return sprintf('<strong><a target="_blank" href="%1$s">%1$s</a></strong>%2$s', $item['url'], $this->row_actions($actions));
+        return sprintf('<strong><a target="_blank" href="%1$s" class="site_url">%1$s</a></strong>%2$s', $item['url'], $this->row_actions($actions));
     }
 
     function column_backup($item)
@@ -263,20 +264,24 @@ class MainWPManageSites_List_Table extends WP_List_Table
         return sprintf('<img src="' . plugins_url('images/notes.png', dirname(__FILE__)) . '" class="mainwp_notes_img" id="mainwp_notes_img_%1$s" style="%2$s"/> <a href="#" class="mainwp_notes_show_all" id="mainwp_notes_%1$s">' . __('Open','mainwp') . '</a><span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ($item['note'] == '' ? 'display: none;' : ''), $item['note']);
     }
 
-//    function get_bulk_actions()
-//    {
-//        $actions = array(
-//            'delete' => 'Delete'
-//        );
-//        return $actions;
-//    }
+    function get_bulk_actions()
+    {        
+        $actions = array(
+            'sync' => __('Sync', 'mainwp'),
+            'delete' => __('Delete', 'mainwp'),
+            'test_connection' => __('Test Connection', 'mainwp'),
+            'open_wpadmin' => __('Open WP Admin', 'mainwp'),
+            'open_frontpage' => __('Open Frontpage', 'mainwp'),
+        );
+        return $actions;
+    }
 
-//    function column_cb($item)
-//    {
-//        return sprintf(
-//            '<input type="checkbox" name="book[]" value="%s" />', $item['id']
-//        );
-//    }
+    function column_cb($item)
+    {
+        return sprintf(
+            '<input type="checkbox"  status="queue" value="%s" />', $item['id']
+        );
+    }
 
     function prepare_items($globalIgnoredPluginConflicts = array(), $globalIgnoredThemeConflicts = array())
     {
@@ -434,7 +439,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
    		echo '<tr' . $row_class . ' siteid="'.$item['id'].'">';
    		$this->single_row_columns( $item );
    		echo '</tr>';
-   	}
+    }
 
     function extra_tablenav( $which )
     {

@@ -985,6 +985,7 @@ class MainWPManageSites
         <div id="mainwp_managesites_content">
             <div id="mainwp_managesites_add_errors" class="mainwp_error mainwp_info-box-red"></div>
             <div id="mainwp_managesites_add_message" class="mainwp_updated updated mainwp_info-box"></div>
+            <div id="mainwp_managesites_add_other_message" class="mainwp_updated updated mainwp_info-box hidden"></div>
             <?php
             MainWPManageSitesView::_renderInfo();
 

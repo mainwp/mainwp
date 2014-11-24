@@ -6487,7 +6487,7 @@ mainwp_managesites_bulk_remove_specific  = function (pCheckedBox) {
         }
 
         if (error != '') {
-            err = '<div class="mainwp_error mainwp_info-box-red mainwp_append_error">' + err + '</div>';
+            err = '<div class="mainwp_info-box-red mainwp_append_error">' + err + '</div>';
             jQuery('#mainwp_managesites_add_other_message').after(err);            
         }        
         if (error == '') {
@@ -6560,7 +6560,7 @@ mainwp_managesites_bulk_test_connection_specific = function(pCheckedBox) {
             msg = '<div class="mainwp_updated updated mainwp_info-box mainwp_append_message"><p>' + msg + '</p></div>';
             jQuery('#mainwp_managesites_add_other_message').after(msg);
         } else if (err != '') {
-            err = '<div class="mainwp_error mainwp_info-box-red mainwp_append_error">' + err + '</div>';
+            err = '<div class="mainwp_info-box-red mainwp_append_error">' + err + '</div>';
             jQuery('#mainwp_managesites_add_other_message').after(err);
         }        
         mainwp_managesites_bulk_test_connection_next();

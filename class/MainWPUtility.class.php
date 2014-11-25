@@ -459,9 +459,11 @@ class MainWPUtility
 
             @curl_setopt($ch, CURLOPT_URL, $url);
             @curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             @curl_setopt($ch, CURLOPT_POST, true);
             $postdata = MainWPUtility::getPostDataAuthed($website, $what, $params);
             @curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
+            @curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
             @curl_setopt($ch, CURLOPT_USERAGENT, $agent);
             
             $ssl_verifyhost = false;
@@ -555,6 +557,12 @@ class MainWPUtility
             foreach ($requestHandles as $id => $ch)
             {
                 $data = curl_exec($ch);
+
+                if ($handler != null)
+                {
+                    $site = &$handleToWebsite[self::get_resource_id($ch)];
+                    call_user_func($handler, $data, $site, $output);
+                }
             }
         }
         return true;
@@ -839,7 +847,7 @@ class MainWPUtility
         MainWPUtility::endSession();
 
         $disabled_functions = ini_get('disable_functions');
-        if (false && (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false)))
+        if (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false))
         {
             $mh = @curl_multi_init();
             @curl_multi_add_handle($mh, $ch);
@@ -1828,5 +1836,21 @@ class MainWPUtility
     {
         $filename = str_replace(array('|', '/', '\\', ' ', ':'), array('-', '-', '-', '-', '-'), $filename);
         return sanitize_file_name($filename);
+    }
+
+    public static function normalize_filename($s)
+    {
+        // maps German (umlauts) and other European characters onto two characters before just removing diacritics
+        $s    = preg_replace( '@\x{00c4}@u'    , "A",    $s );    // umlaut Ä => A
+        $s    = preg_replace( '@\x{00d6}@u'    , "O",    $s );    // umlaut Ö => O
+        $s    = preg_replace( '@\x{00dc}@u'    , "U",    $s );    // umlaut Ü => U
+        $s    = preg_replace( '@\x{00cb}@u'    , "E",    $s );    // umlaut Ë => E
+        $s    = preg_replace( '@\x{00e4}@u'    , "a",    $s );    // umlaut ä => a
+        $s    = preg_replace( '@\x{00f6}@u'    , "o",    $s );    // umlaut ö => o
+        $s    = preg_replace( '@\x{00fc}@u'    , "u",    $s );    // umlaut ü => u
+        $s    = preg_replace( '@\x{00eb}@u'    , "e",    $s );    // umlaut ë => e
+        $s    = preg_replace( '@\x{00f1}@u'    , "n",    $s );    // ñ => n
+        $s    = preg_replace( '@\x{00ff}@u'    , "y",    $s );    // ÿ => y
+        return $s;
     }
 }

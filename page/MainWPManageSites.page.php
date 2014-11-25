@@ -144,6 +144,7 @@ class MainWPManageSites
         $subfolder = str_replace('%task%', '', $subfolder);
         $subfolder = str_replace('%', '', $subfolder);
         $subfolder = MainWPUtility::removePreSlashSpaces($subfolder);
+        $subfolder = MainWPUtility::normalize_filename($subfolder);
 
         if (!MainWPSystem::Instance()->isSingleUser() && ($userid != $website->userid))
         {
@@ -168,6 +169,7 @@ class MainWPManageSites
 
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $type), $pFilename);
         $file = str_replace('%', '', $file);
+        $file = MainWPUtility::normalize_filename($file);
 
         if (!empty($file)) $file .= $ext;
 
@@ -448,6 +450,8 @@ class MainWPManageSites
                     }
                     $localBackupFile .= MainWPUtility::getRealExtension($information['db']);
 
+                    $localBackupFile = MainWPUtility::normalize_filename($localBackupFile);
+
                     $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadedDB' => $localBackupFile));
                 }
                 else
@@ -477,6 +481,8 @@ class MainWPManageSites
                         $filename = str_replace('%', '', $filename);
                         $localBackupFile = $dir . $filename . $realExt;
                     }
+
+                    $localBackupFile = MainWPUtility::normalize_filename($localBackupFile);
 
                     $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadedFULL' => $localBackupFile));
                 }
@@ -652,6 +658,7 @@ class MainWPManageSites
             $subfolder = str_replace('%task%', '', $subfolder);
             $subfolder = str_replace('%', '', $subfolder);
             $subfolder = MainWPUtility::removePreSlashSpaces($subfolder);
+            $subfolder = MainWPUtility::normalize_filename($subfolder);
 
             $result['subfolder'] = $subfolder;
 
@@ -683,6 +690,7 @@ class MainWPManageSites
                 $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, $fm_date, $fm_time, $type), $pFilename);
                 $filename = str_replace('%', '', $filename);
                 $localBackupFile = $dir . $filename;
+                $localBackupFile = MainWPUtility::normalize_filename($localBackupFile);
 
                 if ($type == 'db')
                 {
@@ -716,6 +724,7 @@ class MainWPManageSites
         $subfolder = str_replace('%task%', '', $subfolder);
         $subfolder = str_replace('%', '', $subfolder);
         $subfolder = MainWPUtility::removePreSlashSpaces($subfolder);
+        $subfolder = MainWPUtility::normalize_filename($subfolder);
 
         if (!MainWPUtility::can_edit_website($website))
         {
@@ -760,6 +769,7 @@ class MainWPManageSites
 
         $file = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, MainWPUtility::date('m-d-Y'), MainWPUtility::date('G\hi\ms\s'), $pType), $pFilename);
         $file = str_replace('%', '', $file);
+        $file = MainWPUtility::normalize_filename($file);
 
         //Normal flow: check site settings & fallback to global
         if ($pLoadFilesBeforeZip == false)
@@ -868,6 +878,7 @@ class MainWPManageSites
                 $filename = str_replace(array('%sitename%', '%url%', '%date%', '%time%', '%type%'), array(MainWPUtility::sanitize($website->name), $websiteCleanUrl, $fm_date, $fm_time, $pType), $pFilename);
                 $filename = str_replace('%', '', $filename);
                 $localBackupFile = $dir . $filename;
+                $localBackupFile = MainWPUtility::normalize_filename($localBackupFile);
 
                 if ($pType == 'db')
                 {

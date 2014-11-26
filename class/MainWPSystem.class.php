@@ -1789,7 +1789,7 @@ class MainWPSystem
         echo '<script type="text/javascript" src="' . plugins_url('js/jquery.tablesorter.min.js', dirname(__FILE__)) . '"></script>';
         echo '<script type="text/javascript" src="' . plugins_url('js/jquery.tablesorter.pager.js', dirname(__FILE__)) . '"></script>';
         echo '<script type="text/javascript" src="' . plugins_url('js/moment.min.js', dirname(__FILE__)) . '"></script>';
-        echo '<script type="text/javascript" src="https://www.google.com/jsapi"></script>';
+        echo '<script type="text/javascript" src="' . plugins_url('js/jsapi.js', dirname(__FILE__)) . '"></script>';
         echo '<script type="text/javascript">
   				google.load("visualization", "1", {packages:["corechart"]});
 			</script>';

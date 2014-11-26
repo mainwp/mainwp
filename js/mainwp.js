@@ -3932,7 +3932,7 @@ backup = function ()
         loadFilesBeforeZip: loadFilesBeforeZip,
 
         subfolder:jQuery('#backup_subfolder').val()
-    });
+    }, true);
 
     jQuery('#managesite-backup-status-text').html(dateToHMS(new Date()) + ' '+__('Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient.') +' <div id="managesite-createbackup-status-progress" style="margin-top: 1em;"></div>');
     jQuery('#managesite-createbackup-status-progress').progressbar({value: 0, max: size});
@@ -4078,6 +4078,8 @@ backup_retry_fail = function(siteId, pData, remoteDestinations, pid, type, subfo
 
                     pData['filename'] = response.result.file;
                     pData['append'] = 1;
+                    pData = mainwp_secure_data(pData, true); //Rescure
+
                     jQuery.ajax({
                         url: ajaxurl,
                         data: pData,
@@ -4132,7 +4134,7 @@ backup_retry_fail = function(siteId, pData, remoteDestinations, pid, type, subfo
         },
         error: function() {
             if (console.log)console.log('Error!');
-            //Try again in 5seconds
+            //Try again in 10seconds
             setTimeout(function() {
                 backup_retry_fail(siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError);
             },10000);
@@ -4158,7 +4160,7 @@ backup_download_file = function(pSiteId, type, url, file, regexfile, size, subfo
             success: function(pFunc) { return function (response) {
                 if (backupCreateRunning && response.error)
                 {
-                    setTimeout(function() { pFunc(pFunc); }, 1000);
+                    setTimeout(function() { pFunc(pFunc); }, 5000);
                     return;
                 }
 
@@ -4190,7 +4192,12 @@ backup_download_file = function(pSiteId, type, url, file, regexfile, size, subfo
         local: file
     });
     backupDownloadRunning = true;
-    jQuery.post(ajaxurl, data, function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pUrl) { return function (response) {
+
+    jQuery.ajax({
+        url: ajaxurl,
+        data: data,
+        method: 'POST',
+        success: function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pUrl, pData) { return function (response) {
         backupDownloadRunning = false;
 
         if (response.error)
@@ -4213,7 +4220,14 @@ backup_download_file = function(pSiteId, type, url, file, regexfile, size, subfo
         });
         jQuery.post(ajaxurl, newData, function() {}, 'json');
         backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize);
-    } }(pSiteId, file, regexfile, subfolder, remote_destinations, size, type, url), 'json');
+            } }(pSiteId, file, regexfile, subfolder, remote_destinations, size, type, url, data),
+        error:function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pUrl, pData) { return function() {
+            //Try again in 10seconds
+            /*setTimeout(function() {
+                download_retry_fail(pSiteId, pData, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pUrl);
+            },10000);*/
+            } }(pSiteId, file, regexfile, subfolder, remote_destinations, size, type, url, data),
+        dataType: 'json'});
 };
 
 var backupUploadRunning = [];
@@ -4914,6 +4928,7 @@ jQuery(document).ready(function () {
                 pluginCountSent++;
                 jQuery.post(ajaxurl, data, function (response) {
                     pluginCountReceived++;
+
                     if (pluginResetAllowed && pluginCountReceived == pluginCountSent) {
                         pluginCountReceived = 0;
                         pluginCountSent = 0;

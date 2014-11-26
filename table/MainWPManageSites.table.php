@@ -216,7 +216,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
                 if ($file != '.' && $file != '..')
                 {
                     $theFile = $dir . $file;
-                    if (preg_match('/(.*)\.zip/', $file) && !preg_match('/(.*).sql.zip$/', $file))
+                    if (MainWPUtility::isArchive($file) && !MainWPUtility::isSQLArchive($file))
                     {
                         if (filemtime($theFile) > $lastbackup) $lastbackup = filemtime($theFile);
                     }

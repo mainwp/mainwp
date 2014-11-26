@@ -610,7 +610,7 @@ class MainWPPage
             ?>
             <div id="message" class="updated">
                 <?php foreach ($dbwebsites as $website) { ?>
-                <p><?php echo $website->name; ?>
+                <p><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a>
                     : <?php echo (isset($output->ok[$website->id]) && $output->ok[$website->id] == 1 ? 'New page created. '."<a href=\"".$output->link[$website->id]."\"  target=\"_blank\">View Page</a>" : 'ERROR: ' . $output->errors[$website->id]); ?></p>
                 <?php } ?>
             </div>

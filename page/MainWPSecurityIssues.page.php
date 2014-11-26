@@ -39,7 +39,7 @@ class MainWPSecurityIssues
         <?php } ?>
         	<div class="mainwp_info-box"><?php _e('We highly suggest you make a full backup before you run the Security Update.','mainwp'); ?></div>
             <div class="postbox">
-            <h3 class="mainwp_box_title"><span><?php echo $website->name; ?> (<?php echo $website->url; ?>)</span></h3>
+            <h3 class="mainwp_box_title"><span><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a> (<?php echo $website->url; ?>)</span></h3>
             <div class="inside">
             <table id="mainwp-security-issues-table">
                 <tr><td><span id="listing_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span><span id="listing_ok" style="display: none;"><img src="<?php echo plugins_url('images/ok.png', dirname(__FILE__)); ?>"/></span><span id="listing_nok"  style="display: none;"><img src="<?php echo plugins_url('images/nok.png', dirname(__FILE__)); ?>"/></span></td><td><?php _e('Prevent listing wp-content, wp-content/plugins, wp-content/themes, wp-content/uploads','mainwp'); ?></td><td><span id="listing_fix" style="display: none"><a href="#"><?php _e('Fix','mainwp'); ?></a></span></td></tr>

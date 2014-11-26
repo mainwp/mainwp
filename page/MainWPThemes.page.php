@@ -22,7 +22,7 @@ class MainWPThemes
 
         add_submenu_page('mainwp_tab', __('Themes','mainwp'), '<span id="mainwp-Themes">' . __('Themes','mainwp') . '</span>', 'read', 'ThemesManage', array(MainWPThemes::getClassName(), 'render'));
         add_submenu_page('mainwp_tab', __('Themes','mainwp'), '<div class="mainwp-hidden">Install</div>', 'read', 'ThemesInstall', array(MainWPThemes::getClassName(), 'renderInstall'));
-        add_submenu_page('mainwp_tab', __('Themes','mainwp'), '<div class="mainwp-hidden">Auto Update Trust</div>', 'read', 'ThemesAutoUpdate', array(MainWPThemes::getClassName(), 'renderAutoUpdate'));
+        add_submenu_page('mainwp_tab', __('Themes','mainwp'), '<div class="mainwp-hidden">Auto Updates</div>', 'read', 'ThemesAutoUpdate', array(MainWPThemes::getClassName(), 'renderAutoUpdate'));
         add_submenu_page('mainwp_tab', __('Themes','mainwp'), '<div class="mainwp-hidden">Ignored Updates</div>', 'read', 'ThemesIgnore', array(MainWPThemes::getClassName(), 'renderIgnore'));
         add_submenu_page('mainwp_tab', __('Themes','mainwp'), '<div class="mainwp-hidden">Ignored Conflicts</div>', 'read', 'ThemesIgnoredConflicts', array(MainWPThemes::getClassName(), 'renderIgnoredConflicts'));
         add_submenu_page('mainwp_tab', __('Themes Help','mainwp'), '<div class="mainwp-hidden">Themes Help</div>', 'read', 'ThemesHelp', array(MainWPThemes::getClassName(), 'QSGManageThemes'));
@@ -48,7 +48,7 @@ class MainWPThemes
                     <?php if (mainwp_current_user_can("dashboard", "install_themes")) { ?>
                     <a href="<?php echo admin_url('admin.php?page=ThemesInstall'); ?>" class="mainwp-submenu"><?php _e('Install','mainwp'); ?></a>
                     <?php } ?>
-                    <a href="<?php echo admin_url('admin.php?page=ThemesAutoUpdate'); ?>" class="mainwp-submenu"><?php _e('Auto Update Trust','mainwp'); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=ThemesAutoUpdate'); ?>" class="mainwp-submenu"><?php _e('Auto Updates','mainwp'); ?></a>
                     <a href="<?php echo admin_url('admin.php?page=ThemesIgnore'); ?>" class="mainwp-submenu"><?php _e('Ignored Updates','mainwp'); ?></a>
                     <a href="<?php echo admin_url('admin.php?page=ThemesIgnoredConflicts'); ?>" class="mainwp-submenu"><?php _e('Ignored Conflicts','mainwp'); ?></a>
                     <?php
@@ -88,7 +88,7 @@ class MainWPThemes
             <?php if (mainwp_current_user_can("dashboard", "install_themes")) { ?>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Install') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesInstall"><?php _e('Install','mainwp'); ?></a>
             <?php } ?>
-            <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'AutoUpdate') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesAutoUpdate"><?php _e('Auto Update Trust','mainwp'); ?></a>
+            <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'AutoUpdate') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesAutoUpdate"><?php _e('Auto Updates','mainwp'); ?></a>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Ignore') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesIgnore"><?php _e('Ignored Updates','mainwp'); ?></a>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'IgnoredConflicts') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesIgnoredConflicts"><?php _e('Ignored Conflicts','mainwp'); ?></a>
             <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage === 'ThemesHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesHelp"><?php _e('Help','mainwp'); ?></a>
@@ -129,6 +129,7 @@ class MainWPThemes
             <p>
                 <?php _e('Status:','mainwp'); ?><br />
                 <select name="mainwp_theme_search_by_status" id="mainwp_theme_search_by_status">
+                    <option value="all" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'all') { echo 'selected'; } ?>><?php _e('All Themes','mainwp'); ?></option>
                     <option value="active" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'active') { echo 'selected'; } ?>><?php _e('Active','mainwp'); ?></option>
                     <option value="inactive" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'inactive') { echo 'selected'; } ?>><?php _e('Inactive','mainwp'); ?></option>
                 </select>
@@ -176,7 +177,14 @@ class MainWPThemes
                         $allThemes = json_decode($website->themes, true);
                         for ($i = 0; $i < count($allThemes); $i++) {
                             $theme = $allThemes[$i];
-                            if ($theme['active'] != (($status == 'active') ? 1 : 0)) continue;
+                            
+                            if ($status == "active" || $status == "inactive") {
+                                if ($theme['active'] == 1 && $status !== "active")
+                                    continue;
+                                else if ($theme['active'] != 1 && $status !== "inactive")
+                                    continue;
+                            }
+                                
                             if ($keyword != '' && !stristr($theme['title'], $keyword)) continue;
 
                             $theme['websiteid'] = $website->id;
@@ -197,7 +205,12 @@ class MainWPThemes
                             $allThemes = json_decode($website->themes, true);
                             for ($i = 0; $i < count($allThemes); $i++) {
                                 $theme = $allThemes[$i];
-                                if ($theme['active'] != (($status == 'active') ? 1 : 0)) continue;
+                                if ($status == "active" || $status == "inactive") {
+                                    if ($theme['active'] == 1 && $status !== "active")
+                                        continue;
+                                    else if ($theme['active'] != 1 && $status !== "inactive")
+                                        continue;
+                                }
                                 if ($keyword != '' && !stristr($theme['title'], $keyword)) continue;
 
                                 $theme['websiteid'] = $website->id;
@@ -240,9 +253,17 @@ class MainWPThemes
             }
 
             $post_data = array(
-                'keyword' => $keyword,
-                'status' => $status
+                'keyword' => $keyword                
             );
+            
+            if ($status == "active" || $status == "inactive") {
+                $post_data['status'] = $status;
+                $post_data['filter'] = true;
+            } else {
+                $post_data['status'] = "";
+                $post_data['filter'] = false;
+            }
+                
             MainWPUtility::fetchUrlsAuthed($dbwebsites, 'get_all_themes', $post_data, array(MainWPThemes::getClassName(), 'ThemesSearch_handler'), $output);
 
             if (count($output->errors) > 0)
@@ -364,8 +385,14 @@ class MainWPThemes
     }
     public static function renderAllThemesTable($output = null)
     {
+        $keyword = null;
+        $search_status = 'all';
         if ($output == null)
         {
+            $keyword = isset($_POST['keyword']) && !empty($_POST['keyword']) ? trim($_POST["keyword"]) : null;
+            $search_status = isset($_POST['status']) ? $_POST['status'] : "all";            
+            $search_theme_status = isset($_POST['theme_status']) ? $_POST['theme_status'] : "all";
+          
             $output = new stdClass();
             $output->errors = array();
             $output->themes = array();
@@ -380,9 +407,17 @@ class MainWPThemes
                 {
                     $allThemes = json_decode($website->themes, true);
                     for ($i = 0; $i < count($allThemes); $i++) {
-                        $theme = $allThemes[$i];
-                        if ($theme['active'] != 1) continue;
-
+                        $theme = $allThemes[$i];                        
+                        if ($search_theme_status != "all") {
+                            if ($theme['active'] == 1 && $search_theme_status !== "active")
+                                continue;
+                            else if ($theme['active'] != 1 && $search_theme_status !== "inactive")
+                                continue;
+                        }
+                        
+                        if ($keyword != '' && stristr($theme['name'], $keyword) === false) 
+                            continue;
+                        
                         $theme['websiteid'] = $website->id;
                         $theme['websiteurl'] = $website->url;
                         $output->themes[] = $theme;
@@ -403,9 +438,17 @@ class MainWPThemes
                 @MainWPDB::free_result($websites);
 
                 $post_data = array(
-                    'keyword' => '',
-                    'status' => 'active'
+                    'keyword' => $keyword                    
                 );
+                
+                if ($search_theme_status == "active" || $search_theme_status == "inactive") {
+                    $post_data['status'] = $search_theme_status;
+                    $post_data['filter'] = true;
+                } else {
+                    $post_data['status'] = "";
+                    $post_data['filter'] = false;
+                } 
+                
                 MainWPUtility::fetchUrlsAuthed($dbwebsites, 'get_all_themes', $post_data, array(MainWPThemes::getClassName(), 'ThemesSearch_handler'), $output);
 
                 if (count($output->errors) > 0)
@@ -427,10 +470,22 @@ class MainWPThemes
 
             if (session_id() == '') session_start();
             $_SESSION['SNThemesAll'] = $output;
+            $_SESSION['SNThemesAllStatus'] = array('keyword' => $keyword, 'status' => $search_status, 'theme_status' => $search_theme_status);
+        } else {
+            if (isset($_SESSION['SNThemesAllStatus'])) {
+                $keyword = $_SESSION['SNThemesAllStatus']['keyword'];
+                $search_status = $_SESSION['SNThemesAllStatus']['status'];
+                $search_theme_status = $_SESSION['SNThemesAllStatus']['theme_status'];                
+            }
         }
 
-
-        if (count($output->themes) == 0) return;
+       if (count($output->themes) == 0) {
+            ?>
+        No themes found
+        <?php
+            return;
+        }
+        
         ?>
     <div class="alignleft">
         <select name="bulk_action" id="mainwp_bulk_action">
@@ -440,20 +495,12 @@ class MainWPThemes
         </select> <input type="button" name="" id="mainwp_bulk_trust_themes_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
     </div>
     <div class="clear"></div>
-
-
     <?php
-        if (count($output->themes) == 0) {
-            ?>
-        No themes found
-        <?php
-            return;
-        }
-
+        
         //Map per siteId
         $themes = array(); //name_version -> slug
         foreach ($output->themes as $theme) {
-            $themes[$theme['slug']] = $theme['name'];
+            $themes[$theme['slug']] = $theme;            
         }
         asort($themes);
 
@@ -473,6 +520,9 @@ class MainWPThemes
                 <th scope="col" id="theme" class="manage-column column-title sortable desc" style="">
                     <a href="#"><span><?php _e('Theme','mainwp'); ?></span><span class="sorting-indicator"></span></a>
                 </th>
+                 <th scope="col" id="thmstatus" class="manage-column column-title sortable desc" style="">
+                    <a href="#"><span><?php _e('Status','mainwp'); ?></span><span class="sorting-indicator"></span></a>
+                </th>
                 <th scope="col" id="trustlvl" class="manage-column column-title sortable desc" style="">
                     <a href="#"><span><?php _e('Trust Level','mainwp'); ?></span><span class="sorting-indicator"></span></a>
                 </th>
@@ -488,6 +538,7 @@ class MainWPThemes
                 <th scope="col" class="manage-column column-cb check-column" style=""><input name="themes" type="checkbox"></th>
                 <th scope="col" id="info_footer" class="manage-column column-cb check-column" style=""></th>
                 <th scope="col" id="theme_footer" class="manage-column column-title sortable desc" style=""><span><?php _e('Theme','mainwp'); ?></span></th>
+                <th scope="col" id="thmstatus_footer" class="manage-column column-posts" style=""><?php _e('Status','mainwp'); ?></th>
                 <th scope="col" id="trustlvl_footer" class="manage-column column-posts" style=""><?php _e('Trust Level','mainwp'); ?></th>
                 <th scope="col" id="ignoredstatus_footer" class="manage-column column-posts" style=""><?php _e('Ignored Status','mainwp'); ?></th>
                 <th scope="col" id="notes_footer" class="manage-column column-posts" style=""><?php _e('Notes','mainwp'); ?></th>
@@ -496,14 +547,26 @@ class MainWPThemes
 
             <tbody id="the-posts-list" class="list:posts">
                 <?php
-                    foreach ($themes as $slug => $name)
-                    {
+                    foreach ($themes as $slug => $theme)
+                    {         
+                        $name = $theme['name'];
+                        if (!empty($search_status) && $search_status != "all") {
+                            if ($search_status == "trust" && !in_array($slug, $trustedThemes))
+                                continue;
+                            else if ($search_status == "untrust" && in_array($slug, $trustedThemes))
+                                continue;
+                            else if ($search_status == "ignored" && !isset($decodedIgnoredThemes[$slug]))
+                                continue;
+                        }
                      ?>
                     <tr id="post-1" class="post-1 post type-post status-publish format-standard hentry category-uncategorized alternate iedit author-self" valign="top" theme_slug="<?php echo urlencode($slug); ?>" theme_name="<?php echo rawurlencode($name); ?>">
                         <th scope="row" class="check-column"><input type="checkbox" name="theme[]" value="<?php echo urlencode($slug); ?>"></th>
                         <td scope="col" id="info_content" class="manage-column" style=""> <?php if (isset($decodedIgnoredThemes[$slug])) { MainWPUtility::renderToolTip('Ignored themes will NOT be auto-updated.', null, 'images/icons/mainwp-red-info-16.png'); } ?></td>
                         <td scope="col" id="theme_content" class="manage-column sorted" style="">
                             <?php echo $name; ?>
+                        </td>
+                        <td scope="col" id="plgstatus_content" class="manage-column" style="">
+                            <?php echo ($theme['active'] == 1) ? __("Active", "mainwp") : __("Inactive", "mainwp"); ?>
                         </td>
                         <td scope="col" id="trustlvl_content" class="manage-column" style="">
                             <?php
@@ -776,6 +839,10 @@ class MainWPThemes
 
     public static function renderAutoUpdate()
     {
+        $cachedThemesSearch = null;
+        if (isset($_SESSION['SNThemesAllStatus'])) {
+            $cachedThemesSearch = $_SESSION['SNThemesAllStatus'];          
+        }         
         self::renderHeader('AutoUpdate');
         if (!mainwp_current_user_can("dashboard", "trust_untrust_updates")) {
             mainwp_do_not_have_permissions("Trust/Untrust updates");
@@ -794,8 +861,28 @@ class MainWPThemes
             <?php } ?></strong></div>
             <div class="mainwp_info-box"><?php _e('Only mark Themes as Trusted if you are absolutely sure they can be updated','mainwp'); ?></div>
 
-            <a href="#" class="button-primary" id="mainwp_show_all_themes"><?php _e('Show Themes','mainwp'); ?></a>
-            <span id="mainwp_themes_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+            <div class="postbox">
+                <h3 class="mainwp_box_title"><?php _e('Search Themes','mainwp'); ?></h3>
+                <div class="inside">
+                            <span><?php _e("Status:", "mainwp"); ?> </span>
+                                <select id="mainwp_au_theme_status">
+                                    <option value="all" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['theme_status'] == 'all') { echo 'selected'; } ?>><?php _e('All Themes','mainwp'); ?></option>
+                                    <option value="active" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['theme_status'] == 'active') { echo 'selected'; } ?>><?php _e('Active Themes','mainwp'); ?></option>
+                                    <option value="inactive" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['theme_status'] == 'inactive') { echo 'selected'; } ?>><?php _e('Inactive Themes','mainwp'); ?></option>                        
+                                </select>&nbsp;&nbsp;
+                            <span><?php _e("Trust Status:", "mainwp"); ?> </span>
+                            <select id="mainwp_au_theme_trust_status">
+                                <option value="all" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['status'] == 'all') { echo 'selected'; } ?>><?php _e('All Themes','mainwp'); ?></option>
+                                <option value="trust" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['status'] == 'trust') { echo 'selected'; } ?>><?php _e('Trusted Themes','mainwp'); ?></option>
+                                <option value="untrust" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['status'] == 'untrust') { echo 'selected'; } ?>><?php _e('Not Trusted Themes','mainwp'); ?></option>
+                                <option value="ignored" <?php if ($cachedThemesSearch != null && $cachedThemesSearch['status'] == 'ignored') { echo 'selected'; } ?>><?php _e('Ignored Themes','mainwp'); ?></option>
+                            </select>&nbsp;&nbsp;
+                        <span><?php _e("Containing Keywords:", "mainwp"); ?> </span>
+                        <input type="text" class="mainwp-field mainwp-keyword" id="mainwp_au_theme_keyword" style="width: 350px;" value="<?php echo ($cachedThemesSearch !== null) ? $cachedThemesSearch['keyword'] : "";?>">&nbsp;&nbsp;
+                        <a href="#" class="button-primary" id="mainwp_show_all_themes"><?php _e('Show Themes','mainwp'); ?></a>
+                        <span id="mainwp_themes_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+                </div>
+            </div>
 
 
             <div id="mainwp_themes_main" style="display: block; margin-top: 1.5em ;">
@@ -897,7 +984,7 @@ class MainWPThemes
                     <tr site_id="<?php echo $website->id; ?>" theme="<?php echo urlencode($ignoredThemeConflictName); ?>">
                         <td>
                             <span class="websitename" <?php if (!$first) { echo 'style="display: none;"'; } else { $first = false; }?>>
-                                <?php echo $website->name; ?>
+                                <a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a>
                             </span>
                         </td>
                         <td>
@@ -1013,7 +1100,7 @@ class MainWPThemes
                <tr site_id="<?php echo $website->id; ?>" theme_slug="<?php echo urlencode($ignoredTheme); ?>">
                    <td>
                        <span class="websitename" <?php if (!$first) { echo 'style="display: none;"'; } else { $first = false; }?>>
-                           <?php echo $website->name; ?>
+                           <a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a>
                        </span>
                    </td>
                    <td>

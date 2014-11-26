@@ -162,6 +162,8 @@ class MainWPManageSitesView
             $breadcrumd = self::getBreadcrumb($shownPage, $subPages);
         }
 
+        $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
+
         $can_add = mainwp_current_user_can("dashboard", "add_sites");
         $can_edit = mainwp_current_user_can("dashboard", "edit_sites");
         $can_view_dashboard = mainwp_current_user_can("dashboard", "access_individual_dashboard");
@@ -187,7 +189,23 @@ class MainWPManageSitesView
         </div>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <?php if (!empty($breadcrumd)) { ?>
-            <div class="mainwp_breadcrumb"><strong>You are here:</strong> &nbsp;&nbsp;<?php echo $breadcrumd; ?></div><br/>
+            <div class="mainwp_breadcrumb"><strong><?php _e('You are here: ','mainwp'); ?></strong> &nbsp;&nbsp;<?php echo $breadcrumd; ?>
+                <span id="mainwp-ind-dash-quick-jump" style="float: right;"><strong><?php _e('Jump to ','mainwp'); ?></strong>
+                    <select id="mainwp-quick-jump-child" name="">
+                        <option value=""><?php _e('Select Site ','mainwp'); ?></option>
+                        <?php
+                        while ($websites && ($website = @MainWPDB::fetch_object($websites)))
+                        {
+                        echo '<option value="'.$website->id.'">' . $website->name . '</option>';
+                        }
+                        @MainWPDB::free_result($websites);
+                        ?>
+                    </select>
+                    <strong><?php _e(' dashboard','mainwp'); ?></strong>
+                </span>
+                <div style="clear: both;"></div>
+            </div>
+            <br/>
             <?php } ?>
             <?php if ($shownPage == '') {?>
             <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
@@ -1394,6 +1412,13 @@ class MainWPManageSitesView
             <h3 class="mainwp_box_title"><span><?php _e('Advanced Options','mainwp'); ?></span></h3>
             <div class="inside">
             <table class="form-table" style="width: 100%">
+                <?php $disabled_unique = empty($website->uniqueId) ? true : false; ?> 
+                <tr class="form-field form-required">
+                    <th scope="row"><?php _e('Child Unique Security
+                      ID: ','mainwp'); ?><?php MainWPUtility::renderToolTip('The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.'); ?></th>
+                    <td><input type="text" id="mainwp_managesites_edit_uniqueId" style="width: 350px;" <?php echo $disabled_unique ? 'disabled="disabled"' : ''; ?>
+                             name="mainwp_managesites_edit_uniqueId" value="<?php echo $website->uniqueId; ?>" class="mainwp-field mainwp-unique-id"/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
+                </tr>                
                  <tr class="form-field form-required">
                     <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
                     <td>
@@ -1517,7 +1542,7 @@ class MainWPManageSitesView
             do_action('mainwp-extension-sites-edit', $website);
             ?><p class="submit"><input type="submit" name="submit" id="submit" class="button-primary"
                                      value="<?php _e('Update Site','mainwp'); ?>"/></p>
-        </form>
+        </form>       
         <?php
     }
 
@@ -1559,7 +1584,7 @@ class MainWPManageSitesView
                     if (isset($information['register']) && $information['register'] == 'OK')
                     {
                         //Update website
-                        MainWPDB::Instance()->updateWebsiteValues($website->id, array('pubkey' => base64_encode($pubkey), 'privkey' => base64_encode($privkey), 'nossl' => $information['nossl'], 'nosslkey' => (isset($information['nosslkey']) ? $information['nosslkey'] : '')));
+                        MainWPDB::Instance()->updateWebsiteValues($website->id, array('pubkey' => base64_encode($pubkey), 'privkey' => base64_encode($privkey), 'nossl' => $information['nossl'], 'nosslkey' => (isset($information['nosslkey']) ? $information['nosslkey'] : ''), 'uniqueId' =>  (isset($information['uniqueId']) ? $information['uniqueId'] : '')));                        
                         MainWPSync::syncInformationArray($website, $information);
                         return true;
                     }
@@ -1641,10 +1666,11 @@ class MainWPManageSitesView
                 if (is_array($themeConflicts))
                     $themeConflicts = array_filter($themeConflicts);
                 $verifyCertificate = $_POST['verify_certificate'];
+                $addUniqueId = $_POST['managesites_add_uniqueId'];
                 $information = MainWPUtility::fetchUrlNotAuthed($url, $_POST['managesites_add_wpadmin'], 'register',
                     array('pubkey' => $pubkey,
                         'server' => get_admin_url(),
-                        'uniqueId' => $_POST['managesites_add_uniqueId'],
+                        'uniqueId' => $addUniqueId,
                         'pluginConflicts' => json_encode($pluginConflicts),
                         'themeConflicts' => json_encode($themeConflicts)), 
                     false,
@@ -1692,10 +1718,13 @@ class MainWPManageSitesView
                                 }
                             }
                         }
-
+                        
+                        if (!isset($information['uniqueId']) || empty($information['uniqueId']))
+                            $addUniqueId = "";
+                        
                         global $current_user;
                         $id = MainWPDB::Instance()->addWebsite($current_user->ID, $_POST['managesites_add_wpname'], $_POST['managesites_add_wpurl'], $_POST['managesites_add_wpadmin'], base64_encode($pubkey), base64_encode($privkey), $information['nossl'], (isset($information['nosslkey'])
-                                ? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate);
+                                ? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate, $addUniqueId);
                         $message = 'Site successfully added';
                         $website = MainWPDB::Instance()->getWebsiteById($id);
                         MainWPSync::syncInformationArray($website, $information);

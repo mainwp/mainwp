@@ -1400,9 +1400,9 @@ class MainWPUtility
             <br>
             <div style="background:#ffffff;padding:0 1.618em;font:13px/20px Helvetica,Arial,Sans-serif;padding-bottom:50px!important">
                 <div style="width:600px;background:#fff;margin-left:auto;margin-right:auto;margin-top:10px;margin-bottom:25px;padding:0!important;border:10px Solid #fff;border-radius:10px;overflow:hidden">
-                    <div style="display: block; width: 100% ; background-image: url(http://mainwp.com/wp-content/uploads/2013/02/debut_light.png) ; background-repeat: repeat; border-bottom: 2px Solid #7fb100 ; overflow: hidden;">
+                    <div style="display: block; width: 100% ; background: #fafafa; border-bottom: 2px Solid #7fb100 ; overflow: hidden;">
                       <div style="display: block; width: 95% ; margin-left: auto ; margin-right: auto ; padding: .5em 0 ;">
-                         <div style="float: left;"><a href="http://mainwp.com"><img src="http://mainwp.com/wp-content/uploads/2013/07/MainWP-Logo-1000-300x62.png" alt="MainWP" height="30"/></a></div>
+                         <div style="float: left;"><a href="http://mainwp.com"><img src="'. plugins_url('images/logo.png', dirname(__FILE__)) .'" alt="MainWP" height="30"/></a></div>
                          <div style="float: right; margin-top: .6em ;">
                             <span style="display: inline-block; margin-right: .8em;"><a href="http://extensions.mainwp.com" style="font-family: Helvetica, Sans; color: #7fb100; text-transform: uppercase; font-size: 14px;">Extensions</a></span>
                             <span style="display: inline-block; margin-right: .8em;"><a style="font-family: Helvetica, Sans; color: #7fb100; text-transform: uppercase; font-size: 14px;" href="http://mainwp.com/forum">Support</a></span>
@@ -1423,8 +1423,8 @@ class MainWPUtility
 
                     <div style="display: block; width: 100% ; background: #1c1d1b;">
                       <div style="display: block; width: 95% ; margin-left: auto ; margin-right: auto ; padding: .5em 0 ;">
-                        <div style="padding: .5em 0 ; float: left;"><p style="color: #fff; font-family: Helvetica, Sans; font-size: 12px ;">© 2013 MainWP. All Rights Reserved.</p></div>
-                        <div style="float: right;"><a href="http://mainwp.com"><img src="http://mainwp.com/wp-content/uploads/2013/07/MainWP-Icon-300.png" height="45"/></a></div><div style="clear: both;"></div>
+                        <div style="padding: .5em 0 ; float: left;"><p style="color: #fff; font-family: Helvetica, Sans; font-size: 12px ;">Â© 2013 MainWP. All Rights Reserved.</p></div>
+                        <div style="float: right;"><a href="http://mainwp.com"><img src="'. plugins_url('images/g-all-top-menu-item.png', dirname(__FILE__)) .'" height="45"/></a></div><div style="clear: both;"></div>
                       </div>
                    </div>
                 </div>

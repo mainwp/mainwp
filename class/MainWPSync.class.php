@@ -269,6 +269,12 @@ class MainWPSync
             $websiteValues['mainwpdir'] = $information['mainwpdir'];
             $done = true;
         }
+        
+        if (isset($information['uniqueId']))
+        {
+            $websiteValues['uniqueId'] = $information['uniqueId'];
+            $done = true;
+        }         
 
         if (!$done)
         {

@@ -46,7 +46,7 @@ class MainWPShortcuts
     <div id="mainwp_notes" class="mainwp_popup">
         <a id="mainwp_notes_closeX" class="mainwp_closeX" style="display: inline; "></a>
 
-        <div id="mainwp_notes_title" class="mainwp_popup_title"><?php echo $website->name; ?></div>
+        <div id="mainwp_notes_title" class="mainwp_popup_title"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a></div>
         <div id="mainwp_notes_content">
             <textarea style="width: 580px !important; height: 300px;"
                       id="mainwp_notes_note"></textarea>

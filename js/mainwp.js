@@ -1757,26 +1757,43 @@ managebackups_backup_upload_file = function(pSiteId, pSiteName, pFile, pRegexFil
         var unique = Date.now();
         appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] '+ __('Uploading to remote destination: %1 (%2)', remote_destination.title, remote_destination.type) + '<div id="managesite-upload-status-progress-' + unique + '" style="margin-top: 1em;"></div>');
 
-        var interVal = undefined;
         jQuery('#managesite-upload-status-progress-'+unique).progressbar({value: 0, max: pSize});
-        interVal = setInterval(function() {
-            var data = mainwp_secure_data({
-                action:'mainwp_backup_upload_getprogress',
-                unique: unique
-            });
-            jQuery.post(ajaxurl, data,  function(pUnique) { return function (response) {
-                if (response.error) return;
 
-                if (backupUploadRunning[pUnique])
-                {
-                    var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
-                    if ((progressBar.length > 0) && (progressBar.progressbar('option', 'value') < progressBar.progressbar('option', 'max')) && (progressBar.progressbar('option', 'value') < parseInt(response.result)))
-                    {
-                        progressBar.progressbar('value', response.result);
-                    }
-                }
-            } }(unique), 'json');
-        }, 1000);
+		var fnc = function(pUnique) { return function(pFunction) {
+            var data2 = mainwp_secure_data({
+                action:'mainwp_backup_upload_getprogress',
+                unique: pUnique
+            }, false);
+
+			jQuery.ajax({
+				url: ajaxurl,
+				data: data2,
+				method: 'POST',
+				success: function(pFunc) { return function (response) {
+					if (backupUploadRunning[pUnique] && response.error)
+					{
+						setTimeout(function() { pFunc(pFunc); }, 1000);
+						return;
+					}
+
+					if (backupUploadRunning[pUnique])
+					{
+						var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
+						if ((progressBar.length > 0) && (progressBar.progressbar('option', 'value') < progressBar.progressbar('option', 'max')) && (progressBar.progressbar('option', 'value') < parseInt(response.result)))
+						{
+							progressBar.progressbar('value', response.result);
+						}
+
+						setTimeout(function() { pFunc(pFunc); }, 1000);
+					}
+				} }(pFunction),
+				error:function(pFunc) { return function() {
+					if (backupUploadRunning[pUnique]) { setTimeout(function() { pFunc(pFunc); }, 10000); }
+				} }(pFunction),
+				dataType: 'json'});
+		} }(unique);
+
+		setTimeout(function() { fnc(fnc); }, 1000);
 
         backupUploadRunning[unique] = true;
 
@@ -1790,50 +1807,42 @@ managebackups_backup_upload_file = function(pSiteId, pSiteName, pFile, pRegexFil
             remote_destination: remote_destination.id,
             unique: unique
         });
+
         pRemoteDestinations.shift();
         jQuery.ajax({
             type: 'POST',
             url: ajaxurl,
             data: data,
-            success: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pInterval, pUnique) { return function (response) {
-                if (response.error) return;
+            success: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique) { return function (response) {
+	            if (response.error)
+				{
+					managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, response.error);
+				}
+				else
+				{
+					backupUploadRunning[pUnique] = false;
 
-                if (pInterval != undefined)
-                {
-                    backupUploadRunning[pUnique] = false;
-                    clearInterval(pInterval);
-                    var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
-                    progressBar.progressbar();
-                    progressBar.progressbar('value', pSize);
-                }
+					var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
+					progressBar.progressbar();
+					progressBar.progressbar('value', pSize);
 
-                var obj = response.result;
-                if (obj.error)
-                {
-                    manageBackupsError = true;
-                    appendToDiv('#managebackups-task-status-text', '<font color="red">[' + pSiteName + '] '+__('Upload to %1 (%2) failed:', obj.title, obj.type) + ' ' + obj.error + '</font>');
-                }
-                else
-                {
-                    appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] '+__('Upload to %1 (%2) succesful',  obj.title, obj.type));
-                }
-                managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize)
-            } }(pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, interVal, unique),
-            error: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pInterval, pUnique) { return function (response) {
-                if (pInterval != undefined)
-                {
-                    backupUploadRunning[pUnique] = false;
-                    clearInterval(pInterval);
-                    var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
-                    progressBar.progressbar();
-                    progressBar.progressbar('value', pSize);
-                }
+					var obj = response.result;
+					if (obj.error)
+					{
+						manageBackupsError = true;
+						appendToDiv('#managebackups-task-status-text', '<font color="red">[' + pSiteName + '] '+__('Upload to %1 (%2) failed:', obj.title, obj.type) + ' ' + obj.error + '</font>');
+					}
+					else
+					{
+						appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] '+__('Upload to %1 (%2) succesful',  obj.title, obj.type));
+					}
 
-                manageBackupsError = true;
-                appendToDiv('#managebackups-task-status-text', '<font color="red">[' + pSiteName + '] '+__('Upload failed.') + '</font>');
-
-                managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize)
-            } }(pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, interVal, unique),
+					managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
+				}
+            } }(pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, data, unique),
+            error: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique) { return function (response) {
+                managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique);
+            } }(pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, data, unique),
             dataType: 'json'
         });
     }
@@ -1843,6 +1852,126 @@ managebackups_backup_upload_file = function(pSiteId, pSiteName, pFile, pRegexFil
         managebackups_run_next();
     }
 };
+
+managebackups_backup_upload_file_retry_fail = function(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError)
+{
+    //we've got the pid file!!!!
+    var data = mainwp_secure_data({
+        action:'mainwp_backup_upload_checkstatus',
+		unique: pUnique
+    });
+
+    jQuery.ajax({
+        url: ajaxurl,
+        data: data,
+        method: 'POST',
+        success: function(response) {
+            if (response.status == 'done')
+            {
+				backupUploadRunning[pUnique] = false;
+
+				var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
+				progressBar.progressbar();
+				progressBar.progressbar('value', pSize);
+
+				appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] '+__('Upload to %1 (%2) succesful',  response.title, response.type));
+
+				managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
+            }
+            else if (response.status == 'busy')
+            {
+                //Try again in 10seconds
+                setTimeout(function() {
+                    managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError);
+                },10000);
+            }
+            else if (response.status == 'stalled')
+            {
+                if (backupContinueRetriesUnique[pUnique] == undefined)
+                {
+                    backupContinueRetriesUnique[pUnique] = 1;
+                }
+                else
+                {
+                    backupContinueRetriesUnique[pUnique]++;
+                }
+
+                if (backupContinueRetriesUnique[pUnique] > 10)
+                {
+                    if (responseError != undefined)
+                    {
+						manageBackupsError = true;
+						appendToDiv('#managebackups-task-status-text', '<font color="red">[' + pSiteName + '] '+__('Upload to %1 (%2) failed:', response.title, response.type) + ' ' + responseError + '</font>');
+                    }
+                    else
+                    {
+                        appendToDiv('#managebackups-task-status-text', ' <font color="red">[' + pSiteName + '] Error: Upload timed out - <a href="http://docs.mainwp.com/backup-failed-php-ini-settings/">Please check this help document for more information and possible fixes</a></font>');
+                    }
+
+					managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
+                }
+                else
+                {
+					appendToDiv('#managebackups-task-status-text', ' [' + pSiteName + '] Upload stalled, trying to resume from last position.');
+
+                    pData = mainwp_secure_data(pData); //Rescure
+
+                    jQuery.ajax({
+                        url: ajaxurl,
+                        data: pData,
+                        method: 'POST',
+						success: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique) { return function (response) {
+							if (response.error)
+							{
+								managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, response.error);
+							}
+							else
+							{
+								backupUploadRunning[pUnique] = false;
+
+								var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
+								progressBar.progressbar();
+								progressBar.progressbar('value', pSize);
+
+								var obj = response.result;
+								if (obj.error)
+								{
+									manageBackupsError = true;
+									appendToDiv('#managebackups-task-status-text', '<font color="red">[' + pSiteName + '] '+__('Upload to %1 (%2) failed:', obj.title, obj.type) + ' ' + obj.error + '</font>');
+								}
+								else
+								{
+									appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] '+__('Upload to %1 (%2) succesful',  obj.title, obj.type));
+								}
+
+								managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
+							}
+						} }(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique),
+						error: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique) { return function (response) {
+							managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pUnique, pSize);
+						} }(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique),
+                        dataType: 'json'
+                    });
+                }
+            }
+            else
+            {
+                //Try again in 5seconds
+                setTimeout(function() {
+                    managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError);
+                },10000);
+            }
+        },
+        error: function() {
+            //Try again in 10seconds
+            setTimeout(function() {
+                managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError);
+            },10000);
+        },
+        dataType: 'json'
+    });
+};
+
 managebackups_init = function () {
     setVisible('#mainwp_managebackups_add_errors', false);
 
@@ -3880,6 +4009,7 @@ mainwp_upload_bulk_start_specific = function (pType, pUrls, pActivatePlugin, pOv
 var backupDownloadRunning = false;
 var backupError = false;
 var backupContinueRetries = 0;
+var backupContinueRetriesUnique = [];
 
 jQuery(document).ready(function () {
     jQuery('#backup_btnSubmit').live('click', function () {
@@ -4240,33 +4370,50 @@ backup_upload_file = function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDes
         var unique = Date.now();
         appendToDiv('#managesite-backup-status-text', __('Uploading to remote destination: %1 (%2)', remote_destination.title, remote_destination.type) + '<div id="managesite-upload-status-progress-' + unique + '"  style="margin-top: 1em;"></div>');
 
-        var interVal = undefined;
         jQuery('#managesite-upload-status-progress-'+unique).progressbar({value: 0, max: pSize});
-        interVal = setInterval(function() {
-            var data = mainwp_secure_data({
-                action:'mainwp_backup_upload_getprogress',
-                unique: unique
-            });
-            jQuery.post(ajaxurl, data,  function(pUnique) { return function (response) {
-                if (response.error) return;
 
-                if (backupUploadRunning[pUnique])
-                {
-                    var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
-                    if ((progressBar.length > 0) && (progressBar.progressbar('option', 'value') < progressBar.progressbar('option', 'max')) && (progressBar.progressbar('option', 'value') < parseInt(response.result)))
-                    {
-                        progressBar.progressbar('value', response.result);
-                    }
-                }
-            } }(unique), 'json');
-        }, 1000);
+		var fnc = function(pUnique) { return function(pFunction) {
+            var data2 = mainwp_secure_data({
+                action:'mainwp_backup_upload_getprogress',
+                unique: pUnique
+            }, false);
+
+			jQuery.ajax({
+				url: ajaxurl,
+				data: data2,
+				method: 'POST',
+				success: function(pFunc) { return function (response) {
+					if (backupUploadRunning[pUnique] && response.error)
+					{
+						setTimeout(function() { pFunc(pFunc); }, 1000);
+						return;
+					}
+
+					if (backupUploadRunning[pUnique])
+					{
+						var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
+						if ((progressBar.length > 0) && (progressBar.progressbar('option', 'value') < progressBar.progressbar('option', 'max')) && (progressBar.progressbar('option', 'value') < parseInt(response.result)))
+						{
+							progressBar.progressbar('value', response.result);
+						}
+
+						setTimeout(function() { pFunc(pFunc); }, 1000);
+					}
+				} }(pFunction),
+				error:function(pFunc) { return function() {
+					if (backupUploadRunning[pUnique]) { setTimeout(function() { pFunc(pFunc); }, 10000); }
+				} }(pFunction),
+				dataType: 'json'});
+		} }(unique);
+
+		setTimeout(function() { fnc(fnc); }, 1000);
 
         backupUploadRunning[unique] = true;
 
         var data = mainwp_secure_data({
             action:'mainwp_backup_upload_file',
-            siteId: pSiteId,
             file: pFile,
+            siteId: pSiteId,
             regexfile: pRegexFile,
             subfolder: pSubfolder,
             type: pType,
@@ -4279,46 +4426,36 @@ backup_upload_file = function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDes
             type: 'POST',
             url: ajaxurl,
             data: data,
-            success: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pInterVal, pUnique) { return function (response) {
-                if (response.error) return;
+            success: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pUnique) { return function (response) {
+	            if (response.error)
+				{
+					backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, response.error);
+				}
+				else
+				{
+					backupUploadRunning[pUnique] = false;
 
-                if (interVal != undefined)
-                {
-                    backupUploadRunning[pUnique] = false;
-                    clearInterval(pInterVal);
                     var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
                     progressBar.progressbar();
                     progressBar.progressbar('value', pSize);
-                }
 
-                var obj = response.result;
-                if (obj.error)
-                {
-                    backupError = true;
-                    appendToDiv('#managesite-backup-status-text', '<font color="red">' + __('Upload to %1 (%2) failed:', obj.title, obj.type)+' ' + obj.error + '</font>');
-                }
-                else
-                {
-                    appendToDiv('#managesite-backup-status-text', __('Upload to %1 (%2) successful.', obj.title, obj.type));
-                }
+					var obj = response.result;
+					if (obj.error)
+					{
+						backupError = true;
+						appendToDiv('#managesite-backup-status-text', '<font color="red">' + __('Upload to %1 (%2) failed:', obj.title, obj.type)+' ' + obj.error + '</font>');
+					}
+					else
+					{
+						appendToDiv('#managesite-backup-status-text', __('Upload to %1 (%2) successful.', obj.title, obj.type));
+					}
 
-                backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
-            } }(pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, interVal, unique),
-            error: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pInterVal, pUnique) { return function (response) {
-                if (interVal != undefined)
-                {
-                    backupUploadRunning[pUnique] = false;
-                    clearInterval(pInterVal);
-                    var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
-                    progressBar.progressbar();
-                    progressBar.progressbar('value', 0);
-                }
-
-                backupError = true;
-                appendToDiv('#managesite-backup-status-text', '<font color="red">' + __('Upload failed.') + '</font>');
-
-                backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
-            } }(pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, interVal, unique),
+					backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
+				}
+            } }(pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, data, unique),
+            error: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pUnique) { return function (response) {
+				backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique);
+            } }(pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, data, unique),
             dataType: 'json'
         });
     }
@@ -4334,6 +4471,125 @@ backup_upload_file = function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDes
             }, 3000);
         }
     }
+};
+
+backup_upload_file_retry_fail = function(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError)
+{
+    //we've got the pid file!!!!
+    var data = mainwp_secure_data({
+        action:'mainwp_backup_upload_checkstatus',
+		unique: pUnique
+    });
+
+    jQuery.ajax({
+        url: ajaxurl,
+        data: data,
+        method: 'POST',
+        success: function(response) {
+            if (response.status == 'done')
+            {
+				backupUploadRunning[pUnique] = false;
+
+				var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
+				progressBar.progressbar();
+				progressBar.progressbar('value', pSize);
+
+				appendToDiv('#managesite-backup-status-text', __('Upload to %1 (%2) successful.', response.title, response.type));
+
+				backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
+            }
+            else if (response.status == 'busy')
+            {
+                //Try again in 10seconds
+                setTimeout(function() {
+                    backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError);
+                },10000);
+            }
+            else if (response.status == 'stalled')
+            {
+                if (backupContinueRetriesUnique[pUnique] == undefined)
+                {
+                    backupContinueRetriesUnique[pUnique] = 1;
+                }
+                else
+                {
+                    backupContinueRetriesUnique[pUnique]++;
+                }
+
+                if (backupContinueRetriesUnique[pUnique] > 10)
+                {
+                    if (responseError != undefined)
+                    {
+						backupError = true;
+						appendToDiv('#managesite-backup-status-text', '<font color="red">' + __('Upload to %1 (%2) failed:', response.title, response.type)+' ' + responseError + '</font>');
+                    }
+                    else
+                    {
+                        appendToDiv('#managesite-backup-status-text', ' <font color="red">Error: Upload timed out - <a href="http://docs.mainwp.com/backup-failed-php-ini-settings/">Please check this help document for more information and possible fixes</a></font>');
+                    }
+
+					backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
+                }
+                else
+                {
+                    appendToDiv('#managesite-backup-status-text', ' Upload stalled, trying to resume from last position.');
+
+                    pData = mainwp_secure_data(pData); //Rescure
+
+                    jQuery.ajax({
+                        url: ajaxurl,
+                        data: pData,
+                        method: 'POST',
+						success: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData) { return function (response) {
+							if (response.error)
+							{
+								backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, response.error);
+							}
+							else
+							{
+								backupUploadRunning[pUnique] = false;
+
+								var progressBar = jQuery('#managesite-upload-status-progress-'+pUnique);
+								progressBar.progressbar();
+								progressBar.progressbar('value', pSize);
+
+								var obj = response.result;
+								if (obj.error)
+								{
+									backupError = true;
+									appendToDiv('#managesite-backup-status-text', '<font color="red">' + __('Upload to %1 (%2) failed:', obj.title, obj.type)+' ' + obj.error + '</font>');
+								}
+								else
+								{
+									appendToDiv('#managesite-backup-status-text', __('Upload to %1 (%2) successful.', obj.title, obj.type));
+								}
+
+								backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
+							}
+						} }(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData),
+						error: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData) { return function (response) {
+							backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique);
+						} }(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData),
+                        dataType: 'json'
+                    });
+                }
+            }
+            else
+            {
+                //Try again in 5seconds
+                setTimeout(function() {
+                    backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError);
+                },10000);
+            }
+        },
+        error: function() {
+            //Try again in 10seconds
+            setTimeout(function() {
+                backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError);
+            },10000);
+        },
+        dataType: 'json'
+    });
 };
 
 

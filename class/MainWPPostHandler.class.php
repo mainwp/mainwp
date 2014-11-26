@@ -88,6 +88,7 @@ class MainWPPostHandler
         $this->addAction('mainwp_backup_delete_file', array(&$this, 'mainwp_backup_delete_file'));
         $this->addAction('mainwp_backup_getfilesize', array(&$this, 'mainwp_backup_getfilesize'));
         $this->addAction('mainwp_backup_upload_getprogress', array(&$this, 'mainwp_backup_upload_getprogress'));
+        $this->addAction('mainwp_backup_upload_checkstatus', array(&$this, 'mainwp_backup_upload_checkstatus'));
 
         //Page: CloneSite
 //        add_action('wp_ajax_mainwp_clonesite_check_backups', array(&$this, 'mainwp_clonesite_check_backups'));
@@ -745,6 +746,39 @@ class MainWPPostHandler
         }
     }
 
+    function mainwp_backup_upload_checkstatus()
+    {
+        $this->secure_request('mainwp_backup_upload_checkstatus');
+
+        try
+        {
+            $array = get_option('mainwp_upload_progress');
+
+            if (!is_array($array) || !isset($array[$_POST['unique']]) || !isset($array[$_POST['unique']]['dts']))
+            {
+                die(json_encode(array('status' => 'stalled')));
+            }
+            else if (isset($array[$_POST['unique']]['finished']))
+            {
+                die(json_encode(array('status' => 'done')));
+            }
+            else
+            {
+                if ($array[$_POST['unique']]['dts'] < (time() - (2 * 60))) //2minutes
+                {
+                    die(json_encode(array('status' => 'stalled')));
+                }
+                else
+                {
+                    die(json_encode(array('status' => 'busy')));
+                }
+            }
+        }
+        catch (MainWPException $e)
+        {
+            die(json_encode(array('error' => array('message' => $e->getMessage(), 'extra' => $e->getMessageExtra()))));
+        }
+    }
 
     function mainwp_backup_upload_getprogress()
     {
@@ -754,7 +788,18 @@ class MainWPPostHandler
         {
             $array = get_option('mainwp_upload_progress');
 
-            die(json_encode(array('result' => (!is_array($array) || !isset($array[$_POST['unique']]) ? 0 : $array[$_POST['unique']]))));
+            if (!is_array($array) || !isset($array[$_POST['unique']]))
+            {
+                die(json_encode(array('result' => 0)));
+            }
+            else if (isset($array[$_POST['unique']]['finished']))
+            {
+                throw new MainWPException('finished..');
+            }
+            else
+            {
+                die(json_encode(array('result' => (isset($array[$_POST['unique']]['offset']) ? $array[$_POST['unique']]['offset'] : $array[$_POST['unique']]))));
+            }
         }
         catch (MainWPException $e)
         {

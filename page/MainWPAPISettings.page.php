@@ -101,7 +101,7 @@ class MainWPAPISettings
     public static function testAPIs($pAPI = null, $forceRequest = false, $username = null, $password = null, $pIgnoreLastCheckTime = false, $saveAnyway = false)
     {
         if ($username == null) $username = get_option('mainwp_api_username');
-        if ($password == null) $password = get_option('mainwp_api_password');
+        if ($password == null) $password = MainWPUtility::decrypt(get_option('mainwp_api_password'), 'MainWPAPI');
 
         $requestsDB = get_option('mainwp_requests');
         $requests =  isset($requestsDB['requests']) ? unserialize(base64_decode($requestsDB['requests'])) : array();
@@ -198,7 +198,7 @@ class MainWPAPISettings
     public static function checkUpgrade()
     {
         $username = get_option("mainwp_api_username");
-        $password = get_option("mainwp_api_password");
+        $password = MainWPUtility::decrypt(get_option('mainwp_api_password'), 'MainWPAPI');
 
         $slugs = MainWPExtensions::getSlugs();
         if ($slugs == '') return array();
@@ -228,7 +228,7 @@ class MainWPAPISettings
     public static function getUpgradeInformation($pSlug)
     {
         $username = get_option("mainwp_api_username");
-        $password = get_option("mainwp_api_password");
+        $password = MainWPUtility::decrypt(get_option('mainwp_api_password'), 'MainWPAPI');
 
         try
         {

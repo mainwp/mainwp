@@ -753,24 +753,25 @@ class MainWPPostHandler
         try
         {
             $array = get_option('mainwp_upload_progress');
+            $info = apply_filters('mainwp_remote_destination_info', array(), $_POST['remote_destination']);
 
             if (!is_array($array) || !isset($array[$_POST['unique']]) || !isset($array[$_POST['unique']]['dts']))
             {
-                die(json_encode(array('status' => 'stalled')));
+                die(json_encode(array('status' => 'stalled', 'info' => $info)));
             }
             else if (isset($array[$_POST['unique']]['finished']))
             {
-                die(json_encode(array('status' => 'done')));
+                die(json_encode(array('status' => 'done', 'info' => $info)));
             }
             else
             {
                 if ($array[$_POST['unique']]['dts'] < (time() - (2 * 60))) //2minutes
                 {
-                    die(json_encode(array('status' => 'stalled')));
+                    die(json_encode(array('status' => 'stalled', 'info' => $info)));
                 }
                 else
                 {
-                    die(json_encode(array('status' => 'busy')));
+                    die(json_encode(array('status' => 'busy', 'info' => $info)));
                 }
             }
         }

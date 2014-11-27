@@ -76,9 +76,10 @@ apiTest = function () {
             setVisible('#mainwp_api_message', false);
             setHtml('#mainwp_api_errors', __('An error occured, please contact us.'));
         }
-        if (response['api_status'] == "VALID") jQuery('#mainwp-api-submit').removeAttr('disabled'); //Enable
+        var apiSubmit = jQuery('#mainwp-api-submit');
+        if (response['api_status'] == "VALID") apiSubmit.removeAttr('disabled'); //Enable
 
-        jQuery('#mainwp-api-submit').removeAttr('disabled'); //Enable
+        apiSubmit.removeAttr('disabled'); //Enable
 
     }, 'json');
     return false;
@@ -1813,10 +1814,10 @@ managebackups_backup_upload_file = function(pSiteId, pSiteName, pFile, pRegexFil
             type: 'POST',
             url: ajaxurl,
             data: data,
-            success: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique) { return function (response) {
+            success: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId) { return function (response) {
 	            if (response.error)
 				{
-					managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, response.error);
+					managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, response.error);
 				}
 				else
 				{
@@ -1839,10 +1840,10 @@ managebackups_backup_upload_file = function(pSiteId, pSiteName, pFile, pRegexFil
 
 					managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
 				}
-            } }(pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, data, unique),
-            error: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique) { return function (response) {
-                managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique);
-            } }(pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, data, unique),
+            } }(pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, data, unique, remote_destination.id),
+            error: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId) { return function (response) {
+                managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId);
+            } }(pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, data, unique, remote_destination.id),
             dataType: 'json'
         });
     }
@@ -1853,12 +1854,13 @@ managebackups_backup_upload_file = function(pSiteId, pSiteName, pFile, pRegexFil
     }
 };
 
-managebackups_backup_upload_file_retry_fail = function(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError)
+managebackups_backup_upload_file_retry_fail = function(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError)
 {
     //we've got the pid file!!!!
     var data = mainwp_secure_data({
         action:'mainwp_backup_upload_checkstatus',
-		unique: pUnique
+		unique: pUnique,
+        remote_destination: pRemoteDestId
     });
 
     jQuery.ajax({
@@ -1874,7 +1876,7 @@ managebackups_backup_upload_file_retry_fail = function(pData, pSiteId, pSiteName
 				progressBar.progressbar();
 				progressBar.progressbar('value', pSize);
 
-				appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] '+__('Upload to %1 (%2) succesful',  response.title, response.type));
+				appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] '+__('Upload to %1 (%2) succesful',  response.info.title, response.info.type));
 
 				managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
             }
@@ -1882,7 +1884,7 @@ managebackups_backup_upload_file_retry_fail = function(pData, pSiteId, pSiteName
             {
                 //Try again in 10seconds
                 setTimeout(function() {
-                    managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError);
+                    managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
                 },10000);
             }
             else if (response.status == 'stalled')
@@ -1901,7 +1903,7 @@ managebackups_backup_upload_file_retry_fail = function(pData, pSiteId, pSiteName
                     if (responseError != undefined)
                     {
 						manageBackupsError = true;
-						appendToDiv('#managebackups-task-status-text', '<font color="red">[' + pSiteName + '] '+__('Upload to %1 (%2) failed:', response.title, response.type) + ' ' + responseError + '</font>');
+						appendToDiv('#managebackups-task-status-text', '<font color="red">[' + pSiteName + '] '+__('Upload to %1 (%2) failed:', response.info.title, response.info.type) + ' ' + responseError + '</font>');
                     }
                     else
                     {
@@ -1920,10 +1922,10 @@ managebackups_backup_upload_file_retry_fail = function(pData, pSiteId, pSiteName
                         url: ajaxurl,
                         data: pData,
                         method: 'POST',
-						success: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique) { return function (response) {
+						success: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId) { return function (response) {
 							if (response.error)
 							{
-								managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, response.error);
+								managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, response.error);
 							}
 							else
 							{
@@ -1946,10 +1948,10 @@ managebackups_backup_upload_file_retry_fail = function(pData, pSiteId, pSiteName
 
 								managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
 							}
-						} }(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique),
-						error: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique) { return function (response) {
-							managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pUnique, pSize);
-						} }(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique),
+						} }(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId),
+						error: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId) { return function (response) {
+							managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pUnique, pRemoteDestId, pSize);
+						} }(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId),
                         dataType: 'json'
                     });
                 }
@@ -1958,14 +1960,14 @@ managebackups_backup_upload_file_retry_fail = function(pData, pSiteId, pSiteName
             {
                 //Try again in 5seconds
                 setTimeout(function() {
-                    managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError);
+                    managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
                 },10000);
             }
         },
         error: function() {
             //Try again in 10seconds
             setTimeout(function() {
-                managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError);
+                managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
             },10000);
         },
         dataType: 'json'
@@ -4143,8 +4145,6 @@ backup = function ()
 
 backup_retry_fail = function(siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError)
 {
-    if (console.log)console.log('Retrying for site ' + siteId);
-
     //we've got the pid file!!!!
     var data = mainwp_secure_data({
         action:'mainwp_backup_checkpid',
@@ -4162,8 +4162,6 @@ backup_retry_fail = function(siteId, pData, remoteDestinations, pid, type, subfo
         success: function(response) {
             if (response.status == 'done')
             {
-                if (console.log)console.log('Status done, continue download');
-
                 backupCreateRunning = false;
 
                 var progressBar = jQuery('#managesite-createbackup-status-progress');
@@ -4176,8 +4174,6 @@ backup_retry_fail = function(siteId, pData, remoteDestinations, pid, type, subfo
             }
             else if (response.status == 'busy')
             {
-                if (console.log)console.log('Status busy, retry in 10');
-
                 //Try again in 5seconds
                 setTimeout(function() {
                     backup_retry_fail(siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError);
@@ -4185,10 +4181,7 @@ backup_retry_fail = function(siteId, pData, remoteDestinations, pid, type, subfo
             }
             else if (response.status == 'stalled')
             {
-                if (console.log)console.log('stalled, trying to continue the backup');
-
                 backupContinueRetries++;
-                if (console.log)console.log('backupContinueRetries: ' + backupContinueRetries);
 
                 if (backupContinueRetries > 10)
                 {
@@ -4240,8 +4233,6 @@ backup_retry_fail = function(siteId, pData, remoteDestinations, pid, type, subfo
             }
             else if (response.status == 'invalid')
             {
-                if (console.log)console.log('no status?');
-
                 backupCreateRunning = false;
 
                 if (responseError != undefined)
@@ -4255,7 +4246,6 @@ backup_retry_fail = function(siteId, pData, remoteDestinations, pid, type, subfo
             }
             else
             {
-                if (console.log)console.log('WOD?');
                 //Try again in 5seconds
                 setTimeout(function() {
                     backup_retry_fail(siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError);
@@ -4263,7 +4253,6 @@ backup_retry_fail = function(siteId, pData, remoteDestinations, pid, type, subfo
             }
         },
         error: function() {
-            if (console.log)console.log('Error!');
             //Try again in 10seconds
             setTimeout(function() {
                 backup_retry_fail(siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError);
@@ -4426,10 +4415,10 @@ backup_upload_file = function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDes
             type: 'POST',
             url: ajaxurl,
             data: data,
-            success: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pUnique) { return function (response) {
+            success: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pUnique, pRemoteDestId) { return function (response) {
 	            if (response.error)
 				{
-					backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, response.error);
+					backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, response.error);
 				}
 				else
 				{
@@ -4452,10 +4441,10 @@ backup_upload_file = function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDes
 
 					backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
 				}
-            } }(pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, data, unique),
-            error: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pUnique) { return function (response) {
-				backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique);
-            } }(pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, data, unique),
+            } }(pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, data, unique,  remote_destination.id),
+            error: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pUnique, pRemoteDestId) { return function (response) {
+				backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId);
+            } }(pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, data, unique,  remote_destination.id),
             dataType: 'json'
         });
     }
@@ -4473,12 +4462,13 @@ backup_upload_file = function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDes
     }
 };
 
-backup_upload_file_retry_fail = function(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError)
+backup_upload_file_retry_fail = function(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError)
 {
     //we've got the pid file!!!!
     var data = mainwp_secure_data({
         action:'mainwp_backup_upload_checkstatus',
-		unique: pUnique
+		unique: pUnique,
+        remote_destination: pRemoteDestId
     });
 
     jQuery.ajax({
@@ -4494,7 +4484,7 @@ backup_upload_file_retry_fail = function(pData, pSiteId, pFile, pRegexFile, pSub
 				progressBar.progressbar();
 				progressBar.progressbar('value', pSize);
 
-				appendToDiv('#managesite-backup-status-text', __('Upload to %1 (%2) successful.', response.title, response.type));
+				appendToDiv('#managesite-backup-status-text', __('Upload to %1 (%2) successful.', response.info.title, response.info.type));
 
 				backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
             }
@@ -4502,7 +4492,7 @@ backup_upload_file_retry_fail = function(pData, pSiteId, pFile, pRegexFile, pSub
             {
                 //Try again in 10seconds
                 setTimeout(function() {
-                    backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError);
+                    backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
                 },10000);
             }
             else if (response.status == 'stalled')
@@ -4521,7 +4511,7 @@ backup_upload_file_retry_fail = function(pData, pSiteId, pFile, pRegexFile, pSub
                     if (responseError != undefined)
                     {
 						backupError = true;
-						appendToDiv('#managesite-backup-status-text', '<font color="red">' + __('Upload to %1 (%2) failed:', response.title, response.type)+' ' + responseError + '</font>');
+						appendToDiv('#managesite-backup-status-text', '<font color="red">' + __('Upload to %1 (%2) failed:', response.info.title, response.info.type)+' ' + responseError + '</font>');
                     }
                     else
                     {
@@ -4540,10 +4530,10 @@ backup_upload_file_retry_fail = function(pData, pSiteId, pFile, pRegexFile, pSub
                         url: ajaxurl,
                         data: pData,
                         method: 'POST',
-						success: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData) { return function (response) {
+						success: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pRemoteDestId) { return function (response) {
 							if (response.error)
 							{
-								backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, response.error);
+								backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, response.error);
 							}
 							else
 							{
@@ -4566,10 +4556,10 @@ backup_upload_file_retry_fail = function(pData, pSiteId, pFile, pRegexFile, pSub
 
 								backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
 							}
-						} }(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData),
-						error: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData) { return function (response) {
-							backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique);
-						} }(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData),
+						} }(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pRemoteDestId),
+						error: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pRemoteDestId) { return function (response) {
+							backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId);
+						} }(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pRemoteDestId),
                         dataType: 'json'
                     });
                 }
@@ -4578,14 +4568,14 @@ backup_upload_file_retry_fail = function(pData, pSiteId, pFile, pRegexFile, pSub
             {
                 //Try again in 5seconds
                 setTimeout(function() {
-                    backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError);
+                    backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
                 },10000);
             }
         },
         error: function() {
             //Try again in 10seconds
             setTimeout(function() {
-                backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, responseError);
+                backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
             },10000);
         },
         dataType: 'json'

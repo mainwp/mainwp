@@ -711,14 +711,14 @@ jQuery(document).ready(function () {
         bulkTaskRunning = false;
         jQuery('#refresh-status-box').dialog('destroy');
 
-        location.href = location.href.replace('&refresh=yes', '');
+        location.href = location.href;
     });
     jQuery(document).on('click', '#rightnow-upgrade-status-close', function(event)
     {
         bulkTaskRunning = false;
         jQuery('#rightnow-upgrade-status-box').dialog('destroy');
 
-        location.href = location.href.replace('&refresh=yes', '');
+        location.href = location.href;
     });
 });
 mainwp_refresh_dashboard = function (syncSiteIds)
@@ -753,7 +753,7 @@ mainwp_refresh_dashboard = function (syncSiteIds)
         height: 350,
         width: 500,
         modal: true,
-        close: function(event, ui) {bulkTaskRunning = false; jQuery('#refresh-status-box').dialog('destroy'); location.href = location.href.replace('&refresh=yes', '');}});
+        close: function(event, ui) {bulkTaskRunning = false; jQuery('#refresh-status-box').dialog('destroy'); location.href = location.href;}});
     dashboard_update(allWebsiteIds);
 };
 
@@ -820,7 +820,7 @@ dashboard_update_done = function()
             if (websitesError <= 0)
             {
                 jQuery('#refresh-status-box').dialog('destroy');
-                location.href = location.href.replace('&refresh=yes', '');
+                location.href = location.href;
             }
             else
             {
@@ -6631,3 +6631,11 @@ jQuery(document).on('click', '#mainwp_managesites_content #doaction', function()
     })
     return false;
 });
+   
+jQuery(document).on('click', '.managesites_syncdata', function(){
+    var row = jQuery(this).closest('tr');    
+    var syncIds = [];
+    syncIds.push(row.attr('siteid'));
+    mainwp_refresh_dashboard(syncIds);      
+    return false;   
+})

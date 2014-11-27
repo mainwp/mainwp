@@ -189,11 +189,7 @@ class MainWPMain
 
     <div class="clear"></div>
     </div><!-- dashboard-widgets-wrap -->
-    <?php
-        if (isset($_REQUEST['refresh']) && ($_REQUEST['refresh'] == 'yes'))
-        {
-            echo '<script>jQuery(document).ready(function() {mainwp_refresh_dashboard();});</script>';
-        }
+    <?php       
     }
 
     //executed if the post arrives initiated by pressing the submit button of form

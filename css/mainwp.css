@@ -2706,4 +2706,39 @@ input.mainwp-field:-webkit-autofill {
 .mainwp_breadcrumb .separator{
     font-size: 20px;
 }
-
+.mainwp-extensions-api-row .api-row-div{
+    display: none;
+}
+.mainwp-extensions-api-row input[type=text] {
+    width: 280px;
+}
+.mainwp-extensions-api-row .api-row-div {
+    border: 1px solid #ddd;
+    padding: 3px;
+    margin-top: 5px;
+}
+#mainwp-extensions-grabkeys, #mainwp-extensions-bulkinstall{
+    text-transform: uppercase;
+}
+.api-status.deactivated {
+    background: #bb7239;
+    color: #fff;
+    text-decoration: none;
+    padding: 6px 15px;
+}
+.api-status.activated {
+    background: #7fb100;
+    color: #fff;
+    text-decoration: none;
+    padding: 6px 23px;
+}
+.api-grabbing-fields ul {
+    margin: 0;
+}
+.api-grabbing-fields ul li {
+    float: left;
+    margin-left:10px;
+}
+.api-grabbing-fields ul li p{
+    margin: 0.5em 0;
+}

@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '7.8';
+    private $mainwp_db_version = '8';
     //Private
     private $table_prefix;
     //Singleton
@@ -334,6 +334,12 @@ class MainWPDB
                     $wpdb->insert($this->tableName('wp_settings_backup'), array('wpid' => $site->id, 'archiveFormat' => 'global'));
                 }
             }
+        }
+
+        if (version_compare($currentVersion, '8', '<'))
+        {
+            $apiPass = get_option('mainwp_api_password');
+            MainWPUtility::update_option('mainwp_api_password', MainWPUtility::encrypt($apiPass, 'MainWPAPI'));
         }
     }
 

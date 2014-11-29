@@ -14,7 +14,7 @@ class MainWPAPISettingsView
     public static function render()
     {
         $username = get_option("mainwp_api_username");
-        $password = get_option("mainwp_api_password");
+        $password = MainWPUtility::decrypt(get_option('mainwp_api_password'), 'MainWPAPI');
         $userExtension = MainWPDB::Instance()->getUserExtension();
         $pluginDir = (($userExtension == null) || (($userExtension->pluginDir == null) || ($userExtension->pluginDir == '')) ? 'default' : $userExtension->pluginDir);
         ?>
@@ -81,7 +81,7 @@ class MainWPAPISettingsView
 
     public static function renderSettings() {
         $username = get_option("mainwp_api_username");
-        $password = get_option("mainwp_api_password");
+        $password = MainWPUtility::decrypt(get_option('mainwp_api_password'), 'MainWPAPI');
         ?>
         <div class="postbox" id="mainwp-account-information">
         <h3 class="mainwp_box_title"><span><?php _e('MainWP Account Information','mainwp'); ?></span></h3>

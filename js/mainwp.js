@@ -6874,7 +6874,7 @@ jQuery(document).on('click', '#mainwp_managesites_content #doaction', function()
                 break;                        
         }
         
-    })
+    });
     return false;
 });
    
@@ -6884,4 +6884,12 @@ jQuery(document).on('click', '.managesites_syncdata', function(){
     syncIds.push(row.attr('siteid'));
     mainwp_refresh_dashboard(syncIds);      
     return false;   
-})
+});
+
+
+jQuery(document).ready(function() {
+    jQuery('.mainwp-extensions-api-activation').live('click', function () {
+        jQuery(this).closest("table").find("tr.mainwp-extensions-api-row .api-row-div").toggle();
+        return false;
+    });
+});

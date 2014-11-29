@@ -240,7 +240,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
     {
         $output = '';
         if ($item['dtsSync'] != 0) $output = MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp($item['dtsSync'])) . '<br />';
-        $output .= sprintf('<a href="admin.php?page=managesites&dashboard=%s&refresh=yes">' . __('Sync Data', 'mainwp') . '</a>', $item['id']);
+        $output .= sprintf('<a href="#" class="managesites_syncdata">' . __('Sync Data', 'mainwp') . '</a>', $item['id']);
 
         return $output;
     }

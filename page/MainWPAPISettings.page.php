@@ -146,17 +146,15 @@ class MainWPAPISettings
             }
             else
             {
-            /*    $activated_keys = get_option("mainwp_api_manager_activated_keys");
-                if (!is_array($activated_keys))
-                    $activated_keys = array();
-
-                if (isset($activated_keys[$pAPI])) {
-                    if ($activated_keys[$pAPI] == 'Activated')
+                // compatible
+                $activated_info = get_option($pAPI . "_APIManAdder");                
+                if ($activated_info && is_array($activated_info) && isset($activated_info["activated_key"]) && !empty($activated_info["api_key"])) {
+                    if ($activated_info['activated_key'] == 'Activated')
                         $exclusiveResult = MAINWP_API_VALID;
-                    else
+                    else 
                         $exclusiveResult = MAINWP_API_INVALID;
-
-                } else  */
+                    
+                } else 
                 //If it was forced or the API is not yet fetched or (invalid && last fetched later then 10 minutes ago)
                 if ($forceRequest || !isset($requests[$pAPI]) || ($requests[$pAPI] == MAINWP_API_INVALID && ($pIgnoreLastCheckTime || (!isset($lastRequests[$pAPI]) || ((time() - $lastRequests[$pAPI]) > (10 * 60))))))
                 {
@@ -196,32 +194,44 @@ class MainWPAPISettings
     }
 
     public static function checkUpgrade()
-    {
-        $username = get_option("mainwp_api_username");
-        $password = MainWPUtility::decrypt(get_option('mainwp_api_password'), 'MainWPAPI');
+    {        
+        //$slugs = MainWPExtensions::getSlugs();
+        $result = MainWPExtensions::getSlugsTwo();        
+        $slugs = $result['slugs'];
+        $am_slugs = $result['am_slugs'];        
+        $output = array(); 
+        if ($slugs != '') {
+            $username = get_option("mainwp_api_username");
+            $password = MainWPUtility::decrypt(get_option('mainwp_api_password'), 'MainWPAPI');
+            try
+            {
+                $responseArray = MainWPUtility::http_post("do=checkUpgradeV2&username=" . rawurlencode($username) . "&password=" . rawurlencode($password) . '&slugs=' . $slugs, "mainwp.com", "/versioncontrol/rqst.php", true);
+            }
+            catch (Exception $e)
+            {
+                MainWPLogger::Instance()->warning('An error occured when trying to reach the MainWP server: ' . $e->getMessage());
+            }
 
-        $slugs = MainWPExtensions::getSlugs();
-        if ($slugs == '') return array();
-        try
-        {
-            $responseArray = MainWPUtility::http_post("do=checkUpgradeV2&username=" . rawurlencode($username) . "&password=" . rawurlencode($password) . '&slugs=' . $slugs, "mainwp.com", "/versioncontrol/rqst.php", true);
+            if (is_array($responseArray) && isset($responseArray[1])) {
+                $rslt = json_decode($responseArray[1]);                    
+                if (!empty($rslt)) {
+                    foreach ($rslt as $upgrade)
+                    {
+                        $output[] = $upgrade;
+                    }
+                }
+            }
         }
-        catch (Exception $e)
-        {
-            MainWPLogger::Instance()->warning('An error occured when trying to reach the MainWP server: ' . $e->getMessage());
+        
+        if ($am_slugs != '') {            
+            $am_slugs = explode(",", $am_slugs); 
+            foreach($am_slugs as $am_slug) {                
+                $rslt = self::getUpgradeInformationTwo($am_slug);
+                if (!empty($rslt)) {                                    
+                    $output[] = $rslt;
+                }
+            }
         }
-
-        if (!is_array($responseArray) || !isset($responseArray[1])) return null;
-
-        $rslt = json_decode($responseArray[1]);
-        if (empty($rslt)) return null;
-
-        $output = array();
-        foreach ($rslt as $upgrade)
-        {
-            $output[] = $upgrade;
-        }
-
         return $output;
     }
 
@@ -246,6 +256,67 @@ class MainWPAPISettings
         $rslt->slug = MainWPSystem::Instance()->slug;
         return $rslt;
     }
+    
+    public static function getUpgradeInformationTwo($pSlug)
+    {               
+        $extensions = MainWPExtensions::loadExtensions();
+        $rslt = null;
+        if (is_array($extensions)) {
+            foreach($extensions as $ext) {                
+                if ($pSlug == $ext['api'] && isset($ext['apiManager']) && !empty($ext['apiManager'])) {  
+                    $args = array();
+                    $args['plugin_name'] =  $ext['api'];                    
+                    $args['version']    =   $ext['version'];
+                    $args['product_id'] =   $ext['product_id'];
+                    $args['api_key']    =   $ext['api_key'];
+                    $args['activation_email'] =	$ext['activation_email'];
+                    $args['instance']   =   $ext['instance_id'];
+                    $args['software_version']   = $ext['software_version']; 
+                    $response = MainWPApiManager::instance()->update_check($args);                                          
+                    if (!empty($response)) {
+                        $rslt = new stdClass();
+                        $rslt->slug = $response->slug;
+                        $rslt->latest_version = $response->new_version;                    
+                        $rslt->download_url = $response->package;
+                        $rslt->key_status = "";                                            
+                        $rslt->apiManager = 1;                        
+                        if ( isset( $response->errors)) {
+                            $rslt->error = $response->errors;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        return $rslt;
+    }
+    
+    public static function getPluginInformation($pSlug)
+    {               
+        $extensions = MainWPExtensions::loadExtensions();
+        $rslt = null;
+        if (is_array($extensions)) {
+            foreach($extensions as $ext) {                
+                if ($pSlug == $ext['api'] && isset($ext['apiManager']) && !empty($ext['apiManager'])) {  
+                    $args = array();
+                    $args['plugin_name'] =  $ext['api'];                    
+                    $args['version']    =   $ext['version'];
+                    $args['product_id'] =   $ext['product_id'];
+                    $args['api_key']    =   $ext['api_key'];
+                    $args['activation_email'] =	$ext['activation_email'];
+                    $args['instance']   =   $ext['instance_id'];
+                    $args['software_version']   = $ext['software_version']; 
+                    $rslt = MainWPApiManager::instance()->request_plugin_information($args);                  
+                    break;
+                }
+            }
+        }
+        return $rslt;
+    }
+    
+    
+    
+    
 }
 
 ?>

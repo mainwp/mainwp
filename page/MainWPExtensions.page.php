@@ -8,7 +8,7 @@ class MainWPExtensions
 
     public static $extensionsLoaded = false;
     public static $extensions;
-
+ 
     public static function getPluginSlug($pSlug)
     {
         $currentExtensions = (self::$extensionsLoaded ? self::$extensions : get_option('mainwp_extensions'));
@@ -43,11 +43,37 @@ class MainWPExtensions
 
         return ($out == '' ? '' : $out);
     }
+    
+    public static function getSlugsTwo()
+    {
+        $currentExtensions = (self::$extensionsLoaded ? self::$extensions : get_option('mainwp_extensions'));
 
+        if (!is_array($currentExtensions) || empty($currentExtensions)) return '';
+
+        $out = '';
+        $am_out = '';
+        foreach ($currentExtensions as $extension)
+        {
+            if (!isset($extension['api']) || $extension['api'] == '') continue;
+            
+            if (isset($extension['apiManager']) && !empty($extension['apiManager']) && $extension['activated_key'] == 'Activated') {
+                if ($am_out != '') $am_out .= ',';
+                $am_out .= $extension['api'];
+            } else {
+                if ($out != '') $out .= ',';
+                $out .= $extension['api'];
+            }
+        }
+
+        return (array('slugs' => $out, 'am_slugs' => $am_out));
+    }
+    
+    
     public static function init()
     {
         add_action('mainwp-pageheader-extensions', array(MainWPExtensions::getClassName(), 'renderHeader'));
         add_action('mainwp-pagefooter-extensions', array(MainWPExtensions::getClassName(), 'renderFooter'));
+        add_filter("mainwp-extensions-apigeneratepassword", array(MainWPExtensions::getClassName(), 'genApiPassword'), 10, 3);        
     }
 
     public static function initMenu()
@@ -56,13 +82,12 @@ class MainWPExtensions
 
         self::$extensions = array();
         $all_extensions = array();
-        //$ext_activated_keys = array();
         
         $newExtensions = apply_filters('mainwp-getextensions', array());
         $extraHeaders = array('IconURI' => 'Icon URI', 'SupportForumURI' => 'Support Forum URI', 'DocumentationURI' => 'Documentation URI');
         foreach ($newExtensions as $extension)
         {
-            $slug = plugin_basename($extension['plugin']);
+            $slug = plugin_basename($extension['plugin']);            
             $plugin_data = get_plugin_data($extension['plugin']);
             $file_data = get_file_data($extension['plugin'], $extraHeaders);
             if (!isset($plugin_data['Name']) || ($plugin_data['Name'] == '')) continue;
@@ -77,9 +102,19 @@ class MainWPExtensions
             $extension['DocumentationURI'] = $file_data['DocumentationURI'];
             $extension['page'] = 'Extensions-' . str_replace(' ', '-', ucwords(str_replace('-', ' ', dirname($slug))));
             
-            //if (isset($extension['api_activated_key']))
-            //    $extension['api_activated'] = $ext_activated_keys[$slug] = get_option($extension['api_activated_key']);
-            
+            if (isset($extension['apiManager']) && $extension['apiManager']) { 
+                $api = dirname($slug);
+                $options = get_option($api . "_APIManAdder");
+                if (!is_array($options)) $options = array();  
+                $extension['api_key'] = isset($options["api_key"]) ?  $options["api_key"] : "";
+                $extension['activation_email'] = isset($options["activation_email"]) ?  $options["activation_email"] : "";
+                $extension['activated_key'] = isset($options["activated_key"]) ?  $options["activated_key"] : "Deactivated";
+                $extension['deactivate_checkbox'] = isset($options["deactivate_checkbox"]) ?  $options["deactivate_checkbox"] : "off";
+                $extension['product_id'] = isset($options["product_id"]) ?  $options["product_id"] : "";
+                $extension['instance_id'] = isset($options["instance_id"]) ?  $options["instance_id"] : "";
+                $extension['software_version'] = isset($options["software_version"]) ?  $options["software_version"] : "";
+            }
+
             $all_extensions[] = $extension;            
             if ((defined("MWP_TEAMCONTROL_PLUGIN_SLUG") && MWP_TEAMCONTROL_PLUGIN_SLUG == $slug) || 
                     mainwp_current_user_can("extension", dirname($slug))) {
@@ -88,14 +123,25 @@ class MainWPExtensions
                     if (isset($extension['callback'])) add_submenu_page('mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback']);			            
                 }
             }
-        }
+        }        
         MainWPUtility::update_option("mainwp_extensions", self::$extensions);
-        MainWPUtility::update_option("mainwp_manager_extensions", $all_extensions);
-        //MainWPUtility::update_option("mainwp_api_manager_activated_keys", $ext_activated_keys);
-                
+        MainWPUtility::update_option("mainwp_manager_extensions", $all_extensions);        
         self::$extensionsLoaded = true;
     }
 
+    public static function loadExtensions() {
+        if (!isset(self::$extensions))  {          
+            self::$extensions = get_option('mainwp_extensions');
+            self::$extensionsLoaded = true;
+        }
+        return self::$extensions;
+    }
+    
+    public static function genApiPassword($length = 12, $special_chars = true, $extra_special_chars = false) {
+        $api_manager_password_management = new MainWPApiManagerPasswordManagement();      
+        return $api_manager_password_management->generate_password($length, $special_chars, $extra_special_chars);        
+    }
+            
     public static function initMenuSubPages()
     {
         //if (true) return;
@@ -141,6 +187,13 @@ class MainWPExtensions
         add_action('wp_ajax_mainwp_extension_enable', array(MainWPExtensions::getClassName(), 'enableExtension'));
         add_action('wp_ajax_mainwp_extension_disable', array(MainWPExtensions::getClassName(), 'disableExtension'));
         add_action('wp_ajax_mainwp_extension_trash', array(MainWPExtensions::getClassName(), 'trashExtension'));
+        add_action('wp_ajax_mainwp_extension_activate', array(MainWPExtensions::getClassName(), 'activateExtension'));
+        add_action('wp_ajax_mainwp_extension_deactivate', array(MainWPExtensions::getClassName(), 'deactivateExtension'));
+        add_action('wp_ajax_mainwp_extension_grabapikey', array(MainWPExtensions::getClassName(), 'grabapikeyExtension'));        
+        add_action('wp_ajax_mainwp_extension_testextensionapilogin', array(MainWPExtensions::getClassName(), 'testExtensionsApiLogin'));        
+        add_action('wp_ajax_mainwp_extension_getpurchased', array(MainWPExtensions::getClassName(), 'getPurchasedExts'));        
+        add_action('wp_ajax_mainwp_extension_downloadandinstall', array(MainWPExtensions::getClassName(), 'downloadAndInstall'));        
+        add_action('wp_ajax_mainwp_extension_bulk_activate', array(MainWPExtensions::getClassName(), 'bulkActivate'));        
     }
 
     public static function enableAllExtensions()
@@ -176,6 +229,235 @@ class MainWPExtensions
         die(json_encode(array('result' => 'SUCCESS')));
     }
 
+    
+    public static function activateExtension( ) {
+        $api = dirname($_POST['slug']);                 
+        $api_key = trim( $_POST['key'] );
+        $api_email = trim( $_POST['email'] );
+        $result = MainWPApiManager::instance()->license_key_activation($api, $api_key, $api_email);                      
+        die(json_encode($result));
+    }
+    
+    public static function deactivateExtension( ) {
+        $api = dirname($_POST['slug']);
+        $result = MainWPApiManager::instance()->license_key_deactivation($api);           
+        die(json_encode($result));
+    }
+    
+    
+    public static function grabapikeyExtension( ) {        
+        $username = trim( $_POST['username'] );
+        $password = trim( $_POST['password'] );
+        $api = dirname($_POST['slug']);
+        $result = MainWPApiManager::instance()->grab_license_key($api, $username, $password);                       
+        die(json_encode($result));
+    }
+    
+    public static function testExtensionsApiLogin() {        
+        $username = trim( $_POST['username'] );
+        $password = trim( $_POST['password'] );
+            
+        if (($username == '') && ($password == ''))
+        {
+            MainWPUtility::update_option("mainwp_extensions_api_username", $username);
+            MainWPUtility::update_option("mainwp_extensions_api_password", $password);
+            die(json_encode(array('saved' => 1)));
+        }
+        $test = MainWPApiManager::instance()->test_login_api($username, $password); 
+        $result = json_decode($test, true);        
+        $save_login = (isset($_POST['saveLogin']) && ($_POST['saveLogin'] == '1')) ? true : false;    
+        $return = array();
+        if (is_array($result)) {
+            if (isset($result['success']) && $result['success']) {  
+                if ($save_login) {
+                    $enscrypt_u = MainWPApiManagerPasswordManagement::encrypt_string($username);
+                    $enscrypt_p = MainWPApiManagerPasswordManagement::encrypt_string($password);                  
+                    MainWPUtility::update_option("mainwp_extensions_api_username", $enscrypt_u);
+                    MainWPUtility::update_option("mainwp_extensions_api_password", $enscrypt_p); 
+                    MainWPUtility::update_option("mainwp_extensions_api_save_login", true);
+                } 
+                $return['result'] = 'SUCCESS';                                         
+            } else if (isset($result['error'])){
+                $return['error'] = $result['error'];                                     
+            }    
+        }
+        
+        if (!$save_login) {
+            MainWPUtility::update_option("mainwp_extensions_api_username", "");
+            MainWPUtility::update_option("mainwp_extensions_api_password", "");
+            MainWPUtility::update_option("mainwp_extensions_api_save_login", "");
+        }
+        
+        die(json_encode($return));                       
+    }
+    
+    public static function getPurchasedExts() {        
+        $username = trim( $_POST['username'] );
+        $password = trim( $_POST['password'] );
+            
+        if (($username == '') && ($password == ''))
+        {
+            MainWPUtility::update_option("mainwp_extensions_api_username", $username);
+            MainWPUtility::update_option("mainwp_extensions_api_password", $password);
+            die(json_encode(array('saved' => 1)));
+        }
+        $data = MainWPApiManager::instance()->get_purchased_software( $username, $password); 
+        $result = json_decode($data, true);                       
+        $save_login = (isset($_POST['saveLogin']) && ($_POST['saveLogin'] == '1')) ? true : false;           
+        $return = array();
+        if (is_array($result)) {
+            if (isset($result['success']) && $result['success']) {    
+                if ($save_login) {
+                    $enscrypt_u = MainWPApiManagerPasswordManagement::encrypt_string($username);
+                    $enscrypt_p = MainWPApiManagerPasswordManagement::encrypt_string($password);                                     
+                    MainWPUtility::update_option("mainwp_extensions_api_username", $enscrypt_u);
+                    MainWPUtility::update_option("mainwp_extensions_api_password", $enscrypt_p);        
+                    MainWPUtility::update_option("mainwp_extensions_api_save_login", true);        
+                }                 
+                if (isset($result['purchased_data']) && is_array($result['purchased_data'])) {                    
+                    self::loadExtensions();
+                    $installed_softwares = array();
+                    if (is_array(self::$extensions)) {
+                        foreach(self::$extensions as $extension) {
+                            if (isset($extension['product_id']) && !empty($extension['product_id'])) {
+                                $installed_softwares[$extension['product_id']] = $extension['product_id'];
+                            }
+                        }
+                    }                  
+                    $purchased_data = $result['purchased_data'];
+                    $purchased_data = array_diff_key($purchased_data, $installed_softwares);
+                    $html = $message = '';
+                    if (empty($purchased_data)) {
+                        $message = __("All purchased extensions was installed.", "mainwp");
+                    } else {
+                        $html = "<h2>" . __("Installing Purchased Extensions ...", "mainwp") . "</h2><br />";                        
+                        $html .= '<div class="mainwp_extension_installing">';
+                        foreach($purchased_data as $software_title => $product_info) {
+                            if (isset($product_info['error']) && $product_info['error'] == 'download_revoked') {
+                                $html .= '<div><strong>' . $software_title . "</strong>: <p><span style=\"color: red;\"><strong>Error</strong>: " . MainWPApiManager::instance()->download_revoked_error_notice($software_title) . '</span></p></div>';
+                            } else if (isset($product_info['package']) && !empty($product_info['package'])){
+                                $html .= '<div class="extension_to_install" download-link="' . $product_info['package'] . '" status="queue" product-id="' . $software_title . '"><strong>' . $software_title . "</strong>: " . '<span class="ext_installing" status="queue"><img class="hidden" src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '" /><br/><span class="status hidden"></span></span></div>';
+                            }
+                        }
+                        $html .= '<div id="extBulkActivate"><img class="hidden" src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '" /> <span class="status hidden"></span></div>';
+                        $html .= '</div>';
+                        $html .= '<script type="text/javascript">mainwp_extension_bulk_install();</script>';
+                    }                    
+                } else {
+                    $message = __("Not found purchased extensions.", "mainwp");
+                }
+                $return= array('result' => 'SUCCESS', 'data' => $html , 'message' => $message, 'count' => count($purchased_data));                
+            } else if (isset($result['error'])){
+                $return= array('error' => $result['error']);                                         
+            }    
+        }             
+        
+        if (!$save_login) {                     
+            MainWPUtility::update_option("mainwp_extensions_api_username", "");
+            MainWPUtility::update_option("mainwp_extensions_api_password", "");
+            MainWPUtility::update_option("mainwp_extensions_api_save_login", "");
+        }        
+        die(json_encode($return));                       
+    }
+        
+    public static function http_request_reject_unsafe_urls($r, $url)
+    {
+        $r['reject_unsafe_urls'] = false;
+        return $r;
+    }
+    
+    public static function noSSLFilterFunction($r, $url)
+    {
+        $r['sslverify'] = false;
+        return $r;
+    }
+    
+    public static function downloadAndInstall() {
+        $return = self::installPlugin($_POST['download_link']);
+        die('<mainwp>' . json_encode($return) . '</mainwp>');             
+    }
+    
+    static function installPlugin($url)
+    {
+        $hasWPFileSystem = MainWPUtility::getWPFilesystem();
+        global $wp_filesystem;
+
+        if (file_exists(ABSPATH . '/wp-admin/includes/screen.php')) include_once(ABSPATH . '/wp-admin/includes/screen.php');
+        include_once(ABSPATH . '/wp-admin/includes/template.php');
+        include_once(ABSPATH . '/wp-admin/includes/misc.php');
+        include_once(ABSPATH . '/wp-admin/includes/class-wp-upgrader.php');
+        include_once(ABSPATH . '/wp-admin/includes/plugin.php');
+
+        $installer = new WP_Upgrader();
+        $ssl_verifyhost = get_option('mainwp_sslVerifyCertificate');
+        if ($ssl_verifyhost === '0')
+        {                
+            add_filter( 'http_request_args', array(MainWPExtensions::getClassName(), 'noSSLFilterFunction'), 99, 2);
+        }
+        add_filter('http_request_args', array(MainWPExtensions::getClassName(), 'http_request_reject_unsafe_urls'), 99, 2);
+        
+        $result = $installer->run(array(
+            'package' => $url,
+            'destination' => WP_PLUGIN_DIR,
+            'clear_destination' => false, //overwrite files
+            'clear_working' => true,
+            'hook_extra' => array()
+        ));               
+        remove_filter( 'http_request_args', array(MainWPExtensions::getClassName(), 'http_request_reject_unsafe_urls') , 99, 2);
+        if ($ssl_verifyhost === '0')
+        {  
+            remove_filter( 'http_request_args', array(MainWPExtensions::getClassName(), 'noSSLFilterFunction') , 99);
+        }
+        
+        $error = $output = $plugin_slug = null;        
+        if (is_wp_error($result))
+        {
+            $error = $result->get_error_codes();            
+            if (is_array($error))
+            {
+                if ($error[0] == 'folder_exists') {
+                    $error = __("Destination folder already exists.", "mainwp");
+                } else 
+                    $error = implode(', ', $error); 
+            }            
+        } else {                    
+            $path = $result['destination'];
+            foreach ($result['source_files'] as $srcFile)
+            {
+                // to fix bug
+                if ($srcFile == "readme.txt")
+                    continue;
+                $thePlugin = get_plugin_data($path . $srcFile);                
+                if ($thePlugin != null && $thePlugin != '' && $thePlugin['Name'] != '')
+                {
+                    $output .= "<p>" . __("Successfully installed the plugin", "mainwp") . " " . $thePlugin['Name'] . " " . $thePlugin['Version'] . "</p>";                   
+                    $plugin_slug = $result['destination_name'] . "/" . $srcFile;
+                    break;
+                }
+            }
+        }                
+       
+        if (!empty($error)) {
+            $return['error'] = $error;
+        } else {
+            $return['result'] = 'SUCCESS';
+            $return['output'] = $output; 
+            $return['slug'] = $plugin_slug; 
+        }        
+        return $return;        
+    }
+    
+    public static function bulkActivate() {
+        $plugins = $_POST['plugins'];
+        if (is_array($plugins) && count($plugins) > 0) {
+            if (current_user_can('activate_plugins') ) {
+                activate_plugins($plugins);
+                die('SUCCESS');
+            }
+        }            
+        die('FAILED');
+    }
+    
     public static function disableExtension()
     {
         $snEnabledExtensions = get_option('mainwp_extloaded');
@@ -242,9 +524,9 @@ class MainWPExtensions
         self::renderFooter('');
     }
 
-    public static function isExtensionAvailable($api)
+    public static function isExtensionAvailable($pAPI)
     {
-        $ext_extensions = get_option('mainwp_extensions');
+        $ext_extensions = (self::$extensionsLoaded ? self::$extensions : get_option('mainwp_extensions'));         
         if (isset($ext_extensions))
         {
             $snEnabledExtensions = get_option('mainwp_extloaded');
@@ -254,7 +536,7 @@ class MainWPExtensions
             {
                 if (isset($extension['mainwp']) && ($extension['mainwp'] == true))
                 {
-                    if (isset($extension['api']) && ($extension['api'] == $api))
+                    if (isset($extension['api']) && ($extension['api'] == $pAPI))
                     {
                         $slug = plugin_basename($extension['plugin']);
 
@@ -274,19 +556,25 @@ class MainWPExtensions
         if (!is_array($snEnabledExtensions)) $snEnabledExtensions = array();
 
         $active = in_array($slug, $snEnabledExtensions);
+
+        // To fix bug
+        self::loadExtensions();
         
         if (isset(self::$extensions))
-        {
+        {                
             foreach(self::$extensions as $extension)
             {
                 if ($extension['plugin'] == $pluginFile)
-                {
+                {   
                     if (isset($extension['mainwp']) && ($extension['mainwp'] == true))
-                    {   
-                        //if (isset($extension['api_activated']) && ($extension['api_activated'] != 'Activated')) {                                             
-                        //        $active = false;
-                        //} else 
-                        if (isset($extension['api']) && (MainWPAPISettings::testAPIs($extension['api']) != 'VALID'))
+                    {                        
+                        if (isset($extension['api_key']) && !empty($extension['api_key'])) {                            
+                            if (isset($extension['activated_key']) && ($extension['activated_key'] == "Activated")) {                                                                     
+                                $active = true;
+                            } else {
+                                $active = false;
+                            }
+                        } else if (isset($extension['api']) && (MainWPAPISettings::testAPIs($extension['api']) != 'VALID'))
                         {
                             $active = false;
                         }
@@ -316,7 +604,7 @@ class MainWPExtensions
         if (!function_exists('wp_create_nonce')) include_once(ABSPATH . WPINC . '/pluggable.php');
         return (self::isExtensionEnabled($pluginFile) && ((wp_verify_nonce($key, $pluginFile . '-SNNonceAdder') == 1) || (md5($pluginFile.'-SNNonceAdder') == $key)));
     }
-
+   
     public static function hookGetDashboardSites($pluginFile, $key)
     {
         if (!self::hookVerify($pluginFile, $key))

@@ -147,9 +147,9 @@ class MainWPSystem
         //MainWPAjax::Instance();
 
         MainWPInstallBulk::init();
-
-        do_action('mainwp_cronload_action');
-
+    
+        do_action('mainwp_cronload_action');      
+        
         //Cron every 5 minutes
         add_action('mainwp_cronofflinecheck_action', array($this, 'mainwp_cronofflinecheck_action'));
         add_action('mainwp_cronstats_action', array($this, 'mainwp_cronstats_action'));
@@ -242,8 +242,8 @@ class MainWPSystem
         add_action('mainwp_fetchurlsauthed', array(&$this, 'filter_fetchUrlsAuthed'), 10, 7);
         add_filter('mainwp_fetchurlauthed', array(&$this, 'filter_fetchUrlAuthed'), 10, 5);
         add_filter('mainwp_getdashboardsites', array(MainWPExtensions::getClassName(), 'hookGetDashboardSites'), 10, 7);
-        add_filter('mainwp-manager-getextensions', array(MainWPExtensions::getClassName(), 'hookManagerGetExtensions'));
-
+        add_filter('mainwp-manager-getextensions', array(MainWPExtensions::getClassName(), 'hookManagerGetExtensions'));        
+        
         $this->posthandler = new MainWPPostHandler();
 
         do_action('mainwp-activated');
@@ -270,10 +270,10 @@ class MainWPSystem
 
     public function in_plugin_update_message($plugin_data, $r)
     {
-        if (empty($r) || !is_object($r)) return;
+        if (empty($r) || !is_object($r)) return;        
 
         if (property_exists($r, 'key_status') && $r->key_status == 'NOK') echo '<br />Your Log-in and Password are invalid, please update your login settings <a href="'.admin_url('admin.php?page=Settings').'">here</a>.';
-        else if (property_exists($r, 'package') && empty($r->package)) echo '<br />Your update license has expired, please log into <a href="http://mainwp.com/member">the members area</a> and upgrade your support and update license.';
+        else if (property_exists($r, 'package') && empty($r->package)) echo '<br />Your update license has expired, please log into <a href="http://mainwp.com/member">the members area</a> and upgrade your support and update license.';        
     }
 
     public function localization()
@@ -308,17 +308,17 @@ class MainWPSystem
             echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';            
             update_option('mainwp_first_site_events_notice', 'yes');
         } else {
-            if (get_option('mainwp_first_site_events_notice') == 'yes') {
+            if (get_option('mainwp_first_site_events_notice') == 'yes') { 
                 ?>
                 <div id="mainwp-events-notice" class="updated fade">
                 	<p>
                     	<span style="float: right;" ><a id="mainwp-events-notice-dismiss" style="text-decoration: none;" href="#"><?php _e('Dismiss','mainwp'); ?></a></span><span><strong><?php _e('Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">Scheduled Events</a>'); ?></strong></span>
                     	</p>
-                </div>
+                </div>                    
                 <?php
             }
         }
-
+        
     }
 
     public function getVersion()
@@ -363,7 +363,7 @@ class MainWPSystem
     private function checkUpgrade()
     {
         $result = MainWPAPISettings::checkUpgrade();
-        if ($result == null) return;
+        if ($result == null) return;        
 
         $this->upgradeVersionInfo->result = $result;
         $this->upgradeVersionInfo->updated = time();
@@ -410,13 +410,23 @@ class MainWPSystem
             return false;
         }
 
-        $slugs = MainWPExtensions::getSlugs();
+        //$slugs = MainWPExtensions::getSlugs();
+        $result = MainWPExtensions::getSlugsTwo();
+        $slugs = $result['slugs'];
+        $am_slugs = $result['am_slugs'];
+        
         if ($slugs != '')
-        {
+        {           
             $slugs = explode(',', $slugs);
             if (in_array($arg->slug, $slugs)) return MainWPAPISettings::getUpgradeInformation($arg->slug);
         }
-
+        
+        if ($am_slugs != '')
+        {   
+            $am_slugs = explode(',', $am_slugs);            
+            if (in_array($arg->slug, $am_slugs)) return MainWPAPISettings::getPluginInformation($arg->slug);
+        }
+        
         return false;
     }
 

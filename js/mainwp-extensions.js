@@ -118,7 +118,7 @@ jQuery(document).on('click', '.mainwp-extensions-activate', function ()
         key: api_row.find('input.api_key:text').val(),
         email: api_row.find('input.api_email:text').val()
     };
-   
+
     var loadingEl = api_row.find(".mainwp_loading");
     statusEl.hide();
     loadingEl.show();

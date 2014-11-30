@@ -175,8 +175,8 @@ msgstr "<a href=\"http://wordpress.org/support/\" target=\"_blank\">Support Foru
 #: view/MainWPManageSitesView.view.php:953
 #: view/MainWPManageSitesView.view.php:1081
 #@ mainwp
-msgid "post as much information as possible on the error in the <a href=\"http://mainwp.com/forum/\">support forum</a>."
-msgstr "schreiben Sie so viele Informationen wie möglich über den/die Fehler in das <a href=\"http://mainwp.com/forum/\">MainWP Support Forum</a>."
+msgid "post as much information as possible on the error in the <a href=\"https://mainwp.com/forum/\">support forum</a>."
+msgstr "schreiben Sie so viele Informationen wie möglich über den/die Fehler in das <a href=\"https://mainwp.com/forum/\">MainWP Support Forum</a>."
 
 #: class/MainWPMetaBoxes.class.php:8
 #: class/MainWPMetaBoxes.class.php:14
@@ -2752,8 +2752,8 @@ msgstr "Anzeige"
 
 #: view/MainWPAPISettingsView.view.php:11
 #@ mainwp
-msgid "Maximum number of main installations on your MainWP plan have been reached. <a href=\"http://mainwp.com/member/login/index\" target=\"_blank\">Upgrade your plan for more sites</a>"
-msgstr "Maximale Anzahl der Haupt-Installationen auf Ihrem MainWP Plan wurde erreicht.  <a href=\"http://mainwp.com/member/login/index\" target=\"_blank\">Aktualisieren Sie Ihren Plan für mehr Seiten</a>"
+msgid "Maximum number of main installations on your MainWP plan have been reached. <a href=\"https://mainwp.com/member/login/index\" target=\"_blank\">Upgrade your plan for more sites</a>"
+msgstr "Maximale Anzahl der Haupt-Installationen auf Ihrem MainWP Plan wurde erreicht.  <a href=\"https://mainwp.com/member/login/index\" target=\"_blank\">Aktualisieren Sie Ihren Plan für mehr Seiten</a>"
 
 #: view/MainWPAPISettingsView.view.php:26
 #@ mainwp
@@ -4594,14 +4594,14 @@ msgstr "Die Seite wurde entfernt, aber das MainWP Child Plugin konnte nicht deak
 
 #: view/MainWPSystemView.view.php:127
 #@ mainwp
-msgid "No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please post as much information as possible on the error in the <a href=\"http://mainwp.com/forum/\">support forum</a>."
-msgstr "Kein MainWP Child Plugin erkannt. Child Plugin erst installieren und aktivieren um danach die Webseite im MainWP Dashboard hinzuzufügen. Wenn Sie dieses Problem danach immer noch haben, geben Sie bitte so viel Informationen wie möglich über die Fehler in das <a href=\"http://mainwp.com/forum/\">Support Forum</a>."
+msgid "No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please post as much information as possible on the error in the <a href=\"https://mainwp.com/forum/\">support forum</a>."
+msgstr "Kein MainWP Child Plugin erkannt. Child Plugin erst installieren und aktivieren um danach die Webseite im MainWP Dashboard hinzuzufügen. Wenn Sie dieses Problem danach immer noch haben, geben Sie bitte so viel Informationen wie möglich über die Fehler in das <a href=\"https://mainwp.com/forum/\">Support Forum</a>."
 
 #: view/MainWPSystemView.view.php:128
 #, php-format
 #@ mainwp
-msgid "No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please  test your connection <a href=\"admin.php?page=managesites&do=test&site=%1\">here</a> or post as much information as possible on the error in the <a href=\"http://mainwp.com/forum/\">support forum</a>."
-msgstr "Kein MainWP Child Plugin erkannt. Child Plugin erst installieren und aktivieren um danach die Webseite im MainWP Dashboard hinzuzufügen. Wenn Sie dieses Problem danach immer noch haben, test Sie Ihre Verbindung einmal  <a href=\"admin.php?page=managesites&do=test&site=%1\">hier</a> oder geben Sie bitte so viel Informationen wie möglich über die Fehler in das <a href=\"http://mainwp.com/forum/\">Support Forum</a>."
+msgid "No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please  test your connection <a href=\"admin.php?page=managesites&do=test&site=%1\">here</a> or post as much information as possible on the error in the <a href=\"https://mainwp.com/forum/\">support forum</a>."
+msgstr "Kein MainWP Child Plugin erkannt. Child Plugin erst installieren und aktivieren um danach die Webseite im MainWP Dashboard hinzuzufügen. Wenn Sie dieses Problem danach immer noch haben, test Sie Ihre Verbindung einmal  <a href=\"admin.php?page=managesites&do=test&site=%1\">hier</a> oder geben Sie bitte so viel Informationen wie möglich über die Fehler in das <a href=\"https://mainwp.com/forum/\">Support Forum</a>."
 
 #: widget/MainWPExtensions.widget.php:24
 #@ mainwp

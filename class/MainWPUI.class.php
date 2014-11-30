@@ -238,7 +238,7 @@ class MainWPUI
     public static function renderHeader($title, $icon_url)
     {
         ?>
-        <div class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
+        <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
                 src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP"/></a>
             <img src="<?php echo $icon_url; ?>"
                  style="float: left; margin-right: 8px; margin-top: 7px ;" alt="<?php echo $title; ?>"

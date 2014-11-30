@@ -6118,11 +6118,11 @@ getErrorMessage = function(pError)
         var error = '';
         if (pError.extra)
         {
-            error = __('No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please  test your connection <a href="admin.php?page=managesites&do=test&site=%1">here</a> or post as much information as possible on the error in the <a href="http://mainwp.com/forum/">support forum</a>.', encodeURIComponent(pError.extra));
+            error = __('No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please  test your connection <a href="admin.php?page=managesites&do=test&site=%1">here</a> or post as much information as possible on the error in the <a href="https://mainwp.com/forum/">support forum</a>.', encodeURIComponent(pError.extra));
         }
         else
         {
-            error = __('No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please post as much information as possible on the error in the <a href="http://mainwp.com/forum/">support forum</a>.');
+            error = __('No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please post as much information as possible on the error in the <a href="https://mainwp.com/forum/">support forum</a>.');
         }
 
         return error;

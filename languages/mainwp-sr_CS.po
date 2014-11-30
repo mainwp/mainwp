@@ -179,8 +179,8 @@ msgstr "MainWP plugin nije pronađen, pre dodavanja sajta u MainWP kontrolnu tab
 #: page/MainWPManageSites.page.php:1810
 #: page/MainWPManageSites.page.php:1955
 #@ mainwp
-msgid "post as much information as possible on the error in the <a href=\"http://mainwp.com/forum/\">support forum</a>."
-msgstr "pošaljite što više informacija o grešci na <a href=\"http://mainwp.com/forum/\">forum za podršku</a>."
+msgid "post as much information as possible on the error in the <a href=\"https://mainwp.com/forum/\">support forum</a>."
+msgstr "pošaljite što više informacija o grešci na <a href=\"https://mainwp.com/forum/\">forum za podršku</a>."
 
 #: class/MainWPMetaBoxes.class.php:71
 #@ mainwp
@@ -658,8 +658,8 @@ msgstr "Sačuvaj podešavanja"
 
 #: page/MainWPAPISettings.page.php:113
 #@ mainwp
-msgid "Maximum number of main installations on your MainWP plan have been reached. <a href=\"http://mainwp.com/member/login/index\" target=\"_blank\">Upgrade your plan for more sites</a>"
-msgstr "Dostigli ste maksimalan broj upravljanih sajtova za vaš plan. <a href=\"http://mainwp.com/member/login/index\" target=\"_blank\">Pojačajte Vaš plan ovde!</a>"
+msgid "Maximum number of main installations on your MainWP plan have been reached. <a href=\"https://mainwp.com/member/login/index\" target=\"_blank\">Upgrade your plan for more sites</a>"
+msgstr "Dostigli ste maksimalan broj upravljanih sajtova za vaš plan. <a href=\"https://mainwp.com/member/login/index\" target=\"_blank\">Pojačajte Vaš plan ovde!</a>"
 
 #: page/MainWPBulkUpdateAdminPasswords.page.php:32
 #@ mainwp
@@ -2098,8 +2098,8 @@ msgstr "Otvori"
 #: page/MainWPManageSites.page.php:1715
 #: page/MainWPManageSites.page.php:1841
 #@ mainwp
-msgid "Maximum number of available sites on your MainWP plan have been reached. <a href=\"http://mainwp.com/member/login/index\" target=\"_blank\">Upgrade your plan for more sites</a>"
-msgstr "Maksimalan broj sajtova za Vaš plan je dostignut. <a href=\"http://mainwp.com/member/login/index\" target=\"_blank\">Pojačajte Vaš plan.</a>"
+msgid "Maximum number of available sites on your MainWP plan have been reached. <a href=\"https://mainwp.com/member/login/index\" target=\"_blank\">Upgrade your plan for more sites</a>"
+msgstr "Maksimalan broj sajtova za Vaš plan je dostignut. <a href=\"https://mainwp.com/member/login/index\" target=\"_blank\">Pojačajte Vaš plan.</a>"
 
 #: page/MainWPManageSites.page.php:1791
 #@ mainwp
@@ -4333,14 +4333,14 @@ msgstr "Greška na upravljanom WordPress sajtu"
 
 #: class/MainWPSystem.class.php:1350
 #@ mainwp
-msgid "No MainWP plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please post as much information as possible on the error in the <a href=\"http://mainwp.com/forum/\">support forum</a>."
-msgstr "MainWP plugin nije pronađen, provo instalirajte i aktivirajte plugin, a zatim dodajte vaše sajtove. Ako i dalje budete imali ovaj problem, molimo, pošaljite što više informacija o problemu na <a href=\"http://mainwp.com/forum/\">forum za pordšku</a>."
+msgid "No MainWP plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please post as much information as possible on the error in the <a href=\"https://mainwp.com/forum/\">support forum</a>."
+msgstr "MainWP plugin nije pronađen, provo instalirajte i aktivirajte plugin, a zatim dodajte vaše sajtove. Ako i dalje budete imali ovaj problem, molimo, pošaljite što više informacija o problemu na <a href=\"https://mainwp.com/forum/\">forum za pordšku</a>."
 
 #: class/MainWPSystem.class.php:1351
 #, php-format
 #@ mainwp
-msgid "No MainWP plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please  test your connection <a href=\"admin.php?page=managesites&do=test&site=%1\">here</a> or post as much information as possible on the error in the <a href=\"http://mainwp.com/forum/\">support forum</a>."
-msgstr "MainWP Plugin nije pronađen, provo instalirajte i aktivirajte plugin, a zatima dodajte Vaše sajtove. Ako i dalje budete imali ovaj problem, molimo provo testirajte konekciju <a href=\"admin.php?page=managesites&do=test&site=%1\">ovde</a> ili pošaljite što više informacija o problem na <a href=\"http://mainwp.com/forum/\">forum za podršku</a>."
+msgid "No MainWP plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please  test your connection <a href=\"admin.php?page=managesites&do=test&site=%1\">here</a> or post as much information as possible on the error in the <a href=\"https://mainwp.com/forum/\">support forum</a>."
+msgstr "MainWP Plugin nije pronađen, provo instalirajte i aktivirajte plugin, a zatima dodajte Vaše sajtove. Ako i dalje budete imali ovaj problem, molimo provo testirajte konekciju <a href=\"admin.php?page=managesites&do=test&site=%1\">ovde</a> ili pošaljite što više informacija o problem na <a href=\"https://mainwp.com/forum/\">forum za podršku</a>."
 
 #: class/MainWPSystem.class.php:1352
 #@ mainwp

@@ -8,7 +8,7 @@ class MainWPAPISettingsView
 
     public static function maximumInstallationsReached()
     {
-        return __('Maximum number of main installations on your MainWP plan have been reached. <a href="http://mainwp.com/member/login/index" target="_blank">Upgrade your plan for more sites</a>','mainwp');
+        return __('Maximum number of main installations on your MainWP plan have been reached. <a href="https://mainwp.com/member/login/index" target="_blank">Upgrade your plan for more sites</a>','mainwp');
     }
 
     public static function render()
@@ -18,7 +18,7 @@ class MainWPAPISettingsView
         $userExtension = MainWPDB::Instance()->getUserExtension();
         $pluginDir = (($userExtension == null) || (($userExtension->pluginDir == null) || ($userExtension->pluginDir == '')) ? 'default' : $userExtension->pluginDir);
         ?>
-    <div class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
+    <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
             src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP"/></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-passwords.png', dirname(__FILE__)); ?>"
              style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Password" height="32"/>
@@ -89,7 +89,7 @@ class MainWPAPISettingsView
         <div id="mainwp_api_errors" class="mainwp_error error" style="display: none"></div>
         <div id="mainwp_api_message" class="mainwp_updated updated" style="display: none"></div>
 
-        <h3 style="border-bottom: none !important;"><?php _e('MainWP Account - <em>Required for Support, Extensions, Ideas and Automated Cron Jobs</em>','mainwp'); ?>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://mainwp.com/dashboard-signup" target="_blank" class="button button-primary mainwp-upgrade-button button-hero" style="margin-top: -1em"><?php _e('Create MainWP Account', 'mainwp'); ?></a></h3>
+        <h3 style="border-bottom: none !important;"><?php _e('MainWP Account - <em>Required for Support, Extensions, Ideas and Automated Cron Jobs</em>','mainwp'); ?>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://mainwp.com/dashboard-signup" target="_blank" class="button button-primary mainwp-upgrade-button button-hero" style="margin-top: -1em"><?php _e('Create MainWP Account', 'mainwp'); ?></a></h3>
         <table class="form-table">
             <tbody>
             <tr>

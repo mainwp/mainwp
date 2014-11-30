@@ -73,7 +73,7 @@ class MainWPPlugins
     {
         ?>
     <div class="wrap">
-        <a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
+        <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-plugin.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Plugin" height="32"/>
         <h2><?php _e('Plugins','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div id="mainwp-tip-zone">
@@ -1428,7 +1428,7 @@ class MainWPPlugins
                                         Click the Upload toggle Button
                                     </li>
                                     <li>
-                                        Click â€œUpload Nowâ€ button<br/><br/>
+                                        Click 'Upload Now' button<br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-plugins-upload.jpg" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                     <li>
@@ -1438,7 +1438,7 @@ class MainWPPlugins
                                         Select sites you want to install the Plugin
                                     </li>
                                     <li>
-                                        Click â€œInstall Nowâ€ button
+                                        Click 'Install Now' button
                                     </li>
                                 </ol>
                             </p>
@@ -1451,17 +1451,17 @@ class MainWPPlugins
                                         Go to main MainWP Dashboard
                                     </li>
                                     <li>
-                                        Locate your â€œRight Nowâ€ Widget
+                                        Locate your 'Right Now' Widget
                                     </li>
                                     <li>
-                                        Click â€œShowâ€ on in Plugin Upgrades Availableâ€ area <br/><br/>
+                                        Click 'Show' in 'Plugin Upgrades Available' area <br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-available-plugins.jpg" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                     <li>
                                         Click the middle upgrades link to show the drop down of the available upgrades for that site
                                     </li>
                                     <li>
-                                        Select â€œUpgradeâ€ next to the name of the plugin or â€œUpgrade Allâ€ to upgrade all plugins on the site <br/><br/>
+                                        Select 'Upgrade' next to the name of the plugin or 'Upgrade All' to upgrade all plugins on the site <br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-available-plugins-upgrade.jpg" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                 </ol>
@@ -1475,16 +1475,16 @@ class MainWPPlugins
                                         Go to main MainWP Dashboard
                                     </li>
                                     <li>
-                                        Locate your â€œRight Nowâ€ Widget
+                                        Locate your 'Right Now' Widget
                                     </li>
                                     <li>
-                                        Click â€œShowâ€ on in â€œPlugin Upgrades Availableâ€ area
+                                        Click 'Show' on 'Plugin Upgrades Available' area
                                     </li>
                                     <li>
                                         Click the middle upgrades link to show the drop down of the available upgrades for that site
                                     </li>
                                     <li>
-                                        Click â€œIgnoreâ€ next to the name of the plugin<br/><br/>
+                                        Click 'Ignore' next to the name of the plugin<br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-ignore-plugin.jpg" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                 </ol>

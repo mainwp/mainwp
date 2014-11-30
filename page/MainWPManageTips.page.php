@@ -44,7 +44,7 @@ class MainWPManageTips
         $tips = MainWPDB::Instance()->getTips();
         //Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
         ?>
-    <div class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
+    <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-tips.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Tips" height="32"/>
         <h2>Manage Tips</h2><div style="clear: both;"></div><br/>
 

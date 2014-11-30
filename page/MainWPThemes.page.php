@@ -72,7 +72,7 @@ class MainWPThemes
     {
         ?>
     <div class="wrap">
-        <a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
+        <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-themes.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Themes" height="32"/>
         <h2><?php _e('Themes','mainwp'); ?></h2><div style="clear: both;"></div><br/>
          <div id="mainwp-tip-zone">
@@ -782,7 +782,7 @@ class MainWPThemes
                         <span class='action-links'>
 
                                     <a href="" class="thickbox thickbox-preview onclick"
-                                       id="install-theme-<?php echo $theme->slug; ?>" title="Install â€œ<?php echo $name; ?>??">Install</a> |
+                                       id="install-theme-<?php echo $theme->slug; ?>" title="Install '<?php echo $name; ?>'">Install</a> |
                                     <a href="<?php echo $preview_link; ?>" target="_blank"
                                        class="thickbox thickbox-preview onclick previewlink"
                                        title="Preview '<?php echo $name; ?>'">Preview</a>
@@ -1271,7 +1271,7 @@ class MainWPThemes
                                         Click the Upload toggle Button
                                     </li>
                                     <li>
-                                        Click â€œUpload Nowâ€ button<br/><br/>
+                                        Click 'Upload Now' button<br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-theme-upload.jpg" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                     <li>
@@ -1281,7 +1281,7 @@ class MainWPThemes
                                         Select sites you want to install the themes
                                     </li>
                                     <li>
-                                        Click â€œInstall Nowâ€ button
+                                        Click 'Install Now' button
                                     </li>
                                 </ol>
                             </p>
@@ -1294,10 +1294,10 @@ class MainWPThemes
                                         Go to main MainWP Dashboard
                                     </li>
                                     <li>
-                                        Locate your â€œRight Nowâ€ Widget
+                                        Locate your 'Right Now' Widget
                                     </li>
                                     <li>
-                                        Click â€œShowâ€ on in â€œTheme Upgrades Availableâ€ area <br/><br/>
+                                        Click 'Show' on 'Theme Upgrades Available' area <br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-available-themes.jpg" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                     <li>
@@ -1305,7 +1305,7 @@ class MainWPThemes
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-available-themes-show.jpg" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                     <li>
-                                        Select â€œUpgradeâ€ next to the name of the theme or â€œUpgrade Allâ€ to upgrade all themes on the site <br/><br/>
+                                        Select 'Upgrade' next to the name of the theme or 'Upgrade All' to upgrade all themes on the site <br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-available-themes-upgrade.jpg" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                 </ol>
@@ -1319,17 +1319,17 @@ class MainWPThemes
                                         Go to main MainWP Dashboard
                                     </li>
                                     <li>
-                                        Locate your â€œRight Nowâ€ Widget
+                                        Locate your 'Right Now' Widget
                                     </li>
                                     <li>
-                                        Click â€œShowâ€ on in â€œTheme Upgrades Availableâ€ area <br/><br/>
+                                        Click 'Show' on 'Theme Upgrades Available' area <br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-available-themes.jpg" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                     <li>
                                         Click the middle upgrades link to show the drop down of the available upgrades for that site
                                     </li>
                                     <li>
-                                        Click â€œIgnoreâ€ next to the name of the theme<br/><br/>
+                                        Click 'Ignore' next to the name of the theme<br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-plugin-ignore.jpg" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                 </ol>

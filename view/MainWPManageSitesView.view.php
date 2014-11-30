@@ -173,7 +173,7 @@ class MainWPManageSitesView
 
         ?>
     <div class="wrap">
-        <a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
+        <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
                 src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
                 alt="MainWP"/></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-sites.png', dirname(__FILE__)); ?>"
@@ -617,7 +617,7 @@ class MainWPManageSitesView
             return;
         }
           ?>
-      <div class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
+      <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
               src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP"/></a>
           <img src="<?php echo plugins_url('images/icons/mainwp-sites.png', dirname(__FILE__)); ?>"
                style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Sites" height="32"/>
@@ -1604,7 +1604,7 @@ class MainWPManageSitesView
                 {
                     $error = __('No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please ','mainwp');
                     if ($e->getMessageExtra() != null) $error .= __('test your connection <a href="' . admin_url('admin.php?page=managesites&do=test&site=' . urlencode($e->getMessageExtra())) . '">here</a> or ','mainwp');
-                    $error .= __('post as much information as possible on the error in the <a href="http://mainwp.com/forum/">support forum</a>.','mainwp');
+                    $error .= __('post as much information as possible on the error in the <a href="https://mainwp.com/forum/">support forum</a>.','mainwp');
 
                     throw new Exception($error);
                 }
@@ -1745,7 +1745,7 @@ class MainWPManageSitesView
                 {
                     $error = __('No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please ','mainwp');
                     if ($e->getMessageExtra() != null) $error .= __('test your connection <a href="' . admin_url('admin.php?page=managesites&do=test&site=' . urlencode($e->getMessageExtra())) . '">here</a> or ','mainwp');
-                    $error .= __('post as much information as possible on the error in the <a href="http://mainwp.com/forum/">support forum</a>.','mainwp');
+                    $error .= __('post as much information as possible on the error in the <a href="https://mainwp.com/forum/">support forum</a>.','mainwp');
                 }
                 else
                 {

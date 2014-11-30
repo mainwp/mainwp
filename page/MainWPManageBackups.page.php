@@ -73,7 +73,7 @@ class MainWPManageBackups
     {
         ?>
     <div class="wrap">
-        <a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
+        <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
                 src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
                 alt="MainWP"/></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-backups.png', dirname(__FILE__)); ?>"
@@ -1238,7 +1238,7 @@ class MainWPManageBackups
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/12/backup-type.png" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                     <li>
-                                        In case you donâ€™t need all files to be included in backup, click the EXCLUDE FILES link, this will show your site file map and you will be able to easily exclude any files and folders<br/><br/>
+                                        In case you don't need all files to be included in backup, click the EXCLUDE FILES link, this will show your site file map and you will be able to easily exclude any files and folders<br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/12/exclude-files.png" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                     <li>
@@ -1275,7 +1275,7 @@ class MainWPManageBackups
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/12/drobbox-allow.png" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                     <li>
-                                        After you get the success message, return to dashboard and click the Yes, Iâ€™ve authorized MainWP to Dropbox button <br/><br/>
+                                        After you get the success message, return to dashboard and click the Yes, I've authorized MainWP to Dropbox button <br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/12/dropbox-authorized.png" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                     <li>
@@ -1333,7 +1333,7 @@ class MainWPManageBackups
                             <p>
                                 <ol>
                                     <li>
-                                        Go to the Settings page and set the â€œExecute backuptasks in chunksâ€ option to YES <br/><br/>
+                                        Go to the Settings page and set the 'Execute backuptasks in chunks' option to YES <br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/11/settings-chunk-backups-1024x227.jpg" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                 </ol>

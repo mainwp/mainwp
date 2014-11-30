@@ -273,7 +273,7 @@ class MainWPSystem
         if (empty($r) || !is_object($r)) return;        
 
         if (property_exists($r, 'key_status') && $r->key_status == 'NOK') echo '<br />Your Log-in and Password are invalid, please update your login settings <a href="'.admin_url('admin.php?page=Settings').'">here</a>.';
-        else if (property_exists($r, 'package') && empty($r->package)) echo '<br />Your update license has expired, please log into <a href="http://mainwp.com/member">the members area</a> and upgrade your support and update license.';        
+        else if (property_exists($r, 'package') && empty($r->package)) echo '<br />Your update license has expired, please log into <a href="https://mainwp.com/member">the members area</a> and upgrade your support and update license.';
     }
 
     public function localization()
@@ -1862,7 +1862,7 @@ class MainWPSystem
     //Version
     function update_footer()
     {
-        $output = '<span><input type="button" style="background-image: none!important; padding-left: .6em !important;" id="dashboard_refresh" value="Sync Data" class="mainwp-upgrade-button button-primary button" /> <a class="button-primary button" href="admin.php?page=managesites&do=new">Add New Site</a> <a class="button-primary button mainwp-button-red" href="http://extensions.mainwp.com" target="_blank">Get New Extensions</a></span>';
+        $output = '<span><input type="button" style="background-image: none!important; padding-left: .6em !important;" id="dashboard_refresh" value="Sync Data" class="mainwp-upgrade-button button-primary button" /> <a class="button-primary button" href="admin.php?page=managesites&do=new">Add New Site</a> <a class="button-primary button mainwp-button-red" href="https://extensions.mainwp.com" target="_blank">Get New Extensions</a></span>';
 
 
         $current_wpid = MainWPUtility::get_current_wpid();

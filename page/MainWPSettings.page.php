@@ -61,7 +61,7 @@ class MainWPSettings
     {
         ?>
     <div class="wrap">
-        <a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
+        <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
                 src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
                 alt="MainWP"/></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-settings.png', dirname(__FILE__)); ?>"
@@ -209,7 +209,7 @@ class MainWPSettings
     <div class="mainwp_info-box"><strong><?php _e('Use this to set Global options.','mainwp'); ?></strong></div>
         <br/>
         <!--
-            <div class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
+            <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
                 <img src="<?php echo plugins_url('images/icons/mainwp-settings.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Settings" height="32"/><h2>MainWP Settings</h2>
               -->
 
@@ -251,7 +251,7 @@ class MainWPSettings
                             <p>
                                 <ol>
                                     <li>
-                                        <strong>Notification Email</strong> â€“ enables you to enter your email address where you want to receive Offline Monitoring alerts, Available Updates notifications and Backups notifications (when backup fails or starts if set in Backup Options section).
+                                        <strong>Notification Email</strong> enables you to enter your email address where you want to receive Offline Monitoring alerts, Available Updates notifications and Backups notifications (when backup fails or starts if set in Backup Options section).
                                     <li>
                                         <strong>Allow us to count your sites</strong> - provides you ability to enable/disable MainWP from counting your managed sites. This info is used only to show a count of managed blogs. No other information is gathered but number of sites you have connected. Setting it to YES means that you allow us to get this info from your dashboard.
                                     </li>
@@ -259,49 +259,49 @@ class MainWPSettings
                                         <strong>Optimize for big networks</strong> uses a caching function. This option is recommended for networks with 50+ sites. If enabled (Set to YES)  updates will be cached for quick loading. A manual refresh from the Dashboard is required to view new plugins, themes, posts, pages, comments and users.
                                     </li>
                                     <li>
-                                        <strong>Maximum request / 30 seconds</strong> â€“ sets a limit of requests sent to child sites per 30 seconds. Too menu requests can lead to child sites timing out and showing as offline while they are online. On the other side, lower number of requests leads to slower MainWP performance.
+                                        <strong>Maximum request / 30 seconds</strong> sets a limit of requests sent to child sites per 30 seconds. Too menu requests can lead to child sites timing out and showing as offline while they are online. On the other side, lower number of requests leads to slower MainWP performance.
                                     </li>
                                     <li>
                                         <strong>View Upgrades per site</strong> - option enables you to choose whether you like to see your updates Per Site or Per Theme/Plugin. If enabled (set to YES) updates in the Right Now widget will be displayed per site, if disabled Updates will be displayed per Theme/Plugin.
                                     </li>
                                     <li>
-                                        <strong>Require backup before upgrade</strong> â€“ with this option enabled, when you try to upgrade a plugin, theme or WordPress core, MainWP will check if there is a full backup created for the site(s) you are trying to upgrade in last 7 days. If you have a fresh backup of the site(s) MainWP will proceed to the upgrade process, if not it will ask you to create a full backup.
+                                        <strong>Require backup before upgrade</strong> with this option enabled, when you try to upgrade a plugin, theme or WordPress core, MainWP will check if there is a full backup created for the site(s) you are trying to upgrade in last 7 days. If you have a fresh backup of the site(s) MainWP will proceed to the upgrade process, if not it will ask you to create a full backup.
                                     </li>
                                     <li>
-                                        <strong>Automatic daily updates</strong> â€“ MainWP gives you ability to set automatic updates.
+                                        <strong>Automatic daily updates</strong> MainWP gives you ability to set automatic updates.
                                     </li>
                                     <li>
                                         <strong>Data Return Options</strong> - In case you have large number of posts/comments, fetching all of them from a child site at once can overload the dashboard and decrease the speed. In worst case scenario, it can crash communication. Here you can set the maximum the maximum number of posts/comments per search
                                     </li>
                                     <li>
-                                        <strong>Backups on server</strong> â€“ enables you to limit the number of backups you want to store on your server. If set to 3, MainWP will keep only 3 full backups for each of your sites. MainWP always replaces the oldest backup file. This option doesnâ€™t affect external sources
+                                        <strong>Backups on server</strong> enables you to limit the number of backups you want to store on your server. If set to 3, MainWP will keep only 3 full backups for each of your sites. MainWP always replaces the oldest backup file. This option doesn't affect external sources
                                     </li>
                                     <li>
-                                        <strong>Backups on external sources</strong> â€“ enables you to limit the number of stored backups on external sources such as Dropbox, Amazon S3 or FTP. This option does not affect the backups on server options. If you donâ€™t want to limit the number of backups on external sources, set this option to 0
+                                        <strong>Backups on external sources</strong> enables you to limit the number of stored backups on external sources such as Dropbox, Amazon S3 or FTP. This option does not affect the backups on server options. If you don't want to limit the number of backups on external sources, set this option to 0
                                     </li>
                                     <li>
-                                        <strong>Send email when backup starts</strong> â€“ when scheduled backup starts, MainWP will notify you via email notification if this option is enabled (Set to YES). Notification will be sent to email address set in the Notification Email field.
+                                        <strong>Send email when backup starts</strong> when scheduled backup starts, MainWP will notify you via email notification if this option is enabled (Set to YES). Notification will be sent to email address set in the Notification Email field.
                                     </li>
                                     <li>
                                         <strong>Execute backups in chunks</strong> - when setting a backup tasks with 5+ scheduled  sites, executing backups in chunks means that MainWP will backup 5 by 5 sites with 2 minutes pause between chunks.  By enabling this option, you can avoid server timing out while executing scheduled backup tasks.
                                     </li>
                                     <li>
-                                        <strong>Online Notification</strong> â€“ by default MainWP sends notifications only when your sites are offline. With this option enabled, MainWP will send an email even if your site is online notifying you that everything is okay. Frequency of this emails depends on your settings in the MainWP > Offline Check page.
+                                        <strong>Online Notification</strong> by default MainWP sends notifications only when your sites are offline. With this option enabled, MainWP will send an email even if your site is online notifying you that everything is okay. Frequency of this emails depends on your settings in the MainWP > Offline Check page.
                                     </li>
                                     <li>
-                                        <strong>New Account</strong> â€“ enables you to add new Google Analytics account. Here you can add multiple accounts. You need to be logged in your account, once you are logged click the Add GA Account and allow MainWP to access it. To add additional accounts, log out of you current GA account, log into another one and lick the button again.
+                                        <strong>New Account</strong> enables you to add new Google Analytics account. Here you can add multiple accounts. You need to be logged in your account, once you are logged click the Add GA Account and allow MainWP to access it. To add additional accounts, log out of you current GA account, log into another one and lick the button again.
                                     </li>
                                     <li>
-                                        <strong>Accounts</strong> â€“ this option shows only when a GA account(s) are added to MainWP. Here you can Disconnect selected account by clicking the Disconnect button.
+                                        <strong>Accounts</strong> this option shows only when a GA account(s) are added to MainWP. Here you can Disconnect selected account by clicking the Disconnect button.
                                     </li>
                                     <li>
-                                        <strong>Time Interval</strong> â€“ select the time interval for your GA account. You can choose between Weekly and Monthly setup. This will determine the way how your MainWP  GA widget displays statistics.
+                                        <strong>Time Interval</strong> select the time interval for your GA account. You can choose between Weekly and Monthly setup. This will determine the way how your MainWP  GA widget displays statistics.
                                     </li>
                                     <li>
-                                       <strong>Refresh Rate</strong> â€“ here you can set how often you want MainWP to check for new traffic data and new sites. Also use the Refresh Now button to refresh data on demand.
+                                       <strong>Refresh Rate</strong> here you can set how often you want MainWP to check for new traffic data and new sites. Also use the Refresh Now button to refresh data on demand.
                                     </li>
                                     <li>
-                                        <strong>Client Plugin folder options</strong> â€“ By default, files and folders on child sites are viewable. If you set to Hidden, MainWP will hide your files and folders. When hidden, if somebody tries to view your files it will return 404 file. However footprint does still exist.
+                                        <strong>Client Plugin folder options</strong> By default, files and folders on child sites are viewable. If you set to Hidden, MainWP will hide your files and folders. When hidden, if somebody tries to view your files it will return 404 file. However footprint does still exist.
                                     </li>
                                     <li>
                                         <strong>Turn Off Heatmap</strong> - By disabling Heatmaps (set to YES), you will remove the heatmap javascript footprint in the managed sites.

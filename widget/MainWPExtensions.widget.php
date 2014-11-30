@@ -21,7 +21,7 @@ class MainWPExtensionsWidget {
             ?>
             <span class="mainwp-no-extensions">
                 <div class="mainwp_info-box-yellow"><?php _e('You have no installed extensions.','mainwp'); ?></div><br/>
-                <div style="text-align: center"><a href="http://extensions.mainwp.com/" target="_blank" class="button button-hero button-primary"><?php _e('Add an Extension Today', 'mainwp'); ?></a></div><br/>
+                <div style="text-align: center"><a href="https://extensions.mainwp.com/" target="_blank" class="button button-hero button-primary"><?php _e('Add an Extension Today', 'mainwp'); ?></a></div><br/>
                 <h3 style="color: #7fb100;"><?php _e('What are Extensions?','mainwp'); ?></h3>
                 <p><?php _e('MainWP Extensions are specific features or tools created for the purpose of expanding the basic functionality of the MainWP plugin.', 'mainwp'); ?></p>
                 <h3 style="color: #7fb100;"><?php _e('Why have Extensions?','mainwp'); ?></h3>
@@ -170,7 +170,7 @@ class MainWPExtensionsWidget {
             ?>
             </tbody>
             </table>
-            <div style="clear: both; text-align: left; font-size: 12px; padding: .5em; border-top: 1px solid #dfdfdf;"><a href="http://extensions.mainwp.com/" target="_blank" class="button mainwp-upgrade-button"><?php _e('GET MORE EXTENSIONS', 'mainwp'); ?></a><span style="float: right;"><a href="#" class="mainwp-extension-widget-switch-grid" <?php echo (!$showList ? "style='display:none;'" : ''); ?>><?php _e('Show Grid View','mainwp'); ?></a><a href="#" class="mainwp-extension-widget-switch-list" <?php echo (!$showGrid ? "style='display:none;'" : ''); ?>><?php _e('Show List View','mainwp'); ?></a></span></div><?php
+            <div style="clear: both; text-align: left; font-size: 12px; padding: .5em; border-top: 1px solid #dfdfdf;"><a href="https://extensions.mainwp.com/" target="_blank" class="button mainwp-upgrade-button"><?php _e('GET MORE EXTENSIONS', 'mainwp'); ?></a><span style="float: right;"><a href="#" class="mainwp-extension-widget-switch-grid" <?php echo (!$showList ? "style='display:none;'" : ''); ?>><?php _e('Show Grid View','mainwp'); ?></a><a href="#" class="mainwp-extension-widget-switch-list" <?php echo (!$showGrid ? "style='display:none;'" : ''); ?>><?php _e('Show List View','mainwp'); ?></a></span></div><?php
         }
 	}
 

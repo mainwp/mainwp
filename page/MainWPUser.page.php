@@ -67,7 +67,7 @@ class MainWPUser
     {
         ?>
     <div class="wrap">
-        <a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
+        <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
                 src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
                 alt="MainWP"/></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-user.png', dirname(__FILE__)); ?>"
@@ -735,7 +735,7 @@ class MainWPUser
                                        id="import_user_file_bulkupload" accept="text/comma-separated-values"
                                        class="regular-text" disabled="disabled"/> 
                                        <span
-                                    class="description"><?php _e('File must be in CSV format.','mainwp'); ?> <a href="http://mainwp.com/csv/sample_users.csv" target="_blank"><?php _e('Click here to download sample CSV file.','mainwp'); ?></a></span>
+                                    class="description"><?php _e('File must be in CSV format.','mainwp'); ?> <a href="https://mainwp.com/csv/sample_users.csv" target="_blank"><?php _e('Click here to download sample CSV file.','mainwp'); ?></a></span>
                                     <div>
                                         <p>
                                             <input type="checkbox" name="user_chk_bulkupload"
@@ -1144,14 +1144,14 @@ class MainWPUser
                                     <li>
                                         The fields in the csv file are as follows
                                         <ol>
-                                            <li>Username â€“ The new username to create</li>
-                                            <li>Email Address â€“ The email address for the new user</li>
-                                            <li>First Name â€“ The first name of the new user</li>
-                                            <li>Last Name â€“ The last name of the new user</li>
-                                            <li>Users Web Site â€“ The home site of the new user (NOT THE SITE YOU WISH TO ADD THE USER TO)</li>
-                                            <li>Send Welcome Email â€“ 0 for No â€“ 1 for Yes</li>
-                                            <li>Role â€“ The role you would like the new user to have (subscriber, administrator, editor, author, contributor)</li>
-                                            <li>Child Site to add User to â€“ The site you would like the new user added to. (multiple sites can be chosen use ; to separate sites.  http://site1.com;http:site2.com;http://site3.com</li>
+                                            <li>Username - The new username to create</li>
+                                            <li>Email Address - The email address for the new user</li>
+                                            <li>First Name - The first name of the new user</li>
+                                            <li>Last Name - The last name of the new user</li>
+                                            <li>Users Web Site - The home site of the new user (NOT THE SITE YOU WISH TO ADD THE USER TO)</li>
+                                            <li>Send Welcome Email - 0 for No, 1 for Yes</li>
+                                            <li>Role - The role you would like the new user to have (subscriber, administrator, editor, author, contributor)</li>
+                                            <li>Child Site to add User to - The site you would like the new user added to. (multiple sites can be chosen use ; to separate sites.  http://site1.com;http:site2.com;http://site3.com</li>
                                         </ol>
                                     </li>
                                 </ol>

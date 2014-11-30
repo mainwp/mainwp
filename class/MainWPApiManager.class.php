@@ -2,11 +2,8 @@
 
 class MainWPApiManager {
     
-//    public $upgrade_url = 'https://extensions.mainwp.com/';
-//    public $renew_license_url = 'https://extensions.mainwp.com/my-account';
-
-    public $upgrade_url = 'http://extensions.vsbp.com/';
-    public $renew_license_url = 'http://extensions.vsbp.com/my-account';
+    public $upgrade_url = 'https://extensions.mainwp.com/';
+    public $renew_license_url = 'https://extensions.mainwp.com/my-account';
 
     public $domain = "";
     /**

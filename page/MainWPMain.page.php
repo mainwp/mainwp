@@ -116,7 +116,7 @@ class MainWPMain
 
         global $screen_layout_columns;
         ?>
-    <div id="mainwp_tab-general" class="wrap"><a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
+    <div id="mainwp_tab-general" class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-dashboard.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Dashboard" height="32"/>
         <h2><?php _e('MainWP Dashboard','mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
         <div id="mainwp-tip-zone">
@@ -171,7 +171,7 @@ class MainWPMain
                 <td id="mainwp-refresh-bar-buttons">
                 <input type="button" id="dashboard_refresh" value="<?php _e('Sync Data','mainwp'); ?>" class="button-hero button mainwp-upgrade-button" title="<?php echo MainWPRightNow::renderLastUpdate(); ?>" />
                 <a class="button-hero button-primary button mainwp-addsite-button" href="admin.php?page=managesites&do=new"><?php _e('Add New Site','mainwp'); ?></a>
-                <a class="button-hero button-primary button mainwp-button-red" target="_blank" href="http://extensions.mainwp.com"><?php _e('Get New Extensions','mainwp'); ?></a>
+                <a class="button-hero button-primary button mainwp-button-red" target="_blank" href="https://extensions.mainwp.com"><?php _e('Get New Extensions','mainwp'); ?></a>
                 </td>
             <div id="dashboard_refresh_statusextra" style="display: none">&nbsp;&nbsp;<img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></div>
                 </tr></tbody>

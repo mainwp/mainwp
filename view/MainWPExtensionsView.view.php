@@ -10,7 +10,7 @@ class MainWPExtensionsView
     {        
         ?>
     <div class="wrap">
-        <a href="http://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
+        <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
                 src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
                 alt="MainWP"/></a>
         <img src="<?php echo plugins_url('images/icons/mainwp-extensions.png', dirname(__FILE__)); ?>"
@@ -18,16 +18,16 @@ class MainWPExtensionsView
         <h2><?php _e('Extensions', 'mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
         <?php if ($shownPage === '') { ?>
         <div id="mainwp-extensions-categories-menu" class="postbox">
-                <div class="mainwp-inside"><span id="mainwp-extensions-menu-title"><?php _e('Get MainWP Extensions','mainwp');?></span><span style="float: right;"><a href="http://mainwp.com/member/signup/mainwpsignup" target="_blank" class="mainwp-upgrade-button button-primary button"><?php _e('Create MainWP Account','mainwp'); ?></a></span></div>
+                <div class="mainwp-inside"><span id="mainwp-extensions-menu-title"><?php _e('Get MainWP Extensions','mainwp');?></span><span style="float: right;"><a href="https://mainwp.com/member/signup/mainwpsignup" target="_blank" class="mainwp-upgrade-button button-primary button"><?php _e('Create MainWP Account','mainwp'); ?></a></span></div>
                 <div style="border-bottom: 1px Solid #e5e5e5;"></div>
                 <div class="mainwp-inside mainwp-align-center" style="clear: both;">
                 <div id="mainwp-extensions-cat-menu">
                     <ul id="mainwp-extensions-menu-cat-list">
-                        <li class="mainwp-extensions-menu-item mainwp-category-1"><a href="http://extensions.mainwp.com/product-category/mainwp-extensions/administrative/"><?php _e('Administrative','mainwp'); ?></a></li>
-                        <li class="mainwp-extensions-menu-item mainwp-category-2"><a href="http://extensions.mainwp.com/product-category/mainwp-extensions/content/"><?php _e('Content','mainwp'); ?></a></li>
-                        <li class="mainwp-extensions-menu-item mainwp-category-3"><a href="http://extensions.mainwp.com/product-category/mainwp-extensions/visitor-data/"><?php _e('Visitor Data','mainwp'); ?></a></li>
-                        <li class="mainwp-extensions-menu-item mainwp-category-4"><a href="http://extensions.mainwp.com/product-category/mainwp-extensions/free/"><?php _e('Free Extensions','mainwp'); ?></a></li>
-                        <li class="mainwp-extensions-menu-item mainwp-category-5"><a href="http://extensions.mainwp.com/shop/"><?php _e('All Extensions','mainwp'); ?></a></li>
+                        <li class="mainwp-extensions-menu-item mainwp-category-1"><a href="https://extensions.mainwp.com/product-category/mainwp-extensions/administrative/"><?php _e('Administrative','mainwp'); ?></a></li>
+                        <li class="mainwp-extensions-menu-item mainwp-category-2"><a href="https://extensions.mainwp.com/product-category/mainwp-extensions/content/"><?php _e('Content','mainwp'); ?></a></li>
+                        <li class="mainwp-extensions-menu-item mainwp-category-3"><a href="https://extensions.mainwp.com/product-category/mainwp-extensions/visitor-data/"><?php _e('Visitor Data','mainwp'); ?></a></li>
+                        <li class="mainwp-extensions-menu-item mainwp-category-4"><a href="https://extensions.mainwp.com/product-category/mainwp-extensions/free/"><?php _e('Free Extensions','mainwp'); ?></a></li>
+                        <li class="mainwp-extensions-menu-item mainwp-category-5"><a href="https://extensions.mainwp.com/shop/"><?php _e('All Extensions','mainwp'); ?></a></li>
                     </ul>
                 </div>
                     <div style="clear: both;"></div>
@@ -125,7 +125,7 @@ class MainWPExtensionsView
                 <?php _e('Extensions are specific features or tools created for the purpose of expanding the basic functionality of MainWP.', 'mainwp'); ?>
                 <h3><?php _e('Why have Extensions?', 'mainwp'); ?></h3>
                 <?php _e('The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat.  Extensions offer custom functions and features so that each user can tailor their MainWP to their specific needs.', 'mainwp'); ?>
-                <p><a href="http://extensions.mainwp.com/"><?php _e('Download your first extension now.', 'mainwp'); ?></a></p>
+                <p><a href="https://extensions.mainwp.com/"><?php _e('Download your first extension now.', 'mainwp'); ?></a></p>
             </div>
 <?php  } ?>
 <?php     

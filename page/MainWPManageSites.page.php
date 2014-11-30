@@ -1511,7 +1511,7 @@ class MainWPManageSites
                             <p>
                                 <ol>
                                     <li>
-                                        Click the â€œAdd New Siteâ€ button in or go to MainWP > Sites > Add New<br/><br/>
+                                        Click the 'Add New Site' button in or go to MainWP > Sites > Add New<br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-add-new-site-1024x64.jpg" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                     <li>
@@ -1531,7 +1531,7 @@ class MainWPManageSites
                             <p>
                                 <ol>
                                     <li>In the Child Site locate MainWP Settings in the Main WordPress Settings tab</li>
-                                    <li>Click â€œRequire Unique Security IDâ€</li>
+                                    <li>Click 'Require Unique Security ID'</li>
                                     <li>
                                         Click Save Changes <br/><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/04/new-sec-id.jpg" style="wight: 100% !important;" alt="screenshot"/>
@@ -1548,7 +1548,7 @@ class MainWPManageSites
                             <p>
                                 <ol>
                                     <li>
-                                        Locate the wanted site in the list and click the â€œDashboardâ€ link under the site name or just click on the site name  <br /><br/>
+                                        Locate the wanted site in the list and click the 'Dashboard' link under the site name or just click on the site name  <br /><br/>
                                         <img src="http://docs.mainwp.com/wp-content/uploads/2013/12/new-dashboard-link-1024x77.png" style="wight: 100% !important;" alt="screenshot"/>
                                     </li>
                                 </ol>

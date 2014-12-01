@@ -189,7 +189,8 @@ class MainWPExtensions
         add_action('wp_ajax_mainwp_extension_trash', array(MainWPExtensions::getClassName(), 'trashExtension'));
         add_action('wp_ajax_mainwp_extension_activate', array(MainWPExtensions::getClassName(), 'activateExtension'));
         add_action('wp_ajax_mainwp_extension_deactivate', array(MainWPExtensions::getClassName(), 'deactivateExtension'));
-        add_action('wp_ajax_mainwp_extension_grabapikey', array(MainWPExtensions::getClassName(), 'grabapikeyExtension'));        
+        add_action('wp_ajax_mainwp_extension_grabapikey', array(MainWPExtensions::getClassName(), 'grabapikeyExtension'));
+        add_action('wp_ajax_mainwp_extension_saveextensionapilogin', array(MainWPExtensions::getClassName(), 'saveExtensionsApiLogin'));        
         add_action('wp_ajax_mainwp_extension_testextensionapilogin', array(MainWPExtensions::getClassName(), 'testExtensionsApiLogin'));        
         add_action('wp_ajax_mainwp_extension_getpurchased', array(MainWPExtensions::getClassName(), 'getPurchasedExts'));        
         add_action('wp_ajax_mainwp_extension_downloadandinstall', array(MainWPExtensions::getClassName(), 'downloadAndInstall'));        
@@ -253,10 +254,9 @@ class MainWPExtensions
         die(json_encode($result));
     }
     
-    public static function testExtensionsApiLogin() {        
+    public static function saveExtensionsApiLogin() {        
         $username = trim( $_POST['username'] );
-        $password = trim( $_POST['password'] );
-            
+        $password = trim( $_POST['password'] );            
         if (($username == '') && ($password == ''))
         {
             MainWPUtility::update_option("mainwp_extensions_api_username", $username);
@@ -291,29 +291,46 @@ class MainWPExtensions
         die(json_encode($return));                       
     }
     
-    public static function getPurchasedExts() {        
+    public static function testExtensionsApiLogin() {  
         $username = trim( $_POST['username'] );
-        $password = trim( $_POST['password'] );
-            
-        if (($username == '') && ($password == ''))
-        {
-            MainWPUtility::update_option("mainwp_extensions_api_username", $username);
-            MainWPUtility::update_option("mainwp_extensions_api_password", $password);
-            die(json_encode(array('saved' => 1)));
+        $password = trim( $_POST['password'] );            
+        if (($username == '') || ($password == ''))
+        {            
+            die(json_encode(array('error' => 'Login invalid.')));
         }
-        $data = MainWPApiManager::instance()->get_purchased_software( $username, $password); 
-        $result = json_decode($data, true);                       
-        $save_login = (isset($_POST['saveLogin']) && ($_POST['saveLogin'] == '1')) ? true : false;           
+        
+        $enscrypt_u = get_option('mainwp_extensions_api_username');
+        $enscrypt_p = get_option('mainwp_extensions_api_password');
+        $username = !empty($enscrypt_u) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_u) : "";
+        $password = !empty($enscrypt_p) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_p) : "";             
+ 
+        $test = MainWPApiManager::instance()->test_login_api($username, $password); 
+        $result = json_decode($test, true);        
         $return = array();
         if (is_array($result)) {
-            if (isset($result['success']) && $result['success']) {    
-                if ($save_login) {
-                    $enscrypt_u = MainWPApiManagerPasswordManagement::encrypt_string($username);
-                    $enscrypt_p = MainWPApiManagerPasswordManagement::encrypt_string($password);                                     
-                    MainWPUtility::update_option("mainwp_extensions_api_username", $enscrypt_u);
-                    MainWPUtility::update_option("mainwp_extensions_api_password", $enscrypt_p);        
-                    MainWPUtility::update_option("mainwp_extensions_api_save_login", true);        
-                }                 
+            if (isset($result['success']) && $result['success']) {             
+                $return['result'] = 'SUCCESS';                                         
+            } else if (isset($result['error'])){
+                $return['error'] = $result['error'];                                     
+            }    
+        }        
+        die(json_encode($return));                       
+    }
+    
+    
+    public static function getPurchasedExts() {        
+        $username = trim( $_POST['username'] );
+        $password = trim( $_POST['password'] );            
+        if (($username == '') || ($password == ''))
+        {            
+            die(json_encode(array('error' => 'Login invalid.')));
+        }
+        
+        $data = MainWPApiManager::instance()->get_purchased_software( $username, $password); 
+        $result = json_decode($data, true);                               
+        $return = array();
+        if (is_array($result)) {
+            if (isset($result['success']) && $result['success']) {                                  
                 if (isset($result['purchased_data']) && is_array($result['purchased_data'])) {                    
                     self::loadExtensions();
                     $installed_softwares = array();
@@ -350,13 +367,7 @@ class MainWPExtensions
             } else if (isset($result['error'])){
                 $return= array('error' => $result['error']);                                         
             }    
-        }             
-        
-        if (!$save_login) {                     
-            MainWPUtility::update_option("mainwp_extensions_api_username", "");
-            MainWPUtility::update_option("mainwp_extensions_api_password", "");
-            MainWPUtility::update_option("mainwp_extensions_api_save_login", "");
-        }        
+        }                         
         die(json_encode($return));                       
     }
         
@@ -713,16 +724,16 @@ class MainWPExtensions
     }
 
     public static function hookGetSites($pluginFile, $key, $websiteid, $for_manager = false)
-    {
+    {       
         if (!self::hookVerify($pluginFile, $key))
         {
             return false;
-        }
+        }        
         
         if ($for_manager && (!defined("MWP_TEAMCONTROL_PLUGIN_SLUG") || !mainwp_current_user_can("extension", dirname(MWP_TEAMCONTROL_PLUGIN_SLUG)))) {                                             
             return false;            
         }
-        
+       
         if (isset($websiteid) && ($websiteid != null))
         {
             $website = MainWPDB::Instance()->getWebsiteById($websiteid);
@@ -734,7 +745,7 @@ class MainWPExtensions
             return array(array('id' => $websiteid, 'url' => MainWPUtility::getNiceURL($website->url, true), 'name' => $website->name, 'totalsize' => $website->totalsize));
         }
 
-        $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, $for_manager));       
+        $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, $for_manager));              
         $output = array();
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
         {

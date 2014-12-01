@@ -382,6 +382,10 @@ extensions_loop_next = function()
 
 extensions_activate_next = function(pObj)
 {
+        var grabingEl = jQuery(".api-grabbing-fields");
+        var username = grabingEl.find('input.username:text').val();
+        var pwd = grabingEl.find('input.passwd:password').val();
+   
         var api_row = jQuery(pObj).find("tr.mainwp-extensions-api-row");            
         var statusEl = api_row.find(".activate-api-status");                
         var loadingEl = api_row.find(".mainwp_loading");
@@ -389,6 +393,8 @@ extensions_activate_next = function(pObj)
         var extensionSlug = jQuery(pObj).attr('extension_slug');
         var data = {
             action:'mainwp_extension_grabapikey',           
+            username: username,
+            password: pwd,
             slug:extensionSlug            
         };
         currentActivateThreads++;

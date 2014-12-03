@@ -656,6 +656,7 @@ class MainWPExtensions
         }
     }
 
+    //todo: implement correclty: MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades')..
     private static $possible_options = array(
         'plugin_upgrades' => 'plugin_upgrades',
         'theme_upgrades' => 'theme_upgrades',

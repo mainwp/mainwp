@@ -323,7 +323,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
                                     THEN 1
                                 WHEN (offline_check_result = -1)
                                     THEN 2
-                                WHEN (sync_errors IS NOT NULL) AND (sync_errors <> "")
+                                WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")
                                     THEN 3
                                 ELSE 4
                                     + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
@@ -333,7 +333,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
             }
             else if (($_REQUEST['orderby'] == 'last_post'))
             {
-                $orderby = 'wp.last_post_gmt ' . ($_GET['order'] == 'asc' ? 'asc' : 'desc');
+                $orderby = 'wp_sync.last_post_gmt ' . ($_GET['order'] == 'asc' ? 'asc' : 'desc');
             }
             
             
@@ -374,7 +374,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
             }
             else if ($_REQUEST['status'] == 'disconnected')
             {
-                $where = 'wp.sync_errors != ""';
+                $where = 'wp_sync.sync_errors != ""';
             }
             else if ($_REQUEST['status'] == 'update')
             {

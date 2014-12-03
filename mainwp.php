@@ -63,21 +63,6 @@ if (!function_exists('mainwp_do_not_have_permissions'))
     }
 }
 
-if (!function_exists('mainwp_current_user_can'))
-{
-    function mainwp_current_user_can($cap_type = "", $cap)
-    {
-        require_once(ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'pluggable.php');
-        $current_user = wp_get_current_user();
-        if (empty($current_user))
-        {
-            return false;
-        }
-
-        return apply_filters("mainwp_currentusercan", true, $cap_type, $cap);
-    }
-}
-
 $mainWP = new MainWPSystem(WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename(__FILE__));
 register_activation_hook(__FILE__, array($mainWP, 'activation'));
 register_deactivation_hook(__FILE__, array($mainWP, 'deactivation'));

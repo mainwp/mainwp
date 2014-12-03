@@ -10,28 +10,6 @@ class MainWPSync
 
         MainWPUtility::endSession();
 
-        $emptyArray = json_encode(array());
-        $websiteValues = array(
-            'directories' => $emptyArray,
-            'sync_errors' => '',
-            'wp_upgrades' => $emptyArray,
-            'plugin_upgrades' => $emptyArray,
-            'theme_upgrades' => $emptyArray,
-            'premium_upgrades' => $emptyArray,
-            'uptodate' => 0,
-            'securityIssues' => $emptyArray,
-            'recent_comments' => $emptyArray,
-            'recent_posts' => $emptyArray,
-            'recent_pages' => $emptyArray,
-            'themes' => $emptyArray,
-            'plugins' => $emptyArray,
-            'users' => $emptyArray,
-            'categories' => $emptyArray,
-            'pluginConflicts' => $emptyArray,
-            'themeConflicts' => $emptyArray
-        );
-
-        $error = false;
         try
         {
             $pluginDir = $pWebsite->pluginDir;
@@ -111,23 +89,20 @@ class MainWPSync
         $emptyArray = json_encode(array());
         $websiteValues = array(
             'directories' => $emptyArray,
-            'sync_errors' => $sync_errors,
-            'wp_upgrades' => $emptyArray,
             'plugin_upgrades' => $emptyArray,
             'theme_upgrades' => $emptyArray,
-            'premium_upgrades' => $emptyArray,
-            'uptodate' => 0,
             'securityIssues' => $emptyArray,
-            'recent_comments' => $emptyArray,
-            'recent_posts' => $emptyArray,
-            'recent_pages' => $emptyArray,
             'themes' => $emptyArray,
             'plugins' => $emptyArray,
             'users' => $emptyArray,
             'categories' => $emptyArray,
             'pluginConflicts' => $emptyArray,
             'themeConflicts' => $emptyArray,
-            'offline_check_result' => $offline_check_result,
+            'offline_check_result' => $offline_check_result
+        );
+        $websiteSyncValues = array(
+            'uptodate' => 0,
+            'sync_errors' => $sync_errors,
             'version' => 0
         );
 
@@ -141,7 +116,7 @@ class MainWPSync
 
         if (isset($information['version']))
         {
-            $websiteValues['version'] = $information['version'];
+            $websiteSyncValues['version'] = $information['version'];
             $done = true;
         }
 
@@ -158,8 +133,12 @@ class MainWPSync
 
         if (isset($information['wp_updates']) && $information['wp_updates'] != null)
         {
-            $websiteValues['wp_upgrades'] = json_encode(array('current' => $information['wpversion'], 'new' => $information['wp_updates']));
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'wp_upgrades', json_encode(array('current' => $information['wpversion'], 'new' => $information['wp_updates'])));
             $done = true;
+        }
+        else
+        {
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'wp_upgrades', $emptyArray);
         }
 
         if (isset($information['plugin_updates']))
@@ -176,8 +155,12 @@ class MainWPSync
 
         if (isset($information['premium_updates']))
         {
-            $websiteValues['premium_upgrades'] = json_encode($information['premium_updates']);
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'premium_upgrades', json_encode($information['premium_updates']));
             $done = true;
+        }
+        else
+        {
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'premium_upgrades', $emptyArray);
         }
 
         if (isset($information['securityIssues']) && MainWPUtility::ctype_digit($information['securityIssues']) && $information['securityIssues'] >= 0)
@@ -188,20 +171,32 @@ class MainWPSync
 
         if (isset($information['recent_comments']))
         {
-            $websiteValues['recent_comments'] = json_encode($information['recent_comments']);
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'recent_comments', json_encode($information['recent_comments']));
             $done = true;
+        }
+        else
+        {
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'recent_comments', $emptyArray);
         }
 
         if (isset($information['recent_posts']))
         {
-            $websiteValues['recent_posts'] = json_encode($information['recent_posts']);
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'recent_posts', json_encode($information['recent_posts']));
             $done = true;
+        }
+        else
+        {
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'recent_posts', $emptyArray);
         }
 
         if (isset($information['recent_pages']))
         {
-            $websiteValues['recent_pages'] = json_encode($information['recent_pages']);
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'recent_pages', json_encode($information['recent_pages']));
             $done = true;
+        }
+        else
+        {
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'recent_pages', $emptyArray);
         }
 
         if (isset($information['themes']))
@@ -230,19 +225,19 @@ class MainWPSync
 
         if (isset($information['totalsize']))
         {
-            $websiteValues['totalsize'] = $information['totalsize'];
+            $websiteSyncValues['totalsize'] = $information['totalsize'];
             $done = true;
         }
 
         if (isset($information['dbsize']))
         {
-            $websiteValues['dbsize'] = $information['dbsize'];
+            $websiteSyncValues['dbsize'] = $information['dbsize'];
             $done = true;
         }
 
         if (isset($information['extauth']))
         {
-            $websiteValues['extauth'] = $information['extauth'];
+            $websiteSyncValues['extauth'] = $information['extauth'];
             $done = true;
         }
 
@@ -260,7 +255,7 @@ class MainWPSync
 
         if (isset($information['last_post_gmt']))
         {
-            $websiteValues['last_post_gmt'] = $information['last_post_gmt'];
+            $websiteSyncValues['last_post_gmt'] = $information['last_post_gmt'];
             $done = true;
         }
 
@@ -280,22 +275,23 @@ class MainWPSync
         {
             if (isset($information['wpversion']))
             {
-                $websiteValues['uptodate'] = 1;
+                $websiteSyncValues['uptodate'] = 1;
             }
             else if (isset($information['error']))
             {
                 $error = true;
-                $websiteValues['sync_errors'] = __('Error - ', 'mainwp') . $information['error'];
+                $websiteSyncValues['sync_errors'] = __('Error - ', 'mainwp') . $information['error'];
             }
             else
             {
                 $error = true;
-                $websiteValues['sync_errors'] = __('Undefined error - please reinstall the MainWP Child Plugin on the client site', 'mainwp');
+                $websiteSyncValues['sync_errors'] = __('Undefined error - please reinstall the MainWP Child Plugin on the client site', 'mainwp');
             }
         }
 
 
-        $websiteValues['dtsSync'] = time();
+        $websiteSyncValues['dtsSync'] = time();
+        MainWPDB::Instance()->updateWebsiteSyncValues($pWebsite->id, $websiteSyncValues);
         MainWPDB::Instance()->updateWebsiteValues($pWebsite->id, $websiteValues);
 
         //Sync action

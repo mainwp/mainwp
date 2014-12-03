@@ -903,7 +903,6 @@ class MainWPThemes
 
     public static function renderIgnoredConflicts()
     {
-        //todo: only fetch sites with ignored conflicts
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
         $userExtension = MainWPDB::Instance()->getUserExtension();
         $decodedIgnoredThemeConflicts = json_decode($userExtension->ignored_themeConflicts, true);

@@ -123,7 +123,7 @@ class MainWPMain
                 <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can move the Widgets around to fit your needs and even adjust the number of columns by selecting "Screen Options" on the top right.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
         </div>
         <?php
-        $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.dtsSync DESC, wp.url ASC'));
+        $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp_sync.dtsSync DESC, wp.url ASC'));
         self::renderDashboardBody($websites, $this->dashBoard, $screen_layout_columns);
         @MainWPDB::free_result($websites);
         ?>

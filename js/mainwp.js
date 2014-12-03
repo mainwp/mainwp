@@ -3616,7 +3616,7 @@ mainwp_import_users = function () {
         'line_number': import_user_current_line_number
     });
     jQuery.post(ajaxurl, data, function (response_data) {
-        if (response_data.error != undefined) return; //todo: add handling
+        if (response_data.error != undefined) return;
 
         var line_num = response_data.line_number;
         var okList = response_data.ok_list;

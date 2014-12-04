@@ -250,6 +250,8 @@ class MainWPManageSites
                 throw $e;
             }
 
+            if (isset($information['error']) && stristr($information['error'], 'Another backup process is running')) return false;
+
             $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('fetchResult' => json_encode($information)));
         }
         //If not fetchResult, we had a timeout.. Retry this!
@@ -284,6 +286,12 @@ class MainWPManageSites
                                 'file_descriptors' => $maximumFileDescriptors, 'loadFilesBeforeZip' => $loadFilesBeforeZip,
                                 'pid' => $backupTaskProgress->pid, 'append' => '1',
                                 MainWPUtility::getFileParameter($website) => $temp['file']), false, false, false);
+
+                            if (isset($information['error']) && stristr($information['error'], 'Another backup process is running'))
+                            {
+                                MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('attempts' => ($backupTaskProgress->attempts - 1)));
+                                return false;
+                            }
                         }
                         catch (MainWPException $e)
                         {

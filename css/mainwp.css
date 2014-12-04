@@ -2732,13 +2732,31 @@ input.mainwp-field:-webkit-autofill {
     text-decoration: none;
     padding: 6px 23px;
 }
-.api-grabbing-fields ul {
-    margin: 0;
+
+.mainwp_api_postbox .handlediv{
+    float: right;
+    height: 30px;
+    width: 27px;
 }
-.api-grabbing-fields ul li {
-    float: left;
-    margin-left:10px;
+.mainwp_api_postbox .handlediv:before{
+   content: '\f142';
 }
-.api-grabbing-fields ul li p{
-    margin: 0.5em 0;
+.mainwp_api_postbox.closed .handlediv:before{
+   content: '\f140';
+}
+.mainwp_api_postbox .handlediv:before{
+    right: 12px;
+    font: normal 20px/1 'dashicons';
+    speak: none;
+    display: inline-block;
+    padding: 8px 10px;
+    top: 0;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-decoration: none !important;
+}
+
+.mainwp_api_postbox.closed > .mainwp-inside{
+    display: none;
 }

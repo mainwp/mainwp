@@ -38,11 +38,7 @@ class MainWPExtensionsView
     
     $loader_url = plugins_url('images/loader.gif', dirname(__FILE__));      
     if (mainwp_current_user_can("dashboard", "manage_extensions")) {     
-?>   
-    <div class="postbox">
-           <div class="mainwp-inside"></div>                
-           <div class="mainwp-inside" style="clear: both;">
-<?php 
+
         $username = $password = "";
         $checked_save = false;
         if (get_option("mainwp_extensions_api_save_login") == true) {            
@@ -53,22 +49,46 @@ class MainWPExtensionsView
             $checked_save = true;
         }  
 ?>
-            <div class="api-grabbing-fields">
-                <ul><li><?php _e("MainWP Extensions Login:", "mainwp"); ?></li>
-                    <li><input type="text" class="input username" placeholder="<?php echo __("Username", "mainwp"); ?>" value="<?php echo $username; ?>"/>
-                        <input type="password" class="input passwd" placeholder="<?php echo __("Password", "mainwp"); ?>" value="<?php echo $password; ?>"/>
-                        <p><input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ""; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><label><?php _e("Save API login", "mainwp"); ?></label></span></p>
-                        <p><span class="mainwp_loading"><img src="<?php echo $loader_url; ?>"/></span></p>
-                        <p><span class="status hidden"></span></p>
-                    </li>
-                    <li>
-                        <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-grabkeys" value="<?php _e("Grab Api Keys", "mainwp"); ?>">  
-                        <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-bulkinstall" value="<?php _e("Install purchased extensions", "mainwp"); ?>">                            
-                    </li>
-                </ul>
+        
+    <div class="postbox mainwp_api_postbox" section="1">
+           <div class="handlediv"><br></div>
+           <h3 class="mainwp_box_title"><span><?php _e("Bulk Install and Activate Extensions", "mainwp"); ?></span></h3>                          
+           <div class="mainwp-inside" style="clear: both;">
+            <div style="padding: 0 5px;">
+                <strong><?php _e("Step 1", "mainwp"); ?></strong>
+                <p><span class="description"><?php _e("Enter your MainWP Extensions (https://extensions.mainwp.com) Login to automatically install and activate purchased extensions."); ?></span></p>
+                <span><?php _e("MainWP Extensions Login:", "mainwp"); ?></span><br /><br />
+                <div class="api-grabbing-fields">              
+                    <input type="text" class="input username" placeholder="<?php echo __("Username", "mainwp"); ?>" value="<?php echo $username; ?>"/>&nbsp;
+                    <input type="password" class="input passwd" placeholder="<?php echo __("Password", "mainwp"); ?>" value="<?php echo $password; ?>"/>&nbsp;
+                    <label><input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ""; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e("Save API login", "mainwp"); ?></label>
+                </div>  
+                <p>
+                    <span class="extension_api_loading">
+                        <input type="button" class="button-primary" id="mainwp-extensions-savelogin" value="<?php _e("Save Login", "mainwp"); ?>">
+                        <img class="hidden" src="<?php echo $loader_url; ?>"/><span class="status hidden"></span>
+                    </span>
+                </p>  
+                <p><hr></p>            
+                <strong><?php _e("Step 2", "mainwp"); ?></strong>
+                <p><span class="description"><?php _e("The Install Purchased Extensions button will automatically install all all your MainWP Extensions. You can also install them manually using the directions <a href=\"http://docs.mainwp.com/how-to-install-mainwp-extensions/\" >here</a>."); ?></span></p>
+                <p>
+                    <span class="extension_api_loading">
+                        <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-bulkinstall" value="<?php _e("Install purchased extensions", "mainwp"); ?>">
+                        <img class="hidden" src="<?php echo $loader_url; ?>"/><span class="status hidden"></span>
+                    </span>
+                </p>                            
+                <p><hr></p>
+                <strong><?php _e("Step 3", "mainwp"); ?></strong>
+                <p><span class="description"><?php _e("The Grap API Keys will automatically add your API Keys and activate your Extensions. You can also manually enter your API for each Extension following the steps <a href=\"http://docs.mainwp.com/enter-extensions-api-keys/\" >here</a>."); ?></span></p>
+                <p>
+                    <span class="extension_api_loading">
+                        <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-grabkeys" value="<?php _e("Grab Api Keys", "mainwp"); ?>">
+                        <img class="hidden" src="<?php echo $loader_url; ?>"/><span class="status hidden"></span>
+                    </span>
+                </p>  
                 <div style="clear: both;"></div>
             </div>
-            <div style="clear: both;"></div>
         </div>
     </div> 
        <?php } ?>         

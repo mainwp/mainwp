@@ -22,7 +22,7 @@ class MainWPAPISettings
         if (($username == '') && ($password == ''))
         {
             MainWPUtility::update_option("mainwp_api_username", $username);
-            MainWPUtility::update_option("mainwp_api_password", $password);
+            MainWPUtility::update_option("mainwp_api_password", MainWPUtility::encrypt($password, 'MainWPAPI'));
             die(json_encode(array('saved' => 1)));
         }
 
@@ -53,7 +53,7 @@ class MainWPAPISettings
         if ($output['api_status'] == MAINWP_API_VALID)
         {
             MainWPUtility::update_option("mainwp_api_username", $username);
-            MainWPUtility::update_option("mainwp_api_password", $password);
+            MainWPUtility::update_option("mainwp_api_password", MainWPUtility::encrypt($password, 'MainWPAPI'));
         }
 
        if ($parseError && stristr($output['api_status'], 'ERROR'))

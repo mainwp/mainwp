@@ -821,7 +821,11 @@ class MainWPDB
                 GROUP BY wp.id';
             }
             $where = $this->getWhereAllowAccessGroupsSites("site");
-            return 'SELECT * FROM ' . $this->tableName('wp') . ' WHERE id = ' . $id . $where;
+            return 'SELECT wp.*,wp_sync.*,wp_optionview.*
+                    FROM ' . $this->tableName('wp') . '
+                    JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
+                    JOIN ' . $this->tableName('wp_optionview') . ' wp_optionview ON wp.id = wp_optionview.wpid
+                    WHERE id = ' . $id . $where;
         }
         return null;
     }

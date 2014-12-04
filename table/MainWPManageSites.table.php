@@ -132,7 +132,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
         $cnt = 0;
         if ($item['offline_check_result'] == 1 && !$hasSyncErrors && !$isConflict)
         {
-            $websiteCore = json_decode($item['wp_upgrades'], true);
+            $websiteCore = MainWPDB::Instance()->getWebsiteOption((object)$item, 'wp_upgrades');
             if (isset($websiteCore['current'])) $cnt++;
 
             $websitePlugins = json_decode($item['plugin_upgrades'], true);
@@ -378,7 +378,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
             }
             else if ($_REQUEST['status'] == 'update')
             {
-                $where = '(wp.wp_upgrades != "[]" OR wp.plugin_upgrades != "[]" OR wp.theme_upgrades != "[]")';
+                $where = '(wp_optionview.wp_upgrades != "[]" OR wp.plugin_upgrades != "[]" OR wp.theme_upgrades != "[]")';
             }
         }
 

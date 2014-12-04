@@ -66,7 +66,7 @@ class MainWPRightNow
 
                 if (isset($information['upgrade']) && ($information['upgrade'] == 'SUCCESS'))
                 {
-                    MainWPDB::Instance()->updateWebsiteValues($website->id, array('wp_upgrades' => json_encode(array())));
+                    MainWPDB::Instance()->updateWebsiteOption($website->id, 'wp_upgrades', json_encode(array()));
                     return __('Upgrade successful','mainwp');
                 }
                 else if (isset($information['upgrade']))
@@ -437,7 +437,7 @@ class MainWPRightNow
         {
             if (!$globalView) $currentSite = $website;
 
-            $wp_upgrades = json_decode($website->wp_upgrades, true);
+            $wp_upgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'wp_upgrades'), true);
             if ($website->is_ignoreCoreUpdates)
                 $wp_upgrades = array();
             
@@ -595,7 +595,7 @@ class MainWPRightNow
             {
                 if ($website->is_ignoreCoreUpdates) continue;                    
                     
-                $wp_upgrades = json_decode($website->wp_upgrades, true);                
+                $wp_upgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'wp_upgrades'), true);
                 if ((count($wp_upgrades) == 0) && ($website->sync_errors == '')) continue;
 
                 ?>

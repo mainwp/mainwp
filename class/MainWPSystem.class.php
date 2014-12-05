@@ -1224,9 +1224,6 @@ class MainWPSystem
 
         MainWPUtility::update_option('mainwp_cron_last_backups_continue', time());
 
-        $chunkedBackupTasks = get_option('mainwp_chunkedBackupTasks');
-        if ($chunkedBackupTasks == 0) return;
-
         //Fetch all tasks where complete < last & last checkup is more then 1minute ago! & last is more then 1 minute ago!
         $tasks = MainWPDB::Instance()->getBackupTasksToComplete();
 

@@ -414,7 +414,7 @@ class MainWPDB
         }
         $where = ($userId != null) ? ' userid = ' . $userId : '';
         $where .= $this->getWhereAllowAccessGroupsSites("site", $this->tableName('wp'));
-        $qry = 'SELECT wp_sync.dtsSync FROM '.$this->tableName('wp'). ' wp, ' . $this->tableName('wp_sync') . ' wp_sync WHERE 1 ' . $where . ' ORDER BY wp_sync.dtsSync ASC LIMIT 1';
+        $qry = 'SELECT wp_sync.dtsSync FROM '.$this->tableName('wp'). ' wp JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid WHERE 1 ' . $where . ' ORDER BY wp_sync.dtsSync ASC LIMIT 1';
 
         return $wpdb->get_var($qry);
     }
@@ -822,7 +822,7 @@ class MainWPDB
             }
             $where = $this->getWhereAllowAccessGroupsSites("site");
             return 'SELECT wp.*,wp_sync.*,wp_optionview.*
-                    FROM ' . $this->tableName('wp') . '
+                    FROM ' . $this->tableName('wp') . ' wp
                     JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
                     JOIN ' . $this->tableName('wp_optionview') . ' wp_optionview ON wp.id = wp_optionview.wpid
                     WHERE id = ' . $id . $where;

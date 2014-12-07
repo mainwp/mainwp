@@ -278,7 +278,7 @@ class MainWPServerInformation
                 foreach ($cron_info as $key => $schedule )
                 {
                     ?>
-                    <tr><td><?php echo MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp($time)); ?></td><td><?php echo $schedules[$schedule['schedule']]['display'];?> </td><td><?php echo $hook; ?></td></tr>
+                    <tr><td><?php echo MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp($time)); ?></td><td><?php echo (isset($schedules[$schedule['schedule']]) ? $schedules[$schedule['schedule']]['display'] : '');?> </td><td><?php echo $hook; ?></td></tr>
                     <?php
                 }
             }

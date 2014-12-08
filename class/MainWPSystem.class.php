@@ -498,7 +498,7 @@ class MainWPSystem
                 'dtsAutomaticSyncStart' => time()
             );
 
-            MainWPDB::Instance()->updateWebsiteValues($website->id, $websiteValues);
+            MainWPDB::Instance()->updateWebsiteSyncValues($website->id, $websiteValues);
         }
 
         if (count($websites) == 0)
@@ -638,7 +638,6 @@ class MainWPSystem
                 if ($mainwpAutomaticDailyUpdate !== false && $mainwpAutomaticDailyUpdate != 0)
                 {
                     //Create a nice email to send
-                    //todo: RS: make this email global, not per user, or per user & allow better support for this
                     $email = get_option('mainwp_updatescheck_mail_email');
                     if ($email != false && $email != '') {
                         $mail = '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="'.site_url().'">'.site_url().'</a>)</div>
@@ -714,15 +713,15 @@ class MainWPSystem
                         'dtsAutomaticSync' => time()
                     );
 
-                    MainWPDB::Instance()->updateWebsiteValues($website->id, $websiteValues);
+                    MainWPDB::Instance()->updateWebsiteSyncValues($website->id, $websiteValues);
 
                     continue;
                 }
                 $website = MainWPDB::Instance()->getWebsiteById($website->id);
 
                 /** Check core upgrades **/
-                $websiteLastCoreUpgrades = json_decode($website->last_wp_upgrades, true);
-                $websiteCoreUpgrades = json_decode($website->wp_upgrades, true);
+                $websiteLastCoreUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'last_wp_upgrades'), true);
+                $websiteCoreUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'wp_upgrades'), true);
 
                 //Run over every update we had last time..
                 if (isset($websiteCoreUpgrades['current']))
@@ -758,14 +757,14 @@ class MainWPSystem
                 }
 
                 /** Check plugins **/
-                $websiteLastPlugins = json_decode($website->last_plugin_upgrades, true);
+                $websiteLastPlugins = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'last_plugin_upgrades'), true);
                 $websitePlugins = json_decode($website->plugin_upgrades, true);
 
                 /** Check themes **/
-                $websiteLastThemes = json_decode($website->last_theme_upgrades, true);
+                $websiteLastThemes = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'last_theme_upgrades'), true);
                 $websiteThemes = json_decode($website->theme_upgrades, true);
 
-                $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
+                $decodedPremiumUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades'), true);
                 if (is_array($decodedPremiumUpgrades))
                 {
                     foreach ($decodedPremiumUpgrades as $slug => $premiumUpgrade)
@@ -895,17 +894,13 @@ class MainWPSystem
                 }
 
                 //Loop over last plugins & current plugins, check if we need to upgrade them..
-                $websiteValues = array(
-                    'dtsAutomaticSync' => time(),
-                    'last_plugin_upgrades' => $website->plugin_upgrades,
-                    'last_theme_upgrades' => $website->theme_upgrades,
-                    'last_wp_upgrades' => $website->wp_upgrades
-                );
-
                 $user = get_userdata($website->userid);
                 $email = MainWPUtility::getNotificationEmail($user);
                 MainWPUtility::update_option('mainwp_updatescheck_mail_email', $email);
-                MainWPDB::Instance()->updateWebsiteValues($website->id, $websiteValues);
+                MainWPDB::Instance()->updateWebsiteSyncValues($website->id, array('dtsAutomaticSync' => time()));
+                MainWPDB::Instance()->updateWebsiteOption($website, 'last_wp_upgrades', json_encode($websiteCoreUpgrades));
+                MainWPDB::Instance()->getWebsiteOption($website, 'last_plugin_upgrades', $website->plugin_upgrades);
+                MainWPDB::Instance()->getWebsiteOption($website, 'last_theme_upgrades', $website->theme_upgrades);
             }
 
             if (count($coreNewUpdate) != 0)
@@ -1244,9 +1239,6 @@ class MainWPSystem
 
         MainWPUtility::update_option('mainwp_cron_last_backups_continue', time());
 
-        $chunkedBackupTasks = get_option('mainwp_chunkedBackupTasks');
-        if ($chunkedBackupTasks == 0) return;
-
         //Fetch all tasks where complete < last & last checkup is more then 1minute ago! & last is more then 1 minute ago!
         $tasks = MainWPDB::Instance()->getBackupTasksToComplete();
 
@@ -1417,6 +1409,26 @@ class MainWPSystem
 
     function init()
     {
+        if (!function_exists('mainwp_current_user_can'))
+        {
+            function mainwp_current_user_can($cap_type = "", $cap)
+            {
+                global $current_user;
+                if (empty($current_user))
+                {
+                    if (!function_exists('wp_get_current_user')) require_once(ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'pluggable.php');
+                    $current_user = wp_get_current_user();
+                }
+
+                if (empty($current_user))
+                {
+                    return false;
+                }
+
+                return apply_filters("mainwp_currentusercan", true, $cap_type, $cap);
+            }
+        }
+
         remove_all_filters( 'admin_footer_text' );
         add_filter('admin_footer_text', array(&$this, 'admin_footer_text'));
     }
@@ -1888,7 +1900,7 @@ class MainWPSystem
         }
         else
         {
-            $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.dtsSync DESC, wp.url ASC'));
+            $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp_sync.dtsSync DESC, wp.url ASC'));
         }
         ob_start();
 

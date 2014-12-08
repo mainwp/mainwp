@@ -53,6 +53,7 @@ class MainWPBackupTasks {
                     $group_sites = MainWPDB::Instance()->getWebsitesByGroupId($groupid);
                     foreach ($group_sites as $group_site)
                     {
+                        if (in_array($group_site->id, $sites)) continue;
                         $sites[] = $group_site->id;
                     }
                 }

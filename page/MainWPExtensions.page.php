@@ -667,6 +667,7 @@ class MainWPExtensions
         }
     }
 
+    //todo: implement correclty: MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades')..
     private static $possible_options = array(
         'plugin_upgrades' => 'plugin_upgrades',
         'theme_upgrades' => 'theme_upgrades',
@@ -790,6 +791,7 @@ class MainWPExtensions
             $websitesOut = array();
             foreach ($websites as $website)
             {
+                if (in_array($website->id, $websitesOut)) continue;
                 $websitesOut[] = $website->id;
             }
             $output[] = array('id' => $group->id, 'name' => $group->name, 'websites' => $websitesOut);

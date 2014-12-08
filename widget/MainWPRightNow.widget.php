@@ -66,7 +66,7 @@ class MainWPRightNow
 
                 if (isset($information['upgrade']) && ($information['upgrade'] == 'SUCCESS'))
                 {
-                    MainWPDB::Instance()->updateWebsiteValues($website->id, array('wp_upgrades' => json_encode(array())));
+                    MainWPDB::Instance()->updateWebsiteOption($website->id, 'wp_upgrades', json_encode(array()));
                     return __('Upgrade successful','mainwp');
                 }
                 else if (isset($information['upgrade']))
@@ -262,7 +262,7 @@ class MainWPRightNow
                     {
                         $decodedPluginUpgrades = json_decode($website->plugin_upgrades, true);
                         $decodedThemeUpgrades = json_decode($website->theme_upgrades, true);
-                        $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
+                        $decodedPremiumUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades'), true);
                         if (is_array($decodedPremiumUpgrades))
                         {
                             foreach ($decodedPremiumUpgrades as $crrSlug => $premiumUpgrade)
@@ -371,7 +371,7 @@ class MainWPRightNow
 //            }
 //        }
 
-        MainWPDB::Instance()->updateWebsiteValues($website->id, array('dtsSyncStart' => time()));
+        MainWPDB::Instance()->updateWebsiteSyncValues($website->id, array('dtsSyncStart' => time()));
         MainWPUtility::endSession();
 
         //Unlock
@@ -437,7 +437,7 @@ class MainWPRightNow
         {
             if (!$globalView) $currentSite = $website;
 
-            $wp_upgrades = json_decode($website->wp_upgrades, true);
+            $wp_upgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'wp_upgrades'), true);
             if ($website->is_ignoreCoreUpdates)
                 $wp_upgrades = array();
             
@@ -451,7 +451,7 @@ class MainWPRightNow
             if ($website->is_ignoreThemeUpdates)
                 $theme_upgrades = array();
             
-            $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
+            $decodedPremiumUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades'), true);
             if (is_array($decodedPremiumUpgrades))
             {
                 foreach ($decodedPremiumUpgrades as $crrSlug => $premiumUpgrade)
@@ -595,7 +595,7 @@ class MainWPRightNow
             {
                 if ($website->is_ignoreCoreUpdates) continue;                    
                     
-                $wp_upgrades = json_decode($website->wp_upgrades, true);                
+                $wp_upgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'wp_upgrades'), true);
                 if ((count($wp_upgrades) == 0) && ($website->sync_errors == '')) continue;
 
                 ?>
@@ -650,7 +650,7 @@ class MainWPRightNow
                     if ($website->is_ignorePluginUpdates) continue;
                     
                     $plugin_upgrades = json_decode($website->plugin_upgrades, true);
-                    $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
+                    $decodedPremiumUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades'), true);
                     if (is_array($decodedPremiumUpgrades))
                     {
                         foreach ($decodedPremiumUpgrades as $crrSlug => $premiumUpgrade)
@@ -775,7 +775,7 @@ class MainWPRightNow
                         {
                              if ($website->is_ignorePluginUpdates) continue;
                             $plugin_upgrades = json_decode($website->plugin_upgrades, true);
-                            $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
+                            $decodedPremiumUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades'), true);
                             if (is_array($decodedPremiumUpgrades))
                             {
                                 foreach ($decodedPremiumUpgrades as $crrSlug => $premiumUpgrade)
@@ -855,7 +855,7 @@ class MainWPRightNow
                     if ($website->is_ignoreThemeUpdates) continue;
                     
                     $theme_upgrades = json_decode($website->theme_upgrades, true);                    
-                    $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
+                    $decodedPremiumUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades'), true);
                     if (is_array($decodedPremiumUpgrades))
                     {
                         foreach ($decodedPremiumUpgrades as $crrSlug => $premiumUpgrade)
@@ -971,7 +971,7 @@ class MainWPRightNow
                             if ($website->is_ignoreThemeUpdates) continue;
                             
                             $theme_upgrades = json_decode($website->theme_upgrades, true);
-                            $decodedPremiumUpgrades = json_decode($website->premium_upgrades, true);
+                            $decodedPremiumUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades'), true);
                             if (is_array($decodedPremiumUpgrades))
                             {
                                 foreach ($decodedPremiumUpgrades as $crrSlug => $premiumUpgrade)

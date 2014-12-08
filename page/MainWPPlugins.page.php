@@ -1062,7 +1062,6 @@ class MainWPPlugins
 
     public static function renderIgnoredConflicts()
     {
-        //todo: only fetch sites with ignored conflicts..
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
         $userExtension = MainWPDB::Instance()->getUserExtension();
         $decodedIgnoredPluginConflicts = json_decode($userExtension->ignored_pluginConflicts, true);
@@ -1173,7 +1172,6 @@ class MainWPPlugins
 
     public static function renderIgnore()
     {
-        //todo: only fetch sites with ignored plugins
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
         $userExtension = MainWPDB::Instance()->getUserExtension();
         $decodedIgnoredPlugins = json_decode($userExtension->ignored_plugins, true);

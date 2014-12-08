@@ -274,7 +274,6 @@ class MainWPUtility
      */
     static function getNotificationEmail($user = null)
     {
-        //todo: work with correct single user email..
         if ($user == null)
         {
             global $current_user;
@@ -664,6 +663,7 @@ class MainWPUtility
             //todo: RS:
             //check if offline
         }
+
         $identifier = null;
         if ($checkConstraints)
         {

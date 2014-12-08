@@ -243,6 +243,8 @@ class MainWPSystem
         add_filter('mainwp_fetchurlauthed', array(&$this, 'filter_fetchUrlAuthed'), 10, 5);
         add_filter('mainwp_getdashboardsites', array(MainWPExtensions::getClassName(), 'hookGetDashboardSites'), 10, 7);
         add_filter('mainwp-manager-getextensions', array(MainWPExtensions::getClassName(), 'hookManagerGetExtensions'));        
+        add_action('mainwp_bulkpost_metabox_handle', array($this, 'hookBulkPostMetaboxHandle'));
+        add_action('mainwp_bulkpage_metabox_handle', array($this, 'hookBulkPageMetaboxHandle'));       
         
         $this->posthandler = new MainWPPostHandler();
 
@@ -268,6 +270,19 @@ class MainWPSystem
        return MainWPExtensions::hookFetchUrlAuthed($pluginFile, $key, $websiteId, $what, $params);
     }
 
+    function hookBulkPostMetaboxHandle($post_id, $output) {
+        $output = $this->metaboxes->select_sites_handle($post_id, 'bulkpost');        
+        $this->metaboxes->add_categories_handle($post_id, 'bulkpost');      
+        $this->metaboxes->add_tags_handle($post_id, 'bulkpost');
+        $this->metaboxes->add_slug_handle($post_id, 'bulkpost');    
+        MainWPPost::add_sticky_handle($post_id);
+    }
+    
+    function hookBulkPageMetaboxHandle($post_id, $output) {
+        $output = $this->metaboxes->select_sites_handle($post_id, 'bulkpage');        
+        $this->metaboxes->add_slug_handle($post_id, 'bulkpage');
+    }
+    
     public function in_plugin_update_message($plugin_data, $r)
     {
         if (empty($r) || !is_object($r)) return;        

@@ -138,9 +138,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Added: Extensions API Management
 * Added: Bulk Install purchased extensions
 * Added: Bulk Grab extensions API keys
-* Fix: Post and Page search mechanism to search content body and title
-* Fix: Client Reports bug not recording scheduled backups
-* Fix: Issue of backup not running if the site is in two groups trying to backup at same time
+* Fixed: Post and Page search mechanism to search content body and title
+* Fixed: Client Reports bug not recording scheduled backups
+* Fixed: Issue of backup not running if the site is in two groups trying to backup at same time
 * Tweak: Groups page removed from the main navigation and added under the Sites menu
 * Tweak: Offline Checks removed from the main navigation and added under the Settings menu
 * Tweak: “All Sites” menu item renamed to “Manage Sites”

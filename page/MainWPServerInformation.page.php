@@ -663,7 +663,7 @@ class MainWPServerInformation
 
         $error_log = ini_get( 'error_log' );
         $logs      = apply_filters( 'error_log_mainwp_logs', array( $error_log ) );
-        $count     = apply_filters( 'error_log_mainwp_lines', 10 );
+        $count     = apply_filters( 'error_log_mainwp_lines', 50 );
         $lines     = array();
 
         foreach ( $logs as $log ) {

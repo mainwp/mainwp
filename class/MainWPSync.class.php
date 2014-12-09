@@ -122,7 +122,7 @@ class MainWPSync
 
         if (isset($information['directories']) && is_array($information['directories']))
         {
-            $websiteValues['directories'] = json_encode($information['directories']);
+            $websiteValues['directories'] = @json_encode($information['directories']);
             $done = true;
         }
         else if (isset($information['directories']))
@@ -133,7 +133,7 @@ class MainWPSync
 
         if (isset($information['wp_updates']) && $information['wp_updates'] != null)
         {
-            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'wp_upgrades', json_encode(array('current' => $information['wpversion'], 'new' => $information['wp_updates'])));
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'wp_upgrades', @json_encode(array('current' => $information['wpversion'], 'new' => $information['wp_updates'])));
             $done = true;
         }
         else
@@ -143,19 +143,19 @@ class MainWPSync
 
         if (isset($information['plugin_updates']))
         {
-            $websiteValues['plugin_upgrades'] = json_encode($information['plugin_updates']);
+            $websiteValues['plugin_upgrades'] = @json_encode($information['plugin_updates']);
             $done = true;
         }
 
         if (isset($information['theme_updates']))
         {
-            $websiteValues['theme_upgrades'] = json_encode($information['theme_updates']);
+            $websiteValues['theme_upgrades'] = @json_encode($information['theme_updates']);
             $done = true;
         }
 
         if (isset($information['premium_updates']))
         {
-            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'premium_upgrades', json_encode($information['premium_updates']));
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'premium_upgrades', @json_encode($information['premium_updates']));
             $done = true;
         }
         else
@@ -171,7 +171,7 @@ class MainWPSync
 
         if (isset($information['recent_comments']))
         {
-            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'recent_comments', json_encode($information['recent_comments']));
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'recent_comments', @json_encode($information['recent_comments']));
             $done = true;
         }
         else
@@ -181,7 +181,7 @@ class MainWPSync
 
         if (isset($information['recent_posts']))
         {
-            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'recent_posts', json_encode($information['recent_posts']));
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'recent_posts', @json_encode($information['recent_posts']));
             $done = true;
         }
         else
@@ -191,7 +191,7 @@ class MainWPSync
 
         if (isset($information['recent_pages']))
         {
-            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'recent_pages', json_encode($information['recent_pages']));
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'recent_pages', @json_encode($information['recent_pages']));
             $done = true;
         }
         else
@@ -201,25 +201,25 @@ class MainWPSync
 
         if (isset($information['themes']))
         {
-            $websiteValues['themes'] = json_encode($information['themes']);
+            $websiteValues['themes'] = @json_encode($information['themes']);
             $done = true;
         }
 
         if (isset($information['plugins']))
         {
-            $websiteValues['plugins'] = json_encode($information['plugins']);
+            $websiteValues['plugins'] = @json_encode($information['plugins']);
             $done = true;
         }
 
         if (isset($information['users']))
         {
-            $websiteValues['users'] = json_encode($information['users']);
+            $websiteValues['users'] = @json_encode($information['users']);
             $done = true;
         }
 
         if (isset($information['categories']))
         {
-            $websiteValues['categories'] = json_encode($information['categories']);
+            $websiteValues['categories'] = @json_encode($information['categories']);
             $done = true;
         }
 
@@ -243,13 +243,13 @@ class MainWPSync
 
         if (isset($information['pluginConflicts']))
         {
-            $websiteValues['pluginConflicts'] = json_encode($information['pluginConflicts']);
+            $websiteValues['pluginConflicts'] = @json_encode($information['pluginConflicts']);
             $done = true;
         }
 
         if (isset($information['themeConflicts']))
         {
-            $websiteValues['themeConflicts'] = json_encode($information['themeConflicts']);
+            $websiteValues['themeConflicts'] = @json_encode($information['themeConflicts']);
             $done = true;
         }
 

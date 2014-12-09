@@ -365,15 +365,15 @@ class MainWPDB
 
             //We can't split up here!
             $wpSyncColumns = array('version', 'totalsize', 'dbsize', 'extauth', 'last_post_gmt', 'uptodate', 'sync_errors', 'dtsSync', 'dtsSyncStart', 'dtsAutomaticSync', 'dtsAutomaticSyncStart');
-            $first = true;
             foreach ($wpSyncColumns as $wpSyncColumn)
             {
-                $rslts = $wpdb->get_results('SELECT id,'.$wpSyncColumn.' FROM ' . $this->tableName('wp'), ARRAY_A);
+                $rslts = $wpdb->get_results('SELECT id,' . $wpSyncColumn . ' FROM ' . $this->tableName('wp'), ARRAY_A);
                 if (empty($rslts)) continue;
 
                 foreach ($rslts as $rslt)
                 {
-                    if ($first)
+                    $exists = $wpdb->get_results('SELECT wpid FROM ' . $this->tableName('wp_sync') . ' WHERE wpid = ' . $rslt['id'], ARRAY_A);
+                    if (empty($exists))
                     {
                         $wpdb->insert($this->tableName('wp_sync'), array('wpid' => $rslt['id'], $wpSyncColumn => $rslt[$wpSyncColumn]));
                     }
@@ -383,14 +383,15 @@ class MainWPDB
                     }
                 }
 
+                $suppress = $wpdb->suppress_errors();
                 $wpdb->query('ALTER TABLE ' . $this->tableName('wp') . ' DROP COLUMN ' . $wpSyncColumn);
-                $first = false;
+                $wpdb->suppress_errors($suppress);
             }
 
             $optionColumns = array('last_wp_upgrades', 'last_plugin_upgrades', 'last_theme_upgrades', 'wp_upgrades', 'recent_comments', 'recent_posts', 'recent_pages');
             foreach ($optionColumns as $optionColumn)
             {
-                $rslts = $wpdb->get_results('SELECT id,'.$optionColumn.' FROM ' . $this->tableName('wp'), ARRAY_A);
+                $rslts = $wpdb->get_results('SELECT id,' . $optionColumn . ' FROM ' . $this->tableName('wp'), ARRAY_A);
                 if (empty($rslts)) continue;
 
                 foreach ($rslts as $rslt)
@@ -398,7 +399,9 @@ class MainWPDB
                     MainWPDB::updateWebsiteOption((object)$rslt, $optionColumn, $rslt[$optionColumn]);
                 }
 
+                $suppress = $wpdb->suppress_errors();
                 $wpdb->query('ALTER TABLE ' . $this->tableName('wp') . ' DROP COLUMN ' . $optionColumn);
+                $wpdb->suppress_errors($suppress);
             }
         }
     }

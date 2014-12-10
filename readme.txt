@@ -114,11 +114,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 == Changelog ==
 
 = 2.0 =
-* Added:  Tar GZip as a backup file format
-* Added:  Tar Bzip2 as a backup file format
-* Added:  Tar as a backup file format
+* Added: Tar GZip as a backup file format
+* Added: Tar Bzip2 as a backup file format
+* Added: Tar as a backup file format
 * Added: Feature to resume unfinished or stalled backups
-* Added:  Feature to detect is backup is already running
+* Added: Feature to detect is backup is already running
 * Added: New Feature for the Post Plus extension - Auto saving drafts in case posting fails
 * Added: Support for the Team Control extension
 * Added: IP check to the Test Connection feature

@@ -252,18 +252,18 @@ class MainWPDB
             dbDelta($query);
         }
 
-        /** @var $wpdb wpdb */
-        global $wpdb;
-
-        $wpdb->query('CREATE OR REPLACE VIEW ' . $this->tableName('wp_optionview') . ' AS
-                      SELECT wp.id AS wpid,
-                             recent_comments.value AS recent_comments,
-                             recent_posts.value AS recent_posts,
-                             recent_pages.value AS recent_pages
-                      FROM ' . $this->tableName('wp') . ' wp
-                      LEFT JOIN ' . $this->tableName('wp_options') . ' recent_comments ON recent_comments.wpid = wp.id AND recent_comments.name = "recent_comments"
-                      LEFT JOIN ' . $this->tableName('wp_options') . ' recent_posts ON recent_posts.wpid = wp.id AND recent_posts.name = "recent_posts"
-                      LEFT JOIN ' . $this->tableName('wp_options') . ' recent_pages ON recent_pages.wpid = wp.id AND recent_pages.name = "recent_pages"');
+//        /** @var $wpdb wpdb */
+//        global $wpdb;
+//
+//        $wpdb->query('CREATE OR REPLACE VIEW ' . $this->tableName('wp_optionview') . ' AS
+//                      SELECT intwp.id AS wpid,
+//                             recent_comments.value AS recent_comments,
+//                             recent_posts.value AS recent_posts,
+//                             recent_pages.value AS recent_pages
+//                      FROM ' . $this->tableName('wp') . ' intwp
+//                      LEFT JOIN ' . $this->tableName('wp_options') . ' recent_comments ON recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments"
+//                      LEFT JOIN ' . $this->tableName('wp_options') . ' recent_posts ON recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts"
+//                      LEFT JOIN ' . $this->tableName('wp_options') . ' recent_pages ON recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages"');
 
         $this->post_update();
 
@@ -274,6 +274,18 @@ class MainWPDB
     function update()
     {
 
+    }
+
+    function getOptionView()
+    {
+        return '(SELECT intwp.id AS wpid,
+                                     recent_comments.value AS recent_comments,
+                                     recent_posts.value AS recent_posts,
+                                     recent_pages.value AS recent_pages
+                              FROM ' . $this->tableName('wp') . ' intwp
+                              LEFT JOIN ' . $this->tableName('wp_options') . ' recent_comments ON recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments"
+                              LEFT JOIN ' . $this->tableName('wp_options') . ' recent_posts ON recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts"
+                              LEFT JOIN ' . $this->tableName('wp_options') . ' recent_pages ON recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages")';
     }
 
     function post_update()
@@ -486,7 +498,7 @@ class MainWPDB
         return 'SELECT wp.*,wp_sync.*,wp_optionview.*
                 FROM ' . $this->tableName('wp') . ' wp
                 JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
-                JOIN ' . $this->tableName('wp_optionview') . ' wp_optionview ON wp.id = wp_optionview.wpid
+                JOIN ' . $this->getOptionView() . ' wp_optionview ON wp.id = wp_optionview.wpid
                 ' . $where;
     }
 
@@ -507,7 +519,7 @@ class MainWPDB
                 LEFT JOIN ' . $this->tableName('wp_group') . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->tableName('group') . ' gr ON wpgr.groupid = gr.id
                 JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
-                JOIN ' . $this->tableName('wp_optionview') . ' wp_optionview ON wp.id = wp_optionview.wpid
+                JOIN ' . $this->getOptionView() . ' wp_optionview ON wp.id = wp_optionview.wpid
                 WHERE wp.userid = ' . $userid . "
                 $where
                 GROUP BY wp.id
@@ -518,7 +530,7 @@ class MainWPDB
                 $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*
                 FROM ' . $this->tableName('wp') . ' wp
                 JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
-                JOIN ' . $this->tableName('wp_optionview') . ' wp_optionview ON wp.id = wp_optionview.wpid
+                JOIN ' . $this->getOptionView() . ' wp_optionview ON wp.id = wp_optionview.wpid
                 WHERE wp.userid = ' . $userid . "
                 $where
                 ORDER BY ".$orderBy;
@@ -559,7 +571,7 @@ class MainWPDB
             LEFT JOIN ' . $this->tableName('wp_group') . ' wpgr ON wp.id = wpgr.wpid
             LEFT JOIN ' . $this->tableName('group') . ' gr ON wpgr.groupid = gr.id
             JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
-            JOIN ' . $this->tableName('wp_optionview') . ' wp_optionview ON wp.id = wp_optionview.wpid
+            JOIN ' . $this->getOptionView() . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . '
             GROUP BY wp.id
             ORDER BY '.$orderBy;
@@ -569,7 +581,7 @@ class MainWPDB
             $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*
             FROM ' . $this->tableName('wp') . ' wp
             JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
-            JOIN ' . $this->tableName('wp_optionview') . ' wp_optionview ON wp.id = wp_optionview.wpid
+            JOIN ' . $this->getOptionView() . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . '
             ORDER BY '.$orderBy;
         }
@@ -819,7 +831,7 @@ class MainWPDB
                 LEFT JOIN ' . $this->tableName('wp_group') . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->tableName('group') . ' gr ON wpgr.groupid = gr.id
                 JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
-                JOIN ' . $this->tableName('wp_optionview') . ' wp_optionview ON wp.id = wp_optionview.wpid
+                JOIN ' . $this->getOptionView() . ' wp_optionview ON wp.id = wp_optionview.wpid
                 WHERE wp.id = ' . $id . $where . '
                 GROUP BY wp.id';
             }
@@ -827,7 +839,7 @@ class MainWPDB
             return 'SELECT wp.*,wp_sync.*,wp_optionview.*
                     FROM ' . $this->tableName('wp') . ' wp
                     JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
-                    JOIN ' . $this->tableName('wp_optionview') . ' wp_optionview ON wp.id = wp_optionview.wpid
+                    JOIN ' . $this->getOptionView() . ' wp_optionview ON wp.id = wp_optionview.wpid
                     WHERE id = ' . $id . $where;
         }
         return null;
@@ -877,7 +889,7 @@ class MainWPDB
                  LEFT JOIN ' . $this->tableName('wp_group') . ' wpgr ON wp.id = wpgr.wpid
                  LEFT JOIN ' . $this->tableName('group') . ' gr ON wpgr.groupid = gr.id
                  JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
-                 JOIN ' . $this->tableName('wp_optionview') . ' wp_optionview ON wp.id = wp_optionview.wpid
+                 JOIN ' . $this->getOptionView() . ' wp_optionview ON wp.id = wp_optionview.wpid
                  WHERE wpgroup.groupid = ' . $id . ' ' .
                  ($where == null ? '' : ' AND ' . $where) . $where_allowed . '
                  GROUP BY wp.id
@@ -917,7 +929,7 @@ class MainWPDB
                 INNER JOIN ' . $this->tableName('wp_group') . ' wpgroup ON wp.id = wpgroup.wpid
                 JOIN ' . $this->tableName('group') . ' g ON wpgroup.groupid = g.id
                 JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
-                JOIN ' . $this->tableName('wp_optionview') . ' wp_optionview ON wp.id = wp_optionview.wpid
+                JOIN ' . $this->getOptionView() . ' wp_optionview ON wp.id = wp_optionview.wpid
                 WHERE g.name="' . $this->escape($groupname). '"' . $where;
         if ($userid != null) $sql .= ' AND g.userid = "' . $userid . '"';
         return $sql;
@@ -1483,7 +1495,7 @@ class MainWPDB
         return $wpdb->get_results('SELECT wp.*,wp_sync.*,wp_optionview.*
                                     FROM ' . $this->tableName('wp') . ' wp
                                     JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
-                                    JOIN ' . $this->tableName('wp_optionview') . ' wp_optionview ON wp.id = wp_optionview.wpid
+                                    JOIN ' . $this->getOptionView() . ' wp_optionview ON wp.id = wp_optionview.wpid
                                     WHERE (wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW())) ' . $where . ' LIMIT 0,' . $limit, OBJECT);
     }
 

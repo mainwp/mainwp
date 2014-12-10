@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.1
-Stable tag: 2.0
+Stable tag: 2.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.2 =
+* Fixed: Support for big networks with a low MAX_JOIN_SIZE setting in MySQL.
+
+= 2.0.1 =
+* Added: Support for SQL users without CREATE VIEW privilege
 
 = 2.0 =
 * Added: Tar GZip as a backup file format

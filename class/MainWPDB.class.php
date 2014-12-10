@@ -279,13 +279,10 @@ class MainWPDB
     function getOptionView()
     {
         return '(SELECT intwp.id AS wpid,
-                                     recent_comments.value AS recent_comments,
-                                     recent_posts.value AS recent_posts,
-                                     recent_pages.value AS recent_pages
-                              FROM ' . $this->tableName('wp') . ' intwp
-                              LEFT JOIN ' . $this->tableName('wp_options') . ' recent_comments ON recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments"
-                              LEFT JOIN ' . $this->tableName('wp_options') . ' recent_posts ON recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts"
-                              LEFT JOIN ' . $this->tableName('wp_options') . ' recent_pages ON recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages")';
+                         (SELECT recent_comments.value FROM ' . $this->tableName('wp_options') . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments") AS recent_comments,
+                         (SELECT recent_posts.value FROM ' . $this->tableName('wp_options') . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts") AS recent_posts,
+                         (SELECT recent_pages.value FROM ' . $this->tableName('wp_options') . ' recent_pages WHERE  recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages") AS recent_pages
+                              FROM ' . $this->tableName('wp') . ' intwp)';
     }
 
     function post_update()

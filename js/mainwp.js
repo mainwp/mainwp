@@ -6599,8 +6599,7 @@ jQuery(document).on('click', '#remove-mainwp-installation-warning', function()
     var data = {
         action:'mainwp_installation_warning_hide'
     };
-    jQuery.post(ajaxurl, data, function (res) {
-    });
+    jQuery.post(ajaxurl, data, function (res) {    });
     return false;
 });
 

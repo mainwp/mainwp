@@ -279,9 +279,9 @@ class MainWPDB
     function getOptionView()
     {
         return '(SELECT intwp.id AS wpid,
-                         (SELECT recent_comments.value FROM ' . $this->tableName('wp_options') . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments") AS recent_comments,
-                         (SELECT recent_posts.value FROM ' . $this->tableName('wp_options') . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts") AS recent_posts,
-                         (SELECT recent_pages.value FROM ' . $this->tableName('wp_options') . ' recent_pages WHERE  recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages") AS recent_pages
+                         (SELECT recent_comments.value FROM ' . $this->tableName('wp_options') . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments" LIMIT 1) AS recent_comments,
+                         (SELECT recent_posts.value FROM ' . $this->tableName('wp_options') . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts" LIMIT 1) AS recent_posts,
+                         (SELECT recent_pages.value FROM ' . $this->tableName('wp_options') . ' recent_pages WHERE  recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages" LIMIT 1) AS recent_pages
                               FROM ' . $this->tableName('wp') . ' intwp)';
     }
 
@@ -472,8 +472,14 @@ class MainWPDB
         /** @var $wpdb wpdb */
         global $wpdb;
 
-        $optionname = $wpdb->get_var('SELECT name FROM ' . $this->tableName('wp_options') . ' WHERE wpid = ' . $website->id . ' AND name = "' . $this->escape($option) . '"');
-        if (empty($optionname))
+        $rslt = $wpdb->get_results('SELECT name FROM ' . $this->tableName('wp_options') . ' WHERE wpid = ' . $website->id . ' AND name = "' . $this->escape($option) . '"');
+        if (count($rslt) > 0)
+        {
+            $wpdb->delete($this->tableName('wp_options'), array('wpid' => $website->id, 'name' => $this->escape($option)));
+            $rslt = $wpdb->get_results('SELECT name FROM ' . $this->tableName('wp_options') . ' WHERE wpid = ' . $website->id . ' AND name = "' . $this->escape($option) . '"');
+        }
+
+        if (count($rslt) == 0)
         {
             $wpdb->insert($this->tableName('wp_options'), array('wpid' => $website->id, 'name' => $option, 'value' => $value));
         }

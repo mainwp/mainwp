@@ -15,7 +15,7 @@ class MainWPNews
     {
         $news = get_option('mainwp_news');
         $newstimestamp = get_option('mainwp_news_timestamp');
-        if ($news === false || $newstimestamp === false || (time() - $newstimestamp) > 60 * 60)
+        if ($newstimestamp === false || (time() - $newstimestamp) > 60 * 60 * 24) //24 hrs..
         {
             try
             {

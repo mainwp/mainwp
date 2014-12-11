@@ -115,7 +115,7 @@ class MainWPAPISettings
         //  or last request was too long ago
         if ($forceRequest ||
                 (($pAPI != null) && (!isset($requests[$pAPI]) || ($requests[$pAPI] == MAINWP_API_INVALID))) ||
-                (time() - $requestsDB['lastRequest'] > 24 * 60 * 60)) //Polls every day
+                (time() - $requestsDB['lastRequest'] > 48 * 60 * 60)) //Polls every 2days
         {
             //init requests
             if (!is_array($requests) || !isset($requests['main']))

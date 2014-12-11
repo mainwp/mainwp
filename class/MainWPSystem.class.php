@@ -1159,7 +1159,7 @@ class MainWPSystem
     function mainwp_cronconflicts_action()
     {
         $lastCronConflicts = get_option('mainwp_cron_last_cronconflicts');
-        if ($lastCronConflicts !== false && (time() - $lastCronConflicts) < (60 * 60 * 11))
+        if ($lastCronConflicts !== false && (time() - $lastCronConflicts) < (60 * 60 * 48))
         {
             return;
         }

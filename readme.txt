@@ -3,11 +3,11 @@ Contributors: mainwp
 Donate link: 
 Tags: WordPress Management, WordPress Controller
 Author: mainwp
-Author URI: http://mainwp.com
-Plugin URI: http://mainwp.com
+Author URI: https://mainwp.com
+Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.0
-Stable tag: 1.2.1
+Tested up to: 4.1
+Stable tag: 2.0.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,11 +55,11 @@ Building on the core principals of WordPress our Extension hooks allow third par
 = More Information =
 [MainWP Documentation](http://docs.mainwp.com/)
 
-[MainWP Support](http://mainwp.com/forum/)
+[MainWP Support](https://mainwp.com/forum/)
 
 [MainWP Videos](http://www.youtube.com/user/MyMainWP)
 
-[MainWP Extensions](http://extensions.mainwp.com/)
+[MainWP Extensions](https://extensions.mainwp.com/)
 
 [MainWP Ideas](http://ideas.mainwp.com/)
 
@@ -112,6 +112,69 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.3 =
+* Fixed: Empty sites list issue on some hosts
+
+= 2.0.2 =
+* Fixed: Support for big networks with a low MAX_JOIN_SIZE setting in MySQL
+
+= 2.0.1 =
+* Added: Support for SQL users without CREATE VIEW privilege
+
+= 2.0 =
+* Added: Tar GZip as a backup file format
+* Added: Tar Bzip2 as a backup file format
+* Added: Tar as a backup file format
+* Added: Feature to resume unfinished or stalled backups
+* Added: Feature to detect is backup is already running
+* Added: New Feature for the Post Plus extension - Auto saving drafts in case posting fails
+* Added: Support for the Team Control extension
+* Added: IP check to the Test Connection feature
+* Added: Tips bar on the All Dashboard, Sites, Posts, Pages, Manage Themes, Install Themes, Manage Plugins, Install Plugins, Settings and Offline Checks page
+* Added: Breadcrumbs system in the Individual Site screen
+* Added: Better search mechanism for plugin auto updates
+* Added: Better search mechanism for theme auto updates
+* Added: Ability to change Auto Update trust status for Inactive plugins
+* Added: Ability to change Auto Update trust status for Inactive themes
+* Added: Quick Jump drop down list for quicker navigation between Individual Dashboard
+* Added: Bulk Actions for the Manage Sites table (Sync, Delete, Test Connection, Open WP-Admin and Open Front Page)
+* Added: Feature for saving the last Manage Sites table sorting
+* Added: Ability to edit the Child Site Security ID in Dashboard
+* Added: Ability to search All (active and inactive) Plugins
+* Added: Ability to search All (active and inactive) Themes
+* Added: Filters and select helpers for sites and groups in the Manage Groups page
+* Added: Extensions API Management
+* Added: Bulk Install purchased extensions
+* Added: Bulk Grab extensions API keys
+* Fixed: Post and Page search mechanism to search content body and title
+* Fixed: Client Reports bug not recording scheduled backups
+* Fixed: Issue of backup not running if the site is in two groups trying to backup at same time
+* Tweak: Groups page removed from the main navigation and added under the Sites menu
+* Tweak: Offline Checks removed from the main navigation and added under the Settings menu
+* Tweak: “All Sites” menu item renamed to “Manage Sites”
+* Tweak: “All Posts” menu item renamed to “Manage Posts”
+* Tweak: “All Pages” menu item renamed to “Manage Pages”
+* Tweak: “All Users” menu item renamed to “Manage Users”
+* Tweak: “Backups” menu item renamed to “Schedule Backup”
+* Tweak: “All Backups” menu item renamed to “Manage Backups”
+* Tweak: Email Template updated to call images from user’s dashboard site
+* Tweak: Individual Sync Now action syncs on the Manage SItes page
+* Tweak: MainWP Account login on the settings page encryption
+* Tweak: “Auto Update Trust” menu item renamed to “Auto Updates”
+* Tweak: “Child Unique Security Id” field moved to the Advanced Options field
+* Redesign: Warning message on the Sites > Add New page
+* Redesign: Warning message from the Settings page removed and added as an admin notice after the dashboard plugin activation. 
+* Redesign: The Advanced Settings options separated in different boxes
+* Redesign: New form field style
+* Redesign: New Search Posts, Search Pages, Search Themes, Search Plugin and Search Users form style
+* Redesign: New Upload Themes and Plugins from layout
+* Redesign: The redirection page style updated
+* Redesign: Update Admin Passwords page style updated
+* Refactor: Site Backup page added as a separate tab
+* Refactor: Site Security Scan tab added including Security issues box, WordFence box and Sucuri box
+* Refactor: MainWP Database table split into two tables, mainwp_wp_option and mainwp_wp_sync
+* Removed: jsapi link to Google
 
 = 1.2.1 =
 * Added Auto detection of allowed File Descriptors during backups

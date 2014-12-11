@@ -1159,7 +1159,7 @@ class MainWPSystem
     function mainwp_cronconflicts_action()
     {
         $lastCronConflicts = get_option('mainwp_cron_last_cronconflicts');
-        if ($lastCronConflicts !== false && (time() - $lastCronConflicts) < (60 * 60 * 11))
+        if ($lastCronConflicts !== false && (time() - $lastCronConflicts) < (60 * 60 * 48))
         {
             return;
         }
@@ -1437,7 +1437,7 @@ class MainWPSystem
     {
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename=' . basename($file));
+        header('Content-Disposition: attachment; filename="' . basename($file) . '"');
         header('Expires: 0');
         header('Cache-Control: must-revalidate');
         header('Pragma: public');

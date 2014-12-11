@@ -66,7 +66,7 @@ class MainWPRightNow
 
                 if (isset($information['upgrade']) && ($information['upgrade'] == 'SUCCESS'))
                 {
-                    MainWPDB::Instance()->updateWebsiteOption($website->id, 'wp_upgrades', json_encode(array()));
+                    MainWPDB::Instance()->updateWebsiteOption($website, 'wp_upgrades', json_encode(array()));
                     return __('Upgrade successful','mainwp');
                 }
                 else if (isset($information['upgrade']))

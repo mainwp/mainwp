@@ -133,7 +133,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
         if ($item['offline_check_result'] == 1 && !$hasSyncErrors && !$isConflict)
         {
             $websiteCore = MainWPDB::Instance()->getWebsiteOption((object)$item, 'wp_upgrades');
-            if (isset($websiteCore['current'])) $cnt++;
+            if (is_array($websiteCore) && isset($websiteCore['current'])) $cnt++;
 
             $websitePlugins = json_decode($item['plugin_upgrades'], true);
             if (is_array($websitePlugins)) $cnt += count($websitePlugins);

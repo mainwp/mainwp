@@ -425,7 +425,7 @@ class MainWPDB
             $userId = $current_user->ID;
         }
         $where = ($userId != null) ? ' userid = ' . $userId : '';
-        $where .= $this->getWhereAllowAccessGroupsSites("site", $this->tableName('wp'));
+        $where .= $this->getWhereAllowAccessGroupsSites("site", "wp");
         $qry = 'SELECT wp_sync.dtsSync FROM '.$this->tableName('wp'). ' wp JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid WHERE 1 ' . $where . ' ORDER BY wp_sync.dtsSync ASC LIMIT 1';
 
         return $wpdb->get_var($qry);
@@ -435,7 +435,7 @@ class MainWPDB
     {
         /** @var $wpdb wpdb */
         global $wpdb;
-        $where = $this->getWhereAllowAccessGroupsSites("site", $this->tableName('wp'));
+        $where = $this->getWhereAllowAccessGroupsSites("site", "wp");
         $qry = 'SELECT count(*) FROM '.$this->tableName('wp').' wp JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid WHERE wp_sync.dtsSyncStart > ' . (time() - $pSeconds) . $where;
 
         return $wpdb->get_var($qry);
@@ -838,7 +838,8 @@ class MainWPDB
                 WHERE wp.id = ' . $id . $where . '
                 GROUP BY wp.id';
             }
-            $where = $this->getWhereAllowAccessGroupsSites("site");
+            $where = $this->getWhereAllowAccessGroupsSites("site", "wp");
+            
             return 'SELECT wp.*,wp_sync.*,wp_optionview.*
                     FROM ' . $this->tableName('wp') . ' wp
                     JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
@@ -1493,7 +1494,7 @@ class MainWPDB
     {
         /** @var $wpdb wpdb */
         global $wpdb;
-        $where = $this->getWhereAllowAccessGroupsSites("site");
+        $where = $this->getWhereAllowAccessGroupsSites("site", "wp");
         //once a day
         return $wpdb->get_results('SELECT wp.*,wp_sync.*,wp_optionview.*
                                     FROM ' . $this->tableName('wp') . ' wp

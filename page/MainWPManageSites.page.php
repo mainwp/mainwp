@@ -49,10 +49,11 @@ class MainWPManageSites
 
             add_action('load-'.MainWPManageSites::$page, array(MainWPManageSites::getClassName(), 'on_load_page_dashboard'));
         }
-        else if (isset($_REQUEST['id']))
-        {
-
-        }
+        // Fix bug
+//        else if (isset($_REQUEST['id']))
+//        {
+//
+//        }
         else
         {
 //            add_action('load-'.MainWPManageSites::$page, array(MainWPManageSites::getClassName(), 'on_load_page_manage'));

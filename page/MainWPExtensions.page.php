@@ -537,23 +537,16 @@ class MainWPExtensions
 
     public static function isExtensionAvailable($pAPI)
     {
-        $ext_extensions = (self::$extensionsLoaded ? self::$extensions : get_option('mainwp_extensions'));         
-        if (isset($ext_extensions))
+        $extensions = (self::$extensionsLoaded ? self::$extensions : get_option('mainwp_extensions'));         
+        if (isset($extensions) && is_array($extensions))
         {
-            $snEnabledExtensions = get_option('mainwp_extloaded');
-            if (!is_array($snEnabledExtensions)) $snEnabledExtensions = array();
-
-            foreach($ext_extensions as $extension)
+            foreach($extensions as $extension)
             {
-                if (isset($extension['mainwp']) && ($extension['mainwp'] == true))
+                if (isset($extension['api']) && ($extension['api'] == $pAPI))
                 {
-                    if (isset($extension['api']) && ($extension['api'] == $pAPI))
-                    {
-                        $slug = plugin_basename($extension['plugin']);
-
-                        return in_array($slug, $snEnabledExtensions);
-                    }
-                }
+                    $pluginFile = $extension['plugin'];
+                    return self::isExtensionEnabled($pluginFile);
+                }                
             }
         }
 
@@ -562,7 +555,7 @@ class MainWPExtensions
 
     public static function isExtensionEnabled($pluginFile)
     {
-        $slug = plugin_basename($pluginFile);
+        $slug = plugin_basename($pluginFile);       
         $snEnabledExtensions = get_option('mainwp_extloaded');
         if (!is_array($snEnabledExtensions)) $snEnabledExtensions = array();
 
@@ -605,7 +598,7 @@ class MainWPExtensions
         //return ($active ? array('key' => wp_create_nonce($pluginFile . '-SNNonceAdder')) : false);
         return ($active ? array('key' => md5($pluginFile . '-SNNonceAdder')) : false);
     }
-
+   
     public static function create_nonce_function()
     {
     }

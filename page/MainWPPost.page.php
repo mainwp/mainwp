@@ -602,7 +602,7 @@ class MainWPPost
         if (!$skip_post) { 
             if (isset($_GET['id'])) {
                 $id = $_GET['id'];
-                $post = get_post($id);
+                $post = get_post($id);                
                 if ($post) {
     //                die('<pre>'.print_r($post, 1).'</pre>');
                     $selected_by = get_post_meta($id, '_selected_by', true);
@@ -676,7 +676,7 @@ class MainWPPost
                             'mainwp_upload_dir' => base64_encode(serialize($mainwp_upload_dir)));                        
                         MainWPUtility::fetchUrlsAuthed($dbwebsites, 'newpost', $post_data, array(MainWPBulkAdd::getClassName(), 'PostingBulk_handler'), $output);
                     }
-
+                      
                     $failed_posts = array();            
                     foreach ($dbwebsites as $website)
                     {
@@ -703,17 +703,18 @@ class MainWPPost
                     if ($del_post) {                      
                         wp_delete_post($id, true);    
                     }
-
-                }
-                ?>
-                <div id="message" class="updated">
-                    <?php foreach ($dbwebsites as $website) {
+                    
+                    
                     ?>
-                    <p><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a>
-                        : <?php echo (isset($output->ok[$website->id]) && $output->ok[$website->id] == 1 ? 'New post created. '."<a href=\"".$output->link[$website->id]."\" target=\"_blank\">View Post</a>" : 'ERROR: ' . $output->errors[$website->id]); ?></p>
-                    <?php } ?>
-                </div>               
-                <?php
+                    <div id="message" class="updated">
+                        <?php foreach ($dbwebsites as $website) {                              
+                        ?>
+                        <p><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a>
+                            : <?php echo (isset($output->ok[$website->id]) && $output->ok[$website->id] == 1 ? 'New post created. '."<a href=\"".$output->link[$website->id]."\" target=\"_blank\">View Post</a>" : 'ERROR: ' . $output->errors[$website->id]); ?></p>
+                        <?php } ?>
+                    </div>               
+                    <?php
+                 } // if ($post)
             } else {
                 ?>
                 <div class="error below-h2">

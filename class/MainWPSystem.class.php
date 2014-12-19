@@ -1580,27 +1580,26 @@ class MainWPSystem
     //This function will read the metaboxes & save them to the post
     function publish_bulkpost($post_id)
     {
-        $save_seo_value = isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))? true : false;
+        if (isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))) 
+            return;
+        
         $message_id = 99;
-        if ($save_seo_value)
-            $message_id = 98;
-
         //Read extra metabox
         $pid = $this->metaboxes->select_sites_handle($post_id, 'bulkpost');
-
-        if ($save_seo_value || $pid == $post_id) {
+        
+        if ($pid == $post_id) {
             /** @var $wpdb wpdb */
-            global $wpdb;
+            global $wpdb;            
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
             add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
         }
         else
-        {
+        {            
             $this->metaboxes->add_categories_handle($post_id, 'bulkpost');
             $this->metaboxes->add_tags_handle($post_id, 'bulkpost');
             $this->metaboxes->add_slug_handle($post_id, 'bulkpost');
-            MainWPPost::add_sticky_handle($post_id);
-
+            MainWPPost::add_sticky_handle($post_id); 
+            
             //Redirect to handle page! (to actually post the messages)
             wp_redirect(get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&hideall=1&id=' . $post_id);
             die();
@@ -1616,12 +1615,12 @@ class MainWPSystem
         // If it is our form has not been submitted, so we dont want to do anything
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
             return;
-
-        $save_seo_value = isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))? true : false;
+        
+        if (isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))) 
+            return;
+        
         $message_id = 96;
-        if ($save_seo_value)
-            $message_id = 98;
-
+                
         //Read extra metabox
         $pid = $this->metaboxes->select_sites_handle($post_id, 'bulkpost');
         $this->metaboxes->add_categories_handle($post_id, 'bulkpost');
@@ -1633,14 +1632,14 @@ class MainWPSystem
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
             add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
         }
-        else if ($save_seo_value || $pid == $post_id) {
+        else if ($pid == $post_id) {
             /** @var $wpdb wpdb */
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
             add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
         }
         else if (isset($_POST['publish']))
-        {
+        {            
             //Redirect to handle page! (to actually post the messages)
             wp_redirect(get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&hideall=1&id=' . $post_id);
             die();
@@ -1651,15 +1650,15 @@ class MainWPSystem
     //This function will read the metaboxes & save them to the post
     function publish_bulkpage($post_id)
     {
-        $save_seo_value = isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))? true : false;
+        if (isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))) 
+            return;
+        
         $message_id = 99;
-        if ($save_seo_value)
-            $message_id = 98;
-
+        
         //Read extra metabox
         $pid = $this->metaboxes->select_sites_handle($post_id, 'bulkpage');
 
-        if ($save_seo_value || $pid == $post_id) {
+        if ($pid == $post_id) {
             /** @var $wpdb wpdb */
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
@@ -1685,11 +1684,11 @@ class MainWPSystem
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
             return;
 
-        $save_seo_value = isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))? true : false;
+        if (isset($_POST["mainwp_wpseo_metabox_save_values"]) && (!empty($_POST["mainwp_wpseo_metabox_save_values"]))) 
+            return;
+        
         $message_id = 96;
-        if ($save_seo_value)
-            $message_id = 98;
-
+        
         //Read extra metabox
         $pid = $this->metaboxes->select_sites_handle($post_id, 'bulkpage');
         $this->metaboxes->add_slug_handle($post_id, 'bulkpage');
@@ -1699,7 +1698,7 @@ class MainWPSystem
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));            
             add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));            
         }
-        else if ($save_seo_value || $pid == $post_id) {
+        else if ($pid == $post_id) {
             /** @var $wpdb wpdb */
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));

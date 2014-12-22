@@ -1853,4 +1853,25 @@ class MainWPUtility
         $s    = preg_replace( '@\x{00ff}@u'    , "y",    $s );    // ÿ => y
         return $s;
     }
+    
+    public static function showUserTip($tip_id) {
+        global $current_user;
+        if ($user_id = $current_user->ID) {           
+            $reset_tips = get_option("mainwp_reset_user_tips");
+            if (!is_array($reset_tips)) $reset_tips = array();                
+            if (!isset($reset_tips[$user_id])) { 
+                $reset_tips[$user_id] = 1;
+                update_option("mainwp_reset_user_tips", $reset_tips);
+                update_user_option($user_id, "mainwp_hide_user_tips", array());                 
+                return true;
+            }
+
+            $hide_usertips = get_user_option('mainwp_hide_user_tips');
+            if (!is_array($hide_usertips)) $hide_usertips = array();  
+            if (isset($hide_usertips[$tip_id])) {                                                
+                return false;
+            }            
+        }
+        return true;
+    }
 }

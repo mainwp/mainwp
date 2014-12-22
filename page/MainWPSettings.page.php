@@ -69,10 +69,14 @@ class MainWPSettings
         <h2><?php _e('MainWP Settings','mainwp'); ?></h2><div style="clear: both;"></div><br/>
          <div id="mainwp-tip-zone">
           <?php if ($shownPage == '') { ?>
-                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('The majority of these default settings can also be tweaked on the Site level by visiting Manage Sites &rarr; Edit Site.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+             <?php if (MainWPUtility::showUserTip('mainwp-settings-tips')) { ?>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-settings-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('The majority of these default settings can also be tweaked on the Site level by visiting Manage Sites &rarr; Edit Site.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+              <?php } ?>   
           <?php } ?>
           <?php if ($shownPage == 'OfflineChecks') { ?>
-                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('We currently recommend the free <a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/" target="_blank">Advanced Uptime Monitor Extension</a> to perform more frequent tests.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <?php if (MainWPUtility::showUserTip('mainwp-aumrecommend-tips')) { ?>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-aumrecommend-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('We currently recommend the free <a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/" target="_blank">Advanced Uptime Monitor Extension</a> to perform more frequent tests.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <?php } ?>
           <?php } ?>
         </div>
         <div class="mainwp-tabs" id="mainwp-tabs">

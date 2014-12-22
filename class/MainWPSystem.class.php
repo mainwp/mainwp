@@ -69,6 +69,10 @@ class MainWPSystem
             include_once(ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php'); //Version information from wordpress
             $pluginData = get_plugin_data($mainwp_plugin_file);
             $this->current_version = $pluginData['Version'];
+            $currentVersion = get_option('mainwp_plugin_version');
+            if (version_compare($currentVersion, $this->current_version, '<')) {
+                update_option('mainwp_reset_user_tips', array());
+            }            
             MainWPUtility::update_option('mainwp_plugin_version', $this->current_version);
         }
 

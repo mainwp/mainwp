@@ -189,12 +189,15 @@ class MainWPExtensions
         add_action('wp_ajax_mainwp_extension_trash', array(MainWPExtensions::getClassName(), 'trashExtension'));
         add_action('wp_ajax_mainwp_extension_activate', array(MainWPExtensions::getClassName(), 'activateExtension'));
         add_action('wp_ajax_mainwp_extension_deactivate', array(MainWPExtensions::getClassName(), 'deactivateExtension'));
-        add_action('wp_ajax_mainwp_extension_grabapikey', array(MainWPExtensions::getClassName(), 'grabapikeyExtension'));
-        add_action('wp_ajax_mainwp_extension_saveextensionapilogin', array(MainWPExtensions::getClassName(), 'saveExtensionsApiLogin'));        
-        add_action('wp_ajax_mainwp_extension_testextensionapilogin', array(MainWPExtensions::getClassName(), 'testExtensionsApiLogin'));        
-        add_action('wp_ajax_mainwp_extension_getpurchased', array(MainWPExtensions::getClassName(), 'getPurchasedExts'));        
-        add_action('wp_ajax_mainwp_extension_downloadandinstall', array(MainWPExtensions::getClassName(), 'downloadAndInstall'));        
-        add_action('wp_ajax_mainwp_extension_bulk_activate', array(MainWPExtensions::getClassName(), 'bulkActivate'));        
+        add_action('wp_ajax_mainwp_extension_testextensionapilogin', array(MainWPExtensions::getClassName(), 'testExtensionsApiLogin'));                
+
+        if (mainwp_current_user_can("dashboard", "bulk_install_and_activate_extensions")) {    
+            add_action('wp_ajax_mainwp_extension_grabapikey', array(MainWPExtensions::getClassName(), 'grabapikeyExtension'));
+            add_action('wp_ajax_mainwp_extension_saveextensionapilogin', array(MainWPExtensions::getClassName(), 'saveExtensionsApiLogin'));                    
+            add_action('wp_ajax_mainwp_extension_getpurchased', array(MainWPExtensions::getClassName(), 'getPurchasedExts'));        
+            add_action('wp_ajax_mainwp_extension_downloadandinstall', array(MainWPExtensions::getClassName(), 'downloadAndInstall'));        
+            add_action('wp_ajax_mainwp_extension_bulk_activate', array(MainWPExtensions::getClassName(), 'bulkActivate'));        
+        }
     }
 
     public static function enableAllExtensions()

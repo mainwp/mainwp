@@ -37,7 +37,7 @@ class MainWPExtensionsView
 <?php     
     
     $loader_url = plugins_url('images/loader.gif', dirname(__FILE__));      
-    if (mainwp_current_user_can("dashboard", "manage_extensions")) {     
+    if (mainwp_current_user_can("dashboard", "bulk_install_and_activate_extensions")) {     
 
         $username = $password = "";
         $checked_save = false;

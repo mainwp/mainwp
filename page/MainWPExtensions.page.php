@@ -189,12 +189,15 @@ class MainWPExtensions
         add_action('wp_ajax_mainwp_extension_trash', array(MainWPExtensions::getClassName(), 'trashExtension'));
         add_action('wp_ajax_mainwp_extension_activate', array(MainWPExtensions::getClassName(), 'activateExtension'));
         add_action('wp_ajax_mainwp_extension_deactivate', array(MainWPExtensions::getClassName(), 'deactivateExtension'));
-        add_action('wp_ajax_mainwp_extension_grabapikey', array(MainWPExtensions::getClassName(), 'grabapikeyExtension'));
-        add_action('wp_ajax_mainwp_extension_saveextensionapilogin', array(MainWPExtensions::getClassName(), 'saveExtensionsApiLogin'));        
-        add_action('wp_ajax_mainwp_extension_testextensionapilogin', array(MainWPExtensions::getClassName(), 'testExtensionsApiLogin'));        
-        add_action('wp_ajax_mainwp_extension_getpurchased', array(MainWPExtensions::getClassName(), 'getPurchasedExts'));        
-        add_action('wp_ajax_mainwp_extension_downloadandinstall', array(MainWPExtensions::getClassName(), 'downloadAndInstall'));        
-        add_action('wp_ajax_mainwp_extension_bulk_activate', array(MainWPExtensions::getClassName(), 'bulkActivate'));        
+        add_action('wp_ajax_mainwp_extension_testextensionapilogin', array(MainWPExtensions::getClassName(), 'testExtensionsApiLogin'));                
+
+        if (mainwp_current_user_can("dashboard", "bulk_install_and_activate_extensions")) {    
+            add_action('wp_ajax_mainwp_extension_grabapikey', array(MainWPExtensions::getClassName(), 'grabapikeyExtension'));
+            add_action('wp_ajax_mainwp_extension_saveextensionapilogin', array(MainWPExtensions::getClassName(), 'saveExtensionsApiLogin'));                    
+            add_action('wp_ajax_mainwp_extension_getpurchased', array(MainWPExtensions::getClassName(), 'getPurchasedExts'));        
+            add_action('wp_ajax_mainwp_extension_downloadandinstall', array(MainWPExtensions::getClassName(), 'downloadAndInstall'));        
+            add_action('wp_ajax_mainwp_extension_bulk_activate', array(MainWPExtensions::getClassName(), 'bulkActivate'));        
+        }
     }
 
     public static function enableAllExtensions()
@@ -537,23 +540,16 @@ class MainWPExtensions
 
     public static function isExtensionAvailable($pAPI)
     {
-        $ext_extensions = (self::$extensionsLoaded ? self::$extensions : get_option('mainwp_extensions'));         
-        if (isset($ext_extensions))
+        $extensions = (self::$extensionsLoaded ? self::$extensions : get_option('mainwp_extensions'));         
+        if (isset($extensions) && is_array($extensions))
         {
-            $snEnabledExtensions = get_option('mainwp_extloaded');
-            if (!is_array($snEnabledExtensions)) $snEnabledExtensions = array();
-
-            foreach($ext_extensions as $extension)
+            foreach($extensions as $extension)
             {
-                if (isset($extension['mainwp']) && ($extension['mainwp'] == true))
+                if (isset($extension['api']) && ($extension['api'] == $pAPI))
                 {
-                    if (isset($extension['api']) && ($extension['api'] == $pAPI))
-                    {
-                        $slug = plugin_basename($extension['plugin']);
-
-                        return in_array($slug, $snEnabledExtensions);
-                    }
-                }
+                    $pluginFile = $extension['plugin'];
+                    return self::isExtensionEnabled($pluginFile);
+                }                
             }
         }
 
@@ -562,7 +558,7 @@ class MainWPExtensions
 
     public static function isExtensionEnabled($pluginFile)
     {
-        $slug = plugin_basename($pluginFile);
+        $slug = plugin_basename($pluginFile);       
         $snEnabledExtensions = get_option('mainwp_extloaded');
         if (!is_array($snEnabledExtensions)) $snEnabledExtensions = array();
 
@@ -605,7 +601,7 @@ class MainWPExtensions
         //return ($active ? array('key' => wp_create_nonce($pluginFile . '-SNNonceAdder')) : false);
         return ($active ? array('key' => md5($pluginFile . '-SNNonceAdder')) : false);
     }
-
+   
     public static function create_nonce_function()
     {
     }

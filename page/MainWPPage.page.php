@@ -75,7 +75,9 @@ class MainWPPage
         <h2><?php _e('Pages','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div id="mainwp-tip-zone">
           <?php if ($shownPage == 'BulkManage') { ?> 
-                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can also quickly see all Published, Draft, Pending and Trash Pages for a single site from your Individual Site Dashboard Recent Pages widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Dashboard.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <?php if (MainWPUtility::showUserTip('mainwp-managepage-tips')) { ?>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-managepage-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can also quickly see all Published, Draft, Pending and Trash Pages for a single site from your Individual Site Dashboard Recent Pages widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Dashboard.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <?php } ?>
           <?php } ?>
         </div>
         <div class="mainwp-tabs" id="mainwp-tabs">

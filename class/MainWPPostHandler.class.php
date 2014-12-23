@@ -104,6 +104,7 @@ class MainWPPostHandler
 
         //Page: ManageTips
         add_action('wp_ajax_mainwp_managetips_update', array(&$this, 'mainwp_managetips_update')); //ok
+        add_action('wp_ajax_mainwp_tips_update', array(&$this, 'mainwp_tips_update')); //ok
 
         //Page: OfflineChecks
         if (mainwp_current_user_can("dashboard", "manage_offline_checks")) {
@@ -540,6 +541,19 @@ class MainWPPostHandler
         die();
     }
 
+    function mainwp_tips_update()
+    {
+        global $current_user;
+        if (($user_id = $current_user->ID) && isset($_POST['tipId']) && !empty($_POST['tipId'])) {
+            $user_tips = get_user_option('mainwp_hide_user_tips');
+            if (!is_array($user_tips))
+                $user_tips = array();
+            $user_tips[$_POST['tipId']] = time();
+            update_user_option($user_id, "mainwp_hide_user_tips", $user_tips);            
+        }
+        die(1);
+    }
+    
     /**
      * Page: SecurityIssues
      */

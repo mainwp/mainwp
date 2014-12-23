@@ -132,15 +132,85 @@ class MainWPManageSites_List_Table extends WP_List_Table
         $cnt = 0;
         if ($item['offline_check_result'] == 1 && !$hasSyncErrors && !$isConflict)
         {
-            $websiteCore = MainWPDB::Instance()->getWebsiteOption((object)$item, 'wp_upgrades');
-            if (isset($websiteCore['current'])) $cnt++;
+            $website = (object)$item;
+            $userExtension = MainWPDB::Instance()->getUserExtension();
+            $total_wp_upgrades = 0;
+            $total_plugin_upgrades = 0;
+            $total_theme_upgrades = 0;
 
-            $websitePlugins = json_decode($item['plugin_upgrades'], true);
-            if (is_array($websitePlugins)) $cnt += count($websitePlugins);
+            $wp_upgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'wp_upgrades'), true);
+            if ($website->is_ignoreCoreUpdates)
+                $wp_upgrades = array();
+    
+            if (is_array($wp_upgrades) && count($wp_upgrades) > 0) $total_wp_upgrades++;
 
-            $websiteThemes = json_decode($item['theme_upgrades'], true);
-            if (is_array($websiteThemes)) $cnt += count($websiteThemes);
+            $plugin_upgrades = json_decode($website->plugin_upgrades, true);     
+            if ($website->is_ignorePluginUpdates)
+                $plugin_upgrades = array();
 
+            $theme_upgrades = json_decode($website->theme_upgrades, true);
+            if ($website->is_ignoreThemeUpdates)
+                $theme_upgrades = array();
+
+            $decodedPremiumUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades'), true);
+            if (is_array($decodedPremiumUpgrades))
+            {
+                foreach ($decodedPremiumUpgrades as $crrSlug => $premiumUpgrade)
+                {
+                    $premiumUpgrade['premium'] = true;
+
+                    if ($premiumUpgrade['type'] == 'plugin')
+                    {
+                        if (!is_array($plugin_upgrades)) $plugin_upgrades = array();
+                        if (!$website->is_ignorePluginUpdates)
+                            $plugin_upgrades[$crrSlug] = $premiumUpgrade;
+                    }
+                    else if ($premiumUpgrade['type'] == 'theme')
+                    {
+                        if (!is_array($theme_upgrades)) $theme_upgrades = array();
+                        if (!$website->is_ignoreThemeUpdates)
+                            $theme_upgrades[$crrSlug] = $premiumUpgrade;
+                    }
+                }
+            }
+
+            if (is_array($plugin_upgrades))
+            {
+                $ignored_plugins = json_decode($website->ignored_plugins, true);
+                if (is_array($ignored_plugins)) {
+                    $plugin_upgrades = array_diff_key($plugin_upgrades, $ignored_plugins);
+                }
+
+                $ignored_plugins = json_decode($userExtension->ignored_plugins, true);                
+                if (is_array($ignored_plugins)) {
+                    $plugin_upgrades = array_diff_key($plugin_upgrades, $ignored_plugins);
+                }
+
+                $total_plugin_upgrades += count($plugin_upgrades);
+            }
+           
+            if (is_array($theme_upgrades))
+            {
+                $ignored_themes = json_decode($website->ignored_themes, true);
+                if (is_array($ignored_themes)) $theme_upgrades = array_diff_key($theme_upgrades, $ignored_themes);
+
+                $ignored_themes = json_decode($userExtension->ignored_themes, true);
+                if (is_array($ignored_themes)) $theme_upgrades = array_diff_key($theme_upgrades, $ignored_themes);
+
+                $total_theme_upgrades += count($theme_upgrades);
+            }
+            
+            $cnt =  $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
+            
+//            $websiteCore = MainWPDB::Instance()->getWebsiteOption((object)$item, 'wp_upgrades');
+//            if (is_array($websiteCore) && isset($websiteCore['current'])) $cnt++;
+//
+//            $websitePlugins = json_decode($item['plugin_upgrades'], true);
+//            if (is_array($websitePlugins)) $cnt += count($websitePlugins);
+//
+//            $websiteThemes = json_decode($item['theme_upgrades'], true);
+//            if (is_array($websiteThemes)) $cnt += count($websiteThemes);
+            
             if ($cnt > 0)
             {
                 $output .= '<span class="mainwp-av-updates-col"> ' . $cnt . '</span>';

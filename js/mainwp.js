@@ -6604,7 +6604,13 @@ jQuery(document).on('click', '#remove-mainwp-installation-warning', function()
 });
 
 jQuery(document).on('click', '.mainwp-dismiss', function(){
-    jQuery('.mainwp-tips').fadeOut("slow");
+    jQuery('.mainwp-tips').fadeOut("slow");    
+    var data = {
+        action:'mainwp_tips_update',
+        tipId: jQuery(this).closest('.mainwp-tips').find('.mainwp-tip').attr('id')
+    };
+    jQuery.post(ajaxurl, data, function (res) {
+    });    
     return false;
 });
 

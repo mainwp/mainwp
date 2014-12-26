@@ -115,6 +115,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 = 2.0.4 =
 * Added: Hooks for upcoming Team Control Extension 
+* Fixed: Issues with very large network Dashboard load times
 * Fixed: MainWP Tips dismiss button not removing the message
 * Fixed: Ignored Updates still showing in the Manage Sites table
 * Fixed: Hooks for the some Extensions

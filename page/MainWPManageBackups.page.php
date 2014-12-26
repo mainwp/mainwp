@@ -719,6 +719,7 @@ class MainWPManageBackups
                     $tmpErrorOutput .= 'Dropbox: '.$backupResult['dropbox'] . '<br />';
                     $error = true;
                 }
+
                 if (isset($backupResult['amazon']) && $backupResult['amazon'] != 'success')
                 {
                     $tmpErrorOutput .= 'Amazon: '.$backupResult['amazon'] . '<br />';

@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '8.1';
+    private $mainwp_db_version = '8.2';
     //Private
     private $table_prefix;
     //Singleton
@@ -105,7 +105,8 @@ class MainWPDB
   uniqueId text NOT NULL,
   maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
   maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
-  maximumFileDescriptors int(11) NOT NULL DEFAULT 150';
+  maximumFileDescriptors int(11) NOT NULL DEFAULT 150,
+  INDEX idx_userid (userid)';
         if ($currentVersion == '') $tbl .= ',
   PRIMARY KEY  (id)  ';
         $tbl .= ')';
@@ -123,18 +124,21 @@ class MainWPDB
   totalsize int(11) NOT NULL DEFAULT 0,
   dbsize int(11) NOT NULL DEFAULT 0,
   extauth text NOT NULL DEFAULT "",
-  last_post_gmt int(11) NOT NULL DEFAULT 0)';
+  last_post_gmt int(11) NOT NULL DEFAULT 0,
+  INDEX idx_wpid (wpid))';
         $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->tableName('wp_options') . ' (
   wpid int(11) NOT NULL,
   name text NOT NULL DEFAULT "",
-  value longtext NOT NULL DEFAULT "")';
+  value longtext NOT NULL DEFAULT "",
+  INDEX idx_wpid (wpid))';
           $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->tableName('wp_settings_backup') . ' (
   wpid int(11) NOT NULL,
-  archiveFormat text NOT NULL';
+  archiveFormat text NOT NULL,
+  INDEX idx_wpid (wpid)';
           if ($currentVersion == '') $tbl .= ',
   PRIMARY KEY  (id)  ';
           $tbl .= ')';
@@ -181,7 +185,9 @@ class MainWPDB
 
         $sql[] = 'CREATE TABLE ' . $this->tableName('wp_group') . ' (
   wpid int(11) NOT NULL,
-  groupid int(11) NOT NULL
+  groupid int(11) NOT NULL,
+  INDEX idx_wpid (wpid),
+  INDEX idx_groupid (groupid)
         )';
 
         $tbl = 'CREATE TABLE ' . $this->tableName('wp_backup_progress') . ' (
@@ -196,7 +202,8 @@ class MainWPDB
   removedFiles tinyint(1) NOT NULL DEFAULT 0,
   attempts int(11) NOT NULL DEFAULT 0,
   last_error text NOT NULL DEFAULT "",
-  pid int(11) NOT NULL DEFAULT 0
+  pid int(11) NOT NULL DEFAULT 0,
+  INDEX idx_task_id (task_id)
          )';
         $sql[] = $tbl;
 

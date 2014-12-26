@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.1
-Stable tag: 2.0.3
+Stable tag: 2.0.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,7 +15,7 @@ Manage all of your WP sites, even those on different servers, from one central d
 
 == Description ==
 
-[MainWP](http://mainwp.com) is a free self-hosted WordPress management system that allows you to manage virtually all aspects of multiple WordPress sites including scheduling backups, up time monitoring of your sites, managing content for posts/pages and much more.
+[MainWP](https://mainwp.com) is a free self-hosted WordPress management system that allows you to manage virtually all aspects of multiple WordPress sites including scheduling backups, up time monitoring of your sites, managing content for posts/pages and much more.
 
 **Note:  MainWP requires two (2) plugins.**
 
@@ -90,13 +90,13 @@ Yes, please review the [documentation site](http://docs.mainwp.com/).
 Yes, please read the [Quick Start – Setting up your MainWP](http://docs.mainwp.com/setting-up-your-mainwp/) guide on the doc site.
 
 = Where do I go for support or to ask for help? =
-Please go to the [MainWP Community Support Forum](http://mainwp.com/forum/)
+Please go to the [MainWP Community Support Forum](https://mainwp.com/forum/) or open a [Support Ticket](http://support.mainwp.com/support/home)
 
 = Do you have any videos? =
 Yes, you can [see them on YouTube](http://www.youtube.com/user/MyMainWP).
 
 = I have an idea for MainWP how do I let you know? =
-Please add any ideas to the [MainWP Ideas](http://ideas.mainwp.com/) site.
+Please add any ideas to the [MainWP Feature Request](http://support.mainwp.com/support/discussions/5000037246) site.
 
 = I have more questions, do you have any other information? =
 Sure we have a quick FAQ with a lot more questions and answers [here](http://mainwp.com/presales-faq/).
@@ -112,6 +112,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.4 =
+* Added: Hooks for upcoming Team Control Extension 
+* Fixed: Issues with very large network Dashboard load times
+* Fixed: MainWP Tips dismiss button not removing the message
+* Fixed: Ignored Updates still showing in the Manage Sites table
+* Fixed: Hooks for the some Extensions
 
 = 2.0.3 =
 * Fixed: Empty sites list issue on some hosts

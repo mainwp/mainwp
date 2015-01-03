@@ -6898,3 +6898,7 @@ jQuery(document).ready(function() {
         return false;
     });
 });
+
+jQuery(document).on('click', '.mainwpactionlogsline', function(){
+   jQuery(this).next().toggle();
+});

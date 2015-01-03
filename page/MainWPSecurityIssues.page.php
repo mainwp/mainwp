@@ -94,7 +94,7 @@ class MainWPSecurityIssues
         }
 
         $information = MainWPUtility::fetchUrlAuthed($website, 'securityFix', array('feature' => $_REQUEST['feature']));
-        if (isset($information['sync']))
+        if (isset($information['sync']) && !empty($information['sync']))
         {
             MainWPSync::syncInformationArray($website, $information['sync']);
             unset($information['sync']);
@@ -116,7 +116,7 @@ class MainWPSecurityIssues
         }
 
         $information = MainWPUtility::fetchUrlAuthed($website, 'securityUnFix', array('feature' => $_REQUEST['feature']));
-        if (isset($information['sync']))
+        if (isset($information['sync']) && !empty($information['sync']))
         {
             MainWPSync::syncInformationArray($website, $information['sync']);
             unset($information['sync']);

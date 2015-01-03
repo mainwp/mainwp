@@ -457,6 +457,8 @@ class MainWPSystem
 
     function mainwp_cronofflinecheck_action()
     {
+        MainWPLogger::Instance()->info('CRON :: offlinecheck');
+
         MainWPUtility::update_option('mainwp_cron_last_offlinecheck', time());
         //Do cronjobs!
         //Config this in crontab: 0 0 * * * wget -q http://mainwp.com/wp-admin/?do=checkSites -O /dev/null 2>&1
@@ -481,6 +483,8 @@ class MainWPSystem
 
     function mainwp_cronupdatescheck_action()
     {
+        MainWPLogger::Instance()->info('CRON :: updates check');
+
         @ignore_user_abort(true);
         @set_time_limit(0);
         $mem =  '512M';
@@ -711,7 +715,7 @@ class MainWPSystem
                 if (!is_array($websiteDecodedIgnoredThemes)) $websiteDecodedIgnoredThemes = array();
 
                 //Perform check & update
-                if (!MainWPSync::syncSite($website))
+                if (!MainWPSync::syncSite($website, false, false))
                 {
                     $websiteValues = array(
                         'dtsAutomaticSync' => time()
@@ -1091,7 +1095,7 @@ class MainWPSystem
                         'list' => urldecode(implode(',', $slugs))
                     ));
 
-                    if (isset($information['sync'])) MainWPSync::syncInformationArray($allWebsites[$websiteId], $information['sync']);
+                    if (isset($information['sync']) && !empty($information['sync'])) MainWPSync::syncInformationArray($allWebsites[$websiteId], $information['sync']);
                 }
                 catch (Exception $e)
                 {
@@ -1110,7 +1114,7 @@ class MainWPSystem
                         'list' => urldecode(implode(',', $slugs))
                     ));
 
-                    if (isset($information['sync'])) MainWPSync::syncInformationArray($allWebsites[$websiteId], $information['sync']);
+                    if (isset($information['sync']) && !empty($information['sync'])) MainWPSync::syncInformationArray($allWebsites[$websiteId], $information['sync']);
                 }
                 catch (Exception $e)
                 {
@@ -1135,6 +1139,8 @@ class MainWPSystem
 
     function mainwp_cronpingchilds_action()
     {
+        MainWPLogger::Instance()->info('CRON :: ping childs');
+
         $lastPing = get_option('mainwp_cron_last_ping');
         if ($lastPing !== false && (time() - $lastPing) < (60 * 60 * 23))
         {
@@ -1162,6 +1168,8 @@ class MainWPSystem
 
     function mainwp_cronconflicts_action()
     {
+        MainWPLogger::Instance()->info('CRON :: conflicts');
+
         $lastCronConflicts = get_option('mainwp_cron_last_cronconflicts');
         if ($lastCronConflicts !== false && (time() - $lastCronConflicts) < (60 * 60 * 48))
         {
@@ -1235,6 +1243,8 @@ class MainWPSystem
 
     function mainwp_cronbackups_continue_action()
     {
+        MainWPLogger::Instance()->info('CRON :: backups continue');
+
         @ignore_user_abort(true);
         @set_time_limit(0);
         $mem =  '512M';
@@ -1245,6 +1255,15 @@ class MainWPSystem
 
         //Fetch all tasks where complete < last & last checkup is more then 1minute ago! & last is more then 1 minute ago!
         $tasks = MainWPDB::Instance()->getBackupTasksToComplete();
+
+        MainWPLogger::Instance()->debug('CRON :: backups continue :: Found ' . count($tasks) . ' to continue.');
+
+        if (empty($tasks)) return;
+
+        foreach ($tasks as $task)
+        {
+            MainWPLogger::Instance()->debug('CRON :: backups continue ::    Task: ' . $task->name);
+        }
 
         foreach ($tasks as $task)
         {
@@ -1259,6 +1278,8 @@ class MainWPSystem
 
     function mainwp_cronbackups_action()
     {
+        MainWPLogger::Instance()->info('CRON :: backups');
+
         @ignore_user_abort(true);
         @set_time_limit(0);
         $mem =  '512M';
@@ -1282,6 +1303,13 @@ class MainWPSystem
         $monthlyTasks = MainWPDB::Instance()->getBackupTasksTodoMonthly();
         if (count($monthlyTasks) > 0) {
             $allTasks = array_merge($allTasks, $monthlyTasks);
+        }
+
+        MainWPLogger::Instance()->debug('CRON :: backups :: Found ' . count($allTasks) . ' to start.');
+
+        foreach ($allTasks as $task)
+        {
+            MainWPLogger::Instance()->debug('CRON :: backups ::    Task: ' . $task->name);
         }
 
         foreach ($allTasks as $task)
@@ -1316,6 +1344,8 @@ class MainWPSystem
 
     function mainwp_cronstats_action()
     {
+        MainWPLogger::Instance()->info('CRON :: status');
+
         MainWPUtility::update_option('mainwp_cron_last_stats', time());
         if (get_option('mainwp_seo') != 1) return;
 

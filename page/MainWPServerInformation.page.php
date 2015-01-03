@@ -15,6 +15,7 @@ class MainWPServerInformation
         add_submenu_page('mainwp_tab', __('Error Log','mainwp'), '<div class="mainwp-hidden">' . __('Error Log','mainwp') . '</div>', 'read', 'ErrorLog', array(MainWPServerInformation::getClassName(), 'renderErrorLogPage'));
         add_submenu_page('mainwp_tab', __('WP-Config File','mainwp'), '<div class="mainwp-hidden">' . __('WP-Config File','mainwp') . '</div>', 'read', 'WPConfig', array(MainWPServerInformation::getClassName(), 'renderWPConfig'));
         add_submenu_page('mainwp_tab', __('.htaccess File','mainwp'), '<div class="mainwp-hidden">' . __('.htaccess File','mainwp') . '</div>', 'read', '.htaccess', array(MainWPServerInformation::getClassName(), 'renderhtaccess'));
+        add_submenu_page('mainwp_tab', __('Action logs','mainwp'), '<div class="mainwp-hidden">' . __('Action logs','mainwp') . '</div>', 'read', 'ActionLogs', array(MainWPServerInformation::getClassName(), 'renderActionLogs'));
     }
 
     public static function renderHeader($shownPage)
@@ -677,7 +678,7 @@ class MainWPServerInformation
 
         if ( empty( $lines ) ) {
 
-            echo '<tr><td colspan="2">' . __( 'No errors found... Yet.', 'mainwp' ) . '</td></tr>';
+            echo '<tr><td colspan="2">' . __( 'MainWP is unable to find your error logs, please contact your host for server error logs.', 'mainwp' ) . '</td></tr>';
 
             return;
         }
@@ -780,6 +781,47 @@ class MainWPServerInformation
         </div>
         <?php
         self::renderFooter('WPConfig');
+    }
+
+    public static function renderActionLogs() {
+        self::renderHeader('Action logs');
+
+        if (isset($_REQUEST['actionlogs_status']))
+        {
+            if ($_REQUEST['actionlogs_status'] != MainWPLogger::DISABLED)
+            {
+                MainWPLogger::Instance()->setLogPriority($_REQUEST['actionlogs_status']);
+            }
+
+            MainWPLogger::Instance()->log('Action logs set to: ' . MainWPLogger::Instance()->getLogText($_REQUEST['actionlogs_status']), MainWPLogger::LOG);
+
+            if ($_REQUEST['actionlogs_status'] == MainWPLogger::DISABLED)
+            {
+                MainWPLogger::Instance()->setLogPriority($_REQUEST['actionlogs_status']);
+            }
+
+            MainWPUtility::update_option('mainwp_actionlogs', $_REQUEST['actionlogs_status']);
+        }
+
+        $enabled = get_option('mainwp_actionlogs');
+        if ($enabled === false) $enabled = MainWPLogger::DISABLED;
+
+        ?>
+        <div class="postbox" id="mainwp-code-display">
+            <h3 class="hndle" style="padding: 8px 12px; font-size: 14px;"><span>Action logs</span></h3>
+            <div style="padding: 1em;"><form method="POST" action="">
+                Status:
+                <select name="actionlogs_status">
+                    <option value="<?php echo MainWPLogger::DISABLED; ?>" <?php if (MainWPLogger::DISABLED == $enabled): echo 'selected'; endif; ?>>Disabled</option>
+                    <option value="<?php echo MainWPLogger::WARNING; ?>" <?php if (MainWPLogger::WARNING == $enabled): echo 'selected'; endif; ?>>Warning</option>
+                    <option value="<?php echo MainWPLogger::INFO; ?>" <?php if (MainWPLogger::INFO == $enabled): echo 'selected'; endif; ?>>Info</option>
+                    <option value="<?php echo MainWPLogger::DEBUG; ?>" <?php if (MainWPLogger::DEBUG == $enabled): echo 'selected'; endif; ?>>Debug</option>
+                </select> <input type="submit" class="button button-primary" value="Save" />
+            </form></div>
+            <div style="padding: 1em;"><?php MainWPLogger::showLog(); ?></div>
+        </div>
+        <?php
+        self::renderFooter('Action logs');
     }
 
     public static function renderhtaccess() {

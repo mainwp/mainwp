@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.1
-Stable tag: 2.0.4
+Stable tag: 2.0.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.5 =
+* Fixed: Search issue (not showing all results when searching the sites page)
+* Fixed: Incorrect "Another backup process is running, try again later" message.
+* Added: Enhanced backup fetch to support a broader range of hosts
+* Added: Speed enhancement in the syncing process
+* Added: Action logs (to provide better debugging)
 
 = 2.0.4 =
 * Added: Hooks for upcoming Team Control Extension 

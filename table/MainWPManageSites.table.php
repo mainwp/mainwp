@@ -412,19 +412,29 @@ class MainWPManageSites_List_Table extends WP_List_Table
         $perPage = $this->get_items_per_page('mainwp_managesites_per_page');
         $currentPage = $this->get_pagenum();
         
+        $no_request = (!isset($_REQUEST['s']) && !isset($_REQUEST['g']) && !isset($_REQUEST['status']));
+                
         if (!isset($_REQUEST['status'])) {
-            $_status = get_option('mainwp_managesites_filter_status');
-            if (!empty($_status)) {
-               $_REQUEST['status'] = $_status;
+            if ($no_request) {
+                $_status = get_option('mainwp_managesites_filter_status');
+                if (!empty($_status)) {
+                   $_REQUEST['status'] = $_status;
+                }
+            } else {
+                MainWPUtility::update_option('mainwp_managesites_filter_status', '');
             }
         } else {
             MainWPUtility::update_option('mainwp_managesites_filter_status', $_REQUEST['status']);
         }
         
         if (!isset($_REQUEST['g'])) {
-            $_g = get_option('mainwp_managesites_filter_group');
-            if (!empty($_g)) {
-               $_REQUEST['g'] = $_g;
+            if ($no_request) {
+                $_g = get_option('mainwp_managesites_filter_group');
+                if (!empty($_g)) {
+                   $_REQUEST['g'] = $_g;
+                }
+            } else {
+                MainWPUtility::update_option('mainwp_managesites_filter_group', '');
             }
         } else {
             MainWPUtility::update_option('mainwp_managesites_filter_group', $_REQUEST['g']);
@@ -541,7 +551,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
             <input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
             <select name="g">
                 <option value="">Select a group</option>
-                <?php
+                <?php                
                 $groups = MainWPDB::Instance()->getGroupsForCurrentUser();
                 foreach ($groups as $group)
                 {

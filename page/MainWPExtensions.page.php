@@ -266,7 +266,14 @@ class MainWPExtensions
             MainWPUtility::update_option("mainwp_extensions_api_password", $password);
             die(json_encode(array('saved' => 1)));
         }
-        $test = MainWPApiManager::instance()->test_login_api($username, $password); 
+        $result = array();
+        try {
+            $test = MainWPApiManager::instance()->test_login_api($username, $password); 
+        } catch (Exception $e) {            
+            $return['error'] = $e->getMessage();  
+            die(json_encode($return));
+        }
+        
         $result = json_decode($test, true);        
         $save_login = (isset($_POST['saveLogin']) && ($_POST['saveLogin'] == '1')) ? true : false;    
         $return = array();
@@ -307,7 +314,14 @@ class MainWPExtensions
         $username = !empty($enscrypt_u) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_u) : "";
         $password = !empty($enscrypt_p) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_p) : "";             
  
-        $test = MainWPApiManager::instance()->test_login_api($username, $password); 
+        $result = array();
+        try {
+            $test = MainWPApiManager::instance()->test_login_api($username, $password); 
+        } catch (Exception $e) {            
+            $return['error'] = $e->getMessage();  
+            die(json_encode($return));
+        }
+        
         $result = json_decode($test, true);        
         $return = array();
         if (is_array($result)) {

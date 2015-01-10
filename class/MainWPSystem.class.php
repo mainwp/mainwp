@@ -1418,6 +1418,10 @@ class MainWPSystem
             function mainwp_current_user_can($cap_type = "", $cap)
             {
                 global $current_user;
+                
+                if ( defined( 'DOING_CRON' ) && DOING_CRON ) 
+                    return true;
+               
                 if (empty($current_user))
                 {
                     if (!function_exists('wp_get_current_user')) require_once(ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'pluggable.php');

@@ -5148,9 +5148,9 @@ jQuery(document).ready(function () {
         //Find all checked boxes
         jQuery('.websiteId').each(function () {
             var websiteId = jQuery(this).val();
-            var rowElement = jQuery(this).parents('tr');
+            //var rowElement = jQuery(this).parents('tr');
 
-            var selectedPlugins = rowElement.find('.selected_plugin:checked');
+            var selectedPlugins = jQuery('td[website-id=' + websiteId + ']').find('.selected_plugin:checked');
             if (selectedPlugins.length == 0) return;
 
             if ((action == 'activate') || (action == 'delete') || (action == 'deactivate') || (action == 'ignore_updates')) {
@@ -5633,9 +5633,9 @@ jQuery(document).ready(function () {
         //Find all checked boxes
         jQuery('.websiteId').each(function () {
             var websiteId = jQuery(this).val();
-            var rowElement = jQuery(this).parents('tr');
+            //var rowElement = jQuery(this).parents('tr');
 
-            var selectedThemes = rowElement.find('.selected_theme:checked');
+            var selectedThemes = jQuery('td[website-id=' + websiteId + ']').find('.selected_theme:checked');
             if (selectedThemes.length == 0) return;
 
             if (action == 'activate' || action == 'ignore_updates') {

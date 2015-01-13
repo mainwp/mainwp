@@ -343,11 +343,12 @@ class MainWPThemes
         <tr>
             <th></th>
             <?php
-            foreach ($themesVersion as $theme_name => $theme_title) {
+            foreach ($sites as $site_id => $site_url) {            
                 echo '<th style="height: 100px; padding: 5px ;">
                     <p style="font-family: Arial, Sans-Serif; text-shadow: none ; width: 100px !important; height: 30px ; text-align: center; width: auto; height: auto; font-size: 13px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); -o-transform: rotate(-90deg); -ms-transform: rotate(-90deg); writing-mode: lr-tb; ">
-                    <input type="checkbox" value="' . $themes[$theme_name] . '" id="' . $theme_name . '" version="'.$themesRealVersion[$theme_name].'" class="mainwp_theme_check_all" style="margin: 3px 0px 0px 0px; display: none ; " />
-                    <label for="' . $theme_name . '">' . $theme_title . '</label>
+                    <input class="websiteId" type="hidden" name="id" value="' . $site_id . '"/>
+                    <input type="checkbox" value="" id="' . $site_url . '" class="mainwp_site_check_all" style="margin: 3px 0px 0px 0px; display: none ; " />
+                    <label for="' . $site_url . '">' . $site_url . '</label>
                     </p>
                     </th>';
             }
@@ -355,20 +356,19 @@ class MainWPThemes
         </tr>
         </thead>
         <tbody>
-            <?php
-            foreach ($sites as $site_id => $site_url) {
+            
+              <?php
+            foreach ($themesVersion as $theme_name => $theme_title) {
                 ?>
             <tr>
-                <td>
-                    <input class="websiteId" type="hidden" name="id" value="<?php echo $site_id; ?>"/>
-<!--                    <strong>--><?php //echo $site_url; ?><!--</strong>-->
-                    <label for="<?php echo $site_url; ?>"><strong><?php echo $site_url; ?></strong></label>
-                    &nbsp;&nbsp;<input type="checkbox" value="" id="<?php echo $site_url; ?>"
-                                       class="mainwp_site_check_all" style="display: none ;"/>
+                <td>                    
+                    <label for="<?php echo $theme_name; ?>"><strong><?php echo $theme_title; ?></strong></label>
+                    &nbsp;&nbsp;<input type="checkbox" value="<?php echo $themes[$theme_name]; ?>" id="<?php echo $theme_name; ?>" version="<?php echo $themesRealVersion[$theme_name]; ?>"
+                                       class="mainwp_theme_check_all" style="display: none ;"/>
                 </td>
                 <?php
-                foreach ($themesVersion as $theme_name => $theme_title) {
-                    echo '<td style="text-align: center">';
+                foreach ($sites as $site_id => $site_url) { 
+                    echo '<td style="text-align: center" website-id="' . $site_id . '">';
                     if (isset($siteThemes[$site_id]) && isset($siteThemes[$site_id][$theme_name])) {
                         echo '<input type="checkbox" value="' . $themes[$theme_name] . '" version="'.$themesRealVersion[$theme_name].'" slug="' . $themesSlug[$theme_name]. '" class="selected_theme" />';
                     }
@@ -378,7 +378,7 @@ class MainWPThemes
             </tr>
                 <?php
             }
-            ?>
+            ?>      
         </tbody>
     </table>
 </div>

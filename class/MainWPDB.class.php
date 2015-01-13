@@ -1211,7 +1211,7 @@ class MainWPDB
                 $wpdb->query('DELETE FROM ' . $this->tableName('wp_group') . ' WHERE wpid=' . $websiteid);
                 //Remove GA stats
                 $showErrors = $wpdb->hide_errors();
-                $wpdb->query('DELETE FROM ' . $this->tableName('wp_ga') . ' WHERE wpid=' . $websiteid);
+                do_action('mainwp_ga_delete_site', $websiteid);                
                 if ($showErrors) $wpdb->show_errors();
                 //add groups with groupnames
                 foreach ($groupnames as $groupname)

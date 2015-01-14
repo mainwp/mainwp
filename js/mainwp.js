@@ -5148,9 +5148,9 @@ jQuery(document).ready(function () {
         //Find all checked boxes
         jQuery('.websiteId').each(function () {
             var websiteId = jQuery(this).val();
-            //var rowElement = jQuery(this).parents('tr');
+            var rowElement = jQuery(this).parents('tr');
 
-            var selectedPlugins = jQuery('td[website-id=' + websiteId + ']').find('.selected_plugin:checked');
+            var selectedPlugins = rowElement.find('.selected_plugin:checked');
             if (selectedPlugins.length == 0) return;
 
             if ((action == 'activate') || (action == 'delete') || (action == 'deactivate') || (action == 'ignore_updates')) {
@@ -5633,9 +5633,9 @@ jQuery(document).ready(function () {
         //Find all checked boxes
         jQuery('.websiteId').each(function () {
             var websiteId = jQuery(this).val();
-            //var rowElement = jQuery(this).parents('tr');
+            var rowElement = jQuery(this).parents('tr');
 
-            var selectedThemes = jQuery('td[website-id=' + websiteId + ']').find('.selected_theme:checked');
+            var selectedThemes = rowElement.find('.selected_theme:checked');
             if (selectedThemes.length == 0) return;
 
             if (action == 'activate' || action == 'ignore_updates') {
@@ -6898,3 +6898,40 @@ jQuery(document).ready(function() {
         return false;
     });
 });
+
+
+ 
+jQuery(document).ready(function($) {
+    mainwp_check_showhide_sections(); 
+    $('.mainwp_postbox .handlediv').live('click', function(){
+        var pr = $(this).parent();        
+        if (pr.hasClass('closed'))
+            mainwp_set_showhide_section(pr, true);
+        else 
+            mainwp_set_showhide_section(pr, false);       
+    });    
+});
+
+mainwp_set_showhide_section = function(obj, show) {       
+    var sec = obj.attr('section');
+    if (show) {
+        obj.removeClass('closed');                
+        mainwp_setCookie('mainwp_showhide_section_' + sec, 'show');
+    } else {
+        obj.addClass('closed');               
+        mainwp_setCookie('mainwp_showhide_section_' + sec, '');
+    }
+}
+
+mainwp_check_showhide_sections = function() {       
+    var pr, sec;
+    jQuery('.mainwp_postbox .handlediv').each(function() {
+        pr = jQuery(this).parent(); 
+        sec = pr.attr('section');
+        if (mainwp_getCookie('mainwp_showhide_section_' + sec) == 'show') {            
+            mainwp_set_showhide_section(pr, true);
+        } else {
+            mainwp_set_showhide_section(pr, false);
+        }
+    }); 
+}

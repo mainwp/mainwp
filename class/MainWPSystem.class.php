@@ -1845,7 +1845,7 @@ class MainWPSystem
         }
         echo '<script type="text/javascript">var mainwp_ajax_nonce = "' . wp_create_nonce('mainwp_ajax') . '"</script>';
         echo '<script type="text/javascript" src="' . plugins_url('js/FileSaver.js', dirname(__FILE__)) . '"></script>';
-        echo '<script type="text/javascript" src="' . plugins_url('js/jqueryFileTree.js', dirname(__FILE__)) . '"></script>';
+        echo '<script type="text/javascript" src="' . plugins_url('js/jqueryFileTree.js', dirname(__FILE__)) . '"></script>';        
         echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('css/jqueryFileTree.css', dirname(__FILE__)) . '" />';
         // mainwp-article-poster
 //        echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('mainwp-article-poster/css/admin.css', dirname(__FILE__)) . '" />';

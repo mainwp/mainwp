@@ -1039,6 +1039,26 @@ li.hoverli {
     background: #f9f9f9 ;
 }
 
+#mainwp_plugins_content .headcol, #mainwp_themes_content .headcol{
+    position:absolute; 
+    left: 0;
+    width: 22em;
+}
+#mainwp_plugins_content th.headcol, #mainwp_themes_content th.headcol{
+    border-bottom: 0;
+}
+#mainwp_plugins_content #mainwp-table-overflow, #mainwp_themes_content #mainwp-table-overflow{
+    margin-left: 22em;
+}
+
+#mainwp-table-overflow table tbody tr:nth-child(odd) td.headcol {
+background: #fff !important;
+}
+
+#mainwp-table-overflow table tbody tr:nth-child(even) td.headcol {
+background: #d5e4af !important;
+}
+
 #mainwp_background-box {
     min-height: 80vh;
     height: 100% ;
@@ -2759,4 +2779,23 @@ input.mainwp-field:-webkit-autofill {
 
 .mainwp_api_postbox.closed > .mainwp-inside{
     display: none;
+}
+
+.mainwp_postbox .handlediv:before{
+   content: '\f142';
+}
+.mainwp_postbox.closed .handlediv:before{
+   content: '\f140';
+}
+.mainwp_postbox .handlediv:before{
+    right: 12px;
+    font: normal 20px/1 'dashicons';
+    speak: none;
+    display: inline-block;
+    padding: 8px 10px;
+    top: 0;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-decoration: none !important;
 }

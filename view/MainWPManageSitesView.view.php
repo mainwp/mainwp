@@ -480,8 +480,8 @@ class MainWPManageSitesView
         }
 
         ?>
-       <div id="mainwp_managesites_add_errors" class="mainwp_error"></div>
-       <div id="mainwp_managesites_add_message" class="mainwp_updated updated"></div>
+       <div id="mainwp_managesites_add_errors" class="mainwp_info-box-red"></div>
+       <div id="mainwp_managesites_add_message" class="mainwp_info-box"></div>
        <div class="postbox" id="mainwp-add-a-single-site">
        <h3 class="mainwp_box_title"><span><?php _e('Add a Single Site','mainwp'); ?></span></h3>
        <div class="inside">

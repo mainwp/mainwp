@@ -588,45 +588,46 @@ class MainWPPlugins
         <thead>
         <tr>
             <th class="headcol"></th>
-             <?php
-            foreach ($sites as $site_id => $site_url) {
-                 echo '<th style="height: 100px; padding: 5px ;" class="long">
-                    <p style="font-family: Arial, Sans-Serif; text-shadow: none ; width: 100px !important; height: 30px ; text-align: center; width: auto; height: auto; font-size: 13px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); -o-transform: rotate(-90deg); -ms-transform: rotate(-90deg); writing-mode: lr-tb; ">
-                    <input class="websiteId" type="hidden" name="id" value="' . $site_id . '"/>
-                    <input type="checkbox" value="" id="' . $site_url . '" class="mainwp_site_check_all" style="margin: 3px 0px 0px 0px; display: none ; " />
-                    <label for="' . $site_url . '">' . $site_url . '</label>
-                    </p>
-                    </th>';
+            <?php
+            foreach ($pluginsVersion as $plugin_name => $plugin_title) {
+                echo '<th style="height: 100px; padding: 5px ;" class="long">
+<p style="font-family: Arial, Sans-Serif; text-shadow: none ; width: 100px !important; height: 30px ; text-align: center; width: auto; height: auto; font-size: 13px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); -o-transform: rotate(-90deg); -ms-transform: rotate(-90deg); writing-mode: lr-tb; ">
+<input type="checkbox" value="' . $plugins[$plugin_name] . '" id="' . $plugin_name . '" class="mainwp_plugin_check_all" style="margin: 3px 0px 0px 0px; display: none ; " />
+<label for="' . $plugin_name . '">' . $plugin_title . '</label>
+</p>
+</th>';
             }
             ?>
         </tr>
         </thead>
         <tbody>
             <?php
-            foreach ($pluginsVersion as $plugin_name => $plugin_title) {
-                 ?>
-                <tr>
-                    <td class="headcol">                        
-                        <label for="<?php echo $plugin_name; ?>"><strong><?php echo $plugin_title; ?></strong></label>
-                        &nbsp;&nbsp;<input type="checkbox" value="<?php echo $plugins[$plugin_name]; ?>" id="<?php echo $plugin_name ?>" class="mainwp_plugin_check_all"
-                                           style="display: none ;"/>
-                    </td>
-                    <?php
-                    foreach ($sites as $site_id => $site_url) {
-                        echo '<td class="long" website-id="' . $site_id . '" style="text-align: center">';
-                        if (isset($sitePlugins[$site_id]) && isset($sitePlugins[$site_id][$plugin_name])) {
-                            echo '<input type="checkbox" value="' . $plugins[$plugin_name] . '" name="'. $pluginsName[$plugin_name].'" class="selected_plugin" />';
-                        }
-                        echo '</td>';
+            foreach ($sites as $site_id => $site_url) {
+                ?>
+            <tr>
+                <td class="headcol">
+                    <input class="websiteId" type="hidden" name="id" value="<?php echo $site_id; ?>"/>
+                    <label for="<?php echo $site_url; ?>"><strong><?php echo $site_url; ?></strong></label>
+                    &nbsp;&nbsp;<input type="checkbox" value="" id="<?php echo $site_url; ?>"
+                                       class="mainwp_site_check_all" style="display: none ;"/>
+                </td>
+                <?php
+                foreach ($pluginsVersion as $plugin_name => $plugin_title) {
+                    echo '<td class="long" style="text-align: center">';
+                    if (isset($sitePlugins[$site_id]) && isset($sitePlugins[$site_id][$plugin_name])) {
+                        echo '<input type="checkbox" value="' . $plugins[$plugin_name] . '" name="'. $pluginsName[$plugin_name].'" class="selected_plugin" />';
                     }
-                    ?>
-                </tr>
+                    echo '</td>';
+                }
+                ?>
+            </tr>
                 <?php
             }
-            ?>            
+            ?>
         </tbody>
     </table>
 </div>
+         
         <?php
         $newOutput = ob_get_clean();
         echo $newOutput;

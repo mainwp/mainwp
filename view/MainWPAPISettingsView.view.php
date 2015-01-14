@@ -83,7 +83,8 @@ class MainWPAPISettingsView
         $username = get_option("mainwp_api_username");
         $password = MainWPUtility::decrypt(get_option('mainwp_api_password'), 'MainWPAPI');
         ?>
-        <div class="postbox" id="mainwp-account-information">
+        <div class="postbox mainwp_postbox" id="mainwp-account-information" section="setting-1">
+        <div class="handlediv"><br /></div> 
         <h3 class="mainwp_box_title"><span><?php _e('MainWP Account Information','mainwp'); ?></span></h3>
         <div class="inside">
         <div id="mainwp_api_errors" class="mainwp_error error" style="display: none"></div>
@@ -110,7 +111,7 @@ class MainWPAPISettingsView
             </tr>
             <span class="submit">
             <tr>
-            <th scope="row" colspan="2"><input type="button" name="submit" id="mainwp-api-submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>" /></th>
+            <th scope="row" colspan="2"><input type="button" name="submit" id="mainwp-api-submit" class="button-primary" value="<?php _e('Save Login','mainwp'); ?>" /></th>
             </tr>
             </span>
             </tbody>

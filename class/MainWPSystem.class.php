@@ -1474,13 +1474,23 @@ class MainWPSystem
     function uploadFile($file)
     {
         header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
+        if (MainWPUtility::endsWith($file, '.tar.gz'))
+        {
+            header('Content-Type: application/x-gzip');
+            header("Content-Encoding: gzip'");
+        }
+        else
+        {
+            header('Content-Type: application/octet-stream');
+        }
         header('Content-Disposition: attachment; filename="' . basename($file) . '"');
         header('Expires: 0');
         header('Cache-Control: must-revalidate');
         header('Pragma: public');
         header('Content-Length: ' . filesize($file));
+        while (@ob_end_flush());
         $this->readfile_chunked($file);
+		exit();
     }
 
     function readfile_chunked($filename)

@@ -223,7 +223,10 @@ class MainWPSettings
         <div id="ajax-information-zone" class="updated"><p><?php _e('Your settings have been saved.','mainwp'); ?></p></div>
         <?php
         }
+
+        MainWPAPISettingsView::renderForumSignup();
             ?>
+
         <form method="POST" action="admin.php?page=Settings" id="mainwp-settings-page-form">
             <?php           
             

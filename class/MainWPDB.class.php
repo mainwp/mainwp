@@ -433,7 +433,7 @@ class MainWPDB
         }
         $where = ($userId != null) ? ' userid = ' . $userId : '';
         $where .= $this->getWhereAllowAccessGroupsSites("site", "wp");
-        $qry = 'SELECT wp_sync.dtsSync FROM '.$this->tableName('wp'). ' wp JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid WHERE 1 ' . $where . ' ORDER BY wp_sync.dtsSync ASC LIMIT 1';
+        $qry = 'SELECT wp_sync.dtsSync FROM '.$this->tableName('wp'). ' wp JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid WHERE wp_sync.sync_errors = "" ' . $where . ' ORDER BY wp_sync.dtsSync ASC LIMIT 1';
 
         return $wpdb->get_var($qry);
     }

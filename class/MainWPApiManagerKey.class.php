@@ -84,10 +84,24 @@ class MainWPApiManagerKey {
 
 		$args = wp_parse_args( $defaults, $args );
 
+                $ssl_verifyhost = false;
+                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
+                {
+                    $ssl_verifyhost = true;
+                } 
+                
+                $http_args = array(
+                    'body'			=> $args,                    
+                    'httpversion'	=> '1.1',
+                    'timeout'		=> 20,
+                    'user-agent'  => get_bloginfo( 'url' ),
+                    'sslverify'   => $ssl_verifyhost
+                );   
+                
 		//$target_url = self::create_software_api_url( $args );                
 		//$request = wp_remote_get( $target_url );
                 
-                $request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/am-software-api/', array( 'body' => $args ) );
+                $request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/am-software-api/', $http_args );
 
 		if( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 		// Request failed
@@ -106,16 +120,36 @@ class MainWPApiManagerKey {
                     );
 
 		$args = wp_parse_args( $defaults, $args );
-
+                
+                $ssl_verifyhost = false;
+                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
+                {
+                    $ssl_verifyhost = true;
+                } 
+                
+                $http_args = array(
+                    'body'			=> $args,                    
+                    'httpversion'	=> '1.1',
+                    'timeout'		=> 20,
+                    'user-agent'  => get_bloginfo( 'url' ),
+                    'sslverify'   => $ssl_verifyhost
+                );                  
+                
 		//$target_url = self::create_software_api_url( $args );                
 		//$request = wp_remote_get( $target_url );
                 
-                $request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/am-software-api/', array( 'body' => $args ) );
+                $request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/am-software-api/', $http_args );
 
-		if( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
-		// Request failed
-			return false;
+		if( is_wp_error( $request )) {
+                    throw new Exception($request->get_error_message());            
+                    return false;
 		}
+
+                $code = wp_remote_retrieve_response_code( $request );                
+                if ($code != 200 ) {
+                    throw new Exception("Error: code " . $code);            
+                    return false;
+                }
 
 		$response = wp_remote_retrieve_body( $request );
 
@@ -130,11 +164,25 @@ class MainWPApiManagerKey {
                     );
 
 		$args = wp_parse_args( $defaults, $args );
+                
+                $ssl_verifyhost = false;
+                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
+                {
+                    $ssl_verifyhost = true;
+                } 
+                
+                $http_args = array(
+                    'body'			=> $args,                    
+                    'httpversion'	=> '1.1',
+                    'timeout'		=> 20,
+                    'user-agent'  => get_bloginfo( 'url' ),
+                    'sslverify'   => $ssl_verifyhost
+                );  
 
 		//$target_url = self::create_software_api_url( $args );                
 		//$request = wp_remote_get( $target_url );
                 
-                $request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/am-software-api/', array( 'body' => $args ) );
+                $request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/am-software-api/', $http_args );
 
 		if( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 		// Request failed

@@ -341,7 +341,7 @@ class MainWPThemes
     <table class="wp-list-table widefat fixed pages" style="width: auto; word-wrap: normal">
         <thead>
         <tr>
-            <th></th>
+            <th class="headcol"></th>
             <?php
             foreach ($themesVersion as $theme_name => $theme_title) {
                 echo '<th style="height: 100px; padding: 5px ;">
@@ -359,7 +359,7 @@ class MainWPThemes
             foreach ($sites as $site_id => $site_url) {
                 ?>
             <tr>
-                <td>
+                <td class="headcol">
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $site_id; ?>"/>
 <!--                    <strong>--><?php //echo $site_url; ?><!--</strong>-->
                     <label for="<?php echo $site_url; ?>"><strong><?php echo $site_url; ?></strong></label>

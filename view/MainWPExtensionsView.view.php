@@ -18,7 +18,7 @@ class MainWPExtensionsView
         <h2><?php _e('Extensions', 'mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
         <?php if ($shownPage === '') { ?>
         <div id="mainwp-extensions-categories-menu" class="postbox">
-                <div class="mainwp-inside"><span id="mainwp-extensions-menu-title"><?php _e('Get MainWP Extensions','mainwp');?></span><span style="float: right;"><a href="https://mainwp.com/member/signup/mainwpsignup" target="_blank" class="mainwp-upgrade-button button-primary button"><?php _e('Create MainWP Account','mainwp'); ?></a></span></div>
+                <div class="mainwp-inside"><span id="mainwp-extensions-menu-title"><?php _e('Get MainWP Extensions','mainwp');?></span></div>
                 <div style="border-bottom: 1px Solid #e5e5e5;"></div>
                 <div class="mainwp-inside mainwp-align-center" style="clear: both;">
                 <div id="mainwp-extensions-cat-menu">

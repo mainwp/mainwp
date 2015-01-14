@@ -225,8 +225,7 @@ class MainWPSettings
         }
             ?>
         <form method="POST" action="admin.php?page=Settings" id="mainwp-settings-page-form">
-            <?php
-            MainWPAPISettingsView::renderSettings();
+            <?php           
             
             MainWPOptions::renderSettings();
             
@@ -234,10 +233,13 @@ class MainWPSettings
             
             MainWPOfflineChecks::renderSettings();
             
-            MainWPFootprint::renderSettings();
+            MainWPFootprint::renderSettings();            
+            
+            MainWPAPISettingsView::renderSettings();
+            
             ?>
             <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>"/>
-            </p>
+            </p>             
         </form>
     <?php
         self::renderFooter('');

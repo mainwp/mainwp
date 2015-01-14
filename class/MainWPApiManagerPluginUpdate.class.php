@@ -33,8 +33,6 @@ class MainWPApiManagerPluginUpdate {
 
             return self::$_instance;
 	}
-
-	public $upgrade_url; // URL to access the Update API Manager.
 	
 	/**
 	 * Constructor.
@@ -44,13 +42,12 @@ class MainWPApiManagerPluginUpdate {
 	 * @return void
 	 */
 	public function __construct() {
-            // API data
-            $this->upgrade_url 			= MainWPApiManager::instance()->upgrade_url;
+            // API data            
 	}
 
 	// Upgrade API URL
 	private function create_upgrade_api_url( $args ) {
-		$upgrade_url = add_query_arg( 'wc-api', 'upgrade-api', $this->upgrade_url );
+		$upgrade_url = add_query_arg( 'wc-api', 'upgrade-api', MainWPApiManager::instance()->upgrade_url );
 
 		return $upgrade_url . '&' . http_build_query( $args );
 	}
@@ -84,7 +81,6 @@ class MainWPApiManagerPluginUpdate {
 		if ( isset( $response ) && is_object( $response ) && $response !== false ) {
 			return $response;
 		}
-
 	}
         
 	/**
@@ -96,11 +92,24 @@ class MainWPApiManagerPluginUpdate {
 	 */
 	public function plugin_information( $args ) {
 
-		$target_url = $this->create_upgrade_api_url( $args );
-
-		$request = wp_remote_get( $target_url );
-
-		//$request = wp_remote_post( $this->upgrade_url . 'wc-api/upgrade-api/', array( 'body' => $args ) );
+//		$target_url = $this->create_upgrade_api_url( $args );
+//		$request = wp_remote_get( $target_url );
+                
+                $ssl_verifyhost = false;
+                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
+                {
+                    $ssl_verifyhost = true;
+                } 
+                
+                $http_args = array(
+                    'body'			=> $args,                    
+                    'httpversion'	=> '1.1',
+                    'timeout'		=> 20,
+                    'user-agent'  => get_bloginfo( 'url' ),
+                    'sslverify'   => $ssl_verifyhost
+                );   
+ 
+		$request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/upgrade-api/', $http_args );
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			return false;

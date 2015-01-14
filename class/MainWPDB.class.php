@@ -603,8 +603,7 @@ class MainWPDB
     public function getWhereAllowAccessGroupsSites($type = "", $site_table_alias = "", $group_table_alias = "") {
 
         // To fix bug run from cron job
-        global $current_user;
-        if ($current_user->ID == 0)
+        if ( defined( 'DOING_CRON' ) && DOING_CRON )              
             return "";
 
         $allowed_sites = apply_filters("mainwp_currentuserallowedaccesssites", "all");
@@ -1212,7 +1211,7 @@ class MainWPDB
                 $wpdb->query('DELETE FROM ' . $this->tableName('wp_group') . ' WHERE wpid=' . $websiteid);
                 //Remove GA stats
                 $showErrors = $wpdb->hide_errors();
-                $wpdb->query('DELETE FROM ' . $this->tableName('wp_ga') . ' WHERE wpid=' . $websiteid);
+                do_action('mainwp_ga_delete_site', $websiteid);                
                 if ($showErrors) $wpdb->show_errors();
                 //add groups with groupnames
                 foreach ($groupnames as $groupname)

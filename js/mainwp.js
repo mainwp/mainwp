@@ -6902,3 +6902,38 @@ jQuery(document).ready(function() {
 jQuery(document).on('click', '.mainwpactionlogsline', function(){
    jQuery(this).next().toggle();
 });
+ 
+jQuery(document).ready(function($) {
+    mainwp_check_showhide_sections(); 
+    $('.mainwp_postbox .handlediv').live('click', function(){
+        var pr = $(this).parent();        
+        if (pr.hasClass('closed'))
+            mainwp_set_showhide_section(pr, true);
+        else 
+            mainwp_set_showhide_section(pr, false);       
+    });    
+});
+
+mainwp_set_showhide_section = function(obj, show) {       
+    var sec = obj.attr('section');
+    if (show) {
+        obj.removeClass('closed');                
+        mainwp_setCookie('mainwp_showhide_section_' + sec, 'show');
+    } else {
+        obj.addClass('closed');               
+        mainwp_setCookie('mainwp_showhide_section_' + sec, '');
+    }
+}
+
+mainwp_check_showhide_sections = function() {       
+    var pr, sec;
+    jQuery('.mainwp_postbox .handlediv').each(function() {
+        pr = jQuery(this).parent(); 
+        sec = pr.attr('section');
+        if (mainwp_getCookie('mainwp_showhide_section_' + sec) == 'show') {            
+            mainwp_set_showhide_section(pr, true);
+        } else {
+            mainwp_set_showhide_section(pr, false);
+        }
+    }); 
+}

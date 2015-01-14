@@ -83,13 +83,16 @@ class MainWPAPISettingsView
         $username = get_option("mainwp_api_username");
         $password = MainWPUtility::decrypt(get_option('mainwp_api_password'), 'MainWPAPI');
         ?>
-        <div class="postbox" id="mainwp-account-information">
+        <div class="postbox mainwp_postbox" id="mainwp-account-information" section="setting-1">
+        <div class="handlediv"><br /></div> 
         <h3 class="mainwp_box_title"><span><?php _e('MainWP Account Information','mainwp'); ?></span></h3>
         <div class="inside">
         <div id="mainwp_api_errors" class="mainwp_error error" style="display: none"></div>
         <div id="mainwp_api_message" class="mainwp_updated updated" style="display: none"></div>
 
-        <h3 style="border-bottom: none !important;"><?php _e('MainWP Account - <em>Required for Support, Extensions, Ideas and Automated Cron Jobs</em>','mainwp'); ?>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://mainwp.com/dashboard-signup" target="_blank" class="button button-primary mainwp-upgrade-button button-hero" style="margin-top: -1em"><?php _e('Create MainWP Account', 'mainwp'); ?></a></h3>
+        <h3 style="border-bottom: none !important;"><?php _e('Have a question? Would you like to discuss MainWP with other users?', 'mainwp'); ?>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <a href="https://mainwp.com/member/signup/index/c/forumsignup" target="_blank" class="button button-primary mainwp-upgrade-button button-hero" style="margin-top: -1em"><?php _e('Sign Up Here', 'mainwp'); ?></a></h3> 
+        <div class="mainwp_info-box-red" style="margin-top: 5px;"><?php _e('<strong>IMPORTANT</strong>: This section is being retired and is replaced by the new Extension API and <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/" target="_blank">Uptime Robot Cron wp-cron</a> trigger directions. You no longer need to add any information to this section it is here for a limited time to allow previous users time to update their Extensions to the new API system and setup their Uptime Robot accounts.','mainwp'); ?></div>
         <table class="form-table">
             <tbody>
             <tr>
@@ -108,7 +111,7 @@ class MainWPAPISettingsView
             </tr>
             <span class="submit">
             <tr>
-            <th scope="row" colspan="2"><input type="button" name="submit" id="mainwp-api-submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>" /></th>
+            <th scope="row" colspan="2"><input type="button" name="submit" id="mainwp-api-submit" class="button-primary" value="<?php _e('Save Login','mainwp'); ?>" /></th>
             </tr>
             </span>
             </tbody>

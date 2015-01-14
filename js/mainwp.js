@@ -6899,7 +6899,9 @@ jQuery(document).ready(function() {
     });
 });
 
-
+jQuery(document).on('click', '.mainwpactionlogsline', function(){
+   jQuery(this).next().toggle();
+});
  
 jQuery(document).ready(function($) {
     mainwp_check_showhide_sections(); 

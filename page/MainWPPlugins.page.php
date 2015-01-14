@@ -627,7 +627,6 @@ class MainWPPlugins
         </tbody>
     </table>
 </div>
-         
         <?php
         $newOutput = ob_get_clean();
         echo $newOutput;

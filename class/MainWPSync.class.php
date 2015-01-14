@@ -2,7 +2,7 @@
 
 class MainWPSync
 {
-    public static function syncSite(&$pWebsite = null, $pForceFetch = false)
+    public static function syncSite(&$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true)
     {
         if ($pWebsite == null) return false;
         $userExtension = MainWPDB::Instance()->getUserExtensionByUserId($pWebsite->userid);
@@ -62,7 +62,7 @@ class MainWPSync
                 true, $pForceFetch
             );
 
-            return self::syncInformationArray($pWebsite, $information);
+            return self::syncInformationArray($pWebsite, $information, '', 1, false, $pAllowDisconnect);
         }
         catch (MainWPException $e)
         {
@@ -80,11 +80,11 @@ class MainWPSync
                 $offline_check_result = 1;
             }
 
-            return self::syncInformationArray($pWebsite, $information, $sync_errors, $offline_check_result, true);
+            return self::syncInformationArray($pWebsite, $information, $sync_errors, $offline_check_result, true, $pAllowDisconnect);
         }
     }
 
-    public static function syncInformationArray(&$pWebsite, &$information, $sync_errors = '', $offline_check_result = 1, $error = false)
+    public static function syncInformationArray(&$pWebsite, &$information, $sync_errors = '', $offline_check_result = 1, $error = false, $pAllowDisconnect = true)
     {
         $emptyArray = json_encode(array());
         $websiteValues = array(
@@ -276,21 +276,33 @@ class MainWPSync
             if (isset($information['wpversion']))
             {
                 $websiteSyncValues['uptodate'] = 1;
+                $done = true;
             }
             else if (isset($information['error']))
             {
+                MainWPLogger::Instance()->warningForWebsite($pWebsite, 'SYNC ERROR', '[' . $information['error'] . ']');
                 $error = true;
+                $done = true;
                 $websiteSyncValues['sync_errors'] = __('Error - ', 'mainwp') . $information['error'];
+            }
+            else if (!empty($sync_errors))
+            {
+                MainWPLogger::Instance()->warningForWebsite($pWebsite, 'SYNC ERROR', '[' . $sync_errors . ']');
+
+                $error = true;
+                if (!$pAllowDisconnect) $sync_errors = '';
+
+                $websiteSyncValues['sync_errors'] = $sync_errors;
             }
             else
             {
+                MainWPLogger::Instance()->warningForWebsite($pWebsite, 'SYNC ERROR', '[Undefined error]');
                 $error = true;
-                $websiteSyncValues['sync_errors'] = __('Undefined error - please reinstall the MainWP Child Plugin on the client site', 'mainwp');
+                if ($pAllowDisconnect) $websiteSyncValues['sync_errors'] = __('Undefined error - please reinstall the MainWP Child Plugin on the client site', 'mainwp');
             }
         }
 
-
-        $websiteSyncValues['dtsSync'] = time();
+        if ($done) $websiteSyncValues['dtsSync'] = time();
         MainWPDB::Instance()->updateWebsiteSyncValues($pWebsite->id, $websiteSyncValues);
         MainWPDB::Instance()->updateWebsiteValues($pWebsite->id, $websiteValues);
 

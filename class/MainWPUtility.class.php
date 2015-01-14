@@ -575,7 +575,7 @@ class MainWPUtility
         $postdata = MainWPUtility::getPostDataAuthed($website, $what, $params);
         $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed);
       
-        if (is_array($information) && isset($information['sync']))
+        if (is_array($information) && isset($information['sync']) && !empty($information['sync']))
         {
             MainWPSync::syncInformationArray($website, $information['sync']);
             unset($information['sync']);
@@ -637,9 +637,9 @@ class MainWPUtility
         }
         catch (Exception $e)
         {
-            if (!$pRetryFailed || ((time() - $start) > (60 * 2)))
+            if (!$pRetryFailed || ((time() - $start) > 30))
             {
-                //If more then 2minutes past since the initial request, do not retry this!
+                //If more then 30secs past since the initial request, do not retry this!
                 throw $e;
             }
 
@@ -894,11 +894,14 @@ class MainWPUtility
             MainWPDB::Instance()->insertOrUpdateRequestLog($website->id, $ip, null, microtime(true));
         }
 
-        if (($data === false) && ($http_status == 0)) {
+        if (($data === false) && ($http_status == 0))
+        {
+            MainWPLogger::Instance()->debugForWebsite($website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=0][' . $err . ']');
             throw new MainWPException('HTTPERROR', $err);
         }
         else if (empty($data) && !empty($err))
         {
+            MainWPLogger::Instance()->debugForWebsite($website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']');
             throw new MainWPException('HTTPERROR', $err);
         }
         else if (preg_match('/<mainwp>(.*)<\/mainwp>/', $data, $results) > 0) {
@@ -908,8 +911,8 @@ class MainWPUtility
         }
         else
         {
+            MainWPLogger::Instance()->debugForWebsite($website, 'fetchUrl', '[' . $url . '] Result was: [' . $data . ']');
             throw new MainWPException('NOMAINWP', $url);
-//            throw new MainWPException('ERROR ' . print_r($data,1), $url);
         }
     }
 

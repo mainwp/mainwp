@@ -833,7 +833,7 @@ class MainWPManageSites
             MainWPUtility::getFileParameter($website) => $file,
             'fileUID' => $pFileNameUID,
             'pid' => $pid,
-            'append' => ($append ? 1 : 0)), false, false, false);
+            'append' => ($append ? 1 : 0)), false, false, true);
         do_action('mainwp_managesite_backup', $website, array('type' => $pType), $information);
 
         if (isset($information['error']))

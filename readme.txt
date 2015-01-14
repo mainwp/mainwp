@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.1
-Stable tag: 2.0.5
+Stable tag: 2.0.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,17 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.6 =
+* Fixed: Incorrect dashboard out of sync message
+* Fixed: Hooks for the Google Analytics Extension
+* Fixed: Hooks for the Client Reports extension
+* Fixed: Error messages styling when adding a new child site
+* Tweaked: MainWP Account Information box moved to the bottom of the Settings page.
+* Tweaked: Messages in the MainWP Account Information box
+* Tweaked: Manage Plugins table, added static first column
+* Tweaked: Manage Themes table, added static first column
+* Removed: Create MainWP Account from the Extensions page
 
 = 2.0.5 =
 * Fixed: Search issue (not showing all results when searching the sites page)

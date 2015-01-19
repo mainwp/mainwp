@@ -92,24 +92,10 @@ class MainWPApiManagerPluginUpdate {
 	 */
 	public function plugin_information( $args ) {
 
-//		$target_url = $this->create_upgrade_api_url( $args );
-//		$request = wp_remote_get( $target_url );
+		$target_url = $this->create_upgrade_api_url( $args );
+		$request = wp_remote_get( $target_url );
                 
-                $ssl_verifyhost = false;
-                if (((get_option('mainwp_sslVerifyCertificate') === false) || (get_option('mainwp_sslVerifyCertificate') == 1)))
-                {
-                    $ssl_verifyhost = true;
-                } 
-                
-                $http_args = array(
-                    'body'			=> $args,                    
-                    'httpversion'	=> '1.1',
-                    'timeout'		=> 20,
-                    'user-agent'  => get_bloginfo( 'url' ),
-                    'sslverify'   => $ssl_verifyhost
-                );   
- 
-		$request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/upgrade-api/', $http_args );
+//		$request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/upgrade-api/', array('body' => $args) );
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			return false;

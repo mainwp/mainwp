@@ -47,10 +47,16 @@ class MainWPExtensionsView
             $username = !empty($enscrypt_u) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_u) : "";
             $password = !empty($enscrypt_p) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_p) : "";             
             $checked_save = true;
-        }  
+        } 
+    
+        if (!MainWPUtility::resetUserCookie('api_bulk_install')) {
+        ?>
+            <span id="mainwp_api_postbox_reset_showhide"></span>
+        <?php 
+        }
 ?>
         
-    <div class="postbox mainwp_api_postbox" section="1">
+    <div class="postbox mainwp_api_postbox" section="1" >
            <div class="handlediv"><br></div>
            <h3 class="mainwp_box_title"><span><?php _e("Bulk Install and Activate Extensions", "mainwp"); ?></span></h3>                          
            <div class="mainwp-inside" style="clear: both;">

@@ -105,7 +105,8 @@ class MainWPPostHandler
         //Page: ManageTips
         add_action('wp_ajax_mainwp_managetips_update', array(&$this, 'mainwp_managetips_update')); //ok
         add_action('wp_ajax_mainwp_tips_update', array(&$this, 'mainwp_tips_update')); //ok
-
+        add_action('wp_ajax_mainwp_reset_usercookies', array(&$this, 'mainwp_reset_usercookies')); //ok
+        
         //Page: OfflineChecks
         if (mainwp_current_user_can("dashboard", "manage_offline_checks")) {
             add_action('wp_ajax_mainwp_offline_check_save', array(&$this, 'mainwp_offline_check_save')); //ok
@@ -553,6 +554,22 @@ class MainWPPostHandler
         }
         die(1);
     }
+    
+    function mainwp_reset_usercookies()
+    {
+        global $current_user;
+        if (($user_id = $current_user->ID) && isset($_POST['what']) && !empty($_POST['what'])) {
+            $user_cookies = get_user_option('mainwp_saved_user_cookies');
+            if (!is_array($user_cookies))
+                $user_cookies = array();
+            if (!isset($user_cookies[$_POST['what']])) {
+                $user_cookies[$_POST['what']] = 1;
+                update_user_option($user_id, "mainwp_saved_user_cookies", $user_cookies);            
+            }
+        }
+        die(1);
+    }
+    
     
     /**
      * Page: SecurityIssues

@@ -1878,4 +1878,27 @@ class MainWPUtility
         }
         return true;
     }
+    
+    public static function resetUserCookie($what, $value = "") {
+        global $current_user;
+        if ($user_id = $current_user->ID) {           
+            $reset_cookies = get_option("mainwp_reset_user_cookies");
+            if (!is_array($reset_cookies)) $reset_cookies = array(); 
+            
+            if (!isset($reset_cookies[$user_id]) || !isset($reset_cookies[$user_id][$what])) { 
+                $reset_cookies[$user_id][$what] = 1;
+                MainWPUtility::update_option("mainwp_reset_user_cookies", $reset_cookies);
+                update_user_option($user_id, "mainwp_saved_user_cookies", array());                 
+                return false;
+            }
+
+            $user_cookies = get_user_option('mainwp_saved_user_cookies');
+            if (!is_array($user_cookies)) $user_cookies = array();  
+            if (!isset($user_cookies[$what])) {                                                
+                return false;
+            }            
+        }
+        return true;
+    }
+    
 }

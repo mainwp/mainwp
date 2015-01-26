@@ -435,7 +435,7 @@ class MainWPPage
                 <td class="date column-date"><abbr
                         title="<?php echo $page['dts']; ?>"><?php echo $page['dts']; ?></abbr>
                 </td>
-                <td class="status column-status"><?php echo MainWPPage::getStatus($page['status']); ?>
+                <td class="status column-status"><?php echo self::getStatus($page['status']); ?>
                 </td>
                 <td class="categories column-categories">
                     <a href="<?php echo $website->url; ?>" target="_blank"><?php echo $website->url; ?></a>
@@ -510,7 +510,6 @@ class MainWPPage
     {
         ?>
     <div class="wrap">
-        <?php //self::renderHeader(false, true); ?>
       <?php //  Use this to add a new page. To bulk change pages click on the "Manage" tab.
           
         do_action("mainwp_bulkpage_before_post", $_GET['id']);               
@@ -537,9 +536,7 @@ class MainWPPage
                     include_once(ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php');
                     $post_featured_image = get_post_thumbnail_id($id);
                     $mainwp_upload_dir = wp_upload_dir();
-    //                $results = apply_filters('mainwp-pre-posting-posts', array($post), true);
-    //                $post = $results[0];    
-                    $new_post = array(                    
+                    $new_post = array(
                         'post_title' => $post->post_title,
                         'post_content' => $post->post_content,
                         'post_status' => $post->post_status, //was 'publish'

@@ -632,7 +632,6 @@ class MainWPManageBackups
     public static function executeBackupTask($task, $nrOfSites = 0, $updateRun = true)
     {
         if ($updateRun) MainWPDB::Instance()->updateBackupRun($task->id);
-//        MainWPDB::Instance()->updateBackupLast($task->id);
 
         $task = MainWPDB::Instance()->getBackupTaskById($task->id);
 

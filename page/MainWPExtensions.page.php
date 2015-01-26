@@ -25,26 +25,8 @@ class MainWPExtensions
 
         return $pSlug;
     }
-
-    public static function getSlugs()
-    {
-        $currentExtensions = (self::$extensionsLoaded ? self::$extensions : get_option('mainwp_extensions'));
-
-        if (!is_array($currentExtensions) || empty($currentExtensions)) return '';
-
-        $out = '';
-        foreach ($currentExtensions as $extension)
-        {
-            if (!isset($extension['api']) || $extension['api'] == '') continue;
-
-            if ($out != '') $out .= ',';
-            $out .= $extension['api'];
-        }
-
-        return ($out == '' ? '' : $out);
-    }
     
-    public static function getSlugsTwo()
+    public static function getSlugs()
     {
         $currentExtensions = (self::$extensionsLoaded ? self::$extensions : get_option('mainwp_extensions'));
 

@@ -506,7 +506,7 @@ class MainWPUser
             <td class="name column-name"><?php echo $user['display_name']; ?></td>
             <td class="email column-email"><a
                     href="mailto:<?php echo $user['email']; ?>"><?php echo $user['email']; ?></a></td>
-            <td class="role column-role"><?php  echo MainWPUser::getRole($user['role']); ?></td>
+            <td class="role column-role"><?php  echo self::getRole($user['role']); ?></td>
             <td class="posts column-posts" style="text-align: left; padding-left: 1.7em ;"><a href="<?php echo admin_url('admin.php?page=PostBulkManage&siteid='.$website->id.'&userid='.$user['id']); ?>"><?php echo $user['post_count']; ?></a></td>
             <td class="website column-website"><a
                     href="<?php echo $website->url; ?>"><?php echo $website->url; ?></a>
@@ -789,23 +789,18 @@ class MainWPUser
             $errors[] = 'Please select whether you want to add the user to specific sites or groups.';
         }
         if (!isset($_POST['user_login']) || $_POST['user_login'] == '') {
-            //                $errors[] = 'Please enter the username.';
             $errorFields[] = 'user_login';
         }
         if (!isset($_POST['email']) || $_POST['email'] == '') {
-            //                $errors[] = 'Please enter the email.';
             $errorFields[] = 'email';
         }
         if (!isset($_POST['pass1']) || $_POST['pass1'] == '' || !isset($_POST['pass2']) || $_POST['pass2'] == '') {
-            //                $errors[] = 'Please enter the password twice.';
             $errorFields[] = 'pass1';
         } else if ($_POST['pass1'] != $_POST['pass2']) {
-            //                $errors[] = 'Please enter the same password in the two password fields.';
             $errorFields[] = 'pass2';
         }
         $allowed_roles = array('subscriber', 'administrator', 'editor', 'author', 'contributor');
         if (!isset($_POST['role']) || !in_array($_POST['role'], $allowed_roles)) {
-            //                $errors[] = 'Please select a valid role.';
             $errorFields[] = 'role';
         }
 
@@ -882,7 +877,7 @@ class MainWPUser
                     if (is_uploaded_file($_FILES['import_user_file_bulkupload']['tmp_name']))
                     {
                           $content = file_get_contents($_FILES['import_user_file_bulkupload']['tmp_name']); 
-                          $lines = split("\r", $content);
+                          $lines = explode("\r", $content);
                           
                           if (is_array($lines) && count($lines) > 0) {
                                 $i = 0;    
@@ -893,7 +888,7 @@ class MainWPUser
 
                                 foreach($lines as $line) {
                                     $line = trim($line);                                   
-                                    $items = split(",", $line);
+                                    $items = explode(",", $line);
                                     
                                     $line = trim($items[0]) . "," . trim($items[1]) .",". trim($items[2]) . "," . trim($items[3]) . "," . trim($items[4]) . "," . trim($items[5]). "," . intval($items[6]) . "," . trim(strtolower($items[7])). "," . trim($items[8]) . "," . trim($items[9]) ;
 

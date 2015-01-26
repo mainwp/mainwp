@@ -508,8 +508,6 @@ class qq2FileUploader {
         $this->allowedExtensions = $allowedExtensions;
         $this->sizeLimit = $sizeLimit;
 
-        $this->checkServerSettings();
-         //die("{'error':'".print_r($_POST, true).print_r($_FILES, true)."'}");
         if (isset($_GET['qqfile'])) {
             $this->file = new qq2UploadedFileXhr();
         } elseif (isset($_FILES['qqfile'])) {
@@ -517,15 +515,6 @@ class qq2FileUploader {
         } else {
             $this->file = false;
         }
-    }
-
-    private function checkServerSettings(){
-//        $postSize = $this->toBytes(ini_get('post_max_size'));
-//        $uploadSize = $this->toBytes(ini_get('upload_max_filesize'));
-//        if ($postSize < $this->sizeLimit || $uploadSize < $this->sizeLimit){
-//            $size = max(1, $this->sizeLimit / 1024 / 1024) . 'M';
-//            die("{'error':'increase post_max_size and upload_max_filesize to $size'}");
-//        }
     }
 
     private function toBytes($str){

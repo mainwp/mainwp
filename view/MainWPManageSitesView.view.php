@@ -398,11 +398,6 @@ class MainWPManageSitesView
                         {
                             $line = trim($line);
                             $items = explode(',', $line);
-//                                    $group_name = "";
-//
-//                                    if (trim($items[3]) != '')
-//                                        $group_name = "," . trim($items[3]);
-
                             $line = trim(trim($items[0]), '"') . "," . trim(trim($items[1]), '"') . "," . trim(trim($items[2]), '"') . ',' . trim(trim($items[3]), '"') . ',' . trim(trim($items[4]), '"');
 
                             ?>
@@ -946,14 +941,6 @@ class MainWPManageSitesView
         $hasRemoteDestinations = ($remote_destinations == null ? $remote_destinations : count($remote_destinations));
         ?>
 
-        <?php
-//        if ($website->totalsize > 100)
-//        {
-//            ?>
-<!--            <div class="mainwp_info-box-yellow">--><?php //_e('A full backup might fail because the total file size of this website is','mainwp'); ?><!-- --><?php //echo $website->totalsize; ?><!----><?php //_e('MB, you could exclude folders to decrease the filesize.','mainwp'); ?><!--</div>-->
-<!--            --><?php
-//        }
-        ?>
         <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
 

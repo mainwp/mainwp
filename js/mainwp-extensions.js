@@ -630,8 +630,7 @@ mainwp_api_set_showhide_section = function(obj, show) {
         obj.addClass('closed');               
         mainwp_setCookie('mainwp_api_showhide_section_' + sec, '');
     }
-}
-
+};
 
 mainwp_api_check_showhide_sections = function() {  
     var pr, sec, reset;
@@ -658,4 +657,4 @@ mainwp_api_check_showhide_sections = function() {
         jQuery.post(ajaxurl, data, function (res) {
         });    
     }
-}
+};

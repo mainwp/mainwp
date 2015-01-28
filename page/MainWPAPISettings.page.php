@@ -195,8 +195,7 @@ class MainWPAPISettings
 
     public static function checkUpgrade()
     {        
-        //$slugs = MainWPExtensions::getSlugs();
-        $result = MainWPExtensions::getSlugsTwo();        
+        $result = MainWPExtensions::getSlugs();
         $slugs = $result['slugs'];
         $am_slugs = $result['am_slugs'];        
         $output = array(); 

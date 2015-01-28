@@ -655,7 +655,7 @@ class MainWPManageSites
         //key: status/file
         $status = $information['status'];
 
-        $result = array('file' => $information['file']);
+        $result = isset($information['file']) ? array('file' => $information['file']) : array();
         if ($status == 'done')
         {
             $result['file'] = $information['file'];
@@ -833,7 +833,7 @@ class MainWPManageSites
             MainWPUtility::getFileParameter($website) => $file,
             'fileUID' => $pFileNameUID,
             'pid' => $pid,
-            'append' => ($append ? 1 : 0)), false, false, true);
+            'append' => ($append ? 1 : 0)), false, false, false);
         do_action('mainwp_managesite_backup', $website, array('type' => $pType), $information);
 
         if (isset($information['error']))

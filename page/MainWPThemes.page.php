@@ -361,7 +361,6 @@ class MainWPThemes
             <tr>
                 <td class="headcol">
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $site_id; ?>"/>
-<!--                    <strong>--><?php //echo $site_url; ?><!--</strong>-->
                     <label for="<?php echo $site_url; ?>"><strong><?php echo $site_url; ?></strong></label>
                     &nbsp;&nbsp;<input type="checkbox" value="" id="<?php echo $site_url; ?>"
                                        class="mainwp_site_check_all" style="display: none ;"/>
@@ -652,7 +651,6 @@ class MainWPThemes
 
                 $output->themes[] = $theme;
             }
-            //$output->themes = array_merge($output->themes, $themes);
             unset($themes);
         } else {
             $output->errors[$website->id] = MainWPErrorHelper::getErrorMessage(new MainWPException('NOMAINWP', $website->url));

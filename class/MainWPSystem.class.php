@@ -42,7 +42,7 @@ class MainWPSystem
      */
     static function Instance()
     {
-        return MainWPSystem::$instance;
+        return self::$instance;
     }
 
     public function getAPIStatus()
@@ -73,7 +73,7 @@ class MainWPSystem
             if (version_compare($currentVersion, $this->current_version, '<')) {
                 update_option('mainwp_reset_user_tips', array());
                 MainWPUtility::update_option('mainwp_reset_user_cookies', array());
-            }            
+            }
             MainWPUtility::update_option('mainwp_plugin_version', $this->current_version);
         }
 
@@ -113,7 +113,7 @@ class MainWPSystem
 
         //Add js
         add_action('admin_head', array(&$this, 'admin_head'));
-        
+
         //Add body class
         add_action('admin_body_class', array(&$this, 'admin_body_class'));
 
@@ -148,13 +148,10 @@ class MainWPSystem
 
         add_filter('admin_footer', array($this, 'admin_footer'));
 
-        // AJAX functionality
-        //MainWPAjax::Instance();
-
         MainWPInstallBulk::init();
-    
-        do_action('mainwp_cronload_action');      
-        
+
+        do_action('mainwp_cronload_action');
+
         //Cron every 5 minutes
         add_action('mainwp_cronofflinecheck_action', array($this, 'mainwp_cronofflinecheck_action'));
         add_action('mainwp_cronstats_action', array($this, 'mainwp_cronstats_action'));
@@ -247,10 +244,10 @@ class MainWPSystem
         add_action('mainwp_fetchurlsauthed', array(&$this, 'filter_fetchUrlsAuthed'), 10, 7);
         add_filter('mainwp_fetchurlauthed', array(&$this, 'filter_fetchUrlAuthed'), 10, 5);
         add_filter('mainwp_getdashboardsites', array(MainWPExtensions::getClassName(), 'hookGetDashboardSites'), 10, 7);
-        add_filter('mainwp-manager-getextensions', array(MainWPExtensions::getClassName(), 'hookManagerGetExtensions'));        
+        add_filter('mainwp-manager-getextensions', array(MainWPExtensions::getClassName(), 'hookManagerGetExtensions'));
         add_action('mainwp_bulkpost_metabox_handle', array($this, 'hookBulkPostMetaboxHandle'));
-        add_action('mainwp_bulkpage_metabox_handle', array($this, 'hookBulkPageMetaboxHandle'));       
-        
+        add_action('mainwp_bulkpage_metabox_handle', array($this, 'hookBulkPageMetaboxHandle'));
+
         $this->posthandler = new MainWPPostHandler();
 
         do_action('mainwp-activated');
@@ -275,16 +272,16 @@ class MainWPSystem
        return MainWPExtensions::hookFetchUrlAuthed($pluginFile, $key, $websiteId, $what, $params);
     }
 
-    function hookBulkPostMetaboxHandle($post_id, $output) {
-        $output = $this->metaboxes->select_sites_handle($post_id, 'bulkpost');        
+    function hookBulkPostMetaboxHandle($post_id) {
+        $this->metaboxes->select_sites_handle($post_id, 'bulkpost');
         $this->metaboxes->add_categories_handle($post_id, 'bulkpost');      
         $this->metaboxes->add_tags_handle($post_id, 'bulkpost');
         $this->metaboxes->add_slug_handle($post_id, 'bulkpost');    
         MainWPPost::add_sticky_handle($post_id);
     }
     
-    function hookBulkPageMetaboxHandle($post_id, $output) {
-        $output = $this->metaboxes->select_sites_handle($post_id, 'bulkpage');        
+    function hookBulkPageMetaboxHandle($post_id) {
+        $this->metaboxes->select_sites_handle($post_id, 'bulkpage');
         $this->metaboxes->add_slug_handle($post_id, 'bulkpage');
     }
     
@@ -430,8 +427,7 @@ class MainWPSystem
             return false;
         }
 
-        //$slugs = MainWPExtensions::getSlugs();
-        $result = MainWPExtensions::getSlugsTwo();
+        $result = MainWPExtensions::getSlugs();
         $slugs = $result['slugs'];
         $am_slugs = $result['am_slugs'];
         
@@ -497,15 +493,22 @@ class MainWPSystem
         $mainwpAutomaticDailyUpdate = get_option('mainwp_automaticDailyUpdate');
 
         $mainwpLastAutomaticUpdate = get_option('mainwp_updatescheck_last');
-        if ($mainwpLastAutomaticUpdate == date('d/m/Y')) return;
+        if ($mainwpLastAutomaticUpdate == date('d/m/Y'))
+        {
+            MainWPLogger::Instance()->debug('CRON :: updates check :: already updated today');
+            return;
+        }
 
         $websites = MainWPDB::Instance()->getWebsitesCheckUpdates(4);
+        MainWPLogger::Instance()->debug('CRON :: updates check :: found ' . count($websites) . ' websites');
 
+        $userid = null;
         foreach ($websites as $website)
         {
             $websiteValues = array(
                 'dtsAutomaticSyncStart' => time()
             );
+            if ($userid == null) $userid = $website->userid;
 
             MainWPDB::Instance()->updateWebsiteSyncValues($website->id, $websiteValues);
         }
@@ -516,6 +519,8 @@ class MainWPSystem
 
             if ($busyCounter == 0)
             {
+                MainWPLogger::Instance()->debug('CRON :: updates check :: got to the mail part');
+
                 //Send the email & update all to this time!
                 $mail = '';
                 $sendMail = false;
@@ -640,14 +645,18 @@ class MainWPSystem
 
                 MainWPUtility::update_option('mainwp_updatescheck_mail_themeconflicts', '');
 
-                if (!$sendMail) return;
-
                 MainWPUtility::update_option('mainwp_updatescheck_last', date('d/m/Y'));
+                if (!$sendMail)
+                {
+                    MainWPLogger::Instance()->debug('CRON :: updates check :: sendMail is false');
+                    return;
+                }
 
                 if ($mainwpAutomaticDailyUpdate !== false && $mainwpAutomaticDailyUpdate != 0)
                 {
                     //Create a nice email to send
                     $email = get_option('mainwp_updatescheck_mail_email');
+                    MainWPLogger::Instance()->debug('CRON :: updates check :: send mail to ' . $email);
                     if ($email != false && $email != '') {
                         $mail = '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="'.site_url().'">'.site_url().'</a>)</div>
                                  <div></div>
@@ -665,7 +674,7 @@ class MainWPSystem
         }
         else
         {
-            $userExtension = MainWPDB::Instance()->getUserExtensionByUserId($website->userid);
+            $userExtension = MainWPDB::Instance()->getUserExtensionByUserId($userid);
 
             $decodedIgnoredPlugins = json_decode($userExtension->ignored_plugins, true);
             if (!is_array($decodedIgnoredPlugins)) $decodedIgnoredPlugins = array();
@@ -699,8 +708,6 @@ class MainWPSystem
 
             $pluginConflicts = '';
             $themeConflicts = '';
-            $savedPluginConflicts = get_option('mainwp_pluginConflicts');
-            $savedThemeConflicts = get_option('mainwp_themeConflicts');
 
             $allWebsites = array();
 
@@ -1345,7 +1352,7 @@ class MainWPSystem
 
     function mainwp_cronstats_action()
     {
-        MainWPLogger::Instance()->info('CRON :: status');
+        MainWPLogger::Instance()->info('CRON :: stats');
 
         MainWPUtility::update_option('mainwp_cron_last_stats', time());
         if (get_option('mainwp_seo') != 1) return;
@@ -1763,7 +1770,7 @@ class MainWPSystem
 
     function create_post_type()
     {
-        $queryable = ($post_plus = apply_filters('mainwp-ext-post-plus-enabled', false)) ? true : false;
+        $queryable = (apply_filters('mainwp-ext-post-plus-enabled', false)) ? true : false;
         
         $labels = array(
             'name' => _x('Bulkpost', 'bulkpost'),
@@ -1857,15 +1864,11 @@ class MainWPSystem
 
     function admin_head()
     {
-//        echo '<script type="text/javascript" src="' . plugins_url('js/jquery.ui.core.min.js', dirname(__FILE__)) . '"></script>';
-        if (MainWPUtility::isAdmin()) {
+        if (MainWPUtility::isAdmin())
+        {
             echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-admin.js', dirname(__FILE__)) . '"></script>';
         }
-        $userExtension = MainWPDB::Instance()->getUserExtension();
 
-//        if (($userExtension->tips == 1) && isset($_SESSION['showTip'])) {
-//            echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-tip.js', dirname(__FILE__)) . '"></script>';
-//        }
         echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-rightnow.js', dirname(__FILE__)) . '"></script>';
         echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-extensions.js', dirname(__FILE__)) . '"></script>';
         echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-ui.js', dirname(__FILE__)) . '"></script>';
@@ -1888,11 +1891,6 @@ class MainWPSystem
         echo '<script type="text/javascript" src="' . plugins_url('js/FileSaver.js', dirname(__FILE__)) . '"></script>';
         echo '<script type="text/javascript" src="' . plugins_url('js/jqueryFileTree.js', dirname(__FILE__)) . '"></script>';        
         echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('css/jqueryFileTree.css', dirname(__FILE__)) . '" />';
-        // mainwp-article-poster
-//        echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('mainwp-article-poster/css/admin.css', dirname(__FILE__)) . '" />';
-//        echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('mainwp-article-poster/css/datePicker.css', dirname(__FILE__)) . '" />';
-//        echo '<script type="text/javascript" src="' . plugins_url('mainwp-article-poster/js/date.js', dirname(__FILE__)) . '"></script>';
-//        echo '<script type="text/javascript" src="' . plugins_url('mainwp-article-poster/js/jquery.datePicker.min-2.1.2.js', dirname(__FILE__)) . '"></script>';
     }
     
     function admin_body_class($class_string) {
@@ -1906,7 +1904,7 @@ class MainWPSystem
 
     function admin_menu()
     {
-        global $menu, $submenu;
+        global $menu;
         foreach ($menu as $k => $item)
         {
             if ($item[2] == 'edit.php?post_type=bulkpost')
@@ -1923,14 +1921,8 @@ class MainWPSystem
     //Empty footer text
     function admin_footer_text()
     {
-        $userExtension = MainWPDB::Instance()->getUserExtension();
-        if (session_id() == '') session_start();
-//        if (($userExtension->tips == 1) && isset($_SESSION['showTip'])) {
-//            MainWPManageTips::renderTips();
-//        }
-        if (isset($_SESSION['showTip'])) {
-            unset($_SESSION['showTip']);
-        }
+        if (isset($_SESSION['showTip'])) unset($_SESSION['showTip']);
+
         return 'MainWP - version ' . $this->current_version . ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Currently Managing: <span id="managedSitesCount">' . MainWPDB::Instance()->getWebsitesCount() . '</span> Sites';
     }
 

@@ -541,14 +541,14 @@ class MainWPPlugins
             <?php if ($status == 'active') { ?>
             <option value="deactivate"><?php _e('Deactivate','mainwp'); ?></option>
             <?php } ?>
-            <?php } // ?>
+            <?php } ?>
             <?php if ($status == 'inactive') { ?>
             <?php if (mainwp_current_user_can("dashboard", "activate_deactivate_plugins")) { ?>
             <option value="activate"><?php _e('Activate','mainwp'); ?></option>
-            <?php } // ?>
+            <?php } ?>
             <?php if (mainwp_current_user_can("dashboard", "delete_plugins")) { ?>
             <option value="delete"><?php _e('Delete','mainwp'); ?></option>            
-            <?php } // ?>
+            <?php } ?>
             <?php } ?>  
             <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>   
             <option value="ignore_updates"><?php _e('Ignore Updates','mainwp'); ?></option>    
@@ -651,7 +651,6 @@ class MainWPPlugins
 
                 $output->plugins[] = $plugin;
             }
-            //$output->plugins = array_merge($output->plugins, $plugins);
             unset($plugins);
         } else {
             $output->errors[$website->id] = MainWPErrorHelper::getErrorMessage(new MainWPException('NOMAINWP', $website->url));

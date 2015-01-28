@@ -72,6 +72,7 @@ class MainWPSystem
             $currentVersion = get_option('mainwp_plugin_version');
             if (version_compare($currentVersion, $this->current_version, '<')) {
                 update_option('mainwp_reset_user_tips', array());
+                MainWPUtility::update_option('mainwp_reset_user_cookies', array());
             }
             MainWPUtility::update_option('mainwp_plugin_version', $this->current_version);
         }

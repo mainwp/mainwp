@@ -630,18 +630,31 @@ mainwp_api_set_showhide_section = function(obj, show) {
         obj.addClass('closed');               
         mainwp_setCookie('mainwp_api_showhide_section_' + sec, '');
     }
-}
+};
 
-
-mainwp_api_check_showhide_sections = function() {       
-    var pr, sec;
+mainwp_api_check_showhide_sections = function() {  
+    var pr, sec, reset;
+    reset = false;
     jQuery('.mainwp_api_postbox .handlediv').each(function() {
         pr = jQuery(this).parent(); 
         sec = pr.attr('section');
-        if (mainwp_getCookie('mainwp_api_showhide_section_' + sec) == 'show') {            
-            mainwp_api_set_showhide_section(pr, true);
-        } else {
-            mainwp_api_set_showhide_section(pr, false);
+        if (jQuery('#mainwp_api_postbox_reset_showhide').length > 0) {
+            mainwp_setCookie('mainwp_api_showhide_section_' + sec, 'show');
+            reset = true;
+        } else {    
+            if (mainwp_getCookie('mainwp_api_showhide_section_' + sec) == 'show') {            
+                mainwp_api_set_showhide_section(pr, true);
+            } else {
+                mainwp_api_set_showhide_section(pr, false);
+            }
         }
-    }); 
-}
+    });
+    if (reset) {        
+        var data = {
+            action:'mainwp_reset_usercookies',
+            what: 'api_bulk_install'
+        };
+        jQuery.post(ajaxurl, data, function (res) {
+        });    
+    }
+};

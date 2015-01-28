@@ -1,6 +1,10 @@
 <?php
 if (session_id() == '') session_start();
+//ini_set('display_errors', true);
+//error_reporting(E_ALL | E_STRICT);
 
+@ini_set('display_errors', false);
+@error_reporting(0);
 define('MAINWP_API_VALID', "VALID");
 define('MAINWP_API_INVALID', "INVALID");
 
@@ -68,7 +72,7 @@ class MainWPSystem
             $currentVersion = get_option('mainwp_plugin_version');
             if (version_compare($currentVersion, $this->current_version, '<')) {
                 update_option('mainwp_reset_user_tips', array());
-            }            
+            }
             MainWPUtility::update_option('mainwp_plugin_version', $this->current_version);
         }
 
@@ -108,7 +112,7 @@ class MainWPSystem
 
         //Add js
         add_action('admin_head', array(&$this, 'admin_head'));
-        
+
         //Add body class
         add_action('admin_body_class', array(&$this, 'admin_body_class'));
 
@@ -144,9 +148,9 @@ class MainWPSystem
         add_filter('admin_footer', array($this, 'admin_footer'));
 
         MainWPInstallBulk::init();
-    
-        do_action('mainwp_cronload_action');      
-        
+
+        do_action('mainwp_cronload_action');
+
         //Cron every 5 minutes
         add_action('mainwp_cronofflinecheck_action', array($this, 'mainwp_cronofflinecheck_action'));
         add_action('mainwp_cronstats_action', array($this, 'mainwp_cronstats_action'));
@@ -239,10 +243,10 @@ class MainWPSystem
         add_action('mainwp_fetchurlsauthed', array(&$this, 'filter_fetchUrlsAuthed'), 10, 7);
         add_filter('mainwp_fetchurlauthed', array(&$this, 'filter_fetchUrlAuthed'), 10, 5);
         add_filter('mainwp_getdashboardsites', array(MainWPExtensions::getClassName(), 'hookGetDashboardSites'), 10, 7);
-        add_filter('mainwp-manager-getextensions', array(MainWPExtensions::getClassName(), 'hookManagerGetExtensions'));        
+        add_filter('mainwp-manager-getextensions', array(MainWPExtensions::getClassName(), 'hookManagerGetExtensions'));
         add_action('mainwp_bulkpost_metabox_handle', array($this, 'hookBulkPostMetaboxHandle'));
-        add_action('mainwp_bulkpage_metabox_handle', array($this, 'hookBulkPageMetaboxHandle'));       
-        
+        add_action('mainwp_bulkpage_metabox_handle', array($this, 'hookBulkPageMetaboxHandle'));
+
         $this->posthandler = new MainWPPostHandler();
 
         do_action('mainwp-activated');
@@ -1347,7 +1351,7 @@ class MainWPSystem
 
     function mainwp_cronstats_action()
     {
-        MainWPLogger::Instance()->info('CRON :: status');
+        MainWPLogger::Instance()->info('CRON :: stats');
 
         MainWPUtility::update_option('mainwp_cron_last_stats', time());
         if (get_option('mainwp_seo') != 1) return;

@@ -38,7 +38,7 @@ class MainWPDB
 
     private function test_connection()
     {
-        if (!@self::ping($this->wpdb->dbh))
+        if (!self::ping($this->wpdb->dbh))
         {
             MainWPLogger::Instance()->info('Trying to reconnect Wordpress DB Connection');
             $this->wpdb->db_connect();
@@ -1527,7 +1527,7 @@ class MainWPDB
         /** @var $this->wpdb wpdb */
         if (!function_exists( 'mysqli_connect' ) ) return false;
 
-        return (self::Instance()->wpdb->dbh instanceof mysqli);
+        return (self::$instance->wpdb->dbh instanceof mysqli);
     }
 
     public static function ping($link)

@@ -138,9 +138,7 @@ class MainWPDB
         $tbl = 'CREATE TABLE ' . $this->tableName('wp_settings_backup') . ' (
   wpid int(11) NOT NULL,
   archiveFormat text NOT NULL,
-  INDEX idx_wpid (wpid)';
-          if ($currentVersion == '') $tbl .= ',
-  PRIMARY KEY  (id)  ';
+  INDEX idx_wpid (wpid)';  
           $tbl .= ')';
           $sql[] = $tbl;
 

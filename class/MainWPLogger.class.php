@@ -16,7 +16,7 @@ class MainWPLogger
     private $logFileNamePrefix = 'mainwp';
     private $logFileNameSuffix = '.log';
 //    private $logMaxFiles = 5; //todo: future add log rotation
-    private $logMaxMB = 2;
+    private $logMaxMB = 0.5;
     private $logDateFormat = 'Y-m-d H:i:s';
 
     private $logDirectory = null;
@@ -127,7 +127,7 @@ class MainWPLogger
                 $newLogFile = $this->logCurrentFile . '.tmp';
                 $newLogHandle = false;
                 $chunkSize = filesize($this->logCurrentFile) - ($this->logMaxMB * 1048576);
-                while (!feof($this->logCurrentHandle))
+                while (is_resource($this->logCurrentHandle) && !feof($this->logCurrentHandle))
                 {
                     $content = fread($this->logCurrentHandle, $chunkSize);
 
@@ -145,7 +145,7 @@ class MainWPLogger
                 if  ($newLogHandle)
                 {
                     fclose($newLogHandle);
-                    fclose($this->logCurrentHandle);
+                    if (is_resource($this->logCurrentHandle)) fclose($this->logCurrentHandle);
                     unlink($this->logCurrentFile);
                     rename($newLogFile, $this->logCurrentFile);
                 }

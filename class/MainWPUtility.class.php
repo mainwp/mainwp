@@ -130,17 +130,46 @@ class MainWPUtility
             @curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, false);
             @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, false);
         }
-        
-        $data = curl_exec($ch);
+
+
+        $disabled_functions = ini_get('disable_functions');
+        if (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false))
+        {
+            $mh = curl_multi_init();
+            @curl_multi_add_handle($mh, $ch);
+
+            do
+            {
+                curl_multi_exec($mh, $running); //Execute handlers
+                while ($info = curl_multi_info_read($mh))
+                {
+                    $data = curl_multi_getcontent($info['handle']);
+                    $err = curl_error($info['handle']);
+                    $http_status = curl_getinfo($info['handle'], CURLINFO_HTTP_CODE);
+                    $err = curl_error($info['handle']);
+                    $realurl = curl_getinfo($info['handle'], CURLINFO_EFFECTIVE_URL);
+
+                    curl_multi_remove_handle($mh, $info['handle']);
+                }
+                usleep(10000);
+            } while ($running > 0);
+
+            curl_multi_close($mh);
+        }
+        else
+        {
+            $data = curl_exec($ch);
+            $err = curl_error($ch);
+            $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $err = curl_error($ch);
+            $realurl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+            curl_close($ch);
+        }
+
         if ($data === FALSE)
         {
-            $err = curl_error($ch);
             return array('error' => ($err == '' ? 'Invalid host.' : $err));
         }
-        $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $err = curl_error($ch);
-        $realurl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
-        curl_close($ch);
 
         $host = parse_url($realurl, PHP_URL_HOST);
         $ip = false;

@@ -379,8 +379,8 @@ class MainWPExtensionsView
                     'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/07/mainwp-clean-and-lock-extension.png'
                 ),
             array(
-                    'slug' => 'mainwp-clean-and-lock-extension',
-                    'title' => 'mainwp-heatmap-extension',
+                    'slug' => 'mainwp-heatmap-extension',
+                    'title' => 'MainWP Click Heatmap Extension',
                     'desc' => 'MainWP Click Heatmap Extension is an extension for the MainWP plugin that enables you to track visitors clicks on your child sites.',
                     'link' => 'https://extensions.mainwp.com/product/mainwp-click-heatmaps-extension/',
                     'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-heatmaps-ext-icon.png'
@@ -390,7 +390,7 @@ class MainWPExtensionsView
                     'title' => 'MainWP Client Reports Extension',
                     'desc' => 'MainWP Client Reports Extension allows you to generate activity reports for your clients sites. Requires MainWP Dashboard.',
                     'link' => 'https://extensions.mainwp.com/product/mainwp-client-reports-extension/',
-                    'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-heatmaps-ext-icon.png'
+                    'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/mainwp-client-reports-extension.png'
                 ),
             array(
                 'slug' => 'mainwp-clone-extension',
@@ -536,7 +536,7 @@ class MainWPExtensionsView
                 $installed_slugs[] = dirname($ext['slug']);
             }
         }
-    
+        
         ?>
         <div class="postbox">
             <div class="handle"></div>

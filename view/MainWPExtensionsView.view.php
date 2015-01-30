@@ -333,16 +333,7 @@ class MainWPExtensionsView
     }
     public static function mainwpAvailableExtensions($extensions) {
         
-        $all_extensions = array(    
-            
-            
-            array(                   
-                    'slug' => 'the-bundle',
-                    'title' => 'The Bundle – Get All Our Plugins',
-                    'desc' => 'Includes all MainWP Extensions current and future extensions with a lifetime licence.',
-                    'link' => 'https://extensions.mainwp.com/product/bundle/',
-                    'img' => 'https://extensions.mainwp.com/wp-content/uploads/2014/12/the-bundle-icon1.png'
-                ),
+        $all_extensions = array(                
             array(
                     'free' => true,
                     'slug' => 'advanced-uptime-monitor-extension',
@@ -556,13 +547,16 @@ class MainWPExtensionsView
                         foreach($all_extensions as $ext ) {
                             if (in_array($ext['slug'], $installed_slugs))
                                     continue;
+                            $is_free = (isset($ext['free']) && $ext['free']) ? true : false;
                                 ?>
-                                <div class="mainwp-availbale-extension-holder <?php echo (isset($ext['free']) && $ext['free']) ? 'mainwp-free' : 'mainwp-paid'; ?>" style="clear: both;">
+                                <div class="mainwp-availbale-extension-holder <?php echo ($is_free) ? 'mainwp-free' : 'mainwp-paid'; ?>" style="clear: both;">
                                     <div class="mainwp-av-ext-icon">
                                         <img src="<?php echo $ext['img']?>" />
                                     </div>
                                     <div class="mainwp-av-ext-buttons">
-                                        <span class="mainwp-price"></span>
+                                        <?php
+                                        echo $is_free ? '<span class="mainwp-price"></span>' : '';
+                                        ?>                                        
                                         <a href="<?php echo $ext['link']?>" class="button">Find Out More</a>
                                         <a href="<?php echo $ext['link']?>" class="button button-primary mainwp-upgrade-button">Order Now</a>
                                     </div>

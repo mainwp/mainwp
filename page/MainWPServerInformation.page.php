@@ -118,6 +118,17 @@ class MainWPServerInformation
                 <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
                 <thead>
                     <tr>
+                        <th scope="col" class="manage-column column-posts" style="width: 20%;"><span><?php _e('Disabled PHP Functions','mainwp'); ?></span></th>
+                    </tr>
+                </thead>
+                    <tbody id="the-sites-list" class="list:sites">
+                        <?php self::mainwpRequiredFunctions(); ?>
+                    </tbody>
+                </table>
+                <br/>
+                <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+                <thead>
+                    <tr>
                         <th scope="col" class="manage-column sorted" style=""><span><?php _e('Server Info','mainwp'); ?></span></th>
                         <th scope="col" class="manage-column column-posts" style=""><span><?php _e('Value','mainwp'); ?></span></th>
                     </tr>
@@ -839,5 +850,23 @@ class MainWPServerInformation
         self::renderFooter('.htaccess');
     }
 
+    public static function mainwpRequiredFunctions() {
+          //error_reporting(E_ALL);
+          $disabled_functions = ini_get('disable_functions');
+          if ($disabled_functions != '')
+          {
+                $arr = explode(',', $disabled_functions);
+                sort($arr);
+                for ($i=0; $i<count($arr); $i++)
+                {
+                    echo '<tr><td>'.$arr[$i].'</td></tr>';
+                }
+          }
+          else
+          {
+                echo '<tr><td>' . __('No functions disabled','mainwp') . '</td></tr>';
+          }
+
+       }
 }
 

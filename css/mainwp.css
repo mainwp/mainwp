@@ -1918,18 +1918,18 @@ background-position: 0 -16px;
 }
 
 #mainwp-extensions-list {
-    margin: 5em 0 3em 0 ;
+
 }
 
 .mainwp-extensions-childHolder {
-    width: 100%;
-    border-bottom: 1px solid #aaa;
-    margin-top: 1em ;
-    margin-bottom: 1em ;
+    border-bottom: 1px solid #eee;
+    padding: 1em .6em;
 }
-.mainwp-extensions-childHolder.collapsed {
-    margin-bottom: 10px;
+
+.mainwp-extensions-childHolder:nth-child(even) {
+    background: #fafafa;
 }
+
 .mainwp-extensions-img.large {
     max-height: 120px;
     max-width: 120px;
@@ -1938,14 +1938,17 @@ background-position: 0 -16px;
     max-height: 45px;
     max-width: 45px;
 }
+.mainwp-extensions-childHolder.collapsed .mainwp-extensions-childIcon {
+    width: 80px;
+}
 
 .mainwp-extensions-childIcon {
-    width: 120px;
+    width: 140px;
     text-align: center;
 }
 
 .mainwp-extensions-childName {
-    font-size: large;
+    font-size: 20px;
     width: 40%;
 }
 .mainwp-extensions-childVersion {
@@ -2798,4 +2801,37 @@ input.mainwp-field:-webkit-autofill {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-decoration: none !important;
+}
+
+
+.mainwp-availbale-extension-holder {
+    padding: 1em;
+    border-bottom: 1px Solid #eee;
+}
+
+.mainwp-availbale-extension-holder:nth-child(even) {
+    background: #f4f4f4;
+}
+
+.mainwp-av-ext-icon img {
+    float: left;
+    width: 75px;
+    margin-right: 1em;
+    margin-top: 1em;
+}
+
+.mainwp-av-ext-desciption {
+    width: 70%;
+}
+
+.mainwp-av-ext-buttons {
+    float: right;
+}
+
+.mainwp-price {
+    background-image: url('../images/mainwp-free.png');
+    background-repeat: no-repeat;
+    background-position: 0 15px;
+    padding: 20px 40px;
+    margin-right: 20px;
 }

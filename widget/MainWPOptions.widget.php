@@ -103,16 +103,6 @@ class MainWPOptions
             </td>
         </tr>
         <tr>
-            <th scope="row"><?php _e('Use MainWP Cron Trigger','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Enables the cron jobs triggered from the MainWP Member area. A MainWP login is required for this option.','mainwp')); ?></th>
-            <td>
-                <div class="mainwp-checkbox">
-                <input type="checkbox" name="mainwp_options_cron_jobs"
-                       id="mainwp_options_cron_jobs" <?php echo ((get_option('mainwp_cron_jobs') == 1) ? 'checked="true"' : ''); ?>/>
-                <label for="mainwp_options_cron_jobs"></label>
-                </div><em style="display: inline;"><?php _e('Requires MainWP Login','mainwp'); ?></em>
-            </td>
-        </tr>
-        <tr>
             <th scope="row"><?php _e('Use WP-Cron','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('When not using WP-Cron you will need to set up a cron job via your hosting.','mainwp'), 'http://docs.mainwp.com/disable-wp-cron/'); ?></th>
             <td>
                 <div class="mainwp-checkbox">

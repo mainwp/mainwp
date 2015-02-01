@@ -541,10 +541,12 @@ class MainWPExtensions
         {
             foreach($extensions as $extension)
             {
-                if (isset($extension['api']) && ($extension['api'] == $pAPI))
+                $slug = dirname($extension['slug']);
+                if ($slug == $pAPI)
                 {
                     $pluginFile = $extension['plugin'];
-                    return self::isExtensionEnabled($pluginFile);
+                    $result = self::isExtensionEnabled($pluginFile);                    
+                    return ($result === false) ? false : true;
                 }                
             }
         }

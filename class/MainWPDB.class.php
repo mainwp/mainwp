@@ -748,7 +748,8 @@ class MainWPDB
     public function getWebsitesByUrl($url)
     {
         if (substr($url, -1) != '/') { $url .= '/'; }
-        $where = $this->getWhereAllowAccessGroupsSites("site");
+        //$where = $this->getWhereAllowAccessGroupsSites("site");
+        $where = "";
         $results = $this->wpdb->get_results('SELECT * FROM ' . $this->tableName('wp') . ' WHERE url = "' . $this->escape($url) . '"' . $where, OBJECT);
         if ($results) return $results;
 

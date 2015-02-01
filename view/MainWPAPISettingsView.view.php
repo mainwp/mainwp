@@ -121,6 +121,16 @@ class MainWPAPISettingsView
             <th scope="row" colspan="2"><input type="button" name="submit" id="mainwp-api-submit" class="button-primary" value="<?php _e('Save Login','mainwp'); ?>" /></th>
             </tr>
             </span>
+             <tr>
+                <th scope="row"><?php _e('Use MainWP Cron Trigger','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Enables the cron jobs triggered from the MainWP Member area. A MainWP login is required for this option.','mainwp')); ?></th>
+                <td>
+                    <div class="mainwp-checkbox">
+                    <input type="checkbox" name="mainwp_options_cron_jobs"
+                           id="mainwp_options_cron_jobs" <?php echo ((get_option('mainwp_cron_jobs') == 1) ? 'checked="true"' : ''); ?>/>
+                    <label for="mainwp_options_cron_jobs"></label>
+                    </div><em style="display: inline;"><?php _e('Requires MainWP Login','mainwp'); ?></em>
+                </td>
+            </tr>
             </tbody>
             </table>
         </p>

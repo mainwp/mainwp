@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.1
-Stable tag: 2.0.6
+Stable tag: 2.0.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -116,10 +116,17 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 = 2.0.7 =
 * Fixed: Bug for Heatmap extension
 * Fixed: WordPress Database error
+* Fixed: Wrong sync-times displayed on Right Now widget
+* Fixed: Email notifications of updates not being sent
+* Fixed: Endless loop causing a lot of error log in our logger
+* Fixed: MySQL Database error when updatig from a previous version
 * Added: Available extensions box on the Extensions page
 * Added: Disabled PHP functions check on the Server Information page
+* Tweaked: Test connection now performs a more robuust check to verify the connection
+* Tweaked: Backup retry mechanism works better on larger sites
 * Tweaked: CSS on the extensions page
 * Tweaked: "Use MainWP Trigger" option moved to the MainWP Account Information box on the MainWP settings page
+* Tweaked: Removed old code and fixed deprecated PHP calls
 
 = 2.0.6 =
 * Fixed: Incorrect dashboard out of sync message

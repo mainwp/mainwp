@@ -113,6 +113,14 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 == Changelog ==
 
+= 2.0.7 =
+* Fixed: Bug for Heatmap extension
+* Fixed: WordPress Database error
+* Added: Available extensions box on the Extensions page
+* Added: Disabled PHP functions check on the Server Information page
+* Tweaked: CSS on the extensions page
+* Tweaked: "Use MainWP Trigger" option moved to the MainWP Account Information box on the MainWP settings page
+
 = 2.0.6 =
 * Fixed: Incorrect dashboard out of sync message
 * Fixed: Hooks for the Google Analytics Extension

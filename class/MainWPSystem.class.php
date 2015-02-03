@@ -915,8 +915,8 @@ class MainWPSystem
                 MainWPUtility::update_option('mainwp_updatescheck_mail_email', $email);
                 MainWPDB::Instance()->updateWebsiteSyncValues($website->id, array('dtsAutomaticSync' => time()));
                 MainWPDB::Instance()->updateWebsiteOption($website, 'last_wp_upgrades', json_encode($websiteCoreUpgrades));
-                MainWPDB::Instance()->getWebsiteOption($website, 'last_plugin_upgrades', $website->plugin_upgrades);
-                MainWPDB::Instance()->getWebsiteOption($website, 'last_theme_upgrades', $website->theme_upgrades);
+                MainWPDB::Instance()->updateWebsiteOption($website, 'last_plugin_upgrades', $website->plugin_upgrades);
+                MainWPDB::Instance()->updateWebsiteOption($website, 'last_theme_upgrades', $website->theme_upgrades);
             }
 
             if (count($coreNewUpdate) != 0)

@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.1
-Stable tag: 2.0.7
+Stable tag: 2.0.7.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,10 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.7.1 =
+* Fixed: MySQL error when showing last sync time
+* Fixed: Auto updates not working on some hosts
 
 = 2.0.7 =
 * Fixed: Bug for Heatmap extension

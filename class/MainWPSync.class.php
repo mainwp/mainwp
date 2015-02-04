@@ -50,6 +50,7 @@ class MainWPSync
                 $themeConflicts = array_keys($themeConflicts);
             }
 
+            $othersData = apply_filters('mainwp-sync-others-data', array());            
             $information = MainWPUtility::fetchUrlAuthed($pWebsite, 'stats',
                 array(
                     'optimize' => ((get_option("mainwp_optimize") == 1) ? 1 : 0),
@@ -57,7 +58,8 @@ class MainWPSync
                     'pluginDir' => $pluginDir,
                     'cloneSites' => (!$cloneEnabled ? 0 : urlencode(json_encode($cloneSites))),
                     'pluginConflicts' => json_encode($pluginConflicts),
-                    'themeConflicts' => json_encode($themeConflicts)
+                    'themeConflicts' => json_encode($themeConflicts),
+                    'othersData' => json_encode($othersData)
                 ),
                 true, $pForceFetch
             );

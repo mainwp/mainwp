@@ -1055,7 +1055,7 @@ class MainWPDB
             $nr = $this->wpdb->query('DELETE FROM ' . $this->tableName('wp') . ' WHERE id=' . $websiteid);
             $this->wpdb->query('DELETE FROM ' . $this->tableName('wp_group') . ' WHERE wpid=' . $websiteid);
             $this->wpdb->query('DELETE FROM ' . $this->tableName('wp_sync') . ' WHERE wpid=' . $websiteid);
-            $this->wpdb->query('DELETE FROM ' . $this->tableName('wp_optionview') . ' WHERE wpid=' . $websiteid);
+            $this->wpdb->query('DELETE FROM ' . $this->tableName('wp_options') . ' WHERE wpid=' . $websiteid);
             return $nr;
         }
         return false;

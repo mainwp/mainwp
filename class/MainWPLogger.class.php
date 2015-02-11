@@ -20,7 +20,6 @@ class MainWPLogger
     private $logDateFormat = 'Y-m-d H:i:s';
 
     private $logDirectory = null;
-    private $logCurrentHandle = null;
 
     private $logPriority = MainWPLogger::DISABLED; //default
 
@@ -100,13 +99,10 @@ class MainWPLogger
     {
         if ($this->logPriority >= $pPriority)
         {
-            if (!$this->logCurrentHandle)
-            {
-                $this->logCurrentFile = $this->logDirectory . $this->logFileNamePrefix . $this->logFileNameSuffix;
-                $this->logCurrentHandle = fopen($this->logCurrentFile, 'a+');
-            }
+            $this->logCurrentFile = $this->logDirectory . $this->logFileNamePrefix . $this->logFileNameSuffix;
+            $logCurrentHandle = fopen($this->logCurrentFile, 'a+');
 
-            if ($this->logCurrentHandle)
+            if ($logCurrentHandle)
             {
                 $time = date($this->logDateFormat);
                 $prefix = '[' . $this->getLogText($pPriority) . ']';
@@ -118,36 +114,42 @@ class MainWPLogger
                     $prefix .= ' [' . $current_user->user_login . ']';
                 }
 
-                fwrite($this->logCurrentHandle, $time . ' ' . $prefix . ' ' . $pText . "\n");
+                fwrite($logCurrentHandle, $time . ' ' . $prefix . ' ' . $pText . "\n");
+                fclose($logCurrentHandle);
             }
 
             if (filesize($this->logCurrentFile) >= ($this->logMaxMB * 1048576))
             {
-                fseek($this->logCurrentHandle, 0);
-                $newLogFile = $this->logCurrentFile . '.tmp';
-                $newLogHandle = false;
-                $chunkSize = filesize($this->logCurrentFile) - ($this->logMaxMB * 1048576);
-                while (is_resource($this->logCurrentHandle) && !feof($this->logCurrentHandle))
+                $logCurrentHandle = fopen($this->logCurrentFile, 'a+');
+                if ($logCurrentHandle)
                 {
-                    $content = fread($this->logCurrentHandle, $chunkSize);
-
-                    if ($newLogHandle)
+                    fseek($logCurrentHandle, 0);
+                    $newLogFile = $this->logCurrentFile . '.tmp';
+                    $newLogHandle = false;
+                    $chunkSize = filesize($this->logCurrentFile) - ($this->logMaxMB * 1048576);
+                    while (is_resource($logCurrentHandle) && !feof($logCurrentHandle))
                     {
-                        fwrite($newLogHandle, $content);
-                    }
-                    else if ($pos = strrpos($content, "\n"))
-                    {
-                        if (!$newLogHandle) $newLogHandle = fopen($newLogFile, 'w+');
-                        fwrite($newLogHandle, substr($content, $pos + 1));
-                    }
-                }
+                        $content = fread($logCurrentHandle, $chunkSize);
 
-                if  ($newLogHandle)
-                {
-                    fclose($newLogHandle);
-                    if (is_resource($this->logCurrentHandle)) fclose($this->logCurrentHandle);
-                    unlink($this->logCurrentFile);
-                    rename($newLogFile, $this->logCurrentFile);
+                        if ($newLogHandle)
+                        {
+                            fwrite($newLogHandle, $content);
+                        }
+                        else if ($pos = strrpos($content, "\n"))
+                        {
+                            if (!$newLogHandle) $newLogHandle = fopen($newLogFile, 'w+');
+                            fwrite($newLogHandle, substr($content, $pos + 1));
+                        }
+                    }
+
+                    if (is_resource($logCurrentHandle)) fclose($logCurrentHandle);
+
+                    if  ($newLogHandle)
+                    {
+                        fclose($newLogHandle);
+                        unlink($this->logCurrentFile);
+                        rename($newLogFile, $this->logCurrentFile);
+                    }
                 }
             }
 

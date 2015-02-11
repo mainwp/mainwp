@@ -429,8 +429,14 @@ class MainWPUtility
         {
             $url = $website->url;
             if (substr($url, -1) != '/') { $url .= '/'; }
-            $url .= 'wp-admin/';
+
+            if (strpos($url, 'wp-admin') === false)
+            {
+                $url .= 'wp-admin/';
+            }
+
             if ($whatPage != null) $url .= $whatPage;
+            else $url .= 'admin-ajax.php';
 
             $_new_post = null;
             if (isset($params) && isset($params['new_post']))
@@ -969,6 +975,7 @@ class MainWPUtility
         $ch = curl_init(str_replace(' ', '%20', $url));
         curl_setopt($ch, CURLOPT_FILE, $fp);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_exec($ch);
         curl_close($ch);
         fclose($fp);

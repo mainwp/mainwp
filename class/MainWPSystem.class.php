@@ -723,7 +723,7 @@ class MainWPSystem
                 if (!is_array($websiteDecodedIgnoredThemes)) $websiteDecodedIgnoredThemes = array();
 
                 //Perform check & update
-                if (!MainWPSync::syncSite($website, false, false))
+                if (!MainWPSync::syncSite($website, false, true))
                 {
                     $websiteValues = array(
                         'dtsAutomaticSync' => time()

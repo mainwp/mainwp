@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.1
-Stable tag: 2.0.7.1
+Stable tag: 2.0.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,14 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.8 =
+* Fixed: Database issue when removing sites
+* Added: Better log file handling
+* Fixed: One unreachable site blocking last sync date
+* Fixed: Corrupt backups when backing up via HTTPS
+* Fixed: Backup tasks losing site-configuration
+* Fixed: "No MainWP Child"-error on some hosts when adding new pages/posts/users
 
 = 2.0.7.1 =
 * Fixed: MySQL error when showing last sync time

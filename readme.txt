@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.1
-Stable tag: 2.0.8
+Stable tag: 2.0.8.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.8.1 =
+* Fixed: Security issue - Unrestricted file upload
+* Fixed: Security issue - Path traversal in file download
+* Fixed: Possible high resource allocation in logger
+* Added: IP address in test connection result
 
 = 2.0.8 =
 * Fixed: Database issue when removing sites

@@ -67,7 +67,10 @@ class MainWPLogger
 
     public function debugForWebsite($pWebsite, $pAction, $pMessage)
     {
-        if (empty($pWebsite)) return false;
+        if (empty($pWebsite))
+        {
+            return $this->log('[] [' . MainWPUtility::getNiceURL($pWebsite->url) . ']  ::' . $pAction . ':: ' . $pMessage, self::DEBUG);
+        }
 
         return $this->log('[' . $pWebsite->name . '] [' . MainWPUtility::getNiceURL($pWebsite->url) . ']  ::' . $pAction . ':: ' . $pMessage, self::DEBUG);
     }
@@ -118,7 +121,7 @@ class MainWPLogger
                 fclose($logCurrentHandle);
             }
 
-            if (filesize($this->logCurrentFile) >= ($this->logMaxMB * 1048576))
+            if (filesize($this->logCurrentFile) > ($this->logMaxMB * 1048576))
             {
                 $logCurrentHandle = fopen($this->logCurrentFile, 'a+');
                 if ($logCurrentHandle)
@@ -127,9 +130,10 @@ class MainWPLogger
                     $newLogFile = $this->logCurrentFile . '.tmp';
                     $newLogHandle = false;
                     $chunkSize = filesize($this->logCurrentFile) - ($this->logMaxMB * 1048576);
-                    while (is_resource($logCurrentHandle) && !feof($logCurrentHandle))
+                    while (is_resource($logCurrentHandle) && !feof($logCurrentHandle) && ($chunkSize > 0))
                     {
                         $content = fread($logCurrentHandle, $chunkSize);
+                        if ($content === false) break;
 
                         if ($newLogHandle)
                         {

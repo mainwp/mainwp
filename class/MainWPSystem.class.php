@@ -1545,7 +1545,13 @@ class MainWPSystem
         {
             $mwpDir = MainWPUtility::getMainWPDir();
             $mwpDir = $mwpDir[0];
-            $file = trailingslashit($mwpDir) . rawurldecode($_GET['mwpdl']);
+            $file = trailingslashit($mwpDir) . rawurldecode($_REQUEST['mwpdl']);
+
+            if (stristr($_REQUEST['mwpdl'], '..'))
+            {
+                return;
+            }
+
             if (file_exists($file) && md5(filesize($file)) == $_GET['sig'])
             {
                 $this->uploadFile($file);
@@ -1584,6 +1590,8 @@ class MainWPSystem
 
     function admin_init()
     {
+        if (!MainWPUtility::isAdmin()) return;
+        
         if (get_option('mainwp_activated') == 'yes')
         {
             delete_option('mainwp_activated');
@@ -2019,7 +2027,7 @@ class MainWPSystem
 
     function new_menus()
     {
-        if (MainWPUtility::isAdmin()) // || $this->isAPIValid())
+        if (MainWPUtility::isAdmin())
         {
             //Adding the page to manage your added sites/groups
             //The first page which will display the post area etc..
@@ -2038,11 +2046,8 @@ class MainWPSystem
             MainWPExtensions::initMenu();
             do_action('mainwp_admin_menu');
             MainWPDocumentation::initMenu();
-            MainWPServerInformation::initMenu();            
-        }
+            MainWPServerInformation::initMenu();
 
-        if (MainWPUtility::isAdmin())
-        {
             MainWPAPISettings::initMenu();
         }
     }

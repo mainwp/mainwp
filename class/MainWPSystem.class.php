@@ -1496,7 +1496,9 @@ class MainWPSystem
         header('Cache-Control: must-revalidate');
         header('Pragma: public');
         header('Content-Length: ' . filesize($file));
-        while (@ob_end_flush());
+        while (@ob_get_level()) {
+            @ob_end_clean();
+        }
         $this->readfile_chunked($file);
 		exit();
     }
@@ -1512,7 +1514,7 @@ class MainWPSystem
             $buffer = @fread($handle, $chunksize);
             echo $buffer;
             @ob_flush();
-            @flush();
+            @flush();         
             $buffer = null;
         }
         return @fclose($handle);

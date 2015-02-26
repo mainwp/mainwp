@@ -421,7 +421,8 @@ class MainWPUtility
         $mh = curl_multi_init();
 
         $timeout = 20 * 60 * 60; //20 minutes
-
+        
+        $disabled_functions = ini_get('disable_functions'); 
         $handleToWebsite = array();
         $requestUrls = array();
         $requestHandles = array();
@@ -501,8 +502,11 @@ class MainWPUtility
             @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout); //20minutes
             if (!ini_get('safe_mode')) @set_time_limit($timeout); //20minutes
             @ini_set('max_execution_time', $timeout);
-
-            @curl_multi_add_handle($mh, $ch);
+            
+            if (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false)) {    
+                @curl_multi_add_handle($mh, $ch);
+            }
+            
             $handleToWebsite[self::get_resource_id($ch)] = $website;
             $requestUrls[self::get_resource_id($ch)] = $website->url;
             $requestHandles[self::get_resource_id($ch)] = $ch;
@@ -511,9 +515,9 @@ class MainWPUtility
         }
 
 
-        $disabled_functions = ini_get('disable_functions');
+        
         if (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false))
-        {
+        {            
             $lastRun = 0;
             do
             {

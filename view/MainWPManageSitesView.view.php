@@ -50,10 +50,9 @@ class MainWPManageSitesView
             }
         }
         $site_id = null;
-        $site_name = "";
         $page = "";
         switch ($pShowpage) {
-            case "":
+            case "ManageSites":
                 $page = "manage";
                 break;
             case "ManageSitesDashboard":
@@ -82,14 +81,17 @@ class MainWPManageSitesView
                 $page = "help";
                 break;
             default:
-                $page = "subpage";
+                $site_id = isset($_GET['id']) ? $_GET['id'] : 0;
+                $page = "others";
                 break;
         }
-
+        $current_site = "";
         $separator = '<span class="separator">&nbsp;&rsaquo;&nbsp;</span>';
         if ($site_id) {
             $website = MainWPDB::Instance()->getWebsiteById($site_id);
-            $site_name  = '<a href="admin.php?page=managesites&dashboard=' . $site_id . '">' . $website->name . '</a>' . $separator;
+            if ($website) {
+                $current_site  = '<a href="admin.php?page=managesites&dashboard=' . $site_id . '">' . $website->name . '</a>' . $separator;
+            }
         }
 
         $page_links = array(
@@ -104,7 +106,7 @@ class MainWPManageSitesView
                             "parent" => "mainwp"
                             ),
             "dashboard" => array( "href" => '' ,
-                            "text" => $site_name . __("Dashboard", "mainwp"),
+                            "text" => $current_site . __("Dashboard", "mainwp"),
                             "alt" => "",
                             "parent" => "site"
                             ),
@@ -113,30 +115,34 @@ class MainWPManageSitesView
                             "alt" => "",
                             "parent" => "site"
                             ),
+            "help" => array( "href" => '' ,
+                            "text" => __("Help", "mainwp"),
+                            "alt" => "",
+                            "parent" => "site"
+                            ),
             "edit" => array( "href" => '' ,
-                            "text" => $site_name . __("Edit", "mainwp"),
+                            "text" => $current_site . __("Edit", "mainwp"),
                             "alt" => "",
                             "parent" => "site"
                             ),
             "backup" => array( "href" => '' ,
-                            "text" => $site_name . __("Backups", "mainwp"),
+                            "text" => $current_site . __("Backups", "mainwp"),
                             "alt" => "",
                             "parent" => "site"
                             ),
             "scan" => array( "href" => '' ,
-                            "text" => $site_name . __("Security Scan", "mainwp"),
+                            "text" => $current_site . __("Security Scan", "mainwp"),
                             "alt" => "",
                             "parent" => "site"
                             ),
-            "subpage" => array( "href" => (isset($extra['href']) ? $extra['href'] : ""),
-                            "text" => (isset($extra['text']) ? $extra['text'] : ""),
+            "others" => array( "href" => '',
+                            "text" => (!empty($current_site) ? $current_site : "")  . (isset($extra['text']) ? $extra['text'] : ""),
                             "alt" => (isset($extra['alt']) ? $extra['alt'] : ""),
                             "parent" => "site"
                         )
         );
 
         $str_breadcrumb = "";
-
         $first = true;
         while(isset($page_links[$page])) {
             if ($first) {
@@ -152,24 +158,59 @@ class MainWPManageSitesView
             $page = $page_links[$page]["parent"];
         }
 
-        return $str_breadcrumb;
+        $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());       
+        $html = "";        
+        if (!empty($str_breadcrumb)) {
+            $html = '<div class="mainwp_breadcrumb"><strong>' . __('You are here: ','mainwp') . '</strong> &nbsp;&nbsp;' .  $str_breadcrumb . '
+                    <span id="mainwp-ind-dash-quick-jump" style="float: right;"><strong>' .  __('Jump to ','mainwp') . '</strong>
+                        <select id="mainwp-quick-jump-child" name="">
+                            <option value="">' . __('Select Site ','mainwp') . '</option>';
+                while ($websites && ($website = @MainWPDB::fetch_object($websites)))
+                {
+                    $html .= '<option value="'.$website->id.'">' . $website->name . '</option>';
+                }
+                @MainWPDB::free_result($websites);
+
+            $html .= '</select>
+                        <strong>' . __(' dashboard','mainwp') . '</strong>
+                    </span>
+                    <div style="clear: both;"></div>
+                </div>';        
+        }
+        
+        return $html;
     }
 
     public static function renderHeader($shownPage, &$subPages)
     {
+        if ($shownPage == '')
+            $shownPage = 'ManageSites';
+        
+        $site_id = 0;        
+        if (isset($_GET['id']) && !empty($_GET['id']))
+            $site_id = $_GET['id'];
+        else if (isset($_GET['backupid']) && !empty($_GET['backupid']))
+             $site_id = $_GET['backupid'];
+        else if (isset($_GET['dashboard']) && !empty($_GET['dashboard']))
+             $site_id = $_GET['dashboard'];
+        else if (isset($_GET['scanid']) && !empty($_GET['scanid']))
+             $site_id = $_GET['scanid'];
+              
+        $managesites_pages = array( 'ManageSites' => array( 'href' => 'admin.php?page=managesites', 'title' => __('Manage','mainwp'), 'access' => true),                                   
+                                    'AddNew' => array( 'href' => 'admin.php?page=managesites&do=new', 'title' => __('Add New','mainwp'), 'access' => mainwp_current_user_can("dashboard", "add_sites")),                                   
+                                    'Test' => array( 'href' => 'admin.php?page=managesites&do=test', 'title' => __('Test Connection','mainwp'), 'access' => mainwp_current_user_can("dashboard", "test_connection")), 
+                                    'ManageGroups' => array( 'href' => 'admin.php?page=ManageGroups', 'title' => __('Groups','mainwp'), 'access' => true));
+        
+        $site_pages = array( 'ManageSitesDashboard' => array( 'href' => 'admin.php?page=managesites&dashboard=' . $site_id, 'title' => __('Dashboard','mainwp'), 'access' => mainwp_current_user_can("dashboard", "access_individual_dashboard")),
+                             'ManageSitesEdit' => array( 'href' => 'admin.php?page=managesites&id=' . $site_id, 'title' => __('Edit','mainwp'), 'access' => mainwp_current_user_can("dashboard", "edit_sites")),
+                            'ManageSitesBackups' => array( 'href' => 'admin.php?page=managesites&backupid=' . $site_id, 'title' => __('Backups','mainwp'), 'access' => mainwp_current_user_can("dashboard", "execute_backups")),
+                            'SecurityScan' => array( 'href' => 'admin.php?page=managesites&scanid=' . $site_id, 'title' => __('Security Scan','mainwp'), 'access' => true)                            
+                        );
+        
         $breadcrumd = "";
-        if ($shownPage != '' && $shownPage != 'Test' && $shownPage != 'SitesHelp' && $shownPage != 'AddNew' && $shownPage != 'ManageGroups') {
+        if ($shownPage != 'SitesHelp' && !isset($managesites_pages[$shownPage])) {
             $breadcrumd = self::getBreadcrumb($shownPage, $subPages);
         }
-
-        $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
-
-        $can_add = mainwp_current_user_can("dashboard", "add_sites");
-        $can_edit = mainwp_current_user_can("dashboard", "edit_sites");
-        $can_view_dashboard = mainwp_current_user_can("dashboard", "access_individual_dashboard");
-        $can_execute_backups = mainwp_current_user_can("dashboard", "execute_backups");
-        $can_test_connection = mainwp_current_user_can("dashboard", "test_connection");
-
 
         ?>
     <div class="wrap">
@@ -179,6 +220,7 @@ class MainWPManageSitesView
         <img src="<?php echo plugins_url('images/icons/mainwp-sites.png', dirname(__FILE__)); ?>"
              style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Sites" height="32"/>
         <h2><?php _e('Sites','mainwp'); ?></h2><div style="clear: both;"></div><br/>
+        
          <div id="mainwp-tip-zone">
           <?php if ($shownPage == '') { ?>
                 <?php if (MainWPUtility::showUserTip('mainwp-managesites-tips')) { ?>
@@ -191,117 +233,46 @@ class MainWPManageSitesView
                 <?php } ?>
           <?php } ?>
         </div>
+        
         <div class="mainwp-tabs" id="mainwp-tabs">
-            <?php if (!empty($breadcrumd)) { ?>
-            <div class="mainwp_breadcrumb"><strong><?php _e('You are here: ','mainwp'); ?></strong> &nbsp;&nbsp;<?php echo $breadcrumd; ?>
-                <span id="mainwp-ind-dash-quick-jump" style="float: right;"><strong><?php _e('Jump to ','mainwp'); ?></strong>
-                    <select id="mainwp-quick-jump-child" name="">
-                        <option value=""><?php _e('Select Site ','mainwp'); ?></option>
+            <?php echo !empty($breadcrumd) ? $breadcrumd . "<br />" : ""; ?>            
                         <?php
-                        while ($websites && ($website = @MainWPDB::fetch_object($websites)))
-                        {
-                        echo '<option value="'.$website->id.'">' . $website->name . '</option>';
-                        }
-                        @MainWPDB::free_result($websites);
+            if ($shownPage == 'ManageSitesBulkUpload') { 
                         ?>
-                    </select>
-                    <strong><?php _e(' dashboard','mainwp'); ?></strong>
-                </span>
-                <div style="clear: both;"></div>
-            </div>
-            <br/>
-            <?php } ?>
-            <?php if ($shownPage == '') {?>
-            <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
-            <?php if ($can_add) { ?>
-            <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
-            <?php } ?>
-            <?php } ?>
-              <?php if ($shownPage == 'ManageSitesBulkUpload') { ?>
                 <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Bulk upload','mainwp'); ?></a>
-                <?php } ?>
-            <?php if ($shownPage == 'ManageSitesBackups') { ?>
-                <a class="nav-tab pos-nav-tab" href="admin.php?page=managesites&dashboard=<?php echo $_GET['backupid'] ?>"><?php _e('Dashboard','mainwp'); ?></a>
-                <?php if ($can_edit) { ?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&id=<?php echo $_GET['backupid'] ?>"><?php _e('Edit','mainwp'); ?></a>
-                <?php } ?>
-                <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Backups','mainwp'); ?></a>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&scanid=<?php echo $_GET['backupid'] ?>"><?php _e('Security Scan','mainwp'); ?></a>
-                <?php } ?>
-            <?php if ($shownPage == 'ManageSitesEdit') { ?>
-                <?php if ($can_view_dashboard) { ?>
-                    <a class="nav-tab pos-nav-tab" href="admin.php?page=managesites&dashboard=<?php echo $_GET['id'] ?>"><?php _e('Dashboard','mainwp'); ?></a>
-                <?php } ?>
-                <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Edit','mainwp'); ?></a>
-                <?php if ($can_execute_backups) { ?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['id'] ?>"><?php _e('Backups','mainwp'); ?></a>
-                <?php } ?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&scanid=<?php echo $_GET['id'] ?>"><?php _e('Security Scan','mainwp'); ?></a>
-            <?php } ?>
-            <?php if ($shownPage == 'ManageSitesDashboard') { ?>
-                <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Dashboard','mainwp'); ?></a>
-                <?php if ($can_edit) { ?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&id=<?php echo $_GET['dashboard'] ?>"><?php _e('Edit','mainwp'); ?></a>
-                <?php } ?>
-                <?php if ($can_execute_backups) { ?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['dashboard'] ?>"><?php _e('Backups','mainwp'); ?></a>
-                <?php } ?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&scanid=<?php echo $_GET['dashboard'] ?>"><?php _e('Security Scan','mainwp'); ?></a>
-            <?php } ?>
-            <?php if ($shownPage == 'SecurityScan') { ?>
-                <?php if ($can_view_dashboard) { ?>
-                <a class="nav-tab pos-nav-tab" href="admin.php?page=managesites&dashboard=<?php echo $_GET['scanid'] ?>"><?php _e('Dashboard','mainwp'); ?></a>
-                <?php } ?>
-                <?php if ($can_edit) { ?>
-                    <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&id=<?php echo $_GET['scanid'] ?>"><?php _e('Edit','mainwp'); ?></a>
-                 <?php } ?>
-                <?php if ($can_execute_backups) { ?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&backupid=<?php echo $_GET['scanid'] ?>"><?php _e('Backups','mainwp'); ?></a>
-                 <?php } ?>
-                <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Security Scan','mainwp'); ?></a>
-            <?php } ?>
-            <?php if ($shownPage == 'AddNew') {?>
-            <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
-            <a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e('Add New','mainwp'); ?></a>
-            <?php } ?>
-            <?php if ($shownPage == 'ManageGroups') {?>
-            <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
-            <?php if ($can_add) { ?>
-            <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
-            <?php } ?>
-            <?php } ?>
-            <?php if ($shownPage == 'Test') {?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
-                <?php if ($can_add) { ?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
-                <?php } ?>
-            <?php } ?>
-            <?php if ($shownPage == 'SitesHelp') {?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites"><?php _e('Manage','mainwp'); ?></a>
-                <?php if ($can_add) { ?>
-                <a class="nav-tab pos-nav-tab " href="admin.php?page=managesites&do=new"><?php _e('Add New','mainwp'); ?></a>
-                <?php } ?>
-            <?php } ?>
-            <?php if ($shownPage == '' || $shownPage == 'AddNew' || $shownPage == 'SitesHelp' || $shownPage == 'Test' || $shownPage == 'ManageGroups') { ?>
-                <?php if ($can_test_connection) { ?>
-                <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Test') { echo "nav-tab-active"; } ?>" href="admin.php?page=managesites&do=test"><?php _e('Test Connection','mainwp'); ?></a>
-                <?php } ?>
-                <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'ManageGroups') { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageGroups"><?php _e('Groups','mainwp'); ?></a>
-            <?php } ?>
-            <a style="float: right;" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage == 'SitesHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=SitesHelp"><?php _e('Help','mainwp'); ?></a>
             <?php
+            } else if ($shownPage == 'SitesHelp' || isset($managesites_pages[$shownPage])) {
+                foreach($managesites_pages as $page => $value) {   
+                    if (!$value['access'])
+                        continue;
+                    ?>                
+                    <a class="nav-tab pos-nav-tab <?php echo $shownPage == $page ? "nav-tab-active" : "" ?>" href="<?php echo $value['href']; ?>"><?php echo $value['title']; ?></a>
+                    <?php
+                }
+            } else if ($site_id) {
+                foreach($site_pages as $page => $value) {   
+                    if (!$value['access'])
+                        continue;
+                    ?>                
+                    <a class="nav-tab pos-nav-tab <?php echo $shownPage == $page ? "nav-tab-active" : "" ?>" href="<?php echo $value['href']; ?>"><?php echo $value['title']; ?></a>
+                    <?php
+                }
+            }   
+            
             if (isset($subPages) && is_array($subPages))
             {
                 foreach ($subPages as $subPage)
                 {
-                    if ($shownPage === $subPage['slug'] || !isset($subPage['menu_hidden']) || (isset($subPage['menu_hidden']) && $subPage['menu_hidden'] != true)) {
+                    if (isset($subPage['sitetab']) && $subPage['sitetab'] == true && empty($site_id))
+                        continue;
                 ?>
-                    <a class="nav-tab pos-nav-tab <?php if ($shownPage === $subPage['slug']) { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageSites<?php echo $subPage['slug']; ?>"><?php echo $subPage['title']; ?></a>
+                <a class="nav-tab pos-nav-tab <?php if ($shownPage === $subPage['slug']) { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageSites<?php echo $subPage['slug'] . ($site_id ? '&id=' . $site_id : ""); ?>"><?php echo $subPage['title']; ?></a>
                 <?php
                     }
                 }
-            }
             ?>
+            <a class="mainwp-help-tab nav-tab pos-nav-tab <?php echo $shownPage == 'SitesHelp' ? "nav-tab-active" : "" ?>" style="float:right" href="admin.php?page=SitesHelp"><?php echo __("Help", "mainwp"); ?></a>           
+            <div class="clear"></div>
         </div>
 
         <div id="mainwp_wrap-inside">

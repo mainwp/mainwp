@@ -1055,7 +1055,7 @@ class MainWPDB
             $nr = $this->wpdb->query('DELETE FROM ' . $this->tableName('wp') . ' WHERE id=' . $websiteid);
             $this->wpdb->query('DELETE FROM ' . $this->tableName('wp_group') . ' WHERE wpid=' . $websiteid);
             $this->wpdb->query('DELETE FROM ' . $this->tableName('wp_sync') . ' WHERE wpid=' . $websiteid);
-            $this->wpdb->query('DELETE FROM ' . $this->tableName('wp_optionview') . ' WHERE wpid=' . $websiteid);
+            $this->wpdb->query('DELETE FROM ' . $this->tableName('wp_options') . ' WHERE wpid=' . $websiteid);
             return $nr;
         }
         return false;
@@ -1324,7 +1324,7 @@ class MainWPDB
 
         //once a day
         return $this->wpdb->get_var('SELECT count(wp.id) FROM ' . $this->tableName('wp') . ' wp
-                                            JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid wp_sync
+                                            JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
                                             WHERE ((wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart) OR (wp_sync.dtsAutomaticSyncStart = 0) OR (DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW()))) ' . $where);
     }
 
@@ -1332,7 +1332,7 @@ class MainWPDB
     {
         //once a day
         return $this->wpdb->get_var('SELECT MAX(wp_sync.dtsAutomaticSync) FROM ' . $this->tableName('wp') . ' wp
-                                            JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid wp_sync');
+                                            JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid');
     }
 
     public function getWebsitesCheckUpdates($limit)

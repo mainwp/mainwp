@@ -158,7 +158,6 @@ class MainWPManageBackups
                     MainWPDB::Instance()->updateBackupTaskWithValues($backupTask->id, array('groups' => $newGroupIds));
                 }
             }
-
         }
 
         return $nothingChanged;

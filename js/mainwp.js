@@ -2438,7 +2438,7 @@ jQuery(document).ready(function () {
                 }
                 else
                 {
-                    setHtml('#mainwp_managesites_add_errors', response.sitename+ ': '+__('Connection test failed.')+' '+__('URL:')+' '+response.host+' '+__('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>');
+                    setHtml('#mainwp_managesites_add_errors', response.sitename+ ': '+__('Connection test failed.')+' '+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') +' '+__('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>');
                 }
             }
             else
@@ -2719,7 +2719,7 @@ mainwp_managesites_test = function (event) {
                 else
                 {
                     setHtml('#mainwp_managesites_test_errors',
-                        __('Connection test failed.')+' '+__('URL:')+' '+response.host+' - '+ __('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>');
+                        __('Connection test failed.')+' '+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') +' - '+ __('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>');
                 }
             }
             else
@@ -6803,7 +6803,7 @@ mainwp_managesites_bulk_test_connection_specific = function(pCheckedBox) {
             }
             else
             {
-                err = response.sitename+ ': '+__('Connection test failed.')+ ' '+__('URL:')+' '+response.host+' - '+__('Error message:') + ' ' + response.error;
+                err = response.sitename+ ': '+__('Connection test failed.')+ ' '+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') +' - '+__('Error message:') + ' ' + response.error;
             }
         }
         else if (response.httpCode)
@@ -6814,7 +6814,7 @@ mainwp_managesites_bulk_test_connection_specific = function(pCheckedBox) {
             }
             else
             {
-                err = response.sitename+ ': '+__('Connection test failed.')+' '+__('URL:')+' '+response.host+' '+__('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>';
+                err = response.sitename+ ': '+__('Connection test failed.')+' '+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') +' '+__('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>';
             }
         }
         else

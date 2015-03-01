@@ -131,7 +131,6 @@ class MainWPUtility
             @curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, false);
         }
 
-
         $disabled_functions = ini_get('disable_functions');
         if (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false))
         {
@@ -166,6 +165,8 @@ class MainWPUtility
             curl_close($ch);
         }
 
+        MainWPLogger::Instance()->debug(' :: tryVisit :: [url=' . $url .'] [http_status='.$http_status.'] [error='.$err . '] [data=' . $data . ']');
+
         if ($data === FALSE)
         {
             return array('error' => ($err == '' ? 'Invalid host.' : $err));
@@ -173,53 +174,58 @@ class MainWPUtility
 
         $host = parse_url($realurl, PHP_URL_HOST);
         $ip = false;
-        if ($http_status == '200')
+        $target = false;
+
+        $dnsRecord = dns_get_record($host);
+        if ($dnsRecord === false)
         {
-            $dnsRecord = dns_get_record($host);
-            if ($dnsRecord === false)
+            return array('error' => 'Invalid host.');
+        }
+        else
+        {
+            if (!isset($dnsRecord['ip']))
             {
-                return array('error' => 'Invalid host.');
+                foreach ($dnsRecord as $dnsRec)
+                {
+                    if (isset($dnsRec['ip']))
+                    {
+                        $ip = $dnsRec['ip'];
+                        break;
+                    }
+                }
             }
             else
             {
-                if (!isset($dnsRecord['ip']))
-                {
-                    foreach ($dnsRecord as $dnsRec)
-                    {
-                        if (isset($dnsRec['ip']))
-                        {
-                            $ip = $dnsRec['ip'];
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    $ip = $dnsRecord['ip'];
-                }
+                $ip = $dnsRecord['ip'];
+            }
 
-                $found = false;
-                if (!isset($dnsRecord['host']))
+            $found = false;
+            if (!isset($dnsRecord['host']))
+            {
+                foreach ($dnsRecord as $dnsRec)
                 {
-                    foreach ($dnsRecord as $dnsRec)
+                    if ($dnsRec['host'] == $host)
                     {
-                        if ($dnsRec['host'] == $host)
-                        {
-                            $found = true;
-                            break;
-                        }
+                        if ($dnsRec['type'] == 'CNAME') $target = $dnsRec['target'];
+                        $found = true;
+                        break;
                     }
-                }
-                else
-                {
-                    $found = ($dnsRecord['host'] == $host);
-                }
-                if (!$found)
-                {
-                    return array('error' => 'Invalid host.'); // Got redirected to: ' . $dnsRecord['host'])));
                 }
             }
+            else
+            {
+                $found = ($dnsRecord['host'] == $host);
+                if ($dnsRecord['type'] == 'CNAME') $target = $dnsRecord['target'];
+            }
+
+            if (!$found)
+            {
+                return array('error' => 'Invalid host.'); // Got redirected to: ' . $dnsRecord['host'])));
+            }
         }
+
+        if ($ip === false) $ip = gethostbynamel($host);
+        if (($target !== false) && ($target != $host)) $host .= ' (CNAME: ' . $target . ')';
 
         $out = array('host' => $host, 'httpCode' => $http_status, 'error' => $err, 'httpCodeString' => self::getHttpStatusErrorString($http_status));
         if ($ip !== false) $out['ip'] = $ip;
@@ -421,8 +427,8 @@ class MainWPUtility
         $mh = curl_multi_init();
 
         $timeout = 20 * 60 * 60; //20 minutes
-        
-        $disabled_functions = ini_get('disable_functions'); 
+
+        $disabled_functions = ini_get('disable_functions');
         $handleToWebsite = array();
         $requestUrls = array();
         $requestHandles = array();
@@ -430,8 +436,14 @@ class MainWPUtility
         {
             $url = $website->url;
             if (substr($url, -1) != '/') { $url .= '/'; }
-            $url .= 'wp-admin/';
+
+            if (strpos($url, 'wp-admin') === false)
+            {
+                $url .= 'wp-admin/';
+            }
+
             if ($whatPage != null) $url .= $whatPage;
+            else $url .= 'admin-ajax.php';
 
             $_new_post = null;
             if (isset($params) && isset($params['new_post']))
@@ -502,11 +514,11 @@ class MainWPUtility
             @curl_setopt($ch, CURLOPT_TIMEOUT, $timeout); //20minutes
             if (!ini_get('safe_mode')) @set_time_limit($timeout); //20minutes
             @ini_set('max_execution_time', $timeout);
-            
-            if (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false)) {    
+
+            if (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false)) {
                 @curl_multi_add_handle($mh, $ch);
             }
-            
+
             $handleToWebsite[self::get_resource_id($ch)] = $website;
             $requestUrls[self::get_resource_id($ch)] = $website->url;
             $requestHandles[self::get_resource_id($ch)] = $ch;
@@ -515,9 +527,9 @@ class MainWPUtility
         }
 
 
-        
+
         if (empty($disabled_functions) || (stristr($disabled_functions, 'curl_multi_exec') === false))
-        {            
+        {
             $lastRun = 0;
             do
             {
@@ -973,6 +985,7 @@ class MainWPUtility
         $ch = curl_init(str_replace(' ', '%20', $url));
         curl_setopt($ch, CURLOPT_FILE, $fp);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_exec($ch);
         curl_close($ch);
         fclose($fp);

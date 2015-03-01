@@ -210,6 +210,8 @@ class MainWPPostHandler
     }
 
     function mainwp_installation_warning_hide() {
+        $this->secure_request();
+
         update_option("mainwp_installation_warning_hide_the_notice", "yes");
         die('ok');
     }
@@ -219,12 +221,16 @@ class MainWPPostHandler
      */
     function mainwp_users_search()
     {
+        $this->secure_request();
+
         MainWPUser::renderTable($_POST['role'], (isset($_POST['groups']) ? $_POST['groups'] : ''), (isset($_POST['sites']) ? $_POST['sites'] : ''));
         die();
     }
 
     function mainwp_users_query()
     {
+        $this->secure_request();
+
         MainWPUser::renderTable(null, (isset($_POST['groups']) ? $_POST['groups'] : ''), (isset($_POST['sites']) ? $_POST['sites'] : ''), $_POST['search']);
         die();
     }
@@ -235,6 +241,8 @@ class MainWPPostHandler
      */
     function mainwp_themes_search()
     {
+        $this->secure_request();
+
         MainWPThemes::renderTable($_POST['keyword'], $_POST['status'], (isset($_POST['groups']) ? $_POST['groups'] : ''), (isset($_POST['sites']) ? $_POST['sites'] : ''));
         die();
     }
@@ -261,6 +269,8 @@ class MainWPPostHandler
     }
     function mainwp_themes_search_all()
     {
+       $this->secure_request();
+
        MainWPThemes::renderAllThemesTable();
        die();
     }
@@ -276,11 +286,16 @@ class MainWPPostHandler
      */
     function mainwp_plugins_search()
     {
+        $this->secure_request();
+
         MainWPPlugins::renderTable($_POST['keyword'], $_POST['status'], (isset($_POST['groups']) ? $_POST['groups'] : ''), (isset($_POST['sites']) ? $_POST['sites'] : ''));
         die();
     }
+
     function mainwp_plugins_search_all_active()
     {
+        $this->secure_request();
+
         MainWPPlugins::renderAllActiveTable();
         die();
     }
@@ -309,6 +324,7 @@ class MainWPPostHandler
     function mainwp_plugin_ignore_updates()
     {
         $this->secure_request('mainwp_plugin_ignore_updates');
+
         MainWPPlugins::ignoreUpdates();
         die();
     }
@@ -324,15 +340,20 @@ class MainWPPostHandler
 	/**
 	* Widget: Plugins
 	*/
-	function mainwp_widget_plugin_activate() {
+	function mainwp_widget_plugin_activate()
+    {
 		$this->secure_request('mainwp_widget_plugin_activate');
 		MainWPWidgetPlugins::activatePlugin();
 	}
-	function mainwp_widget_plugin_deactivate() {
+
+	function mainwp_widget_plugin_deactivate()
+    {
 		$this->secure_request('mainwp_widget_plugin_deactivate');
 		MainWPWidgetPlugins::deactivatePlugin();
 	}
-	function mainwp_widget_plugin_delete() {
+
+	function mainwp_widget_plugin_delete()
+    {
 		$this->secure_request('mainwp_widget_plugin_delete');
 		MainWPWidgetPlugins::deletePlugin();		
 	}
@@ -340,11 +361,13 @@ class MainWPPostHandler
 	/**
 	* Widget: Themes
 	*/
-	function mainwp_widget_theme_activate() {
+	function mainwp_widget_theme_activate()
+    {
 		$this->secure_request('mainwp_widget_theme_activate');
 		MainWPWidgetThemes::activateTheme();
 	}	
-	function mainwp_widget_theme_delete() {
+	function mainwp_widget_theme_delete()
+    {
 		$this->secure_request('mainwp_widget_theme_delete');
 		MainWPWidgetThemes::deleteTheme();		
 	}
@@ -355,21 +378,25 @@ class MainWPPostHandler
      */
     function mainwp_posts_search()
     {
+        $this->secure_request();
         MainWPPost::renderTable($_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], (isset($_POST['groups']) ? $_POST['groups'] : ''), (isset($_POST['sites']) ? $_POST['sites'] : ''), $_POST['postId'], $_POST['userId']);
         die();
     }
     function mainwp_posts_get_terms()
     {
+        $this->secure_request();
         MainWPPost::getTerms($_POST['selected_site'], $_POST['prefix'], $_POST['what'], $_POST['generate_type']);
         die();
     }
     function mainwp_posts_test_post()
     {
+        $this->secure_request();
         MainWPPost::testPost();
         die();
     }
     function mainwp_get_categories()
     {
+        $this->secure_request();
         MainWPPost::getCategories();
         die();
     }
@@ -379,6 +406,7 @@ class MainWPPostHandler
      */
     function mainwp_pages_search()
     {
+        $this->secure_request();
         MainWPPage::renderTable($_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], (isset($_POST['groups']) ? $_POST['groups'] : ''), (isset($_POST['sites']) ? $_POST['sites'] : ''));
         die();
     }
@@ -388,11 +416,13 @@ class MainWPPostHandler
      */
     function mainwp_api_test()
     {
+        $this->secure_request();
         die(json_encode(MainWPAPISettings::testAndSaveLogin($_POST['username'], $_POST['password'])));
     }
 
     function mainwp_api_refresh()
     {
+        $this->secure_request();
         die(json_encode(MainWPAPISettings::refresh()));
     }
 
@@ -520,16 +550,22 @@ class MainWPPostHandler
      */
     function mainwp_offline_check_save()
     {
+        $this->secure_request();
+
         die(MainWPOfflineChecks::updateWebsite());
     }
 
     function mainwp_offline_check_save_bulk()
     {
+        $this->secure_request();
+
         die(MainWPOfflineChecks::updateWebsites());
     }
 
     function mainwp_offline_check_check()
     {
+        $this->secure_request();
+
         die(json_encode(MainWPOfflineChecks::checkWebsite()));
     }
 
@@ -538,12 +574,16 @@ class MainWPPostHandler
      */
     function mainwp_managetips_update()
     {
+        $this->secure_request();
+
         MainWPManageTips::updateTipSettings();
         die();
     }
 
     function mainwp_tips_update()
     {
+        $this->secure_request();
+
         global $current_user;
         if (($user_id = $current_user->ID) && isset($_POST['tipId']) && !empty($_POST['tipId'])) {
             $user_tips = get_user_option('mainwp_hide_user_tips');
@@ -557,6 +597,8 @@ class MainWPPostHandler
     
     function mainwp_reset_usercookies()
     {
+        $this->secure_request();
+
         global $current_user;
         if (($user_id = $current_user->ID) && isset($_POST['what']) && !empty($_POST['what'])) {
             $user_cookies = get_user_option('mainwp_saved_user_cookies');
@@ -576,6 +618,8 @@ class MainWPPostHandler
      */
     function mainwp_securityIssues_request()
     {
+        $this->secure_request();
+
         try
         {
             die(json_encode(array('result' => MainWPSecurityIssues::fetchSecurityIssues())));
@@ -588,6 +632,8 @@ class MainWPPostHandler
 
     function mainwp_securityIssues_fix()
     {
+        $this->secure_request();
+
         try
         {
             die(json_encode(array('result' => MainWPSecurityIssues::fixSecurityIssue())));
@@ -599,6 +645,8 @@ class MainWPPostHandler
     }
     function mainwp_securityIssues_unfix()
     {
+        $this->secure_request();
+
         try
         {
             die(json_encode(array('result' => MainWPSecurityIssues::unfixSecurityIssue())));
@@ -851,8 +899,10 @@ class MainWPPostHandler
 
     function mainwp_bulkuploadadduser()
     {
+        $this->secure_request();
+
         MainWPUser::renderBulkUpload();
-       die();
+        die();
     }
 
     function mainwp_importuser()
@@ -868,6 +918,8 @@ class MainWPPostHandler
 
     function mainwp_installbulksearch()
     {
+        $this->secure_request();
+
         if ($_REQUEST['page'] == 'PluginsInstall')
         {
             MainWPPlugins::performSearch();
@@ -880,6 +932,8 @@ class MainWPPostHandler
 
     function mainwp_installbulknavsearch()
     {
+        $this->secure_request();
+
         if ($_REQUEST['page'] == 'PluginsInstall')
         {
             if (mainwp_current_user_can("dashboard", "install_plugins")) {
@@ -901,6 +955,8 @@ class MainWPPostHandler
 
     function mainwp_installbulknavupload()
     {
+        $this->secure_request();
+
         if ($_REQUEST['page'] == 'PluginsInstall')
         {
             MainWPInstallBulk::renderUpload('Plugins');
@@ -914,6 +970,8 @@ class MainWPPostHandler
 
     function mainwp_preparebulkinstallplugintheme()
     {
+        $this->secure_request();
+
         MainWPInstallBulk::prepareInstall();
     }
 
@@ -926,6 +984,8 @@ class MainWPPostHandler
 
     function mainwp_preparebulkuploadplugintheme()
     {
+        $this->secure_request();
+
         MainWPInstallBulk::prepareUpload();
     }
 
@@ -955,6 +1015,8 @@ class MainWPPostHandler
 
     function mainwp_group_delete()
     {
+        $this->secure_request();
+
         MainWPManageGroups::deleteGroup();
     }
 
@@ -967,6 +1029,8 @@ class MainWPPostHandler
 
     function mainwp_group_getsites()
     {
+        $this->secure_request();
+
         die(MainWPManageGroups::getSites());
     }
 
@@ -1020,12 +1084,16 @@ class MainWPPostHandler
 
     function mainwp_site_dirs()
     {
+        $this->secure_request();
+
         MainWPManageBackups::getSiteDirectories();
         exit();
     }
 
     function mainwp_backuptask_get_sites()
     {
+        $this->secure_request();
+
         $taskID = $_POST['task_id'];
 
         die(json_encode(array('result' => MainWPManageBackups::getBackupTaskSites($taskID))));
@@ -1155,11 +1223,15 @@ class MainWPPostHandler
 
     function mainwp_reconnectwp()
     {
+        $this->secure_request();
+
         MainWPManageSites::reconnectSite();
     }
 
     function mainwp_updatechildsite_value()
     {
+        $this->secure_request();
+
         MainWPManageSites::updateChildsiteValue();
     }
     
@@ -1225,6 +1297,8 @@ class MainWPPostHandler
 
     function mainwp_ignoreplugintheme()
     {
+        $this->secure_request();
+
         if (!isset($_POST['id']))
         {
             die(json_encode(array('error' => 'Invalid request')));
@@ -1255,6 +1329,8 @@ class MainWPPostHandler
 
     function mainwp_unignoreplugintheme()
     {
+        $this->secure_request();
+
         if (!isset($_POST['id']))
         {
             die(json_encode(array('error' => 'Invalid request')));
@@ -1264,6 +1340,8 @@ class MainWPPostHandler
 
     function mainwp_ignorepluginsthemes()
     {
+        $this->secure_request();
+
         if (!mainwp_current_user_can("dashboard", "ignore_unignore_updates")) {
              die(json_encode(array('error' => mainwp_do_not_have_permissions("ignore/unignor updates"))));
         }
@@ -1277,6 +1355,8 @@ class MainWPPostHandler
 
     function mainwp_unignorepluginsthemes()
     {
+        $this->secure_request();
+
         if (!isset($_POST['slug']))
         {
             die(json_encode(array('error' => 'Invalid request')));
@@ -1330,6 +1410,8 @@ class MainWPPostHandler
 
     function mainwp_serverInformation()
     {
+        $this->secure_request();
+
         MainWPServerInformation::fetchChildServerInformation($_POST['siteId']);
         die();
     }
@@ -1357,8 +1439,11 @@ class MainWPPostHandler
         die('ok');
     }
     
-    function secure_request($action, $query_arg = 'security')
+    function secure_request($action = '', $query_arg = 'security')
     {
+        if (!MainWPUtility::isAdmin()) die(0);
+        if ($action == '') return;
+
         if (!$this->check_security($action, $query_arg)) die(json_encode(array('error' => 'Invalid request')));
 
         if (isset($_POST['dts']))

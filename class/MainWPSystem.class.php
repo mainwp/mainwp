@@ -723,7 +723,7 @@ class MainWPSystem
                 if (!is_array($websiteDecodedIgnoredThemes)) $websiteDecodedIgnoredThemes = array();
 
                 //Perform check & update
-                if (!MainWPSync::syncSite($website, false, false))
+                if (!MainWPSync::syncSite($website, false, true))
                 {
                     $websiteValues = array(
                         'dtsAutomaticSync' => time()
@@ -915,8 +915,8 @@ class MainWPSystem
                 MainWPUtility::update_option('mainwp_updatescheck_mail_email', $email);
                 MainWPDB::Instance()->updateWebsiteSyncValues($website->id, array('dtsAutomaticSync' => time()));
                 MainWPDB::Instance()->updateWebsiteOption($website, 'last_wp_upgrades', json_encode($websiteCoreUpgrades));
-                MainWPDB::Instance()->getWebsiteOption($website, 'last_plugin_upgrades', $website->plugin_upgrades);
-                MainWPDB::Instance()->getWebsiteOption($website, 'last_theme_upgrades', $website->theme_upgrades);
+                MainWPDB::Instance()->updateWebsiteOption($website, 'last_plugin_upgrades', $website->plugin_upgrades);
+                MainWPDB::Instance()->updateWebsiteOption($website, 'last_theme_upgrades', $website->theme_upgrades);
             }
 
             if (count($coreNewUpdate) != 0)
@@ -1514,7 +1514,7 @@ class MainWPSystem
             $buffer = @fread($handle, $chunksize);
             echo $buffer;
             @ob_flush();
-            @flush();         
+            @flush();
             $buffer = null;
         }
         return @fclose($handle);
@@ -1547,7 +1547,13 @@ class MainWPSystem
         {
             $mwpDir = MainWPUtility::getMainWPDir();
             $mwpDir = $mwpDir[0];
-            $file = trailingslashit($mwpDir) . rawurldecode($_GET['mwpdl']);
+            $file = trailingslashit($mwpDir) . rawurldecode($_REQUEST['mwpdl']);
+
+            if (stristr($_REQUEST['mwpdl'], '..'))
+            {
+                return;
+            }
+
             if (file_exists($file) && md5(filesize($file)) == $_GET['sig'])
             {
                 $this->uploadFile($file);
@@ -1586,6 +1592,8 @@ class MainWPSystem
 
     function admin_init()
     {
+        if (!MainWPUtility::isAdmin()) return;
+        
         if (get_option('mainwp_activated') == 'yes')
         {
             delete_option('mainwp_activated');
@@ -2021,7 +2029,7 @@ class MainWPSystem
 
     function new_menus()
     {
-        if (MainWPUtility::isAdmin()) // || $this->isAPIValid())
+        if (MainWPUtility::isAdmin())
         {
             //Adding the page to manage your added sites/groups
             //The first page which will display the post area etc..
@@ -2040,11 +2048,8 @@ class MainWPSystem
             MainWPExtensions::initMenu();
             do_action('mainwp_admin_menu');
             MainWPDocumentation::initMenu();
-            MainWPServerInformation::initMenu();            
-        }
+            MainWPServerInformation::initMenu();
 
-        if (MainWPUtility::isAdmin())
-        {
             MainWPAPISettings::initMenu();
         }
     }

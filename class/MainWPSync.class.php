@@ -50,7 +50,7 @@ class MainWPSync
                 $themeConflicts = array_keys($themeConflicts);
             }
 
-            $othersData = apply_filters('mainwp-sync-others-data', array());            
+            $othersData = apply_filters('mainwp-sync-others-data', array(), $pWebsite);            
             $information = MainWPUtility::fetchUrlAuthed($pWebsite, 'stats',
                 array(
                     'optimize' => ((get_option("mainwp_optimize") == 1) ? 1 : 0),

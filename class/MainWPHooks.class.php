@@ -27,6 +27,7 @@ class MainWPHooks
         add_filter('mainwp_getwebsitesbyurl', array(&$this, 'getWebsitesByUrl'));
         add_filter('mainwp_getWebsitesByUrl', array(&$this, 'getWebsitesByUrl')); //legacy
         add_filter('mainwp_getErrorMessage', array(&$this, 'getErrorMessage'), 10, 2);
+        add_filter('mainwp_getwebsitesbygroupids', array(&$this, 'hookGetWebsitesByGroupIds'), 10, 2);
 
         //Cache hooks
         add_filter('mainwp_cache_getcontext', array(&$this, 'cache_getcontext'));
@@ -167,5 +168,8 @@ class MainWPHooks
 
         die();
     }
-
+   
+    public function hookGetWebsitesByGroupIds($ids, $userId = null) {
+        return MainWPDB::Instance()->getWebsitesByGroupIds($ids, $userId);
+    }
 }

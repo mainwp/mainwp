@@ -418,7 +418,7 @@ class MainWPDB
             $userId = $current_user->ID;
         }
         $where = ($userId != null) ? ' userid = ' . $userId : '';
-        $where .= $this->getWhereAllowAccessGroupsSites("wp");
+        $where .= $this->getWhereAllowAccessSites("wp");
         $qry = 'SELECT wp_sync.dtsSync FROM '.$this->tableName('wp'). ' wp JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid WHERE wp_sync.sync_errors = "" ' . $where . ' ORDER BY wp_sync.dtsSync ASC LIMIT 1';
 
         return $this->wpdb->get_var($qry);
@@ -426,7 +426,7 @@ class MainWPDB
 
     public function getRequestsSince($pSeconds)
     {
-        $where = $this->getWhereAllowAccessGroupsSites("wp");
+        $where = $this->getWhereAllowAccessSites("wp");
         $qry = 'SELECT count(*) FROM '.$this->tableName('wp').' wp JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid WHERE wp_sync.dtsSyncStart > ' . (time() - $pSeconds) . $where;
 
         return $this->wpdb->get_var($qry);
@@ -441,7 +441,7 @@ class MainWPDB
             $userId = $current_user->ID;
         }
         $where = ($userId == null ? '' : ' wp.userid = '.$userId);
-        $where .= $this->getWhereAllowAccessGroupsSites("wp");
+        $where .= $this->getWhereAllowAccessSites("wp");
         $qry = 'SELECT COUNT(wp.id) FROM ' . $this->tableName('wp') . ' wp WHERE 1 ' . $where;
 
         return $this->wpdb->get_var($qry);
@@ -483,7 +483,7 @@ class MainWPDB
 
     public function getSQLWebsites()
     {
-        $where = $this->getWhereAllowAccessGroupsSites("wp");
+        $where = $this->getWhereAllowAccessSites("wp");
         return 'SELECT wp.*,wp_sync.*,wp_optionview.*
                 FROM ' . $this->tableName('wp') . ' wp
                 JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
@@ -500,7 +500,7 @@ class MainWPDB
                 $where = ' AND (wp.name LIKE "%'.$search_site.'%" OR wp.url LIKE  "%'.$search_site.'%") ';
             }
 
-            $where .= $this->getWhereAllowAccessGroupsSites("wp");
+            $where .= $this->getWhereAllowAccessSites("wp");
 
             if ($selectgroups) {
                 $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
@@ -551,7 +551,7 @@ class MainWPDB
         }
 
         if (!$for_manager) {
-            $where .= $this->getWhereAllowAccessGroupsSites("wp");
+            $where .= $this->getWhereAllowAccessSites("wp");
         }
 
         if ($selectgroups) {
@@ -579,34 +579,20 @@ class MainWPDB
         return $qry;
     }
 
-    public function getWhereAllowAccessGroupsSites($site_table_alias = "") {
+    public function getWhereAllowAccessSites($site_table_alias = "") {
 
         // To fix bug run from cron job
         if ( defined( 'DOING_CRON' ) && DOING_CRON )
             return "";
         
         $allowed_sites = apply_filters("mainwp_currentuserallowedaccesssites", "all");
-        $allowed_groups = apply_filters("mainwp_currentuserallowedaccessgroups", "all");
         
-        if ($allowed_sites == "all" || $allowed_groups == "all") {         
+        if ($allowed_sites == "all") {         
             return ""; // allow all sites            
         } 
         
         if (empty($site_table_alias))
             $site_table_alias = $this->tableName("wp");
-       
-        if (is_array($allowed_groups) && count($allowed_groups) > 0) {   
-            $websites = MainWPDB::Instance()->getWebsitesByGroupIds($allowed_groups);
-            if (is_array($websites)) {                
-                if (!is_array($allowed_sites))
-                    $allowed_sites = array();
-                
-                foreach ($websites as  $website)
-                {
-                    $allowed_sites[] = $website->id;
-                }
-            }
-        } 
         
         if (is_array($allowed_sites) && count($allowed_sites) > 0) {                                                
             $_where = ' AND ' . $site_table_alias. '.id IN (' . implode(",", $allowed_sites) . ') ';
@@ -787,7 +773,7 @@ class MainWPDB
     {
         if (MainWPUtility::ctype_digit($id))
         {
-            $where = $this->getWhereAllowAccessGroupsSites("wp");
+            $where = $this->getWhereAllowAccessSites("wp");
             if ($selectGroups) {                
                 return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
                 FROM ' . $this->tableName('wp') . ' wp
@@ -815,7 +801,7 @@ class MainWPDB
             global $current_user;
             $userId = $current_user->ID;
         }
-        $where = $this->getWhereAllowAccessGroupsSites();
+        $where = $this->getWhereAllowAccessSites();
         return $this->wpdb->get_results('SELECT * FROM ' . $this->tableName('wp') . ' WHERE id IN (' . implode(',', $ids) . ')' . ($userId != null ? ' AND userid = '.$userId : '') . $where, OBJECT);
     }
 
@@ -838,7 +824,7 @@ class MainWPDB
     {
         if (MainWPUtility::ctype_digit($id))
         {
-            $where_allowed = $this->getWhereAllowAccessGroupsSites("wp");
+            $where_allowed = $this->getWhereAllowAccessSites("wp");
             if ($selectgroups)
             {
                 $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
@@ -1314,7 +1300,7 @@ class MainWPDB
 
     public function getWebsitesCheckUpdatesCount()
     {
-        $where = $this->getWhereAllowAccessGroupsSites("wp");        
+        $where = $this->getWhereAllowAccessSites("wp");        
         return $this->wpdb->get_var('SELECT count(wp.id) FROM ' . $this->tableName('wp') . ' wp
                                             JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
                                             WHERE (wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW())) ' . $where);
@@ -1322,7 +1308,7 @@ class MainWPDB
 
     public function getWebsitesCountWhereDtsAutomaticSyncSmallerThenStart()
     {
-        $where = $this->getWhereAllowAccessGroupsSites("wp");
+        $where = $this->getWhereAllowAccessSites("wp");
 
         //once a day
         return $this->wpdb->get_var('SELECT count(wp.id) FROM ' . $this->tableName('wp') . ' wp
@@ -1339,7 +1325,7 @@ class MainWPDB
 
     public function getWebsitesCheckUpdates($limit)
     {
-        $where = $this->getWhereAllowAccessGroupsSites("wp");
+        $where = $this->getWhereAllowAccessSites("wp");
         //once a day
         return $this->wpdb->get_results('SELECT wp.*,wp_sync.*,wp_optionview.*
                                     FROM ' . $this->tableName('wp') . ' wp
@@ -1350,7 +1336,7 @@ class MainWPDB
 
     public function getWebsitesStatsUpdateSQL()
     {
-        $where = $this->getWhereAllowAccessGroupsSites();
+        $where = $this->getWhereAllowAccessSites();
         //once a week
         return 'SELECT * FROM ' . $this->tableName('wp') . ' WHERE (statsUpdate = 0 OR ' . time() . ' - statsUpdate >= ' . (60 * 60 * 24 * 7) . ')' . $where;
     }

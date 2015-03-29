@@ -277,6 +277,12 @@ class MainWPManageSites_List_Table extends WP_List_Table
 
     function column_backup($item)
     {
+        
+        $backupnow_lnk = apply_filters('mainwp-managesites-getbackuplink', "", $item['id']);        
+        if (!empty($backupnow_lnk)) {
+            return $backupnow_lnk;
+        }
+        
         $dir = MainWPUtility::getMainWPSpecificDir($item['id']);
         $lastbackup = 0;
         if (file_exists($dir) && ($dh = opendir($dir)))
@@ -294,13 +300,13 @@ class MainWPManageSites_List_Table extends WP_List_Table
             }
             closedir($dh);
         }
-
+        
         $output = '';
         if ($lastbackup > 0) $output = MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp($lastbackup)) . '<br />';
         else $output = '<span class="mainwp-red">Never</span><br/>';
         
         if (mainwp_current_user_can("dashboard", "execute_backups")) {
-            $output .= sprintf('<a href="admin.php?page=managesites&backupid=%s">' . __('Backup Now','mainwp') . '</a>', $item['id']);
+            $output .= sprintf('<a href="admin.php?page=managesites&backupid=%s">' . __('Backup Now','mainwp') . '</a>', $item['id']);            
         }
 
         return $output;

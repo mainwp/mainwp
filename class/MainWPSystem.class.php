@@ -84,7 +84,8 @@ class MainWPSystem
             $this->upgradeVersionInfo = null;
         }
 
-
+        $this->handleSettingsPost();
+       
         MainWPExtensions::init();
 
         add_action('in_plugin_update_message-'.$this->plugin_slug, array($this, 'in_plugin_update_message'), 10, 2);
@@ -1474,7 +1475,7 @@ class MainWPSystem
                 return apply_filters("mainwp_currentusercan", true, $cap_type, $cap);
             }
         }
-
+ 
         remove_all_filters( 'admin_footer_text' );
         add_filter('admin_footer_text', array(&$this, 'admin_footer_text'));
     }
@@ -1600,6 +1601,12 @@ class MainWPSystem
             wp_redirect(admin_url('admin.php?page=managesites&do=new'));
             return;
         }
+        
+        global $mainwpUseExternalPrimaryBackupsMethod;
+        
+        if ($mainwpUseExternalPrimaryBackupsMethod === null)
+            $mainwpUseExternalPrimaryBackupsMethod = apply_filters("mainwp-getprimarybackup-activated", "");        
+        
         add_action( 'admin_notices', array($this, 'mainwp_warning_notice' ));
         $this->posthandler->init();
 
@@ -1642,6 +1649,14 @@ class MainWPSystem
         if (!current_user_can('update_core')) remove_action('admin_notices', 'update_nag', 3);
     }
 
+    function handleSettingsPost() {         
+        if (isset($_GET['page']) && $_GET['page'] == "Settings" && isset($_POST['submit']))
+        {
+            if (isset($_POST['mainwp_primaryBackup'])) {
+                MainWPUtility::update_option('mainwp_primaryBackup', $_POST['mainwp_primaryBackup']);
+            }
+        }        
+    }
 
     //This function will read the metaboxes & save them to the post
     function publish_bulkpost($post_id)
@@ -1675,6 +1690,10 @@ class MainWPSystem
     function save_bulkpost($post_id)
     {
         $post = get_post($post_id);
+         
+        if ($post->post_type != 'bulkpage' && $post->post_type != 'bulkpost')
+            return;
+         
         if ($post->post_type != 'bulkpost' && (!isset($_POST['post_type']) || ($_POST['post_type'] != 'bulkpost'))) return;
 
         // verify if this is an auto save routine.
@@ -1743,6 +1762,10 @@ class MainWPSystem
     function save_bulkpage($post_id)
     {
         $post = get_post($post_id);
+        
+        if ($post->post_type != 'bulkpage' && $post->post_type != 'bulkpost')
+            return;
+        
         if ($post->post_type != 'bulkpage' && (!isset($_POST['post_type']) || ($_POST['post_type'] != 'bulkpage'))) return;
 
         // verify if this is an auto save routine.

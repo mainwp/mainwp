@@ -63,8 +63,12 @@ class MainWPSync
                 ),
                 true, $pForceFetch
             );
-
-            return self::syncInformationArray($pWebsite, $information, '', 1, false, $pAllowDisconnect);
+            
+            $return = self::syncInformationArray($pWebsite, $information, '', 1, false, $pAllowDisconnect);
+            
+            do_action('mainwp-syncothersdata-result', $information, $pWebsite->id);       
+            
+            return $return;
         }
         catch (MainWPException $e)
         {

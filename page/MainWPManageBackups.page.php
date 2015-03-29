@@ -9,7 +9,9 @@ class MainWPManageBackups
     public static $subPages;
     /** @var $sitesTable MainWPManageBackups_List_Table */
     public static $sitesTable;
-
+    
+    private static $hideSubmenuBackups = false;
+    
     public static function init()
     {
         add_action('mainwp-pageheader-backups', array(MainWPManageBackups::getClassName(), 'renderHeader'));
@@ -18,13 +20,20 @@ class MainWPManageBackups
 
     public static function initMenu()
     {
-        $page = add_submenu_page('mainwp_tab', __('Schedule Backup','mainwp'), '<span id="mainwp-Backups">'. __('Schedule Backup','mainwp') . '</span>', 'read', 'ManageBackups', array(MainWPManageBackups::getClassName(), 'renderManager'));
-        add_action('load-' . $page, array(MainWPManageBackups::getClassName(), 'load_page'));
-        if (mainwp_current_user_can("dashboard", "add_backup_tasks")) {
-            add_submenu_page('mainwp_tab', __('Add New Schedule','mainwp'), '<div class="mainwp-hidden">' . __('Add New','mainwp') . '</div>', 'read', 'ManageBackupsAddNew', array(MainWPManageBackups::getClassName(), 'renderNew'));
-        }
-        add_submenu_page('mainwp_tab', __('Backups Help','mainwp'), '<div class="mainwp-hidden">' . __('Backups Help','mainwp') . '</div>', 'read', 'BackupsHelp', array(MainWPManageBackups::getClassName(), 'QSGManageBackups'));
-
+        
+        $customPage = apply_filters('mainwp-getcustompage-backups', false);
+        if (is_array($customPage) && isset($customPage['slug'])) {
+            self::$hideSubmenuBackups = true;
+            add_submenu_page('mainwp_tab', $customPage['title'], '<span id="mainwp-Backups">'. $customPage['title'] . '</span>', 'read', 'ManageBackups' . $customPage['slug'], $customPage['callback']);
+        } else {
+            $page = add_submenu_page('mainwp_tab', __('Schedule Backup','mainwp'), '<span id="mainwp-Backups">'. __('Schedule Backup','mainwp') . '</span>', 'read', 'ManageBackups', array(MainWPManageBackups::getClassName(), 'renderManager'));
+            add_action('load-' . $page, array(MainWPManageBackups::getClassName(), 'load_page'));
+            if (mainwp_current_user_can("dashboard", "add_backup_tasks")) {
+                add_submenu_page('mainwp_tab', __('Add New Schedule','mainwp'), '<div class="mainwp-hidden">' . __('Add New','mainwp') . '</div>', 'read', 'ManageBackupsAddNew', array(MainWPManageBackups::getClassName(), 'renderNew'));
+            }
+            add_submenu_page('mainwp_tab', __('Backups Help','mainwp'), '<div class="mainwp-hidden">' . __('Backups Help','mainwp') . '</div>', 'read', 'BackupsHelp', array(MainWPManageBackups::getClassName(), 'QSGManageBackups'));
+        }        
+        
         self::$subPages = apply_filters('mainwp-getsubpages-backups', array());
         if (isset(self::$subPages) && is_array(self::$subPages))
         {
@@ -42,14 +51,20 @@ class MainWPManageBackups
 
     public static function initMenuSubPages()
     {
+        if (self::$hideSubmenuBackups && (empty(self::$subPages) || !is_array(self::$subPages))) { 
+            return;
+        }        
         ?>
     <div id="menu-mainwp-Backups" class="mainwp-submenu-wrapper">
         <div class="wp-submenu sub-open" style="">
-            <div class="mainwp_boxout">
-                <div class="mainwp_boxoutin"></div>
-                <a href="<?php echo admin_url('admin.php?page=ManageBackups'); ?>" class="mainwp-submenu"><?php _e('Manage Backups','mainwp'); ?></a>
-                <?php if (mainwp_current_user_can("dashboard", "add_backup_tasks")) { ?>
-                <a href="<?php echo admin_url('admin.php?page=ManageBackupsAddNew'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
+            <div class="mainwp_boxout">                
+                <?php 
+                if (!self::$hideSubmenuBackups) { ?>
+                    <div class="mainwp_boxoutin"></div>
+                    <a href="<?php echo admin_url('admin.php?page=ManageBackups'); ?>" class="mainwp-submenu"><?php _e('Manage Backups','mainwp'); ?></a>
+                    <?php if (mainwp_current_user_can("dashboard", "add_backup_tasks")) { ?>
+                    <a href="<?php echo admin_url('admin.php?page=ManageBackupsAddNew'); ?>" class="mainwp-submenu"><?php _e('Add New','mainwp'); ?></a>
+                    <?php } ?>
                 <?php } ?>
                 <?php
                 if (isset(self::$subPages) && is_array(self::$subPages))

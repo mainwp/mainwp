@@ -30,7 +30,7 @@ class MainWPExtensions
     {
         $currentExtensions = (self::$extensionsLoaded ? self::$extensions : get_option('mainwp_extensions'));
 
-        if (!is_array($currentExtensions) || empty($currentExtensions)) return '';
+        if (!is_array($currentExtensions) || empty($currentExtensions)) return array('slugs' => '', 'am_slugs' => '');
 
         $out = '';
         $am_out = '';

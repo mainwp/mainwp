@@ -9,8 +9,8 @@ class MainWPManageSites_List_Table extends WP_List_Table
 {
     protected $globalIgnoredPluginConflicts;
     protected $globalIgnoredThemeConflicts;
-
-    function __construct()
+    protected $othersSiteData;
+            function __construct()
     {
         parent::__construct(array(
             'singular' => __('site', 'mainwp'), //singular name of the listed records
@@ -355,8 +355,19 @@ class MainWPManageSites_List_Table extends WP_List_Table
 
     function column_favi($item)
     {
-        $imgurl = "http://www.google.com/s2/favicons?domain=" . $item['url']; 
-        return '<span><img src="' . $imgurl . '" width="16" height="16" style="margin-top:5px"/>';	        
+        $favi = isset($this->othersSiteData['favi_icons'][$item['id']]) ? $this->othersSiteData['favi_icons'][$item['id']] : "";        
+        
+        if (!empty($favi)) {
+            // fix bug
+            if (strpos($favi, '//') === 0) {
+                $faviurl = $favi;            
+            } else 
+                $faviurl = $item['url'] . $favi;            
+        } else {
+            $faviurl = plugins_url('images/sitefavi.png', dirname(__FILE__));            
+        }
+        
+        return '<span><img src="' . $faviurl . '" width="16" height="16" style="margin-top:5px"/>';	        
     }
     
     function column_cb($item)
@@ -370,7 +381,10 @@ class MainWPManageSites_List_Table extends WP_List_Table
     {
         $this->globalIgnoredPluginConflicts = $globalIgnoredPluginConflicts;
         $this->globalIgnoredThemeConflicts = $globalIgnoredThemeConflicts;
-
+        $this->othersSiteData = get_option("mainwp_managesites_othersSiteData");
+        if (!is_array($this->othersSiteData))
+            $this->othersSiteData = array();
+            
         $orderby = 'wp.url';
         
         if (!isset($_GET['orderby'])) {

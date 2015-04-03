@@ -248,11 +248,12 @@ class MainWPSystem
         add_filter('mainwp-manager-getextensions', array(MainWPExtensions::getClassName(), 'hookManagerGetExtensions'));
         add_action('mainwp_bulkpost_metabox_handle', array($this, 'hookBulkPostMetaboxHandle'));
         add_action('mainwp_bulkpage_metabox_handle', array($this, 'hookBulkPageMetaboxHandle'));
-
+        add_action('mainwp-syncothersdata-result', array($this, 'hookSyncOthersSiteData'), 10 , 2);
+        
         $this->posthandler = new MainWPPostHandler();
 
         do_action('mainwp-activated');
-
+        
         MainWPPost::init();
         MainWPSettings::init();
         MainWPManageBackups::init();
@@ -284,6 +285,18 @@ class MainWPSystem
     function hookBulkPageMetaboxHandle($post_id) {
         $this->metaboxes->select_sites_handle($post_id, 'bulkpage');
         $this->metaboxes->add_slug_handle($post_id, 'bulkpage');
+    }
+    
+    function hookSyncOthersSiteData($data, $siteId) {   
+        $others_SiteData = get_option("mainwp_managesites_othersSiteData");
+        if (!is_array($others_SiteData)) $others_SiteData = array();        
+        
+        if (is_array($data) && isset($data['faviIcon']) && !empty($data['faviIcon'])) {
+            $others_SiteData['favi_icons'][$siteId] = $data['faviIcon'];            
+        } else {
+            $others_SiteData['favi_icons'][$siteId] = "";
+        }        
+        update_option('mainwp_managesites_othersSiteData', $others_SiteData);        
     }
     
     public function in_plugin_update_message($plugin_data, $r)

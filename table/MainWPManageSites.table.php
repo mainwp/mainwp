@@ -78,8 +78,9 @@ class MainWPManageSites_List_Table extends WP_List_Table
     function get_columns()
     {
         $columns = array(
-            'cb' => '<input type="checkbox" />',
+            'cb' => '<input type="checkbox" />',            
             'status' => __('Status', 'mainwp'),
+            'favi' => __('Icon', 'mainwp'),
             'site' => __('Site', 'mainwp'),
             'url' => __('URL', 'mainwp'),
             'groups' => __('Groups', 'mainwp'),
@@ -352,6 +353,12 @@ class MainWPManageSites_List_Table extends WP_List_Table
         return $actions;
     }
 
+    function column_favi($item)
+    {
+        $imgurl = "http://www.google.com/s2/favicons?domain=" . $item['url']; 
+        return '<span><img src="' . $imgurl . '" width="16" height="16" style="margin-top:5px"/>';	        
+    }
+    
     function column_cb($item)
     {
         return sprintf(

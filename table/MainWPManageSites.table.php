@@ -79,8 +79,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
     {
         $columns = array(
             'cb' => '<input type="checkbox" />',            
-            'status' => __('Status', 'mainwp'),
-            'favi' => __('Icon', 'mainwp'),
+            'status' => __('Status', 'mainwp'),            
             'site' => __('Site', 'mainwp'),
             'url' => __('URL', 'mainwp'),
             'groups' => __('Groups', 'mainwp'),
@@ -252,8 +251,23 @@ class MainWPManageSites_List_Table extends WP_List_Table
         {
             $actions['reconnect'] = sprintf('<a class="mainwp_site_reconnect" href="#" siteid="%s">' . __('Reconnect', 'mainwp') . '</a>', $item['id']);
         }
+        
+        $favi = isset($this->othersSiteData['favi_icons'][$item['id']]) ? $this->othersSiteData['favi_icons'][$item['id']] : "";        
+        
+        if (!empty($favi)) {
+            // fix bug
+            if (strpos($favi, '//') === 0) {
+                $faviurl = $favi;            
+            } else 
+                $faviurl = $item['url'] . $favi;            
+        } else {
+            $faviurl = plugins_url('images/sitefavi.png', dirname(__FILE__));            
+        }
+        
+        $imgfavi = '<span><img src="' . $faviurl . '" width="16" height="16" style="margin-top:5px"/>';	        
+        
         $loader = '<span class="bulk_running"><img src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '"  class="hidden" /><span class="status hidden"></span></span>';
-        return sprintf('<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], $item['name'], $this->row_actions($actions));
+        return sprintf($imgfavi . '<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], $item['name'], $this->row_actions($actions));
     }
 
     function column_url($item)
@@ -353,22 +367,6 @@ class MainWPManageSites_List_Table extends WP_List_Table
         return $actions;
     }
 
-    function column_favi($item)
-    {
-        $favi = isset($this->othersSiteData['favi_icons'][$item['id']]) ? $this->othersSiteData['favi_icons'][$item['id']] : "";        
-        
-        if (!empty($favi)) {
-            // fix bug
-            if (strpos($favi, '//') === 0) {
-                $faviurl = $favi;            
-            } else 
-                $faviurl = $item['url'] . $favi;            
-        } else {
-            $faviurl = plugins_url('images/sitefavi.png', dirname(__FILE__));            
-        }
-        
-        return '<span><img src="' . $faviurl . '" width="16" height="16" style="margin-top:5px"/>';	        
-    }
     
     function column_cb($item)
     {

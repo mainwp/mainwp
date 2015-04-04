@@ -9,7 +9,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
 {
     protected $globalIgnoredPluginConflicts;
     protected $globalIgnoredThemeConflicts;
-    protected $othersSiteData;
+    
             function __construct()
     {
         parent::__construct(array(
@@ -252,11 +252,11 @@ class MainWPManageSites_List_Table extends WP_List_Table
             $actions['reconnect'] = sprintf('<a class="mainwp_site_reconnect" href="#" siteid="%s">' . __('Reconnect', 'mainwp') . '</a>', $item['id']);
         }
         
-        $favi = isset($this->othersSiteData['favi_icons'][$item['id']]) ? $this->othersSiteData['favi_icons'][$item['id']] : "";        
-        
+        $favi = MainWPDB::Instance()->getWebsiteOption((object)$item, 'favi_icon', "");
+          
         if (!empty($favi)) {
             // fix bug
-            if (strpos($favi, '//') === 0) {
+            if ((strpos($favi, '//') === 0) || (strpos($favi, 'http') === 0)) {
                 $faviurl = $favi;            
             } else 
                 $faviurl = $item['url'] . $favi;            
@@ -264,7 +264,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
             $faviurl = plugins_url('images/sitefavi.png', dirname(__FILE__));            
         }
         
-        $imgfavi = '<span><img src="' . $faviurl . '" width="16" height="16" style="margin-top:5px"/>';	        
+        $imgfavi = '<img src="' . $faviurl . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';	        
         
         $loader = '<span class="bulk_running"><img src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '"  class="hidden" /><span class="status hidden"></span></span>';
         return sprintf($imgfavi . '<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], $item['name'], $this->row_actions($actions));
@@ -379,10 +379,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
     {
         $this->globalIgnoredPluginConflicts = $globalIgnoredPluginConflicts;
         $this->globalIgnoredThemeConflicts = $globalIgnoredThemeConflicts;
-        $this->othersSiteData = get_option("mainwp_managesites_othersSiteData");
-        if (!is_array($this->othersSiteData))
-            $this->othersSiteData = array();
-            
+        
         $orderby = 'wp.url';
         
         if (!isset($_GET['orderby'])) {

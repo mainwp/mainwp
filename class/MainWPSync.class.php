@@ -66,8 +66,6 @@ class MainWPSync
             
             $return = self::syncInformationArray($pWebsite, $information, '', 1, false, $pAllowDisconnect);
             
-            do_action('mainwp-syncothersdata-result', $information, $pWebsite->id);       
-            
             return $return;
         }
         catch (MainWPException $e)
@@ -277,6 +275,16 @@ class MainWPSync
             $done = true;
         }         
 
+        if (isset($information['faviIcon']))
+        {
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'favi_icon', $information['faviIcon']);
+            $done = true;
+        }
+        else
+        {
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'favi_icon', "");
+        }
+       
         if (!$done)
         {
             if (isset($information['wpversion']))
@@ -313,7 +321,7 @@ class MainWPSync
         MainWPDB::Instance()->updateWebsiteValues($pWebsite->id, $websiteValues);
 
         //Sync action
-        if (!$error) do_action('mainwp-site-synced', $pWebsite);
+        if (!$error) do_action('mainwp-site-synced', $pWebsite, $information);
 
         return (!$error);
     }

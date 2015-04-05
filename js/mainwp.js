@@ -1,7 +1,7 @@
 jQuery(document).ready(function ()
 {
     jQuery(document).tooltip({
-        items:"img.tooltip",
+        items:"span.tooltip",
         track:true,
         content:function ()
         {

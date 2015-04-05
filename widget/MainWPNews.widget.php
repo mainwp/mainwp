@@ -8,7 +8,7 @@ class MainWPNews
 
     public static function getName()
     {
-        return __("News",'mainwp');
+        return __('<i class="fa fa-newspaper-o"></i> News','mainwp');
     }
 
     public static function render()

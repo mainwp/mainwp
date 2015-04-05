@@ -7,7 +7,7 @@ class MainWPSEO {
 	}
 
 	public static function getName() {
-		return __('SEO','mainwp');
+		return __('<i class="fa fa-search"></i> SEO','mainwp');
 	}
 
 	public static function render() {

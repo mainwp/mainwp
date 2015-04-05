@@ -286,7 +286,7 @@ class MainWPOfflineChecks
         $onlineNotifications = (($userExtension == null) || (($userExtension->offlineChecksOnlineNotification == null) || ($userExtension->offlineChecksOnlineNotification == '')) ? '0' : $userExtension->offlineChecksOnlineNotification);
         ?>
     <div class="postbox" id="mainwp-offline-check-options-settings">
-    <h3 class="mainwp_box_title"><span><?php _e('Offline Check Options','mainwp'); ?></span></h3>
+    <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Offline Check Options','mainwp'); ?></span></h3>
     <div class="inside">
     <table class="form-table">
         <tbody>

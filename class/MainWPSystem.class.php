@@ -1901,6 +1901,7 @@ class MainWPSystem
         echo '<script type="text/javascript" src="' . plugins_url('js/FileSaver.js', dirname(__FILE__)) . '"></script>';
         echo '<script type="text/javascript" src="' . plugins_url('js/jqueryFileTree.js', dirname(__FILE__)) . '"></script>';        
         echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('css/jqueryFileTree.css', dirname(__FILE__)) . '" />';
+        echo '<link rel="stylesheet" href="' . plugins_url('css/font-awesome/css/font-awesome.min.css', dirname(__FILE__)) . '" />';
     }
     
     function admin_body_class($class_string) {

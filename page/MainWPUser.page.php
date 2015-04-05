@@ -70,9 +70,7 @@ class MainWPUser
         <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
                 src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
                 alt="MainWP"/></a>
-        <img src="<?php echo plugins_url('images/icons/mainwp-user.png', dirname(__FILE__)); ?>"
-             style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP User" height="32"/>
-        <h2><?php _e('Users','mainwp'); ?></h2><div style="clear: both;"></div><br/>
+        <h2><i class="fa fa-user"></i> <?php _e('Users','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <?php if (mainwp_current_user_can("dashboard", "manage_users")) { ?>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == '') { echo "nav-tab-active"; } ?>" href="admin.php?page=UserBulkManage"><?php _e('Manage','mainwp'); ?></a>
@@ -119,7 +117,7 @@ class MainWPUser
         <br/>
          <div>
             <div class="postbox mainwp-postbox" style="width: 555px !important;">
-            <h3 class="mainwp_box_title"><?php _e('Search Users','mainwp'); ?></h3>
+            <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search Users','mainwp'); ?></h3>
             <div class="inside">                  
             <div class="mainwp-search-box">
                 <input type="text" aria-required="true" value="<?php if ($cachedSearch != null && isset($cachedSearch['keyword'])) { echo $cachedSearch['keyword']; } ?>"
@@ -157,7 +155,7 @@ class MainWPUser
             </div>
             <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
             <div class="postbox" style="float: left; width: 255px; margin-left: 2em;">
-            <h3 class="box_title mainwp_box_title"><?php _e('Update Password','mainwp'); ?></h3>
+            <h3 class="box_title mainwp_box_title"><i class="fa fa-key"></i> <?php _e('Update Password','mainwp'); ?></h3>
             <div class="inside mainwp_inside" style="padding-bottom: .2em !important;">
             <div class="form-field">
                <label for="pass1"><?php _e('Twice Required','mainwp'); ?></label>

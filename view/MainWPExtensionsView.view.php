@@ -13,9 +13,7 @@ class MainWPExtensionsView
         <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
                 src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
                 alt="MainWP"/></a>
-        <img src="<?php echo plugins_url('images/icons/mainwp-extensions.png', dirname(__FILE__)); ?>"
-             style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Extensions" height="32"/>
-        <h2><?php _e('Extensions', 'mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
+        <h2><i class="fa fa-plug"></i> <?php _e('Extensions', 'mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
         <?php if ($shownPage === '') { ?>
         <div id="mainwp-extensions-categories-menu" class="postbox">
                 <div class="mainwp-inside"><span id="mainwp-extensions-menu-title"><?php _e('Get MainWP Extensions','mainwp');?></span></div>
@@ -58,7 +56,7 @@ class MainWPExtensionsView
         
     <div class="postbox mainwp_api_postbox" section="1" >
            <div class="handlediv"><br></div>
-           <h3 class="mainwp_box_title"><span><?php _e("Bulk Install and Activate Extensions", "mainwp"); ?></span></h3>                          
+           <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e("Bulk Install and Activate Extensions", "mainwp"); ?></span></h3>                          
            <div class="mainwp-inside" style="clear: both;">
             <div style="padding: 0 5px;">
                 <strong><?php _e("Step 1", "mainwp"); ?></strong>
@@ -215,23 +213,23 @@ class MainWPExtensionsView
                                     <?php if (isset($extension['apiManager']) && $extension['apiManager'] && !empty($extension['api_key'])) { ?>
                                         <a href="javascript:void(0)" class="api-status activated" ><?php _e('Activated','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                         <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>                                    
-                                        <a href="#" class="mainwp-extensions-api-activation"><img src="<?php echo plugins_url('images/extensions/unlock.png', dirname(__FILE__)); ?>" title="Activated" /></a>
+                                        <a href="#" class="mainwp-extensions-api-activation" style="font-size: 28px;"><i class="fa fa-unlock"></i></a>
                                         <?php }  ?>
                                     <?php } else {  ?>
                                         <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
                                             <a href="#" class="button mainwp-extensions-disable"><?php _e('Disable','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                            <img src="<?php echo plugins_url('images/extensions/unlock.png', dirname(__FILE__)); ?>" title="Activated" />
+                                            <span style="font-size: 28px;"><i class="fa fa-unlock"></i></span>
                                         <?php } //  ?>
                                     <?php }  ?>
                                     <?php if (isset($extension['direct_page']) && !empty($extension['direct_page'])) { ?>
-                                        <a href="<?php echo admin_url('admin.php?page='.$extension['direct_page']); ?>"><img src="<?php echo plugins_url('images/extensions/settings.png', dirname(__FILE__)); ?>" title="Settings" /></a>
+                                        <a href="<?php echo admin_url('admin.php?page='.$extension['direct_page']); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
                                     <?php } else if (isset($extension['callback'])) { ?>
-                                        <a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>"><img src="<?php echo plugins_url('images/extensions/settings.png', dirname(__FILE__)); ?>" title="Settings" /></a>
+                                        <a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
                                     <?php } else { ?>
-                                        <img src="<?php echo plugins_url('images/extensions/settings-freeze.png', dirname(__FILE__)); ?>" title="Settings" />
+                                        <span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-wrench"></i></span>
                                     <?php } ?>
                                     <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
-                                    <img src="<?php echo plugins_url('images/extensions/trash-freeze.png', dirname(__FILE__)); ?>" title="Delete" />
+                                    <span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-trash"></i></span>
                                     <?php } //  ?>
                                 <?php } else {
                                     $apilink = '';
@@ -260,26 +258,26 @@ class MainWPExtensionsView
                                     <?php if (isset($extension['apiManager']) && $extension['apiManager'] && !empty($extension['api_key'])) { ?>
                                         <a href="javascript:void(0)" class="api-status deactivated" title="Not Activated"><?php _e('Deactivated','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                         <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>                                                                               
-                                            <a href="#" class="mainwp-extensions-api-activation"><img class="image-api-status" src="<?php echo plugins_url('images/extensions/lock.png', dirname(__FILE__)); ?>" title="Not Activated" /></a>                                    
+                                            <a href="#" class="mainwp-extensions-api-activation"><i class="fa fa-lock image-api-status"></i></a>                                    
                                         <?php } ?>
                                     <?php } else { ?>
                                         <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
                                         <button class="button-primary mainwp-extensions-enable" <?php echo ($locked ? 'disabled' : ''); ?>><?php _e('Enable','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                         <?php if ($apilink != '') { ?>
-                                        <a href="<?php echo $apilink; ?>"><img src="<?php echo plugins_url('images/extensions/'.(!$locked ? 'un' : '') . 'lock.png', dirname(__FILE__)); ?>" title="Not Activated" /></a>
+                                        <a href="<?php echo $apilink; ?>" style="font-size: 28px;"><i class="fa fa-<?php echo (!$locked ? 'un' : '') .'lock'; ?>"></i></a>
                                         <?php } else { ?>
-                                        <img src="<?php echo plugins_url('images/extensions/unlock.png', dirname(__FILE__)); ?>" title="Activated" /></a>
+                                        <i class="fa fa-unlock"></i></a>
                                         <?php }?>
                                         <?php } ?>                                        
                                     <?php } ?>
                                         
                                     <?php if (isset($extension['callback'])) { ?>
-                                        <a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>"><img src="<?php echo plugins_url('images/extensions/settings.png', dirname(__FILE__)); ?>" title="Settings" /></a>
+                                        <a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
                                     <?php } else { ?>
                                         <img src="<?php echo plugins_url('images/extensions/settings-freeze.png', dirname(__FILE__)); ?>" title="Settings" />
                                     <?php } ?>
                                     <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
-                                    <a href="#" class="mainwp-extensions-trash"><img src="<?php echo plugins_url('images/extensions/trash.png', dirname(__FILE__)); ?>" title="Delete" /></a>
+                                    <a href="#" class="mainwp-extensions-trash" style="font-size: 28px"><i class="fa fa-trash"></i></a>
                                     <?php } ?>
                                 <?php } ?>
                             </td>

@@ -300,7 +300,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
         else $output = '<span class="mainwp-red">Never</span><br/>';
         
         if (mainwp_current_user_can("dashboard", "execute_backups")) {
-            $output .= sprintf('<a href="admin.php?page=managesites&backupid=%s">' . __('Backup Now','mainwp') . '</a>', $item['id']);
+            $output .= sprintf('<a href="admin.php?page=managesites&backupid=%s">' . '<i class="fa fa-hdd-o"></i> ' . __('Backup Now','mainwp') . '</a>', $item['id']);
         }
 
         return $output;
@@ -310,7 +310,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
     {
         $output = '';
         if ($item['dtsSync'] != 0) $output = MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp($item['dtsSync'])) . '<br />';
-        $output .= sprintf('<a href="#" class="managesites_syncdata">' . __('Sync Data', 'mainwp') . '</a>', $item['id']);
+        $output .= sprintf('<a href="#" class="managesites_syncdata">' . '<i class="fa fa-refresh"></i> ' .  __('Sync Data', 'mainwp') . '</a>', $item['id']);
 
         return $output;
     }
@@ -319,19 +319,19 @@ class MainWPManageSites_List_Table extends WP_List_Table
     {
         $output = '';
         if ($item['last_post_gmt'] != 0) $output .= MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp($item['last_post_gmt'])) . '<br />';
-        $output .= sprintf('<a href="admin.php?page=PostBulkAdd&select=%s">' . __('Add New', 'mainwp') . '</a>', $item['id']);
+        $output .= sprintf('<a href="admin.php?page=PostBulkAdd&select=%s">' . '<i class="fa fa-plus"></i> ' . __('Add New', 'mainwp') . '</a>', $item['id']);
 
         return $output;
     }
 
     function column_seo($item)
     {
-        return sprintf('<a href="admin.php?page=managesites&seowebsiteid=%s">' . __('SEO', 'mainwp') . '</a>', $item['id']);
+        return sprintf('<a href="admin.php?page=managesites&seowebsiteid=%s">' .'<i class="fa fa-search"></i> '. __('SEO', 'mainwp') . '</a>', $item['id']);
     }
 
     function column_notes($item)
     {
-        return sprintf('<img src="' . plugins_url('images/notes.png', dirname(__FILE__)) . '" class="mainwp_notes_img" id="mainwp_notes_img_%1$s" style="%2$s"/> <a href="#" class="mainwp_notes_show_all" id="mainwp_notes_%1$s">' . __('Open','mainwp') . '</a><span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ($item['note'] == '' ? 'display: none;' : ''), $item['note']);
+        return sprintf('<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_%1$s">'. '<i class="fa fa-pencil-square-o"></i> ' . __('Open','mainwp') . '</a><span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ($item['note'] == '' ? 'display: none;' : ''), $item['note']);
     }
 
     function get_bulk_actions()

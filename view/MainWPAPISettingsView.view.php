@@ -95,7 +95,7 @@ class MainWPAPISettingsView
         ?>
         <div class="postbox mainwp_postbox" id="mainwp-account-information" section="setting-1">
         <div class="handlediv"><br /></div> 
-        <h3 class="mainwp_box_title"><span><?php _e('MainWP Account Information','mainwp'); ?></span></h3>
+        <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('MainWP Account Information','mainwp'); ?></span></h3>
         <div class="inside">
         <div id="mainwp_api_errors" class="mainwp_error error" style="display: none"></div>
         <div id="mainwp_api_message" class="mainwp_updated updated" style="display: none"></div>

@@ -73,8 +73,7 @@ class MainWPThemes
         ?>
     <div class="wrap">
         <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
-        <img src="<?php echo plugins_url('images/icons/mainwp-themes.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Themes" height="32"/>
-        <h2><?php _e('Themes','mainwp'); ?></h2><div style="clear: both;"></div><br/>
+        <h2><i class="fa fa-paint-brush"></i> <?php _e('Themes','mainwp'); ?></h2><div style="clear: both;"></div><br/>
          <div id="mainwp-tip-zone">
           <?php if ($shownPage == 'Manage') { ?> 
              <?php if (MainWPUtility::showUserTip('mainwp-managethemes-tips')) { ?>
@@ -128,7 +127,7 @@ class MainWPThemes
         <br/>
         <div class="mainwp-search-form">
             <div class="postbox mainwp-postbox">
-            <h3 class="mainwp_box_title"><?php _e('Search Themes','mainwp'); ?></h3>
+            <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search Themes','mainwp'); ?></h3>
             <div class="inside">
             <p>
                 <?php _e('Status:','mainwp'); ?><br />
@@ -864,7 +863,7 @@ class MainWPThemes
             <div class="mainwp_info-box"><?php _e('Only mark Themes as Trusted if you are absolutely sure they can be updated','mainwp'); ?></div>
 
             <div class="postbox">
-                <h3 class="mainwp_box_title"><?php _e('Search Themes','mainwp'); ?></h3>
+                <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search Themes','mainwp'); ?></h3>
                 <div class="inside">
                             <span><?php _e("Status:", "mainwp"); ?> </span>
                                 <select id="mainwp_au_theme_status">

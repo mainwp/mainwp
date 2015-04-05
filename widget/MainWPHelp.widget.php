@@ -9,7 +9,7 @@ class MainWPHelp
 
     public static function getName()
     {
-        return __("Help",'mainwp');
+        return __('<i class="fa fa-question-circle"></i> Help','mainwp');
     }
 
     public static function render()

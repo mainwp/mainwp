@@ -6,7 +6,7 @@ class MainWPUI
 		?>
 		<div class="mainwp_select_sites_box<?php if ( $class ) echo " $class"; ?> mainwp_select_sites_wrapper"<?php if ( $style ) echo ' style="'.$style.'"'; ?>>
             <div class="postbox">
-                <h3 class="mainwp_box_title"><span><?php echo ( $title ) ? $title : translate('Select Sites', 'mainwp') ?> <div class="mainwp_sites_selectcount"><?php echo !is_array($selected_websites) ? '0' : count($selected_websites); ?></div></span></h3>
+                <h3 class="mainwp_box_title"><span><i class="fa fa-globe"></i> <?php echo ( $title ) ? $title : translate('Select Sites', 'mainwp') ?> <div class="mainwp_sites_selectcount"><?php echo !is_array($selected_websites) ? '0' : count($selected_websites); ?></div></span></h3>
                 <div class="inside mainwp_inside">
                     <?php self::select_sites_box_body($selected_websites, $selected_groups, $type, $show_group, $show_select_all, false, $enableOfflineSites); ?>
                 </div>

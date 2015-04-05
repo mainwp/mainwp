@@ -23,11 +23,7 @@ class MainWPServerInformation
         ?>
     <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
             src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP"/></a>
-        <img src="<?php echo plugins_url('images/icons/mainwp-serverinfo.png', dirname(__FILE__)); ?>"
-             style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Server Information"
-             height="32"/>
-
-        <h2><?php _e('Server Information','mainwp'); ?></h2><div style="clear: both;"></div><br/>
+        <h2><i class="fa fa-server"></i> <?php _e('Server Information','mainwp'); ?></h2><div style="clear: both;"></div><br/>
 
         <div class="clear"></div>
         <div class="wrap">
@@ -342,7 +338,7 @@ class MainWPServerInformation
         <td class="mwp-hide-generate-row"><?php echo $pDirectory; ?></td>
         <td><?php echo $pCheck; ?></td>
         <td><?php echo $pResult; ?></td>
-        <td><?php echo ($pPassed ? '<span class="mainwp-pass">Pass</span>' : '<span class="mainwp-warning">Warning</span>'); ?></td>
+        <td><?php echo ($pPassed ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>'); ?></td>
     </tr>
     <?php
       return true;
@@ -358,7 +354,7 @@ class MainWPServerInformation
         <td><?php echo $pConfig; ?></td>
         <td><?php echo $pCompare; ?>  <?php echo ($pVersion === true ? 'true' : $pVersion) . ' ' . $pExtraText; ?></td>
         <td><?php echo ($currentVersion === true ? 'true' : $currentVersion); ?></td>
-        <td><?php echo (version_compare($currentVersion, $pVersion, $pCompare) || (($pExtraCompare != null) && version_compare($currentVersion, $pExtraVersion, $pExtraCompare)) ? '<span class="mainwp-pass">Pass</span>' : '<span class="mainwp-warning">Warning</span>'); ?></td>
+        <td><?php echo (version_compare($currentVersion, $pVersion, $pCompare) || (($pExtraCompare != null) && version_compare($currentVersion, $pExtraVersion, $pExtraCompare)) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>'); ?></td>
     </tr>
     <?php
     }
@@ -783,8 +779,8 @@ class MainWPServerInformation
         self::renderHeader('WPConfig');
         ?>
         <div class="postbox" id="mainwp-code-display">
-            <h3 class="hndle" style="padding: 8px 12px; font-size: 14px;"><span>WP-Config.php</span></h3>
-            <div style="padding: 1em;">
+            <h3 class="mainwp_box_title"><i class="fa fa-file-code-o"></i> <span>WP-Config.php</span></h3>
+            <div class="inside">
             <?php
                 show_source( ABSPATH . 'wp-config.php');
             ?>
@@ -839,8 +835,8 @@ class MainWPServerInformation
         self::renderHeader('.htaccess');
         ?>
         <div class="postbox" id="mainwp-code-display">
-            <h3 class="hndle" style="padding: 8px 12px; font-size: 14px;"><span>.htaccess</span></h3>
-            <div style="padding: 1em;">
+            <h3 class="mainwp_box_title"><span><i class="fa fa-file-code-o"></i> .htaccess</span></h3>
+            <div class="inside">
             <?php
                 show_source( ABSPATH . '.htaccess');
             ?>

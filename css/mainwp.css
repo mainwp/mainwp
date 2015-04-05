@@ -1391,23 +1391,17 @@ background: #d5e4af !important;
 
 .mainwp-pass
 {
-	padding: 1px 5px;
-    background: rgba(127, 177, 0, 0.3);
-    border: 1px solid #7fb100;
-    border-radius: 3px;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 3px;
+	padding: 3px 18px;
+    background: #7fb100;
     clear: both;
+    color: #fff;
 }
 .mainwp-warning
 {
-	padding: 1px 5px ;
-    background: #ffebe8;
-    border: 1px solid #c00;
-    border-radius: 3px;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 3px;
+	padding: 3px 7px ;
+    background: #a00;
     clear: both;
+    color: #fff;
 }
 
 .mainwp-table-container .wp-list-table tr:nth-child(even), #mainwp-table tr:nth-child(even) { background-color: #f4f4f4 !important ;}
@@ -1961,6 +1955,11 @@ background-position: 0 -16px;
 .mainwp-extensions-childActions {
     text-align: right;
 }
+
+.mainwp-extensions-childActions i {
+    margin-left: .5em;
+}
+
 .mainwp-extensions-childActions img {
     margin-bottom: -5px;
 }
@@ -2108,22 +2107,7 @@ background-position: 0 -16px;
 
 #mainwp-refresh-bar-buttons {
     text-align: right;
-    padding-right: 15px;
-}
-
-.mainwp-addsite-button {
-   background-image: url('../images/add-icon.png') !important;
-   background-repeat: no-repeat !important;
-   background-position: 8% 50% !important;
-   padding-left: 3em !important;
-   background-size: 20px !important;
-}
-#dashboard_refresh.mainwp-upgrade-button {
-   background-image: url('../images/refresh-icon.png') !important;
-   background-repeat: no-repeat !important;
-   background-position: 8% 50% !important;
-   padding-left: 3em !important;
-   background-size: 24px !important;
+    padding-right: 10px;
 }
 
 .mainwp-reminder {
@@ -2486,50 +2470,6 @@ background-position: 0 -16px;
 .mainwp-exclude-nonwp-folders,
 .mainwp-exclude-zips {
     width: 100% !important;
-}
-
-.mainwp-exclude-backup-locations h4,
-.mainwp-exclude-cache-locations h4,
-.mainwp-exclude-nonwp-folders h4,
-.mainwp-exclude-zips h4 {
-    border-bottom: 0 !important;
-    padding-left: 25px;
-    margin-bottom: 5px !important;
-}
-
-.mainwp-exclude-backup-locations h4 {
-    background-image: url('../images/mainwp-exclude-backups.png');
-    background-repeat: no-repeat;
-    background-position: 0 50%;
-    background-size: 20px;
-}
-.mainwp-exclude-cache-locations h4 {
-    background-image: url('../images/mainwp-exclude-cache.png');
-    background-repeat: no-repeat;
-    background-position: 0 50%;
-    background-size: 20px;
-}
-.mainwp-exclude-nonwp-folders h4 {
-    background-image: url('../images/mainwp-exclude-nonwp.png');
-    background-repeat: no-repeat;
-    background-position: 0 50%;
-    background-size: 20px;
-}
-.mainwp-exclude-zips h4 {
-    background-image: url('../images/mainwp-exclude-zips.png');
-    background-repeat: no-repeat;
-    background-position: 0 50%;
-    background-size: 20px;
-}
-
-h4.mainwp-custom-excludes {
-    background-image: url('../images/custom-exclude.png');
-    background-repeat: no-repeat;
-    background-position: 0 50%;
-    background-size: 17px;
-    padding-left: 25px;
-    margin-left: 6px;
-    margin-top: 0 !important;
 }
 
 .mainwp-exclude-backup-locations td,

@@ -62,7 +62,7 @@ class MainWPOptions
         else $lastAutomaticUpdate = MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp($lastAutomaticUpdate));
         ?>
     <div class="postbox" id="mainwp-hide-child-plugin-settings">
-        <h3 class="mainwp_box_title"><span><?php _e('Hide MainWP Child Plugin','mainwp'); ?></span></h3>
+        <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Hide MainWP Child Plugin','mainwp'); ?></span></h3>
         <div class="inside">
         <div class="mainwp_info-box-red" style="margin-top: 5px;"><?php _e('<strong>STOP BEFORE TURNING ON!</strong> Hiding the Child Plugin does require the plugin to make changes to your .htaccess file that in rare instances or server configurations could cause problems.','mainwp'); ?></div>
         <table class="form-table">
@@ -92,7 +92,7 @@ class MainWPOptions
     </div>
 
     <div class="postbox" id="mainwp-global-options-settings">
-    <h3 class="mainwp_box_title"><span><?php _e('Global Options','mainwp'); ?></span></h3>
+    <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Global Options','mainwp'); ?></span></h3>
     <div class="inside">
     <table class="form-table">
         <tbody>
@@ -149,7 +149,7 @@ class MainWPOptions
     </div>
 
     <div class="postbox" id="mainwp-upgrade-options-settings">
-    <h3 class="mainwp_box_title"><span><?php _e('Upgrade Options','mainwp'); ?></span></h3>
+    <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Upgrade Options','mainwp'); ?></span></h3>
     <div class="inside">
     <table class="form-table">
         <tbody>
@@ -201,7 +201,7 @@ class MainWPOptions
     </div>
     
     <div class="postbox" id="mainwp-date-return-options-settings">
-    <h3 class="mainwp_box_title"><span><?php _e('Data Return Options','mainwp'); ?></span></h3>
+    <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Data Return Options','mainwp'); ?></span></h3>
     <div class="inside">
     <table class="form-table">
         <tbody>

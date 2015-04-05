@@ -126,7 +126,7 @@ class MainWPSecurityIssues
 
     public static function getMetaboxName()
     {
-        return __("Security Issues", 'mainwp');
+        return __('<i class="fa fa-shield"></i> Security Issues', 'mainwp');
     }
 
     public static function renderMetabox()

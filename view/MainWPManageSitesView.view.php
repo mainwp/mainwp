@@ -217,9 +217,7 @@ class MainWPManageSitesView
         <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
                 src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
                 alt="MainWP"/></a>
-        <img src="<?php echo plugins_url('images/icons/mainwp-sites.png', dirname(__FILE__)); ?>"
-             style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Sites" height="32"/>
-        <h2><?php _e('Sites','mainwp'); ?></h2><div style="clear: both;"></div><br/>
+        <h2><i class="fa fa-globe"></i> <?php _e('Sites','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         
          <div id="mainwp-tip-zone">
           <?php if ($shownPage == '') { ?>
@@ -299,7 +297,7 @@ class MainWPManageSitesView
             <div id="mainwp_managesites_test_message" class="mainwp_updated updated"></div>
             <div class="mainwp_info-box"><strong><?php _e('Please only use the domain URL, do not add /wp-admin.','mainwp'); ?></strong></div>
             <div class="postbox">
-            <h3 class="mainwp_box_title"><span><?php _e('Test a Site Connection','mainwp'); ?></span></h3>
+            <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Test a Site Connection','mainwp'); ?></span></h3>
             <div class="inside">
             <form method="POST" action="" enctype="multipart/form-data" id="mainwp_testconnection_form">
                 <table class="form-table">
@@ -449,7 +447,7 @@ class MainWPManageSitesView
        <div id="mainwp_managesites_add_errors" class="mainwp_info-box-red"></div>
        <div id="mainwp_managesites_add_message" class="mainwp_info-box"></div>
        <div class="postbox" id="mainwp-add-a-single-site">
-       <h3 class="mainwp_box_title"><span><?php _e('Add a Single Site','mainwp'); ?></span></h3>
+       <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Add a Single Site','mainwp'); ?></span></h3>
        <div class="inside">
         <div id="mainwp-add-site-notice-box" >
        <div id="mainwp-add-site-notice-show" class="mainwp_info-box-blue" style="background-position: 10px 10px !important; display: none; text-align: center;"><a href="#" class="button button-primary" id="mainwp-add-site-notice-show-link"><?php _e('Having trouble adding your site?','mainwp'); ?></a></div>
@@ -514,7 +512,7 @@ class MainWPManageSitesView
                </div>
                 
             <div class="postbox" id="mainwp-managesites-adv-options">
-                <h3 class="mainwp_box_title"><span><?php _e('Advanced Options','mainwp'); ?></span></h3>
+                <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Advanced Options','mainwp'); ?></span></h3>
                 <div class="inside">
                     <table class="form-table">
                         <tr class="form-field form-required">
@@ -538,7 +536,7 @@ class MainWPManageSitesView
                 </div>
 
                <div class="postbox" id="mainwp-bulk-upload-sites">
-               <h3 class="mainwp_box_title"><span><?php _e('Bulk Upload','mainwp'); ?></span></h3>
+               <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Bulk Upload','mainwp'); ?></span></h3>
                <div class="inside">
                <table>
                    <th scope="row"></th>
@@ -725,7 +723,7 @@ class MainWPManageSitesView
         $loadFilesBeforeZip = ($loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false);
         ?>
     <div class="postbox" id="mainwp-backup-options-settings">
-    <h3 class="mainwp_box_title"><span>Backup Options</span></h3>
+    <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> Backup Options</span></h3>
     <div class="inside">
     <table class="form-table">
         <tbody>
@@ -916,7 +914,7 @@ class MainWPManageSitesView
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
 
         	<div class="postbox" id="mainwp-backup-details">
-                <h3 class="mainwp_box_title"><span><?php _e('Backup Details','mainwp'); ?></span></h3>
+                <h3 class="mainwp_box_title"><span><i class="fa fa-hdd-o"></i> <?php _e('Backup Details','mainwp'); ?></span></h3>
                 <div class="inside">
                 <?php
                 if (!MainWPUtility::can_edit_website($website))
@@ -929,7 +927,7 @@ class MainWPManageSitesView
                 </div>
             </div>
             <div class="postbox" id="mainwp-backup-optins-site">
-            <h3 class="mainwp_box_title"><span><?php _e('Backup Options','mainwp'); ?></span></h3>
+            <h3 class="mainwp_box_title"><span><i class="fa fa-hdd-o"></i> <?php _e('Backup Options','mainwp'); ?></span></h3>
             <div class="inside">
             <form method="POST" action="" id="mainwp_backup_sites_page">
             <table class="form-table">
@@ -952,7 +950,7 @@ class MainWPManageSitesView
                     <td><p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e('Every WordPress website is different but the sections below generally do not need to be backed up and since many of them are large in size they can even cause issues with your backup including server timeouts.', 'mainwp'); ?></p></td>
                 </tr>
                 <tr class="mainwp-exclude-backup-locations">
-                    <td colspan="2"><h4><?php _e('Known Backup Locations', 'mainwp'); ?></h4></td>
+                    <td colspan="2"><h4><i class="fa fa-cloud-upload"></i> <?php _e('Known Backup Locations', 'mainwp'); ?></h4></td>
                 </tr>
                 <tr class="mainwp-exclude-backup-locations">
                     <td><label for="mainwp-known-backup-locations"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-known-backup-locations" checked></td>
@@ -962,7 +960,7 @@ class MainWPManageSitesView
                 </tr>
                 <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
                 <tr class="mainwp-exclude-cache-locations">
-                    <td colspan="2"><h4><?php _e('Known Cache Locations', 'mainwp'); ?></h4></td>
+                    <td colspan="2"><h4><i class="fa fa-cubes"></i> <?php _e('Known Cache Locations', 'mainwp'); ?></h4></td>
                 </tr>
                 <tr class="mainwp-exclude-cache-locations">
                     <td><label for="mainwp-known-cache-locations"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-known-cache-locations" checked></td>
@@ -972,7 +970,7 @@ class MainWPManageSitesView
                 </tr>
                 <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
                 <tr class="mainwp-exclude-nonwp-folders">
-                    <td colspan="2"><h4><?php _e('Non-WordPress Folders', 'mainwp'); ?></h4></td>
+                    <td colspan="2"><h4><i class="fa fa-folder"></i> <?php _e('Non-WordPress Folders', 'mainwp'); ?></h4></td>
                 </tr>
                 <tr class="mainwp-exclude-nonwp-folders">
                     <td><label for="mainwp-non-wordpress-folders"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-non-wordpress-folders" checked></td>
@@ -982,7 +980,7 @@ class MainWPManageSitesView
                 </tr>
                 <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
                 <tr class="mainwp-exclude-zips">
-                    <td colspan="2"><h4><?php _e('ZIP Archives', 'mainwp'); ?></h4></td>
+                    <td colspan="2"><h4><i class="fa fa-file-archive-o"></i> <?php _e('ZIP Archives', 'mainwp'); ?></h4></td>
                 </tr>
                 <tr class="mainwp-exclude-zips">
                     <td><label for="mainwp-zip-archives"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-zip-archives" checked></td>
@@ -990,7 +988,7 @@ class MainWPManageSitesView
                 </tr>
                 <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
                 <tr class="mainwp_backup_exclude_files_content">
-                    <th scope="row" style="vertical-align: top"><h4 class="mainwp-custom-excludes"><?php _e('Custom Excludes', 'mainwp'); ?></h4></th>
+                    <th scope="row" style="vertical-align: top"><h4 class="mainwp-custom-excludes"><i class="fa fa-minus-circle"></i> <?php _e('Custom Excludes', 'mainwp'); ?></h4></th>
                     <td>
                         <p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e('Exclude any additional files that you do not need backed up for this site. Click a folder name to drill down into the directory.', 'mainwp'); ?></p>
                         <br />
@@ -1226,7 +1224,7 @@ class MainWPManageSitesView
         ?>
         <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data">
             <div class="postbox">
-            <h3 class="mainwp_box_title"><?php _e('General Options','mainwp'); ?></h3>
+            <h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e('General Options','mainwp'); ?></h3>
             <div class="inside">
             <table class="form-table">
                 <tbody>
@@ -1371,7 +1369,7 @@ class MainWPManageSitesView
             </div>
             <div class="clear"></div>
             <div class="postbox">
-            <h3 class="mainwp_box_title"><span><?php _e('Advanced Options','mainwp'); ?></span></h3>
+            <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Advanced Options','mainwp'); ?></span></h3>
             <div class="inside">
             <table class="form-table" style="width: 100%">
                 <?php $disabled_unique = empty($website->uniqueId) ? true : false; ?> 
@@ -1397,7 +1395,7 @@ class MainWPManageSitesView
             
             <div class="clear"></div>
             <div class="postbox">
-            <h3 class="mainwp_box_title"><span><?php _e('Backup Settings','mainwp'); ?></span></h3>
+            <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Backup Settings','mainwp'); ?></span></h3>
             <div class="inside">
             <table class="form-table" style="width: 100%">
                 <?php

@@ -1494,7 +1494,7 @@ class MainWPManageSites
 
     public static function getMetaboxName()
     {
-        return 'SEO Details';
+        return '<i class="fa fa-search"></i> SEO Details';
     }
 
     public static function renderMetabox()

@@ -83,10 +83,10 @@ class MainWPMain
         if (empty($mainwpUseExternalPrimaryBackupsMethod)) {
             if (mainwp_current_user_can("dashboard", "manage_security_issues")) {
                 add_meta_box($page.'-contentbox-' . $i++, MainWPSecurityIssues::getMetaboxName(), array(MainWPSecurityIssues::getClassName(), 'renderMetabox'), $page, 'normal', 'core');
-            }        
+            }
             add_meta_box($page.'-contentbox-' . $i++, MainWPBackupTasks::getName(), array(MainWPBackupTasks::getClassName(), 'render'), $page, 'normal', 'core');
-        }    
-        
+        }
+
         if (mainwp_current_user_can("dashboard", "see_seo_statistics")) {
             if (get_option('mainwp_seo') == 1) add_meta_box($page.'-contentbox-' . $i++, MainWPSEO::getName(), array(MainWPSEO::getClassName(), 'render'), $page, 'normal', 'core');
         }
@@ -120,8 +120,7 @@ class MainWPMain
         global $screen_layout_columns;
         ?>
     <div id="mainwp_tab-general" class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
-        <img src="<?php echo plugins_url('images/icons/mainwp-dashboard.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Dashboard" height="32"/>
-        <h2><?php _e('MainWP Dashboard','mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
+        <h2><i class="fa fa-tachometer"></i> <?php _e('MainWP Dashboard','mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
         <?php if (MainWPUtility::showUserTip('mainwp-dashboard-tips')) { ?>
         <div id="mainwp-tip-zone">
                 <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-dashboard-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can move the Widgets around to fit your needs and even adjust the number of columns by selecting "Screen Options" on the top right.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
@@ -158,7 +157,7 @@ class MainWPMain
                     if ((time() - ($website == null ? MainWPDB::Instance()->getFirstSyncedSite() : $website->dtsSync)) > (60 * 60 * 24))
                     {
                     ?>
-                <td id="mainwp-welcome-bar" width="50%" style="padding-left: 1em;">
+                <td id="mainwp-welcome-bar" width="47%" style="padding-left: 1em;">
                     <span class="mainwp-reminder"><?php _e('Your MainWP Dashboard has not been synced for 24 hours! Click the Sync Data button to get the latest data from child sites.','mainwp'); ?></span><br/>
                 </td>
                     <?php
@@ -166,7 +165,7 @@ class MainWPMain
                     else
                     {
                     ?>
-                <td id="mainwp-welcome-bar" width="50%" style="padding-left: 1em;">
+                <td id="mainwp-welcome-bar" width="47%" style="padding-left: 1em;">
                     <span style="font-size: 24px"><?php echo (($website == null) ? __('Welcome to Your MainWP Dashboard!','mainwp') : sprintf(__('Welcome to %s Dashboard!','mainwp'), $website->name)); ?></span><br/>
                     <span style="font-style: italic; font-size: 14px;"><?php echo (($website == null) ? __('Manage your WordPress sites with ease.','mainwp') : sprintf(__('This information is only for %s','mainwp'), MainWPUtility::getNiceURL($website->url, true))); ?></span>
                 </td>
@@ -174,9 +173,9 @@ class MainWPMain
                     }
                     ?>
                 <td id="mainwp-refresh-bar-buttons">
-                <input type="button" id="dashboard_refresh" value="<?php _e('Sync Data','mainwp'); ?>" class="button-hero button mainwp-upgrade-button" title="<?php echo MainWPRightNow::renderLastUpdate(); ?>" />
-                <a class="button-hero button-primary button mainwp-addsite-button" href="admin.php?page=managesites&do=new"><?php _e('Add New Site','mainwp'); ?></a>
-                <a class="button-hero button-primary button mainwp-button-red" target="_blank" href="https://extensions.mainwp.com"><?php _e('Get New Extensions','mainwp'); ?></a>
+                <a class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWPRightNow::renderLastUpdate(); ?>"><?php _e('<i class="fa fa-refresh"></i> Sync Data','mainwp'); ?></a>
+                <a class="button-hero button-primary button mainwp-addsite-button" href="admin.php?page=managesites&do=new"><?php _e('<i class="fa fa-plus"></i> Add New Site','mainwp'); ?></a>
+                <a class="button-hero button-primary button mainwp-button-red" target="_blank" href="https://extensions.mainwp.com"><?php _e('<i class="fa fa-cart-plus"></i> Get New Extensions','mainwp'); ?></a>
                 </td>
             <div id="dashboard_refresh_statusextra" style="display: none">&nbsp;&nbsp;<img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></div>
                 </tr></tbody>

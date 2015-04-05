@@ -85,7 +85,7 @@ class MainWPSystem
         }
 
         $this->handleSettingsPost();
-       
+
         MainWPExtensions::init();
 
         add_action('in_plugin_update_message-'.$this->plugin_slug, array($this, 'in_plugin_update_message'), 10, 2);
@@ -248,11 +248,11 @@ class MainWPSystem
         add_filter('mainwp-manager-getextensions', array(MainWPExtensions::getClassName(), 'hookManagerGetExtensions'));
         add_action('mainwp_bulkpost_metabox_handle', array($this, 'hookBulkPostMetaboxHandle'));
         add_action('mainwp_bulkpage_metabox_handle', array($this, 'hookBulkPageMetaboxHandle'));
-        
+
         $this->posthandler = new MainWPPostHandler();
 
         do_action('mainwp-activated');
-        
+
         MainWPPost::init();
         MainWPSettings::init();
         MainWPManageBackups::init();
@@ -285,7 +285,6 @@ class MainWPSystem
         $this->metaboxes->select_sites_handle($post_id, 'bulkpage');
         $this->metaboxes->add_slug_handle($post_id, 'bulkpage');
     }
-    
     
     public function in_plugin_update_message($plugin_data, $r)
     {
@@ -1476,7 +1475,7 @@ class MainWPSystem
                 return apply_filters("mainwp_currentusercan", true, $cap_type, $cap);
             }
         }
- 
+
         remove_all_filters( 'admin_footer_text' );
         add_filter('admin_footer_text', array(&$this, 'admin_footer_text'));
     }
@@ -1602,12 +1601,12 @@ class MainWPSystem
             wp_redirect(admin_url('admin.php?page=managesites&do=new'));
             return;
         }
-        
+
         global $mainwpUseExternalPrimaryBackupsMethod;
-        
+
         if ($mainwpUseExternalPrimaryBackupsMethod === null)
-            $mainwpUseExternalPrimaryBackupsMethod = apply_filters("mainwp-getprimarybackup-activated", "");        
-        
+            $mainwpUseExternalPrimaryBackupsMethod = apply_filters("mainwp-getprimarybackup-activated", "");
+
         add_action( 'admin_notices', array($this, 'mainwp_warning_notice' ));
         $this->posthandler->init();
 
@@ -1650,13 +1649,13 @@ class MainWPSystem
         if (!current_user_can('update_core')) remove_action('admin_notices', 'update_nag', 3);
     }
 
-    function handleSettingsPost() {         
+    function handleSettingsPost() {
         if (isset($_GET['page']) && $_GET['page'] == "Settings" && isset($_POST['submit']))
         {
             if (isset($_POST['mainwp_primaryBackup'])) {
                 MainWPUtility::update_option('mainwp_primaryBackup', $_POST['mainwp_primaryBackup']);
             }
-        }        
+        }
     }
 
     //This function will read the metaboxes & save them to the post
@@ -1691,10 +1690,10 @@ class MainWPSystem
     function save_bulkpost($post_id)
     {
         $post = get_post($post_id);
-         
+
         if ($post->post_type != 'bulkpage' && $post->post_type != 'bulkpost')
             return;
-         
+
         if ($post->post_type != 'bulkpost' && (!isset($_POST['post_type']) || ($_POST['post_type'] != 'bulkpost'))) return;
 
         // verify if this is an auto save routine.
@@ -1763,10 +1762,10 @@ class MainWPSystem
     function save_bulkpage($post_id)
     {
         $post = get_post($post_id);
-        
+
         if ($post->post_type != 'bulkpage' && $post->post_type != 'bulkpost')
             return;
-        
+
         if ($post->post_type != 'bulkpage' && (!isset($_POST['post_type']) || ($_POST['post_type'] != 'bulkpage'))) return;
 
         // verify if this is an auto save routine.
@@ -1925,6 +1924,7 @@ class MainWPSystem
         echo '<script type="text/javascript" src="' . plugins_url('js/FileSaver.js', dirname(__FILE__)) . '"></script>';
         echo '<script type="text/javascript" src="' . plugins_url('js/jqueryFileTree.js', dirname(__FILE__)) . '"></script>';        
         echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('css/jqueryFileTree.css', dirname(__FILE__)) . '" />';
+        echo '<link rel="stylesheet" href="' . plugins_url('css/font-awesome/css/font-awesome.min.css', dirname(__FILE__)) . '" />';
     }
     
     function admin_body_class($class_string) {

@@ -9,7 +9,7 @@ class MainWPShortcuts
 
     public static function getName()
     {
-        return __("Shortcuts",'mainwp');
+        return __('<i class="fa fa-share-square-o"></i> Shortcuts','mainwp');
     }
 
     public static function render()

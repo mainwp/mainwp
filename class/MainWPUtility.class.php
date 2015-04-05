@@ -1319,7 +1319,7 @@ class MainWPUtility
     {
         $output = '<span class="tooltipcontainer">';
         if ($pUrl != null) $output .= '<a href="' . $pUrl . '" target="_blank">';
-        $output .= '<img src="' . plugins_url($pImage, dirname(__FILE__)) . '" class="tooltip" style="'.($style == null ? '' : $style).'" />';
+        $output .= '<span style="color: #0074a2; font-size: 14px;" class="tooltip"><i class="fa fa-question-circle"></i></span>';
         if ($pUrl != null) $output .= '</a>';
         $output .= '<span class="tooltipcontent" style="display: none;">' . $pText;
         if ($pUrl != null) $output .= ' (Click to read more)';

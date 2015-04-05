@@ -14,7 +14,7 @@ class MainWPRecentPages
 
     public static function getName()
     {
-        return __("Recent Pages",'mainwp');
+        return __('<i class="fa fa-file"></i> Recent Pages','mainwp');
     }
 
     public static function render()

@@ -45,7 +45,7 @@ class MainWPRightNow
 
     public static function getName()
     {
-        return __("Right Now",'mainwp');
+        return __('<i class="fa fa-pie-chart"></i> Right Now','mainwp');
     }
 
     public static function render()

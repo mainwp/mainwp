@@ -16,9 +16,7 @@ class MainWPDocumentation
 		?>
         <div class="wrap">
             <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
-            <img src="<?php echo plugins_url('images/icons/mainwp-tips.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Documentation" height="32"/>
-            
-            <h2><?php _e('Documentation','mainwp'); ?></h2>
+            <h2><i class="fa fa-book"></i> <?php _e('Documentation','mainwp'); ?></h2>
             
             <div class="clear"></div><br/><br/>
             <div class="wrap" style="font-size: 16px !important;">

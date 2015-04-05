@@ -71,8 +71,8 @@ class MainWPManageBackups_List_Table extends WP_List_Table
     function column_task_name($item)
     {
         $actions = array(
-            'edit' => sprintf('<a href="admin.php?page=ManageBackups&id=%s">' . __('Edit', 'mainwp') . '</a>', $item->id),
-            'delete' => sprintf('<a class="submitdelete" href="#" task_id="%s" onClick="return managebackups_remove(this);">' . __('Delete','mainwp') . '</a>', $item->id)
+            'edit' => sprintf('<a href="admin.php?page=ManageBackups&id=%s">' . '<i class="fa fa-pencil-square-o"></i> ' . __('Edit', 'mainwp') . '</a>', $item->id),
+            'delete' => sprintf('<a class="submitdelete" href="#" task_id="%s" onClick="return managebackups_remove(this);">' . '<i class="fa fa-trash-o"></i> ' . __('Delete','mainwp') . '</a>', $item->id)
         );
         
         if (!mainwp_current_user_can("dashboard", "edit_backup_tasks")) {
@@ -86,13 +86,13 @@ class MainWPManageBackups_List_Table extends WP_List_Table
         if ($item->paused == 1)
         {
             if (mainwp_current_user_can("dashboard", "pause_resume_backup_tasks"))
-                $actions['resume'] = sprintf('<a href="#" task_id="%s" onClick="return managebackups_resume(this)">' . __('Resume','mainwp') . '</a>', $item->id);
+                $actions['resume'] = sprintf('<a href="#" task_id="%s" onClick="return managebackups_resume(this)">' . '<i class="fa fa-play"></i> ' . __('Resume','mainwp') . '</a>', $item->id);
             return sprintf('<strong><a style="color: #999;" href="admin.php?page=ManageBackups&id=%s" title="Paused">%s</a></strong><br /><div id="task-status-%s" style="float: left; padding-right: 20px"></div>%s', $item->id, $item->name, $item->id, $this->row_actions($actions));
         }
         else
         {
             if (mainwp_current_user_can("dashboard", "pause_resume_backup_tasks"))
-                $actions['pause'] = sprintf('<a href="#" task_id="%s" onClick="return managebackups_pause(this)">' . __('Pause','mainwp') . '</a>', $item->id);
+                $actions['pause'] = sprintf('<a href="#" task_id="%s" onClick="return managebackups_pause(this)">' . '<i class="fa fa-pause"></i> ' . __('Pause','mainwp') . '</a>', $item->id);
             return sprintf('<strong><a href="admin.php?page=ManageBackups&id=%s">%s</a></strong><br /><div id="task-status-%s" style="float: left; padding-right: 20px"></div>%s', $item->id, $item->name, $item->id, $this->row_actions($actions));
         }         
     }

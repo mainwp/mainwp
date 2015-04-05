@@ -9,7 +9,7 @@ class MainWPNotes
 
     public static function getName()
     {
-        return __("Notes",'mainwp');
+        return __('<i class="fa fa-file-text-o"></i> Notes','mainwp');
     }
 
     public static function render()

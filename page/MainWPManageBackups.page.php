@@ -9,9 +9,9 @@ class MainWPManageBackups
     public static $subPages;
     /** @var $sitesTable MainWPManageBackups_List_Table */
     public static $sitesTable;
-    
+
     private static $hideSubmenuBackups = false;
-    
+
     public static function init()
     {
         add_action('mainwp-pageheader-backups', array(MainWPManageBackups::getClassName(), 'renderHeader'));
@@ -20,7 +20,7 @@ class MainWPManageBackups
 
     public static function initMenu()
     {
-        
+
         $customPage = apply_filters('mainwp-getcustompage-backups', false);
         if (is_array($customPage) && isset($customPage['slug'])) {
             self::$hideSubmenuBackups = true;
@@ -32,8 +32,8 @@ class MainWPManageBackups
                 add_submenu_page('mainwp_tab', __('Add New Schedule','mainwp'), '<div class="mainwp-hidden">' . __('Add New','mainwp') . '</div>', 'read', 'ManageBackupsAddNew', array(MainWPManageBackups::getClassName(), 'renderNew'));
             }
             add_submenu_page('mainwp_tab', __('Backups Help','mainwp'), '<div class="mainwp-hidden">' . __('Backups Help','mainwp') . '</div>', 'read', 'BackupsHelp', array(MainWPManageBackups::getClassName(), 'QSGManageBackups'));
-        }        
-        
+        }
+
         self::$subPages = apply_filters('mainwp-getsubpages-backups', array());
         if (isset(self::$subPages) && is_array(self::$subPages))
         {
@@ -51,14 +51,14 @@ class MainWPManageBackups
 
     public static function initMenuSubPages()
     {
-        if (self::$hideSubmenuBackups && (empty(self::$subPages) || !is_array(self::$subPages))) { 
+        if (self::$hideSubmenuBackups && (empty(self::$subPages) || !is_array(self::$subPages))) {
             return;
-        }        
+        }
         ?>
     <div id="menu-mainwp-Backups" class="mainwp-submenu-wrapper">
         <div class="wp-submenu sub-open" style="">
-            <div class="mainwp_boxout">                
-                <?php 
+            <div class="mainwp_boxout">
+                <?php
                 if (!self::$hideSubmenuBackups) { ?>
                     <div class="mainwp_boxoutin"></div>
                     <a href="<?php echo admin_url('admin.php?page=ManageBackups'); ?>" class="mainwp-submenu"><?php _e('Manage Backups','mainwp'); ?></a>
@@ -91,9 +91,7 @@ class MainWPManageBackups
         <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
                 src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
                 alt="MainWP"/></a>
-        <img src="<?php echo plugins_url('images/icons/mainwp-backups.png', dirname(__FILE__)); ?>"
-             style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Backups" height="32"/>
-        <h2><?php _e('Backups','mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
+        <h2><i class="fa fa-hdd-o"></i> <?php _e('Backups','mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
         <div class="mainwp-tabs" id="mainwp-tabs">
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == '') { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageBackups"><?php _e('Manage','mainwp'); ?></a>
             <?php if (mainwp_current_user_can("dashboard", "add_backup_tasks")) { ?>
@@ -311,7 +309,7 @@ class MainWPManageBackups
         <div class="mainwp_config_box_left">
 
         <div class="postbox">
-        <h3 class="mainwp_box_title"><span><?php _e('Schedule Backup','mainwp'); ?></span></h3>
+        <h3 class="mainwp_box_title"><span><i class="fa fa-history"></i> <?php _e('Schedule Backup','mainwp'); ?></span></h3>
         <div class="inside">
         <table class="form-table" style="width: 100%">
             <tr class="form-field form-required">
@@ -340,7 +338,7 @@ class MainWPManageBackups
                     <td><p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e('Every WordPress website is different but the sections below generally do not need to be backed up and since many of them are large in size they can even cause issues with your backup including server timeouts.', 'mainwp'); ?></p></td>
                 </tr>
                 <tr class="mainwp-exclude-backup-locations">
-                    <td colspan="2"><h4><?php _e('Known Backup Locations', 'mainwp'); ?></h4></td>
+                    <td colspan="2"><h4><i class="fa fa-cloud-upload"></i> <?php _e('Known Backup Locations', 'mainwp'); ?></h4></td>
                 </tr>
                 <tr class="mainwp-exclude-backup-locations">
                     <td><label for="mainwp-known-backup-locations"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-known-backup-locations" <?php echo (!isset($task) || $task->excludebackup == 1 ? 'checked' : ''); ?>></td>
@@ -350,7 +348,7 @@ class MainWPManageBackups
                 </tr>
                 <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
                 <tr class="mainwp-exclude-cache-locations">
-                    <td colspan="2"><h4><?php _e('Known Cache Locations', 'mainwp'); ?></h4></td>
+                    <td colspan="2"><h4><i class="fa fa-cubes"></i> <?php _e('Known Cache Locations', 'mainwp'); ?></h4></td>
                 </tr>
                 <tr class="mainwp-exclude-cache-locations">
                     <td><label for="mainwp-known-cache-locations"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-known-cache-locations" <?php echo (!isset($task) || $task->excludecache == 1 ? 'checked' : ''); ?>></td>
@@ -360,7 +358,7 @@ class MainWPManageBackups
                 </tr>
                 <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
                 <tr class="mainwp-exclude-nonwp-folders">
-                    <td colspan="2"><h4><?php _e('Non-WordPress Folders', 'mainwp'); ?></h4></td>
+                    <td colspan="2"><h4><i class="fa fa-folder"></i> <?php _e('Non-WordPress Folders', 'mainwp'); ?></h4></td>
                 </tr>
                 <tr class="mainwp-exclude-nonwp-folders">
                     <td><label for="mainwp-non-wordpress-folders"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-non-wordpress-folders" <?php echo (!isset($task) || $task->excludenonwp == 1 ? 'checked' : ''); ?>></td>
@@ -370,7 +368,7 @@ class MainWPManageBackups
                 </tr>
                 <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
                 <tr class="mainwp-exclude-zips">
-                    <td colspan="2"><h4><?php _e('ZIP Archives', 'mainwp'); ?></h4></td>
+                    <td colspan="2"><h4><i class="fa fa-file-archive-o"></i> <?php _e('ZIP Archives', 'mainwp'); ?></h4></td>
                 </tr>
                 <tr class="mainwp-exclude-zips">
                     <td><label for="mainwp-zip-archives"><?php _e('Exclude', 'mainwp'); ?></label><input type="checkbox" id="mainwp-zip-archives" <?php echo (!isset($task) || $task->excludezip == 1 ? 'checked' : ''); ?>></td>
@@ -378,7 +376,7 @@ class MainWPManageBackups
                 </tr>
                 <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
             <tr class="mainwp_backup_exclude_files_content" <?php echo (isset($task) && $task->type == 'db' ? 'style="display: none;"' : ''); ?>>
-                <th scope="row" style="vertical-align: top"><h4 class="mainwp-custom-excludes"><?php _e('Custom Excludes', 'mainwp'); ?></h4></th>
+                <th scope="row" style="vertical-align: top"><h4 class="mainwp-custom-excludes"><i class="fa fa-minus-circle"></i> <?php _e('Custom Excludes', 'mainwp'); ?></h4></th>
                 <td>
                     <p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e('Exclude any additional files that you do not need backed up for this site. Click a folder name to drill down into the directory.', 'mainwp'); ?></p>
                     <br />
@@ -1210,7 +1208,7 @@ class MainWPManageBackups
 
     public static function getMetaboxName()
     {
-        return 'Backups';
+        return '<i class="fa fa-hdd-o"></i> Backups';
     }
 
     public static function renderMetabox()

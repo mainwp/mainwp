@@ -10,7 +10,7 @@ class MainWPExtensionsWidget {
 	public static $extensionsLoaded = false;
 
 	public static function getName() {
-		return __('Extensions','mainwp');
+		return __('<i class="fa fa-plug"></i> Extensions','mainwp');
 	}
 
 	public static function render() {

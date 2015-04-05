@@ -64,9 +64,7 @@ class MainWPSettings
         <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
                 src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
                 alt="MainWP"/></a>
-        <img src="<?php echo plugins_url('images/icons/mainwp-settings.png', dirname(__FILE__)); ?>"
-             style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Settings" height="32"/>
-        <h2><?php _e('MainWP Settings','mainwp'); ?></h2><div style="clear: both;"></div><br/>
+        <h2><i class="fa fa-cogs"></i> <?php _e('MainWP Settings','mainwp'); ?></h2><div style="clear: both;"></div><br/>
          <div id="mainwp-tip-zone">
           <?php if ($shownPage == '') { ?>
              <?php if (MainWPUtility::showUserTip('mainwp-settings-tips')) { ?>
@@ -127,7 +125,7 @@ class MainWPSettings
         ?>
     <form method="POST" action="" id="mainwp-settings-page-form">
     <div class="postbox" id="mainwp-advanced-options">
-        <h3 class="mainwp_box_title"><span><?php _e('Cross IP Settings','mainwp'); ?></span></h3>
+        <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Cross IP Settings','mainwp'); ?></span></h3>
         <div class="inside">
 
         <table class="form-table">
@@ -151,7 +149,7 @@ class MainWPSettings
         </div>
     </div>
     <div class="postbox" id="mainwp-advanced-options">
-        <h3 class="mainwp_box_title"><span><?php _e('IP Settings','mainwp'); ?></span></h3>
+        <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('IP Settings','mainwp'); ?></span></h3>
         <div class="inside">
         <table class="form-table">
             <tbody>
@@ -174,7 +172,7 @@ class MainWPSettings
         </div>
     </div>
     <div class="postbox" id="mainwp-advanced-options">
-        <h3 class="mainwp_box_title"><span><?php _e('SSL Settings','mainwp'); ?></span></h3>
+        <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('SSL Settings','mainwp'); ?></span></h3>
         <div class="inside">
         <table class="form-table">
             </tbody>

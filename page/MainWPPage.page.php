@@ -71,8 +71,7 @@ class MainWPPage
         ?>
         <div class="wrap">
         <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
-        <img src="<?php echo plugins_url('images/icons/mainwp-page.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Page" height="32"/>
-        <h2><?php _e('Pages','mainwp'); ?></h2><div style="clear: both;"></div><br/>
+        <h2><i class="fa fa-file"></i> <?php _e('Pages','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         <div id="mainwp-tip-zone">
           <?php if ($shownPage == 'BulkManage') { ?> 
                 <?php if (MainWPUtility::showUserTip('mainwp-managepage-tips')) { ?>
@@ -132,7 +131,7 @@ class MainWPPage
         <br/>
         <div class="mainwp-search-form">
                <div class="postbox mainwp-postbox">
-            <h3 class="mainwp_box_title"><?php _e('Search Pages','mainwp'); ?></h3>
+            <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search Pages','mainwp'); ?></h3>
             <div class="inside">
             <ul class="mainwp_checkboxes">
                 <li>

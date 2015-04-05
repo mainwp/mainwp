@@ -7,7 +7,7 @@ class MainWPBackupTasks {
 	}
 
 	public static function getName() {
-		return __('Backup Tasks','mainwp');
+		return __('<i class="fa fa-tasks"></i> Backup Tasks','mainwp');
 	}
 
 	public static function render() {

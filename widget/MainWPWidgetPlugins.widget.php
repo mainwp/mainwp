@@ -14,7 +14,7 @@ class MainWPWidgetPlugins
 
     public static function getName()
     {
-        return __("Plugins",'mainwp');
+        return __('<i class="fa fa-plug"></i> Plugins','mainwp');
     }
 
     public static function render()

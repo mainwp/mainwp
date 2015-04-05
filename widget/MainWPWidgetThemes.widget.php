@@ -14,7 +14,7 @@ class MainWPWidgetThemes
 
     public static function getName()
     {
-        return __("Themes",'mainwp');
+        return __('<i class="fa fa-paint-brush"></i> Themes','mainwp');
     }
 
     public static function render()

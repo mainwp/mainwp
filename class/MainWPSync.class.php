@@ -50,7 +50,7 @@ class MainWPSync
                 $themeConflicts = array_keys($themeConflicts);
             }
 
-            $othersData = apply_filters('mainwp-sync-others-data', array());            
+            $othersData = apply_filters('mainwp-sync-others-data', array(), $pWebsite);            
             $information = MainWPUtility::fetchUrlAuthed($pWebsite, 'stats',
                 array(
                     'optimize' => ((get_option("mainwp_optimize") == 1) ? 1 : 0),
@@ -63,8 +63,10 @@ class MainWPSync
                 ),
                 true, $pForceFetch
             );
-
-            return self::syncInformationArray($pWebsite, $information, '', 1, false, $pAllowDisconnect);
+            
+            $return = self::syncInformationArray($pWebsite, $information, '', 1, false, $pAllowDisconnect);
+            
+            return $return;
         }
         catch (MainWPException $e)
         {
@@ -273,6 +275,16 @@ class MainWPSync
             $done = true;
         }         
 
+        if (isset($information['faviIcon']))
+        {
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'favi_icon', $information['faviIcon']);
+            $done = true;
+        }
+        else
+        {
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'favi_icon', "");
+        }
+       
         if (!$done)
         {
             if (isset($information['wpversion']))
@@ -309,7 +321,7 @@ class MainWPSync
         MainWPDB::Instance()->updateWebsiteValues($pWebsite->id, $websiteValues);
 
         //Sync action
-        if (!$error) do_action('mainwp-site-synced', $pWebsite);
+        if (!$error) do_action('mainwp-site-synced', $pWebsite, $information);
 
         return (!$error);
     }

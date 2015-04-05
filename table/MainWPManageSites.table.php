@@ -251,8 +251,23 @@ class MainWPManageSites_List_Table extends WP_List_Table
         {
             $actions['reconnect'] = sprintf('<a class="mainwp_site_reconnect" href="#" siteid="%s">' . __('Reconnect', 'mainwp') . '</a>', $item['id']);
         }
+
+        $favi = MainWPDB::Instance()->getWebsiteOption((object)$item, 'favi_icon', "");
+
+        if (!empty($favi)) {
+            // fix bug
+            if ((strpos($favi, '//') === 0) || (strpos($favi, 'http') === 0)) {
+                $faviurl = $favi;
+            } else
+                $faviurl = $item['url'] . $favi;
+        } else {
+            $faviurl = plugins_url('images/sitefavi.png', dirname(__FILE__));
+        }
+
+        $imgfavi = '<img src="' . $faviurl . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
+
         $loader = '<span class="bulk_running"><img src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '"  class="hidden" /><span class="status hidden"></span></span>';
-        return sprintf('<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], $item['name'], $this->row_actions($actions));
+        return sprintf($imgfavi . '<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], $item['name'], $this->row_actions($actions));
     }
 
     function column_url($item)
@@ -277,6 +292,12 @@ class MainWPManageSites_List_Table extends WP_List_Table
 
     function column_backup($item)
     {
+
+        $backupnow_lnk = apply_filters('mainwp-managesites-getbackuplink', "", $item['id']);
+        if (!empty($backupnow_lnk)) {
+            return $backupnow_lnk;
+        }
+
         $dir = MainWPUtility::getMainWPSpecificDir($item['id']);
         $lastbackup = 0;
         if (file_exists($dir) && ($dh = opendir($dir)))

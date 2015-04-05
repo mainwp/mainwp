@@ -418,7 +418,7 @@ class MainWPDB
             $userId = $current_user->ID;
         }
         $where = ($userId != null) ? ' userid = ' . $userId : '';
-        $where .= $this->getWhereAllowAccessGroupsSites("site", "wp");
+        $where .= $this->getWhereAllowAccessSites("wp");
         $qry = 'SELECT wp_sync.dtsSync FROM '.$this->tableName('wp'). ' wp JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid WHERE wp_sync.sync_errors = "" ' . $where . ' ORDER BY wp_sync.dtsSync ASC LIMIT 1';
 
         return $this->wpdb->get_var($qry);
@@ -426,7 +426,7 @@ class MainWPDB
 
     public function getRequestsSince($pSeconds)
     {
-        $where = $this->getWhereAllowAccessGroupsSites("site", "wp");
+        $where = $this->getWhereAllowAccessSites("wp");
         $qry = 'SELECT count(*) FROM '.$this->tableName('wp').' wp JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid WHERE wp_sync.dtsSyncStart > ' . (time() - $pSeconds) . $where;
 
         return $this->wpdb->get_var($qry);
@@ -441,12 +441,16 @@ class MainWPDB
             $userId = $current_user->ID;
         }
         $where = ($userId == null ? '' : ' wp.userid = '.$userId);
-        $where .= $this->getWhereAllowAccessGroupsSites("site", "wp");
+        $where .= $this->getWhereAllowAccessSites("wp");
         $qry = 'SELECT COUNT(wp.id) FROM ' . $this->tableName('wp') . ' wp WHERE 1 ' . $where;
 
         return $this->wpdb->get_var($qry);
     }
-
+    
+    public function getAllowedSiteIds() {
+        
+    }
+    
     public function getWebsiteOption($website, $option)
     {
         return $this->wpdb->get_var('SELECT value FROM ' . $this->tableName('wp_options') . ' WHERE wpid = ' . $website->id . ' AND name = "' . $this->escape($option) . '"');
@@ -479,7 +483,7 @@ class MainWPDB
 
     public function getSQLWebsites()
     {
-        $where = $this->getWhereAllowAccessGroupsSites("site", "wp");
+        $where = $this->getWhereAllowAccessSites("wp");
         return 'SELECT wp.*,wp_sync.*,wp_optionview.*
                 FROM ' . $this->tableName('wp') . ' wp
                 JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
@@ -496,7 +500,7 @@ class MainWPDB
                 $where = ' AND (wp.name LIKE "%'.$search_site.'%" OR wp.url LIKE  "%'.$search_site.'%") ';
             }
 
-            $where .= $this->getWhereAllowAccessGroupsSites("site", "wp");
+            $where .= $this->getWhereAllowAccessSites("wp");
 
             if ($selectgroups) {
                 $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
@@ -547,7 +551,7 @@ class MainWPDB
         }
 
         if (!$for_manager) {
-            $where .= $this->getWhereAllowAccessGroupsSites("site", "wp");
+            $where .= $this->getWhereAllowAccessSites("wp");
         }
 
         if ($selectgroups) {
@@ -575,61 +579,50 @@ class MainWPDB
         return $qry;
     }
 
-    public function getWhereAllowAccessGroupsSites($type = "", $site_table_alias = "", $group_table_alias = "") {
+    public function getWhereAllowAccessSites($site_table_alias = "") {
 
         // To fix bug run from cron job
         if ( defined( 'DOING_CRON' ) && DOING_CRON )
             return "";
-
+        
         $allowed_sites = apply_filters("mainwp_currentuserallowedaccesssites", "all");
-        $where_site = $where_group = "";
-
+        
+        if ($allowed_sites == "all") {         
+            return ""; // allow all sites            
+        } 
+        
         if (empty($site_table_alias))
             $site_table_alias = $this->tableName("wp");
-
+        
+        if (is_array($allowed_sites) && count($allowed_sites) > 0) {                                                
+            $_where = ' AND ' . $site_table_alias. '.id IN (' . implode(",", $allowed_sites) . ') ';
+        } else {
+            $_where = ' AND 0 '; // denied access
+        }         
+        
+        return $_where;
+    }
+    
+    public function getWhereAllowGroups($group_table_alias = "") {
+         // To fix bug run from cron job
+        if ( defined( 'DOING_CRON' ) && DOING_CRON )
+            return "";
+        
+        $allowed_groups = apply_filters("mainwp_currentuserallowedaccessgroups", "all");
+        
+        if ($allowed_groups == "all")             
+           return ""; // allow all groups  
+                
         if (empty($group_table_alias))
             $group_table_alias = $this->tableName("group");
-
-        if ($allowed_sites !== "all") {
-            if (is_array($allowed_sites) && count($allowed_sites) > 0) {
-                $allowed_sites = implode(",", $allowed_sites);
-            } else {
-                $allowed_sites = "";
-            }
-
-            if (!empty($allowed_sites))
-                $where_site = ' AND ' . $site_table_alias. '.id IN (' . $allowed_sites . ') ';
-            else
-                $where_site = ' AND 0 ';
+       
+        if (is_array($allowed_groups) && count($allowed_groups) > 0) {                    
+           return ' AND ' . $group_table_alias. '.id IN (' . implode(",", $allowed_groups) . ') ';
+        } else {                     
+           return ' AND 0 '; // not allow access groups
         }
-
-        $allowed_groups = apply_filters("mainwp_currentuserallowedaccessgroups", "all");
-        if ($allowed_groups !== "all") {
-            if (is_array($allowed_groups) && count($allowed_groups) > 0) {
-                $allowed_groups = implode(",", $allowed_groups);
-            } else {
-                $allowed_groups = "";
-            }
-
-            if (!empty($allowed_groups)) {
-                    $where_group = ' AND ' . $group_table_alias. '.id IN (' . $allowed_groups . ') ';
-            } else {
-                    $where_group = ' AND 0';
-            }
-        }
-
-        $where = "";
-        if ($type == "site") {
-            $where = $where_site;
-        } else if ($type == "group") {
-            $where = $where_group;
-        } else if (empty($type)){ // all sites and groups
-            $where = $where_site . $where_group;
-        }
-        //error_log($where);
-        return $where;
     }
-
+    
     public function getGroupByNameForUser($name, $userid = null)
     {
         if (($userid == null) && MainWPSystem::Instance()->isMultiUser())
@@ -638,15 +631,14 @@ class MainWPDB
             $userid = $current_user->ID;
         }
         $where = ($userid != null) ? ' AND userid=' . $userid : '';
-        $where .= $this->getWhereAllowAccessGroupsSites("group");
+        $where .= $this->getWhereAllowGroups();
         return $this->wpdb->get_row('SELECT * FROM ' . $this->tableName('group') . ' WHERE 1 ' . $where  . ' AND name="' . $this->escape($name) . '"');
     }
 
     public function getGroupById($id)
     {
-        if (MainWPUtility::ctype_digit($id)) {
-            $where = $this->getWhereAllowAccessGroupsSites("group");
-            return $this->wpdb->get_row('SELECT * FROM ' . $this->tableName('group') . ' WHERE id=' . $id . $where);
+        if (MainWPUtility::ctype_digit($id)) {            
+            return $this->wpdb->get_row('SELECT * FROM ' . $this->tableName('group') . ' WHERE id=' . $id);
         }
         return null;
     }
@@ -654,7 +646,7 @@ class MainWPDB
     public function getGroupsByUserId($userid)
     {
         if (MainWPUtility::ctype_digit($userid)) {
-            $where = $this->getWhereAllowAccessGroupsSites("group");
+            $where = $this->getWhereAllowGroups();
             return $this->wpdb->get_results('SELECT * FROM ' . $this->tableName('group') . ' WHERE userid = ' . $userid . $where . ' ORDER BY name', OBJECT_K);
         }
         return null;
@@ -668,14 +660,13 @@ class MainWPDB
             global $current_user;
             $where = ' userid = ' . $current_user->ID . ' ';
         }
-        $where .= $this->getWhereAllowAccessGroupsSites("group");
+        $where .= $this->getWhereAllowGroups();
         return $this->wpdb->get_results('SELECT * FROM ' . $this->tableName('group') . ' WHERE ' . $where . ' ORDER BY name', OBJECT_K);
     }
 
     public function getGroupsByWebsiteId($websiteid)
     {
-        if (MainWPUtility::ctype_digit($websiteid)) {
-            $where = $this->getWhereAllowAccessGroupsSites("group", "", "gr");
+        if (MainWPUtility::ctype_digit($websiteid)) {           
             return $this->wpdb->get_results('SELECT * FROM ' . $this->tableName('group') . ' gr
                 JOIN ' . $this->tableName('wp_group') . ' wpgr ON gr.id = wpgr.groupid
                 WHERE wpgr.wpid = ' . $websiteid . $where . ' ORDER BY name', OBJECT_K);
@@ -698,7 +689,7 @@ class MainWPDB
         }
 
         if (!$for_manager) {
-            $where .= $this->getWhereAllowAccessGroupsSites("group", "", "gr");
+            $where .= $this->getWhereAllowGroups("gr");
         }
 
         return $this->wpdb->get_results('SELECT gr.*, COUNT(DISTINCT(wpgr.wpid)) as nrsites
@@ -710,8 +701,7 @@ class MainWPDB
     }
 
     public function getGroupsByName($name)
-    {
-        $where = $this->getWhereAllowAccessGroupsSites("group", "", "gr");
+    {       
         return $this->wpdb->get_results('SELECT gr.*
             FROM ' . $this->tableName('group') . ' gr
             WHERE gr.name = "' . $this->escape($name) . '"
@@ -729,7 +719,7 @@ class MainWPDB
         }
 
         $where = ' WHERE 1 ';
-        $where .= $this->getWhereAllowAccessGroupsSites("group", "", "g");
+        $where .= $this->getWhereAllowGroups("g");
 
         if ($userid != null) $where .= ' AND g.userid = ' . $userid;
         if (!$enableOfflineSites) $where .= ' AND wp_sync.sync_errors = ""';
@@ -747,8 +737,7 @@ class MainWPDB
 
     public function getWebsitesByUrl($url)
     {
-        if (substr($url, -1) != '/') { $url .= '/'; }
-        //$where = $this->getWhereAllowAccessGroupsSites("site");
+        if (substr($url, -1) != '/') { $url .= '/'; }        
         $where = "";
         $results = $this->wpdb->get_results('SELECT * FROM ' . $this->tableName('wp') . ' WHERE url = "' . $this->escape($url) . '"' . $where, OBJECT);
         if ($results) return $results;
@@ -784,8 +773,8 @@ class MainWPDB
     {
         if (MainWPUtility::ctype_digit($id))
         {
-            if ($selectGroups) {
-                $where = $this->getWhereAllowAccessGroupsSites("group", "wp", "gr");
+            $where = $this->getWhereAllowAccessSites("wp");
+            if ($selectGroups) {                
                 return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
                 FROM ' . $this->tableName('wp') . ' wp
                 LEFT JOIN ' . $this->tableName('wp_group') . ' wpgr ON wp.id = wpgr.wpid
@@ -795,8 +784,7 @@ class MainWPDB
                 WHERE wp.id = ' . $id . $where . '
                 GROUP BY wp.id';
             }
-            $where = $this->getWhereAllowAccessGroupsSites("site", "wp");
-
+            
             return 'SELECT wp.*,wp_sync.*,wp_optionview.*
                     FROM ' . $this->tableName('wp') . ' wp
                     JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
@@ -813,7 +801,7 @@ class MainWPDB
             global $current_user;
             $userId = $current_user->ID;
         }
-        $where = $this->getWhereAllowAccessGroupsSites("site");
+        $where = $this->getWhereAllowAccessSites();
         return $this->wpdb->get_results('SELECT * FROM ' . $this->tableName('wp') . ' WHERE id IN (' . implode(',', $ids) . ')' . ($userId != null ? ' AND userid = '.$userId : '') . $where, OBJECT);
     }
 
@@ -823,9 +811,8 @@ class MainWPDB
         {
             global $current_user;
             $userId = $current_user->ID;
-        }
-        $where = $this->getWhereAllowAccessGroupsSites("site", "wp");
-        return $this->wpdb->get_results('SELECT * FROM ' . $this->tableName('wp') . ' wp JOIN ' . $this->tableName('wp_group') . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . implode(',', $ids) .') '.($userId != null ? ' AND wp.userid = '.$userId : '') . $where, OBJECT);
+        }        
+        return $this->wpdb->get_results('SELECT * FROM ' . $this->tableName('wp') . ' wp JOIN ' . $this->tableName('wp_group') . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . implode(',', $ids) .') '.($userId != null ? ' AND wp.userid = '.$userId : ''), OBJECT);
     }
 
     public function getWebsitesByGroupId($id)
@@ -837,7 +824,7 @@ class MainWPDB
     {
         if (MainWPUtility::ctype_digit($id))
         {
-            $where_allowed = $this->getWhereAllowAccessGroupsSites("site", "wp");
+            $where_allowed = $this->getWhereAllowAccessSites("wp");
             if ($selectgroups)
             {
                 $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
@@ -879,14 +866,14 @@ class MainWPDB
         {
             global $current_user;
             $userid = $current_user->ID;
-        }
-        $where = $this->getWhereAllowAccessGroupsSites("site", "wp");
+        }        
+        
         $sql = 'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->tableName('wp') . ' wp
                 INNER JOIN ' . $this->tableName('wp_group') . ' wpgroup ON wp.id = wpgroup.wpid
                 JOIN ' . $this->tableName('group') . ' g ON wpgroup.groupid = g.id
                 JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
                 JOIN ' . $this->getOptionView() . ' wp_optionview ON wp.id = wp_optionview.wpid
-                WHERE g.name="' . $this->escape($groupname). '"' . $where;
+                WHERE g.name="' . $this->escape($groupname). '"';
         if ($userid != null) $sql .= ' AND g.userid = "' . $userid . '"';
         return $sql;
     }
@@ -1313,14 +1300,15 @@ class MainWPDB
 
     public function getWebsitesCheckUpdatesCount()
     {
+        $where = $this->getWhereAllowAccessSites("wp");        
         return $this->wpdb->get_var('SELECT count(wp.id) FROM ' . $this->tableName('wp') . ' wp
                                             JOIN ' . $this->tableName('wp_sync') . ' wp_sync ON wp.id = wp_sync.wpid
-                                            WHERE (wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW()))');
+                                            WHERE (wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW())) ' . $where);
     }
 
     public function getWebsitesCountWhereDtsAutomaticSyncSmallerThenStart()
     {
-        $where = $this->getWhereAllowAccessGroupsSites("site", "wp");
+        $where = $this->getWhereAllowAccessSites("wp");
 
         //once a day
         return $this->wpdb->get_var('SELECT count(wp.id) FROM ' . $this->tableName('wp') . ' wp
@@ -1337,7 +1325,7 @@ class MainWPDB
 
     public function getWebsitesCheckUpdates($limit)
     {
-        $where = $this->getWhereAllowAccessGroupsSites("site", "wp");
+        $where = $this->getWhereAllowAccessSites("wp");
         //once a day
         return $this->wpdb->get_results('SELECT wp.*,wp_sync.*,wp_optionview.*
                                     FROM ' . $this->tableName('wp') . ' wp
@@ -1348,7 +1336,7 @@ class MainWPDB
 
     public function getWebsitesStatsUpdateSQL()
     {
-        $where = $this->getWhereAllowAccessGroupsSites("site");
+        $where = $this->getWhereAllowAccessSites();
         //once a week
         return 'SELECT * FROM ' . $this->tableName('wp') . ' WHERE (statsUpdate = 0 OR ' . time() . ' - statsUpdate >= ' . (60 * 60 * 24 * 7) . ')' . $where;
     }

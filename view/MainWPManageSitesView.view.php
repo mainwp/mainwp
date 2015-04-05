@@ -206,7 +206,11 @@ class MainWPManageSitesView
                             'ManageSitesBackups' => array( 'href' => 'admin.php?page=managesites&backupid=' . $site_id, 'title' => __('Backups','mainwp'), 'access' => mainwp_current_user_can("dashboard", "execute_backups")),
                             'SecurityScan' => array( 'href' => 'admin.php?page=managesites&scanid=' . $site_id, 'title' => __('Security Scan','mainwp'), 'access' => true)                            
                         );
-        
+        global $mainwpUseExternalPrimaryBackupsMethod;
+        if (!empty($mainwpUseExternalPrimaryBackupsMethod)) {
+           unset($site_pages['ManageSitesBackups']);
+        }
+
         $breadcrumd = "";
         if ($shownPage != 'SitesHelp' && !isset($managesites_pages[$shownPage])) {
             $breadcrumd = self::getBreadcrumb($shownPage, $subPages);
@@ -217,6 +221,8 @@ class MainWPManageSitesView
         <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
                 src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
                 alt="MainWP"/></a>
+        <img src="<?php echo plugins_url('images/icons/mainwp-sites.png', dirname(__FILE__)); ?>"
+             style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Sites" height="32"/>
         <h2><i class="fa fa-globe"></i> <?php _e('Sites','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         
          <div id="mainwp-tip-zone">
@@ -721,27 +727,40 @@ class MainWPManageSitesView
 
         $loadFilesBeforeZip = get_option('mainwp_options_loadFilesBeforeZip');
         $loadFilesBeforeZip = ($loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false);
+
+        $primaryBackup = get_option('mainwp_primaryBackup');
+        $primaryBackupMethods = apply_filters("mainwp-getprimarybackup-methods", $primaryBackupMethods);
+        if (!is_array($primaryBackupMethods)) {
+            $primaryBackupMethods = array();
+        }
+
+        global $mainwpUseExternalPrimaryBackupsMethod;
+        $hiddenCls = "";
+        if (!empty($primaryBackup) && $primaryBackup == $mainwpUseExternalPrimaryBackupsMethod) {
+            $hiddenCls = "class=\"hidden\"";
+        }
+
         ?>
     <div class="postbox" id="mainwp-backup-options-settings">
     <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> Backup Options</span></h3>
     <div class="inside">
     <table class="form-table">
         <tbody>
-        <tr>
+        <tr <?php echo $hiddenCls; ?> >
             <th scope="row">Backups on Server <?php MainWPUtility::renderToolTip('The number of backups to keep on your server.  This does not affect external sources.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/'); ?></th>
             <td>
                 <input type="text" name="mainwp_options_backupOnServer"  class="mainwp-field mainwp-settings-icon"
                        value="<?php echo ($backupsOnServer === false ? 1 : $backupsOnServer); ?>"/><span class="mainwp-form_hint"><?php _e('The number of backups to keep on your server.  This does not affect external sources.','mainwp'); ?></span>
             </td>
         </tr>
-        <tr>
+        <tr <?php echo $hiddenCls; ?>>
             <th scope="row"><?php _e('Backups on external sources','mainwp'); ?> <?php MainWPUtility::renderToolTip('The number of backups to keep on your external sources.  This does not affect backups on the server.  0 sets unlimited.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/'); ?></th>
             <td>
                 <input type="text" name="mainwp_options_backupOnExternalSources"  class="mainwp-field mainwp-settings-icon"
                        value="<?php echo ($backupOnExternalSources === false ? 1 : $backupOnExternalSources); ?>"/><span class="mainwp-form_hint"><?php _e('The number of backups to keep on your external sources.  This does not affect backups on the server.  0 sets unlimited.','mainwp'); ?></span>
             </td>
         </tr>
-        <tr>
+        <tr <?php echo $hiddenCls; ?>>
             <th scope="row"><?php _e('Archive format','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('','mainwp')); ?></th>
             <td>
                 <table class="mainwp-nomarkup">
@@ -766,7 +785,7 @@ class MainWPManageSitesView
                 </table>
             </td>
         </tr>
-        <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
+        <tr class="archive_method archive_zip <?php echo !empty($hiddenCls) ? "hidden" : ""; ?>" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
             <th scope="row"><?php _e('Maximum File Descriptors on Child','mainwp'); ?> <?php MainWPUtility::renderToolTip('The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
             <td>
                 <div style="float: left">Auto detect:&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e('Enter a fallback value because not all hosts support this function.','mainwp'); ?>)</i></div><div style="clear:both"></div>
@@ -774,7 +793,7 @@ class MainWPManageSitesView
                        value="<?php echo ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors); ?>"/><span class="mainwp-form_hint"><?php _e('The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp'); ?></span>
             </td>
         </tr>
-        <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
+        <tr class="archive_method archive_zip <?php echo !empty($hiddenCls) ? "hidden" : ""; ?>" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
             <th scope="row"><?php _e('Load files in memory before zipping','mainwp');?> <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advice to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
             <td>
                 <div class="mainwp-checkbox">
@@ -783,7 +802,7 @@ class MainWPManageSitesView
                 </div>
             </td>
         </tr>
-        <tr>
+        <tr <?php echo $hiddenCls; ?>>
             <th scope="row">
                 <?php _e('Send Email when a backup fails','mainwp'); ?></th>
                 <td>
@@ -793,7 +812,7 @@ class MainWPManageSitesView
                   </div>
                </td>
         </tr>
-        <tr>
+        <tr <?php echo $hiddenCls; ?>>
             <th scope="row"><?php _e('Send Email when a backup starts','mainwp'); ?></th>
                <td>
                  <div class="mainwp-checkbox">
@@ -802,7 +821,7 @@ class MainWPManageSitesView
                 </div>
             </td>
         </tr>
-        <tr>
+        <tr <?php echo $hiddenCls; ?>>
             <th scope="row"><?php _e('Execute backuptasks in chunks','mainwp'); ?></th>
                <td>
                  <div class="mainwp-checkbox">
@@ -811,6 +830,23 @@ class MainWPManageSitesView
                 </div>
             </td>
         </tr>
+        <?php
+        if (count($primaryBackupMethods) > 0) {
+        ?>
+        <tr>
+            <th scope="row"><?php _e('Select Primary Backup System','mainwp'); ?></th>
+               <td>
+                <span"><select name="mainwp_primaryBackup" id="mainwp_primaryBackup">
+                        <option value="" >Default MainWP Backups</option>
+                        <?php
+                        foreach($primaryBackupMethods as $method) {
+                            echo '<option value="' . $method['value'] . '" ' . (($primaryBackup == $method['value']) ? "selected" : "") . '>' . $method['title'] . '</option>';
+                        }
+                        ?>
+                </select><label></label></span>
+            </td>
+        </tr>
+        <?php } ?>
         </tbody>
     </table>
     </div>

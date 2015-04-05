@@ -1,4 +1,4 @@
-﻿=== MainWP ===
+=== MainWP ===
 Contributors: mainwp
 Donate link: 
 Tags: WordPress Management, WordPress Controller
@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.1
-Stable tag: 2.0.8.2
+Stable tag: 2.0.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -113,6 +113,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 == Changelog ==
 
+= 2.0.9 =
+* Fixed: For some languages titles not displaying correctly in the latest posts/latest pages widget
+* Fixed: Dashboard download permission issue which was causing plugin bulk installation not working properly
+* Tweaked: Better performance (memory usage) and less PHP notices
+* Added: Hooks for upcoming extensions
+
 = 2.0.8.2 =
 * Fixed: PHP Fatal error when hiding warnings
 
@@ -172,7 +178,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Fixed: Issues with very large network Dashboard load times
 * Fixed: MainWP Tips dismiss button not removing the message
 * Fixed: Ignored Updates still showing in the Manage Sites table
-* Fixed: Hooks for the some Extensions
+* Fixed: Hooks for some Extensions
 
 = 2.0.3 =
 * Fixed: Empty sites list issue on some hosts

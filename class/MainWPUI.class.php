@@ -39,9 +39,9 @@ class MainWPUI
                 {
                     $imgfavi = "";
                     if ($website !== null) {
-                        if (get_option('mainwp_use_favicon', 1) == 1) {
-                            $favi = MainWPDB::Instance()->getWebsiteOption((object)$website, 'favi_icon', "");
-                            $favi_url =     MainWPUtility::get_favico_url($favi);
+                        if (get_option('mainwp_use_favicon', 1) == 1) {                            
+                            $favi = MainWPDB::Instance()->getWebsiteOption($website, 'favi_icon', "");
+                            $favi_url =     MainWPUtility::get_favico_url($favi, $website);
                             $imgfavi = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
                         }
                     }

@@ -254,8 +254,9 @@ class MainWPManageSites_List_Table extends WP_List_Table
         
         $imgfavi = "";
         if (get_option('mainwp_use_favicon', 1) == 1) {
-            $favi = MainWPDB::Instance()->getWebsiteOption((object)$item, 'favi_icon', "");
-            $favi_url =     MainWPUtility::get_favico_url($favi);
+            $siteObj = (object)$website;
+            $favi = MainWPDB::Instance()->getWebsiteOption($siteObj, 'favi_icon', "");
+            $favi_url =     MainWPUtility::get_favico_url($favi, $siteObj);
             $imgfavi = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
         }
         

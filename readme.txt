@@ -1,4 +1,4 @@
-﻿=== MainWP ===
+=== MainWP ===
 Contributors: mainwp
 Donate link: 
 Tags: WordPress Management, WordPress Controller
@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.1
-Stable tag: 2.0.9
+Stable tag: 2.0.10
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.10 =
+* Added: Display Favicon for child sites feature
+* Added: Support for upcoming extension
+* Added: New css style
+* Fixed: Select sites by group bug in the Team Control Extension
+* Fixed: Multiple PHP Warnings
 
 = 2.0.9 =
 * Fixed: For some languages titles not displaying correctly in the latest posts/latest pages widget

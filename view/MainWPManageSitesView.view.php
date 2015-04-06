@@ -221,8 +221,6 @@ class MainWPManageSitesView
         <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
                 src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
                 alt="MainWP"/></a>
-        <img src="<?php echo plugins_url('images/icons/mainwp-sites.png', dirname(__FILE__)); ?>"
-             style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Sites" height="32"/>
         <h2><i class="fa fa-globe"></i> <?php _e('Sites','mainwp'); ?></h2><div style="clear: both;"></div><br/>
         
          <div id="mainwp-tip-zone">
@@ -593,10 +591,7 @@ class MainWPManageSitesView
           ?>
       <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
               src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP"/></a>
-          <img src="<?php echo plugins_url('images/icons/mainwp-sites.png', dirname(__FILE__)); ?>"
-               style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Sites" height="32"/>
-
-          <h2><?php echo $website->name; ?> (<?php echo $website->url; ?>)</h2>
+          <h2><i class="fa fa-globe"></i> <?php echo $website->name; ?> (<?php echo $website->url; ?>)</h2>
 
           <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
           <div id="ajax-information-zone" class="updated" style="display: none;"></div>
@@ -729,7 +724,7 @@ class MainWPManageSitesView
         $loadFilesBeforeZip = ($loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false);
 
         $primaryBackup = get_option('mainwp_primaryBackup');
-        $primaryBackupMethods = apply_filters("mainwp-getprimarybackup-methods", $primaryBackupMethods);
+        $primaryBackupMethods = apply_filters("mainwp-getprimarybackup-methods", array());
         if (!is_array($primaryBackupMethods)) {
             $primaryBackupMethods = array();
         }

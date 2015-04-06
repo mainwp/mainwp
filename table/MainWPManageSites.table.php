@@ -251,7 +251,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
         {
             $actions['reconnect'] = sprintf('<a class="mainwp_site_reconnect" href="#" siteid="%s">' . __('Reconnect', 'mainwp') . '</a>', $item['id']);
         }
-        
+
         $imgfavi = "";
         if (get_option('mainwp_use_favicon', 1) == 1) {
             $siteObj = (object)$item;
@@ -259,7 +259,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
             $favi_url =     MainWPUtility::get_favico_url($favi, $siteObj);
             $imgfavi = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
         }
-        
+
         $loader = '<span class="bulk_running"><img src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '"  class="hidden" /><span class="status hidden"></span></span>';
         return sprintf($imgfavi . '<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], $item['name'], $this->row_actions($actions));
     }

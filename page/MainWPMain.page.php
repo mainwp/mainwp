@@ -136,7 +136,7 @@ class MainWPMain
     }
 
     public static function renderDashboardBody($websites, $pDashboard, $pScreenLayout)
-    {      
+    {
         ?>
     <form action="admin-post.php" method="post">
         <?php wp_nonce_field('mainwp_tab-general'); ?>
@@ -153,8 +153,8 @@ class MainWPMain
                     {
                         $website = $websites[0];
                     }
-                    
-                    $imgfavi = "";        
+
+                    $imgfavi = "";
                     if ($website !== null) {
                         if (get_option('mainwp_use_favicon', 1) == 1) {
                             $favi = MainWPDB::Instance()->getWebsiteOption($website, 'favi_icon', "");
@@ -162,7 +162,7 @@ class MainWPMain
                             $imgfavi = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
                         }
                     }
-        
+
                     if ((time() - ($website == null ? MainWPDB::Instance()->getFirstSyncedSite() : $website->dtsSync)) > (60 * 60 * 24))
                     {
                     ?>

@@ -47,7 +47,7 @@ class MainWPExtensions
             }
         }
 
-        return (array('slugs' => $out, 'am_slugs' => $am_out));
+        return array('slugs' => $out, 'am_slugs' => $am_out);
     }
     
     

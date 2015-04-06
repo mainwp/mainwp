@@ -1905,7 +1905,7 @@ class MainWPUtility
         }
         return true;
     }
-    
+
     public static function get_favico_url($favi = "", $site = null)
     {
         if (!empty($favi)) {

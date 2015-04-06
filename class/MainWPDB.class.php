@@ -669,7 +669,7 @@ class MainWPDB
         if (MainWPUtility::ctype_digit($websiteid)) {           
             return $this->wpdb->get_results('SELECT * FROM ' . $this->tableName('group') . ' gr
                 JOIN ' . $this->tableName('wp_group') . ' wpgr ON gr.id = wpgr.groupid
-                WHERE wpgr.wpid = ' . $websiteid . $where . ' ORDER BY name', OBJECT_K);
+                WHERE wpgr.wpid = ' . $websiteid . ' ORDER BY name', OBJECT_K);
         }
         return null;
     }

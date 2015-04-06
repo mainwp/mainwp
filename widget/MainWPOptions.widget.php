@@ -28,6 +28,7 @@ class MainWPOptions
                 MainWPUtility::update_option('mainwp_maximumComments', $_POST['mainwp_maximumComments']);
                 MainWPUtility::update_option('mainwp_cron_jobs', (!isset($_POST['mainwp_options_cron_jobs']) ? 0 : 1));
                 MainWPUtility::update_option('mainwp_wp_cron', (!isset($_POST['mainwp_options_wp_cron']) ? 0 : 1));
+                MainWPUtility::update_option('mainwp_use_favicon', (!isset($_POST['mainwp_use_favicon']) ? 0 : 1));
             }
 
             return true;
@@ -139,6 +140,16 @@ class MainWPOptions
                 <input type="checkbox" name="mainwp_seo"
                        id="mainwp_seo" <?php echo ((get_option('mainwp_seo') == 1) ? 'checked="true"' : ''); ?>"/>
                 <label for="mainwp_seo"></label>
+               </div>
+            </td>
+        </tr>
+         <tr>
+            <th scope="row"><?php _e('Use Child Site Favicon','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Set to YES if you want to use Child Site Favicon.','mainwp')); ?></th>
+            <td>
+            	<div class="mainwp-checkbox">
+                <input type="checkbox" name="mainwp_use_favicon"
+                       id="mainwp_use_favicon" <?php echo ((get_option('mainwp_use_favicon', 1) == 1) ? 'checked="true"' : ''); ?>"/>
+                <label for="mainwp_use_favicon"></label>
                </div>
             </td>
         </tr>

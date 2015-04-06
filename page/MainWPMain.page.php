@@ -136,7 +136,7 @@ class MainWPMain
     }
 
     public static function renderDashboardBody($websites, $pDashboard, $pScreenLayout)
-    {
+    {      
         ?>
     <form action="admin-post.php" method="post">
         <?php wp_nonce_field('mainwp_tab-general'); ?>
@@ -153,7 +153,16 @@ class MainWPMain
                     {
                         $website = $websites[0];
                     }
-
+                    
+                    $imgfavi = "";        
+                    if ($website !== null) {
+                        if (get_option('mainwp_use_favicon', 1) == 1) {
+                            $favi = MainWPDB::Instance()->getWebsiteOption((object)$website, 'favi_icon', "");
+                            $favi_url =     MainWPUtility::get_favico_url($favi);
+                            $imgfavi = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
+                        }
+                    }
+        
                     if ((time() - ($website == null ? MainWPDB::Instance()->getFirstSyncedSite() : $website->dtsSync)) > (60 * 60 * 24))
                     {
                     ?>
@@ -167,7 +176,7 @@ class MainWPMain
                     ?>
                 <td id="mainwp-welcome-bar" width="47%" style="padding-left: 1em;">
                     <span style="font-size: 24px"><?php echo (($website == null) ? __('Welcome to Your MainWP Dashboard!','mainwp') : sprintf(__('Welcome to %s Dashboard!','mainwp'), $website->name)); ?></span><br/>
-                    <span style="font-style: italic; font-size: 14px;"><?php echo (($website == null) ? __('Manage your WordPress sites with ease.','mainwp') : sprintf(__('This information is only for %s','mainwp'), MainWPUtility::getNiceURL($website->url, true))); ?></span>
+                    <span style="font-style: italic; font-size: 14px;"><?php echo (($website == null) ? __('Manage your WordPress sites with ease.','mainwp') : sprintf(__('This information is only for %s%s','mainwp'), $imgfavi, MainWPUtility::getNiceURL($website->url, true))); ?></span>
                 </td>
                     <?php
                     }

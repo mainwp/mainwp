@@ -1905,4 +1905,18 @@ class MainWPUtility
         }
         return true;
     }
+    
+    public static function get_favico_url($favi = "")
+    {
+        if (!empty($favi)) {
+            // fix bug
+            if ((strpos($favi, '//') === 0) || (strpos($favi, 'http') === 0)) {
+                $faviurl = $favi;
+            } else
+                $faviurl = $item['url'] . $favi;
+        } else {
+            $faviurl = plugins_url('images/sitefavi.png', dirname(__FILE__));
+        }
+        return $faviurl;
+    }
 }

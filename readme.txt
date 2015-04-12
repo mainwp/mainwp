@@ -113,6 +113,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 == Changelog ==
 
+= 2.0.11 =
+* Fixed: Displaying favicon bug
+
 = 2.0.10 =
 * Added: Display Favicon for child sites feature
 * Added: Support for upcoming extension

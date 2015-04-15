@@ -491,6 +491,14 @@ class MainWPExtensionsView
                 'img' => 'https://extensions.mainwp.com/wp-content/uploads/2014/10/mainwp-team-control-extension.png'
             ),
             array(
+                    'free' => true,
+                    'slug' => 'mainwp-updraftplus-extension',
+                    'title' => 'MainWP UpdraftPlus Extension',
+                    'desc' => 'MainWP UpdraftPlus Extension combines the power of your MainWP Dashboard with the popular WordPress UpdraftPlus Plugin. It allows you to quickly back up your child sites.',
+                    'link' => 'https://extensions.mainwp.com/product/mainwp-updraftplus-extension/',
+                    'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/04/mainwp-updraftplus-extension.png'
+                ),
+            array(
                 'slug' => 'mainwp-url-extractor-extension',
                 'title' => 'MainWP URL Extractor Extension',
                 'desc' => 'MainWP URL Extractor allows you to search your child sites post and pages and export URLs in customized format. Requires MainWP Dashboard plugin.',

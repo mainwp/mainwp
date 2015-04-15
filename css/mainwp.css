@@ -2775,3 +2775,15 @@ input.mainwp-field:-webkit-autofill {
     padding: 20px 40px;
     margin-right: 20px;
 }
+
+.mainwp_ext_info_box {
+    background-color: #fff;
+    border: 1px Solid #e5e5e5;
+    padding: 1em;
+    margin-bottom: 1em;
+    text-decoration: none !important;
+}
+
+.mainwp_ext_info_box a {
+    text-decoration: none !important;
+}

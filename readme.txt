@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.1
-Stable tag: 2.0.11
+Stable tag: 2.0.12
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.12 =
+* Fixed: Typo on the Plugins widget
+* Added: Various Notices
+* Added: New Extension in the Available Extensions box on the Extensions page. 
+* Tweaked: Layout of the Backup Options box on the Settings Page
 
 = 2.0.11 =
 * Fixed: Displaying favicon bug

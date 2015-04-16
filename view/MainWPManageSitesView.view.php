@@ -741,6 +741,28 @@ class MainWPManageSitesView
     <div class="inside">
     <table class="form-table">
         <tbody>
+            <?php if (count($primaryBackupMethods) == 0) { ?>
+                <tr>
+                    <div class="mainwp_info-box"><?php _e('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the <a href="https://extensions.mainwp.com/product-category/mainwp-extensions/backups/" target="_blank" ?>Extensions Site</a> for options.', 'mainwp'); ?></div>
+                </tr>
+            <?php } ?>
+        <?php
+        if (count($primaryBackupMethods) > 0) {
+        ?>
+        <tr>
+            <th scope="row"><?php _e('Select Primary Backup System','mainwp'); ?></th>
+               <td>
+                <span><select name="mainwp_primaryBackup" id="mainwp_primaryBackup">
+                        <option value="" >Default MainWP Backups</option>
+                        <?php
+                        foreach($primaryBackupMethods as $method) {
+                            echo '<option value="' . $method['value'] . '" ' . (($primaryBackup == $method['value']) ? "selected" : "") . '>' . $method['title'] . '</option>';
+                        }
+                        ?>
+                </select><label></label></span>
+            </td>
+        </tr>
+        <?php } ?>
         <tr <?php echo $hiddenCls; ?> >
             <th scope="row">Backups on Server <?php MainWPUtility::renderToolTip('The number of backups to keep on your server.  This does not affect external sources.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/'); ?></th>
             <td>
@@ -825,23 +847,6 @@ class MainWPManageSitesView
                 </div>
             </td>
         </tr>
-        <?php
-        if (count($primaryBackupMethods) > 0) {
-        ?>
-        <tr>
-            <th scope="row"><?php _e('Select Primary Backup System','mainwp'); ?></th>
-               <td>
-                <span"><select name="mainwp_primaryBackup" id="mainwp_primaryBackup">
-                        <option value="" >Default MainWP Backups</option>
-                        <?php
-                        foreach($primaryBackupMethods as $method) {
-                            echo '<option value="' . $method['value'] . '" ' . (($primaryBackup == $method['value']) ? "selected" : "") . '>' . $method['title'] . '</option>';
-                        }
-                        ?>
-                </select><label></label></span>
-            </td>
-        </tr>
-        <?php } ?>
         </tbody>
     </table>
     </div>
@@ -937,12 +942,23 @@ class MainWPManageSitesView
             return;
         }
 
+        $primaryBackupMethods = apply_filters("mainwp-getprimarybackup-methods", array());
+        if (!is_array($primaryBackupMethods)) {
+            $primaryBackupMethods = array();
+        }
+
         $remote_destinations = apply_filters('mainwp_backups_remote_get_destinations', null, array('website' => $website->id));
         $hasRemoteDestinations = ($remote_destinations == null ? $remote_destinations : count($remote_destinations));
         ?>
 
         <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
+        
+        <?php if (count($primaryBackupMethods) == 0) { ?>
+            <tr>
+                <div class="mainwp_info-box"><?php _e('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the <a href="https://extensions.mainwp.com/product-category/mainwp-extensions/backups/" target="_blank" ?>Extensions Site</a> for options.', 'mainwp'); ?></div>
+            </tr>
+        <?php } ?>
 
         	<div class="postbox" id="mainwp-backup-details">
                 <h3 class="mainwp_box_title"><span><i class="fa fa-hdd-o"></i> <?php _e('Backup Details','mainwp'); ?></span></h3>

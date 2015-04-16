@@ -262,7 +262,7 @@ class MainWPAPISettings
         $rslt = null;
         if (is_array($extensions)) {
             foreach($extensions as $ext) {                
-                if ($pSlug == $ext['api'] && isset($ext['apiManager']) && !empty($ext['apiManager'])) {  
+                if (isset($ext['api']) && ($pSlug == $ext['api']) && isset($ext['apiManager']) && !empty($ext['apiManager'])) {  
                     $args = array();
                     $args['plugin_name'] =  $ext['api'];                    
                     $args['version']    =   $ext['version'];

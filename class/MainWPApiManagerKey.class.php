@@ -27,7 +27,7 @@ class MainWPApiManagerKey {
 	// API Key URL
 	public function create_software_api_url( $args ) {
 
-		$api_url = add_query_arg( 'wc-api', 'am-software-api', MainWPApiManager::instance()->upgrade_url);
+		$api_url = esc_url_raw( add_query_arg( 'wc-api', 'am-software-api', MainWPApiManager::instance()->upgrade_url ) );
 
 		return $api_url . '&' . http_build_query( $args );
 	}

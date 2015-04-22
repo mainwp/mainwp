@@ -406,11 +406,14 @@ class MainWPExtensions
         include_once(ABSPATH . '/wp-admin/includes/plugin.php');
 
         $installer = new WP_Upgrader();
-        $ssl_verifyhost = get_option('mainwp_sslVerifyCertificate');
-        if ($ssl_verifyhost === '0')
+        $ssl_verifyhost = get_option('mainwp_sslVerifyCertificate');        
+        $ssl_api_verifyhost = ((get_option('mainwp_api_sslVerifyCertificate') === false) || (get_option('mainwp_api_sslVerifyCertificate') == 1)) ? 1 : 0; 
+        
+        if ($ssl_verifyhost === '0' || $ssl_api_verifyhost == 0)
         {                
             add_filter( 'http_request_args', array(MainWPExtensions::getClassName(), 'noSSLFilterFunction'), 99, 2);
         }
+        
         add_filter('http_request_args', array(MainWPExtensions::getClassName(), 'http_request_reject_unsafe_urls'), 99, 2);
         
         $result = $installer->run(array(

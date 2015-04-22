@@ -63,10 +63,11 @@ class MainWPExtensionsView
             
                 $apisslverify = get_option('mainwp_api_sslVerifyCertificate');                
                 if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER > 0x009080bf) && ($apisslverify == 0)) {                                       
-                    MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", 1);
+                    $apisslverify = 1;
+                    MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", $apisslverify);
                 }
                 
-                if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER <= 0x009080bf)) {                    
+                if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER <= 0x009080bf) && ($apisslverify === false || $apisslverify == 1)) {                    
                     $_selected_1 = (($apisslverify === false) || ($apisslverify == 1)) ? "selected" : ''; 
                     $_selected_0 = "";
                     

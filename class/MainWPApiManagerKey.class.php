@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 class MainWPApiManagerKey {
         protected static $_instance = null;
         
-        protected $apisslverify = 1; 
+        protected static $apisslverify = 1; 
         
         public static function instance() {
 
@@ -27,7 +27,7 @@ class MainWPApiManagerKey {
         }
         
         public function __construct() {
-             $this->apisslverify = ((get_option('mainwp_api_sslVerifyCertificate') === false) || (get_option('mainwp_api_sslVerifyCertificate') == 1)) ? 1 : 0; 
+             self::$apisslverify = ((get_option('mainwp_api_sslVerifyCertificate') === false) || (get_option('mainwp_api_sslVerifyCertificate') == 1)) ? 1 : 0; 
         }
         
 	// API Key URL
@@ -48,7 +48,7 @@ class MainWPApiManagerKey {
 
 		$target_url = self::create_software_api_url( $args );
                 
-		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => $this->apisslverify));
+		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => self::$apisslverify));
 
 		if( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 		// Request failed
@@ -70,7 +70,7 @@ class MainWPApiManagerKey {
 
 		$target_url = self::create_software_api_url( $args );
 
-		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => $this->apisslverify) );
+		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => self::$apisslverify) );
 
 
 		if( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
@@ -91,7 +91,7 @@ class MainWPApiManagerKey {
 		$args = wp_parse_args( $defaults, $args );
                 
 		$target_url = self::create_software_api_url( $args );                
-		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => $this->apisslverify));
+		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => self::$apisslverify));
                 
 //                $request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/am-software-api/', array('body' => $args) );
 
@@ -114,7 +114,7 @@ class MainWPApiManagerKey {
 		$args = wp_parse_args( $defaults, $args );
                
 		$target_url = self::create_software_api_url( $args );                
-		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => $this->apisslverify));
+		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => self::$apisslverify));
                 
 //                $request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/am-software-api/', array('body' => $args) );
                 
@@ -144,7 +144,7 @@ class MainWPApiManagerKey {
 		$args = wp_parse_args( $defaults, $args );
          
 		$target_url = self::create_software_api_url( $args );                
-		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => $this->apisslverify));
+		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => self::$apisslverify));
                 
 //                $request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/am-software-api/', array('body' => $args) );
 

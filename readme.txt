@@ -114,7 +114,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 == Changelog ==
 
 = 2.0.13 =
-* Fixed: Security Issue with add_query_arg and remove_query_arg
+* Fixed: Security issue with add_query_arg and remove_query_arg
+* Fixed: Additional fixes for displaying favicon
+* Fixed: PHP Warning
 * Added: OpenSSL notification and sslverify option for Extension login
 
 = 2.0.12 =

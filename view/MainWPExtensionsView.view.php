@@ -76,7 +76,7 @@ class MainWPExtensionsView
                     
                     ?>
                     <div class="mainwp_info-box-red">
-                        <p><?php _e("MainWP System detected an older install of OpenSSL that does not support Server Name Indication (SNI). This will more than likely cause API Activation failure.<br>We highly recommend for your security that you have your host update your OpenSSL to a current version that does support Server Name Indication (SNI).", "mainwp"); ?></p>
+                        <p><?php _e("<strong style=\"color:#a00\">WARNING:</strong> MainWP System detected an older install of OpenSSL that does not support Server Name Indication (SNI). This will more than likely cause API Activation failure.<br>We highly recommend for your security that you have your host update your OpenSSL to a current version that does support Server Name Indication (SNI).", "mainwp"); ?></p>
                         <p><?php _e("If you do not want to or cannot update your OpenSSL to a current version you can change the verify certificate option to No <strong>(Not recommended)</strong>", "mainwp"); ?></p>
                         <table class="form-table">
                             </tbody>

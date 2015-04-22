@@ -179,6 +179,7 @@ class MainWPExtensions
             add_action('wp_ajax_mainwp_extension_getpurchased', array(MainWPExtensions::getClassName(), 'getPurchasedExts'));        
             add_action('wp_ajax_mainwp_extension_downloadandinstall', array(MainWPExtensions::getClassName(), 'downloadAndInstall'));        
             add_action('wp_ajax_mainwp_extension_bulk_activate', array(MainWPExtensions::getClassName(), 'bulkActivate'));        
+            add_action('wp_ajax_mainwp_extension_apisslverifycertificate', array(MainWPExtensions::getClassName(), 'saveApiSSLVerify'));                    
         }
     }
 
@@ -282,6 +283,12 @@ class MainWPExtensions
         
         die(json_encode($return));                       
     }
+    
+    public static function saveApiSSLVerify() {  
+        MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", intval($_POST['api_sslverify']));                                                         
+        die(json_encode(array('saved' => 1)));                       
+    }
+    
     
     public static function testExtensionsApiLogin() {  
         $username = trim( $_POST['username'] );

@@ -658,3 +658,48 @@ mainwp_api_check_showhide_sections = function() {
         });    
     }
 };
+
+
+jQuery(document).on('click', '#mainwp-extensions-api-sslverify-certificate', function ()
+{
+    
+    var parent = jQuery(this).closest(".extension_api_sslverify_loading");
+    var statusEl = parent.find('span.status');                 
+    var loadingEl = parent.find("img");       
+    
+    var data = {
+        action:'mainwp_extension_apisslverifycertificate',
+        api_sslverify: jQuery("#mainwp_api_sslVerifyCertificate").val()        
+    };
+    
+    statusEl.hide();
+    loadingEl.show();
+    jQuery.post(ajaxurl, data, function (response)
+    {
+        loadingEl.hide();        
+        var undefError = false;        
+        if (response) {
+            if (response.saved) {
+                statusEl.css('color', '#0074a2');
+                statusEl.html('Saved.').fadeIn(); 
+                setTimeout(function ()
+                {
+                  statusEl.fadeOut();
+                }, 3000); 
+            } else if (response.error) {
+                statusEl.css('color', 'red');
+                statusEl.html(response.error).fadeIn(); 
+            } else {
+                undefError = true; 
+            }        
+        } else {
+            undefError = true; 
+        }
+        
+        if (undefError) {
+            statusEl.css('color', 'red');
+            statusEl.html("Undefined error.").fadeIn(); 
+        }                
+    }, 'json');     
+    return false;
+});

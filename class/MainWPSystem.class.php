@@ -1672,7 +1672,7 @@ class MainWPSystem
             /** @var $wpdb wpdb */
             global $wpdb;            
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
+            add_filter('redirect_post_location', create_function('$location', 'return esc_url_raw(add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location));'));
         }
         else
         {            
@@ -1715,13 +1715,13 @@ class MainWPSystem
         if (isset($_POST['save'])) {
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
+            add_filter('redirect_post_location', create_function('$location', 'return esc_url_raw(add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location));'));
         }
         else if ($pid == $post_id) {
             /** @var $wpdb wpdb */
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
+            add_filter('redirect_post_location', create_function('$location', 'return esc_url_raw(add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location));'));
         }
         else if (isset($_POST['publish']))
         {            
@@ -1747,7 +1747,7 @@ class MainWPSystem
             /** @var $wpdb wpdb */
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
+            add_filter('redirect_post_location', create_function('$location', 'return esc_url_raw(add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location));'));
         }
         else
         {
@@ -1785,13 +1785,13 @@ class MainWPSystem
         if (isset($_POST['save'])) {
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));            
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));            
+            add_filter('redirect_post_location', create_function('$location', 'return esc_url_raw(add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location));'));
         }
         else if ($pid == $post_id) {
             /** @var $wpdb wpdb */
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
-            add_filter('redirect_post_location', create_function('$location', 'return add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location);'));
+            add_filter('redirect_post_location', create_function('$location', 'return esc_url_raw(add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location));'));
         }
         else
         {

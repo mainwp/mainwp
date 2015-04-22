@@ -179,6 +179,7 @@ class MainWPExtensions
             add_action('wp_ajax_mainwp_extension_getpurchased', array(MainWPExtensions::getClassName(), 'getPurchasedExts'));        
             add_action('wp_ajax_mainwp_extension_downloadandinstall', array(MainWPExtensions::getClassName(), 'downloadAndInstall'));        
             add_action('wp_ajax_mainwp_extension_bulk_activate', array(MainWPExtensions::getClassName(), 'bulkActivate'));        
+            add_action('wp_ajax_mainwp_extension_apisslverifycertificate', array(MainWPExtensions::getClassName(), 'saveApiSSLVerify'));                    
         }
     }
 
@@ -282,6 +283,12 @@ class MainWPExtensions
         
         die(json_encode($return));                       
     }
+    
+    public static function saveApiSSLVerify() {  
+        MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", intval($_POST['api_sslverify']));                                                         
+        die(json_encode(array('saved' => 1)));                       
+    }
+    
     
     public static function testExtensionsApiLogin() {  
         $username = trim( $_POST['username'] );
@@ -399,11 +406,14 @@ class MainWPExtensions
         include_once(ABSPATH . '/wp-admin/includes/plugin.php');
 
         $installer = new WP_Upgrader();
-        $ssl_verifyhost = get_option('mainwp_sslVerifyCertificate');
-        if ($ssl_verifyhost === '0')
+        $ssl_verifyhost = get_option('mainwp_sslVerifyCertificate');        
+        $ssl_api_verifyhost = ((get_option('mainwp_api_sslVerifyCertificate') === false) || (get_option('mainwp_api_sslVerifyCertificate') == 1)) ? 1 : 0; 
+        
+        if ($ssl_verifyhost === '0' || $ssl_api_verifyhost == 0)
         {                
             add_filter( 'http_request_args', array(MainWPExtensions::getClassName(), 'noSSLFilterFunction'), 99, 2);
         }
+        
         add_filter('http_request_args', array(MainWPExtensions::getClassName(), 'http_request_reject_unsafe_urls'), 99, 2);
         
         $result = $installer->run(array(

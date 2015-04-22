@@ -93,7 +93,10 @@ class MainWPApiManagerPluginUpdate {
 	public function plugin_information( $args ) {
 
 		$target_url = $this->create_upgrade_api_url( $args );
-		$request = wp_remote_get( $target_url, array('timeout' => 50));
+                
+                $apisslverify = ((get_option('mainwp_api_sslVerifyCertificate') === false) || (get_option('mainwp_api_sslVerifyCertificate') == 1)) ? 1 : 0; 
+                
+		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => $apisslverify));
                 
 //		$request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/upgrade-api/', array('body' => $args) );
 

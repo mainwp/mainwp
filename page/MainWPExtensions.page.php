@@ -389,6 +389,14 @@ class MainWPExtensions
         return $r;
     }
     
+    public static function noSSLFilterExtensionUpgrade($r, $url)
+    {
+        if ((strpos($url, "am_download_file=") !== false) && (strpos($url, "am_email=")) !== false) {        
+            $r['sslverify'] = false;
+        }
+        return $r;
+    }
+    
     public static function downloadAndInstall() {
         $return = self::installPlugin($_POST['download_link']);
         die('<mainwp>' . json_encode($return) . '</mainwp>');             

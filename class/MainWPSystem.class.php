@@ -86,6 +86,12 @@ class MainWPSystem
 
         $this->handleSettingsPost();
 
+        $ssl_api_verifyhost = ((get_option('mainwp_api_sslVerifyCertificate') === false) || (get_option('mainwp_api_sslVerifyCertificate') == 1)) ? 1 : 0;                 
+        if ($ssl_api_verifyhost == 0)
+        {   
+            add_filter( 'http_request_args', array(MainWPExtensions::getClassName(), 'noSSLFilterExtensionUpgrade'), 99, 2);
+        }
+        
         MainWPExtensions::init();
 
         add_action('in_plugin_update_message-'.$this->plugin_slug, array($this, 'in_plugin_update_message'), 10, 2);

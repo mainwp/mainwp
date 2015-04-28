@@ -117,7 +117,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Added: OpenSSL Notification and the SSL Verify option for Extension site connection
 * Fixed: Issues with some updates on Extensions page
 * Fixed: Issue deleting Child sites from Dashboard when the Child plugin disabled or removed
+* Fixed:  PHP Warning
+* Updated: Plugin install page layout
+* Updated: Theme install page layout
 * Changed: PHP required version on the Server Information page
+* Changed: Various small cosmetic features 
 
 = 2.0.13 =
 * Fixed: Security issue with add_query_arg and remove_query_arg

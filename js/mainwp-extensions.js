@@ -264,7 +264,7 @@ jQuery(document).on('click', '#mainwp-extensions-savelogin', function ()
     
     var parent = jQuery(this).closest(".extension_api_loading");
     var statusEl = parent.find('span.status');                 
-    var loadingEl = parent.find("img");       
+    var loadingEl = parent.find("i");       
     
     var data = {
         action:'mainwp_extension_saveextensionapilogin',
@@ -322,7 +322,7 @@ jQuery(document).on('click', '#mainwp-extensions-grabkeys', function ()
     
     var parent = jQuery(this).parent().closest(".extension_api_loading");
     var statusEl = parent.find('span.status');                 
-    var loadingEl = parent.find("img");       
+    var loadingEl = parent.find("i");       
     
     var data = {
         action:'mainwp_extension_testextensionapilogin',
@@ -454,7 +454,7 @@ jQuery(document).on('click', '#mainwp-extensions-bulkinstall', function () {
     
     var parent = jQuery(this).closest(".extension_api_loading");
     var statusEl = parent.find('span.status');                 
-    var loadingEl = parent.find("img");    
+    var loadingEl = parent.find("i");    
     
     var data = {
         action:'mainwp_extension_getpurchased',
@@ -549,7 +549,7 @@ mainwp_extension_bulk_activate = function() {
         action:'mainwp_extension_bulk_activate',
         plugins: plugins
     });
-    var loadingEl = jQuery('#extBulkActivate img');
+    var loadingEl = jQuery('#extBulkActivate i');
     var statusEl = jQuery('#extBulkActivate .status');
     loadingEl.show();
     jQuery.post(ajaxurl, data,  function(response) {
@@ -565,7 +565,7 @@ mainwp_extension_bulk_activate = function() {
 mainwp_extension_bulk_install_specific = function(pExtToInstall) {
     pExtToInstall.attr('status', 'running');    
     bulkExtensionsCurrentThreads++;        
-    var loadingEl = pExtToInstall.find('.ext_installing img');
+    var loadingEl = pExtToInstall.find('.ext_installing i');
     var statusEl = pExtToInstall.find('.ext_installing .status');
     loadingEl.show();    
     var data = mainwp_secure_data({
@@ -665,7 +665,7 @@ jQuery(document).on('click', '#mainwp-extensions-api-sslverify-certificate', fun
     
     var parent = jQuery(this).closest(".extension_api_sslverify_loading");
     var statusEl = parent.find('span.status');                 
-    var loadingEl = parent.find("img");       
+    var loadingEl = parent.find("i");       
     
     var data = {
         action:'mainwp_extension_apisslverifycertificate',

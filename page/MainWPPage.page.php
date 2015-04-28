@@ -75,7 +75,7 @@ class MainWPPage
         <div id="mainwp-tip-zone">
           <?php if ($shownPage == 'BulkManage') { ?> 
                 <?php if (MainWPUtility::showUserTip('mainwp-managepage-tips')) { ?>
-                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-managepage-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can also quickly see all Published, Draft, Pending and Trash Pages for a single site from your Individual Site Dashboard Recent Pages widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Dashboard.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-managepage-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can also quickly see all Published, Draft, Pending and Trash Pages for a single site from your Individual Site Dashboard Recent Pages widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Dashboard.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
                 <?php } ?>
           <?php } ?>
         </div>
@@ -172,7 +172,7 @@ class MainWPPage
             <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
             <div style="clear: both;"></div>
             <input type="button" name="mainwp_show_pages" id="mainwp_show_pages" class="button-primary" value="<?php _e('Show Pages','mainwp'); ?>"/>
-            <span id="mainwp_pages_loading">&nbsp;<em><?php _e('Grabbing information from Child Sites','mainwp') ?></em>&nbsp;&nbsp;<img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+            <span id="mainwp_pages_loading"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span>
             <br/><br/>
         </div>
         <div class="clear"></div>
@@ -385,7 +385,7 @@ class MainWPPage
                         <?php if ($page['status'] != 'trash') { ?>
                         <a class="row-title"
                            href="admin.php?page=SiteOpen&websiteid=<?php echo $website->id; ?>&location=<?php echo base64_encode('post.php?post=' . $page['id'] . '&action=edit'); ?>"
-                           title="Edit “<?php echo $page['title']; ?>�?"><?php echo $page['title']; ?></a>
+                           title="Edit '<?php echo $page['title']; ?>'?"><?php echo $page['title']; ?></a>
                         <?php } else { ?>
                         <?php echo $page['title']; ?>
                         <?php } ?>
@@ -406,7 +406,7 @@ class MainWPPage
                         <span class="view">
                             | <a
                                 href="<?php echo $website->url . (substr($website->url, -1) != '/' ? '/' : '') . '?p=' . $page['id']; ?>"
-                                target="_blank" title="View “<?php echo $page['title']; ?>�?" rel="permalink"><?php _e('View','mainwp'); ?></a></span>
+                                target="_blank" title="View '<?php echo $page['title']; ?>'?" rel="permalink"><?php _e('View','mainwp'); ?></a></span>
                         <?php } ?>
                         <?php if ($page['status'] == 'trash') { ?>
                         <span class="restore">
@@ -418,8 +418,7 @@ class MainWPPage
                         </span>
                         <?php } ?>
                     </div>
-                    <div class="row-actions-working"><img
-                            src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?>
+                    <div class="row-actions-working"><i class="fa fa-spinner fa-pulse"></i> <?php _e('Please wait','mainwp'); ?>
                     </div>
                 </td>
                 <td class="author column-author">
@@ -648,7 +647,7 @@ class MainWPPage
         self::renderHeader('PagesHelp');
                     ?><div style="text-align: center"><a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e('Show Quick Start Guide','mainwp'); ?></a></div>
                       <div  class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
-                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Pages','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="2"><?php _e('Create a New Page','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><?php _e('Dismiss','mainwp'); ?></a></span>
+                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Pages','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="2"><?php _e('Create a New Page','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
                       <div class="clear"></div>
                       <div id="mainwp-qsgs">
                         <div class="mainwp-qsg" number="1">

@@ -123,7 +123,7 @@ class MainWPMain
         <h2><i class="fa fa-tachometer"></i> <?php _e('MainWP Dashboard','mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
         <?php if (MainWPUtility::showUserTip('mainwp-dashboard-tips')) { ?>
         <div id="mainwp-tip-zone">
-                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-dashboard-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can move the Widgets around to fit your needs and even adjust the number of columns by selecting "Screen Options" on the top right.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-dashboard-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can move the Widgets around to fit your needs and even adjust the number of columns by selecting "Screen Options" on the top right.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
         </div>
         <?php } ?>
         <?php
@@ -186,7 +186,7 @@ class MainWPMain
                 <a class="button-hero button-primary button mainwp-addsite-button" href="admin.php?page=managesites&do=new"><?php _e('<i class="fa fa-plus"></i> Add New Site','mainwp'); ?></a>
                 <a class="button-hero button-primary button mainwp-button-red" target="_blank" href="https://extensions.mainwp.com"><?php _e('<i class="fa fa-cart-plus"></i> Get New Extensions','mainwp'); ?></a>
                 </td>
-            <div id="dashboard_refresh_statusextra" style="display: none">&nbsp;&nbsp;<img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></div>
+            <div id="dashboard_refresh_statusextra" style="display: none"> <i class="fa fa-spinner fa-pulse"></i> </div>
                 </tr></tbody>
             </table>
             <div id="mainwp_dashboard_refresh_status"></div>

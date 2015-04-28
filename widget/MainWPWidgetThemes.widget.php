@@ -92,7 +92,7 @@ class MainWPWidgetThemes
                         <?php } ?>
                     </div>
                     <div style="clear: left;"></div>
-                    <div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?></div>
+                    <div class="mainwp-row-actions-working"><i class="fa fa-spinner fa-pulse"></i> <?php _e('Please wait','mainwp'); ?></div>
                     <div>&nbsp;</div>
                 </div>
                 <?php } ?>

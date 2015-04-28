@@ -57,7 +57,7 @@ class MainWPServerInformation
         self::renderHeader('');
         ?>
         <div class="updated below-h2">
-            <p><?php _e("Please include this information when requesting support:", "mainwp"); ?></p><span class="mwp_close_srv_info"><a href="#" id="mwp_download_srv_info"><?php _e("Download", "mainwp");?></a> | <a href="#" id="mwp_close_srv_info"><?php _e("Hide", "mainwp");?></a></span>
+            <p><?php _e("Please include this information when requesting support:", "mainwp"); ?></p><span class="mwp_close_srv_info"><a href="#" id="mwp_download_srv_info"><?php _e("Download", "mainwp");?></a> | <a href="#" id="mwp_close_srv_info"><i class="fa fa-eye-slash"></i> <?php _e("Hide", "mainwp");?></a></span>
             <p class="submit"><a class="button-primary mwp-get-system-report-btn" href="#"><?php _e("Get System Report", "mainwp"); ?></a></p>
             <div id="mwp-server-information"><textarea readonly="readonly"  wrap="off"></textarea></div>
         </div>
@@ -77,7 +77,7 @@ class MainWPServerInformation
                     <tbody id="the-sites-list" class="list:sites">
                         <?php
                         self::renderRow('WordPress Version', '>=', '3.6', 'getWordpressVersion', '', '', null, 'MainWP requires the WordPress version 3.6 or higher. If the condition is not met, please update your Website. Click the help icon to read more.');
-                        self::renderRow('PHP Version', '>=', '5.2.4', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.24 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you. Click the help icon to read more.');
+                        self::renderRow('PHP Version', '>=', '5.3', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.3 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you. Click the help icon to read more.');
                         self::renderRow('MySQL Version', '>=', '5.0', 'getMySQLVersion', '', '', null, 'MainWP requires the MySQL version 5.0 or higher. If the condition is not met, MySQL version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you. Click the help icon to read more.');
                         self::renderRow('PHP Max Execution Time', '>=', '30', 'getMaxExecutionTime', 'seconds', '=', '0', 'Changed by modifying the value max_execution_time in your php.ini file. Click the help icon to read more.');
                         self::renderRow('PHP Upload Max Filesize', '>=', '2M', 'getUploadMaxFilesize', '(2MB+ best for upload of big plugins)', '', null, 'Changed by modifying the value upload_max_filesize in your php.ini file. Click the help icon to read more.');
@@ -227,7 +227,7 @@ class MainWPServerInformation
         @MainWPDB::free_result($websites);
 
 
-        echo '</select><br /><br /><div id="mainwp_serverInformation_child_loading"><img src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '"/> ' . __('Loading server information..', 'mainwp') . '</div><div id="mainwp_serverInformation_child_resp"></div>';
+        echo '</select><br /><br /><div id="mainwp_serverInformation_child_loading"><i class="fa fa-spinner fa-pulse"></i> ' . __('Loading server information..', 'mainwp') . '</div><div id="mainwp_serverInformation_child_resp"></div>';
 
         self::renderFooter('ServerInformationChild');
     }

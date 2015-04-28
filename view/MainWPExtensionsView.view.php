@@ -34,7 +34,7 @@ class MainWPExtensionsView
        
 <?php     
     
-    $loader_url = plugins_url('images/loader.gif', dirname(__FILE__));      
+    $loader_url = '<i class="fa fa-spinner fa-pulse"></i>';
     if (mainwp_current_user_can("dashboard", "bulk_install_and_activate_extensions")) {     
 
         $username = $password = "";
@@ -61,45 +61,48 @@ class MainWPExtensionsView
             <div style="padding: 0 5px;">
             <?php  
             
-                $apisslverify = get_option('mainwp_api_sslVerifyCertificate');                
-                if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER > 0x009080bf) && ($apisslverify == 0)) {                                       
-                    $apisslverify = 1;
-                    MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", $apisslverify);
-                }
-                
-                if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER <= 0x009080bf) && ($apisslverify === false || $apisslverify == 1)) {                    
-                    $_selected_1 = (($apisslverify === false) || ($apisslverify == 1)) ? "selected" : ''; 
-                    $_selected_0 = "";
-                    
-                    if (empty($_selected_1))
-                        $_selected_0 = "selected";
-                    
-                    ?>
-                    <div class="mainwp_info-box-red">
-                        <p><?php _e("<strong style=\"color:#a00\">WARNING:</strong> MainWP System detected an older install of OpenSSL that does not support Server Name Indication (SNI). This will more than likely cause API Activation failure.<br>We highly recommend for your security that you have your host update your OpenSSL to a current version that does support Server Name Indication (SNI).", "mainwp"); ?></p>
-                        <p><?php _e("If you do not want to or cannot update your OpenSSL to a current version you can change the verify certificate option to No <strong>(Not recommended)</strong>", "mainwp"); ?></p>
-                        <table class="form-table">
-                            </tbody>
-                                <tr>
-                                    <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
-                                       <td>
-                                           <span><select name="mainwp_api_sslVerifyCertificate" id="mainwp_api_sslVerifyCertificate" style="width: 200px;">
-                                                <option value="0" <?php echo $_selected_0; ?> ><?php _e("No", "mainwp"); ?></option>
-                                                <option value="1" <?php echo $_selected_1; ?> ><?php _e("Yes", "mainwp"); ?></option>                                               
-                                            </select><label></label></span>&nbsp;&nbsp;&nbsp;&nbsp;
-                                            <span class="extension_api_sslverify_loading">
-                                                <input type="button" value="<?php _e("Save", "mainwp");?>" id="mainwp-extensions-api-sslverify-certificate" class="button-primary">
-                                                <img class="hidden" src="<?php echo $loader_url; ?>"/><span class="status hidden"></span>
-                                            </span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>                
-                    </div>
-                    <?php
-                } 
-                
+                $apisslverify = get_option('mainwp_api_sslVerifyCertificate');  
+//                if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER > 0x009080bf) && ($apisslverify == 0)) {                                       
+//                    $apisslverify = 1;
+//                    MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", $apisslverify);
+//                }
+                $_selected_1 = (($apisslverify === false) || ($apisslverify == 1)) ? "selected" : ''; 
+                $_selected_0 = "";
+
+                if (empty($_selected_1))
+                    $_selected_0 = "selected";
                 ?>
+                
+                <div class="mainwp_info-box-red">
+                <?php if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER <= 0x009080bf) && ($apisslverify === false || $apisslverify == 1)) { ?>
+                        <p><?php _e("<strong style=\"color:#a00\">WARNING:</strong> MainWP has detected an older install of OpenSSL that does not support Server Name Indication (SNI). This will cause API Activation failure.", "mainwp"); ?></p>
+                        <p><?php _e("We highly recommend, for your security, that you have your host update your OpenSSL to a current version that does support Server Name Indication (SNI).", "mainwp"); ?></p>
+                        <p><?php _e("If you do not want to or cannot update your OpenSSL to a current version you can change the verify certificate option to No <strong>(Not recommended)</strong>", "mainwp"); ?></p>
+                    <?php } else { ?>
+                        <p><?php _e("<strong>Notice:</strong> We did not detect any SSL issues.", "mainwp"); ?></p>                         
+                        <p><?php _e("However, if you are having an issue connecting to, logging in or updating Extensions try setting the verify certificate option below to No and pressing Save.", "mainwp"); ?></p>                         
+                        
+                        
+                    <?php } ?>
+                    <table class="form-table">
+                        </tbody>
+                            <tr>
+                                <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
+                                   <td>
+                                       <span><select name="mainwp_api_sslVerifyCertificate" id="mainwp_api_sslVerifyCertificate" style="width: 200px;">
+                                            <option value="0" <?php echo $_selected_0; ?> ><?php _e("No", "mainwp"); ?></option>
+                                            <option value="1" <?php echo $_selected_1; ?> ><?php _e("Yes", "mainwp"); ?></option>                                               
+                                        </select><label></label></span>&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <span class="extension_api_sslverify_loading">
+                                            <input type="button" value="<?php _e("Save", "mainwp");?>" id="mainwp-extensions-api-sslverify-certificate" class="button-primary">
+                                            <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
+                                        </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>                
+                </div>
+                  
                 <strong><?php _e("Step 1", "mainwp"); ?></strong>
                 <p><span class="description"><?php _e("Enter your MainWP Extensions (https://extensions.mainwp.com) Login to automatically install and activate purchased extensions."); ?></span></p>
                 <span><?php _e("MainWP Extensions Login:", "mainwp"); ?></span><br /><br />
@@ -111,7 +114,7 @@ class MainWPExtensionsView
                 <p>
                     <span class="extension_api_loading">
                         <input type="button" class="button-primary" id="mainwp-extensions-savelogin" value="<?php _e("Save Login", "mainwp"); ?>">
-                        <img class="hidden" src="<?php echo $loader_url; ?>"/><span class="status hidden"></span>
+                        <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
                     </span>
                 </p>  
                 <p><hr></p>            
@@ -120,7 +123,7 @@ class MainWPExtensionsView
                 <p>
                     <span class="extension_api_loading">
                         <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-bulkinstall" value="<?php _e("Install purchased extensions", "mainwp"); ?>">
-                        <img class="hidden" src="<?php echo $loader_url; ?>"/><span class="status hidden"></span>
+                        <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
                     </span>
                 </p>                            
                 <p><hr></p>
@@ -129,7 +132,7 @@ class MainWPExtensionsView
                 <p>
                     <span class="extension_api_loading">
                         <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-grabkeys" value="<?php _e("Grab Api Keys", "mainwp"); ?>">
-                        <img class="hidden" src="<?php echo $loader_url; ?>"/><span class="status hidden"></span>
+                        <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
                     </span>
                 </p>  
                 <div style="clear: both;"></div>
@@ -171,7 +174,7 @@ class MainWPExtensionsView
     public static function render(&$extensions)
     {    
         
-    $loader_url = plugins_url('images/loader.gif', dirname(__FILE__));            
+    $loader_url = '<i class="fa fa-spinner fa-pulse"></i>';     
     if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
         
         <?php } ?>
@@ -341,7 +344,7 @@ class MainWPExtensionsView
                                     <input type="text" class="input api_key" placeholder="<?php echo __("API License Key", "mainwp"); ?>" value="<?php echo $extension["api_key"]; ?>"/>
                                     <input type="text" class="input api_email" placeholder="<?php echo __("API License Email", "mainwp"); ?>" value="<?php echo $extension["activation_email"]; ?>"/>
                                     <input type="button" class="button-primary mainwp-extensions-activate" value="<?php _e("Activate", "mainwp"); ?>">                            
-                                    <span class="mainwp_loading"><img src="<?php echo $loader_url; ?>"/></span>
+                                    <span class="mainwp_loading"><i class="fa fa-spinner fa-pulse"></i></span>
                                     </span>
                                     <span style="float:right">
                                     <?php _e("Deactivate License Key", "mainwp"); ?>

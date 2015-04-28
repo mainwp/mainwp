@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.2
-Stable tag: 2.0.13
+Tested up to: 4.2.1
+Stable tag: 2.0.14
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -19,7 +19,7 @@ Manage all of your WP sites, even those on different servers, from one central d
 
 **Note:  MainWP requires two (2) plugins.**
 
-**This is the MainWP Dashboard plugin that you install on your own separate WordPress install and the [MainWP child plugin](http://wordpress.org/plugins/mainwp-child/) that you install on the sites you want to control (child sites) .**
+**This is the MainWP Dashboard plugin that you install on your own separate WordPress install and the [MainWP child plugin](https://wordpress.org/plugins/mainwp-child/) that you install on the sites you want to control (child sites) .**
 
 **Please check the [Quick Start - Setting up your MainWP](http://docs.mainwp.com/setting-up-your-mainwp/) support doc for more information.**
 
@@ -112,6 +112,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.14 =
+* Added: OpenSSL Notification and the SSL Verify option for Extension site connection
+* Fixed: Issues with some updates on Extensions page
+* Fixed: Issue deleting Child sites from Dashboard when the Child plugin disabled or removed
+* Changed: PHP required version on the Server Information page
 
 = 2.0.13 =
 * Fixed: Security issue with add_query_arg and remove_query_arg

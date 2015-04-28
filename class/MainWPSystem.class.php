@@ -353,14 +353,50 @@ class MainWPSystem
 
     public function check_update_custom($transient)
     {
-        if (empty($transient->checked)) {
+        // fix bug: update extensions at plugins page
+        if (empty($transient->checked) && (!isset($_GET['do'])) && ($_GET['do'] != 'checkUpgrade')) {
+            $last_update = get_option('mainwp_extension_last_update_transient');               
+            if (isset($transient->last_checked) && ($transient->last_checked != $last_update)) {
+                MainWPUtility::update_option('mainwp_extension_last_update_transient', $transient->last_checked);                
+                $plugins = get_plugins(); 
+                $pluginsVersion = array();
+               
+                foreach ( $plugins as $file => $p ) {
+                    $pluginsVersion[$file] = $p['Version'];;
+		}
+                
+                if ($this->upgradeVersionInfo != null)
+                {
+                    foreach ($this->upgradeVersionInfo->result as $rslt)
+                    {
+                        if (!isset($rslt->slug)) continue; //Legacy, to support older versions.
+
+                        $plugin_slug = MainWPExtensions::getPluginSlug($rslt->slug);
+                        
+                        if (empty($plugin_slug))
+                            continue;
+                        
+                        if (isset($pluginsVersion[$plugin_slug]) && version_compare($rslt->latest_version, $pluginsVersion[$plugin_slug], '>'))
+                        {
+                            $obj = new stdClass();
+                            $obj->slug = $rslt->slug;
+                            $obj->new_version = $rslt->latest_version;
+                            $obj->url = 'http://mainwp.com/';
+                            $obj->package = $rslt->download_url;
+                            $obj->key_status = $rslt->key_status;
+                            $transient->response[$plugin_slug] = $obj;
+                        }
+                    }
+                }
+                $transient->mainwp_checked_update = time();
+            }
             return $transient;
         }
 
         if (isset($_GET['do']) && $_GET['do'] == 'checkUpgrade' && ((time() - $this->upgradeVersionInfo->updated) > 30)) {
             $this->checkUpgrade();
-        }
-
+        }        
+         
         if ($this->upgradeVersionInfo != null)
         {
             foreach ($this->upgradeVersionInfo->result as $rslt)

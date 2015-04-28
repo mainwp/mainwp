@@ -6756,11 +6756,11 @@ mainwp_managesites_bulk_remove_specific  = function (pCheckedBox) {
             err = '<div class="mainwp_info-box-red mainwp_append_error">' + err + '</div>';
             jQuery('#mainwp_managesites_add_other_message').after(err);            
         }        
-        if (error == '') {
+        //if (error == '') {
             jQuery('#site-status-' + id).html('');
             jQuery('tr[siteid=' + id + ']').html('<td colspan="6">' + result + '</td>');
             setTimeout(function() { jQuery('tr[siteid=' + id + ']').fadeOut(1000);}, 3000);
-        }
+        //}
         mainwp_managesites_bulk_remove_next();
     }, 'json');
 };

@@ -75,10 +75,14 @@ class MainWPExtensionsView
                 
                 <div class="mainwp_info-box-red">
                 <?php if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER <= 0x009080bf) && ($apisslverify === false || $apisslverify == 1)) { ?>
-                        <p><?php _e("<strong style=\"color:#a00\">WARNING:</strong> MainWP System detected an older install of OpenSSL that does not support Server Name Indication (SNI). This will more than likely cause API Activation failure.<br>We highly recommend for your security that you have your host update your OpenSSL to a current version that does support Server Name Indication (SNI).", "mainwp"); ?></p>
+                        <p><?php _e("<strong style=\"color:#a00\">WARNING:</strong> MainWP has detected an older install of OpenSSL that does not support Server Name Indication (SNI). This will cause API Activation failure.", "mainwp"); ?></p>
+                        <p><?php _e("We highly recommend, for your security, that you have your host update your OpenSSL to a current version that does support Server Name Indication (SNI).", "mainwp"); ?></p>
                         <p><?php _e("If you do not want to or cannot update your OpenSSL to a current version you can change the verify certificate option to No <strong>(Not recommended)</strong>", "mainwp"); ?></p>
                     <?php } else { ?>
-                        <p><?php _e("<strong style=\"color:#a00\">Notice:</strong> We did not detect any SSL issues. However, if you are having an issue connecting to or logging in below you can try setting the verify certificate option below to No and pressing Save.", "mainwp"); ?></p>                         
+                        <p><?php _e("<strong>Notice:</strong> We did not detect any SSL issues.", "mainwp"); ?></p>                         
+                        <p><?php _e("However, if you are having an issue connecting to, logging in or updating Extensions try setting the verify certificate option below to No and pressing Save.", "mainwp"); ?></p>                         
+                        
+                        
                     <?php } ?>
                     <table class="form-table">
                         </tbody>

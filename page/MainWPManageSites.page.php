@@ -1338,6 +1338,11 @@ class MainWPManageSites
                 //Remove from DB
                 MainWPDB::Instance()->removeWebsite($website->id);
                 do_action('mainwp_delete_site', $website);
+                
+                if ($error === 'NOMAINWP') {
+                    $error = __("Be sure to deactivate the child plugin from the site to avoid potential security issues.", "mainwp");
+                }
+                
                 if ($error != '')
                 {
                     die(json_encode(array('error' => $error)));

@@ -74,7 +74,7 @@ class MainWPPost
         <div id="mainwp-tip-zone">
           <?php if ($shownPage == 'BulkManage') { ?> 
             <?php if (MainWPUtility::showUserTip('mainwp-manageposts-tips')) { ?>
-                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-manageposts-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can also quickly see all Published, Draft, Pending and Trash Posts for a single site from your Individual Site Dashboard Recent Posts widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Dashboard.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-manageposts-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can also quickly see all Published, Draft, Pending and Trash Posts for a single site from your Individual Site Dashboard Recent Posts widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Dashboard.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
             <?php } ?>    
           <?php } ?>
         </div>
@@ -180,7 +180,7 @@ class MainWPPost
                 echo '<script>jQuery(document).ready(function() { mainwp_show_post('.$_REQUEST['siteid'].', undefined, '.$_REQUEST['userid'].')});</script>';
             }
             ?>
-            <span id="mainwp_posts_loading">&nbsp;<em><?php _e('Grabbing information from Child Sites','mainwp') ?></em>&nbsp;&nbsp;<img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+            <span id="mainwp_posts_loading"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span>
             <br/><br/>
         </div>
         <div class="clear"></div>
@@ -448,7 +448,7 @@ class MainWPPost
                         <span class="view">
                             | <a
                                 href="<?php echo $website->url . (substr($website->url, -1) != '/' ? '/' : '') . '?p=' . $post['id']; ?>"
-                                target="_blank" title="View “<?php echo $post['title']; ?>�?" rel="permalink"><?php _e('View','mainwp'); ?></a>
+                                target="_blank" title="View â€œ<?php echo $post['title']; ?>ï¿½?" rel="permalink"><?php _e('View','mainwp'); ?></a>
                         </span>
                         <span class="unpublish">
                             | <a class="post_submitunpublish" title="Unpublish this item" href="#"><?php _e('Unpublish','mainwp'); ?></a>
@@ -465,8 +465,7 @@ class MainWPPost
                         </span>
                         <?php } ?>
                     </div>
-                    <div class="row-actions-working"><img
-                            src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?></div>
+                    <div class="row-actions-working"><i class="fa fa-spinner fa-pulse"></i> <?php _e('Please wait','mainwp'); ?></div>
                 </td>
                 <td class="author column-author">
                     <?php echo $post['author']; ?>
@@ -1083,7 +1082,7 @@ class MainWPPost
         self::renderHeader('PostsHelp');
     ?><div style="text-align: center"><a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e('Show Quick Start Guide','mainwp'); ?></a></div>
                       <div  class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
-                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Posts','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="2"><?php _e('Create a New Post','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><?php _e('Dismiss','mainwp'); ?></a></span>
+                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Posts','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="2"><?php _e('Create a New Post','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
                       <div class="clear"></div>
                       <div id="mainwp-qsgs">
                         <div class="mainwp-qsg" number="1">

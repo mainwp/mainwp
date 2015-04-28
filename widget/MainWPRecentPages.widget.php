@@ -92,11 +92,11 @@ class MainWPRecentPages
                                 <span class="comment-count"><?php echo $recent_pages_published[$i]['comment_count']; ?></span>
                             </a>
                     </span>
-                    <span class="mainwp-right-col"><?php echo MainWPUtility::getNiceURL($recent_pages_published[$i]['website']->url); ?> <br/><?php echo $recent_pages_published[$i]['dts']; ?></span>
+                    <span class="mainwp-right-col"><a href="<?php echo $recent_pages_published[$i]['website']->url; ?>" target="_blank"><i class="fa fa-external-link"></i> <?php echo MainWPUtility::getNiceURL($recent_pages_published[$i]['website']->url); ?></a> <br/><?php echo $recent_pages_published[$i]['dts']; ?></span>
 
                     <div style="clear: left;"></div>
                     <div class="mainwp-row-actions"><a href="#" class="mainwp-post-unpublish"><?php _e('Unpublish','mainwp'); ?></a> | <a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_pages_published[$i]['website']->id; ?>&location=<?php echo base64_encode('post.php?action=editpost&post=' . $recent_pages_published[$i]['id'] . '&action=edit'); ?>" title="Edit this post"><?php _e('Edit','mainwp'); ?></a> | <a href="#" class="mainwp-post-trash"><?php _e('Trash','mainwp'); ?></a>| <a href="<?php echo $recent_pages_published[$i]['website']->url . (substr($recent_pages_published[$i]['website']->url, -1) != '/' ? '/' : '') . '?p=' . $recent_pages_published[$i]['id']; ?>" target="_blank" title="View '<?php echo $recent_pages_published[$i]['title']; ?>'" rel="permalink"><?php _e('View','mainwp'); ?></a> | <a href="admin.php?page=PageBulkManage" class="mainwp-post-viewall"><?php _e('View All','mainwp'); ?></a></div>
-                    <div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?>
+                    <div class="mainwp-row-actions-working"><i class="fa fa-spinner fa-pulse"></i> <?php _e('Please wait','mainwp'); ?>
                     <div>&nbsp;</div>
                     </div>
                 </div>
@@ -129,7 +129,7 @@ class MainWPRecentPages
 
                     <div style="clear: left;"></div>
                     <div class="mainwp-row-actions"><a href="#" class="mainwp-post-publish"><?php _e('Publish','mainwp'); ?></a> | <a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_pages_draft[$i]['website']->id; ?>&location=<?php echo base64_encode('post.php?action=editpost&post=' . $recent_pages_draft[$i]['id'] . '&action=edit'); ?>" title="Edit this post"><?php _e('Edit','mainwp'); ?></a> | <a href="#" class="mainwp-post-trash"><?php _e('Trash','mainwp'); ?></a> | <a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e('View All','mainwp'); ?></a></div>
-                    <div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?>
+                    <div class="mainwp-row-actions-working"><i class="fa fa-spinner fa-pulse"></i> <?php _e('Please wait','mainwp'); ?>
                     </div>
                     <div>&nbsp;</div>
                 </div>
@@ -162,7 +162,7 @@ class MainWPRecentPages
 
                     <div style="clear: left;"></div>
                     <div class="mainwp-row-actions"><a href="#" class="mainwp-post-publish"><?php _e('Publish','mainwp'); ?></a> | <a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_pages_pending[$i]['website']->id; ?>&location=<?php echo base64_encode('post.php?action=editpost&post=' . $recent_pages_pending[$i]['id'] . '&action=edit'); ?>" title="Edit this post"><?php _e('Edit','mainwp'); ?></a> | <a href="#" class="mainwp-post-trash"><?php _e('Trash','mainwp'); ?></a> | <a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e('View All','mainwp'); ?></a></div>
-                    <div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?>
+                    <div class="mainwp-row-actions-working"><i class="fa fa-spinner fa-pulse"></i> <?php _e('Please wait','mainwp'); ?>
                     </div>
                     <div>&nbsp;</div>
                 </div>
@@ -194,7 +194,7 @@ class MainWPRecentPages
 
                     <div style="clear: left;"></div>
                     <div class="mainwp-row-actions"><a href="#" class="mainwp-post-restore"><?php _e('Restore','mainwp'); ?></a> | <a href="#" class="mainwp-post-delete delete" style="color: red;"><?php _e('Delete Permanently','mainwp'); ?></a></div>
-                    <div class="mainwp-row-actions-working"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?>
+                    <div class="mainwp-row-actions-working"><i class="fa fa-spinner fa-pulse"></i> <?php _e('Please wait','mainwp'); ?>
                     </div>
                     <div>&nbsp;</div>
                 </div>

@@ -57,7 +57,7 @@ class MainWPInstallBulk
                 <a href="#" class="mainwp_action left <?php if ($tab == 'search') { echo 'mainwp_action_down'; } ?>" id="MainWPInstallBulkNavSearch"><?php _e('Search','mainwp'); ?></a><a href="#" class="mainwp_action right <?php if ($tab == 'upload') { echo 'mainwp_action_down'; } ?>" id="MainWPInstallBulkNavUpload"><?php _e('Upload','mainwp'); ?></a>
 
 
-                <br class="clear" />
+                <br class="clear" /><br />
                 <form method="POST" action="">
                     <div class="mainwp_config_box_right stick-to-window">
 <!--                    <div>-->
@@ -94,8 +94,9 @@ class MainWPInstallBulk
 
     public static function renderSearch($title) {
         ?>
-        <?php /*<h4 style="margin: 0 0 8px;">Search</h4>*/ ?>
-        <p class="install-help">Search for <?php echo strtolower($title); ?> by keyword, author, or tag.</p>
+        <div class="postbox">
+        <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search for','mainwp'); ?> <?php echo $title; ?> <?php _e('by Keyword, Author, or Tag.','mainwp'); ?></h3>
+        <div class="inside">
         <div class="tablenav top">
             <div class="alignleft actions">
                 <form id="search-<?php echo strtolower($title); ?>" method="post" action="">
@@ -116,10 +117,13 @@ class MainWPInstallBulk
                     <br />&nbsp;&nbsp;<input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite existing', 'mainwp'); ?></label><br />
                 </form>
             </div>
-            <div id="MainWPInstallBulkStatusExtra" class="MainWPInstallBulkStatus" style="display: none"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>" /> &nbsp;</div><div id="MainWPInstallBulkStatus" class="MainWPInstallBulkStatus"></div>
-            <div class="tablenav-pages" style="display: none;" id="MainWPInstallBulkNav"><span id="MainWPInstallBulkResults" class="displaying-num"></span> <a class="prev-page" title="Go to the previous page" href="#" id="mainwp-plugin-search-prev" onClick="return mainwp_install_prev(event);">‹</a> <span id="MainWPInstallBulkPage"></span> of <span id="MainWPInstallBulkPages"></span> <a class="next-page" title="Go to the next page" href="#" id="mainwp-plugin-search-next" onClick="return mainwp_install_next(event);">›</a></div>
+            <div id="MainWPInstallBulkStatusExtra" class="MainWPInstallBulkStatus" style="display: none"><i class="fa fa-spinner fa-pulse"></i> &nbsp;</div><div id="MainWPInstallBulkStatus" class="MainWPInstallBulkStatus"></div>
+            <div class="tablenav-pages" style="display: none;" id="MainWPInstallBulkNav"><span id="MainWPInstallBulkResults" class="displaying-num"></span> <a class="prev-page" title="Go to the previous page" href="#" id="mainwp-plugin-search-prev" onClick="return mainwp_install_prev(event);">â€¹</a> <span id="MainWPInstallBulkPage"></span> of <span id="MainWPInstallBulkPages"></span> <a class="next-page" title="Go to the next page" href="#" id="mainwp-plugin-search-next" onClick="return mainwp_install_next(event);">â€º</a></div>
         </div>
         <div class="clear"></div>
+        </div>
+        </div>
+        
         <div id="MainWPInstallBulkSearchAjax" style="margin-top: 2em;">
 
         </div>
@@ -129,6 +133,9 @@ class MainWPInstallBulk
      //Renders the upload sub part
     public static function renderUpload($title) {
         ?>
+        <div class="postbox">
+        <h3 class="mainwp_box_title"><i class="fa fa-upload"></i> <?php _e('Upload','mainwp'); ?> <?php echo $title; ?></h3>
+        <div class="inside">
         <?php if ($title == 'Plugins') { ?>
         <div class="mainwp_info-box-red" id="mainwp-ext-notice" style="margin-top: 1em;">
             <span><?php _e('<strong>Do Not upload extensions here</strong>, they do not go on the child sites, upload and activate them via your dashboard sites <a href="/wp-admin/plugin-install.php" style="text-decoration: none;">plugin screen.</a>','mainwp'); ?></span>
@@ -165,6 +172,8 @@ class MainWPInstallBulk
             <?php if ($title == 'Plugins') { echo '<br />&nbsp;&nbsp;<input type="checkbox" value="1" checked id="chk_activate_plugin_upload" /> <label for="chk_activate_plugin_upload">Activate plugin after installation</label>'; } ?>
             <br />&nbsp;&nbsp;<input type="checkbox" value="2" checked id="chk_overwrite_upload" /> <label for="chk_overwrite_upload"><?php _e('Overwrite existing', 'mainwp'); ?></label><br />
             <br /><input type="button" class="button" value="<?php _e('Install Now','mainwp'); ?>" id="mainwp_upload_bulk_button" onClick="mainwp_upload_bulk('<?php echo strtolower($title); ?>');">
+        </div>
+        </div>
         </div>
         <?php
     }

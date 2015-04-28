@@ -564,7 +564,7 @@ class MainWPRightNow
         <div id="mainwp-right-now-message" class="mainwp-right-now-error" <?php if ($total_sync_errors <= 0 || ($globalView && $errorsDismissed)) echo ' style="display: none;"' ?>>
             <p>
                 <?php if ($globalView) { ?>
-                        <span id="mainwp-right-now-message-content"><?php echo $total_sync_errors; ?> <?php echo _n('Site Timed Out / Errored', 'Sites Timed Out / Errored', $total_sync_errors, 'mainwp'); ?> (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)</span><span style="float: right;"><a href="#" id="mainwp-right-now-message-dismiss">Dismiss</a></span>
+                        <span id="mainwp-right-now-message-content"><?php echo $total_sync_errors; ?> <?php echo _n('Site Timed Out / Errored', 'Sites Timed Out / Errored', $total_sync_errors, 'mainwp'); ?> (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)</span><span style="float: right;"><a href="#" id="mainwp-right-now-message-dismiss"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
                 <?php } else { ?>
                     <span id="mainwp-right-now-message-content"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $currentSite->id); ?>"><?php echo $currentSite->name; ?></a> <?php _e('Timed Out / Errored', 'mainwp'); ?> (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)</span>
                 <?php } ?>
@@ -579,7 +579,7 @@ class MainWPRightNow
             <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_wp_upgrades; ?></span> <?php _e('WordPress upgrade','mainwp'); ?><?php if (count($total_wp_upgrades) > 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?></span>
             <span class="mainwp-mid-col">&nbsp;</span>
             <span class="mainwp-right-col">
-                <a href="#" id="mainwp_upgrades_show" onClick="return rightnow_show('upgrades');"><?php _e('Show','mainwp'); ?></a>
+                <a href="#" id="mainwp_upgrades_show" onClick="return rightnow_show('upgrades');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a>
                 <?php if (mainwp_current_user_can("dashboard", "update_wordpress")) { 
                     if ($total_wp_upgrades > 0) { ?>
                     &nbsp; <a href="#" onClick="return rightnow_wordpress_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_wp_upgrades, 'mainwp'); ?></a>
@@ -637,7 +637,7 @@ class MainWPRightNow
         <div class="mainwp-row">
             <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_plugin_upgrades; ?> </span> <?php _e('Plugin upgrade','mainwp'); ?><?php if ($total_plugin_upgrades > 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?></span>
             <span class="mainwp-mid-col">&nbsp;</span>            
-            <span class="mainwp-right-col"><a href="#" id="mainwp_plugin_upgrades_show" onClick="return rightnow_show('plugin_upgrades');"><?php _e('Show','mainwp'); ?></a> <?php if (mainwp_current_user_can("dashboard", "update_plugins")) {  ?><?php if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } }?></span>
+            <span class="mainwp-right-col"><a href="#" id="mainwp_plugin_upgrades_show" onClick="return rightnow_show('plugin_upgrades');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a> <?php if (mainwp_current_user_can("dashboard", "update_plugins")) {  ?><?php if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } }?></span>
             
         </div>
         <div id="wp_plugin_upgrades" style="display: none">
@@ -838,7 +838,7 @@ class MainWPRightNow
         <div class="mainwp-row">
             <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_theme_upgrades; ?> </span> <?php _e('Theme upgrade','mainwp'); ?><?php if ($total_theme_upgrades > 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?></span>
             <span class="mainwp-mid-col">&nbsp;</span>            
-            <span class="mainwp-right-col"><a href="#" id="mainwp_theme_upgrades_show" onClick="return rightnow_show('theme_upgrades');"><?php _e('Show','mainwp'); ?></a> 
+            <span class="mainwp-right-col"><a href="#" id="mainwp_theme_upgrades_show" onClick="return rightnow_show('theme_upgrades');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a> 
                 <?php if (mainwp_current_user_can("dashboard", "update_themes")) { ?>
                     <?php if ($total_theme_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_theme_upgrades, 'mainwp'); ?></a><?php } else if ($total_theme_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_theme_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } ?>
                 <?php } ?>
@@ -1041,7 +1041,7 @@ class MainWPRightNow
             <div class="mainwp-row">
                 <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_sync_errors; ?></span> Error<?php if ($total_sync_errors > 1) { ?>s<?php } ?></span>
                 <span class="mainwp-mid-col">&nbsp;</span>
-                <span class="mainwp-right-col"><a href="#" id="mainwp_errors_show" onClick="return rightnow_show('errors');"><?php _e('Show','mainwp'); ?></a></span>
+                <span class="mainwp-right-col"><a href="#" id="mainwp_errors_show" onClick="return rightnow_show('errors');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
             </div>
             <div id="wp_errors" style="display: none">
                 <?php
@@ -1069,7 +1069,7 @@ class MainWPRightNow
             <div class="mainwp-row">
                 <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_uptodate; ?></span> <?php _e('Up to date','mainwp'); ?></span>
                 <span class="mainwp-mid-col">&nbsp;</span>
-                <span class="mainwp-right-col"><a href="#" id="mainwp_uptodate_show" onClick="return rightnow_show('uptodate');"><?php _e('Show','mainwp'); ?></a></span>
+                <span class="mainwp-right-col"><a href="#" id="mainwp_uptodate_show" onClick="return rightnow_show('uptodate');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
             </div>
             <div id="wp_uptodate" style="display: none">
                 <?php
@@ -1093,7 +1093,7 @@ class MainWPRightNow
                 <span class="mainwp-left-col"><span class="mainwp-rightnow-number">
                     <img class="down-img" title="<?php echo ($total_sync_errors > 0 ? 'Site Disconnected' : (($total_conflict > 0 ? 'Plugin or Theme Conflict Found' : ($total_offline > 0 ? 'Site is Offline' : 'Site is Online')))); ?>" alt="<?php echo ($total_sync_errors > 0 ? 'Sync errors' : (($total_conflict > 0 ? 'Conflict Found' : ($total_offline > 0 ? 'Site Down' : 'Site Up')))); ?>" src="<?php echo plugins_url('images/'.($total_sync_errors > 0 ? 'disconnected' : ($total_conflict > 0 ? 'conflict' : ($total_offline > 0 ? 'down' : 'up'))).'.png', dirname(__FILE__)); ?>" /></span> <?php _e('Status','mainwp'); ?></span>
                 <span class="mainwp-mid-col">&nbsp;</span>
-                <span class="mainwp-right-col"><a href="#" id="mainwp_status_show" onClick="return rightnow_show('status');"><?php _e('Show','mainwp'); ?></a></span>
+                <span class="mainwp-right-col"><a href="#" id="mainwp_status_show" onClick="return rightnow_show('status');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
             </div>
             <div id="wp_status" style="display: none">
                 <?php

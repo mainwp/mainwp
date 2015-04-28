@@ -855,6 +855,12 @@ table#mainwp_offlinechecks td.url {
     width: 200px;
 }
 
+#mainwp_availablethemes {
+    background: #fff;
+    border: 1px Solid #e5e5e5;
+    padding: 12px;
+}
+
 #mainwp_availablethemes .available-theme {
     margin-right: 15px;
     margin-bottom: 2em;

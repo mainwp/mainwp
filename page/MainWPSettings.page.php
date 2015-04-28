@@ -68,12 +68,12 @@ class MainWPSettings
          <div id="mainwp-tip-zone">
           <?php if ($shownPage == '') { ?>
              <?php if (MainWPUtility::showUserTip('mainwp-settings-tips')) { ?>
-                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-settings-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('The majority of these default settings can also be tweaked on the Site level by visiting Manage Sites &rarr; Edit Site.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-settings-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('The majority of these default settings can also be tweaked on the Site level by visiting Manage Sites &rarr; Edit Site.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
               <?php } ?>   
           <?php } ?>
           <?php if ($shownPage == 'OfflineChecks') { ?>
                 <?php if (MainWPUtility::showUserTip('mainwp-aumrecommend-tips')) { ?>
-                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-aumrecommend-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('We currently recommend the free <a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/" target="_blank">Advanced Uptime Monitor Extension</a> to perform more frequent tests.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-aumrecommend-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('We currently recommend the free <a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/" target="_blank">Advanced Uptime Monitor Extension</a> to perform more frequent tests.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
                 <?php } ?>
           <?php } ?>
         </div>
@@ -250,7 +250,7 @@ class MainWPSettings
         self::renderHeader('SettingsHelp');
     ?><div style="text-align: center"><a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e('Show Quick Start Guide','mainwp'); ?></a></div>
                       <div  class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
-                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Settings Overview','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><?php _e('Dismiss','mainwp'); ?></a></span>
+                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Settings Overview','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
                       <div class="clear"></div>
                       <div id="mainwp-qsgs">
                         <div class="mainwp-qsg" number="1">

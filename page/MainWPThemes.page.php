@@ -77,12 +77,12 @@ class MainWPThemes
          <div id="mainwp-tip-zone">
           <?php if ($shownPage == 'Manage') { ?> 
              <?php if (MainWPUtility::showUserTip('mainwp-managethemes-tips')) { ?>
-                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-managethemes-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can also quickly activate and deactivate installed Themes for a single site from your Individual Site Dashboard Theme widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Dashboard.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-managethemes-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can also quickly activate and deactivate installed Themes for a single site from your Individual Site Dashboard Theme widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Dashboard.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
             <?php } ?>
           <?php } ?>
           <?php if ($shownPage == 'Install') { ?> 
                 <?php if (MainWPUtility::showUserTip('mainwp-installthemes-tips')) { ?>
-                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-installthemes-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('If you check the “Overwrite Existing” option while installing a theme you can easily update or rollback the theme on your child sites.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-installthemes-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('If you check the â€œOverwrite Existingâ€� option while installing a theme you can easily update or rollback the theme on your child sites.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
             <?php } ?>
           <?php } ?>
         </div>
@@ -146,7 +146,7 @@ class MainWPThemes
             <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
             <div style="clear: both;"></div>
             <input type="button" name="mainwp_show_themes" id="mainwp_show_themes" class="button-primary" value="<?php _e('Show Themes','mainwp'); ?>"/>
-            <span id="mainwp_themes_loading">&nbsp;<em><?php _e('Grabbing information from Child Sites','mainwp') ?></em>&nbsp;&nbsp;<img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span> <span id="mainwp_themes_loading_info"><?php _e('Automatically refreshing to get up to date information.','mainwp'); ?></span>
+            <span id="mainwp_themes_loading"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span> <span id="mainwp_themes_loading_info"><?php _e('Automatically refreshing to get up to date information.','mainwp'); ?></span>
             <br/><br/>
         </div>
         <div class="clear"></div>
@@ -303,7 +303,7 @@ class MainWPThemes
             <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>       
                 <option value="ignore_updates"><?php _e('Ignore Updates','mainwp'); ?></option>
             <?php } ?>
-        </select> <input type="button" name="" id="mainwp_bulk_theme_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+        </select> <input type="button" name="" id="mainwp_bulk_theme_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><i class="fa fa-spinner fa-pulse"></i></span>
     </div>
     <div class="clear"></div>
     
@@ -494,7 +494,7 @@ class MainWPThemes
             <option value="none"><?php _e('Choose Action','mainwp'); ?></option>
             <option value="trust"><?php _e('Trust','mainwp'); ?></option>
             <option value="untrust"><?php _e('Untrust','mainwp'); ?></option>
-        </select> <input type="button" name="" id="mainwp_bulk_trust_themes_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+        </select> <input type="button" name="" id="mainwp_bulk_trust_themes_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><i class="fa fa-spinner fa-pulse"></i></span>
     </div>
     <div class="clear"></div>
     <?php
@@ -881,7 +881,7 @@ class MainWPThemes
                         <span><?php _e("Containing Keywords:", "mainwp"); ?> </span>
                         <input type="text" class="mainwp-field mainwp-keyword" id="mainwp_au_theme_keyword" style="width: 350px;" value="<?php echo ($cachedThemesSearch !== null) ? $cachedThemesSearch['keyword'] : "";?>">&nbsp;&nbsp;
                         <a href="#" class="button-primary" id="mainwp_show_all_themes"><?php _e('Show Themes','mainwp'); ?></a>
-                        <span id="mainwp_themes_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+                        <span id="mainwp_themes_loading"><i class="fa fa-spinner fa-pulse"></i></span>
                 </div>
             </div>
 
@@ -1184,7 +1184,7 @@ class MainWPThemes
         self::renderHeader('ThemesHelp');
     ?><div style="text-align: center"><a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e('Show Quick Start Guide','mainwp'); ?></a></div>
                       <div  class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
-                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Themes','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="4"><?php _e('Ignore a theme update','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><?php _e('Dismiss','mainwp'); ?></a></span>
+                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Themes','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="4"><?php _e('Ignore a theme update','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
                       <div class="clear"></div>
                       <div id="mainwp-qsgs">
                         <div class="mainwp-qsg" number="1">

@@ -57,7 +57,7 @@ class MainWPServerInformation
         self::renderHeader('');
         ?>
         <div class="updated below-h2">
-            <p><?php _e("Please include this information when requesting support:", "mainwp"); ?></p><span class="mwp_close_srv_info"><a href="#" id="mwp_download_srv_info"><?php _e("Download", "mainwp");?></a> | <a href="#" id="mwp_close_srv_info"><?php _e("Hide", "mainwp");?></a></span>
+            <p><?php _e("Please include this information when requesting support:", "mainwp"); ?></p><span class="mwp_close_srv_info"><a href="#" id="mwp_download_srv_info"><?php _e("Download", "mainwp");?></a> | <a href="#" id="mwp_close_srv_info"><i class="fa fa-eye-slash"></i> <?php _e("Hide", "mainwp");?></a></span>
             <p class="submit"><a class="button-primary mwp-get-system-report-btn" href="#"><?php _e("Get System Report", "mainwp"); ?></a></p>
             <div id="mwp-server-information"><textarea readonly="readonly"  wrap="off"></textarea></div>
         </div>
@@ -227,7 +227,7 @@ class MainWPServerInformation
         @MainWPDB::free_result($websites);
 
 
-        echo '</select><br /><br /><div id="mainwp_serverInformation_child_loading"><img src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '"/> ' . __('Loading server information..', 'mainwp') . '</div><div id="mainwp_serverInformation_child_resp"></div>';
+        echo '</select><br /><br /><div id="mainwp_serverInformation_child_loading"><i class="fa fa-spinner fa-pulse"></i> ' . __('Loading server information..', 'mainwp') . '</div><div id="mainwp_serverInformation_child_resp"></div>';
 
         self::renderFooter('ServerInformationChild');
     }

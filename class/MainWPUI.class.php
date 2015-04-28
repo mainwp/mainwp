@@ -146,7 +146,7 @@ class MainWPUI
                                                     <div class="mainwp_categories_list_bottom">
                                                        <div style="float:right">
                                                            <a href="#" rel="<?php echo $prefix ?>" class="load_more_cats" onClick="return mainwp_ss_cats_more(this, <?php echo $website->id;?>, 'site')"><?php _e('Reload','mainwp'); ?></a>
-                                                           <span class="mainwp_more_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+                                                           <span class="mainwp_more_loading"><i class="fa fa-spinner fa-pulse"></i></span>
                                                        </div>
                                                        <div class="clearfix"></div>
                                                    </div>
@@ -202,7 +202,7 @@ class MainWPUI
                                                                 <div class="mainwp_categories_list_bottom">
                                                                     <div style="float:right">
                                                                         <a href="#" rel="<?php echo $prefix ?>" class="load_more_cats" onClick="return mainwp_ss_cats_more(this, <?php echo $id;?>, 'group')">Reload</a>
-                                                                        <span class="mainwp_more_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+                                                                        <span class="mainwp_more_loading"><i class="fa fa-spinner fa-pulse"></i></span>
                                                                     </div>
                                                                    <div class="clearfix"></div>
                                                                </div>

@@ -78,12 +78,12 @@ class MainWPPlugins
         <div id="mainwp-tip-zone">
           <?php if ($shownPage == 'Manage') { ?> 
             <?php if (MainWPUtility::showUserTip('mainwp-manageplugins-tips')) { ?>
-                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-manageplugins-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can also quickly activate and deactivate installed Plugins for a single site from your Individual Site Dashboard Plugins widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Dashboard.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-manageplugins-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can also quickly activate and deactivate installed Plugins for a single site from your Individual Site Dashboard Plugins widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Dashboard.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
             <?php } ?>
           <?php } ?>
           <?php if ($shownPage == 'Install') { ?> 
                 <?php if (MainWPUtility::showUserTip('mainwp-installplugins-tips')) { ?>
-                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-installplugins-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('If you check the “Overwrite Existing” option while installing a plugin you can easily update or rollback the plugin on your child sites.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-installplugins-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('If you check the â€œOverwrite Existingâ€� option while installing a plugin you can easily update or rollback the plugin on your child sites.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
                 <?php } ?>
           <?php } ?>
         </div>
@@ -148,7 +148,7 @@ class MainWPPlugins
             <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
             <div style="clear: both;"></div>
             <input type="button" name="mainwp_show_plugins" id="mainwp_show_plugins" class="button-primary" value="<?php _e('Show Plugins','mainwp'); ?>"/>
-            <span id="mainwp_plugins_loading">&nbsp;<em><?php _e('Grabbing information from Child Sites','mainwp') ?></em>&nbsp;&nbsp;<img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span> <span id="mainwp_plugins_loading_info"><?php _e('Automatically refreshing to get up to date information.','mainwp'); ?></span>
+            <span id="mainwp_plugins_loading"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span> <span id="mainwp_plugins_loading_info"> <i class="fa fa-spinner fa-pulse"></i> <?php _e('Automatically refreshing to get up to date information.','mainwp'); ?></span>
         <br><br>
         </div>
         <div class="clear"></div>
@@ -277,7 +277,7 @@ class MainWPPlugins
             <option value="none"><?php _e('Choose Action','mainwp'); ?></option>
             <option value="trust"><?php _e('Trust','mainwp'); ?></option>
             <option value="untrust"><?php _e('Untrust','mainwp'); ?></option>
-        </select> <input type="button" name="" id="mainwp_bulk_trust_plugins_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+        </select> <input type="button" name="" id="mainwp_bulk_trust_plugins_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><i class="fa fa-spinner fa-pulse"></i></span>
     </div>
     <div class="clear"></div>
 
@@ -552,7 +552,7 @@ class MainWPPlugins
             <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>   
             <option value="ignore_updates"><?php _e('Ignore Updates','mainwp'); ?></option>    
             <?php } ?>  
-        </select> <input type="button" name="" id="mainwp_bulk_plugins_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>&nbsp;<span><a href="http://docs.mainwp.com/why-does-the-mainwp-client-plugin-not-show-up-on-the-plugin-list-for-my-managed-site/" target="_blank"><?php _e('Why does the MainWP Child Plugin NOT show here?','mainwp'); ?></a></span>
+        </select> <input type="button" name="" id="mainwp_bulk_plugins_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><i class="fa fa-spinner fa-pulse"></i></span>&nbsp;<span><a href="http://docs.mainwp.com/why-does-the-mainwp-client-plugin-not-show-up-on-the-plugin-list-for-my-managed-site/" target="_blank"><?php _e('Why does the MainWP Child Plugin NOT show here?','mainwp'); ?></a></span>
     </div>
     <div class="clear"></div>
 
@@ -876,7 +876,7 @@ class MainWPPlugins
                     <span><?php _e("Containing Keywords:", "mainwp"); ?> </span>
                     <input type="text" class="mainwp-field mainwp-keyword" id="mainwp_au_plugin_keyword" style="width: 350px;" value="<?php echo ($cachedAUSearch !== null) ? $cachedAUSearch['keyword'] : "";?>">&nbsp;&nbsp;
                     <a href="#" class="button-primary" id="mainwp_show_all_active_plugins"><?php _e('Show Plugins','mainwp'); ?></a>
-                    <span id="mainwp_plugins_loading"><img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+                    <span id="mainwp_plugins_loading"><i class="fa fa-spinner fa-pulse"></i></span>
             </div>
             </div>
 
@@ -1340,7 +1340,7 @@ class MainWPPlugins
         self::renderHeader('PluginsHelp');
     ?><div style="text-align: center"><a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e('Show Quick Start Guide','mainwp'); ?></a></div>
                       <div  class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
-                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Plugins','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="2"><?php _e('How to install a Plugin','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="3"><?php _e('How to update Plugins','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="4"><?php _e('Ignore a plugin update','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><?php _e('Dismiss','mainwp'); ?></a></span>
+                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Plugins','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="2"><?php _e('How to install a Plugin','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="3"><?php _e('How to update Plugins','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="4"><?php _e('Ignore a plugin update','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
                       <div class="clear"></div>
                       <div id="mainwp-qsgs">
                         <div class="mainwp-qsg" number="1">

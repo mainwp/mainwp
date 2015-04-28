@@ -125,7 +125,7 @@ class MainWPUser
                 <input type="button" value="<?php _e('Search Users','mainwp'); ?>" class="button"
                         id="mainwp_btn_search_users" name="mainwp_btn_search_users">
                 <span id="mainwp_users_searching">
-                    <img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/>
+                    <i class="fa fa-spinner fa-pulse"></i>
                 </span>                 
             </div>
             <h3><?php _e('Show Users','mainwp'); ?></h3>
@@ -170,16 +170,14 @@ class MainWPUser
                 symbols like ! " ? $ % ^ &amp; ).','mainwp'); ?></p>
              <p style="text-align: center;"><input type="button" value="<?php _e('Update Password','mainwp'); ?>" class="button-primary"
                     id="mainwp_btn_update_password" name="mainwp_btn_update_password">
-                <span id="mainwp_users_password_updating">
-                        <img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/>
-                    </span>   
+                <span id="mainwp_users_password_updating"><i class="fa fa-spinner fa-pulse"></i></span>   
              </p> 
              <p><div id="mainwp_update_password_error" style="display: none"></div></p>
              </div>
         </div>
             <div style="clear: both;"></div>
             <input type="button" name="mainwp_show_users" id="mainwp_show_users" class="button-primary" value="<?php _e('Show Users','mainwp'); ?>"/>
-            <span id="mainwp_users_loading">&nbsp;<em><?php _e('Grabbing information from Child Sites','mainwp') ?></em>&nbsp;&nbsp;<img src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/></span>
+            <span id="mainwp_users_loading"><i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span>
             <br/><br/>
         </div>
         <div class="clear"></div>
@@ -497,8 +495,7 @@ class MainWPUser
                     </span>
                     <?php } ?>
                 </div>
-                <div class="row-actions-working"><img
-                        src="<?php echo plugins_url('images/loader.gif', dirname(__FILE__)); ?>"/> <?php _e('Please wait','mainwp'); ?>
+                <div class="row-actions-working"><i class="fa fa-spinner fa-pulse"></i> <?php _e('Please wait','mainwp'); ?>
                 </div>
             </td>
             <td class="name column-name"><?php echo $user['display_name']; ?></td>
@@ -1064,7 +1061,7 @@ class MainWPUser
         self::renderHeader('UsersHelp');
     ?><div style="text-align: center"><a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e('Show Quick Start Guide','mainwp'); ?></a></div>
                       <div  class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
-                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Users','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="2"><?php _e('How to add an User','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="3"><?php _e('How to bulk add users','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="4"><?php _e('Manage Admin Passwords','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><?php _e('Dismiss','mainwp'); ?></a></span>
+                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Users','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="2"><?php _e('How to add an User','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="3"><?php _e('How to bulk add users','mainwp') ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="4"><?php _e('Manage Admin Passwords','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
                       <div class="clear"></div>
                       <div id="mainwp-qsgs">
                         <div class="mainwp-qsg" number="1">

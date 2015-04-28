@@ -359,10 +359,10 @@ class MainWPExtensions
                             if (isset($product_info['error']) && $product_info['error'] == 'download_revoked') {
                                 $html .= '<div><strong>' . $software_title . "</strong>: <p><span style=\"color: red;\"><strong>Error</strong>: " . MainWPApiManager::instance()->download_revoked_error_notice($software_title) . '</span></p></div>';
                             } else if (isset($product_info['package']) && !empty($product_info['package'])){
-                                $html .= '<div class="extension_to_install" download-link="' . $product_info['package'] . '" status="queue" product-id="' . $software_title . '"><strong>' . $software_title . "</strong>: " . '<span class="ext_installing" status="queue"><img class="hidden" src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '" /><br/><span class="status hidden"></span></span></div>';
+                                $html .= '<div class="extension_to_install" download-link="' . $product_info['package'] . '" status="queue" product-id="' . $software_title . '"><strong>' . $software_title . "</strong>: " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden"></i><br/><span class="status hidden"></span></span></div>';
                             }
                         }
-                        $html .= '<div id="extBulkActivate"><img class="hidden" src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '" /> <span class="status hidden"></span></div>';
+                        $html .= '<div id="extBulkActivate"><i class="fa fa-spinner fa-pulse hidden"></i> <span class="status hidden"></span></div>';
                         $html .= '</div>';
                         $html .= '<script type="text/javascript">mainwp_extension_bulk_install();</script>';
                     }                    

@@ -1945,6 +1945,7 @@ class MainWPSystem
         }
 
         echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-rightnow.js', dirname(__FILE__)) . '"></script>';
+        echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-managesites.js', dirname(__FILE__)) . '"></script>';
         echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-extensions.js', dirname(__FILE__)) . '"></script>';
         echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-ui.js', dirname(__FILE__)) . '"></script>';
         echo '<script type="text/javascript" src="' . plugins_url('js/fileuploader.js', dirname(__FILE__)) . '"></script>';
@@ -2059,11 +2060,11 @@ class MainWPSystem
                             $website = $websites[$i];
                             if ($website->sync_errors == '')
                             {
-                                echo '<tr><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" siteid="'.$website->id.'">PENDING</span></td></tr>';
+                                echo '<tr><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWPUtility::getNiceURL($website->url) . '" siteid="'.$website->id.'">PENDING</span></td></tr>';
                             }
                             else
                             {
-                                echo '<tr class="mainwp_wp_offline"><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" siteid="'.$website->id.'">DISCONNECTED</span></td></tr>';
+                                echo '<tr class="mainwp_wp_offline"><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWPUtility::getNiceURL($website->url) . '" siteid="'.$website->id.'">DISCONNECTED</span></td></tr>';
                             }
                         }
                     }
@@ -2074,11 +2075,11 @@ class MainWPSystem
                         {
                             if ($website->sync_errors == '')
                             {
-                                echo '<tr><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" siteid="'.$website->id.'">PENDING</span></td></tr>';
+                                echo '<tr><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWPUtility::getNiceURL($website->url) . '" siteid="'.$website->id.'">PENDING</span></td></tr>';
                             }
                             else
                             {
-                                echo '<tr class="mainwp_wp_offline"><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" siteid="'.$website->id.'">DISCONNECTED</span></td></tr>';
+                                echo '<tr class="mainwp_wp_offline"><td>'.MainWPUtility::getNiceURL($website->url).'</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWPUtility::getNiceURL($website->url) . '" siteid="'.$website->id.'">DISCONNECTED</span></td></tr>';
                             }
                         }
                     }

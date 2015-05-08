@@ -313,6 +313,92 @@ class MainWPRightNow
         throw new MainWPException('ERROR', __('Invalid request','mainwp'));
     }
 
+     /*
+     * $id = site id in db
+     * $type = theme/plugin     
+     */    
+    public static function getPluginThemeSlugs($id, $type) {
+        
+        $userExtension = MainWPDB::Instance()->getUserExtension();
+        $sql = MainWPDB::Instance()->getSQLWebsiteById($id); 
+        $websites = MainWPDB::Instance()->query($sql);
+        $website = @MainWPDB::fetch_object($websites);
+ 
+        $slugs = array();        
+        if ($type == 'plugin') {
+            if ($website->is_ignorePluginUpdates) return "";
+
+            $plugin_upgrades = json_decode($website->plugin_upgrades, true);
+            $decodedPremiumUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades'), true);
+            if (is_array($decodedPremiumUpgrades))
+            {
+                foreach ($decodedPremiumUpgrades as $crrSlug => $premiumUpgrade)
+                {
+                    $premiumUpgrade['premium'] = true;
+
+                    if ($premiumUpgrade['type'] == 'plugin')
+                    {
+                        if (!is_array($plugin_upgrades)) $plugin_upgrades = array();
+                        $plugin_upgrades[$crrSlug] = $premiumUpgrade;
+                    }
+                }
+            }
+
+            $ignored_plugins = json_decode($website->ignored_plugins, true);
+            if (is_array($ignored_plugins)) {
+                $plugin_upgrades = array_diff_key($plugin_upgrades, $ignored_plugins);
+            }
+
+            $ignored_plugins = json_decode($userExtension->ignored_plugins, true);
+            if (is_array($ignored_plugins)) {
+                $plugin_upgrades = array_diff_key($plugin_upgrades, $ignored_plugins);
+            }
+            
+            if (is_array($plugin_upgrades))
+            {
+                foreach ($plugin_upgrades as $plugin_name => $plugin_upgrade)
+                {
+                    $slugs[] = urlencode($plugin_name);
+                }
+            }                  
+        } else if ($type == 'theme') {
+        
+            if ($website->is_ignoreThemeUpdates) return "";
+
+            $theme_upgrades = json_decode($website->theme_upgrades, true);                    
+            $decodedPremiumUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades'), true);
+            if (is_array($decodedPremiumUpgrades))
+            {
+                foreach ($decodedPremiumUpgrades as $crrSlug => $premiumUpgrade)
+                {
+                    $premiumUpgrade['premium'] = true;
+
+                    if ($premiumUpgrade['type'] == 'theme')
+                    {
+                        if (!is_array($theme_upgrades)) $theme_upgrades = array();
+                        $theme_upgrades[$crrSlug] = $premiumUpgrade;
+                    }
+                }
+            }
+
+            $ignored_themes = json_decode($website->ignored_themes, true);
+            if (is_array($ignored_themes)) $theme_upgrades = array_diff_key($theme_upgrades, $ignored_themes);
+
+            $ignored_themes = json_decode($userExtension->ignored_themes, true);
+            if (is_array($ignored_themes)) $theme_upgrades = array_diff_key($theme_upgrades, $ignored_themes);
+            
+            if (is_array($theme_upgrades))
+            {
+                foreach ($theme_upgrades as $slug => $theme_upgrade)
+                {
+                    $slugs[] = $slug;
+                }               
+            }            
+        }
+        
+        return implode(",", $slugs);      
+    }
+    
     public static function renderLastUpdate()
     {
         $currentwp = MainWPUtility::get_current_wpid();

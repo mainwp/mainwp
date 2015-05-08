@@ -1279,15 +1279,26 @@ class MainWPPostHandler
             die(json_encode(array('error' => mainwp_do_not_have_permissions("update themes", $echo = false))));
 
         $this->secure_request('mainwp_upgradeplugintheme');
-
-        try
+        
+        $websiteId = null;
+        $slugs = "";
+        if (isset($_POST['websiteId']))
         {
-            $websiteId = null;
-            if (isset($_POST['websiteId']))
-            {
-                $websiteId = $_POST['websiteId'];
-            }
-            die(json_encode(array('result' => MainWPRightNow::upgradePluginTheme($websiteId, $_POST['type'], $_POST['slug']))));
+            $websiteId = $_POST['websiteId'];            
+            if (isset($_POST['slug'])) {
+                $slugs = $_POST['slug'];            
+            } else {
+                $slugs = MainWPRightNow::getPluginThemeSlugs($websiteId, $_POST['type']);
+            }             
+        }
+       
+        if (empty($slugs)) {
+            die(json_encode(array('message' => __("Not found items slugs to update."))));
+        } 
+        
+        try
+        {            
+            die(json_encode(array('result' => MainWPRightNow::upgradePluginTheme($websiteId, $_POST['type'], $slugs))));
         }
         catch (MainWPException $e)
         {

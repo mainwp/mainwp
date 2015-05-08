@@ -1048,7 +1048,22 @@ class MainWPManageSites
         self::$sitesTable->clear_items();
        ?>
         </form>
-    </div><?php
+    </div>
+        
+    <div id="managesites-backup-box" title="Full backup required" style="display: none; text-align: center">
+        <div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesites-backup-content">
+        </div>
+        <input id="managesites-backup-all" type="button" name="Backup All" value="<?php _e('Backup All','mainwp'); ?>" class="button-primary" />
+        <input id="managesites-backup-ignore" type="button" name="Ignore" value="<?php _e('Ignore','mainwp'); ?>" class="button" />
+    </div>
+
+    <div id="managesites-backupnow-box" title="Full backup" style="display: none; text-align: center">
+        <div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesites-backupnow-content">
+        </div>
+        <input id="managesites-backupnow-close" type="button" name="Ignore" value="<?php _e('Cancel','mainwp'); ?>" class="button" />
+    </div>
+        
+    <?php
 
         self::renderFooter('');
     }

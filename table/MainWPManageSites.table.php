@@ -357,6 +357,9 @@ class MainWPManageSites_List_Table extends WP_List_Table
             'test_connection' => __('Test Connection', 'mainwp'),
             'open_wpadmin' => __('Open WP Admin', 'mainwp'),
             'open_frontpage' => __('Open Frontpage', 'mainwp'),
+            'open_frontpage' => __('Open Frontpage', 'mainwp'),
+            'update_plugins' => __('Update Plugins', 'mainwp'),
+            'update_themes' => __('Update Themes', 'mainwp'),
         );
         return $actions;
     }

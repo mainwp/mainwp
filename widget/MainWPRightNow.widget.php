@@ -1320,12 +1320,17 @@ class MainWPRightNow
 
     public static function checkBackups()
     {
-        if (get_option('mainwp_backup_before_upgrade') != 1) return true;
+        //if (get_option('mainwp_backup_before_upgrade') != 1) return true;
         if (!is_array($_POST['sites'])) return true;
-
+        $global_backup_before_upgrade = get_option('mainwp_backup_before_upgrade');
+        
         $output = array();
         foreach ($_POST['sites'] as $siteId)
         {
+            $website = MainWPDB::Instance()->getWebsiteById($siteId);            
+            if (($website->backup_before_upgrade == 0) || (($website->backup_before_upgrade == 2) && ($global_backup_before_upgrade == 0)))
+                continue;
+            
             $dir = MainWPUtility::getMainWPSpecificDir($siteId);
             //Check if backup ok
             $lastBackup = -1;

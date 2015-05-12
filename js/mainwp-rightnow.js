@@ -1216,11 +1216,11 @@ var rightnowShowBusyTimeout;
 var rightnowShowBusy;
 mainwp_rightnow_checkBackups = function(sitesToUpdate, siteNames)
 {
-    if (mainwpParams['backup_before_upgrade'] != true)
-    {
-        if (rightnowContinueAfterBackup != undefined) rightnowContinueAfterBackup();
-        return false;
-    }
+//    if (mainwpParams['backup_before_upgrade'] != true)
+//    {
+//        if (rightnowContinueAfterBackup != undefined) rightnowContinueAfterBackup();
+//        return false;
+//    }
 
     rightnowShowBusy = true;
     rightnowShowBusyFunction = function()

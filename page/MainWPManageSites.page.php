@@ -1194,9 +1194,13 @@ class MainWPManageSites
 
                 MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset($_POST['mainwp_managesites_edit_uniqueId']) ? $_POST['mainwp_managesites_edit_uniqueId'] : '');
                 do_action('mainwp_update_site', $website->id);
-
+                
+                $backup_before_upgrade = isset($_POST['mainwp_backup_before_upgrade']) ? intval($_POST['mainwp_backup_before_upgrade']) : 2;
+                if ($backup_before_upgrade > 2)
+                    $backup_before_upgrade = 2;
+                
                 $newValues = array('automatic_update' => (!isset($_POST['mainwp_automaticDailyUpdate']) ? 0 : 1),
-                    'backup_before_upgrade' => (!isset($_POST['mainwp_backup_before_upgrade']) ? 0 : 1),
+                    'backup_before_upgrade' => $backup_before_upgrade,
                     'loadFilesBeforeZip' => $_POST['mainwp_options_loadFilesBeforeZip']
                 );
                 

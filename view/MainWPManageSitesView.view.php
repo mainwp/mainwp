@@ -1370,11 +1370,12 @@ class MainWPManageSitesView
                 <tr>
                     <th scope="row"><?php _e('Require backup before upgrade','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Backup only works when enabled in the global settings as well.','mainwp'), admin_url('admin.php?page=Settings')); ?></th>
                     <td>
-                        <div class="mainwp-checkbox">
-                        <input type="checkbox" name="mainwp_backup_before_upgrade"
-                               id="mainwp_backup_before_upgrade" <?php echo ($website->backup_before_upgrade == 1 ? 'checked="true"' : ''); ?>/>
-                        <label for="mainwp_backup_before_upgrade"></label>
-                        </div>
+                         <select id="mainwp_backup_before_upgrade" name="mainwp_backup_before_upgrade">
+                             <option <?php echo ($website->backup_before_upgrade == 1) ? "selected" : ""; ?> value="1"><?php _e('Yes','mainwp'); ?></option>
+                             <option <?php echo ($website->backup_before_upgrade == 0) ? "selected" : ""; ?> value="0"><?php _e('No','mainwp'); ?></option>
+                             <option <?php echo ($website->backup_before_upgrade == 2) ? "selected" : ""; ?> value="2"><?php _e('Use Global Setting','mainwp'); ?></option>
+                         </select> <i>(<?php _e('Default','mainwp'); ?>: <?php _e('Use Global Setting','mainwp'); ?>)</i>
+                         
                     </td>
                 </tr>
                 <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>

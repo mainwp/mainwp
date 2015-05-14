@@ -1427,7 +1427,17 @@ class MainWPManageSites
             'option' => 'mainwp_managesites_per_page'
         );
         add_screen_option($option, $args);
-
+        
+        if (false === get_user_option('mainwp_default_hide_actions_column')) {
+            global $current_user;
+            $hidden = get_user_option("manage" . MainWPManageSites::$page . "columnshidden");
+            if (!is_array($hidden))
+                $hidden = array();
+            $hidden[] = 'site_actions';        
+            update_user_option($current_user->ID, "manage" . MainWPManageSites::$page . "columnshidden", $hidden, true);
+            update_user_option($current_user->ID, "mainwp_default_hide_actions_column", 1);     
+        }
+        
         self::$sitesTable = new MainWPManageSites_List_Table();
     }
 
@@ -1437,7 +1447,7 @@ class MainWPManageSites
         // get out of here if we are not on our settings page
         if (!is_object($screen) || $screen->id != MainWPManageSites::$page)
             return;
-
+        
         $args = array(
             'label' => MainWPManageSitesView::sitesPerPage(),
             'default' => 20,

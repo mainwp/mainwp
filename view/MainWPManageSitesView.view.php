@@ -526,7 +526,7 @@ class MainWPManageSitesView
                                       name="mainwp_managesites_add_uniqueId" value="" class="mainwp-field mainwp-unique-id"/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
                         </tr>
                             <tr class="form-field form-required">
-                            <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
+                            <th scope="row"><?php _e('Verify Certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
                             <td>
                                 <select id="mainwp_managesites_verify_certificate" name="mainwp_managesites_verify_certificate">
                                      <option selected value="1"><?php _e('Yes','mainwp'); ?></option>
@@ -1103,7 +1103,7 @@ class MainWPManageSitesView
                 ?>
                 <tr><td colspan="2"><hr /></td></tr>
                 <tr>
-                    <th scope="row"><?php _e('Archive format','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('','mainwp')); ?></th>
+                    <th scope="row"><?php _e('Archive Format','mainwp'); ?></th>
                     <td>
                         <table class="mainwp-nomarkup">
                             <tr>
@@ -1356,17 +1356,7 @@ class MainWPManageSitesView
                           <label for="mainwp_options_footprint_plugin_folder_hidden"></label>
                         </div>Hidden (<strong>Note: </strong><i>If the heatmap is turned on, the heatmap javascript will still be visible.</i>) <br/>
                     </td>
-                </tr>
-                <tr>
-                    <th scope="row"><?php _e('Auto Update Core','mainwp'); ?> <?php MainWPUtility::renderToolTip('Auto update only works when enabled in the global settings as well.', admin_url('admin.php?page=Settings')); ?></th>
-                    <td>
-                        <div class="mainwp-checkbox">
-                        <input type="checkbox" name="mainwp_automaticDailyUpdate"
-                               id="mainwp_automaticDailyUpdate" <?php echo ($website->automatic_update == 1 ? 'checked="true"' : ''); ?> />
-                        <label for="mainwp_automaticDailyUpdate"></label>
-                        </div>
-                    </td>
-                </tr>
+                </tr>               
                 <tr>
                     <th scope="row"><?php _e('Require Backup Before Upgrade','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Backup only works when enabled in the global settings as well.','mainwp'), admin_url('admin.php?page=Settings')); ?></th>
                     <td>
@@ -1376,6 +1366,16 @@ class MainWPManageSitesView
                              <option <?php echo ($website->backup_before_upgrade == 2) ? "selected" : ""; ?> value="2"><?php _e('Use Global Setting','mainwp'); ?></option>
                          </select> <i>(<?php _e('Default','mainwp'); ?>: <?php _e('Use Global Setting','mainwp'); ?>)</i>
                          
+                    </td>
+                </tr>
+                 <tr>
+                    <th scope="row"><?php _e('Auto Update Core','mainwp'); ?> <?php MainWPUtility::renderToolTip('Auto update only works when enabled in the global settings as well.', admin_url('admin.php?page=Settings')); ?></th>
+                    <td>
+                        <div class="mainwp-checkbox">
+                        <input type="checkbox" name="mainwp_automaticDailyUpdate"
+                               id="mainwp_automaticDailyUpdate" <?php echo ($website->automatic_update == 1 ? 'checked="true"' : ''); ?> />
+                        <label for="mainwp_automaticDailyUpdate"></label>
+                        </div>
                     </td>
                 </tr>
                 <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>

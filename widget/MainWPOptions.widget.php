@@ -128,13 +128,13 @@ class MainWPOptions
             <td>
             	<div class="mainwp-checkbox">
                 <input type="checkbox" name="mainwp_optimize"
-                       id="mainwp_optimize" <?php echo ((get_option('mainwp_optimize') == 1) ? 'checked="true"' : ''); ?>"/>
+                       id="mainwp_optimize" <?php echo ((get_option('mainwp_optimize') == 1) ? 'checked="true"' : ''); ?> />
                 <label for="mainwp_optimize"></label>
                </div>
             </td>
         </tr>
         <tr>
-            <th scope="row"><?php _e('Basic SEO Stats','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('This requires your Dashboard to query the Google servers for this information.','mainwp')); ?></th>
+            <th scope="row"><?php _e('Show Basic SEO Stats','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('This requires your Dashboard to query the Google servers for this information.','mainwp')); ?></th>
             <td>
             	<div class="mainwp-checkbox">
                 <input type="checkbox" name="mainwp_seo"
@@ -165,7 +165,7 @@ class MainWPOptions
     <table class="form-table">
         <tbody>
         <tr>
-            <th scope="row"><?php _e('View upgrades per site','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('When this is disabled, the upgrades are shown per plugin/theme with a sublist of sites. When this is enabled, all the sites are shown with the plugin/theme upgrades available per site.','mainwp')); ?></th>
+            <th scope="row"><?php _e('View Upgrades per Site','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('When this is disabled, the upgrades are shown per plugin/theme with a sublist of sites. When this is enabled, all the sites are shown with the plugin/theme upgrades available per site.','mainwp')); ?></th>
             <td>
             	<div class="mainwp-checkbox">
                 <input type="checkbox" name="mainwp_options_siteview" id="mainwp_options_siteview" size="35" <?php echo ($siteview == 1 ? 'checked="true"' : ''); ?>/> <label for="mainwp_options_siteview"></label>
@@ -173,7 +173,7 @@ class MainWPOptions
             </td>
         </tr>
         <tr>
-            <th scope="row"><?php _e('Require backup before upgrade','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('With this option enabled, when you try to upgrade a plugin, theme or WordPress core, MainWP will check if there is a full backup created for the site(s) you are trying to upgrade in last 7 days. If you have a fresh backup of the site(s) MainWP will proceed to the upgrade process, if not it will ask you to create a full backup.','mainwp')); ?></th>
+            <th scope="row"><?php _e('Require Backup Before Upgrade','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('With this option enabled, when you try to upgrade a plugin, theme or WordPress core, MainWP will check if there is a full backup created for the site(s) you are trying to upgrade in last 7 days. If you have a fresh backup of the site(s) MainWP will proceed to the upgrade process, if not it will ask you to create a full backup.','mainwp')); ?></th>
             <td>
             	<div class="mainwp-checkbox">
                 <input type="checkbox" name="mainwp_backup_before_upgrade" id="mainwp_backup_before_upgrade" size="35" <?php echo ($backup_before_upgrade == 1 ? 'checked="true"' : ''); ?>/> <label for="mainwp_backup_before_upgrade"></label>
@@ -181,7 +181,7 @@ class MainWPOptions
             </td>
         </tr>
         <tr>
-            <th scope="row"><?php _e('Automatic daily update','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Choose to have MainWP install updates, or notify you by email of available updates.  Updates apply to WordPress Core files, Plugins and Themes.','mainwp')); ?></th>
+            <th scope="row"><?php _e('Automatic Daily Update','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Choose to have MainWP install updates, or notify you by email of available updates.  Updates apply to WordPress Core files, Plugins and Themes.','mainwp')); ?></th>
             <td>
                 <table class="mainwp-nomarkup">
                     <tr>
@@ -217,14 +217,14 @@ class MainWPOptions
     <table class="form-table">
         <tbody>
         <tr>
-            <th scope="row"><?php _e('Maximum number of Posts/Pages','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.','mainwp')); ?></th>
+            <th scope="row"><?php _e('Maximum Number of Posts/Pages','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.','mainwp')); ?></th>
             <td>
                 <input type="text" name="mainwp_maximumPosts"  class="mainwp-field mainwp-settings-icon"
                        id="mainwp_maximumPosts" value="<?php echo ((get_option('mainwp_maximumPosts') === false) ? 50 : get_option('mainwp_maximumPosts')); ?>"/>
             </td>
         </tr>
         <tr>
-            <th scope="row"><?php _e('Maximum number of Comments','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.','mainwp')); ?></th>
+            <th scope="row"><?php _e('Maximum Number of Comments','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.','mainwp')); ?></th>
             <td>
                 <input type="text" name="mainwp_maximumComments" class="mainwp-field mainwp-settings-icon"
                        id="mainwp_maximumComments" value="<?php echo ((get_option('mainwp_maximumComments') === false) ? 50 : get_option('mainwp_maximumComments')); ?>"/>

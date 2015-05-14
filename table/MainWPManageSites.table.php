@@ -37,7 +37,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
 
     function no_items()
     {
-        _e('No sites found.');
+        _e('No sites found.','mainwp');
     }
 
     function column_default($item, $column_name)
@@ -56,6 +56,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
             case 'last_post':
             case 'seo':
             case 'notes':
+            //case 'site_actions':
                 return $item[$column_name];
             default:
                 return $item[$column_name];
@@ -87,7 +88,8 @@ class MainWPManageSites_List_Table extends WP_List_Table
             'last_sync' => __('Last Sync', 'mainwp'),
             'last_post' => __('Last Post', 'mainwp'),
             'seo' => __('SEO', 'mainwp'),
-            'notes' => __('Notes', 'mainwp')
+            'notes' => __('Notes', 'mainwp'),
+            'site_actions' => __('Actions', 'mainwp')
         );
         
         if (!mainwp_current_user_can("dashboard", "see_seo_statistics")) {
@@ -97,6 +99,72 @@ class MainWPManageSites_List_Table extends WP_List_Table
 
         $columns = apply_filters('mainwp-sitestable-getcolumns', $columns, $columns);
         return $columns;
+    }
+        
+    function column_site_actions($item) {
+        if ($item['sync_errors'] != '') {
+            $reconnect_lnk = '<a class="mainwp_site_reconnect" href="#" siteid="'.$item['id'].'" style="margin-right: .5em;" title="Reconnect Child Site"><i class="fa fa-plug fa-lg"></i></a>';
+        } else {
+            $reconnect_lnk = '';
+        }
+
+        if (!mainwp_current_user_can("dashboard", "access_individual_dashboard")) {
+            $dashboard_lnk = '';
+        } else {
+            $dashboard_lnk = '<a href="admin.php?page=managesites&dashboard=' . $item['id'] . '" style="margin-right: .5em;" title="Open Child Site Dashboard"><i class="fa fa-tachometer fa-lg"></i></a>';
+        }
+
+        $sync_lnk = '<a href="#" class="managesites_syncdata" style="margin-right: .5em;" title="Sync Child Site"><i class="fa fa-refresh fa-lg"></i></a>';
+
+        if (!mainwp_current_user_can("dashboard", "edit_sites")) {
+            $edit_lnk = '';
+        } else {
+            $edit_lnk = '<a href="admin.php?page=managesites&id='. $item['id'] .'" style="margin-right: .5em;" title="Edit Child Site"><i class="fa fa-pencil-square-o fa-lg"></i></a>';
+        }
+        
+        if (!mainwp_current_user_can("dashboard", "test_connection")) {
+            $test_lnk = '';
+        } else {
+            $test_lnk = '<a href="#" class="mainwp_site_testconnection" class="test_connection" style="margin-right: .5em;" title="Test Connection"><i class="fa fa-link fa-lg"></i></a>';
+        }
+        
+        if (!mainwp_current_user_can("dashboard", "execute_backups")) {
+            $backup_lnk = '';
+        } else {
+            $backup_lnk = '<a href="admin.php?page=managesites&backupid='.$item['id'].'" style="margin-right: .5em;" title="Backup Child Site"><i class="fa fa-hdd-o fa-lg"></i></a>';
+        }
+        
+
+        if (!mainwp_current_user_can("dashboard", "access_wpadmin_on_child_sites")) {
+            $wp_admin_new_lnk = '';
+        } else {
+            $wp_admin_new_lnk = '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid='.$item['id'].'" class="open_newwindow_wpadmin" target="_blank" style="margin-right: .5em;" title="Open Child Site WP Admin"><i class="fa fa-external-link fa-lg"></i></a>';
+        }
+        
+
+        $post_lnk = '<a href="admin.php?page=PostBulkAdd&select='.$item['id'].'" style="margin-right: .5em;" title="Add New Post"><i class="fa fa-file-text fa-lg"></i></a>';
+
+        if (!mainwp_current_user_can("dashboard", "see_seo_statistics")) {
+            $seo_lnk = '';
+        } else {
+            $seo_lnk = '<a href="admin.php?page=managesites&seowebsiteid='.$item['id'].'" style="margin-right: .5em;" title="Show Child Site SEO"><i class="fa fa-search fa-lg"></i></a>';
+        }
+        
+
+        $notes_lnk = '<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_'.$item['id'].'" style="margin-right: .5em;" title="Open Child Site Notes"><i class="fa fa-pencil fa-lg"></i></a>';
+
+        $security_lnk = '<a href="admin.php?page=managesites&scanid=' . $item['id'] . '" style="margin-right: .5em;" title="Show Security Scan Report"><i class="fa fa-shield fa-lg"></i></a>';
+
+        if ($item['sync_errors'] != '') {
+            $mainwp_actions = $reconnect_lnk;
+        } else if (get_option('mainwp_seo') != 1) {
+            $mainwp_actions = $dashboard_lnk . $edit_lnk . $wp_admin_new_lnk . $sync_lnk . $security_lnk . $test_lnk . $backup_lnk . $post_lnk . $notes_lnk;
+        } else{
+            $mainwp_actions = $dashboard_lnk . $edit_lnk . $wp_admin_new_lnk . $sync_lnk . $security_lnk . $test_lnk . $backup_lnk . $post_lnk . $seo_lnk . $notes_lnk;
+        }
+
+        echo $mainwp_actions;
+
     }
         
     function column_status($item)
@@ -542,33 +610,13 @@ class MainWPManageSites_List_Table extends WP_List_Table
     function extra_tablenav( $which )
     {
         ?>
-    <div class="alignleft actions">
-        <form method="GET" action="">
-            <input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
-            <input type="text" value="<?php echo (isset($_REQUEST['s']) ? $_REQUEST['s'] : ''); ?>"
-                   autocompletelist="sites" name="s" class="mainwp_autocomplete"/>
-            <datalist id="sites">
-                <?php
-                if (MainWPDB::is_result($this->items))
-                {
-                    while ($this->items && ($item = @MainWPDB::fetch_array($this->items)))
-                    {
-                        echo '<option>' . $item['name'] . '</option>';
-                    }
 
-                    MainWPDB::data_seek($this->items, 0);
-                }
-                ?>
-            </datalist>
-            <input type="submit" value="<?php _e('Search Sites'); ?>" class="button" name=""/>
-        </form>
-    </div>
 
     <div class="alignleft actions">
         <form method="GET" action="">
             <input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
             <select name="g">
-                <option value="">Select a group</option>
+                <option value=""><?php _e('All Groups','mainwp'); ?></option>
                 <?php                
                 $groups = MainWPDB::Instance()->getGroupsForCurrentUser();
                 foreach ($groups as $group)
@@ -580,13 +628,35 @@ class MainWPManageSites_List_Table extends WP_List_Table
 
             <input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
             <select name="status">
-                <option value="">Select a status</option>
+                <option value=""><?php _e('All Statuses','mainwp'); ?></option>
                 <option value="online" <?php echo (isset($_REQUEST['status']) && $_REQUEST['status'] == 'online' ? 'selected' : ''); ?>>Online</option>
                 <option value="offline" <?php echo (isset($_REQUEST['status']) && $_REQUEST['status'] == 'offline' ? 'selected' : ''); ?>>Offline</option>
                 <option value="disconnected" <?php echo (isset($_REQUEST['status']) && $_REQUEST['status'] == 'disconnected' ? 'selected' : ''); ?>>Disconnected</option>
                 <option value="update" <?php echo (isset($_REQUEST['status']) && $_REQUEST['status'] == 'update' ? 'selected' : ''); ?>>Available update</option>
             </select>
             <input type="submit" value="<?php _e('Display'); ?>" class="button" name="">
+        </form>
+    </div>
+
+    <div class="alignleft actions">
+        <form method="GET" action="">
+            <input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
+            <input type="text" value="<?php echo (isset($_REQUEST['s']) ? $_REQUEST['s'] : ''); ?>"
+                   autocompletelist="sites" name="s" class="mainwp_autocomplete"/>
+            <datalist id="sites">
+    <?php
+                if (MainWPDB::is_result($this->items))
+                {
+                    while ($this->items && ($item = @MainWPDB::fetch_array($this->items)))
+                    {
+                        echo '<option>' . $item['name'] . '</option>';
+    }
+
+                    MainWPDB::data_seek($this->items, 0);
+                }
+                ?>
+            </datalist>
+            <input type="submit" value="<?php _e('Search Sites'); ?>" class="button" name=""/>
         </form>
     </div>
     <?php

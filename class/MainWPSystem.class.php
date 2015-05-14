@@ -334,15 +334,78 @@ class MainWPSystem
         } else {
             if (get_option('mainwp_first_site_events_notice') == 'yes') { 
                 ?>
-                <div id="mainwp-events-notice" class="updated fade">
+                <div class="mainwp-events-notice updated fade">
                 	<p>
-                    	<span style="float: right;" ><a id="mainwp-events-notice-dismiss" style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span><span><strong><?php _e('Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">Scheduled Events</a>'); ?></strong></span>
+                    	<span style="float: right;" class="mainwp-events-notice-dismiss" notice="first_site" style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span><span><strong><?php _e('Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">Scheduled Events</a>'); ?></strong></span>
                     	</p>
                 </div>                    
                 <?php
             }
         }
         
+        $current_options = get_option("mainwp_showhide_events_notice");        
+        if (!is_array($current_options)) $current_options = array();
+        
+        $display_request1 = $display_request2 = false;  
+        
+        if (isset($current_options['request_reviews1'])) {
+            if ($current_options['request_reviews1'] == 'forever') {
+                $display_request1 = false;
+            } else {                
+                $days = intval($current_options['request_reviews1']);   // 15 or 30 
+                $start_time = $current_options['request_reviews1_starttime'];                
+                $display_request1 = ((time() - $start_time) >  $days * 24 * 3600) ? true : false;
+            } 
+        } else {
+            $current_options['request_reviews1'] = 30;
+            $current_options['request_reviews1_starttime'] = time();   
+            update_option('mainwp_showhide_events_notice', $current_options);
+        }
+        
+        if (isset($current_options['request_reviews2'])) {
+            if ($current_options['request_reviews2'] == 'forever') {
+                $display_request2 = false;
+            } else {                
+                $days = intval($current_options['request_reviews2']);   // 15 
+                $start_time = $current_options['request_reviews2_starttime'];                
+                $display_request2 = ((time() - $start_time) >  $days * 24 * 3600) ? true : false;
+            } 
+        } else {
+            $currentExtensions = (MainWPExtensions::$extensionsLoaded ? MainWPExtensions::$extensions : get_option('mainwp_extensions'));        
+            if (is_array($currentExtensions) && count($currentExtensions) > 10) {
+                $display_request2 = true;
+            }         
+        }
+        
+        if ($display_request1) {
+        ?>
+        <div class="mainwp-events-notice updated fade">
+            <p>
+                <span style="float: right;" ><a class="mainwp-events-notice-dismiss" notice="request_reviews1" style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
+                <span style="font-size: 14px;">
+                    <?php _e('Hi, I noticed you having been using MainWP for over 30 days and that\'s awesome!','mainwp'); ?><br/>
+                    <?php _e('Could you please do me a BIG favor and give it a 5-star rating on WordPress?  Reviews from users like you really help the MainWP community to grow.','mainwp'); ?><br/><br/>
+                    <?php _e('Thank You','mainwp'); ?><br/>
+                    <?php _e('~ Dennis','mainwp'); ?><br/><br/>
+                    <a href="https://wordpress.org/support/view/plugin-reviews/mainwp#postform" target="_blank" class="button mainwp-upgrade-button"><?php _e('Ok, you deserve','mainwp'); ?> <i class="fa fa-star"></i> <i class="fa fa-star"></i> <i class="fa fa-star"></i> <i class="fa fa-star"></i> <i class="fa fa-star"></i></a>&nbsp;&nbsp;&nbsp;&nbsp; <a href="" class="button mainwp-events-notice-dismiss" notice="request_reviews1"><?php _e('Nope, maybe later','mainwp'); ?></a> <a href="" class="button mainwp-events-notice-dismiss" notice="request_reviews1_forever"><?php _e('I already did','mainwp'); ?></a>
+                </span>
+            </p>
+        </div>
+        <?php } else if ($display_request2) { ?>        
+            <div class="mainwp-events-notice updated fade">
+                <p>
+                    <span style="float: right;" ><a class="mainwp-events-notice-dismiss" notice="request_reviews2" style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
+                    <span style="font-size: 14px;">
+                        <?php _e('Hi, I noticed you have a few MainWP Extensions installed and that\'s awesome!','mainwp'); ?><br/>
+                        <?php _e('Could you please do me a BIG favor and give it a 5-star rating on WordPress?  Reviews from users like you really help the MainWP community to grow.','mainwp'); ?><br/><br/>
+                        <?php _e('Thank You','mainwp'); ?><br/>
+                        <?php _e('~ Dennis','mainwp'); ?><br/><br/>
+                        <a href="https://wordpress.org/support/view/plugin-reviews/mainwp#postform" target="_blank" class="button mainwp-upgrade-button"><?php _e('Ok, you deserve','mainwp'); ?> <i class="fa fa-star"></i> <i class="fa fa-star"></i> <i class="fa fa-star"></i> <i class="fa fa-star"></i> <i class="fa fa-star"></i></a>&nbsp;&nbsp;&nbsp;&nbsp; <a href="" class="button mainwp-events-notice-dismiss" notice="request_reviews2" ><?php _e('Nope, maybe later','mainwp'); ?></a> <a href="" class="button mainwp-events-notice-dismiss" notice="request_reviews2_forever"><?php _e('I already did','mainwp'); ?></a>
+                    </span>
+                </p>
+            </div>
+        <?php
+        }
     }
 
     public function getVersion()

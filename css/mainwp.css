@@ -1162,6 +1162,12 @@ background: #d5e4af !important;
     width: 160px;
 } /* fixed by bogdan, original 180px, changed to auto */
 
+
+.mainwp-submenu-wide {
+    width: auto !important;
+    min-width: 200px !important;
+}
+
 /*
 .mainwp_boxout {
     padding: 10px 7px 10px 7px;

@@ -83,7 +83,7 @@ class MainWPPlugins
           <?php } ?>
           <?php if ($shownPage == 'Install') { ?> 
                 <?php if (MainWPUtility::showUserTip('mainwp-installplugins-tips')) { ?>
-                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-installplugins-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('If you check the â€œOverwrite Existingâ€� option while installing a plugin you can easily update or rollback the plugin on your child sites.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
+                <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-installplugins-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('If you check the "Overwrite Existing" option while installing a plugin you can easily update or rollback the plugin on your child sites.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
                 <?php } ?>
           <?php } ?>
         </div>
@@ -1190,7 +1190,7 @@ class MainWPPlugins
 
         self::renderHeader('Ignore');
 ?>
-        <h2><?php _e('Plugin Ignore List','mainwp'); ?></h2>
+        <h2><?php _e('Ignored Plugins','mainwp'); ?></h2>
         <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0" style="width: 780px">
         	<caption><?php _e('Globally','mainwp'); ?></caption>
             <thead>

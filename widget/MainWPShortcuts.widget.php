@@ -29,18 +29,19 @@ class MainWPShortcuts
     </div>
     <div class="mainwp-row">
         <div style="display: inline-block; width: 100px;"><?php _e('Notes:','mainwp'); ?></div>
-        <a href="#" class="mainwp_notes_show_all" id="mainwp_notes_<?php echo $website->id; ?>"><?php _e('Open Notes','mainwp'); ?></a><img src="<?php echo plugins_url('images/notes.png', dirname(__FILE__)); ?>" class="mainwp_notes_img" id="mainwp_notes_img_<?php echo $website->id; ?>" <?php if ($website->note == '') { echo 'style="display: none;"'; } ?> />
+        <a href="#" class="mainwp_notes_show_all" id="mainwp_notes_<?php echo $website->id; ?>"><i class="fa fa-pencil"></i> <?php _e('Open Notes','mainwp'); ?></a><img src="<?php echo plugins_url('images/notes.png', dirname(__FILE__)); ?>" class="mainwp_notes_img" id="mainwp_notes_img_<?php echo $website->id; ?>" <?php if ($website->note == '') { echo 'style="display: none;"'; } ?> />
     </div>
     <span style="display: none"
           id="mainwp_notes_<?php echo $website->id; ?>_note"><?php echo $website->note; ?></span>
     <div class="mainwp-row">
-        <div style="display: inline-block; width: 100px;"><?php _e('WP-Admin:','mainwp'); ?></div>
-        <a href="admin.php?page=SiteOpen&websiteid=<?php echo $website->id; ?>"><?php _e('Open embedded','mainwp'); ?></a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>" target="_blank"><?php _e('Open in new window','mainwp'); ?></a>
+        <div style="display: inline-block; width: 100px;"><?php _e('Go to:','mainwp'); ?></div>
+        <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>" target="_blank"><i class="fa fa-external-link"></i> <?php _e('WP Admin','mainwp'); ?></a> | <a target="_blank" href="<?php echo $website->url; ?>"><i class="fa fa-external-link"></i> <?php _e('Front Page','mainwp'); ?></a>
     </div>
     <div class="mainwp-row">
-        <div style="display: inline-block; width: 100px;"><?php _e('Frontpage:','mainwp'); ?></div>
-        <a class="mainwp-open-link" target="_blank" href="<?php echo $website->url; ?>"><?php _e('Open','mainwp'); ?></a>
+        <div style="display: inline-block; width: 100px;"><?php _e('Child Site:','mainwp'); ?></div>
+        <a href="admin.php?page=managesites&id=<?php echo $website->id; ?>"><i class="fa fa-pencil-square-o"></i> <?php _e('Edit','mainwp'); ?></a> | <a target="_blank" href="admin.php?page=managesites&scanid=<?php echo $website->id; ?>"><i class="fa fa-shield"></i> <?php _e('Security Scan','mainwp'); ?></a>
     </div>
+
     <?php do_action("mainwp_shortcuts_widget", $website); ?>
     <div id="mainwp_notes_overlay" class="mainwp_overlay"></div>
     <div id="mainwp_notes" class="mainwp_popup">

@@ -140,10 +140,10 @@ class MainWPExtensions
                                                           
                         if (isset($extension['direct_page'])) {
                             $html .= '<a href="' . admin_url('admin.php?page=' . $extension['direct_page']) . '"
-                               class="mainwp-submenu">' . $extension['name'] . '</a>';
+                               class="mainwp-submenu">' . str_replace(array("Extension", "MainWP"), "", $extension['name']) . '</a>';
                         } else {
                             $html .= '<a href="' . admin_url('admin.php?page=' . $extension['page']) . '"
-                               class="mainwp-submenu">' . $extension['name'] . '</a>';                    
+                               class="mainwp-submenu">' . str_replace(array("Extension", "MainWP"), "", $extension['name']) . '</a>';                    
                         }
                     }
                 }
@@ -153,8 +153,8 @@ class MainWPExtensions
         ?>
 		<div id="menu-mainwp-Extensions" class="mainwp-submenu-wrapper" xmlns="http://www.w3.org/1999/html">
 			<div class="wp-submenu sub-open" style="">
-				<div class="mainwp_boxout">
-					<div class="mainwp_boxoutin"></div>
+				<div class="mainwp_boxout mainwp-submenu-wide">
+					<div class="mainwp_boxoutin"></div><ul class="mainwp-submenu-ul">
 					<?php echo $html; ?>
 				</div>
 			</div>
@@ -295,7 +295,7 @@ class MainWPExtensions
         $password = trim( $_POST['password'] );            
         if (($username == '') || ($password == ''))
         {            
-            die(json_encode(array('error' => 'Login invalid.')));
+            die(json_encode(array('error' => __('Login Invalid.','mainwp'))));
         }
         
         $enscrypt_u = get_option('mainwp_extensions_api_username');
@@ -329,7 +329,7 @@ class MainWPExtensions
         $password = trim( $_POST['password'] );            
         if (($username == '') || ($password == ''))
         {            
-            die(json_encode(array('error' => 'Login invalid.')));
+            die(json_encode(array('error' => __('Login Invalid.','mainwp'))));
         }
         
         $data = MainWPApiManager::instance()->get_purchased_software( $username, $password); 
@@ -351,9 +351,10 @@ class MainWPExtensions
                     $purchased_data = array_diff_key($purchased_data, $installed_softwares);
                     $html = $message = '';
                     if (empty($purchased_data)) {
-                        $message = __("All purchased extensions was installed.", "mainwp");
+                        $message = __("All purchased extensions are Installed", "mainwp");
                     } else {
-                        $html = "<h2>" . __("Installing Purchased Extensions ...", "mainwp") . "</h2><br />";                        
+                        $html = '<div class="inside">';
+                        $html .= "<h2>" . __("Installing Purchased Extensions ...", "mainwp") . "</h2><br />";                        
                         $html .= '<div class="mainwp_extension_installing">';
                         foreach($purchased_data as $software_title => $product_info) {
                             if (isset($product_info['error']) && $product_info['error'] == 'download_revoked') {
@@ -363,6 +364,7 @@ class MainWPExtensions
                             }
                         }
                         $html .= '<div id="extBulkActivate"><i class="fa fa-spinner fa-pulse hidden"></i> <span class="status hidden"></span></div>';
+                        $html .= '</div>';
                         $html .= '</div>';
                         $html .= '<script type="text/javascript">mainwp_extension_bulk_install();</script>';
                     }                    

@@ -67,18 +67,18 @@ class MainWPRightNow
                 if (isset($information['upgrade']) && ($information['upgrade'] == 'SUCCESS'))
                 {
                     MainWPDB::Instance()->updateWebsiteOption($website, 'wp_upgrades', json_encode(array()));
-                    return __('Upgrade successful','mainwp');
+                    return __('Upgrade Successful','mainwp');
                 }
                 else if (isset($information['upgrade']))
                 {
                     $errorMsg = '';
                     if ($information['upgrade'] == 'LOCALIZATION')
                     {
-                        $errorMsg = __('No update found for your set locale.','mainwp');
+                        $errorMsg = __('No update found for your set locale','mainwp');
                     }
                     else if ($information['upgrade'] == 'NORESPONSE')
                     {
-                        $errorMsg = __('No response from the wordpress update server.','mainwp');
+                        $errorMsg = __('No response from the WordPress update server','mainwp');
                     }
 
                     throw new MainWPException('WPERROR', $errorMsg);
@@ -94,7 +94,7 @@ class MainWPRightNow
             }
         }
 
-        throw new MainWPException('ERROR', __('Invalid request','mainwp'));
+        throw new MainWPException('ERROR', __('Invalid Request','mainwp'));
     }
 
     public static function ignorePluginTheme($type, $slug, $name, $id)
@@ -427,7 +427,7 @@ class MainWPRightNow
         
         if ($website == null)
         {
-            die(json_encode(array('error' => 'Invalid request.')));
+            die(json_encode(array('error' => 'Invalid Request')));
         }
 
         $maxRequestsInThirtySeconds = get_option('mainwp_maximumRequests');
@@ -1111,7 +1111,7 @@ class MainWPRightNow
     
     <div class="clear">
         <div class="mainwp-row">
-            <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=PluginsIgnore'); ?>"><?php _e('Plugin Ignore List','mainwp'); ?></a> / <a href="<?php echo admin_url('admin.php?page=ThemesIgnore'); ?>"><?php _e('Theme Ignore List','mainwp'); ?></a></span>
+            <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=PluginsIgnore'); ?>"><?php _e('Ignored Plugins','mainwp'); ?></a> | <a href="<?php echo admin_url('admin.php?page=ThemesIgnore'); ?>"><?php _e('Ignored Themes','mainwp'); ?></a></span>
             <span class="mainwp-mid-col">&nbsp;</span>
             <?php if (mainwp_current_user_can("dashboard", "update_wordpress") && mainwp_current_user_can("dashboard", "update_plugins") && mainwp_current_user_can("dashboard", "update_themes")) { ?>
             <span class="mainwp-right-col"><?php if (($total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades) == 0) { ?><a class="button" disabled="disabled"><?php _e('Upgrade Everything','mainwp'); ?></a><?php } else { ?><a href="#" onClick="return rightnow_global_upgrade_all();" class="mainwp-upgrade-button button"><?php _e('Upgrade Everything','mainwp'); ?></a><?php } ?></span>

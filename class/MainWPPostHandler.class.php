@@ -1446,7 +1446,23 @@ class MainWPPostHandler
     }
     
     function mainwp_events_notice_hide() {
-        update_option("mainwp_first_site_events_notice", "");
+        if (isset($_POST['notice'])) {
+            $current_options = get_option("mainwp_showhide_events_notice");
+            if (!is_array($current_options)) $current_options = array();            
+            if ( $_POST['notice'] == 'first_site') {
+                update_option("mainwp_first_site_events_notice", "");
+            } else if ( $_POST['notice'] == 'request_reviews1') {
+                $current_options['request_reviews1'] = 15; 
+                $current_options['request_reviews1_starttime'] = time();
+            } else if ( $_POST['notice'] == 'request_reviews1_forever' || $_POST['notice'] == 'request_reviews2_forever') {
+                $current_options['request_reviews1'] = 'forever';
+                $current_options['request_reviews2'] = 'forever';
+            } else if ( $_POST['notice'] == 'request_reviews2') {
+                $current_options['request_reviews2'] = 15;
+                $current_options['request_reviews2_starttime'] = time();
+            }
+            update_option("mainwp_showhide_events_notice", $current_options);
+        }
         die('ok');
     }
     

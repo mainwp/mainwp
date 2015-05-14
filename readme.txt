@@ -1,13 +1,13 @@
 === MainWP ===
 Contributors: mainwp
 Donate link: 
-Tags: WordPress Management, WordPress Controller
+Tags: WordPress Management, WordPress Controller, Network, MainWP, Updates, Update
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.2.1
-Stable tag: 2.0.14
+Tested up to: 4.2.2
+Stable tag: 2.0.15
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,31 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.15 =
+* Added: Update Plugs in bulk action on the Manage Sites page
+* Added: Update Themes bulk action on the Manage Sites page
+* Added: Actions column in the Mange Sites table
+* Added: New documents to the  Documentation page
+* Added: Support for translation for missed strings
+* Added: Invitation for review on WordPress.org messages
+* Added: New links to the Shortcuts widget
+* Added: New checks to the Sever Information page
+* Added: Support for the upcoming extension
+* Fixed: Multiple PHP Warning 
+* Fixed: Multiple spelling errors
+* Fixed: Individual site Require backup before upgrade settings bug
+* Updated: Required values on the Server Information page
+* Updated: Layout of the Server Information page
+* Updated: Layout of the Manage Sites table top navigation
+* Updated: Layout of the Install Plugins page (install process screen)
+* Updated: Layout of the Install Themes page (install process screen)
+* Updated: Plugin CSS style
+* Updated: Form fields labels
+* Updated: Layout of the bulk extension installing process screen 
+* Updated: Extensions sub-menu (removed the "MainWP" and "Extension" from menu items)
+* Updated: Individual site Require backup before upgrade setting
+* Removed: Unnecessary checks from the Sever Information page
 
 = 2.0.14 =
 * Added: OpenSSL Notification and the SSL Verify option for Extension site connection

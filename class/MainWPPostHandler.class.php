@@ -1279,15 +1279,26 @@ class MainWPPostHandler
             die(json_encode(array('error' => mainwp_do_not_have_permissions("update themes", $echo = false))));
 
         $this->secure_request('mainwp_upgradeplugintheme');
-
-        try
+        
+        $websiteId = null;
+        $slugs = "";
+        if (isset($_POST['websiteId']))
         {
-            $websiteId = null;
-            if (isset($_POST['websiteId']))
-            {
-                $websiteId = $_POST['websiteId'];
-            }
-            die(json_encode(array('result' => MainWPRightNow::upgradePluginTheme($websiteId, $_POST['type'], $_POST['slug']))));
+            $websiteId = $_POST['websiteId'];            
+            if (isset($_POST['slug'])) {
+                $slugs = $_POST['slug'];            
+            } else {
+                $slugs = MainWPRightNow::getPluginThemeSlugs($websiteId, $_POST['type']);
+            }             
+        }
+       
+        if (empty($slugs)) {
+            die(json_encode(array('message' => __("Not found items slugs to update."))));
+        } 
+        
+        try
+        {            
+            die(json_encode(array('result' => MainWPRightNow::upgradePluginTheme($websiteId, $_POST['type'], $slugs))));
         }
         catch (MainWPException $e)
         {
@@ -1435,7 +1446,23 @@ class MainWPPostHandler
     }
     
     function mainwp_events_notice_hide() {
-        update_option("mainwp_first_site_events_notice", "");
+        if (isset($_POST['notice'])) {
+            $current_options = get_option("mainwp_showhide_events_notice");
+            if (!is_array($current_options)) $current_options = array();            
+            if ( $_POST['notice'] == 'first_site') {
+                update_option("mainwp_first_site_events_notice", "");
+            } else if ( $_POST['notice'] == 'request_reviews1') {
+                $current_options['request_reviews1'] = 15; 
+                $current_options['request_reviews1_starttime'] = time();
+            } else if ( $_POST['notice'] == 'request_reviews1_forever' || $_POST['notice'] == 'request_reviews2_forever') {
+                $current_options['request_reviews1'] = 'forever';
+                $current_options['request_reviews2'] = 'forever';
+            } else if ( $_POST['notice'] == 'request_reviews2') {
+                $current_options['request_reviews2'] = 15;
+                $current_options['request_reviews2_starttime'] = time();
+            }
+            update_option("mainwp_showhide_events_notice", $current_options);
+        }
         die('ok');
     }
     

@@ -165,7 +165,7 @@ rightnow_wordpress_upgrade_int = function (websiteId, bulkMode)
     var websiteHolder = jQuery('div.mainwp_wordpress_upgrade[site_id="' + websiteId + '"]');
 
     websiteHolder.find('.wordpressAction').hide();
-    websiteHolder.find('.wordpressInfo').html(__('Upgrading..'));
+    websiteHolder.find('.wordpressInfo').html('<i class="fa fa-spinner fa-pulse"></i> '+__('Upgrading'));
 
     var data = mainwp_secure_data({
         action:'mainwp_upgradewp',
@@ -418,7 +418,7 @@ rightnow_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck)
             }
 
             websiteHolder.find('.pluginsAction').hide();
-            websiteHolder.find('.pluginsInfo').html('Upgrading..');
+            websiteHolder.find('.pluginsInfo').html('<i class="fa fa-spinner fa-pulse"></i> '+'Upgrading');
         }
 
         var data = mainwp_secure_data({
@@ -455,13 +455,13 @@ rightnow_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck)
                         if (res[slugParts[i]])
                         {
                             if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
-                            result = __('Upgrade successful');
+                            result = __('Upgrade Successful');
                             websiteHolder.attr('updated', 1);
                         }
                         else
                         {
                             if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, __('FAILED'));
-                            result = __('Upgrade failed');
+                            result = __('Upgrade Failed');
                         }
                     }
                     if (!done && pBulkMode)
@@ -740,13 +740,13 @@ rightnow_themes_upgrade_int = function (slug, websiteId, bulkMode)
                     if (res[pSlug])
                     {
                         if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
-                        result = __('Upgrade successful');
+                        result = __('Upgrade Successful');
                         websiteHolder.attr('updated', 1);
                     }
                     else
                     {
                         if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, __('FAILED'));
-                        result = __('Upgrade failed');
+                        result = __('Upgrade Failed');
                     }
 
                 }
@@ -1017,7 +1017,7 @@ rightnow_upgrade_int = function (websiteId, pThemeSlugToUpgrade, pPluginSlugToUp
             }
 
             websiteHolder.find('.pluginsAction').hide();
-            websiteHolder.find('.pluginsInfo').html(__('Upgrading..'));
+            websiteHolder.find('.pluginsInfo').html('<i class="fa fa-spinner fa-pulse"></i> '+__('Upgrading'));
         }
     }
 
@@ -1033,7 +1033,7 @@ rightnow_upgrade_int = function (websiteId, pThemeSlugToUpgrade, pPluginSlugToUp
             }
 
             websiteHolder.find('.pluginsAction').hide();
-            websiteHolder.find('.pluginsInfo').html(__('Upgrading..'));
+            websiteHolder.find('.pluginsInfo').html('<i class="fa fa-spinner fa-pulse"></i> '+__('Upgrading'));
         }
     }
 
@@ -1099,12 +1099,12 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
 
                         if (res[pSlug])
                         {
-                            result = __('Upgrade successful');
+                            result = __('Upgrade Successful');
                             websiteHolder.attr('updated', 1);
                         }
                         else
                         {
-                            result = __('Upgrade failed');
+                            result = __('Upgrade Failed');
                             pErrorMessage = result;
                         }
 
@@ -1150,12 +1150,12 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
 
                         if (res[pSlug])
                         {
-                            result = __('Upgrade successful');
+                            result = __('Upgrade Successful');
                             websiteHolder.attr('updated', 1);
                         }
                         else
                         {
-                            result = __('Upgrade failed');
+                            result = __('Upgrade Failed');
                             pErrorMessage = result;
                         }
 
@@ -1216,11 +1216,11 @@ var rightnowShowBusyTimeout;
 var rightnowShowBusy;
 mainwp_rightnow_checkBackups = function(sitesToUpdate, siteNames)
 {
-    if (mainwpParams['backup_before_upgrade'] != true)
-    {
-        if (rightnowContinueAfterBackup != undefined) rightnowContinueAfterBackup();
-        return false;
-    }
+//    if (mainwpParams['backup_before_upgrade'] != true)
+//    {
+//        if (rightnowContinueAfterBackup != undefined) rightnowContinueAfterBackup();
+//        return false;
+//    }
 
     rightnowShowBusy = true;
     rightnowShowBusyFunction = function()

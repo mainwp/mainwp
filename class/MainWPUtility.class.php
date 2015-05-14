@@ -176,12 +176,12 @@ class MainWPUtility
         $ip = false;
         $target = false;
 
-        $dnsRecord = dns_get_record($host);
+        $dnsRecord = @dns_get_record($host);
         if ($dnsRecord === false)
         {
             return array('error' => 'Invalid host.');
         }
-        else
+        else if (is_array($dnsRecord))
         {
             if (!isset($dnsRecord['ip']))
             {

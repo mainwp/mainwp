@@ -458,7 +458,7 @@ class MainWPManageBackups
             $useSite = ($archiveFormat == '' || $archiveFormat == 'site');
             ?>
             <tr>
-                <th scope="row"><?php _e('Archive format','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('','mainwp')); ?></th>
+                <th scope="row"><?php _e('Archive Format','mainwp'); ?></th>
                 <td>
                     <table class="mainwp-nomarkup">
                         <tr>

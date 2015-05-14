@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '8.2';
+    private $mainwp_db_version = '8.3';
     //Private
     private $table_prefix;
     //Singleton
@@ -96,7 +96,7 @@ class MainWPDB
   categories longtext NOT NULL,
   pluginDir text NOT NULL,
   automatic_update tinyint(1) NOT NULL,
-  backup_before_upgrade tinyint(1) NOT NULL DEFAULT 1,
+  backup_before_upgrade tinyint(1) NOT NULL DEFAULT 2,
   last_db_backup_size int(11) NOT NULL,
   pluginConflicts text NOT NULL,
   themeConflicts text NOT NULL,

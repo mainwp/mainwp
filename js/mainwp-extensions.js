@@ -126,7 +126,7 @@ jQuery(document).on('click', '.mainwp-extensions-activate', function ()
     if (jQuery(this).attr('license-status') == 'activated') {
         loadingEl.hide();
         statusEl.css('color', '#0074a2');
-        statusEl.html(__("Extension activated already.")).fadeIn();       
+        statusEl.html('<i class="fa fa-check-circle"></i> ' + __('Extension already Activated')).fadeIn();       
         return;
     } 
         
@@ -136,17 +136,17 @@ jQuery(document).on('click', '.mainwp-extensions-activate', function ()
         if (response) {
             if (response.result == 'SUCCESS') {
                 statusEl.css('color', '#0074a2');
-                statusEl.html(__("Extension successfully activated.")).fadeIn(); 
+                statusEl.html('<i class="fa fa-check-circle"></i> ' + __('Extension Activated Successfully')).fadeIn(); 
             } else if (response.error) {
                 statusEl.css('color', 'red');
                 statusEl.html(response.error).fadeIn(); 
             } else {
                 statusEl.css('color', 'red');
-                statusEl.html("Undefined error.").fadeIn(); 
+                statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn(); 
             }    
         } else {
             statusEl.css('color', 'red');
-            statusEl.html("Undefined error.").fadeIn(); 
+            statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn(); 
         }
         
         setTimeout(function ()
@@ -183,7 +183,7 @@ jQuery(document).on('click', '.mainwp-extensions-deactivate', function ()
         if (response) {
             if (response.result == 'SUCCESS') {
                 statusEl.css('color', '#0074a2');
-                var msg = __('Extension deactivated.');
+                var msg = '<i class="fa fa-check-circle"></i> ' + __('Extension Deactivated');
 //                if (response.activations_remaining)
 //                    msg += ' ' + response.activations_remaining;
                 statusEl.html(msg).fadeIn();              
@@ -192,11 +192,11 @@ jQuery(document).on('click', '.mainwp-extensions-deactivate', function ()
                 statusEl.html(response.error).fadeIn(); 
             } else {
                 statusEl.css('color', 'red');
-                statusEl.html("Undefined error.").fadeIn(); 
+                statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn(); 
             }        
         } else {
             statusEl.css('color', 'red');
-            statusEl.html("Undefined error.").fadeIn(); 
+            statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn(); 
         }
         
         setTimeout(function ()
@@ -282,10 +282,10 @@ jQuery(document).on('click', '#mainwp-extensions-savelogin', function ()
         if (response) {
             if (response.saved) {
                 statusEl.css('color', '#0074a2');
-                statusEl.html('Login saved.').fadeIn();              
+                statusEl.html('<i class="fa fa-check-circle"></i> Login Saved').fadeIn();              
             } else if (response.result == 'SUCCESS') {
                 statusEl.css('color', '#0074a2');
-                statusEl.html('Login success.').fadeIn();  
+                statusEl.html('<i class="fa fa-check-circle"></i> Login Success').fadeIn();  
                 setTimeout(function ()
                 {
                   statusEl.fadeOut();
@@ -302,7 +302,7 @@ jQuery(document).on('click', '#mainwp-extensions-savelogin', function ()
         
         if (undefError) {
             statusEl.css('color', 'red');
-            statusEl.html("Undefined error.").fadeIn(); 
+            statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn(); 
         }                
     }, 'json');     
     return false;
@@ -339,7 +339,7 @@ jQuery(document).on('click', '#mainwp-extensions-grabkeys', function ()
         if (response) {
             if (response.result == 'SUCCESS') {
                 statusEl.css('color', '#0074a2');
-                statusEl.html('Login success.').fadeIn();  
+                statusEl.html('<i class="fa fa-check-circle"></i> Login Success').fadeIn();  
                 setTimeout(function ()
                 {
                   statusEl.fadeOut();
@@ -359,7 +359,7 @@ jQuery(document).on('click', '#mainwp-extensions-grabkeys', function ()
         
         if (undefError) {
             statusEl.css('color', 'red');
-            statusEl.html("Undefined error.").fadeIn(); 
+            statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn(); 
         }                
     }, 'json');     
     return false;
@@ -405,7 +405,7 @@ extensions_activate_next = function(pObj)
             finishedActivateThreads++;
             currentActivateThreads--;
             statusEl.css('color', '#0074a2');
-            statusEl.html(__("Extension activated already.")).fadeIn(); 
+            statusEl.html('<i class="fa fa-check-circle"></i> ' + __('Extension already Activated')).fadeIn(); 
             countSuccessActivation++;
             extensions_loop_next();
             return;
@@ -424,7 +424,7 @@ extensions_activate_next = function(pObj)
                     if (response.activation_email)
                         api_row.find('input.api_email:text').val(response.activation_email);                            
                     statusEl.css('color', '#0074a2');
-                    statusEl.html(__("Extension successfully activated.")).fadeIn(); 
+                    statusEl.html('<i class="fa fa-check-circle"></i> ' + __("Extension Activated Successfully")).fadeIn(); 
                     api_row.find('.mainwp-extensions-deactivate-chkbox').attr('checked', false);  
                     var acts = jQuery(pObj).find("td.mainwp-extensions-childActions");   
                     acts.find('a.api-status').text(__('Activated'));
@@ -436,11 +436,11 @@ extensions_activate_next = function(pObj)
                     statusEl.html(response.error).fadeIn(); 
                 } else {
                     statusEl.css('color', 'red');
-                    statusEl.html("Undefined error.").fadeIn(); 
+                    statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn(); 
                 }  
             } else {
                 statusEl.css('color', 'red');
-                statusEl.html("Undefined error.").fadeIn(); 
+                statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn(); 
             }
             extensions_loop_next();
         }, 'json');
@@ -470,7 +470,7 @@ jQuery(document).on('click', '#mainwp-extensions-bulkinstall', function () {
         var undefError = false; 
         if (response) {
             if (response.result == 'SUCCESS') {
-                var msg = 'Login success.';
+                var msg = '<i class="fa fa-check-circle"></i> Login Success';
                 if (response.message) {
                     msg += ' ' + response.message;                    
                 } 
@@ -495,7 +495,7 @@ jQuery(document).on('click', '#mainwp-extensions-bulkinstall', function () {
         
         if (undefError) {
             statusEl.css('color', 'red');
-            statusEl.html("Undefined error.").fadeIn(); 
+            statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn(); 
         }                
     }, 'json');     
     return false;
@@ -517,7 +517,7 @@ mainwp_extension_bulk_install = function() {
 }
 
 mainwp_extension_bulk_install_done = function() {
-    jQuery('.mainwp_extension_installing').append('<div class="mainwp_info-box">' + __("Install finished.") + '</div><div class="mainwp_info-box">' + __('Refreshing the page for Step 3 "Add API Keys" in 5 seconds... if refresh fails please <a href="admin.php?page=Extensions" title="Extensions page">click here</a>.') + '</div>');
+    jQuery('.mainwp_extension_installing').append('<div class="mainwp_info-box"><i class="fa fa-check-circle"></i> ' + __("Install Finished") + '</div><div class="mainwp_info-box">' + __('Refreshing the page for Step 3 "Add API Keys" in 5 seconds... if refresh fails please <a href="admin.php?page=Extensions" title="Extensions page">click here</a>.') + '</div>');
     setTimeout(function ()
     {
       location.href = 'admin.php?page=Extensions'; 
@@ -556,7 +556,7 @@ mainwp_extension_bulk_activate = function() {
             loadingEl.hide();
             if (response == 'SUCCESS') { 
                 statusEl.css('color', '#21759B');
-                statusEl.html('<p>Plugins activated successfully.</p>').show();  
+                statusEl.html('<p><i class="fa fa-check-circle"></i> Plugins Activated Successfully</p>').show();  
             } 
             mainwp_extension_bulk_install_done();    
     });
@@ -594,14 +594,14 @@ mainwp_extension_bulk_install_specific = function(pExtToInstall) {
                     jQuery('.mainwp_extension_installing').append('<span class="extension_installed_success" slug="' + response.slug + '"></span>')
                 } else if (response.error) {
                     statusEl.css('color', 'red');
-                    statusEl.html('<p><strong>Error:</strong> ' + response.error + '</p>').show();
+                    statusEl.html('<p><strong><i class="fa fa-exclamation-circle"></i> Error:</strong> ' + response.error + '</p>').show();
                 } else {
                     statusEl.css('color', 'red');
-                    statusEl.html('<p>Undefined error.</p>').show();
+                    statusEl.html('<p><i class="fa fa-exclamation-circle"></i> Undefined Error</p>').show();
                 }
             } else {
                 statusEl.css('color', 'red');
-                statusEl.html('<p>Undefined error.</p>').show();
+                statusEl.html('<p><i class="fa fa-exclamation-circle"></i> Undefined Error</p>').show();
             }
             mainwp_extension_bulk_install_next();
         } }()
@@ -681,7 +681,7 @@ jQuery(document).on('click', '#mainwp-extensions-api-sslverify-certificate', fun
         if (response) {
             if (response.saved) {
                 statusEl.css('color', '#0074a2');
-                statusEl.html('Saved.').fadeIn(); 
+                statusEl.html('<i class="fa fa-check-circle"></i> Saved').fadeIn(); 
                 setTimeout(function ()
                 {
                   statusEl.fadeOut();
@@ -698,7 +698,7 @@ jQuery(document).on('click', '#mainwp-extensions-api-sslverify-certificate', fun
         
         if (undefError) {
             statusEl.css('color', 'red');
-            statusEl.html("Undefined error.").fadeIn(); 
+            statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn(); 
         }                
     }, 'json');     
     return false;

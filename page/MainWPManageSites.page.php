@@ -1048,7 +1048,22 @@ class MainWPManageSites
         self::$sitesTable->clear_items();
        ?>
         </form>
-    </div><?php
+    </div>
+        
+    <div id="managesites-backup-box" title="Full backup required" style="display: none; text-align: center">
+        <div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesites-backup-content">
+        </div>
+        <input id="managesites-backup-all" type="button" name="Backup All" value="<?php _e('Backup All','mainwp'); ?>" class="button-primary" />
+        <input id="managesites-backup-ignore" type="button" name="Ignore" value="<?php _e('Ignore','mainwp'); ?>" class="button" />
+    </div>
+
+    <div id="managesites-backupnow-box" title="Full backup" style="display: none; text-align: center">
+        <div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesites-backupnow-content">
+        </div>
+        <input id="managesites-backupnow-close" type="button" name="Ignore" value="<?php _e('Cancel','mainwp'); ?>" class="button" />
+    </div>
+        
+    <?php
 
         self::renderFooter('');
     }
@@ -1179,9 +1194,13 @@ class MainWPManageSites
 
                 MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset($_POST['mainwp_managesites_edit_uniqueId']) ? $_POST['mainwp_managesites_edit_uniqueId'] : '');
                 do_action('mainwp_update_site', $website->id);
-
+                
+                $backup_before_upgrade = isset($_POST['mainwp_backup_before_upgrade']) ? intval($_POST['mainwp_backup_before_upgrade']) : 2;
+                if ($backup_before_upgrade > 2)
+                    $backup_before_upgrade = 2;
+                
                 $newValues = array('automatic_update' => (!isset($_POST['mainwp_automaticDailyUpdate']) ? 0 : 1),
-                    'backup_before_upgrade' => (!isset($_POST['mainwp_backup_before_upgrade']) ? 0 : 1),
+                    'backup_before_upgrade' => $backup_before_upgrade,
                     'loadFilesBeforeZip' => $_POST['mainwp_options_loadFilesBeforeZip']
                 );
                 
@@ -1408,7 +1427,17 @@ class MainWPManageSites
             'option' => 'mainwp_managesites_per_page'
         );
         add_screen_option($option, $args);
-
+        
+        if (false === get_user_option('mainwp_default_hide_actions_column')) {
+            global $current_user;
+            $hidden = get_user_option("manage" . MainWPManageSites::$page . "columnshidden");
+            if (!is_array($hidden))
+                $hidden = array();
+            $hidden[] = 'site_actions';        
+            update_user_option($current_user->ID, "manage" . MainWPManageSites::$page . "columnshidden", $hidden, true);
+            update_user_option($current_user->ID, "mainwp_default_hide_actions_column", 1);     
+        }
+        
         self::$sitesTable = new MainWPManageSites_List_Table();
     }
 
@@ -1418,7 +1447,7 @@ class MainWPManageSites
         // get out of here if we are not on our settings page
         if (!is_object($screen) || $screen->id != MainWPManageSites::$page)
             return;
-
+        
         $args = array(
             'label' => MainWPManageSitesView::sitesPerPage(),
             'default' => 20,

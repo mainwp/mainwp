@@ -67,18 +67,18 @@ class MainWPRightNow
                 if (isset($information['upgrade']) && ($information['upgrade'] == 'SUCCESS'))
                 {
                     MainWPDB::Instance()->updateWebsiteOption($website, 'wp_upgrades', json_encode(array()));
-                    return __('Upgrade successful','mainwp');
+                    return __('Upgrade Successful','mainwp');
                 }
                 else if (isset($information['upgrade']))
                 {
                     $errorMsg = '';
                     if ($information['upgrade'] == 'LOCALIZATION')
                     {
-                        $errorMsg = __('No update found for your set locale.','mainwp');
+                        $errorMsg = __('No update found for your set locale','mainwp');
                     }
                     else if ($information['upgrade'] == 'NORESPONSE')
                     {
-                        $errorMsg = __('No response from the wordpress update server.','mainwp');
+                        $errorMsg = __('No response from the WordPress update server','mainwp');
                     }
 
                     throw new MainWPException('WPERROR', $errorMsg);
@@ -94,7 +94,7 @@ class MainWPRightNow
             }
         }
 
-        throw new MainWPException('ERROR', __('Invalid request','mainwp'));
+        throw new MainWPException('ERROR', __('Invalid Request','mainwp'));
     }
 
     public static function ignorePluginTheme($type, $slug, $name, $id)
@@ -313,6 +313,92 @@ class MainWPRightNow
         throw new MainWPException('ERROR', __('Invalid request','mainwp'));
     }
 
+     /*
+     * $id = site id in db
+     * $type = theme/plugin     
+     */    
+    public static function getPluginThemeSlugs($id, $type) {
+        
+        $userExtension = MainWPDB::Instance()->getUserExtension();
+        $sql = MainWPDB::Instance()->getSQLWebsiteById($id); 
+        $websites = MainWPDB::Instance()->query($sql);
+        $website = @MainWPDB::fetch_object($websites);
+ 
+        $slugs = array();        
+        if ($type == 'plugin') {
+            if ($website->is_ignorePluginUpdates) return "";
+
+            $plugin_upgrades = json_decode($website->plugin_upgrades, true);
+            $decodedPremiumUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades'), true);
+            if (is_array($decodedPremiumUpgrades))
+            {
+                foreach ($decodedPremiumUpgrades as $crrSlug => $premiumUpgrade)
+                {
+                    $premiumUpgrade['premium'] = true;
+
+                    if ($premiumUpgrade['type'] == 'plugin')
+                    {
+                        if (!is_array($plugin_upgrades)) $plugin_upgrades = array();
+                        $plugin_upgrades[$crrSlug] = $premiumUpgrade;
+                    }
+                }
+            }
+
+            $ignored_plugins = json_decode($website->ignored_plugins, true);
+            if (is_array($ignored_plugins)) {
+                $plugin_upgrades = array_diff_key($plugin_upgrades, $ignored_plugins);
+            }
+
+            $ignored_plugins = json_decode($userExtension->ignored_plugins, true);
+            if (is_array($ignored_plugins)) {
+                $plugin_upgrades = array_diff_key($plugin_upgrades, $ignored_plugins);
+            }
+            
+            if (is_array($plugin_upgrades))
+            {
+                foreach ($plugin_upgrades as $plugin_name => $plugin_upgrade)
+                {
+                    $slugs[] = urlencode($plugin_name);
+                }
+            }                  
+        } else if ($type == 'theme') {
+        
+            if ($website->is_ignoreThemeUpdates) return "";
+
+            $theme_upgrades = json_decode($website->theme_upgrades, true);                    
+            $decodedPremiumUpgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'premium_upgrades'), true);
+            if (is_array($decodedPremiumUpgrades))
+            {
+                foreach ($decodedPremiumUpgrades as $crrSlug => $premiumUpgrade)
+                {
+                    $premiumUpgrade['premium'] = true;
+
+                    if ($premiumUpgrade['type'] == 'theme')
+                    {
+                        if (!is_array($theme_upgrades)) $theme_upgrades = array();
+                        $theme_upgrades[$crrSlug] = $premiumUpgrade;
+                    }
+                }
+            }
+
+            $ignored_themes = json_decode($website->ignored_themes, true);
+            if (is_array($ignored_themes)) $theme_upgrades = array_diff_key($theme_upgrades, $ignored_themes);
+
+            $ignored_themes = json_decode($userExtension->ignored_themes, true);
+            if (is_array($ignored_themes)) $theme_upgrades = array_diff_key($theme_upgrades, $ignored_themes);
+            
+            if (is_array($theme_upgrades))
+            {
+                foreach ($theme_upgrades as $slug => $theme_upgrade)
+                {
+                    $slugs[] = $slug;
+                }               
+            }            
+        }
+        
+        return implode(",", $slugs);      
+    }
+    
     public static function renderLastUpdate()
     {
         $currentwp = MainWPUtility::get_current_wpid();
@@ -341,7 +427,7 @@ class MainWPRightNow
         
         if ($website == null)
         {
-            die(json_encode(array('error' => 'Invalid request.')));
+            die(json_encode(array('error' => 'Invalid Request')));
         }
 
         $maxRequestsInThirtySeconds = get_option('mainwp_maximumRequests');
@@ -1025,7 +1111,7 @@ class MainWPRightNow
     
     <div class="clear">
         <div class="mainwp-row">
-            <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=PluginsIgnore'); ?>"><?php _e('Plugin Ignore List','mainwp'); ?></a> / <a href="<?php echo admin_url('admin.php?page=ThemesIgnore'); ?>"><?php _e('Theme Ignore List','mainwp'); ?></a></span>
+            <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=PluginsIgnore'); ?>"><?php _e('Ignored Plugins','mainwp'); ?></a> | <a href="<?php echo admin_url('admin.php?page=ThemesIgnore'); ?>"><?php _e('Ignored Themes','mainwp'); ?></a></span>
             <span class="mainwp-mid-col">&nbsp;</span>
             <?php if (mainwp_current_user_can("dashboard", "update_wordpress") && mainwp_current_user_can("dashboard", "update_plugins") && mainwp_current_user_can("dashboard", "update_themes")) { ?>
             <span class="mainwp-right-col"><?php if (($total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades) == 0) { ?><a class="button" disabled="disabled"><?php _e('Upgrade Everything','mainwp'); ?></a><?php } else { ?><a href="#" onClick="return rightnow_global_upgrade_all();" class="mainwp-upgrade-button button"><?php _e('Upgrade Everything','mainwp'); ?></a><?php } ?></span>
@@ -1234,12 +1320,17 @@ class MainWPRightNow
 
     public static function checkBackups()
     {
-        if (get_option('mainwp_backup_before_upgrade') != 1) return true;
+        //if (get_option('mainwp_backup_before_upgrade') != 1) return true;
         if (!is_array($_POST['sites'])) return true;
-
+        $global_backup_before_upgrade = get_option('mainwp_backup_before_upgrade');
+        
         $output = array();
         foreach ($_POST['sites'] as $siteId)
         {
+            $website = MainWPDB::Instance()->getWebsiteById($siteId);            
+            if (($website->backup_before_upgrade == 0) || (($website->backup_before_upgrade == 2) && ($global_backup_before_upgrade == 0)))
+                continue;
+            
             $dir = MainWPUtility::getMainWPSpecificDir($siteId);
             //Check if backup ok
             $lastBackup = -1;

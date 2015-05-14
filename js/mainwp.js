@@ -193,10 +193,10 @@ postAction = function (elem, what) {
     rowElement.children('.mainwp-row-actions-working').show();
     jQuery.post(ajaxurl, data, function (response) {
         if (response.error) {
-            rowElement.html('<font color="red">'+response.error+'</font>');
+            rowElement.html('<span style="color: #a00;"><i class="fa fa-exclamation-circle"></i> '+response.error+'</span>');
         }
         else if (response.result) {
-            rowElement.html(response.result);
+            rowElement.html('<span style="color: #0073aa;"><i class="fa fa-check-circle"></i> '+response.result+'</span>');
         }
         else {
             rowElement.children('.mainwp-row-actions-working').hide();
@@ -239,10 +239,10 @@ pluginAction = function (elem, what) {
     rowElement.children('.mainwp-row-actions-working').show();
     jQuery.post(ajaxurl, data, function (response) {
         if (response && response.error) {
-            rowElement.html('<font color="red">'+response.error+'</font>');
+            rowElement.html('<span style="color: #a00;"><i class="fa fa-exclamation-circle"></i> '+response.error+'</span>');
         }
         else if (response && response.result) {
-            rowElement.html(response.result);
+            rowElement.html('<span style="color: #0073aa;"><i class="fa fa-check-circle"></i> '+response.result+'<span>');
         }
         else {
             rowElement.children('.mainwp-row-actions-working').hide();
@@ -279,10 +279,10 @@ themeAction = function (elem, what) {
     rowElement.children('.mainwp-row-actions-working').show();
     jQuery.post(ajaxurl, data, function (response) {
         if (response && response.error) {
-            rowElement.html('<font color="red">'+response.error+'</font>');
+            rowElement.html('<span style="color: #a00;"><i class="fa fa-exclamation-circle"></i> '+response.error+'</span>');
         }
         else if (response && response.result) {
-            rowElement.html(response.result);
+            rowElement.html('<span style="color: #0073aa;"><i class="fa fa-check-circle"></i> '+response.result+'<span>');
         }
         else {
             rowElement.children('.mainwp-row-actions-working').hide();
@@ -695,7 +695,7 @@ securityIssues_handle = function (response) {
             }
         }
         catch (err) {
-            result = __('Undefined error');
+            result = '<i class="fa fa-exclamation-circle"></i> '+__('Undefined Error');
         }
     }
     if (result != '') {
@@ -1462,10 +1462,10 @@ rightnow_upgrade_plugintheme_list = function (what, id, list, noCheck)
                     for (var i = 0; i < newList.length; i++) {
                         var item = newList[i];
                         if (res[item]) {
-                            document.getElementById('wp_upgrade_' + pWhat + '_' + pId + '_' + item).innerHTML = __('Upgrade successful');
+                            document.getElementById('wp_upgrade_' + pWhat + '_' + pId + '_' + item).innerHTML = '<span style="color: #0073aa;"><i class="fa fa-check-circle"></i> '+ __('Upgrade Successful') + '</span>';
                         }
                         else {
-                            document.getElementById('wp_upgrade_' + pWhat + '_' + pId + '_' + item).innerHTML = __('Upgrade failed');
+                            document.getElementById('wp_upgrade_' + pWhat + '_' + pId + '_' + item).innerHTML = '<span style="color: #a00;"><i class="fa fa-exclamation-circle"></i> ' + __('Upgrade Failed') + '</span>';
                         }
                     }
                     success = true;
@@ -1501,10 +1501,10 @@ rightnow_show = function (what, leave_text) {
     jQuery('#wp_' + what).toggle(100, 'linear', function () {
         if (!leave_text) {
             if (jQuery('#wp_' + what).css('display') == 'none') {
-                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('Show All') : __('<i class="fa fa-eye-slash"></i> Show')));
+                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('<i class="fa fa-eye-slash"></i> Show All') : __('<i class="fa fa-eye-slash"></i> Show')));
             }
             else {
-                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('Hide All') : __('<i class="fa fa-eye-slash"></i> Hide')));
+                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('<i class="fa fa-eye-slash"></i> Hide All') : __('<i class="fa fa-eye-slash"></i> Hide')));
             }
         }
     });
@@ -2471,7 +2471,7 @@ managesites_init = function () {
 mainwp_managesites_reconnect = function(pElement, pRightNow)
 {
     var parent = pElement.parent();
-    parent.html('Trying to reconnect...');
+    parent.html('<i class="fa fa-spinner fa-pulse"></i> '+'Trying to reconnect...');
 
     var data = {
         action:'mainwp_reconnectwp',
@@ -2484,7 +2484,7 @@ mainwp_managesites_reconnect = function(pElement, pRightNow)
         if (response.substr(0, 5) == 'ERROR') {
             var error;
             if (response.length == 5) {
-                error = 'Undefined error.';
+                error = 'Undefined Error';
             }
             else {
                 error = 'Error - ' + response.substr(6);
@@ -2735,7 +2735,7 @@ managesites_remove = function (id) {
     
     var q = confirm(__('Are you sure you want to delete this site?'));
     if (q) {
-        jQuery('#site-status-' + id).html(__('Removing and deactivating the MainWP Child plugin..'));
+        jQuery('#site-status-' + id).html('<i class="fa fa-spinner fa-pulse"></i> '+__('Removing and deactivating the MainWP Child plugin..'));
         var data = mainwp_secure_data({
             action:'mainwp_removesite',
             id:id
@@ -3688,7 +3688,7 @@ mainwp_install_next = function (ev) {
     newp = parseInt(jQuery('#MainWPInstallBulkPage').html()) + 1;
     maxp = parseInt(jQuery('#MainWPInstallBulkPages').html());
     if (newp <= maxp) {
-        jQuery('#MainWPInstallBulkStatus').html(__('Loading next page..'));
+        jQuery('#MainWPInstallBulkStatus').html(__('Loading next page...'));
         jQuery('#MainWPInstallBulkStatusExtra').css('display', 'inline-block');
         mainwp_install_searchhelp(jQuery('#mainwp_installbulk_s').val(), jQuery('#mainwp_installbulk_typeselector').val(), newp);
     }
@@ -3784,17 +3784,19 @@ mainwp_install_bulk = function (type, slug) {
     }
 
     jQuery.post(ajaxurl, data, function (pType, pActivatePlugin, pOverwrite) { return function (response) {
-        var installQueue = '<h3>Installing ' + type + '</h3>';
+        var installQueue = '<div class="postbox"><div class="inside">';
+        installQueue += '<h3>Installing ' + type + '</h3>';
         for (var siteId in response.sites)
         {
             var site = response.sites[siteId];
-            installQueue += '<span class="siteBulkInstall" siteid="' + siteId + '" status="queue"><strong>' + site['name'] + '</strong>: <span class="queue">'+__('Queued')+'</span><span class="progress"><i class="fa fa-spinner fa-pulse"></i> '+__('In progress')+'</span><span class="status"></span></span><br />';
+            installQueue += '<span class="siteBulkInstall" siteid="' + siteId + '" status="queue"><strong>' + site['name'] + '</strong>: <span class="queue"><i class="fa fa-clock-o"></i> '+__('Queued')+'</span><span class="progress"><i class="fa fa-spinner fa-pulse"></i> '+__('In progress')+'</span><span class="status"></span></span><br />';
         }
+        installQueue += '</div></div>';
 
         jQuery('#mainwp_wrap-inside').html(installQueue);
         mainwp_install_bulk_start_next(pType, response.url, pActivatePlugin, pOverwrite);
     } }(type, jQuery('#chk_activate_plugin').is(':checked'), jQuery('#chk_overwrite').is(':checked')), 'json');
-    jQuery('#mainwp_wrap-inside').html('<i class="fa fa-spinner fa-pulse"></i> '+__('Preparing %1 installation.', type));
+    jQuery('#mainwp_wrap-inside').html('<div class="postbox"><div class="inside"><h3><i class="fa fa-spinner fa-pulse"></i> '+ __('Preparing %1 installation.', type) + '</h3></div></div>');
 };
 
 bulkInstallMaxThreads = 3;
@@ -3842,16 +3844,16 @@ mainwp_install_bulk_start_specific = function (pType, pUrl, pActivatePlugin, pOv
             }
             else if ((response.ok != undefined) && (response.ok[pSiteToInstall.attr('siteid')] != undefined))
             {
-                statusEl.html(__('Installation successful'));
+                statusEl.html('<span style="color: #0073aa;"><i class="fa fa-check-circle"></i> '+__('Installation Successful')+'</span>');
             }
             else if ((response.errors != undefined) && (response.errors[pSiteToInstall.attr('siteid')] != undefined))
             {
-                statusEl.html(__('Installation failed')+': ' + response.errors[pSiteToInstall.attr('siteid')][1]);
+                statusEl.html('<i class="fa fa-exclamation-circle"></i> '+__('Installation Failed')+': ' + response.errors[pSiteToInstall.attr('siteid')][1]);
                 statusEl.css('color', 'red');
             }
             else
             {
-                statusEl.html(__('Installation failed'));
+                statusEl.html('<i class="fa fa-exclamation-circle"></i> '+__('Installation failed'));
                 statusEl.css('color', 'red');
             }
 
@@ -3923,7 +3925,7 @@ mainwp_upload_bulk = function (type) {
         for (var siteId in response.sites)
         {
             var site = response.sites[siteId];
-            installQueue += '<span class="siteBulkInstall" siteid="' + siteId + '" status="queue"><strong>' + site['name'] + '</strong>: <span class="queue">'+__('Queued')+'</span><span class="progress"><i class="fa fa-spinner fa-pulse"></i> '+__('In progress')+'</span><span class="status"></span></span><br />';
+            installQueue += '<span class="siteBulkInstall" siteid="' + siteId + '" status="queue"><strong>' + site['name'] + '</strong>: <span class="queue"><i class="fa fa-clock-o"></i> '+__('Queued')+'</span><span class="progress"><i class="fa fa-spinner fa-pulse"></i> '+__('In progress')+'</span><span class="status"></span></span><br />';
         }
 
         jQuery('#mainwp_wrap-inside').html(installQueue);
@@ -3986,16 +3988,16 @@ mainwp_upload_bulk_start_specific = function (pType, pUrls, pActivatePlugin, pOv
             }
             else if ((response.ok != undefined) && (response.ok[pSiteToInstall.attr('siteid')] != undefined))
             {
-                statusEl.html(__('Installation successful'));
+                statusEl.html('<span style="color: #0073aa;"><i class="fa fa-check-circle"></i>  '+__('Installation Successful')+'</span>');
             }
             else if ((response.errors != undefined) && (response.errors[pSiteToInstall.attr('siteid')] != undefined))
             {
-                statusEl.html(__('Installation failed')+': ' + response.errors[pSiteToInstall.attr('siteid')][1]);
+                statusEl.html('<i class="fa fa-exclamation-circle"></i>'+__('Installation Failed')+': ' + response.errors[pSiteToInstall.attr('siteid')][1]);
                 statusEl.css('color', 'red');
             }
             else
             {
-                statusEl.html(__('Installation failed'));
+                statusEl.html('<i class="fa fa-exclamation-circle"></i>'+__('Installation Failed'));
                 statusEl.css('color', 'red');
             }
 
@@ -4990,7 +4992,7 @@ mainwppage_postAction = function (elem, what) {
     rowElement.find('.row-actions-working').show();
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            rowElement.html('<td colspan="7">' + response.result + '</td>');
+            rowElement.html('<td colspan="7"><i class="fa fa-check-circle"></i> ' + response.result + '</td>');
         }
         else {
             rowElement.find('.row-actions-working').hide();
@@ -5221,7 +5223,7 @@ jQuery(document).ready(function () {
         jQuery.post(ajaxurl, data, function(pSlug) { return function (response) {
             var rowEl = jQuery('tr[plugin_slug="'+pSlug+'"]');
             if (response.result == 'SUCCESS') {
-                jQuery('#mainwp_notes_status').html(__('Note saved.'));
+                jQuery('#mainwp_notes_status').html('<i class="fa fa-check-circle"></i> '+__('Note Saved'));
                 rowEl.find('.note').html(jQuery('#mainwp_notes_note').val());
 
                 if (newnote == '') {
@@ -5471,7 +5473,7 @@ mainwppost_postAction = function (elem, what) {
             rowElement.html('<td colspan="9"><font color="red">'+response.error+'</font></td>');
         }
         else if (response.result) {
-            rowElement.html('<td colspan="9">' + response.result + '</td>');
+            rowElement.html('<td colspan="9"><i class="fa fa-check-circle"></i> ' + response.result + '</td>');
         }
         else {
             rowElement.find('.row-actions-working').hide();
@@ -5929,7 +5931,7 @@ mainwpuser_postAction = function (elem, what) {
     rowElement.find('.row-actions-working').show();
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            rowElement.html('<td colspan="7">' + response.result + '</td>');
+            rowElement.html('<td colspan="7"><i class="fa fa-check-circle"></i> ' + response.result + '</td>');
         }
         else {
             rowElement.find('.row-actions-working').hide();
@@ -6582,11 +6584,13 @@ updateExcludedFolders = function()
 };
 
 
-jQuery(document).on('click', '#mainwp-events-notice-dismiss', function()
+jQuery(document).on('click', '.mainwp-events-notice-dismiss', function()
 {
-    jQuery('#mainwp-events-notice').hide();
+    var notice = jQuery(this).attr('notice');
+    jQuery(this).closest('.mainwp-events-notice').fadeOut(500);
     var data = {
-        action:'mainwp_events_notice_hide'        
+        action:'mainwp_events_notice_hide',
+        notice: notice
     };
     jQuery.post(ajaxurl, data, function (res) {
     });

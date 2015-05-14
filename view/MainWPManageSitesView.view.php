@@ -526,7 +526,7 @@ class MainWPManageSitesView
                                       name="mainwp_managesites_add_uniqueId" value="" class="mainwp-field mainwp-unique-id"/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
                         </tr>
                             <tr class="form-field form-required">
-                            <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
+                            <th scope="row"><?php _e('Verify Certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
                             <td>
                                 <select id="mainwp_managesites_verify_certificate" name="mainwp_managesites_verify_certificate">
                                      <option selected value="1"><?php _e('Yes','mainwp'); ?></option>
@@ -767,18 +767,18 @@ class MainWPManageSitesView
             <th scope="row">Backups on Server <?php MainWPUtility::renderToolTip('The number of backups to keep on your server.  This does not affect external sources.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/'); ?></th>
             <td>
                 <input type="text" name="mainwp_options_backupOnServer"  class="mainwp-field mainwp-settings-icon"
-                       value="<?php echo ($backupsOnServer === false ? 1 : $backupsOnServer); ?>"/><span class="mainwp-form_hint"><?php _e('The number of backups to keep on your server.  This does not affect external sources.','mainwp'); ?></span>
+                       value="<?php echo ($backupsOnServer === false ? 1 : $backupsOnServer); ?>"/><span class="mainwp-form_hint"><?php _e('The number of backups to keep on your server. This does not affect external sources. 0 sets unlimited.','mainwp'); ?></span>
             </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>
-            <th scope="row"><?php _e('Backups on external sources','mainwp'); ?> <?php MainWPUtility::renderToolTip('The number of backups to keep on your external sources.  This does not affect backups on the server.  0 sets unlimited.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/'); ?></th>
+            <th scope="row"><?php _e('Backups on External Sources','mainwp'); ?> <?php MainWPUtility::renderToolTip('The number of backups to keep on your external sources. This does not affect backups on the server.  0 sets unlimited.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/'); ?></th>
             <td>
                 <input type="text" name="mainwp_options_backupOnExternalSources"  class="mainwp-field mainwp-settings-icon"
                        value="<?php echo ($backupOnExternalSources === false ? 1 : $backupOnExternalSources); ?>"/><span class="mainwp-form_hint"><?php _e('The number of backups to keep on your external sources.  This does not affect backups on the server.  0 sets unlimited.','mainwp'); ?></span>
             </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>
-            <th scope="row"><?php _e('Archive format','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('','mainwp')); ?></th>
+            <th scope="row"><?php _e('Archive Format','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('','mainwp')); ?></th>
             <td>
                 <table class="mainwp-nomarkup">
                     <tr>
@@ -792,10 +792,10 @@ class MainWPManageSitesView
                         </td>
                         <td>
                             <i>
-                            <span id="info_zip" class="archive_info" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)</span>
-                            <span id="info_tar" class="archive_info" <?php if ($archiveFormat != 'tar'): ?>style="display: none;"<?php endif; ?>>Creates an uncompressed tar-archive. (No compression, fast, low memory usage)</span>
-                            <span id="info_tar.gz" class="archive_info" <?php if ($archiveFormat != 'tar.gz' && $archiveFormat !== false): ?>style="display: none;"<?php endif; ?>>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)</span>
-                            <span id="info_tar.bz2" class="archive_info" <?php if ($archiveFormat != 'tar.bz2'): ?>style="display: none;"<?php endif; ?>>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)</span>
+                            <span id="info_zip" class="archive_info" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>><?php _e('Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)','mainwp'); ?></span>
+                            <span id="info_tar" class="archive_info" <?php if ($archiveFormat != 'tar'): ?>style="display: none;"<?php endif; ?>><?php _e('Creates an uncompressed tar-archive. (No compression, fast, low memory usage)','mainwp'); ?></span>
+                            <span id="info_tar.gz" class="archive_info" <?php if ($archiveFormat != 'tar.gz' && $archiveFormat !== false): ?>style="display: none;"<?php endif; ?>><?php _e('Creates a GZipped tar-archive. (Good compression, fast, low memory usage)','mainwp'); ?></span>
+                            <span id="info_tar.bz2" class="archive_info" <?php if ($archiveFormat != 'tar.bz2'): ?>style="display: none;"<?php endif; ?>><?php _e('Creates a BZipped tar-archive. (Best compression, fast, low memory usage)','mainwp'); ?></span>
                             </i>
                         </td>
                     </tr>
@@ -811,35 +811,35 @@ class MainWPManageSitesView
             </td>
         </tr>
         <tr class="archive_method archive_zip <?php echo !empty($hiddenCls) ? "hidden" : ""; ?>" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
-            <th scope="row"><?php _e('Load files in memory before zipping','mainwp');?> <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advice to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
+            <th scope="row"><?php _e('Load Files in Memory Before Zipping','mainwp');?> <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advice to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/'); ?></th>
             <td>
                 <div class="mainwp-checkbox">
-                <input type="checkbox" id="mainwp_options_loadFilesBeforeZip" name="mainwp_options_loadFilesBeforeZip" <?php echo ($loadFilesBeforeZip ? 'checked="checked"' : ''); ?>"/>
+                <input type="checkbox" id="mainwp_options_loadFilesBeforeZip" name="mainwp_options_loadFilesBeforeZip" <?php echo ($loadFilesBeforeZip ? 'checked="checked"' : ''); ?> />
                 <label for="mainwp_options_loadFilesBeforeZip"></label>
                 </div>
             </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>
             <th scope="row">
-                <?php _e('Send Email when a backup fails','mainwp'); ?></th>
+                <?php _e('Send Email if a Backup Fails','mainwp'); ?></th>
                 <td>
                   <div class="mainwp-checkbox">
-                    <input type="checkbox" id="mainwp_options_notificationOnBackupFail" name="mainwp_options_notificationOnBackupFail"  <?php echo ($notificationOnBackupFail == 0 ? '' : 'checked="checked"'); ?> "/>
+                    <input type="checkbox" id="mainwp_options_notificationOnBackupFail" name="mainwp_options_notificationOnBackupFail"  <?php echo ($notificationOnBackupFail == 0 ? '' : 'checked="checked"'); ?> />
                     <label for="mainwp_options_notificationOnBackupFail"></label>
                   </div>
                </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>
-            <th scope="row"><?php _e('Send Email when a backup starts','mainwp'); ?></th>
+            <th scope="row"><?php _e('Send Email if a Backup Starts','mainwp'); ?></th>
                <td>
                  <div class="mainwp-checkbox">
-                   <input type="checkbox" id="mainwp_options_notificationOnBackupStart" name="mainwp_options_notificationOnBackupStart"  <?php echo ($notificationOnBackupStart == 0 ? '' : 'checked="checked"'); ?> "/>
+                   <input type="checkbox" id="mainwp_options_notificationOnBackupStart" name="mainwp_options_notificationOnBackupStart"  <?php echo ($notificationOnBackupStart == 0 ? '' : 'checked="checked"'); ?> />
                    <label for="mainwp_options_notificationOnBackupStart"></label>
                 </div>
             </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>
-            <th scope="row"><?php _e('Execute backuptasks in chunks','mainwp'); ?></th>
+            <th scope="row"><?php _e('Execute Backuptasks in Chunks','mainwp'); ?></th>
                <td>
                  <div class="mainwp-checkbox">
                    <input type="checkbox" id="mainwp_options_chunkedBackupTasks" name="mainwp_options_chunkedBackupTasks"  <?php echo ($chunkedBackupTasks == 0 ? '' : 'checked="checked"'); ?> />
@@ -1103,7 +1103,7 @@ class MainWPManageSitesView
                 ?>
                 <tr><td colspan="2"><hr /></td></tr>
                 <tr>
-                    <th scope="row"><?php _e('Archive format','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('','mainwp')); ?></th>
+                    <th scope="row"><?php _e('Archive Format','mainwp'); ?></th>
                     <td>
                         <table class="mainwp-nomarkup">
                             <tr>
@@ -1356,54 +1356,55 @@ class MainWPManageSitesView
                           <label for="mainwp_options_footprint_plugin_folder_hidden"></label>
                         </div>Hidden (<strong>Note: </strong><i>If the heatmap is turned on, the heatmap javascript will still be visible.</i>) <br/>
                     </td>
-                </tr>
+                </tr>               
                 <tr>
-                    <th scope="row">Auto update core <?php MainWPUtility::renderToolTip('Auto update only works when enabled in the global settings as well.', admin_url('admin.php?page=Settings')); ?></th>
+                    <th scope="row"><?php _e('Require Backup Before Upgrade','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Backup only works when enabled in the global settings as well.','mainwp'), admin_url('admin.php?page=Settings')); ?></th>
+                    <td>
+                         <select id="mainwp_backup_before_upgrade" name="mainwp_backup_before_upgrade">
+                             <option <?php echo ($website->backup_before_upgrade == 1) ? "selected" : ""; ?> value="1"><?php _e('Yes','mainwp'); ?></option>
+                             <option <?php echo ($website->backup_before_upgrade == 0) ? "selected" : ""; ?> value="0"><?php _e('No','mainwp'); ?></option>
+                             <option <?php echo ($website->backup_before_upgrade == 2) ? "selected" : ""; ?> value="2"><?php _e('Use Global Setting','mainwp'); ?></option>
+                         </select> <i>(<?php _e('Default','mainwp'); ?>: <?php _e('Use Global Setting','mainwp'); ?>)</i>
+                         
+                    </td>
+                </tr>
+                 <tr>
+                    <th scope="row"><?php _e('Auto Update Core','mainwp'); ?> <?php MainWPUtility::renderToolTip('Auto update only works when enabled in the global settings as well.', admin_url('admin.php?page=Settings')); ?></th>
                     <td>
                         <div class="mainwp-checkbox">
                         <input type="checkbox" name="mainwp_automaticDailyUpdate"
-                               id="mainwp_automaticDailyUpdate" <?php echo ($website->automatic_update == 1 ? 'checked="true"' : ''); ?>"/>
+                               id="mainwp_automaticDailyUpdate" <?php echo ($website->automatic_update == 1 ? 'checked="true"' : ''); ?> />
                         <label for="mainwp_automaticDailyUpdate"></label>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row"><?php _e('Require backup before upgrade','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Backup only works when enabled in the global settings as well.','mainwp'), admin_url('admin.php?page=Settings')); ?></th>
-                    <td>
-                        <div class="mainwp-checkbox">
-                        <input type="checkbox" name="mainwp_backup_before_upgrade"
-                               id="mainwp_backup_before_upgrade" <?php echo ($website->backup_before_upgrade == 1 ? 'checked="true"' : ''); ?>/>
-                        <label for="mainwp_backup_before_upgrade"></label>
                         </div>
                     </td>
                 </tr>
                 <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
                 <tr>
-                    <th scope="row">Ignore Core Updates <?php MainWPUtility::renderToolTip('Set to YES if you want to Ignore Core Updates.'); ?></th>
+                    <th scope="row"><?php _e('Ignore Core Updates','mainwp'); ?> <?php MainWPUtility::renderToolTip('Set to YES if you want to Ignore Core Updates.'); ?></th>
                     <td>
                         <div class="mainwp-checkbox">
                         <input type="checkbox" name="mainwp_is_ignoreCoreUpdates"
-                               id="mainwp_is_ignoreCoreUpdates" <?php echo ($website->is_ignoreCoreUpdates == 1 ? 'checked="true"' : ''); ?>"/>
+                               id="mainwp_is_ignoreCoreUpdates" <?php echo ($website->is_ignoreCoreUpdates == 1 ? 'checked="true"' : ''); ?> />
                         <label for="mainwp_is_ignoreCoreUpdates"></label>
                         </div>
                     </td>
                 </tr>  
                 <tr>
-                    <th scope="row">Ignore All Plugin Updates <?php MainWPUtility::renderToolTip('Set to YES if you want to Ignore All Plugin Updates.'); ?></th>
+                    <th scope="row"><?php _e('Ignore All Plugin Updates','mainwp'); ?> <?php MainWPUtility::renderToolTip('Set to YES if you want to Ignore All Plugin Updates.'); ?></th>
                     <td>
                         <div class="mainwp-checkbox">
                         <input type="checkbox" name="mainwp_is_ignorePluginUpdates"
-                               id="mainwp_is_ignorePluginUpdates" <?php echo ($website->is_ignorePluginUpdates == 1 ? 'checked="true"' : ''); ?>"/>
+                               id="mainwp_is_ignorePluginUpdates" <?php echo ($website->is_ignorePluginUpdates == 1 ? 'checked="true"' : ''); ?> />
                         <label for="mainwp_is_ignorePluginUpdates"></label>
                         </div>
                     </td>
                 </tr>  
                 <tr>
-                    <th scope="row">Ignore All Theme Updates <?php MainWPUtility::renderToolTip('Set to YES if you want to Ignore All Theme Updates.'); ?></th>
+                    <th scope="row"><?php _e('Ignore All Theme Updates','mainwp'); ?> <?php MainWPUtility::renderToolTip('Set to YES if you want to Ignore All Theme Updates.'); ?></th>
                     <td>
                         <div class="mainwp-checkbox">
                         <input type="checkbox" name="mainwp_is_ignoreThemeUpdates"
-                               id="mainwp_is_ignoreThemeUpdates" <?php echo ($website->is_ignoreThemeUpdates == 1 ? 'checked="true"' : ''); ?>"/>
+                               id="mainwp_is_ignoreThemeUpdates" <?php echo ($website->is_ignoreThemeUpdates == 1 ? 'checked="true"' : ''); ?> />
                         <label for="mainwp_is_ignoreThemeUpdates"></label>
                         </div>
                     </td>
@@ -1427,7 +1428,7 @@ class MainWPManageSitesView
                              name="mainwp_managesites_edit_uniqueId" value="<?php echo $website->uniqueId; ?>" class="mainwp-field mainwp-unique-id"/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
                 </tr>                
                  <tr class="form-field form-required">
-                    <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
+                    <th scope="row"><?php _e('Verify Certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
                     <td>
                         <select id="mainwp_managesites_edit_verifycertificate" name="mainwp_managesites_edit_verifycertificate">
                              <option <?php echo ($website->verify_certificate == 1) ? "selected" : ""; ?> value="1"><?php _e('Yes','mainwp'); ?></option>
@@ -1470,7 +1471,7 @@ class MainWPManageSitesView
                 $useGlobal = ($archiveFormat == 'global');
                 ?>
                 <tr>
-                    <th scope="row"><?php _e('Archive format','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('','mainwp')); ?></th>
+                    <th scope="row"><?php _e('Archive Format','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('','mainwp')); ?></th>
                     <td>
                         <table class="mainwp-nomarkup">
                             <tr>
@@ -1518,13 +1519,13 @@ class MainWPManageSitesView
                           <label for="mainwp_options_maximumFileDescriptorsOverride_override"></label>
                         </div>Override<br/><br />
 
-                        <div style="float: left">Auto detect:&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e('Enter a fallback value because not all hosts support this function.','mainwp'); ?>)</i></div><div style="clear:both"></div>
+                        <div style="float: left">Auto Detect:&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e('Enter a fallback value because not all hosts support this function.','mainwp'); ?>)</i></div><div style="clear:both"></div>
                         <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors"
                                value="<?php echo $maximumFileDescriptors; ?>"/><span class="mainwp-form_hint"><?php _e('The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp'); ?></span>
                     </td>
                 </tr>
                 <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
-                    <th scope="row">Load files in memory before zipping <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advise to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/load-files-memory/'); ?></th>
+                    <th scope="row"><?php _e('Load Files in Memory Before Zipping','mainwp'); ?> <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advise to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/load-files-memory/'); ?></th>
                     <td>
                         <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_global" value="1" <?php if ($website->loadFilesBeforeZip == false || $website->loadFilesBeforeZip == 1): ?>checked="true"<?php endif; ?>/> Global setting (<a href="<?php echo admin_url('admin.php?page=Settings'); ?>">Change Here</a>)<br />
                         <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_yes" value="2" <?php if ($website->loadFilesBeforeZip == 2): ?>checked="true"<?php endif; ?>/> Yes<br />

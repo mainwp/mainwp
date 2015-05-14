@@ -128,7 +128,7 @@ class MainWPExtensionsView
                 </p>                            
                 <p><hr></p>
                 <strong><?php _e("Step 3", "mainwp"); ?></strong>
-                <p><span class="description"><?php _e("The Grap API Keys will automatically add your API Keys and activate your Extensions. You can also manually enter your API for each Extension following the steps <a href=\"http://docs.mainwp.com/enter-extensions-api-keys/\" >here</a>."); ?></span></p>
+                <p><span class="description"><?php _e("The Grab API Keys will automatically add your API Keys and activate your Extensions. You can also manually enter your API for each Extension following the steps <a href=\"http://docs.mainwp.com/enter-extensions-api-keys/\" >here</a>."); ?></span></p>
                 <p>
                     <span class="extension_api_loading">
                         <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-grabkeys" value="<?php _e("Grab Api Keys", "mainwp"); ?>">

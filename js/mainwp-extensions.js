@@ -469,20 +469,8 @@ jQuery(document).on('click', '#mainwp-extensions-bulkinstall', function () {
         loadingEl.hide();        
         var undefError = false; 
         if (response) {
-            if (response.result == 'SUCCESS') {
-                var msg = '<i class="fa fa-check-circle"></i> Login Success';
-                if (response.message) {
-                    msg += ' ' + response.message;                    
-                } 
-                statusEl.css('color', '#0074a2');
-                statusEl.html(msg).fadeIn();    
-                if (response.count > 0) {                   
-                    jQuery('#mainwp-install-purchased-extensions').html(response.data);
-                    setTimeout(function ()
-                    {
-                      statusEl.fadeOut();
-                    }, 3000);
-                }
+            if (response.result == 'SUCCESS') {                 
+                jQuery('#mainwp-install-purchased-extensions').html(response.data);                
             } else if (response.error) {
                 statusEl.css('color', 'red');
                 statusEl.html(response.error).fadeIn(); 
@@ -515,10 +503,11 @@ bulkExtensionsRunning = false;
 mainwp_extension_bulk_install = function() {    
     if (bulkExtensionsRunning)
         return;
-    jQuery('.mainwp_extension_installing INPUT:checkbox:not(:checked)[status="queue"]').closest('.extension_to_install').find('.ext_installing .status').html(__('Skipped')).show();              
+    jQuery('.mainwp_extension_installing INPUT:checkbox:not(:checked)[status="queue"]').closest('.extension_to_install').find('.ext_installing .status').html(__('Skipped')).show();                                
     bulkExtensionsTotal = jQuery('.mainwp_extension_installing INPUT:checkbox:checked[status="queue"]').length;              
     if (bulkExtensionsTotal == 0) 
-        return false;          
+        return false;    
+    jQuery('.extension_to_install .ext_installing .status').show();
     mainwp_extension_bulk_install_next();   
 }
 

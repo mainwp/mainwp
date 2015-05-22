@@ -2333,6 +2333,7 @@ background-position: 0 -16px;
 .mainwp-extension-widget-version {
     font-style: italic;
     color: #aaa;
+    width: 12%;
 }
 
 .mainwp-extension-widget-button {

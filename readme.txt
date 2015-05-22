@@ -1,7 +1,7 @@
 === MainWP ===
 Contributors: mainwp
 Donate link: 
-Tags: WordPress management, management, manager, WordPress controller, network, MainWP, updates, updates, admin, administration, manage,  multiple,
+Tags: WordPress management, management, manager, WordPress controller, network, MainWP, updates, updates, admin, administration, manage,  multiple
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com

@@ -2303,6 +2303,7 @@ background-position: 0 -16px;
 
 .mainwp-widget-extensions {
     width: 20%;
+    min-height: 145px;
     margin-left: 2%;
     margin-right: 2%;
     float: left;
@@ -2796,6 +2797,15 @@ input.mainwp-field:-webkit-autofill {
     text-decoration: none !important;
 }
 
-.mainwp_ext_info_box a {
+.mainwp_ext_info_box a, #mainwp-install-purchased-extensions a {
     text-decoration: none !important;
 }
+.extension_to_install .name, .extension_not_purchased .name{   
+    width: 380px;
+    display: inline-block;
+}
+
+.extension_not_purchased .name{
+ color: #DEDEDE;
+}
+ 

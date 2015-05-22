@@ -3921,18 +3921,19 @@ mainwp_upload_bulk = function (type) {
     data['files[]'] = files;
 
     jQuery.post(ajaxurl, data, function(pType, pFiles, pActivatePlugin, pOverwrite) { return function (response) {
-        var installQueue = '<h3>Installing ' + pFiles.length + ' ' + pType + (pFiles.length > 1 ? 's' : '') + '</h3>';
+        var installQueue = '<div class="postbox"><div class="inside"><h3>Installing ' + pFiles.length + ' ' + pType + (pFiles.length > 1 ? 's' : '') + '</h3>';
         for (var siteId in response.sites)
         {
             var site = response.sites[siteId];
             installQueue += '<span class="siteBulkInstall" siteid="' + siteId + '" status="queue"><strong>' + site['name'] + '</strong>: <span class="queue"><i class="fa fa-clock-o"></i> '+__('Queued')+'</span><span class="progress"><i class="fa fa-spinner fa-pulse"></i> '+__('In progress')+'</span><span class="status"></span></span><br />';
         }
+        installQueue += '</div></div>';
 
         jQuery('#mainwp_wrap-inside').html(installQueue);
         mainwp_upload_bulk_start_next(pType, response.urls, pActivatePlugin, pOverwrite);
     } }(type, files, jQuery('#chk_activate_plugin_upload').is(':checked'), jQuery('#chk_overwrite_upload').is(':checked')), 'json');
 
-    jQuery('#mainwp_wrap-inside').html('<i class="fa fa-spinner fa-pulse"></i> '+__('Preparing %1 installation.', type));
+    jQuery('#mainwp_wrap-inside').html('<div class="postbox"><div class="inside"><h3><i class="fa fa-spinner fa-pulse"></i> '+__('Preparing %1 installation.', type) + '</h3></div></div>');
     return false;
 };
 
@@ -6618,11 +6619,12 @@ jQuery(document).on('click', '.mainwp-dismiss', function(){
     return false;
 });
 
-jQuery(document).on('change', '#mainwp-quick-jump-child', function()
+jQuery(document).on('change', '#mainwp-quick-jump-page', function()
 {
-    var siteId = jQuery(this).val();
+    var siteId = jQuery('#mainwp-quick-jump-child').val();
+    var pageSlug = jQuery('#mainwp-quick-jump-page').val();
 
-    window.location = 'admin.php?page=managesites&dashboard=' + siteId;
+    window.location = 'admin.php?page=managesites&'+ pageSlug +'=' + siteId;
 
 });
 

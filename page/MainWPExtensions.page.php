@@ -336,41 +336,53 @@ class MainWPExtensions
         $result = json_decode($data, true);                               
         $return = array();
         if (is_array($result)) {
-            if (isset($result['success']) && $result['success']) {                                  
-                if (isset($result['purchased_data']) && is_array($result['purchased_data'])) {                    
-                    self::loadExtensions();
-                    $installed_softwares = array();
-                    if (is_array(self::$extensions)) {
-                        foreach(self::$extensions as $extension) {
-                            if (isset($extension['product_id']) && !empty($extension['product_id'])) {
-                                $installed_softwares[$extension['product_id']] = $extension['product_id'];
-                            }
+            if (isset($result['success']) && $result['success']) { 
+                $all_available_exts = array();  
+                foreach(MainWPExtensionsView::getAvailableExtensions() as $ext) {
+                    $all_available_exts[$ext['product_id']] = $ext;
+                }                 
+                self::loadExtensions();
+                $installed_softwares = array();
+                if (is_array(self::$extensions)) {
+                    foreach(self::$extensions as $extension) {
+                        if (isset($extension['product_id']) && !empty($extension['product_id'])) {
+                            $installed_softwares[$extension['product_id']] = $extension['product_id'];
                         }
-                    }                  
-                    $purchased_data = $result['purchased_data'];
-                    $purchased_data = array_diff_key($purchased_data, $installed_softwares);
-                    $html = $message = '';
-                    if (empty($purchased_data)) {
-                        $message = __("All purchased extensions are Installed", "mainwp");
-                    } else {
-                        $html = '<div class="inside">';
-                        $html .= "<h2>" . __("Installing Purchased Extensions ...", "mainwp") . "</h2><br />";                        
-                        $html .= '<div class="mainwp_extension_installing">';
-                        foreach($purchased_data as $software_title => $product_info) {
-                            if (isset($product_info['error']) && $product_info['error'] == 'download_revoked') {
-                                $html .= '<div><strong>' . $software_title . "</strong>: <p><span style=\"color: red;\"><strong>Error</strong>: " . MainWPApiManager::instance()->download_revoked_error_notice($software_title) . '</span></p></div>';
-                            } else if (isset($product_info['package']) && !empty($product_info['package'])){
-                                $html .= '<div class="extension_to_install" download-link="' . $product_info['package'] . '" status="queue" product-id="' . $software_title . '"><strong>' . $software_title . "</strong>: " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden"></i><br/><span class="status hidden"></span></span></div>';
-                            }
-                        }
-                        $html .= '<div id="extBulkActivate"><i class="fa fa-spinner fa-pulse hidden"></i> <span class="status hidden"></span></div>';
-                        $html .= '</div>';
-                        $html .= '</div>';
-                        $html .= '<script type="text/javascript">mainwp_extension_bulk_install();</script>';
-                    }                    
+                    }
+                }                         
+                $purchased_data = (isset($result['purchased_data']) && is_array($result['purchased_data'])) ? $result['purchased_data'] : array();
+                $not_purchased_exts = array_diff_key($all_available_exts, $purchased_data);
+                $installing_exts = array_diff_key($purchased_data, $installed_softwares);
+
+                $html = $message = '';
+                if (empty($installing_exts)) {
+                    $message = __("All purchased extensions are Installed", "mainwp");
                 } else {
-                    $message = __("Not found purchased extensions.", "mainwp");
-                }
+                    $html = '<div class="inside">';
+                    $html .= "<h2>" . __("Installing Purchased Extensions ...", "mainwp") . "</h2><br />";                        
+                    $html .= '<div class="mainwp_extension_installing">';
+                    foreach($installing_exts as $product_id => $product_info) {
+                        $software_title = isset($all_available_exts[$product_id]) ? $all_available_exts[$product_id]['title'] : $product_id;
+                        if (isset($product_info['error']) && $product_info['error'] == 'download_revoked') {
+                            $html .= '<div><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $software_title . "</strong></span> <span style=\"color: red;\"><strong>Error</strong> " . MainWPApiManager::instance()->download_revoked_error_notice($software_title) . '</span></div>';
+                        } else if (isset($product_info['package']) && !empty($product_info['package'])){
+                            $html .= '<div class="extension_to_install" download-link="' . $product_info['package'] . '" product-id="' . $product_id . '"><input type="checkbox" status="queue"> <span class="name"><strong>' . $software_title . "</strong></span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"></span></span></div>';
+                        }                        
+                    }                        
+                    foreach($not_purchased_exts as $product_id => $ext) {                                                  
+                        $html .= '<div class="extension_to_install not_purchased" product-id="' . $product_id . '"><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $ext['title'] . '</strong></span> ' . __("Extension not purchased.") . ' <a href="' . $ext['link'] . '" target="_blank">' .  __("Get it here!") . '</a></div>';                                                        
+                    }
+                    $html .= '</div>';
+                    $html .= '</div>';
+                    $html .= '<p>
+                                <span class="extension_api_loading">
+                                    <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-installnow" value="' . __("Install Now", "mainwp") . '">
+                                    <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
+                                </span>
+                            </p> '; 
+                    $html .= '<p><div id="extBulkActivate"><i class="fa fa-spinner fa-pulse hidden" style="display: none"></i> <span class="status hidden"></span></div></p>';
+                }   
+                
                 $return= array('result' => 'SUCCESS', 'data' => $html , 'message' => $message, 'count' => count($purchased_data));                
             } else if (isset($result['error'])){
                 $return= array('error' => $result['error']);                                         
@@ -460,7 +472,7 @@ class MainWPExtensions
                 $thePlugin = get_plugin_data($path . $srcFile);                
                 if ($thePlugin != null && $thePlugin != '' && $thePlugin['Name'] != '')
                 {
-                    $output .= "<p>" . __("Successfully installed the plugin", "mainwp") . " " . $thePlugin['Name'] . " " . $thePlugin['Version'] . "</p>";                   
+                    $output .= __("Successfully installed the plugin", "mainwp") . " " . $thePlugin['Name'] . " " . $thePlugin['Version'];                   
                     $plugin_slug = $result['destination_name'] . "/" . $srcFile;
                     break;
                 }

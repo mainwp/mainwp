@@ -172,7 +172,13 @@ class MainWPManageSitesView
                 @MainWPDB::free_result($websites);
 
             $html .= '</select>
-                        <strong>' . __(' dashboard','mainwp') . '</strong>
+                        <select id="mainwp-quick-jump-page" name="">
+                        <option value="">' . __('Select Page ','mainwp') . '</option>
+                        <option value="dashboard">' . __('Dashboard ','mainwp') . '</option>
+                        <option value="id">' . __('Edit ','mainwp') . '</option>
+                        <option value="backupid">' . __('Backup ','mainwp') . '</option>
+                        <option value="scanid">' . __('Security Scan ','mainwp') . '</option>
+                      </select>
                     </span>
                     <div style="clear: both;"></div>
                 </div>';        

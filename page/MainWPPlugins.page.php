@@ -131,6 +131,11 @@ class MainWPPlugins
             <div class="postbox mainwp-postbox">
             <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search Plugins','mainwp'); ?></h3>
             <div class="inside">
+                <div class="mainwp_info-box-blue">
+                    <?php _e('To only <strong>View or Ignore</strong> plugins select <strong>All Plugins</strong>', 'mainwp'); ?><br/>
+                    <?php _e('To <strong>Deactivate</strong> a Plugin select <strong>Active</strong> (A plugin needs to be Active in order to be Deactivated)', 'mainwp'); ?><br/>
+                    <?php _e('To <strong>Activate</strong> or <strong>Delete</strong> a Plugin select <strong>Inactive</strong> (A plugin needs to be Deactivated in order for it to be Activated or Deleted)', 'mainwp'); ?><br/>
+                </div>
             <p>
                 <?php _e('Status:','mainwp'); ?><br />
                 <select name="mainwp_plugin_search_by_status" id="mainwp_plugin_search_by_status">
@@ -370,7 +375,7 @@ class MainWPPlugins
                         </td>
                         <td scope="col" id="notes_content" class="manage-column" style="">
                             <img src="<?php echo plugins_url('images/notes.png', dirname(__FILE__)); ?>" class="mainwp_notes_img" <?php if (!isset($trustedPluginsNotes[$slug]) || $trustedPluginsNotes[$slug] == '') { echo 'style="display: none;"'; } ?> />
-                            <a href="#" class="mainwp_trusted_plugin_notes_show"><?php _e('Open','mainwp'); ?></a>
+                            <a href="#" class="mainwp_trusted_plugin_notes_show"><i class="fa fa-pencil"></i> <?php _e('Open','mainwp'); ?></a>
                             <div style="display: none" class="note"><?php if (isset($trustedPluginsNotes[$slug])) { echo $trustedPluginsNotes[$slug]; } ?></div>
                         </td>
                     </tr>
@@ -1079,12 +1084,11 @@ class MainWPPlugins
 
         self::renderHeader('IgnoredConflicts');
         ?>
-        <h2><?php _e('Ignored Plugin Conflict List','mainwp'); ?></h2>
-        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0" style="width: 780px">
-            <caption><?php _e('Globally','mainwp'); ?></caption>
+        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+            <caption><?php _e('Globally Ignored Plugin Conflict List','mainwp'); ?></caption>
             <thead>
                 <tr>
-                    <th scope="col" class="manage-column" style="width: 650px"><?php _e('Plugins','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="width: 650px"><?php _e('Plugin','mainwp'); ?></th>
                     <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ($ignoredPluginConflicts) { ?><a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return pluginthemeconflict_unignore('plugin', undefined, undefined);"><?php _e('Allow All','mainwp'); ?></a><?php } ?></th>
                 </tr>
             </thead>
@@ -1100,7 +1104,7 @@ class MainWPPlugins
                                 <strong><?php echo $ignoredPluginName; ?></strong>
                             </td>
                             <td style="text-align: right; padding-right: 30px">
-                                <a href="#" onClick="return pluginthemeconflict_unignore('plugin', '<?php echo urlencode($ignoredPluginName); ?>', undefined);"><?php _e('ALLOW','mainwp'); ?></a>
+                                <a href="#" onClick="return pluginthemeconflict_unignore('plugin', '<?php echo urlencode($ignoredPluginName); ?>', undefined);"><i class="fa fa-check"></i> <?php _e('Allow','mainwp'); ?></a>
                             </td>
                         </tr>
                 <?php
@@ -1118,12 +1122,12 @@ class MainWPPlugins
             </tbody>
         </table>
 
-        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0" style="width: 780px">
-            <caption><?php _e('Per Site','mainwp'); ?></caption>
+        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+            <caption><?php _e('Per Site Ignored Plugin Conflict List','mainwp'); ?></caption>
             <thead>
                 <tr>
-                    <th scope="col" class="manage-column" style="width: 250px"><?php _e('Site','mainwp'); ?></th>
-                    <th scope="col" class="manage-column" style="width: 400px"><?php _e('Plugins','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="width: 300px"><?php _e('Site','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="width: 650px"><?php _e('Plugin','mainwp'); ?></th>
                     <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ($cnt > 0) { ?><a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return pluginthemeconflict_unignore('plugin', undefined, '_ALL_');"><?php _e('Allow All','mainwp'); ?></a><?php } ?></th>
                 </tr>
             </thead>
@@ -1151,7 +1155,7 @@ class MainWPPlugins
                             <strong><?php echo $ignoredPluginConflictName; ?></strong>
                         </td>
                         <td style="text-align: right; padding-right: 30px">
-                            <a href="#" onClick="return pluginthemeconflict_unignore('plugin', '<?php echo urlencode($ignoredPluginConflictName); ?>', <?php echo $website->id; ?>)"><?php _e('ALLOW','mainwp'); ?></a>
+                            <a href="#" onClick="return pluginthemeconflict_unignore('plugin', '<?php echo urlencode($ignoredPluginConflictName); ?>', <?php echo $website->id; ?>)"><i class="fa fa-check"></i> <?php _e('Allow','mainwp'); ?></a>
                         </td>
                     </tr>
                         <?php
@@ -1190,12 +1194,12 @@ class MainWPPlugins
 
         self::renderHeader('Ignore');
 ?>
-        <h2><?php _e('Ignored Plugins','mainwp'); ?></h2>
-        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0" style="width: 780px">
-        	<caption><?php _e('Globally','mainwp'); ?></caption>
+        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+        	<caption><?php _e('Globally Ignored Plugins','mainwp'); ?></caption>
             <thead>
                 <tr>
-                    <th scope="col" class="manage-column" style="width: 650px"><?php _e('Plugins','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="width: 300px"><?php _e('Plugin','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="width: 650px"><?php _e('Plugin File','mainwp'); ?></th>
                     <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { if ($ignoredPlugins) { ?><a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return rightnow_plugins_unignore_globally_all();"><?php _e('Allow All','mainwp'); ?></a><?php } } ?></th>
                 </tr>
             </thead>
@@ -1208,11 +1212,14 @@ class MainWPPlugins
                     ?>
                         <tr plugin_slug="<?php echo urlencode($ignoredPlugin); ?>">
                             <td>
-                                <strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.urlencode(dirname($ignoredPlugin)).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $ignoredPluginName; ?>"><?php echo $ignoredPluginName; ?></a></strong> (<?php echo $ignoredPlugin; ?>)
+                                <strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.urlencode(dirname($ignoredPlugin)).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $ignoredPluginName; ?>"><?php echo $ignoredPluginName; ?></a></strong>
+                            </td>
+                            <td>
+                                <?php echo $ignoredPlugin; ?>
                             </td>
                             <td style="text-align: right; padding-right: 30px">
                                 <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                                <a href="#" onClick="return rightnow_plugins_unignore_globally('<?php echo urlencode($ignoredPlugin); ?>')"><?php _e('ALLOW','mainwp'); ?></a>
+                                <a href="#" onClick="return rightnow_plugins_unignore_globally('<?php echo urlencode($ignoredPlugin); ?>')"><i class="fa fa-check"></i> <?php _e('Allow','mainwp'); ?></a>
                                 <?php } ?>
                             </td>
                         </tr>
@@ -1231,12 +1238,12 @@ class MainWPPlugins
             </tbody>
         </table>
 
-        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0" style="width: 780px">
-        	<caption><?php _e('Per Site','mainwp'); ?></caption>
+        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+        	<caption><?php _e('Per Site Ignored Plugins','mainwp'); ?></caption>
             <thead>
                 <tr>
-                    <th scope="col" class="manage-column" style="width: 250px"><?php _e('Site','mainwp'); ?></th>
-                    <th scope="col" class="manage-column" style="width: 400px"><?php _e('Plugins','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="width: 300px"><?php _e('Site','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="width: 650px"><?php _e('Plugins','mainwp'); ?></th>
                     <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ($cnt > 0) { ?><a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return rightnow_plugins_unignore_detail_all();"><?php _e('Allow All','mainwp'); ?></a><?php } ?></th>
                 </tr>
             </thead>
@@ -1265,7 +1272,7 @@ class MainWPPlugins
                             <strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.urlencode(dirname($ignoredPlugin)).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $ignoredPluginName; ?>"><?php echo $ignoredPluginName; ?></a></strong> (<?php echo $ignoredPlugin; ?>)
                         </td>
                         <td style="text-align: right; padding-right: 30px">
-                            <a href="#" onClick="return rightnow_plugins_unignore_detail('<?php echo urlencode($ignoredPlugin); ?>', <?php echo $website->id; ?>)"><?php _e('ALLOW','mainwp'); ?></a>
+                            <a href="#" onClick="return rightnow_plugins_unignore_detail('<?php echo urlencode($ignoredPlugin); ?>', <?php echo $website->id; ?>)"><i class="fa fa-check"></i> <?php _e('Allow','mainwp'); ?></a>
                         </td>
                     </tr>
                         <?php

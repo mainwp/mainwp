@@ -1140,7 +1140,7 @@ class MainWPPostHandler
 
     //Check if WP can be added
     function mainwp_checkwp()
-    {
+    {         
         if ($this->check_security('mainwp_checkwp', 'security'))
         {
             MainWPManageSites::checkSite();

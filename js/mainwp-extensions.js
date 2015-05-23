@@ -469,20 +469,8 @@ jQuery(document).on('click', '#mainwp-extensions-bulkinstall', function () {
         loadingEl.hide();        
         var undefError = false; 
         if (response) {
-            if (response.result == 'SUCCESS') {
-                var msg = '<i class="fa fa-check-circle"></i> Login Success';
-                if (response.message) {
-                    msg += ' ' + response.message;                    
-                } 
-                statusEl.css('color', '#0074a2');
-                statusEl.html(msg).fadeIn();    
-                if (response.count > 0) {                   
-                    jQuery('#mainwp-extensions-wrap').html(response.data);
-                    setTimeout(function ()
-                    {
-                      statusEl.fadeOut();
-                    }, 3000);
-                }
+            if (response.result == 'SUCCESS') {                 
+                jQuery('#mainwp-install-purchased-extensions').html(response.data);                
             } else if (response.error) {
                 statusEl.css('color', 'red');
                 statusEl.html(response.error).fadeIn(); 
@@ -501,32 +489,40 @@ jQuery(document).on('click', '#mainwp-extensions-bulkinstall', function () {
     return false;
 })
 
+jQuery(document).on('click', '#mainwp-extensions-installnow', function () {    
+    mainwp_extension_bulk_install();
+    return false;
+})
+
 bulkExtensionsMaxThreads = 3;
 bulkExtensionsCurrentThreads = 0;
 bulkExtensionsTotal = 0;
 bulkExtensionsFinished = 0;
 bulkExtensionsRunning = false;
 
-mainwp_extension_bulk_install = function() {
-    bulkExtensionsTotal = jQuery('.extension_to_install[status="queue"]').length;
-    if (bulkExtensionsTotal > 0) {
-       mainwp_extension_bulk_install_next();
-    } else {
-       mainwp_extension_bulk_install_done();
-    }
+mainwp_extension_bulk_install = function() {    
+    if (bulkExtensionsRunning)
+        return;
+    jQuery('.mainwp_extension_installing INPUT:checkbox:not(:checked)[status="queue"]').closest('.extension_to_install').find('.ext_installing .status').html(__('Skipped')).show();                                
+    bulkExtensionsTotal = jQuery('.mainwp_extension_installing INPUT:checkbox:checked[status="queue"]').length;              
+    if (bulkExtensionsTotal == 0) 
+        return false;    
+    jQuery('.extension_to_install .ext_installing .status').show();
+    mainwp_extension_bulk_install_next();   
 }
 
 mainwp_extension_bulk_install_done = function() {
-    jQuery('.mainwp_extension_installing').append('<div class="mainwp_info-box"><i class="fa fa-check-circle"></i> ' + __("Install Finished") + '</div><div class="mainwp_info-box">' + __('Refreshing the page for Step 3 "Add API Keys" in 5 seconds... if refresh fails please <a href="admin.php?page=Extensions" title="Extensions page">click here</a>.') + '</div>');
+    bulkExtensionsRunning = false;
+    jQuery('#mainwp-install-purchased-extensions').append('<div class="mainwp_info-box"><i class="fa fa-check-circle"></i> ' + __("Install Finished") + '</div><div class="mainwp_info-box">' + __('Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please <a href="admin.php?page=Extensions" title="Extensions page">click here</a>.') + '</div>');
     setTimeout(function ()
     {
       location.href = 'admin.php?page=Extensions'; 
-    }, 2000);
+    }, 5000);
 }
 
-mainwp_extension_bulk_install_next = function() {
-    while ((extToInstall = jQuery('.extension_to_install[status="queue"]:first')) && (extToInstall.length > 0)  && (bulkExtensionsCurrentThreads < bulkExtensionsMaxThreads))
-    {
+mainwp_extension_bulk_install_next = function() {    
+    while ((extToInstall = jQuery('.mainwp_extension_installing INPUT:checkbox:checked[status="queue"]:first').closest('.extension_to_install')) && (extToInstall.length > 0)  && (bulkExtensionsCurrentThreads < bulkExtensionsMaxThreads))
+    {        
         mainwp_extension_bulk_install_specific(extToInstall);
     }    
     if ((bulkExtensionsTotal > 0) && (bulkExtensionsFinished == bulkExtensionsTotal)) {
@@ -552,22 +548,27 @@ mainwp_extension_bulk_activate = function() {
     var loadingEl = jQuery('#extBulkActivate i');
     var statusEl = jQuery('#extBulkActivate .status');
     loadingEl.show();
+    statusEl.html(__('Activating plugins ...')).show();
     jQuery.post(ajaxurl, data,  function(response) {
             loadingEl.hide();
             if (response == 'SUCCESS') { 
                 statusEl.css('color', '#21759B');
-                statusEl.html('<p><i class="fa fa-check-circle"></i> Plugins Activated Successfully</p>').show();  
+                statusEl.html('<i class="fa fa-check-circle"></i> Plugins Activated Successfully').show();  
+                statusEl.fadeOut(1000);                
             } 
             mainwp_extension_bulk_install_done();    
     });
 }
 
 mainwp_extension_bulk_install_specific = function(pExtToInstall) {
-    pExtToInstall.attr('status', 'running');    
+    bulkExtensionsRunning = true;
+    pExtToInstall.find('INPUT[type="checkbox"]').attr('status', 'running');    
     bulkExtensionsCurrentThreads++;        
     var loadingEl = pExtToInstall.find('.ext_installing i');
     var statusEl = pExtToInstall.find('.ext_installing .status');
-    loadingEl.show();    
+    loadingEl.show();   
+    statusEl.css('color', '#000');
+    statusEl.html(__('Installing ...'));
     var data = mainwp_secure_data({
         action:'mainwp_extension_downloadandinstall',
         download_link: pExtToInstall.attr('download-link')        
@@ -594,14 +595,14 @@ mainwp_extension_bulk_install_specific = function(pExtToInstall) {
                     jQuery('.mainwp_extension_installing').append('<span class="extension_installed_success" slug="' + response.slug + '"></span>')
                 } else if (response.error) {
                     statusEl.css('color', 'red');
-                    statusEl.html('<p><strong><i class="fa fa-exclamation-circle"></i> Error:</strong> ' + response.error + '</p>').show();
+                    statusEl.html('<strong><i class="fa fa-exclamation-circle"></i> Error:</strong> ' + response.error).show();
                 } else {
                     statusEl.css('color', 'red');
-                    statusEl.html('<p><i class="fa fa-exclamation-circle"></i> Undefined Error</p>').show();
+                    statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').show();
                 }
             } else {
                 statusEl.css('color', 'red');
-                statusEl.html('<p><i class="fa fa-exclamation-circle"></i> Undefined Error</p>').show();
+                statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').show();
             }
             mainwp_extension_bulk_install_next();
         } }()

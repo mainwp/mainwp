@@ -129,6 +129,10 @@ class MainWPThemes
             <div class="postbox mainwp-postbox">
             <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search Themes','mainwp'); ?></h3>
             <div class="inside">
+                <div class="mainwp_info-box-blue">
+                    <?php _e('To only <strong>View or Ignore</strong> themes select <strong>All Themes</strong>', 'mainwp'); ?><br/>
+                    <?php _e('To <strong>Activate</strong> or <strong>Delete</strong> a Theme select <strong>Inactive</strong> (A theme needs to be Deactivated in order for it to be Enabled)', 'mainwp'); ?><br/>
+                </div>
             <p>
                 <?php _e('Status:','mainwp'); ?><br />
                 <select name="mainwp_theme_search_by_status" id="mainwp_theme_search_by_status">
@@ -587,7 +591,7 @@ class MainWPThemes
                         </td>
                         <td scope="col" id="notes_content" class="manage-column" style="">
                             <img src="<?php echo plugins_url('images/notes.png', dirname(__FILE__)); ?>" class="mainwp_notes_img" <?php if (!isset($trustedThemesNotes[$slug]) || $trustedThemesNotes[$slug] == '') { echo 'style="display: none;"'; } ?> />
-                            <a href="#" class="mainwp_trusted_theme_notes_show">Open</a>
+                            <a href="#" class="mainwp_trusted_theme_notes_show"><i class="fa fa-pencil"></i> <?php _e('Open','mainwp'); ?></a>
                             <div style="display: none" class="note"><?php if (isset($trustedThemesNotes[$slug])) { echo $trustedThemesNotes[$slug]; } ?></div>
                         </td>
                     </tr>
@@ -919,12 +923,11 @@ class MainWPThemes
 
         self::renderHeader('IgnoredConflicts');
         ?>
-        <h2><?php _e('Ignored Theme Conflict List','mainwp'); ?></h2>
-        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0" style="width: 780px">
-            <caption><?php _e('Globally','mainwp'); ?></caption>
+        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+            <caption><?php _e('Globally Ignored Theme Conflict List','mainwp'); ?></caption>
             <thead>
                 <tr>
-                    <th scope="col" class="manage-column" style="width: 650px"><?php _e('Themes','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="width: 300px"><?php _e('Theme','mainwp'); ?></th>
                     <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ($ignoredThemeConflicts) { ?><a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return pluginthemeconflict_unignore('theme', undefined, undefined);"><?php _e('Allow All','mainwp'); ?></a><?php } ?></th>
                 </tr>
             </thead>
@@ -940,7 +943,7 @@ class MainWPThemes
                                 <strong><?php echo $ignoredThemeName; ?></strong>
                             </td>
                             <td style="text-align: right; padding-right: 30px">
-                                <a href="#" onClick="return pluginthemeconflict_unignore('theme', '<?php echo urlencode($ignoredThemeName); ?>', undefined);"><?php _e('ALLOW','mainwp'); ?></a>
+                                <a href="#" onClick="return pluginthemeconflict_unignore('theme', '<?php echo urlencode($ignoredThemeName); ?>', undefined);"><i class="fa fa-check"></i> <?php _e('Allow','mainwp'); ?></a>
                             </td>
                         </tr>
                 <?php
@@ -958,12 +961,12 @@ class MainWPThemes
             </tbody>
         </table>
 
-        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0" style="width: 780px">
-            <caption><?php _e('Per Site','mainwp'); ?></caption>
+        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+            <caption><?php _e('Per Site Ignored Theme Conflict List','mainwp'); ?></caption>
             <thead>
                 <tr>
-                    <th scope="col" class="manage-column" style="width: 250px"><?php _e('Site','mainwp'); ?></th>
-                    <th scope="col" class="manage-column" style="width: 400px"><?php _e('Themes','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="width: 300px"><?php _e('Site','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="width: 650px"><?php _e('Themes','mainwp'); ?></th>
                     <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ($cnt > 0) { ?><a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return pluginthemeconflict_unignore('theme', undefined, '_ALL_');"><?php _e('Allow All','mainwp'); ?></a><?php } ?></th>
                 </tr>
             </thead>
@@ -991,7 +994,7 @@ class MainWPThemes
                             <strong><?php echo $ignoredThemeConflictName; ?></strong>
                         </td>
                         <td style="text-align: right; padding-right: 30px">
-                            <a href="#" onClick="return pluginthemeconflict_unignore('theme', '<?php echo urlencode($ignoredThemeConflictName); ?>', <?php echo $website->id; ?>)"><?php _e('ALLOW','mainwp'); ?></a>
+                            <a href="#" onClick="return pluginthemeconflict_unignore('theme', '<?php echo urlencode($ignoredThemeConflictName); ?>', <?php echo $website->id; ?>)"><i class="fa fa-check"></i> <?php _e('Allow','mainwp'); ?></a>
                         </td>
                     </tr>
                         <?php
@@ -1030,12 +1033,12 @@ class MainWPThemes
 
         self::renderHeader('Ignore');
         ?>
-    <h2><?php _e('Ignored Themes','mainwp'); ?></h2>
-    <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0" style="width: 780px">
-    <caption><?php _e('Globally','mainwp'); ?></caption>
+    <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+    <caption><?php _e('Globally Ignored Themes','mainwp'); ?></caption>
         <thead>
             <tr>
-                <th scope="col" class="manage-column" style="width: 650px"><?php _e('Themes','mainwp'); ?></th>
+                <th scope="col" class="manage-column" style="width: 300px"><?php _e('Theme','mainwp'); ?></th>
+                <th scope="col" class="manage-column" style="width: 650px"><?php _e('Theme File','mainwp'); ?></th>
                 <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ($ignoredThemes) { ?><a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return rightnow_themes_unignore_globally_all();"><?php _e('Allow All','mainwp'); ?></a><?php } ?></th>
             </tr>
         </thead>
@@ -1050,11 +1053,14 @@ class MainWPThemes
                 ?>
                     <tr theme_slug="<?php echo urlencode($ignoredTheme); ?>">
                          <td>
-                             <strong><?php echo $ignoredThemeName; ?></strong> (<?php echo $ignoredTheme; ?>)
+                             <strong><?php echo $ignoredThemeName; ?></strong>
+                         </td>
+                         <td>
+                             <?php echo $ignoredTheme; ?>
                          </td>
                         <td style="text-align: right; padding-right: 30px">
                             <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                            <a href="#" onClick="return rightnow_themes_unignore_globally('<?php echo urlencode($ignoredTheme); ?>')"><?php _e('ALLOW','mainwp'); ?></a>
+                            <a href="#" onClick="return rightnow_themes_unignore_globally('<?php echo urlencode($ignoredTheme); ?>')"><i class="fa fa-check"></i> <?php _e('Allow','mainwp'); ?></a>
                             <?php } ?>
                         </td>
                     </tr>
@@ -1073,12 +1079,12 @@ class MainWPThemes
         </tbody>
     </table>
 
-    <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0" style="width: 780px">
-    <caption><?php _e('Per Site','mainwp'); ?></caption>
+    <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+    <caption><?php _e('Per Site Ignored Themes','mainwp'); ?></caption>
         <thead>
             <tr>
-                <th scope="col" class="manage-column" style="width: 250px"><?php _e('Site','mainwp'); ?></th>
-                <th scope="col" class="manage-column" style="width: 400px"><?php _e('Themes','mainwp'); ?></th>
+                <th scope="col" class="manage-column" style="width: 300px"><?php _e('Site','mainwp'); ?></th>
+                <th scope="col" class="manage-column" style="width: 650px"><?php _e('Themes','mainwp'); ?></th>
                 <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { if ($cnt > 0) { ?><a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return rightnow_themes_unignore_detail_all();"><?php _e('Allow All','mainwp'); ?></a><?php } } ?></th>
             </tr>
         </thead>
@@ -1108,7 +1114,7 @@ class MainWPThemes
                    </td>
                    <td style="text-align: right; padding-right: 30px">
                         <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                        <a href="#" onClick="return rightnow_themes_unignore_detail('<?php echo urlencode($ignoredTheme); ?>', <?php echo $website->id; ?>)"><?php _e('ALLOW','mainwp'); ?></a>
+                        <a href="#" onClick="return rightnow_themes_unignore_detail('<?php echo urlencode($ignoredTheme); ?>', <?php echo $website->id; ?>)"><i class="fa fa-check"></i> <?php _e('Allow','mainwp'); ?></a>
                         <?php } ?>
                    </td>
                </tr>

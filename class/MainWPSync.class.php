@@ -277,7 +277,7 @@ class MainWPSync
 
         if (isset($information['faviIcon']))
         {
-            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'favi_icon', $information['faviIcon']);
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'favi_icon', trim($information['faviIcon']));
             $done = true;
         }
         else

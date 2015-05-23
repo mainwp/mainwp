@@ -78,15 +78,13 @@ class MainWPMain
         if (mainwp_current_user_can("dashboard", "manage_pages")) {
             add_meta_box($page.'-contentbox-' . $i++, MainWPRecentPages::getName(), array(MainWPRecentPages::getClassName(), 'render'), $page, 'normal', 'core');
         }
-
+        if (mainwp_current_user_can("dashboard", "manage_security_issues")) {
+            add_meta_box($page.'-contentbox-' . $i++, MainWPSecurityIssues::getMetaboxName(), array(MainWPSecurityIssues::getClassName(), 'renderMetabox'), $page, 'normal', 'core');
+        }            
         global $mainwpUseExternalPrimaryBackupsMethod;
-        if (empty($mainwpUseExternalPrimaryBackupsMethod)) {
-            if (mainwp_current_user_can("dashboard", "manage_security_issues")) {
-                add_meta_box($page.'-contentbox-' . $i++, MainWPSecurityIssues::getMetaboxName(), array(MainWPSecurityIssues::getClassName(), 'renderMetabox'), $page, 'normal', 'core');
-            }
+        if (empty($mainwpUseExternalPrimaryBackupsMethod)) {            
             add_meta_box($page.'-contentbox-' . $i++, MainWPBackupTasks::getName(), array(MainWPBackupTasks::getClassName(), 'render'), $page, 'normal', 'core');
         }
-
         if (mainwp_current_user_can("dashboard", "see_seo_statistics")) {
             if (get_option('mainwp_seo') == 1) add_meta_box($page.'-contentbox-' . $i++, MainWPSEO::getName(), array(MainWPSEO::getClassName(), 'render'), $page, 'normal', 'core');
         }

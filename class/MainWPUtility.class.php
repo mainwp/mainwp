@@ -1205,7 +1205,7 @@ class MainWPUtility
 
     public static function getGoogleCount($domain)
     {
-        $content = file_get_contents('http://ajax.googleapis.com/ajax/services/' .
+        $content = file_get_contents('https://ajax.googleapis.com/ajax/services/' .
                 'search/web?v=1.0&filter=0&q=site:' . urlencode($domain));
         $data = json_decode($content);
 
@@ -1281,6 +1281,10 @@ class MainWPUtility
 
     public static function http_post($request, $http_host, $path, $port = 80, $pApplication = 'main', $throwException = false) {
 
+        $connect_timeout = get_option('mainwp_versioncontrol_timeout');
+        if ($connect_timeout !== false && (time() - $connect_timeout) < 60 * 60 * 12) //12 hrs..
+            return false;
+
         if ($pApplication == 'main') $pApplication = 'MainWP/1.1';//.MainWPSystem::Instance()->getVersion();
         else $pApplication = 'MainWPExtension/'.$pApplication.'/v';
 
@@ -1300,6 +1304,12 @@ class MainWPUtility
         $mainwp_url = "http://{$http_host}{$path}";
 
         $response = wp_remote_post( $mainwp_url, $http_args );
+
+        if(empty($response) || is_wp_error( $response )) {
+            MainWPUtility::update_option('mainwp_versioncontrol_timeout', time());
+        } else if ($connect_timeout !== false) {
+            delete_option('mainwp_versioncontrol_timeout');
+        }
 
         if ( is_wp_error( $response ) )
         {

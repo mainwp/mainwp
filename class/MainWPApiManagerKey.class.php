@@ -33,14 +33,15 @@ class MainWPApiManagerKey {
 	// API Key URL
 	public function create_software_api_url( $args ) {
 
-		$api_url = esc_url_raw( add_query_arg( 'wc-api', 'am-software-api', MainWPApiManager::instance()->upgrade_url ) );
+		$api_url = esc_url_raw( add_query_arg( 'wc-api', 'am-software-api', MainWPApiManager::instance()->upgrade_url ) );                        
+                
                 $query_url = "";
                 foreach ($args as $key => $value)
                 {
-                    $query_url .= $key . '=' . $value . '&';
+                    $query_url .= $key . '=' . urlencode($value) . '&';
                 }
                 $query_url = rtrim($query_url, '&');
-                    
+                
 		return $api_url . '&' . $query_url;		
 	}
 

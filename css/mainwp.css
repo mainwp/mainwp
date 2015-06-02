@@ -2809,4 +2809,6 @@ input.mainwp-field:-webkit-autofill {
 .extension_not_purchased .name{
  color: #DEDEDE;
 }
- 
+.ui-widget-header .fusion-tabs-menu a {
+    color: #222 !important;
+}

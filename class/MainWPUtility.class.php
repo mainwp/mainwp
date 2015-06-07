@@ -69,9 +69,13 @@ class MainWPUtility
 
     public static function isWebsiteAvailable($website)
     {
+        $http_user = null;
+        $http_pass = null;
         if (is_object($website) && isset($website->url)) {
             $url = $website->url;
             $verifyCertificate = isset($website->verify_certificate) ? $website->verify_certificate : null;
+            $http_user = $website->http_user;
+            $http_pass = $website->http_pass;
         } else {
             $url = $website;
             $verifyCertificate = null;
@@ -79,7 +83,7 @@ class MainWPUtility
         
         if (!self::isDomainValid($url)) return false;
 
-        return MainWPUtility::tryVisit($url, $verifyCertificate);
+        return MainWPUtility::tryVisit($url, $verifyCertificate, $http_user, $http_pass);
     }
 
     private static function isDomainValid($url)
@@ -89,7 +93,7 @@ class MainWPUtility
     }
 
 
-    public static function tryVisit($url, $verifyCertificate = null)
+    public static function tryVisit($url, $verifyCertificate = null, $http_user = null, $http_pass = null)
     {
         $agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
         $postdata = array('test' => 'yes');
@@ -102,6 +106,7 @@ class MainWPUtility
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+        if (!empty($http_user) && !empty($http_pass)) curl_setopt($ch, CURLOPT_USERPWD, "$http_user:$http_pass");
         
         $ssl_verifyhost = false;        
         if ($verifyCertificate !== null) { 
@@ -445,6 +450,9 @@ class MainWPUtility
             if ($whatPage != null) $url .= $whatPage;
             else $url .= 'admin-ajax.php';
 
+            $http_user = $website->http_user;
+            $http_pass = $website->http_pass;
+
             $_new_post = null;
             if (isset($params) && isset($params['new_post']))
             {
@@ -481,7 +489,8 @@ class MainWPUtility
             @curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
             @curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
             @curl_setopt($ch, CURLOPT_USERAGENT, $agent);
-            
+            if (!empty($http_user) && !empty($http_pass)) curl_setopt($ch, CURLOPT_USERPWD, "$http_user:$http_pass");
+
             $ssl_verifyhost = false;
             $verifyCertificate = isset($website->verify_certificate) ? $website->verify_certificate : null ;
             if ($verifyCertificate !== null) { 
@@ -592,7 +601,7 @@ class MainWPUtility
         $params['optimize'] = ((get_option("mainwp_optimize") == 1) ? 1 : 0);
 
         $postdata = MainWPUtility::getPostDataAuthed($website, $what, $params);
-        $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed);
+        $information = MainWPUtility::fetchUrl($website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass);
       
         if (is_array($information) && isset($information['sync']) && !empty($information['sync']))
         {
@@ -603,11 +612,11 @@ class MainWPUtility
         return $information;
     }
 
-    static function fetchUrlNotAuthed($url, $admin, $what, $params = null, $pForceFetch = false, $verifyCertificate = null)
+    static function fetchUrlNotAuthed($url, $admin, $what, $params = null, $pForceFetch = false, $verifyCertificate = null, $http_user = null, $http_pass = null)
     {
         $postdata = MainWPUtility::getPostDataNotAuthed($url, $admin, $what, $params);
         $website = null;
-        return MainWPUtility::fetchUrl($website, $url, $postdata, $pForceFetch, false, $verifyCertificate);
+        return MainWPUtility::fetchUrl($website, $url, $postdata, $pForceFetch, false, $verifyCertificate, $http_user, $http_pass);
     }
 
     static function fetchUrlClean($url, $postdata)
@@ -643,7 +652,7 @@ class MainWPUtility
         }
     }
 
-    static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $pRetryFailed = true)
+    static function fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null)
     {
         $start = time();
 
@@ -657,7 +666,7 @@ class MainWPUtility
                 $tmpUrl .= 'wp-admin/admin-ajax.php';
             }
 
-            return self::_fetchUrl($website, $tmpUrl, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate);
+            return self::_fetchUrl($website, $tmpUrl, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass);
         }
         catch (Exception $e)
         {
@@ -669,7 +678,7 @@ class MainWPUtility
 
             try
             {
-                return self::_fetchUrl($website, $url, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate);
+                return self::_fetchUrl($website, $url, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass);
             }
             catch (Exception $ex)
             {
@@ -678,7 +687,7 @@ class MainWPUtility
         }
     }
 
-    static function _fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null)
+    static function _fetchUrl(&$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $http_user = null, $http_pass = null)
     {
         $agent= 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 
@@ -835,7 +844,8 @@ class MainWPUtility
         @curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         @curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
         @curl_setopt($ch, CURLOPT_USERAGENT, $agent);
-        
+        if (!empty($http_user) && !empty($http_pass)) @curl_setopt($ch, CURLOPT_USERPWD, "$http_user:$http_pass");
+
         $ssl_verifyhost = false;
         if ($verifyCertificate !== null) { 
             if ($verifyCertificate == 1) {
@@ -950,7 +960,7 @@ class MainWPUtility
 
     }
 
-    public static function downloadToFile($url, $file, $size = false)
+    public static function downloadToFile($url, $file, $size = false, $http_user = null, $http_pass = null)
     {
         if (@file_exists($file) && (($size === false) || (@filesize($file) > $size)))
         {
@@ -986,6 +996,7 @@ class MainWPUtility
         curl_setopt($ch, CURLOPT_FILE, $fp);
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        if (!empty($http_user) && !empty($http_pass)) curl_setopt($ch, CURLOPT_USERPWD, "$http_user:$http_pass");
         curl_exec($ch);
         curl_close($ch);
         fclose($fp);

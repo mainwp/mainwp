@@ -2563,7 +2563,9 @@ mainwp_managesites_add = function (event) {
             name:jQuery('#mainwp_managesites_add_wpname').val(),
             url:url,
             admin:jQuery('#mainwp_managesites_add_wpadmin').val(),
-            verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val()
+            verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val(),
+            http_user:jQuery('#mainwp_managesites_add_http_user').val(),
+            http_pass:jQuery('#mainwp_managesites_add_http_pass').val()
         });
 
         jQuery.post(ajaxurl, data, function (res_things) {
@@ -2603,7 +2605,9 @@ mainwp_managesites_add = function (event) {
                     managesites_add_uniqueId:jQuery('#mainwp_managesites_add_uniqueId').val(),
                     'groupids[]':groupids,
                     groupnames:jQuery('#mainwp_managesites_add_addgroups').val(),
-                    verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val()
+                    verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val(),
+                    managesites_add_http_user:jQuery('#mainwp_managesites_add_http_user').val(),
+                    managesites_add_http_pass:jQuery('#mainwp_managesites_add_http_pass').val()
                 });
 
                 jQuery.post(ajaxurl, data, function (res_things) {
@@ -2691,7 +2695,9 @@ mainwp_managesites_test = function (event) {
         var data = mainwp_secure_data({
             action:'mainwp_testwp',
             url:url,
-            test_verify_cert: jQuery('#mainwp_managesites_test_verifycertificate').val()
+            test_verify_cert: jQuery('#mainwp_managesites_test_verifycertificate').val(),
+            http_user: jQuery('#mainwp_managesites_test_http_user').val(),
+            http_pass: jQuery('#mainwp_managesites_test_http_pass').val()
         });
         jQuery.post(ajaxurl, data, function (response) {
             managesites_init();

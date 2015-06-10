@@ -1835,7 +1835,7 @@ background-position: 0 -16px;
 #mainwp-table-overflow ::-webkit-scrollbar-track,
 #mainwp-preview-window ::-webkit-scrollbar-track,
 #mainwp_background-box ::-webkit-scrollbar-track,
-#mainwp_wrap-inside ::-webkit-scrollbar-track  {
+#mainwp_wrap-inside ::-webkit-scrollbar-track {
     width: 14px ;
     background: #f3f3f3;
 }
@@ -2809,4 +2809,122 @@ input.mainwp-field:-webkit-autofill {
 .extension_not_purchased .name{
  color: #DEDEDE;
 }
- 
+
+.ui-widget-header .fusion-tabs-menu a {
+    color: #222 !important;
+}
+
+/* ---- MainWP Buttons ---- */
+
+.mainwp-link-clean:hover {
+    text-decoration: none !important;
+}
+
+.mainwp-white {
+    color: #fff;
+}
+
+.mainwp-red {
+    color: #bb7239;
+}
+
+.mainwp-blue {
+    color: #00a0d2;
+}
+
+.mainwp-green {
+    color: #7fb100;
+}
+
+.mainwp-white:hover {
+    color: #fff;
+}
+
+.mainwp-red:hover{
+    color: #fff;
+}
+
+.mainwp-blue:hover {
+    color: #fff;
+}
+
+.mainwp-green:hover {
+    color: #fff;
+}
+
+.mainwp-left-margin-2 {
+    margin-left: 2em;
+}
+
+.mainwp-right-margin-2 {
+    margin-right: 2em;
+}
+
+/* ---- Footer Customization ---- */
+
+#wpfooter {
+    background: #333;
+    position: fixed;
+    bottom: 0;
+}
+
+#mainwp-footer-buttons {
+
+}
+
+#mainwp-add-new-links {
+    display: none;
+    padding: .5em 1em;
+    color: #fff;
+    background: #333;
+    position: fixed;
+    right: 90px;
+    bottom: 46px;
+}
+
+#mainwp-sites-menu {
+    display: none;
+    padding: .5em 1em;
+    color: #fff;
+    background: #333;
+    position: fixed;
+    left: 160px;
+    bottom: 46px;
+    max-height: calc(100% - 78px);
+    overflow: scroll;
+    overflow-x: hidden;
+}
+
+#mainwp-sites-menu::-webkit-scrollbar {
+    width: 14px ;
+    background: #333;
+}
+
+#mainwp-sites-menu::-webkit-scrollbar-track {
+    width: 10px ;
+    background: #333;
+
+}
+
+#mainwp-sites-menu::-webkit-scrollbar-thumb {
+    width: 8px ;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2); 
+     padding-left: 5px;
+}
+
+#mainwp-sites-menu::-webkit-scrollbar-thumb:hover {
+    width: 8px ;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.5); 
+}
+
+a.mainpw-fly-meny-lnk, a.mainwp-add-new-link {
+    color: #fff;
+    text-decoration: none;
+}
+
+a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {
+    color: #fff;
+    text-decoration: none !important;
+}

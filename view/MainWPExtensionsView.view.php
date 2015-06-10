@@ -55,7 +55,7 @@ class MainWPExtensionsView
 ?>
         
     <div class="postbox mainwp_api_postbox" section="1" >
-           <div class="handlediv"><br></div>
+           <!-- <div class="handlediv"><br></div> -->
            <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e("Bulk Install and Activate Extensions", "mainwp"); ?></span></h3>                          
            <div class="mainwp-inside" style="clear: both;">
             <div style="padding: 0 5px;">
@@ -440,6 +440,14 @@ class MainWPExtensionsView
                                 'link' => 'https://extensions.mainwp.com/product/mainwp-article-uploader-extension/',
                                 'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/08/mainwp-article-uploader-extension.png',
                                 'product_id' => 'MainWP Article Uploader Extension'
+                            ),
+                        array(
+                                'slug' => 'mainwp-backupwordpress-extension',
+                                'title' => 'MainWP BackUpWordPress Extension',
+                                'desc' => 'MainWP BackUpWordPress Extension combines the power of your MainWP Dashboard with the popular WordPress BackUpWordPress Plugin. It allows you to schedule backups on your child sites.',
+                                'link' => 'https://extensions.mainwp.com/product/mainwp-backupwordpress-extension/',
+                                'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/05/mainwp-backupwordpress-extension.png',
+                                'product_id' => 'MainWP BackUpWordPress Extension'
                             ),
                         array(
                                 'slug' => 'boilerplate-extension',

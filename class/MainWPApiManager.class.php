@@ -228,7 +228,11 @@ class MainWPApiManager {
                     );        
 
                     $activate_results = json_decode( MainWPApiManagerKey::instance()->grabapikey( $args ), true );                    
-                    if ( $activate_results['activated'] == true) {
+                    $options['api_key'] = '';
+                    $options['activation_email'] = '';					
+                    $options['activated_key'] = 'Deactivated';	
+                            
+                    if ( is_array($activate_results) && $activate_results['activated'] == true && !empty($activate_results['api_key'])) {
                             $return['result'] = 'SUCCESS';
                             $mess = isset($activate_results['message']) ? $activate_results['message'] : "";
                             $return['message'] = __( 'Plugin activated. ', 'mainwp' ) . $mess;
@@ -236,14 +240,15 @@ class MainWPApiManager {
                             $options['activation_email'] = $return['activation_email'] = $activate_results['activation_email'];
                             $options['activated_key'] = 'Activated';
                             $options['deactivate_checkbox'] = 'off';                                        
-                    }
-
-                    if ( $activate_results == false ) {
-                            $return['error'] =  __( 'Connection failed to the License Key API server. Try again later.', "mainwp" );
-                            $options['api_key'] = '';
-                            $options['activation_email'] = '';					
-                            $options['activated_key'] = 'Deactivated';					
-                    }
+                    } else {
+                            if ( $activate_results == false ) 
+                                $return['error'] =  __( 'Connection failed to the License Key API server. Try again later.', "mainwp" );
+                            else if (empty($activate_results['api_key'])) {
+                                $return['error'] =  __( 'License key is empty.', "mainwp" );
+                            } else {
+                                $return['error'] =  __( 'Undefined error.', "mainwp" );
+                            }   			
+                    } 
 
                     if ( isset( $activate_results['code'] ) ) {                                    
                             switch ( $activate_results['code'] ) {
@@ -253,10 +258,7 @@ class MainWPApiManager {
                                     case '103':
                                     case '104':
                                     case '105':
-                                    case '106':
-                                        $options['api_key'] = '';
-                                        $options['activation_email'] = '';
-                                        $options['activated_key'] = 'Deactivated';
+                                    case '106':                                        
                                         $error = isset($activate_results['error']) ? $activate_results['error'] : ""; 
                                         $info = isset($activate_results['additional info']) ? ' ' . $activate_results['additional info'] : "";                                    
                                         $return['error'] = $error . $info;	                                    

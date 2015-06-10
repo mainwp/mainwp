@@ -85,9 +85,9 @@ class MainWPServerInformation
                         self::renderRow('PHP Version', '>=', '5.3', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.3 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you. Click the help icon to read more.');
                         self::renderRow('PHP Safe Mode Disabled', '=', true, 'getPHPSafeMode', '', '', null, 'MainWP Requires PHP Safe Mode to be disabled.');
                         self::renderRow('PHP Max Execution Time', '>=', '30', 'getMaxExecutionTime', 'seconds', '=', '0', 'Changed by modifying the value max_execution_time in your php.ini file. Click the help icon to read more.');
-                        self::renderRow('PHP Memory Limit', '>=', '128M', 'getPHPMemoryLimit', '', '', null, 'MainWP requires at least 128MB for proper functioning (256M+ recommended for big backups)');
-                        self::renderRow('PHP Upload Max Filesize', '>=', '2M', 'getUploadMaxFilesize', '(2MB+ best for upload of big plugins)', '', null, 'Changed by modifying the value upload_max_filesize in your php.ini file. Click the help icon to read more.');
-                        self::renderRow('PHP Post Max Size', '>=', '2M', 'getPostMaxSize', '(2MB+ best for upload of big plugins)', '', null, 'Changed by modifying the value post_max_size in your php.ini file. Click the help icon to read more.');
+                        self::renderRow('PHP Memory Limit', '>=', '128M', 'getPHPMemoryLimit', '', '', null, 'MainWP requires at least 128MB for proper functioning (256M+ recommended for big backups)', true);
+                        self::renderRow('PHP Upload Max Filesize', '>=', '2M', 'getUploadMaxFilesize', '(2MB+ best for upload of big plugins)', '', null, 'Changed by modifying the value upload_max_filesize in your php.ini file. Click the help icon to read more.', true);
+                        self::renderRow('PHP Post Max Size', '>=', '2M', 'getPostMaxSize', '(2MB+ best for upload of big plugins)', '', null, 'Changed by modifying the value post_max_size in your php.ini file. Click the help icon to read more.', true);
                         self::renderRow('SSL Extension Enabled', '=', true, 'getSSLSupport', '', '', null, 'Changed by uncommenting the ;extension=php_openssl.dll line in your php.ini file by removing the ";" character. Click the help icon to read more.');
                         self::renderRow('SSL Warnings', '=', '', 'getSSLWarning', 'empty', '', null, 'If your SSL Warnings has any errors we suggest speaking with your web host so they can help troubleshoot the specific error you are getting. Click the help icon to read more.');
                         self::renderRow('cURL Extension Enabled', '=', true, 'getCurlSupport', '', '', null, 'Changed by uncommenting the ;extension=php_curl.dll line in your php.ini file by removing the ";" character. Click the help icon to read more.');
@@ -101,6 +101,7 @@ class MainWPServerInformation
 
                         ?><tr><td style="background: #333; color: #fff;" colspan="5"><?php _e('MISC','mainwp'); ?></td></tr><?php
                         self::renderRow('PCRE Backtracking Limit', '>=', '10000', 'getOutputBufferSize', '', '', null, 'Changed by modifying the value pcre.backtrack_limit in your php.ini file. Click the help icon to read more.');
+                        ?><tr><td><?php MainWPUtility::renderToolTip('MainWP requires the FS_METHOD to be set to direct','mainwp'); ?></td><td><?php _e('FileSystem Method','mainwp'); ?></td><td><?php echo '= ' . __('direct','mainwp'); ?></td><td><?php echo self::getFileSystemMethod(); ?></td><td><?php echo self::getFileSystemMethodCheck(); ?></td></tr><?php
                         ?><tr><td style="background: #333; color: #fff;" colspan="5"><?php _e('SERVER INFORMATION','mainwp'); ?></td></tr>
                           <tr><td></td><td><?php _e('WordPress Root Directory','mainwp'); ?></td><td colspan="3"><?php self::getWPRoot(); ?></td></tr>
                           <tr><td></td><td><?php _e('Server Name','mainwp'); ?></td><td colspan="3"><?php self::getSeverName(); ?></td></tr>
@@ -334,19 +335,54 @@ class MainWPServerInformation
       return true;
     }
 
-    protected static function renderRow($pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $toolTip = null)
+    protected static function renderRow($pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $toolTip = null, $compareFilesize = false)
     {
         $currentVersion = call_user_func(array(MainWPServerInformation::getClassName(), $pGetter));
-
+        
         ?>
     <tr>
         <td class="mwp-not-generate-row"><?php if ($toolTip != null) { ?> <a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWPUtility::renderToolTip($toolTip); ?></a><?php } ?></td>
         <td><?php echo $pConfig; ?></td>
         <td><?php echo $pCompare; ?>  <?php echo ($pVersion === true ? 'true' : $pVersion) . ' ' . $pExtraText; ?></td>
         <td><?php echo ($currentVersion === true ? 'true' : $currentVersion); ?></td>
+        <?php if ($compareFilesize) { ?>        
+        <td><?php echo (self::filesize_compare($currentVersion, $pVersion, $pCompare) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>'); ?></td>
+        <?php } else { ?>
         <td><?php echo (version_compare($currentVersion, $pVersion, $pCompare) || (($pExtraCompare != null) && version_compare($currentVersion, $pExtraVersion, $pExtraCompare)) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>'); ?></td>
+        <?php } ?>
     </tr>
     <?php
+    }
+    
+    protected static function filesize_compare($value1, $value2, $operator = null) {        
+        if (strpos($value1, "G") !== false) {
+            $value1 = preg_replace('/[A-Za-z]/', '', $value1);
+            $value1 = intval($value1) * 1024; // Megabyte number            
+        } else {
+            $value1 = preg_replace('/[A-Za-z]/', '', $value1); // Megabyte number
+        }
+        
+        if (strpos($value2, "G") !== false) {
+            $value2 = preg_replace('/[A-Za-z]/', '', $value2);
+            $value2 = intval($value2) * 1024; // Megabyte number            
+        } else {
+            $value2 = preg_replace('/[A-Za-z]/', '', $value2); // Megabyte number
+        }
+        return version_compare($value1, $value2, $operator);
+    }
+    
+    protected static function getFileSystemMethod() {
+        $fs = get_filesystem_method();
+        return $fs;
+    }
+
+    protected static function getFileSystemMethodCheck() {
+        $fsmethod = self::getFileSystemMethod();
+        if ($fsmethod == 'direct') {
+            echo '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>';
+        } else {
+            echo '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>';
+        }
     }
 
     protected static function getLoadedPHPExtensions() {

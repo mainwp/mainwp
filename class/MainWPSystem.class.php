@@ -1255,6 +1255,7 @@ class MainWPSystem
 
         if (true || $this->isAPIValid())
         {
+            if (!isset($GLOBALS['pagenow'])) $GLOBALS['pagenow'] = '';
             $url = get_home_url();
             try
             {
@@ -1981,6 +1982,7 @@ class MainWPSystem
   				google.load("visualization", "1", {packages:["corechart"]});
 			</script>';
         echo '<link rel="stylesheet" id="custom_admin" type="text/css" href="' . plugins_url('css/mainwp.css', dirname(__FILE__)) . '" />';
+        echo '<link rel="stylesheet" id="mainwp_responsive_layouts" type="text/css" href="' . plugins_url('css/mainwp-responsive-layouts.css', dirname(__FILE__)) . '" />';
         echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('css/fileuploader.css', dirname(__FILE__)) . '" />';
         if (isset($_GET['hideall']) && $_GET['hideall'] == 1) {
             echo '<link rel="stylesheet" id="custom_admin" type="text/css" href="' . plugins_url('css/mainwp-hidden.css', dirname(__FILE__)) . '" />';
@@ -2018,18 +2020,61 @@ class MainWPSystem
         }
     }
 
+    function sites_fly_menu() {
+        global $wpdb ;
+        $websites = $wpdb->get_results("SELECT id,name,url FROM `" . $wpdb->prefix . "mainwp_wp`");
+        ?>
+            <div id="mainwp-sites-menu" style="direction: rtl;">
+                <div style="direction: ltr;">
+                    <ul>
+                        <?php
+                        foreach ($websites as $website) {
+                            $imgfavi = "";
+                            if ($website !== null) {
+                                if (get_option('mainwp_use_favicon', 1) == 1) {                            
+                                    $favi = MainWPDB::Instance()->getWebsiteOption($website, 'favi_icon', "");
+                                    $favi_url =     MainWPUtility::get_favico_url($favi, $website);
+                                    $imgfavi = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:bottom;"/>&nbsp;';
+                                }
+                            }
+                            echo '<li class="mwp-child-site-item" value="'. $website->id .'">' . $imgfavi . '<a href="admin.php?page=managesites&dashboard=' . $website->id . '" class="mainpw-fly-meny-lnk">' . MainWPUtility::getNiceURL($website->url) . '</a></li>' ;
+                        }
+                        ?>
+                    </ul>
+                <div id="mainwp-sites-menu-filter">
+                    <input id="mainwp-fly-manu-filter" style="margin-top: .5em; width: 100%;" type="text" value="" placeholder="<?php _e('Type here to filter sites','mainwp'); ?>" />
+                </div>
+                </div>
+            </div>
+        <?php
+    }
+
     //Empty footer text
     function admin_footer_text()
     {
         if (isset($_SESSION['showTip'])) unset($_SESSION['showTip']);
-
-        return 'MainWP - version ' . $this->current_version . ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Currently Managing: <span id="managedSitesCount">' . MainWPDB::Instance()->getWebsitesCount() . '</span> Sites';
+        
+        return '<a href="javascript:void(0)" id="mainwp-sites-menu-button" class="mainwp-white mainwp-right-margin-2"><i class="fa fa-globe fa-2x"></i></a>'.'<span style="font-size: 14px;"><i class="fa fa-info-circle"></i> ' . __('Currently managing ','mainwp') . MainWPDB::Instance()->getWebsitesCount()  .  __(' child sites with MainWP ','mainwp') . $this->current_version . __(' version. ','mainwp') . '</span>';
     }
 
+    function add_new_links() {
+        ?>
+        <div id="mainwp-add-new-links">
+            <ul>
+                <li><a class="mainwp-add-new-link" href="<?php echo admin_url('admin.php?page=managesites&do=new'); ?>"><i class="fa fa-globe"></i> &nbsp;&nbsp;<?php _e('Site','mainwp'); ?></a></li>
+                <li><a class="mainwp-add-new-link" href="<?php echo admin_url('admin.php?page=PostBulkAdd'); ?>"><i class="fa fa-file-text"></i> &nbsp;&nbsp;<?php _e('Post','mainwp'); ?></a></li>
+                <li><a class="mainwp-add-new-link" href="<?php echo admin_url('admin.php?page=PageBulkAdd'); ?>"><i class="fa fa-file"></i> &nbsp;&nbsp;<?php _e('Page','mainwp'); ?></a></li>
+                <li><a class="mainwp-add-new-link" href="<?php echo admin_url('admin.php?page=PluginsInstall'); ?>"><i class="fa fa-plug"></i> &nbsp;&nbsp;<?php _e('Plugin','mainwp'); ?></a></li>
+                <li><a class="mainwp-add-new-link" href="<?php echo admin_url('admin.php?page=ThemesInstall'); ?>"><i class="fa fa-paint-brush"></i> &nbsp;&nbsp;<?php _e('Theme','mainwp'); ?></a></li>
+                <li><a class="mainwp-add-new-link" href="<?php echo admin_url('admin.php?page=UserBulkAdd'); ?>"><i class="fa fa-user"></i> &nbsp;&nbsp;<?php _e('User','mainwp'); ?></a></li>
+            </ul>
+        </div>
+        <?php
+    }
     //Version
     function update_footer()
     {
-        $output = '<span><input type="button" style="background-image: none!important; padding-left: .6em !important;" id="dashboard_refresh" value="Sync Data" class="mainwp-upgrade-button button-primary button" /> <a class="button-primary button" href="admin.php?page=managesites&do=new">Add New Site</a> <a class="button-primary button mainwp-button-red" href="https://extensions.mainwp.com" target="_blank">Get New Extensions</a></span>';
+        $output = '<a href="javascript:void(0)" id="dashboard_refresh" title="Sync Data" class="mainwp-left-margin-2 mainwp-green"><i class="fa fa-refresh fa-2x"></i></a> <a id="mainwp-add-new-button" class="mainwp-blue mainwp-left-margin-2" title="Add New" href="javascript:void(0)"><i class="fa fa-plus fa-2x"></i></a> <a class="mainwp-red mainwp-left-margin-2" title="Get MainWP Extensions" href="https://extensions.mainwp.com" target="_blank"><i class="fa fa-shopping-cart fa-2x"></i></a> <a class="mainwp-white mainwp-left-margin-2" title="Get Support" href="http://support.mainwp.com" target="_blank"><i class="fa fa-life-ring fa-2x"></i></a>' . '<a href="https://www.facebook.com/mainwp" class="mainwp-link-clean mainwp-left-margin-2" style="color: #3B5998;" target="_blank"><i class="fa fa-facebook-square fa-2x"></i></a> ' . ' <a href="https://twitter.com/mymainwp" class="mainwp-link-clean" target="_blank" style="color: #4099FF;"><i class="fa fa-twitter-square fa-2x"></i></a>.';
 
 
         $current_wpid = MainWPUtility::get_current_wpid();
@@ -2112,6 +2157,10 @@ class MainWPSystem
             <input id="refresh-status-close" type="button" name="Close" value="Close" class="button" />
         </div>
     <?php
+
+        self::sites_fly_menu();
+        self::add_new_links();
+
         $newOutput = ob_get_clean();
 
         return $output . $newOutput;

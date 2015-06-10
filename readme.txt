@@ -114,7 +114,15 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 == Changelog ==
 
 = 2.0.18 - 6-10-15 =
-
+* Added: HTTP Auth option when adding Child sites
+* Added: Responsive Mobile Friendly Design
+* Added: Sites menu in the plugin footer
+* Added: Additional links in the footer
+* Added: File System check on the Server Information page
+* Fixed: Extension API activation error notice
+* Fixed: Calculation error for the PHP Memory Limit, PHP Max Upload Filesize and PHP Post Max Size checks
+* Updated: CSS style
+* Updated: Plugin footer layout
 
 = 2.0.17 - 5-30-15 =
 * Fixed: Extension activation issue

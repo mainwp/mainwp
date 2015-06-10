@@ -113,10 +113,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 == Changelog ==
 
-= 2.0.17 =
+= 2.0.18 - 6-10-15 =
+
+
+= 2.0.17 - 5-30-15 =
 * Fixed: Extension activation issue
 
-= 2.0.16 =
+= 2.0.16 - 5-23-15 =
 * Added: Connection Timeout
 * Added: French language files
 * Fixed: Issue where the Security widget disappears if not using default backup option
@@ -125,7 +128,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Updated: Extensions widget layout
 * Updated: CSS Style
 
-= 2.0.15 =
+= 2.0.15 - 5-14-15 =
 * Added: Update Plugs in bulk action on the Manage Sites page
 * Added: Update Themes bulk action on the Manage Sites page
 * Added: Actions column in the Mange Sites table
@@ -150,7 +153,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Updated: Individual site Require backup before upgrade setting
 * Removed: Unnecessary checks from the Sever Information page
 
-= 2.0.14 =
+= 2.0.14 - 4-28-15 =
 * Added: OpenSSL Notification and the SSL Verify option for Extension site connection
 * Fixed: Issues with some updates on Extensions page
 * Fixed: Issue deleting Child sites from Dashboard when the Child plugin disabled or removed
@@ -160,44 +163,44 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Changed: PHP required version on the Server Information page
 * Changed: Various small cosmetic features 
 
-= 2.0.13 =
+= 2.0.13 - 4-22-15 =
 * Fixed: Security issue with add_query_arg and remove_query_arg
 * Fixed: Additional fixes for displaying favicon
 * Fixed: PHP Warning
 * Added: OpenSSL notification and sslverify option for Extension login
 
-= 2.0.12 =
+= 2.0.12 - 4-16-15  =
 * Fixed: Typo on the Plugins widget
 * Added: Various Notices
 * Added: New Extension in the Available Extensions box on the Extensions page. 
 * Tweaked: Layout of the Backup Options box on the Settings Page
 
-= 2.0.11 =
+= 2.0.11 - 4-12-15 =
 * Fixed: Displaying favicon bug
 
-= 2.0.10 =
+= 2.0.10 - 4-06-15 =
 * Added: Display Favicon for child sites feature
 * Added: Support for upcoming extension
 * Added: New css style
 * Fixed: Select sites by group bug in the Team Control Extension
 * Fixed: Multiple PHP Warnings
 
-= 2.0.9 =
+= 2.0.9  - 3-01-15 =
 * Fixed: For some languages titles not displaying correctly in the latest posts/latest pages widget
 * Fixed: Dashboard download permission issue which was causing plugin bulk installation not working properly
 * Tweaked: Better performance (memory usage) and less PHP notices
 * Added: Hooks for upcoming extensions
 
-= 2.0.8.2 =
+= 2.0.8.2 - 2-25-15 =
 * Fixed: PHP Fatal error when hiding warnings
 
-= 2.0.8.1 =
+= 2.0.8.1 - 2-23-15 =
 * Fixed: Security issue - Unrestricted file upload
 * Fixed: Security issue - Path traversal in file download
 * Fixed: Possible high resource allocation in logger
 * Added: IP address in test connection result
 
-= 2.0.8 =
+= 2.0.8 - 2-11-15 =
 * Fixed: Database issue when removing sites
 * Added: Better log file handling
 * Fixed: One unreachable site blocking last sync date
@@ -205,11 +208,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Fixed: Backup tasks losing site-configuration
 * Fixed: "No MainWP Child"-error on some hosts when adding new pages/posts/users
 
-= 2.0.7.1 =
+= 2.0.7.1 - 2-03-15 =
 * Fixed: MySQL error when showing last sync time
 * Fixed: Auto updates not working on some hosts
 
-= 2.0.7 =
+= 2.0.7 - 2-01-15 =
 * Fixed: Bug for Heatmap extension
 * Fixed: WordPress Database error
 * Fixed: Wrong sync-times displayed on Right Now widget
@@ -224,7 +227,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Tweaked: "Use MainWP Trigger" option moved to the MainWP Account Information box on the MainWP settings page
 * Tweaked: Removed old code and fixed deprecated PHP calls
 
-= 2.0.6 =
+= 2.0.6 - 1-14-15 =
 * Fixed: Incorrect dashboard out of sync message
 * Fixed: Hooks for the Google Analytics Extension
 * Fixed: Hooks for the Client Reports extension
@@ -235,30 +238,30 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Tweaked: Manage Themes table, added static first column
 * Removed: Create MainWP Account from the Extensions page
 
-= 2.0.5 =
+= 2.0.5 - 1-7-15 =
 * Fixed: Search issue (not showing all results when searching the sites page)
 * Fixed: Incorrect "Another backup process is running, try again later" message.
 * Added: Enhanced backup fetch to support a broader range of hosts
 * Added: Speed enhancement in the syncing process
 * Added: Action logs (to provide better debugging)
 
-= 2.0.4 =
+= 2.0.4 - 12-26-14 =
 * Added: Hooks for upcoming Team Control Extension 
 * Fixed: Issues with very large network Dashboard load times
 * Fixed: MainWP Tips dismiss button not removing the message
 * Fixed: Ignored Updates still showing in the Manage Sites table
 * Fixed: Hooks for some Extensions
 
-= 2.0.3 =
+= 2.0.3 - 12-11-14 =
 * Fixed: Empty sites list issue on some hosts
 
-= 2.0.2 =
+= 2.0.2 - 12-10-14 =
 * Fixed: Support for big networks with a low MAX_JOIN_SIZE setting in MySQL
 
-= 2.0.1 =
+= 2.0.1 - 12-10-14 =
 * Added: Support for SQL users without CREATE VIEW privilege
 
-= 2.0 =
+= 2.0 - 12-09-14 =
 * Added: Tar GZip as a backup file format
 * Added: Tar Bzip2 as a backup file format
 * Added: Tar as a backup file format
@@ -312,12 +315,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Refactor: MainWP Database table split into two tables, mainwp_wp_option and mainwp_wp_sync
 * Removed: jsapi link to Google
 
-= 1.2.1 =
+= 1.2.1 - 09-02-14 =
 * Added Auto detection of allowed File Descriptors during backups
 * Added Hide Dashboard from non-admins on Dashboard site
 * Fixed issue with some links in posts
 
-= 1.2 =
+= 1.2 - 09-02-14 =
 * Added Tooltips on server information page
 * Added auto save login after successful test
 * Added Additional tweaks for less Backup timeouts
@@ -332,7 +335,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Removed link to Google url for jquery to prevent possible tracking
 * Removed old code references
 
-= 1.1 =
+= 1.1 - 8-08-14 =
 * Added Option to automatically exclude common backup locations from Backups
 * Added Option to automatically exclude common cache locations from Backups
 * Added Option to automatically exclude non-WordPress folders from Backups
@@ -347,16 +350,16 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Fixed Issue where the upper sync button did not activate when there are posts/pages with html tags in title
 * Additional CSS and Cosmetic Tweaks
 
-= 1.0.9.1 =
+= 1.0.9.1 - 7-10-14  =
 * Added support for servers blocking curl_multi_exec calls
 
-= 1.0.9 =
+= 1.0.9 - 7-08-14 =
 * Added additional pings to decrease Backup timeouts on slower servers
 * Added enhancement for sites having a timeout stuck while performing a backup
 * Added enhancement to decrease server load when searching for or posting posts/pages/users
 * Tweaked CSS for Dashboard boxes mobile devices - ht phalancs
 
-= 1.0.8.9 =
+= 1.0.8.9 - 7-02-14 =
 * Added redirect for user to add first site on activation
 * Cleaned up messages to user on initial activation
 * Fixed forms to move to the top and show messages on submit
@@ -364,18 +367,18 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Fixed PHP Strict Error
 * Fixed Page and Post scheduling
 
-= 1.0.8.8 =
+= 1.0.8.8 - 6-18-14 =
 * Fix for backups (database backups deleted incorrectly)
 * Fix to reduce timeouts on sync
 
-= 1.0.8.7 =
+= 1.0.8.7 - 6-17-14 =
 * Tweak for Backup file dates to match set timezone
 * Fix for uploads path outside the conventional path for backups
 * Fix for created category name and slug not handling spacing correctly
 * Fix for declaring wp_mail causing conflict with Mandrill
 * Added new hooks for upcoming extensions
 
-= 1.0.8.6 =
+= 1.0.8.6 - 6-10-14 =
 * Added ping from dashboard during backups, to reduce timeouts and add better error reporting
 * Added intelligent checks to increase backup speed
 * Install New Extension button added to the Extensions page
@@ -385,32 +388,32 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * CSS changes for a cleaner look
 * Hooks added for the upcoming extension
 
-= 1.0.8.5 =
+= 1.0.8.5 - 5-29-14 =
 * Fixed warning with open basedir restriction in place
 * Added zip support to database backups
 * Added new hooks for upcoming extensions
 
-= 1.0.8.4 =
+= 1.0.8.4 - 5-22-14 =
 * Now compatible with WPEngine-hosted child-sites
 * Added new hooks for upcoming extensions
 
-= 1.0.8.3 =
+= 1.0.8.3 - 5-08-14 =
 * Fixed issue with some missing images
 * Fixed issue with Comments extension redirect
 * Fixed PHP Notice on Sync Now when using strict 
 * Updated Test Connection to show the hostname
 * Added new German translations
 
-= 1.0.8.2 =
+= 1.0.8.2 - 5-07-14  =
 * Fixed invalid link on Extensions Page
 * Fixed screen layout saving on manage sites page
 * Fixed various other CSS Layout issues
 
-= 1.0.8.1 =
+= 1.0.8.1 - 4-29-14 =
 * Fixed default values for minimum delays between requests
 * Fixed issue that prevented 0 as values for minimum delays between requests
 
-= 1.0.8 =
+= 1.0.8 - 4-28-14 =
 * Added Minimum delay between requests to Settings Advanced Options
 * Added Minimum delay between requests to the same ip Settings Advanced Options
 * Fixed issue with some premium plugins showing as Trusted in email when not Trusted
@@ -418,26 +421,26 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Added new German translations
 * Changed Max Request Error Message to provide link to more information
 
-= 1.0.7 =
+= 1.0.7 - 4-14-14 =
 * Fix menu position, so menus created by extensions will be below Extensions menu item
 * Fix for Favorites Extension: bug upload long file name
 * Added support for custom crontab settings (may reduce timeouts on bigger sites)
 * Optimized the delay settings between requests and requests to the same ip to reduce timeouts
 
-= 1.0.6 =
+= 1.0.6 - 3-31-14 =
 * Code changes for WP 3.9 Compatibility 
 * Added Plugin Widget to Individual Dashboard screen
 * Added Theme Widget to Individual Dashboard screen
 * Moved Bulk Update Admin password to the Users screen
 * Changed Extension Menu Layout
 
-= 1.0.5 =
+= 1.0.5 - 3-16-14 =
 * Minor fix for heatmap extension
 
-= 1.0.4 =
+= 1.0.4 - 3-12-14 =
 * Fix for premium plugins
 
-= 1.0.3 =
+= 1.0.3 - 3-10-14  =
 * Added possibility to disable basic SEO stats
 * Codex Issue Fixed for displaying header and footer
 * Added support for premium plugins
@@ -445,11 +448,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 * Added Sync, Add Sites and Extension to the plugin footer for easy access
 
 
-= 1.0.2 =
+= 1.0.2 - 2-27-14 =
 * Fixed issue with adding new posts/pages
 
-= 1.0.1 =
+= 1.0.1 - 2-26-14  =
 * Internal version
 
-= 1.0.0 =
+= 1.0.0 - 2-23-14 =
 * Initial version

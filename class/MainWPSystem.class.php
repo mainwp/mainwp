@@ -120,6 +120,8 @@ class MainWPSystem
 
         //Add js
         add_action('admin_head', array(&$this, 'admin_head'));
+        add_action('admin_enqueue_scripts', array(&$this, 'admin_enqueue_styles'));
+        add_action('admin_enqueue_scripts', array(&$this, 'admin_enqueue_scripts'));
 
         //Add body class
         add_action('admin_body_class', array(&$this, 'admin_body_class'));
@@ -1961,38 +1963,49 @@ class MainWPSystem
         register_post_type('bulkpage', $args);
     }
 
-    function admin_head()
-    {
-        if (MainWPUtility::isAdmin())
-        {
-            echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-admin.js', dirname(__FILE__)) . '"></script>';
+    function admin_enqueue_scripts($hook) {
+        wp_register_script('mainwp-admin', MAINWP_PLUGIN_URL . 'js/mainwp-admin.js', array(), $this->current_version);
+
+        if (MainWPUtility::isAdmin()) {
+            wp_enqueue_script('mainwp-admin');
         }
 
-        echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-rightnow.js', dirname(__FILE__)) . '"></script>';
-        echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-managesites.js', dirname(__FILE__)) . '"></script>';
-        echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-extensions.js', dirname(__FILE__)) . '"></script>';
-        echo '<script type="text/javascript" src="' . plugins_url('js/mainwp-ui.js', dirname(__FILE__)) . '"></script>';
-        echo '<script type="text/javascript" src="' . plugins_url('js/fileuploader.js', dirname(__FILE__)) . '"></script>';
-        echo '<script type="text/javascript" src="' . plugins_url('js/date.js', dirname(__FILE__)) . '"></script>';
-        echo '<script type="text/javascript" src="' . plugins_url('js/jquery.tablesorter.min.js', dirname(__FILE__)) . '"></script>';
-        echo '<script type="text/javascript" src="' . plugins_url('js/jquery.tablesorter.pager.js', dirname(__FILE__)) . '"></script>';
-        echo '<script type="text/javascript" src="' . plugins_url('js/moment.min.js', dirname(__FILE__)) . '"></script>';
+        wp_enqueue_script('mainwp-rightnow', MAINWP_PLUGIN_URL . 'js/mainwp-rightnow.js', array(), $this->current_version);
+        wp_enqueue_script('mainwp-managesites', MAINWP_PLUGIN_URL . 'js/mainwp-managesites.js', array(), $this->current_version);
+        wp_enqueue_script('mainwp-extensions', MAINWP_PLUGIN_URL . 'js/mainwp-extensions.js', array(), $this->current_version);
+        wp_enqueue_script('mainwp-ui', MAINWP_PLUGIN_URL . 'js/mainwp-ui.js', array(), $this->current_version);
+        wp_enqueue_script('mainwp-fileuploader', MAINWP_PLUGIN_URL . 'js/mainwp-fileuploader.js', array(), $this->current_version);
+        wp_enqueue_script('mainwp-date', MAINWP_PLUGIN_URL . 'js/mainwp-date.js', array(), $this->current_version);
+        wp_enqueue_script('mainwp-tablesorter', MAINWP_PLUGIN_URL . 'js/jquery.tablesorter.min.js', array(), $this->current_version);
+        wp_enqueue_script('mainwp-tablesorter-pager', MAINWP_PLUGIN_URL . 'js/jquery.tablesorter.pager.min.js', array(), $this->current_version);
+        wp_enqueue_script('mainwp-moment', MAINWP_PLUGIN_URL . 'js/moment.min.js', array(), $this->current_version);
+    }
+
+    function admin_enqueue_styles($hook) {
+        wp_register_style('mainwp-hidden', MAINWP_PLUGIN_URL . 'css/mainwp-hidden.css', array(), $this->current_version);
+
+        wp_enqueue_style('mainwp', MAINWP_PLUGIN_URL . 'css/mainwp.css', array(), $this->current_version);
+        wp_enqueue_style('mainwp-responsive-layouts', MAINWP_PLUGIN_URL . 'css/mainwp-responsive-layouts.css', array(), $this->current_version);
+        wp_enqueue_style('mainwp-fileuploader', MAINWP_PLUGIN_URL . 'css/fileuploader.css', array(), $this->current_version);
+
+        if (isset($_GET['hideall']) && $_GET['hideall'] == 1) {
+            wp_enqueue_style('mainwp-hidden');
+            remove_action('admin_footer', 'wp_admin_bar_render', 1000);
+        }
+
+        wp_enqueue_style('mainwp-filetree', MAINWP_PLUGIN_URL . 'css/jqueryFileTree.css', array(), $this->current_version);
+        wp_enqueue_style('mainwp-font-awesome', MAINWP_PLUGIN_URL . 'css/font-awesome/css/font-awesome.min.cs', array(), $this->current_version);
+    }
+
+    function admin_head()
+    {
         echo '<script type="text/javascript" src="' . plugins_url('js/jsapi.js', dirname(__FILE__)) . '"></script>';
         echo '<script type="text/javascript">
   				google.load("visualization", "1", {packages:["corechart"]});
 			</script>';
-        echo '<link rel="stylesheet" id="custom_admin" type="text/css" href="' . plugins_url('css/mainwp.css', dirname(__FILE__)) . '" />';
-        echo '<link rel="stylesheet" id="mainwp_responsive_layouts" type="text/css" href="' . plugins_url('css/mainwp-responsive-layouts.css', dirname(__FILE__)) . '" />';
-        echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('css/fileuploader.css', dirname(__FILE__)) . '" />';
-        if (isset($_GET['hideall']) && $_GET['hideall'] == 1) {
-            echo '<link rel="stylesheet" id="custom_admin" type="text/css" href="' . plugins_url('css/mainwp-hidden.css', dirname(__FILE__)) . '" />';
-            remove_action('admin_footer', 'wp_admin_bar_render', 1000);
-        }
         echo '<script type="text/javascript">var mainwp_ajax_nonce = "' . wp_create_nonce('mainwp_ajax') . '"</script>';
         echo '<script type="text/javascript" src="' . plugins_url('js/FileSaver.js', dirname(__FILE__)) . '"></script>';
-        echo '<script type="text/javascript" src="' . plugins_url('js/jqueryFileTree.js', dirname(__FILE__)) . '"></script>';        
-        echo '<link rel="stylesheet" type="text/css" href="' . plugins_url('css/jqueryFileTree.css', dirname(__FILE__)) . '" />';
-        echo '<link rel="stylesheet" href="' . plugins_url('css/font-awesome/css/font-awesome.min.css', dirname(__FILE__)) . '" />';
+        echo '<script type="text/javascript" src="' . plugins_url('js/jqueryFileTree.js', dirname(__FILE__)) . '"></script>';
     }
     
     function admin_body_class($class_string) {

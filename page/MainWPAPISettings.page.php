@@ -109,6 +109,7 @@ class MainWPAPISettings
         $maxOccurences = isset($requestsDB['maxOccurences']) ? unserialize(base64_decode($requestsDB['maxOccurences'])) : 0;
 
         $exclusiveResult = '';
+        if (!isset($GLOBALS['pagenow'])) $GLOBALS['pagenow'] = '';
         $url = get_home_url();
         //If we force a request,
         //  or API is not yet checked or invalid,

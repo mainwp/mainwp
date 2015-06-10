@@ -339,6 +339,19 @@ class MainWPManageSitesView
                              </select> <i>(Default: Yes)</i>
                         </td>
                     </tr>
+
+                    <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
+                    <input style="display:none" type="text" name="fakeusernameremembered"/>
+                    <input style="display:none" type="password" name="fakepasswordremembered"/>
+
+                    <tr class="form-field form-required">
+                         <th scope="row"><?php _e('HTTP username: ','mainwp'); ?></th>
+                         <td><input type="text" id="mainwp_managesites_test_http_user" style="width: 350px;" name="mainwp_managesites_test_http_user" value="" class="mainwp-field mainwp-username"/></td>
+                    </tr>
+                    <tr class="form-field form-required">
+                         <th scope="row"><?php _e('HTTP password: ','mainwp'); ?></th>
+                         <td><input type="password" id="mainwp_managesites_test_http_pass" style="width: 350px;" name="mainwp_managesites_test_http_pass" value="" class="mainwp-field mainwp-password"/></td>
+                    </tr>
                 </table>
                 <p class="submit"><input type="button" name="mainwp_managesites_test"
                                          id="mainwp_managesites_test"
@@ -531,7 +544,7 @@ class MainWPManageSitesView
                              <td><input type="text" id="mainwp_managesites_add_uniqueId" style="width: 350px;"
                                       name="mainwp_managesites_add_uniqueId" value="" class="mainwp-field mainwp-unique-id"/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
                         </tr>
-                            <tr class="form-field form-required">
+                        <tr class="form-field form-required">
                             <th scope="row"><?php _e('Verify Certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
                             <td>
                                 <select id="mainwp_managesites_verify_certificate" name="mainwp_managesites_verify_certificate">
@@ -540,7 +553,20 @@ class MainWPManageSitesView
                                      <option value="2"><?php _e('Use Global Setting','mainwp'); ?></option>
                                  </select> <i>(Default: Yes)</i>
                             </td>
-                            </tr>
+                        </tr>
+
+                        <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
+                        <input style="display:none" type="text" name="fakeusernameremembered"/>
+                        <input style="display:none" type="password" name="fakepasswordremembered"/>
+
+                        <tr class="form-field form-required">
+                             <th scope="row"><?php _e('HTTP username: ','mainwp'); ?></th>
+                             <td><input type="text" id="mainwp_managesites_add_http_user" style="width: 350px;" name="mainwp_managesites_add_http_user" value="" class="mainwp-field mainwp-username"/></td>
+                        </tr>
+                        <tr class="form-field form-required">
+                             <th scope="row"><?php _e('HTTP password: ','mainwp'); ?></th>
+                             <td><input type="password" id="mainwp_managesites_add_http_pass" style="width: 350px;" name="mainwp_managesites_add_http_pass" value="" class="mainwp-field mainwp-password"/></td>
+                        </tr>
                     </table>
                     </div>
                 </div>
@@ -1443,6 +1469,19 @@ class MainWPManageSitesView
                          </select> <i>(Default: Yes)</i>
                     </td>
                 </tr>
+
+                <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
+                <input style="display:none" type="text" name="fakeusernameremembered"/>
+                <input style="display:none" type="password" name="fakepasswordremembered"/>
+
+                <tr class="form-field form-required">
+                     <th scope="row"><?php _e('HTTP username: ','mainwp'); ?></th>
+                     <td><input type="text" id="mainwp_managesites_edit_http_user" style="width: 350px;" name="mainwp_managesites_edit_http_user" value="<?php echo (empty($website->http_user) ? '' : $website->http_user); ?>" class="mainwp-field mainwp-username"/></td>
+                </tr>
+                <tr class="form-field form-required">
+                     <th scope="row"><?php _e('HTTP password: ','mainwp'); ?></th>
+                     <td><input type="password" id="mainwp_managesites_edit_http_pass" style="width: 350px;" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty($website->http_pass) ? '' : $website->http_pass); ?>" class="mainwp-field mainwp-password"/></td>
+                </tr>
             </table>
             </div>
             </div>
@@ -1587,7 +1626,7 @@ class MainWPManageSitesView
                     $pubkey = '-1';
                 }
 
-                $information = MainWPUtility::fetchUrlNotAuthed($website->url, $website->adminname, 'register', array('pubkey' => $pubkey, 'server' => get_admin_url()), true, $website->verify_certificate);
+                $information = MainWPUtility::fetchUrlNotAuthed($website->url, $website->adminname, 'register', array('pubkey' => $pubkey, 'server' => get_admin_url()), true, $website->verify_certificate, $website->http_user, $website->http_pass);
 
                 if (isset($information['error']) && $information['error'] != '')
                 {
@@ -1681,6 +1720,8 @@ class MainWPManageSitesView
                     $themeConflicts = array_filter($themeConflicts);
                 $verifyCertificate = $_POST['verify_certificate'];
                 $addUniqueId = $_POST['managesites_add_uniqueId'];
+                $http_user = $_POST['managesites_add_http_user'];
+                $http_pass = $_POST['managesites_add_http_pass'];
                 $information = MainWPUtility::fetchUrlNotAuthed($url, $_POST['managesites_add_wpadmin'], 'register',
                     array('pubkey' => $pubkey,
                         'server' => get_admin_url(),
@@ -1688,7 +1729,7 @@ class MainWPManageSitesView
                         'pluginConflicts' => json_encode($pluginConflicts),
                         'themeConflicts' => json_encode($themeConflicts)), 
                     false,
-                    $verifyCertificate    
+                    $verifyCertificate, $http_user, $http_pass
                 );
 
                 if (isset($information['error']) && $information['error'] != '')
@@ -1735,10 +1776,12 @@ class MainWPManageSitesView
                         
                         if (!isset($information['uniqueId']) || empty($information['uniqueId']))
                             $addUniqueId = "";
-                        
+
+                        $http_user = $_POST['managesites_add_http_user'];
+                        $http_pass = $_POST['managesites_add_http_pass'];
                         global $current_user;
                         $id = MainWPDB::Instance()->addWebsite($current_user->ID, $_POST['managesites_add_wpname'], $_POST['managesites_add_wpurl'], $_POST['managesites_add_wpadmin'], base64_encode($pubkey), base64_encode($privkey), $information['nossl'], (isset($information['nosslkey'])
-                                ? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate, $addUniqueId);
+                                ? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass);
                         $message = 'Site successfully added';
                         $website = MainWPDB::Instance()->getWebsiteById($id);
                         MainWPSync::syncInformationArray($website, $information);

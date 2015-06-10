@@ -1170,11 +1170,15 @@ class MainWPPostHandler
 
         $url = null;
         $name = null;
+        $http_user = null;
+        $http_pass = null;
         $verifyCertificate = 1;
         if (isset($_POST['url']))
         {
             $url = $_POST['url'];
             $verifyCertificate = $_POST['test_verify_cert'];
+            $http_user = $_POST['http_user'];
+            $http_pass = $_POST['http_pass'];
         }
         else if (isset($_POST['siteid']))
         {
@@ -1184,16 +1188,18 @@ class MainWPPostHandler
                 $url = $website->url;
                 $name = $website->name;
                 $verifyCertificate = $website->verify_certificate;
+                $http_user = $website->http_user;
+                $http_pass = $website->http_pass;
             }
         }
 
-        $rslt = MainWPUtility::tryVisit($url, $verifyCertificate);
+        $rslt = MainWPUtility::tryVisit($url, $verifyCertificate, $http_user, $http_pass);
 
         if (isset($rslt['error']) && ($rslt['error'] != '') && (substr($url, -9) != 'wp-admin/'))
         {
             if (substr($url, -1) != '/') { $url .= '/'; }
             $url .= 'wp-admin/';
-            $newrslt = MainWPUtility::tryVisit($url, $verifyCertificate);
+            $newrslt = MainWPUtility::tryVisit($url, $verifyCertificate, $http_user, $http_pass);
             if (isset($newrslt['error']) && ($rslt['error'] != '')) $rslt = $newrslt;
         }
 

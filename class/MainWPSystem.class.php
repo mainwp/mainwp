@@ -1255,6 +1255,7 @@ class MainWPSystem
 
         if (true || $this->isAPIValid())
         {
+            if (!isset($GLOBALS['pagenow'])) $GLOBALS['pagenow'] = '';
             $url = get_home_url();
             try
             {

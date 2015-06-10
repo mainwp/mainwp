@@ -471,7 +471,7 @@ class MainWPManageSites
 
                 if ($backupTaskProgress->downloadedDBComplete == 0)
                 {
-                    MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $information['db'], 'fdl'), $localBackupFile, $information['size']);
+                    MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $information['db'], 'fdl'), $localBackupFile, $information['size'], $website->http_user, $website->http_pass);
                     $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadedDBComplete' => 1));
                 }
             }
@@ -525,7 +525,7 @@ class MainWPManageSites
                         }
                     }
 
-                    MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $information['full'], 'fdl'), $localBackupFile, $information['size']);
+                    MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $information['full'], 'fdl'), $localBackupFile, $information['size'], $website->http_user, $website->http_pass);
                     MainWPUtility::fetchUrlAuthed($website, 'delete_backup', array('del' => $information['full']));
                     $backupTaskProgress = MainWPDB::Instance()->updateBackupTaskProgress($taskId, $website->id, array('downloadedFULLComplete' => 1));
                 }
@@ -626,12 +626,12 @@ class MainWPManageSites
         $what = null;
         if ($pType == 'db')
         {
-            MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $pUrl, 'fdl'), $pFile);
+            MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $pUrl, 'fdl'), $pFile, false, $website->http_user, $website->http_pass);
         }
 
         if ($pType == 'full')
         {
-            MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $pUrl, 'fdl'), $pFile);
+            MainWPUtility::downloadToFile(MainWPUtility::getGetDataAuthed($website, $pUrl, 'fdl'), $pFile, false, $website->http_user, $website->http_pass);
         }
 
         return true;
@@ -1192,7 +1192,9 @@ class MainWPManageSites
 
                 $archiveFormat = isset($_POST['mainwp_archiveFormat']) ? $_POST['mainwp_archiveFormat'] : 'global';
 
-                MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset($_POST['mainwp_managesites_edit_uniqueId']) ? $_POST['mainwp_managesites_edit_uniqueId'] : '');
+                $http_user = $_POST['mainwp_managesites_edit_http_user'];
+                $http_pass = $_POST['mainwp_managesites_edit_http_pass'];
+                MainWPDB::Instance()->updateWebsite($website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset($_POST['mainwp_managesites_edit_uniqueId']) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass);
                 do_action('mainwp_update_site', $website->id);
                 
                 $backup_before_upgrade = isset($_POST['mainwp_backup_before_upgrade']) ? intval($_POST['mainwp_backup_before_upgrade']) : 2;
@@ -1238,7 +1240,9 @@ class MainWPManageSites
         {
             try
             {
-                $information = MainWPUtility::fetchUrlNotAuthed($_POST['url'], $_POST['admin'], 'stats'); //Fetch the stats with the given admin name
+                $http_user = (isset($_POST['http_user']) ? $_POST['http_user'] : '');
+                $http_pass = (isset($_POST['http_pass']) ? $_POST['http_pass'] : '');
+                $information = MainWPUtility::fetchUrlNotAuthed($_POST['url'], $_POST['admin'], 'stats', null, false, null, $http_user, $http_pass); //Fetch the stats with the given admin name
 
                 if (isset($information['wpversion']))
                 { //Version found - able to add

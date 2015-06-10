@@ -216,7 +216,7 @@ class MainWPOfflineChecks
                         $pubkey = '-1';
                     }
 
-                    $information = MainWPUtility::fetchUrlNotAuthed($website->url, $website->adminname, 'register', array('pubkey' => $pubkey, 'server' => get_admin_url()), false, $website->verify_certificate);
+                    $information = MainWPUtility::fetchUrlNotAuthed($website->url, $website->adminname, 'register', array('pubkey' => $pubkey, 'server' => get_admin_url()), false, $website->verify_certificate, $website->http_user, $website->http_pass);
 
                     if (!isset($information['error']) || ($information['error'] == ''))
                     {

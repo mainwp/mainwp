@@ -1689,17 +1689,23 @@ class MainWPSystem
         $version = $ui->ver;
         if (MainWPUtility::startsWith($version, '1.10'))
         {
-            wp_enqueue_style('jquery-ui-style', plugins_url('/css/1.10.4/jquery-ui.min.css', dirname(__FILE__)));
+            wp_enqueue_style('jquery-ui-style', MAINWP_PLUGIN_URL . 'css/1.10.4/jquery-ui.min.css', array(), '1.10.4');
         }
         else
         {
-            wp_enqueue_style('jquery-ui-style', plugins_url('/css/1.11.1/jquery-ui.min.css', dirname(__FILE__)));
+            wp_enqueue_style('jquery-ui-style', MAINWP_PLUGIN_URL . 'css/1.11.1/jquery-ui.min.css', array(), '1.11.1');
         }
 
-        wp_enqueue_script('mainwp', plugins_url('/js/mainwp.js', dirname(__FILE__)), array('jquery-ui-tooltip', 'jquery-ui-autocomplete', 'jquery-ui-progressbar', 'jquery-ui-dialog', 'jquery-ui-datepicker'));
-        $mainwpParams = array('image_url' => plugins_url('/images/', dirname(__FILE__)), 'backup_before_upgrade' => (get_option('mainwp_backup_before_upgrade') == 1), 'admin_url' => admin_url(), 'date_format' => get_option('date_format'), 'time_format' => get_option('time_format'));
-        wp_localize_script('mainwp', 'mainwpParams', $mainwpParams );
-        wp_enqueue_script('mainwp-tristate', plugins_url('/js/tristate.min.js', dirname(__FILE__)), array('mainwp'));
+        wp_enqueue_script('mainwp', MAINWP_PLUGIN_URL . 'js/mainwp.js', array('jquery-ui-tooltip', 'jquery-ui-autocomplete', 'jquery-ui-progressbar', 'jquery-ui-dialog', 'jquery-ui-datepicker'), $this->current_version);
+        $mainwpParams = array(
+            'image_url' => MAINWP_PLUGIN_URL . 'images/',
+            'backup_before_upgrade' => (get_option('mainwp_backup_before_upgrade') == 1),
+            'admin_url' => admin_url(),
+            'date_format' => get_option('date_format'),
+            'time_format' => get_option('time_format')
+        );
+        wp_localize_script('mainwp', 'mainwpParams', $mainwpParams);
+        wp_enqueue_script('mainwp-tristate', MAINWP_PLUGIN_URL . 'js/tristate.min.js', array('mainwp'), $this->current_version);
 
         $mainwpTranslations = MainWPSystemView::getMainWPTranslations();
 
@@ -1999,13 +2005,13 @@ class MainWPSystem
 
     function admin_head()
     {
-        echo '<script type="text/javascript" src="' . plugins_url('js/jsapi.js', dirname(__FILE__)) . '"></script>';
+        echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'js/jsapi.js' . '"></script>';
         echo '<script type="text/javascript">
   				google.load("visualization", "1", {packages:["corechart"]});
 			</script>';
         echo '<script type="text/javascript">var mainwp_ajax_nonce = "' . wp_create_nonce('mainwp_ajax') . '"</script>';
-        echo '<script type="text/javascript" src="' . plugins_url('js/FileSaver.js', dirname(__FILE__)) . '"></script>';
-        echo '<script type="text/javascript" src="' . plugins_url('js/jqueryFileTree.js', dirname(__FILE__)) . '"></script>';
+        echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'js/FileSaver.js' . '"></script>';
+        echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'js/jqueryFileTree.js' . '"></script>';
     }
     
     function admin_body_class($class_string) {

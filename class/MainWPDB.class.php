@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '8.4';
+    private $mainwp_db_version = '8.5';
     //Private
     private $table_prefix;
     //Singleton
@@ -115,7 +115,7 @@ class MainWPDB
   maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
   maximumFileDescriptors int(11) NOT NULL DEFAULT 150,
   http_user text NOT NULL DEFAULT "",
-  http_pass text NOT NULL DEFAULT ""
+  http_pass text NOT NULL DEFAULT "",
   KEY idx_userid (userid)';
         if ($currentVersion == '') $tbl .= ',
   PRIMARY KEY  (id)  ';

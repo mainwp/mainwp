@@ -113,6 +113,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 == Changelog ==
 
+= 2.0.19 - 6-11-15 =
+* Fixed: issue with some Dashboards not adding new Child sites
+
 = 2.0.18 - 6-10-15 =
 * Added: HTTP Auth option when adding Child sites
 * Added: Responsive Mobile Friendly Design

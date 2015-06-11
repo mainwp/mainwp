@@ -55,6 +55,9 @@ class MainWPDB
     {
         $currentVersion = get_site_option('mainwp_db_version');
 
+		$rslt = MainWPDB::Instance()->query("SHOW TABLES LIKE '".$this->tableName('wp')."'");
+		if (@MainWPDB::num_rows($rslt) == 0) $currentVersion = false;
+
         if ($currentVersion == $this->mainwp_db_version) return;
 
         $sql = array();

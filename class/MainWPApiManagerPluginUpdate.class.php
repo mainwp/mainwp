@@ -48,8 +48,13 @@ class MainWPApiManagerPluginUpdate {
 	// Upgrade API URL
 	private function create_upgrade_api_url( $args ) {
 		$upgrade_url = esc_url_raw( add_query_arg( 'wc-api', 'upgrade-api', MainWPApiManager::instance()->upgrade_url ) );
-
-		return $upgrade_url . '&' . http_build_query( $args );
+                $query_url = "";
+                foreach ($args as $key => $value)
+                {
+                    $query_url .= $key . '=' . urlencode($value) . '&';
+                }
+                $query_url = rtrim($query_url, '&');   
+		return $upgrade_url . '&' . $query_url; //http_build_query( $args );
 	}
 
         public function update_check( $plugin ) {

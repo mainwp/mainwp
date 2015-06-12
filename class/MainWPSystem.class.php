@@ -416,6 +416,10 @@ class MainWPSystem
 
     public function check_update_custom($transient)
     {
+        if (empty($transient->checked)) {
+            return $transient;
+        }
+        
         if (isset($_GET['do']) && $_GET['do'] == 'checkUpgrade' && ((time() - $this->upgradeVersionInfo->updated) > 30)) {
             $this->checkUpgrade();
         }        

@@ -59,20 +59,17 @@ class MainWPExtensionsView
            <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e("Bulk Install and Activate Extensions", "mainwp"); ?></span></h3>                          
            <div class="mainwp-inside" style="clear: both;">
             <div style="padding: 0 5px;">
-            <?php  
-            
-                $apisslverify = get_option('mainwp_api_sslVerifyCertificate');  
-//                if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER > 0x009080bf) && ($apisslverify == 0)) {                                       
-//                    $apisslverify = 1;
-//                    MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", $apisslverify);
-//                }
-                $_selected_1 = (($apisslverify === false) || ($apisslverify == 1)) ? "selected" : ''; 
-                $_selected_0 = "";
-
-                if (empty($_selected_1))
-                    $_selected_0 = "selected";
-                ?>
+            <?php 
                 
+                $apisslverify = get_option('mainwp_api_sslVerifyCertificate');  
+                if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER <= 0x009080bf) && ($apisslverify === false)) {                                       
+                    $apisslverify = 0;
+                    MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", $apisslverify);
+                }
+                $_selected_1 = (($apisslverify === false) || ($apisslverify == 1)) ? "selected" : ''; 
+                $_selected_0 = empty($_selected_1) ? "selected" : "";                
+                
+                ?>                
                 <div class="mainwp_info-box-red">
                 <?php if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER <= 0x009080bf) && ($apisslverify === false || $apisslverify == 1)) { ?>
                         <p><?php _e("<strong style=\"color:#a00\">WARNING:</strong> MainWP has detected an older install of OpenSSL that does not support Server Name Indication (SNI). This will cause API Activation failure.", "mainwp"); ?></p>
@@ -81,8 +78,6 @@ class MainWPExtensionsView
                     <?php } else { ?>
                         <p><?php _e("<strong>Notice:</strong> We did not detect any SSL issues.", "mainwp"); ?></p>                         
                         <p><?php _e("However, if you are having an issue connecting to, logging in or updating Extensions try setting the verify certificate option below to No and pressing Save.", "mainwp"); ?></p>                         
-                        
-                        
                     <?php } ?>
                     <table class="form-table">
                         </tbody>

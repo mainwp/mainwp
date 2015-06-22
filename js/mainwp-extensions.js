@@ -108,38 +108,51 @@ jQuery(document).on('click', '.mainwp-extensions-disable', function ()
 
 jQuery(document).on('click', '.mainwp-extensions-activate', function ()
 {    
-    var api_row = jQuery(this).closest("tr.mainwp-extensions-api-row");
+   mainwp_extensions_activate(this, false);
+});
+
+function mainwp_extensions_activate(pObj, retring) {
+    var api_row = jQuery(pObj).closest("tr.mainwp-extensions-api-row");
     var statusEl = api_row.find(".activate-api-status");
+    var loadingEl = api_row.find(".mainwp_loading");
     
-    var extensionSlug = jQuery(this).parents('.mainwp-extensions-childHolder').attr('extension_slug');
+    if (jQuery(pObj).attr('license-status') == 'activated') {
+        loadingEl.hide();
+        statusEl.css('color', '#0074a2');
+        statusEl.html('<i class="fa fa-check-circle"></i> ' + __('Extension already Activated')).fadeIn();       
+        return;
+    } 
+       
+    if (retring == true) {
+        statusEl.css('color', '#0074a2');
+        statusEl.html(' ' + __("Connection error detected. The Verify Certificate option has been switched to NO. Retrying in progress.")).fadeIn();                 
+    } else 
+        statusEl.hide();    
+    loadingEl.show();
+    var extensionSlug = jQuery(pObj).parents('.mainwp-extensions-childHolder').attr('extension_slug');
     var data = {
         action:'mainwp_extension_activate',
         slug:extensionSlug,
         key: api_row.find('input.api_key:text').val(),
         email: api_row.find('input.api_email:text').val()
     };
-
-    var loadingEl = api_row.find(".mainwp_loading");
-    statusEl.hide();
-    loadingEl.show();
     
-    if (jQuery(this).attr('license-status') == 'activated') {
-        loadingEl.hide();
-        statusEl.css('color', '#0074a2');
-        statusEl.html('<i class="fa fa-check-circle"></i> ' + __('Extension already Activated')).fadeIn();       
-        return;
-    } 
-        
     jQuery.post(ajaxurl, data, function (response)
     {
         loadingEl.hide();
+        var success = false;
         if (response) {
             if (response.result == 'SUCCESS') {
                 statusEl.css('color', '#0074a2');
                 statusEl.html('<i class="fa fa-check-circle"></i> ' + __('Extension Activated Successfully')).fadeIn(); 
+                success = true;
             } else if (response.error) {
                 statusEl.css('color', 'red');
                 statusEl.html(response.error).fadeIn(); 
+            } else if (response.retry_action && response.retry_action == 1){
+                jQuery("#mainwp_api_sslVerifyCertificate").val(0);
+                mainwp_extensions_activate(pObj, true);
+                return false;
             } else {
                 statusEl.css('color', 'red');
                 statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn(); 
@@ -149,16 +162,17 @@ jQuery(document).on('click', '.mainwp-extensions-activate', function ()
             statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn(); 
         }
         
-        setTimeout(function ()
-        {
-          location.href = 'admin.php?page=Extensions';        
-        }, 1000);   
+        if (success) {
+            setTimeout(function ()
+            {
+              location.href = 'admin.php?page=Extensions';        
+            }, 2000);   
+        }
         
     }, 'json');
 
     return false;
-});
-
+}
 
 jQuery(document).on('click', '.mainwp-extensions-deactivate', function ()
 {    
@@ -316,11 +330,15 @@ var countSuccessActivation = 0;
 
 jQuery(document).on('click', '#mainwp-extensions-grabkeys', function ()
 {
+   mainwp_extensions_grabkeys(this, false);
+});
+
+function mainwp_extensions_grabkeys(pObj, retring) {
     var grabingEl = jQuery(".api-grabbing-fields");
     var username = grabingEl.find('input.username:text').val();
     var pwd = grabingEl.find('input.passwd:password').val();
     
-    var parent = jQuery(this).parent().closest(".extension_api_loading");
+    var parent = jQuery(pObj).parent().closest(".extension_api_loading");
     var statusEl = parent.find('span.status');                 
     var loadingEl = parent.find("i");       
     
@@ -330,7 +348,12 @@ jQuery(document).on('click', '#mainwp-extensions-grabkeys', function ()
         password: pwd
     };
     
-    statusEl.hide();
+    if (retring == true) {
+        statusEl.css('color', '#0074a2');
+        statusEl.html(' ' + __("Connection error detected. The Verify Certificate option has been switched to NO. Retrying in progress.")).fadeIn();                 
+    } else 
+        statusEl.hide();
+    
     loadingEl.show();
     jQuery.post(ajaxurl, data, function (response)
     {
@@ -350,6 +373,10 @@ jQuery(document).on('click', '#mainwp-extensions-grabkeys', function ()
             } else if (response.error) {
                 statusEl.css('color', 'red');
                 statusEl.html(response.error).fadeIn(); 
+            } else if (response.retry_action && response.retry_action == 1){
+                jQuery("#mainwp_api_sslVerifyCertificate").val(0);
+                mainwp_extensions_grabkeys(pObj, true);
+                return false;
             } else {
                 undefError = true; 
             }        
@@ -363,7 +390,7 @@ jQuery(document).on('click', '#mainwp-extensions-grabkeys', function ()
         }                
     }, 'json');     
     return false;
-});
+}
 
 extensions_loop_next = function()
 {
@@ -447,12 +474,15 @@ extensions_activate_next = function(pObj)
 };
 
 jQuery(document).on('click', '#mainwp-extensions-bulkinstall', function () {  
+    mainwp_extension_grab_purchased(this, false);
+})
+
+mainwp_extension_grab_purchased = function(pObj, retring) {
     var grabingEl = jQuery(".api-grabbing-fields");
     var username = grabingEl.find('input.username:text').val();
     var pwd = grabingEl.find('input.passwd:password').val();
     
-    
-    var parent = jQuery(this).closest(".extension_api_loading");
+    var parent = jQuery(pObj).closest(".extension_api_loading");
     var statusEl = parent.find('span.status');                 
     var loadingEl = parent.find("i");    
     
@@ -461,8 +491,12 @@ jQuery(document).on('click', '#mainwp-extensions-bulkinstall', function () {
         username: username,
         password: pwd
     };    
+    if (retring == true) {
+        statusEl.css('color', '#0074a2');
+        statusEl.html(' ' + __("Connection error detected. The Verify Certificate option has been switched to NO. Retrying in progress.")).fadeIn();                 
+    } else 
+        statusEl.hide();
     
-    statusEl.hide();
     loadingEl.show();
     jQuery.post(ajaxurl, data, function (response)
     {
@@ -474,6 +508,10 @@ jQuery(document).on('click', '#mainwp-extensions-bulkinstall', function () {
             } else if (response.error) {
                 statusEl.css('color', 'red');
                 statusEl.html(response.error).fadeIn(); 
+            } else if (response.retry_action && response.retry_action == 1){
+                jQuery("#mainwp_api_sslVerifyCertificate").val(0);
+                mainwp_extension_grab_purchased(pObj, true);
+                return false;
             } else {
                 undefError = true; 
             }        
@@ -487,7 +525,7 @@ jQuery(document).on('click', '#mainwp-extensions-bulkinstall', function () {
         }                
     }, 'json');     
     return false;
-})
+} 
 
 jQuery(document).on('click', '#mainwp-extensions-installnow', function () {    
     mainwp_extension_bulk_install();

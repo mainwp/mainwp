@@ -88,12 +88,18 @@ class MainWPApiManager {
                         $options['activated_key'] = 'Activated';
                         $options['deactivate_checkbox'] = 'off';                                        
                 }
-
+                
                 if ( $activate_results == false ) {
+                    $apisslverify = get_option('mainwp_api_sslVerifyCertificate');
+                    if ($apisslverify == 1) {
+                        MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", 0);
+                        $return['retry_action'] = 1;
+                    } else {
                         $return['error'] =  __( 'Connection failed to the License Key API server. Try again later.', "mainwp" );
-                        $options['api_key'] = '';
-                        $options['activation_email'] = '';					
-                        $options['activated_key'] = 'Deactivated';					
+                    }
+                    $options['api_key'] = '';
+                    $options['activation_email'] = '';					
+                    $options['activated_key'] = 'Deactivated';
                 }
 
                 if ( isset( $activate_results['code'] ) ) {                                    

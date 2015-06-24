@@ -6978,7 +6978,17 @@ mainwp_check_showhide_sections = function() {
 jQuery(document).on('click', '#mainwp-sites-menu-button', function(){
    jQuery('#mainwp-sites-menu').slideToggle();
    jQuery("#mainwp-sites-menu").scrollTop( 10000000 );
+   jQuery("#mainwp-fly-manu-filter").focus();
    return false;
+});
+
+jQuery(document).bind('keypress', function(e){
+    if(e.keyCode == 83 && e.shiftKey) {
+       jQuery('#mainwp-sites-menu').slideToggle();
+       jQuery("#mainwp-sites-menu").scrollTop( 10000000 );
+       jQuery("#mainwp-fly-manu-filter").focus();
+       return false;
+    }
 });
 
 jQuery(document).on('click', '#mainwp-add-new-button', function(){

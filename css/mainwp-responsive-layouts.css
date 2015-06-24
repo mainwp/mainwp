@@ -118,16 +118,37 @@
 
 	/*  -  Add  -  Test Connection  -  */
 	 
-	#mainwp_testconnection_form .form-field input,
-	#mainwp-managesites-adv-options .form-field input,
-	#mainwp_managesites_add_form .form-field input,
-	#mainwp_managesites_add_form #selected_groups,
-	#mainwp_managesites_add_form .mainwp-field {
+	.mainwp-ui .form-field input,
+	.mainwp-ui .form-field input,
+	.mainwp-ui .form-field input,
+	.mainwp-ui #selected_groups,
+	.mainwp-ui .mainwp-field {
 		background-image: none !important;
 		width: 100% !important;
 	}
 
-	.mainwp-ui .button-primary {
+	/* --- Posts --- */
+
+	/*  -  Manage  -  */
+
+	.mainwp-ui .postbox {
+		width: 100% !important;
+		min-height: auto !important;
+		height: auto !important;
+	}
+
+	.mainwp_select_sites_box .postbox,
+	.mainwp_select_sites_box  {
+		max-width: 100% !important;
+		width: 100% !important;
+		min-width: 100% !important;
+	}
+
+	.mainwp_page_managesites .button-primary,
+	.mainwp_page_ManageGroups .button-primary,
+	.mainwp_page_PostBulkManage .button-primary,
+	.mainwp_page_PageBulkManage .button-primary,
+	.mainwp_page_ThemesManage  .button-primary {
 		width: 100%;
 		font-size: 16px;
 		height: 3em;

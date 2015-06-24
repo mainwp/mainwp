@@ -305,11 +305,10 @@ class MainWPManageSitesView
         ?>
             <div id="mainwp_managesites_test_errors" class="mainwp_error error"></div>
             <div id="mainwp_managesites_test_message" class="mainwp_updated updated"></div>
-            <div class="mainwp_info-box"><strong><?php _e('Please only use the domain URL, do not add /wp-admin.','mainwp'); ?></strong></div>
+            <form method="POST" action="" enctype="multipart/form-data" id="mainwp_testconnection_form">
             <div class="postbox">
             <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Test a Site Connection','mainwp'); ?></span></h3>
             <div class="inside">
-            <form method="POST" action="" enctype="multipart/form-data" id="mainwp_testconnection_form">
                 <table class="form-table">
                     <tr class="form-field form-required">
                         <th scope="row"><?php _e('Site URL:','mainwp'); ?></th>
@@ -327,8 +326,16 @@ class MainWPManageSitesView
                                 @MainWPDB::free_result($websites);
                                ?>
                             </datalist>
+                            <br/><em><?php _e('Please only use the domain URL, do not add /wp-admin.','mainwp'); ?></em>
                         </td>
                     </tr>
+                </table>
+                </div>
+                </div>
+                <div class="postbox">
+                <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Advanced Options','mainwp'); ?></span></h3>
+                <div class="inside">
+                    <table class="form-table">
                     <tr class="form-field form-required">
                        <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
                         <td>
@@ -336,13 +343,16 @@ class MainWPManageSitesView
                                  <option selected value="1"><?php _e('Yes','mainwp'); ?></option>
                                  <option value="0"><?php _e('No','mainwp'); ?></option>
                                  <option value="2"><?php _e('Use Global Setting','mainwp'); ?></option>
-                             </select> <i>(Default: Yes)</i>
+                             </select> <em>(<?php _e('Default: Yes','mainwp'); ?>)</em>
                         </td>
                     </tr>
 
                     <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
                     <input style="display:none" type="text" name="fakeusernameremembered"/>
                     <input style="display:none" type="password" name="fakepasswordremembered"/>
+                    <tr>
+                        <td colspan="2"><div class="mainwp_info-box"><?php _e('If your Child Site is protected with HTTP basic authentication, please set the username and password for authentication here.','mainwp'); ?></div></td>
+                    </tr>
 
                     <tr class="form-field form-required">
                          <th scope="row"><?php _e('HTTP username: ','mainwp'); ?></th>
@@ -353,12 +363,11 @@ class MainWPManageSitesView
                          <td><input type="password" id="mainwp_managesites_test_http_pass" style="width: 350px;" name="mainwp_managesites_test_http_pass" value="" class="mainwp-field mainwp-password"/></td>
                     </tr>
                 </table>
-                <p class="submit"><input type="button" name="mainwp_managesites_test"
-                                         id="mainwp_managesites_test"
-                                         class="button-primary" value="<?php _e('Test Connection','mainwp'); ?>"/></p>
+                
             </form>
         </div>
     </div>
+    <p class="submit"><input type="button" name="mainwp_managesites_test" id="mainwp_managesites_test" class="button-primary" value="<?php _e('Test Connection','mainwp'); ?>"/></p>
     <?php
     }
 
@@ -558,6 +567,10 @@ class MainWPManageSitesView
                         <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
                         <input style="display:none" type="text" name="fakeusernameremembered"/>
                         <input style="display:none" type="password" name="fakepasswordremembered"/>
+
+                        <tr>
+                            <td colspan="2"><div class="mainwp_info-box"><?php _e('If your Child Site is protected with HTTP basic authentication, please set the username and password for authentication here.','mainwp'); ?></div></td>
+                        </tr>
 
                         <tr class="form-field form-required">
                              <th scope="row"><?php _e('HTTP username: ','mainwp'); ?></th>
@@ -1384,7 +1397,7 @@ class MainWPManageSitesView
                           <label for="mainwp_options_footprint_plugin_folder_default"></label>
                         </div>Default<br/>
                         <div class="mainwp-radio" style="float: left;">
-                          <input type="radio" value="hidden" name="mainwp_options_footprint_plugin_folder" id="mainwp_options_footprint_plugin_folder_hidden" <?php echo ($pluginDir == 'hidden' ? 'checked="true"' : ''); ?>"/>
+                          <input type="radio" value="hidden" name="mainwp_options_footprint_plugin_folder" id="mainwp_options_footprint_plugin_folder_hidden" <?php echo ($pluginDir == 'hidden' ? 'checked="true"' : ''); ?>/>
                           <label for="mainwp_options_footprint_plugin_folder_hidden"></label>
                         </div>Hidden (<strong>Note: </strong><i>If the heatmap is turned on, the heatmap javascript will still be visible.</i>) <br/>
                     </td>
@@ -1473,6 +1486,10 @@ class MainWPManageSitesView
                 <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
                 <input style="display:none" type="text" name="fakeusernameremembered"/>
                 <input style="display:none" type="password" name="fakepasswordremembered"/>
+
+                <tr>
+                    <td colspan="2"><div class="mainwp_info-box"><?php _e('If your Child Site is protected with HTTP basic authentication, please set the username and password for authentication here.','mainwp'); ?></div></td>
+                </tr>
 
                 <tr class="form-field form-required">
                      <th scope="row"><?php _e('HTTP username: ','mainwp'); ?></th>

@@ -94,7 +94,7 @@ class MainWPServerInformation
                         self::renderRow('cURL Timeout', '>=', '300', 'getCurlTimeout', 'seconds', '=', '0', 'Changed by modifying the value default_socket_timeout in your php.ini file. Click the help icon to read more.');
                         if ( function_exists( 'curl_version' ) ) {
                         self::renderRow('cURL Version', '>=', "7.18.1", 'getCurlVersion', '', '', null, 'MainWP Requires cURL 7.18.1 version or later.');
-                        self::renderRow('cURL SSL Verison', '>=', 'OpenSSL/0.9.8f', 'getCurlSSLVersion','', '', null, 'MainWP Requires cURL SSL OpenSSL/0.9.8f version or later.');
+                        self::renderRow('cURL SSL Version', '>=', 'OpenSSL/0.9.8f', 'getCurlSSLVersion','', '', null, 'MainWP Requires cURL SSL OpenSSL/0.9.8f version or later.');
                         }
                         ?><tr><td style="background: #333; color: #fff;" colspan="5"><?php _e('MySQL SETTINGS','mainwp'); ?></td></tr><?php
                         self::renderRow('MySQL Version', '>=', '5.0', 'getMySQLVersion', '', '', null, 'MainWP requires the MySQL version 5.0 or higher. If the condition is not met, MySQL version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you. Click the help icon to read more.');

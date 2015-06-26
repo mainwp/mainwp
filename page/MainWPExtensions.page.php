@@ -252,11 +252,15 @@ class MainWPExtensions
         $result = array();
         try {
             $test = MainWPApiManager::instance()->test_login_api($username, $password); 
-        } catch (Exception $e) {            
+        } catch (Exception $e) {  
             $return['error'] = $e->getMessage();  
             die(json_encode($return));
         }
         
+        if (is_array($test) && isset($test['retry_action'])) {
+            die(json_encode($test)); 
+        }        
+
         $result = json_decode($test, true);        
         $save_login = (isset($_POST['saveLogin']) && ($_POST['saveLogin'] == '1')) ? true : false;    
         $return = array();
@@ -309,9 +313,16 @@ class MainWPExtensions
             die(json_encode($return));
         }
         
+        if (is_array($test) && isset($test['retry_action'])) {
+            die(json_encode($test)); 
+        }  
+        
         $result = json_decode($test, true);        
         $return = array();
         if (is_array($result)) {
+            if (isset($result['retry_action'])) {
+                
+            }
             if (isset($result['success']) && $result['success']) {             
                 $return['result'] = 'SUCCESS';                                         
             } else if (isset($result['error'])){

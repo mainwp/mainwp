@@ -272,11 +272,15 @@ jQuery(document).on('click', '.mainwp-extension-widget-switch-grid', function() 
 
 jQuery(document).on('click', '#mainwp-extensions-savelogin', function ()
 {
+   mainwp_extensions_savelogin(this, false);
+});
+
+function mainwp_extensions_savelogin(pObj, retring) {
     var grabingEl = jQuery(".api-grabbing-fields");
     var username = grabingEl.find('input.username:text').val();
     var pwd = grabingEl.find('input.passwd:password').val();
     
-    var parent = jQuery(this).closest(".extension_api_loading");
+    var parent = jQuery(pObj).closest(".extension_api_loading");
     var statusEl = parent.find('span.status');                 
     var loadingEl = parent.find("i");       
     
@@ -287,7 +291,12 @@ jQuery(document).on('click', '#mainwp-extensions-savelogin', function ()
         saveLogin: jQuery('#extensions_api_savemylogin_chk').is(':checked') ? '1' : '0'
     };
     
-    statusEl.hide();
+    if (retring == true) {
+        statusEl.css('color', '#0074a2');
+        statusEl.html(' ' + __("Connection error detected. The Verify Certificate option has been switched to NO. Retrying in progress.")).fadeIn();                 
+    } else 
+        statusEl.hide();
+    
     loadingEl.show();
     jQuery.post(ajaxurl, data, function (response)
     {
@@ -307,6 +316,10 @@ jQuery(document).on('click', '#mainwp-extensions-savelogin', function ()
             } else if (response.error) {
                 statusEl.css('color', 'red');
                 statusEl.html(response.error).fadeIn(); 
+            } else if (response.retry_action && response.retry_action == 1){
+                jQuery("#mainwp_api_sslVerifyCertificate").val(0);
+                mainwp_extensions_savelogin(pObj, true);
+                return false;
             } else {
                 undefError = true; 
             }        
@@ -320,8 +333,8 @@ jQuery(document).on('click', '#mainwp-extensions-savelogin', function ()
         }                
     }, 'json');     
     return false;
-});
-
+}
+    
 var maxActivateThreads = 8;
 var totalActivateThreads = 0;
 var currentActivateThreads = 0;

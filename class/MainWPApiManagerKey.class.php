@@ -123,7 +123,12 @@ class MainWPApiManagerKey {
                 
 //                $request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/am-software-api/', array('body' => $args) );
                 
-		if( is_wp_error( $request )) {
+		if( is_wp_error( $request )) {    
+                    if (self::$apisslverify == 1) {
+                        MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", 0);
+                        return array('retry_action' => 1);
+                    } 
+                    
                     throw new Exception($request->get_error_message());            
                     return false;
 		}

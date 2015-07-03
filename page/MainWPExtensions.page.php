@@ -320,9 +320,6 @@ class MainWPExtensions
         $result = json_decode($test, true);        
         $return = array();
         if (is_array($result)) {
-            if (isset($result['retry_action'])) {
-                
-            }
             if (isset($result['success']) && $result['success']) {             
                 $return['result'] = 'SUCCESS';                                         
             } else if (isset($result['error'])){

@@ -695,23 +695,38 @@ class MainWPManageSitesView
       <br /><br />
       <table>
         <tr>
-          <th style="text-align: left; width: 300px;">Alexa Rank:</th>
-          <?php if ($website->alexia > $website->alexia_old) { ?> <td style="width: 100px" class="mainwp-seo-up"><?php echo $website->alexia; ?></td><?php } else if ($website->alexia === $website->alexia_old) { ?><td style="width: 100px" class="mainwp-seo-same"><?php echo $website->alexia; ?></td><?php } else { ?>
-          <td style="width: 100px" class="mainwp-seo-down"><?php echo $website->alexia; ?></td>
+          <th style="text-align: left; width: 300px;"><?php _e('Alexa Rank:','mainwp'); ?></th>
+          <?php if ($website->alexia < $website->alexia_old) 
+            { ?> 
+                <td style="width: 100px" class="mainwp-green"><span><i class="fa fa-chevron-down"></i> <?php echo $website->alexia; ?></span></td>
+          <?php } else if ($website->alexia === $website->alexia_old) 
+            { ?>
+                <td style="width: 100px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->alexia; ?></span></td>
+          <?php } else 
+            { ?>
+                <td style="width: 100px" class="mainwp-red"><span><i class="fa fa-chevron-up"></i> <?php echo $website->alexia; ?></span></td>
           <?php } ?>
           <td style="width: 100px; color: #7B848B;"><?php echo ($website->alexia_old != '' ? $website->alexia_old : ''); ?></td>
         </tr>
         <tr>
-          <th style="text-align: left; width: 300px;">Google Page Rank:</th>
-          <?php if ($website->pagerank > $website->pagerank_old) { ?> <td style="width: 100px" class="mainwp-seo-up"><?php echo $website->pagerank; ?></td><?php } else if ($website->pagerank === $website->pagerank_old) { ?><td style="width: 100px" class="mainwp-seo-same"><?php echo $website->pagerank; ?></td><?php } else { ?>
-          <td style="width: 100px" class="mainwp-seo-down"><?php echo $website->pagerank; ?></td>
+          <th style="text-align: left; width: 300px;"><?php _e('Google Page Rank:','mainwp'); ?></th>
+          <?php if ($website->pagerank > $website->pagerank_old) { ?> 
+          <td style="width: 100px" class="mainwp-green"><span><i class="fa fa-chevron-up"></i> <?php echo $website->pagerank; ?></span></td>
+          <?php } else if ($website->pagerank === $website->pagerank_old) { ?>
+          <td style="width: 100px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->pagerank; ?></span></td>
+          <?php } else { ?>
+          <td style="width: 100px" class="mainwp-red"><span><i class="fa fa-chevron-down"></i> <?php echo $website->pagerank; ?></span></td>
           <?php } ?>
           <td style="width: 100px; color: #7B848B;"><?php echo ($website->pagerank_old != '' ? $website->pagerank_old : ''); ?></td>
         </tr>
         <tr>
-          <th style="text-align: left; width: 300px;">Indexed Links on Google:</th>
-          <?php if ($website->indexed > $website->indexed_old) { ?> <td style="width: 100px" class="mainwp-seo-up"><?php echo $website->indexed; ?></td><?php } else if ($website->indexed === $website->indexed_old) { ?><td style="width: 100px" class="mainwp-seo-same"><?php echo $website->indexed; ?></td><?php } else { ?>
-          <td style="width: 100px" class="mainwp-seo-down"><?php echo $website->indexed; ?></td>
+          <th style="text-align: left; width: 300px;"><?php _e('Indexed Links on Google:','mainwp'); ?></th>
+          <?php if ($website->indexed > $website->indexed_old) { ?> 
+          <td style="width: 100px" class="mainwp-green"><span><i class="fa fa-chevron-up"></i> <?php echo $website->indexed; ?></span></td>
+          <?php } else if ($website->indexed === $website->indexed_old) { ?>
+          <td style="width: 100px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->indexed; ?></span></td>
+          <?php } else { ?>
+          <td style="width: 100px" class="mainwp-red"><span><i class="fa fa-chevron-down"></i> <?php echo $website->indexed; ?></span></td>
           <?php } ?>
           <td style="width: 100px; color: #7B848B;"><?php echo ($website->indexed_old != '' ? $website->indexed_old : ''); ?></td>
         </tr>
@@ -1194,15 +1209,15 @@ class MainWPManageSitesView
                         <div class="mainwp-radio" style="float: left;">
                           <input type="radio" value="override" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_override" <?php echo ($maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?>"/>
                           <label for="mainwp_options_maximumFileDescriptorsOverride_override"></label>
-                        </div>Override<br/><br />
+                        </div><?php _e('Override','mainwp'); ?><br/><br />
 
-                        <div style="float: left">Auto detect:&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e('Enter a fallback value because not all hosts support this function.','mainwp'); ?>)</i></div><div style="clear:both"></div>
+                        <div style="float: left"><?php _e('Auto detect:','mainwp'); ?>&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e('Enter a fallback value because not all hosts support this function.','mainwp'); ?>)</i></div><div style="clear:both"></div>
                         <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors"
                                value="<?php echo $maximumFileDescriptors; ?>"/><span class="mainwp-form_hint"><?php _e('The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp'); ?></span>
                     </td>
                 </tr>
                 <tr class="archive_method archive_zip" <?php if ($archiveFormat != 'zip'): ?>style="display: none;"<?php endif; ?>>
-                    <th scope="row">Load files in memory before zipping <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advise to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/load-files-memory/'); ?></th>
+                    <th scope="row"><?php _e('Load files in memory before zipping','mainwp'); ?> <?php MainWPUtility::renderToolTip('This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advise to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/load-files-memory/'); ?></th>
                     <td>
                         <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_global" value="1" <?php if ($website->loadFilesBeforeZip == false || $website->loadFilesBeforeZip == 1): ?>checked="true"<?php endif; ?>/> Global setting (<a href="<?php echo admin_url('admin.php?page=Settings'); ?>">Change Here</a>)<br />
                         <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_yes" value="2" <?php if ($website->loadFilesBeforeZip == 2): ?>checked="true"<?php endif; ?>/> Yes<br />
@@ -1282,7 +1297,7 @@ class MainWPManageSitesView
                 <textarea style="width: 580px !important; height: 300px;"
                           id="mainwp_notes_note"></textarea>
             </div>
-            <div><em>Allowed HTML Tags: &lt;p&gt;, &lt;srtong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
+            <div><em><?php _e('Allowed HTML Tags:','mainwp'); ?> &lt;p&gt;, &lt;srtong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
             <form>
                 <div style="float: right" id="mainwp_notes_status"></div>
                 <input type="button" class="button cont button-primary" id="mainwp_notes_save" value="<?php _e('Save Note','mainwp'); ?>"/>
@@ -1367,22 +1382,22 @@ class MainWPManageSitesView
                     <td>
                         <input type="radio" name="offline_checks" id="check_disabled" value="disabled"
                             <?php echo (!in_array($website->offline_checks, $statusses) ? 'checked="true"'
-                                : ''); ?> /> Disabled &nbsp;&nbsp;&nbsp;
+                                : ''); ?> /> <?php _e('Disabled','mainwp'); ?> &nbsp;&nbsp;&nbsp;
                         <input type="radio" name="offline_checks" id="check_hourly"
                                value="hourly" <?php echo ($website->offline_checks == 'hourly' ? 'checked="true"'
-                                : ''); ?>/> Hourly &nbsp;&nbsp;&nbsp;
+                                : ''); ?>/> <?php _e('Hourly','mainwp'); ?> &nbsp;&nbsp;&nbsp;
                         <input type="radio" name="offline_checks" id="check_2xday"
                                value="2xday" <?php echo ($website->offline_checks == '2xday' ? 'checked="true"'
-                                : ''); ?>/> 2x Day &nbsp;&nbsp;&nbsp;
+                                : ''); ?>/> <?php _e('2x Day','mainwp'); ?> &nbsp;&nbsp;&nbsp;
                         <input type="radio" name="offline_checks" id="check_daily"
                                value="daily" <?php echo ($website->offline_checks == 'daily' ? 'checked="true"'
-                                : ''); ?>/> Daily &nbsp;&nbsp;&nbsp;
+                                : ''); ?>/> <?php _e('Daily','mainwp'); ?> &nbsp;&nbsp;&nbsp;
                         <input type="radio" name="offline_checks" id="check_weekly" value="weekly"
                             <?php echo ($website->offline_checks == 'weekly' ? 'checked="true"' : ''); ?>/>
                         Weekly  &nbsp;
-                    <span class="mainwp-form_hint-display">Notifications are sent to: <?php echo MainWPUtility::getNotificationEmail(); ?>
-                        (this address can be changed <a
-                                href="<?php echo get_admin_url(); ?>admin.php?page=Settings">here</a>)</span>
+                    <span class="mainwp-form_hint-display"><?php _e('Notifications are sent to:','mainwp'); ?> <?php echo MainWPUtility::getNotificationEmail(); ?>
+                        (<?php _e('this address can be changed','mainwp'); ?> <a
+                                href="<?php echo get_admin_url(); ?>admin.php?page=Settings"><?php _e('here','mainwp'); ?></a>)</span>
                     </td>
                 </tr>
                 <tr>

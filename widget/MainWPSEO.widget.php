@@ -41,24 +41,26 @@ class MainWPSEO {
             				?>
             				<tr>
             					<td style="padding-right: 2em"><abbr title="<?php echo $website->url; ?>"><a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php echo $website->url; ?></a></abbr></td>
-            						<?php if ($website->alexia > $website->alexia_old) { ?> 
-            						           <td style="width: 150px" class="mainwp-seo-up"><?php echo $website->alexia; echo ($website->alexia_old != '' ? ' <span style="color: #7B848B !important">(' . $website->alexia_old . ')</span>' : ''); ?></td><?php } 
+            						<?php if ($website->alexia < $website->alexia_old) { ?> 
+            						           <td style="width: 150px"><span class="mainwp-green"><i class="fa fa-chevron-down"></i> <?php echo $website->alexia; ?></span><?php echo ($website->alexia_old != '' ? ' <span style="color: #7B848B !important">(' . $website->alexia_old . ')</span>' : ''); ?></td><?php } 
             						      else if ($website->alexia === $website->alexia_old) { ?>
-            						           <td style="width: 150px" class="mainwp-seo-same"><?php echo $website->alexia; echo ($website->alexia_old != '' ? ' <span style="color: #7B848B !important">(' . $website->alexia_old . ')</span>' : ''); ?></td><?php } 
+            						           <td style="width: 150px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->alexia; ?></span> <?php echo ($website->alexia_old != '' ? ' <span style="color: #7B848B !important">(' . $website->alexia_old . ')</span>' : ''); ?></td><?php } 
             						      else { ?>
-                                               <td style="width: 150px" class="mainwp-seo-down"><?php echo $website->alexia; echo ($website->alexia_old != '' ? ' <span style="color: #7B848B !important">(' . $website->alexia_old . ')</span>' : ''); ?></td><?php } 
+                                               <td style="width: 150px"><span class="mainwp-red"><i class="fa fa-chevron-up"></i> <?php echo $website->alexia;?></span> <?php echo ($website->alexia_old != '' ? ' <span style="color: #7B848B !important">(' . $website->alexia_old . ')</span>' : ''); ?></td><?php } 
+                                          
                                           if ($website->pagerank > $website->pagerank_old) { ?> 
-            						           <td style="width: 100px" class="mainwp-seo-up"><?php echo $website->pagerank; echo ($website->pagerank_old != '' ? ' <span style="color: #7B848B !important">(' . $website->pagerank_old . ')</span>' : ''); ?></td><?php } 
+            						           <td style="width: 100px"><span class="mainwp-green"><i class="fa fa-chevron-up"></i> <?php echo $website->pagerank; ?></span> <?php echo ($website->pagerank_old != '' ? ' <span style="color: #7B848B !important">(' . $website->pagerank_old . ')</span>' : ''); ?></td><?php } 
             						      else if ($website->pagerank === $website->pagerank_old) { ?>
-            						           <td style="width: 100px" class="mainwp-seo-same"><?php echo $website->pagerank; echo ($website->pagerank_old != '' ? ' <span style="color: #7B848B !important">(' . $website->pagerank_old . ')</span>' : ''); ?></td><?php } 
+            						           <td style="width: 100px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->pagerank; ?></span> <?php echo ($website->pagerank_old != '' ? ' <span style="color: #7B848B !important">(' . $website->pagerank_old . ')</span>' : ''); ?></td><?php } 
             						      else { ?>
-                                               <td style="width: 100px" class="mainwp-seo-down"><?php echo $website->pagerank; echo ($website->pagerank_old != '' ? ' <span style="color: #7B848B !important">(' . $website->pagerank_old . ')</span>' : ''); ?></td><?php } 
+                                               <td style="width: 100px"><span class="mainwp-red"><i class="fa fa-chevron-up"></i> <?php echo $website->pagerank; echo ($website->pagerank_old != '' ? ' <span style="color: #7B848B !important">(' . $website->pagerank_old . ')</span>' : ''); ?></td><?php } 
+                                          
                                           if ($website->indexed > $website->indexed_old) { ?> 
-            						           <td style="width: 100px" class="mainwp-seo-up"><?php echo $website->indexed; echo ($website->indexed_old != '' ? ' <span style="color: #7B848B !important">(' . $website->indexed_old . ')</span>' : ''); ?></td><?php } 
+            						           <td style="width: 100px"><span class="mainwp-green"><i class="fa fa-chevron-up"></i> <?php echo $website->indexed; ?></span> <?php echo ($website->indexed_old != '' ? ' <span style="color: #7B848B !important">(' . $website->indexed_old . ')</span>' : ''); ?></td><?php } 
             						      else if ($website->indexed === $website->indexed_old) { ?>
-            						           <td style="width: 100px" class="mainwp-seo-same"><?php echo $website->indexed; echo ($website->indexed_old != '' ? ' <span style="color: #7B848B !important">(' . $website->indexed_old . ')</span>' : ''); ?></td><?php } 
+            						           <td style="width: 100px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->indexed; ?></span> <?php echo ($website->indexed_old != '' ? ' <span style="color: #7B848B !important">(' . $website->indexed_old . ')</span>' : ''); ?></td><?php } 
             						      else { ?>
-                                               <td style="width: 100px" class="mainwp-seo-down"><?php echo $website->indexed; echo ($website->indexed_old != '' ? ' <span style="color: #7B848B !important">(' . $website->indexed_old . ')</span>' : ''); ?></td><?php } ?>
+                                               <td style="width: 100px"><span class="mainwp-red"><i class="fa fa-chevron-up"></i> <?php echo $website->indexed; ?></span> <?php echo ($website->indexed_old != '' ? ' <span style="color: #7B848B !important">(' . $website->indexed_old . ')</span>' : ''); ?></td><?php } ?>
             				</tr>
             				<?php
             			}

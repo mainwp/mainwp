@@ -272,10 +272,10 @@ class MainWPAPISettings
                     $args['activation_email'] =	$ext['activation_email'];
                     $args['instance']   =   $ext['instance_id'];
                     $args['software_version']   = $ext['software_version']; 
-                    $response = MainWPApiManager::instance()->update_check($args);                                          
+                    $response = MainWPApiManager::instance()->update_check($args);                     
                     if (!empty($response)) {
                         $rslt = new stdClass();
-                        $rslt->slug = $response->slug;
+                        $rslt->slug = $ext['api']; //$response->slug
                         $rslt->latest_version = $response->new_version;                    
                         $rslt->download_url = $response->package;
                         $rslt->key_status = "";                                            

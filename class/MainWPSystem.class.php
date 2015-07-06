@@ -73,6 +73,7 @@ class MainWPSystem
             if (version_compare($currentVersion, $this->current_version, '<')) {
                 update_option('mainwp_reset_user_tips', array());
                 MainWPUtility::update_option('mainwp_reset_user_cookies', array());
+                delete_option('mainwp_api_sslVerifyCertificate');
             }
             MainWPUtility::update_option('mainwp_plugin_version', $this->current_version);
         }
@@ -416,6 +417,10 @@ class MainWPSystem
 
     public function check_update_custom($transient)
     {
+        if (empty($transient->checked)) {
+            return $transient;
+        }
+        
         if (isset($_GET['do']) && $_GET['do'] == 'checkUpgrade' && ((time() - $this->upgradeVersionInfo->updated) > 30)) {
             $this->checkUpgrade();
         }        
@@ -455,9 +460,9 @@ class MainWPSystem
 
     public function pre_check_update_custom($transient)
     {
-        if (empty($transient->checked)) {
-            return $transient;
-        }
+//        if (empty($transient->checked)) {
+//            return $transient;
+//        }
 
         if (($this->upgradeVersionInfo == null) || ((time() - $this->upgradeVersionInfo->updated) > 60 * 60 * 12)) {
             $this->checkUpgrade();
@@ -468,7 +473,7 @@ class MainWPSystem
             foreach ($this->upgradeVersionInfo->result as $rslt)
             {
                 $plugin_slug = MainWPExtensions::getPluginSlug($rslt->slug);
-                if (isset($transient->checked[$plugin_slug]) && version_compare($rslt->latest_version, $transient->checked[$plugin_slug], '>'))
+                if (!isset($transient->checked) || !isset($transient->checked[$plugin_slug]) || (isset($transient->checked[$plugin_slug]) && version_compare($rslt->latest_version, $transient->checked[$plugin_slug], '>')))
                 {
                     $obj = new stdClass();
                     $obj->slug = $rslt->slug;

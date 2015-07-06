@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.2.2
-Stable tag: 2.0.19
+Stable tag: 2.0.20
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,23 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.20 - 7-6-2015 =
+* Fixed: An issue with Extension updates
+* Fixed: An issue where lower Alexa Rank has been marked as negative
+* Fixed: An issue with the Available Update filter in Mange Sites list
+* Added: Reconnect child sites bulk action
+* Added: Verify Certificate preset based on OpenSSL version detection
+* Added: Auto retry Extension authentication with Verify Certificate change in case authentication fails
+* Added: Keyboard Shortcut (Shift + S) for toggling the footer sites menu
+* Added: Missing translation support markups
+* Improved: OpenSSL check on the Server Information page
+* Improved: Footer Sites menu filter, after opening the menu, filter filed is auto focused
+* Updated: CSS style
+* Updated: Layout on the Add New Site and Test Connection page
+* Updated: SEO Widget layout
+* Updated: Security Scan page style
+* Removed: Unused images
 
 = 2.0.19 - 6-11-15 =
 * Fixed: issue with some Dashboards not adding new Child sites

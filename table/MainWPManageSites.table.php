@@ -423,6 +423,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
             'sync' => __('Sync', 'mainwp'),
             'delete' => __('Delete', 'mainwp'),
             'test_connection' => __('Test Connection', 'mainwp'),
+            'reconnect' => __('Reconnect', 'mainwp'),
             'open_wpadmin' => __('Open WP Admin', 'mainwp'),
             'open_frontpage' => __('Open Frontpage', 'mainwp'),
             'open_frontpage' => __('Open Frontpage', 'mainwp'),
@@ -602,7 +603,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
    		static $row_class = '';
    		$row_class = ( $row_class == '' ? ' class="alternate"' : '' );
 
-   		echo '<tr' . $row_class . ' siteid="'.$item['id'].'">';
+   		echo '<tr' . $row_class . ' siteid="'.$item['id'].'" site-url="' . $item['url'] . '">';
    		$this->single_row_columns( $item );
    		echo '</tr>';
     }

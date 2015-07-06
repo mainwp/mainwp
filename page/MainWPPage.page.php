@@ -126,9 +126,6 @@ class MainWPPage
         //Loads the page screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
         ?>   
         <?php self::renderHeader('BulkManage'); ?>
-    
-            <div class="mainwp_info-box"><strong><?php _e('Use this to bulk change pages. To add new pages click on the "Add New" tab.','mainwp'); ?></strong></div>
-        <br/>
         <div class="mainwp-search-form">
                <div class="postbox mainwp-postbox">
             <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search Pages','mainwp'); ?></h3>
@@ -496,9 +493,7 @@ class MainWPPage
         //Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
         ?>
         <?php self::renderHeader('BulkAdd'); ?>
-            <div class="mainwp_info-box"><strong><?php _e('Use this to add a new page. To bulk change pages click on the "Manage" tab.','mainwp'); ?></strong></div>
-            <iframe scrolling="auto" id="mainwp_iframe"
-                    src="<?php echo $src; ?>"></iframe>
+            <iframe scrolling="auto" id="mainwp_iframe" src="<?php echo $src; ?>"></iframe>
         </div>
     </div>
     <?php

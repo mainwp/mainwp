@@ -6877,7 +6877,7 @@ jQuery(document).on('click', '#mainwp_managesites_content #doaction', function()
     if (action == -1)
         return false;   
     
-    if (action == 'delete' || action == 'test_connection' || action == 'sync') {
+    if (action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect') {
         
         if (bulkManageSitesRunning)
             return false;
@@ -6900,6 +6900,9 @@ jQuery(document).on('click', '#mainwp_managesites_content #doaction', function()
         } else if (action == 'sync') {
             var syncIds = jQuery.map(jQuery('#the-list .check-column INPUT:checkbox:checked'), function(el) { return jQuery(el).val(); });        
             mainwp_refresh_dashboard(syncIds);
+        } else if (action == 'reconnect') {
+            var syncIds = jQuery.map(jQuery('#the-list .check-column INPUT:checkbox:checked'), function(el) { return jQuery(el).val(); });        
+            mainwp_managesites_bulk_reconnect_next(syncIds);
         }
     }
     
@@ -6978,10 +6981,88 @@ mainwp_check_showhide_sections = function() {
 jQuery(document).on('click', '#mainwp-sites-menu-button', function(){
    jQuery('#mainwp-sites-menu').slideToggle();
    jQuery("#mainwp-sites-menu").scrollTop( 10000000 );
+   jQuery("#mainwp-fly-manu-filter").focus();
    return false;
+});
+
+jQuery(document).bind('keypress', function(e){
+    if(e.keyCode == 83 && e.shiftKey) {
+       jQuery('#mainwp-sites-menu').slideToggle();
+       jQuery("#mainwp-sites-menu").scrollTop( 10000000 );
+       jQuery("#mainwp-fly-manu-filter").focus();
+       return false;
+    }
 });
 
 jQuery(document).on('click', '#mainwp-add-new-button', function(){
    jQuery('#mainwp-add-new-links').slideToggle();
    return false;
 });
+
+mainwp_managesites_bulk_reconnect_next = function() {     
+    while ((checkedBox = jQuery('#the-list .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0)  && (bulkManageSitesCurrentThreads < bulkManageSitesMaxThreads))
+    {
+        mainwp_managesites_bulk_reconnect_specific(checkedBox);
+    }    
+    if ((bulkManageSitesTotal > 0) && (bulkManageSitesFinished == bulkManageSitesTotal)) {
+        managesites_bulk_done();
+        setHtml('#mainwp_managesites_add_other_message', __("Bulk reconnect finished."));
+    }
+}
+
+mainwp_managesites_bulk_reconnect_specific = function(pCheckedBox) {   
+    pCheckedBox.attr('status', 'running');
+    var rowObj = pCheckedBox.closest('tr');    
+    var pElement = rowObj.find('td.column-site .mainwp_site_reconnect');    
+    if (pElement.length == 0) {
+        bulkManageSitesFinished++;
+        mainwp_managesites_bulk_reconnect_next();
+        return;
+    }
+    
+    bulkManageSitesCurrentThreads++;   
+    pElement.parent().remove();
+    
+    var siteUrl = rowObj.attr('site-url');
+
+    var statusEl = rowObj.find('.column-site .bulk_running .status');    
+    statusEl.html('<i class="fa fa-spinner fa-pulse"></i> '+'Trying to reconnect...').show();
+    
+    var data = {
+        action:'mainwp_reconnectwp',
+        siteid: rowObj.attr('siteid')
+    };
+
+    jQuery.post(ajaxurl, data, function(response) { 
+        bulkManageSitesCurrentThreads--;
+        bulkManageSitesFinished++;
+        statusEl.html('').hide();
+        
+        response = jQuery.trim(response);    
+        var msg = '', error = ''; 
+        if (response.substr(0, 5) == 'ERROR') {           
+            if (response.length == 5) {
+                error = 'Undefined Error';
+            }
+            else {
+                error = 'Error - ' + response.substr(6);
+            }
+            error = siteUrl + '<br />' + error;          
+        }
+        else
+        {
+            msg = siteUrl + '<br />' + response;
+        }        
+         
+        if (msg != '') {
+            msg = '<div class="mainwp_updated updated mainwp_info-box mainwp_append_message"><p>' + msg + '</p></div>';
+            jQuery('#mainwp_managesites_add_other_message').after(msg);
+        } else if (error != '') {
+            error = '<div class="mainwp_info-box-red mainwp_append_error">' + error + '</div>';
+            jQuery('#mainwp_managesites_add_other_message').after(error);
+        }         
+        mainwp_managesites_bulk_reconnect_next();
+    });
+
+    return;
+};

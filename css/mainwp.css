@@ -73,9 +73,10 @@ a.mainwp-comment-unapprove,a.mainwp-post-unpublish,a.post_submitunpublish
 {
     color: #d98500;
 }
-a.mainwp-comment-spam,a.mainwp-comment-trash,a.mainwp-post-trash,.mainwp-red
-{
-    color: #bc0b0b;
+a.mainwp-comment-spam,
+a.mainwp-comment-trash,
+a.mainwp-post-trash {
+    color: #a00;
 }
 .mainwp_action
 {
@@ -2828,11 +2829,19 @@ input.mainwp-field:-webkit-autofill {
     color: #bb7239;
 }
 
+.mainwp-error-red {
+    color: #a00;
+}
+
 .mainwp-blue {
     color: #00a0d2;
 }
 
 .mainwp-green {
+    color: #7fb100;
+}
+
+.mainwp-success-green {
     color: #7fb100;
 }
 

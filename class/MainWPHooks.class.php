@@ -39,7 +39,7 @@ class MainWPHooks
         add_filter('mainwp_getmetaboxes', array(&$this, 'getMetaBoxes'), 10, 0);
         add_filter('mainwp_getnotificationemail', array('MainWPUtility', 'getNotificationEmail'), 10, 0);
         add_filter('mainwp-extension-available-check', array(MainWPExtensions::getClassName(), 'isExtensionAvailable'));
-        
+        add_filter('mainwp-extension-decrypt-string', array(&$this, 'hookDecryptString'));
     }
 
     public function cache_getcontext($page)
@@ -172,4 +172,9 @@ class MainWPHooks
     public function hookGetWebsitesByGroupIds($ids, $userId = null) {
         return MainWPDB::Instance()->getWebsitesByGroupIds($ids, $userId);
     }
+    
+    public function hookDecryptString($enscrypt) {
+        return MainWPApiManagerPasswordManagement::decrypt_string($enscrypt);
+    }      
+    
 }

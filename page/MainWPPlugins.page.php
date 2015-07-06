@@ -125,8 +125,6 @@ class MainWPPlugins
         $cachedSearch = MainWPCache::getCachedContext('Plugins');
         ?>
         <?php self::renderHeader('Manage'); ?>
-        <div class="mainwp_info-box"><strong><?php _e('Use this to bulk (de)activate or delete plugins. To add new plugins click on the "Install" tab.','mainwp'); ?></strong></div>
-        <br/>
         <div class="mainwp-search-form">
             <div class="postbox mainwp-postbox">
             <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search Plugins','mainwp'); ?></h3>

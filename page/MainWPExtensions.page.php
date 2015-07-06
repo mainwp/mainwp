@@ -221,7 +221,7 @@ class MainWPExtensions
         $api = dirname($_POST['slug']);                 
         $api_key = trim( $_POST['key'] );
         $api_email = trim( $_POST['email'] );
-        $result = MainWPApiManager::instance()->license_key_activation($api, $api_key, $api_email);                      
+        $result = MainWPApiManager::instance()->license_key_activation($api, $api_key, $api_email);                                        
         die(json_encode($result));
     }
     
@@ -252,11 +252,15 @@ class MainWPExtensions
         $result = array();
         try {
             $test = MainWPApiManager::instance()->test_login_api($username, $password); 
-        } catch (Exception $e) {            
+        } catch (Exception $e) {  
             $return['error'] = $e->getMessage();  
             die(json_encode($return));
         }
         
+        if (is_array($test) && isset($test['retry_action'])) {
+            die(json_encode($test)); 
+        }        
+
         $result = json_decode($test, true);        
         $save_login = (isset($_POST['saveLogin']) && ($_POST['saveLogin'] == '1')) ? true : false;    
         $return = array();
@@ -290,19 +294,17 @@ class MainWPExtensions
     }
     
     
-    public static function testExtensionsApiLogin() {  
-        $username = trim( $_POST['username'] );
-        $password = trim( $_POST['password'] );            
+    public static function testExtensionsApiLogin() {           
+        $enscrypt_u = get_option('mainwp_extensions_api_username');
+        $enscrypt_p = get_option('mainwp_extensions_api_password');
+        $username = !empty($enscrypt_u) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_u) : "";
+        $password = !empty($enscrypt_p) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_p) : "";             
+        
         if (($username == '') || ($password == ''))
         {            
             die(json_encode(array('error' => __('Login Invalid.','mainwp'))));
         }
         
-        $enscrypt_u = get_option('mainwp_extensions_api_username');
-        $enscrypt_p = get_option('mainwp_extensions_api_password');
-        $username = !empty($enscrypt_u) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_u) : "";
-        $password = !empty($enscrypt_p) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_p) : "";             
- 
         $result = array();
         try {
             $test = MainWPApiManager::instance()->test_login_api($username, $password); 
@@ -310,6 +312,10 @@ class MainWPExtensions
             $return['error'] = $e->getMessage();  
             die(json_encode($return));
         }
+        
+        if (is_array($test) && isset($test['retry_action'])) {
+            die(json_encode($test)); 
+        }  
         
         $result = json_decode($test, true);        
         $return = array();
@@ -319,7 +325,13 @@ class MainWPExtensions
             } else if (isset($result['error'])){
                 $return['error'] = $result['error'];                                     
             }    
-        }        
+        } else {
+            $apisslverify = get_option('mainwp_api_sslVerifyCertificate');
+            if ($apisslverify == 1) {
+                MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", 0);
+                $return['retry_action'] = 1;
+            }
+        }                     
         die(json_encode($return));                       
     }
     
@@ -390,7 +402,13 @@ class MainWPExtensions
             } else if (isset($result['error'])){
                 $return= array('error' => $result['error']);                                         
             }    
-        }                         
+        } else {
+            $apisslverify = get_option('mainwp_api_sslVerifyCertificate');
+            if ($apisslverify == 1) {
+                MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", 0);
+                $return['retry_action'] = 1;
+            }
+        }          
         die(json_encode($return));                       
     }
         

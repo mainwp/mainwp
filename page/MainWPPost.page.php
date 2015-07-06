@@ -124,8 +124,6 @@ class MainWPPost
 
         //Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
         self::renderHeader('BulkManage'); ?>
-        <div class="mainwp_info-box"><strong><?php _e('Use this to bulk change posts. To add new posts click on the "Add New" tab.','mainwp'); ?></strong></div>
-        <br/>
         <div class="mainwp-search-form">
             <div class="postbox mainwp-postbox">
             <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search Posts','mainwp'); ?></h3>
@@ -514,9 +512,7 @@ class MainWPPost
         $src = apply_filters('mainwp_bulkpost_edit_source', $src);
         //Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
         self::renderHeader('BulkAdd'); ?>
-        <div class="mainwp_info-box"><strong><?php _e('Use this to add new posts. To bulk change posts click on the "Manage" tab.','mainwp'); ?> </strong></div>
-        <iframe scrolling="auto" id="mainwp_iframe"
-                src="<?php echo $src; ?>"></iframe>
+        <iframe scrolling="auto" id="mainwp_iframe" src="<?php echo $src; ?>"></iframe>
     <?php
         self::renderFooter('BulkAdd');
     }

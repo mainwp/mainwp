@@ -460,9 +460,9 @@ class MainWPSystem
 
     public function pre_check_update_custom($transient)
     {
-        if (empty($transient->checked)) {
-            return $transient;
-        }
+//        if (empty($transient->checked)) {
+//            return $transient;
+//        }
 
         if (($this->upgradeVersionInfo == null) || ((time() - $this->upgradeVersionInfo->updated) > 60 * 60 * 12)) {
             $this->checkUpgrade();
@@ -473,7 +473,7 @@ class MainWPSystem
             foreach ($this->upgradeVersionInfo->result as $rslt)
             {
                 $plugin_slug = MainWPExtensions::getPluginSlug($rslt->slug);
-                if (isset($transient->checked[$plugin_slug]) && version_compare($rslt->latest_version, $transient->checked[$plugin_slug], '>'))
+                if (!isset($transient->checked) || !isset($transient->checked[$plugin_slug]) || (isset($transient->checked[$plugin_slug]) && version_compare($rslt->latest_version, $transient->checked[$plugin_slug], '>')))
                 {
                     $obj = new stdClass();
                     $obj->slug = $rslt->slug;

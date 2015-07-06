@@ -123,8 +123,6 @@ class MainWPThemes
     {
         $cachedSearch = MainWPCache::getCachedContext('Themes');
         self::renderHeader('Manage'); ?>
-            <div class="mainwp_info-box"><strong><?php _e('Use this to bulk (de)activate or delete themes. To add new themes click on the "Install" tab.','mainwp'); ?></strong></div>
-        <br/>
         <div class="mainwp-search-form">
             <div class="postbox mainwp-postbox">
             <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search Themes','mainwp'); ?></h3>

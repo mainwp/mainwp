@@ -118,6 +118,17 @@ class MainWPExtensions
         }
         return self::$extensions;
     }
+      
+    public static function getExtensions() {
+        $extensions = MainWPExtensions::loadExtensions();
+        $array = array();
+        foreach($extensions as $extension) {            
+            $ext = array();
+            $ext['version'] = $extension['version'];            
+            $array[$extension['slug']] = $ext;
+        }
+        return $array;
+    }
     
     public static function genApiPassword($length = 12, $special_chars = true, $extra_special_chars = false) {
         $api_manager_password_management = new MainWPApiManagerPasswordManagement();      

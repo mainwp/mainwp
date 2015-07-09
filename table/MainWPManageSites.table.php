@@ -413,8 +413,9 @@ class MainWPManageSites_List_Table extends WP_List_Table
     }
 
     function column_notes($item)
-    {
-        return sprintf('<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_%1$s">'. '<i class="fa fa-pencil-square-o"></i> ' . __('Open','mainwp') . '</a><span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ($item['note'] == '' ? 'display: none;' : ''), $item['note']);
+    {        
+        $note = strip_tags($item['note'], "<p><strong><em><br/><hr/><a></p></strong></em></a>");        
+        return sprintf('<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_%1$s">'. '<i class="fa fa-pencil-square-o"></i> ' . __('Open','mainwp') . '</a><span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ($item['note'] == '' ? 'display: none;' : ''), $note);
     }
 
     function get_bulk_actions()

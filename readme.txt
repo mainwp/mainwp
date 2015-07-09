@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.2.2
-Stable tag: 2.0.20
+Stable tag: 2.0.21
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.21 - 7-9-2015 =
+* Fixed: Bug where extensions updates were failing
+* Fixed: Bug where up to date extensions were showing available updates 
+* Fixed: Timeout issue with blocked request by CloudProxy
+* Fixed: Footer sites menu keyboard shortcut prevented typing of capital S (Keyboard shortcut changed to Shift + Ctrl + S)
+* Fixed: An issue with HTML tags in notes
 
 = 2.0.20 - 7-6-2015 =
 * Fixed: An issue with Extension updates

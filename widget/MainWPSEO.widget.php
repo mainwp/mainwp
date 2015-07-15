@@ -60,7 +60,7 @@ class MainWPSEO {
             						      else if ($website->indexed === $website->indexed_old) { ?>
             						           <td style="width: 100px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->indexed; ?></span> <?php echo ($website->indexed_old != '' ? ' <span style="color: #7B848B !important">(' . $website->indexed_old . ')</span>' : ''); ?></td><?php } 
             						      else { ?>
-                                               <td style="width: 100px"><span class="mainwp-red"><i class="fa fa-chevron-up"></i> <?php echo $website->indexed; ?></span> <?php echo ($website->indexed_old != '' ? ' <span style="color: #7B848B !important">(' . $website->indexed_old . ')</span>' : ''); ?></td><?php } ?>
+                                               <td style="width: 100px"><span class="mainwp-red"><i class="fa fa-chevron-down"></i> <?php echo $website->indexed; ?></span> <?php echo ($website->indexed_old != '' ? ' <span style="color: #7B848B !important">(' . $website->indexed_old . ')</span>' : ''); ?></td><?php } ?>
             				</tr>
             				<?php
             			}

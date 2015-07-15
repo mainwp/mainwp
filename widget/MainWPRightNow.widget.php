@@ -1118,7 +1118,7 @@ class MainWPRightNow
             <?php } ?>
         </div>
     </div>
-
+    
     <?php
         //Sync errors!
         if ($total_sync_errors > 0) {
@@ -1273,7 +1273,16 @@ class MainWPRightNow
                 }?>
             </div>
         </div>
-
+    <?php 
+        @MainWPDB::data_seek($websites, 0);
+        $site_ids = array();
+        while ($websites && ($website = @MainWPDB::fetch_object($websites)))
+        {
+            $site_ids[] = $website->id;
+        }
+        echo do_action('mainwp_rightnow_widget_bottom', $site_ids, $globalView);  
+    ?>
+    
     <div class="clear"></div>
 
     <div id="rightnow-upgrade-status-box" title="Upgrade" style="display: none; text-align: center">

@@ -6761,7 +6761,7 @@ mainwp_managesites_bulk_remove_specific  = function (pCheckedBox) {
     pCheckedBox.attr('status', 'running');
     var rowObj = pCheckedBox.closest('tr');
     bulkManageSitesCurrentThreads++;        
-    var loadingEl = rowObj.find('.column-site .bulk_running img');
+    var loadingEl = rowObj.find('.column-site .bulk_running i');
     var id = rowObj.attr('siteid');
     loadingEl.show();
   
@@ -6817,7 +6817,7 @@ mainwp_managesites_bulk_test_connection_specific = function(pCheckedBox) {
     pCheckedBox.attr('status', 'running');
     var rowObj = pCheckedBox.closest('tr');
     bulkManageSitesCurrentThreads++;        
-    var loadingEl = rowObj.find('.column-site .bulk_running img');
+    var loadingEl = rowObj.find('.column-site .bulk_running i');
     loadingEl.show();
     var data = mainwp_secure_data({
         action:'mainwp_testwp',

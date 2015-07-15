@@ -1280,7 +1280,7 @@ class MainWPRightNow
         {
             $site_ids[] = $website->id;
         }
-        echo do_action('mainwp_rightnow_widget_bottom', $site_ids, $globalView);  
+        do_action('mainwp_rightnow_widget_bottom', $site_ids, $globalView);  
     ?>
     
     <div class="clear"></div>

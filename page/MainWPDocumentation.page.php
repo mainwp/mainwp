@@ -15,7 +15,7 @@ class MainWPDocumentation
     public static function render() {
 		?>
         <div class="wrap">
-            <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
+            <a href="//mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
             <h2><i class="fa fa-book"></i> <?php _e('Documentation','mainwp'); ?></h2>
             
             <div class="clear"></div><br/><br/>
@@ -74,7 +74,7 @@ class MainWPDocumentation
                 </div>
             </div>
             <div class="clear"></div><br/>
-            <div style="margin-bottom: 2em;"><a href="//docs.mainwp.com/mainwp-changelog/" target="_blank" class="add-new-h2">MainWP Changelog</a> <a href="//docs.mainwp.com/mainwp-system-requirements/" target="_blank" class="add-new-h2">MainWP System Requirements</a><a href="https://mainwp.com/forum/" class="add-new-h2">Support Forum</a></div>
+            <div style="margin-bottom: 2em;"><a href="//docs.mainwp.com/mainwp-changelog/" target="_blank" class="add-new-h2">MainWP Changelog</a> <a href="//docs.mainwp.com/mainwp-system-requirements/" target="_blank" class="add-new-h2">MainWP System Requirements</a><a href="//mainwp.com/forum/" class="add-new-h2">Support Forum</a></div>
         </div>
 		<?php
 		

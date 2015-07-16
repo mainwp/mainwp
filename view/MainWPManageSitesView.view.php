@@ -1341,7 +1341,7 @@ class MainWPManageSitesView
                 <tr>
                     <th scope="row"><?php _e('Site Name','mainwp'); ?></th>
                     <td><input type="text" name="mainwp_managesites_edit_sitename"
-                               value="<?php echo $website->name; ?>" class="regular-text mainwp-field mainwp-site"/></td>
+                               value="<?php echo stripslashes($website->name); ?>" class="regular-text mainwp-field mainwp-site"/></td>
                 </tr>
                 <tr>
                     <th scope="row"><?php _e('Site URL','mainwp'); ?></th>

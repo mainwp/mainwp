@@ -1525,15 +1525,21 @@ class MainWPSystem
 
     function admin_print_styles()
     {
+        
+        $hide_footer = false;
+    ?>
+        <style>
+<?php
         if (isset($_GET['hideall']) && $_GET['hideall'] == 1) {
             $post_plus = apply_filters('mainwp-ext-post-plus-enabled', false);
-            ?>
-        <style>
-<?php   if (!$post_plus) { ?>
+            
+        if (!$post_plus) { ?>
             #minor-publishing-actions {
                 display: none;
             }
-<?php   } ?>
+<?php   } 
+        $hide_footer = true;
+        ?>
             #screen-options-link-wrap {
                 display: none;
             }
@@ -1547,12 +1553,29 @@ class MainWPSystem
             }
             #wpfooter {
                 display: none;
-            }
-        </style>
+            }       
         <?php
-        }
+        } 
+        
+        if (!$hide_footer && self::visibleFooter()) {
+            ?>
+                #wpfooter {
+                    background: #333 !important;;
+                    position: fixed !important;
+                    bottom: 0 !important;;
+                }    
+        <?php } ?>
+         </style>
+       <?php
     }
-
+    
+    public function visibleFooter() {        
+        $screen = get_current_screen();         
+        if($screen && strpos($screen->base, "mainwp_") !== false) 
+            return true;        
+        return false;        
+    }
+    
     function login_redirect($redirect_to, $request, $user)
     {
         if (session_id() == '') session_start();
@@ -2102,7 +2125,7 @@ class MainWPSystem
     //Empty footer text
     function admin_footer_text()
     {
-        if (!MainWPUtility::isAdmin()) return;
+        if (!self::visibleFooter()) return;
                     
         if (isset($_SESSION['showTip'])) unset($_SESSION['showTip']);
         
@@ -2126,7 +2149,7 @@ class MainWPSystem
     //Version
     function update_footer()
     {
-        if (!MainWPUtility::isAdmin()) return;
+        if (!self::visibleFooter()) return;
         
         $output = '<a href="javascript:void(0)" id="dashboard_refresh" title="Sync Data" class="mainwp-left-margin-2 mainwp-green"><i class="fa fa-refresh fa-2x"></i></a> <a id="mainwp-add-new-button" class="mainwp-blue mainwp-left-margin-2" title="Add New" href="javascript:void(0)"><i class="fa fa-plus fa-2x"></i></a> <a class="mainwp-red mainwp-left-margin-2" title="Get MainWP Extensions" href="https://extensions.mainwp.com" target="_blank"><i class="fa fa-shopping-cart fa-2x"></i></a> <a class="mainwp-white mainwp-left-margin-2" title="Get Support" href="http://support.mainwp.com" target="_blank"><i class="fa fa-life-ring fa-2x"></i></a>' . '<a href="https://www.facebook.com/mainwp" class="mainwp-link-clean mainwp-left-margin-2" style="color: #3B5998;" target="_blank"><i class="fa fa-facebook-square fa-2x"></i></a> ' . ' <a href="https://twitter.com/mymainwp" class="mainwp-link-clean" target="_blank" style="color: #4099FF;"><i class="fa fa-twitter-square fa-2x"></i></a>.';
 

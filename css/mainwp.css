@@ -2871,11 +2871,6 @@ input.mainwp-field:-webkit-autofill {
 
 /* ---- Footer Customization ---- */
 
-#wpfooter {
-    background: #333;
-    position: fixed;
-    bottom: 0;
-}
 
 #mainwp-footer-buttons {
 

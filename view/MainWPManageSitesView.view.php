@@ -467,14 +467,16 @@ class MainWPManageSitesView
                 <?php
             }
     }
-
+    
     public static function _renderNewSite(&$groups)
     {
         if (!mainwp_current_user_can("dashboard", "add_sites")) {
             mainwp_do_not_have_permissions("add sites");
             return;
         }
-
+        
+        $passed_curl_ssl = MainWPServerInformation::checkCURLSSLInfo();
+        
         ?>
        <div id="mainwp_managesites_add_errors" class="mainwp_info-box-red"></div>
        <div id="mainwp_managesites_add_message" class="mainwp_info-box"></div>
@@ -492,9 +494,10 @@ class MainWPManageSitesView
            <ol>
              <li><?php _e('You have a Security Plugin blocking the connection. If you have a security plugin installed and are having an issue please check the <a href="http://docs.mainwp.com/known-plugin-conflicts/" style="text-decoration: none;">Plugin Conflict page</a> for how to resolve.','mainwp'); ?></li>
              <li><?php _e('Your Dashboard is on the same host as your Child site. Some hosts will not allow two sites on the same server to communicate with each other. In this situation you would contact your host for assistance or move your Dashboard or Child site to a different host.','mainwp'); ?></li>
+             <li class="curl-notice" <?php echo ($passed_curl_ssl ? 'style="display: none;"' : ""); ?>><?php _e('Your Dashboard or Child site is experiencing SSL or cURL errors which can make it so you are unable to the new Child site.  You can check for these errors on the Server Information page for both the MainWP Dashboard and Child Plugin.','mainwp'); ?></li>
            </ol>
          </p>
-         <p style="text-align: center;"><a href="#" class="button button-primary" style="text-decoration: none;" id="mainwp-add-site-notice-dismiss"><?php _e('Hide this message','mainwp'); ?></a></p>
+         <p style="text-align: center;"><a href="#" class="button button-primary" style="text-decoration: none;" id="mainwp-add-site-notice-dismiss"><?php _e('Hide this message','mainwp'); ?></a></p>         
        </div>
         </div>
        <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
@@ -626,7 +629,7 @@ class MainWPManageSitesView
        </form>
 <?php
     }
-
+    
     public static function renderSeoPage(&$website)
       {
         if (!mainwp_current_user_can("dashboard", "see_seo_statistics")) {

@@ -2581,6 +2581,7 @@ mainwp_managesites_add = function (event) {
 
             if (response == 'HTTPERROR') {
                 errors.push('HTTP error - website does not exist');
+                jQuery('#mainwp-add-site-notice .curl-notice').fadeIn(1000);
             } else if (response == 'NOMAINWP') {
                 errors.push(__('No MainWP Child Plugin detected, first install and activate the plugin and add your site to MainWP Dashboard afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation).', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins'));
             } else if (response.substr(0, 5) == 'ERROR') {

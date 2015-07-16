@@ -2937,3 +2937,6 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {
     color: #fff;
     text-decoration: none !important;
 }
+#mainwp-add-a-single-site .inside{
+    min-height: 530px;
+}

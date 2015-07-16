@@ -355,6 +355,13 @@ class MainWPServerInformation
     </tr>
     <?php
     }
+          
+    public static function checkCURLSSLInfo() {
+        $isSupport = (self::getCurlSupport() && self::getSSLSupport()) ? true : false;            
+        $checkCURL = version_compare(self::getCurlVersion(), "7.18.1", ">=");                  
+        $checkSSL = self::curlssl_compare(array('version_number' => 0x009080cf , 'version' => 'OpenSSL/0.9.8l'), ">=");        
+        return $isSupport && $checkSSL && $checkCURL;
+    }     
     
     protected static function filesize_compare($value1, $value2, $operator = null) {        
         if (strpos($value1, "G") !== false) {
@@ -377,7 +384,7 @@ class MainWPServerInformation
         if (isset($value['version_number']) && defined('OPENSSL_VERSION_NUMBER')) {                        
             return version_compare(OPENSSL_VERSION_NUMBER, $value['version_number'], $operator);            
         }                
-        return version_compare($value1, $value2, $operator);
+        return false;
     }    
     
     protected static function getFileSystemMethod() {

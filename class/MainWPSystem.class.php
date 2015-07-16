@@ -2102,6 +2102,8 @@ class MainWPSystem
     //Empty footer text
     function admin_footer_text()
     {
+        if (current_user_can('subscriber'))
+            return;        
         if (isset($_SESSION['showTip'])) unset($_SESSION['showTip']);
         
         return '<a href="javascript:void(0)" id="mainwp-sites-menu-button" class="mainwp-white mainwp-right-margin-2"><i class="fa fa-globe fa-2x"></i></a>'.'<span style="font-size: 14px;"><i class="fa fa-info-circle"></i> ' . __('Currently managing ','mainwp') . MainWPDB::Instance()->getWebsitesCount()  .  __(' child sites with MainWP ','mainwp') . $this->current_version . __(' version. ','mainwp') . '</span>';
@@ -2124,6 +2126,9 @@ class MainWPSystem
     //Version
     function update_footer()
     {
+        if (current_user_can('subscriber'))
+            return;
+        
         $output = '<a href="javascript:void(0)" id="dashboard_refresh" title="Sync Data" class="mainwp-left-margin-2 mainwp-green"><i class="fa fa-refresh fa-2x"></i></a> <a id="mainwp-add-new-button" class="mainwp-blue mainwp-left-margin-2" title="Add New" href="javascript:void(0)"><i class="fa fa-plus fa-2x"></i></a> <a class="mainwp-red mainwp-left-margin-2" title="Get MainWP Extensions" href="https://extensions.mainwp.com" target="_blank"><i class="fa fa-shopping-cart fa-2x"></i></a> <a class="mainwp-white mainwp-left-margin-2" title="Get Support" href="http://support.mainwp.com" target="_blank"><i class="fa fa-life-ring fa-2x"></i></a>' . '<a href="https://www.facebook.com/mainwp" class="mainwp-link-clean mainwp-left-margin-2" style="color: #3B5998;" target="_blank"><i class="fa fa-facebook-square fa-2x"></i></a> ' . ' <a href="https://twitter.com/mymainwp" class="mainwp-link-clean" target="_blank" style="color: #4099FF;"><i class="fa fa-twitter-square fa-2x"></i></a>.';
 
 

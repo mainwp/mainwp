@@ -90,7 +90,7 @@ class MainWPManageSitesView
         if ($site_id) {
             $website = MainWPDB::Instance()->getWebsiteById($site_id);
             if ($website) {
-                $current_site  = '<a href="admin.php?page=managesites&dashboard=' . $site_id . '">' . $website->name . '</a>' . $separator;
+                $current_site  = '<a href="admin.php?page=managesites&dashboard=' . $site_id . '">' . stripslashes($website->name) . '</a>' . $separator;
             }
         }
 
@@ -167,7 +167,7 @@ class MainWPManageSitesView
                             <option value="">' . __('Select Site ','mainwp') . '</option>';
                 while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                 {
-                    $html .= '<option value="'.$website->id.'">' . $website->name . '</option>';
+                    $html .= '<option value="'.$website->id.'">' . stripslashes($website->name) . '</option>';
                 }
                 @MainWPDB::free_result($websites);
 
@@ -639,7 +639,7 @@ class MainWPManageSitesView
           ?>
       <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
               src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP"/></a>
-          <h2><i class="fa fa-globe"></i> <?php echo $website->name; ?> (<?php echo $website->url; ?>)</h2>
+          <h2><i class="fa fa-globe"></i> <?php echo stripslashes($website->name); ?> (<?php echo $website->url; ?>)</h2>
 
           <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
           <div id="ajax-information-zone" class="updated" style="display: none;"></div>
@@ -1241,7 +1241,7 @@ class MainWPManageSitesView
             </div>
         </div>
 
-    <div id="managesite-backup-status-box" title="Backup <?php echo $website->name; ?>" style="display: none; text-align: center">
+    <div id="managesite-backup-status-box" title="Backup <?php echo stripslashes($website->name); ?>" style="display: none; text-align: center">
         <div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesite-backup-status-text">
         </div>
         <input id="managesite-backup-status-close" type="button" name="Close" value="Cancel" class="button" />

@@ -985,7 +985,7 @@ class MainWPThemes
                     <tr site_id="<?php echo $website->id; ?>" theme="<?php echo urlencode($ignoredThemeConflictName); ?>">
                         <td>
                             <span class="websitename" <?php if (!$first) { echo 'style="display: none;"'; } else { $first = false; }?>>
-                                <a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a>
+                                <a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a>
                             </span>
                         </td>
                         <td>
@@ -1104,7 +1104,7 @@ class MainWPThemes
                <tr site_id="<?php echo $website->id; ?>" theme_slug="<?php echo urlencode($ignoredTheme); ?>">
                    <td>
                        <span class="websitename" <?php if (!$first) { echo 'style="display: none;"'; } else { $first = false; }?>>
-                           <a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a>
+                           <a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a>
                        </span>
                    </td>
                    <td>

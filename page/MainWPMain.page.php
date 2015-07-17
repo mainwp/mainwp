@@ -173,7 +173,7 @@ class MainWPMain
                     {
                     ?>
                 <td id="mainwp-welcome-bar" width="47%" style="padding-left: 1em;">
-                    <span style="font-size: 24px"><?php echo (($website == null) ? __('Welcome to Your MainWP Dashboard!','mainwp') : sprintf(__('Welcome to %s Dashboard!','mainwp'), $website->name)); ?></span><br/>
+                    <span style="font-size: 24px"><?php echo (($website == null) ? __('Welcome to Your MainWP Dashboard!','mainwp') : sprintf(__('Welcome to %s Dashboard!','mainwp'), stripslashes($website->name))); ?></span><br/>
                     <span style="font-style: italic; font-size: 14px;"><?php echo (($website == null) ? __('Manage your WordPress sites with ease.','mainwp') : sprintf(__('This information is only for %s%s','mainwp'), $imgfavi, MainWPUtility::getNiceURL($website->url, true))); ?></span>
                 </td>
                     <?php

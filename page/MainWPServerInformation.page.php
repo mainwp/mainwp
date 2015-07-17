@@ -176,14 +176,14 @@ class MainWPServerInformation
             $serverInformation = MainWPUtility::fetchUrlAuthed($website, 'serverInformation');
             ?>
 
-        <h2><i class="fa fa-server"></i> <strong><?php echo $website->name; ?></strong>&nbsp;<?php _e('Server Information'); ?></h2>
+        <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('Server Information'); ?></h2>
         <?php echo $serverInformation['information']; ?>
-        <h2><i class="fa fa-server"></i> <strong><?php echo $website->name; ?></strong>&nbsp;<?php _e('Cron Schedules'); ?></h2>
+        <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('Cron Schedules'); ?></h2>
         <?php echo $serverInformation['cron']; ?>
         <?php if (isset($serverInformation['wpconfig'])) { ?>
-        <h2><i class="fa fa-server"></i> <strong><?php echo $website->name; ?></strong>&nbsp;<?php _e('WP-Config File'); ?></h2>
+        <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('WP-Config File'); ?></h2>
         <?php echo $serverInformation['wpconfig']; ?>
-        <h2><i class="fa fa-server"></i> <strong><?php echo $website->name; ?></strong>&nbsp;<?php _e('Error Log'); ?></h2>
+        <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('Error Log'); ?></h2>
         <?php echo $serverInformation['error']; ?>
         <?php } ?>
             <?php
@@ -210,7 +210,7 @@ class MainWPServerInformation
 
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
         {
-            echo '<option value="'.$website->id.'">' . $website->name . '</option>';
+            echo '<option value="'.$website->id.'">' . stripslashes($website->name) . '</option>';
         }
         @MainWPDB::free_result($websites);
 

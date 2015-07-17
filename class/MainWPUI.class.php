@@ -50,11 +50,11 @@ class MainWPUI
                     {
                     $selected = ($selected_websites == 'all' || in_array($website->id, $selected_websites));
 
-                    echo '<div class="mainwp_selected_sites_item '.($selected ? 'selected_sites_item_checked' : '').'"><input onClick="mainwp_site_select(this)" type="'.$type.'" name="' . ( $type == 'radio' ? 'selected_site' : 'selected_sites[]' ) . '" siteid="' . $website->id . '" value="' . $website->id . '" id="selected_sites_' . $website->id . '" '.($selected ? 'checked="true"' : '').'/> <label for="selected_sites_' . $website->id . '">' . $imgfavi . $website->name . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+                    echo '<div class="mainwp_selected_sites_item '.($selected ? 'selected_sites_item_checked' : '').'"><input onClick="mainwp_site_select(this)" type="'.$type.'" name="' . ( $type == 'radio' ? 'selected_site' : 'selected_sites[]' ) . '" siteid="' . $website->id . '" value="' . $website->id . '" id="selected_sites_' . $website->id . '" '.($selected ? 'checked="true"' : '').'/> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
                     }
                     else
                     {
-                        echo '<div class="mainwp_selected_sites_item disabled"><input type="'.$type.'" disabled=disabled /> <label for="selected_sites_' . $website->id . '">' . $imgfavi . $website->name . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+                        echo '<div class="mainwp_selected_sites_item disabled"><input type="'.$type.'" disabled=disabled /> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
                     }
                 }
                 @MainWPDB::free_result($websites);
@@ -124,7 +124,7 @@ class MainWPUI
                                         ?>
                                         <div class="categories_site_<?php echo $website->id;?>">
                                             <div class="categories_list_header">
-                                                    <div><?php echo $website->name?></div>
+                                                    <div><?php echo stripslashes($website->name)?></div>
                                                     <label><span class="url"><?php echo $website->url ?></span></label>
                                             </div>
                                              <div class="categories_list_<?php echo $website->id;?>">
@@ -180,7 +180,7 @@ class MainWPUI
                                                     ?>
                                                     <div class="categories_site_<?php echo $id;?>">
                                                         <div class="categories_list_header">
-                                                                <div><?php echo $website->name?></div>
+                                                                <div><?php echo stripslashes($website->name); ?></div>
                                                                 <label><span class="url"><?php echo $website->url ?></span></label>
                                                         </div>
                                                             <div class="categories_list_<?php echo $id;?>">

@@ -329,7 +329,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
         }
 
         $loader = '<span class="bulk_running"><i class="fa fa-spinner fa-pulse" style="display:none"></i><span class="status hidden"></span></span>';
-        return $imgfavi . sprintf('<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], $item['name'], $this->row_actions($actions));
+        return $imgfavi . sprintf('<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], stripslashes($item['name']), $this->row_actions($actions));
     }
 
     function column_url($item)

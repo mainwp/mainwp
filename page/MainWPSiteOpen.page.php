@@ -29,7 +29,7 @@ class MainWPSiteOpen
     {
         ?>
     <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
-        <h2><i class="fa fa-globe"></i> <?php echo $website->name; ?></h2><div style="clear: both;"></div><br/>
+        <h2><i class="fa fa-globe"></i> <?php echo stripslashes($website->name); ?></h2><div style="clear: both;"></div><br/>
 
         <div id="mainwp_background-box">
             <?php
@@ -93,7 +93,7 @@ class MainWPSiteOpen
     {
         ?>
     <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
-        <h2><i class="fa fa-globe"></i> <?php echo $website->name; ?></h2><div style="clear: both;"></div><br/>
+        <h2><i class="fa fa-globe"></i> <?php echo stripslashes($website->name); ?></h2><div style="clear: both;"></div><br/>
 
         <div id="mainwp_background-box">
                 <?php

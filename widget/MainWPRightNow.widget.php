@@ -1173,7 +1173,16 @@ class MainWPRightNow
             </div>
         </div>
         <?php } ?>
-
+    
+        <?php 
+            @MainWPDB::data_seek($websites, 0);
+            $site_ids = array();
+            while ($websites && ($website = @MainWPDB::fetch_object($websites)))
+            {
+                $site_ids[] = $website->id;
+            }
+            do_action('mainwp_rightnow_widget_bottom', $site_ids, $globalView);  
+        ?>
         <div class="clear">
             <div class="mainwp-row">
                 <span class="mainwp-left-col"><span class="mainwp-rightnow-number">
@@ -1272,16 +1281,7 @@ class MainWPRightNow
                     }
                 }?>
             </div>
-        </div>
-    <?php 
-        @MainWPDB::data_seek($websites, 0);
-        $site_ids = array();
-        while ($websites && ($website = @MainWPDB::fetch_object($websites)))
-        {
-            $site_ids[] = $website->id;
-        }
-        do_action('mainwp_rightnow_widget_bottom', $site_ids, $globalView);  
-    ?>
+        </div>   
     
     <div class="clear"></div>
 

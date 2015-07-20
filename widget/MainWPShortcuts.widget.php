@@ -47,12 +47,12 @@ class MainWPShortcuts
     <div id="mainwp_notes" class="mainwp_popup">
         <a id="mainwp_notes_closeX" class="mainwp_closeX" style="display: inline; "></a>
 
-        <div id="mainwp_notes_title" class="mainwp_popup_title"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a></div>
+        <div id="mainwp_notes_title" class="mainwp_popup_title"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a></div>
         <div id="mainwp_notes_content">
             <textarea style="width: 580px !important; height: 300px;"
                       id="mainwp_notes_note"></textarea>
         </div>
-        <div><em>Allowed HTML Tags: &lt;p&gt;, &lt;srtong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
+        <div><em>Allowed HTML Tags: &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
         <form>
             <div style="float: right" id="mainwp_notes_status"></div>
             <input type="button" class="button cont button-primary" id="mainwp_notes_save" value="<?php _e('Save Note','mainwp'); ?>"/>

@@ -228,7 +228,7 @@ class MainWPAPISettings
             foreach($am_slugs as $am_slug) {                
                 $rslt = self::getUpgradeInformationTwo($am_slug);
                 if (!empty($rslt)) {                                    
-                    $output[] = $rslt;
+                    $output[$am_slug] = $rslt;
                 }
             }
         }

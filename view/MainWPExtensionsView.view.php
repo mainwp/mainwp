@@ -326,9 +326,9 @@ class MainWPExtensionsView
                         <tr class="mainwp-extensions-extra mainwp-extension-description"><td colspan="3"><br/><br/><?php echo preg_replace('/\<cite\>.*\<\/cite\>/', '', $extension['description']); ?><br/><br/></td></tr>
                         <tr class="mainwp-extensions-links">
                             <td colspan="3">
-                                <?php printf(__('By %s', 'mainwp'), $extension['author']); ?>
-                                <?php echo (isset($extension['DocumentationURI']) && !empty($extension['DocumentationURI'])) ? ' | <a href="' . $extension['DocumentationURI'] . '" target="_blank" title="' . __("Documentation", "mainwp") . '">' . __("Documentation", "mainwp") . '</a>' : ""; ?>
-                                <?php echo (isset($extension['SupportForumURI']) && !empty($extension['SupportForumURI'])) ? ' | <a href="' . $extension['SupportForumURI'] . '" target="_blank" title="' . __("Support Forum", "mainwp") . '">' . __("Support Forum", "mainwp") . '</a>' : ""; ?>
+                                <?php printf(__('By %s', 'mainwp'), str_replace(array("http:", "https:"), "", $extension['author'])); ?>
+                                <?php echo (isset($extension['DocumentationURI']) && !empty($extension['DocumentationURI'])) ? ' | <a href="' . str_replace(array("http:", "https:"), "", $extension['DocumentationURI']) . '" target="_blank" title="' . __("Documentation", "mainwp") . '">' . __("Documentation", "mainwp") . '</a>' : ""; ?>
+                                <?php echo (isset($extension['SupportForumURI']) && !empty($extension['SupportForumURI'])) ? ' | <a href="' . str_replace(array("http:", "https:"), "", $extension['SupportForumURI']) . '" target="_blank" title="' . __("Support Forum", "mainwp") . '">' . __("Support Forum", "mainwp") . '</a>' : ""; ?>
                                 <?php if (isset($extension['apiManager']) && $extension['apiManager']) { ?>
                                     <?php echo ' | <a href="#" class="mainwp-extensions-api-activation" >' . __('Enter Activation API') . '</a>'; ?>
                                 <?php } ?>
@@ -384,7 +384,7 @@ class MainWPExtensionsView
         ?>
         <div class="postbox">
             <div class="handle"></div>
-            <h3 class="mainwp_box_title"><?php _e('Available Extensions on <a href="http://extensions.mainwp.com">MainWP Extensions</a>'); ?></h3>
+            <h3 class="mainwp_box_title"><?php _e('Available Extensions on <a href="//extensions.mainwp.com">MainWP Extensions</a>'); ?></h3>
             <div>
                 <div id="mainwp-available-extensions-list">
                     <?php
@@ -401,8 +401,8 @@ class MainWPExtensionsView
                                         <?php
                                         echo $is_free ? '<span class="mainwp-price"></span>' : '';
                                         ?>                                        
-                                        <a href="<?php echo $ext['link']?>" class="button">Find Out More</a>
-                                        <a href="<?php echo $ext['link']?>" class="button button-primary mainwp-upgrade-button">Order Now</a>
+                                        <a href="<?php echo str_replace(array("http:", "https:"), "", $ext['link']); ?>" class="button">Find Out More</a>
+                                        <a href="<?php echo str_replace(array("http:", "https:"), "", $ext['link']); ?>" class="button button-primary mainwp-upgrade-button">Order Now</a>
                                     </div>
                                     <div class="mainwp-av-ext-desciption">
                                         <h2><?php echo $ext['title']?></h2>

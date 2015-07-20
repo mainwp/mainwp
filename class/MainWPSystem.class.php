@@ -416,30 +416,46 @@ class MainWPSystem
 
 
     public function check_update_custom($transient)
-    {
-        if (isset($_POST['plugin']) && isset($_POST['action']) && $_POST['action'] == 'update-plugin') {                        
-            $plugin_slug = $_POST['plugin'];
+    {           
+        if (isset($_POST['action']) && (($_POST['action'] == 'update-plugin') || ($_POST['action'] == 'update-selected'))) {
             $extensions = MainWPExtensions::getExtensions();
-            if (isset($extensions[$plugin_slug])) {                 
-                if (isset($transient->response[$plugin_slug]) && version_compare($transient->response[$plugin_slug]->new_version, $extensions[$plugin_slug]['version'], '=')) {                    
+            if (defined('DOING_AJAX') && isset($_POST['plugin']) && $_POST['action'] == 'update-plugin') {                        
+                $plugin_slug = $_POST['plugin'];           
+                if (isset($extensions[$plugin_slug])) {                 
+                    if (isset($transient->response[$plugin_slug]) && version_compare($transient->response[$plugin_slug]->new_version, $extensions[$plugin_slug]['version'], '=')) {                    
+                        return $transient;
+                    }
+
+                    $api_slug = dirname($plugin_slug);                        
+                    $rslt = MainWPAPISettings::getUpgradeInformationTwo($api_slug);  
+                    
+                    if (!empty($rslt) && isset($rslt->latest_version) && version_compare($rslt->latest_version, $extensions[$plugin_slug]['version'], '>'))
+                    {  
+                        $transient->response[$plugin_slug] = self::mapRsltObj($rslt);
+                    }
                     return $transient;
+                }     
+            } else if ($_POST['action'] == 'update-selected' && isset($_POST['checked']) && is_array($_POST['checked'])) {                                          
+                $updated = false;
+                foreach($_POST['checked'] as $plugin_slug) {
+                    if (isset($extensions[$plugin_slug])) {                           
+                        if (isset($transient->response[$plugin_slug]) && version_compare($transient->response[$plugin_slug]->new_version, $extensions[$plugin_slug]['version'], '=')) {                                                
+                            continue;
+                        }                        
+                        $api_slug = dirname($plugin_slug);                        
+                        $rslt = MainWPAPISettings::getUpgradeInformationTwo($api_slug);                          
+                        if (!empty($rslt) && isset($rslt->latest_version) && version_compare($rslt->latest_version, $extensions[$plugin_slug]['version'], '>'))
+                        {  
+                            $this->upgradeVersionInfo->result[$api_slug] = $rslt;
+                            $transient->response[$plugin_slug] = self::mapRsltObj($rslt);                            
+                            $updated = true;
+                        }                        
+                    }    
                 }
-                
-                $api_slug = dirname($plugin_slug);                        
-                $rslt = MainWPAPISettings::getUpgradeInformationTwo($api_slug);  
-                
-                if (!empty($rslt) && isset($rslt->latest_version) && version_compare($rslt->latest_version, $extensions[$plugin_slug]['version'], '>'))
-                {                    
-                    $obj = new stdClass();
-                    $obj->slug = $rslt->slug;
-                    $obj->new_version = $rslt->latest_version;
-                    $obj->url = 'http://mainwp.com/';
-                    $obj->package = $rslt->download_url;
-                    $obj->key_status = $rslt->key_status;
-                    $transient->response[$plugin_slug] = $obj;
-                }
+                if ($updated)
+                    MainWPUtility::update_option("mainwp_upgradeVersionInfo", serialize($this->upgradeVersionInfo));
                 return $transient;
-            }     
+            }
         }
         
         if (empty($transient->checked)) {
@@ -458,14 +474,8 @@ class MainWPSystem
 
                 $plugin_slug = MainWPExtensions::getPluginSlug($rslt->slug);
                 if (isset($transient->checked[$plugin_slug]) && version_compare($rslt->latest_version, $transient->checked[$plugin_slug], '>'))
-                {
-                    $obj = new stdClass();
-                    $obj->slug = $rslt->slug;
-                    $obj->new_version = $rslt->latest_version;
-                    $obj->url = 'http://mainwp.com/';
-                    $obj->package = $rslt->download_url;
-                    $obj->key_status = $rslt->key_status;
-                    $transient->response[$plugin_slug] = $obj;
+                {                    
+                    $transient->response[$plugin_slug] = self::mapRsltObj($rslt);
                 }
             }
         }
@@ -473,6 +483,16 @@ class MainWPSystem
         return $transient;
     }
 
+    public static function mapRsltObj($pRslt) {
+        $obj = new stdClass();
+        $obj->slug = $pRslt->slug;
+        $obj->new_version = $pRslt->latest_version;
+        $obj->url = 'http://mainwp.com/';
+        $obj->package = $pRslt->download_url;
+        $obj->key_status = $pRslt->key_status; 
+        return $obj;
+    }
+    
     private function checkUpgrade()
     {
         $result = MainWPAPISettings::checkUpgrade();
@@ -500,14 +520,8 @@ class MainWPSystem
             {
                 $plugin_slug = MainWPExtensions::getPluginSlug($rslt->slug);
                 if (isset($extensions[$plugin_slug]) && version_compare($rslt->latest_version, $extensions[$plugin_slug]['version'], '>'))
-                {
-                    $obj = new stdClass();
-                    $obj->slug = $rslt->slug;
-                    $obj->new_version = $rslt->latest_version;
-                    $obj->url = 'http://mainwp.com/';
-                    $obj->package = $rslt->download_url;
-                    $obj->key_status = $rslt->key_status;
-                    $transient->response[$plugin_slug] = $obj;
+                {                    
+                    $transient->response[$plugin_slug] = self::mapRsltObj($rslt);
                 }
             }
         }
@@ -535,8 +549,8 @@ class MainWPSystem
         }
         
         if ($am_slugs != '')
-        {   
-            $am_slugs = explode(',', $am_slugs);            
+        {             
+            $am_slugs = explode(',', $am_slugs);                 
             if (in_array($arg->slug, $am_slugs)) return MainWPAPISettings::getPluginInformation($arg->slug);
         }
         
@@ -1511,15 +1525,21 @@ class MainWPSystem
 
     function admin_print_styles()
     {
+        
+        $hide_footer = false;
+    ?>
+        <style>
+<?php
         if (isset($_GET['hideall']) && $_GET['hideall'] == 1) {
             $post_plus = apply_filters('mainwp-ext-post-plus-enabled', false);
-            ?>
-        <style>
-<?php   if (!$post_plus) { ?>
+            
+        if (!$post_plus) { ?>
             #minor-publishing-actions {
                 display: none;
             }
-<?php   } ?>
+<?php   } 
+        $hide_footer = true;
+        ?>
             #screen-options-link-wrap {
                 display: none;
             }
@@ -1533,12 +1553,29 @@ class MainWPSystem
             }
             #wpfooter {
                 display: none;
-            }
-        </style>
+            }       
         <?php
-        }
+        } 
+       
+        if (!$hide_footer && self::isMainWPPages()) {           
+            ?>
+                #wpfooter {
+                    background: #333 !important;;
+                    position: fixed !important;
+                    bottom: 0 !important;;
+                }    
+    <?php } ?>
+         </style>
+       <?php
     }
-
+    
+    public static function isMainWPPages() {        
+        $screen = get_current_screen();         
+        if($screen && strpos($screen->base, "mainwp_") !== false) 
+            return true;        
+        return false;                
+    }
+    
     function login_redirect($redirect_to, $request, $user)
     {
         if (session_id() == '') session_start();
@@ -1764,6 +1801,7 @@ class MainWPSystem
         $message_id = 99;
         //Read extra metabox
         $pid = $this->metaboxes->select_sites_handle($post_id, 'bulkpost');
+        do_action('mainwp_publish_bulkpost', $post_id);
         
         if ($pid == $post_id) {
             /** @var $wpdb wpdb */
@@ -1809,6 +1847,8 @@ class MainWPSystem
         $this->metaboxes->add_tags_handle($post_id, 'bulkpost');
         $this->metaboxes->add_slug_handle($post_id, 'bulkpost');
         
+        do_action('mainwp_save_bulkpost', $post_id);
+        
         if (isset($_POST['save'])) {
             global $wpdb;
             $wpdb->update($wpdb->posts, array('post_status' => 'draft'), array('ID' => $post_id));
@@ -1839,7 +1879,8 @@ class MainWPSystem
         
         //Read extra metabox
         $pid = $this->metaboxes->select_sites_handle($post_id, 'bulkpage');
-
+        do_action('mainwp_publish_bulkpage', $post_id);
+        
         if ($pid == $post_id) {
             /** @var $wpdb wpdb */
             global $wpdb;
@@ -1878,6 +1919,7 @@ class MainWPSystem
         //Read extra metabox
         $pid = $this->metaboxes->select_sites_handle($post_id, 'bulkpage');
         $this->metaboxes->add_slug_handle($post_id, 'bulkpage');
+        do_action('mainwp_save_bulkpage', $post_id);
         
         if (isset($_POST['save'])) {
             global $wpdb;
@@ -2083,6 +2125,8 @@ class MainWPSystem
     //Empty footer text
     function admin_footer_text()
     {
+        if (!self::isMainWPPages()) return;
+                    
         if (isset($_SESSION['showTip'])) unset($_SESSION['showTip']);
         
         return '<a href="javascript:void(0)" id="mainwp-sites-menu-button" class="mainwp-white mainwp-right-margin-2"><i class="fa fa-globe fa-2x"></i></a>'.'<span style="font-size: 14px;"><i class="fa fa-info-circle"></i> ' . __('Currently managing ','mainwp') . MainWPDB::Instance()->getWebsitesCount()  .  __(' child sites with MainWP ','mainwp') . $this->current_version . __(' version. ','mainwp') . '</span>';
@@ -2105,6 +2149,8 @@ class MainWPSystem
     //Version
     function update_footer()
     {
+        if (!self::isMainWPPages()) return;
+        
         $output = '<a href="javascript:void(0)" id="dashboard_refresh" title="Sync Data" class="mainwp-left-margin-2 mainwp-green"><i class="fa fa-refresh fa-2x"></i></a> <a id="mainwp-add-new-button" class="mainwp-blue mainwp-left-margin-2" title="Add New" href="javascript:void(0)"><i class="fa fa-plus fa-2x"></i></a> <a class="mainwp-red mainwp-left-margin-2" title="Get MainWP Extensions" href="https://extensions.mainwp.com" target="_blank"><i class="fa fa-shopping-cart fa-2x"></i></a> <a class="mainwp-white mainwp-left-margin-2" title="Get Support" href="http://support.mainwp.com" target="_blank"><i class="fa fa-life-ring fa-2x"></i></a>' . '<a href="https://www.facebook.com/mainwp" class="mainwp-link-clean mainwp-left-margin-2" style="color: #3B5998;" target="_blank"><i class="fa fa-facebook-square fa-2x"></i></a> ' . ' <a href="https://twitter.com/mymainwp" class="mainwp-link-clean" target="_blank" style="color: #4099FF;"><i class="fa fa-twitter-square fa-2x"></i></a>.';
 
 

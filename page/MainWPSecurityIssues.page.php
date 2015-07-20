@@ -39,7 +39,7 @@ class MainWPSecurityIssues
         <?php } ?>
         	<div class="mainwp_info-box"><?php _e('We highly suggest you make a full backup before you run the Security Update.','mainwp'); ?></div>
             <div class="postbox">
-            <h3 class="mainwp_box_title"><span><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a> (<?php echo $website->url; ?>)</span></h3>
+            <h3 class="mainwp_box_title"><span><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a> (<?php echo $website->url; ?>)</span></h3>
             <div class="inside">
             <table id="mainwp-security-issues-table">
                 <tr><td><span id="listing_loading"><i class="fa fa-spinner fa-lg fa-pulse"></i></span><span id="listing_ok" class="mainwp-success-green" style="display: none;"><i class="fa fa-check fa-lg"></i></span><span id="listing_nok" class="mainwp-error-red" style="display: none;"><i class="fa fa-times fa-lg"></i></span></td><td><?php _e('Prevent listing wp-content, wp-content/plugins, wp-content/themes, wp-content/uploads','mainwp'); ?></td><td><span id="listing_fix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e('Fix','mainwp'); ?></a></span></td></tr>
@@ -180,7 +180,7 @@ class MainWPSecurityIssues
                     if (!MainWPUtility::ctype_digit($website->securityIssues) || $website->securityIssues == 0) continue;
                 ?>
                 <div class="mainwp-row" siteid="<?php echo $website->id; ?>">
-                    <span class="mainwp-left-col"><a href="admin.php?page=managesites&scanid=<?php echo $website->id; ?>"><?php echo $website->name; ?></a></span>
+                    <span class="mainwp-left-col"><a href="admin.php?page=managesites&scanid=<?php echo $website->id; ?>"><?php echo stripslashes($website->name); ?></a></span>
                     <span class="mainwp-mid-col"><span class="<?php echo ($website->securityIssues > 0 ? 'darkred' : 'mainwp_ga_plus'); ?>"><span class="mainwp-rightnow-number"><?php echo $website->securityIssues; ?></span> Issue<?php echo (($website->securityIssues > 1) ? 's' : ''); ?></span></span>
                     <span class="mainwp-right-col"><?php if ($website->securityIssues == 0) { ?>
                             <input type="button" class="securityIssues_dashboard_unfixAll button" value="<?php _e('Unfix All','mainwp'); ?>"/>

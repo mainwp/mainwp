@@ -90,7 +90,7 @@ class MainWPManageSitesView
         if ($site_id) {
             $website = MainWPDB::Instance()->getWebsiteById($site_id);
             if ($website) {
-                $current_site  = '<a href="admin.php?page=managesites&dashboard=' . $site_id . '">' . $website->name . '</a>' . $separator;
+                $current_site  = '<a href="admin.php?page=managesites&dashboard=' . $site_id . '">' . stripslashes($website->name) . '</a>' . $separator;
             }
         }
 
@@ -167,7 +167,7 @@ class MainWPManageSitesView
                             <option value="">' . __('Select Site ','mainwp') . '</option>';
                 while ($websites && ($website = @MainWPDB::fetch_object($websites)))
                 {
-                    $html .= '<option value="'.$website->id.'">' . $website->name . '</option>';
+                    $html .= '<option value="'.$website->id.'">' . stripslashes($website->name) . '</option>';
                 }
                 @MainWPDB::free_result($websites);
 
@@ -467,14 +467,16 @@ class MainWPManageSitesView
                 <?php
             }
     }
-
+    
     public static function _renderNewSite(&$groups)
     {
         if (!mainwp_current_user_can("dashboard", "add_sites")) {
             mainwp_do_not_have_permissions("add sites");
             return;
         }
-
+        
+        $passed_curl_ssl = MainWPServerInformation::checkCURLSSLInfo();
+        
         ?>
        <div id="mainwp_managesites_add_errors" class="mainwp_info-box-red"></div>
        <div id="mainwp_managesites_add_message" class="mainwp_info-box"></div>
@@ -492,9 +494,10 @@ class MainWPManageSitesView
            <ol>
              <li><?php _e('You have a Security Plugin blocking the connection. If you have a security plugin installed and are having an issue please check the <a href="http://docs.mainwp.com/known-plugin-conflicts/" style="text-decoration: none;">Plugin Conflict page</a> for how to resolve.','mainwp'); ?></li>
              <li><?php _e('Your Dashboard is on the same host as your Child site. Some hosts will not allow two sites on the same server to communicate with each other. In this situation you would contact your host for assistance or move your Dashboard or Child site to a different host.','mainwp'); ?></li>
+             <li class="curl-notice" <?php echo ($passed_curl_ssl ? 'style="display: none;"' : ""); ?>><?php _e('Your Dashboard or Child site is experiencing SSL or cURL errors which can make it so you are unable to the new Child site.  You can check for these errors on the Server Information page for both the MainWP Dashboard and Child Plugin.','mainwp'); ?></li>
            </ol>
          </p>
-         <p style="text-align: center;"><a href="#" class="button button-primary" style="text-decoration: none;" id="mainwp-add-site-notice-dismiss"><?php _e('Hide this message','mainwp'); ?></a></p>
+         <p style="text-align: center;"><a href="#" class="button button-primary" style="text-decoration: none;" id="mainwp-add-site-notice-dismiss"><?php _e('Hide this message','mainwp'); ?></a></p>         
        </div>
         </div>
        <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
@@ -626,7 +629,7 @@ class MainWPManageSitesView
        </form>
 <?php
     }
-
+    
     public static function renderSeoPage(&$website)
       {
         if (!mainwp_current_user_can("dashboard", "see_seo_statistics")) {
@@ -636,7 +639,7 @@ class MainWPManageSitesView
           ?>
       <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
               src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP"/></a>
-          <h2><i class="fa fa-globe"></i> <?php echo $website->name; ?> (<?php echo $website->url; ?>)</h2>
+          <h2><i class="fa fa-globe"></i> <?php echo stripslashes($website->name); ?> (<?php echo $website->url; ?>)</h2>
 
           <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
           <div id="ajax-information-zone" class="updated" style="display: none;"></div>
@@ -1238,7 +1241,7 @@ class MainWPManageSitesView
             </div>
         </div>
 
-    <div id="managesite-backup-status-box" title="Backup <?php echo $website->name; ?>" style="display: none; text-align: center">
+    <div id="managesite-backup-status-box" title="Backup <?php echo stripslashes($website->name); ?>" style="display: none; text-align: center">
         <div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesite-backup-status-text">
         </div>
         <input id="managesite-backup-status-close" type="button" name="Close" value="Cancel" class="button" />
@@ -1297,7 +1300,7 @@ class MainWPManageSitesView
                 <textarea style="width: 580px !important; height: 300px;"
                           id="mainwp_notes_note"></textarea>
             </div>
-            <div><em><?php _e('Allowed HTML Tags:','mainwp'); ?> &lt;p&gt;, &lt;srtong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
+            <div><em><?php _e('Allowed HTML Tags:','mainwp'); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
             <form>
                 <div style="float: right" id="mainwp_notes_status"></div>
                 <input type="button" class="button cont button-primary" id="mainwp_notes_save" value="<?php _e('Save Note','mainwp'); ?>"/>
@@ -1338,7 +1341,7 @@ class MainWPManageSitesView
                 <tr>
                     <th scope="row"><?php _e('Site Name','mainwp'); ?></th>
                     <td><input type="text" name="mainwp_managesites_edit_sitename"
-                               value="<?php echo $website->name; ?>" class="regular-text mainwp-field mainwp-site"/></td>
+                               value="<?php echo stripslashes($website->name); ?>" class="regular-text mainwp-field mainwp-site"/></td>
                 </tr>
                 <tr>
                     <th scope="row"><?php _e('Site URL','mainwp'); ?></th>

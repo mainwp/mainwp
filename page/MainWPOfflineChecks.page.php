@@ -75,7 +75,7 @@ class MainWPOfflineChecks
                 <tr>
                     <input type="hidden" name="offline_check_website_id" id="offline_check_website_id"
                            value="<?php echo $website->id; ?>" />
-                    <td class="url"><a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php echo $website->name;?></a> <span class="offline_check_saved"><?php _e('Saved','mainwp'); ?></span></td>
+                    <td class="url"><a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php echo stripslashes($website->name);?></a> <span class="offline_check_saved"><?php _e('Saved','mainwp'); ?></span></td>
                     <td>
                         <img class="down-img" title="Site Offline" src="<?php echo plugins_url('images/down.png', dirname(__FILE__)); ?>" <?php echo ($website->offline_check_result == -1 ? '' : 'style="display:none;"'); ?> />
                         <img class="up-img" title="Site Online" src="<?php echo plugins_url('images/up.png', dirname(__FILE__)); ?>" <?php echo ($website->offline_check_result == 1 ? '' : 'style="display:none;"'); ?> />
@@ -243,7 +243,7 @@ class MainWPOfflineChecks
         $result = MainWPUtility::isWebsiteAvailable($website);
         if (!$result || (isset($result['error']) && ($result['error'] != '')) || ($result['httpCode'] != '200')) {
             MainWPDB::Instance()->updateWebsiteValues($website->id, array('offline_check_result' => '-1', 'offline_checks_last' => time()));
-            $body = 'We\'ve had some issues trying to reach your website <a href="' . $website->url . '">' . $website->name . '</a>. ' . (isset($result['error']) && ($result['error'] != '') ? ' Error message: '. $result['error'] . '.' : 'Received HTTP-code: ' . $result['httpCode'] . ($result['httpCodeString'] != '' ? ' (' . $result['httpCodeString'] . ').' : ''));
+            $body = 'We\'ve had some issues trying to reach your website <a href="' . $website->url . '">' . stripslashes($website->name) . '</a>. ' . (isset($result['error']) && ($result['error'] != '') ? ' Error message: '. $result['error'] . '.' : 'Received HTTP-code: ' . $result['httpCode'] . ($result['httpCodeString'] != '' ? ' (' . $result['httpCodeString'] . ').' : ''));
             if ($emailOutput === null) {
                 $email = MainWPDB::Instance()->getUserNotificationEmail($website->userid);
                 wp_mail($email, 'Down Time Alert - MainWP', MainWPUtility::formatEmail($email, $body . '<br /><br />Please take a look at the <a href="' . $website->url . '">website</a> and make sure everything is ok.'), array('From: "'.get_option('admin_email').'" <'.get_option('admin_email').'>', 'content-type: text/html'));
@@ -257,7 +257,7 @@ class MainWPOfflineChecks
             $userExtension = MainWPDB::Instance()->getUserExtensionByUserId($website->userid);
             if ($sendOnline || $userExtension->offlineChecksOnlineNotification == 1)
             {
-                $body = 'Your website <a href="' . $website->url . '">' . $website->name . '</a> is up and responding as expected!';
+                $body = 'Your website <a href="' . $website->url . '">' . stripslashes($website->name) . '</a> is up and responding as expected!';
                 //if set in config!
                 if ($emailOutput === null) {
                     $email = MainWPDB::Instance()->getUserNotificationEmail($website->userid);

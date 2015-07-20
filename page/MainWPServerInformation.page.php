@@ -176,14 +176,14 @@ class MainWPServerInformation
             $serverInformation = MainWPUtility::fetchUrlAuthed($website, 'serverInformation');
             ?>
 
-        <h2><i class="fa fa-server"></i> <strong><?php echo $website->name; ?></strong>&nbsp;<?php _e('Server Information'); ?></h2>
+        <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('Server Information'); ?></h2>
         <?php echo $serverInformation['information']; ?>
-        <h2><i class="fa fa-server"></i> <strong><?php echo $website->name; ?></strong>&nbsp;<?php _e('Cron Schedules'); ?></h2>
+        <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('Cron Schedules'); ?></h2>
         <?php echo $serverInformation['cron']; ?>
         <?php if (isset($serverInformation['wpconfig'])) { ?>
-        <h2><i class="fa fa-server"></i> <strong><?php echo $website->name; ?></strong>&nbsp;<?php _e('WP-Config File'); ?></h2>
+        <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('WP-Config File'); ?></h2>
         <?php echo $serverInformation['wpconfig']; ?>
-        <h2><i class="fa fa-server"></i> <strong><?php echo $website->name; ?></strong>&nbsp;<?php _e('Error Log'); ?></h2>
+        <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('Error Log'); ?></h2>
         <?php echo $serverInformation['error']; ?>
         <?php } ?>
             <?php
@@ -210,7 +210,7 @@ class MainWPServerInformation
 
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
         {
-            echo '<option value="'.$website->id.'">' . $website->name . '</option>';
+            echo '<option value="'.$website->id.'">' . stripslashes($website->name) . '</option>';
         }
         @MainWPDB::free_result($websites);
 
@@ -355,6 +355,13 @@ class MainWPServerInformation
     </tr>
     <?php
     }
+          
+    public static function checkCURLSSLInfo() {
+        $isSupport = (self::getCurlSupport() && self::getSSLSupport()) ? true : false;            
+        $checkCURL = version_compare(self::getCurlVersion(), "7.18.1", ">=");                  
+        $checkSSL = self::curlssl_compare(array('version_number' => 0x009080cf , 'version' => 'OpenSSL/0.9.8l'), ">=");        
+        return $isSupport && $checkSSL && $checkCURL;
+    }     
     
     protected static function filesize_compare($value1, $value2, $operator = null) {        
         if (strpos($value1, "G") !== false) {
@@ -377,7 +384,7 @@ class MainWPServerInformation
         if (isset($value['version_number']) && defined('OPENSSL_VERSION_NUMBER')) {                        
             return version_compare(OPENSSL_VERSION_NUMBER, $value['version_number'], $operator);            
         }                
-        return version_compare($value1, $value2, $operator);
+        return false;
     }    
     
     protected static function getFileSystemMethod() {

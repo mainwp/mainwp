@@ -652,7 +652,7 @@ class MainWPRightNow
                 <?php if ($globalView) { ?>
                         <span id="mainwp-right-now-message-content"><?php echo $total_sync_errors; ?> <?php echo _n('Site Timed Out / Errored', 'Sites Timed Out / Errored', $total_sync_errors, 'mainwp'); ?> (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)</span><span style="float: right;"><a href="#" id="mainwp-right-now-message-dismiss"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
                 <?php } else { ?>
-                    <span id="mainwp-right-now-message-content"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $currentSite->id); ?>"><?php echo $currentSite->name; ?></a> <?php _e('Timed Out / Errored', 'mainwp'); ?> (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)</span>
+                    <span id="mainwp-right-now-message-content"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $currentSite->id); ?>"><?php echo stripslashes($currentSite->name); ?></a> <?php _e('Timed Out / Errored', 'mainwp'); ?> (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)</span>
                 <?php } ?>
             </p>
         </div>
@@ -686,7 +686,7 @@ class MainWPRightNow
 
                 ?>
                 <div class="mainwp-row mainwp_wordpress_upgrade" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode($website->name); ?>" updated="<?php echo (count($wp_upgrades) > 0) ? '0' : '1'; ?>">
-                    <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a><input type="hidden" id="wp_upgraded_<?php echo $website->id; ?>" value="<?php if (count($wp_upgrades) > 0) { echo '0'; } else { echo '1'; } ?>"/></span>
+                    <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a><input type="hidden" id="wp_upgraded_<?php echo $website->id; ?>" value="<?php if (count($wp_upgrades) > 0) { echo '0'; } else { echo '1'; } ?>"/></span>
                     <span class="mainwp-mid-col wordpressInfo" id="wp_upgrade_<?php echo $website->id; ?>"><?php
                         if (count($wp_upgrades) > 0)
                         {
@@ -765,7 +765,7 @@ class MainWPRightNow
                     {
                 ?>
                 <div class="mainwp-row">
-                    <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a><input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>" value="<?php if (count($plugin_upgrades) > 0) { echo '0'; } else { echo '1'; } ?>"/></span>
+                    <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a><input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>" value="<?php if (count($plugin_upgrades) > 0) { echo '0'; } else { echo '1'; } ?>"/></span>
                     <span class="mainwp-mid-col" id="wp_upgrade_plugin_<?php echo $website->id; ?>">
                         <?php
                         if (count($plugin_upgrades) > 0)
@@ -888,7 +888,7 @@ class MainWPRightNow
                             <div class="mainwp-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode($website->name); ?>" updated="0">
                                 <span class="mainwp-left-col">
                                     <?php if ($globalView) { ?>
-                                    &nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a>
+                                    &nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a>
                                     <?php } else { ?>
                                         <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.$pluginsInfo[$slug]['slug'].'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
                                                                                                                                     class="thickbox" title="More information about <?php echo $pluginsInfo[$slug]['name']; ?>">
@@ -965,7 +965,7 @@ class MainWPRightNow
                     {
                 ?>
                 <div class="mainwp-row">
-                    <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a><input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>" value="<?php if (count($theme_upgrades) > 0) { echo '0'; } else { echo '1'; } ?>"/></span>
+                    <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a><input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>" value="<?php if (count($theme_upgrades) > 0) { echo '0'; } else { echo '1'; } ?>"/></span>
                     <span class="mainwp-mid-col" id="wp_upgrade_theme_<?php echo $website->id; ?>">
                         <?php
                         if (count($theme_upgrades) > 0)
@@ -1084,7 +1084,7 @@ class MainWPRightNow
                             <div class="mainwp-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode($website->name); ?>" updated="0">
                                 <span class="mainwp-left-col">
                                     <?php if ($globalView) { ?>
-                                    &nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a>
+                                    &nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a>
                                     <?php } else {
                                         echo $themesInfo[$slug]['name'];
                                     } ?></span>
@@ -1118,7 +1118,7 @@ class MainWPRightNow
             <?php } ?>
         </div>
     </div>
-
+    
     <?php
         //Sync errors!
         if ($total_sync_errors > 0) {
@@ -1137,7 +1137,7 @@ class MainWPRightNow
                     if ($website->sync_errors == '') continue;
                 ?>
                 <div class="mainwp-row">
-                    <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a></span>
+                    <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a></span>
                     <span class="mainwp-mid-col"><?php echo $website->sync_errors; ?></span>
                     <span class="mainwp-right-col"><a href="#" class="mainwp_rightnow_site_reconnect" siteid="<?php echo $website->id; ?>"><?php _e('Reconnect','mainwp'); ?></a> | <a href="<?php echo $website->url; ?>" target="_blank"><?php _e('Open','mainwp'); ?></a></span>
                 </div>
@@ -1165,7 +1165,7 @@ class MainWPRightNow
                     if ($website->uptodate != 1) continue;
                 ?>
                 <div class="mainwp-row">
-                    <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a></span>
+                    <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a></span>
                     <span class="mainwp-mid-col">&nbsp;</span>
                     <span class="mainwp-right-col"><a href="<?php echo $website->url; ?>" target="_blank"><?php _e('Open','mainwp'); ?></a></span>
                 </div>
@@ -1173,7 +1173,16 @@ class MainWPRightNow
             </div>
         </div>
         <?php } ?>
-
+    
+        <?php 
+            @MainWPDB::data_seek($websites, 0);
+            $site_ids = array();
+            while ($websites && ($website = @MainWPDB::fetch_object($websites)))
+            {
+                $site_ids[] = $website->id;
+            }
+            do_action('mainwp_rightnow_widget_bottom', $site_ids, $globalView);  
+        ?>
         <div class="clear">
             <div class="mainwp-row">
                 <span class="mainwp-left-col"><span class="mainwp-rightnow-number">
@@ -1235,7 +1244,7 @@ class MainWPRightNow
 
                     ?>
                     <div class="mainwp-row">
-                        <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a></span>
+                        <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a></span>
                         <span class="mainwp-mid-col">&nbsp;
                             <?php if ($isConflict) { ?><span class="mainwp_status_conflict"><?php _e('Conflict Found','mainwp'); ?></span> <?php } ?>
                         </span>
@@ -1272,8 +1281,8 @@ class MainWPRightNow
                     }
                 }?>
             </div>
-        </div>
-
+        </div>   
+    
     <div class="clear"></div>
 
     <div id="rightnow-upgrade-status-box" title="Upgrade" style="display: none; text-align: center">

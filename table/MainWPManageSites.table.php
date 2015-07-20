@@ -328,8 +328,8 @@ class MainWPManageSites_List_Table extends WP_List_Table
             $imgfavi = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
         }
 
-        $loader = '<span class="bulk_running"><img src="' . plugins_url('images/loader.gif', dirname(__FILE__)) . '"  class="hidden" /><span class="status hidden"></span></span>';
-        return $imgfavi . sprintf('<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], $item['name'], $this->row_actions($actions));
+        $loader = '<span class="bulk_running"><i class="fa fa-spinner fa-pulse" style="display:none"></i><span class="status hidden"></span></span>';
+        return $imgfavi . sprintf('<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], stripslashes($item['name']), $this->row_actions($actions));
     }
 
     function column_url($item)
@@ -430,8 +430,8 @@ class MainWPManageSites_List_Table extends WP_List_Table
             'open_frontpage' => __('Open Frontpage', 'mainwp'),
             'update_plugins' => __('Update Plugins', 'mainwp'),
             'update_themes' => __('Update Themes', 'mainwp'),
-        );
-        return $actions;
+        );        
+        return apply_filters('mainwp_managesites_bulk_actions', $actions);                       
     }
 
     function column_cb($item)

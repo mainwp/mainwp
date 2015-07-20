@@ -2871,11 +2871,6 @@ input.mainwp-field:-webkit-autofill {
 
 /* ---- Footer Customization ---- */
 
-#wpfooter {
-    background: #333;
-    position: fixed;
-    bottom: 0;
-}
 
 #mainwp-footer-buttons {
 
@@ -2936,4 +2931,7 @@ a.mainpw-fly-meny-lnk, a.mainwp-add-new-link {
 a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {
     color: #fff;
     text-decoration: none !important;
+}
+#mainwp-add-a-single-site .inside{
+    min-height: 530px;
 }

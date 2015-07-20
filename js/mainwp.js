@@ -6986,7 +6986,7 @@ jQuery(document).on('click', '#mainwp-sites-menu-button', function(){
 });
 
 jQuery(document).bind('keypress', function(e){
-    if(e.keyCode == 83 && e.shiftKey) {
+    if(e.keyCode == 19 && e.shiftKey && e.ctrlKey) {
        jQuery('#mainwp-sites-menu').slideToggle();
        jQuery("#mainwp-sites-menu").scrollTop( 10000000 );
        jQuery("#mainwp-fly-manu-filter").focus();

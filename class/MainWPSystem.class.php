@@ -417,6 +417,31 @@ class MainWPSystem
 
     public function check_update_custom($transient)
     {
+        if (isset($_POST['plugin']) && isset($_POST['action']) && $_POST['action'] == 'update-plugin') {                        
+            $plugin_slug = $_POST['plugin'];
+            $extensions = MainWPExtensions::getExtensions();
+            if (isset($extensions[$plugin_slug])) {                 
+                if (isset($transient->response[$plugin_slug]) && version_compare($transient->response[$plugin_slug]->new_version, $extensions[$plugin_slug]['version'], '=')) {                    
+                    return $transient;
+                }
+                
+                $api_slug = dirname($plugin_slug);                        
+                $rslt = MainWPAPISettings::getUpgradeInformationTwo($api_slug);  
+                
+                if (!empty($rslt) && isset($rslt->latest_version) && version_compare($rslt->latest_version, $extensions[$plugin_slug]['version'], '>'))
+                {                    
+                    $obj = new stdClass();
+                    $obj->slug = $rslt->slug;
+                    $obj->new_version = $rslt->latest_version;
+                    $obj->url = 'http://mainwp.com/';
+                    $obj->package = $rslt->download_url;
+                    $obj->key_status = $rslt->key_status;
+                    $transient->response[$plugin_slug] = $obj;
+                }
+                return $transient;
+            }     
+        }
+        
         if (empty($transient->checked)) {
             return $transient;
         }
@@ -451,15 +476,15 @@ class MainWPSystem
     private function checkUpgrade()
     {
         $result = MainWPAPISettings::checkUpgrade();
-        if ($result == null) return;        
-
-        $this->upgradeVersionInfo->result = $result;
-        $this->upgradeVersionInfo->updated = time();
+        $this->upgradeVersionInfo->updated = time();        
+        if (empty($result)) {            
+            $this->upgradeVersionInfo->result = $result;            
+        }
         MainWPUtility::update_option("mainwp_upgradeVersionInfo", serialize($this->upgradeVersionInfo));
     }
 
     public function pre_check_update_custom($transient)
-    {
+    {   
 //        if (empty($transient->checked)) {
 //            return $transient;
 //        }
@@ -470,10 +495,11 @@ class MainWPSystem
 
         if ($this->upgradeVersionInfo != null)
         {
+            $extensions = MainWPExtensions::getExtensions();
             foreach ($this->upgradeVersionInfo->result as $rslt)
             {
                 $plugin_slug = MainWPExtensions::getPluginSlug($rslt->slug);
-                if (!isset($transient->checked) || !isset($transient->checked[$plugin_slug]) || (isset($transient->checked[$plugin_slug]) && version_compare($rslt->latest_version, $transient->checked[$plugin_slug], '>')))
+                if (isset($extensions[$plugin_slug]) && version_compare($rslt->latest_version, $extensions[$plugin_slug]['version'], '>'))
                 {
                     $obj = new stdClass();
                     $obj->slug = $rslt->slug;

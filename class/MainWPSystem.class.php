@@ -1557,7 +1557,7 @@ class MainWPSystem
         <?php
         } 
         
-        if (!$hide_footer && self::visibleFooter()) {
+        if (!$hide_footer && self::isMainWPPages()) {
             ?>
                 #wpfooter {
                     background: #333 !important;;
@@ -1569,9 +1569,9 @@ class MainWPSystem
        <?php
     }
     
-    public function visibleFooter() {        
-        $screen = get_current_screen();         
-        if($screen && strpos($screen->base, "mainwp_") !== false) 
+    public static function isMainWPPages() {        
+        $current_screen = get_current_screen();         
+        if($current_screen->parent_base == 'mainwp_tab') 
             return true;        
         return false;        
     }
@@ -2125,7 +2125,7 @@ class MainWPSystem
     //Empty footer text
     function admin_footer_text()
     {
-        if (!self::visibleFooter()) return;
+        if (!self::isMainWPPages()) return;
                     
         if (isset($_SESSION['showTip'])) unset($_SESSION['showTip']);
         
@@ -2149,7 +2149,7 @@ class MainWPSystem
     //Version
     function update_footer()
     {
-        if (!self::visibleFooter()) return;
+        if (!self::isMainWPPages()) return;
         
         $output = '<a href="javascript:void(0)" id="dashboard_refresh" title="Sync Data" class="mainwp-left-margin-2 mainwp-green"><i class="fa fa-refresh fa-2x"></i></a> <a id="mainwp-add-new-button" class="mainwp-blue mainwp-left-margin-2" title="Add New" href="javascript:void(0)"><i class="fa fa-plus fa-2x"></i></a> <a class="mainwp-red mainwp-left-margin-2" title="Get MainWP Extensions" href="https://extensions.mainwp.com" target="_blank"><i class="fa fa-shopping-cart fa-2x"></i></a> <a class="mainwp-white mainwp-left-margin-2" title="Get Support" href="http://support.mainwp.com" target="_blank"><i class="fa fa-life-ring fa-2x"></i></a>' . '<a href="https://www.facebook.com/mainwp" class="mainwp-link-clean mainwp-left-margin-2" style="color: #3B5998;" target="_blank"><i class="fa fa-facebook-square fa-2x"></i></a> ' . ' <a href="https://twitter.com/mymainwp" class="mainwp-link-clean" target="_blank" style="color: #4099FF;"><i class="fa fa-twitter-square fa-2x"></i></a>.';
 

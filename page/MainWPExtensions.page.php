@@ -731,7 +731,8 @@ class MainWPExtensions
         'theme_upgrades' => 'theme_upgrades',
         'premium_upgrades' => 'premium_upgrades',
         'plugins' => 'plugins',
-        'dtsSync' => 'dtsSync'
+        'dtsSync' => 'dtsSync',
+        'version' => 'version'
     );
     
     public static function hookGetDBSites($pluginFile, $key, $sites, $groups, $options = false)

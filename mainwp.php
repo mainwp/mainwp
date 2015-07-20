@@ -7,6 +7,19 @@
   Author URI: http://mainwp.com
   Version: 2.0.21
  */
+
+if ( !defined( 'MAINWP_PLUGIN_FILE' ) ) {
+  define( 'MAINWP_PLUGIN_FILE', __FILE__ );
+}
+
+if ( !defined( 'MAINWP_PLUGIN_DIR' ) ) {
+  define( 'MAINWP_PLUGIN_DIR', plugin_dir_path( MAINWP_PLUGIN_FILE ) );
+}
+
+if ( !defined( 'MAINWP_PLUGIN_URL' ) ) {
+  define( 'MAINWP_PLUGIN_URL', plugin_dir_url( MAINWP_PLUGIN_FILE ) );
+}
+
 include_once(ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'version.php'); //Version information from wordpress
 
 if (!function_exists('mainwp_autoload'))

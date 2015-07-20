@@ -1556,24 +1556,24 @@ class MainWPSystem
             }       
         <?php
         } 
-        
-        if (!$hide_footer && self::isMainWPPages()) {
+       
+        if (!$hide_footer && self::isMainWPPages()) {           
             ?>
                 #wpfooter {
                     background: #333 !important;;
                     position: fixed !important;
                     bottom: 0 !important;;
                 }    
-        <?php } ?>
+    <?php } ?>
          </style>
        <?php
     }
     
     public static function isMainWPPages() {        
-        $current_screen = get_current_screen();         
-        if($current_screen->parent_base == 'mainwp_tab') 
+        $screen = get_current_screen();         
+        if($screen && strpos($screen->base, "mainwp_") !== false) 
             return true;        
-        return false;        
+        return false;                
     }
     
     function login_redirect($redirect_to, $request, $user)

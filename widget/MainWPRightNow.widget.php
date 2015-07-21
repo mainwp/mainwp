@@ -494,8 +494,17 @@ class MainWPRightNow
             return;
         }
 
-        $userExtension = MainWPDB::Instance()->getUserExtension();        
+        $userExtension = MainWPDB::Instance()->getUserExtension();  
         
+        $total_themesIgnored = $total_pluginsIgnored = 0;
+
+        if ($globalView) {            
+            $decodedIgnoredPlugins = json_decode($userExtension->ignored_plugins, true);
+            $decodedIgnoredThemes = json_decode($userExtension->ignored_themes, true);        
+            $total_pluginsIgnored = is_array($decodedIgnoredPlugins) ? count($decodedIgnoredPlugins) : 0;        
+            $total_themesIgnored = is_array($decodedIgnoredThemes) ? count($decodedIgnoredThemes) : 0;       
+        } 
+    
         $globalIgnoredPluginConflicts = json_decode($userExtension->ignored_pluginConflicts, true);
         if (!is_array($globalIgnoredPluginConflicts)) $globalIgnoredPluginConflicts = array();
 
@@ -518,7 +527,7 @@ class MainWPRightNow
         @MainWPDB::data_seek($websites, 0);
 
         $currentSite = null;
-
+      
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
         {
             if (!$globalView) $currentSite = $website;
@@ -573,7 +582,8 @@ class MainWPRightNow
 
                 $total_plugin_upgrades += count($plugin_upgrades);
             }
-
+            
+            
             if (is_array($theme_upgrades))
             {
                 $ignored_themes = json_decode($website->ignored_themes, true);
@@ -585,6 +595,13 @@ class MainWPRightNow
                 $total_theme_upgrades += count($theme_upgrades);
             }
 
+            
+            $ignored_plugins = json_decode($website->ignored_plugins, true);
+            $ignored_themes = json_decode($website->ignored_themes, true);
+            
+            $total_pluginsIgnored += is_array($ignored_plugins) ? count($ignored_plugins) : 0;            
+            $total_themesIgnored += (is_array($ignored_themes) ? count($ignored_themes) : 0);             
+            
             if ($userExtension->site_view == 0) //site view disabled
             {
                 //Keep track of all the plugins & themes
@@ -658,18 +675,6 @@ class MainWPRightNow
         </div>
     </div>
     <?php   
-    
-    if ($globalView) {            
-        $decodedIgnoredPlugins = json_decode($userExtension->ignored_plugins, true);
-        $decodedIgnoredThemes = json_decode($userExtension->ignored_themes, true);
-    } else {
-        $decodedIgnoredPlugins = json_decode($currentSite->ignored_plugins, true);
-        $decodedIgnoredThemes = json_decode($currentSite->ignored_themes, true);         
-    }
-
-    $total_pluginsIgnored = is_array($decodedIgnoredPlugins) ? count($decodedIgnoredPlugins) : 0;
-    $total_themesIgnored = is_array($decodedIgnoredThemes) ? count($decodedIgnoredThemes) : 0;
-
     
     //WP Upgrades part:  
     $total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;

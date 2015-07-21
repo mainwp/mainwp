@@ -527,7 +527,8 @@ class MainWPRightNow
         @MainWPDB::data_seek($websites, 0);
 
         $currentSite = null;
-      
+        
+        $pluginsIgnored_perSites = $themesIgnored_perSites = array();
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
         {
             if (!$globalView) $currentSite = $website;
@@ -598,9 +599,14 @@ class MainWPRightNow
             
             $ignored_plugins = json_decode($website->ignored_plugins, true);
             $ignored_themes = json_decode($website->ignored_themes, true);
-            
-            $total_pluginsIgnored += is_array($ignored_plugins) ? count($ignored_plugins) : 0;            
-            $total_themesIgnored += (is_array($ignored_themes) ? count($ignored_themes) : 0);             
+            if (is_array($ignored_plugins)) {
+                $ignored_plugins = array_filter($ignored_plugins);
+                $pluginsIgnored_perSites = array_merge($pluginsIgnored_perSites, $ignored_plugins);
+            }
+            if (is_array($ignored_themes)) {
+                $ignored_themes = array_filter($ignored_themes);
+                $themesIgnored_perSites = array_merge($themesIgnored_perSites, $ignored_themes);
+            }
             
             if ($userExtension->site_view == 0) //site view disabled
             {
@@ -674,7 +680,10 @@ class MainWPRightNow
             </p>
         </div>
     </div>
-    <?php   
+    <?php       
+    
+    $total_pluginsIgnored += count($pluginsIgnored_perSites);            
+    $total_themesIgnored += count($themesIgnored_perSites);  
     
     //WP Upgrades part:  
     $total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;

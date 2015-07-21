@@ -494,8 +494,8 @@ class MainWPRightNow
             return;
         }
 
-        $userExtension = MainWPDB::Instance()->getUserExtension();
-
+        $userExtension = MainWPDB::Instance()->getUserExtension();        
+        
         $globalIgnoredPluginConflicts = json_decode($userExtension->ignored_pluginConflicts, true);
         if (!is_array($globalIgnoredPluginConflicts)) $globalIgnoredPluginConflicts = array();
 
@@ -657,11 +657,34 @@ class MainWPRightNow
             </p>
         </div>
     </div>
-    <?php    
+    <?php   
+    
+    if ($globalView) {            
+        $decodedIgnoredPlugins = json_decode($userExtension->ignored_plugins, true);
+        $decodedIgnoredThemes = json_decode($userExtension->ignored_themes, true);
+    } else {
+        $decodedIgnoredPlugins = json_decode($currentSite->ignored_plugins, true);
+        $decodedIgnoredThemes = json_decode($currentSite->ignored_themes, true);         
+    }
+
+    $total_pluginsIgnored = is_array($decodedIgnoredPlugins) ? count($decodedIgnoredPlugins) : 0;
+    $total_themesIgnored = is_array($decodedIgnoredThemes) ? count($decodedIgnoredThemes) : 0;
+
+    
     //WP Upgrades part:  
-    ?>
-    <div class="clear">        
+    $total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
+    ?>    
+    <div class="clear">
         <div class="mainwp-row-top">
+            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_upgrades; ?></span> <?php _e('Upgrade','mainwp'); ?><?php if (count($total_upgrades) > 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?></span>
+            <span class="mainwp-mid-col">&nbsp;</span>
+            <?php if (mainwp_current_user_can("dashboard", "update_wordpress") && mainwp_current_user_can("dashboard", "update_plugins") && mainwp_current_user_can("dashboard", "update_themes")) { ?>
+            <span class="mainwp-right-col"><?php if (($total_upgrades) == 0) { ?><a class="button" disabled="disabled"><?php _e('Upgrade Everything','mainwp'); ?></a><?php } else { ?><a href="#" onClick="return rightnow_global_upgrade_all();" class="mainwp-upgrade-button button"><?php _e('Upgrade Everything','mainwp'); ?></a><?php } ?></span>
+            <?php } ?>
+        </div>
+    </div>
+    <div class="clear">        
+        <div class="mainwp-row">
             <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_wp_upgrades; ?></span> <?php _e('WordPress upgrade','mainwp'); ?><?php if (count($total_wp_upgrades) > 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?></span>
             <span class="mainwp-mid-col">&nbsp;</span>
             <span class="mainwp-right-col">
@@ -722,7 +745,7 @@ class MainWPRightNow
     <div class="clear">
         <div class="mainwp-row">
             <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_plugin_upgrades; ?> </span> <?php _e('Plugin upgrade','mainwp'); ?><?php if ($total_plugin_upgrades > 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?></span>
-            <span class="mainwp-mid-col">&nbsp;</span>            
+            <span class="mainwp-mid-col"><a href="<?php echo admin_url('admin.php?page=PluginsIgnore'); ?>"><?php _e('Ignored','mainwp'); ?> (<?php echo $total_pluginsIgnored; ?>)</a></span>            
             <span class="mainwp-right-col"><a href="#" id="mainwp_plugin_upgrades_show" onClick="return rightnow_show('plugin_upgrades');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a> <?php if (mainwp_current_user_can("dashboard", "update_plugins")) {  ?><?php if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } }?></span>
             
         </div>
@@ -923,7 +946,7 @@ class MainWPRightNow
     <div class="clear">
         <div class="mainwp-row">
             <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_theme_upgrades; ?> </span> <?php _e('Theme upgrade','mainwp'); ?><?php if ($total_theme_upgrades > 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?></span>
-            <span class="mainwp-mid-col">&nbsp;</span>            
+            <span class="mainwp-mid-col"><a href="<?php echo admin_url('admin.php?page=ThemesIgnore'); ?>"><?php _e('Ignored','mainwp'); ?> (<?php echo $total_themesIgnored; ?>)</a></span>            
             <span class="mainwp-right-col"><a href="#" id="mainwp_theme_upgrades_show" onClick="return rightnow_show('theme_upgrades');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a> 
                 <?php if (mainwp_current_user_can("dashboard", "update_themes")) { ?>
                     <?php if ($total_theme_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_theme_upgrades, 'mainwp'); ?></a><?php } else if ($total_theme_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_theme_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } ?>
@@ -1106,16 +1129,6 @@ class MainWPRightNow
                 }
             }
             ?>
-        </div>
-    </div>
-    
-    <div class="clear">
-        <div class="mainwp-row">
-            <span class="mainwp-left-col"><a href="<?php echo admin_url('admin.php?page=PluginsIgnore'); ?>"><?php _e('Ignored Plugins','mainwp'); ?></a> | <a href="<?php echo admin_url('admin.php?page=ThemesIgnore'); ?>"><?php _e('Ignored Themes','mainwp'); ?></a></span>
-            <span class="mainwp-mid-col">&nbsp;</span>
-            <?php if (mainwp_current_user_can("dashboard", "update_wordpress") && mainwp_current_user_can("dashboard", "update_plugins") && mainwp_current_user_can("dashboard", "update_themes")) { ?>
-            <span class="mainwp-right-col"><?php if (($total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades) == 0) { ?><a class="button" disabled="disabled"><?php _e('Upgrade Everything','mainwp'); ?></a><?php } else { ?><a href="#" onClick="return rightnow_global_upgrade_all();" class="mainwp-upgrade-button button"><?php _e('Upgrade Everything','mainwp'); ?></a><?php } ?></span>
-            <?php } ?>
         </div>
     </div>
     

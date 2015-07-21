@@ -490,7 +490,7 @@ class MainWPManageSitesView
            <?php _e('If you are having trouble adding your site please use the Test Connection tab. This tells you the header response being received by your dashboard from that child site. The Test Connection feature is specifically testing what your Dashboard can "see" and what your Dashboard "sees" and what my Dashboard "sees" or what your browser "sees" can be completely different things.','mainwp'); ?>
          </p>
          <p>
-           <strong><?php _e('The two most common reasons for sites not being added are:','mainwp'); ?></strong>
+           <strong><?php _e('Most common reasons for sites not being added are:','mainwp'); ?></strong>
            <ol>
              <li><?php _e('You have a Security Plugin blocking the connection. If you have a security plugin installed and are having an issue please check the <a href="http://docs.mainwp.com/known-plugin-conflicts/" style="text-decoration: none;">Plugin Conflict page</a> for how to resolve.','mainwp'); ?></li>
              <li><?php _e('Your Dashboard is on the same host as your Child site. Some hosts will not allow two sites on the same server to communicate with each other. In this situation you would contact your host for assistance or move your Dashboard or Child site to a different host.','mainwp'); ?></li>
@@ -667,11 +667,7 @@ class MainWPManageSitesView
                       <tr>
                           <th style="text-align: left; width: 180px;">Alexa Rank:</th>
                           <td><?php echo $website->alexia; ?> <?php echo ($website->alexia_old != '' ? '(' . $website->alexia_old . ')' : ''); ?></td>
-                      </tr>
-                      <tr>
-                          <th style="text-align: left">Google Page Rank:</th>
-                          <td><?php echo $website->pagerank; ?> <?php echo ($website->pagerank_old != '' ? '(' . $website->pagerank_old . ')' : ''); ?></td>
-                      </tr>
+                      </tr>                     
                       <tr>
                           <th style="text-align: left">Indexed Links on Google:</th>
                           <td><?php echo $website->indexed; ?> <?php echo ($website->indexed_old != '' ? '(' . $website->indexed_old . ')' : ''); ?></td>
@@ -710,17 +706,6 @@ class MainWPManageSitesView
                 <td style="width: 100px" class="mainwp-red"><span><i class="fa fa-chevron-up"></i> <?php echo $website->alexia; ?></span></td>
           <?php } ?>
           <td style="width: 100px; color: #7B848B;"><?php echo ($website->alexia_old != '' ? $website->alexia_old : ''); ?></td>
-        </tr>
-        <tr>
-          <th style="text-align: left; width: 300px;"><?php _e('Google Page Rank:','mainwp'); ?></th>
-          <?php if ($website->pagerank > $website->pagerank_old) { ?> 
-          <td style="width: 100px" class="mainwp-green"><span><i class="fa fa-chevron-up"></i> <?php echo $website->pagerank; ?></span></td>
-          <?php } else if ($website->pagerank === $website->pagerank_old) { ?>
-          <td style="width: 100px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->pagerank; ?></span></td>
-          <?php } else { ?>
-          <td style="width: 100px" class="mainwp-red"><span><i class="fa fa-chevron-down"></i> <?php echo $website->pagerank; ?></span></td>
-          <?php } ?>
-          <td style="width: 100px; color: #7B848B;"><?php echo ($website->pagerank_old != '' ? $website->pagerank_old : ''); ?></td>
         </tr>
         <tr>
           <th style="text-align: left; width: 300px;"><?php _e('Indexed Links on Google:','mainwp'); ?></th>

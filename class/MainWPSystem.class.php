@@ -1480,7 +1480,7 @@ class MainWPSystem
             }
 
             $alexia = MainWPUtility::getAlexaRank($website->url);
-            $pageRank = MainWPUtility::getPagerank($website->url);
+            $pageRank = 0;//MainWPUtility::getPagerank($website->url);
             $indexed = MainWPUtility::getGoogleCount($website->url);
 
             MainWPDB::Instance()->updateWebsiteStats($website->id, $pageRank, $indexed, $alexia, $website->pagerank, $website->indexed, $website->alexia);
@@ -2194,7 +2194,7 @@ class MainWPSystem
         ?>
         <div id="refresh-status-box" title="Syncing Websites" style="display: none; text-align: center">
             <div id="refresh-status-progress"></div>
-            <span id="refresh-status-current">0</span> / <span id="refresh-status-total"><?php echo $cntr; ?></span> updated
+            <span id="refresh-status-current">0</span> / <span id="refresh-status-total"><?php echo $cntr; ?></span> <span id="refresh-status-text"><?php _e('synced', 'mainwp'); ?></span>
             <div style="height: 160px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="refresh-status-content">
                 <table style="width: 100%">
                 <?php

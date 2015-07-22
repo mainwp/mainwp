@@ -113,6 +113,22 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 
 == Changelog ==
 
+= 2.0.22 - 7-22-2015 =
+* Fixed: Bug where extensions updates were failing when updating in bulk
+* Fixed: Bug with extensions updates detection
+* Fixed: Bug with displaying slashes if an apostrophe has been used in a site name
+* Fixed: Incorrect arrows direction for Alexa index in the SEO widget
+* Fixed: Issue with insecure links
+* Added: cURL & SSL notice in the Sites > Add New page
+* Added: Hooks for the upcoming extension
+* Updated: Footer bar shows for Admin users and on MainWP pages only
+* Updated: Layout of the Right Now widget
+* Updated: Columns width in the Manage Sites table
+* Updated: Incorrect text on the Sync popup window
+* Updated: CSS Style
+* Removed: Google PR from SEO check
+* Removed: Redundant text from multiple pages
+
 = 2.0.21 - 7-9-2015 =
 * Fixed: Bug where extensions updates were failing
 * Fixed: Bug where up to date extensions were showing available updates 

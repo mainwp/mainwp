@@ -1270,7 +1270,7 @@ class MainWPManageSitesView
 
     public static function _renderInfo()
     {
-        ?><div class="mainwp_info-box"><strong><?php _e('Use this to manage your Sites. To add new Site click on the "Add new" Button.','mainwp'); ?></strong></div><?php
+        
     }
     public static function _renderNotes()
     {

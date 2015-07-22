@@ -210,7 +210,6 @@ class MainWPManageBackups
         if ($backupTask == null)
         {
             self::renderHeader(''); ?>
-            <div class="mainwp_info-box"><strong><?php _e('Use these backup tasks to run backups at different times on different days. To backup a site right away please go to the','mainwp'); ?> <a href="<?php echo admin_url(); ?>admin.php?page=managesites"><?php _e('Sites page','mainwp'); ?></a> <?php _e('and select Backup Now.','mainwp'); ?></strong></div>
             <?php if (count($primaryBackupMethods) == 0) { ?>
                 <tr>
                     <div class="mainwp_info-box"><?php _e('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the <a href="https://extensions.mainwp.com/product-category/mainwp-extensions/backups/" target="_blank" ?>Extensions Site</a> for options.', 'mainwp'); ?></div>
@@ -276,7 +275,7 @@ class MainWPManageBackups
         }
 
         self::renderHeader('AddNew'); ?>
-        <div class="mainwp_info-box"><strong><?php _e('Use these backup tasks to run backups at different times on different days. To backup a site right away please go to the','mainwp'); ?> <a href="<?php echo admin_url(); ?>admin.php?page=managesites"><?php _e('Sites page','mainwp'); ?></a> <?php _e('and select Backup Now.','mainwp'); ?></strong></div>
+        <div class="mainwp_info-box-yellow"><?php _e('We recommend only scheduling 1 site per backup, multiples sites can cause unintended issues.','mainwp'); ?></div>
         <div id="mainwp_managebackups_add_errors" class="mainwp_error error"></div>
         <div id="mainwp_managebackups_add_message" class="mainwp_updated updated" style="display: none"></div>
         <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
@@ -314,7 +313,7 @@ class MainWPManageBackups
             //to add CSS Styling to the select sites box use the one below (this adds the css class mainwp_select_sites_box_right to the box)
             //MainWPUI::select_sites_box(__("Select Sites"), 'checkbox', true, true, 'mainwp_select_sites_box_right', '', $selected_websites, $selected_groups);
         ?>
-        <div class="mainwp_info-box-yellow" style="float: right; width: 240px;"><?php _e('We recommend only scheduling 1 site per backup, multiples sites can cause unintended issues.','mainwp'); ?></div>
+        
         <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right', 'float: right !important; clear: both;', $selected_websites, $selected_groups, true); ?>
         <div class="mainwp_config_box_left">
 

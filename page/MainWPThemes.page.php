@@ -853,8 +853,6 @@ class MainWPThemes
         } else {
             $snAutomaticDailyUpdate = get_option('mainwp_automaticDailyUpdate');
             ?>
-            <h2><?php _e('Theme Automatic Update Trust List','mainwp'); ?></h2>
-            <br />
             <div id="mainwp-au" class=""><strong><?php if ($snAutomaticDailyUpdate == 1) { ?>
                 <div class="mainwp-au-on"><?php _e('Auto Updates are ON and Trusted Plugins will be Automatically Updated','mainwp'); ?> - <a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e('Change this in Settings','mainwp'); ?></a></div>
             <?php } elseif (($snAutomaticDailyUpdate === false) || ($snAutomaticDailyUpdate == 2)) { ?>

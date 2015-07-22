@@ -64,7 +64,7 @@ mainwp_update_pluginsthemes = function (updateType, updateSiteIds)
         else if (pType == 'theme') {
             jQuery('#refresh-status-box').attr('title', __("Upgrading Themes"));
         }
-
+        jQuery('#refresh-status-text').html(__('updated'));        
         jQuery('#refresh-status-progress').progressbar({value: 0, max: sitesCount});
         jQuery('#refresh-status-box').dialog({
             resizable: false,

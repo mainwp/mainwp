@@ -323,6 +323,8 @@ rightnow_plugins_upgrade_all = function (slug, pluginName)
 
     rightnowContinueAfterBackup = function(pSitesCount, pSlug, pSitesToUpdate) { return function()
     {
+        pluginName = decodeURIComponent(pluginName);
+        pluginName = pluginName.replace(/\+/g, ' ');
         //Step 2: show form
         jQuery('#rightnow-upgrade-status-box').attr('title', __('Upgrading %1', decodeURIComponent(pluginName)));
         jQuery('#rightnow-upgrade-status-total').html(pSitesCount);
@@ -612,6 +614,8 @@ rightnow_themes_upgrade_all = function (slug, themeName)
     }
     rightnowContinueAfterBackup = function(pSitesCount, pSlug, pSitesToUpdate) { return function()
     {
+        themeName = decodeURIComponent(themeName);
+        themeName = themeName.replace(/\+/g, ' ');
         //Step 2: show form
         jQuery('#rightnow-upgrade-status-box').attr('title', __('Upgrading %1', decodeURIComponent(themeName)));
         jQuery('#rightnow-upgrade-status-total').html(pSitesCount);

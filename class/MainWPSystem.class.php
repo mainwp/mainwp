@@ -1483,7 +1483,7 @@ class MainWPSystem
             }
 
             $alexia = MainWPUtility::getAlexaRank($website->url);
-            $pageRank = MainWPUtility::getPagerank($website->url);
+            $pageRank = 0;//MainWPUtility::getPagerank($website->url);
             $indexed = MainWPUtility::getGoogleCount($website->url);
 
             MainWPDB::Instance()->updateWebsiteStats($website->id, $pageRank, $indexed, $alexia, $website->pagerank, $website->indexed, $website->alexia);
@@ -2054,10 +2054,10 @@ class MainWPSystem
         wp_enqueue_script('mainwp-managesites', MAINWP_PLUGIN_URL . 'js/mainwp-managesites.js', array(), $this->current_version);
         wp_enqueue_script('mainwp-extensions', MAINWP_PLUGIN_URL . 'js/mainwp-extensions.js', array(), $this->current_version);
         wp_enqueue_script('mainwp-ui', MAINWP_PLUGIN_URL . 'js/mainwp-ui.js', array(), $this->current_version);
-        wp_enqueue_script('mainwp-fileuploader', MAINWP_PLUGIN_URL . 'js/mainwp-fileuploader.js', array(), $this->current_version);
-        wp_enqueue_script('mainwp-date', MAINWP_PLUGIN_URL . 'js/mainwp-date.js', array(), $this->current_version);
+        wp_enqueue_script('mainwp-fileuploader', MAINWP_PLUGIN_URL . 'js/fileuploader.js', array(), $this->current_version);
+        wp_enqueue_script('mainwp-date', MAINWP_PLUGIN_URL . 'js/date.js', array(), $this->current_version);
         wp_enqueue_script('mainwp-tablesorter', MAINWP_PLUGIN_URL . 'js/jquery.tablesorter.min.js', array(), $this->current_version);
-        wp_enqueue_script('mainwp-tablesorter-pager', MAINWP_PLUGIN_URL . 'js/jquery.tablesorter.pager.min.js', array(), $this->current_version);
+        wp_enqueue_script('mainwp-tablesorter-pager', MAINWP_PLUGIN_URL . 'js/jquery.tablesorter.pager.js', array(), $this->current_version);
         wp_enqueue_script('mainwp-moment', MAINWP_PLUGIN_URL . 'js/moment.min.js', array(), $this->current_version);
     }
 
@@ -2074,7 +2074,7 @@ class MainWPSystem
         }
 
         wp_enqueue_style('mainwp-filetree', MAINWP_PLUGIN_URL . 'css/jqueryFileTree.css', array(), $this->current_version);
-        wp_enqueue_style('mainwp-font-awesome', MAINWP_PLUGIN_URL . 'css/font-awesome/css/font-awesome.min.cs', array(), $this->current_version);
+        wp_enqueue_style('mainwp-font-awesome', MAINWP_PLUGIN_URL . 'css/font-awesome/css/font-awesome.min.css', array(), $this->current_version);
     }
 
     function admin_head()
@@ -2214,7 +2214,7 @@ class MainWPSystem
         ?>
         <div id="refresh-status-box" title="Syncing Websites" style="display: none; text-align: center">
             <div id="refresh-status-progress"></div>
-            <span id="refresh-status-current">0</span> / <span id="refresh-status-total"><?php echo $cntr; ?></span> updated
+            <span id="refresh-status-current">0</span> / <span id="refresh-status-total"><?php echo $cntr; ?></span> <span id="refresh-status-text"><?php _e('synced', 'mainwp'); ?></span>
             <div style="height: 160px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="refresh-status-content">
                 <table style="width: 100%">
                 <?php

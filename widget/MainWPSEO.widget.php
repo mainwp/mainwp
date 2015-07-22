@@ -32,7 +32,7 @@ class MainWPSEO {
             		<thead align="left">
             			<th style="padding-bottom: 1em; cursor: pointer;" class="sortable"><?php _e('Child Site','mainwp'); ?></th>
             			<th style="padding-bottom: 1em; cursor: pointer;" class="sortable"><?php _e('Alexa Rank','mainwp'); ?></th>
-            			<th style="padding-bottom: 1em; cursor: pointer;" class="sortable"><?php _e('Google PR','mainwp'); ?></th>
+<!--            			<th style="padding-bottom: 1em; cursor: pointer;" class="sortable"><?php _e('Google PR','mainwp'); ?></th>-->
             			<th style="padding-bottom: 1em; cursor: pointer;" class="sortable"><?php _e('Indexed','mainwp'); ?></th>
             		</thead>
             		<tbody>
@@ -47,14 +47,7 @@ class MainWPSEO {
             						           <td style="width: 150px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->alexia; ?></span> <?php echo ($website->alexia_old != '' ? ' <span style="color: #7B848B !important">(' . $website->alexia_old . ')</span>' : ''); ?></td><?php } 
             						      else { ?>
                                                <td style="width: 150px"><span class="mainwp-red"><i class="fa fa-chevron-up"></i> <?php echo $website->alexia;?></span> <?php echo ($website->alexia_old != '' ? ' <span style="color: #7B848B !important">(' . $website->alexia_old . ')</span>' : ''); ?></td><?php } 
-                                          
-                                          if ($website->pagerank > $website->pagerank_old) { ?> 
-            						           <td style="width: 100px"><span class="mainwp-green"><i class="fa fa-chevron-up"></i> <?php echo $website->pagerank; ?></span> <?php echo ($website->pagerank_old != '' ? ' <span style="color: #7B848B !important">(' . $website->pagerank_old . ')</span>' : ''); ?></td><?php } 
-            						      else if ($website->pagerank === $website->pagerank_old) { ?>
-            						           <td style="width: 100px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->pagerank; ?></span> <?php echo ($website->pagerank_old != '' ? ' <span style="color: #7B848B !important">(' . $website->pagerank_old . ')</span>' : ''); ?></td><?php } 
-            						      else { ?>
-                                               <td style="width: 100px"><span class="mainwp-red"><i class="fa fa-chevron-up"></i> <?php echo $website->pagerank; echo ($website->pagerank_old != '' ? ' <span style="color: #7B848B !important">(' . $website->pagerank_old . ')</span>' : ''); ?></td><?php } 
-                                          
+                                        
                                           if ($website->indexed > $website->indexed_old) { ?> 
             						           <td style="width: 100px"><span class="mainwp-green"><i class="fa fa-chevron-up"></i> <?php echo $website->indexed; ?></span> <?php echo ($website->indexed_old != '' ? ' <span style="color: #7B848B !important">(' . $website->indexed_old . ')</span>' : ''); ?></td><?php } 
             						      else if ($website->indexed === $website->indexed_old) { ?>

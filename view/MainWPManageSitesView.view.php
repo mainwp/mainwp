@@ -1270,8 +1270,9 @@ class MainWPManageSitesView
 
     public static function _renderInfo()
     {
-        
+        //todo: RS: Remove method
     }
+
     public static function _renderNotes()
     {
         ?>

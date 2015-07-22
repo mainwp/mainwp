@@ -78,59 +78,7 @@ a.mainwp-comment-trash,
 a.mainwp-post-trash {
     color: #a00;
 }
-.mainwp_action
-{
-    text-decoration: none;
-    background: none repeat scroll 0 0 #FFFFFF;
-    border-color: #C9CBD1 #BFC2C8 #A9ABB1;
-    border-style: solid;
-    color: #3A3D46;
-    display: inline-block;
-    font-size: 12px;
-    padding: 4px 8px;
-    -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.05);
-    -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.05);
-    box-shadow: 0 1px 0 rgba(0,0,0,0.05);
-}
-.mainwp_action.left
-{
-    border-width: 1px 0 1px 1px;
-    -webkit-border-radius: 3px 0 0 3px;
-    -moz-border-radius: 3px 0 0 3px;
-    border-radius: 3px 0 0 3px;
-}
-.mainwp_action.mid
-{
-    border-width: 1px 0 1px 1px;
-}
-.mainwp_action.right
-{
-    border-width: 1px 1px 1px 1px;
-    -webkit-border-radius: 0 3px 3px 0;
-    -moz-border-radius: 0 3px 3px 0;
-    border-radius: 0 3px 3px 0;
-}
-.mainwp_action.single
-{
-    border-width: 1px 1px 1px 1px;
-    -webkit-border-radius: 3px 3px 3px 3px;
-    -moz-border-radius: 3px 3px 3px 3px;
-    border-radius: 3px 3px 3px 3px;
-}
-.mainwp_action_down
-{
-    background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(220, 221, 225, 1)), color-stop(100%, rgba(234, 236, 241, 1)));
-    background: -webkit-linear-gradient(top, rgba(220, 221, 225, 1) 0%, rgba(234, 236, 241, 1) 100%);
-    background: -moz-linear-gradient(top, rgba(220, 221, 225, 1) 0%, rgba(234, 236, 241, 1) 100%);
-    background: -o-linear-gradient(top, rgba(220, 221, 225, 1) 0%, rgba(234, 236, 241, 1) 100%);
-    background: -ms-linear-gradient(top, rgba(220, 221, 225, 1) 0%, rgba(234, 236, 241, 1) 100%);
-    background: linear-gradient(top, rgba(220, 221, 225, 1) 0%, rgba(234, 236, 241, 1) 100%);
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr = '#dcdde1', endColorstr = '#eaecf1', GradientType = 0);
-    -webkit-box-shadow: 0 1px 0 rgba(255, 255, 255, 0.59), 0 2px 0 rgba(0, 0, 0, 0.05) inset;
-    -moz-box-shadow: 0 1px 0 rgba(255, 255, 255, 0.59), 0 2px 0 rgba(0, 0, 0, 0.05) inset;
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.59), 0 2px 0 rgba(0, 0, 0, 0.05) inset;
-    border-color: #b1b5c7 #bec2d1 #c9ccd9;
-}
+
 /* Enhance Wordpress Admin UI */
 #adminmenuback, #adminmenuwrap, #adminmenu, #adminmenu .wp-submenu, #adminmenu .wp-submenu-wrap, .folded #adminmenu .wp-has-current-submenu .wp-submenu {
     width: 180px;
@@ -2207,7 +2155,7 @@ background-position: 0 -16px;
 }
 
 #mainwp_managesites_content .column-status {
-    width: 5% !important;
+    width: 45px !important;
 }
 
 #mainwp_managesites_content .column-site {
@@ -2935,4 +2883,44 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {
 }
 #mainwp-add-a-single-site .inside{
     min-height: 530px;
+}
+
+/* ACTION TABS */
+
+.mainwp_action
+{
+    text-decoration: none;
+    text-transform: uppercase;
+    background: #fff;
+    border-color: #e5e5e5;
+    border-style: solid;
+    color: #333333;
+    display: inline-block;
+    font-size: 12px;
+    padding: 4px 12px;
+    -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.04);
+  box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+.mainwp_action.left
+{
+    border-width: 1px 0 1px 1px;
+}
+.mainwp_action.mid
+{
+    border-width: 1px 0 1px 1px;
+}
+.mainwp_action.right
+{
+    border-width: 1px 1px 1px 1px;
+}
+.mainwp_action.single
+{
+    border-width: 1px 1px 1px 1px;
+}
+
+.mainwp_action_down
+{
+    background: #e5e5e5;
+    -webkit-box-shadow: none;
+    box-shadow: none;
 }

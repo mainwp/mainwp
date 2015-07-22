@@ -113,8 +113,6 @@ class MainWPUser
         
         $cachedSearch = MainWPCache::getCachedContext('Users');
         self::renderHeader(''); ?>
-        <div class="mainwp_info-box"><strong><?php _e('Use this to bulk change password, change role or delete users. To add new users click on the "Add New" tab.','mainwp'); ?></strong></div>
-        <br/>
          <div>
             <div class="postbox mainwp-postbox" style="width: 555px !important;">
             <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search Users','mainwp'); ?></h3>

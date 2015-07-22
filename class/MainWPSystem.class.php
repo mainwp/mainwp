@@ -499,7 +499,7 @@ class MainWPSystem
     {
         $result = MainWPAPISettings::checkUpgrade();
         $this->upgradeVersionInfo->updated = time();        
-        if (empty($result)) {            
+        if (!empty($result)) {
             $this->upgradeVersionInfo->result = $result;            
         }
         MainWPUtility::update_option("mainwp_upgradeVersionInfo", serialize($this->upgradeVersionInfo));

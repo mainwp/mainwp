@@ -208,13 +208,6 @@ class MainWPSettings
         $updated |= MainWPFootprint::handleSettingsPost();
 
         self::renderHeader(''); ?>
-    <div class="mainwp_info-box"><strong><?php _e('Use this to set Global options.','mainwp'); ?></strong></div>
-        <br/>
-        <!--
-            <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
-                <img src="<?php echo plugins_url('images/icons/mainwp-settings.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Settings" height="32"/><h2>MainWP Settings</h2>
-              -->
-
         <?php if ($updated)
         {
             ?>

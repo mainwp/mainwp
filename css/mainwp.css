@@ -2207,17 +2207,17 @@ background-position: 0 -16px;
 }
 
 #mainwp_managesites_content .column-status {
-    width: 6% !important;
+    width: 5% !important;
 }
 
 #mainwp_managesites_content .column-site {
-    width: 17% !important;
+    width: 20% !important;
 }
 
 #mainwp_managesites_content .column-url {
-    width: 22% !important;
+    width: 20% !important;
 }
-
+/*
 #mainwp_managesites_content .column-groups {
     width: 11% !important;
 }
@@ -2241,6 +2241,7 @@ background-position: 0 -16px;
 #mainwp_managesites_content .column-notes {
     width: 6% !important;
 }
+*/
 
 /*  Backups Table  */
 

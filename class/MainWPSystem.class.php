@@ -2049,10 +2049,13 @@ class MainWPSystem
         if (MainWPUtility::isAdmin()) {
             wp_enqueue_script('mainwp-admin');
         }
-
-        wp_enqueue_script('mainwp-rightnow', MAINWP_PLUGIN_URL . 'js/mainwp-rightnow.js', array(), $this->current_version);
-        wp_enqueue_script('mainwp-managesites', MAINWP_PLUGIN_URL . 'js/mainwp-managesites.js', array(), $this->current_version);
-        wp_enqueue_script('mainwp-extensions', MAINWP_PLUGIN_URL . 'js/mainwp-extensions.js', array(), $this->current_version);
+        
+        if (self::isMainWPPages()) {
+            wp_enqueue_script('mainwp-rightnow', MAINWP_PLUGIN_URL . 'js/mainwp-rightnow.js', array(), $this->current_version);
+            wp_enqueue_script('mainwp-managesites', MAINWP_PLUGIN_URL . 'js/mainwp-managesites.js', array(), $this->current_version);
+            wp_enqueue_script('mainwp-extensions', MAINWP_PLUGIN_URL . 'js/mainwp-extensions.js', array(), $this->current_version);
+        }
+        
         wp_enqueue_script('mainwp-ui', MAINWP_PLUGIN_URL . 'js/mainwp-ui.js', array(), $this->current_version);
         wp_enqueue_script('mainwp-fileuploader', MAINWP_PLUGIN_URL . 'js/fileuploader.js', array(), $this->current_version);
         wp_enqueue_script('mainwp-date', MAINWP_PLUGIN_URL . 'js/date.js', array(), $this->current_version);

@@ -59,7 +59,8 @@ class MainWPSync
                     'cloneSites' => (!$cloneEnabled ? 0 : urlencode(json_encode($cloneSites))),
                     'pluginConflicts' => json_encode($pluginConflicts),
                     'themeConflicts' => json_encode($themeConflicts),
-                    'othersData' => json_encode($othersData)
+                    'othersData' => json_encode($othersData),
+                    'server' => get_admin_url()
                 ),
                 true, $pForceFetch
             );

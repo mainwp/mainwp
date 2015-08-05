@@ -1572,7 +1572,9 @@ class MainWPSystem
        <?php
     }
     
-    public static function isMainWPPages() {        
+    public static function isMainWPPages() {
+        if (get_option('mainwp_hide_footer', 1))
+                return false;
         $screen = get_current_screen();         
         if($screen && strpos($screen->base, "mainwp_") !== false) 
             return true;        
@@ -2118,7 +2120,8 @@ class MainWPSystem
 
     function sites_fly_menu() {
         global $wpdb ;
-        $websites = $wpdb->get_results("SELECT id,name,url FROM `" . $wpdb->prefix . "mainwp_wp`");
+        $where = MainWPDB::Instance()->getWhereAllowAccessSites();
+        $websites = $wpdb->get_results("SELECT id,name,url FROM `" . $wpdb->prefix . "mainwp_wp` WHERE 1 " . $where);
         ?>
             <div id="mainwp-sites-menu" style="direction: rtl;">
                 <div style="direction: ltr;">

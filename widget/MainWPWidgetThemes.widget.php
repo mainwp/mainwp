@@ -37,7 +37,7 @@ class MainWPWidgetThemes
 		{
 			$website = @MainWPDB::fetch_object($websites);			            
 			if ($website && $website->themes != '')  { 
-				$themes = json_decode($website->themes, 1);
+				$themes = json_decode($website->themes, 1);                                
 				if (is_array($themes) && count($themes) != 0) {
 					foreach ($themes as $theme)
 					{
@@ -53,6 +53,25 @@ class MainWPWidgetThemes
 		
 		$inactive_themes = MainWPUtility::getSubArrayHaving($allThemes, 'active', 0);
 		$inactive_themes = MainWPUtility::sortmulti($inactive_themes, 'name', 'desc');
+                
+                if ((count($allThemes)> 0) && $website) {
+                    $themes_outdate = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'themes_outdate_info'), true);
+                    if (!is_array($themes_outdate))
+                        $themes_outdate = array();
+
+                    $themesOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'themes_outdate_dismissed'), true);            
+                    if (is_array($themesOutdateDismissed)) {                                        
+                        $themes_outdate = array_diff_key($themes_outdate, $themesOutdateDismissed);
+                    }
+                    
+                    $userExtension = MainWPDB::Instance()->getUserExtension();  
+                    $decodedDismissedThemes = json_decode($userExtension->dismissed_themes, true);
+                    
+                    if (is_array($decodedDismissedThemes)) {
+                        $themes_outdate = array_diff_key($themes_outdate, $decodedDismissedThemes);
+                    }
+                }
+                
 		
 	?>
         <div class="clear">            
@@ -60,13 +79,27 @@ class MainWPWidgetThemes
             <div class="mainwp_themes_active">
                 <?php
                 for ($i = 0; $i < count($actived_themes); $i++)
-                {                    
+                {         
+                    $outdate_notice = "";                    
+                    $slug = $actived_themes[$i]['slug'];
+                    
+                    if (isset($themes_outdate[$slug])) {
+                        $theme_outdate = $themes_outdate[$slug];
+
+                        $now = new \DateTime();
+                        $last_updated = $theme_outdate['last_updated'];
+                        $theme_last_updated_date = new \DateTime( '@' . $last_updated );
+                        $diff_in_days = $now->diff( $theme_last_updated_date )->format( '%a' );
+                        $outdate_notice = sprintf( '| <strong style="color: #f00;">Outdate %1$d days</strong>', $diff_in_days );                        
+                    }
+                    
+                    
                 ?>
                 <div class="mainwp-row mainwp-active">
                     <input class="themeName" type="hidden" name="name" value="<?php echo $actived_themes[$i]['name']; ?>"/>
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
                     <span class="mainwp-left-col">												
-                            <?php echo $actived_themes[$i]['name']. " " . $actived_themes[$i]['version']; ?>                            
+                            <?php echo $actived_themes[$i]['name']. " " . $actived_themes[$i]['version']; ?> <?php echo $outdate_notice; ?>                           
                     </span>					       
                 </div>
                 <?php } ?>
@@ -75,13 +108,24 @@ class MainWPWidgetThemes
             <div class="mainwp_themes_inactive" style="display: none">
                 <?php
                 for ($i = 0; $i < count($inactive_themes); $i++)
-                {                    
+                {      
+                    $outdate_notice = "";                    
+                    $slug = $inactive_themes[$i]['slug'];                    
+                    if (isset($themes_outdate[$slug])) {
+                        $theme_outdate = $themes_outdate[$slug];
+
+                        $now = new \DateTime();
+                        $last_updated = $theme_outdate['last_updated'];
+                        $theme_last_updated_date = new \DateTime( '@' . $last_updated );
+                        $diff_in_days = $now->diff( $theme_last_updated_date )->format( '%a' );
+                        $outdate_notice = sprintf( '| <strong style="color: #f00;">Outdate %1$d days</strong>', $diff_in_days );                        
+                    }
                 ?>
                 <div class="mainwp-row mainwp-inactive">
                     <input class="themeName" type="hidden" name="name" value="<?php echo $inactive_themes[$i]['name']; ?>"/>
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
                     <span class="mainwp-left-col">					
-                        <?php echo $inactive_themes[$i]['name'] . " " . $inactive_themes[$i]['version']; ?>							
+                        <?php echo $inactive_themes[$i]['name'] . " " . $inactive_themes[$i]['version']; ?> <?php echo $outdate_notice; ?>							
                     </span>                    
                     <div class="mainwp-right-col themesAction">
                         <?php if (mainwp_current_user_can("dashboard", "activate_themes")) { ?>

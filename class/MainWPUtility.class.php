@@ -437,6 +437,24 @@ class MainWPUtility
         $handleToWebsite = array();
         $requestUrls = array();
         $requestHandles = array();
+
+        $dirs = self::getMainWPDir();
+        $cookieDir = $dirs[0] . 'cookies';
+        if (!@is_dir($cookieDir)) {
+            @mkdir($cookieDir, 0777, true);
+        }
+
+        if (!file_exists($cookieDir . '/.htaccess')) {
+            $file_htaccess = @fopen($cookieDir . '/.htaccess', 'w+');
+            @fwrite($file_htaccess, 'deny from all');
+            @fclose($file_htaccess);
+        }
+
+        if (!file_exists($cookieDir . '/index.php')) {
+            $file_index = @fopen($cookieDir . '/index.php', 'w+');
+            @fclose($file_index);
+        }
+
         foreach ($websites as $website)
         {
             $url = $website->url;
@@ -464,11 +482,7 @@ class MainWPUtility
 
             if ($website != null)
             {
-                $dirs = self::getMainWPDir();
-                $cookieDir = $dirs[0] . 'cookies';
-                @mkdir($cookieDir, 0777, true);
-
-                $cookieFile = $cookieDir . '/' . sha1(sha1('mainwp' . $website->id) . 'WP_Cookie');
+                $cookieFile = $cookieDir . '/' . sha1(sha1('mainwp' . LOGGED_IN_SALT . $website->id) . NONCE_SALT . 'WP_Cookie');
                 if (!file_exists($cookieFile))
                 {
                     @file_put_contents($cookieFile, '');
@@ -592,6 +606,7 @@ class MainWPUtility
                 }
             }
         }
+
         return true;
     }
 
@@ -816,15 +831,28 @@ class MainWPUtility
             MainWPUtility::release($identifier);
         }
 
+        $dirs = self::getMainWPDir();
+        $cookieDir = $dirs[0] . 'cookies';
+        if (!@is_dir($cookieDir)) {
+            @mkdir($cookieDir, 0777, true);
+        }
+
+        if (!file_exists($cookieDir . '/.htaccess')) {
+            $file_htaccess = @fopen($cookieDir . '/.htaccess', 'w+');
+            @fwrite($file_htaccess, 'deny from all');
+            @fclose($file_htaccess);
+        }
+
+        if (!file_exists($cookieDir . '/index.php')) {
+            $file_index = @fopen($cookieDir . '/index.php', 'w+');
+            @fclose($file_index);
+        }
+
         $ch = curl_init();
 
         if ($website != null)
         {
-            $dirs = self::getMainWPDir();
-            $cookieDir = $dirs[0] . 'cookies';
-            if (!@file_exists($cookieDir)) @mkdir($cookieDir, 0777, true);
-
-            $cookieFile = $cookieDir . '/' . sha1(sha1('mainwp' . $website->id) . 'WP_Cookie');
+            $cookieFile = $cookieDir . '/' . sha1(sha1('mainwp' . LOGGED_IN_SALT . $website->id) . NONCE_SALT . 'WP_Cookie');
             if (!file_exists($cookieFile))
             {
                 @file_put_contents($cookieFile, '');
@@ -1885,6 +1913,10 @@ class MainWPUtility
     
     public static function showUserTip($tip_id) {
         global $current_user;
+        
+        if (get_option('mainwp_hide_tips', 1))
+            return false;
+        
         if ($user_id = $current_user->ID) {           
             $reset_tips = get_option("mainwp_reset_user_tips");
             if (!is_array($reset_tips)) $reset_tips = array();                

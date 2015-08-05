@@ -160,4 +160,35 @@
 		height: 3em;
 	}
 
+	/* --- Extensions --- */
+
+	#mainwp-extensions-categories-menu {
+		display: none;
+}
+
+	.mainwp_api_postbox input, .mainwp_api_postbox select {
+		width: 100%;
+	}
+
+	#mainwp-extensions-wrap .mainwp-extensions-disable-all, 
+	#mainwp-extensions-wrap .mainwp-extensions-enable-all,
+	#mainwp-extensions-wrap #mainwp-extensions-expand,
+	#mainwp-extensions-wrap #mainwp-extensions-collapse {
+		display: none !important;
+	}
+
+	#mainwp-extensions-list td.mainwp-extensions-childIcon,
+	#mainwp-extensions-list td.mainwp-extensions-childName,
+	#mainwp-extensions-list td.mainwp-extensions-childActions {
+		display: block;
+		width: 100%;
+		margin-bottom: 2em;
+	}
+
+	#mainwp-extensions-list td.mainwp-extensions-childVersion,
+	#mainwp-extensions-list td.mainwp-extensions-extra {
+		display: none;
+	}
+
+
 }

@@ -2,7 +2,7 @@
 class MainWPDB
 {
     //Config
-    private $mainwp_db_version = '8.5';
+    private $mainwp_db_version = '8.6';
     //Private
     private $table_prefix;
     //Singleton
@@ -177,6 +177,8 @@ class MainWPDB
   trusted_themes_notes longtext NOT NULL DEFAULT '',
   site_view tinyint(1) NOT NULL DEFAULT '0',
   pluginDir text NOT NULL DEFAULT '',
+  dismissed_plugins longtext NOT NULL DEFAULT '',
+  dismissed_themes longtext NOT NULL DEFAULT '',
   ignored_pluginConflicts text NOT NULL DEFAULT '',
   ignored_themeConflicts text NOT NULL DEFAULT ''";
           if ($currentVersion == '') $tbl .= ',

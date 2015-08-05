@@ -182,19 +182,21 @@ class MainWPExtensionsView
 
 <div id="mainwp-extensions-wrap">    
     <?php if (count($extensions) == 0)  { ?>
-            <div class="mainwp_info-box-yellow">
+    <div class="inside">
+            <div class="mainwp_info-box-blue">
                 <h3><?php _e('What are Extensions?', 'mainwp'); ?></h3>
                 <?php _e('Extensions are specific features or tools created for the purpose of expanding the basic functionality of MainWP.', 'mainwp'); ?>
                 <h3><?php _e('Why have Extensions?', 'mainwp'); ?></h3>
-                <?php _e('The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat.  Extensions offer custom functions and features so that each user can tailor their MainWP to their specific needs.', 'mainwp'); ?>
+                <?php _e('The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat. Extensions offer custom functions and features so that each user can tailor their MainWP to their specific needs.', 'mainwp'); ?>
                 <p><a href="https://extensions.mainwp.com/"><?php _e('Download your first extension now.', 'mainwp'); ?></a></p>
             </div>
+    </div>
 <?php  }  else {            
 ?>
 <div style="background: #eee; padding: 1em .6em;">
 <a class="mainwp_action left mainwp_action_down" href="#" id="mainwp-extensions-expand"><?php _e('Expand', 'mainwp'); ?></a><a class="mainwp_action right" href="#" id="mainwp-extensions-collapse"><?php _e('Collapse', 'mainwp'); ?></a>  
 <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
-    <div style="float: right; margin-top: -3px;"><a href="#" class="button mainwp-extensions-disable-all"><?php _e('Disable All', 'mainwp'); ?></a> <a href="#" class="button-primary mainwp-extensions-enable-all"><?php _e('Enable All', 'mainwp'); ?></a> <a href="<?php echo admin_url( 'plugin-install.php?tab=upload' ); ?>" class="mainwp-upgrade-button button-primary button"><?php _e('Install New Extension', 'mainwp'); ?></a></div>
+    <div style="float: right; margin-top: -3px;"><a href="#" class="button mainwp-extensions-disable-all"><?php _e('Disable All', 'mainwp'); ?></a> <a href="#" class="button-primary mainwp-extensions-enable-all"><?php _e('Enable All', 'mainwp'); ?></a> <a href="<?php echo admin_url( 'plugin-install.php?tab=upload' ); ?>" class="mainwp-upgrade-button button-primary button"><?php _e('Install New Extension', 'mainwp'); ?></a></div><div style="clear: both;"></div>
 <?php } ?>
 </div>
 <div id="mainwp-extensions-list">
@@ -332,7 +334,8 @@ class MainWPExtensionsView
                                 <?php if (isset($extension['apiManager']) && $extension['apiManager']) { ?>
                                     <?php echo ' | <a href="#" class="mainwp-extensions-api-activation" >' . __('Enter Activation API') . '</a>'; ?>
                                 <?php } ?>
-                            </td></tr>
+                            </td>
+                        </tr>
                         <?php if (isset($extension['apiManager']) && $extension['apiManager']) { ?>
                         <tr class="mainwp-extensions-api-row">
                             <td colspan="3">

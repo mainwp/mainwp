@@ -28,7 +28,8 @@ class MainWPOptions
                 MainWPUtility::update_option('mainwp_maximumComments', $_POST['mainwp_maximumComments']);
                 MainWPUtility::update_option('mainwp_cron_jobs', (!isset($_POST['mainwp_options_cron_jobs']) ? 0 : 1));
                 MainWPUtility::update_option('mainwp_wp_cron', (!isset($_POST['mainwp_options_wp_cron']) ? 0 : 1));
-                MainWPUtility::update_option('mainwp_use_favicon', (!isset($_POST['mainwp_use_favicon']) ? 0 : 1));
+                //MainWPUtility::update_option('mainwp_use_favicon', (!isset($_POST['mainwp_use_favicon']) ? 0 : 1));
+                MainWPUtility::update_option('mainwp_numberdays_Outdate_Plugin_Theme', $_POST['mainwp_numberdays_Outdate_Plugin_Theme']);
             }
 
             return true;
@@ -138,21 +139,21 @@ class MainWPOptions
             <td>
             	<div class="mainwp-checkbox">
                 <input type="checkbox" name="mainwp_seo"
-                       id="mainwp_seo" <?php echo ((get_option('mainwp_seo') == 1) ? 'checked="true"' : ''); ?>"/>
+                       id="mainwp_seo" <?php echo ((get_option('mainwp_seo') == 1) ? 'checked="true"' : ''); ?>/>
                 <label for="mainwp_seo"></label>
                </div>
             </td>
         </tr>
-         <tr>
+        <!-- <tr>
             <th scope="row"><?php _e('Use Child Site Favicon','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Set to YES if you want to use Child Site Favicon.','mainwp')); ?></th>
             <td>
             	<div class="mainwp-checkbox">
                 <input type="checkbox" name="mainwp_use_favicon"
-                       id="mainwp_use_favicon" <?php echo ((get_option('mainwp_use_favicon', 1) == 1) ? 'checked="true"' : ''); ?>"/>
+                       id="mainwp_use_favicon" <?php echo ((get_option('mainwp_use_favicon', 1) == 1) ? 'checked="true"' : ''); ?>/>
                 <label for="mainwp_use_favicon"></label>
                </div>
             </td>
-        </tr>
+        </tr> -->
         <?php } ?>
         </tbody>
     </table>
@@ -205,7 +206,15 @@ class MainWPOptions
                     </tr>
                 </table>
             </td>
+        </tr>       
+        <tr>
+            <th scope="row"><?php _e('Outdate Plugins/Themes check','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Outdate Plugins/Themes check.','mainwp')); ?></th>
+            <td>
+                <input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme"  class="mainwp-field mainwp-settings-icon"
+                       id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo ((get_option('mainwp_numberdays_Outdate_Plugin_Theme') === false) ? 356 : get_option('mainwp_numberdays_Outdate_Plugin_Theme')); ?>"/>
+            </td>
         </tr>
+        
         </tbody>
     </table>
     </div>

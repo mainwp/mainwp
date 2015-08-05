@@ -530,6 +530,11 @@ div.legacy-star img {
     width: 45%;
 }
 
+.mwp_plugintheme_widget .mainwp-left-col {
+    float: left;
+    width: 65%;
+}
+
 .mainwp-right-col {
     float: right;
     color: #7B848B !important;
@@ -1109,58 +1114,13 @@ background: #d5e4af !important;
 /* Enhance Wordpress Admin UI */
 #adminmenuback, #adminmenuwrap, #adminmenu, #adminmenu .wp-submenu, #adminmenu .wp-submenu-wrap, .folded #adminmenu .wp-has-current-submenu .wp-submenu {
     width: 160px;
-} /* fixed by bogdan, original 180px, changed to auto */
+} 
 
 
 .mainwp-submenu-wide {
     width: auto !important;
     min-width: 200px !important;
 }
-
-/*
-.mainwp_boxout {
-    padding: 10px 7px 10px 7px;
-    left: 30px;
-    width: 130px;
-    position: absolute;
-    background: rgba(255, 255, 255, .9 );
-    border: 1px solid #7fb100 !important;
-    margin: 0 !important;
-    z-index: 9999;
-    font-family: Arial;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px ;
-    box-shadow: 2px 3px 6px rgba(0,0,0,0.4);
-    -webkit-box-shadow: 2px 3px 6px rgba(0,0,0,0.4);
-    -moz-box-shadow: 2px 3px 6px rgba(0,0,0,0.4);
-}
-
-.mainwp_boxout a {
-    display: block;
-    font-family: Arial;
-    font-size: 13px;
-    color: black !important;
-    text-decoration: none;
-    line-height: 1.2em;
-    padding: 4px 5px 4px 7px !important;
-}
-
-.mainwp_boxout a:hover {
-    background-color: none;
-    color: #7fb100 !important ;
-}
-
-.mainwp_boxoutin {
-    background-image: url('../images/pointer.png');
-    background-position: left ;
-    display: block;
-    height: 30px;
-    margin: -4px 0 0 -27px;
-    position: absolute;
-    width: 20px;
-}
-*/
 
 #toplevel_page_mainwp_tab a:hover {color: #7fb100 !important;}
 #toplevel_page_mainwp_tab .hoverli {background-color: #333 !important; }
@@ -1397,79 +1357,6 @@ background: #d5e4af !important;
     background: #bb4539 !important ;
 }
 
-/*
-.mainwp-upgrade-button
-{
-	display: inline-block;
-	background-color: #446200;
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#7fb100), to(#446200));
-	background-image: -webkit-linear-gradient(top, #7fb100, #446200);
-	background-image: -moz-linear-gradient(top, #7fb100, #446200);
-	background-image: -ms-linear-gradient(top, #7fb100, #446200);
-	background-image: -o-linear-gradient(top, #7fb100, #446200);
-	background-image: linear-gradient(top, #7fb100, #446200);
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#7fb100', EndColorStr='#446200');
-	border: 1px solid #446200;
-	margin-top: -4px ;
-	padding: 0px 5px ;
-	font: bold 1em/2em Arial, Helvetica;
-	text-decoration: none;
-	color: #fff;
-	text-shadow: 0 1px 0 rgba(0,0,0,.3);
-	-moz-border-radius: .3em;
-	-webkit-border-radius: .3em;
-	border-radius: .3em;
-	-moz-box-shadow: 0 0 1px 1px rgba(255,255,255,.3) inset, 0 1px 0 rgba(0,0,0,.3);
-	-webkit-box-shadow: 0 0 1px 1px rgba(255,255,255,.3) inset, 0 1px 0 rgba(0,0,0,.3);
-	box-shadow: 0 0 1px 1px rgba(255,255,255,.3) inset, 0 1px 0 rgba(0,0,0,.3);
-}
-.mainwp-upgrade-button:hover
-{
-	display: inline-block;
-	background-color: #446200;
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#7fb100), to(#446200));
-	background-image: -webkit-linear-gradient(top, #7fb100, #446200);
-	background-image: -moz-linear-gradient(top, #7fb100, #446200);
-	background-image: -ms-linear-gradient(top, #7fb100, #446200);
-	background-image: -o-linear-gradient(top, #7fb100, #446200);
-	background-image: linear-gradient(top, #7fb100, #446200);
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#7fb100', EndColorStr='#446200');
-	border: 1px solid #446200;
-	margin-top: -4px ;
-	padding: 0px 5px ;
-	font: bold 1em/2em Arial, Helvetica;
-	text-decoration: none;
-	color: #eee;
-	text-shadow: 0 1px 0 rgba(0,0,0,.3);
-	-moz-border-radius: .3em;
-	-webkit-border-radius: .3em;
-	border-radius: .3em;
-	-moz-box-shadow: 0 0 1px 1px rgba(255,255,255,.3) inset, 0 1px 0 rgba(0,0,0,.3);
-	-webkit-box-shadow: 0 0 1px 1px rgba(255,255,255,.3) inset, 0 1px 0 rgba(0,0,0,.3);
-	box-shadow: 0 0 1px 1px rgba(255,255,255,.3) inset, 0 1px 0 rgba(0,0,0,.3);
-}
-
-.mainwp-open-button
-{
-	display: inline-block;
-	background-color: #eee;
-	background-image: url('../images/open.png') ;
-	background-position: 35px 2px ;
-	background-repeat: no-repeat;
-	border: 1px solid #aaa;
-	margin-top: -4px ;
-	padding: 0px 20px 0px 5px ;
-	font: bold 1em/2em Arial, Helvetica;
-	text-decoration: none;
-	color: #333;
-	text-shadow: 0 1px 0 rgba(255,255,255,.8);
-	-moz-border-radius: .3em;
-	-webkit-border-radius: .3em;
-	border-radius: .3em;
-}
-
-*/
-
 .mainwp-open-button {
     background-image: url('../images/open.png') !important;
     background-position: 90% 50% !important ;
@@ -1501,27 +1388,23 @@ input[type=number]{
 .mainwp-checkbox {
 	float: left ;
 	width: 70px;
-	height: 26px;
-	background: rgba(127, 177, 0, 0.2);
+	height: 35px;
+	background: #e5e5e5;
 	margin: -3px 5px 0 0 ;
 
-	-webkit-border-radius: 5px;
-	-moz-border-radius: 5px;
-	border-radius: 5px;
+	-webkit-border-radius: 18px;
+	-moz-border-radius: 18px;
+	border-radius: 18px;
 	position: relative;
-
-	-webkit-box-shadow: inset 0px 1px 1px rgba(0,0,0,0.5), 0px 1px 0px rgba(255,255,255,0.2);
-	-moz-box-shadow: inset 0px 1px 1px rgba(0,0,0,0.5), 0px 1px 0px rgba(255,255,255,0.2);
-	box-shadow: inset 0px 1px 1px rgba(0,0,0,0.5), 0px 1px 0px rgba(255,255,255,0.2);
-
 }
 
 .mainwp-checkbox:after {
 	content: 'NO';
 	font: 15px/26px "Trebuchet MS", Helvetica, sans-serif;
-	color: #AF2109;
+	color: #a00;
 	position: absolute;
 	right: 8px;
+    top: 5px;
 	z-index: 0;
 	font-weight: bold;
 	text-shadow: 1px 1px 0px rgba(255,255,255,.15);
@@ -1530,22 +1413,22 @@ input[type=number]{
 .mainwp-checkbox:before {
 	content: 'YES';
 	font: 15px/26px "Trebuchet MS", Helvetica, sans-serif;
-	color: #446200;
+	color: #7fb100;
 	position: absolute;
-	left: 6px;
+	left: 7px;
+    top: 5px;
 	z-index: 0;
 	font-weight: bold;
-	text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
 }
 
 .mainwp-checkbox label {
 	display: block;
-	width: 32px;
-	height: 20px;
+	width: 33px;
+	height: 33px;
 
-	-webkit-border-radius: 3px;
-	-moz-border-radius: 3px;
-	border-radius: 3px;
+	-webkit-border-radius: 18px;
+	-moz-border-radius: 18px;
+	border-radius: 18px;
 
 	-webkit-transition: all .4s ease;
 	-moz-transition: all .4s ease;
@@ -1554,26 +1437,18 @@ input[type=number]{
 	transition: all .4s ease;
 	cursor: pointer;
 	position: absolute;
-	top: 3px;
-	left: 3px;
+	top: 1px;
+    left: 1px;
+
 	z-index: 1;
 
-	-webkit-box-shadow: 1px 1px 3px rgba(50, 50, 50, 0.3);
-    -moz-box-shadow:    1px 1px 3px rgba(50, 50, 50, 0.3);
-    box-shadow:         1px 1px 3px rgba(50, 50, 50, 0.3);
-
-	background: #fcfff4;
-	background: -webkit-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-	background: -moz-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-	background: -o-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-	background: -ms-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-	background: linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfff4', endColorstr='#b3bead',GradientType=0 );
+    background: #fff;
 }
 
 .mainwp-checkbox input[type=checkbox]:checked + label {
 	left: 35px;
 }
+
 /* MainWP Checkbox 2 */
 
 input[type=checkbox].mainwp-checkbox2 {
@@ -2640,9 +2515,9 @@ input.mainwp-field:-webkit-autofill {
     width: 280px;
 }
 .mainwp-extensions-api-row .api-row-div {
-    border: 1px solid #ddd;
+    border: 1px solid #e5e5e5;
     padding: 3px;
-    margin-top: 5px;
+    margin-top: 10px;
 }
 #mainwp-extensions-grabkeys, #mainwp-extensions-bulkinstall{
     text-transform: uppercase;
@@ -2923,4 +2798,8 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {
     background: #e5e5e5;
     -webkit-box-shadow: none;
     box-shadow: none;
+}
+
+#mainwp-seo-list, #mainwp-extensions-widget-list {
+    width: 100%;
 }

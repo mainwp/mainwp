@@ -1520,3 +1520,91 @@ jQuery(document).on('click', '#mainwp-right-now-message-dismiss', function()
 
     return false;
 });
+
+
+rightnow_plugins_outdate_detail = function (slug) {
+    jQuery('div[plugin_outdate_slug="'+slug+'"]').toggle(100, 'linear');
+    return false;
+};
+rightnow_plugins_outdate_detail_show = function (slug) {
+    jQuery('div[plugin_outdate_slug="'+slug+'"]').show(100, 'linear');
+    return false;
+};
+rightnow_themes_outdate_detail = function (slug) {
+    jQuery('div[theme_outdate_slug="'+slug+'"]').toggle(100, 'linear');
+    return false;
+};
+rightnow_themes_outdate_detail_show = function (slug) {
+    jQuery('div[theme_outdate_slug="'+slug+'"]').show(100, 'linear');
+    return false;
+};
+
+
+rightnow_plugins_dismiss_outdate_detail = function (slug, name, id) {
+    return rightnow_dismiss_outdate_plugintheme_by_site('plugin', slug, name, id);
+};
+rightnow_themes_dismiss_outdate_detail = function (slug, name, id) {
+    return rightnow_dismiss_outdate_plugintheme_by_site('theme', slug, name, id);
+};
+
+rightnow_dismiss_outdate_plugintheme_by_site = function (what, slug, name, id) {
+    var data = {
+        action:'mainwp_dismissoutdateplugintheme',
+        type:what,
+        id:id,
+        slug:slug,
+        name:name
+    };
+    jQuery(document.getElementById('wp_outdate_' + what + '_' + id + '_' + slug)).html(__('Dismissing..'));
+    jQuery.post(ajaxurl, data, function (response) {
+        if (response.result) {
+            jQuery(document.getElementById('wp_outdate_' + what + '_' + id + '_' + slug)).html(__('Dismissed'));
+            jQuery(document.getElementById('wp_outdate_' + what + '_' + id + '_' + slug)).siblings('.mainwp-right-col').html('');
+            jQuery('div['+what+'_outdate_slug="'+slug+'"] div[site_id="'+id+'"]').find('.pluginsInfo').html(__('Dismissed'));
+            jQuery('div['+what+'_outdate_slug="'+slug+'"] div[site_id="'+id+'"]').find('.pluginsAction').html('');
+            jQuery('div['+what+'_outdate_slug="'+slug+'"] div[site_id="'+id+'"]').attr('dismissed', '-1');
+        }
+        else
+        {
+            jQuery(document.getElementById('wp_outdate_' + what + '_' + id + '_' + slug)).html(getErrorMessage(response.error));
+        }
+    }, 'json');
+    return false;
+};
+
+rightnow_plugins_outdate_dismiss_all = function (slug, name) {
+    rightnow_plugins_outdate_detail_show(slug);
+    var data = {
+        action:'mainwp_dismissoutdatepluginsthemes',
+        type: 'plugin',
+        slug:slug,
+        name:name
+    };
+    jQuery.post(ajaxurl, data, function (response) {
+        if (response.result) {
+            jQuery('div[plugin_outdate_slug="'+slug+'"]').find('.pluginsInfo').html(__('Dismissed'));
+            jQuery('div[plugin_outdate_slug="'+slug+'"]').find('.pluginsAction').hide();
+            jQuery('div[plugin_outdate_slug="'+slug+'"]').find('div[dismissed="0"]').attr('dismissed', '-1');
+        }
+    }, 'json');
+    return false;
+};
+
+
+rightnow_themes_outdate_dismiss_all = function (slug, name) {
+    rightnow_themes_detail_show(slug);
+    var data = {
+        action:'mainwp_ignorepluginsthemes',
+        type: 'theme',
+        slug:slug,
+        name:name
+    };
+    jQuery.post(ajaxurl, data, function (response) {
+        if (response.result) {
+            jQuery('div[theme_outdate_slug="'+slug+'"]').find('.pluginsInfo').html(__('Dismissed'));
+            jQuery('div[theme_outdate_slug="'+slug+'"]').find('.pluginsAction').hide();
+            jQuery('div[theme_outdate_slug="'+slug+'"]').find('div[dismissed="0"]').attr('dismissed', '-1');
+        }
+    }, 'json');
+    return false;
+};

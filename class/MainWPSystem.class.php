@@ -1560,7 +1560,7 @@ class MainWPSystem
         <?php
         } 
        
-        if (!$hide_footer && self::isMainWPPages()) {           
+        if (!$hide_footer && self::isMainWPPages() && !self::isHideFooter()) {           
             ?>
                 #wpfooter {
                     background: #333 !important;;
@@ -1572,15 +1572,19 @@ class MainWPSystem
        <?php
     }
     
-    public static function isMainWPPages() {
-        if (get_option('mainwp_hide_footer', 1))
-                return false;
+    public static function isMainWPPages() {        
         $screen = get_current_screen();         
         if($screen && strpos($screen->base, "mainwp_") !== false) 
             return true;        
         return false;                
     }
     
+    public static function isHideFooter() { 
+        if (get_option('mainwp_hide_footer', 1))
+                return true;
+        return false;        
+    }
+        
     function login_redirect($redirect_to, $request, $user)
     {
         if (session_id() == '') session_start();
@@ -2152,7 +2156,8 @@ class MainWPSystem
     function admin_footer_text()
     {
         if (!self::isMainWPPages()) return;
-                    
+        if (self::isHideFooter()) return;
+       
         if (isset($_SESSION['showTip'])) unset($_SESSION['showTip']);
         
         return '<a href="javascript:void(0)" id="mainwp-sites-menu-button" class="mainwp-white mainwp-right-margin-2"><i class="fa fa-globe fa-2x"></i></a>'.'<span style="font-size: 14px;"><i class="fa fa-info-circle"></i> ' . __('Currently managing ','mainwp') . MainWPDB::Instance()->getWebsitesCount()  .  __(' child sites with MainWP ','mainwp') . $this->current_version . __(' version. ','mainwp') . '</span>';

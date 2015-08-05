@@ -78,6 +78,7 @@ class MainWPWidgetThemes
             <a class="mainwp_action left mainwp_action_down themes_actived_lnk" href="#"><?php _e('Active','mainwp'); ?> (<?php echo count($actived_themes); ?>)</a><a class="mainwp_action mid themes_inactive_lnk right" href="#" ><?php _e('Inactive','mainwp'); ?> (<?php echo count($inactive_themes); ?>)</a><br/><br/>
             <div class="mainwp_themes_active">
                 <?php
+                $str_format = __(" | Last Updated %s Days Ago", "mainwp"); 
                 for ($i = 0; $i < count($actived_themes); $i++)
                 {         
                     $outdate_notice = "";                    
@@ -90,7 +91,7 @@ class MainWPWidgetThemes
                         $last_updated = $theme_outdate['last_updated'];
                         $theme_last_updated_date = new \DateTime( '@' . $last_updated );
                         $diff_in_days = $now->diff( $theme_last_updated_date )->format( '%a' );
-                        $outdate_notice = sprintf( '| <strong style="color: #f00;">Outdate %1$d days</strong>', $diff_in_days );                        
+                        $outdate_notice = sprintf( $str_format, $diff_in_days );
                     }
                     
                     
@@ -118,7 +119,7 @@ class MainWPWidgetThemes
                         $last_updated = $theme_outdate['last_updated'];
                         $theme_last_updated_date = new \DateTime( '@' . $last_updated );
                         $diff_in_days = $now->diff( $theme_last_updated_date )->format( '%a' );
-                        $outdate_notice = sprintf( '| <strong style="color: #f00;">Outdate %1$d days</strong>', $diff_in_days );                        
+                        $outdate_notice = sprintf( $str_format, $diff_in_days );
                     }
                 ?>
                 <div class="mainwp-row mainwp-inactive">

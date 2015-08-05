@@ -1272,13 +1272,14 @@ class MainWPRightNow
         ?>
     <div class="clear">
         <div class="mainwp-row">
-            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_plugins_outdate; ?> </span> <?php _e('Plugin','mainwp'); ?><?php if ($total_plugins_outdate > 0) echo 's'; ?> <?php _e('outdate', 'mainwp'); ?></span>
+            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_plugins_outdate; ?> </span> <?php _e('Plugin','mainwp'); ?><?php if ($total_plugins_outdate > 0) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?></span>
             <span class="mainwp-mid-col">&nbsp;</span>            
             <span class="mainwp-right-col"><a href="#" id="mainwp_plugins_outdate_show" onClick="return rightnow_show('plugins_outdate');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
             
         </div>
         <div id="wp_plugins_outdate" style="display: none">
-            <?php            
+            <?php                
+            $str_format = __("Last Updated %s Days Ago", "mainwp");            
             if ($userExtension->site_view == 1)
             {
                 @MainWPDB::data_seek($websites, 0);
@@ -1308,13 +1309,13 @@ class MainWPRightNow
                         if (count($plugins_outdate) > 0)
                         {
                         ?>
-                            <a href="#" id="mainwp_plugins_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugins_outdate_<?php echo $website->id; ?>', true);"><?php echo count($plugins_outdate); ?> <?php _e('Outdate','mainwp'); ?><?php echo (count($plugins_outdate) > 1 ? 's' : ''); ?></a>
+                            <a href="#" id="mainwp_plugins_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugins_outdate_<?php echo $website->id; ?>', true);"><?php echo count($plugins_outdate); ?> <?php _e('Plugin','mainwp'); ?><?php echo (count($plugins_outdate) > 1 ? 's' : ''); ?></a>
                         <?php
                         }
                         else
                         {
                             if ($website->sync_errors != '') echo __('Site Error - No update Information available','mainwp');
-                            else echo __("Hooray, No Outdate Plugins!",'mainwp');
+                            else echo __("Hooray, No Abandoned Plugins!",'mainwp');
                         }
                         ?>
                     </span>
@@ -1336,7 +1337,7 @@ class MainWPRightNow
                         $plugin_last_updated_date = new \DateTime( '@' . $last_updated );
                         $diff_in_days = $now->diff( $plugin_last_updated_date )->format( '%a' );
 
-                        $outdate_notice = sprintf( '<strong style="color: #f00;">Outdate %1$d days</strong>', $diff_in_days );
+                        $outdate_notice = sprintf( $str_format, $diff_in_days );
                         ?>
                         <div class="mainwp-row" plugin_outdate_slug="<?php echo $plugin_name; ?>" dismissed="0">
                                 <span class="mainwp-left-col">
@@ -1346,7 +1347,7 @@ class MainWPRightNow
                                 <span class="mainwp-right-col pluginsAction">
                                     <div id="wp_dismissbuttons_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">                                   
                                     <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                                         &nbsp;<a href="#" class="button" onClick="return rightnow_plugins_dismiss_outdate_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode($plugin_outdate['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Dismisss','mainwp'); ?></a>
+                                         &nbsp;<a href="#" class="button" onClick="return rightnow_plugins_dismiss_outdate_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode($plugin_outdate['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Dismiss','mainwp'); ?></a>
                                     <?php } ?>
                                     </div>
                                 </span>
@@ -1374,12 +1375,12 @@ class MainWPRightNow
                         </span>
                         <span class="mainwp-mid-col">
                             <a href="#" onClick="return rightnow_plugins_outdate_detail('<?php echo $plugin_name; ?>');">
-                                <?php echo $cnt; ?> <?php _e('Outdate','mainwp'); ?><?php echo ($cnt > 1 ? 's' : ''); ?>
+                                <?php echo $cnt; ?> <?php _e('Plugin','mainwp'); ?><?php echo ($cnt <> 1 ? 's' : ''); ?>
                             </a>
                         </span>
                         <span class="mainwp-right-col"> 
                              <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                                <a href="#" class="button" onClick="return rightnow_plugins_outdate_dismiss_all('<?php echo $plugin_name; ?>', '<?php echo urlencode($pluginsOutdateInfo[$slug]['name']); ?>')"><?php _e('Dismiss Globally','mainwp'); ?></a>
+                                <a href="#" class="button" onClick="return rightnow_plugins_outdate_dismiss_all('<?php echo $plugin_name; ?>', '<?php echo urlencode($pluginsOutdateInfo[$slug]['name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a>
                             <?php } ?>                                                        
                         </span>
                     </div>
@@ -1413,7 +1414,7 @@ class MainWPRightNow
                             $plugin_last_updated_date = new \DateTime( '@' . $last_updated );
                             $diff_in_days = $now->diff( $plugin_last_updated_date )->format( '%a' );
 
-                            $outdate_notice = sprintf( '<strong style="color: #f00;">Outdate %1$d days</strong>', $diff_in_days );
+                            $outdate_notice = sprintf( $str_format, $diff_in_days );
 
                             ?>
                             <div class="mainwp-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode($website->name); ?>" outdate="1">
@@ -1430,7 +1431,7 @@ class MainWPRightNow
                                 <span class="mainwp-mid-col pluginsInfo" id="wp_outdate_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>"><?php echo $plugin_outdate['Version']; ?> | <?php echo $outdate_notice; ?></span>
                                 <span class="mainwp-right-col pluginsAction">                                    
                                     <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                                    &nbsp; <a href="#" class="button" onClick="return rightnow_plugins_dismiss_outdate_detail('<?php echo $plugin_name; ?>',  '<?php echo urlencode($plugin_outdate['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Dismiss','mainwp'); ?></a>
+                                    &nbsp; <a href="#" class="button" onClick="return rightnow_plugins_dismiss_outdate_detail('<?php echo $plugin_name; ?>',  '<?php echo urlencode($plugin_outdate['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Ignore','mainwp'); ?></a>
                                     <?php } ?>
                                 </span>
                             </div>
@@ -1451,7 +1452,7 @@ class MainWPRightNow
         ?>
     <div class="clear">
         <div class="mainwp-row">
-            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_themes_outdate; ?> </span> <?php _e('Theme','mainwp'); ?><?php if ($total_themes_outdate > 0) echo 's'; ?> <?php _e('outdate', 'mainwp'); ?></span>
+            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_themes_outdate; ?> </span> <?php _e('Theme','mainwp'); ?><?php if ($total_themes_outdate > 0) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?></span>
             <span class="mainwp-mid-col">&nbsp;</span>            
             <span class="mainwp-right-col"><a href="#" id="mainwp_themes_outdate_show" onClick="return rightnow_show('themes_outdate');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
             
@@ -1487,13 +1488,13 @@ class MainWPRightNow
                         if (count($themes_outdate) > 0)
                         {
                         ?>
-                            <a href="#" id="mainwp_themes_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('themes_outdate_<?php echo $website->id; ?>', true);"><?php echo count($themes_outdate); ?> <?php _e('Outdate','mainwp'); ?><?php echo (count($themes_outdate) > 1 ? 's' : ''); ?></a>
+                            <a href="#" id="mainwp_themes_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('themes_outdate_<?php echo $website->id; ?>', true);"><?php echo count($themes_outdate); ?> <?php _e('Theme','mainwp'); ?><?php echo (count($themes_outdate) > 1 ? 's' : ''); ?></a>
                         <?php
                         }
                         else
                         {
                             if ($website->sync_errors != '') echo __('Site Error - No update Information available','mainwp');
-                            else echo __("Hooray, No Outdate Themes!",'mainwp');
+                            else echo __("Hooray, No Abandoned Themes!",'mainwp');
                         }
                         ?>
                     </span>
@@ -1506,25 +1507,23 @@ class MainWPRightNow
                 ?>
                 <div id="wp_themes_outdate_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode($website->name); ?>" <?php if ($globalView) { ?>style="display: none"<?php } ?>>
                     <?php
-                    foreach ($themes_outdate as $theme_name => $theme_outdate)
+                    foreach ($themes_outdate as $slug => $theme_outdate)
                     {
-                        $theme_name = urlencode($theme_name);
-                        
+                        $slug = urlencode($slug);                        
                         $now = new \DateTime();
                         $last_updated = $theme_outdate['last_updated'];
                         $theme_last_updated_date = new \DateTime( '@' . $last_updated );
                         $diff_in_days = $now->diff( $theme_last_updated_date )->format( '%a' );
-
-                        $outdate_notice = sprintf( '<strong style="color: #f00;">Outdate %1$d days</strong>', $diff_in_days );
+                        $outdate_notice = sprintf( $str_format, $diff_in_days );
                         ?>
-                        <div class="mainwp-row" theme_outdate_slug="<?php echo $theme_name; ?>" dismissed="0">
+                        <div class="mainwp-row" theme_outdate_slug="<?php echo $slug; ?>" dismissed="0">
                                 <span class="mainwp-left-col">
-                                    <?php if ($globalView) { ?>&nbsp;&nbsp;&nbsp;<?php } ?><?php echo $theme_outdate['Name']; ?><input type="hidden" id="wp_dismissed_theme_<?php echo $website->id; ?>_<?php echo $theme_name; ?>" value="0"/></span>
-                                <span class="mainwp-mid-col pluginsInfo" id="wp_outdate_theme_<?php echo $website->id; ?>_<?php echo $theme_name; ?>"><?php echo $theme_outdate['Version']; ?> | <?php echo $outdate_notice; ?></span>
+                                    <?php if ($globalView) { ?>&nbsp;&nbsp;&nbsp;<?php } ?><?php echo $theme_outdate['name']; ?><input type="hidden" id="wp_dismissed_theme_<?php echo $website->id; ?>_<?php echo $slug; ?>" value="0"/></span>
+                                <span class="mainwp-mid-col pluginsInfo" id="wp_outdate_theme_<?php echo $website->id; ?>_<?php echo $slug; ?>"><?php echo $theme_outdate['Version']; ?> | <?php echo $outdate_notice; ?></span>
                                 <span class="mainwp-right-col pluginsAction">
-                                    <div id="wp_dismissbuttons_theme_<?php echo $website->id; ?>_<?php echo $theme_name; ?>">                                   
+                                    <div id="wp_dismissbuttons_theme_<?php echo $website->id; ?>_<?php echo $slug; ?>">                                   
                                     <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                                         &nbsp;<a href="#" class="button" onClick="return rightnow_themes_dismiss_outdate_detail('<?php echo $theme_name; ?>', '<?php echo urlencode($theme_outdate['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Dismisss','mainwp'); ?></a>
+                                         &nbsp;<a href="#" class="button" onClick="return rightnow_themes_dismiss_outdate_detail('<?php echo $slug; ?>', '<?php echo urlencode($theme_outdate['name']); ?>', <?php echo $website->id; ?>)"><?php _e('Dismiss','mainwp'); ?></a>
                                     <?php } ?>
                                     </div>
                                 </span>
@@ -1539,29 +1538,30 @@ class MainWPRightNow
             {                
                 foreach ($allThemesOutdate as $slug => $cnt)
                 {
-                    $theme_name = urlencode($slug);
+                    $slug = urlencode($slug);
+                    
                     if ($globalView)
-                    {
+                    {                               
                     ?>
                     <div class="mainwp-row">
                         <span class="mainwp-left-col">
-                                <?php echo $pluginsOutdateInfo[$slug]['name']; ?>
+                                <?php echo $themesOutdateInfo[$slug]['name']; ?>
                         </span>
                         <span class="mainwp-mid-col">
-                            <a href="#" onClick="return rightnow_themes_outdate_detail('<?php echo $theme_name; ?>');">
-                                <?php echo $cnt; ?> <?php _e('Outdate','mainwp'); ?><?php echo ($cnt > 1 ? 's' : ''); ?>
+                            <a href="#" onClick="return rightnow_themes_outdate_detail('<?php echo $slug; ?>');">
+                                <?php echo $cnt; ?> <?php _e('Theme','mainwp'); ?><?php echo ($cnt <> 1 ? 's' : ''); ?>
                             </a>
                         </span>
                         <span class="mainwp-right-col"> 
                              <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                                <a href="#" class="button" onClick="return rightnow_themes_outdate_dismiss_all('<?php echo $theme_name; ?>', '<?php echo urlencode($themesOutdateInfo[$slug]['name']); ?>')"><?php _e('Dismiss Globally','mainwp'); ?></a>
+                                <a href="#" class="button" onClick="return rightnow_themes_outdate_dismiss_all('<?php echo $slug; ?>', '<?php echo urlencode($themesOutdateInfo[$slug]['name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a>
                             <?php } ?>                                                        
                         </span>
                     </div>
                     <?php
                     }
                     ?>
-                    <div theme_outdate_slug="<?php echo $theme_name; ?>" theme_name="<?php echo urlencode($themesOutdateInfo[$slug]['name']); ?>" <?php if ($globalView) { ?>style="display: none"<?php } ?>>
+                    <div theme_outdate_slug="<?php echo $slug; ?>" theme_name="<?php echo urlencode($themesOutdateInfo[$slug]['name']); ?>" <?php if ($globalView) { ?>style="display: none"<?php } ?>>
                         <?php
                         @MainWPDB::data_seek($websites, 0);
                         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
@@ -1584,12 +1584,11 @@ class MainWPRightNow
                             $theme_outdate = $themes_outdate[$slug];
                             
                             $now = new \DateTime();
-                            $last_updated = $theme_outdate['last_updated'];
+                            $last_updated = $theme_outdate['last_updated']; 
                             $theme_last_updated_date = new \DateTime( '@' . $last_updated );
                             $diff_in_days = $now->diff( $theme_last_updated_date )->format( '%a' );
-
-                            $outdate_notice = sprintf( '<strong style="color: #f00;">Outdate %1$d days</strong>', $diff_in_days );
-
+                            $outdate_notice = sprintf( $str_format, $diff_in_days );
+                            
                             ?>
                             <div class="mainwp-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode($website->name); ?>" outdate="1">
                                 <span class="mainwp-left-col">
@@ -1599,10 +1598,10 @@ class MainWPRightNow
                                             <?php echo $themesOutdateInfo[$slug]['name']; ?>
                                     <?php }?>
                                 </span>
-                                <span class="mainwp-mid-col pluginsInfo" id="wp_outdate_theme_<?php echo $website->id; ?>_<?php echo $theme_name; ?>"><?php echo $theme_outdate['Version']; ?> | <?php echo $outdate_notice; ?></span>
+                                <span class="mainwp-mid-col pluginsInfo" id="wp_outdate_theme_<?php echo $website->id; ?>_<?php echo $slug; ?>"><?php echo $theme_outdate['Version']; ?> | <?php echo $outdate_notice; ?></span>
                                 <span class="mainwp-right-col pluginsAction">                                    
                                     <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                                    &nbsp; <a href="#" class="button" onClick="return rightnow_themes_dismiss_outdate_detail('<?php echo $theme_name; ?>',  '<?php echo urlencode($theme_outdate['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Dismiss','mainwp'); ?></a>
+                                    &nbsp; <a href="#" class="button" onClick="return rightnow_themes_dismiss_outdate_detail('<?php echo $slug; ?>',  '<?php echo urlencode($themesOutdateInfo[$slug]['name']); ?>', <?php echo $website->id; ?>)"><?php _e('Ignore','mainwp'); ?></a>
                                     <?php } ?>
                                 </span>
                             </div>

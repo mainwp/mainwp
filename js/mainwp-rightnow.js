@@ -1555,12 +1555,12 @@ rightnow_dismiss_outdate_plugintheme_by_site = function (what, slug, name, id) {
         slug:slug,
         name:name
     };
-    jQuery(document.getElementById('wp_outdate_' + what + '_' + id + '_' + slug)).html(__('Dismissing..'));
+    jQuery(document.getElementById('wp_outdate_' + what + '_' + id + '_' + slug)).html(__('Ignoring..'));
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            jQuery(document.getElementById('wp_outdate_' + what + '_' + id + '_' + slug)).html(__('Dismissed'));
+            jQuery(document.getElementById('wp_outdate_' + what + '_' + id + '_' + slug)).html(__('Ignored'));
             jQuery(document.getElementById('wp_outdate_' + what + '_' + id + '_' + slug)).siblings('.mainwp-right-col').html('');
-            jQuery('div['+what+'_outdate_slug="'+slug+'"] div[site_id="'+id+'"]').find('.pluginsInfo').html(__('Dismissed'));
+            jQuery('div['+what+'_outdate_slug="'+slug+'"] div[site_id="'+id+'"]').find('.pluginsInfo').html(__('Ignored'));
             jQuery('div['+what+'_outdate_slug="'+slug+'"] div[site_id="'+id+'"]').find('.pluginsAction').html('');
             jQuery('div['+what+'_outdate_slug="'+slug+'"] div[site_id="'+id+'"]').attr('dismissed', '-1');
         }
@@ -1582,7 +1582,7 @@ rightnow_plugins_outdate_dismiss_all = function (slug, name) {
     };
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            jQuery('div[plugin_outdate_slug="'+slug+'"]').find('.pluginsInfo').html(__('Dismissed'));
+            jQuery('div[plugin_outdate_slug="'+slug+'"]').find('.pluginsInfo').html(__('Ignored'));
             jQuery('div[plugin_outdate_slug="'+slug+'"]').find('.pluginsAction').hide();
             jQuery('div[plugin_outdate_slug="'+slug+'"]').find('div[dismissed="0"]').attr('dismissed', '-1');
         }
@@ -1592,16 +1592,16 @@ rightnow_plugins_outdate_dismiss_all = function (slug, name) {
 
 
 rightnow_themes_outdate_dismiss_all = function (slug, name) {
-    rightnow_themes_detail_show(slug);
+    rightnow_themes_outdate_detail_show(slug);
     var data = {
-        action:'mainwp_ignorepluginsthemes',
+        action:'mainwp_dismissoutdatepluginsthemes',
         type: 'theme',
         slug:slug,
         name:name
     };
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            jQuery('div[theme_outdate_slug="'+slug+'"]').find('.pluginsInfo').html(__('Dismissed'));
+            jQuery('div[theme_outdate_slug="'+slug+'"]').find('.pluginsInfo').html(__('Ignored'));
             jQuery('div[theme_outdate_slug="'+slug+'"]').find('.pluginsAction').hide();
             jQuery('div[theme_outdate_slug="'+slug+'"]').find('div[dismissed="0"]').attr('dismissed', '-1');
         }

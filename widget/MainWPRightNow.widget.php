@@ -556,7 +556,7 @@ class MainWPRightNow
             $total_pluginsIgnored = is_array($decodedIgnoredPlugins) ? count($decodedIgnoredPlugins) : 0;        
             $total_themesIgnored = is_array($decodedIgnoredThemes) ? count($decodedIgnoredThemes) : 0;       
         } 
-    
+               
         $decodedDismissedPlugins = json_decode($userExtension->dismissed_plugins, true);
         $decodedDismissedThemes = json_decode($userExtension->dismissed_themes, true);
                 
@@ -594,7 +594,7 @@ class MainWPRightNow
         
         $pluginsIgnored_perSites = $themesIgnored_perSites = array();
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
-        {
+        {          
             if (!$globalView) $currentSite = $website;
 
             $wp_upgrades = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'wp_upgrades'), true);
@@ -693,7 +693,7 @@ class MainWPRightNow
             
             if (is_array($themes_outdate))
             {
-                $themesOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'plugins_outdate_dismissed'), true);            
+                $themesOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'themes_outdate_dismissed'), true);            
                 if (is_array($themesOutdateDismissed)) {                                        
                     $themes_outdate = array_diff_key($themes_outdate, $themesOutdateDismissed);
                 }    
@@ -704,7 +704,6 @@ class MainWPRightNow
                 
                 $total_themes_outdate += count($themes_outdate);
             }
-            
             
             if ($userExtension->site_view == 0) //site view disabled
             {
@@ -1290,14 +1289,16 @@ class MainWPRightNow
                     if (!is_array($plugins_outdate))
                         $plugins_outdate = array(); 
                     
-                    $pluginsOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'plugins_outdate_dismissed'), true);            
-                    if (is_array($pluginsOutdateDismissed)) {                                        
-                        $plugins_outdate = array_diff_key($plugins_outdate, $pluginsOutdateDismissed);
-                    } 
+                    if (count($plugins_outdate) > 0) {
+                        $pluginsOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'plugins_outdate_dismissed'), true);            
+                        if (is_array($pluginsOutdateDismissed)) {                                        
+                            $plugins_outdate = array_diff_key($plugins_outdate, $pluginsOutdateDismissed);
+                        } 
 
-                    if (is_array($decodedDismissedPlugins)) {
-                        $plugins_outdate = array_diff_key($plugins_outdate, $decodedDismissedPlugins);
-                    }                    
+                        if (is_array($decodedDismissedPlugins)) {
+                            $plugins_outdate = array_diff_key($plugins_outdate, $decodedDismissedPlugins);
+                        }                    
+                    }
                     
                     if ($globalView)
                     {
@@ -1347,7 +1348,7 @@ class MainWPRightNow
                                 <span class="mainwp-right-col pluginsAction">
                                     <div id="wp_dismissbuttons_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">                                   
                                     <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                                         &nbsp;<a href="#" class="button" onClick="return rightnow_plugins_dismiss_outdate_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode($plugin_outdate['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Dismiss','mainwp'); ?></a>
+                                         &nbsp;<a href="#" class="button" onClick="return rightnow_plugins_dismiss_outdate_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode($plugin_outdate['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Ignore','mainwp'); ?></a>
                                     <?php } ?>
                                     </div>
                                 </span>
@@ -1396,15 +1397,17 @@ class MainWPRightNow
                             if (!is_array($plugins_outdate))
                                 $plugins_outdate = array();
                             
-                            $pluginsOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'plugins_outdate_dismissed'), true);            
-                            if (is_array($pluginsOutdateDismissed)) {                                        
-                                $plugins_outdate = array_diff_key($plugins_outdate, $pluginsOutdateDismissed);
-                            }
-                    
-                            if (is_array($decodedDismissedPlugins)) {
-                                $plugins_outdate = array_diff_key($plugins_outdate, $decodedDismissedPlugins);
-                            }
+                            if (count($plugins_outdate) > 0) {
+                                $pluginsOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'plugins_outdate_dismissed'), true);            
+                                if (is_array($pluginsOutdateDismissed)) {                                        
+                                    $plugins_outdate = array_diff_key($plugins_outdate, $pluginsOutdateDismissed);
+                                }
 
+                                if (is_array($decodedDismissedPlugins)) {
+                                    $plugins_outdate = array_diff_key($plugins_outdate, $decodedDismissedPlugins);
+                                }
+                            }
+                            
                             if (!isset($plugins_outdate[$slug])) continue;
                             
                             $plugin_outdate = $plugins_outdate[$slug];
@@ -1469,14 +1472,16 @@ class MainWPRightNow
                     if (!is_array($themes_outdate))
                         $themes_outdate = array(); 
                     
-                    $themesOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'themes_outdate_dismissed'), true);            
-                    if (is_array($themesOutdateDismissed)) {                                        
-                        $themes_outdate = array_diff_key($themes_outdate, $themesOutdateDismissed);
-                    } 
+                    if (count($themes_outdate) > 0) {
+                        $themesOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'themes_outdate_dismissed'), true);            
+                        if (is_array($themesOutdateDismissed)) {                                        
+                            $themes_outdate = array_diff_key($themes_outdate, $themesOutdateDismissed);
+                        } 
 
-                    if (is_array($decodedDismissedThemes)) {
-                        $themes_outdate = array_diff_key($themes_outdate, $decodedDismissedThemes);
-                    }                    
+                        if (is_array($decodedDismissedThemes)) {
+                            $themes_outdate = array_diff_key($themes_outdate, $decodedDismissedThemes);
+                        }                    
+                    }
                     
                     if ($globalView)
                     {
@@ -1518,12 +1523,12 @@ class MainWPRightNow
                         ?>
                         <div class="mainwp-row" theme_outdate_slug="<?php echo $slug; ?>" dismissed="0">
                                 <span class="mainwp-left-col">
-                                    <?php if ($globalView) { ?>&nbsp;&nbsp;&nbsp;<?php } ?><?php echo $theme_outdate['name']; ?><input type="hidden" id="wp_dismissed_theme_<?php echo $website->id; ?>_<?php echo $slug; ?>" value="0"/></span>
+                                    <?php if ($globalView) { ?>&nbsp;&nbsp;&nbsp;<?php } ?><?php echo $theme_outdate['Name']; ?><input type="hidden" id="wp_dismissed_theme_<?php echo $website->id; ?>_<?php echo $slug; ?>" value="0"/></span>
                                 <span class="mainwp-mid-col pluginsInfo" id="wp_outdate_theme_<?php echo $website->id; ?>_<?php echo $slug; ?>"><?php echo $theme_outdate['Version']; ?> | <?php echo $outdate_notice; ?></span>
                                 <span class="mainwp-right-col pluginsAction">
                                     <div id="wp_dismissbuttons_theme_<?php echo $website->id; ?>_<?php echo $slug; ?>">                                   
                                     <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                                         &nbsp;<a href="#" class="button" onClick="return rightnow_themes_dismiss_outdate_detail('<?php echo $slug; ?>', '<?php echo urlencode($theme_outdate['name']); ?>', <?php echo $website->id; ?>)"><?php _e('Dismiss','mainwp'); ?></a>
+                                         &nbsp;<a href="#" class="button" onClick="return rightnow_themes_dismiss_outdate_detail('<?php echo $slug; ?>', '<?php echo urlencode($theme_outdate['Name']); ?>', <?php echo $website->id; ?>)"><?php _e('Ignore','mainwp'); ?></a>
                                     <?php } ?>
                                     </div>
                                 </span>
@@ -1570,15 +1575,17 @@ class MainWPRightNow
                             if (!is_array($themes_outdate))
                                 $themes_outdate = array();
                             
-                            $themesOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'themes_outdate_dismissed'), true);            
-                            if (is_array($themesOutdateDismissed)) {                                        
-                                $themes_outdate = array_diff_key($themes_outdate, $themesOutdateDismissed);
-                            }
-                    
-                            if (is_array($decodedDismissedThemes)) {
-                                $themes_outdate = array_diff_key($themes_outdate, $decodedDismissedThemes);
-                            }
+                            if (count($themes_outdate) > 0) { 
+                                $themesOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'themes_outdate_dismissed'), true);            
+                                if (is_array($themesOutdateDismissed)) {                                        
+                                    $themes_outdate = array_diff_key($themes_outdate, $themesOutdateDismissed);
+                                }
 
+                                if (is_array($decodedDismissedThemes)) {
+                                    $themes_outdate = array_diff_key($themes_outdate, $decodedDismissedThemes);
+                                }
+                            }
+                            
                             if (!isset($themes_outdate[$slug])) continue;
                             
                             $theme_outdate = $themes_outdate[$slug];

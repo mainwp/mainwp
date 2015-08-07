@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.2.2
-Stable tag: 2.0.22
+Tested up to: 4.2.4
+Stable tag: 2.0.23
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,27 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.23 - 8-7-2015 =
+* Fixed: Potential security issue
+* Fixed: Incorrect URL in Email template
+* Fixed: Syntax error in the Right Now widget 
+* Fixed: Incorrect URL for the FileSystem tooltip icon
+* Fixed: An issue with loading JS and CSS scripts
+* Fixed: An issue with Heatmaps not loading
+* Added: MultiSite detection on the Server Information page
+* Added: max_input_time detection on the Server Information page
+* Added: Tools page under the Settings page
+* Added: Establish New Connection feature on the Tools page
+* Added: Dashboard Options page under the Settings page
+* Added: Option to hide MainWP Dashboard custom footer
+* Added: Option to hide MainWP Dashboard tip
+* Added: Abandoned Plugins detection feature
+* Added: Abandoned Themes detection feature
+* Updated: Extensions API management system
+* Updated: Use Child Site favicons option moved from General Option to Dashboard Options page
+* Updated: CSS style
+* Updated: Responsive CSS style
 
 = 2.0.22 - 7-22-2015 =
 * Fixed: Bug where extensions updates were failing when updating in bulk

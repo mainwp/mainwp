@@ -7067,3 +7067,64 @@ mainwp_managesites_bulk_reconnect_specific = function(pCheckedBox) {
 
     return;
 };
+
+
+mainwp_force_destroy_sessions = function() {
+    var q = confirm(__('Are you sure?'));
+    if (q) {
+        jQuery('#refresh-status-box').dialog({
+            resizable: false,
+            height: 350,
+            width: 500,
+            modal: true
+        });
+
+        mainwp_force_destroy_sessions_websites = jQuery('.dashboard_wp_id').map(function(indx, el){ return jQuery(el).val(); });
+        jQuery('#refresh-status-progress').progressbar({value: 0, max: mainwp_force_destroy_sessions_websites.length});
+
+        mainwp_force_destroy_sessions_part_2(0);
+    }
+};
+
+mainwp_force_destroy_sessions_part_2 = function(id) {
+    if (id >= mainwp_force_destroy_sessions_websites.length) {
+        mainwp_force_destroy_sessions_websites = [];
+        return;
+    }
+
+    var website_id = mainwp_force_destroy_sessions_websites[id];
+    dashboard_update_site_status(website_id, __('SYNCING'));
+
+    jQuery.post(ajaxurl, {'action': 'mainwp_force_destroy_sessions', 'website_id': website_id, 'security': security_nonces['mainwp_force_destroy_sessions']}, function(response) { 
+        var counter = id+1;
+        mainwp_force_destroy_sessions_part_2(counter);
+
+        jQuery('#refresh-status-progress').progressbar('value', counter);
+        jQuery('#refresh-status-current').html(counter);
+
+        if ('error' in response) {
+            dashboard_update_site_status(website_id, '<font color="red">' + __('ERROR') + '</font>');
+        } else if ('success' in response) {
+            dashboard_update_site_status(website_id, __('DONE'));
+        } else {
+            dashboard_update_site_status(website_id, '<font color="red">' + __('UNKNOWN') + '</font>');
+        }
+    }, 'json').fail(function() {
+        var counter = id+1;
+        mainwp_force_destroy_sessions_part_2(counter);
+
+        jQuery('#refresh-status-progress').progressbar('value', counter);
+        jQuery('#refresh-status-current').html(counter);
+
+        dashboard_update_site_status(website_id, '<font color="red">' + __('RESPONSE ERROR') + '</font>');
+    });  
+
+};
+
+// MainWP Tools
+jQuery(document).ready(function () {
+    var mainwp_force_destroy_sessions_websites = []; 
+    jQuery('#force-destroy-sessions-button').live('click', function (event) {
+        mainwp_force_destroy_sessions();
+    });
+});

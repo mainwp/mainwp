@@ -208,6 +208,8 @@ class MainWPPostHandler
         $this->addAction('mainwp_extension_change_view', array(&$this, 'mainwp_extension_change_view'));
         $this->addAction('mainwp_events_notice_hide', array(&$this, 'mainwp_events_notice_hide'));
         $this->addAction('mainwp_installation_warning_hide', array(&$this, 'mainwp_installation_warning_hide'));
+        $this->addAction('mainwp_force_destroy_sessions', array(&$this, 'mainwp_force_destroy_sessions'));
+        
         MainWPExtensions::initAjaxHandlers();
     }
 
@@ -1555,6 +1557,39 @@ class MainWPPostHandler
     {
         return $this->security_nonces;
     }
+    
+    function mainwp_force_destroy_sessions()
+    {
+        $this->secure_request('mainwp_force_destroy_sessions');
+
+        $website_id = (isset($_POST['website_id']) ? (int) $_POST['website_id'] : 0);
+
+        if ( ! MainWPDB::Instance()->getWebsiteById( $website_id ) ) {
+            die(json_encode(array('error' => array('message' => __( "This website does not exist", 'mainwp')))));
+        }
+        
+        $website = MainWPDB::Instance()->getWebsiteById($website_id);
+        if (!MainWPUtility::can_edit_website($website)) {
+            die(json_encode(array('error' => array('message' => __( "You cannot edit this website", 'mainwp')))));
+        }
+        
+        try {
+            $information = MainWPUtility::fetchUrlAuthed($website, 'settings_tools', array(
+                'action' => 'force_destroy_sessions'
+            ));
+            global $mainWP;
+            if (($mainWP->getVersion() == '2.0.22') || ($mainWP->getVersion() == '2.0.23')) {
+                if (get_option('mainwp_fixed_security_2022') != 1) {
+                    update_option('mainwp_fixed_security_2022', 1);
+                }
+            }
+        } catch (Exception $e) {
+            $information = array('error' => __( "fetchUrlAuthed exception", 'mainwp'));
+        }
+
+        die(json_encode($information));
+    }
+    
 }
 
 ?>

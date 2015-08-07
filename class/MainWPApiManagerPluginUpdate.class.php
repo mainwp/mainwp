@@ -47,7 +47,7 @@ class MainWPApiManagerPluginUpdate {
 
 	// Upgrade API URL
 	private function create_upgrade_api_url( $args ) {
-		$upgrade_url = esc_url_raw( add_query_arg( 'wc-api', 'upgrade-api', MainWPApiManager::instance()->upgrade_url ) );
+		$upgrade_url = esc_url_raw( add_query_arg( 'wc-api', 'upgrade-api', MainWPApiManager::instance()->getUpgradeUrl() ) );
                 $query_url = "";
                 foreach ($args as $key => $value)
                 {
@@ -103,7 +103,7 @@ class MainWPApiManagerPluginUpdate {
                 
 		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => $apisslverify));
                 
-//		$request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/upgrade-api/', array('body' => $args) );
+//		$request = wp_remote_post( MainWPApiManager::instance()->getUpgradeUrl() . 'wc-api/upgrade-api/', array('body' => $args) );
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			return false;
@@ -121,6 +121,9 @@ class MainWPApiManagerPluginUpdate {
 
 
 		if ( is_object( $response ) ) {
+                        if (isset($response->package)) {
+                            $response->package = apply_filters('mainwp_api_manager_upgrade_url', $response->package);
+                        }
 			return $response;
 		} else {
 			return false;

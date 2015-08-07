@@ -56,6 +56,11 @@ class MainWPExtensions
         add_action('mainwp-pageheader-extensions', array(MainWPExtensions::getClassName(), 'renderHeader'));
         add_action('mainwp-pagefooter-extensions', array(MainWPExtensions::getClassName(), 'renderFooter'));
         add_filter("mainwp-extensions-apigeneratepassword", array(MainWPExtensions::getClassName(), 'genApiPassword'), 10, 3);        
+        add_filter('mainwp_api_manager_upgrade_url', array(MainWPExtensions::getClassName(), 'filter_ApiUpgradeUrl'));
+    }
+    
+    static function filter_ApiUpgradeUrl($api_url) {
+        return str_replace('extensions.mainwp.com', MainWPApiManager::MAINWP_EXTENSIONS_SHOP_IP, $api_url);
     }
 
     public static function initMenu()
@@ -389,7 +394,8 @@ class MainWPExtensions
                         if (isset($product_info['error']) && $product_info['error'] == 'download_revoked') {
                             $html .= '<div><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $software_title . "</strong></span> <span style=\"color: red;\"><strong>Error</strong> " . MainWPApiManager::instance()->download_revoked_error_notice($software_title) . '</span></div>';
                         } else if (isset($product_info['package']) && !empty($product_info['package'])){
-                            $html .= '<div class="extension_to_install" download-link="' . $product_info['package'] . '" product-id="' . $product_id . '"><input type="checkbox" status="queue" checked="true"> <span class="name"><strong>' . $software_title . "</strong></span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
+                            $package_url = apply_filters('mainwp_api_manager_upgrade_url', $product_info['package']);
+                            $html .= '<div class="extension_to_install" download-link="' . $package_url . '" product-id="' . $product_id . '"><input type="checkbox" status="queue" checked="true"> <span class="name"><strong>' . $software_title . "</strong></span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
                         }                        
                     }       
                 }

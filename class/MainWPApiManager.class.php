@@ -2,9 +2,9 @@
 
 class MainWPApiManager {
     
-    public $upgrade_url = 'https://extensions.mainwp.com/';
-    public $renew_license_url = 'https://extensions.mainwp.com/my-account';
-
+    private $upgrade_url = 'https://extensions.mainwp.com/';
+    private $renew_license_url = 'https://extensions.mainwp.com/my-account';
+    const MAINWP_EXTENSIONS_SHOP_IP = '69.167.133.91'; // replace for upgrade_url
     public $domain = "";
     /**
      * @var The single instance of the class
@@ -41,6 +41,11 @@ class MainWPApiManager {
             }
              $this->domain = str_ireplace( array( 'http://', 'https://' ), '', home_url());
 	}
+        
+        public function getUpgradeUrl() {
+            $url = apply_filters('mainwp_api_manager_upgrade_url', $this->upgrade_url);
+            return $url;
+        }
         
 	public function license_key_activation( $api, $api_key, $api_email ) {
             

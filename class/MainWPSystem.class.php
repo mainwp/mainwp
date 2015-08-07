@@ -56,7 +56,7 @@ class MainWPSystem
     }
 
     public function __construct($mainwp_plugin_file)
-    {
+    {      
         MainWPSystem::$instance = $this;
         $this->update();
         $this->plugin_slug = plugin_basename($mainwp_plugin_file);
@@ -73,7 +73,7 @@ class MainWPSystem
             if (version_compare($currentVersion, $this->current_version, '<')) {
                 update_option('mainwp_reset_user_tips', array());
                 MainWPUtility::update_option('mainwp_reset_user_cookies', array());
-                delete_option('mainwp_api_sslVerifyCertificate');
+                //delete_option('mainwp_api_sslVerifyCertificate');
             }
             MainWPUtility::update_option('mainwp_plugin_version', $this->current_version);
         }
@@ -343,6 +343,23 @@ class MainWPSystem
                     	</p>
                 </div>                    
                 <?php
+            }
+        }
+        
+        if ($this->current_version == '2.0.22' || $this->current_version == '2.0.23') {
+            if (get_option('mainwp_fixed_security_2022') != 1) {
+            ?>
+                <div class="mainwp_info-box-red">
+                    <p>                    
+                    <span><?php _e("This update includes additional security hardening. In order to complete the process please update all your Child Sites to the lates version MainWP Child version then follow these steps:<br />
+                            Click <a href=\"admin.php?page=MainWPTools\" \"MainWP Tools\">Here</a> to go to the Tools Page<br />
+                            Press the Establish New Connection Button and Let it Run<br />
+                            Once completed the hardening is done.", 'mainwp');
+                    ?>
+                    </span>
+                    </p>
+                </div>
+            <?php        
             }
         }
         
@@ -1798,13 +1815,23 @@ class MainWPSystem
         if (!current_user_can('update_core')) remove_action('admin_notices', 'update_nag', 3);
     }
 
-    function handleSettingsPost() {
-        if (isset($_GET['page']) && $_GET['page'] == "Settings" && isset($_POST['submit']))
-        {
-            if (isset($_POST['mainwp_primaryBackup'])) {
-                MainWPUtility::update_option('mainwp_primaryBackup', $_POST['mainwp_primaryBackup']);
+    function handleSettingsPost() {        
+        if (isset($_GET['page'])) {
+           if ($_GET['page'] == 'DashboardOptions') {             
+                if (isset($_POST['submit']))
+                {
+                   MainWPUtility::update_option('mainwp_use_favicon', (!isset($_POST['mainwp_use_favicon']) ? 0 : 1));
+                   MainWPUtility::update_option('mainwp_hide_footer', (!isset($_POST['mainwp_hide_footer']) ? 0 : 1));
+                   MainWPUtility::update_option('mainwp_hide_tips', (!isset($_POST['mainwp_hide_tips']) ? 0 : 1));
+                }
+            } else if ($_GET['page'] == "Settings") {
+                if (isset($_POST['submit'])) {
+                    if (isset($_POST['mainwp_primaryBackup'])) {
+                        MainWPUtility::update_option('mainwp_primaryBackup', $_POST['mainwp_primaryBackup']);
+                    }
+                }
             }
-        }
+        }        
     }
 
     //This function will read the metaboxes & save them to the post
@@ -2182,9 +2209,6 @@ class MainWPSystem
     {
         if (!self::isMainWPPages()) return;
         
-        $output = '<a href="javascript:void(0)" id="dashboard_refresh" title="Sync Data" class="mainwp-left-margin-2 mainwp-green"><i class="fa fa-refresh fa-2x"></i></a> <a id="mainwp-add-new-button" class="mainwp-blue mainwp-left-margin-2" title="Add New" href="javascript:void(0)"><i class="fa fa-plus fa-2x"></i></a> <a class="mainwp-red mainwp-left-margin-2" title="Get MainWP Extensions" href="https://extensions.mainwp.com" target="_blank"><i class="fa fa-shopping-cart fa-2x"></i></a> <a class="mainwp-white mainwp-left-margin-2" title="Get Support" href="http://support.mainwp.com" target="_blank"><i class="fa fa-life-ring fa-2x"></i></a>' . '<a href="https://www.facebook.com/mainwp" class="mainwp-link-clean mainwp-left-margin-2" style="color: #3B5998;" target="_blank"><i class="fa fa-facebook-square fa-2x"></i></a> ' . ' <a href="https://twitter.com/mymainwp" class="mainwp-link-clean" target="_blank" style="color: #4099FF;"><i class="fa fa-twitter-square fa-2x"></i></a>.';
-
-
         $current_wpid = MainWPUtility::get_current_wpid();
         if ($current_wpid)
         {
@@ -2265,12 +2289,19 @@ class MainWPSystem
             <input id="refresh-status-close" type="button" name="Close" value="Close" class="button" />
         </div>
     <?php
-
-        self::sites_fly_menu();
-        self::add_new_links();
-
+        
+        if (!self::isHideFooter()) {
+            self::sites_fly_menu();
+            self::add_new_links();
+        }
+        
         $newOutput = ob_get_clean();
 
+        $output = "";
+        if (!self::isHideFooter()) {        
+            $output .= '<a href="javascript:void(0)" id="dashboard_refresh" title="Sync Data" class="mainwp-left-margin-2 mainwp-green"><i class="fa fa-refresh fa-2x"></i></a> <a id="mainwp-add-new-button" class="mainwp-blue mainwp-left-margin-2" title="Add New" href="javascript:void(0)"><i class="fa fa-plus fa-2x"></i></a> <a class="mainwp-red mainwp-left-margin-2" title="Get MainWP Extensions" href="https://extensions.mainwp.com" target="_blank"><i class="fa fa-shopping-cart fa-2x"></i></a> <a class="mainwp-white mainwp-left-margin-2" title="Get Support" href="http://support.mainwp.com" target="_blank"><i class="fa fa-life-ring fa-2x"></i></a>' . '<a href="https://www.facebook.com/mainwp" class="mainwp-link-clean mainwp-left-margin-2" style="color: #3B5998;" target="_blank"><i class="fa fa-facebook-square fa-2x"></i></a> ' . ' <a href="https://twitter.com/mymainwp" class="mainwp-link-clean" target="_blank" style="color: #4099FF;"><i class="fa fa-twitter-square fa-2x"></i></a>.';
+        }
+        
         return $output . $newOutput;
     }
 

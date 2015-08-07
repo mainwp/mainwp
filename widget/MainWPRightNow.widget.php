@@ -547,7 +547,7 @@ class MainWPRightNow
         }
 
         $userExtension = MainWPDB::Instance()->getUserExtension();  
-        
+
         $total_themesIgnored = $total_pluginsIgnored = 0;
         
         if ($globalView) {            
@@ -738,7 +738,7 @@ class MainWPRightNow
                     {
                         if (!isset($allPluginsOutdate[$slug])) $allPluginsOutdate[$slug] = 1;
                         else $allPluginsOutdate[$slug]++;
-                        $pluginsOutdateInfo[$slug] = array('name' => $plugin_outdate['Name'], 'slug' => dirname($slug), 'last_updated' => (isset($plugin_outdate['last_updated']) ? $plugin_outdate['last_updated'] : 0));
+                        $pluginsOutdateInfo[$slug] = array('Name' => $plugin_outdate['Name'], 'last_updated' => (isset($plugin_outdate['last_updated']) ? $plugin_outdate['last_updated'] : 0));
                     }
                 }
                 ksort($allPluginsOutdate); 
@@ -1158,7 +1158,7 @@ class MainWPRightNow
                     {
                         $theme_name = urlencode($theme_name);
                         ?>
-                        <div class="mainwp-row" theme_slug="<?php echo $theme_name; ?>"  theme_name="<?php echo urlencode($themesInfo[$slug]['name']); ?>" premium="<?php echo $themesInfo[$slug]['premium'] ? 1 : 0; ?>" updated="0">
+                        <div class="mainwp-row" theme_slug="<?php echo $theme_name; ?>"  theme_name="<?php echo $theme_upgrade['Name']; ?>" premium="<?php echo (isset($themesInfo[$theme_name]['premium']) && $themesInfo[$theme_name]['premium']) ? 1 : 0; ?>" updated="0">
                             <span class="mainwp-left-col"><?php if ($globalView) { ?>&nbsp;&nbsp;&nbsp;<?php } ?><?php echo $theme_upgrade['Name']; ?><input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>_<?php echo $theme_name; ?>" value="0"/></span>
                             <span class="mainwp-mid-col pluginsInfo" id="wp_upgrade_theme_<?php echo $website->id; ?>_<?php echo $theme_name; ?>"><?php echo $theme_upgrade['Version']; ?> to <?php echo $theme_upgrade['update']['new_version']; ?></span>
                             <span class="mainwp-right-col pluginsAction">
@@ -1267,11 +1267,11 @@ class MainWPRightNow
     </div>
     
      <?php
-        //WP plugin outdate!         
+        //WP plugin outdate!     
         ?>
     <div class="clear">
         <div class="mainwp-row">
-            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_plugins_outdate; ?> </span> <?php _e('Plugin','mainwp'); ?><?php if ($total_plugins_outdate > 0) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?></span>
+            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_plugins_outdate; ?> </span> <?php _e('Plugin','mainwp'); ?><?php if ($total_plugins_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?></span>
             <span class="mainwp-mid-col">&nbsp;</span>            
             <span class="mainwp-right-col"><a href="#" id="mainwp_plugins_outdate_show" onClick="return rightnow_show('plugins_outdate');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
             
@@ -1328,10 +1328,10 @@ class MainWPRightNow
                     }
                 ?>
                 <div id="wp_plugins_outdate_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode($website->name); ?>" <?php if ($globalView) { ?>style="display: none"<?php } ?>>
-                    <?php
-                    foreach ($plugins_outdate as $plugin_name => $plugin_outdate)
+                    <?php                    
+                    foreach ($plugins_outdate as $slug => $plugin_outdate)
                     {
-                        $plugin_name = urlencode($plugin_name);
+                        $plugin_name = urlencode($slug);
                         
                         $now = new \DateTime();
                         $last_updated = $plugin_outdate['last_updated'];
@@ -1342,7 +1342,7 @@ class MainWPRightNow
                         ?>
                         <div class="mainwp-row" plugin_outdate_slug="<?php echo $plugin_name; ?>" dismissed="0">
                                 <span class="mainwp-left-col">
-                                    <?php if ($globalView) { ?>&nbsp;&nbsp;&nbsp;<?php } ?><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.$pluginsOutdateInfo[$plugin_name]['slug'].'&url=' . (isset($plugin_outdate['PluginURI']) ? rawurlencode($plugin_outdate['PluginURI']) : '') . '&name='.rawurlencode($plugin_outdate['Name']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
+                                    <?php if ($globalView) { ?>&nbsp;&nbsp;&nbsp;<?php } ?><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.dirname($slug).'&url=' . (isset($plugin_outdate['PluginURI']) ? rawurlencode($plugin_outdate['PluginURI']) : '') . '&name='.rawurlencode($plugin_outdate['Name']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
                                                                                         class="thickbox" title="More information about <?php echo $plugin_outdate['Name']; ?>"><?php echo $plugin_outdate['Name']; ?></a><input type="hidden" id="wp_dismissed_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" value="0"/></span>
                                 <span class="mainwp-mid-col pluginsInfo" id="wp_outdate_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>"><?php echo $plugin_outdate['Version']; ?> | <?php echo $outdate_notice; ?></span>
                                 <span class="mainwp-right-col pluginsAction">
@@ -1369,9 +1369,9 @@ class MainWPRightNow
                     ?>
                     <div class="mainwp-row">
                         <span class="mainwp-left-col">
-                            <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.$pluginsOutdateInfo[$slug]['slug'].'&url=' . (isset($plugin_outdate['PluginURI']) ? rawurlencode($plugin_outdate['PluginURI']) : '') . '&name='.rawurlencode($plugin_outdate['Name']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-                                                                                                                        class="thickbox" title="More information about <?php echo $pluginsOutdateInfo[$slug]['name']; ?>">
-                                <?php echo $pluginsOutdateInfo[$slug]['name']; ?>
+                            <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.dirname($slug).'&url=' . (isset($plugin_outdate['PluginURI']) ? rawurlencode($plugin_outdate['PluginURI']) : '') . '&name='.rawurlencode($plugin_outdate['Name']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
+                                                                                                                        class="thickbox" title="More information about <?php echo $pluginsOutdateInfo[$slug]['Name']; ?>">
+                                <?php echo $pluginsOutdateInfo[$slug]['Name']; ?>
                             </a>
                         </span>
                         <span class="mainwp-mid-col">
@@ -1381,14 +1381,14 @@ class MainWPRightNow
                         </span>
                         <span class="mainwp-right-col"> 
                              <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                                <a href="#" class="button" onClick="return rightnow_plugins_outdate_dismiss_all('<?php echo $plugin_name; ?>', '<?php echo urlencode($pluginsOutdateInfo[$slug]['name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a>
+                                <a href="#" class="button" onClick="return rightnow_plugins_outdate_dismiss_all('<?php echo $plugin_name; ?>', '<?php echo urlencode($pluginsOutdateInfo[$slug]['Name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a>
                             <?php } ?>                                                        
                         </span>
                     </div>
                     <?php
                     }
                     ?>
-                    <div plugin_outdate_slug="<?php echo $plugin_name; ?>" plugin_name="<?php echo urlencode($pluginsOutdateInfo[$slug]['name']); ?>" <?php if ($globalView) { ?>style="display: none"<?php } ?>>
+                    <div plugin_outdate_slug="<?php echo $plugin_name; ?>" plugin_name="<?php echo urlencode($pluginsOutdateInfo[$slug]['Name']); ?>" <?php if ($globalView) { ?>style="display: none"<?php } ?>>
                         <?php
                         @MainWPDB::data_seek($websites, 0);
                         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
@@ -1425,9 +1425,9 @@ class MainWPRightNow
                                     <?php if ($globalView) { ?>
                                     &nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a>
                                     <?php } else { ?>
-                                        <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.$pluginsOutdateInfo[$slug]['slug'].'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-                                                                                                                                    class="thickbox" title="More information about <?php echo $pluginsOutdateInfo[$slug]['name']; ?>">
-                                            <?php echo $pluginsOutdateInfo[$slug]['name']; ?>
+                                        <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.dirname($slug).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
+                                                                                                                                    class="thickbox" title="More information about <?php echo $pluginsOutdateInfo[$slug]['Name']; ?>">
+                                            <?php echo $pluginsOutdateInfo[$slug]['Name']; ?>
                                         </a>
                                     <?php }?>
                                 </span>
@@ -1451,11 +1451,11 @@ class MainWPRightNow
     
     
        <?php
-        //WP theme outdate!         
+        //WP theme outdate!          
         ?>
     <div class="clear">
         <div class="mainwp-row">
-            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_themes_outdate; ?> </span> <?php _e('Theme','mainwp'); ?><?php if ($total_themes_outdate > 0) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?></span>
+            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_themes_outdate; ?> </span> <?php _e('Theme','mainwp'); ?><?php if ($total_themes_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?></span>
             <span class="mainwp-mid-col">&nbsp;</span>            
             <span class="mainwp-right-col"><a href="#" id="mainwp_themes_outdate_show" onClick="return rightnow_show('themes_outdate');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
             

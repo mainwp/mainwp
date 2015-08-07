@@ -1271,7 +1271,7 @@ class MainWPRightNow
         ?>
     <div class="clear">
         <div class="mainwp-row">
-            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_plugins_outdate; ?> </span> <?php _e('Plugin','mainwp'); ?><?php if ($total_plugins_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?></span>
+            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_plugins_outdate; ?> </span> <?php _e('Plugin','mainwp'); ?><?php if ($total_plugins_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>&nbsp;<?php MainWPUtility::renderToolTip(__('This feature checks the last updated status of plugins and alerts you if not updated in a specific amount of time. This gives you insight on if a plugin may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?></span>
             <span class="mainwp-mid-col">&nbsp;</span>            
             <span class="mainwp-right-col"><a href="#" id="mainwp_plugins_outdate_show" onClick="return rightnow_show('plugins_outdate');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
             
@@ -1455,7 +1455,7 @@ class MainWPRightNow
         ?>
     <div class="clear">
         <div class="mainwp-row">
-            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_themes_outdate; ?> </span> <?php _e('Theme','mainwp'); ?><?php if ($total_themes_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?></span>
+            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_themes_outdate; ?> </span> <?php _e('Theme','mainwp'); ?><?php if ($total_themes_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>&nbsp;<?php MainWPUtility::renderToolTip(__('This feature checks the last updated status of themes and alerts you if not updated in a specific amount of time. This gives you insight on if a theme may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?></span>
             <span class="mainwp-mid-col">&nbsp;</span>            
             <span class="mainwp-right-col"><a href="#" id="mainwp_themes_outdate_show" onClick="return rightnow_show('themes_outdate');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
             

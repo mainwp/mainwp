@@ -7089,6 +7089,16 @@ mainwp_force_destroy_sessions = function() {
 mainwp_force_destroy_sessions_part_2 = function(id) {
     if (id >= mainwp_force_destroy_sessions_websites.length) {
         mainwp_force_destroy_sessions_websites = [];
+        if (mainwp_force_destroy_sessions_successed == mainwp_force_destroy_sessions_websites.length) {
+            setTimeout(function ()
+            {
+                jQuery('#refresh-status-box').dialog('destroy');
+                location.href = location.href;
+            }, 3000);
+        }
+        jQuery('#refresh-status-box').dialog('destroy');
+        location.href = location.href;
+            
         return;
     }
 
@@ -7105,6 +7115,7 @@ mainwp_force_destroy_sessions_part_2 = function(id) {
         if ('error' in response) {
             dashboard_update_site_status(website_id, '<font color="red">' + __('ERROR') + '</font>');
         } else if ('success' in response) {
+            mainwp_force_destroy_sessions_successed += 1;
             dashboard_update_site_status(website_id, __('DONE'));
         } else {
             dashboard_update_site_status(website_id, '<font color="red">' + __('UNKNOWN') + '</font>');
@@ -7121,6 +7132,8 @@ mainwp_force_destroy_sessions_part_2 = function(id) {
 
 };
 
+ var mainwp_force_destroy_sessions_successed = 0;
+ 
 // MainWP Tools
 jQuery(document).ready(function () {
     var mainwp_force_destroy_sessions_websites = []; 

@@ -345,21 +345,22 @@ class MainWPSystem
                 <?php
             }
         }
-        
+                
         if ($this->current_version == '2.0.22' || $this->current_version == '2.0.23') {
-            if (get_option('mainwp_fixed_security_2022') != 1) {
-            ?>
-                <div class="mainwp_info-box-red">
-                    <p>                    
-                    <span><?php _e("This update includes additional security hardening. In order to complete the process please update all your Child Sites to the lates version MainWP Child version then follow these steps:<br />
-                            Click <a href=\"admin.php?page=MainWPTools\" \"MainWP Tools\">Here</a> to go to the Tools Page<br />
-                            Press the Establish New Connection Button and Let it Run<br />
-                            Once completed the hardening is done.", 'mainwp');
-                    ?>
-                    </span>
-                    </p>
-                </div>
-            <?php        
+            if (get_option('mainwp_installation_warning_hide_the_notice')  == 'yes') {           
+                if (get_option('mainwp_fixed_security_2022') != 1) {
+                ?>
+                    <div class="mainwp_info-box-red">
+                        <span><?php _e("This update includes additional security hardening. In order to complete the process please update all your Child Sites to the lates version MainWP Child version then follow these steps:", 'mainwp'); ?>
+                            <ol>                            
+                                <li><?php _e("Click <a style=\"text-decoration: none;\" href=\"admin.php?page=MainWPTools\" \"MainWP Tools\">Here</a> to go to the Tools Page.", 'mainwp'); ?></li>
+                                <li><?php _e("Press the Establish New Connection Button and Let it Run.", 'mainwp'); ?></li>
+                                <li><?php _e("Once completed the hardening is done.", 'mainwp'); ?></li>
+                            </ol>
+                        </span>
+                    </div>
+                <?php        
+                }
             }
         }
         

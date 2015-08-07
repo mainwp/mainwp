@@ -489,7 +489,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
                                     + (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
                             END ' . ($_GET['order'] == 'asc' ? 'asc' : 'desc');
             }
-            else if (($_REQUEST['orderby'] == 'last_post'))
+            else if ((isset($_REQUEST['orderby']) && ($_REQUEST['orderby'] == 'last_post')))
             {
                 $orderby = 'wp_sync.last_post_gmt ' . ($_GET['order'] == 'asc' ? 'asc' : 'desc');
             }

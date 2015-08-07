@@ -351,12 +351,15 @@ class MainWPSystem
                 if (get_option('mainwp_fixed_security_2022') != 1) {
                 ?>
                     <div class="mainwp_info-box-red">
-                        <span><?php _e("This update includes additional security hardening. In order to complete the process please update all your Child Sites to the lates version MainWP Child version then follow these steps:", 'mainwp'); ?>
+                        <span><?php _e("<strong>This update includes additional security hardening.</strong>", 'mainwp'); ?>
+                            <p><?php _e("In order to complete the security hardening process follow these steps:", 'mainwp'); ?></p>
                             <ol>                            
-                                <li><?php _e("Click <a style=\"text-decoration: none;\" href=\"admin.php?page=MainWPTools\" \"MainWP Tools\">Here</a> to go to the Tools Page.", 'mainwp'); ?></li>
+                                <li><?php _e("Update all your Child Sites to the latest version MainWP Child.", 'mainwp'); ?></li>
+                                <li><?php _e("Then Go to the MainWP Tools Page by clicking <a style=\"text-decoration: none;\" href=\"admin.php?page=MainWPTools\" \"MainWP Tools\">Here</a>.", 'mainwp'); ?></li>
                                 <li><?php _e("Press the Establish New Connection Button and Let it Run.", 'mainwp'); ?></li>
-                                <li><?php _e("Once completed the hardening is done.", 'mainwp'); ?></li>
+                                <li><?php _e("Once completed the security hardening is done.", 'mainwp'); ?></li>
                             </ol>
+                            <?php _e("<i>This message will automatically go away once you have completed the hardening process.</i>", 'mainwp'); ?>
                         </span>
                     </div>
                 <?php        

@@ -359,7 +359,7 @@ class MainWPSystem
                                 <li><?php _e("Press the Establish New Connection Button and Let it Run.", 'mainwp'); ?></li>
                                 <li><?php _e("Once completed the security hardening is done.", 'mainwp'); ?></li>
                             </ol>
-                            <?php _e("<i>This message will automatically go away once you have completed the hardening process.</i>", 'mainwp'); ?>
+                            <?php _e("<em>This message will automatically go away once you have completed the hardening process.</em>", 'mainwp'); ?>
                         </span>
                     </div>
                 <?php        

@@ -81,10 +81,12 @@ class MainWPServerInformation
                         <tr><td style="background: #333; color: #fff;" colspan="5"><?php _e('WORDPRESS','mainwp'); ?></td></tr><?php
                         self::renderRow('WordPress Version', '>=', '3.6', 'getWordpressVersion', '', '', null, 'MainWP requires the WordPress version 3.6 or higher. If the condition is not met, please update your Website. Click the help icon to read more.');
                         self::renderRow('WordPress Memory Limit', '>=', '64M', 'getWordpressMemoryLimit', '', '', null, 'MainWP requires at least 64MB for proper functioning.');
+                        self::renderRow('MultiSite Disabled', '=', true, 'checkIfMultisite', '', '', null, 'MainWP Plugin has not been tested on WordPress Multisite Setups. There is a chance that some features will not work properly');
                         ?><tr><td style="background: #333; color: #fff;" colspan="5"><?php _e('PHP SETTINGS','mainwp'); ?></td></tr><?php
                         self::renderRow('PHP Version', '>=', '5.3', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.3 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you. Click the help icon to read more.');
                         self::renderRow('PHP Safe Mode Disabled', '=', true, 'getPHPSafeMode', '', '', null, 'MainWP Requires PHP Safe Mode to be disabled.');
                         self::renderRow('PHP Max Execution Time', '>=', '30', 'getMaxExecutionTime', 'seconds', '=', '0', 'Changed by modifying the value max_execution_time in your php.ini file. Click the help icon to read more.');
+                        self::renderRow('PHP Max Input Time', '>=', '30', 'getMaxInputTime', 'seconds', '=', '0', 'Required 30 or more for larger backups. Changed by modifying the value max_input_time in your php.ini file. Click the help icon to read more.');
                         self::renderRow('PHP Memory Limit', '>=', '128M', 'getPHPMemoryLimit', '', '', null, 'MainWP requires at least 128MB for proper functioning (256M+ recommended for big backups)', 'filesize');
                         self::renderRow('PHP Upload Max Filesize', '>=', '2M', 'getUploadMaxFilesize', '(2MB+ best for upload of big plugins)', '', null, 'Changed by modifying the value upload_max_filesize in your php.ini file. Click the help icon to read more.', 'filesize');
                         self::renderRow('PHP Post Max Size', '>=', '2M', 'getPostMaxSize', '(2MB+ best for upload of big plugins)', '', null, 'Changed by modifying the value post_max_size in your php.ini file. Click the help icon to read more.', 'filesize');
@@ -101,7 +103,7 @@ class MainWPServerInformation
 
                         ?><tr><td style="background: #333; color: #fff;" colspan="5"><?php _e('MISC','mainwp'); ?></td></tr><?php
                         self::renderRow('PCRE Backtracking Limit', '>=', '10000', 'getOutputBufferSize', '', '', null, 'Changed by modifying the value pcre.backtrack_limit in your php.ini file. Click the help icon to read more.');
-                        ?><tr><td><?php MainWPUtility::renderToolTip('MainWP requires the FS_METHOD to be set to direct','mainwp'); ?></td><td><?php _e('FileSystem Method','mainwp'); ?></td><td><?php echo '= ' . __('direct','mainwp'); ?></td><td><?php echo self::getFileSystemMethod(); ?></td><td><?php echo self::getFileSystemMethodCheck(); ?></td></tr><?php
+                        ?><tr><td><a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWPUtility::renderToolTip('MainWP requires the FS_METHOD to be set to direct'); ?></a></td><td><?php _e('FileSystem Method','mainwp'); ?></td><td><?php echo '= ' . __('direct','mainwp'); ?></td><td><?php echo self::getFileSystemMethod(); ?></td><td><?php echo self::getFileSystemMethodCheck(); ?></td></tr><?php
                         ?><tr><td style="background: #333; color: #fff;" colspan="5"><?php _e('SERVER INFORMATION','mainwp'); ?></td></tr>
                           <tr><td></td><td><?php _e('WordPress Root Directory','mainwp'); ?></td><td colspan="3"><?php self::getWPRoot(); ?></td></tr>
                           <tr><td></td><td><?php _e('Server Name','mainwp'); ?></td><td colspan="3"><?php self::getSeverName(); ?></td></tr>
@@ -356,6 +358,11 @@ class MainWPServerInformation
     <?php
     }
           
+    public static function checkIfMultisite() {
+        $isMultisite = !is_multisite() ? true : false;
+        return $isMultisite;
+    }
+          
     public static function checkCURLSSLInfo() {
         $isSupport = (self::getCurlSupport() && self::getSSLSupport()) ? true : false;            
         $checkCURL = version_compare(self::getCurlVersion(), "7.18.1", ">=");                  
@@ -460,6 +467,11 @@ class MainWPServerInformation
     protected static function getMaxExecutionTime()
     {
         return ini_get('max_execution_time');
+    }
+
+    protected static function getMaxInputTime()
+    {
+        return ini_get('max_input_time');
     }
 
     protected static function getUploadMaxFilesize()

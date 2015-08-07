@@ -19,6 +19,8 @@ class MainWPSettings
     {
         add_submenu_page('mainwp_tab', __('Settings Global options','mainwp'), ' <span id="mainwp-Settings">'. __('Settings','mainwp') .'</span>', 'read', 'Settings', array(MainWPSettings::getClassName(), 'render'));
         add_submenu_page('mainwp_tab', __('Settings Help','mainwp'), ' <div class="mainwp-hidden">'. __('Settings Help','mainwp') .'</div>', 'read', 'SettingsHelp', array(MainWPSettings::getClassName(), 'QSGManageSettings'));
+        add_submenu_page('mainwp_tab', __('Dashboard Options','mainwp'), ' <div class="mainwp-hidden">'. __('Dashboard Options','mainwp') .'</div>', 'read', 'DashboardOptions', array(MainWPSettings::getClassName(), 'renderDashboardOptions'));
+        add_submenu_page('mainwp_tab', __('MainWP Tools','mainwp'), ' <div class="mainwp-hidden">'. __('MainWP Tools','mainwp') .'</div>', 'read', 'MainWPTools', array(MainWPSettings::getClassName(), 'renderMainWPTools'));
 
         self::$subPages = apply_filters('mainwp-getsubpages-settings', array(array('title'=> __('Advanced Options', 'mainwp'), 'slug' => 'Advanced', 'callback' =>  array(MainWPSettings::getClassName(), 'renderAdvanced'))));
         if (isset(self::$subPages) && is_array(self::$subPages))
@@ -28,6 +30,8 @@ class MainWPSettings
                 add_submenu_page('mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Settings' . $subPage['slug'], $subPage['callback']);
             }
         }
+
+       
     }
 
     public static function initMenuSubPages()
@@ -49,6 +53,8 @@ class MainWPSettings
                         <?php
                         }
                     ?>
+                    <a href="<?php echo admin_url('admin.php?page=DashboardOptions'); ?>" class="mainwp-submenu"><?php _e('Dashboard Options','mainwp'); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=MainWPTools'); ?>" class="mainwp-submenu"><?php _e('MainWP Tools','mainwp'); ?></a>
                     <a href="<?php echo admin_url('admin.php?page=OfflineChecks'); ?>" class="mainwp-submenu"><?php _e('Offline Checks','mainwp'); ?></a>
                 </div>
             </div>
@@ -91,6 +97,8 @@ class MainWPSettings
                 }
             }
             ?>
+            <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'DashboardOptions') { echo "nav-tab-active"; } ?>" href="admin.php?page=DashboardOptions"><?php _e('Dashboard Options','mainwp'); ?></a>
+            <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'MainWPTools') { echo "nav-tab-active"; } ?>" href="admin.php?page=MainWPTools"><?php _e('MainWP Tools','mainwp'); ?></a>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'OfflineChecks') { echo "nav-tab-active"; } ?>" href="admin.php?page=OfflineChecks"><?php _e('Offline Checks','mainwp'); ?></a>
         </div>
         <div id="mainwp_wrap-inside">
@@ -239,6 +247,93 @@ class MainWPSettings
         self::renderFooter('');
     }
 
+    public static function renderDashboardOptions()
+    {
+        if (!mainwp_current_user_can("dashboard", "manage_dashboard_settings")) {
+            mainwp_do_not_have_permissions("manage dashboard settings");
+            return;
+        }
+
+        self::renderHeader('DashboardOptions');
+        ?>
+        <form method="POST" action="" id="mainwp-settings-page-form">
+            <div class="postbox" id="mainwp-dashboard-options">
+                <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Dashboard Options','mainwp'); ?></span></h3>
+                <div class="inside">
+                <table class="form-table">
+                    <tbody>
+                        <tr>
+                            <th scope="row"><?php _e('Hide MainWP Footer','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('If set to YES, fixed footer will be appended to the bottom of the page','mainwp')); ?></th>
+                            <td>
+                                <div class="mainwp-checkbox">
+                                <input type="checkbox" name="mainwp_hide_footer"
+                                       id="mainwp_hide_footer" <?php echo ((get_option('mainwp_hide_footer', 1) == 1) ? 'checked="true"' : ''); ?>/>
+                                <label for="mainwp_hide_footer"></label>
+                               </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php _e('Use Child Site Favicon','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Set to YES if you want to use Child Site Favicon.','mainwp')); ?></th>
+                            <td>
+                                <div class="mainwp-checkbox">
+                                <input type="checkbox" name="mainwp_use_favicon"
+                                       id="mainwp_use_favicon" <?php echo ((get_option('mainwp_use_favicon', 1) == 1) ? 'checked="true"' : ''); ?>/>
+                                <label for="mainwp_use_favicon"></label>
+                               </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php _e('Hide MainWP Tips','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('If set to YES, MainWP Tips will be hidden','mainwp')); ?></th>
+                            <td>
+                                <div class="mainwp-checkbox">
+                                <input type="checkbox" name="mainwp_hide_tips"
+                                       id="mainwp_hide_tips" <?php echo ((get_option('mainwp_hide_tips', 1) == 1) ? 'checked="true"' : ''); ?>/>
+                                <label for="mainwp_hide_tips"></label>
+                               </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                </table>
+                </div>
+            </div>
+        <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>"/></p>
+        </form>
+        <?php
+        self::renderFooter('DashboardOptions');
+    }
+
+    
+    public static function renderMainWPTools()
+    {
+        if (!mainwp_current_user_can("dashboard", "manage_dashboard_settings")) {
+            mainwp_do_not_have_permissions("manage dashboard settings");
+            return;
+        }
+
+        self::renderHeader('MainWPTools');
+        ?>
+            <div class="postbox" id="mainwp-tools">
+                <h3 class="mainwp_box_title"><span><i class="fa fa-wrench"></i> <?php _e('MainWP Tools','mainwp'); ?></span></h3>
+                <div class="inside">
+                    <table class="form-table">
+                        <tbody>
+                            <tr>
+                                <th scope="row"><?php _e('Force Dashboard to Establish New Connection','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Use this option to establish new connection with child sites.','mainwp')); ?></th>
+                                <td>
+                                    <input type="submit" name="" id="force-destroy-sessions-button" class="button-primary button" value="<?php _e('Establish New Connection','mainwp'); ?>"/><br/>
+                                    <em>
+                                        <?php _e('Forces your Dashboard to reconnect with your Child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.','mainwp'); ?>
+                                    </em>
+                                </td>
+                            </tr>
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        <?php
+        self::renderFooter('MainWPTools');
+    }
+    
     public static function QSGManageSettings() {
         self::renderHeader('SettingsHelp');
     ?><div style="text-align: center"><a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e('Show Quick Start Guide','mainwp'); ?></a></div>

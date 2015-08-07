@@ -12,7 +12,7 @@ class MainWPInstallBulk
     //Has to be called in System constructor - adds handling for the main page
     public static function init() {
         add_action('admin_init', array(MainWPInstallBulk::getClassName(), 'admin_init'));
-    }
+    }            
 
     //Handles the uploading of a file
     public static function admin_init()

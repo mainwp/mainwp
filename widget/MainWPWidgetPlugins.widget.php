@@ -53,14 +53,49 @@ class MainWPWidgetPlugins
 		
 		$inactive_plugins = MainWPUtility::getSubArrayHaving($allPlugins, 'active', 0);
 		$inactive_plugins = MainWPUtility::sortmulti($inactive_plugins, 'name', 'desc');
+                
+                $plugins_outdate = array();
+                
+                if ((count($allPlugins)> 0) && $website) {
+                      
+                    $plugins_outdate = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'plugins_outdate_info'), true);
+                    if (!is_array($plugins_outdate))
+                        $plugins_outdate = array();
+
+                    $pluginsOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'plugins_outdate_dismissed'), true);            
+                    if (is_array($pluginsOutdateDismissed)) {                                        
+                        $plugins_outdate = array_diff_key($plugins_outdate, $pluginsOutdateDismissed);
+                    }
+
+                    $userExtension = MainWPDB::Instance()->getUserExtension();  
+                    $decodedDismissedPlugins = json_decode($userExtension->dismissed_plugins, true);
+                   
+                    if (is_array($decodedDismissedPlugins)) {
+                        $plugins_outdate = array_diff_key($plugins_outdate, $decodedDismissedPlugins);
+                    }
+                }
 		
 	?>
-        <div class="clear">            
+        <div class="clear mwp_plugintheme_widget">            
             <a class="mainwp_action left mainwp_action_down plugins_actived_lnk" href="#"><?php _e('Active','mainwp'); ?> (<?php echo count($actived_plugins); ?>)</a><a class="mainwp_action mid plugins_inactive_lnk right" href="#" ><?php _e('Inactive','mainwp'); ?> (<?php echo count($inactive_plugins); ?>)</a><br/><br/>
             <div class="mainwp_plugins_active">
                 <?php
+                $str_format = __(" | Last Updated %s Days Ago", "mainwp"); 
                 for ($i = 0; $i < count($actived_plugins); $i++)
-                {                    
+                {   
+                    $outdate_notice = "";                    
+                    $slug = $actived_plugins[$i]['slug'];
+                    
+                    if (isset($plugins_outdate[$slug])) {
+                        $plugin_outdate = $plugins_outdate[$slug];
+
+                        $now = new \DateTime();
+                        $last_updated = $plugin_outdate['last_updated'];
+                        $plugin_last_updated_date = new \DateTime( '@' . $last_updated );
+                        $diff_in_days = $now->diff( $plugin_last_updated_date )->format( '%a' );                        
+                        $outdate_notice = sprintf( $str_format, $diff_in_days );                        
+                    }
+                    
                 ?>
                 <div class="mainwp-row mainwp-active">
                     <input class="pluginSlug" type="hidden" name="slug" value="<?php echo $actived_plugins[$i]['slug']; ?>"/>
@@ -69,7 +104,7 @@ class MainWPWidgetPlugins
                             <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.dirname($actived_plugins[$i]['slug']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
                                                                                                                 class="thickbox" title="More information about <?php echo $actived_plugins[$i]['name']; ?>">
                         <?php echo $actived_plugins[$i]['name']; ?>
-                    </a><?php echo  " " . $actived_plugins[$i]['version']; ?> 
+                    </a><?php echo  " " . $actived_plugins[$i]['version']; ?> <?php echo $outdate_notice; ?>
 					</span>					       
                     <div class="mainwp-right-col pluginsAction">
                         <?php if (mainwp_current_user_can("dashboard", "activate_deactivate_plugins")) { ?>
@@ -86,7 +121,18 @@ class MainWPWidgetPlugins
             <div class="mainwp_plugins_inactive" style="display: none">
                 <?php
                 for ($i = 0; $i < count($inactive_plugins); $i++)
-                {                    
+                {        
+                    $outdate_notice = "";                    
+                    $slug = $inactive_plugins[$i]['slug'];
+                    if (isset($plugins_outdate[$slug])) {
+                        $plugin_outdate = $plugins_outdate[$slug];
+
+                        $now = new \DateTime();
+                        $last_updated = $plugin_outdate['last_updated'];
+                        $plugin_last_updated_date = new \DateTime( '@' . $last_updated );
+                        $diff_in_days = $now->diff( $plugin_last_updated_date )->format( '%a' );
+                        $outdate_notice = sprintf( $str_format, $diff_in_days );
+                    }
                 ?>
                 <div class="mainwp-row mainwp-inactive">
                     <input class="pluginSlug" type="hidden" name="slug" value="<?php echo $inactive_plugins[$i]['slug']; ?>"/>
@@ -95,7 +141,7 @@ class MainWPWidgetPlugins
                     <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.dirname($inactive_plugins[$i]['slug']).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
                                                                                                                                                                                                                     class="thickbox" title="More information about <?php echo $inactive_plugins[$i]['name']; ?>">
                                     <?php echo $inactive_plugins[$i]['name']; ?>
-                            </a><?php echo  " " . $inactive_plugins[$i]['version']; ?> 							
+                            </a><?php echo  " " . $inactive_plugins[$i]['version']; ?> <?php echo $outdate_notice; ?>							
                     </span>                                       
                     <div class="mainwp-right-col pluginsAction">
                         <?php if (mainwp_current_user_can("dashboard", "activate_deactivate_plugins")) { ?>

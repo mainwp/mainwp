@@ -59,7 +59,9 @@ class MainWPSync
                     'cloneSites' => (!$cloneEnabled ? 0 : urlencode(json_encode($cloneSites))),
                     'pluginConflicts' => json_encode($pluginConflicts),
                     'themeConflicts' => json_encode($themeConflicts),
-                    'othersData' => json_encode($othersData)
+                    'othersData' => json_encode($othersData),
+                    'server' => get_admin_url(),
+                    'numberdaysOutdatePluginTheme' => get_option('mainwp_numberdays_Outdate_Plugin_Theme', 365)
                 ),
                 true, $pForceFetch
             );
@@ -284,7 +286,27 @@ class MainWPSync
         {
             MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'favi_icon', "");
         }
-       
+        
+        if (isset($information['plugins_outdate_info']))
+        {
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'plugins_outdate_info', @json_encode($information['plugins_outdate_info']));
+            $done = true;
+        }
+        else
+        {
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'plugins_outdate_info', $emptyArray);
+        }
+        
+        if (isset($information['themes_outdate_info']))
+        {
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'themes_outdate_info', @json_encode($information['themes_outdate_info']));
+            $done = true;
+        }
+        else
+        {
+            MainWPDB::Instance()->updateWebsiteOption($pWebsite, 'themes_outdate_info', $emptyArray);
+        }
+        
         if (!$done)
         {
             if (isset($information['wpversion']))

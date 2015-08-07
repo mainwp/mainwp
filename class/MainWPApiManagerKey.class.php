@@ -31,9 +31,8 @@ class MainWPApiManagerKey {
         }
         
 	// API Key URL
-	public function create_software_api_url( $args ) {
-
-		$api_url = esc_url_raw( add_query_arg( 'wc-api', 'am-software-api', MainWPApiManager::instance()->upgrade_url ) );                        
+	public function create_software_api_url( $args ) {               
+		$api_url = esc_url_raw( add_query_arg( 'wc-api', 'am-software-api', MainWPApiManager::instance()->getUpgradeUrl() ) );                        
                 
                 $query_url = "";
                 foreach ($args as $key => $value)
@@ -98,7 +97,7 @@ class MainWPApiManagerKey {
 		$target_url = self::create_software_api_url( $args );                
 		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => self::$apisslverify));
                 
-//                $request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/am-software-api/', array('body' => $args) );
+//                $request = wp_remote_post( MainWPApiManager::instance()->getUpgradeUrl() . 'wc-api/am-software-api/', array('body' => $args) );
 
 		if( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 		// Request failed
@@ -121,7 +120,8 @@ class MainWPApiManagerKey {
 		$target_url = self::create_software_api_url( $args );                
 		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => self::$apisslverify));
                 
-//                $request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/am-software-api/', array('body' => $args) );
+                
+//                $request = wp_remote_post( MainWPApiManager::instance()->getUpgradeUrl() . 'wc-api/am-software-api/', array('body' => $args) );
                 
 		if( is_wp_error( $request )) {    
                     if (self::$apisslverify == 1) {
@@ -156,7 +156,7 @@ class MainWPApiManagerKey {
 		$target_url = self::create_software_api_url( $args );                
 		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => self::$apisslverify));
                 
-//                $request = wp_remote_post( MainWPApiManager::instance()->upgrade_url . 'wc-api/am-software-api/', array('body' => $args) );
+//                $request = wp_remote_post( MainWPApiManager::instance()->getUpgradeUrl() . 'wc-api/am-software-api/', array('body' => $args) );
 
 		if( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 		// Request failed

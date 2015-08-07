@@ -56,7 +56,7 @@ class MainWPSystem
     }
 
     public function __construct($mainwp_plugin_file)
-    {
+    {      
         MainWPSystem::$instance = $this;
         $this->update();
         $this->plugin_slug = plugin_basename($mainwp_plugin_file);
@@ -73,7 +73,7 @@ class MainWPSystem
             if (version_compare($currentVersion, $this->current_version, '<')) {
                 update_option('mainwp_reset_user_tips', array());
                 MainWPUtility::update_option('mainwp_reset_user_cookies', array());
-                delete_option('mainwp_api_sslVerifyCertificate');
+                //delete_option('mainwp_api_sslVerifyCertificate');
             }
             MainWPUtility::update_option('mainwp_plugin_version', $this->current_version);
         }
@@ -343,6 +343,27 @@ class MainWPSystem
                     	</p>
                 </div>                    
                 <?php
+            }
+        }
+                
+        if ($this->current_version == '2.0.22' || $this->current_version == '2.0.23') {
+            if (get_option('mainwp_installation_warning_hide_the_notice')  == 'yes') {           
+                if (get_option('mainwp_fixed_security_2022') != 1) {
+                ?>
+                    <div class="mainwp_info-box-red">
+                        <span><?php _e("<strong>This update includes additional security hardening.</strong>", 'mainwp'); ?>
+                            <p><?php _e("In order to complete the security hardening process follow these steps:", 'mainwp'); ?></p>
+                            <ol>                            
+                                <li><?php _e("Update all your Child Sites to the latest version MainWP Child.", 'mainwp'); ?></li>
+                                <li><?php _e("Then Go to the MainWP Tools Page by clicking <a style=\"text-decoration: none;\" href=\"admin.php?page=MainWPTools\" \"MainWP Tools\">Here</a>.", 'mainwp'); ?></li>
+                                <li><?php _e("Press the Establish New Connection Button and Let it Run.", 'mainwp'); ?></li>
+                                <li><?php _e("Once completed the security hardening is done.", 'mainwp'); ?></li>
+                            </ol>
+                            <?php _e("<em>This message will automatically go away once you have completed the hardening process.</em>", 'mainwp'); ?>
+                        </span>
+                    </div>
+                <?php        
+                }
             }
         }
         
@@ -1560,7 +1581,7 @@ class MainWPSystem
         <?php
         } 
        
-        if (!$hide_footer && self::isMainWPPages()) {           
+        if (!$hide_footer && self::isMainWPPages() && !self::isHideFooter()) {           
             ?>
                 #wpfooter {
                     background: #333 !important;;
@@ -1579,6 +1600,12 @@ class MainWPSystem
         return false;                
     }
     
+    public static function isHideFooter() { 
+        if (get_option('mainwp_hide_footer', 1))
+                return true;
+        return false;        
+    }
+        
     function login_redirect($redirect_to, $request, $user)
     {
         if (session_id() == '') session_start();
@@ -1792,13 +1819,23 @@ class MainWPSystem
         if (!current_user_can('update_core')) remove_action('admin_notices', 'update_nag', 3);
     }
 
-    function handleSettingsPost() {
-        if (isset($_GET['page']) && $_GET['page'] == "Settings" && isset($_POST['submit']))
-        {
-            if (isset($_POST['mainwp_primaryBackup'])) {
-                MainWPUtility::update_option('mainwp_primaryBackup', $_POST['mainwp_primaryBackup']);
+    function handleSettingsPost() {        
+        if (isset($_GET['page'])) {
+           if ($_GET['page'] == 'DashboardOptions') {             
+                if (isset($_POST['submit']))
+                {
+                   MainWPUtility::update_option('mainwp_use_favicon', (!isset($_POST['mainwp_use_favicon']) ? 0 : 1));
+                   MainWPUtility::update_option('mainwp_hide_footer', (!isset($_POST['mainwp_hide_footer']) ? 0 : 1));
+                   MainWPUtility::update_option('mainwp_hide_tips', (!isset($_POST['mainwp_hide_tips']) ? 0 : 1));
+                }
+            } else if ($_GET['page'] == "Settings") {
+                if (isset($_POST['submit'])) {
+                    if (isset($_POST['mainwp_primaryBackup'])) {
+                        MainWPUtility::update_option('mainwp_primaryBackup', $_POST['mainwp_primaryBackup']);
+                    }
+                }
             }
-        }
+        }        
     }
 
     //This function will read the metaboxes & save them to the post
@@ -2049,10 +2086,13 @@ class MainWPSystem
         if (MainWPUtility::isAdmin()) {
             wp_enqueue_script('mainwp-admin');
         }
-
-        wp_enqueue_script('mainwp-rightnow', MAINWP_PLUGIN_URL . 'js/mainwp-rightnow.js', array(), $this->current_version);
-        wp_enqueue_script('mainwp-managesites', MAINWP_PLUGIN_URL . 'js/mainwp-managesites.js', array(), $this->current_version);
-        wp_enqueue_script('mainwp-extensions', MAINWP_PLUGIN_URL . 'js/mainwp-extensions.js', array(), $this->current_version);
+        
+        if (self::isMainWPPages()) {
+            wp_enqueue_script('mainwp-rightnow', MAINWP_PLUGIN_URL . 'js/mainwp-rightnow.js', array(), $this->current_version);
+            wp_enqueue_script('mainwp-managesites', MAINWP_PLUGIN_URL . 'js/mainwp-managesites.js', array(), $this->current_version);
+            wp_enqueue_script('mainwp-extensions', MAINWP_PLUGIN_URL . 'js/mainwp-extensions.js', array(), $this->current_version);
+        }
+        
         wp_enqueue_script('mainwp-ui', MAINWP_PLUGIN_URL . 'js/mainwp-ui.js', array(), $this->current_version);
         wp_enqueue_script('mainwp-fileuploader', MAINWP_PLUGIN_URL . 'js/fileuploader.js', array(), $this->current_version);
         wp_enqueue_script('mainwp-date', MAINWP_PLUGIN_URL . 'js/date.js', array(), $this->current_version);
@@ -2115,7 +2155,8 @@ class MainWPSystem
 
     function sites_fly_menu() {
         global $wpdb ;
-        $websites = $wpdb->get_results("SELECT id,name,url FROM `" . $wpdb->prefix . "mainwp_wp`");
+        $where = MainWPDB::Instance()->getWhereAllowAccessSites();
+        $websites = $wpdb->get_results("SELECT id,name,url FROM `" . $wpdb->prefix . "mainwp_wp` WHERE 1 " . $where);
         ?>
             <div id="mainwp-sites-menu" style="direction: rtl;">
                 <div style="direction: ltr;">
@@ -2146,7 +2187,8 @@ class MainWPSystem
     function admin_footer_text()
     {
         if (!self::isMainWPPages()) return;
-                    
+        if (self::isHideFooter()) return;
+       
         if (isset($_SESSION['showTip'])) unset($_SESSION['showTip']);
         
         return '<a href="javascript:void(0)" id="mainwp-sites-menu-button" class="mainwp-white mainwp-right-margin-2"><i class="fa fa-globe fa-2x"></i></a>'.'<span style="font-size: 14px;"><i class="fa fa-info-circle"></i> ' . __('Currently managing ','mainwp') . MainWPDB::Instance()->getWebsitesCount()  .  __(' child sites with MainWP ','mainwp') . $this->current_version . __(' version. ','mainwp') . '</span>';
@@ -2171,9 +2213,6 @@ class MainWPSystem
     {
         if (!self::isMainWPPages()) return;
         
-        $output = '<a href="javascript:void(0)" id="dashboard_refresh" title="Sync Data" class="mainwp-left-margin-2 mainwp-green"><i class="fa fa-refresh fa-2x"></i></a> <a id="mainwp-add-new-button" class="mainwp-blue mainwp-left-margin-2" title="Add New" href="javascript:void(0)"><i class="fa fa-plus fa-2x"></i></a> <a class="mainwp-red mainwp-left-margin-2" title="Get MainWP Extensions" href="https://extensions.mainwp.com" target="_blank"><i class="fa fa-shopping-cart fa-2x"></i></a> <a class="mainwp-white mainwp-left-margin-2" title="Get Support" href="http://support.mainwp.com" target="_blank"><i class="fa fa-life-ring fa-2x"></i></a>' . '<a href="https://www.facebook.com/mainwp" class="mainwp-link-clean mainwp-left-margin-2" style="color: #3B5998;" target="_blank"><i class="fa fa-facebook-square fa-2x"></i></a> ' . ' <a href="https://twitter.com/mymainwp" class="mainwp-link-clean" target="_blank" style="color: #4099FF;"><i class="fa fa-twitter-square fa-2x"></i></a>.';
-
-
         $current_wpid = MainWPUtility::get_current_wpid();
         if ($current_wpid)
         {
@@ -2254,12 +2293,19 @@ class MainWPSystem
             <input id="refresh-status-close" type="button" name="Close" value="Close" class="button" />
         </div>
     <?php
-
-        self::sites_fly_menu();
-        self::add_new_links();
-
+        
+        if (!self::isHideFooter()) {
+            self::sites_fly_menu();
+            self::add_new_links();
+        }
+        
         $newOutput = ob_get_clean();
 
+        $output = "";
+        if (!self::isHideFooter()) {        
+            $output .= '<a href="javascript:void(0)" id="dashboard_refresh" title="Sync Data" class="mainwp-left-margin-2 mainwp-green"><i class="fa fa-refresh fa-2x"></i></a> <a id="mainwp-add-new-button" class="mainwp-blue mainwp-left-margin-2" title="Add New" href="javascript:void(0)"><i class="fa fa-plus fa-2x"></i></a> <a class="mainwp-red mainwp-left-margin-2" title="Get MainWP Extensions" href="https://extensions.mainwp.com" target="_blank"><i class="fa fa-shopping-cart fa-2x"></i></a> <a class="mainwp-white mainwp-left-margin-2" title="Get Support" href="http://support.mainwp.com" target="_blank"><i class="fa fa-life-ring fa-2x"></i></a>' . '<a href="https://www.facebook.com/mainwp" class="mainwp-link-clean mainwp-left-margin-2" style="color: #3B5998;" target="_blank"><i class="fa fa-facebook-square fa-2x"></i></a> ' . ' <a href="https://twitter.com/mymainwp" class="mainwp-link-clean" target="_blank" style="color: #4099FF;"><i class="fa fa-twitter-square fa-2x"></i></a>.';
+        }
+        
         return $output . $newOutput;
     }
 

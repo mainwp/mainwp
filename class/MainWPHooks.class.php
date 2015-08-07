@@ -20,7 +20,7 @@ class MainWPHooks
         add_action('mainwp_notify_user', array(&$this, 'notifyUser'), 10, 3);
         add_action('mainwp_activePlugin', array(&$this, 'activePlugin'), 10, 0);
         add_action('mainwp_deactivePlugin', array(&$this, 'deactivePlugin'), 10, 0);
-        add_action('mainwp_upgradePluginTheme', array(&$this, 'upgradePluginTheme'), 10, 0);
+        add_action('mainwp_upgradePluginTheme', array(&$this, 'upgradePluginTheme'), 10, 0);        
 
         //Internal hook - deprecated
         add_filter('mainwp_getUserExtension', array(&$this, 'getUserExtension'));
@@ -168,7 +168,7 @@ class MainWPHooks
 
         die();
     }
-   
+       
     public function hookGetWebsitesByGroupIds($ids, $userId = null) {
         return MainWPDB::Instance()->getWebsitesByGroupIds($ids, $userId);
     }

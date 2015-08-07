@@ -61,43 +61,20 @@ class MainWPExtensionsView
             <div style="padding: 0 5px;">
             <?php 
                 
-                $apisslverify = get_option('mainwp_api_sslVerifyCertificate');  
-                if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER <= 0x009080bf) && ($apisslverify === false)) {                                       
-                    $apisslverify = 0;
-                    MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", $apisslverify);
-                }
-                $_selected_1 = (($apisslverify === false) || ($apisslverify == 1)) ? "selected" : ''; 
-                $_selected_0 = empty($_selected_1) ? "selected" : "";                
+                if (get_option('mainwp_api_sslVerifyCertificate') == 1) {
+                    update_option('mainwp_api_sslVerifyCertificate', 0);                     
+                } 
+                
+//                $apisslverify = get_option('mainwp_api_sslVerifyCertificate');  
+//                if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER <= 0x009080bf) && ($apisslverify === false)) {                                       
+//                    $apisslverify = 0;
+//                    MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", $apisslverify);
+//                }
+//                $_selected_1 = (($apisslverify === false) || ($apisslverify == 1)) ? "selected" : ''; 
+//                $_selected_0 = empty($_selected_1) ? "selected" : "";                
                  
-                ?>                
-                <div class="mainwp_info-box-red">
-                <?php if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER <= 0x009080bf)) { ?>
-                        <p><?php _e("<strong style=\"color:#a00\">WARNING:</strong> MainWP has detected an older install of OpenSSL that does not support Server Name Indication (SNI). This will cause API Activation failure.", "mainwp"); ?></p>
-                        <p><?php _e("We highly recommend, for your security, that you have your host update your OpenSSL to a current version that does support Server Name Indication (SNI).", "mainwp"); ?></p>
-                        <p><?php _e("If you do not want to or cannot update your OpenSSL to a current version you can change the verify certificate option to No <strong>(Not recommended)</strong>", "mainwp"); ?></p>
-                    <?php } else { ?>
-                        <p><?php _e("<strong>Notice:</strong> We did not detect any SSL issues.", "mainwp"); ?></p>                         
-                        <p><?php _e("However, if you are having an issue connecting to, logging in or updating Extensions try setting the verify certificate option below to No and pressing Save.", "mainwp"); ?></p>                         
-                    <?php } ?>
-                    <table class="form-table">
-                        </tbody>
-                            <tr>
-                                <th scope="row"><?php _e('Verify certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
-                                   <td>
-                                       <span><select name="mainwp_api_sslVerifyCertificate" id="mainwp_api_sslVerifyCertificate" style="width: 200px;">
-                                            <option value="0" <?php echo $_selected_0; ?> ><?php _e("No", "mainwp"); ?></option>
-                                            <option value="1" <?php echo $_selected_1; ?> ><?php _e("Yes", "mainwp"); ?></option>                                               
-                                        </select><label></label></span>&nbsp;&nbsp;&nbsp;&nbsp;
-                                        <span class="extension_api_sslverify_loading">
-                                            <input type="button" value="<?php _e("Save", "mainwp");?>" id="mainwp-extensions-api-sslverify-certificate" class="button-primary">
-                                            <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
-                                        </span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>                
-                </div>
-                  
+                ?>      
+             
                 <strong><?php _e("Step 1", "mainwp"); ?></strong>
                 <p><span class="description"><?php _e("Enter your MainWP Extensions (https://extensions.mainwp.com) Login to automatically install and activate purchased extensions."); ?></span></p>
                 <span><?php _e("MainWP Extensions Login:", "mainwp"); ?></span><br /><br />
@@ -182,19 +159,21 @@ class MainWPExtensionsView
 
 <div id="mainwp-extensions-wrap">    
     <?php if (count($extensions) == 0)  { ?>
-            <div class="mainwp_info-box-yellow">
+    <div class="inside">
+            <div class="mainwp_info-box-blue">
                 <h3><?php _e('What are Extensions?', 'mainwp'); ?></h3>
                 <?php _e('Extensions are specific features or tools created for the purpose of expanding the basic functionality of MainWP.', 'mainwp'); ?>
                 <h3><?php _e('Why have Extensions?', 'mainwp'); ?></h3>
-                <?php _e('The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat.  Extensions offer custom functions and features so that each user can tailor their MainWP to their specific needs.', 'mainwp'); ?>
+                <?php _e('The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat. Extensions offer custom functions and features so that each user can tailor their MainWP to their specific needs.', 'mainwp'); ?>
                 <p><a href="https://extensions.mainwp.com/"><?php _e('Download your first extension now.', 'mainwp'); ?></a></p>
             </div>
+    </div>
 <?php  }  else {            
 ?>
 <div style="background: #eee; padding: 1em .6em;">
 <a class="mainwp_action left mainwp_action_down" href="#" id="mainwp-extensions-expand"><?php _e('Expand', 'mainwp'); ?></a><a class="mainwp_action right" href="#" id="mainwp-extensions-collapse"><?php _e('Collapse', 'mainwp'); ?></a>  
 <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
-    <div style="float: right; margin-top: -3px;"><a href="#" class="button mainwp-extensions-disable-all"><?php _e('Disable All', 'mainwp'); ?></a> <a href="#" class="button-primary mainwp-extensions-enable-all"><?php _e('Enable All', 'mainwp'); ?></a> <a href="<?php echo admin_url( 'plugin-install.php?tab=upload' ); ?>" class="mainwp-upgrade-button button-primary button"><?php _e('Install New Extension', 'mainwp'); ?></a></div>
+    <div style="float: right; margin-top: -3px;"><a href="#" class="button mainwp-extensions-disable-all"><?php _e('Disable All', 'mainwp'); ?></a> <a href="#" class="button-primary mainwp-extensions-enable-all"><?php _e('Enable All', 'mainwp'); ?></a> <a href="<?php echo admin_url( 'plugin-install.php?tab=upload' ); ?>" class="mainwp-upgrade-button button-primary button"><?php _e('Install New Extension', 'mainwp'); ?></a></div><div style="clear: both;"></div>
 <?php } ?>
 </div>
 <div id="mainwp-extensions-list">
@@ -332,7 +311,8 @@ class MainWPExtensionsView
                                 <?php if (isset($extension['apiManager']) && $extension['apiManager']) { ?>
                                     <?php echo ' | <a href="#" class="mainwp-extensions-api-activation" >' . __('Enter Activation API') . '</a>'; ?>
                                 <?php } ?>
-                            </td></tr>
+                            </td>
+                        </tr>
                         <?php if (isset($extension['apiManager']) && $extension['apiManager']) { ?>
                         <tr class="mainwp-extensions-api-row">
                             <td colspan="3">

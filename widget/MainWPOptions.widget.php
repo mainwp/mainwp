@@ -211,7 +211,7 @@ class MainWPOptions
             <th scope="row"><?php _e('Abandoned Plugins/Thems Tolerance','mainwp'); ?> <?php MainWPUtility::renderToolTip(__("In case the plugin or theme author didn't release an update for the set number of days, the plugin/theme will be marked and Possibly Abandoned.",'mainwp')); ?></th>
             <td>
                 <input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme"  class="mainwp-field mainwp-settings-icon"
-                       id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo ((get_option('mainwp_numberdays_Outdate_Plugin_Theme') === false) ? 356 : get_option('mainwp_numberdays_Outdate_Plugin_Theme')); ?>"/>
+                       id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo ((get_option('mainwp_numberdays_Outdate_Plugin_Theme') === false) ? 365 : get_option('mainwp_numberdays_Outdate_Plugin_Theme')); ?>"/>
             </td>
         </tr>
         

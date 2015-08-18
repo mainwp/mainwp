@@ -126,6 +126,7 @@ class MainWPBulkUpdateAdminPasswords
             </div>
             <?php
         } else {
+            wp_enqueue_script( 'user-profile' );
 			// header in User page
             MainWPUser::renderHeader('UpdateAdminPasswords');
             ?>
@@ -141,9 +142,13 @@ class MainWPBulkUpdateAdminPasswords
                 <h3 class="mainwp_box_title"><i class="fa fa-key"></i> <?php _e('Bulk Update Administrator Passwords','mainwp'); ?></h3>
                 <div class="inside">
                 <table class="form-table">
+                    <?php
+                    global $wp_version;
+                    if (version_compare('4.3-alpha', $wp_version, '>=')): ?>
                     <tr class="form-field form-required">
                         <th scope="row"><label for="pass1"><?php _e('Enter New Password ','mainwp'); ?><br /><span class="description"><?php _e('(twice, required)','mainwp'); ?></span></label></th>
-                        <td><input name="user_login" type="hidden" id="user_login" value="admin">
+                        <td>
+                            <input name="user_login" type="hidden" id="user_login" value="admin">
                             <input class="mainwp-field mainwp-password" name="pass1" type="password" id="pass1" autocomplete="off" />
                             <br />
                             <input class="mainwp-field mainwp-password" name="pass2" type="password" id="pass2" autocomplete="off" />
@@ -152,6 +157,40 @@ class MainWPBulkUpdateAdminPasswords
                             <p class="description indicator-hint" style="clear:both;"><?php _e('Hint: The password should be at least seven characters long. To make it stronger, use upper and lower case letters, numbers and symbols like ! " ? $ % ^ &amp; ).','mainwp'); ?></p>
                         </td>
                     </tr>
+                    <?php else: ?>
+                    <tr class="form-field form-required user-pass1-wrap">
+                   		<th scope="row">
+                   			<label for="pass1">
+                   				<?php _e( 'New Password' , 'mainwp' ); ?>
+                   				<span class="description hide-if-js"><?php _e( '(required)' ); ?></span>
+                   			</label>
+                   		</th>
+                   		<td>
+                   			<input class="hidden" value=" " /><!-- #24364 workaround -->
+<!--                   			<button type="button" class="button button-secondary wp-generate-pw hide-if-no-js">--><?php //_e( 'Show password' ); ?><!--</button>-->
+                   			<div class="wp-pwd123">
+                                <?php $initial_password = wp_generate_password( 24 ); ?>
+                                <span class="password-input-wrapper">
+                   					<input type="password" name="pass1" id="pass1" class="regular-text" autocomplete="off" data-reveal="1" data-pw="<?php echo esc_attr( $initial_password ); ?>" aria-describedby="pass-strength-result" />
+                   				</span>
+                   				<button type="button" class="button button-secondary wp-hide-pw hide-if-no-js" data-toggle="0" aria-label="<?php esc_attr_e( 'Hide password' ); ?>">
+                   					<span class="dashicons dashicons-hidden"></span>
+                   					<span class="text"><?php _e( 'Hide' ); ?></span>
+                   				</button>
+<!--                   				<button type="button" class="button button-secondary wp-cancel-pw hide-if-no-js" data-toggle="0" aria-label="--><?php //esc_attr_e( 'Cancel password change' ); ?><!--">-->
+<!--                   					<span class="text">--><?php //_e( 'Cancel' ); ?><!--</span>-->
+<!--                   				</button>-->
+                   				<div style="display:none" id="pass-strength-result" aria-live="polite"></div>
+                   			</div>
+                   		</td>
+                   	</tr>
+                   	<tr class="form-field form-required user-pass2-wrap hide-if-js">
+                   		<td scope="row"><label for="pass2"><?php _e( 'Repeat Password' ); ?> <span class="description"><?php _e( '(required)' ); ?></span></label></td>
+                   		<td>
+                   		    <input name="pass2" type="password" id="pass2" value="<?php echo esc_attr( $initial_password ); ?>" autocomplete="off" />
+                        </td>
+                    </tr>
+                    <?php endif; ?>
                     <tr><td></td><td colspan="2"><input type="submit" name="updateadminpassword" id="bulk_updateadminpassword" class="button-primary" value="<?php _e('Update Now','mainwp'); ?>"  /></td></tr>
                 </table>
                 </div>

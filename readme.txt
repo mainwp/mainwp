@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.2.4
-Stable tag: 2.0.23
+Stable tag: 2.0.24
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,10 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.24 - 8-17-2015 =
+* Fixed: Compatibility issue with WordPress 4.3
+* Updated: Default value for the Abandoned Plugins & Themes Tolerance
 
 = 2.0.23 - 8-7-2015 =
 * Fixed: Potential security issue

@@ -124,6 +124,27 @@ class MainWPMain
                 <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-dashboard-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can move the Widgets around to fit your needs and even adjust the number of columns by selecting "Screen Options" on the top right.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
         </div>
         <?php } ?>
+        <?php if (MainWPTwitter::enabledTwitterMessages()) {  
+                $filter = array(   'upgrade_everything',
+                                    'upgrade_all_wp_core',
+                                    'upgrade_all_plugins',
+                                    'upgrade_all_themes'                           
+                                ); 
+                foreach($filter as $what) {
+                    $twitters = MainWPTwitter::getTwitterNotice($what);                     
+                    if (is_array($twitters)) {
+                        foreach($twitters as $timeid => $twit_mess) {    
+                            if (!empty($twit_mess)) {
+                            ?>
+                                <div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span> <a href="#" onclick="return mainwp_brag_on_twitter(this, '<?php echo $what; ?>', <?php echo $timeid; ?>)" class="button-primary button"><?php _e("Brag on Twitter", 'mainwp'); ?></a><span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
+                            <?php
+                            }
+                        }
+                    }
+                }
+                ?>
+        <?php } ?>
+        
         <?php
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp_sync.dtsSync DESC, wp.url ASC'));
         self::renderDashboardBody($websites, $this->dashBoard, $screen_layout_columns);

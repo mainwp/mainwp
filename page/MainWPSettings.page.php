@@ -292,17 +292,30 @@ class MainWPSettings
                                </div>
                             </td>
                         </tr>
+                        <tr>
+                            <th scope="row"><?php _e('Turn off Twitter messages','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('If set to YES, Twitter messages will be turn off','mainwp')); ?></th>
+                            <td>
+                                <div class="mainwp-checkbox">
+                                <input type="checkbox" name="mainwp_hide_twitters_message"
+                                       id="mainwp_hide_twitters_message" <?php echo ((get_option('mainwp_hide_twitters_message', 0) == 1) ? 'checked="true"' : ''); ?>/>
+                                <label for="mainwp_hide_twitters_message"></label>
+                               </div>
+                            </td>
+                        </tr>
                         </tbody>
                 </table>
                 </div>
             </div>
         <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>"/></p>
-        </form>
+        </form>        
         <?php
+        
+        MainWPTwitter::renderSettings();
+        
         self::renderFooter('DashboardOptions');
     }
 
-    
+   
     public static function renderMainWPTools()
     {
         if (!mainwp_current_user_can("dashboard", "manage_dashboard_settings")) {

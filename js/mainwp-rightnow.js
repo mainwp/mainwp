@@ -828,7 +828,27 @@ rightnow_global_upgrade_all = function ()
     if (bulkTaskRunning) return false;
     
     rightnow_show_if_required('wp_upgrades', false);
-        
+    
+    // testing
+//    if (mainwpParams.enabledTwit == true) {
+//        var dateObj = new Date();            
+//        var countSec = 20;
+//        if (countSec <= mainwpParams.maxSecondsTwit) {
+//            send = true;
+//            var data = {
+//                action:'mainwp_twitter_dashboard_action',
+//                actionName: 'upgrade_everything',
+//                countSites: 2,
+//                countSeconds: countSec,
+//                countItems: 1
+//            };
+//            jQuery.post(ajaxurl, data, function (res) {               
+//               
+//            });   
+//        }
+//        return;
+//    } 
+    
     //Step 1: build form
     var sitesToUpdate = [];
     var sitesToUpgrade = [];

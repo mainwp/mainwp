@@ -108,7 +108,6 @@ class MainWPPostHandler
         add_action('wp_ajax_mainwp_managetips_update', array(&$this, 'mainwp_managetips_update')); //ok
         add_action('wp_ajax_mainwp_tips_update', array(&$this, 'mainwp_tips_update')); //ok
         add_action('wp_ajax_mainwp_dismiss_twit', array(&$this, 'mainwp_dismiss_twit')); 
-        add_action('wp_ajax_mainwp_brag_on_twitter', array(&$this, 'mainwp_brag_on_twitter')); //ok
         add_action('wp_ajax_mainwp_twitter_dashboard_action', array(&$this, 'mainwp_twitter_dashboard_action')); //ok            
         add_action('wp_ajax_mainwp_reset_usercookies', array(&$this, 'mainwp_reset_usercookies')); //ok
         
@@ -612,16 +611,7 @@ class MainWPPostHandler
         }
         die(1);
     }
-        
-    function mainwp_brag_on_twitter()
-    {
-        $this->secure_request();                
-        if (isset($_POST['what']) && !empty($_POST['what']) && isset($_POST['twId']) && !empty($_POST['twId'])) {
-            MainWPTwitter::bragOnTwitter($_POST['what'], $_POST['twId']);
-        }
-        die();
-    }
-    
+         
     function mainwp_twitter_dashboard_action() {
         $success = false;
         if (isset($_POST['actionName']) && isset($_POST['countSites']) && !empty($_POST['countSites'])) {                                                                    
@@ -635,7 +625,8 @@ class MainWPPostHandler
                 if (is_array($twitters)) {
                     foreach($twitters as $timeid => $twit_mess) {    
                         if (!empty($twit_mess)) {
-                            $html .= '<div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="' . $_POST['actionName'] . '" twit-id="' . $timeid . '">' . $twit_mess .'</span> <a href="#" onclick="return mainwp_brag_on_twitter(this, \'' . $_POST['actionName'] . '\', '.   $timeid . ')" class="button-primary button">'.  __("Brag on Twitter", 'mainwp') . '</a><span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i>' . __('Dismiss','mainwp') . '</a></span></div>';                        
+                            $sendText = MainWPTwitter::getTwitToSend($_POST['actionName'], $timeid);
+                            $html .= '<div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="' . $_POST['actionName'] . '" twit-id="' . $timeid . '">' . $twit_mess .'</span>&nbsp;' . MainWPTwitter::genTwitterButton($sendText, false) . '<span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i>' . __('Dismiss','mainwp') . '</a></span></div>';                        
                         }
                     }
                 }

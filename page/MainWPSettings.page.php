@@ -310,8 +310,6 @@ class MainWPSettings
         </form>        
         <?php
         
-        MainWPTwitter::renderSettings();
-        
         self::renderFooter('DashboardOptions');
     }
 

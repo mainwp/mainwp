@@ -3872,6 +3872,7 @@ mainwp_install_bulk_start_next = function(pType, pUrl, pActivatePlugin, pOverwri
                 jQuery.post(ajaxurl, data, function (res) {
                     if (res && res != ''){
                         jQuery('#bulk_install_info').html(res);
+                        twttr.widgets.load();
                     } else {
                         jQuery('#bulk_install_info').html('');
                     }
@@ -6694,16 +6695,20 @@ jQuery(document).on('click', '.mainwp-dismiss', function(){
 
 jQuery(document).on('click', '.mainwp-dismiss-twit', function(){     
     jQuery(this).closest('.mainwp-tips').fadeOut("slow"); 
+    mainwp_twitter_dismiss(this);    
+    return false;
+});
+
+mainwp_twitter_dismiss = function(obj) {     
     var data = {
         action:'mainwp_dismiss_twit',
-        twitId: jQuery(this).closest('.mainwp-tips').find('.mainwp-tip').attr('twit-id'),
-        what: jQuery(this).closest('.mainwp-tips').find('.mainwp-tip').attr('twit-what')
+        twitId: jQuery(obj).closest('.mainwp-tips').find('.mainwp-tip').attr('twit-id'),
+        what: jQuery(obj).closest('.mainwp-tips').find('.mainwp-tip').attr('twit-what')
     };
     jQuery.post(ajaxurl, data, function (res) {
         
     });    
-    return false;
-});
+}
 
 jQuery(document).on('change', '#mainwp-quick-jump-page', function()
 {
@@ -7195,26 +7200,3 @@ jQuery(document).ready(function () {
         mainwp_force_destroy_sessions();
     });
 });
-
-mainwp_brag_on_twitter = function (pObj, pWhat, pId) {
-    jQuery(pObj).attr('disabled', 'true'); //Disable
-    var data = {
-        action:'mainwp_brag_on_twitter',
-        what: pWhat,
-        twId: pId
-    };
-    jQuery.post(ajaxurl, data, function (res) {
-        if (res) {
-            if (res.message) {
-                jQuery(pObj).closest('.mainwp-tips').html(res.message)
-            } else if (res.error) {
-                jQuery(pObj).closest('.mainwp-tips').html(res.error)
-            } else {
-                jQuery(pObj).closest('.mainwp-tips').html(__('Undefined error.'))
-            }
-        } else {
-            jQuery(pObj).closest('.mainwp-tips').html(__('Undefined error.'))
-        }
-    }, 'json');    
-    return false;    
-};

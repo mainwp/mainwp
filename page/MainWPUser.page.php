@@ -857,8 +857,9 @@ class MainWPUser
                 if (is_array($twitters)) {
                     foreach($twitters as $timeid => $twit_mess) {    
                         if (!empty($twit_mess)) {
+                            $sendText = MainWPTwitter::getTwitToSend('create_new_user', $timeid);
                         ?>
-                            <div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="create_new_user" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span> <a href="#" onclick="return mainwp_brag_on_twitter(this, 'create_new_user', <?php echo $timeid; ?>)" class="button-primary button"><?php _e("Brag on Twitter", 'mainwp'); ?></a><span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
+                            <div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="create_new_user" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWPTwitter::genTwitterButton($sendText);?><span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
                         <?php
                         }
                     }

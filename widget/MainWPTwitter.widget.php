@@ -45,7 +45,7 @@ class MainWPTwitter
                         __("Super", 'mainwp'),
                         __("Wonderful", 'mainwp'),
                         __("Wow", 'mainwp'));        
-        return $words[rand(0, 7)];
+        return $words[rand(0, 6)];
     }
     
     static function getNotice($what, $value) {

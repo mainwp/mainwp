@@ -800,6 +800,7 @@ rightnow_themes_upgrade_int = function (slug, websiteId, bulkMode)
                         if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
                         result = __('Upgrade Successful');
                         websiteHolder.attr('updated', 1);
+                        countItemsUpdated++;
                     }
                     else
                     {
@@ -1184,6 +1185,7 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                         {
                             result = __('Upgrade Successful');
                             websiteHolder.attr('updated', 1);
+                            countItemsUpdated++;
                         }
                         else
                         {
@@ -1235,6 +1237,7 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                         {
                             result = __('Upgrade Successful');
                             websiteHolder.attr('updated', 1);
+                            countItemsUpdated++;
                         }
                         else
                         {

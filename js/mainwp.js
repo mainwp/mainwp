@@ -3867,6 +3867,7 @@ mainwp_install_bulk_start_next = function(pType, pUrl, pActivatePlugin, pOverwri
                     actionName: dashboardActionName,
                     countSites: bulkInstallDone,
                     countSeconds: countSec,
+                    countItems: 1,
                     showNotice: 1
                 };
                 jQuery.post(ajaxurl, data, function (res) {

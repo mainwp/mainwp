@@ -121,7 +121,7 @@ class MainWPTwitter
                 };                
                 jQuery('.mainwp_tweet_this').on('click', function(){                
                     var url = mainwpTweetUrlBuilder({                        
-                        text: '<?php echo $content; ?>'
+                        text: '<?php echo urlencode($content); ?>'
                     });                                    
                     window.open(url, 'Tweet', 'height=450,width=700');
                     mainwp_twitter_dismiss(this);

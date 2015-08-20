@@ -85,7 +85,7 @@ class MainWPTwitter
          if (!empty($message)) {           
             $in_sec = $value['seconds'];
             if ( $in_sec <= 60) {
-                $message .= " " . sprintf(__('in %d seconds', 'mainwp'), $in_sec);
+                $message .= " " . sprintf(__('in %d ' . (($in_sec == 1) ? 'second' : 'seconds'), 'mainwp'), $in_sec);
             }
             $message .= ".";                                     
          }
@@ -96,9 +96,11 @@ class MainWPTwitter
     public static function genTwitterButton($content, $echo = true) {
         ob_start();
         ?>  
-<button class="mainwp_tweet_this"><i class="fa fa-twitter fa-1x" style="color: #4099FF;"></i>&nbsp;Tweet</button>
+        <button class="mainwp_tweet_this">
+            <i class="fa fa-twitter fa-1x" style="color: #4099FF;"></i>&nbsp;
+                <?php _e("Brag on Twitter", 'mainwp'); ?></button>
         <script type="text/javascript">                
-                var maiwpTweetUrlBuilder = function(o){
+                var mainwpTweetUrlBuilder = function(o){
                     return [
                         'https://twitter.com/intent/tweet?tw_p=tweetbutton',
                         '&url=" "',                        
@@ -106,7 +108,7 @@ class MainWPTwitter
                     ].join('');
                 };                
                 jQuery('.mainwp_tweet_this').on('click', function(){                
-                    var url = maiwpTweetUrlBuilder({                        
+                    var url = mainwpTweetUrlBuilder({                        
                         text: '<?php echo $content; ?>'
                     });                                    
                     window.open(url, 'Tweet', 'height=450,width=700');
@@ -131,16 +133,14 @@ class MainWPTwitter
         if (!in_array($what, $filters))
             return false;    
         
-        if (empty($countSec)) $countSec = 1;        
+        if (empty($countSec)) $countSec = 1; 
+        // store one twitt info only
         $data = array($twId => array('sites' => $countSites, 'seconds' => $countSec, 'items' => $countItems));
-        $user_id = get_current_user_id();         
-        
-        $opt_name = 'mainwp_tt_message_' . $what;       
-         
+        $user_id = get_current_user_id();                 
+        $opt_name = 'mainwp_tt_message_' . $what; 
         if (update_user_option($user_id, $opt_name, $data )) {            
             return true;
         }            
-        
         return false;   
     }    
     
@@ -254,7 +254,7 @@ class MainWPTwitter
                 if (!empty($twit)) {                      
                     $in_sec = $value['seconds'];
                     if ( $in_sec <= 60 ) {
-                        $twit .= " " . sprintf(__('in %d seconds', 'mainwp'), $in_sec);
+                        $twit .= " " . sprintf(__('in %d ' . (($in_sec == 1) ? 'second' : 'seconds'), 'mainwp'), $in_sec);
                     }                    
                     $twit .= ' https://mainwp.com';                                        
                     return $twit;

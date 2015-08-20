@@ -831,15 +831,14 @@ rightnow_global_upgrade_all = function ()
     
     // testing
 //    if (mainwpParams.enabledTwit == true) {
-//        var dateObj = new Date();            
-//        var countSec = 20;
+//        var countSec = 1;
 //        if (countSec <= mainwpParams.maxSecondsTwit) {
 //            send = true;
 //            var data = {
 //                action:'mainwp_twitter_dashboard_action',
-//                actionName: 'upgrade_everything',
-//                countSites: 2,
-//                countSeconds: countSec,
+//                actionName: 'upgrade_all_plugins',
+//                countSites: 1,
+//                countSeconds: 1,
 //                countItems: 1
 //            };
 //            jQuery.post(ajaxurl, data, function (res) {               

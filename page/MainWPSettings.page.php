@@ -293,7 +293,7 @@ class MainWPSettings
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"><?php _e('Turn off Twitter messages','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('If set to YES, Twitter messages will be turn off','mainwp')); ?></th>
+                            <th scope="row"><?php _e('Turn off Brag Button','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('If set to YES, Twitter messages will be turn off','mainwp')); ?></th>
                             <td>
                                 <div class="mainwp-checkbox">
                                 <input type="checkbox" name="mainwp_hide_twitters_message"

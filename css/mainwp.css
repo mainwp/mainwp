@@ -2807,16 +2807,15 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {
     width: 100%;
 }
 
+
 #mainwp-to-twitter .tokens label {
     width: 200px;
     display: block;
     float: left;
     margin-top: 5px;
 }
+
 .mainwp_info-box-blue.twitter {    
     border-left: 4px solid #4099FF !important;        
-    background-image: url('../images/twitter-icon.png') !important; 
+    background-image: url('../images/twitter-icon.png') !important;
 }
-
- 
- 

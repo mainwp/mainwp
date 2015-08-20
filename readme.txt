@@ -1,13 +1,13 @@
 === MainWP ===
 Contributors: mainwp
 Donate link: 
-Tags: WordPress management, management, manager, WordPress controller, network, MainWP, updates, updates, admin, administration, manage,  multiple
+Tags: WordPress management, management, manager, WordPress controller, network, MainWP, updates, updates, admin, administration, manage,  multiple, multi
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.2.4
-Stable tag: 2.0.23
+Tested up to: 4.3
+Stable tag: 2.0.25
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,7 +15,9 @@ Manage all of your WP sites, even those on different servers, from one central d
 
 == Description ==
 
-[MainWP](https://mainwp.com) is a free self-hosted WordPress management system that allows you to manage virtually all aspects of multiple WordPress sites including scheduling backups, up time monitoring of your sites, managing content for posts/pages and much more.
+[MainWP](https://mainwp.com) is a free open source and self-hosted WordPress management system that allows you to control virtually all of your daily WordPress maintenance tasks freeing your time for more profitable activities. MainWP is the perfect solution for marketers, WordPress shops and others with multiple WordPress sites.  
+
+MainWP allows you to connect and control completely independent WordPress sites even those on different hosts and servers.
 
 **Note:  MainWP requires two (2) plugins.**
 
@@ -23,22 +25,51 @@ Manage all of your WP sites, even those on different servers, from one central d
 
 **Please check the [Quick Start - Setting up your MainWP](http://docs.mainwp.com/setting-up-your-mainwp/) support doc for more information.**
 
+= Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
+
+But wait, How is MainWP free, what’s the catch, how will you continue to pay development costs?
+
+We make money by selling [Extensions](https://extensions.mainwp.com/).
+
+Extensions enhance your MainWP Dashboard with additional features. The catalog of [MainWP Extensions](https://extensions.mainwp.com/) include additional features for backups, marketing, SEO, maintenance, security, monitoring and other tools to help you build a better network. 
+
+= Some of the Free MainWP Features include: =
 
 = Easy Management =
-MainWP takes the hassle out of managing your themes and plugins. Using your dashboard means you can review which of your WordPress sites have themes and plugins that need updating from one central location. Just one click will now upgrade all of your plugins and themes at the same time.
+MainWP takes the hassle out of managing your themes and plugins. The MainWP Dashboard allows easy review of which of your WordPress sites have themes and plugins that need updating. Just one click will update all of your plugins and themes at the same time.
 
+= Effortless Upgrades =
+Do you have a busy schedule and dread all of the work you’ll be putting into upgrading to the latest version of WordPress? Worry no more! With the click of a button from your MainWP dashboard, all of your WordPress sites will be upgraded to the latest stable version.  
+
+= One Click Access =
+Do you have too many WordPress sites to remember? Accessing all of your WordPress sites is now a breeze with our intuitive one-click access. Navigate to your sites sub-menu and click the admin link to open, and you’re instantly logged in and ready to work directly in that child site! 
+
+= Automated Updates =
+Using the Trusted Plugin and Theme option in your MainWP Dashboard will automatically update all Plugins and Themes that you trust with no further interaction from you. Sit back, and will alert you by email with available updated and then will auto-install them the next day.
+
+= Ignore Updates =
+Is there a plugin or theme that you do not want to update for compatibility or other issues?  Just tell to your MainWP Dashboard to ignore it and it will no longer alert you of the update.
+
+= Abandoned Plugin and Theme Alerts =
+Sometimes when a plugin hasn't had an update in a long time we tend to forget about it which could lead to security or compatibility issues, your MainWP Dashboard will alert you of possibly abandoned plugins or themes so that you can look for a more update plugin.
 
 = Reliable Backups =
-We understand that your WordPress data is valuable — you’re never more than a moment away from a complete disaster, so make sure you do it right! Use our backup feature and enjoy premium-quality backup services for all of your WordPress sites. You can even choose to exclude specific folders that aren’t mission critical.
+We understand that your WordPress data is valuable — you’re never more than a moment away from a complete disaster, so make sure you do it right! MainWP comes with a built in Backup Feature or you can use one of our [Free Backup Extensions](https://extensions.mainwp.com/product-category/mainwp-extensions/free/) that incorporate the most popular Backup plugins directly into your Dashboard. 
 
-= Auto-Backup Scheduling =
-Providing you the power to automate your backups is another crucial feature you’ll find useful with MainWP . Automate your backups on a daily, weekly, or monthly basis, and then rest assured knowing that your data will be safe and retrievable weather you are backing up your entire site or just your WordPress database.
+= Multiple Backup Options =
+The MainWP Dashboard offers multiple backup options. Along with the default backup system, you are able to use our [Free Backup Extensions](https://extensions.mainwp.com/product-category/mainwp-extensions/free/) and find the best solution for managing your sites backups.
 
 = Content Management =
-The power of MainWP means that publishing content to sites is now as easy as can be. Pick your site from a list, write content, and publish, without the hassles of logging into each and every site. It’s just as easy to manage links, comments, and spam using our mass publish and delete functions.
+The power of the MainWP Dashboard means that publishing content to sites is now as easy as can be. Pick your site from a list, write content, and publish, without the hassles of logging into each and every site. It’s just as easy to manage links, comments, and spam using our mass publish and delete functions.
 
 = Bulk Posting =
-Posting content to multiple websites can prove difficult with WordPress alone. With MainWP , posting content to multiple blogs couldn’t be easier. Create the content, select your blogs, and enjoy the time you saved.
+Posting content to multiple websites can prove difficult with WordPress alone. With the MainWP Dashboard, posting content to multiple blogs couldn’t be easier. Create the content, select your blogs, and enjoy the time you saved.
+
+= Customize Your MainWP =
+Extensions offer custom functions and features so that each user can tailor their MainWP installation to their specific needs. 
+
+= Developer?  Code your own Extensions  =
+Building on the core principals of WordPress, MainWP allows third party developers to “hook” into it so anything you want can be developed to work within your MainWP Dashboard. You can find more information in the [MainWP Codex](http://codex.mainwp.com).  Build your own Extensions for both fun and profit.
 
 = Self Hosted =
 Your main MainWP dashboard is hosted on your own WordPress install and not on our private servers. We do not keep records of your actions, sites, passwords or anything else.
@@ -46,11 +77,11 @@ Your main MainWP dashboard is hosted on your own WordPress install and not on ou
 = Discovery Protection =
 MainWP protects you from your competitors, search engines or anyone else with prying eyes. No one will ever know you are using MainWP unless you tell them.
 
-= Customize Your MainWP =
-Extensions offer custom functions and features so that each user can tailor their MainWP installation to their specific needs. MainWP is built in PHP so that any developer can create a new extension for both fun and profit.
+= Developer Spy Free =
+We know some developers like to keep tight control of what is happening with their plugins but this is your network and we have 100% respect for your privacy. You control and choose the hosting which means we do not have secret access to any of your sites or information.
 
-= Public Extension Hooks =
-Building on the core principals of WordPress our Extension hooks allow third party developers to “hook” into MainWP for an ever expanding list of features. You can find more information in the MainWP Codex
+= Fully Auditable Code =
+Both the MainWP Dashboard and Child plugin are fully open source and GPL compliant with no obfuscated code so you always know what is running on your server. Both plugins are also maintained on GitHub for easy code access. 
 
 = More Information =
 [MainWP Documentation](http://docs.mainwp.com/)
@@ -63,18 +94,22 @@ Building on the core principals of WordPress our Extension hooks allow third par
 
 [MainWP Ideas](http://ideas.mainwp.com/)
 
-[MainWP Codex](http://codex.mainwp.com/index.php?title=Main_Page)
+[MainWP Codex](http://codex.mainwp.com)
 
 [MainWP on Github](http://mainwp.com/github/)
 
 == Installation ==
 
 1. We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.
-Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard from an active site. Most hosting companies provide free subdomains ("demo.yourdomain.com") and we recommend creating one if you do not have a specific dedicated domain to run your Network Main Dashboard.
+Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard from an active site. Most hosting companies provide free subdomains ("demo.yourdomain.com") and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.
 If you are not sure how to set up a subdomain here is a quick step by step with [cPanel](http://docs.mainwp.com/creating-a-subdomain-in-cpanel/), [Plesk](http://docs.mainwp.com/creating-a-subdomain-in-plesk/) or [Direct Admin](http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/). If you are not sure what you have, contact your hosting companies support.
+
 2. Once you have setup the separate WordPress install you can install the MainWP Dashboard plugin following your normal installation procedure either the Automatic process by searching MainWP or by uploading the MainWP plugin to the '/wp-content/plugins/' directory.
+
 3. Once installed then Activate the Plugin through the Plugins Menu in WordPress
+
 4. Add your first child site to the MainWP Dashboard - [Documentation](http://docs.mainwp.com/setting-up-your-mainwp/)
+
 5. Set your MainWP Settings - [Documentation](http://docs.mainwp.com/mainwp-settings-overview/)
 
 Note: MainWP is not tested on multisite installs, we have reports that most functions work but support will be limited.
@@ -112,6 +147,15 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.25 - 8-20-2015 =
+* Added: New message showing how many actions performed and the time it took with a Brag button
+* Added: Option to remove message and brag button to Settings --> Dashboard Options
+* Fixed: Bug with the filter manage sites by available update with ignored items
+
+= 2.0.24 - 8-17-2015 =
+* Fixed: Compatibility issue with WordPress 4.3
+* Updated: Default value for the Abandoned Plugins & Themes Tolerance
 
 = 2.0.23 - 8-7-2015 =
 * Fixed: Potential security issue

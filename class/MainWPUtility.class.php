@@ -1935,7 +1935,7 @@ class MainWPUtility
         }
         return true;
     }
-  
+
     public static function resetUserCookie($what, $value = "")
     {
         global $current_user;

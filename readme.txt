@@ -15,7 +15,7 @@ Manage all of your WP sites, even those on different servers, from one central d
 
 == Description ==
 
-[MainWP](https://mainwp.com) is a free self-hosted WordPress management system that allows you to manage virtually all aspects of multiple WordPress sites including scheduling backups, up time monitoring of your sites, managing content for posts/pages and much more.
+[MainWP](https://mainwp.com) is a free self-hosted WordPress management system that allows you to control virtually all of your daily Word
 
 **Note:  MainWP requires two (2) plugins.**
 
@@ -23,6 +23,15 @@ Manage all of your WP sites, even those on different servers, from one central d
 
 **Please check the [Quick Start - Setting up your MainWP](http://docs.mainwp.com/setting-up-your-mainwp/) support doc for more information.**
 
+= Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
+
+But wait, How is MainWP free, what’s the catch, how will you continue to pay development costs?
+
+We make money by selling [Extensions](https://extensions.mainwp.com/).
+
+Extensions enhance your MainWP Dashboard with additional features. The catalog of [MainWP Extensions](https://extensions.mainwp.com/) include additional features for backups, marketing, SEO, maintenance, security, monitoring and other tools to help you build a better network. 
+
+= Some of the Free MainWP Features include: =
 
 = Easy Management =
 MainWP takes the hassle out of managing your themes and plugins. The MainWP Dashboard allows easy review of which of your WordPress sites have themes and plugins that need updating. Just one click will update all of your plugins and themes at the same time.
@@ -43,10 +52,10 @@ Is there a plugin or theme that you do not want to update for compatibility or o
 Sometimes when a plugin hasn't had an update in a long time we tend to forget about it which could lead to security or compatibility issues, your MainWP Dashboard will alert you of possibly abandoned plugins or themes so that you can look for a more update plugin.
 
 = Reliable Backups =
-We understand that your WordPress data is valuable — you’re never more than a moment away from a complete disaster, so make sure you do it right! MainWP comes with a built in Backup Feature or you can use one of our Free Backup Extensions that incorporate the most popular Backup plugins directly into your Dashboard. 
+We understand that your WordPress data is valuable — you’re never more than a moment away from a complete disaster, so make sure you do it right! MainWP comes with a built in Backup Feature or you can use one of our [Free Backup Extensions](https://extensions.mainwp.com/product-category/mainwp-extensions/free/) that incorporate the most popular Backup plugins directly into your Dashboard. 
 
 = Multiple Backup Options =
-The MainWP Dashboard offers multiple backup options. Along with the default backup system, you are able to use our Free Backup extensions and find the best solution for managing your sites backups.
+The MainWP Dashboard offers multiple backup options. Along with the default backup system, you are able to use our [Free Backup Extensions](https://extensions.mainwp.com/product-category/mainwp-extensions/free/) and find the best solution for managing your sites backups.
 
 = Content Management =
 The power of the MainWP Dashboard means that publishing content to sites is now as easy as can be. Pick your site from a list, write content, and publish, without the hassles of logging into each and every site. It’s just as easy to manage links, comments, and spam using our mass publish and delete functions.
@@ -90,11 +99,15 @@ Both the MainWP Dashboard and Child plugin are fully open source and GPL complia
 == Installation ==
 
 1. We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.
-Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard from an active site. Most hosting companies provide free subdomains ("demo.yourdomain.com") and we recommend creating one if you do not have a specific dedicated domain to run your Network Main Dashboard.
+Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard from an active site. Most hosting companies provide free subdomains ("demo.yourdomain.com") and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.
 If you are not sure how to set up a subdomain here is a quick step by step with [cPanel](http://docs.mainwp.com/creating-a-subdomain-in-cpanel/), [Plesk](http://docs.mainwp.com/creating-a-subdomain-in-plesk/) or [Direct Admin](http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/). If you are not sure what you have, contact your hosting companies support.
+
 2. Once you have setup the separate WordPress install you can install the MainWP Dashboard plugin following your normal installation procedure either the Automatic process by searching MainWP or by uploading the MainWP plugin to the '/wp-content/plugins/' directory.
+
 3. Once installed then Activate the Plugin through the Plugins Menu in WordPress
+
 4. Add your first child site to the MainWP Dashboard - [Documentation](http://docs.mainwp.com/setting-up-your-mainwp/)
+
 5. Set your MainWP Settings - [Documentation](http://docs.mainwp.com/mainwp-settings-overview/)
 
 Note: MainWP is not tested on multisite installs, we have reports that most functions work but support will be limited.

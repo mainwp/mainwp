@@ -15,7 +15,9 @@ Manage all of your WP sites, even those on different servers, from one central d
 
 == Description ==
 
-[MainWP](https://mainwp.com) is a free self-hosted WordPress management system that allows you to control virtually all of your daily Word
+[MainWP](https://mainwp.com) is a free open source and self-hosted WordPress management system that allows you to control virtually all of your daily WordPress maintenance freeing your time for more profitable activities. MainWP is the perfect solution for marketers, WordPress shops and others with multiple WordPress sites.  
+
+MainWP allows you to connect and control completely independent WordPress sites even those on different hosts and servers.
 
 **Note:  MainWP requires two (2) plugins.**
 
@@ -60,14 +62,14 @@ The MainWP Dashboard offers multiple backup options. Along with the default back
 = Content Management =
 The power of the MainWP Dashboard means that publishing content to sites is now as easy as can be. Pick your site from a list, write content, and publish, without the hassles of logging into each and every site. It’s just as easy to manage links, comments, and spam using our mass publish and delete functions.
 
-= Customize Your MainWP =
-Extensions offer custom functions and features so that each user can tailor their MainWP installation to their specific needs. MainWP is built in PHP so that any developer can create a new extension for both fun and profit.
-
-= Public Extension Hooks =
-Building on the core principals of WordPress our Extension hooks allow third party developers to “hook” into MainWP for an ever expanding list of features. You can find more information in the MainWP Codex
-
 = Bulk Posting =
 Posting content to multiple websites can prove difficult with WordPress alone. With the MainWP Dashboard, posting content to multiple blogs couldn’t be easier. Create the content, select your blogs, and enjoy the time you saved.
+
+= Customize Your MainWP =
+Extensions offer custom functions and features so that each user can tailor their MainWP installation to their specific needs. 
+
+= Developer?  Code your own Extensions  =
+Building on the core principals of WordPress, MainWP allows third party developers to “hook” into it so anything you want can be developed to work within your MainWP Dashboard. You can find more information in the [MainWP Codex](http://codex.mainwp.com).  Build your own Extensions for both fun and profit.
 
 = Self Hosted =
 Your main MainWP dashboard is hosted on your own WordPress install and not on our private servers. We do not keep records of your actions, sites, passwords or anything else.
@@ -92,7 +94,7 @@ Both the MainWP Dashboard and Child plugin are fully open source and GPL complia
 
 [MainWP Ideas](http://ideas.mainwp.com/)
 
-[MainWP Codex](http://codex.mainwp.com/index.php?title=Main_Page)
+[MainWP Codex](http://codex.mainwp.com)
 
 [MainWP on Github](http://mainwp.com/github/)
 

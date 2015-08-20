@@ -15,7 +15,7 @@ Manage all of your WP sites, even those on different servers, from one central d
 
 == Description ==
 
-[MainWP](https://mainwp.com) is a free open source and self-hosted WordPress management system that allows you to control virtually all of your daily WordPress maintenance freeing your time for more profitable activities. MainWP is the perfect solution for marketers, WordPress shops and others with multiple WordPress sites.  
+[MainWP](https://mainwp.com) is a free open source and self-hosted WordPress management system that allows you to control virtually all of your daily WordPress maintenance tasks freeing your time for more profitable activities. MainWP is the perfect solution for marketers, WordPress shops and others with multiple WordPress sites.  
 
 MainWP allows you to connect and control completely independent WordPress sites even those on different hosts and servers.
 

@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.3
-Stable tag: 2.0.24
+Stable tag: 2.0.25
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -145,6 +145,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 7. The Groups Screen
 
 == Changelog ==
+
+= 2.0.25 - 8-20-2015 =
+* Added: New message showing how many actions performed and the time it took with a Brag button
+* Added: Option to remove message and brag button to Settings --> Dashboard Options
+* Fixed: Bug with the filter manage sites by available update with ignored items
 
 = 2.0.24 - 8-17-2015 =
 * Fixed: Compatibility issue with WordPress 4.3

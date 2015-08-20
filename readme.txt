@@ -25,20 +25,40 @@ Manage all of your WP sites, even those on different servers, from one central d
 
 
 = Easy Management =
-MainWP takes the hassle out of managing your themes and plugins. Using your dashboard means you can review which of your WordPress sites have themes and plugins that need updating from one central location. Just one click will now upgrade all of your plugins and themes at the same time.
+MainWP takes the hassle out of managing your themes and plugins. The MainWP Dashboard allows easy review of which of your WordPress sites have themes and plugins that need updating. Just one click will update all of your plugins and themes at the same time.
 
+= Effortless Upgrades =
+Do you have a busy schedule and dread all of the work you’ll be putting into upgrading to the latest version of WordPress? Worry no more! With the click of a button from your MainWP dashboard, all of your WordPress sites will be upgraded to the latest stable version.  
+
+= One Click Access =
+Do you have too many WordPress sites to remember? Accessing all of your WordPress sites is now a breeze with our intuitive one-click access. Navigate to your sites sub-menu and click the admin link to open, and you’re instantly logged in and ready to work directly in that child site! 
+
+= Automated Updates =
+Using the Trusted Plugin and Theme option in your MainWP Dashboard will automatically update all Plugins and Themes that you trust with no further interaction from you. Sit back, and will alert you by email with available updated and then will auto-install them the next day.
+
+= Ignore Updates =
+Is there a plugin or theme that you do not want to update for compatibility or other issues?  Just tell to your MainWP Dashboard to ignore it and it will no longer alert you of the update.
+
+= Abandoned Plugin and Theme Alerts =
+Sometimes when a plugin hasn't had an update in a long time we tend to forget about it which could lead to security or compatibility issues, your MainWP Dashboard will alert you of possibly abandoned plugins or themes so that you can look for a more update plugin.
 
 = Reliable Backups =
-We understand that your WordPress data is valuable — you’re never more than a moment away from a complete disaster, so make sure you do it right! Use our backup feature and enjoy premium-quality backup services for all of your WordPress sites. You can even choose to exclude specific folders that aren’t mission critical.
+We understand that your WordPress data is valuable — you’re never more than a moment away from a complete disaster, so make sure you do it right! MainWP comes with a built in Backup Feature or you can use one of our Free Backup Extensions that incorporate the most popular Backup plugins directly into your Dashboard. 
 
-= Auto-Backup Scheduling =
-Providing you the power to automate your backups is another crucial feature you’ll find useful with MainWP . Automate your backups on a daily, weekly, or monthly basis, and then rest assured knowing that your data will be safe and retrievable weather you are backing up your entire site or just your WordPress database.
+= Multiple Backup Options =
+The MainWP Dashboard offers multiple backup options. Along with the default backup system, you are able to use our Free Backup extensions and find the best solution for managing your sites backups.
 
 = Content Management =
-The power of MainWP means that publishing content to sites is now as easy as can be. Pick your site from a list, write content, and publish, without the hassles of logging into each and every site. It’s just as easy to manage links, comments, and spam using our mass publish and delete functions.
+The power of the MainWP Dashboard means that publishing content to sites is now as easy as can be. Pick your site from a list, write content, and publish, without the hassles of logging into each and every site. It’s just as easy to manage links, comments, and spam using our mass publish and delete functions.
+
+= Customize Your MainWP =
+Extensions offer custom functions and features so that each user can tailor their MainWP installation to their specific needs. MainWP is built in PHP so that any developer can create a new extension for both fun and profit.
+
+= Public Extension Hooks =
+Building on the core principals of WordPress our Extension hooks allow third party developers to “hook” into MainWP for an ever expanding list of features. You can find more information in the MainWP Codex
 
 = Bulk Posting =
-Posting content to multiple websites can prove difficult with WordPress alone. With MainWP , posting content to multiple blogs couldn’t be easier. Create the content, select your blogs, and enjoy the time you saved.
+Posting content to multiple websites can prove difficult with WordPress alone. With the MainWP Dashboard, posting content to multiple blogs couldn’t be easier. Create the content, select your blogs, and enjoy the time you saved.
 
 = Self Hosted =
 Your main MainWP dashboard is hosted on your own WordPress install and not on our private servers. We do not keep records of your actions, sites, passwords or anything else.
@@ -46,11 +66,11 @@ Your main MainWP dashboard is hosted on your own WordPress install and not on ou
 = Discovery Protection =
 MainWP protects you from your competitors, search engines or anyone else with prying eyes. No one will ever know you are using MainWP unless you tell them.
 
-= Customize Your MainWP =
-Extensions offer custom functions and features so that each user can tailor their MainWP installation to their specific needs. MainWP is built in PHP so that any developer can create a new extension for both fun and profit.
+= Developer Spy Free =
+We know some developers like to keep tight control of what is happening with their plugins but this is your network and we have 100% respect for your privacy. You control and choose the hosting which means we do not have secret access to any of your sites or information.
 
-= Public Extension Hooks =
-Building on the core principals of WordPress our Extension hooks allow third party developers to “hook” into MainWP for an ever expanding list of features. You can find more information in the MainWP Codex
+= Fully Auditable Code =
+Both the MainWP Dashboard and Child plugin are fully open source and GPL compliant with no obfuscated code so you always know what is running on your server. Both plugins are also maintained on GitHub for easy code access. 
 
 = More Information =
 [MainWP Documentation](http://docs.mainwp.com/)

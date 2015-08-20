@@ -573,7 +573,8 @@ class MainWPPage
                     $output = new stdClass();
                     $output->ok = array();
                     $output->errors = array();
-
+                    $startTime = time();
+                     
                     if (count($dbwebsites) > 0) {
                         $post_data = array(
                             'new_post' => base64_encode(serialize($new_post)),
@@ -609,7 +610,35 @@ class MainWPPage
                     }
 
                     if ($del_post)    
-                        wp_delete_post($id, true);                 
+                        wp_delete_post($id, true);     
+                    
+                    $countSites = 0;
+                    foreach ($dbwebsites as $website) { 
+                        if (isset($output->ok[$website->id]) && $output->ok[$website->id] == 1) {
+                            $countSites++;
+                        }                            
+                    }
+                    
+                    if (!empty($countSites)) {
+                        $seconds = (time() - $startTime);                        
+                        MainWPTwitter::updateTwitterInfo('new_page', $countSites, $seconds, 1 , $startTime);
+                    } 
+                    
+                    if (MainWPTwitter::enabledTwitterMessages()) {                 
+                        $twitters = MainWPTwitter::getTwitterNotice('new_page');                     
+                        if (is_array($twitters)) {
+                            foreach($twitters as $timeid => $twit_mess) {    
+                                if (!empty($twit_mess)) {
+                                    $sendText = MainWPTwitter::getTwitToSend('new_page', $timeid);
+                                ?>
+                                    <div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="new_page" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWPTwitter::genTwitterButton($sendText);?><span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
+                                <?php
+                                }
+                            }
+                        }
+                   
+                     } 
+                     
                 }
                 ?>
                 <div id="message" class="updated">

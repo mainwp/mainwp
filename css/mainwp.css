@@ -985,10 +985,12 @@ li.hoverli {
     background-position: 10px 50%;
 }
 
-.mainwp_info-box-blue .mainwp-dismiss {
+.mainwp_info-box-blue .mainwp-dismiss, 
+.mainwp_info-box-blue .mainwp-dismiss-twit {
     float: right;
     text-decoration: none;
 }
+
 
 .mainwp_info-box-yellow a, .mainwp-au-email a {
     text-shadow: none;
@@ -1541,6 +1543,7 @@ background-position: 0 -16px;
 #createuser .mainwp-fieldset-box input[type=text]:focus,
 #mainwp_testconnection_form input[type=text]:focus,
 #mainwp_managebackups_add_form .mainwp-fieldset-box input[type=text]:focus,
+#mainwp-to-twitter input[type=text]:focus,
 #mainwp_managesites_add_form input[type=text]:focus {
     border: 1px Solid #7fb100;
 }
@@ -2802,4 +2805,17 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {
 
 #mainwp-seo-list, #mainwp-extensions-widget-list {
     width: 100%;
+}
+
+
+#mainwp-to-twitter .tokens label {
+    width: 200px;
+    display: block;
+    float: left;
+    margin-top: 5px;
+}
+
+.mainwp_info-box-blue.twitter {    
+    border-left: 4px solid #4099FF !important;        
+    background-image: url('../images/twitter-icon.png') !important;
 }

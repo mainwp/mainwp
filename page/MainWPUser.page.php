@@ -903,7 +903,7 @@ class MainWPUser
                     }
                 }
             }
-
+            $startTime = time();
             if (count($dbwebsites) > 0) {
                 $post_data = array(
                     'new_user' => base64_encode(serialize($user_to_add)),
@@ -913,6 +913,32 @@ class MainWPUser
                 $output->ok = array();
                 $output->errors = array();
                 MainWPUtility::fetchUrlsAuthed($dbwebsites, 'newuser', $post_data, array(MainWPBulkAdd::getClassName(), 'PostingBulk_handler'), $output);
+            }
+
+            $countSites = 0;
+            foreach ($dbwebsites as $website) {
+                if (isset($output->ok[$website->id]) && $output->ok[$website->id] == 1) {
+                    $countSites++;
+                }
+            }
+
+            if (!empty($countSites)) {
+                $seconds = (time() - $startTime);
+                MainWPTwitter::updateTwitterInfo('create_new_user', $countSites, $seconds, 1 , $startTime);
+            }
+
+            if (MainWPTwitter::enabledTwitterMessages()) {
+                $twitters = MainWPTwitter::getTwitterNotice('create_new_user');
+                if (is_array($twitters)) {
+                    foreach($twitters as $timeid => $twit_mess) {
+                        if (!empty($twit_mess)) {
+                            $sendText = MainWPTwitter::getTwitToSend('create_new_user', $timeid);
+                        ?>
+                            <div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="create_new_user" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWPTwitter::genTwitterButton($sendText);?><span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
+                        <?php
+                        }
+                    }
+                }
             }
 
             ?>

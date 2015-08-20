@@ -661,8 +661,9 @@ class MainWPPost
 
                     $output = new stdClass();
                     $output->ok = array();
-                    $output->errors = array();
-
+                    $output->errors = array();                    
+                    $startTime = time();
+                    
                     if (count($dbwebsites) > 0) {
                         $post_data = array(
                             'new_post' => base64_encode(serialize($new_post)),
@@ -700,12 +701,38 @@ class MainWPPost
                         wp_delete_post($id, true);    
                     }
                     
+                    $countSites = 0;
+                    foreach ($dbwebsites as $website) { 
+                        if (isset($output->ok[$website->id]) && $output->ok[$website->id] == 1) {
+                            $countSites++;
+                        }                            
+                    }
                     
+                    if (!empty($countSites)) {
+                        $seconds = (time() - $startTime);                        
+                        MainWPTwitter::updateTwitterInfo('new_post', $countSites, $seconds, 1 , $startTime);
+                    } 
+                    
+                    if (MainWPTwitter::enabledTwitterMessages()) {                 
+                        $twitters = MainWPTwitter::getTwitterNotice('new_post');                     
+                        if (is_array($twitters)) {
+                            foreach($twitters as $timeid => $twit_mess) {    
+                                if (!empty($twit_mess)) {
+                                    $sendText = MainWPTwitter::getTwitToSend('new_post', $timeid);
+                                ?>
+                                    <div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="new_post" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWPTwitter::genTwitterButton($sendText);?><span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
+                                <?php
+                                }
+                            }
+                        }                   
+                     } 
+                     
                     ?>
+                                    
                     <div id="message" class="updated">
                         <?php foreach ($dbwebsites as $website) {                              
                         ?>
-                        <p><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo $website->name; ?></a>
+                        <p><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a>
                             : <?php echo (isset($output->ok[$website->id]) && $output->ok[$website->id] == 1 ? 'New post created. '."<a href=\"".$output->link[$website->id]."\" target=\"_blank\">View Post</a>" : 'ERROR: ' . $output->errors[$website->id]); ?></p>
                         <?php } ?>
                     </div>               

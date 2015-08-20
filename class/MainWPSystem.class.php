@@ -8,6 +8,8 @@ if (session_id() == '') session_start();
 define('MAINWP_API_VALID', "VALID");
 define('MAINWP_API_INVALID', "INVALID");
 
+define('MAINWP_TWITTER_MAX_SECONDS', 60 * 5); // seconds
+
 class MainWPSystem
 {
     //Singleton
@@ -1798,7 +1800,9 @@ class MainWPSystem
             'backup_before_upgrade' => (get_option('mainwp_backup_before_upgrade') == 1),
             'admin_url' => admin_url(),
             'date_format' => get_option('date_format'),
-            'time_format' => get_option('time_format')
+            'time_format' => get_option('time_format'),
+            'enabledTwit' => MainWPTwitter::enabledTwitterMessages(), 
+            'maxSecondsTwit' => MAINWP_TWITTER_MAX_SECONDS,
         );
         wp_localize_script('mainwp', 'mainwpParams', $mainwpParams);
         wp_enqueue_script('mainwp-tristate', MAINWP_PLUGIN_URL . 'js/tristate.min.js', array('mainwp'), $this->current_version);
@@ -1827,7 +1831,12 @@ class MainWPSystem
                    MainWPUtility::update_option('mainwp_use_favicon', (!isset($_POST['mainwp_use_favicon']) ? 0 : 1));
                    MainWPUtility::update_option('mainwp_hide_footer', (!isset($_POST['mainwp_hide_footer']) ? 0 : 1));
                    MainWPUtility::update_option('mainwp_hide_tips', (!isset($_POST['mainwp_hide_tips']) ? 0 : 1));
-                }
+                   $enabled_twit = !isset($_POST['mainwp_hide_twitters_message']) ? 0 : 1;
+                   MainWPUtility::update_option('mainwp_hide_twitters_message', $enabled_twit);                                      
+                   if (!$enabled_twit) {
+                       MainWPTwitter::clearAllTwitterMessages();
+                   }
+                }                
             } else if ($_GET['page'] == "Settings") {
                 if (isset($_POST['submit'])) {
                     if (isset($_POST['mainwp_primaryBackup'])) {

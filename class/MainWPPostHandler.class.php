@@ -107,6 +107,8 @@ class MainWPPostHandler
         //Page: ManageTips
         add_action('wp_ajax_mainwp_managetips_update', array(&$this, 'mainwp_managetips_update')); //ok
         add_action('wp_ajax_mainwp_tips_update', array(&$this, 'mainwp_tips_update')); //ok
+        add_action('wp_ajax_mainwp_dismiss_twit', array(&$this, 'mainwp_dismiss_twit')); 
+        add_action('wp_ajax_mainwp_twitter_dashboard_action', array(&$this, 'mainwp_twitter_dashboard_action')); //ok            
         add_action('wp_ajax_mainwp_reset_usercookies', array(&$this, 'mainwp_reset_usercookies')); //ok
         
         //Page: OfflineChecks
@@ -597,6 +599,43 @@ class MainWPPostHandler
             update_user_option($user_id, "mainwp_hide_user_tips", $user_tips);            
         }
         die(1);
+    }
+    
+    function mainwp_dismiss_twit()
+    {
+        $this->secure_request();
+
+        global $current_user;
+        if (($user_id = $current_user->ID) && isset($_POST['twitId']) && !empty($_POST['twitId']) && isset($_POST['what']) && !empty($_POST['what'])) {
+            MainWPTwitter::clearTwitterInfo($_POST['what'], $_POST['twitId']);            
+        }
+        die(1);
+    }
+         
+    function mainwp_twitter_dashboard_action() {
+        $success = false;
+        if (isset($_POST['actionName']) && isset($_POST['countSites']) && !empty($_POST['countSites'])) {                                                                    
+            $success = MainWPTwitter::updateTwitterInfo($_POST['actionName'], $_POST['countSites'], (int)$_POST['countSeconds'], (isset($_POST['countItems']) ? $_POST['countItems'] : 0) , time());
+        }  
+        
+        if (isset($_POST['showNotice']) && !empty($_POST['showNotice'])) {
+            if (MainWPTwitter::enabledTwitterMessages()) {                 
+                $twitters = MainWPTwitter::getTwitterNotice($_POST['actionName']);                
+                $html = "";
+                if (is_array($twitters)) {
+                    foreach($twitters as $timeid => $twit_mess) {    
+                        if (!empty($twit_mess)) {
+                            $sendText = MainWPTwitter::getTwitToSend($_POST['actionName'], $timeid);
+                            $html .= '<div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="' . $_POST['actionName'] . '" twit-id="' . $timeid . '">' . $twit_mess .'</span>&nbsp;' . MainWPTwitter::genTwitterButton($sendText, false) . '<span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i>' . __('Dismiss','mainwp') . '</a></span></div>';                        
+                        }
+                    }
+                }
+                die($html);                
+             } 
+        } else if ($success)
+            die('ok');    
+        
+        die('');        
     }
     
     function mainwp_reset_usercookies()
@@ -1308,7 +1347,7 @@ class MainWPPostHandler
         
         try
         {            
-            die(json_encode(array('result' => MainWPRightNow::upgradePluginTheme($websiteId, $_POST['type'], $slugs))));
+            die(json_encode(array('result' => MainWPRightNow::upgradePluginTheme($websiteId, $_POST['type'], $slugs))));            
         }
         catch (MainWPException $e)
         {

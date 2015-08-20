@@ -124,6 +124,7 @@ class MainWPMain
                 <div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-dashboard-tips"><strong><?php _e('MainWP Tip','mainwp'); ?>: </strong><?php _e('You can move the Widgets around to fit your needs and even adjust the number of columns by selecting "Screen Options" on the top right.','mainwp'); ?></span><span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
         </div>
         <?php } ?>
+         
         <?php
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp_sync.dtsSync DESC, wp.url ASC'));
         self::renderDashboardBody($websites, $this->dashBoard, $screen_layout_columns);
@@ -192,6 +193,29 @@ class MainWPMain
         <div id="mainwp_main_errors" class="mainwp_error"></div>
     </form>
 
+    <?php if (empty($current_wp_id) && MainWPTwitter::enabledTwitterMessages()) {  
+            $filter = array(   'upgrade_everything',
+                                'upgrade_all_wp_core',
+                                'upgrade_all_plugins',
+                                'upgrade_all_themes'                           
+                            ); 
+            foreach($filter as $what) {
+                $twitters = MainWPTwitter::getTwitterNotice($what);                     
+                if (is_array($twitters)) {
+                    foreach($twitters as $timeid => $twit_mess) {    
+                        if (!empty($twit_mess)) {
+                            $sendText = MainWPTwitter::getTwitToSend($what, $timeid);
+                        ?>
+                            <div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWPTwitter::genTwitterButton($sendText);?><span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
+                        <?php
+                        }
+                    }
+                }
+            }
+            ?>
+    <?php } ?>
+       
+                                
     <div id="dashboard-widgets-wrap">
 
     <?php require_once(ABSPATH . 'wp-admin/includes/dashboard.php');

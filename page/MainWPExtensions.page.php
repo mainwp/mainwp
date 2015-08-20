@@ -119,8 +119,11 @@ class MainWPExtensions
     public static function loadExtensions() {
         if (!isset(self::$extensions))  {          
             self::$extensions = get_option('mainwp_extensions');
+            if (!is_array(self::$extensions))
+                self::$extensions = array();
             self::$extensionsLoaded = true;
         }
+        
         return self::$extensions;
     }
       

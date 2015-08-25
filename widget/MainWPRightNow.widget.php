@@ -233,6 +233,91 @@ class MainWPRightNow
         }
         return 'success';
     }
+    
+    public static function unIgnoreAbandonedPluginTheme($type, $slug, $id)
+    {
+        if (isset($id))
+        {
+            if ($id == '_ALL_')
+            {
+                $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
+                while ($websites && ($website = @MainWPDB::fetch_object($websites)))
+                {
+                    if ($type == 'plugin')
+                    {                        
+                        MainWPDB::Instance()->updateWebsiteOption($website, 'plugins_outdate_dismissed', @json_encode(array()));
+                    }
+                    else if ($type == 'theme')
+                    {
+                        MainWPDB::Instance()->updateWebsiteOption($website, 'themes_outdate_dismissed', @json_encode(array()));
+                    }
+                }
+                @MainWPDB::free_result($websites);
+            }
+            else if (MainWPUtility::ctype_digit($id))
+            {
+                $website = MainWPDB::Instance()->getWebsiteById($id);
+                if (MainWPUtility::can_edit_website($website))
+                {
+                    $slug = urldecode($slug);
+                    if ($type == 'plugin')
+                    {                        
+                        $decodedIgnoredPlugins = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'plugins_outdate_dismissed'), true);
+                        if (isset($decodedIgnoredPlugins[$slug]))
+                        {
+                            unset($decodedIgnoredPlugins[$slug]);
+                            MainWPDB::Instance()->updateWebsiteOption($website, 'plugins_outdate_dismissed', @json_encode($decodedIgnoredPlugins));                    
+                        }
+                    }
+                    else if ($type == 'theme')
+                    {
+                        $decodedIgnoredThemes = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'themes_outdate_dismissed'), true);
+                        if (isset($decodedIgnoredThemes[$slug]))
+                        {
+                            unset($decodedIgnoredThemes[$slug]);
+                            MainWPDB::Instance()->updateWebsiteOption($website, 'themes_outdate_dismissed', @json_encode($decodedIgnoredThemes));                                                
+                        }                        
+                    }
+                }
+            }
+        }
+        return 'success';
+    }
+   
+    public static function unIgnoreAbandonedPluginsThemes($type, $slug)
+    {
+        $slug = urldecode($slug);
+        $userExtension = MainWPDB::Instance()->getUserExtension();
+        if ($type == 'plugin')
+        {
+            if ($slug == '_ALL_')
+            {
+                $decodedIgnoredPlugins = array();
+            }
+            else
+            {
+                $decodedIgnoredPlugins = json_decode($userExtension->dismissed_plugins, true);
+                if (!is_array($decodedIgnoredPlugins)) $decodedIgnoredPlugins = array();
+                if (isset($decodedIgnoredPlugins[$slug])) unset($decodedIgnoredPlugins[$slug]);
+            }
+            MainWPDB::Instance()->updateUserExtension(array('userid' => null, 'dismissed_plugins' => json_encode($decodedIgnoredPlugins)));
+        }
+        else if ($type == 'theme')
+        {
+            if ($slug == '_ALL_')
+            {
+                $decodedIgnoredThemes = array();
+            }
+            else
+            {
+                $decodedIgnoredThemes = json_decode($userExtension->dismissed_themes, true);
+                if (!is_array($decodedIgnoredThemes)) $decodedIgnoredThemes = array();
+                if (isset($decodedIgnoredThemes[$slug])) unset($decodedIgnoredThemes[$slug]);
+            }
+            MainWPDB::Instance()->updateUserExtension(array('userid' => null, 'dismissed_themes' => json_encode($decodedIgnoredThemes)));
+        }
+        return 'success';
+    }
 
     public static function dismissPluginTheme($type, $slug, $name, $id)
     {
@@ -1381,7 +1466,7 @@ class MainWPRightNow
                         </span>
                         <span class="mainwp-right-col"> 
                              <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                                <a href="#" class="button" onClick="return rightnow_plugins_outdate_dismiss_all('<?php echo $plugin_name; ?>', '<?php echo urlencode($pluginsOutdateInfo[$slug]['Name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a>
+                                <a href="#" class="button" onClick="return rightnow_plugins_abandoned_ignore_all('<?php echo $plugin_name; ?>', '<?php echo urlencode($pluginsOutdateInfo[$slug]['Name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a>
                             <?php } ?>                                                        
                         </span>
                     </div>
@@ -1559,7 +1644,7 @@ class MainWPRightNow
                         </span>
                         <span class="mainwp-right-col"> 
                              <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
-                                <a href="#" class="button" onClick="return rightnow_themes_outdate_dismiss_all('<?php echo $slug; ?>', '<?php echo urlencode($themesOutdateInfo[$slug]['name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a>
+                                <a href="#" class="button" onClick="return rightnow_themes_abandoned_ignore_all('<?php echo $slug; ?>', '<?php echo urlencode($themesOutdateInfo[$slug]['name']); ?>')"><?php _e('Ignore Globally','mainwp'); ?></a>
                             <?php } ?>                                                        
                         </span>
                     </div>

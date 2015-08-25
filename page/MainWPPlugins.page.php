@@ -26,6 +26,7 @@ class MainWPPlugins
         add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<div class="mainwp-hidden">Auto Updates</div>', 'read', 'PluginsAutoUpdate', array(MainWPPlugins::getClassName(), 'renderAutoUpdate'));
         add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<div class="mainwp-hidden">Ignored Updates</div>', 'read', 'PluginsIgnore', array(MainWPPlugins::getClassName(), 'renderIgnore'));
         add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<div class="mainwp-hidden">Ignored Conflicts</div>', 'read', 'PluginsIgnoredConflicts', array(MainWPPlugins::getClassName(), 'renderIgnoredConflicts'));
+        add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<div class="mainwp-hidden">Ignored Abandoned</div>', 'read', 'PluginsIgnoredAbandoned', array(MainWPPlugins::getClassName(), 'renderIgnoredAbandoned'));
         add_submenu_page('mainwp_tab', __('Plugins Help','mainwp'), '<div class="mainwp-hidden">Plugins Help</div>', 'read', 'PluginsHelp', array(MainWPPlugins::getClassName(), 'QSGManagePlugins'));
 
         self::$subPages = apply_filters('mainwp-getsubpages-plugins', array());
@@ -50,8 +51,9 @@ class MainWPPlugins
                     <a href="<?php echo admin_url('admin.php?page=PluginsInstall'); ?>" class="mainwp-submenu"><?php _e('Install','mainwp'); ?></a>
                     <?php } ?>
                     <a href="<?php echo admin_url('admin.php?page=PluginsAutoUpdate'); ?>" class="mainwp-submenu"><?php _e('Auto Updates','mainwp'); ?></a>
-                    <a href="<?php echo admin_url('admin.php?page=PluginsIgnore'); ?>" class="mainwp-submenu"><?php _e('Ignored Updates','mainwp'); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=PluginsIgnore'); ?>" class="mainwp-submenu"><?php _e('Ignored Updates','mainwp'); ?></a>                    
                     <a href="<?php echo admin_url('admin.php?page=PluginsIgnoredConflicts'); ?>" class="mainwp-submenu"><?php _e('Ignored Conflicts','mainwp'); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=PluginsIgnoredAbandoned'); ?>" class="mainwp-submenu"><?php _e('Ignored Abandoned','mainwp'); ?></a>
                     <?php
                     if (isset(self::$subPages) && is_array(self::$subPages))
                     {
@@ -95,6 +97,7 @@ class MainWPPlugins
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'AutoUpdate') { echo "nav-tab-active"; } ?>" href="admin.php?page=PluginsAutoUpdate"><?php _e('Auto Updates','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Ignore') { echo "nav-tab-active"; } ?>" href="admin.php?page=PluginsIgnore"><?php _e('Ignored Updates','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'IgnoredConflicts') { echo "nav-tab-active"; } ?>" href="admin.php?page=PluginsIgnoredConflicts"><?php _e('Ignored Conflicts','mainwp'); ?></a>
+                <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'IgnoreAbandoned') { echo "nav-tab-active"; } ?>" href="admin.php?page=PluginsIgnoredAbandoned"><?php _e('Ignored Abandoned','mainwp'); ?></a>
                 <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage === 'PluginsHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=PluginsHelp"><?php _e('Help','mainwp'); ?></a>
                 <?php
                 if (isset(self::$subPages) && is_array(self::$subPages))
@@ -1289,6 +1292,121 @@ class MainWPPlugins
         self::renderFooter('Ignore');
     }
 
+    public static function renderIgnoredAbandoned()
+    {
+        $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
+        $userExtension = MainWPDB::Instance()->getUserExtension();
+        $decodedIgnoredPlugins = json_decode($userExtension->dismissed_plugins, true);
+        $ignoredPlugins  = (is_array($decodedIgnoredPlugins) && (count($decodedIgnoredPlugins) > 0));
+            
+        $cnt = 0;
+        while ($websites && ($website = @MainWPDB::fetch_object($websites)))
+        {   
+            $tmpDecodedDismissedPlugins = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'plugins_outdate_dismissed'), true);                        
+            if (!is_array($tmpDecodedDismissedPlugins) || count($tmpDecodedDismissedPlugins) == 0) continue;
+            $cnt++;
+        }
+
+        self::renderHeader('IgnoreAbandoned');
+?>
+        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+        	<caption><?php _e('Globally Ignored Abandoned Plugins','mainwp'); ?></caption>
+            <thead>
+                <tr>
+                    <th scope="col" class="manage-column" style="width: 300px"><?php _e('Plugin','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="width: 650px"><?php _e('Plugin File','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { if ($ignoredPlugins) { ?><a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return rightnow_plugins_abandoned_unignore_globally_all();"><?php _e('Allow All','mainwp'); ?></a><?php } } ?></th>
+                </tr>
+            </thead>
+            <tbody id="globally-ignored-plugins-list" class="list:sites">
+            <?php
+                if ($ignoredPlugins)
+                {
+                    foreach ($decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName)
+                    {
+                    ?>
+                        <tr plugin_slug="<?php echo urlencode($ignoredPlugin); ?>">
+                            <td>
+                                <strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.urlencode(dirname($ignoredPlugin)).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $ignoredPluginName; ?>"><?php echo $ignoredPluginName; ?></a></strong>
+                            </td>
+                            <td>
+                                <?php echo $ignoredPlugin; ?>
+                            </td>
+                            <td style="text-align: right; padding-right: 30px">
+                                <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
+                                <a href="#" onClick="return rightnow_plugins_abandoned_unignore_globally('<?php echo urlencode($ignoredPlugin); ?>')"><i class="fa fa-check"></i> <?php _e('Allow','mainwp'); ?></a>
+                                <?php } ?>
+                            </td>
+                        </tr>
+                <?php
+                    }
+                ?>
+            <?php
+                }
+                else
+                {
+                ?>
+                        <tr><td colspan="2"><?php _e('No ignored abandoned plugins','mainwp'); ?></td></tr>
+                <?php
+                }
+            ?>
+            </tbody>
+        </table>
+
+        <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+        	<caption><?php _e('Per Site Ignored Abandoned Plugins','mainwp'); ?></caption>
+            <thead>
+                <tr>
+                    <th scope="col" class="manage-column" style="width: 300px"><?php _e('Site','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="width: 650px"><?php _e('Plugins','mainwp'); ?></th>
+                    <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ($cnt > 0) { ?><a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return rightnow_plugins_unignore_abandoned_detail_all();"><?php _e('Allow All','mainwp'); ?></a><?php } ?></th>
+                </tr>
+            </thead>
+            <tbody id="ignored-plugins-list" class="list:sites">
+            <?php
+            if ($cnt > 0)
+            {
+                @MainWPDB::data_seek($websites, 0);
+                while ($websites && ($website = @MainWPDB::fetch_object($websites)))
+                {                    
+                    $decodedIgnoredPlugins = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'plugins_outdate_dismissed'), true);                                
+                    if (!is_array($decodedIgnoredPlugins) || count($decodedIgnoredPlugins) == 0) continue;
+                    $first = true;
+
+                    foreach ($decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName)
+                    {   
+                        ?>
+                    <tr site_id="<?php echo $website->id; ?>" plugin_slug="<?php echo urlencode($ignoredPlugin); ?>">
+                        <td>
+                            <span class="websitename" <?php if (!$first) { echo 'style="display: none;"'; } else { $first = false; }?>>
+                                <a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a>
+                            </span>
+                        </td>
+                        <td>
+                            <strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.urlencode(dirname($ignoredPlugin)).'&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $ignoredPluginName; ?>"><?php echo $ignoredPluginName; ?></a></strong> (<?php echo $ignoredPlugin; ?>)
+                        </td>
+                        <td style="text-align: right; padding-right: 30px">
+                            <a href="#" onClick="return rightnow_plugins_unignore_abandoned_detail('<?php echo urlencode($ignoredPlugin); ?>', <?php echo $website->id; ?>)"><i class="fa fa-check"></i> <?php _e('Allow','mainwp'); ?></a>
+                        </td>
+                    </tr>
+                        <?php
+                    }
+                }
+                @MainWPDB::free_result($websites);
+            }
+            else
+            {
+            ?>
+                <tr><td colspan="3"><?php _e('No ignored abandoned plugins','mainwp'); ?></td></tr>
+            <?php
+            }
+            ?>
+            </tbody>
+        </table>
+            <?php
+        self::renderFooter('IgnoreAbandoned');
+    }
+    
     public static function trustPost()
     {
         $userExtension = MainWPDB::Instance()->getUserExtension();

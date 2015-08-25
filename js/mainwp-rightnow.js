@@ -1819,7 +1819,7 @@ rightnow_themes_abandoned_unignore_globally_all = function() {
 rightnow_themes_abandoned_unignore_globally = function (slug) {
     var data = {
         action:'mainwp_unignoreabandonedpluginsthemes',
-        type: 'plugin',
+        type: 'theme',
         slug:slug
     };    
     jQuery.post(ajaxurl, data, function (response) {

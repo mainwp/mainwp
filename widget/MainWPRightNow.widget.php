@@ -634,12 +634,18 @@ class MainWPRightNow
         $userExtension = MainWPDB::Instance()->getUserExtension();  
 
         $total_themesIgnored = $total_pluginsIgnored = 0;
+        $total_themesIgnoredAbandoned = $total_pluginsIgnoredAbandoned = 0;
         
         if ($globalView) {            
             $decodedIgnoredPlugins = json_decode($userExtension->ignored_plugins, true);
             $decodedIgnoredThemes = json_decode($userExtension->ignored_themes, true);        
             $total_pluginsIgnored = is_array($decodedIgnoredPlugins) ? count($decodedIgnoredPlugins) : 0;        
             $total_themesIgnored = is_array($decodedIgnoredThemes) ? count($decodedIgnoredThemes) : 0;       
+            
+            $decodedIgnoredPluginsAbandoned = json_decode($userExtension->dismissed_plugins, true);
+            $decodedIgnoredThemesAbandoned = json_decode($userExtension->dismissed_themes, true);        
+            $total_pluginsIgnoredAbandoned = is_array($decodedIgnoredPluginsAbandoned) ? count($decodedIgnoredPluginsAbandoned) : 0;        
+            $total_themesIgnoredAbandoned = is_array($decodedIgnoredThemesAbandoned) ? count($decodedIgnoredThemesAbandoned) : 0;              
         } 
                
         $decodedDismissedPlugins = json_decode($userExtension->dismissed_plugins, true);
@@ -678,6 +684,8 @@ class MainWPRightNow
         $currentSite = null;
         
         $pluginsIgnored_perSites = $themesIgnored_perSites = array();
+        $pluginsIgnoredAbandoned_perSites = $themesIgnoredAbandoned_perSites = array();
+        
         while ($websites && ($website = @MainWPDB::fetch_object($websites)))
         {          
             if (!$globalView) $currentSite = $website;
@@ -757,16 +765,24 @@ class MainWPRightNow
                 $themesIgnored_perSites = array_merge($themesIgnored_perSites, $ignored_themes);
             }
             
+            $ignoredAbandoned_plugins = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'plugins_outdate_dismissed'), true);                        
+            if (is_array($ignoredAbandoned_plugins)) {
+                $ignoredAbandoned_plugins = array_filter($ignoredAbandoned_plugins);
+                $pluginsIgnoredAbandoned_perSites = array_merge($pluginsIgnoredAbandoned_perSites, $ignoredAbandoned_plugins);
+            }
+            $ignoredAbandoned_themes = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'themes_outdate_dismissed'), true);            
+            if (is_array($ignoredAbandoned_themes)) {
+                $ignoredAbandoned_themes = array_filter($ignoredAbandoned_themes);
+                $themesIgnoredAbandoned_perSites = array_merge($themesIgnoredAbandoned_perSites, $ignoredAbandoned_themes);
+            }
+            
             $plugins_outdate = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'plugins_outdate_info'), true);            
             $themes_outdate = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'themes_outdate_info'), true);            
             
-            //MainWPDB::Instance()->updateWebsiteOption($website, 'plugins_outdate_dismissed', @json_encode(array()));                    
-            
             if (is_array($plugins_outdate))
-            {
-                $pluginsOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'plugins_outdate_dismissed'), true);            
-                if (is_array($pluginsOutdateDismissed)) {                                        
-                    $plugins_outdate = array_diff_key($plugins_outdate, $pluginsOutdateDismissed);
+            {                
+                if (is_array($ignoredAbandoned_plugins)) {                                        
+                    $plugins_outdate = array_diff_key($plugins_outdate, $ignoredAbandoned_plugins);
                 }    
                 
                 if (is_array($decodedDismissedPlugins)) {
@@ -778,9 +794,8 @@ class MainWPRightNow
             
             if (is_array($themes_outdate))
             {
-                $themesOutdateDismissed = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'themes_outdate_dismissed'), true);            
-                if (is_array($themesOutdateDismissed)) {                                        
-                    $themes_outdate = array_diff_key($themes_outdate, $themesOutdateDismissed);
+                if (is_array($themesIgnoredAbandoned_perSites)) {                                        
+                    $themes_outdate = array_diff_key($themes_outdate, $themesIgnoredAbandoned_perSites);
                 }    
                 
                 if (is_array($decodedDismissedThemes)) {
@@ -888,7 +903,10 @@ class MainWPRightNow
     <?php       
     
     $total_pluginsIgnored += count($pluginsIgnored_perSites);            
-    $total_themesIgnored += count($themesIgnored_perSites);  
+    $total_themesIgnored += count($themesIgnored_perSites); 
+    
+    $total_pluginsIgnoredAbandoned += count($pluginsIgnoredAbandoned_perSites);
+    $total_themesIgnoredAbandoned += count($themesIgnoredAbandoned_perSites);            
     
     //WP Upgrades part:  
     $total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
@@ -1013,7 +1031,7 @@ class MainWPRightNow
                         if (count($plugin_upgrades) > 0)
                         {
                         ?>
-                            <a href="#" id="mainwp_plugin_upgrades_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugin_upgrades_<?php echo $website->id; ?>', true);"><?php echo count($plugin_upgrades); ?> <?php _e('Upgrade','mainwp'); ?><?php echo (count($plugin_upgrades) > 1 ? 's' : ''); ?></a>
+                            <a href="#" id="mainwp_plugin_upgrades_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugin_upgrades_<?php echo $website->id; ?>', true);"><i class="fa fa-eye-slash"></i> <?php echo count($plugin_upgrades); ?> <?php _e('Upgrade','mainwp'); ?><?php echo (count($plugin_upgrades) > 1 ? 's' : ''); ?></a>
                         <?php
                         }
                         else
@@ -1081,7 +1099,7 @@ class MainWPRightNow
                         </span>
                         <span class="mainwp-mid-col">
                             <a href="#" onClick="return rightnow_plugins_detail('<?php echo $plugin_name; ?>');">
-                                <?php echo $cnt; ?> <?php _e('Upgrade','mainwp'); ?><?php echo ($cnt > 1 ? 's' : ''); ?>
+                                <i class="fa fa-eye-slash"></i> <?php echo $cnt; ?> <?php _e('Upgrade','mainwp'); ?><?php echo ($cnt > 1 ? 's' : ''); ?>
                             </a>
                         </span>
                         <span class="mainwp-right-col">
@@ -1213,7 +1231,7 @@ class MainWPRightNow
                         if (count($theme_upgrades) > 0)
                         {
                         ?>
-                            <a href="#" id="mainwp_theme_upgrades_<?php echo $website->id; ?>_show" onClick="return rightnow_show('theme_upgrades_<?php echo $website->id; ?>', true);"><?php echo count($theme_upgrades); ?> <?php _e('Upgrade','mainwp'); ?><?php echo (count($theme_upgrades) > 1 ? 's' : ''); ?></a>
+                            <a href="#" id="mainwp_theme_upgrades_<?php echo $website->id; ?>_show" onClick="return rightnow_show('theme_upgrades_<?php echo $website->id; ?>', true);"><i class="fa fa-eye-slash"></i> <?php echo count($theme_upgrades); ?> <?php _e('Upgrade','mainwp'); ?><?php echo (count($theme_upgrades) > 1 ? 's' : ''); ?></a>
                         <?php
                         }
                         else
@@ -1276,7 +1294,7 @@ class MainWPRightNow
                         </span>
                         <span class="mainwp-mid-col">
                             <a href="#" onClick="return rightnow_themes_detail('<?php echo $theme_name; ?>');">
-                                <?php echo $cnt; ?> <?php _e('Upgrade','mainwp'); ?><?php echo ($cnt > 1 ? 's' : ''); ?>
+                                <i class="fa fa-eye-slash"></i> <?php echo $cnt; ?> <?php _e('Upgrade','mainwp'); ?><?php echo ($cnt > 1 ? 's' : ''); ?>
                             </a>
                         </span>
                         <span class="mainwp-right-col">
@@ -1352,12 +1370,12 @@ class MainWPRightNow
     </div>
     
      <?php
-        //WP plugin outdate!     
+        //WP plugin Abandoned!     
         ?>
     <div class="clear">
         <div class="mainwp-row">
             <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_plugins_outdate; ?> </span> <?php _e('Plugin','mainwp'); ?><?php if ($total_plugins_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>&nbsp;<?php MainWPUtility::renderToolTip(__('This feature checks the last updated status of plugins and alerts you if not updated in a specific amount of time. This gives you insight on if a plugin may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?></span>
-            <span class="mainwp-mid-col">&nbsp;</span>            
+            <span class="mainwp-mid-col"><a href="<?php echo admin_url('admin.php?page=PluginsIgnoredAbandoned'); ?>"><?php _e('Ignored','mainwp'); ?> (<?php echo $total_pluginsIgnoredAbandoned; ?>)</a></span>            
             <span class="mainwp-right-col"><a href="#" id="mainwp_plugins_outdate_show" onClick="return rightnow_show('plugins_outdate');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
             
         </div>
@@ -1395,7 +1413,7 @@ class MainWPRightNow
                         if (count($plugins_outdate) > 0)
                         {
                         ?>
-                            <a href="#" id="mainwp_plugins_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugins_outdate_<?php echo $website->id; ?>', true);"><?php echo count($plugins_outdate); ?> <?php _e('Plugin','mainwp'); ?><?php echo (count($plugins_outdate) > 1 ? 's' : ''); ?></a>
+                            <a href="#" id="mainwp_plugins_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugins_outdate_<?php echo $website->id; ?>', true);"><i class="fa fa-eye-slash"></i> <?php echo count($plugins_outdate); ?> <?php _e('Plugin','mainwp'); ?><?php echo (count($plugins_outdate) > 1 ? 's' : ''); ?></a>
                         <?php
                         }
                         else
@@ -1461,7 +1479,7 @@ class MainWPRightNow
                         </span>
                         <span class="mainwp-mid-col">
                             <a href="#" onClick="return rightnow_plugins_outdate_detail('<?php echo $plugin_name; ?>');">
-                                <?php echo $cnt; ?> <?php _e('Plugin','mainwp'); ?><?php echo ($cnt <> 1 ? 's' : ''); ?>
+                                <i class="fa fa-eye-slash"></i> <?php echo $cnt; ?> <?php _e('Plugin','mainwp'); ?><?php echo ($cnt <> 1 ? 's' : ''); ?>
                             </a>
                         </span>
                         <span class="mainwp-right-col"> 
@@ -1536,12 +1554,12 @@ class MainWPRightNow
     
     
        <?php
-        //WP theme outdate!          
+        //WP theme Abandoned!          
         ?>
     <div class="clear">
         <div class="mainwp-row">
             <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_themes_outdate; ?> </span> <?php _e('Theme','mainwp'); ?><?php if ($total_themes_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>&nbsp;<?php MainWPUtility::renderToolTip(__('This feature checks the last updated status of themes and alerts you if not updated in a specific amount of time. This gives you insight on if a theme may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?></span>
-            <span class="mainwp-mid-col">&nbsp;</span>            
+            <span class="mainwp-mid-col"><a href="<?php echo admin_url('admin.php?page=ThemesIgnoredAbandoned'); ?>"><?php _e('Ignored','mainwp'); ?> (<?php echo $total_themesIgnoredAbandoned; ?>)</a></span>            
             <span class="mainwp-right-col"><a href="#" id="mainwp_themes_outdate_show" onClick="return rightnow_show('themes_outdate');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
             
         </div>
@@ -1578,7 +1596,7 @@ class MainWPRightNow
                         if (count($themes_outdate) > 0)
                         {
                         ?>
-                            <a href="#" id="mainwp_themes_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('themes_outdate_<?php echo $website->id; ?>', true);"><?php echo count($themes_outdate); ?> <?php _e('Theme','mainwp'); ?><?php echo (count($themes_outdate) > 1 ? 's' : ''); ?></a>
+                            <a href="#" id="mainwp_themes_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('themes_outdate_<?php echo $website->id; ?>', true);"><i class="fa fa-eye-slash"></i> <?php echo count($themes_outdate); ?> <?php _e('Theme','mainwp'); ?><?php echo (count($themes_outdate) > 1 ? 's' : ''); ?></a>
                         <?php
                         }
                         else
@@ -1639,7 +1657,7 @@ class MainWPRightNow
                         </span>
                         <span class="mainwp-mid-col">
                             <a href="#" onClick="return rightnow_themes_outdate_detail('<?php echo $slug; ?>');">
-                                <?php echo $cnt; ?> <?php _e('Theme','mainwp'); ?><?php echo ($cnt <> 1 ? 's' : ''); ?>
+                                <i class="fa fa-eye-slash"></i> <?php echo $cnt; ?> <?php _e('Theme','mainwp'); ?><?php echo ($cnt <> 1 ? 's' : ''); ?>
                             </a>
                         </span>
                         <span class="mainwp-right-col"> 

@@ -2474,9 +2474,9 @@ input.mainwp-field:-webkit-autofill {
 
 #mainwp-add-site-notice-box {
     position: absolute;
-    left: 650px;
-    top: 10px;
-    width: 450px;
+    left: 600px;
+    top: 0px;
+    width: calc(100% - 600px);
 }
 
 

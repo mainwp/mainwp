@@ -140,9 +140,9 @@ class MainWPPlugins
             <p>
                 <?php _e('Status:','mainwp'); ?><br />
                 <select name="mainwp_plugin_search_by_status" id="mainwp_plugin_search_by_status">
-                    <option value="all" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'all') { echo 'selected'; } ?>><?php _e('All Plugins','mainwp'); ?></option>
                     <option value="active" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'active') { echo 'selected'; } ?>><?php _e('Active','mainwp'); ?></option>
                     <option value="inactive" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'inactive') { echo 'selected'; } ?>><?php _e('Inactive','mainwp'); ?></option>
+                    <option value="all" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'all') { echo 'selected'; } ?>><?php _e('All Plugins','mainwp'); ?></option>
                 </select>
             </p>
             <p>

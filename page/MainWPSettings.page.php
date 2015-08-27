@@ -267,7 +267,7 @@ class MainWPSettings
                             <td>
                                 <div class="mainwp-checkbox">
                                 <input type="checkbox" name="mainwp_hide_footer"
-                                       id="mainwp_hide_footer" <?php echo ((get_option('mainwp_hide_footer', 1) == 1) ? 'checked="true"' : ''); ?>/>
+                                       id="mainwp_hide_footer" <?php echo ((get_option('mainwp_hide_footer', 0) == 1) ? 'checked="true"' : ''); ?>/>
                                 <label for="mainwp_hide_footer"></label>
                                </div>
                             </td>

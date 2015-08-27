@@ -1603,7 +1603,7 @@ class MainWPSystem
     }
     
     public static function isHideFooter() { 
-        if (get_option('mainwp_hide_footer', 1))
+        if (get_option('mainwp_hide_footer', 0))
                 return true;
         return false;        
     }

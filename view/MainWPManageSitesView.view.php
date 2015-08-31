@@ -306,6 +306,9 @@ class MainWPManageSitesView
             <div id="mainwp_managesites_test_errors" class="mainwp_error error"></div>
             <div id="mainwp_managesites_test_message" class="mainwp_updated updated"></div>
             <form method="POST" action="" enctype="multipart/form-data" id="mainwp_testconnection_form">
+            <div class="mainwp_info-box-blue">
+                <span><?php _e('The Test Connection feature is specifically testing what your Dashboard can "see" and what your Dashboard "sees" and what my Dashboard "sees" or what your browser "sees" can be completely different things.','mainwp'); ?></span>
+            </div>
             <div class="postbox">
             <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Test a Site Connection','mainwp'); ?></span></h3>
             <div class="inside">
@@ -487,13 +490,14 @@ class MainWPManageSitesView
        <div id="mainwp-add-site-notice-show" class="mainwp_info-box-blue" style="background-position: 10px 10px !important; display: none; text-align: center;"><a href="#" class="button button-primary" id="mainwp-add-site-notice-show-link"><?php _e('Having trouble adding your site?','mainwp'); ?></a></div>
        <div id="mainwp-add-site-notice" class="mainwp_info-box-blue" style="background-position: 10px 25px !important;">
          <p>
-           <?php _e('If you are having trouble adding your site please use the Test Connection tab. This tells you the header response being received by your dashboard from that child site. The Test Connection feature is specifically testing what your Dashboard can "see" and what your Dashboard "sees" and what my Dashboard "sees" or what your browser "sees" can be completely different things.','mainwp'); ?>
+           <?php _e('If you are having trouble adding your site please use the <a href="/wp-admin/admin.php?page=managesites&do=test" style="text-decoration: none;">Test Connection tab</a>. This tells you the header response being received by your dashboard from that child site. <br/><strong>The Test Connection feature is specifically testing what your Dashboard can "see" and what your Dashboard "sees" and what my Dashboard "sees" or what your browser "sees" can be completely different things.</strong>','mainwp'); ?>
          </p>
          <p>
            <strong><?php _e('Most common reasons for sites not being added are:','mainwp'); ?></strong>
            <ol>
-             <li><?php _e('You have a Security Plugin blocking the connection. If you have a security plugin installed and are having an issue please check the <a href="http://docs.mainwp.com/known-plugin-conflicts/" style="text-decoration: none;">Plugin Conflict page</a> for how to resolve.','mainwp'); ?></li>
+             <li><strong><?php _e('You have a Security Plugin blocking the connection. If you have a security plugin installed and are having an issue please check the <a href="http://docs.mainwp.com/known-plugin-conflicts/" style="text-decoration: none;">Plugin Conflict page</a> for how to resolve.','mainwp'); ?></strong></li>
              <li><?php _e('Your Dashboard is on the same host as your Child site. Some hosts will not allow two sites on the same server to communicate with each other. In this situation you would contact your host for assistance or move your Dashboard or Child site to a different host.','mainwp'); ?></li>
+             <li><?php _e('You may have recently moved the child site and your Dashboard\'s Server may not have an updated DNS or your server may be experiencing DNS issues.  To check this use the Test Connection tab and verify the IP that shows up with the IP that shows on your Child sites MainWP Server Information page. ','mainwp'); ?></li>
              <li class="curl-notice" <?php echo ($passed_curl_ssl ? 'style="display: none;"' : ""); ?>><?php _e('Your Dashboard or Child site is experiencing SSL or cURL errors which can make it so you are unable to the new Child site.  You can check for these errors on the Server Information page for both the MainWP Dashboard and Child Plugin.','mainwp'); ?></li>
            </ol>
          </p>

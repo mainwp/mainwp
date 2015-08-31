@@ -143,8 +143,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 3. The Posts Screen
 4. The Extensions Screen
 5. The Plugins Screen
-6. The Offline Checks Screen
-7. The Groups Screen
+6. The Groups Screen
 
 == Changelog ==
 

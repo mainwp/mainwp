@@ -69,7 +69,9 @@ class MainWPPostHandler
         add_action('wp_ajax_mainwp_ignoreplugintheme', array(&$this, 'mainwp_ignoreplugintheme')); //ok
         add_action('wp_ajax_mainwp_unignoreplugintheme', array(&$this, 'mainwp_unignoreplugintheme')); //ok
         add_action('wp_ajax_mainwp_ignorepluginsthemes', array(&$this, 'mainwp_ignorepluginsthemes')); //ok
-        add_action('wp_ajax_mainwp_unignorepluginsthemes', array(&$this, 'mainwp_unignorepluginsthemes')); //ok
+        add_action('wp_ajax_mainwp_unignorepluginsthemes', array(&$this, 'mainwp_unignorepluginsthemes')); //ok        
+        add_action('wp_ajax_mainwp_unignoreabandonedplugintheme', array(&$this, 'mainwp_unignoreabandonedplugintheme')); //ok        
+        add_action('wp_ajax_mainwp_unignoreabandonedpluginsthemes', array(&$this, 'mainwp_unignoreabandonedpluginsthemes')); //ok        
         add_action('wp_ajax_mainwp_dismissoutdateplugintheme', array(&$this, 'mainwp_dismissoutdateplugintheme')); //ok        
         add_action('wp_ajax_mainwp_dismissoutdatepluginsthemes', array(&$this, 'mainwp_dismissoutdatepluginsthemes')); //ok        
         $this->addAction('mainwp_trust_plugin', array(&$this, 'mainwp_trust_plugin'));
@@ -615,7 +617,7 @@ class MainWPPostHandler
     function mainwp_twitter_dashboard_action() {
         $success = false;
         if (isset($_POST['actionName']) && isset($_POST['countSites']) && !empty($_POST['countSites'])) {                                                                    
-            $success = MainWPTwitter::updateTwitterInfo($_POST['actionName'], $_POST['countSites'], (int)$_POST['countSeconds'], (isset($_POST['countItems']) ? $_POST['countItems'] : 0) , time());
+            $success = MainWPTwitter::updateTwitterInfo($_POST['actionName'], $_POST['countSites'], (int)$_POST['countSeconds'],  (isset($_POST['countRealItems']) ? $_POST['countRealItems'] : 0), time(), (isset($_POST['countItems']) ? $_POST['countItems'] : 0));
         }  
         
         if (isset($_POST['showNotice']) && !empty($_POST['showNotice'])) {
@@ -1364,6 +1366,28 @@ class MainWPPostHandler
             die(json_encode(array('error' => 'Invalid request')));
         }
         die(json_encode(array('result' => MainWPRightNow::ignorePluginTheme($_POST['type'], $_POST['slug'], $_POST['name'], $_POST['id']))));
+    }
+   
+    function mainwp_unignoreabandonedplugintheme()
+    {
+        $this->secure_request();
+
+        if (!isset($_POST['id']))
+        {
+            die(json_encode(array('error' => 'Invalid request')));
+        }
+        die(json_encode(array('result' => MainWPRightNow::unIgnoreAbandonedPluginTheme($_POST['type'], $_POST['slug'], $_POST['id']))));
+    }
+   
+    function mainwp_unignoreabandonedpluginsthemes()
+    {
+        $this->secure_request();
+
+        if (!isset($_POST['slug']))
+        {
+            die(json_encode(array('error' => 'Invalid request')));
+        }
+        die(json_encode(array('result' => MainWPRightNow::unIgnoreAbandonedPluginsThemes($_POST['type'], $_POST['slug']))));
     }
     
     function mainwp_dismissoutdateplugintheme()

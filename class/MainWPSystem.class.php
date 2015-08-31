@@ -938,12 +938,15 @@ class MainWPSystem
                 //Run over every update we had last time..
                 foreach ($websitePlugins as $pluginSlug => $pluginInfo)
                 {
+                    if (isset($decodedIgnoredPlugins[$pluginSlug]) || isset($websiteDecodedIgnoredPlugins[$pluginSlug])) 
+                        continue;
+                    
                     $infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . $website->name . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
                     $infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . $website->name . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
 
                     $newUpdate = !(isset($websiteLastPlugins[$pluginSlug]) && ($pluginInfo['Version'] == $websiteLastPlugins[$pluginSlug]['Version']) && ($pluginInfo['update']['new_version'] == $websiteLastPlugins[$pluginSlug]['update']['new_version']));
                     //update this..
-                    if (in_array($pluginSlug, $trustedPlugins) && !isset($decodedIgnoredPlugins[$pluginSlug]) && !isset($websiteDecodedIgnoredPlugins[$pluginSlug]))
+                    if (in_array($pluginSlug, $trustedPlugins))
                     {
                         //Trusted
                         if ($newUpdate)
@@ -974,12 +977,15 @@ class MainWPSystem
                 //Run over every update we had last time..
                 foreach ($websiteThemes as $themeSlug => $themeInfo)
                 {
+                    if (isset($decodedIgnoredThemes[$themeSlug]) || isset($websiteDecodedIgnoredThemes[$themeSlug]))
+                        continue;                    
+                    
                     $infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . $website->name . '</a> - ' . $themeInfo['Name'] . ' ' . $themeInfo['Version'] . ' to ' . $themeInfo['update']['new_version'];
                     $infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . $website->name . '</a> - ' . $themeInfo['Name'] . ' ' . $themeInfo['Version'] . ' to ' . $themeInfo['update']['new_version'];
 
                     $newUpdate = !(isset($websiteLastThemes[$themeSlug]) && ($themeInfo['Version'] == $websiteLastThemes[$themeSlug]['Version']) && ($themeInfo['update']['new_version'] == $websiteLastThemes[$themeSlug]['update']['new_version']));
                     //update this..
-                    if (in_array($themeSlug, $trustedThemes) && !isset($decodedIgnoredThemes[$themeSlug]) && !isset($websiteDecodedIgnoredThemes[$themeSlug]))
+                    if (in_array($themeSlug, $trustedThemes))
                     {
                         //Trusted
                         if ($newUpdate)
@@ -1603,7 +1609,7 @@ class MainWPSystem
     }
     
     public static function isHideFooter() { 
-        if (get_option('mainwp_hide_footer', 1))
+        if (get_option('mainwp_hide_footer', 0))
                 return true;
         return false;        
     }

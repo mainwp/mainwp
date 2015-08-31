@@ -37,7 +37,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
 
     function no_items()
     {
-        _e('No sites found.','mainwp');
+        echo __('No sites found.','mainwp') . "<br/><br/>" . __('<em>If sites are missing from your Display but you know those sites are connected to your Dashboard be sure to check the Status drop down filter and adjust it to your needs.</em>','mainwp');; 
     }
 
     function column_default($item, $column_name)
@@ -281,7 +281,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
             
             if ($cnt > 0)
             {
-                $output .= '<span class="mainwp-av-updates-col"> ' . $cnt . '</span>';
+                $output .= '<span class="mainwp-av-updates-col" title="'. $cnt .' Availble Update' . ($cnt != 1 ? "s" : "") . '"> ' . $cnt . '</span>';
             }
         }
 

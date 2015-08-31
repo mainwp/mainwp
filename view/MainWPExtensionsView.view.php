@@ -456,15 +456,7 @@ class MainWPExtensionsView
                                 'link' => 'https://extensions.mainwp.com/product/mainwp-clean-lock-extension/',
                                 'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/07/mainwp-clean-and-lock-extension.png',
                                 'product_id' => 'MainWP Clean and Lock Extension'
-                            ),
-                        array(
-                                'slug' => 'mainwp-heatmap-extension',
-                                'title' => 'MainWP Click Heatmap Extension',
-                                'desc' => 'MainWP Click Heatmap Extension is an extension for the MainWP plugin that enables you to track visitors clicks on your child sites.',
-                                'link' => 'https://extensions.mainwp.com/product/mainwp-click-heatmaps-extension/',
-                                'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-heatmaps-ext-icon.png',
-                                'product_id' => 'MainWP Click Heatmap Extension'
-                            ),
+                            ),                        
                         array(
                                 'slug' => 'mainwp-client-reports-extension',
                                 'title' => 'MainWP Client Reports Extension',

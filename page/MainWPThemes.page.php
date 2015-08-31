@@ -25,6 +25,7 @@ class MainWPThemes
         add_submenu_page('mainwp_tab', __('Themes','mainwp'), '<div class="mainwp-hidden">Auto Updates</div>', 'read', 'ThemesAutoUpdate', array(MainWPThemes::getClassName(), 'renderAutoUpdate'));
         add_submenu_page('mainwp_tab', __('Themes','mainwp'), '<div class="mainwp-hidden">Ignored Updates</div>', 'read', 'ThemesIgnore', array(MainWPThemes::getClassName(), 'renderIgnore'));
         add_submenu_page('mainwp_tab', __('Themes','mainwp'), '<div class="mainwp-hidden">Ignored Conflicts</div>', 'read', 'ThemesIgnoredConflicts', array(MainWPThemes::getClassName(), 'renderIgnoredConflicts'));
+        add_submenu_page('mainwp_tab', __('Themes','mainwp'), '<div class="mainwp-hidden">Ignored Abandoned</div>', 'read', 'ThemesIgnoredAbandoned', array(MainWPThemes::getClassName(), 'renderIgnoredAbandoned'));
         add_submenu_page('mainwp_tab', __('Themes Help','mainwp'), '<div class="mainwp-hidden">Themes Help</div>', 'read', 'ThemesHelp', array(MainWPThemes::getClassName(), 'QSGManageThemes'));
 
         self::$subPages = apply_filters('mainwp-getsubpages-themes', array());
@@ -51,6 +52,7 @@ class MainWPThemes
                     <a href="<?php echo admin_url('admin.php?page=ThemesAutoUpdate'); ?>" class="mainwp-submenu"><?php _e('Auto Updates','mainwp'); ?></a>
                     <a href="<?php echo admin_url('admin.php?page=ThemesIgnore'); ?>" class="mainwp-submenu"><?php _e('Ignored Updates','mainwp'); ?></a>
                     <a href="<?php echo admin_url('admin.php?page=ThemesIgnoredConflicts'); ?>" class="mainwp-submenu"><?php _e('Ignored Conflicts','mainwp'); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=ThemesIgnoredAbandoned'); ?>" class="mainwp-submenu"><?php _e('Ignored Abandoned','mainwp'); ?></a>
                     <?php
                     if (isset(self::$subPages) && is_array(self::$subPages))
                     {
@@ -94,6 +96,7 @@ class MainWPThemes
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'AutoUpdate') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesAutoUpdate"><?php _e('Auto Updates','mainwp'); ?></a>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'Ignore') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesIgnore"><?php _e('Ignored Updates','mainwp'); ?></a>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'IgnoredConflicts') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesIgnoredConflicts"><?php _e('Ignored Conflicts','mainwp'); ?></a>
+            <a class="nav-tab pos-nav-tab <?php if ($shownPage == 'IgnoreAbandoned') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesIgnoredAbandoned"><?php _e('Ignored Abandoned','mainwp'); ?></a>
             <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage === 'ThemesHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=ThemesHelp"><?php _e('Help','mainwp'); ?></a>
             <?php
             if (isset(self::$subPages) && is_array(self::$subPages))
@@ -134,9 +137,9 @@ class MainWPThemes
             <p>
                 <?php _e('Status:','mainwp'); ?><br />
                 <select name="mainwp_theme_search_by_status" id="mainwp_theme_search_by_status">
-                    <option value="all" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'all') { echo 'selected'; } ?>><?php _e('All Themes','mainwp'); ?></option>
                     <option value="active" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'active') { echo 'selected'; } ?>><?php _e('Active','mainwp'); ?></option>
                     <option value="inactive" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'inactive') { echo 'selected'; } ?>><?php _e('Inactive','mainwp'); ?></option>
+                    <option value="all" <?php if ($cachedSearch != null && $cachedSearch['the_status'] == 'all') { echo 'selected'; } ?>><?php _e('All Themes','mainwp'); ?></option>
                 </select>
             </p>
             <p>
@@ -1132,6 +1135,124 @@ class MainWPThemes
         self::renderFooter('Ignore');
     }
 
+     public static function renderIgnoredAbandoned()
+    {
+        $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
+        $userExtension = MainWPDB::Instance()->getUserExtension();
+        $decodedIgnoredThemes = json_decode($userExtension->dismissed_themes, true);
+        $ignoredThemes = (is_array($decodedIgnoredThemes) && (count($decodedIgnoredThemes) > 0));
+
+        $cnt = 0;
+        while ($websites && ($website = @MainWPDB::fetch_object($websites)))
+        {   
+            $tmpDecodedIgnoredThemes = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'themes_outdate_dismissed'), true);                                
+            if (!is_array($tmpDecodedIgnoredThemes) || count($tmpDecodedIgnoredThemes) == 0) continue;
+            $cnt++;
+        }
+
+        self::renderHeader('IgnoreAbandoned');
+        ?>
+    <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+    <caption><?php _e('Globally Ignored Abandoned Themes','mainwp'); ?></caption>
+        <thead>
+            <tr>
+                <th scope="col" class="manage-column" style="width: 300px"><?php _e('Theme','mainwp'); ?></th>
+                <th scope="col" class="manage-column" style="width: 650px"><?php _e('Theme File','mainwp'); ?></th>
+                <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ($ignoredThemes) { ?><a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return rightnow_themes_abandoned_unignore_globally_all();"><?php _e('Allow All','mainwp'); ?></a><?php } ?></th>
+            </tr>
+        </thead>
+        <tbody id="globally-ignored-themes-list" class="list:sites">
+        <?php
+            if ($ignoredThemes)
+            {
+        ?>
+                <?php
+                foreach ($decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName)
+                {
+                ?>
+                    <tr theme_slug="<?php echo urlencode($ignoredTheme); ?>">
+                         <td>
+                             <strong><?php echo $ignoredThemeName; ?></strong>
+                         </td>
+                         <td>
+                             <?php echo $ignoredTheme; ?>
+                         </td>
+                        <td style="text-align: right; padding-right: 30px">
+                            <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
+                            <a href="#" onClick="return rightnow_themes_abandoned_unignore_globally('<?php echo urlencode($ignoredTheme); ?>')"><i class="fa fa-check"></i> <?php _e('Allow','mainwp'); ?></a>
+                            <?php } ?>
+                        </td>
+                    </tr>
+                <?php
+                }
+                ?>
+        <?php
+            }
+            else
+            {
+            ?>
+                    <tr><td colspan="2"><?php _e('No ignored abandoned themes','mainwp'); ?></td></tr>
+            <?php
+            }
+        ?>
+        </tbody>
+    </table>
+
+    <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+    <caption><?php _e('Per Site Ignored Abandoned Themes','mainwp'); ?></caption>
+        <thead>
+            <tr>
+                <th scope="col" class="manage-column" style="width: 300px"><?php _e('Site','mainwp'); ?></th>
+                <th scope="col" class="manage-column" style="width: 650px"><?php _e('Themes','mainwp'); ?></th>
+                <th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { if ($cnt > 0) { ?><a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return rightnow_themes_unignore_abandoned_detail_all();"><?php _e('Allow All','mainwp'); ?></a><?php } } ?></th>
+            </tr>
+        </thead>
+        <tbody id="ignored-themes-list" class="list:sites">
+        <?php
+        if ($cnt > 0)
+        {
+            @MainWPDB::data_seek($websites, 0);
+            while ($websites && ($website = @MainWPDB::fetch_object($websites)))
+            {               
+               $decodedIgnoredThemes = json_decode(MainWPDB::Instance()->getWebsiteOption($website, 'themes_outdate_dismissed'), true);                                
+               if (!is_array($decodedIgnoredThemes) || count($decodedIgnoredThemes) == 0) continue;
+               $first = true;
+               foreach ($decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName)
+               {
+                 ?>
+               <tr site_id="<?php echo $website->id; ?>" theme_slug="<?php echo urlencode($ignoredTheme); ?>">
+                   <td>
+                       <span class="websitename" <?php if (!$first) { echo 'style="display: none;"'; } else { $first = false; }?>>
+                           <a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $website->id); ?>"><?php echo stripslashes($website->name); ?></a>
+                       </span>
+                   </td>
+                   <td>
+                       <strong><?php echo $ignoredThemeName; ?></strong> (<?php echo $ignoredTheme; ?>)
+                   </td>
+                   <td style="text-align: right; padding-right: 30px">
+                        <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>
+                        <a href="#" onClick="return rightnow_themes_unignore_abandoned_detail('<?php echo urlencode($ignoredTheme); ?>', <?php echo $website->id; ?>)"><i class="fa fa-check"></i> <?php _e('Allow','mainwp'); ?></a>
+                        <?php } ?>
+                   </td>
+               </tr>
+                 <?php
+               }
+            }
+            @MainWPDB::free_result($websites);
+        }
+        else
+        {
+        ?>
+            <tr><td colspan="3"><?php _e('No ignored abandoned themes','mainwp'); ?></td></tr>
+        <?php
+        }
+        ?>
+        </tbody>
+    </table>
+                   <?php
+        self::renderFooter('IgnoreAbandoned');
+    }
+    
     public static function trustPost()
     {
         $userExtension = MainWPDB::Instance()->getUserExtension();

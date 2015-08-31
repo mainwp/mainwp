@@ -33,6 +33,9 @@ class MainWPManageGroups
         ?>
         <div class="wrap">
             <?php do_action("mainwp-pageheader-sites", "ManageGroups"); ?>
+            <div class="mainwp_info-box-blue">
+                <span><?php _e('In case you are managing large number of WordPress sites, it would be very useful for you to split them in different groups. Later, you will be able to make site selection by group which will speed up your work and make it much easier.','mainwp'); ?></span>
+            </div>
                 <div class="mainwp_managegroups-outsidebox">
                     <span id="mainwp_managegroups-addnew-container"><input type="button" name="Add new" value="<?php _e('Add New','mainwp'); ?>" class="managegroups-addnew button" /></span>
                     <h3><?php _e('Groups','mainwp'); ?></h3>

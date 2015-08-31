@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.3
-Stable tag: 2.0.25
+Stable tag: 2.0.26
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -143,10 +143,24 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 3. The Posts Screen
 4. The Extensions Screen
 5. The Plugins Screen
-6. The Offline Checks Screen
-7. The Groups Screen
+6. The Groups Screen
 
 == Changelog ==
+
+= 2.0.26 - 8-31-2015 =
+* Fixed: Element title for the Available Updates status in the Manange Sites page
+* Added: Counts for Brag feature
+* Added: Unignore feature for Abandoned Plugins
+* Added: Unignore feature for Abandoned Themes
+* Added: Various info messages
+* Updated: Message format for Twitter messages
+* Updated: Various info messages
+* Updated: Default value for the Hide MainWP Footer option
+* Updated: Default status for the Plugins search
+* Updated: Default status for the Themes search 
+* Updated: Ignored Plugins and Themes will not show up in email summary
+* Removed: MainWP Heatmap Extension from the "Available Extensions" list
+* Removed: News Widget
 
 = 2.0.25 - 8-20-2015 =
 * Added: New message showing how many actions performed and the time it took with a Brag button

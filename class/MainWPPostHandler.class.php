@@ -617,7 +617,7 @@ class MainWPPostHandler
     function mainwp_twitter_dashboard_action() {
         $success = false;
         if (isset($_POST['actionName']) && isset($_POST['countSites']) && !empty($_POST['countSites'])) {                                                                    
-            $success = MainWPTwitter::updateTwitterInfo($_POST['actionName'], $_POST['countSites'], (int)$_POST['countSeconds'], (isset($_POST['countItems']) ? $_POST['countItems'] : 0) , time());
+            $success = MainWPTwitter::updateTwitterInfo($_POST['actionName'], $_POST['countSites'], (int)$_POST['countSeconds'],  (isset($_POST['countRealItems']) ? $_POST['countRealItems'] : 0), time(), (isset($_POST['countItems']) ? $_POST['countItems'] : 0));
         }  
         
         if (isset($_POST['showNotice']) && !empty($_POST['showNotice'])) {

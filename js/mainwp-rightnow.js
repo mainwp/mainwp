@@ -49,7 +49,8 @@ jQuery(document).on('click', '#rightnow-backup-ignore', function() {
 
 var dashboardActionName = '';
 var starttimeDashboardAction = 0;
-var countItemsUpdated = 0;
+var countRealItemsUpdated = 0;
+var itemsToUpdate = [];
 
 rightnow_wordpress_global_upgrade_all = function ()
 {
@@ -197,7 +198,7 @@ rightnow_wordpress_upgrade_int = function (websiteId, bulkMode)
                 result = response.result;
                 if (pBulkMode) rightnow_wordpress_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
                 websiteHolder.attr('updated', 1);
-                countItemsUpdated++;
+                countRealItemsUpdated++;
             }
             rightnow_wordpress_upgrade_all_update_done();
             websiteHolder.find('.wordpressInfo').html(result);
@@ -303,7 +304,7 @@ rightnow_plugins_global_upgrade_all = function()
         var dateObj = new Date();
         dashboardActionName = 'upgrade_all_plugins';        
         starttimeDashboardAction = dateObj.getTime();
-        countItemsUpdated = 0;
+        countRealItemsUpdated = 0;
 
         //Step 3: start upgrades
         rightnow_plugins_upgrade_all_int(undefined, pSitesToUpdate, pSitesPluginSlugs);
@@ -416,7 +417,8 @@ rightnow_send_twitt_info = function() {
                 actionName: dashboardActionName,
                 countSites: websitesDone,
                 countSeconds: countSec,
-                countItems: countItemsUpdated
+                countItems: itemsToUpdate.length,
+                countRealItems: countRealItemsUpdated                
             };
             jQuery.post(ajaxurl, data, function (res) {               
             });   
@@ -500,7 +502,8 @@ rightnow_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck)
                             if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
                             result = __('Upgrade Successful');
                             websiteHolder.attr('updated', 1);
-                            countItemsUpdated++;                            
+                            countRealItemsUpdated++;  
+                            if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);                                                        
                         }
                         else
                         {
@@ -629,7 +632,7 @@ rightnow_themes_global_upgrade_all = function ()
         var dateObj = new Date();
         dashboardActionName = 'upgrade_all_themes';        
         starttimeDashboardAction = dateObj.getTime();
-        countItemsUpdated = 0;
+        countRealItemsUpdated = 0;
    
         //Step 3: start upgrades
         rightnow_themes_upgrade_all_int(undefined, pSitesToUpdate, pSitesPluginSlugs);
@@ -797,7 +800,8 @@ rightnow_themes_upgrade_int = function (slug, websiteId, bulkMode)
                         if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
                         result = __('Upgrade Successful');
                         websiteHolder.attr('updated', 1);
-                        countItemsUpdated++;
+                        countRealItemsUpdated++;
+                        if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
                     }
                     else
                     {
@@ -1184,7 +1188,8 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                         {
                             result = __('Upgrade Successful');
                             websiteHolder.attr('updated', 1);
-                            countItemsUpdated++;
+                            countRealItemsUpdated++;
+                            if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);  
                         }
                         else
                         {
@@ -1236,7 +1241,8 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                         {
                             result = __('Upgrade Successful');
                             websiteHolder.attr('updated', 1);
-                            countItemsUpdated++;
+                            countRealItemsUpdated++;
+                            if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);  
                         }
                         else
                         {

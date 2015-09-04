@@ -57,7 +57,7 @@ class MainWPTwitter
         $first_word = self::randomWord();
         switch ( $what ) {
             case 'upgrade_everything':  
-                    $message = $first_word . ', you just updated updated <strong>%d</strong> ' . ( $value['sites'] == 1 ? 'site' : 'sites');
+                    $message = $first_word . ', you just updated <strong>%d</strong> ' . ( $value['sites'] == 1 ? 'site' : 'sites');
                     $message = sprintf(__($message), $value['sites']);                       
                 break;
             case 'upgrade_all_wp_core':  
@@ -97,7 +97,7 @@ class MainWPTwitter
          if (!empty($message)) {           
             $in_sec = $value['seconds'];
             if ( $in_sec <= 60) {
-                if ($what == 'upgrade_all_plugins' || $what == 'upgrade_all_themes' ) {
+                if ($what == 'upgrade_all_plugins' || $what == 'upgrade_all_themes' || $what == 'upgrade_everything') {
                     $real_updated = $value['real_items'];
                     $message .= ", " . sprintf(__("<strong>%d</strong> total " . (($real_updated == 1) ? 'update' : 'updates'), 'mainwp'), $real_updated); 
                 }
@@ -273,7 +273,7 @@ class MainWPTwitter
                 if (!empty($twit)) {                      
                     $in_sec = $value['seconds'];
                     if ( $in_sec <= 60 ) {
-                        if ($what == 'upgrade_all_plugins' || $what == 'upgrade_all_themes' ) {
+                        if ($what == 'upgrade_all_plugins' || $what == 'upgrade_all_themes' || $what == 'upgrade_everything') {
                             $real_updated = $value['real_items'];
                             $twit .= ", " . sprintf(__("%d total " . (($real_updated == 1) ? 'update' : 'updates'), 'mainwp'), $real_updated); 
                         }

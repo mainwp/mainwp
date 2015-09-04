@@ -1042,6 +1042,7 @@ rightnow_global_upgrade_all = function ()
     var dateObj = new Date();
     dashboardActionName = 'upgrade_everything';        
     starttimeDashboardAction = dateObj.getTime();
+    countRealItemsUpdated = 0;
     
     //Step 3: start upgrades
     rightnow_upgrade_all_int(sitesToUpdate, sitesToUpgrade, sitesPluginSlugs, sitesThemeSlugs);
@@ -1295,6 +1296,8 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                 {
                     result = response.result;
                     websiteHolder.attr('updated', 1);
+                    countRealItemsUpdated++;
+                    if (itemsToUpdate.indexOf('upgradewp_site_' + pWebsiteId) == -1) itemsToUpdate.push('upgradewp_site_' + pWebsiteId);
                 }
 
                 websiteHolder.find('.wordpressInfo').html(result);

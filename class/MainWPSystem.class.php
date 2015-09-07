@@ -2346,6 +2346,7 @@ class MainWPSystem
             do_action('mainwp_admin_menu');
             MainWPDocumentation::initMenu();
             MainWPServerInformation::initMenu();
+            MainWPChildScan::initMenu();
 
             MainWPAPISettings::initMenu();
         }

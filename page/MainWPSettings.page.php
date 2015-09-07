@@ -337,6 +337,15 @@ class MainWPSettings
                                     </em>
                                 </td>
                             </tr>
+                            <tr>
+                                <th scope="row"><?php _e('Scan child sites for known issues','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Use this option to scan child sites for known issues.','mainwp')); ?></th>
+                                <td>
+                                    <a href="<?php echo admin_url('admin.php?page=MainWPChildScan'); ?>" class="button-primary button"><?php _e('Scan','mainwp'); ?></a><br/>
+                                    <em>
+                                        <?php _e('Scans each site individually for known issues.','mainwp'); ?>
+                                    </em>
+                                </td>
+                            </tr>
                             </tbody>
                     </table>
                 </div>

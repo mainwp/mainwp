@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.3
-Stable tag: 2.0.26
+Stable tag: 2.0.27
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -146,6 +146,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 6. The Groups Screen
 
 == Changelog ==
+
+= 2.0.27 - 9-7-2015 =
+* Added: Confirmation before Upgrading Plugins and Themes
+* Added: Scan child sites for known issues
+* Updated: Success message after adding a new child site and reconnecting a disconnected child site
+* Updated: Welcome Panel layout on the main and individual child site dashboard
 
 = 2.0.26 - 8-31-2015 =
 * Fixed: Element title for the Available Updates status in the Manange Sites page

@@ -1807,7 +1807,7 @@ class MainWPManageSitesView
                         global $current_user;
                         $id = MainWPDB::Instance()->addWebsite($current_user->ID, $_POST['managesites_add_wpname'], $_POST['managesites_add_wpurl'], $_POST['managesites_add_wpadmin'], base64_encode($pubkey), base64_encode($privkey), $information['nossl'], (isset($information['nosslkey'])
                                 ? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass);
-                        $message = 'Site successfully added';
+                        $message = sprintf(__('Site successfully added - Visit the Site\'s <a href="admin.php?page=managesites&dashboard=%d" style="text-decoration: none;" title="Dashboard">Dashboard</a> now.', 'mainwp'), $id);
                         $website = MainWPDB::Instance()->getWebsiteById($id);
                         MainWPSync::syncInformationArray($website, $information);
                     }

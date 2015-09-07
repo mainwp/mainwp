@@ -220,6 +220,9 @@ rightnow_plugins_global_upgrade_all = function()
 {
     if (bulkTaskRunning) return false;
 
+    if (!confirm(__('Are you sure you want to Upgrade All Plugins?')))
+        return false;
+    
     rightnow_show_if_required('plugin_upgrades', false);
 
     //Step 1: build form
@@ -318,7 +321,7 @@ rightnow_plugins_global_upgrade_all = function()
 rightnow_plugins_upgrade_all = function (slug, pluginName)
 {
     if (bulkTaskRunning) return false;
-
+        
     rightnow_plugins_detail_show(slug);
 
     //Step 1: build form
@@ -548,7 +551,10 @@ var websitesThemeSlugsToUpgrade = undefined;
 rightnow_themes_global_upgrade_all = function ()
 {
     if (bulkTaskRunning) return false;
-
+    
+    if (!confirm(__('Are you sure you want to Upgrade All Themes?')))
+        return false;
+    
     rightnow_show_if_required('theme_upgrades', false);
  
     //Step 1: build form
@@ -645,7 +651,7 @@ rightnow_themes_global_upgrade_all = function ()
 rightnow_themes_upgrade_all = function (slug, themeName)
 {
     if (bulkTaskRunning) return false;
-
+   
     rightnow_themes_detail_show(slug);
 
     //Step 1: build form
@@ -832,6 +838,9 @@ rightnow_themes_upgrade_int = function (slug, websiteId, bulkMode)
 rightnow_global_upgrade_all = function ()
 {
     if (bulkTaskRunning) return false;
+    
+    if (!confirm(__('Are you sure you want to upgrade everything?')))
+        return false;
     
     rightnow_show_if_required('wp_upgrades', false);
     
@@ -1033,6 +1042,7 @@ rightnow_global_upgrade_all = function ()
     var dateObj = new Date();
     dashboardActionName = 'upgrade_everything';        
     starttimeDashboardAction = dateObj.getTime();
+    countRealItemsUpdated = 0;
     
     //Step 3: start upgrades
     rightnow_upgrade_all_int(sitesToUpdate, sitesToUpgrade, sitesPluginSlugs, sitesThemeSlugs);
@@ -1286,6 +1296,8 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                 {
                     result = response.result;
                     websiteHolder.attr('updated', 1);
+                    countRealItemsUpdated++;
+                    if (itemsToUpdate.indexOf('upgradewp_site_' + pWebsiteId) == -1) itemsToUpdate.push('upgradewp_site_' + pWebsiteId);
                 }
 
                 websiteHolder.find('.wordpressInfo').html(result);

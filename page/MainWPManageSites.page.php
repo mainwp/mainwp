@@ -1288,7 +1288,7 @@ class MainWPManageSites
             die('ERROR ' . $e->getMessage());
         }
 
-        die('Site successfully reconnected');
+        die(sprintf(__('Site successfully reconnected - Visit the Site\'s <a href="admin.php?page=managesites&dashboard=%d" title="Dashboard">Dashboard</a> now.', 'mainwp'), $siteId));
     }
 
     public static function _reconnectSite($website)

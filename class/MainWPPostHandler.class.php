@@ -215,6 +215,13 @@ class MainWPPostHandler
         $this->addAction('mainwp_force_destroy_sessions', array(&$this, 'mainwp_force_destroy_sessions'));
         
         MainWPExtensions::initAjaxHandlers();
+
+        add_action('wp_ajax_mainwp_childscan', array(&$this, 'mainwp_childscan')); //ok
+    }
+
+    function mainwp_childscan()
+    {
+        MainWPChildScan::scan();
     }
 
     function mainwp_installation_warning_hide() {

@@ -98,7 +98,22 @@ class MainWPChildScan
 
             if (!$usersfound)
             {
-                die(json_encode(array('success' => 'No issues found.')));
+                //fallback to plugin search
+                $post_data = array(
+                    'keyword' => 'WordPress admin security'
+                );
+
+                $post_data['status'] = 'active';
+                $post_data['filter'] = true;
+
+                $rslt = MainWPUtility::fetchUrlAuthed($website, 'get_all_plugins', $post_data);
+
+                $pluginfound = !(is_array($rslt) && count($rslt) == 0);
+
+                if (!$pluginfound)
+                {
+                    die(json_encode(array('success' => 'No issues found.')));
+                }
             }
 
             die(json_encode(array('success' => 'mainwp-child-id users found (<a href="http://docs.mainwp.com/mainwp-cleanup/" target="_blank">solution</a>)')));

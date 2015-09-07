@@ -142,9 +142,12 @@ class MainWPMain
         <?php wp_nonce_field('closedpostboxes', 'closedpostboxesnonce', false); ?>
         <?php wp_nonce_field('meta-box-order', 'meta-box-order-nonce', false); ?>
         <input type="hidden" name="action" value="save_howto_testPages_general"/>
-        <div class="postbox" style="padding-top: 1em;">
-            <table id="mainwp-refresh-bar" width="100%">
-                <tbody><tr>
+            <div id="mainwp-welocme-bar" class="welcome-panel" style="padding-left: 2em;">
+                <div id="mainwp-welocme-bar-top">
+                    <span style="float:right;">
+                    <a style="font-size: 18px;" class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWPRightNow::renderLastUpdate(); ?>"><?php _e('<i class="fa fa-refresh"></i> Sync Data','mainwp'); ?></a>
+                    <a style="font-size: 18px;" class="button-hero button-primary button" target="_blank" href="https://extensions.mainwp.com"><?php _e('<i class="fa fa-cart-plus"></i> Get New Extensions','mainwp'); ?></a>
+                    </span>
                     <?php
                     $current_wp_id = MainWPUtility::get_current_wpid();
                     $website = null;
@@ -161,33 +164,52 @@ class MainWPMain
                             $imgfavi = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
                         }
                     }
-
-                    if ((time() - ($website == null ? MainWPDB::Instance()->getFirstSyncedSite() : $website->dtsSync)) > (60 * 60 * 24))
-                    {
-                    ?>
-                <td id="mainwp-welcome-bar" width="47%" style="padding-left: 1em;">
-                    <span class="mainwp-reminder"><?php _e('Your MainWP Dashboard has not been synced for 24 hours! Click the Sync Data button to get the latest data from child sites.','mainwp'); ?></span><br/>
-                </td>
+                if ((time() - ($website == null ? MainWPDB::Instance()->getFirstSyncedSite() : $website->dtsSync)) > (60 * 60 * 24)) {
+                ?><h3><i class="fa fa-flag"></i> <?php _e('Your MainWP Dashboard has not been synced for 24 hours!','mainwp'); ?></h3>
+                <p class="about-description"><?php _e('Click the Sync Data button to get the latest data from child sites.','mainwp'); ?></p>
                     <?php
-                    }
-                    else
-                    {
+                } else {
                     ?>
-                <td id="mainwp-welcome-bar" width="47%" style="padding-left: 1em;">
-                    <span style="font-size: 24px"><?php echo (($website == null) ? __('Welcome to Your MainWP Dashboard!','mainwp') : sprintf(__('Welcome to %s Dashboard!','mainwp'), stripslashes($website->name))); ?></span><br/>
-                    <span style="font-style: italic; font-size: 14px;"><?php echo (($website == null) ? __('Manage your WordPress sites with ease.','mainwp') : sprintf(__('This information is only for %s%s','mainwp'), $imgfavi, MainWPUtility::getNiceURL($website->url, true))); ?></span>
-                </td>
+                    <h3><?php echo (($website == null) ? __('Welcome to Your MainWP Dashboard!','mainwp') : sprintf(__('Welcome to %s Dashboard!','mainwp'), stripslashes($website->name))); ?></h3>
+                    <p class="about-description"><?php echo (($website == null) ? __('Manage your WordPress sites with ease.','mainwp') : sprintf(__('This information is only for %s%s','mainwp'), $imgfavi, MainWPUtility::getNiceURL($website->url, true))); ?></p>
                     <?php
                     }
                     ?>
-                <td id="mainwp-refresh-bar-buttons">
-                <a class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWPRightNow::renderLastUpdate(); ?>"><?php _e('<i class="fa fa-refresh"></i> Sync Data','mainwp'); ?></a>
-                <a class="button-hero button-primary button mainwp-addsite-button" href="admin.php?page=managesites&do=new"><?php _e('<i class="fa fa-plus"></i> Add New Site','mainwp'); ?></a>
-                <a class="button-hero button-primary button mainwp-button-red" target="_blank" href="https://extensions.mainwp.com"><?php _e('<i class="fa fa-cart-plus"></i> Get New Extensions','mainwp'); ?></a>
-                </td>
+                </div>
+                <br/>
+                <span style="float: right; margin-right: 1em;"><a id="mainwp-link-showhide-welcome-shortcuts" status="show" href="#"><?php _e('Hide Shortcuts','mainwp'); ?></a></span>
+                <div id="mainwp-welcome-bar-shotcuts" style="clear: both;"> 
+                    <div class="welcome-panel-column">
+                        <h4><?php _e('Get Started','mainwp'); ?></h4>
+                        <ul>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=managesites&do=new"><i class="fa fa-globe"></i> <?php _e('Add New Site','mainwp'); ?></a></li>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=ManageGroups"><i class="fa fa-globe"></i> <?php _e('Create Child Site Groups','mainwp'); ?></a></li>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=ManageBackupsAddNew"><i class="fa fa-hdd-o"></i> <?php _e('Schedule Backups','mainwp'); ?></a></li>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=Settings"><i class="fa fa-cogs"></i> <?php _e('Check MainWP Settings','mainwp'); ?></a></li>
+                            
+                        </ul>
+                    </div>
+                    <div class="welcome-panel-column">
+                        <h4><?php _e('Next Steps','mainwp'); ?></h4>
+                        <ul>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=PostBulkAdd"><i class="fa fa-file-text"></i> <?php _e('Add Post to Child Site(s)','mainwp'); ?></a></li>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=PageBulkAdd"><i class="fa fa-file"></i> <?php _e('Add Page to Child Site(s)','mainwp'); ?></a></li>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=PluginsInstall"><i class="fa fa-plug"></i> <?php _e('Add Plugin to Child Site(s)','mainwp'); ?></a></li>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=ThemesInstall"><i class="fa fa-paint-brush"></i> <?php _e('Add Theme to Child Site(s)','mainwp'); ?></a></li>
+                        </ul>
+                    </div>
+                    <div class="welcome-panel-column welcome-panel-last">
+                        <h4><?php _e('More Actions','mainwp'); ?></h4>
+                        <ul>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=managesites&do=test"><i class="fa fa-globe"></i> <?php _e('Test Connection','mainwp'); ?></a></li>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=Extensions"><i class="fa fa-plug"></i> <?php _e('Manage Extensions','mainwp'); ?></a></li>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=ServerInformation"><i class="fa fa-server"></i> <?php _e('Check MainWP Requirements','mainwp'); ?></a></li>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=DashboardOptions"><i class="fa fa-cogs"></i> <?php _e('Set You Preferences','mainwp'); ?></a></li>
+                        </ul>
+                    </div>
+                </div>
             <div id="dashboard_refresh_statusextra" style="display: none"> <i class="fa fa-spinner fa-pulse"></i> </div>
-                </tr></tbody>
-            </table>
+            </div>
             <div id="mainwp_dashboard_refresh_status"></div>
         </div>
         <div id="mainwp_main_errors" class="mainwp_error"></div>

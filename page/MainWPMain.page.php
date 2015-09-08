@@ -204,7 +204,7 @@ class MainWPMain
                             <li><a href="<?php echo get_admin_url(); ?>admin.php?page=managesites&do=test"><i class="fa fa-globe"></i> <?php _e('Test Connection','mainwp'); ?></a></li>
                             <li><a href="<?php echo get_admin_url(); ?>admin.php?page=Extensions"><i class="fa fa-plug"></i> <?php _e('Manage Extensions','mainwp'); ?></a></li>
                             <li><a href="<?php echo get_admin_url(); ?>admin.php?page=ServerInformation"><i class="fa fa-server"></i> <?php _e('Check MainWP Requirements','mainwp'); ?></a></li>
-                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=DashboardOptions"><i class="fa fa-cogs"></i> <?php _e('Set You Preferences','mainwp'); ?></a></li>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=DashboardOptions"><i class="fa fa-cogs"></i> <?php _e('Set Your Preferences','mainwp'); ?></a></li>
                         </ul>
                     </div>
                 </div>

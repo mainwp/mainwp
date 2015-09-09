@@ -143,6 +143,8 @@ class MainWPMain
         <?php wp_nonce_field('meta-box-order', 'meta-box-order-nonce', false); ?>
         <input type="hidden" name="action" value="save_howto_testPages_general"/>
             <div id="mainwp-welocme-bar" class="welcome-panel" style="padding-left: 2em;">
+            <table id="mainwp-refresh-bar" width="100%">
+                <tbody><tr><td>
                 <div id="mainwp-welocme-bar-top">
                     <span style="float:right;">
                     <a style="font-size: 18px;" class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWPRightNow::renderLastUpdate(); ?>"><?php _e('<i class="fa fa-refresh"></i> Sync Data','mainwp'); ?></a>
@@ -211,6 +213,8 @@ class MainWPMain
             <div id="dashboard_refresh_statusextra" style="display: none"> <i class="fa fa-spinner fa-pulse"></i> </div>
             </div>
             <div id="mainwp_dashboard_refresh_status"></div>
+            </td></tr></tbody>
+         </table>
         </div>
         <div id="mainwp_main_errors" class="mainwp_error"></div>
     </form>

@@ -379,9 +379,9 @@ class MainWPSystem
                     <div id="" class="mainwp-events-notice error fade">
                         <p>              
                             <span style="float: right;" ><a class="mainwp-events-notice-dismiss" notice="trust_child" style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
-                            <strong><?php _e("You have not set your MainWP Child Plugins for auto update, this is highly recommended", "mainwp"); ?></strong>                        
+                            <strong><?php _e("You have not set your MainWP Child Plugins for auto updates, this is highly recommended", "mainwp"); ?></strong>                        
                             &nbsp;<a id="mainwp_btn_autoupdate_and_trust" class="button-primary" href="#"><?php _e("Turn On", "mainwp"); ?></a>
-                            &nbsp;<a class="button mainwp-upgrade-button" href="//docs.mainwp.com/setting-mainwp-as-a-trusted-plugin/" target="_blank"><?php _e("Learn More", "mainwp"); ?></a>
+                            &nbsp;<a class="button" href="//docs.mainwp.com/setting-mainwp-as-a-trusted-plugin/" target="_blank"><?php _e("Learn More", "mainwp"); ?></a>
                          </p>
                     </div>
                 <?php

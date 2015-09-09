@@ -211,6 +211,7 @@ class MainWPPostHandler
 
         $this->addAction('mainwp_extension_change_view', array(&$this, 'mainwp_extension_change_view'));
         $this->addAction('mainwp_events_notice_hide', array(&$this, 'mainwp_events_notice_hide'));
+        $this->addAction('mainwp_autoupdate_and_trust_child', array(&$this, 'mainwp_autoupdate_and_trust_child'));
         $this->addAction('mainwp_installation_warning_hide', array(&$this, 'mainwp_installation_warning_hide'));
         $this->addAction('mainwp_force_destroy_sessions', array(&$this, 'mainwp_force_destroy_sessions'));
         
@@ -1568,9 +1569,20 @@ class MainWPPostHandler
             } else if ( $_POST['notice'] == 'request_reviews2') {
                 $current_options['request_reviews2'] = 15;
                 $current_options['request_reviews2_starttime'] = time();
+            } else if ( $_POST['notice'] == 'trust_child') {                
+                $current_options['trust_child'] = 1;
             }
             update_option("mainwp_showhide_events_notice", $current_options);
         }
+        die('ok');
+    }
+    
+    function mainwp_autoupdate_and_trust_child() {
+        $this->secure_request('mainwp_autoupdate_and_trust_child');
+        if (get_option('mainwp_automaticDailyUpdate') != 1) {
+            update_option('mainwp_automaticDailyUpdate', 1);
+        }
+        MainWPPlugins::trustPlugin('mainwp-child/mainwp-child.php');
         die('ok');
     }
     

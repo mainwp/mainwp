@@ -1441,6 +1441,32 @@ class MainWPPlugins
         $userExtension->trusted_plugins = json_encode($trustedPlugins);
         MainWPDB::Instance()->updateUserExtension($userExtension);
     }
+    
+    
+    public static function trustPlugin($slug)
+    {
+        $userExtension = MainWPDB::Instance()->getUserExtension();
+        $trustedPlugins = json_decode($userExtension->trusted_plugins, true);
+        if (!is_array($trustedPlugins)) $trustedPlugins = array();        
+        $idx = array_search(urldecode($slug), $trustedPlugins);
+        if ($idx == false) $trustedPlugins[] = urldecode($slug);          
+        $userExtension->trusted_plugins = json_encode($trustedPlugins);
+        MainWPDB::Instance()->updateUserExtension($userExtension);
+    }
+    
+    
+    public static function checkAutoUpdatePlugin($slug) { 
+        if (get_option('mainwp_automaticDailyUpdate') != 1) 
+            return false;
+        $userExtension = MainWPDB::Instance()->getUserExtension();
+        $trustedPlugins = json_decode($userExtension->trusted_plugins, true);
+        if (is_array($trustedPlugins) && in_array($slug, $trustedPlugins)) {
+            return true;
+        }
+        return false;       
+    }
+    
+    
 
     public static function saveTrustedPluginNote()
     {

@@ -372,7 +372,25 @@ class MainWPSystem
         $current_options = get_option("mainwp_showhide_events_notice");        
         if (!is_array($current_options)) $current_options = array();
         
-        $display_request1 = $display_request2 = false;  
+        if (!isset($current_options['trust_child']) || empty($current_options['trust_child'])) {
+            if (self::isMainWPPages()) {
+                if (!MainWPPlugins::checkAutoUpdatePlugin("mainwp-child/mainwp-child.php")) {
+                  ?>
+                    <div id="" class="mainwp-events-notice error fade">
+                        <p>              
+                            <span style="float: right;" ><a class="mainwp-events-notice-dismiss" notice="trust_child" style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
+                            <strong><?php _e("You have not set your MainWP Child Plugins for auto update, this is highly recommended", "mainwp"); ?></strong>                        
+                            &nbsp;<a id="mainwp_btn_autoupdate_and_trust" class="button-primary" href="#"><?php _e("Turn On", "mainwp"); ?></a>
+                            &nbsp;<a class="button mainwp-upgrade-button" href="//docs.mainwp.com/setting-mainwp-as-a-trusted-plugin/" target="_blank"><?php _e("Learn More", "mainwp"); ?></a>
+                         </p>
+                    </div>
+                <?php
+
+                }
+            }
+        }    
+        
+        $display_request1 = $display_request2 = false;          
         
         if (isset($current_options['request_reviews1'])) {
             if ($current_options['request_reviews1'] == 'forever') {
@@ -1651,7 +1669,7 @@ class MainWPSystem
         remove_all_filters( 'admin_footer_text' );
         add_filter('admin_footer_text', array(&$this, 'admin_footer_text'));
     }
-
+    
     function uploadFile($file)
     {
         header('Content-Description: File Transfer');
@@ -1750,7 +1768,7 @@ class MainWPSystem
         return $messages;
     }
 
-      function mainwp_warning_notice() {
+      function mainwp_warning_notice() {        
         if (get_option('mainwp_installation_warning_hide_the_notice')  == 'yes')
             return;
         ?>

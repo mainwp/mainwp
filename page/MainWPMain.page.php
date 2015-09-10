@@ -143,6 +143,8 @@ class MainWPMain
         <?php wp_nonce_field('meta-box-order', 'meta-box-order-nonce', false); ?>
         <input type="hidden" name="action" value="save_howto_testPages_general"/>
             <div id="mainwp-welocme-bar" class="welcome-panel" style="padding-left: 2em;">
+            <table id="mainwp-refresh-bar" width="100%">
+                <tbody><tr><td>
                 <div id="mainwp-welocme-bar-top">
                     <span style="float:right;">
                     <a style="font-size: 18px;" class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWPRightNow::renderLastUpdate(); ?>"><?php _e('<i class="fa fa-refresh"></i> Sync Data','mainwp'); ?></a>
@@ -204,13 +206,15 @@ class MainWPMain
                             <li><a href="<?php echo get_admin_url(); ?>admin.php?page=managesites&do=test"><i class="fa fa-globe"></i> <?php _e('Test Connection','mainwp'); ?></a></li>
                             <li><a href="<?php echo get_admin_url(); ?>admin.php?page=Extensions"><i class="fa fa-plug"></i> <?php _e('Manage Extensions','mainwp'); ?></a></li>
                             <li><a href="<?php echo get_admin_url(); ?>admin.php?page=ServerInformation"><i class="fa fa-server"></i> <?php _e('Check MainWP Requirements','mainwp'); ?></a></li>
-                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=DashboardOptions"><i class="fa fa-cogs"></i> <?php _e('Set You Preferences','mainwp'); ?></a></li>
+                            <li><a href="<?php echo get_admin_url(); ?>admin.php?page=DashboardOptions"><i class="fa fa-cogs"></i> <?php _e('Set Your Preferences','mainwp'); ?></a></li>
                         </ul>
                     </div>
                 </div>
             <div id="dashboard_refresh_statusextra" style="display: none"> <i class="fa fa-spinner fa-pulse"></i> </div>
             </div>
             <div id="mainwp_dashboard_refresh_status"></div>
+            </td></tr></tbody>
+         </table>
         </div>
         <div id="mainwp_main_errors" class="mainwp_error"></div>
     </form>

@@ -6673,6 +6673,22 @@ jQuery(document).on('click', '.mainwp-events-notice-dismiss', function()
     return false;
 });
 
+jQuery(document).on('click', '#mainwp_btn_autoupdate_and_trust', function()
+{
+    jQuery(this).attr('disabled', 'true');    
+    var data = mainwp_secure_data({
+        action:'mainwp_autoupdate_and_trust_child'     
+    });    
+    jQuery.post(ajaxurl, data, function (res) {
+        if (res == 'ok') {
+            location.reload(true); 
+        } else {
+            jQuery(this).removeAttr('disabled'); 
+        }
+    });
+    return false;
+});
+
 jQuery(document).on('click', '#remove-mainwp-installation-warning', function()
 {
     jQuery('#mainwp-installation-warning').hide();

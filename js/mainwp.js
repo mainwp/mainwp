@@ -7030,21 +7030,37 @@ jQuery(document).ready(function($) {
             mainwp_set_showhide_section(pr, false);       
     });
 
-    mainwp_check_showhide_welcome_shortcuts();
     $('#mainwp-link-showhide-welcome-shortcuts').live('click', function(){
         var status = $(this).attr('status');
+        var shortcuts = jQuery('#mainwp-welcome-bar-shotcuts');
         if (status == 'show') {
             $(this).attr('status', 'hide');
-            mainwp_setCookie('mainwp_showhide_welcome_shortcuts', 'hide');
+            $(this).text(__('Show Shortcuts'));
+            shortcuts.hide();
+            status = 'hide';
         } else {
-           $(this).attr('status', 'show');
+            $(this).attr('status', 'show');
+            $(this).text(__('Hide Shortcuts'));
+            shortcuts.show();
             mainwp_setCookie('mainwp_showhide_welcome_shortcuts', 'show');
+            status = 'show';
         }
-        mainwp_check_showhide_welcome_shortcuts();
+        mainwp_save_showhide_sections('welcome_shortcuts', status);
         return false;
     });
 
 });
+
+mainwp_save_showhide_sections = function(pSec, pStatus) {
+    var data = {
+        action:'mainwp_showhide_sections',
+        sec: pSec,
+        status: pStatus
+    };
+    jQuery.post(ajaxurl, data, function (res) {
+    });
+    return false;
+}
 
 
 mainwp_set_showhide_section = function(obj, show) {       
@@ -7071,20 +7087,6 @@ mainwp_check_showhide_sections = function() {
     }); 
 };
 
-
-mainwp_check_showhide_welcome_shortcuts = function() {
-    var shortcuts = jQuery('#mainwp-welcome-bar-shotcuts');
-    var link = jQuery('#mainwp-link-showhide-welcome-shortcuts');
-    if (mainwp_getCookie('mainwp_showhide_welcome_shortcuts') == 'hide') {
-        shortcuts.hide();
-        link.text(__('Show Shortcuts'));
-        link.attr('status', 'hide');
-    } else {
-        shortcuts.show();
-        link.text(__('Hide Shortcuts'));
-        link.attr('status', 'show');
-    }
-}
 
 jQuery(document).on('click', '#mainwp-sites-menu-button', function(){
    jQuery('#mainwp-sites-menu').slideToggle();

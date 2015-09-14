@@ -1250,8 +1250,8 @@ class MainWPUtility
 
         if (empty($data)) return 0;
         if (!property_exists($data, 'responseData')) return 0;
-        if (!property_exists($data->responseData, 'cursor')) return 0;
-        if (!property_exists($data->responseData->cursor, 'estimatedResultCount')) return 0;
+        if (!is_object($data->responseData) || !property_exists($data->responseData, 'cursor')) return 0;
+        if (!is_object($data->responseData->cursor) || !property_exists($data->responseData->cursor, 'estimatedResultCount')) return 0;
 
         return intval($data->responseData->cursor->estimatedResultCount);
     }

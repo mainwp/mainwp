@@ -136,6 +136,8 @@ class MainWPMain
 
     public static function renderDashboardBody($websites, $pDashboard, $pScreenLayout)
     {
+        $opts = get_option("mainwp_opts_showhide_sections", false);        
+        $hide_shortcuts = (is_array($opts) && isset($opts['welcome_shortcuts']) && $opts['welcome_shortcuts'] == 'hide') ? true : false;
         ?>
     <form action="admin-post.php" method="post">
         <?php wp_nonce_field('mainwp_tab-general'); ?>
@@ -179,8 +181,8 @@ class MainWPMain
                     ?>
                 </div>
                 <br/>
-                <span style="float: right; margin-right: 1em;"><a id="mainwp-link-showhide-welcome-shortcuts" status="show" href="#"><?php _e('Hide Shortcuts','mainwp'); ?></a></span>
-                <div id="mainwp-welcome-bar-shotcuts" style="clear: both;"> 
+                <span style="float: right; margin-right: 1em;"><a id="mainwp-link-showhide-welcome-shortcuts" status="<?php echo ($hide_shortcuts ? "hide" : "show"); ?>" href="#"><?php echo ($hide_shortcuts ?  __('Show Shortcuts','mainwp') : __('Hide Shortcuts','mainwp')); ?></a></span>
+                <div id="mainwp-welcome-bar-shotcuts" style="clear: both;<?php echo ($hide_shortcuts ? "display: none;" : ""); ?>" > 
                     <div class="welcome-panel-column">
                         <h4><?php _e('Get Started','mainwp'); ?></h4>
                         <ul>

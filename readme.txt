@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.3
-Stable tag: 2.0.28
+Tested up to: 4.3.1
+Stable tag: 2.0.29
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -146,6 +146,14 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 6. The Groups Screen
 
 == Changelog ==
+
+= 2.0.29 - 9-22-15 =
+Fixed: Bulk Actions at bottom of Manage Sites page
+Added: Option to view upgrades per site or per plugin/theme in the Dashboard Right Now widget
+Added: Message in the Security Issues widget in case all issues have been fixed
+Updated: Layout of the error message in the Right Now widget
+Updated: Twitter brag message
+Removed: Unused Code
 
 = 2.0.28 - 9-10-2015 =
 * Fixed: Dashboard layout issue

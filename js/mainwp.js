@@ -1354,7 +1354,9 @@ rightnow_upgrade_plugin = function (id, slug) {
     return rightnow_upgrade_plugintheme('plugin', id, slug);
 };
 
-rightnow_upgrade_plugin_all = function (id) {
+rightnow_upgrade_plugin_all = function (id) {     
+    if (!confirm(__('Are you sure you want to upgrade everything?')))
+        return false;    
     rightnow_show_if_required('plugin_upgrades', false);
     return rightnow_upgrade_plugintheme_all('plugin', id);
 };
@@ -1362,6 +1364,8 @@ rightnow_upgrade_theme = function (id, slug) {
     return rightnow_upgrade_plugintheme('theme', id, slug);
 };
 rightnow_upgrade_theme_all = function (id) {
+    if (!confirm(__('Are you sure you want to upgrade everything?')))
+        return false;
     rightnow_show_if_required('theme_upgrades', false);
     return rightnow_upgrade_plugintheme_all('theme', id);
 };

@@ -154,8 +154,6 @@ class MainWPSystem
 
         add_action('login_form', array(&$this, 'login_form'));
 
-        add_filter('login_redirect', array(&$this, 'login_redirect'), 10, 3);
-
         add_action('admin_print_styles', array(&$this, 'admin_print_styles'));
 
         add_filter('admin_footer', array($this, 'admin_footer'));
@@ -1631,14 +1629,6 @@ class MainWPSystem
                 return true;
         return false;        
     }
-        
-    function login_redirect($redirect_to, $request, $user)
-    {
-        if (session_id() == '') session_start();
-        $_SESSION['showTip'] = 'yes';
-
-        return home_url('/wp-admin/index.php');
-    }
 
     function init()
     {
@@ -1740,7 +1730,7 @@ class MainWPSystem
             $mwpDir = $mwpDir[0];
             $file = trailingslashit($mwpDir) . rawurldecode($_REQUEST['mwpdl']);
 
-            if (stristr($_REQUEST['mwpdl'], '..'))
+            if (stristr(rawurldecode($_REQUEST['mwpdl']), '..'))
             {
                 return;
             }
@@ -1868,13 +1858,13 @@ class MainWPSystem
                     }
                 }
             }
-        } 
-		
-		if (isset($_POST['select_mainwp_options_siteview'])){			
-			$userExtension = MainWPDB::Instance()->getUserExtension();            
-            $userExtension->site_view = (empty($_POST['select_mainwp_options_siteview']) ? 0 : 1);			
-			MainWPDB::Instance()->updateUserExtension($userExtension);			
-		}       
+        }
+
+		if (isset($_POST['select_mainwp_options_siteview'])){
+			$userExtension = MainWPDB::Instance()->getUserExtension();
+            $userExtension->site_view = (empty($_POST['select_mainwp_options_siteview']) ? 0 : 1);
+			MainWPDB::Instance()->updateUserExtension($userExtension);
+		}
     }
 
     //This function will read the metaboxes & save them to the post
@@ -2228,8 +2218,6 @@ class MainWPSystem
         if (!self::isMainWPPages()) return;
         if (self::isHideFooter()) return;
        
-        if (isset($_SESSION['showTip'])) unset($_SESSION['showTip']);
-        
         return '<a href="javascript:void(0)" id="mainwp-sites-menu-button" class="mainwp-white mainwp-right-margin-2"><i class="fa fa-globe fa-2x"></i></a>'.'<span style="font-size: 14px;"><i class="fa fa-info-circle"></i> ' . __('Currently managing ','mainwp') . MainWPDB::Instance()->getWebsitesCount()  .  __(' child sites with MainWP ','mainwp') . $this->current_version . __(' version. ','mainwp') . '</span>';
     }
 

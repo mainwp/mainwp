@@ -6953,6 +6953,19 @@ jQuery(document).on('click', '#mainwp_managesites_content #doaction', function()
     var action = jQuery('#bulk-action-selector-top').val();    
     if (action == -1)
         return false;   
+    mainwp_managesites_doaction(action);
+    return false;
+});
+     
+jQuery(document).on('click', '#mainwp_managesites_content #doaction2', function(){
+    var action = jQuery('#bulk-action-selector-bottom').val();    
+    if (action == -1)
+        return false;  
+    mainwp_managesites_doaction(action);
+    return false;
+});
+
+mainwp_managesites_doaction = function(action) {
     
     if (action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect') {
         
@@ -6998,8 +7011,9 @@ jQuery(document).on('click', '#mainwp_managesites_content #doaction', function()
         
     });
     return false;
-});
-   
+    
+} 
+ 
 jQuery(document).on('click', '.managesites_syncdata', function(){
     var row = jQuery(this).closest('tr');    
     var syncIds = [];

@@ -1,8 +1,18 @@
 jQuery(document).on('click', '#mainwp_managesites_content #doaction', function(){
     var action = jQuery('#bulk-action-selector-top').val();    
     if (action == -1)
-        return false;   
-    
+        return false; 
+    mainwp_managesites_doaction2(action);
+});
+
+jQuery(document).on('click', '#mainwp_managesites_content #doaction2', function(){
+    var action = jQuery('#bulk-action-selector-bottom').val();    
+    if (action == -1)
+        return false;     
+    mainwp_managesites_doaction2(action);     
+});
+
+mainwp_managesites_doaction2 = function(action) {
     if (action == 'update_plugins' || action == 'update_themes') {
           if (bulkManageSitesRunning)
             return false;
@@ -18,11 +28,10 @@ jQuery(document).on('click', '#mainwp_managesites_content #doaction', function()
         } else if (action == 'update_themes') {
             var selectedIds = jQuery.map(jQuery('#the-list .check-column INPUT:checkbox:checked'), function(el) { return jQuery(el).val(); });        
             mainwp_update_pluginsthemes('theme', selectedIds);
-        }
-        
+        }        
     } 
-     
-});
+}
+
 
 mainwp_update_pluginsthemes = function (updateType, updateSiteIds)
 {    

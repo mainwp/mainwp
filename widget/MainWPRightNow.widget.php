@@ -600,8 +600,8 @@ class MainWPRightNow
         //Unlock
 //        MainWPUtility::release($identifier);
         if (MainWPSync::syncSite($website))
-        {
-            die(json_encode(array('result' => 'SUCCESS')));
+        {			
+				die(json_encode(array('result' => 'SUCCESS')));
         }
 
         $website = MainWPDB::Instance()->getWebsiteById($website->id);
@@ -893,9 +893,10 @@ class MainWPRightNow
         <div id="mainwp-right-now-message" class="mainwp-right-now-error" <?php if ($total_sync_errors <= 0 || ($globalView && $errorsDismissed)) echo ' style="display: none;"' ?>>
             <p>
                 <?php if ($globalView) { ?>
-                        <span id="mainwp-right-now-message-content"><?php echo $total_sync_errors; ?> <?php echo _n('Site Timed Out / Errored', 'Sites Timed Out / Errored', $total_sync_errors, 'mainwp'); ?> (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)</span><span style="float: right;"><a href="#" id="mainwp-right-now-message-dismiss"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
+						<span style="float: right;"><a href="#" id="mainwp-right-now-message-dismiss"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
+                        <span id="mainwp-right-now-message-content"><?php echo $total_sync_errors; ?> <?php echo _n('Site Timed Out / Errored Out', 'Sites Timed Out / Errored Out', $total_sync_errors, 'mainwp'); ?>.<br />There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a></span>
                 <?php } else { ?>
-                    <span id="mainwp-right-now-message-content"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $currentSite->id); ?>"><?php echo stripslashes($currentSite->name); ?></a> <?php _e('Timed Out / Errored', 'mainwp'); ?> (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)</span>
+                    <span id="mainwp-right-now-message-content"><a href="<?php echo admin_url('admin.php?page=managesites&dashboard=' . $currentSite->id); ?>"><?php echo stripslashes($currentSite->name); ?></a> <?php _e('Timed Out / Errored Out', 'mainwp'); ?>.<br />There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a></span>
                 <?php } ?>
             </p>
         </div>
@@ -910,9 +911,29 @@ class MainWPRightNow
     
     //WP Upgrades part:  
     $total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
-    ?>    
-    <div class="clear">
+	if ($globalView) {
+		 $userExtension->site_view;
+    ?>   
+	
+	 <div class="clear">
         <div class="mainwp-row-top">
+            <span class="mainwp-left-col"><strong><?php _e('View Upgrades per','mainwp'); ?></strong></span>
+            <span class="mainwp-mid-col">&nbsp;</span>            
+            <span class="mainwp-right-col">
+				<form method="post" action="">
+					<select id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
+						<option value="1" <?php echo $userExtension->site_view == 1 ? "selected" : ""; ?>><?php esc_html_e('Site', 'mainwp'); ?></option>
+						<option value="0" <?php echo $userExtension->site_view == 0 ? "selected" : ""; ?>><?php esc_html_e('Plugin/Theme', 'mainwp'); ?></option>					
+					</select>
+				</form>
+			</span>
+        </div>
+    </div>
+	<?php
+	}
+	?>	
+    <div class="clear">
+        <div class="<?php  echo $globalView ? "mainwp-row" : "mainwp-row-top"; ?>">
             <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_upgrades; ?></span> <?php _e('Upgrade','mainwp'); ?><?php if ($total_upgrades <> 1) { echo "s"; } ?> <?php _e('available','mainwp'); ?></span>
             <span class="mainwp-mid-col">&nbsp;</span>
             <?php if (mainwp_current_user_can("dashboard", "update_wordpress") && mainwp_current_user_can("dashboard", "update_plugins") && mainwp_current_user_can("dashboard", "update_themes")) { ?>

@@ -621,7 +621,7 @@ class MainWPPage
                     
                     if (!empty($countSites)) {
                         $seconds = (time() - $startTime);                        
-                        MainWPTwitter::updateTwitterInfo('new_page', $countSites, $seconds, 1 , $startTime);
+                        MainWPTwitter::updateTwitterInfo('new_page', $countSites, $seconds, 1 , $startTime, 1);
                     } 
                     
                     if (MainWPTwitter::enabledTwitterMessages()) {                 

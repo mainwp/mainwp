@@ -924,7 +924,7 @@ class MainWPUser
 
             if (!empty($countSites)) {
                 $seconds = (time() - $startTime);
-                MainWPTwitter::updateTwitterInfo('create_new_user', $countSites, $seconds, 1 , $startTime);
+                MainWPTwitter::updateTwitterInfo('create_new_user', $countSites, $seconds, 1 , $startTime , 1);
             }
 
             if (MainWPTwitter::enabledTwitterMessages()) {

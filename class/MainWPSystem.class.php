@@ -1868,7 +1868,13 @@ class MainWPSystem
                     }
                 }
             }
-        }        
+        } 
+		
+		if (isset($_POST['select_mainwp_options_siteview'])){			
+			$userExtension = MainWPDB::Instance()->getUserExtension();            
+            $userExtension->site_view = (empty($_POST['select_mainwp_options_siteview']) ? 0 : 1);			
+			MainWPDB::Instance()->updateUserExtension($userExtension);			
+		}       
     }
 
     //This function will read the metaboxes & save them to the post

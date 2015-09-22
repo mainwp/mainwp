@@ -1856,3 +1856,9 @@ rightnow_themes_abandoned_unignore_globally = function (slug) {
     return false;
 };
 
+jQuery(document).ready(function ()
+{
+    jQuery('#mainwp_select_options_siteview').change(function() {        
+        jQuery(this).closest("form").submit();
+    });
+})

@@ -150,8 +150,15 @@ class MainWPTwitter
         $filters = self::get_filter();       
         
         if (!in_array($what, $filters))
-            return false;    
-        
+            return false;
+		
+		if ( 'new_page' == $what || 'new_post' == $what || 'create_new_user' == $what ) {
+			if ( 1 == $countSites ) 
+				return false;
+		} else if ( ( 1 == $countSites ) && ( 1 == $coutRealItems) ) {
+			return false;
+		}
+			
         if (empty($countSec)) $countSec = 1; 
         // store one twitt info only
         $data = array($twId => array('sites' => $countSites, 'seconds' => $countSec, 'items' => $countItems, 'real_items' => $coutRealItems));

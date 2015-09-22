@@ -1,4 +1,4 @@
-=== MainWP ===
+=== MainWP Dashboard ===
 Contributors: mainwp
 Donate link: 
 Tags: WordPress management, management, manager, WordPress controller, network, MainWP, updates, updates, admin, administration, manage,  multiple, multi

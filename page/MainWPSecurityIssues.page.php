@@ -193,7 +193,9 @@ class MainWPSecurityIssues
                 <?php } ?>
             </div>
         </div>
-        <?php }
+        <?php } else {
+					esc_html_e( 'No security issues detected.', 'mainwp' );
+		}
     }
 }
 

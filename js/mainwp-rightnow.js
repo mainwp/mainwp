@@ -321,7 +321,10 @@ rightnow_plugins_global_upgrade_all = function()
 rightnow_plugins_upgrade_all = function (slug, pluginName)
 {
     if (bulkTaskRunning) return false;
-        
+      
+    if (!confirm(__('Are you sure you want to upgrade everything?')))
+        return false;
+    
     rightnow_plugins_detail_show(slug);
 
     //Step 1: build form
@@ -651,7 +654,10 @@ rightnow_themes_global_upgrade_all = function ()
 rightnow_themes_upgrade_all = function (slug, themeName)
 {
     if (bulkTaskRunning) return false;
-   
+    
+    if (!confirm(__('Are you sure you want to upgrade everything?')))
+        return false; 
+    
     rightnow_themes_detail_show(slug);
 
     //Step 1: build form
@@ -1856,3 +1862,9 @@ rightnow_themes_abandoned_unignore_globally = function (slug) {
     return false;
 };
 
+jQuery(document).ready(function ()
+{
+    jQuery('#mainwp_select_options_siteview').change(function() {        
+        jQuery(this).closest("form").submit();
+    });
+})

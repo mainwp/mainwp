@@ -1,8 +1,18 @@
 jQuery(document).on('click', '#mainwp_managesites_content #doaction', function(){
     var action = jQuery('#bulk-action-selector-top').val();    
     if (action == -1)
-        return false;   
-    
+        return false; 
+    mainwp_managesites_doaction2(action);
+});
+
+jQuery(document).on('click', '#mainwp_managesites_content #doaction2', function(){
+    var action = jQuery('#bulk-action-selector-bottom').val();    
+    if (action == -1)
+        return false;     
+    mainwp_managesites_doaction2(action);     
+});
+
+mainwp_managesites_doaction2 = function(action) {
     if (action == 'update_plugins' || action == 'update_themes') {
           if (bulkManageSitesRunning)
             return false;
@@ -18,11 +28,10 @@ jQuery(document).on('click', '#mainwp_managesites_content #doaction', function()
         } else if (action == 'update_themes') {
             var selectedIds = jQuery.map(jQuery('#the-list .check-column INPUT:checkbox:checked'), function(el) { return jQuery(el).val(); });        
             mainwp_update_pluginsthemes('theme', selectedIds);
-        }
-        
+        }        
     } 
-     
-});
+}
+
 
 mainwp_update_pluginsthemes = function (updateType, updateSiteIds)
 {    
@@ -130,7 +139,7 @@ managesites_update_pluginsthemes_done = function(pType)
             }
             else
             {
-                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed Out / Errored. (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)';
+                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed Out / Errored Out. (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)';
                 jQuery('#refresh-status-content').prepend('<font color="red"><strong>' + message + '</strong></font><br /><br />');
                 jQuery('#mainwp-right-now-message-content').html(message);
                 jQuery('#mainwp-right-now-message').show();

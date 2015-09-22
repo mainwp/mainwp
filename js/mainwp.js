@@ -825,7 +825,7 @@ dashboard_update_done = function()
             }
             else
             {
-                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed Out / Errored. (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)';
+                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed Out / Errored Out. (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)';
                 jQuery('#refresh-status-content').prepend('<font color="red"><strong>' + message + '</strong></font><br /><br />');
                 jQuery('#mainwp-right-now-message-content').html(message);
                 jQuery('#mainwp-right-now-message').show();
@@ -1354,7 +1354,9 @@ rightnow_upgrade_plugin = function (id, slug) {
     return rightnow_upgrade_plugintheme('plugin', id, slug);
 };
 
-rightnow_upgrade_plugin_all = function (id) {
+rightnow_upgrade_plugin_all = function (id) {     
+    if (!confirm(__('Are you sure you want to upgrade everything?')))
+        return false;    
     rightnow_show_if_required('plugin_upgrades', false);
     return rightnow_upgrade_plugintheme_all('plugin', id);
 };
@@ -1362,6 +1364,8 @@ rightnow_upgrade_theme = function (id, slug) {
     return rightnow_upgrade_plugintheme('theme', id, slug);
 };
 rightnow_upgrade_theme_all = function (id) {
+    if (!confirm(__('Are you sure you want to upgrade everything?')))
+        return false;
     rightnow_show_if_required('theme_upgrades', false);
     return rightnow_upgrade_plugintheme_all('theme', id);
 };
@@ -6953,6 +6957,19 @@ jQuery(document).on('click', '#mainwp_managesites_content #doaction', function()
     var action = jQuery('#bulk-action-selector-top').val();    
     if (action == -1)
         return false;   
+    mainwp_managesites_doaction(action);
+    return false;
+});
+     
+jQuery(document).on('click', '#mainwp_managesites_content #doaction2', function(){
+    var action = jQuery('#bulk-action-selector-bottom').val();    
+    if (action == -1)
+        return false;  
+    mainwp_managesites_doaction(action);
+    return false;
+});
+
+mainwp_managesites_doaction = function(action) {
     
     if (action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect') {
         
@@ -6998,8 +7015,9 @@ jQuery(document).on('click', '#mainwp_managesites_content #doaction', function()
         
     });
     return false;
-});
-   
+    
+} 
+ 
 jQuery(document).on('click', '.managesites_syncdata', function(){
     var row = jQuery(this).closest('tr');    
     var syncIds = [];
@@ -7030,21 +7048,37 @@ jQuery(document).ready(function($) {
             mainwp_set_showhide_section(pr, false);       
     });
 
-    mainwp_check_showhide_welcome_shortcuts();
     $('#mainwp-link-showhide-welcome-shortcuts').live('click', function(){
         var status = $(this).attr('status');
+        var shortcuts = jQuery('#mainwp-welcome-bar-shotcuts');
         if (status == 'show') {
             $(this).attr('status', 'hide');
-            mainwp_setCookie('mainwp_showhide_welcome_shortcuts', 'hide');
+            $(this).text(__('Show Shortcuts'));
+            shortcuts.hide();
+            status = 'hide';
         } else {
-           $(this).attr('status', 'show');
+            $(this).attr('status', 'show');
+            $(this).text(__('Hide Shortcuts'));
+            shortcuts.show();
             mainwp_setCookie('mainwp_showhide_welcome_shortcuts', 'show');
+            status = 'show';
         }
-        mainwp_check_showhide_welcome_shortcuts();
+        mainwp_save_showhide_sections('welcome_shortcuts', status);
         return false;
     });
 
 });
+
+mainwp_save_showhide_sections = function(pSec, pStatus) {
+    var data = {
+        action:'mainwp_showhide_sections',
+        sec: pSec,
+        status: pStatus
+    };
+    jQuery.post(ajaxurl, data, function (res) {
+    });
+    return false;
+}
 
 
 mainwp_set_showhide_section = function(obj, show) {       
@@ -7071,20 +7105,6 @@ mainwp_check_showhide_sections = function() {
     }); 
 };
 
-
-mainwp_check_showhide_welcome_shortcuts = function() {
-    var shortcuts = jQuery('#mainwp-welcome-bar-shotcuts');
-    var link = jQuery('#mainwp-link-showhide-welcome-shortcuts');
-    if (mainwp_getCookie('mainwp_showhide_welcome_shortcuts') == 'hide') {
-        shortcuts.hide();
-        link.text(__('Show Shortcuts'));
-        link.attr('status', 'hide');
-    } else {
-        shortcuts.show();
-        link.text(__('Hide Shortcuts'));
-        link.attr('status', 'show');
-    }
-}
 
 jQuery(document).on('click', '#mainwp-sites-menu-button', function(){
    jQuery('#mainwp-sites-menu').slideToggle();

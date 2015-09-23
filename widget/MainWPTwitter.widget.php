@@ -110,30 +110,13 @@ class MainWPTwitter
     }
     
     public static function genTwitterButton($content, $echo = true) {
-        ob_start();
+        ob_start();$content
         ?>  
-        <button class="mainwp_tweet_this">
+        <button class="mainwp_tweet_this" msg="<?php echo urlencode($content); ?>">
             <i class="fa fa-twitter fa-1x" style="color: #4099FF;"></i>&nbsp;
-                <?php _e("Brag on Twitter", 'mainwp'); ?></button>
-        <script type="text/javascript">                
-                var mainwpTweetUrlBuilder = function(o){
-                    return [
-                        'https://twitter.com/intent/tweet?tw_p=tweetbutton',
-                        '&url=" "',                        
-                        '&text=', o.text
-                    ].join('');
-                };                
-                jQuery('.mainwp_tweet_this').on('click', function(){                
-                    var url = mainwpTweetUrlBuilder({                        
-                        text: '<?php echo urlencode($content); ?>'
-                    });                                    
-                    window.open(url, 'Tweet', 'height=450,width=700');
-                    mainwp_twitter_dismiss(this);
-                })
-        </script>
+                <?php _e("Brag on Twitter", 'mainwp'); ?></button>        
         <?php
-         $return = ob_get_clean();
-         
+         $return = ob_get_clean();         
          if ($echo)
             echo $return;
          else

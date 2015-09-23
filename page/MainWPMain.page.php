@@ -220,7 +220,8 @@ class MainWPMain
         </div>
         <div id="mainwp_main_errors" class="mainwp_error"></div>
     </form>
-
+		
+	<div id="mainwp-dashboard-info-box">	
     <?php if (empty($current_wp_id) && MainWPTwitter::enabledTwitterMessages()) {  
             $filter = array(   'upgrade_everything',
                                 'upgrade_all_wp_core',
@@ -231,19 +232,21 @@ class MainWPMain
                 $twitters = MainWPTwitter::getTwitterNotice($what);                     
                 if (is_array($twitters)) {
                     foreach($twitters as $timeid => $twit_mess) {    
-                        if (!empty($twit_mess)) {
-                            $sendText = MainWPTwitter::getTwitToSend($what, $timeid);
+						$sendText = "";
+                        if (!empty($twit_mess)) 
+                            $sendText = MainWPTwitter::getTwitToSend($what, $timeid);						
+						if (!empty($sendText)) {
                         ?>
                             <div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWPTwitter::genTwitterButton($sendText);?><span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
-                        <?php
+                        <?php						
                         }
                     }
                 }
             }
             ?>
-    <?php } ?>
-       
-                                
+    <?php } ?>       
+    </div>    
+		
     <div id="dashboard-widgets-wrap">
 
     <?php require_once(ABSPATH . 'wp-admin/includes/dashboard.php');

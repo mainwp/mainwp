@@ -56,6 +56,9 @@ rightnow_wordpress_global_upgrade_all = function ()
 {
     if (bulkTaskRunning) return false;
 
+    if (!confirm(__('Are you sure you want to Upgrade All WordPress?')))
+        return false;
+    
     rightnow_show_if_required('wp_upgrades', false);
     
     //Step 1: build form
@@ -366,7 +369,13 @@ rightnow_plugins_upgrade_all = function (slug, pluginName)
                 jQuery('#rightnow-upgrade-status-box').dialog('destroy');
                 location.reload();
             }});
-
+        
+        var dateObj = new Date();
+        dashboardActionName = 'upgrade_all_plugins';        
+        starttimeDashboardAction = dateObj.getTime();
+        countRealItemsUpdated = 0;
+        itemsToUpdate = [];
+        
         //Step 3: start upgrades
         rightnow_plugins_upgrade_all_int(pSlug, pSitesToUpdate);
 
@@ -384,7 +393,7 @@ rightnow_plugins_upgrade_all_int = function (slug, websiteIds, sitesPluginSlugs)
     websitesDone = 0;
     websitesTotal = websitesLeft = websitesToUpdatePlugins.length;
 
-    bulkTaskRunning = true;
+    bulkTaskRunning = true;    
     rightnow_plugins_upgrade_all_loop_next();
 };
 rightnow_plugins_upgrade_all_loop_next = function ()
@@ -415,7 +424,7 @@ rightnow_send_twitt_info = function() {
     var send = false;    
     if (mainwpParams.enabledTwit == true) {
         var dateObj = new Date();            
-        var countSec = (dateObj.getTime() - starttimeDashboardAction) / 1000;
+        var countSec = (dateObj.getTime() - starttimeDashboardAction) / 1000;        
         if (countSec <= mainwpParams.maxSecondsTwit) {
             send = true;
             var data = {
@@ -698,6 +707,12 @@ rightnow_themes_upgrade_all = function (slug, themeName)
                 location.reload();
             }});
 
+        var dateObj = new Date();
+        dashboardActionName = 'upgrade_all_themes';        
+        starttimeDashboardAction = dateObj.getTime();
+        countRealItemsUpdated = 0;
+        itemsToUpdate = [];
+        
         //Step 3: start upgrades
         rightnow_themes_upgrade_all_int(pSlug, pSitesToUpdate);
 

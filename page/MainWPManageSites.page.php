@@ -1030,6 +1030,28 @@ class MainWPManageSites
         if (!is_array($globalIgnoredThemeConflicts)) $globalIgnoredThemeConflicts = array();
 
         self::$sitesTable->prepare_items($globalIgnoredPluginConflicts, $globalIgnoredThemeConflicts);
+		
+		if (MainWPTwitter::enabledTwitterMessages()) {  
+            $filter = array(    'upgrade_all_plugins',
+                                'upgrade_all_themes'                           
+                            ); 
+            foreach($filter as $what) {
+                $twitters = MainWPTwitter::getTwitterNotice($what);                     
+                if (is_array($twitters)) {
+                    foreach($twitters as $timeid => $twit_mess) {    
+						$sendText = "";
+                        if (!empty($twit_mess)) 
+                            $sendText = MainWPTwitter::getTwitToSend($what, $timeid);						
+						if (!empty($sendText)) {
+                        ?>
+                            <div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWPTwitter::genTwitterButton($sendText);?><span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
+                        <?php						
+                        }
+                    }
+                }
+            }
+		}  
+		
       ?>
         <div id="mainwp_managesites_content">
             <div id="mainwp_managesites_add_errors" class="mainwp_error mainwp_info-box-red"></div>

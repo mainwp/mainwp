@@ -1,36 +1,36 @@
-jQuery(document).on('click', '#mainwp_managesites_content #doaction', function(){
-    var action = jQuery('#bulk-action-selector-top').val();    
-    if (action == -1)
-        return false; 
-    mainwp_managesites_doaction2(action);
-});
-
-jQuery(document).on('click', '#mainwp_managesites_content #doaction2', function(){
-    var action = jQuery('#bulk-action-selector-bottom').val();    
-    if (action == -1)
-        return false;     
-    mainwp_managesites_doaction2(action);     
-});
-
-mainwp_managesites_doaction2 = function(action) {
-    if (action == 'update_plugins' || action == 'update_themes') {
-          if (bulkManageSitesRunning)
-            return false;
-
-        managesites_bulk_init();
-        bulkManageSitesTotal = jQuery('#the-list .check-column INPUT:checkbox:checked[status="queue"]').length;
-
-        bulkManageSitesRunning = true;
-
-        if (action == 'update_plugins') {
-            var selectedIds = jQuery.map(jQuery('#the-list .check-column INPUT:checkbox:checked'), function(el) { return jQuery(el).val(); });        
-            mainwp_update_pluginsthemes('plugin', selectedIds);
-        } else if (action == 'update_themes') {
-            var selectedIds = jQuery.map(jQuery('#the-list .check-column INPUT:checkbox:checked'), function(el) { return jQuery(el).val(); });        
-            mainwp_update_pluginsthemes('theme', selectedIds);
-        }        
-    } 
-}
+//jQuery(document).on('click', '#mainwp_managesites_content #doaction', function(){
+//    var action = jQuery('#bulk-action-selector-top').val();    
+//    if (action == -1)
+//        return false; 
+//    mainwp_managesites_doaction2(action);
+//});
+//
+//jQuery(document).on('click', '#mainwp_managesites_content #doaction2', function(){
+//    var action = jQuery('#bulk-action-selector-bottom').val();    
+//    if (action == -1)
+//        return false;     
+//    mainwp_managesites_doaction2(action);     
+//});
+//
+//mainwp_managesites_doaction2 = function(action) {
+//    if (action == 'update_plugins' || action == 'update_themes') {
+//          if (bulkManageSitesRunning)
+//            return false;
+//
+//        managesites_bulk_init();
+//        bulkManageSitesTotal = jQuery('#the-list .check-column INPUT:checkbox:checked[status="queue"]').length;
+//
+//        bulkManageSitesRunning = true;
+//
+//        if (action == 'update_plugins') {
+//            var selectedIds = jQuery.map(jQuery('#the-list .check-column INPUT:checkbox:checked'), function(el) { return jQuery(el).val(); });        
+//            mainwp_update_pluginsthemes('plugin', selectedIds);
+//        } else if (action == 'update_themes') {
+//            var selectedIds = jQuery.map(jQuery('#the-list .check-column INPUT:checkbox:checked'), function(el) { return jQuery(el).val(); });        
+//            mainwp_update_pluginsthemes('theme', selectedIds);
+//        }        
+//    } 
+//}
 
 
 mainwp_update_pluginsthemes = function (updateType, updateSiteIds)
@@ -99,6 +99,15 @@ managesites_update_pluginsthemes = function(pType, websiteIds)
     websitesTotal = websitesLeft = websitesToUpdate.length;
 
     bulkTaskRunning = true;
+    
+    if (pType == 'plugin')
+        dashboardActionName = 'upgrade_all_plugins';        
+    else
+        dashboardActionName = 'upgrade_all_themes'; 
+    var dateObj = new Date();
+    starttimeDashboardAction = dateObj.getTime();
+    countRealItemsUpdated = 0;
+    itemsToUpdate = [];
 
     if (websitesTotal == 0)
     {
@@ -130,6 +139,7 @@ managesites_update_pluginsthemes_done = function(pType)
 
     if (websitesDone == websitesTotal)
     {
+        rightnow_send_twitt_info(); 
         setTimeout(function() {
             bulkTaskRunning = false;
             if (websitesError <= 0)
@@ -144,10 +154,10 @@ managesites_update_pluginsthemes_done = function(pType)
                 jQuery('#mainwp-right-now-message-content').html(message);
                 jQuery('#mainwp-right-now-message').show();
             }
-        }, 2000);
+        }, 2000);               
         return;
     }
-
+                            
     managesites_loop_pluginsthemes_next(pType);
 };
 managesites_update_pluginsthemes_next = function(pType)
@@ -170,11 +180,29 @@ managesites_update_pluginsthemes_next_int = function(websiteId, data, errors)
         type: 'POST',
         url: ajaxurl,
         data: data,
-        success: function(pWebsiteId) { return function(response) { if (response.error) { dashboard_update_site_status(pWebsiteId, '<font color="red">' + __('ERROR') + '</font>'); websitesError++; } else {dashboard_update_site_status(websiteId, __('DONE'));} managesites_update_pluginsthemes_done(); } }(websiteId),
+        success: function(pWebsiteId) { return function(response) { 
+                if (response.error) { 
+                    dashboard_update_site_status(pWebsiteId, '<font color="red">' + __('ERROR') + '</font>'); websitesError++; 
+                } else {
+                    dashboard_update_site_status(websiteId, __('DONE'));
+                    if (response.result) {
+                        for (slug in response.result) {                            
+                            if (response.result[slug] == 1) {
+                                countRealItemsUpdated++;                                 
+                                if (itemsToUpdate.indexOf(slug) == -1) itemsToUpdate.push(slug);  
+                            }
+                        }
+                    }                   
+                } 
+                                                                          
+                managesites_update_pluginsthemes_done(); 
+            } }(websiteId),
         error: function(pWebsiteId, pData, pErrors) { return function(response) {
             if (pErrors > 5)
             {
-                dashboard_update_site_status(pWebsiteId, '<font color="red">' +  __('TIMEOUT') + '</font>');  websitesError++; managesites_update_pluginsthemes_done();
+                dashboard_update_site_status(pWebsiteId, '<font color="red">' +  __('TIMEOUT') + '</font>');  
+                websitesError++; 
+                managesites_update_pluginsthemes_done();
             }
             else
             {
@@ -489,4 +517,3 @@ managesites_backupnow_download_file = function(pSiteId, pSiteName, type, url, fi
         managesites_backup_run_next();
     } }(file, regexfile, subfolder, size, type, interVal, pSiteName, pSiteId, url), 'json');
 };
-

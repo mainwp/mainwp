@@ -1033,7 +1033,8 @@ class MainWPManageSites
 		
 		if (MainWPTwitter::enabledTwitterMessages()) {  
             $filter = array(    'upgrade_all_plugins',
-                                'upgrade_all_themes'                           
+                                'upgrade_all_themes',
+                                'upgrade_all_wp_core'
                             ); 
             foreach($filter as $what) {
                 $twitters = MainWPTwitter::getTwitterNotice($what);                     

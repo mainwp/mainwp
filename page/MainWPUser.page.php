@@ -915,16 +915,17 @@ class MainWPUser
                 MainWPUtility::fetchUrlsAuthed($dbwebsites, 'newuser', $post_data, array(MainWPBulkAdd::getClassName(), 'PostingBulk_handler'), $output);
             }
 
-            $countSites = 0;
+            $countSites = $countRealItems = 0;
             foreach ($dbwebsites as $website) {
                 if (isset($output->ok[$website->id]) && $output->ok[$website->id] == 1) {
                     $countSites++;
+                    $countRealItems++;
                 }
             }
 
             if (!empty($countSites)) {
                 $seconds = (time() - $startTime);
-                MainWPTwitter::updateTwitterInfo('create_new_user', $countSites, $seconds, 1 , $startTime , 1);
+                MainWPTwitter::updateTwitterInfo('create_new_user', $countSites, $seconds, $countRealItems , $startTime , 1);
             }
 
             if (MainWPTwitter::enabledTwitterMessages()) {

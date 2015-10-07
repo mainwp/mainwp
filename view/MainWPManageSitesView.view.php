@@ -891,7 +891,7 @@ class MainWPManageSitesView
             </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>
-            <th scope="row"><?php _e('Execute Backuptasks in Chunks','mainwp'); ?></th>
+            <th scope="row"><?php _e('Execute Backup Tasks in Chunks','mainwp'); ?></th>
                <td>
                  <div class="mainwp-checkbox">
                    <input type="checkbox" id="mainwp_options_chunkedBackupTasks" name="mainwp_options_chunkedBackupTasks"  <?php echo ($chunkedBackupTasks == 0 ? '' : 'checked="checked"'); ?> />

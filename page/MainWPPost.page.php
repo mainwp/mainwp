@@ -702,15 +702,18 @@ class MainWPPost
                     }
                     
                     $countSites = 0;
+                    $countRealItems = 0;
                     foreach ($dbwebsites as $website) { 
                         if (isset($output->ok[$website->id]) && $output->ok[$website->id] == 1) {
                             $countSites++;
+                            $countRealItems++;
+
                         }                            
                     }
                     
                     if (!empty($countSites)) {
                         $seconds = (time() - $startTime);                        
-                        MainWPTwitter::updateTwitterInfo('new_post', $countSites, $seconds, 1 , $startTime, 1);
+                        MainWPTwitter::updateTwitterInfo('new_post', $countSites, $seconds, $countRealItems , $startTime, 1);
                     } 
                     
                     if (MainWPTwitter::enabledTwitterMessages()) {                 

@@ -50,6 +50,7 @@ jQuery(document).on('click', '#rightnow-backup-ignore', function() {
 var dashboardActionName = '';
 var starttimeDashboardAction = 0;
 var countRealItemsUpdated = 0;
+var couttItemsToUpdate = 0;
 var itemsToUpdate = [];
 
 rightnow_wordpress_global_upgrade_all = function ()
@@ -202,6 +203,7 @@ rightnow_wordpress_upgrade_int = function (websiteId, bulkMode)
                 if (pBulkMode) rightnow_wordpress_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
                 websiteHolder.attr('updated', 1);
                 countRealItemsUpdated++;
+                couttItemsToUpdate++;
             }
             rightnow_wordpress_upgrade_all_update_done();
             websiteHolder.find('.wordpressInfo').html(result);
@@ -421,7 +423,7 @@ rightnow_plugins_upgrade_all_upgrade_next = function ()
 };
 
 rightnow_send_twitt_info = function() {
-    var send = false;    
+    var send = false;
     if (mainwpParams.enabledTwit == true) {
         var dateObj = new Date();            
         var countSec = (dateObj.getTime() - starttimeDashboardAction) / 1000;        
@@ -432,10 +434,10 @@ rightnow_send_twitt_info = function() {
                 actionName: dashboardActionName,
                 countSites: websitesDone,
                 countSeconds: countSec,
-                countItems: itemsToUpdate.length,
-                countRealItems: countRealItemsUpdated                
+                countItems: couttItemsToUpdate,
+                countRealItems: countRealItemsUpdated
             };
-            jQuery.post(ajaxurl, data, function (res) {               
+            jQuery.post(ajaxurl, data, function (res) {
             });   
         }
     } 
@@ -527,14 +529,15 @@ rightnow_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck)
                         }
                     }                    
                     if (!done && pBulkMode)
-                    {   
+                    {
                         rightnow_plugins_upgrade_all_update_done();
                         done = true;
                     }
                     websiteHolder.find('.pluginsInfo').html(result);
                 }                
                 if (websitesDone == websitesTotal)
-                {        
+                {
+                    couttItemsToUpdate = itemsToUpdate.length;
                     rightnow_send_twitt_info();
                 }
             }
@@ -710,7 +713,6 @@ rightnow_themes_upgrade_all = function (slug, themeName)
         var dateObj = new Date();
         dashboardActionName = 'upgrade_all_themes';        
         starttimeDashboardAction = dateObj.getTime();
-        countRealItemsUpdated = 0;
         itemsToUpdate = [];
         
         //Step 3: start upgrades
@@ -845,7 +847,8 @@ rightnow_themes_upgrade_int = function (slug, websiteId, bulkMode)
                 websiteHolder.find('.pluginsInfo').html(result);
             }
             if (websitesDone == websitesTotal)
-            {        
+            {
+                couttItemsToUpdate = itemsToUpdate.length;
                 rightnow_send_twitt_info();
             }
         }
@@ -1332,7 +1335,8 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
         rightnow_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
         rightnow_upgrade_all_update_done();
         if (websitesDone == websitesTotal)
-        {        
+        {
+            couttItemsToUpdate = itemsToUpdate.length;
             rightnow_send_twitt_info();
         }
         return false;

@@ -190,13 +190,13 @@ class MainWPOptions
                             <span class="mainwp-select-bg"><select name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate">
                                 <option value="2" <?php if (($snAutomaticDailyUpdate === false) || ($snAutomaticDailyUpdate == 2)) {
                                     ?>selected<?php } ?>>E-mail Notifications of New Updates
-                                </option>
-                                <option value="1" <?php if ($snAutomaticDailyUpdate == 1) {
+                                    </option>
+                                    <option value="1" <?php if ($snAutomaticDailyUpdate == 1) {
                                     ?>selected<?php } ?>>Install Trusted Updates
-                                </option>
-                                <option value="0" <?php if ($snAutomaticDailyUpdate !== false && $snAutomaticDailyUpdate == 0) {
+                                    </option>
+                                    <option value="0" <?php if ($snAutomaticDailyUpdate !== false && $snAutomaticDailyUpdate == 0) {
                                     ?>selected<?php } ?>>Off
-                                </option>
+                                    </option>
                             </select><label></label></span>
                         </td>
                         <td>

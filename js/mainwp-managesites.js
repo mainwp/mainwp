@@ -14,13 +14,13 @@
 //
 //mainwp_managesites_doaction2 = function(action) {
 //    if (action == 'update_plugins' || action == 'update_themes') {
-//          if (bulkManageSitesRunning)
+//          if (bulkManageSitesTaskRunning)
 //            return false;
 //
 //        managesites_bulk_init();
 //        bulkManageSitesTotal = jQuery('#the-list .check-column INPUT:checkbox:checked[status="queue"]').length;
 //
-//        bulkManageSitesRunning = true;
+//        bulkManageSitesTaskRunning = true;
 //
 //        if (action == 'update_plugins') {
 //            var selectedIds = jQuery.map(jQuery('#the-list .check-column INPUT:checkbox:checked'), function(el) { return jQuery(el).val(); });        
@@ -80,10 +80,10 @@ mainwp_update_pluginsthemes = function (updateType, updateSiteIds)
             height: 350,
             width: 500,
             modal: true,
-            close: function(event, ui) {bulkTaskRunning = false; jQuery('#refresh-status-box').dialog('destroy'); location.href = location.href;}});
+            close: function(event, ui) {bulkManageSitesTaskRunning = false; jQuery('#refresh-status-box').dialog('destroy'); location.href = location.href;}});
         managesites_update_pluginsthemes(pType, pAllWebsiteIds);
     
-        rightnowContinueAfterBackup = undefined;
+        managesitesContinueAfterBackup = undefined;
     } } (updateType, nrOfWebsites, allWebsiteIds);
 
     return mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
@@ -98,7 +98,7 @@ managesites_update_pluginsthemes = function(pType, websiteIds)
     websitesError = 0;
     websitesTotal = websitesLeft = websitesToUpdate.length;
 
-    bulkTaskRunning = true;
+    bulkManageSitesTaskRunning = true;
     
     if (pType == 'plugin')
         dashboardActionName = 'upgrade_all_plugins';        
@@ -121,7 +121,7 @@ managesites_update_pluginsthemes = function(pType, websiteIds)
 
 managesites_loop_pluginsthemes_next = function(pType)
 {
-    while(bulkTaskRunning && (currentThreads < maxThreads) && (websitesLeft > 0))
+    while(bulkManageSitesTaskRunning && (currentThreads < maxThreads) && (websitesLeft > 0))
     {
         managesites_update_pluginsthemes_next(pType);
     }
@@ -130,7 +130,7 @@ managesites_loop_pluginsthemes_next = function(pType)
 managesites_update_pluginsthemes_done = function(pType)
 {
     currentThreads--;
-    if (!bulkTaskRunning) return;
+    if (!bulkManageSitesTaskRunning) return;
     websitesDone++;
     if (websitesDone > websitesTotal) websitesDone = websitesTotal;
 
@@ -139,9 +139,10 @@ managesites_update_pluginsthemes_done = function(pType)
 
     if (websitesDone == websitesTotal)
     {
+        couttItemsToUpdate = itemsToUpdate.length;
         rightnow_send_twitt_info(); 
         setTimeout(function() {
-            bulkTaskRunning = false;
+            bulkManageSitesTaskRunning = false;
             if (websitesError <= 0)
             {
                 jQuery('#refresh-status-box').dialog('destroy');
@@ -516,4 +517,160 @@ managesites_backupnow_download_file = function(pSiteId, pSiteName, type, url, fi
 
         managesites_backup_run_next();
     } }(file, regexfile, subfolder, size, type, interVal, pSiteName, pSiteId, url), 'json');
+};
+
+managesites_wordpress_global_upgrade_all = function (updateSiteIds)
+{
+    console.log(updateSiteIds);
+
+    var allWebsiteIds = jQuery('.dashboard_wp_id').map(function(indx, el){ return jQuery(el).val(); });
+    
+    var selectedIds = [], excludeIds = [];
+    if (updateSiteIds instanceof Array) {
+        jQuery.grep(allWebsiteIds, function(el) {
+                if (jQuery.inArray(el, updateSiteIds) !== -1) {
+                    selectedIds.push(el);
+                } else {
+                    excludeIds.push(el);
+                }
+        });        
+        for (var i = 0; i < excludeIds.length; i++)
+        {
+            dashboard_update_site_hide(excludeIds[i]);
+        }
+        allWebsiteIds = selectedIds;
+        jQuery('#refresh-status-total').text(allWebsiteIds.length);
+    }
+    var nrOfWebsites = allWebsiteIds.length;   
+
+    if (nrOfWebsites == 0)
+        return false;
+    
+    var siteNames = {};
+     
+    for (var i = 0; i < allWebsiteIds.length; i++)
+    {
+        dashboard_update_site_status(allWebsiteIds[i], __('PENDING'));
+        siteNames[allWebsiteIds[i]] =  jQuery('.refresh-status-wp[siteid="'+allWebsiteIds[i]+'"]').attr('niceurl');
+    }
+
+    managesitesContinueAfterBackup = function(sitesCount, pAllWebsiteIds) { return function()
+    {
+
+        jQuery('#refresh-status-box').attr('title', __("Upgrading Wordpress"));
+        jQuery('#refresh-status-text').html(__('updated'));        
+        jQuery('#refresh-status-progress').progressbar({value: 0, max: sitesCount});
+        jQuery('#refresh-status-box').dialog({
+            resizable: false,
+            height: 350,
+            width: 500,
+            modal: true,
+            close: function(event, ui) {bulkManageSitesTaskRunning = false; jQuery('#refresh-status-box').dialog('destroy'); location.href = location.href;}});
+        
+        var dateObj = new Date();
+        dashboardActionName = 'upgrade_all_wp_core';        
+        starttimeDashboardAction = dateObj.getTime();
+        countRealItemsUpdated = 0;
+
+        managesites_wordpress_upgrade_all_int(pAllWebsiteIds);
+    
+        managesitesContinueAfterBackup = undefined;
+    } } (nrOfWebsites, allWebsiteIds);
+
+    return mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
+    
+    
+};
+managesites_wordpress_upgrade_all_int = function (websiteIds)
+{
+    websitesToUpgrade = websiteIds;
+    currentWebsite = 0;
+    websitesDone = 0;
+    websitesTotal = websitesLeft = websitesToUpgrade.length;
+
+    bulkManageSitesTaskRunning = true;
+    managesites_wordpress_upgrade_all_loop_next();
+};
+managesites_wordpress_upgrade_all_loop_next = function ()
+{
+    while (bulkManageSitesTaskRunning && (currentThreads < maxThreads) && (websitesLeft > 0))
+    {
+        managesites_wordpress_upgrade_all_upgrade_next();
+    }
+};
+managesites_wordpress_upgrade_all_upgrade_next = function ()
+{
+    currentThreads++;
+    websitesLeft--;
+
+    var websiteId = websitesToUpgrade[currentWebsite++];
+    dashboard_update_site_status(websiteId, __('UPGRADING'));
+
+    managesites_wordpress_upgrade_int(websiteId);
+};
+managesites_wordpress_upgrade_all_update_done = function ()
+{
+    currentThreads--;
+    if (!bulkManageSitesTaskRunning) return;
+    websitesDone++;
+
+    jQuery('#refresh-status-progress').progressbar('value', websitesDone);
+    jQuery('#refresh-status-current').html(websitesDone);
+
+    if (websitesDone == websitesTotal)
+    {   
+        setTimeout(function ()
+        {
+            bulkManageSitesTaskRunning = false;
+            jQuery('#refresh-status-box').dialog('destroy');
+            location.href = location.href;
+        }, 3000);
+        return;
+    }
+
+    managesites_wordpress_upgrade_all_loop_next();
+};
+managesites_wordpress_upgrade_int = function (websiteId)
+{
+    var websiteHolder = jQuery('div.mainwp_wordpress_upgrade[site_id="' + websiteId + '"]');
+
+    websiteHolder.find('.wordpressAction').hide();
+    websiteHolder.find('.wordpressInfo').html('<i class="fa fa-spinner fa-pulse"></i> '+__('Upgrading'));
+
+    var data = mainwp_secure_data({
+        action:'mainwp_upgradewp',
+        id:websiteId
+    });
+    jQuery.post(ajaxurl, data, function (pWebsiteId)
+    {
+        return function (response)
+        {
+            var result;
+            var websiteHolder = jQuery('div.mainwp_wordpress_upgrade[site_id="' + pWebsiteId + '"]');
+
+            if (response.error)
+            {
+                result = getErrorMessage(response.error);
+                dashboard_update_site_status(pWebsiteId, __('FAILED'));
+            }
+            else
+            {
+                result = response.result;
+                dashboard_update_site_status(pWebsiteId, __('DONE'));
+                websiteHolder.attr('updated', 1);
+                countRealItemsUpdated++;
+                couttItemsToUpdate++;
+            }
+
+            managesites_wordpress_upgrade_all_update_done();
+            websiteHolder.find('.wordpressInfo').html(result);
+
+            if (websitesDone == websitesTotal)
+            {        
+                rightnow_send_twitt_info();
+            }
+        }
+    }(websiteId), 'json');
+
+    return false;
 };

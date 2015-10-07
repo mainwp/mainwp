@@ -430,6 +430,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
             'open_frontpage' => __('Open Frontpage', 'mainwp'),
             'update_plugins' => __('Update Plugins', 'mainwp'),
             'update_themes' => __('Update Themes', 'mainwp'),
+            'update_wpcore' => __('Update Wordpress', 'mainwp'),
         );        
         return apply_filters('mainwp_managesites_bulk_actions', $actions);                       
     }

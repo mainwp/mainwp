@@ -105,32 +105,34 @@ class MainWPServerInformation
                         self::renderRow('PCRE Backtracking Limit', '>=', '10000', 'getOutputBufferSize', '', '', null, 'Changed by modifying the value pcre.backtrack_limit in your php.ini file. Click the help icon to read more.');
                         ?><tr><td><a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWPUtility::renderToolTip('MainWP requires the FS_METHOD to be set to direct'); ?></a></td><td><?php _e('FileSystem Method','mainwp'); ?></td><td><?php echo '= ' . __('direct','mainwp'); ?></td><td><?php echo self::getFileSystemMethod(); ?></td><td><?php echo self::getFileSystemMethodCheck(); ?></td></tr><?php
                         ?><tr><td style="background: #333; color: #fff;" colspan="5"><?php _e('SERVER INFORMATION','mainwp'); ?></td></tr>
-                          <tr><td></td><td><?php _e('WordPress Root Directory','mainwp'); ?></td><td colspan="3"><?php self::getWPRoot(); ?></td></tr>
-                          <tr><td></td><td><?php _e('Server Name','mainwp'); ?></td><td colspan="3"><?php self::getSeverName(); ?></td></tr>
-                          <tr><td></td><td><?php _e('Server Sofware','mainwp'); ?></td><td colspan="3"><?php self::getServerSoftware(); ?></td></tr>
-                          <tr><td></td><td><?php _e('Operating System','mainwp'); ?></td><td colspan="3"><?php self::getOS(); ?></td></tr>
-                          <tr><td></td><td><?php _e('Architecture','mainwp'); ?></td><td colspan="3"><?php self::getArchitecture(); ?></td></tr>
-                          <tr><td></td><td><?php _e('Server IP','mainwp'); ?></td><td colspan="3"><?php self::getServerIP(); ?></td></tr>
-                          <tr><td></td><td><?php _e('Server Protocol','mainwp'); ?></td><td colspan="3"><?php self::getServerProtocol(); ?></td></tr>
-                          <tr><td></td><td><?php _e('HTTP Host','mainwp'); ?></td><td colspan="3"><?php self::getHTTPHost(); ?></td></tr>
-                          <tr><td></td><td><?php _e('HTTPS','mainwp'); ?></td><td colspan="3"><?php self::getHTTPS(); ?></td></tr>
-                          <tr><td></td><td><?php _e('Server Admin','mainwp'); ?></td><td colspan="3"><?php self::getServerAdmin(); ?></td></tr>
-                          <tr><td></td><td><?php _e('Server Port','mainwp'); ?></td><td colspan="3"><?php self::getServerPort(); ?></td></tr>
-                          <tr><td></td><td><?php _e('Getaway Interface','mainwp'); ?></td><td colspan="3"><?php self::getServerGetawayInterface(); ?></td></tr>
-                          <tr><td></td><td><?php _e('Request Method','mainwp'); ?></td><td colspan="3"><?php self::getServerRequestMethod(); ?></td></tr>
-                          <tr><td></td><td><?php _e('Accept Content','mainwp'); ?></td><td colspan="3"><?php self::getServerHTTPAccept(); ?></td></tr>
-                          <tr><td></td><td><?php _e('Remote Host','mainwp'); ?></td><td colspan="3"><?php self::getRemoteHost(); ?></td></tr>
-                          <tr><td></td><td><?php _e('Remote Port','mainwp'); ?></td><td colspan="3"><?php self::getRemotePort(); ?></td></tr>
-                          <tr><td style="background: #333; color: #fff;" colspan="5"><?php _e('PHP INFORMATION','mainwp'); ?></td></tr>
-                          <tr><td></td><td><?php _e('PHP Allow URL fopen','mainwp'); ?></td><td colspan="3"><?php self::getPHPAllowUrlFopen(); ?></td></tr>
-                          <tr><td></td><td><?php _e('PHP Exif Support','mainwp'); ?></td><td colspan="3"><?php self::getPHPExif(); ?></td></tr>
-                          <tr><td></td><td><?php _e('PHP IPTC Support','mainwp'); ?></td><td colspan="3"><?php self::getPHPIPTC(); ?></td></tr>
-                          <tr><td></td><td><?php _e('PHP XML Support','mainwp'); ?></td><td colspan="3"><?php self::getPHPXML(); ?></td></tr>
-                          <tr><td></td><td><?php _e('PHP Disabled Functions','mainwp'); ?></td><td colspan="3"><?php self::mainwpRequiredFunctions(); ?></td></tr>
-                          <tr><td></td><td><?php _e('PHP Loaded Extensions','mainwp'); ?></td><td colspan="3" style="width: 73% !important;"><?php self::getLoadedPHPExtensions(); ?></td></tr>
-                          <tr><td style="background: #333; color: #fff;" colspan="5"><?php _e('MySQL INFORMATION','mainwp'); ?></td></tr>
-                          <tr><td></td><td><?php _e('MySQL Mode','mainwp'); ?></td><td colspan="3"><?php self::getSQLMode(); ?></td></tr>
-                          <tr><td></td><td><?php _e('MySQL Client Encoding','mainwp'); ?></td><td colspan="3"><?php echo defined( 'DB_CHARSET' ) ? DB_CHARSET : ''; ?></td></tr>
+                            <tr><td></td><td><?php _e('WordPress Root Directory','mainwp'); ?></td><td colspan="3"><?php self::getWPRoot(); ?></td></tr>
+                            <tr><td></td><td><?php _e('Server Name','mainwp'); ?></td><td colspan="3"><?php self::getSeverName(); ?></td></tr>
+                            <tr><td></td><td><?php _e('Server Sofware','mainwp'); ?></td><td colspan="3"><?php self::getServerSoftware(); ?></td></tr>
+                            <tr><td></td><td><?php _e('Operating System','mainwp'); ?></td><td colspan="3"><?php self::getOS(); ?></td></tr>
+                            <tr><td></td><td><?php _e('Architecture','mainwp'); ?></td><td colspan="3"><?php self::getArchitecture(); ?></td></tr>
+                            <tr><td></td><td><?php _e('Server IP','mainwp'); ?></td><td colspan="3"><?php self::getServerIP(); ?></td></tr>
+                            <tr><td></td><td><?php _e('Server Protocol','mainwp'); ?></td><td colspan="3"><?php self::getServerProtocol(); ?></td></tr>
+                            <tr><td></td><td><?php _e('HTTP Host','mainwp'); ?></td><td colspan="3"><?php self::getHTTPHost(); ?></td></tr>
+                            <tr><td></td><td><?php _e('HTTPS','mainwp'); ?></td><td colspan="3"><?php self::getHTTPS(); ?></td></tr>
+                            <tr><td></td><td><?php _e('Server Admin','mainwp'); ?></td><td colspan="3"><?php self::getServerAdmin(); ?></td></tr>
+                            <tr><td></td><td><?php _e('Server Port','mainwp'); ?></td><td colspan="3"><?php self::getServerPort(); ?></td></tr>
+                            <tr><td></td><td><?php _e('Getaway Interface','mainwp'); ?></td><td colspan="3"><?php self::getServerGetawayInterface(); ?></td></tr>
+                            <tr><td></td><td><?php _e('Request Method','mainwp'); ?></td><td colspan="3"><?php self::getServerRequestMethod(); ?></td></tr>
+                            <tr><td></td><td><?php _e('Accept Content','mainwp'); ?></td><td colspan="3"><?php self::getServerHTTPAccept(); ?></td></tr>
+                            <tr><td></td><td><?php _e('Remote Host','mainwp'); ?></td><td colspan="3"><?php self::getRemoteHost(); ?></td></tr>
+                            <tr><td></td><td><?php _e('Remote Port','mainwp'); ?></td><td colspan="3"><?php self::getRemotePort(); ?></td></tr>
+                        <tr><td style="background: #333; color: #fff;" colspan="5"><?php _e('PHP INFORMATION','mainwp'); ?></td></tr>
+                            <tr><td></td><td><?php _e('PHP Allow URL fopen','mainwp'); ?></td><td colspan="3"><?php self::getPHPAllowUrlFopen(); ?></td></tr>
+                            <tr><td></td><td><?php _e('PHP Exif Support','mainwp'); ?></td><td colspan="3"><?php self::getPHPExif(); ?></td></tr>
+                            <tr><td></td><td><?php _e('PHP IPTC Support','mainwp'); ?></td><td colspan="3"><?php self::getPHPIPTC(); ?></td></tr>
+                            <tr><td></td><td><?php _e('PHP XML Support','mainwp'); ?></td><td colspan="3"><?php self::getPHPXML(); ?></td></tr>
+                            <tr><td></td><td><?php _e('PHP Disabled Functions','mainwp'); ?></td><td colspan="3"><?php self::mainwpRequiredFunctions(); ?></td></tr>
+                            <tr><td></td><td><?php _e('PHP Loaded Extensions','mainwp'); ?></td><td colspan="3" style="width: 73% !important;"><?php self::getLoadedPHPExtensions(); ?></td></tr>
+                        <tr><td style="background: #333; color: #fff;" colspan="5"><?php _e('MySQL INFORMATION','mainwp'); ?></td></tr>
+                            <tr><td></td><td><?php _e('MySQL Mode','mainwp'); ?></td><td colspan="3"><?php self::getSQLMode(); ?></td></tr>
+                            <tr><td></td><td><?php _e('MySQL Client Encoding','mainwp'); ?></td><td colspan="3"><?php echo defined( 'DB_CHARSET' ) ? DB_CHARSET : ''; ?></td></tr>
+                        <tr><td style="background: #333; color: #fff;" colspan="5"><?php _e('MAINWP SETTINGS','mainwp'); ?></td></tr>
+                            <?php self::displayMainWPOptions(); ?>
                     </tbody>
                 </table>
                 </div>
@@ -939,5 +941,123 @@ class MainWPServerInformation
           }
 
        }
-}
 
+    public static function mainwpOptions() {
+        $mainwp_options = array(
+            'mainwp_options_footprint_plugin_folder_default' => __('Hide Network on Child Sites','mainwp'),
+            'mainwp_wp_cron' => __('Use WP-Cron','mainwp'),
+            'mainwp_optimize' => __('Optimize for Shared Hosting or Big Networks','mainwp'),
+            'mainwp_seo' => __('Show Basic SEO Stats','mainwp'),
+            'select_mainwp_options_siteview' => __('View Upgrades per Site','mainwp'),
+            'mainwp_backup_before_upgrade' => __('Require Backup Before Upgrade','mainwp'),
+            'mainwp_automaticDailyUpdate' => __('Automatic Daily Update','mainwp'),
+            'mainwp_numberdays_Outdate_Plugin_Theme' => __('Abandoned Plugins/Thems Tolerance','mainwp'),
+            'mainwp_maximumPosts' => __('Maximum Number of Posts/Pages','mainwp'),
+            'mainwp_maximumComments' => __('Maximum Number of Comments','mainwp'),
+            'mainwp_primaryBackup' => __('Primary Backup System','mainwp'),
+            'mainwp_backupsOnServer' => __('Backups on Server','mainwp'),
+            'mainwp_backupOnExternalSources' => __('Backups on External Sources','mainwp'),
+            'mainwp_archiveFormat' => __('Backup Archive Format','mainwp'),
+            'mainwp_notificationOnBackupFail' => __('Send Email if a Backup Fails','mainwp'),
+            'mainwp_notificationOnBackupStart' => __('Send Email if a Backup Starts','mainwp'),
+            'mainwp_chunkedBackupTasks' => __('Execute Backup Tasks in Chunks','mainwp'),
+            'mainwp_options_offlinecheck_onlinenotification' => __('Online Notifications','mainwp'),
+            'mainwp_maximumRequests' => __('Maximum simultaneous requests','mainwp'),
+            'mainwp_minimumDelay' => __('Minimum delay between requests','mainwp'),
+            'mainwp_maximumIPRequests' => __('Maximum simultaneous requests per ip','mainwp'),
+            'mainwp_minimumIPDelay' => __('Minimum delay between requests to the same ip','mainwp')
+        );
+
+        $options_value = array();
+        $userExtension = MainWPDB::Instance()->getUserExtension();
+        foreach($mainwp_options as $opt => $label){
+	        $value  = get_option($opt, false);
+	        switch($opt) {
+		        case 'mainwp_options_footprint_plugin_folder_default':
+			        $pluginDir = (($userExtension == null) || (($userExtension->pluginDir == null) || ($userExtension->pluginDir == '')) ? 'default' : $userExtension->pluginDir);
+			        $value = ($pluginDir == 'hidden' ? 'Yes' : 'No');
+			        break;
+		        case 'select_mainwp_options_siteview':
+			        $siteview = (($userExtension == null) || (($userExtension->site_view == null) || ($userExtension->site_view == '')) ? 0 : $userExtension->site_view);
+			        $value = ($siteview == 1 ? 'Yes' : 'No');
+			        break;
+				case 'mainwp_options_offlinecheck_onlinenotification':
+					$onlineNotifications = (($userExtension == null) || (($userExtension->offlineChecksOnlineNotification == null) || ($userExtension->offlineChecksOnlineNotification == '')) ? 0 : $userExtension->offlineChecksOnlineNotification);
+					$value = ($onlineNotifications == 1 ? 'Yes' : 'No');
+					break;
+		        case 'mainwp_primaryBackup':
+			        $value = __('Default MainWP Backups', 'mainwp');
+			        break;
+		        case 'mainwp_numberdays_Outdate_Plugin_Theme';
+		        case 'mainwp_maximumPosts';
+		        case 'mainwp_maximumComments';
+
+			        break;
+		        case 'mainwp_archiveFormat':
+
+				    if ($value === false || $value == 'tar.gz') {
+					    $value = 'Tar GZip';
+				    } else if ($value == 'tar') {
+					    $value = 'Tar';
+				    } else if ($value == 'zip') {
+					    $value = 'Zip';
+				    } else if ($value == 'tar.bz2') {
+					    $value = 'Tar BZip2';
+				    }
+			        break;
+		        case 'mainwp_automaticDailyUpdate':
+                    if ($value === false || $value == 2) {
+	                    $value = 'E-mail Notifications of New Updates';
+                    } else if ($value == 1) {
+	                    $value = 'Install Trusted Updates';
+                    } else {
+	                    $value = 'Off';
+                    }
+			        break;
+		        case 'mainwp_maximumRequests':
+			        $value = ($value === false) ? 4: $value;
+			        break;
+		        case 'mainwp_maximumIPRequests':
+			        $value = ($value === false) ? 1: $value;
+			        break;
+		        case 'mainwp_minimumIPDelay':
+			        $value = ($value === false) ? 1000: $value;
+					break;
+		        case 'mainwp_minimumDelay':
+			        $value = ($value === false) ? 200: $value;
+					break;
+		        default:
+			        $value = empty($value) ? 'No' : 'Yes';
+			        break;
+	        }
+            $options_value[ $opt ] = array('label' => $label, 'value' => $value );
+        }
+
+        $primaryBackup = get_option('mainwp_primaryBackup');
+        $primaryBackupMethods = apply_filters("mainwp-getprimarybackup-methods", array());
+        if (!is_array($primaryBackupMethods)) {
+            $primaryBackupMethods = array();
+        }
+
+        if (count($primaryBackupMethods) > 0) {
+            $chk = false;
+            foreach ( $primaryBackupMethods as $method ) {
+                if ( $primaryBackup ==  $method['value']) {
+                    $value =  $method['title'];
+                    $chk = true;
+                    break;
+                }
+            }
+            if ($chk)
+                $options_value[ 'mainwp_primaryBackup' ] = array('label' => __('Primary Backup System','mainwp'), 'value' => $value);
+        }
+        return $options_value;
+    }
+
+    public static function displayMainWPOptions() {
+        $options = self::mainwpOptions();
+        foreach($options as $option) {
+            echo '<tr><td></td><td>'. $option['label'] .'</td><td colspan="3">' . $option['value'] . '</td></tr>';
+        }
+    }
+}

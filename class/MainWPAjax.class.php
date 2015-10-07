@@ -44,8 +44,11 @@ class MainWPAjax
 		// Profile
 		wp_enqueue_script('user-profile');
 	}
-	
-	public function init_load()
+
+	/**
+     *
+     */
+    public function init_load()
 	{
         global $plugin_page, $hook_suffix, $current_screen, $title, $menu, $submenu, $pagenow, $typenow;
         if ( ! defined('WP_ADMIN') )

@@ -126,30 +126,29 @@ class MainWPTwitter
     public static function updateTwitterInfo($what, $countSites = 0, $countSec = 0, $coutRealItems = 0, $twId = 0, $countItems = 1) {        
         if (empty($twId))
             return false;
-        
-        if (empty($coutRealItems))
-            return false;
-        
-        $filters = self::get_filter();       
-        
+
+        $filters = self::get_filter();
         if (!in_array($what, $filters))
             return false;
+
+        $clear_twit = false;
+        if ( empty($coutRealItems) || $coutRealItems == 1 ) {
+            $clear_twit = true;
+        }
+
+		$opt_name = 'mainwp_tt_message_' . $what;
+		$user_id = get_current_user_id();
 		
-		if ( 'new_page' == $what || 'new_post' == $what || 'create_new_user' == $what ) {
-			if ( 1 == $countSites ) 
-				return false;
-		} else if ( ( 1 == $countSites ) && ( 1 == $coutRealItems) ) {
-			return false;
+		if ($clear_twit) {
+			delete_user_option($user_id, $opt_name);
+		} else {
+			if (empty($countSec)) $countSec = 1; 
+			// store one twitt info only
+			$data = array($twId => array('sites' => $countSites, 'seconds' => $countSec, 'items' => $countItems, 'real_items' => $coutRealItems));		                			
+			if (update_user_option($user_id, $opt_name, $data )) {            
+				return true;
+			}       
 		}
-			
-        if (empty($countSec)) $countSec = 1; 
-        // store one twitt info only
-        $data = array($twId => array('sites' => $countSites, 'seconds' => $countSec, 'items' => $countItems, 'real_items' => $coutRealItems));
-        $user_id = get_current_user_id();                 
-        $opt_name = 'mainwp_tt_message_' . $what; 
-        if (update_user_option($user_id, $opt_name, $data )) {            
-            return true;
-        }            
         return false;   
     }    
     

@@ -205,10 +205,10 @@ class MainWPExtensions
     public static function enableAllExtensions()
     {
         $snEnabledExtensions = array();
-
-        foreach ($_POST['slugs'] as $slug)
-        {
-            $snEnabledExtensions[] = $slug;
+        if (isset($_POST['slugs']) && is_array($_POST['slugs'])) {
+            foreach ( $_POST['slugs'] as $slug ) {
+                $snEnabledExtensions[] = $slug;
+            }
         }
 
         MainWPUtility::update_option('mainwp_extloaded', $snEnabledExtensions);

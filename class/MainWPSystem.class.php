@@ -554,7 +554,7 @@ class MainWPSystem
             $this->checkUpgrade();
         }
 
-        if ($this->upgradeVersionInfo != null)
+        if ($this->upgradeVersionInfo != null && property_exists($this->upgradeVersionInfo, 'result') && is_array($this->upgradeVersionInfo->result))
         {
             $extensions = MainWPExtensions::getExtensions();
             foreach ($this->upgradeVersionInfo->result as $rslt)

@@ -113,13 +113,13 @@ a.mainwp-post-trash {
     padding: 16px 10px 32px;
 }
 
-#MainWPBulkAddUserLoading {
+#MainWP_Bulk_AddUserLoading {
     display: none;
     text-align: left;
     padding: 10px;
 }
 
-#MainWPBulkAddUserLoading img {
+#MainWP_Bulk_AddUserLoading img {
     display: block;
     float: left;
     margin: -1px 10px 0 0;
@@ -354,7 +354,7 @@ h3.mainwp_box_title {
     width: 25em;
 }
 
-.MainWPInstallBulkStatus {
+.MainWP_Install_BulkStatus {
     padding-top: 4px;
     display: inline-block;
 }

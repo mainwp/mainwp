@@ -1242,7 +1242,7 @@ class MainWPManageSites
             {
                 $http_user = (isset($_POST['http_user']) ? $_POST['http_user'] : '');
                 $http_pass = (isset($_POST['http_pass']) ? $_POST['http_pass'] : '');
-                $information = MainWPUtility::fetchUrlNotAuthed($_POST['url'], $_POST['admin'], 'stats', null, false, null, $http_user, $http_pass); //Fetch the stats with the given admin name
+                $information = MainWPUtility::fetchUrlNotAuthed($_POST['url'], $_POST['admin'], 'stats', null, false, $_POST['verify_certificate'], $http_user, $http_pass); //Fetch the stats with the given admin name
 
                 if (isset($information['wpversion']))
                 { //Version found - able to add

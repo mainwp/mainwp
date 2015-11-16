@@ -255,7 +255,7 @@ class MainWPSync
 
         if (isset($information['themeConflicts']))
         {
-            $websiteValues['themeConflicts'] = @json_encode($information['themeConflicts']);
+            $websiteValues['themeConflicts'] = @json_encode(array_filter($information['themeConflicts']));
             $done = true;
         }
 

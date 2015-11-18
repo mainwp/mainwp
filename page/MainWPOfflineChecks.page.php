@@ -204,7 +204,11 @@ class MainWPOfflineChecks
                     //Add
                     if (function_exists('openssl_pkey_new'))
                     {
-                        $conf = array('private_key_bits' => 384);                                                 
+                        $conf = array('private_key_bits' => 384);
+	                    $conf_loc = MainWPSystem::get_openssl_conf();
+	                    if (!empty($conf_loc))
+		                    $conf['config'] = $conf_loc;
+
                         $res = openssl_pkey_new($conf);                                                          
                         @openssl_pkey_export($res, $privkey, NULL, $conf);
                         $pubkey = openssl_pkey_get_details($res);

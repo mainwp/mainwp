@@ -1,0 +1,401 @@
+.mwp-setup-content p,
+.mwp-setup-content table {
+    font-size: 1em;
+    line-height: 1.75em;
+    color: #666
+}
+body {
+    margin: 100px auto 24px;
+    box-shadow: none;
+    background: #f1f1f1;
+    padding: 0
+}
+#mwp-logo {
+    border: 0;
+    margin: 0 0 24px;
+    padding: 0;
+    text-align: center
+}
+#mwp-logo img {
+    max-width: 50%
+}
+.mwp-setup-content {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .13);
+    padding: 24px 24px 0;
+    background: #fff;
+    overflow: hidden;
+    zoom: 1
+}
+.mwp-setup-content h1,
+.mwp-setup-content h2,
+.mwp-setup-content h3,
+.mwp-setup-content table {
+    margin: 0 0 24px;
+    border: 0;
+    padding: 0;
+    color: #666;
+    clear: none
+}
+.mwp-setup-content p {
+    margin: 0 0 24px
+}
+.mwp-setup-content a {
+    color: #7fb100 
+}
+.mwp-setup-content a:focus,
+.mwp-setup-content a:hover {
+    color: #111
+}
+.mwp-setup-content .form-table th {
+    width: 35%;
+    vertical-align: top;
+    font-weight: 400
+}
+.mwp-setup-content .form-table td {
+    vertical-align: top
+}
+.mwp-setup-content .form-table td input {
+    box-sizing: border-box
+}
+.mwp-setup-content .form-table td input[size] {
+    width: auto
+}
+.mwp-setup-content .form-table td .description {
+    line-height: 1.5em;
+    display: block;
+    margin-top: .25em;
+    color: #999;
+    font-style: italic
+}
+.mwp-setup-content .form-table td .input-checkbox,
+.mwp-setup-content .form-table td .input-radio {
+    width: auto;
+    box-sizing: inherit;
+    padding: inherit;
+    margin: 0 .5em 0 0;
+    box-shadow: none
+}
+.mwp-setup-content .form-table .section_title td {
+    padding: 0
+}
+.mwp-setup-content .form-table .section_title td h2,
+.mwp-setup-content .form-table .section_title td p {
+    margin: 12px 0 0
+}
+.mwp-setup-content .form-table td,
+.mwp-setup-content .form-table th {
+    padding: 12px 0;
+    margin: 0;
+    border: 0
+}
+.mwp-setup-content .form-table td:first-child,
+.mwp-setup-content .form-table th:first-child {
+    padding-right: 1em
+}
+.mwp-setup-content .mwp-setup-pages {
+    width: 100%;
+    border-top: 1px solid #eee
+}
+.mwp-setup-content .mwp-setup-pages thead th {
+    display: none
+}
+.mwp-setup-content .mwp-setup-pages .page-name {
+    width: 30%;
+    font-weight: 700
+}
+.mwp-setup-content .mwp-setup-pages td,
+.mwp-setup-content .mwp-setup-pages th {
+    padding: 14px 0;
+    border-bottom: 1px solid #eee
+}
+.mwp-setup-content .mwp-setup-pages td:first-child,
+.mwp-setup-content .mwp-setup-pages th:first-child {
+    padding-right: 9px
+}
+.mwp-setup-content .mwp-setup-pages th {
+    padding-top: 0
+}
+.mwp-setup-content .mwp-setup-pages .page-options p {
+    color: #777;
+    margin: 6px 0 0 24px;
+    line-height: 1.75em
+}
+.mwp-setup-content .mwp-setup-pages .page-options p input {
+    vertical-align: middle;
+    margin: 1px 0 0;
+    height: 1.75em;
+    width: 1.75em;
+    line-height: 1.75em
+}
+.mwp-setup-content .mwp-setup-pages .page-options p label {
+    line-height: 1
+}
+@media screen and (max-width: 782px) {
+    .mwp-setup-content .form-table tbody th {
+        width: auto
+    }
+}
+.mwp-setup-content .twitter-share-button {
+    float: right
+}
+.mwp-setup-content .mwp-setup-next-steps {
+    overflow: hidden;
+    margin: 0 0 24px
+}
+.mwp-setup-content .mwp-setup-next-steps h2 {
+    margin-bottom: 12px
+}
+.mwp-setup-content .mwp-setup-next-steps .mwp-setup-next-steps-first {
+    float: left;
+    width: 50%;
+    box-sizing: border-box
+}
+.mwp-setup-content .mwp-setup-next-steps .mwp-setup-next-steps-last {
+    float: right;
+    width: 50%;
+    box-sizing: border-box
+}
+.mwp-setup-content .mwp-setup-next-steps .mwp-setup-next-steps-last ul li a {
+    font-size: 1em;
+}
+.mwp-setup-content .mwp-setup-next-steps ul {
+    padding: 0 2em 0 0;
+    list-style: none;
+    margin: 0 0 -.75em
+}
+.mwp-setup-content .mwp-setup-next-steps ul li a {
+    display: block;
+    padding: 0 0 .75em
+}
+.mwp-setup-content .mwp-setup-next-steps ul .setup-product a {
+    text-align: center;
+    font-size: 1em;
+    padding: 1em;
+    line-height: 1.75em;
+    height: auto;
+    margin: 0 0 .75em;
+    opacity: 1;
+    background-color: #7fb100 ;
+    border-color: #7fb100 ;
+    -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 1px 0 rgba(0, 0, 0, .15);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 1px 0 rgba(0, 0, 0, .15)
+}
+.mwp-setup-content .mwp-setup-next-steps ul li a:before {
+    color: #82878c;
+    font: 400 20px/1 dashicons;
+    speak: none;
+    display: inline-block;
+    padding: 0 10px 0 0;
+    top: 1px;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-decoration: none!important;
+    vertical-align: top
+}
+.mwp-setup-content .mwp-setup-next-steps ul .learn-more a:before {
+    content: "\f105"
+}
+.mwp-setup-content .mwp-setup-next-steps ul .video-walkthrough a:before {
+    content: "\f126"
+}
+.mwp-setup-content .mwp-setup-next-steps ul .sidekick a:before {
+    content: "\f118"
+}
+.mwp-setup-content .mwp-setup-next-steps ul .newsletter a:before {
+    content: "\f465"
+}
+.mwp-setup-content .woocommerce-tracker {
+    padding: 24px 24px 0;
+    margin: 0 0 24px;
+    background: #f5f5f5
+}
+.mwp-setup-steps {
+    padding: 0 0 24px;
+    margin: 0;
+    list-style: none;
+    overflow: hidden;
+    color: #ccc
+}
+.mwp-setup-steps li {
+    width: 12.5%;
+    float: left;
+    padding: 0 0 1em;
+    margin: 0;
+    text-align: center;
+    position: relative;
+    border-bottom: 4px solid #ccc;
+    line-height: 1
+}
+.mwp-setup-steps li:before {
+    content: "";
+    border: 4px solid #ccc;
+    border-radius: 100%;
+    width: 4px;
+    height: 4px;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    margin-left: -6px;
+    margin-bottom: -8px;
+    background: #fff
+}
+.mwp-setup-steps li.active {
+    border-color: #7fb100 ;
+    color: #7fb100 
+}
+.mwp-setup-steps li.active a {    
+    color: #7fb100 
+}
+.mwp-setup-steps li.active:before {
+    border-color: #7fb100 
+}
+.mwp-setup-steps li.done a {    
+    color: #7fb100 
+}
+.mwp-setup-steps li.done {
+    border-color: #7fb100 ;
+    color: #7fb100 
+}
+
+.mwp-setup-steps li.done:before {
+    border-color: #7fb100 ;
+    background: #7fb100 
+}
+.mwp-setup .mwp-setup-actions {
+    overflow: hidden
+}
+.mwp-setup .mwp-setup-actions .button {
+    float: right;
+    font-size: 1.25em;
+    padding: .5em 1em;
+    line-height: 1em;
+    margin-right: .5em;
+    height: auto
+}
+.mwp-setup .mwp-setup-actions .button-primary {
+    margin: 0;
+    float: right;
+    opacity: 1;
+    background-color: #7fb100 ;
+    border-color: #7fb100 ;
+    -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 1px 0 rgba(0, 0, 0, .15);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 1px 0 rgba(0, 0, 0, .15)
+}
+.mwp-return-to-dashboard {
+    font-size: .85em;
+    color: #b5b5b5;
+    margin: 1.18em 0;
+    display: block;
+    text-align: center
+}
+
+.mwp-setup-content select {
+    height: 28px;
+    line-height: 28px;
+    padding: 2px;
+    vertical-align: middle;
+}
+
+.mwp-setup-content ul {
+    padding: 0px;
+}
+.mwp-setup-content .os-list ul {
+    padding-left: 50px;
+}
+
+.mwp-setup-content .mwp-setup-list li {
+    list-style-type:none;
+}
+body.mwp-setup{
+    max-width: 920px;
+}
+
+table.widefat {
+    border: 1px solid #e5e5e5;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+.widefat {
+    border-spacing: 0;
+    clear: both;
+    margin: 0;
+    width: 100%;
+}
+.widefat tfoot td, .widefat th, .widefat thead td {
+    font-weight: 400;
+}
+.widefat tfoot td, .widefat th, .widefat thead td {
+    font-size: 14px;
+    line-height: 1.3em;
+    text-align: left;
+}
+.widefat td {
+    font-size: 13px;
+    line-height: 1.5em;
+}
+.widefat td {
+    vertical-align: top;
+}
+.widefat td, .widefat th {
+    padding: 8px 10px;
+}
+.mwp-setup-full-width .mwp-setup-field {
+    width: 50%;
+}
+.mwp-setup-full-width .mwp-setup-field {
+    float: left;
+    margin-left: 3%;
+    width: 45%;
+}
+
+.mwp-setup-full-width input[type="text"], .mwp-setup-full-width input[type="email"], .mwp-setup-full-width input[type="url"], .mwp-setup-full-width input[type="password"]{
+    box-sizing: border-box;
+    color: #60646c;
+    width: 100%;
+    line-height: 20px;
+    font-size: 15px;
+    padding: 3px 5px;
+    border: 1px solid #ddd;
+    -webkit-box-shadow: inset 0 1px 2px rgba(0,0,0,.07);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.07);
+}
+
+.mwp-setup-field {
+    margin-bottom: 20px;
+}
+hr {
+    border: 0;
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #fafafa;
+}
+
+.mwp_setup_install_extension_content p {
+    line-height: 1.5;
+    margin: 1em 0;
+}
+
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="color"]:focus,
+input[type="date"]:focus,
+input[type="datetime"]:focus,
+input[type="datetime-local"]:focus,
+input[type="email"]:focus,
+input[type="month"]:focus,
+input[type="number"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+input[type="tel"]:focus,
+input[type="text"]:focus,
+input[type="time"]:focus,
+input[type="url"]:focus,
+input[type="week"]:focus,
+input[type="checkbox"]:focus,
+input[type="radio"]:focus,
+select:focus,
+textarea:focus {
+    border-color: #7fb100;
+    -webkit-box-shadow: 0 0 2px rgba( 127, 177, 0, 0.8 );
+    box-shadow: 0 0 2px rgba( 127, 177, 0, 0.8 );
+}

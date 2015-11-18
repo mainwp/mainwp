@@ -177,32 +177,36 @@ class MainWPExtensionsView
 <?php } ?>
 </div>
 <div id="mainwp-extensions-list">
-        <?php       
+	<?php    
+	
+	$user_can_manage_extensions = mainwp_current_user_can("dashboard", "manage_extensions");
+	
     if (isset($extensions) && is_array($extensions))
     {
         foreach ($extensions as $extension)
         {
             if (!mainwp_current_user_can("extension", dirname($extension['slug'])))
                continue;
-            $active = MainWPExtensions::isExtensionEnabled($extension['plugin']);
+            $active = MainWPExtensions::isExtensionActivated($extension['plugin']);			
+			$enabled = MainWPExtensions::isExtensionEnabled($extension['plugin']);
             
             $queue_status = "";
             
             if (isset($extension['apiManager']) && $extension['apiManager']) { 
                 $queue_status = 'status="queue"';
             }
-?>
-        <div class="mainwp-extensions-childHolder" extension_slug="<?php echo $extension['slug']; ?>" <?php echo $queue_status; ?> license-status="<?php echo $active ? "activated" : "deactivated"; ?>">
+	?>
+        <div class="mainwp-extensions-childHolder" extension_slug="<?php echo $extension['slug']; ?>" <?php echo $queue_status; ?> license-status="<?php echo $enabled ? "activated" : "deactivated"; ?>">
             <table style="width: 100%">
                 <td class="mainwp-extensions-childIcon">
                     <?php
                     if (isset($extension['iconURI']) && ($extension['iconURI'] != ''))
                     {
-                        ?><img title="<?php echo $extension['name']; ?>" src="<?php echo MainWPUtility::removeHttpPrefix($extension['iconURI']); ?>" class="mainwp-extensions-img large <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /><?php
+                        ?><img title="<?php echo $extension['name']; ?>" src="<?php echo MainWPUtility::removeHttpPrefix($extension['iconURI']); ?>" class="mainwp-extensions-img large <?php echo ($enabled ? '' : 'mainwp-extension-icon-desaturated'); ?>" /><?php
                     }
                     else
                     {
-                        ?><img title="MainWP Placeholder" src="<?php echo plugins_url('images/extensions/placeholder.png', dirname(__FILE__)); ?>" class="mainwp-extensions-img large <?php echo ($active ? '' : 'mainwp-extension-icon-desaturated'); ?>" /><?php
+                        ?><img title="MainWP Placeholder" src="<?php echo plugins_url('images/extensions/placeholder.png', dirname(__FILE__)); ?>" class="mainwp-extensions-img large <?php echo ($enabled ? '' : 'mainwp-extension-icon-desaturated'); ?>" /><?php
                     }
 ?>
                 </td>
@@ -228,78 +232,51 @@ class MainWPExtensionsView
                                 } ?>
                             </td>
                             <td class="mainwp-extensions-childVersion">V. <?php echo $extension['version']; ?></td>
-                            <td class="mainwp-extensions-childActions">
-                                <?php if ($active) { ?>
-                                    <?php if (isset($extension['apiManager']) && $extension['apiManager'] && !empty($extension['api_key'])) { ?>
-                                        <a href="javascript:void(0)" class="api-status activated" ><?php _e('Activated','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                        <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>                                    
-                                        <a href="#" class="mainwp-extensions-api-activation" style="font-size: 28px;"><i class="fa fa-unlock"></i></a>
-                                        <?php }  ?>
-                                    <?php } else {  ?>
-                                        <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
-                                            <a href="#" class="button mainwp-extensions-disable"><?php _e('Disable','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                            <span style="font-size: 28px;"><i class="fa fa-unlock"></i></span>
-                                        <?php } //  ?>
-                                    <?php }  ?>
-                                    <?php if (isset($extension['direct_page']) && !empty($extension['direct_page'])) { ?>
-                                        <a href="<?php echo admin_url('admin.php?page='.$extension['direct_page']); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
-                                    <?php } else if (isset($extension['callback'])) { ?>
-                                        <a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
-                                    <?php } else { ?>
-                                        <span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-wrench"></i></span>
-                                    <?php } ?>
-                                    <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
-                                    <span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-trash"></i></span>
-                                    <?php } //  ?>
-                                <?php } else {
-                                    $apilink = '';
-                                    $locked = false;
-                                    if (isset($extension['mainwp']) && ($extension['mainwp'] == true))
-                                    {
-                                        //MainWP plugin, check if it requires authentication
-                                        if (isset($extension['api']))
-                                        {
-                                            $apilink = admin_url('admin.php?page=Settings');
-                                            //plugin locked (api not valid)
-                                            $locked = (MainWPAPISettings::testAPIs($extension['api']) != 'VALID');
-                                        }
-                                    }
-                                    else
-                                    {
-                                        //Third party plugin, check if it requires authentication
-                                        if (isset($extension['apilink']))
-                                        {
-                                            $apilink = $extension['apilink'];
-                                            //plugin locked
-                                            $locked = (isset($extension['locked']) && ($extension['locked'] == true));
-                                        }
-                                    }
-                                    ?>
-                                    <?php if (isset($extension['apiManager']) && $extension['apiManager'] && !empty($extension['api_key'])) { ?>
-                                        <a href="javascript:void(0)" class="api-status deactivated" title="Not Activated"><?php _e('Deactivated','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                        <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>                                                                               
-                                            <a href="#" class="mainwp-extensions-api-activation"><i class="fa fa-lock image-api-status"></i></a>                                    
-                                        <?php } ?>
-                                    <?php } else { ?>
-                                        <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
-                                        <button class="button-primary mainwp-extensions-enable" <?php echo ($locked ? 'disabled' : ''); ?>><?php _e('Enable','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                        <?php if ($apilink != '') { ?>
-                                        <a href="<?php echo $apilink; ?>" style="font-size: 28px;"><i class="fa fa-<?php echo (!$locked ? 'un' : '') .'lock'; ?>"></i></a>
-                                        <?php } else { ?>
-                                        <i class="fa fa-unlock"></i></a>
-                                        <?php }?>
-                                        <?php } ?>                                        
-                                    <?php } ?>
-                                        
-                                    <?php if (isset($extension['callback'])) { ?>
-                                        <a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
-                                    <?php } else { ?>
-                                        <img src="<?php echo plugins_url('images/extensions/settings-freeze.png', dirname(__FILE__)); ?>" title="Settings" />
-                                    <?php } ?>
-                                    <?php if (mainwp_current_user_can("dashboard", "manage_extensions")) { ?>
-                                    <a href="#" class="mainwp-extensions-trash" style="font-size: 28px"><i class="fa fa-trash"></i></a>
-                                    <?php } ?>
-                                <?php } ?>
+                            <td class="mainwp-extensions-childActions">								
+								<?php if (isset($extension['apiManager']) && $extension['apiManager']) { ?>
+										<?php if ($active) { ?>										
+											<a href="javascript:void(0)" class="api-status activated" ><?php _e('Activated','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;											
+										<?php } else {?>
+											<a href="javascript:void(0)" class="api-status deactivated" title="Not Activated"><?php _e('Deactivated','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;											
+                                    <?php } ?>			
+								<?php } ?>		
+							
+												
+                                <?php if ($enabled) { ?>    											
+									<button href="#" <?php echo $user_can_manage_extensions ? 'class="button mainwp-extensions-disable"' : 'disabled="disabled"'; ?> ><?php _e('Disable','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;										
+								<?php } else {  ?> 
+									<button <?php echo $user_can_manage_extensions ? 'class="button-primary mainwp-extensions-enable"' : 'disabled="disabled"'; ?> ><?php _e('Enable','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;										
+								<?php } ?>
+								    
+								<?php if (isset($extension['apiManager']) && $extension['apiManager']) { ?>
+										<?php if ($user_can_manage_extensions) { ?>																					                                  
+											<?php if ($active) { ?>																					                                  
+													<a href="#" class="mainwp-extensions-api-activation" style="font-size: 28px;"><i class="fa fa-lock"></i></a>											
+											<?php } else {?>
+													<a href="#" class="mainwp-extensions-api-activation" style="font-size: 28px;"><i class="fa fa-unlock"></i></a>										
+											<?php } ?>
+										<?php } else { ?>
+											<?php if ($active) { ?>																					                                  
+													<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-lock"></i></span>											
+											<?php } else {?>
+													<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-unlock"></i></span>										
+											<?php } ?>	
+										<?php } ?>			
+								<?php } ?>		
+										
+								<?php if (isset($extension['direct_page']) && !empty($extension['direct_page'])) { ?>
+									<a href="<?php echo admin_url('admin.php?page='.$extension['direct_page']); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
+								<?php } else if (isset($extension['callback'])) { ?>
+									<a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
+								<?php } else { ?>
+									<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-wrench"></i></span>
+								<?php } ?>
+
+								<?php if (false && $user_can_manage_extensions) { ?>
+										<a href="#" class="mainwp-extensions-trash" style="font-size: 28px"><i class="fa fa-trash"></i></a>
+								<?php } else { ?>
+										<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-trash"></i></span>
+								<?php } ?>  
                             </td>
                         </tr>
                         <tr class="mainwp-extensions-extra mainwp-extension-description"><td colspan="3"><br/><br/><?php echo preg_replace('/\<cite\>.*\<\/cite\>/', '', $extension['description']); ?><br/><br/></td></tr>
@@ -554,7 +531,6 @@ class MainWPExtensionsView
                             'product_id' => 'MainWP Remote Backup Extension'
                         ),
                         array(
-                            'free' => true,
                             'slug' => 'mainwp-spinner',
                             'title' => 'MainWP Spinner',
                             'desc' => 'MainWP Extension Plugin allows words to spun {|} when when adding articles and posts to your blogs. Requires the installation of MainWP Main Plugin.',

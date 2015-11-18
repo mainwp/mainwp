@@ -2819,3 +2819,18 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {
     border-left: 4px solid #4099FF !important;        
     background-image: url('../images/twitter-icon.png') !important;
 }
+.mainwp_config_box_left .upload-plugin, .mainwp_config_box_left .upload-theme{
+    top: 0px !important; 
+}
+.mainwp_config_box_left .wp-filter {
+    margin-top: 0px !important; 
+    margin-bottom: 10px !important;
+}
+.install-theme-settings{
+    margin:10px 0;
+}
+
+body.show-upload-theme .mainwp_config_box_left .install-theme-settings, 
+body.show-upload-theme .mainwp_config_box_left .theme-browser {
+    display: none;
+}

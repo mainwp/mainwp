@@ -889,7 +889,7 @@ class MainWPPost
                                                                     $checked = ' checked="checked" ';
                                                             else
                                                                     $checked = '';                                                            
-                                                           $ret .=   '<div class="mainwp_selected_sites_item ' .(!empty($checked) ? 'selected_sites_item_checked' : ''). '"><input type="checkbox" name="'.$input_name.'" value="' . $siteid . "," .  $cat->term_id . "," . $cat->name . '" ' . $checked . '/><label>'.$cat->name.'</label></div>';
+                                                           $ret .=   '<div class="mainwp_selected_sites_item ' .(!empty($checked) ? 'selected_sites_item_checked' : ''). '"><input type="checkbox" name="'.$input_name.'" value="' . $siteid . "," .  $cat->term_id . "," . $cat->name . '" ' . $checked . '/><label>'. stripslashes( $cat->name ) .'</label></div>';
                                                    }
                                                }                                               
                                          }

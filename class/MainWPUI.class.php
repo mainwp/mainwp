@@ -72,7 +72,7 @@ class MainWPUI
             {
                 $selected = in_array($group->id, $selected_groups);
 
-                echo '<div class="mainwp_selected_groups_item '.($selected ? 'selected_groups_item_checked' : '').'"><input onClick="mainwp_group_select(this)" type="'.$type.'" name="' . ( $type == 'radio' ? 'selected_group' : 'selected_groups[]' ) . '" value="' . $group->id . '" id="selected_groups_' . $group->id . '" '.($selected ? 'checked="true"' : '').'/> <label for="selected_groups_' . $group->id . '">' . $group->name . '</label></div>';
+                echo '<div class="mainwp_selected_groups_item '.($selected ? 'selected_groups_item_checked' : '').'"><input onClick="mainwp_group_select(this)" type="'.$type.'" name="' . ( $type == 'radio' ? 'selected_group' : 'selected_groups[]' ) . '" value="' . $group->id . '" id="selected_groups_' . $group->id . '" '.($selected ? 'checked="true"' : '').'/> <label for="selected_groups_' . $group->id . '">' . stripslashes( $group->name ) . '</label></div>';
             }
             ?>
         </div>
@@ -168,7 +168,7 @@ class MainWPUI
                                                ?>
                                                  <div class="categories_group_<?php echo $gid;?>">
                                                      <div class="mainwp_groups_list_header">
-                                                                <div><?php echo $group->name?></div>
+                                                                <div><?php echo stripslashes( $group->name ); ?></div>
                                                         </div>
                                                     <?php
                                                     $websites = MainWPDB::Instance()->getWebsitesByGroupIds(array($gid));

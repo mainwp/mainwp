@@ -1426,10 +1426,18 @@ class MainWPManageSites
                     MainWPUtility::update_option('mainwp_backupOnExternalSources', $_POST['mainwp_options_backupOnExternalSources']);
                 }
                 MainWPUtility::update_option('mainwp_archiveFormat', $_POST['mainwp_archiveFormat']);
-                MainWPUtility::update_option('mainwp_options_loadFilesBeforeZip', (!isset($_POST['mainwp_options_loadFilesBeforeZip']) ? 0 : 1));
-                MainWPUtility::update_option('mainwp_notificationOnBackupFail', (!isset($_POST['mainwp_options_notificationOnBackupFail']) ? 0 : 1));
-                MainWPUtility::update_option('mainwp_notificationOnBackupStart', (!isset($_POST['mainwp_options_notificationOnBackupStart']) ? 0 : 1));
-                MainWPUtility::update_option('mainwp_chunkedBackupTasks', (!isset($_POST['mainwp_options_chunkedBackupTasks']) ? 0 : 1));
+
+                if (isset($_POST['mainwp_primaryBackup']) && !empty($_POST['mainwp_primaryBackup'])) // not default backup method
+                {
+                    MainWPUtility::update_option('mainwp_notificationOnBackupFail', 0);
+                    MainWPUtility::update_option('mainwp_notificationOnBackupStart', 0);
+                    MainWPUtility::update_option('mainwp_chunkedBackupTasks', 0);
+                } else {
+                    MainWPUtility::update_option( 'mainwp_options_loadFilesBeforeZip', ( ! isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 0 : 1 ) );
+                    MainWPUtility::update_option( 'mainwp_notificationOnBackupFail', ( ! isset( $_POST['mainwp_options_notificationOnBackupFail'] ) ? 0 : 1 ) );
+                    MainWPUtility::update_option( 'mainwp_notificationOnBackupStart', ( ! isset( $_POST['mainwp_options_notificationOnBackupStart'] ) ? 0 : 1 ) );
+                    MainWPUtility::update_option( 'mainwp_chunkedBackupTasks', ( ! isset( $_POST['mainwp_options_chunkedBackupTasks'] ) ? 0 : 1 ) );
+                }
 
                 return true;
             }

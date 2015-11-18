@@ -3730,6 +3730,19 @@ jQuery(document).ready(function () {
     jQuery('#MainWPInstallBulkNavUpload').live('click', function (event) {
         return mainwp_install_nav(event, 'upload');
     });
+    jQuery('.filter-links li.plugin-install a').live('click', function (event) {
+        event.preventDefault();
+        jQuery('.filter-links li.plugin-install a').removeClass('current');
+        jQuery(this).addClass('current');                
+        var tab = jQuery(this).parent().attr('tab');   
+        if (tab == 'search') { 
+            mainwp_install_search(event);
+        } else {
+            jQuery('#mainwp_installbulk_s').val('')
+            jQuery('#mainwp_installbulk_tab').val(tab);
+            mainwp_install_plugin_tab_search('tab:' + tab);
+        }
+    });
 });
 mainwp_install_nav = function (ev, what) {
     var params = getUrlParameters();
@@ -3770,9 +3783,19 @@ mainwp_install_next = function (ev) {
     }
     return false;
 };
+mainwp_install_plugin_tab_search = function (in_s) {
+    jQuery('#MainWPInstallBulkStatus').html(__('Searching the Wordpress repository...'));
+    jQuery('#MainWPInstallBulkStatusExtra').css('display', 'inline-block');
+    mainwp_install_searchhelp(in_s, jQuery('#mainwp_installbulk_typeselector').val(), 1);
+    return false;
+};
+
 mainwp_install_search = function (ev) {
     jQuery('#MainWPInstallBulkStatus').html(__('Searching the Wordpress repository...'));
     jQuery('#MainWPInstallBulkStatusExtra').css('display', 'inline-block');
+    jQuery('.filter-links li.plugin-install a').removeClass('current');
+    jQuery('.filter-links #tab_search a').addClass('current');        
+    jQuery('#mainwp_installbulk_tab').val('search');
     mainwp_install_searchhelp(jQuery('#mainwp_installbulk_s').val(), jQuery('#mainwp_installbulk_typeselector').val(), 1);
     return false;
 };
@@ -3783,7 +3806,8 @@ mainwp_install_searchhelp = function (in_s, in_type, in_currpage) {
         s:in_s,
         type:in_type,
         currpage:in_currpage,
-        page:params['page']
+        page:params['page'],
+        tab: jQuery('#mainwp_installbulk_tab').val()
     };
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -3879,7 +3903,7 @@ mainwp_install_bulk = function (type, slug) {
         for (var siteId in response.sites)
         {
             var site = response.sites[siteId];
-            installQueue += '<span class="siteBulkInstall" siteid="' + siteId + '" status="queue"><strong>' + site['name'] + '</strong>: <span class="queue"><i class="fa fa-clock-o"></i> '+__('Queued')+'</span><span class="progress"><i class="fa fa-spinner fa-pulse"></i> '+__('In progress')+'</span><span class="status"></span></span><br />';
+            installQueue += '<span class="siteBulkInstall" siteid="' + siteId + '" status="queue"><strong>' + site['name'].replace(/\\(.)/mg, "$1") + '</strong>: <span class="queue"><i class="fa fa-clock-o"></i> '+__('Queued')+'</span><span class="progress"><i class="fa fa-spinner fa-pulse"></i> '+__('In progress')+'</span><span class="status"></span></span><br />';
             bulkInstallTotal++;
         }
         installQueue += '<div id="bulk_install_info"></div>';
@@ -4049,7 +4073,7 @@ mainwp_upload_bulk = function (type) {
         for (var siteId in response.sites)
         {
             var site = response.sites[siteId];
-            installQueue += '<span class="siteBulkInstall" siteid="' + siteId + '" status="queue"><strong>' + site['name'] + '</strong>: <span class="queue"><i class="fa fa-clock-o"></i> '+__('Queued')+'</span><span class="progress"><i class="fa fa-spinner fa-pulse"></i> '+__('In progress')+'</span><span class="status"></span></span><br />';
+            installQueue += '<span class="siteBulkInstall" siteid="' + siteId + '" status="queue"><strong>' + site['name'].replace(/\\(.)/mg, "$1") + '</strong>: <span class="queue"><i class="fa fa-clock-o"></i> '+__('Queued')+'</span><span class="progress"><i class="fa fa-spinner fa-pulse"></i> '+__('In progress')+'</span><span class="status"></span></span><br />';
         }
         installQueue += '</div></div>';
 

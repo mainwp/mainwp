@@ -58,7 +58,10 @@ class MainWPSystem
     }
 
     public function __construct($mainwp_plugin_file)
-    {      
+    {
+        if ( !defined( 'MAINWP_VERSION' ) )
+            define( 'MAINWP_VERSION', $this->current_version);
+
         MainWPSystem::$instance = $this;
         $this->update();
         $this->plugin_slug = plugin_basename($mainwp_plugin_file);
@@ -145,6 +148,8 @@ class MainWPSystem
         add_action('init', array(&$this, 'create_post_type'));
         add_action('init', array(&$this, 'parse_init'));
         add_action('init', array(&$this, 'init'), 9999);
+
+	    add_action( 'admin_init', array( $this, 'admin_redirects' ) );
 
         //Remove the pages from the menu which I use in AJAX
         add_action('admin_menu', array(&$this, 'admin_menu'));
@@ -270,6 +275,8 @@ class MainWPSystem
         MainWPThemes::init();
         MainWPPlugins::init();
         MainWPRightNow::init();
+        MainWPRightNow::init();
+	    MainWPSetupWizard::init();
     }
 
     function filter_fetchUrlsAuthed($pluginFile, $key, $dbwebsites, $what, $params, $handle, $output)
@@ -894,8 +901,8 @@ class MainWPSystem
                 //Run over every update we had last time..
                 if (isset($websiteCoreUpgrades['current']))
                 {
-                    $infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . $website->name . '</a> - ' . $websiteCoreUpgrades['current'] . ' to ' . $websiteCoreUpgrades['new'];
-                    $infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . $website->name . '</a> - ' . $websiteCoreUpgrades['current'] . ' to ' . $websiteCoreUpgrades['new'];
+                    $infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $websiteCoreUpgrades['current'] . ' to ' . $websiteCoreUpgrades['new'];
+                    $infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $websiteCoreUpgrades['current'] . ' to ' . $websiteCoreUpgrades['new'];
                     $newUpdate = !(isset($websiteLastCoreUpgrades['current']) && ($websiteLastCoreUpgrades['current'] == $websiteCoreUpgrades['current']) && ($websiteLastCoreUpgrades['new'] == $websiteCoreUpgrades['new']));
                     if ($website->automatic_update == 1)
                     {
@@ -957,8 +964,8 @@ class MainWPSystem
                     if (isset($decodedIgnoredPlugins[$pluginSlug]) || isset($websiteDecodedIgnoredPlugins[$pluginSlug])) 
                         continue;
                     
-                    $infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . $website->name . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
-                    $infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . $website->name . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
+                    $infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
+                    $infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
 
                     $newUpdate = !(isset($websiteLastPlugins[$pluginSlug]) && ($pluginInfo['Version'] == $websiteLastPlugins[$pluginSlug]['Version']) && ($pluginInfo['update']['new_version'] == $websiteLastPlugins[$pluginSlug]['update']['new_version']));
                     //update this..
@@ -996,8 +1003,8 @@ class MainWPSystem
                     if (isset($decodedIgnoredThemes[$themeSlug]) || isset($websiteDecodedIgnoredThemes[$themeSlug]))
                         continue;                    
                     
-                    $infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . $website->name . '</a> - ' . $themeInfo['Name'] . ' ' . $themeInfo['Version'] . ' to ' . $themeInfo['update']['new_version'];
-                    $infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . $website->name . '</a> - ' . $themeInfo['Name'] . ' ' . $themeInfo['Version'] . ' to ' . $themeInfo['update']['new_version'];
+                    $infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name )  . '</a> - ' . $themeInfo['Name'] . ' ' . $themeInfo['Version'] . ' to ' . $themeInfo['update']['new_version'];
+                    $infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $themeInfo['Name'] . ' ' . $themeInfo['Version'] . ' to ' . $themeInfo['update']['new_version'];
 
                     $newUpdate = !(isset($websiteLastThemes[$themeSlug]) && ($themeInfo['Version'] == $websiteLastThemes[$themeSlug]['Version']) && ($themeInfo['update']['new_version'] == $websiteLastThemes[$themeSlug]['update']['new_version']));
                     //update this..
@@ -1035,7 +1042,7 @@ class MainWPSystem
                 $sitePluginConflicts = json_decode($website->pluginConflicts, true);
                 if (count($sitePluginConflicts) > 0)
                 {
-                    $infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . $website->name . '</a> - ';
+                    $infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name )  . '</a> - ';
 
                     $pluginConflicts .= '<li>' . $infoTxt;
                     $added = false;
@@ -1054,7 +1061,7 @@ class MainWPSystem
                 $siteThemeConflicts = json_decode($website->themeConflicts, true);
                 if (count($siteThemeConflicts) > 0)
                 {
-                    $infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . $website->name . '</a> - ';
+                    $infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ';
 
                     $themeConflicts .= '<li>' . $infoTxt;
                     $added = false;
@@ -1630,6 +1637,16 @@ class MainWPSystem
         return false;        
     }
 
+    public static function get_openssl_conf() {
+        $setup_hosting_type = get_option("mwp_setup_installationHostingType");
+        $setup_system_type = get_option('mwp_setup_installationSystemType');
+        $setup_conf_loc = "";
+        if ($setup_hosting_type == 2 && $setup_system_type == 3){
+            $setup_conf_loc = get_option('mwp_setup_opensslLibLocation');			
+        }
+        return $setup_conf_loc;
+    }
+
     function init()
     {
         if (!function_exists('mainwp_current_user_can'))
@@ -1741,6 +1758,14 @@ class MainWPSystem
                 exit();
             }
         }
+	    else if (isset($_GET['page']))
+	    {
+		    switch ( $_GET['page'] ) {
+			    case 'mainwp-setup' :
+				    new MainWPSetupWizard();
+				    break;
+	        }
+	    }
     }
 
     function login_form()
@@ -1774,7 +1799,6 @@ class MainWPSystem
     function admin_init()
     {
         if (!MainWPUtility::isAdmin()) return;
-        
         if (get_option('mainwp_activated') == 'yes')
         {
             delete_option('mainwp_activated');
@@ -1836,6 +1860,25 @@ class MainWPSystem
 
         if (!current_user_can('update_core')) remove_action('admin_notices', 'update_nag', 3);
     }
+
+
+	public function admin_redirects() {
+		if ( ! get_transient( '_mainwp_activation_redirect' ) || is_network_admin() ) {
+			return;
+		}
+		
+		delete_transient( '_mainwp_activation_redirect' );
+		
+		if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'mainwp-setup' ) ) ) {
+			return;
+		}
+		
+		$quick_setup = get_site_option('mainwp_run_quick_setup', false);
+		if ($quick_setup == 'yes') {		
+			wp_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );
+			exit;
+		}
+	}
 
     function handleSettingsPost() {        
         if (isset($_GET['page'])) {

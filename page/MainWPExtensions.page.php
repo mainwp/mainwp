@@ -173,7 +173,7 @@ class MainWPExtensions
 		<div id="menu-mainwp-Extensions" class="mainwp-submenu-wrapper" xmlns="http://www.w3.org/1999/html">
 			<div class="wp-submenu sub-open" style="">
 				<div class="mainwp_boxout mainwp-submenu-wide">
-					<div class="mainwp_boxoutin"></div><ul class="mainwp-submenu-ul">
+					<div class="mainwp_boxoutin"></div>
 					<?php echo $html; ?>
 				</div>
 			</div>
@@ -190,7 +190,7 @@ class MainWPExtensions
         add_action('wp_ajax_mainwp_extension_trash', array(MainWPExtensions::getClassName(), 'trashExtension'));
         add_action('wp_ajax_mainwp_extension_activate', array(MainWPExtensions::getClassName(), 'activateExtension'));
         add_action('wp_ajax_mainwp_extension_deactivate', array(MainWPExtensions::getClassName(), 'deactivateExtension'));
-        add_action('wp_ajax_mainwp_extension_testextensionapilogin', array(MainWPExtensions::getClassName(), 'testExtensionsApiLogin'));                
+        add_action('wp_ajax_mainwp_extension_testextensionapilogin', array(MainWPExtensions::getClassName(), 'testExtensionsApiLogin'));
 
         if (mainwp_current_user_can("dashboard", "bulk_install_and_activate_extensions")) {    
             add_action('wp_ajax_mainwp_extension_grabapikey', array(MainWPExtensions::getClassName(), 'grabapikeyExtension'));
@@ -317,41 +317,41 @@ class MainWPExtensions
         $enscrypt_u = get_option('mainwp_extensions_api_username');
         $enscrypt_p = get_option('mainwp_extensions_api_password');
         $username = !empty($enscrypt_u) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_u) : "";
-        $password = !empty($enscrypt_p) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_p) : "";             
-        
+        $password = !empty($enscrypt_p) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_p) : "";
+
         if (($username == '') || ($password == ''))
-        {            
+        {
             die(json_encode(array('error' => __('Login Invalid.','mainwp'))));
         }
-        
+
         $result = array();
         try {
-            $test = MainWPApiManager::instance()->test_login_api($username, $password); 
-        } catch (Exception $e) {            
-            $return['error'] = $e->getMessage();  
+            $test = MainWPApiManager::instance()->test_login_api($username, $password);
+        } catch (Exception $e) {
+            $return['error'] = $e->getMessage();
             die(json_encode($return));
         }
-        
+
         if (is_array($test) && isset($test['retry_action'])) {
-            die(json_encode($test)); 
-        }  
-        
-        $result = json_decode($test, true);        
+            die(json_encode($test));
+        }
+
+        $result = json_decode($test, true);
         $return = array();
         if (is_array($result)) {
-            if (isset($result['success']) && $result['success']) {             
-                $return['result'] = 'SUCCESS';                                         
+            if (isset($result['success']) && $result['success']) {
+                $return['result'] = 'SUCCESS';
             } else if (isset($result['error'])){
-                $return['error'] = $result['error'];                                     
-            }    
+                $return['error'] = $result['error'];
+            }
         } else {
             $apisslverify = get_option('mainwp_api_sslVerifyCertificate');
             if ($apisslverify == 1) {
                 MainWPUtility::update_option("mainwp_api_sslVerifyCertificate", 0);
                 $return['retry_action'] = 1;
             }
-        }                     
-        die(json_encode($return));                       
+        }
+        die(json_encode($return));
     }
     
     
@@ -457,7 +457,7 @@ class MainWPExtensions
         die('<mainwp>' . json_encode($return) . '</mainwp>');             
     }
     
-    static function installPlugin($url)
+    public static function installPlugin($url, $activatePlugin = false)
     {
         $hasWPFileSystem = MainWPUtility::getWPFilesystem();
         global $wp_filesystem;
@@ -515,6 +515,10 @@ class MainWPExtensions
                 {
                     $output .= __("Successfully installed the plugin", "mainwp") . " " . $thePlugin['Name'] . " " . $thePlugin['Version'];                   
                     $plugin_slug = $result['destination_name'] . "/" . $srcFile;
+                    if ($activatePlugin) {
+                        activate_plugin($path . $srcFile, '', false, true);
+	                    do_action('mainwp_api_extension_activated', $path . $srcFile);
+                    }
                     break;
                 }
             }
@@ -636,8 +640,48 @@ class MainWPExtensions
         $active = in_array($slug, $snEnabledExtensions);
 
         // To fix bug
-        self::loadExtensions();
+//        self::loadExtensions();
         
+//        if (isset(self::$extensions))
+//        {                
+//            foreach(self::$extensions as $extension)
+//            {
+//                if ($extension['plugin'] == $pluginFile)
+//                {   
+//                    if (isset($extension['mainwp']) && ($extension['mainwp'] == true))
+//                    {                        
+//                        if (isset($extension['api_key']) && !empty($extension['api_key'])) {                            
+//                            if (isset($extension['activated_key']) && ($extension['activated_key'] == "Activated")) {                                                                     
+//                                $active = true;
+//                            } else {
+//                                $active = false;
+//                            }
+//                        } else if (isset($extension['api']) && (MainWPAPISettings::testAPIs($extension['api']) != 'VALID'))
+//                        {
+//                            $active = false;
+//                        }
+//                    }
+//                    else
+//                    {
+//                        if (isset($extension['apilink']) && isset($extension['locked']) && ($extension['locked'] == true))
+//                        {
+//                            $active = false;
+//                        }
+//                    }
+//                    break;
+//                }
+//            }
+//        }
+
+        //return ($active ? array('key' => wp_create_nonce($pluginFile . '-SNNonceAdder')) : false);
+        return ($active ? array('key' => md5($pluginFile . '-SNNonceAdder')) : false);
+    }
+   
+	public static function isExtensionActivated($pluginFile)
+    {                 
+		$active = false;
+        // To fix bug
+        self::loadExtensions();        
         if (isset(self::$extensions))
         {                
             foreach(self::$extensions as $extension)
@@ -652,27 +696,24 @@ class MainWPExtensions
                             } else {
                                 $active = false;
                             }
-                        } else if (isset($extension['api']) && (MainWPAPISettings::testAPIs($extension['api']) != 'VALID'))
+                        } 
+						else 
                         {
                             $active = false;
                         }
                     }
                     else
-                    {
-                        if (isset($extension['apilink']) && isset($extension['locked']) && ($extension['locked'] == true))
-                        {
-                            $active = false;
-                        }
+                    {                        
+						$active = false;                        
                     }
                     break;
                 }
             }
         }
-
-        //return ($active ? array('key' => wp_create_nonce($pluginFile . '-SNNonceAdder')) : false);
-        return ($active ? array('key' => md5($pluginFile . '-SNNonceAdder')) : false);
+        return $active;
     }
    
+	
     public static function create_nonce_function()
     {
     }

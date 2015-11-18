@@ -123,7 +123,17 @@ class MainWPInstallBulk
         <div class="clear"></div>
         </div>
         </div>
-        
+				
+		<div class="wp-filter">
+			<ul class="filter-links">
+				<li class="plugin-install" tab="search" id="tab_search"><a href=""><?php _e("Search Results");?></a> </li>
+				<li class="plugin-install" tab="featured" ><a class="" href=""><?php _e("Featured");?></a> </li>
+				<li class="plugin-install" tab="popular"><a class="" href=""><?php _e("Popular");?></a> </li>
+				<li class="plugin-install" tab="recommended"><a href=""><?php _e("Recommended");?></a> </li>
+			</ul>
+		</div>
+		<input type="hidden" id="mainwp_installbulk_tab" value="search" />
+		
         <div id="MainWPInstallBulkSearchAjax" style="margin-top: 2em;">
 
         </div>
@@ -184,29 +194,52 @@ class MainWPInstallBulk
             if (isset($_POST['currpage'])) {
                 $page = $_POST['currpage'];
             }
-            $type = 'term';
-            if (isset($_POST['type'])) {
-                $type = $_POST['type'];
-            }
-            $term = '';
-            if (isset($_POST['s'])) {
-                $term = $_POST['s'];
-            }
+           
+			include_once(ABSPATH . '/wp-admin/includes/plugin-install.php');
+			
+			$args = array(
+				'page' => $page,
+				'per_page' => 30,
+				'fields' => array(
+					'last_updated' => true,
+					'icons' => true,
+					'active_installs' => true
+				),
+				// Send the locale and installed plugin slugs to the API so it can provide context-sensitive results.
+				'locale' => get_locale()				
+			);
+            
+			$tab = isset($_POST['tab']) ? $_POST['tab'] : 'search';			
+			
+			switch ($tab) {
+				case 'search':
+					$type = isset( $_REQUEST['type'] ) ? wp_unslash( $_REQUEST['type'] ) : 'term';
+					$term = isset( $_REQUEST['s'] ) ? wp_unslash( $_REQUEST['s'] ) : '';
 
+					switch ( $type ) {
+						case 'tag':
+							$args['tag'] = sanitize_title_with_dashes( $term );
+							break;
+						case 'term':
+							$args['search'] = $term;
+							break;
+						case 'author':
+							$args['author'] = $term;
+							break;
+					}
 
-            include_once(ABSPATH . '/wp-admin/includes/plugin-install.php');
-            $args = array('page' => $page, 'per_page' => 30);
-            switch ($type) {
-                case 'tag':
-                    $args['tag'] = sanitize_title_with_dashes($term);
-                    break;
-                case 'term':
-                    $args['search'] = $term;
-                    break;
-                case 'author':
-                    $args['author'] = $term;
-                    break;
-            }
+					break;
+				case 'featured':
+					$args['fields']['group'] = true;				
+					// No break!
+				case 'popular':
+				case 'new':
+				case 'beta':
+				case 'recommended':
+					$args['browse'] = $tab;
+					break;
+			}
+			
             if ($title == 'Plugins') {
                 $api = plugins_api('query_plugins', $args);
             } else {
@@ -219,7 +252,7 @@ class MainWPInstallBulk
             echo $api->info['page'] . ' ' . $api->info['pages'] . ' ' . $api->info['results'] .' ';
         }
 
-        do_action("mainwp_search_plugin_theme_results");
+       // do_action("mainwp_search_plugin_theme_results");
         call_user_func(array($class, 'renderFound'), $api);
     }
 

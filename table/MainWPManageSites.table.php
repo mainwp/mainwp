@@ -717,7 +717,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
                 $groups = MainWPDB::Instance()->getGroupsForCurrentUser();
                 foreach ($groups as $group)
                 {
-                    echo '<option value="' . $group->id . '" ' . (isset($_REQUEST['g']) && $_REQUEST['g'] == $group->id ? 'selected' : '') . '>' . $group->name . '</option>';
+                    echo '<option value="' . $group->id . '" ' . (isset($_REQUEST['g']) && $_REQUEST['g'] == $group->id ? 'selected' : '') . '>' . stripslashes( $group->name ) . '</option>';
                 }
                 ?>
             </select>

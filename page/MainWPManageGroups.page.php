@@ -283,7 +283,7 @@ class MainWPManageGroups
             	<input type="radio" name="groups" value="<?php echo $group->id; ?>" class="managegroups-radio" id="<?php echo MainWPUtility::getNiceURL($group->id); ?>">
             	<label for="<?php echo MainWPUtility::getNiceURL($group->id); ?>"></label>
             </span>
-                <span class="text"><?php echo $group->name; ?></span>
+                <span class="text"><?php echo stripslashes( $group->name ); ?></span>
             
             <span class="input hidden"><input type="text" name="name" value="<?php echo $group->name; ?>" /></span>
         </li>

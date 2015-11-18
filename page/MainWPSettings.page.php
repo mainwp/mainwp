@@ -346,6 +346,15 @@ class MainWPSettings
                                     </em>
                                 </td>
                             </tr>
+                            <tr>
+                                <th scope="row"><?php _e('MainWP Quick Setup','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Use this option to quick setup MainWP.','mainwp')); ?></th>
+                                <td>
+                                    <a href="admin.php?page=mainwp-setup" class="button-primary button"/><?php _e('MainWP Quick Setup','mainwp'); ?></a><br/>
+                                    <em>
+                                        <?php _e('MainWP Quick Setup.','mainwp'); ?>
+                                    </em>
+                                </td>
+                            </tr>
                             </tbody>
                     </table>
                 </div>

@@ -539,7 +539,7 @@ class MainWPManageSitesView
                            }
                            foreach ($groups as $group)
                            {
-                               echo '<div class="mainwp_selected_groups_item"><input type="checkbox" name="selected_groups[]" value="' . $group->id . '" /> &nbsp ' . $group->name . '</div>';
+                               echo '<div class="mainwp_selected_groups_item"><input type="checkbox" name="selected_groups[]" value="' . $group->id . '" /> &nbsp ' . stripslashes($group->name) . '</div>';
                            }
                            ?>
                        </div>
@@ -1363,7 +1363,7 @@ class MainWPManageSitesView
                             $groupsSite = MainWPDB::Instance()->getGroupsByWebsiteId($website->id);
                             foreach ($groups as $group)
                             {
-                                echo '<div class="mainwp_selected_groups_item"><input type="checkbox" name="selected_groups[]" value="' . $group->id . '" ' . (isset($groupsSite[$group->id]) && $groupsSite[$group->id] ? 'checked' : '') . ' />&nbsp' . $group->name . '</div>';
+                                echo '<div class="mainwp_selected_groups_item"><input type="checkbox" name="selected_groups[]" value="' . $group->id . '" ' . (isset($groupsSite[$group->id]) && $groupsSite[$group->id] ? 'checked' : '') . ' />&nbsp' . stripslashes( $group->name ) . '</div>';
                             }
                             ?>
                         </div>
@@ -1639,7 +1639,10 @@ class MainWPManageSitesView
                 //Add
                 if (function_exists('openssl_pkey_new'))
                 {                    
-                    $conf = array('private_key_bits' => 384);                    
+                    $conf = array('private_key_bits' => 384);
+                    $conf_loc = MainWPSystem::get_openssl_conf();
+                    if (!empty($conf_loc))
+                        $conf['config'] = $conf_loc;
                     $res = openssl_pkey_new($conf);                                                          
                     @openssl_pkey_export($res, $privkey, NULL, $conf);                    
                     $pubkey = openssl_pkey_get_details($res);
@@ -1712,7 +1715,10 @@ class MainWPManageSitesView
                 //Add
                 if (function_exists('openssl_pkey_new'))
                 {
-                    $conf = array('private_key_bits' => 384);                    
+                    $conf = array('private_key_bits' => 384);
+                    $conf_loc = MainWPSystem::get_openssl_conf();
+                    if (!empty($conf_loc))
+                        $conf['config'] = $conf_loc;
                     $res = openssl_pkey_new($conf);                                                          
                     @openssl_pkey_export($res, $privkey, NULL, $conf);
                     $pubkey = openssl_pkey_get_details($res);

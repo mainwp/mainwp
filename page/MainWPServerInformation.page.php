@@ -142,6 +142,35 @@ class MainWPServerInformation
       self::renderFooter('');
     }
 
+    public static function renderQuickSetupSystemCheck()
+    {
+        ?>
+        <div class="mwp_server_info_box">
+                <table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+                    <thead>
+                    <tr>                        
+                        <th scope="col" class="manage-column sorted" style=""><span><?php _e('Server Configuration','mainwp'); ?></span></th>
+                        <th scope="col" class="manage-column column-posts" style=""><?php _e('Required Value','mainwp'); ?></th>
+                        <th scope="col" class="manage-column column-posts" style=""><?php _e('Value','mainwp'); ?></th>
+                        <th scope="col" class="manage-column column-posts" style=""><?php _e('Status','mainwp'); ?></th>
+                    </tr>
+                    </thead>
+
+                    <tbody id="the-sites-list" class="list:sites">
+						<?php
+                        self::render_row_with_description('PHP Version', '>=', '5.3', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.3 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you.');
+                        self::render_row_with_description('SSL Extension Enabled', '=', true, 'getSSLSupport', '', '', null, 'Changed by uncommenting the ;extension=php_openssl.dll line in your php.ini file by removing the ";" character.');
+                        self::render_row_with_description('cURL Extension Enabled', '=', true, 'getCurlSupport', '', '', null, 'Changed by uncommenting the ;extension=php_curl.dll line in your php.ini file by removing the ";" character.');
+                        self::render_row_with_description('MySQL Version', '>=', '5.0', 'getMySQLVersion', '', '', null, 'MainWP requires the MySQL version 5.0 or higher. If the condition is not met, MySQL version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you.');
+                        ?>
+                    </tbody>
+                </table>
+                </div>
+    <?php
+
+    }
+
+
     protected static function getCurrentVersion() {
         $currentVersion = get_option('mainwp_plugin_version');
         return $currentVersion;
@@ -353,13 +382,43 @@ class MainWPServerInformation
         <td><?php echo (self::filesize_compare($currentVersion, $pVersion, $pCompare) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>'); ?></td>
         <?php } else if ($whatType == 'curlssl') { ?>
         <td><?php echo (self::curlssl_compare($pVersion, $pCompare) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>'); ?></td>
+        <?php } else if ($pGetter == 'getMaxInputTime' && $currentVersion == -1) { ?>
+        <td><?php echo '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>'; ?></td>
         <?php } else { ?>
         <td><?php echo (version_compare($currentVersion, $pVersion, $pCompare) || (($pExtraCompare != null) && version_compare($currentVersion, $pExtraVersion, $pExtraCompare)) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>'); ?></td>
         <?php } ?>
     </tr>
     <?php
     }
-          
+        
+	protected static function render_row_with_description($pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $description = '', $whatType = null)
+    {
+        $currentVersion = call_user_func(array(MainWPServerInformation::getClassName(), $pGetter));        
+        ?>
+			<tr>
+				<td><?php echo $pConfig; ?></td>
+				<td><?php echo $pCompare; ?>  <?php echo ($pVersion === true ? 'true' : ( is_array($pVersion) && isset($pVersion['version']) ? $pVersion['version'] : $pVersion)) . ' ' . $pExtraText; ?></td>
+				<td><?php echo ($currentVersion === true ? 'true' : $currentVersion); ?></td>
+				<?php if ($whatType == 'filesize') { ?>        
+				<td><?php echo (self::filesize_compare($currentVersion, $pVersion, $pCompare) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>'); ?></td>
+				<?php } else if ($whatType == 'curlssl') { ?>
+				<td><?php echo (self::curlssl_compare($pVersion, $pCompare) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>'); ?></td>
+				<?php } else if ($pGetter == 'getMaxInputTime' && $currentVersion == -1) { ?>
+				<td><?php echo '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>'; ?></td>
+				<?php } else { ?>
+				<td><?php echo (version_compare($currentVersion, $pVersion, $pCompare) || (($pExtraCompare != null) && version_compare($currentVersion, $pExtraVersion, $pExtraCompare)) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>'); ?></td>
+				<?php } ?>
+			</tr>
+    <?php
+		if (!empty($description)) {
+		?>
+			<tr>
+			   <td colspan="4"><?php echo $description ; ?></td>
+			</tr>
+		<?php
+		}
+    }
+	
     public static function checkIfMultisite() {
         $isMultisite = !is_multisite() ? true : false;
         return $isMultisite;
@@ -444,6 +503,9 @@ class MainWPServerInformation
     protected static function getSSLWarning()
     {
         $conf = array('private_key_bits' => 384);
+        $conf_loc = MainWPSystem::get_openssl_conf();
+        if (!empty($conf_loc))
+            $conf['config'] = $conf_loc;
         $res = @openssl_pkey_new($conf);
         @openssl_pkey_export($res, $privkey);
 

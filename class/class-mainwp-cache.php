@@ -54,7 +54,7 @@ class MainWP_Cache {
 			session_start();
 		}
 		if ( isset( $_SESSION[ 'MainWP' . $page . 'Search' ] ) ) {
-			echo esc_html( $_SESSION[ 'MainWP' . $page . 'Search' ] );
+			echo wp_kses_post( $_SESSION[ 'MainWP' . $page . 'Search' ] );
 		}
 	}
 }

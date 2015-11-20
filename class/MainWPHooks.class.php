@@ -40,6 +40,7 @@ class MainWPHooks
         add_filter('mainwp_getnotificationemail', array('MainWPUtility', 'getNotificationEmail'), 10, 0);
         add_filter('mainwp-extension-available-check', array(MainWPExtensions::getClassName(), 'isExtensionAvailable'));
         add_filter('mainwp-extension-decrypt-string', array(&$this, 'hookDecryptString'));
+		add_action('mainwp_enable_extension', array(&$this, 'hookEnableExtension'), 10, 1);
     }
 
     public function cache_getcontext($page)
@@ -175,6 +176,9 @@ class MainWPHooks
     
     public function hookDecryptString($enscrypt) {
         return MainWPApiManagerPasswordManagement::decrypt_string($enscrypt);
-    }      
-    
+    }  
+	
+	public function hookEnableExtension($slug) {
+        return MainWPExtensions::enableExtension($slug);
+    }  
 }

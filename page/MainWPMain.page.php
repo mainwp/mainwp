@@ -149,7 +149,7 @@ class MainWPMain
                 <tbody><tr><td>
                 <div id="mainwp-welocme-bar-top">
                     <span style="float:right;">
-                    <a style="font-size: 18px;" class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWPRightNow::renderLastUpdate(); ?>"><?php _e('<i class="fa fa-refresh"></i> Sync Data','mainwp'); ?></a>
+                    <a style="font-size: 18px;" class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWPRightNow::renderLastUpdate(); ?>"><?php _e('<i class="fa fa-refresh"></i> Sync Data with Child Sites','mainwp'); ?></a>
                     <a style="font-size: 18px;" class="button-hero button-primary button" target="_blank" href="https://extensions.mainwp.com"><?php _e('<i class="fa fa-cart-plus"></i> Get New Extensions','mainwp'); ?></a>
                     </span>
                     <?php

@@ -191,7 +191,7 @@ class MainWPBulkUpdateAdminPasswords
                         </td>
                     </tr>
                     <?php endif; ?>
-                    <tr><td></td><td colspan="2"><input type="submit" name="updateadminpassword" id="bulk_updateadminpassword" class="button-primary" value="<?php _e('Update Now','mainwp'); ?>"  /></td></tr>
+                    <tr><td></td><td colspan="2"><input type="submit" name="updateadminpassword" id="bulk_updateadminpassword" class="button-primary button button-hero" value="<?php _e('Update Now','mainwp'); ?>"  /></td></tr>
                 </table>
                 </div>
                 </div>

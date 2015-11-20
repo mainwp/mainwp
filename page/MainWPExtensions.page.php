@@ -60,7 +60,8 @@ class MainWPExtensions
     }
     
     static function filter_ApiUpgradeUrl($api_url) {
-        return str_replace('extensions.mainwp.com', MainWPApiManager::MAINWP_EXTENSIONS_SHOP_IP, $api_url);
+		// apply for extensions.mainwp.com only
+        return str_replace('extensions.mainwp.com', MainWPApiManager::MAINWP_EXTENSIONS_SHOP_IP_ADDRESS, $api_url);
     }
 
     public static function initMenu()
@@ -185,7 +186,7 @@ class MainWPExtensions
     {
         add_action('wp_ajax_mainwp_extension_enable_all', array(MainWPExtensions::getClassName(), 'enableAllExtensions'));
         add_action('wp_ajax_mainwp_extension_disable_all', array(MainWPExtensions::getClassName(), 'disableAllExtensions'));
-        add_action('wp_ajax_mainwp_extension_enable', array(MainWPExtensions::getClassName(), 'enableExtension'));
+        add_action('wp_ajax_mainwp_extension_enable', array(MainWPExtensions::getClassName(), 'ajaxEnableExtension'));
         add_action('wp_ajax_mainwp_extension_disable', array(MainWPExtensions::getClassName(), 'disableExtension'));
         add_action('wp_ajax_mainwp_extension_trash', array(MainWPExtensions::getClassName(), 'trashExtension'));
         add_action('wp_ajax_mainwp_extension_activate', array(MainWPExtensions::getClassName(), 'activateExtension'));
@@ -223,19 +224,22 @@ class MainWPExtensions
         die(json_encode(array('result' => 'SUCCESS')));
     }
 
-    public static function enableExtension()
+    public static function ajaxEnableExtension()
+    {       
+		self::enableExtension($_POST['slug']);
+        die(json_encode(array('result' => 'SUCCESS')));
+    }
+
+    public static function enableExtension($slug)
     {
         $snEnabledExtensions = get_option('mainwp_extloaded');
         if (!is_array($snEnabledExtensions)) $snEnabledExtensions = array();
 
-        $snEnabledExtensions[] = $_POST['slug'];
+        $snEnabledExtensions[] = $slug;
 
-        MainWPUtility::update_option('mainwp_extloaded', $snEnabledExtensions);
-
-        die(json_encode(array('result' => 'SUCCESS')));
+        return MainWPUtility::update_option('mainwp_extloaded', $snEnabledExtensions);
     }
-
-    
+	
     public static function activateExtension( ) {
         $api = dirname($_POST['slug']);                 
         $api_key = trim( $_POST['key'] );
@@ -526,10 +530,11 @@ class MainWPExtensions
        
         if (!empty($error)) {
             $return['error'] = $error;
-        } else {
+        } else {			
+			MainWPExtensions::enableExtension($plugin_slug);
             $return['result'] = 'SUCCESS';
             $return['output'] = $output; 
-            $return['slug'] = $plugin_slug; 
+            $return['slug'] = $plugin_slug; 			
         }        
         return $return;        
     }

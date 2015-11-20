@@ -137,6 +137,9 @@ class MainWPPlugins
                     <?php _e('To <strong>Deactivate</strong> a Plugin select <strong>Active</strong> (A plugin needs to be Active in order to be Deactivated)', 'mainwp'); ?><br/>
                     <?php _e('To <strong>Activate</strong> or <strong>Delete</strong> a Plugin select <strong>Inactive</strong> (A plugin needs to be Deactivated in order for it to be Activated or Deleted)', 'mainwp'); ?><br/>
                 </div>
+                <div class="mainwp_info-box-blue">
+                <span><a href="http://docs.mainwp.com/why-does-the-mainwp-client-plugin-not-show-up-on-the-plugin-list-for-my-managed-site/" target="_blank"><?php _e('Why does the MainWP Child Plugin NOT show in the list?','mainwp'); ?></a></span>
+                </div>
             <p>
                 <?php _e('Status:','mainwp'); ?><br />
                 <select name="mainwp_plugin_search_by_status" id="mainwp_plugin_search_by_status">
@@ -153,8 +156,9 @@ class MainWPPlugins
             </div>
             <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
             <div style="clear: both;"></div>
-            <input type="button" name="mainwp_show_plugins" id="mainwp_show_plugins" class="button-primary" value="<?php _e('Show Plugins','mainwp'); ?>"/>
-            <span id="mainwp_plugins_loading"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span> <span id="mainwp_plugins_loading_info"> <i class="fa fa-spinner fa-pulse"></i> <?php _e('Automatically refreshing to get up to date information.','mainwp'); ?></span>
+            <input type="button" name="mainwp_show_plugins" id="mainwp_show_plugins" class="button-primary button button-hero" value="<?php _e('Show Plugins','mainwp'); ?>"/>
+            <br/><br/>
+            <span id="mainwp_plugins_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span> <span id="mainwp_plugins_loading_info" class="mainwp-grabbing-info-note"> - <?php _e('Automatically refreshing to get up to date information.','mainwp'); ?></span>
         <br><br>
         </div>
         <div class="clear"></div>
@@ -165,10 +169,10 @@ class MainWPPlugins
             </div>
         </div>
     <?php
-        if ($cachedSearch != null) { echo '<script>mainwp_plugins_all_table_reinit();</script>'; }
-        self::renderFooter('Manage');
-    }
-
+        //if ($cachedSearch != null) { echo '<script>mainwp_plugins_all_table_reinit();</script>'; }	    
+		self::renderFooter('Manage');
+	}
+	
     public static function renderAllActiveTable($output = null)
     {  
         $keyword = null;
@@ -558,7 +562,7 @@ class MainWPPlugins
             <?php if (mainwp_current_user_can("dashboard", "ignore_unignore_updates")) { ?>   
             <option value="ignore_updates"><?php _e('Ignore Updates','mainwp'); ?></option>    
             <?php } ?>  
-        </select> <input type="button" name="" id="mainwp_bulk_plugins_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><i class="fa fa-spinner fa-pulse"></i></span>&nbsp;<span><a href="http://docs.mainwp.com/why-does-the-mainwp-client-plugin-not-show-up-on-the-plugin-list-for-my-managed-site/" target="_blank"><?php _e('Why does the MainWP Child Plugin NOT show here?','mainwp'); ?></a></span>
+        </select> <input type="button" name="" id="mainwp_bulk_plugins_action_apply" class="button" value="<?php _e('Confirm','mainwp'); ?>"/> <span id="mainwp_bulk_action_loading"><i class="fa fa-spinner fa-pulse"></i></span>
     </div>
     <div class="clear"></div>
 
@@ -589,24 +593,26 @@ class MainWPPlugins
         }
         ?>
 <div id="mainwp-table-overflow" style="overflow: auto !important ;">
-    <table class="ui-tinytable wp-list-table widefat fixed pages" style="width: auto; word-wrap: normal">
+    <table class="ui-tinytable wp-list-table widefat fixed pages" id="plugins_fixedtable" style="width: auto; word-wrap: normal">
         <thead>
         <tr>
-            <th class="headcol"></th>
-            <?php
+            <th class="headcol">
+					<label>&nbsp;</label>		
+				</th>
+            <?php			
             foreach ($pluginsVersion as $plugin_name => $plugin_title) {
                 echo '<th style="height: 100px; padding: 5px ;" class="long">
 <p style="font-family: Arial, Sans-Serif; text-shadow: none ; width: 100px !important; height: 30px ; text-align: center; width: auto; height: auto; font-size: 13px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); -o-transform: rotate(-90deg); -ms-transform: rotate(-90deg); writing-mode: lr-tb; ">
 <input type="checkbox" value="' . $plugins[$plugin_name] . '" id="' . $plugin_name . '" class="mainwp_plugin_check_all" style="margin: 3px 0px 0px 0px; display: none ; " />
 <label for="' . $plugin_name . '">' . $plugin_title . '</label>
 </p>
-</th>';
-            }
+</th>';		
+            }			
             ?>
         </tr>
         </thead>
         <tbody>
-            <?php
+            <?php			
             foreach ($sites as $site_id => $site_url) {
                 ?>
             <tr>
@@ -627,11 +633,16 @@ class MainWPPlugins
                 ?>
             </tr>
                 <?php
-            }
+            }			
             ?>
         </tbody>
     </table>
 </div>
+<script type="text/javascript">
+	jQuery(document).ready(function() {
+		jQuery("#plugins_fixedtable").tableHeadFixer({"left" : 1}); 
+	});
+</script>
         <?php
         $newOutput = ob_get_clean();
         echo $newOutput;

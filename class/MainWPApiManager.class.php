@@ -4,7 +4,7 @@ class MainWPApiManager {
     
     private $upgrade_url = 'https://extensions.mainwp.com/';
     private $renew_license_url = 'https://extensions.mainwp.com/my-account';
-    const MAINWP_EXTENSIONS_SHOP_IP = '69.167.133.91'; // replace for upgrade_url
+    const MAINWP_EXTENSIONS_SHOP_IP_ADDRESS = '69.167.133.91'; // replace for upgrade_url
     public $domain = "";
     /**
      * @var The single instance of the class

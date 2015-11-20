@@ -66,7 +66,7 @@ class MainWPManageGroups
                 </div>
                 <div style="clear: both;"></div>
                 <br />
-                <input type="button" name="Save selection" value="<?php _e('Save Selection','mainwp'); ?>" class="managegroups-saveAll button-primary" /> <span id="managegroups-saved"><?php _e('Saved','mainwp'); ?></span>
+                <input type="button" name="Save selection" value="<?php _e('Save Selection','mainwp'); ?>" class="managegroups-saveAll button-primary button button-hero" /> <span id="managegroups-saved"><?php _e('Saved','mainwp'); ?></span>
         </div>
         <?php do_action("mainwp-pagefooter-sites", "ManageGroups"); ?>
         <script type="text/javascript">

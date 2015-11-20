@@ -207,8 +207,9 @@ class MainWPUser
              </div>
         </div>
             <div style="clear: both;"></div>
-            <input type="button" name="mainwp_show_users" id="mainwp_show_users" class="button-primary" value="<?php _e('Show Users','mainwp'); ?>"/>
-            <span id="mainwp_users_loading"><i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span>
+            <input type="button" name="mainwp_show_users" id="mainwp_show_users" class="button-primary button button-hero" value="<?php _e('Show Users','mainwp'); ?>"/>
+            <br/><br/>
+            <span id="mainwp_users_loading" class="mainwp-grabbing-info-note"><i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span>
             <br/><br/>
         </div>
         <div class="clear"></div>
@@ -633,16 +634,13 @@ class MainWPUser
             <div><img src="images/loading.gif"/> <?php _e('Adding the user','mainwp'); ?></div>
         </div>
         <div id="MainWPBulkAddUser">
-
-            <div class="mainwp_info-box"><strong><?php _e('Create a brand new user and add it to your sites.','mainwp'); ?></strong></div>
-
             <form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">
                 <div class="mainwp_config_box_right">
                     <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp')); ?>
                 </div>
                 <div class="mainwp_config_box_left">
                 	<div class="postbox">
-                	<h3 class="mainwp_box_title"><span><?php _e('Add a Single User','mainwp'); ?></span></h3>
+                	<h3 class="mainwp_box_title"><span><i class="fa fa-user-plus"></i> <?php _e('Add a Single User','mainwp'); ?></span></h3>
                     <div class="inside">
                     <table class="form-table">
                         <tr class="form-field form-required">
@@ -793,7 +791,7 @@ class MainWPUser
                         </div>
                         </div>
                         <div class="postbox">
-                        <h3 class="mainwp_box_title"><span><?php _e('Bulk Upload','mainwp'); ?></span></h3>
+                        <h3 class="mainwp_box_title"><span><i class="fa fa-user-plus"></i> <?php _e('Bulk Upload','mainwp'); ?></span></h3>
                         <div class="inside">
                         <table>
                         <tr>
@@ -824,7 +822,7 @@ class MainWPUser
                 </div>
                 </div>
 
-                <p class="submit"><input type="button" name="createuser" id="bulk_add_createuser" class="button-primary"
+                <p class="submit"><input type="button" name="createuser" id="bulk_add_createuser" class="button-primary button button-hero"
                                          value="<?php _e('Add New User','mainwp'); ?> "/></p>
             </form>
         </div>
@@ -963,7 +961,7 @@ class MainWPUser
     {
         self::renderHeader('UserBulkUpload'); ?>
         <div id="MainWPBulkUploadUserLoading" class="updated" style="display: none;">
-            <div><img src="images/loading.gif"/> <?php _e('Importing users','mainwp'); ?></div>
+            <div><i class="fa fa-spinner fa-pulse"></i> <?php _e('Importing Users','mainwp'); ?></div>
         </div>
         <div id="MainWPBulkUploadUser">
              <?php
@@ -994,7 +992,9 @@ class MainWPUser
                                 }
 
                                 ?>  
-                                <div class="mainwp_info-box"><strong><?php _e('Importing new users and add them to your sites.','mainwp'); ?></strong></div>
+                                <div class="postbox">
+                                <h3 class="mainwp_box_title"><i class="fa fa-user-plus"></i> <?php _e('Importing new users and add them to your sites.','mainwp'); ?></h3>
+                                <div class="inside">
                                 <input type="hidden" id="import_user_do_import" value="1"/>
                                 <input type="hidden" id="import_user_total_import" value="<?php echo $i ?>"/>                            
                                 
@@ -1004,16 +1004,17 @@ class MainWPUser
                                  
                                  <p class="submit"><input type="button" name="import_user_btn_import"
                                                  id="import_user_btn_import"
-                                                 class="button-primary" value="<?php _e('Pause','mainwp'); ?>"/>
+                                                 class="button-primary button button-hero" value="<?php _e('Pause','mainwp'); ?>"/>
                                                  <input type="button" name="import_user_btn_save_csv"
                                                  id="import_user_btn_save_csv" disabled="disabled"
-                                                 class="button-primary" value="<?php _e('Save failed','mainwp'); ?>"/>
+                                                 class="button-hero button" value="<?php _e('Save Failed','mainwp'); ?>"/>
                                  </p>
                                  
                                  <p><div class="import_user_import_listing" id="import_user_import_fail_logging" style="display: none;">
                                      <pre class="log"><?php echo $header_line; ?></pre>
-                                 </div></p>                 
-                            
+                                 </div></p>     
+                                 </div>
+                                 </div>            
                             <?php
                             
                           }                          

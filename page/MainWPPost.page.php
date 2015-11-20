@@ -167,7 +167,7 @@ class MainWPPost
             <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
             <div style="clear: both;"></div>
 
-            <input type="button" name="mainwp_show_posts" id="mainwp_show_posts" class="button-primary" value="<?php _e('Show Posts','mainwp'); ?>"/>
+            <input type="button" name="mainwp_show_posts" id="mainwp_show_posts" class="button-primary button button-hero" value="<?php _e('Show Posts','mainwp'); ?>"/>
             <?php
             if (isset($_REQUEST['siteid']) && isset($_REQUEST['postid']))
             {
@@ -178,7 +178,8 @@ class MainWPPost
                 echo '<script>jQuery(document).ready(function() { mainwp_show_post('.$_REQUEST['siteid'].', undefined, '.$_REQUEST['userid'].')});</script>';
             }
             ?>
-            <span id="mainwp_posts_loading"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span>
+            <br/><br/>
+            <span id="mainwp_posts_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span>
             <br/><br/>
         </div>
         <div class="clear"></div>

@@ -1199,7 +1199,6 @@ pluginthemeconflict_unignore = function(what, name, siteid) {
     return false;
 };
 
-
 rightnow_plugins_detail = function (slug) {
     jQuery('div[plugin_slug="'+slug+'"]').toggle(100, 'linear');
     return false;

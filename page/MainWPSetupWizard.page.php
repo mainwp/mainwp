@@ -128,7 +128,13 @@ class MainWPSetupWizard {
 
 		wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'js/mainwp-setup.js', array( 'jquery', 'jquery-ui-tooltip' ), MAINWP_VERSION );
 		wp_localize_script('mainwp-setup', 'mainwpSetupLocalize', array('nonce' => wp_create_nonce('mainwp-setup-nonce')));
-		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'css/mainwp.css', array(), MAINWP_VERSION );
+		
+		if ( version_compare( $wp_version, '4.3.1', '>' ) ) {			
+			wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'css/mainwp-44.css', array(), MAINWP_VERSION );
+		} else {
+			wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'css/mainwp.css', array(), MAINWP_VERSION );			
+		}
+		
 		wp_enqueue_style( 'mainwp-font-awesome', MAINWP_PLUGIN_URL . 'css/font-awesome/css/font-awesome.min.css', array(), MAINWP_VERSION);
 		wp_enqueue_style( 'jquery-ui-style' );
 		wp_enqueue_style( 'mainwp-setup', MAINWP_PLUGIN_URL . 'css/mainwp-setup.css', array( 'dashicons', 'install' ), MAINWP_VERSION );
@@ -339,6 +345,7 @@ class MainWPSetupWizard {
 		<h1><?php _e( 'Dashboard System Requirements Checkup', 'mainwp' ); ?></h1>
 		<p><?php _e( 'Any detected Warning can cause plugin malfunction. It is highly recommened to contact host support and checking if it possible to update server configuration.', 'mainwp' ); ?></p>
 		<?php MainWPServerInformation::renderQuickSetupSystemCheck(); ?>
+		<br/>
 		<p class="mwp-setup-actions step">
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button-primary button button-large"><?php _e( 'Continue', 'mainwp' ); ?></a>
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button button-large"><?php _e( 'Skip this step', 'mainwp' ); ?></a>
@@ -389,11 +396,11 @@ class MainWPSetupWizard {
 							?>selected<?php } ?>><?php _e('More than 50', 'mainwp'); ?>
 							</option>
 						</select></span>
-						<br />
-						<span id="mwp_setup_hosting_notice" <?php echo $style; ?>><?php _e("Running over 50 sites on shared hosting can be resource intensive for the server so we will turn on caching for you to help. Updates will be cached for quick loading. A manual sync from the Dashboard is required to view new plugins, themes, pages or users.", "mainwp"); ?></span>
 					</td>
 				</tr>
 			</table>
+			<span id="mwp_setup_hosting_notice" <?php echo $style; ?>><em><?php _e("Running over 50 sites on shared hosting can be resource intensive for the server so we will turn on caching for you to help. Updates will be cached for quick loading. A manual sync from the Dashboard is required to view new plugins, themes, pages or users.", "mainwp"); ?></em></span></td>
+			<br /><br />
 			<p class="mwp-setup-actions step">
 				<input type="submit" class="button-primary button button-large" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
 				<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button button-large"><?php _e( 'Skip this step', 'mainwp' ); ?></a>
@@ -435,11 +442,15 @@ class MainWPSetupWizard {
 		<form method="post">
 			<table class="form-table">
 				<tr>
-					<th scope="row"><?php _e('Hide Network on Child Sites','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('This will make anyone including Search Engines trying find your Child Plugin encounter a 404 page. Hiding the Child Plugin does require the plugin to make changes to your .htaccess file that in rare instances or server configurations could cause problems.','mainwp')); ?></th>
+					<th scope="row"><?php _e('Hide Network on Child Sites','mainwp'); ?></th>
 					<td>
 						<div class="mainwp-checkbox">
 							<input type="checkbox" value="hidden" name="mwp_setup_options_footprint_plugin_folder" id="mwp_setup_options_footprint_plugin_folder_default" <?php echo ($pluginDir == 'hidden' ? 'checked="true"' : ''); ?>/><label for="mwp_setup_options_footprint_plugin_folder_default"></label>
 						</div>
+						<br /><br />
+						<em>
+							<?php _e('This will make anyone including Search Engines trying find your Child Plugin encounter a 404 page. Hiding the Child Plugin does require the plugin to make changes to your .htaccess file that in rare instances or server configurations could cause problems.','mainwp'); ?>
+						</em>
 					</td>
 				</tr>
 				<tr>
@@ -453,6 +464,7 @@ class MainWPSetupWizard {
 					</td>
 				</tr>
 			</table>
+			<br />
 			<p class="mwp-setup-actions step">
 				<input type="submit" class="button-primary button button-large" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
 				<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button button-large"><?php _e( 'Skip this step', 'mainwp' ); ?></a>
@@ -618,7 +630,7 @@ class MainWPSetupWizard {
 		<h1><?php _e( 'MainWP Extensions Sign Up', 'mainwp' ); ?></h1>				
 		<p><?php echo __("Skip this Step if you already have MainWP Extensions account.", "mainwp"); ?></p>
 		<p><?php echo __("This extension is free, however it requires MainWP Extensions account.", "mainwp"); ?></p>
-		<p><a href="https://extensions.mainwp.com/mainwp-register/" class="button-primary" target="_blank"><?php _e( 'Register', 'mainwp' ); ?></a><br/><?php _e("(you will be brought to a new page)", "mainwp"); ?></p>
+		<p><a href="https://extensions.mainwp.com/mainwp-register/" class="mainwp-upgrade-button button button-hero" target="_blank"><?php _e( 'Register for MainWP Account', 'mainwp' ); ?></a><br/><em style="font-size: 13px;"><?php _e("(you will be brought to a new page)", "mainwp"); ?></em></p>
 		<p><?php echo sprintf(__("If you do not want to register now click %shere%s to use the MainWP Default Backups.", "mainwp"), '<a href="admin.php?page=mainwp-setup&step=primary_backup&method=default">', '</a>'); ?></p>
 		<p class="mwp-setup-actions step">			
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button-primary button button-large"><?php _e( 'Continue', 'mainwp' ); ?></a>

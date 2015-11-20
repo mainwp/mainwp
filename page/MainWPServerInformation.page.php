@@ -410,13 +410,6 @@ class MainWPServerInformation
 				<?php } ?>
 			</tr>
     <?php
-		if (!empty($description)) {
-		?>
-			<tr>
-			   <td colspan="4"><?php echo $description ; ?></td>
-			</tr>
-		<?php
-		}
     }
 	
     public static function checkIfMultisite() {

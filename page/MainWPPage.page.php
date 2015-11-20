@@ -168,8 +168,9 @@ class MainWPPage
             </div>
             <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
             <div style="clear: both;"></div>
-            <input type="button" name="mainwp_show_pages" id="mainwp_show_pages" class="button-primary" value="<?php _e('Show Pages','mainwp'); ?>"/>
-            <span id="mainwp_pages_loading"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span>
+            <input type="button" name="mainwp_show_pages" id="mainwp_show_pages" class="button-primary button button-hero" value="<?php _e('Show Pages','mainwp'); ?>"/>
+            <br/><br/>
+            <span id="mainwp_pages_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span>
             <br/><br/>
         </div>
         <div class="clear"></div>

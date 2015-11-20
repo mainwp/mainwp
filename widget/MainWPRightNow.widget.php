@@ -943,10 +943,13 @@ class MainWPRightNow
     </div>
     <div class="clear">        
         <div class="mainwp-row">
-            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_wp_upgrades; ?></span> <?php _e('WordPress upgrade','mainwp'); ?><?php if ($total_wp_upgrades <> 1) { echo "s"; } ?> <?php _e('available','mainwp'); ?></span>
+            <span class="mainwp-left-col">
+					<a href="#" id="mainwp_upgrades_show" onClick="return rightnow_show('upgrades', true);">
+						<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_wp_upgrades; ?></span> <?php _e('WordPress upgrade','mainwp'); ?><?php if ($total_wp_upgrades <> 1) { echo "s"; } ?> <?php _e('available','mainwp'); ?>
+					</a>					
+			</span>
             <span class="mainwp-mid-col">&nbsp;</span>
-            <span class="mainwp-right-col">
-                <a href="#" id="mainwp_upgrades_show" onClick="return rightnow_show('upgrades');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a>
+            <span class="mainwp-right-col">                
                 <?php if (mainwp_current_user_can("dashboard", "update_wordpress")) { 
                     if ($total_wp_upgrades > 0) { ?>
                     &nbsp; <a href="#" onClick="return rightnow_wordpress_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_wp_upgrades, 'mainwp'); ?></a>
@@ -1002,9 +1005,13 @@ class MainWPRightNow
         ?>
     <div class="clear">
         <div class="mainwp-row">
-            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_plugin_upgrades; ?> </span> <?php _e('Plugin upgrade','mainwp'); ?><?php if ($total_plugin_upgrades <> 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?></span>
+            <span class="mainwp-left-col">
+				<a href="#" id="mainwp_plugin_upgrades_show" onClick="return rightnow_show('plugin_upgrades', true);">
+					<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_plugin_upgrades; ?> </span> <?php _e('Plugin upgrade','mainwp'); ?><?php if ($total_plugin_upgrades <> 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?>
+				</a>
+			</span>
             <span class="mainwp-mid-col"><a href="<?php echo admin_url('admin.php?page=PluginsIgnore'); ?>"><?php _e('Ignored','mainwp'); ?> (<?php echo $total_pluginsIgnored; ?>)</a></span>            
-            <span class="mainwp-right-col"><a href="#" id="mainwp_plugin_upgrades_show" onClick="return rightnow_show('plugin_upgrades');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a> <?php if (mainwp_current_user_can("dashboard", "update_plugins")) {  ?><?php if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } }?></span>
+            <span class="mainwp-right-col"><?php if (mainwp_current_user_can("dashboard", "update_plugins")) {  ?><?php if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } }?></span>
             
         </div>
         <div id="wp_plugin_upgrades" style="display: none">
@@ -1203,9 +1210,13 @@ class MainWPRightNow
     ?>    
     <div class="clear">
         <div class="mainwp-row">
-            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_theme_upgrades; ?> </span> <?php _e('Theme upgrade','mainwp'); ?><?php if ($total_theme_upgrades <> 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?></span>
+            <span class="mainwp-left-col">
+				<a href="#" id="mainwp_theme_upgrades_show" onClick="return rightnow_show('theme_upgrades', true);"> 
+					<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_theme_upgrades; ?> </span> <?php _e('Theme upgrade','mainwp'); ?><?php if ($total_theme_upgrades <> 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?>
+				</a>
+			</span>
             <span class="mainwp-mid-col"><a href="<?php echo admin_url('admin.php?page=ThemesIgnore'); ?>"><?php _e('Ignored','mainwp'); ?> (<?php echo $total_themesIgnored; ?>)</a></span>            
-            <span class="mainwp-right-col"><a href="#" id="mainwp_theme_upgrades_show" onClick="return rightnow_show('theme_upgrades');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a> 
+            <span class="mainwp-right-col"> 
                 <?php if (mainwp_current_user_can("dashboard", "update_themes")) { ?>
                     <?php if ($total_theme_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_theme_upgrades, 'mainwp'); ?></a><?php } else if ($total_theme_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_theme_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } ?>
                 <?php } ?>
@@ -1395,9 +1406,13 @@ class MainWPRightNow
         ?>
     <div class="clear">
         <div class="mainwp-row">
-            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_plugins_outdate; ?> </span> <?php _e('Plugin','mainwp'); ?><?php if ($total_plugins_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>&nbsp;<?php MainWPUtility::renderToolTip(__('This feature checks the last updated status of plugins and alerts you if not updated in a specific amount of time. This gives you insight on if a plugin may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?></span>
+            <span class="mainwp-left-col">
+				<a href="#" id="mainwp_plugins_outdate_show" onClick="return rightnow_show('plugins_outdate', true);">
+					<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_plugins_outdate; ?> </span> <?php _e('Plugin','mainwp'); ?><?php if ($total_plugins_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
+				</a>&nbsp;<?php MainWPUtility::renderToolTip(__('This feature checks the last updated status of plugins and alerts you if not updated in a specific amount of time. This gives you insight on if a plugin may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
+			</span>
             <span class="mainwp-mid-col"><a href="<?php echo admin_url('admin.php?page=PluginsIgnoredAbandoned'); ?>"><?php _e('Ignored','mainwp'); ?> (<?php echo $total_pluginsIgnoredAbandoned; ?>)</a></span>            
-            <span class="mainwp-right-col"><a href="#" id="mainwp_plugins_outdate_show" onClick="return rightnow_show('plugins_outdate');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
+            <span class="mainwp-right-col"></span>
             
         </div>
         <div id="wp_plugins_outdate" style="display: none">
@@ -1579,9 +1594,13 @@ class MainWPRightNow
         ?>
     <div class="clear">
         <div class="mainwp-row">
-            <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_themes_outdate; ?> </span> <?php _e('Theme','mainwp'); ?><?php if ($total_themes_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>&nbsp;<?php MainWPUtility::renderToolTip(__('This feature checks the last updated status of themes and alerts you if not updated in a specific amount of time. This gives you insight on if a theme may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?></span>
+            <span class="mainwp-left-col">
+				<a href="#" id="mainwp_themes_outdate_show" onClick="return rightnow_show('themes_outdate', true);">
+					<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_themes_outdate; ?> </span> <?php _e('Theme','mainwp'); ?><?php if ($total_themes_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
+				</a>&nbsp;<?php MainWPUtility::renderToolTip(__('This feature checks the last updated status of themes and alerts you if not updated in a specific amount of time. This gives you insight on if a theme may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
+			</span>
             <span class="mainwp-mid-col"><a href="<?php echo admin_url('admin.php?page=ThemesIgnoredAbandoned'); ?>"><?php _e('Ignored','mainwp'); ?> (<?php echo $total_themesIgnoredAbandoned; ?>)</a></span>            
-            <span class="mainwp-right-col"><a href="#" id="mainwp_themes_outdate_show" onClick="return rightnow_show('themes_outdate');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
+            <span class="mainwp-right-col"></span>
             
         </div>
         <div id="wp_themes_outdate" style="display: none">
@@ -1753,9 +1772,13 @@ class MainWPRightNow
             ?>
         <div class="clear">
             <div class="mainwp-row">
-                <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_sync_errors; ?></span> Error<?php if ($total_sync_errors > 1) { ?>s<?php } ?></span>
+                <span class="mainwp-left-col">
+					<a href="#" id="mainwp_errors_show" onClick="return rightnow_show('errors', true);">
+						<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_sync_errors; ?></span> Error<?php if ($total_sync_errors > 1) { ?>s<?php } ?>
+					</a>
+				</span>
                 <span class="mainwp-mid-col">&nbsp;</span>
-                <span class="mainwp-right-col"><a href="#" id="mainwp_errors_show" onClick="return rightnow_show('errors');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
+                <span class="mainwp-right-col"></span>
             </div>
             <div id="wp_errors" style="display: none">
                 <?php
@@ -1781,9 +1804,13 @@ class MainWPRightNow
             ?>
         <div class="clear">
             <div class="mainwp-row">
-                <span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_uptodate; ?></span> <?php _e('Up to date','mainwp'); ?></span>
+                <span class="mainwp-left-col">
+					<a href="#" id="mainwp_uptodate_show" onClick="return rightnow_show('uptodate', true);">
+						<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_uptodate; ?></span> <?php _e('Up to date','mainwp'); ?>
+					</a>
+				</span>
                 <span class="mainwp-mid-col">&nbsp;</span>
-                <span class="mainwp-right-col"><a href="#" id="mainwp_uptodate_show" onClick="return rightnow_show('uptodate');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
+                <span class="mainwp-right-col"></span>
             </div>
             <div id="wp_uptodate" style="display: none">
                 <?php

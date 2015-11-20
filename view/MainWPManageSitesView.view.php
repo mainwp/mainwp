@@ -370,7 +370,7 @@ class MainWPManageSitesView
             </form>
         </div>
     </div>
-    <p class="submit"><input type="button" name="mainwp_managesites_test" id="mainwp_managesites_test" class="button-primary" value="<?php _e('Test Connection','mainwp'); ?>"/></p>
+    <p class="submit"><input type="button" name="mainwp_managesites_test" id="mainwp_managesites_test" class="button-primary button button-hero" value="<?php _e('Test Connection','mainwp'); ?>"/></p>
     <?php
     }
 
@@ -378,7 +378,7 @@ class MainWPManageSitesView
     {
         ?>
             <div id="MainWPBulkUploadSitesLoading" class="updated" style="display: none;">
-                <div><img src="images/loading.gif"/> <?php _e('Importing sites','mainwp'); ?></div>
+                <div><i class="fa fa-spinner fa-pulse"></i> <?php _e('Importing sites','mainwp'); ?></div>
             </div>
             <?php
             $errors = array();
@@ -413,7 +413,9 @@ class MainWPManageSitesView
                         }
 
                         ?>
-                        <div class="mainwp_info-box"><strong><?php _e('Importing new sites.','mainwp'); ?></strong></div>
+                        <div class="postbox">
+                        <h3 class="mainwp_box_title"><i class="fa fa-globe"></i> <?php _e('Importing New Child Sites','mainwp'); ?></h3>
+                        <div class="inside">
                         <input type="hidden" id="mainwp_managesites_do_import" value="1"/>
                         <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo $i ?>"/>
 
@@ -424,10 +426,10 @@ class MainWPManageSitesView
 
                         <p class="submit"><input type="button" name="mainwp_managesites_btn_import"
                                                  id="mainwp_managesites_btn_import"
-                                                 class="button-primary" value="<?php _e('Pause','mainwp'); ?>"/>
+                                                 class="button-primary button button-hero" value="<?php _e('Pause','mainwp'); ?>"/>
                             <input type="button" name="mainwp_managesites_btn_save_csv"
                                    id="mainwp_managesites_btn_save_csv" disabled="disabled"
-                                   class="button-primary" value="<?php _e('Save failed','mainwp'); ?>"/>
+                                   class="button-hero button" value="<?php _e('Save Failed','mainwp'); ?>"/>
                         </p>
 
                         <p>
@@ -435,6 +437,8 @@ class MainWPManageSitesView
                              id="mainwp_managesites_import_fail_logging" style="display: none;">
                             <pre class="log"><?php echo $header_line; ?></pre>
                         </div></p>
+                        </div>
+                        </div>
                         <?php
                     }
                     else
@@ -629,7 +633,7 @@ class MainWPManageSitesView
 
            <p class="submit"><input type="button" name="mainwp_managesites_add"
                                     id="mainwp_managesites_add"
-                                    class="button-primary" value="<?php _e('Add New Site','mainwp'); ?>"/></p>
+                                    class="button-primary button button-hero" value="<?php _e('Add New Site','mainwp'); ?>"/></p>
        </form>
 <?php
     }
@@ -1223,7 +1227,7 @@ class MainWPManageSitesView
                 <input type="hidden" name="backup_site_db_size" id="backup_site_db_size" value="<?php echo $website->dbsize; ?>"/>
 
                 <p class="submit"><input type="button" name="backup_btnSubmit" id="backup_btnSubmit"
-                                         class="button-primary"
+                                         class="button-primary button button-hero"
                                          value="Backup Now"/></p>
 
             </form>
@@ -1618,7 +1622,7 @@ class MainWPManageSitesView
             ?>
             <?php
             do_action('mainwp-extension-sites-edit', $website);
-            ?><p class="submit"><input type="submit" name="submit" id="submit" class="button-primary"
+            ?><p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero"
                                      value="<?php _e('Update Site','mainwp'); ?>"/></p>
         </form>       
         <?php

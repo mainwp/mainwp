@@ -197,7 +197,7 @@ class MainWPSettings
         </table>
     </div>
     </div>
-    <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>"/></p>
+    <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e('Save Settings','mainwp'); ?>"/></p>
     </form>
         <?php
         self::renderFooter('Advanced');
@@ -240,7 +240,7 @@ class MainWPSettings
             MainWPAPISettingsView::renderSettings();
             
             ?>
-            <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>"/>
+            <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e('Save Settings','mainwp'); ?>"/>
             </p>             
         </form>
     <?php
@@ -306,7 +306,7 @@ class MainWPSettings
                 </table>
                 </div>
             </div>
-        <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e('Save Settings','mainwp'); ?>"/></p>
+        <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e('Save Settings','mainwp'); ?>"/></p>
         </form>        
         <?php
         
@@ -347,11 +347,11 @@ class MainWPSettings
                                 </td>
                             </tr>
                             <tr>
-                                <th scope="row"><?php _e('MainWP Quick Setup','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Use this option to quick setup MainWP.','mainwp')); ?></th>
+                                <th scope="row"><?php _e('MainWP Quick Setup','mainwp'); ?></th>
                                 <td>
-                                    <a href="admin.php?page=mainwp-setup" class="button-primary button"/><?php _e('MainWP Quick Setup','mainwp'); ?></a><br/>
+                                    <a href="admin.php?page=mainwp-setup" class="button-primary button"/><?php _e('Start Quick Setup','mainwp'); ?></a><br/>
                                     <em>
-                                        <?php _e('MainWP Quick Setup.','mainwp'); ?>
+                                        <?php _e('MainWP Quick Setup allows you to quickly set your MainWP Dashboard preferences.','mainwp'); ?>
                                     </em>
                                 </td>
                             </tr>

@@ -150,8 +150,9 @@ class MainWPThemes
             </div>
             <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
             <div style="clear: both;"></div>
-            <input type="button" name="mainwp_show_themes" id="mainwp_show_themes" class="button-primary" value="<?php _e('Show Themes','mainwp'); ?>"/>
-            <span id="mainwp_themes_loading"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span> <span id="mainwp_themes_loading_info"><?php _e('Automatically refreshing to get up to date information.','mainwp'); ?></span>
+            <input type="button" name="mainwp_show_themes" id="mainwp_show_themes" class="button-primary button button-hero" value="<?php _e('Show Themes','mainwp'); ?>"/>
+            <br/><br/>
+            <span id="mainwp_themes_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span> <span id="mainwp_themes_loading_info" class="mainwp-grabbing-info-note"> - <?php _e('Automatically refreshing to get up to date information.','mainwp'); ?></span>
             <br/><br/>
         </div>
         <div class="clear"></div>
@@ -342,7 +343,7 @@ class MainWPThemes
         }
         ?>
 <div id="mainwp-table-overflow" style="overflow: auto !important ;">
-    <table class="wp-list-table widefat fixed pages" style="width: auto; word-wrap: normal">
+    <table class="wp-list-table widefat fixed pages" id="themes_fixedtable" style="width: auto; word-wrap: normal">
         <thead>
         <tr>
             <th class="headcol"></th>
@@ -385,6 +386,11 @@ class MainWPThemes
         </tbody>
     </table>
 </div>
+<script type="text/javascript">
+	jQuery(document).ready(function() {
+		jQuery("#themes_fixedtable").tableHeadFixer({"left" : 1}); 
+	});
+</script>
         <?php
         $newOutput = ob_get_clean();
         echo $newOutput;
@@ -762,8 +768,7 @@ class MainWPThemes
         self::renderFooter('Install');
     }
 	
-	public function renderInstallBody($favoritesCallback = '') {
-		$favorites_callback = apply_filters('mainwp_favorites_links_onaction_callback');
+	public function renderInstallBody($favoritesCallback = '') {		
 	?>	
 		<a href="#" class="mainwp_action left mainwp_action_down browse-themes" ><?php _e('Search','mainwp'); ?></a><a href="#" class="mainwp_action right upload" ><?php _e('Upload','mainwp'); ?></a>
 		<br class="clear" /><br />

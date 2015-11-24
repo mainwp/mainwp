@@ -274,7 +274,7 @@ class MainWPManageSitesView
                     if (isset($subPage['sitetab']) && $subPage['sitetab'] == true && empty($site_id))
                         continue;
                 ?>
-                <a class="nav-tab pos-nav-tab <?php if ($shownPage === $subPage['slug']) { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageSites<?php echo $subPage['slug'] . ($site_id ? '&id=' . $site_id : ""); ?>"><?php echo $subPage['title']; ?></a>
+                <a class="nav-tab pos-nav-tab <?php if ($shownPage === $subPage['slug']) { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageSites<?php echo $subPage['slug'] . ($site_id ? '&id=' . esc_attr($site_id) : ""); ?>"><?php echo $subPage['title']; ?></a>
                 <?php
                     }
                 }
@@ -407,7 +407,7 @@ class MainWPManageSitesView
                             ?>
                             <input type="hidden"
                                    id="mainwp_managesites_import_csv_line_<?php echo ($i + 1) // start from 1 ?>"
-                                   value="<?php echo $line ?>"/>
+                                   value="<?php echo esc_attr($line) ?>"/>
                             <?php
                             $i++;
                         }
@@ -421,7 +421,7 @@ class MainWPManageSitesView
 
                         <p>
                         <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">
-                            <pre class="log"><?php echo $header_line; ?></pre>
+                            <pre class="log"><?php echo esc_attr($header_line); ?></pre>
                         </div></p>
 
                         <p class="submit"><input type="button" name="mainwp_managesites_btn_import"
@@ -435,7 +435,7 @@ class MainWPManageSitesView
                         <p>
                         <div class="mainwp_managesites_import_listing"
                              id="mainwp_managesites_import_fail_logging" style="display: none;">
-                            <pre class="log"><?php echo $header_line; ?></pre>
+                            <pre class="log"><?php echo esc_attr($header_line); ?></pre>
                         </div></p>
                         </div>
                         </div>

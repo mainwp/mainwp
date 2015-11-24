@@ -281,15 +281,37 @@ class MainWPManageSites_List_Table extends WP_List_Table
             
             if ($cnt > 0)
             {
-                $output .= '<span class="mainwp-av-updates-col" title="'. $cnt .' Availble Update' . ($cnt != 1 ? "s" : "") . '"> ' . $cnt . '</span>';
+                $output .= '<span class="fa-stack fa-lg" title="'. $cnt .' Availble Update' . ($cnt != 1 ? "s" : "") . '">  
+                <i class="fa fa-circle fa-stack-2x mwp-d-green"></i><strong class="mwp-white fa-stack-1x">' . $cnt . '</strong></span>';
             }
         }
 
         $output .= '
-       <img class="down-img down-img-align" title="Site is Offline" src="' . plugins_url('images/down.png', dirname(__FILE__)) . '" ' . ($item['offline_check_result'] == -1 && !$hasSyncErrors && !$isConflict ? '' : 'style="display:none;"') . ' />
-       <img class="up-img up-img-align" title="Plugin or Theme Conflict Found" src="' . plugins_url('images/conflict.png', dirname(__FILE__)) . '" ' . (!$hasSyncErrors && $isConflict ? '' : 'style="display:none;"') . '/>
-       <img class="up-img up-img-align" title="Site is Online" src="' . plugins_url('images/up.png', dirname(__FILE__)) . '" ' . ($item['offline_check_result'] == 1 && !$hasSyncErrors && !$isConflict && ($cnt == 0) ? '' : 'style="display:none;"'). '/>
-       <img class="up-img up-img-align" title="Site Disconnected" src="' .  plugins_url('images/disconnected.png', dirname(__FILE__)) . '" ' . ($hasSyncErrors ? '' : 'style="display:none;"') . '/>
+       <span title="Site is Offline" ' . ($item['offline_check_result'] == -1 && !$hasSyncErrors && !$isConflict ? '' : 'style="display:none;"') . '>
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-exclamation-circle fa-2x mwp-red"></i>
+            </span>
+       </span>
+
+       <span title="Plugin or Theme Conflict Found" ' . (!$hasSyncErrors && $isConflict ? '' : 'style="display:none;"') . '>
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x mwp-red"></i>
+                <i class="fa fa-flag fa-stack-1x mwp-white"></i>
+            </span>
+       </span>
+
+       <span title="Site is Online" ' . ($item['offline_check_result'] == 1 && !$hasSyncErrors && !$isConflict && ($cnt == 0) ? '' : 'style="display:none;"'). '>
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-check-circle fa-2x mwp-l-green"></i>
+            </span>
+       </span>
+
+       <span title="Site Disconnected" ' . ($hasSyncErrors ? '' : 'style="display:none;"') . '>
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x mwp-red"></i>
+                <i class="fa fa-plug fa-stack-1x mwp-white"></i>
+            </span>
+       </span>
        ';
 
         return $output;
@@ -710,7 +732,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
 
     <div class="alignleft actions">
         <form method="GET" action="">
-            <input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
+            <input type="hidden" value="<?php echo esc_attr($_REQUEST['page']); ?>" name="page"/>
             <select name="g">
                 <option value=""><?php _e('All Groups','mainwp'); ?></option>
                 <?php                
@@ -737,7 +759,7 @@ class MainWPManageSites_List_Table extends WP_List_Table
     <div class="alignleft actions">
         <form method="GET" action="">
             <input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
-            <input type="text" value="<?php echo (isset($_REQUEST['s']) ? $_REQUEST['s'] : ''); ?>"
+            <input type="text" value="<?php echo (isset($_REQUEST['s']) ? esc_attr($_REQUEST['s']) : ''); ?>"
                    autocompletelist="sites" name="s" class="mainwp_autocomplete"/>
             <datalist id="sites">
     <?php

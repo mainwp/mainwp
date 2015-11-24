@@ -1544,10 +1544,10 @@ rightnow_show = function (what, leave_text) {
     jQuery('#wp_' + what).toggle(100, 'linear', function () {
         if (!leave_text) {
             if (jQuery('#wp_' + what).css('display') == 'none') {
-                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('<i class="fa fa-eye-slash"></i> Show All') : __('<i class="fa fa-eye-slash"></i> Show')));
+                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('Show All') : __('Show')));
             }
             else {
-                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('<i class="fa fa-eye-slash"></i> Hide All') : __('<i class="fa fa-eye-slash"></i> Hide')));
+                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('Hide All') : __('Hide')));
             }
         }
     });

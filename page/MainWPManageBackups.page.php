@@ -968,7 +968,7 @@ class MainWPManageBackups
             echo "<ul class=\"jqueryFileTree\" style=\"display: none;\">";
             // All dirs
             foreach( $allFiles as $file ) {
-                echo "<li class=\"directory collapsed\"><a href=\"#\" rel=\"" . htmlentities($_POST['dir'] . $file) . "/\">" . htmlentities($file) . "<div title=\"Exclude form backup\" class=\"exclude_folder_control\"><img src=\"" . plugins_url('images/exclude.png', dirname(__FILE__)) . "\" /></div></a></li>";
+                echo "<li class=\"directory collapsed\"><a href=\"#\" rel=\"" . esc_attr($_POST['dir'] . $file) . "/\">" . esc_html($file) . "<div title=\"Exclude form backup\" class=\"exclude_folder_control\"><img src=\"" . plugins_url('images/exclude.png', dirname(__FILE__)) . "\" /></div></a></li>";
             }
             echo "</ul>";
 

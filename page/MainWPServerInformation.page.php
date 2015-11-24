@@ -203,21 +203,28 @@ class MainWPServerInformation
 
             if (!MainWPUtility::can_edit_website($website))
             {
-                return 'This is not your website.';
+                return __( 'This is not your website.', 'mainwp' );
             }
 
             $serverInformation = MainWPUtility::fetchUrlAuthed($website, 'serverInformation');
             ?>
-
-        <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('Server Information'); ?></h2>
-        <?php echo $serverInformation['information']; ?>
-        <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('Cron Schedules'); ?></h2>
-        <?php echo $serverInformation['cron']; ?>
+        <div id="mainwp-server-information-section">
+            <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('Server Information'); ?></h2>
+            <?php echo $serverInformation['information']; ?>
+        </div>
+        <div id="mainwp-cron-schedules-section">
+            <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('Cron Schedules'); ?></h2>
+            <?php echo $serverInformation['cron']; ?>
+        </div>
         <?php if (isset($serverInformation['wpconfig'])) { ?>
-        <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('WP-Config File'); ?></h2>
-        <?php echo $serverInformation['wpconfig']; ?>
-        <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('Error Log'); ?></h2>
-        <?php echo $serverInformation['error']; ?>
+        <div id="mainwp-wp-config-section">
+            <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('WP-Config File'); ?></h2>
+            <?php echo $serverInformation['wpconfig']; ?>
+        </div>
+        <div id="mainwp-error-log-section">
+            <h2><i class="fa fa-server"></i> <strong><?php echo stripslashes($website->name); ?></strong>&nbsp;<?php _e('Error Log'); ?></h2>
+            <?php echo $serverInformation['error']; ?>
+        </div>
         <?php } ?>
             <?php
         }
@@ -235,22 +242,43 @@ class MainWPServerInformation
 
     public static function renderChild()
     {
-        self::renderHeader('ServerInformationChild');
+        self::renderHeader( 'ServerInformationChild' );
 
         $websites = MainWPDB::Instance()->query(MainWPDB::Instance()->getSQLWebsitesForCurrentUser());
 
-        echo 'Child Site: <select name="" id="mainwp_serverInformation_child"><option value="-1">-- Select site</option>';
-
-        while ($websites && ($website = @MainWPDB::fetch_object($websites)))
-        {
-            echo '<option value="'.$website->id.'">' . stripslashes($website->name) . '</option>';
-        }
-        @MainWPDB::free_result($websites);
-
-
-        echo '</select><br /><br /><div id="mainwp_serverInformation_child_loading"><i class="fa fa-spinner fa-pulse"></i> ' . __('Loading server information..', 'mainwp') . '</div><div id="mainwp_serverInformation_child_resp"></div>';
-
-        self::renderFooter('ServerInformationChild');
+        ?>
+        <div class="postbox">
+            <h3 class="mainwp_box_title"><?php _e( 'Child Site Server Information', 'mainwp' ); ?></h3>
+            <div class="inside">
+                <?php _e( 'Select Child Site: ', 'mainwp' ); ?>
+                <select name="" id="mainwp_serverInformation_child" style="margin-right: 2em">
+                    <option value="-1"><?php _e( 'Select Child Site', 'mainwp' ); ?></option>
+                    <?php
+                    while ($websites && ($website = @MainWPDB::fetch_object($websites)))
+                    {
+                        echo '<option value="'.$website->id.'">' . stripslashes($website->name) . '</option>';
+                    }
+                    @MainWPDB::free_result($websites);
+                    ?>
+                </select>
+                <?php _e( 'Select Information: ', 'mainwp' ); ?>
+                <select name="" id="mainwp-server-info-filter">
+                    <option value=""><?php _e( 'Full Information', 'mainwp' ); ?></option>
+                    <option value="server-information"><?php _e( 'Server Information', 'mainwp' ); ?></option>
+                    <option value="cron-schedules"><?php _e( 'Cron Schedules', 'mainwp' ); ?></option>
+                    <option value="wp-config"><?php _e( 'WP-Config.php', 'mainwp' ); ?></option>
+                    <option value="error-log"><?php _e( 'Error Log', 'mainwp' ); ?></option>
+                </select>
+            </div>
+        </div>
+        <div id="mainwp_serverInformation_child_loading">
+            <spna class="mainwp-grabbing-info-note"><i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Loading server information...', 'mainwp' ); ?></spna>
+        </div>
+        <div id="mainwp_serverInformation_child_resp">
+            
+        </div>
+        <?php
+        self::renderFooter( 'ServerInformationChild' );
     }
 
     public static function renderCron()

@@ -2852,3 +2852,29 @@ body.show-upload-theme .mainwp_config_box_left .theme-browser {
 body.show-upload-plugin .mainwp-upload-plugin {
     display: block;
 }
+
+/* COLORS */
+
+.mwp-l-green {
+    color: #7fb100;
+}
+
+.mwp-d-green {
+    color: #446200;
+}
+
+.mwp-red {
+    color:#a00;
+}
+
+.mwp-blue {
+    color: #00a0d2;
+}
+
+.mwp-black {
+    color: #1c1d1b;
+}
+
+.mwp-white {
+    color: #fff;
+}

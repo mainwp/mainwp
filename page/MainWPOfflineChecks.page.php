@@ -44,6 +44,10 @@ class MainWPOfflineChecks
          do_action("mainwp-pageheader-settings", "OfflineChecks");
 
         ?>
+        <div class="mainwp_info-box-red">
+        <strong>IMPORTANT:</strong> This feature is being retired and replaced by the Free MainWP Advanced Uptime Monitor Extension which provides more advanced monitoring system.<br/>
+        <a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
+        </div>
         <div class="mainwp_info-box">
             <strong><?php _e('Notifications will be sent to','mainwp'); ?> <i><?php echo MainWPUtility::getNotificationEmail(); ?></i> (<a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e('change','mainwp'); ?></a>)</strong>
             <br /><br /><?php _e('MainWP performs two tests when checking your site for up-time.','mainwp'); ?>
@@ -77,8 +81,8 @@ class MainWPOfflineChecks
                            value="<?php echo $website->id; ?>" />
                     <td class="url"><a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php echo stripslashes($website->name);?></a> <span class="offline_check_saved"><?php _e('Saved','mainwp'); ?></span></td>
                     <td>
-                        <img class="down-img" title="Site Offline" src="<?php echo plugins_url('images/down.png', dirname(__FILE__)); ?>" <?php echo ($website->offline_check_result == -1 ? '' : 'style="display:none;"'); ?> />
-                        <img class="up-img" title="Site Online" src="<?php echo plugins_url('images/up.png', dirname(__FILE__)); ?>" <?php echo ($website->offline_check_result == 1 ? '' : 'style="display:none;"'); ?> />
+                        <i class="fa fa-exclamation-circle fa-2x mwp-red" title="Site Offline" <?php echo ($website->offline_check_result == -1 ? '' : 'style="display:none;"'); ?>></i>
+                        <i class="fa fa-check-circle fa-2x mwp-l-green" title="Site Online" <?php echo ($website->offline_check_result == 1 ? '' : 'style="display:none;"'); ?>></i>
                     </td>
                     <td class="column-rating"><input type="radio" id="disabled" class="mainwp_offline_check" value="disabled"
                                name="offline_check_<?php echo $website->id; ?>"

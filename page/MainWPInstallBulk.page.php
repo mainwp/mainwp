@@ -33,56 +33,8 @@ class MainWPInstallBulk
             }
         }
     }
-	
-    public static function renderSearch($title) {
-        ?>
-        <div class="postbox">
-        <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search for','mainwp'); ?> <?php echo $title; ?> <?php _e('by Keyword, Author, or Tag.','mainwp'); ?></h3>
-        <div class="inside">
-        <div class="tablenav top">
-            <div class="alignleft actions">
-                <form id="search-<?php echo strtolower($title); ?>" method="post" action="">
-                    <input type="hidden" name="tab" value="search" />
-                    <select name="type" id="mainwp_installbulk_typeselector">
-                        <option value="term">Term</option>
-                        <option value="author">Author</option>
-                        <option value="tag">Tag</option>
-                    </select>
-                    <input type="text" name="s" value="<?php
-        if (isset($_POST['s'])) {
-            echo $_POST['s'];
-        }
-        ?>" id="mainwp_installbulk_s" />
-                    <label class="screen-reader-text" for="plugin-search-input"><?php _e('Search','mainwp'); ?> <?php echo $title; ?></label>
-                    <input type="button" name="plugin-search-input" id="mainwp-plugin-search-input" class="button-primary" value="Search <?php echo $title; ?>" onClick="return mainwp_install_search(event);" />
-                    <br /><?php if ($title == 'Plugins') { echo '<br />&nbsp;&nbsp;<input type="checkbox" value="1" checked id="chk_activate_plugin" /> <label for="chk_activate_plugin">' . __('Activate plugin after installation','mainwp') .' </label>'; } ?>
-                    <br />&nbsp;&nbsp;<input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite existing', 'mainwp'); ?></label><br />
-                </form>
-            </div>
-            <div id="MainWPInstallBulkStatusExtra" class="MainWPInstallBulkStatus" style="display: none"><i class="fa fa-spinner fa-pulse"></i> &nbsp;</div><div id="MainWPInstallBulkStatus" class="MainWPInstallBulkStatus"></div>
-            <div class="tablenav-pages" style="display: none;" id="MainWPInstallBulkNav"><span id="MainWPInstallBulkResults" class="displaying-num"></span> <a class="prev-page" title="Go to the previous page" href="#" id="mainwp-plugin-search-prev" onClick="return mainwp_install_prev(event);">â€¹</a> <span id="MainWPInstallBulkPage"></span> of <span id="MainWPInstallBulkPages"></span> <a class="next-page" title="Go to the next page" href="#" id="mainwp-plugin-search-next" onClick="return mainwp_install_next(event);">â€º</a></div>
-        </div>
-        <div class="clear"></div>
-        </div>
-        </div>
-				
-		<div class="wp-filter">
-			<ul class="filter-links">
-				<li class="plugin-install" tab="search" id="tab_search"><a href=""><?php _e("Search Results");?></a> </li>
-				<li class="plugin-install" tab="featured" ><a class="" href=""><?php _e("Featured");?></a> </li>
-				<li class="plugin-install" tab="popular"><a class="" href=""><?php _e("Popular");?></a> </li>
-				<li class="plugin-install" tab="recommended"><a href=""><?php _e("Recommended");?></a> </li>
-			</ul>
-		</div>
-		<input type="hidden" id="mainwp_installbulk_tab" value="search" />
-		
-        <div id="MainWPInstallBulkSearchAjax" style="margin-top: 2em;">
 
-        </div>
-        <?php
-    }
-
-     //Renders the upload sub part
+	//Renders the upload sub part
     public static function renderUpload($title) {
         ?>
         <div class="postbox">

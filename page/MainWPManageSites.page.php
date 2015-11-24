@@ -12,7 +12,7 @@ class MainWPManageSites
     public static $sitesTable;
 
     public static function init()
-    {		
+    {
         add_action('mainwp-pageheader-sites', array(MainWPManageSites::getClassName(), 'renderHeader'));
         add_action('mainwp-pagefooter-sites', array(MainWPManageSites::getClassName(), 'renderFooter'));
 

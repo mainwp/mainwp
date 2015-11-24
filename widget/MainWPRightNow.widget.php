@@ -945,7 +945,7 @@ class MainWPRightNow
         <div class="mainwp-row">
             <span class="mainwp-left-col">
 					<a href="#" id="mainwp_upgrades_show" onClick="return rightnow_show('upgrades', true);">
-						<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_wp_upgrades; ?></span> <?php _e('WordPress upgrade','mainwp'); ?><?php if ($total_wp_upgrades <> 1) { echo "s"; } ?> <?php _e('available','mainwp'); ?>
+						<span class="mainwp-rightnow-number"><?php echo $total_wp_upgrades; ?></span> <?php _e('WordPress upgrade','mainwp'); ?><?php if ($total_wp_upgrades <> 1) { echo "s"; } ?> <?php _e('available','mainwp'); ?>
 					</a>					
 			</span>
             <span class="mainwp-mid-col">&nbsp;</span>
@@ -1007,7 +1007,7 @@ class MainWPRightNow
         <div class="mainwp-row">
             <span class="mainwp-left-col">
 				<a href="#" id="mainwp_plugin_upgrades_show" onClick="return rightnow_show('plugin_upgrades', true);">
-					<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_plugin_upgrades; ?> </span> <?php _e('Plugin upgrade','mainwp'); ?><?php if ($total_plugin_upgrades <> 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?>
+					<span class="mainwp-rightnow-number"><?php echo $total_plugin_upgrades; ?> </span> <?php _e('Plugin upgrade','mainwp'); ?><?php if ($total_plugin_upgrades <> 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?>
 				</a>
 			</span>
             <span class="mainwp-mid-col"><a href="<?php echo admin_url('admin.php?page=PluginsIgnore'); ?>"><?php _e('Ignored','mainwp'); ?> (<?php echo $total_pluginsIgnored; ?>)</a></span>            
@@ -1059,7 +1059,7 @@ class MainWPRightNow
                         if (count($plugin_upgrades) > 0)
                         {
                         ?>
-                            <a href="#" id="mainwp_plugin_upgrades_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugin_upgrades_<?php echo $website->id; ?>', true);"><i class="fa fa-eye-slash"></i> <?php echo count($plugin_upgrades); ?> <?php _e('Upgrade','mainwp'); ?><?php echo (count($plugin_upgrades) > 1 ? 's' : ''); ?></a>
+                            <a href="#" id="mainwp_plugin_upgrades_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugin_upgrades_<?php echo $website->id; ?>', true);"><?php echo count($plugin_upgrades); ?> <?php _e('Upgrade','mainwp'); ?><?php echo (count($plugin_upgrades) > 1 ? 's' : ''); ?></a>
                         <?php
                         }
                         else
@@ -1127,7 +1127,7 @@ class MainWPRightNow
                         </span>
                         <span class="mainwp-mid-col">
                             <a href="#" onClick="return rightnow_plugins_detail('<?php echo $plugin_name; ?>');">
-                                <i class="fa fa-eye-slash"></i> <?php echo $cnt; ?> <?php _e('Upgrade','mainwp'); ?><?php echo ($cnt > 1 ? 's' : ''); ?>
+                                <?php echo $cnt; ?> <?php _e('Upgrade','mainwp'); ?><?php echo ($cnt > 1 ? 's' : ''); ?>
                             </a>
                         </span>
                         <span class="mainwp-right-col">
@@ -1212,7 +1212,7 @@ class MainWPRightNow
         <div class="mainwp-row">
             <span class="mainwp-left-col">
 				<a href="#" id="mainwp_theme_upgrades_show" onClick="return rightnow_show('theme_upgrades', true);"> 
-					<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_theme_upgrades; ?> </span> <?php _e('Theme upgrade','mainwp'); ?><?php if ($total_theme_upgrades <> 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?>
+					<span class="mainwp-rightnow-number"><?php echo $total_theme_upgrades; ?> </span> <?php _e('Theme upgrade','mainwp'); ?><?php if ($total_theme_upgrades <> 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?>
 				</a>
 			</span>
             <span class="mainwp-mid-col"><a href="<?php echo admin_url('admin.php?page=ThemesIgnore'); ?>"><?php _e('Ignored','mainwp'); ?> (<?php echo $total_themesIgnored; ?>)</a></span>            
@@ -1263,7 +1263,7 @@ class MainWPRightNow
                         if (count($theme_upgrades) > 0)
                         {
                         ?>
-                            <a href="#" id="mainwp_theme_upgrades_<?php echo $website->id; ?>_show" onClick="return rightnow_show('theme_upgrades_<?php echo $website->id; ?>', true);"><i class="fa fa-eye-slash"></i> <?php echo count($theme_upgrades); ?> <?php _e('Upgrade','mainwp'); ?><?php echo (count($theme_upgrades) > 1 ? 's' : ''); ?></a>
+                            <a href="#" id="mainwp_theme_upgrades_<?php echo $website->id; ?>_show" onClick="return rightnow_show('theme_upgrades_<?php echo $website->id; ?>', true);"><?php echo count($theme_upgrades); ?> <?php _e('Upgrade','mainwp'); ?><?php echo (count($theme_upgrades) > 1 ? 's' : ''); ?></a>
                         <?php
                         }
                         else
@@ -1326,7 +1326,7 @@ class MainWPRightNow
                         </span>
                         <span class="mainwp-mid-col">
                             <a href="#" onClick="return rightnow_themes_detail('<?php echo $theme_name; ?>');">
-                                <i class="fa fa-eye-slash"></i> <?php echo $cnt; ?> <?php _e('Upgrade','mainwp'); ?><?php echo ($cnt > 1 ? 's' : ''); ?>
+                                <?php echo $cnt; ?> <?php _e('Upgrade','mainwp'); ?><?php echo ($cnt > 1 ? 's' : ''); ?>
                             </a>
                         </span>
                         <span class="mainwp-right-col">
@@ -1408,7 +1408,7 @@ class MainWPRightNow
         <div class="mainwp-row">
             <span class="mainwp-left-col">
 				<a href="#" id="mainwp_plugins_outdate_show" onClick="return rightnow_show('plugins_outdate', true);">
-					<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_plugins_outdate; ?> </span> <?php _e('Plugin','mainwp'); ?><?php if ($total_plugins_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
+					<span class="mainwp-rightnow-number"><?php echo $total_plugins_outdate; ?> </span> <?php _e('Plugin','mainwp'); ?><?php if ($total_plugins_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
 				</a>&nbsp;<?php MainWPUtility::renderToolTip(__('This feature checks the last updated status of plugins and alerts you if not updated in a specific amount of time. This gives you insight on if a plugin may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
 			</span>
             <span class="mainwp-mid-col"><a href="<?php echo admin_url('admin.php?page=PluginsIgnoredAbandoned'); ?>"><?php _e('Ignored','mainwp'); ?> (<?php echo $total_pluginsIgnoredAbandoned; ?>)</a></span>            
@@ -1449,7 +1449,7 @@ class MainWPRightNow
                         if (count($plugins_outdate) > 0)
                         {
                         ?>
-                            <a href="#" id="mainwp_plugins_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugins_outdate_<?php echo $website->id; ?>', true);"><i class="fa fa-eye-slash"></i> <?php echo count($plugins_outdate); ?> <?php _e('Plugin','mainwp'); ?><?php echo (count($plugins_outdate) > 1 ? 's' : ''); ?></a>
+                            <a href="#" id="mainwp_plugins_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugins_outdate_<?php echo $website->id; ?>', true);"><?php echo count($plugins_outdate); ?> <?php _e('Plugin','mainwp'); ?><?php echo (count($plugins_outdate) > 1 ? 's' : ''); ?></a>
                         <?php
                         }
                         else
@@ -1515,7 +1515,7 @@ class MainWPRightNow
                         </span>
                         <span class="mainwp-mid-col">
                             <a href="#" onClick="return rightnow_plugins_outdate_detail('<?php echo $plugin_name; ?>');">
-                                <i class="fa fa-eye-slash"></i> <?php echo $cnt; ?> <?php _e('Plugin','mainwp'); ?><?php echo ($cnt <> 1 ? 's' : ''); ?>
+                                <?php echo $cnt; ?> <?php _e('Plugin','mainwp'); ?><?php echo ($cnt <> 1 ? 's' : ''); ?>
                             </a>
                         </span>
                         <span class="mainwp-right-col"> 
@@ -1596,7 +1596,7 @@ class MainWPRightNow
         <div class="mainwp-row">
             <span class="mainwp-left-col">
 				<a href="#" id="mainwp_themes_outdate_show" onClick="return rightnow_show('themes_outdate', true);">
-					<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_themes_outdate; ?> </span> <?php _e('Theme','mainwp'); ?><?php if ($total_themes_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
+					<span class="mainwp-rightnow-number"><?php echo $total_themes_outdate; ?> </span> <?php _e('Theme','mainwp'); ?><?php if ($total_themes_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
 				</a>&nbsp;<?php MainWPUtility::renderToolTip(__('This feature checks the last updated status of themes and alerts you if not updated in a specific amount of time. This gives you insight on if a theme may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
 			</span>
             <span class="mainwp-mid-col"><a href="<?php echo admin_url('admin.php?page=ThemesIgnoredAbandoned'); ?>"><?php _e('Ignored','mainwp'); ?> (<?php echo $total_themesIgnoredAbandoned; ?>)</a></span>            
@@ -1636,7 +1636,7 @@ class MainWPRightNow
                         if (count($themes_outdate) > 0)
                         {
                         ?>
-                            <a href="#" id="mainwp_themes_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('themes_outdate_<?php echo $website->id; ?>', true);"><i class="fa fa-eye-slash"></i> <?php echo count($themes_outdate); ?> <?php _e('Theme','mainwp'); ?><?php echo (count($themes_outdate) > 1 ? 's' : ''); ?></a>
+                            <a href="#" id="mainwp_themes_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('themes_outdate_<?php echo $website->id; ?>', true);"><?php echo count($themes_outdate); ?> <?php _e('Theme','mainwp'); ?><?php echo (count($themes_outdate) > 1 ? 's' : ''); ?></a>
                         <?php
                         }
                         else
@@ -1697,7 +1697,7 @@ class MainWPRightNow
                         </span>
                         <span class="mainwp-mid-col">
                             <a href="#" onClick="return rightnow_themes_outdate_detail('<?php echo $slug; ?>');">
-                                <i class="fa fa-eye-slash"></i> <?php echo $cnt; ?> <?php _e('Theme','mainwp'); ?><?php echo ($cnt <> 1 ? 's' : ''); ?>
+                                <?php echo $cnt; ?> <?php _e('Theme','mainwp'); ?><?php echo ($cnt <> 1 ? 's' : ''); ?>
                             </a>
                         </span>
                         <span class="mainwp-right-col"> 
@@ -1774,7 +1774,7 @@ class MainWPRightNow
             <div class="mainwp-row">
                 <span class="mainwp-left-col">
 					<a href="#" id="mainwp_errors_show" onClick="return rightnow_show('errors', true);">
-						<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_sync_errors; ?></span> Error<?php if ($total_sync_errors > 1) { ?>s<?php } ?>
+						<span class="mainwp-rightnow-number"><?php echo $total_sync_errors; ?></span> Error<?php if ($total_sync_errors > 1) { ?>s<?php } ?>
 					</a>
 				</span>
                 <span class="mainwp-mid-col">&nbsp;</span>
@@ -1806,7 +1806,7 @@ class MainWPRightNow
             <div class="mainwp-row">
                 <span class="mainwp-left-col">
 					<a href="#" id="mainwp_uptodate_show" onClick="return rightnow_show('uptodate', true);">
-						<i class="fa fa-eye-slash"></i> <span class="mainwp-rightnow-number"><?php echo $total_uptodate; ?></span> <?php _e('Up to date','mainwp'); ?>
+						<span class="mainwp-rightnow-number"><?php echo $total_uptodate; ?></span> <?php _e('Up to date','mainwp'); ?>
 					</a>
 				</span>
                 <span class="mainwp-mid-col">&nbsp;</span>
@@ -1840,8 +1840,45 @@ class MainWPRightNow
         ?>
         <div class="clear">
             <div class="mainwp-row">
-                <span class="mainwp-left-col"><span class="mainwp-rightnow-number">
-                    <img class="down-img" style="margin-bottom: -3px;" title="<?php echo ($total_sync_errors > 0 ? 'Site Disconnected' : (($total_conflict > 0 ? 'Plugin or Theme Conflict Found' : ($total_offline > 0 ? 'Site is Offline' : 'Site is Online')))); ?>" alt="<?php echo ($total_sync_errors > 0 ? 'Sync errors' : (($total_conflict > 0 ? 'Conflict Found' : ($total_offline > 0 ? 'Site Down' : 'Site Up')))); ?>" src="<?php echo plugins_url('images/'.($total_sync_errors > 0 ? 'disconnected' : ($total_conflict > 0 ? 'conflict' : ($total_offline > 0 ? 'down' : 'up'))).'.png', dirname(__FILE__)); ?>" /></span> <span style="font-size: 18px !important;"><?php _e('Status','mainwp'); ?></span></span>
+                <span class="mainwp-left-col">
+                <span style="position: relative; top: -5px;">
+                    <?php
+                        if ($total_sync_errors > 0)
+                        {
+                            ?>
+                            <span class="fa-stack" title="Disconnected">
+                                <i class="fa fa-circle fa-stack-2x mwp-red"></i>
+                                <i class="fa fa-plug fa-stack-1x mwp-white"></i>
+                            </span>
+                            <?php
+                        }
+                        else if ($total_conflict > 0)
+                        {
+                            ?>
+                            <span class="fa-stack" title="Plugin or Theme Conflict found">
+                                <i class="fa fa-circle fa-stack-2x mwp-red"></i>
+                                <i class="fa fa-flag fa-stack-1x mwp-white"></i>
+                            </span>
+                            <?php
+                        }
+                        else if ($total_offline > 0)
+                        {
+                            ?>
+                            <span class="fa-stack" title="Site is Offline">
+                                <i class="fa fa-exclamation-circle fa-2x mwp-red"></i>
+                            </span>
+                            <?php
+                        }
+                        else
+                        {
+                            ?>
+                            <span class="fa-stack" title="Site is Online">
+                                <i class="fa fa-check-circle fa-2x mwp-l-green"></i>
+                            </span>
+                            <?php
+                        }
+                    ?></span><h2 style="display: inline;"><?php _e('Status','mainwp'); ?></h2>
+                    </span>
                 <span class="mainwp-mid-col">&nbsp;</span>
                 <span class="mainwp-right-col"><a href="#" id="mainwp_status_show" onClick="return rightnow_show('status');"><i class="fa fa-eye-slash"></i> <?php _e('Show','mainwp'); ?></a></span>
             </div>
@@ -1908,25 +1945,36 @@ class MainWPRightNow
                                 if ($hasSyncErrors)
                                 {
                                     ?>
-                                    <div style="position: absolute; padding-right: 10px; right: 50px;"><a href="#" class="mainwp_rightnow_site_reconnect" siteid="<?php echo $website->id; ?>"><?php _e('Reconnect','mainwp'); ?></a><br /></div> <img class="down-img" title="Site Disconnected" alt="Sync Errors" src="<?php echo plugins_url('images/disconnected.png', dirname(__FILE__)); ?>" />
+                                    <div style="position: absolute; padding-right: 10px; right: 50px; font-size: 13px;"><a href="#" class="mainwp_rightnow_site_reconnect" siteid="<?php echo $website->id; ?>"><?php _e('Reconnect','mainwp'); ?></a><br /></div> 
+                                    <span class="fa-stack fa-lg" title="Disconnected">
+                                        <i class="fa fa-circle fa-stack-2x mwp-red"></i>
+                                        <i class="fa fa-plug fa-stack-1x mwp-white"></i>
+                                    </span>
                                     <?php
                                 }
                                 else if ($isConflict)
                                 {
                                     ?>
-                                    <img class="down-img" title="Plugin or Theme Conflict Found" alt="Conflict Found" src="<?php echo plugins_url('images/conflict.png', dirname(__FILE__)); ?>" />
+                                    <span class="fa-stack fa-lg" title="Plugin or Theme Conflict found">
+                                        <i class="fa fa-circle fa-stack-2x mwp-red"></i>
+                                        <i class="fa fa-flag fa-stack-1x mwp-white"></i>
+                                    </span>
                                     <?php
                                 }
                                 else if ($isDown)
                                 {
                                     ?>
-                                    <img class="down-img" title="Site is Offline" alt="Site Down" src="<?php echo plugins_url('images/down.png', dirname(__FILE__)); ?>" />
+                                    <span class="fa-stack fa-lg" title="Site is Offline">
+                                        <i class="fa fa-exclamation-circle fa-2x mwp-red"></i>
+                                    </span>
                                     <?php
                                 }
                                 else
                                 {
                                     ?>
-                                    <img class="down-img" title="Site is Online" alt="Site Up" src="<?php echo plugins_url('images/up.png', dirname(__FILE__)); ?>" />
+                                    <span class="fa-stack fa-lg" title="Site is Online">
+                                        <i class="fa fa-check-circle fa-2x mwp-l-green"></i>
+                                    </span>
                                     <?php
                                 }
                             ?>

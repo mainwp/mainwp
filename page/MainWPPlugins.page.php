@@ -10,7 +10,8 @@ class MainWPPlugins
     }
 
     public static $subPages;
-
+	public static $pluginsTable;
+	
     public static function init()
     {
         add_action('mainwp-pageheader-plugins', array(MainWPPlugins::getClassName(), 'renderHeader'));
@@ -21,7 +22,8 @@ class MainWPPlugins
     {
         add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<span id="mainwp-Plugins">' . __('Plugins','mainwp') . '</span>', 'read', 'PluginsManage', array(MainWPPlugins::getClassName(), 'render'));
         if (mainwp_current_user_can("dashboard", "install_plugins")) {
-            add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<div class="mainwp-hidden">Install</div>', 'read', 'PluginsInstall', array(MainWPPlugins::getClassName(), 'renderInstall'));
+            $page = add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<div class="mainwp-hidden">Install</div>', 'read', 'PluginsInstall', array(MainWPPlugins::getClassName(), 'renderInstall'));			
+			add_action('load-' . $page, array(MainWPPlugins::getClassName(), 'load_page'));			
         }
         add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<div class="mainwp-hidden">Auto Updates</div>', 'read', 'PluginsAutoUpdate', array(MainWPPlugins::getClassName(), 'renderAutoUpdate'));
         add_submenu_page('mainwp_tab', __('Plugins','mainwp'), '<div class="mainwp-hidden">Ignored Updates</div>', 'read', 'PluginsIgnore', array(MainWPPlugins::getClassName(), 'renderIgnore'));
@@ -39,6 +41,22 @@ class MainWPPlugins
         }
     }
 
+	public static function load_page()
+    {
+		
+        self::$pluginsTable = new MainWPPluginsInstall_List_Table();		
+		$pagenum = self::$pluginsTable->get_pagenum();
+
+		self::$pluginsTable->prepare_items();
+
+		$total_pages = self::$pluginsTable->get_pagination_arg( 'total_pages' );
+
+		if ( $pagenum > $total_pages && $total_pages > 0 ) {
+			wp_redirect( add_query_arg( 'paged', $total_pages ) );
+			exit;
+		}
+    }
+	
     public static function initMenuSubPages()
     {
         ?>
@@ -748,289 +766,65 @@ class MainWPPlugins
     //@see MainWPInstallBulk
     public static function renderInstall()
     {
+		$favorites_callback = apply_filters('mainwp_favorites_links_onaction_callback', '');		
         self::renderHeader('Install');
-        MainWPInstallBulk::render('Plugins', 'plugin');
+        //MainWPInstallBulk::render('Plugins', 'plugin');
+		self::renderPluginsTable($favorites_callback);      
         self::renderFooter('Install');
     }
 
-    //Performs a search
-    public static function performSearch()
-    {
-        MainWPInstallBulk::performSearch(MainWPPlugins::getClassName(), 'Plugins');
-    }
+		
+	public function renderPluginsTable($favoritesCallback = '') {	
+		
+		global $tab;		
+		if (!mainwp_current_user_can("dashboard", "install_plugins")) {
+            mainwp_do_not_have_permissions("install plugins");
+            return;
+        }
+		
+	?>	
+		<a href="#" id="MainWPInstallBulkNavSearch" class="mainwp_action left <?php echo $tab !== 'upload' ? 'mainwp_action_down' : ''; ?>" ><?php _e('Search','mainwp'); ?></a><a href="#" id="MainWPInstallBulkNavUpload" class="mainwp_action <?php echo $tab === 'upload' ? 'mainwp_action_down' : ''; ?> right upload" ><?php _e('Upload','mainwp'); ?></a>		
+		<br class="clear" /><br />
 
-    public static function renderFoundOld($api)
-    {
-        ?>
-    <table class="wp-list-table widefat plugin-install" cellspacing="0">
-        <thead>
-        <tr>
-            <th scope="col" id="name" class="manage-column column-name" style=""><?php  _e('Name','mainwp'); ?></th>
-            <th scope="col" id="version" class="manage-column column-version" style=""><?php _e('Version','mainwp'); ?></th>
-            <th scope="col" id="rating" class="manage-column column-rating" style=""><?php _e('Rating','mainwp'); ?></th>
-            <th scope="col" id="description" class="manage-column column-description" style=""><?php _e('Description','mainwp'); ?></th>
-        </tr>
-        </thead>
-        <tfoot>
-        <tr>
-            <th scope="col" class="manage-column column-name" style=""><?php _e('Name','mainwp'); ?></th>
-            <th scope="col" class="manage-column column-version" style=""><?php _e('Version','mainwp'); ?></th>
-            <th scope="col" class="manage-column column-rating" style=""><?php _e('Rating','mainwp'); ?></th>
-            <th scope="col" class="manage-column column-description" style=""><?php _e('Description','mainwp'); ?></th>
-        </tr>
-        </tfoot>
-        <tbody id="the-list">
-            <?php
-            if (!isset($api) || !isset($api->info['results']) || $api->info['results'] == 0) {
-                ?>
-            <tr class="no-items">
-                <td class="colspanchange" colspan="4"><?php _e('No plugins match your request.','mainwp'); ?></td>
-            </tr>
-                <?php
-            } else {
-                foreach ($api->plugins as $plugin) {
-                    $author = $plugin->author;
-                    if (!empty($author))
-                        $author = ' ' . sprintf(__('By %s'), $author) . '.';
-
-                    //Limit description to 400char, and remove any HTML.
-                    $description = strip_tags($plugin->description);
-
-                    if (strlen($description) > 400)
-                        $description = mb_substr($description, 0, 400) . '&#8230;';
-                    //remove any trailing entities
-                    $description = preg_replace('/&[^;\s]{0,6}$/', '', $description);
-                    //strip leading/trailing & multiple consecutive lines
-                    $description = trim($description);
-                    $description = preg_replace("|(\r?\n)+|", "\n", $description);
-                    //\n => <br>
-                    $description = nl2br($description);
-                    ?>
-                <tr>
-                    <td class="name column-name"><strong><?php echo $plugin->name; ?></strong>
-
-                        <div class="action-links"><a
-                                href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin='.$plugin->slug.'&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-                                class="thickbox" title="More information about <?php echo $plugin->name; ?>"><?php _e('Details','mainwp'); ?></a> |
-                            <a class="install-now" href="#" id="install-plugin-<?php echo $plugin->slug; ?>"
-                               title="Install <?php echo $plugin->name; ?>  <?php echo $plugin->version; ?>"><?php _e('Install Now','mainwp'); ?></a>
-                            <?php do_action('mainwp_installplugins_extra_links', $plugin); ?>
-                        </div>
-                    </td>
-                    <td class="vers column-version"><?php echo $plugin->version; ?></td>
-                    <td class="vers column-rating">
-                        <?php
-                        if (function_exists('wp_star_rating'))
-                        {
-                            wp_star_rating(array('rating' => esc_attr($plugin->rating), 'type' => 'percent', 'number' => $plugin->num_ratings));
-                        }
-                        else
-                        {
-                        ?>
-
-                        <div class="legacy-star-holder star-holder" title="(based on <?php echo $plugin->num_ratings; ?> rating<?php
-                            if ($plugin->num_ratings > 1) {
-                                echo 's';
-                            }
-                            ?>)">
-                            <div class="legacy-star legacy-star-rating star star-rating"
-                                 style="width: <?php echo esc_attr($plugin->rating) ?>px"></div>
-                        </div>
-                        <?php
-                        }
-                        ?>
-                    </td>
-                    <td class="desc column-description"><?php echo $description, $author; ?></td>
-                </tr>
-                    <?php
-                }
-            }
-            ?>
-        </tbody>
-    </table>
-    <?php
-        die();
-    }
-
-	public static function renderFound($api)
-	{
-	?>
-		<div class="wp-list-table widefat plugin-install">
-
-			<div id="the-list">
-				 <?php
-            if (!isset($api) || !isset($api->info['results']) || $api->info['results'] == 0) {
-                ?>
-                <p><?php _e('No plugins match your request.','mainwp'); ?></p>
-                <?php
-            } else {
-				$plugins_allowedtags = array(
-					'a' => array( 'href' => array(),'title' => array(), 'target' => array() ),
-					'abbr' => array( 'title' => array() ),'acronym' => array( 'title' => array() ),
-					'code' => array(), 'pre' => array(), 'em' => array(),'strong' => array(),
-					'ul' => array(), 'ol' => array(), 'li' => array(), 'p' => array(), 'br' => array()
-				);
-
-				$plugins_group_titles = array(
-					'Performance' => _x( 'Performance', 'Plugin installer group title' ),
-					'Social'      => _x( 'Social',      'Plugin installer group title' ),
-					'Tools'       => _x( 'Tools',       'Plugin installer group title' ),
-				);
-	
-				foreach ( (array) $api->plugins as $plugin ) {
-					if ( is_object( $plugin ) ) {
-						$plugin = (array) $plugin;
-					}
-
-					// Display the group heading if there is one
-					if ( isset( $plugin['group'] ) && $plugin['group'] != $group ) {
-						if ( isset( $this->groups[ $plugin['group'] ] ) ) {
-							$group_name = $this->groups[ $plugin['group'] ];
-							if ( isset( $plugins_group_titles[ $group_name ] ) ) {
-								$group_name = $plugins_group_titles[ $group_name ];
-							}
-						} else {
-							$group_name = $plugin['group'];
-						}
-
-						// Starting a new group, close off the divs of the last one
-						if ( ! empty( $group ) ) {
-							echo '</div></div>';
-						}
-
-						echo '<div class="plugin-group"><h3>' . esc_html( $group_name ) . '</h3>';
-						// needs an extra wrapping div for nth-child selectors to work
-						echo '<div class="plugin-items">';
-
-						$group = $plugin['group'];
-					}
-
-					$title = wp_kses( $plugin['name'], $plugins_allowedtags );
-
-					// Remove any HTML from the description.
-					$description = strip_tags( $plugin['short_description'] );
-					$version = wp_kses( $plugin['version'], $plugins_allowedtags );
-
-					$name = strip_tags( $title . ' ' . $version );
-
-					$author = wp_kses( $plugin['author'], $plugins_allowedtags );
-					if ( ! empty( $author ) ) {
-						$author = ' <cite>' . sprintf( __( 'By %s' ), $author ) . '</cite>';
-					}
-
-					$action_links = array();
-
-					$action_links[] = '<a class="install-now button" href="#" id="install-plugin-' . $plugin['slug'] . '"
-                               title="Install ' . $plugin['name'] . '  ' . $plugin['version'] . '">' . __('Install Now','mainwp') . '</a>';
-			
-					$details_link   = self_admin_url( 'plugin-install.php?tab=plugin-information&amp;plugin=' . $plugin['slug'] .
-										'&amp;TB_iframe=true&amp;width=600&amp;height=550' );
-
-					/* translators: 1: Plugin name and version. */
-					$action_links[] = '<a href="' . esc_url( $details_link ) . '" class="thickbox" aria-label="' . esc_attr( sprintf( __( 'More information about %s' ), $name ) ) . '" data-title="' . esc_attr( $name ) . '">' . __( 'More Details' ) . '</a>';
-
-					if ( !empty( $plugin['icons']['svg'] ) ) {
-						$plugin_icon_url = $plugin['icons']['svg'];
-					} elseif ( !empty( $plugin['icons']['2x'] ) ) {
-						$plugin_icon_url = $plugin['icons']['2x'];
-					} elseif ( !empty( $plugin['icons']['1x'] ) ) {
-						$plugin_icon_url = $plugin['icons']['1x'];
-					} else {
-						$plugin_icon_url = $plugin['icons']['default'];
-					}
-
-					/**
-					 * Filter the install action links for a plugin.
-					 *
-					 * @since 2.7.0
-					 *
-					 * @param array $action_links An array of plugin action hyperlinks. Defaults are links to Details and Install Now.
-					 * @param array $plugin       The plugin currently being listed.
-					 */
-					$action_links = apply_filters( 'plugin_install_action_links', $action_links, $plugin );
-
-					$date_format = __( 'M j, Y @ H:i' );
-					$last_updated_timestamp = strtotime( $plugin['last_updated'] );
-				?>
-				<div class="plugin-card plugin-card-<?php echo sanitize_html_class( $plugin['slug'] ); ?>">
-					<div class="plugin-card-top">
-						<a href="<?php echo esc_url( $details_link ); ?>" class="thickbox plugin-icon"><img src="<?php echo esc_attr( $plugin_icon_url ) ?>" /></a>
-						<div class="name column-name">
-							<h4><a href="<?php echo esc_url( $details_link ); ?>" class="thickbox"><?php echo $title; ?></a></h4>
-						</div>
-						<div class="action-links">
-							<?php
-								if ( $action_links ) {
-									echo '<ul class="plugin-action-buttons"><li>' . implode( '</li><li>', $action_links ) . '</li></ul>';
-								}								
-//								do_action('mainwp_installplugins_extra_links', $plugin); 
-							?>
-						</div>
-						<div class="desc column-description">
-							<p><?php echo $description; ?></p>
-							<p class="authors"><?php echo $author; ?></p>
-						</div>
-					</div>
-					<div class="plugin-card-bottom">
-						<div class="vers column-rating">
-							<?php wp_star_rating( array( 'rating' => $plugin['rating'], 'type' => 'percent', 'number' => $plugin['num_ratings'] ) ); ?>
-							<span class="num-ratings">(<?php echo number_format_i18n( $plugin['num_ratings'] ); ?>)</span>
-						</div>
-						<div class="column-updated">
-							<strong><?php _e( 'Last Updated:' ); ?></strong> <span title="<?php echo esc_attr( date_i18n( $date_format, $last_updated_timestamp ) ); ?>">
-								<?php printf( __( '%s ago' ), human_time_diff( $last_updated_timestamp ) ); ?>
-							</span>
-						</div>
-						<div class="column-downloaded">
-							<?php
-							if ( $plugin['active_installs'] >= 1000000 ) {
-								$active_installs_text = _x( '1+ Million', 'Active plugin installs' );
-							} else {
-								$active_installs_text = number_format_i18n( $plugin['active_installs'] ) . '+';
-							}
-							printf( __( '%s Active Installs' ), $active_installs_text );
-							?>
-						</div>
-						<div class="column-compatibility">
-							<?php
-							if ( ! empty( $plugin['tested'] ) && version_compare( substr( $GLOBALS['wp_version'], 0, strlen( $plugin['tested'] ) ), $plugin['tested'], '>' ) ) {
-								echo '<span class="compatibility-untested">' . __( 'Untested with your version of WordPress' ) . '</span>';
-							} elseif ( ! empty( $plugin['requires'] ) && version_compare( substr( $GLOBALS['wp_version'], 0, strlen( $plugin['requires'] ) ), $plugin['requires'], '<' ) ) {
-								echo '<span class="compatibility-incompatible">' . __( '<strong>Incompatible</strong> with your version of WordPress' ) . '</span>';
-							} else {
-								echo '<span class="compatibility-compatible">' . __( '<strong>Compatible</strong> with your version of WordPress' ) . '</span>';
-							}
-							?>
-						</div>
-					</div>
-				</div>
-				<?php
-				}		
-				
-				// Close off the group divs of the last one
-				if ( ! empty( $group ) ) {
-					echo '</div></div>';
-				}
-				
-				$favorites_callback = apply_filters('mainwp_favorites_links_onaction_callback', '');				
-				if (!empty($favorites_callback)) {
-					?>
-					<script>
-						jQuery(document).ready(function () {
-							<?php echo $favorites_callback.'()'; ?>
-						});
-					</script>
-					<?php				
-				}				
-            }
-            ?>
+			<div class="mainwp_config_box_right stick-to-window">
+				<?php MainWPUI::select_sites_box() ?>
 			</div>
-		</div>
-		<div style="clear: both">&nbsp;</div>
-		<?php
-		die();
+			<div class="mainwp_config_box_left">
+				<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
+				<div class="mainwp-upload-plugin">
+					<?php MainWPInstallBulk::renderUpload('Plugins'); ?>
+				</div>				
+				<div class="mainwp-browse-plugins">				
+					<?php
+					
+						self::$pluginsTable->views();
+					?>	
+					<br />&nbsp;&nbsp;<input type="checkbox" value="1" checked id="chk_activate_plugin" /> <label for="chk_activate_plugin"><?php _e('Activate plugin after installation','mainwp'); ?></label>
+					<br />&nbsp;&nbsp;<input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite existing', 'mainwp'); ?></label><br/>
+					<br class="clear" />
+					<form id="plugin-filter" method="post">
+						<?php self::$pluginsTable->display(); ?>
+					</form>						
+				</div>
+				<br class="clear" />
+			</div>
+		
+		<script type="text/javascript">
+			mainwp_install_set_install_links();
+		</script>	
+		
+		<?php		
+		if(!empty($favoritesCallback)) {
+		?>
+		<script type="text/javascript">
+				jQuery(document).ready(function () {
+					<?php echo $favoritesCallback.'()'; ?>
+				});
+			</script>			
+		<?php	
+		}			
 	}
-			  
+		  
     public static function renderAutoUpdate()
     {
         $cachedAUSearch = null;
@@ -1092,6 +886,37 @@ class MainWPPlugins
         self::renderFooter('AutoUpdate');
     }
 
+		
+	public static function install_search_form( $type_selector = true ) {
+		$type = isset($_REQUEST['type']) ? wp_unslash( $_REQUEST['type'] ) : 'term';
+		$term = isset($_REQUEST['s']) ? wp_unslash( $_REQUEST['s'] ) : '';
+		$input_attrs = '';
+		$button_type = 'button screen-reader-text';
+
+		// assume no $type_selector means it's a simplified search form
+		if ( ! $type_selector ) {
+			$input_attrs = 'class="wp-filter-search" placeholder="' . esc_attr__( 'Search Plugins' ) . '" ';
+		}
+
+		?><form class="search-form search-plugins" method="get" action="<?php echo admin_url("admin.php?page=PluginsInstall"); ?>">
+			<input type="hidden" name="tab" value="search" />
+			<input type="hidden" name="page" value="PluginsInstall" />
+			<?php if ( $type_selector ) : ?>
+			<select name="type" id="typeselector">
+				<option value="term"<?php selected('term', $type) ?>><?php _e('Keyword'); ?></option>
+				<option value="author"<?php selected('author', $type) ?>><?php _e('Author'); ?></option>
+				<option value="tag"<?php selected('tag', $type) ?>><?php _ex('Tag', 'Plugin Installer'); ?></option>
+			</select>
+			<?php endif; ?>
+			<label><span class="screen-reader-text"><?php _e('Search Plugins'); ?></span>
+				<input type="search" name="s" value="<?php echo esc_attr($term) ?>" <?php echo $input_attrs; ?>/>
+			</label>
+			<?php submit_button( __( 'Search Plugins' ), $button_type, false, false, array( 'id' => 'search-submit' ) ); ?>
+		</form>		
+		<?php
+	}
+
+	
     public static function ignorePluginThemeConflict($type, $name, $siteid)
     {
         if (MainWPUtility::ctype_digit($siteid))

@@ -104,7 +104,7 @@ class MainWPUtility
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);		
         curl_setopt($ch, CURLOPT_USERAGENT, $agent);
         if (!empty($http_user) && !empty($http_pass)) curl_setopt($ch, CURLOPT_USERPWD, "$http_user:$http_pass");
         

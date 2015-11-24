@@ -764,11 +764,16 @@ class MainWPThemes
 
         self::renderHeader('Install');
 		//MainWPInstallBulk::render('Themes', 'theme');		
-		self::renderInstallBody($favorites_callback);        
+		self::renderThemesTable($favorites_callback);        
         self::renderFooter('Install');
     }
 	
-	public function renderInstallBody($favoritesCallback = '') {		
+	public static function renderThemesTable($favoritesCallback = '') {	
+		if (!mainwp_current_user_can("dashboard", "install_themes")) {
+            mainwp_do_not_have_permissions("install themes");
+            return;
+        }
+		
 	?>	
 		<a href="#" class="mainwp_action left mainwp_action_down browse-themes" ><?php _e('Search','mainwp'); ?></a><a href="#" class="mainwp_action right upload" ><?php _e('Upload','mainwp'); ?></a>
 		<br class="clear" /><br />
@@ -917,109 +922,8 @@ class MainWPThemes
     {		
         MainWPInstallBulk::performSearch(MainWPThemes::getClassName(), 'Themes');
     }
-
-    public static function renderFound($api)
-    {
-        global $themes_allowedtags;
-        ?>
-    <div id="mainwp_availablethemes">
-        <?php
-        $themes = $api->themes;
-        $rows = ceil(count($themes) / 2);
-        $table = array();
-        $theme_keys = array_keys($themes);
-        for ($row = 1; $row <= $rows; $row++)
-            for ($col = 1; $col <= 3; $col++)
-                $table[$row][$col] = array_shift($theme_keys);
-
-        foreach ($table as $row => $cols) {
-            foreach ($cols as $col => $theme_index) {
-                $class = array('available-theme');
-                if ($row == 1) {
-                    $class[] = 'top';
-                }
-                if ($col == 1) {
-                    $class[] = 'left';
-                }
-                if ($row == $rows) {
-                    $class[] = 'bottom';
-                }
-                if ($col == 3) {
-                    $class[] = 'right';
-                }
-                ?>
-                <div class="<?php echo join(' ', $class); ?>">
-                    <?php
-                    if (isset($themes[$theme_index])) {
-                        $theme = $themes[$theme_index];
-                        $name = wp_kses($theme->name, $themes_allowedtags);
-                        $desc = wp_kses($theme->description, $themes_allowedtags);
-                        $preview_link = $theme->preview_url . '?TB_iframe=true&amp;width=600&amp;height=400';
-                        ?>
-
-                        <a class='thickbox thickbox-preview screenshot' href='<?php echo esc_url($preview_link); ?>'
-                           target="_blank" title='Preview <?php echo $name; ?>'>
-                            <img src='<?php echo esc_url($theme->screenshot_url); ?>'/>
-                        </a>
-                        <h3><?php echo $name; ?></h3>
-                        <span class='action-links'>
-
-                                    <a href="" class="thickbox thickbox-preview onclick"
-                                       id="install-theme-<?php echo $theme->slug; ?>" title="Install '<?php echo $name; ?>'">Install</a> |
-                                    <a href="<?php echo $preview_link; ?>" target="_blank"
-                                       class="thickbox thickbox-preview onclick previewlink"
-                                       title="Preview '<?php echo $name; ?>'">Preview</a>
-                                        <?php //do_action("mainwp_installthemes_extra_links", $theme); ?>
-                                </span>
-                        <p><?php echo $desc; ?></p>
-
-                        <div class="themedetaildiv hide-if-js" style="display: block;">
-                            <p>
-                                <strong><?php _e('Version:') ?></strong> <?php echo wp_kses($theme->version, $themes_allowedtags) ?>
-                            </p>
-
-                            <p>
-                                <strong><?php _e('Author:') ?></strong> <?php echo wp_kses($theme->author, $themes_allowedtags) ?>
-                            </p>
-                            <?php if (!empty($theme->last_updated)) : ?>
-                            <p><strong><?php _e('Last Updated:') ?></strong> <span
-                                    title="<?php echo $theme->last_updated ?>"><?php printf(__('%s ago'), human_time_diff(strtotime($theme->last_updated))) ?></span>
-                            </p>
-                            <?php endif;
-                            if (!empty($theme->requires)) : ?>
-                                <p>
-                                    <strong><?php _e('Requires WordPress Version:') ?></strong> <?php printf(__('%s or higher'), $theme->requires) ?>
-                                </p>
-                                <?php endif;
-                            if (!empty($theme->tested)) : ?>
-                                <p><strong><?php _e('Compatible up to:') ?></strong> <?php echo $theme->tested ?></p>
-                                <?php endif;
-                            if (!empty($theme->downloaded)) : ?>
-                                <p>
-                                    <strong><?php _e('Downloaded:') ?></strong> <?php printf(_n('%s time', '%s times', $theme->downloaded), number_format_i18n($theme->downloaded)) ?>
-                                </p>
-                                <?php endif; ?>
-                            <div class="star-holder"
-                                 title="<?php printf(_n('(based on %s rating)', '(based on %s ratings)', $theme->num_ratings), number_format_i18n($theme->num_ratings)) ?>">
-                                <div class="star star-rating"
-                                     style="width: <?php echo esc_attr($theme->rating) ?>px"></div>
-                            </div>
-                        </div>
-
-                        <?php
-                    }
-                    ?>
-                </div>
-                <?php
-            } // end foreach $cols
-        }
-        ?>
-    </div>
-    <?php
-        die();
-    }
-
 	
+		
     public static function renderAutoUpdate()
     {
         $cachedThemesSearch = null;

@@ -3723,11 +3723,17 @@ mainwp_import_users = function () {
  * InstallPlugins/Themes
  */
 jQuery(document).ready(function () {
-    jQuery('#MainWPInstallBulkNavSearch').live('click', function (event) {
-        return mainwp_install_nav(event, 'search');
+    jQuery('#MainWPInstallBulkNavSearch').live('click', function (event) {        
+        event.preventDefault();
+        jQuery( 'body' ).removeClass( 'show-upload-plugin' );        
+        jQuery( '#MainWPInstallBulkNavUpload' ).removeClass('mainwp_action_down');
+        jQuery(this).addClass('mainwp_action_down');        
     });
-    jQuery('#MainWPInstallBulkNavUpload').live('click', function (event) {
-        return mainwp_install_nav(event, 'upload');
+    jQuery('#MainWPInstallBulkNavUpload').live('click', function (event) {            
+        event.preventDefault();
+        jQuery( 'body' ).addClass( 'show-upload-plugin' );
+        jQuery( '#MainWPInstallBulkNavSearch' ).removeClass('mainwp_action_down');
+        jQuery(this).addClass('mainwp_action_down');        
     });
     jQuery('.filter-links li.plugin-install a').live('click', function (event) {
         event.preventDefault();
@@ -3743,93 +3749,6 @@ jQuery(document).ready(function () {
         }
     });
 });
-mainwp_install_nav = function (ev, what) {
-    var params = getUrlParameters();
-    var data = {
-        action:'mainwp_installbulknav' + what,
-        page:params['page']
-    };
-    jQuery.post(ajaxurl, data, function (response) {
-        response = jQuery.trim(response);
-        if (what == 'upload') {
-            jQuery('#MainWPInstallBulkNavSearch').removeClass('mainwp_action_down');
-            jQuery('#MainWPInstallBulkNavUpload').addClass('mainwp_action_down');
-        }
-        else {
-            jQuery('#MainWPInstallBulkNavUpload').removeClass('mainwp_action_down');
-            jQuery('#MainWPInstallBulkNavSearch').addClass('mainwp_action_down');
-        }
-        jQuery('#MainWPInstallBulkAjax').html(response);
-    });
-    return false;
-};
-mainwp_install_prev = function (ev) {
-    newp = parseInt(jQuery('#MainWPInstallBulkPage').html()) - 1;
-    if (newp > 0) {
-        jQuery('#MainWPInstallBulkStatus').html(__('Loading previous page..'));
-        jQuery('#MainWPInstallBulkStatusExtra').css('display', 'inline-block');
-        mainwp_install_searchhelp(jQuery('#mainwp_installbulk_s').val(), jQuery('#mainwp_installbulk_typeselector').val(), newp);
-    }
-    return false;
-};
-mainwp_install_next = function (ev) {
-    newp = parseInt(jQuery('#MainWPInstallBulkPage').html()) + 1;
-    maxp = parseInt(jQuery('#MainWPInstallBulkPages').html());
-    if (newp <= maxp) {
-        jQuery('#MainWPInstallBulkStatus').html(__('Loading next page...'));
-        jQuery('#MainWPInstallBulkStatusExtra').css('display', 'inline-block');
-        mainwp_install_searchhelp(jQuery('#mainwp_installbulk_s').val(), jQuery('#mainwp_installbulk_typeselector').val(), newp);
-    }
-    return false;
-};
-mainwp_install_plugin_tab_search = function (in_s) {
-    jQuery('#MainWPInstallBulkStatus').html(__('Searching the Wordpress repository...'));
-    jQuery('#MainWPInstallBulkStatusExtra').css('display', 'inline-block');
-    mainwp_install_searchhelp(in_s, jQuery('#mainwp_installbulk_typeselector').val(), 1);
-    return false;
-};
-
-mainwp_install_search = function (ev) {
-    jQuery('#MainWPInstallBulkStatus').html(__('Searching the Wordpress repository...'));
-    jQuery('#MainWPInstallBulkStatusExtra').css('display', 'inline-block');
-    jQuery('.filter-links li.plugin-install a').removeClass('current');
-    jQuery('.filter-links #tab_search a').addClass('current');        
-    jQuery('#mainwp_installbulk_tab').val('search');
-    mainwp_install_searchhelp(jQuery('#mainwp_installbulk_s').val(), jQuery('#mainwp_installbulk_typeselector').val(), 1);
-    return false;
-};
-mainwp_install_searchhelp = function (in_s, in_type, in_currpage) {
-    var params = getUrlParameters();
-    var data = {
-        action:'mainwp_installbulksearch',
-        s:in_s,
-        type:in_type,
-        currpage:in_currpage,
-        page:params['page'],
-        tab: jQuery('#mainwp_installbulk_tab').val()
-    };
-    jQuery.post(ajaxurl, data, function (response) {
-        response = jQuery.trim(response);
-        jQuery('#MainWPInstallBulkStatus').html('');
-        jQuery('#MainWPInstallBulkStatusExtra').css('display', 'none');
-        if (splitted = /^([0-9]+) ([0-9]+) ([0-9]+) ([\s\S]*)/.exec(response)) {
-            if (splitted[3] == 0) {
-                jQuery('#MainWPInstallBulkSearchAjax').html(splitted[4]);
-                jQuery('#MainWPInstallBulkNav').css('display', 'none');
-                jQuery('#MainWPInstallBulkPage').html(0);
-            }
-            else {
-                jQuery('#MainWPInstallBulkPage').html(splitted[1]);
-                jQuery('#MainWPInstallBulkPages').html(splitted[2]);
-                jQuery('#MainWPInstallBulkResults').html(splitted[3] + ' items');
-                jQuery('#MainWPInstallBulkSearchAjax').html(splitted[4]);
-                jQuery('#MainWPInstallBulkNav').css('display', 'inline-block');
-            }
-            mainwp_install_set_install_links();
-        }
-    });
-    return false;
-};
 mainwp_install_set_install_links = function (event) {
     jQuery('a[id^="install-"]').each(function (index, value) {
         if (divId = /^install-([^\-]*)-(.*)$/.exec(value.id)) {

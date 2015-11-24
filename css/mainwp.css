@@ -2845,3 +2845,10 @@ body.show-upload-theme .mainwp_config_box_left .theme-browser {
     font-weight: lighter;
     font-style: italic;
 }
+
+.mainwp-upload-plugin, body.show-upload-plugin .mainwp-browse-plugins {
+    display: none;
+}
+body.show-upload-plugin .mainwp-upload-plugin {
+    display: block;
+}

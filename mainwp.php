@@ -27,7 +27,7 @@ if (!function_exists('mainwp_autoload'))
     function mainwp_autoload($class_name)
     {
         $allowedLoadingTypes = array('class', 'page', 'view', 'widget', 'table');
-
+		
         foreach ($allowedLoadingTypes as $allowedLoadingType)
         {
             $class_file = WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . str_replace(basename(__FILE__), '', plugin_basename(__FILE__)) . $allowedLoadingType . DIRECTORY_SEPARATOR . $class_name . '.' . $allowedLoadingType . '.php';

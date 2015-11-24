@@ -12,7 +12,7 @@ class MainWPManageSites
     public static $sitesTable;
 
     public static function init()
-    {
+    {		
         add_action('mainwp-pageheader-sites', array(MainWPManageSites::getClassName(), 'renderHeader'));
         add_action('mainwp-pagefooter-sites', array(MainWPManageSites::getClassName(), 'renderFooter'));
 
@@ -30,10 +30,10 @@ class MainWPManageSites
     }
 
     public static function initMenu()
-    {
-        self::$page = MainWPManageSitesView::initMenu();
-        add_submenu_page('mainwp_tab', __('Sites Help','mainwp'), '<div class="mainwp-hidden">' . __('Sites Help','mainwp') . '</div>', 'read', 'SitesHelp', array(MainWPManageSites::getClassName(), 'QSGManageSites'));
-
+    {		
+		self::$page = MainWPManageSitesView::initMenu();
+        add_submenu_page('mainwp_tab', __('Sites Help','mainwp'), '<div class="mainwp-hidden">' . __('Sites Help','mainwp') . '</div>', 'read', 'SitesHelp', array(MainWPManageSites::getClassName(), 'QSGManageSites'));		
+		
         if (isset($_REQUEST['dashboard']))
         {
             global $current_user;
@@ -1454,7 +1454,7 @@ class MainWPManageSites
     }
 
     public static function add_options()
-    {
+    {		
         $option = 'per_page';
         $args = array(
             'label' => MainWPManageSitesView::sitesPerPage(),

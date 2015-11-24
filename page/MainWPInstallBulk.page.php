@@ -33,65 +33,7 @@ class MainWPInstallBulk
             }
         }
     }
-
-    //Renders the main page in the WP admin part
-    public static function render($title, $type = "plugin")
-    {
-        if (($type == "plugin" && !mainwp_current_user_can("dashboard", "install_plugins")) ||
-            ($type == "theme" && !mainwp_current_user_can("dashboard", "install_themes"))) {
-            mainwp_do_not_have_permissions("install plugins");
-            return;
-        }
-
-        $tab = 'search';
-        if (isset($_REQUEST['tab'])) {
-            $tab = $_REQUEST['tab'];
-        }
-
-        ?>
-            <?php
-            if ($tab == 'install') {
-
-            } else {
-                ?>
-                <a href="#" class="mainwp_action left <?php if ($tab == 'search') { echo 'mainwp_action_down'; } ?>" id="MainWPInstallBulkNavSearch"><?php _e('Search','mainwp'); ?></a><a href="#" class="mainwp_action right <?php if ($tab == 'upload') { echo 'mainwp_action_down'; } ?>" id="MainWPInstallBulkNavUpload"><?php _e('Upload','mainwp'); ?></a>
-
-
-                <br class="clear" /><br />
-                <form method="POST" action="">
-                    <div class="mainwp_config_box_right stick-to-window">
-<!--                    <div>-->
-                        <?php MainWPUI::select_sites_box() ?>
-                  	</div>
-                        <div class="mainwp_config_box_left">
-               	 	<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
-                    <div id="MainWPInstallBulkAjax">
-                        <?php
-                        switch ($tab) {
-                            case 'search':
-                                MainWPInstallBulk::renderSearch($title);
-                                break;
-                            case 'upload':
-                                MainWPInstallBulk::renderUpload($title);
-                                break;
-                            default:
-                                MainWPInstallBulk::renderSearch($title);
-                        }
-                        ?>
-                    </div>
-                   	</div>
-                </form>
-                <?php
-            }
-            ?>
-            <div id="MainWPInstallBulkNew" style="display: none">
-                <br />
-                <a href="<?php echo get_admin_url() ?>admin.php?page=<?php echo $title; ?>Install" class="add-new-h2" target="_top"><?php _e('Add New','mainwp'); ?></a>
-                <a href="<?php echo get_admin_url() ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php _e('Return to Dashboard','mainwp'); ?></a>
-            </div>
-        <?php
-    }
-
+	
     public static function renderSearch($title) {
         ?>
         <div class="postbox">
@@ -187,75 +129,7 @@ class MainWPInstallBulk
         </div>
         <?php
     }
-
-    public static function performSearch($class, $title) {
-        if (isset($_POST['s'])) {
-            $page = 1;
-            if (isset($_POST['currpage'])) {
-                $page = $_POST['currpage'];
-            }
-           
-			include_once(ABSPATH . '/wp-admin/includes/plugin-install.php');
-			
-			$args = array(
-				'page' => $page,
-				'per_page' => 30,
-				'fields' => array(
-					'last_updated' => true,
-					'icons' => true,
-					'active_installs' => true
-				),
-				// Send the locale and installed plugin slugs to the API so it can provide context-sensitive results.
-				'locale' => get_locale()				
-			);
-            
-			$tab = isset($_POST['tab']) ? $_POST['tab'] : 'search';			
-			
-			switch ($tab) {
-				case 'search':
-					$type = isset( $_REQUEST['type'] ) ? wp_unslash( $_REQUEST['type'] ) : 'term';
-					$term = isset( $_REQUEST['s'] ) ? wp_unslash( $_REQUEST['s'] ) : '';
-
-					switch ( $type ) {
-						case 'tag':
-							$args['tag'] = sanitize_title_with_dashes( $term );
-							break;
-						case 'term':
-							$args['search'] = $term;
-							break;
-						case 'author':
-							$args['author'] = $term;
-							break;
-					}
-
-					break;
-				case 'featured':
-					$args['fields']['group'] = true;				
-					// No break!
-				case 'popular':
-				case 'new':
-				case 'beta':
-				case 'recommended':
-					$args['browse'] = $tab;
-					break;
-			}
-			
-            if ($title == 'Plugins') {
-                $api = plugins_api('query_plugins', $args);
-            } else {
-                $api = themes_api('query_themes', $args);
-            }
-        }
-        if (!isset($api) || !isset($api->info['results']) || $api->info['results'] == 0) {
-            echo '0 0 0 ';
-        } else {
-            echo $api->info['page'] . ' ' . $api->info['pages'] . ' ' . $api->info['results'] .' ';
-        }
-
-       // do_action("mainwp_search_plugin_theme_results");
-        call_user_func(array($class, 'renderFound'), $api);
-    }
-
+	
     public static function prepareInstall() {
         include_once(ABSPATH . '/wp-admin/includes/plugin-install.php');
 

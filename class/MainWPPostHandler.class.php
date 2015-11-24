@@ -48,9 +48,6 @@ class MainWPPostHandler
         $this->addAction('mainwp_group_updategroup', array(&$this, 'mainwp_group_updategroup'));
 
         //Page: InstallPlugins/Themes
-        add_action('wp_ajax_mainwp_installbulksearch', array(&$this, 'mainwp_installbulksearch')); //ok
-        add_action('wp_ajax_mainwp_installbulknavsearch', array(&$this, 'mainwp_installbulknavsearch')); //ok
-        add_action('wp_ajax_mainwp_installbulknavupload', array(&$this, 'mainwp_installbulknavupload')); //ok
         add_action('wp_ajax_mainwp_preparebulkinstallplugintheme', array(&$this, 'mainwp_preparebulkinstallplugintheme')); //ok
         $this->addAction('mainwp_installbulkinstallplugintheme', array(&$this, 'mainwp_installbulkinstallplugintheme'));
         add_action('wp_ajax_mainwp_preparebulkuploadplugintheme', array(&$this, 'mainwp_preparebulkuploadplugintheme')); //ok
@@ -965,63 +962,6 @@ class MainWPPostHandler
 
         MainWPUser::doImport();
     }
-
-    /*
-    * Page: InstallPlugins/Themes
-    */
-
-    function mainwp_installbulksearch()
-    {
-        $this->secure_request();
-
-        if ($_REQUEST['page'] == 'PluginsInstall')
-        {
-            MainWPPlugins::performSearch();
-        }
-        else
-        {
-            MainWPThemes::performSearch();
-        }
-    }
-
-    function mainwp_installbulknavsearch()
-    {
-        $this->secure_request();
-
-        if ($_REQUEST['page'] == 'PluginsInstall')
-        {
-            if (mainwp_current_user_can("dashboard", "install_plugins")) {
-                MainWPInstallBulk::renderSearch('Plugins');
-            } else {
-                mainwp_do_not_have_permissions("plugins install");
-            }
-        }
-        else
-        {
-            if (mainwp_current_user_can("dashboard", "install_themes")) {
-                MainWPInstallBulk::renderSearch('Themes');
-            } else {
-                mainwp_do_not_have_permissions("themes install");
-            }
-        }
-        die();
-    }
-
-    function mainwp_installbulknavupload()
-    {
-        $this->secure_request();
-
-        if ($_REQUEST['page'] == 'PluginsInstall')
-        {
-            MainWPInstallBulk::renderUpload('Plugins');
-        }
-        else
-        {
-            MainWPInstallBulk::renderUpload('Themes');
-        }
-        die();
-    }
-
     function mainwp_preparebulkinstallplugintheme()
     {
         $this->secure_request();

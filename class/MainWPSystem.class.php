@@ -69,7 +69,7 @@ class MainWPSystem
         $this->slug = str_replace('.php', '', $t2);
 
         $this->apiStatus = MainWPAPISettings::testAPIs('main');
-
+		
         if (is_admin()) {
             include_once(ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php'); //Version information from wordpress
             $pluginData = get_plugin_data($mainwp_plugin_file);
@@ -97,7 +97,7 @@ class MainWPSystem
         {   
             add_filter( 'http_request_args', array(MainWPExtensions::getClassName(), 'noSSLFilterExtensionUpgrade'), 99, 2);
         }
-        
+
         MainWPExtensions::init();
 
         add_action('in_plugin_update_message-'.$this->plugin_slug, array($this, 'in_plugin_update_message'), 10, 2);
@@ -116,7 +116,7 @@ class MainWPSystem
         MainWPMain::get(); //init main dashboard
 
         MainWPManageSites::init();
-        new MainWPHooks(); //Init the hooks
+        new MainWPHooks(); //Init the hooks		
 
         //Change menu & widgets
         add_action('admin_menu', array(&$this, 'new_menus'));

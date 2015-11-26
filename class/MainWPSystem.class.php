@@ -14,7 +14,7 @@ class MainWPSystem
 {
     //Singleton
     private static $instance = null;
-    private $apiStatus;
+    
 
     private $upgradeVersionInfo;
     private $posthandler;
@@ -47,17 +47,7 @@ class MainWPSystem
         return self::$instance;
     }
 
-    public function getAPIStatus()
-    {
-        return $this->apiStatus;
-    }
-
-    public function isAPIValid()
-    {
-        return $this->apiStatus == MAINWP_API_VALID;
-    }
-
-    public function __construct($mainwp_plugin_file)
+	public function __construct($mainwp_plugin_file)
     {
         if ( !defined( 'MAINWP_VERSION' ) )
             define( 'MAINWP_VERSION', $this->current_version);
@@ -68,7 +58,6 @@ class MainWPSystem
         list ($t1, $t2) = explode('/', $this->plugin_slug);
         $this->slug = str_replace('.php', '', $t2);
 
-        $this->apiStatus = MainWPAPISettings::testAPIs('main');
 		
         if (is_admin()) {
             include_once(ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php'); //Version information from wordpress
@@ -171,8 +160,7 @@ class MainWPSystem
         add_action('mainwp_cronofflinecheck_action', array($this, 'mainwp_cronofflinecheck_action'));
         add_action('mainwp_cronstats_action', array($this, 'mainwp_cronstats_action'));
         add_action('mainwp_cronbackups_action', array($this, 'mainwp_cronbackups_action'));
-        add_action('mainwp_cronbackups_continue_action', array($this, 'mainwp_cronbackups_continue_action'));
-        add_action('mainwp_cronconflicts_action', array($this, 'mainwp_cronconflicts_action'));
+        add_action('mainwp_cronbackups_continue_action', array($this, 'mainwp_cronbackups_continue_action'));        
         add_action('mainwp_cronupdatescheck_action', array($this, 'mainwp_cronupdatescheck_action'));
         add_action('mainwp_cronpingchilds_action', array($this, 'mainwp_cronpingchilds_action'));
 
@@ -216,15 +204,6 @@ class MainWPSystem
             if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronbackups_continue_action');
         }
 
-        if (($sched = wp_next_scheduled('mainwp_cronconflicts_action')) == false)
-        {
-            if ($useWPCron) wp_schedule_event(time(), 'twicedaily', 'mainwp_cronconflicts_action');
-        }
-        else
-        {
-            if (!$useWPCron) wp_unschedule_event($sched, 'mainwp_cronconflicts_action');
-        }
-
         if (($sched = wp_next_scheduled('mainwp_cronremotedestinationcheck_action')) != false) {
             wp_unschedule_event($sched, 'mainwp_cronremotedestinationcheck_action');
         }
@@ -250,8 +229,7 @@ class MainWPSystem
         add_action('plugin_action_links_' . $this->plugin_slug, array(&$this, 'plugin_action_links'));
         add_action('admin_notices', array(&$this, 'admin_notices'));
 
-        add_filter('mainwp-activated-check', array(&$this, 'activated_check'));
-        add_filter('mainwp-activated-sub-check', array(&$this, 'activated_sub_check'));
+        add_filter('mainwp-activated-check', array(&$this, 'activated_check'));        
         add_filter('mainwp-extension-enabled-check', array(MainWPExtensions::getClassName(), 'isExtensionEnabled'));
         add_filter('mainwp-getsites', array(MainWPExtensions::getClassName(), 'hookGetSites'), 10, 4);
         add_filter('mainwp-getdbsites', array(MainWPExtensions::getClassName(), 'hookGetDBSites'), 10, 5);
@@ -315,14 +293,6 @@ class MainWPSystem
         load_plugin_textdomain('mainwp', false, dirname(dirname(plugin_basename(__FILE__))) . '/languages/');
     }
 
-    public function activated_sub_check($arr)
-    {
-        if (!is_array($arr)) return $arr;
-        if (count($arr) != 1) return $arr;
-        $rslt = array('result' => MainWPAPISettings::testAPIs($arr[0]));
-        return $rslt;
-    }
-
     public function activated_check()
     {
         return $this->getVersion();
@@ -335,8 +305,6 @@ class MainWPSystem
             echo '<meta http-equiv="refresh" content="0">';
             delete_option('mainwp_refresh');
         }
-
-        echo '<div id="message" class="mainwp-api-message-invalid updated fade" style="' . (true || $this->isAPIValid() ? 'display: none;' : '') . '"><p><strong>MainWP needs to be activated before using - <a href="' . admin_url() . 'admin.php?page=Settings">Activate Here</a>.</strong></p></div>';
 
         if (MainWPDB::Instance()->getWebsitesCount() == 0) {
             echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';            
@@ -475,7 +443,7 @@ class MainWPSystem
                     }
 
                     $api_slug = dirname($plugin_slug);                        
-                    $rslt = MainWPAPISettings::getUpgradeInformationTwo($api_slug);  
+                    $rslt = MainWPAPISettings::getUpgradeInformation($api_slug);  
                     
                     if (!empty($rslt) && isset($rslt->latest_version) && version_compare($rslt->latest_version, $extensions[$plugin_slug]['version'], '>'))
                     {  
@@ -491,7 +459,7 @@ class MainWPSystem
                             continue;
                         }                        
                         $api_slug = dirname($plugin_slug);                        
-                        $rslt = MainWPAPISettings::getUpgradeInformationTwo($api_slug);                          
+                        $rslt = MainWPAPISettings::getUpgradeInformation($api_slug);                          
                         if (!empty($rslt) && isset($rslt->latest_version) && version_compare($rslt->latest_version, $extensions[$plugin_slug]['version'], '>'))
                         {  
                             $this->upgradeVersionInfo->result[$api_slug] = $rslt;
@@ -589,12 +557,6 @@ class MainWPSystem
         $result = MainWPExtensions::getSlugs();
         $slugs = $result['slugs'];
         $am_slugs = $result['am_slugs'];
-        
-        if ($slugs != '')
-        {           
-            $slugs = explode(',', $slugs);
-            if (in_array($arg->slug, $slugs)) return MainWPAPISettings::getUpgradeInformation($arg->slug);
-        }
         
         if ($am_slugs != '')
         {             
@@ -1340,82 +1302,6 @@ class MainWPSystem
         @MainWPDB::free_result($websites);
     }
 
-    function mainwp_cronconflicts_action()
-    {
-        MainWPLogger::Instance()->info('CRON :: conflicts');
-
-        $lastCronConflicts = get_option('mainwp_cron_last_cronconflicts');
-        if ($lastCronConflicts !== false && (time() - $lastCronConflicts) < (60 * 60 * 48))
-        {
-            return;
-        }
-        MainWPUtility::update_option('mainwp_cron_last_cronconflicts', time());
-
-        MainWPAPISettings::testAPIs();
-
-        if (true || $this->isAPIValid())
-        {
-            if (!isset($GLOBALS['pagenow'])) $GLOBALS['pagenow'] = '';
-            $url = get_home_url();
-            try
-            {
-                $cronjobs = get_option('mainwp_cron_jobs');
-                if ($cronjobs === false) $cronjobs = 0;
-                if ($cronjobs && !((get_option('mainwp_wp_cron') === false) || (get_option('mainwp_wp_cron') == 1))) $cronjobs = false;
-                $result = MainWPUtility::http_post("do=getConflicts&url=" . urlencode($url). "&username=" . urldecode(get_option('mainwp_api_username')) . "&cron=" . $cronjobs, "mainwp.com", "/versioncontrol/rqst.php", 80, 'main', true);
-            }
-            catch (Exception $e)
-            {
-                MainWPLogger::Instance()->warning('An error occured when trying to reach the MainWP server: ' . $e->getMessage());
-            }
-
-            if (isset($result[1]))
-            {
-                $result = $result[1];
-            }
-            else
-            {
-                return;
-            }
-
-            $result = json_decode($result, true);
-            $pluginConflicts = explode("\n", $result['pluginConflicts']);
-            $themeConflicts = explode("\n", $result['themeConflicts']);
-            $newPluginConflicts = array();
-            foreach ($pluginConflicts as $pluginConflict)
-            {
-                $lastIndex = strrpos($pluginConflict, ' ');
-                if (!$lastIndex)
-                {
-                    $newPluginConflicts[$pluginConflict] = false;
-                }
-                else
-                {
-                    $newPluginConflicts[substr($pluginConflict, 0, $lastIndex)] = substr($pluginConflict, $lastIndex);
-                }
-            }
-
-            $newThemeConflicts = array();
-            foreach ($themeConflicts as $themeConflict)
-            {
-                $lastIndex = strrpos($themeConflict, ' ');
-                if (!$lastIndex)
-                {
-                    $newThemeConflicts[$themeConflict] = false;
-                }
-                else
-                {
-                    $newThemeConflicts[substr($themeConflict, 0, $lastIndex)] = substr($themeConflict, $lastIndex);
-                }
-            }
-
-            MainWPUtility::update_option('mainwp_pluginConflicts', $newPluginConflicts);
-            MainWPUtility::update_option('mainwp_themeConflicts', $newThemeConflicts);
-
-            return;
-        }
-    }
-
     function mainwp_cronbackups_continue_action()
     {
         MainWPLogger::Instance()->info('CRON :: backups continue');
@@ -1734,10 +1620,7 @@ class MainWPSystem
         }
         else if (isset($_GET['do']) && $_GET['do'] == 'checkSites') {
             $this->mainwp_cronofflinecheck_action();
-        }
-        else if (isset($_GET['do']) && $_GET['do'] == 'cronConflicts') {
-            $this->mainwp_cronconflicts_action();
-        }
+        }        
         else if (isset($_GET['do']) && $_GET['do'] == 'cronUpdatesCheck') {
             $this->mainwp_cronupdatescheck_action();
         }
@@ -2428,16 +2311,7 @@ class MainWPSystem
 
     function deactivation()
     {
-        wp_clear_scheduled_hook('mainwp_cron_action');
-        delete_option('mainwp_requests');
-        try
-        {
-            MainWPUtility::http_post("do=deactivation&url=" . urlencode(get_home_url()), "mainwp.com", "/versioncontrol/rqst.php", 80, 'main', true);
-        }
-        catch (Exception $e)
-        {
-            MainWPLogger::Instance()->warning('An error occured when trying to reach the MainWP server: ' . $e->getMessage());
-        }
+        
     }
 
     //On update update the database

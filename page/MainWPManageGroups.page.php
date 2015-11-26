@@ -37,15 +37,15 @@ class MainWPManageGroups
                 <span><?php _e('In case you are managing large number of WordPress sites, it would be very useful for you to split them in different groups. Later, you will be able to make site selection by group which will speed up your work and make it much easier.','mainwp'); ?></span>
             </div>
                 <div class="mainwp_managegroups-outsidebox">
-                    <span id="mainwp_managegroups-addnew-container"><input type="button" name="Add new" value="<?php _e('Add New','mainwp'); ?>" class="managegroups-addnew button" /></span>
-                    <h3><?php _e('Groups','mainwp'); ?></h3>
                     <div class="mainwp_managegroups-insidebox">
-                        <input id="managegroups-filter" style="margin-top: .5em;" type="text" value="" placeholder="Type here to filter groups" />
+                    <h2 style="border-bottom: 1px Solid #e5e5e5;"><?php _e('Groups','mainwp'); ?></h2>
+                        <input id="managegroups-filter" style="margin: 1em 0; width: 40%;" type="text" value="" placeholder="Type here to filter groups" /> 
+                        <span id="mainwp_managegroups-addnew-container"><a class="managegroups-addnew" href="javascript:void(0)"><i class="fa fa-plus"></i> <?php _e('Create New Group','mainwp'); ?></a></span>
                         <hr>
                         <ul id="managegroups-list">
                             <li class="managegroups-listitem managegroups-group-add hidden">
-                                <span class="mainwp_group-actions actions-input"><a href="#" class="managegroups-savenew"><?php _e('Save','mainwp'); ?></a> | <a href="#" class="managegroups-cancel"><?php _e('Cancel','mainwp'); ?></a></span>
-                                <input type="text" name="name" value="" />
+                                <span class="mainwp_group-actions actions-input"><a href="#" class="managegroups-savenew"><i class="fa fa-floppy-o"></i> <?php _e('Save','mainwp'); ?></a> | <a href="#" class="managegroups-cancel"><i class="fa fa-times-circle"></i> <?php _e('Cancel','mainwp'); ?></a></span>
+                                <input type="text" style="width: 50%;" placeholder="<?php _e('Enter Group Name','mainwp'); ?>" name="name" value="" />
                             </li>
                             <?php echo MainWPManageGroups::getGroupListContent(); ?>
                         </ul>
@@ -53,11 +53,12 @@ class MainWPManageGroups
                 </div>
 
                 <div class="mainwp_managegroups-outsidebox">
-                    <div style="float: right; margin-top: 12px;"><?php _e('Display by:','mainwp'); ?> <a href="#" class="mainwp_action left mainwp_action_down" id="group_sites_by_name"><strong><?php _e('Site Name','mainwp'); ?></strong></a><a href="#" class="mainwp_action right" id="group_sites_by_url"><?php _e('URL','mainwp'); ?></a></div>
-                    <h3><?php _e('Websites','mainwp'); ?></h3>
                     <div class="mainwp_managegroups-insidebox" id="managegroups-sites-list">
-                        <input id="managegroups_site-filter" style="margin-top: .5em;" type="text" value="" placeholder="Type here to filter sites" />
-                        <div style="float:right; margin-top: .7em"><?php _e('Select: ','mainwp'); ?><a href="#" onClick="return mainwp_managegroups_ss_select(this, true)"><?php _e('All','mainwp'); ?></a> | <a href="#" onClick="return mainwp_managegroups_ss_select(this, false)"><?php _e('None','mainwp'); ?></a></div>
+                    <h2 style="border-bottom: 1px Solid #e5e5e5;"><?php _e('Child Sites','mainwp'); ?></h2>
+                        <input id="managegroups_site-filter" style="margin: 1em 0; width: 40%;" type="text" value="" placeholder="Type here to filter sites" />
+                        <div style="float: right; margin-top: 20px; margin-left: 1em;"><?php _e('Select: ','mainwp'); ?><a href="#" onClick="return mainwp_managegroups_ss_select(this, true)"><?php _e('All','mainwp'); ?></a> | <a href="#" onClick="return mainwp_managegroups_ss_select(this, false)"><?php _e('None','mainwp'); ?></a></div>
+                        <div style="float: right; margin-top: 20px;"><?php _e('Display by:','mainwp'); ?> <a href="#" id="group_sites_by_name"><?php _e('Site Name','mainwp'); ?></a> | <a href="#" id="group_sites_by_url"><?php _e('URL','mainwp'); ?></a></div>
+                        <div style="clear: both;"></div>
                         <hr>
                         <ul id="managegroups-listsites">
                             <?php echo MainWPManageGroups::getWebsiteListContent(); ?>
@@ -73,16 +74,16 @@ class MainWPManageGroups
             jQuery(document).ready(function () {
                 jQuery('#group_sites_by_name').live('click', function(event)
                 {
-                    jQuery(this).addClass('mainwp_action_down');
-                    jQuery('#group_sites_by_url').removeClass('mainwp_action_down');
+                    //jQuery(this).addClass('mainwp_action_down');
+                    //jQuery('#group_sites_by_url').removeClass('mainwp_action_down');
                     jQuery('#managegroups-sites-list').find('.website_url').hide();
                     jQuery('#managegroups-sites-list').find('.website_name').show();
                     return false;
                 });
                 jQuery('#group_sites_by_url').live('click', function(event)
                 {
-                    jQuery(this).addClass('mainwp_action_down');
-                    jQuery('#group_sites_by_name').removeClass('mainwp_action_down');
+                    //jQuery(this).addClass('mainwp_action_down');
+                    //jQuery('#group_sites_by_name').removeClass('mainwp_action_down');
                     jQuery('#managegroups-sites-list').find('.website_name').hide();
                     jQuery('#managegroups-sites-list').find('.website_url').show();
                     return false;
@@ -277,15 +278,16 @@ class MainWPManageGroups
     {
         ?>
         <li id="<?php echo $group->id; ?>" class="managegroups-listitem">
-            <span class="mainwp_group-actions actions-text hidden"><a href="#" class="managegroups-rename"><?php _e('Rename','mainwp'); ?></a> | <a href="#" class="managegroups-delete"><?php _e('Delete','mainwp'); ?></a></span>
-            <span class="mainwp_group-actions actions-input hidden"><a href="#" class="managegroups-save"><?php _e('Save','mainwp'); ?></a> | <a href="#" class="managegroups-delete"><?php _e('Delete','mainwp'); ?></a></span>
+            <span class="mainwp_group-actions actions-text hidden"><a href="#" class="managegroups-rename"><i class="fa fa-pencil-square-o"></i> <?php _e('Rename','mainwp'); ?></a> | <a href="#" class="managegroups-delete"><i class="fa fa-trash-o"></i> <?php _e('Delete','mainwp'); ?></a></span>
+            <span class="mainwp_group-actions actions-input hidden"><a href="#" class="managegroups-save"><i class="fa fa-floppy-o"></i> <?php _e('Save','mainwp'); ?></a> | <a href="#" class="managegroups-delete"><i class="fa fa-trash-o"></i> <?php _e('Delete','mainwp'); ?></a></span>
             <span class="mainwp-radio">
             	<input type="radio" name="groups" value="<?php echo $group->id; ?>" class="managegroups-radio" id="<?php echo MainWPUtility::getNiceURL($group->id); ?>">
             	<label for="<?php echo MainWPUtility::getNiceURL($group->id); ?>"></label>
             </span>
-                <span class="text"><?php echo stripslashes( $group->name ); ?></span>
-            
-            <span class="input hidden"><input type="text" name="name" value="<?php echo $group->name; ?>" /></span>
+            <span class="text"><?php echo stripslashes( $group->name ); ?></span>
+            <span class="input hidden">
+                <input type="text" style="width: 50%" name="name" placeholder="<?php _e('Enter Group Name','mainwp'); ?>" value="<?php echo $group->name; ?>" />
+            </span>
         </li>
         <?php
     }

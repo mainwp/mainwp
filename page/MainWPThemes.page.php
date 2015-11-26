@@ -346,15 +346,19 @@ class MainWPThemes
     <table class="wp-list-table widefat fixed pages" id="themes_fixedtable" style="width: auto; word-wrap: normal">
         <thead>
         <tr>
-            <th class="headcol"></th>
+            <th class="headcol" style="text-align: center; border-bottom: 1px Solid #e1e1e1; font-size: 18px; z-index:999; padding: auto; width: 15em !important;"><?php _e( 'Child Site / Theme', 'mainwp' ); ?>
+            <p style="font-size: 10px; line-height: 12px;"><?php _e( 'Click on the Theme Name to select the theme on all sites or click the Site URL to select all themes on the site.', 'mainwp' ); ?></p>
+            </th>
             <?php
             foreach ($themesVersion as $theme_name => $theme_title) {
-                echo '<th style="height: 100px; padding: 5px ;">
-                    <p style="font-family: Arial, Sans-Serif; text-shadow: none ; width: 100px !important; height: 30px ; text-align: center; width: auto; height: auto; font-size: 13px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); -o-transform: rotate(-90deg); -ms-transform: rotate(-90deg); writing-mode: lr-tb; ">
-                    <input type="checkbox" value="' . $themes[$theme_name] . '" id="' . $theme_name . '" version="'.$themesRealVersion[$theme_name].'" class="mainwp_theme_check_all" style="margin: 3px 0px 0px 0px; display: none ; " />
-                    <label for="' . $theme_name . '">' . $theme_title . '</label>
-                    </p>
-                    </th>';
+                    ?>
+                    <th height="100" style="padding: 5px;">
+                        <div style="max-width: 120px; text-align: center;" title="<?php echo $plugin_title; ?>" >
+                            <input type="checkbox" value="<?php echo $themes[$theme_name]; ?>" id="<?php echo $theme_name; ?>" version="<?php echo $themesRealVersion[$theme_name]; ?>" class="mainwp_theme_check_all" style="display: none ;" />
+                            <label for="<?php echo $theme_name; ?>"><?php echo $theme_title; ?></label>
+                        </div>
+                    </th>
+                    <?php
             }
             ?>
         </tr>
@@ -366,9 +370,8 @@ class MainWPThemes
             <tr>
                 <td class="headcol">
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $site_id; ?>"/>
-                    <label for="<?php echo $site_url; ?>"><strong><?php echo $site_url; ?></strong></label>
-                    &nbsp;&nbsp;<input type="checkbox" value="" id="<?php echo $site_url; ?>"
-                                       class="mainwp_site_check_all" style="display: none ;"/>
+                    <label for="<?php echo $site_url; ?>"><?php echo $site_url; ?></label>
+                    <input type="checkbox" value="" id="<?php echo $site_url; ?>" class="mainwp_site_check_all" style="display: none ;"/>
                 </td>
                 <?php
                 foreach ($themesVersion as $theme_name => $theme_title) {
@@ -827,7 +830,12 @@ class MainWPThemes
 					</div>
 				</div>
 			</div>
-			<div class="install-theme-settings"><input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite existing', 'mainwp'); ?></label></div>
+            <div class="postbox install-theme-settings">
+                <h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'Installation Options', 'mainwp' ); ?></h3>
+                <div class="inside">
+                    <input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite Existing', 'mainwp'); ?></label>
+                </div>
+            </div>
 			<div class="theme-browser content-filterable"></div>
 			<div class="theme-install-overlay wp-full-overlay expanded"></div>
 

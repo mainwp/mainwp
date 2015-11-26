@@ -296,6 +296,10 @@ class MainWPOfflineChecks
     <div class="postbox" id="mainwp-offline-check-options-settings">
     <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Offline Check Options','mainwp'); ?></span></h3>
     <div class="inside">
+    <div class="mainwp_info-box-red">
+        <strong>IMPORTANT:</strong> This feature is being retired and replaced by the Free MainWP Advanced Uptime Monitor Extension which provides more advanced monitoring system.<br/>
+        <a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
+        </div>
     <table class="form-table">
         <tbody>
         <tr>

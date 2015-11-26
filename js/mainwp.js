@@ -14,93 +14,6 @@ jQuery(document).ready(function ()
 });
 
 /**
- * API
- */
-jQuery(document).ready(function () {
-    jQuery('#mainwp-api-submit').live('click', function () {
-        return apiTest();
-    });
-    jQuery('.mainwp-api-refresh').live('click', function () {
-        return apiRefresh(jQuery(this));
-    });
-});
-
-apiTest = function () {
-    var data = {
-        action:'mainwp_api_test',
-        username:jQuery('#mainwp_api_username').val(),
-        password:jQuery('#mainwp_api_password').val()
-    };
-
-    jQuery('#mainwp-api-submit').attr('disabled', 'true'); //Disable
-    setVisible('#mainwp_api_errors', false);
-    if (data['username'] == '' && data['password'] == '')
-    {
-        setHtml('#mainwp_api_message', __('Updating settings.'));
-    }
-    else
-    {
-        setHtml('#mainwp_api_message', __('Testing login.'));
-    }
-
-    jQuery.post(ajaxurl, data, function (response) {
-        if (response['api_status'] == "VALID")
-        {
-            setVisible('#mainwp_api_errors', false);
-            setHtml('#mainwp_api_message', __('Your login is valid, settings have been updated.'));
-        }
-        else if (response['api_status'] == "INVALID")
-        {
-            setVisible('#mainwp_api_errors', false);
-            if ((response['error'] != undefined) && (response['error'] != ''))
-            {
-                setHtml('#mainwp_api_message', response['error']);
-            }
-            else
-            {
-                setHtml('#mainwp_api_message', __('Your login is invalid.'));
-            }
-        }
-        else if (response['api_status'] == "ERROR")
-        {
-            setVisible('#mainwp_api_message', false);
-            setHtml('#mainwp_api_errors', response['error'] + ".");
-        }
-        else if (response['saved'] == 1)
-        {
-            setVisible('#mainwp_api_errors', false);
-            setHtml('#mainwp_api_message', __('Your settings have been updated.'));
-        }
-        else
-        {
-            setVisible('#mainwp_api_message', false);
-            setHtml('#mainwp_api_errors', __('An error occured, please contact us.'));
-        }
-        var apiSubmit = jQuery('#mainwp-api-submit');
-        if (response['api_status'] == "VALID") apiSubmit.removeAttr('disabled'); //Enable
-
-        apiSubmit.removeAttr('disabled'); //Enable
-
-    }, 'json');
-    return false;
-};
-
-apiRefresh = function (pElement) {
-    var data = {
-        action:'mainwp_api_refresh'
-    };
-
-    pElement.attr('disabled', true);
-    pElement.text(__('Updating your plan...'));
-
-    jQuery.post(ajaxurl, data, function (response) {
-        pElement.text(__('Updated your plan'));
-    }, 'json');
-
-    return false;
-};
-
-/**
  * Global
  */
 jQuery(document).ready(function () {
@@ -1544,10 +1457,10 @@ rightnow_show = function (what, leave_text) {
     jQuery('#wp_' + what).toggle(100, 'linear', function () {
         if (!leave_text) {
             if (jQuery('#wp_' + what).css('display') == 'none') {
-                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('Show All') : __('Show')));
+                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('<i class="fa fa-eye-slash"></i> Show All') : __('<i class="fa fa-eye-slash"></i> Show')));
             }
             else {
-                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('Hide All') : __('Hide')));
+                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('<i class="fa fa-eye-slash"></i> Hide All') : __('<i class="fa fa-eye-slash"></i> Hide')));
             }
         }
     });

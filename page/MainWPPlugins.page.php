@@ -613,19 +613,21 @@ class MainWPPlugins
 <div id="mainwp-table-overflow" style="overflow: auto !important ;">
     <table class="ui-tinytable wp-list-table widefat fixed pages" id="plugins_fixedtable" style="width: auto; word-wrap: normal">
         <thead>
-        <tr>
-            <th class="headcol">
-					<label>&nbsp;</label>		
-				</th>
+            <tr>
+				<th class="headcol" style="text-align: center; border-bottom: 1px Solid #e1e1e1; font-size: 18px; z-index:999; padding: auto; width: 15em !important;"><?php _e( 'Child Site / Plugin', 'mainwp' ); ?>
+                    <p style="font-size: 10px; line-height: 12px;"><?php _e( 'Click on the Plugin Name to select the plugin on all sites or click the Site URL to select all plugins on the site.', 'mainwp' ); ?></p>		
+		        </th>
             <?php			
             foreach ($pluginsVersion as $plugin_name => $plugin_title) {
-                echo '<th style="height: 100px; padding: 5px ;" class="long">
-<p style="font-family: Arial, Sans-Serif; text-shadow: none ; width: 100px !important; height: 30px ; text-align: center; width: auto; height: auto; font-size: 13px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); -o-transform: rotate(-90deg); -ms-transform: rotate(-90deg); writing-mode: lr-tb; ">
-<input type="checkbox" value="' . $plugins[$plugin_name] . '" id="' . $plugin_name . '" class="mainwp_plugin_check_all" style="margin: 3px 0px 0px 0px; display: none ; " />
-<label for="' . $plugin_name . '">' . $plugin_title . '</label>
-</p>
-</th>';		
-            }			
+                ?>
+                    <th height="100" width="120" style="padding: 5px;">
+                        <div style="max-width: 120px; text-align: center;" title="<?php echo $plugin_title; ?>">
+                            <input type="checkbox" value="<?php echo $plugins[$plugin_name]; ?>" id="<?php echo $plugin_name; ?>" version="<?php echo $pluginsRealVersion[$plugin_name]; ?>" class="mainwp_theme_check_all" style="display: none ;" />
+                            <label for="<?php echo $plugin_name; ?>"><?php echo $plugin_title; ?></label>
+                        </div>
+                    </th>
+                <?php
+                }			
             ?>
         </tr>
         </thead>
@@ -637,8 +639,7 @@ class MainWPPlugins
                 <td class="headcol">
                     <input class="websiteId" type="hidden" name="id" value="<?php echo $site_id; ?>"/>
                     <label for="<?php echo $site_url; ?>"><strong><?php echo $site_url; ?></strong></label>
-                    &nbsp;&nbsp;<input type="checkbox" value="" id="<?php echo $site_url; ?>"
-                                       class="mainwp_site_check_all" style="display: none ;"/>
+                    <input type="checkbox" value="" id="<?php echo $site_url; ?>" class="mainwp_site_check_all" style="display: none ;"/>
                 </td>
                 <?php
                 foreach ($pluginsVersion as $plugin_name => $plugin_title) {
@@ -799,9 +800,13 @@ class MainWPPlugins
 					
 						self::$pluginsTable->views();
 					?>	
-					<br />&nbsp;&nbsp;<input type="checkbox" value="1" checked id="chk_activate_plugin" /> <label for="chk_activate_plugin"><?php _e('Activate plugin after installation','mainwp'); ?></label>
-					<br />&nbsp;&nbsp;<input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite existing', 'mainwp'); ?></label><br/>
-					<br class="clear" />
+                    <div class="postbox">
+                        <h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'Installation Options', 'mainwp' ); ?></h3>
+                        <div class="inside">
+                            <input type="checkbox" value="1" checked id="chk_activate_plugin" /> <label for="chk_activate_plugin"><?php _e('Activate Plugin After Installation','mainwp'); ?></label><br/>
+                            <input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite Existing', 'mainwp'); ?></label>
+                        </div>
+                    </div>
 					<form id="plugin-filter" method="post">
 						<?php self::$pluginsTable->display(); ?>
 					</form>						

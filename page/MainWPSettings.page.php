@@ -236,9 +236,7 @@ class MainWPSettings
             MainWPOfflineChecks::renderSettings();
             
             MainWPFootprint::renderSettings();            
-            
-            MainWPAPISettingsView::renderSettings();
-            
+                        
             ?>
             <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e('Save Settings','mainwp'); ?>"/>
             </p>             

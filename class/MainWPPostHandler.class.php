@@ -143,10 +143,6 @@ class MainWPPostHandler
         $this->addAction('mainwp_user_role_to_subscriber', array(&$this, 'mainwp_user_role_to_subscriber'));
         $this->addAction('mainwp_user_update_password', array(&$this, 'mainwp_user_update_password'));
 
-        //Page: API
-        add_action('wp_ajax_mainwp_api_test', array(&$this, 'mainwp_api_test')); //ok
-        add_action('wp_ajax_mainwp_api_refresh', array(&$this, 'mainwp_api_refresh')); //ok
-
         //Page: Posts
         add_action('wp_ajax_mainwp_posts_search', array(&$this, 'mainwp_posts_search')); //ok
         add_action('wp_ajax_mainwp_get_categories', array(&$this, 'mainwp_get_categories')); //ok
@@ -423,21 +419,6 @@ class MainWPPostHandler
         $this->secure_request();
         MainWPPage::renderTable($_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], (isset($_POST['groups']) ? $_POST['groups'] : ''), (isset($_POST['sites']) ? $_POST['sites'] : ''));
         die();
-    }
-
-    /**
-     * Page: API
-     */
-    function mainwp_api_test()
-    {
-        $this->secure_request();
-        die(json_encode(MainWPAPISettings::testAndSaveLogin($_POST['username'], $_POST['password'])));
-    }
-
-    function mainwp_api_refresh()
-    {
-        $this->secure_request();
-        die(json_encode(MainWPAPISettings::refresh()));
     }
 
     /**

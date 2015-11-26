@@ -2,6 +2,10 @@
     text-decoration: none !important;
 }
 
+.mainwp-ui .form-table tr th[scope="row"] {
+    width: 300px !important;
+}
+
 
 .ui-tooltip {
     z-index: 99999999 !important;
@@ -46,23 +50,28 @@
 #mainwp_managegroups-addnew-container
 {
     float:right;
-    padding-top: 12px;
+    padding-top: 20px;
 }
 .managegroups-listitem
 {
-    padding: 3px;
-    border-bottom: 1px solid #ccc;
+    padding: 8px;
+    border-bottom: 1px solid #e5e5e5;
 }
+.managegroups_site-listitem
+{
+    padding: 3px;
+}
+
 .mainwp_managegroups-outsidebox
 {
     float: left;
-    width: 350px;
-    margin-right: 20px;
+    width: 49%;
+    margin-right: 1%;
 }
 .mainwp_managegroups-insidebox
 {
-    border: 1px solid #ccc;
-    background: #fff ;
+    border: 1px solid #e5e5e5;
+    background: #fff;
     padding-top: 0px;
     padding-left: 10px;
     padding-right: 10px;
@@ -1001,7 +1010,6 @@ li.hoverli {
     text-shadow: none;
     text-decoration: none;
 }
-
 .mainwp_plugins_content,.mainwp_themes_content{
     background: #f9f9f9 ;
 }
@@ -1013,16 +1021,9 @@ li.hoverli {
     border-bottom: 0;
 }
 
-#mainwp_plugins_content #mainwp-table-overflow, #mainwp_themes_content #mainwp-table-overflow{
-   height: 500px;
-}
-
-#mainwp-table-overflow table tbody tr:nth-child(odd) td.headcol {
-background: #fff !important;
-}
-
-#mainwp-table-overflow table tbody tr:nth-child(even) td.headcol {
-background: #d5e4af !important;
+#mainwp_plugins_content #mainwp-table-overflow, 
+#mainwp_themes_content #mainwp-table-overflow {
+   height: 720px;
 }
 
 #mainwp_background-box {
@@ -1223,8 +1224,14 @@ background: #d5e4af !important;
 }
 
 /* Plugins and Themes Table Striping */
-#mainwp-table-overflow tr:nth-child(even) { background-color: #d5e4af !important ;}
-#mainwp-table-overflow tr:hover {background: #b4c194 !important ; }
+#mainwp-table-overflow tr td {
+    border-bottom: 1px dotted #e5e5e5;
+}
+
+#mainwp-table-overflow tr:hover td,
+#mainwp-table-overflow tr:hover th {
+    background: #fafafa !important;
+}
 
 
 .backup_destination_cont.settings .backup_destination_title:hover,.backup_destination_cont.settings .backup_destination_type:hover
@@ -1518,8 +1525,9 @@ background-position: 0 -16px;
 }
 
 .mainwp_managegroups-insidebox .text {
-    font-size: 14px !important;
-    margin-top: -7px;
+    font-size: 15px !important;
+    position: relative;
+    bottom: 2px;
 }
 
 #mainwp_wrap-inside input[type=radio]:checked:before {
@@ -2478,9 +2486,9 @@ input.mainwp-field:-webkit-autofill {
 
 #mainwp-add-site-notice-box {
     position: absolute;
-    left: 600px;
+    left: 700px;
     top: 0px;
-    width: calc(100% - 600px);
+    width: calc(100% - 700px);
 }
 
 

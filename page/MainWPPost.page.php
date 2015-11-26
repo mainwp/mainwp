@@ -583,7 +583,6 @@ class MainWPPost
         //Posts the saved sites
         ?>
     <div class="wrap">
-<!--        <img src="--><?php //echo plugins_url('images/icons/mainwp-post.png', dirname(__FILE__)); ?><!--" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Post" height="32"/>-->
         <h2>New Post</h2>
         <?php             
         do_action("mainwp_bulkpost_before_post", $_GET['id']);               

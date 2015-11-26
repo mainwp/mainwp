@@ -641,43 +641,7 @@ class MainWPExtensions
         $slug = plugin_basename($pluginFile);       
         $snEnabledExtensions = get_option('mainwp_extloaded');
         if (!is_array($snEnabledExtensions)) $snEnabledExtensions = array();
-
         $active = in_array($slug, $snEnabledExtensions);
-
-        // To fix bug
-//        self::loadExtensions();
-        
-//        if (isset(self::$extensions))
-//        {                
-//            foreach(self::$extensions as $extension)
-//            {
-//                if ($extension['plugin'] == $pluginFile)
-//                {   
-//                    if (isset($extension['mainwp']) && ($extension['mainwp'] == true))
-//                    {                        
-//                        if (isset($extension['api_key']) && !empty($extension['api_key'])) {                            
-//                            if (isset($extension['activated_key']) && ($extension['activated_key'] == "Activated")) {                                                                     
-//                                $active = true;
-//                            } else {
-//                                $active = false;
-//                            }
-//                        } else if (isset($extension['api']) && (MainWPAPISettings::testAPIs($extension['api']) != 'VALID'))
-//                        {
-//                            $active = false;
-//                        }
-//                    }
-//                    else
-//                    {
-//                        if (isset($extension['apilink']) && isset($extension['locked']) && ($extension['locked'] == true))
-//                        {
-//                            $active = false;
-//                        }
-//                    }
-//                    break;
-//                }
-//            }
-//        }
-
         //return ($active ? array('key' => wp_create_nonce($pluginFile . '-SNNonceAdder')) : false);
         return ($active ? array('key' => md5($pluginFile . '-SNNonceAdder')) : false);
     }

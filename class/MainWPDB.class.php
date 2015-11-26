@@ -313,12 +313,6 @@ class MainWPDB
         $currentVersion = get_site_option('mainwp_db_version');
         if ($currentVersion === false) return;
 
-        if (version_compare($currentVersion, '2.5', '<'))
-        {
-            $requests = array('lastRequest' => time(), 'requests' => base64_encode(serialize(array('main' => MainWPSystem::Instance()->getAPIStatus()))));
-            MainWPUtility::update_option('mainwp_requests', $requests);
-        }
-
         if (version_compare($currentVersion, '2.8', '<')) {
             $this->wpdb->update($this->tableName('wp_backup'), array('subfolder' => 'MainWP Backups/%url%/%type%/%date%'), array('template' => '0'));
         }
@@ -352,7 +346,7 @@ class MainWPDB
 
         if (version_compare($currentVersion, '6.2', '<'))
         {
-            $options = array('mainwp_db_version', 'mainwp_requests', 'mainwp_plugin_version', 'mainwp_upgradeVersionInfo', 'mainwp_cron_last_offlinecheck', 'mainwp_cron_last_updatescheck', 'mainwp_automaticUpdate_backupChecks', 'mainwp_updatescheck_mail_update_core_new', 'mainwp_updatescheck_mail_update_plugins_new', 'mainwp_updatescheck_mail_update_themes_new', 'mainwp_updatescheck_mail_update_core', 'mainwp_updatescheck_mail_update_plugins', 'mainwp_updatescheck_mail_update_themes', 'mainwp_updatescheck_mail_ignore_core', 'mainwp_updatescheck_mail_ignore_plugins', 'mainwp_updatescheck_mail_ignore_themes', 'mainwp_updatescheck_mail_ignore_core_new', 'mainwp_updatescheck_mail_ignore_plugins_new', 'mainwp_updatescheck_mail_ignore_themes_new', 'mainwp_updatescheck_mail_pluginconflicts', 'mainwp_updatescheck_mail_themeconflicts', 'mainwp_updatescheck_last', 'mainwp_updatescheck_mail_email', 'mainwp_cron_last_ping', 'mainwp_cron_last_cronconflicts', 'mainwp_pluginConflicts', 'mainwp_themeConflicts', 'mainwp_cron_last_backups_continue', 'mainwp_cron_last_backups', 'mainwp_cron_last_stats', 'mainwp_backupsOnServer', 'mainwp_maximumFileDescriptors', 'mainwp_backupOnExternalSources', 'mainwp_notificationOnBackupFail', 'mainwp_notificationOnBackupStart', 'mainwp_chunkedBackupTasks', 'mainwp_maximumRequests', 'mainwp_minimumDelay', 'mainwp_maximumIPRequests', 'mainwp_minimumIPDelay', 'mainwp_extensions', 'mainwp_extloaded', 'mainwp_api_username', 'mainwp_api_password', 'mainwp_extension_widget_view', 'mainwp_news', 'mainwp_news_timestamp', 'mainwp_optimize', 'mainwp_seo', 'mainwp_automaticDailyUpdate', 'mainwp_backup_before_upgrade', 'mainwp_maximumPosts', 'mainwp_maximumComments', 'mainwp_cron_jobs', 'mainwp_wp_cron');
+            $options = array('mainwp_db_version', 'mainwp_requests', 'mainwp_plugin_version', 'mainwp_upgradeVersionInfo', 'mainwp_cron_last_offlinecheck', 'mainwp_cron_last_updatescheck', 'mainwp_automaticUpdate_backupChecks', 'mainwp_updatescheck_mail_update_core_new', 'mainwp_updatescheck_mail_update_plugins_new', 'mainwp_updatescheck_mail_update_themes_new', 'mainwp_updatescheck_mail_update_core', 'mainwp_updatescheck_mail_update_plugins', 'mainwp_updatescheck_mail_update_themes', 'mainwp_updatescheck_mail_ignore_core', 'mainwp_updatescheck_mail_ignore_plugins', 'mainwp_updatescheck_mail_ignore_themes', 'mainwp_updatescheck_mail_ignore_core_new', 'mainwp_updatescheck_mail_ignore_plugins_new', 'mainwp_updatescheck_mail_ignore_themes_new', 'mainwp_updatescheck_mail_pluginconflicts', 'mainwp_updatescheck_mail_themeconflicts', 'mainwp_updatescheck_last', 'mainwp_updatescheck_mail_email', 'mainwp_cron_last_ping', 'mainwp_cron_last_cronconflicts', 'mainwp_pluginConflicts', 'mainwp_themeConflicts', 'mainwp_cron_last_backups_continue', 'mainwp_cron_last_backups', 'mainwp_cron_last_stats', 'mainwp_backupsOnServer', 'mainwp_maximumFileDescriptors', 'mainwp_backupOnExternalSources', 'mainwp_notificationOnBackupFail', 'mainwp_notificationOnBackupStart', 'mainwp_chunkedBackupTasks', 'mainwp_maximumRequests', 'mainwp_minimumDelay', 'mainwp_maximumIPRequests', 'mainwp_minimumIPDelay', 'mainwp_extensions', 'mainwp_extloaded', 'mainwp_extension_widget_view', 'mainwp_news', 'mainwp_news_timestamp', 'mainwp_optimize', 'mainwp_seo', 'mainwp_automaticDailyUpdate', 'mainwp_backup_before_upgrade', 'mainwp_maximumPosts', 'mainwp_maximumComments', 'mainwp_wp_cron');
             foreach ($options as $option)
             {
                 MainWPUtility::fix_option($option);
@@ -370,12 +364,6 @@ class MainWPDB
                     $this->wpdb->insert($this->tableName('wp_settings_backup'), array('wpid' => $site->id, 'archiveFormat' => 'global'));
                 }
             }
-        }
-
-        if (version_compare($currentVersion, '8', '<'))
-        {
-            $apiPass = get_option('mainwp_api_password');
-            MainWPUtility::update_option('mainwp_api_password', MainWPUtility::encrypt($apiPass, 'MainWPAPI'));
         }
 
         if (version_compare($currentVersion, '8.1', '<'))

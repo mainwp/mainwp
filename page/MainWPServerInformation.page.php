@@ -693,7 +693,7 @@ class MainWPServerInformation
     }
 
     protected static function getCompleteURL() {
-        echo $_SERVER['HTTP_REFERER'];
+        echo isset( $_SERVER['HTTP_REFERER'] ) ? $_SERVER['HTTP_REFERER'] : '';
     }
 
     protected static function getUserAgent() {
@@ -1039,7 +1039,7 @@ class MainWPServerInformation
             'mainwp_maximumComments' => __('Maximum Number of Comments','mainwp'),
             'mainwp_primaryBackup' => __('Primary Backup System','mainwp'),
             'mainwp_backupsOnServer' => __('Backups on Server','mainwp'),
-            'mainwp_backupOnExternalSources' => __('Backups on External Sources','mainwp'),
+            'mainwp_backupOnExternalSources' => __('Backups on Remote Storage','mainwp'),
             'mainwp_archiveFormat' => __('Backup Archive Format','mainwp'),
             'mainwp_notificationOnBackupFail' => __('Send Email if a Backup Fails','mainwp'),
             'mainwp_notificationOnBackupStart' => __('Send Email if a Backup Starts','mainwp'),

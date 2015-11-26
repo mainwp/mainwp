@@ -74,8 +74,8 @@ class MainWPInstallBulk
     </script>
          <div id="MainWPInstallBulkInstallNow" style="display: none">
             <?php if ($title == 'Plugins') { echo '<br />&nbsp;&nbsp;<input type="checkbox" value="1" checked id="chk_activate_plugin_upload" /> <label for="chk_activate_plugin_upload">Activate plugin after installation</label>'; } ?>
-            <br />&nbsp;&nbsp;<input type="checkbox" value="2" checked id="chk_overwrite_upload" /> <label for="chk_overwrite_upload"><?php _e('Overwrite existing', 'mainwp'); ?></label><br />
-            <br /><input type="button" class="button" value="<?php _e('Install Now','mainwp'); ?>" id="mainwp_upload_bulk_button" onClick="mainwp_upload_bulk('<?php echo strtolower($title); ?>');">
+            <br />&nbsp;&nbsp;<input type="checkbox" value="2" checked id="chk_overwrite_upload" /> <label for="chk_overwrite_upload"><?php _e('Overwrite Existing', 'mainwp'); ?></label><br />
+            <br /><input type="button" class="button button-primary button-hero" value="<?php _e('Install Now','mainwp'); ?>" id="mainwp_upload_bulk_button" onClick="mainwp_upload_bulk('<?php echo strtolower($title); ?>');">
         </div>
         </div>
         </div>

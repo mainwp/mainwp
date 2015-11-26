@@ -631,7 +631,7 @@ class MainWPUser
         <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
         <!--            <div id="ajax-response"></div>-->
         <div id="MainWPBulkAddUserLoading" class="updated">
-            <div><img src="images/loading.gif"/> <?php _e('Adding the user','mainwp'); ?></div>
+            <div><i class="fa fa-spinner fa-pulse"></i> <?php _e('Adding the user','mainwp'); ?></div>
         </div>
         <div id="MainWPBulkAddUser">
             <form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">

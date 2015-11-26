@@ -25,8 +25,7 @@ class MainWPOptions
                 $val = (!isset($_POST['mainwp_backup_before_upgrade']) ? 0 : 1);
                 MainWPUtility::update_option('mainwp_backup_before_upgrade', $val);
                 MainWPUtility::update_option('mainwp_maximumPosts', $_POST['mainwp_maximumPosts']);
-                MainWPUtility::update_option('mainwp_maximumComments', $_POST['mainwp_maximumComments']);
-                MainWPUtility::update_option('mainwp_cron_jobs', (!isset($_POST['mainwp_options_cron_jobs']) ? 0 : 1));
+                MainWPUtility::update_option('mainwp_maximumComments', $_POST['mainwp_maximumComments']);                
                 MainWPUtility::update_option('mainwp_wp_cron', (!isset($_POST['mainwp_options_wp_cron']) ? 0 : 1));
                 //MainWPUtility::update_option('mainwp_use_favicon', (!isset($_POST['mainwp_use_favicon']) ? 0 : 1));
                 MainWPUtility::update_option('mainwp_numberdays_Outdate_Plugin_Theme', $_POST['mainwp_numberdays_Outdate_Plugin_Theme']);
@@ -64,13 +63,15 @@ class MainWPOptions
         else $lastAutomaticUpdate = MainWPUtility::formatTimestamp(MainWPUtility::getTimestamp($lastAutomaticUpdate));
         ?>
     <div class="postbox" id="mainwp-hide-child-plugin-settings">
-        <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Hide MainWP Child Plugin','mainwp'); ?></span></h3>
+        <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e( 'Network Optimization', 'mainwp' ); ?></span></h3>
         <div class="inside">
         <div class="mainwp_info-box-red" style="margin-top: 5px;"><?php _e('<strong>STOP BEFORE TURNING ON!</strong> Hiding the Child Plugin does require the plugin to make changes to your .htaccess file that in rare instances or server configurations could cause problems.','mainwp'); ?></div>
         <table class="form-table">
             <tbody>
             <tr>
-                <th scope="row"><?php _e('Hide Network on Child Sites','mainwp'); ?></th>
+                <th scope="row"><?php _e('Hide MainWP Child Plugin from Search Engines','mainwp'); ?><br/>
+                <em style="font-size: 12px;">(<?php _e('does not hide from users','mainwp'); ?>)</em>
+                </th>
                 <td>
                     <table>
                         <tr>
@@ -88,6 +89,16 @@ class MainWPOptions
                     </table>
                 </td>
             </tr>
+            <tr>
+            <th scope="row"><?php _e('Optimize for Shared Hosting or Big Networks','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Updates will be cached for quick loading. A manual refresh from the Dashboard is required to view new plugins, themes, pages or users. Recommended for Networks over 50 sites.','mainwp')); ?></th>
+            <td>
+                <div class="mainwp-checkbox">
+                <input type="checkbox" name="mainwp_optimize"
+                       id="mainwp_optimize" <?php echo ((get_option('mainwp_optimize') == 1) ? 'checked="true"' : ''); ?> />
+                <label for="mainwp_optimize"></label>
+               </div>
+            </td>
+        </tr>
             </tbody>
         </table>
     </div>
@@ -114,26 +125,7 @@ class MainWPOptions
                 </div>
             </td>
         </tr>
-<!--        todo: RS: Re-enable-->
-<!--        <tr>-->
-<!--            <th scope="row">Tips on login</th>-->
-<!--            <td>-->
-<!--                <input type="checkbox" name="mainwp_options_tips"-->
-<!--                       id="mainwp_options_tips" --><?php //echo ($userExtension->tips == 1 ? 'checked="true"' : ''); ?><!--"/>-->
-<!--                <label for="mainwp_options_tips">Enable "Did you know" tips</label>-->
-<!--            </td>-->
-<!--        </tr>-->
         <?php if (MainWPUtility::isAdmin()) { ?>
-        <tr>
-            <th scope="row"><?php _e('Optimize for Shared Hosting or Big Networks','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Updates will be cached for quick loading. A manual refresh from the Dashboard is required to view new plugins, themes, pages or users. Recommended for Networks over 50 sites.','mainwp')); ?></th>
-            <td>
-            	<div class="mainwp-checkbox">
-                <input type="checkbox" name="mainwp_optimize"
-                       id="mainwp_optimize" <?php echo ((get_option('mainwp_optimize') == 1) ? 'checked="true"' : ''); ?> />
-                <label for="mainwp_optimize"></label>
-               </div>
-            </td>
-        </tr>
         <tr>
             <th scope="row"><?php _e('Show Basic SEO Stats','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('This requires your Dashboard to query the Google servers for this information.','mainwp')); ?></th>
             <td>
@@ -198,10 +190,8 @@ class MainWPOptions
                                     ?>selected<?php } ?>>Off
                                     </option>
                             </select><label></label></span>
-                        </td>
-                        <td>
-                            &nbsp;&nbsp;Last run: <?php echo $lastAutomaticUpdate; ?>
-                            <br />&nbsp;&nbsp;Next run: <?php echo $nextAutomaticUpdate; ?>
+                            <br/><em><?php _e( 'Last run: ', 'mainwp' ); ?><?php echo $lastAutomaticUpdate; ?></em>
+                            <br /><em><?php _e( 'Next run: ', 'mainwp' ); ?><?php echo $nextAutomaticUpdate; ?></em>
                         </td>
                     </tr>
                 </table>

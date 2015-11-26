@@ -511,19 +511,19 @@ class MainWPManageSitesView
        <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
            <table class="form-table">
                <tr class="form-field form-required">
-                   <th scope="row"><?php _e('Site Name:','mainwp'); ?></th>
+                   <th scope="row"><?php _e('Site Name','mainwp'); ?></th>
                    <td><input type="text" id="mainwp_managesites_add_wpname"
                               name="mainwp_managesites_add_wpname"
                               value="" class="mainwp-field mainwp-site"/></td>
                </tr>
                <tr class="form-field form-required">
-                   <th scope="row"><?php _e('Site URL:','mainwp'); ?></th>
+                   <th scope="row"><?php _e('Site URL','mainwp'); ?></th>
                    <td><input type="text" id="mainwp_managesites_add_wpurl"
                               name="mainwp_managesites_add_wpurl"
                               value="http://" class="mainwp-field mainwp-url" /><span class="mainwp-form_hint">Proper format "http://address.com/"</span></td>
                </tr>
                <tr class="form-field form-required">
-                   <th scope="row"><?php _e('Administrator Username:','mainwp'); ?></th>
+                   <th scope="row"><?php _e('Administrator Username','mainwp'); ?></th>
                    <td><input type="text" id="mainwp_managesites_add_wpadmin"
                               name="mainwp_managesites_add_wpadmin" value="" class="mainwp-field mainwp-username" /></td>
                </tr>
@@ -560,7 +560,7 @@ class MainWPManageSitesView
                     <table class="form-table">
                         <tr class="form-field form-required">
                              <th scope="row"><?php _e('Child Unique Security
-                               ID: ','mainwp'); ?><?php MainWPUtility::renderToolTip('The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.'); ?></th>
+                               ID ','mainwp'); ?><?php MainWPUtility::renderToolTip('The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.'); ?></th>
                              <td><input type="text" id="mainwp_managesites_add_uniqueId" style="width: 350px;"
                                       name="mainwp_managesites_add_uniqueId" value="" class="mainwp-field mainwp-unique-id"/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
                         </tr>
@@ -584,11 +584,11 @@ class MainWPManageSitesView
                         </tr>
 
                         <tr class="form-field form-required">
-                             <th scope="row"><?php _e('HTTP username: ','mainwp'); ?></th>
+                             <th scope="row"><?php _e('HTTP username ','mainwp'); ?></th>
                              <td><input type="text" id="mainwp_managesites_add_http_user" style="width: 350px;" name="mainwp_managesites_add_http_user" value="" class="mainwp-field mainwp-username"/></td>
                         </tr>
                         <tr class="form-field form-required">
-                             <th scope="row"><?php _e('HTTP password: ','mainwp'); ?></th>
+                             <th scope="row"><?php _e('HTTP password ','mainwp'); ?></th>
                              <td><input type="password" id="mainwp_managesites_add_http_pass" style="width: 350px;" name="mainwp_managesites_add_http_pass" value="" class="mainwp-field mainwp-password"/></td>
                         </tr>
                     </table>
@@ -827,7 +827,7 @@ class MainWPManageSitesView
             </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>
-            <th scope="row"><?php _e('Backups on External Sources','mainwp'); ?> <?php MainWPUtility::renderToolTip('The number of backups to keep on your external sources. This does not affect backups on the server.  0 sets unlimited.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/'); ?></th>
+            <th scope="row"><?php _e('Backups on Remote Storage','mainwp'); ?> <?php MainWPUtility::renderToolTip('The number of backups to keep on your external sources. This does not affect backups on the server.  0 sets unlimited.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/'); ?></th>
             <td>
                 <input type="text" name="mainwp_options_backupOnExternalSources"  class="mainwp-field mainwp-settings-icon"
                        value="<?php echo ($backupOnExternalSources === false ? 1 : $backupOnExternalSources); ?>"/><span class="mainwp-form_hint"><?php _e('The number of backups to keep on your external sources.  This does not affect backups on the server.  0 sets unlimited.','mainwp'); ?></span>
@@ -1480,7 +1480,7 @@ class MainWPManageSitesView
                 <?php $disabled_unique = empty($website->uniqueId) ? true : false; ?> 
                 <tr class="form-field form-required">
                     <th scope="row"><?php _e('Child Unique Security
-                      ID: ','mainwp'); ?><?php MainWPUtility::renderToolTip('The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.'); ?></th>
+                      ID ','mainwp'); ?><?php MainWPUtility::renderToolTip('The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.'); ?></th>
                     <td><input type="text" id="mainwp_managesites_edit_uniqueId" style="width: 350px;" <?php echo $disabled_unique ? 'disabled="disabled"' : ''; ?>
                              name="mainwp_managesites_edit_uniqueId" value="<?php echo $website->uniqueId; ?>" class="mainwp-field mainwp-unique-id"/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
                 </tr>                
@@ -1504,11 +1504,11 @@ class MainWPManageSitesView
                 </tr>
 
                 <tr class="form-field form-required">
-                     <th scope="row"><?php _e('HTTP username: ','mainwp'); ?></th>
+                     <th scope="row"><?php _e('HTTP username ','mainwp'); ?></th>
                      <td><input type="text" id="mainwp_managesites_edit_http_user" style="width: 350px;" name="mainwp_managesites_edit_http_user" value="<?php echo (empty($website->http_user) ? '' : $website->http_user); ?>" class="mainwp-field mainwp-username"/></td>
                 </tr>
                 <tr class="form-field form-required">
-                     <th scope="row"><?php _e('HTTP password: ','mainwp'); ?></th>
+                     <th scope="row"><?php _e('HTTP password ','mainwp'); ?></th>
                      <td><input type="password" id="mainwp_managesites_edit_http_pass" style="width: 350px;" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty($website->http_pass) ? '' : $website->http_pass); ?>" class="mainwp-field mainwp-password"/></td>
                 </tr>
             </table>

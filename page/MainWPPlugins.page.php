@@ -622,7 +622,7 @@ class MainWPPlugins
                 ?>
                     <th height="100" width="120" style="padding: 5px;">
                         <div style="max-width: 120px; text-align: center;" title="<?php echo $plugin_title; ?>">
-                            <input type="checkbox" value="<?php echo $plugins[$plugin_name]; ?>" id="<?php echo $plugin_name; ?>" version="<?php echo $pluginsRealVersion[$plugin_name]; ?>" class="mainwp_theme_check_all" style="display: none ;" />
+                            <input type="checkbox" value="<?php echo $plugins[$plugin_name]; ?>" id="<?php echo $plugin_name; ?>" version="<?php echo $pluginsRealVersion[$plugin_name]; ?>" class="mainwp_plugin_check_all" style="display: none ;" />
                             <label for="<?php echo $plugin_name; ?>"><?php echo $plugin_title; ?></label>
                         </div>
                     </th>

@@ -9,20 +9,6 @@ class MainWPManageGroups
     public static function initMenu()
     {
         add_submenu_page('mainwp_tab', __('Groups','mainwp'), '<div id="mainwp-Groups" class="mainwp-hidden">'. __('Groups','mainwp') .'</div>', 'read', 'ManageGroups', array(MainWPManageGroups::getClassName(), 'renderAllGroups'));
-        add_submenu_page('mainwp_tab', __('Add New Group','mainwp'), '<div class="mainwp-hidden">Add New</div>', 'read', 'ManageGroupsAddNew', array(MainWPManageGroups::getClassName(), 'renderNewGroup'));
-        add_submenu_page('mainwp_tab', __('Groups Help','mainwp'), '<div class="mainwp-hidden">Groups Help</div>', 'read', 'GroupsHelp', array(MainWPManageGroups::getClassName(), 'QSGManageGroups'));    
-    }
-
-    private static function renderHeader($pManage)
-    {
-        ?>
-        <img src="<?php echo plugins_url('images/icons/mainwp-group.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Groups" height="32"/>
-        <h2>Groups</h2><div style="clear: both;"></div><br/>
-        <div class="mainwp-tabs" id="mainwp-tabs">            
-            <a class="nav-tab pos-nav-tab <?php if ($pManage) { echo "nav-tab-active"; } ?>" href="admin.php?page=ManageGroups"><?php _e('Manage','mainwp'); ?></a>            
-            <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab" href="admin.php?page=GroupsHelp"><?php _e('Help','mainwp'); ?></a>
-        </div>
-        <?php
     }
 
     public static function renderAllGroups() {
@@ -419,46 +405,5 @@ class MainWPManageGroups
         die(json_encode(array('result' => false)));
     }
 
-    public static function QSGManageGroups() {
-    ?>
-    <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
-            <?php self::renderHeader(true, false); ?>
-
-            <div id="mainwp_wrap-inside"><div style="text-align: center"><a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e('Show Quick Start Guide','mainwp'); ?></a></div>
-                      <div  class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
-                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Adding a new group','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
-                      <div class="clear"></div>
-                      <div id="mainwp-qsgs">
-                        <div class="mainwp-qsg" number="1">
-                            <h3>Adding a new group</h3>
-                            <p>
-                                <ol>
-                                    <li>
-                                        Click the Add New button <br/><br/>
-                                        <img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-add-new-group.jpg" style="wight: 100% !important;" alt="screenshot"/>
-                                    </li>
-                                    <li>
-                                        Enter a Group Name <br/><br/>
-                                        <img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-add-new-group-name.jpg" style="wight: 100% !important;" alt="screenshot"/>
-                                    </li>
-                                    <li>
-                                        Click the Save link
-                                    </li>
-                                    <li>
-                                        Select the newly created group and in the Websites box on the right-hand side, select sites to add to the group
-                                    </li>
-                                    <li>
-                                        Click the Save Selection button
-                                    </li>
-                                </ol>
-                            </p>
-                        </div>
-                      </div>
-                    </div>
-                    </div>
-
-
-    <?php
-  }
 }
 ?>

@@ -14,21 +14,6 @@ class MainWPBulkUpdateAdminPasswords
         add_submenu_page('mainwp_tab', __('Admin Passwords','mainwp'), '<div class="mainwp-hidden">' . __('Admin Passwords','mainwp') . '</div>', 'read', 'UpdateAdminPasswords', array(MainWPBulkUpdateAdminPasswords::getClassName(), 'render'));        
     }
 
-    public static function renderHeader($shownPage) {
-    ?>
-        <div class="wrap">
-            <a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
-                <img src="<?php echo plugins_url('images/icons/mainwp-passwords.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Passwords" height="32"/>
-                <h2><?php _e('Update Admin Passwords','mainwp'); ?></h2>
-                <div class="clear"></div>
-                    <div class="mainwp-tabs" id="mainwp-tabs">
-                        <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'UpdateAdminPasswords') { echo "nav-tab-active"; } ?>" href="admin.php?page=UpdateAdminPasswords"><?php _e('Bulk update admin passwords','mainwp'); ?></a>
-                        <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage === 'AdminPasswordsHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=AdminPasswordsHelp"><?php _e('Help','mainwp'); ?></a>
-                    </div>
-                    <div id="mainwp_wrap-inside">
-    <?php
-    }
-
     public static function renderFooter($shownPage)
     {
         ?>

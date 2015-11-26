@@ -9,20 +9,6 @@ class MainWPOfflineChecks
     public static function initMenu()
     {       
         add_submenu_page('mainwp_tab', __('Offline Checks','mainwp'), ' <div class="mainwp-hidden">' . __('Offline Checks','mainwp') . '</div>', 'read', 'OfflineChecks', array(MainWPOfflineChecks::getClassName(), 'render'));
-        add_submenu_page('mainwp_tab', __('Offline Checks Help','mainwp'), '<div class="mainwp-hidden">' .__('Offline Checks Help','mainwp').'</div>', 'read', 'OfflineChecksHelp', array(MainWPOfflineChecks::getClassName(), 'QSGManageOfflineChecks'));    
-    }
-
-    public static function renderHeader($shownPage) {                
-        ?>
-        <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50" alt="MainWP" /></a>
-        <img src="<?php echo plugins_url('images/icons/mainwp-offline.png', dirname(__FILE__)); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Offline Checks" height="32"/>
-        <h2><?php _e('Offline Checks','mainwp'); ?></h2><div style="clear: both;"></div><br/>
-        <div class="mainwp-tabs" id="mainwp-tabs">
-                <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'OfflineChecks') { echo "nav-tab-active"; } ?>" href="admin.php?page=OfflineChecks"><?php _e('Manage','mainwp'); ?></a>
-                <a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ($shownPage == 'OfflineChecksHelp') { echo "nav-tab-active"; } ?>" href="admin.php?page=OfflineChecksHelp"><?php _e('Help','mainwp'); ?></a>
-        </div>
-        <div id="mainwp_wrap-inside">
-        <?php
     }
 
     public static function renderFooter($shownPage) {
@@ -318,35 +304,5 @@ class MainWPOfflineChecks
     </div>
     <?php
     }
-
-    public static function QSGManageOfflineChecks() {
-        self::renderHeader('OfflineChecksHelp');
-    ?><div style="text-align: center"><a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e('Show Quick Start Guide','mainwp'); ?></a></div>
-                      <div  class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
-                          <span><a href="#" class="mainwp-show-qsg" number="1"><?php _e('Manage Offline Checks','mainwp') ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span>
-                      <div class="clear"></div>
-                      <div id="mainwp-qsgs">
-                        <div class="mainwp-qsg" number="1">
-                            <h3>Manage Offline Checks</h3>
-                            <p>
-                                <ol>
-                                    <li>
-                                        In the provided list, you can see list of your sites and option to set offline check for each of them <br/><br/>
-                                        <img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-offline-check-1024x154.jpg" style="wight: 100% !important;" alt="screenshot"/>
-                                    </li>
-                                    <li>
-                                        Choose whether you like to do Hourly, Twice a Day, Daily, Weekly or to Disable checks.
-                                    </li>
-                                    <li>
-                                        If you want the instant report, click Check link, or Check All to get a report for all sites <br/><br/>
-                                        <img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-check-site-1024x154.jpg" style="wight: 100% !important;" alt="screenshot"/>
-                                    </li>
-                                </ol>
-                            </p>
-                        </div>
-                      </div>
-                    </div>
-    <?php
-    self::renderFooter('OfflineChecksHelp');
-  }
+   
 }

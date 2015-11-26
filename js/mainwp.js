@@ -5583,9 +5583,9 @@ jQuery(document).ready(function () {
     jQuery('#mainwp_show_themes').live('click', function () {
         mainwp_fetch_themes();
     });
-    jQuery('.mainwp_theme_check_all').live('change', function () {
+    jQuery('.mainwp_theme_check_all').live('change', function () {        
         var elements = jQuery(".selected_theme[value='"+jQuery(this).val()+"'][version='"+jQuery(this).attr('version')+"']");
-
+        
         elements.prop('checked', jQuery(this).prop('checked'));
         mainwp_themes_check_changed(elements);
     });

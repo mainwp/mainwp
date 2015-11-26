@@ -6228,6 +6228,38 @@ jQuery(document).on('change', '#mainwp_serverInformation_child', function()
     }, 'html');
 });
 
+jQuery(document).on('change', '#mainwp-server-info-filter', function()
+{
+    var info = jQuery('#mainwp-server-info-filter').val();
+
+    if (info == "error-log") {
+        jQuery('#mainwp-server-information-section').hide();
+        jQuery('#mainwp-cron-schedules-section').hide();
+        jQuery('#mainwp-wp-config-section').hide();
+        jQuery('#mainwp-error-log-section').show();
+    } else if (info == "server-information") {
+        jQuery('#mainwp-server-information-section').show();
+        jQuery('#mainwp-cron-schedules-section').hide();
+        jQuery('#mainwp-wp-config-section').hide();
+        jQuery('#mainwp-error-log-section').hide();
+    } else if (info == "cron-schedules") {
+        jQuery('#mainwp-server-information-section').hide();
+        jQuery('#mainwp-cron-schedules-section').show();
+        jQuery('#mainwp-wp-config-section').hide();
+        jQuery('#mainwp-error-log-section').hide();
+    } else if (info == "wp-config") {
+        jQuery('#mainwp-server-information-section').hide();
+        jQuery('#mainwp-cron-schedules-section').hide();
+        jQuery('#mainwp-wp-config-section').show();
+        jQuery('#mainwp-error-log-section').hide();
+    } else {
+        jQuery('#mainwp-server-information-section').show();
+        jQuery('#mainwp-cron-schedules-section').show();
+        jQuery('#mainwp-wp-config-section').show();
+        jQuery('#mainwp-error-log-section').show();
+    }
+});
+
 mainwp_secure_data = function(data, includeDts)
 {
     if (data['action'] == undefined) return data;

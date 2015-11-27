@@ -2886,3 +2886,6 @@ body.show-upload-plugin .mainwp-upload-plugin {
 .mwp-white {
     color: #fff;
 }
+.mwp-setup-steps a {
+    text-decoration: none;
+}

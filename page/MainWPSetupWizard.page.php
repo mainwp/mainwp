@@ -127,13 +127,8 @@ class MainWPSetupWizard {
 		$this->check_redirect();
 
 		wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'js/mainwp-setup.js', array( 'jquery', 'jquery-ui-tooltip' ), MAINWP_VERSION );
-		wp_localize_script('mainwp-setup', 'mainwpSetupLocalize', array('nonce' => wp_create_nonce('mainwp-setup-nonce')));
-		
-		if ( version_compare( $wp_version, '4.3.1', '>' ) ) {			
-			wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'css/mainwp-44.css', array(), MAINWP_VERSION );
-		} else {
-			wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'css/mainwp.css', array(), MAINWP_VERSION );			
-		}
+		wp_localize_script('mainwp-setup', 'mainwpSetupLocalize', array('nonce' => wp_create_nonce('mainwp-setup-nonce')));		
+		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'css/mainwp.css', array(), MAINWP_VERSION );			
 		
 		wp_enqueue_style( 'mainwp-font-awesome', MAINWP_PLUGIN_URL . 'css/font-awesome/css/font-awesome.min.css', array(), MAINWP_VERSION);
 		wp_enqueue_style( 'jquery-ui-style' );

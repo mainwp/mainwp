@@ -132,6 +132,7 @@ class MainWPExtensionsView
                 }
             }
             ?>
+			<div class="clear"></div>
         </div>
         <div id="mainwp_wrap-inside">
         <?php

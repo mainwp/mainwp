@@ -34,6 +34,7 @@ class MainWPServerInformation
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'ErrorLog') { echo "nav-tab-active"; } ?>" href="admin.php?page=ErrorLog"><?php _e('Error Log','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'WPConfig') { echo "nav-tab-active"; } ?>" href="admin.php?page=WPConfig"><?php _e('WP-Config File','mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php if ($shownPage === '.htaccess') { echo "nav-tab-active"; } ?>" href="admin.php?page=.htaccess"><?php _e('.htaccess File','mainwp'); ?></a>
+				<div class="clear"></div>
             </div>
             <div id="mainwp_wrap-inside">
         <?php

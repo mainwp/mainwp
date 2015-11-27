@@ -100,6 +100,7 @@ class MainWPSettings
             <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'DashboardOptions') { echo "nav-tab-active"; } ?>" href="admin.php?page=DashboardOptions"><?php _e('Dashboard Options','mainwp'); ?></a>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'MainWPTools') { echo "nav-tab-active"; } ?>" href="admin.php?page=MainWPTools"><?php _e('MainWP Tools','mainwp'); ?></a>
             <a class="nav-tab pos-nav-tab <?php if ($shownPage === 'OfflineChecks') { echo "nav-tab-active"; } ?>" href="admin.php?page=OfflineChecks"><?php _e('Offline Checks','mainwp'); ?></a>
+			<div class="clear"></div>
         </div>
         <div id="mainwp_wrap-inside">
         <?php

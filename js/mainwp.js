@@ -2399,7 +2399,8 @@ jQuery(document).ready(function () {
             }
             else
             {
-                setHtml('#mainwp_managesites_add_errors', response.sitename+ ': '+__('Invalid response from the server, please try again.'));
+                var hint = '<br/>' + __('Hint: In case your Dashboard and Child site are on the same server, please contact your host support and verify if your server allows loop-back connections.');
+                setHtml('#mainwp_managesites_add_errors', response.sitename+ ': ' + __('Invalid response from the server, please try again.') + hint);
             }
         } }(thisEl, loadingEl),
             dataType: 'json'});
@@ -2534,12 +2535,13 @@ mainwp_managesites_add = function (event) {
             if (url.substr(-1) != '/') {
                 url += '/';
             }
-
+                        
             if (response == 'HTTPERROR') {
                 errors.push('HTTP error - website does not exist');
                 jQuery('#mainwp-add-site-notice .curl-notice').fadeIn(1000);
             } else if (response == 'NOMAINWP') {
-                errors.push(__('No MainWP Child Plugin detected, first install and activate the plugin and add your site to MainWP Dashboard afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation).', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins'));
+                var hint = '<br/>' + __('Hint: On your child site, go to the Server Information page and verify that the SSL Extension is enabled.');
+                errors.push(__('No MainWP Child Plugin detected, first install and activate the plugin and add your site to MainWP Dashboard afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation).', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins') + hint);
             } else if (response.substr(0, 5) == 'ERROR') {
                 if (response.length == 5) {
                     errors.push(__('Undefined error.'));
@@ -2687,8 +2689,9 @@ mainwp_managesites_test = function (event) {
             }
             else
             {
+                var hint = '<br/>' + __('Hint: In case your Dashboard and Child site are on the same server, please contact your host support and verify if your server allows loop-back connections.');
                 setHtml('#mainwp_managesites_test_errors',
-                    __('Invalid response from the server, please try again.'));
+                    __('Invalid response from the server, please try again.') + hint);
             }
         }, 'json');
     }
@@ -6869,7 +6872,8 @@ mainwp_managesites_bulk_test_connection_specific = function(pCheckedBox) {
         }
         else
         {
-            err = response.sitename+ ': '+__('Invalid response from the server, please try again.');
+            var hint = '<br/>' + __('Hint: In case your Dashboard and Child site are on the same server, please contact your host support and verify if your server allows loop-back connections.');
+            err = response.sitename+ ': '+__('Invalid response from the server, please try again.') + hint;
         }
         
         if (msg != '') {

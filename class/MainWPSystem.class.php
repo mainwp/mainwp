@@ -229,7 +229,8 @@ class MainWPSystem
         add_action('plugin_action_links_' . $this->plugin_slug, array(&$this, 'plugin_action_links'));
         add_action('admin_notices', array(&$this, 'admin_notices'));
 
-        add_filter('mainwp-activated-check', array(&$this, 'activated_check'));        
+        add_filter('mainwp-activated-check', array(&$this, 'activated_check'));  
+		add_filter('mainwp-activated-sub-check', array(&$this, 'activated_sub_check'));
         add_filter('mainwp-extension-enabled-check', array(MainWPExtensions::getClassName(), 'isExtensionEnabled'));
         add_filter('mainwp-getsites', array(MainWPExtensions::getClassName(), 'hookGetSites'), 10, 4);
         add_filter('mainwp-getdbsites', array(MainWPExtensions::getClassName(), 'hookGetDBSites'), 10, 5);
@@ -297,7 +298,12 @@ class MainWPSystem
     {
         return $this->getVersion();
     }
-
+	
+	public function activated_sub_check() 
+	{
+		return array('result' => MAINWP_API_VALID);
+	}
+	
     public function admin_notices()
     {
         if (get_option('mainwp_refresh'))

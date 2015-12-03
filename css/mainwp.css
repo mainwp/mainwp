@@ -2541,7 +2541,7 @@ background-position: 0 -16px;
     border-bottom: 1px Solid #eee;
 }
 
-.mainwp-availbale-extension-holder:nth-child(even) {
+.mainwp-availbale-extension-holder.mainwp-odd {
     background: #f4f4f4;
 }
 
@@ -2833,4 +2833,7 @@ body.show-upload-plugin .mainwp-upload-plugin {
 }
 .mainwp_config_box_left .content-filterable {
     float: left;
+}
+.installed-group-exts {
+    padding: 1em;
 }

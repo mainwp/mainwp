@@ -318,6 +318,7 @@ class MainWPExtensionsView
     public static function mainwpAvailableExtensions($extensions) {
         
         $all_extensions = self::getAvailableExtensions();
+		$all_groups = self::getExtensionGroups();
               
         $installed_slugs = array();
         if (is_array($extensions)) {
@@ -332,24 +333,23 @@ class MainWPExtensionsView
             <h3 class="mainwp_box_title"><?php _e('Available <a href="//extensions.mainwp.com">MainWP Extensions</a>'); ?></h3>
             <div>
             <div id="mainwp-extensions-filter" style="background: #eee; padding: 1em .6em;">
-                <a class="mainwp_action left mainwp_action_down" href="#" id="mainwp-extensions-all"><?php _e('All', 'mainwp'); ?></a><!--
-                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-free"><?php _e('Free', 'mainwp'); ?></a><!--
-                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-backups"><?php _e('Backup', 'mainwp'); ?></a><!--
-                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-content"><?php _e('Content', 'mainwp'); ?></a><!--
-                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-security"><?php _e('Security', 'mainwp'); ?></a><!--
-                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-administrative"><?php _e('Administrative', 'mainwp'); ?></a><!--
-                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-hosting"><?php _e('Hosting', 'mainwp'); ?></a><!--
-                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-performance"><?php _e('Performance', 'mainwp'); ?></a><!--
-                --><a class="mainwp_action right" href="#" id="mainwp-extensions-visitor-data"><?php _e('Visitor Data', 'mainwp'); ?></a>
+                <a class="mainwp_action left mainwp-show-extensions mainwp_action_down" href="#" group="all"><?php _e('All', 'mainwp'); ?></a><?php				
+				$i = 0;
+				foreach($all_groups as $gr_id => $gr_name) {
+					$i++;
+					?><a class="mainwp_action <?php echo ($i < count($all_groups)) ? 'mid' : 'right'; ?> mainwp-show-extensions" href="#" group="<?php echo $gr_id; ?>"><?php echo esc_html($gr_name); ?></a><?php
+				}
+				?>
             </div>
                 <div id="mainwp-available-extensions-list">
                     <?php
+						$i = 0;
                         foreach($all_extensions as $ext ) {
                             if (in_array($ext['slug'], $installed_slugs))
-                                    continue;
+                                    continue;							
                             $is_free = (isset($ext['free']) && $ext['free']) ? true : false;
                                 ?>
-                                <div class="mainwp-availbale-extension-holder <?php echo ($is_free) ? 'mainwp-free' : 'mainwp-paid'; ?>" style="clear: both;">
+                                <div class="mainwp-availbale-extension-holder <?php echo ($i % 2) ? 'mainwp-odd' : ''; ?> <?php echo ($is_free) ? 'mainwp-free group-free' : 'mainwp-paid'; ?> <?php echo "group-" . $ext['group']; ?>" style="clear: both;">
                                     <div class="mainwp-av-ext-icon">
                                         <img src="<?php echo $ext['img']?>" />
                                     </div>
@@ -366,8 +366,14 @@ class MainWPExtensionsView
                                     </div>
 
                                 </div>
-                    <?php } ?>
-                </div>
+						<?php 
+							$i++;					
+						} 
+					?>							
+                </div>				
+				<div class="installed-group-exts" style="clear: both; display: none">
+					<?php echo __('All selected group extensions are Installed.', 'mainwp')?>
+				</div>
             </div>
         </div>
         <?php
@@ -375,15 +381,14 @@ class MainWPExtensionsView
         
 		public static function getExtensionGroups() {
 			$groups = array(
-                                'backup' => 'Backup',
-								'performance' => 'Performance',
-								'security' => 'Security',
-								'admin' => 'Administrative',
-								'content' => 'Content',
-								'visitor' => 'Visitor Data',
-								'free' => 'Free extension',
-								'others' => 'Others'
-						);			
+								'free' => __('Free', 'mainwp'),
+                                'backup' => __('Backup', 'mainwp'),
+								'content' => __('Content', 'mainwp'),
+								'security' => __('Security', 'mainwp'),
+								'admin' => __('Administrative', 'mainwp'),
+								'performance' => __('Performance', 'mainwp'),								
+								'visitor' => __('Visitor Data', 'mainwp')
+						);						
 			return $groups;
 		}
 		
@@ -686,7 +691,7 @@ class MainWPExtensionsView
                             'catalog_id' => '12706',
 							'group' => 'free'
                         ),
-                        array(
+                        array(							
                             'slug' => 'mainwp-woocommerce-status-extension',
                             'title' => 'MainWP WooCommerce Status Extension',
                             'desc' => 'MainWP WooCommerce Status provides you a quick overview of your WooCommerce stores in your network. Requires MainWP Dashboard plugin.',
@@ -694,7 +699,7 @@ class MainWPExtensionsView
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-woocommerce-status-extension.png',
                             'product_id' => 'MainWP WooCommerce Status Extension',
                             'catalog_id' => '12671',
-							'group' => 'free'
+							'group' => 'admin'
                         ),
                         array(
                             'slug' => 'mainwp-wordfence-extension',

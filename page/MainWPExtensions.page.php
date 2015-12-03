@@ -374,9 +374,12 @@ class MainWPExtensions
             if (isset($result['success']) && $result['success']) { 
                 $all_available_exts = array();				
 				$map_extensions_group = array();
+				$free_group = array();
                 foreach(MainWPExtensionsView::getAvailableExtensions() as $ext) {
                     $all_available_exts[$ext['product_id']] = $ext;
 					$map_extensions_group[$ext['product_id']] = $ext['group'];
+					if (isset($ext['free']) && !empty($ext['free']))
+						$free_group[] = $ext['product_id'];
                 }                 
                 self::loadExtensions();
                 $installed_softwares = array();
@@ -408,7 +411,7 @@ class MainWPExtensions
 				}
 
 				foreach($not_purchased_exts as $product_id => $ext) {
-						$item_html = '<div class="extension_not_purchased" product-id="' . $product_id . '"><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $ext['title'] . '</strong></span> ' . __("Extension not purchased.") . ' <a href="' . $ext['link'] . '" target="_blank">' .  __("Get it here!") . '</a></div>';
+						$item_html = '<div class="extension_not_purchased" product-id="' . $product_id . '"><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $ext['title'] . '</strong></span> ' . __("Extension not purchased.") . ' <a href="' . $ext['link'] . '" target="_blank">' .  __("Get it here!", 'mainwp') . '</a>' . (in_array($product_id, $free_group) ? " <em>" . __("It's free.") ."</em>" : '') .'</div>';
 						if (isset($map_extensions_group[$product_id])) 
 							$grouped_exts[$map_extensions_group[$product_id]] .= $item_html;
 						else 
@@ -432,6 +435,11 @@ class MainWPExtensions
 						$html .= '<p><h3>' . $gr_name . '</h3></p>';
 						$html .= $grouped_exts[$gr_id];
 					}
+				}
+				
+				if (isset($grouped_exts['others'])) {
+					$html .= '<p><h3>Others</h3></p>';
+					$html .= $grouped_exts['others'];
 				}
 				
                 $html .= '</div>';

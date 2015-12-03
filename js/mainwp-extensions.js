@@ -780,9 +780,37 @@ jQuery(document).ready(function($) {
         });        
     });
     $('#mainwp-uncheck-all-ext').live('click', function() {
-     $('.extension_to_install').find("input:checkbox").each(function(){
-        $(this).attr('checked', false);
-    });        
+        $('.extension_to_install').find("input:checkbox").each(function(){
+           $(this).attr('checked', false);
+       });        
+    });
+    
+    $('.mainwp-show-extensions').live('click', function() {
+        $('a.mainwp-show-extensions').removeClass('mainwp_action_down');
+        $(this).addClass('mainwp_action_down');
+        
+        var gr = $(this).attr('group');
+        var selectedEl = $('#mainwp-available-extensions-list .mainwp-availbale-extension-holder.group-' + gr);
+        var installedGroup = $('.installed-group-exts');
+        installedGroup.hide();
+        
+        if (gr == 'all') {
+            $('#mainwp-available-extensions-list .mainwp-availbale-extension-holder').fadeIn(500);           
+        } else {
+            $('#mainwp-available-extensions-list .mainwp-availbale-extension-holder').hide();
+            if (selectedEl.length > 0) {
+                selectedEl.fadeIn(500);
+            } else {
+                installedGroup.fadeIn(500);
+            }
+        }   
+        
+        $("#mainwp-available-extensions-list .mainwp-availbale-extension-holder:visible").removeClass('mainwp-odd');
+        $("#mainwp-available-extensions-list .mainwp-availbale-extension-holder:visible").addClass(function(i, curClass){
+            return (i % 2) ? "mainwp-odd" : "";
+        });
+        
+        return false;
     });
 });
 

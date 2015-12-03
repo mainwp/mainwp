@@ -9,7 +9,7 @@ class MainWPAPISettings
 
     public static function initMenu()
     {
-        MainWPAPISettingsView::initMenu();
+        //MainWPAPISettingsView::initMenu();
     }
 
     public static function render()

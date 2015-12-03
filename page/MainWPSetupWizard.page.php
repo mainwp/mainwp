@@ -309,7 +309,7 @@ class MainWPSetupWizard {
 		<h1><?php _e( 'Windows Localhost', 'mainwp' ); ?></h1>
 		<form method="post" class="form-table">			
 			<p><?php _e( 'Due to bug with PHP on Windows please enter your OpenSSL Library location.<br /> Usually it is here:', 'mainwp' ); ?></p>
-			<p><input type="text" class="mainwp-field" style="width: 100%" name="mwp_setup_openssl_lib_location" value="<?php echo esc_html($openssl_loc); ?>"></p>
+			<p><input type="text" class="" style="width: 100%" name="mwp_setup_openssl_lib_location" value="<?php echo esc_html($openssl_loc); ?>"></p>
 			<em><?php _e( 'In most cases c:\\\\xampplite\\\\appache\\\\conf\\\\openssl.conf should be your path if using a normal install.<br />If not your will need to change that to match your specific path.' ); ?></em>
 			<br /><br />
 			<p class="mwp-setup-actions step">
@@ -496,7 +496,7 @@ class MainWPSetupWizard {
 		$important_notification            = get_option( 'mwp_setup_importantNotification', false );
 		$user_email = MainWPUtility::getNotificationEmail();
 		?>
-		<h1><?php _e( 'Optimization', 'mainwp' ); ?></h1>
+		<h1><?php _e( 'Notification', 'mainwp' ); ?></h1>
 		<form method="post">
 			<table class="form-table">
 				<tr>
@@ -512,7 +512,7 @@ class MainWPSetupWizard {
 				<tr>
 					<th scope="row"><?php _e('Enter Your Email Address','mainwp'); ?></th>
 					<td>
-						<input type="email"  class="mainwp-field" name="mwp_setup_options_email" size="35" value="<?php echo $user_email; ?>"/>
+						<input type="email"  class="" name="mwp_setup_options_email" size="35" value="<?php echo $user_email; ?>"/>
 					</td>
 				</tr>
 			</table>
@@ -1016,7 +1016,7 @@ class MainWPSetupWizard {
 				<tr>
 					<th scope="row"><?php _e("Your Uptime Robot API Key:", "mainwp"); ?></th>
 					<td>	
-						<input type="text" readonly = "readonly" class="mainwp-field" value="<?php echo $ur_api_key; ?>" size="35" name="mwp_setup_uptime_robot_api_key">							
+						<input type="text" readonly = "readonly" class="" value="<?php echo $ur_api_key; ?>" size="35" name="mwp_setup_uptime_robot_api_key">							
 					</td>					
 				</tr>
 				<tr>

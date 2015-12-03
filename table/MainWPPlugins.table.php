@@ -359,30 +359,11 @@ class MainWPPluginsInstall_List_Table extends WP_List_Table {
 			$action_links = array();
 
 			if ( current_user_can( 'install_plugins' ) || current_user_can( 'update_plugins' ) ) {
-				$status = install_plugin_install_status( $plugin );
-
-				switch ( $status['status'] ) {
-					case 'install':
-						if ( $status['url'] ) {
 							/* translators: 1: Plugin name and version. */							
-							$action_links[] = '<a class="install-now button" href="#" id="install-plugin-' . $plugin['slug'] . '"
-                               title="Install ' . $plugin['name'] . '  ' . $plugin['version'] . '">' . __('Install Now','mainwp') . '</a>';
-			
-						}
-
-						break;
-					case 'update_available':
-						if ( $status['url'] ) {
-							/* translators: 1: Plugin name and version */
-							$action_links[] = '<a class="update-now button" data-plugin="' . esc_attr( $status['file'] ) . '" data-slug="' . esc_attr( $plugin['slug'] ) . '" href="' . esc_url( $status['url'] ) . '" aria-label="' . esc_attr( sprintf( __( 'Update %s now' ), $name ) ) . '" data-name="' . esc_attr( $name ) . '">' . __( 'Update Now' ) . '</a>';
-						}
-
-						break;
-					case 'latest_installed':
-					case 'newer_installed':
-						$action_links[] = '<span class="button button-disabled" title="' . esc_attr__( 'This plugin is already installed and is up to date' ) . ' ">' . _x( 'Installed', 'plugin' ) . '</span>';
-						break;
-				}
+//							$action_links[] = '<a class="install-now button" href="#" id="install-plugin-' . $plugin['slug'] . '"
+//                               title="Install ' . $plugin['name'] . '  ' . $plugin['version'] . '">' . __('Install Now','mainwp') . '</a>';
+							$action_links[] = '<label><input name="install-plugin" type="radio" id="install-plugin-' . $plugin['slug'] . '"
+                               title="Install ' . $plugin['name'] . '  ' . $plugin['version'] . '">' . __('Install','mainwp') . '</label>';			
 			}
 
 			$details_link   = self_admin_url( 'plugin-install.php?tab=plugin-information&amp;plugin=' . $plugin['slug'] .

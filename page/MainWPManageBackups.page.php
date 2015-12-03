@@ -324,7 +324,7 @@ class MainWPManageBackups
         <table class="form-table" style="width: 100%">
             <tr class="form-field form-required">
                 <th scope="row"><?php _e('Task Name:','mainwp'); ?></th>
-                <td><input type="text" id="mainwp_managebackups_add_name" class="mainwp-field mainwp-task-name" name="mainwp_managebackups_add_name" value="<?php echo (isset($task) ? $task->name : ''); ?>" /><span class="mainwp-form_hint">e.g. Site1 Daily, Site1 Full Weekly, ...</span></td>
+                <td><input type="text" id="mainwp_managebackups_add_name" class="" name="mainwp_managebackups_add_name" value="<?php echo (isset($task) ? $task->name : ''); ?>" /><span class="mainwp-form_hint">e.g. Site1 Daily, Site1 Full Weekly, ...</span></td>
             </tr>
             <tr>
                 <th scope="row"><?php _e('Task Schedule:','mainwp'); ?></th>
@@ -332,7 +332,7 @@ class MainWPManageBackups
             </tr>
             <tr>
                 <th scope="row"><?php _e('Backup File Name:','mainwp'); ?></th>
-                <td><input type="text" name="backup_filename" id="backup_filename" class="mainwp-field mainwp-file-name" value="<?php echo (isset($task) ? $task->filename : ''); ?>" /><span class="mainwp-form_hint" style="display: inline; max-width: 500px;">Allowed Structure Tags: <strong>%url%</strong>, <strong>%date%</strong>, <strong>%time%</strong>, <strong>%type%</strong></span>
+                <td><input type="text" name="backup_filename" id="backup_filename" class="" value="<?php echo (isset($task) ? $task->filename : ''); ?>" /><span class="mainwp-form_hint" style="display: inline; max-width: 500px;">Allowed Structure Tags: <strong>%url%</strong>, <strong>%date%</strong>, <strong>%time%</strong>, <strong>%type%</strong></span>
                 </td>
             </tr>
             <tr><td colspan="2"><hr /></td></tr>

@@ -149,7 +149,7 @@ class MainWPPlugins
         <?php self::renderHeader('Manage'); ?>
         <div class="mainwp-search-form">
             <div class="postbox mainwp-postbox">
-            <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Search Plugins','mainwp'); ?></h3>
+            <h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Step 1:','mainwp'); ?> <?php _e('Search Plugins','mainwp'); ?></h3>
             <div class="inside">
                 <div class="mainwp_info-box-blue">
                     <?php _e('To only <strong>View or Ignore</strong> plugins select <strong>All Plugins</strong>', 'mainwp'); ?><br/>
@@ -169,13 +169,13 @@ class MainWPPlugins
             </p>
             <p>
                 <?php _e('Containing Keyword:','mainwp'); ?><br/>
-                <input type="text" id="mainwp_plugin_search_by_keyword"  class="mainwp-field mainwp-keyword"  size="50" value="<?php if ($cachedSearch != null) { echo $cachedSearch['keyword']; } ?>"/>
+                <input type="text" id="mainwp_plugin_search_by_keyword"  class=""  size="50" value="<?php if ($cachedSearch != null) { echo $cachedSearch['keyword']; } ?>"/>
             </p>
             </div>
             </div>
-            <?php MainWPUI::select_sites_box(__("Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
+            <?php MainWPUI::select_sites_box(__("Step 2: Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
             <div style="clear: both;"></div>
-            <input type="button" name="mainwp_show_plugins" id="mainwp_show_plugins" class="button-primary button button-hero" value="<?php _e('Show Plugins','mainwp'); ?>"/>
+            <input type="button" name="mainwp_show_plugins" id="mainwp_show_plugins" class="button-primary button button-hero button-right" value="<?php _e('Show Plugins','mainwp'); ?>"/>
             <br/><br/>
             <span id="mainwp_plugins_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span> <span id="mainwp_plugins_loading_info" class="mainwp-grabbing-info-note"> - <?php _e('Automatically refreshing to get up to date information.','mainwp'); ?></span>
         <br><br>
@@ -788,26 +788,27 @@ class MainWPPlugins
 		<a href="#" id="MainWPInstallBulkNavSearch" class="mainwp_action left <?php echo $tab !== 'upload' ? 'mainwp_action_down' : ''; ?>" ><?php _e('Search','mainwp'); ?></a><a href="#" id="MainWPInstallBulkNavUpload" class="mainwp_action <?php echo $tab === 'upload' ? 'mainwp_action_down' : ''; ?> right upload" ><?php _e('Upload','mainwp'); ?></a>		
 		<br class="clear" /><br />
 
-			<div class="mainwp_config_box_right stick-to-window">
+			<div class="mainwp_config_box_right">
+				  <div class="postbox hide-if-upload">
+                        <h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'Installation Options', 'mainwp' ); ?></h3>
+                        <div class="inside">
+                            <input type="checkbox" value="1" checked id="chk_activate_plugin" /> <label for="chk_activate_plugin"><?php _e('Activate Plugin After Installation','mainwp'); ?></label><br/>
+                            <input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite Existing Plugin, if already installed', 'mainwp'); ?></label>
+                        </div>
+                    </div>
 				<?php MainWPUI::select_sites_box() ?>
+				<input type="button" value="<?php _e("Complete Installation"); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_plugin_bulk_install_btn" name="bulk-install">
 			</div>
 			<div class="mainwp_config_box_left">
 				<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
 				<div class="mainwp-upload-plugin">
 					<?php MainWPInstallBulk::renderUpload('Plugins'); ?>
 				</div>				
-				<div class="mainwp-browse-plugins">				
+				<div class="mainwp-browse-plugins hide-if-upload">				
 					<?php
 					
 						self::$pluginsTable->views();
-					?>	
-                    <div class="postbox">
-                        <h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'Installation Options', 'mainwp' ); ?></h3>
-                        <div class="inside">
-                            <input type="checkbox" value="1" checked id="chk_activate_plugin" /> <label for="chk_activate_plugin"><?php _e('Activate Plugin After Installation','mainwp'); ?></label><br/>
-                            <input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite Existing', 'mainwp'); ?></label>
-                        </div>
-                    </div>
+					?>	                  
 					<form id="plugin-filter" method="post">
 						<?php self::$pluginsTable->display(); ?>
 					</form>						
@@ -816,7 +817,7 @@ class MainWPPlugins
 			</div>
 		
 		<script type="text/javascript">
-			mainwp_install_set_install_links();
+			//mainwp_install_set_install_links();			
 		</script>	
 		
 		<?php		
@@ -868,7 +869,7 @@ class MainWPPlugins
                             <option value="ignored" <?php if ($cachedAUSearch != null && $cachedAUSearch['status'] == 'ignored') { echo 'selected'; } ?>><?php _e('Ignored Plugins','mainwp'); ?></option>
                         </select>&nbsp;&nbsp;
                     <span><?php _e("Containing Keywords:", "mainwp"); ?> </span>
-                    <input type="text" class="mainwp-field mainwp-keyword" id="mainwp_au_plugin_keyword" style="width: 350px;" value="<?php echo ($cachedAUSearch !== null) ? $cachedAUSearch['keyword'] : "";?>">&nbsp;&nbsp;
+                    <input type="text" class="" id="mainwp_au_plugin_keyword" style="width: 350px;" value="<?php echo ($cachedAUSearch !== null) ? $cachedAUSearch['keyword'] : "";?>">&nbsp;&nbsp;
                     <a href="#" class="button-primary" id="mainwp_show_all_active_plugins"><?php _e('Show Plugins','mainwp'); ?></a>
                     <span id="mainwp_plugins_loading"><i class="fa fa-spinner fa-pulse"></i></span>
             </div>

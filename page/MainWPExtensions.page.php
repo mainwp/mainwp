@@ -372,50 +372,75 @@ class MainWPExtensions
         $return = array();
         if (is_array($result)) {
             if (isset($result['success']) && $result['success']) { 
-                $all_available_exts = array();  
+                $all_available_exts = array();				
+				$map_extensions_group = array();
                 foreach(MainWPExtensionsView::getAvailableExtensions() as $ext) {
                     $all_available_exts[$ext['product_id']] = $ext;
+					$map_extensions_group[$ext['product_id']] = $ext['group'];
                 }                 
                 self::loadExtensions();
                 $installed_softwares = array();
                 if (is_array(self::$extensions)) {
                     foreach(self::$extensions as $extension) {
                         if (isset($extension['product_id']) && !empty($extension['product_id'])) {
-                            $installed_softwares[$extension['product_id']] = $extension['product_id'];
+                            $installed_softwares[$extension['product_id']] = $extension['product_id'];								
                         }
                     }
                 }                         
                 $purchased_data = (isset($result['purchased_data']) && is_array($result['purchased_data'])) ? $result['purchased_data'] : array();
                 $not_purchased_exts = array_diff_key($all_available_exts, $purchased_data);
-                $installing_exts = array_diff_key($purchased_data, $installed_softwares);
+                $installing_exts = array_diff_key($purchased_data, $installed_softwares);				
+				
+				$grouped_exts = array();
+				foreach($installing_exts as $product_id => $product_info) {
+						$item_html = '';												
+						$software_title = isset($all_available_exts[$product_id]) ? $all_available_exts[$product_id]['title'] : $product_id;
+						if (isset($product_info['error']) && $product_info['error'] == 'download_revoked') {
+							$item_html = '<div><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $software_title . "</strong></span> <span style=\"color: red;\"><strong>Error</strong> " . MainWPApiManager::instance()->download_revoked_error_notice($software_title) . '</span></div>';
+						} else if (isset($product_info['package']) && !empty($product_info['package'])){
+							$package_url = apply_filters('mainwp_api_manager_upgrade_url', $product_info['package']);
+							$item_html = '<div class="extension_to_install" download-link="' . $package_url . '" product-id="' . $product_id . '"><input type="checkbox" status="queue" checked="true"> <span class="name"><strong>' . $software_title . "</strong></span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
+						}	
+						if (isset($map_extensions_group[$product_id])) 
+							$grouped_exts[$map_extensions_group[$product_id]] .= $item_html;
+						else 
+							$grouped_exts['others'] .= $item_html;
+				}
 
+				foreach($not_purchased_exts as $product_id => $ext) {
+						$item_html = '<div class="extension_not_purchased" product-id="' . $product_id . '"><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $ext['title'] . '</strong></span> ' . __("Extension not purchased.") . ' <a href="' . $ext['link'] . '" target="_blank">' .  __("Get it here!") . '</a></div>';
+						if (isset($map_extensions_group[$product_id])) 
+							$grouped_exts[$map_extensions_group[$product_id]] .= $item_html;
+						else 
+							$grouped_exts['others'] .= $item_html;
+						
+				}
+				
+				$all_groups = MainWPExtensionsView::getExtensionGroups();
                 $html = '<div class="inside">';
-                $html .= "<h2>" . __("Installing Purchased Extensions ...", "mainwp") . "</h2>";                                        
+                $html .= "<h2>" . __("Install Purchased Extensions", "mainwp") . "</h2>";                                        
                 $html .= '<div class="mainwp_extension_installing">';
-                if (empty($installing_exts)) {
+				if (empty($installing_exts)) {
                     $html .= '<p>' . __("All purchased extensions are Installed", "mainwp") . '</p>';
                 } else {
-                    $html .= '<p><span class="description">' . __('Uncheck any Extension you do not want to install', 'mainwp') . '</span></p>';
-                    foreach($installing_exts as $product_id => $product_info) {
-                        $software_title = isset($all_available_exts[$product_id]) ? $all_available_exts[$product_id]['title'] : $product_id;
-                        if (isset($product_info['error']) && $product_info['error'] == 'download_revoked') {
-                            $html .= '<div><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $software_title . "</strong></span> <span style=\"color: red;\"><strong>Error</strong> " . MainWPApiManager::instance()->download_revoked_error_notice($software_title) . '</span></div>';
-                        } else if (isset($product_info['package']) && !empty($product_info['package'])){
-                            $package_url = apply_filters('mainwp_api_manager_upgrade_url', $product_info['package']);
-                            $html .= '<div class="extension_to_install" download-link="' . $package_url . '" product-id="' . $product_id . '"><input type="checkbox" status="queue" checked="true"> <span class="name"><strong>' . $software_title . "</strong></span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
-                        }                        
-                    }       
-                }
-                foreach($not_purchased_exts as $product_id => $ext) {                                                  
-                    $html .= '<div class="extension_not_purchased" product-id="' . $product_id . '"><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $ext['title'] . '</strong></span> ' . __("Extension not purchased.") . ' <a href="' . $ext['link'] . '" target="_blank">' .  __("Get it here!") . '</a></div>';                                                        
-                }
+                    $html .= '<p><span class="description">' . __('You have access to all purchased Extensions but you DO NOT need to install all off them. We recommend adding them one at a time, as you need them, so you do not experience information overload. Uncheck any Extension you do not want to install', 'mainwp') . '</span></p>';
+					$html .= '<div><a id="mainwp-check-all-ext" href="javascript:void(0);"><i class="fa fa-check-square-o"></i> ' . __('Select All', 'mainwp') . '</a> | <a id="mainwp-uncheck-all-ext" href="javascript:void(0);"><i class="fa fa-square-o"></i> ' . __('Select None', 'mainwp') . '</a></div><br/>';
+				}
+				
+				foreach($all_groups as $gr_id => $gr_name) {					
+					if (isset($grouped_exts[$gr_id])) {
+						$html .= '<p><h3>' . $gr_name . '</h3></p>';
+						$html .= $grouped_exts[$gr_id];
+					}
+				}
+				
                 $html .= '</div>';
                 $html .= '</div>';
                 
-                if (!empty($installing_exts)) {
+				if (!empty($installing_exts)) {
                     $html .= '<p>
                                 <span class="extension_api_loading">
-                                    <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-installnow" value="' . __("Install Now", "mainwp") . '">
+                                    <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-installnow" value="' . __("Install Selected Extensions", "mainwp") . '">
                                     <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
                                 </span>
                             </p> ';
@@ -435,7 +460,7 @@ class MainWPExtensions
         }          
         die(json_encode($return));                       
     }
-        
+    
     public static function http_request_reject_unsafe_urls($r, $url)
     {
         $r['reject_unsafe_urls'] = false;

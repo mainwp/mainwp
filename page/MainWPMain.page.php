@@ -90,7 +90,7 @@ class MainWPMain
         }
         add_meta_box($page.'-contentbox-' . $i++, MainWPExtensionsWidget::getName(), array(MainWPExtensionsWidget::getClassName(), 'render'), $page, 'normal', 'core');
         add_meta_box($page.'-contentbox-' . $i++, MainWPHelp::getName(), array(MainWPHelp::getClassName(), 'render'), $page, 'normal', 'core');
-        //add_meta_box($page.'-contentbox-' . $i++, MainWPNews::getName(), array(MainWPNews::getClassName(), 'render'), $page, 'normal', 'core');
+        add_meta_box($page.'-contentbox-' . $i++, MainWPHowTo::getName(), array(MainWPHowTo::getClassName(), 'render'), $page, 'normal', 'core');
 
         $extMetaBoxs = MainWPSystem::Instance()->apply_filter('mainwp-getmetaboxes', array());
         $extMetaBoxs = apply_filters('mainwp-getmetaboxs', $extMetaBoxs);

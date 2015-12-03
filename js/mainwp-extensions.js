@@ -772,3 +772,17 @@ function mainwp_getCookie(c_name)
     }
     return "";
 }
+
+jQuery(document).ready(function($) {
+    $('#mainwp-check-all-ext').live('click', function() {               
+        $('.extension_to_install').find("input:checkbox").each(function(){
+            $(this).attr('checked', true);
+        });        
+    });
+    $('#mainwp-uncheck-all-ext').live('click', function() {
+     $('.extension_to_install').find("input:checkbox").each(function(){
+        $(this).attr('checked', false);
+    });        
+    });
+});
+

@@ -433,13 +433,13 @@ themes.view.Theme = wp.Backbone.View.extend({
 		if ( this.touchDrag === true ) {
 			return this.touchDrag = false;
 		}
-
+                
 		// Prevent the modal from showing when the user clicks
 		// one of the direct action buttons
 		if ( $( event.target ).is( '.theme-actions a' ) ) {
 			return;
 		}
-
+                
 		// Set focused theme to current element
 		themes.focusedTheme = this.$el;
 
@@ -463,12 +463,19 @@ themes.view.Theme = wp.Backbone.View.extend({
 		if ( $( event.target ).hasClass( 'button-primary' ) ) {
 			return;
 		}
-
+                
+                if ( $( event.target ).is( '.theme-actions input[type="radio"]' ) ) {
+                        return;
+                }
+                if ( $( event.target ).is( '.theme-actions label.lbl-install-theme' ) ) {
+                        return;
+                }
+                
 		// 'enter' and 'space' keys expand the details view when a theme is :focused
 		if ( event.type === 'keydown' && ( event.which !== 13 && event.which !== 32 ) ) {
 			return;
 		}
-
+                
 		// pressing enter while focused on the buttons shouldn't open the preview
 		if ( event.type === 'keydown' && event.which !== 13 && $( ':focus' ).hasClass( 'button' ) ) {
 			return;
@@ -1377,7 +1384,7 @@ themes.view.Installer = themes.view.Appearance.extend({
 		this.listenTo( this.collection, 'query:success', function() {
 			$( 'body' ).removeClass( 'loading-content' );
 			$( '.theme-browser' ).find( 'div.error' ).remove();
-                        mainwp_install_set_install_links();
+                        //mainwp_install_set_install_links();                        
                         if (themes.data.favoritesOnActionCallback) {                            
                             window[themes.data.favoritesOnActionCallback]();                            
                         } 

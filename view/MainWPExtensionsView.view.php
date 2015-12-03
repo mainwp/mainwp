@@ -15,22 +15,7 @@ class MainWPExtensionsView
                 alt="MainWP"/></a>
         <h2><i class="fa fa-plug"></i> <?php _e('Extensions', 'mainwp'); ?></h2><div style="clear: both;"></div><br/><br/>
         <?php if ($shownPage === '') { ?>
-        <div id="mainwp-extensions-categories-menu" class="postbox">
-                <div class="mainwp-inside"><span id="mainwp-extensions-menu-title"><?php _e('Get MainWP Extensions','mainwp');?></span></div>
-                <div style="border-bottom: 1px Solid #e5e5e5;"></div>
-                <div class="mainwp-inside mainwp-align-center" style="clear: both;">
-                <div id="mainwp-extensions-cat-menu">
-                    <ul id="mainwp-extensions-menu-cat-list">
-                        <li class="mainwp-extensions-menu-item mainwp-category-1"><a href="https://extensions.mainwp.com/product-category/mainwp-extensions/administrative/"><?php _e('Administrative','mainwp'); ?></a></li>
-                        <li class="mainwp-extensions-menu-item mainwp-category-2"><a href="https://extensions.mainwp.com/product-category/mainwp-extensions/content/"><?php _e('Content','mainwp'); ?></a></li>
-                        <li class="mainwp-extensions-menu-item mainwp-category-3"><a href="https://extensions.mainwp.com/product-category/mainwp-extensions/visitor-data/"><?php _e('Visitor Data','mainwp'); ?></a></li>
-                        <li class="mainwp-extensions-menu-item mainwp-category-4"><a href="https://extensions.mainwp.com/product-category/mainwp-extensions/free/"><?php _e('Free Extensions','mainwp'); ?></a></li>
-                        <li class="mainwp-extensions-menu-item mainwp-category-5"><a href="https://extensions.mainwp.com/shop/"><?php _e('All Extensions','mainwp'); ?></a></li>
-                    </ul>
-                </div>
-                    <div style="clear: both;"></div>
-                </div>
-        </div>        
+                
        
 <?php     
     
@@ -81,31 +66,31 @@ class MainWPExtensionsView
                 <div class="api-grabbing-fields">              
                     <input type="text" class="input username" placeholder="<?php echo __("Username", "mainwp"); ?>" value="<?php echo $username; ?>"/>&nbsp;
                     <input type="password" class="input passwd" placeholder="<?php echo __("Password", "mainwp"); ?>" value="<?php echo $password; ?>"/>&nbsp;
-                    <label><input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ""; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e("Save API login", "mainwp"); ?></label>
+                    <label><input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ""; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e("Check to Save API login", "mainwp"); ?></label>
                 </div>  
                 <p>
                     <span class="extension_api_loading">
-                        <input type="button" class="button-primary" id="mainwp-extensions-savelogin" value="<?php _e("Save Login", "mainwp"); ?>">
+                        <input type="button" class="button-primary button button-hero" id="mainwp-extensions-savelogin" value="<?php _e("Verify Login", "mainwp"); ?>">
                         <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
                     </span>
                 </p>  
                 <p><hr></p>            
                 <strong><?php _e("Step 2", "mainwp"); ?></strong>
                 <div id="mainwp-install-purchased-extensions">
-                <p><span class="description"><?php _e("The Install Purchased Extensions button will automatically install all your MainWP Extensions. You can also install them manually using the directions <a href=\"http://docs.mainwp.com/how-to-install-mainwp-extensions/\" >here</a>."); ?></span></p>
+                <p><span class="description"><?php _e("The Show Purchased Extensions button will show you all your MainWP Extensions. After the list appears, you can select wanted extensions and install them automatically. You can also install them manually using the directions <a href=\"http://docs.mainwp.com/how-to-install-mainwp-extensions/\" >here</a>."); ?></span></p>
                 <p>
                     <span class="extension_api_loading">
-                        <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-bulkinstall" value="<?php _e("Install purchased extensions", "mainwp"); ?>">
+                        <input type="button" class="mainwp-upgrade-button button-primary button button-hero" id="mainwp-extensions-bulkinstall" value="<?php _e("Show purchased extensions", "mainwp"); ?>">
                         <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
                     </span>
                 </p>                            
                 </div>
                 <p><hr></p>
                 <strong><?php _e("Step 3", "mainwp"); ?></strong>
-                <p><span class="description"><?php _e("The Grab API Keys will automatically add your API Keys and activate your Extensions. You can also manually enter your API for each Extension following the steps <a href=\"http://docs.mainwp.com/enter-extensions-api-keys/\" >here</a>."); ?></span></p>
+                <p><span class="description"><?php _e("The Grab API Keys will automatically add your API Keys for Extension automatic updates. You can also manually enter your API for each Extension following the steps <a href=\"http://docs.mainwp.com/enter-extensions-api-keys/\" >here</a>."); ?></span></p>
                 <p>
                     <span class="extension_api_loading">
-                        <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-grabkeys" value="<?php _e("Grab Api Keys", "mainwp"); ?>">
+                        <input type="button" class="mainwp-upgrade-button button-primary button button-hero" id="mainwp-extensions-grabkeys" value="<?php _e("Grab Api Keys", "mainwp"); ?>">
                         <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
                     </span>
                 </p>  
@@ -344,8 +329,19 @@ class MainWPExtensionsView
         ?>
         <div class="postbox">
             <div class="handle"></div>
-            <h3 class="mainwp_box_title"><?php _e('Available Extensions on <a href="//extensions.mainwp.com">MainWP Extensions</a>'); ?></h3>
+            <h3 class="mainwp_box_title"><?php _e('Available <a href="//extensions.mainwp.com">MainWP Extensions</a>'); ?></h3>
             <div>
+            <div id="mainwp-extensions-filter" style="background: #eee; padding: 1em .6em;">
+                <a class="mainwp_action left mainwp_action_down" href="#" id="mainwp-extensions-all"><?php _e('All', 'mainwp'); ?></a><!--
+                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-free"><?php _e('Free', 'mainwp'); ?></a><!--
+                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-backups"><?php _e('Backup', 'mainwp'); ?></a><!--
+                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-content"><?php _e('Content', 'mainwp'); ?></a><!--
+                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-security"><?php _e('Security', 'mainwp'); ?></a><!--
+                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-administrative"><?php _e('Administrative', 'mainwp'); ?></a><!--
+                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-hosting"><?php _e('Hosting', 'mainwp'); ?></a><!--
+                --><a class="mainwp_action mid" href="#" id="mainwp-extensions-performance"><?php _e('Performance', 'mainwp'); ?></a><!--
+                --><a class="mainwp_action right" href="#" id="mainwp-extensions-visitor-data"><?php _e('Visitor Data', 'mainwp'); ?></a>
+            </div>
                 <div id="mainwp-available-extensions-list">
                     <?php
                         foreach($all_extensions as $ext ) {
@@ -377,6 +373,20 @@ class MainWPExtensionsView
         <?php
         }
         
+		public static function getExtensionGroups() {
+			$groups = array(
+                                'backup' => 'Backup',
+								'performance' => 'Performance',
+								'security' => 'Security',
+								'admin' => 'Administrative',
+								'content' => 'Content',
+								'visitor' => 'Visitor Data',
+								'free' => 'Free extension',
+								'others' => 'Others'
+						);			
+			return $groups;
+		}
+		
         public static function getAvailableExtensions() {
             return array(                
                         array(
@@ -387,7 +397,8 @@ class MainWPExtensionsView
                                 'link' => 'https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/',
                                 'img' => 'http://extensions.mainwp.com/wp-content/uploads/2013/06/Advanced-Uptime-Monitor-300x300.png',
                                 'product_id' => 'Advanced Uptime Monitor Extension',
-                                'catalog_id' => '218'
+                                'catalog_id' => '218',
+								'group' => 'free'
                             ),
                         array(
                                 'slug' => 'mainwp-article-uploader-extension',
@@ -396,7 +407,8 @@ class MainWPExtensionsView
                                 'link' => 'https://extensions.mainwp.com/product/mainwp-article-uploader-extension/',
                                 'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/08/mainwp-article-uploader-extension.png',
                                 'product_id' => 'MainWP Article Uploader Extension',
-                                'catalog_id' => '15340'
+                                'catalog_id' => '15340',
+								'group' => 'content'
                             ),
                         array(
                                 'slug' => 'mainwp-backupwordpress-extension',
@@ -405,7 +417,8 @@ class MainWPExtensionsView
                                 'link' => 'https://extensions.mainwp.com/product/mainwp-backupwordpress-extension/',
                                 'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/05/mainwp-backupwordpress-extension.png',
                                 'product_id' => 'MainWP BackUpWordPress Extension',
-                                'catalog_id' => '273535'
+                                'catalog_id' => '273535',
+								'group' => 'backup'
                             ),
                         array(
                             'free' => true,
@@ -415,7 +428,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-blogvault-incremental-backup-extension/',
                             'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/10/mainwp-blogvault-backup-extension.png',
                             'product_id' => 'MainWP BlogVault Backup Extension',
-                            'catalog_id' => '347111'
+                            'catalog_id' => '347111',
+							'group' => 'backup'
                         ),
                         array(
                                 'slug' => 'boilerplate-extension',
@@ -424,7 +438,8 @@ class MainWPExtensionsView
                                 'link' => 'https://extensions.mainwp.com/product/mainwp-boilerplate-extension/',
                                 'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/boilerplate-icon-300x300.png',
                                 'product_id' => 'Boilerplate Extension',
-                                'catalog_id' => '1188'
+                                'catalog_id' => '1188',
+								'group' => 'content'
                             ),
                         array(
                                 'slug' => 'mainwp-branding-extension',
@@ -433,7 +448,8 @@ class MainWPExtensionsView
                                 'link' => 'https://extensions.mainwp.com/product/mainwp-child-plugin-branding-extension/',
                                 'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/03/mainwp-child-pllugin-branding-extension.png',
                                 'product_id' => 'MainWP Branding Extension',
-                                'catalog_id' => '10679'
+                                'catalog_id' => '10679',
+								'group' => 'admin'
                             ),
                         array(
                                 'slug' => 'mainwp-broken-links-checker-extension',
@@ -442,7 +458,8 @@ class MainWPExtensionsView
                                 'link' => 'https://extensions.mainwp.com/product/mainwp-broken-links-checker-extension/',
                                 'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/07/mainwp-broken-links-checker-extension.png',
                                 'product_id' => 'MainWP Broken Links Checker Extension',
-                                'catalog_id' => '12737'
+                                'catalog_id' => '12737',
+								'group' => 'performance'
                             ),
                          array(
                             'slug' => 'mainwp-bulk-settings-manager',
@@ -451,7 +468,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-bulk-settings-manager-extension/',
                             'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/10/mainwp-bulk-settings-manager-extension.png',
                             'product_id' => 'MainWP Bulk Settings Manager',
-                            'catalog_id' => '347704'
+                            'catalog_id' => '347704',
+							'group' => 'admin'
                         ),
                          array(
                                 'free' => true,
@@ -461,7 +479,8 @@ class MainWPExtensionsView
                                 'link' => 'https://extensions.mainwp.com/product/mainwp-clean-lock-extension/',
                                 'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/07/mainwp-clean-and-lock-extension.png',
                                 'product_id' => 'MainWP Clean and Lock Extension',
-                                'catalog_id' => '12907'
+                                'catalog_id' => '12907',
+								'group' => 'security'
                             ),                        
                         array(
                                 'slug' => 'mainwp-client-reports-extension',
@@ -470,7 +489,8 @@ class MainWPExtensionsView
                                 'link' => 'https://extensions.mainwp.com/product/mainwp-client-reports-extension/',
                                 'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/mainwp-client-reports-extension.png',
                                 'product_id' => 'MainWP Client Reports Extension',
-                                'catalog_id' => '12139'
+                                'catalog_id' => '12139',
+								'group' => 'admin'
                             ),
                         array(
                             'slug' => 'mainwp-clone-extension',
@@ -479,7 +499,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-clone-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-clone-ext-icon.png',
                             'product_id' => 'MainWP Clone Extension',
-                            'catalog_id' => '1555'
+                            'catalog_id' => '1555',
+							'group' => 'admin'
                         ),
                         array(
                             'slug' => 'mainwp-code-snippets-extension',
@@ -488,7 +509,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-code-snippets-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/04/mainwp-code-snippets-extension.png',
                             'product_id' => 'MainWP Code Snippets Extension',
-                            'catalog_id' => '11196'
+                            'catalog_id' => '11196',
+							'group' => 'admin'
                         ),
                         array(
                             'slug' => 'mainwp-comments-extension',
@@ -497,7 +519,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-comments-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-comments-ext-icon.png',
                             'product_id' => 'MainWP Comments Extension',
-                            'catalog_id' => '1551'
+                            'catalog_id' => '1551',
+							'group' => 'admin'
                         ),
                         array(
                             'slug' => 'mainwp-favorites-extension',
@@ -506,7 +529,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-favorites-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-favorites-icon.png',
                             'product_id' => 'MainWP Favorites Extension',
-                            'catalog_id' => '1379'
+                            'catalog_id' => '1379',
+							'group' => 'admin'
                         ),
                         array(
                             'slug' => 'mainwp-file-uploader-extension',
@@ -515,7 +539,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-file-uploader-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/mainwp-file-uploader-extension.png',
                             'product_id' => 'MainWP File Uploader Extension',
-                            'catalog_id' => '11637'
+                            'catalog_id' => '11637',
+							'group' => 'admin'
                         ),
                         array(
                             'slug' => 'mainwp-google-analytics-extension',
@@ -524,7 +549,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-google-analytics-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-ga-ext-icon.png',
                             'product_id' => 'MainWP Google Analytics Extension',
-                            'catalog_id' => '1554'
+                            'catalog_id' => '1554',
+							'group' => 'visitor'
                         ),
                         array(
                             'free' => true,
@@ -534,7 +560,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-inmotion-hosting-extension/',
                             'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/07/mainwp-inmotion-extension.png',
                             'product_id' => 'MainWP InMotion Hosting Extension',
-                            'catalog_id' => '336219'
+                            'catalog_id' => '336219',
+							'group' => 'free'
                         ),
                         array(
                             'slug' => 'mainwp-links-manager-extension',
@@ -543,7 +570,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-links-manager/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2013/08/links-manager-1.png',
                             'product_id' => 'MainWP Links Manager Extension',
-                            'catalog_id' => '317'
+                            'catalog_id' => '317',
+							'group' => 'content'
                         ),
                         array(
                             'slug' => 'mainwp-maintenance-extension',
@@ -552,7 +580,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-maintenance-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/Maintenance-Icon-3-300x300.png',
                             'product_id' => 'MainWP Maintenance Extension',
-                            'catalog_id' => '1141'
+                            'catalog_id' => '1141',
+							'group' => 'admin'
                         ),
                         array(
                             'slug' => 'mainwp-piwik-extension',
@@ -561,7 +590,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-piwik-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/03/mainwp-piwik-extension.png',
                             'product_id' => 'MainWP Piwik Extension',
-                            'catalog_id' => '10523'
+                            'catalog_id' => '10523',
+							'group' => 'visitor'
                         ),
                         array(
                             'slug' => 'mainwp-post-dripper-extension',
@@ -570,7 +600,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-post-dripper-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/mainwp-post-dripper-extension.png',
                             'product_id' => 'MainWP Post Dripper Extension',
-                            'catalog_id' => '11756'
+                            'catalog_id' => '11756',
+							'group' => 'content'
                         ),
                         array(
                             'slug' => 'mainwp-remote-backup-extension',
@@ -579,7 +610,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-remote-backups-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-remote-backups-ext-icon.png',
                             'product_id' => 'MainWP Remote Backup Extension',
-                            'catalog_id' => '1553'
+                            'catalog_id' => '1553',
+							'group' => 'backup'
                         ),
                         array(
                             'slug' => 'mainwp-rocket-extension',
@@ -588,7 +620,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-rocket-extension/',
                             'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/07/mainwp-rocket-extension.png',
                             'product_id' => 'MainWP Rocket Extension',
-                            'catalog_id' => '335257'
+                            'catalog_id' => '335257',
+							'group' => 'performance'
                         ),
                         array(
                             'slug' => 'mainwp-spinner',
@@ -597,7 +630,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-spinner/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2013/06/spinner-300x300.png',
                             'product_id' => 'MainWP Spinner',
-                            'catalog_id' => '110'
+                            'catalog_id' => '110',
+							'group' => 'content'
                         ),
                         array(
                             'free' => true,
@@ -607,7 +641,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-sucuri-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/03/mainwp-sucuri-extension.png',
                             'product_id' => 'MainWP Sucuri Extension',
-                            'catalog_id' => '10777'
+                            'catalog_id' => '10777',
+							'group' => 'security'
                         ),
                         array(
                             'slug' => 'mainwp-team-control',
@@ -616,7 +651,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-team-control/',
                             'img' => 'https://extensions.mainwp.com/wp-content/uploads/2014/10/mainwp-team-control-extension.png',
                             'product_id' => 'MainWP Team Control',
-                            'catalog_id' => '23936'
+                            'catalog_id' => '23936',
+							'group' => 'admin'
                         ),
                         array(
                                 'free' => true,
@@ -626,7 +662,8 @@ class MainWPExtensionsView
                                 'link' => 'https://extensions.mainwp.com/product/mainwp-updraftplus-extension/',
                                 'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/04/mainwp-updraftplus-extension.png',
                                 'product_id' => 'MainWP UpdraftPlus Extension',
-                                'catalog_id' => '165843'
+                                'catalog_id' => '165843',
+								'group' => 'backup'
                             ),
                         array(
                             'slug' => 'mainwp-url-extractor-extension',
@@ -635,7 +672,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-url-extractor-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/mainwp-url-extractor-extension.png',
                             'product_id' => 'MainWP Url Extractor Extension',
-                            'catalog_id' => '11965'
+                            'catalog_id' => '11965',
+							'group' => 'admin'
                         ),
                         array(
                             'free' => true,
@@ -645,7 +683,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-woocommerce-shortcuts-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-woocommerce-shortcuts-extension.png',
                             'product_id' => 'MainWP WooCommerce Shortcuts Extension',
-                            'catalog_id' => '12706'
+                            'catalog_id' => '12706',
+							'group' => 'free'
                         ),
                         array(
                             'slug' => 'mainwp-woocommerce-status-extension',
@@ -654,7 +693,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-woocommerce-status-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-woocommerce-status-extension.png',
                             'product_id' => 'MainWP WooCommerce Status Extension',
-                            'catalog_id' => '12671'
+                            'catalog_id' => '12671',
+							'group' => 'free'
                         ),
                         array(
                             'slug' => 'mainwp-wordfence-extension',
@@ -663,7 +703,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/mainwp-wordfence-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/09/mainwp-wordfence-icon.png',
                             'product_id' => 'MainWP Wordfence Extension',
-                            'catalog_id' => '19678'
+                            'catalog_id' => '19678',
+							'group' => 'security'
                         ),
                         array(
                             'slug' => 'wordpress-seo-extension',
@@ -672,7 +713,8 @@ class MainWPExtensionsView
                             'link' => 'https://extensions.mainwp.com/product/wordpress-seo-extension/',
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/wordpress-seo-extension.png',
                             'product_id' => 'MainWP Wordpress SEO Extension',
-                            'catalog_id' => '12080'
+                            'catalog_id' => '12080',
+							'group' => 'content'							
                         ),
                         
                     );

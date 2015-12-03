@@ -112,7 +112,7 @@ class MainWPOptions
         <tr>
             <th scope="row"><?php _e('Notification Email','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('This address is used to send monitoring alerts.','mainwp')); ?></th>
             <td>
-                <input type="text"  class="mainwp-field mainwp-email" name="mainwp_options_email" size="35" value="<?php echo $user_email; ?>"/><span class="mainwp-form_hint"><?php _e('This address is used to send monitoring alerts.','mainwp'); ?></span>
+                <input type="text"  class="" name="mainwp_options_email" size="35" value="<?php echo $user_email; ?>"/><span class="mainwp-form_hint"><?php _e('This address is used to send monitoring alerts.','mainwp'); ?></span>
             </td>
         </tr>
         <tr>
@@ -136,16 +136,6 @@ class MainWPOptions
                </div>
             </td>
         </tr>
-        <!-- <tr>
-            <th scope="row"><?php _e('Use Child Site Favicon','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Set to YES if you want to use Child Site Favicon.','mainwp')); ?></th>
-            <td>
-            	<div class="mainwp-checkbox">
-                <input type="checkbox" name="mainwp_use_favicon"
-                       id="mainwp_use_favicon" <?php echo ((get_option('mainwp_use_favicon', 1) == 1) ? 'checked="true"' : ''); ?>/>
-                <label for="mainwp_use_favicon"></label>
-               </div>
-            </td>
-        </tr> -->
         <?php } ?>
         </tbody>
     </table>
@@ -157,14 +147,6 @@ class MainWPOptions
     <div class="inside">
     <table class="form-table">
         <tbody>
-        <tr>
-            <th scope="row"><?php _e('View Upgrades per Site','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('When this is disabled, the upgrades are shown per plugin/theme with a sublist of sites. When this is enabled, all the sites are shown with the plugin/theme upgrades available per site.','mainwp')); ?></th>
-            <td>
-            	<div class="mainwp-checkbox">
-                <input type="checkbox" name="mainwp_options_siteview" id="mainwp_options_siteview" size="35" <?php echo ($siteview == 1 ? 'checked="true"' : ''); ?>/> <label for="mainwp_options_siteview"></label>
-               </div>
-            </td>
-        </tr>
         <tr>
             <th scope="row"><?php _e('Require Backup Before Upgrade','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('With this option enabled, when you try to upgrade a plugin, theme or WordPress core, MainWP will check if there is a full backup created for the site(s) you are trying to upgrade in last 7 days. If you have a fresh backup of the site(s) MainWP will proceed to the upgrade process, if not it will ask you to create a full backup.','mainwp')); ?></th>
             <td>
@@ -200,7 +182,7 @@ class MainWPOptions
         <tr>
             <th scope="row"><?php _e('Abandoned Plugins/Thems Tolerance','mainwp'); ?> <?php MainWPUtility::renderToolTip(__("In case the plugin or theme author didn't release an update for the set number of days, the plugin/theme will be marked and Possibly Abandoned.",'mainwp')); ?></th>
             <td>
-                <input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme"  class="mainwp-field mainwp-settings-icon"
+                <input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme"  class=""
                        id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo ((get_option('mainwp_numberdays_Outdate_Plugin_Theme') === false) ? 365 : get_option('mainwp_numberdays_Outdate_Plugin_Theme')); ?>"/>
             </td>
         </tr>
@@ -218,14 +200,14 @@ class MainWPOptions
         <tr>
             <th scope="row"><?php _e('Maximum Number of Posts/Pages','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.','mainwp')); ?></th>
             <td>
-                <input type="text" name="mainwp_maximumPosts"  class="mainwp-field mainwp-settings-icon"
+                <input type="text" name="mainwp_maximumPosts"  class=""
                        id="mainwp_maximumPosts" value="<?php echo ((get_option('mainwp_maximumPosts') === false) ? 50 : get_option('mainwp_maximumPosts')); ?>"/>
             </td>
         </tr>
         <tr>
             <th scope="row"><?php _e('Maximum Number of Comments','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.','mainwp')); ?></th>
             <td>
-                <input type="text" name="mainwp_maximumComments" class="mainwp-field mainwp-settings-icon"
+                <input type="text" name="mainwp_maximumComments" class=""
                        id="mainwp_maximumComments" value="<?php echo ((get_option('mainwp_maximumComments') === false) ? 50 : get_option('mainwp_maximumComments')); ?>"/>
             </td>
         </tr>

@@ -3664,18 +3664,50 @@ jQuery(document).ready(function () {
             mainwp_install_plugin_tab_search('tab:' + tab);
         }
     });
+    
+    jQuery('#mainwp_plugin_bulk_install_btn').live('click', function (event) {        
+        var selected = jQuery("input[type='radio'][name='install-plugin']:checked");
+        if (selected.length == 0) {
+            show_error('ajax-error-zone', __('Please select plugin to install files.'));        
+        } else if (selectedId = /^install-([^\-]*)-(.*)$/.exec(selected.attr('id'))) {         
+            mainwp_install_bulk('plugin', selectedId[2]);         
+        }    
+        return false;
+    })
+    
+    jQuery('#mainwp_theme_bulk_install_btn').live('click', function (event) {
+         var selected = jQuery("input[type='radio'][name='install-theme']:checked");
+        if (selected.length == 0) {
+            show_error('ajax-error-zone', __('Please select theme to install files.'));        
+        } else if (selectedId = /^install-([^\-]*)-(.*)$/.exec(selected.attr('id'))) {         
+            mainwp_install_bulk('theme', selectedId[2]);         
+        }    
+        return false;
+    })
+    
 });
-mainwp_install_set_install_links = function (event) {
-    jQuery('a[id^="install-"]').each(function (index, value) {
-        if (divId = /^install-([^\-]*)-(.*)$/.exec(value.id)) {
-            jQuery(value).bind('click', function (event, what, slug) {
-                return function () {
-                    mainwp_install_bulk(what, slug);
-                    return false;
-                }
-            }(event, divId[1], divId[2]));
-        }
-    });
+
+// mainwp_install_set_install_links = function (event) {
+//    jQuery('a[id^="install-"]').each(function (index, value) {
+//        if (divId = /^install-([^\-]*)-(.*)$/.exec(value.id)) {
+//            jQuery(value).bind('click', function (event, what, slug) {
+//                return function () {
+//                    mainwp_install_bulk(what, slug);
+//                    return false;
+//                }
+//            }(event, divId[1], divId[2]));
+//        }
+//    });
+//};
+
+mainwp_install_set_install_button = function (what) {
+    var selected = jQuery("input[type='radio'][name='install-" + what + "']:checked");
+    if (selected.length == 0) {
+        show_error('ajax-error-zone', __('Please select ' + what + ' on the left side to install files.'));        
+    } else if (divId = /^install-([^\-]*)-(.*)$/.exec(selected.attr('id'))) {         
+        mainwp_install_bulk(what, divId[2]);         
+    }    
+    return false;
 };
 
 bulkInstallTotal = 0;

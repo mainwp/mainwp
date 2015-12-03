@@ -359,11 +359,11 @@ class MainWPManageSitesView
 
                     <tr class="form-field form-required">
                          <th scope="row"><?php _e('HTTP username: ','mainwp'); ?></th>
-                         <td><input type="text" id="mainwp_managesites_test_http_user" style="width: 350px;" name="mainwp_managesites_test_http_user" value="" class="mainwp-field mainwp-username"/></td>
+                         <td><input type="text" id="mainwp_managesites_test_http_user" style="width: 350px;" name="mainwp_managesites_test_http_user" value="" class=""/></td>
                     </tr>
                     <tr class="form-field form-required">
                          <th scope="row"><?php _e('HTTP password: ','mainwp'); ?></th>
-                         <td><input type="password" id="mainwp_managesites_test_http_pass" style="width: 350px;" name="mainwp_managesites_test_http_pass" value="" class="mainwp-field mainwp-password"/></td>
+                         <td><input type="password" id="mainwp_managesites_test_http_pass" style="width: 350px;" name="mainwp_managesites_test_http_pass" value="" class=""/></td>
                     </tr>
                 </table>
                 
@@ -512,29 +512,43 @@ class MainWPManageSitesView
            <table class="form-table">
                <tr class="form-field form-required">
                    <th scope="row"><?php _e('Site Name','mainwp'); ?></th>
-                   <td><input type="text" id="mainwp_managesites_add_wpname"
-                              name="mainwp_managesites_add_wpname"
-                              value="" class="mainwp-field mainwp-site"/></td>
+                   <td>
+                            <input type="text" 
+                                   id="mainwp_managesites_add_wpname"
+                                   name="mainwp_managesites_add_wpname"
+                                   value=""
+                                   class=""/>
+                    </td>
                </tr>
                <tr class="form-field form-required">
                    <th scope="row"><?php _e('Site URL','mainwp'); ?></th>
-                   <td><input type="text" id="mainwp_managesites_add_wpurl"
-                              name="mainwp_managesites_add_wpurl"
-                              value="http://" class="mainwp-field mainwp-url" /><span class="mainwp-form_hint">Proper format "http://address.com/"</span></td>
+                   <td>
+                        <input type="text"
+                               id="mainwp_managesites_add_wpurl"
+                               name="mainwp_managesites_add_wpurl"
+                               value="http://" 
+                               class="" />
+                    </td>
                </tr>
                <tr class="form-field form-required">
                    <th scope="row"><?php _e('Administrator Username','mainwp'); ?></th>
-                   <td><input type="text" id="mainwp_managesites_add_wpadmin"
-                              name="mainwp_managesites_add_wpadmin" value="" class="mainwp-field mainwp-username" /></td>
+                   <td>
+                        <input type="text" 
+                               id="mainwp_managesites_add_wpadmin"
+                               name="mainwp_managesites_add_wpadmin" 
+                               value="" 
+                               class="" />
+                    </td>
                </tr>
                <tr>
                    <th scope="row"><?php _e('Groups','mainwp'); ?></th>
                    <td>
-                       <input type="text" name="mainwp_managesites_add_addgroups"
-                              id="mainwp_managesites_add_addgroups" value=""
-                              class="regular-text mainwp-field mainwp-groups" /> <span
-                           class="mainwp-form_hint">Separate groups by commas (e.g. Group 1, Group 2).</span>
-
+                        <input type="text" 
+                               name="mainwp_managesites_add_addgroups"
+                               id="mainwp_managesites_add_addgroups" 
+                               value=""
+                               class="regular-text form-control" />
+                        <span class="mainwp-form_hint"><?php _e( 'Separate groups by commas (e.g. Group 1, Group 2)', 'mainwp' ); ?></span>
                        <div id="selected_groups" style="display: block; width: 25em">
                            <?php
                            if (count($groups) == 0)
@@ -561,17 +575,23 @@ class MainWPManageSitesView
                         <tr class="form-field form-required">
                              <th scope="row"><?php _e('Child Unique Security
                                ID ','mainwp'); ?><?php MainWPUtility::renderToolTip('The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.'); ?></th>
-                             <td><input type="text" id="mainwp_managesites_add_uniqueId" style="width: 350px;"
-                                      name="mainwp_managesites_add_uniqueId" value="" class="mainwp-field mainwp-unique-id"/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
+                             <td>
+                             <input type="text" 
+                                    id="mainwp_managesites_add_uniqueId"
+                                    style="width: 350px;"
+                                    name="mainwp_managesites_add_uniqueId" 
+                                    value="" 
+                                    class=""/>
+                            <span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
                         </tr>
                         <tr class="form-field form-required">
                             <th scope="row"><?php _e('Verify Certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
                             <td>
-                                <select id="mainwp_managesites_verify_certificate" name="mainwp_managesites_verify_certificate">
-                                     <option selected value="1"><?php _e('Yes','mainwp'); ?></option>
-                                     <option value="0"><?php _e('No','mainwp'); ?></option>
-                                     <option value="2"><?php _e('Use Global Setting','mainwp'); ?></option>
-                                 </select> <i>(Default: Yes)</i>
+                                    <select id="mainwp_managesites_verify_certificate" name="mainwp_managesites_verify_certificate" class="form-control">
+                                         <option selected value="1"><?php _e('Yes','mainwp'); ?></option>
+                                         <option value="0"><?php _e('No','mainwp'); ?></option>
+                                         <option value="2"><?php _e('Use Global Setting','mainwp'); ?></option>
+                                    </select> <em><?php _e( 'Default: Yes', 'mainwp' ); ?></em>
                             </td>
                         </tr>
 
@@ -585,18 +605,32 @@ class MainWPManageSitesView
 
                         <tr class="form-field form-required">
                              <th scope="row"><?php _e('HTTP username ','mainwp'); ?></th>
-                             <td><input type="text" id="mainwp_managesites_add_http_user" style="width: 350px;" name="mainwp_managesites_add_http_user" value="" class="mainwp-field mainwp-username"/></td>
+                             <td>
+                                     <input type="text" 
+                                            id="mainwp_managesites_add_http_user" 
+                                            style="width: 350px;" 
+                                            name="mainwp_managesites_add_http_user" 
+                                            value="" 
+                                            class=""/>
+                            </td>
                         </tr>
                         <tr class="form-field form-required">
                              <th scope="row"><?php _e('HTTP password ','mainwp'); ?></th>
-                             <td><input type="password" id="mainwp_managesites_add_http_pass" style="width: 350px;" name="mainwp_managesites_add_http_pass" value="" class="mainwp-field mainwp-password"/></td>
+                             <td>
+                                    <input type="password" 
+                                           id="mainwp_managesites_add_http_pass" 
+                                           style="width: 350px;" 
+                                           name="mainwp_managesites_add_http_pass" 
+                                           value="" 
+                                           class=""/>
+                            </td>
                         </tr>
                     </table>
                     </div>
                 </div>
 
                <div class="postbox" id="mainwp-bulk-upload-sites">
-               <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Bulk Upload','mainwp'); ?></span></h3>
+               <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e( 'Bulk Upload','mainwp' ); ?></span></h3>
                <div class="inside">
                <table>
                    <th scope="row"></th>
@@ -822,14 +856,14 @@ class MainWPManageSitesView
         <tr <?php echo $hiddenCls; ?> >
             <th scope="row">Backups on Server <?php MainWPUtility::renderToolTip('The number of backups to keep on your server.  This does not affect external sources.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/'); ?></th>
             <td>
-                <input type="text" name="mainwp_options_backupOnServer"  class="mainwp-field mainwp-settings-icon"
+                <input type="text" name="mainwp_options_backupOnServer"  class=""
                        value="<?php echo ($backupsOnServer === false ? 1 : $backupsOnServer); ?>"/><span class="mainwp-form_hint"><?php _e('The number of backups to keep on your server. This does not affect external sources. 0 sets unlimited.','mainwp'); ?></span>
             </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>
             <th scope="row"><?php _e('Backups on Remote Storage','mainwp'); ?> <?php MainWPUtility::renderToolTip('The number of backups to keep on your external sources. This does not affect backups on the server.  0 sets unlimited.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/'); ?></th>
             <td>
-                <input type="text" name="mainwp_options_backupOnExternalSources"  class="mainwp-field mainwp-settings-icon"
+                <input type="text" name="mainwp_options_backupOnExternalSources"  class=""
                        value="<?php echo ($backupOnExternalSources === false ? 1 : $backupOnExternalSources); ?>"/><span class="mainwp-form_hint"><?php _e('The number of backups to keep on your external sources.  This does not affect backups on the server.  0 sets unlimited.','mainwp'); ?></span>
             </td>
         </tr>
@@ -1037,7 +1071,7 @@ class MainWPManageSitesView
                 <tbody>
                 <tr>
                     <th scope="row"><?php _e('Backup File Name:','mainwp'); ?></th>
-                    <td><input type="text" name="backup_filename" id="backup_filename" value="" class="mainwp-field mainwp-file-name" /><span class="mainwp-form_hint" style="display: inline; max-width: 500px;"><?php _e('Allowed Structure Tags:','mainwp'); ?> <strong>%sitename%</strong>, <strong>%url%</strong>, <strong>%date%</strong>, <strong>%time%</strong>, <strong>%type%</strong></span>
+                    <td><input type="text" name="backup_filename" id="backup_filename" value="" class="" /><span class="mainwp-form_hint" style="display: inline; max-width: 500px;"><?php _e('Allowed Structure Tags:','mainwp'); ?> <strong>%sitename%</strong>, <strong>%url%</strong>, <strong>%date%</strong>, <strong>%time%</strong>, <strong>%type%</strong></span>
                     </td>
                 </tr>
                 <tr><td colspan="2"><hr /></td></tr>
@@ -1335,12 +1369,12 @@ class MainWPManageSitesView
                 <tr>
                     <th scope="row"><?php _e('Site Name','mainwp'); ?></th>
                     <td><input type="text" name="mainwp_managesites_edit_sitename"
-                               value="<?php echo stripslashes($website->name); ?>" class="regular-text mainwp-field mainwp-site"/></td>
+                               value="<?php echo stripslashes($website->name); ?>" class="regular-text"/></td>
                 </tr>
                 <tr>
                     <th scope="row"><?php _e('Site URL','mainwp'); ?></th>
                     <td><input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled"
-                               value="<?php echo $website->url; ?>" class="regular-text mainwp-field mainwp-url" /> <span
+                               value="<?php echo $website->url; ?>" class="regular-text" /> <span
                             class="mainwp-form_hint-display"><?php _e('Site URL cannot be changed.','mainwp'); ?></span></td>
                 </tr>
                 <tr>
@@ -1348,14 +1382,14 @@ class MainWPManageSitesView
                     <td><input type="text" name="mainwp_managesites_edit_siteadmin"
                                id="mainwp_managesites_edit_siteadmin"
                                value="<?php echo $website->adminname; ?>"
-                               class="regular-text  mainwp-field mainwp-username"/></td>
+                               class="regular-text"/></td>
                 </tr>
                 <tr>
                     <th scope="row"><?php _e('Groups','mainwp'); ?></th>
                     <td>
                         <input type="text" name="mainwp_managesites_edit_addgroups"
                                id="mainwp_managesites_edit_addgroups" value=""
-                               class="regular-text  mainwp-field mainwp-groups"/> <span
+                               class="regular-text"/> <span
                             class="mainwp-form_hint"><?php _e('Separate groups by commas (e.g. Group 1, Group 2).','mainwp'); ?></span>
 
                         <div id="selected_groups" style="display: block; width: 25em">
@@ -1482,7 +1516,7 @@ class MainWPManageSitesView
                     <th scope="row"><?php _e('Child Unique Security
                       ID ','mainwp'); ?><?php MainWPUtility::renderToolTip('The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.'); ?></th>
                     <td><input type="text" id="mainwp_managesites_edit_uniqueId" style="width: 350px;" <?php echo $disabled_unique ? 'disabled="disabled"' : ''; ?>
-                             name="mainwp_managesites_edit_uniqueId" value="<?php echo $website->uniqueId; ?>" class="mainwp-field mainwp-unique-id"/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
+                             name="mainwp_managesites_edit_uniqueId" value="<?php echo $website->uniqueId; ?>" class=""/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
                 </tr>                
                  <tr class="form-field form-required">
                     <th scope="row"><?php _e('Verify Certificate','mainwp'); ?> <?php MainWPUtility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
@@ -1505,11 +1539,11 @@ class MainWPManageSitesView
 
                 <tr class="form-field form-required">
                      <th scope="row"><?php _e('HTTP username ','mainwp'); ?></th>
-                     <td><input type="text" id="mainwp_managesites_edit_http_user" style="width: 350px;" name="mainwp_managesites_edit_http_user" value="<?php echo (empty($website->http_user) ? '' : $website->http_user); ?>" class="mainwp-field mainwp-username"/></td>
+                     <td><input type="text" id="mainwp_managesites_edit_http_user" style="width: 350px;" name="mainwp_managesites_edit_http_user" value="<?php echo (empty($website->http_user) ? '' : $website->http_user); ?>" class=""/></td>
                 </tr>
                 <tr class="form-field form-required">
                      <th scope="row"><?php _e('HTTP password ','mainwp'); ?></th>
-                     <td><input type="password" id="mainwp_managesites_edit_http_pass" style="width: 350px;" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty($website->http_pass) ? '' : $website->http_pass); ?>" class="mainwp-field mainwp-password"/></td>
+                     <td><input type="password" id="mainwp_managesites_edit_http_pass" style="width: 350px;" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty($website->http_pass) ? '' : $website->http_pass); ?>" class=""/></td>
                 </tr>
             </table>
             </div>

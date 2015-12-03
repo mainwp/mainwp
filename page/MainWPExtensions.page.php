@@ -377,7 +377,7 @@ class MainWPExtensions
 				$free_group = array();
                 foreach(MainWPExtensionsView::getAvailableExtensions() as $ext) {
                     $all_available_exts[$ext['product_id']] = $ext;
-					$map_extensions_group[$ext['product_id']] = $ext['group'];
+					$map_extensions_group[$ext['product_id']] = current($ext['group']); // first group
 					if (isset($ext['free']) && !empty($ext['free']))
 						$free_group[] = $ext['product_id'];
                 }                 
@@ -427,18 +427,18 @@ class MainWPExtensions
                     $html .= '<p>' . __("All purchased extensions are Installed", "mainwp") . '</p>';
                 } else {
                     $html .= '<p><span class="description">' . __('You have access to all purchased Extensions but you DO NOT need to install all off them. We recommend adding them one at a time, as you need them, so you do not experience information overload. Uncheck any Extension you do not want to install', 'mainwp') . '</span></p>';
-					$html .= '<div><a id="mainwp-check-all-ext" href="javascript:void(0);"><i class="fa fa-check-square-o"></i> ' . __('Select All', 'mainwp') . '</a> | <a id="mainwp-uncheck-all-ext" href="javascript:void(0);"><i class="fa fa-square-o"></i> ' . __('Select None', 'mainwp') . '</a></div><br/>';
+					$html .= '<div><a id="mainwp-check-all-ext" href="javascript:void(0);"><i class="fa fa-check-square-o"></i> ' . __('Select All', 'mainwp') . '</a> | <a id="mainwp-uncheck-all-ext" href="javascript:void(0);"><i class="fa fa-square-o"></i> ' . __('Select None', 'mainwp') . '</a></div>';
 				}
 				
 				foreach($all_groups as $gr_id => $gr_name) {					
 					if (isset($grouped_exts[$gr_id])) {
-						$html .= '<p><h3>' . $gr_name . '</h3></p>';
+						$html .= '<h3>' . $gr_name . '</h3>';
 						$html .= $grouped_exts[$gr_id];
 					}
 				}
 				
 				if (isset($grouped_exts['others'])) {
-					$html .= '<p><h3>Others</h3></p>';
+					$html .= '<h3>Others</h3>';
 					$html .= $grouped_exts['others'];
 				}
 				

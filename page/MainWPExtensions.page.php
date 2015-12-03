@@ -394,6 +394,7 @@ class MainWPExtensions
                 $not_purchased_exts = array_diff_key($all_available_exts, $purchased_data);
                 $installing_exts = array_diff_key($purchased_data, $installed_softwares);				
 				
+				$all_groups = MainWPExtensionsView::getExtensionGroups();
 				$grouped_exts = array();
 				foreach($installing_exts as $product_id => $product_info) {
 						$item_html = '';												
@@ -404,22 +405,22 @@ class MainWPExtensions
 							$package_url = apply_filters('mainwp_api_manager_upgrade_url', $product_info['package']);
 							$item_html = '<div class="extension_to_install" download-link="' . $package_url . '" product-id="' . $product_id . '"><input type="checkbox" status="queue" checked="true"> <span class="name"><strong>' . $software_title . "</strong></span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
 						}	
-						if (isset($map_extensions_group[$product_id])) 
-							$grouped_exts[$map_extensions_group[$product_id]] .= $item_html;
+						$group_id = isset($map_extensions_group[$product_id]) ? $map_extensions_group[$product_id] : false;
+						if (!empty($group_id) && isset($all_groups[$group_id])) 
+							$grouped_exts[$group_id] .= $item_html;
 						else 
 							$grouped_exts['others'] .= $item_html;
 				}
 
 				foreach($not_purchased_exts as $product_id => $ext) {
-						$item_html = '<div class="extension_not_purchased" product-id="' . $product_id . '"><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $ext['title'] . '</strong></span> ' . __("Extension not purchased.") . ' <a href="' . $ext['link'] . '" target="_blank">' .  __("Get it here!", 'mainwp') . '</a>' . (in_array($product_id, $free_group) ? " <em>" . __("It's free.") ."</em>" : '') .'</div>';
-						if (isset($map_extensions_group[$product_id])) 
-							$grouped_exts[$map_extensions_group[$product_id]] .= $item_html;
+						$item_html = '<div class="extension_not_purchased" product-id="' . $product_id . '"><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $ext['title'] . '</strong></span> ' . __("Extension not purchased.") . ' <a href="' . $ext['link'] . '" target="_blank">' .  __("Get it here!", 'mainwp') . '</a>' . (in_array($product_id, $free_group) ? " <em>" . __("It's free.") ."</em>" : '') .'</div>';						
+						$group_id = isset($map_extensions_group[$product_id]) ? $map_extensions_group[$product_id] : false;
+						if (!empty($group_id) && isset($all_groups[$group_id])) 
+							$grouped_exts[$group_id] .= $item_html;
 						else 
-							$grouped_exts['others'] .= $item_html;
-						
+							$grouped_exts['others'] .= $item_html;						
 				}
 				
-				$all_groups = MainWPExtensionsView::getExtensionGroups();
                 $html = '<div class="inside">';
                 $html .= "<h2>" . __("Install Purchased Extensions", "mainwp") . "</h2>";                                        
                 $html .= '<div class="mainwp_extension_installing">';

@@ -406,7 +406,7 @@ class MainWPExtensionsView
                                 'img' => 'http://extensions.mainwp.com/wp-content/uploads/2013/06/Advanced-Uptime-Monitor-300x300.png',
                                 'product_id' => 'Advanced Uptime Monitor Extension',
                                 'catalog_id' => '218',
-								'group' => array('free')
+								'group' => array('other')
                             ),
                         array(
                                 'slug' => 'mainwp-article-uploader-extension',
@@ -692,7 +692,7 @@ class MainWPExtensionsView
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-woocommerce-shortcuts-extension.png',
                             'product_id' => 'MainWP WooCommerce Shortcuts Extension',
                             'catalog_id' => '12706',
-							'group' => array('free')
+							'group' => array('other')
                         ),
                         array(							
                             'slug' => 'mainwp-woocommerce-status-extension',

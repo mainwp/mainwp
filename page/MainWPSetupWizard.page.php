@@ -107,6 +107,11 @@ class MainWPSetupWizard {
 				'view'    => array( $this, 'mwp_setup_uptime_robot' ),
 				'handler' => array( $this, 'mwp_setup_uptime_robot_save' ),
 			),
+			'hide_wp_menus' => array(
+				'name'    =>  __( 'Hide WP Menus', 'mainwp' ),
+				'view'    => array( $this, 'mwp_setup_hide_wp_menu' ),
+				'handler' => array( $this, 'mwp_setup_hide_wp_menu_save' ),
+			),
 			'next_steps' => array(
 				'name'    =>  __( 'Finish', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_ready' ),
@@ -972,6 +977,71 @@ class MainWPSetupWizard {
 		exit;
 	}
 
+	public function mwp_setup_hide_wp_menu() {
+		
+		$wp_menu_items = array(
+			'dashboard' => __( 'Dashboard', 'mainwp' ),
+			'posts' => __( 'Posts', 'mainwp' ),
+			'media' => __( 'Media', 'mainwp' ),
+			'pages' => __( 'Pages' ),
+			'appearance' => __( 'Appearance', 'mainwp' ),
+			'comments' => __( 'Comments', 'mainwp' ),
+			'users' => __( 'Users', 'mainwp' ),
+			'tools' => __( 'Tools', 'mainwp' ),
+		);
+		
+		$hide_menus = get_option('mwp_setup_hide_wp_menus', array());		
+		if (!is_array($hide_menus))
+			$hide_menus = array();
+		?>
+		<h1><?php _e( 'Hide WP Menus', 'mainwp' ); ?></h1>		
+		
+		<form method="post">			
+			<table class="form-table">
+				
+				<tr>
+					<th scope="row"><?php _e("Hide WP Menus:", "mainwp"); ?></th>
+					<td>
+						<ul class="mainwp_checkboxes mainwp_hide_wpmenu_checkboxes">
+							<?php
+							foreach ( $wp_menu_items as $name => $item ) {
+								$_selected = '';
+								if ( in_array( $name, $hide_menus ) ) {
+									$_selected = 'checked'; }
+								?>
+								<li>
+									<input type="checkbox" id="mainwp_hide_wpmenu_<?php echo $name; ?>" name="mainwp_hide_wpmenu[]" <?php echo $_selected; ?> value="<?php echo $name; ?>" class="mainwp-checkbox2"> 
+									<label for="mainwp_hide_wpmenu_<?php echo $name; ?>" class="mainwp-label2"><?php echo $item; ?></label>
+								</li>
+							<?php }
+							?>
+						</ul>
+					</td>					
+				</tr>	
+			</table>			
+			<p class="mwp-setup-actions step">
+				<input type="submit" class="button-primary button button-large" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
+				<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button button-large"><?php _e( 'Skip this step', 'mainwp' ); ?></a>
+				<a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="button button-large"><?php _e( 'Back', 'mainwp' ); ?></a>
+				<?php wp_nonce_field( 'mwp-setup' ); ?>
+			</p>
+		</form>
+		<?php
+	}
+	
+	public function mwp_setup_hide_wp_menu_save() {	
+		check_admin_referer( 'mwp-setup' );		
+		$hide_menus = array();
+		if ( isset( $_POST['mainwp_hide_wpmenu'] ) && is_array( $_POST['mainwp_hide_wpmenu'] ) && count( $_POST['mainwp_hide_wpmenu'] ) > 0 ) {
+			foreach ( $_POST['mainwp_hide_wpmenu'] as $value ) {
+				$hide_menus[] = $value;
+			}
+		}
+		MainWPUtility::update_option('mwp_setup_hide_wp_menus', $hide_menus);
+		wp_redirect( $this->get_next_step_link() );
+		exit;
+	}
+	
 	public function mwp_setup_uptime_robot() {
 		$options = get_option('advanced_uptime_monitor_extension', array());		
 		if (!is_array($options))
@@ -1061,7 +1131,7 @@ class MainWPSetupWizard {
 		</form>
 		<?php
 	}
-
+	
 	public function mwp_setup_uptime_robot_save() {	
 		check_admin_referer( 'mwp-setup' );		
 		$default_contact_id = isset($_POST['mwp_setup_uptime_robot_default_contact_id']) ? $_POST['mwp_setup_uptime_robot_default_contact_id'] : null;									

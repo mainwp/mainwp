@@ -57,7 +57,7 @@ class MainWPPluginsInstall_List_Table extends WP_List_Table {
 		$tabs['featured']  = _x( 'Featured', 'Plugin Installer' );
 		$tabs['popular']   = _x( 'Popular', 'Plugin Installer' );
 		$tabs['recommended']   = _x( 'Recommended', 'Plugin Installer' );
-		$tabs['favorites'] = _x( 'Favorites', 'Plugin Installer' );
+		//$tabs['favorites'] = _x( 'Favorites', 'Plugin Installer' );
 		if ( $tab === 'beta' || false !== strpos( $GLOBALS['wp_version'], '-' ) ) {
 			$tabs['beta']      = _x( 'Beta Testing', 'Plugin Installer' );
 		}
@@ -192,6 +192,7 @@ class MainWPPluginsInstall_List_Table extends WP_List_Table {
 
 ?>
 <div class="wp-filter">
+<h3 class="mainwp_box_title"><?php _e( 'Step 1: Select a Plugin', 'mainwp' ); ?></h3>
 	<ul class="filter-links">
 		<?php
 		if ( ! empty( $views ) ) {
@@ -362,8 +363,8 @@ class MainWPPluginsInstall_List_Table extends WP_List_Table {
 							/* translators: 1: Plugin name and version. */							
 //							$action_links[] = '<a class="install-now button" href="#" id="install-plugin-' . $plugin['slug'] . '"
 //                               title="Install ' . $plugin['name'] . '  ' . $plugin['version'] . '">' . __('Install Now','mainwp') . '</a>';
-							$action_links[] = '<label><input name="install-plugin" type="radio" id="install-plugin-' . $plugin['slug'] . '"
-                               title="Install ' . $plugin['name'] . '  ' . $plugin['version'] . '">' . __('Install','mainwp') . '</label>';			
+							$action_links[] = '<label style="font-size: 16px;"><input name="install-plugin" type="radio" id="install-plugin-' . $plugin['slug'] . '"
+                               title="Install ' . $plugin['name'] . '  ' . $plugin['version'] . '">' . __('Install this Plugin','mainwp') . '</label>';			
 			}
 
 			$details_link   = self_admin_url( 'plugin-install.php?tab=plugin-information&amp;plugin=' . $plugin['slug'] .
@@ -390,17 +391,11 @@ class MainWPPluginsInstall_List_Table extends WP_List_Table {
 		<div class="plugin-card plugin-card-<?php echo sanitize_html_class( $plugin['slug'] ); ?>">
 			<div class="plugin-card-top">
 				<a href="<?php echo esc_url( $details_link ); ?>" class="thickbox plugin-icon"><img src="<?php echo esc_attr( $plugin_icon_url ) ?>" /></a>
-				<div class="name column-name">
+				<div class="name column-name" style="margin-right: 0!important;">
 					<h4><a href="<?php echo esc_url( $details_link ); ?>" class="thickbox"><?php echo $title; ?></a></h4>
 				</div>
-				<div class="action-links">
-					<?php
-						if ( $action_links ) {
-							echo '<ul class="plugin-action-buttons"><li>' . implode( '</li><li>', $action_links ) . '</li></ul>';
-						}
-					?>
-				</div>
-				<div class="desc column-description">
+				
+				<div class="desc column-description" style="margin-right: 0!important;">
 					<p><?php echo $description; ?></p>
 					<p class="authors"><?php echo $author; ?></p>
 				</div>
@@ -436,6 +431,15 @@ class MainWPPluginsInstall_List_Table extends WP_List_Table {
 					}
 					?>
 				</div>
+			</div>
+			<div class="mainwp-action-lnks">
+				<?php
+					echo '<span class="mainwp-more-details">' . $details_lnk . '</span>';
+					if ( $action_links ) {
+						echo '<ul class="plugin-action-buttons"><li>' . implode( '</li><li>', $action_links ) . '</li></ul>';
+					}
+				?>
+				<div style="clear:both;"></div>
 			</div>
 		</div>
 		<?php

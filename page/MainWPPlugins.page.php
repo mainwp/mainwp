@@ -787,19 +787,8 @@ class MainWPPlugins
 	?>	
 		<a href="#" id="MainWPInstallBulkNavSearch" class="mainwp_action left <?php echo $tab !== 'upload' ? 'mainwp_action_down' : ''; ?>" ><?php _e('Search','mainwp'); ?></a><a href="#" id="MainWPInstallBulkNavUpload" class="mainwp_action <?php echo $tab === 'upload' ? 'mainwp_action_down' : ''; ?> right upload" ><?php _e('Upload','mainwp'); ?></a>		
 		<br class="clear" /><br />
-
-			<div class="mainwp_config_box_right">
-				  <div class="postbox hide-if-upload">
-                        <h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'Installation Options', 'mainwp' ); ?></h3>
-                        <div class="inside">
-                            <input type="checkbox" value="1" checked id="chk_activate_plugin" /> <label for="chk_activate_plugin"><?php _e('Activate Plugin After Installation','mainwp'); ?></label><br/>
-                            <input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite Existing Plugin, if already installed', 'mainwp'); ?></label>
-                        </div>
-                    </div>
-				<?php MainWPUI::select_sites_box() ?>
-				<input type="button" value="<?php _e("Complete Installation"); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_plugin_bulk_install_btn" name="bulk-install">
-			</div>
-			<div class="mainwp_config_box_left">
+            
+			<div class="mainwp_config_box_left" style="width: calc(100% - 290px);">
 				<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
 				<div class="mainwp-upload-plugin">
 					<?php MainWPInstallBulk::renderUpload('Plugins'); ?>
@@ -813,12 +802,26 @@ class MainWPPlugins
 						<?php self::$pluginsTable->display(); ?>
 					</form>						
 				</div>
-				<br class="clear" />
+				<div style="clear: both;"></div>
 			</div>
 		
 		<script type="text/javascript">
 			//mainwp_install_set_install_links();			
 		</script>	
+
+        <?php MainWPUI::select_sites_box(__("Step 2: Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right'); ?>
+            
+            <div class="mainwp_config_box_right">
+                <div class="postbox hide-if-upload">
+                    <h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'Step 3: Installation Options', 'mainwp' ); ?></h3>
+                    <div class="inside">
+                        <input type="checkbox" value="1" checked id="chk_activate_plugin" /> <label for="chk_activate_plugin"><?php _e('Activate Plugin After Installation','mainwp'); ?></label><br/>
+                        <input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite Existing Plugin, if already installed', 'mainwp'); ?></label>
+                    </div>
+                </div>
+                <input type="button" value="<?php _e("Complete Installation"); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_plugin_bulk_install_btn" name="bulk-install">
+            </div>
+            <div style="clear: both;"></div>
 		
 		<?php		
 		if(!empty($favoritesCallback)) {

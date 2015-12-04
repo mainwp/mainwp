@@ -464,10 +464,10 @@ themes.view.Theme = wp.Backbone.View.extend({
 			return;
 		}
                 
-                if ( $( event.target ).is( '.theme-actions input[type="radio"]' ) ) {
+                if ( $( event.target ).is( '.mainwp-theme-lnks input[type="radio"]' ) ) {
                         return;
                 }
-                if ( $( event.target ).is( '.theme-actions label.lbl-install-theme' ) ) {
+                if ( $( event.target ).is( '.mainwp-theme-lnks label.lbl-install-theme' ) ) {
                         return;
                 }
                 

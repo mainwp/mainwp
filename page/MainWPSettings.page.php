@@ -320,8 +320,25 @@ class MainWPSettings
             return;
         }
 
+		$wp_menu_items = array(
+			'dashboard' => __( 'Dashboard', 'mainwp' ),
+			'posts' => __( 'Posts', 'mainwp' ),
+			'media' => __( 'Media', 'mainwp' ),
+			'pages' => __( 'Pages' ),
+			'appearance' => __( 'Appearance', 'mainwp' ),
+			'comments' => __( 'Comments', 'mainwp' ),
+			'users' => __( 'Users', 'mainwp' ),
+			'tools' => __( 'Tools', 'mainwp' ),
+		);
+		
+		$hide_menus =  get_option('mwp_setup_hide_wp_menus');
+
+		if ( ! is_array( $hide_menus ) ) {
+			$hide_menus = array(); }
+			
         self::renderHeader('MainWPTools');
         ?>
+		<form method="POST" action="">
             <div class="postbox" id="mainwp-tools">
                 <h3 class="mainwp_box_title"><span><i class="fa fa-wrench"></i> <?php _e('MainWP Tools','mainwp'); ?></span></h3>
                 <div class="inside">
@@ -354,10 +371,31 @@ class MainWPSettings
                                     </em>
                                 </td>
                             </tr>
+							<tr>
+								<th scope="row"><?php _e( 'Hide WP Menus', 'mainwp' ); ?></th>
+								<td>
+									<ul class="mainwp_checkboxes mainwp_hide_wpmenu_checkboxes">
+										<?php
+										foreach ( $wp_menu_items as $name => $item ) {
+											$_selected = '';
+											if ( in_array( $name, $hide_menus ) ) {
+												$_selected = 'checked'; }
+											?>
+											<li>
+												<input type="checkbox" id="mainwp_hide_wpmenu_<?php echo $name; ?>" name="mainwp_hide_wpmenu[]" <?php echo $_selected; ?> value="<?php echo $name; ?>" class="mainwp-checkbox2"> 
+												<label for="mainwp_hide_wpmenu_<?php echo $name; ?>" class="mainwp-label2"><?php echo $item; ?></label>
+											</li>
+										<?php }
+										?>
+									</ul>
+								</td>
+							</tr>
                             </tbody>
                     </table>
                 </div>
             </div>
+			<p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e('Save Settings','mainwp'); ?>"/></p>  
+		</form>
         <?php
         self::renderFooter('MainWPTools');
     }

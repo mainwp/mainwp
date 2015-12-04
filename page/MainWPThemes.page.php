@@ -782,147 +782,153 @@ class MainWPThemes
 		<a href="#" class="mainwp_action left mainwp_action_down browse-themes" ><?php _e('Search','mainwp'); ?></a><a href="#" class="mainwp_action right upload" ><?php _e('Upload','mainwp'); ?></a>
 		<br class="clear" /><br />
 
-			<div class="mainwp_config_box_right">
-				<div class="postbox install-theme-settings hide-if-upload">
-					<h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'Installation Options', 'mainwp' ); ?></h3>
-					<div class="inside">
-						<input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite Existing theme, if already installed', 'mainwp'); ?></label>
-					</div>
-				</div>
-				<?php MainWPUI::select_sites_box() ?>
-				<input type="button" value="<?php _e("Complete Installation"); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_theme_bulk_install_btn" name="bulk-install">
-			</div>
-			<div class="mainwp_config_box_left">
-				<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
-				<div class="upload-theme">
-					<?php MainWPInstallBulk::renderUpload('Themes'); ?>
-				</div>				
-				<div class="wp-filter">
-					<div class="filter-count">
-						<span class="count theme-count"></span>
-					</div>
-					
-				<ul class="filter-links">
-					<li><a href="#" data-sort="featured"><?php _ex( 'Featured', 'themes' ); ?></a></li>
-					<li><a href="#" data-sort="popular"><?php _ex( 'Popular', 'themes' ); ?></a></li>
-					<li><a href="#" data-sort="new"><?php _ex( 'Latest', 'themes' ); ?></a></li>
-				</ul>
-				<a class="drawer-toggle" href="#"><?php _e( 'Feature Filter' ); ?></a>
+        <div class="mainwp_config_box_left" style="width: calc(100% - 290px);">
+                <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
+                <div class="upload-theme">
+                    <?php MainWPInstallBulk::renderUpload('Themes'); ?>
+                </div>              
+                <div class="wp-filter">
+                <h3 class="mainwp_box_title"><?php _e( 'Step 1: Select a Theme', 'mainwp' ); ?></h3>
+                    <div class="filter-count">
+                        <span class="count theme-count"></span>
+                    </div>
+                    
+                <ul class="filter-links">
+                    <li><a href="#" data-sort="featured"><?php _ex( 'Featured', 'themes' ); ?></a></li>
+                    <li><a href="#" data-sort="popular"><?php _ex( 'Popular', 'themes' ); ?></a></li>
+                    <li><a href="#" data-sort="new"><?php _ex( 'Latest', 'themes' ); ?></a></li>
+                </ul>
+                <a class="drawer-toggle" href="#"><?php _e( 'Feature Filter' ); ?></a>
 
-				<div class="search-form"></div>
-				<div class="filter-drawer">
-					<div class="buttons">
-						<a class="apply-filters button button-secondary" href="#"><?php _e( 'Apply Filters' ); ?><span></span></a>
-						<a class="clear-filters button button-secondary" href="#"><?php _e( 'Clear' ); ?></a>
-					</div>
-				<?php
-				$feature_list = get_theme_feature_list();
-				foreach ( $feature_list as $feature_name => $features ) {
-					echo '<div class="filter-group">';
-					$feature_name = esc_html( $feature_name );
-					echo '<h4>' . $feature_name . '</h4>';
-					echo '<ol class="feature-group">';
-					foreach ( $features as $feature => $feature_name ) {
-						$feature = esc_attr( $feature );
-						echo '<li><input type="checkbox" id="filter-id-' . $feature . '" value="' . $feature . '" /> ';
-						echo '<label for="filter-id-' . $feature . '">' . $feature_name . '</label></li>';
-					}
-					echo '</ol>';
-					echo '</div>';
-				}
-				?>
-					<div class="filtered-by">
-						<span><?php _e( 'Filtering by:' ); ?></span>
-						<div class="tags"></div>
-						<a href="#"><?php _e( 'Edit' ); ?></a>
-					</div>
-				</div>
-			</div>            
+                <div class="search-form"></div>
+                <div class="filter-drawer">
+                    <div class="buttons">
+                        <a class="apply-filters button button-secondary" href="#"><?php _e( 'Apply Filters' ); ?><span></span></a>
+                        <a class="clear-filters button button-secondary" href="#"><?php _e( 'Clear' ); ?></a>
+                    </div>
+                <?php
+                $feature_list = get_theme_feature_list();
+                foreach ( $feature_list as $feature_name => $features ) {
+                    echo '<div class="filter-group">';
+                    $feature_name = esc_html( $feature_name );
+                    echo '<h4>' . $feature_name . '</h4>';
+                    echo '<ol class="feature-group">';
+                    foreach ( $features as $feature => $feature_name ) {
+                        $feature = esc_attr( $feature );
+                        echo '<li><input type="checkbox" id="filter-id-' . $feature . '" value="' . $feature . '" /> ';
+                        echo '<label for="filter-id-' . $feature . '">' . $feature_name . '</label></li>';
+                    }
+                    echo '</ol>';
+                    echo '</div>';
+                }
+                ?>
+                    <div class="filtered-by">
+                        <span><?php _e( 'Filtering by:' ); ?></span>
+                        <div class="tags"></div>
+                        <a href="#"><?php _e( 'Edit' ); ?></a>
+                    </div>
+                </div>
+            </div>            
 			<div class="theme-browser content-filterable hide-if-upload"></div>
-			<div class="theme-install-overlay wp-full-overlay expanded"></div>
+            <div class="theme-install-overlay wp-full-overlay expanded"></div>
 
-			<p class="no-themes"><?php _e( 'No themes found. Try a different search.' ); ?></p>
-			<span class="spinner"></span>
+            <p class="no-themes"><?php _e( 'No themes found. Try a different search.' ); ?></p>
+            <span class="spinner"></span>
 
-			<br class="clear" />
-			</div>
-	
-		<script id="tmpl-theme" type="text/template">
-			<# if ( data.screenshot_url ) { #>
-				<div class="theme-screenshot">
-					<img src="{{ data.screenshot_url }}" alt="" />
+            <br class="clear" />
+            </div>
+    
+        <script id="tmpl-theme" type="text/template">
+            <# if ( data.screenshot_url ) { #>
+                <div class="theme-screenshot">
+                    <img src="{{ data.screenshot_url }}" alt="" />
+                </div>
+            <# } else { #>
+                <div class="theme-screenshot blank"></div>
+            <# } #>
+            <span class="more-details"><?php _ex( 'Details &amp; Preview', 'theme' ); ?></span>
+            <div class="theme-author"><?php printf( __( 'By %s' ), '{{ data.author }}' ); ?></div>
+            <h3 class="theme-name">{{ data.name }}</h3>
+
+            <!--<div class="theme-actions">-->
+                <!--<a class="button button-secondary preview install-theme-preview" href="#"><?php esc_html_e( 'Preview' ); ?></a>-->
+            <!--</div>-->
+            
+            <div class="mainwp-theme-lnks" style="">
+                <label class="lbl-install-theme" style="font-size: 16px;"><input name="install-theme" type="radio" id="install-theme-{{data.slug}}" title="Install {{data.name}}"><?php esc_html_e( 'Install this Theme' ); ?></label>
+                <?php                   
+                if (!empty($favoritesCallback)) {
+                ?>
+                <div class="favorites-add-link"><a style="font-size: 16px;" class="add-favorites" href="#" id="add-favorite-theme-{{data.slug}}"
+                     title="{{data.name}} {{data.version}}"><?php  _e( 'Add To Favorites' ); ?></a></div>
+                <?php
+                }                   
+                ?>
+            </div>
+
+            <# if ( data.installed ) { #>
+                <div class="theme-installed"><?php _ex( 'Already Installed', 'theme' ); ?></div>
+            <# } #>
+        </script>
+
+        <script id="tmpl-theme-preview" type="text/template">
+            <div class="wp-full-overlay-sidebar">
+                <div class="wp-full-overlay-header">
+                    <a href="#" class="close-full-overlay"><span class="screen-reader-text"><?php _e( 'Close' ); ?></span></a>
+                    <a href="#" class="previous-theme"><span class="screen-reader-text"><?php _ex( 'Previous', 'Button label for a theme' ); ?></span></a>
+                    <a href="#" class="next-theme"><span class="screen-reader-text"><?php _ex( 'Next', 'Button label for a theme' ); ?></span></a>
+                <# if ( data.installed ) { #>
+                    <a href="#" class="button button-primary theme-install disabled"><?php _ex( 'Installed', 'theme' ); ?></a>
+                <# } else { #>
+                    <a href="{{ data.install_url }}" class="button button-primary theme-install"><?php _e( 'Install' ); ?></a>
+                <# } #>
+                </div>
+                <div class="wp-full-overlay-sidebar-content">
+                    <div class="install-theme-info">
+                        <h3 class="theme-name">{{ data.name }}</h3>
+                        <span class="theme-by"><?php printf( __( 'By %s' ), '{{ data.author }}' ); ?></span>
+
+                        <img class="theme-screenshot" src="{{ data.screenshot_url }}" alt="" />
+
+                        <div class="theme-details">
+                            <# if ( data.rating ) { #>
+                                <div class="star-rating rating-{{ Math.round( data.rating / 10 ) * 10 }}">
+                                    <span class="one"></span><span class="two"></span><span class="three"></span><span class="four"></span><span class="five"></span>
+                                    <small class="ratings">{{ data.num_ratings }}</small>
+                                </div>
+                            <# } else { #>
+                                <div class="star-rating">
+                                    <small class="ratings"><?php _e( 'This theme has not been rated yet.' ); ?></small>
+                                </div>
+                            <# } #>
+                            <div class="theme-version"><?php printf( __( 'Version: %s' ), '{{ data.version }}' ); ?></div>
+                            <div class="theme-description">{{{ data.description }}}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="wp-full-overlay-footer">
+                    <button type="button" class="collapse-sidebar button-secondary" aria-expanded="true" aria-label="<?php esc_attr_e( 'Collapse Sidebar' ); ?>">
+                        <span class="collapse-sidebar-arrow"></span>
+                        <span class="collapse-sidebar-label"><?php _e( 'Collapse' ); ?></span>
+                    </button>
+                </div>
+            </div>
+            <div class="wp-full-overlay-main">
+                <iframe src="{{ data.preview_url }}" title="<?php esc_attr_e( 'Preview' ); ?>" />
+            </div>
+        </script>
+		<?php MainWPUI::select_sites_box( __("Step 2: Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right' ); ?>
+		<div class="mainwp_config_box_right">
+			<div class="postbox install-theme-settings hide-if-upload">
+				<h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'Step 3: Installation Options', 'mainwp' ); ?></h3>
+				<div class="inside">
+					<input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite Existing theme, if already installed', 'mainwp'); ?></label>
 				</div>
-			<# } else { #>
-				<div class="theme-screenshot blank"></div>
-			<# } #>
-			<span class="more-details"><?php _ex( 'Details &amp; Preview', 'theme' ); ?></span>
-			<div class="theme-author"><?php printf( __( 'By %s' ), '{{ data.author }}' ); ?></div>
-			<h3 class="theme-name">{{ data.name }}</h3>
-
-			<div class="theme-actions">
-				<label class="lbl-install-theme"><input name="install-theme" type="radio" id="install-theme-{{data.slug}}" title="Install {{data.name}}"><?php esc_html_e( 'Install' ); ?></label>				
-				<a class="button button-secondary preview install-theme-preview" href="#"><?php esc_html_e( 'Preview' ); ?></a>
-				<?php					
-				if (!empty($favoritesCallback)) {
-				?>
-				<span class="favorites-add-link"><a class="button button-secondary add-favorites" href="#" id="add-favorite-theme-{{data.slug}}"
-                     title="{{data.name}} {{data.version}}"><?php  _e( 'Add To Favorites' ); ?></a></span>
-				<?php
-				}					
-				?>
 			</div>
 
-			<# if ( data.installed ) { #>
-				<div class="theme-installed"><?php _ex( 'Already Installed', 'theme' ); ?></div>
-			<# } #>
-		</script>
-
-		<script id="tmpl-theme-preview" type="text/template">
-			<div class="wp-full-overlay-sidebar">
-				<div class="wp-full-overlay-header">
-					<a href="#" class="close-full-overlay"><span class="screen-reader-text"><?php _e( 'Close' ); ?></span></a>
-					<a href="#" class="previous-theme"><span class="screen-reader-text"><?php _ex( 'Previous', 'Button label for a theme' ); ?></span></a>
-					<a href="#" class="next-theme"><span class="screen-reader-text"><?php _ex( 'Next', 'Button label for a theme' ); ?></span></a>
-				<# if ( data.installed ) { #>
-					<a href="#" class="button button-primary theme-install disabled"><?php _ex( 'Installed', 'theme' ); ?></a>
-				<# } else { #>
-					<a href="{{ data.install_url }}" class="button button-primary theme-install"><?php _e( 'Install' ); ?></a>
-				<# } #>
-				</div>
-				<div class="wp-full-overlay-sidebar-content">
-					<div class="install-theme-info">
-						<h3 class="theme-name">{{ data.name }}</h3>
-						<span class="theme-by"><?php printf( __( 'By %s' ), '{{ data.author }}' ); ?></span>
-
-						<img class="theme-screenshot" src="{{ data.screenshot_url }}" alt="" />
-
-						<div class="theme-details">
-							<# if ( data.rating ) { #>
-								<div class="star-rating rating-{{ Math.round( data.rating / 10 ) * 10 }}">
-									<span class="one"></span><span class="two"></span><span class="three"></span><span class="four"></span><span class="five"></span>
-									<small class="ratings">{{ data.num_ratings }}</small>
-								</div>
-							<# } else { #>
-								<div class="star-rating">
-									<small class="ratings"><?php _e( 'This theme has not been rated yet.' ); ?></small>
-								</div>
-							<# } #>
-							<div class="theme-version"><?php printf( __( 'Version: %s' ), '{{ data.version }}' ); ?></div>
-							<div class="theme-description">{{{ data.description }}}</div>
-						</div>
-					</div>
-				</div>
-				<div class="wp-full-overlay-footer">
-					<button type="button" class="collapse-sidebar button-secondary" aria-expanded="true" aria-label="<?php esc_attr_e( 'Collapse Sidebar' ); ?>">
-						<span class="collapse-sidebar-arrow"></span>
-						<span class="collapse-sidebar-label"><?php _e( 'Collapse' ); ?></span>
-					</button>
-				</div>
-			</div>
-			<div class="wp-full-overlay-main">
-				<iframe src="{{ data.preview_url }}" title="<?php esc_attr_e( 'Preview' ); ?>" />
-			</div>
-		</script>
+			<input type="button" value="<?php _e("Complete Installation"); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_theme_bulk_install_btn" name="bulk-install">
+		</div>
+		<div style="clear: both;"></div>
 						
 		<?php
 	}

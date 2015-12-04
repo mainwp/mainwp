@@ -142,7 +142,8 @@ class MainWPSystem
 
         //Remove the pages from the menu which I use in AJAX
         add_action('admin_menu', array(&$this, 'admin_menu'));
-
+		add_action('admin_menu', array(&$this, 'remove_wp_menus'));
+		
         //Add custom error messages
         add_filter('post_updated_messages', array(&$this, 'post_updated_messages'));
 
@@ -1756,6 +1757,17 @@ class MainWPSystem
 
 
 	public function admin_redirects() {
+		
+		$_pos = strlen( $_SERVER['REQUEST_URI'] ) - strlen( '/wp-admin/' );
+		$hide_menus = get_option( 'mwp_setup_hide_wp_menus', array() );
+		if ( ! is_array( $hide_menus ) ) {
+			$hide_menus = array(); }
+		$hide_wp_dashboard = in_array( 'dashboard', $hide_menus );
+		if ( ($hide_wp_dashboard && strpos( $_SERVER['REQUEST_URI'], 'index.php' )) || (strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) == $_pos) ) {
+			wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+			die();
+		}		
+		
 		if ( ! get_transient( '_mainwp_activation_redirect' ) || is_network_admin() ) {
 			return;
 		}
@@ -1792,8 +1804,18 @@ class MainWPSystem
                     if (isset($_POST['mainwp_primaryBackup'])) {
                         MainWPUtility::update_option('mainwp_primaryBackup', $_POST['mainwp_primaryBackup']);
                     }
-                }
-            }
+                } 
+            } else if ($_GET['page'] == "MainWPTools") {	
+				if (isset($_POST['submit'])) {
+					$hide_menus = array();
+					if ( isset( $_POST['mainwp_hide_wpmenu'] ) && is_array( $_POST['mainwp_hide_wpmenu'] ) && count( $_POST['mainwp_hide_wpmenu'] ) > 0 ) {
+						foreach ( $_POST['mainwp_hide_wpmenu'] as $value ) {
+							$hide_menus[] = $value;
+						}
+					}
+					MainWPUtility::update_option('mwp_setup_hide_wp_menus', $hide_menus);
+				}
+			}
         }
 
 		if (isset($_POST['select_mainwp_options_siteview'])){
@@ -2120,6 +2142,30 @@ class MainWPSystem
             }
         }
     }
+	
+	public function remove_wp_menus() {		
+		$hide_menus = get_option( 'mwp_setup_hide_wp_menus', array() );
+		if ( ! is_array( $hide_menus ) ) {
+			$hide_menus = array(); }
+
+		$menus_slug = array(
+			'dashboard' => 'index.php',
+			'posts' => 'edit.php',
+			'media' => 'upload.php',
+			'pages' => 'edit.php?post_type=page',
+			'appearance' => 'themes.php',
+			'comments' => 'edit-comments.php',
+			'users' => 'users.php',
+			'tools' => 'tools.php',
+		);
+
+		foreach ( $hide_menus as $menu ) {
+			if ( isset( $menus_slug[ $menu ] ) ) {
+				remove_menu_page( $menus_slug[ $menu ] );
+			}
+		}
+	}
+	
 
     function sites_fly_menu() {
         global $wpdb ;

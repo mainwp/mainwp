@@ -7,3 +7,23 @@
 #mainwp-tabs .nav-tab-active {
     margin-top: 1px;
 }
+
+.mainwp-upgrade-button {
+	background: #7fb100 !important;
+    border-color: #446200 #446200 #446200 !important;
+    -webkit-box-shadow: 0 1px 0 #446200 !important;
+    box-shadow: 0 1px 0 #446200 !important;
+    color: #fff !important;
+    text-decoration: none !important;
+    text-shadow: 0 -1px 1px #446200,1px 0 1px #446200,0 1px 1px #446200,-1px 0 1px #446200 !important;
+}
+
+.button-hero.mainwp-upgrade-button {
+	background: #7fb100 !important;
+    border-color: #446200 #446200 #446200 !important;
+    -webkit-box-shadow: 0 1px 0 #446200 !important;
+    box-shadow: 0 2px 0 #446200 !important;
+    color: #fff !important;
+    text-decoration: none !important;
+    text-shadow: 0 -1px 1px #446200,1px 0 1px #446200,0 1px 1px #446200,-1px 0 1px #446200 !important;
+}

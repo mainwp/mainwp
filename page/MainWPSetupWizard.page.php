@@ -576,6 +576,17 @@ class MainWPSetupWizard {
 								<option value="backupwp" <?php if ($backup_method == 'backupwp'): ?>selected<?php endif; ?>>BackUpWordPress (Free Extension)</option>
 								<option value="" <?php if (empty($backup_method)): ?>selected<?php endif; ?>>Default Backups</option>
 							</select></span>
+						</span>
+						<br /><br />
+						<em>
+							<span class="mainwp-backups-notice" method="default" <?php echo empty($backup_method) ? "" : 'style="display:none"'; ?> ><?php _e( 'This is a backup solution developed by MainWP.','mainwp' ); ?></span>
+							<span class="mainwp-backups-notice" method="updraftplus" <?php echo ($backup_method == 'updraftplus') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the UpdraftPlus backup plugin for your Backups.','mainwp' ); ?></span>
+							<span class="mainwp-backups-notice" method="backupwp" <?php echo ($backup_method == 'backupwp') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the BackupWordPress backup plugin for your Backups.','mainwp' ); ?></span>
+						</em>
+						<br /><br />
+						<em>
+							<?php _e( 'You can change this at any time.','mainwp' ); ?>
+						</em>
 					</td>
 				</tr>
 				<tr id="mwp_setup_tr_backup_archive_type" <?php echo $style_archive; ?>>

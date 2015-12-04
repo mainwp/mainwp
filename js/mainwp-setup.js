@@ -44,11 +44,15 @@ jQuery(document).ready(function () {
     });
 
     jQuery('#mwp_setup_backup_method').on('change', function() {
-        if (jQuery(this).val() == '' )
-        {
+        var bkmethod = jQuery(this).val();        
+        jQuery('.mainwp-backups-notice').hide();
+        if (bkmethod == '' )
+        {                        
+            jQuery('.mainwp-backups-notice[method="default"]').show();
             jQuery('#mwp_setup_tr_backup_archive_type').fadeIn(500);
             jQuery('#mwp_setup_archive_format').removeAttr('disabled');
-        } else {
+        } else {            
+            jQuery('.mainwp-backups-notice[method="' + bkmethod + '"]').show();            
             jQuery('#mwp_setup_tr_backup_archive_type').fadeOut(500);
             jQuery('#mwp_setup_archive_format').attr('disabled', 'disabled');
         }

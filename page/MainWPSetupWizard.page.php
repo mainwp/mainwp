@@ -103,7 +103,7 @@ class MainWPSetupWizard {
 				'hidden' => true
 			),
 			'uptime_robot' => array(
-				'name'    =>  __( 'Uptime Robot', 'mainwp' ),
+				'name'    =>  __( 'WP-Cron Trigger', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_uptime_robot' ),
 				'handler' => array( $this, 'mwp_setup_uptime_robot_save' ),
 			),
@@ -343,7 +343,7 @@ class MainWPSetupWizard {
 		}				
 		?>
 		<h1><?php _e( 'Dashboard System Requirements Checkup', 'mainwp' ); ?></h1>
-		<p><?php _e( 'Any detected Warning can cause plugin malfunction. It is highly recommened to contact host support and checking if it possible to update server configuration.', 'mainwp' ); ?></p>
+		<p><?php _e( 'Any Warning here may cause the MainWP Dashboard to malfunction. After you complete the Quick Start setup it is recommended to contact your host’s support and updating your server configuration for optimal performance.', 'mainwp' ); ?></p>
 		<?php MainWPServerInformation::renderQuickSetupSystemCheck(); ?>
 		<br/>
 		<p class="mwp-setup-actions step">
@@ -372,14 +372,14 @@ class MainWPSetupWizard {
 					<th scope="row"><?php _e("What type of hosting is this Dashboard site on?", "mainwp"); ?></th>
 					<td>
 						<span class="mainwp-select-bg"><select name="mwp_setup_type_hosting" id="mwp_setup_type_hosting">
+							<option value="3" <?php if ($typeHosting == 3) {
+							?>selected<?php } ?>><?php _e('Shared', 'mainwp'); ?>
+							</option>
 							<option value="1" <?php if (($typeHosting == false) || ($typeHosting == 1)) {
 							?>selected<?php } ?>><?php _e('VPS', 'mainwp'); ?>
 							</option>
 							<option value="2" <?php if ($typeHosting == 2) {
 							?>selected<?php } ?>><?php _e('Dedicated', 'mainwp'); ?>
-							</option>
-							<option value="3" <?php if ($typeHosting == 3) {
-							?>selected<?php } ?>><?php _e('Shared', 'mainwp'); ?>
 							</option>
 						</select></span>
 					</td>
@@ -454,13 +454,17 @@ class MainWPSetupWizard {
 					</td>
 				</tr>
 				<tr>
-					<th scope="row"><?php _e('Add MainWP to Trusted Updates','mainwp'); ?></th>
+					<th scope="row"><?php _e('Add MainWP Child to Trusted Updates','mainwp'); ?></th>
 					<td>
 						<div class="mainwp-checkbox">
 							<input type="checkbox" name="mwp_setup_add_mainwp_to_trusted_update"
 							       id="mwp_setup_add_mainwp_to_trusted_update" <?php echo ($mainwp_strusted == 1 ? 'checked="true"' : ''); ?> />
 							<label for="mwp_setup_add_mainwp_to_trusted_update"></label>
 						</div>
+						<br /><br />
+						<em>
+							<?php _e( 'This allows your MainWP Dashboard to automatically update your MainWP Child plugins whenever a new version is released.', 'mainwp' ); ?>
+						</em>
 					</td>
 				</tr>
 			</table>
@@ -512,6 +516,12 @@ class MainWPSetupWizard {
 							       id="mwp_setup_options_important_notification" <?php echo ($important_notification == 1 ? 'checked="true"' : ''); ?> />
 							<label for="mwp_setup_options_important_notification"></label>
 						</div>
+						<br /><br />
+						<em>
+							<?php _e( 'These are emails from your MainWP Dashboard notifying you of available updates and other maintenance related messages. You can change this later in your MainWP Settings tab.', 'mainwp' ); ?>
+							<br />
+							<?php _e( 'These are NOT emails from the MainWP team and this does NOT sign you up for any mailing lists.', 'mainwp' ); ?>
+						</em>
 					</td>
 				</tr>
 				<tr>
@@ -571,11 +581,12 @@ class MainWPSetupWizard {
 				<tr id="mwp_setup_tr_backup_method" <?php echo $style; ?>>
 					<th scope="row"><?php _e('Choose how you want to handle backups:','mainwp'); ?></th>
 					<td>
-						<span class="mainwp-select-bg"><select name="mwp_setup_backup_method" id="mwp_setup_backup_method">
-								<option value="updraftplus" <?php if ($backup_method == 'updraftplus'): ?>selected<?php endif; ?>>UpdraftPlus (Free Extension)</option>
-								<option value="backupwp" <?php if ($backup_method == 'backupwp'): ?>selected<?php endif; ?>>BackUpWordPress (Free Extension)</option>
-								<option value="" <?php if (empty($backup_method)): ?>selected<?php endif; ?>>Default Backups</option>
-							</select></span>
+						<span class="mainwp-select-bg">						
+								<select name="mwp_setup_backup_method" id="mwp_setup_backup_method">
+									<option value="updraftplus" <?php if ($backup_method == 'updraftplus'): ?>selected<?php endif; ?>>UpdraftPlus (Free Extension)</option>
+									<option value="backupwp" <?php if ($backup_method == 'backupwp'): ?>selected<?php endif; ?>>BackUpWordPress (Free Extension)</option>
+									<option value="" <?php if (empty($backup_method)): ?>selected<?php endif; ?>>Default Backups</option>
+								</select>						
 						</span>
 						<br /><br />
 						<em>
@@ -1006,7 +1017,12 @@ class MainWPSetupWizard {
 			$hide_menus = array();
 		?>
 		<h1><?php _e( 'Hide WP Menus', 'mainwp' ); ?></h1>		
-		
+		<p>
+			<?php _e( 'If you installed your MainWP Dashboard on a brand new site dedicated to MainWP these are sections that you will not need and you can hide in order to declutter your site.', 'mainwp' ); ?>
+		</p>
+		<p>
+			<?php _e( 'You can change this later in the MainWP > Settings > Tools screen.', 'mainwp' ); ?>
+		</p>
 		<form method="post">			
 			<table class="form-table">
 				
@@ -1077,11 +1093,10 @@ class MainWPSetupWizard {
 		$uptimerobot_url = 'http://uptimerobot.com/authenticateApps?appID=6&callbackURLCustom=' . urlencode($callback_url);		
 		
 		?>
-		<h1><?php _e( 'Uptime Robot', 'mainwp' ); ?></h1>	
-		<p><?php _e( 'Create the Uptime Robot account by filling in following field.', 'mainwp' ); ?><br>
-		   <?php _e( 'Later, add your dashboard site as a Monitor. Uptime Robot will "visit" your dashboard site and make sure that Cron Jobs are regularly triggered.', 'mainwp' ); ?><br>
-		   <strong><?php _e( 'This is optional, but highly recommended.', 'mainwp' ); ?></strong>
-		</p>
+		<h1><?php _e( 'WP-Cron Trigger', 'mainwp' ); ?></h1>	
+		<p><?php _e( 'MainWP by default relies on a built in WordPress file called wp-cron.php to trigger scheduled events. The wp-cron.php file is called each time your site is viewed and is sufficient in most cases.', 'mainwp' ); ?></p>
+		<p><?php _e( 'However, since we suggest you install your MainWP Dashboard on a fresh dedicated site it will get almost no traffic which means your scheduled tasks such as backups and automatic updates may not be triggered in a timely manner.', 'mainwp' ); ?></p>
+		<p><?php _e( 'In order to work around that we suggest you sign up for the free Uptime Robot service that will "visit" your dashboard site and make sure that Cron Jobs are regularly triggered.', 'mainwp' ); ?></p>
 		<?php
 		$error = get_option('mainwp_setup_error_create_uptime_robot');		
 		if (!empty($error)) {
@@ -1090,7 +1105,9 @@ class MainWPSetupWizard {
 		}
 		$error_settings = false;
 		?>
-		<p><?php echo sprintf(__("Click %shere%s to Authorize Uptime Robot", "mainwp"), '<a href="' . $uptimerobot_url . '" target="_blank">','</a>');?></p>		
+		<p>	
+			<a class="button button-primary button-hero" target="_blank" href="<?php echo $uptimerobot_url; ?>"><?php _e( 'Authorize Uptime Robot', 'mainwp' ); ?></a>
+		</p>
 		<form method="post">			
 			<table class="form-table">
 				<?php if (!empty($ur_api_key)) { ?>

@@ -328,7 +328,7 @@ class MainWPExtensionsView
         }
         
         ?>
-        <div class="postbox">
+        <div class="postbox" id="mainwp-available-extensions">
             <div class="handle"></div>
             <h3 class="mainwp_box_title"><?php _e('Available <a href="//extensions.mainwp.com">MainWP Extensions</a>'); ?></h3>
             <div>
@@ -406,7 +406,7 @@ class MainWPExtensionsView
                                 'img' => 'http://extensions.mainwp.com/wp-content/uploads/2013/06/Advanced-Uptime-Monitor-300x300.png',
                                 'product_id' => 'Advanced Uptime Monitor Extension',
                                 'catalog_id' => '218',
-								'group' => array('other')
+								'group' => array('admin')
                             ),
                         array(
                                 'slug' => 'mainwp-article-uploader-extension',
@@ -467,7 +467,7 @@ class MainWPExtensionsView
                                 'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/07/mainwp-broken-links-checker-extension.png',
                                 'product_id' => 'MainWP Broken Links Checker Extension',
                                 'catalog_id' => '12737',
-								'group' => array('performance', 'admin')
+								'group' => array('performance')
                             ),
                          array(
                             'slug' => 'mainwp-bulk-settings-manager',
@@ -477,7 +477,7 @@ class MainWPExtensionsView
                             'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/10/mainwp-bulk-settings-manager-extension.png',
                             'product_id' => 'MainWP Bulk Settings Manager',
                             'catalog_id' => '347704',
-							'group' => array('admin', 'content')
+							'group' => array('admin')
                         ),
                          array(
                                 'free' => true,
@@ -548,7 +548,7 @@ class MainWPExtensionsView
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/mainwp-file-uploader-extension.png',
                             'product_id' => 'MainWP File Uploader Extension',
                             'catalog_id' => '11637',
-							'group' => array('admin', 'content')
+							'group' => array('content')
                         ),
                         array(
                             'slug' => 'mainwp-google-analytics-extension',
@@ -619,7 +619,7 @@ class MainWPExtensionsView
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-remote-backups-ext-icon.png',
                             'product_id' => 'MainWP Remote Backup Extension',
                             'catalog_id' => '1553',
-							'group' => array('backup', 'admin')
+							'group' => array('backup')
                         ),
                         array(
                             'slug' => 'mainwp-rocket-extension',
@@ -629,7 +629,7 @@ class MainWPExtensionsView
                             'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/07/mainwp-rocket-extension.png',
                             'product_id' => 'MainWP Rocket Extension',
                             'catalog_id' => '335257',
-							'group' => array('performance', 'admin')
+							'group' => array('performance')
                         ),
                         array(
                             'slug' => 'mainwp-spinner',
@@ -650,7 +650,7 @@ class MainWPExtensionsView
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/03/mainwp-sucuri-extension.png',
                             'product_id' => 'MainWP Sucuri Extension',
                             'catalog_id' => '10777',
-							'group' => array('security', 'admin')
+							'group' => array('security')
                         ),
                         array(
                             'slug' => 'mainwp-team-control',
@@ -671,7 +671,7 @@ class MainWPExtensionsView
                                 'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/04/mainwp-updraftplus-extension.png',
                                 'product_id' => 'MainWP UpdraftPlus Extension',
                                 'catalog_id' => '165843',
-								'group' => array('backup', 'admin')
+								'group' => array('backup')
                             ),
                         array(
                             'slug' => 'mainwp-url-extractor-extension',
@@ -692,7 +692,7 @@ class MainWPExtensionsView
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-woocommerce-shortcuts-extension.png',
                             'product_id' => 'MainWP WooCommerce Shortcuts Extension',
                             'catalog_id' => '12706',
-							'group' => array('other')
+							'group' => array('admin')
                         ),
                         array(							
                             'slug' => 'mainwp-woocommerce-status-extension',
@@ -702,7 +702,7 @@ class MainWPExtensionsView
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-woocommerce-status-extension.png',
                             'product_id' => 'MainWP WooCommerce Status Extension',
                             'catalog_id' => '12671',
-							'group' => array('admin', 'content')
+							'group' => array('admin')
                         ),
                         array(
                             'slug' => 'mainwp-wordfence-extension',
@@ -712,7 +712,7 @@ class MainWPExtensionsView
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/09/mainwp-wordfence-icon.png',
                             'product_id' => 'MainWP Wordfence Extension',
                             'catalog_id' => '19678',
-							'group' => array('security', 'admin')
+							'group' => array('security')
                         ),
                         array(
                             'slug' => 'wordpress-seo-extension',
@@ -722,7 +722,7 @@ class MainWPExtensionsView
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/wordpress-seo-extension.png',
                             'product_id' => 'MainWP Wordpress SEO Extension',
                             'catalog_id' => '12080',
-							'group' => array('content', 'admin')							
+							'group' => array('content')							
                         ),
 						array(
                             'slug' => 'mainwp-page-speed-extension',
@@ -732,7 +732,7 @@ class MainWPExtensionsView
                             'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-page-speed-extension.png',
                             'product_id' => 'MainWP Page Speed Extension',
                             'catalog_id' => '12581',
-							'group' => array('perfomance', 'admin')							
+							'group' => array('perfomance')							
                         ),
 						array(
                             'slug' => 'mainwp-ithemes-security-extension',
@@ -742,17 +742,17 @@ class MainWPExtensionsView
                             'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/03/mainwp-security-extension.png',
                             'product_id' => 'MainWP Security Extension',
                             'catalog_id' => '113355',
-							'group' => array('security', 'admin')							
+							'group' => array('security')							
                         ),
 						array(
                             'slug' => 'mainwp-post-plus-extension',
                             'title' => 'MainWP Post Plus Extension',
                             'desc' => 'Enhance your MainWP publishing experience. The MainWP Post Plus Extension allows you to save work in progress as Post and Page drafts. That is not all, it allows you to use random authors, dates and categories for your posts and pages. Requires the MainWP Dashboard plugin.',
                             'link' => 'https://extensions.mainwp.com/product/mainwp-post-plus-extension/',
-                            'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/03/mainwp-security-extension.png',
+                            'img' => 'https://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-post-plus-extension.png',
                             'product_id' => 'MainWP Post Plus Extension',
                             'catalog_id' => '12458',
-							'group' => array('security', 'admin')							
+							'group' => array('admin')							
                         ),
 						array(
                             'slug' => 'mainwp-blogvault-backup-extension',

@@ -20,190 +20,190 @@ msgstr ""
 "X-Poedit-SearchPath-0: .\n"
 "X-Textdomain-Support: yes"
 
-#: class/MainWP_Ajax.class.php:77
+#: class/MainWPAjax.class.php:77
 #@ mainwp
 msgid "Network Admin"
 msgstr "Mrežni Administrator"
 
-#: class/MainWP_Ajax.class.php:79
+#: class/MainWPAjax.class.php:79
 #@ mainwp
 msgid "Global Dashboard"
 msgstr "Glavna Komandna Tabla"
 
-#: class/MainWP_Ajax.class.php:84
+#: class/MainWPAjax.class.php:84
 #, php-format
 #@ mainwp
 msgid "%1$s &#8212; WordPress"
 msgstr "%1$s &#8212; WordPress"
 
-#: class/MainWP_Ajax.class.php:86
+#: class/MainWPAjax.class.php:86
 #, php-format
 #@ mainwp
 msgid "%1$s &lsaquo; %2$s &#8212; WordPress"
 msgstr "%1$s &lsaquo; %2$s &#8212; WordPress"
 
-#: class/MainWP_Ajax.class.php:135
-#: class/MainWP_Ajax.class.php:155
-#: page/MainWP_Main.page.php:41
-#: page/MainWP_Manage_Sites.page.php:119
-#: page/MainWP_Manage_Sites.page.php:123
-#: page/MainWP_Manage_Sites.page.php:1645
+#: class/MainWPAjax.class.php:135
+#: class/MainWPAjax.class.php:155
+#: page/MainWPMain.page.php:41
+#: page/MainWPManageSites.page.php:119
+#: page/MainWPManageSites.page.php:123
+#: page/MainWPManageSites.page.php:1645
 #@ mainwp
 #@ default
 msgid "Dashboard"
 msgstr "Komandna tabla"
 
-#: class/MainWP_Ajax.class.php:166
+#: class/MainWPAjax.class.php:166
 #@ mainwp
 msgid "Welcome to your WordPress Dashboard! This is the screen you will see when you log in to your site, and gives you access to all the site management features of WordPress. You can get help for any screen by clicking the Help tab in the upper corner."
 msgstr "Dobrodošli u vašu WordPress komandnu tablu. Ovo je ekran koji ćete videti kada se prijavite u Vaš sajt i koji Vam daje pristup upravljanju svim funkcijama vašeg sajta."
 
-#: class/MainWP_Ajax.class.php:170
+#: class/MainWPAjax.class.php:170
 #@ mainwp
 msgid "Overview"
 msgstr "Pregled"
 
-#: class/MainWP_Ajax.class.php:176
+#: class/MainWPAjax.class.php:176
 #@ mainwp
 msgid "The left-hand navigation menu provides links to all of the WordPress administration screens, with submenu items displayed on hover. You can minimize this menu to a narrow icon strip by clicking on the Collapse Menu arrow at the bottom."
 msgstr "Navigacija sa leve strana omogućava pristup svim administrativnim stranama. "
 
-#: class/MainWP_Ajax.class.php:177
+#: class/MainWPAjax.class.php:177
 #@ mainwp
 msgid "Links in the Toolbar at the top of the screen connect your dashboard and the front end of your site, and provide access to your profile and helpful WordPress information."
 msgstr "Tulbar i linkovi u njemu povezuju prednji i zadnji deo Vašeg sajta, takođe obezbeđuje pristup Vašem profilu i korisnim WordPress informacijama."
 
-#: class/MainWP_Ajax.class.php:181
+#: class/MainWPAjax.class.php:181
 #@ mainwp
 msgid "Navigation"
 msgstr "Navigacija"
 
-#: class/MainWP_Ajax.class.php:185
+#: class/MainWPAjax.class.php:185
 #@ mainwp
 msgid "You can use the following controls to arrange your Dashboard screen to suit your workflow. This is true on most other administration screens as well."
 msgstr "Možete koristiti date opcije za uređenje kontrolne table prema Vašim preferencijama."
 
-#: class/MainWP_Ajax.class.php:186
+#: class/MainWPAjax.class.php:186
 #@ mainwp
 msgid "<strong>Screen Options</strong> - Use the Screen Options tab to choose which Dashboard boxes to show, and how many columns to display."
 msgstr "<strong>Opcije</strong> - Odaberite koje vidžete želite da vidite na stranici i u koliko kolona želite da ih rasporedite."
 
-#: class/MainWP_Ajax.class.php:187
+#: class/MainWPAjax.class.php:187
 #@ mainwp
 msgid "<strong>Drag and Drop</strong> - To rearrange the boxes, drag and drop by clicking on the title bar of the selected box and releasing when you see a gray dotted-line rectangle appear in the location you want to place the box."
 msgstr "<strong>Prevuci i pusti</strong> - Koristite Drag/Drop sistem da biste preuredili Vašu kontrolnu tablu prema Vašim preferencijama. Kliknite na naslovnu liniju i prevucite vidžet gde želite."
 
-#: class/MainWP_Ajax.class.php:188
+#: class/MainWPAjax.class.php:188
 #@ mainwp
 msgid "<strong>Box Controls</strong> - Click the title bar of the box to expand or collapse it. In addition, some box have configurable content, and will show a &#8220;Configure&#8221; link in the title bar if you hover over it."
 msgstr "<strong>Kontrole vidžeta</strong> - Kliknite na naslovnu liniju kako biste skupili i proširili vidžet. Neki vidžeti imaju sadržaj koji se može konfigurisati i pokazaće &#8220;Konfiguriši&#8221; link u naslovnoj liniji ako pređete mišem preko nje."
 
-#: class/MainWP_Ajax.class.php:192
+#: class/MainWPAjax.class.php:192
 #@ mainwp
 msgid "Layout"
 msgstr "Raspored"
 
-#: class/MainWP_Ajax.class.php:196
+#: class/MainWPAjax.class.php:196
 #@ mainwp
 msgid "The boxes on your Dashboard screen are:"
 msgstr "Vidžeti na Vašoj kontrolnoj tabli su:"
 
-#: class/MainWP_Ajax.class.php:197
+#: class/MainWPAjax.class.php:197
 #@ mainwp
 msgid "<strong>Right Now</strong> - Displays a summary of the content on your site and identifies which theme and version of WordPress you are using."
 msgstr "<strong>Sada</strong>"
 
-#: class/MainWP_Ajax.class.php:198
+#: class/MainWPAjax.class.php:198
 #@ mainwp
 msgid "<strong>Recent Comments</strong> - Shows the most recent comments on your posts (configurable, up to 30) and allows you to moderate them."
 msgstr "<strong>Poslednji komentari</strong>"
 
-#: class/MainWP_Ajax.class.php:199
+#: class/MainWPAjax.class.php:199
 #@ mainwp
 msgid "<strong>Incoming Links</strong> - Shows links to your site found by Google Blog Search."
 msgstr ""
 
-#: class/MainWP_Ajax.class.php:200
+#: class/MainWPAjax.class.php:200
 #@ mainwp
 msgid "<strong>QuickPress</strong> - Allows you to create a new post and either publish it or save it as a draft."
 msgstr ""
 
-#: class/MainWP_Ajax.class.php:201
+#: class/MainWPAjax.class.php:201
 #@ mainwp
 msgid "<strong>Recent Drafts</strong> - Displays links to the 5 most recent draft posts you&#8217;ve started."
 msgstr ""
 
-#: class/MainWP_Ajax.class.php:202
+#: class/MainWPAjax.class.php:202
 #@ mainwp
 msgid "<strong>WordPress Blog</strong> - Latest news from the official WordPress project."
 msgstr ""
 
-#: class/MainWP_Ajax.class.php:203
+#: class/MainWPAjax.class.php:203
 #@ mainwp
 msgid "<strong>Other WordPress News</strong> - Shows the <a href=\"http://planet.wordpress.org\" target=\"_blank\">WordPress Planet</a> feed. You can configure it to show a different feed of your choosing."
 msgstr ""
 
-#: class/MainWP_Ajax.class.php:204
+#: class/MainWPAjax.class.php:204
 #@ mainwp
 msgid "<strong>Plugins</strong> - Features the most popular, newest, and recently updated plugins from the WordPress.org Plugin Directory."
 msgstr ""
 
-#: class/MainWP_Ajax.class.php:208
+#: class/MainWPAjax.class.php:208
 #@ mainwp
 msgid "Content"
 msgstr "Sadržaj"
 
-#: class/MainWP_Ajax.class.php:215
+#: class/MainWPAjax.class.php:215
 #@ mainwp
 msgid "For more information:"
 msgstr "Za više informacija:"
 
-#: class/MainWP_Ajax.class.php:216
+#: class/MainWPAjax.class.php:216
 #@ mainwp
 msgid "<a href=\"http://codex.wordpress.org/Dashboard_Screen\" target=\"_blank\">Documentation on Dashboard</a>"
 msgstr ""
 
-#: class/MainWP_Ajax.class.php:217
+#: class/MainWPAjax.class.php:217
 #@ mainwp
 msgid "<a href=\"http://wordpress.org/support/\" target=\"_blank\">Support Forums</a>"
 msgstr "<a href=\"http://wordpress.org/support/\" target=\"_blank\">Forum za podršku</a>"
 
-#: class/MainWP_Error_Helper.class.php:15
-#: page/MainWP_Manage_Sites.page.php:1808
-#: page/MainWP_Manage_Sites.page.php:1953
+#: class/MainWPErrorHelper.class.php:15
+#: page/MainWPManageSites.page.php:1808
+#: page/MainWPManageSites.page.php:1953
 #@ mainwp
 msgid "No MainWP plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please "
 msgstr "MainWP plugin nije pronađen, pre dodavanja sajta u MainWP kontrolnu tablu, prvo instalirajte i aktivirajte plugin. Ako i dalje buede imali ovaj problem, molim"
 
-#: class/MainWP_Error_Helper.class.php:17
-#: page/MainWP_Manage_Sites.page.php:1810
-#: page/MainWP_Manage_Sites.page.php:1955
+#: class/MainWPErrorHelper.class.php:17
+#: page/MainWPManageSites.page.php:1810
+#: page/MainWPManageSites.page.php:1955
 #@ mainwp
 msgid "post as much information as possible on the error in the <a href=\"https://mainwp.com/forum/\">support forum</a>."
 msgstr "pošaljite što više informacija o grešci na <a href=\"https://mainwp.com/forum/\">forum za podršku</a>."
 
-#: class/MainWP_Meta_Boxes.class.php:71
+#: class/MainWPMetaBoxes.class.php:71
 #@ mainwp
 msgid "All Categories"
 msgstr "Sve kategorije"
 
-#: class/MainWP_Meta_Boxes.class.php:76
+#: class/MainWPMetaBoxes.class.php:76
 #@ mainwp
 msgid " Uncategorized"
 msgstr "Bez kategorije"
 
-#: class/MainWP_Meta_Boxes.class.php:81
+#: class/MainWPMetaBoxes.class.php:81
 #@ mainwp
 msgid "+ Add New Category"
 msgstr "+ Dodaj novu kategoriju"
 
-#: class/MainWP_Meta_Boxes.class.php:83
-#: class/MainWP_Meta_Boxes.class.php:85
+#: class/MainWPMetaBoxes.class.php:83
+#: class/MainWPMetaBoxes.class.php:85
 #@ mainwp
 msgid "Add New Category"
 msgstr "Dodaj novu kategoriju"
 
-#: class/MainWP_Meta_Boxes.class.php:84
+#: class/MainWPMetaBoxes.class.php:84
 #@ mainwp
 msgid "New Category Name"
 msgstr "Ime nove kategorije"
@@ -329,271 +329,271 @@ msgstr "Koristi Active mod:"
 msgid "New FTP Destination"
 msgstr "Nova FTP destinacija"
 
-#: class/MainWP_Sync.class.php:190
-#: class/MainWP_Sync.class.php:349
-#: page/MainWP_Bulk_Add.page.php:24
+#: class/MainWPSync.class.php:190
+#: class/MainWPSync.class.php:349
+#: page/MainWPBulkAdd.page.php:24
 #@ mainwp
 msgid "Error - "
 msgstr "Greška - "
 
-#: class/MainWP_Sync.class.php:195
-#: class/MainWP_Sync.class.php:353
-#: page/MainWP_Bulk_Add.page.php:26
-#: page/MainWP_Install_Bulk.page.php:343
+#: class/MainWPSync.class.php:195
+#: class/MainWPSync.class.php:353
+#: page/MainWPBulkAdd.page.php:26
+#: page/MainWPInstallBulk.page.php:343
 #@ mainwp
 msgid "Undefined error - please reinstall the MainWP plugin on the client"
 msgstr "Nedefinisana greška - molimo re-instalirajte MainWP plugin"
 
-#: class/MainWP_Sync.class.php:207
+#: class/MainWPSync.class.php:207
 #@ mainwp
 msgid "HTTP error while contacting the website"
 msgstr "HTTP greška prilikom kontaktiranja sajta"
 
-#: class/MainWP_Sync.class.php:212
+#: class/MainWPSync.class.php:212
 #@ mainwp
 msgid "MainWP not detected"
 msgstr "MainWP plugin nije pronađen"
 
-#: class/MainWP_System.class.php:381
+#: class/MainWPSystem.class.php:381
 #@ mainwp
 msgid "Once every 5 minutes"
 msgstr "Jednom na svakih 5 minuta"
 
-#: class/MainWP_System.class.php:385
+#: class/MainWPSystem.class.php:385
 #@ mainwp
 msgid "Once every minute"
 msgstr "Jednom svake minute"
 
-#: class/MainWP_System.class.php:1361
-#: class/MainWP_System.class.php:1367
+#: class/MainWPSystem.class.php:1361
+#: class/MainWPSystem.class.php:1367
 #@ mainwp
 msgid "Select sites"
 msgstr "Odaberite sajtove"
 
-#: class/MainWP_System.class.php:1362
-#: page/MainWP_Post.page.php:174
-#: page/MainWP_Post.page.php:205
+#: class/MainWPSystem.class.php:1362
+#: page/MainWPPost.page.php:174
+#: page/MainWPPost.page.php:205
 #@ mainwp
 msgid "Categories"
 msgstr "Kategorije"
 
-#: class/MainWP_System.class.php:1363
-#: page/MainWP_Post.page.php:177
-#: page/MainWP_Post.page.php:206
+#: class/MainWPSystem.class.php:1363
+#: page/MainWPPost.page.php:177
+#: page/MainWPPost.page.php:206
 #@ mainwp
 msgid "Tags"
 msgstr "Tagovi"
 
-#: class/MainWP_System.class.php:1364
-#: class/MainWP_System.class.php:1368
+#: class/MainWPSystem.class.php:1364
+#: class/MainWPSystem.class.php:1368
 #@ mainwp
 msgid "Slug"
 msgstr "Slug"
 
-#: class/MainWP_System.class.php:1488
-#: class/MainWP_System.class.php:1489
-#: class/MainWP_System.class.php:1499
+#: class/MainWPSystem.class.php:1488
+#: class/MainWPSystem.class.php:1489
+#: class/MainWPSystem.class.php:1499
 #@ default
 msgctxt "bulkpost"
 msgid "Bulkpost"
 msgstr ""
 
-#: class/MainWP_System.class.php:1490
+#: class/MainWPSystem.class.php:1490
 #@ default
 msgctxt "bulkpost"
 msgid "Add New"
 msgstr ""
 
-#: class/MainWP_System.class.php:1491
+#: class/MainWPSystem.class.php:1491
 #@ default
 msgctxt "bulkpost"
 msgid "Add New Bulkpost"
 msgstr ""
 
-#: class/MainWP_System.class.php:1492
+#: class/MainWPSystem.class.php:1492
 #@ default
 msgctxt "bulkpost"
 msgid "Edit Bulkpost"
 msgstr ""
 
-#: class/MainWP_System.class.php:1493
+#: class/MainWPSystem.class.php:1493
 #@ default
 msgctxt "bulkpost"
 msgid "New Bulkpost"
 msgstr ""
 
-#: class/MainWP_System.class.php:1494
+#: class/MainWPSystem.class.php:1494
 #@ default
 msgctxt "bulkpost"
 msgid "View Bulkpost"
 msgstr ""
 
-#: class/MainWP_System.class.php:1495
+#: class/MainWPSystem.class.php:1495
 #@ default
 msgctxt "bulkpost"
 msgid "Search Bulkpost"
 msgstr ""
 
-#: class/MainWP_System.class.php:1496
+#: class/MainWPSystem.class.php:1496
 #@ default
 msgctxt "bulkpost"
 msgid "No bulkpost found"
 msgstr ""
 
-#: class/MainWP_System.class.php:1497
+#: class/MainWPSystem.class.php:1497
 #@ default
 msgctxt "bulkpost"
 msgid "No bulkpost found in Trash"
 msgstr ""
 
-#: class/MainWP_System.class.php:1498
+#: class/MainWPSystem.class.php:1498
 #@ default
 msgctxt "bulkpost"
 msgid "Parent Bulkpost:"
 msgstr ""
 
-#: class/MainWP_System.class.php:1533
-#: class/MainWP_System.class.php:1534
-#: class/MainWP_System.class.php:1544
+#: class/MainWPSystem.class.php:1533
+#: class/MainWPSystem.class.php:1534
+#: class/MainWPSystem.class.php:1544
 #@ default
 msgctxt "bulkpage"
 msgid "Bulkpage"
 msgstr ""
 
-#: class/MainWP_System.class.php:1535
+#: class/MainWPSystem.class.php:1535
 #@ default
 msgctxt "bulkpage"
 msgid "Add New"
 msgstr ""
 
-#: class/MainWP_System.class.php:1536
+#: class/MainWPSystem.class.php:1536
 #@ default
 msgctxt "bulkpage"
 msgid "Add New Bulkpage"
 msgstr ""
 
-#: class/MainWP_System.class.php:1537
+#: class/MainWPSystem.class.php:1537
 #@ default
 msgctxt "bulkpage"
 msgid "Edit Bulkpage"
 msgstr ""
 
-#: class/MainWP_System.class.php:1538
+#: class/MainWPSystem.class.php:1538
 #@ default
 msgctxt "bulkpage"
 msgid "New Bulkpage"
 msgstr ""
 
-#: class/MainWP_System.class.php:1539
+#: class/MainWPSystem.class.php:1539
 #@ default
 msgctxt "bulkpage"
 msgid "View Bulkpage"
 msgstr ""
 
-#: class/MainWP_System.class.php:1540
+#: class/MainWPSystem.class.php:1540
 #@ default
 msgctxt "bulkpage"
 msgid "Search Bulkpage"
 msgstr ""
 
-#: class/MainWP_System.class.php:1541
+#: class/MainWPSystem.class.php:1541
 #@ default
 msgctxt "bulkpage"
 msgid "No bulkpage found"
 msgstr ""
 
-#: class/MainWP_System.class.php:1542
+#: class/MainWPSystem.class.php:1542
 #@ default
 msgctxt "bulkpage"
 msgid "No bulkpage found in Trash"
 msgstr ""
 
-#: class/MainWP_System.class.php:1543
+#: class/MainWPSystem.class.php:1543
 #@ default
 msgctxt "bulkpage"
 msgid "Parent Bulkpage:"
 msgstr ""
 
-#: class/MainWP_System.class.php:1702
+#: class/MainWPSystem.class.php:1702
 #@ mainwp
 msgid "MainWP Configuration"
 msgstr "MainWP konfiguracija"
 
-#: class/MainWP_UI.class.php:26
+#: class/MainWPUI.class.php:26
 #@ mainwp
 msgid "Select: "
 msgstr "Odaberi: "
 
-#: class/MainWP_System.class.php:1346
-#: class/MainWP_UI.class.php:26
+#: class/MainWPSystem.class.php:1346
+#: class/MainWPUI.class.php:26
 #: page/MainWPClickHeatmap.page.php:45
 #: page/MainWPClickHeatmap.page.php:49
 #@ mainwp
 msgid "All"
 msgstr "Sve"
 
-#: class/MainWP_UI.class.php:26
+#: class/MainWPUI.class.php:26
 #@ mainwp
 msgid "None"
 msgstr "Ništa"
 
-#: class/MainWP_UI.class.php:29
-#: class/MainWP_UI.class.php:83
-#: class/MainWP_UI.class.php:84
+#: class/MainWPUI.class.php:29
+#: class/MainWPUI.class.php:83
+#: class/MainWPUI.class.php:84
 #@ mainwp
 msgid "By site"
 msgstr "Prema sajtu"
 
-#: class/MainWP_UI.class.php:29
-#: class/MainWP_UI.class.php:84
-#: class/MainWP_UI.class.php:85
+#: class/MainWPUI.class.php:29
+#: class/MainWPUI.class.php:84
+#: class/MainWPUI.class.php:85
 #@ mainwp
 msgid "By group"
 msgstr "Prema grupi"
 
-#: class/MainWP_UI.class.php:34
-#: class/MainWP_UI.class.php:90
+#: class/MainWPUI.class.php:34
+#: class/MainWPUI.class.php:90
 #@ mainwp
 msgid "<p>No websites have been found.</p>"
 msgstr "<p>Nijeda sajt nije pronađen</p>"
 
-#: class/MainWP_UI.class.php:50
-#: class/MainWP_UI.class.php:137
+#: class/MainWPUI.class.php:50
+#: class/MainWPUI.class.php:137
 #@ mainwp
 msgid "<p>No groups with entries have been found.</p>"
 msgstr "<p>Nijedna grupa nije pronadjena</p>"
 
-#: class/MainWP_UI.class.php:79
+#: class/MainWPUI.class.php:79
 #@ mainwp
 msgid "Select Categories"
 msgstr "Odaberite kategorije"
 
-#: class/MainWP_UI.class.php:121
+#: class/MainWPUI.class.php:121
 #@ mainwp
 msgid "Reload"
 msgstr "Učitaj ponovo"
 
-#: class/MainWP_UI.class.php:162
+#: class/MainWPUI.class.php:162
 #@ mainwp
 msgid "<p>No selected categories.</p>"
 msgstr "<p>Nema odabranih kategorija</p>"
 
-#: page/MainWP_API_Settings.page.php:22
+#: page/MainWPAPISettings.page.php:22
 #@ mainwp
 msgid "MainWP Login Settings"
 msgstr "Podešavanje MainWP prijave"
 
-#: page/MainWP_API_Settings.page.php:27
+#: page/MainWPAPISettings.page.php:27
 #@ mainwp
 msgid "Stop, before installing!"
 msgstr "Stop, pre instaliranja!"
 
-#: page/MainWP_API_Settings.page.php:29
+#: page/MainWPAPISettings.page.php:29
 #@ mainwp
 msgid "We HIGHLY recommend a NEW WordPress install for your Main Dashboard."
 msgstr "Preporučujemo novu WordPress instalaciju za vašu MainWP komandnu tablu."
 
-#: page/MainWP_API_Settings.page.php:31
+#: page/MainWPAPISettings.page.php:31
 #@ mainwp
 msgid ""
 "Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard off an active site. Most hosting companies provide free subdomains (\"<strong>demo.yourdomain.com</strong>\") and we recommend creating one if you do not have a specific dedicated domain to run your Network Main Dashboard.<br/><br/>\n"
@@ -604,147 +604,147 @@ msgstr ""
 "\n"
 "        Ako niste sigurni kako da kreirate subdomen ovde mozete naći korak-po-korak instrukcije: <a href=\"http://docs.mainwp.com/creating-a-subdomain-in-cpanel/\">cPanel</a>, <a href=\"http://docs.mainwp.com/creating-a-subdomain-in-plesk/\">Plesk</a> or <a href=\"http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/\">Direct Admin</a>. Ako niste sigurni sta koristite, kontaktirajte Vašu hosting kompaniju."
 
-#: page/MainWP_API_Settings.page.php:35
+#: page/MainWPAPISettings.page.php:35
 #@ mainwp
 msgid "Initial MainWP Settings"
 msgstr "Početna MainWP podešavanja"
 
-#: page/MainWP_API_Settings.page.php:39
+#: page/MainWPAPISettings.page.php:39
 #@ mainwp
 msgid "Hide Network on Child Sites"
 msgstr "Sakrijte mrežu na upravljanim sajtovima"
 
-#: page/MainWP_API_Settings.page.php:48
+#: page/MainWPAPISettings.page.php:48
 #@ mainwp
 msgid "This will make anyone including Search Engines trying find your Child Plugin encounter a 404 page. Hiding the Child Plugin does require the plugin to make changes to your .htaccess file that in rare instances or server configurations could cause problems."
 msgstr "Ovim ćete sakriti sakriti Child Plugin od svih pa čak i Internet pretraživača. Sakrivanje plugin-a podrazumeva izmene u .htaccess datoteci što u retkim slučajevima može dovesti do problema."
 
-#: page/MainWP_API_Settings.page.php:50
+#: page/MainWPAPISettings.page.php:50
 #@ mainwp
 msgid "We recommend you have this option checked. You can change these settings any time on the settings page."
 msgstr "Naša preporuka je da odaberete ovu opciju. Ovo podešavanje možete da izmenite u bilo kom trenutku."
 
-#: page/MainWP_API_Settings.page.php:59
+#: page/MainWPAPISettings.page.php:59
 #@ mainwp
 msgid "MainWP login"
 msgstr "MainWP prijava"
 
-#: page/MainWP_API_Settings.page.php:63
-#: page/MainWP_User.page.php:197
-#: page/MainWP_User.page.php:222
-#: page/MainWP_User.page.php:574
+#: page/MainWPAPISettings.page.php:63
+#: page/MainWPUser.page.php:197
+#: page/MainWPUser.page.php:222
+#: page/MainWPUser.page.php:574
 #@ mainwp
 msgid "Username"
 msgstr "Korisničko ime"
 
-#: page/MainWP_API_Settings.page.php:70
-#: page/MainWP_User.page.php:616
+#: page/MainWPAPISettings.page.php:70
+#: page/MainWPUser.page.php:616
 #@ mainwp
 msgid "Password"
 msgstr "Šifra"
 
-#: page/MainWP_API_Settings.page.php:79
+#: page/MainWPAPISettings.page.php:79
 #@ mainwp
 msgid "Test Login"
 msgstr "Testiraj Prijavu"
 
-#: page/MainWP_API_Settings.page.php:80
-#: page/MainWP_Manage_Backups.page.php:407
-#: page/MainWP_Manage_Backups.page.php:792
-#: page/MainWP_Settings.page.php:129
+#: page/MainWPAPISettings.page.php:80
+#: page/MainWPManageBackups.page.php:407
+#: page/MainWPManageBackups.page.php:792
+#: page/MainWPSettings.page.php:129
 #@ mainwp
 msgid "Save Settings"
 msgstr "Sačuvaj podešavanja"
 
-#: page/MainWP_API_Settings.page.php:113
+#: page/MainWPAPISettings.page.php:113
 #@ mainwp
 msgid "Maximum number of main installations on your MainWP plan have been reached. <a href=\"https://mainwp.com/member/login/index\" target=\"_blank\">Upgrade your plan for more sites</a>"
 msgstr "Dostigli ste maksimalan broj upravljanih sajtova za vaš plan. <a href=\"https://mainwp.com/member/login/index\" target=\"_blank\">Pojačajte Vaš plan ovde!</a>"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:32
+#: page/MainWPBulkUpdateAdminPasswords.page.php:32
 #@ mainwp
 msgid "Please select the sites or groups where you want to change the admin password."
 msgstr "Molimo, odaberite sajtove ili grupe za koje želite da promenite administratorsku šifru."
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:35
+#: page/MainWPBulkUpdateAdminPasswords.page.php:35
 #@ mainwp
 msgid "Please select whether you want to change the admin password for specific sites or groups."
 msgstr "Molimo, odaberite da li želite da promenite administratorsku šifru za određene sajtove ili grupe."
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:38
+#: page/MainWPBulkUpdateAdminPasswords.page.php:38
 #@ mainwp
 msgid "Please enter the password twice."
 msgstr "Molimo, unesite šifru dva puta."
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:40
+#: page/MainWPBulkUpdateAdminPasswords.page.php:40
 #@ mainwp
 msgid "Please enter the same password in the two password fields."
 msgstr "Molimo, unesite istu šifru u oba polja."
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:89
+#: page/MainWPBulkUpdateAdminPasswords.page.php:89
 #@ mainwp
 msgid "Admin password updated."
 msgstr "Administratorska šifra ažurirana."
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:89
+#: page/MainWPBulkUpdateAdminPasswords.page.php:89
 #@ mainwp
 msgid "ERROR: "
 msgstr "GEŠKA: "
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:93
+#: page/MainWPBulkUpdateAdminPasswords.page.php:93
 #@ mainwp
 msgid "Update admin passwords"
 msgstr "Ažuriraj administratorske šifre"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:94
-#: page/MainWP_Install_Bulk.page.php:84
-#: page/MainWP_User.page.php:902
+#: page/MainWPBulkUpdateAdminPasswords.page.php:94
+#: page/MainWPInstallBulk.page.php:84
+#: page/MainWPUser.page.php:902
 #@ mainwp
 msgid "Return to Dashboard"
 msgstr "Povratak na kontrolnu tablu"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:102
+#: page/MainWPBulkUpdateAdminPasswords.page.php:102
 #@ mainwp
 msgid "Update Admin Passwords"
 msgstr "Ažuriraj administratorske šifre"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:108
+#: page/MainWPBulkUpdateAdminPasswords.page.php:108
 #@ mainwp
 msgid "Bulk update admin passwords"
 msgstr "Masovno ažuriranje administratorskih šifri"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:114
+#: page/MainWPBulkUpdateAdminPasswords.page.php:114
 #@ mainwp
 msgid "Select Sites to Update"
 msgstr "Odaberite sajtove za ažuriranje"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:120
+#: page/MainWPBulkUpdateAdminPasswords.page.php:120
 #@ mainwp
 msgid "Enter New Password "
 msgstr "Unesite novu šifru "
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:120
-#: page/MainWP_User.page.php:617
+#: page/MainWPBulkUpdateAdminPasswords.page.php:120
+#: page/MainWPUser.page.php:617
 #@ mainwp
 msgid "(twice, required)"
 msgstr "(dva puta, obavezno)"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:126
+#: page/MainWPBulkUpdateAdminPasswords.page.php:126
 #@ mainwp
 msgid "Strength indicator"
 msgstr "Indikator snage"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:127
+#: page/MainWPBulkUpdateAdminPasswords.page.php:127
 #@ mainwp
 msgid "Hint: The password should be at least seven characters long. To make it stronger, use upper and lower case letters, numbers and symbols like ! \" ? $ % ^ &amp; )."
 msgstr "Savet: Šifra treba imate barem sedam karaktera. Da bi bila jača, koristite velika i mala slova, brojeve i simbole poput ! \" ? $ % ^ &amp; )."
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:130
+#: page/MainWPBulkUpdateAdminPasswords.page.php:130
 #@ mainwp
 msgid "Update Now"
 msgstr "Ažuriraj"
 
-#: class/MainWP_System.class.php:1683
+#: class/MainWPSystem.class.php:1683
 #: page/MainWPClickHeatmap.page.php:17
 #@ mainwp
 msgid "Click Heatmap"
@@ -863,17 +863,17 @@ msgstr "Prikaži po: "
 
 #: page/MainWPCloneSite.page.php:37
 #: page/MainWPCloneSite.page.php:63
-#: page/MainWP_Manage_Groups.page.php:41
-#: page/MainWP_Manage_Sites.page.php:1442
+#: page/MainWPManageGroups.page.php:41
+#: page/MainWPManageSites.page.php:1442
 #@ mainwp
 msgid "Site Name"
 msgstr "Naziv Sajta"
 
 #: page/MainWPCloneSite.page.php:37
 #: page/MainWPCloneSite.page.php:63
-#: page/MainWP_Manage_Groups.page.php:41
-#: page/MainWP_Manage_Sites.page.php:1210
-#: page/MainWP_Manage_Sites.page.php:1231
+#: page/MainWPManageGroups.page.php:41
+#: page/MainWPManageSites.page.php:1210
+#: page/MainWPManageSites.page.php:1231
 #@ mainwp
 msgid "URL"
 msgstr "URL"
@@ -894,7 +894,7 @@ msgid "Allow"
 msgstr "Dozvoli"
 
 #: page/MainWPCloneSite.page.php:63
-#: page/MainWP_Manage_Groups.page.php:41
+#: page/MainWPManageGroups.page.php:41
 #@ mainwp
 msgid "Display by:"
 msgstr "Prikaži po:"
@@ -905,15 +905,15 @@ msgid "Disallowed Sites"
 msgstr "Odbačeni sajtovi"
 
 #: page/MainWPCloneSite.page.php:87
-#: page/MainWP_Manage_Groups.page.php:32
-#: page/MainWP_Manage_Groups.page.php:252
+#: page/MainWPManageGroups.page.php:32
+#: page/MainWPManageGroups.page.php:252
 #@ mainwp
 msgid "Save"
 msgstr "Sačuvaj"
 
 #: page/MainWPCloneSite.page.php:87
-#: page/MainWP_Manage_Groups.page.php:51
-#: page/MainWP_Offline_Checks.page.php:49
+#: page/MainWPManageGroups.page.php:51
+#: page/MainWPOfflineChecks.page.php:49
 #@ mainwp
 msgid "Saved"
 msgstr "Sačuvano"
@@ -924,14 +924,14 @@ msgid "After pressing \"Save\" you will need to return to MainWP Dashboard and p
 msgstr "Kada sačuvate, vratite se na kontrolnu tablu i kliknite \\\"Osveži\\\" da sinhronizujete podešavanja."
 
 #: page/MainWPComment.page.php:65
-#: page/MainWP_Manage_Backups.page.php:70
-#: page/MainWP_Manage_Groups.page.php:15
-#: page/MainWP_Manage_Sites.page.php:115
-#: page/MainWP_Page.page.php:72
-#: page/MainWP_Plugins.page.php:75
-#: page/MainWP_Post.page.php:70
-#: page/MainWP_Themes.page.php:76
-#: page/MainWP_User.page.php:73
+#: page/MainWPManageBackups.page.php:70
+#: page/MainWPManageGroups.page.php:15
+#: page/MainWPManageSites.page.php:115
+#: page/MainWPPage.page.php:72
+#: page/MainWPPlugins.page.php:75
+#: page/MainWPPost.page.php:70
+#: page/MainWPThemes.page.php:76
+#: page/MainWPUser.page.php:73
 #@ mainwp
 msgid "Manage"
 msgstr "Upravljaj"
@@ -942,13 +942,13 @@ msgid "Use this to bulk change comments."
 msgstr "Koristite ovo da masovno promenite komentare."
 
 #: page/MainWPComment.page.php:71
-#: page/MainWP_Manage_Backups.page.php:295
-#: page/MainWP_Page.page.php:107
-#: page/MainWP_Plugins.page.php:111
-#: page/MainWP_Post.page.php:103
-#: page/MainWP_Themes.page.php:111
-#: page/MainWP_User.page.php:128
-#: page/MainWP_User.page.php:567
+#: page/MainWPManageBackups.page.php:295
+#: page/MainWPPage.page.php:107
+#: page/MainWPPlugins.page.php:111
+#: page/MainWPPost.page.php:103
+#: page/MainWPThemes.page.php:111
+#: page/MainWPUser.page.php:128
+#: page/MainWPUser.page.php:567
 #@ mainwp
 msgid "Select Sites"
 msgstr "Odaberite Sajtove"
@@ -959,23 +959,23 @@ msgid "Search Comments"
 msgstr "Pretraži komentare"
 
 #: page/MainWPComment.page.php:93
-#: page/MainWP_Page.page.php:137
-#: page/MainWP_Plugins.page.php:122
-#: page/MainWP_Post.page.php:133
-#: page/MainWP_Themes.page.php:122
+#: page/MainWPPage.page.php:137
+#: page/MainWPPlugins.page.php:122
+#: page/MainWPPost.page.php:133
+#: page/MainWPThemes.page.php:122
 #@ mainwp
 msgid "Containing Keyword:"
 msgstr "Sadržana ključna reč:"
 
 #: page/MainWPComment.page.php:97
-#: page/MainWP_Page.page.php:141
-#: page/MainWP_Post.page.php:137
+#: page/MainWPPage.page.php:141
+#: page/MainWPPost.page.php:137
 #@ mainwp
 msgid "Date Range:"
 msgstr "Period:"
 
 #: page/MainWPComment.page.php:98
-#: page/MainWP_Post.page.php:138
+#: page/MainWPPost.page.php:138
 #@ mainwp
 msgid "to"
 msgstr "do"
@@ -986,9 +986,9 @@ msgid "Show Comments"
 msgstr "Prikaži komentare"
 
 #: page/MainWPComment.page.php:110
-#: page/MainWP_Page.page.php:154
-#: page/MainWP_Post.page.php:150
-#: page/MainWP_User.page.php:173
+#: page/MainWPPage.page.php:154
+#: page/MainWPPost.page.php:150
+#: page/MainWPUser.page.php:173
 #@ mainwp
 msgid "Bulk Action"
 msgstr "Masovna radnja"
@@ -1002,7 +1002,7 @@ msgstr "Zabrani"
 
 #: page/MainWPComment.page.php:112
 #: page/MainWPComment.page.php:303
-#: page/MainWP_Post.page.php:349
+#: page/MainWPPost.page.php:349
 #: widget/MainWPRecentComments.widget.php:96
 #@ mainwp
 msgid "Approve"
@@ -1020,25 +1020,25 @@ msgid "Not Spam"
 msgstr "Nije Spam"
 
 #: page/MainWPComment.page.php:115
-#: page/MainWP_Page.page.php:155
-#: page/MainWP_Post.page.php:151
+#: page/MainWPPage.page.php:155
+#: page/MainWPPost.page.php:151
 #@ mainwp
 msgid "Move to Trash"
 msgstr "Obriši"
 
 #: page/MainWPComment.page.php:116
 #: page/MainWPComment.page.php:320
-#: page/MainWP_Page.page.php:156
-#: page/MainWP_Page.page.php:345
-#: page/MainWP_Post.page.php:152
-#: page/MainWP_Post.page.php:363
+#: page/MainWPPage.page.php:156
+#: page/MainWPPage.page.php:345
+#: page/MainWPPost.page.php:152
+#: page/MainWPPost.page.php:363
 #@ mainwp
 msgid "Restore"
 msgstr "Povrati"
 
 #: page/MainWPComment.page.php:117
-#: page/MainWP_Page.page.php:157
-#: page/MainWP_Post.page.php:153
+#: page/MainWPPage.page.php:157
+#: page/MainWPPost.page.php:153
 #@ mainwp
 msgid "Delete Permanently"
 msgstr "Obriši zauvek"
@@ -1054,22 +1054,22 @@ msgid "All Search Results"
 msgstr "Svi rezultati pretraživanja"
 
 #: page/MainWPComment.page.php:128
-#: page/MainWP_Page.page.php:161
-#: page/MainWP_Post.page.php:157
-#: page/MainWP_User.page.php:186
+#: page/MainWPPage.page.php:161
+#: page/MainWPPost.page.php:157
+#: page/MainWPUser.page.php:186
 #@ mainwp
 msgid "Total Results:"
 msgstr "Ukupno rezultata:"
 
 #: page/MainWPComment.page.php:139
 #: page/MainWPComment.page.php:161
-#: page/MainWP_Page.page.php:175
-#: page/MainWP_Page.page.php:201
-#: page/MainWP_Post.page.php:171
-#: page/MainWP_Post.page.php:203
-#: page/MainWP_User.page.php:152
-#: page/MainWP_User.page.php:180
-#: page/MainWP_User.page.php:664
+#: page/MainWPPage.page.php:175
+#: page/MainWPPage.page.php:201
+#: page/MainWPPost.page.php:171
+#: page/MainWPPost.page.php:203
+#: page/MainWPUser.page.php:152
+#: page/MainWPUser.page.php:180
+#: page/MainWPUser.page.php:664
 #@ mainwp
 msgid "Author"
 msgstr "Autor"
@@ -1088,33 +1088,33 @@ msgstr "Kao odgovor na"
 
 #: page/MainWPComment.page.php:148
 #: page/MainWPComment.page.php:170
-#: page/MainWP_Page.page.php:185
-#: page/MainWP_Page.page.php:208
-#: page/MainWP_Post.page.php:187
-#: page/MainWP_Post.page.php:212
+#: page/MainWPPage.page.php:185
+#: page/MainWPPage.page.php:208
+#: page/MainWPPost.page.php:187
+#: page/MainWPPost.page.php:212
 #@ mainwp
 msgid "Date"
 msgstr "Datum"
 
 #: page/MainWPComment.page.php:151
 #: page/MainWPComment.page.php:173
-#: page/MainWP_Page.page.php:188
-#: page/MainWP_Page.page.php:210
-#: page/MainWP_Post.page.php:190
-#: page/MainWP_Post.page.php:214
-#: page/MainWP_User.page.php:212
-#: page/MainWP_User.page.php:230
-#: page/MainWP_User.page.php:608
+#: page/MainWPPage.page.php:188
+#: page/MainWPPage.page.php:210
+#: page/MainWPPost.page.php:190
+#: page/MainWPPost.page.php:214
+#: page/MainWPUser.page.php:212
+#: page/MainWPUser.page.php:230
+#: page/MainWPUser.page.php:608
 #@ mainwp
 msgid "Website"
 msgstr "Sajt"
 
 #: page/MainWPComment.page.php:188
-#: page/MainWP_Page.page.php:224
-#: page/MainWP_Plugins.page.php:333
-#: page/MainWP_Post.page.php:228
-#: page/MainWP_Themes.page.php:514
-#: page/MainWP_User.page.php:244
+#: page/MainWPPage.page.php:224
+#: page/MainWPPlugins.page.php:333
+#: page/MainWPPost.page.php:228
+#: page/MainWPThemes.page.php:514
+#: page/MainWPUser.page.php:244
 #@ mainwp
 msgid "Show:"
 msgstr "Pokaži:"
@@ -1125,14 +1125,14 @@ msgid "Comments per page"
 msgstr "komentara po stranici"
 
 #: page/MainWPComment.page.php:309
-#: page/MainWP_Manage_Backups.page.php:72
-#: page/MainWP_Manage_Backups.page.php:214
-#: page/MainWP_Manage_Sites.page.php:120
-#: page/MainWP_Manage_Sites.page.php:124
-#: page/MainWP_Manage_Sites.page.php:1646
-#: page/MainWP_Page.page.php:331
-#: page/MainWP_Post.page.php:335
-#: page/MainWP_User.page.php:454
+#: page/MainWPManageBackups.page.php:72
+#: page/MainWPManageBackups.page.php:214
+#: page/MainWPManageSites.page.php:120
+#: page/MainWPManageSites.page.php:124
+#: page/MainWPManageSites.page.php:1646
+#: page/MainWPPage.page.php:331
+#: page/MainWPPost.page.php:335
+#: page/MainWPUser.page.php:454
 #@ mainwp
 msgid "Edit"
 msgstr "Uredi"
@@ -1145,36 +1145,36 @@ msgid "Spam"
 msgstr "Spam"
 
 #: page/MainWPComment.page.php:315
-#: page/MainWP_Page.page.php:333
-#: page/MainWP_Post.page.php:337
+#: page/MainWPPage.page.php:333
+#: page/MainWPPost.page.php:337
 #: widget/MainWPRecentComments.widget.php:80
 #: widget/MainWPRecentComments.widget.php:96
-#: widget/MainWP_Recent_Posts.widget.php:86
-#: widget/MainWP_Recent_Posts.widget.php:108
-#: widget/MainWP_Recent_Posts.widget.php:130
+#: widget/MainWPRecentPosts.widget.php:86
+#: widget/MainWPRecentPosts.widget.php:108
+#: widget/MainWPRecentPosts.widget.php:130
 #@ mainwp
 msgid "Trash"
 msgstr "Obriši"
 
 #: page/MainWPComment.page.php:330
-#: page/MainWP_Page.page.php:348
-#: page/MainWP_Post.page.php:366
+#: page/MainWPPage.page.php:348
+#: page/MainWPPost.page.php:366
 #@ mainwp
 msgid ""
 "Delete\n"
 "                            Permanently"
 msgstr "Obriši zauvek"
 
-#: class/MainWP_System.class.php:1354
+#: class/MainWPSystem.class.php:1354
 #: page/MainWPComment.page.php:336
-#: page/MainWP_Page.page.php:354
-#: page/MainWP_Post.page.php:372
-#: page/MainWP_User.page.php:463
+#: page/MainWPPage.page.php:354
+#: page/MainWPPost.page.php:372
+#: page/MainWPUser.page.php:463
 #: widget/MainWPRecentComments.widget.php:81
 #: widget/MainWPRecentComments.widget.php:97
-#: widget/MainWP_Recent_Posts.widget.php:87
-#: widget/MainWP_Recent_Posts.widget.php:109
-#: widget/MainWP_Recent_Posts.widget.php:131
+#: widget/MainWPRecentPosts.widget.php:87
+#: widget/MainWPRecentPosts.widget.php:109
+#: widget/MainWPRecentPosts.widget.php:131
 #@ mainwp
 msgid "Please wait"
 msgstr "Molimo, sačekajte"
@@ -1186,46 +1186,46 @@ msgid ""
 "                        Post"
 msgstr "Pogledaj članak"
 
-#: class/MainWP_System.class.php:1697
-#: page/MainWP_Documentation.page.php:16
+#: class/MainWPSystem.class.php:1697
+#: page/MainWPDocumentation.page.php:16
 #@ mainwp
 msgid "Documentation"
 msgstr "Dokumentacija"
 
-#: page/MainWP_Documentation.page.php:23
+#: page/MainWPDocumentation.page.php:23
 #@ mainwp
 msgid "Quick Start"
 msgstr "Brzi početak"
 
-#: page/MainWP_Documentation.page.php:33
+#: page/MainWPDocumentation.page.php:33
 #@ mainwp
 msgid "How To"
 msgstr "Kako da"
 
-#: page/MainWP_Documentation.page.php:56
+#: page/MainWPDocumentation.page.php:56
 #@ mainwp
 msgid "Search the MainWP Docs"
 msgstr "Pretraži MainWP dokumentaciju"
 
-#: page/MainWP_Documentation.page.php:59
-#: page/MainWP_Install_Bulk.page.php:51
-#: page/MainWP_Install_Bulk.page.php:107
+#: page/MainWPDocumentation.page.php:59
+#: page/MainWPInstallBulk.page.php:51
+#: page/MainWPInstallBulk.page.php:107
 #@ mainwp
 msgid "Search"
 msgstr "Pretraži"
 
-#: page/MainWP_Extensions.page.php:55
-#: page/MainWP_Extensions.page.php:208
+#: page/MainWPExtensions.page.php:55
+#: page/MainWPExtensions.page.php:208
 #@ mainwp
 msgid "Extensions"
 msgstr "Ekstenzije"
 
-#: page/MainWP_Extensions.page.php:210
+#: page/MainWPExtensions.page.php:210
 #@ mainwp
 msgid "Manage Extensions"
 msgstr "Upravljaj ekstenzijama"
 
-#: page/MainWP_Extensions.page.php:242
+#: page/MainWPExtensions.page.php:242
 #, php-format
 #@ mainwp
 msgid "%d Installed MainWP Extension"
@@ -1233,587 +1233,587 @@ msgid_plural "%d Installed MainWP Extensions"
 msgstr[0] "Instalirana ekstenzija"
 msgstr[1] "Instaliranih ekstenzija"
 
-#: page/MainWP_Extensions.page.php:243
+#: page/MainWPExtensions.page.php:243
 #@ mainwp
 msgid "Get more extensions"
 msgstr "Nabavi još ekstenzija"
 
-#: page/MainWP_Extensions.page.php:251
+#: page/MainWPExtensions.page.php:251
 #@ mainwp
 msgid "What are Extensions?"
 msgstr "Šta su ekstenzije?"
 
-#: page/MainWP_Extensions.page.php:252
+#: page/MainWPExtensions.page.php:252
 #@ mainwp
 msgid "Extensions are specific features or tools created for the purpose of expanding the basic functionality of MainWP."
 msgstr "Ekstenzije su specijalni alati kreirani za proširenje funkcionalnosti MainWP plugin-a."
 
-#: page/MainWP_Extensions.page.php:253
+#: page/MainWPExtensions.page.php:253
 #@ mainwp
 msgid "Why have Extensions?"
 msgstr "Zašto koristiti ekstenzije?"
 
-#: page/MainWP_Extensions.page.php:254
+#: page/MainWPExtensions.page.php:254
 #@ mainwp
 msgid "The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat.  Extensions offer custom functions and features so that each user can tailor their MainWP to their specific needs."
 msgstr "Jezgro MainWP-a je dizajnirano da zadovolji osnovne potrebe koristnika. Ekstenzije nude specijalne funkcije tako da svaki korisnik može sebi da skroji MainWP po svojim potrebama."
 
-#: page/MainWP_Extensions.page.php:255
+#: page/MainWPExtensions.page.php:255
 #@ mainwp
 msgid "Download your first extension now."
 msgstr "Preuzmite svoju prvu ekstenziju."
 
-#: page/MainWP_Extensions.page.php:262
+#: page/MainWPExtensions.page.php:262
 #@ mainwp
 msgid "Expand"
 msgstr "Proširi"
 
-#: page/MainWP_Extensions.page.php:262
+#: page/MainWPExtensions.page.php:262
 #@ mainwp
 msgid "Collapse"
 msgstr "Skupi"
 
-#: page/MainWP_Extensions.page.php:263
+#: page/MainWPExtensions.page.php:263
 #@ mainwp
 msgid "Disable All"
 msgstr "Isključi sve"
 
-#: page/MainWP_Extensions.page.php:263
+#: page/MainWPExtensions.page.php:263
 #@ mainwp
 msgid "Enable All"
 msgstr "Uključi sve"
 
-#: page/MainWP_Extensions.page.php:334
-#: page/MainWP_Plugins.page.php:640
+#: page/MainWPExtensions.page.php:334
+#: page/MainWPPlugins.page.php:640
 #, php-format
 #@ mainwp
 #@ default
 msgid "By %s"
 msgstr "Od %s"
 
-#: page/MainWP_Install_Bulk.page.php:51
+#: page/MainWPInstallBulk.page.php:51
 #@ mainwp
 msgid "Upload"
 msgstr "Upload"
 
-#: page/MainWP_Install_Bulk.page.php:83
-#: page/MainWP_Manage_Backups.page.php:20
-#: page/MainWP_Manage_Backups.page.php:40
-#: page/MainWP_Manage_Backups.page.php:71
-#: page/MainWP_Manage_Groups.page.php:27
-#: page/MainWP_Manage_Sites.page.php:75
-#: page/MainWP_Manage_Sites.page.php:116
-#: page/MainWP_Page.page.php:46
-#: page/MainWP_Page.page.php:73
-#: page/MainWP_Page.page.php:511
-#: page/MainWP_Page.page.php:521
-#: page/MainWP_Post.page.php:44
-#: page/MainWP_Post.page.php:71
-#: page/MainWP_Post.page.php:569
-#: page/MainWP_Post.page.php:579
-#: page/MainWP_User.page.php:23
-#: page/MainWP_User.page.php:43
-#: page/MainWP_User.page.php:74
-#: page/MainWP_User.page.php:811
-#: page/MainWP_User.page.php:901
-#: widget/MainWP_Recent_Posts.widget.php:70
+#: page/MainWPInstallBulk.page.php:83
+#: page/MainWPManageBackups.page.php:20
+#: page/MainWPManageBackups.page.php:40
+#: page/MainWPManageBackups.page.php:71
+#: page/MainWPManageGroups.page.php:27
+#: page/MainWPManageSites.page.php:75
+#: page/MainWPManageSites.page.php:116
+#: page/MainWPPage.page.php:46
+#: page/MainWPPage.page.php:73
+#: page/MainWPPage.page.php:511
+#: page/MainWPPage.page.php:521
+#: page/MainWPPost.page.php:44
+#: page/MainWPPost.page.php:71
+#: page/MainWPPost.page.php:569
+#: page/MainWPPost.page.php:579
+#: page/MainWPUser.page.php:23
+#: page/MainWPUser.page.php:43
+#: page/MainWPUser.page.php:74
+#: page/MainWPUser.page.php:811
+#: page/MainWPUser.page.php:901
+#: widget/MainWPRecentPosts.widget.php:70
 #@ mainwp
 msgid "Add New"
 msgstr "Dodaj"
 
-#: page/MainWP_Install_Bulk.page.php:123
-#: page/MainWP_Plugins.page.php:46
-#: page/MainWP_Plugins.page.php:76
-#: page/MainWP_Themes.page.php:47
-#: page/MainWP_Themes.page.php:77
+#: page/MainWPInstallBulk.page.php:123
+#: page/MainWPPlugins.page.php:46
+#: page/MainWPPlugins.page.php:76
+#: page/MainWPThemes.page.php:47
+#: page/MainWPThemes.page.php:77
 #@ mainwp
 msgid "Install"
 msgstr "Instaliraj"
 
-#: page/MainWP_Install_Bulk.page.php:123
+#: page/MainWPInstallBulk.page.php:123
 #@ mainwp
 msgid "in .zip format"
 msgstr "u .zip formatu"
 
-#: page/MainWP_Install_Bulk.page.php:124
+#: page/MainWPInstallBulk.page.php:124
 #@ mainwp
 msgid "If you have"
 msgstr "Ako imate"
 
-#: page/MainWP_Install_Bulk.page.php:124
+#: page/MainWPInstallBulk.page.php:124
 #@ mainwp
 msgid "in a .zip format, you may install it by uploading it here."
 msgstr "u .zip formatu, mozete instalirati tako što ćete uploadovati ovde."
 
-#: page/MainWP_Install_Bulk.page.php:127
+#: page/MainWPInstallBulk.page.php:127
 #@ mainwp
 msgid "Please enable JavaScript to use file uploader."
 msgstr "Molimo uključite JavaScrip da biste koristili uploader."
 
-#: page/MainWP_Install_Bulk.page.php:144
-#: page/MainWP_Plugins.page.php:662
+#: page/MainWPInstallBulk.page.php:144
+#: page/MainWPPlugins.page.php:662
 #@ mainwp
 msgid "Install Now"
 msgstr "Instaliraj"
 
-#: page/MainWP_Install_Bulk.page.php:520
+#: page/MainWPInstallBulk.page.php:520
 #@ mainwp
 msgid "File is too large, increase post_max_size and/or upload_max_filesize"
 msgstr "Datoteka je prevelika, povećajte post_max_size i/ili upload_max_filesize"
 
-#: page/MainWP_Install_Bulk.page.php:530
+#: page/MainWPInstallBulk.page.php:530
 #@ mainwp
 msgid "File has an invalid extension, it should be one of "
 msgstr "Datoteka ima pogrešnu ekstenziju, trebalo bi da bude jedna od"
 
-#: page/MainWP_Install_Bulk.page.php:545
+#: page/MainWPInstallBulk.page.php:545
 #@ mainwp
 msgid "Could not save uploaded file."
 msgstr "Uploadovana datoteka nije mogla biti sačuvana."
 
-#: page/MainWP_Main.page.php:82
-#: page/MainWP_Main.page.php:93
+#: page/MainWPMain.page.php:82
+#: page/MainWPMain.page.php:93
 #@ mainwp
 msgid "MainWP Dashboard"
 msgstr "MainWP kontrolna tabla"
 
-#: page/MainWP_Main.page.php:83
+#: page/MainWPMain.page.php:83
 #@ mainwp
 msgid "MainWP needs to be activated before using"
 msgstr "MainWP treba biti aktiviran pre uptrebe"
 
-#: page/MainWP_Main.page.php:83
+#: page/MainWPMain.page.php:83
 #@ mainwp
 msgid "Activate here"
 msgstr "Aktiviraj ovde"
 
-#: page/MainWP_Main.page.php:137
+#: page/MainWPMain.page.php:137
 #@ mainwp
 msgid "You can refresh the data by clicking the button."
 msgstr "Podatke možete osvežiti klikom na dugme."
 
-#: page/MainWP_Main.page.php:137
-#: page/MainWP_Manage_Sites.page.php:1681
-#: page/MainWP_Security_Issues.page.php:43
+#: page/MainWPMain.page.php:137
+#: page/MainWPManageSites.page.php:1681
+#: page/MainWPSecurityIssues.page.php:43
 #@ mainwp
 msgid "Refresh"
 msgstr "Osveži"
 
-#: page/MainWP_Main.page.php:164
+#: page/MainWPMain.page.php:164
 #@ default
 msgid "Cheatin&#8217; uh?"
 msgstr ""
 
-#: page/MainWP_Manage_Backups.page.php:39
+#: page/MainWPManageBackups.page.php:39
 #@ mainwp
 msgid "All Backups"
 msgstr "Svi Backupi"
 
-#: page/MainWP_Manage_Backups.page.php:19
-#: page/MainWP_Manage_Backups.page.php:68
+#: page/MainWPManageBackups.page.php:19
+#: page/MainWPManageBackups.page.php:68
 #@ mainwp
 msgid "Backups"
 msgstr "Backupi"
 
-#: page/MainWP_Manage_Backups.page.php:114
-#: page/MainWP_Manage_Backups.page.php:255
+#: page/MainWPManageBackups.page.php:114
+#: page/MainWPManageBackups.page.php:255
 #@ mainwp
 msgid "Use these backup tasks to run backups at different times on different days. To backup a site right away please go to the"
 msgstr "Backupujte sajtove u različito vreme, različitim danima. Da biste backupovali sajt odmah, molimo, idite na"
 
-#: page/MainWP_Manage_Backups.page.php:114
-#: page/MainWP_Manage_Backups.page.php:255
+#: page/MainWPManageBackups.page.php:114
+#: page/MainWPManageBackups.page.php:255
 #@ mainwp
 msgid "Sites page"
 msgstr "stranicu Sajtovi"
 
-#: page/MainWP_Manage_Backups.page.php:114
-#: page/MainWP_Manage_Backups.page.php:255
+#: page/MainWPManageBackups.page.php:114
+#: page/MainWPManageBackups.page.php:255
 #@ mainwp
 msgid "and select Backup Now."
 msgstr "i kliknite Backupuj Odmah dugme."
 
-#: page/MainWP_Manage_Backups.page.php:117
+#: page/MainWPManageBackups.page.php:117
 #@ mainwp
 msgid "<p>The backup task was added successfully</p>"
 msgstr "<p>Backup uspešno dodat!</p>"
 
-#: page/MainWP_Manage_Backups.page.php:122
-#: page/MainWP_Manage_Backups.page.php:131
+#: page/MainWPManageBackups.page.php:122
+#: page/MainWPManageBackups.page.php:131
 #@ mainwp
 msgid "Task Name"
 msgstr "Ime zadatka"
 
-#: page/MainWP_Manage_Backups.page.php:123
-#: page/MainWP_Manage_Backups.page.php:132
-#: page/MainWP_Plugins.page.php:660
+#: page/MainWPManageBackups.page.php:123
+#: page/MainWPManageBackups.page.php:132
+#: page/MainWPPlugins.page.php:660
 #@ mainwp
 msgid "Details"
 msgstr "Detalji"
 
-#: page/MainWP_Manage_Backups.page.php:124
-#: page/MainWP_Manage_Backups.page.php:133
-#: page/MainWP_Server_Information.page.php:83
+#: page/MainWPManageBackups.page.php:124
+#: page/MainWPManageBackups.page.php:133
+#: page/MainWPServerInformation.page.php:83
 #@ mainwp
 msgid "Result"
 msgstr "Rezultat"
 
-#: page/MainWP_Manage_Backups.page.php:125
-#: page/MainWP_Manage_Backups.page.php:134
+#: page/MainWPManageBackups.page.php:125
+#: page/MainWPManageBackups.page.php:134
 #@ mainwp
 msgid "Trigger"
 msgstr "Okidač"
 
-#: class/MainWP_System.class.php:1274
-#: page/MainWP_Manage_Backups.page.php:145
-#: page/MainWP_Manage_Groups.page.php:32
+#: class/MainWPSystem.class.php:1274
+#: page/MainWPManageBackups.page.php:145
+#: page/MainWPManageGroups.page.php:32
 #@ mainwp
 msgid "Cancel"
 msgstr "Odustani"
 
-#: page/MainWP_Manage_Backups.page.php:218
+#: page/MainWPManageBackups.page.php:218
 #@ mainwp
 msgid "Destination: Server"
 msgstr "Destinacija: Server"
 
-#: page/MainWP_Manage_Backups.page.php:220
+#: page/MainWPManageBackups.page.php:220
 #@ mainwp
 msgid "Scheduled websites:"
 msgstr "Planirani sajtovi:"
 
-#: page/MainWP_Manage_Backups.page.php:221
+#: page/MainWPManageBackups.page.php:221
 #@ mainwp
 msgid "Last run:"
 msgstr "Poslenji put:"
 
-#: page/MainWP_Manage_Backups.page.php:222
+#: page/MainWPManageBackups.page.php:222
 #@ mainwp
 msgid "Next run:"
 msgstr "Sledeći put:"
 
-#: page/MainWP_Manage_Backups.page.php:222
+#: page/MainWPManageBackups.page.php:222
 #@ mainwp
 msgid "Any minute"
 msgstr "Svakog momenta"
 
-#: page/MainWP_Manage_Backups.page.php:225
+#: page/MainWPManageBackups.page.php:225
 #@ mainwp
 msgid "Run Now"
 msgstr "Pokreni odmah"
 
-#: page/MainWP_Manage_Backups.page.php:245
+#: page/MainWPManageBackups.page.php:245
 #@ mainwp
 msgid "Update Task"
 msgstr "Ažuriraj zadatak"
 
-#: page/MainWP_Manage_Backups.page.php:265
+#: page/MainWPManageBackups.page.php:265
 #@ mainwp
 msgid "Add New Task"
 msgstr "Novi zadatak"
 
-#: page/MainWP_Manage_Backups.page.php:300
+#: page/MainWPManageBackups.page.php:300
 #@ mainwp
 msgid "Schedule Backup"
 msgstr "Zakađi backup"
 
-#: page/MainWP_Manage_Backups.page.php:304
+#: page/MainWPManageBackups.page.php:304
 #@ mainwp
 msgid "Task Name:"
 msgstr "Naziv zadatka:"
 
-#: page/MainWP_Manage_Backups.page.php:308
+#: page/MainWPManageBackups.page.php:308
 #@ mainwp
 msgid "Task Schedule:"
 msgstr "Raspored zadatka:"
 
-#: page/MainWP_Manage_Backups.page.php:309
+#: page/MainWPManageBackups.page.php:309
 #@ mainwp
 msgid "DAILY"
 msgstr "DNEVNO"
 
-#: page/MainWP_Manage_Backups.page.php:309
+#: page/MainWPManageBackups.page.php:309
 #@ mainwp
 msgid "WEEKLY"
 msgstr "NEDELJNO"
 
-#: page/MainWP_Manage_Backups.page.php:309
+#: page/MainWPManageBackups.page.php:309
 #@ mainwp
 msgid "MONTHLY"
 msgstr "MESEČNO"
 
-#: page/MainWP_Manage_Backups.page.php:312
-#: page/MainWP_Manage_Sites.page.php:970
+#: page/MainWPManageBackups.page.php:312
+#: page/MainWPManageSites.page.php:970
 #@ mainwp
 msgid "Backup File Name:"
 msgstr "Naziv backup datoteke:"
 
-#: page/MainWP_Manage_Backups.page.php:318
-#: page/MainWP_Manage_Sites.page.php:976
+#: page/MainWPManageBackups.page.php:318
+#: page/MainWPManageSites.page.php:976
 #@ mainwp
 msgid "Backup Type:"
 msgstr "Vrsta backupa:"
 
-#: page/MainWP_Manage_Backups.page.php:320
-#: page/MainWP_Manage_Sites.page.php:978
+#: page/MainWPManageBackups.page.php:320
+#: page/MainWPManageSites.page.php:978
 #@ mainwp
 msgid "FULL BACKUP"
 msgstr "PUN BACKUP"
 
-#: page/MainWP_Manage_Backups.page.php:320
-#: page/MainWP_Manage_Sites.page.php:978
+#: page/MainWPManageBackups.page.php:320
+#: page/MainWPManageSites.page.php:978
 #@ mainwp
 msgid "DATABASE BACKUP"
 msgstr "SAMO BAZA PODATAKA"
 
-#: page/MainWP_Manage_Backups.page.php:321
-#: page/MainWP_Manage_Sites.page.php:979
+#: page/MainWPManageBackups.page.php:321
+#: page/MainWPManageSites.page.php:979
 #@ mainwp
 msgid "EXCLUDE FILES"
 msgstr "ISKLJUČI DATOTEKE"
 
-#: page/MainWP_Manage_Backups.page.php:330
-#: page/MainWP_Manage_Sites.page.php:988
+#: page/MainWPManageBackups.page.php:330
+#: page/MainWPManageSites.page.php:988
 #@ mainwp
 msgid "Click directories to navigate or click to exclude."
 msgstr "Kliknite na direktorijume da ih isključite."
 
-#: page/MainWP_Manage_Backups.page.php:334
-#: page/MainWP_Manage_Sites.page.php:994
+#: page/MainWPManageBackups.page.php:334
+#: page/MainWPManageSites.page.php:994
 #@ mainwp
 msgid "Excluded files & directories:"
 msgstr "Izuzmite datoteke i direktorijume:"
 
-#: page/MainWP_Manage_Backups.page.php:346
-#: page/MainWP_Manage_Sites.page.php:999
+#: page/MainWPManageBackups.page.php:346
+#: page/MainWPManageSites.page.php:999
 #@ mainwp
 msgid "ATTENTION:"
 msgstr "PAŽNJA:"
 
-#: page/MainWP_Manage_Backups.page.php:346
-#: page/MainWP_Manage_Sites.page.php:999
+#: page/MainWPManageBackups.page.php:346
+#: page/MainWPManageSites.page.php:999
 #@ mainwp
 msgid "Do not exclude any folders if you are using this backup to clone or migrate the wordpress installation."
 msgstr "Ne izuzimajte direktorijume ako želite da klonirate WordPress instalaciju."
 
-#: page/MainWP_Manage_Backups.page.php:353
-#: page/MainWP_Manage_Sites.page.php:1006
+#: page/MainWPManageBackups.page.php:353
+#: page/MainWPManageSites.page.php:1006
 #@ mainwp
 msgid "LOCAL SERVER ONLY"
 msgstr "SAMO LOKALNI SERVER"
 
-#: page/MainWP_Manage_Backups.page.php:353
-#: page/MainWP_Manage_Sites.page.php:1006
+#: page/MainWPManageBackups.page.php:353
+#: page/MainWPManageSites.page.php:1006
 #@ mainwp
 msgid "REMOTE DESTINATION"
 msgstr "UDALJENA DESTINACIJA"
 
-#: page/MainWP_Manage_Backups.page.php:357
-#: page/MainWP_Manage_Sites.page.php:1010
+#: page/MainWPManageBackups.page.php:357
+#: page/MainWPManageSites.page.php:1010
 #@ mainwp
 msgid "Backup Subfolder:"
 msgstr "Pod-Direktorijum:"
 
-#: page/MainWP_Manage_Backups.page.php:383
+#: page/MainWPManageBackups.page.php:383
 #@ mainwp
 msgid "Remote Backup Destinations:"
 msgstr "Udaljena Destinacija:"
 
-#: page/MainWP_Manage_Backups.page.php:388
+#: page/MainWPManageBackups.page.php:388
 #@ mainwp
 msgid "Select existing destination:"
 msgstr "Odaberi postojeću destinaciju"
 
-#: class/MainWP_System.class.php:1269
-#: page/MainWP_Manage_Backups.page.php:407
-#: page/MainWP_Manage_Backups.page.php:792
+#: class/MainWPSystem.class.php:1269
+#: page/MainWPManageBackups.page.php:407
+#: page/MainWPManageBackups.page.php:792
 #@ mainwp
 msgid "Test Settings"
 msgstr "Testiraj podešavanja"
 
-#: page/MainWP_Manage_Backups.page.php:407
-#: page/MainWP_Manage_Backups.page.php:792
+#: page/MainWPManageBackups.page.php:407
+#: page/MainWPManageBackups.page.php:792
 #@ mainwp
 msgid "Delete Destination"
 msgstr "Obriši destinaciju"
 
-#: page/MainWP_Manage_Backups.page.php:417
+#: page/MainWPManageBackups.page.php:417
 #@ mainwp
 msgid "Add a new destination:"
 msgstr "Nova destinacija:"
 
-#: page/MainWP_Manage_Backups.page.php:420
+#: page/MainWPManageBackups.page.php:420
 #@ mainwp
 msgid "Add new"
 msgstr "Dodaj"
 
-#: page/MainWP_Manage_Backups.page.php:433
+#: page/MainWPManageBackups.page.php:433
 #@ mainwp
 msgid "Add"
 msgstr "Dodaj"
 
-#: page/MainWP_Manage_Backups.page.php:467
+#: page/MainWPManageBackups.page.php:467
 #@ mainwp
 msgid "Add remote backup destination"
 msgstr "Dodaj udaljenu destinaciju"
 
-#: page/MainWP_Manage_Backups.page.php:732
+#: page/MainWPManageBackups.page.php:732
 #@ mainwp
 msgid ": Connection test was successful."
 msgstr ": Test konekcije uspešan!"
 
-#: page/MainWP_Manage_Backups.page.php:737
-#: page/MainWP_Manage_Backups.page.php:834
+#: page/MainWPManageBackups.page.php:737
+#: page/MainWPManageBackups.page.php:834
 #@ mainwp
 msgid "Error: "
 msgstr "Greška: "
 
-#: page/MainWP_Manage_Backups.page.php:830
+#: page/MainWPManageBackups.page.php:830
 #@ mainwp
 msgid ": Removed successfully."
 msgstr ": Uspešno obrisano!"
 
-#: page/MainWP_Manage_Backups.page.php:1005
-#: page/MainWP_Manage_Sites.page.php:1676
+#: page/MainWPManageBackups.page.php:1005
+#: page/MainWPManageSites.page.php:1676
 #@ mainwp
 msgid "Backup Now"
 msgstr "Backupuj odmah"
 
-#: class/MainWP_System.class.php:1692
-#: page/MainWP_Manage_Groups.page.php:28
-#: page/MainWP_Manage_Sites.page.php:203
-#: page/MainWP_Manage_Sites.page.php:1213
-#: page/MainWP_Manage_Sites.page.php:1234
-#: page/MainWP_Manage_Sites.page.php:1460
+#: class/MainWPSystem.class.php:1692
+#: page/MainWPManageGroups.page.php:28
+#: page/MainWPManageSites.page.php:203
+#: page/MainWPManageSites.page.php:1213
+#: page/MainWPManageSites.page.php:1234
+#: page/MainWPManageSites.page.php:1460
 #@ mainwp
 msgid "Groups"
 msgstr "Grupe"
 
-#: page/MainWP_Manage_Groups.page.php:42
+#: page/MainWPManageGroups.page.php:42
 #@ mainwp
 msgid "Websites"
 msgstr "Sajtovi"
 
-#: page/MainWP_Manage_Groups.page.php:51
+#: page/MainWPManageGroups.page.php:51
 #@ mainwp
 msgid "Save Selection"
 msgstr "Sačuvaj odabir"
 
-#: page/MainWP_Manage_Groups.page.php:251
+#: page/MainWPManageGroups.page.php:251
 #@ mainwp
 msgid "Rename"
 msgstr "Preimenuj"
 
-#: page/MainWP_Manage_Backups.page.php:215
-#: page/MainWP_Manage_Groups.page.php:251
-#: page/MainWP_Manage_Groups.page.php:252
-#: page/MainWP_Manage_Sites.page.php:1651
-#: page/MainWP_Plugins.page.php:452
-#: page/MainWP_Themes.page.php:244
-#: page/MainWP_User.page.php:174
-#: page/MainWP_User.page.php:458
+#: page/MainWPManageBackups.page.php:215
+#: page/MainWPManageGroups.page.php:251
+#: page/MainWPManageGroups.page.php:252
+#: page/MainWPManageSites.page.php:1651
+#: page/MainWPPlugins.page.php:452
+#: page/MainWPThemes.page.php:244
+#: page/MainWPUser.page.php:174
+#: page/MainWPUser.page.php:458
 #@ mainwp
 msgid "Delete"
 msgstr "Obriši"
 
-#: page/MainWP_Manage_Sites.page.php:74
+#: page/MainWPManageSites.page.php:74
 #@ mainwp
 msgid "All Sites"
 msgstr "Svi sajtovi"
 
-#: page/MainWP_Manage_Sites.page.php:76
-#: page/MainWP_Manage_Sites.page.php:126
-#: page/MainWP_Manage_Sites.page.php:301
-#: page/MainWP_Manage_Sites.page.php:1670
+#: page/MainWPManageSites.page.php:76
+#: page/MainWPManageSites.page.php:126
+#: page/MainWPManageSites.page.php:301
+#: page/MainWPManageSites.page.php:1670
 #@ mainwp
 msgid "Test Connection"
 msgstr "Testiraj konekciju"
 
-#: page/MainWP_Manage_Sites.page.php:30
-#: page/MainWP_Manage_Sites.page.php:104
+#: page/MainWPManageSites.page.php:30
+#: page/MainWPManageSites.page.php:104
 #@ mainwp
 msgid "Sites"
 msgstr "Sajtovi"
 
-#: page/MainWP_Manage_Sites.page.php:111
+#: page/MainWPManageSites.page.php:111
 #@ mainwp
 msgid "Your current installation is using"
 msgstr "Vaša trenutna instalacija koristi"
 
-#: page/MainWP_Manage_Sites.page.php:111
+#: page/MainWPManageSites.page.php:111
 #@ mainwp
 msgid "of the"
 msgstr "od"
 
-#: page/MainWP_Manage_Sites.page.php:111
+#: page/MainWPManageSites.page.php:111
 #@ mainwp
 msgid "available sites on your MainWP plan."
 msgstr "dozvoljenih sajtova na Vašem planu."
 
-#: page/MainWP_Manage_Sites.page.php:111
-#: page/MainWP_Manage_Sites.page.php:161
-#: page/MainWP_Manage_Sites.page.php:1427
+#: page/MainWPManageSites.page.php:111
+#: page/MainWPManageSites.page.php:161
+#: page/MainWPManageSites.page.php:1427
 #@ mainwp
 msgid "Upgrade your plan for more sites"
 msgstr "Pojačajte Vaš plan za više sajtova"
 
-#: page/MainWP_Manage_Sites.page.php:117
+#: page/MainWPManageSites.page.php:117
 #@ mainwp
 msgid "Bulk upload"
 msgstr "Masovni upload"
 
-#: page/MainWP_Manage_Sites.page.php:161
+#: page/MainWPManageSites.page.php:161
 #@ mainwp
 msgid "Maximum number of available sites on your MainWP plan have been reached."
 msgstr "Maksimalan broj sajtova na Vašem planu je dostignut."
 
-#: page/MainWP_Manage_Sites.page.php:175
+#: page/MainWPManageSites.page.php:175
 #@ mainwp
 msgid "Add a Single Site"
 msgstr "Dodaj sajt"
 
-#: page/MainWP_Manage_Sites.page.php:180
+#: page/MainWPManageSites.page.php:180
 #@ mainwp
 msgid "Site Name:"
 msgstr "Naziv sajta:"
 
-#: page/MainWP_Manage_Sites.page.php:186
-#: page/MainWP_Manage_Sites.page.php:281
+#: page/MainWPManageSites.page.php:186
+#: page/MainWPManageSites.page.php:281
 #@ mainwp
 msgid "Site URL:"
 msgstr "URL sajta:"
 
-#: page/MainWP_Manage_Sites.page.php:192
+#: page/MainWPManageSites.page.php:192
 #@ mainwp
 msgid "Administrator Username:"
 msgstr "Administrator:"
 
-#: page/MainWP_Manage_Sites.page.php:197
+#: page/MainWPManageSites.page.php:197
 #@ mainwp
 msgid ""
 "Child Unique Security\n"
 "                                    ID: "
 msgstr "Jedinstveni sigurnosni ključ:"
 
-#: page/MainWP_Manage_Sites.page.php:222
-#: page/MainWP_Manage_Sites.page.php:1480
+#: page/MainWPManageSites.page.php:222
+#: page/MainWPManageSites.page.php:1480
 #@ mainwp
 msgid "Or assign existing groups."
 msgstr "Ili dodaj postojeću grupu."
 
-#: page/MainWP_Manage_Sites.page.php:228
-#: page/MainWP_User.page.php:75
-#: page/MainWP_User.page.php:678
+#: page/MainWPManageSites.page.php:228
+#: page/MainWPUser.page.php:75
+#: page/MainWPUser.page.php:678
 #@ mainwp
 msgid "Bulk Upload"
 msgstr "Masovni upload"
 
-#: page/MainWP_Manage_Sites.page.php:237
-#: page/MainWP_User.page.php:687
+#: page/MainWPManageSites.page.php:237
+#: page/MainWPUser.page.php:687
 #@ mainwp
 msgid "File must be in CSV format."
 msgstr "Datoteka mora biti u CSV formatu."
 
-#: page/MainWP_Manage_Sites.page.php:238
+#: page/MainWPManageSites.page.php:238
 #@ mainwp
 msgid ""
 "Click\n"
@@ -1822,1178 +1822,1178 @@ msgstr ""
 "Klikni\n"
 "                                       ovde da preuzmete CSV datoteku."
 
-#: page/MainWP_Manage_Sites.page.php:245
-#: page/MainWP_User.page.php:692
+#: page/MainWPManageSites.page.php:245
+#: page/MainWPUser.page.php:692
 #@ mainwp
 msgid "Upload file"
 msgstr "Uploaduj datoteku"
 
-#: page/MainWP_Manage_Sites.page.php:252
-#: page/MainWP_User.page.php:697
+#: page/MainWPManageSites.page.php:252
+#: page/MainWPUser.page.php:697
 #@ mainwp
 msgid "CSV file contains a header."
 msgstr "CSV sadrži zaglavlje."
 
-#: page/MainWP_Manage_Sites.page.php:262
+#: page/MainWPManageSites.page.php:262
 #@ mainwp
 msgid "Add New Site"
 msgstr "Dodaj novi sajt"
 
-#: page/MainWP_Manage_Sites.page.php:275
+#: page/MainWPManageSites.page.php:275
 #@ mainwp
 msgid "Please only use the domain URL, do not add /wp-admin."
 msgstr "Molimo, koristite samo URL Domena, ne koristite  /wp-admin."
 
-#: page/MainWP_Manage_Sites.page.php:276
+#: page/MainWPManageSites.page.php:276
 #@ mainwp
 msgid "Test a Site Connection"
 msgstr "Testiraj konekciju sajta"
 
-#: page/MainWP_Manage_Sites.page.php:311
+#: page/MainWPManageSites.page.php:311
 #@ mainwp
 msgid "Importing sites"
 msgstr "Unos sajtova"
 
-#: page/MainWP_Manage_Sites.page.php:351
+#: page/MainWPManageSites.page.php:351
 #@ mainwp
 msgid "Importing new sites."
 msgstr "Unos novih sajtova."
 
-#: class/MainWP_System.class.php:1312
-#: page/MainWP_Manage_Sites.page.php:362
-#: page/MainWP_User.page.php:865
+#: class/MainWPSystem.class.php:1312
+#: page/MainWPManageSites.page.php:362
+#: page/MainWPUser.page.php:865
 #@ mainwp
 msgid "Pause"
 msgstr "Pauza"
 
-#: page/MainWP_Manage_Sites.page.php:365
-#: page/MainWP_User.page.php:868
+#: page/MainWPManageSites.page.php:365
+#: page/MainWPUser.page.php:868
 #@ mainwp
 msgid "Save failed"
 msgstr "Sačuvaj neuspešne"
 
-#: page/MainWP_Manage_Sites.page.php:401
+#: page/MainWPManageSites.page.php:401
 #@ mainwp
 msgid ""
 "Add\n"
 "                    New"
 msgstr "Dodaj"
 
-#: page/MainWP_Manage_Sites.page.php:403
+#: page/MainWPManageSites.page.php:403
 #@ mainwp
 msgid ""
 "Return\n"
 "                    to Dashboard"
 msgstr "Nazad na kontrolnu tablu"
 
-#: page/MainWP_Manage_Sites.page.php:806
-#: page/MainWP_Manage_Sites.page.php:813
+#: page/MainWPManageSites.page.php:806
+#: page/MainWPManageSites.page.php:813
 #@ mainwp
 msgid "SEO Details"
 msgstr "SEO detalji"
 
-#: page/MainWP_Manage_Sites.page.php:807
+#: page/MainWPManageSites.page.php:807
 #@ mainwp
 msgid "Not updated yet."
 msgstr "Nije ažurirano"
 
-#: page/MainWP_Manage_Sites.page.php:946
+#: page/MainWPManageSites.page.php:946
 #@ mainwp
 msgid "A full backup might fail because the total file size of this website is"
 msgstr "Backup celog sajta možda neće biti uspešan pošto je veličina vašeg sajta"
 
-#: page/MainWP_Manage_Sites.page.php:946
+#: page/MainWPManageSites.page.php:946
 #@ mainwp
 msgid "MB, you could exclude folders to decrease the filesize."
 msgstr "MB, možete izuzeti neke direktorijume da umanjite veličinu."
 
-#: page/MainWP_Manage_Sites.page.php:954
+#: page/MainWPManageSites.page.php:954
 #@ mainwp
 msgid "Backup Details"
 msgstr "Detalji backupa"
 
-#: page/MainWP_Manage_Sites.page.php:965
+#: page/MainWPManageSites.page.php:965
 #@ mainwp
 msgid "Backup Options"
 msgstr "Backup opcije"
 
-#: page/MainWP_Manage_Sites.page.php:971
+#: page/MainWPManageSites.page.php:971
 #@ mainwp
 msgid "Allowed Structure Tags:"
 msgstr "Dozvoljeni tagovi"
 
-#: page/MainWP_Manage_Sites.page.php:1004
+#: page/MainWPManageSites.page.php:1004
 #@ mainwp
 msgid "Store Backup In:"
 msgstr "Sačuvaj backupe u:"
 
-#: page/MainWP_Manage_Sites.page.php:1152
+#: page/MainWPManageSites.page.php:1152
 #@ mainwp
 msgid ""
 "Use this to manage your Sites. To add new Site click on the \"Add new\"\n"
 "                    Button."
 msgstr "Upravljate Vašim sajtovima, Da dodate novi kliknite na \\\"Dodaj\\\" dugme."
 
-#: page/MainWP_Manage_Sites.page.php:1176
+#: page/MainWPManageSites.page.php:1176
 #@ mainwp
 msgid "Previous"
 msgstr "Prethodna"
 
-#: page/MainWP_Manage_Sites.page.php:1178
+#: page/MainWPManageSites.page.php:1178
 #@ mainwp
 msgid "Next"
 msgstr "Sledeća"
 
-#: page/MainWP_Manage_Sites.page.php:1205
-#: page/MainWP_Manage_Sites.page.php:1225
-#: page/MainWP_Offline_Checks.page.php:32
-#: page/MainWP_Server_Information.page.php:56
-#: page/MainWP_Server_Information.page.php:84
-#: widget/MainWP_Right_Now.widget.php:812
+#: page/MainWPManageSites.page.php:1205
+#: page/MainWPManageSites.page.php:1225
+#: page/MainWPOfflineChecks.page.php:32
+#: page/MainWPServerInformation.page.php:56
+#: page/MainWPServerInformation.page.php:84
+#: widget/MainWPRightNow.widget.php:812
 #@ mainwp
 msgid "Status"
 msgstr "Status"
 
-#: page/MainWP_Manage_Sites.page.php:1207
-#: page/MainWP_Manage_Sites.page.php:1228
-#: page/MainWP_Plugins.page.php:949
-#: page/MainWP_Plugins.page.php:1060
-#: page/MainWP_Themes.page.php:789
-#: page/MainWP_Themes.page.php:901
+#: page/MainWPManageSites.page.php:1207
+#: page/MainWPManageSites.page.php:1228
+#: page/MainWPPlugins.page.php:949
+#: page/MainWPPlugins.page.php:1060
+#: page/MainWPThemes.page.php:789
+#: page/MainWPThemes.page.php:901
 #@ mainwp
 msgid "Site"
 msgstr "Sajt"
 
-#: page/MainWP_Manage_Sites.page.php:1215
-#: page/MainWP_Manage_Sites.page.php:1236
+#: page/MainWPManageSites.page.php:1215
+#: page/MainWPManageSites.page.php:1236
 #@ mainwp
 msgid "Backup"
 msgstr "Backup"
 
-#: page/MainWP_Manage_Sites.page.php:1216
-#: page/MainWP_Manage_Sites.page.php:1237
+#: page/MainWPManageSites.page.php:1216
+#: page/MainWPManageSites.page.php:1237
 #@ mainwp
 msgid "Last Sync"
 msgstr "Poslednja sinhronizacija"
 
-#: page/MainWP_Manage_Sites.page.php:1217
-#: page/MainWP_Manage_Sites.page.php:1238
-#: page/MainWP_Manage_Sites.page.php:1684
+#: page/MainWPManageSites.page.php:1217
+#: page/MainWPManageSites.page.php:1238
+#: page/MainWPManageSites.page.php:1684
 #@ mainwp
 msgid "SEO"
 msgstr "SEO"
 
-#: page/MainWP_Manage_Sites.page.php:1218
-#: page/MainWP_Manage_Sites.page.php:1239
-#: page/MainWP_Plugins.page.php:257
-#: page/MainWP_Plugins.page.php:268
-#: page/MainWP_Site_Open.page.php:46
-#: page/MainWP_Themes.page.php:438
-#: page/MainWP_Themes.page.php:449
+#: page/MainWPManageSites.page.php:1218
+#: page/MainWPManageSites.page.php:1239
+#: page/MainWPPlugins.page.php:257
+#: page/MainWPPlugins.page.php:268
+#: page/MainWPSiteOpen.page.php:46
+#: page/MainWPThemes.page.php:438
+#: page/MainWPThemes.page.php:449
 #@ mainwp
 msgid "Notes"
 msgstr "Beleške"
 
-#: page/MainWP_Manage_Sites.page.php:1427
+#: page/MainWPManageSites.page.php:1427
 #@ mainwp
 msgid "You have exceeded the maximum number of available sites, you will not be able to change any more settings."
 msgstr "Dostigli ste maksimalan broj sajtova za Vaš plan, niste u mogućnosti da menjate podešavanja."
 
-#: page/MainWP_Manage_Sites.page.php:1432
+#: page/MainWPManageSites.page.php:1432
 #@ mainwp
 msgid "Website updated."
 msgstr "Sajt ažuriran."
 
-#: page/MainWP_Manage_Sites.page.php:1438
+#: page/MainWPManageSites.page.php:1438
 #@ mainwp
 msgid "General Options"
 msgstr "Opšta podešavanja"
 
-#: page/MainWP_Manage_Sites.page.php:1447
+#: page/MainWPManageSites.page.php:1447
 #@ mainwp
 msgid "Site URL"
 msgstr "URL sajta"
 
-#: page/MainWP_Manage_Sites.page.php:1450
+#: page/MainWPManageSites.page.php:1450
 #@ mainwp
 msgid "Site URL cannot be changed."
 msgstr "URL sajta ne može biti izmenjen."
 
-#: page/MainWP_Manage_Sites.page.php:1453
+#: page/MainWPManageSites.page.php:1453
 #@ mainwp
 msgid "Administrator Username"
 msgstr "Administrator"
 
-#: page/MainWP_Manage_Sites.page.php:1465
+#: page/MainWPManageSites.page.php:1465
 #@ mainwp
 msgid "Separate groups by commas (e.g. Group 1, Group 2)."
 msgstr "Razdvojte grupe zarezima (npr. Group 1, Group 2)."
 
-#: class/MainWP_System.class.php:1688
-#: page/MainWP_Manage_Sites.page.php:1484
-#: page/MainWP_Offline_Checks.page.php:16
+#: class/MainWPSystem.class.php:1688
+#: page/MainWPManageSites.page.php:1484
+#: page/MainWPOfflineChecks.page.php:16
 #@ mainwp
 msgid "Offline Checks"
 msgstr "Offline provere"
 
-#: page/MainWP_Manage_Sites.page.php:1507
+#: page/MainWPManageSites.page.php:1507
 #@ mainwp
 msgid "Site from your Google account"
 msgstr "Sajt iz Google naloga"
 
-#: page/MainWP_Manage_Sites.page.php:1510
+#: page/MainWPManageSites.page.php:1510
 #@ mainwp
 msgid "No website"
 msgstr "Nema sajta"
 
-#: page/MainWP_Manage_Sites.page.php:1528
-#: widget/MainWP_Footprint.widget.php:34
+#: page/MainWPManageSites.page.php:1528
+#: widget/MainWPFootprint.widget.php:34
 #@ mainwp
 msgid "Client Plugin Folder Option"
 msgstr "Opcije za folder klijent plugin-a"
 
-#: page/MainWP_Manage_Sites.page.php:1559
+#: page/MainWPManageSites.page.php:1559
 #@ mainwp
 msgid "Backup Settings"
 msgstr "Podešavanje backup-a"
 
-#: page/MainWP_Manage_Sites.page.php:1568
+#: page/MainWPManageSites.page.php:1568
 #@ mainwp
 msgid "Update Site"
 msgstr "Ažuriraj sajt"
 
-#: page/MainWP_Manage_Sites.page.php:1658
-#: widget/MainWP_Right_Now.widget.php:774
+#: page/MainWPManageSites.page.php:1658
+#: widget/MainWPRightNow.widget.php:774
 #@ mainwp
 msgid "Reconnect"
 msgstr "Ponovo konektuj"
 
-#: page/MainWP_Manage_Sites.page.php:1669
+#: page/MainWPManageSites.page.php:1669
 #@ mainwp
 msgid "Open WP Admin"
 msgstr "Otvori WP Admin"
 
-#: page/MainWP_Manage_Sites.page.php:1669
+#: page/MainWPManageSites.page.php:1669
 #@ mainwp
 msgid "New Window"
 msgstr "Novi prozor"
 
-#: page/MainWP_Manage_Sites.page.php:1670
+#: page/MainWPManageSites.page.php:1670
 #@ mainwp
 msgid "Testing Connection"
 msgstr "Testiranje konekcije"
 
-#: page/MainWP_Manage_Sites.page.php:1692
-#: page/MainWP_Plugins.page.php:300
-#: widget/MainWP_Right_Now.widget.php:504
-#: widget/MainWP_Right_Now.widget.php:558
-#: widget/MainWP_Right_Now.widget.php:675
-#: widget/MainWP_Right_Now.widget.php:774
-#: widget/MainWP_Right_Now.widget.php:802
-#: widget/MainWP_Shortcuts.widget.php:42
+#: page/MainWPManageSites.page.php:1692
+#: page/MainWPPlugins.page.php:300
+#: widget/MainWPRightNow.widget.php:504
+#: widget/MainWPRightNow.widget.php:558
+#: widget/MainWPRightNow.widget.php:675
+#: widget/MainWPRightNow.widget.php:774
+#: widget/MainWPRightNow.widget.php:802
+#: widget/MainWPShortcuts.widget.php:42
 #@ mainwp
 msgid "Open"
 msgstr "Otvori"
 
-#: page/MainWP_Manage_Sites.page.php:1715
-#: page/MainWP_Manage_Sites.page.php:1841
+#: page/MainWPManageSites.page.php:1715
+#: page/MainWPManageSites.page.php:1841
 #@ mainwp
 msgid "Maximum number of available sites on your MainWP plan have been reached. <a href=\"https://mainwp.com/member/login/index\" target=\"_blank\">Upgrade your plan for more sites</a>"
 msgstr "Maksimalan broj sajtova za Vaš plan je dostignut. <a href=\"https://mainwp.com/member/login/index\" target=\"_blank\">Pojačajte Vaš plan.</a>"
 
-#: page/MainWP_Manage_Sites.page.php:1791
+#: page/MainWPManageSites.page.php:1791
 #@ mainwp
 msgid "Site successfully reconnected"
 msgstr "Sajt uspešno spojen"
 
-#: class/MainWP_System.class.php:1250
-#: page/MainWP_Manage_Sites.page.php:1796
+#: class/MainWPSystem.class.php:1250
+#: page/MainWPManageSites.page.php:1796
 #@ mainwp
 msgid "Undefined error"
 msgstr "Nedefinisana greška"
 
-#: page/MainWP_Manage_Sites.page.php:1816
+#: page/MainWPManageSites.page.php:1816
 #@ mainwp
 msgid "Not allowed this operation."
 msgstr "Nedozvoljena operacija"
 
-#: page/MainWP_Manage_Sites.page.php:1849
+#: page/MainWPManageSites.page.php:1849
 #@ mainwp
 msgid "Your site is already added to MainWP"
 msgstr "Vaš sajt je već dodat u MainWP"
 
-#: page/MainWP_Manage_Sites.page.php:2073
+#: page/MainWPManageSites.page.php:2073
 #@ mainwp
 msgid "The number of backups to keep on your server.  This does not affect external sources."
 msgstr "Broj backup-a na serveru. Ovo ne utiče na udaljene destinacije."
 
-#: page/MainWP_Manage_Sites.page.php:2077
+#: page/MainWPManageSites.page.php:2077
 #@ mainwp
 msgid "Backups on external sources"
 msgstr "Backup-i na sopljnim izvorima"
 
-#: page/MainWP_Manage_Sites.page.php:2080
+#: page/MainWPManageSites.page.php:2080
 #@ mainwp
 msgid "The number of backups to keep on your external sources.  This does not affect backups on the server.  0 sets unlimited."
 msgstr "Broj backup-a na spoljnim izvorima. Ovo ne utiče na backup-e na serveru."
 
-#: page/MainWP_Manage_Sites.page.php:2085
+#: page/MainWPManageSites.page.php:2085
 #@ mainwp
 msgid "Send Email when a backup fails"
 msgstr "Pošalji Email kada backup ne uspe"
 
-#: page/MainWP_Manage_Sites.page.php:2094
+#: page/MainWPManageSites.page.php:2094
 #@ mainwp
 msgid "Send Email when a backup starts"
 msgstr "Pošalji Email kada backup počne"
 
-#: page/MainWP_Manage_Sites.page.php:2117
+#: page/MainWPManageSites.page.php:2117
 #@ mainwp
 msgid "Sites per page"
 msgstr "Sajtova po stranici"
 
-#: page/MainWP_Offline_Checks.page.php:19
+#: page/MainWPOfflineChecks.page.php:19
 #@ mainwp
 msgid "Notifications will be sent to"
 msgstr "Obaveštenja će biti poslata na"
 
-#: page/MainWP_Offline_Checks.page.php:19
+#: page/MainWPOfflineChecks.page.php:19
 #@ mainwp
 msgid "change"
 msgstr "izmeni"
 
-#: page/MainWP_Offline_Checks.page.php:20
+#: page/MainWPOfflineChecks.page.php:20
 #@ mainwp
 msgid "MainWP performs two tests when checking your site for up-time."
 msgstr "MainWP obavlja dva testa kada proverava stanje Vašeg sajta."
 
-#: page/MainWP_Offline_Checks.page.php:22
+#: page/MainWPOfflineChecks.page.php:22
 #@ mainwp
 msgid "The first test we do is to check that the domain is valid."
 msgstr "Prvi test proverava da li je domen validan."
 
-#: page/MainWP_Offline_Checks.page.php:24
+#: page/MainWPOfflineChecks.page.php:24
 #@ mainwp
 msgid "If this test passes we use a browser emulator to visit the website, this sends out a user agent (just like your web browser from your computer) and waits for a status message."
 msgstr "Ako je test uspešan, emulator posećuje sajt što šalje korisničkog agenta i čeka odgovor."
 
-#: page/MainWP_Offline_Checks.page.php:26
+#: page/MainWPOfflineChecks.page.php:26
 #@ mainwp
 msgid "We report any http status code from 200-399 as a success. Any other http status code returned is considered \"offline\" which is treated as a failure."
 msgstr "Mi izveštavamo za svaki kod od 200 - 399 kao uspeh."
 
-#: page/MainWP_Offline_Checks.page.php:33
+#: page/MainWPOfflineChecks.page.php:33
 #@ mainwp
 msgid "Disabled"
 msgstr "Isljučeno"
 
-#: page/MainWP_Offline_Checks.page.php:34
+#: page/MainWPOfflineChecks.page.php:34
 #@ mainwp
 msgid "Hourly"
 msgstr "Svaki sat"
 
-#: page/MainWP_Offline_Checks.page.php:35
+#: page/MainWPOfflineChecks.page.php:35
 #@ mainwp
 msgid "2x Day"
 msgstr "Dva puta na dan"
 
-#: page/MainWP_Offline_Checks.page.php:36
+#: page/MainWPOfflineChecks.page.php:36
 #@ mainwp
 msgid "Daily"
 msgstr "Dnevno"
 
-#: page/MainWP_Offline_Checks.page.php:37
+#: page/MainWPOfflineChecks.page.php:37
 #@ mainwp
 msgid "Weekly"
 msgstr "Nedeljno"
 
-#: page/MainWP_Offline_Checks.page.php:38
+#: page/MainWPOfflineChecks.page.php:38
 #@ mainwp
 msgid "Check All"
 msgstr "Proveri sve"
 
-#: page/MainWP_Offline_Checks.page.php:261
+#: page/MainWPOfflineChecks.page.php:261
 #@ mainwp
 msgid "Offline Check Options"
 msgstr "Opcije offline provera"
 
-#: page/MainWP_Offline_Checks.page.php:265
+#: page/MainWPOfflineChecks.page.php:265
 #@ mainwp
 msgid "Online Notifications"
 msgstr "Online obaveštenja"
 
-#: page/MainWP_Offline_Checks.page.php:271
+#: page/MainWPOfflineChecks.page.php:271
 #@ mainwp
 msgid "Enable notifications even when the website is online"
 msgstr "Uključi obaveštenja čak i jada je sajt online"
 
-#: page/MainWP_Page.page.php:44
+#: page/MainWPPage.page.php:44
 #@ mainwp
 msgid ""
 "All\n"
 "                        Pages"
 msgstr "Sve stranice"
 
-#: page/MainWP_Page.page.php:22
-#: page/MainWP_Page.page.php:70
+#: page/MainWPPage.page.php:22
+#: page/MainWPPage.page.php:70
 #@ mainwp
 msgid "Pages"
 msgstr "Stranice"
 
-#: page/MainWP_Page.page.php:104
+#: page/MainWPPage.page.php:104
 #@ mainwp
 msgid "Use this to bulk change pages. To add new pages click on the \"Add New\" tab."
 msgstr "Masovno izmenite stranice. Da dodate novu, kliknite Dodaj dugme"
 
-#: page/MainWP_Page.page.php:109
+#: page/MainWPPage.page.php:109
 #@ mainwp
 msgid "Search Pages"
 msgstr "Pretraži stranice"
 
-#: page/MainWP_Page.page.php:145
+#: page/MainWPPage.page.php:145
 #@ mainwp
 msgid "Show Pages"
 msgstr "Prikaži stranice"
 
 #: page/MainWPComment.page.php:121
-#: page/MainWP_Page.page.php:158
-#: page/MainWP_Post.page.php:154
-#: page/MainWP_User.page.php:175
+#: page/MainWPPage.page.php:158
+#: page/MainWPPost.page.php:154
+#: page/MainWPUser.page.php:175
 #@ mainwp
 msgid "Apply"
 msgstr "Primeni"
 
-#: page/MainWP_Page.page.php:172
-#: page/MainWP_Page.page.php:198
-#: page/MainWP_Post.page.php:168
-#: page/MainWP_Post.page.php:200
+#: page/MainWPPage.page.php:172
+#: page/MainWPPage.page.php:198
+#: page/MainWPPost.page.php:168
+#: page/MainWPPost.page.php:200
 #@ mainwp
 msgid "Title"
 msgstr "Naziv"
 
-#: page/MainWP_Page.page.php:229
+#: page/MainWPPage.page.php:229
 #@ mainwp
 msgid "Pages per page"
 msgstr "Stranica po strani"
 
-#: page/MainWP_Page.page.php:341
-#: page/MainWP_Post.page.php:357
+#: page/MainWPPage.page.php:341
+#: page/MainWPPost.page.php:357
 #@ mainwp
 msgid "View"
 msgstr "Pogledaj"
 
-#: page/MainWP_Page.page.php:417
+#: page/MainWPPage.page.php:417
 #@ mainwp
 msgid "Use this to add a new page. To bulk change pages click on the \"Manage\" tab."
 msgstr "Dodaj novu stanicu."
 
-#: page/MainWP_Page.page.php:512
-#: page/MainWP_Page.page.php:522
-#: page/MainWP_Post.page.php:570
-#: page/MainWP_Post.page.php:580
+#: page/MainWPPage.page.php:512
+#: page/MainWPPage.page.php:522
+#: page/MainWPPost.page.php:570
+#: page/MainWPPost.page.php:580
 #@ mainwp
 msgid ""
 "Return\n"
 "                to Dashboard"
 msgstr "Povratak na kontrolnu tablu"
 
-#: page/MainWP_Page.page.php:518
-#: page/MainWP_Post.page.php:576
+#: page/MainWPPage.page.php:518
+#: page/MainWPPost.page.php:576
 #@ mainwp
 msgid "An undefined error occured."
 msgstr "Došlo je do nedefinisane greške"
 
-#: page/MainWP_Plugins.page.php:45
+#: page/MainWPPlugins.page.php:45
 #@ mainwp
 msgid "Manage Plugins"
 msgstr "Upravljaj Pluginovima"
 
-#: page/MainWP_Plugins.page.php:47
-#: page/MainWP_Plugins.page.php:77
-#: page/MainWP_Themes.page.php:48
-#: page/MainWP_Themes.page.php:78
+#: page/MainWPPlugins.page.php:47
+#: page/MainWPPlugins.page.php:77
+#: page/MainWPThemes.page.php:48
+#: page/MainWPThemes.page.php:78
 #@ mainwp
 msgid "Auto Update Trust"
 msgstr "Poverenje auto-ažuriranja"
 
-#: page/MainWP_Plugins.page.php:48
-#: page/MainWP_Plugins.page.php:78
-#: page/MainWP_Themes.page.php:49
-#: page/MainWP_Themes.page.php:79
+#: page/MainWPPlugins.page.php:48
+#: page/MainWPPlugins.page.php:78
+#: page/MainWPThemes.page.php:49
+#: page/MainWPThemes.page.php:79
 #@ mainwp
 msgid "Ignored Updates"
 msgstr "Ignorisana ažuriranja"
 
-#: page/MainWP_Plugins.page.php:49
-#: page/MainWP_Plugins.page.php:79
-#: page/MainWP_Themes.page.php:50
-#: page/MainWP_Themes.page.php:80
+#: page/MainWPPlugins.page.php:49
+#: page/MainWPPlugins.page.php:79
+#: page/MainWPThemes.page.php:50
+#: page/MainWPThemes.page.php:80
 #@ mainwp
 msgid "Ignored Conflicts"
 msgstr "Ignorisani konflikti"
 
-#: page/MainWP_Plugins.page.php:22
-#: page/MainWP_Plugins.page.php:23
-#: page/MainWP_Plugins.page.php:24
-#: page/MainWP_Plugins.page.php:25
-#: page/MainWP_Plugins.page.php:26
-#: page/MainWP_Plugins.page.php:73
-#: page/MainWP_Plugins.page.php:911
-#: page/MainWP_Plugins.page.php:950
-#: page/MainWP_Plugins.page.php:1022
-#: page/MainWP_Plugins.page.php:1061
+#: page/MainWPPlugins.page.php:22
+#: page/MainWPPlugins.page.php:23
+#: page/MainWPPlugins.page.php:24
+#: page/MainWPPlugins.page.php:25
+#: page/MainWPPlugins.page.php:26
+#: page/MainWPPlugins.page.php:73
+#: page/MainWPPlugins.page.php:911
+#: page/MainWPPlugins.page.php:950
+#: page/MainWPPlugins.page.php:1022
+#: page/MainWPPlugins.page.php:1061
 #@ mainwp
 msgid "Plugins"
 msgstr "Pluginovi"
 
-#: page/MainWP_Plugins.page.php:108
+#: page/MainWPPlugins.page.php:108
 #@ mainwp
 msgid "Use this to bulk (de)activate or delete plugins. To add new plugins click on the \"Install\" tab."
 msgstr "Masovno (de)aktivirajte ili obrišite pluginove. Da dodate nove, kliknite na Instaliraj tab."
 
-#: page/MainWP_Plugins.page.php:113
+#: page/MainWPPlugins.page.php:113
 #@ mainwp
 msgid "Search Plugins"
 msgstr "Pretraži pluginove"
 
-#: page/MainWP_Plugins.page.php:115
-#: page/MainWP_Themes.page.php:115
+#: page/MainWPPlugins.page.php:115
+#: page/MainWPThemes.page.php:115
 #@ mainwp
 msgid "Status:"
 msgstr "Statusi:"
 
-#: page/MainWP_Plugins.page.php:117
-#: page/MainWP_Themes.page.php:117
+#: page/MainWPPlugins.page.php:117
+#: page/MainWPThemes.page.php:117
 #@ mainwp
 msgid "Active"
 msgstr "Akivan"
 
-#: page/MainWP_Plugins.page.php:118
-#: page/MainWP_Themes.page.php:118
+#: page/MainWPPlugins.page.php:118
+#: page/MainWPThemes.page.php:118
 #@ mainwp
 msgid "Inactive"
 msgstr "Neaktivan"
 
-#: page/MainWP_Plugins.page.php:126
-#: page/MainWP_Plugins.page.php:705
+#: page/MainWPPlugins.page.php:126
+#: page/MainWPPlugins.page.php:705
 #@ mainwp
 msgid "Show Plugins"
 msgstr "Prikaži pluginove"
 
-#: page/MainWP_Plugins.page.php:127
-#: page/MainWP_Themes.page.php:127
+#: page/MainWPPlugins.page.php:127
+#: page/MainWPThemes.page.php:127
 #@ mainwp
 msgid "Automatically refreshing to get up to date information."
 msgstr "Automatsko osvežavanje"
 
-#: page/MainWP_Plugins.page.php:211
-#: page/MainWP_Plugins.page.php:446
-#: page/MainWP_Themes.page.php:242
-#: page/MainWP_Themes.page.php:393
+#: page/MainWPPlugins.page.php:211
+#: page/MainWPPlugins.page.php:446
+#: page/MainWPThemes.page.php:242
+#: page/MainWPThemes.page.php:393
 #@ mainwp
 msgid "Choose Action"
 msgstr "Odaberi akciju"
 
-#: page/MainWP_Plugins.page.php:212
-#: page/MainWP_Themes.page.php:394
+#: page/MainWPPlugins.page.php:212
+#: page/MainWPThemes.page.php:394
 #@ mainwp
 msgid "Trust"
 msgstr "Veruj"
 
-#: page/MainWP_Plugins.page.php:213
-#: page/MainWP_Themes.page.php:395
+#: page/MainWPPlugins.page.php:213
+#: page/MainWPThemes.page.php:395
 #@ mainwp
 msgid "Untrust"
 msgstr "Ne veruj"
 
-#: page/MainWP_Plugins.page.php:214
-#: page/MainWP_Plugins.page.php:454
-#: page/MainWP_Themes.page.php:245
-#: page/MainWP_Themes.page.php:396
+#: page/MainWPPlugins.page.php:214
+#: page/MainWPPlugins.page.php:454
+#: page/MainWPThemes.page.php:245
+#: page/MainWPThemes.page.php:396
 #@ mainwp
 msgid "Confirm"
 msgstr "Potvrdi"
 
-#: page/MainWP_Plugins.page.php:249
-#: page/MainWP_Plugins.page.php:265
+#: page/MainWPPlugins.page.php:249
+#: page/MainWPPlugins.page.php:265
 #@ mainwp
 msgid "Plugin"
 msgstr "Plugin"
 
-#: page/MainWP_Plugins.page.php:252
-#: page/MainWP_Plugins.page.php:266
-#: page/MainWP_Themes.page.php:433
-#: page/MainWP_Themes.page.php:447
+#: page/MainWPPlugins.page.php:252
+#: page/MainWPPlugins.page.php:266
+#: page/MainWPThemes.page.php:433
+#: page/MainWPThemes.page.php:447
 #@ mainwp
 msgid "Trust Level"
 msgstr "Nivo poverenja"
 
-#: page/MainWP_Plugins.page.php:255
-#: page/MainWP_Plugins.page.php:267
-#: page/MainWP_Themes.page.php:436
-#: page/MainWP_Themes.page.php:448
+#: page/MainWPPlugins.page.php:255
+#: page/MainWPPlugins.page.php:267
+#: page/MainWPThemes.page.php:436
+#: page/MainWPThemes.page.php:448
 #@ mainwp
 msgid "Ignored Status"
 msgstr "Status ignorisanja"
 
-#: page/MainWP_Manage_Sites.page.php:1196
-#: page/MainWP_Plugins.page.php:321
-#: page/MainWP_Themes.page.php:502
-#: widget/MainWP_Shortcuts.widget.php:56
+#: page/MainWPManageSites.page.php:1196
+#: page/MainWPPlugins.page.php:321
+#: page/MainWPThemes.page.php:502
+#: widget/MainWPShortcuts.widget.php:56
 #@ mainwp
 msgid "Save Note"
 msgstr "Sačuvaj belešku"
 
-#: class/MainWP_System.class.php:1277
-#: page/MainWP_Manage_Sites.page.php:1197
-#: page/MainWP_Plugins.page.php:322
-#: page/MainWP_Themes.page.php:503
-#: widget/MainWP_Right_Now.widget.php:905
-#: widget/MainWP_Shortcuts.widget.php:57
+#: class/MainWPSystem.class.php:1277
+#: page/MainWPManageSites.page.php:1197
+#: page/MainWPPlugins.page.php:322
+#: page/MainWPThemes.page.php:503
+#: widget/MainWPRightNow.widget.php:905
+#: widget/MainWPShortcuts.widget.php:57
 #@ mainwp
 msgid "Close"
 msgstr "Zatvori"
 
-#: page/MainWP_Plugins.page.php:338
-#: page/MainWP_Themes.page.php:519
+#: page/MainWPPlugins.page.php:338
+#: page/MainWPThemes.page.php:519
 #@ mainwp
 msgid "Plugins per page"
 msgstr "Pluginova po stranici"
 
-#: page/MainWP_Plugins.page.php:448
+#: page/MainWPPlugins.page.php:448
 #@ mainwp
 msgid "Deactivate"
 msgstr "Deaktiviraj"
 
-#: page/MainWP_Plugins.page.php:451
-#: page/MainWP_Themes.page.php:243
+#: page/MainWPPlugins.page.php:451
+#: page/MainWPThemes.page.php:243
 #@ mainwp
 msgid "Activate"
 msgstr "Aktiviraj"
 
-#: page/MainWP_Plugins.page.php:454
+#: page/MainWPPlugins.page.php:454
 #@ mainwp
 msgid "Why does the MainWP Child Plugin NOT show here?"
 msgstr "Zašto MainWP plugin nije ovde prikazan"
 
-#: page/MainWP_Plugins.page.php:614
-#: page/MainWP_Plugins.page.php:622
-#: page/MainWP_User.page.php:200
-#: page/MainWP_User.page.php:225
+#: page/MainWPPlugins.page.php:614
+#: page/MainWPPlugins.page.php:622
+#: page/MainWPUser.page.php:200
+#: page/MainWPUser.page.php:225
 #@ mainwp
 msgid "Name"
 msgstr "Ime"
 
-#: page/MainWP_Plugins.page.php:615
-#: page/MainWP_Plugins.page.php:623
+#: page/MainWPPlugins.page.php:615
+#: page/MainWPPlugins.page.php:623
 #@ mainwp
 msgid "Version"
 msgstr "Verzija"
 
-#: page/MainWP_Plugins.page.php:616
-#: page/MainWP_Plugins.page.php:624
+#: page/MainWPPlugins.page.php:616
+#: page/MainWPPlugins.page.php:624
 #@ mainwp
 msgid "Rating"
 msgstr "Rejting"
 
-#: page/MainWP_Plugins.page.php:617
-#: page/MainWP_Plugins.page.php:625
+#: page/MainWPPlugins.page.php:617
+#: page/MainWPPlugins.page.php:625
 #@ mainwp
 msgid "Description"
 msgstr "Opis"
 
-#: page/MainWP_Plugins.page.php:633
+#: page/MainWPPlugins.page.php:633
 #@ mainwp
 msgid "No plugins match your request."
 msgstr "Nijedan plugin ne odgovara Vašim zahtevima."
 
-#: page/MainWP_Plugins.page.php:697
-#: page/MainWP_Themes.page.php:701
+#: page/MainWPPlugins.page.php:697
+#: page/MainWPThemes.page.php:701
 #@ mainwp
 msgid "Auto Updates are ON and Trusted Plugins will be Automatically Updated"
 msgstr "Automatsko ažuriranje je uključeno, odabrani pluginovi će biti ažurirani automatski."
 
-#: page/MainWP_Plugins.page.php:699
-#: page/MainWP_Themes.page.php:703
+#: page/MainWPPlugins.page.php:699
+#: page/MainWPThemes.page.php:703
 #@ mainwp
 msgid "Auto Updates are OFF - Email Update Notification is ON"
 msgstr "Automatsko ažuriranje je isključeno - Email obaveštenja su uključena"
 
-#: page/MainWP_Plugins.page.php:701
-#: page/MainWP_Themes.page.php:705
+#: page/MainWPPlugins.page.php:701
+#: page/MainWPThemes.page.php:705
 #@ mainwp
 msgid "Auto Updates are OFF - Email Update Notification is OFF"
 msgstr "Automatsko ažiriranje je isključeno - email obaveštenja su isključena"
 
-#: page/MainWP_Plugins.page.php:703
+#: page/MainWPPlugins.page.php:703
 #@ mainwp
 msgid "Only mark Plugins as Trusted if you are absolutely sure they can be updated without breaking your sites or your network."
 msgstr "Označite pluginove samo ako ste apsolutno sigurni da ažuriranje neće poremetiti ništa na Vašem sajtu."
 
-#: page/MainWP_Plugins.page.php:703
+#: page/MainWPPlugins.page.php:703
 #@ mainwp
 msgid "Ignored Plugins can not be Automatically Updated."
 msgstr "Ignorisani pluginovi neće biti ažurirani automatski."
 
-#: page/MainWP_Plugins.page.php:906
+#: page/MainWPPlugins.page.php:906
 #@ mainwp
 msgid "Ignored Plugin Conflict List"
 msgstr "Lista ignorisanih plugin konflikata"
 
-#: page/MainWP_Plugins.page.php:908
-#: page/MainWP_Plugins.page.php:1019
-#: page/MainWP_Themes.page.php:748
-#: page/MainWP_Themes.page.php:858
+#: page/MainWPPlugins.page.php:908
+#: page/MainWPPlugins.page.php:1019
+#: page/MainWPThemes.page.php:748
+#: page/MainWPThemes.page.php:858
 #@ mainwp
 msgid "Globally"
 msgstr "Globalno"
 
-#: page/MainWP_Plugins.page.php:912
-#: page/MainWP_Plugins.page.php:951
-#: page/MainWP_Plugins.page.php:1023
-#: page/MainWP_Plugins.page.php:1062
-#: page/MainWP_Themes.page.php:752
-#: page/MainWP_Themes.page.php:791
-#: page/MainWP_Themes.page.php:862
-#: page/MainWP_Themes.page.php:903
+#: page/MainWPPlugins.page.php:912
+#: page/MainWPPlugins.page.php:951
+#: page/MainWPPlugins.page.php:1023
+#: page/MainWPPlugins.page.php:1062
+#: page/MainWPThemes.page.php:752
+#: page/MainWPThemes.page.php:791
+#: page/MainWPThemes.page.php:862
+#: page/MainWPThemes.page.php:903
 #@ mainwp
 msgid "Allow All"
 msgstr "Odobri sve"
 
-#: page/MainWP_Plugins.page.php:927
-#: page/MainWP_Plugins.page.php:978
-#: page/MainWP_Plugins.page.php:1038
-#: page/MainWP_Plugins.page.php:1089
-#: page/MainWP_Themes.page.php:767
-#: page/MainWP_Themes.page.php:818
-#: page/MainWP_Themes.page.php:879
-#: page/MainWP_Themes.page.php:929
+#: page/MainWPPlugins.page.php:927
+#: page/MainWPPlugins.page.php:978
+#: page/MainWPPlugins.page.php:1038
+#: page/MainWPPlugins.page.php:1089
+#: page/MainWPThemes.page.php:767
+#: page/MainWPThemes.page.php:818
+#: page/MainWPThemes.page.php:879
+#: page/MainWPThemes.page.php:929
 #@ mainwp
 msgid "ALLOW"
 msgstr "ODOBRI"
 
-#: page/MainWP_Plugins.page.php:938
-#: page/MainWP_Plugins.page.php:989
+#: page/MainWPPlugins.page.php:938
+#: page/MainWPPlugins.page.php:989
 #@ mainwp
 msgid "No ignored plugin conflicts"
 msgstr "Nema ignorisanih konflikata"
 
-#: page/MainWP_Plugins.page.php:946
-#: page/MainWP_Plugins.page.php:1057
-#: page/MainWP_Themes.page.php:786
-#: page/MainWP_Themes.page.php:898
+#: page/MainWPPlugins.page.php:946
+#: page/MainWPPlugins.page.php:1057
+#: page/MainWPThemes.page.php:786
+#: page/MainWPThemes.page.php:898
 #@ mainwp
 msgid "Per Site"
 msgstr "Po sajtu"
 
-#: page/MainWP_Plugins.page.php:1017
+#: page/MainWPPlugins.page.php:1017
 #@ mainwp
 msgid "Plugin Ignore List"
 msgstr "Lista ignorisanih pluginova"
 
-#: class/MainWP_System.class.php:1259
-#: page/MainWP_Plugins.page.php:1049
-#: page/MainWP_Plugins.page.php:1100
+#: class/MainWPSystem.class.php:1259
+#: page/MainWPPlugins.page.php:1049
+#: page/MainWPPlugins.page.php:1100
 #@ mainwp
 msgid "No ignored plugins"
 msgstr "Nema ignorisanih pluginova"
 
-#: page/MainWP_Post.page.php:43
+#: page/MainWPPost.page.php:43
 #@ mainwp
 msgid "All Posts"
 msgstr "Svi postovi"
 
-#: page/MainWP_Post.page.php:22
-#: page/MainWP_Post.page.php:68
-#: page/MainWP_User.page.php:209
-#: page/MainWP_User.page.php:229
+#: page/MainWPPost.page.php:22
+#: page/MainWPPost.page.php:68
+#: page/MainWPUser.page.php:209
+#: page/MainWPUser.page.php:229
 #@ mainwp
 msgid "Posts"
 msgstr "Postovi"
 
-#: page/MainWP_Post.page.php:100
+#: page/MainWPPost.page.php:100
 #@ mainwp
 msgid "Use this to bulk change posts. To add new posts click on the \"Add New\" tab."
 msgstr "Masovno editujte postove. Da dodate novi kliknite na Dodaj tab"
 
-#: page/MainWP_Post.page.php:105
+#: page/MainWPPost.page.php:105
 #@ mainwp
 msgid "Search Posts"
 msgstr "Pretraži postove"
 
-#: page/MainWP_Post.page.php:142
+#: page/MainWPPost.page.php:142
 #@ mainwp
 msgid "Show Posts"
 msgstr "Prikaži postove"
 
-#: page/MainWP_Post.page.php:233
+#: page/MainWPPost.page.php:233
 #@ mainwp
 msgid "Posts per page"
 msgstr "Postove po stranici"
 
-#: page/MainWP_Post.page.php:343
-#: widget/MainWP_Recent_Posts.widget.php:108
-#: widget/MainWP_Recent_Posts.widget.php:130
+#: page/MainWPPost.page.php:343
+#: widget/MainWPRecentPosts.widget.php:108
+#: widget/MainWPRecentPosts.widget.php:130
 #@ mainwp
 msgid "Publish"
 msgstr "Objavi"
 
-#: page/MainWP_Post.page.php:407
+#: page/MainWPPost.page.php:407
 #@ mainwp
 msgid "Use this to add new posts. To bulk change posts click on the \"Manage\" tab."
 msgstr "Dodaj novi post. Za masovno editovanje klikni Upravljaj tab"
 
-#: page/MainWP_Post.page.php:576
+#: page/MainWPPost.page.php:576
 #@ mainwp
 msgid "ERROR"
 msgstr "GREŠKA"
 
-#: page/MainWP_Security_Issues.page.php:25
-#: page/MainWP_Security_Issues.page.php:113
+#: page/MainWPSecurityIssues.page.php:25
+#: page/MainWPSecurityIssues.page.php:113
 #@ mainwp
 msgid "Security Issues"
 msgstr "Sigurnosni problemi"
 
-#: page/MainWP_Security_Issues.page.php:27
+#: page/MainWPSecurityIssues.page.php:27
 #@ mainwp
 msgid "We highly suggest you make a full backup before you run the Security Update."
 msgstr "Preporučujemo backup pre korišćenja sigurnosnih ispravki."
 
-#: page/MainWP_Security_Issues.page.php:30
+#: page/MainWPSecurityIssues.page.php:30
 #@ mainwp
 msgid "Prevent listing wp-content, wp-content/plugins, wp-content/themes, wp-content/uploads"
 msgstr "Spreči wp-content, wp-content/plugins, wp-content/themes, wp-content/uploads listing"
 
-#: page/MainWP_Security_Issues.page.php:30
-#: page/MainWP_Security_Issues.page.php:31
-#: page/MainWP_Security_Issues.page.php:32
-#: page/MainWP_Security_Issues.page.php:33
-#: page/MainWP_Security_Issues.page.php:38
-#: page/MainWP_Security_Issues.page.php:39
-#: page/MainWP_Security_Issues.page.php:40
+#: page/MainWPSecurityIssues.page.php:30
+#: page/MainWPSecurityIssues.page.php:31
+#: page/MainWPSecurityIssues.page.php:32
+#: page/MainWPSecurityIssues.page.php:33
+#: page/MainWPSecurityIssues.page.php:38
+#: page/MainWPSecurityIssues.page.php:39
+#: page/MainWPSecurityIssues.page.php:40
 #@ mainwp
 msgid "Fix"
 msgstr "Popravi"
 
-#: page/MainWP_Security_Issues.page.php:31
+#: page/MainWPSecurityIssues.page.php:31
 #@ mainwp
 msgid "Removed wp-version"
 msgstr "Odstranjena WP verzija"
 
-#: page/MainWP_Security_Issues.page.php:31
-#: page/MainWP_Security_Issues.page.php:32
-#: page/MainWP_Security_Issues.page.php:33
-#: page/MainWP_Security_Issues.page.php:40
+#: page/MainWPSecurityIssues.page.php:31
+#: page/MainWPSecurityIssues.page.php:32
+#: page/MainWPSecurityIssues.page.php:33
+#: page/MainWPSecurityIssues.page.php:40
 #@ mainwp
 msgid "Unfix"
 msgstr "Vrati"
 
-#: page/MainWP_Security_Issues.page.php:32
+#: page/MainWPSecurityIssues.page.php:32
 #@ mainwp
 msgid "Removed Really Simple Discovery meta tag"
 msgstr "Odstranjeni Really Simple Discovery tagovi"
 
-#: page/MainWP_Security_Issues.page.php:33
+#: page/MainWPSecurityIssues.page.php:33
 #@ mainwp
 msgid "Removed Windows Live Writer meta tag"
 msgstr "Odstanjen Windows Live Writer meta tag"
 
-#: page/MainWP_Security_Issues.page.php:38
+#: page/MainWPSecurityIssues.page.php:38
 #@ mainwp
 msgid "Database error reporting turned off"
 msgstr "Isključeni izveštaji grešaka u bazi podataka"
 
-#: page/MainWP_Security_Issues.page.php:39
+#: page/MainWPSecurityIssues.page.php:39
 #@ mainwp
 msgid "PHP error reporting turned off"
 msgstr "Isključeni izveštaji PHP grešaka"
 
-#: page/MainWP_Security_Issues.page.php:40
+#: page/MainWPSecurityIssues.page.php:40
 #@ mainwp
 msgid "Removed version information for scripts/stylesheets"
 msgstr "Odstranjena informacija verzija skripti"
 
-#: page/MainWP_Security_Issues.page.php:41
+#: page/MainWPSecurityIssues.page.php:41
 #@ mainwp
 msgid "Admin user name is not admin"
 msgstr "Administratorsko korisničko ima nije admin"
 
-#: page/MainWP_Security_Issues.page.php:41
+#: page/MainWPSecurityIssues.page.php:41
 #@ mainwp
 msgid "You need to remove this user yourself"
 msgstr "Ovo ručno mora biti promenjeno"
 
-#: page/MainWP_Security_Issues.page.php:43
-#: page/MainWP_Security_Issues.page.php:172
+#: page/MainWPSecurityIssues.page.php:43
+#: page/MainWPSecurityIssues.page.php:172
 #@ mainwp
 msgid "Fix All"
 msgstr "Popravi sve"
 
-#: page/MainWP_Security_Issues.page.php:155
+#: page/MainWPSecurityIssues.page.php:155
 #@ mainwp
 msgid "Security issue"
 msgstr "Sigurnosni problem"
 
-#: class/MainWP_System.class.php:1264
-#: page/MainWP_Security_Issues.page.php:157
+#: class/MainWPSystem.class.php:1264
+#: page/MainWPSecurityIssues.page.php:157
 #@ mainwp
 msgid "Show All"
 msgstr "Pokaži sve"
 
-#: page/MainWP_Security_Issues.page.php:170
+#: page/MainWPSecurityIssues.page.php:170
 #@ mainwp
 msgid "Unfix All"
 msgstr "Vrati sve"
 
-#: class/MainWP_System.class.php:1698
-#: page/MainWP_Server_Information.page.php:19
+#: class/MainWPSystem.class.php:1698
+#: page/MainWPServerInformation.page.php:19
 #@ mainwp
 msgid "Server Information"
 msgstr "Informacije o serveru"
 
-#: page/MainWP_Server_Information.page.php:24
+#: page/MainWPServerInformation.page.php:24
 #@ mainwp
 msgid "Server"
 msgstr "Sever"
 
-#: page/MainWP_Server_Information.page.php:31
+#: page/MainWPServerInformation.page.php:31
 #@ mainwp
 msgid "Info"
 msgstr "Info"
 
-#: page/MainWP_Server_Information.page.php:37
+#: page/MainWPServerInformation.page.php:37
 #@ mainwp
 msgid "Operating System"
 msgstr "Operativni sistem"
 
-#: page/MainWP_Server_Information.page.php:38
+#: page/MainWPServerInformation.page.php:38
 #@ mainwp
 msgid "Architecture"
 msgstr "Arhitektura"
 
-#: page/MainWP_Server_Information.page.php:39
+#: page/MainWPServerInformation.page.php:39
 #@ mainwp
 msgid "HTTP Server Sofware"
 msgstr "HTTP Server Sofware"
 
-#: page/MainWP_Server_Information.page.php:40
+#: page/MainWPServerInformation.page.php:40
 #@ mainwp
 msgid "Memory Usage"
 msgstr "Potrošnja memorije"
 
-#: page/MainWP_Server_Information.page.php:41
+#: page/MainWPServerInformation.page.php:41
 #@ mainwp
 msgid "PHP Safe Mode"
 msgstr "PHP Safe Mode"
 
-#: page/MainWP_Server_Information.page.php:42
+#: page/MainWPServerInformation.page.php:42
 #@ mainwp
 msgid "PHP Allow URL fopen"
 msgstr "PHP Allow URL fopen"
 
-#: page/MainWP_Server_Information.page.php:43
+#: page/MainWPServerInformation.page.php:43
 #@ mainwp
 msgid "PHP Exif Support"
 msgstr "PHP Exif Support"
 
-#: page/MainWP_Server_Information.page.php:44
+#: page/MainWPServerInformation.page.php:44
 #@ mainwp
 msgid "PHP IPTC Support"
 msgstr "PHP IPTC Support"
 
-#: page/MainWP_Server_Information.page.php:45
+#: page/MainWPServerInformation.page.php:45
 #@ mainwp
 msgid "PHP XML Support"
 msgstr "PHP XML Support"
 
-#: page/MainWP_Server_Information.page.php:46
+#: page/MainWPServerInformation.page.php:46
 #@ mainwp
 msgid "SQL Mode"
 msgstr "SQL Mode"
 
-#: page/MainWP_Server_Information.page.php:53
+#: page/MainWPServerInformation.page.php:53
 #@ mainwp
 msgid "Server Configuration"
 msgstr "Konfiguracija Servera"
 
-#: page/MainWP_Server_Information.page.php:54
+#: page/MainWPServerInformation.page.php:54
 #@ mainwp
 msgid "Suggested Value"
 msgstr "Preporučena vrednost"
 
-#: page/MainWP_Server_Information.page.php:55
+#: page/MainWPServerInformation.page.php:55
 #@ mainwp
 msgid "Value"
 msgstr "Vrednost"
 
-#: page/MainWP_Server_Information.page.php:80
+#: page/MainWPServerInformation.page.php:80
 #@ mainwp
 msgid "Directory name"
 msgstr "Naziv direktorijuma"
 
-#: page/MainWP_Server_Information.page.php:81
+#: page/MainWPServerInformation.page.php:81
 #@ mainwp
 msgid "Path"
 msgstr "Staza"
 
-#: page/MainWP_Offline_Checks.page.php:69
-#: page/MainWP_Server_Information.page.php:82
+#: page/MainWPOfflineChecks.page.php:69
+#: page/MainWPServerInformation.page.php:82
 #@ mainwp
 msgid "Check"
 msgstr "Provera"
 
-#: page/MainWP_Server_Information.page.php:214
+#: page/MainWPServerInformation.page.php:214
 #@ default
 msgid " MB"
 msgstr ""
 
-#: page/MainWP_Server_Information.page.php:215
+#: page/MainWPServerInformation.page.php:215
 #@ default
 msgid "N/A"
 msgstr ""
 
-#: page/MainWP_Server_Information.page.php:224
-#: page/MainWP_Server_Information.page.php:238
+#: page/MainWPServerInformation.page.php:224
+#: page/MainWPServerInformation.page.php:238
 #@ default
 msgid "ON"
 msgstr ""
 
-#: page/MainWP_Server_Information.page.php:225
-#: page/MainWP_Server_Information.page.php:239
+#: page/MainWPServerInformation.page.php:225
+#: page/MainWPServerInformation.page.php:239
 #@ default
 msgid "OFF"
 msgstr ""
 
-#: page/MainWP_Server_Information.page.php:233
+#: page/MainWPServerInformation.page.php:233
 #@ default
 msgid "NOT SET"
 msgstr ""
 
-#: page/MainWP_Server_Information.page.php:244
-#: page/MainWP_Server_Information.page.php:250
-#: page/MainWP_Server_Information.page.php:256
+#: page/MainWPServerInformation.page.php:244
+#: page/MainWPServerInformation.page.php:250
+#: page/MainWPServerInformation.page.php:256
 #@ default
 msgid "YES"
 msgstr ""
 
-#: page/MainWP_Server_Information.page.php:245
-#: page/MainWP_Server_Information.page.php:251
-#: page/MainWP_Server_Information.page.php:257
+#: page/MainWPServerInformation.page.php:245
+#: page/MainWPServerInformation.page.php:251
+#: page/MainWPServerInformation.page.php:257
 #@ default
 msgid "NO"
 msgstr ""
 
-#: page/MainWP_Settings.page.php:38
-#: page/MainWP_Settings.page.php:68
-#: widget/MainWP_Options.widget.php:56
+#: page/MainWPSettings.page.php:38
+#: page/MainWPSettings.page.php:68
+#: widget/MainWPOptions.widget.php:56
 #@ mainwp
 msgid "Global Options"
 msgstr "Globalne opcije"
 
-#: page/MainWP_Settings.page.php:66
+#: page/MainWPSettings.page.php:66
 #@ mainwp
 msgid "MainWP Settings"
 msgstr "MainWP Podešavanja"
 
-#: page/MainWP_Settings.page.php:112
+#: page/MainWPSettings.page.php:112
 #@ mainwp
 msgid "Your settings have been saved."
 msgstr "Podešavanja su sačuvana"
 
-#: page/MainWP_Site_Open.page.php:36
+#: page/MainWPSiteOpen.page.php:36
 #@ mainwp
 msgid "Will redirect to your website immediately."
 msgstr "Will redirect to your website immediately."
 
-#: page/MainWP_Site_Open.page.php:45
+#: page/MainWPSiteOpen.page.php:45
 #@ mainwp
 msgid "Back to Sites"
 msgstr "Nazad na sajtove"
 
-#: page/MainWP_Themes.page.php:46
+#: page/MainWPThemes.page.php:46
 #@ mainwp
 msgid "Manage Themes"
 msgstr "Upravljaj temama"
 
-#: page/MainWP_Themes.page.php:23
-#: page/MainWP_Themes.page.php:24
-#: page/MainWP_Themes.page.php:25
-#: page/MainWP_Themes.page.php:26
-#: page/MainWP_Themes.page.php:27
-#: page/MainWP_Themes.page.php:74
-#: page/MainWP_Themes.page.php:751
-#: page/MainWP_Themes.page.php:790
-#: page/MainWP_Themes.page.php:861
-#: page/MainWP_Themes.page.php:902
+#: page/MainWPThemes.page.php:23
+#: page/MainWPThemes.page.php:24
+#: page/MainWPThemes.page.php:25
+#: page/MainWPThemes.page.php:26
+#: page/MainWPThemes.page.php:27
+#: page/MainWPThemes.page.php:74
+#: page/MainWPThemes.page.php:751
+#: page/MainWPThemes.page.php:790
+#: page/MainWPThemes.page.php:861
+#: page/MainWPThemes.page.php:902
 #@ mainwp
 msgid "Themes"
 msgstr "Teme"
 
-#: page/MainWP_Themes.page.php:108
+#: page/MainWPThemes.page.php:108
 #@ mainwp
 msgid "Use this to bulk (de)activate or delete themes. To add new themes click on the \"Install\" tab."
 msgstr "Masovno (de)aktiviraj teme. Da dodate nove kliknite Instaliraj tab."
 
-#: page/MainWP_Themes.page.php:113
+#: page/MainWPThemes.page.php:113
 #@ mainwp
 msgid "Search Themes"
 msgstr "Pretraži teme"
 
-#: page/MainWP_Themes.page.php:126
-#: page/MainWP_Themes.page.php:709
+#: page/MainWPThemes.page.php:126
+#: page/MainWPThemes.page.php:709
 #@ mainwp
 msgid "Show Themes"
 msgstr "Prikaži teme"
 
-#: page/MainWP_Themes.page.php:430
-#: page/MainWP_Themes.page.php:446
+#: page/MainWPThemes.page.php:430
+#: page/MainWPThemes.page.php:446
 #@ mainwp
 msgid "Theme"
 msgstr "Tema"
 
-#: page/MainWP_Themes.page.php:647
+#: page/MainWPThemes.page.php:647
 #@ default
 msgid "Version:"
 msgstr ""
 
-#: page/MainWP_Themes.page.php:651
+#: page/MainWPThemes.page.php:651
 #@ default
 msgid "Author:"
 msgstr ""
 
-#: page/MainWP_Themes.page.php:654
+#: page/MainWPThemes.page.php:654
 #@ default
 msgid "Last Updated:"
 msgstr ""
 
-#: page/MainWP_Themes.page.php:655
+#: page/MainWPThemes.page.php:655
 #, php-format
 #@ default
 msgid "%s ago"
 msgstr ""
 
-#: page/MainWP_Themes.page.php:660
+#: page/MainWPThemes.page.php:660
 #@ default
 msgid "Requires WordPress Version:"
 msgstr ""
 
-#: page/MainWP_Themes.page.php:660
+#: page/MainWPThemes.page.php:660
 #, php-format
 #@ default
 msgid "%s or higher"
 msgstr ""
 
-#: page/MainWP_Themes.page.php:664
+#: page/MainWPThemes.page.php:664
 #@ default
 msgid "Compatible up to:"
 msgstr ""
 
-#: page/MainWP_Themes.page.php:668
+#: page/MainWPThemes.page.php:668
 #@ default
 msgid "Downloaded:"
 msgstr ""
 
-#: page/MainWP_Themes.page.php:668
+#: page/MainWPThemes.page.php:668
 #, php-format
 #@ default
 msgid "%s time"
@@ -3001,7 +3001,7 @@ msgid_plural "%s times"
 msgstr[0] ""
 msgstr[1] ""
 
-#: page/MainWP_Themes.page.php:672
+#: page/MainWPThemes.page.php:672
 #, php-format
 #@ default
 msgid "(based on %s rating)"
@@ -3009,80 +3009,80 @@ msgid_plural "(based on %s ratings)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: page/MainWP_Themes.page.php:698
+#: page/MainWPThemes.page.php:698
 #@ mainwp
 msgid "Theme Automatic Update Trust List"
 msgstr "Lista tema za automatsko ažuriranje"
 
-#: page/MainWP_Plugins.page.php:702
-#: page/MainWP_Themes.page.php:706
+#: page/MainWPPlugins.page.php:702
+#: page/MainWPThemes.page.php:706
 #@ mainwp
 msgid "Change this in Settings"
 msgstr "Izmeni ovo u podešavanjima"
 
-#: page/MainWP_Themes.page.php:707
+#: page/MainWPThemes.page.php:707
 #@ mainwp
 msgid "Only mark Themes as Trusted if you are absolutely sure they can be updated"
 msgstr "Only mark Themes as Trusted if you are absolutely sure they can be updated"
 
-#: page/MainWP_Themes.page.php:746
+#: page/MainWPThemes.page.php:746
 #@ mainwp
 msgid "Ignored Theme Conflict List"
 msgstr "Lista tema ignorisanih konflikata"
 
-#: page/MainWP_Themes.page.php:778
-#: page/MainWP_Themes.page.php:829
+#: page/MainWPThemes.page.php:778
+#: page/MainWPThemes.page.php:829
 #@ mainwp
 msgid "No ignored theme conflicts"
 msgstr "Nema ignorisanih konflikata"
 
-#: page/MainWP_Themes.page.php:856
+#: page/MainWPThemes.page.php:856
 #@ mainwp
 msgid "Theme Ignore List"
 msgstr "Lista ignorisanih tema"
 
-#: class/MainWP_System.class.php:1260
-#: page/MainWP_Themes.page.php:890
-#: page/MainWP_Themes.page.php:940
+#: class/MainWPSystem.class.php:1260
+#: page/MainWPThemes.page.php:890
+#: page/MainWPThemes.page.php:940
 #@ mainwp
 msgid "No ignored themes"
 msgstr "Nema ignorisanih tema"
 
-#: page/MainWP_User.page.php:42
+#: page/MainWPUser.page.php:42
 #@ mainwp
 msgid "All Users"
 msgstr "Svi korisnici"
 
-#: page/MainWP_User.page.php:22
-#: page/MainWP_User.page.php:23
-#: page/MainWP_User.page.php:71
+#: page/MainWPUser.page.php:22
+#: page/MainWPUser.page.php:23
+#: page/MainWPUser.page.php:71
 #@ mainwp
 msgid "Users"
 msgstr "Korisnici"
 
-#: page/MainWP_User.page.php:104
+#: page/MainWPUser.page.php:104
 #@ mainwp
 msgid "Use this to bulk change password, change role or delete users. To add new users click on the \"Add New\" tab."
 msgstr "Masovno izmenite šifre, uloge ili izbrišite korisnike."
 
-#: page/MainWP_User.page.php:107
-#: page/MainWP_User.page.php:119
+#: page/MainWPUser.page.php:107
+#: page/MainWPUser.page.php:119
 #@ mainwp
 msgid "Update Password"
 msgstr "Ažuriraj šifru"
 
-#: page/MainWP_User.page.php:109
+#: page/MainWPUser.page.php:109
 #@ mainwp
 msgid "Twice Required"
 msgstr "Dva puta obavezno"
 
-#: page/MainWP_User.page.php:114
-#: page/MainWP_User.page.php:623
+#: page/MainWPUser.page.php:114
+#: page/MainWPUser.page.php:623
 #@ mainwp
 msgid "Strength Indicator"
 msgstr "Indikator snage"
 
-#: page/MainWP_User.page.php:116
+#: page/MainWPUser.page.php:116
 #@ mainwp
 msgid ""
 "Hint: The password should be at least seven\n"
@@ -3090,107 +3090,107 @@ msgid ""
 "                symbols like ! \" ? $ % ^ &amp; )."
 msgstr "Savet: Šifra bi trebala da sadrži barem sedam karaktera. Da bi bila jača, koristite velika i mala slova, brojeve i simbole poput ! \" ? $ % ^ &amp; )."
 
-#: page/MainWP_User.page.php:130
-#: page/MainWP_User.page.php:134
+#: page/MainWPUser.page.php:130
+#: page/MainWPUser.page.php:134
 #@ mainwp
 msgid "Search Users"
 msgstr "Pretraži korisnike"
 
-#: page/MainWP_User.page.php:140
-#: page/MainWP_User.page.php:164
+#: page/MainWPUser.page.php:140
+#: page/MainWPUser.page.php:164
 #@ mainwp
 msgid "Show Users"
 msgstr "Prikaži korisnike"
 
-#: page/MainWP_User.page.php:144
-#: page/MainWP_User.page.php:178
-#: page/MainWP_User.page.php:652
+#: page/MainWPUser.page.php:144
+#: page/MainWPUser.page.php:178
+#: page/MainWPUser.page.php:652
 #@ mainwp
 msgid "Administrator"
 msgstr "Administrator"
 
-#: page/MainWP_User.page.php:148
-#: page/MainWP_User.page.php:179
-#: page/MainWP_User.page.php:658
+#: page/MainWPUser.page.php:148
+#: page/MainWPUser.page.php:179
+#: page/MainWPUser.page.php:658
 #@ mainwp
 msgid "Editor"
 msgstr "Editor"
 
-#: page/MainWP_User.page.php:156
-#: page/MainWP_User.page.php:181
-#: page/MainWP_User.page.php:670
+#: page/MainWPUser.page.php:156
+#: page/MainWPUser.page.php:181
+#: page/MainWPUser.page.php:670
 #@ mainwp
 msgid "Contributor"
 msgstr "Contributor"
 
-#: page/MainWP_User.page.php:160
-#: page/MainWP_User.page.php:182
-#: page/MainWP_User.page.php:646
+#: page/MainWPUser.page.php:160
+#: page/MainWPUser.page.php:182
+#: page/MainWPUser.page.php:646
 #@ mainwp
 msgid "Subscriber"
 msgstr "Subscriber"
 
-#: page/MainWP_User.page.php:177
+#: page/MainWPUser.page.php:177
 #@ mainwp
 msgid "Change Role to ..."
 msgstr "Promeni ulogu"
 
-#: page/MainWP_User.page.php:183
+#: page/MainWPUser.page.php:183
 #@ mainwp
 msgid "Change"
 msgstr "Izneni"
 
-#: page/MainWP_User.page.php:203
-#: page/MainWP_User.page.php:227
-#: page/MainWP_User.page.php:583
+#: page/MainWPUser.page.php:203
+#: page/MainWPUser.page.php:227
+#: page/MainWPUser.page.php:583
 #@ mainwp
 msgid "E-mail"
 msgstr "Email"
 
-#: page/MainWP_User.page.php:206
-#: page/MainWP_User.page.php:228
-#: page/MainWP_User.page.php:639
+#: page/MainWPUser.page.php:206
+#: page/MainWPUser.page.php:228
+#: page/MainWPUser.page.php:639
 #@ mainwp
 msgid "Role"
 msgstr "Uloga"
 
-#: page/MainWP_User.page.php:249
+#: page/MainWPUser.page.php:249
 #@ mainwp
 msgid "Users per page"
 msgstr "Korisnika po stranici"
 
-#: page/MainWP_User.page.php:559
+#: page/MainWPUser.page.php:559
 #@ mainwp
 msgid "Adding the user"
 msgstr "Dodavanje korisnika"
 
-#: page/MainWP_User.page.php:563
+#: page/MainWPUser.page.php:563
 #@ mainwp
 msgid "Create a brand new user and add it to your sites."
 msgstr "Kreirajte novog korisnika"
 
-#: page/MainWP_User.page.php:571
+#: page/MainWPUser.page.php:571
 #@ mainwp
 msgid "Add a Single User"
 msgstr "Dodaj korisnika"
 
-#: page/MainWP_User.page.php:574
-#: page/MainWP_User.page.php:584
+#: page/MainWPUser.page.php:574
+#: page/MainWPUser.page.php:584
 #@ mainwp
 msgid "(required)"
 msgstr "(obavezno)"
 
-#: page/MainWP_User.page.php:592
+#: page/MainWPUser.page.php:592
 #@ mainwp
 msgid "First Name"
 msgstr "Ime"
 
-#: page/MainWP_User.page.php:600
+#: page/MainWPUser.page.php:600
 #@ mainwp
 msgid "Last Name"
 msgstr "Prezime"
 
-#: page/MainWP_User.page.php:624
+#: page/MainWPUser.page.php:624
 #@ mainwp
 msgid ""
 "Hint: The password should be at least seven\n"
@@ -3198,95 +3198,95 @@ msgid ""
 "                                    symbols like ! \" ? $ % ^ &amp; )."
 msgstr "Savet: Šifra bi trebala da sadrži barem sedam karaktera. Da bi bila jača, koristite velika i mala slova, brojeve i simbole poput ! \" ? $ % ^ &amp; )."
 
-#: page/MainWP_User.page.php:630
+#: page/MainWPUser.page.php:630
 #@ mainwp
 msgid "Send Password?"
 msgstr "Pošalji šifru"
 
-#: page/MainWP_User.page.php:636
+#: page/MainWPUser.page.php:636
 #@ mainwp
 msgid "Send this password to the new user by email."
 msgstr "Pošalji šifru korisniku emailom"
 
-#: page/MainWP_User.page.php:687
+#: page/MainWPUser.page.php:687
 #@ mainwp
 msgid "Click here to download sample CSV file."
 msgstr "Kliknte da preuzmete CSV datoteku."
 
-#: page/MainWP_User.page.php:708
+#: page/MainWPUser.page.php:708
 #@ mainwp
 msgid "Add New User"
 msgstr "Dodaj novog korisnika"
 
-#: page/MainWP_User.page.php:812
+#: page/MainWPUser.page.php:812
 #@ mainwp
 msgid ""
 "Return to\n"
 "            Dashboard"
 msgstr "Povratak na kontrolnu tablu"
 
-#: page/MainWP_User.page.php:824
+#: page/MainWPUser.page.php:824
 #@ mainwp
 msgid "Importing users"
 msgstr "Unos korisnika"
 
-#: page/MainWP_User.page.php:855
+#: page/MainWPUser.page.php:855
 #@ mainwp
 msgid "Importing new users and add them to your sites."
 msgstr "Unos novih korisnika"
 
-#: page/MainWP_User.page.php:880
+#: page/MainWPUser.page.php:880
 #@ mainwp
 msgid "Data is not valid. <br />"
 msgstr "Podatci nisu validni <br />"
 
-#: page/MainWP_User.page.php:885
-#: page/MainWP_User.page.php:890
+#: page/MainWPUser.page.php:885
+#: page/MainWPUser.page.php:890
 #@ mainwp
 msgid "Upload error. <br />"
 msgstr "Greška pri uploadu <br />"
 
-#: page/MainWP_User.page.php:970
+#: page/MainWPUser.page.php:970
 #@ mainwp
 msgid "Error - These are not websites in the group. "
 msgstr "Greška - Ovo nisu sajtovi  u grupi. "
 
-#: page/MainWP_User.page.php:975
+#: page/MainWPUser.page.php:975
 #@ mainwp
 msgid "Error - The group doesn't exist in the Network. "
 msgstr "Greška - Ova grupa ne postoji u mreži. "
 
-#: widget/MainWP_Footprint.widget.php:30
+#: widget/MainWPFootprint.widget.php:30
 #@ mainwp
 msgid "Network Footprint"
 msgstr "Otsak mreže"
 
-#: widget/MainWP_Footprint.widget.php:39
+#: widget/MainWPFootprint.widget.php:39
 #@ mainwp
 msgid "Default"
 msgstr "Podrazumevano"
 
-#: widget/MainWP_Footprint.widget.php:43
+#: widget/MainWPFootprint.widget.php:43
 #@ mainwp
 msgid "Hidden"
 msgstr "Sakriveno"
 
-#: widget/MainWP_Footprint.widget.php:43
+#: widget/MainWPFootprint.widget.php:43
 #@ mainwp
 msgid "Note:"
 msgstr "Pažnja:"
 
-#: widget/MainWP_Footprint.widget.php:43
+#: widget/MainWPFootprint.widget.php:43
 #@ mainwp
 msgid "If the heatmap is turned on, the heatmap javascript will still be visible."
 msgstr "Ako je mapa uključena,  java scripa ce biti vidljiva."
 
-#: widget/MainWP_Footprint.widget.php:47
+#: widget/MainWPFootprint.widget.php:47
 #@ mainwp
 msgid "Turn Off Heatmap"
 msgstr "Isključi mape"
 
-#: widget/MainWP_Footprint.widget.php:58
+#: widget/MainWPFootprint.widget.php:58
 #@ mainwp
 msgid "After pressing \"Save Settings\" below you will need to return to MainWP Dashboard and press the refresh button to synchronize the settings."
 msgstr "Pošto sačuvate podešavanja, vratitie se na kontrolnu tablu i osvežite podateke."
@@ -3296,7 +3296,7 @@ msgstr "Pošto sačuvate podešavanja, vratitie se na kontrolnu tablu i osvežit
 msgid "No statistics available."
 msgstr "Nema dostupne statistike."
 
-#: class/MainWP_System.class.php:1248
+#: class/MainWPSystem.class.php:1248
 #: widget/MainWPGA.widget.php:92
 #@ mainwp
 msgid "An error occured: "
@@ -3357,68 +3357,68 @@ msgstr "Osveži odmah"
 msgid "Connect"
 msgstr "Konektuj"
 
-#: widget/MainWP_Options.widget.php:60
+#: widget/MainWPOptions.widget.php:60
 #@ mainwp
 msgid "Notification Email"
 msgstr "Email za obaveštenja"
 
-#: widget/MainWP_Options.widget.php:60
-#: widget/MainWP_Options.widget.php:62
+#: widget/MainWPOptions.widget.php:60
+#: widget/MainWPOptions.widget.php:62
 #@ mainwp
 msgid "This address is used to send monitoring alerts."
 msgstr "Ova adresa se koristi za alarmiranje."
 
-#: widget/MainWP_Options.widget.php:76
+#: widget/MainWPOptions.widget.php:76
 #@ mainwp
 msgid "Allow us to count your sites?"
 msgstr "Dozvolite da brojimo Vaše sajtove?"
 
-#: widget/MainWP_Options.widget.php:76
+#: widget/MainWPOptions.widget.php:76
 #@ mainwp
 msgid "This info will be used only to show a count of managed blogs. No other information is gathered but number of sites you have connected."
 msgstr "Ova informacija bice korišćenja samo za prikaz broja sajtova koji koriste MainWP. Nikakve druge informacije nece biti sakupljane."
 
-#: widget/MainWP_Options.widget.php:86
+#: widget/MainWPOptions.widget.php:86
 #@ mainwp
 msgid "Optimize for big networks"
 msgstr "Optimizacija za velike mreže"
 
-#: widget/MainWP_Options.widget.php:86
+#: widget/MainWPOptions.widget.php:86
 #@ mainwp
 msgid "Updates will be cached for quick loading. A manual refresh from the Dashboard is required to view new plugins, themes, pages or users. Recommended for Networks over 50 sites."
 msgstr "Ažuriranje će biti sačuvano u keš memoriji zbog brženg učitavanja. Ručno osvežavanje je neophodno da bi novi pluginovi, teme ili korisnici bili vidljivi. Preporučeno za mreže sa 50 i više sajtova."
 
-#: widget/MainWP_Options.widget.php:96
+#: widget/MainWPOptions.widget.php:96
 #@ mainwp
 msgid "Maximum requests / 30seconds"
 msgstr "Maksimum zahteva / 30seconds"
 
-#: widget/MainWP_Options.widget.php:96
+#: widget/MainWPOptions.widget.php:96
 #@ mainwp
 msgid "Maximum requests sent out to child sites per 30 seconds. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 15, set to 0 for unlimited."
 msgstr "Maximum requests sent out to child sites per 30 seconds. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 15, set to 0 for unlimited."
 
-#: widget/MainWP_Options.widget.php:103
+#: widget/MainWPOptions.widget.php:103
 #@ mainwp
 msgid "Automatic daily update"
 msgstr "Dnevno automatsko ažuriranje"
 
-#: widget/MainWP_Options.widget.php:103
+#: widget/MainWPOptions.widget.php:103
 #@ mainwp
 msgid "Choose to have MainWP install updates, or notify you by email of available updates.  Updates apply to WordPress Core files, Plugins and Themes."
 msgstr "Choose to have MainWP install updates, or notify you by email of available updates.  Updates apply to WordPress Core files, Plugins and Themes."
 
-#: widget/MainWP_Options.widget.php:134
+#: widget/MainWPOptions.widget.php:134
 #@ mainwp
 msgid "Usability Options"
 msgstr "Korišćenje prema"
 
-#: widget/MainWP_Options.widget.php:138
+#: widget/MainWPOptions.widget.php:138
 #@ mainwp
 msgid "View upgrades per site"
 msgstr "Prema sajtu"
 
-#: widget/MainWP_Options.widget.php:138
+#: widget/MainWPOptions.widget.php:138
 #@ mainwp
 msgid "When this is disabled, the upgrades are shown per plugin/theme with a sublist of sites. When this is enabled, all the sites are shown with the plugin/theme upgrades available per site."
 msgstr "When this is disabled, the upgrades are shown per plugin/theme with a sublist of sites. When this is enabled, all the sites are shown with the plugin/theme upgrades available per site."
@@ -3429,7 +3429,7 @@ msgid "Approved"
 msgstr "Odobreno"
 
 #: widget/MainWPRecentComments.widget.php:68
-#: widget/MainWP_Recent_Posts.widget.php:71
+#: widget/MainWPRecentPosts.widget.php:71
 #@ mainwp
 msgid "Pending"
 msgstr "Na čekanju"
@@ -3441,9 +3441,9 @@ msgstr "Od"
 
 #: widget/MainWPRecentComments.widget.php:80
 #: widget/MainWPRecentComments.widget.php:96
-#: widget/MainWP_Recent_Posts.widget.php:86
-#: widget/MainWP_Recent_Posts.widget.php:108
-#: widget/MainWP_Recent_Posts.widget.php:130
+#: widget/MainWPRecentPosts.widget.php:86
+#: widget/MainWPRecentPosts.widget.php:108
+#: widget/MainWPRecentPosts.widget.php:130
 #@ mainwp
 msgid "View All"
 msgstr "Pogledaj sve"
@@ -3518,264 +3518,264 @@ msgstr "Komentari su vraćeni"
 msgid "Comment(s) has been permanently deleted"
 msgstr "Komentari su obrisani zauvek"
 
-#: widget/MainWP_Recent_Posts.widget.php:17
+#: widget/MainWPRecentPosts.widget.php:17
 #@ mainwp
 msgid "Recent Posts"
 msgstr "Poslednji postovi"
 
-#: widget/MainWP_Recent_Posts.widget.php:71
+#: widget/MainWPRecentPosts.widget.php:71
 #@ mainwp
 msgid "Published"
 msgstr "Objavljeni"
 
-#: widget/MainWP_Recent_Posts.widget.php:71
+#: widget/MainWPRecentPosts.widget.php:71
 #@ mainwp
 msgid "Draft"
 msgstr "Draft"
 
-#: widget/MainWP_Recent_Posts.widget.php:86
+#: widget/MainWPRecentPosts.widget.php:86
 #@ mainwp
 msgid "Unpublish"
 msgstr "Neobjavljeni"
 
-#: widget/MainWP_Recent_Posts.widget.php:146
+#: widget/MainWPRecentPosts.widget.php:146
 #@ mainwp
 msgid "Post has been published"
 msgstr "Post je opbjavljen"
 
-#: widget/MainWP_Recent_Posts.widget.php:152
+#: widget/MainWPRecentPosts.widget.php:152
 #@ mainwp
 msgid "Post has been approved"
 msgstr "Post je odobren"
 
-#: widget/MainWP_Recent_Posts.widget.php:158
+#: widget/MainWPRecentPosts.widget.php:158
 #@ mainwp
 msgid "Post has been unpublished"
 msgstr "Post nije odobren"
 
-#: widget/MainWP_Recent_Posts.widget.php:164
+#: widget/MainWPRecentPosts.widget.php:164
 #@ mainwp
 msgid "Post has been moved to trash"
 msgstr "Post je obrisan"
 
-#: widget/MainWP_Recent_Posts.widget.php:170
+#: widget/MainWPRecentPosts.widget.php:170
 #@ mainwp
 msgid "Post has been permanently deleted"
 msgstr "Post je obrisan zauvek"
 
-#: widget/MainWP_Recent_Posts.widget.php:176
+#: widget/MainWPRecentPosts.widget.php:176
 #@ mainwp
 msgid "Post has been restored"
 msgstr "Post je vraćen"
 
-#: widget/MainWP_Right_Now.widget.php:16
+#: widget/MainWPRightNow.widget.php:16
 #@ mainwp
 msgid "Right Now"
 msgstr "Sada"
 
-#: class/MainWP_System.class.php:1262
-#: widget/MainWP_Right_Now.widget.php:38
+#: class/MainWPSystem.class.php:1262
+#: widget/MainWPRightNow.widget.php:38
 #@ mainwp
 msgid "Upgrade successful"
 msgstr "Ažuriranje uspešno"
 
-#: widget/MainWP_Right_Now.widget.php:45
+#: widget/MainWPRightNow.widget.php:45
 #@ mainwp
 msgid "No update found for your set locale."
 msgstr "No update found for your set locale."
 
-#: widget/MainWP_Right_Now.widget.php:49
+#: widget/MainWPRightNow.widget.php:49
 #@ mainwp
 msgid "No response from the wordpress update server."
 msgstr "Nema odgovora od WordPress servera za ažuriranje"
 
-#: widget/MainWP_Right_Now.widget.php:60
+#: widget/MainWPRightNow.widget.php:60
 #@ mainwp
 msgid "Invalid response from site"
 msgstr "Pogrepan odgovor od sajta"
 
-#: widget/MainWP_Right_Now.widget.php:65
-#: widget/MainWP_Right_Now.widget.php:264
+#: widget/MainWPRightNow.widget.php:65
+#: widget/MainWPRightNow.widget.php:264
 #@ mainwp
 msgid "Invalid request"
 msgstr "Pogrešan zahtev"
 
-#: widget/MainWP_Right_Now.widget.php:284
+#: widget/MainWPRightNow.widget.php:284
 #@ mainwp
 msgid "(Last complete sync: "
 msgstr "(Poslednja sinhronizacija: "
 
-#: widget/MainWP_Right_Now.widget.php:475
+#: widget/MainWPRightNow.widget.php:475
 #@ mainwp
 msgid "WordPress upgrade"
 msgstr "WordPress upgrade"
 
-#: widget/MainWP_Right_Now.widget.php:475
-#: widget/MainWP_Right_Now.widget.php:518
-#: widget/MainWP_Right_Now.widget.php:639
+#: widget/MainWPRightNow.widget.php:475
+#: widget/MainWPRightNow.widget.php:518
+#: widget/MainWPRightNow.widget.php:639
 #@ mainwp
 msgid "available"
 msgstr "dostupno"
 
-#: class/MainWP_System.class.php:1265
-#: widget/MainWP_Right_Now.widget.php:477
-#: widget/MainWP_Right_Now.widget.php:520
-#: widget/MainWP_Right_Now.widget.php:641
-#: widget/MainWP_Right_Now.widget.php:762
-#: widget/MainWP_Right_Now.widget.php:790
-#: widget/MainWP_Right_Now.widget.php:814
+#: class/MainWPSystem.class.php:1265
+#: widget/MainWPRightNow.widget.php:477
+#: widget/MainWPRightNow.widget.php:520
+#: widget/MainWPRightNow.widget.php:641
+#: widget/MainWPRightNow.widget.php:762
+#: widget/MainWPRightNow.widget.php:790
+#: widget/MainWPRightNow.widget.php:814
 #@ mainwp
 msgid "Show"
 msgstr "Pokaži"
 
-#: widget/MainWP_Right_Now.widget.php:477
-#: widget/MainWP_Right_Now.widget.php:520
-#: widget/MainWP_Right_Now.widget.php:558
-#: widget/MainWP_Right_Now.widget.php:597
-#: widget/MainWP_Right_Now.widget.php:641
-#: widget/MainWP_Right_Now.widget.php:675
-#: widget/MainWP_Right_Now.widget.php:710
+#: widget/MainWPRightNow.widget.php:477
+#: widget/MainWPRightNow.widget.php:520
+#: widget/MainWPRightNow.widget.php:558
+#: widget/MainWPRightNow.widget.php:597
+#: widget/MainWPRightNow.widget.php:641
+#: widget/MainWPRightNow.widget.php:675
+#: widget/MainWPRightNow.widget.php:710
 #@ mainwp
 msgid "Upgrade All"
 msgstr "Ažuriraj sve"
 
-#: widget/MainWP_Right_Now.widget.php:495
-#: widget/MainWP_Right_Now.widget.php:553
-#: widget/MainWP_Right_Now.widget.php:670
+#: widget/MainWPRightNow.widget.php:495
+#: widget/MainWPRightNow.widget.php:553
+#: widget/MainWPRightNow.widget.php:670
 #@ mainwp
 msgid "Site Error - No update Information available"
 msgstr "Greška - nema dostupnih informacija"
 
-#: widget/MainWP_Right_Now.widget.php:496
-#: widget/MainWP_Right_Now.widget.php:554
-#: widget/MainWP_Right_Now.widget.php:671
+#: widget/MainWPRightNow.widget.php:496
+#: widget/MainWPRightNow.widget.php:554
+#: widget/MainWPRightNow.widget.php:671
 #@ mainwp
 msgid "Hooray, No Updates Available!"
 msgstr "To! Nema Dostupnih Update-ova"
 
-#: widget/MainWP_Right_Now.widget.php:503
-#: widget/MainWP_Right_Now.widget.php:548
-#: widget/MainWP_Right_Now.widget.php:570
-#: widget/MainWP_Right_Now.widget.php:593
-#: widget/MainWP_Right_Now.widget.php:620
-#: widget/MainWP_Right_Now.widget.php:665
-#: widget/MainWP_Right_Now.widget.php:686
-#: widget/MainWP_Right_Now.widget.php:706
-#: widget/MainWP_Right_Now.widget.php:733
+#: widget/MainWPRightNow.widget.php:503
+#: widget/MainWPRightNow.widget.php:548
+#: widget/MainWPRightNow.widget.php:570
+#: widget/MainWPRightNow.widget.php:593
+#: widget/MainWPRightNow.widget.php:620
+#: widget/MainWPRightNow.widget.php:665
+#: widget/MainWPRightNow.widget.php:686
+#: widget/MainWPRightNow.widget.php:706
+#: widget/MainWPRightNow.widget.php:733
 #@ mainwp
 msgid "Upgrade"
 msgstr "Ažuriraj"
 
-#: widget/MainWP_Right_Now.widget.php:518
+#: widget/MainWPRightNow.widget.php:518
 #@ mainwp
 msgid "Plugin upgrade"
 msgstr "Plguin upgrade"
 
-#: widget/MainWP_Right_Now.widget.php:570
-#: widget/MainWP_Right_Now.widget.php:620
-#: widget/MainWP_Right_Now.widget.php:686
-#: widget/MainWP_Right_Now.widget.php:733
+#: widget/MainWPRightNow.widget.php:570
+#: widget/MainWPRightNow.widget.php:620
+#: widget/MainWPRightNow.widget.php:686
+#: widget/MainWPRightNow.widget.php:733
 #@ mainwp
 msgid "Ignore"
 msgstr "Ignoriši"
 
-#: widget/MainWP_Right_Now.widget.php:597
-#: widget/MainWP_Right_Now.widget.php:710
+#: widget/MainWPRightNow.widget.php:597
+#: widget/MainWPRightNow.widget.php:710
 #@ mainwp
 msgid "Ignore Globally"
 msgstr "Ignoriši globalno"
 
-#: widget/MainWP_Right_Now.widget.php:639
+#: widget/MainWPRightNow.widget.php:639
 #@ mainwp
 msgid "Theme upgrade"
 msgstr "Teme upgrade"
 
-#: widget/MainWP_Right_Now.widget.php:748
+#: widget/MainWPRightNow.widget.php:748
 #@ mainwp
 msgid "View Plugin Ignore List"
 msgstr "Pogleda listu ignorisanih pluginova"
 
-#: widget/MainWP_Right_Now.widget.php:748
+#: widget/MainWPRightNow.widget.php:748
 #@ mainwp
 msgid "View Theme Ignore List"
 msgstr "Pogledaj listu ignorisanih tema"
 
-#: widget/MainWP_Right_Now.widget.php:750
+#: widget/MainWPRightNow.widget.php:750
 #@ mainwp
 msgid "Upgrade Everything"
 msgstr "AŽURIRAJ SVE"
 
-#: widget/MainWP_Right_Now.widget.php:788
+#: widget/MainWPRightNow.widget.php:788
 #@ mainwp
 msgid "Up to date"
 msgstr "Ažurirano"
 
-#: widget/MainWP_Right_Now.widget.php:865
+#: widget/MainWPRightNow.widget.php:865
 #@ mainwp
 msgid "Conflict Found"
 msgstr "Pronađen konflikt"
 
-#: widget/MainWP_Right_Now.widget.php:900
+#: widget/MainWPRightNow.widget.php:900
 #@ mainwp
 msgid "upgraded"
 msgstr "ažurirano"
 
-#: widget/MainWP_Shortcuts.widget.php:12
+#: widget/MainWPShortcuts.widget.php:12
 #@ mainwp
 msgid "Shortcuts"
 msgstr "Prečice"
 
-#: widget/MainWP_Shortcuts.widget.php:27
+#: widget/MainWPShortcuts.widget.php:27
 #@ mainwp
 msgid "Groups:"
 msgstr "Grupe:"
 
-#: widget/MainWP_Shortcuts.widget.php:31
+#: widget/MainWPShortcuts.widget.php:31
 #@ mainwp
 msgid "Notes:"
 msgstr "Beleške:"
 
-#: widget/MainWP_Shortcuts.widget.php:32
+#: widget/MainWPShortcuts.widget.php:32
 #@ mainwp
 msgid "Open Notes"
 msgstr "Otvori beleške"
 
-#: widget/MainWP_Shortcuts.widget.php:37
+#: widget/MainWPShortcuts.widget.php:37
 #@ mainwp
 msgid "WP-Admin:"
 msgstr "WP-Admin"
 
-#: widget/MainWP_Shortcuts.widget.php:38
+#: widget/MainWPShortcuts.widget.php:38
 #@ mainwp
 msgid "Open embedded"
 msgstr "Otvori ovde"
 
-#: widget/MainWP_Shortcuts.widget.php:38
+#: widget/MainWPShortcuts.widget.php:38
 #@ mainwp
 msgid "Open in new window"
 msgstr "Otvori u novom prozoru"
 
-#: widget/MainWP_Shortcuts.widget.php:41
+#: widget/MainWPShortcuts.widget.php:41
 #@ mainwp
 msgid "Frontpage:"
 msgstr "Naslovna strana:"
 
-#: class/MainWP_System.class.php:1672
+#: class/MainWPSystem.class.php:1672
 #@ mainwp
 msgid "SecurityIssues"
 msgstr "Sigurnosni problemi"
 
-#: class/MainWP_System.class.php:1687
+#: class/MainWPSystem.class.php:1687
 #@ mainwp
 msgid "Migrate/Clone Site"
 msgstr "Preseli / Kloniraj sajt"
 
-#: class/MainWP_System.class.php:1690
+#: class/MainWPSystem.class.php:1690
 #@ mainwp
 msgid "Admin Passwords"
 msgstr "Administratorske šifre"
 
-#: class/MainWP_System.class.php:1693
+#: class/MainWPSystem.class.php:1693
 #@ mainwp
 msgid "Asdd New Group"
 msgstr "Nova Grupa"
@@ -3786,47 +3786,47 @@ msgstr "Nova Grupa"
 msgid "Comments"
 msgstr "Komentari"
 
-#: page/MainWP_Install_Bulk.page.php:108
+#: page/MainWPInstallBulk.page.php:108
 #@ mainwp
 msgid "Activate plugin after installation"
 msgstr "Aktiviraj plugin posle instalacije"
 
-#: page/MainWP_Manage_Backups.page.php:20
+#: page/MainWPManageBackups.page.php:20
 #@ mainwp
 msgid "Add New Schedule"
 msgstr "Novi Raspored"
 
-#: page/MainWP_Manage_Backups.page.php:218
+#: page/MainWPManageBackups.page.php:218
 #@ mainwp
 msgid "Type:"
 msgstr "Vrsta:"
 
-#: page/MainWP_Manage_Backups.page.php:218
+#: page/MainWPManageBackups.page.php:218
 #@ mainwp
 msgid "Database only"
 msgstr "Samo baza podataka"
 
-#: page/MainWP_Manage_Backups.page.php:218
+#: page/MainWPManageBackups.page.php:218
 #@ mainwp
 msgid "Full backup"
 msgstr "Pun backup"
 
-#: page/MainWP_Manage_Sites.page.php:859
+#: page/MainWPManageSites.page.php:859
 #@ mainwp
 msgid "Dashboard of"
 msgstr "Kontrolna table za"
 
-#: page/MainWP_Plugins.page.php:694
+#: page/MainWPPlugins.page.php:694
 #@ mainwp
 msgid "Plugin Automatic Update Trust List"
 msgstr "Lista pluginova za automatsko ažuriranje"
 
-#: page/MainWP_Settings.page.php:20
+#: page/MainWPSettings.page.php:20
 #@ mainwp
 msgid "Settings"
 msgstr "Podešavanje"
 
-#: page/MainWP_Settings.page.php:102
+#: page/MainWPSettings.page.php:102
 #@ mainwp
 msgid "Use this to set Global options."
 msgstr "Globalna podešavanja"
@@ -3836,554 +3836,554 @@ msgstr "Globalna podešavanja"
 msgid "Recent Comments"
 msgstr "Poslednji Komentari"
 
-#: class/MainWP_System.class.php:1239
+#: class/MainWPSystem.class.php:1239
 #@ mainwp
 msgid "Update settings."
 msgstr "Ažuriraj podešavanja."
 
-#: class/MainWP_System.class.php:1240
+#: class/MainWPSystem.class.php:1240
 #@ mainwp
 msgid "Settings have been updated."
 msgstr "Podešavanja su ažurirana."
 
-#: class/MainWP_System.class.php:1241
+#: class/MainWPSystem.class.php:1241
 #@ mainwp
 msgid "An error occured."
 msgstr "Došlo je do greške."
 
-#: class/MainWP_System.class.php:1242
+#: class/MainWPSystem.class.php:1242
 #@ mainwp
 msgid "Testing login."
 msgstr "Testiranje prijave."
 
-#: class/MainWP_System.class.php:1243
+#: class/MainWPSystem.class.php:1243
 #@ mainwp
 msgid "Your login is valid."
 msgstr "Vaša prijava je validna."
 
-#: class/MainWP_System.class.php:1244
+#: class/MainWPSystem.class.php:1244
 #@ mainwp
 msgid "Your login is invalid."
 msgstr "Vaša prijava nije validna."
 
-#: class/MainWP_System.class.php:1245
+#: class/MainWPSystem.class.php:1245
 #@ mainwp
 msgid "An error occured, please contact us."
 msgstr "Došlo je do greške, molimo da nas kontaktirate."
 
-#: class/MainWP_System.class.php:1246
+#: class/MainWPSystem.class.php:1246
 #@ mainwp
 msgid "more"
 msgstr "više"
 
-#: class/MainWP_System.class.php:1247
+#: class/MainWPSystem.class.php:1247
 #@ mainwp
 msgid "less"
 msgstr "manje"
 
-#: class/MainWP_System.class.php:1249
+#: class/MainWPSystem.class.php:1249
 #@ mainwp
 msgid "No data available. Connect your sites using the Settings submenu."
 msgstr "Nema dostupnih podataka. Povežite Vaše sajtove u podešavanjima."
 
-#: class/MainWP_System.class.php:1251
+#: class/MainWPSystem.class.php:1251
 #@ mainwp
 msgid "PENDING"
 msgstr "NA ČEKANJU"
 
-#: class/MainWP_System.class.php:1252
+#: class/MainWPSystem.class.php:1252
 #@ mainwp
 msgid "UPDATING"
 msgstr "AŽURIRANJE"
 
-#: class/MainWP_System.class.php:1253
+#: class/MainWPSystem.class.php:1253
 #@ mainwp
 msgid "UPGRADING"
 msgstr "NADOGRADNJA"
 
-#: class/MainWP_System.class.php:1254
+#: class/MainWPSystem.class.php:1254
 #@ mainwp
 msgid "FAILED"
 msgstr "NEUSPEŠNO"
 
-#: class/MainWP_System.class.php:1255
+#: class/MainWPSystem.class.php:1255
 #@ mainwp
 msgid "DONE"
 msgstr "GOTOVO"
 
-#: class/MainWP_System.class.php:1256
+#: class/MainWPSystem.class.php:1256
 #@ mainwp
 msgid "Ignored"
 msgstr "Ignorisano"
 
-#: class/MainWP_System.class.php:1257
+#: class/MainWPSystem.class.php:1257
 #, php-format
 #@ mainwp
 msgid "No ignored %1s"
 msgstr "Nema ignorisanih %1s"
 
-#: class/MainWP_System.class.php:1258
+#: class/MainWPSystem.class.php:1258
 #, php-format
 #@ mainwp
 msgid "No ignored %1 conflicts"
 msgstr "Nema ignorisanih %1 konflikta"
 
-#: class/MainWP_System.class.php:1261
+#: class/MainWPSystem.class.php:1261
 #@ mainwp
 msgid "Upgrading.."
 msgstr "Nadograđivanje.."
 
-#: class/MainWP_System.class.php:1263
+#: class/MainWPSystem.class.php:1263
 #@ mainwp
 msgid "Upgrade failed"
 msgstr "Nadogradnja neuspešna"
 
-#: class/MainWP_System.class.php:1266
+#: class/MainWPSystem.class.php:1266
 #@ mainwp
 msgid "Hide All"
 msgstr "Sakrij sve"
 
-#: class/MainWP_System.class.php:1267
+#: class/MainWPSystem.class.php:1267
 #@ mainwp
 msgid "Hide"
 msgstr "Sakrij"
 
-#: class/MainWP_System.class.php:1268
+#: class/MainWPSystem.class.php:1268
 #@ mainwp
 msgid "Testing ..."
 msgstr "Testiranje..."
 
-#: class/MainWP_System.class.php:1270
+#: class/MainWPSystem.class.php:1270
 #@ mainwp
 msgid "Received wrong response from the server."
 msgstr "Primljen pogrešan odgovor od servera."
 
-#: class/MainWP_System.class.php:1271
+#: class/MainWPSystem.class.php:1271
 #@ mainwp
 msgid "Untitled"
 msgstr "Bez naziva"
 
-#: class/MainWP_System.class.php:1272
+#: class/MainWPSystem.class.php:1272
 #@ mainwp
 msgid "Are you sure you want to remove this destination. This could make some of the backup tasks invalid."
 msgstr "Da li ste sigurni da želite da uklonite ovu destinaciju? Ovo može dovesti do nepravilnih backup zadataka."
 
-#: class/MainWP_System.class.php:1273
+#: class/MainWPSystem.class.php:1273
 #@ mainwp
 msgid "Starting backup task."
 msgstr "Backup zadatak počinje."
 
-#: class/MainWP_System.class.php:1275
+#: class/MainWPSystem.class.php:1275
 #@ mainwp
 msgid "Backup task complete"
 msgstr "Backup zadatak završen"
 
-#: class/MainWP_System.class.php:1276
+#: class/MainWPSystem.class.php:1276
 #@ mainwp
 msgid "with errors"
 msgstr "sa greškama"
 
-#: class/MainWP_System.class.php:1278
+#: class/MainWPSystem.class.php:1278
 #@ mainwp
 msgid "Creating backupfile."
 msgstr "Kreiranje backup datoteke."
 
-#: class/MainWP_System.class.php:1279
+#: class/MainWPSystem.class.php:1279
 #@ mainwp
 msgid "Backupfile created successfully."
 msgstr "Backup datoteka uspešno kreirana."
 
-#: class/MainWP_System.class.php:1280
-#: class/MainWP_System.class.php:1340
+#: class/MainWPSystem.class.php:1280
+#: class/MainWPSystem.class.php:1340
 #@ mainwp
 msgid "Download from site child completed."
 msgstr "Preuzimanje sa sajta završeno."
 
-#: class/MainWP_System.class.php:1281
-#: class/MainWP_System.class.php:1341
+#: class/MainWPSystem.class.php:1281
+#: class/MainWPSystem.class.php:1341
 #@ mainwp
 msgid "Uploading to remote destinations.."
 msgstr "Slanje na udaljenu destinaciju.."
 
-#: class/MainWP_System.class.php:1282
+#: class/MainWPSystem.class.php:1282
 #@ mainwp
 msgid "Backup complete."
 msgstr "Backup završen."
 
-#: class/MainWP_System.class.php:1283
+#: class/MainWPSystem.class.php:1283
 #, php-format
 #@ mainwp
 msgid "Upload to %1 (%2) failed:"
 msgstr "Slanje na %1 (%2) neuspešno:"
 
-#: class/MainWP_System.class.php:1284
+#: class/MainWPSystem.class.php:1284
 #, php-format
 #@ mainwp
 msgid "Upload to %1 (%2) succesful"
 msgstr "Slanje na %1 (%2) uspešno"
 
-#: class/MainWP_System.class.php:1285
+#: class/MainWPSystem.class.php:1285
 #@ mainwp
 msgid "Please select websites or groups to add a backup task."
 msgstr "Molimo, odaberite sajtove ili grupe za backup zadatak."
 
-#: class/MainWP_System.class.php:1286
+#: class/MainWPSystem.class.php:1286
 #@ mainwp
 msgid "Adding the task to MainWP"
 msgstr "Dodavanje zadatka u MainWP"
 
-#: class/MainWP_System.class.php:1287
+#: class/MainWPSystem.class.php:1287
 #@ mainwp
 msgid "Please select websites or groups."
 msgstr "Molimo, odaberite sajtove ili grupe."
 
-#: class/MainWP_System.class.php:1288
+#: class/MainWPSystem.class.php:1288
 #@ mainwp
 msgid "Are you sure you want to delete this backup task?"
 msgstr "Da li ste sigurni da želiite da obrišete ovaj backup zadatak?"
 
-#: class/MainWP_System.class.php:1289
+#: class/MainWPSystem.class.php:1289
 #@ mainwp
 msgid "Removing the task.."
 msgstr "Uklanjanje zadatka.."
 
-#: class/MainWP_System.class.php:1290
+#: class/MainWPSystem.class.php:1290
 #@ mainwp
 msgid "The task has been removed"
 msgstr "Zadatak je uklonjen"
 
-#: class/MainWP_System.class.php:1291
+#: class/MainWPSystem.class.php:1291
 #@ mainwp
 msgid "An unspecified error occured"
 msgstr "Došlo je do nepoznate greške"
 
-#: class/MainWP_System.class.php:1292
+#: class/MainWPSystem.class.php:1292
 #@ mainwp
 msgid "Connection test failed."
 msgstr "Test konekcije neuspešan."
 
-#: class/MainWP_System.class.php:1293
+#: class/MainWPSystem.class.php:1293
 #@ mainwp
 msgid "Error message:"
 msgstr "Greška:"
 
-#: class/MainWP_System.class.php:1294
+#: class/MainWPSystem.class.php:1294
 #@ mainwp
 msgid "Received HTTP-code:"
 msgstr "Primljen HTTP-kod:"
 
-#: class/MainWP_System.class.php:1295
+#: class/MainWPSystem.class.php:1295
 #@ mainwp
 msgid "Connection test successful."
 msgstr "Test konekcije uspešan."
 
-#: class/MainWP_System.class.php:1296
+#: class/MainWPSystem.class.php:1296
 #@ mainwp
 msgid "Invalid response from the server, please try again."
 msgstr "Odgovor servera nije validan, molimo, pokušajte ponovo."
 
-#: class/MainWP_System.class.php:1297
+#: class/MainWPSystem.class.php:1297
 #@ mainwp
 msgid "Please enter csv file for upload"
 msgstr "Molimo, unesite CSV datoteku za slanje"
 
-#: class/MainWP_System.class.php:1298
+#: class/MainWPSystem.class.php:1298
 #@ mainwp
 msgid "Please enter a name for the website"
 msgstr "Molimo, unesite naziv sajta"
 
-#: class/MainWP_System.class.php:1299
+#: class/MainWPSystem.class.php:1299
 #@ mainwp
 msgid "Please enter a valid URL for your site"
 msgstr "Molimo, unesite validan URL za sajt"
 
-#: class/MainWP_System.class.php:1300
+#: class/MainWPSystem.class.php:1300
 #@ mainwp
 msgid "Please enter a username for the administrator"
 msgstr "Molimo, unesite korisničko ime administratora"
 
-#: class/MainWP_System.class.php:1301
+#: class/MainWPSystem.class.php:1301
 #@ mainwp
 msgid "Adding the site to MainWP"
 msgstr "Dodavanje sajta u MainWP"
 
-#: class/MainWP_System.class.php:1302
+#: class/MainWPSystem.class.php:1302
 #, php-format
 #@ mainwp
 msgid "No MainWP plugin detected, first install and activate the plugin and add your site to MainWP afterwards. Click <a href=\"%1\" target=\"_blank\">here</a> to install <a href=\"%2\" target=\"_blank\">MainWP</a> plugin (do not forget to activate it after installation)."
 msgstr "MainWP plugin nije pronađen, prvo instalirajte i aktivirajte plugin a zatim dodajte Vaš sajt. Kliknite <a href=\"%1\" target=\"_blank\">ovde</a> da instalirate <a href=\"%2\" target=\"_blank\">MainWP</a> (ne zaboravite da aktivirate posle instalacije.)"
 
-#: class/MainWP_System.class.php:1303
+#: class/MainWPSystem.class.php:1303
 #@ mainwp
 msgid "Testing the connection"
 msgstr "Testirnanje konekcije"
 
-#: class/MainWP_System.class.php:1304
+#: class/MainWPSystem.class.php:1304
 #@ mainwp
 msgid "Are you sure you want to delete this site?"
 msgstr "Da li ste sigurni da želite da obrišete ovaj sajt?"
 
-#: class/MainWP_System.class.php:1305
+#: class/MainWPSystem.class.php:1305
 #@ mainwp
 msgid "Removing and deactivating the MainWP plugin.."
 msgstr "Uklanjanje i deaktivacija MainWP plugina."
 
-#: class/MainWP_System.class.php:1306
+#: class/MainWPSystem.class.php:1306
 #@ mainwp
 msgid "The site has been removed and the MainWP plugin has been disabled"
 msgstr "Sajt je uklonjen i MainWP plugin je deaktiviran"
 
-#: class/MainWP_System.class.php:1307
+#: class/MainWPSystem.class.php:1307
 #@ mainwp
 msgid "The requested site has not been found"
 msgstr "Traženi sajt nije pronađen"
 
-#: class/MainWP_System.class.php:1308
+#: class/MainWPSystem.class.php:1308
 #@ mainwp
 msgid "The site has been removed but the MainWP plugin could not be disabled"
 msgstr "Sajt je uklonjen ali MainWP plugin nije mogao biti deaktiviran"
 
-#: class/MainWP_System.class.php:1309
+#: class/MainWPSystem.class.php:1309
 #@ mainwp
 msgid "Paused import by user."
 msgstr "Unos pauzran od strane korisnika."
 
-#: class/MainWP_System.class.php:1310
+#: class/MainWPSystem.class.php:1310
 #@ mainwp
 msgid "Continue"
 msgstr "Nastavi"
 
-#: class/MainWP_System.class.php:1311
+#: class/MainWPSystem.class.php:1311
 #@ mainwp
 msgid "Continue import."
 msgstr "Nastavi unos."
 
-#: class/MainWP_System.class.php:1313
+#: class/MainWPSystem.class.php:1313
 #@ mainwp
 msgid "Finished"
 msgstr "Završeno"
 
-#: class/MainWP_System.class.php:1314
+#: class/MainWPSystem.class.php:1314
 #@ mainwp
 msgid "Please enter the Site name."
 msgstr "Molimo, unesite naziv sajta."
 
-#: class/MainWP_System.class.php:1315
+#: class/MainWPSystem.class.php:1315
 #@ mainwp
 msgid "Please enter the Site url."
 msgstr "Molimo, unesite URL sajta."
 
-#: class/MainWP_System.class.php:1316
+#: class/MainWPSystem.class.php:1316
 #@ mainwp
 msgid "Please enter Admin name of the site."
 msgstr "Molimo unesite korisničko ime administratora."
 
-#: class/MainWP_System.class.php:1317
+#: class/MainWPSystem.class.php:1317
 #, php-format
 #@ mainwp
 msgid "Number of sites to Import: %1 Created sites: %2 Failed: %3"
 msgstr "Broj sajtova za unos: %1 Kreiranih sajtova: %2 Neuspešno: %3"
 
-#: class/MainWP_System.class.php:1318
+#: class/MainWPSystem.class.php:1318
 #@ mainwp
 msgid "HTTP error - website does not exist"
 msgstr "HTTP Greška - sajt ne postoji"
 
-#: class/MainWP_System.class.php:1319
+#: class/MainWPSystem.class.php:1319
 #@ mainwp
 msgid "No selected Categories"
 msgstr "Nema odabranih kategorija"
 
-#: class/MainWP_System.class.php:1320
+#: class/MainWPSystem.class.php:1320
 #@ mainwp
 msgid "Please select websites or groups to add a user."
 msgstr "Molimo, odaberite sajtove ili grupe za dodavanje korisnika."
 
-#: class/MainWP_System.class.php:1321
+#: class/MainWPSystem.class.php:1321
 #@ mainwp
 msgid "Please enter csv file for upload."
 msgstr "Molimo unesite CSV datoteku za slanje."
 
-#: class/MainWP_System.class.php:1322
+#: class/MainWPSystem.class.php:1322
 #, php-format
 #@ mainwp
 msgid "Number of Users to Import: %1 Created users: %2 Failed: %3"
 msgstr "Broj korisnika za unos: %1 Kreirano korisnika: %2 Neuspešno: %3"
 
-#: class/MainWP_System.class.php:1323
+#: class/MainWPSystem.class.php:1323
 #@ mainwp
 msgid "Please enter the username."
 msgstr "Molimo unesite korisničko ima."
 
-#: class/MainWP_System.class.php:1324
+#: class/MainWPSystem.class.php:1324
 #@ mainwp
 msgid "Please enter the email."
 msgstr "Molimo, unesite email adresu."
 
-#: class/MainWP_System.class.php:1325
+#: class/MainWPSystem.class.php:1325
 #@ mainwp
 msgid "Please enter the password."
 msgstr "Molimo, unesite lozinku."
 
-#: class/MainWP_System.class.php:1326
+#: class/MainWPSystem.class.php:1326
 #@ mainwp
 msgid "Please select a valid role."
 msgstr "Molimo, odaberite validnu ulogu."
 
-#: class/MainWP_System.class.php:1327
+#: class/MainWPSystem.class.php:1327
 #@ mainwp
 msgid "Loading previous page.."
 msgstr "Učitavanje prethodne strane.."
 
-#: class/MainWP_System.class.php:1328
+#: class/MainWPSystem.class.php:1328
 #@ mainwp
 msgid "Loading next page.."
 msgstr "Učitavanje sledeće strane.."
 
-#: class/MainWP_System.class.php:1329
+#: class/MainWPSystem.class.php:1329
 #@ mainwp
 msgid "Searching the Wordpress repository.."
 msgstr "Pretraživanje WordPress skladišta.."
 
-#: class/MainWP_System.class.php:1330
+#: class/MainWPSystem.class.php:1330
 #@ mainwp
 msgid "Please select websites or groups on the right side to install files."
 msgstr "Molimo, odaberite sajtove ili grupe sa desne strane za instaliranje datoteka."
 
-#: class/MainWP_System.class.php:1331
+#: class/MainWPSystem.class.php:1331
 #@ mainwp
 msgid "Queued"
 msgstr "Na čekanju"
 
-#: class/MainWP_System.class.php:1332
+#: class/MainWPSystem.class.php:1332
 #@ mainwp
 msgid "In progress"
 msgstr "U toku"
 
-#: class/MainWP_System.class.php:1333
+#: class/MainWPSystem.class.php:1333
 #, php-format
 #@ mainwp
 msgid "Preparing %1 installation."
 msgstr "Priprema %1 instalacije."
 
-#: class/MainWP_System.class.php:1334
+#: class/MainWPSystem.class.php:1334
 #@ mainwp
 msgid "Installation successful"
 msgstr "Instalacija uspešna"
 
-#: class/MainWP_System.class.php:1335
+#: class/MainWPSystem.class.php:1335
 #@ mainwp
 msgid "Installation failed"
 msgstr "Instalacija neuspešna"
 
-#: class/MainWP_System.class.php:1336
+#: class/MainWPSystem.class.php:1336
 #@ mainwp
 msgid "Please select websites or groups to install files."
 msgstr "Molimo, odaberite sajtove ili grupe za instaliranje datoteka."
 
-#: class/MainWP_System.class.php:1337
+#: class/MainWPSystem.class.php:1337
 #@ mainwp
 msgid "Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient."
 msgstr "Kreiranje backup datoteke na sajtu, ovo može potrajati, zavisno od veličine sajta. Molimo, budite strpljivi."
 
-#: class/MainWP_System.class.php:1338
+#: class/MainWPSystem.class.php:1338
 #@ mainwp
 msgid "Backupfile on child site created successfully."
 msgstr "Backup datoteka uspešno kreirana na sajtu."
 
-#: class/MainWP_System.class.php:1339
+#: class/MainWPSystem.class.php:1339
 #@ mainwp
 msgid "Downloading the file."
 msgstr "Preuzimanje datoteke."
 
-#: class/MainWP_System.class.php:1342
+#: class/MainWPSystem.class.php:1342
 #@ mainwp
 msgid "Please wait while we are saving your note"
 msgstr "Molimo, sačekajte dok se beleške ne sačuvaju"
 
-#: class/MainWP_System.class.php:1343
+#: class/MainWPSystem.class.php:1343
 #@ mainwp
 msgid "Note saved."
 msgstr "Beleška sačuvana."
 
-#: class/MainWP_System.class.php:1344
+#: class/MainWPSystem.class.php:1344
 #@ mainwp
 msgid "An error occured while saving your message."
 msgstr "Došlo je do greške prilikom snimanja Vaše poruke."
 
-#: class/MainWP_System.class.php:1345
+#: class/MainWPSystem.class.php:1345
 #@ mainwp
 msgid "Please search and select users for update password."
 msgstr "Molimo, pretražite i odaberite korisnike za ažuriranje lozinke."
 
-#: class/MainWP_System.class.php:1347
+#: class/MainWPSystem.class.php:1347
 #@ mainwp
 msgid "Any"
 msgstr "Bilo koji"
 
-#: class/MainWP_System.class.php:1348
+#: class/MainWPSystem.class.php:1348
 #@ mainwp
 msgid "HTTP error"
 msgstr "HTTP Greška"
 
-#: class/MainWP_System.class.php:1349
+#: class/MainWPSystem.class.php:1349
 #@ mainwp
 msgid "Error on your child wordpress"
 msgstr "Greška na upravljanom WordPress sajtu"
 
-#: class/MainWP_System.class.php:1350
+#: class/MainWPSystem.class.php:1350
 #@ mainwp
 msgid "No MainWP plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please post as much information as possible on the error in the <a href=\"https://mainwp.com/forum/\">support forum</a>."
 msgstr "MainWP plugin nije pronađen, provo instalirajte i aktivirajte plugin, a zatim dodajte vaše sajtove. Ako i dalje budete imali ovaj problem, molimo, pošaljite što više informacija o problemu na <a href=\"https://mainwp.com/forum/\">forum za pordšku</a>."
 
-#: class/MainWP_System.class.php:1351
+#: class/MainWPSystem.class.php:1351
 #, php-format
 #@ mainwp
 msgid "No MainWP plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please  test your connection <a href=\"admin.php?page=managesites&do=test&site=%1\">here</a> or post as much information as possible on the error in the <a href=\"https://mainwp.com/forum/\">support forum</a>."
 msgstr "MainWP Plugin nije pronađen, provo instalirajte i aktivirajte plugin, a zatima dodajte Vaše sajtove. Ako i dalje budete imali ovaj problem, molimo provo testirajte konekciju <a href=\"admin.php?page=managesites&do=test&site=%1\">ovde</a> ili pošaljite što više informacija o problem na <a href=\"https://mainwp.com/forum/\">forum za podršku</a>."
 
-#: class/MainWP_System.class.php:1352
+#: class/MainWPSystem.class.php:1352
 #@ mainwp
 msgid "Remove"
 msgstr "Ukloni"
 
-#: class/MainWP_System.class.php:1353
+#: class/MainWPSystem.class.php:1353
 #@ mainwp
 msgid "Please reconnect to Dropbox"
 msgstr "Molimo, re-konektujte Dropbox"
 
-#: class/MainWP_System.class.php:1355
+#: class/MainWPSystem.class.php:1355
 #@ mainwp
 msgid "Upgrading all"
 msgstr "Nadogranja svega"
 
-#: class/MainWP_System.class.php:1356
+#: class/MainWPSystem.class.php:1356
 #, php-format
 #@ mainwp
 msgid "Upgrading %1"
 msgstr "Nadogradnja %1"
 
-#: class/MainWP_Utility.class.php:591
+#: class/MainWPUtility.class.php:591
 #@ default
 msgid "Could not create directory to download the file."
 msgstr ""
 
-#: page/MainWP_Extensions.page.php:294
+#: page/MainWPExtensions.page.php:294
 #@ mainwp
 msgid "Disable"
 msgstr "Deaktiviraj"
 
-#: page/MainWP_Extensions.page.php:322
+#: page/MainWPExtensions.page.php:322
 #@ mainwp
 msgid "Enable"
 msgstr "Aktiviraj"
 
-#: page/MainWP_Offline_Checks.page.php:265
+#: page/MainWPOfflineChecks.page.php:265
 #@ mainwp
 msgid "Network will monitor your sites for downtime and uptime.  By default emails are only sent when your site is down."
 msgstr "Mreža će motriti na Vaše sajtove. Email obaveštenja će biti poslata u slučaju da sajt ne radi kako treba."
 
-#: page/MainWP_Settings.page.php:20
+#: page/MainWPSettings.page.php:20
 #@ mainwp
 msgid "Settings Global options"
 msgstr ""

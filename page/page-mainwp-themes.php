@@ -140,6 +140,7 @@ class MainWP_Themes {
 				}
 			}
 			?>
+			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">
 		<?php
@@ -157,7 +158,7 @@ class MainWP_Themes {
 		self::renderHeader( 'Manage' ); ?>
 		<div class="mainwp-search-form">
 			<div class="postbox mainwp-postbox">
-				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Search Themes', 'mainwp' ); ?>
+				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Step 1: Search Themes', 'mainwp' ); ?>
 				</h3>
 
 				<div class="inside">
@@ -183,17 +184,18 @@ class MainWP_Themes {
 					</p>
 					<p>
 						<?php _e( 'Containing Keyword:', 'mainwp' ); ?><br/>
-						<input type="text" id="mainwp_theme_search_by_keyword" class="mainwp-field mainwp-keyword" size="50" value="<?php if ( $cachedSearch != null ) {
+						<input type="text" id="mainwp_theme_search_by_keyword" class="" size="50" value="<?php if ( $cachedSearch != null ) {
 							echo $cachedSearch['keyword'];
 						} ?>"/>
 					</p>
 				</div>
 			</div>
-			<?php MainWP_UI::select_sites_box( __( 'Select Sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
+			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select Sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
 			<div style="clear: both;"></div>
-			<input type="button" name="mainwp_show_themes" id="mainwp_show_themes" class="button-primary" value="<?php _e( 'Show Themes', 'mainwp' ); ?>"/>
-			<span id="mainwp_themes_loading"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e( 'Grabbing information from Child Sites', 'mainwp' ) ?></em></span>
-			<span id="mainwp_themes_loading_info"><?php _e( 'Automatically refreshing to get up to date information.', 'mainwp' ); ?></span>
+			<input type="button" name="mainwp_show_themes" id="mainwp_show_themes" class="button-primary button button-hero button-right" value="<?php _e( 'Show Themes', 'mainwp' ); ?>"/>
+			<br /><br />
+			<span id="mainwp_themes_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e( 'Grabbing information from Child Sites', 'mainwp' ) ?></em></span>
+			<span id="mainwp_themes_loading_info" class="mainwp-grabbing-info-note"> - <?php _e( 'Automatically refreshing to get up to date information.', 'mainwp' ); ?></span>
 			<br/><br/>
 		</div>
 		<div class="clear"></div>
@@ -412,18 +414,22 @@ class MainWP_Themes {
 		}
 		?>
 		<div id="mainwp-table-overflow" style="overflow: auto !important ;">
-			<table class="wp-list-table widefat fixed pages" style="width: auto; word-wrap: normal">
+			<table class="wp-list-table widefat fixed pages" id="themes_fixedtable" style="width: auto; word-wrap: normal">
 				<thead>
 				<tr>
-					<th class="headcol"></th>
+					<th class="headcol" style="text-align: center; border-bottom: 1px Solid #e1e1e1; font-size: 18px; z-index:999; padding: auto; width: 15em !important;"><?php _e( 'Child Site / Theme', 'mainwp' ); ?>
+						<p style="font-size: 10px; line-height: 12px;"><?php _e( 'Click on the Theme Name to select the theme on all sites or click the Site URL to select all themes on the site.', 'mainwp' ); ?></p>
+					</th>
 					<?php
 					foreach ( $themesVersion as $theme_name => $theme_title ) {
-						echo '<th style="height: 100px; padding: 5px ;">
-                    <p style="font-family: Arial, Sans-Serif; text-shadow: none ; width: 100px !important; height: 30px ; text-align: center; width: auto; height: auto; font-size: 13px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); -o-transform: rotate(-90deg); -ms-transform: rotate(-90deg); writing-mode: lr-tb; ">
-                    <input type="checkbox" value="' . $themes[ $theme_name ] . '" id="' . $theme_name . '" version="' . $themesRealVersion[ $theme_name ] . '" class="mainwp_theme_check_all" style="margin: 3px 0px 0px 0px; display: none ; " />
-                    <label for="' . $theme_name . '">' . $theme_title . '</label>
-                    </p>
-                    </th>';
+						?>
+						<th height="100" style="padding: 5px;">
+							<div style="max-width: 120px; text-align: center;" title="<?php echo $theme_title; ?>" >
+								<input type="checkbox" value="<?php echo $themes[$theme_name]; ?>" id="<?php echo $theme_name; ?>" version="<?php echo $themesRealVersion[$theme_name]; ?>" class="mainwp_theme_check_all" style="display: none ;" />
+								<label for="<?php echo $theme_name; ?>"><?php echo $theme_title; ?></label>
+							</div>
+						</th>
+						<?php
 					}
 					?>
 				</tr>
@@ -435,9 +441,8 @@ class MainWP_Themes {
 					<tr>
 						<td class="headcol">
 							<input class="websiteId" type="hidden" name="id" value="<?php echo $site_id; ?>"/>
-							<label for="<?php echo $site_url; ?>"><strong><?php echo $site_url; ?></strong></label>
-							&nbsp;&nbsp;<input type="checkbox" value="" id="<?php echo $site_url; ?>"
-								class="mainwp_site_check_all" style="display: none ;"/>
+							<label for="<?php echo $site_url; ?>"><?php echo $site_url; ?></label>
+							<input type="checkbox" value="" id="<?php echo $site_url; ?>" class="mainwp_site_check_all" style="display: none ;"/>
 						</td>
 						<?php
 						foreach ( $themesVersion as $theme_name => $theme_title ) {
@@ -455,6 +460,11 @@ class MainWP_Themes {
 				</tbody>
 			</table>
 		</div>
+		<script type="text/javascript">
+			jQuery(document).ready(function() {
+				jQuery("#themes_fixedtable").tableHeadFixer({"left" : 1});
+			});
+		</script>
 		<?php
 		$newOutput = ob_get_clean();
 		echo $newOutput;
@@ -835,117 +845,205 @@ class MainWP_Themes {
 	}
 
 	//@see MainWP_Install_Bulk
+	//todo apply coding rules
 	public static function renderInstall() {
-		self::renderHeader( 'Install' );
-		MainWP_Install_Bulk::render( 'Themes', 'theme' );
-		self::renderFooter( 'Install' );
+		$favorites_callback = apply_filters('mainwp_favorites_links_onaction_callback', '');
+		wp_enqueue_script('mainwp-theme', MAINWP_PLUGIN_URL . 'js/mainwp-theme.js', array( 'wp-backbone', 'wp-a11y' ), MAINWP_VERSION);
+		wp_localize_script( 'mainwp-theme', '_mainwpThemeSettings', array(
+			'themes'   => false,
+			'settings' => array(
+				'isInstall'     => true,
+				'canInstall'    => false, //current_user_can( 'install_themes' ),
+				'installURI'    => null, //current_user_can( 'install_themes' ) ? self_admin_url( 'admin.php?page=ThemesInstall' ) : null,
+				'adminUrl'      => parse_url( self_admin_url(), PHP_URL_PATH )
+			),
+			'l10n' => array(
+				'addNew' => __( 'Add New Theme' ),
+				'search' => __( 'Search Themes' ),
+				'searchPlaceholder' => __( 'Search themes...' ), // placeholder (no ellipsis)
+				'upload' => __( 'Upload Theme' ),
+				'back'   => __( 'Back' ),
+				'error'  => __( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="https://wordpress.org/support/">support forums</a>.' ),
+				'themesFound'   => __( 'Number of Themes found: %d' ),
+				'noThemesFound' => __( 'No themes found. Try a different search.' ),
+				'collapseSidebar'    => __( 'Collapse Sidebar' ),
+				'expandSidebar'      => __( 'Expand Sidebar' ),
+			),
+			'installedThemes' => array(),
+			'favoritesOnActionCallback' => $favorites_callback
+		) );
+
+		self::renderHeader('Install');
+		//MainWPInstallBulk::render('Themes', 'theme');
+		self::renderThemesTable($favorites_callback);
+		self::renderFooter('Install');
+	}
+
+	public static function renderThemesTable($favoritesCallback = '') {
+		if (!mainwp_current_user_can("dashboard", "install_themes")) {
+			mainwp_do_not_have_permissions("install themes");
+			return;
+		}
+
+		?>
+		<a href="#" class="mainwp_action left mainwp_action_down browse-themes" ><?php _e('Search','mainwp'); ?></a><a href="#" class="mainwp_action right upload" ><?php _e('Upload','mainwp'); ?></a>
+		<br class="clear" /><br />
+
+		<div class="mainwp_config_box_left" style="width: calc(100% - 290px);">
+			<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
+			<div class="upload-theme">
+				<?php MainWPInstallBulk::renderUpload('Themes'); ?>
+			</div>
+			<div class="wp-filter">
+				<h3 class="mainwp_box_title"><?php _e( 'Step 1: Select a Theme', 'mainwp' ); ?></h3>
+				<div class="filter-count">
+					<span class="count theme-count"></span>
+				</div>
+
+				<ul class="filter-links">
+					<li><a href="#" data-sort="featured"><?php _ex( 'Featured', 'themes' ); ?></a></li>
+					<li><a href="#" data-sort="popular"><?php _ex( 'Popular', 'themes' ); ?></a></li>
+					<li><a href="#" data-sort="new"><?php _ex( 'Latest', 'themes' ); ?></a></li>
+				</ul>
+				<a class="drawer-toggle" href="#"><?php _e( 'Feature Filter' ); ?></a>
+
+				<div class="search-form"></div>
+				<div class="filter-drawer">
+					<div class="buttons">
+						<a class="apply-filters button button-secondary" href="#"><?php _e( 'Apply Filters' ); ?><span></span></a>
+						<a class="clear-filters button button-secondary" href="#"><?php _e( 'Clear' ); ?></a>
+					</div>
+					<?php
+					$feature_list = get_theme_feature_list();
+					foreach ( $feature_list as $feature_name => $features ) {
+						echo '<div class="filter-group">';
+						$feature_name = esc_html( $feature_name );
+						echo '<h4>' . $feature_name . '</h4>';
+						echo '<ol class="feature-group">';
+						foreach ( $features as $feature => $feature_name ) {
+							$feature = esc_attr( $feature );
+							echo '<li><input type="checkbox" id="filter-id-' . $feature . '" value="' . $feature . '" /> ';
+							echo '<label for="filter-id-' . $feature . '">' . $feature_name . '</label></li>';
+						}
+						echo '</ol>';
+						echo '</div>';
+					}
+					?>
+					<div class="filtered-by">
+						<span><?php _e( 'Filtering by:' ); ?></span>
+						<div class="tags"></div>
+						<a href="#"><?php _e( 'Edit' ); ?></a>
+					</div>
+				</div>
+			</div>
+			<div class="theme-browser content-filterable hide-if-upload"></div>
+			<div class="theme-install-overlay wp-full-overlay expanded"></div>
+
+			<p class="no-themes"><?php _e( 'No themes found. Try a different search.' ); ?></p>
+			<span class="spinner"></span>
+
+			<br class="clear" />
+		</div>
+
+		<script id="tmpl-theme" type="text/template">
+			<# if ( data.screenshot_url ) { #>
+				<div class="theme-screenshot">
+					<img src="{{ data.screenshot_url }}" alt="" />
+				</div>
+				<# } else { #>
+					<div class="theme-screenshot blank"></div>
+					<# } #>
+						<span class="more-details"><?php _ex( 'Details &amp; Preview', 'theme' ); ?></span>
+						<div class="theme-author"><?php printf( __( 'By %s' ), '{{ data.author }}' ); ?></div>
+						<h3 class="theme-name">{{ data.name }}</h3>
+
+						<!--<div class="theme-actions">-->
+						<!--<a class="button button-secondary preview install-theme-preview" href="#"><?php esc_html_e( 'Preview' ); ?></a>-->
+						<!--</div>-->
+
+						<div class="mainwp-theme-lnks" style="">
+							<label class="lbl-install-theme" style="font-size: 16px;"><input name="install-theme" type="radio" id="install-theme-{{data.slug}}" title="Install {{data.name}}"><?php esc_html_e( 'Install this Theme' ); ?></label>
+							<?php
+							if (!empty($favoritesCallback)) {
+								?>
+								<div class="favorites-add-link"><a style="font-size: 16px;" class="add-favorites" href="#" id="add-favorite-theme-{{data.slug}}"
+																   title="{{data.name}} {{data.version}}"><?php  _e( 'Add To Favorites' ); ?></a></div>
+								<?php
+							}
+							?>
+						</div>
+
+						<# if ( data.installed ) { #>
+							<div class="theme-installed"><?php _ex( 'Already Installed', 'theme' ); ?></div>
+							<# } #>
+		</script>
+
+		<script id="tmpl-theme-preview" type="text/template">
+			<div class="wp-full-overlay-sidebar">
+				<div class="wp-full-overlay-header">
+					<a href="#" class="close-full-overlay"><span class="screen-reader-text"><?php _e( 'Close' ); ?></span></a>
+					<a href="#" class="previous-theme"><span class="screen-reader-text"><?php _ex( 'Previous', 'Button label for a theme' ); ?></span></a>
+					<a href="#" class="next-theme"><span class="screen-reader-text"><?php _ex( 'Next', 'Button label for a theme' ); ?></span></a>
+					<# if ( data.installed ) { #>
+						<a href="#" class="button button-primary theme-install disabled"><?php _ex( 'Installed', 'theme' ); ?></a>
+						<# } else { #>
+							<a href="{{ data.install_url }}" class="button button-primary theme-install"><?php _e( 'Install' ); ?></a>
+							<# } #>
+				</div>
+				<div class="wp-full-overlay-sidebar-content">
+					<div class="install-theme-info">
+						<h3 class="theme-name">{{ data.name }}</h3>
+						<span class="theme-by"><?php printf( __( 'By %s' ), '{{ data.author }}' ); ?></span>
+
+						<img class="theme-screenshot" src="{{ data.screenshot_url }}" alt="" />
+
+						<div class="theme-details">
+							<# if ( data.rating ) { #>
+								<div class="star-rating rating-{{ Math.round( data.rating / 10 ) * 10 }}">
+									<span class="one"></span><span class="two"></span><span class="three"></span><span class="four"></span><span class="five"></span>
+									<small class="ratings">{{ data.num_ratings }}</small>
+								</div>
+								<# } else { #>
+									<div class="star-rating">
+										<small class="ratings"><?php _e( 'This theme has not been rated yet.' ); ?></small>
+									</div>
+									<# } #>
+										<div class="theme-version"><?php printf( __( 'Version: %s' ), '{{ data.version }}' ); ?></div>
+										<div class="theme-description">{{{ data.description }}}</div>
+						</div>
+					</div>
+				</div>
+				<div class="wp-full-overlay-footer">
+					<button type="button" class="collapse-sidebar button-secondary" aria-expanded="true" aria-label="<?php esc_attr_e( 'Collapse Sidebar' ); ?>">
+						<span class="collapse-sidebar-arrow"></span>
+						<span class="collapse-sidebar-label"><?php _e( 'Collapse' ); ?></span>
+					</button>
+				</div>
+			</div>
+			<div class="wp-full-overlay-main">
+				<iframe src="{{ data.preview_url }}" title="<?php esc_attr_e( 'Preview' ); ?>" />
+			</div>
+		</script>
+		<?php MainWP_UI::select_sites_box( __("Step 2: Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right' ); ?>
+		<div class="mainwp_config_box_right">
+			<div class="postbox install-theme-settings hide-if-upload">
+				<h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'Step 3: Installation Options', 'mainwp' ); ?></h3>
+				<div class="inside">
+					<input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite Existing theme, if already installed', 'mainwp'); ?></label>
+				</div>
+			</div>
+
+			<input type="button" value="<?php _e("Complete Installation"); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_theme_bulk_install_btn" name="bulk-install">
+		</div>
+		<div style="clear: both;"></div>
+
+		<?php
 	}
 
 	//Performs a search
 	public static function performSearch() {
 		MainWP_Install_Bulk::performSearch( MainWP_Themes::getClassName(), 'Themes' );
 	}
-
-	public static function renderFound( $api ) {
-		global $themes_allowedtags;
-		?>
-		<div id="mainwp_availablethemes">
-			<?php
-			$themes     = $api->themes;
-			$rows       = ceil( count( $themes ) / 2 );
-			$table      = array();
-			$theme_keys = array_keys( $themes );
-			for ( $row = 1; $row <= $rows; $row ++ ) {
-				for ( $col = 1; $col <= 3; $col ++ ) {
-					$table[ $row ][ $col ] = array_shift( $theme_keys );
-				}
-			}
-
-			foreach ( $table as $row => $cols ) {
-				foreach ( $cols as $col => $theme_index ) {
-					$class = array( 'available-theme' );
-					if ( $row == 1 ) {
-						$class[] = 'top';
-					}
-					if ( $col == 1 ) {
-						$class[] = 'left';
-					}
-					if ( $row == $rows ) {
-						$class[] = 'bottom';
-					}
-					if ( $col == 3 ) {
-						$class[] = 'right';
-					}
-					?>
-					<div class="<?php echo join( ' ', $class ); ?>">
-						<?php
-						if ( isset( $themes[ $theme_index ] ) ) {
-							$theme        = $themes[ $theme_index ];
-							$name         = wp_kses( $theme->name, $themes_allowedtags );
-							$desc         = wp_kses( $theme->description, $themes_allowedtags );
-							$preview_link = $theme->preview_url . '?TB_iframe=true&amp;width=600&amp;height=400';
-							?>
-
-							<a class='thickbox thickbox-preview screenshot' href='<?php echo esc_url( $preview_link ); ?>'
-								target="_blank" title='Preview <?php echo $name; ?>'>
-								<img src='<?php echo esc_url( $theme->screenshot_url ); ?>'/>
-							</a>
-							<h3><?php echo $name; ?></h3>
-							<span class='action-links'>
-
-								<a href="" class="thickbox thickbox-preview onclick" id="install-theme-<?php echo $theme->slug; ?>" title="Install '<?php echo $name; ?>'">Install</a> |
-								<a href="<?php echo $preview_link; ?>" target="_blank" class="thickbox thickbox-preview onclick previewlink" title="Preview '<?php echo $name; ?>'">Preview</a>
-								<?php do_action( 'mainwp_installthemes_extra_links', $theme ); ?>
-							</span>
-							<p><?php echo $desc; ?></p>
-
-							<div class="themedetaildiv hide-if-js" style="display: block;">
-								<p>
-									<strong><?php _e( 'Version:' ) ?></strong> <?php echo wp_kses( $theme->version, $themes_allowedtags ) ?>
-								</p>
-
-								<p>
-									<strong><?php _e( 'Author:' ) ?></strong> <?php echo wp_kses( $theme->author, $themes_allowedtags ) ?>
-								</p>
-								<?php if ( ! empty( $theme->last_updated ) ) : ?>
-									<p><strong><?php _e( 'Last Updated:' ) ?></strong> <span
-											title="<?php echo $theme->last_updated ?>"><?php printf( __( '%s ago' ), human_time_diff( strtotime( $theme->last_updated ) ) ) ?></span>
-									</p>
-								<?php endif;
-								if ( ! empty( $theme->requires ) ) : ?>
-									<p>
-										<strong><?php _e( 'Requires WordPress Version:' ) ?></strong> <?php printf( __( '%s or higher' ), $theme->requires ) ?>
-									</p>
-								<?php endif;
-								if ( ! empty( $theme->tested ) ) : ?>
-									<p><strong><?php _e( 'Compatible up to:' ) ?></strong> <?php echo $theme->tested ?>
-									</p>
-								<?php endif;
-								if ( ! empty( $theme->downloaded ) ) : ?>
-									<p>
-										<strong><?php _e( 'Downloaded:' ) ?></strong> <?php printf( _n( '%s time', '%s times', $theme->downloaded ), number_format_i18n( $theme->downloaded ) ) ?>
-									</p>
-								<?php endif; ?>
-								<div class="star-holder"
-									title="<?php printf( _n( '(based on %s rating)', '(based on %s ratings)', $theme->num_ratings ), number_format_i18n( $theme->num_ratings ) ) ?>">
-									<div class="star star-rating"
-										style="width: <?php echo esc_attr( $theme->rating ) ?>px"></div>
-								</div>
-							</div>
-
-							<?php
-						}
-						?>
-					</div>
-					<?php
-				} // end foreach $cols
-			}
-			?>
-		</div>
-		<?php
-		die();
-	}
-
 
 	public static function renderAutoUpdate() {
 		$cachedThemesSearch = null;
@@ -1008,7 +1106,7 @@ class MainWP_Themes {
 						} ?>><?php _e( 'Ignored Themes', 'mainwp' ); ?></option>
 					</select>&nbsp;&nbsp;
 					<span><?php _e( 'Containing Keywords:', 'mainwp' ); ?> </span>
-					<input type="text" class="mainwp-field mainwp-keyword" id="mainwp_au_theme_keyword" style="width: 350px;" value="<?php echo ( $cachedThemesSearch !== null ) ? $cachedThemesSearch['keyword'] : ''; ?>">&nbsp;&nbsp;
+					<input type="text" class="" id="mainwp_au_theme_keyword" style="width: 350px;" value="<?php echo ( $cachedThemesSearch !== null ) ? $cachedThemesSearch['keyword'] : ''; ?>">&nbsp;&nbsp;
 					<a href="#" class="button-primary" id="mainwp_show_all_themes"><?php _e( 'Show Themes', 'mainwp' ); ?></a>
 					<span id="mainwp_themes_loading"><i class="fa fa-spinner fa-pulse"></i></span>
 				</div>

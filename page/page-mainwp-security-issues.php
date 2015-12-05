@@ -142,7 +142,7 @@ class MainWP_Security_Issues {
 						</td>
 					</tr>
 				</table>
-				<br/><input type="button" id="securityIssues_fixAll" class="button-primary" value="<?php _e( 'Fix All', 'mainwp' ); ?>"/>
+				<br/><input type="button" id="securityIssues_fixAll button button-hero" class="button-primary" value="<?php _e( 'Fix All', 'mainwp' ); ?>"/>
 				<input type="button" id="securityIssues_refresh" class="button" value="<?php _e( 'Refresh', 'mainwp' ); ?>"/>
 			</div>
 		</div>

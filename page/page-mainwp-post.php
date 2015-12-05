@@ -110,6 +110,7 @@ class MainWP_Post {
 				}
 			}
 			?>
+			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">
 		<?php
@@ -136,58 +137,58 @@ class MainWP_Post {
 		self::renderHeader( 'BulkManage' ); ?>
 		<div class="mainwp-search-form">
 			<div class="postbox mainwp-postbox">
-				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Search Posts', 'mainwp' ); ?>
+				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Step 1: Search Posts', 'mainwp' ); ?>
 				</h3>
 
 				<div class="inside">
 					<ul class="mainwp_checkboxes">
 						<li>
 							<input type="checkbox" id="mainwp_post_search_type_publish" <?php echo ( $cachedSearch == null || ( $cachedSearch != null && in_array( 'publish', $cachedSearch['status'] ) ) ) ? 'checked="checked"' : ''; ?> class="mainwp-checkbox2"/>
-							<label for="mainwp_post_search_type_publish" class="mainwp-label2">Published</label>
+							<label for="mainwp_post_search_type_publish" class="mainwp-label2"><?php _e( 'Published', 'mainwp' ); ?></label>
 						</li>
 						<li>
 							<input type="checkbox" id="mainwp_post_search_type_pending" <?php echo ( $cachedSearch != null && in_array( 'pending', $cachedSearch['status'] ) ) ? 'checked="checked"' : ''; ?> class="mainwp-checkbox2"/>
-							<label for="mainwp_post_search_type_pending" class="mainwp-label2">Pending</label>
+							<label for="mainwp_post_search_type_pending" class="mainwp-label2"><?php _e( 'Pending', 'mainwp' ); ?></label>
 						</li>
 						<li>
 							<input type="checkbox" id="mainwp_post_search_type_private" <?php echo ( $cachedSearch != null && in_array( 'private', $cachedSearch['status'] ) ) ? 'checked="checked"' : ''; ?> class="mainwp-checkbox2"/>
-							<label for="mainwp_post_search_type_private" class="mainwp-label2">Private</label>
+							<label for="mainwp_post_search_type_private" class="mainwp-label2"><?php _e( 'Private', 'mainwp' ); ?></label>
 						</li>
 						<li>
 							<input type="checkbox" id="mainwp_post_search_type_future" <?php echo ( $cachedSearch != null && in_array( 'future', $cachedSearch['status'] ) ) ? 'checked="checked"' : ''; ?> class="mainwp-checkbox2"/>
-							<label for="mainwp_post_search_type_future" class="mainwp-label2">Future</label>
+							<label for="mainwp_post_search_type_future" class="mainwp-label2"><?php _e( 'Future', 'mainwp' ); ?></label>
 						</li>
 						<li>
 							<input type="checkbox" id="mainwp_post_search_type_draft" <?php echo ( $cachedSearch != null && in_array( 'draft', $cachedSearch['status'] ) ) ? 'checked="checked"' : ''; ?> class="mainwp-checkbox2"/>
-							<label for="mainwp_post_search_type_draft" class="mainwp-label2">Draft</label>
+							<label for="mainwp_post_search_type_draft" class="mainwp-label2"><?php _e( 'Draft', 'mainwp' ); ?></label>
 						</li>
 						<li>
 							<input type="checkbox" id="mainwp_post_search_type_trash" <?php echo ( $cachedSearch != null && in_array( 'trash', $cachedSearch['status'] ) ) ? 'checked="checked"' : ''; ?> class="mainwp-checkbox2"/>
-							<label for="mainwp_post_search_type_trash" class="mainwp-label2">Trash</label>
+							<label for="mainwp_post_search_type_trash" class="mainwp-label2"><?php _e( 'Trash', 'mainwp' ); ?></label>
 						</li>
 					</ul>
 					<p>
 						<?php _e( 'Containing Keyword:', 'mainwp' ); ?><br/>
-						<input type="text" id="mainwp_post_search_by_keyword" class="mainwp-field mainwp-keyword" size="50" value="<?php if ( $cachedSearch != null ) {
+						<input type="text" id="mainwp_post_search_by_keyword" class="" size="50" value="<?php if ( $cachedSearch != null ) {
 							echo $cachedSearch['keyword'];
 						} ?>"/>
 					</p>
 
 					<p>
 						<?php _e( 'Date Range:', 'mainwp' ); ?><br/>
-						<input type="text" id="mainwp_post_search_by_dtsstart" class="mainwp_datepicker mainwp-field mainwp-date" size="12" value="<?php if ( $cachedSearch != null ) {
+						<input type="text" id="mainwp_post_search_by_dtsstart" class="mainwp_datepicker" size="12" value="<?php if ( $cachedSearch != null ) {
 							echo $cachedSearch['dtsstart'];
 						} ?>"/> <?php _e( 'to', 'mainwp' ); ?>
-						<input type="text" id="mainwp_post_search_by_dtsstop" class="mainwp_datepicker mainwp-field mainwp-date" size="12" value="<?php if ( $cachedSearch != null ) {
+						<input type="text" id="mainwp_post_search_by_dtsstop" class="mainwp_datepicke" size="12" value="<?php if ( $cachedSearch != null ) {
 							echo $cachedSearch['dtsstop'];
 						} ?>"/>
 					</p>
 				</div>
 			</div>
-			<?php MainWP_UI::select_sites_box( __( 'Select Sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
+			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select Sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
 			<div style="clear: both;"></div>
 
-			<input type="button" name="mainwp_show_posts" id="mainwp_show_posts" class="button-primary" value="<?php _e( 'Show Posts', 'mainwp' ); ?>"/>
+			<input type="button" name="mainwp_show_posts" id="mainwp_show_posts" class="button-primary button button-hero button-right" value="<?php _e( 'Show Posts', 'mainwp' ); ?>"/>
 			<?php
 			if ( isset( $_REQUEST['siteid'] ) && isset( $_REQUEST['postid'] ) ) {
 				echo '<script>jQuery(document).ready(function() { mainwp_show_post(' . $_REQUEST['siteid'] . ', ' . $_REQUEST['postid'] . ', undefined)});</script>';
@@ -195,7 +196,8 @@ class MainWP_Post {
 				echo '<script>jQuery(document).ready(function() { mainwp_show_post(' . $_REQUEST['siteid'] . ', undefined, ' . $_REQUEST['userid'] . ')});</script>';
 			}
 			?>
-			<span id="mainwp_posts_loading"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e( 'Grabbing information from Child Sites', 'mainwp' ) ?></em></span>
+			<br/><br/>
+			<span id="mainwp_posts_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e( 'Grabbing information from Child Sites', 'mainwp' ) ?></em></span>
 			<br/><br/>
 		</div>
 		<div class="clear"></div>
@@ -625,8 +627,6 @@ class MainWP_Post {
 		//Posts the saved sites
 		?>
 		<div class="wrap">
-			<!--        <img src="--><?php //echo plugins_url('images/icons/mainwp-post.png', dirname(__FILE__));
-			?><!--" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Post" height="32"/>-->
 			<h2>New Post</h2>
 			<?php
 			do_action( 'mainwp_bulkpost_before_post', $_GET['id'] );
@@ -660,8 +660,6 @@ class MainWP_Post {
 						include_once( ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php' );
 						$post_featured_image = get_post_thumbnail_id( $id );
 						$mainwp_upload_dir   = wp_upload_dir();
-						//                $results = apply_filters('mainwp-pre-posting-posts', array($post), true);
-						//                $post = $results[0];
 						$new_post = array(
 							'post_title'     => $post->post_title,
 							'post_content'   => $post->post_content,
@@ -765,15 +763,17 @@ class MainWP_Post {
 						}
 
 						$countSites = 0;
+						$countRealItems = 0;
 						foreach ( $dbwebsites as $website ) {
 							if ( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ) {
-								$countSites ++;
+								$countSites++;
+								$countRealItems++;
 							}
 						}
 
 						if ( ! empty( $countSites ) ) {
 							$seconds = ( time() - $startTime );
-							MainWP_Twitter::updateTwitterInfo( 'new_post', $countSites, $seconds, 1, $startTime, 1 );
+							MainWP_Twitter::updateTwitterInfo( 'new_post', $countSites, $seconds, $countRealItems, $startTime, 1 );
 						}
 
 						if ( MainWP_Twitter::enabledTwitterMessages() ) {
@@ -825,62 +825,6 @@ class MainWP_Post {
 		</div>
 		<?php
 	}
-
-	// public static function postingContent($id, $timestamp, $cats, $websiteId )
-	// {
-	// if (intval($id) > 0) {
-	// $post = get_post($id);
-	// if ($post) {
-	// $cats = is_array($cats) ? $cats  : array();
-	// $post_tags = base64_decode(get_post_meta($id, '_tags', true));
-	// $post_slug = base64_decode(get_post_meta($id, '_slug', true));
-	// $post_custom = get_post_custom($id);
-	// $results = apply_filters('mainwp-pre-posting-posts', array($post), true);
-	// $post = $results[0];
-	// $new_post = array(
-	// 'post_title' => $post->post_title,
-	// 'post_content' => $post->post_content,
-	// 'post_date' => date('Y-m-d H:i:s', $timestamp),
-	// 'post_status' => $post->post_status,
-	// 'post_type' => $post->post_type,
-	// 'id_spin' => $post->ID,
-	// );
-
-	// $website = MainWP_DB::Instance()->getWebsiteById($websiteId);
-	// if (!MainWP_Utility::can_edit_website($website)) return false;
-
-	// $post_data = array(
-	// 'new_post' => base64_encode(serialize($new_post)),
-	// 'post_custom' => base64_encode(serialize($post_custom)),
-	// '_ezin_post_category' => base64_encode(serialize($cats))
-	// );
-
-	// try
-	// {
-	// $information = MainWP_Utility::fetchUrlAuthed($website, 'newpost', $post_data);
-	// }
-	// catch (Exception $e)
-	// {
-	// throw  $e;
-	// }
-
-	// $ret = array();
-	// if (is_array($information))
-	// {
-	// $ret['wp_insert_id'] = $information['added_id'];
-	// $ret['wp_insert_link'] = $information['link'];
-
-	// if (($information['added'] == 1) && (isset($information['added_id'])))
-	// {
-	// do_action('mainwp-post-posting-post', $website, $information['added_id'], (isset($information['link']) ? $information['link'] : null));
-	// }
-	// }
-	// return $ret;
-	// }
-	// }
-
-	// return false;
-	// }
 
 	public static function PostsGetTerms_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
@@ -965,7 +909,7 @@ class MainWP_Post {
 								} else {
 									$checked = '';
 								}
-								$ret .= '<div class="mainwp_selected_sites_item ' . ( ! empty( $checked ) ? 'selected_sites_item_checked' : '' ) . '"><input type="checkbox" name="' . $input_name . '" value="' . $siteid . ',' . $cat->term_id . ',' . $cat->name . '" ' . $checked . '/><label>' . $cat->name . '</label></div>';
+								$ret .= '<div class="mainwp_selected_sites_item ' . ( ! empty( $checked ) ? 'selected_sites_item_checked' : '' ) . '"><input type="checkbox" name="' . $input_name . '" value="' . $siteid . ',' . $cat->term_id . ',' . stripslashes( $cat->name ) . '" ' . $checked . '/><label>' . $cat->name . '</label></div>';
 							}
 						}
 					} else {

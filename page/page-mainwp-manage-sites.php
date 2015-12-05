@@ -1009,6 +1009,30 @@ class MainWP_Manage_Sites {
 		}
 
 		self::$sitesTable->prepare_items( $globalIgnoredPluginConflicts, $globalIgnoredThemeConflicts );
+
+		if ( MainWP_Twitter::enabledTwitterMessages() ) {
+			$filter = array(    'upgrade_all_plugins',
+				'upgrade_all_themes',
+				'upgrade_all_wp_core'
+			);
+			foreach ( $filter as $what ) {
+				$twitters = MainWP_Twitter::getTwitterNotice( $what );
+				if ( is_array( $twitters ) ) {
+					foreach ( $twitters as $timeid => $twit_mess ) {
+						$sendText = "";
+						if ( !empty( $twit_mess ) ) {
+							$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
+						}
+						if ( !empty( $sendText ) ) {
+							?>
+							<div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText );?><span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
+							<?php
+						}
+					}
+				}
+			}
+		}
+
 		?>
 		<div id="mainwp_managesites_content">
 			<div id="mainwp_managesites_add_errors" class="mainwp_error mainwp_info-box-red"></div>
@@ -1313,15 +1337,22 @@ class MainWP_Manage_Sites {
 				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_maximumFileDescriptors'] ) && $_POST['mainwp_options_maximumFileDescriptors'] > - 1 ) {
 					MainWP_Utility::update_option( 'mainwp_maximumFileDescriptors', $_POST['mainwp_options_maximumFileDescriptors'] );
 				}
-				MainWP_Utility::update_option( 'mainwp_maximumFileDescriptorsAuto', ( ! isset( $_POST['mainwp_maximumFileDescriptorsAuto'] ) ? 0 : 1 ) );
+				MainWP_Utility::update_option( 'mainwp_maximumFileDescriptorsAuto', ( !isset( $_POST['mainwp_maximumFileDescriptorsAuto'] ) ? 0 : 1 ) );
 				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_backupOnExternalSources'] ) && $_POST['mainwp_options_backupOnExternalSources'] >= 0 ) {
 					MainWP_Utility::update_option( 'mainwp_backupOnExternalSources', $_POST['mainwp_options_backupOnExternalSources'] );
 				}
 				MainWP_Utility::update_option( 'mainwp_archiveFormat', $_POST['mainwp_archiveFormat'] );
-				MainWP_Utility::update_option( 'mainwp_options_loadFilesBeforeZip', ( ! isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 0 : 1 ) );
-				MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', ( ! isset( $_POST['mainwp_options_notificationOnBackupFail'] ) ? 0 : 1 ) );
-				MainWP_Utility::update_option( 'mainwp_notificationOnBackupStart', ( ! isset( $_POST['mainwp_options_notificationOnBackupStart'] ) ? 0 : 1 ) );
-				MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', ( ! isset( $_POST['mainwp_options_chunkedBackupTasks'] ) ? 0 : 1 ) );
+				if (isset($_POST['mainwp_primaryBackup']) && !empty($_POST['mainwp_primaryBackup'])) // not default backup method
+				{
+					MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', 0 );
+					MainWP_Utility::update_option( 'mainwp_notificationOnBackupStart', 0 );
+					MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', 0 );
+				} else {
+					MainWP_Utility::update_option( 'mainwp_options_loadFilesBeforeZip', (!isset($_POST['mainwp_options_loadFilesBeforeZip']) ? 0 : 1) );
+					MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', (!isset($_POST['mainwp_options_notificationOnBackupFail']) ? 0 : 1) );
+					MainWP_Utility::update_option( 'mainwp_notificationOnBackupStart', (!isset($_POST['mainwp_options_notificationOnBackupStart']) ? 0 : 1) );
+					MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', (!isset($_POST['mainwp_options_chunkedBackupTasks']) ? 0 : 1) );
+				}
 
 				return true;
 			}

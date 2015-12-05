@@ -4,7 +4,7 @@ class MainWP_Api_Manager {
 
 	private $upgrade_url = 'https://extensions.mainwp.com/';
 	private $renew_license_url = 'https://extensions.mainwp.com/my-account';
-	const MAINWP_EXTENSIONS_SHOP_IP = '69.167.133.91'; // replace for upgrade_url
+	const MAINWP_EXTENSIONS_SHOP_IP_ADDRESS = '69.167.133.91'; // replace for upgrade_url
 	public $domain = '';
 	/**
 	 * @var The single instance of the class
@@ -218,7 +218,19 @@ class MainWP_Api_Manager {
 		) );
 	}
 
-	public function get_purchased_software( $username, $password ) {
+	public function purchase_software( $username, $password, $productId ) {
+		if (empty($username) || empty($password)) {
+			return false;
+		}
+
+		return MainWP_Api_Manager_Key::instance()->purchasesoftware( array(
+			'username' => $username,
+			'password' => $password,
+			'product_id' =>$productId
+		) );
+	}
+
+	public function get_purchased_software( $username, $password, $productId = "" ) {
 		if ( empty( $username ) || empty( $password ) ) {
 			return false;
 		}
@@ -226,6 +238,7 @@ class MainWP_Api_Manager {
 		return MainWP_Api_Manager_Key::instance()->getpurchasedsoftware( array(
 			'username' => $username,
 			'password' => $password,
+			'product_id' => $productId
 		) );
 	}
 
@@ -267,8 +280,11 @@ class MainWP_Api_Manager {
 					$options['activated_key']       = 'Activated';
 					$options['deactivate_checkbox'] = 'off';
 				} else {
+
 					if ( $activate_results == false ) {
-						$return['error'] = __( 'Connection failed to the License Key API server. Try again later.', 'mainwp' );
+						$return['error'] = __( 'Connection failed to the License Key API server. Try again later.', "mainwp" );
+					} else if ( isset( $activate_results['error'] ) ) {
+						$return['error'] =  $activate_results['error'];
 					} else if ( empty( $activate_results['api_key'] ) ) {
 						$return['error'] = __( 'License key is empty.', 'mainwp' );
 					} else {

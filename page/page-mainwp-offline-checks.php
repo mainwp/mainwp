@@ -10,29 +10,6 @@ class MainWP_Offline_Checks {
 			MainWP_Offline_Checks::getClassName(),
 			'render',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Offline Checks Help', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Offline Checks Help', 'mainwp' ) . '</div>', 'read', 'OfflineChecksHelp', array(
-			MainWP_Offline_Checks::getClassName(),
-			'QSGManageOfflineChecks',
-		) );
-	}
-
-	public static function renderHeader( $shownPage ) {
-		?>
-		<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
-		<img src="<?php echo plugins_url( 'images/icons/mainwp-offline.png', dirname( __FILE__ ) ); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Offline Checks" height="32"/>
-		<h2><?php _e( 'Offline Checks', 'mainwp' ); ?></h2>
-		<div style="clear: both;"></div><br/>
-		<div class="mainwp-tabs" id="mainwp-tabs">
-			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'OfflineChecks' ) {
-				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=OfflineChecks"><?php _e( 'Manage', 'mainwp' ); ?></a>
-			<a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ( $shownPage == 'OfflineChecksHelp' ) {
-				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=OfflineChecksHelp"><?php _e( 'Help', 'mainwp' ); ?></a>
-		</div>
-		<div id="mainwp_wrap-inside">
-		<?php
 	}
 
 	public static function renderFooter( $shownPage ) {
@@ -54,6 +31,10 @@ class MainWP_Offline_Checks {
 		do_action( 'mainwp-pageheader-settings', 'OfflineChecks' );
 
 		?>
+        <div class="mainwp_info-box-red">
+        <strong>IMPORTANT:</strong> This feature is being retired and replaced by the Free MainWP Advanced Uptime Monitor Extension which provides more advanced monitoring system.<br/>
+        <a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
+        </div>
 		<div class="mainwp_info-box">
 			<strong><?php _e( 'Notifications will be sent to', 'mainwp' ); ?>
 				<i><?php echo MainWP_Utility::getNotificationEmail(); ?></i> (<a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e( 'change', 'mainwp' ); ?></a>)</strong>
@@ -101,9 +82,9 @@ class MainWP_Offline_Checks {
 						<a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php echo stripslashes( $website->name ); ?></a>
 						<span class="offline_check_saved"><?php _e( 'Saved', 'mainwp' ); ?></span></td>
 					<td>
-						<img class="down-img" title="Site Offline" src="<?php echo plugins_url( 'images/down.png', dirname( __FILE__ ) ); ?>" <?php echo( $website->offline_check_result == - 1 ? '' : 'style="display:none;"' ); ?> />
-						<img class="up-img" title="Site Online" src="<?php echo plugins_url( 'images/up.png', dirname( __FILE__ ) ); ?>" <?php echo( $website->offline_check_result == 1 ? '' : 'style="display:none;"' ); ?> />
-					</td>
+                        <i class="fa fa-exclamation-circle fa-2x mwp-red" title="Site Offline" <?php echo ( $website->offline_check_result == -1 ? '' : 'style="display:none;"' ); ?>></i>
+                        <i class="fa fa-check-circle fa-2x mwp-l-green" title="Site Online" <?php echo ( $website->offline_check_result == 1 ? '' : 'style="display:none;"' ); ?>></i>
+                   </td>
 					<td class="column-rating">
 						<input type="radio" id="disabled" class="mainwp_offline_check" value="disabled"
 							name="offline_check_<?php echo $website->id; ?>"
@@ -215,6 +196,11 @@ class MainWP_Offline_Checks {
 					//Add
 					if ( function_exists( 'openssl_pkey_new' ) ) {
 						$conf = array( 'private_key_bits' => 384 );
+	                    $conf_loc = MainWP_System::get_openssl_conf();
+	                    if ( !empty( $conf_loc ) ) {
+		                    $conf['config'] = $conf_loc;
+						}
+
 						$res  = openssl_pkey_new( $conf );
 						@openssl_pkey_export( $res, $privkey, null, $conf );
 						$pubkey = openssl_pkey_get_details( $res );
@@ -315,6 +301,10 @@ class MainWP_Offline_Checks {
 				<span><i class="fa fa-cog"></i> <?php _e( 'Offline Check Options', 'mainwp' ); ?></span></h3>
 
 			<div class="inside">
+				<div class="mainwp_info-box-red">
+					<strong>IMPORTANT:</strong> This feature is being retired and replaced by the Free MainWP Advanced Uptime Monitor Extension which provides more advanced monitoring system.<br/>
+					<a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
+				</div>
 				<table class="form-table">
 					<tbody>
 					<tr>
@@ -332,44 +322,5 @@ class MainWP_Offline_Checks {
 			</div>
 		</div>
 		<?php
-	}
-
-	public static function QSGManageOfflineChecks() {
-		self::renderHeader( 'OfflineChecksHelp' );
-		?>
-		<div style="text-align: center">
-			<a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e( 'Show Quick Start Guide', 'mainwp' ); ?></a>
-		</div>
-		<div class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
-			<span><a href="#" class="mainwp-show-qsg" number="1"><?php _e( 'Manage Offline Checks', 'mainwp' ) ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
-				</a></span>
-
-			<div class="clear"></div>
-			<div id="mainwp-qsgs">
-				<div class="mainwp-qsg" number="1">
-					<h3>Manage Offline Checks</h3>
-
-					<p>
-					<ol>
-						<li>
-							In the provided list, you can see list of your sites and option to set offline check for each of them
-							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-offline-check-1024x154.jpg" style="wight: 100% !important;" alt="screenshot"/>
-						</li>
-						<li>
-							Choose whether you like to do Hourly, Twice a Day, Daily, Weekly or to Disable checks.
-						</li>
-						<li>
-							If you want the instant report, click Check link, or Check All to get a report for all sites
-							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-check-site-1024x154.jpg" style="wight: 100% !important;" alt="screenshot"/>
-						</li>
-					</ol>
-					</p>
-				</div>
-			</div>
-		</div>
-		<?php
-		self::renderFooter( 'OfflineChecksHelp' );
 	}
 }

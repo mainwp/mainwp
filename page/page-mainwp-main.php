@@ -115,7 +115,10 @@ class MainWP_Main {
 			MainWP_Help::getClassName(),
 			'render',
 		), $page, 'normal', 'core' );
-		//add_meta_box($page.'-contentbox-' . $i++, MainWPNews::getName(), array(MainWPNews::getClassName(), 'render'), $page, 'normal', 'core');
+		add_meta_box($page.'-contentbox-' . $i++, MainWP_How_To::getName(), array(
+			MainWP_How_To::getClassName(),
+			'render'
+		), $page, 'normal', 'core');
 
 		$extMetaBoxs = MainWP_System::Instance()->apply_filter( 'mainwp-getmetaboxes', array() );
 		$extMetaBoxs = apply_filters( 'mainwp-getmetaboxs', $extMetaBoxs );
@@ -182,7 +185,7 @@ class MainWP_Main {
 						<td>
 							<div id="mainwp-welocme-bar-top">
                     <span style="float:right;">
-                    <a style="font-size: 18px;" class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWP_Right_Now::renderLastUpdate(); ?>"><?php _e( '<i class="fa fa-refresh"></i> Sync Data', 'mainwp' ); ?></a>
+                    <a style="font-size: 18px;" class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWP_Right_Now::renderLastUpdate(); ?>"><?php _e( '<i class="fa fa-refresh"></i> Sync Data with Child Sites', 'mainwp' ); ?></a>
                     <a style="font-size: 18px;" class="button-hero button-primary button" target="_blank" href="https://extensions.mainwp.com"><?php _e( '<i class="fa fa-cart-plus"></i> Get New Extensions', 'mainwp' ); ?></a>
                     </span>
 								<?php
@@ -281,6 +284,7 @@ class MainWP_Main {
 			<div id="mainwp_main_errors" class="mainwp_error"></div>
 		</form>
 
+		<div id="mainwp-dashboard-info-box">
 		<?php if ( empty( $current_wp_id ) && MainWP_Twitter::enabledTwitterMessages() ) {
 			$filter = array(
 				'upgrade_everything',
@@ -292,20 +296,26 @@ class MainWP_Main {
 				$twitters = MainWP_Twitter::getTwitterNotice( $what );
 				if ( is_array( $twitters ) ) {
 					foreach ( $twitters as $timeid => $twit_mess ) {
+						$sendText = "";
 						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
-							?>
-							<div class="mainwp-tips mainwp_info-box-blue twitter">
-								<span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText ); ?>
-								<span><a href="#" class="mainwp-dismiss-twit"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
-									</a></span></div>
-							<?php
+							if (!empty($sendText)) {
+								$sendText = MainWP_Twitter::getTwitToSend($what, $timeid);
+								?>
+								<div class="mainwp-tips mainwp_info-box-blue twitter">
+									<span class="mainwp-tip" twit-what="<?php echo $what; ?>"
+										  twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton($sendText); ?>
+									<span><a href="#" class="mainwp-dismiss-twit"><i
+												class="fa fa-times-circle"></i> <?php _e('Dismiss', 'mainwp'); ?>
+										</a></span></div>
+								<?php
+							}
 						}
 					}
 				}
 			}
 			?>
 		<?php } ?>
+		</div>
 
 
 		<div id="dashboard-widgets-wrap">

@@ -121,6 +121,7 @@ public static function renderHeader( $shownPage ) {
 				}
 			}
 			?>
+			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">
 			<?php
@@ -295,7 +296,7 @@ public static function renderHeader( $shownPage ) {
 				MainWP_Manage_Backups::renderNewEdit( null );
 				?>
 				<p class="submit">
-					<input type="button" name="mainwp_managebackups_add" id="mainwp_managebackups_add" class="button-primary" value="<?php _e( 'Add New Task', 'mainwp' ); ?>"/>
+					<input type="button" name="mainwp_managebackups_add" id="mainwp_managebackups_add" class="button-primary button button-hero" value="<?php _e( 'Add New Task', 'mainwp' ); ?>"/>
 				</p>
 			</form>
 		</div>
@@ -337,7 +338,7 @@ public static function renderHeader( $shownPage ) {
 							<tr class="form-field form-required">
 								<th scope="row"><?php _e( 'Task Name:', 'mainwp' ); ?></th>
 								<td>
-									<input type="text" id="mainwp_managebackups_add_name" class="mainwp-field mainwp-task-name" name="mainwp_managebackups_add_name" value="<?php echo( isset( $task ) ? $task->name : '' ); ?>"/><span class="mainwp-form_hint">e.g. Site1 Daily, Site1 Full Weekly, ...</span>
+									<input type="text" id="mainwp_managebackups_add_name" class="" name="mainwp_managebackups_add_name" value="<?php echo( isset( $task ) ? $task->name : '' ); ?>"/><span class="mainwp-form_hint">e.g. Site1 Daily, Site1 Full Weekly, ...</span>
 								</td>
 							</tr>
 							<tr>
@@ -349,7 +350,7 @@ public static function renderHeader( $shownPage ) {
 							<tr>
 								<th scope="row"><?php _e( 'Backup File Name:', 'mainwp' ); ?></th>
 								<td>
-									<input type="text" name="backup_filename" id="backup_filename" class="mainwp-field mainwp-file-name" value="<?php echo( isset( $task ) ? $task->filename : '' ); ?>"/><span class="mainwp-form_hint" style="display: inline; max-width: 500px;">Allowed Structure Tags: <strong>%url%</strong>, <strong>%date%</strong>, <strong>%time%</strong>, <strong>%type%</strong></span>
+									<input type="text" name="backup_filename" id="backup_filename" class="" value="<?php echo( isset( $task ) ? $task->filename : '' ); ?>"/><span class="mainwp-form_hint" style="display: inline; max-width: 500px;">Allowed Structure Tags: <strong>%url%</strong>, <strong>%date%</strong>, <strong>%time%</strong>, <strong>%type%</strong></span>
 								</td>
 							</tr>
 							<tr>
@@ -1031,7 +1032,7 @@ public static function renderHeader( $shownPage ) {
 			echo '<ul class="jqueryFileTree" style="display: none;">';
 			// All dirs
 			foreach ( $allFiles as $file ) {
-				echo '<li class="directory collapsed"><a href="#" rel="' . htmlentities( $_POST['dir'] . $file ) . '/">' . htmlentities( $file ) . '<div title="Exclude form backup" class="exclude_folder_control"><img src="' . plugins_url( 'images/exclude.png', dirname( __FILE__ ) ) . '" /></div></a></li>';
+				echo '<li class="directory collapsed"><a href="#" rel="' . esc_attr( $_POST['dir'] . $file ) . '/">' . esc_html( $file ) . '<div title="Exclude form backup" class="exclude_folder_control"><img src="' . plugins_url( 'images/exclude.png', dirname( __FILE__ ) ) . '" /></div></a></li>';
 			}
 			echo '</ul>';
 

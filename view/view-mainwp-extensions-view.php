@@ -18,38 +18,7 @@ class MainWP_Extensions_View {
 				alt="MainWP"/></a>
 		<h2><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h2>
 		<div style="clear: both;"></div><br/><br/>
-		<?php if ( $shownPage === '' ) { ?>
-			<div id="mainwp-extensions-categories-menu" class="postbox">
-				<div class="mainwp-inside">
-					<span id="mainwp-extensions-menu-title"><?php _e( 'Get MainWP Extensions', 'mainwp' ); ?></span>
-				</div>
-				<div style="border-bottom: 1px Solid #e5e5e5;"></div>
-				<div class="mainwp-inside mainwp-align-center" style="clear: both;">
-					<div id="mainwp-extensions-cat-menu">
-						<ul id="mainwp-extensions-menu-cat-list">
-							<li class="mainwp-extensions-menu-item mainwp-category-1">
-								<a href="https://extensions.mainwp.com/product-category/mainwp-extensions/administrative/"><?php _e( 'Administrative', 'mainwp' ); ?></a>
-							</li>
-							<li class="mainwp-extensions-menu-item mainwp-category-2">
-								<a href="https://extensions.mainwp.com/product-category/mainwp-extensions/content/"><?php _e( 'Content', 'mainwp' ); ?></a>
-							</li>
-							<li class="mainwp-extensions-menu-item mainwp-category-3">
-								<a href="https://extensions.mainwp.com/product-category/mainwp-extensions/visitor-data/"><?php _e( 'Visitor Data', 'mainwp' ); ?></a>
-							</li>
-							<li class="mainwp-extensions-menu-item mainwp-category-4">
-								<a href="https://extensions.mainwp.com/product-category/mainwp-extensions/free/"><?php _e( 'Free Extensions', 'mainwp' ); ?></a>
-							</li>
-							<li class="mainwp-extensions-menu-item mainwp-category-5">
-								<a href="https://extensions.mainwp.com/shop/"><?php _e( 'All Extensions', 'mainwp' ); ?></a>
-							</li>
-						</ul>
-					</div>
-					<div style="clear: both;"></div>
-				</div>
-			</div>
-
-			<?php
-
+		<?php if ( $shownPage === '' ) {
 			$loader_url = '<i class="fa fa-spinner fa-pulse"></i>';
 			if ( mainwp_current_user_can( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
 
@@ -104,12 +73,12 @@ class MainWP_Extensions_View {
 							<div class="api-grabbing-fields">
 								<input type="text" class="input username" placeholder="<?php echo __( 'Username', 'mainwp' ); ?>" value="<?php echo $username; ?>"/>&nbsp;
 								<input type="password" class="input passwd" placeholder="<?php echo __( 'Password', 'mainwp' ); ?>" value="<?php echo $password; ?>"/>&nbsp;
-								<label><input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e( 'Save API login', 'mainwp' ); ?>
+								<label><input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e( 'Check to Save API login', 'mainwp' ); ?>
 								</label>
 							</div>
 							<p>
 				<span class="extension_api_loading">
-					<input type="button" class="button-primary" id="mainwp-extensions-savelogin" value="<?php _e( 'Save Login', 'mainwp' ); ?>">
+					<input type="button" class="button-primary button button-hero" id="mainwp-extensions-savelogin" value="<?php _e( 'Save Login', 'mainwp' ); ?>">
 					<i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
 				</span>
 							</p>
@@ -121,12 +90,12 @@ class MainWP_Extensions_View {
 
 							<div id="mainwp-install-purchased-extensions">
 								<p>
-									<span class="description"><?php _e( 'The Install Purchased Extensions button will automatically install all your MainWP Extensions. You can also install them manually using the directions <a href="http://docs.mainwp.com/how-to-install-mainwp-extensions/" >here</a>.' ); ?></span>
+									<span class="description"><?php _e( 'The Show Purchased Extensions button will show you all your MainWP Extensions. After the list appears, you can select wanted extensions and install them automatically. You can also install them manually using the directions <a href="http://docs.mainwp.com/how-to-install-mainwp-extensions/" >here</a>.' ); ?></span>
 								</p>
 
 								<p>
 				<span class="extension_api_loading">
-					<input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-bulkinstall" value="<?php _e( 'Install purchased extensions', 'mainwp' ); ?>">
+					<input type="button" class="mainwp-upgrade-button button-primary button button-hero" id="mainwp-extensions-bulkinstall" value="<?php _e( 'Show purchased extensions', 'mainwp' ); ?>">
 					<i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
 				</span>
 								</p>
@@ -137,12 +106,12 @@ class MainWP_Extensions_View {
 							<strong><?php _e( 'Step 3', 'mainwp' ); ?></strong>
 
 							<p>
-								<span class="description"><?php _e( 'The Grab API Keys will automatically add your API Keys and activate your Extensions. You can also manually enter your API for each Extension following the steps <a href="http://docs.mainwp.com/enter-extensions-api-keys/" >here</a>.' ); ?></span>
+								<span class="description"><?php _e( 'The Grab API Keys will automatically add your API Keys for Extension automatic updates. You can also manually enter your API for each Extension following the steps <a href="http://docs.mainwp.com/enter-extensions-api-keys/" >here</a>.' ); ?></span>
 							</p>
 
 							<p>
 				<span class="extension_api_loading">
-					<input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-grabkeys" value="<?php _e( 'Grab Api Keys', 'mainwp' ); ?>">
+					<input type="button" class="mainwp-upgrade-button button-primary button button-hero" id="mainwp-extensions-grabkeys" value="<?php _e( 'Grab Api Keys', 'mainwp' ); ?>">
 					<i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
 				</span>
 							</p>
@@ -169,6 +138,7 @@ class MainWP_Extensions_View {
 				}
 			}
 			?>
+			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">
 		<?php
@@ -223,12 +193,15 @@ class MainWP_Extensions_View {
 				</div>
 				<div id="mainwp-extensions-list">
 					<?php
+					$user_can_manage_extensions = mainwp_current_user_can( 'dashboard', 'manage_extensions' );
+
 					if ( isset( $extensions ) && is_array( $extensions ) ) {
 						foreach ( $extensions as $extension ) {
 							if ( ! mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
 								continue;
 							}
-							$active = MainWP_Extensions::isExtensionEnabled( $extension['plugin'] );
+							$active = MainWP_Extensions::isExtensionActivated( $extension['plugin'] );
+							$enabled = MainWP_Extensions::isExtensionEnabled( $extension['plugin'] );
 
 							$queue_status = '';
 
@@ -242,10 +215,10 @@ class MainWP_Extensions_View {
 										<?php
 										if ( isset( $extension['iconURI'] ) && ( $extension['iconURI'] != '' ) ) {
 											?>
-											<img title="<?php echo $extension['name']; ?>" src="<?php echo MainWP_Utility::removeHttpPrefix( $extension['iconURI'] ); ?>" class="mainwp-extensions-img large <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>" /><?php
+											<img title="<?php echo $extension['name']; ?>" src="<?php echo MainWP_Utility::removeHttpPrefix( $extension['iconURI'] ); ?>" class="mainwp-extensions-img large <?php echo( $enabled ? '' : 'mainwp-extension-icon-desaturated' ); ?>" /><?php
 										} else {
 											?>
-											<img title="MainWP Placeholder" src="<?php echo plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) ); ?>" class="mainwp-extensions-img large <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>" /><?php
+											<img title="MainWP Placeholder" src="<?php echo plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) ); ?>" class="mainwp-extensions-img large <?php echo( $enabled ? '' : 'mainwp-extension-icon-desaturated' ); ?>" /><?php
 										}
 										?>
 									</td>
@@ -270,71 +243,51 @@ class MainWP_Extensions_View {
 												</td>
 												<td class="mainwp-extensions-childVersion">V. <?php echo $extension['version']; ?></td>
 												<td class="mainwp-extensions-childActions">
-													<?php if ( $active ) { ?>
-														<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && ! empty( $extension['api_key'] ) ) { ?>
-															<a href="javascript:void(0)" class="api-status activated" ><?php _e( 'Activated','mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-															<?php if ( mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
-																<a href="#" class="mainwp-extensions-api-activation" style="font-size: 28px;"><i class="fa fa-unlock"></i></a>
-															<?php }  ?>
-														<?php } else {  ?>
-															<?php if ( mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
-																<a href="#" class="button mainwp-extensions-disable"><?php _e( 'Disable','mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-																<span style="font-size: 28px;"><i class="fa fa-unlock"></i></span>
-															<?php } //  ?>
-														<?php }  ?>
-														<?php if ( isset( $extension['direct_page'] ) && ! empty( $extension['direct_page'] ) ) { ?>
-															<a href="<?php echo admin_url( 'admin.php?page='.$extension['direct_page'] ); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
-														<?php } else if ( isset( $extension['callback'] ) ) { ?>
-															<a href="<?php echo admin_url( 'admin.php?page='.$extension['page'] ); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
-														<?php } else { ?>
-															<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-wrench"></i></span>
+													<?php if (isset($extension['apiManager']) && $extension['apiManager']) { ?>
+														<?php if ($active) { ?>
+															<a href="javascript:void(0)" class="api-status activated" ><?php _e('Activated','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+														<?php } else {?>
+															<a href="javascript:void(0)" class="api-status deactivated" title="Not Activated"><?php _e('Deactivated','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 														<?php } ?>
-														<?php if ( mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
-															<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-trash"></i></span>
-														<?php } //  ?>
-													<?php } else {
-														$apilink = '';
-														$locked = false;
-														if ( isset( $extension['mainwp'] ) && ($extension['mainwp'] == true) ) {
-															//MainWP plugin, check if it requires authentication
-															if ( isset( $extension['api'] ) ) {
-																$apilink = admin_url( 'admin.php?page=Settings' );
-																//plugin locked (api not valid)
-																$locked = (MainWP_API_Settings::testAPIs( $extension['api'] ) != 'VALID');
-															}
-														} else {
-															//Third party plugin, check if it requires authentication
-															if ( isset( $extension['apilink'] ) ) {
-																$apilink = $extension['apilink'];
-																//plugin locked
-																$locked = (isset( $extension['locked'] ) && ($extension['locked'] == true));
-															}
-														}
-														?>
-														<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && ! empty( $extension['api_key'] ) ) { ?>
-															<a href="javascript:void(0)" class="api-status deactivated" title="Not Activated"><?php _e( 'Deactivated','mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-															<?php if ( mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
-																<a href="#" class="mainwp-extensions-api-activation"><i class="fa fa-lock image-api-status"></i></a>
-															<?php } ?>
-														<?php } else { ?>
-															<?php if ( mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
-																<button class="button-primary mainwp-extensions-enable" <?php echo ($locked ? 'disabled' : ''); ?>><?php _e( 'Enable','mainwp' ); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-																<?php if ( $apilink != '' ) { ?>
-																	<a href="<?php echo $apilink; ?>" style="font-size: 28px;"><i class="fa fa-<?php echo ( ! $locked ? 'un' : '') .'lock'; ?>"></i></a>
-																<?php } else { ?>
-																	<i class="fa fa-unlock"></i></a>
-																<?php }?>
-															<?php } ?>
-														<?php } ?>
+													<?php } ?>
 
-														<?php if ( isset( $extension['callback'] ) ) { ?>
-															<a href="<?php echo admin_url( 'admin.php?page='.$extension['page'] ); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
+
+													<?php if ($enabled) { ?>
+														<button href="#" <?php echo $user_can_manage_extensions ? 'class="button mainwp-extensions-disable"' : 'disabled="disabled"'; ?> ><?php _e('Disable','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+													<?php } else {  ?>
+														<button <?php echo $user_can_manage_extensions ? 'class="button-primary mainwp-extensions-enable"' : 'disabled="disabled"'; ?> ><?php _e('Enable','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+													<?php } ?>
+
+													<?php if (isset($extension['apiManager']) && $extension['apiManager']) { ?>
+														<?php if ($user_can_manage_extensions) { ?>
+															<?php if ($active) { ?>
+																<a href="#" class="mainwp-extensions-api-activation" style="font-size: 28px;"><i class="fa fa-lock"></i></a>
+															<?php } else {?>
+																<a href="#" class="mainwp-extensions-api-activation" style="font-size: 28px;"><i class="fa fa-unlock"></i></a>
+															<?php } ?>
 														<?php } else { ?>
-															<img src="<?php echo plugins_url( 'images/extensions/settings-freeze.png', dirname( __FILE__ ) ); ?>" title="Settings" />
+															<?php if ($active) { ?>
+																<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-lock"></i></span>
+															<?php } else {?>
+																<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-unlock"></i></span>
+															<?php } ?>
 														<?php } ?>
-														<?php if ( mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
-															<a href="#" class="mainwp-extensions-trash" style="font-size: 28px"><i class="fa fa-trash"></i></a>
-														<?php } ?>
+													<?php } else { ?>
+														<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-lock"></i></span>
+													<?php } ?>
+
+													<?php if (isset($extension['direct_page']) && !empty($extension['direct_page'])) { ?>
+														<a href="<?php echo admin_url('admin.php?page='.$extension['direct_page']); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
+													<?php } else if (isset($extension['callback'])) { ?>
+														<a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
+													<?php } else { ?>
+														<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-wrench"></i></span>
+													<?php } ?>
+
+													<?php if (false && $user_can_manage_extensions) { ?>
+														<a href="#" class="mainwp-extensions-trash" style="font-size: 28px"><i class="fa fa-trash"></i></a>
+													<?php } else { ?>
+														<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-trash"></i></span>
 													<?php } ?>
 												</td>
 											</tr>
@@ -403,29 +356,48 @@ class MainWP_Extensions_View {
 	public static function mainwpAvailableExtensions( $extensions ) {
 
 		$all_extensions = self::getAvailableExtensions();
+		$all_groups = self::getExtensionGroups();
 
 		$installed_slugs = array();
-		if ( is_array( $extensions ) ) {
-			foreach ( $extensions as $ext ) {
-				$installed_slugs[] = dirname( $ext['slug'] );
+		if (is_array($extensions)) {
+			foreach ($extensions as $ext) {
+				$installed_slugs[] = dirname($ext['slug']);
 			}
 		}
 
 		?>
-		<div class="postbox">
+		<div class="postbox" id="mainwp-available-extensions">
 			<div class="handle"></div>
-			<h3 class="mainwp_box_title"><?php _e( 'Available Extensions on <a href="//extensions.mainwp.com">MainWP Extensions</a>' ); ?></h3>
+			<h3 class="mainwp_box_title"><?php _e('Available <a href="//extensions.mainwp.com">MainWP Extensions</a>'); ?></h3>
 
 			<div>
+				<div id="mainwp-extensions-filter" style="background: #eee; padding: 1em .6em;">
+					<a class="mainwp_action left mainwp-show-extensions mainwp_action_down" href="#"
+					   group="all"><?php _e('All', 'mainwp'); ?></a><!--
+			 --><a class="mainwp_action mid mainwp-show-extensions" href="#"
+				   group="free"><?php _e("Free", 'mainwp'); ?></a><?php
+					$i = 0;
+					foreach ($all_groups as $gr_id => $gr_name) {
+						$i++;
+						?><a
+						class="mainwp_action <?php echo ($i < count($all_groups)) ? 'mid' : 'right'; ?> mainwp-show-extensions"
+						href="#" group="<?php echo $gr_id; ?>"><?php echo esc_html($gr_name); ?></a><?php
+					}
+					?>
+				</div>
 				<div id="mainwp-available-extensions-list">
 					<?php
-					foreach ( $all_extensions as $ext ) {
-						if ( in_array( $ext['slug'], $installed_slugs ) ) {
+					$i = 0;
+					foreach ($all_extensions as $ext) {
+						if (in_array($ext['slug'], $installed_slugs))
 							continue;
-						}
-						$is_free = ( isset( $ext['free'] ) && $ext['free'] ) ? true : false;
+						$is_free = (isset($ext['free']) && $ext['free']) ? true : false;
+						$group_class = implode(" group-", $ext['group']);
+						$group_class = " group-" . $group_class;
 						?>
-						<div class="mainwp-availbale-extension-holder <?php echo ( $is_free ) ? 'mainwp-free' : 'mainwp-paid'; ?>" style="clear: both;">
+						<div
+							class="mainwp-availbale-extension-holder <?php echo ($i % 2) ? 'mainwp-odd' : ''; ?> <?php echo ($is_free) ? 'mainwp-free group-free' : 'mainwp-paid'; ?> <?php echo $group_class; ?>"
+							style="clear: both;">
 							<div class="mainwp-av-ext-icon">
 								<img src="<?php echo $ext['img'] ?>"/>
 							</div>
@@ -433,14 +405,12 @@ class MainWP_Extensions_View {
 								<?php
 								echo $is_free ? '<span class="mainwp-price"></span>' : '';
 								?>
-								<a href="<?php echo str_replace( array(
-									'http:',
-									'https:'
-								), '', $ext['link'] ); ?>" class="button">Find Out More</a>
-								<a href="<?php echo str_replace( array(
-									'http:',
-									'https:'
-								), '', $ext['link'] ); ?>" class="button button-primary mainwp-upgrade-button">Order Now</a>
+								<a target="_blank"
+								   href="<?php echo str_replace(array("http:", "https:"), "", $ext['link']); ?>"
+								   class="button">Find Out More</a>
+								<a target="_blank"
+								   href="<?php echo str_replace(array("http:", "https:"), "", '//extensions.mainwp.com/checkout/?add-to-cart=' . $ext['catalog_id']); ?>"
+								   class="button button-primary mainwp-upgrade-button">Order Now</a>
 							</div>
 							<div class="mainwp-av-ext-desciption">
 								<h2><?php echo $ext['title'] ?></h2>
@@ -449,11 +419,30 @@ class MainWP_Extensions_View {
 							</div>
 
 						</div>
-					<?php } ?>
+						<?php
+						$i++;
+					}
+					?>
+				</div>
+				<div class="installed-group-exts" style="clear: both; display: none">
+					<?php echo __('All selected group extensions are Installed.', 'mainwp') ?>
 				</div>
 			</div>
 		</div>
 		<?php
+	}
+
+	public static function getExtensionGroups() {
+		$groups = array(
+			'backup' => __('Backups', 'mainwp'),
+			'content' => __('Content', 'mainwp'),
+			'security' => __('Security', 'mainwp'),
+			'hosting' => __('Hosting', 'mainwp'),
+			'admin' => __('Administrative', 'mainwp'),
+			'performance' => __('Performance', 'mainwp'),
+			'visitor' => __('Visitor Data', 'mainwp')
+		);
+		return $groups;
 	}
 
 	public static function getAvailableExtensions() {
@@ -466,6 +455,8 @@ class MainWP_Extensions_View {
 				'link'       => 'https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/',
 				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2013/06/Advanced-Uptime-Monitor-300x300.png',
 				'product_id' => 'Advanced Uptime Monitor Extension',
+				'catalog_id' => '218',
+				'group' => array('admin')
 			),
 			array(
 				'slug'       => 'mainwp-article-uploader-extension',
@@ -474,6 +465,8 @@ class MainWP_Extensions_View {
 				'link'       => 'https://extensions.mainwp.com/product/mainwp-article-uploader-extension/',
 				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/08/mainwp-article-uploader-extension.png',
 				'product_id' => 'MainWP Article Uploader Extension',
+				'catalog_id' => '15340',
+				'group' => array('content')
 			),
 			array(
 				'slug'       => 'mainwp-backupwordpress-extension',
@@ -482,6 +475,19 @@ class MainWP_Extensions_View {
 				'link'       => 'https://extensions.mainwp.com/product/mainwp-backupwordpress-extension/',
 				'img'        => 'https://extensions.mainwp.com/wp-content/uploads/2015/05/mainwp-backupwordpress-extension.png',
 				'product_id' => 'MainWP BackUpWordPress Extension',
+				'catalog_id' => '273535',
+				'group' => array('backup')
+			),
+			array(
+				'free' => true,
+				'slug' => 'mainwp-blogvault-backup-extension',
+				'title' => 'MainWP BlogVault Backup Extension',
+				'desc' => 'MainWP BlogVault Backup Extension allows you to claim your 25% discount for the BlogVault Backup service.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-blogvault-incremental-backup-extension/',
+				'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/10/mainwp-blogvault-backup-extension.png',
+				'product_id' => 'MainWP BlogVault Backup Extension',
+				'catalog_id' => '347111',
+				'group' => array('backup')
 			),
 			array(
 				'slug'       => 'boilerplate-extension',
@@ -490,6 +496,8 @@ class MainWP_Extensions_View {
 				'link'       => 'https://extensions.mainwp.com/product/mainwp-boilerplate-extension/',
 				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/boilerplate-icon-300x300.png',
 				'product_id' => 'Boilerplate Extension',
+				'catalog_id' => '1188',
+				'group' => array('content')
 			),
 			array(
 				'slug'       => 'mainwp-branding-extension',
@@ -498,6 +506,8 @@ class MainWP_Extensions_View {
 				'link'       => 'https://extensions.mainwp.com/product/mainwp-child-plugin-branding-extension/',
 				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/03/mainwp-child-pllugin-branding-extension.png',
 				'product_id' => 'MainWP Branding Extension',
+				'catalog_id' => '10679',
+				'group' => array('admin')
 			),
 			array(
 				'slug'       => 'mainwp-broken-links-checker-extension',
@@ -506,6 +516,18 @@ class MainWP_Extensions_View {
 				'link'       => 'https://extensions.mainwp.com/product/mainwp-broken-links-checker-extension/',
 				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/07/mainwp-broken-links-checker-extension.png',
 				'product_id' => 'MainWP Broken Links Checker Extension',
+				'catalog_id' => '12737',
+				'group' => array('performance')
+			),
+			array(
+				'slug' => 'mainwp-bulk-settings-manager',
+				'title' => 'MainWP Bulk Settings Manager',
+				'desc' => 'The Bulk Settings Manager Extension unlocks the world of WordPress directly from your MainWP Dashboard.  With Bulk Settings Manager you can adjust your Child site settings for the WordPress Core and almost any WordPress Plugin or Theme.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-bulk-settings-manager-extension/',
+				'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/10/mainwp-bulk-settings-manager-extension.png',
+				'product_id' => 'MainWP Bulk Settings Manager',
+				'catalog_id' => '347704',
+				'group' => array('admin')
 			),
 			array(
 				'free'       => true,
@@ -515,6 +537,8 @@ class MainWP_Extensions_View {
 				'link'       => 'https://extensions.mainwp.com/product/mainwp-clean-lock-extension/',
 				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/07/mainwp-clean-and-lock-extension.png',
 				'product_id' => 'MainWP Clean and Lock Extension',
+				'catalog_id' => '12907',
+				'group' => array('security')
 			),
 			array(
 				'slug'       => 'mainwp-client-reports-extension',
@@ -523,170 +547,272 @@ class MainWP_Extensions_View {
 				'link'       => 'https://extensions.mainwp.com/product/mainwp-client-reports-extension/',
 				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/mainwp-client-reports-extension.png',
 				'product_id' => 'MainWP Client Reports Extension',
+				'catalog_id' => '12139',
+				'group' => array('admin')
 			),
 			array(
-				'slug'       => 'mainwp-clone-extension',
-				'title'      => 'MainWP Clone Extension',
-				'desc'       => 'MainWP Clone Extension is an extension for the MainWP plugin that enables you to clone your child sites with no technical knowledge required.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-clone-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-clone-ext-icon.png',
+				'slug' => 'mainwp-clone-extension',
+				'title' => 'MainWP Clone Extension',
+				'desc' => 'MainWP Clone Extension is an extension for the MainWP plugin that enables you to clone your child sites with no technical knowledge required.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-clone-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-clone-ext-icon.png',
 				'product_id' => 'MainWP Clone Extension',
+				'catalog_id' => '1555',
+				'group' => array('admin')
 			),
 			array(
-				'slug'       => 'mainwp-code-snippets-extension',
-				'title'      => 'MainWP Code Snippets Extension',
-				'desc'       => 'The MainWP Code Snippets Extension is a powerful PHP platform that enables you to execute php code and scripts on your child sites and view the output on your Dashboard. Requires the MainWP Dashboard plugin.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-code-snippets-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/04/mainwp-code-snippets-extension.png',
+				'slug' => 'mainwp-code-snippets-extension',
+				'title' => 'MainWP Code Snippets Extension',
+				'desc' => 'The MainWP Code Snippets Extension is a powerful PHP platform that enables you to execute php code and scripts on your child sites and view the output on your Dashboard. Requires the MainWP Dashboard plugin.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-code-snippets-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/04/mainwp-code-snippets-extension.png',
 				'product_id' => 'MainWP Code Snippets Extension',
+				'catalog_id' => '11196',
+				'group' => array('admin')
 			),
 			array(
-				'slug'       => 'mainwp-comments-extension',
-				'title'      => 'MainWP Comments Extension',
-				'desc'       => 'MainWP Comments Extension is an extension for the MainWP plugin that enables you to manage comments on your child sites.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-comments-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-comments-ext-icon.png',
+				'slug' => 'mainwp-comments-extension',
+				'title' => 'MainWP Comments Extension',
+				'desc' => 'MainWP Comments Extension is an extension for the MainWP plugin that enables you to manage comments on your child sites.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-comments-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-comments-ext-icon.png',
 				'product_id' => 'MainWP Comments Extension',
+				'catalog_id' => '1551',
+				'group' => array('admin')
 			),
 			array(
-				'slug'       => 'mainwp-favorites-extension',
-				'title'      => 'MainWP Favorites Extension',
-				'desc'       => 'MainWP Favorites is an extension for the MainWP plugin that allows you to store your favorite plugins and themes, and install them directly to child sites from the dashboard repository.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-favorites-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-favorites-icon.png',
+				'slug' => 'mainwp-favorites-extension',
+				'title' => 'MainWP Favorites Extension',
+				'desc' => 'MainWP Favorites is an extension for the MainWP plugin that allows you to store your favorite plugins and themes, and install them directly to child sites from the dashboard repository.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-favorites-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-favorites-icon.png',
 				'product_id' => 'MainWP Favorites Extension',
+				'catalog_id' => '1379',
+				'group' => array('admin')
 			),
 			array(
-				'slug'       => 'mainwp-file-uploader-extension',
-				'title'      => 'MainWP File Uploader Extension',
-				'desc'       => 'MainWP File Uploader Extension gives you an simple way to upload files to your child sites! Requires the MainWP Dashboard plugin.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-file-uploader-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/mainwp-file-uploader-extension.png',
+				'slug' => 'mainwp-file-uploader-extension',
+				'title' => 'MainWP File Uploader Extension',
+				'desc' => 'MainWP File Uploader Extension gives you an simple way to upload files to your child sites! Requires the MainWP Dashboard plugin.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-file-uploader-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/mainwp-file-uploader-extension.png',
 				'product_id' => 'MainWP File Uploader Extension',
+				'catalog_id' => '11637',
+				'group' => array('content')
 			),
 			array(
-				'slug'       => 'mainwp-google-analytics-extension',
-				'title'      => 'MainWP Google Analytics Extension',
-				'desc'       => 'MainWP Google Analytics Extension is an extension for the MainWP plugin that enables you to monitor detailed statistics about your child sites traffic. It integrates seamlessly with your Google Analytics account.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-google-analytics-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-ga-ext-icon.png',
+				'slug' => 'mainwp-google-analytics-extension',
+				'title' => 'MainWP Google Analytics Extension',
+				'desc' => 'MainWP Google Analytics Extension is an extension for the MainWP plugin that enables you to monitor detailed statistics about your child sites traffic. It integrates seamlessly with your Google Analytics account.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-google-analytics-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-ga-ext-icon.png',
 				'product_id' => 'MainWP Google Analytics Extension',
+				'catalog_id' => '1554',
+				'group' => array('visitor')
 			),
 			array(
-				'slug'       => 'mainwp-links-manager-extension',
-				'title'      => 'MainWP Links Manager',
-				'desc'       => 'MainWP Links Manager is an Extension that allows you to create, manage and track links in your posts and pages for all your sites right from your MainWP Dashboard.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-links-manager/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2013/08/links-manager-1.png',
+				'free' => true,
+				'slug' => 'mainwp-inmotion-hosting-extension',
+				'title' => 'MainWP InMotion Hosting Extension',
+				'desc' => 'MainWP InMotion Hosting Extension allows you to claim your coupon for 1 year of free hosting provided by the InMotion Hosting company.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-inmotion-hosting-extension/',
+				'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/07/mainwp-inmotion-extension.png',
+				'product_id' => 'MainWP InMotion Hosting Extension',
+				'catalog_id' => '336219',
+				'group' => array('hosting')
+			),
+			array(
+				'slug' => 'mainwp-links-manager-extension',
+				'title' => 'MainWP Links Manager',
+				'desc' => 'MainWP Links Manager is an Extension that allows you to create, manage and track links in your posts and pages for all your sites right from your MainWP Dashboard.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-links-manager/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2013/08/links-manager-1.png',
 				'product_id' => 'MainWP Links Manager Extension',
+				'catalog_id' => '317',
+				'group' => array('content')
 			),
 			array(
-				'slug'       => 'mainwp-maintenance-extension',
-				'title'      => 'MainWP Maintenance Extension',
-				'desc'       => 'MainWP Maintenance Extension is MainWP Dashboard extension that clears unwanted entries from child sites in your network. You can delete post revisions, delete auto draft pots, delete trash posts, delete spam, pending and trash comments, delete unused tags and categories and optimize database tables on selected child sites.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-maintenance-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/Maintenance-Icon-3-300x300.png',
+				'slug' => 'mainwp-maintenance-extension',
+				'title' => 'MainWP Maintenance Extension',
+				'desc' => 'MainWP Maintenance Extension is MainWP Dashboard extension that clears unwanted entries from child sites in your network. You can delete post revisions, delete auto draft pots, delete trash posts, delete spam, pending and trash comments, delete unused tags and categories and optimize database tables on selected child sites.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-maintenance-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/Maintenance-Icon-3-300x300.png',
 				'product_id' => 'MainWP Maintenance Extension',
+				'catalog_id' => '1141',
+				'group' => array('admin')
 			),
 			array(
-				'slug'       => 'mainwp-piwik-extension',
-				'title'      => 'MainWP Piwik Extension',
-				'desc'       => 'MainWP Piwik Extension is an extension for the MainWP plugin that enables you to monitor detailed statistics about your child sites traffic. It integrates seamlessly with your Piwik account.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-piwik-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/03/mainwp-piwik-extension.png',
+				'slug' => 'mainwp-piwik-extension',
+				'title' => 'MainWP Piwik Extension',
+				'desc' => 'MainWP Piwik Extension is an extension for the MainWP plugin that enables you to monitor detailed statistics about your child sites traffic. It integrates seamlessly with your Piwik account.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-piwik-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/03/mainwp-piwik-extension.png',
 				'product_id' => 'MainWP Piwik Extension',
+				'catalog_id' => '10523',
+				'group' => array('visitor')
 			),
 			array(
-				'slug'       => 'mainwp-post-dripper-extension',
-				'title'      => 'MainWP Post Dripper Extension',
-				'desc'       => 'MainWP Post Dripper Extension allows you to deliver posts or pages to your network of sites over a pre-scheduled period of time. Requires MainWP Dashboard plugin.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-post-dripper-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/mainwp-post-dripper-extension.png',
+				'slug' => 'mainwp-post-dripper-extension',
+				'title' => 'MainWP Post Dripper Extension',
+				'desc' => 'MainWP Post Dripper Extension allows you to deliver posts or pages to your network of sites over a pre-scheduled period of time. Requires MainWP Dashboard plugin.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-post-dripper-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/mainwp-post-dripper-extension.png',
 				'product_id' => 'MainWP Post Dripper Extension',
+				'catalog_id' => '11756',
+				'group' => array('content')
 			),
 			array(
-				'slug'       => 'mainwp-remote-backup-extension',
-				'title'      => 'MainWP Remote Backups Extension',
-				'desc'       => 'MainWP Remote Backup Extension is an extension for the MainWP plugin that enables you store your backups on different off site locations.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-remote-backups-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-remote-backups-ext-icon.png',
+				'slug' => 'mainwp-remote-backup-extension',
+				'title' => 'MainWP Remote Backups Extension',
+				'desc' => 'MainWP Remote Backup Extension is an extension for the MainWP plugin that enables you store your backups on different off site locations.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-remote-backups-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/01/mainwp-remote-backups-ext-icon.png',
 				'product_id' => 'MainWP Remote Backup Extension',
+				'catalog_id' => '1553',
+				'group' => array('backup')
 			),
 			array(
-				'free'       => true,
-				'slug'       => 'mainwp-spinner',
-				'title'      => 'MainWP Spinner',
-				'desc'       => 'MainWP Extension Plugin allows words to spun {|} when when adding articles and posts to your blogs. Requires the installation of MainWP Main Plugin.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-spinner/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2013/06/spinner-300x300.png',
+				'slug' => 'mainwp-rocket-extension',
+				'title' => 'MainWP Rocket Extension',
+				'desc' => 'MainWP Rocket Extension combines the power of your MainWP Dashboard with the popular WP Rocket Plugin. It allows you to mange WP Rocket settings and quickly Clear and Preload cache on your child sites.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-rocket-extension/',
+				'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/07/mainwp-rocket-extension.png',
+				'product_id' => 'MainWP Rocket Extension',
+				'catalog_id' => '335257',
+				'group' => array('performance')
+			),
+			array(
+				'slug' => 'mainwp-spinner',
+				'title' => 'MainWP Spinner',
+				'desc' => 'MainWP Extension Plugin allows words to spun {|} when when adding articles and posts to your blogs. Requires the installation of MainWP Main Plugin.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-spinner/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2013/06/spinner-300x300.png',
 				'product_id' => 'MainWP Spinner',
+				'catalog_id' => '110',
+				'group' => array('content')
 			),
 			array(
-				'free'       => true,
-				'slug'       => 'mainwp-sucuri-extension',
-				'title'      => 'MainWP Sucuri Extension',
-				'desc'       => 'MainWP Sucuri Extension enables you to scan your child sites for various types of malware, spam injections, website errors, and much more. Requires the MainWP Dashboard.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-sucuri-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/03/mainwp-sucuri-extension.png',
+				'free' => true,
+				'slug' => 'mainwp-sucuri-extension',
+				'title' => 'MainWP Sucuri Extension',
+				'desc' => 'MainWP Sucuri Extension enables you to scan your child sites for various types of malware, spam injections, website errors, and much more. Requires the MainWP Dashboard.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-sucuri-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/03/mainwp-sucuri-extension.png',
 				'product_id' => 'MainWP Sucuri Extension',
+				'catalog_id' => '10777',
+				'group' => array('security')
 			),
 			array(
-				'slug'       => 'mainwp-team-control',
-				'title'      => 'MainWP Team Control',
-				'desc'       => 'MainWP Team Control extension allows you to create a custom roles for your dashboard site users and limiting their access to MainWP features. Requires MainWP Dashboard plugin.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-team-control/',
-				'img'        => 'https://extensions.mainwp.com/wp-content/uploads/2014/10/mainwp-team-control-extension.png',
+				'slug' => 'mainwp-team-control',
+				'title' => 'MainWP Team Control',
+				'desc' => 'MainWP Team Control extension allows you to create a custom roles for your dashboard site users and limiting their access to MainWP features. Requires MainWP Dashboard plugin.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-team-control/',
+				'img' => 'https://extensions.mainwp.com/wp-content/uploads/2014/10/mainwp-team-control-extension.png',
 				'product_id' => 'MainWP Team Control',
+				'catalog_id' => '23936',
+				'group' => array('admin')
 			),
 			array(
-				'free'       => true,
-				'slug'       => 'mainwp-updraftplus-extension',
-				'title'      => 'MainWP UpdraftPlus Extension',
-				'desc'       => 'MainWP UpdraftPlus Extension combines the power of your MainWP Dashboard with the popular WordPress UpdraftPlus Plugin. It allows you to quickly back up your child sites.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-updraftplus-extension/',
-				'img'        => 'https://extensions.mainwp.com/wp-content/uploads/2015/04/mainwp-updraftplus-extension.png',
+				'free' => true,
+				'slug' => 'mainwp-updraftplus-extension',
+				'title' => 'MainWP UpdraftPlus Extension',
+				'desc' => 'MainWP UpdraftPlus Extension combines the power of your MainWP Dashboard with the popular WordPress UpdraftPlus Plugin. It allows you to quickly back up your child sites.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-updraftplus-extension/',
+				'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/04/mainwp-updraftplus-extension.png',
 				'product_id' => 'MainWP UpdraftPlus Extension',
+				'catalog_id' => '165843',
+				'group' => array('backup')
 			),
 			array(
-				'slug'       => 'mainwp-url-extractor-extension',
-				'title'      => 'MainWP URL Extractor Extension',
-				'desc'       => 'MainWP URL Extractor allows you to search your child sites post and pages and export URLs in customized format. Requires MainWP Dashboard plugin.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-url-extractor-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/mainwp-url-extractor-extension.png',
+				'slug' => 'mainwp-url-extractor-extension',
+				'title' => 'MainWP URL Extractor Extension',
+				'desc' => 'MainWP URL Extractor allows you to search your child sites post and pages and export URLs in customized format. Requires MainWP Dashboard plugin.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-url-extractor-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/mainwp-url-extractor-extension.png',
 				'product_id' => 'MainWP Url Extractor Extension',
+				'catalog_id' => '11965',
+				'group' => array('admin')
 			),
 			array(
-				'free'       => true,
-				'slug'       => 'mainwp-woocommerce-shortcuts-extension',
-				'title'      => 'MainWP WooCommerce Shortcuts Extension',
-				'desc'       => 'MainWP WooCommerce Shortcuts provides you a quick access WooCommerce pages in your network. Requires MainWP Dashboard plugin.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-woocommerce-shortcuts-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-woocommerce-shortcuts-extension.png',
+				'free' => true,
+				'slug' => 'mainwp-woocommerce-shortcuts-extension',
+				'title' => 'MainWP WooCommerce Shortcuts Extension',
+				'desc' => 'MainWP WooCommerce Shortcuts provides you a quick access WooCommerce pages in your network. Requires MainWP Dashboard plugin.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-woocommerce-shortcuts-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-woocommerce-shortcuts-extension.png',
 				'product_id' => 'MainWP WooCommerce Shortcuts Extension',
+				'catalog_id' => '12706',
+				'group' => array('admin')
 			),
 			array(
-				'slug'       => 'mainwp-woocommerce-status-extension',
-				'title'      => 'MainWP WooCommerce Status Extension',
-				'desc'       => 'MainWP WooCommerce Status provides you a quick overview of your WooCommerce stores in your network. Requires MainWP Dashboard plugin.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-woocommerce-status-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-woocommerce-status-extension.png',
+				'slug' => 'mainwp-woocommerce-status-extension',
+				'title' => 'MainWP WooCommerce Status Extension',
+				'desc' => 'MainWP WooCommerce Status provides you a quick overview of your WooCommerce stores in your network. Requires MainWP Dashboard plugin.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-woocommerce-status-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-woocommerce-status-extension.png',
 				'product_id' => 'MainWP WooCommerce Status Extension',
+				'catalog_id' => '12671',
+				'group' => array('admin')
 			),
 			array(
-				'slug'       => 'mainwp-wordfence-extension',
-				'title'      => 'MainWP WordFence Extension',
-				'desc'       => 'The WordFence Extension combines the power of your MainWP Dashboard with the popular WordPress Wordfence Plugin. It allows you to manage WordFence settings, Monitor Live Traffic and Scan your child sites directly from your dashboard. Requires MainWP Dashboard plugin.',
-				'link'       => 'https://extensions.mainwp.com/product/mainwp-wordfence-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/09/mainwp-wordfence-icon.png',
+				'slug' => 'mainwp-wordfence-extension',
+				'title' => 'MainWP WordFence Extension',
+				'desc' => 'The WordFence Extension combines the power of your MainWP Dashboard with the popular WordPress Wordfence Plugin. It allows you to manage WordFence settings, Monitor Live Traffic and Scan your child sites directly from your dashboard. Requires MainWP Dashboard plugin.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-wordfence-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/09/mainwp-wordfence-icon.png',
 				'product_id' => 'MainWP Wordfence Extension',
+				'catalog_id' => '19678',
+				'group' => array('security')
 			),
 			array(
-				'slug'       => 'wordpress-seo-extension',
-				'title'      => 'MainWP WordPress SEO Extension',
-				'desc'       => 'MainWP WordPress SEO extension by MainWP enables you to manage all your WordPress SEO by Yoast plugins across your network. Create and quickly set settings templates from one central dashboard. Requires MainWP Dashboard plugin.',
-				'link'       => 'https://extensions.mainwp.com/product/wordpress-seo-extension/',
-				'img'        => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/wordpress-seo-extension.png',
+				'slug' => 'wordpress-seo-extension',
+				'title' => 'MainWP WordPress SEO Extension',
+				'desc' => 'MainWP WordPress SEO extension by MainWP enables you to manage all your WordPress SEO by Yoast plugins across your network. Create and quickly set settings templates from one central dashboard. Requires MainWP Dashboard plugin.',
+				'link' => 'https://extensions.mainwp.com/product/wordpress-seo-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/05/wordpress-seo-extension.png',
 				'product_id' => 'MainWP Wordpress SEO Extension',
+				'catalog_id' => '12080',
+				'group' => array('content')
+			),
+			array(
+				'slug' => 'mainwp-page-speed-extension',
+				'title' => 'MainWP Page Speed Extension',
+				'desc' => 'MainWP Page Speed Extension enables you to use Google Page Speed insights to monitor website performance across your network. Requires MainWP Dashboard plugin.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-page-speed-extension/',
+				'img' => 'http://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-page-speed-extension.png',
+				'product_id' => 'MainWP Page Speed Extension',
+				'catalog_id' => '12581',
+				'group' => array('perfomance')
+			),
+			array(
+				'slug' => 'mainwp-ithemes-security-extension',
+				'title' => 'MainWP iThemes Security Extension',
+				'desc' => 'The iThemes Security Extension combines the power of your MainWP Dashboard with the popular iThemes Security Plugin. It allows you to manage iThemes Security plugin settings directly from your dashboard. Requires MainWP Dashboard plugin.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-ithemes-security-extension/',
+				'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/03/mainwp-security-extension.png',
+				'product_id' => 'MainWP Security Extension',
+				'catalog_id' => '113355',
+				'group' => array('security')
+			),
+			array(
+				'slug' => 'mainwp-post-plus-extension',
+				'title' => 'MainWP Post Plus Extension',
+				'desc' => 'Enhance your MainWP publishing experience. The MainWP Post Plus Extension allows you to save work in progress as Post and Page drafts. That is not all, it allows you to use random authors, dates and categories for your posts and pages. Requires the MainWP Dashboard plugin.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-post-plus-extension/',
+				'img' => 'https://extensions.mainwp.com/wp-content/uploads/2014/06/mainwp-post-plus-extension.png',
+				'product_id' => 'MainWP Post Plus Extension',
+				'catalog_id' => '12458',
+				'group' => array('admin')
+			),
+			array(
+				'slug' => 'mainwp-blogvault-backup-extension',
+				'title' => 'MainWP BlogVault Backup Extension',
+				'desc' => 'MainWP BlogVault Backup Extension allows you to claim your 25% discount for the BlogVault Backup service.',
+				'link' => 'https://extensions.mainwp.com/product/mainwp-blogvault-incremental-backup-extension/',
+				'img' => 'https://extensions.mainwp.com/wp-content/uploads/2015/10/mainwp-blogvault-backup-extension.png',
+				'product_id' => 'MainWP BlogVault Backup Extension',
+				'catalog_id' => '347111',
+				'group' => array('backup')
 			),
 		);
 	}

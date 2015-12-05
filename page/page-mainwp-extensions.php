@@ -69,7 +69,8 @@ class MainWP_Extensions {
 	}
 
 	static function filter_ApiUpgradeUrl( $api_url ) {
-		return str_replace( 'extensions.mainwp.com', MainWP_Api_Manager::MAINWP_EXTENSIONS_SHOP_IP, $api_url );
+		// apply for extensions.mainwp.com only
+		return str_replace( 'extensions.mainwp.com', MainWP_Api_Manager::MAINWP_EXTENSIONS_SHOP_IP_ADDRESS, $api_url );
 	}
 
 	public static function initMenu() {
@@ -202,7 +203,6 @@ class MainWP_Extensions {
             <div class="wp-submenu sub-open" style="">
                 <div class="mainwp_boxout mainwp-submenu-wide">
                     <div class="mainwp_boxoutin"></div>
-                    <ul class="mainwp-submenu-ul">
 						<?php echo $html; ?>
                 </div>
             </div>
@@ -219,7 +219,7 @@ class MainWP_Extensions {
 			MainWP_Extensions::getClassName(),
 			'disableAllExtensions',
 		) );
-		add_action( 'wp_ajax_mainwp_extension_enable', array( MainWP_Extensions::getClassName(), 'enableExtension' ) );
+		add_action( 'wp_ajax_mainwp_extension_enable', array( MainWP_Extensions::getClassName(), 'ajaxEnableExtension' ) );
 		add_action( 'wp_ajax_mainwp_extension_disable', array(
 			MainWP_Extensions::getClassName(),
 			'disableExtension',
@@ -269,8 +269,10 @@ class MainWP_Extensions {
 	public static function enableAllExtensions() {
 		$snEnabledExtensions = array();
 
-		foreach ( $_POST['slugs'] as $slug ) {
-			$snEnabledExtensions[] = $slug;
+		if ( isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ) {
+			foreach ( $_POST['slugs'] as $slug ) {
+				$snEnabledExtensions[] = $slug;
+			}
 		}
 
 		MainWP_Utility::update_option( 'mainwp_extloaded', $snEnabledExtensions );
@@ -284,19 +286,22 @@ class MainWP_Extensions {
 		die( json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
 
-	public static function enableExtension() {
+	public static function ajaxEnableExtension()
+	{
+		self::enableExtension($_POST['slug']);
+		die(json_encode(array('result' => 'SUCCESS')));
+	}
+
+	public static function enableExtension($slug) {
 		$snEnabledExtensions = get_option( 'mainwp_extloaded' );
 		if ( ! is_array( $snEnabledExtensions ) ) {
 			$snEnabledExtensions = array();
 		}
 
-		$snEnabledExtensions[] = $_POST['slug'];
+		$snEnabledExtensions[] = $slug;
 
-		MainWP_Utility::update_option( 'mainwp_extloaded', $snEnabledExtensions );
-
-		die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+		return MainWP_Utility::update_option( 'mainwp_extloaded', $snEnabledExtensions );
 	}
-
 
 	public static function activateExtension() {
 		$api       = dirname( $_POST['slug'] );
@@ -428,8 +433,14 @@ class MainWP_Extensions {
 		if ( is_array( $result ) ) {
 			if ( isset( $result['success'] ) && $result['success'] ) {
 				$all_available_exts = array();
+				$map_extensions_group = array();
+				$free_group = array();
 				foreach ( MainWP_Extensions_View::getAvailableExtensions() as $ext ) {
 					$all_available_exts[ $ext['product_id'] ] = $ext;
+					$map_extensions_group[ $ext['product_id'] ] = current( $ext['group'] ); // first group
+					if ( isset( $ext['free'] ) && !empty( $ext['free'] ) ) {
+						$free_group[] = $ext['product_id'];
+					}
 				}
 				self::loadExtensions();
 				$installed_softwares = array();
@@ -444,33 +455,64 @@ class MainWP_Extensions {
 				$not_purchased_exts = array_diff_key( $all_available_exts, $purchased_data );
 				$installing_exts    = array_diff_key( $purchased_data, $installed_softwares );
 
+				//todo update to coding standards
+				$all_groups = MainWP_Extensions_View::getExtensionGroups();
+				$grouped_exts = array();
+				foreach($installing_exts as $product_id => $product_info) {
+					$item_html = '';
+					$software_title = isset($all_available_exts[$product_id]) ? $all_available_exts[$product_id]['title'] : $product_id;
+					if (isset($product_info['error']) && $product_info['error'] == 'download_revoked') {
+						$item_html = '<div><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $software_title . "</strong></span> <span style=\"color: red;\"><strong>Error</strong> " . MainWP_Api_Manager::instance()->download_revoked_error_notice($software_title) . '</span></div>';
+					} else if (isset($product_info['package']) && !empty($product_info['package'])){
+						$package_url = apply_filters('mainwp_api_manager_upgrade_url', $product_info['package']);
+						$item_html = '<div class="extension_to_install" download-link="' . $package_url . '" product-id="' . $product_id . '"><input type="checkbox" status="queue" checked="true"> <span class="name"><strong>' . $software_title . "</strong></span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
+					}
+					$group_id = isset($map_extensions_group[$product_id]) ? $map_extensions_group[$product_id] : false;
+					if (!empty($group_id) && isset($all_groups[$group_id]))
+						$grouped_exts[$group_id] .= $item_html;
+					else
+						$grouped_exts['others'] .= $item_html;
+				}
+
+				foreach($not_purchased_exts as $product_id => $ext) {
+					$item_html = '<div class="extension_not_purchased" product-id="' . $product_id . '"><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $ext['title'] . '</strong></span> ' . __("Extension not purchased.") . ' <a href="' . $ext['link'] . '" target="_blank">' .  __("Get it here!", 'mainwp') . '</a>' . (in_array($product_id, $free_group) ? " <em>" . __("It's free.") ."</em>" : '') .'</div>';
+					$group_id = isset($map_extensions_group[$product_id]) ? $map_extensions_group[$product_id] : false;
+					if (!empty($group_id) && isset($all_groups[$group_id]))
+						$grouped_exts[$group_id] .= $item_html;
+					else
+						$grouped_exts['others'] .= $item_html;
+				}
+
+				//todo update coding standards
 				$html = '<div class="inside">';
-				$html .= '<h2>' . __( 'Installing Purchased Extensions ...', 'mainwp' ) . '</h2>';
+				$html .= '<h2>' . __( 'Install Purchased Extensions', 'mainwp' ) . '</h2>';
 				$html .= '<div class="mainwp_extension_installing">';
 				if ( empty( $installing_exts ) ) {
 					$html .= '<p>' . __( 'All purchased extensions are Installed', 'mainwp' ) . '</p>';
 				} else {
-					$html .= '<p><span class="description">' . __( 'Uncheck any Extension you do not want to install', 'mainwp' ) . '</span></p>';
-					foreach ( $installing_exts as $product_id => $product_info ) {
-						$software_title = isset( $all_available_exts[ $product_id ] ) ? $all_available_exts[ $product_id ]['title'] : $product_id;
-						if ( isset( $product_info['error'] ) && $product_info['error'] == 'download_revoked' ) {
-							$html .= '<div><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $software_title . '</strong></span> <span style="color: red;"><strong>Error</strong> ' . MainWP_Api_Manager::instance()->download_revoked_error_notice( $software_title ) . '</span></div>';
-						} else if ( isset( $product_info['package'] ) && ! empty( $product_info['package'] ) ) {
-							$package_url = apply_filters( 'mainwp_api_manager_upgrade_url', $product_info['package'] );
-							$html .= '<div class="extension_to_install" download-link="' . $package_url . '" product-id="' . $product_id . '"><input type="checkbox" status="queue" checked="true"> <span class="name"><strong>' . $software_title . '</strong></span> ' . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __( 'Queued', 'mainwp' ) . '</span></span></div>';
-						}
+					$html .= '<p><span class="description">' . __('You have access to all purchased Extensions but you DO NOT need to install all off them. We recommend adding them one at a time, as you need them, so you do not experience information overload. Uncheck any Extension you do not want to install', 'mainwp') . '</span></p>';
+					$html .= '<div><a id="mainwp-check-all-ext" href="javascript:void(0);"><i class="fa fa-check-square-o"></i> ' . __('Select All', 'mainwp') . '</a> | <a id="mainwp-uncheck-all-ext" href="javascript:void(0);"><i class="fa fa-square-o"></i> ' . __('Select None', 'mainwp') . '</a></div>';
+				}
+
+				foreach($all_groups as $gr_id => $gr_name) {
+					if (isset($grouped_exts[$gr_id])) {
+						$html .= '<h3>' . $gr_name . '</h3>';
+						$html .= $grouped_exts[$gr_id];
 					}
 				}
-				foreach ( $not_purchased_exts as $product_id => $ext ) {
-					$html .= '<div class="extension_not_purchased" product-id="' . $product_id . '"><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $ext['title'] . '</strong></span> ' . __( 'Extension not purchased.' ) . ' <a href="' . $ext['link'] . '" target="_blank">' . __( 'Get it here!' ) . '</a></div>';
+
+				if (isset($grouped_exts['others'])) {
+					$html .= '<h3>Others</h3>';
+					$html .= $grouped_exts['others'];
 				}
+
 				$html .= '</div>';
 				$html .= '</div>';
 
 				if ( ! empty( $installing_exts ) ) {
 					$html .= '<p>
                                 <span class="extension_api_loading">
-                                    <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-installnow" value="' . __( 'Install Now', 'mainwp' ) . '">
+                                    <input type="button" class="mainwp-upgrade-button button-primary" id="mainwp-extensions-installnow" value="' . __( 'Install Selected Extensions', 'mainwp' ) . '">
                                     <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
                                 </span>
                             </p> ';
@@ -516,7 +558,7 @@ class MainWP_Extensions {
 		die( '<mainwp>' . json_encode( $return ) . '</mainwp>' );
 	}
 
-	static function installPlugin( $url ) {
+	public static function installPlugin( $url, $activatePlugin = false ) {
 		$hasWPFileSystem = MainWP_Utility::getWPFilesystem();
 		global $wp_filesystem;
 
@@ -577,6 +619,10 @@ class MainWP_Extensions {
 				if ( $thePlugin != null && $thePlugin != '' && $thePlugin['Name'] != '' ) {
 					$output .= __( 'Successfully installed the plugin', 'mainwp' ) . ' ' . $thePlugin['Name'] . ' ' . $thePlugin['Version'];
 					$plugin_slug = $result['destination_name'] . '/' . $srcFile;
+					if ( $activatePlugin ) {
+						activate_plugin( $path . $srcFile, '', false, true );
+						do_action( 'mainwp_api_extension_activated', $path . $srcFile );
+					}
 					break;
 				}
 			}
@@ -585,6 +631,7 @@ class MainWP_Extensions {
 		if ( ! empty( $error ) ) {
 			$return['error'] = $error;
 		} else {
+			MainWP_Extensions::enableExtension($plugin_slug);
 			$return['result'] = 'SUCCESS';
 			$return['output'] = $output;
 			$return['slug']   = $plugin_slug;
@@ -699,6 +746,13 @@ class MainWP_Extensions {
 		}
 
 		$active = in_array( $slug, $snEnabledExtensions );
+		//return ($active ? array('key' => wp_create_nonce($pluginFile . '-SNNonceAdder')) : false);
+		return ($active ? array( 'key' => md5( $pluginFile . '-SNNonceAdder' ) ) : false );
+	}
+
+	public static function isExtensionActivated( $pluginFile )
+	{
+		$active = false;
 
 		// To fix bug
 		self::loadExtensions();
@@ -713,21 +767,18 @@ class MainWP_Extensions {
 							} else {
 								$active = false;
 							}
-						} else if ( isset( $extension['api'] ) && ( MainWP_API_Settings::testAPIs( $extension['api'] ) != 'VALID' ) ) {
+						} else {
 							$active = false;
 						}
 					} else {
-						if ( isset( $extension['apilink'] ) && isset( $extension['locked'] ) && ( $extension['locked'] == true ) ) {
-							$active = false;
-						}
+						$active = false;
 					}
 					break;
 				}
 			}
 		}
 
-		//return ($active ? array('key' => wp_create_nonce($pluginFile . '-SNNonceAdder')) : false);
-		return ( $active ? array( 'key' => md5( $pluginFile . '-SNNonceAdder' ) ) : false );
+		return $active;
 	}
 
 	public static function create_nonce_function() {

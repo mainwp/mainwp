@@ -41,6 +41,7 @@ class MainWP_Hooks {
 			'isExtensionAvailable',
 		) );
 		add_filter( 'mainwp-extension-decrypt-string', array( &$this, 'hookDecryptString' ) );
+		add_action('mainwp_enable_extension', array(&$this, 'hookEnableExtension'), 10, 1);
 	}
 
 	public function cache_getcontext( $page ) {
@@ -158,5 +159,9 @@ class MainWP_Hooks {
 
 	public function hookDecryptString( $enscrypt ) {
 		return MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt );
+	}
+
+	public function hookEnableExtension($slug) {
+		return MainWP_Extensions::enableExtension($slug);
 	}
 }

@@ -13,7 +13,7 @@
 }
 
 @media only screen and ( min-width: 981px ) and ( max-width: 1100px ) {
-	
+
 }
 
 @media only screen and ( max-width: 980px ) {
@@ -33,7 +33,11 @@
 	}
 
 	#mainwp-tabs {
-		 
+
+	}
+
+	.mainwp-ui input[type="text"] {
+		width: 100% !important;
 	}
 
 	#mainwp-tabs .nav-tab {
@@ -97,11 +101,11 @@
 	}
 
 	#mainwp_managesites_content table.sites .check-column {
-		width: 10% !important;		
+		width: 10% !important;
 	}
 
 	#mainwp_managesites_content table.sites .column-status {
-		width: 13% !important;		
+		width: 13% !important;
 	}
 
 	#mainwp_managesites_content table.sites .column-site {
@@ -123,7 +127,7 @@
 	}
 
 	/*  -  Add  -  Test Connection  -  */
-	 
+
 	.mainwp-ui .form-field input,
 	.mainwp-ui .form-field input,
 	.mainwp-ui .form-field input,
@@ -133,7 +137,55 @@
 		width: 100% !important;
 	}
 
+	/* --- Groups --- */
+
+	.mainwp_managegroups-outsidebox {
+		width: 100%;
+		display: block;
+		margin-bottom: 2em;
+	}
+
 	/* --- Posts --- */
+
+	.mainwp-ui #mainwp_posts_content table.posts .column-author,
+	.mainwp-ui #mainwp_posts_content table.posts .column-categories,
+	.mainwp-ui #mainwp_posts_content table.posts .column-tags,
+	.mainwp-ui #mainwp_posts_content table.posts .column-comments,
+	.mainwp-ui #mainwp_posts_content table.posts .column-status,
+	.mainwp-ui #mainwp_posts_content table.posts .column-date {
+		display: none !important;
+	}
+
+	/* --- Pages --- */
+
+	.mainwp-ui #mainwp_pages_content table.pages .column-author,
+	.mainwp-ui #mainwp_pages_content table.pages .column-categories,
+	.mainwp-ui #mainwp_pages_content table.pages .column-comments,
+	.mainwp-ui #mainwp_pages_content table.pages .column-status,
+	.mainwp-ui #mainwp_pages_content table.pages .column-date {
+		display: none !important;
+	}
+
+	/* --- Themes & Plugins--- */
+
+	.mainwp_config_box_left, .mainwp_config_box_right {
+		width: 100% !important;
+	}
+
+	.mainwp_page_ThemesAutoUpdate input[type="text"],
+	.mainwp_page_ThemesAutoUpdate select,
+	.mainwp_page_PluginsAutoUpdate input[type="text"],
+	.mainwp_page_PluginsAutoUpdate select {
+		width: 100%;
+		display: block;
+		margin-bottom: 2em;
+	}
+
+	/* --- Backups --- */
+
+	.mainwp-form_hint {
+		display: none !important;
+	}
 
 	/*  -  Manage  -  */
 
@@ -154,30 +206,54 @@
 	.mainwp_page_ManageGroups .button-primary,
 	.mainwp_page_PostBulkManage .button-primary,
 	.mainwp_page_PageBulkManage .button-primary,
-	.mainwp_page_ThemesManage  .button-primary {
+	.mainwp_page_ThemesManage .button-primary,
+	.mainwp_page_ThemesInstall .button-primary,
+	.mainwp_page_ThemesAutoUpdate .button-primary,
+	.mainwp_page_PluginsManage .button-primary,
+	.mainwp_page_PluginsInstall .button-primary,
+	.mainwp_page_PluginsAutoUpdate .button-primary,
+	.mainwp_page_UserBulkManage .button-primary,
+	.mainwp_page_UserBulkManage .button,
+	.mainwp_page_UserBulkAdd .button-primary,
+	.mainwp_page_UserBulkAdd .button,
+	.mainwp_page_UpdateAdminPasswords .button-primary,
+	.mainwp_page_UpdateAdminPasswords .button,
+	.mainwp_page_ManageBackupsAddNew .button-primary,
+	.mainwp_page_Settings .button-primary,
+	.mainwp_page_SettingsAdvanced .button-primary,
+	.mainwp_page_DashboardOptions .button-primary,
+	.mainwp_page_MainWPTools .button-primary,
+	.mainwp_page_Documentation .button {
 		width: 100%;
 		font-size: 16px;
 		height: 3em;
+		text-align: center;
+	}
+
+	.mainwp_page_Documentation .add-new-h2 {
+		width: 100%;
+		font-size: 16px;
+		display: block;
 	}
 
 	/* --- Extensions --- */
 
 	#mainwp-extensions-categories-menu {
 		display: none;
-}
+	}
 
 	.mainwp_api_postbox input, .mainwp_api_postbox select {
 		width: 100%;
 	}
 
-	#mainwp-extensions-wrap .mainwp-extensions-disable-all, 
+	#mainwp-extensions-wrap .mainwp-extensions-disable-all,
 	#mainwp-extensions-wrap .mainwp-extensions-enable-all,
 	#mainwp-extensions-wrap #mainwp-extensions-expand,
 	#mainwp-extensions-wrap #mainwp-extensions-collapse {
 		display: none !important;
 	}
 
-	#mainwp-extensions-list td.mainwp-extensions-childIcon,
+
 	#mainwp-extensions-list td.mainwp-extensions-childName,
 	#mainwp-extensions-list td.mainwp-extensions-childActions {
 		display: block;
@@ -185,8 +261,22 @@
 		margin-bottom: 2em;
 	}
 
+	#mainwp-extensions-list td.mainwp-extensions-childActions .api-status,
+	#mainwp-extensions-list td.mainwp-extensions-childActions .button {
+		display: block;
+		width: 100%;
+		padding: 1em 0;
+		margin-bottom: 1em;
+		text-align: center;
+	}
+
+	#mainwp-extensions-list td.mainwp-extensions-childIcon,
 	#mainwp-extensions-list td.mainwp-extensions-childVersion,
 	#mainwp-extensions-list td.mainwp-extensions-extra {
+		display: none;
+	}
+
+	#mainwp-available-extensions {
 		display: none;
 	}
 

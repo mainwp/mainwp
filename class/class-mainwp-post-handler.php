@@ -46,9 +46,6 @@ class MainWP_Post_Handler {
 		$this->addAction( 'mainwp_group_updategroup', array( &$this, 'mainwp_group_updategroup' ) );
 
 		//Page: InstallPlugins/Themes
-		add_action( 'wp_ajax_mainwp_installbulksearch', array( &$this, 'mainwp_installbulksearch' ) ); //ok
-		add_action( 'wp_ajax_mainwp_installbulknavsearch', array( &$this, 'mainwp_installbulknavsearch' ) ); //ok
-		add_action( 'wp_ajax_mainwp_installbulknavupload', array( &$this, 'mainwp_installbulknavupload' ) ); //ok
 		add_action( 'wp_ajax_mainwp_preparebulkinstallplugintheme', array(
 			&$this,
 			'mainwp_preparebulkinstallplugintheme',
@@ -179,10 +176,6 @@ class MainWP_Post_Handler {
 		$this->addAction( 'mainwp_user_role_to_contributor', array( &$this, 'mainwp_user_role_to_contributor' ) );
 		$this->addAction( 'mainwp_user_role_to_subscriber', array( &$this, 'mainwp_user_role_to_subscriber' ) );
 		$this->addAction( 'mainwp_user_update_password', array( &$this, 'mainwp_user_update_password' ) );
-
-		//Page: API
-		add_action( 'wp_ajax_mainwp_api_test', array( &$this, 'mainwp_api_test' ) ); //ok
-		add_action( 'wp_ajax_mainwp_api_refresh', array( &$this, 'mainwp_api_refresh' ) ); //ok
 
 		//Page: Posts
 		add_action( 'wp_ajax_mainwp_posts_search', array( &$this, 'mainwp_posts_search' ) ); //ok
@@ -453,19 +446,6 @@ class MainWP_Post_Handler {
 		$this->secure_request();
 		MainWP_Page::renderTable( $_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ) );
 		die();
-	}
-
-	/**
-	 * Page: API
-	 */
-	function mainwp_api_test() {
-		$this->secure_request();
-		die( json_encode( MainWP_API_Settings::testAndSaveLogin( $_POST['username'], $_POST['password'] ) ) );
-	}
-
-	function mainwp_api_refresh() {
-		$this->secure_request();
-		die( json_encode( MainWP_API_Settings::refresh() ) );
 	}
 
 	/**
@@ -990,46 +970,6 @@ class MainWP_Post_Handler {
 	/*
     * Page: InstallPlugins/Themes
     */
-
-	function mainwp_installbulksearch() {
-		$this->secure_request();
-
-		if ( $_REQUEST['page'] == 'PluginsInstall' ) {
-			MainWP_Plugins::performSearch();
-		} else {
-			MainWP_Themes::performSearch();
-		}
-	}
-
-	function mainwp_installbulknavsearch() {
-		$this->secure_request();
-
-		if ( $_REQUEST['page'] == 'PluginsInstall' ) {
-			if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) {
-				MainWP_Install_Bulk::renderSearch( 'Plugins' );
-			} else {
-				mainwp_do_not_have_permissions( 'plugins install' );
-			}
-		} else {
-			if ( mainwp_current_user_can( 'dashboard', 'install_themes' ) ) {
-				MainWP_Install_Bulk::renderSearch( 'Themes' );
-			} else {
-				mainwp_do_not_have_permissions( 'themes install' );
-			}
-		}
-		die();
-	}
-
-	function mainwp_installbulknavupload() {
-		$this->secure_request();
-
-		if ( $_REQUEST['page'] == 'PluginsInstall' ) {
-			MainWP_Install_Bulk::renderUpload( 'Plugins' );
-		} else {
-			MainWP_Install_Bulk::renderUpload( 'Themes' );
-		}
-		die();
-	}
 
 	function mainwp_preparebulkinstallplugintheme() {
 		$this->secure_request();

@@ -24,7 +24,6 @@ class MainWP_Options {
 				MainWP_Utility::update_option( 'mainwp_backup_before_upgrade', $val );
 				MainWP_Utility::update_option( 'mainwp_maximumPosts', $_POST['mainwp_maximumPosts'] );
 				MainWP_Utility::update_option( 'mainwp_maximumComments', $_POST['mainwp_maximumComments'] );
-				MainWP_Utility::update_option( 'mainwp_cron_jobs', ( ! isset( $_POST['mainwp_options_cron_jobs'] ) ? 0 : 1 ) );
 				MainWP_Utility::update_option( 'mainwp_wp_cron', ( ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1 ) );
 				//MainWP_Utility::update_option('mainwp_use_favicon', (!isset($_POST['mainwp_use_favicon']) ? 0 : 1));
 				MainWP_Utility::update_option( 'mainwp_numberdays_Outdate_Plugin_Theme', $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] );
@@ -61,14 +60,16 @@ class MainWP_Options {
 		?>
 		<div class="postbox" id="mainwp-hide-child-plugin-settings">
 			<h3 class="mainwp_box_title">
-				<span><i class="fa fa-cog"></i> <?php _e( 'Hide MainWP Child Plugin', 'mainwp' ); ?></span></h3>
+				<span><i class="fa fa-cog"></i> <?php _e( 'Network Optimization', 'mainwp' ); ?></span></h3>
 
 			<div class="inside">
 				<div class="mainwp_info-box-red" style="margin-top: 5px;"><?php _e( '<strong>STOP BEFORE TURNING ON!</strong> Hiding the Child Plugin does require the plugin to make changes to your .htaccess file that in rare instances or server configurations could cause problems.', 'mainwp' ); ?></div>
 				<table class="form-table">
 					<tbody>
 					<tr>
-						<th scope="row"><?php _e( 'Hide Network on Child Sites', 'mainwp' ); ?></th>
+						<th scope="row"><?php _e('Hide MainWP Child Plugin from Search Engines','mainwp'); ?><br/>
+							<em style="font-size: 12px;">(<?php _e('does not hide from users','mainwp'); ?>)</em>
+						</th>
 						<td>
 							<table>
 								<tr>
@@ -86,6 +87,16 @@ class MainWP_Options {
 							</table>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><?php _e('Optimize for Shared Hosting or Big Networks','mainwp'); ?> <?php MainWP_Utility::renderToolTip(__('Updates will be cached for quick loading. A manual refresh from the Dashboard is required to view new plugins, themes, pages or users. Recommended for Networks over 50 sites.','mainwp')); ?></th>
+						<td>
+							<div class="mainwp-checkbox">
+								<input type="checkbox" name="mainwp_optimize"
+									   id="mainwp_optimize" <?php echo ((get_option('mainwp_optimize') == 1) ? 'checked="true"' : ''); ?> />
+								<label for="mainwp_optimize"></label>
+							</div>
+						</td>
+					</tr>
 					</tbody>
 				</table>
 			</div>
@@ -101,7 +112,7 @@ class MainWP_Options {
 					<tr>
 						<th scope="row"><?php _e( 'Notification Email', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'This address is used to send monitoring alerts.', 'mainwp' ) ); ?></th>
 						<td>
-							<input type="text" class="mainwp-field mainwp-email" name="mainwp_options_email" size="35" value="<?php echo $user_email; ?>"/><span class="mainwp-form_hint"><?php _e( 'This address is used to send monitoring alerts.', 'mainwp' ); ?></span>
+							<input type="text" class="" name="mainwp_options_email" size="35" value="<?php echo $user_email; ?>"/><span class="mainwp-form_hint"><?php _e( 'This address is used to send monitoring alerts.', 'mainwp' ); ?></span>
 						</td>
 					</tr>
 					<tr>
@@ -114,27 +125,7 @@ class MainWP_Options {
 							</div>
 						</td>
 					</tr>
-					<!--        todo: RS: Re-enable-->
-					<!--        <tr>-->
-					<!--            <th scope="row">Tips on login</th>-->
-					<!--            <td>-->
-					<!--                <input type="checkbox" name="mainwp_options_tips"-->
-					<!--                       id="mainwp_options_tips" --><?php //echo ($userExtension->tips == 1 ? 'checked="true"' : '');
-					?><!--"/>-->
-					<!--                <label for="mainwp_options_tips">Enable "Did you know" tips</label>-->
-					<!--            </td>-->
-					<!--        </tr>-->
 					<?php if ( MainWP_Utility::isAdmin() ) { ?>
-						<tr>
-							<th scope="row"><?php _e( 'Optimize for Shared Hosting or Big Networks', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Updates will be cached for quick loading. A manual refresh from the Dashboard is required to view new plugins, themes, pages or users. Recommended for Networks over 50 sites.', 'mainwp' ) ); ?></th>
-							<td>
-								<div class="mainwp-checkbox">
-									<input type="checkbox" name="mainwp_optimize"
-										id="mainwp_optimize" <?php echo( ( get_option( 'mainwp_optimize' ) == 1 ) ? 'checked="true"' : '' ); ?> />
-									<label for="mainwp_optimize"></label>
-								</div>
-							</td>
-						</tr>
 						<tr>
 							<th scope="row"><?php _e( 'Show Basic SEO Stats', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'This requires your Dashboard to query the Google servers for this information.', 'mainwp' ) ); ?></th>
 							<td>
@@ -145,16 +136,6 @@ class MainWP_Options {
 								</div>
 							</td>
 						</tr>
-						<!-- <tr>
-            <th scope="row"><?php _e( 'Use Child Site Favicon', 'mainwp' ); ?> <?php MainWP_Utility::renderToolTip( __( 'Set to YES if you want to use Child Site Favicon.', 'mainwp' ) ); ?></th>
-            <td>
-                <div class="mainwp-checkbox">
-                <input type="checkbox" name="mainwp_use_favicon"
-                       id="mainwp_use_favicon" <?php echo( ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) ? 'checked="true"' : '' ); ?>/>
-                <label for="mainwp_use_favicon"></label>
-               </div>
-            </td>
-        </tr> -->
 					<?php } ?>
 					</tbody>
 				</table>
@@ -168,15 +149,6 @@ class MainWP_Options {
 			<div class="inside">
 				<table class="form-table">
 					<tbody>
-					<tr>
-						<th scope="row"><?php _e( 'View Upgrades per Site', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'When this is disabled, the upgrades are shown per plugin/theme with a sublist of sites. When this is enabled, all the sites are shown with the plugin/theme upgrades available per site.', 'mainwp' ) ); ?></th>
-						<td>
-							<div class="mainwp-checkbox">
-								<input type="checkbox" name="mainwp_options_siteview" id="mainwp_options_siteview" size="35" <?php echo( $siteview == 1 ? 'checked="true"' : '' ); ?>/>
-								<label for="mainwp_options_siteview"></label>
-							</div>
-						</td>
-					</tr>
 					<tr>
 						<th scope="row"><?php _e( 'Require Backup Before Upgrade', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'With this option enabled, when you try to upgrade a plugin, theme or WordPress core, MainWP will check if there is a full backup created for the site(s) you are trying to upgrade in last 7 days. If you have a fresh backup of the site(s) MainWP will proceed to the upgrade process, if not it will ask you to create a full backup.', 'mainwp' ) ); ?></th>
 						<td>
@@ -200,10 +172,8 @@ class MainWP_Options {
 											</select>
 											<label></label>
 										</span>
-									</td>
-									<td>
-										&nbsp;&nbsp;Last run: <?php echo $lastAutomaticUpdate; ?>
-										<br/>&nbsp;&nbsp;Next run: <?php echo $nextAutomaticUpdate; ?>
+										<br/><em><?php _e( 'Last run: ', 'mainwp' ); ?><?php echo $lastAutomaticUpdate; ?></em>
+										<br /><em><?php _e( 'Next run: ', 'mainwp' ); ?><?php echo $nextAutomaticUpdate; ?></em>
 									</td>
 								</tr>
 							</table>
@@ -212,7 +182,7 @@ class MainWP_Options {
 					<tr>
 						<th scope="row"><?php _e( 'Abandoned Plugins/Thems Tolerance', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( "In case the plugin or theme author didn't release an update for the set number of days, the plugin/theme will be marked and Possibly Abandoned.", 'mainwp' ) ); ?></th>
 						<td>
-							<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" class="mainwp-field mainwp-settings-icon"
+							<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" class=""
 								id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo( ( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) === false ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
 						</td>
 					</tr>
@@ -232,14 +202,14 @@ class MainWP_Options {
 					<tr>
 						<th scope="row"><?php _e( 'Maximum Number of Posts/Pages', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( '0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.', 'mainwp' ) ); ?></th>
 						<td>
-							<input type="text" name="mainwp_maximumPosts" class="mainwp-field mainwp-settings-icon"
+							<input type="text" name="mainwp_maximumPosts" class=""
 								id="mainwp_maximumPosts" value="<?php echo( ( get_option( 'mainwp_maximumPosts' ) === false ) ? 50 : get_option( 'mainwp_maximumPosts' ) ); ?>"/>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row"><?php _e( 'Maximum Number of Comments', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( '0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.', 'mainwp' ) ); ?></th>
 						<td>
-							<input type="text" name="mainwp_maximumComments" class="mainwp-field mainwp-settings-icon"
+							<input type="text" name="mainwp_maximumComments" class=""
 								id="mainwp_maximumComments" value="<?php echo( ( get_option( 'mainwp_maximumComments' ) === false ) ? 50 : get_option( 'mainwp_maximumComments' ) ); ?>"/>
 						</td>
 					</tr>

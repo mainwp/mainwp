@@ -32,121 +32,6 @@ class MainWP_Install_Bulk {
 		}
 	}
 
-	//Renders the main page in the WP admin part
-	public static function render( $title, $type = 'plugin' ) {
-		if ( ( $type == 'plugin' && ! mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) ||
-		     ( $type == 'theme' && ! mainwp_current_user_can( 'dashboard', 'install_themes' ) )
-		) {
-			mainwp_do_not_have_permissions( 'install plugins' );
-
-			return;
-		}
-
-		$tab = 'search';
-		if ( isset( $_REQUEST['tab'] ) ) {
-			$tab = $_REQUEST['tab'];
-		}
-
-		?>
-		<?php
-		if ( $tab == 'install' ) {
-
-		} else {
-			?>
-			<a href="#" class="mainwp_action left <?php if ( $tab == 'search' ) {
-				echo 'mainwp_action_down';
-			} ?>" id="MainWP_Install_BulkNavSearch"><?php _e( 'Search', 'mainwp' ); ?></a>
-			<a href="#" class="mainwp_action right <?php if ( $tab == 'upload' ) {
-				echo 'mainwp_action_down';
-			} ?>" id="MainWP_Install_BulkNavUpload"><?php _e( 'Upload', 'mainwp' ); ?></a>
-
-
-			<br class="clear"/><br/>
-			<form method="POST" action="">
-				<div class="mainwp_config_box_right stick-to-window">
-					<!--                    <div>-->
-					<?php MainWP_UI::select_sites_box() ?>
-				</div>
-				<div class="mainwp_config_box_left">
-					<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
-					<div id="MainWP_Install_BulkAjax">
-						<?php
-						switch ( $tab ) {
-							case 'search':
-								MainWP_Install_Bulk::renderSearch( $title );
-								break;
-							case 'upload':
-								MainWP_Install_Bulk::renderUpload( $title );
-								break;
-							default:
-								MainWP_Install_Bulk::renderSearch( $title );
-						}
-						?>
-					</div>
-				</div>
-			</form>
-			<?php
-		}
-		?>
-		<div id="MainWP_Install_BulkNew" style="display: none">
-			<br/>
-			<a href="<?php echo get_admin_url() ?>admin.php?page=<?php echo $title; ?>Install" class="add-new-h2" target="_top"><?php _e( 'Add New', 'mainwp' ); ?></a>
-			<a href="<?php echo get_admin_url() ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php _e( 'Return to Dashboard', 'mainwp' ); ?></a>
-		</div>
-		<?php
-	}
-
-	public static function renderSearch( $title ) {
-		?>
-		<div class="postbox">
-			<h3 class="mainwp_box_title">
-				<i class="fa fa-binoculars"></i> <?php _e( 'Search for', 'mainwp' ); ?> <?php echo $title; ?> <?php _e( 'by Keyword, Author, or Tag.', 'mainwp' ); ?>
-			</h3>
-
-			<div class="inside">
-				<div class="tablenav top">
-					<div class="alignleft actions">
-						<form id="search-<?php echo strtolower( $title ); ?>" method="post" action="">
-							<input type="hidden" name="tab" value="search"/>
-							<select name="type" id="mainwp_installbulk_typeselector">
-								<option value="term">Term</option>
-								<option value="author">Author</option>
-								<option value="tag">Tag</option>
-							</select>
-							<input type="text" name="s" value="<?php
-							if ( isset( $_POST['s'] ) ) {
-								echo $_POST['s'];
-							}
-							?>" id="mainwp_installbulk_s"/>
-							<label class="screen-reader-text" for="plugin-search-input"><?php _e( 'Search', 'mainwp' ); ?><?php echo $title; ?></label>
-							<input type="button" name="plugin-search-input" id="mainwp-plugin-search-input" class="button-primary" value="Search <?php echo $title; ?>" onClick="return mainwp_install_search(event);"/>
-							<br/><?php if ( $title == 'Plugins' ) {
-								echo '<br />&nbsp;&nbsp;<input type="checkbox" value="1" checked id="chk_activate_plugin" /> <label for="chk_activate_plugin">' . __( 'Activate plugin after installation', 'mainwp' ) . ' </label>';
-							} ?>
-							<br/>&nbsp;&nbsp;<input type="checkbox" value="2" checked id="chk_overwrite"/>
-							<label for="chk_overwrite"><?php _e( 'Overwrite existing', 'mainwp' ); ?></label><br/>
-						</form>
-					</div>
-					<div id="MainWP_Install_BulkStatusExtra" class="MainWP_Install_BulkStatus" style="display: none">
-						<i class="fa fa-spinner fa-pulse"></i> &nbsp;</div>
-					<div id="MainWP_Install_BulkStatus" class="MainWP_Install_BulkStatus"></div>
-					<div class="tablenav-pages" style="display: none;" id="MainWP_Install_BulkNav">
-						<span id="MainWP_Install_BulkResults" class="displaying-num"></span>
-						<a class="prev-page" title="Go to the previous page" href="#" id="mainwp-plugin-search-prev" onClick="return mainwp_install_prev(event);">â€¹</a>
-						<span id="MainWP_Install_BulkPage"></span> of <span id="MainWP_Install_BulkPages"></span>
-						<a class="next-page" title="Go to the next page" href="#" id="mainwp-plugin-search-next" onClick="return mainwp_install_next(event);">â€º</a>
-					</div>
-				</div>
-				<div class="clear"></div>
-			</div>
-		</div>
-
-		<div id="MainWP_Install_BulkSearchAjax" style="margin-top: 2em;">
-
-		</div>
-		<?php
-	}
-
 	//Renders the upload sub part
 	public static function renderUpload( $title ) {
 		?>
@@ -191,57 +76,13 @@ class MainWP_Install_Bulk {
 					<?php if ( $title == 'Plugins' ) {
 						echo '<br />&nbsp;&nbsp;<input type="checkbox" value="1" checked id="chk_activate_plugin_upload" /> <label for="chk_activate_plugin_upload">Activate plugin after installation</label>';
 					} ?>
-					<br/>&nbsp;&nbsp;<input type="checkbox" value="2" checked id="chk_overwrite_upload"/>
-					<label for="chk_overwrite_upload"><?php _e( 'Overwrite existing', 'mainwp' ); ?></label><br/>
-					<br/><input type="button" class="button" value="<?php _e( 'Install Now', 'mainwp' ); ?>" id="mainwp_upload_bulk_button" onClick="mainwp_upload_bulk('<?php echo strtolower( $title ); ?>');">
+					<br />&nbsp;&nbsp;<input type="checkbox" value="2" checked id="chk_overwrite_upload" />
+					<label for="chk_overwrite_upload"><?php _e('Overwrite existing Plugin, if already installed', 'mainwp'); ?></label><br />
+					<br /><input type="button" class="button button-primary button-hero" value="<?php _e('Install Now','mainwp'); ?>" id="mainwp_upload_bulk_button" onClick="mainwp_upload_bulk('<?php echo strtolower($title); ?>');">
 				</div>
 			</div>
 		</div>
 		<?php
-	}
-
-	public static function performSearch( $class, $title ) {
-		if ( isset( $_POST['s'] ) ) {
-			$page = 1;
-			if ( isset( $_POST['currpage'] ) ) {
-				$page = $_POST['currpage'];
-			}
-			$type = 'term';
-			if ( isset( $_POST['type'] ) ) {
-				$type = $_POST['type'];
-			}
-			$term = '';
-			if ( isset( $_POST['s'] ) ) {
-				$term = $_POST['s'];
-			}
-
-			include_once( ABSPATH . '/wp-admin/includes/plugin-install.php' );
-			$args = array( 'page' => $page, 'per_page' => 30 );
-			switch ( $type ) {
-				case 'tag':
-					$args['tag'] = sanitize_title_with_dashes( $term );
-					break;
-				case 'term':
-					$args['search'] = $term;
-					break;
-				case 'author':
-					$args['author'] = $term;
-					break;
-			}
-			if ( $title == 'Plugins' ) {
-				$api = plugins_api( 'query_plugins', $args );
-			} else {
-				$api = themes_api( 'query_themes', $args );
-			}
-		}
-		if ( ! isset( $api ) || ! isset( $api->info['results'] ) || $api->info['results'] == 0 ) {
-			echo '0 0 0 ';
-		} else {
-			echo $api->info['page'] . ' ' . $api->info['pages'] . ' ' . $api->info['results'] . ' ';
-		}
-
-		do_action( 'mainwp_search_plugin_theme_results' );
-		call_user_func( array( $class, 'renderFound' ), $api );
 	}
 
 	public static function prepareInstall() {

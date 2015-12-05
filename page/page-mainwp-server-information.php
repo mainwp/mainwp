@@ -64,6 +64,7 @@ class MainWP_Server_Information {
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === '.htaccess' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=.htaccess"><?php _e( '.htaccess File', 'mainwp' ); ?></a>
+			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">
 		<?php
@@ -301,6 +302,10 @@ class MainWP_Server_Information {
 					<td><?php _e( 'MySQL Client Encoding', 'mainwp' ); ?></td>
 					<td colspan="3"><?php echo defined( 'DB_CHARSET' ) ? DB_CHARSET : ''; ?></td>
 				</tr>
+				<tr>
+					<td style="background: #333; color: #fff;" colspan="5"><?php _e('MAINWP SETTINGS','mainwp'); ?></td>
+				</tr>
+				<?php self::displayMainWPOptions(); ?>
 				</tbody>
 			</table>
 		</div>
@@ -308,6 +313,34 @@ class MainWP_Server_Information {
 		</div>
 		<?php
 		self::renderFooter( '' );
+	}
+
+	//todo apply coding rules
+	public static function renderQuickSetupSystemCheck() {
+		?>
+		<div class="mwp_server_info_box">
+			<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
+				<thead>
+				<tr>
+					<th scope="col" class="manage-column sorted" style=""><span><?php _e('Server Configuration','mainwp'); ?></span></th>
+					<th scope="col" class="manage-column column-posts" style=""><?php _e('Required Value','mainwp'); ?></th>
+					<th scope="col" class="manage-column column-posts" style=""><?php _e('Value','mainwp'); ?></th>
+					<th scope="col" class="manage-column column-posts" style=""><?php _e('Status','mainwp'); ?></th>
+				</tr>
+				</thead>
+
+				<tbody id="the-sites-list" class="list:sites">
+				<?php
+				self::render_row_with_description('PHP Version', '>=', '5.3', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.3 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you.');
+				self::render_row_with_description('SSL Extension Enabled', '=', true, 'getSSLSupport', '', '', null, 'Changed by uncommenting the ;extension=php_openssl.dll line in your php.ini file by removing the ";" character.');
+				self::render_row_with_description('cURL Extension Enabled', '=', true, 'getCurlSupport', '', '', null, 'Changed by uncommenting the ;extension=php_curl.dll line in your php.ini file by removing the ";" character.');
+				self::render_row_with_description('MySQL Version', '>=', '5.0', 'getMySQLVersion', '', '', null, 'MainWP requires the MySQL version 5.0 or higher. If the condition is not met, MySQL version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you.');
+				?>
+				</tbody>
+			</table>
+		</div>
+		<?php
+
 	}
 
 	protected static function getCurrentVersion() {
@@ -345,28 +378,36 @@ class MainWP_Server_Information {
 			$website = MainWP_DB::Instance()->getWebsiteById( $siteId );
 
 			if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-				return 'This is not your website.';
+				return __( 'This is not your website.', 'mainwp' );
 			}
 
 			$serverInformation = MainWP_Utility::fetchUrlAuthed( $website, 'serverInformation' );
 			?>
 
+        <div id="mainwp-server-information-section">
 			<h2><i class="fa fa-server"></i>
 				<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Server Information' ); ?>
 			</h2>
 			<?php echo $serverInformation['information']; ?>
+		</div>
+        <div id="mainwp-cron-schedules-section">
 			<h2><i class="fa fa-server"></i>
 				<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Cron Schedules' ); ?>
 			</h2>
 			<?php echo $serverInformation['cron']; ?>
+		</div>
 			<?php if ( isset( $serverInformation['wpconfig'] ) ) { ?>
+        	<div id="mainwp-wp-config-section">
 				<h2><i class="fa fa-server"></i>
 					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'WP-Config File' ); ?>
 				</h2>
 				<?php echo $serverInformation['wpconfig']; ?>
+			</div>
+			<div id="mainwp-error-log-section">
 				<h2><i class="fa fa-server"></i>
 					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Error Log' ); ?></h2>
 				<?php echo $serverInformation['error']; ?>
+			</div>
 			<?php } ?>
 			<?php
 		} catch ( MainWP_Exception $e ) {
@@ -383,15 +424,38 @@ class MainWP_Server_Information {
 
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 
-		echo 'Child Site: <select name="" id="mainwp_serverInformation_child"><option value="-1">-- Select site</option>';
+		?>
+		<div class="postbox">
+			<h3 class="mainwp_box_title"><?php _e( 'Child Site Server Information', 'mainwp' ); ?></h3>
+			<div class="inside">
+				<?php _e( 'Select Child Site: ', 'mainwp' ); ?>
+				<select name="" id="mainwp_serverInformation_child" style="margin-right: 2em">
+					<option value="-1"><?php _e( 'Select Child Site', 'mainwp' ); ?></option>
+					<?php
+					while ($websites && ($website = @MainWP_DB::fetch_object($websites)))
+					{
+						echo '<option value="'.$website->id.'">' . stripslashes($website->name) . '</option>';
+					}
+					@MainWP_DB::free_result($websites);
+					?>
+				</select>
+				<?php _e( 'Select Information: ', 'mainwp' ); ?>
+				<select name="" id="mainwp-server-info-filter">
+					<option value=""><?php _e( 'Full Information', 'mainwp' ); ?></option>
+					<option value="server-information"><?php _e( 'Server Information', 'mainwp' ); ?></option>
+					<option value="cron-schedules"><?php _e( 'Cron Schedules', 'mainwp' ); ?></option>
+					<option value="wp-config"><?php _e( 'WP-Config.php', 'mainwp' ); ?></option>
+					<option value="error-log"><?php _e( 'Error Log', 'mainwp' ); ?></option>
+				</select>
+			</div>
+		</div>
+		<div id="mainwp_serverInformation_child_loading">
+			<span class="mainwp-grabbing-info-note"><i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Loading server information...', 'mainwp' ); ?></span>
+		</div>
+		<div id="mainwp_serverInformation_child_resp">
 
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
-			echo '<option value="' . $website->id . '">' . stripslashes( $website->name ) . '</option>';
-		}
-		@MainWP_DB::free_result( $websites );
-
-		echo '</select><br /><br /><div id="mainwp_serverInformation_child_loading"><i class="fa fa-spinner fa-pulse"></i> ' . __( 'Loading server information..', 'mainwp' ) . '</div><div id="mainwp_serverInformation_child_resp"></div>';
-
+		</div>
+		<?php
 		self::renderFooter( 'ServerInformationChild' );
 	}
 
@@ -526,6 +590,29 @@ class MainWP_Server_Information {
 				<td><?php echo( self::filesize_compare( $currentVersion, $pVersion, $pCompare ) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>' ); ?></td>
 			<?php } else if ( $whatType == 'curlssl' ) { ?>
 				<td><?php echo( self::curlssl_compare( $pVersion, $pCompare ) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>' ); ?></td>
+			<?php } else if ($pGetter == 'getMaxInputTime' && $currentVersion == -1) { ?>
+				<td><?php echo '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>'; ?></td>
+			<?php } else { ?>
+				<td><?php echo (version_compare($currentVersion, $pVersion, $pCompare) || (($pExtraCompare != null) && version_compare($currentVersion, $pExtraVersion, $pExtraCompare)) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>'); ?></td>
+			<?php } ?>
+		</tr>
+		<?php
+	}
+
+	protected static function render_row_with_description( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $description = '', $whatType = null )
+	{
+		$currentVersion = call_user_func(array(MainWP_Server_Information::getClassName(), $pGetter));
+		?>
+		<tr>
+			<td><?php echo $pConfig; ?></td>
+			<td><?php echo $pCompare; ?>  <?php echo ($pVersion === true ? 'true' : ( is_array($pVersion) && isset($pVersion['version']) ? $pVersion['version'] : $pVersion)) . ' ' . $pExtraText; ?></td>
+			<td><?php echo ($currentVersion === true ? 'true' : $currentVersion); ?></td>
+			<?php if ($whatType == 'filesize') { ?>
+				<td><?php echo (self::filesize_compare($currentVersion, $pVersion, $pCompare) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>'); ?></td>
+			<?php } else if ($whatType == 'curlssl') { ?>
+				<td><?php echo (self::curlssl_compare($pVersion, $pCompare) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>'); ?></td>
+			<?php } else if ($pGetter == 'getMaxInputTime' && $currentVersion == -1) { ?>
+				<td><?php echo '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>'; ?></td>
 			<?php } else { ?>
 				<td><?php echo( version_compare( $currentVersion, $pVersion, $pCompare ) || ( ( $pExtraCompare != null ) && version_compare( $currentVersion, $pExtraVersion, $pExtraCompare ) ) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>' ); ?></td>
 			<?php } ?>
@@ -625,6 +712,10 @@ class MainWP_Server_Information {
 
 	protected static function getSSLWarning() {
 		$conf = array( 'private_key_bits' => 384 );
+		$conf_loc = MainWP_System::get_openssl_conf();
+		if ( !empty( $conf_loc ) ) {
+			$conf['config'] = $conf_loc;
+		}
 		$res  = @openssl_pkey_new( $conf );
 		@openssl_pkey_export( $res, $privkey );
 
@@ -801,7 +892,7 @@ class MainWP_Server_Information {
 	}
 
 	protected static function getCompleteURL() {
-		echo $_SERVER['HTTP_REFERER'];
+		echo isset( $_SERVER['HTTP_REFERER'] ) ? $_SERVER['HTTP_REFERER'] : '';
 	}
 
 	protected static function getUserAgent() {
@@ -1136,5 +1227,125 @@ class MainWP_Server_Information {
 			echo __( 'No functions disabled', 'mainwp' );
 		}
 
+	}
+
+	//todo apply coding rules
+	public static function mainwpOptions() {
+		$mainwp_options = array(
+			'mainwp_options_footprint_plugin_folder_default' => __('Hide Network on Child Sites','mainwp'),
+			'mainwp_wp_cron' => __('Use WP-Cron','mainwp'),
+			'mainwp_optimize' => __('Optimize for Shared Hosting or Big Networks','mainwp'),
+			'mainwp_seo' => __('Show Basic SEO Stats','mainwp'),
+			'select_mainwp_options_siteview' => __('View Upgrades per Site','mainwp'),
+			'mainwp_backup_before_upgrade' => __('Require Backup Before Upgrade','mainwp'),
+			'mainwp_automaticDailyUpdate' => __('Automatic Daily Update','mainwp'),
+			'mainwp_numberdays_Outdate_Plugin_Theme' => __('Abandoned Plugins/Thems Tolerance','mainwp'),
+			'mainwp_maximumPosts' => __('Maximum Number of Posts/Pages','mainwp'),
+			'mainwp_maximumComments' => __('Maximum Number of Comments','mainwp'),
+			'mainwp_primaryBackup' => __('Primary Backup System','mainwp'),
+			'mainwp_backupsOnServer' => __('Backups on Server','mainwp'),
+			'mainwp_backupOnExternalSources' => __('Backups on Remote Storage','mainwp'),
+			'mainwp_archiveFormat' => __('Backup Archive Format','mainwp'),
+			'mainwp_notificationOnBackupFail' => __('Send Email if a Backup Fails','mainwp'),
+			'mainwp_notificationOnBackupStart' => __('Send Email if a Backup Starts','mainwp'),
+			'mainwp_chunkedBackupTasks' => __('Execute Backup Tasks in Chunks','mainwp'),
+			'mainwp_options_offlinecheck_onlinenotification' => __('Online Notifications','mainwp'),
+			'mainwp_maximumRequests' => __('Maximum simultaneous requests','mainwp'),
+			'mainwp_minimumDelay' => __('Minimum delay between requests','mainwp'),
+			'mainwp_maximumIPRequests' => __('Maximum simultaneous requests per ip','mainwp'),
+			'mainwp_minimumIPDelay' => __('Minimum delay between requests to the same ip','mainwp')
+		);
+
+		$options_value = array();
+		$userExtension = MainWP_DB::Instance()->getUserExtension();
+		foreach($mainwp_options as $opt => $label){
+			$value  = get_option($opt, false);
+			switch($opt) {
+				case 'mainwp_options_footprint_plugin_folder_default':
+					$pluginDir = (($userExtension == null) || (($userExtension->pluginDir == null) || ($userExtension->pluginDir == '')) ? 'default' : $userExtension->pluginDir);
+					$value = ($pluginDir == 'hidden' ? 'Yes' : 'No');
+					break;
+				case 'select_mainwp_options_siteview':
+					$siteview = (($userExtension == null) || (($userExtension->site_view == null) || ($userExtension->site_view == '')) ? 0 : $userExtension->site_view);
+					$value = ($siteview == 1 ? 'Yes' : 'No');
+					break;
+				case 'mainwp_options_offlinecheck_onlinenotification':
+					$onlineNotifications = (($userExtension == null) || (($userExtension->offlineChecksOnlineNotification == null) || ($userExtension->offlineChecksOnlineNotification == '')) ? 0 : $userExtension->offlineChecksOnlineNotification);
+					$value = ($onlineNotifications == 1 ? 'Yes' : 'No');
+					break;
+				case 'mainwp_primaryBackup':
+					$value = __('Default MainWP Backups', 'mainwp');
+					break;
+				case 'mainwp_numberdays_Outdate_Plugin_Theme';
+				case 'mainwp_maximumPosts';
+				case 'mainwp_maximumComments';
+
+					break;
+				case 'mainwp_archiveFormat':
+
+					if ($value === false || $value == 'tar.gz') {
+						$value = 'Tar GZip';
+					} else if ($value == 'tar') {
+						$value = 'Tar';
+					} else if ($value == 'zip') {
+						$value = 'Zip';
+					} else if ($value == 'tar.bz2') {
+						$value = 'Tar BZip2';
+					}
+					break;
+				case 'mainwp_automaticDailyUpdate':
+					if ($value === false || $value == 2) {
+						$value = 'E-mail Notifications of New Updates';
+					} else if ($value == 1) {
+						$value = 'Install Trusted Updates';
+					} else {
+						$value = 'Off';
+					}
+					break;
+				case 'mainwp_maximumRequests':
+					$value = ($value === false) ? 4: $value;
+					break;
+				case 'mainwp_maximumIPRequests':
+					$value = ($value === false) ? 1: $value;
+					break;
+				case 'mainwp_minimumIPDelay':
+					$value = ($value === false) ? 1000: $value;
+					break;
+				case 'mainwp_minimumDelay':
+					$value = ($value === false) ? 200: $value;
+					break;
+				default:
+					$value = empty($value) ? 'No' : 'Yes';
+					break;
+			}
+			$options_value[ $opt ] = array('label' => $label, 'value' => $value );
+		}
+
+		$primaryBackup = get_option('mainwp_primaryBackup');
+		$primaryBackupMethods = apply_filters("mainwp-getprimarybackup-methods", array());
+		if (!is_array($primaryBackupMethods)) {
+			$primaryBackupMethods = array();
+		}
+
+		if (count($primaryBackupMethods) > 0) {
+			$chk = false;
+			foreach ( $primaryBackupMethods as $method ) {
+				if ( $primaryBackup ==  $method['value']) {
+					$value =  $method['title'];
+					$chk = true;
+					break;
+				}
+			}
+			if ($chk)
+				$options_value[ 'mainwp_primaryBackup' ] = array('label' => __('Primary Backup System','mainwp'), 'value' => $value);
+		}
+		return $options_value;
+	}
+
+	public static function displayMainWPOptions() {
+		$options = self::mainwpOptions();
+		foreach($options as $option) {
+			echo '<tr><td></td><td>'. $option['label'] .'</td><td colspan="3">' . $option['value'] . '</td></tr>';
+		}
 	}
 }

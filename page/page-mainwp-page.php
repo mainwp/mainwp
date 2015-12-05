@@ -92,6 +92,7 @@ class MainWP_Page {
 						}
 				}
 				?>
+				<div class="clear"></div>
 			</div>
 			<div id="mainwp_wrap-inside">
 		<?php
@@ -117,49 +118,50 @@ class MainWP_Page {
 		<?php self::renderHeader( 'BulkManage' ); ?>
 		<div class="mainwp-search-form">
 			<div class="postbox mainwp-postbox">
-				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Search Pages','mainwp' ); ?></h3>
+				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Step 1: Search Pages', 'mainwp' ); ?></h3>
 				<div class="inside">
 					<ul class="mainwp_checkboxes">
 						<li>
 							<input type="checkbox" id="mainwp_page_search_type_publish" <?php echo ($cachedSearch == null || ($cachedSearch != null && in_array( 'publish', $cachedSearch['status'] ))) ? 'checked="checked"' : ''; ?> class="mainwp-checkbox2"/>
-							<label for="mainwp_page_search_type_publish" class="mainwp-label2">Published</label>
+							<label for="mainwp_page_search_type_publish" class="mainwp-label2"><?php _e( 'Published', 'mainwp' ); ?></label>
 						</li>
 						<li>
 							<input type="checkbox" id="mainwp_page_search_type_pending" <?php echo ($cachedSearch != null && in_array( 'pending', $cachedSearch['status'] )) ? 'checked="checked"' : ''; ?> class="mainwp-checkbox2"/>
-							<label for="mainwp_page_search_type_pending" class="mainwp-label2">Pending</label>
+							<label for="mainwp_page_search_type_pending" class="mainwp-label2"><?php _e( 'Pending', 'mainwp' ); ?></label>
 						</li>
 						<li>
 							<input type="checkbox" id="mainwp_page_search_type_private" <?php echo ($cachedSearch != null && in_array( 'private', $cachedSearch['status'] )) ? 'checked="checked"' : ''; ?> class="mainwp-checkbox2"/>
-							<label for="mainwp_page_search_type_private" class="mainwp-label2">Private</label>
+							<label for="mainwp_page_search_type_private" class="mainwp-label2"><?php _e( 'Private', 'mainwp' ); ?></label>
 						</li>
 						<li>
 							<input type="checkbox" id="mainwp_page_search_type_future" <?php echo ($cachedSearch != null && in_array( 'future', $cachedSearch['status'] )) ? 'checked="checked"' : ''; ?> class="mainwp-checkbox2"/>
-							<label for="mainwp_page_search_type_future" class="mainwp-label2">Future</label>
+							<label for="mainwp_page_search_type_future" class="mainwp-label2"><?php _e( 'Future', 'mainwp' ); ?></label>
 						</li>
 						<li>
 							<input type="checkbox" id="mainwp_page_search_type_draft" <?php echo ($cachedSearch != null && in_array( 'draft', $cachedSearch['status'] )) ? 'checked="checked"' : ''; ?> class="mainwp-checkbox2"/>
-							<label for="mainwp_page_search_type_draft" class="mainwp-label2">Draft</label>
+							<label for="mainwp_page_search_type_draft" class="mainwp-label2"><?php _e( 'Draft', 'mainwp' ); ?></label>
 						</li>
 						<li>
 							<input type="checkbox" id="mainwp_page_search_type_trash" <?php echo ($cachedSearch != null && in_array( 'trash', $cachedSearch['status'] )) ? 'checked="checked"' : ''; ?> class="mainwp-checkbox2"/>
-							<label for="mainwp_page_search_type_trash" class="mainwp-label2">Trash</label>
+							<label for="mainwp_page_search_type_trash" class="mainwp-label2"><?php _e( 'Trash', 'mainwp' ); ?></label>
 						</li>
 					</ul>
 					<p>
 						<?php _e( 'Containing Keyword:','mainwp' ); ?><br />
-						<input type="text" id="mainwp_page_search_by_keyword" class="mainwp-field mainwp-keyword" size="50" value="<?php if ( $cachedSearch != null ) { echo $cachedSearch['keyword']; } ?>"/>
+						<input type="text" id="mainwp_page_search_by_keyword" class="" size="50" value="<?php if ( $cachedSearch != null ) { echo $cachedSearch['keyword']; } ?>"/>
 					</p>
 					<p>
 						<?php _e( 'Date Range:','mainwp' ); ?><br />
-						<input type="text" id="mainwp_page_search_by_dtsstart" class="mainwp_datepicker  mainwp-field mainwp-date" size="12" value="<?php if ( $cachedSearch != null ) { echo $cachedSearch['dtsstart']; } ?>"/> to <input type="text" id="mainwp_page_search_by_dtsstop" class="mainwp_datepicker  mainwp-field mainwp-date" size="12" value="<?php if ( $cachedSearch != null ) { echo $cachedSearch['dtsstop']; } ?>"/>
+						<input type="text" id="mainwp_page_search_by_dtsstart" class="mainwp_datepicker" size="12" value="<?php if ( $cachedSearch != null ) { echo $cachedSearch['dtsstart']; } ?>"/> to <input type="text" id="mainwp_page_search_by_dtsstop" class="mainwp_datepicker  mainwp-field mainwp-date" size="12" value="<?php if ( $cachedSearch != null ) { echo $cachedSearch['dtsstop']; } ?>"/>
 					</p>
 				</div>
 			</div>
-			<?php MainWP_UI::select_sites_box( __( 'Select Sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
+			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select Sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
 			<div style="clear: both;"></div>
-			<input type="button" name="mainwp_show_pages" id="mainwp_show_pages" class="button-primary" value="<?php _e( 'Show Pages','mainwp' ); ?>"/>
-			<span id="mainwp_pages_loading"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e( 'Grabbing information from Child Sites','mainwp' ) ?></em></span>
-			<br/><br/>
+            <input type="button" name="mainwp_show_pages" id="mainwp_show_pages" class="button-primary button button-hero button-right" value="<?php _e( 'Show Pages', 'mainwp' ); ?>"/>
+            <br/><br/>
+            <span id="mainwp_pages_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e( 'Grabbing information from Child Sites', 'mainwp' ) ?></em></span>
+            <br/><br/>
 		</div>
 		<div class="clear"></div>
 
@@ -590,15 +592,17 @@ class MainWP_Page {
 						wp_delete_post( $id, true );}
 
 					$countSites = 0;
+                    $countRealItems = 0;
 					foreach ( $dbwebsites as $website ) {
 						if ( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ) {
 							$countSites++;
+                            $countRealItems++;
 						}
 					}
 
 					if ( ! empty( $countSites ) ) {
 						$seconds = (time() - $startTime);
-						MainWP_Twitter::updateTwitterInfo( 'new_page', $countSites, $seconds, 1 , $startTime, 1 );
+						MainWP_Twitter::updateTwitterInfo( 'new_page', $countSites, $seconds, $countRealItems, $startTime, 1 );
 					}
 
 					if ( MainWP_Twitter::enabledTwitterMessages() ) {

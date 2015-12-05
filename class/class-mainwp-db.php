@@ -55,6 +55,11 @@ class MainWP_DB {
 			$currentVersion = false;
 		}
 
+		if ( empty( $currentVersion ) ) {
+			set_transient( '_mainwp_activation_redirect', 1, 30 );
+			update_site_option( 'mainwp_run_quick_setup', 'yes' );
+		}
+
 		if ( $currentVersion == $this->mainwp_db_version ) {
 			return;
 		}
@@ -315,14 +320,6 @@ class MainWP_DB {
 		$currentVersion = get_site_option( 'mainwp_db_version' );
 		if ( $currentVersion === false ) {
 			return;
-		}
-
-		if ( version_compare( $currentVersion, '2.5', '<' ) ) {
-			$requests = array(
-				'lastRequest' => time(),
-				'requests'    => base64_encode( serialize( array( 'main' => MainWP_System::Instance()->getAPIStatus() ) ) ),
-			);
-			MainWP_Utility::update_option( 'mainwp_requests', $requests );
 		}
 
 		if ( version_compare( $currentVersion, '2.8', '<' ) ) {

@@ -541,8 +541,8 @@ class MainWP_Utility {
 				$url .= 'admin-ajax.php';
 			}
 
-			$http_user = $website->http_user;
-			$http_pass = $website->http_pass;
+			if ( property_exists( $website, 'http_user' ) ) $http_user = $website->http_user;
+			if ( property_exists( $website, 'http_pass' ) ) $http_pass = $website->http_pass;
 
 			$_new_post = null;
 			if ( isset( $params ) && isset( $params['new_post'] ) ) {

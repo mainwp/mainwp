@@ -125,6 +125,7 @@ class MainWP_Settings {
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'OfflineChecks' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=OfflineChecks"><?php _e( 'Offline Checks', 'mainwp' ); ?></a>
+			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">
 		<?php
@@ -166,7 +167,7 @@ class MainWP_Settings {
 						<tr>
 							<th scope="row"><?php _e( 'Maximum simultaneous requests', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Maximum simultaneous requests. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 4, set to 0 for unlimited.', 'mainwp' ) ); ?></th>
 							<td>
-								<input type="text" name="mainwp_maximumRequests" class="mainwp-field mainwp-settings-icon"
+								<input type="text" name="mainwp_maximumRequests" class=""
 									id="mainwp_maximumRequests" value="<?php echo( ( get_option( 'mainwp_maximumRequests' ) === false ) ? 4 : get_option( 'mainwp_maximumRequests' ) ); ?>"/>
 								<i>Default: 4</i>
 							</td>
@@ -174,7 +175,7 @@ class MainWP_Settings {
 						<tr>
 							<th scope="row"><?php _e( 'Minimum delay between requests (milliseconds)', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Minimum delay between requests (milliseconds). With a typical shared host you should set this at 200.', 'mainwp' ) ); ?></th>
 							<td>
-								<input type="text" name="mainwp_minimumDelay" class="mainwp-field mainwp-settings-icon"
+								<input type="text" name="mainwp_minimumDelay" class=""
 									id="mainwp_minimumDelay" value="<?php echo( ( get_option( 'mainwp_minimumDelay' ) === false ) ? 200 : get_option( 'mainwp_minimumDelay' ) ); ?>"/>
 								<i>Default: 200</i>
 							</td>
@@ -193,7 +194,7 @@ class MainWP_Settings {
 						<tr>
 							<th scope="row"><?php _e( 'Maximum simultaneous requests per ip', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Maximum simultaneous requests per IP. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 1, set to 0 for unlimited.', 'mainwp' ) ); ?></th>
 							<td>
-								<input type="text" name="mainwp_maximumIPRequests" class="mainwp-field mainwp-settings-icon"
+								<input type="text" name="mainwp_maximumIPRequests" class=""
 									id="mainwp_maximumIPRequests" value="<?php echo( ( get_option( 'mainwp_maximumIPRequests' ) === false ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) ); ?>"/>
 								<i>Default: 1</i>
 							</td>
@@ -201,7 +202,7 @@ class MainWP_Settings {
 						<tr>
 							<th scope="row"><?php _e( 'Minimum delay between requests to the same ip (milliseconds)', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Minimum delay between requests (milliseconds) per IP. With a typical shared host you should set this at 1000.', 'mainwp' ) ); ?></th>
 							<td>
-								<input type="text" name="mainwp_minimumIPDelay" class="mainwp-field mainwp-settings-icon"
+								<input type="text" name="mainwp_minimumIPDelay" class=""
 									id="mainwp_minimumIPDelay" value="<?php echo( ( get_option( 'mainwp_minimumIPDelay' ) === false ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) ); ?>"/>
 								<i>Default: 1000</i>
 							</td>
@@ -232,7 +233,7 @@ class MainWP_Settings {
 				</div>
 			</div>
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>
+				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>
 			</p>
 		</form>
 		<?php
@@ -259,7 +260,6 @@ class MainWP_Settings {
 			<?php
 		}
 
-		MainWP_API_Settings_View::renderForumSignup();
 		?>
 
 		<form method="POST" action="admin.php?page=Settings" id="mainwp-settings-page-form">
@@ -273,11 +273,9 @@ class MainWP_Settings {
 
 			MainWP_Footprint::renderSettings();
 
-			MainWP_API_Settings_View::renderSettings();
-
 			?>
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>
+				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>
 			</p>
 		</form>
 		<?php
@@ -346,7 +344,7 @@ class MainWP_Settings {
 				</div>
 			</div>
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button-primary" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>
+				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>
 			</p>
 		</form>
 		<?php
@@ -362,37 +360,85 @@ class MainWP_Settings {
 			return;
 		}
 
+		$wp_menu_items = array(
+			'dashboard' => __( 'Dashboard', 'mainwp' ),
+			'posts' => __( 'Posts', 'mainwp' ),
+			'media' => __( 'Media', 'mainwp' ),
+			'pages' => __( 'Pages' ),
+			'appearance' => __( 'Appearance', 'mainwp' ),
+			'comments' => __( 'Comments', 'mainwp' ),
+			'users' => __( 'Users', 'mainwp' ),
+			'tools' => __( 'Tools', 'mainwp' ),
+		);
+
+		$hide_menus =  get_option('mwp_setup_hide_wp_menus');
+
+		if ( ! is_array( $hide_menus ) ) {
+			$hide_menus = array();
+		}
+
 		self::renderHeader( 'MainWPTools' );
 		?>
-		<div class="postbox" id="mainwp-tools">
-			<h3 class="mainwp_box_title">
-				<span><i class="fa fa-wrench"></i> <?php _e( 'MainWP Tools', 'mainwp' ); ?></span></h3>
+		<form method="POST" action="">
+			<div class="postbox" id="mainwp-tools">
+				<h3 class="mainwp_box_title">
+					<span><i class="fa fa-wrench"></i> <?php _e( 'MainWP Tools', 'mainwp' ); ?></span></h3>
 
-			<div class="inside">
-				<table class="form-table">
-					<tbody>
-					<tr>
-						<th scope="row"><?php _e( 'Force Dashboard to Establish New Connection', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Use this option to establish new connection with child sites.', 'mainwp' ) ); ?></th>
-						<td>
-							<input type="submit" name="" id="force-destroy-sessions-button" class="button-primary button" value="<?php _e( 'Establish New Connection', 'mainwp' ); ?>"/><br/>
-							<em>
-								<?php _e( 'Forces your Dashboard to reconnect with your Child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>
-							</em>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><?php _e( 'Scan child sites for known issues', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Use this option to scan child sites for known issues.', 'mainwp' ) ); ?></th>
-						<td>
-							<a href="<?php echo admin_url( 'admin.php?page=MainWP_Child_Scan' ); ?>" class="button-primary button"><?php _e( 'Scan', 'mainwp' ); ?></a><br/>
-							<em>
-								<?php _e( 'Scans each site individually for known issues.', 'mainwp' ); ?>
-							</em>
-						</td>
-					</tr>
-					</tbody>
-				</table>
+				<div class="inside">
+					<table class="form-table">
+						<tbody>
+						<tr>
+							<th scope="row"><?php _e( 'Force Dashboard to Establish New Connection', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Use this option to establish new connection with child sites.', 'mainwp' ) ); ?></th>
+							<td>
+								<input type="submit" name="" id="force-destroy-sessions-button" class="button-primary button" value="<?php _e( 'Establish New Connection', 'mainwp' ); ?>"/><br/>
+								<em>
+									<?php _e( 'Forces your Dashboard to reconnect with your Child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>
+								</em>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php _e( 'Scan child sites for known issues', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Use this option to scan child sites for known issues.', 'mainwp' ) ); ?></th>
+							<td>
+								<a href="<?php echo admin_url( 'admin.php?page=MainWP_Child_Scan' ); ?>" class="button-primary button"><?php _e( 'Scan', 'mainwp' ); ?></a><br/>
+								<em>
+									<?php _e( 'Scans each site individually for known issues.', 'mainwp' ); ?>
+								</em>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php _e('MainWP Quick Setup','mainwp'); ?></th>
+							<td>
+								<a href="admin.php?page=mainwp-setup" class="button-primary button"/><?php _e('Start Quick Setup','mainwp'); ?></a><br/>
+								<em>
+									<?php _e('MainWP Quick Setup allows you to quickly set your MainWP Dashboard preferences.','mainwp'); ?>
+								</em>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php _e( 'Hide WP Menus', 'mainwp' ); ?></th>
+							<td>
+								<ul class="mainwp_checkboxes mainwp_hide_wpmenu_checkboxes">
+									<?php
+									foreach ( $wp_menu_items as $name => $item ) {
+										$_selected = '';
+										if ( in_array( $name, $hide_menus ) ) {
+											$_selected = 'checked'; }
+										?>
+										<li>
+											<input type="checkbox" id="mainwp_hide_wpmenu_<?php echo $name; ?>" name="mainwp_hide_wpmenu[]" <?php echo $_selected; ?> value="<?php echo $name; ?>" class="mainwp-checkbox2">
+											<label for="mainwp_hide_wpmenu_<?php echo $name; ?>" class="mainwp-label2"><?php echo $item; ?></label>
+										</li>
+									<?php }
+									?>
+								</ul>
+							</td>
+						</tr>
+						</tbody>
+					</table>
+				</div>
 			</div>
-		</div>
+			<p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e('Save Settings','mainwp'); ?>"/></p>
+		</form>
 		<?php
 		self::renderFooter( 'MainWPTools' );
 	}

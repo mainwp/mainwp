@@ -284,15 +284,37 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			//            if (is_array($websiteThemes)) $cnt += count($websiteThemes);
 
 			if ( $cnt > 0 ) {
-				$output .= '<span class="mainwp-av-updates-col" title="' . $cnt . ' Availble Update' . ( $cnt != 1 ? 's' : '' ) . '"> ' . $cnt . '</span>';
+				$output .= '<span class="fa-stack fa-lg" title="'. $cnt .' Availble Update' . ($cnt != 1 ? "s" : "") . '">
+                <i class="fa fa-circle fa-stack-2x mwp-d-green"></i><strong class="mwp-white fa-stack-1x">' . $cnt . '</strong></span>';
 			}
 		}
 
 		$output .= '
-       <img class="down-img down-img-align" title="Site is Offline" src="' . plugins_url( 'images/down.png', dirname( __FILE__ ) ) . '" ' . ( $item['offline_check_result'] == - 1 && ! $hasSyncErrors && ! $isConflict ? '' : 'style="display:none;"' ) . ' />
-       <img class="up-img up-img-align" title="Plugin or Theme Conflict Found" src="' . plugins_url( 'images/conflict.png', dirname( __FILE__ ) ) . '" ' . ( ! $hasSyncErrors && $isConflict ? '' : 'style="display:none;"' ) . '/>
-       <img class="up-img up-img-align" title="Site is Online" src="' . plugins_url( 'images/up.png', dirname( __FILE__ ) ) . '" ' . ( $item['offline_check_result'] == 1 && ! $hasSyncErrors && ! $isConflict && ( $cnt == 0 ) ? '' : 'style="display:none;"' ) . '/>
-       <img class="up-img up-img-align" title="Site Disconnected" src="' . plugins_url( 'images/disconnected.png', dirname( __FILE__ ) ) . '" ' . ( $hasSyncErrors ? '' : 'style="display:none;"' ) . '/>
+       <span title="Site is Offline" ' . ($item['offline_check_result'] == -1 && !$hasSyncErrors && !$isConflict ? '' : 'style="display:none;"') . '>
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-exclamation-circle fa-2x mwp-red"></i>
+            </span>
+       </span>
+
+       <span title="Plugin or Theme Conflict Found" ' . (!$hasSyncErrors && $isConflict ? '' : 'style="display:none;"') . '>
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x mwp-red"></i>
+                <i class="fa fa-flag fa-stack-1x mwp-white"></i>
+            </span>
+       </span>
+
+       <span title="Site is Online" ' . ($item['offline_check_result'] == 1 && !$hasSyncErrors && !$isConflict && ($cnt == 0) ? '' : 'style="display:none;"'). '>
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-check-circle fa-2x mwp-l-green"></i>
+            </span>
+       </span>
+
+       <span title="Site Disconnected" ' . ($hasSyncErrors ? '' : 'style="display:none;"') . '>
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x mwp-red"></i>
+                <i class="fa fa-plug fa-stack-1x mwp-white"></i>
+            </span>
+       </span>
        ';
 
 		return $output;
@@ -337,7 +359,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	function column_url( $item ) {
 		$actions = array(
 			'open' => sprintf( '<a href="admin.php?page=SiteOpen&websiteid=%1$s" class="open_wpadmin">' . __( 'Open WP Admin', 'mainwp' ) . '</a> (<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=%1$s" class="open_newwindow_wpadmin" target="_blank">' . __( 'New Window', 'mainwp' ) . '</a>)', $item['id'] ),
-			'test' => '<a href="#" class="mainwp_site_testconnection" class="test_connection">' . __( 'Test Connection', 'mainwp' ) . '</a> <span style="display: none;"><img src="' . plugins_url( 'images/loading.gif', dirname( __FILE__ ) ) . '""/>' . __( 'Testing Connection', 'mainwp' ) . '</span>',
+			'test' => '<a href="#" class="mainwp_site_testconnection" class="test_connection">' . __( 'Test Connection', 'mainwp' ) . '</a> <span style="display: none;"><i class="fa fa-spinner fa-pulse"></i>' . __( 'Testing Connection', 'mainwp' ) . '</span>',
 			'scan' => '<a href="admin.php?page=managesites&scanid=' . $item['id'] . '">' . __( 'Security Scan', 'mainwp' ) . '</a>',
 		);
 
@@ -432,6 +454,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			'open_frontpage'  => __( 'Open Frontpage', 'mainwp' ),
 			'update_plugins'  => __( 'Update Plugins', 'mainwp' ),
 			'update_themes'   => __( 'Update Themes', 'mainwp' ),
+			'update_wpcore'   => __('Update Wordpress', 'mainwp'),
 		);
 
 		return apply_filters( 'mainwp_managesites_bulk_actions', $actions );
@@ -696,13 +719,13 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 		<div class="alignleft actions">
 			<form method="GET" action="">
-				<input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
+				<input type="hidden" value="<?php echo esc_attr( $_REQUEST['page'] ); ?>" name="page"/>
 				<select name="g">
 					<option value=""><?php _e( 'All Groups', 'mainwp' ); ?></option>
 					<?php
 					$groups = MainWP_DB::Instance()->getGroupsForCurrentUser();
 					foreach ( $groups as $group ) {
-						echo '<option value="' . $group->id . '" ' . ( isset( $_REQUEST['g'] ) && $_REQUEST['g'] == $group->id ? 'selected' : '' ) . '>' . $group->name . '</option>';
+						echo '<option value="' . $group->id . '" ' . ( isset( $_REQUEST['g'] ) && $_REQUEST['g'] == $group->id ? 'selected' : '' ) . '>' . stripslashes( $group->name ) . '</option>';
 					}
 					?>
 				</select>
@@ -722,7 +745,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		<div class="alignleft actions">
 			<form method="GET" action="">
 				<input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
-				<input type="text" value="<?php echo( isset( $_REQUEST['s'] ) ? $_REQUEST['s'] : '' ); ?>"
+				<input type="text" value="<?php echo( isset( $_REQUEST['s'] ) ? esc_attr( $_REQUEST['s'] ) : '' ); ?>"
 					autocompletelist="sites" name="s" class="mainwp_autocomplete"/>
 				<datalist id="sites">
 					<?php

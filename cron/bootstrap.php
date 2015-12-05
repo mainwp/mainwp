@@ -7,4 +7,4 @@ $mem =  '512M';
 
 define('DOING_CRON', true);
 
-include_once '../../../../wp-load.php';
+include_once __DIR__.'/../../../../wp-load.php';

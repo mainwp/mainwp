@@ -171,6 +171,23 @@ class MainWP_Api_Manager_Key {
 
 		return $response;
 	}
+
+	public function purchasesoftware( $args ) {
+		$defaults = array(
+			'request' => 'purchasesoftware',
+		);
+		$args = wp_parse_args( $defaults, $args );
+		$target_url = self::create_software_api_url( $args );
+		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => self::$apisslverify));
+
+		if( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
+			// Request failed
+			return false;
+		}
+
+		$response = wp_remote_retrieve_body( $request );
+		return $response;
+	}
 }
 
 // Class is instantiated as an object by other classes on-demand

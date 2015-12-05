@@ -20,613 +20,613 @@ msgstr ""
 "X-Poedit-SearchPath-0: .\n"
 "X-Textdomain-Support: yes"
 
-#: class/MainWP_Ajax.class.php:77
+#: class/MainWPAjax.class.php:77
 #@ mainwp
 msgid "Network Admin"
 msgstr "Netzwerk-Admin"
 
-#: class/MainWP_Ajax.class.php:79
+#: class/MainWPAjax.class.php:79
 #@ mainwp
 msgid "Global Dashboard"
 msgstr "Zentrales Dashboard"
 
-#: class/MainWP_Ajax.class.php:84
+#: class/MainWPAjax.class.php:84
 #, php-format
 #@ mainwp
 msgid "%1$s &#8212; WordPress"
 msgstr "%1$s &#8212; WordPress"
 
-#: class/MainWP_Ajax.class.php:86
+#: class/MainWPAjax.class.php:86
 #, php-format
 #@ mainwp
 msgid "%1$s &lsaquo; %2$s &#8212; WordPress"
 msgstr "%1$s &lsaquo; %2$s &#8212; WordPress"
 
-#: class/MainWP_Ajax.class.php:135
-#: class/MainWP_Ajax.class.php:155
-#: page/MainWP_Main.page.php:41
-#: page/MainWP_Page.page.php:423
-#: page/MainWP_Post.page.php:470
-#: page/MainWP_User.page.php:497
-#: table/MainWP_Manage_Sites.table.php:154
-#: view/MainWP_Manage_Sites_View.view.php:54
-#: view/MainWP_Manage_Sites_View.view.php:58
+#: class/MainWPAjax.class.php:135
+#: class/MainWPAjax.class.php:155
+#: page/MainWPMain.page.php:41
+#: page/MainWPPage.page.php:423
+#: page/MainWPPost.page.php:470
+#: page/MainWPUser.page.php:497
+#: table/MainWPManageSites.table.php:154
+#: view/MainWPManageSitesView.view.php:54
+#: view/MainWPManageSitesView.view.php:58
 #@ mainwp
 #@ default
 msgid "Dashboard"
 msgstr "Dashboard"
 
-#: class/MainWP_Ajax.class.php:166
+#: class/MainWPAjax.class.php:166
 #@ mainwp
 msgid "Welcome to your WordPress Dashboard! This is the screen you will see when you log in to your site, and gives you access to all the site management features of WordPress. You can get help for any screen by clicking the Help tab in the upper corner."
 msgstr "Willkommen in Ihrem Wordpress-Dashboard! Dies ist der Bildschirm den Sie sehen, wenn Sie sich auf Ihre Webseite angemeldet haben und gibt Ihnen Zugriff auf alle Webseite-Management-Funktionen von Wordpress. Sie können die Hilfe für jeden Bildschirm bekommen, klicken Sie in der oberen Ecke der Registerkarte Hilfe an."
 
-#: class/MainWP_Ajax.class.php:170
+#: class/MainWPAjax.class.php:170
 #@ mainwp
 msgid "Overview"
 msgstr "Übersicht"
 
-#: class/MainWP_Ajax.class.php:176
+#: class/MainWPAjax.class.php:176
 #@ mainwp
 msgid "The left-hand navigation menu provides links to all of the WordPress administration screens, with submenu items displayed on hover. You can minimize this menu to a narrow icon strip by clicking on the Collapse Menu arrow at the bottom."
 msgstr "Das linke Navigationsmenü bietet Links zu allen Wordpress-Administration Bildschirmen mit Untermenüpunkte die beim anwählen schwebend angezeigt werden. Sie können dieses Menü zu einem schmalen Streifen Symbol minimieren, indem Sie auf den Pfeil Menü einklappen am unteren Rand klicken."
 
-#: class/MainWP_Ajax.class.php:177
+#: class/MainWPAjax.class.php:177
 #@ mainwp
 msgid "Links in the Toolbar at the top of the screen connect your dashboard and the front end of your site, and provide access to your profile and helpful WordPress information."
 msgstr "In der Werkzeugleiste am oberen Bildschirmrand können Sie von Ihrem Dashboard Ihr Front-End Seite sehen und den Zugang zu Ihrem Profil und hilfreiche WordPress Informationen."
 
-#: class/MainWP_Ajax.class.php:181
+#: class/MainWPAjax.class.php:181
 #@ mainwp
 msgid "Navigation"
 msgstr "Navigation"
 
-#: class/MainWP_Ajax.class.php:185
+#: class/MainWPAjax.class.php:185
 #@ mainwp
 msgid "You can use the following controls to arrange your Dashboard screen to suit your workflow. This is true on most other administration screens as well."
 msgstr "Sie können die folgenden Steuer-Elemente benutzen, um Ihre Dashboard-Bildschirm auf Ihren Workflow anzupassen. Dies gilt für die meisten anderen Bildschirme sowie der Verwaltung."
 
-#: class/MainWP_Ajax.class.php:186
+#: class/MainWPAjax.class.php:186
 #@ mainwp
 msgid "<strong>Screen Options</strong> - Use the Screen Options tab to choose which Dashboard boxes to show, and how many columns to display."
 msgstr "<strong>Bildschirmoptionen</strong> - Verwenden Sie die Registerkarte Optionen des Bildschirms, um entsprechende Einstellungen wie zB. wie viele Spalten angezeigt werden sollen."
 
-#: class/MainWP_Ajax.class.php:187
+#: class/MainWPAjax.class.php:187
 #@ mainwp
 msgid "<strong>Drag and Drop</strong> - To rearrange the boxes, drag and drop by clicking on the title bar of the selected box and releasing when you see a gray dotted-line rectangle appear in the location you want to place the box."
 msgstr "<strong>Drag &amp; Drop</strong> - Um die Boxen neu zu ordnen, Drag &amp; Drop, auf die Titelleiste der gewählten Box und in der Position, die Sie die Box platzieren möchten einfach Loslassen, wenn Sie ein grau gestricheltes Rechteck erscheinen sehen."
 
-#: class/MainWP_Ajax.class.php:188
+#: class/MainWPAjax.class.php:188
 #@ mainwp
 msgid "<strong>Box Controls</strong> - Click the title bar of the box to expand or collapse it. In addition, some box have configurable content, and will show a &#8220;Configure&#8221; link in the title bar if you hover over it."
 msgstr "<strong>Box Steuerungen</strong> - Klicken Sie auf die Titelleiste der Box um Sie aufzuklappen oder einzuklappen. Darüber hinaus sind einige Boxen konfigurierbaren Inhalt und ein Link \\\"Konfigurieren\\\" wird in der Titelleiste angezeigt, wenn Sie mit dem Mauszeiger darüber stehen."
 
-#: class/MainWP_Ajax.class.php:192
+#: class/MainWPAjax.class.php:192
 #@ mainwp
 msgid "Layout"
 msgstr "Layout"
 
-#: class/MainWP_Ajax.class.php:196
+#: class/MainWPAjax.class.php:196
 #@ mainwp
 msgid "The boxes on your Dashboard screen are:"
 msgstr "Die Boxen auf Ihrem Dashboard-Bildschirm sind:"
 
-#: class/MainWP_Ajax.class.php:197
+#: class/MainWPAjax.class.php:197
 #@ mainwp
 msgid "<strong>Right Now</strong> - Displays a summary of the content on your site and identifies which theme and version of WordPress you are using."
 msgstr "<strong>Im Moment</strong> - Zeigt eine Zusammenfassung der Inhalte auf Ihrer Webseite und die Themen- und Wordpress-Version die Sie verwenden."
 
-#: class/MainWP_Ajax.class.php:198
+#: class/MainWPAjax.class.php:198
 #@ mainwp
 msgid "<strong>Recent Comments</strong> - Shows the most recent comments on your posts (configurable, up to 30) and allows you to moderate them."
 msgstr "<strong>Aktuelle Kommentare</strong> - Zeigt die jüngsten Kommentare auf deine Beiträge (konfigurierbar bis zu 30) und erlaubt Ihnen, sie zu moderieren."
 
-#: class/MainWP_Ajax.class.php:199
+#: class/MainWPAjax.class.php:199
 #@ mainwp
 msgid "<strong>Incoming Links</strong> - Shows links to your site found by Google Blog Search."
 msgstr "<strong>Eingehende Links</strong> - Zeigt Links zu Ihrer Webseite die von Google Blog-Suche gefunden wurden."
 
-#: class/MainWP_Ajax.class.php:200
+#: class/MainWPAjax.class.php:200
 #@ mainwp
 msgid "<strong>QuickPress</strong> - Allows you to create a new post and either publish it or save it as a draft."
 msgstr "<strong>Schnell-Beitrag</strong> - Damit können Sie einen neuen Beitrag erstellen und entweder veröffentlichen oder speichern Sie diesen als Entwurf."
 
-#: class/MainWP_Ajax.class.php:201
+#: class/MainWPAjax.class.php:201
 #@ mainwp
 msgid "<strong>Recent Drafts</strong> - Displays links to the 5 most recent draft posts you&#8217;ve started."
 msgstr "<strong>Neue Entwürfe</strong> - Zeigt Links zu den fünf jüngsten Entwurfsbeiträgen, die Sie begonnen haben."
 
-#: class/MainWP_Ajax.class.php:202
+#: class/MainWPAjax.class.php:202
 #@ mainwp
 msgid "<strong>WordPress Blog</strong> - Latest news from the official WordPress project."
 msgstr "<strong>WordPress Blog</strong> - Aktuelle Nachrichten aus der offiziellen Wordpress-Projekt."
 
-#: class/MainWP_Ajax.class.php:203
+#: class/MainWPAjax.class.php:203
 #@ mainwp
 msgid "<strong>Other WordPress News</strong> - Shows the <a href=\"http://planet.wordpress.org\" target=\"_blank\">WordPress Planet</a> feed. You can configure it to show a different feed of your choosing."
 msgstr "<strong>Weitere WordPress Nachrichten</strong> - zeigt die  <a href=\"http://planet.wordpress.org\" target=\"_blank\">WordPress Planet</a> Feeds an. Sie können dies umkonfigurieren, um einen anderen Feed Ihrer Wahl zu zeigen."
 
-#: class/MainWP_Ajax.class.php:204
+#: class/MainWPAjax.class.php:204
 #@ mainwp
 msgid "<strong>Plugins</strong> - Features the most popular, newest, and recently updated plugins from the WordPress.org Plugin Directory."
 msgstr "<strong>Plugins</strong> - Werden die beliebtesten, neuesten, und vor kurzem aktualisierte Plugins aus dem WordPress.org Plugin-Verzeichnis angezeigt."
 
-#: class/MainWP_Ajax.class.php:208
+#: class/MainWPAjax.class.php:208
 #@ mainwp
 msgid "Content"
 msgstr "Inhalt"
 
-#: class/MainWP_Ajax.class.php:215
+#: class/MainWPAjax.class.php:215
 #@ mainwp
 msgid "For more information:"
 msgstr "Für weitere Infos:"
 
-#: class/MainWP_Ajax.class.php:216
+#: class/MainWPAjax.class.php:216
 #@ mainwp
 msgid "<a href=\"http://codex.wordpress.org/Dashboard_Screen\" target=\"_blank\">Documentation on Dashboard</a>"
 msgstr "<a href=\"http://codex.wordpress.org/Dashboard_Screen\" target=\"_blank\">Dokumentation vom Dashboard</a>"
 
-#: class/MainWP_Ajax.class.php:217
+#: class/MainWPAjax.class.php:217
 #@ mainwp
 msgid "<a href=\"http://wordpress.org/support/\" target=\"_blank\">Support Forums</a>"
 msgstr "<a href=\"http://wordpress.org/support/\" target=\"_blank\">Support Forum</a>"
 
-#: class/MainWP_Error_Helper.class.php:17
-#: view/MainWP_Manage_Sites_View.view.php:953
-#: view/MainWP_Manage_Sites_View.view.php:1081
+#: class/MainWPErrorHelper.class.php:17
+#: view/MainWPManageSitesView.view.php:953
+#: view/MainWPManageSitesView.view.php:1081
 #@ mainwp
 msgid "post as much information as possible on the error in the <a href=\"https://mainwp.com/forum/\">support forum</a>."
 msgstr "schreiben Sie so viele Informationen wie möglich über den/die Fehler in das <a href=\"https://mainwp.com/forum/\">MainWP Support Forum</a>."
 
-#: class/MainWP_Meta_Boxes.class.php:8
-#: class/MainWP_Meta_Boxes.class.php:14
+#: class/MainWPMetaBoxes.class.php:8
+#: class/MainWPMetaBoxes.class.php:14
 #@ mainwp
 msgid "Select sites"
 msgstr "Wähle Webseite"
 
-#: class/MainWP_Meta_Boxes.class.php:9
-#: page/MainWP_Post.page.php:197
-#: page/MainWP_Post.page.php:232
+#: class/MainWPMetaBoxes.class.php:9
+#: page/MainWPPost.page.php:197
+#: page/MainWPPost.page.php:232
 #@ mainwp
 msgid "Categories"
 msgstr "Kategorien"
 
-#: class/MainWP_Meta_Boxes.class.php:10
-#: page/MainWP_Post.page.php:200
-#: page/MainWP_Post.page.php:235
+#: class/MainWPMetaBoxes.class.php:10
+#: page/MainWPPost.page.php:200
+#: page/MainWPPost.page.php:235
 #@ mainwp
 msgid "Tags"
 msgstr "Schlagworte"
 
-#: class/MainWP_Meta_Boxes.class.php:11
-#: class/MainWP_Meta_Boxes.class.php:15
+#: class/MainWPMetaBoxes.class.php:11
+#: class/MainWPMetaBoxes.class.php:15
 #@ mainwp
 msgid "Slug"
 msgstr "Slug"
 
-#: class/MainWP_Meta_Boxes.class.php:84
+#: class/MainWPMetaBoxes.class.php:84
 #@ mainwp
 msgid "All Categories"
 msgstr "Alle Kategorien"
 
-#: class/MainWP_Meta_Boxes.class.php:89
+#: class/MainWPMetaBoxes.class.php:89
 #@ mainwp
 msgid " Uncategorized"
 msgstr "nicht zugeordnet"
 
-#: class/MainWP_Meta_Boxes.class.php:94
+#: class/MainWPMetaBoxes.class.php:94
 #@ mainwp
 msgid "+ Add New Category"
 msgstr "+ Neue Kategorie hinzufügen"
 
-#: class/MainWP_Meta_Boxes.class.php:96
-#: class/MainWP_Meta_Boxes.class.php:98
+#: class/MainWPMetaBoxes.class.php:96
+#: class/MainWPMetaBoxes.class.php:98
 #@ mainwp
 msgid "Add New Category"
 msgstr " Neue Kategorie hinzufügen"
 
-#: class/MainWP_Meta_Boxes.class.php:97
+#: class/MainWPMetaBoxes.class.php:97
 #@ mainwp
 msgid "New Category Name"
 msgstr "Neuer Kategoriename"
 
-#: class/MainWP_Sync.class.php:96
-#: view/MainWP_System_View.view.php:125
+#: class/MainWPSync.class.php:96
+#: view/MainWPSystemView.view.php:125
 #@ mainwp
 msgid "HTTP error"
 msgstr "HTTP Fehler"
 
-#: class/MainWP_Sync.class.php:101
+#: class/MainWPSync.class.php:101
 #@ mainwp
 msgid "MainWP not detected"
 msgstr "MainWP nicht erkannt"
 
-#: class/MainWP_Sync.class.php:264
-#: page/MainWP_Bulk_Add.page.php:24
+#: class/MainWPSync.class.php:264
+#: page/MainWPBulkAdd.page.php:24
 #@ mainwp
 msgid "Error - "
 msgstr "Fehler - "
 
-#: class/MainWP_UI.class.php:26
+#: class/MainWPUI.class.php:26
 #@ mainwp
 msgid "Select: "
 msgstr "Auswahl:"
 
-#: class/MainWP_UI.class.php:26
-#: view/MainWP_System_View.view.php:123
+#: class/MainWPUI.class.php:26
+#: view/MainWPSystemView.view.php:123
 #@ mainwp
 msgid "All"
 msgstr "Alles"
 
-#: class/MainWP_UI.class.php:26
+#: class/MainWPUI.class.php:26
 #@ mainwp
 msgid "None"
 msgstr "Nichts"
 
-#: class/MainWP_UI.class.php:29
-#: class/MainWP_UI.class.php:94
-#: class/MainWP_UI.class.php:95
+#: class/MainWPUI.class.php:29
+#: class/MainWPUI.class.php:94
+#: class/MainWPUI.class.php:95
 #@ mainwp
 msgid "By site"
 msgstr "Durch die Webseite"
 
-#: class/MainWP_UI.class.php:29
-#: class/MainWP_UI.class.php:95
-#: class/MainWP_UI.class.php:96
+#: class/MainWPUI.class.php:29
+#: class/MainWPUI.class.php:95
+#: class/MainWPUI.class.php:96
 #@ mainwp
 msgid "By group"
 msgstr "Durch die Gruppe"
 
-#: class/MainWP_UI.class.php:34
-#: class/MainWP_UI.class.php:101
+#: class/MainWPUI.class.php:34
+#: class/MainWPUI.class.php:101
 #@ mainwp
 msgid "<p>No websites have been found.</p>"
 msgstr "<p>Keine Webseiten gefunden.</p>"
 
-#: class/MainWP_UI.class.php:53
-#: class/MainWP_UI.class.php:148
+#: class/MainWPUI.class.php:53
+#: class/MainWPUI.class.php:148
 #@ mainwp
 msgid "<p>No groups with entries have been found.</p>"
 msgstr "<p>Keine Gruppen mit Einträgen gefunden.</p>"
 
-#: class/MainWP_UI.class.php:90
+#: class/MainWPUI.class.php:90
 #@ mainwp
 msgid "Select Categories"
 msgstr "Wählen Sie Kategorien"
 
-#: class/MainWP_UI.class.php:132
+#: class/MainWPUI.class.php:132
 #@ mainwp
 msgid "Reload"
 msgstr "Neu laden"
 
-#: class/MainWP_UI.class.php:173
+#: class/MainWPUI.class.php:173
 #@ mainwp
 msgid "<p>No selected categories.</p>"
 msgstr "<p>Keine ausgewählten Kategorien.</p>"
 
-#: class/MainWP_Utility.class.php:681
+#: class/MainWPUtility.class.php:681
 #@ default
 msgid "Could not create directory to download the file."
 msgstr "Verzeichnis konnte nicht erstellt werden, um die Datei herunterzuladen."
 
-#: class/MainWP_Utility.class.php:1318
+#: class/MainWPUtility.class.php:1318
 #@ mainwp
 msgid "Once every 5 minutes"
 msgstr "Einmal alle 5 Minuten"
 
-#: class/MainWP_Utility.class.php:1322
+#: class/MainWPUtility.class.php:1322
 #@ mainwp
 msgid "Once every minute"
 msgstr "Einmal pro Minute"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:14
-#: page/MainWP_User.page.php:45
-#: page/MainWP_User.page.php:77
+#: page/MainWPBulkUpdateAdminPasswords.page.php:14
+#: page/MainWPUser.page.php:45
+#: page/MainWPUser.page.php:77
 #@ mainwp
 msgid "Admin Passwords"
 msgstr "Admin Passwort"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:62
+#: page/MainWPBulkUpdateAdminPasswords.page.php:62
 #@ mainwp
 msgid "Please select the sites or groups where you want to change the admin password."
 msgstr "Bitte wählen Sie die Seiten oder Gruppen, in denen Sie das Admin-Passwort ändern möchten."
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:65
+#: page/MainWPBulkUpdateAdminPasswords.page.php:65
 #@ mainwp
 msgid "Please select whether you want to change the admin password for specific sites or groups."
 msgstr "Bitte wählen Sie, ob Sie das Admin-Passwort für bestimmte Seiten oder Gruppen ändern möchten."
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:68
+#: page/MainWPBulkUpdateAdminPasswords.page.php:68
 #@ mainwp
 msgid "Please enter the password twice."
 msgstr "Bitte geben Sie das Passwort zweimal ein."
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:70
+#: page/MainWPBulkUpdateAdminPasswords.page.php:70
 #@ mainwp
 msgid "Please enter the same password in the two password fields."
 msgstr "Bitte geben Sie das gleiche Kennwort in die beiden Passwortfelder."
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:119
+#: page/MainWPBulkUpdateAdminPasswords.page.php:119
 #@ mainwp
 msgid "Admin password updated."
 msgstr "Admin-Passwort aktualisiert."
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:119
+#: page/MainWPBulkUpdateAdminPasswords.page.php:119
 #@ mainwp
 msgid "ERROR: "
 msgstr "FEHLER:"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:123
+#: page/MainWPBulkUpdateAdminPasswords.page.php:123
 #@ mainwp
 msgid "Update admin passwords"
 msgstr "Admin Passwörter aktualisiert"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:124
-#: page/MainWP_Install_Bulk.page.php:84
-#: page/MainWP_User.page.php:933
+#: page/MainWPBulkUpdateAdminPasswords.page.php:124
+#: page/MainWPInstallBulk.page.php:84
+#: page/MainWPUser.page.php:933
 #@ mainwp
 msgid "Return to Dashboard"
 msgstr "Zurück zum Dashboard"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:22
+#: page/MainWPBulkUpdateAdminPasswords.page.php:22
 #@ mainwp
 msgid "Update Admin Passwords"
 msgstr "Admin Passwörter aktualisiert"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:25
+#: page/MainWPBulkUpdateAdminPasswords.page.php:25
 #@ mainwp
 msgid "Bulk update admin passwords"
 msgstr "Maßen Aktualisierung der Admin-Passwörter"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:136
+#: page/MainWPBulkUpdateAdminPasswords.page.php:136
 #@ mainwp
 msgid "Select Sites to Update"
 msgstr "Wählen Sie Seiten zum aktualisieren"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:142
+#: page/MainWPBulkUpdateAdminPasswords.page.php:142
 #@ mainwp
 msgid "Enter New Password "
 msgstr "Eingabe neues Passwort"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:142
-#: page/MainWP_User.page.php:648
+#: page/MainWPBulkUpdateAdminPasswords.page.php:142
+#: page/MainWPUser.page.php:648
 #@ mainwp
 msgid "(twice, required)"
 msgstr "(doppelt erforderlich)"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:148
+#: page/MainWPBulkUpdateAdminPasswords.page.php:148
 #@ mainwp
 msgid "Strength indicator"
 msgstr "Stärke-Indikator"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:149
+#: page/MainWPBulkUpdateAdminPasswords.page.php:149
 #@ mainwp
 msgid "Hint: The password should be at least seven characters long. To make it stronger, use upper and lower case letters, numbers and symbols like ! \" ? $ % ^ &amp; )."
 msgstr "Tipps: Das Passwort sollte mindestens sieben Zeichen lang sein. Um das Passwort stärker zu machen, verwenden Sie Groß-und Kleinbuchstaben , Zahlen und Symbole wie ! \" ? $ % ^ &amp; )."
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:152
+#: page/MainWPBulkUpdateAdminPasswords.page.php:152
 #@ mainwp
 msgid "Update Now"
 msgstr "Jetzt aktualisieren"
 
-#: page/MainWP_Manage_Groups.page.php:49
-#: view/MainWP_Manage_Sites_View.view.php:768
+#: page/MainWPManageGroups.page.php:49
+#: view/MainWPManageSitesView.view.php:768
 #@ mainwp
 msgid "Site Name"
 msgstr "Seitenname"
 
-#: page/MainWP_Manage_Groups.page.php:49
-#: table/MainWP_Manage_Sites.table.php:79
+#: page/MainWPManageGroups.page.php:49
+#: table/MainWPManageSites.table.php:79
 #@ mainwp
 msgid "URL"
 msgstr "URL"
 
-#: page/MainWP_Manage_Groups.page.php:49
+#: page/MainWPManageGroups.page.php:49
 #@ mainwp
 msgid "Display by:"
 msgstr "Anzeige von:"
 
-#: page/MainWP_Manage_Groups.page.php:40
-#: page/MainWP_Manage_Groups.page.php:271
+#: page/MainWPManageGroups.page.php:40
+#: page/MainWPManageGroups.page.php:271
 #@ mainwp
 msgid "Save"
 msgstr "Speichern"
 
-#: page/MainWP_Manage_Groups.page.php:59
-#: page/MainWP_Offline_Checks.page.php:74
+#: page/MainWPManageGroups.page.php:59
+#: page/MainWPOfflineChecks.page.php:74
 #@ mainwp
 msgid "Saved"
 msgstr "Gespeichert"
 
-#: page/MainWP_Manage_Backups.page.php:79
-#: page/MainWP_Manage_Groups.page.php:22
-#: page/MainWP_Offline_Checks.page.php:21
-#: page/MainWP_Page.page.php:76
-#: page/MainWP_Plugins.page.php:76
-#: page/MainWP_Post.page.php:74
-#: page/MainWP_Themes.page.php:77
-#: page/MainWP_User.page.php:75
-#: view/MainWP_Manage_Sites_View.view.php:50
-#: widget/MainWP_Help.widget.php:26
+#: page/MainWPManageBackups.page.php:79
+#: page/MainWPManageGroups.page.php:22
+#: page/MainWPOfflineChecks.page.php:21
+#: page/MainWPPage.page.php:76
+#: page/MainWPPlugins.page.php:76
+#: page/MainWPPost.page.php:74
+#: page/MainWPThemes.page.php:77
+#: page/MainWPUser.page.php:75
+#: view/MainWPManageSitesView.view.php:50
+#: widget/MainWPHelp.widget.php:26
 #@ mainwp
 msgid "Manage"
 msgstr "verwalten"
 
-#: page/MainWP_Manage_Backups.page.php:280
-#: page/MainWP_Page.page.php:119
-#: page/MainWP_Plugins.page.php:114
-#: page/MainWP_Post.page.php:114
-#: page/MainWP_Themes.page.php:114
-#: page/MainWP_User.page.php:133
-#: page/MainWP_User.page.php:598
+#: page/MainWPManageBackups.page.php:280
+#: page/MainWPPage.page.php:119
+#: page/MainWPPlugins.page.php:114
+#: page/MainWPPost.page.php:114
+#: page/MainWPThemes.page.php:114
+#: page/MainWPUser.page.php:133
+#: page/MainWPUser.page.php:598
 #@ mainwp
 msgid "Select Sites"
 msgstr "Wähle Seiten"
 
-#: page/MainWP_Page.page.php:149
-#: page/MainWP_Plugins.page.php:125
-#: page/MainWP_Post.page.php:144
-#: page/MainWP_Themes.page.php:125
+#: page/MainWPPage.page.php:149
+#: page/MainWPPlugins.page.php:125
+#: page/MainWPPost.page.php:144
+#: page/MainWPThemes.page.php:125
 #@ mainwp
 msgid "Containing Keyword:"
 msgstr "beinhaltet Schlagwort:"
 
-#: page/MainWP_Page.page.php:153
-#: page/MainWP_Post.page.php:148
+#: page/MainWPPage.page.php:153
+#: page/MainWPPost.page.php:148
 #@ mainwp
 msgid "Date Range:"
 msgstr "Zeitraum:"
 
-#: page/MainWP_Post.page.php:149
+#: page/MainWPPost.page.php:149
 #@ mainwp
 msgid "to"
 msgstr "zu"
 
-#: page/MainWP_Page.page.php:158
-#: page/MainWP_Plugins.page.php:130
-#: page/MainWP_Post.page.php:164
-#: page/MainWP_Themes.page.php:130
-#: page/MainWP_User.page.php:170
+#: page/MainWPPage.page.php:158
+#: page/MainWPPlugins.page.php:130
+#: page/MainWPPost.page.php:164
+#: page/MainWPThemes.page.php:130
+#: page/MainWPUser.page.php:170
 #@ mainwp
 msgid "Grabbing information from Child Sites"
 msgstr "Abgrief von Informationen aus Child-Seiten"
 
-#: page/MainWP_Page.page.php:166
-#: page/MainWP_Post.page.php:171
-#: page/MainWP_User.page.php:178
+#: page/MainWPPage.page.php:166
+#: page/MainWPPost.page.php:171
+#: page/MainWPUser.page.php:178
 #@ mainwp
 msgid "Bulk Action"
 msgstr "Massen Aktion"
 
-#: page/MainWP_Post.page.php:422
+#: page/MainWPPost.page.php:422
 #@ mainwp
 msgid "Approve"
 msgstr "genehmigen"
 
-#: page/MainWP_Page.page.php:167
-#: page/MainWP_Post.page.php:174
+#: page/MainWPPage.page.php:167
+#: page/MainWPPost.page.php:174
 #@ mainwp
 msgid "Move to Trash"
 msgstr "In den Papierkorb"
 
-#: page/MainWP_Page.page.php:168
-#: page/MainWP_Page.page.php:394
-#: page/MainWP_Post.page.php:175
-#: page/MainWP_Post.page.php:439
-#: widget/MainWP_Recent_Pages.widget.php:196
-#: widget/MainWP_Recent_Posts.widget.php:196
+#: page/MainWPPage.page.php:168
+#: page/MainWPPage.page.php:394
+#: page/MainWPPost.page.php:175
+#: page/MainWPPost.page.php:439
+#: widget/MainWPRecentPages.widget.php:196
+#: widget/MainWPRecentPosts.widget.php:196
 #@ mainwp
 msgid "Restore"
 msgstr "wiederherstellen"
 
-#: page/MainWP_Page.page.php:169
-#: page/MainWP_Post.page.php:176
-#: widget/MainWP_Recent_Pages.widget.php:196
-#: widget/MainWP_Recent_Posts.widget.php:196
+#: page/MainWPPage.page.php:169
+#: page/MainWPPost.page.php:176
+#: widget/MainWPRecentPages.widget.php:196
+#: widget/MainWPRecentPosts.widget.php:196
 #@ mainwp
 msgid "Delete Permanently"
 msgstr "Dauerhaft löschen"
 
-#: page/MainWP_Page.page.php:170
-#: page/MainWP_Post.page.php:177
-#: page/MainWP_User.page.php:180
+#: page/MainWPPage.page.php:170
+#: page/MainWPPost.page.php:177
+#: page/MainWPUser.page.php:180
 #@ mainwp
 msgid "Apply"
 msgstr "anwenden"
 
-#: page/MainWP_Page.page.php:173
-#: page/MainWP_Post.page.php:180
-#: page/MainWP_User.page.php:191
+#: page/MainWPPage.page.php:173
+#: page/MainWPPost.page.php:180
+#: page/MainWPUser.page.php:191
 #@ mainwp
 msgid "Total Results:"
 msgstr "Anzahl der Ergebnisse:"
 
-#: page/MainWP_Page.page.php:187
-#: page/MainWP_Page.page.php:216
-#: page/MainWP_Post.page.php:194
-#: page/MainWP_Post.page.php:229
-#: page/MainWP_User.page.php:157
-#: page/MainWP_User.page.php:185
-#: page/MainWP_User.page.php:695
+#: page/MainWPPage.page.php:187
+#: page/MainWPPage.page.php:216
+#: page/MainWPPost.page.php:194
+#: page/MainWPPost.page.php:229
+#: page/MainWPUser.page.php:157
+#: page/MainWPUser.page.php:185
+#: page/MainWPUser.page.php:695
 #@ mainwp
 msgid "Author"
 msgstr "Autor"
 
-#: page/MainWP_Page.page.php:197
-#: page/MainWP_Page.page.php:226
-#: page/MainWP_Post.page.php:210
-#: page/MainWP_Post.page.php:245
+#: page/MainWPPage.page.php:197
+#: page/MainWPPage.page.php:226
+#: page/MainWPPost.page.php:210
+#: page/MainWPPost.page.php:245
 #@ mainwp
 msgid "Date"
 msgstr "Datum"
 
-#: page/MainWP_Offline_Checks.page.php:57
-#: page/MainWP_Page.page.php:200
-#: page/MainWP_Page.page.php:229
-#: page/MainWP_Post.page.php:213
-#: page/MainWP_Post.page.php:248
-#: page/MainWP_Server_Information.page.php:62
-#: page/MainWP_Server_Information.page.php:90
-#: table/MainWP_Manage_Sites.table.php:77
-#: widget/MainWP_Right_Now.widget.php:1000
+#: page/MainWPOfflineChecks.page.php:57
+#: page/MainWPPage.page.php:200
+#: page/MainWPPage.page.php:229
+#: page/MainWPPost.page.php:213
+#: page/MainWPPost.page.php:248
+#: page/MainWPServerInformation.page.php:62
+#: page/MainWPServerInformation.page.php:90
+#: table/MainWPManageSites.table.php:77
+#: widget/MainWPRightNow.widget.php:1000
 #@ mainwp
 msgid "Status"
 msgstr "Status"
 
-#: page/MainWP_Page.page.php:203
-#: page/MainWP_Page.page.php:232
-#: page/MainWP_Post.page.php:216
-#: page/MainWP_Post.page.php:251
-#: page/MainWP_User.page.php:217
-#: page/MainWP_User.page.php:242
-#: page/MainWP_User.page.php:639
+#: page/MainWPPage.page.php:203
+#: page/MainWPPage.page.php:232
+#: page/MainWPPost.page.php:216
+#: page/MainWPPost.page.php:251
+#: page/MainWPUser.page.php:217
+#: page/MainWPUser.page.php:242
+#: page/MainWPUser.page.php:639
 #@ mainwp
 msgid "Website"
 msgstr "Webseite"
 
-#: page/MainWP_Page.page.php:248
-#: page/MainWP_Plugins.page.php:342
-#: page/MainWP_Post.page.php:267
-#: page/MainWP_Themes.page.php:530
-#: page/MainWP_User.page.php:258
+#: page/MainWPPage.page.php:248
+#: page/MainWPPlugins.page.php:342
+#: page/MainWPPost.page.php:267
+#: page/MainWPThemes.page.php:530
+#: page/MainWPUser.page.php:258
 #@ mainwp
 msgid "Show:"
 msgstr "Anzeige"
 
-#: page/MainWP_Manage_Backups.page.php:82
-#: page/MainWP_Page.page.php:380
-#: page/MainWP_Post.page.php:408
-#: page/MainWP_User.page.php:473
-#: table/MainWP_Manage_Backups.table.php:69
-#: table/MainWP_Manage_Sites.table.php:155
-#: view/MainWP_Manage_Sites_View.view.php:55
-#: view/MainWP_Manage_Sites_View.view.php:59
-#: widget/MainWP_Recent_Pages.widget.php:98
-#: widget/MainWP_Recent_Pages.widget.php:131
-#: widget/MainWP_Recent_Pages.widget.php:164
-#: widget/MainWP_Recent_Posts.widget.php:98
-#: widget/MainWP_Recent_Posts.widget.php:131
-#: widget/MainWP_Recent_Posts.widget.php:164
+#: page/MainWPManageBackups.page.php:82
+#: page/MainWPPage.page.php:380
+#: page/MainWPPost.page.php:408
+#: page/MainWPUser.page.php:473
+#: table/MainWPManageBackups.table.php:69
+#: table/MainWPManageSites.table.php:155
+#: view/MainWPManageSitesView.view.php:55
+#: view/MainWPManageSitesView.view.php:59
+#: widget/MainWPRecentPages.widget.php:98
+#: widget/MainWPRecentPages.widget.php:131
+#: widget/MainWPRecentPages.widget.php:164
+#: widget/MainWPRecentPosts.widget.php:98
+#: widget/MainWPRecentPosts.widget.php:131
+#: widget/MainWPRecentPosts.widget.php:164
 #@ mainwp
 msgid "Edit"
 msgstr "ändern"
 
-#: page/MainWP_Page.page.php:382
-#: page/MainWP_Post.page.php:410
-#: widget/MainWP_Recent_Pages.widget.php:72
-#: widget/MainWP_Recent_Pages.widget.php:98
-#: widget/MainWP_Recent_Pages.widget.php:131
-#: widget/MainWP_Recent_Pages.widget.php:164
-#: widget/MainWP_Recent_Posts.widget.php:72
-#: widget/MainWP_Recent_Posts.widget.php:98
-#: widget/MainWP_Recent_Posts.widget.php:131
-#: widget/MainWP_Recent_Posts.widget.php:164
+#: page/MainWPPage.page.php:382
+#: page/MainWPPost.page.php:410
+#: widget/MainWPRecentPages.widget.php:72
+#: widget/MainWPRecentPages.widget.php:98
+#: widget/MainWPRecentPages.widget.php:131
+#: widget/MainWPRecentPages.widget.php:164
+#: widget/MainWPRecentPosts.widget.php:72
+#: widget/MainWPRecentPosts.widget.php:98
+#: widget/MainWPRecentPosts.widget.php:131
+#: widget/MainWPRecentPosts.widget.php:164
 #@ mainwp
 msgid "Trash"
 msgstr "Papierkorb"
 
-#: page/MainWP_Page.page.php:397
-#: page/MainWP_Post.page.php:442
+#: page/MainWPPage.page.php:397
+#: page/MainWPPost.page.php:442
 #@ mainwp
 msgid ""
 "Delete\n"
@@ -635,624 +635,624 @@ msgstr ""
 "Dauerhaft\n"
 " Löschen"
 
-#: page/MainWP_Page.page.php:403
-#: page/MainWP_Post.page.php:448
-#: page/MainWP_User.page.php:486
-#: view/MainWP_System_View.view.php:131
-#: widget/MainWP_Recent_Pages.widget.php:99
-#: widget/MainWP_Recent_Pages.widget.php:132
-#: widget/MainWP_Recent_Pages.widget.php:165
-#: widget/MainWP_Recent_Pages.widget.php:197
-#: widget/MainWP_Recent_Posts.widget.php:99
-#: widget/MainWP_Recent_Posts.widget.php:132
-#: widget/MainWP_Recent_Posts.widget.php:165
-#: widget/MainWP_Recent_Posts.widget.php:197
-#: widget/MainWP_Widget_Plugins.widget.php:76
-#: widget/MainWP_Widget_Plugins.widget.php:98
-#: widget/MainWP_Widget_Themes.widget.php:88
+#: page/MainWPPage.page.php:403
+#: page/MainWPPost.page.php:448
+#: page/MainWPUser.page.php:486
+#: view/MainWPSystemView.view.php:131
+#: widget/MainWPRecentPages.widget.php:99
+#: widget/MainWPRecentPages.widget.php:132
+#: widget/MainWPRecentPages.widget.php:165
+#: widget/MainWPRecentPages.widget.php:197
+#: widget/MainWPRecentPosts.widget.php:99
+#: widget/MainWPRecentPosts.widget.php:132
+#: widget/MainWPRecentPosts.widget.php:165
+#: widget/MainWPRecentPosts.widget.php:197
+#: widget/MainWPWidgetPlugins.widget.php:76
+#: widget/MainWPWidgetPlugins.widget.php:98
+#: widget/MainWPWidgetThemes.widget.php:88
 #@ mainwp
 msgid "Please wait"
 msgstr "Bitte warten"
 
-#: page/MainWP_Page.page.php:423
-#: page/MainWP_Post.page.php:470
-#: page/MainWP_User.page.php:497
+#: page/MainWPPage.page.php:423
+#: page/MainWPPost.page.php:470
+#: page/MainWPUser.page.php:497
 #@ mainwp
 msgid "WP Admin"
 msgstr "WP Admin"
 
-#: page/MainWP_Documentation.page.php:12
-#: page/MainWP_Documentation.page.php:21
-#: page/MainWP_Security_Issues.page.php:43
+#: page/MainWPDocumentation.page.php:12
+#: page/MainWPDocumentation.page.php:21
+#: page/MainWPSecurityIssues.page.php:43
 #@ mainwp
 msgid "Documentation"
 msgstr "Dokumentation"
 
-#: page/MainWP_Documentation.page.php:34
-#: widget/MainWP_Help.widget.php:26
+#: page/MainWPDocumentation.page.php:34
+#: widget/MainWPHelp.widget.php:26
 #@ mainwp
 msgid "Quick Start"
 msgstr "Schnell Start"
 
-#: page/MainWP_Documentation.page.php:44
+#: page/MainWPDocumentation.page.php:44
 #@ mainwp
 msgid "How To"
 msgstr "Wie"
 
-#: page/MainWP_Documentation.page.php:27
-#: widget/MainWP_Help.widget.php:21
+#: page/MainWPDocumentation.page.php:27
+#: widget/MainWPHelp.widget.php:21
 #@ mainwp
 msgid "Search the MainWP Docs"
 msgstr "Suchen Sie die MainWP Dokumente"
 
-#: page/MainWP_Documentation.page.php:28
-#: page/MainWP_Install_Bulk.page.php:51
-#: page/MainWP_Install_Bulk.page.php:107
-#: widget/MainWP_Help.widget.php:22
+#: page/MainWPDocumentation.page.php:28
+#: page/MainWPInstallBulk.page.php:51
+#: page/MainWPInstallBulk.page.php:107
+#: widget/MainWPHelp.widget.php:22
 #@ mainwp
 msgid "Search"
 msgstr "Suchen"
 
-#: page/MainWP_Install_Bulk.page.php:51
+#: page/MainWPInstallBulk.page.php:51
 #@ mainwp
 msgid "Upload"
 msgstr "Hochladen"
 
-#: page/MainWP_Install_Bulk.page.php:83
-#: page/MainWP_Manage_Backups.page.php:23
-#: page/MainWP_Manage_Backups.page.php:49
-#: page/MainWP_Manage_Backups.page.php:80
-#: page/MainWP_Manage_Groups.page.php:35
-#: page/MainWP_Page.page.php:47
-#: page/MainWP_Page.page.php:77
-#: page/MainWP_Page.page.php:577
-#: page/MainWP_Page.page.php:587
-#: page/MainWP_Post.page.php:45
-#: page/MainWP_Post.page.php:75
-#: page/MainWP_Post.page.php:663
-#: page/MainWP_Post.page.php:673
-#: page/MainWP_User.page.php:23
-#: page/MainWP_User.page.php:44
-#: page/MainWP_User.page.php:76
-#: page/MainWP_User.page.php:842
-#: page/MainWP_User.page.php:932
-#: table/MainWP_Manage_Sites.table.php:218
-#: view/MainWP_Manage_Sites_View.view.php:17
-#: view/MainWP_Manage_Sites_View.view.php:51
-#: widget/MainWP_Recent_Pages.widget.php:71
-#: widget/MainWP_Recent_Posts.widget.php:71
+#: page/MainWPInstallBulk.page.php:83
+#: page/MainWPManageBackups.page.php:23
+#: page/MainWPManageBackups.page.php:49
+#: page/MainWPManageBackups.page.php:80
+#: page/MainWPManageGroups.page.php:35
+#: page/MainWPPage.page.php:47
+#: page/MainWPPage.page.php:77
+#: page/MainWPPage.page.php:577
+#: page/MainWPPage.page.php:587
+#: page/MainWPPost.page.php:45
+#: page/MainWPPost.page.php:75
+#: page/MainWPPost.page.php:663
+#: page/MainWPPost.page.php:673
+#: page/MainWPUser.page.php:23
+#: page/MainWPUser.page.php:44
+#: page/MainWPUser.page.php:76
+#: page/MainWPUser.page.php:842
+#: page/MainWPUser.page.php:932
+#: table/MainWPManageSites.table.php:218
+#: view/MainWPManageSitesView.view.php:17
+#: view/MainWPManageSitesView.view.php:51
+#: widget/MainWPRecentPages.widget.php:71
+#: widget/MainWPRecentPosts.widget.php:71
 #@ mainwp
 msgid "Add New"
 msgstr "Neu hinzufügen"
 
-#: page/MainWP_Install_Bulk.page.php:109
+#: page/MainWPInstallBulk.page.php:109
 #@ mainwp
 msgid "Activate plugin after installation"
 msgstr "Aktiviere Plugin nach der Installation"
 
-#: page/MainWP_Install_Bulk.page.php:131
-#: page/MainWP_Plugins.page.php:47
-#: page/MainWP_Plugins.page.php:77
-#: page/MainWP_Themes.page.php:48
-#: page/MainWP_Themes.page.php:78
+#: page/MainWPInstallBulk.page.php:131
+#: page/MainWPPlugins.page.php:47
+#: page/MainWPPlugins.page.php:77
+#: page/MainWPThemes.page.php:48
+#: page/MainWPThemes.page.php:78
 #@ mainwp
 msgid "Install"
 msgstr "Installation"
 
-#: page/MainWP_Install_Bulk.page.php:131
+#: page/MainWPInstallBulk.page.php:131
 #@ mainwp
 msgid "in .zip format"
 msgstr "in .zip Format"
 
-#: page/MainWP_Install_Bulk.page.php:132
+#: page/MainWPInstallBulk.page.php:132
 #@ mainwp
 msgid "If you have"
 msgstr "Wenn Sie"
 
-#: page/MainWP_Install_Bulk.page.php:132
+#: page/MainWPInstallBulk.page.php:132
 #@ mainwp
 msgid "in a .zip format, you may install it by uploading it here."
 msgstr "in einem. zip-Format, können Sie es installieren, wenn Sie es von hier Hochladen."
 
-#: page/MainWP_Install_Bulk.page.php:135
+#: page/MainWPInstallBulk.page.php:135
 #@ mainwp
 msgid "Please enable JavaScript to use file uploader."
 msgstr "Bitte aktivieren Sie JavaScript, um den Datei-Uploader zu nutzen."
 
-#: page/MainWP_Install_Bulk.page.php:160
-#: page/MainWP_Plugins.page.php:679
+#: page/MainWPInstallBulk.page.php:160
+#: page/MainWPPlugins.page.php:679
 #@ mainwp
 msgid "Install Now"
 msgstr "Jetzt installieren"
 
-#: page/MainWP_Install_Bulk.page.php:367
+#: page/MainWPInstallBulk.page.php:367
 #@ default
 msgid "Already installed"
 msgstr "bereits installierte"
 
-#: page/MainWP_Install_Bulk.page.php:548
+#: page/MainWPInstallBulk.page.php:548
 #@ mainwp
 msgid "File is too large, increase post_max_size and/or upload_max_filesize"
 msgstr "Die Datei ist zu groß, erhöhen Sie post_max_size und/oder upload_max_filesize"
 
-#: page/MainWP_Install_Bulk.page.php:558
+#: page/MainWPInstallBulk.page.php:558
 #@ mainwp
 msgid "File has an invalid extension, it should be one of "
 msgstr "Datei hat eine ungültige Erweiterung, sollte es einer der folgenden sein"
 
-#: page/MainWP_Install_Bulk.page.php:573
+#: page/MainWPInstallBulk.page.php:573
 #@ mainwp
 msgid "Could not save uploaded file."
 msgstr "Konnte hochgeladene Datei nicht speichern."
 
-#: page/MainWP_Main.page.php:91
-#: page/MainWP_Main.page.php:102
+#: page/MainWPMain.page.php:91
+#: page/MainWPMain.page.php:102
 #@ mainwp
 msgid "MainWP Dashboard"
 msgstr "MainWP Dashboard"
 
-#: page/MainWP_Main.page.php:92
+#: page/MainWPMain.page.php:92
 #@ mainwp
 msgid "MainWP needs to be activated before using"
 msgstr "MainWP muss vor der Verwendung aktiviert werden"
 
-#: page/MainWP_Main.page.php:92
+#: page/MainWPMain.page.php:92
 #@ mainwp
 msgid "Activate here"
 msgstr "aktivieren Sie hier"
 
-#: page/MainWP_Main.page.php:136
+#: page/MainWPMain.page.php:136
 #@ mainwp
 msgid "Your MainWP Dashboard has not been synced for 24 hours! Click the Sync Data button to get the latest data from child sites."
 msgstr "Ihre MainWP-Dashboard hat sich die letzten 24 Stunden nicht synchronisiert! Klicken Sie auf den Sync-Knopf, um die neuesten Daten von den Child-Seiten zu bekommen."
 
-#: page/MainWP_Main.page.php:144
+#: page/MainWPMain.page.php:144
 #@ mainwp
 msgid "Welcome to Your MainWP Dashboard!"
 msgstr "Willkommen bei Ihrem MainWP Dashboard!"
 
-#: page/MainWP_Main.page.php:144
+#: page/MainWPMain.page.php:144
 #, php-format
 #@ mainwp
 msgid "Welcome to %s Dashboard!"
 msgstr "Willkommen in %s beim Dasboard!"
 
-#: page/MainWP_Main.page.php:145
+#: page/MainWPMain.page.php:145
 #@ mainwp
 msgid "Manage your WordPress sites with ease."
 msgstr "Verwalten Sie Ihre Wordpress-Seiten mit Leichtigkeit."
 
-#: page/MainWP_Main.page.php:145
+#: page/MainWPMain.page.php:145
 #, php-format
 #@ mainwp
 msgid "This information is only for %s"
 msgstr "Diese Information ist nur für %s"
 
-#: page/MainWP_Main.page.php:151
-#: table/MainWP_Manage_Sites.table.php:209
+#: page/MainWPMain.page.php:151
+#: table/MainWPManageSites.table.php:209
 #@ mainwp
 msgid "Sync Data"
 msgstr "Sync Daten"
 
-#: page/MainWP_Main.page.php:152
-#: view/MainWP_Manage_Sites_View.view.php:336
+#: page/MainWPMain.page.php:152
+#: view/MainWPManageSitesView.view.php:336
 #@ mainwp
 msgid "Add New Site"
 msgstr "Neue Seite hinzufügen"
 
-#: page/MainWP_Main.page.php:183
+#: page/MainWPMain.page.php:183
 #@ default
 msgid "Cheatin&#8217; uh?"
 msgstr "Mogeln&#8217; uh?"
 
-#: page/MainWP_Manage_Backups.page.php:21
-#: page/MainWP_Manage_Backups.page.php:77
-#: widget/MainWP_Help.widget.php:26
+#: page/MainWPManageBackups.page.php:21
+#: page/MainWPManageBackups.page.php:77
+#: widget/MainWPHelp.widget.php:26
 #@ mainwp
 msgid "Backups"
 msgstr "Sicherungskopien"
 
-#: page/MainWP_Manage_Backups.page.php:23
+#: page/MainWPManageBackups.page.php:23
 #@ mainwp
 msgid "Add New Schedule"
 msgstr "Neuer Zeitplan hizufügen"
 
-#: page/MainWP_Manage_Backups.page.php:48
+#: page/MainWPManageBackups.page.php:48
 #@ mainwp
 msgid "All Backups"
 msgstr "Alle Sicherungskopien"
 
-#: page/MainWP_Manage_Backups.page.php:186
-#: page/MainWP_Manage_Backups.page.php:242
+#: page/MainWPManageBackups.page.php:186
+#: page/MainWPManageBackups.page.php:242
 #@ mainwp
 msgid "Use these backup tasks to run backups at different times on different days. To backup a site right away please go to the"
 msgstr "Verwenden Sie diese Sicherungs-Aufgaben, um Sicherungskopien zu verschiedenen Zeiten an verschiedenen Tagen durchführen zu lassen."
 
-#: page/MainWP_Manage_Backups.page.php:186
-#: page/MainWP_Manage_Backups.page.php:242
+#: page/MainWPManageBackups.page.php:186
+#: page/MainWPManageBackups.page.php:242
 #@ mainwp
 msgid "Sites page"
 msgstr "Webseiten Seite"
 
-#: page/MainWP_Manage_Backups.page.php:186
-#: page/MainWP_Manage_Backups.page.php:242
+#: page/MainWPManageBackups.page.php:186
+#: page/MainWPManageBackups.page.php:242
 #@ mainwp
 msgid "and select Backup Now."
 msgstr "und Sicherungskopie jetzt wählen."
 
-#: page/MainWP_Manage_Backups.page.php:189
+#: page/MainWPManageBackups.page.php:189
 #@ mainwp
 msgid "<p>The backup task was added successfully</p>"
 msgstr "<p>Die Sicherungs-Aufgabe wurde erfolgreich hinzugefügt</p>"
 
-#: table/MainWP_Manage_Backups.table.php:55
+#: table/MainWPManageBackups.table.php:55
 #@ mainwp
 msgid "Task Name"
 msgstr "Task Name"
 
-#: table/MainWP_Manage_Backups.table.php:56
+#: table/MainWPManageBackups.table.php:56
 #@ mainwp
 msgid "Type"
 msgstr "Typ"
 
-#: page/MainWP_Server_Information.page.php:227
-#: page/MainWP_Server_Information.page.php:251
-#: table/MainWP_Manage_Backups.table.php:57
+#: page/MainWPServerInformation.page.php:227
+#: page/MainWPServerInformation.page.php:251
+#: table/MainWPManageBackups.table.php:57
 #@ mainwp
 msgid "Schedule"
 msgstr "Zeitplan"
 
-#: table/MainWP_Manage_Backups.table.php:58
+#: table/MainWPManageBackups.table.php:58
 #@ mainwp
 msgid "Destination"
 msgstr "Ziel"
 
-#: page/MainWP_Manage_Groups.page.php:50
-#: table/MainWP_Manage_Backups.table.php:59
+#: page/MainWPManageGroups.page.php:50
+#: table/MainWPManageBackups.table.php:59
 #@ mainwp
 msgid "Websites"
 msgstr "Webseiten"
 
-#: page/MainWP_Plugins.page.php:677
-#: table/MainWP_Manage_Backups.table.php:60
+#: page/MainWPPlugins.page.php:677
+#: table/MainWPManageBackups.table.php:60
 #@ mainwp
 msgid "Details"
 msgstr "Details"
 
-#: table/MainWP_Manage_Backups.table.php:61
+#: table/MainWPManageBackups.table.php:61
 #@ mainwp
 msgid "Trigger"
 msgstr "Auslöser (Trigger)"
 
-#: page/MainWP_Manage_Backups.page.php:207
-#: page/MainWP_Manage_Groups.page.php:40
-#: view/MainWP_System_View.view.php:52
-#: widget/MainWP_Right_Now.widget.php:1119
+#: page/MainWPManageBackups.page.php:207
+#: page/MainWPManageGroups.page.php:40
+#: view/MainWPSystemView.view.php:52
+#: widget/MainWPRightNow.widget.php:1119
 #@ mainwp
 msgid "Cancel"
 msgstr "Abbruch"
 
-#: page/MainWP_Manage_Groups.page.php:270
-#: page/MainWP_Manage_Groups.page.php:271
-#: page/MainWP_Plugins.page.php:466
-#: page/MainWP_Themes.page.php:254
-#: page/MainWP_User.page.php:179
-#: page/MainWP_User.page.php:477
-#: page/MainWP_User.page.php:481
-#: table/MainWP_Manage_Backups.table.php:70
-#: table/MainWP_Manage_Sites.table.php:156
-#: widget/MainWP_Widget_Plugins.widget.php:96
-#: widget/MainWP_Widget_Themes.widget.php:86
+#: page/MainWPManageGroups.page.php:270
+#: page/MainWPManageGroups.page.php:271
+#: page/MainWPPlugins.page.php:466
+#: page/MainWPThemes.page.php:254
+#: page/MainWPUser.page.php:179
+#: page/MainWPUser.page.php:477
+#: page/MainWPUser.page.php:481
+#: table/MainWPManageBackups.table.php:70
+#: table/MainWPManageSites.table.php:156
+#: widget/MainWPWidgetPlugins.widget.php:96
+#: widget/MainWPWidgetThemes.widget.php:86
 #@ mainwp
 msgid "Delete"
 msgstr "Löschen"
 
-#: page/MainWP_Manage_Backups.page.php:305
-#: table/MainWP_Manage_Backups.table.php:87
-#: view/MainWP_Manage_Sites_View.view.php:657
+#: page/MainWPManageBackups.page.php:305
+#: table/MainWPManageBackups.table.php:87
+#: view/MainWPManageSitesView.view.php:657
 #@ mainwp
 msgid "DATABASE BACKUP"
 msgstr "Datenbank Sicherungskopie"
 
-#: page/MainWP_Manage_Backups.page.php:305
-#: table/MainWP_Manage_Backups.table.php:87
-#: view/MainWP_Manage_Sites_View.view.php:657
+#: page/MainWPManageBackups.page.php:305
+#: table/MainWPManageBackups.table.php:87
+#: view/MainWPManageSitesView.view.php:657
 #@ mainwp
 msgid "FULL BACKUP"
 msgstr "Volle Sicherkunskopie"
 
-#: table/MainWP_Manage_Backups.table.php:102
+#: table/MainWPManageBackups.table.php:102
 #@ mainwp
 msgid "SERVER"
 msgstr "Server"
 
-#: table/MainWP_Manage_Backups.table.php:118
+#: table/MainWPManageBackups.table.php:118
 #@ mainwp
 msgid "LAST RUN MANUALLY: "
 msgstr "Letzte manuelle Ausführung:"
 
-#: table/MainWP_Manage_Backups.table.php:119
-#: widget/MainWP_Backup_Tasks.widget.php:63
+#: table/MainWPManageBackups.table.php:119
+#: widget/MainWPBackupTasks.widget.php:63
 #@ mainwp
 msgid "LAST RUN: "
 msgstr "Letzter Lauf:"
 
-#: table/MainWP_Manage_Backups.table.php:120
+#: table/MainWPManageBackups.table.php:120
 #@ mainwp
 msgid "LAST COMPLETED: "
 msgstr "Zuletzt erstellte:"
 
-#: table/MainWP_Manage_Backups.table.php:121
-#: widget/MainWP_Backup_Tasks.widget.php:64
+#: table/MainWPManageBackups.table.php:121
+#: widget/MainWPBackupTasks.widget.php:64
 #@ mainwp
 msgid "NEXT RUN: "
 msgstr "Nächsten Lauf"
 
-#: table/MainWP_Manage_Backups.table.php:121
-#: widget/MainWP_Backup_Tasks.widget.php:64
+#: table/MainWPManageBackups.table.php:121
+#: widget/MainWPBackupTasks.widget.php:64
 #@ mainwp
 msgid "Any minute"
 msgstr "jede Minute"
 
-#: table/MainWP_Manage_Backups.table.php:125
+#: table/MainWPManageBackups.table.php:125
 #@ default
 msgid "<br />CURRENTLY RUNNING: "
 msgstr "<br />Derzeit ausgeführt:"
 
-#: table/MainWP_Manage_Backups.table.php:137
+#: table/MainWPManageBackups.table.php:137
 #@ mainwp
 msgid "Run Now"
 msgstr "Jetzt Starten"
 
-#: page/MainWP_Manage_Backups.page.php:232
+#: page/MainWPManageBackups.page.php:232
 #@ mainwp
 msgid "Update Task"
 msgstr "Update-Aufgabe"
 
-#: page/MainWP_Manage_Backups.page.php:252
-#: widget/MainWP_Backup_Tasks.widget.php:23
+#: page/MainWPManageBackups.page.php:252
+#: widget/MainWPBackupTasks.widget.php:23
 #@ mainwp
 msgid "Add New Task"
 msgstr "Neue Aufgabe hinzufügen"
 
-#: page/MainWP_Manage_Backups.page.php:285
+#: page/MainWPManageBackups.page.php:285
 #@ mainwp
 msgid "Schedule Backup"
 msgstr "Zeitplan Sicherungskopíe"
 
-#: page/MainWP_Manage_Backups.page.php:289
+#: page/MainWPManageBackups.page.php:289
 #@ mainwp
 msgid "Task Name:"
 msgstr "Aufgabenname:"
 
-#: page/MainWP_Manage_Backups.page.php:293
+#: page/MainWPManageBackups.page.php:293
 #@ mainwp
 msgid "Task Schedule:"
 msgstr "Aufgabe Zeitplan:"
 
-#: page/MainWP_Manage_Backups.page.php:294
+#: page/MainWPManageBackups.page.php:294
 #@ mainwp
 msgid "DAILY"
 msgstr "T&auml;glich"
 
-#: page/MainWP_Manage_Backups.page.php:294
+#: page/MainWPManageBackups.page.php:294
 #@ mainwp
 msgid "WEEKLY"
 msgstr "W&ouml;chentlich"
 
-#: page/MainWP_Manage_Backups.page.php:294
+#: page/MainWPManageBackups.page.php:294
 #@ mainwp
 msgid "MONTHLY"
 msgstr "Monatlich"
 
-#: page/MainWP_Manage_Backups.page.php:297
-#: view/MainWP_Manage_Sites_View.view.php:649
+#: page/MainWPManageBackups.page.php:297
+#: view/MainWPManageSitesView.view.php:649
 #@ mainwp
 msgid "Backup File Name:"
 msgstr "Dateiname Sicherungskopie:"
 
-#: page/MainWP_Manage_Backups.page.php:303
-#: view/MainWP_Manage_Sites_View.view.php:655
+#: page/MainWPManageBackups.page.php:303
+#: view/MainWPManageSitesView.view.php:655
 #@ mainwp
 msgid "Backup Type:"
 msgstr "Typ Sicherungskopie:"
 
-#: page/MainWP_Manage_Backups.page.php:306
-#: view/MainWP_Manage_Sites_View.view.php:658
+#: page/MainWPManageBackups.page.php:306
+#: view/MainWPManageSitesView.view.php:658
 #@ mainwp
 msgid "EXCLUDE FILES"
 msgstr "Ausschließen von Dateien"
 
-#: page/MainWP_Manage_Backups.page.php:315
-#: view/MainWP_Manage_Sites_View.view.php:667
+#: page/MainWPManageBackups.page.php:315
+#: view/MainWPManageSitesView.view.php:667
 #@ mainwp
 msgid "Click directories to navigate or click to exclude."
 msgstr "Navigieren SIe zu dem Verzeichnisse um es mit einem Klick auszuschließen."
 
-#: page/MainWP_Manage_Backups.page.php:319
-#: view/MainWP_Manage_Sites_View.view.php:673
+#: page/MainWPManageBackups.page.php:319
+#: view/MainWPManageSitesView.view.php:673
 #@ mainwp
 msgid "Excluded files & directories:"
 msgstr "Ausgeschlossene Dateien und Verzeichnisse:"
 
-#: page/MainWP_Manage_Backups.page.php:331
-#: view/MainWP_Manage_Sites_View.view.php:678
+#: page/MainWPManageBackups.page.php:331
+#: view/MainWPManageSitesView.view.php:678
 #@ mainwp
 msgid "ATTENTION:"
 msgstr "Achtung:"
 
-#: page/MainWP_Manage_Backups.page.php:331
-#: view/MainWP_Manage_Sites_View.view.php:678
+#: page/MainWPManageBackups.page.php:331
+#: view/MainWPManageSitesView.view.php:678
 #@ mainwp
 msgid "Do not exclude any folders if you are using this backup to clone or migrate the wordpress installation."
 msgstr "Sie haben keine Ordner ausgeschloßen, wenn Sie mit diesem Backup klonen oder migrieren, installieren Sie Wordpress."
 
-#: page/MainWP_Manage_Backups.page.php:342
-#: view/MainWP_Manage_Sites_View.view.php:689
+#: page/MainWPManageBackups.page.php:342
+#: view/MainWPManageSitesView.view.php:689
 #@ mainwp
 msgid "LOCAL SERVER ONLY"
 msgstr "Nur lokaler Server"
 
-#: page/MainWP_Manage_Backups.page.php:342
-#: view/MainWP_Manage_Sites_View.view.php:689
+#: page/MainWPManageBackups.page.php:342
+#: view/MainWPManageSitesView.view.php:689
 #@ mainwp
 msgid "REMOTE DESTINATION"
 msgstr "Entferntes Ziel"
 
-#: page/MainWP_Manage_Backups.page.php:346
-#: view/MainWP_Manage_Sites_View.view.php:693
+#: page/MainWPManageBackups.page.php:346
+#: view/MainWPManageSitesView.view.php:693
 #@ mainwp
 msgid "Backup Subfolder:"
 msgstr "Sicherungskopie Unterverzeichnis:"
 
-#: view/MainWP_System_View.view.php:47
+#: view/MainWPSystemView.view.php:47
 #@ mainwp
 msgid "Test Settings"
 msgstr "Einstellungen überprüfen"
 
-#: page/MainWP_Settings.page.php:152
-#: page/MainWP_Settings.page.php:194
-#: view/MainWP_API_Settings_View.view.php:84
-#: view/MainWP_API_Settings_View.view.php:128
+#: page/MainWPSettings.page.php:152
+#: page/MainWPSettings.page.php:194
+#: view/MainWPAPISettingsView.view.php:84
+#: view/MainWPAPISettingsView.view.php:128
 #@ mainwp
 msgid "Save Settings"
 msgstr "Speicher Einstellungen"
 
-#: page/MainWP_Manage_Backups.page.php:802
-#: table/MainWP_Manage_Sites.table.php:200
+#: page/MainWPManageBackups.page.php:802
+#: table/MainWPManageSites.table.php:200
 #@ mainwp
 msgid "Backup Now"
 msgstr "Starte Sicherungskopie"
 
-#: page/MainWP_Manage_Groups.page.php:11
-#: page/MainWP_Manage_Groups.page.php:36
-#: table/MainWP_Manage_Sites.table.php:80
-#: view/MainWP_Manage_Sites_View.view.php:277
-#: view/MainWP_Manage_Sites_View.view.php:786
+#: page/MainWPManageGroups.page.php:11
+#: page/MainWPManageGroups.page.php:36
+#: table/MainWPManageSites.table.php:80
+#: view/MainWPManageSitesView.view.php:277
+#: view/MainWPManageSitesView.view.php:786
 #@ mainwp
 msgid "Groups"
 msgstr "Gruppen"
 
-#: page/MainWP_Manage_Groups.page.php:12
+#: page/MainWPManageGroups.page.php:12
 #@ mainwp
 msgid "Asdd New Group"
 msgstr "Neue Gruppe hinzufügen"
 
-#: page/MainWP_Manage_Groups.page.php:59
+#: page/MainWPManageGroups.page.php:59
 #@ mainwp
 msgid "Save Selection"
 msgstr "Speichere Auswahl"
 
-#: page/MainWP_Manage_Groups.page.php:270
+#: page/MainWPManageGroups.page.php:270
 #@ mainwp
 msgid "Rename"
 msgstr "Umbenennen"
 
-#: page/MainWP_Manage_Groups.page.php:332
+#: page/MainWPManageGroups.page.php:332
 #@ default
 msgid "New Group"
 msgstr "Neue Gruppe"
 
-#: page/MainWP_Offline_Checks.page.php:11
-#: page/MainWP_Offline_Checks.page.php:19
-#: view/MainWP_Manage_Sites_View.view.php:810
+#: page/MainWPOfflineChecks.page.php:11
+#: page/MainWPOfflineChecks.page.php:19
+#: view/MainWPManageSitesView.view.php:810
 #@ mainwp
 msgid "Offline Checks"
 msgstr "Offline-Überprüfung"
 
-#: page/MainWP_Offline_Checks.page.php:44
+#: page/MainWPOfflineChecks.page.php:44
 #@ mainwp
 msgid "Notifications will be sent to"
 msgstr "Benachrichtigungen werden gesendet an"
 
-#: page/MainWP_Offline_Checks.page.php:44
+#: page/MainWPOfflineChecks.page.php:44
 #@ mainwp
 msgid "change"
 msgstr "Veränderung"
 
-#: page/MainWP_Offline_Checks.page.php:45
+#: page/MainWPOfflineChecks.page.php:45
 #@ mainwp
 msgid "MainWP performs two tests when checking your site for up-time."
 msgstr "MainWP führt zwei Tests bei der Überprüfung Ihrer Webseite für die Erreichbarkeit durch."
 
-#: page/MainWP_Offline_Checks.page.php:47
+#: page/MainWPOfflineChecks.page.php:47
 #@ mainwp
 msgid "The first test we do is to check that the domain is valid."
 msgstr "Der erste Test, den wir durchführen, überprüft dass die Domain gültig ist."
 
-#: page/MainWP_Offline_Checks.page.php:49
+#: page/MainWPOfflineChecks.page.php:49
 #@ mainwp
 msgid "If this test passes we use a browser emulator to visit the website, this sends out a user agent (just like your web browser from your computer) and waits for a status message."
 msgstr "Wenn dieser Test erfolgreich war, verwenden wir ein Browser-Emulator, um die Webseite zu besuchen. Diese sendet ein User-Agent (wie Ihre Webbrowser von Ihrem Computer) und wartet auf eine Statusmeldung."
 
-#: page/MainWP_Offline_Checks.page.php:51
+#: page/MainWPOfflineChecks.page.php:51
 #@ mainwp
 msgid "We report any http status code from 200-399 as a success. Any other http status code returned is considered \"offline\" which is treated as a failure."
 msgstr "Wir berichten jeden HTTP-Statuscode 200 bis 399 als Erfolg. Jeder andere zurückgegeben HTTP-Statuscode wird als \\ \\\"offline \" behandelt."
 
-#: page/MainWP_Offline_Checks.page.php:58
+#: page/MainWPOfflineChecks.page.php:58
 #@ mainwp
 msgid "Disabled"
 msgstr "Deaktiviert"
 
-#: page/MainWP_Offline_Checks.page.php:59
+#: page/MainWPOfflineChecks.page.php:59
 #@ mainwp
 msgid "Hourly"
 msgstr "St&uuml;ndlich"
 
-#: page/MainWP_Offline_Checks.page.php:60
+#: page/MainWPOfflineChecks.page.php:60
 #@ mainwp
 msgid "2x Day"
 msgstr "2 mal am Tag"
 
-#: page/MainWP_Offline_Checks.page.php:61
+#: page/MainWPOfflineChecks.page.php:61
 #@ mainwp
 msgid "Daily"
 msgstr "T&auml;glich"
 
-#: page/MainWP_Offline_Checks.page.php:62
+#: page/MainWPOfflineChecks.page.php:62
 #@ mainwp
 msgid "Weekly"
 msgstr "W&ouml;chentlich"
 
-#: page/MainWP_Offline_Checks.page.php:63
+#: page/MainWPOfflineChecks.page.php:63
 #@ mainwp
 msgid "Check All"
 msgstr "Alles prüfen"
 
-#: page/MainWP_Offline_Checks.page.php:94
-#: page/MainWP_Server_Information.page.php:88
+#: page/MainWPOfflineChecks.page.php:94
+#: page/MainWPServerInformation.page.php:88
 #@ mainwp
 msgid "Check"
 msgstr "Prüfen"
 
-#: page/MainWP_Offline_Checks.page.php:285
+#: page/MainWPOfflineChecks.page.php:285
 #@ mainwp
 msgid "Offline Check Options"
 msgstr "Offline Prüf-Optionen"
 
-#: page/MainWP_Offline_Checks.page.php:289
+#: page/MainWPOfflineChecks.page.php:289
 #@ mainwp
 msgid "Online Notifications"
 msgstr "Online Benachrichtigungen"
 
-#: page/MainWP_Offline_Checks.page.php:289
+#: page/MainWPOfflineChecks.page.php:289
 #@ mainwp
 msgid "Network will monitor your sites for downtime and uptime.  By default emails are only sent when your site is down."
 msgstr "Das Netzwerk wird Ihre Webseiten auf Ausfallzeiten und Betriebszeit überwachen."
 
-#: page/MainWP_Offline_Checks.page.php:295
+#: page/MainWPOfflineChecks.page.php:295
 #@ mainwp
 msgid "Enable notifications even when the website is online"
 msgstr "Benachrichtigungen aktivieren, auch wenn die Webseite online ist"
 
-#: page/MainWP_Page.page.php:22
-#: page/MainWP_Page.page.php:74
+#: page/MainWPPage.page.php:22
+#: page/MainWPPage.page.php:74
 #@ mainwp
 msgid "Pages"
 msgstr "Seiten"
 
-#: page/MainWP_Page.page.php:45
+#: page/MainWPPage.page.php:45
 #@ mainwp
 msgid ""
 "All\n"
@@ -1261,51 +1261,51 @@ msgstr ""
 "Alle\n"
 " Seiten"
 
-#: page/MainWP_Page.page.php:116
+#: page/MainWPPage.page.php:116
 #@ mainwp
 msgid "Use this to bulk change pages. To add new pages click on the \"Add New\" tab."
 msgstr "Verwenden Sie diese Massenänderung für die Seiten. Neue Seiten mit dem Klick auf den Reiter \"Neu hinzufügen\"."
 
-#: page/MainWP_Page.page.php:121
+#: page/MainWPPage.page.php:121
 #@ mainwp
 msgid "Search Pages"
 msgstr "Such Seiten"
 
-#: page/MainWP_Page.page.php:157
+#: page/MainWPPage.page.php:157
 #@ mainwp
 msgid "Show Pages"
 msgstr "Seiten anzeigen"
 
-#: page/MainWP_Page.page.php:184
-#: page/MainWP_Page.page.php:213
-#: page/MainWP_Post.page.php:191
-#: page/MainWP_Post.page.php:226
+#: page/MainWPPage.page.php:184
+#: page/MainWPPage.page.php:213
+#: page/MainWPPost.page.php:191
+#: page/MainWPPost.page.php:226
 #@ mainwp
 msgid "Title"
 msgstr "Titel"
 
-#: page/MainWP_Page.page.php:254
+#: page/MainWPPage.page.php:254
 #@ mainwp
 msgid "Pages per page"
 msgstr "Seiten pro Seite"
 
-#: page/MainWP_Page.page.php:390
-#: page/MainWP_Post.page.php:430
-#: widget/MainWP_Recent_Pages.widget.php:98
-#: widget/MainWP_Recent_Posts.widget.php:98
+#: page/MainWPPage.page.php:390
+#: page/MainWPPost.page.php:430
+#: widget/MainWPRecentPages.widget.php:98
+#: widget/MainWPRecentPosts.widget.php:98
 #@ mainwp
 msgid "View"
 msgstr "anzeigen"
 
-#: page/MainWP_Page.page.php:474
+#: page/MainWPPage.page.php:474
 #@ mainwp
 msgid "Use this to add a new page. To bulk change pages click on the \"Manage\" tab."
 msgstr "Verwenden Sie diese, um eine neue Seite hinzufügen. Um Massenänderung der Seiten durchzuführen klicken Sie auf den Reiter \"Verwalten \"."
 
-#: page/MainWP_Page.page.php:578
-#: page/MainWP_Page.page.php:588
-#: page/MainWP_Post.page.php:664
-#: page/MainWP_Post.page.php:674
+#: page/MainWPPage.page.php:578
+#: page/MainWPPage.page.php:588
+#: page/MainWPPost.page.php:664
+#: page/MainWPPost.page.php:674
 #@ mainwp
 msgid ""
 "Return\n"
@@ -1314,1011 +1314,1011 @@ msgstr ""
 "Zurück\n"
 " zum Dashboard"
 
-#: page/MainWP_Page.page.php:584
-#: page/MainWP_Post.page.php:670
+#: page/MainWPPage.page.php:584
+#: page/MainWPPost.page.php:670
 #@ mainwp
 msgid "An undefined error occured."
 msgstr "Ein nicht definierter Fehler ist aufgetreten."
 
-#: page/MainWP_Plugins.page.php:22
-#: page/MainWP_Plugins.page.php:23
-#: page/MainWP_Plugins.page.php:24
-#: page/MainWP_Plugins.page.php:25
-#: page/MainWP_Plugins.page.php:26
-#: page/MainWP_Plugins.page.php:74
-#: page/MainWP_Plugins.page.php:941
-#: page/MainWP_Plugins.page.php:980
-#: page/MainWP_Plugins.page.php:1052
-#: page/MainWP_Plugins.page.php:1091
-#: widget/MainWP_Widget_Plugins.widget.php:17
+#: page/MainWPPlugins.page.php:22
+#: page/MainWPPlugins.page.php:23
+#: page/MainWPPlugins.page.php:24
+#: page/MainWPPlugins.page.php:25
+#: page/MainWPPlugins.page.php:26
+#: page/MainWPPlugins.page.php:74
+#: page/MainWPPlugins.page.php:941
+#: page/MainWPPlugins.page.php:980
+#: page/MainWPPlugins.page.php:1052
+#: page/MainWPPlugins.page.php:1091
+#: widget/MainWPWidgetPlugins.widget.php:17
 #@ mainwp
 msgid "Plugins"
 msgstr "Plugins"
 
-#: page/MainWP_Plugins.page.php:46
-#: page/MainWP_Plugins.page.php:1194
+#: page/MainWPPlugins.page.php:46
+#: page/MainWPPlugins.page.php:1194
 #@ mainwp
 msgid "Manage Plugins"
 msgstr "Verwalte Plaugins"
 
-#: page/MainWP_Plugins.page.php:48
-#: page/MainWP_Plugins.page.php:78
-#: page/MainWP_Themes.page.php:49
-#: page/MainWP_Themes.page.php:79
+#: page/MainWPPlugins.page.php:48
+#: page/MainWPPlugins.page.php:78
+#: page/MainWPThemes.page.php:49
+#: page/MainWPThemes.page.php:79
 #@ mainwp
 msgid "Auto Update Trust"
 msgstr "Auto-Update vertrauen"
 
-#: page/MainWP_Plugins.page.php:49
-#: page/MainWP_Plugins.page.php:79
-#: page/MainWP_Themes.page.php:50
-#: page/MainWP_Themes.page.php:80
+#: page/MainWPPlugins.page.php:49
+#: page/MainWPPlugins.page.php:79
+#: page/MainWPThemes.page.php:50
+#: page/MainWPThemes.page.php:80
 #@ mainwp
 msgid "Ignored Updates"
 msgstr "Ignorierte Updates"
 
-#: page/MainWP_Plugins.page.php:50
-#: page/MainWP_Plugins.page.php:80
-#: page/MainWP_Themes.page.php:51
-#: page/MainWP_Themes.page.php:81
+#: page/MainWPPlugins.page.php:50
+#: page/MainWPPlugins.page.php:80
+#: page/MainWPThemes.page.php:51
+#: page/MainWPThemes.page.php:81
 #@ mainwp
 msgid "Ignored Conflicts"
 msgstr "ignorierte Konflikte"
 
-#: page/MainWP_Plugins.page.php:111
+#: page/MainWPPlugins.page.php:111
 #@ mainwp
 msgid "Use this to bulk (de)activate or delete plugins. To add new plugins click on the \"Install\" tab."
 msgstr "Verwenden Sie dies zum (de) aktivieren oder Plugins löschen. Neue Plugins über den Reiter \"Installieren \" hinzufügen."
 
-#: page/MainWP_Plugins.page.php:116
+#: page/MainWPPlugins.page.php:116
 #@ mainwp
 msgid "Search Plugins"
 msgstr "Suche Plugins"
 
-#: page/MainWP_Plugins.page.php:118
-#: page/MainWP_Themes.page.php:118
+#: page/MainWPPlugins.page.php:118
+#: page/MainWPThemes.page.php:118
 #@ mainwp
 msgid "Status:"
 msgstr "Status:"
 
-#: page/MainWP_Plugins.page.php:120
-#: page/MainWP_Themes.page.php:120
-#: widget/MainWP_Widget_Plugins.widget.php:59
-#: widget/MainWP_Widget_Themes.widget.php:59
+#: page/MainWPPlugins.page.php:120
+#: page/MainWPThemes.page.php:120
+#: widget/MainWPWidgetPlugins.widget.php:59
+#: widget/MainWPWidgetThemes.widget.php:59
 #@ mainwp
 msgid "Active"
 msgstr "Aktiv"
 
-#: page/MainWP_Plugins.page.php:121
-#: page/MainWP_Themes.page.php:121
-#: widget/MainWP_Widget_Plugins.widget.php:59
-#: widget/MainWP_Widget_Themes.widget.php:59
+#: page/MainWPPlugins.page.php:121
+#: page/MainWPThemes.page.php:121
+#: widget/MainWPWidgetPlugins.widget.php:59
+#: widget/MainWPWidgetThemes.widget.php:59
 #@ mainwp
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: page/MainWP_Plugins.page.php:129
-#: page/MainWP_Plugins.page.php:735
+#: page/MainWPPlugins.page.php:129
+#: page/MainWPPlugins.page.php:735
 #@ mainwp
 msgid "Show Plugins"
 msgstr "Plugins anzeigen"
 
-#: page/MainWP_Plugins.page.php:130
-#: page/MainWP_Themes.page.php:130
+#: page/MainWPPlugins.page.php:130
+#: page/MainWPThemes.page.php:130
 #@ mainwp
 msgid "Automatically refreshing to get up to date information."
 msgstr "Automatische Aktualisierung, um aktuelle Informationen zu erhalten."
 
-#: page/MainWP_Plugins.page.php:214
+#: page/MainWPPlugins.page.php:214
 #@ mainwp
 msgid "No plugins found"
 msgstr "Keine Plugins gefunden"
 
-#: page/MainWP_Plugins.page.php:220
-#: page/MainWP_Plugins.page.php:460
-#: page/MainWP_Themes.page.php:252
-#: page/MainWP_Themes.page.php:409
+#: page/MainWPPlugins.page.php:220
+#: page/MainWPPlugins.page.php:460
+#: page/MainWPThemes.page.php:252
+#: page/MainWPThemes.page.php:409
 #@ mainwp
 msgid "Choose Action"
 msgstr "Wählen Sie Aktion"
 
-#: page/MainWP_Plugins.page.php:221
-#: page/MainWP_Themes.page.php:410
+#: page/MainWPPlugins.page.php:221
+#: page/MainWPThemes.page.php:410
 #@ mainwp
 msgid "Trust"
 msgstr "Vertrauen"
 
-#: page/MainWP_Plugins.page.php:222
-#: page/MainWP_Themes.page.php:411
+#: page/MainWPPlugins.page.php:222
+#: page/MainWPThemes.page.php:411
 #@ mainwp
 msgid "Untrust"
 msgstr "nicht vertrauen"
 
-#: page/MainWP_Plugins.page.php:223
-#: page/MainWP_Plugins.page.php:468
-#: page/MainWP_Themes.page.php:255
-#: page/MainWP_Themes.page.php:412
+#: page/MainWPPlugins.page.php:223
+#: page/MainWPPlugins.page.php:468
+#: page/MainWPThemes.page.php:255
+#: page/MainWPThemes.page.php:412
 #@ mainwp
 msgid "Confirm"
 msgstr "Bestätigen"
 
-#: page/MainWP_Plugins.page.php:258
-#: page/MainWP_Plugins.page.php:274
+#: page/MainWPPlugins.page.php:258
+#: page/MainWPPlugins.page.php:274
 #@ mainwp
 msgid "Plugin"
 msgstr "Plugin"
 
-#: page/MainWP_Plugins.page.php:261
-#: page/MainWP_Plugins.page.php:275
-#: page/MainWP_Themes.page.php:449
-#: page/MainWP_Themes.page.php:463
+#: page/MainWPPlugins.page.php:261
+#: page/MainWPPlugins.page.php:275
+#: page/MainWPThemes.page.php:449
+#: page/MainWPThemes.page.php:463
 #@ mainwp
 msgid "Trust Level"
 msgstr "Vertrauensebene"
 
-#: page/MainWP_Plugins.page.php:264
-#: page/MainWP_Plugins.page.php:276
-#: page/MainWP_Themes.page.php:452
-#: page/MainWP_Themes.page.php:464
+#: page/MainWPPlugins.page.php:264
+#: page/MainWPPlugins.page.php:276
+#: page/MainWPThemes.page.php:452
+#: page/MainWPThemes.page.php:464
 #@ mainwp
 msgid "Ignored Status"
 msgstr "ignorierter Status"
 
-#: page/MainWP_Plugins.page.php:266
-#: page/MainWP_Plugins.page.php:277
-#: page/MainWP_Site_Open.page.php:46
-#: page/MainWP_Themes.page.php:454
-#: page/MainWP_Themes.page.php:465
-#: table/MainWP_Manage_Sites.table.php:85
+#: page/MainWPPlugins.page.php:266
+#: page/MainWPPlugins.page.php:277
+#: page/MainWPSiteOpen.page.php:46
+#: page/MainWPThemes.page.php:454
+#: page/MainWPThemes.page.php:465
+#: table/MainWPManageSites.table.php:85
 #@ mainwp
 msgid "Notes"
 msgstr "Notizen"
 
-#: page/MainWP_Plugins.page.php:309
-#: table/MainWP_Manage_Sites.table.php:230
-#: widget/MainWP_Right_Now.widget.php:601
-#: widget/MainWP_Right_Now.widget.php:672
-#: widget/MainWP_Right_Now.widget.php:837
-#: widget/MainWP_Right_Now.widget.php:962
-#: widget/MainWP_Right_Now.widget.php:990
-#: widget/MainWP_Shortcuts.widget.php:42
+#: page/MainWPPlugins.page.php:309
+#: table/MainWPManageSites.table.php:230
+#: widget/MainWPRightNow.widget.php:601
+#: widget/MainWPRightNow.widget.php:672
+#: widget/MainWPRightNow.widget.php:837
+#: widget/MainWPRightNow.widget.php:962
+#: widget/MainWPRightNow.widget.php:990
+#: widget/MainWPShortcuts.widget.php:42
 #@ mainwp
 msgid "Open"
 msgstr "Öffnen"
 
-#: page/MainWP_Plugins.page.php:330
-#: page/MainWP_Themes.page.php:518
-#: view/MainWP_Manage_Sites_View.view.php:738
-#: widget/MainWP_Shortcuts.widget.php:55
+#: page/MainWPPlugins.page.php:330
+#: page/MainWPThemes.page.php:518
+#: view/MainWPManageSitesView.view.php:738
+#: widget/MainWPShortcuts.widget.php:55
 #@ mainwp
 msgid "Save Note"
 msgstr "Notiz speichern"
 
-#: page/MainWP_Plugins.page.php:331
-#: page/MainWP_Themes.page.php:519
-#: view/MainWP_Manage_Sites_View.view.php:739
-#: view/MainWP_System_View.view.php:55
-#: widget/MainWP_Right_Now.widget.php:1106
-#: widget/MainWP_Shortcuts.widget.php:56
+#: page/MainWPPlugins.page.php:331
+#: page/MainWPThemes.page.php:519
+#: view/MainWPManageSitesView.view.php:739
+#: view/MainWPSystemView.view.php:55
+#: widget/MainWPRightNow.widget.php:1106
+#: widget/MainWPShortcuts.widget.php:56
 #@ mainwp
 msgid "Close"
 msgstr "Schließen"
 
-#: page/MainWP_Plugins.page.php:347
-#: page/MainWP_Themes.page.php:535
+#: page/MainWPPlugins.page.php:347
+#: page/MainWPThemes.page.php:535
 #@ mainwp
 msgid "Plugins per page"
 msgstr "Plugins pro Seite"
 
-#: page/MainWP_Plugins.page.php:462
+#: page/MainWPPlugins.page.php:462
 #@ mainwp
 msgid "Deactivate"
 msgstr "Deaktiviert"
 
-#: page/MainWP_Plugins.page.php:465
-#: page/MainWP_Themes.page.php:253
-#: widget/MainWP_Widget_Plugins.widget.php:96
-#: widget/MainWP_Widget_Themes.widget.php:86
+#: page/MainWPPlugins.page.php:465
+#: page/MainWPThemes.page.php:253
+#: widget/MainWPWidgetPlugins.widget.php:96
+#: widget/MainWPWidgetThemes.widget.php:86
 #@ mainwp
 msgid "Activate"
 msgstr "Aktiviert"
 
-#: page/MainWP_Plugins.page.php:468
+#: page/MainWPPlugins.page.php:468
 #@ mainwp
 msgid "Why does the MainWP Child Plugin NOT show here?"
 msgstr "Warum wird das MainWP Child-Plugin NICHT hier angezeigt?"
 
-#: page/MainWP_Plugins.page.php:631
-#: page/MainWP_Plugins.page.php:639
-#: page/MainWP_User.page.php:205
-#: page/MainWP_User.page.php:230
+#: page/MainWPPlugins.page.php:631
+#: page/MainWPPlugins.page.php:639
+#: page/MainWPUser.page.php:205
+#: page/MainWPUser.page.php:230
 #@ mainwp
 msgid "Name"
 msgstr "Name"
 
-#: page/MainWP_Plugins.page.php:632
-#: page/MainWP_Plugins.page.php:640
+#: page/MainWPPlugins.page.php:632
+#: page/MainWPPlugins.page.php:640
 #@ mainwp
 msgid "Version"
 msgstr "Version"
 
-#: page/MainWP_Plugins.page.php:633
-#: page/MainWP_Plugins.page.php:641
+#: page/MainWPPlugins.page.php:633
+#: page/MainWPPlugins.page.php:641
 #@ mainwp
 msgid "Rating"
 msgstr "Wertung"
 
-#: page/MainWP_Plugins.page.php:634
-#: page/MainWP_Plugins.page.php:642
+#: page/MainWPPlugins.page.php:634
+#: page/MainWPPlugins.page.php:642
 #@ mainwp
 msgid "Description"
 msgstr "Beschreibung"
 
-#: page/MainWP_Plugins.page.php:650
+#: page/MainWPPlugins.page.php:650
 #@ mainwp
 msgid "No plugins match your request."
 msgstr "Keine Plugins passen auf Ihrer Anfrage."
 
-#: page/MainWP_Plugins.page.php:657
-#: view/MainWP_Extensions_View.view.php:157
+#: page/MainWPPlugins.page.php:657
+#: view/MainWPExtensionsView.view.php:157
 #, php-format
 #@ default
 #@ mainwp
 msgid "By %s"
 msgstr "von %s"
 
-#: page/MainWP_Plugins.page.php:724
+#: page/MainWPPlugins.page.php:724
 #@ mainwp
 msgid "Plugin Automatic Update Trust List"
 msgstr "Automatisches Plugin-Update via Vertrauensliste"
 
-#: page/MainWP_Plugins.page.php:727
-#: page/MainWP_Themes.page.php:727
+#: page/MainWPPlugins.page.php:727
+#: page/MainWPThemes.page.php:727
 #@ mainwp
 msgid "Auto Updates are ON and Trusted Plugins will be Automatically Updated"
 msgstr "Auto-Updates ist eingeschaltet und vertauten Plugins werden automatisch aktualisiert"
 
-#: page/MainWP_Plugins.page.php:729
-#: page/MainWP_Themes.page.php:729
+#: page/MainWPPlugins.page.php:729
+#: page/MainWPThemes.page.php:729
 #@ mainwp
 msgid "Auto Updates are OFF - Email Update Notification is ON"
 msgstr "Auto-Updates ist ausgeschaltet - E-Mail-Update-Mitteilung ist eingeschaltet"
 
-#: page/MainWP_Plugins.page.php:731
-#: page/MainWP_Themes.page.php:731
+#: page/MainWPPlugins.page.php:731
+#: page/MainWPThemes.page.php:731
 #@ mainwp
 msgid "Auto Updates are OFF - Email Update Notification is OFF"
 msgstr "Auto-Updates ist ausgeschaltet - E-Mail-Update-Mitteilung ist ausgeschaltet"
 
-#: page/MainWP_Plugins.page.php:732
-#: page/MainWP_Themes.page.php:732
+#: page/MainWPPlugins.page.php:732
+#: page/MainWPThemes.page.php:732
 #@ mainwp
 msgid "Change this in Settings"
 msgstr "Ändern Sie diese Einstellungen in"
 
-#: page/MainWP_Plugins.page.php:733
+#: page/MainWPPlugins.page.php:733
 #@ mainwp
 msgid "Only mark Plugins as Trusted if you are absolutely sure they can be updated without breaking your sites or your network."
 msgstr "Nur markierten Plugins wird vertraut, wenn Sie absolut sicher sind, dass sie ohne Ihre Webseiten oder Ihr Netzwerk aktualisiert werden."
 
-#: page/MainWP_Plugins.page.php:733
+#: page/MainWPPlugins.page.php:733
 #@ mainwp
 msgid "Ignored Plugins can not be Automatically Updated."
 msgstr "Ignoriert Plugins können nicht automatisch aktualisiert werden."
 
-#: page/MainWP_Plugins.page.php:936
+#: page/MainWPPlugins.page.php:936
 #@ mainwp
 msgid "Ignored Plugin Conflict List"
 msgstr "Ignorierte Plugin Konfliktliste"
 
-#: page/MainWP_Plugins.page.php:938
-#: page/MainWP_Plugins.page.php:1049
-#: page/MainWP_Themes.page.php:774
-#: page/MainWP_Themes.page.php:884
+#: page/MainWPPlugins.page.php:938
+#: page/MainWPPlugins.page.php:1049
+#: page/MainWPThemes.page.php:774
+#: page/MainWPThemes.page.php:884
 #@ mainwp
 msgid "Globally"
 msgstr "Global"
 
-#: page/MainWP_Plugins.page.php:942
-#: page/MainWP_Plugins.page.php:981
-#: page/MainWP_Plugins.page.php:1053
-#: page/MainWP_Plugins.page.php:1092
-#: page/MainWP_Themes.page.php:778
-#: page/MainWP_Themes.page.php:817
-#: page/MainWP_Themes.page.php:888
-#: page/MainWP_Themes.page.php:929
+#: page/MainWPPlugins.page.php:942
+#: page/MainWPPlugins.page.php:981
+#: page/MainWPPlugins.page.php:1053
+#: page/MainWPPlugins.page.php:1092
+#: page/MainWPThemes.page.php:778
+#: page/MainWPThemes.page.php:817
+#: page/MainWPThemes.page.php:888
+#: page/MainWPThemes.page.php:929
 #@ mainwp
 msgid "Allow All"
 msgstr "Alle zulassen"
 
-#: page/MainWP_Plugins.page.php:957
-#: page/MainWP_Plugins.page.php:1008
-#: page/MainWP_Plugins.page.php:1068
-#: page/MainWP_Plugins.page.php:1119
-#: page/MainWP_Themes.page.php:793
-#: page/MainWP_Themes.page.php:844
-#: page/MainWP_Themes.page.php:905
-#: page/MainWP_Themes.page.php:955
+#: page/MainWPPlugins.page.php:957
+#: page/MainWPPlugins.page.php:1008
+#: page/MainWPPlugins.page.php:1068
+#: page/MainWPPlugins.page.php:1119
+#: page/MainWPThemes.page.php:793
+#: page/MainWPThemes.page.php:844
+#: page/MainWPThemes.page.php:905
+#: page/MainWPThemes.page.php:955
 #@ mainwp
 msgid "ALLOW"
 msgstr "Zulassen"
 
-#: page/MainWP_Plugins.page.php:968
-#: page/MainWP_Plugins.page.php:1019
+#: page/MainWPPlugins.page.php:968
+#: page/MainWPPlugins.page.php:1019
 #@ mainwp
 msgid "No ignored plugin conflicts"
 msgstr "Keine ignorierten Plugin Konflikte"
 
-#: page/MainWP_Plugins.page.php:976
-#: page/MainWP_Plugins.page.php:1087
-#: page/MainWP_Themes.page.php:812
-#: page/MainWP_Themes.page.php:924
+#: page/MainWPPlugins.page.php:976
+#: page/MainWPPlugins.page.php:1087
+#: page/MainWPThemes.page.php:812
+#: page/MainWPThemes.page.php:924
 #@ mainwp
 msgid "Per Site"
 msgstr "pro Seite"
 
-#: page/MainWP_Plugins.page.php:979
-#: page/MainWP_Plugins.page.php:1090
-#: page/MainWP_Themes.page.php:815
-#: page/MainWP_Themes.page.php:927
-#: table/MainWP_Manage_Sites.table.php:78
+#: page/MainWPPlugins.page.php:979
+#: page/MainWPPlugins.page.php:1090
+#: page/MainWPThemes.page.php:815
+#: page/MainWPThemes.page.php:927
+#: table/MainWPManageSites.table.php:78
 #@ mainwp
 msgid "Site"
 msgstr "Seite"
 
-#: page/MainWP_Plugins.page.php:1047
-#: widget/MainWP_Right_Now.widget.php:936
+#: page/MainWPPlugins.page.php:1047
+#: widget/MainWPRightNow.widget.php:936
 #@ mainwp
 msgid "Plugin Ignore List"
 msgstr "Ignoriete Plugin Liste"
 
-#: page/MainWP_Plugins.page.php:1079
-#: page/MainWP_Plugins.page.php:1130
-#: view/MainWP_System_View.view.php:37
+#: page/MainWPPlugins.page.php:1079
+#: page/MainWPPlugins.page.php:1130
+#: view/MainWPSystemView.view.php:37
 #@ mainwp
 msgid "No ignored plugins"
 msgstr "Keine ignorierten Plugins"
 
-#: page/MainWP_Post.page.php:22
-#: page/MainWP_Post.page.php:72
-#: page/MainWP_User.page.php:214
-#: page/MainWP_User.page.php:239
+#: page/MainWPPost.page.php:22
+#: page/MainWPPost.page.php:72
+#: page/MainWPUser.page.php:214
+#: page/MainWPUser.page.php:239
 #@ mainwp
 msgid "Posts"
 msgstr "Beiträge"
 
-#: page/MainWP_Post.page.php:44
+#: page/MainWPPost.page.php:44
 #@ mainwp
 msgid "All Posts"
 msgstr "Alle Beiträge"
 
-#: page/MainWP_Post.page.php:111
+#: page/MainWPPost.page.php:111
 #@ mainwp
 msgid "Use this to bulk change posts. To add new posts click on the \"Add New\" tab."
 msgstr "Verwenden Sie diese Massenänderung für Beiträge. Neue Beiträge fügen Sie über den Reiter \"Neue \" hinzu."
 
-#: page/MainWP_Post.page.php:116
+#: page/MainWPPost.page.php:116
 #@ mainwp
 msgid "Search Posts"
 msgstr "Suche Beiträge"
 
-#: page/MainWP_Post.page.php:153
+#: page/MainWPPost.page.php:153
 #@ mainwp
 msgid "Show Posts"
 msgstr "Beiträge anzeigen"
 
-#: page/MainWP_Post.page.php:172
-#: page/MainWP_Post.page.php:416
-#: widget/MainWP_Recent_Pages.widget.php:131
-#: widget/MainWP_Recent_Pages.widget.php:164
-#: widget/MainWP_Recent_Posts.widget.php:131
-#: widget/MainWP_Recent_Posts.widget.php:164
+#: page/MainWPPost.page.php:172
+#: page/MainWPPost.page.php:416
+#: widget/MainWPRecentPages.widget.php:131
+#: widget/MainWPRecentPages.widget.php:164
+#: widget/MainWPRecentPosts.widget.php:131
+#: widget/MainWPRecentPosts.widget.php:164
 #@ mainwp
 msgid "Publish"
 msgstr "veröffentlichen"
 
-#: page/MainWP_Post.page.php:173
-#: page/MainWP_Post.page.php:433
-#: widget/MainWP_Recent_Pages.widget.php:98
-#: widget/MainWP_Recent_Posts.widget.php:98
+#: page/MainWPPost.page.php:173
+#: page/MainWPPost.page.php:433
+#: widget/MainWPRecentPages.widget.php:98
+#: widget/MainWPRecentPosts.widget.php:98
 #@ mainwp
 msgid "Unpublish"
 msgstr "Unveröffentlicht"
 
-#: page/MainWP_Post.page.php:273
+#: page/MainWPPost.page.php:273
 #@ mainwp
 msgid "Posts per page"
 msgstr "Beiträge pro Seite"
 
-#: page/MainWP_Post.page.php:491
+#: page/MainWPPost.page.php:491
 #@ mainwp
 msgid "Use this to add new posts. To bulk change posts click on the \"Manage\" tab."
 msgstr "Verwenden Sie diese, um neue Beiträge hinzuzufügen. Um Massenänderung an Beiträge durchzuführen klicken Sie auf den Reiter \"Verwalten \"."
 
-#: page/MainWP_Post.page.php:670
+#: page/MainWPPost.page.php:670
 #@ mainwp
 msgid "ERROR"
 msgstr "Fehler"
 
-#: page/MainWP_Security_Issues.page.php:12
+#: page/MainWPSecurityIssues.page.php:12
 #@ mainwp
 msgid "SecurityIssues"
 msgstr "Sicherheitsprobleme"
 
-#: page/MainWP_Security_Issues.page.php:30
-#: page/MainWP_Security_Issues.page.php:115
+#: page/MainWPSecurityIssues.page.php:30
+#: page/MainWPSecurityIssues.page.php:115
 #@ mainwp
 msgid "Security Issues"
 msgstr "Sicherheitsprobleme"
 
-#: page/MainWP_Security_Issues.page.php:32
+#: page/MainWPSecurityIssues.page.php:32
 #@ mainwp
 msgid "We highly suggest you make a full backup before you run the Security Update."
 msgstr "Wir empfehlen eine vollständige Datensicherung vornehmen, bevor Sie das Sicherheitsupdate-einspielen."
 
-#: page/MainWP_Security_Issues.page.php:35
+#: page/MainWPSecurityIssues.page.php:35
 #@ mainwp
 msgid "Prevent listing wp-content, wp-content/plugins, wp-content/themes, wp-content/uploads"
 msgstr "Prevent listing wp-content, wp-content/plugins, wp-content/themes, wp-content/uploads"
 
-#: page/MainWP_Security_Issues.page.php:35
-#: page/MainWP_Security_Issues.page.php:36
-#: page/MainWP_Security_Issues.page.php:37
-#: page/MainWP_Security_Issues.page.php:38
-#: page/MainWP_Security_Issues.page.php:39
-#: page/MainWP_Security_Issues.page.php:40
-#: page/MainWP_Security_Issues.page.php:41
-#: page/MainWP_Security_Issues.page.php:42
+#: page/MainWPSecurityIssues.page.php:35
+#: page/MainWPSecurityIssues.page.php:36
+#: page/MainWPSecurityIssues.page.php:37
+#: page/MainWPSecurityIssues.page.php:38
+#: page/MainWPSecurityIssues.page.php:39
+#: page/MainWPSecurityIssues.page.php:40
+#: page/MainWPSecurityIssues.page.php:41
+#: page/MainWPSecurityIssues.page.php:42
 #@ mainwp
 msgid "Fix"
 msgstr "Fix"
 
-#: page/MainWP_Security_Issues.page.php:36
+#: page/MainWPSecurityIssues.page.php:36
 #@ mainwp
 msgid "Removed wp-version"
 msgstr "Entfernt WP-Version"
 
-#: page/MainWP_Security_Issues.page.php:36
-#: page/MainWP_Security_Issues.page.php:37
-#: page/MainWP_Security_Issues.page.php:38
-#: page/MainWP_Security_Issues.page.php:41
-#: page/MainWP_Security_Issues.page.php:42
+#: page/MainWPSecurityIssues.page.php:36
+#: page/MainWPSecurityIssues.page.php:37
+#: page/MainWPSecurityIssues.page.php:38
+#: page/MainWPSecurityIssues.page.php:41
+#: page/MainWPSecurityIssues.page.php:42
 #@ mainwp
 msgid "Unfix"
 msgstr "Unfix"
 
-#: page/MainWP_Security_Issues.page.php:37
+#: page/MainWPSecurityIssues.page.php:37
 #@ mainwp
 msgid "Removed Really Simple Discovery meta tag"
 msgstr "Entferne einfach gefundene Meta Tag"
 
-#: page/MainWP_Security_Issues.page.php:38
+#: page/MainWPSecurityIssues.page.php:38
 #@ mainwp
 msgid "Removed Windows Live Writer meta tag"
 msgstr "Entferne Windows Live Writer Meta Tag"
 
-#: page/MainWP_Security_Issues.page.php:39
+#: page/MainWPSecurityIssues.page.php:39
 #@ mainwp
 msgid "Database error reporting turned off"
 msgstr "Datenbank Fehlerreport  ist ausgeschaltet"
 
-#: page/MainWP_Security_Issues.page.php:40
+#: page/MainWPSecurityIssues.page.php:40
 #@ mainwp
 msgid "PHP error reporting turned off"
 msgstr "PHP Fehlerreport ist ausgeschaltet"
 
-#: page/MainWP_Security_Issues.page.php:41
+#: page/MainWPSecurityIssues.page.php:41
 #@ mainwp
 msgid "Removed version information for scripts/stylesheets"
 msgstr "Entfernte Versions-Info über Scripts/Sytlesheets"
 
-#: page/MainWP_Security_Issues.page.php:43
+#: page/MainWPSecurityIssues.page.php:43
 #@ mainwp
 msgid "Admin user name is not admin"
 msgstr "Admin Benutzername ist nicht admin"
 
-#: page/MainWP_Security_Issues.page.php:43
+#: page/MainWPSecurityIssues.page.php:43
 #@ mainwp
 msgid "You have to change this yourself"
 msgstr "Sie wollen dies selbst ändern"
 
-#: page/MainWP_Security_Issues.page.php:43
+#: page/MainWPSecurityIssues.page.php:43
 #@ mainwp
 msgid "Tutorial"
 msgstr "Lernprogramm"
 
-#: page/MainWP_Security_Issues.page.php:42
+#: page/MainWPSecurityIssues.page.php:42
 #@ mainwp
 msgid "readme.html removed"
 msgstr "readme.html entfernt"
 
-#: page/MainWP_Security_Issues.page.php:45
-#: page/MainWP_Security_Issues.page.php:159
-#: page/MainWP_Security_Issues.page.php:174
+#: page/MainWPSecurityIssues.page.php:45
+#: page/MainWPSecurityIssues.page.php:159
+#: page/MainWPSecurityIssues.page.php:174
 #@ mainwp
 msgid "Fix All"
 msgstr "Alles Reparieren"
 
-#: page/MainWP_Security_Issues.page.php:45
+#: page/MainWPSecurityIssues.page.php:45
 #@ mainwp
 msgid "Refresh"
 msgstr "Aktualisieren"
 
-#: page/MainWP_Security_Issues.page.php:157
+#: page/MainWPSecurityIssues.page.php:157
 #@ mainwp
 msgid "Security issue"
 msgstr "Sicherheitsproblem"
 
-#: page/MainWP_Security_Issues.page.php:159
-#: view/MainWP_System_View.view.php:42
+#: page/MainWPSecurityIssues.page.php:159
+#: view/MainWPSystemView.view.php:42
 #@ mainwp
 msgid "Show All"
 msgstr "Alles anzeigen"
 
-#: page/MainWP_Security_Issues.page.php:172
+#: page/MainWPSecurityIssues.page.php:172
 #@ mainwp
 msgid "Unfix All"
 msgstr "Alles nicht Reparieren"
 
-#: page/MainWP_Server_Information.page.php:12
-#: page/MainWP_Server_Information.page.php:28
-#: page/MainWP_Server_Information.page.php:166
+#: page/MainWPServerInformation.page.php:12
+#: page/MainWPServerInformation.page.php:28
+#: page/MainWPServerInformation.page.php:166
 #@ mainwp
 #@ default
 msgid "Server Information"
 msgstr "Server Informationen"
 
-#: page/MainWP_Server_Information.page.php:13
-#: page/MainWP_Server_Information.page.php:34
-#: page/MainWP_Server_Information.page.php:168
+#: page/MainWPServerInformation.page.php:13
+#: page/MainWPServerInformation.page.php:34
+#: page/MainWPServerInformation.page.php:168
 #@ mainwp
 #@ default
 msgid "Cron Schedules"
 msgstr "Zeitplan Aufträge (Cron)"
 
-#: page/MainWP_Server_Information.page.php:14
-#: page/MainWP_Server_Information.page.php:35
+#: page/MainWPServerInformation.page.php:14
+#: page/MainWPServerInformation.page.php:35
 #@ mainwp
 msgid "Child Site Information"
 msgstr "Child Seiten Information"
 
-#: page/MainWP_Server_Information.page.php:15
-#: page/MainWP_Server_Information.page.php:36
-#: page/MainWP_Server_Information.page.php:173
+#: page/MainWPServerInformation.page.php:15
+#: page/MainWPServerInformation.page.php:36
+#: page/MainWPServerInformation.page.php:173
 #@ mainwp
 #@ default
 msgid "Error Log"
 msgstr "Fehler Log"
 
-#: page/MainWP_Server_Information.page.php:33
+#: page/MainWPServerInformation.page.php:33
 #@ mainwp
 msgid "Server"
 msgstr "Server"
 
-#: page/MainWP_Server_Information.page.php:59
+#: page/MainWPServerInformation.page.php:59
 #@ mainwp
 msgid "Server Configuration"
 msgstr "Server Konfiguration"
 
-#: page/MainWP_Server_Information.page.php:60
+#: page/MainWPServerInformation.page.php:60
 #@ mainwp
 msgid "Suggested Value"
 msgstr "Empfohlener Wert"
 
-#: page/MainWP_Server_Information.page.php:61
-#: page/MainWP_Server_Information.page.php:105
+#: page/MainWPServerInformation.page.php:61
+#: page/MainWPServerInformation.page.php:105
 #@ mainwp
 msgid "Value"
 msgstr "Wert"
 
-#: page/MainWP_Server_Information.page.php:86
+#: page/MainWPServerInformation.page.php:86
 #@ mainwp
 msgid "Directory name"
 msgstr "Verzeichnisname"
 
-#: page/MainWP_Server_Information.page.php:87
+#: page/MainWPServerInformation.page.php:87
 #@ mainwp
 msgid "Path"
 msgstr "Pfad"
 
-#: page/MainWP_Server_Information.page.php:89
+#: page/MainWPServerInformation.page.php:89
 #@ mainwp
 msgid "Result"
 msgstr "Ergebnis"
 
-#: page/MainWP_Server_Information.page.php:104
+#: page/MainWPServerInformation.page.php:104
 #@ mainwp
 msgid "Server Info"
 msgstr "Server Info"
 
-#: page/MainWP_Server_Information.page.php:109
+#: page/MainWPServerInformation.page.php:109
 #@ mainwp
 msgid "WordPress Root Directory"
 msgstr "WordPress Root Verzeichnis"
 
-#: page/MainWP_Server_Information.page.php:110
+#: page/MainWPServerInformation.page.php:110
 #@ mainwp
 msgid "Server Name"
 msgstr "Server Name"
 
-#: page/MainWP_Server_Information.page.php:111
+#: page/MainWPServerInformation.page.php:111
 #@ mainwp
 msgid "Server Sofware"
 msgstr "Server Software"
 
-#: page/MainWP_Server_Information.page.php:112
+#: page/MainWPServerInformation.page.php:112
 #@ mainwp
 msgid "Operating System"
 msgstr "Betriebssystem"
 
-#: page/MainWP_Server_Information.page.php:113
+#: page/MainWPServerInformation.page.php:113
 #@ mainwp
 msgid "Architecture"
 msgstr "Architektur"
 
-#: page/MainWP_Server_Information.page.php:114
+#: page/MainWPServerInformation.page.php:114
 #@ mainwp
 msgid "Server IP"
 msgstr "Server IP"
 
-#: page/MainWP_Server_Information.page.php:115
+#: page/MainWPServerInformation.page.php:115
 #@ mainwp
 msgid "Server Protocol"
 msgstr "Server Protocol"
 
-#: page/MainWP_Server_Information.page.php:116
+#: page/MainWPServerInformation.page.php:116
 #@ mainwp
 msgid "HTTP Host"
 msgstr "HTTP Host"
 
-#: page/MainWP_Server_Information.page.php:117
+#: page/MainWPServerInformation.page.php:117
 #@ mainwp
 msgid "Server Admin"
 msgstr "Server Admin"
 
-#: page/MainWP_Server_Information.page.php:118
+#: page/MainWPServerInformation.page.php:118
 #@ mainwp
 msgid "Server Port"
 msgstr "Server Port"
 
-#: page/MainWP_Server_Information.page.php:119
+#: page/MainWPServerInformation.page.php:119
 #@ mainwp
 msgid "Getaway Interface"
 msgstr "Getaway-Schnittstelle"
 
-#: page/MainWP_Server_Information.page.php:120
+#: page/MainWPServerInformation.page.php:120
 #@ mainwp
 msgid "Memory Usage"
 msgstr "Speicher Benutzung"
 
-#: page/MainWP_Server_Information.page.php:121
+#: page/MainWPServerInformation.page.php:121
 #@ mainwp
 msgid "HTTPS"
 msgstr "HTTPS"
 
-#: page/MainWP_Server_Information.page.php:122
+#: page/MainWPServerInformation.page.php:122
 #@ mainwp
 msgid "User Agent"
 msgstr "User Agent"
 
-#: page/MainWP_Server_Information.page.php:123
+#: page/MainWPServerInformation.page.php:123
 #@ mainwp
 msgid "Complete URL"
 msgstr "Komplette URL"
 
-#: page/MainWP_Server_Information.page.php:124
+#: page/MainWPServerInformation.page.php:124
 #@ mainwp
 msgid "Request Method"
 msgstr "Anfrage Methode"
 
-#: page/MainWP_Server_Information.page.php:125
+#: page/MainWPServerInformation.page.php:125
 #@ mainwp
 msgid "Request Time"
 msgstr "Zeitanforderung"
 
-#: page/MainWP_Server_Information.page.php:126
+#: page/MainWPServerInformation.page.php:126
 #@ mainwp
 msgid "Query String"
 msgstr "Abfrage Zeichenkette"
 
-#: page/MainWP_Server_Information.page.php:127
+#: page/MainWPServerInformation.page.php:127
 #@ mainwp
 msgid "Accept Content"
 msgstr "Inhalt akzeptieren"
 
-#: page/MainWP_Server_Information.page.php:128
+#: page/MainWPServerInformation.page.php:128
 #@ mainwp
 msgid "Accept-Charset Content"
 msgstr "Akzeptierter Inhalts-Zeichensatz "
 
-#: page/MainWP_Server_Information.page.php:129
+#: page/MainWPServerInformation.page.php:129
 #@ mainwp
 msgid "Currently Executing Script Pathname"
 msgstr "Aktuell ausgeführter Skript-Pfadname"
 
-#: page/MainWP_Server_Information.page.php:130
+#: page/MainWPServerInformation.page.php:130
 #@ mainwp
 msgid "Server Signature"
 msgstr "Signature Server"
 
-#: page/MainWP_Server_Information.page.php:131
+#: page/MainWPServerInformation.page.php:131
 #@ mainwp
 msgid "Currently Executing Script"
 msgstr "Aktuell ausgeführte Skripts"
 
-#: page/MainWP_Server_Information.page.php:132
+#: page/MainWPServerInformation.page.php:132
 #@ mainwp
 msgid "Path Translated"
 msgstr "Pfad übersetzt"
 
-#: page/MainWP_Server_Information.page.php:133
+#: page/MainWPServerInformation.page.php:133
 #@ mainwp
 msgid "Current Script Path"
 msgstr "Aktueller Skript Pfad"
 
-#: page/MainWP_Server_Information.page.php:134
+#: page/MainWPServerInformation.page.php:134
 #@ mainwp
 msgid "Current Page URI"
 msgstr "Aktuelle URI"
 
-#: page/MainWP_Server_Information.page.php:135
+#: page/MainWPServerInformation.page.php:135
 #@ mainwp
 msgid "Remote Address"
 msgstr "Entfernte Adresse"
 
-#: page/MainWP_Server_Information.page.php:136
+#: page/MainWPServerInformation.page.php:136
 #@ mainwp
 msgid "Remote Host"
 msgstr "Entfernter Host"
 
-#: page/MainWP_Server_Information.page.php:137
+#: page/MainWPServerInformation.page.php:137
 #@ mainwp
 msgid "Remote Port"
 msgstr "Entfernter Port"
 
-#: page/MainWP_Server_Information.page.php:138
+#: page/MainWPServerInformation.page.php:138
 #@ mainwp
 msgid "PHP Safe Mode"
 msgstr "PHP Safe Modus"
 
-#: page/MainWP_Server_Information.page.php:139
+#: page/MainWPServerInformation.page.php:139
 #@ mainwp
 msgid "PHP Allow URL fopen"
 msgstr "PHP erlaubt URL fopen"
 
-#: page/MainWP_Server_Information.page.php:140
+#: page/MainWPServerInformation.page.php:140
 #@ mainwp
 msgid "PHP Exif Support"
 msgstr "PHP Exif-Unterstützung"
 
-#: page/MainWP_Server_Information.page.php:141
+#: page/MainWPServerInformation.page.php:141
 #@ mainwp
 msgid "PHP IPTC Support"
 msgstr "PHP IPTC-Unterstützung"
 
-#: page/MainWP_Server_Information.page.php:142
+#: page/MainWPServerInformation.page.php:142
 #@ mainwp
 msgid "PHP XML Support"
 msgstr "PHP XML-Unterstützung"
 
-#: page/MainWP_Server_Information.page.php:143
+#: page/MainWPServerInformation.page.php:143
 #@ mainwp
 msgid "SQL Mode"
 msgstr "SQL Modus"
 
-#: page/MainWP_Server_Information.page.php:205
+#: page/MainWPServerInformation.page.php:205
 #@ mainwp
 msgid "Loading server information.."
 msgstr "Lädt Server Informationen.."
 
-#: page/MainWP_Server_Information.page.php:250
+#: page/MainWPServerInformation.page.php:250
 #@ mainwp
 msgid "Next due"
 msgstr "Weiter durch"
 
-#: page/MainWP_Server_Information.page.php:252
+#: page/MainWPServerInformation.page.php:252
 #@ mainwp
 msgid "Hook"
 msgstr "Haken"
 
-#: page/MainWP_Server_Information.page.php:395
+#: page/MainWPServerInformation.page.php:395
 #@ default
 msgid " MB"
 msgstr " MB"
 
-#: page/MainWP_Server_Information.page.php:396
-#: page/MainWP_Server_Information.page.php:486
-#: page/MainWP_Server_Information.page.php:521
-#: page/MainWP_Server_Information.page.php:550
+#: page/MainWPServerInformation.page.php:396
+#: page/MainWPServerInformation.page.php:486
+#: page/MainWPServerInformation.page.php:521
+#: page/MainWPServerInformation.page.php:550
 #@ default
 #@ mainwp
 msgid "N/A"
 msgstr "N/A"
 
-#: page/MainWP_Server_Information.page.php:405
-#: page/MainWP_Server_Information.page.php:419
-#: page/MainWP_Server_Information.page.php:508
+#: page/MainWPServerInformation.page.php:405
+#: page/MainWPServerInformation.page.php:419
+#: page/MainWPServerInformation.page.php:508
 #@ default
 #@ mainwp
 msgid "ON"
 msgstr "an"
 
-#: page/MainWP_Server_Information.page.php:406
-#: page/MainWP_Server_Information.page.php:420
-#: page/MainWP_Server_Information.page.php:511
+#: page/MainWPServerInformation.page.php:406
+#: page/MainWPServerInformation.page.php:420
+#: page/MainWPServerInformation.page.php:511
 #@ default
 #@ mainwp
 msgid "OFF"
 msgstr "aus"
 
-#: page/MainWP_Server_Information.page.php:414
+#: page/MainWPServerInformation.page.php:414
 #@ default
 msgid "NOT SET"
 msgstr "Nicht gesetzt"
 
-#: page/MainWP_Server_Information.page.php:425
-#: page/MainWP_Server_Information.page.php:431
-#: page/MainWP_Server_Information.page.php:437
+#: page/MainWPServerInformation.page.php:425
+#: page/MainWPServerInformation.page.php:431
+#: page/MainWPServerInformation.page.php:437
 #@ default
 msgid "YES"
 msgstr "Ja"
 
-#: page/MainWP_Server_Information.page.php:426
-#: page/MainWP_Server_Information.page.php:432
-#: page/MainWP_Server_Information.page.php:438
+#: page/MainWPServerInformation.page.php:426
+#: page/MainWPServerInformation.page.php:432
+#: page/MainWPServerInformation.page.php:438
 #@ default
 msgid "NO"
 msgstr "Nein"
 
-#: page/MainWP_Server_Information.page.php:618
+#: page/MainWPServerInformation.page.php:618
 #@ mainwp
 msgid "Time"
 msgstr "Zeit"
 
-#: page/MainWP_Server_Information.page.php:619
+#: page/MainWPServerInformation.page.php:619
 #@ mainwp
 msgid "Error"
 msgstr "Fehler"
 
-#: page/MainWP_Server_Information.page.php:633
+#: page/MainWPServerInformation.page.php:633
 #@ mainwp
 msgid "Error logging disabled."
 msgstr "Fehlerprotokollierung deaktiviert."
 
-#: page/MainWP_Server_Information.page.php:651
+#: page/MainWPServerInformation.page.php:651
 #@ mainwp
 msgid "No errors found... Yet."
 msgstr "Keine Fehler gefunden...bisher."
 
-#: page/MainWP_Settings.page.php:20
+#: page/MainWPSettings.page.php:20
 #@ mainwp
 msgid "Settings Global options"
 msgstr "Einstellungen Globaler Optionen"
 
-#: page/MainWP_Settings.page.php:20
+#: page/MainWPSettings.page.php:20
 #@ mainwp
 msgid "Settings"
 msgstr "Einstellungen"
 
-#: page/MainWP_Settings.page.php:42
-#: page/MainWP_Settings.page.php:70
-#: widget/MainWP_Options.widget.php:92
+#: page/MainWPSettings.page.php:42
+#: page/MainWPSettings.page.php:70
+#: widget/MainWPOptions.widget.php:92
 #@ mainwp
 msgid "Global Options"
 msgstr "Globale Optionen"
 
-#: page/MainWP_Settings.page.php:68
+#: page/MainWPSettings.page.php:68
 #@ mainwp
 msgid "MainWP Settings"
 msgstr "MainWP Einstellungen"
 
-#: page/MainWP_Settings.page.php:168
+#: page/MainWPSettings.page.php:168
 #@ mainwp
 msgid "Use this to set Global options."
 msgstr "Verwenden Sie diese Globale Optionen."
 
-#: page/MainWP_Settings.page.php:178
+#: page/MainWPSettings.page.php:178
 #@ mainwp
 msgid "Your settings have been saved."
 msgstr "Ihre Einstellungen wurden gespeichert."
 
-#: page/MainWP_Site_Open.page.php:36
-#: page/MainWP_Site_Open.page.php:98
+#: page/MainWPSiteOpen.page.php:36
+#: page/MainWPSiteOpen.page.php:98
 #@ mainwp
 msgid "Will redirect to your website immediately."
 msgstr "Wird sofort auf Ihre Webseite umgeleiten."
 
-#: page/MainWP_Site_Open.page.php:45
+#: page/MainWPSiteOpen.page.php:45
 #@ mainwp
 msgid "Back to Sites"
 msgstr "Zurück zu den Seiten"
 
-#: page/MainWP_Themes.page.php:23
-#: page/MainWP_Themes.page.php:24
-#: page/MainWP_Themes.page.php:25
-#: page/MainWP_Themes.page.php:26
-#: page/MainWP_Themes.page.php:27
-#: page/MainWP_Themes.page.php:75
-#: page/MainWP_Themes.page.php:777
-#: page/MainWP_Themes.page.php:816
-#: page/MainWP_Themes.page.php:887
-#: page/MainWP_Themes.page.php:928
-#: widget/MainWP_Widget_Themes.widget.php:17
+#: page/MainWPThemes.page.php:23
+#: page/MainWPThemes.page.php:24
+#: page/MainWPThemes.page.php:25
+#: page/MainWPThemes.page.php:26
+#: page/MainWPThemes.page.php:27
+#: page/MainWPThemes.page.php:75
+#: page/MainWPThemes.page.php:777
+#: page/MainWPThemes.page.php:816
+#: page/MainWPThemes.page.php:887
+#: page/MainWPThemes.page.php:928
+#: widget/MainWPWidgetThemes.widget.php:17
 #@ mainwp
 msgid "Themes"
 msgstr "Themes"
 
-#: page/MainWP_Themes.page.php:47
-#: page/MainWP_Themes.page.php:1030
+#: page/MainWPThemes.page.php:47
+#: page/MainWPThemes.page.php:1030
 #@ mainwp
 msgid "Manage Themes"
 msgstr "Verwalte Themes"
 
-#: page/MainWP_Themes.page.php:111
+#: page/MainWPThemes.page.php:111
 #@ mainwp
 msgid "Use this to bulk (de)activate or delete themes. To add new themes click on the \"Install\" tab."
 msgstr "Verwenden Sie diese Massenänderung zum (de) aktivieren oder Themes löschen. Neue Themes hinzufügen über den Reiter \"Installieren \"."
 
-#: page/MainWP_Themes.page.php:116
+#: page/MainWPThemes.page.php:116
 #@ mainwp
 msgid "Search Themes"
 msgstr "Suche nach Themes"
 
-#: page/MainWP_Themes.page.php:129
-#: page/MainWP_Themes.page.php:735
+#: page/MainWPThemes.page.php:129
+#: page/MainWPThemes.page.php:735
 #@ mainwp
 msgid "Show Themes"
 msgstr "Themes anzeigen"
 
-#: page/MainWP_Themes.page.php:446
-#: page/MainWP_Themes.page.php:462
+#: page/MainWPThemes.page.php:446
+#: page/MainWPThemes.page.php:462
 #@ mainwp
 msgid "Theme"
 msgstr "Theme"
 
-#: page/MainWP_Themes.page.php:673
+#: page/MainWPThemes.page.php:673
 #@ default
 msgid "Version:"
 msgstr "Version:"
 
-#: page/MainWP_Themes.page.php:677
+#: page/MainWPThemes.page.php:677
 #@ default
 msgid "Author:"
 msgstr "Autor:"
 
-#: page/MainWP_Themes.page.php:680
+#: page/MainWPThemes.page.php:680
 #@ default
 msgid "Last Updated:"
 msgstr "Zuletzt aktualisiert:"
 
-#: page/MainWP_Themes.page.php:681
+#: page/MainWPThemes.page.php:681
 #, php-format
 #@ default
 msgid "%s ago"
 msgstr "%s vor"
 
-#: page/MainWP_Themes.page.php:686
+#: page/MainWPThemes.page.php:686
 #@ default
 msgid "Requires WordPress Version:"
 msgstr "Benötigt WordPress Version:"
 
-#: page/MainWP_Themes.page.php:686
+#: page/MainWPThemes.page.php:686
 #, php-format
 #@ default
 msgid "%s or higher"
 msgstr "%s oder höher"
 
-#: page/MainWP_Themes.page.php:690
+#: page/MainWPThemes.page.php:690
 #@ default
 msgid "Compatible up to:"
 msgstr "Kompatibel bis:"
 
-#: page/MainWP_Themes.page.php:694
+#: page/MainWPThemes.page.php:694
 #@ default
 msgid "Downloaded:"
 msgstr "heruntergeladen:"
 
-#: page/MainWP_Themes.page.php:694
+#: page/MainWPThemes.page.php:694
 #, php-format
 #@ default
 msgid "%s time"
@@ -2326,7 +2326,7 @@ msgid_plural "%s times"
 msgstr[0] "%s Zeit"
 msgstr[1] "%s Zeiten"
 
-#: page/MainWP_Themes.page.php:698
+#: page/MainWPThemes.page.php:698
 #, php-format
 #@ default
 msgid "(based on %s rating)"
@@ -2334,82 +2334,82 @@ msgid_plural "(based on %s ratings)"
 msgstr[0] "(basierend auf der %s Bewertung)"
 msgstr[1] "(basierend auf die %s Bewertungen)"
 
-#: page/MainWP_Themes.page.php:724
+#: page/MainWPThemes.page.php:724
 #@ mainwp
 msgid "Theme Automatic Update Trust List"
 msgstr "Theme in die Automatische Update Vertrauensliste"
 
-#: page/MainWP_Themes.page.php:733
+#: page/MainWPThemes.page.php:733
 #@ mainwp
 msgid "Only mark Themes as Trusted if you are absolutely sure they can be updated"
 msgstr "Nur markierte Themes vertrauen, wenn Sie absolut sicher sind dass sie aktualisiert werden können."
 
-#: page/MainWP_Themes.page.php:772
+#: page/MainWPThemes.page.php:772
 #@ mainwp
 msgid "Ignored Theme Conflict List"
 msgstr "Ignorierte Themes Konfliktliste"
 
-#: page/MainWP_Themes.page.php:804
-#: page/MainWP_Themes.page.php:855
+#: page/MainWPThemes.page.php:804
+#: page/MainWPThemes.page.php:855
 #@ mainwp
 msgid "No ignored theme conflicts"
 msgstr "Kein ignorierte Theme Konflikte "
 
-#: page/MainWP_Themes.page.php:882
-#: widget/MainWP_Right_Now.widget.php:936
+#: page/MainWPThemes.page.php:882
+#: widget/MainWPRightNow.widget.php:936
 #@ mainwp
 msgid "Theme Ignore List"
 msgstr "Ignorierte Themes Liste"
 
-#: page/MainWP_Themes.page.php:916
-#: page/MainWP_Themes.page.php:966
-#: view/MainWP_System_View.view.php:38
+#: page/MainWPThemes.page.php:916
+#: page/MainWPThemes.page.php:966
+#: view/MainWPSystemView.view.php:38
 #@ mainwp
 msgid "No ignored themes"
 msgstr "Keine ignorieten Themes"
 
-#: page/MainWP_User.page.php:22
-#: page/MainWP_User.page.php:23
-#: page/MainWP_User.page.php:73
+#: page/MainWPUser.page.php:22
+#: page/MainWPUser.page.php:23
+#: page/MainWPUser.page.php:73
 #@ mainwp
 msgid "Users"
 msgstr "Benutzer"
 
-#: page/MainWP_User.page.php:43
+#: page/MainWPUser.page.php:43
 #@ mainwp
 msgid "All Users"
 msgstr "Alle Benutzer"
 
-#: page/MainWP_User.page.php:79
-#: page/MainWP_User.page.php:709
-#: view/MainWP_Manage_Sites_View.view.php:302
+#: page/MainWPUser.page.php:79
+#: page/MainWPUser.page.php:709
+#: view/MainWPManageSitesView.view.php:302
 #@ mainwp
 msgid "Bulk Upload"
 msgstr "Massen Hochladen"
 
-#: page/MainWP_User.page.php:109
+#: page/MainWPUser.page.php:109
 #@ mainwp
 msgid "Use this to bulk change password, change role or delete users. To add new users click on the \"Add New\" tab."
 msgstr "Verwenden Sie diese Massänderung um Passwort änderungen, änderung der Rolle oder Benutzer zu löschen. Um neue Benutzer hinzuzufügen klicken Sie auf den Reiter \"Neue \"."
 
-#: page/MainWP_User.page.php:112
-#: page/MainWP_User.page.php:124
+#: page/MainWPUser.page.php:112
+#: page/MainWPUser.page.php:124
 #@ mainwp
 msgid "Update Password"
 msgstr "Update Passwort"
 
-#: page/MainWP_User.page.php:114
+#: page/MainWPUser.page.php:114
 #@ mainwp
 msgid "Twice Required"
 msgstr "Zweimal Erforderlich"
 
-#: page/MainWP_User.page.php:119
-#: page/MainWP_User.page.php:654
+#: page/MainWPUser.page.php:119
+#: page/MainWPUser.page.php:654
 #@ mainwp
 msgid "Strength Indicator"
 msgstr "Stärke Anzeige"
 
-#: page/MainWP_User.page.php:121
+#: page/MainWPUser.page.php:121
 #@ mainwp
 msgid ""
 "Hint: The password should be at least seven\n"
@@ -2420,135 +2420,135 @@ msgstr ""
 " Zeichen lang sein. Um das Passwort stärker zu machen, verwenden Sie Groß-und Kleinbuchstaben,\n"
 " Zahlen und Symbole wie ! \" ? $ % ^ &amp; )."
 
-#: page/MainWP_User.page.php:135
-#: page/MainWP_User.page.php:139
+#: page/MainWPUser.page.php:135
+#: page/MainWPUser.page.php:139
 #@ mainwp
 msgid "Search Users"
 msgstr "Suche Benutzer"
 
-#: page/MainWP_User.page.php:145
-#: page/MainWP_User.page.php:169
+#: page/MainWPUser.page.php:145
+#: page/MainWPUser.page.php:169
 #@ mainwp
 msgid "Show Users"
 msgstr "Benutzer anzeigen"
 
-#: page/MainWP_User.page.php:149
-#: page/MainWP_User.page.php:183
-#: page/MainWP_User.page.php:683
+#: page/MainWPUser.page.php:149
+#: page/MainWPUser.page.php:183
+#: page/MainWPUser.page.php:683
 #@ mainwp
 msgid "Administrator"
 msgstr "Administrator"
 
-#: page/MainWP_User.page.php:153
-#: page/MainWP_User.page.php:184
-#: page/MainWP_User.page.php:689
+#: page/MainWPUser.page.php:153
+#: page/MainWPUser.page.php:184
+#: page/MainWPUser.page.php:689
 #@ mainwp
 msgid "Editor"
 msgstr "Editor"
 
-#: page/MainWP_User.page.php:161
-#: page/MainWP_User.page.php:186
-#: page/MainWP_User.page.php:701
+#: page/MainWPUser.page.php:161
+#: page/MainWPUser.page.php:186
+#: page/MainWPUser.page.php:701
 #@ mainwp
 msgid "Contributor"
 msgstr "Anbieter"
 
-#: page/MainWP_User.page.php:165
-#: page/MainWP_User.page.php:187
-#: page/MainWP_User.page.php:677
+#: page/MainWPUser.page.php:165
+#: page/MainWPUser.page.php:187
+#: page/MainWPUser.page.php:677
 #@ mainwp
 msgid "Subscriber"
 msgstr "Teilnehmer"
 
-#: page/MainWP_User.page.php:182
+#: page/MainWPUser.page.php:182
 #@ mainwp
 msgid "Change Role to ..."
 msgstr "Ändere Rolle zu ..."
 
-#: page/MainWP_User.page.php:188
+#: page/MainWPUser.page.php:188
 #@ mainwp
 msgid "Change"
 msgstr "ändern"
 
-#: page/MainWP_User.page.php:202
-#: page/MainWP_User.page.php:227
-#: page/MainWP_User.page.php:605
-#: view/MainWP_API_Settings_View.view.php:67
-#: view/MainWP_API_Settings_View.view.php:110
+#: page/MainWPUser.page.php:202
+#: page/MainWPUser.page.php:227
+#: page/MainWPUser.page.php:605
+#: view/MainWPAPISettingsView.view.php:67
+#: view/MainWPAPISettingsView.view.php:110
 #@ mainwp
 msgid "Username"
 msgstr "Benutzername"
 
-#: page/MainWP_User.page.php:208
-#: page/MainWP_User.page.php:233
-#: page/MainWP_User.page.php:614
+#: page/MainWPUser.page.php:208
+#: page/MainWPUser.page.php:233
+#: page/MainWPUser.page.php:614
 #@ mainwp
 msgid "E-mail"
 msgstr "E-Mail"
 
-#: page/MainWP_User.page.php:211
-#: page/MainWP_User.page.php:236
-#: page/MainWP_User.page.php:670
+#: page/MainWPUser.page.php:211
+#: page/MainWPUser.page.php:236
+#: page/MainWPUser.page.php:670
 #@ mainwp
 msgid "Role"
 msgstr "Rolle"
 
-#: page/MainWP_User.page.php:264
+#: page/MainWPUser.page.php:264
 #@ mainwp
 msgid "Users per page"
 msgstr "Benutzer pro Seite"
 
-#: page/MainWP_User.page.php:481
-#: page/MainWP_User.page.php:553
+#: page/MainWPUser.page.php:481
+#: page/MainWPUser.page.php:553
 #@ mainwp
 #@ default
 msgid "This user is used for our secure link, it can not be deleted."
 msgstr "Dieser Benutzer wird von uns als sichere Verbindung verwendet  und kann deswegen nicht gelöscht werden."
 
-#: page/MainWP_User.page.php:554
+#: page/MainWPUser.page.php:554
 #@ default
 msgid "This user is used for our secure link, you can not change the role."
 msgstr "Dieser Benutzer wird für unsere sichere Verbindung verwendet, SIe können die Rolle nicht ändern."
 
-#: page/MainWP_User.page.php:590
+#: page/MainWPUser.page.php:590
 #@ mainwp
 msgid "Adding the user"
 msgstr "Hinzufügen der Benutzer"
 
-#: page/MainWP_User.page.php:594
+#: page/MainWPUser.page.php:594
 #@ mainwp
 msgid "Create a brand new user and add it to your sites."
 msgstr "Erstellen Sie einen neue Benutzer-Marke, um sie Ihren Seiten hinzuzufügen."
 
-#: page/MainWP_User.page.php:602
+#: page/MainWPUser.page.php:602
 #@ mainwp
 msgid "Add a Single User"
 msgstr "Einen Benutzer hinzufügen"
 
-#: page/MainWP_User.page.php:605
-#: page/MainWP_User.page.php:615
+#: page/MainWPUser.page.php:605
+#: page/MainWPUser.page.php:615
 #@ mainwp
 msgid "(required)"
 msgstr "(erforderlich)"
 
-#: page/MainWP_User.page.php:623
+#: page/MainWPUser.page.php:623
 #@ mainwp
 msgid "First Name"
 msgstr "Vorname"
 
-#: page/MainWP_User.page.php:631
+#: page/MainWPUser.page.php:631
 #@ mainwp
 msgid "Last Name"
 msgstr "Nachname"
 
-#: page/MainWP_User.page.php:647
-#: view/MainWP_API_Settings_View.view.php:74
-#: view/MainWP_API_Settings_View.view.php:117
+#: page/MainWPUser.page.php:647
+#: view/MainWPAPISettingsView.view.php:74
+#: view/MainWPAPISettingsView.view.php:117
 #@ mainwp
 msgid "Password"
 msgstr "Passwort"
 
-#: page/MainWP_User.page.php:655
+#: page/MainWPUser.page.php:655
 #@ mainwp
 msgid ""
 "Hint: The password should be at least seven\n"
@@ -2559,45 +2559,45 @@ msgstr ""
 " Zeichen lang sein. Um Ihr Passwort stärker zu machen, verwenden Sie Groß-und Kleinbuchstaben,\n"
 " Zahlen und Symbole wie ! \" ? $ % ^ &amp; )."
 
-#: page/MainWP_User.page.php:661
+#: page/MainWPUser.page.php:661
 #@ mainwp
 msgid "Send Password?"
 msgstr "Passwort senden?"
 
-#: page/MainWP_User.page.php:667
+#: page/MainWPUser.page.php:667
 #@ mainwp
 msgid "Send this password to the new user by email."
 msgstr "Senden Sie dieses Kennwort für den neuen Benutzer per E-Mail."
 
-#: page/MainWP_User.page.php:718
-#: view/MainWP_Manage_Sites_View.view.php:311
+#: page/MainWPUser.page.php:718
+#: view/MainWPManageSitesView.view.php:311
 #@ mainwp
 msgid "File must be in CSV format."
 msgstr "Die Datei muss im CSV-Format vorliegen."
 
-#: page/MainWP_User.page.php:718
+#: page/MainWPUser.page.php:718
 #@ mainwp
 msgid "Click here to download sample CSV file."
 msgstr "Klicken Sie hier, um die Beispiel CSV-Datei herunter zuladen."
 
-#: page/MainWP_User.page.php:723
-#: view/MainWP_Manage_Sites_View.view.php:319
+#: page/MainWPUser.page.php:723
+#: view/MainWPManageSitesView.view.php:319
 #@ mainwp
 msgid "Upload file"
 msgstr "Datei hochladen"
 
-#: page/MainWP_User.page.php:728
-#: view/MainWP_Manage_Sites_View.view.php:326
+#: page/MainWPUser.page.php:728
+#: view/MainWPManageSitesView.view.php:326
 #@ mainwp
 msgid "CSV file contains a header."
 msgstr "CSV-Datei enthält einen Header."
 
-#: page/MainWP_User.page.php:739
+#: page/MainWPUser.page.php:739
 #@ mainwp
 msgid "Add New User"
 msgstr "Neuen Benutzer hinzufügen"
 
-#: page/MainWP_User.page.php:843
+#: page/MainWPUser.page.php:843
 #@ mainwp
 msgid ""
 "Return to\n"
@@ -2606,174 +2606,174 @@ msgstr ""
 "Zurück zum\n"
 " Dashboard"
 
-#: page/MainWP_User.page.php:855
+#: page/MainWPUser.page.php:855
 #@ mainwp
 msgid "Importing users"
 msgstr "Benutzer importieren"
 
-#: page/MainWP_User.page.php:886
+#: page/MainWPUser.page.php:886
 #@ mainwp
 msgid "Importing new users and add them to your sites."
 msgstr "Importieren von neuen Benutzern und fügen Sie sie auf Ihre Seiten ein."
 
-#: page/MainWP_User.page.php:896
-#: table/MainWP_Manage_Backups.table.php:80
-#: view/MainWP_Manage_Sites_View.view.php:182
-#: view/MainWP_System_View.view.php:90
-#: view/MainWP_System_View.view.php:141
+#: page/MainWPUser.page.php:896
+#: table/MainWPManageBackups.table.php:80
+#: view/MainWPManageSitesView.view.php:182
+#: view/MainWPSystemView.view.php:90
+#: view/MainWPSystemView.view.php:141
 #@ mainwp
 msgid "Pause"
 msgstr "Pause"
 
-#: page/MainWP_User.page.php:899
-#: view/MainWP_Manage_Sites_View.view.php:185
+#: page/MainWPUser.page.php:899
+#: view/MainWPManageSitesView.view.php:185
 #@ mainwp
 msgid "Save failed"
 msgstr "Speichern gescheitert"
 
-#: page/MainWP_User.page.php:911
+#: page/MainWPUser.page.php:911
 #@ mainwp
 msgid "Data is not valid. <br />"
 msgstr "Die Daten sind nicht gültig. <br />"
 
-#: page/MainWP_User.page.php:916
-#: page/MainWP_User.page.php:921
+#: page/MainWPUser.page.php:916
+#: page/MainWPUser.page.php:921
 #@ mainwp
 msgid "Upload error. <br />"
 msgstr "Fehler beim Hochladen.<br />"
 
-#: page/MainWP_User.page.php:1001
+#: page/MainWPUser.page.php:1001
 #@ mainwp
 msgid "Error - These are not websites in the group. "
 msgstr "Fehler - Das sind keine Webseiten in der Gruppe."
 
-#: page/MainWP_User.page.php:1006
+#: page/MainWPUser.page.php:1006
 #@ mainwp
 msgid "Error - The group doesn't exist in the Network. "
 msgstr "Fehler - Die Gruppe existieren nicht im Netzwerk."
 
-#: table/MainWP_Manage_Backups.table.php:13
+#: table/MainWPManageBackups.table.php:13
 #@ mainwp
 msgid "backup task"
 msgstr "Sicherungskopie Aufgabe"
 
-#: table/MainWP_Manage_Backups.table.php:14
+#: table/MainWPManageBackups.table.php:14
 #@ mainwp
 msgid "backup tasks"
 msgstr "Sicherungskopie Ausgaben"
 
-#: table/MainWP_Manage_Backups.table.php:22
+#: table/MainWPManageBackups.table.php:22
 #@ default
 msgid "No backup tasks found."
 msgstr "Keine Backup-Aufgaben gefunden."
 
-#: table/MainWP_Manage_Backups.table.php:75
-#: view/MainWP_System_View.view.php:142
+#: table/MainWPManageBackups.table.php:75
+#: view/MainWPSystemView.view.php:142
 #@ mainwp
 msgid "Resume"
 msgstr "Zusammenfassung"
 
-#: table/MainWP_Manage_Sites.table.php:16
+#: table/MainWPManageSites.table.php:16
 #@ mainwp
 msgid "site"
 msgstr "Seite"
 
-#: table/MainWP_Manage_Sites.table.php:17
+#: table/MainWPManageSites.table.php:17
 #@ mainwp
 msgid "sites"
 msgstr "Seiten"
 
-#: table/MainWP_Manage_Sites.table.php:40
+#: table/MainWPManageSites.table.php:40
 #@ default
 msgid "No sites found."
 msgstr "Seite nicht gefunden."
 
-#: table/MainWP_Manage_Sites.table.php:81
+#: table/MainWPManageSites.table.php:81
 #@ mainwp
 msgid "Backup"
 msgstr "Sicherung"
 
-#: table/MainWP_Manage_Sites.table.php:82
+#: table/MainWPManageSites.table.php:82
 #@ mainwp
 msgid "Last Sync"
 msgstr "Letzter Sync"
 
-#: table/MainWP_Manage_Sites.table.php:83
+#: table/MainWPManageSites.table.php:83
 #@ mainwp
 msgid "Last Post"
 msgstr "Letzter Beitrag"
 
-#: table/MainWP_Manage_Sites.table.php:84
-#: table/MainWP_Manage_Sites.table.php:225
-#: widget/MainWP_SEO.widget.php:10
+#: table/MainWPManageSites.table.php:84
+#: table/MainWPManageSites.table.php:225
+#: widget/MainWPSEO.widget.php:10
 #@ mainwp
 msgid "SEO"
 msgstr "SEO"
 
-#: table/MainWP_Manage_Sites.table.php:161
-#: widget/MainWP_Right_Now.widget.php:962
-#: widget/MainWP_Right_Now.widget.php:1067
+#: table/MainWPManageSites.table.php:161
+#: widget/MainWPRightNow.widget.php:962
+#: widget/MainWPRightNow.widget.php:1067
 #@ mainwp
 msgid "Reconnect"
 msgstr "Erneut verbinden"
 
-#: table/MainWP_Manage_Sites.table.php:170
+#: table/MainWPManageSites.table.php:170
 #@ mainwp
 msgid "Open WP Admin"
 msgstr "Starte WP Admin"
 
-#: table/MainWP_Manage_Sites.table.php:170
+#: table/MainWPManageSites.table.php:170
 #@ mainwp
 msgid "New Window"
 msgstr "Neues Fenster"
 
-#: table/MainWP_Manage_Sites.table.php:171
-#: view/MainWP_Manage_Sites_View.view.php:18
-#: view/MainWP_Manage_Sites_View.view.php:61
-#: view/MainWP_Manage_Sites_View.view.php:122
+#: table/MainWPManageSites.table.php:171
+#: view/MainWPManageSitesView.view.php:18
+#: view/MainWPManageSitesView.view.php:61
+#: view/MainWPManageSitesView.view.php:122
 #@ mainwp
 msgid "Test Connection"
 msgstr "Verbindung testen"
 
-#: table/MainWP_Manage_Sites.table.php:171
+#: table/MainWPManageSites.table.php:171
 #@ mainwp
 msgid "Testing Connection"
 msgstr "Verbindung prüfen"
 
-#: table/MainWP_Manage_Sites.table.php:395
+#: table/MainWPManageSites.table.php:395
 #@ default
 msgid "Search Sites"
 msgstr "Suche Seite"
 
-#: table/MainWP_Manage_Sites.table.php:421
+#: table/MainWPManageSites.table.php:421
 #@ default
 msgid "Display"
 msgstr "Anzeige"
 
-#: view/MainWP_API_Settings_View.view.php:11
+#: view/MainWPAPISettingsView.view.php:11
 #@ mainwp
 msgid "Maximum number of main installations on your MainWP plan have been reached. <a href=\"https://mainwp.com/member/login/index\" target=\"_blank\">Upgrade your plan for more sites</a>"
 msgstr "Maximale Anzahl der Haupt-Installationen auf Ihrem MainWP Plan wurde erreicht.  <a href=\"https://mainwp.com/member/login/index\" target=\"_blank\">Aktualisieren Sie Ihren Plan für mehr Seiten</a>"
 
-#: view/MainWP_API_Settings_View.view.php:26
+#: view/MainWPAPISettingsView.view.php:26
 #@ mainwp
 msgid "MainWP Login Settings"
 msgstr "MainWP Login-Einstellungen"
 
-#: view/MainWP_API_Settings_View.view.php:31
-#: view/MainWP_API_Settings_View.view.php:98
+#: view/MainWPAPISettingsView.view.php:31
+#: view/MainWPAPISettingsView.view.php:98
 #@ mainwp
 msgid "Stop, before installing!"
 msgstr "Halt, bevor Sie installieren!"
 
-#: view/MainWP_API_Settings_View.view.php:33
-#: view/MainWP_API_Settings_View.view.php:100
+#: view/MainWPAPISettingsView.view.php:33
+#: view/MainWPAPISettingsView.view.php:100
 #@ mainwp
 msgid "We HIGHLY recommend a NEW WordPress install for your Main Dashboard."
 msgstr "Wir empfehlen eine NEUE Wordpress-Installation für die Main-Dashboards."
 
-#: view/MainWP_API_Settings_View.view.php:35
-#: view/MainWP_API_Settings_View.view.php:102
+#: view/MainWPAPISettingsView.view.php:35
+#: view/MainWPAPISettingsView.view.php:102
 #@ mainwp
 msgid ""
 "Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard off an active site. Most hosting companies provide free subdomains (\"<strong>demo.yourdomain.com</strong>\") and we recommend creating one if you do not have a specific dedicated domain to run your Network Main Dashboard.<br/><br/>\n"
@@ -2784,53 +2784,53 @@ msgstr ""
 "\n"
 " Wenn Sie nicht sicher sind, wie Sie eine Subdomain einzurichten haben, ist hier eine schnelle Schritt für Schritt  für <a href=\"http://docs.mainwp.com/creating-a-subdomain-in-cpanel/\">cPanel</a>, <a href=\"http://docs.mainwp.com/creating-a-subdomain-in-plesk/\">Plesk</a> or <a href=\"http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/\">Direct Admin</a>. Wenn Sie nicht sicher sind, was Sie haben, kontaktieren Sie Ihren Hosting-Unternehmen zu unterstützen."
 
-#: view/MainWP_API_Settings_View.view.php:39
+#: view/MainWPAPISettingsView.view.php:39
 #@ mainwp
 msgid "Initial MainWP Settings"
 msgstr "Überprüfung MainWP EInstellungen"
 
-#: view/MainWP_API_Settings_View.view.php:43
-#: widget/MainWP_Options.widget.php:70
+#: view/MainWPAPISettingsView.view.php:43
+#: widget/MainWPOptions.widget.php:70
 #@ mainwp
 msgid "Hide Network on Child Sites"
 msgstr "verborgenes Netzwerk von Client Seiten"
 
-#: view/MainWP_API_Settings_View.view.php:52
-#: widget/MainWP_Options.widget.php:81
+#: view/MainWPAPISettingsView.view.php:52
+#: widget/MainWPOptions.widget.php:81
 #@ mainwp
 msgid "This will make anyone including Search Engines trying find your Child Plugin encounter a 404 page. Hiding the Child Plugin does require the plugin to make changes to your .htaccess file that in rare instances or server configurations could cause problems."
 msgstr "This will make anyone including Search Engines trying find your Child Plugin encounter a 404 page. Ausblenden des Client-Plugin benötigt neben dem Plugin, eine Änderungen an der. htaccess-Datei, dass in seltenen Fällen zu Server-Konfigurationen Problemen führen kann."
 
-#: view/MainWP_API_Settings_View.view.php:54
+#: view/MainWPAPISettingsView.view.php:54
 #@ mainwp
 msgid "We recommend you have this option checked. You can change these settings any time on the settings page."
 msgstr "Wir empfehlen, diese Option aktiviert zu haben. Diese Einstellungen können Sie jederzeit auf der Seite Einstellungen ändern."
 
-#: view/MainWP_API_Settings_View.view.php:63
+#: view/MainWPAPISettingsView.view.php:63
 #@ mainwp
 msgid "MainWP login"
 msgstr "MainWP Login"
 
-#: view/MainWP_API_Settings_View.view.php:83
-#: view/MainWP_API_Settings_View.view.php:125
+#: view/MainWPAPISettingsView.view.php:83
+#: view/MainWPAPISettingsView.view.php:125
 #@ mainwp
 msgid "Test Login"
 msgstr "Test Login"
 
-#: view/MainWP_Extensions_View.view.php:6
-#: view/MainWP_Extensions_View.view.php:18
-#: widget/MainWP_Extensions.widget.php:13
-#: widget/MainWP_Help.widget.php:26
+#: view/MainWPExtensionsView.view.php:6
+#: view/MainWPExtensionsView.view.php:18
+#: widget/MainWPExtensions.widget.php:13
+#: widget/MainWPHelp.widget.php:26
 #@ mainwp
 msgid "Extensions"
 msgstr "Erweiterungen"
 
-#: view/MainWP_Extensions_View.view.php:20
+#: view/MainWPExtensionsView.view.php:20
 #@ mainwp
 msgid "Manage Extensions"
 msgstr "Erweiterungen verwalten"
 
-#: view/MainWP_Extensions_View.view.php:55
+#: view/MainWPExtensionsView.view.php:55
 #, php-format
 #@ mainwp
 msgid "%d Installed MainWP Extension"
@@ -2838,116 +2838,116 @@ msgid_plural "%d Installed MainWP Extensions"
 msgstr[0] "%d Installierte MainWP Erweiterung"
 msgstr[1] "%d Installierte MainWP Erweiterungen"
 
-#: view/MainWP_Extensions_View.view.php:56
+#: view/MainWPExtensionsView.view.php:56
 #@ mainwp
 msgid "Get more extensions"
 msgstr "Weitere Erweiterungen"
 
-#: view/MainWP_Extensions_View.view.php:64
-#: widget/MainWP_Extensions.widget.php:26
+#: view/MainWPExtensionsView.view.php:64
+#: widget/MainWPExtensions.widget.php:26
 #@ mainwp
 msgid "What are Extensions?"
 msgstr "Was sind Erweiterungen?"
 
-#: view/MainWP_Extensions_View.view.php:65
+#: view/MainWPExtensionsView.view.php:65
 #@ mainwp
 msgid "Extensions are specific features or tools created for the purpose of expanding the basic functionality of MainWP."
 msgstr "Erweiterungen sind spezielle Funktionen oder Werkzeuge die die Grundfunktionalität von MainWP erweitern."
 
-#: view/MainWP_Extensions_View.view.php:66
-#: widget/MainWP_Extensions.widget.php:28
+#: view/MainWPExtensionsView.view.php:66
+#: widget/MainWPExtensions.widget.php:28
 #@ mainwp
 msgid "Why have Extensions?"
 msgstr "Warum gibt es Erweiterungen?"
 
-#: view/MainWP_Extensions_View.view.php:67
+#: view/MainWPExtensionsView.view.php:67
 #@ mainwp
 msgid "The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat.  Extensions offer custom functions and features so that each user can tailor their MainWP to their specific needs."
 msgstr "Der Kern der MainWP wurde entwickelt, um die Funktionen am meisten benötigt werden vom Nutzer auf einer Oberfläche zu vereinen und Code zu minimieren. Erweiterungen bieten kundenspezifische Funktionen und Features, so dass jeder Benutzer seine MainWP-Umgebung auf seine spezifischen Bedürfnisse anpassen kann."
 
-#: view/MainWP_Extensions_View.view.php:68
+#: view/MainWPExtensionsView.view.php:68
 #@ mainwp
 msgid "Download your first extension now."
 msgstr "Laden Sie Ihre erste Erweiterung jetzt."
 
-#: view/MainWP_Extensions_View.view.php:75
+#: view/MainWPExtensionsView.view.php:75
 #@ mainwp
 msgid "Expand"
 msgstr "erweitern"
 
-#: view/MainWP_Extensions_View.view.php:75
+#: view/MainWPExtensionsView.view.php:75
 #@ mainwp
 msgid "Collapse"
 msgstr "zusammenklappen"
 
-#: view/MainWP_Extensions_View.view.php:76
+#: view/MainWPExtensionsView.view.php:76
 #@ mainwp
 msgid "Disable All"
 msgstr "Alles deaktivieren"
 
-#: view/MainWP_Extensions_View.view.php:76
+#: view/MainWPExtensionsView.view.php:76
 #@ mainwp
 msgid "Enable All"
 msgstr "Alles aktivieren"
 
-#: view/MainWP_Extensions_View.view.php:107
-#: widget/MainWP_Extensions.widget.php:77
-#: widget/MainWP_Extensions.widget.php:113
+#: view/MainWPExtensionsView.view.php:107
+#: widget/MainWPExtensions.widget.php:77
+#: widget/MainWPExtensions.widget.php:113
 #@ mainwp
 msgid "Disable"
 msgstr "Deaktivieren"
 
-#: view/MainWP_Extensions_View.view.php:141
-#: widget/MainWP_Extensions.widget.php:102
-#: widget/MainWP_Extensions.widget.php:138
+#: view/MainWPExtensionsView.view.php:141
+#: widget/MainWPExtensions.widget.php:102
+#: widget/MainWPExtensions.widget.php:138
 #@ mainwp
 msgid "Enable"
 msgstr "Aktivieren"
 
-#: view/MainWP_Manage_Sites_View.view.php:6
-#: view/MainWP_Manage_Sites_View.view.php:48
-#: widget/MainWP_Help.widget.php:26
+#: view/MainWPManageSitesView.view.php:6
+#: view/MainWPManageSitesView.view.php:48
+#: widget/MainWPHelp.widget.php:26
 #@ mainwp
 msgid "Sites"
 msgstr "WP-Seiten"
 
-#: view/MainWP_Manage_Sites_View.view.php:16
+#: view/MainWPManageSitesView.view.php:16
 #@ mainwp
 msgid "All Sites"
 msgstr "Alle Seiten"
 
-#: view/MainWP_Manage_Sites_View.view.php:52
+#: view/MainWPManageSitesView.view.php:52
 #@ mainwp
 msgid "Bulk upload"
 msgstr "Massen Hochladen"
 
-#: view/MainWP_Manage_Sites_View.view.php:96
+#: view/MainWPManageSitesView.view.php:96
 #@ mainwp
 msgid "Please only use the domain URL, do not add /wp-admin."
 msgstr "Bitte verwenden Sie nur die Domain-URL, fügen Sie nicht / wp-admin mit an."
 
-#: view/MainWP_Manage_Sites_View.view.php:97
+#: view/MainWPManageSitesView.view.php:97
 #@ mainwp
 msgid "Test a Site Connection"
 msgstr "Testen Sie eine Seiten-Verbindung"
 
-#: view/MainWP_Manage_Sites_View.view.php:102
-#: view/MainWP_Manage_Sites_View.view.php:260
+#: view/MainWPManageSitesView.view.php:102
+#: view/MainWPManageSitesView.view.php:260
 #@ mainwp
 msgid "Site URL:"
 msgstr "Seiten URL:"
 
-#: view/MainWP_Manage_Sites_View.view.php:131
+#: view/MainWPManageSitesView.view.php:131
 #@ mainwp
 msgid "Importing sites"
 msgstr "Importieren von Seiten"
 
-#: view/MainWP_Manage_Sites_View.view.php:171
+#: view/MainWPManageSitesView.view.php:171
 #@ mainwp
 msgid "Importing new sites."
 msgstr "Importieren von neuen Seiten."
 
-#: view/MainWP_Manage_Sites_View.view.php:221
+#: view/MainWPManageSitesView.view.php:221
 #@ mainwp
 msgid ""
 "Add\n"
@@ -2956,7 +2956,7 @@ msgstr ""
 "Neu\n"
 " hinzufgügen"
 
-#: view/MainWP_Manage_Sites_View.view.php:223
+#: view/MainWPManageSitesView.view.php:223
 #@ mainwp
 msgid ""
 "Return\n"
@@ -2965,35 +2965,35 @@ msgstr ""
 "Zurück\n"
 " zum Dashboard"
 
-#: view/MainWP_Manage_Sites_View.view.php:235
+#: view/MainWPManageSitesView.view.php:235
 #@ mainwp
 msgid "Add a Single Site"
 msgstr "Hinzufügen einer Seite"
 
-#: view/MainWP_Manage_Sites_View.view.php:254
+#: view/MainWPManageSitesView.view.php:254
 #@ mainwp
 msgid "Site Name:"
 msgstr "Seitenname:"
 
-#: view/MainWP_Manage_Sites_View.view.php:266
+#: view/MainWPManageSitesView.view.php:266
 #@ mainwp
 msgid "Administrator Username:"
 msgstr "Administrator Benutzername:"
 
-#: view/MainWP_Manage_Sites_View.view.php:271
+#: view/MainWPManageSitesView.view.php:271
 #@ mainwp
 msgid ""
 "Child Unique Security\n"
 "                       ID: "
 msgstr "Einzigartige Client-Sicherheit IDs:\n"
 
-#: view/MainWP_Manage_Sites_View.view.php:296
-#: view/MainWP_Manage_Sites_View.view.php:806
+#: view/MainWPManageSitesView.view.php:296
+#: view/MainWPManageSitesView.view.php:806
 #@ mainwp
 msgid "Or assign existing groups."
 msgstr "Oder bestehenden Gruppen zuordnen."
 
-#: view/MainWP_Manage_Sites_View.view.php:312
+#: view/MainWPManageSitesView.view.php:312
 #@ mainwp
 msgid ""
 "Click\n"
@@ -3002,1653 +3002,1653 @@ msgstr ""
 "Klicken Sie hier\n"
 " um die Beispiel CSV-Datei herunterzuladen."
 
-#: view/MainWP_Manage_Sites_View.view.php:358
-#: view/MainWP_Manage_Sites_View.view.php:365
+#: view/MainWPManageSitesView.view.php:358
+#: view/MainWPManageSitesView.view.php:365
 #@ mainwp
 msgid "SEO Details"
 msgstr "SEO-Details"
 
-#: view/MainWP_Manage_Sites_View.view.php:359
+#: view/MainWPManageSitesView.view.php:359
 #@ mainwp
 msgid "Not updated yet."
 msgstr "Noch nicht aktualisiert."
 
-#: view/MainWP_Manage_Sites_View.view.php:449
+#: view/MainWPManageSitesView.view.php:449
 #@ mainwp
 msgid "No full backup has been taken yet"
 msgstr "Es wurde noch kein Voll-Backup erstellt"
 
-#: view/MainWP_Manage_Sites_View.view.php:450
+#: view/MainWPManageSitesView.view.php:450
 #@ mainwp
 msgid "Last backups from your files:"
 msgstr "Letzte Sicherungen Ihrer Dateien:"
 
-#: view/MainWP_Manage_Sites_View.view.php:459
+#: view/MainWPManageSitesView.view.php:459
 #@ mainwp
 msgid "No database only backup has been taken yet"
 msgstr "Keine Datenbank nur Backup "
 
-#: view/MainWP_Manage_Sites_View.view.php:460
+#: view/MainWPManageSitesView.view.php:460
 #@ mainwp
 msgid "Last backups from your database:"
 msgstr "Letzte Datensicherung von der Datenbank:"
 
-#: view/MainWP_Manage_Sites_View.view.php:482
+#: view/MainWPManageSitesView.view.php:482
 #@ mainwp
 msgid "The number of backups to keep on your server.  This does not affect external sources."
 msgstr "Die Anzahl der Backups die auf dem Server bleiben. Dies hat keinen Einfluss auf externen Quellen."
 
-#: view/MainWP_Manage_Sites_View.view.php:486
+#: view/MainWPManageSitesView.view.php:486
 #@ mainwp
 msgid "Backups on external sources"
 msgstr "Datensicheurng auf externen Quellen"
 
-#: view/MainWP_Manage_Sites_View.view.php:489
+#: view/MainWPManageSitesView.view.php:489
 #@ mainwp
 msgid "The number of backups to keep on your external sources.  This does not affect backups on the server.  0 sets unlimited."
 msgstr "Die Anzahl der Datensicherungen auf externen Quellen. Dies hat keine Auswirkungen auf die Datensicherung auf dem Server. 0 setzt unbegrenzt."
 
-#: view/MainWP_Manage_Sites_View.view.php:501
+#: view/MainWPManageSitesView.view.php:501
 #@ mainwp
 msgid "Send Email when a backup fails"
 msgstr "E-Mail senden, wenn ein Datensicherung fehlschlägt"
 
-#: view/MainWP_Manage_Sites_View.view.php:510
+#: view/MainWPManageSitesView.view.php:510
 #@ mainwp
 msgid "Send Email when a backup starts"
 msgstr "E-Mail senden, wenn eine Datensicherung startet"
 
-#: view/MainWP_Manage_Sites_View.view.php:519
+#: view/MainWPManageSitesView.view.php:519
 #@ mainwp
 msgid "Execute backuptasks in chunks"
 msgstr "Führen Sie Datensicherungssufgaben in Blöcken aus"
 
-#: view/MainWP_Manage_Sites_View.view.php:625
+#: view/MainWPManageSitesView.view.php:625
 #@ mainwp
 msgid "A full backup might fail because the total file size of this website is"
 msgstr "Eine Gesamte Datensicherung schlägt fehl, weil die Gesamtgröße der Datei von dieser Webseite"
 
-#: view/MainWP_Manage_Sites_View.view.php:625
+#: view/MainWPManageSitesView.view.php:625
 #@ mainwp
 msgid "MB, you could exclude folders to decrease the filesize."
 msgstr "MB, Sie können Ordner ausschließen, um die Dateigröße zu verringern."
 
-#: view/MainWP_Manage_Sites_View.view.php:633
+#: view/MainWPManageSitesView.view.php:633
 #@ mainwp
 msgid "Backup Details"
 msgstr "Details Datensicherung"
 
-#: view/MainWP_Manage_Sites_View.view.php:644
+#: view/MainWPManageSitesView.view.php:644
 #@ mainwp
 msgid "Backup Options"
 msgstr "Einstellung Datensicherung"
 
-#: view/MainWP_Manage_Sites_View.view.php:650
+#: view/MainWPManageSitesView.view.php:650
 #@ mainwp
 msgid "Allowed Structure Tags:"
 msgstr "Struktur erlaubt Schlagwörter:"
 
-#: page/MainWP_Manage_Backups.page.php:340
-#: view/MainWP_Manage_Sites_View.view.php:687
+#: page/MainWPManageBackups.page.php:340
+#: view/MainWPManageSitesView.view.php:687
 #@ mainwp
 msgid "Store Backup In:"
 msgstr "Datensicherung in:"
 
-#: view/MainWP_Manage_Sites_View.view.php:758
+#: view/MainWPManageSitesView.view.php:758
 #@ mainwp
 msgid "Website updated."
 msgstr "Webseite aktualisiert."
 
-#: view/MainWP_Manage_Sites_View.view.php:764
+#: view/MainWPManageSitesView.view.php:764
 #@ mainwp
 msgid "General Options"
 msgstr "Allgemeine Einstellungen"
 
-#: view/MainWP_Manage_Sites_View.view.php:773
+#: view/MainWPManageSitesView.view.php:773
 #@ mainwp
 msgid "Site URL"
 msgstr "Seiten URL"
 
-#: view/MainWP_Manage_Sites_View.view.php:776
+#: view/MainWPManageSitesView.view.php:776
 #@ mainwp
 msgid "Site URL cannot be changed."
 msgstr "Seite URL kann nicht geändert werden."
 
-#: view/MainWP_Manage_Sites_View.view.php:779
+#: view/MainWPManageSitesView.view.php:779
 #@ mainwp
 msgid "Administrator Username"
 msgstr "Adminstrator Benutzername"
 
-#: view/MainWP_Manage_Sites_View.view.php:791
+#: view/MainWPManageSitesView.view.php:791
 #@ mainwp
 msgid "Separate groups by commas (e.g. Group 1, Group 2)."
 msgstr "Getrennte Gruppen durch Kommas (zB Gruppe 1, Gruppe 2)."
 
-#: view/MainWP_Manage_Sites_View.view.php:833
+#: view/MainWPManageSitesView.view.php:833
 #@ mainwp
 msgid "Client Plugin Folder Option"
 msgstr "Client-Plugin-Ordner Einstellung"
 
-#: view/MainWP_Manage_Sites_View.view.php:860
-#: widget/MainWP_Options.widget.php:169
+#: view/MainWPManageSitesView.view.php:860
+#: widget/MainWPOptions.widget.php:169
 #@ mainwp
 msgid "Require backup before upgrade"
 msgstr "Erfordert eine Datensicherung vor dem Upgrade"
 
-#: view/MainWP_Manage_Sites_View.view.php:860
+#: view/MainWPManageSitesView.view.php:860
 #@ mainwp
 msgid "Backup only works when enabled in the global settings as well."
 msgstr "Datensicherung funktioniert nur, wenn dies in den globalen Einstellungen aktiviert ist."
 
-#: view/MainWP_Manage_Sites_View.view.php:879
+#: view/MainWPManageSitesView.view.php:879
 #@ mainwp
 msgid "Backup Settings"
 msgstr "Datensicherungs-Einstellungen"
 
-#: view/MainWP_Manage_Sites_View.view.php:890
+#: view/MainWPManageSitesView.view.php:890
 #@ mainwp
 msgid "Update Site"
 msgstr "Update Seiten"
 
-#: view/MainWP_Manage_Sites_View.view.php:939
-#: view/MainWP_System_View.view.php:28
+#: view/MainWPManageSitesView.view.php:939
+#: view/MainWPSystemView.view.php:28
 #@ mainwp
 msgid "Undefined error"
 msgstr "Undefinierter Fehler"
 
-#: view/MainWP_Manage_Sites_View.view.php:961
+#: view/MainWPManageSitesView.view.php:961
 #@ mainwp
 msgid "Not allowed this operation."
 msgstr "Operation nicht erlaubt."
 
-#: view/MainWP_Manage_Sites_View.view.php:974
+#: view/MainWPManageSitesView.view.php:974
 #@ mainwp
 msgid "Your site is already added to MainWP"
 msgstr "Ihre Webseite ist bereits zu MainWP hinzugefügt"
 
-#: view/MainWP_Manage_Sites_View.view.php:1095
+#: view/MainWPManageSitesView.view.php:1095
 #@ mainwp
 msgid "Sites per page"
 msgstr "Seiten pro Seite"
 
-#: view/MainWP_System_View.view.php:17
+#: view/MainWPSystemView.view.php:17
 #@ mainwp
 msgid "Update settings."
 msgstr "Update-Einstellungen."
 
-#: view/MainWP_System_View.view.php:18
+#: view/MainWPSystemView.view.php:18
 #@ mainwp
 msgid "Settings have been updated."
 msgstr "Einstellungen wurden aktualisiert."
 
-#: view/MainWP_System_View.view.php:19
+#: view/MainWPSystemView.view.php:19
 #@ mainwp
 msgid "An error occured."
 msgstr "Ein Fehler ist aufgetreten."
 
-#: view/MainWP_System_View.view.php:20
+#: view/MainWPSystemView.view.php:20
 #@ mainwp
 msgid "Testing login."
 msgstr "Login-Testing."
 
-#: view/MainWP_System_View.view.php:21
+#: view/MainWPSystemView.view.php:21
 #@ mainwp
 msgid "Your login is valid."
 msgstr "Ihre Anmeldung ist gültig."
 
-#: view/MainWP_System_View.view.php:22
+#: view/MainWPSystemView.view.php:22
 #@ mainwp
 msgid "Your login is invalid."
 msgstr "Ihr Login ist ungültig."
 
-#: view/MainWP_System_View.view.php:23
+#: view/MainWPSystemView.view.php:23
 #@ mainwp
 msgid "An error occured, please contact us."
 msgstr "Ein Fehler ist aufgetreten, kontaktieren Sie uns bitte."
 
-#: view/MainWP_System_View.view.php:24
+#: view/MainWPSystemView.view.php:24
 #@ mainwp
 msgid "more"
 msgstr "mehr"
 
-#: view/MainWP_System_View.view.php:25
+#: view/MainWPSystemView.view.php:25
 #@ mainwp
 msgid "less"
 msgstr "weniger"
 
-#: view/MainWP_System_View.view.php:26
+#: view/MainWPSystemView.view.php:26
 #@ mainwp
 msgid "An error occured: "
 msgstr "Ein Fehler ist aufgetreten:"
 
-#: view/MainWP_System_View.view.php:27
+#: view/MainWPSystemView.view.php:27
 #@ mainwp
 msgid "No data available. Connect your sites using the Settings submenu."
 msgstr "Keine Daten vorhanden. Schließen Sie Ihre Seiten mit dem Untermenü Einstellungen."
 
-#: view/MainWP_System_View.view.php:29
+#: view/MainWPSystemView.view.php:29
 #@ mainwp
 msgid "PENDING"
 msgstr "ANSTEHEND"
 
-#: view/MainWP_System_View.view.php:30
+#: view/MainWPSystemView.view.php:30
 #@ mainwp
 msgid "UPDATING"
 msgstr "AKTUALISIERUNG"
 
-#: view/MainWP_System_View.view.php:31
+#: view/MainWPSystemView.view.php:31
 #@ mainwp
 msgid "UPGRADING"
 msgstr "UPGRADE"
 
-#: view/MainWP_System_View.view.php:32
+#: view/MainWPSystemView.view.php:32
 #@ mainwp
 msgid "FAILED"
 msgstr "GESCHEITERT"
 
-#: view/MainWP_System_View.view.php:33
+#: view/MainWPSystemView.view.php:33
 #@ mainwp
 msgid "DONE"
 msgstr "ERLEDIGT"
 
-#: view/MainWP_System_View.view.php:34
+#: view/MainWPSystemView.view.php:34
 #@ mainwp
 msgid "Ignored"
 msgstr "ignoriert"
 
-#: view/MainWP_System_View.view.php:35
+#: view/MainWPSystemView.view.php:35
 #, php-format
 #@ mainwp
 msgid "No ignored %1s"
 msgstr "Kein ignoriert %1s"
 
-#: view/MainWP_System_View.view.php:36
+#: view/MainWPSystemView.view.php:36
 #, php-format
 #@ mainwp
 msgid "No ignored %1 conflicts"
 msgstr "Keine ignorierten %1s Konflikte"
 
-#: view/MainWP_System_View.view.php:39
+#: view/MainWPSystemView.view.php:39
 #@ mainwp
 msgid "Upgrading.."
 msgstr "Upgrade .."
 
-#: view/MainWP_System_View.view.php:40
-#: widget/MainWP_Right_Now.widget.php:70
+#: view/MainWPSystemView.view.php:40
+#: widget/MainWPRightNow.widget.php:70
 #@ mainwp
 msgid "Upgrade successful"
 msgstr "Upgrade erfolgreich"
 
-#: view/MainWP_System_View.view.php:41
+#: view/MainWPSystemView.view.php:41
 #@ mainwp
 msgid "Upgrade failed"
 msgstr "Upgrade fehlgeschlagen"
 
-#: view/MainWP_System_View.view.php:43
-#: widget/MainWP_Right_Now.widget.php:571
-#: widget/MainWP_Right_Now.widget.php:617
-#: widget/MainWP_Right_Now.widget.php:787
-#: widget/MainWP_Right_Now.widget.php:950
-#: widget/MainWP_Right_Now.widget.php:978
-#: widget/MainWP_Right_Now.widget.php:1002
+#: view/MainWPSystemView.view.php:43
+#: widget/MainWPRightNow.widget.php:571
+#: widget/MainWPRightNow.widget.php:617
+#: widget/MainWPRightNow.widget.php:787
+#: widget/MainWPRightNow.widget.php:950
+#: widget/MainWPRightNow.widget.php:978
+#: widget/MainWPRightNow.widget.php:1002
 #@ mainwp
 msgid "Show"
 msgstr "Anzeigen"
 
-#: view/MainWP_System_View.view.php:44
+#: view/MainWPSystemView.view.php:44
 #@ mainwp
 msgid "Hide All"
 msgstr "Alles ausblenden"
 
-#: view/MainWP_System_View.view.php:45
+#: view/MainWPSystemView.view.php:45
 #@ mainwp
 msgid "Hide"
 msgstr "Ausblenden"
 
-#: view/MainWP_System_View.view.php:46
+#: view/MainWPSystemView.view.php:46
 #@ mainwp
 msgid "Testing ..."
 msgstr "Testen ..."
 
-#: view/MainWP_System_View.view.php:48
+#: view/MainWPSystemView.view.php:48
 #@ mainwp
 msgid "Received wrong response from the server."
 msgstr "Empfangene falsche Antwort vom Server."
 
-#: view/MainWP_System_View.view.php:49
+#: view/MainWPSystemView.view.php:49
 #@ mainwp
 msgid "Untitled"
 msgstr "Unbetitelt"
 
-#: view/MainWP_System_View.view.php:50
+#: view/MainWPSystemView.view.php:50
 #@ mainwp
 msgid "Are you sure you want to remove this destination. This could make some of the backup tasks invalid."
 msgstr "Sind Sie sicher, dass Sie dieses Ziel entfernen möchten. Dies könnte einige der Datensicherungs-Aufgaben ungültig werden lassen."
 
-#: view/MainWP_System_View.view.php:51
+#: view/MainWPSystemView.view.php:51
 #@ mainwp
 msgid "Starting backup task."
 msgstr "Die Sicherung Aufgabe starten."
 
-#: view/MainWP_System_View.view.php:53
+#: view/MainWPSystemView.view.php:53
 #@ mainwp
 msgid "Backup task complete"
 msgstr "Datensicherungs-Aufgabe abgeschlossen"
 
-#: view/MainWP_System_View.view.php:54
+#: view/MainWPSystemView.view.php:54
 #@ mainwp
 msgid "with errors"
 msgstr "mit fehlern"
 
-#: view/MainWP_System_View.view.php:56
+#: view/MainWPSystemView.view.php:56
 #@ mainwp
 msgid "Creating backupfile."
 msgstr "Erstellen von Datensicherungsdatei."
 
-#: view/MainWP_System_View.view.php:57
+#: view/MainWPSystemView.view.php:57
 #@ mainwp
 msgid "Backupfile created successfully."
 msgstr "Datensicherungsdatei erfolgreich erstellt."
 
-#: view/MainWP_System_View.view.php:58
-#: view/MainWP_System_View.view.php:118
+#: view/MainWPSystemView.view.php:58
+#: view/MainWPSystemView.view.php:118
 #@ mainwp
 msgid "Download from site child completed."
 msgstr "Laden vom Client abgeschlossen."
 
-#: view/MainWP_System_View.view.php:59
+#: view/MainWPSystemView.view.php:59
 #@ mainwp
 msgid "Uploading to remote destinations.."
 msgstr "Hochladen zum entfernten Ziel"
 
-#: view/MainWP_System_View.view.php:60
+#: view/MainWPSystemView.view.php:60
 #@ mainwp
 msgid "Backup complete."
 msgstr "Datensicherung vollständig."
 
-#: view/MainWP_System_View.view.php:61
+#: view/MainWPSystemView.view.php:61
 #, php-format
 #@ mainwp
 msgid "Upload to %1 (%2) failed:"
 msgstr "Hochladen %1 (%2) fehlerhaft:"
 
-#: view/MainWP_System_View.view.php:62
+#: view/MainWPSystemView.view.php:62
 #, php-format
 #@ mainwp
 msgid "Upload to %1 (%2) succesful"
 msgstr "Hochladen %1 (%2) fehlerhaft"
 
-#: view/MainWP_System_View.view.php:63
+#: view/MainWPSystemView.view.php:63
 #@ mainwp
 msgid "Please select websites or groups to add a backup task."
 msgstr "Bitte wählen Sie Webseite(n) oder Gruppe(n), um eine Datensicherungs-Aufgabe hinzuzufügen."
 
-#: view/MainWP_System_View.view.php:64
+#: view/MainWPSystemView.view.php:64
 #@ mainwp
 msgid "Adding the task to MainWP"
 msgstr "Hinzufügen der Aufgabe zu MainWP"
 
-#: view/MainWP_System_View.view.php:65
+#: view/MainWPSystemView.view.php:65
 #@ mainwp
 msgid "Please select websites or groups."
 msgstr "Bitte wählen Sie Internetseiten oder Gruppen."
 
-#: view/MainWP_System_View.view.php:66
+#: view/MainWPSystemView.view.php:66
 #@ mainwp
 msgid "Are you sure you want to delete this backup task?"
 msgstr "Sind Sie sicher, dass Sie dieses Datensicherungs-Aufgabe löschen wollen?"
 
-#: view/MainWP_System_View.view.php:67
+#: view/MainWPSystemView.view.php:67
 #@ mainwp
 msgid "Removing the task.."
 msgstr "Entfernen der Aufgabe .."
 
-#: view/MainWP_System_View.view.php:68
+#: view/MainWPSystemView.view.php:68
 #@ mainwp
 msgid "The task has been removed"
 msgstr "Die Aufgabe wurde entfernt"
 
-#: view/MainWP_System_View.view.php:69
+#: view/MainWPSystemView.view.php:69
 #@ mainwp
 msgid "An unspecified error occured"
 msgstr "Ein unbekannter Fehler ist aufgetreten"
 
-#: view/MainWP_System_View.view.php:70
+#: view/MainWPSystemView.view.php:70
 #@ mainwp
 msgid "Connection test failed."
 msgstr "Verbindungstest fehlgeschlagen."
 
-#: view/MainWP_System_View.view.php:71
+#: view/MainWPSystemView.view.php:71
 #@ mainwp
 msgid "Error message:"
 msgstr "Fehlermeldung:"
 
-#: view/MainWP_System_View.view.php:72
+#: view/MainWPSystemView.view.php:72
 #@ mainwp
 msgid "Received HTTP-code:"
 msgstr "Erhaltener HTTP-Code:"
 
-#: view/MainWP_System_View.view.php:73
+#: view/MainWPSystemView.view.php:73
 #@ mainwp
 msgid "Connection test successful."
 msgstr "Verbindungstest erfolgreich."
 
-#: view/MainWP_System_View.view.php:74
+#: view/MainWPSystemView.view.php:74
 #@ mainwp
 msgid "Invalid response from the server, please try again."
 msgstr "Ungültige Antwort vom Server, bitte versuchen Sie es erneut."
 
-#: view/MainWP_System_View.view.php:75
+#: view/MainWPSystemView.view.php:75
 #@ mainwp
 msgid "Please enter csv file for upload"
 msgstr "Bitte geben Sie eine CSV-Datei für das Hochladen an"
 
-#: view/MainWP_System_View.view.php:76
+#: view/MainWPSystemView.view.php:76
 #@ mainwp
 msgid "Please enter a name for the website"
 msgstr "Bitte geben Sie einen Namen für die Webseite"
 
-#: view/MainWP_System_View.view.php:77
+#: view/MainWPSystemView.view.php:77
 #@ mainwp
 msgid "Please enter a valid URL for your site"
 msgstr "Bitte geben Sie eine gültige URL für Ihre Webseite ein"
 
-#: view/MainWP_System_View.view.php:78
+#: view/MainWPSystemView.view.php:78
 #@ mainwp
 msgid "Please enter a username for the administrator"
 msgstr "Bitte geben Sie einen Benutzernamen für den Administrator ein"
 
-#: view/MainWP_System_View.view.php:79
+#: view/MainWPSystemView.view.php:79
 #@ mainwp
 msgid "Adding the site to MainWP"
 msgstr "Hinzufügen der Webseite zum MainWP"
 
-#: view/MainWP_System_View.view.php:81
+#: view/MainWPSystemView.view.php:81
 #@ mainwp
 msgid "Testing the connection"
 msgstr "Testen der Verbindung"
 
-#: view/MainWP_System_View.view.php:82
+#: view/MainWPSystemView.view.php:82
 #@ mainwp
 msgid "Are you sure you want to delete this site?"
 msgstr "Sind Sie sicher, dass Sie diese Seite löschen wollen?"
 
-#: view/MainWP_System_View.view.php:85
+#: view/MainWPSystemView.view.php:85
 #@ mainwp
 msgid "The requested site has not been found"
 msgstr "Die angeforderte Seite wurde nicht gefunden"
 
-#: view/MainWP_System_View.view.php:87
+#: view/MainWPSystemView.view.php:87
 #@ mainwp
 msgid "Paused import by user."
 msgstr "Import Pause durch den Benutzer."
 
-#: view/MainWP_System_View.view.php:88
+#: view/MainWPSystemView.view.php:88
 #@ mainwp
 msgid "Continue"
 msgstr "weiter"
 
-#: view/MainWP_System_View.view.php:89
+#: view/MainWPSystemView.view.php:89
 #@ mainwp
 msgid "Continue import."
 msgstr "weiter Importieren"
 
-#: view/MainWP_System_View.view.php:91
+#: view/MainWPSystemView.view.php:91
 #@ mainwp
 msgid "Finished"
 msgstr "Fertig"
 
-#: view/MainWP_System_View.view.php:92
+#: view/MainWPSystemView.view.php:92
 #@ mainwp
 msgid "Please enter the Site name."
 msgstr "Bitte geben Sie einen Seitenamen ein."
 
-#: view/MainWP_System_View.view.php:93
+#: view/MainWPSystemView.view.php:93
 #@ mainwp
 msgid "Please enter the Site url."
 msgstr "Bitte geben Sie die URL der Webseite ein."
 
-#: view/MainWP_System_View.view.php:94
+#: view/MainWPSystemView.view.php:94
 #@ mainwp
 msgid "Please enter Admin name of the site."
 msgstr "Bitte geben Sie Admin-Namen der Webseite ein."
 
-#: view/MainWP_System_View.view.php:95
+#: view/MainWPSystemView.view.php:95
 #, php-format
 #@ mainwp
 msgid "Number of sites to Import: %1 Created sites: %2 Failed: %3"
 msgstr "Anzahl der Websites, zum Import: %1 Erstellte Seiten: %2 Erfolglos: %3"
 
-#: view/MainWP_System_View.view.php:96
+#: view/MainWPSystemView.view.php:96
 #@ mainwp
 msgid "HTTP error - website does not exist"
 msgstr "HTTP-Fehler - Webseite existiert nicht"
 
-#: view/MainWP_System_View.view.php:97
+#: view/MainWPSystemView.view.php:97
 #@ mainwp
 msgid "No selected Categories"
 msgstr "Keine ausgewählten Kategorien"
 
-#: view/MainWP_System_View.view.php:98
+#: view/MainWPSystemView.view.php:98
 #@ mainwp
 msgid "Please select websites or groups to add a user."
 msgstr "Bitte wählen Sie Webseite(n) oder Gruppe(n), um einen Benutzer hinzuzufügen."
 
-#: view/MainWP_System_View.view.php:99
+#: view/MainWPSystemView.view.php:99
 #@ mainwp
 msgid "Please enter csv file for upload."
 msgstr "Bitte geben Sie eine CSV-Datei für das hochladen an."
 
-#: view/MainWP_System_View.view.php:100
+#: view/MainWPSystemView.view.php:100
 #, php-format
 #@ mainwp
 msgid "Number of Users to Import: %1 Created users: %2 Failed: %3"
 msgstr "Anzahl der Benutzer, die Import werden: %1 Erstellte Benutzer: %2 Erfolglos: %3"
 
-#: view/MainWP_System_View.view.php:101
+#: view/MainWPSystemView.view.php:101
 #@ mainwp
 msgid "Please enter the username."
 msgstr "Bitte geben Sie den Benutzernamen ein."
 
-#: view/MainWP_System_View.view.php:102
+#: view/MainWPSystemView.view.php:102
 #@ mainwp
 msgid "Please enter the email."
 msgstr "Bitte geben Sie die E-Mail ein."
 
-#: view/MainWP_System_View.view.php:103
+#: view/MainWPSystemView.view.php:103
 #@ mainwp
 msgid "Please enter the password."
 msgstr "Bitte geben Sie das Passwort ein."
 
-#: view/MainWP_System_View.view.php:104
+#: view/MainWPSystemView.view.php:104
 #@ mainwp
 msgid "Please select a valid role."
 msgstr "Bitte wählen Sie eine gültige Rolle."
 
-#: view/MainWP_System_View.view.php:105
+#: view/MainWPSystemView.view.php:105
 #@ mainwp
 msgid "Loading previous page.."
 msgstr "Lädt vorherigen Seite .."
 
-#: view/MainWP_System_View.view.php:106
+#: view/MainWPSystemView.view.php:106
 #@ mainwp
 msgid "Loading next page.."
 msgstr "Laden der nächsten Seite .."
 
-#: view/MainWP_System_View.view.php:107
+#: view/MainWPSystemView.view.php:107
 #@ mainwp
 msgid "Searching the Wordpress repository.."
 msgstr "Suche in der Wordpress-Repository .."
 
-#: view/MainWP_System_View.view.php:108
+#: view/MainWPSystemView.view.php:108
 #@ mainwp
 msgid "Please select websites or groups on the right side to install files."
 msgstr "Bitte wählen Sie Webseite(n) oder Gruppe(n) auf der rechten Seite, um Dateien zu installieren."
 
-#: view/MainWP_System_View.view.php:109
+#: view/MainWPSystemView.view.php:109
 #@ mainwp
 msgid "Queued"
 msgstr "Warteschlange"
 
-#: view/MainWP_System_View.view.php:110
+#: view/MainWPSystemView.view.php:110
 #@ mainwp
 msgid "In progress"
 msgstr "Im Gange"
 
-#: view/MainWP_System_View.view.php:111
+#: view/MainWPSystemView.view.php:111
 #, php-format
 #@ mainwp
 msgid "Preparing %1 installation."
 msgstr "Vorbereitung %1 Installation."
 
-#: view/MainWP_System_View.view.php:112
+#: view/MainWPSystemView.view.php:112
 #@ mainwp
 msgid "Installation successful"
 msgstr "Installation erfolgreich"
 
-#: view/MainWP_System_View.view.php:113
+#: view/MainWPSystemView.view.php:113
 #@ mainwp
 msgid "Installation failed"
 msgstr "Installation fehlgeschlagen"
 
-#: view/MainWP_System_View.view.php:114
+#: view/MainWPSystemView.view.php:114
 #@ mainwp
 msgid "Please select websites or groups to install files."
 msgstr "Bitte wählen Sie Webseite(n) oder Gruppe(n), um Dateien zu installieren."
 
-#: view/MainWP_System_View.view.php:115
+#: view/MainWPSystemView.view.php:115
 #@ mainwp
 msgid "Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient."
 msgstr "Erstellen der Datensicherungsdatei auf der Client Installation, dies könnte eine Weile dauern, abhängig von der Größe. Bitte haben Sie Geduld."
 
-#: view/MainWP_System_View.view.php:116
+#: view/MainWPSystemView.view.php:116
 #@ mainwp
 msgid "Backupfile on child site created successfully."
 msgstr "Backup über Client Webseite erfolgreich erstellt."
 
-#: view/MainWP_System_View.view.php:117
+#: view/MainWPSystemView.view.php:117
 #@ mainwp
 msgid "Downloading the file."
 msgstr "Herunterladen der Datei."
 
-#: view/MainWP_System_View.view.php:119
+#: view/MainWPSystemView.view.php:119
 #@ mainwp
 msgid "Please wait while we are saving your note"
 msgstr "Bitte warten Sie, während wir Ihre Notiz speichern"
 
-#: view/MainWP_System_View.view.php:120
+#: view/MainWPSystemView.view.php:120
 #@ mainwp
 msgid "Note saved."
 msgstr "Hinweis gespeichert."
 
-#: view/MainWP_System_View.view.php:121
+#: view/MainWPSystemView.view.php:121
 #@ mainwp
 msgid "An error occured while saving your message."
 msgstr "Beim Speichern ist ein Fehler aufgetreten."
 
-#: view/MainWP_System_View.view.php:122
+#: view/MainWPSystemView.view.php:122
 #@ mainwp
 msgid "Please search and select users for update password."
 msgstr "Bitte suchen und wählen Sie einen Benutzer für die Passwort Aktualisierung."
 
-#: view/MainWP_System_View.view.php:124
+#: view/MainWPSystemView.view.php:124
 #@ mainwp
 msgid "Any"
 msgstr "jeder"
 
-#: view/MainWP_System_View.view.php:126
+#: view/MainWPSystemView.view.php:126
 #@ mainwp
 msgid "Error on your child wordpress"
 msgstr "Fehler auf dem Client Wordpress"
 
-#: view/MainWP_System_View.view.php:129
+#: view/MainWPSystemView.view.php:129
 #@ mainwp
 msgid "Remove"
 msgstr "entfernen"
 
-#: view/MainWP_System_View.view.php:130
+#: view/MainWPSystemView.view.php:130
 #@ mainwp
 msgid "Please reconnect to Dropbox"
 msgstr "Bitte erneut die Dropbox verbinden"
 
-#: view/MainWP_System_View.view.php:132
+#: view/MainWPSystemView.view.php:132
 #@ mainwp
 msgid "Upgrading all"
 msgstr "Alles Upgrade"
 
-#: view/MainWP_System_View.view.php:133
+#: view/MainWPSystemView.view.php:133
 #, php-format
 #@ mainwp
 msgid "Upgrading %1"
 msgstr "Verbesserung %1"
 
-#: view/MainWP_System_View.view.php:134
+#: view/MainWPSystemView.view.php:134
 #@ mainwp
 msgid "Updating your plan..."
 msgstr "Aktualisieren Sie Ihren Plan"
 
-#: view/MainWP_System_View.view.php:135
+#: view/MainWPSystemView.view.php:135
 #@ mainwp
 msgid "Updated your plan"
 msgstr "Aktualisiert Ihren Plan"
 
-#: view/MainWP_System_View.view.php:136
+#: view/MainWPSystemView.view.php:136
 #@ mainwp
 msgid "A full backup has not been taken in the last 7 days for the following sites:"
 msgstr "Es wurde kein Voll-Backup in den letzten 7 Tagen für die folgenden Seiten getroffen:"
 
-#: view/MainWP_System_View.view.php:137
+#: view/MainWPSystemView.view.php:137
 #@ mainwp
 msgid "Starting required backup(s)."
 msgstr "Startet erforderliche(n) Sicherunge(n)."
 
-#: view/MainWP_System_View.view.php:138
+#: view/MainWPSystemView.view.php:138
 #@ mainwp
 msgid "Required backup(s) complete"
 msgstr "Erforderliche Sicherung (en) komplett"
 
-#: view/MainWP_System_View.view.php:139
+#: view/MainWPSystemView.view.php:139
 #@ mainwp
 msgid "Continue upgrade anyway"
 msgstr "Weiter Upgrade sowieso"
 
-#: view/MainWP_System_View.view.php:140
+#: view/MainWPSystemView.view.php:140
 #@ mainwp
 msgid "Continue upgrade"
 msgstr "Weiter Upgrade"
 
-#: view/MainWP_System_View.view.php:143
+#: view/MainWPSystemView.view.php:143
 #@ mainwp
 msgid "Checking if a backup is required for the selected upgrades..."
 msgstr "Prüfen, ob eine Sicherung für die gewählten Upgrades erforderlich ..."
 
-#: view/MainWP_System_View.view.php:144
+#: view/MainWPSystemView.view.php:144
 #@ mainwp
 msgid "Full backup required"
 msgstr "Vollständige Sicherung erforderlich"
 
-#: view/MainWP_System_View.view.php:145
+#: view/MainWPSystemView.view.php:145
 #@ mainwp
 msgid "Checking backup settings"
 msgstr "Überprüfung der Backup-Einstellungen"
 
-#: widget/MainWP_Backup_Tasks.widget.php:10
+#: widget/MainWPBackupTasks.widget.php:10
 #@ mainwp
 msgid "Backup Tasks"
 msgstr "Sicherungs-Aufgaben"
 
-#: widget/MainWP_Backup_Tasks.widget.php:23
+#: widget/MainWPBackupTasks.widget.php:23
 #@ mainwp
 msgid "Manage Backups"
 msgstr "Sicherungen verwalten"
 
-#: widget/MainWP_Backup_Tasks.widget.php:48
+#: widget/MainWPBackupTasks.widget.php:48
 #@ mainwp
 msgid "Database Backup"
 msgstr "Datenbank-Sicherung"
 
-#: widget/MainWP_Backup_Tasks.widget.php:48
+#: widget/MainWPBackupTasks.widget.php:48
 #@ mainwp
 msgid "Full Backup"
 msgstr "Volle Sicherung"
 
-#: widget/MainWP_Footprint.widget.php:29
+#: widget/MainWPFootprint.widget.php:29
 #@ mainwp
 msgid "Network Footprint"
 msgstr "Netzwerk-Footprint"
 
-#: widget/MainWP_Footprint.widget.php:35
+#: widget/MainWPFootprint.widget.php:35
 #@ mainwp
 msgid "After pressing \"Save Settings\" below you will need to return to MainWP Dashboard and press the Sync Data button to synchronize the settings."
 msgstr "Nach Drücken  \"Speicher Einstellung\" gehen Sie zum MainWP-Dashboard zurück und drücken Sie den Sync-Daten Knopf, um die Einstellungen zu synchronisieren."
 
-#: widget/MainWP_Options.widget.php:96
+#: widget/MainWPOptions.widget.php:96
 #@ mainwp
 msgid "Notification Email"
 msgstr "E-Mail-Benachrichtigung"
 
-#: widget/MainWP_Options.widget.php:96
-#: widget/MainWP_Options.widget.php:98
+#: widget/MainWPOptions.widget.php:96
+#: widget/MainWPOptions.widget.php:98
 #@ mainwp
 msgid "This address is used to send monitoring alerts."
 msgstr "Diese Adresse wird verwendet, um die Überwachung Warnungen zu senden."
 
-#: widget/MainWP_Options.widget.php:132
+#: widget/MainWPOptions.widget.php:132
 #@ mainwp
 msgid "Optimize for big networks"
 msgstr "Optimieren für große Netzwerke"
 
-#: widget/MainWP_Options.widget.php:132
+#: widget/MainWPOptions.widget.php:132
 #@ mainwp
 msgid "Updates will be cached for quick loading. A manual refresh from the Dashboard is required to view new plugins, themes, pages or users. Recommended for Networks over 50 sites."
 msgstr "Updates für schnelles Laden zwischengespeichert werden. Eine manuelle Aktualisierung über das Dashboard ist erforderlich, um neue Plugins, Themen, Seiten oder Benutzer anzeigen. Empfohlen für Netzwerke über 50 Seiten."
 
-#: widget/MainWP_Options.widget.php:157
+#: widget/MainWPOptions.widget.php:157
 #@ mainwp
 msgid "Upgrade Options"
 msgstr "Upgrade-Optionen"
 
-#: widget/MainWP_Options.widget.php:161
+#: widget/MainWPOptions.widget.php:161
 #@ mainwp
 msgid "View upgrades per site"
 msgstr "Upgrades pro Seite"
 
-#: widget/MainWP_Options.widget.php:161
+#: widget/MainWPOptions.widget.php:161
 #@ mainwp
 msgid "When this is disabled, the upgrades are shown per plugin/theme with a sublist of sites. When this is enabled, all the sites are shown with the plugin/theme upgrades available per site."
 msgstr "Wenn diese deaktiviert ist, die Upgrades werden pro plugin / Theme mit einer Unterliste von Webseiten gezeigt. Wenn diese aktiviert ist, werden alle Seiten mit den plugin / Theme Upgrades pro Seite gezeigt."
 
-#: widget/MainWP_Options.widget.php:169
+#: widget/MainWPOptions.widget.php:169
 #@ mainwp
 msgid "With this option enabled, when you try to upgrade a plugin, theme or WordPress core, MainWP will check if there is a full backup created for the site(s) you are trying to upgrade in last 7 days. If you have a fresh backup of the site(s) MainWP will proceed to the upgrade process, if not it will ask you to create a full backup."
 msgstr "Wenn diese Option aktiviert ist, wenn Sie versuchen, ein Plugin, Themen Upgrade oder Wordpress-Kern, MainWP wird prüfen, ob es ein Voll-Backup für die Website (s) in den letztem 7Tagen erstellt haben. Wenn Sie eine neue Sicherungskopie der Website (s) haben wird MainWP zum pgrade-Prozess gehen, wenn nicht, werden Sie gefragt um eine vollständige Sicherung zu erstellen."
 
-#: widget/MainWP_Options.widget.php:177
+#: widget/MainWPOptions.widget.php:177
 #@ mainwp
 msgid "Automatic daily update"
 msgstr "Automatisches tägliches Update"
 
-#: widget/MainWP_Options.widget.php:177
+#: widget/MainWPOptions.widget.php:177
 #@ mainwp
 msgid "Choose to have MainWP install updates, or notify you by email of available updates.  Updates apply to WordPress Core files, Plugins and Themes."
 msgstr "Wählen Sie, MainWP Updates installieren, oder eine Benachrichtigung per E-Mail der verfügbaren Updates senden. Updates gelten für Wordpress Kern-Dateien, Plugins und Themes."
 
-#: widget/MainWP_Options.widget.php:207
+#: widget/MainWPOptions.widget.php:207
 #@ mainwp
 msgid "Data Return Options"
 msgstr "Daten Optionen."
 
-#: widget/MainWP_Options.widget.php:211
+#: widget/MainWPOptions.widget.php:211
 #@ mainwp
 msgid "Maximum number of Posts/Pages"
 msgstr "Maximale Anzahl der Beiträge / Seiten"
 
-#: widget/MainWP_Options.widget.php:211
-#: widget/MainWP_Options.widget.php:218
+#: widget/MainWPOptions.widget.php:211
+#: widget/MainWPOptions.widget.php:218
 #@ mainwp
 msgid "0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication."
 msgstr "0 für unbegrenzt, ACHTUNG: eine große Menge wird die Geschwindigkeit zu gering, könnte die Kommunikation abstürzen."
 
-#: widget/MainWP_Options.widget.php:218
+#: widget/MainWPOptions.widget.php:218
 #@ mainwp
 msgid "Maximum number of Comments"
 msgstr "Maximale Anzahl der Kommentare"
 
-#: widget/MainWP_Recent_Pages.widget.php:72
-#: widget/MainWP_Recent_Posts.widget.php:72
+#: widget/MainWPRecentPages.widget.php:72
+#: widget/MainWPRecentPosts.widget.php:72
 #@ mainwp
 msgid "Pending"
 msgstr "anstehend"
 
-#: widget/MainWP_Recent_Pages.widget.php:98
-#: widget/MainWP_Recent_Pages.widget.php:131
-#: widget/MainWP_Recent_Pages.widget.php:164
-#: widget/MainWP_Recent_Posts.widget.php:98
-#: widget/MainWP_Recent_Posts.widget.php:131
-#: widget/MainWP_Recent_Posts.widget.php:164
+#: widget/MainWPRecentPages.widget.php:98
+#: widget/MainWPRecentPages.widget.php:131
+#: widget/MainWPRecentPages.widget.php:164
+#: widget/MainWPRecentPosts.widget.php:98
+#: widget/MainWPRecentPosts.widget.php:131
+#: widget/MainWPRecentPosts.widget.php:164
 #@ mainwp
 msgid "View All"
 msgstr "Alle anzeigen"
 
-#: widget/MainWP_Recent_Posts.widget.php:17
+#: widget/MainWPRecentPosts.widget.php:17
 #@ mainwp
 msgid "Recent Posts"
 msgstr "Aktuelle Beiträge"
 
-#: widget/MainWP_Recent_Pages.widget.php:72
-#: widget/MainWP_Recent_Posts.widget.php:72
+#: widget/MainWPRecentPages.widget.php:72
+#: widget/MainWPRecentPosts.widget.php:72
 #@ mainwp
 msgid "Published"
 msgstr "veröffentlicht"
 
-#: widget/MainWP_Recent_Pages.widget.php:72
-#: widget/MainWP_Recent_Posts.widget.php:72
+#: widget/MainWPRecentPages.widget.php:72
+#: widget/MainWPRecentPosts.widget.php:72
 #@ mainwp
 msgid "Draft"
 msgstr "Entwurf"
 
-#: widget/MainWP_Recent_Posts.widget.php:212
+#: widget/MainWPRecentPosts.widget.php:212
 #@ mainwp
 msgid "Post has been published"
 msgstr "Beitrag wurde veröffentlicht"
 
-#: widget/MainWP_Recent_Posts.widget.php:218
+#: widget/MainWPRecentPosts.widget.php:218
 #@ mainwp
 msgid "Post has been approved"
 msgstr "Beitrag wurde genehmigt"
 
-#: widget/MainWP_Recent_Posts.widget.php:224
+#: widget/MainWPRecentPosts.widget.php:224
 #@ mainwp
 msgid "Post has been unpublished"
 msgstr "Beitrag ist unveröffentlicht"
 
-#: widget/MainWP_Recent_Posts.widget.php:230
+#: widget/MainWPRecentPosts.widget.php:230
 #@ mainwp
 msgid "Post has been moved to trash"
 msgstr "Beitrag wurde in den Papierkorb verschoben"
 
-#: widget/MainWP_Recent_Posts.widget.php:236
+#: widget/MainWPRecentPosts.widget.php:236
 #@ mainwp
 msgid "Post has been permanently deleted"
 msgstr "Beitrag wurde dauerhaft gelöscht"
 
-#: widget/MainWP_Recent_Posts.widget.php:242
+#: widget/MainWPRecentPosts.widget.php:242
 #@ mainwp
 msgid "Post has been restored"
 msgstr "Beitrag wurde wiederhergestellt"
 
-#: widget/MainWP_Right_Now.widget.php:48
+#: widget/MainWPRightNow.widget.php:48
 #@ mainwp
 msgid "Right Now"
 msgstr "im Moment"
 
-#: widget/MainWP_Right_Now.widget.php:77
+#: widget/MainWPRightNow.widget.php:77
 #@ mainwp
 msgid "No update found for your set locale."
 msgstr "Kein Update gefunden."
 
-#: widget/MainWP_Right_Now.widget.php:81
+#: widget/MainWPRightNow.widget.php:81
 #@ mainwp
 msgid "No response from the wordpress update server."
 msgstr "Keine Antwort von den Wordpress-Update-Servern."
 
-#: widget/MainWP_Right_Now.widget.php:92
+#: widget/MainWPRightNow.widget.php:92
 #@ mainwp
 msgid "Invalid response from site"
 msgstr "Ungültige Antwort von der Seite"
 
-#: widget/MainWP_Right_Now.widget.php:97
-#: widget/MainWP_Right_Now.widget.php:313
+#: widget/MainWPRightNow.widget.php:97
+#: widget/MainWPRightNow.widget.php:313
 #@ mainwp
 msgid "Invalid request"
 msgstr "Ungültige Anforderung"
 
-#: widget/MainWP_Right_Now.widget.php:333
+#: widget/MainWPRightNow.widget.php:333
 #@ mainwp
 msgid "(Last complete sync: "
 msgstr "(Letzte Gesamt-sync: "
 
-#: widget/MainWP_Right_Now.widget.php:556
+#: widget/MainWPRightNow.widget.php:556
 #@ mainwp
 msgid "Site Timed Out / Errored"
 msgid_plural "Sites Timed Out / Errored"
 msgstr[0] "Seite Timeout / Fehler"
 msgstr[1] "Seiten Timeout / Fehler"
 
-#: widget/MainWP_Right_Now.widget.php:558
+#: widget/MainWPRightNow.widget.php:558
 #@ mainwp
 msgid "Timed Out / Errored"
 msgstr "Timeout / Fehler"
 
-#: widget/MainWP_Right_Now.widget.php:568
+#: widget/MainWPRightNow.widget.php:568
 #@ mainwp
 msgid "WordPress upgrade"
 msgstr "Wordpress Upgrade"
 
-#: widget/MainWP_Right_Now.widget.php:568
-#: widget/MainWP_Right_Now.widget.php:615
-#: widget/MainWP_Right_Now.widget.php:785
+#: widget/MainWPRightNow.widget.php:568
+#: widget/MainWPRightNow.widget.php:615
+#: widget/MainWPRightNow.widget.php:785
 #@ mainwp
 msgid "available"
 msgstr "verfügbar"
 
 #. gettext fix: identical singular and plural forms found, that may be ambiguous! Please check the code!
-#: widget/MainWP_Right_Now.widget.php:571
-#: widget/MainWP_Right_Now.widget.php:617
-#: widget/MainWP_Right_Now.widget.php:672
-#: widget/MainWP_Right_Now.widget.php:717
-#: widget/MainWP_Right_Now.widget.php:787
-#: widget/MainWP_Right_Now.widget.php:837
-#: widget/MainWP_Right_Now.widget.php:876
-#: widget/MainWP_Right_Now.widget.php:600
-#: widget/MainWP_Right_Now.widget.php:662
-#: widget/MainWP_Right_Now.widget.php:688
-#: widget/MainWP_Right_Now.widget.php:713
-#: widget/MainWP_Right_Now.widget.php:766
-#: widget/MainWP_Right_Now.widget.php:827
-#: widget/MainWP_Right_Now.widget.php:851
-#: widget/MainWP_Right_Now.widget.php:872
-#: widget/MainWP_Right_Now.widget.php:921
+#: widget/MainWPRightNow.widget.php:571
+#: widget/MainWPRightNow.widget.php:617
+#: widget/MainWPRightNow.widget.php:672
+#: widget/MainWPRightNow.widget.php:717
+#: widget/MainWPRightNow.widget.php:787
+#: widget/MainWPRightNow.widget.php:837
+#: widget/MainWPRightNow.widget.php:876
+#: widget/MainWPRightNow.widget.php:600
+#: widget/MainWPRightNow.widget.php:662
+#: widget/MainWPRightNow.widget.php:688
+#: widget/MainWPRightNow.widget.php:713
+#: widget/MainWPRightNow.widget.php:766
+#: widget/MainWPRightNow.widget.php:827
+#: widget/MainWPRightNow.widget.php:851
+#: widget/MainWPRightNow.widget.php:872
+#: widget/MainWPRightNow.widget.php:921
 #@ mainwp
 msgid "Upgrade"
 msgid_plural "Upgrade All"
 msgstr[0] "Upgrade"
 msgstr[1] "Alles Upgraden"
 
-#: widget/MainWP_Right_Now.widget.php:571
-#: widget/MainWP_Right_Now.widget.php:617
-#: widget/MainWP_Right_Now.widget.php:717
-#: widget/MainWP_Right_Now.widget.php:787
-#: widget/MainWP_Right_Now.widget.php:876
+#: widget/MainWPRightNow.widget.php:571
+#: widget/MainWPRightNow.widget.php:617
+#: widget/MainWPRightNow.widget.php:717
+#: widget/MainWPRightNow.widget.php:787
+#: widget/MainWPRightNow.widget.php:876
 #@ mainwp
 msgid "No Upgrades"
 msgstr "Keine Upgrades"
 
-#: widget/MainWP_Right_Now.widget.php:592
-#: widget/MainWP_Right_Now.widget.php:667
-#: widget/MainWP_Right_Now.widget.php:832
+#: widget/MainWPRightNow.widget.php:592
+#: widget/MainWPRightNow.widget.php:667
+#: widget/MainWPRightNow.widget.php:832
 #@ mainwp
 msgid "Site Error - No update Information available"
 msgstr "Webseite-Fehler - keine Update-Informationen verfügbar"
 
-#: widget/MainWP_Right_Now.widget.php:593
-#: widget/MainWP_Right_Now.widget.php:668
-#: widget/MainWP_Right_Now.widget.php:833
+#: widget/MainWPRightNow.widget.php:593
+#: widget/MainWPRightNow.widget.php:668
+#: widget/MainWPRightNow.widget.php:833
 #@ mainwp
 msgid "Hooray, No Updates Available!"
 msgstr "Hurra, keine Updates verfügbar!"
 
-#: widget/MainWP_Right_Now.widget.php:615
+#: widget/MainWPRightNow.widget.php:615
 #@ mainwp
 msgid "Plugin upgrade"
 msgstr "Plugin-Upgrade"
 
-#: widget/MainWP_Right_Now.widget.php:688
-#: widget/MainWP_Right_Now.widget.php:766
-#: widget/MainWP_Right_Now.widget.php:851
-#: widget/MainWP_Right_Now.widget.php:921
-#: widget/MainWP_Right_Now.widget.php:1113
+#: widget/MainWPRightNow.widget.php:688
+#: widget/MainWPRightNow.widget.php:766
+#: widget/MainWPRightNow.widget.php:851
+#: widget/MainWPRightNow.widget.php:921
+#: widget/MainWPRightNow.widget.php:1113
 #@ mainwp
 msgid "Ignore"
 msgstr "ignorieren"
 
-#: widget/MainWP_Right_Now.widget.php:717
-#: widget/MainWP_Right_Now.widget.php:876
+#: widget/MainWPRightNow.widget.php:717
+#: widget/MainWPRightNow.widget.php:876
 #@ mainwp
 msgid "Ignore Globally"
 msgstr "Weltweit ignorieren"
 
-#: widget/MainWP_Right_Now.widget.php:785
+#: widget/MainWPRightNow.widget.php:785
 #@ mainwp
 msgid "Theme upgrade"
 msgstr "Theme-Upgrade"
 
-#: widget/MainWP_Right_Now.widget.php:938
+#: widget/MainWPRightNow.widget.php:938
 #@ mainwp
 msgid "Upgrade Everything"
 msgstr "Alles aktualisieren"
 
-#: widget/MainWP_Right_Now.widget.php:976
+#: widget/MainWPRightNow.widget.php:976
 #@ mainwp
 msgid "Up to date"
 msgstr "Up to date"
 
-#: widget/MainWP_Right_Now.widget.php:1060
+#: widget/MainWPRightNow.widget.php:1060
 #@ mainwp
 msgid "Conflict Found"
 msgstr "Konflikt gefunden"
 
-#: widget/MainWP_Right_Now.widget.php:1101
+#: widget/MainWPRightNow.widget.php:1101
 #@ mainwp
 msgid "upgraded"
 msgstr "verbessern"
 
-#: widget/MainWP_Right_Now.widget.php:1112
+#: widget/MainWPRightNow.widget.php:1112
 #@ mainwp
 msgid "Backup All"
 msgstr "Sicherung komplett"
 
-#: widget/MainWP_SEO.widget.php:20
+#: widget/MainWPSEO.widget.php:20
 #@ mainwp
 msgid "No Websites"
 msgstr "Keine Webseiten"
 
-#: widget/MainWP_SEO.widget.php:33
+#: widget/MainWPSEO.widget.php:33
 #@ mainwp
 msgid "Child Site"
 msgstr "Child Seite"
 
-#: widget/MainWP_SEO.widget.php:34
+#: widget/MainWPSEO.widget.php:34
 #@ mainwp
 msgid "Alexa Rank"
 msgstr "Alexa Rank"
 
-#: widget/MainWP_SEO.widget.php:35
+#: widget/MainWPSEO.widget.php:35
 #@ mainwp
 msgid "Google PR"
 msgstr "Google PR"
 
-#: widget/MainWP_SEO.widget.php:36
+#: widget/MainWPSEO.widget.php:36
 #@ mainwp
 msgid "Indexed"
 msgstr "Indexed"
 
-#: widget/MainWP_Shortcuts.widget.php:12
+#: widget/MainWPShortcuts.widget.php:12
 #@ mainwp
 msgid "Shortcuts"
 msgstr "Shortcuts"
 
-#: widget/MainWP_Shortcuts.widget.php:27
+#: widget/MainWPShortcuts.widget.php:27
 #@ mainwp
 msgid "Groups:"
 msgstr "Gruppen:"
 
-#: widget/MainWP_Shortcuts.widget.php:31
+#: widget/MainWPShortcuts.widget.php:31
 #@ mainwp
 msgid "Notes:"
 msgstr "Hinweis:"
 
-#: widget/MainWP_Shortcuts.widget.php:32
+#: widget/MainWPShortcuts.widget.php:32
 #@ mainwp
 msgid "Open Notes"
 msgstr "&Ouml;ffene Hinweise"
 
-#: widget/MainWP_Shortcuts.widget.php:37
+#: widget/MainWPShortcuts.widget.php:37
 #@ mainwp
 msgid "WP-Admin:"
 msgstr "WP-Admin:"
 
-#: widget/MainWP_Shortcuts.widget.php:38
+#: widget/MainWPShortcuts.widget.php:38
 #@ mainwp
 msgid "Open embedded"
 msgstr "&ouml;ffene eingebettet"
 
-#: widget/MainWP_Shortcuts.widget.php:38
+#: widget/MainWPShortcuts.widget.php:38
 #@ mainwp
 msgid "Open in new window"
 msgstr "Öffnen in neuem Fenster"
 
-#: widget/MainWP_Shortcuts.widget.php:41
+#: widget/MainWPShortcuts.widget.php:41
 #@ mainwp
 msgid "Frontpage:"
 msgstr "Frontpage:"
 
-#: class/MainWP_Error_Helper.class.php:15
+#: class/MainWPErrorHelper.class.php:15
 #@ mainwp
 msgid "No MainWP Child Plugin detected, first install and activate the plugin and add your site to MainWP Dashboard afterwards. If you continue experiencing this issue please "
 msgstr "Kein MainWP Child Plugin erkannt, Installieren und aktivieren des Child Plugins auf der entsprechenden Wordpress Seite um danach die Seite im MainWP Dashboard anzulegen."
 
-#: class/MainWP_Sync.class.php:269
+#: class/MainWPSync.class.php:269
 #@ mainwp
 msgid "Undefined error - please reinstall the MainWP Child Plugin on the client site"
 msgstr "Undefinierter Fehler - Bitte installieren Sie die MainWP Child Plugin auf der Client-Seite erneut"
 
-#: class/MainWP_System.class.php:1539
-#: class/MainWP_System.class.php:1540
-#: class/MainWP_System.class.php:1550
+#: class/MainWPSystem.class.php:1539
+#: class/MainWPSystem.class.php:1540
+#: class/MainWPSystem.class.php:1550
 #@ default
 msgctxt "bulkpost"
 msgid "Bulkpost"
 msgstr "Massen Beitrag"
 
-#: class/MainWP_System.class.php:1541
+#: class/MainWPSystem.class.php:1541
 #@ default
 msgctxt "bulkpost"
 msgid "Add New"
 msgstr "Neu"
 
-#: class/MainWP_System.class.php:1542
+#: class/MainWPSystem.class.php:1542
 #@ default
 msgctxt "bulkpost"
 msgid "Add New Bulkpost"
 msgstr "Neuer Massen Beitrag"
 
-#: class/MainWP_System.class.php:1543
+#: class/MainWPSystem.class.php:1543
 #@ default
 msgctxt "bulkpost"
 msgid "Edit Bulkpost"
 msgstr "ändern Massen Beitrag"
 
-#: class/MainWP_System.class.php:1544
+#: class/MainWPSystem.class.php:1544
 #@ default
 msgctxt "bulkpost"
 msgid "New Bulkpost"
 msgstr "Neuer Massen Beitrag"
 
-#: class/MainWP_System.class.php:1545
+#: class/MainWPSystem.class.php:1545
 #@ default
 msgctxt "bulkpost"
 msgid "View Bulkpost"
 msgstr "Massen Beitrag anzeigen"
 
-#: class/MainWP_System.class.php:1546
+#: class/MainWPSystem.class.php:1546
 #@ default
 msgctxt "bulkpost"
 msgid "Search Bulkpost"
 msgstr "Suche Massen Beitrag"
 
-#: class/MainWP_System.class.php:1547
+#: class/MainWPSystem.class.php:1547
 #@ default
 msgctxt "bulkpost"
 msgid "No bulkpost found"
 msgstr "Kein Massen Beitrag gefunden"
 
-#: class/MainWP_System.class.php:1548
+#: class/MainWPSystem.class.php:1548
 #@ default
 msgctxt "bulkpost"
 msgid "No bulkpost found in Trash"
 msgstr "Kein Massen Beitrag im Papierkorb gefunden"
 
-#: class/MainWP_System.class.php:1549
+#: class/MainWPSystem.class.php:1549
 #@ default
 msgctxt "bulkpost"
 msgid "Parent Bulkpost:"
 msgstr "Vorgänger Massen Beitrag"
 
-#: class/MainWP_System.class.php:1584
-#: class/MainWP_System.class.php:1585
-#: class/MainWP_System.class.php:1595
+#: class/MainWPSystem.class.php:1584
+#: class/MainWPSystem.class.php:1585
+#: class/MainWPSystem.class.php:1595
 #@ default
 msgctxt "bulkpage"
 msgid "Bulkpage"
 msgstr "Massen Seite"
 
-#: class/MainWP_System.class.php:1586
+#: class/MainWPSystem.class.php:1586
 #@ default
 msgctxt "bulkpage"
 msgid "Add New"
 msgstr "Neu"
 
-#: class/MainWP_System.class.php:1587
+#: class/MainWPSystem.class.php:1587
 #@ default
 msgctxt "bulkpage"
 msgid "Add New Bulkpage"
 msgstr "Neuer Massen Beitrag"
 
-#: class/MainWP_System.class.php:1588
+#: class/MainWPSystem.class.php:1588
 #@ default
 msgctxt "bulkpage"
 msgid "Edit Bulkpage"
 msgstr "Massen Seite ändern"
 
-#: class/MainWP_System.class.php:1589
+#: class/MainWPSystem.class.php:1589
 #@ default
 msgctxt "bulkpage"
 msgid "New Bulkpage"
 msgstr "Neue Massen Seite"
 
-#: class/MainWP_System.class.php:1590
+#: class/MainWPSystem.class.php:1590
 #@ default
 msgctxt "bulkpage"
 msgid "View Bulkpage"
 msgstr "Massen Seite anzeigen"
 
-#: class/MainWP_System.class.php:1591
+#: class/MainWPSystem.class.php:1591
 #@ default
 msgctxt "bulkpage"
 msgid "Search Bulkpage"
 msgstr "Suche Massen Seite"
 
-#: class/MainWP_System.class.php:1592
+#: class/MainWPSystem.class.php:1592
 #@ default
 msgctxt "bulkpage"
 msgid "No bulkpage found"
 msgstr "Keine Massen Seite gefunden"
 
-#: class/MainWP_System.class.php:1593
+#: class/MainWPSystem.class.php:1593
 #@ default
 msgctxt "bulkpage"
 msgid "No bulkpage found in Trash"
 msgstr "Keine Massen Seite im Papierkorb gefunden"
 
-#: class/MainWP_System.class.php:1594
+#: class/MainWPSystem.class.php:1594
 #@ default
 msgctxt "bulkpage"
 msgid "Parent Bulkpage:"
 msgstr "Vorgänger Massen Seite"
 
-#: page/MainWP_Bulk_Add.page.php:26
-#: page/MainWP_Install_Bulk.page.php:371
+#: page/MainWPBulkAdd.page.php:26
+#: page/MainWPInstallBulk.page.php:371
 #@ mainwp
 msgid "Undefined error - please reinstall the MainWP Child plugin on the client"
 msgstr "Undefinierter Fehler - Bitte installieren Sie die MainWP Child Plugin auf dem Client"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:26
-#: page/MainWP_Manage_Backups.page.php:81
-#: page/MainWP_Manage_Groups.page.php:23
-#: page/MainWP_Offline_Checks.page.php:22
-#: page/MainWP_Page.page.php:78
-#: page/MainWP_Plugins.page.php:81
-#: page/MainWP_Post.page.php:76
-#: page/MainWP_Settings.page.php:71
-#: page/MainWP_Themes.page.php:82
-#: page/MainWP_User.page.php:78
-#: view/MainWP_Manage_Sites_View.view.php:62
-#: widget/MainWP_Help.widget.php:12
+#: page/MainWPBulkUpdateAdminPasswords.page.php:26
+#: page/MainWPManageBackups.page.php:81
+#: page/MainWPManageGroups.page.php:23
+#: page/MainWPOfflineChecks.page.php:22
+#: page/MainWPPage.page.php:78
+#: page/MainWPPlugins.page.php:81
+#: page/MainWPPost.page.php:76
+#: page/MainWPSettings.page.php:71
+#: page/MainWPThemes.page.php:82
+#: page/MainWPUser.page.php:78
+#: view/MainWPManageSitesView.view.php:62
+#: widget/MainWPHelp.widget.php:12
 #@ mainwp
 msgid "Help"
 msgstr "Hilfe"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:164
-#: page/MainWP_Manage_Backups.page.php:808
-#: page/MainWP_Manage_Groups.page.php:415
-#: page/MainWP_Manage_Sites.page.php:969
-#: page/MainWP_Offline_Checks.page.php:306
-#: page/MainWP_Page.page.php:599
-#: page/MainWP_Plugins.page.php:1192
-#: page/MainWP_Post.page.php:1030
-#: page/MainWP_Settings.page.php:203
-#: page/MainWP_Themes.page.php:1028
-#: page/MainWP_User.page.php:1051
+#: page/MainWPBulkUpdateAdminPasswords.page.php:164
+#: page/MainWPManageBackups.page.php:808
+#: page/MainWPManageGroups.page.php:415
+#: page/MainWPManageSites.page.php:969
+#: page/MainWPOfflineChecks.page.php:306
+#: page/MainWPPage.page.php:599
+#: page/MainWPPlugins.page.php:1192
+#: page/MainWPPost.page.php:1030
+#: page/MainWPSettings.page.php:203
+#: page/MainWPThemes.page.php:1028
+#: page/MainWPUser.page.php:1051
 #@ mainwp
 msgid "Show Quick Start Guide"
 msgstr "Zeigen Schnell-Start Leitfaden"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:166
-#: page/MainWP_User.page.php:1053
+#: page/MainWPBulkUpdateAdminPasswords.page.php:166
+#: page/MainWPUser.page.php:1053
 #@ mainwp
 msgid "Manage Admin Passwords"
 msgstr "Admin Passwörter verwalten"
 
-#: page/MainWP_Bulk_Update_Admin_Passwords.page.php:166
-#: page/MainWP_Install_Bulk.page.php:128
-#: page/MainWP_Manage_Backups.page.php:810
-#: page/MainWP_Manage_Groups.page.php:417
-#: page/MainWP_Manage_Sites.page.php:971
-#: page/MainWP_Offline_Checks.page.php:308
-#: page/MainWP_Page.page.php:601
-#: page/MainWP_Plugins.page.php:1194
-#: page/MainWP_Post.page.php:1032
-#: page/MainWP_Settings.page.php:205
-#: page/MainWP_Themes.page.php:1030
-#: page/MainWP_User.page.php:1053
-#: view/MainWP_Extensions_View.view.php:53
+#: page/MainWPBulkUpdateAdminPasswords.page.php:166
+#: page/MainWPInstallBulk.page.php:128
+#: page/MainWPManageBackups.page.php:810
+#: page/MainWPManageGroups.page.php:417
+#: page/MainWPManageSites.page.php:971
+#: page/MainWPOfflineChecks.page.php:308
+#: page/MainWPPage.page.php:601
+#: page/MainWPPlugins.page.php:1194
+#: page/MainWPPost.page.php:1032
+#: page/MainWPSettings.page.php:205
+#: page/MainWPThemes.page.php:1030
+#: page/MainWPUser.page.php:1053
+#: view/MainWPExtensionsView.view.php:53
 #@ mainwp
 msgid "Dismiss"
 msgstr "verwerfen"
 
-#: page/MainWP_Install_Bulk.page.php:110
-#: page/MainWP_Install_Bulk.page.php:162
+#: page/MainWPInstallBulk.page.php:110
+#: page/MainWPInstallBulk.page.php:162
 #@ mainwp
 msgid "Overwrite existing"
 msgstr "Überschreibe existierende"
 
-#: page/MainWP_Install_Bulk.page.php:128
+#: page/MainWPInstallBulk.page.php:128
 #@ mainwp
 msgid "<strong>Do Not upload extensions here</strong>, they do not go on the child sites, upload and activate them via your dashboard sites <a href=\"/wp-admin/plugin-install.php\" style=\"text-decoration: none;\">plugin screen.</a>"
 msgstr ""
 "<strong>Hier keine Erweiterungen laden</strong> gehen sie nicht auf die untergeordneten Seiten, hochladen und aktivieren Sie sie diese über Ihre Dashboard-Webseite <a href=\"/wp-admin/plugin-install.php\" style=\"text-decoration: none;\">\n"
 "Plugin-Bildschirm.</a>"
 
-#: page/MainWP_Main.page.php:153
+#: page/MainWPMain.page.php:153
 #@ mainwp
 msgid "Get New Extensions"
 msgstr "Holen Sie sich neue Erweiterungen"
 
-#: page/MainWP_Manage_Backups.page.php:24
+#: page/MainWPManageBackups.page.php:24
 #@ mainwp
 msgid "Backups Help"
 msgstr "Hilfe Datensicherung"
 
-#: page/MainWP_Manage_Backups.page.php:810
+#: page/MainWPManageBackups.page.php:810
 #@ mainwp
 msgid "Scheduling a Backup Task"
 msgstr "Planen einer Sicherungsaufgabe"
 
-#: page/MainWP_Manage_Backups.page.php:810
+#: page/MainWPManageBackups.page.php:810
 #@ mainwp
 msgid "Backup Remote Destinations"
 msgstr "Datensicherung entferntes Ziele (Remote)"
 
-#: page/MainWP_Manage_Backups.page.php:810
+#: page/MainWPManageBackups.page.php:810
 #@ mainwp
 msgid "How to execute backups in chunks"
 msgstr "Wie Backups in Blöcken ausführen"
 
-#: page/MainWP_Manage_Groups.page.php:13
+#: page/MainWPManageGroups.page.php:13
 #@ mainwp
 msgid "Groups Help"
 msgstr "Gruppen Hilfe"
 
-#: page/MainWP_Manage_Groups.page.php:417
+#: page/MainWPManageGroups.page.php:417
 #@ mainwp
 msgid "Adding a new group"
 msgstr "Hinzufügen einer neuen Gruppe"
 
-#: page/MainWP_Manage_Sites.page.php:33
+#: page/MainWPManageSites.page.php:33
 #@ mainwp
 msgid "Sites Help"
 msgstr "Seiten-Hilfe"
 
-#: page/MainWP_Manage_Sites.page.php:971
+#: page/MainWPManageSites.page.php:971
 #@ mainwp
 msgid "Adding a Site To MainWP Dashboard"
 msgstr "Hinzufügen einer Webseite zu MainWP-Dashboard"
 
-#: page/MainWP_Manage_Sites.page.php:971
+#: page/MainWPManageSites.page.php:971
 #@ mainwp
 msgid "How to use the Child Unique Security ID"
 msgstr "Wie die eindeutige Child Sicherheits-ID verwenden"
 
-#: page/MainWP_Manage_Sites.page.php:971
+#: page/MainWPManageSites.page.php:971
 #@ mainwp
 msgid "Individual Site Dashboard"
 msgstr "Individuelle Webseite-Dashboard"
 
-#: page/MainWP_Manage_Sites.page.php:971
+#: page/MainWPManageSites.page.php:971
 #@ mainwp
 msgid "How to test a Site Connection"
 msgstr "Wie testet man eine Standort-Verbindung"
 
-#: page/MainWP_Offline_Checks.page.php:12
+#: page/MainWPOfflineChecks.page.php:12
 #@ mainwp
 msgid "Offline Checks Help"
 msgstr "Offline-Checks Hilfe"
 
-#: page/MainWP_Offline_Checks.page.php:308
+#: page/MainWPOfflineChecks.page.php:308
 #@ mainwp
 msgid "Manage Offline Checks"
 msgstr "Verwalten Offline-Checks"
 
-#: page/MainWP_Page.page.php:25
+#: page/MainWPPage.page.php:25
 #@ mainwp
 msgid "Pages Help"
 msgstr "Seiten-Hilfe"
 
-#: page/MainWP_Page.page.php:601
+#: page/MainWPPage.page.php:601
 #@ mainwp
 msgid "Manage Pages"
 msgstr "Seiten verwalten"
 
-#: page/MainWP_Page.page.php:601
+#: page/MainWPPage.page.php:601
 #@ mainwp
 msgid "Create a New Page"
 msgstr "Erstellen einer neuen Seite"
 
-#: page/MainWP_Plugins.page.php:27
+#: page/MainWPPlugins.page.php:27
 #@ mainwp
 msgid "Plugins Help"
 msgstr "Plugins Hilfe"
 
-#: page/MainWP_Plugins.page.php:1194
+#: page/MainWPPlugins.page.php:1194
 #@ mainwp
 msgid "How to install a Plugin"
 msgstr "Wie man ein Plugin installieren"
 
-#: page/MainWP_Plugins.page.php:1194
+#: page/MainWPPlugins.page.php:1194
 #@ mainwp
 msgid "How to update Plugins"
 msgstr "Wie aktualisieren Sie Plugins"
 
-#: page/MainWP_Plugins.page.php:1194
+#: page/MainWPPlugins.page.php:1194
 #@ mainwp
 msgid "Ignore a plugin update"
 msgstr "Ignorieren Sie ein Plugin-Update"
 
-#: page/MainWP_Post.page.php:25
+#: page/MainWPPost.page.php:25
 #@ mainwp
 msgid "Posts Help"
 msgstr "Beiträge Hilfe"
 
-#: page/MainWP_Post.page.php:1032
+#: page/MainWPPost.page.php:1032
 #@ mainwp
 msgid "Manage Posts"
 msgstr "Beiträge verwalten"
 
-#: page/MainWP_Post.page.php:1032
+#: page/MainWPPost.page.php:1032
 #@ mainwp
 msgid "Create a New Post"
 msgstr "Erstellen Sie einen neuen Beitrag"
 
-#: page/MainWP_Security_Issues.page.php:42
+#: page/MainWPSecurityIssues.page.php:42
 #@ mainwp
 msgid "You need to re-upload the readme.html file manually to unfix this."
 msgstr "Sie müssen die readme.html Datei erneut manuell hochladen zum entfixen."
 
-#: page/MainWP_Security_Issues.page.php:43
+#: page/MainWPSecurityIssues.page.php:43
 #@ mainwp
 msgid "If this user was used as your MainWP Secure Link Admin, you will need to change your Administrator Username in the MainWP Dashboard for the site."
 msgstr "Wenn dieser Benutzer einen MainWP Sicheren Link Admin verwendet, müssen Sie Ihren Administrator Benutzernamen in der MainWP-Dashboard für die Webseite ändern."
 
-#: page/MainWP_Settings.page.php:21
+#: page/MainWPSettings.page.php:21
 #@ mainwp
 msgid "Settings Help"
 msgstr "Einstellungs - Hilfe"
 
-#: page/MainWP_Settings.page.php:205
+#: page/MainWPSettings.page.php:205
 #@ mainwp
 msgid "Settings Overview"
 msgstr "Einstellungs - Übersicht"
 
-#: page/MainWP_Themes.page.php:28
+#: page/MainWPThemes.page.php:28
 #@ mainwp
 msgid "Themes Help"
 msgstr "Themen Hilfe"
 
-#: page/MainWP_Themes.page.php:1030
+#: page/MainWPThemes.page.php:1030
 #@ mainwp
 msgid "Ignore a theme update"
 msgstr "Ignorieren Sie ein Theme Update"
 
-#: page/MainWP_User.page.php:24
+#: page/MainWPUser.page.php:24
 #@ mainwp
 msgid "Users Help"
 msgstr "Benutzer Hilfe"
 
-#: page/MainWP_User.page.php:1053
+#: page/MainWPUser.page.php:1053
 #@ mainwp
 msgid "Manage Users"
 msgstr "Benutzer verwalten"
 
-#: page/MainWP_User.page.php:1053
+#: page/MainWPUser.page.php:1053
 #@ mainwp
 msgid "How to add an User"
 msgstr "Wie man einen Benutzer hinzufügt"
 
-#: page/MainWP_User.page.php:1053
+#: page/MainWPUser.page.php:1053
 #@ mainwp
 msgid "How to bulk add users"
 msgstr "Wie man mehrere Benutzer hinzufügt"
 
-#: view/MainWP_API_Settings_View.view.php:97
+#: view/MainWPAPISettingsView.view.php:97
 #@ mainwp
 msgid "MainWP Account Information"
 msgstr "MainWP Kontoinformationen"
 
-#: view/MainWP_API_Settings_View.view.php:106
+#: view/MainWPAPISettingsView.view.php:106
 #@ mainwp
 msgid "MainWP Account - <em>Required for Support, Extensions, Ideas and Automated Cron Jobs</em>"
 msgstr "MainWP Konto - <em>Erforderlich für den Support, Erweiterungen, Ideen und Automated Cron Jobs</em>"
 
-#: view/MainWP_API_Settings_View.view.php:106
+#: view/MainWPAPISettingsView.view.php:106
 #@ mainwp
 msgid "Create MainWP Account"
 msgstr "Erstelle ein MainWP Konto"
 
-#: view/MainWP_Extensions_View.view.php:52
+#: view/MainWPExtensionsView.view.php:52
 #@ mainwp
 msgid "To enable extensions you need to add your MainWP login info in the <a href=\"admin.php?page=Settings\" style=\"text-decoration: none;\">Settings Page</a>. &nbsp;&nbsp;For more help review <a href=\"http://docs.mainwp.com/how-to-install-mainwp-extensions/\" target=\"_blank\" style=\"text-decoration: none;\">this document.</a>"
 msgstr "Um Erweiterungen zu aktivieren fügen Sie die MainWP Login Infos auf der <a href=\"admin.php?page=Settings\" style=\"text-decoration: none;\">Einstellungseite</a> hinzu.&nbsp;&nbsp;Für weitere Hilfe, siehe <a href=\"http://docs.mainwp.com/how-to-install-mainwp-extensions/\" target=\"_blank\" style=\"text-decoration: none;\">diese Doku</a>."
 
-#: view/MainWP_Manage_Sites_View.view.php:236
+#: view/MainWPManageSitesView.view.php:236
 #@ mainwp
 msgid "Having trouble adding your site?"
 msgstr "Haben Sie Probleme beim Hinzufügen von Ihrer Website?"
 
-#: view/MainWP_Manage_Sites_View.view.php:239
+#: view/MainWPManageSitesView.view.php:239
 #@ mainwp
 msgid "If you are having trouble adding your site please use the Test Connection tab. This tells you the header response being received by your dashboard from that child site. The Test Connection feature is specifically testing what your Dashboard can \"see\" and what your Dashboard \"sees\" and what my Dashboard \"sees\" or what your browser \"sees\" can be completely different things."
 msgstr "Wenn Sie Probleme beim Hinzufügen von Ihrer Webseite haben, benutzen Sie bitte die Registerkarte Verbindung testen. Damit sehen und erhalten Sie die Antwort in der Kopfbereich von Ihrem Dashboard von der abgefragten Webseite. Die Test Connection Funktion ist speziell zum testen und Fehlerfindung, weil was Ihrem Dashboard sieht oder was Ihr Browser sieht, können ganz unterschiedliche Dinge sein."
 
-#: view/MainWP_Manage_Sites_View.view.php:242
+#: view/MainWPManageSitesView.view.php:242
 #@ mainwp
 msgid "The two most common reasons for sites not being added are:"
 msgstr "Die beiden häufigsten Gründe warum Webseiten,  nicht hinzugefügt werden:"
 
-#: view/MainWP_Manage_Sites_View.view.php:244
+#: view/MainWPManageSitesView.view.php:244
 #@ mainwp
 msgid "You have a Security Plugin blocking the connection. If you have a security plugin installed and are having an issue please check the <a href=\"http://docs.mainwp.com/known-plugin-conflicts/\" style=\"text-decoration: none;\">Plugin Conflict page</a> for how to resolve."
 msgstr "Sie haben ein Sicherheits Plugin aktiviert was die Verbindung blockiert. Wenn Sie ein Sicherheits-Plugin installiert haben und Sie haben eine Ausgabe, dann schauen Sie auf der <a href=\"http://docs.mainwp.com/known-plugin-conflicts/\" style=\"text-decoration: none;\">Plugin Conflict Seite</a> nach einer Lösung."
 
-#: view/MainWP_Manage_Sites_View.view.php:245
+#: view/MainWPManageSitesView.view.php:245
 #@ mainwp
 msgid "Your Dashboard is on the same host as your Child site. Some hosts will not allow two sites on the same server to communicate with each other. In this situation you would contact your host for assistance or move your Dashboard or Child site to a different host."
 msgstr "Ihr Dashboard ist auf dem gleichen Host wie Ihr Child Webseite. Einige Hoster/Provider erlaubt keine zwei Seiten auf dem gleichen Server, die miteinander kommunizieren. In dieser Situation bitten SIe Ihren Hoster um Unterstützung oder legen die Dashboard-oder Child Webseite auf einen anderen Host."
 
-#: view/MainWP_Manage_Sites_View.view.php:248
+#: view/MainWPManageSitesView.view.php:248
 #@ mainwp
 msgid "Hide this message"
 msgstr "Diese Nachricht ausblenden"
 
-#: view/MainWP_Manage_Sites_View.view.php:369
+#: view/MainWPManageSitesView.view.php:369
 #@ mainwp
 msgid "Basic SEO turned Off. <strong>Historic Information Only</strong>. You can turn back on in the <a href=\"admin.php?page=Settings\">Settings page</a>."
 msgstr "Basic SEO ausgeschaltet. <strong>nur historische Informationen</strong>. Sie können dies wieder ändern auf der <a href=\"admin.php?page=Settings\">Einstellungs-Seite</a>."
 
-#: view/MainWP_Manage_Sites_View.view.php:398
+#: view/MainWPManageSitesView.view.php:398
 #@ mainwp
 msgid "Not updated yet"
 msgstr "Noch nicht aktualisiert"
 
-#: view/MainWP_Manage_Sites_View.view.php:404
+#: view/MainWPManageSitesView.view.php:404
 #@ mainwp
 msgid "Last Updated"
 msgstr "zuletzt aktualisiert"
 
-#: view/MainWP_Manage_Sites_View.view.php:496
+#: view/MainWPManageSitesView.view.php:496
 #@ mainwp
 msgid "The maximum number of open file descriptors on the child hosting.  0 sets unlimited."
 msgstr "Die maximale Anzahl der geöffneten Datei-Deskriptoren auf dem Child Hosting. 0 setzt unbegrenzt."
 
-#: view/MainWP_Manage_Sites_View.view.php:721
+#: view/MainWPManageSitesView.view.php:721
 #@ mainwp
 msgid "Use this to manage your Sites. To add new Site click on the \"Add new\" Button."
 msgstr "Verwenden Sie diese Funktion zur Verwaltung von Webseiten. Um neue Seiten hinzuzufügen, klicken Sie auf die Schaltfläche \"Neu hinzufügen\"."
 
-#: view/MainWP_Manage_Sites_View.view.php:951
-#: view/MainWP_Manage_Sites_View.view.php:1079
+#: view/MainWPManageSitesView.view.php:951
+#: view/MainWPManageSitesView.view.php:1079
 #@ mainwp
 msgid "No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please "
 msgstr "Kein MainWP Child Plugin erkannt, Child Plugin erst installieren und aktivieren um danach die Webseite im MainWP Dashbaord hinzuzufügen."
 
-#: view/MainWP_System_View.view.php:80
+#: view/MainWPSystemView.view.php:80
 #, php-format
 #@ mainwp
 msgid "No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. Click <a href=\"%1\" target=\"_blank\">here</a> to install <a href=\"%2\" target=\"_blank\">MainWP</a> plugin (do not forget to activate it after installation)."
 msgstr "Kein MainWP Child Plugin erkannt, CHild Plugin erst installieren und aktivieren um danach die Webseite im MainWP Dashboard hinzuzufügen. Klick  <a href=\"%1\" target=\"_blank\">hier</a> zum installieren  <a href=\"%2\" target=\"_blank\">MainWP</a> Plugin (vergessen Sie nicht, nach der Installation aktivieren)."
 
-#: view/MainWP_System_View.view.php:83
+#: view/MainWPSystemView.view.php:83
 #@ mainwp
 msgid "Removing and deactivating the MainWP Child plugin.."
 msgstr "Entfernen und Deaktivieren des Child MainWP Plugin .."
 
-#: view/MainWP_System_View.view.php:84
+#: view/MainWPSystemView.view.php:84
 #@ mainwp
 msgid "The site has been removed and the MainWP Child plugin has been disabled"
 msgstr "Die Seite wurde entfernt und das Child MainWP Plugin wurde deaktiviert"
 
-#: view/MainWP_System_View.view.php:86
+#: view/MainWPSystemView.view.php:86
 #@ mainwp
 msgid "The site has been removed but the MainWP Child plugin could not be disabled"
 msgstr "Die Seite wurde entfernt, aber das MainWP Child Plugin konnte nicht deaktiviert werden."
 
-#: view/MainWP_System_View.view.php:127
+#: view/MainWPSystemView.view.php:127
 #@ mainwp
 msgid "No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please post as much information as possible on the error in the <a href=\"https://mainwp.com/forum/\">support forum</a>."
 msgstr "Kein MainWP Child Plugin erkannt. Child Plugin erst installieren und aktivieren um danach die Webseite im MainWP Dashboard hinzuzufügen. Wenn Sie dieses Problem danach immer noch haben, geben Sie bitte so viel Informationen wie möglich über die Fehler in das <a href=\"https://mainwp.com/forum/\">Support Forum</a>."
 
-#: view/MainWP_System_View.view.php:128
+#: view/MainWPSystemView.view.php:128
 #, php-format
 #@ mainwp
 msgid "No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please  test your connection <a href=\"admin.php?page=managesites&do=test&site=%1\">here</a> or post as much information as possible on the error in the <a href=\"https://mainwp.com/forum/\">support forum</a>."
 msgstr "Kein MainWP Child Plugin erkannt. Child Plugin erst installieren und aktivieren um danach die Webseite im MainWP Dashboard hinzuzufügen. Wenn Sie dieses Problem danach immer noch haben, test Sie Ihre Verbindung einmal  <a href=\"admin.php?page=managesites&do=test&site=%1\">hier</a> oder geben Sie bitte so viel Informationen wie möglich über die Fehler in das <a href=\"https://mainwp.com/forum/\">Support Forum</a>."
 
-#: widget/MainWP_Extensions.widget.php:24
+#: widget/MainWPExtensions.widget.php:24
 #@ mainwp
 msgid "You have no installed extensions."
 msgstr "Sie haben keine Erweiterungen installierten."
 
-#: widget/MainWP_Extensions.widget.php:25
+#: widget/MainWPExtensions.widget.php:25
 #@ mainwp
 msgid "Add an Extension Today"
 msgstr "Eine Erweiterung hinzufügen"
 
-#: widget/MainWP_Extensions.widget.php:27
+#: widget/MainWPExtensions.widget.php:27
 #@ mainwp
 msgid "MainWP Extensions are specific features or tools created for the purpose of expanding the basic functionality of the MainWP plugin."
 msgstr "MainWP Erweiterungen sind spezielle Funktionen oder Werkzeuge für die Erweiterung der Grundfunktionalität von MainWP."
 
-#: widget/MainWP_Extensions.widget.php:29
+#: widget/MainWPExtensions.widget.php:29
 #@ mainwp
 msgid "The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat. Extensions offer custom functions and features so that each user can tailor their MainWP to their specific needs."
 msgstr "Der Kern von MainWP wurde so entwickelt das die am meinsten genutzten Grundfunktionen die die Anwender benötigen schon beinhalten und das ohen dem Quellcode aufzublähen."
 
-#: widget/MainWP_Extensions.widget.php:152
+#: widget/MainWPExtensions.widget.php:152
 #@ mainwp
 msgid "GET MORE EXTENSIONS"
 msgstr "Weitere Erweiterungen"
 
-#: widget/MainWP_Extensions.widget.php:152
+#: widget/MainWPExtensions.widget.php:152
 #@ mainwp
 msgid "Show Grid View"
 msgstr "Grid-Ansicht anzeigen"
 
-#: widget/MainWP_Extensions.widget.php:152
+#: widget/MainWPExtensions.widget.php:152
 #@ mainwp
 msgid "Show List View"
 msgstr "Listen-Ansicht anzeigen"
 
-#: widget/MainWP_Extensions.widget.php:158
+#: widget/MainWPExtensions.widget.php:158
 #@ default
 msgid "Invalid Request"
 msgstr "Ungültige Anfrage"
 
-#: widget/MainWP_Help.widget.php:26
+#: widget/MainWPHelp.widget.php:26
 #@ mainwp
 msgid "Clone"
 msgstr "Klone"
 
-#: widget/MainWP_Help.widget.php:26
+#: widget/MainWPHelp.widget.php:26
 #@ mainwp
 msgid "Miscellaneous"
 msgstr "Diverses"
@@ -4658,156 +4658,156 @@ msgstr "Diverses"
 msgid "News"
 msgstr "Neuigkeiten"
 
-#: widget/MainWP_Options.widget.php:65
+#: widget/MainWPOptions.widget.php:65
 #@ mainwp
 msgid "Hide MainWP Child Plugin"
 msgstr "Ausblenden MainWP Child Plugin"
 
-#: widget/MainWP_Options.widget.php:66
+#: widget/MainWPOptions.widget.php:66
 #@ mainwp
 msgid "<strong>STOP BEFORE TURNING ON!</strong> Hiding the Child Plugin does require the plugin to make changes to your .htaccess file that in rare instances or server configurations could cause problems."
 msgstr "<strong>STOP, BEVOR SIE AKTIVIEREN!</strong> Ausblenden der Child Plugin benötigt neben dem Plugin, auch Änderungen an der .htaccess-Datei, dass in seltenen Fällen zu Server-Konfigurations Problemen führen kann."
 
-#: widget/MainWP_Options.widget.php:108
+#: widget/MainWPOptions.widget.php:108
 #@ mainwp
 msgid "Requires MainWP Login"
 msgstr "Benötigt MainWP Anmeldung"
 
-#: widget/MainWP_Options.widget.php:142
+#: widget/MainWPOptions.widget.php:142
 #@ mainwp
 msgid "Basic SEO Stats"
 msgstr "Basic SEO Stats"
 
-#: widget/MainWP_Options.widget.php:142
+#: widget/MainWPOptions.widget.php:142
 #@ mainwp
 msgid "This requires your Dashboard to query the Google servers for this information."
 msgstr "Dies erfordert das das Dashboard die Google-Server für diese Informationen abfragen."
 
-#: widget/MainWP_Recent_Pages.widget.php:17
+#: widget/MainWPRecentPages.widget.php:17
 #@ mainwp
 msgid "Recent Pages"
 msgstr "Neue Seiten"
 
-#: widget/MainWP_Right_Now.widget.php:39
+#: widget/MainWPRightNow.widget.php:39
 #@ mainwp
 msgid "<h3>No Plugin Information Found.</h3> This may be a premium plugin and no other details are available from WordPress."
 msgstr "<h3>Kein Plugin Informationen gefunden.</h3> Dies kann ein Premium-Plugin sein und keine anderen Details von Wordpress."
 
-#: widget/MainWP_Right_Now.widget.php:39
+#: widget/MainWPRightNow.widget.php:39
 #@ mainwp
 msgid "Please visit the Plugin website for more information."
 msgstr "Bitte besuchen Sie die Plugin Webseite für weitere Informationen."
 
-#: widget/MainWP_Right_Now.widget.php:39
+#: widget/MainWPRightNow.widget.php:39
 #@ mainwp
 msgid "Please visit the Plugin website for more information: "
 msgstr "Bitte besuchen Sie die Plugin Website für weitere Informationen:"
 
-#: page/MainWP_Server_Information.page.php:228
+#: page/MainWPServerInformation.page.php:228
 #@ mainwp
 msgid "Last run"
 msgstr "Letzte Ausführung"
 
-#: page/MainWP_Settings.page.php:23
-#: page/MainWP_Settings.page.php:109
+#: page/MainWPSettings.page.php:23
+#: page/MainWPSettings.page.php:109
 #@ mainwp
 msgid "Advanced Options"
 msgstr "Erweiterte Optionen"
 
-#: page/MainWP_Settings.page.php:124
+#: page/MainWPSettings.page.php:124
 #@ mainwp
 msgid "Minimum delay between requests (milliseconds)"
 msgstr "Mindestverzögerung zwischen Anforderungen (Millisekunden)"
 
-#: page/MainWP_Settings.page.php:124
+#: page/MainWPSettings.page.php:124
 #@ mainwp
 msgid "Minimum delay between requests (milliseconds). With a typical shared host you should set this at 200."
 msgstr "Mindestverzögerung zwischen Anforderungen (Millisekunden). Bei einem typischen Web-Hostern, sollten dies bei 200 liegen."
 
-#: page/MainWP_Settings.page.php:144
+#: page/MainWPSettings.page.php:144
 #@ mainwp
 msgid "Minimum delay between requests to the same ip (milliseconds)"
 msgstr "Mindestverzögerung zwischen den Anforderungen an die gleiche IP (Millisekunden)"
 
-#: page/MainWP_Settings.page.php:144
+#: page/MainWPSettings.page.php:144
 #@ mainwp
 msgid "Minimum delay between requests (milliseconds) per IP. With a typical shared host you should set this at 1000."
 msgstr "Mindestverzögerung zwischen Anforderungen (Millisekunden) pro IP. Bei einem typischen Web-Hostern, sollte dies bei 1000 liegen."
 
-#: widget/MainWP_Options.widget.php:102
+#: widget/MainWPOptions.widget.php:102
 #@ mainwp
 msgid "Use MainWP Cron Trigger"
 msgstr "Verwenden MainWP Cron-Trigger"
 
-#: widget/MainWP_Options.widget.php:102
+#: widget/MainWPOptions.widget.php:102
 #@ mainwp
 msgid "Enables the cron jobs triggered from the MainWP Member area. A MainWP login is required for this option."
 msgstr "Ermöglicht die Cron-Jobs von dem MainWP Mitgliederbereich. Eine MainWP Anmeldung für diese Option ist erforderlich."
 
-#: widget/MainWP_Options.widget.php:112
+#: widget/MainWPOptions.widget.php:112
 #@ mainwp
 msgid "Use WP-Cron"
 msgstr "Verwenden WP-Cron"
 
-#: widget/MainWP_Options.widget.php:112
+#: widget/MainWPOptions.widget.php:112
 #@ mainwp
 msgid "When not using WP-Cron you will need to set up a cron job via your hosting."
 msgstr "Wenn Sie keine WP-Cron benötigen, sollten Sie einen Cron Job über Ihr Hosting erstellen."
 
-#: widget/MainWP_Widget_Plugins.widget.php:74
+#: widget/MainWPWidgetPlugins.widget.php:74
 #@ mainwp
 msgid "Deactive"
 msgstr "Deaktiviert"
 
-#: widget/MainWP_Widget_Plugins.widget.php:112
+#: widget/MainWPWidgetPlugins.widget.php:112
 #@ mainwp
 msgid "Plugin has been activated"
 msgstr "Plugin wurde aktiviert"
 
-#: widget/MainWP_Widget_Plugins.widget.php:118
+#: widget/MainWPWidgetPlugins.widget.php:118
 #@ mainwp
 msgid "Plugin has been deactivated"
 msgstr "Plugin wurde deaktiviert"
 
-#: widget/MainWP_Widget_Plugins.widget.php:124
+#: widget/MainWPWidgetPlugins.widget.php:124
 #@ mainwp
 msgid "Plugin has been permanently deleted"
 msgstr "Plugin wurde endgültig gelöscht"
 
-#: widget/MainWP_Widget_Themes.widget.php:102
+#: widget/MainWPWidgetThemes.widget.php:102
 #@ mainwp
 msgid "Theme has been activated"
 msgstr "Theme wurde aktiviert"
 
-#: widget/MainWP_Widget_Themes.widget.php:108
+#: widget/MainWPWidgetThemes.widget.php:108
 #@ mainwp
 msgid "Theme has been permanently deleted"
 msgstr "Thema wurde endgültig gelöscht"
 
-#: page/MainWP_Server_Information.page.php:16
-#: page/MainWP_Server_Information.page.php:37
-#: page/MainWP_Server_Information.page.php:171
+#: page/MainWPServerInformation.page.php:16
+#: page/MainWPServerInformation.page.php:37
+#: page/MainWPServerInformation.page.php:171
 #@ mainwp
 #@ default
 msgid "WP-Config File"
 msgstr "WP Konfigurationsdatei"
 
-#: page/MainWP_Settings.page.php:117
+#: page/MainWPSettings.page.php:117
 #@ mainwp
 msgid "Maximum simultaneous requests"
 msgstr "Maximale gleichzeitige Anfragen"
 
-#: page/MainWP_Settings.page.php:117
+#: page/MainWPSettings.page.php:117
 #@ mainwp
 msgid "Maximum simultaneous requests. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 4, set to 0 for unlimited."
 msgstr "Maximale gleichzeitige Anfragen. Wenn zu viele Anfragen ausgesendet werden,  es wird dann zu Zeitverzögerungen kommen. Dies führt dazu, untergeordnete Standorte als offline angezeigt werden, während sie online sind. Bei einem typischen Web-Hostern, sollten Sie dies bei 4 setzen, auf 0 für unbegrenzt."
 
-#: page/MainWP_Settings.page.php:137
+#: page/MainWPSettings.page.php:137
 #@ mainwp
 msgid "Maximum simultaneous requests per ip"
 msgstr "Maximale gleichzeitige Anfragen pro IP"
 
-#: page/MainWP_Settings.page.php:137
+#: page/MainWPSettings.page.php:137
 #@ mainwp
 msgid "Maximum simultaneous requests per IP. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 1, set to 0 for unlimited."
 msgstr "Maximale gleichzeitige Anfragen pro IP. Wenn zu viele Anfragen ausgesendet, es kommt dann zu Zeitverzögerungen. Dies führt dazu, untergeordnete Standorte als offline angezeigt werden, während sie online sind. Bei einem typischen Web-Hostern, sollten Sie dies bei 1 setzen, auf 0 für unbegrenzt."

@@ -62,9 +62,11 @@ class MainWP_UI {
 					if ( $website->sync_errors == '' || $enableOfflineSites ) {
 						$selected = ( $selected_websites == 'all' || in_array( $website->id, $selected_websites ) );
 
-						echo '<div class="mainwp_selected_sites_item ' . ( $selected ? 'selected_sites_item_checked' : '' ) . '"><input onClick="mainwp_site_select(this)" type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_site' : 'selected_sites[]' ) . '" siteid="' . $website->id . '" value="' . $website->id . '" id="selected_sites_' . $website->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes( $website->name ) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
-					} else {
-						echo '<div class="mainwp_selected_sites_item disabled"><input type="' . $type . '" disabled=disabled /> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes( $website->name ) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+						echo '<div title="'. $website->url .'" class="mainwp_selected_sites_item ' . ( $selected ? 'selected_sites_item_checked' : '' ) . '"><input onClick="mainwp_site_select(this)" type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_site' : 'selected_sites[]' ) . '" siteid="' . $website->id . '" value="' . $website->id . '" id="selected_sites_' . $website->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+					}
+					else
+					{
+						echo '<div title="'. $website->url . '" class="mainwp_selected_sites_item disabled"><input type="' . $type . '" disabled=disabled /> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
 					}
 				}
 				@MainWP_DB::free_result( $websites );
@@ -81,7 +83,7 @@ class MainWP_UI {
 				foreach ( $groups as $group ) {
 					$selected = in_array( $group->id, $selected_groups );
 
-					echo '<div class="mainwp_selected_groups_item ' . ( $selected ? 'selected_groups_item_checked' : '' ) . '"><input onClick="mainwp_group_select(this)" type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_group' : 'selected_groups[]' ) . '" value="' . $group->id . '" id="selected_groups_' . $group->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_groups_' . $group->id . '">' . $group->name . '</label></div>';
+					echo '<div class="mainwp_selected_groups_item ' . ( $selected ? 'selected_groups_item_checked' : '' ) . '"><input onClick="mainwp_group_select(this)" type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_group' : 'selected_groups[]' ) . '" value="' . $group->id . '" id="selected_groups_' . $group->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_groups_' . $group->id . '">' . stripslashes( $group->name ) . '</label></div>';
 				}
 				?>
             </div>
@@ -180,7 +182,7 @@ class MainWP_UI {
 							?>
 							<div class="categories_group_<?php echo esc_attr( $gid ); ?>">
 								<div class="mainwp_groups_list_header">
-									<div><?php echo esc_html( $group->name ) ?></div>
+									<div><?php echo stripslashes( $group->name ); ?></div>
 								</div>
 								<?php
 								$websites = MainWP_DB::Instance()->getWebsitesByGroupIds( array( $gid ) );

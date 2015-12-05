@@ -15,7 +15,6 @@ define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 class MainWP_System {
 	//Singleton
 	private static $instance = null;
-	private $apiStatus;
 
 	private $upgradeVersionInfo;
 	private $posthandler;
@@ -47,22 +46,16 @@ class MainWP_System {
 		return self::$instance;
 	}
 
-	public function getAPIStatus() {
-		return $this->apiStatus;
-	}
-
-	public function isAPIValid() {
-		return $this->apiStatus == MAINWP_API_VALID;
-	}
-
 	public function __construct( $mainwp_plugin_file ) {
+		if ( !defined( 'MAINWP_VERSION' ) ) {
+			define( 'MAINWP_VERSION', $this->current_version );
+		}
+
 		MainWP_System::$instance = $this;
 		$this->update();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 		list ( $t1, $t2 ) = explode( '/', $this->plugin_slug );
 		$this->slug = str_replace( '.php', '', $t2 );
-
-		$this->apiStatus = MainWP_API_Settings::testAPIs( 'main' );
 
 		if ( is_admin() ) {
 			include_once( ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php' ); //Version information from wordpress
@@ -146,8 +139,11 @@ class MainWP_System {
 		add_action( 'init', array( &$this, 'parse_init' ) );
 		add_action( 'init', array( &$this, 'init' ), 9999 );
 
+		add_action( 'admin_init', array( $this, 'admin_redirects' ) );
+
 		//Remove the pages from the menu which I use in AJAX
 		add_action( 'admin_menu', array( &$this, 'admin_menu' ) );
+		add_action( 'admin_menu', array( &$this, 'remove_wp_menus' ) );
 
 		//Add custom error messages
 		add_filter( 'post_updated_messages', array( &$this, 'post_updated_messages' ) );
@@ -167,7 +163,6 @@ class MainWP_System {
 		add_action( 'mainwp_cronstats_action', array( $this, 'mainwp_cronstats_action' ) );
 		add_action( 'mainwp_cronbackups_action', array( $this, 'mainwp_cronbackups_action' ) );
 		add_action( 'mainwp_cronbackups_continue_action', array( $this, 'mainwp_cronbackups_continue_action' ) );
-		add_action( 'mainwp_cronconflicts_action', array( $this, 'mainwp_cronconflicts_action' ) );
 		add_action( 'mainwp_cronupdatescheck_action', array( $this, 'mainwp_cronupdatescheck_action' ) );
 		add_action( 'mainwp_cronpingchilds_action', array( $this, 'mainwp_cronpingchilds_action' ) );
 
@@ -212,16 +207,6 @@ class MainWP_System {
 		} else {
 			if ( ! $useWPCron ) {
 				wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
-			}
-		}
-
-		if ( ( $sched = wp_next_scheduled( 'mainwp_cronconflicts_action' ) ) == false ) {
-			if ( $useWPCron ) {
-				wp_schedule_event( time(), 'twicedaily', 'mainwp_cronconflicts_action' );
-			}
-		} else {
-			if ( ! $useWPCron ) {
-				wp_unschedule_event( $sched, 'mainwp_cronconflicts_action' );
 			}
 		}
 
@@ -283,6 +268,7 @@ class MainWP_System {
 		MainWP_Themes::init();
 		MainWP_Plugins::init();
 		MainWP_Right_Now::init();
+		MainWP_Setup_Wizard::init();
 	}
 
 	function filter_fetchUrlsAuthed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
@@ -322,20 +308,13 @@ class MainWP_System {
 		load_plugin_textdomain( 'mainwp', false, dirname( dirname( plugin_basename( __FILE__ ) ) ) . '/languages/' );
 	}
 
-	public function activated_sub_check( $arr ) {
-		if ( ! is_array( $arr ) ) {
-			return $arr;
-		}
-		if ( count( $arr ) != 1 ) {
-			return $arr;
-		}
-		$rslt = array( 'result' => MainWP_API_Settings::testAPIs( $arr[0] ) );
-
-		return $rslt;
-	}
-
 	public function activated_check() {
 		return $this->getVersion();
+	}
+
+	public function activated_sub_check()
+	{
+		return array( 'result' => MAINWP_API_VALID );
 	}
 
 	public function admin_notices() {
@@ -343,8 +322,6 @@ class MainWP_System {
 			echo '<meta http-equiv="refresh" content="0">';
 			delete_option( 'mainwp_refresh' );
 		}
-
-		echo '<div id="message" class="mainwp-api-message-invalid updated fade" style="' . ( true || $this->isAPIValid() ? 'display: none;' : '' ) . '"><p><strong>MainWP needs to be activated before using - <a href="' . admin_url() . 'admin.php?page=Settings">Activate Here</a>.</strong></p></div>';
 
 		if ( MainWP_DB::Instance()->getWebsitesCount() == 0 ) {
 			echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';
@@ -506,7 +483,7 @@ class MainWP_System {
 					}
 
 					$api_slug = dirname( $plugin_slug );
-					$rslt     = MainWP_API_Settings::getUpgradeInformationTwo( $api_slug );
+					$rslt     = MainWP_API_Settings::getUpgradeInformation( $api_slug );
 
 					if ( ! empty( $rslt ) && isset( $rslt->latest_version ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
 						$transient->response[ $plugin_slug ] = self::mapRsltObj( $rslt );
@@ -522,7 +499,7 @@ class MainWP_System {
 							continue;
 						}
 						$api_slug = dirname( $plugin_slug );
-						$rslt     = MainWP_API_Settings::getUpgradeInformationTwo( $api_slug );
+						$rslt     = MainWP_API_Settings::getUpgradeInformation( $api_slug );
 						if ( ! empty( $rslt ) && isset( $rslt->latest_version ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
 							$this->upgradeVersionInfo->result[ $api_slug ] = $rslt;
 							$transient->response[ $plugin_slug ]           = self::mapRsltObj( $rslt );
@@ -591,7 +568,7 @@ class MainWP_System {
 			$this->checkUpgrade();
 		}
 
-		if ( $this->upgradeVersionInfo != null ) {
+		if ($this->upgradeVersionInfo != null && property_exists( $this->upgradeVersionInfo , 'result' ) && is_array( $this->upgradeVersionInfo->result ) ) {
 			$extensions = MainWP_Extensions::getExtensions();
 			foreach ( $this->upgradeVersionInfo->result as $rslt ) {
 				$plugin_slug = MainWP_Extensions::getPluginSlug( $rslt->slug );
@@ -616,13 +593,6 @@ class MainWP_System {
 		$result   = MainWP_Extensions::getSlugs();
 		$slugs    = $result['slugs'];
 		$am_slugs = $result['am_slugs'];
-
-		if ( $slugs != '' ) {
-			$slugs = explode( ',', $slugs );
-			if ( in_array( $arg->slug, $slugs ) ) {
-				return MainWP_API_Settings::getUpgradeInformation( $arg->slug );
-			}
-		}
 
 		if ( $am_slugs != '' ) {
 			$am_slugs = explode( ',', $am_slugs );
@@ -958,8 +928,8 @@ class MainWP_System {
 
 				//Run over every update we had last time..
 				if ( isset( $websiteCoreUpgrades['current'] ) ) {
-					$infoTxt    = '<a href="' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) . '">' . $website->name . '</a> - ' . $websiteCoreUpgrades['current'] . ' to ' . $websiteCoreUpgrades['new'];
-					$infoNewTxt = '*NEW* <a href="' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) . '">' . $website->name . '</a> - ' . $websiteCoreUpgrades['current'] . ' to ' . $websiteCoreUpgrades['new'];
+					$infoTxt    = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $websiteCoreUpgrades['current'] . ' to ' . $websiteCoreUpgrades['new'];
+					$infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $websiteCoreUpgrades['current'] . ' to ' . $websiteCoreUpgrades['new'];
 					$newUpdate  = ! ( isset( $websiteLastCoreUpgrades['current'] ) && ( $websiteLastCoreUpgrades['current'] == $websiteCoreUpgrades['current'] ) && ( $websiteLastCoreUpgrades['new'] == $websiteCoreUpgrades['new'] ) );
 					if ( $website->automatic_update == 1 ) {
 						if ( $newUpdate ) {
@@ -1010,8 +980,8 @@ class MainWP_System {
 						continue;
 					}
 
-					$infoTxt    = '<a href="' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) . '">' . $website->name . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
-					$infoNewTxt = '*NEW* <a href="' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) . '">' . $website->name . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
+					$infoTxt    = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
+					$infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
 
 					$newUpdate = ! ( isset( $websiteLastPlugins[ $pluginSlug ] ) && ( $pluginInfo['Version'] == $websiteLastPlugins[ $pluginSlug ]['Version'] ) && ( $pluginInfo['update']['new_version'] == $websiteLastPlugins[ $pluginSlug ]['update']['new_version'] ) );
 					//update this..
@@ -1040,8 +1010,8 @@ class MainWP_System {
 						continue;
 					}
 
-					$infoTxt    = '<a href="' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) . '">' . $website->name . '</a> - ' . $themeInfo['Name'] . ' ' . $themeInfo['Version'] . ' to ' . $themeInfo['update']['new_version'];
-					$infoNewTxt = '*NEW* <a href="' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) . '">' . $website->name . '</a> - ' . $themeInfo['Name'] . ' ' . $themeInfo['Version'] . ' to ' . $themeInfo['update']['new_version'];
+					$infoTxt    = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name )  . '</a> - ' . $themeInfo['Name'] . ' ' . $themeInfo['Version'] . ' to ' . $themeInfo['update']['new_version'];
+					$infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $themeInfo['Name'] . ' ' . $themeInfo['Version'] . ' to ' . $themeInfo['update']['new_version'];
 
 					$newUpdate = ! ( isset( $websiteLastThemes[ $themeSlug ] ) && ( $themeInfo['Version'] == $websiteLastThemes[ $themeSlug ]['Version'] ) && ( $themeInfo['update']['new_version'] == $websiteLastThemes[ $themeSlug ]['update']['new_version'] ) );
 					//update this..
@@ -1069,7 +1039,7 @@ class MainWP_System {
 				 */
 				$sitePluginConflicts = json_decode( $website->pluginConflicts, true );
 				if ( count( $sitePluginConflicts ) > 0 ) {
-					$infoTxt = '<a href="' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) . '">' . $website->name . '</a> - ';
+					$infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name )  . '</a> - ';
 
 					$pluginConflicts .= '<li>' . $infoTxt;
 					$added = false;
@@ -1088,7 +1058,7 @@ class MainWP_System {
 				 */
 				$siteThemeConflicts = json_decode( $website->themeConflicts, true );
 				if ( count( $siteThemeConflicts ) > 0 ) {
-					$infoTxt = '<a href="' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) . '">' . $website->name . '</a> - ';
+					$infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ';
 
 					$themeConflicts .= '<li>' . $infoTxt;
 					$added = false;
@@ -1339,71 +1309,6 @@ class MainWP_System {
 		@MainWP_DB::free_result( $websites );
 	}
 
-	function mainwp_cronconflicts_action() {
-		MainWP_Logger::Instance()->info( 'CRON :: conflicts' );
-
-		$lastCronConflicts = get_option( 'mainwp_cron_last_cronconflicts' );
-		if ( $lastCronConflicts !== false && ( time() - $lastCronConflicts ) < ( 60 * 60 * 48 ) ) {
-			return;
-		}
-		MainWP_Utility::update_option( 'mainwp_cron_last_cronconflicts', time() );
-
-		MainWP_API_Settings::testAPIs();
-
-		if ( true || $this->isAPIValid() ) {
-			if ( ! isset( $GLOBALS['pagenow'] ) ) {
-				$GLOBALS['pagenow'] = '';
-			}
-			$url = get_home_url();
-			try {
-				$cronjobs = get_option( 'mainwp_cron_jobs' );
-				if ( $cronjobs === false ) {
-					$cronjobs = 0;
-				}
-				if ( $cronjobs && ! ( ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 ) ) ) {
-					$cronjobs = false;
-				}
-				$result = MainWP_Utility::http_post( 'do=getConflicts&url=' . urlencode( $url ) . '&username=' . urldecode( get_option( 'mainwp_api_username' ) ) . '&cron=' . $cronjobs, 'mainwp.com', '/versioncontrol/rqst.php', 80, 'main', true );
-			} catch ( Exception $e ) {
-				MainWP_Logger::Instance()->warning( 'An error occured when trying to reach the MainWP server: ' . $e->getMessage() );
-			}
-
-			if ( isset( $result[1] ) ) {
-				$result = $result[1];
-			} else {
-				return;
-			}
-
-			$result             = json_decode( $result, true );
-			$pluginConflicts    = explode( "\n", $result['pluginConflicts'] );
-			$themeConflicts     = explode( "\n", $result['themeConflicts'] );
-			$newPluginConflicts = array();
-			foreach ( $pluginConflicts as $pluginConflict ) {
-				$lastIndex = strrpos( $pluginConflict, ' ' );
-				if ( ! $lastIndex ) {
-					$newPluginConflicts[ $pluginConflict ] = false;
-				} else {
-					$newPluginConflicts[ substr( $pluginConflict, 0, $lastIndex ) ] = substr( $pluginConflict, $lastIndex );
-				}
-			}
-
-			$newThemeConflicts = array();
-			foreach ( $themeConflicts as $themeConflict ) {
-				$lastIndex = strrpos( $themeConflict, ' ' );
-				if ( ! $lastIndex ) {
-					$newThemeConflicts[ $themeConflict ] = false;
-				} else {
-					$newThemeConflicts[ substr( $themeConflict, 0, $lastIndex ) ] = substr( $themeConflict, $lastIndex );
-				}
-			}
-
-			MainWP_Utility::update_option( 'mainwp_pluginConflicts', $newPluginConflicts );
-			MainWP_Utility::update_option( 'mainwp_themeConflicts', $newThemeConflicts );
-
-			return;
-		}
-	}
-
 	function mainwp_cronbackups_continue_action() {
 		MainWP_Logger::Instance()->info( 'CRON :: backups continue' );
 
@@ -1615,6 +1520,16 @@ class MainWP_System {
 		return false;
 	}
 
+	public static function get_openssl_conf() {
+		$setup_hosting_type = get_option( 'mwp_setup_installationHostingType' );
+		$setup_system_type = get_option( 'mwp_setup_installationSystemType' );
+		$setup_conf_loc = '';
+		if ( $setup_hosting_type == 2 && $setup_system_type == 3 ) {
+			$setup_conf_loc = get_option( 'mwp_setup_opensslLibLocation' );
+		}
+		return $setup_conf_loc;
+	}
+
 	function init() {
 		if ( ! function_exists( 'mainwp_current_user_can' ) ) {
 			function mainwp_current_user_can( $cap_type = '', $cap ) {
@@ -1693,8 +1608,6 @@ class MainWP_System {
 			$this->mainwp_cronstats_action();
 		} else if ( isset( $_GET['do'] ) && $_GET['do'] == 'checkSites' ) {
 			$this->mainwp_cronofflinecheck_action();
-		} else if ( isset( $_GET['do'] ) && $_GET['do'] == 'cronConflicts' ) {
-			$this->mainwp_cronconflicts_action();
 		} else if ( isset( $_GET['do'] ) && $_GET['do'] == 'cronUpdatesCheck' ) {
 			$this->mainwp_cronupdatescheck_action();
 		} else if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
@@ -1709,6 +1622,14 @@ class MainWP_System {
 			if ( file_exists( $file ) && md5( filesize( $file ) ) == $_GET['sig'] ) {
 				$this->uploadFile( $file );
 				exit();
+			}
+		}
+		else if ( isset( $_GET['page'] ) )
+		{
+			switch ( $_GET['page'] ) {
+				case 'mainwp-setup' :
+					new MainWP_Setup_Wizard();
+					break;
 			}
 		}
 	}
@@ -1812,8 +1733,40 @@ class MainWP_System {
 		wp_enqueue_script( 'user-profile' );
 		wp_enqueue_style( 'thickbox' );
 
+		if ( isset( $_GET['page'] ) && ( $_GET['page'] == 'PluginsManage' || $_GET['page'] == 'ThemesManage' ) ) {
+			wp_enqueue_script( 'mainwp-fixedtable', MAINWP_PLUGIN_URL . 'js/tableHeadFixer.js', array( 'jquery', 'jquery-ui-core' ), $this->current_version );
+		}
+
 		if ( ! current_user_can( 'update_core' ) ) {
 			remove_action( 'admin_notices', 'update_nag', 3 );
+		}
+	}
+
+	public function admin_redirects() {
+		$_pos = strlen( $_SERVER['REQUEST_URI'] ) - strlen( '/wp-admin/' );
+		$hide_menus = get_option( 'mwp_setup_hide_wp_menus', array() );
+		if ( ! is_array( $hide_menus ) ) {
+			$hide_menus = array(); }
+		$hide_wp_dashboard = in_array( 'dashboard', $hide_menus );
+		if ( ($hide_wp_dashboard && strpos( $_SERVER['REQUEST_URI'], 'index.php' ) ) || (strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) == $_pos ) ) {
+			wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+			die();
+		}
+
+		if ( ! get_transient( '_mainwp_activation_redirect' ) || is_network_admin() ) {
+			return;
+		}
+
+		delete_transient( '_mainwp_activation_redirect' );
+
+		if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'mainwp-setup' ) ) ) {
+			return;
+		}
+
+		$quick_setup = get_site_option('mainwp_run_quick_setup', false);
+		if ($quick_setup == 'yes') {
+			wp_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );
+			exit;
 		}
 	}
 
@@ -1835,6 +1788,16 @@ class MainWP_System {
 					if ( isset( $_POST['mainwp_primaryBackup'] ) ) {
 						MainWP_Utility::update_option( 'mainwp_primaryBackup', $_POST['mainwp_primaryBackup'] );
 					}
+				}
+			} else if ( $_GET['page'] == 'MainWPTools' ) {
+				if ( isset( $_POST['submit'] ) ) {
+					$hide_menus = array();
+					if ( isset( $_POST['mainwp_hide_wpmenu'] ) && is_array( $_POST['mainwp_hide_wpmenu'] ) && count( $_POST['mainwp_hide_wpmenu'] ) > 0 ) {
+						foreach ( $_POST['mainwp_hide_wpmenu'] as $value ) {
+							$hide_menus[] = $value;
+						}
+					}
+					MainWP_Utility::update_option('mwp_setup_hide_wp_menus', $hide_menus);
 				}
 			}
 		}
@@ -2123,8 +2086,11 @@ class MainWP_System {
 
 	function admin_enqueue_styles( $hook ) {
 		wp_register_style( 'mainwp-hidden', MAINWP_PLUGIN_URL . 'css/mainwp-hidden.css', array(), $this->current_version );
-
+		global $wp_version;
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'css/mainwp.css', array(), $this->current_version );
+		if ( version_compare( $wp_version, '4.3.1', '>' ) ) {
+			wp_enqueue_style( 'mainwp-44', MAINWP_PLUGIN_URL . 'css/mainwp-44.css', array(), $this->current_version );
+		}
 		wp_enqueue_style( 'mainwp-responsive-layouts', MAINWP_PLUGIN_URL . 'css/mainwp-responsive-layouts.css', array(), $this->current_version );
 		wp_enqueue_style( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'css/fileuploader.css', array(), $this->current_version );
 
@@ -2164,6 +2130,30 @@ class MainWP_System {
 				unset( $menu[ $k ] );
 			} else if ( $item[2] == 'edit.php?post_type=bulkpage' ) { //Remove bulkpost
 				unset( $menu[ $k ] );
+			}
+		}
+	}
+
+
+	public function remove_wp_menus() {
+		$hide_menus = get_option( 'mwp_setup_hide_wp_menus', array() );
+		if ( ! is_array( $hide_menus ) ) {
+			$hide_menus = array(); }
+
+		$menus_slug = array(
+			'dashboard' => 'index.php',
+			'posts' => 'edit.php',
+			'media' => 'upload.php',
+			'pages' => 'edit.php?post_type=page',
+			'appearance' => 'themes.php',
+			'comments' => 'edit-comments.php',
+			'users' => 'users.php',
+			'tools' => 'tools.php',
+		);
+
+		foreach ( $hide_menus as $menu ) {
+			if ( isset( $menus_slug[ $menu ] ) ) {
+				remove_menu_page( $menus_slug[ $menu ] );
 			}
 		}
 	}
@@ -2369,13 +2359,6 @@ class MainWP_System {
 	}
 
 	function deactivation() {
-		wp_clear_scheduled_hook( 'mainwp_cron_action' );
-		delete_option( 'mainwp_requests' );
-		try {
-			MainWP_Utility::http_post( 'do=deactivation&url=' . urlencode( get_home_url() ), 'mainwp.com', '/versioncontrol/rqst.php', 80, 'main', true );
-		} catch ( Exception $e ) {
-			MainWP_Logger::Instance()->warning( 'An error occured when trying to reach the MainWP server: ' . $e->getMessage() );
-		}
 	}
 
 	//On update update the database

@@ -114,27 +114,11 @@ class MainWP_Twitter {
 	}
 
 	public static function genTwitterButton( $content, $echo = true ) {
-		ob_start();
+		ob_start();$content
 		?>
-		<button class="mainwp_tweet_this">
+		<button class="mainwp_tweet_this" msg="<?php echo urlencode($content); ?>">
 			<i class="fa fa-twitter fa-1x" style="color: #4099FF;"></i>&nbsp;
 			<?php _e( 'Brag on Twitter', 'mainwp' ); ?></button>
-		<script type="text/javascript">
-			var mainwpTweetUrlBuilder = function ( o ) {
-				return [
-					'https://twitter.com/intent/tweet?tw_p=tweetbutton',
-					'&url=" "',
-					'&text=', o.text
-				].join( '' );
-			};
-			jQuery( '.mainwp_tweet_this' ).on( 'click', function () {
-				var url = mainwpTweetUrlBuilder( {
-					text: '<?php echo urlencode( $content ); ?>'
-				} );
-				window.open( url, 'Tweet', 'height=450,width=700' );
-				mainwp_twitter_dismiss( this );
-			} )
-		</script>
 		<?php
 		$return = ob_get_clean();
 
@@ -150,42 +134,30 @@ class MainWP_Twitter {
 			return false;
 		}
 
-		if ( empty( $coutRealItems ) ) {
-			return false;
-		}
-
 		$filters = self::get_filter();
 
 		if ( ! in_array( $what, $filters ) ) {
 			return false;
 		}
 
-		if ( 'new_page' == $what || 'new_post' == $what || 'create_new_user' == $what ) {
-			if ( 1 == $countSites ) {
-				return false;
-			}
-		} else if ( ( 1 == $countSites ) && ( 1 == $coutRealItems ) ) {
-			return false;
+		$clear_twit = false;
+		if ( empty($coutRealItems) || $coutRealItems == 1 ) {
+			$clear_twit = true;
 		}
 
-		if ( empty( $countSec ) ) {
-			$countSec = 1;
-		}
-		// store one twitt info only
-		$data     = array(
-			$twId => array(
-				'sites'      => $countSites,
-				'seconds'    => $countSec,
-				'items'      => $countItems,
-				'real_items' => $coutRealItems,
-			),
-		);
-		$user_id  = get_current_user_id();
 		$opt_name = 'mainwp_tt_message_' . $what;
-		if ( update_user_option( $user_id, $opt_name, $data ) ) {
-			return true;
-		}
+		$user_id = get_current_user_id();
 
+		if ( $clear_twit ) {
+			delete_user_option( $user_id, $opt_name );
+		} else {
+			if ( empty( $countSec ) ) $countSec = 1;
+			// store one twitt info only
+			$data = array( $twId => array( 'sites' => $countSites, 'seconds' => $countSec, 'items' => $countItems, 'real_items' => $coutRealItems ) );
+			if ( update_user_option( $user_id, $opt_name, $data ) ) {
+				return true;
+			}
+		}
 		return false;
 	}
 

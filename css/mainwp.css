@@ -9,7 +9,7 @@
 
 .mainwp-action-lnks ul li {
     float: right;
-    margin-left: 2em; 
+    margin-left: 2em;
     margin-bottom: 0 !important;
 }
 
@@ -57,7 +57,7 @@
     width: 275px;
     height: 134px;
     overflow: auto;
-    background: #f4f4f4; 
+    background: #f4f4f4;
     margin-top: 17px;
     padding: 3px;
 }
@@ -158,13 +158,13 @@ a.mainwp-post-trash {
     padding: 16px 10px 32px;
 }
 
-#MainWPBulkAddUserLoading {
+#MainWP_Bulk_AddUserLoading {
     display: none;
     text-align: left;
     padding: 10px;
 }
 
-#MainWPBulkAddUserLoading img {
+#MainWP_Bulk_AddUserLoading img {
     display: block;
     float: left;
     margin: -1px 10px 0 0;
@@ -298,8 +298,8 @@ h3.mainwp_box_title {
 }
 
 .mainwp_groups_list_header {
-     padding: 4px 5px;
-     background-color:  #DDD;
+    padding: 4px 5px;
+    background-color:  #DDD;
 }
 .mainwp_selected_sites_item:hover,
 .selected_sites_item_checked {
@@ -397,7 +397,7 @@ h3.mainwp_box_title {
     width: 25em;
 }
 
-.MainWPInstallBulkStatus {
+.MainWP_Install_BulkStatus {
     padding-top: 4px;
     display: inline-block;
 }
@@ -1028,7 +1028,7 @@ li.hoverli {
     background-position: 10px 50%;
 }
 
-.mainwp_info-box-blue .mainwp-dismiss, 
+.mainwp_info-box-blue .mainwp-dismiss,
 .mainwp_info-box-blue .mainwp-dismiss-twit {
     float: right;
     text-decoration: none;
@@ -1050,9 +1050,9 @@ li.hoverli {
     border-bottom: 0;
 }
 
-#mainwp_plugins_content #mainwp-table-overflow, 
+#mainwp_plugins_content #mainwp-table-overflow,
 #mainwp_themes_content #mainwp-table-overflow {
-   height: 720px;
+    height: 720px;
 }
 
 #mainwp_background-box {
@@ -1150,7 +1150,7 @@ li.hoverli {
 /* Enhance Wordpress Admin UI */
 #adminmenuback, #adminmenuwrap, #adminmenu, #adminmenu .wp-submenu, #adminmenu .wp-submenu-wrap, .folded #adminmenu .wp-has-current-submenu .wp-submenu {
     width: 160px;
-} 
+}
 
 
 .mainwp-submenu-wide {
@@ -1353,14 +1353,14 @@ li.hoverli {
 
 .mainwp-pass
 {
-	padding: 3px 18px;
+    padding: 3px 18px;
     background: #7fb100;
     clear: both;
     color: #fff;
 }
 .mainwp-warning
 {
-	padding: 3px 7px ;
+    padding: 3px 7px ;
     background: #a00;
     clear: both;
     color: #fff;
@@ -1405,13 +1405,13 @@ li.hoverli {
     padding-right: 25px !important ;
 }
 .mainwp-open-link {
-	padding: 6px 20px 0px 5px ;
-	background-image: url('../images/open-blue.png') ;
-	background-position: 37px 5px ;
-	background-repeat: no-repeat;
+    padding: 6px 20px 0px 5px ;
+    background-image: url('../images/open-blue.png') ;
+    background-position: 37px 5px ;
+    background-repeat: no-repeat;
 }
 .up-img-align, .down-img-align {
-	padding: 5px 0 5px 12px ;
+    padding: 5px 0 5px 12px ;
 }
 
 input[type=number]{
@@ -1423,119 +1423,119 @@ input[type=number]{
 /* MainWP Checkbox 1*/
 
 .mainwp-checkbox input[type=checkbox] {
-	visibility: hidden;
+    visibility: hidden;
 }
 
 .mainwp-checkbox {
-	float: left ;
-	width: 70px;
-	height: 35px;
-	background: #e5e5e5;
-	margin: -3px 5px 0 0 ;
+    float: left ;
+    width: 70px;
+    height: 35px;
+    background: #e5e5e5;
+    margin: -3px 5px 0 0 ;
 
-	-webkit-border-radius: 18px;
-	-moz-border-radius: 18px;
-	border-radius: 18px;
-	position: relative;
+    -webkit-border-radius: 18px;
+    -moz-border-radius: 18px;
+    border-radius: 18px;
+    position: relative;
 }
 
 .mainwp-checkbox:after {
-	content: 'NO';
-	font: 15px/26px "Trebuchet MS", Helvetica, sans-serif;
-	color: #a00;
-	position: absolute;
-	right: 8px;
+    content: 'NO';
+    font: 15px/26px "Trebuchet MS", Helvetica, sans-serif;
+    color: #a00;
+    position: absolute;
+    right: 8px;
     top: 5px;
-	z-index: 0;
-	font-weight: bold;
-	text-shadow: 1px 1px 0px rgba(255,255,255,.15);
+    z-index: 0;
+    font-weight: bold;
+    text-shadow: 1px 1px 0px rgba(255,255,255,.15);
 }
 
 .mainwp-checkbox:before {
-	content: 'YES';
-	font: 15px/26px "Trebuchet MS", Helvetica, sans-serif;
-	color: #7fb100;
-	position: absolute;
-	left: 7px;
+    content: 'YES';
+    font: 15px/26px "Trebuchet MS", Helvetica, sans-serif;
+    color: #7fb100;
+    position: absolute;
+    left: 7px;
     top: 5px;
-	z-index: 0;
-	font-weight: bold;
+    z-index: 0;
+    font-weight: bold;
 }
 
 .mainwp-checkbox label {
-	display: block;
-	width: 33px;
-	height: 33px;
+    display: block;
+    width: 33px;
+    height: 33px;
 
-	-webkit-border-radius: 18px;
-	-moz-border-radius: 18px;
-	border-radius: 18px;
+    -webkit-border-radius: 18px;
+    -moz-border-radius: 18px;
+    border-radius: 18px;
 
-	-webkit-transition: all .4s ease;
-	-moz-transition: all .4s ease;
-	-o-transition: all .4s ease;
-	-ms-transition: all .4s ease;
-	transition: all .4s ease;
-	cursor: pointer;
-	position: absolute;
-	top: 1px;
+    -webkit-transition: all .4s ease;
+    -moz-transition: all .4s ease;
+    -o-transition: all .4s ease;
+    -ms-transition: all .4s ease;
+    transition: all .4s ease;
+    cursor: pointer;
+    position: absolute;
+    top: 1px;
     left: 1px;
 
-	z-index: 1;
+    z-index: 1;
 
     background: #fff;
 }
 
 .mainwp-checkbox input[type=checkbox]:checked + label {
-	left: 35px;
+    left: 35px;
 }
 
 /* MainWP Checkbox 2 */
 
 input[type=checkbox].mainwp-checkbox2 {
-display:none;
+    display:none;
 }
 
 input[type=checkbox].mainwp-checkbox2 + label.mainwp-label2 {
-padding-left:20px;
-height:16px;
-display:inline-block;
-line-height:15px;
-background-repeat:no-repeat;
-background-position: 0 0;
-font-size:15px;
-vertical-align:middle;
-cursor:pointer;
+    padding-left:20px;
+    height:16px;
+    display:inline-block;
+    line-height:15px;
+    background-repeat:no-repeat;
+    background-position: 0 0;
+    font-size:15px;
+    vertical-align:middle;
+    cursor:pointer;
 }
 
 input[type=checkbox].mainwp-checkbox2:checked + label.mainwp-label2 {
-background-position: 0 -16px;
+    background-position: 0 -16px;
 }
 
 .mainwp-label2{
-background-image:url(../images/check-green.png);
+    background-image:url(../images/check-green.png);
 }
 
 /* MainWP Checkbox 3 */
 
 input[type=checkbox].mainwp-checkbox3 {
-display:none;
+    display:none;
 }
 
 input[type=checkbox].mainwp-checkbox3  {
-padding-left:20px;
-height:25px;
-display:inline-block;
-background-image:url(../images/check-light.png);
-background-repeat:no-repeat;
-background-position: 0 0;
-font-size:12px;
-vertical-align:middle;
-cursor:pointer;
+    padding-left:20px;
+    height:25px;
+    display:inline-block;
+    background-image:url(../images/check-light.png);
+    background-repeat:no-repeat;
+    background-position: 0 0;
+    font-size:12px;
+    vertical-align:middle;
+    cursor:pointer;
 }
 
 input[type=checkbox].mainwp-checkbox3:checked {
-background-position: 0 -16px;
+    background-position: 0 -16px;
 }
 
 
@@ -1577,40 +1577,40 @@ background-position: 0 -16px;
 }
 
 .mainwp-form_hint {
-	background: #7fb100;
-	border-radius: 3px 3px 3px 3px;
-	color: white;
-	margin-left:8px;
+    background: #7fb100;
+    border-radius: 3px 3px 3px 3px;
+    color: white;
+    margin-left:8px;
     margin-top: 3px;
-	padding: 3px 6px;
-	z-index: 999;
-	position: absolute;
-	display: none;
+    padding: 3px 6px;
+    z-index: 999;
+    position: absolute;
+    display: none;
 }
 .mainwp-form_hint::before {
-	content: "\25C0";
-	color:#7fb100;
-	position: absolute;
-	top:2px;
-	left:-8px;
+    content: "\25C0";
+    color:#7fb100;
+    position: absolute;
+    top:2px;
+    left:-8px;
 }
 .mainwp-form_hint-display {
-	background: #7fb100;
-	border-radius: 3px 3px 3px 3px;
-	color: white;
-	margin-top: -4px;
-	margin-left:8px;
-	padding: 3px 6px;
-	z-index: 999;
-	position: absolute;
-	display: inline-block;
+    background: #7fb100;
+    border-radius: 3px 3px 3px 3px;
+    color: white;
+    margin-top: -4px;
+    margin-left:8px;
+    padding: 3px 6px;
+    z-index: 999;
+    position: absolute;
+    display: inline-block;
 }
 .mainwp-form_hint-display::before {
-	content: "\25C0";
-	color:#7fb100;
-	position: absolute;
-	top:2px;
-	left:-8px;
+    content: "\25C0";
+    color:#7fb100;
+    position: absolute;
+    top:2px;
+    left:-8px;
 }
 #mainwp-settings-page-form input[type=text]:focus + .mainwp-form_hint,
 #mainwp-edit-single-site-form input[type=text]:focus + .mainwp-form_hint,
@@ -1622,7 +1622,7 @@ background-position: 0 -16px;
 #mainwp_managesites_add_form input[type=text]:focus + .mainwp-form_hint {display: inline; max-width: 500px;}
 
 #import_user_file_bulkupload {
-	width: 230px !important;
+    width: 230px !important;
 }
 
 /* New Select Box Style */
@@ -1636,32 +1636,32 @@ background-position: 0 -16px;
 /* Settings Boxes */
 
 .mainwp-fieldset-box {
-	position: relative;
-	padding: 1em ;
-	margin-bottom: 2em ;
-	border: 1px solid #aaa ;
-	border-radius: 5px ;
-	-webkit-border-radius: 5px ;
-	-moz-border-radius: 5px ;
-	background: #fcfcfc ;
+    position: relative;
+    padding: 1em ;
+    margin-bottom: 2em ;
+    border: 1px solid #aaa ;
+    border-radius: 5px ;
+    -webkit-border-radius: 5px ;
+    -moz-border-radius: 5px ;
+    background: #fcfcfc ;
 
 }
 
 .mainwp-fieldset-box legend {
-	font: 20px/30px Georgia,"Times New Roman","Bitstream Charter",Times,serif;;
+    font: 20px/30px Georgia,"Times New Roman","Bitstream Charter",Times,serif;;
     color: #666 ;
 }
 
 .mainwp-table-container .wp-list-table caption,#mainwp-table caption {
-	padding-left: .5em ;
-	margin-top: 2em ;
-	text-align: left ;
-	font: 16px/26px Arial, sans-serif;
-	font-weight: bold ;
+    padding-left: .5em ;
+    margin-top: 2em ;
+    text-align: left ;
+    font: 16px/26px Arial, sans-serif;
+    font-weight: bold ;
 }
 
 #managegroups-sites-list input[type=checkbox]:checked + label {
-	font-weight: bold ;
+    font-weight: bold ;
 }
 
 #managedSitesCount {
@@ -1678,16 +1678,16 @@ background-position: 0 -16px;
 /* Scrollbar Style*/
 
 .mainwp_select_sites_box ::-webkit-scrollbar,
-/*#mainwp-table-overflow ::-webkit-scrollbar,*/
+    /*#mainwp-table-overflow ::-webkit-scrollbar,*/
 #mainwp-preview-window ::-webkit-scrollbar,
 #mainwp_background-box ::-webkit-scrollbar,
 #mainwp_wrap-inside ::-webkit-scrollbar {
     width: 14px ;
     background: #f3f3f3;
- }
+}
 
 .mainwp_select_sites_box ::-webkit-scrollbar-track,
-/*#mainwp-table-overflow ::-webkit-scrollbar-track,*/
+    /*#mainwp-table-overflow ::-webkit-scrollbar-track,*/
 #mainwp-preview-window ::-webkit-scrollbar-track,
 #mainwp_background-box ::-webkit-scrollbar-track,
 #mainwp_wrap-inside ::-webkit-scrollbar-track {
@@ -1696,7 +1696,7 @@ background-position: 0 -16px;
 }
 
 .mainwp_select_sites_box ::-webkit-scrollbar-thumb,
-/*#mainwp-table-overflow ::-webkit-scrollbar-thumb,*/
+    /*#mainwp-table-overflow ::-webkit-scrollbar-thumb,*/
 #mainwp-preview-window ::-webkit-scrollbar-thumb,
 #mainwp_background-box ::-webkit-scrollbar-thumb,
 #mainwp_wrap-inside ::-webkit-scrollbar-thumb {
@@ -1706,7 +1706,7 @@ background-position: 0 -16px;
 }
 
 .mainwp_select_sites_box ::-webkit-scrollbar-thumb:hover,
-/*#mainwp-table-overflow ::-webkit-scrollbar-thumb:hover,*/
+    /*#mainwp-table-overflow ::-webkit-scrollbar-thumb:hover,*/
 #mainwp-preview-window ::-webkit-scrollbar-thumb:hover,
 #mainwp_background-box ::-webkit-scrollbar-thumb:hover,
 #mainwp_wrap-inside ::-webkit-scrollbar-thumb:hover {
@@ -1747,35 +1747,35 @@ background-position: 0 -16px;
 }
 
 .mainwp-more-extensions-button {
-  padding: .5em 2em .5em 3.3em ;
-  border-radius: 50px ;
-  -moz-border-radius: 50px ;
-  -webkit-border-radius: 50px ;
-  background: #7fb100 ;
-  background-image: url('../images/extensions/download-white.png');
-  background-repeat: no-repeat;
-  background-position: 1em center ;
-  border: 1px solid #446200 ;
-  color: #fff ;
-  font-size: 15px ;
-  font-weight: bold ;
-  text-transform: uppercase ;
-  text-decoration: none;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
-  -webkit-box-shadow:  0px 0px 0px 5px rgba(0, 0, 0, .1);
-  box-shadow:  0px 0px 0px 5px rgba(0, 0, 0, .1);
+    padding: .5em 2em .5em 3.3em ;
+    border-radius: 50px ;
+    -moz-border-radius: 50px ;
+    -webkit-border-radius: 50px ;
+    background: #7fb100 ;
+    background-image: url('../images/extensions/download-white.png');
+    background-repeat: no-repeat;
+    background-position: 1em center ;
+    border: 1px solid #446200 ;
+    color: #fff ;
+    font-size: 15px ;
+    font-weight: bold ;
+    text-transform: uppercase ;
+    text-decoration: none;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+    -webkit-box-shadow:  0px 0px 0px 5px rgba(0, 0, 0, .1);
+    box-shadow:  0px 0px 0px 5px rgba(0, 0, 0, .1);
 }
 
 .mainwp-more-extensions-button:hover {
-  -webkit-box-shadow:  none ;
-  box-shadow:  none ;
-  -webkit-transition: all 0.3s ease-in-out;
-  -moz-transition: all 0.3s ease-in-out;
-  -ms-transition: all 0.3s ease-in-out;
-  -o-transition: all 0.3s ease-in-out;
-  transition: all 0.3s ease-in-out;
-  text-decoration: none !important ;
-  color: #fff;
+    -webkit-box-shadow:  none ;
+    box-shadow:  none ;
+    -webkit-transition: all 0.3s ease-in-out;
+    -moz-transition: all 0.3s ease-in-out;
+    -ms-transition: all 0.3s ease-in-out;
+    -o-transition: all 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out;
+    text-decoration: none !important ;
+    color: #fff;
 }
 
 #mainwp-extensions-list {
@@ -1853,8 +1853,8 @@ background-position: 0 -16px;
     padding: .5em;
     width: 600px !important;
     overflow: hidden;
-   -webkit-box-shadow: 0px 0px 15px rgba(50, 50, 50, 0.45);
-   -moz-box-shadow:    0px 0px 15px rgba(50, 50, 50, 0.45);
+    -webkit-box-shadow: 0px 0px 15px rgba(50, 50, 50, 0.45);
+    -moz-box-shadow:    0px 0px 15px rgba(50, 50, 50, 0.45);
     box-shadow:         0px 0px 15px rgba(50, 50, 50, 0.45);
     background: #fff !important;
     z-index: 99999;
@@ -1886,11 +1886,11 @@ background-position: 0 -16px;
     -webkit-border-radius: 25px;
     display: inline-block;
     overflow: hidden;
-        -webkit-transition: width .4s ease-in-out;
-        -moz-transition: width .4s ease-in-out;
-        -ms-transition: width .4s ease-in-out;
-        -o-transition: width .4s ease-in-out;
-        transition: width .4s ease-in-out;
+    -webkit-transition: width .4s ease-in-out;
+    -moz-transition: width .4s ease-in-out;
+    -ms-transition: width .4s ease-in-out;
+    -o-transition: width .4s ease-in-out;
+    transition: width .4s ease-in-out;
 }
 #refresh-status-box .ui-progressbar-value:after,
 #rightnow-upgrade-status-box .ui-progressbar-value:after,
@@ -1908,25 +1908,25 @@ background-position: 0 -16px;
     background-size:         30px 30px;
     overflow: hidden !important;
     background-image: -webkit-gradient(linear, left top, right bottom,
-                        color-stop(.25, rgba(255, 255, 255, .15)), color-stop(.25, transparent),
-                        color-stop(.5, transparent), color-stop(.5, rgba(255, 255, 255, .15)),
-                        color-stop(.75, rgba(255, 255, 255, .15)), color-stop(.75, transparent),
-                        to(transparent));
+    color-stop(.25, rgba(255, 255, 255, .15)), color-stop(.25, transparent),
+    color-stop(.5, transparent), color-stop(.5, rgba(255, 255, 255, .15)),
+    color-stop(.75, rgba(255, 255, 255, .15)), color-stop(.75, transparent),
+    to(transparent));
     background-image: -webkit-linear-gradient(135deg, rgba(255, 255, 255, .15) 25%, transparent 25%,
-                        transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%,
-                        transparent 75%, transparent);
+    transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%,
+    transparent 75%, transparent);
     background-image: -moz-linear-gradient(135deg, rgba(255, 255, 255, .15) 25%, transparent 25%,
-                        transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%,
-                        transparent 75%, transparent);
+    transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%,
+    transparent 75%, transparent);
     background-image: -ms-linear-gradient(135deg, rgba(255, 255, 255, .15) 25%, transparent 25%,
-                        transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%,
-                        transparent 75%, transparent);
+    transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%,
+    transparent 75%, transparent);
     background-image: -o-linear-gradient(135deg, rgba(255, 255, 255, .15) 25%, transparent 25%,
-                        transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%,
-                        transparent 75%, transparent);
+    transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%,
+    transparent 75%, transparent);
     background-image: linear-gradient(135deg, rgba(255, 255, 255, .15) 25%, transparent 25%,
-                        transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%,
-                        transparent 75%, transparent);
+    transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%,
+    transparent 75%, transparent);
 
     -webkit-animation: animate-stripes 6s linear infinite;
     -moz-animation: animate-stripes 6s linear infinite;
@@ -2013,11 +2013,11 @@ background-position: 0 -16px;
 }
 
 .mainwp-seo-up {
-   color: #7fb100;
-   padding-left: 15px ;
-   background-image: url('../images/seo-up.png');
-   background-repeat: no-repeat;
-   background-position: 0% 50% ;
+    color: #7fb100;
+    padding-left: 15px ;
+    background-image: url('../images/seo-up.png');
+    background-repeat: no-repeat;
+    background-position: 0% 50% ;
 }
 
 .mainwp-seo-down {
@@ -2057,7 +2057,7 @@ background-position: 0 -16px;
 /*  Sites Table  */
 
 #mainwp_managesites_content .mainwp-av-updates-col {
-  margin-left: .6em;
+    margin-left: .6em;
 }
 
 #mainwp_managesites_content .column-status {
@@ -2198,17 +2198,17 @@ background-position: 0 -16px;
 
 #wpbody-content #mainwp_tab-general #dashboard-widgets.columns-1 #postbox-container-1,#wpbody-content #mainwp_wrap-inside #dashboard-widgets.columns-1 #postbox-container-1
 {
-	width: 100% !important;
+    width: 100% !important;
 }
 
 #wpbody-content #mainwp_tab-general #dashboard-widgets.columns-2 #postbox-container-1,#wpbody-content #mainwp_wrap-inside #dashboard-widgets.columns-2 #postbox-container-1
 {
-	width: 49% !important;
+    width: 49% !important;
 }
 
 #wpbody-content #mainwp_tab-general #dashboard-widgets.columns-3 #postbox-container-1,#wpbody-content #mainwp_wrap-inside #dashboard-widgets.columns-3 #postbox-container-1
 {
-	width: 33% !important;
+    width: 33% !important;
 }
 
 /*    QSG    */
@@ -2262,9 +2262,9 @@ background-position: 0 -16px;
 }
 
 #mainwp-extensions-cat-menu-list {
-   width: auto;
-   margin-left: auto !important;
-   margin-right: auto !important;
+    width: auto;
+    margin-left: auto !important;
+    margin-right: auto !important;
 }
 
 #mainwp-extensions-cat-menu .mainwp-extensions-menu-item {
@@ -2389,10 +2389,10 @@ background-position: 0 -16px;
 }
 /*make dashboard boxes switch to 1 column style on mobile devices*/
 @media only screen and (max-width: 799px) {
-  #wpbody-content #mainwp_tab-general #dashboard-widgets.columns-2 #postbox-container-1, 
-  div#postbox-container-2.postbox-container {
-    width: 100% !important;
-  }
+    #wpbody-content #mainwp_tab-general #dashboard-widgets.columns-2 #postbox-container-1,
+    div#postbox-container-2.postbox-container {
+        width: 100% !important;
+    }
 }
 
 .mainwp_wp_offline td
@@ -2517,10 +2517,10 @@ background-position: 0 -16px;
     width: 27px;
 }
 .mainwp_api_postbox .handlediv:before{
-   content: '\f142';
+    content: '\f142';
 }
 .mainwp_api_postbox.closed .handlediv:before{
-   content: '\f140';
+    content: '\f140';
 }
 .mainwp_api_postbox .handlediv:before{
     right: 12px;
@@ -2540,10 +2540,10 @@ background-position: 0 -16px;
 }
 
 .mainwp_postbox .handlediv:before{
-   content: '\f142';
+    content: '\f142';
 }
 .mainwp_postbox.closed .handlediv:before{
-   content: '\f140';
+    content: '\f140';
 }
 .mainwp_postbox .handlediv:before{
     right: 12px;
@@ -2602,13 +2602,13 @@ background-position: 0 -16px;
 .mainwp_ext_info_box a, #mainwp-install-purchased-extensions a {
     text-decoration: none !important;
 }
-.extension_to_install .name, .extension_not_purchased .name{   
+.extension_to_install .name, .extension_not_purchased .name{
     width: 380px;
     display: inline-block;
 }
 
 .extension_not_purchased .name{
- color: #DEDEDE;
+    color: #DEDEDE;
 }
 
 .ui-widget-header .fusion-tabs-menu a {
@@ -2713,14 +2713,14 @@ background-position: 0 -16px;
 #mainwp-sites-menu::-webkit-scrollbar-thumb {
     width: 8px ;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.2); 
-     padding-left: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    padding-left: 5px;
 }
 
 #mainwp-sites-menu::-webkit-scrollbar-thumb:hover {
     width: 8px ;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.5); 
+    background: rgba(255, 255, 255, 0.5);
 }
 
 a.mainpw-fly-meny-lnk, a.mainwp-add-new-link {
@@ -2750,7 +2750,7 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {
     font-size: 12px;
     padding: 4px 12px;
     -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.04);
-  box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
 .mainwp_action.left
 {
@@ -2788,14 +2788,14 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {
     margin-top: 5px;
 }
 
-.mainwp_info-box-blue.twitter {    
-    border-left: 4px solid #4099FF !important;        
+.mainwp_info-box-blue.twitter {
+    border-left: 4px solid #4099FF !important;
     background-image: url('../images/twitter-icon.png') !important;
 }
 .mainwp_config_box_left .upload-plugin, .mainwp_config_box_left .upload-theme{
-    top: 0px !important; 
+    top: 0px !important;
 }
-.mainwp_config_box_left .wp-filter {    
+.mainwp_config_box_left .wp-filter {
     margin-bottom: 10px !important;
     margin-top: 0 !important;
 }
@@ -2855,14 +2855,14 @@ body.show-upload-plugin .mainwp-upload-plugin {
     text-decoration: none;
 }
 .mainwp_config_box_left .content-filterable {
-    float: left;    
-    min-height: 400px !important;    
-    display: block;    
+    float: left;
+    min-height: 400px !important;
+    display: block;
 }
 .installed-group-exts {
     padding: 1em;
 }
 
-.mainwp_hide_wpmenu_checkboxes {    
-    margin: 0;    
+.mainwp_hide_wpmenu_checkboxes {
+    margin: 0;
 }

@@ -623,9 +623,9 @@ qq.extend(qq.FileUploader.prototype, {
             //MAINWP custom code
             totalSuccess++;
             if (totalSuccess > 0) {
-                jQuery('#MainWPInstallBulkInstallNow').css('display', 'block');
+                jQuery('#MainWP_Install_BulkInstallNow').css('display', 'block');
             } else {
-                jQuery('#MainWPInstallBulkInstallNow').css('display', 'none');
+                jQuery('#MainWP_Install_BulkInstallNow').css('display', 'none');
             }
             this._find(item, 'file').setAttribute('filename', fileName);
             //MAINWP custom code

@@ -34,18 +34,18 @@
 
 
 mainwp_update_pluginsthemes = function (updateType, updateSiteIds)
-{    
+{
     var allWebsiteIds = jQuery('.dashboard_wp_id').map(function(indx, el){ return jQuery(el).val(); });
-    
+
     var selectedIds = [], excludeIds = [];
     if (updateSiteIds instanceof Array) {
         jQuery.grep(allWebsiteIds, function(el) {
-                if (jQuery.inArray(el, updateSiteIds) !== -1) {
-                    selectedIds.push(el);
-                } else {
-                    excludeIds.push(el);
-                }
-        });        
+            if (jQuery.inArray(el, updateSiteIds) !== -1) {
+                selectedIds.push(el);
+            } else {
+                excludeIds.push(el);
+            }
+        });
         for (var i = 0; i < excludeIds.length; i++)
         {
             dashboard_update_site_hide(excludeIds[i]);
@@ -53,19 +53,19 @@ mainwp_update_pluginsthemes = function (updateType, updateSiteIds)
         allWebsiteIds = selectedIds;
         jQuery('#refresh-status-total').text(allWebsiteIds.length);
     }
-    var nrOfWebsites = allWebsiteIds.length;   
-    
+    var nrOfWebsites = allWebsiteIds.length;
+
     if (nrOfWebsites == 0)
         return false;
-    
+
     var siteNames = {};
-     
+
     for (var i = 0; i < allWebsiteIds.length; i++)
     {
         dashboard_update_site_status(allWebsiteIds[i], __('PENDING'));
         siteNames[allWebsiteIds[i]] =  jQuery('.refresh-status-wp[siteid="'+allWebsiteIds[i]+'"]').attr('niceurl');
     }
-    
+
     managesitesContinueAfterBackup = function(pType, sitesCount, pAllWebsiteIds) { return function()
     {
         if (pType == 'plugin')
@@ -73,7 +73,7 @@ mainwp_update_pluginsthemes = function (updateType, updateSiteIds)
         else if (pType == 'theme') {
             jQuery('#refresh-status-box').attr('title', __("Upgrading Themes"));
         }
-        jQuery('#refresh-status-text').html(__('updated'));        
+        jQuery('#refresh-status-text').html(__('updated'));
         jQuery('#refresh-status-progress').progressbar({value: 0, max: sitesCount});
         jQuery('#refresh-status-box').dialog({
             resizable: false,
@@ -82,12 +82,12 @@ mainwp_update_pluginsthemes = function (updateType, updateSiteIds)
             modal: true,
             close: function(event, ui) {bulkManageSitesTaskRunning = false; jQuery('#refresh-status-box').dialog('destroy'); location.href = location.href;}});
         managesites_update_pluginsthemes(pType, pAllWebsiteIds);
-    
+
         managesitesContinueAfterBackup = undefined;
     } } (updateType, nrOfWebsites, allWebsiteIds);
 
     return mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
-    
+
 };
 
 managesites_update_pluginsthemes = function(pType, websiteIds)
@@ -99,11 +99,11 @@ managesites_update_pluginsthemes = function(pType, websiteIds)
     websitesTotal = websitesLeft = websitesToUpdate.length;
 
     bulkManageSitesTaskRunning = true;
-    
+
     if (pType == 'plugin')
-        dashboardActionName = 'upgrade_all_plugins';        
+        dashboardActionName = 'upgrade_all_plugins';
     else
-        dashboardActionName = 'upgrade_all_themes'; 
+        dashboardActionName = 'upgrade_all_themes';
     var dateObj = new Date();
     starttimeDashboardAction = dateObj.getTime();
     countRealItemsUpdated = 0;
@@ -140,7 +140,7 @@ managesites_update_pluginsthemes_done = function(pType)
     if (websitesDone == websitesTotal)
     {
         couttItemsToUpdate = itemsToUpdate.length;
-        rightnow_send_twitt_info(); 
+        rightnow_send_twitt_info();
         setTimeout(function() {
             bulkManageSitesTaskRunning = false;
             if (websitesError <= 0)
@@ -155,10 +155,10 @@ managesites_update_pluginsthemes_done = function(pType)
                 jQuery('#mainwp-right-now-message-content').html(message);
                 jQuery('#mainwp-right-now-message').show();
             }
-        }, 2000);               
+        }, 2000);
         return;
     }
-                            
+
     managesites_loop_pluginsthemes_next(pType);
 };
 managesites_update_pluginsthemes_next = function(pType)
@@ -168,10 +168,10 @@ managesites_update_pluginsthemes_next = function(pType)
     var websiteId = websitesToUpdate[currentWebsite++];
     dashboard_update_site_status(websiteId, __('UPGRADING'));
     var data = mainwp_secure_data({
-            action:'mainwp_upgradeplugintheme',
-            websiteId: websiteId,            
-            type: pType           
-        });
+        action:'mainwp_upgradeplugintheme',
+        websiteId: websiteId,
+        type: pType
+    });
     managesites_update_pluginsthemes_next_int(websiteId, data, 0);
 };
 
@@ -181,28 +181,28 @@ managesites_update_pluginsthemes_next_int = function(websiteId, data, errors)
         type: 'POST',
         url: ajaxurl,
         data: data,
-        success: function(pWebsiteId) { return function(response) { 
-                if (response.error) { 
-                    dashboard_update_site_status(pWebsiteId, '<font color="red">' + __('ERROR') + '</font>'); websitesError++; 
-                } else {
-                    dashboard_update_site_status(websiteId, __('DONE'));
-                    if (response.result) {
-                        for (slug in response.result) {                            
-                            if (response.result[slug] == 1) {
-                                countRealItemsUpdated++;                                 
-                                if (itemsToUpdate.indexOf(slug) == -1) itemsToUpdate.push(slug);  
-                            }
+        success: function(pWebsiteId) { return function(response) {
+            if (response.error) {
+                dashboard_update_site_status(pWebsiteId, '<font color="red">' + __('ERROR') + '</font>'); websitesError++;
+            } else {
+                dashboard_update_site_status(websiteId, __('DONE'));
+                if (response.result) {
+                    for (slug in response.result) {
+                        if (response.result[slug] == 1) {
+                            countRealItemsUpdated++;
+                            if (itemsToUpdate.indexOf(slug) == -1) itemsToUpdate.push(slug);
                         }
-                    }                   
-                } 
-                                                                          
-                managesites_update_pluginsthemes_done(); 
-            } }(websiteId),
+                    }
+                }
+            }
+
+            managesites_update_pluginsthemes_done();
+        } }(websiteId),
         error: function(pWebsiteId, pData, pErrors) { return function(response) {
             if (pErrors > 5)
             {
-                dashboard_update_site_status(pWebsiteId, '<font color="red">' +  __('TIMEOUT') + '</font>');  
-                websitesError++; 
+                dashboard_update_site_status(pWebsiteId, '<font color="red">' +  __('TIMEOUT') + '</font>');
+                websitesError++;
                 managesites_update_pluginsthemes_done();
             }
             else
@@ -217,12 +217,12 @@ managesites_update_pluginsthemes_next_int = function(websiteId, data, errors)
 
 var managesitesContinueAfterBackup = undefined;
 jQuery(document).on('click', '#managesites-backup-ignore', function() {
-   if (managesitesContinueAfterBackup != undefined)
-   {
-       jQuery('#managesites-backup-box').dialog('destroy');
-       managesitesContinueAfterBackup();
-       managesitesContinueAfterBackup = undefined;
-   }
+    if (managesitesContinueAfterBackup != undefined)
+    {
+        jQuery('#managesites-backup-box').dialog('destroy');
+        managesitesContinueAfterBackup();
+        managesitesContinueAfterBackup = undefined;
+    }
 });
 
 var managesitesShowBusyFunction;
@@ -272,84 +272,84 @@ mainwp_managesites_checkBackups = function(sitesToUpdate, siteNames)
     });
 
     jQuery.ajax({
-      type: "POST",
-      url: ajaxurl,
-      data: data,
-      success: function(pSiteNames) { return function (response)
-      {
-          managesitesShowBusy = false;
-          clearTimeout(managesitesShowBusyTimeout);
-          var backupBox = jQuery('#managesites-backup-box');
-          try
-          {
-              backupBox.dialog('destroy');
-          }
-          catch (e) {}
+        type: "POST",
+        url: ajaxurl,
+        data: data,
+        success: function(pSiteNames) { return function (response)
+        {
+            managesitesShowBusy = false;
+            clearTimeout(managesitesShowBusyTimeout);
+            var backupBox = jQuery('#managesites-backup-box');
+            try
+            {
+                backupBox.dialog('destroy');
+            }
+            catch (e) {}
 
-          jQuery('#managesites-backup-all').show();
-          jQuery('#managesites-backup-ignore').show();
+            jQuery('#managesites-backup-all').show();
+            jQuery('#managesites-backup-ignore').show();
 
-          backupBox.attr('title', __('Full backup required'));
-          jQuery('div[aria-describedby="managesites-backup-box"]').find('.ui-dialog-title').html(__('Full backup required'));
+            backupBox.attr('title', __('Full backup required'));
+            jQuery('div[aria-describedby="managesites-backup-box"]').find('.ui-dialog-title').html(__('Full backup required'));
 
 
-          var siteFeedback = undefined;
+            var siteFeedback = undefined;
 
-          if (response.error != undefined)
-          {
-          }
-          else if (response['result'] == true)
-          {
-              //Continue..
-          }
-          else if (response['result']['sites'] != undefined)
-          {
-              siteFeedback = [];
-              for (var currSiteId in response['result']['sites'])
-              {
-                  if (response['result']['sites'][currSiteId] == false)
-                  {
-                      siteFeedback.push(currSiteId);
-                  }
-              }
-              if (siteFeedback.length == 0) siteFeedback = undefined;
-          }
+            if (response.error != undefined)
+            {
+            }
+            else if (response['result'] == true)
+            {
+                //Continue..
+            }
+            else if (response['result']['sites'] != undefined)
+            {
+                siteFeedback = [];
+                for (var currSiteId in response['result']['sites'])
+                {
+                    if (response['result']['sites'][currSiteId] == false)
+                    {
+                        siteFeedback.push(currSiteId);
+                    }
+                }
+                if (siteFeedback.length == 0) siteFeedback = undefined;
+            }
 
-          if (siteFeedback != undefined)
-          {
-              var backupContent = jQuery('#managesites-backup-content');
-              var output = '<font color="red">'+__('A full backup has not been taken in the last 7 days for the following sites:')+'</font><br /><br />';
-              for (var j = 0; j < siteFeedback.length; j++)
-              {
-                  output += '<span class="managesites-backup-site" siteid="' + siteFeedback[j] + '">' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
-              }
-              backupContent.html(output);
+            if (siteFeedback != undefined)
+            {
+                var backupContent = jQuery('#managesites-backup-content');
+                var output = '<font color="red">'+__('A full backup has not been taken in the last 7 days for the following sites:')+'</font><br /><br />';
+                for (var j = 0; j < siteFeedback.length; j++)
+                {
+                    output += '<span class="managesites-backup-site" siteid="' + siteFeedback[j] + '">' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
+                }
+                backupContent.html(output);
 
-              //backupBox = jQuery('#managesites-backup-box');
-              backupBox.dialog({
-                  resizable:false,
-                  height:350,
-                  width:500,
-                  modal:true,
-                  close:function (event, ui)
-                  {
-                      jQuery('#managesites-backup-box').dialog('destroy');
-                      managesitesContinueAfterBackup = undefined;
-                  }});
+                //backupBox = jQuery('#managesites-backup-box');
+                backupBox.dialog({
+                    resizable:false,
+                    height:350,
+                    width:500,
+                    modal:true,
+                    close:function (event, ui)
+                    {
+                        jQuery('#managesites-backup-box').dialog('destroy');
+                        managesitesContinueAfterBackup = undefined;
+                    }});
 
-              return false;
-          }
+                return false;
+            }
 
-          if (managesitesContinueAfterBackup != undefined) managesitesContinueAfterBackup();
-      } }(siteNames),
-      error: function()
-      {
-          backupBox = jQuery('#managesites-backup-box');
-          backupBox.dialog('destroy');
+            if (managesitesContinueAfterBackup != undefined) managesitesContinueAfterBackup();
+        } }(siteNames),
+        error: function()
+        {
+            backupBox = jQuery('#managesites-backup-box');
+            backupBox.dialog('destroy');
 
-          //if (managesitesContinueAfterBackup != undefined) managesitesContinueAfterBackup();
-      },
-      dataType: 'json'
+            //if (managesitesContinueAfterBackup != undefined) managesitesContinueAfterBackup();
+        },
+        dataType: 'json'
     });
 
     return false;
@@ -524,16 +524,16 @@ managesites_wordpress_global_upgrade_all = function (updateSiteIds)
     console.log(updateSiteIds);
 
     var allWebsiteIds = jQuery('.dashboard_wp_id').map(function(indx, el){ return jQuery(el).val(); });
-    
+
     var selectedIds = [], excludeIds = [];
     if (updateSiteIds instanceof Array) {
         jQuery.grep(allWebsiteIds, function(el) {
-                if (jQuery.inArray(el, updateSiteIds) !== -1) {
-                    selectedIds.push(el);
-                } else {
-                    excludeIds.push(el);
-                }
-        });        
+            if (jQuery.inArray(el, updateSiteIds) !== -1) {
+                selectedIds.push(el);
+            } else {
+                excludeIds.push(el);
+            }
+        });
         for (var i = 0; i < excludeIds.length; i++)
         {
             dashboard_update_site_hide(excludeIds[i]);
@@ -541,13 +541,13 @@ managesites_wordpress_global_upgrade_all = function (updateSiteIds)
         allWebsiteIds = selectedIds;
         jQuery('#refresh-status-total').text(allWebsiteIds.length);
     }
-    var nrOfWebsites = allWebsiteIds.length;   
+    var nrOfWebsites = allWebsiteIds.length;
 
     if (nrOfWebsites == 0)
         return false;
-    
+
     var siteNames = {};
-     
+
     for (var i = 0; i < allWebsiteIds.length; i++)
     {
         dashboard_update_site_status(allWebsiteIds[i], __('PENDING'));
@@ -558,7 +558,7 @@ managesites_wordpress_global_upgrade_all = function (updateSiteIds)
     {
 
         jQuery('#refresh-status-box').attr('title', __("Upgrading Wordpress"));
-        jQuery('#refresh-status-text').html(__('updated'));        
+        jQuery('#refresh-status-text').html(__('updated'));
         jQuery('#refresh-status-progress').progressbar({value: 0, max: sitesCount});
         jQuery('#refresh-status-box').dialog({
             resizable: false,
@@ -566,20 +566,20 @@ managesites_wordpress_global_upgrade_all = function (updateSiteIds)
             width: 500,
             modal: true,
             close: function(event, ui) {bulkManageSitesTaskRunning = false; jQuery('#refresh-status-box').dialog('destroy'); location.href = location.href;}});
-        
+
         var dateObj = new Date();
-        dashboardActionName = 'upgrade_all_wp_core';        
+        dashboardActionName = 'upgrade_all_wp_core';
         starttimeDashboardAction = dateObj.getTime();
         countRealItemsUpdated = 0;
 
         managesites_wordpress_upgrade_all_int(pAllWebsiteIds);
-    
+
         managesitesContinueAfterBackup = undefined;
     } } (nrOfWebsites, allWebsiteIds);
 
     return mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
-    
-    
+
+
 };
 managesites_wordpress_upgrade_all_int = function (websiteIds)
 {
@@ -618,7 +618,7 @@ managesites_wordpress_upgrade_all_update_done = function ()
     jQuery('#refresh-status-current').html(websitesDone);
 
     if (websitesDone == websitesTotal)
-    {   
+    {
         setTimeout(function ()
         {
             bulkManageSitesTaskRunning = false;
@@ -666,7 +666,7 @@ managesites_wordpress_upgrade_int = function (websiteId)
             websiteHolder.find('.wordpressInfo').html(result);
 
             if (websitesDone == websitesTotal)
-            {        
+            {
                 rightnow_send_twitt_info();
             }
         }

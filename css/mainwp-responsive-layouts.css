@@ -13,7 +13,7 @@
 }
 
 @media only screen and ( min-width: 981px ) and ( max-width: 1100px ) {
-	
+
 }
 
 @media only screen and ( max-width: 980px ) {
@@ -33,7 +33,7 @@
 	}
 
 	#mainwp-tabs {
-		 
+
 	}
 
 	.mainwp-ui input[type="text"] {
@@ -101,11 +101,11 @@
 	}
 
 	#mainwp_managesites_content table.sites .check-column {
-		width: 10% !important;		
+		width: 10% !important;
 	}
 
 	#mainwp_managesites_content table.sites .column-status {
-		width: 13% !important;		
+		width: 13% !important;
 	}
 
 	#mainwp_managesites_content table.sites .column-site {
@@ -127,7 +127,7 @@
 	}
 
 	/*  -  Add  -  Test Connection  -  */
-	 
+
 	.mainwp-ui .form-field input,
 	.mainwp-ui .form-field input,
 	.mainwp-ui .form-field input,
@@ -172,9 +172,9 @@
 		width: 100% !important;
 	}
 
-	.mainwp_page_ThemesAutoUpdate input[type="text"], 
+	.mainwp_page_ThemesAutoUpdate input[type="text"],
 	.mainwp_page_ThemesAutoUpdate select,
-	.mainwp_page_PluginsAutoUpdate input[type="text"], 
+	.mainwp_page_PluginsAutoUpdate input[type="text"],
 	.mainwp_page_PluginsAutoUpdate select {
 		width: 100%;
 		display: block;
@@ -240,20 +240,20 @@
 
 	#mainwp-extensions-categories-menu {
 		display: none;
-}
+	}
 
 	.mainwp_api_postbox input, .mainwp_api_postbox select {
 		width: 100%;
 	}
 
-	#mainwp-extensions-wrap .mainwp-extensions-disable-all, 
+	#mainwp-extensions-wrap .mainwp-extensions-disable-all,
 	#mainwp-extensions-wrap .mainwp-extensions-enable-all,
 	#mainwp-extensions-wrap #mainwp-extensions-expand,
 	#mainwp-extensions-wrap #mainwp-extensions-collapse {
 		display: none !important;
 	}
 
-	
+
 	#mainwp-extensions-list td.mainwp-extensions-childName,
 	#mainwp-extensions-list td.mainwp-extensions-childActions {
 		display: block;

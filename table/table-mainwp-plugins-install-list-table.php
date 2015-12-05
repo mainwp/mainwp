@@ -203,7 +203,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		?>
 	</ul>
 
-	<?php MainWPPlugins::install_search_form( isset( $views['plugin-install-search'] ) ); ?>
+	<?php MainWP_Plugins::install_search_form( isset( $views['plugin-install-search'] ) ); ?>
 </div>
 <?php
 	}

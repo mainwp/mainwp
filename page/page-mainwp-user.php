@@ -163,6 +163,7 @@ class MainWP_User {
 						</li>
 					</ul>
 				</div>
+			</div>
             <?php MainWP_UI::select_sites_box(__("Step 2: Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
             <div style="clear: both;"></div>
             <input type="button" name="mainwp_show_users" id="mainwp_show_users" class="button-primary button button-hero button-right" value="<?php _e('Show Users','mainwp'); ?>"/>
@@ -890,6 +891,7 @@ class MainWP_User {
 					</div>
 				</div>
 
+				<div class="clear"></div>
 				<p class="submit"><input type="button" name="createuser" id="bulk_add_createuser" class="button-primary button button-hero"
 						value="<?php _e( 'Add New User', 'mainwp' ); ?> "/></p>
 			</form>

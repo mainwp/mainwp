@@ -892,7 +892,7 @@ class MainWP_Themes {
 		<div class="mainwp_config_box_left" style="width: calc(100% - 290px);">
 			<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
 			<div class="upload-theme">
-				<?php MainWPInstallBulk::renderUpload('Themes'); ?>
+				<?php MainWP_Install_Bulk::renderUpload('Themes'); ?>
 			</div>
 			<div class="wp-filter">
 				<h3 class="mainwp_box_title"><?php _e( 'Step 1: Select a Theme', 'mainwp' ); ?></h3>

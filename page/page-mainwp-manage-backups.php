@@ -295,6 +295,7 @@ public static function renderHeader( $shownPage ) {
 				<?php
 				MainWP_Manage_Backups::renderNewEdit( null );
 				?>
+
 				<p class="submit">
 					<input type="button" name="mainwp_managebackups_add" id="mainwp_managebackups_add" class="button-primary button button-hero" value="<?php _e( 'Add New Task', 'mainwp' ); ?>"/>
 				</p>

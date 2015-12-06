@@ -208,6 +208,7 @@ class MainWP_User {
 										</button>
 										<div style="display:none; width: 225px !important;" id="pass-strength-result" aria-live="polite"></div>
 									</div>
+									<p class="description indicator-hint"><?php _e('Hint: The password should be at least seven characters long. To make it stronger, use upper and lower case letters, numbers and symbols like ! " ? $ % ^ &amp; ).','mainwp'); ?></p>
 								</td>
 							</tr>
 							<tr class="form-field form-required user-pass2-wrap hide-if-js">

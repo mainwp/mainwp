@@ -1,6 +1,6 @@
 <?php
-
 class MainWP_Server_Information {
+
 	public static function getClassName() {
 		return __CLASS__;
 	}
@@ -367,9 +367,9 @@ class MainWP_Server_Information {
 		$current = get_option( 'mainwp_plugin_version' );
 		$latest  = self::getMainwpVersion();
 		if ( $current == $latest ) {
-			echo '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>';
+			return '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>';
 		} else {
-			echo '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>';
+			return '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>';
 		}
 	}
 
@@ -542,6 +542,8 @@ class MainWP_Server_Information {
 		}
 
 		$hasWPFileSystem = MainWP_Utility::getWPFilesystem();
+
+		/** @global WP_Filesystem_Base $wp_filesystem */
 		global $wp_filesystem;
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
@@ -672,9 +674,9 @@ class MainWP_Server_Information {
 	protected static function getFileSystemMethodCheck() {
 		$fsmethod = self::getFileSystemMethod();
 		if ( $fsmethod == 'direct' ) {
-			echo '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>';
+			return '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>';
 		} else {
-			echo '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>';
+			return '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>';
 		}
 	}
 

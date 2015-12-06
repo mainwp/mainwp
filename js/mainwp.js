@@ -3640,13 +3640,13 @@ mainwp_import_users = function () {
  * InstallPlugins/Themes
  */
 jQuery(document).ready(function () {
-    jQuery('#MainWP_Install_BulkNavSearch').live('click', function (event) {
+    jQuery('#MainWPInstallBulkNavSearch').live('click', function (event) {
         event.preventDefault();
         jQuery( 'body' ).removeClass( 'show-upload-plugin' );
         jQuery( '#MainWPInstallBulkNavUpload' ).removeClass('mainwp_action_down');
         jQuery(this).addClass('mainwp_action_down');
     });
-    jQuery('#MainWP_Install_BulkNavUpload').live('click', function (event) {
+    jQuery('#MainWPInstallBulkNavUpload').live('click', function (event) {
         event.preventDefault();
         jQuery( 'body' ).addClass( 'show-upload-plugin' );
         jQuery( '#MainWPInstallBulkNavSearch' ).removeClass('mainwp_action_down');

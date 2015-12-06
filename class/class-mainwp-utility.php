@@ -482,7 +482,7 @@ class MainWP_Utility {
 
 	static function fetchUrlsAuthed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null ) {
 		if ( ! is_array( $websites ) || empty( $websites ) ) {
-			return;
+			return false;
 		}
 
 		$chunkSize = 10;
@@ -495,7 +495,7 @@ class MainWP_Utility {
 				sleep( 5 );
 			}
 
-			return;
+			return false;
 		}
 
 		$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
@@ -1222,6 +1222,7 @@ class MainWP_Utility {
 		$data  = MainWP_Utility::file_get_contents_curl( $query );
 		$pos   = strpos( $data, 'Rank_' );
 		if ( $pos === false ) {
+			return false;
 		} else {
 			$pagerank = substr( $data, $pos + 9 );
 
@@ -1442,6 +1443,7 @@ class MainWP_Utility {
 	 * @return WP_Filesystem_Base
 	 */
 	public static function getWPFilesystem() {
+		/** @global WP_Filesystem_Base $wp_filesystem */
 		global $wp_filesystem;
 
 		if ( empty( $wp_filesystem ) ) {

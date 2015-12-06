@@ -129,6 +129,7 @@ class MainWP_User {
 
 				<div class="inside">
 					<div class="mainwp-search-box">
+                        <div class="mainwp_info-box-blue"><?php _e( 'To search users by username, enter the wanted username here, select sites and click the Search Users button.', 'mainwp' ); ?></div>
 						<input type="text" aria-required="true" value="<?php if ( $cachedSearch != null && isset( $cachedSearch['keyword'] ) ) {
 							echo $cachedSearch['keyword'];
 						} ?>"

@@ -317,6 +317,7 @@ class qq2UploadedFileXhr {
 		}
 
 		$hasWPFileSystem = MainWP_Utility::getWPFilesystem();
+		/** @global WP_Filesystem_Base $wp_filesystem */
 		global $wp_filesystem;
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {

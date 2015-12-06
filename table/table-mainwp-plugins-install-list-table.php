@@ -433,7 +433,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 			</div>
 			<div class="mainwp-action-lnks">
 				<?php
-					echo '<span class="mainwp-more-details">' . $details_lnk . '</span>';
+					echo '<span class="mainwp-more-details">' . $details_link . '</span>';
 					if ( $action_links ) {
 						echo '<ul class="plugin-action-buttons"><li>' . implode( '</li><li>', $action_links ) . '</li></ul>';
 					}

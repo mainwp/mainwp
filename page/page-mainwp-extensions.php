@@ -560,6 +560,7 @@ class MainWP_Extensions {
 
 	public static function installPlugin( $url, $activatePlugin = false ) {
 		$hasWPFileSystem = MainWP_Utility::getWPFilesystem();
+		/** @global WP_Filesystem_Base $wp_filesystem */
 		global $wp_filesystem;
 
 		if ( file_exists( ABSPATH . '/wp-admin/includes/screen.php' ) ) {
@@ -690,7 +691,9 @@ class MainWP_Extensions {
 		include_once( ABSPATH . '/wp-admin/includes/class-wp-filesystem-direct.php' );
 
 		MainWP_Utility::getWPFilesystem();
+		/** @global WP_Filesystem_Base $wp_filesystem */
 		global $wp_filesystem;
+
 		if ( empty( $wp_filesystem ) ) {
 			$wp_filesystem = new WP_Filesystem_Direct( null );
 		}

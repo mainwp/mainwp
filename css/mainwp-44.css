@@ -27,3 +27,6 @@
     text-decoration: none !important;
     text-shadow: 0 -1px 1px #446200,1px 0 1px #446200,0 1px 1px #446200,-1px 0 1px #446200 !important;
 }
+#wpcontent h2 {
+    display: block;
+}

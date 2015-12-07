@@ -891,7 +891,7 @@ class MainWP_Plugins {
 	}
 
 	//todo apply coding rules
-	public function renderPluginsTable( $favoritesCallback = '' ) {
+	public static function renderPluginsTable( $favoritesCallback = '' ) {
 		global $tab;
 		if (!mainwp_current_user_can("dashboard", "install_plugins")) {
 			mainwp_do_not_have_permissions("install plugins");

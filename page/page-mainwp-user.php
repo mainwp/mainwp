@@ -129,6 +129,7 @@ class MainWP_User {
 
 				<div class="inside">
 					<div class="mainwp-search-box">
+                        <div class="mainwp_info-box-blue"><?php _e( 'To search users by username, enter the wanted username here, select sites and click the Search Users button.', 'mainwp' ); ?></div>
 						<input type="text" aria-required="true" value="<?php if ( $cachedSearch != null && isset( $cachedSearch['keyword'] ) ) {
 							echo $cachedSearch['keyword'];
 						} ?>"
@@ -207,6 +208,7 @@ class MainWP_User {
 										</button>
 										<div style="display:none; width: 225px !important;" id="pass-strength-result" aria-live="polite"></div>
 									</div>
+									<p class="description indicator-hint"><?php _e('Hint: The password should be at least seven characters long. To make it stronger, use upper and lower case letters, numbers and symbols like ! " ? $ % ^ &amp; ).','mainwp'); ?></p>
 								</td>
 							</tr>
 							<tr class="form-field form-required user-pass2-wrap hide-if-js">
@@ -662,6 +664,7 @@ class MainWP_User {
 	public static function renderBulkAdd() {
 		if ( isset( $_POST['user_chk_bulkupload'] ) && $_POST['user_chk_bulkupload'] ) {
 			self::renderBulkUpload();
+
 			return;
 		}
 		?>

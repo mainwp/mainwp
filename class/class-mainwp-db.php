@@ -1486,7 +1486,22 @@ class MainWP_DB {
 	public function getUserExtension() {
 		global $current_user;
 
-		return $this->getUserExtensionByUserId( $current_user->ID );
+		if ( empty( $current_user ) )
+		{
+			if ( MainWP_System::Instance()->isSingleUser() ) {
+				$userid = 0;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			$userid = $current_user->ID;
+		}
+
+		return $this->getUserExtensionByUserId( $userid );
 	}
 
 	public function getUserExtensionByUserId( $userid ) {

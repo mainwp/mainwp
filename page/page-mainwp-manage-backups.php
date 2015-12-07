@@ -328,7 +328,7 @@ public static function renderHeader( $shownPage ) {
 			?>
 
 			<?php MainWP_UI::select_sites_box( __( 'Select Sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_right', 'float: right !important; clear: both;', $selected_websites, $selected_groups, true ); ?>
-			<div class="mainwp_config_box_left">
+			<div class="mainwp_config_box_left" style="width: calc(100% - 290px);">
 
 				<div class="postbox">
 					<h3 class="mainwp_box_title">

@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.3.1
-Stable tag: 2.0.29
+Stable tag: 2.0.30
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -146,6 +146,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 6. The Groups Screen
 
 == Changelog ==
+
+= 2.0.30 - 12-7-15 =
+* Code changes for WP 4.4 Compatibility
 
 = 2.0.29 - 9-22-15 =
 * Fixed: Bulk Actions at bottom of Manage Sites page

@@ -333,7 +333,7 @@ class MainWP_System {
 					<p>
 						<span style="float: right;" class="mainwp-events-notice-dismiss" notice="first_site"
 						      style="text-decoration: none;" href="#"><i
-								class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span><span><strong><?php esc_html_e( 'Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">Scheduled Events</a>' ); ?></strong></span>
+								class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span><span><strong><?php _e( 'Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">Scheduled Events</a>' ); ?></strong></span>
 					</p>
 				</div>
 				<?php
@@ -2085,18 +2085,19 @@ class MainWP_System {
 	}
 
 	function admin_enqueue_styles( $hook ) {
-		wp_register_style( 'mainwp-hidden', MAINWP_PLUGIN_URL . 'css/mainwp-hidden.css', array(), $this->current_version );
 		global $wp_version;
+		wp_register_style( 'mainwp-hidden', MAINWP_PLUGIN_URL . 'css/mainwp-hidden.css', array(), $this->current_version );
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'css/mainwp.css', array(), $this->current_version );
-		if ( version_compare( $wp_version, '4.3.1', '>' ) ) {
-			wp_enqueue_style( 'mainwp-44', MAINWP_PLUGIN_URL . 'css/mainwp-44.css', array(), $this->current_version );
-		}
 		wp_enqueue_style( 'mainwp-responsive-layouts', MAINWP_PLUGIN_URL . 'css/mainwp-responsive-layouts.css', array(), $this->current_version );
 		wp_enqueue_style( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'css/fileuploader.css', array(), $this->current_version );
 
 		if ( isset( $_GET['hideall'] ) && $_GET['hideall'] == 1 ) {
 			wp_enqueue_style( 'mainwp-hidden' );
 			remove_action( 'admin_footer', 'wp_admin_bar_render', 1000 );
+		}
+
+		if ( version_compare( $wp_version, '4.3.1', '>' ) ) {
+			wp_enqueue_style( 'mainwp-44', MAINWP_PLUGIN_URL . 'css/mainwp-44.css', array(), $this->current_version );
 		}
 
 		wp_enqueue_style( 'mainwp-filetree', MAINWP_PLUGIN_URL . 'css/jqueryFileTree.css', array(), $this->current_version );

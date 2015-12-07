@@ -687,7 +687,7 @@ class MainWP_User {
 				<div class="mainwp_config_box_right">
 					<?php MainWP_UI::select_sites_box( __( 'Select Sites', 'mainwp' ) ); ?>
 				</div>
-				<div class="mainwp_config_box_left">
+				<div class="mainwp_config_box_left" style="width: calc(100% - 290px);">
 					<div class="postbox">
                 		<h3 class="mainwp_box_title"><span><i class="fa fa-user-plus"></i> <?php _e('Add a Single User','mainwp'); ?></span></h3>
 

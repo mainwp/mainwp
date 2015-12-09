@@ -234,7 +234,6 @@ class MainWP_System {
 			}
 		}
 
-		add_action( 'plugin_action_links_' . $this->plugin_slug, array( &$this, 'plugin_action_links' ) );
 		add_action( 'admin_notices', array( &$this, 'admin_notices' ) );
 
 		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) );
@@ -602,12 +601,6 @@ class MainWP_System {
 		}
 
 		return false;
-	}
-
-	public function plugin_action_links( $val ) {
-		$val[] = '<a href="' . admin_url() . 'admin.php?page=Settings">Licenses</a>';
-
-		return $val;
 	}
 
 	function mainwp_cronofflinecheck_action() {

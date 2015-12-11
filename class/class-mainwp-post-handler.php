@@ -1277,9 +1277,13 @@ class MainWP_Post_Handler {
 		if ( empty( $slugs ) ) {
 			die( json_encode( array( 'message' => __( 'Not found items slugs to update.' ) ) ) );
 		}
-
-		try {
-			die( json_encode( array( 'result' => MainWP_Right_Now::upgradePluginTheme( $websiteId, $_POST['type'], $slugs ) ) ) );
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+		try {	
+			$info = array( 'result' => MainWP_Right_Now::upgradePluginTheme( $websiteId, $_POST['type'], $slugs ) );
+			if (!empty($website)) {
+				$info['site_url'] = esc_url($website->url);
+			} 
+			die( json_encode( $info ) );
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(
 				'error' => array(

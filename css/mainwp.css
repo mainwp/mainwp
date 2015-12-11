@@ -2866,3 +2866,6 @@ body.show-upload-plugin .mainwp-upload-plugin {
 .mainwp_hide_wpmenu_checkboxes {
     margin: 0;
 }
+.plugin-update-tr .api-deactivate {
+    background-color: #fcf3ef;
+}

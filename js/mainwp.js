@@ -2522,6 +2522,7 @@ mainwp_managesites_add = function (event) {
             url:url,
             admin:jQuery('#mainwp_managesites_add_wpadmin').val(),
             verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val(),
+            ssl_version:jQuery('#mainwp_managesites_ssl_version').val(),
             http_user:jQuery('#mainwp_managesites_add_http_user').val(),
             http_pass:jQuery('#mainwp_managesites_add_http_pass').val()
         });
@@ -2566,6 +2567,7 @@ mainwp_managesites_add = function (event) {
                     'groupids[]':groupids,
                     groupnames:jQuery('#mainwp_managesites_add_addgroups').val(),
                     verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val(),
+                    ssl_version:jQuery('#mainwp_managesites_ssl_version').val(),
                     managesites_add_http_user:jQuery('#mainwp_managesites_add_http_user').val(),
                     managesites_add_http_pass:jQuery('#mainwp_managesites_add_http_pass').val()
                 });
@@ -2597,6 +2599,7 @@ mainwp_managesites_add = function (event) {
                         jQuery('#mainwp_managesites_add_addgroups').val('');
                         jQuery("input[name='selected_groups[]']:checked").attr('checked', false);
                         jQuery('#mainwp_managesites_verify_certificate').val(1);                        
+                        jQuery('#mainwp_managesites_ssl_version').val('auto');
                         if (res_things.redirectUrl != undefined)
                         {
                             setTimeout(function(pUrl) { return function() { location.href = pUrl; } }(res_things.redirectUrl), 1000);
@@ -2656,6 +2659,7 @@ mainwp_managesites_test = function (event) {
             action:'mainwp_testwp',
             url:url,
             test_verify_cert: jQuery('#mainwp_managesites_test_verifycertificate').val(),
+            test_ssl_version: jQuery('#mainwp_managesites_test_ssl_version').val(),
             http_user: jQuery('#mainwp_managesites_test_http_user').val(),
             http_pass: jQuery('#mainwp_managesites_test_http_pass').val()
         });
@@ -2821,6 +2825,7 @@ mainwp_managesites_import_sites = function () {
     }
            
     var import_line = jQuery('#mainwp_managesites_import_csv_line_' + import_current).val();
+    var import_line_orig = jQuery('#mainwp_managesites_import_csv_line_' + import_current).attr('original');
     var import_items = import_line.split(',');
 
     var import_wpname = import_items[0];
@@ -2828,6 +2833,10 @@ mainwp_managesites_import_sites = function () {
     var import_wpadmin = import_items[2];
     var import_wpgroups = import_items[3];    
     var import_uniqueId = import_items[4];
+    var import_http_username = import_items[5];
+    var import_http_password = import_items[6];
+    var import_verify_certificate = import_items[7];
+    var import_ssl_version = import_items[8];
 
     if (import_wpname == undefined)
         import_wpname = '';
@@ -2840,9 +2849,7 @@ mainwp_managesites_import_sites = function () {
     if (typeof(import_uniqueId) == "undefined")
         import_uniqueId = '';
   
-    var import_current_line = import_wpname + ',' + import_wpurl + ',' + import_wpadmin + ',' + import_wpgroups + ',' + import_uniqueId + '\r';
-    
-    jQuery('#mainwp_managesites_import_logging .log').append('[' + import_current + '] ' + import_current_line);
+    jQuery('#mainwp_managesites_import_logging .log').append('[' + import_current + '] ' + import_line_orig);
         
     var errors = [];
     
@@ -2860,7 +2867,7 @@ mainwp_managesites_import_sites = function () {
     
     if (errors.length > 0) {        
         jQuery('#mainwp_managesites_import_logging .log').append('[' + import_current + ']>> Error - ' + errors.join(" ") + '\n');
-        jQuery('#mainwp_managesites_import_fail_logging .log').append(import_current_line);
+        jQuery('#mainwp_managesites_import_fail_logging .log').append(import_line_orig);
         import_count_fails++;
         mainwp_managesites_import_sites();
         return;
@@ -2871,7 +2878,12 @@ mainwp_managesites_import_sites = function () {
             name: import_wpname,
             url: import_wpurl,
             admin: import_wpadmin,
-            check_me: import_current   
+            check_me: import_current,
+
+            verify_certificate:import_verify_certificate,
+            ssl_version:import_ssl_version,
+            http_user:import_http_username,
+            http_pass:import_http_password
         });
     
     jQuery.post(ajaxurl, data, function (res_things) {            
@@ -2909,7 +2921,12 @@ mainwp_managesites_import_sites = function () {
                     managesites_add_uniqueId: import_uniqueId,
                     'groupids[]':groupids,
                     groupnames_import: import_wpgroups,
-                    add_me: import_current                    
+                    add_me: import_current,
+
+                    verify_certificate:import_verify_certificate,
+                    ssl_version:import_ssl_version,
+                    managesites_add_http_user:import_http_username,
+                    managesites_add_http_pass:import_http_password
                 });
 
                 jQuery.post(ajaxurl, data, function (res_things) {
@@ -2926,7 +2943,7 @@ mainwp_managesites_import_sites = function () {
                     response = jQuery.trim(response);
                     
                     if (response.substr(0, 5) == 'ERROR') {
-                        jQuery('#mainwp_managesites_import_fail_logging .log').append(import_current_line);
+                        jQuery('#mainwp_managesites_import_fail_logging .log').append(import_line_orig);
                         jQuery('#mainwp_managesites_import_logging .log').append(add_result + response.substr(6) + "\n");
                         import_count_fails++;
                     }
@@ -2937,7 +2954,7 @@ mainwp_managesites_import_sites = function () {
                     }
                     mainwp_managesites_import_sites();
                 }, 'json').fail(function (xhr, textStatus, errorThrown) {
-                        jQuery('#mainwp_managesites_import_fail_logging .log').append(import_current_line);
+                        jQuery('#mainwp_managesites_import_fail_logging .log').append(import_line_orig);
                         jQuery('#mainwp_managesites_import_logging .log').append("error: " + errorThrown +"\n");
                         import_count_fails++;
                         mainwp_managesites_import_sites();
@@ -2945,7 +2962,7 @@ mainwp_managesites_import_sites = function () {
             }
                         
             if (errors.length > 0) {    
-                jQuery('#mainwp_managesites_import_fail_logging .log').append(import_current_line);
+                jQuery('#mainwp_managesites_import_fail_logging .log').append(import_line_orig);
                 jQuery('#mainwp_managesites_import_logging .log').append(errors.join("\n") + '\n');
                 import_count_fails++;
                 mainwp_managesites_import_sites();

@@ -69,21 +69,23 @@ class MainWP_Utility {
 	public static function isWebsiteAvailable( $website ) {
 		$http_user = null;
 		$http_pass = null;
+		$sslVersion = null;
+		$verifyCertificate = null;
 		if ( is_object( $website ) && isset( $website->url ) ) {
 			$url               = $website->url;
 			$verifyCertificate = isset( $website->verify_certificate ) ? $website->verify_certificate : null;
 			$http_user         = $website->http_user;
 			$http_pass         = $website->http_pass;
+			$sslVersion        = $website->ssl_version;
 		} else {
 			$url               = $website;
-			$verifyCertificate = null;
 		}
 
 		if ( ! self::isDomainValid( $url ) ) {
 			return false;
 		}
 
-		return MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass );
+		return MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion );
 	}
 
 	private static function isDomainValid( $url ) {
@@ -92,8 +94,9 @@ class MainWP_Utility {
 	}
 
 
-	public static function tryVisit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null ) {
-		$agent    = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+	public static function tryVisit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = CURL_SSLVERSION_DEFAULT ) {
+		//$agent    = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$postdata = array( 'test' => 'yes' );
 
 		$ch = curl_init();
@@ -130,6 +133,8 @@ class MainWP_Utility {
 			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
 			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		}
+
+		@curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
 
 		$disabled_functions = ini_get( 'disable_functions' );
 		if ( empty( $disabled_functions ) || ( stristr( $disabled_functions, 'curl_multi_exec' ) === false ) ) {
@@ -498,7 +503,8 @@ class MainWP_Utility {
 			return false;
 		}
 
-		$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+		//$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$mh    = curl_multi_init();
 
 		$timeout = 20 * 60 * 60; //20 minutes
@@ -604,6 +610,8 @@ class MainWP_Utility {
 				@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 			}
 
+			@curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
+
 			@curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); //20minutes
 			if ( ! ini_get( 'safe_mode' ) ) {
 				@set_time_limit( $timeout );
@@ -681,7 +689,7 @@ class MainWP_Utility {
 		$params['optimize'] = ( ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0 );
 
 		$postdata    = MainWP_Utility::getPostDataAuthed( $website, $what, $params );
-		$information = MainWP_Utility::fetchUrl( $website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass );
+		$information = MainWP_Utility::fetchUrl( $website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version );
 
 		if ( is_array( $information ) && isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
 			MainWP_Sync::syncInformationArray( $website, $information['sync'] );
@@ -691,15 +699,16 @@ class MainWP_Utility {
 		return $information;
 	}
 
-	static function fetchUrlNotAuthed( $url, $admin, $what, $params = null, $pForceFetch = false, $verifyCertificate = null, $http_user = null, $http_pass = null ) {
+	static function fetchUrlNotAuthed( $url, $admin, $what, $params = null, $pForceFetch = false, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = CURL_SSLVERSION_DEFAULT ) {
 		$postdata = MainWP_Utility::getPostDataNotAuthed( $url, $admin, $what, $params );
 		$website  = null;
 
-		return MainWP_Utility::fetchUrl( $website, $url, $postdata, $pForceFetch, false, $verifyCertificate, $http_user, $http_pass );
+		return MainWP_Utility::fetchUrl( $website, $url, $postdata, false, $pForceFetch, false, $verifyCertificate, $http_user, $http_pass,  $sslVersion);
 	}
 
 	static function fetchUrlClean( $url, $postdata ) {
-		$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+		//$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
 		$ch = curl_init();
 		curl_setopt( $ch, CURLOPT_URL, $url );
@@ -725,7 +734,7 @@ class MainWP_Utility {
 		}
 	}
 
-	static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null ) {
+	static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null, $sslVersion = CURL_SSLVERSION_DEFAULT ) {
 		$start = time();
 
 		try {
@@ -738,7 +747,7 @@ class MainWP_Utility {
 				$tmpUrl .= 'wp-admin/admin-ajax.php';
 			}
 
-			return self::_fetchUrl( $website, $tmpUrl, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass );
+			return self::_fetchUrl( $website, $tmpUrl, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion );
 		} catch ( Exception $e ) {
 			if ( ! $pRetryFailed || ( ( time() - $start ) > 30 ) ) {
 				//If more then 30secs past since the initial request, do not retry this!
@@ -746,15 +755,16 @@ class MainWP_Utility {
 			}
 
 			try {
-				return self::_fetchUrl( $website, $url, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass );
+				return self::_fetchUrl( $website, $url, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion );
 			} catch ( Exception $ex ) {
 				throw $e;
 			}
 		}
 	}
 
-	static function _fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $http_user = null, $http_pass = null ) {
-		$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+	static function _fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = CURL_SSLVERSION_DEFAULT ) {
+		//$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
 		if ( ! $pForceFetch ) {
 			//todo: RS:
@@ -937,6 +947,8 @@ class MainWP_Utility {
 			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		}
 
+		@curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
+
 		$timeout = 20 * 60 * 60; //20 minutes
 		@curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
 		if ( ! ini_get( 'safe_mode' ) ) {
@@ -1029,7 +1041,8 @@ class MainWP_Utility {
 		}
 
 		$fp    = fopen( $file, 'a' );
-		$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+		//$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		if ( $size !== false ) {
 			if ( @file_exists( $file ) ) {
 				$size = @filesize( $file );
@@ -1231,7 +1244,8 @@ class MainWP_Utility {
 	}
 
 	protected static function file_get_contents_curl( $url ) {
-		$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+		//$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
+		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$ch    = curl_init();
 		curl_setopt( $ch, CURLOPT_HEADER, 0 );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 ); //Set curl to return the data instead of printing it to the browser.
@@ -1997,5 +2011,26 @@ class MainWP_Utility {
 		}
 
 		return $faviurl;
+	}
+
+	public static function getCURLSSLVersion( $sslVersion )
+	{
+		switch ($sslVersion)
+		{
+			case '1.x':
+				return CURL_SSLVERSION_TLSv1;
+			case '2':
+				return CURL_SSLVERSION_SSLv2;
+			case '3':
+				return CURL_SSLVERSION_SSLv3;
+			case '1.0':
+				return CURL_SSLVERSION_TLSv1_0;
+			case '1.1':
+				return CURL_SSLVERSION_TLSv1_1;
+			case '1.2':
+				return CURL_SSLVERSION_TLSv1_2;
+			default:
+				return CURL_SSLVERSION_DEFAULT;
+		}
 	}
 }

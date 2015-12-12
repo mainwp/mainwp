@@ -350,13 +350,27 @@ class MainWP_Manage_Sites_View {
                 <div class="inside">
                     <table class="form-table">
                     <tr class="form-field form-required">
-                       <th scope="row"><?php _e( 'Verify certificate','mainwp' ); ?> <?php MainWP_Utility::renderToolTip( __( 'Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp' ) ); ?></th>
+                       <th scope="row"><?php _e( 'Verify Certificate','mainwp' ); ?> <?php MainWP_Utility::renderToolTip( __( 'Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp' ) ); ?></th>
                         <td>
                             <select id="mainwp_managesites_test_verifycertificate" name="mainwp_managesites_test_verifycertificate">
                                  <option selected value="1"><?php _e( 'Yes','mainwp' ); ?></option>
                                  <option value="0"><?php _e( 'No','mainwp' ); ?></option>
                                  <option value="2"><?php _e( 'Use Global Setting','mainwp' ); ?></option>
                              </select> <em>(<?php _e( 'Default: Yes','mainwp' ); ?>)</em>
+                        </td>
+                    </tr>
+                    <tr class="form-field form-required">
+                       <th scope="row"><?php _e( 'SSL Version','mainwp' ); ?> <?php MainWP_Utility::renderToolTip( __( 'Prefered SSL Version to connect to your site.','mainwp' ) ); ?></th>
+                        <td>
+                            <select id="mainwp_managesites_test_ssl_version" name="mainwp_managesites_test_ssl_version">
+                                 <option selected value="auto"><?php _e( 'Auto detect','mainwp' ); ?></option>
+                                 <option value="1.x"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
+                                 <option value="2"><?php _e( 'SSL v2','mainwp' ); ?></option>
+                                 <option value="3"><?php _e( 'SSL v3','mainwp' ); ?></option>
+                                 <option value="1.0"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
+                                 <option value="1.1"><?php _e( 'TLS v1.1','mainwp' ); ?></option>
+                                 <option value="1.2"><?php _e( 'TLS v1.2','mainwp' ); ?></option>
+                             </select> <em>(<?php _e( 'Default: Auto detect','mainwp' ); ?>)</em>
                         </td>
                     </tr>
 
@@ -395,23 +409,61 @@ class MainWP_Manage_Sites_View {
 				if ( is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
 					$content = file_get_contents( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] );
 					$lines = explode( "\r", $content );
+					$allowedHeaders = array('site name', 'url', 'admin name', 'group', 'security id', 'http username', 'http password', 'verify certificate', 'ssl version');
+					$default = array('', '', '', '', '', '', '', '1', 'auto');
 
 					if ( is_array( $lines ) && (count( $lines ) > 0) ) {
 						$i = 0;
-						if ( $_POST['mainwp_managesites_chk_header_first'] ) {
-							$header_line = trim( trim( $lines[0] ), '"' ) . "\n";
-							unset( $lines[0] );
-						}
+						$header_line = null;
+						$header_line_split = null;
 
-						foreach ( $lines as $line ) {
-							$line = trim( $line );
+						foreach ( $lines as $originalLine ) {
+							$line = trim( $originalLine );
+							if (MainWP_Utility::startsWith($line, '#')) continue;
+
+							if ( ( $header_line == null ) && $_POST['mainwp_managesites_chk_header_first'] ) {
+								$header_line = $line . "\n";
+								$header_line_split_tmp = explode( ',', $header_line );
+								$header_line_split = array();
+								for ($x = 0; $x < count($header_line_split_tmp); $x++)
+								{
+									$header_line_split[$x] = strtolower( trim( trim( $header_line_split_tmp[$x] ), '"' ) );
+								}
+
+								continue;
+							}
+
 							$items = explode( ',', $line );
-							$line = trim( trim( $items[0] ), '"' ) . ',' . trim( trim( $items[1] ), '"' ) . ',' . trim( trim( $items[2] ), '"' ) . ',' . trim( trim( $items[3] ), '"' ) . ',' . trim( trim( $items[4] ), '"' );
+							$line = '';
+							for ($x = 0; $x < count($allowedHeaders); $x++)
+							{
+								if ($line != '') { $line .= ','; }
+								$idx = $x;
+								if (!empty($header_line_split)) {
+									$idx = array_search($allowedHeaders[$x], $header_line_split);
+								}
 
+								$val = null;
+								if ( $idx > -1 ) {
+									$val = trim( trim( $items[$idx] ), '"' );
+									if ( $allowedHeaders[$x] == 'verify certificate' ) {
+										if ( $val == 'T' ) {
+											$val = '1';
+										} else {
+											$val = '0';
+										}
+									}
+								}
+								if ( empty( $val ) ) {
+									$val = $default[$x];
+								}
+								$line .= $val;
+							}
 							?>
                             <input type="hidden"
                                    id="mainwp_managesites_import_csv_line_<?php echo ($i + 1) // start from 1 ?>"
-                                   value="<?php echo esc_attr( $line ); ?>"/>
+                                   value="<?php echo esc_attr( $line ); ?>"
+                                   original="<?php echo esc_attr( $originalLine ); ?>" />
                             <?php
 							$i++;
 						}
@@ -589,6 +641,20 @@ class MainWP_Manage_Sites_View {
                                     </select> <em><?php _e( 'Default: Yes', 'mainwp' ); ?></em>
                             </td>
                         </tr>
+	                    <tr class="form-field form-required">
+	                       <th scope="row"><?php _e( 'SSL Version','mainwp' ); ?> <?php MainWP_Utility::renderToolTip( __( 'Prefered SSL Version to connect to your site.','mainwp' ) ); ?></th>
+	                        <td>
+	                            <select id="mainwp_managesites_ssl_version" name="mainwp_managesites_ssl_version">
+	                                 <option selected value="auto"><?php _e( 'Auto detect','mainwp' ); ?></option>
+	                                 <option value="1.x"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
+	                                 <option value="2"><?php _e( 'SSL v2','mainwp' ); ?></option>
+	                                 <option value="3"><?php _e( 'SSL v3','mainwp' ); ?></option>
+	                                 <option value="1.0"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
+	                                 <option value="1.1"><?php _e( 'TLS v1.1','mainwp' ); ?></option>
+	                                 <option value="1.2"><?php _e( 'TLS v1.2','mainwp' ); ?></option>
+	                             </select> <em>(<?php _e( 'Default: Auto detect','mainwp' ); ?>)</em>
+	                        </td>
+	                    </tr>
 
                         <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
                         <input style="display:none" type="text" name="fakeusernameremembered"/>
@@ -643,14 +709,14 @@ class MainWP_Manage_Sites_View {
                            <p>
                                <input type="checkbox" name="mainwp_managesites_chk_bulkupload"
                                       id="mainwp_managesites_chk_bulkupload" value="1"/>
-                               <span class="description"><?php _e('Upload file','mainwp'); ?></span>
+                               <label for="mainwp_managesites_chk_bulkupload"><span class="description"><?php _e('Upload file','mainwp'); ?></span></label>
                            </p>
 
                            <p>
                                <input type="checkbox" name="mainwp_managesites_chk_header_first"
                                       disabled="disabled" checked="checked"
                                       id="mainwp_managesites_chk_header_first" value="1"/>
-                               <span class="description"><?php _e('CSV file contains a header.','mainwp'); ?></span>
+                               <label for="mainwp_managesites_chk_header_first"><span class="description"><?php _e('CSV file contains a header.','mainwp'); ?></span></label>
                            </p>
                        </div>
                    </td>
@@ -727,7 +793,7 @@ class MainWP_Manage_Sites_View {
 			<?php if ( $website->alexia < $website->alexia_old ) {
 				?> 
                 <td style="width: 100px" class="mainwp-green"><span><i class="fa fa-chevron-down"></i> <?php echo $website->alexia; ?></span></td>
-			<?php } else if ( $website->alexia === $website->alexia_old ) {
+			<?php } else if ( $website->alexia == $website->alexia_old ) {
 				?>
                 <td style="width: 100px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->alexia; ?></span></td>
 			<?php } else { ?>
@@ -739,7 +805,7 @@ class MainWP_Manage_Sites_View {
           <th style="text-align: left; width: 300px;"><?php _e( 'Indexed Links on Google:','mainwp' ); ?></th>
 			<?php if ( $website->indexed > $website->indexed_old ) { ?> 
           <td style="width: 100px" class="mainwp-green"><span><i class="fa fa-chevron-up"></i> <?php echo $website->indexed; ?></span></td>
-			<?php } else if ( $website->indexed === $website->indexed_old ) { ?>
+			<?php } else if ( $website->indexed == $website->indexed_old ) { ?>
           <td style="width: 100px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->indexed; ?></span></td>
 			<?php } else { ?>
           <td style="width: 100px" class="mainwp-red"><span><i class="fa fa-chevron-down"></i> <?php echo $website->indexed; ?></span></td>
@@ -1485,6 +1551,20 @@ class MainWP_Manage_Sites_View {
                          </select> <i>(Default: Yes)</i>
                     </td>
                 </tr>
+                <tr class="form-field form-required">
+                   <th scope="row"><?php _e( 'SSL Version','mainwp' ); ?> <?php MainWP_Utility::renderToolTip( __( 'Prefered SSL Version to connect to your site.','mainwp' ) ); ?></th>
+                    <td>
+                        <select id="mainwp_managesites_edit_ssl_version" name="mainwp_managesites_edit_ssl_version">
+                             <option <?php echo ($website->ssl_version == 'auto') ? 'selected' : ''; ?> value="auto"><?php _e( 'Auto detect','mainwp' ); ?></option>
+                             <option <?php echo ($website->ssl_version == '1.x') ? 'selected' : ''; ?> value="1.x"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
+                             <option <?php echo ($website->ssl_version == '2') ? 'selected' : ''; ?> value="2"><?php _e( 'SSL v2','mainwp' ); ?></option>
+                             <option <?php echo ($website->ssl_version == '3') ? 'selected' : ''; ?> value="3"><?php _e( 'SSL v3','mainwp' ); ?></option>
+                             <option <?php echo ($website->ssl_version == '1.0') ? 'selected' : ''; ?> value="1.0"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
+                             <option <?php echo ($website->ssl_version == '1.1') ? 'selected' : ''; ?> value="1.1"><?php _e( 'TLS v1.1','mainwp' ); ?></option>
+                             <option <?php echo ($website->ssl_version == '1.2') ? 'selected' : ''; ?> value="1.2"><?php _e( 'TLS v1.2','mainwp' ); ?></option>
+                         </select> <em>(<?php _e( 'Default: Auto detect','mainwp' ); ?>)</em>
+                    </td>
+                </tr>
 
                 <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
                 <input style="display:none" type="text" name="fakeusernameremembered"/>
@@ -1636,7 +1716,7 @@ class MainWP_Manage_Sites_View {
 					$pubkey = '-1';
 				}
 
-					$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array( 'pubkey' => $pubkey, 'server' => get_admin_url() ), true, $website->verify_certificate, $website->http_user, $website->http_pass );
+					$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array( 'pubkey' => $pubkey, 'server' => get_admin_url() ), true, $website->verify_certificate, $website->http_user, $website->http_pass, $website->ssl_version );
 
 				if ( isset( $information['error'] ) && $information['error'] != '' ) {
 					throw new Exception( $information['error'] );
@@ -1709,7 +1789,8 @@ class MainWP_Manage_Sites_View {
 					$pluginConflicts = array_filter( $pluginConflicts );}
 				if ( is_array( $themeConflicts ) ) {
 					$themeConflicts = array_filter( $themeConflicts );}
-				$verifyCertificate = $_POST['verify_certificate'];
+				$verifyCertificate = ( !isset( $_POST['verify_certificate'] ) || empty( $_POST['verify_certificate'] ) ? null : $_POST['verify_certificate']);
+				$sslVersion = MainWP_Utility::getCURLSSLVersion( !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version']);
 				$addUniqueId = $_POST['managesites_add_uniqueId'];
 				$http_user = $_POST['managesites_add_http_user'];
 				$http_pass = $_POST['managesites_add_http_pass'];

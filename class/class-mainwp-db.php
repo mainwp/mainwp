@@ -116,6 +116,7 @@ class MainWP_DB {
   is_ignorePluginUpdates tinyint(1) NOT NULL DEFAULT 0,
   is_ignoreThemeUpdates tinyint(1) NOT NULL DEFAULT 0,
   verify_certificate tinyint(1) NOT NULL DEFAULT 1,
+  ssl_version tinyint(1) NOT NULL DEFAULT 0,
   ip text NOT NULL DEFAULT "",
   uniqueId text NOT NULL,
   maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
@@ -999,7 +1000,7 @@ class MainWP_DB {
 		return $this->wpdb->get_var( 'SELECT micro_timestamp_start FROM ' . $this->tableName( 'request_log' ) . ' WHERE ip = "' . esc_sql( $ip ) . '" order by micro_timestamp_start desc limit 1' );
 	}
 
-	public function addWebsite( $userid, $name, $url, $admin, $pubkey, $privkey, $nossl, $nosslkey, $groupids, $groupnames, $verifyCertificate = 1, $uniqueId = '', $http_user, $http_pass ) {
+	public function addWebsite( $userid, $name, $url, $admin, $pubkey, $privkey, $nossl, $nosslkey, $groupids, $groupnames, $verifyCertificate = 1, $uniqueId = '', $http_user, $http_pass, $sslVersion = CURL_SSLVERSION_DEFAULT) {
 		if ( MainWP_Utility::ctype_digit( $userid ) && ( $nossl == 0 || $nossl == 1 ) ) {
 			$values = array(
 				'userid'                  => $userid,
@@ -1043,6 +1044,7 @@ class MainWP_DB {
 				'ignored_pluginConflicts' => '',
 				'ignored_themeConflicts'  => '',
 				'verify_certificate'      => $verifyCertificate,
+				'ssl_version'             => $sslVersion,
 				'uniqueId'                => $uniqueId,
 				'mainwpdir'               => 0,
 				'http_user'               => $http_user,
@@ -1161,12 +1163,12 @@ class MainWP_DB {
 		return false;
 	}
 
-	public function updateWebsite( $websiteid, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifyCertificate = 1, $archiveFormat, $uniqueId = '', $http_user = null, $http_pass = null ) {
+	public function updateWebsite( $websiteid, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifyCertificate = 1, $archiveFormat, $uniqueId = '', $http_user = null, $http_pass = null, $sslVersion = CURL_SSLVERSION_DEFAULT ) {
 		if ( MainWP_Utility::ctype_digit( $websiteid ) && MainWP_Utility::ctype_digit( $userid ) ) {
 			$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				//update admin
-				$this->wpdb->query( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET name="' . $this->escape( $name ) . '", adminname="' . $this->escape( $siteadmin ) . '",offline_checks="' . $this->escape( $offlineChecks ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '"  WHERE id=' . $websiteid );
+				$this->wpdb->query( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET name="' . $this->escape( $name ) . '", adminname="' . $this->escape( $siteadmin ) . '",offline_checks="' . $this->escape( $offlineChecks ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '"  WHERE id=' . $websiteid );
 				$this->wpdb->query( 'UPDATE ' . $this->tableName( 'wp_settings_backup' ) . ' SET archiveFormat = "' . $this->escape( $archiveFormat ) . '" WHERE wpid=' . $websiteid );
 				//remove groups
 				$this->wpdb->query( 'DELETE FROM ' . $this->tableName( 'wp_group' ) . ' WHERE wpid=' . $websiteid );

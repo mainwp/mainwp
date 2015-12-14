@@ -706,13 +706,14 @@ class MainWP_Plugins {
 		$sites          = array(); //id -> url
 		$sitePlugins    = array(); //site_id -> plugin_version_name -> plugin obj
 		$plugins        = array(); //name_version -> slug
-		$pluginsVersion = $pluginsName = array(); //name_version -> title_version
+		$pluginsVersion = $pluginsName = $pluginsMainWP = array(); //name_version -> title_version
 		$pluginsRealVersion = array(); //name_version -> title_version
 		foreach ( $output->plugins as $plugin ) {
 			$sites[ $plugin['websiteid'] ]                                = $plugin['websiteurl'];
 			$plugins[ $plugin['name'] . '_' . $plugin['version'] ]        = $plugin['slug'];
 			$pluginsName[ $plugin['name'] . '_' . $plugin['version'] ]    = $plugin['name'];
 			$pluginsVersion[ $plugin['name'] . '_' . $plugin['version'] ] = $plugin['name'] . ' ' . $plugin['version'];
+			$pluginsMainWP[ $plugin['name'] . '_' . $plugin['version'] ]  = isset($plugin['mainwp']) ? $plugin['mainwp'] : 'F';
 			$pluginsRealVersion[ $plugin['name'] . '_' . $plugin['version'] ] = $plugin['version'];
 			if ( ! isset( $sitePlugins[ $plugin['websiteid'] ] ) || ! is_array( $sitePlugins[ $plugin['websiteid'] ] ) ) {
 				$sitePlugins[ $plugin['websiteid'] ] = array();
@@ -754,7 +755,7 @@ class MainWP_Plugins {
 						<?php
 						foreach ( $pluginsVersion as $plugin_name => $plugin_title ) {
 							echo '<td class="long" style="text-align: center">';
-							if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) ) {
+							if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( !isset($pluginsMainWP[$plugin_name]) || $pluginsMainWP[$plugin_name] === 'F')) {
 								echo '<input type="checkbox" value="' . $plugins[ $plugin_name ] . '" name="' . $pluginsName[ $plugin_name ] . '" class="selected_plugin" />';
 							}
 							echo '</td>';

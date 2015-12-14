@@ -852,7 +852,7 @@ class MainWP_Extensions {
 		}
 
 		$dbwebsites = array();
-		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate' );
+		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version' );
 
 		if ( is_array( $options ) ) {
 			foreach ( $options as $option_name => $value ) {

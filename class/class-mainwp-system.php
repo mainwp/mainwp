@@ -13,6 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
+	public static $version = '3.0';
 	//Singleton
 	private static $instance = null;
 
@@ -234,7 +235,6 @@ class MainWP_System {
 			}
 		}
 
-		add_action( 'plugin_action_links_' . $this->plugin_slug, array( &$this, 'plugin_action_links' ) );
 		add_action( 'admin_notices', array( &$this, 'admin_notices' ) );
 
 		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) );
@@ -602,12 +602,6 @@ class MainWP_System {
 		}
 
 		return false;
-	}
-
-	public function plugin_action_links( $val ) {
-		$val[] = '<a href="' . admin_url() . 'admin.php?page=Settings">Licenses</a>';
-
-		return $val;
 	}
 
 	function mainwp_cronofflinecheck_action() {
@@ -1416,11 +1410,33 @@ class MainWP_System {
 				break;
 			}
 
-			$alexia   = MainWP_Utility::getAlexaRank( $website->url );
-			$pageRank = 0;//MainWP_Utility::getPagerank($website->url);
-			$indexed  = MainWP_Utility::getGoogleCount( $website->url );
+			$errors = false;
+			if ( !$errors ) {
+				$indexed = MainWP_Utility::getGoogleCount( $website->url );
 
-			MainWP_DB::Instance()->updateWebsiteStats( $website->id, $pageRank, $indexed, $alexia, $website->pagerank, $website->indexed, $website->alexia );
+				if ($indexed == NULL) {
+					$errors = true;
+				}
+			}
+
+			if ( !$errors ) {
+				$alexia = MainWP_Utility::getAlexaRank( $website->url );
+
+				if ($alexia == NULL) {
+					$errors = true;
+				}
+			}
+
+			$pageRank = 0;//MainWP_Utility::getPagerank($website->url);
+
+
+			$newIndexed = ($errors ? $website->indexed : $indexed);
+			$oldIndexed = ($errors ? $website->indexed_old : $website->indexed);
+			$newAlexia = ($errors ? $website->alexia : $alexia);
+			$oldAlexia = ($errors ? $website->alexia_old : $website->alexia);
+			$statsUpdated = ($errors ? $website->statsUpdate : time());
+
+			MainWP_DB::Instance()->updateWebsiteStats( $website->id, $pageRank, $newIndexed, $newAlexia, $website->pagerank, $oldIndexed, $oldAlexia, $statsUpdated );
 
 			if ( $website->sync_errors != '' ) {
 				//Try reconnecting

@@ -1361,6 +1361,13 @@ li.hoverli {
 .mainwp-warning
 {
     padding: 3px 7px ;
+    background: #d98500;
+    clear: both;
+    color: #fff;
+}
+.mainwp-fail
+{
+    padding: 3px 21px ;
     background: #a00;
     clear: both;
     color: #fff;

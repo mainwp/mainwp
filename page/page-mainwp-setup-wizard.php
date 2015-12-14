@@ -344,7 +344,7 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1><?php _e( 'Dashboard System Requirements Checkup', 'mainwp' ); ?></h1>
 		<p><?php _e( 'Any Warning here may cause the MainWP Dashboard to malfunction. After you complete the Quick Start setup it is recommended to contact your host’s support and updating your server configuration for optimal performance.', 'mainwp' ); ?></p>
-		<?php MainWPServerInformation::renderQuickSetupSystemCheck(); ?>
+		<?php MainWP_Server_Information::renderQuickSetupSystemCheck(); ?>
 		<br/>
 		<p class="mwp-setup-actions step">
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button-primary button button-large"><?php _e( 'Continue', 'mainwp' ); ?></a>
@@ -669,8 +669,8 @@ class MainWP_Setup_Wizard {
 		if (get_option("mainwp_extensions_api_save_login") == true) {
 			$enscrypt_u = get_option('mainwp_extensions_api_username');
 			$enscrypt_p = get_option('mainwp_extensions_api_password');
-			$username = !empty($enscrypt_u) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_u) : "";
-			$password = !empty($enscrypt_p) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_p) : "";
+			$username = !empty($enscrypt_u) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_u) : "";
+			$password = !empty($enscrypt_p) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_p) : "";
 		}
 
 		$backup_method = get_option('mwp_setup_primaryBackup');
@@ -733,8 +733,8 @@ class MainWP_Setup_Wizard {
 			MainWP_Utility::update_option("mainwp_extensions_api_username", $username);
 			MainWP_Utility::update_option("mainwp_extensions_api_password", $password);
 		} else {
-			$enscrypt_u = MainWPApiManagerPasswordManagement::encrypt_string( $username );
-			$enscrypt_p = MainWPApiManagerPasswordManagement::encrypt_string( $password );
+			$enscrypt_u = MainWP_Api_Manager_Password_Management::encrypt_string( $username );
+			$enscrypt_p = MainWP_Api_Manager_Password_Management::encrypt_string( $password );
 			MainWP_Utility::update_option( "mainwp_extensions_api_username", $enscrypt_u );
 			MainWP_Utility::update_option( "mainwp_extensions_api_password", $enscrypt_p );
 			MainWP_Utility::update_option( "mainwp_extensions_api_save_login", true );
@@ -780,7 +780,7 @@ class MainWP_Setup_Wizard {
 	}
 
 	public static function ajax_save_extensions_api_login() {
-		MainWPExtensions::saveExtensionsApiLogin();
+		MainWP_Extensions::saveExtensionsApiLogin();
 		die();
 	}
 
@@ -788,8 +788,8 @@ class MainWP_Setup_Wizard {
 
 		$enscrypt_u = get_option('mainwp_extensions_api_username');
 		$enscrypt_p = get_option('mainwp_extensions_api_password');
-		$username = !empty($enscrypt_u) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_u) : "";
-		$password = !empty($enscrypt_p) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_p) : "";
+		$username = !empty($enscrypt_u) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_u) : "";
+		$password = !empty($enscrypt_p) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_p) : "";
 
 		$product_id = trim( $_POST['productId'] );
 
@@ -798,13 +798,13 @@ class MainWP_Setup_Wizard {
 			die(json_encode(array('error' => __('Login Invalid.','mainwp'))));
 		}
 
-		$data = MainWPApiManager::instance()->get_purchased_software( $username, $password, $product_id);
+		$data = MainWP_Api_Manager::instance()->get_purchased_software( $username, $password, $product_id);
 		$result = json_decode($data, true);
 		$return = array();
 		if (is_array($result)) {
 			if (isset($result['success']) && $result['success']) {
 				$all_available_exts = array();
-				foreach(MainWPExtensionsView::getAvailableExtensions() as $ext) {
+				foreach(MainWP_Extensions_View::getAvailableExtensions() as $ext) {
 					$all_available_exts[$ext['product_id']] = $ext;
 				}
 				$purchased_data = (isset($result['purchased_data']) && is_array($result['purchased_data'])) ? $result['purchased_data'] : array();
@@ -819,7 +819,7 @@ class MainWP_Setup_Wizard {
 					$software_title = isset($all_available_exts[$product_id]) ? $all_available_exts[$product_id]['title'] : $product_id;
 					if (isset($product_info['error']) && $product_info['error'] == 'download_revoked') {
 						$error = true;
-						$html .= '<div><span class="name"><strong>' . $software_title . "</strong></span> <span style=\"color: red;\"><strong>Error</strong> " . MainWPApiManager::instance()->download_revoked_error_notice($software_title) . '</span></div>';
+						$html .= '<div><span class="name"><strong>' . $software_title . "</strong></span> <span style=\"color: red;\"><strong>Error</strong> " . MainWP_Api_Manager::instance()->download_revoked_error_notice($software_title) . '</span></div>';
 					} else if (isset($product_info['package']) && !empty($product_info['package'])){
 						$package_url = apply_filters('mainwp_api_manager_upgrade_url', $product_info['package']);
 						$html .= '<div class="extension_to_install" download-link="' . $package_url . '" product-id="' . $product_id . '"><span class="name"><strong>' . $software_title . "</strong></span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
@@ -843,25 +843,25 @@ class MainWP_Setup_Wizard {
 	}
 
 	public static function ajax_download_and_install() {
-		$return = MainWPExtensions::installPlugin($_POST['download_link'], true);
+		$return = MainWP_Extensions::installPlugin($_POST['download_link'], true);
 		die('<mainwp>' . json_encode($return) . '</mainwp>');
 	}
 
 	public static function ajax_grab_api_key( ) {
 		$enscrypt_u = get_option('mainwp_extensions_api_username');
 		$enscrypt_p = get_option('mainwp_extensions_api_password');
-		$username = !empty($enscrypt_u) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_u) : "";
-		$password = !empty($enscrypt_p) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_p) : "";
+		$username = !empty($enscrypt_u) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_u) : "";
+		$password = !empty($enscrypt_p) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_p) : "";
 		$api = dirname($_POST['slug']);
-		$result = MainWPApiManager::instance()->grab_license_key($api, $username, $password);
+		$result = MainWP_Api_Manager::instance()->grab_license_key($api, $username, $password);
 		die(json_encode($result));
 	}
 
 	public function mwp_setup_install_extension() {
 		$enscrypt_u = get_option('mainwp_extensions_api_username');
 		$enscrypt_p = get_option('mainwp_extensions_api_password');
-		$username = !empty($enscrypt_u) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_u) : "";
-		$password = !empty($enscrypt_p) ? MainWPApiManagerPasswordManagement::decrypt_string($enscrypt_p) : "";
+		$username = !empty($enscrypt_u) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_u) : "";
+		$password = !empty($enscrypt_p) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_p) : "";
 
 		$backup_method = get_option('mwp_setup_primaryBackup');
 
@@ -875,7 +875,7 @@ class MainWP_Setup_Wizard {
 		$ext_installed = false;
 		$ext_activated = false;
 
-		$installed_exts = MainWPExtensions::loadExtensions();
+		$installed_exts = MainWP_Extensions::loadExtensions();
 		foreach($installed_exts as $ext) {
 			if (isset($ext['product_id']) && $ext_product_id == $ext['product_id']) {
 				$ext_installed = true;

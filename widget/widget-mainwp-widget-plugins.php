@@ -34,6 +34,9 @@ class MainWP_Widget_Plugins {
 				$plugins = json_decode( $website->plugins, 1 );
 				if ( is_array( $plugins ) && count( $plugins ) != 0 ) {
 					foreach ( $plugins as $plugin ) {
+						if ( isset( $plugin['mainwp'] ) && ( $plugin['mainwp'] == 'T' ) ) {
+							continue;
+						}
 						$allPlugins[] = $plugin;
 					}
 				}

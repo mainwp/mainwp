@@ -1151,9 +1151,11 @@ class MainWP_Post_Handler {
 		$http_user         = null;
 		$http_pass         = null;
 		$verifyCertificate = 1;
+		$sslVersion = 0;
 		if ( isset( $_POST['url'] ) ) {
 			$url               = $_POST['url'];
 			$verifyCertificate = $_POST['test_verify_cert'];
+			$sslVersion        = MainWP_Utility::getCURLSSLVersion( $_POST['test_ssl_version'] );
 			$http_user         = $_POST['http_user'];
 			$http_pass         = $_POST['http_pass'];
 		} else if ( isset( $_POST['siteid'] ) ) {
@@ -1162,19 +1164,20 @@ class MainWP_Post_Handler {
 				$url               = $website->url;
 				$name              = $website->name;
 				$verifyCertificate = $website->verify_certificate;
+				$sslVersion        = $website->ssl_version;
 				$http_user         = $website->http_user;
 				$http_pass         = $website->http_pass;
 			}
 		}
 
-		$rslt = MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass );
+		$rslt = MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion);
 
 		if ( isset( $rslt['error'] ) && ( $rslt['error'] != '' ) && ( substr( $url, - 9 ) != 'wp-admin/' ) ) {
 			if ( substr( $url, - 1 ) != '/' ) {
 				$url .= '/';
 			}
 			$url .= 'wp-admin/';
-			$newrslt = MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass );
+			$newrslt = MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion );
 			if ( isset( $newrslt['error'] ) && ( $rslt['error'] != '' ) ) {
 				$rslt = $newrslt;
 			}
@@ -1278,11 +1281,11 @@ class MainWP_Post_Handler {
 			die( json_encode( array( 'message' => __( 'Not found items slugs to update.' ) ) ) );
 		}
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
-		try {	
+		try {
 			$info = array( 'result' => MainWP_Right_Now::upgradePluginTheme( $websiteId, $_POST['type'], $slugs ) );
 			if (!empty($website)) {
 				$info['site_url'] = esc_url($website->url);
-			} 
+			}
 			die( json_encode( $info ) );
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(

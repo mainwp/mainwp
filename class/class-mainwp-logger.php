@@ -65,7 +65,7 @@ class MainWP_Logger {
 
 	public function debugForWebsite( $pWebsite, $pAction, $pMessage ) {
 		if ( empty( $pWebsite ) ) {
-			return $this->log( '[] [' . MainWP_Utility::getNiceURL( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage, self::DEBUG );
+			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage, self::DEBUG );
 		}
 
 		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::getNiceURL( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage, self::DEBUG );
@@ -73,23 +73,22 @@ class MainWP_Logger {
 
 	public function infoForWebsite( $pWebsite, $pAction, $pMessage ) {
 		if ( empty( $pWebsite ) ) {
-			return false;
+			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage, self::INFO );
 		}
 
 		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::getNiceURL( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage, self::INFO );
 	}
 
 	public function warningForWebsite( $pWebsite, $pAction, $pMessage, $addStackTrace = true ) {
-		if ( empty( $pWebsite ) ) {
-			return false;
-		}
-
 		$stackTrace = '';
 		if ( $addStackTrace ) {
 			@ob_start();
 			@debug_print_backtrace();
 
 			$stackTrace = "\n" . @ob_get_clean();
+		}
+		if ( empty( $pWebsite ) ) {
+			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage . $stackTrace, self::WARNING );
 		}
 
 		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::getNiceURL( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage . $stackTrace, self::WARNING );

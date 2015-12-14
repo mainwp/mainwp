@@ -59,7 +59,7 @@ class MainWP_Right_Now {
 				if ( isset( $information['upgrade'] ) && ( $information['upgrade'] == 'SUCCESS' ) ) {
 					MainWP_DB::Instance()->updateWebsiteOption( $website, 'wp_upgrades', json_encode( array() ) );
 
-					return __( 'Upgrade Successful', 'mainwp' ) . '! Open your site <a href="' . esc_url( $website->url ) . '" target="_blank">Frontpage</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $id . '" target="_blank">WP Admin</a>';					
+					return __( 'Upgrade Successful', 'mainwp' ) . '! Open your site <a href="' . esc_url( $website->url ) . '" target="_blank">Frontpage</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $id . '" target="_blank">WP Admin</a>';
 				} else if ( isset( $information['upgrade'] ) ) {
 					$errorMsg = '';
 					if ( $information['upgrade'] == 'LOCALIZATION' ) {

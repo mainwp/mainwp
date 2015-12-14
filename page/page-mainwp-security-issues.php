@@ -143,7 +143,7 @@ class MainWP_Security_Issues {
 					</tr>
 				</table>
 				<br/><input type="button" id="securityIssues_fixAll" class="button-primary button button-hero" value="<?php _e( 'Fix All', 'mainwp' ); ?>"/>
-				<input type="button" id="securityIssues_refresh" class="button" value="<?php _e( 'Refresh', 'mainwp' ); ?>"/>
+				<input type="button" id="securityIssues_refresh" class="button button-hero" value="<?php _e( 'Refresh', 'mainwp' ); ?>"/>
 			</div>
 		</div>
 		<?php if ( $with_header ) { ?>

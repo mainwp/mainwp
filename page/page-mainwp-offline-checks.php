@@ -213,7 +213,7 @@ class MainWP_Offline_Checks {
 					$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array(
 						'pubkey' => $pubkey,
 						'server' => get_admin_url(),
-					), false, $website->verify_certificate, $website->http_user, $website->http_pass );
+					), false, $website->verify_certificate, $website->http_user, $website->http_pass, $website->ssl_version );
 
 					if ( ! isset( $information['error'] ) || ( $information['error'] == '' ) ) {
 						if ( isset( $information['register'] ) && $information['register'] == 'OK' ) {

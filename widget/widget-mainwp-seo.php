@@ -43,7 +43,7 @@ class MainWP_SEO {
 							<td style="width: 150px"><span class="mainwp-green">
 							<i class="fa fa-chevron-down"></i> <?php echo $website->alexia; ?>
 							</span><?php echo( $website->alexia_old != '' ? ' <span style="color: #7B848B !important">(' . $website->alexia_old . ')</span>' : '' ); ?>
-							</td><?php } else if ( $website->alexia === $website->alexia_old ) { ?>
+							</td><?php } else if ( $website->alexia == $website->alexia_old ) { ?>
 							<td style="width: 150px">
 							<span><i class="fa fa-chevron-right"></i> <?php echo $website->alexia; ?></span> <?php echo( $website->alexia_old != '' ? ' <span style="color: #7B848B !important">(' . $website->alexia_old . ')</span>' : '' ); ?>
 							</td><?php } else { ?>
@@ -54,7 +54,7 @@ class MainWP_SEO {
 						if ( $website->indexed > $website->indexed_old ) { ?>
 							<td style="width: 100px">
 							<span class="mainwp-green"><i class="fa fa-chevron-up"></i> <?php echo $website->indexed; ?></span> <?php echo( $website->indexed_old != '' ? ' <span style="color: #7B848B !important">(' . $website->indexed_old . ')</span>' : '' ); ?>
-							</td><?php } else if ( $website->indexed === $website->indexed_old ) { ?>
+							</td><?php } else if ( $website->indexed == $website->indexed_old ) { ?>
 							<td style="width: 100px">
 							<span><i class="fa fa-chevron-right"></i> <?php echo $website->indexed; ?></span> <?php echo( $website->indexed_old != '' ? ' <span style="color: #7B848B !important">(' . $website->indexed_old . ')</span>' : '' ); ?>
 							</td><?php } else { ?>

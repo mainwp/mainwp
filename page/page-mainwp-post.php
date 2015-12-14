@@ -179,7 +179,7 @@ class MainWP_Post {
 						<input type="text" id="mainwp_post_search_by_dtsstart" class="mainwp_datepicker" size="12" value="<?php if ( $cachedSearch != null ) {
 							echo $cachedSearch['dtsstart'];
 						} ?>"/> <?php _e( 'to', 'mainwp' ); ?>
-						<input type="text" id="mainwp_post_search_by_dtsstop" class="mainwp_datepicke" size="12" value="<?php if ( $cachedSearch != null ) {
+						<input type="text" id="mainwp_post_search_by_dtsstop" class="mainwp_datepicker" size="12" value="<?php if ( $cachedSearch != null ) {
 							echo $cachedSearch['dtsstop'];
 						} ?>"/>
 					</p>

@@ -206,6 +206,13 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								</tr>
 							<?php endif; ?>
 							<tr>
+								<td colspan="2">
+									<p class="description indicator-hint"><?php _e( 'Hint: The password should be at least seven
+                                characters long. To make it stronger, use upper and lower case letters, numbers and
+                                symbols like ! " ? $ % ^ &amp; ).', 'mainwp' ); ?></p>
+								</td>
+							</tr>
+							<tr>
 								<td></td>
 								<td colspan="2">
 									<input type="submit" name="updateadminpassword" id="bulk_updateadminpassword" class="button-primary button button-hero" value="<?php _e( 'Update Now', 'mainwp' ); ?>"/>

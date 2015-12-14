@@ -520,7 +520,7 @@ rightnow_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck)
                             result = __('Upgrade Successful');
                             if (response.site_url)
                                 result = result + '! ' + 'Open your site <a href="' + response.site_url + '" target="_blank">Frontpage</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>.';
-                            
+
                             websiteHolder.attr('updated', 1);
                             countRealItemsUpdated++;
                             if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);

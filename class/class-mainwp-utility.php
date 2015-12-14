@@ -695,7 +695,7 @@ class MainWP_Utility {
 		$postdata = MainWP_Utility::getPostDataNotAuthed( $url, $admin, $what, $params );
 		$website  = null;
 
-		return MainWP_Utility::fetchUrl( $website, $url, $postdata, $pForceFetch, false, $verifyCertificate, $http_user, $http_pass );
+		return MainWP_Utility::fetchUrl( $website, $url, $postdata, $pForceFetch, false, $verifyCertificate, false, $http_user, $http_pass );
 	}
 
 	static function fetchUrlClean( $url, $postdata ) {

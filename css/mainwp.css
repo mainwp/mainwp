@@ -1361,6 +1361,13 @@ li.hoverli {
 .mainwp-warning
 {
     padding: 3px 7px ;
+    background: #d98500;
+    clear: both;
+    color: #fff;
+}
+.mainwp-fail
+{
+    padding: 3px 21px ;
     background: #a00;
     clear: both;
     color: #fff;
@@ -2865,4 +2872,7 @@ body.show-upload-plugin .mainwp-upload-plugin {
 
 .mainwp_hide_wpmenu_checkboxes {
     margin: 0;
+}
+.plugin-update-tr .api-deactivate {
+    background-color: #fcf3ef;
 }

@@ -1803,7 +1803,7 @@ class MainWP_Manage_Sites_View {
 						'themeConflicts' => json_encode( $themeConflicts ),
 					),
 					false,
-					$verifyCertificate, $http_user, $http_pass
+					$verifyCertificate, $http_user, $http_pass, $sslVersion
 				);
 
 				if ( isset( $information['error'] ) && $information['error'] != '' ) {
@@ -1842,7 +1842,7 @@ class MainWP_Manage_Sites_View {
 						$http_pass = $_POST['managesites_add_http_pass'];
 						global $current_user;
 						$id = MainWP_DB::Instance()->addWebsite($current_user->ID, $_POST['managesites_add_wpname'], $_POST['managesites_add_wpurl'], $_POST['managesites_add_wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], (isset( $information['nosslkey'] )
-								? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass);
+								? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion);
 						$message = sprintf( __( 'Site successfully added - Visit the Site\'s <a href="admin.php?page=managesites&dashboard=%d" style="text-decoration: none;" title="Dashboard">Dashboard</a> now.', 'mainwp' ), $id );
 						$website = MainWP_DB::Instance()->getWebsiteById( $id );
 						MainWP_Sync::syncInformationArray( $website, $information );

@@ -1151,11 +1151,11 @@ class MainWP_Post_Handler {
 		$http_user         = null;
 		$http_pass         = null;
 		$verifyCertificate = 1;
-		$sslVersion = CURL_SSLVERSION_DEFAULT;
+		$sslVersion = 0;
 		if ( isset( $_POST['url'] ) ) {
 			$url               = $_POST['url'];
 			$verifyCertificate = $_POST['test_verify_cert'];
-			$sslVersion        = $_POST['test_ssl_version'];
+			$sslVersion        = MainWP_Utility::getCURLSSLVersion( $_POST['test_ssl_version'] );
 			$http_user         = $_POST['http_user'];
 			$http_pass         = $_POST['http_pass'];
 		} else if ( isset( $_POST['siteid'] ) ) {
@@ -1280,9 +1280,13 @@ class MainWP_Post_Handler {
 		if ( empty( $slugs ) ) {
 			die( json_encode( array( 'message' => __( 'Not found items slugs to update.' ) ) ) );
 		}
-
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		try {
-			die( json_encode( array( 'result' => MainWP_Right_Now::upgradePluginTheme( $websiteId, $_POST['type'], $slugs ) ) ) );
+			$info = array( 'result' => MainWP_Right_Now::upgradePluginTheme( $websiteId, $_POST['type'], $slugs ) );
+			if (!empty($website)) {
+				$info['site_url'] = esc_url($website->url);
+			}
+			die( json_encode( $info ) );
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(
 				'error' => array(

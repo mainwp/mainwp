@@ -2,7 +2,7 @@
 
 class MainWP_DB {
 	//Config
-	private $mainwp_db_version = '8.6';
+	private $mainwp_db_version = '8.7';
 	//Private
 	private $table_prefix;
 	//Singleton
@@ -1000,7 +1000,7 @@ class MainWP_DB {
 		return $this->wpdb->get_var( 'SELECT micro_timestamp_start FROM ' . $this->tableName( 'request_log' ) . ' WHERE ip = "' . esc_sql( $ip ) . '" order by micro_timestamp_start desc limit 1' );
 	}
 
-	public function addWebsite( $userid, $name, $url, $admin, $pubkey, $privkey, $nossl, $nosslkey, $groupids, $groupnames, $verifyCertificate = 1, $uniqueId = '', $http_user, $http_pass, $sslVersion = CURL_SSLVERSION_DEFAULT) {
+	public function addWebsite( $userid, $name, $url, $admin, $pubkey, $privkey, $nossl, $nosslkey, $groupids, $groupnames, $verifyCertificate = 1, $uniqueId = '', $http_user, $http_pass, $sslVersion = 0) {
 		if ( MainWP_Utility::ctype_digit( $userid ) && ( $nossl == 0 || $nossl == 1 ) ) {
 			$values = array(
 				'userid'                  => $userid,
@@ -1163,7 +1163,7 @@ class MainWP_DB {
 		return false;
 	}
 
-	public function updateWebsite( $websiteid, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifyCertificate = 1, $archiveFormat, $uniqueId = '', $http_user = null, $http_pass = null, $sslVersion = CURL_SSLVERSION_DEFAULT ) {
+	public function updateWebsite( $websiteid, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifyCertificate = 1, $archiveFormat, $uniqueId = '', $http_user = null, $http_pass = null, $sslVersion = 0 ) {
 		if ( MainWP_Utility::ctype_digit( $websiteid ) && MainWP_Utility::ctype_digit( $userid ) ) {
 			$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
@@ -1439,12 +1439,12 @@ class MainWP_DB {
 		$where = $this->getWhereAllowAccessSites();
 
 		//once a week
-		return 'SELECT * FROM ' . $this->tableName( 'wp' ) . ' WHERE (statsUpdate = 0 OR ' . time() . ' - statsUpdate >= ' . ( 60 * 60 * 24 * 7 ) . ')' . $where;
+		return 'SELECT * FROM ' . $this->tableName( 'wp' ) . ' WHERE (statsUpdate = 0 OR ' . time() . ' - statsUpdate >= ' . ( 60 * 60 * 24 * 7 ) . ')' . $where . ' ORDER BY statsUpdate ASC';
 	}
 
-	public function updateWebsiteStats( $websiteid, $pageRank, $indexed, $alexia, $pageRank_old, $indexed_old, $alexia_old ) {
+	public function updateWebsiteStats( $websiteid, $pageRank, $indexed, $alexia, $pageRank_old, $indexed_old, $alexia_old, $statsUpdated ) {
 		return $this->wpdb->update( $this->tableName( 'wp' ), array(
-			'statsUpdate'  => time(),
+			'statsUpdate'  => $statsUpdated,
 			'pagerank'     => $pageRank,
 			'indexed'      => $indexed,
 			'alexia'       => $alexia,

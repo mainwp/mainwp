@@ -518,6 +518,9 @@ rightnow_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck)
                         {
                             if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
                             result = __('Upgrade Successful');
+                            if (response.site_url)
+                                result = result + '! ' + 'Open your site <a href="' + response.site_url + '" target="_blank">Frontpage</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>.';
+
                             websiteHolder.attr('updated', 1);
                             countRealItemsUpdated++;
                             if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
@@ -828,6 +831,8 @@ rightnow_themes_upgrade_int = function (slug, websiteId, bulkMode)
                     {
                         if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
                         result = __('Upgrade Successful');
+                        if (response.site_url)
+                            result = result + '! ' + 'Open your site <a href="' + response.site_url + '" target="_blank">Frontpage</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + websiteId + '" target="_blank">WP Admin</a>.';
                         websiteHolder.attr('updated', 1);
                         countRealItemsUpdated++;
                         if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
@@ -1221,6 +1226,8 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                         if (res[pSlug])
                         {
                             result = __('Upgrade Successful');
+                            if (response.site_url)
+                                result = result + '! ' + 'Open your site <a href="' + response.site_url + '" target="_blank">Frontpage</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>.';
                             websiteHolder.attr('updated', 1);
                             countRealItemsUpdated++;
                             if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
@@ -1274,6 +1281,8 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                         if (res[pSlug])
                         {
                             result = __('Upgrade Successful');
+                            if (response.site_url)
+                                result = result + '! ' + 'Open your site <a href="' + response.site_url + '" target="_blank">Frontpage</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>.';
                             websiteHolder.attr('updated', 1);
                             countRealItemsUpdated++;
                             if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);

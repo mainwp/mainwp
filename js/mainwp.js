@@ -1391,7 +1391,10 @@ rightnow_upgrade_plugintheme_list = function (what, id, list, noCheck)
                         var item = newList[i];
                         couttItemsToUpdate++;
                         if (res[item]) {
-                            document.getElementById('wp_upgrade_' + pWhat + '_' + pId + '_' + item).innerHTML = '<span style="color: #0073aa;"><i class="fa fa-check-circle"></i> '+ __('Upgrade Successful') + '</span>';
+                            var msg = __('Upgrade Successful');
+                            if (response.site_url)
+                                msg = msg + '! ' + 'Open your site <a href="' + response.site_url + '" target="_blank">Frontpage</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pId + '" target="_blank">WP Admin</a>.';
+                            document.getElementById('wp_upgrade_' + pWhat + '_' + pId + '_' + item).innerHTML = '<span style="color: #0073aa;"><i class="fa fa-check-circle"></i> '+ msg + '</span>';
                             countRealItemsUpdated++;
                         }
                         else {

@@ -94,7 +94,7 @@ class MainWP_Utility {
 	}
 
 
-	public static function tryVisit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = CURL_SSLVERSION_DEFAULT ) {
+	public static function tryVisit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0 ) {
 		//$agent    = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$postdata = array( 'test' => 'yes' );
@@ -699,7 +699,7 @@ class MainWP_Utility {
 		return $information;
 	}
 
-	static function fetchUrlNotAuthed( $url, $admin, $what, $params = null, $pForceFetch = false, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = CURL_SSLVERSION_DEFAULT ) {
+	static function fetchUrlNotAuthed( $url, $admin, $what, $params = null, $pForceFetch = false, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0 ) {
 		$postdata = MainWP_Utility::getPostDataNotAuthed( $url, $admin, $what, $params );
 		$website  = null;
 
@@ -734,7 +734,7 @@ class MainWP_Utility {
 		}
 	}
 
-	static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null, $sslVersion = CURL_SSLVERSION_DEFAULT ) {
+	static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null, $sslVersion = 0 ) {
 		$start = time();
 
 		try {
@@ -762,7 +762,7 @@ class MainWP_Utility {
 		}
 	}
 
-	static function _fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = CURL_SSLVERSION_DEFAULT ) {
+	static function _fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0 ) {
 		//$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
@@ -1143,6 +1143,7 @@ class MainWP_Utility {
 			$part .= fread( $handle, 100 );
 			fclose( $handle );
 		}
+		if ( ! stristr( $part, '<ALEXA') ) return NULL;
 		if ( ! stristr( $part, $search_for ) ) {
 			return 0;
 		}
@@ -1263,10 +1264,10 @@ class MainWP_Utility {
 		$data    = json_decode( $content );
 
 		if ( empty( $data ) ) {
-			return 0;
+			return NULL;
 		}
 		if ( ! property_exists( $data, 'responseData' ) ) {
-			return 0;
+			return NULL;
 		}
 		if ( ! is_object( $data->responseData ) || ! property_exists( $data->responseData, 'cursor' ) ) {
 			return 0;
@@ -2018,19 +2019,19 @@ class MainWP_Utility {
 		switch ($sslVersion)
 		{
 			case '1.x':
-				return CURL_SSLVERSION_TLSv1;
+				return 1; //CURL_SSLVERSION_TLSv1;
 			case '2':
-				return CURL_SSLVERSION_SSLv2;
+				return 2; //CURL_SSLVERSION_SSLv2;
 			case '3':
-				return CURL_SSLVERSION_SSLv3;
+				return 3; //CURL_SSLVERSION_SSLv3;
 			case '1.0':
-				return CURL_SSLVERSION_TLSv1_0;
+				return 4; //CURL_SSLVERSION_TLSv1_0;
 			case '1.1':
-				return CURL_SSLVERSION_TLSv1_1;
+				return 5; //CURL_SSLVERSION_TLSv1_1;
 			case '1.2':
-				return CURL_SSLVERSION_TLSv1_2;
+				return 6; //CURL_SSLVERSION_TLSv1_2;
 			default:
-				return CURL_SSLVERSION_DEFAULT;
+				return 0; //CURL_SSLVERSION_DEFAULT;
 		}
 	}
 }

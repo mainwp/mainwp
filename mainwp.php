@@ -6,7 +6,7 @@
   Author: MainWP
   Author URI: http://mainwp.com
   Text Domain: mainwp
-  Version: 3.0-beta3
+  Version: 3.0-beta4
  */
 
 if ( ! defined( 'MAINWP_PLUGIN_FILE' ) ) {
@@ -70,3 +70,36 @@ $mainWP = new MainWP_System( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basena
 register_activation_hook( __FILE__, array( $mainWP, 'activation' ) );
 register_deactivation_hook( __FILE__, array( $mainWP, 'deactivation' ) );
 add_action( 'plugins_loaded', array( $mainWP, 'update' ) );
+
+
+
+
+if (isset($_REQUEST['dotest'])) {
+	$agent = 'Mozilla/5.0 (compatible; MainWP/3.0; +http://mainwp.com)';
+
+	$ch = curl_init();
+	curl_setopt( $ch, CURLOPT_URL, 'https://startupbadger.com/' );
+	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+	curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+	curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+	curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+
+	curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+	curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+
+	$data        = curl_exec( $ch );
+	$err         = curl_error( $ch );
+	$http_status = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+	$errno       = curl_errno( $ch );
+	$realurl     = curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
+	curl_close( $ch );
+
+	echo '<pre>';
+	echo '[i=' . $i . "]\n";
+	echo '[error=' . $err . "]\n";
+	echo '[http_status=' . $http_status . "]\n";
+	echo '[errno=' . $errno . "]\n";
+	echo '[effective_url=' . $realurl . "]\n";
+	die();
+}
+

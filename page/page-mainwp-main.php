@@ -137,7 +137,7 @@ class MainWP_Main {
 
 	function on_show_page() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
-			mainwp_do_not_have_permissions( 'global dashboard' );
+			mainwp_do_not_have_permissions( __( 'global dashboard', 'mainwp' ) );
 
 			return;
 		}

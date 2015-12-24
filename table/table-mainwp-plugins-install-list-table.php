@@ -52,7 +52,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		$tabs = array();
 
 		if ( 'search' == $tab )
-			$tabs['search']	= __( 'Search Results' );
+			$tabs['search']	= __( 'Search Results', 'mainwp' );
 		$tabs['featured']  = _x( 'Featured', 'Plugin Installer' );
 		$tabs['popular']   = _x( 'Popular', 'Plugin Installer' );
 		$tabs['recommended']   = _x( 'Recommended', 'Plugin Installer' );
@@ -63,7 +63,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		if ( current_user_can( 'upload_plugins' ) ) {
 			// No longer a real tab. Here for filter compatibility.
 			// Gets skipped in get_views().
-			$tabs['upload'] = __( 'Upload Plugin' );
+			$tabs['upload'] = __( __( 'Upload Plugin', 'mainwp' ) );
 		}
 
 		$nonmenu_tabs = array( 'plugin-information' ); // Valid actions to perform which do not have a Menu item.
@@ -163,9 +163,9 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 	 */
 	public function no_items() {
 		if ( isset( $this->error ) ) {
-			$message = $this->error->get_error_message() . '<p class="hide-if-no-js"><a href="#" class="button" onclick="document.location.reload(); return false;">' . __( 'Try again' ) . '</a></p>';
+			$message = $this->error->get_error_message() . '<p class="hide-if-no-js"><a href="#" class="button" onclick="document.location.reload(); return false;">' . __( 'Try again', 'mainwp' ) . '</a></p>';
 		} else {
-			$message = __( 'No plugins match your request.' );
+			$message = __( 'No plugins match your request.', 'mainwp' );
 		}
 		echo '<div class="no-plugin-results">' . $message . '</div>';
 	}
@@ -353,7 +353,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 
 			$author = wp_kses( $plugin['author'], $plugins_allowedtags );
 			if ( ! empty( $author ) ) {
-				$author = ' <cite>' . sprintf( __( 'By %s' ), $author ) . '</cite>';
+				$author = ' <cite>' . sprintf( __( 'By %s', 'mainwp' ), $author ) . '</cite>';
 			}
 
 			$action_links = array();
@@ -406,7 +406,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 				</div>
 				<div class="column-updated">
 					<strong><?php _e( 'Last Updated:' ); ?></strong> <span title="<?php echo esc_attr( date_i18n( $date_format, $last_updated_timestamp ) ); ?>">
-						<?php printf( __( '%s ago' ), human_time_diff( $last_updated_timestamp ) ); ?>
+						<?php printf( __( '%s ago', 'mainwp' ), human_time_diff( $last_updated_timestamp ) ); ?>
 					</span>
 				</div>
 				<div class="column-downloaded">
@@ -416,17 +416,17 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 					} else {
 						$active_installs_text = number_format_i18n( $plugin['active_installs'] ) . '+';
 					}
-					printf( __( '%s Active Installs' ), $active_installs_text );
+					printf( __( '%s Active Installs', 'mainwp' ), $active_installs_text );
 					?>
 				</div>
 				<div class="column-compatibility">
 					<?php
 					if ( ! empty( $plugin['tested'] ) && version_compare( substr( $GLOBALS['wp_version'], 0, strlen( $plugin['tested'] ) ), $plugin['tested'], '>' ) ) {
-						echo '<span class="compatibility-untested">' . __( 'Untested with your version of WordPress' ) . '</span>';
+						echo '<span class="compatibility-untested">' . __( 'Untested with your version of WordPress', 'mainwp' ) . '</span>';
 					} elseif ( ! empty( $plugin['requires'] ) && version_compare( substr( $GLOBALS['wp_version'], 0, strlen( $plugin['requires'] ) ), $plugin['requires'], '<' ) ) {
-						echo '<span class="compatibility-incompatible">' . __( '<strong>Incompatible</strong> with your version of WordPress' ) . '</span>';
+						echo '<span class="compatibility-incompatible">' . __( '<strong>Incompatible</strong> with your version of WordPress', 'mainwp' ) . '</span>';
 					} else {
-						echo '<span class="compatibility-compatible">' . __( '<strong>Compatible</strong> with your version of WordPress' ) . '</span>';
+						echo '<span class="compatibility-compatible">' . __( '<strong>Compatible</strong> with your version of WordPress', 'mainwp' ) . '</span>';
 					}
 					?>
 				</div>

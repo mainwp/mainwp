@@ -129,8 +129,8 @@ class MainWP_Bulk_Update_Admin_Passwords {
 					<?php } ?>
 				</div>
 				<br/>
-				<a href="<?php echo get_admin_url() ?>admin.php?page=UpdateAdminPasswords" class="add-new-h2" target="_top"><?php _e( 'Update admin passwords', 'mainwp' ); ?></a>
-				<a href="<?php echo get_admin_url() ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php _e( 'Return to Dashboard', 'mainwp' ); ?></a>
+				<a href="<?php echo get_admin_url() ?>admin.php?page=UpdateAdminPasswords" class="add-new-h2" target="_top"><?php esc_html_e( 'Update admin passwords', 'mainwp' ); ?></a>
+				<a href="<?php echo get_admin_url() ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php esc_html_e( 'Return to Dashboard', 'mainwp' ); ?></a>
 			</div>
 			<?php
 		} else {
@@ -175,7 +175,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 									<th scope="row">
 										<label for="pass1">
 											<?php _e( 'New Password', 'mainwp' ); ?>
-											<span class="description hide-if-js"><?php _e( '(required)' ); ?></span>
+											<span class="description hide-if-js"><?php esc_html_e( '(required)', 'mainwp' ); ?></span>
 										</label>
 									</th>
 									<td>
@@ -186,9 +186,9 @@ class MainWP_Bulk_Update_Admin_Passwords {
 											<span class="password-input-wrapper">
 												<input type="password" name="pass1" id="pass1" class="regular-text" autocomplete="off" data-reveal="1" data-pw="<?php echo esc_attr( $initial_password ); ?>" aria-describedby="pass-strength-result"/>
 											</span>
-											<button type="button" class="button button-secondary wp-hide-pw hide-if-no-js" data-toggle="0" aria-label="<?php esc_attr_e( 'Hide password' ); ?>">
+											<button type="button" class="button button-secondary wp-hide-pw hide-if-no-js" data-toggle="0" aria-label="<?php esc_attr_e( 'Hide password', 'mainwp' ); ?>">
 												<span class="dashicons dashicons-hidden"></span>
-												<span class="text"><?php _e( 'Hide' ); ?></span>
+												<span class="text"><?php _e( 'Hide', 'mainwp' ); ?></span>
 											</button>
 											<!--                   				<button type="button" class="button button-secondary wp-cancel-pw hide-if-no-js" data-toggle="0" aria-label="--><?php //esc_attr_e( 'Cancel password change' ); ?><!--">-->
 											<!--                   					<span class="text">--><?php //_e( 'Cancel' ); ?><!--</span>-->

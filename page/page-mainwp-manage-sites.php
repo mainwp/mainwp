@@ -58,11 +58,11 @@ class MainWP_Manage_Sites {
 			//            add_action('load-'.MainWP_Manage_Sites::$page, array(MainWP_Manage_Sites::getClassName(), 'on_load_page_manage'));
 			add_action( 'load-' . MainWP_Manage_Sites::$page, array( MainWP_Manage_Sites::getClassName(), 'add_options' ) );
 		}
-		add_submenu_page( 'mainwp_tab', 'Sites', '<div class="mainwp-hidden">Sites</div>', 'read', 'SiteOpen', array(
+		add_submenu_page( 'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteOpen', array(
 			MainWP_Site_Open::getClassName(),
 			'render',
 		) );
-		add_submenu_page( 'mainwp_tab', 'Sites', '<div class="mainwp-hidden">Sites</div>', 'read', 'SiteRestore', array(
+		add_submenu_page( 'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteRestore', array(
 			MainWP_Site_Open::getClassName(),
 			'renderRestore',
 		) );
@@ -144,7 +144,7 @@ class MainWP_Manage_Sites {
 		$subfolder = MainWP_Utility::normalize_filename( $subfolder );
 
 		if ( ! MainWP_System::Instance()->isSingleUser() && ( $userid != $website->userid ) ) {
-			throw new MainWP_Exception( 'Undefined error' );
+			throw new MainWP_Exception( 'Undefined error.' );
 		}
 
 		$websiteCleanUrl = $website->url;

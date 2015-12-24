@@ -190,7 +190,7 @@ public static function renderHeader( $shownPage ) {
 		$backupTask = null;
 		if ( isset( $_GET['id'] ) && MainWP_Utility::ctype_digit( $_GET['id'] ) ) {
 			if ( ! mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
-				mainwp_do_not_have_permissions( 'edit backup tasks' );
+				mainwp_do_not_have_permissions( __( 'edit backup tasks', 'mainwp' ) );
 
 				return;
 			}
@@ -227,7 +227,7 @@ public static function renderHeader( $shownPage ) {
 				} else {
 					echo 'none';
 				} ?>"><?php if ( isset( $_GET['a'] ) && $_GET['a'] == '1' ) {
-						echo __( '<p>The backup task was added successfully</p>', 'mainwp' );
+						echo '<p>' . __( 'The backup task was added successfully', 'mainwp' ) . '</p>';
 					} ?></div>
 				<p></p>
 				<?php
@@ -279,7 +279,7 @@ public static function renderHeader( $shownPage ) {
 
 	public static function renderNew() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) {
-			mainwp_do_not_have_permissions( 'add backup tasks' );
+			mainwp_do_not_have_permissions( __( 'add backup tasks', 'mainwp' ) );
 
 			return;
 		}
@@ -624,7 +624,7 @@ public static function renderHeader( $shownPage ) {
 		global $current_user;
 		$name = $_POST['name'];
 		if ( $name == '' ) {
-			die( json_encode( array( 'error' => 'Please enter a valid name for your backup task' ) ) );
+			die( json_encode( array( 'error' => __('Please enter a valid name for your backup task') ) ) );
 		}
 		$backupId = $_POST['id'];
 		$task     = MainWP_DB::Instance()->getBackupTaskById( $backupId );
@@ -675,7 +675,7 @@ public static function renderHeader( $shownPage ) {
 		global $current_user;
 		$name = $_POST['name'];
 		if ( $name == '' ) {
-			die( json_encode( array( 'error' => 'Please enter a valid name for your backup task' ) ) );
+			die( json_encode( array( 'error' => __('Please enter a valid name for your backup task') ) ) );
 		}
 		$schedule       = $_POST['schedule'];
 		$type           = $_POST['type'];
@@ -714,7 +714,7 @@ public static function renderHeader( $shownPage ) {
 		} else {
 			do_action( 'mainwp_add_backuptask', $task->id );
 
-			die( json_encode( array( 'result' => 'The backup task was added successfully' ) ) );
+			die( json_encode( array( 'result' => __('The backup task was added successfully') ) ) );
 		}
 	}
 

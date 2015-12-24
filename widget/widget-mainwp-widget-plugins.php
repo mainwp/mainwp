@@ -10,7 +10,7 @@ class MainWP_Widget_Plugins {
 	}
 
 	public static function getName() {
-		return __( '<i class="fa fa-plug"></i> Plugins', 'mainwp' );
+		return '<i class="fa fa-plug"></i> ' . __( 'Plugins', 'mainwp' );
 	}
 
 	public static function render() {

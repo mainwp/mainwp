@@ -7,7 +7,7 @@ class MainWP_Site_Open {
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
-			mainwp_do_not_have_permissions( 'WP-Admin on child sites' );
+			mainwp_do_not_have_permissions( __( 'WP-Admin on child sites', 'mainwp' ) );
 
 			return;
 		}

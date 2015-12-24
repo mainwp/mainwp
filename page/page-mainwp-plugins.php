@@ -22,29 +22,29 @@ class MainWP_Plugins {
 			'render',
 		) );
 		if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) {
-			$page = add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">Install</div>', 'read', 'PluginsInstall', array(
+			$page = add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>', 'read', 'PluginsInstall', array(
 				MainWP_Plugins::getClassName(),
 				'renderInstall'
 			) );
 			add_action('load-' . $page, array(MainWP_Plugins::getClassName(), 'load_page'));
 		}
-		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">Auto Updates</div>', 'read', 'PluginsAutoUpdate', array(
+		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __('Auto Updates', 'mainwp' ) . '</div>', 'read', 'PluginsAutoUpdate', array(
 			MainWP_Plugins::getClassName(),
 			'renderAutoUpdate',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">Ignored Updates</div>', 'read', 'PluginsIgnore', array(
+		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'PluginsIgnore', array(
 			MainWP_Plugins::getClassName(),
 			'renderIgnore',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">Ignored Conflicts</div>', 'read', 'PluginsIgnoredConflicts', array(
+		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Conflicts', 'mainwp' ) . '</div>', 'read', 'PluginsIgnoredConflicts', array(
 			MainWP_Plugins::getClassName(),
 			'renderIgnoredConflicts',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">Ignored Abandoned</div>', 'read', 'PluginsIgnoredAbandoned', array(
+		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'PluginsIgnoredAbandoned', array(
 			MainWP_Plugins::getClassName(),
 			'renderIgnoredAbandoned',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Plugins Help', 'mainwp' ), '<div class="mainwp-hidden">Plugins Help</div>', 'read', 'PluginsHelp', array(
+		add_submenu_page( 'mainwp_tab', __( 'Plugins Help', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Plugins Help', 'mainwp' ) . '</div>', 'read', 'PluginsHelp', array(
 			MainWP_Plugins::getClassName(),
 			'QSGManagePlugins',
 		) );
@@ -895,7 +895,7 @@ class MainWP_Plugins {
 	public static function renderPluginsTable( $favoritesCallback = '' ) {
 		global $tab;
 		if (!mainwp_current_user_can("dashboard", "install_plugins")) {
-			mainwp_do_not_have_permissions("install plugins");
+			mainwp_do_not_have_permissions( __( 'install plugins', 'mainwp' ) );
 			return;
 		}
 
@@ -934,7 +934,7 @@ class MainWP_Plugins {
 					<input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite Existing Plugin, if already installed', 'mainwp'); ?></label>
 				</div>
 			</div>
-			<input type="button" value="<?php _e("Complete Installation"); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_plugin_bulk_install_btn" name="bulk-install">
+			<input type="button" value="<?php _e( "Complete Installation", 'mainwp' ); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_plugin_bulk_install_btn" name="bulk-install">
 		</div>
 		<div style="clear: both;"></div>
 
@@ -957,7 +957,7 @@ class MainWP_Plugins {
 		}
 		self::renderHeader( 'AutoUpdate' );
 		if ( ! mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
-			mainwp_do_not_have_permissions( 'Trust/Untrust updates' );
+			mainwp_do_not_have_permissions( __( 'trust/untrust updates', 'mainwp' ) );
 		} else {
 			$snAutomaticDailyUpdate = get_option( 'mainwp_automaticDailyUpdate' );
 			?>
@@ -1043,7 +1043,7 @@ class MainWP_Plugins {
 
 		// assume no $type_selector means it's a simplified search form
 		if ( ! $type_selector ) {
-			$input_attrs = 'class="wp-filter-search" placeholder="' . esc_attr__( 'Search Plugins' ) . '" ';
+			$input_attrs = 'class="wp-filter-search" placeholder="' . esc_attr__( 'Search Plugins', 'mainwp' ) . '" ';
 		}
 
 		?><form class="search-form search-plugins" method="get" action="<?php echo admin_url("admin.php?page=PluginsInstall"); ?>">
@@ -1051,8 +1051,8 @@ class MainWP_Plugins {
 		<input type="hidden" name="page" value="PluginsInstall" />
 		<?php if ( $type_selector ) : ?>
 			<select name="type" id="typeselector">
-				<option value="term"<?php selected('term', $type) ?>><?php _e('Keyword'); ?></option>
-				<option value="author"<?php selected('author', $type) ?>><?php _e('Author'); ?></option>
+				<option value="term"<?php selected('term', $type) ?>><?php _e('Keyword', 'mainwp' ); ?></option>
+				<option value="author"<?php selected('author', $type) ?>><?php ;_e( 'Author', 'mainwp' ) ?></option>
 				<option value="tag"<?php selected('tag', $type) ?>><?php _ex('Tag', 'Plugin Installer'); ?></option>
 			</select>
 		<?php endif; ?>

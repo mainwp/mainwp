@@ -208,7 +208,7 @@ class MainWP_Security_Issues {
 	}
 
 	public static function getMetaboxName() {
-		return __( '<i class="fa fa-shield"></i> Security Issues', 'mainwp' );
+		return '<i class="fa fa-shield"></i> ' . __( 'Security Issues', 'mainwp' );
 	}
 
 	public static function renderMetabox() {
@@ -246,7 +246,7 @@ class MainWP_Security_Issues {
 			?>
 			<div class="clear">
 				<div class="mainwp-row-top darkred">
-					<span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_securityIssues; ?></span> <?php _e( 'Security issue', 'mainwp' ); ?><?php echo( ( $total_securityIssues > 1 ) ? 's' : '' ); ?></span>
+					<span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_securityIssues; ?></span> <?php echo _n( 'Security issue', 'Security issues', $total_securityIssues, 'mainwp' ); ?></span>
 					<span class="mainwp-mid-col">&nbsp;</span>
 					<span class="mainwp-right-col"><a href="#" id="mainwp_securityissues_show" onClick="return rightnow_show('securityissues');"><?php _e( 'Show All', 'mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" class="securityIssues_dashboard_allFixAll button-primary" value="<?php _e( 'Fix All', 'mainwp' ); ?>"/></span>
 				</div>
@@ -260,7 +260,7 @@ class MainWP_Security_Issues {
 						?>
 						<div class="mainwp-row" siteid="<?php echo $website->id; ?>">
 							<span class="mainwp-left-col"><a href="admin.php?page=managesites&scanid=<?php echo $website->id; ?>"><?php echo stripslashes( $website->name ); ?></a></span>
-							<span class="mainwp-mid-col"><span class="<?php echo( $website->securityIssues > 0 ? 'darkred' : 'mainwp_ga_plus' ); ?>"><span class="mainwp-rightnow-number"><?php echo $website->securityIssues; ?></span> Issue<?php echo( ( $website->securityIssues > 1 ) ? 's' : '' ); ?></span></span>
+							<span class="mainwp-mid-col"><span class="<?php echo( $website->securityIssues > 0 ? 'darkred' : 'mainwp_ga_plus' ); ?>"><span class="mainwp-rightnow-number"><?php echo $website->securityIssues; ?></span> <?php echo _n( 'Issue', 'Issues', $website->securityIssues, 'mainwp' ); ?></span></span>
 							<span class="mainwp-right-col">
 								<?php if ( $website->securityIssues == 0 ) { ?>
 									<input type="button" class="securityIssues_dashboard_unfixAll button" value="<?php _e( 'Unfix All', 'mainwp' ); ?>"/>

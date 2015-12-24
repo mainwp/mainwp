@@ -10,7 +10,7 @@ class MainWP_Recent_Pages {
 	}
 
 	public static function getName() {
-		return __( '<i class="fa fa-file"></i> Recent Pages', 'mainwp' );
+		return '<i class="fa fa-file"></i> ' . __( 'Recent Pages', 'mainwp' );
 	}
 
 	public static function render() {

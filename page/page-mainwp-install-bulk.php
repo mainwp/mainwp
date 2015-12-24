@@ -77,7 +77,7 @@ class MainWP_Install_Bulk {
 						echo '<br />&nbsp;&nbsp;<input type="checkbox" value="1" checked id="chk_activate_plugin_upload" /> <label for="chk_activate_plugin_upload">Activate plugin after installation</label>';
 					} ?>
 					<br />&nbsp;&nbsp;<input type="checkbox" value="2" checked id="chk_overwrite_upload" />
-					<label for="chk_overwrite_upload"><?php _e('Overwrite existing Plugin, if already installed', 'mainwp'); ?></label><br />
+					<label for="chk_overwrite_upload"><?php echo ( $title == 'Plugins' ) ? __('Overwrite existing Plugin, if already installed', 'mainwp') : __('Overwrite existing Theme, if already installed', 'mainwp'); ?></label><br />
 					<br /><input type="button" class="button button-primary button-hero" value="<?php _e('Install Now','mainwp'); ?>" id="mainwp_upload_bulk_button" onClick="mainwp_upload_bulk('<?php echo strtolower($title); ?>');">
 				</div>
 			</div>
@@ -277,7 +277,7 @@ class MainWP_Install_Bulk {
 			} else if ( isset( $information['error'] ) ) {
 				$error = $information['error'];
 				if ( $error == 'folder_exists' ) {
-					$error = __( 'Already installed' );
+					$error = __( 'Already installed', 'mainwp' );
 				}
 				$output->errors[ $website->id ] = array( $website->name, $error );
 			} else {

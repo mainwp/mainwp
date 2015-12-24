@@ -310,7 +310,7 @@ class MainWP_Manage_Sites_View {
 
 	public static function renderTest() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'test_connection' ) ) {
-			mainwp_do_not_have_permissions( 'test connection' );
+			mainwp_do_not_have_permissions( __( 'test connection', 'mainwp' ) );
 			return;
 		}
 		?>
@@ -497,13 +497,13 @@ class MainWP_Manage_Sites_View {
                         </div>
                         <?php
 					} else {
-						$errors[] = 'Error: Data is not valid. <br />';
+						$errors[] = __( 'Error: Data is not valid. <br />', 'mainwp' );
 					}
 				} else {
-					$errors[] = 'Error: Upload error. <br />';
+					$errors[] = __( 'Error: Upload error. <br />', 'mainwp' );
 				}
 			} else {
-				$errors[] = 'Error: Upload error. <br />';
+				$errors[] = __( 'Error: Upload error. <br />', 'mainwp' );
 			}
 
 			if ( count( $errors ) > 0 ) {
@@ -525,7 +525,7 @@ class MainWP_Manage_Sites_View {
 
 	public static function _renderNewSite( &$groups ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'add_sites' ) ) {
-			mainwp_do_not_have_permissions( 'add sites' );
+			mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
 			return;
 		}
 
@@ -735,7 +735,7 @@ class MainWP_Manage_Sites_View {
 
 	public static function renderSeoPage( &$website ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'see_seo_statistics' ) ) {
-			mainwp_do_not_have_permissions( 'see seo statistics' );
+			mainwp_do_not_have_permissions( __( 'see seo statistics', 'mainwp' ) );
 			return;
 		}
 			?>
@@ -995,7 +995,7 @@ class MainWP_Manage_Sites_View {
 
 	public static function renderDashboard( &$website, &$page ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) {
-			mainwp_do_not_have_permissions( 'individual dashboard' );
+			mainwp_do_not_have_permissions( __( 'individual dashboard', 'mainwp' ) );
 			return;
 		}
 
@@ -1065,7 +1065,7 @@ class MainWP_Manage_Sites_View {
 
 	public static function renderBackupSite( &$website ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
-			mainwp_do_not_have_permissions( 'execute backups' );
+			mainwp_do_not_have_permissions( __( 'execute backups', 'mainwp' ) );
 			return;
 		}
 
@@ -1370,7 +1370,7 @@ class MainWP_Manage_Sites_View {
 
 	public static function renderAllSites( &$website, $updated, $groups, $statusses, $pluginDir ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
-			mainwp_do_not_have_permissions( 'edit sites' );
+			mainwp_do_not_have_permissions( __( 'edit sites', 'mainwp' ) );
 			return;
 		}
 
@@ -1727,7 +1727,7 @@ class MainWP_Manage_Sites_View {
 						MainWP_Sync::syncInformationArray( $website, $information );
 						return true;
 					} else {
-						throw new Exception( __( 'Undefined error','mainwp' ) );
+						throw new Exception( __( 'Undefined error.','mainwp' ) );
 					}
 				}
 			} catch (MainWP_Exception $e) {
@@ -1735,7 +1735,7 @@ class MainWP_Manage_Sites_View {
 					throw new Exception( 'HTTP error' . ($e->getMessageExtra() != null ? ' - ' . $e->getMessageExtra() : '') );
 				} else if ( $e->getMessage() == 'NOMAINWP' ) {
 					$error = __( 'No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please ','mainwp' );
-					if ( $e->getMessageExtra() != null ) {$error .= __( 'test your connection <a href="' . admin_url( 'admin.php?page=managesites&do=test&site=' . urlencode( $e->getMessageExtra() ) ) . '">here</a> or ','mainwp' );}
+					if ( $e->getMessageExtra() != null ) {$error .= sprintf( __( 'test your connection %shere%s or ', 'mainwp' ), '<a href="' . admin_url( 'admin.php?page=managesites&do=test&site=' . urlencode( $e->getMessageExtra() ) ) . '">', '</a>' );}					
 					$error .= __( 'post as much information as possible on the error in the <a href="https://mainwp.com/forum/">support forum</a>.','mainwp' );
 
 					throw new Exception( $error );
@@ -1847,7 +1847,7 @@ class MainWP_Manage_Sites_View {
 						$website = MainWP_DB::Instance()->getWebsiteById( $id );
 						MainWP_Sync::syncInformationArray( $website, $information );
 					} else {
-						$error = 'Undefined error';
+						$error = __('Undefined error.', 'mainwp' );
 					}
 				}
 			} catch (MainWP_Exception $e) {
@@ -1855,7 +1855,7 @@ class MainWP_Manage_Sites_View {
 					$error = 'HTTP error' . ($e->getMessageExtra() != null ? ' - ' . $e->getMessageExtra() : '');
 				} else if ( $e->getMessage() == 'NOMAINWP' ) {
 					$error = __( 'No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please ','mainwp' );
-					if ( $e->getMessageExtra() != null ) {$error .= __( 'test your connection <a href="' . admin_url( 'admin.php?page=managesites&do=test&site=' . urlencode( $e->getMessageExtra() ) ) . '">here</a> or ','mainwp' );}
+					if ( $e->getMessageExtra() != null ) {$error .=sprintf( __( 'test your connection %shere%s or ', 'mainwp' ), '<a href="' . admin_url( 'admin.php?page=managesites&do=test&site=' . urlencode( $e->getMessageExtra() ) ) . '">', '</a>' );}
 					$error .= __( 'post as much information as possible on the error in the <a href="https://mainwp.com/forum/">support forum</a>.','mainwp' );
 				} else {
 					$error = $e->getMessage();

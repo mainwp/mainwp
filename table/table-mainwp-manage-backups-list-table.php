@@ -123,7 +123,7 @@ class MainWP_Manage_Backups_List_Table extends WP_List_Table {
 		$output .= '<strong>' . __( 'NEXT RUN: ', 'mainwp' ) . '</strong>' . ( $item->last_run == 0 ? __( 'Any minute', 'mainwp' ) : MainWP_Utility::formatTimestamp( ( $item->schedule == 'daily' ? ( 60 * 60 * 24 ) : ( $item->schedule == 'weekly' ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::getTimestamp( $item->last_run ) ) );
 		$output .= '<strong>';
 		if ( $item->last_run != 0 && $item->completed < $item->last_run ) {
-			$output .= __( '<br />CURRENTLY RUNNING: ' ) . '</strong>';
+			$output .= __( '<br />CURRENTLY RUNNING: ', 'mainwp' ) . '</strong>';
 			$completed_sites = $item->completed_sites;
 			if ( $completed_sites != '' ) {
 				$completed_sites = json_decode( $completed_sites, 1 );

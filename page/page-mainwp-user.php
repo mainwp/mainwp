@@ -116,7 +116,7 @@ class MainWP_User {
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
-			mainwp_do_not_have_permissions( 'manage users' );
+			mainwp_do_not_have_permissions( __( 'manage users', 'mainwp' ) );
 
 			return;
 		}
@@ -639,10 +639,10 @@ class MainWP_User {
 		}
 
 		if ( ( $pAction == 'delete' ) && ( $website->adminname == $userName ) ) {
-			die( json_encode( array( 'error' => __( 'This user is used for our secure link, it can not be deleted.' ) ) ) );
+			die( json_encode( array( 'error' => __( 'This user is used for our secure link, it can not be deleted.', 'mainwp' ) ) ) );
 		}
 		if ( ( $pAction == 'changeRole' ) && ( $website->adminname == $userName ) ) {
-			die( json_encode( array( 'error' => __( 'This user is used for our secure link, you can not change the role.' ) ) ) );
+			die( json_encode( array( 'error' => __( 'This user is used for our secure link, you can not change the role.', 'mainwp' ) ) ) );
 		}
 
 		try {
@@ -1184,7 +1184,7 @@ class MainWP_User {
 							'nosslkey',
 						) );
 					} else {
-						$not_valid[] = "Error - The website doesn't exist in the Network. " . $url;;
+						$not_valid[] = __( "Error - The website doesn't exist in the Network.", 'mainwp' ) . " " . $url;;
 						$error_sites .= $url . ';';
 					}
 				}

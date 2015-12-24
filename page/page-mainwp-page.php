@@ -17,8 +17,8 @@ class MainWP_Page {
 
 	public static function initMenu() {
 		add_submenu_page( 'mainwp_tab', __( 'Pages','mainwp' ), '<span id="mainwp-Pages">'.__( 'Pages','mainwp' ).'</span>', 'read', 'PageBulkManage', array( MainWP_Page::getClassName(), 'render' ) );
-		add_submenu_page( 'mainwp_tab', 'Pages', '<div class="mainwp-hidden">Add New</div>', 'read', 'PageBulkAdd', array( MainWP_Page::getClassName(), 'renderBulkAdd' ) );
-		add_submenu_page( 'mainwp_tab', 'Posting new bulkpage', '<div class="mainwp-hidden">Add New Page</div>', 'read', 'PostingBulkPage', array( MainWP_Page::getClassName(), 'posting' ) ); //removed from menu afterwards
+		add_submenu_page( 'mainwp_tab', __( 'Pages','mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ). '</div>', 'read', 'PageBulkAdd', array( MainWP_Page::getClassName(), 'renderBulkAdd' ) );
+		add_submenu_page( 'mainwp_tab', __( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( MainWP_Page::getClassName(), 'posting' ) ); //removed from menu afterwards
 		add_submenu_page( 'mainwp_tab', __( 'Pages Help','mainwp' ), '<div class="mainwp-hidden">'.__( 'Pages Help','mainwp' ).'</div>', 'read', 'PagesHelp', array( MainWP_Page::getClassName(), 'QSGManagePages' ) );
 
 		self::$subPages = apply_filters( 'mainwp-getsubpages-page', array() );
@@ -107,7 +107,7 @@ class MainWP_Page {
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
-			mainwp_do_not_have_permissions( 'manage pages' );
+			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
 			return;
 		}
 
@@ -466,7 +466,7 @@ class MainWP_Page {
 
 	public static function renderBulkAdd() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
-			mainwp_do_not_have_permissions( 'manage pages' );
+			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
 			return;
 		}
 

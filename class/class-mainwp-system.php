@@ -333,7 +333,7 @@ class MainWP_System {
 					<p>
 						<span style="float: right;" class="mainwp-events-notice-dismiss" notice="first_site"
 						      style="text-decoration: none;" href="#"><i
-								class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span><span><strong><?php _e( 'Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">Scheduled Events</a>' ); ?></strong></span>
+								class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span><span><strong><?php esc_html_e( 'Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">Scheduled Events</a>', 'mainwp' ); ?></strong></span>
 					</p>
 				</div>
 				<?php
@@ -1475,6 +1475,13 @@ class MainWP_System {
 		$hide_footer = false;
 		?>
 		<style>
+			.mainwp-checkbox:before {
+				content: '<?php _e('YES', 'mainwp' ); ?>';
+			}
+			.mainwp-checkbox:after {
+				content: '<?php _e('NO', 'mainwp' ); ?>';
+			}
+
 			<?php
 			if ( isset( $_GET['hideall'] ) && $_GET['hideall'] == 1 ) {
 				$post_plus = apply_filters( 'mainwp-ext-post-plus-enabled', false );
@@ -1672,10 +1679,10 @@ class MainWP_System {
 		<div id="mainwp-installation-warning" class="mainwp_info-box-red">
 			<h3><?php esc_html_e( 'Stop! Before you continue,', 'mainwp' ); ?></h3>
 			<strong><?php esc_html_e( 'We HIGHLY recommend a NEW WordPress install for your Main Dashboard.', 'mainwp' ); ?></strong><br/><br/>
-			<?php _e( 'Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard off an active site. Most hosting companies provide free subdomains ("<strong>demo.yourdomain.com</strong>") and we recommend creating one if you do not have a specific dedicated domain to run your Network Main Dashboard.<br/><br/> If you are not sure how to set up a subdomain here is a quick step by step with <a href="http://docs.mainwp.com/creating-a-subdomain-in-cpanel/">cPanel</a>, <a href="http://docs.mainwp.com/creating-a-subdomain-in-plesk/">Plesk</a> or <a href="http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/">Direct Admin</a>. If you are not sure what you have, contact your hosting companies support.', 'mainwp' ); ?>
+			<?php esc_html_e( 'Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard off an active site. Most hosting companies provide free subdomains ("<strong>demo.yourdomain.com</strong>") and we recommend creating one if you do not have a specific dedicated domain to run your Network Main Dashboard.<br/><br/> If you are not sure how to set up a subdomain here is a quick step by step with <a href="http://docs.mainwp.com/creating-a-subdomain-in-cpanel/">cPanel</a>, <a href="http://docs.mainwp.com/creating-a-subdomain-in-plesk/">Plesk</a> or <a href="http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/">Direct Admin</a>. If you are not sure what you have, contact your hosting companies support.', 'mainwp' ); ?>
 			<br/><br/>
 			<div style="text-align: center">
-				<a href="#" class="button button-primary" id="remove-mainwp-installation-warning">I have read the warning and I want to proceed</a>
+				<a href="#" class="button button-primary" id="remove-mainwp-installation-warning"><?php esc_html_e('I have read the warning and I want to proceed', 'mainwp' ); ?></a>
 			</div>
 		</div>
 		<?php

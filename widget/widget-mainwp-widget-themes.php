@@ -10,7 +10,7 @@ class MainWP_Widget_Themes {
 	}
 
 	public static function getName() {
-		return __( '<i class="fa fa-paint-brush"></i> Themes', 'mainwp' );
+		return '<i class="fa fa-paint-brush"></i> ' . __( 'Themes', 'mainwp' );
 	}
 
 	public static function render() {

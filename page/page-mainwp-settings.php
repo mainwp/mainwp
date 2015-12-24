@@ -140,7 +140,7 @@ class MainWP_Settings {
 
 	public static function renderAdvanced() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( 'manage dashboard settings' );
+			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 
 			return;
 		}
@@ -242,7 +242,7 @@ class MainWP_Settings {
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( 'manage dashboard settings' );
+			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 
 			return;
 		}
@@ -284,7 +284,7 @@ class MainWP_Settings {
 
 	public static function renderDashboardOptions() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( 'manage dashboard settings' );
+			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 
 			return;
 		}
@@ -355,7 +355,7 @@ class MainWP_Settings {
 
 	public static function renderMainWPTools() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( 'manage dashboard settings' );
+			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 
 			return;
 		}

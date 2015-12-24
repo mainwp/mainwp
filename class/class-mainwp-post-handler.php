@@ -841,7 +841,7 @@ class MainWP_Post_Handler {
 
 		try {
 			if ( ! isset( $_POST['siteId'] ) ) {
-				throw new Exception( __( 'No site given', 'mainwp-child' ) );
+				throw new Exception( __( 'No site given', 'mainwp' ) );
 			}
 			$siteId      = $_POST['siteId'];
 			$fileName    = $_POST['fileName'];
@@ -850,7 +850,7 @@ class MainWP_Post_Handler {
 
 			$website = MainWP_DB::Instance()->getWebsiteById( $siteId );
 			if ( ! $website ) {
-				throw new Exception( __( 'No site given', 'mainwp-child' ) );
+				throw new Exception( __( 'No site given', 'mainwp' ) );
 			}
 
 			MainWP_Utility::endSession();
@@ -862,7 +862,7 @@ class MainWP_Post_Handler {
 			) );
 
 			if ( ! isset( $result['size'] ) ) {
-				throw new Exception( __( 'Invalid response', 'mainwp-child' ) );
+				throw new Exception( __( 'Invalid response', 'mainwp' ) );
 			}
 
 			if ( MainWP_Utility::ctype_digit( $result['size'] ) ) {
@@ -1193,7 +1193,7 @@ class MainWP_Post_Handler {
 	//Remove a website from MainWP
 	function mainwp_removesite() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'delete_sites' ) ) {
-			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( 'delete sites', false ) ) ) );
+			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'delete sites', 'mainwp' ), false ) ) ) );
 		}
 
 		$this->secure_request( 'mainwp_removesite' );
@@ -1234,7 +1234,7 @@ class MainWP_Post_Handler {
 	//Upgrade a specific WP
 	function mainwp_upgradewp() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'update_wordpress' ) ) {
-			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( 'update Wordpress', $echo = false ) ) ) );
+			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update Wordpress', 'mainwp' ), $echo = false ) ) ) );
 		}
 
 		$this->secure_request( 'mainwp_upgradewp' );
@@ -1257,11 +1257,11 @@ class MainWP_Post_Handler {
 
 	function mainwp_upgradeplugintheme() {
 		if ( $_POST['type'] == 'plugin' && ! mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) {
-			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( 'update plugins', $echo = false ) ) ) );
+			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update plugins', 'mainwp' ), $echo = false ) ) ) );
 		}
 
 		if ( $_POST['type'] == 'theme' && ! mainwp_current_user_can( 'dashboard', 'update_themes' ) ) {
-			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( 'update themes', $echo = false ) ) ) );
+			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update themes', 'mainwp' ), $echo = false ) ) ) );
 		}
 
 		$this->secure_request( 'mainwp_upgradeplugintheme' );
@@ -1337,7 +1337,7 @@ class MainWP_Post_Handler {
 		$this->secure_request();
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( 'ignore/unignor updates' ) ) ) );
+			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'ignore/unignor updates', 'mainwp' ) ) ) ) );
 		}
 
 		if ( ! isset( $_POST['slug'] ) ) {
@@ -1378,7 +1378,7 @@ class MainWP_Post_Handler {
 		$this->secure_request();
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( 'ignore/unignor updates' ) ) ) );
+			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'ignore/unignor updates', 'mainwp' ) ) ) ) );
 		}
 
 		if ( ! isset( $_POST['slug'] ) ) {

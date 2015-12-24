@@ -41,7 +41,7 @@ class MainWP_Right_Now {
 	}
 
 	public static function getName() {
-		return __( '<i class="fa fa-pie-chart"></i> Right Now', 'mainwp' );
+		return '<i class="fa fa-pie-chart"></i> ' . __( 'Right Now', 'mainwp' );
 	}
 
 	public static function render() {
@@ -886,9 +886,9 @@ class MainWP_Right_Now {
 					<?php if ( $globalView ) { ?>
 						<span style="float: right;"><a href="#" id="mainwp-right-now-message-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
 							</a></span>
-						<span id="mainwp-right-now-message-content"><?php echo $total_sync_errors; ?> <?php echo _n( 'Site Timed Out / Errored Out', 'Sites Timed Out / Errored Out', $total_sync_errors, 'mainwp' ); ?>.<br/>There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a></span>
+					<span id="mainwp-right-now-message-content"><?php echo $total_sync_errors; ?> <?php echo _n( 'Site Timed Out / Errored Out', 'Sites Timed Out / Errored Out', $total_sync_errors, 'mainwp' ); ?>.<br/><?php echo sprintf( __('There was an error syncing some of your sites. %sPlease check this help doc for possible solutions%s.', 'mainwp' ), '<a href="http://docs.mainwp.com/sync-error/">', '</a>'); ?></span>
 					<?php } else { ?>
-						<span id="mainwp-right-now-message-content"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $currentSite->id ); ?>"><?php echo stripslashes( $currentSite->name ); ?></a> <?php _e( 'Timed Out / Errored Out', 'mainwp' ); ?>.<br/>There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a></span>
+						<span id="mainwp-right-now-message-content"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $currentSite->id ); ?>"><?php echo stripslashes( $currentSite->name ); ?></a> <?php _e( 'Timed Out / Errored Out', 'mainwp' ); ?>.<br/><?php echo sprintf( __('There was an error syncing some of your sites. %sPlease check this help doc for possible solutions%s.', 'mainwp' ), '<a href="http://docs.mainwp.com/sync-error/">', '</a>'); ?></span>
 					<?php } ?>
 				</p>
 			</div>
@@ -926,9 +926,7 @@ class MainWP_Right_Now {
 		?>
 		<div class="clear">
 			<div class="<?php echo $globalView ? 'mainwp-row' : 'mainwp-row-top'; ?>">
-				<span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_upgrades; ?></span> <?php _e( 'Upgrade', 'mainwp' ); ?><?php if ( $total_upgrades <> 1 ) {
-						echo 's';
-					} ?> <?php _e( 'available', 'mainwp' ); ?></span>
+				<span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_upgrades; ?></span> <?php echo _n( 'Upgrade', 'Upgrades', $total_upgrades, 'mainwp' ); ?> <?php _e( 'available', 'mainwp' ); ?></span>
 				<span class="mainwp-mid-col">&nbsp;</span>
 				<?php if ( mainwp_current_user_can( 'dashboard', 'update_wordpress' ) && mainwp_current_user_can( 'dashboard', 'update_plugins' ) && mainwp_current_user_can( 'dashboard', 'update_themes' ) ) { ?>
 					<span class="mainwp-right-col"><?php if ( ( $total_upgrades ) == 0 ) { ?>
@@ -941,7 +939,7 @@ class MainWP_Right_Now {
 			<div class="mainwp-row">
 				<span class="mainwp-left-col">
 					<a href="#" id="mainwp_upgrades_show" onClick="return rightnow_show('upgrades', true);">
-						<span class="mainwp-rightnow-number"><?php echo $total_wp_upgrades; ?></span> <?php _e('WordPress upgrade','mainwp'); ?><?php if ($total_wp_upgrades <> 1) { echo "s"; } ?> <?php _e('available','mainwp'); ?>
+						<span class="mainwp-rightnow-number"><?php echo $total_wp_upgrades; ?></span> <?php echo _n( 'WordPress upgrade', 'WordPress upgrades', $total_wp_upgrades, 'mainwp'); ?> <?php _e('available','mainwp'); ?>
 					</a>
 				</span>
 				<span class="mainwp-mid-col">&nbsp;</span>
@@ -1072,8 +1070,7 @@ class MainWP_Right_Now {
 									<?php
 									if ( count( $plugin_upgrades ) > 0 ) {
 										?>
-										<a href="#" id="mainwp_plugin_upgrades_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugin_upgrades_<?php echo $website->id; ?>', true);"> <?php echo count( $plugin_upgrades ); ?> <?php _e( 'Upgrade', 'mainwp' ); ?><?php echo( count( $plugin_upgrades ) > 1 ? 's' : '' ); ?>
-										</a>
+										<a href="#" id="mainwp_plugin_upgrades_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugin_upgrades_<?php echo $website->id; ?>', true);"> <?php echo count( $plugin_upgrades ); ?> <?php echo _n( 'Upgrade', 'Upgrades', count($plugin_upgrades), 'mainwp' ); ?></a>
 										<?php
 									} else {
 										if ( $website->sync_errors != '' ) {
@@ -1295,8 +1292,7 @@ class MainWP_Right_Now {
                         <?php
                         if ( count( $theme_upgrades ) > 0 ) {
 	                        ?>
-	                        <a href="#" id="mainwp_theme_upgrades_<?php echo $website->id; ?>_show" onClick="return rightnow_show('theme_upgrades_<?php echo $website->id; ?>', true);"> <?php echo count( $theme_upgrades ); ?> <?php _e( 'Upgrade', 'mainwp' ); ?><?php echo( count( $theme_upgrades ) > 1 ? 's' : '' ); ?>
-	                        </a>
+	                        <a href="#" id="mainwp_theme_upgrades_<?php echo $website->id; ?>_show" onClick="return rightnow_show('theme_upgrades_<?php echo $website->id; ?>', true);"> <?php echo count( $theme_upgrades ); ?> <?php echo _n( 'Upgrade', 'Upgrades', count( $theme_upgrades ), 'mainwp' ); ?></a>
 	                        <?php
                         } else {
 	                        if ( $website->sync_errors != '' ) {
@@ -1357,8 +1353,7 @@ class MainWP_Right_Now {
                         </span>
                         <span class="mainwp-mid-col">
                             <a href="#" onClick="return rightnow_themes_detail('<?php echo $theme_name; ?>');">
-	                            <?php echo $cnt; ?> <?php _e( 'Upgrade', 'mainwp' ); ?><?php echo( $cnt > 1 ? 's' : '' ); ?>
-                            </a>
+	                            <?php echo $cnt; ?> <?php echo _n( 'Upgrade', 'Upgrades', $cnt, 'mainwp' ); ?></a>
                         </span>
                         <span class="mainwp-right-col">
                             <?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
@@ -1445,7 +1440,7 @@ class MainWP_Right_Now {
 			<div class="mainwp-row">
 				<span class="mainwp-left-col">
 					<a href="#" id="mainwp_plugins_outdate_show" onClick="return rightnow_show('plugins_outdate', true);">
-						<span class="mainwp-rightnow-number"><?php echo $total_plugins_outdate; ?> </span> <?php _e('Plugin','mainwp'); ?><?php if ($total_plugins_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
+						<span class="mainwp-rightnow-number"><?php echo $total_plugins_outdate; ?> </span> <?php echo _n( 'Plugin', 'Plugins', $total_plugins_outdate, 'mainwp'); ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
 					</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('This feature checks the last updated status of plugins and alerts you if not updated in a specific amount of time. This gives you insight on if a plugin may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
 				</span>
 				<span class="mainwp-mid-col"><a href="<?php echo admin_url( 'admin.php?page=PluginsIgnoredAbandoned' ); ?>"><?php _e( 'Ignored', 'mainwp' ); ?> (<?php echo $total_pluginsIgnoredAbandoned; ?>)</a></span>
@@ -1486,8 +1481,7 @@ class MainWP_Right_Now {
                         <?php
                         if ( count( $plugins_outdate ) > 0 ) {
 	                        ?>
-	                        <a href="#" id="mainwp_plugins_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugins_outdate_<?php echo $website->id; ?>', true);"> <?php echo count( $plugins_outdate ); ?> <?php _e( 'Plugin', 'mainwp' ); ?><?php echo( count( $plugins_outdate ) > 1 ? 's' : '' ); ?>
-	                        </a>
+	                        <a href="#" id="mainwp_plugins_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('plugins_outdate_<?php echo $website->id; ?>', true);"> <?php echo count( $plugins_outdate ); ?> <?php echo _n( 'Plugin', 'Plugins', count( $plugins_outdate ), 'mainwp' ); ?></a>
 	                        <?php
                         } else {
 	                        if ( $website->sync_errors != '' ) {
@@ -1551,8 +1545,7 @@ class MainWP_Right_Now {
                         </span>
                         <span class="mainwp-mid-col">
                             <a href="#" onClick="return rightnow_plugins_outdate_detail('<?php echo $plugin_name; ?>');">
-	                            <?php echo $cnt; ?> <?php _e( 'Plugin', 'mainwp' ); ?><?php echo( $cnt <> 1 ? 's' : '' ); ?>
-                            </a>
+	                            <?php echo $cnt; ?> <?php echo _n( 'Plugin', 'Plugins', $cnt, 'mainwp' ); ?></a>
                         </span>
                         <span class="mainwp-right-col"> 
 								<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
@@ -1636,7 +1629,7 @@ class MainWP_Right_Now {
 			<div class="mainwp-row">
 				<span class="mainwp-left-col">
 					<a href="#" id="mainwp_themes_outdate_show" onClick="return rightnow_show('themes_outdate', true);">
-						<span class="mainwp-rightnow-number"><?php echo $total_themes_outdate; ?> </span> <?php _e('Theme','mainwp'); ?><?php if ($total_themes_outdate != 1) echo 's'; ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
+						<span class="mainwp-rightnow-number"><?php echo $total_themes_outdate; ?> </span> <?php echo _n( 'Theme', 'Themes', $total_themes_outdate, 'mainwp'); ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
 					</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('This feature checks the last updated status of themes and alerts you if not updated in a specific amount of time. This gives you insight on if a theme may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
 				</span>
 				<span class="mainwp-mid-col"><a href="<?php echo admin_url( 'admin.php?page=ThemesIgnoredAbandoned' ); ?>"><?php _e( 'Ignored', 'mainwp' ); ?> (<?php echo $total_themesIgnoredAbandoned; ?>)</a></span>
@@ -1676,8 +1669,7 @@ class MainWP_Right_Now {
                         <?php
                         if ( count( $themes_outdate ) > 0 ) {
 	                        ?>
-	                        <a href="#" id="mainwp_themes_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('themes_outdate_<?php echo $website->id; ?>', true);"> <?php echo count( $themes_outdate ); ?> <?php _e( 'Theme', 'mainwp' ); ?><?php echo( count( $themes_outdate ) > 1 ? 's' : '' ); ?>
-	                        </a>
+	                        <a href="#" id="mainwp_themes_outdate_<?php echo $website->id; ?>_show" onClick="return rightnow_show('themes_outdate_<?php echo $website->id; ?>', true);"> <?php echo count( $themes_outdate ); ?> <?php echo _n( 'Theme', 'Themes', count( $themes_outdate ), 'mainwp' ); ?></a>
 	                        <?php
                         } else {
 	                        if ( $website->sync_errors != '' ) {
@@ -1736,8 +1728,7 @@ class MainWP_Right_Now {
                         </span>
                         <span class="mainwp-mid-col">
                             <a href="#" onClick="return rightnow_themes_outdate_detail('<?php echo $slug; ?>');">
-	                            <?php echo $cnt; ?> <?php _e( 'Theme', 'mainwp' ); ?><?php echo( $cnt <> 1 ? 's' : '' ); ?>
-                            </a>
+	                            <?php echo $cnt; ?> <?php echo _n( 'Theme', 'Themes', $cnt, 'mainwp' ); ?></a>
                         </span>
                         <span class="mainwp-right-col"> 
 								<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>

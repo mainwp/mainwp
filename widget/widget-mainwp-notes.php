@@ -6,7 +6,7 @@ class MainWP_Notes {
 	}
 
 	public static function getName() {
-		return __( '<i class="fa fa-file-text-o"></i> Notes', 'mainwp' );
+		return '<i class="fa fa-file-text-o"></i> ' . __( 'Notes', 'mainwp' );
 	}
 
 	public static function render() {

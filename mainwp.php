@@ -55,7 +55,7 @@ if ( ! function_exists( 'mainwpdir' ) ) {
 
 if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
 	function mainwp_do_not_have_permissions( $where = '', $echo = true ) {
-		$msg = __( 'You do not have sufficient permissions to access this page (' . ucwords( $where ) . ').', 'mainwp' );
+		$msg = sprintf( __( 'You do not have sufficient permissions to access this page (%s).', 'mainwp' ), ucwords( $where ) );
 		if ( $echo ) {
 			echo '<div class="mainwp-permission-error"><p>' . esc_html( $msg ) . '</p>If you need access to this page please contact the Dashboard Administrator.</div>';
 		} else {

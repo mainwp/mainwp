@@ -703,7 +703,7 @@ class MainWP_Utility {
 		$postdata = MainWP_Utility::getPostDataNotAuthed( $url, $admin, $what, $params );
 		$website  = null;
 
-		return MainWP_Utility::fetchUrl( $website, $url, $postdata, false, $pForceFetch, false, $verifyCertificate, $http_user, $http_pass,  $sslVersion);
+		return MainWP_Utility::fetchUrl( $website, $url, $postdata, false, $pForceFetch, $verifyCertificate, true, $http_user, $http_pass,  $sslVersion);
 	}
 
 	static function fetchUrlClean( $url, $postdata ) {
@@ -733,7 +733,7 @@ class MainWP_Utility {
 			return $data;
 		}
 	}
-
+	                
 	static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null, $sslVersion = 0 ) {
 		$start = time();
 
@@ -1033,11 +1033,11 @@ class MainWP_Utility {
 		}
 
 		if ( ! @file_exists( @dirname( $file ) ) ) {
-			throw new MainWP_Exception( __( 'Could not create directory to download the file.' ) );
+			throw new MainWP_Exception( __( 'Could not create directory to download the file.', 'mainwp' ) );
 		}
 
 		if ( ! @is_writable( @dirname( $file ) ) ) {
-			throw new MainWP_Exception( __( 'MainWP upload directory is not writable.' ) );
+			throw new MainWP_Exception( __( 'MainWP upload directory is not writable.', 'mainwp' ) );
 		}
 
 		$fp    = fopen( $file, 'a' );

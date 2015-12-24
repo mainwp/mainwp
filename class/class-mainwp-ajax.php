@@ -147,7 +147,7 @@ class MainWP_Ajax {
 			wp_enqueue_script( 'media-upload' );
 			add_thickbox();
 
-			$title       = __( 'Dashboard' );
+			$title       = __( 'Dashboard', 'mainwp' );
 			$parent_file = 'index.php';
 
 			if ( is_user_admin() ) {

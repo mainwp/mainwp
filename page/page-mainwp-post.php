@@ -20,11 +20,11 @@ class MainWP_Post {
 			MainWP_Post::getClassName(),
 			'render',
 		) );
-		add_submenu_page( 'mainwp_tab', 'Posts', '<div class="mainwp-hidden">Add New</div>', 'read', 'PostBulkAdd', array(
+		add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ). '</div>', 'read', 'PostBulkAdd', array(
 			MainWP_Post::getClassName(),
 			'renderBulkAdd',
 		) );
-		add_submenu_page( 'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">Posts</div>', 'read', 'PostingBulkPost', array(
+		add_submenu_page( 'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . __( 'Posts', 'mainwp' ) . '</div>', 'read', 'PostingBulkPost', array(
 			MainWP_Post::getClassName(),
 			'posting',
 		) ); //removed from menu afterwards
@@ -125,7 +125,7 @@ class MainWP_Post {
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
-			mainwp_do_not_have_permissions( 'manage posts' );
+			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
 
 			return;
 		}
@@ -557,7 +557,7 @@ class MainWP_Post {
 
 	public static function renderBulkAdd() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
-			mainwp_do_not_have_permissions( 'manage posts' );
+			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
 
 			return;
 		}
@@ -899,7 +899,7 @@ class MainWP_Post {
 					}
 				}
 				if ( ! empty( $output->errors[ $siteid ] ) ) {
-					$ret .= '<p> Error - ' . $output->errors[ $siteid ] . '</p>';
+					$ret .= '<p> ' . __( 'Error - ', 'mainwp' ) . $output->errors[ $siteid ] . '</p>';
 				} else {
 					if ( count( $output->cats[ $siteid ] ) > 0 ) {
 						foreach ( $output->cats[ $siteid ] as $cat ) {
@@ -918,7 +918,7 @@ class MainWP_Post {
 				}
 			}
 		} else {
-			$ret .= '<p>Error - no site</p>';
+			$ret .= '<p>' . __( 'Error - ', 'mainwp' ) . ' no site</p>';
 		}
 		echo $ret;
 	}

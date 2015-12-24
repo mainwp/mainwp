@@ -6,7 +6,7 @@ class MainWP_Help {
 	}
 
 	public static function getName() {
-		return __( '<i class="fa fa-question-circle"></i> Help', 'mainwp' );
+		return '<i class="fa fa-question-circle"></i> ' . __( 'Help', 'mainwp' );
 	}
 
 	public static function render() {

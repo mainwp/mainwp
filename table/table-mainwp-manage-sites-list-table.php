@@ -284,7 +284,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			//            if (is_array($websiteThemes)) $cnt += count($websiteThemes);
 
 			if ( $cnt > 0 ) {
-				$output .= '<span class="fa-stack fa-lg" title="'. $cnt .' Availble Update' . ($cnt != 1 ? "s" : "") . '">
+				$output .= '<span class="fa-stack fa-lg" title="'. $cnt . ' ' . _n( 'Availble Update', 'Availble Updates', $cnt, 'mainwp' ) . '">
                 <i class="fa fa-circle fa-stack-2x mwp-d-green"></i><strong class="mwp-white fa-stack-1x">' . $cnt . '</strong></span>';
 			}
 		}

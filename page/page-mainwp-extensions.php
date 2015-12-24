@@ -475,7 +475,7 @@ class MainWP_Extensions {
 				}
 
 				foreach($not_purchased_exts as $product_id => $ext) {
-					$item_html = '<div class="extension_not_purchased" product-id="' . $product_id . '"><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $ext['title'] . '</strong></span> ' . __("Extension not purchased.") . ' <a href="' . $ext['link'] . '" target="_blank">' .  __("Get it here!", 'mainwp') . '</a>' . (in_array($product_id, $free_group) ? " <em>" . __("It's free.") ."</em>" : '') .'</div>';
+					$item_html = '<div class="extension_not_purchased" product-id="' . $product_id . '"><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $ext['title'] . '</strong></span> ' . __( 'Extension not purchased.', 'mainwp' ) . ' <a href="' . $ext['link'] . '" target="_blank">' .  __( 'Get it here!', 'mainwp') . '</a>' . (in_array($product_id, $free_group) ? " <em>" . __( 'It\'s free.', 'mainwp' ) ."</em>" : '') .'</div>';
 					$group_id = isset($map_extensions_group[$product_id]) ? $map_extensions_group[$product_id] : false;
 					if (!empty($group_id) && isset($all_groups[$group_id]))
 						$grouped_exts[$group_id] .= $item_html;

@@ -9,7 +9,7 @@ class MainWP_How_To
 
     public static function getName()
     {
-        return __('<i class="fa fa-graduation-cap"></i> How To','mainwp');
+        return '<i class="fa fa-graduation-cap"></i> ' . __('How To','mainwp');
     }
 
     public static function render()

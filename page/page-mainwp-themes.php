@@ -21,27 +21,27 @@ class MainWP_Themes {
 			MainWP_Themes::getClassName(),
 			'render',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">Install</div>', 'read', 'ThemesInstall', array(
+		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>', 'read', 'ThemesInstall', array(
 			MainWP_Themes::getClassName(),
 			'renderInstall',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">Auto Updates</div>', 'read', 'ThemesAutoUpdate', array(
+		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'ThemesAutoUpdate', array(
 			MainWP_Themes::getClassName(),
 			'renderAutoUpdate',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">Ignored Updates</div>', 'read', 'ThemesIgnore', array(
+		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'ThemesIgnore', array(
 			MainWP_Themes::getClassName(),
 			'renderIgnore',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">Ignored Conflicts</div>', 'read', 'ThemesIgnoredConflicts', array(
+		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Conflicts', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredConflicts', array(
 			MainWP_Themes::getClassName(),
 			'renderIgnoredConflicts',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">Ignored Abandoned</div>', 'read', 'ThemesIgnoredAbandoned', array(
+		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredAbandoned', array(
 			MainWP_Themes::getClassName(),
 			'renderIgnoredAbandoned',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes Help', 'mainwp' ), '<div class="mainwp-hidden">Themes Help</div>', 'read', 'ThemesHelp', array(
+		add_submenu_page( 'mainwp_tab', __( 'Themes Help', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Themes Help', 'mainwp' ) . '</div>', 'read', 'ThemesHelp', array(
 			MainWP_Themes::getClassName(),
 			'QSGManageThemes',
 		) );
@@ -881,7 +881,7 @@ class MainWP_Themes {
 
 	public static function renderThemesTable($favoritesCallback = '') {
 		if (!mainwp_current_user_can("dashboard", "install_themes")) {
-			mainwp_do_not_have_permissions("install themes");
+			mainwp_do_not_have_permissions( __( 'install themes', 'mainwp' ) );
 			return;
 		}
 
@@ -954,7 +954,7 @@ class MainWP_Themes {
 					<div class="theme-screenshot blank"></div>
 					<# } #>
 						<span class="more-details"><?php _ex( 'Details &amp; Preview', 'theme' ); ?></span>
-						<div class="theme-author"><?php printf( __( 'By %s' ), '{{ data.author }}' ); ?></div>
+						<div class="theme-author"><?php printf( __( 'By %s', 'mainwp' ), '{{ data.author }}' ); ?></div>
 						<h3 class="theme-name">{{ data.name }}</h3>
 
 						<!--<div class="theme-actions">-->
@@ -962,7 +962,7 @@ class MainWP_Themes {
 						<!--</div>-->
 
 						<div class="mainwp-theme-lnks" style="">
-							<label class="lbl-install-theme" style="font-size: 16px;"><input name="install-theme" type="radio" id="install-theme-{{data.slug}}" title="Install {{data.name}}"><?php esc_html_e( 'Install this Theme' ); ?></label>
+							<label class="lbl-install-theme" style="font-size: 16px;"><input name="install-theme" type="radio" id="install-theme-{{data.slug}}" title="Install {{data.name}}"><?php esc_html_e( 'Install this Theme', 'mainwp' ); ?></label>
 							<?php
 							if (!empty($favoritesCallback)) {
 								?>
@@ -981,7 +981,7 @@ class MainWP_Themes {
 		<script id="tmpl-theme-preview" type="text/template">
 			<div class="wp-full-overlay-sidebar">
 				<div class="wp-full-overlay-header">
-					<a href="#" class="close-full-overlay"><span class="screen-reader-text"><?php _e( 'Close' ); ?></span></a>
+					<a href="#" class="close-full-overlay"><span class="screen-reader-text"><?php _e( 'Close', 'mainwp' ); ?></span></a>
 					<a href="#" class="previous-theme"><span class="screen-reader-text"><?php _ex( 'Previous', 'Button label for a theme' ); ?></span></a>
 					<a href="#" class="next-theme"><span class="screen-reader-text"><?php _ex( 'Next', 'Button label for a theme' ); ?></span></a>
 					<# if ( data.installed ) { #>
@@ -993,7 +993,7 @@ class MainWP_Themes {
 				<div class="wp-full-overlay-sidebar-content">
 					<div class="install-theme-info">
 						<h3 class="theme-name">{{ data.name }}</h3>
-						<span class="theme-by"><?php printf( __( 'By %s' ), '{{ data.author }}' ); ?></span>
+						<span class="theme-by"><?php printf( __( 'By %s', 'mainwp' ), '{{ data.author }}' ); ?></span>
 
 						<img class="theme-screenshot" src="{{ data.screenshot_url }}" alt="" />
 
@@ -1008,7 +1008,7 @@ class MainWP_Themes {
 										<small class="ratings"><?php _e( 'This theme has not been rated yet.' ); ?></small>
 									</div>
 									<# } #>
-										<div class="theme-version"><?php printf( __( 'Version: %s' ), '{{ data.version }}' ); ?></div>
+										<div class="theme-version"><?php printf( __( 'Version: %s', 'mainwp' ), '{{ data.version }}' ); ?></div>
 										<div class="theme-description">{{{ data.description }}}</div>
 						</div>
 					</div>
@@ -1033,7 +1033,7 @@ class MainWP_Themes {
 				</div>
 			</div>
 
-			<input type="button" value="<?php _e("Complete Installation"); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_theme_bulk_install_btn" name="bulk-install">
+			<input type="button" value="<?php _e( "Complete Installation", 'mainwp' ); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_theme_bulk_install_btn" name="bulk-install">
 		</div>
 		<div style="clear: both;"></div>
 
@@ -1052,7 +1052,7 @@ class MainWP_Themes {
 		}
 		self::renderHeader( 'AutoUpdate' );
 		if ( ! mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
-			mainwp_do_not_have_permissions( 'Trust/Untrust updates' );
+			mainwp_do_not_have_permissions( __( 'trust/untrust updates', 'mainwp' ) );
 
 			return;
 		} else {

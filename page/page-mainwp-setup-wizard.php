@@ -693,7 +693,7 @@ class MainWP_Setup_Wizard {
 		}
 		if (!empty($error)) {
 			delete_option('mwp_setup_error_purchase_extension');
-			echo '<div class="mainwp_info-box-red">' . __("Error:") . " " .  $error . '</div>';
+			echo '<div class="mainwp_info-box-red">' . __( 'Error:' , 'mainwp' ) . " " .  $error . '</div>';
 		}
 		?>
 		<form method="post">
@@ -771,7 +771,7 @@ class MainWP_Setup_Wizard {
 		}
 
 		if ($undefined_error) {
-			update_option('mwp_setup_error_purchase_extension', __('Undefined error','mainwp'));
+			update_option('mwp_setup_error_purchase_extension', __('Undefined error.','mainwp'));
 			return;
 		}
 
@@ -1005,7 +1005,7 @@ class MainWP_Setup_Wizard {
 			'dashboard' => __( 'Dashboard', 'mainwp' ),
 			'posts' => __( 'Posts', 'mainwp' ),
 			'media' => __( 'Media', 'mainwp' ),
-			'pages' => __( 'Pages' ),
+			'pages' => __( 'Pages', 'mainwp' ),
 			'appearance' => __( 'Appearance', 'mainwp' ),
 			'comments' => __( 'Comments', 'mainwp' ),
 			'users' => __( 'Users', 'mainwp' ),
@@ -1101,7 +1101,7 @@ class MainWP_Setup_Wizard {
 		$error = get_option('mainwp_setup_error_create_uptime_robot');		
 		if (!empty($error)) {
 			delete_option('mainwp_setup_error_create_uptime_robot');
-			echo '<div class="mainwp_info-box-red">' . __("Error:") . " " .  $error . '</div>';
+			echo '<div class="mainwp_info-box-red">' . __( 'Error -', 'mainwp' ) . " " .  $error . '</div>';
 		}
 		$error_settings = false;
 		?>

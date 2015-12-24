@@ -88,7 +88,7 @@ class MainWP_Options {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php _e('Optimize for Shared Hosting or Big Networks','mainwp'); ?> <?php MainWP_Utility::renderToolTip(__('Updates will be cached for quick loading. A manual refresh from the Dashboard is required to view new plugins, themes, pages or users. Recommended for Networks over 50 sites.','mainwp')); ?></th>
+						<th scope="row"><?php _e('Optimize for Shared Hosting or Big Networks','mainwp'); ?> <?php MainWP_Utility::renderToolTip( __('Updates will be cached for quick loading. A manual refresh from the Dashboard is required to view new plugins, themes, pages or users. Recommended for Networks over 50 sites.', 'mainwp' )); ?></th>
 						<td>
 							<div class="mainwp-checkbox">
 								<input type="checkbox" name="mainwp_optimize"

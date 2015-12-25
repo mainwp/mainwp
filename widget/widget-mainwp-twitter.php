@@ -261,7 +261,7 @@ class MainWP_Twitter {
 						break;
 					case 'new_page':
 						$twit = _n( 'Thanks to @MyMainWP I just quickly published a new page on %d #WordPress site', 'Thanks to @MyMainWP I just quickly published a new page on %d #WordPress sites', $value['sites'], 'mainwp' );
-						$twit = sprintf( __( $twit ), $value['sites'] );
+						$twit = sprintf( $twit, $value['sites'] );
 						break;
 					case 'installing_new_plugin':
 						$twit = _n( 'Thanks to @MyMainWP I just quickly installed a new plugin on %d #WordPress site', 'Thanks to @MyMainWP I just quickly installed a new plugin on %d #WordPress sites', $value['sites'], 'mainwp' );

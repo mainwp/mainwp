@@ -174,7 +174,7 @@ class MainWP_Page {
 					<option value="restore"><?php _e( 'Restore','mainwp' ); ?></option>
 					<option value="delete"><?php _e( 'Delete Permanently','mainwp' ); ?></option>
 				</select>
-				<input type="button" name="" id="mainwp_bulk_page_action_apply" class="button" value="<?php _e( 'Apply','mainwp' ); ?>"/>
+				<input type="button" name="" id="mainwp_bulk_page_action_apply" class="button" value="<?php esc_attr_e( 'Apply','mainwp' ); ?>"/>
 			</div>
 			<div class="alignright" id="mainwp_pages_total_results">
 				<?php _e( 'Total Results:','mainwp' ); ?> <span id="mainwp_pages_total"><?php if ( $cachedSearch != null ) { echo $cachedSearch['count']; } ?></span>

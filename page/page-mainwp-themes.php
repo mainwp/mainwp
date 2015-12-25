@@ -905,13 +905,13 @@ class MainWP_Themes {
 					<li><a href="#" data-sort="popular"><?php _ex( 'Popular', 'themes' ); ?></a></li>
 					<li><a href="#" data-sort="new"><?php _ex( 'Latest', 'themes' ); ?></a></li>
 				</ul>
-				<a class="drawer-toggle" href="#"><?php _e( 'Feature Filter' ); ?></a>
+				<a class="drawer-toggle" href="#"><?php _e( 'Feature Filter', 'mainwp' ); ?></a>
 
 				<div class="search-form"></div>
 				<div class="filter-drawer">
 					<div class="buttons">
-						<a class="apply-filters button button-secondary" href="#"><?php _e( 'Apply Filters' ); ?><span></span></a>
-						<a class="clear-filters button button-secondary" href="#"><?php _e( 'Clear' ); ?></a>
+						<a class="apply-filters button button-secondary" href="#"><?php _e( 'Apply Filters', 'mainwp' ); ?><span></span></a>
+						<a class="clear-filters button button-secondary" href="#"><?php _e( 'Clear', 'mainwp' ); ?></a>
 					</div>
 					<?php
 					$feature_list = get_theme_feature_list();
@@ -930,9 +930,9 @@ class MainWP_Themes {
 					}
 					?>
 					<div class="filtered-by">
-						<span><?php _e( 'Filtering by:' ); ?></span>
+						<span><?php _e( 'Filtering by:', 'mainwp' ); ?></span>
 						<div class="tags"></div>
-						<a href="#"><?php _e( 'Edit' ); ?></a>
+						<a href="#"><?php _e( 'Edit', 'mainwp' ); ?></a>
 					</div>
 				</div>
 			</div>
@@ -958,7 +958,7 @@ class MainWP_Themes {
 						<h3 class="theme-name">{{ data.name }}</h3>
 
 						<!--<div class="theme-actions">-->
-						<!--<a class="button button-secondary preview install-theme-preview" href="#"><?php esc_html_e( 'Preview' ); ?></a>-->
+						<!--<a class="button button-secondary preview install-theme-preview" href="#"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>-->
 						<!--</div>-->
 
 						<div class="mainwp-theme-lnks" style="">
@@ -967,7 +967,7 @@ class MainWP_Themes {
 							if (!empty($favoritesCallback)) {
 								?>
 								<div class="favorites-add-link"><a style="font-size: 16px;" class="add-favorites" href="#" id="add-favorite-theme-{{data.slug}}"
-																   title="{{data.name}} {{data.version}}"><?php  _e( 'Add To Favorites' ); ?></a></div>
+																   title="{{data.name}} {{data.version}}"><?php  _e( 'Add To Favorites', 'mainwp' ); ?></a></div>
 								<?php
 							}
 							?>
@@ -987,7 +987,7 @@ class MainWP_Themes {
 					<# if ( data.installed ) { #>
 						<a href="#" class="button button-primary theme-install disabled"><?php _ex( 'Installed', 'theme' ); ?></a>
 						<# } else { #>
-							<a href="{{ data.install_url }}" class="button button-primary theme-install"><?php _e( 'Install' ); ?></a>
+							<a href="{{ data.install_url }}" class="button button-primary theme-install"><?php _e( 'Install', 'mainwp' ); ?></a>
 							<# } #>
 				</div>
 				<div class="wp-full-overlay-sidebar-content">
@@ -1014,14 +1014,14 @@ class MainWP_Themes {
 					</div>
 				</div>
 				<div class="wp-full-overlay-footer">
-					<button type="button" class="collapse-sidebar button-secondary" aria-expanded="true" aria-label="<?php esc_attr_e( 'Collapse Sidebar' ); ?>">
+					<button type="button" class="collapse-sidebar button-secondary" aria-expanded="true" aria-label="<?php esc_attr_e( 'Collapse Sidebar', 'mainwp' ); ?>">
 						<span class="collapse-sidebar-arrow"></span>
-						<span class="collapse-sidebar-label"><?php _e( 'Collapse' ); ?></span>
+						<span class="collapse-sidebar-label"><?php _e( 'Collapse', 'mainwp' ); ?></span>
 					</button>
 				</div>
 			</div>
 			<div class="wp-full-overlay-main">
-				<iframe src="{{ data.preview_url }}" title="<?php esc_attr_e( 'Preview' ); ?>" />
+				<iframe src="{{ data.preview_url }}" title="<?php esc_attr_e( 'Preview', 'mainwp' ); ?>" />
 			</div>
 		</script>
 		<?php MainWP_UI::select_sites_box( __("Step 2: Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right' ); ?>

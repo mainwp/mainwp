@@ -198,8 +198,8 @@ class MainWP_Bulk_Update_Admin_Passwords {
 									</td>
 								</tr>
 								<tr class="form-field form-required user-pass2-wrap hide-if-js">
-									<td scope="row"><label for="pass2"><?php _e( 'Repeat Password' ); ?>
-											<span class="description"><?php _e( '(required)' ); ?></span></label></td>
+									<td scope="row"><label for="pass2"><?php _e( 'Repeat Password', 'mainwp' ); ?>
+											<span class="description"><?php _e( '(required)', 'mainwp' ); ?></span></label></td>
 									<td>
 										<input name="pass2" type="password" id="pass2" value="<?php echo esc_attr( $initial_password ); ?>" autocomplete="off"/>
 									</td>

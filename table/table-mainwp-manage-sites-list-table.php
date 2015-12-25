@@ -34,7 +34,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	//    }
 
 	function no_items() {
-		echo __( 'No sites found.', 'mainwp' ) . '<br/><br/>' . __( '<em>If sites are missing from your Display but you know those sites are connected to your Dashboard be sure to check the Status drop down filter and adjust it to your needs.</em>', 'mainwp' );;
+		echo __( 'No sites found.', 'mainwp' ) . '<br/><br/><em>' . __( 'If sites are missing from your Display but you know those sites are connected to your Dashboard be sure to check the Status drop down filter and adjust it to your needs.', 'mainwp' ) . '</em>';
 	}
 
 	function column_default( $item, $column_name ) {
@@ -738,7 +738,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 					<option value="disconnected" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'disconnected' ? 'selected' : '' ); ?>>Disconnected</option>
 					<option value="update" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'update' ? 'selected' : '' ); ?>>Available update</option>
 				</select>
-				<input type="submit" value="<?php _e( 'Display' ); ?>" class="button" name="">
+				<input type="submit" value="<?php _e( 'Display', 'mainwp' ); ?>" class="button" name="">
 			</form>
 		</div>
 
@@ -758,7 +758,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 					}
 					?>
 				</datalist>
-				<input type="submit" value="<?php _e( 'Search Sites' ); ?>" class="button" name=""/>
+				<input type="submit" value="<?php _e( 'Search Sites', 'mainwp' ); ?>" class="button" name=""/>
 			</form>
 		</div>
 		<?php

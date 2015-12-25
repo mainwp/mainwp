@@ -202,9 +202,9 @@ class MainWP_User {
                                     <input type="password" name="pass1" id="pass1" class="regular-text" autocomplete="off" data-reveal="1" data-pw="" aria-describedby="pass-strength-result"/>
                                 </span>
 										</div>
-										<button type="button" class="button button-secondary wp-hide-pw hide-if-no-js" data-toggle="0" aria-label="<?php esc_attr_e( 'Hide password' ); ?>" style="margin-bottom: 5px !important;">
+										<button type="button" class="button button-secondary wp-hide-pw hide-if-no-js" data-toggle="0" aria-label="<?php esc_attr_e( 'Hide password', 'mainwp' ); ?>" style="margin-bottom: 5px !important;">
 											<span class="dashicons dashicons-hidden"></span>
-											<span class="text"><?php _e( 'Hide' ); ?></span>
+											<span class="text"><?php _e( 'Hide', 'mainwp' ); ?></span>
 										</button>
 										<div style="display:none; width: 225px !important;" id="pass-strength-result" aria-live="polite"></div>
 									</div>
@@ -767,20 +767,19 @@ class MainWP_User {
 										<th scope="row">
 											<label for="pass1">
 												<?php _e( 'New Password', 'mainwp' ); ?>
-												<span class="description hide-if-js"><?php _e( '(required)' ); ?></span>
+												<span class="description hide-if-js"><?php _e( '(required)', 'mainwp' ); ?></span>
 											</label>
 										</th>
 										<td>
 											<input class="hidden" value=" "/><!-- #24364 workaround -->
-											<!--                   			<button type="button" class="button button-secondary wp-generate-pw hide-if-no-js">--><?php //_e( 'Show password' ); ?><!--</button>-->
 											<div class="wp-pwd123">
 												<?php $initial_password = wp_generate_password( 24 ); ?>
 												<span class="password-input-wrapper">
                                         <input type="password" name="pass1" id="pass1" class="regular-text" autocomplete="off" data-reveal="1" data-pw="<?php echo esc_attr( $initial_password ); ?>" aria-describedby="pass-strength-result"/>
                                     </span>
-												<button type="button" class="button button-secondary wp-hide-pw hide-if-no-js" data-toggle="0" aria-label="<?php esc_attr_e( 'Hide password' ); ?>">
+												<button type="button" class="button button-secondary wp-hide-pw hide-if-no-js" data-toggle="0" aria-label="<?php esc_attr_e( 'Hide password', 'mainwp' ); ?>">
 													<span class="dashicons dashicons-hidden"></span>
-													<span class="text"><?php _e( 'Hide' ); ?></span>
+													<span class="text"><?php _e( 'Hide', 'mainwp' ); ?></span>
 												</button>
 												<!--                   				<button type="button" class="button button-secondary wp-cancel-pw hide-if-no-js" data-toggle="0" aria-label="--><?php //esc_attr_e( 'Cancel password change' ); ?><!--">-->
 												<!--                   					<span class="text">--><?php //_e( 'Cancel' ); ?><!--</span>-->
@@ -790,8 +789,8 @@ class MainWP_User {
 										</td>
 									</tr>
 									<tr class="form-field form-required user-pass2-wrap hide-if-js">
-										<td scope="row"><label for="pass2"><?php _e( 'Repeat Password' ); ?>
-												<span class="description"><?php _e( '(required)' ); ?></span></label>
+										<td scope="row"><label for="pass2"><?php _e( 'Repeat Password', 'mainwp' ); ?>
+												<span class="description"><?php _e( '(required)', 'mainwp' ); ?></span></label>
 										</td>
 										<td>
 											<input name="pass2" type="password" id="pass2" value="<?php echo esc_attr( $initial_password ); ?>" autocomplete="off"/>
@@ -1111,13 +1110,13 @@ class MainWP_User {
 						<?php
 
 					} else {
-						$errors[] = __( 'Data is not valid. <br />', 'mainwp' );
+						$errors[] = __( 'Data is not valid.', 'mainwp' ) .'<br />';
 					}
 				} else {
-					$errors[] = __( 'Upload error. <br />','mainwp' );
+					$errors[] = __( 'Upload error.','mainwp' ) . '<br />';
 				}
 			} else {
-				$errors[] = __( 'Upload error. <br />','mainwp' );
+				$errors[] = __( 'Upload error.','mainwp' ) . '<br />';
 			}
 
 			if ( count( $errors ) > 0 ) {

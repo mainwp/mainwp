@@ -497,13 +497,13 @@ class MainWP_Manage_Sites_View {
                         </div>
                         <?php
 					} else {
-						$errors[] = __( 'Error: Data is not valid. <br />', 'mainwp' );
+						$errors[] = __( 'Error: Data is not valid.', 'mainwp' ) . '<br />';
 					}
 				} else {
-					$errors[] = __( 'Error: Upload error. <br />', 'mainwp' );
+					$errors[] = __( 'Error: Upload error.', 'mainwp' ) . '<br />';
 				}
 			} else {
-				$errors[] = __( 'Error: Upload error. <br />', 'mainwp' );
+				$errors[] = __( 'Error: Upload error.', 'mainwp' ) . '<br />';
 			}
 
 			if ( count( $errors ) > 0 ) {
@@ -541,7 +541,7 @@ class MainWP_Manage_Sites_View {
        <div id="mainwp-add-site-notice-show" class="mainwp_info-box-blue" style="background-position: 10px 10px !important; display: none; text-align: center;"><a href="#" class="button button-primary" id="mainwp-add-site-notice-show-link"><?php _e( 'Having trouble adding your site?','mainwp' ); ?></a></div>
        <div id="mainwp-add-site-notice" class="mainwp_info-box-blue" style="background-position: 10px 25px !important;">
          <p>
-			<?php _e( 'If you are having trouble adding your site please use the <a href="/wp-admin/admin.php?page=managesites&do=test" style="text-decoration: none;">Test Connection tab</a>. This tells you the header response being received by your dashboard from that child site. <br/><strong>The Test Connection feature is specifically testing what your Dashboard can "see" and what your Dashboard "sees" and what my Dashboard "sees" or what your browser "sees" can be completely different things.</strong>','mainwp' ); ?>
+			<?php echo sprintf( __( 'If you are having trouble adding your site please use the %sTest Connection tab%s. This tells you the header response being received by your dashboard from that child site. <br/><strong>The Test Connection feature is specifically testing what your Dashboard can "see" and what your Dashboard "sees" and what my Dashboard "sees" or what your browser "sees" can be completely different things.</strong>','mainwp' ), '<a href="/wp-admin/admin.php?page=managesites&do=test" style="text-decoration: none;">', '</a>' ); ?>
          </p>
          <p>
            <strong><?php _e( 'Most common reasons for sites not being added are:','mainwp' ); ?></strong>
@@ -1856,7 +1856,7 @@ class MainWP_Manage_Sites_View {
 				} else if ( $e->getMessage() == 'NOMAINWP' ) {
 					$error = __( 'No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please ','mainwp' );
 					if ( $e->getMessageExtra() != null ) {$error .=sprintf( __( 'test your connection %shere%s or ', 'mainwp' ), '<a href="' . admin_url( 'admin.php?page=managesites&do=test&site=' . urlencode( $e->getMessageExtra() ) ) . '">', '</a>' );}
-					$error .= __( 'post as much information as possible on the error in the <a href="https://mainwp.com/forum/">support forum</a>.','mainwp' );
+					$error .= sprintf( __( 'post as much information as possible on the error in the %ssupport forum%s.','mainwp' ), '<a href="https://mainwp.com/forum/">', '</a>' );
 				} else {
 					$error = $e->getMessage();
 				}

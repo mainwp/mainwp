@@ -32,6 +32,7 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'FAILED', __( 'FAILED', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'DONE', __( 'DONE', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'SYNCING', __( 'SYNCING', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'DISCONNECTED', __( 'DISCONNECTED', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'TIMEOUT', __( 'TIMEOUT', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Ignored', __( 'Ignored', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'No ignored %1s', __( 'No ignored %1s', 'mainwp' ) );

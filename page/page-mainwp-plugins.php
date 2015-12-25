@@ -215,7 +215,7 @@ class MainWP_Plugins {
 			</div>
 			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select Sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
 			<div style="clear: both;"></div>
-			<input type="button" name="mainwp_show_plugins" id="mainwp_show_plugins" class="button-primary button button-hero button-right" value="<?php _e( 'Show Plugins', 'mainwp' ); ?>"/>
+			<input type="button" name="mainwp_show_plugins" id="mainwp_show_plugins" class="button-primary button button-hero button-right" value="<?php esc_attr_e( 'Show Plugins', 'mainwp' ); ?>"/>
 			<br /><br />
 			<span id="mainwp_plugins_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e( 'Grabbing information from Child Sites', 'mainwp' ) ?></em></span>
 			<span id="mainwp_plugins_loading_info" class="mainwp-grabbing-info-note"> - <?php _e( 'Automatically refreshing to get up to date information.', 'mainwp' ); ?></span>
@@ -370,7 +370,7 @@ class MainWP_Plugins {
 				<option value="trust"><?php _e( 'Trust', 'mainwp' ); ?></option>
 				<option value="untrust"><?php _e( 'Untrust', 'mainwp' ); ?></option>
 			</select>
-			<input type="button" name="" id="mainwp_bulk_trust_plugins_action_apply" class="button" value="<?php _e( 'Confirm', 'mainwp' ); ?>"/>
+			<input type="button" name="" id="mainwp_bulk_trust_plugins_action_apply" class="button" value="<?php esc_attr_e( 'Confirm', 'mainwp' ); ?>"/>
 			<span id="mainwp_bulk_action_loading"><i class="fa fa-spinner fa-pulse"></i></span>
 		</div>
 		<div class="clear"></div>
@@ -500,8 +500,8 @@ class MainWP_Plugins {
 			</div>
 			<form>
 				<div style="float: right" id="mainwp_notes_status"></div>
-				<input type="button" class="button cont button-primary" id="mainwp_trusted_plugin_notes_save" value="<?php _e( 'Save Note', 'mainwp' ); ?>"/>
-				<input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php _e( 'Close', 'mainwp' ); ?>"/>
+				<input type="button" class="button cont button-primary" id="mainwp_trusted_plugin_notes_save" value="<?php esc_attr_e( 'Save Note', 'mainwp' ); ?>"/>
+				<input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"/>
 				<input type="hidden" id="mainwp_notes_slug" value=""/>
 			</form>
 		</div>
@@ -684,7 +684,7 @@ class MainWP_Plugins {
 					<option value="ignore_updates"><?php _e( 'Ignore Updates', 'mainwp' ); ?></option>
 				<?php } ?>
 			</select>
-			<input type="button" name="" id="mainwp_bulk_plugins_action_apply" class="button" value="<?php _e( 'Confirm', 'mainwp' ); ?>"/>
+			<input type="button" name="" id="mainwp_bulk_plugins_action_apply" class="button" value="<?php esc_attr_e( 'Confirm', 'mainwp' ); ?>"/>
 			<span id="mainwp_bulk_action_loading"><i class="fa fa-spinner fa-pulse"></i></span>
 		</div>
 		<div class="clear"></div>
@@ -1056,10 +1056,10 @@ class MainWP_Plugins {
 				<option value="tag"<?php selected('tag', $type) ?>><?php _ex('Tag', 'Plugin Installer'); ?></option>
 			</select>
 		<?php endif; ?>
-		<label><span class="screen-reader-text"><?php _e('Search Plugins'); ?></span>
+		<label><span class="screen-reader-text"><?php _e( 'Search Plugins', 'mainwp' ); ?></span>
 			<input type="search" name="s" value="<?php echo esc_attr($term) ?>" <?php echo $input_attrs; ?>/>
 		</label>
-		<?php submit_button( __( 'Search Plugins' ), $button_type, false, false, array( 'id' => 'search-submit' ) ); ?>
+		<?php submit_button( __( 'Search Plugins', 'mainwp' ), $button_type, false, false, array( 'id' => 'search-submit' ) ); ?>
 		</form>
 		<?php
 	}

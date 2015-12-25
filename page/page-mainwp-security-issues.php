@@ -263,9 +263,9 @@ class MainWP_Security_Issues {
 							<span class="mainwp-mid-col"><span class="<?php echo( $website->securityIssues > 0 ? 'darkred' : 'mainwp_ga_plus' ); ?>"><span class="mainwp-rightnow-number"><?php echo $website->securityIssues; ?></span> <?php echo _n( 'Issue', 'Issues', $website->securityIssues, 'mainwp' ); ?></span></span>
 							<span class="mainwp-right-col">
 								<?php if ( $website->securityIssues == 0 ) { ?>
-									<input type="button" class="securityIssues_dashboard_unfixAll button" value="<?php _e( 'Unfix All', 'mainwp' ); ?>"/>
+									<input type="button" class="securityIssues_dashboard_unfixAll button" value="<?php esc_attr_e( 'Unfix All', 'mainwp' ); ?>"/>
 								<?php } else { ?>
-									<input type="button" class="securityIssues_dashboard_fixAll button-primary" value="<?php _e( 'Fix All', 'mainwp' ); ?>"/>
+									<input type="button" class="securityIssues_dashboard_fixAll button-primary" value="<?php esc_attr_e( 'Fix All', 'mainwp' ); ?>"/>
 								<?php } ?>
 								<i class="fa fa-spinner fa-pulse img-loader" style="display: none;"></i>
 							</span>

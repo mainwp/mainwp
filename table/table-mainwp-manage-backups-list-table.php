@@ -16,7 +16,7 @@ class MainWP_Manage_Backups_List_Table extends WP_List_Table {
 	}
 
 	function no_items() {
-		echo __( 'No backup tasks have been created yet.', 'mainwp' ) . '<br><em><a href="' . admin_url( 'admin.php?page=ManageBackupsAddNew' ) . '" >' . __( 'Click here') . '</a>' . __( ' to create a new backup task.', 'mainwp' ) . '</em>';
+		echo __( 'No backup tasks have been created yet.', 'mainwp' ) . '<br><em><a href="' . admin_url( 'admin.php?page=ManageBackupsAddNew' ) . '" >' . __( 'Click here', 'mainwp') . '</a>' . __( ' to create a new backup task.', 'mainwp' ) . '</em>';
 	}
 
 	function column_default( $item, $column_name ) {

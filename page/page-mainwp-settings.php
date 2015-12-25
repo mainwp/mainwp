@@ -233,7 +233,7 @@ class MainWP_Settings {
 				</div>
 			</div>
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>
+				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 			</p>
 		</form>
 		<?php
@@ -275,7 +275,7 @@ class MainWP_Settings {
 
 			?>
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>
+				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 			</p>
 		</form>
 		<?php
@@ -344,7 +344,7 @@ class MainWP_Settings {
 				</div>
 			</div>
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>
+				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 			</p>
 		</form>
 		<?php
@@ -364,7 +364,7 @@ class MainWP_Settings {
 			'dashboard' => __( 'Dashboard', 'mainwp' ),
 			'posts' => __( 'Posts', 'mainwp' ),
 			'media' => __( 'Media', 'mainwp' ),
-			'pages' => __( 'Pages' ),
+			'pages' => __( 'Pages', 'mainwp' ),
 			'appearance' => __( 'Appearance', 'mainwp' ),
 			'comments' => __( 'Comments', 'mainwp' ),
 			'users' => __( 'Users', 'mainwp' ),
@@ -390,7 +390,7 @@ class MainWP_Settings {
 						<tr>
 							<th scope="row"><?php _e( 'Force Dashboard to Establish New Connection', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Use this option to establish new connection with child sites.', 'mainwp' ) ); ?></th>
 							<td>
-								<input type="submit" name="" id="force-destroy-sessions-button" class="button-primary button" value="<?php _e( 'Establish New Connection', 'mainwp' ); ?>"/><br/>
+								<input type="submit" name="" id="force-destroy-sessions-button" class="button-primary button" value="<?php esc_attr_e( 'Establish New Connection', 'mainwp' ); ?>"/><br/>
 								<em>
 									<?php _e( 'Forces your Dashboard to reconnect with your Child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>
 								</em>
@@ -437,7 +437,7 @@ class MainWP_Settings {
 					</table>
 				</div>
 			</div>
-			<p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e('Save Settings','mainwp'); ?>"/></p>
+			<p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e('Save Settings','mainwp'); ?>"/></p>
 		</form>
 		<?php
 		self::renderFooter( 'MainWPTools' );

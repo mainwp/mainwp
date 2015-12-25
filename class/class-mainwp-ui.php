@@ -47,7 +47,7 @@ class MainWP_UI {
 		<div id="selected_sites" <?php echo esc_html( count( $selected_groups ) > 0 ? 'style="display: none;"' : '' ); ?>>
 			<?php
 			if ( ! $websites ) {
-				esc_html_e( '<p>No websites have been found.</p>', 'mainwp' );
+				echo '<p>' . esc_html( 'No websites have been found.', 'mainwp' ) . '</p>';
 			} else {
 				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 					$imgfavi = '';
@@ -73,7 +73,7 @@ class MainWP_UI {
 			}
 			?>
 		</div>
-		<input id="selected_sites-filter" style="margin-top: .5em" type="text" value="" placeholder="Type here to filter sites" <?php echo esc_attr( count( $selected_groups ) > 0 ? 'style="display: none;"' : '' ); ?> />
+		<input id="selected_sites-filter" style="margin-top: .5em" type="text" value="" placeholder="<?php esc_attr_e( 'Type here to filter sites', 'mainwp'); ?>" <?php echo esc_attr( count( $selected_groups ) > 0 ? 'style="display: none;"' : '' ); ?> />
 		<?php if ( $show_group ) :  ?>
 			<div id="selected_groups" <?php echo esc_html( count( $selected_groups ) > 0 ? 'style="display: block;"' : '' ); ?>>
 				<?php
@@ -87,7 +87,7 @@ class MainWP_UI {
 				}
 				?>
             </div>
-            <input id="selected_groups-filter" style="margin-top: .5em" type="text" value="" placeholder="Type here to filter groups" <?php echo esc_attr( count( $selected_groups ) > 0 ? 'style="display: block;"' : '' ); ?> />
+		<input id="selected_groups-filter" style="margin-top: .5em" type="text" value="" placeholder="<?php esc_attr_e( 'Type here to filter groups', 'mainwp' );?>" <?php echo esc_attr( count( $selected_groups ) > 0 ? 'style="display: block;"' : '' ); ?> />
 		<?php endif ?>
 		<?php
 		if ( $updateQty ) {

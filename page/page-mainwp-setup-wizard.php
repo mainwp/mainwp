@@ -315,7 +315,7 @@ class MainWP_Setup_Wizard {
 		<form method="post" class="form-table">			
 			<p><?php _e( 'Due to bug with PHP on Windows please enter your OpenSSL Library location.<br /> Usually it is here:', 'mainwp' ); ?></p>
 			<p><input type="text" class="" style="width: 100%" name="mwp_setup_openssl_lib_location" value="<?php echo esc_html($openssl_loc); ?>"></p>
-			<em><?php _e( 'In most cases c:\\\\xampplite\\\\appache\\\\conf\\\\openssl.conf should be your path if using a normal install.<br />If not your will need to change that to match your specific path.' ); ?></em>
+			<em><?php echo sprintf( __( 'In most cases %s should be your path if using a normal install.%sIf not your will need to change that to match your specific path.', 'mainwp' ), 'c:\\\\xampplite\\\\appache\\\\conf\\\\openssl.conf', '<br />' ); ?></em>
 			<br /><br />
 			<p class="mwp-setup-actions step">
 				<input type="submit" class="button-primary button button-large" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
@@ -527,7 +527,7 @@ class MainWP_Setup_Wizard {
 				<tr>
 					<th scope="row"><?php _e('Enter Your Email Address','mainwp'); ?></th>
 					<td>
-						<input type="email"  class="" name="mwp_setup_options_email" size="35" value="<?php echo $user_email; ?>"/>
+						<input type="email"  class="" name="mwp_setup_options_email" size="35" value="<?php echo esc_attr($user_email); ?>"/>
 					</td>
 				</tr>
 			</table>

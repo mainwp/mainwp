@@ -333,7 +333,7 @@ class MainWP_System {
 					<p>
 						<span style="float: right;" class="mainwp-events-notice-dismiss" notice="first_site"
 						      style="text-decoration: none;" href="#"><i
-								class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span><span><strong><?php echo esc_html( sprintf( __( 'Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected %sScheduled Events%s', 'mainwp' ), '<a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">', '</a>' ) ) ; ?></strong></span>
+								class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span><span><strong><?php echo sprintf( __( 'Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected %sScheduled Events%s', 'mainwp' ), '<a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">', '</a>' ) ; ?></strong></span>
 					</p>
 				</div>
 				<?php
@@ -345,11 +345,11 @@ class MainWP_System {
 				if ( get_option( 'mainwp_fixed_security_2022' ) != 1 ) {
 					?>
 					<div class="mainwp_info-box-red">
-						<span><?php esc_html_e( '<strong>This update includes additional security hardening.</strong>', 'mainwp' ); ?>
+						<span><strong><?php esc_html_e( 'This update includes additional security hardening.', 'mainwp' ); ?></strong>
 							<p><?php esc_html_e( 'In order to complete the security hardening process follow these steps:', 'mainwp' ); ?></p>
 							<ol>
 								<li><?php esc_html_e( 'Update all your Child Sites to the latest version MainWP Child.', 'mainwp' ); ?></li>
-								<li><?php echo esc_html( sprintf( __( 'Then Go to the MainWP Tools Page by clicking %sHere%s.', 'mainwp' ), '<a style="text-decoration: none;" href="admin.php?page=MainWPTools" "MainWP Tools">', '</a>' ) ); ?></li>
+								<li><?php echo sprintf( __( 'Then Go to the MainWP Tools Page by clicking %sHere%s.', 'mainwp' ), '<a style="text-decoration: none;" href="admin.php?page=MainWPTools" "MainWP Tools">', '</a>' ) ; ?></li>
 								<li><?php esc_html_e( 'Press the Establish New Connection Button and Let it Run.', 'mainwp' ); ?></li>
 								<li><?php esc_html_e( 'Once completed the security hardening is done.', 'mainwp' ); ?></li>
 							</ol>
@@ -2205,7 +2205,7 @@ class MainWP_System {
 					?>
 				</ul>
 				<div id="mainwp-sites-menu-filter">
-					<input id="mainwp-fly-manu-filter" style="margin-top: .5em; width: 100%;" type="text" value="" placeholder="<?php esc_html_e( 'Type here to filter sites', 'mainwp' ); ?>" />
+					<input id="mainwp-fly-manu-filter" style="margin-top: .5em; width: 100%;" type="text" value="" placeholder="<?php esc_attr_e( 'Type here to filter sites', 'mainwp' ); ?>" />
 				</div>
 			</div>
 		</div>

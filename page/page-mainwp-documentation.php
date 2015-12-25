@@ -25,7 +25,7 @@ class MainWP_Documentation {
 			<div class="wrap" style="font-size: 16px !important;">
 				<div class="postbox" style="padding: 1em !important;">
 					<form name="advanced-search-form" method="get" action="//docs.mainwp.com/" class="auto-complete" autocomplete="off" target="_blank">
-						<input type="text" style="width: 85%;" class="input-text input-txt" name="s" id="s" value="" placeholder="<?php _e( 'Search the MainWP Docs', 'mainwp' ); ?>"/>
+						<input type="text" style="width: 85%;" class="input-text input-txt" name="s" id="s" value="" placeholder="<?php esc_attr_e( 'Search the MainWP Docs', 'mainwp' ); ?>"/>
 						<button type="submit" class="button button-primary mainwp-upgrade-button" style="padding-left: 3em !important; padding-right: 3em !important;"><?php _e( 'Search', 'mainwp' ); ?></button>
 					</form>
 				</div>

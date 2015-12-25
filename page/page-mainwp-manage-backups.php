@@ -217,7 +217,7 @@ public static function renderHeader( $shownPage ) {
 			self::renderHeader( '' ); ?>
 			<?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
 				<tr>
-					<div class="mainwp_info-box"><?php _e( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the <a href="https://extensions.mainwp.com/product-category/mainwp-extensions/backups/" target="_blank" ?>Extensions Site</a> for options.', 'mainwp' ); ?></div>
+				<div class="mainwp_info-box"><?php echo sprintf( __( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://extensions.mainwp.com/product-category/mainwp-extensions/backups/" target="_blank" ?>', '</a>' ); ?></div>
 				</tr>
 			<?php } ?>
 			<div id="mainwp_managebackups_content">
@@ -269,7 +269,7 @@ public static function renderHeader( $shownPage ) {
 				MainWP_Manage_Backups::renderNewEdit( $task );
 				?>
 				<p class="submit">
-					<input type="button" name="mainwp_managebackups_update" id="mainwp_managebackups_update" class="button-primary" value="<?php _e( 'Update Task', 'mainwp' ); ?>"/>
+					<input type="button" name="mainwp_managebackups_update" id="mainwp_managebackups_update" class="button-primary" value="<?php esc_attr_e( 'Update Task', 'mainwp' ); ?>"/>
 				</p>
 			</form>
 		</div>
@@ -297,7 +297,7 @@ public static function renderHeader( $shownPage ) {
 				?>
 
 				<p class="submit">
-					<input type="button" name="mainwp_managebackups_add" id="mainwp_managebackups_add" class="button-primary button button-hero" value="<?php _e( 'Add New Task', 'mainwp' ); ?>"/>
+					<input type="button" name="mainwp_managebackups_add" id="mainwp_managebackups_add" class="button-primary button button-hero" value="<?php esc_attr_e( 'Add New Task', 'mainwp' ); ?>"/>
 				</p>
 			</form>
 		</div>
@@ -459,7 +459,7 @@ public static function renderHeader( $shownPage ) {
 								<td>
 									<p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e( 'Exclude any additional files that you do not need backed up for this site. Click a folder name to drill down into the directory.', 'mainwp' ); ?></p>
 									<br/>
-									<?php printf( __( 'Click directories to navigate. Click the red sign ( <img style="margin-bottom: -3px;" src="%s"> ) to exclude a folder.', 'mainwp' ), plugins_url( 'images/exclude.png', dirname( __FILE__ ) ) ); ?>
+									<?php printf( __( 'Click directories to navigate. Click the red sign ( %s ) to exclude a folder.', 'mainwp' ), '<img style="margin-bottom: -3px;" src="' . plugins_url( 'images/exclude.png', dirname( __FILE__ ) ) . '">' ); ?>
 									<br/><br/>
 									<table class="mainwp_excluded_folders_cont">
 										<tr>
@@ -714,7 +714,7 @@ public static function renderHeader( $shownPage ) {
 		} else {
 			do_action( 'mainwp_add_backuptask', $task->id );
 
-			die( json_encode( array( 'result' => __('The backup task was added successfully') ) ) );
+			die( json_encode( array( 'result' => __('The backup task was added successfully', 'mainwp') ) ) );
 		}
 	}
 

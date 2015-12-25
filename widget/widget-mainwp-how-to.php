@@ -18,7 +18,7 @@ class MainWP_How_To
         <div>
             <div id="mainwp-docs-search" class="mainwp-row-top">
                 <form name="advanced-search-form" method="get" action="//blog.mainwp.com/" class="auto-complete" autocomplete="off" target="_blank">
-                    <input type="text" style="width: 75%;" class="input-text input-txt" name="s" id="s" value="" placeholder="<?php _e('Search the MainWP Blog','mainwp'); ?>" />
+                    <input type="text" style="width: 75%;" class="input-text input-txt" name="s" id="s" value="" placeholder="<?php esc_attr_e('Search the MainWP Blog','mainwp'); ?>" />
                     <button type="submit" class="button button-primary mainwp-upgrade-button" style="padding-left: 3em !important; padding-right: 3em !important;"><?php _e('Search','mainwp'); ?></button>
                 </form>
             </div>

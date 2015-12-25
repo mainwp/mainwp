@@ -1251,7 +1251,7 @@ class MainWP_Manage_Sites {
 			die( 'ERROR ' . $e->getMessage() );
 		}
 
-		die( sprintf( __( 'Site successfully reconnected - Visit the Site\'s <a href="admin.php?page=managesites&dashboard=%d" title="Dashboard">Dashboard</a> now.', 'mainwp' ), $siteId ) );
+		die( sprintf( __( 'Site successfully reconnected - Visit the Site\'s %sDashboard%s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $siteId . '" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' ) );
 	}
 
 	public static function _reconnectSite( $website ) {

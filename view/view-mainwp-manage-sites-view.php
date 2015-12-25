@@ -546,7 +546,7 @@ class MainWP_Manage_Sites_View {
          <p>
            <strong><?php _e( 'Most common reasons for sites not being added are:','mainwp' ); ?></strong>
            <ol>
-             <li><strong><?php _e( 'You have a Security Plugin blocking the connection. If you have a security plugin installed and are having an issue please check the <a href="http://docs.mainwp.com/known-plugin-conflicts/" style="text-decoration: none;">Plugin Conflict page</a> for how to resolve.','mainwp' ); ?></strong></li>
+			   <li><strong><?php echo sprintf( __('You have a Security Plugin blocking the connection. If you have a security plugin installed and are having an issue please check the %sPlugin Conflict page%s for how to resolve.','mainwp' ), '<a href="http://docs.mainwp.com/known-plugin-conflicts/" style="text-decoration: none;">', '</a>' ); ?></strong></li>
              <li><?php _e( 'Your Dashboard is on the same host as your Child site. Some hosts will not allow two sites on the same server to communicate with each other. In this situation you would contact your host for assistance or move your Dashboard or Child site to a different host.','mainwp' ); ?></li>
              <li><?php _e( 'You may have recently moved the child site and your Dashboard\'s Server may not have an updated DNS or your server may be experiencing DNS issues.  To check this use the Test Connection tab and verify the IP that shows up with the IP that shows on your Child sites MainWP Server Information page. ','mainwp' ); ?></li>
              <li class="curl-notice" <?php echo ($passed_curl_ssl ? 'style="display: none;"' : ''); ?>><?php _e( 'Your Dashboard or Child site is experiencing SSL or cURL errors which can make it so you are unable to the new Child site.  You can check for these errors on the Server Information page for both the MainWP Dashboard and Child Plugin.','mainwp' ); ?></li>
@@ -758,7 +758,7 @@ class MainWP_Manage_Sites_View {
 					<?php
 					if ( get_option( 'mainwp_seo' ) == 0 ) {
 						?>
-					  <div class="mainwp_info-box-red"><?php _e( 'Basic SEO turned Off. <strong>Historic Information Only</strong>. You can turn back on in the <a href="admin.php?page=Settings">Settings page</a>.','mainwp' ); ?></div>
+					  <div class="mainwp_info-box-red"><?php echo sprintf( __('Basic SEO turned Off. <strong>Historic Information Only</strong>. You can turn back on in the %Settings page%.','mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
                     <?php
 					}
 					?>
@@ -881,7 +881,7 @@ class MainWP_Manage_Sites_View {
         <tbody>
             <?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
                 <tr>
-                    <div class="mainwp_info-box"><?php _e( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the <a href="https://extensions.mainwp.com/product-category/mainwp-extensions/backups/" target="_blank" ?>Extensions Site</a> for options.', 'mainwp' ); ?></div>
+		<div class="mainwp_info-box"><?php echo sprintf( __('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %Extensions Site%s for options.', 'mainwp' ), '<a href="https://extensions.mainwp.com/product-category/mainwp-extensions/backups/" target="_blank" ?>', '</a>' ); ?></div>
                 </tr>
             <?php } ?>
         <?php
@@ -1083,7 +1083,7 @@ class MainWP_Manage_Sites_View {
         
         <?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
             <tr>
-                <div class="mainwp_info-box"><?php _e( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the <a href="https://extensions.mainwp.com/product-category/mainwp-extensions/backups/" target="_blank" ?>Extensions Site</a> for options.', 'mainwp' ); ?></div>
+			<div class="mainwp_info-box"><?php echo sprintf( __('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://extensions.mainwp.com/product-category/mainwp-extensions/backups/" target="_blank" ?>', '</a>' ); ?></div>
             </tr>
         <?php } ?>
 
@@ -1165,7 +1165,7 @@ class MainWP_Manage_Sites_View {
                     <td>
                         <p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e( 'Exclude any additional files that you do not need backed up for this site. Click a folder name to drill down into the directory.', 'mainwp' ); ?></p>
                         <br />
-                        <?php printf( __( 'Click directories to navigate. Click the red sign ( <img style="margin-bottom: -3px;" src="%s"> ) to exclude a folder.','mainwp' ), plugins_url( 'images/exclude.png', dirname( __FILE__ ) ) ); ?><br /><br />
+                        <?php printf( __( 'Click directories to navigate. Click the red sign ( %s ) to exclude a folder.','mainwp' ), '<img style="margin-bottom: -3px;" src="' . plugins_url( 'images/exclude.png', dirname( __FILE__ ) ) . '">' ); ?><br /><br />
                         <table class="mainwp_excluded_folders_cont">
                             <tr>
                                 <td style="width: 280px;">
@@ -1316,7 +1316,7 @@ class MainWP_Manage_Sites_View {
                 <div class="postbox">
                     <h3 class="mainwp_box_title"><span>Sucuri Scan</span></h3>
                     <div class="inside">
-                        <?php  _e( 'The Sucuri Scan requires the free Sucuri Extension, please download from <a href="https://extensions.mainwp.com/product/mainwp-sucuri-extension/" title="Sucuri">here</a>', 'mainwp' ); ?>
+                        <?php  echo sprintf( __('The Sucuri Scan requires the free Sucuri Extension, please download from %shere%s', 'mainwp' ), '<a href="https://extensions.mainwp.com/product/mainwp-sucuri-extension/" title="Sucuri">', '</a>' ); ?>
                     </div>
                 </div>
                 <?php
@@ -1330,7 +1330,7 @@ class MainWP_Manage_Sites_View {
                 <div class="postbox">
                     <h3 class="mainwp_box_title"><span>Wordfence Security Scan</span></h3>
                     <div class="inside">
-                        <?php  _e( 'Wordfence status requires the Wordfence Extension, please order from <a href="https://extensions.mainwp.com/product/mainwp-wordfence-extension/" title="Wordfence">here</a>.', 'mainwp' ); ?>
+                        <?php  echo sprintf( __('Wordfence status requires the Wordfence Extension, please order from %shere%s.', 'mainwp' ), '<a href="https://extensions.mainwp.com/product/mainwp-wordfence-extension/" title="Wordfence">', '</a>' ); ?>
                     </div>
                 </div>
         <?php }
@@ -1736,7 +1736,7 @@ class MainWP_Manage_Sites_View {
 				} else if ( $e->getMessage() == 'NOMAINWP' ) {
 					$error = __( 'No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please ','mainwp' );
 					if ( $e->getMessageExtra() != null ) {$error .= sprintf( __( 'test your connection %shere%s or ', 'mainwp' ), '<a href="' . admin_url( 'admin.php?page=managesites&do=test&site=' . urlencode( $e->getMessageExtra() ) ) . '">', '</a>' );}					
-					$error .= __( 'post as much information as possible on the error in the <a href="https://mainwp.com/forum/">support forum</a>.','mainwp' );
+					$error .= sprintf( __( 'post as much information as possible on the error in the %ssupport forum%s.','mainwp' ), '<a href="https://mainwp.com/forum/">', '</a>' );
 
 					throw new Exception( $error );
 				}
@@ -1843,7 +1843,7 @@ class MainWP_Manage_Sites_View {
 						global $current_user;
 						$id = MainWP_DB::Instance()->addWebsite($current_user->ID, $_POST['managesites_add_wpname'], $_POST['managesites_add_wpurl'], $_POST['managesites_add_wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], (isset( $information['nosslkey'] )
 								? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion);
-						$message = sprintf( __( 'Site successfully added - Visit the Site\'s <a href="admin.php?page=managesites&dashboard=%d" style="text-decoration: none;" title="Dashboard">Dashboard</a> now.', 'mainwp' ), $id );
+						$message = sprintf( __( 'Site successfully added - Visit the Site\'s %sDashboard%s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' );
 						$website = MainWP_DB::Instance()->getWebsiteById( $id );
 						MainWP_Sync::syncInformationArray( $website, $information );
 					} else {

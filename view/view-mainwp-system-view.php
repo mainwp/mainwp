@@ -8,7 +8,7 @@ class MainWP_System_View {
 			}
 
 			$strippedText = str_replace( ' ', '_', $pKey );
-			$strippedText = preg_replace( '/[^A-Za-z0-9_%]/', '', $strippedText );
+			$strippedText = preg_replace( '/[^A-Za-z0-9_]/', '', $strippedText );
 
 			$pArray[ $strippedText ] = $pText;
 		}
@@ -163,7 +163,11 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'Please enter a valid name for your backup task', __( 'Please enter a valid name for your backup task', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'The backup task was added successfully', __( 'The backup task was added successfully', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Bulk test connection finished', __( 'Bulk test connection finished', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (%1)', __( 'To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (%1)', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', __( 'To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please %1click here%2.', __( 'Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please %1click here%2.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'No ignored abandoned plugins', __( 'No ignored abandoned plugins', 'mainwp' ) );
+
+
 
 		return $mainwpTranslations;
 	}

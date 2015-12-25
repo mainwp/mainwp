@@ -208,8 +208,8 @@ class MainWP_Ajax {
 
 			get_current_screen()->set_help_sidebar(
 				'<p><strong>' . __( 'For more information:', 'mainwp' ) . '</strong></p>' .
-				'<p>' . __( '<a href="http://codex.wordpress.org/Dashboard_Screen" target="_blank">Documentation on Dashboard</a>', 'mainwp' ) . '</p>' .
-				'<p>' . __( '<a href="http://wordpress.org/support/" target="_blank">Support Forums</a>', 'mainwp' ) . '</p>'
+				'<p>' . sprintf( __( '%sDocumentation on Dashboard%s', 'mainwp' ), '<a href="http://codex.wordpress.org/Dashboard_Screen" target="_blank">', '</a>') . '</p>' .
+				'<p>' . sprintf( __( '%sSupport Forums%s</a>', 'mainwp' ), '<a href="http://wordpress.org/support/" target="_blank">', '</a>' ) . '</p>'
 			);
 			$today = current_time( 'mysql', 1 );
 			?>

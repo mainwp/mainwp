@@ -333,7 +333,7 @@ class MainWP_System {
 					<p>
 						<span style="float: right;" class="mainwp-events-notice-dismiss" notice="first_site"
 						      style="text-decoration: none;" href="#"><i
-								class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span><span><strong><?php esc_html_e( 'Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected <a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">Scheduled Events</a>', 'mainwp' ); ?></strong></span>
+								class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span><span><strong><?php echo esc_html( sprintf( __( 'Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected %sScheduled Events%s', 'mainwp' ), '<a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">', '</a>' ) ) ; ?></strong></span>
 					</p>
 				</div>
 				<?php
@@ -349,7 +349,7 @@ class MainWP_System {
 							<p><?php esc_html_e( 'In order to complete the security hardening process follow these steps:', 'mainwp' ); ?></p>
 							<ol>
 								<li><?php esc_html_e( 'Update all your Child Sites to the latest version MainWP Child.', 'mainwp' ); ?></li>
-								<li><?php esc_html_e( 'Then Go to the MainWP Tools Page by clicking <a style="text-decoration: none;" href="admin.php?page=MainWPTools" "MainWP Tools">Here</a>.', 'mainwp' ); ?></li>
+								<li><?php echo esc_html( sprintf( __( 'Then Go to the MainWP Tools Page by clicking %sHere%s.', 'mainwp' ), '<a style="text-decoration: none;" href="admin.php?page=MainWPTools" "MainWP Tools">', '</a>' ) ); ?></li>
 								<li><?php esc_html_e( 'Press the Establish New Connection Button and Let it Run.', 'mainwp' ); ?></li>
 								<li><?php esc_html_e( 'Once completed the security hardening is done.', 'mainwp' ); ?></li>
 							</ol>

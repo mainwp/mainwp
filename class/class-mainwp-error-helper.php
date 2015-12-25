@@ -11,7 +11,7 @@ class MainWP_Error_Helper {
 			if ( $pException->getMessageExtra() != null ) {				
 				$error .= sprintf( __( 'test your connection %shere%s or ', 'mainwp' ), '<a href="' . admin_url( 'admin.php?page=managesites&do=test&site=' . urlencode( $pException->getMessageExtra() ) ) . '">', '</a>' );
 			}
-			$error .= __( 'post as much information as possible on the error in the <a href="https://mainwp.com/forum/">support forum</a>.', 'mainwp' );
+			$error .= sprintf( __( 'post as much information as possible on the error in the %ssupport forum%s.', 'mainwp' ), '<a href="https://mainwp.com/forum/">', '</a>' );
 		}
 
 		return $error;

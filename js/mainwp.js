@@ -1,6 +1,8 @@
 jQuery(document).ready(function ()
 {
-    jQuery(document).tooltip({
+    // to fix conflict with bootstrap tooltip
+    jQuery.widget.bridge('uitooltip', jQuery.ui.tooltip);    
+    jQuery(document).uitooltip({
         items:"span.tooltip",
         track:true,
         content:function ()

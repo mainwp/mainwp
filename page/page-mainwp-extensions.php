@@ -660,7 +660,7 @@ class MainWP_Extensions {
 
 		$key = array_search( $_POST['slug'], $snEnabledExtensions );
 
-		if ( $key !== false ) {
+		if ( $key != false ) {
 			unset( $snEnabledExtensions[ $key ] );
 		}
 
@@ -733,7 +733,7 @@ class MainWP_Extensions {
 					$pluginFile = $extension['plugin'];
 					$result     = self::isExtensionEnabled( $pluginFile );
 
-					return ( $result === false ) ? false : true;
+					return ( $result == false ) ? false : true;
 				}
 			}
 		}
@@ -742,6 +742,9 @@ class MainWP_Extensions {
 	}
 
 	public static function isExtensionEnabled( $pluginFile ) {
+		// To fix bug
+		self::loadExtensions();
+
 		$slug                = plugin_basename( $pluginFile );
 		$snEnabledExtensions = get_option( 'mainwp_extloaded' );
 		if ( ! is_array( $snEnabledExtensions ) ) {

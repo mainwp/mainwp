@@ -147,7 +147,7 @@ class MainWP_Utility {
 					$data        = curl_multi_getcontent( $info['handle'] );
 					$err         = curl_error( $info['handle'] );
 					$http_status = curl_getinfo( $info['handle'], CURLINFO_HTTP_CODE );
-					$err         = curl_error( $info['handle'] );
+					$errno       = curl_errno( $info['handle'] );
 					$realurl     = curl_getinfo( $info['handle'], CURLINFO_EFFECTIVE_URL );
 
 					curl_multi_remove_handle( $mh, $info['handle'] );
@@ -160,7 +160,7 @@ class MainWP_Utility {
 			$data        = curl_exec( $ch );
 			$err         = curl_error( $ch );
 			$http_status = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
-			$err         = curl_error( $ch );
+			$errno       = curl_errno( $ch );
 			$realurl     = curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
 			curl_close( $ch );
 		}

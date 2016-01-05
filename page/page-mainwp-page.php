@@ -11,16 +11,39 @@ class MainWP_Page {
 	public static $subPages;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the Page page header via the 'mainwp-pageheader-page' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-page
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-page'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-page
+		 *
+		 * @see \MainWP_Page::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-page', array( MainWP_Page::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the Page page footer via the 'mainwp-pagefooter-page' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-page
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-page'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-page
+		 *
+		 * @see \MainWP_Page::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-page', array( MainWP_Page::getClassName(), 'renderFooter' ) );
 	}
 
 	public static function initMenu() {
 		add_submenu_page( 'mainwp_tab', __( 'Pages','mainwp' ), '<span id="mainwp-Pages">'.__( 'Pages','mainwp' ).'</span>', 'read', 'PageBulkManage', array( MainWP_Page::getClassName(), 'render' ) );
-		add_submenu_page( 'mainwp_tab', 'Pages', '<div class="mainwp-hidden">Add New</div>', 'read', 'PageBulkAdd', array( MainWP_Page::getClassName(), 'renderBulkAdd' ) );
-		add_submenu_page( 'mainwp_tab', 'Posting new bulkpage', '<div class="mainwp-hidden">Add New Page</div>', 'read', 'PostingBulkPage', array( MainWP_Page::getClassName(), 'posting' ) ); //removed from menu afterwards
+		add_submenu_page( 'mainwp_tab', __( 'Pages','mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ). '</div>', 'read', 'PageBulkAdd', array( MainWP_Page::getClassName(), 'renderBulkAdd' ) );
+		add_submenu_page( 'mainwp_tab', __( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( MainWP_Page::getClassName(), 'posting' ) ); //removed from menu afterwards
 		add_submenu_page( 'mainwp_tab', __( 'Pages Help','mainwp' ), '<div class="mainwp-hidden">'.__( 'Pages Help','mainwp' ).'</div>', 'read', 'PagesHelp', array( MainWP_Page::getClassName(), 'QSGManagePages' ) );
 
+		/**
+		 * This hook allows you to add extra sub pages to the Page page via the 'mainwp-getsubpages-page' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-page
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-page', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
@@ -57,6 +80,9 @@ class MainWP_Page {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		?>
 		<div class="wrap">
@@ -98,6 +124,9 @@ class MainWP_Page {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderFooter( $shownPage ) {
 		?>
 			</div>
@@ -107,7 +136,7 @@ class MainWP_Page {
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
-			mainwp_do_not_have_permissions( 'manage pages' );
+			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
 			return;
 		}
 
@@ -174,7 +203,7 @@ class MainWP_Page {
 					<option value="restore"><?php _e( 'Restore','mainwp' ); ?></option>
 					<option value="delete"><?php _e( 'Delete Permanently','mainwp' ); ?></option>
 				</select>
-				<input type="button" name="" id="mainwp_bulk_page_action_apply" class="button" value="<?php _e( 'Apply','mainwp' ); ?>"/>
+				<input type="button" name="" id="mainwp_bulk_page_action_apply" class="button" value="<?php esc_attr_e( 'Apply','mainwp' ); ?>"/>
 			</div>
 			<div class="alignright" id="mainwp_pages_total_results">
 				<?php _e( 'Total Results:','mainwp' ); ?> <span id="mainwp_pages_total"><?php if ( $cachedSearch != null ) { echo $cachedSearch['count']; } ?></span>
@@ -466,7 +495,7 @@ class MainWP_Page {
 
 	public static function renderBulkAdd() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
-			mainwp_do_not_have_permissions( 'manage pages' );
+			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
 			return;
 		}
 

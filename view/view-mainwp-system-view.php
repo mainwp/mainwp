@@ -25,12 +25,15 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'less', __( 'less', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'An error occured: ', __( 'An error occured: ', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'No data available. Connect your sites using the Settings submenu.', __( 'No data available. Connect your sites using the Settings submenu.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Undefined error', __( 'Undefined error', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Undefined error.', __( 'Undefined error.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'PENDING', __( 'PENDING', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'UPDATING', __( 'UPDATING', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'UPGRADING', __( 'UPGRADING', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'FAILED', __( 'FAILED', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'DONE', __( 'DONE', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'SYNCING', __( 'SYNCING', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'DISCONNECTED', __( 'DISCONNECTED', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'TIMEOUT', __( 'TIMEOUT', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Ignored', __( 'Ignored', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'No ignored %1s', __( 'No ignored %1s', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'No ignored %1 conflicts', __( 'No ignored %1 conflicts', 'mainwp' ) );
@@ -72,7 +75,7 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'Received HTTP-code:', __( 'Received HTTP-code:', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Connection test successful.', __( 'Connection test successful.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Invalid response from the server, please try again.', __( 'Invalid response from the server, please try again.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please enter csv file for upload', __( 'Please enter csv file for upload', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Please enter csv file for upload.', __( 'Please enter csv file for upload.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please enter a name for the website', __( 'Please enter a name for the website', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please enter a valid URL for your site', __( 'Please enter a valid URL for your site', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please enter a username for the administrator', __( 'Please enter a username for the administrator', 'mainwp' ) );
@@ -96,7 +99,6 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'HTTP error - website does not exist', __( 'HTTP error - website does not exist', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'No selected Categories', __( 'No selected Categories', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or groups to add a user.', __( 'Please select websites or groups to add a user.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please enter csv file for upload.', __( 'Please enter csv file for upload.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Number of Users to Import: %1 Created users: %2 Failed: %3', __( 'Number of Users to Import: %1 Created users: %2 Failed: %3', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please enter the username.', __( 'Please enter the username.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please enter the email.', __( 'Please enter the email.', 'mainwp' ) );
@@ -143,6 +145,30 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'Checking if a backup is required for the selected upgrades...', __( 'Checking if a backup is required for the selected upgrades...', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Full backup required', __( 'Full backup required', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Checking backup settings', __( 'Checking backup settings', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Hide Shortcuts', __( 'Hide Shortcuts', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Show Shortcuts', __( 'Show Shortcuts', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Are you sure?', __( 'Are you sure?', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Bulk reconnect finished.', __( 'Bulk reconnect finished.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Note Saved', __( 'Note Saved', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'An error occured while saving your message', __( 'An error occured while saving your message', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Download from child site completed.', __( 'Download from child site completed.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Please wait while we are saving your note', __( 'Please wait while we are saving your note', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Installation Successful', __( 'Installation Successful', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Upload to %1 (%2) successful.', __( 'Upload to %1 (%2) successful.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Upload to %1 (%2) failed:', __( 'Upload to %1 (%2) failed:', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Upgrading Themes', __( 'Upgrading Themes', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Upgrading Plugins', __( 'Upgrading Plugins', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Upgrading Wordpress', __( 'Upgrading Wordpress', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'updated', __( 'updated', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Upgrading', __( 'Upgrading', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Please enter a valid name for your backup task', __( 'Please enter a valid name for your backup task', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'The backup task was added successfully', __( 'The backup task was added successfully', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Bulk test connection finished', __( 'Bulk test connection finished', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', __( 'To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please %1click here%2.', __( 'Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please %1click here%2.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'No ignored abandoned plugins', __( 'No ignored abandoned plugins', 'mainwp' ) );
+
+
 
 		return $mainwpTranslations;
 	}

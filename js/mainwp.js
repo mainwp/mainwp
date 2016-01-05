@@ -1,6 +1,8 @@
 jQuery(document).ready(function ()
 {
-    jQuery(document).tooltip({
+    // to fix conflict with bootstrap tooltip
+    jQuery.widget.bridge('uitooltip', jQuery.ui.tooltip);
+    jQuery(document).uitooltip({
         items:"span.tooltip",
         track:true,
         content:function ()
@@ -608,7 +610,7 @@ securityIssues_handle = function (response) {
             }
         }
         catch (err) {
-            result = '<i class="fa fa-exclamation-circle"></i> '+__('Undefined Error');
+            result = '<i class="fa fa-exclamation-circle"></i> '+__('Undefined Error.');
         }
     }
     if (result != '') {
@@ -1461,10 +1463,10 @@ rightnow_show = function (what, leave_text) {
     jQuery('#wp_' + what).toggle(100, 'linear', function () {
         if (!leave_text) {
             if (jQuery('#wp_' + what).css('display') == 'none') {
-                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('<i class="fa fa-eye-slash"></i> Show All') : __('<i class="fa fa-eye-slash"></i> Show')));
+                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? '<i class="fa fa-eye-slash"></i> ' + __('Show All') : '<i class="fa fa-eye-slash"></i> ' + __('Show')));
             }
             else {
-                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? __('<i class="fa fa-eye-slash"></i> Hide All') : __('<i class="fa fa-eye-slash"></i> Hide')));
+                jQuery('#mainwp_' + what + '_show').html((what == 'securityissues' ? '<i class="fa fa-eye-slash"></i> ' + __('Hide All') : '<i class="fa fa-eye-slash"></i> ' + __('Hide')));
             }
         }
     });
@@ -1474,7 +1476,7 @@ rightnow_show = function (what, leave_text) {
 rightnow_show_if_required = function (what, leave_text) {
     jQuery('#wp_' + what).show(100, function() {
         if (!leave_text) {
-            jQuery('#mainwp_' + what + '_show').html(__('<i class="fa fa-eye-slash"></i> Hide'));
+            jQuery('#mainwp_' + what + '_show').html('<i class="fa fa-eye-slash"></i> ' + __('Hide'));
         }
     });
     return false;
@@ -1946,7 +1948,7 @@ mainwp_managebackups_update = function (event) {
 
     var errors = [];
     if (jQuery('#mainwp_managebackups_add_name').val() == '') {
-        errors.push('Please enter a valid name for your backup task');
+        errors.push(__('Please enter a valid name for your backup task'));
         jQuery('#mainwp_managebackups_add_name').parent().parent().addClass('form-invalid');
     }
     else {
@@ -2036,7 +2038,7 @@ mainwp_managebackups_add = function (event) {
 
     var errors = [];
     if (jQuery('#mainwp_managebackups_add_name').val() == '') {
-        errors.push('Please enter a valid name for your backup task');
+        errors.push(__('Please enter a valid name for your backup task'));
         jQuery('#mainwp_managebackups_add_name').parent().parent().addClass('form-invalid');
     }
     else {
@@ -2342,9 +2344,21 @@ jQuery(document).on('click', '.backuptaskschedule', function() {
 jQuery(document).ready(function () {
     
     jQuery('#mainwp_managesites_add_wpurl').live('change', function (event) {
-        if (jQuery('#mainwp_managesites_add_wpname').val() == '') {
-            jQuery('#mainwp_managesites_add_wpname').val(jQuery('#mainwp_managesites_add_wpurl').val());
+        var url = jQuery('#mainwp_managesites_add_wpurl').val();
+        var protocol = 'http';
+        if (url.lastIndexOf('http://') === 0) {
+            protocol = 'http';
+            url = url.substring(7);
         }
+        else if (url.lastIndexOf('https://') === 0) {
+            protocol = 'https';
+            url = url.substring(8);
+        }
+        if (jQuery('#mainwp_managesites_add_wpname').val() == '') {
+            jQuery('#mainwp_managesites_add_wpname').val(url);
+        }
+        jQuery('#mainwp_managesites_add_wpurl').val(url);
+        jQuery('#mainwp_managesites_add_wpurl_protocol').val(protocol);
     });
     jQuery('.mainwp_site_reconnect').live('click', function(event)
     {
@@ -2383,7 +2397,7 @@ jQuery(document).ready(function () {
             {
                 if (response.httpCode)
                 {
-                    setHtml('#mainwp_managesites_add_errors', response.sitename+ ': '+__('Connection test failed.')+' '+__('URL:')+' '+response.host+' - '+__('HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' - '+__('Error message:')+' ' + response.error + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>');
+                    setHtml('#mainwp_managesites_add_errors', response.sitename+ ': '+__('Connection test failed.')+' '+__('URL:')+' '+response.host+' - '+__('HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' - ' + __('Error message:') + ' ' + response.error + ' <br/> <em>' + __('To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', '<a href="http://docs.mainwp.com/http-status-codes/" target="_blank">', '</a>', response.httpCode) + '</em>');
                 }
                 else
                 {
@@ -2394,11 +2408,11 @@ jQuery(document).ready(function () {
             {
                 if (response.httpCode == '200')
                 {
-                    setHtml('#mainwp_managesites_add_message', response.sitename+ ': '+__('Connection test successful.')+' '+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') + ' ('+__('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ')' + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>');
+                    setHtml('#mainwp_managesites_add_message', response.sitename + ': ' + __('Connection test successful.') + ' ' + __('URL:') + ' ' + response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') + ' (' + __('Received HTTP-code:') + ' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ')' + ' <br/> <em>' + __('To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', '<a href="http://docs.mainwp.com/http-status-codes/" target="_blank">', '</a>', response.httpCode) + '</em>');
                 }
                 else
                 {
-                    setHtml('#mainwp_managesites_add_errors', response.sitename+ ': '+__('Connection test failed.')+' '+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') +' '+__('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>');
+                    setHtml('#mainwp_managesites_add_errors', response.sitename+ ': '+__('Connection test failed.')+' '+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') +' '+__('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' <br/> <em>' + __('To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', '<a href="http://docs.mainwp.com/http-status-codes/" target="_blank">', '</a>', response.httpCode) + '</em>');
                 }
             }
             else
@@ -2473,7 +2487,7 @@ mainwp_managesites_add = function (event) {
      
     if (jQuery('#mainwp_managesites_chk_bulkupload').attr('checked')) {        
         if (jQuery('#mainwp_managesites_file_bulkupload').val() == '') {                             
-            setHtml('#mainwp_managesites_add_errors', __('Please enter csv file for upload'));
+            setHtml('#mainwp_managesites_add_errors', __('Please enter csv file for upload.'));
         } else {
             jQuery('#mainwp_managesites_add_form').submit();            
         }
@@ -2488,14 +2502,11 @@ mainwp_managesites_add = function (event) {
     }
     else {
         var url = jQuery('#mainwp_managesites_add_wpurl').val();
-        if (url.substr(0, 4) != 'http') {
-            url = 'http://' + url;
-        }
         if (url.substr(-1) != '/') {
             url += '/';
         }
         jQuery('#mainwp_managesites_add_wpurl').val(url);
-        if (!isUrl(jQuery('#mainwp_managesites_add_wpurl').val())) {
+        if (!isUrl(jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val())) {
             errors.push(__('Please enter a valid URL for your site'));
         }
     }
@@ -2512,10 +2523,7 @@ mainwp_managesites_add = function (event) {
         jQuery('#mainwp_managesites_add').attr('disabled', 'true'); //disable button to add..
 
         //Check if valid user & rulewp is installed?
-        var url = jQuery('#mainwp_managesites_add_wpurl').val();
-        if (url.substr(0, 4) != 'http') {
-            url = 'http://' + url;
-        }
+        var url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val();
         if (url.substr(-1) != '/') {
             url += '/';
         }
@@ -2533,10 +2541,7 @@ mainwp_managesites_add = function (event) {
         jQuery.post(ajaxurl, data, function (res_things) {
             response = res_things.response;
             response = jQuery.trim(response);
-            var url = jQuery('#mainwp_managesites_add_wpurl').val();
-            if (url.substr(0, 4) != 'http') {
-                url = 'http://' + url;
-            }
+            var url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val();
             if (url.substr(-1) != '/') {
                 url += '/';
             }
@@ -2596,7 +2601,8 @@ mainwp_managesites_add = function (event) {
 
                         //Reset fields
                         jQuery('#mainwp_managesites_add_wpname').val('');
-                        jQuery('#mainwp_managesites_add_wpurl').val('http://');
+                        jQuery('#mainwp_managesites_add_wpurl').val('');
+                        jQuery('#mainwp_managesites_add_wpurl_protocol').val('http');
                         jQuery('#mainwp_managesites_add_wpadmin').val('');
                         jQuery('#mainwp_managesites_add_uniqueId').val('');
                         jQuery('#mainwp_managesites_add_addgroups').val('');
@@ -2675,7 +2681,7 @@ mainwp_managesites_test = function (event) {
                 if (response.httpCode)
                 {
                     setHtml('#mainwp_managesites_test_errors',
-                        __('Connection test failed.')+' '+__('URL:')+' '+response.host+' - '+__('HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' - '+__('Error message:')+' ' + response.error + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>');
+                        __('Connection test failed.')+' '+__('URL:')+' '+response.host+' - '+__('HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' - '+__('Error message:')+' ' + response.error + ' <br/> <em>' + __('To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', '<a href="http://docs.mainwp.com/http-status-codes/" target="_blank">', '</a>', response.httpCode) + '</em>');
                 }
                 else
                 {
@@ -2687,12 +2693,12 @@ mainwp_managesites_test = function (event) {
             {
                 if (response.httpCode == '200')
                 {
-                    setHtml('#mainwp_managesites_test_message', __('Connection test successful') + ' ('+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') + ' - '+__('Received HTTP-code')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ')' + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>');
+                    setHtml('#mainwp_managesites_test_message', __('Connection test successful') + ' ('+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') + ' - '+__('Received HTTP-code')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ')' + ' <br/> <em>' + __('To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', '<a href="http://docs.mainwp.com/http-status-codes/" target="_blank">', '</a>', response.httpCode) + '</em>');
                 }
                 else
                 {
                     setHtml('#mainwp_managesites_test_errors',
-                        __('Connection test failed.')+' '+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') +' - '+ __('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>');
+                        __('Connection test failed.')+' '+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') +' - '+ __('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' <br/> <em>' + __('To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', '<a href="http://docs.mainwp.com/http-status-codes/" target="_blank">', '</a>', response.httpCode) + '</em>');
                 }
             }
             else
@@ -3720,15 +3726,15 @@ jQuery(document).ready(function () {
 //    });
 //};
 
-mainwp_install_set_install_button = function (what) {
-    var selected = jQuery("input[type='radio'][name='install-" + what + "']:checked");
-    if (selected.length == 0) {
-        show_error('ajax-error-zone', __('Please select ' + what + ' on the left side to install files.'));
-    } else if (divId = /^install-([^\-]*)-(.*)$/.exec(selected.attr('id'))) {
-        mainwp_install_bulk(what, divId[2]);
-    }
-    return false;
-};
+//mainwp_install_set_install_button = function (what) {
+//    var selected = jQuery("input[type='radio'][name='install-" + what + "']:checked");
+//    if (selected.length == 0) {
+//        show_error('ajax-error-zone', __('Please select %1 on the left side to install files.', what));
+//    } else if (divId = /^install-([^\-]*)-(.*)$/.exec(selected.attr('id'))) {
+//        mainwp_install_bulk(what, divId[2]);
+//    }
+//    return false;
+//};
 
 bulkInstallTotal = 0;
 bulkInstallDone = 0;
@@ -4953,7 +4959,7 @@ mainwp_notes_save = function () {
         }
         else
         {
-            jQuery('#mainwp_notes_status').html(__('An error occured while saving your message.'));
+            jQuery('#mainwp_notes_status').html(__('An error occured while saving your message') + '.');
         }
     }, 'json');
 };
@@ -5268,10 +5274,10 @@ jQuery(document).ready(function () {
                 }
             }
             else if (response.error != undefined) {
-                jQuery('#mainwp_notes_status').html(__('An error occured while saving your message: ') + response.error);
+                jQuery('#mainwp_notes_status').html(__('An error occured while saving your message') + ': ' + response.error);
             }
             else {
-                jQuery('#mainwp_notes_status').html(__('An error occured while saving your message.'));
+                jQuery('#mainwp_notes_status').html(__('An error occured while saving your message') + '.');
             }
         } }(slug), 'json');
         return false;
@@ -5312,10 +5318,10 @@ jQuery(document).ready(function () {
                 }
             }
             else if (response.error != undefined) {
-                jQuery('#mainwp_notes_status').html(__('An error occured while saving your message: ') + response.error);
+                jQuery('#mainwp_notes_status').html(__('An error occured while saving your message') + ': ' + response.error);
             }
             else {
-                jQuery('#mainwp_notes_status').html(__('An error occured while saving your message.'));
+                jQuery('#mainwp_notes_status').html(__('An error occured while saving your message')) + '.';
             }
         } }(slug), 'json');
         return false;
@@ -6902,7 +6908,7 @@ mainwp_managesites_bulk_test_connection_specific = function(pCheckedBox) {
         {
             if (response.httpCode)
             {
-                err = response.sitename+ ': '+__('Connection test failed.')+' '+__('URL:')+' '+response.host+' - '+__('HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' - '+__('Error message:')+' ' + response.error + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>';
+                err = response.sitename+ ': '+__('Connection test failed.')+' '+__('URL:')+' '+response.host+' - '+__('HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' - '+__('Error message:')+' ' + response.error + ' <br/> <em>' + __('To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', '<a href="http://docs.mainwp.com/http-status-codes/" target="_blank">', '</a>', response.httpCode) + '</em>';
             }
             else
             {
@@ -6913,11 +6919,11 @@ mainwp_managesites_bulk_test_connection_specific = function(pCheckedBox) {
         {
             if (response.httpCode == '200')
             {
-                msg = response.sitename+ ': '+__('Connection test successful.')+' '+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') + ' ('+__('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ')' + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>';
+                msg = response.sitename+ ': '+__('Connection test successful.')+' '+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') + ' ('+__('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ')' + ' <br/> <em>' + __('To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', '<a href="http://docs.mainwp.com/http-status-codes/" target="_blank">', '</a>', response.httpCode) + '</em>';
             }
             else
             {
-                err = response.sitename+ ': '+__('Connection test failed.')+' '+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') +' '+__('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' <br/> <em>To find out more about what your HTTP status code means please <a href="http://docs.mainwp.com/http-status-codes/" target="_blank">click here</a> to locate your number (' + response.httpCode + ')</em>';
+                err = response.sitename+ ': '+__('Connection test failed.')+' '+__('URL:')+' '+response.host + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') +' '+__('Received HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' <br/> <em>' + __('To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', '<a href="http://docs.mainwp.com/http-status-codes/" target="_blank">', '</a>', response.httpCode) + '</em>';
             }
         }
         else
@@ -7165,7 +7171,7 @@ mainwp_managesites_bulk_reconnect_specific = function(pCheckedBox) {
         var msg = '', error = ''; 
         if (response.substr(0, 5) == 'ERROR') {           
             if (response.length == 5) {
-                error = 'Undefined Error';
+                error = __('Undefined Error.');
             }
             else {
                 error = 'Error - ' + response.substr(6);

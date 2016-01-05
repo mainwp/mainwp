@@ -11,7 +11,26 @@ class MainWP_User {
 	public static $subPages;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the User page header via the 'mainwp-pageheader-user' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-user
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-user'
+         * @link http://codex.mainwp.com/#mainwp-getsubpages-user
+		 *
+		 * @see \MainWP_User::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-user', array( MainWP_User::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the User page footer via the 'mainwp-pagefooter-user' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-user
+         *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-user'
+         * @link http://codex.mainwp.com/#mainwp-getsubpages-user
+		 *
+		 * @see \MainWP_User::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-user', array( MainWP_User::getClassName(), 'renderFooter' ) );
 	}
 
@@ -29,6 +48,10 @@ class MainWP_User {
 			'QSGManageUsers',
 		) );
 
+		/**
+		 * This hook allows you to add extra sub pages to the User page via the 'mainwp-getsubpages-user' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-user
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-user', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
@@ -64,6 +87,9 @@ class MainWP_User {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		?>
 		<div class="wrap">
@@ -107,6 +133,9 @@ class MainWP_User {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderFooter( $shownPage ) {
 		?>
 		</div>
@@ -116,7 +145,7 @@ class MainWP_User {
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
-			mainwp_do_not_have_permissions( 'manage users' );
+			mainwp_do_not_have_permissions( __( 'manage users', 'mainwp' ) );
 
 			return;
 		}
@@ -202,9 +231,9 @@ class MainWP_User {
                                     <input type="password" name="pass1" id="pass1" class="regular-text" autocomplete="off" data-reveal="1" data-pw="" aria-describedby="pass-strength-result"/>
                                 </span>
 										</div>
-										<button type="button" class="button button-secondary wp-hide-pw hide-if-no-js" data-toggle="0" aria-label="<?php esc_attr_e( 'Hide password' ); ?>" style="margin-bottom: 5px !important;">
+										<button type="button" class="button button-secondary wp-hide-pw hide-if-no-js" data-toggle="0" aria-label="<?php esc_attr_e( 'Hide password', 'mainwp' ); ?>" style="margin-bottom: 5px !important;">
 											<span class="dashicons dashicons-hidden"></span>
-											<span class="text"><?php _e( 'Hide' ); ?></span>
+											<span class="text"><?php _e( 'Hide', 'mainwp' ); ?></span>
 										</button>
 										<div style="display:none; width: 225px !important;" id="pass-strength-result" aria-live="polite"></div>
 									</div>
@@ -639,10 +668,10 @@ class MainWP_User {
 		}
 
 		if ( ( $pAction == 'delete' ) && ( $website->adminname == $userName ) ) {
-			die( json_encode( array( 'error' => __( 'This user is used for our secure link, it can not be deleted.' ) ) ) );
+			die( json_encode( array( 'error' => __( 'This user is used for our secure link, it can not be deleted.', 'mainwp' ) ) ) );
 		}
 		if ( ( $pAction == 'changeRole' ) && ( $website->adminname == $userName ) ) {
-			die( json_encode( array( 'error' => __( 'This user is used for our secure link, you can not change the role.' ) ) ) );
+			die( json_encode( array( 'error' => __( 'This user is used for our secure link, you can not change the role.', 'mainwp' ) ) ) );
 		}
 
 		try {
@@ -767,20 +796,19 @@ class MainWP_User {
 										<th scope="row">
 											<label for="pass1">
 												<?php _e( 'New Password', 'mainwp' ); ?>
-												<span class="description hide-if-js"><?php _e( '(required)' ); ?></span>
+												<span class="description hide-if-js"><?php _e( '(required)', 'mainwp' ); ?></span>
 											</label>
 										</th>
 										<td>
 											<input class="hidden" value=" "/><!-- #24364 workaround -->
-											<!--                   			<button type="button" class="button button-secondary wp-generate-pw hide-if-no-js">--><?php //_e( 'Show password' ); ?><!--</button>-->
 											<div class="wp-pwd123">
 												<?php $initial_password = wp_generate_password( 24 ); ?>
 												<span class="password-input-wrapper">
                                         <input type="password" name="pass1" id="pass1" class="regular-text" autocomplete="off" data-reveal="1" data-pw="<?php echo esc_attr( $initial_password ); ?>" aria-describedby="pass-strength-result"/>
                                     </span>
-												<button type="button" class="button button-secondary wp-hide-pw hide-if-no-js" data-toggle="0" aria-label="<?php esc_attr_e( 'Hide password' ); ?>">
+												<button type="button" class="button button-secondary wp-hide-pw hide-if-no-js" data-toggle="0" aria-label="<?php esc_attr_e( 'Hide password', 'mainwp' ); ?>">
 													<span class="dashicons dashicons-hidden"></span>
-													<span class="text"><?php _e( 'Hide' ); ?></span>
+													<span class="text"><?php _e( 'Hide', 'mainwp' ); ?></span>
 												</button>
 												<!--                   				<button type="button" class="button button-secondary wp-cancel-pw hide-if-no-js" data-toggle="0" aria-label="--><?php //esc_attr_e( 'Cancel password change' ); ?><!--">-->
 												<!--                   					<span class="text">--><?php //_e( 'Cancel' ); ?><!--</span>-->
@@ -790,8 +818,8 @@ class MainWP_User {
 										</td>
 									</tr>
 									<tr class="form-field form-required user-pass2-wrap hide-if-js">
-										<td scope="row"><label for="pass2"><?php _e( 'Repeat Password' ); ?>
-												<span class="description"><?php _e( '(required)' ); ?></span></label>
+										<td scope="row"><label for="pass2"><?php _e( 'Repeat Password', 'mainwp' ); ?>
+												<span class="description"><?php _e( '(required)', 'mainwp' ); ?></span></label>
 										</td>
 										<td>
 											<input name="pass2" type="password" id="pass2" value="<?php echo esc_attr( $initial_password ); ?>" autocomplete="off"/>
@@ -1111,13 +1139,13 @@ class MainWP_User {
 						<?php
 
 					} else {
-						$errors[] = __( 'Data is not valid. <br />', 'mainwp' );
+						$errors[] = __( 'Data is not valid.', 'mainwp' ) .'<br />';
 					}
 				} else {
-					$errors[] = __( 'Upload error. <br />','mainwp' );
+					$errors[] = __( 'Upload error.','mainwp' ) . '<br />';
 				}
 			} else {
-				$errors[] = __( 'Upload error. <br />','mainwp' );
+				$errors[] = __( 'Upload error.','mainwp' ) . '<br />';
 			}
 
 			if ( count( $errors ) > 0 ) {
@@ -1184,7 +1212,7 @@ class MainWP_User {
 							'nosslkey',
 						) );
 					} else {
-						$not_valid[] = "Error - The website doesn't exist in the Network. " . $url;;
+						$not_valid[] = __( "Error - The website doesn't exist in the Network.", 'mainwp' ) . " " . $url;;
 						$error_sites .= $url . ';';
 					}
 				}

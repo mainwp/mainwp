@@ -82,7 +82,7 @@ class MainWP_Server_Information {
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
-			mainwp_do_not_have_permissions( 'server information' );
+			mainwp_do_not_have_permissions( __( 'server information', 'mainwp' ) );
 
 			return;
 		}
@@ -171,7 +171,7 @@ class MainWP_Server_Information {
 						<a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWP_Utility::renderToolTip( 'MainWP requires the FS_METHOD to be set to direct' ); ?></a>
 					</td>
 					<td><?php _e( 'FileSystem Method', 'mainwp' ); ?></td>
-					<td><?php echo '= ' . __( 'direct', 'mainwp' ); ?></td>
+					<td><?php echo '= ' . 'direct'; ?></td>
 					<td><?php echo self::getFileSystemMethod(); ?></td>
 					<td><?php echo self::getFileSystemMethodCheck(); ?></td>
 				</tr><?php
@@ -395,20 +395,20 @@ class MainWP_Server_Information {
 		</div>
         <div id="mainwp-cron-schedules-section">
 			<h2><i class="fa fa-server"></i>
-				<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Cron Schedules' ); ?>
+				<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Cron Schedules', 'mainwp' ); ?>
 			</h2>
 			<?php echo $serverInformation['cron']; ?>
 		</div>
 			<?php if ( isset( $serverInformation['wpconfig'] ) ) { ?>
         	<div id="mainwp-wp-config-section">
 				<h2><i class="fa fa-server"></i>
-					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'WP-Config File' ); ?>
+					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'WP-Config File', 'mainwp' ); ?>
 				</h2>
 				<?php echo $serverInformation['wpconfig']; ?>
 			</div>
 			<div id="mainwp-error-log-section">
 				<h2><i class="fa fa-server"></i>
-					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Error Log' ); ?></h2>
+					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Error Log', 'mainwp' ); ?></h2>
 				<?php echo $serverInformation['error']; ?>
 			</div>
 			<?php } ?>

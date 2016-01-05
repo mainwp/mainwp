@@ -7,7 +7,7 @@ class MainWP_Child_Scan {
 
 	public static function initMenu() {
 
-		add_submenu_page( 'mainwp_tab', __( 'MainWP Child Scan','mainwp' ), '<div class="mainwp-hidden">' .  __( 'MainWPC Child Scan','mainwp' ) . '</div>', 'read', 'MainWP_Child_Scan', array( MainWP_Child_Scan::getClassName(), 'render' ) );
+		add_submenu_page( 'mainwp_tab', __( 'MainWP Child Scan','mainwp' ), '<div class="mainwp-hidden">' .  __( 'MainWP Child Scan','mainwp' ) . '</div>', 'read', 'MainWP_Child_Scan', array( MainWP_Child_Scan::getClassName(), 'render' ) );
 	}
 
 	public static function renderHeader( $shownPage ) {

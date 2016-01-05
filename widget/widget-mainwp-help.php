@@ -6,7 +6,7 @@ class MainWP_Help {
 	}
 
 	public static function getName() {
-		return __( '<i class="fa fa-question-circle"></i> Help', 'mainwp' );
+		return '<i class="fa fa-question-circle"></i> ' . __( 'Help', 'mainwp' );
 	}
 
 	public static function render() {
@@ -14,7 +14,7 @@ class MainWP_Help {
 		<div>
 			<div id="mainwp-docs-search" class="mainwp-row-top">
 				<form name="advanced-search-form" method="get" action="//docs.mainwp.com/" class="auto-complete" autocomplete="off" target="_blank">
-					<input type="text" style="width: 75%;" class="input-text input-txt" name="s" id="s" value="" placeholder="<?php _e( 'Search the MainWP Docs', 'mainwp' ); ?>"/>
+					<input type="text" style="width: 75%;" class="input-text input-txt" name="s" id="s" value="" placeholder="<?php esc_attr_e( 'Search the MainWP Docs', 'mainwp' ); ?>"/>
 					<button type="submit" class="button button-primary mainwp-upgrade-button" style="padding-left: 3em !important; padding-right: 3em !important;"><?php _e( 'Search', 'mainwp' ); ?></button>
 				</form>
 			</div>

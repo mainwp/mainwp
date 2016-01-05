@@ -21,7 +21,7 @@ class MainWP_Offline_Checks {
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_offline_checks' ) ) {
-			mainwp_do_not_have_permissions( 'manage offline checks' );
+			mainwp_do_not_have_permissions( __( 'manage offline checks', 'mainwp' ) );
 
 			return;
 		}

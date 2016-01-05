@@ -356,7 +356,7 @@ class MainWP_Api_Manager {
 			if ( ! defined( 'WP_ACCESSIBLE_HOSTS' ) || stristr( WP_ACCESSIBLE_HOSTS, $host ) === false ) {
 				?>
 				<div class="error">
-					<p><?php printf( esc_html__( '<b>Warning!</b> You\'re blocking external requests which means you won\'t be able to get some MainWP Extensions updates. Please add %s to %s.', 'mainwp' ), '<strong>' . esc_html( $host ) . '</strong>', '<code>WP_ACCESSIBLE_HOSTS</code>' ); ?></p>
+					<p><?php printf( __( '<b>Warning!</b> You\'re blocking external requests which means you won\'t be able to get some MainWP Extensions updates. Please add %s to %s.', 'mainwp' ), '<strong>' . esc_html( $host ) . '</strong>', '<code>WP_ACCESSIBLE_HOSTS</code>' ); ?></p>
 				</div>
 				<?php
 			}

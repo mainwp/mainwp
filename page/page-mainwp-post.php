@@ -11,7 +11,26 @@ class MainWP_Post {
 	public static $subPages;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the Post page header via the 'mainwp-pageheader-post' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-post
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-post'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
+		 *
+		 * @see \MainWP_Post::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-post', array( MainWP_Post::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the Post page footer via the 'mainwp-pagefooter-post' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-post
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-post'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
+		 *
+		 * @see \MainWP_Post::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-post', array( MainWP_Post::getClassName(), 'renderFooter' ) );
 	}
 
@@ -20,11 +39,11 @@ class MainWP_Post {
 			MainWP_Post::getClassName(),
 			'render',
 		) );
-		add_submenu_page( 'mainwp_tab', 'Posts', '<div class="mainwp-hidden">Add New</div>', 'read', 'PostBulkAdd', array(
+		add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ). '</div>', 'read', 'PostBulkAdd', array(
 			MainWP_Post::getClassName(),
 			'renderBulkAdd',
 		) );
-		add_submenu_page( 'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">Posts</div>', 'read', 'PostingBulkPost', array(
+		add_submenu_page( 'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . __( 'Posts', 'mainwp' ) . '</div>', 'read', 'PostingBulkPost', array(
 			MainWP_Post::getClassName(),
 			'posting',
 		) ); //removed from menu afterwards
@@ -33,6 +52,10 @@ class MainWP_Post {
 			'QSGManagePosts',
 		) );
 
+		/**
+		 * This hook allows you to add extra sub pages to the Post page via the 'mainwp-getsubpages-post' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-post', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
@@ -68,6 +91,9 @@ class MainWP_Post {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		?>
 		<div class="wrap">
@@ -116,6 +142,9 @@ class MainWP_Post {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderFooter( $shownPage ) {
 		?>
 		</div>
@@ -125,7 +154,7 @@ class MainWP_Post {
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
-			mainwp_do_not_have_permissions( 'manage posts' );
+			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
 
 			return;
 		}
@@ -557,7 +586,7 @@ class MainWP_Post {
 
 	public static function renderBulkAdd() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
-			mainwp_do_not_have_permissions( 'manage posts' );
+			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
 
 			return;
 		}
@@ -899,7 +928,7 @@ class MainWP_Post {
 					}
 				}
 				if ( ! empty( $output->errors[ $siteid ] ) ) {
-					$ret .= '<p> Error - ' . $output->errors[ $siteid ] . '</p>';
+					$ret .= '<p> ' . __( 'Error - ', 'mainwp' ) . $output->errors[ $siteid ] . '</p>';
 				} else {
 					if ( count( $output->cats[ $siteid ] ) > 0 ) {
 						foreach ( $output->cats[ $siteid ] as $cat ) {
@@ -918,7 +947,7 @@ class MainWP_Post {
 				}
 			}
 		} else {
-			$ret .= '<p>Error - no site</p>';
+			$ret .= '<p>' . __( 'Error - ', 'mainwp' ) . ' no site</p>';
 		}
 		echo $ret;
 	}

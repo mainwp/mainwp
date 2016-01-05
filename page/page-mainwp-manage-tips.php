@@ -71,11 +71,11 @@ class MainWP_Manage_Tips {
 					</tbody>
 				</table>
 				<p class="submit"><input type="button" name="mainwp_managetips_add" id="mainwp_managetips_add"
-						class="button-primary" value="Add Tip"/> <input type="submit"
+						class="button-primary" value="<?php esc_attr_e( 'Add Tip', 'mainwp' ); ?>"/> <input type="submit"
 						name="mainwp_managetips_save"
 						id="mainwp_managetips_save"
 						class="button-primary"
-						value="Save"/></p>
+						value="<?php esc_attr_e( 'Save' ); ?>"/></p>
 			</form>
 		</div>
 		<?php
@@ -103,10 +103,10 @@ class MainWP_Manage_Tips {
 				?>
 			</div>
 			<form>
-				<input type="button" class="button cont" id="mainwp_tips_next" value="Next tip"/>
-				<input type="button" class="button cont" id="mainwp_tips_close" value="Close" class="button cont2"/>
-				<input type="checkbox" id="mainwp_tips_show" name="mainwp_tips_show" value="1"> Do not show tips anymore
-				<input type="hidden" id="mainwp_tips_current" value="<?php echo $currTip; ?>">
+				<input type="button" class="button cont" id="mainwp_tips_next" value="<?php esc_attr_e( 'Next tip', 'mainwp' ); ?>"/>
+				<input type="button" class="button cont" id="mainwp_tips_close" value="<?php esc_attr_e( 'Close' ); ?>" class="button cont2"/>
+				<input type="checkbox" id="mainwp_tips_show" name="mainwp_tips_show" value="1"> <?php _e( 'Do not show tips anymore', 'mainwp' ); ?>
+				<input type="hidden" id="mainwp_tips_current" value="<?php echo esc_attr($currTip); ?>">
 				<input type="hidden" id="mainwp_tips_max" value="<?php echo count( $tips ); ?>">
 			</form>
 		</div>

@@ -127,9 +127,9 @@ class MainWP_Hooks {
 
 			$error = '';
 			if ( $type == 'plugin' && ! mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) {
-				$error = mainwp_do_not_have_permissions( 'Update Plugins', false );
+				$error = mainwp_do_not_have_permissions( __( 'update plugins', 'mainwp' ), false );
 			} else if ( $type == 'theme' && ! mainwp_current_user_can( 'dashboard', 'update_themes' ) ) {
-				$error = mainwp_do_not_have_permissions( 'Update Themes', false );
+				$error = mainwp_do_not_have_permissions( __( 'update themes', 'mainwp' ), false );
 			}
 
 			if ( ! empty( $error ) ) {

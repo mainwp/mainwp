@@ -120,6 +120,10 @@ class MainWP_Main {
 			'render'
 		), $page, 'normal', 'core');
 
+		/**
+		 * This hook allows you to add extra metaboxes to the dashboard via the 'mainwp-getmetaboxes' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getmetaboxes
+		 */
 		$extMetaBoxs = MainWP_System::Instance()->apply_filter( 'mainwp-getmetaboxes', array() );
 		$extMetaBoxs = apply_filters( 'mainwp-getmetaboxs', $extMetaBoxs );
 		foreach ( $extMetaBoxs as $metaBox ) {
@@ -137,7 +141,7 @@ class MainWP_Main {
 
 	function on_show_page() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
-			mainwp_do_not_have_permissions( 'global dashboard' );
+			mainwp_do_not_have_permissions( __( 'global dashboard', 'mainwp' ) );
 
 			return;
 		}
@@ -185,8 +189,8 @@ class MainWP_Main {
 						<td>
 							<div id="mainwp-welocme-bar-top">
                     <span style="float:right;">
-                    <a style="font-size: 18px;" class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWP_Right_Now::renderLastUpdate(); ?>"><?php _e( '<i class="fa fa-refresh"></i> Sync Data with Child Sites', 'mainwp' ); ?></a>
-                    <a style="font-size: 18px;" class="button-hero button-primary button" target="_blank" href="https://extensions.mainwp.com"><?php _e( '<i class="fa fa-cart-plus"></i> Get New Extensions', 'mainwp' ); ?></a>
+                    <a style="font-size: 18px;" class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWP_Right_Now::renderLastUpdate(); ?>"><i class="fa fa-refresh"></i> <?php _e( 'Sync Data with Child Sites', 'mainwp' ); ?></a>
+                    <a style="font-size: 18px;" class="button-hero button-primary button" target="_blank" href="https://extensions.mainwp.com"><i class="fa fa-cart-plus"></i> <?php _e( 'Get New Extensions', 'mainwp' ); ?></a>
                     </span>
 								<?php
 								$current_wp_id = MainWP_Utility::get_current_wpid();

@@ -147,7 +147,7 @@ class MainWP_Utility {
 					$data        = curl_multi_getcontent( $info['handle'] );
 					$err         = curl_error( $info['handle'] );
 					$http_status = curl_getinfo( $info['handle'], CURLINFO_HTTP_CODE );
-					$errno         = curl_errno( $info['handle'] );
+					$errno       = curl_errno( $info['handle'] );
 					$realurl     = curl_getinfo( $info['handle'], CURLINFO_EFFECTIVE_URL );
 
 					curl_multi_remove_handle( $mh, $info['handle'] );
@@ -160,7 +160,7 @@ class MainWP_Utility {
 			$data        = curl_exec( $ch );
 			$err         = curl_error( $ch );
 			$http_status = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
-			$errno         = curl_errno( $ch );
+			$errno       = curl_errno( $ch );
 			$realurl     = curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
 			curl_close( $ch );
 		}
@@ -733,7 +733,7 @@ class MainWP_Utility {
 			return $data;
 		}
 	}
-
+	                
 	static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null, $sslVersion = 0 ) {
 		$start = time();
 
@@ -1033,11 +1033,11 @@ class MainWP_Utility {
 		}
 
 		if ( ! @file_exists( @dirname( $file ) ) ) {
-			throw new MainWP_Exception( __( 'Could not create directory to download the file.' ) );
+			throw new MainWP_Exception( __( 'Could not create directory to download the file.', 'mainwp' ) );
 		}
 
 		if ( ! @is_writable( @dirname( $file ) ) ) {
-			throw new MainWP_Exception( __( 'MainWP upload directory is not writable.' ) );
+			throw new MainWP_Exception( __( 'MainWP upload directory is not writable.', 'mainwp' ) );
 		}
 
 		$fp    = fopen( $file, 'a' );
@@ -1855,8 +1855,8 @@ class MainWP_Utility {
 		return $text;
 	}
 
-	public static function removeHttpPrefix( $pUrl ) {
-		return str_replace( array( 'http:', 'https:' ), array( '', '' ), $pUrl );
+	public static function removeHttpPrefix( $pUrl, $pTrimSlashes = false ) {
+		return str_replace( array( 'http:' . ( $pTrimSlashes ? '//' : '' ), 'https:' . ( $pTrimSlashes ? '//' : '' ) ), array( '', '' ), $pUrl );
 	}
 
 	public static function isArchive( $pFileName, $pPrefix = '', $pSuffix = '' ) {

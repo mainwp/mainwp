@@ -11,7 +11,26 @@ class MainWP_Themes {
 	public static $subPages;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the Themes page header via the 'mainwp-pageheader-themes' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-themes
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-themes'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-themes
+		 *
+		 * @see \MainWP_Themes::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-themes', array( MainWP_Themes::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the Themes page footer via the 'mainwp-pagefooter-themes' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-themes
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-themes'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-themes
+		 *
+		 * @see \MainWP_Themes::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-themes', array( MainWP_Themes::getClassName(), 'renderFooter' ) );
 	}
 
@@ -21,31 +40,35 @@ class MainWP_Themes {
 			MainWP_Themes::getClassName(),
 			'render',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">Install</div>', 'read', 'ThemesInstall', array(
+		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>', 'read', 'ThemesInstall', array(
 			MainWP_Themes::getClassName(),
 			'renderInstall',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">Auto Updates</div>', 'read', 'ThemesAutoUpdate', array(
+		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'ThemesAutoUpdate', array(
 			MainWP_Themes::getClassName(),
 			'renderAutoUpdate',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">Ignored Updates</div>', 'read', 'ThemesIgnore', array(
+		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'ThemesIgnore', array(
 			MainWP_Themes::getClassName(),
 			'renderIgnore',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">Ignored Conflicts</div>', 'read', 'ThemesIgnoredConflicts', array(
+		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Conflicts', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredConflicts', array(
 			MainWP_Themes::getClassName(),
 			'renderIgnoredConflicts',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">Ignored Abandoned</div>', 'read', 'ThemesIgnoredAbandoned', array(
+		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredAbandoned', array(
 			MainWP_Themes::getClassName(),
 			'renderIgnoredAbandoned',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes Help', 'mainwp' ), '<div class="mainwp-hidden">Themes Help</div>', 'read', 'ThemesHelp', array(
+		add_submenu_page( 'mainwp_tab', __( 'Themes Help', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Themes Help', 'mainwp' ) . '</div>', 'read', 'ThemesHelp', array(
 			MainWP_Themes::getClassName(),
 			'QSGManageThemes',
 		) );
 
+		/**
+		 * This hook allows you to add extra sub pages to the Themes page via the 'mainwp-getsubpages-themes' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-themes
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-themes', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
@@ -83,6 +106,9 @@ class MainWP_Themes {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		?>
 		<div class="wrap">
@@ -146,6 +172,9 @@ class MainWP_Themes {
 		<?php
 	}
 
+		/**
+		 * @param string $shownPage The page slug shown at this moment
+		 */
 	public static function renderFooter( $shownPage ) {
 		?>
 		</div>
@@ -881,7 +910,7 @@ class MainWP_Themes {
 
 	public static function renderThemesTable($favoritesCallback = '') {
 		if (!mainwp_current_user_can("dashboard", "install_themes")) {
-			mainwp_do_not_have_permissions("install themes");
+			mainwp_do_not_have_permissions( __( 'install themes', 'mainwp' ) );
 			return;
 		}
 
@@ -905,13 +934,13 @@ class MainWP_Themes {
 					<li><a href="#" data-sort="popular"><?php _ex( 'Popular', 'themes' ); ?></a></li>
 					<li><a href="#" data-sort="new"><?php _ex( 'Latest', 'themes' ); ?></a></li>
 				</ul>
-				<a class="drawer-toggle" href="#"><?php _e( 'Feature Filter' ); ?></a>
+				<a class="drawer-toggle" href="#"><?php _e( 'Feature Filter', 'mainwp' ); ?></a>
 
 				<div class="search-form"></div>
 				<div class="filter-drawer">
 					<div class="buttons">
-						<a class="apply-filters button button-secondary" href="#"><?php _e( 'Apply Filters' ); ?><span></span></a>
-						<a class="clear-filters button button-secondary" href="#"><?php _e( 'Clear' ); ?></a>
+						<a class="apply-filters button button-secondary" href="#"><?php _e( 'Apply Filters', 'mainwp' ); ?><span></span></a>
+						<a class="clear-filters button button-secondary" href="#"><?php _e( 'Clear', 'mainwp' ); ?></a>
 					</div>
 					<?php
 					$feature_list = get_theme_feature_list();
@@ -930,9 +959,9 @@ class MainWP_Themes {
 					}
 					?>
 					<div class="filtered-by">
-						<span><?php _e( 'Filtering by:' ); ?></span>
+						<span><?php _e( 'Filtering by:', 'mainwp' ); ?></span>
 						<div class="tags"></div>
-						<a href="#"><?php _e( 'Edit' ); ?></a>
+						<a href="#"><?php _e( 'Edit', 'mainwp' ); ?></a>
 					</div>
 				</div>
 			</div>
@@ -954,20 +983,20 @@ class MainWP_Themes {
 					<div class="theme-screenshot blank"></div>
 					<# } #>
 						<span class="more-details"><?php _ex( 'Details &amp; Preview', 'theme' ); ?></span>
-						<div class="theme-author"><?php printf( __( 'By %s' ), '{{ data.author }}' ); ?></div>
+						<div class="theme-author"><?php printf( __( 'By %s', 'mainwp' ), '{{ data.author }}' ); ?></div>
 						<h3 class="theme-name">{{ data.name }}</h3>
 
 						<!--<div class="theme-actions">-->
-						<!--<a class="button button-secondary preview install-theme-preview" href="#"><?php esc_html_e( 'Preview' ); ?></a>-->
+						<!--<a class="button button-secondary preview install-theme-preview" href="#"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>-->
 						<!--</div>-->
 
 						<div class="mainwp-theme-lnks" style="">
-							<label class="lbl-install-theme" style="font-size: 16px;"><input name="install-theme" type="radio" id="install-theme-{{data.slug}}" title="Install {{data.name}}"><?php esc_html_e( 'Install this Theme' ); ?></label>
+							<label class="lbl-install-theme" style="font-size: 16px;"><input name="install-theme" type="radio" id="install-theme-{{data.slug}}" title="Install {{data.name}}"><?php esc_html_e( 'Install this Theme', 'mainwp' ); ?></label>
 							<?php
 							if (!empty($favoritesCallback)) {
 								?>
 								<div class="favorites-add-link"><a style="font-size: 16px;" class="add-favorites" href="#" id="add-favorite-theme-{{data.slug}}"
-																   title="{{data.name}} {{data.version}}"><?php  _e( 'Add To Favorites' ); ?></a></div>
+																   title="{{data.name}} {{data.version}}"><?php  _e( 'Add To Favorites', 'mainwp' ); ?></a></div>
 								<?php
 							}
 							?>
@@ -981,19 +1010,19 @@ class MainWP_Themes {
 		<script id="tmpl-theme-preview" type="text/template">
 			<div class="wp-full-overlay-sidebar">
 				<div class="wp-full-overlay-header">
-					<a href="#" class="close-full-overlay"><span class="screen-reader-text"><?php _e( 'Close' ); ?></span></a>
+					<a href="#" class="close-full-overlay"><span class="screen-reader-text"><?php _e( 'Close', 'mainwp' ); ?></span></a>
 					<a href="#" class="previous-theme"><span class="screen-reader-text"><?php _ex( 'Previous', 'Button label for a theme' ); ?></span></a>
 					<a href="#" class="next-theme"><span class="screen-reader-text"><?php _ex( 'Next', 'Button label for a theme' ); ?></span></a>
 					<# if ( data.installed ) { #>
 						<a href="#" class="button button-primary theme-install disabled"><?php _ex( 'Installed', 'theme' ); ?></a>
 						<# } else { #>
-							<a href="{{ data.install_url }}" class="button button-primary theme-install"><?php _e( 'Install' ); ?></a>
+							<a href="{{ data.install_url }}" class="button button-primary theme-install"><?php _e( 'Install', 'mainwp' ); ?></a>
 							<# } #>
 				</div>
 				<div class="wp-full-overlay-sidebar-content">
 					<div class="install-theme-info">
 						<h3 class="theme-name">{{ data.name }}</h3>
-						<span class="theme-by"><?php printf( __( 'By %s' ), '{{ data.author }}' ); ?></span>
+						<span class="theme-by"><?php printf( __( 'By %s', 'mainwp' ), '{{ data.author }}' ); ?></span>
 
 						<img class="theme-screenshot" src="{{ data.screenshot_url }}" alt="" />
 
@@ -1008,20 +1037,20 @@ class MainWP_Themes {
 										<small class="ratings"><?php _e( 'This theme has not been rated yet.' ); ?></small>
 									</div>
 									<# } #>
-										<div class="theme-version"><?php printf( __( 'Version: %s' ), '{{ data.version }}' ); ?></div>
+										<div class="theme-version"><?php printf( __( 'Version: %s', 'mainwp' ), '{{ data.version }}' ); ?></div>
 										<div class="theme-description">{{{ data.description }}}</div>
 						</div>
 					</div>
 				</div>
 				<div class="wp-full-overlay-footer">
-					<button type="button" class="collapse-sidebar button-secondary" aria-expanded="true" aria-label="<?php esc_attr_e( 'Collapse Sidebar' ); ?>">
+					<button type="button" class="collapse-sidebar button-secondary" aria-expanded="true" aria-label="<?php esc_attr_e( 'Collapse Sidebar', 'mainwp' ); ?>">
 						<span class="collapse-sidebar-arrow"></span>
-						<span class="collapse-sidebar-label"><?php _e( 'Collapse' ); ?></span>
+						<span class="collapse-sidebar-label"><?php _e( 'Collapse', 'mainwp' ); ?></span>
 					</button>
 				</div>
 			</div>
 			<div class="wp-full-overlay-main">
-				<iframe src="{{ data.preview_url }}" title="<?php esc_attr_e( 'Preview' ); ?>" />
+				<iframe src="{{ data.preview_url }}" title="<?php esc_attr_e( 'Preview', 'mainwp' ); ?>" />
 			</div>
 		</script>
 		<?php MainWP_UI::select_sites_box( __("Step 2: Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right' ); ?>
@@ -1033,7 +1062,7 @@ class MainWP_Themes {
 				</div>
 			</div>
 
-			<input type="button" value="<?php _e("Complete Installation"); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_theme_bulk_install_btn" name="bulk-install">
+			<input type="button" value="<?php _e( "Complete Installation", 'mainwp' ); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_theme_bulk_install_btn" name="bulk-install">
 		</div>
 		<div style="clear: both;"></div>
 
@@ -1052,7 +1081,7 @@ class MainWP_Themes {
 		}
 		self::renderHeader( 'AutoUpdate' );
 		if ( ! mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
-			mainwp_do_not_have_permissions( 'Trust/Untrust updates' );
+			mainwp_do_not_have_permissions( __( 'trust/untrust updates', 'mainwp' ) );
 
 			return;
 		} else {

@@ -315,7 +315,7 @@ class MainWP_Setup_Wizard {
 		<form method="post" class="form-table">			
 			<p><?php _e( 'Due to bug with PHP on Windows please enter your OpenSSL Library location.<br /> Usually it is here:', 'mainwp' ); ?></p>
 			<p><input type="text" class="" style="width: 100%" name="mwp_setup_openssl_lib_location" value="<?php echo esc_html($openssl_loc); ?>"></p>
-			<em><?php _e( 'In most cases c:\\\\xampplite\\\\appache\\\\conf\\\\openssl.conf should be your path if using a normal install.<br />If not your will need to change that to match your specific path.' ); ?></em>
+			<em><?php echo sprintf( __( 'In most cases %s should be your path if using a normal install.%sIf not your will need to change that to match your specific path.', 'mainwp' ), 'c:\\\\xampplite\\\\appache\\\\conf\\\\openssl.conf', '<br />' ); ?></em>
 			<br /><br />
 			<p class="mwp-setup-actions step">
 				<input type="submit" class="button-primary button button-large" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
@@ -527,7 +527,7 @@ class MainWP_Setup_Wizard {
 				<tr>
 					<th scope="row"><?php _e('Enter Your Email Address','mainwp'); ?></th>
 					<td>
-						<input type="email"  class="" name="mwp_setup_options_email" size="35" value="<?php echo $user_email; ?>"/>
+						<input type="email"  class="" name="mwp_setup_options_email" size="35" value="<?php echo esc_attr($user_email); ?>"/>
 					</td>
 				</tr>
 			</table>
@@ -693,7 +693,7 @@ class MainWP_Setup_Wizard {
 		}
 		if (!empty($error)) {
 			delete_option('mwp_setup_error_purchase_extension');
-			echo '<div class="mainwp_info-box-red">' . __("Error:") . " " .  $error . '</div>';
+			echo '<div class="mainwp_info-box-red">' . __( 'Error:' , 'mainwp' ) . " " .  $error . '</div>';
 		}
 		?>
 		<form method="post">
@@ -771,7 +771,7 @@ class MainWP_Setup_Wizard {
 		}
 
 		if ($undefined_error) {
-			update_option('mwp_setup_error_purchase_extension', __('Undefined error','mainwp'));
+			update_option('mwp_setup_error_purchase_extension', __('Undefined error.','mainwp'));
 			return;
 		}
 
@@ -1005,7 +1005,7 @@ class MainWP_Setup_Wizard {
 			'dashboard' => __( 'Dashboard', 'mainwp' ),
 			'posts' => __( 'Posts', 'mainwp' ),
 			'media' => __( 'Media', 'mainwp' ),
-			'pages' => __( 'Pages' ),
+			'pages' => __( 'Pages', 'mainwp' ),
 			'appearance' => __( 'Appearance', 'mainwp' ),
 			'comments' => __( 'Comments', 'mainwp' ),
 			'users' => __( 'Users', 'mainwp' ),
@@ -1101,7 +1101,7 @@ class MainWP_Setup_Wizard {
 		$error = get_option('mainwp_setup_error_create_uptime_robot');		
 		if (!empty($error)) {
 			delete_option('mainwp_setup_error_create_uptime_robot');
-			echo '<div class="mainwp_info-box-red">' . __("Error:") . " " .  $error . '</div>';
+			echo '<div class="mainwp_info-box-red">' . __( 'Error -', 'mainwp' ) . " " .  $error . '</div>';
 		}
 		$error_settings = false;
 		?>

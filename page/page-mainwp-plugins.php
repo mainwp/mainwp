@@ -12,7 +12,26 @@ class MainWP_Plugins {
 	public static $pluginsTable;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the Plugins page header via the 'mainwp-pageheader-plugins' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-plugins
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-plugins'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-plugins
+		 *
+		 * @see \MainWP_Plugins::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-plugins', array( MainWP_Plugins::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the Plugins page footer via the 'mainwp-pagefooter-plugins' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-plugins
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-plugins'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-plugins
+		 *
+		 * @see \MainWP_Plugins::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-plugins', array( MainWP_Plugins::getClassName(), 'renderFooter' ) );
 	}
 
@@ -22,33 +41,37 @@ class MainWP_Plugins {
 			'render',
 		) );
 		if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) {
-			$page = add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">Install</div>', 'read', 'PluginsInstall', array(
+			$page = add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>', 'read', 'PluginsInstall', array(
 				MainWP_Plugins::getClassName(),
 				'renderInstall'
 			) );
 			add_action('load-' . $page, array(MainWP_Plugins::getClassName(), 'load_page'));
 		}
-		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">Auto Updates</div>', 'read', 'PluginsAutoUpdate', array(
+		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __('Auto Updates', 'mainwp' ) . '</div>', 'read', 'PluginsAutoUpdate', array(
 			MainWP_Plugins::getClassName(),
 			'renderAutoUpdate',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">Ignored Updates</div>', 'read', 'PluginsIgnore', array(
+		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'PluginsIgnore', array(
 			MainWP_Plugins::getClassName(),
 			'renderIgnore',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">Ignored Conflicts</div>', 'read', 'PluginsIgnoredConflicts', array(
+		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Conflicts', 'mainwp' ) . '</div>', 'read', 'PluginsIgnoredConflicts', array(
 			MainWP_Plugins::getClassName(),
 			'renderIgnoredConflicts',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">Ignored Abandoned</div>', 'read', 'PluginsIgnoredAbandoned', array(
+		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'PluginsIgnoredAbandoned', array(
 			MainWP_Plugins::getClassName(),
 			'renderIgnoredAbandoned',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Plugins Help', 'mainwp' ), '<div class="mainwp-hidden">Plugins Help</div>', 'read', 'PluginsHelp', array(
+		add_submenu_page( 'mainwp_tab', __( 'Plugins Help', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Plugins Help', 'mainwp' ) . '</div>', 'read', 'PluginsHelp', array(
 			MainWP_Plugins::getClassName(),
 			'QSGManagePlugins',
 		) );
 
+		/**
+		 * This hook allows you to add extra sub pages to the Plugins page via the 'mainwp-getsubpages-plugins' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-plugins
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-plugins', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
@@ -100,6 +123,9 @@ class MainWP_Plugins {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		?>
 		<div class="wrap">
@@ -163,6 +189,9 @@ class MainWP_Plugins {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderFooter( $shownPage ) {
 		?>
 		</div>
@@ -215,7 +244,7 @@ class MainWP_Plugins {
 			</div>
 			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select Sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
 			<div style="clear: both;"></div>
-			<input type="button" name="mainwp_show_plugins" id="mainwp_show_plugins" class="button-primary button button-hero button-right" value="<?php _e( 'Show Plugins', 'mainwp' ); ?>"/>
+			<input type="button" name="mainwp_show_plugins" id="mainwp_show_plugins" class="button-primary button button-hero button-right" value="<?php esc_attr_e( 'Show Plugins', 'mainwp' ); ?>"/>
 			<br /><br />
 			<span id="mainwp_plugins_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e( 'Grabbing information from Child Sites', 'mainwp' ) ?></em></span>
 			<span id="mainwp_plugins_loading_info" class="mainwp-grabbing-info-note"> - <?php _e( 'Automatically refreshing to get up to date information.', 'mainwp' ); ?></span>
@@ -370,7 +399,7 @@ class MainWP_Plugins {
 				<option value="trust"><?php _e( 'Trust', 'mainwp' ); ?></option>
 				<option value="untrust"><?php _e( 'Untrust', 'mainwp' ); ?></option>
 			</select>
-			<input type="button" name="" id="mainwp_bulk_trust_plugins_action_apply" class="button" value="<?php _e( 'Confirm', 'mainwp' ); ?>"/>
+			<input type="button" name="" id="mainwp_bulk_trust_plugins_action_apply" class="button" value="<?php esc_attr_e( 'Confirm', 'mainwp' ); ?>"/>
 			<span id="mainwp_bulk_action_loading"><i class="fa fa-spinner fa-pulse"></i></span>
 		</div>
 		<div class="clear"></div>
@@ -500,8 +529,8 @@ class MainWP_Plugins {
 			</div>
 			<form>
 				<div style="float: right" id="mainwp_notes_status"></div>
-				<input type="button" class="button cont button-primary" id="mainwp_trusted_plugin_notes_save" value="<?php _e( 'Save Note', 'mainwp' ); ?>"/>
-				<input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php _e( 'Close', 'mainwp' ); ?>"/>
+				<input type="button" class="button cont button-primary" id="mainwp_trusted_plugin_notes_save" value="<?php esc_attr_e( 'Save Note', 'mainwp' ); ?>"/>
+				<input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"/>
 				<input type="hidden" id="mainwp_notes_slug" value=""/>
 			</form>
 		</div>
@@ -684,7 +713,7 @@ class MainWP_Plugins {
 					<option value="ignore_updates"><?php _e( 'Ignore Updates', 'mainwp' ); ?></option>
 				<?php } ?>
 			</select>
-			<input type="button" name="" id="mainwp_bulk_plugins_action_apply" class="button" value="<?php _e( 'Confirm', 'mainwp' ); ?>"/>
+			<input type="button" name="" id="mainwp_bulk_plugins_action_apply" class="button" value="<?php esc_attr_e( 'Confirm', 'mainwp' ); ?>"/>
 			<span id="mainwp_bulk_action_loading"><i class="fa fa-spinner fa-pulse"></i></span>
 		</div>
 		<div class="clear"></div>
@@ -895,7 +924,7 @@ class MainWP_Plugins {
 	public static function renderPluginsTable( $favoritesCallback = '' ) {
 		global $tab;
 		if (!mainwp_current_user_can("dashboard", "install_plugins")) {
-			mainwp_do_not_have_permissions("install plugins");
+			mainwp_do_not_have_permissions( __( 'install plugins', 'mainwp' ) );
 			return;
 		}
 
@@ -934,7 +963,7 @@ class MainWP_Plugins {
 					<input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite Existing Plugin, if already installed', 'mainwp'); ?></label>
 				</div>
 			</div>
-			<input type="button" value="<?php _e("Complete Installation"); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_plugin_bulk_install_btn" name="bulk-install">
+			<input type="button" value="<?php _e( "Complete Installation", 'mainwp' ); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_plugin_bulk_install_btn" name="bulk-install">
 		</div>
 		<div style="clear: both;"></div>
 
@@ -957,7 +986,7 @@ class MainWP_Plugins {
 		}
 		self::renderHeader( 'AutoUpdate' );
 		if ( ! mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
-			mainwp_do_not_have_permissions( 'Trust/Untrust updates' );
+			mainwp_do_not_have_permissions( __( 'trust/untrust updates', 'mainwp' ) );
 		} else {
 			$snAutomaticDailyUpdate = get_option( 'mainwp_automaticDailyUpdate' );
 			?>
@@ -1043,7 +1072,7 @@ class MainWP_Plugins {
 
 		// assume no $type_selector means it's a simplified search form
 		if ( ! $type_selector ) {
-			$input_attrs = 'class="wp-filter-search" placeholder="' . esc_attr__( 'Search Plugins' ) . '" ';
+			$input_attrs = 'class="wp-filter-search" placeholder="' . esc_attr__( 'Search Plugins', 'mainwp' ) . '" ';
 		}
 
 		?><form class="search-form search-plugins" method="get" action="<?php echo admin_url("admin.php?page=PluginsInstall"); ?>">
@@ -1051,15 +1080,15 @@ class MainWP_Plugins {
 		<input type="hidden" name="page" value="PluginsInstall" />
 		<?php if ( $type_selector ) : ?>
 			<select name="type" id="typeselector">
-				<option value="term"<?php selected('term', $type) ?>><?php _e('Keyword'); ?></option>
-				<option value="author"<?php selected('author', $type) ?>><?php _e('Author'); ?></option>
+				<option value="term"<?php selected('term', $type) ?>><?php _e('Keyword', 'mainwp' ); ?></option>
+				<option value="author"<?php selected('author', $type) ?>><?php ;_e( 'Author', 'mainwp' ) ?></option>
 				<option value="tag"<?php selected('tag', $type) ?>><?php _ex('Tag', 'Plugin Installer'); ?></option>
 			</select>
 		<?php endif; ?>
-		<label><span class="screen-reader-text"><?php _e('Search Plugins'); ?></span>
+		<label><span class="screen-reader-text"><?php _e( 'Search Plugins', 'mainwp' ); ?></span>
 			<input type="search" name="s" value="<?php echo esc_attr($term) ?>" <?php echo $input_attrs; ?>/>
 		</label>
-		<?php submit_button( __( 'Search Plugins' ), $button_type, false, false, array( 'id' => 'search-submit' ) ); ?>
+		<?php submit_button( __( 'Search Plugins', 'mainwp' ), $button_type, false, false, array( 'id' => 'search-submit' ) ); ?>
 		</form>
 		<?php
 	}

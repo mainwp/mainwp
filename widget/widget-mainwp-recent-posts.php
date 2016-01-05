@@ -10,7 +10,7 @@ class MainWP_Recent_Posts {
 	}
 
 	public static function getName() {
-		return __( '<i class="fa fa-file-text"></i> Recent Posts', 'mainwp' );
+		return '<i class="fa fa-file-text"></i> ' . __( 'Recent Posts', 'mainwp' );
 	}
 
 	public static function render() {

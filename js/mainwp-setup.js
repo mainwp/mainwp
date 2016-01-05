@@ -1,14 +1,4 @@
 jQuery(document).ready(function () {
-    jQuery(document).tooltip({
-        items:"span.tooltip",
-        track:true,
-        content:function ()
-        {
-            var element = jQuery(this);
-            return element.parents('.tooltipcontainer').children('.tooltipcontent').html();
-        }
-    });
-
     jQuery('input[type=radio][name=mwp_setup_installation_hosting_type]').change(function() {
         if (this.value == 2) {
             jQuery('input[name="mwp_setup_installation_system_type"]').removeAttr("disabled");

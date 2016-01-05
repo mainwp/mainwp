@@ -147,7 +147,7 @@ class MainWP_Ajax {
 			wp_enqueue_script( 'media-upload' );
 			add_thickbox();
 
-			$title       = __( 'Dashboard' );
+			$title       = __( 'Dashboard', 'mainwp' );
 			$parent_file = 'index.php';
 
 			if ( is_user_admin() ) {
@@ -195,7 +195,7 @@ class MainWP_Ajax {
 			$help .= '<p>' . __( '<strong>QuickPress</strong> - Allows you to create a new post and either publish it or save it as a draft.', 'mainwp' ) . '</p>';
 			$help .= '<p>' . __( '<strong>Recent Drafts</strong> - Displays links to the 5 most recent draft posts you&#8217;ve started.', 'mainwp' ) . '</p>';
 			$help .= '<p>' . __( '<strong>WordPress Blog</strong> - Latest news from the official WordPress project.', 'mainwp' ) . '</p>';
-			$help .= '<p>' . __( '<strong>Other WordPress News</strong> - Shows the <a href="http://planet.wordpress.org" target="_blank">WordPress Planet</a> feed. You can configure it to show a different feed of your choosing.', 'mainwp' ) . '</p>';
+			$help .= '<p>' . sprintf( __( '<strong>Other WordPress News</strong> - Shows the %sWordPress Planet%s feed. You can configure it to show a different feed of your choosing.', 'mainwp' ), '<a href="http://planet.wordpress.org" target="_blank">', '</a>' ) . '</p>';
 			$help .= '<p>' . __( '<strong>Plugins</strong> - Features the most popular, newest, and recently updated plugins from the WordPress.org Plugin Directory.', 'mainwp' ) . '</p>';
 
 			get_current_screen()->add_help_tab( array(
@@ -208,8 +208,8 @@ class MainWP_Ajax {
 
 			get_current_screen()->set_help_sidebar(
 				'<p><strong>' . __( 'For more information:', 'mainwp' ) . '</strong></p>' .
-				'<p>' . __( '<a href="http://codex.wordpress.org/Dashboard_Screen" target="_blank">Documentation on Dashboard</a>', 'mainwp' ) . '</p>' .
-				'<p>' . __( '<a href="http://wordpress.org/support/" target="_blank">Support Forums</a>', 'mainwp' ) . '</p>'
+				'<p>' . sprintf( __( '%sDocumentation on Dashboard%s', 'mainwp' ), '<a href="http://codex.wordpress.org/Dashboard_Screen" target="_blank">', '</a>') . '</p>' .
+				'<p>' . sprintf( __( '%sSupport Forums%s', 'mainwp' ), '<a href="http://wordpress.org/support/" target="_blank">', '</a>' ) . '</p>'
 			);
 			$today = current_time( 'mysql', 1 );
 			?>

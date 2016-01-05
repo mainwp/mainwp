@@ -6,7 +6,7 @@
   Author: MainWP
   Author URI: http://mainwp.com
   Text Domain: mainwp
-  Version: 3.0-beta4
+  Version: 3.0-beta5
  */
 
 if ( ! defined( 'MAINWP_PLUGIN_FILE' ) ) {
@@ -55,7 +55,7 @@ if ( ! function_exists( 'mainwpdir' ) ) {
 
 if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
 	function mainwp_do_not_have_permissions( $where = '', $echo = true ) {
-		$msg = __( 'You do not have sufficient permissions to access this page (' . ucwords( $where ) . ').', 'mainwp' );
+		$msg = sprintf( __( 'You do not have sufficient permissions to access this page (%s).', 'mainwp' ), ucwords( $where ) );
 		if ( $echo ) {
 			echo '<div class="mainwp-permission-error"><p>' . esc_html( $msg ) . '</p>If you need access to this page please contact the Dashboard Administrator.</div>';
 		} else {
@@ -70,36 +70,3 @@ $mainWP = new MainWP_System( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basena
 register_activation_hook( __FILE__, array( $mainWP, 'activation' ) );
 register_deactivation_hook( __FILE__, array( $mainWP, 'deactivation' ) );
 add_action( 'plugins_loaded', array( $mainWP, 'update' ) );
-
-
-
-
-if (isset($_REQUEST['dotest'])) {
-	$agent = 'Mozilla/5.0 (compatible; MainWP/3.0; +http://mainwp.com)';
-
-	$ch = curl_init();
-	curl_setopt( $ch, CURLOPT_URL, 'https://startupbadger.com/' );
-	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-	curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-	curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
-	curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-
-	curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-	curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
-
-	$data        = curl_exec( $ch );
-	$err         = curl_error( $ch );
-	$http_status = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
-	$errno       = curl_errno( $ch );
-	$realurl     = curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
-	curl_close( $ch );
-
-	echo '<pre>';
-	echo '[i=' . $i . "]\n";
-	echo '[error=' . $err . "]\n";
-	echo '[http_status=' . $http_status . "]\n";
-	echo '[errno=' . $errno . "]\n";
-	echo '[effective_url=' . $realurl . "]\n";
-	die();
-}
-

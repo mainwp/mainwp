@@ -10,7 +10,7 @@ class MainWP_Extensions_Widget {
 	public static $extensionsLoaded = false;
 
 	public static function getName() {
-		return __( '<i class="fa fa-plug"></i> Extensions', 'mainwp' );
+		return '<i class="fa fa-plug"></i> ' . __( 'Extensions', 'mainwp' );
 	}
 
 	public static function render() {
@@ -155,7 +155,7 @@ class MainWP_Extensions_Widget {
 
 	public static function changeDefaultView() {
 		if ( ! isset( $_POST['view'] ) ) {
-			throw new Exception( __( 'Invalid Request' ) );
+			throw new Exception( __( 'Invalid Request', 'mainwp' ) );
 		}
 
 		if ( $_POST['view'] == 'list' ) {

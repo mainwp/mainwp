@@ -564,7 +564,7 @@ mainwp_extension_bulk_install = function() {
 
 mainwp_extension_bulk_install_done = function() {
     bulkExtensionsRunning = false;
-    jQuery('#mainwp-install-purchased-extensions').append('<div class="mainwp_info-box"><i class="fa fa-check-circle"></i> ' + __("Install Finished") + '</div><div class="mainwp_info-box">' + __('Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please <a href="admin.php?page=Extensions" title="Extensions page">click here</a>.') + '</div>');
+    jQuery('#mainwp-install-purchased-extensions').append('<div class="mainwp_info-box"><i class="fa fa-check-circle"></i> ' + __("Install Finished") + '</div><div class="mainwp_info-box">' + __('Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please %1click here%2.', '<a href="admin.php?page=Extensions" title="Extensions page">', '</a>') + '</div>');
     setTimeout(function ()
     {
         location.href = 'admin.php?page=Extensions';

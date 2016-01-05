@@ -8,7 +8,26 @@ class MainWP_Settings {
 	public static $subPages;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the Settings page header via the 'mainwp-pageheader-settings' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-settings
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-settings'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-settings
+		 *
+		 * @see \MainWP_Settings::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-settings', array( MainWP_Settings::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the Settings page footer via the 'mainwp-pagefooter-settings' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-settings
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-settings'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-settings
+		 *
+		 * @see \MainWP_Settings::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-settings', array( MainWP_Settings::getClassName(), 'renderFooter' ) );
 	}
 
@@ -30,6 +49,10 @@ class MainWP_Settings {
 			'renderMainWPTools',
 		) );
 
+		/**
+		 * This hook allows you to add extra sub pages to the Settings page via the 'mainwp-getsubpages-settings' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-settings
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-settings', array(
 			array(
 				'title'    => __( 'Advanced Options', 'mainwp' ),
@@ -74,6 +97,9 @@ class MainWP_Settings {
 		}
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		?>
 		<div class="wrap">
@@ -93,7 +119,7 @@ class MainWP_Settings {
 			<?php if ( $shownPage == 'OfflineChecks' ) { ?>
 				<?php if ( MainWP_Utility::showUserTip( 'mainwp-aumrecommend-tips' ) ) { ?>
 					<div class="mainwp-tips mainwp_info-box-blue">
-						<span class="mainwp-tip" id="mainwp-aumrecommend-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php _e( 'We currently recommend the free <a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/" target="_blank">Advanced Uptime Monitor Extension</a> to perform more frequent tests.', 'mainwp' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
+						<span class="mainwp-tip" id="mainwp-aumrecommend-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php echo sprintf( __( 'We currently recommend the free %sAdvanced Uptime Monitor Extension%s to perform more frequent tests.', 'mainwp' ), '<a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/" target="_blank">', '</a>' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
 							</a></span></div>
 				<?php } ?>
 			<?php } ?>
@@ -131,6 +157,9 @@ class MainWP_Settings {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderFooter( $shownPage ) {
 		?>
 		</div>
@@ -140,7 +169,7 @@ class MainWP_Settings {
 
 	public static function renderAdvanced() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( 'manage dashboard settings' );
+			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 
 			return;
 		}
@@ -233,7 +262,7 @@ class MainWP_Settings {
 				</div>
 			</div>
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>
+				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 			</p>
 		</form>
 		<?php
@@ -242,7 +271,7 @@ class MainWP_Settings {
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( 'manage dashboard settings' );
+			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 
 			return;
 		}
@@ -275,7 +304,7 @@ class MainWP_Settings {
 
 			?>
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>
+				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 			</p>
 		</form>
 		<?php
@@ -284,7 +313,7 @@ class MainWP_Settings {
 
 	public static function renderDashboardOptions() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( 'manage dashboard settings' );
+			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 
 			return;
 		}
@@ -344,7 +373,7 @@ class MainWP_Settings {
 				</div>
 			</div>
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>
+				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 			</p>
 		</form>
 		<?php
@@ -355,7 +384,7 @@ class MainWP_Settings {
 
 	public static function renderMainWPTools() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( 'manage dashboard settings' );
+			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 
 			return;
 		}
@@ -364,7 +393,7 @@ class MainWP_Settings {
 			'dashboard' => __( 'Dashboard', 'mainwp' ),
 			'posts' => __( 'Posts', 'mainwp' ),
 			'media' => __( 'Media', 'mainwp' ),
-			'pages' => __( 'Pages' ),
+			'pages' => __( 'Pages', 'mainwp' ),
 			'appearance' => __( 'Appearance', 'mainwp' ),
 			'comments' => __( 'Comments', 'mainwp' ),
 			'users' => __( 'Users', 'mainwp' ),
@@ -390,7 +419,7 @@ class MainWP_Settings {
 						<tr>
 							<th scope="row"><?php _e( 'Force Dashboard to Establish New Connection', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Use this option to establish new connection with child sites.', 'mainwp' ) ); ?></th>
 							<td>
-								<input type="submit" name="" id="force-destroy-sessions-button" class="button-primary button" value="<?php _e( 'Establish New Connection', 'mainwp' ); ?>"/><br/>
+								<input type="submit" name="" id="force-destroy-sessions-button" class="button-primary button" value="<?php esc_attr_e( 'Establish New Connection', 'mainwp' ); ?>"/><br/>
 								<em>
 									<?php _e( 'Forces your Dashboard to reconnect with your Child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>
 								</em>
@@ -414,6 +443,11 @@ class MainWP_Settings {
 								</em>
 							</td>
 						</tr>
+						</tbody>
+					</table>
+					<div class="mainwp_info-box"><?php _e( 'Changing this settings will overwrite Clean & Lock Extension settings. Do not forget to migrate the settings you wish to keep.', 'mainwp' ); ?></div>
+					<table class="form-table">
+						<tbody>
 						<tr>
 							<th scope="row"><?php _e( 'Hide WP Menus', 'mainwp' ); ?></th>
 							<td>
@@ -437,7 +471,7 @@ class MainWP_Settings {
 					</table>
 				</div>
 			</div>
-			<p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php _e('Save Settings','mainwp'); ?>"/></p>
+			<p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e('Save Settings','mainwp'); ?>"/></p>
 		</form>
 		<?php
 		self::renderFooter( 'MainWPTools' );

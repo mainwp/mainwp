@@ -48,10 +48,6 @@ class MainWP_System {
 	}
 
 	public function __construct( $mainwp_plugin_file ) {
-		if ( !defined( 'MAINWP_VERSION' ) ) {
-			define( 'MAINWP_VERSION', $this->current_version );
-		}
-
 		MainWP_System::$instance = $this;
 		$this->update();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
@@ -70,6 +66,11 @@ class MainWP_System {
 			}
 			MainWP_Utility::update_option( 'mainwp_plugin_version', $this->current_version );
 		}
+
+		if ( !defined( 'MAINWP_VERSION' ) ) {
+			define( 'MAINWP_VERSION', $this->current_version );
+		}
+
 
 		if ( ( get_option( 'mainwp_upgradeVersionInfo' ) != '' ) && ( get_option( 'mainwp_upgradeVersionInfo' ) != null ) ) {
 			$this->upgradeVersionInfo = unserialize( get_option( 'mainwp_upgradeVersionInfo' ) );
@@ -240,8 +241,22 @@ class MainWP_System {
 		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) );
 		add_filter( 'mainwp-activated-sub-check', array( &$this, 'activated_sub_check' ) );
 		add_filter( 'mainwp-extension-enabled-check', array( MainWP_Extensions::getClassName(), 'isExtensionEnabled' ) );
+
+		/**
+		 * This hook allows you to get a list of sites via the 'mainwp-getsites' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsites
+		 *
+		 * @see \MainWP_Extensions::hookGetSites
+		 */
 		add_filter( 'mainwp-getsites', array( MainWP_Extensions::getClassName(), 'hookGetSites' ), 10, 4 );
 		add_filter( 'mainwp-getdbsites', array( MainWP_Extensions::getClassName(), 'hookGetDBSites' ), 10, 5 );
+
+		/**
+		 * This hook allows you to get a information about groups via the 'mainwp-getgroups' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getgroups
+		 *
+		 * @see \MainWP_Extensions::hookGetGroups
+		 */
 		add_filter( 'mainwp-getgroups', array( MainWP_Extensions::getClassName(), 'hookGetGroups' ), 10, 4 );
 		add_action( 'mainwp_fetchurlsauthed', array( &$this, 'filter_fetchUrlsAuthed' ), 10, 7 );
 		add_filter( 'mainwp_fetchurlauthed', array( &$this, 'filter_fetchUrlAuthed' ), 10, 5 );
@@ -2391,8 +2406,8 @@ class MainWP_System {
 		MainWP_DB::Instance()->install();
 	}
 
-	function apply_filter( $filter ) {
-		$output = apply_filters( $filter, array() );
+	function apply_filter( $filter, $value = array() ) {
+		$output = apply_filters( $filter, $value );
 
 		if ( ! is_array( $output ) ) {
 			return array();

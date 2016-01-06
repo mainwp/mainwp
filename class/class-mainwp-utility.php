@@ -1855,8 +1855,8 @@ class MainWP_Utility {
 		return $text;
 	}
 
-	public static function removeHttpPrefix( $pUrl ) {
-		return str_replace( array( 'http:', 'https:' ), array( '', '' ), $pUrl );
+	public static function removeHttpPrefix( $pUrl, $pTrimSlashes = false ) {
+		return str_replace( array( 'http:' . ( $pTrimSlashes ? '//' : '' ), 'https:' . ( $pTrimSlashes ? '//' : '' ) ), array( '', '' ), $pUrl );
 	}
 
 	public static function isArchive( $pFileName, $pPrefix = '', $pSuffix = '' ) {

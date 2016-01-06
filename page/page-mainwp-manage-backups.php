@@ -12,7 +12,26 @@ class MainWP_Manage_Backups {
 	private static $hideSubmenuBackups = false;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the Backups page header via the 'mainwp-pageheader-backups' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-backups
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-backups'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-backups
+		 *
+		 * @see \MainWP_Manage_Backups::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-backups', array( MainWP_Manage_Backups::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the Backups page footer via the 'mainwp-pagefooter-backups' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-backups
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-backups'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-backups
+		 *
+		 * @see \MainWP_Manage_Backups::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-backups', array( MainWP_Manage_Backups::getClassName(), 'renderFooter' ) );
 	}
 
@@ -40,6 +59,10 @@ class MainWP_Manage_Backups {
 			) );
 		}
 
+		/**
+		 * This hook allows you to add extra sub pages to the Backups page via the 'mainwp-getsubpages-backups' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-backups
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-backups', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
@@ -84,7 +107,10 @@ class MainWP_Manage_Backups {
 		<?php
 	}
 
-public static function renderHeader( $shownPage ) {
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
+	public static function renderHeader( $shownPage ) {
 	?>
 	<div class="wrap">
 		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
@@ -125,15 +151,17 @@ public static function renderHeader( $shownPage ) {
 		</div>
 		<div id="mainwp_wrap-inside">
 			<?php
-			}
+	}
 
-			public static function renderFooter( $shownPage ) {
-
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
+	public static function renderFooter( $shownPage ) {
 			?>
 		</div>
 	</div>
 	<?php
-}
+	}
 
 	/**
 	 * @param $pBackupTasks

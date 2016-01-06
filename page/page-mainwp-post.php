@@ -11,7 +11,26 @@ class MainWP_Post {
 	public static $subPages;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the Post page header via the 'mainwp-pageheader-post' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-post
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-post'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
+		 *
+		 * @see \MainWP_Post::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-post', array( MainWP_Post::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the Post page footer via the 'mainwp-pagefooter-post' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-post
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-post'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
+		 *
+		 * @see \MainWP_Post::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-post', array( MainWP_Post::getClassName(), 'renderFooter' ) );
 	}
 
@@ -33,6 +52,10 @@ class MainWP_Post {
 			'QSGManagePosts',
 		) );
 
+		/**
+		 * This hook allows you to add extra sub pages to the Post page via the 'mainwp-getsubpages-post' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-post', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
@@ -68,6 +91,9 @@ class MainWP_Post {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		?>
 		<div class="wrap">
@@ -116,6 +142,9 @@ class MainWP_Post {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderFooter( $shownPage ) {
 		?>
 		</div>

@@ -11,13 +11,32 @@ Stable tag: 2.0.30
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Manage all of your WP sites, even those on different servers, from one central dashboard that runs off of your own self-hosted WordPress install.
+Manage WP sites from one central location! Much more than just updates, get nearly complete control of all your sites from your self-hosted Dashboard.
 
 == Description ==
 
-[MainWP](https://mainwp.com) is a free open source and self-hosted WordPress management system that allows you to control virtually all of your daily WordPress maintenance tasks freeing your time for more profitable activities. MainWP is the perfect solution for marketers, WordPress shops and others with multiple WordPress sites.  
+== Description ==
 
-MainWP allows you to connect and control completely independent WordPress sites even those on different hosts and servers.
+[MainWP](https://mainwp.com) is the only free, fully open source and self-hosted WordPress management plugin available. 
+
+And, just because it is free does not mean it’s been stripped down.   The MainWP Dashboard allows you to control virtually all of your daily WordPress maintenance tasks at absolutely no cost. 
+
+The Dashboard plugin allows you to connect and control completely independent WordPress sites even those on different hosts and servers.
+
+MainWP is the perfect solution for affiliates, marketers, developers, WordPress shops and anyone else with multiple WordPress sites.  
+
+= Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
+
+
+But wait, How is MainWP free, what’s the catch, how will you continue to pay development costs?
+
+We make money by selling [Extensions](https://extensions.mainwp.com/).
+
+
+Extensions enhance your MainWP Dashboard with additional features. The catalog of [MainWP Extensions](https://extensions.mainwp.com/) include additional features for backups, marketing, SEO, maintenance, security, monitoring and other tools to help you build a better network. 
+
+= Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
+
 
 **Note:  MainWP requires two (2) plugins.**
 
@@ -25,18 +44,13 @@ MainWP allows you to connect and control completely independent WordPress sites 
 
 **Please check the [Quick Start - Setting up your MainWP](http://docs.mainwp.com/setting-up-your-mainwp/) support doc for more information.**
 
-= Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
-
-But wait, How is MainWP free, what’s the catch, how will you continue to pay development costs?
-
-We make money by selling [Extensions](https://extensions.mainwp.com/).
-
-Extensions enhance your MainWP Dashboard with additional features. The catalog of [MainWP Extensions](https://extensions.mainwp.com/) include additional features for backups, marketing, SEO, maintenance, security, monitoring and other tools to help you build a better network. 
 
 = Some of the Free MainWP Features include: =
 
 = Easy Management =
-MainWP takes the hassle out of managing your themes and plugins. The MainWP Dashboard allows easy review of which of your WordPress sites have themes and plugins that need updating. Just one click will update all of your plugins and themes at the same time.
+MainWP takes the hassle out of managing your themes and plugins. The MainWP Dashboard allows easy review of which of your WordPress sites have themes and plugins that need updating. 
+
+Just one click will update all of your plugins and themes across all your sites.
 
 = Effortless Upgrades =
 Do you have a busy schedule and dread all of the work you’ll be putting into upgrading to the latest version of WordPress? Worry no more! With the click of a button from your MainWP dashboard, all of your WordPress sites will be upgraded to the latest stable version.  
@@ -51,7 +65,7 @@ Using the Trusted Plugin and Theme option in your MainWP Dashboard will automati
 Is there a plugin or theme that you do not want to update for compatibility or other issues?  Just tell to your MainWP Dashboard to ignore it and it will no longer alert you of the update.
 
 = Abandoned Plugin and Theme Alerts =
-Sometimes when a plugin hasn't had an update in a long time we tend to forget about it which could lead to security or compatibility issues, your MainWP Dashboard will alert you of possibly abandoned plugins or themes so that you can look for a more update plugin.
+When a plugin hasn't had an update in a long time we tend to forget about it which could lead to security or compatibility issues, your MainWP Dashboard will alert you of possibly abandoned plugins or themes so that you can look for a more updated plugin or theme.
 
 = Reliable Backups =
 We understand that your WordPress data is valuable — you’re never more than a moment away from a complete disaster, so make sure you do it right! MainWP comes with a built in Backup Feature or you can use one of our [Free Backup Extensions](https://extensions.mainwp.com/product-category/mainwp-extensions/free/) that incorporate the most popular Backup plugins directly into your Dashboard. 
@@ -125,7 +139,7 @@ Yes, please review the [documentation site](http://docs.mainwp.com/).
 Yes, please read the [Quick Start – Setting up your MainWP](http://docs.mainwp.com/setting-up-your-mainwp/) guide on the doc site.
 
 = Where do I go for support or to ask for help? =
-Please go to the [MainWP Community Support Forum](https://mainwp.com/forum/) or open a [Support Ticket](http://support.mainwp.com/support/home)
+Please open a [Support Ticket](http://support.mainwp.com/support/home)
 
 = Do you have any videos? =
 Yes, you can [see them on YouTube](http://www.youtube.com/user/MyMainWP).
@@ -135,6 +149,8 @@ Please add any ideas to the [MainWP Feature Request](http://support.mainwp.com/s
 
 = I have more questions, do you have any other information? =
 Sure we have a quick FAQ with a lot more questions and answers [here](http://mainwp.com/presales-faq/).
+
+
 
 == Screenshots ==
 

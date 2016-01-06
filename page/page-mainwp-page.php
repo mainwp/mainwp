@@ -11,7 +11,26 @@ class MainWP_Page {
 	public static $subPages;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the Page page header via the 'mainwp-pageheader-page' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-page
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-page'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-page
+		 *
+		 * @see \MainWP_Page::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-page', array( MainWP_Page::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the Page page footer via the 'mainwp-pagefooter-page' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-page
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-page'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-page
+		 *
+		 * @see \MainWP_Page::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-page', array( MainWP_Page::getClassName(), 'renderFooter' ) );
 	}
 
@@ -21,6 +40,10 @@ class MainWP_Page {
 		add_submenu_page( 'mainwp_tab', __( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( MainWP_Page::getClassName(), 'posting' ) ); //removed from menu afterwards
 		add_submenu_page( 'mainwp_tab', __( 'Pages Help','mainwp' ), '<div class="mainwp-hidden">'.__( 'Pages Help','mainwp' ).'</div>', 'read', 'PagesHelp', array( MainWP_Page::getClassName(), 'QSGManagePages' ) );
 
+		/**
+		 * This hook allows you to add extra sub pages to the Page page via the 'mainwp-getsubpages-page' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-page
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-page', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
@@ -57,6 +80,9 @@ class MainWP_Page {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		?>
 		<div class="wrap">
@@ -98,6 +124,9 @@ class MainWP_Page {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderFooter( $shownPage ) {
 		?>
 			</div>

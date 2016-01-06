@@ -8,7 +8,26 @@ class MainWP_Settings {
 	public static $subPages;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the Settings page header via the 'mainwp-pageheader-settings' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-settings
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-settings'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-settings
+		 *
+		 * @see \MainWP_Settings::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-settings', array( MainWP_Settings::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the Settings page footer via the 'mainwp-pagefooter-settings' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-settings
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-settings'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-settings
+		 *
+		 * @see \MainWP_Settings::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-settings', array( MainWP_Settings::getClassName(), 'renderFooter' ) );
 	}
 
@@ -30,6 +49,10 @@ class MainWP_Settings {
 			'renderMainWPTools',
 		) );
 
+		/**
+		 * This hook allows you to add extra sub pages to the Settings page via the 'mainwp-getsubpages-settings' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-settings
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-settings', array(
 			array(
 				'title'    => __( 'Advanced Options', 'mainwp' ),
@@ -74,6 +97,9 @@ class MainWP_Settings {
 		}
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		?>
 		<div class="wrap">
@@ -131,6 +157,9 @@ class MainWP_Settings {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderFooter( $shownPage ) {
 		?>
 		</div>
@@ -414,6 +443,11 @@ class MainWP_Settings {
 								</em>
 							</td>
 						</tr>
+						</tbody>
+					</table>
+					<div class="mainwp_info-box"><?php _e( 'Changing this settings will overwrite Clean & Lock Extension settings. Do not forget to migrate the settings you wish to keep.', 'mainwp' ); ?></div>
+					<table class="form-table">
+						<tbody>
 						<tr>
 							<th scope="row"><?php _e( 'Hide WP Menus', 'mainwp' ); ?></th>
 							<td>

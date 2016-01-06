@@ -506,7 +506,7 @@ class MainWP_DB {
 		return $this->wpdb->get_var( $qry );
 	}
 
-	public function getLastSyncStatus( $userId = null ) {			
+	public function getLastSyncStatus( $userId = null ) {
 		$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser();
 		$websites = MainWP_DB::Instance()->query( $sql );
 		if ( ! $websites ) {
@@ -515,21 +515,21 @@ class MainWP_DB {
 		$total_sites = 0;
 		$synced_sites = 0;
 		@MainWP_DB::data_seek( $websites, 0 );
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {									
+		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 			if ( empty($website) || $website->sync_errors != '' ) {
 				continue;
-			}	
+			}
 			$total_sites++;
 			if ( time() - $website->dtsSync  < 60 * 60 * 24 )  {
 				$synced_sites++;
-			}			
+			}
 		}
-		
+
 		if ($total_sites == $synced_sites) {
 			return 'all_synced';
 		} else if ($synced_sites == 0) {
 			return 'not_synced';
-		}		
+		}
 		return false;
 	}
 
@@ -1186,12 +1186,12 @@ class MainWP_DB {
 		return false;
 	}
 
-	public function updateWebsite( $websiteid, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifyCertificate = 1, $archiveFormat, $uniqueId = '', $http_user = null, $http_pass = null, $sslVersion = 0 ) {
+	public function updateWebsite( $websiteid, $url, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks, $pluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifyCertificate = 1, $archiveFormat, $uniqueId = '', $http_user = null, $http_pass = null, $sslVersion = 0 ) {
 		if ( MainWP_Utility::ctype_digit( $websiteid ) && MainWP_Utility::ctype_digit( $userid ) ) {
 			$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				//update admin
-				$this->wpdb->query( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET name="' . $this->escape( $name ) . '", adminname="' . $this->escape( $siteadmin ) . '",offline_checks="' . $this->escape( $offlineChecks ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '"  WHERE id=' . $websiteid );
+				$this->wpdb->query( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( $name ) . '", adminname="' . $this->escape( $siteadmin ) . '",offline_checks="' . $this->escape( $offlineChecks ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '"  WHERE id=' . $websiteid );
 				$this->wpdb->query( 'UPDATE ' . $this->tableName( 'wp_settings_backup' ) . ' SET archiveFormat = "' . $this->escape( $archiveFormat ) . '" WHERE wpid=' . $websiteid );
 				//remove groups
 				$this->wpdb->query( 'DELETE FROM ' . $this->tableName( 'wp_group' ) . ' WHERE wpid=' . $websiteid );

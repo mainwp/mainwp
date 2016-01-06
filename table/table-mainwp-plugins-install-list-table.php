@@ -389,11 +389,10 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		?>
 		<div class="plugin-card plugin-card-<?php echo sanitize_html_class( $plugin['slug'] ); ?>">
 			<div class="plugin-card-top">
-				<a href="<?php echo esc_url( $details_link ); ?>" class="thickbox plugin-icon"><img src="<?php echo esc_attr( $plugin_icon_url ) ?>" /></a>
+				<a href="<?php echo esc_url( $details_link ); ?>" class="thickbox"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" class="plugin-icon" /></a>
 				<div class="name column-name" style="margin-right: 0!important;">
 					<h4><a href="<?php echo esc_url( $details_link ); ?>" class="thickbox"><?php echo $title; ?></a></h4>
 				</div>
-				
 				<div class="desc column-description" style="margin-right: 0!important;">
 					<p><?php echo $description; ?></p>
 					<p class="authors"><?php echo $author; ?></p>

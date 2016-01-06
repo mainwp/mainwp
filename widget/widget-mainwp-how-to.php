@@ -32,7 +32,7 @@ class MainWP_How_To
                 </ul>
             </div>
         </div>
-    <?php
-}
+        <?php
+    }
 }
 ?>

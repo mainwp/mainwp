@@ -569,11 +569,10 @@ class MainWP_Manage_Sites_View {
                </tr>
                <tr class="form-field form-required">
                    <th scope="row"><?php _e('Site URL','mainwp'); ?></th>
-                   <td>
-                        <input type="text"
+                   <td><select id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol"><option value="http">http://</option><option value="https">https://</option></select> <input type="text"
                                id="mainwp_managesites_add_wpurl"
                                name="mainwp_managesites_add_wpurl"
-                               value="http://"
+                               value=""
                                class="" />
                     </td>
                </tr>
@@ -1399,8 +1398,8 @@ class MainWP_Manage_Sites_View {
                 </tr>
                 <tr>
                     <th scope="row"><?php _e( 'Site URL','mainwp' ); ?></th>
-                    <td><input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled"
-                               value="<?php echo $website->url; ?>" class="regular-text" /> <span
+                    <td><select id="mainwp_managesites_edit_siteurl_protocol" name="mainwp_managesites_edit_siteurl_protocol"><option <?php echo (MainWP_Utility::startsWith($website->url, 'http:') ? 'selected' : ''); ?> value="http">http://</option><option <?php echo (MainWP_Utility::startsWith($website->url, 'https:') ? 'selected' : ''); ?> value="https">https://</option></select> <input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled"
+                               value="<?php echo MainWP_Utility::removeHttpPrefix($website->url, true); ?>" class="regular-text" /> <span
                             class="mainwp-form_hint-display"><?php _e( 'Site URL cannot be changed.','mainwp' ); ?></span></td>
                 </tr>
                 <tr>
@@ -1791,9 +1790,9 @@ class MainWP_Manage_Sites_View {
 					$themeConflicts = array_filter( $themeConflicts );}
 				$verifyCertificate = ( !isset( $_POST['verify_certificate'] ) || empty( $_POST['verify_certificate'] ) ? null : $_POST['verify_certificate']);
 				$sslVersion = MainWP_Utility::getCURLSSLVersion( !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version']);
-				$addUniqueId = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : "";
-				$http_user = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : "";
-				$http_pass = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : "";
+				$addUniqueId = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : '';
+				$http_user = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
+				$http_pass = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';
 				$information = MainWP_Utility::fetchUrlNotAuthed($url, $_POST['managesites_add_wpadmin'], 'register',
 					array(
 					'pubkey' => $pubkey,
@@ -1838,8 +1837,8 @@ class MainWP_Manage_Sites_View {
 						if ( ! isset( $information['uniqueId'] ) || empty( $information['uniqueId'] ) ) {
 							$addUniqueId = '';}
 
-						$http_user = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : "";
-						$http_pass = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : "";
+						$http_user = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
+						$http_pass = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';
 						global $current_user;
 						$id = MainWP_DB::Instance()->addWebsite($current_user->ID, $_POST['managesites_add_wpname'], $_POST['managesites_add_wpurl'], $_POST['managesites_add_wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], (isset( $information['nosslkey'] )
 								? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion);

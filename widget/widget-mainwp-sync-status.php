@@ -28,9 +28,9 @@ class MainWP_Sync_Status {
 		}
 		$all_sites_synced = true;
 		$top_row = true;
-	?>
+		?>
 
-		<div class="clear">			
+		<div class="clear">
 			<div id="wp_syncs">
 				<?php
 				ob_start();
@@ -53,7 +53,7 @@ class MainWP_Sync_Status {
 						</span>
 						<span class="mainwp-right-col wordpressAction">
 							<div id="wp_syncs_<?php echo $website->id; ?>">
-								<a class="mainwp-upgrade-button button" onClick="rightnow_wp_sync('<?php echo $website->id; ?>')"><?php _e( 'Sync Now', 'mainwp' ); ?></a>										
+								<a class="mainwp-upgrade-button button" onClick="rightnow_wp_sync('<?php echo $website->id; ?>')"><?php _e( 'Sync Now', 'mainwp' ); ?></a>
 							</div>
 						</span>
 					</div>
@@ -64,7 +64,7 @@ class MainWP_Sync_Status {
 
 				if ( $all_sites_synced ) {
 					esc_html_e( 'All sites have been synced within the last 24 hours.', 'mainwp' );
-				} else {					
+				} else {
 					echo '<div class="mainwp_info-box-red">' . esc_html__( 'Sites not synced in the last 24 hours.', 'mainwp' ) . '</div>';
 					echo $output;
 				}

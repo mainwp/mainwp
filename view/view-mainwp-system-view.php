@@ -98,7 +98,7 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'Number of sites to Import: %1 Created sites: %2 Failed: %3', __( 'Number of sites to Import: %1 Created sites: %2 Failed: %3', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'HTTP error - website does not exist', __( 'HTTP error - website does not exist', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'No selected Categories', __( 'No selected Categories', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or groups to add a user.', __( 'Please select websites or groups to add a user.', 'mainwp' ) );		
+		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or groups to add a user.', __( 'Please select websites or groups to add a user.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Number of Users to Import: %1 Created users: %2 Failed: %3', __( 'Number of Users to Import: %1 Created users: %2 Failed: %3', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please enter the username.', __( 'Please enter the username.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please enter the email.', __( 'Please enter the email.', 'mainwp' ) );

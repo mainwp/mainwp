@@ -12,7 +12,26 @@ class MainWP_Plugins {
 	public static $pluginsTable;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the Plugins page header via the 'mainwp-pageheader-plugins' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-plugins
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-plugins'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-plugins
+		 *
+		 * @see \MainWP_Plugins::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-plugins', array( MainWP_Plugins::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the Plugins page footer via the 'mainwp-pagefooter-plugins' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-plugins
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-plugins'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-plugins
+		 *
+		 * @see \MainWP_Plugins::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-plugins', array( MainWP_Plugins::getClassName(), 'renderFooter' ) );
 	}
 
@@ -49,6 +68,10 @@ class MainWP_Plugins {
 			'QSGManagePlugins',
 		) );
 
+		/**
+		 * This hook allows you to add extra sub pages to the Plugins page via the 'mainwp-getsubpages-plugins' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-plugins
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-plugins', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
@@ -100,6 +123,9 @@ class MainWP_Plugins {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		?>
 		<div class="wrap">
@@ -163,6 +189,9 @@ class MainWP_Plugins {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderFooter( $shownPage ) {
 		?>
 		</div>

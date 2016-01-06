@@ -126,6 +126,10 @@ class MainWP_Main {
 			'render'
 		), $page, 'normal', 'core');
 
+		/**
+		 * This hook allows you to add extra metaboxes to the dashboard via the 'mainwp-getmetaboxes' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getmetaboxes
+		 */
 		$extMetaBoxs = MainWP_System::Instance()->apply_filter( 'mainwp-getmetaboxes', array() );
 		$extMetaBoxs = apply_filters( 'mainwp-getmetaboxs', $extMetaBoxs );
 		foreach ( $extMetaBoxs as $metaBox ) {

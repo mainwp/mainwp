@@ -11,7 +11,26 @@ class MainWP_Themes {
 	public static $subPages;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the Themes page header via the 'mainwp-pageheader-themes' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-themes
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-themes'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-themes
+		 *
+		 * @see \MainWP_Themes::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-themes', array( MainWP_Themes::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the Themes page footer via the 'mainwp-pagefooter-themes' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-themes
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-themes'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-themes
+		 *
+		 * @see \MainWP_Themes::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-themes', array( MainWP_Themes::getClassName(), 'renderFooter' ) );
 	}
 
@@ -46,6 +65,10 @@ class MainWP_Themes {
 			'QSGManageThemes',
 		) );
 
+		/**
+		 * This hook allows you to add extra sub pages to the Themes page via the 'mainwp-getsubpages-themes' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-themes
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-themes', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
@@ -83,6 +106,9 @@ class MainWP_Themes {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		?>
 		<div class="wrap">
@@ -146,6 +172,9 @@ class MainWP_Themes {
 		<?php
 	}
 
+		/**
+		 * @param string $shownPage The page slug shown at this moment
+		 */
 	public static function renderFooter( $shownPage ) {
 		?>
 		</div>

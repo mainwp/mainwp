@@ -779,6 +779,7 @@ class MainWP_Right_Now {
 							'name'    => $plugin_upgrade['Name'],
 							'slug'    => $plugin_upgrade['update']['slug'],
 							'premium' => ( isset( $plugin_upgrade['premium'] ) ? $plugin_upgrade['premium'] : 0 ),
+							'uri'     => $plugin_upgrade['PluginURI'],
 						);
 					}
 				}
@@ -810,6 +811,8 @@ class MainWP_Right_Now {
 						$pluginsOutdateInfo[ $slug ] = array(
 							'Name'         => $plugin_outdate['Name'],
 							'last_updated' => ( isset( $plugin_outdate['last_updated'] ) ? $plugin_outdate['last_updated'] : 0 ),
+							'info'         => $plugin_outdate,
+							'uri'          => $plugin_outdate['PluginURI'],
 						);
 					}
 				}
@@ -1136,7 +1139,7 @@ class MainWP_Right_Now {
 							?>
 							<div class="mainwp-row">
                         <span class="mainwp-left-col">
-                            <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $pluginsInfo[ $slug ]['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
+                            <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $pluginsInfo[ $slug ]['slug'] . '&url=' . ( isset( $pluginsInfo[ $slug ]['uri'] ) ? rawurlencode( $pluginsInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsInfo[ $slug ]['name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
 	                            class="thickbox" title="More information about <?php echo $pluginsInfo[ $slug ]['name']; ?>">
 	                            <?php echo $pluginsInfo[ $slug ]['name']; ?>
                             </a>
@@ -1538,7 +1541,7 @@ class MainWP_Right_Now {
 							?>
 							<div class="mainwp-row">
                         <span class="mainwp-left-col">
-                            <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
+                            <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $pluginsOutdateInfo[ $slug ]['uri-'] ) ? rawurlencode( $pluginsOutdateInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsOutdateInfo[ $slug ]['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
 	                            class="thickbox" title="More information about <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>">
 	                            <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>
                             </a>

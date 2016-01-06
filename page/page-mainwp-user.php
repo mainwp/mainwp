@@ -11,7 +11,26 @@ class MainWP_User {
 	public static $subPages;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the User page header via the 'mainwp-pageheader-user' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-user
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-user'
+         * @link http://codex.mainwp.com/#mainwp-getsubpages-user
+		 *
+		 * @see \MainWP_User::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-user', array( MainWP_User::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the User page footer via the 'mainwp-pagefooter-user' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-user
+         *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-user'
+         * @link http://codex.mainwp.com/#mainwp-getsubpages-user
+		 *
+		 * @see \MainWP_User::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-user', array( MainWP_User::getClassName(), 'renderFooter' ) );
 	}
 
@@ -29,6 +48,10 @@ class MainWP_User {
 			'QSGManageUsers',
 		) );
 
+		/**
+		 * This hook allows you to add extra sub pages to the User page via the 'mainwp-getsubpages-user' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-user
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-user', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
@@ -64,6 +87,9 @@ class MainWP_User {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		?>
 		<div class="wrap">
@@ -107,6 +133,9 @@ class MainWP_User {
 		<?php
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderFooter( $shownPage ) {
 		?>
 		</div>

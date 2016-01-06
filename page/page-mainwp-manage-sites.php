@@ -11,7 +11,26 @@ class MainWP_Manage_Sites {
 	public static $sitesTable;
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the Sites page header via the 'mainwp-pageheader-sites' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-sites
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-sites'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-sites
+		 *
+		 * @see \MainWP_Manage_Sites::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-sites', array( MainWP_Manage_Sites::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the Sites page footer via the 'mainwp-pagefooter-sites' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-sites
+		 *
+		 * This hook is normally used in the same context of 'mainwp-getsubpages-sites'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-sites
+		 *
+		 * @see \MainWP_Manage_Sites::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-sites', array( MainWP_Manage_Sites::getClassName(), 'renderFooter' ) );
 
 		add_filter( 'set-screen-option', array( MainWP_Manage_Sites::getClassName(), 'setScreenOption' ), 10, 3 );
@@ -67,6 +86,10 @@ class MainWP_Manage_Sites {
 			'renderRestore',
 		) );
 
+		/**
+		 * This hook allows you to add extra sub pages to the Sites page via the 'mainwp-getsubpages-sites' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-sites
+		 */
 		self::$subPages = apply_filters( 'mainwp-getsubpages-sites', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
@@ -79,10 +102,16 @@ class MainWP_Manage_Sites {
 		MainWP_Manage_Sites_View::initMenuSubPages( self::$subPages );
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		MainWP_Manage_Sites_View::renderHeader( $shownPage, self::$subPages );
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderFooter( $shownPage ) {
 		MainWP_Manage_Sites_View::renderFooter( $shownPage, self::$subPages );
 	}
@@ -936,6 +965,10 @@ class MainWP_Manage_Sites {
 			'render',
 		), self::$page, 'normal', 'core' );
 
+		/**
+		 * This hook allows you to add extra metaboxes to the dashboard via the 'mainwp-getmetaboxes' filter.
+		 * @link http://codex.mainwp.com/#mainwp-getmetaboxes
+		 */
 		$extMetaBoxs = MainWP_System::Instance()->apply_filter( 'mainwp-getmetaboxes', array() );
 		$extMetaBoxs = apply_filters( 'mainwp-getmetaboxs', $extMetaBoxs );
 		foreach ( $extMetaBoxs as $metaBox ) {
@@ -1174,7 +1207,9 @@ class MainWP_Manage_Sites {
 
 				$http_user = $_POST['mainwp_managesites_edit_http_user'];
 				$http_pass = $_POST['mainwp_managesites_edit_http_pass'];
-				MainWP_DB::Instance()->updateWebsite( $website->id, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass );
+				$url = $_POST['mainwp_managesites_edit_siteurl_protocol'] . '://' . MainWP_Utility::removeHttpPrefix( $website->url, true);
+
+				MainWP_DB::Instance()->updateWebsite( $website->id, $url, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $_POST['offline_checks'], $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass );
 				do_action( 'mainwp_update_site', $website->id );
 
 				$backup_before_upgrade = isset( $_POST['mainwp_backup_before_upgrade'] ) ? intval( $_POST['mainwp_backup_before_upgrade'] ) : 2;

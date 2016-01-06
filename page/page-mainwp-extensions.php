@@ -56,7 +56,20 @@ class MainWP_Extensions {
 
 
 	public static function init() {
+		/**
+		 * This hook allows you to render the Extensions page header via the 'mainwp-pageheader-extensions' action.
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-extensions
+		 *
+		 * @see \MainWP_Extensions::renderHeader
+		 */
 		add_action( 'mainwp-pageheader-extensions', array( MainWP_Extensions::getClassName(), 'renderHeader' ) );
+
+		/**
+		 * This hook allows you to render the Extensions page footer via the 'mainwp-pagefooter-extensions' action.
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-extensions
+		 *
+		 * @see \MainWP_Extensions::renderFooter
+		 */
 		add_action( 'mainwp-pagefooter-extensions', array( MainWP_Extensions::getClassName(), 'renderFooter' ) );
 		add_filter( 'mainwp-extensions-apigeneratepassword', array(
 			MainWP_Extensions::getClassName(),
@@ -708,10 +721,16 @@ class MainWP_Extensions {
 		die( json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderHeader( $shownPage ) {
 		MainWP_Extensions_View::renderHeader( $shownPage, self::$extensions );
 	}
 
+	/**
+	 * @param string $shownPage The page slug shown at this moment
+	 */
 	public static function renderFooter( $shownPage ) {
 		MainWP_Extensions_View::renderFooter( $shownPage, self::$extensions );
 	}
@@ -889,7 +908,15 @@ class MainWP_Extensions {
 		return $dbwebsites;
 	}
 
-	public static function hookGetSites( $pluginFile, $key, $websiteid, $for_manager = false ) {
+	/**
+	 * @param string $pluginFile Extension plugin file to verify
+	 * @param string $key The child-key
+	 * @param int $websiteid The id of the child-site you wish to retrieve
+	 * @param bool $for_manager
+	 *
+	 * @return array|bool An array of arrays, the inner-array contains the id/url/name/totalsize of the website. False when something goes wrong.
+	 */
+	public static function hookGetSites( $pluginFile, $key, $websiteid = null, $for_manager = false ) {
 		if ( ! self::hookVerify( $pluginFile, $key ) ) {
 			return false;
 		}
@@ -934,6 +961,14 @@ class MainWP_Extensions {
 		return $output;
 	}
 
+	/**
+	 * @param string $pluginFile Extension plugin file to verify
+	 * @param string $key The child-key
+	 * @param int $groupid The id of the group you wish to retrieve
+	 * @param bool $for_manager
+	 *
+	 * @return array|bool An array of arrays, the inner-array contains the id/name/array of site ids for the supplied groupid/all groups. False when something goes wrong.
+	 */
 	public static function hookGetGroups( $pluginFile, $key, $groupid, $for_manager = false ) {
 		if ( ! self::hookVerify( $pluginFile, $key ) ) {
 			return false;

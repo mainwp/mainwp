@@ -237,7 +237,7 @@ class MainWP_Main {
 										<?php
 									} else {
 										?>
-										<h3><?php echo __( "Some child sites didn't sync correctly!", 'mainwp' ); ?></h3>
+										<h3><i class="fa fa-flag"></i> <?php echo __( "Some child sites didn't sync correctly!", 'mainwp' ); ?></h3>
 										<p class="about-description"><?php echo __( 'Check the Sync Status widget to review sites that have not been synced.', 'mainwp' ); ?></p>
 										<?php
 									}

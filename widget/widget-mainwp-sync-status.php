@@ -64,8 +64,8 @@ class MainWP_Sync_Status {
 
 				if ( $all_sites_synced ) {
 					esc_html_e( 'All sites synced.', 'mainwp' );
-				} else {
-					esc_html_e( 'Sites not synced in the last 24 hours.', 'mainwp' );
+				} else {					
+					echo '<div class="mainwp_info-box-red">' . esc_html__( 'Sites not synced in the last 24 hours.', 'mainwp' ) . '</div>';
 					echo $output;
 				}
 

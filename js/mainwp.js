@@ -662,7 +662,7 @@ mainwp_refresh_dashboard = function (syncSiteIds)
     {
         dashboard_update_site_status(allWebsiteIds[i], __('PENDING'));
     }
-    var nrOfWebsites = allWebsiteIds.length;
+    var nrOfWebsites = allWebsiteIds.length;    
     jQuery('#refresh-status-progress').progressbar({value: 0, max: nrOfWebsites});
     jQuery('#refresh-status-box').dialog({
         resizable: false,
@@ -728,7 +728,7 @@ dashboard_update_done = function()
 
     jQuery('#refresh-status-progress').progressbar('value', websitesDone);
     jQuery('#refresh-status-current').html(websitesDone);
-
+    
     if (websitesDone == websitesTotal)
     {
         setTimeout(function() {
@@ -1264,6 +1264,12 @@ rightnow_themes_upgrade = function (slug, websiteid) {
 
 /** /END NEW **/
 
+rightnow_wp_sync = function (websiteid) {
+    var syncIds = [];
+    syncIds.push(websiteid);
+    mainwp_refresh_dashboard(syncIds);      
+    return false;   
+};
 
 rightnow_upgrade_plugin = function (id, slug) {
     return rightnow_upgrade_plugintheme('plugin', id, slug);

@@ -506,6 +506,33 @@ class MainWP_DB {
 		return $this->wpdb->get_var( $qry );
 	}
 
+	public function getSitesSyncStatus( $userId = null ) {			
+		$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser();
+		$websites = MainWP_DB::Instance()->query( $sql );
+		if ( ! $websites ) {
+			return 'all_synced';
+		}
+		$total_sites = 0;
+		$synced_sites = 0;
+		@MainWP_DB::data_seek( $websites, 0 );
+		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {									
+			if ( empty($website) || $website->sync_errors != '' ) {
+				continue;
+			}	
+			$total_sites++;
+			if ( time() - $website->dtsSync  < 60 * 60 * 24 )  {
+				$synced_sites++;
+			}			
+		}
+		
+		if ($total_sites == $synced_sites) {
+			return 'all_synced';
+		} else if ($synced_sites == 0) {
+			return 'not_synced';
+		}		
+		return false;
+	}
+
 	public function getRequestsSince( $pSeconds ) {
 		$where = $this->getWhereAllowAccessSites( 'wp' );
 		$qry   = 'SELECT count(*) FROM ' . $this->tableName( 'wp' ) . ' wp JOIN ' . $this->tableName( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE wp_sync.dtsSyncStart > ' . ( time() - $pSeconds ) . $where;
@@ -524,10 +551,6 @@ class MainWP_DB {
 		$qry = 'SELECT COUNT(wp.id) FROM ' . $this->tableName( 'wp' ) . ' wp WHERE 1 ' . $where;
 
 		return $this->wpdb->get_var( $qry );
-	}
-
-	public function getAllowedSiteIds() {
-
 	}
 
 	public function getWebsiteOption( $website, $option ) {

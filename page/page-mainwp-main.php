@@ -120,6 +120,13 @@ class MainWP_Main {
 			'render'
 		), $page, 'normal', 'core');
 
+		if ( !MainWP_Utility::get_current_wpid() ) {
+			add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Sync_Status::getName(), array(
+				MainWP_Sync_Status::getClassName(),
+				'render',
+			), $page, 'normal', 'core' );
+		}
+
 		$extMetaBoxs = MainWP_System::Instance()->apply_filter( 'mainwp-getmetaboxes', array() );
 		$extMetaBoxs = apply_filters( 'mainwp-getmetaboxs', $extMetaBoxs );
 		foreach ( $extMetaBoxs as $metaBox ) {
@@ -203,17 +210,38 @@ class MainWP_Main {
 										$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
 									}
 								}
-								if ( ( time() - ( $website == null ? MainWP_DB::Instance()->getFirstSyncedSite() : $website->dtsSync ) ) > ( 60 * 60 * 24 ) ) {
-									?><h3>
-									<i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?>
-									</h3>
-									<p class="about-description"><?php _e( 'Click the Sync Data button to get the latest data from child sites.', 'mainwp' ); ?></p>
-									<?php
+								if ($website !== null) {
+									if ( ( time() - $website->dtsSync ) > ( 60 * 60 * 24 ) ) {
+										?><h3>
+										<i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?>
+										</h3>
+										<p class="about-description"><?php _e( 'Click the Sync Data button to get the latest data from child sites.', 'mainwp' ); ?></p>
+										<?php
+									} else {
+										?>
+										<h3><?php echo sprintf( __( 'Welcome to %s Dashboard!', 'mainwp' ), stripslashes( $website->name ) ); ?></h3>
+										<p class="about-description"><?php echo sprintf( __( 'This information is only for %s%s', 'mainwp' ), $imgfavi, MainWP_Utility::getNiceURL( $website->url, true ) ); ?></p>
+										<?php
+									}
 								} else {
-									?>
-									<h3><?php echo( ( $website == null ) ? __( 'Welcome to Your MainWP Dashboard!', 'mainwp' ) : sprintf( __( 'Welcome to %s Dashboard!', 'mainwp' ), stripslashes( $website->name ) ) ); ?></h3>
-									<p class="about-description"><?php echo( ( $website == null ) ? __( 'Manage your WordPress sites with ease.', 'mainwp' ) : sprintf( __( 'This information is only for %s%s', 'mainwp' ), $imgfavi, MainWP_Utility::getNiceURL( $website->url, true ) ) ); ?></p>
-									<?php
+									$sync_status = MainWP_DB::Instance()->getSitesSyncStatus();
+									if ( $sync_status === 'not_synced' ) {
+										?><h3>
+										<i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?>
+										</h3>
+										<p class="about-description"><?php _e( 'Click the Sync Data button to get the latest data from child sites.', 'mainwp' ); ?></p>
+										<?php
+									} else if ( $sync_status === 'all_synced' ) {
+										?>
+										<h3><?php echo __( 'Welcome to Your MainWP Dashboard!', 'mainwp' ); ?></h3>
+										<p class="about-description"><?php echo __( 'Manage your WordPress sites with ease.', 'mainwp' ); ?></p>
+										<?php
+									} else {
+										?>
+										<h3><?php echo __( "Some child sites didn't sync correctly!", 'mainwp' ); ?></h3>
+										<p class="about-description"><?php echo __( 'Please check Last Sync date in the Manage Sites list.', 'mainwp' ); ?></p>
+										<?php
+									}
 								}
 								?>
 							</div>

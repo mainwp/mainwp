@@ -248,7 +248,7 @@ class MainWP_Security_Issues {
 				<div class="mainwp-row-top darkred">
 					<span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_securityIssues; ?></span> <?php echo _n( 'Security issue', 'Security issues', $total_securityIssues, 'mainwp' ); ?></span>
 					<span class="mainwp-mid-col">&nbsp;</span>
-					<span class="mainwp-right-col"><a href="#" id="mainwp_securityissues_show" onClick="return rightnow_show('securityissues');"><?php _e( 'Show All', 'mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" class="securityIssues_dashboard_allFixAll button-primary" value="<?php _e( 'Fix All', 'mainwp' ); ?>"/></span>
+					<span class="mainwp-right-col"><a href="#" id="mainwp_securityissues_show" onClick="return rightnow_show('securityissues');"><i class="fa fa-eye-slash"></i> <?php _e( 'Show All', 'mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" class="securityIssues_dashboard_allFixAll button-primary" value="<?php _e( 'Fix All', 'mainwp' ); ?>"/></span>
 				</div>
 				<div id="wp_securityissues" style="display: none">
 					<?php

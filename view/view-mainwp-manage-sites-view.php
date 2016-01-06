@@ -1790,9 +1790,9 @@ class MainWP_Manage_Sites_View {
 					$themeConflicts = array_filter( $themeConflicts );}
 				$verifyCertificate = ( !isset( $_POST['verify_certificate'] ) || empty( $_POST['verify_certificate'] ) ? null : $_POST['verify_certificate']);
 				$sslVersion = MainWP_Utility::getCURLSSLVersion( !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version']);
-				$addUniqueId = $_POST['managesites_add_uniqueId'];
-				$http_user = $_POST['managesites_add_http_user'];
-				$http_pass = $_POST['managesites_add_http_pass'];
+				$addUniqueId = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : '';
+				$http_user = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
+				$http_pass = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';
 				$information = MainWP_Utility::fetchUrlNotAuthed($url, $_POST['managesites_add_wpadmin'], 'register',
 					array(
 					'pubkey' => $pubkey,
@@ -1837,8 +1837,8 @@ class MainWP_Manage_Sites_View {
 						if ( ! isset( $information['uniqueId'] ) || empty( $information['uniqueId'] ) ) {
 							$addUniqueId = '';}
 
-						$http_user = $_POST['managesites_add_http_user'];
-						$http_pass = $_POST['managesites_add_http_pass'];
+						$http_user = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
+						$http_pass = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';
 						global $current_user;
 						$id = MainWP_DB::Instance()->addWebsite($current_user->ID, $_POST['managesites_add_wpname'], $_POST['managesites_add_wpurl'], $_POST['managesites_add_wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], (isset( $information['nosslkey'] )
 								? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion);

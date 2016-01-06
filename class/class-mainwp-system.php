@@ -48,10 +48,6 @@ class MainWP_System {
 	}
 
 	public function __construct( $mainwp_plugin_file ) {
-		if ( !defined( 'MAINWP_VERSION' ) ) {
-			define( 'MAINWP_VERSION', $this->current_version );
-		}
-
 		MainWP_System::$instance = $this;
 		$this->update();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
@@ -70,6 +66,11 @@ class MainWP_System {
 			}
 			MainWP_Utility::update_option( 'mainwp_plugin_version', $this->current_version );
 		}
+
+		if ( !defined( 'MAINWP_VERSION' ) ) {
+			define( 'MAINWP_VERSION', $this->current_version );
+		}
+
 
 		if ( ( get_option( 'mainwp_upgradeVersionInfo' ) != '' ) && ( get_option( 'mainwp_upgradeVersionInfo' ) != null ) ) {
 			$this->upgradeVersionInfo = unserialize( get_option( 'mainwp_upgradeVersionInfo' ) );

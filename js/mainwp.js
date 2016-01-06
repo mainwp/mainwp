@@ -1264,6 +1264,12 @@ rightnow_themes_upgrade = function (slug, websiteid) {
 
 /** /END NEW **/
 
+rightnow_wp_sync = function (websiteid) {
+    var syncIds = [];
+    syncIds.push(websiteid);
+    mainwp_refresh_dashboard(syncIds);
+    return false;
+};
 
 rightnow_upgrade_plugin = function (id, slug) {
     return rightnow_upgrade_plugintheme('plugin', id, slug);

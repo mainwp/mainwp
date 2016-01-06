@@ -74,6 +74,12 @@ class MainWP_Main {
 			MainWP_Right_Now::getClassName(),
 			'render',
 		), $page, 'normal', 'core' );
+		if ( !MainWP_Utility::get_current_wpid() ) {
+			add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Sync_Status::getName(), array(
+				MainWP_Sync_Status::getClassName(),
+				'render',
+			), $page, 'normal', 'core' );
+		}
 		if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
 			add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Recent_Posts::getName(), array(
 				MainWP_Recent_Posts::getClassName(),
@@ -119,13 +125,6 @@ class MainWP_Main {
 			MainWP_How_To::getClassName(),
 			'render'
 		), $page, 'normal', 'core');
-
-		if ( !MainWP_Utility::get_current_wpid() ) {
-			add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Sync_Status::getName(), array(
-				MainWP_Sync_Status::getClassName(),
-				'render',
-			), $page, 'normal', 'core' );
-		}
 
 		$extMetaBoxs = MainWP_System::Instance()->apply_filter( 'mainwp-getmetaboxes', array() );
 		$extMetaBoxs = apply_filters( 'mainwp-getmetaboxs', $extMetaBoxs );
@@ -224,7 +223,7 @@ class MainWP_Main {
 										<?php
 									}
 								} else {
-									$sync_status = MainWP_DB::Instance()->getSitesSyncStatus();
+									$sync_status = MainWP_DB::Instance()->getLastSyncStatus();
 									if ( $sync_status === 'not_synced' ) {
 										?><h3>
 										<i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?>
@@ -233,13 +232,13 @@ class MainWP_Main {
 										<?php
 									} else if ( $sync_status === 'all_synced' ) {
 										?>
-										<h3><?php echo __( 'Welcome to Your MainWP Dashboard!', 'mainwp' ); ?></h3>
+										<h3><?php echo __( 'All sites have been synced within the last 24 hours!', 'mainwp' ); ?></h3>
 										<p class="about-description"><?php echo __( 'Manage your WordPress sites with ease.', 'mainwp' ); ?></p>
 										<?php
 									} else {
 										?>
 										<h3><?php echo __( "Some child sites didn't sync correctly!", 'mainwp' ); ?></h3>
-										<p class="about-description"><?php echo __( 'Please check Last Sync date in the Manage Sites list.', 'mainwp' ); ?></p>
+										<p class="about-description"><?php echo __( 'Check the Sync Status widget to review sites that have not been synced.', 'mainwp' ); ?></p>
 										<?php
 									}
 								}

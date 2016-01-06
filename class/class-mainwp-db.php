@@ -506,7 +506,7 @@ class MainWP_DB {
 		return $this->wpdb->get_var( $qry );
 	}
 
-	public function getSitesSyncStatus( $userId = null ) {			
+	public function getLastSyncStatus( $userId = null ) {			
 		$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser();
 		$websites = MainWP_DB::Instance()->query( $sql );
 		if ( ! $websites ) {

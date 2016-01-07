@@ -288,7 +288,7 @@ class MainWP_Setup_Wizard {
 	public function mwp_setup_installation_save() {
 		check_admin_referer( 'mwp-setup' );
 		$hosting_type = intval( $_POST['mwp_setup_installation_hosting_type'] );
-		$system_type = intval( $_POST['mwp_setup_installation_system_type'] );
+		$system_type = isset( $_POST['mwp_setup_installation_system_type'] ) ? intval( $_POST['mwp_setup_installation_system_type'] ) : 0;
 		MainWP_Utility::update_option('mwp_setup_installationHostingType', $hosting_type);
 
 		if ($hosting_type == 1)

@@ -15,8 +15,8 @@ class MainWP_API_Settings {
 
 	public static function checkUpgrade() {
 		$result   = MainWP_Extensions::getSlugs();
-		$slugs    = $result['slugs'];
-		$am_slugs = $result['am_slugs'];
+		$slugs    = isset( $result['slugs'] ) ? $result['slugs'] : '';
+		$am_slugs = isset( $result['am_slugs'] ) ? $result['am_slugs'] : '';
 		$output   = array();
 
 		if ( $am_slugs != '' ) {

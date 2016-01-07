@@ -220,9 +220,9 @@ class MainWP_Post {
 			<input type="button" name="mainwp_show_posts" id="mainwp_show_posts" class="button-primary button button-hero button-right" value="<?php _e( 'Show Posts', 'mainwp' ); ?>"/>
 			<?php
 			if ( isset( $_REQUEST['siteid'] ) && isset( $_REQUEST['postid'] ) ) {
-				echo '<script>jQuery(document).ready(function() { mainwp_show_post(' . $_REQUEST['siteid'] . ', ' . $_REQUEST['postid'] . ', undefined)});</script>';
+				echo '<script>jQuery(document).ready(function() { mainwp_show_post(' . esc_attr( esc_html( $_REQUEST['siteid'] ) ) . ', ' . esc_attr( esc_html( $_REQUEST['postid'] ) ) . ', undefined)});</script>';
 			} else if ( isset( $_REQUEST['siteid'] ) && isset( $_REQUEST['userid'] ) ) {
-				echo '<script>jQuery(document).ready(function() { mainwp_show_post(' . $_REQUEST['siteid'] . ', undefined, ' . $_REQUEST['userid'] . ')});</script>';
+				echo '<script>jQuery(document).ready(function() { mainwp_show_post(' . esc_attr( esc_html( $_REQUEST['siteid'] ) ) . ', undefined, ' . esc_attr( esc_html( $_REQUEST['userid'] ) ) . ')});</script>';
 			}
 			?>
 			<br/><br/>
@@ -590,7 +590,7 @@ class MainWP_Post {
 
 			return;
 		}
-		$src = get_site_url() . '/wp-admin/post-new.php?post_type=bulkpost&hideall=1' . ( isset( $_REQUEST['select'] ) ? '&select=' . $_REQUEST['select'] : '' );
+		$src = get_site_url() . '/wp-admin/post-new.php?post_type=bulkpost&hideall=1' . ( isset( $_REQUEST['select'] ) ? '&select=' . esc_attr( $_REQUEST['select'] ) : '' );
 		$src = apply_filters( 'mainwp_bulkpost_edit_source', $src );
 		//Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
 		self::renderHeader( 'BulkAdd' ); ?>

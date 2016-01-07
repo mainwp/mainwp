@@ -105,7 +105,7 @@ class MainWP_Server_Information {
 			<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
 				<thead>
 				<tr>
-					<th scope="col" class="manage-column column-posts mwp-not-generate-row" style="width: 1px;"><?php _e( '', 'mainwp' ); ?></th>
+					<th scope="col" class="manage-column column-posts mwp-not-generate-row" style="width: 1px;"></th>
 					<th scope="col" class="manage-column sorted" style="">
 						<span><?php _e( 'Server Configuration', 'mainwp' ); ?></span></th>
 					<th scope="col" class="manage-column column-posts" style=""><?php _e( 'Required Value', 'mainwp' ); ?></th>

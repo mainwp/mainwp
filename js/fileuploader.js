@@ -500,6 +500,7 @@ qq.FileUploader = function(o){
         '<span class="qq-upload-spinner"></span>' +
         '<span class="qq-upload-size"></span>' +
         '<a class="qq-upload-cancel" href="#">Cancel</a>' +
+        '<a class="qq-upload-cancel-install" href="#">Cancel</a>' +
         '<span class="qq-upload-failed-text">Failed</span>' +
         '</li>',        
         
@@ -514,6 +515,7 @@ qq.FileUploader = function(o){
             spinner: 'qq-upload-spinner',
             size: 'qq-upload-size',
             cancel: 'qq-upload-cancel',
+            cancel_install: 'qq-upload-cancel-install',
 
             // added to list item when upload completes
             // used in css to hide progress spinner
@@ -533,6 +535,7 @@ qq.FileUploader = function(o){
     this._button = this._createUploadButton(this._find(this._element, 'button'));        
     
     this._bindCancelEvent();
+    this._bindCancelInstallEvent();
     this._setupDragDrop();
 };
 
@@ -622,12 +625,8 @@ qq.extend(qq.FileUploader.prototype, {
             qq.addClass(item, this._classes.success);
             //MAINWP custom code
             totalSuccess++;
-            if (totalSuccess > 0) {
-                jQuery('#MainWP_Install_BulkInstallNow').css('display', 'block');
-            } else {
-                jQuery('#MainWP_Install_BulkInstallNow').css('display', 'none');
-            }
             this._find(item, 'file').setAttribute('filename', fileName);
+            this._find(item, 'cancel_install').style.display = 'inline';
             //MAINWP custom code
         } else {
             qq.addClass(item, this._classes.fail);
@@ -640,6 +639,7 @@ qq.extend(qq.FileUploader.prototype, {
         var fileElement = this._find(item, 'file');        
         qq.setText(fileElement, this._formatFileName(fileName));
         this._find(item, 'size').style.display = 'none';        
+        this._find(item, 'cancel_install').style.display = 'none';  
 
         this._listElement.appendChild(item);
     },
@@ -669,6 +669,21 @@ qq.extend(qq.FileUploader.prototype, {
                
                 var item = target.parentNode;
                 self._handler.cancel(item.qqFileId);
+                qq.remove(item);
+            }
+        });
+    },    
+    _bindCancelInstallEvent: function(){
+        var self = this,
+        list = this._listElement;            
+        
+        qq.attach(list, 'click', function(e){            
+            e = e || window.event;
+            var target = e.target || e.srcElement;
+            
+            if (qq.hasClass(target, self._classes.cancel_install)){                
+                qq.preventDefault(e);               
+                var item = target.parentNode;                
                 qq.remove(item);
             }
         });
@@ -909,7 +924,7 @@ qq.UploadHandlerAbstract.prototype = {
     cancel: function(id){
         this._cancel(id);
         this._dequeue(id);
-    },
+    },    
     /**
      * Cancells all uploads
      */
@@ -1002,7 +1017,7 @@ qq.extend(qq.UploadHandlerForm.prototype, {
 
             qq.remove(iframe);
         }
-    },     
+    },       
     _upload: function(id, params){                        
         var input = this._inputs[id];
         

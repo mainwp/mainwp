@@ -2821,7 +2821,12 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {
 .mainwp-upload-plugin, body.show-upload-plugin .hide-if-upload, body.show-upload-theme .hide-if-upload{
     display: none;
 }
-
+.show-if-upload{
+    display: none !important;
+}
+body.show-upload-theme .show-if-upload, body.show-upload-plugin .show-if-upload {
+    display: block !important;
+}
 body.show-upload-plugin .mainwp-upload-plugin {
     display: block;
 }

@@ -236,7 +236,7 @@ class MainWP_Main {
 										<?php
 									} else if ( $sync_status === 'all_synced' ) {
 										?>
-										<h3><?php echo __( 'All sites have been synced within the last 24 hours!', 'mainwp' ); ?></h3>
+										<h3><?php echo __( 'All sites have been synced within the last 24 hours', 'mainwp' ); ?>!</h3>
 										<p class="about-description"><?php echo __( 'Manage your WordPress sites with ease.', 'mainwp' ); ?></p>
 										<?php
 									} else {

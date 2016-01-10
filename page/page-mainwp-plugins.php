@@ -956,7 +956,7 @@ class MainWP_Plugins {
 		<?php MainWP_UI::select_sites_box(__("Step 2: Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right'); ?>
 
 		<div class="mainwp_config_box_right">
-			<div class="postbox hide-if-upload">
+			<div class="postbox">
 				<h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'Step 3: Installation Options', 'mainwp' ); ?></h3>
 				<div class="inside">
 					<input type="checkbox" value="1" checked id="chk_activate_plugin" /> <label for="chk_activate_plugin"><?php _e('Activate Plugin After Installation','mainwp'); ?></label><br/>
@@ -964,6 +964,7 @@ class MainWP_Plugins {
 				</div>
 			</div>
 			<input type="button" value="<?php _e( "Complete Installation", 'mainwp' ); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_plugin_bulk_install_btn" name="bulk-install">
+			<input type="button" value="<?php _e( 'Complete Installation','mainwp' ); ?>" class="button-primary button button-hero button-right show-if-upload" onClick="mainwp_upload_bulk('plugins');">
 		</div>
 		<div style="clear: both;"></div>
 

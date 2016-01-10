@@ -37,7 +37,7 @@ class MainWP_Install_Bulk {
 		?>
 		<div class="postbox">
 			<h3 class="mainwp_box_title">
-				<i class="fa fa-upload"></i> <?php _e( 'Upload', 'mainwp' ); ?> <?php echo $title; ?></h3>
+				<i class="fa fa-upload"></i> <?php echo ($title == 'Plugins') ? __( 'Step 1: Upload Plugins', 'mainwp' ) : __( 'Step 1: Upload Themes', 'mainwp' ); ?></h3>
 
 			<div class="inside">
 				<?php if ( $title == 'Plugins' ) { ?>
@@ -46,7 +46,7 @@ class MainWP_Install_Bulk {
 							<a href="<?php echo get_admin_url(); ?>plugin-install.php" style="text-decoration: none;"> <?php _e( 'plugin screen.', 'mainwp' ); ?></a></span>
 					</div>
 				<?php } ?>
-				<div style="font-size: 20px; text-align: center; margin: 3em 0;"><?php _e( 'If you have', 'mainwp' ); ?><?php echo strtolower( $title ); ?><?php _e( 'in a .zip format, you may install it by uploading it here.', 'mainwp' ); ?></div>
+				<div style="font-size: 20px; text-align: center; margin: 3em 0;"><?php _e( 'If you have', 'mainwp' ); ?> <?php echo strtolower( $title ); ?> <?php _e( 'in a .zip format, you may install it by uploading it here.', 'mainwp' ); ?></div>
 				<div id="mainwp-file-uploader">
 					<noscript>
 						<p><?php _e( 'Please enable JavaScript to use file uploader.', 'mainwp' ); ?></p>
@@ -71,19 +71,12 @@ class MainWP_Install_Bulk {
 					// in your app create uploader as soon as the DOM is ready
 					// don't wait for the window to load
 					createUploader();
-				</script>
-				<div id="MainWP_Install_BulkInstallNow" style="display: none">
-					<?php if ( $title == 'Plugins' ) {
-						echo '<br />&nbsp;&nbsp;<input type="checkbox" value="1" checked id="chk_activate_plugin_upload" /> <label for="chk_activate_plugin_upload">Activate plugin after installation</label>';
-					} ?>
-					<br />&nbsp;&nbsp;<input type="checkbox" value="2" checked id="chk_overwrite_upload" />
-					<label for="chk_overwrite_upload"><?php echo ( $title == 'Plugins' ) ? __('Overwrite existing Plugin, if already installed', 'mainwp') : __('Overwrite existing Theme, if already installed', 'mainwp'); ?></label><br />
-					<br /><input type="button" class="button button-primary button-hero" value="<?php _e('Install Now','mainwp'); ?>" id="mainwp_upload_bulk_button" onClick="mainwp_upload_bulk('<?php echo strtolower($title); ?>');">
-				</div>
+				</script>				
 			</div>
 		</div>
 		<?php
 	}
+
 
 	public static function prepareInstall() {
 		include_once( ABSPATH . '/wp-admin/includes/plugin-install.php' );

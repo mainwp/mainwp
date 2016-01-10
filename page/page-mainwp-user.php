@@ -714,11 +714,13 @@ class MainWP_User {
 
 			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">
 				<div class="mainwp_config_box_right">
-					<?php MainWP_UI::select_sites_box( __( 'Select Sites', 'mainwp' ) ); ?>
+					<?php MainWP_UI::select_sites_box( __( 'Setp 2: Select Sites', 'mainwp' ) ); ?>
+					<input type="button" name="createuser" id="bulk_add_createuser" class="button-primary button button-hero button-right"
+						value="<?php _e( 'Add New User', 'mainwp' ); ?> "/>
 				</div>
 				<div class="mainwp_config_box_left" style="width: calc(100% - 290px);">
 					<div class="postbox">
-                		<h3 class="mainwp_box_title"><span><i class="fa fa-user-plus"></i> <?php _e('Add a Single User','mainwp'); ?></span></h3>
+                		<h3 class="mainwp_box_title"><span><i class="fa fa-user-plus"></i> <?php _e('Step 1: Add a Single User','mainwp'); ?></span></h3>
 
                     	<div class="inside">
 							<table class="form-table">
@@ -922,8 +924,6 @@ class MainWP_User {
 				</div>
 
 				<div class="clear"></div>
-				<p class="submit"><input type="button" name="createuser" id="bulk_add_createuser" class="button-primary button button-hero"
-						value="<?php _e( 'Add New User', 'mainwp' ); ?> "/></p>
 			</form>
 		</div>
 		<?php

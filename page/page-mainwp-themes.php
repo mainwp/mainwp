@@ -1055,14 +1055,16 @@ class MainWP_Themes {
 		</script>
 		<?php MainWP_UI::select_sites_box( __("Step 2: Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right' ); ?>
 		<div class="mainwp_config_box_right">
-			<div class="postbox install-theme-settings hide-if-upload">
+			<div class="postbox install-theme-settings">
 				<h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'Step 3: Installation Options', 'mainwp' ); ?></h3>
 				<div class="inside">
 					<input type="checkbox" value="2" checked id="chk_overwrite" /> <label for="chk_overwrite"><?php _e('Overwrite Existing theme, if already installed', 'mainwp'); ?></label>
 				</div>
 			</div>
 
-			<input type="button" value="<?php _e( "Complete Installation", 'mainwp' ); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_theme_bulk_install_btn" name="bulk-install">
+			<input type="button" value="<?php _e( "Complete Installation", 'mainwp' ); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_theme_bulk_install_btn" name="bulk-install">			
+			<input type="button" value="<?php _e( 'Complete Installation','mainwp' ); ?>" class="button-primary button button-hero button-right show-if-upload" onClick="mainwp_upload_bulk('themes');">
+
 		</div>
 		<div style="clear: both;"></div>
 

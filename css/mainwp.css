@@ -2879,3 +2879,6 @@ body.show-upload-plugin .mainwp-upload-plugin {
 .plugin-update-tr .api-deactivate {
     background-color: #fcf3ef;
 }
+#plugin-information-footer a {
+    display: none;
+}

@@ -407,10 +407,7 @@ class MainWP_Extensions_View {
 								?>
 								<a target="_blank"
 								   href="<?php echo str_replace(array("http:", "https:"), "", $ext['link']); ?>"
-								   class="button">Find Out More</a>
-								<a target="_blank"
-								   href="<?php echo str_replace(array("http:", "https:"), "", '//extensions.mainwp.com/checkout/?add-to-cart=' . $ext['catalog_id']); ?>"
-								   class="button button-primary mainwp-upgrade-button">Order Now</a>
+								   class="button"><?php _e( 'Find Out More', 'mainwp' ); ?></a>
 							</div>
 							<div class="mainwp-av-ext-desciption">
 								<h2><?php echo $ext['title'] ?></h2>

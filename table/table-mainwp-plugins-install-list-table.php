@@ -391,7 +391,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 			<div class="plugin-card-top">
 				<a href="<?php echo esc_url( $details_link ); ?>" class="thickbox"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" class="plugin-icon" /></a>
 				<div class="name column-name" style="margin-right: 0!important;">
-					<h4><a href="<?php echo esc_url( $details_link ); ?>" class="thickbox"><?php echo $title; ?></a></h4>
+					<h3><a href="<?php echo esc_url( $details_link ); ?>" class="thickbox"><?php echo $title; ?></a></h3>
 				</div>
 				<div class="desc column-description" style="margin-right: 0!important;">
 					<p><?php echo $description; ?></p>

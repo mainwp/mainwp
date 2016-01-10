@@ -308,7 +308,7 @@ class MainWP_Offline_Checks {
 				<table class="form-table">
 					<tbody>
 					<tr>
-						<th scope="row"><?php _e( 'Online Notifications', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Network will monitor your sites for downtime and uptime.  By default emails are only sent when your site is down.', 'mainwp' ) ); ?></th>
+						<th scope="row"><?php _e( 'Online Notifications', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Network will monitor your sites for downtime and uptime.  By default emails are only sent when your site is down.', 'mainwp' ) ); ?></th>
 						<td>
 							<div class="mainwp-checkbox">
 								<input type="checkbox" name="mainwp_options_offlinecheck_onlinenotification"

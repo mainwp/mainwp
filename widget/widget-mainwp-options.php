@@ -88,7 +88,7 @@ class MainWP_Options {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php _e('Optimize for Shared Hosting or Big Networks','mainwp'); ?> <?php MainWP_Utility::renderToolTip( __('Updates will be cached for quick loading. A manual refresh from the Dashboard is required to view new plugins, themes, pages or users. Recommended for Networks over 50 sites.', 'mainwp' )); ?></th>
+						<th scope="row"><?php _e('Optimize for Shared Hosting or Big Networks','mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __('Updates will be cached for quick loading. A manual refresh from the Dashboard is required to view new plugins, themes, pages or users. Recommended for Networks over 50 sites.', 'mainwp' )); ?></th>
 						<td>
 							<div class="mainwp-checkbox">
 								<input type="checkbox" name="mainwp_optimize"
@@ -110,13 +110,13 @@ class MainWP_Options {
 				<table class="form-table">
 					<tbody>
 					<tr>
-						<th scope="row"><?php _e( 'Notification Email', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'This address is used to send monitoring alerts.', 'mainwp' ) ); ?></th>
+						<th scope="row"><?php _e( 'Notification Email', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'This address is used to send monitoring alerts.', 'mainwp' ) ); ?></th>
 						<td>
 							<input type="text" class="" name="mainwp_options_email" size="35" value="<?php echo $user_email; ?>"/><span class="mainwp-form_hint"><?php _e( 'This address is used to send monitoring alerts.', 'mainwp' ); ?></span>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php _e( 'Use WP-Cron', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'When not using WP-Cron you will need to set up a cron job via your hosting.', 'mainwp' ), 'http://docs.mainwp.com/disable-wp-cron/' ); ?></th>
+						<th scope="row"><?php _e( 'Use WP-Cron', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'When not using WP-Cron you will need to set up a cron job via your hosting.', 'mainwp' ), 'http://docs.mainwp.com/disable-wp-cron/' ); ?></th>
 						<td>
 							<div class="mainwp-checkbox">
 								<input type="checkbox" name="mainwp_options_wp_cron"
@@ -127,7 +127,7 @@ class MainWP_Options {
 					</tr>
 					<?php if ( MainWP_Utility::isAdmin() ) { ?>
 						<tr>
-							<th scope="row"><?php _e( 'Show Basic SEO Stats', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'This requires your Dashboard to query the Google servers for this information.', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Show Basic SEO Stats', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'This requires your Dashboard to query the Google servers for this information.', 'mainwp' ) ); ?></th>
 							<td>
 								<div class="mainwp-checkbox">
 									<input type="checkbox" name="mainwp_seo"
@@ -150,7 +150,7 @@ class MainWP_Options {
 				<table class="form-table">
 					<tbody>
 					<tr>
-						<th scope="row"><?php _e( 'Require Backup Before Upgrade', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'With this option enabled, when you try to upgrade a plugin, theme or WordPress core, MainWP will check if there is a full backup created for the site(s) you are trying to upgrade in last 7 days. If you have a fresh backup of the site(s) MainWP will proceed to the upgrade process, if not it will ask you to create a full backup.', 'mainwp' ) ); ?></th>
+						<th scope="row"><?php _e( 'Require Backup Before Upgrade', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'With this option enabled, when you try to upgrade a plugin, theme or WordPress core, MainWP will check if there is a full backup created for the site(s) you are trying to upgrade in last 7 days. If you have a fresh backup of the site(s) MainWP will proceed to the upgrade process, if not it will ask you to create a full backup.', 'mainwp' ) ); ?></th>
 						<td>
 							<div class="mainwp-checkbox">
 								<input type="checkbox" name="mainwp_backup_before_upgrade" id="mainwp_backup_before_upgrade" size="35" <?php echo( $backup_before_upgrade == 1 ? 'checked="true"' : '' ); ?>/>
@@ -159,7 +159,7 @@ class MainWP_Options {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php _e( 'Automatic Daily Update', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Choose to have MainWP install updates, or notify you by email of available updates.  Updates apply to WordPress Core files, Plugins and Themes.', 'mainwp' ) ); ?></th>
+						<th scope="row"><?php _e( 'Automatic Daily Update', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Choose to have MainWP install updates, or notify you by email of available updates.  Updates apply to WordPress Core files, Plugins and Themes.', 'mainwp' ) ); ?></th>
 						<td>
 							<table class="mainwp-nomarkup">
 								<tr>
@@ -180,7 +180,7 @@ class MainWP_Options {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php _e( 'Abandoned Plugins/Thems Tolerance', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( "In case the plugin or theme author didn't release an update for the set number of days, the plugin/theme will be marked and Possibly Abandoned.", 'mainwp' ) ); ?></th>
+						<th scope="row"><?php _e( 'Abandoned Plugins/Thems Tolerance', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( "In case the plugin or theme author didn't release an update for the set number of days, the plugin/theme will be marked and Possibly Abandoned.", 'mainwp' ) ); ?></th>
 						<td>
 							<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" class=""
 								id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo( ( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) === false ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
@@ -200,14 +200,14 @@ class MainWP_Options {
 				<table class="form-table">
 					<tbody>
 					<tr>
-						<th scope="row"><?php _e( 'Maximum Number of Posts/Pages', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( '0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.', 'mainwp' ) ); ?></th>
+						<th scope="row"><?php _e( 'Maximum Number of Posts/Pages', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( '0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.', 'mainwp' ) ); ?></th>
 						<td>
 							<input type="text" name="mainwp_maximumPosts" class=""
 								id="mainwp_maximumPosts" value="<?php echo( ( get_option( 'mainwp_maximumPosts' ) === false ) ? 50 : get_option( 'mainwp_maximumPosts' ) ); ?>"/>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php _e( 'Maximum Number of Comments', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( '0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.', 'mainwp' ) ); ?></th>
+						<th scope="row"><?php _e( 'Maximum Number of Comments', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( '0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.', 'mainwp' ) ); ?></th>
 						<td>
 							<input type="text" name="mainwp_maximumComments" class=""
 								id="mainwp_maximumComments" value="<?php echo( ( get_option( 'mainwp_maximumComments' ) === false ) ? 50 : get_option( 'mainwp_maximumComments' ) ); ?>"/>

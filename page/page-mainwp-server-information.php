@@ -120,7 +120,7 @@ class MainWP_Server_Information {
 				</tr>
 				<tr>
 					<td><?php MainWP_Utility::renderToolTip( 'MainWP requires the latest version to be installed for extension and child plugin compatibility issues.', 'mainwp' ); ?></td>
-					<td>MainWP Dashboard Version</td>
+					<td><?php _e( 'MainWP Dashboard Version', 'mainwp' ); ?></td>
 					<td><?php echo self::getMainWPVersion(); ?></td>
 					<td><?php echo self::getCurrentVersion(); ?></td>
 					<td><?php echo self::getMainWPVersionCheck(); ?></td>
@@ -168,7 +168,7 @@ class MainWP_Server_Information {
 				?>
 				<tr>
 					<td>
-						<a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWP_Utility::renderToolTip( 'MainWP requires the FS_METHOD to be set to direct' ); ?></a>
+						<a href="http://docs.mainwp.com/child-site-issues/" target="_blank">&nbsp;<?php MainWP_Utility::renderToolTip( 'MainWP requires the FS_METHOD to be set to direct' ); ?></a>
 					</td>
 					<td><?php _e( 'FileSystem Method', 'mainwp' ); ?></td>
 					<td><?php echo '= ' . 'direct'; ?></td>
@@ -569,7 +569,7 @@ class MainWP_Server_Information {
 		?>
 		<tr>
 			<td class="mwp-not-generate-row">
-				<a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWP_Utility::renderToolTip( 'MainWP requires the ../wp-content/uploads/mainwp/ directory to be writable. If the condition is not met, you need to set permissions for the directory. You can do that by using an FTP program like FileZilla and connecting to your site. Go through the directory tree mentioned above and make sure the folders exist /wp-content/uploads/mainwp/. If they do not exist you can right click and create directory. Then name the folder to match the structure above. The permissions should be 755 or 777 depending on your host. We suggest trying 755 first. To check this right click the folder and go to permissions or chmod. Click the help icon to read more.' ); ?></a>
+				<a href="http://docs.mainwp.com/child-site-issues/" target="_blank">&nbsp;<?php MainWP_Utility::renderToolTip( 'MainWP requires the ../wp-content/uploads/mainwp/ directory to be writable. If the condition is not met, you need to set permissions for the directory. You can do that by using an FTP program like FileZilla and connecting to your site. Go through the directory tree mentioned above and make sure the folders exist /wp-content/uploads/mainwp/. If they do not exist you can right click and create directory. Then name the folder to match the structure above. The permissions should be 755 or 777 depending on your host. We suggest trying 755 first. To check this right click the folder and go to permissions or chmod. Click the help icon to read more.' ); ?></a>
 			</td>
 			<td><?php echo $pName; ?></td>
 			<td><?php echo $pCheck; ?></td>
@@ -586,7 +586,7 @@ class MainWP_Server_Information {
 		?>
 		<tr>
 			<td class="mwp-not-generate-row"><?php if ( $toolTip != null ) { ?>
-					<a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWP_Utility::renderToolTip( $toolTip ); ?></a><?php } ?>
+					<a href="http://docs.mainwp.com/child-site-issues/" target="_blank">&nbsp;<?php MainWP_Utility::renderToolTip( $toolTip ); ?></a><?php } ?>
 			</td>
 			<td><?php echo $pConfig; ?></td>
 			<td><?php echo $pCompare; ?><?php echo ( $pVersion === true ? 'true' : ( is_array( $pVersion ) && isset( $pVersion['version'] ) ? $pVersion['version'] : $pVersion ) ) . ' ' . $pExtraText; ?></td>

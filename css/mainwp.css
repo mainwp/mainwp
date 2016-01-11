@@ -570,7 +570,7 @@ div.legacy-star img {
 
 .mainwp-left-col {
     float: left;
-    width: 45%;
+    width: 43%;
 }
 
 .mwp_plugintheme_widget .mainwp-left-col {
@@ -1446,7 +1446,7 @@ input[type=number]{
     position: relative;
 }
 
-.mainwp-checkbox:after {    
+.mainwp-checkbox:after {
     font: 15px/26px "Trebuchet MS", Helvetica, sans-serif;
     color: #a00;
     position: absolute;
@@ -1457,7 +1457,7 @@ input[type=number]{
     text-shadow: 1px 1px 0px rgba(255,255,255,.15);
 }
 
-.mainwp-checkbox:before {    
+.mainwp-checkbox:before {
     font: 15px/26px "Trebuchet MS", Helvetica, sans-serif;
     color: #7fb100;
     position: absolute;
@@ -2821,7 +2821,12 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {
 .mainwp-upload-plugin, body.show-upload-plugin .hide-if-upload, body.show-upload-theme .hide-if-upload{
     display: none;
 }
-
+.show-if-upload{
+    display: none !important;
+}
+body.show-upload-theme .show-if-upload, body.show-upload-plugin .show-if-upload {
+    display: block !important;
+}
 body.show-upload-plugin .mainwp-upload-plugin {
     display: block;
 }
@@ -2873,4 +2878,7 @@ body.show-upload-plugin .mainwp-upload-plugin {
 }
 .plugin-update-tr .api-deactivate {
     background-color: #fcf3ef;
+}
+#plugin-information-footer a {
+    display: none;
 }

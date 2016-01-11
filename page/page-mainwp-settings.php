@@ -83,7 +83,7 @@ class MainWP_Settings {
 						foreach ( self::$subPages as $subPage ) {
 							?>
 							<a href="<?php echo admin_url( 'admin.php?page=Settings' . $subPage['slug'] ); ?>"
-								class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
+							   class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
 							<?php
 						}
 						?>
@@ -119,7 +119,7 @@ class MainWP_Settings {
 			<?php if ( $shownPage == 'OfflineChecks' ) { ?>
 				<?php if ( MainWP_Utility::showUserTip( 'mainwp-aumrecommend-tips' ) ) { ?>
 					<div class="mainwp-tips mainwp_info-box-blue">
-						<span class="mainwp-tip" id="mainwp-aumrecommend-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php echo sprintf( __( 'We currently recommend the free %sAdvanced Uptime Monitor Extension%s to perform more frequent tests.', 'mainwp' ), '<a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/" target="_blank">', '</a>' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
+						<span class="mainwp-tip" id="mainwp-aumrecommend-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php echo sprintf( __( 'We currently recommend the free %sAdvanced Uptime Monitor Extension%s to perform more frequent tests.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor/" target="_blank">', '</a>' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
 							</a></span></div>
 				<?php } ?>
 			<?php } ?>
@@ -194,18 +194,18 @@ class MainWP_Settings {
 					<table class="form-table">
 						<tbody>
 						<tr>
-							<th scope="row"><?php _e( 'Maximum simultaneous requests', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Maximum simultaneous requests. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 4, set to 0 for unlimited.', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Maximum simultaneous requests', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Maximum simultaneous requests. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 4, set to 0 for unlimited.', 'mainwp' ) ); ?></th>
 							<td>
 								<input type="text" name="mainwp_maximumRequests" class=""
-									id="mainwp_maximumRequests" value="<?php echo( ( get_option( 'mainwp_maximumRequests' ) === false ) ? 4 : get_option( 'mainwp_maximumRequests' ) ); ?>"/>
+								       id="mainwp_maximumRequests" value="<?php echo( ( get_option( 'mainwp_maximumRequests' ) === false ) ? 4 : get_option( 'mainwp_maximumRequests' ) ); ?>"/>
 								<i>Default: 4</i>
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><?php _e( 'Minimum delay between requests (milliseconds)', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Minimum delay between requests (milliseconds). With a typical shared host you should set this at 200.', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Minimum delay between requests (milliseconds)', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Minimum delay between requests (milliseconds). With a typical shared host you should set this at 200.', 'mainwp' ) ); ?></th>
 							<td>
 								<input type="text" name="mainwp_minimumDelay" class=""
-									id="mainwp_minimumDelay" value="<?php echo( ( get_option( 'mainwp_minimumDelay' ) === false ) ? 200 : get_option( 'mainwp_minimumDelay' ) ); ?>"/>
+								       id="mainwp_minimumDelay" value="<?php echo( ( get_option( 'mainwp_minimumDelay' ) === false ) ? 200 : get_option( 'mainwp_minimumDelay' ) ); ?>"/>
 								<i>Default: 200</i>
 							</td>
 						</tr>
@@ -221,18 +221,18 @@ class MainWP_Settings {
 					<table class="form-table">
 						<tbody>
 						<tr>
-							<th scope="row"><?php _e( 'Maximum simultaneous requests per ip', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Maximum simultaneous requests per IP. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 1, set to 0 for unlimited.', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Maximum simultaneous requests per ip', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Maximum simultaneous requests per IP. When too many requests are sent out, they will begin to time out. This will cause child sites to be shown as offline while they are online. With a typical shared host you should set this at 1, set to 0 for unlimited.', 'mainwp' ) ); ?></th>
 							<td>
 								<input type="text" name="mainwp_maximumIPRequests" class=""
-									id="mainwp_maximumIPRequests" value="<?php echo( ( get_option( 'mainwp_maximumIPRequests' ) === false ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) ); ?>"/>
+								       id="mainwp_maximumIPRequests" value="<?php echo( ( get_option( 'mainwp_maximumIPRequests' ) === false ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) ); ?>"/>
 								<i>Default: 1</i>
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><?php _e( 'Minimum delay between requests to the same ip (milliseconds)', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Minimum delay between requests (milliseconds) per IP. With a typical shared host you should set this at 1000.', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Minimum delay between requests to the same ip (milliseconds)', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Minimum delay between requests (milliseconds) per IP. With a typical shared host you should set this at 1000.', 'mainwp' ) ); ?></th>
 							<td>
 								<input type="text" name="mainwp_minimumIPDelay" class=""
-									id="mainwp_minimumIPDelay" value="<?php echo( ( get_option( 'mainwp_minimumIPDelay' ) === false ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) ); ?>"/>
+								       id="mainwp_minimumIPDelay" value="<?php echo( ( get_option( 'mainwp_minimumIPDelay' ) === false ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) ); ?>"/>
 								<i>Default: 1000</i>
 							</td>
 						</tr>
@@ -248,11 +248,11 @@ class MainWP_Settings {
 					<table class="form-table">
 						</tbody>
 						<tr>
-							<th scope="row"><?php _e( 'Verify certificate', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Verify certificate', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.', 'mainwp' ) ); ?></th>
 							<td style="width: 100px;">
 								<div class="mainwp-checkbox">
 									<input type="checkbox" name="mainwp_sslVerifyCertificate"
-										id="mainwp_sslVerifyCertificate" value="checked" <?php echo ( ( get_option( 'mainwp_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_sslVerifyCertificate' ) == 1 ) ) ? 'checked="checked"' : ''; ?>/><label for="mainwp_sslVerifyCertificate"></label>
+									       id="mainwp_sslVerifyCertificate" value="checked" <?php echo ( ( get_option( 'mainwp_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_sslVerifyCertificate' ) == 1 ) ) ? 'checked="checked"' : ''; ?>/><label for="mainwp_sslVerifyCertificate"></label>
 								</div>
 							</td>
 							<td><em><?php _e( 'Default: YES', 'mainwp' ); ?></em></td>
@@ -329,41 +329,41 @@ class MainWP_Settings {
 					<table class="form-table">
 						<tbody>
 						<tr>
-							<th scope="row"><?php _e( 'Hide MainWP Footer', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'If set to YES, fixed footer will be appended to the bottom of the page', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Hide MainWP Footer', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'If set to YES, fixed footer will be appended to the bottom of the page', 'mainwp' ) ); ?></th>
 							<td>
 								<div class="mainwp-checkbox">
 									<input type="checkbox" name="mainwp_hide_footer"
-										id="mainwp_hide_footer" <?php echo( ( get_option( 'mainwp_hide_footer', 0 ) == 1 ) ? 'checked="true"' : '' ); ?>/>
+									       id="mainwp_hide_footer" <?php echo( ( get_option( 'mainwp_hide_footer', 0 ) == 1 ) ? 'checked="true"' : '' ); ?>/>
 									<label for="mainwp_hide_footer"></label>
 								</div>
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><?php _e( 'Use Child Site Favicon', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Set to YES if you want to use Child Site Favicon.', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Use Child Site Favicon', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Set to YES if you want to use Child Site Favicon.', 'mainwp' ) ); ?></th>
 							<td>
 								<div class="mainwp-checkbox">
 									<input type="checkbox" name="mainwp_use_favicon"
-										id="mainwp_use_favicon" <?php echo( ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) ? 'checked="true"' : '' ); ?>/>
+									       id="mainwp_use_favicon" <?php echo( ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) ? 'checked="true"' : '' ); ?>/>
 									<label for="mainwp_use_favicon"></label>
 								</div>
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><?php _e( 'Hide MainWP Tips', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'If set to YES, MainWP Tips will be hidden', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Hide MainWP Tips', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'If set to YES, MainWP Tips will be hidden', 'mainwp' ) ); ?></th>
 							<td>
 								<div class="mainwp-checkbox">
 									<input type="checkbox" name="mainwp_hide_tips"
-										id="mainwp_hide_tips" <?php echo( ( get_option( 'mainwp_hide_tips', 1 ) == 1 ) ? 'checked="true"' : '' ); ?>/>
+									       id="mainwp_hide_tips" <?php echo( ( get_option( 'mainwp_hide_tips', 1 ) == 1 ) ? 'checked="true"' : '' ); ?>/>
 									<label for="mainwp_hide_tips"></label>
 								</div>
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><?php _e( 'Turn off Brag Button', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'If set to YES, Twitter messages will be turn off', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Turn off Brag Button', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'If set to YES, Twitter messages will be turn off', 'mainwp' ) ); ?></th>
 							<td>
 								<div class="mainwp-checkbox">
 									<input type="checkbox" name="mainwp_hide_twitters_message"
-										id="mainwp_hide_twitters_message" <?php echo( ( get_option( 'mainwp_hide_twitters_message', 0 ) == 1 ) ? 'checked="true"' : '' ); ?>/>
+									       id="mainwp_hide_twitters_message" <?php echo( ( get_option( 'mainwp_hide_twitters_message', 0 ) == 1 ) ? 'checked="true"' : '' ); ?>/>
 									<label for="mainwp_hide_twitters_message"></label>
 								</div>
 							</td>
@@ -417,7 +417,7 @@ class MainWP_Settings {
 					<table class="form-table">
 						<tbody>
 						<tr>
-							<th scope="row"><?php _e( 'Force Dashboard to Establish New Connection', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Use this option to establish new connection with child sites.', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Force Dashboard to Establish New Connection', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Use this option to establish new connection with child sites.', 'mainwp' ) ); ?></th>
 							<td>
 								<input type="submit" name="" id="force-destroy-sessions-button" class="button-primary button" value="<?php esc_attr_e( 'Establish New Connection', 'mainwp' ); ?>"/><br/>
 								<em>
@@ -426,7 +426,7 @@ class MainWP_Settings {
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><?php _e( 'Scan child sites for known issues', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Use this option to scan child sites for known issues.', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Scan child sites for known issues', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Use this option to scan child sites for known issues.', 'mainwp' ) ); ?></th>
 							<td>
 								<a href="<?php echo admin_url( 'admin.php?page=MainWP_Child_Scan' ); ?>" class="button-primary button"><?php _e( 'Scan', 'mainwp' ); ?></a><br/>
 								<em>

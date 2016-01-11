@@ -33,7 +33,7 @@ class MainWP_Offline_Checks {
 		?>
         <div class="mainwp_info-box-red">
         <strong>IMPORTANT:</strong> This feature is being retired and replaced by the Free MainWP Advanced Uptime Monitor Extension which provides more advanced monitoring system.<br/>
-        <a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
+        <a href="https://mainwp.com/extension/advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
         </div>
 		<div class="mainwp_info-box">
 			<strong><?php _e( 'Notifications will be sent to', 'mainwp' ); ?>
@@ -303,12 +303,12 @@ class MainWP_Offline_Checks {
 			<div class="inside">
 				<div class="mainwp_info-box-red">
 					<strong>IMPORTANT:</strong> This feature is being retired and replaced by the Free MainWP Advanced Uptime Monitor Extension which provides more advanced monitoring system.<br/>
-					<a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
+					<a href="https://mainwp.com/extension/advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
 				</div>
 				<table class="form-table">
 					<tbody>
 					<tr>
-						<th scope="row"><?php _e( 'Online Notifications', 'mainwp' ); ?><?php MainWP_Utility::renderToolTip( __( 'Network will monitor your sites for downtime and uptime.  By default emails are only sent when your site is down.', 'mainwp' ) ); ?></th>
+						<th scope="row"><?php _e( 'Online Notifications', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Network will monitor your sites for downtime and uptime.  By default emails are only sent when your site is down.', 'mainwp' ) ); ?></th>
 						<td>
 							<div class="mainwp-checkbox">
 								<input type="checkbox" name="mainwp_options_offlinecheck_onlinenotification"

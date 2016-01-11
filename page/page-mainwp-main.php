@@ -196,7 +196,7 @@ class MainWP_Main {
 							<div id="mainwp-welocme-bar-top">
                     <span style="float:right;">
                     <a style="font-size: 18px;" class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWP_Right_Now::renderLastUpdate(); ?>"><i class="fa fa-refresh"></i> <?php _e( 'Sync Data with Child Sites', 'mainwp' ); ?></a>
-                    <a style="font-size: 18px;" class="button-hero button-primary button" target="_blank" href="https://extensions.mainwp.com"><i class="fa fa-cart-plus"></i> <?php _e( 'Get New Extensions', 'mainwp' ); ?></a>
+                    <a style="font-size: 18px;" class="button-hero button-primary button" target="_blank" href="https://mainwp.com/extensions/"><i class="fa fa-cart-plus"></i> <?php _e( 'Get New Extensions', 'mainwp' ); ?></a>
                     </span>
 								<?php
 								$current_wp_id = MainWP_Utility::get_current_wpid();
@@ -236,7 +236,7 @@ class MainWP_Main {
 										<?php
 									} else if ( $sync_status === 'all_synced' ) {
 										?>
-										<h3><?php echo __( 'All sites have been synced within the last 24 hours!', 'mainwp' ); ?></h3>
+										<h3><?php echo __( 'All sites have been synced within the last 24 hours', 'mainwp' ); ?>!</h3>
 										<p class="about-description"><?php echo __( 'Manage your WordPress sites with ease.', 'mainwp' ); ?></p>
 										<?php
 									} else {
@@ -316,36 +316,36 @@ class MainWP_Main {
 		</form>
 
 		<div id="mainwp-dashboard-info-box">
-		<?php if ( empty( $current_wp_id ) && MainWP_Twitter::enabledTwitterMessages() ) {
-			$filter = array(
-				'upgrade_everything',
-				'upgrade_all_wp_core',
-				'upgrade_all_plugins',
-				'upgrade_all_themes',
-			);
-			foreach ( $filter as $what ) {
-				$twitters = MainWP_Twitter::getTwitterNotice( $what );
-				if ( is_array( $twitters ) ) {
-					foreach ( $twitters as $timeid => $twit_mess ) {
-						$sendText = "";
-						if ( ! empty( $twit_mess ) ) {
-							if (!empty($sendText)) {
-								$sendText = MainWP_Twitter::getTwitToSend($what, $timeid);
-								?>
-								<div class="mainwp-tips mainwp_info-box-blue twitter">
+			<?php if ( empty( $current_wp_id ) && MainWP_Twitter::enabledTwitterMessages() ) {
+				$filter = array(
+					'upgrade_everything',
+					'upgrade_all_wp_core',
+					'upgrade_all_plugins',
+					'upgrade_all_themes',
+				);
+				foreach ( $filter as $what ) {
+					$twitters = MainWP_Twitter::getTwitterNotice( $what );
+					if ( is_array( $twitters ) ) {
+						foreach ( $twitters as $timeid => $twit_mess ) {
+							$sendText = "";
+							if ( ! empty( $twit_mess ) ) {
+								if (!empty($sendText)) {
+									$sendText = MainWP_Twitter::getTwitToSend($what, $timeid);
+									?>
+									<div class="mainwp-tips mainwp_info-box-blue twitter">
 									<span class="mainwp-tip" twit-what="<?php echo $what; ?>"
-										  twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton($sendText); ?>
-									<span><a href="#" class="mainwp-dismiss-twit"><i
-												class="fa fa-times-circle"></i> <?php _e('Dismiss', 'mainwp'); ?>
-										</a></span></div>
-								<?php
+									      twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton($sendText); ?>
+										<span><a href="#" class="mainwp-dismiss-twit"><i
+													class="fa fa-times-circle"></i> <?php _e('Dismiss', 'mainwp'); ?>
+											</a></span></div>
+									<?php
+								}
 							}
 						}
 					}
 				}
-			}
-			?>
-		<?php } ?>
+				?>
+			<?php } ?>
 		</div>
 
 

@@ -167,7 +167,8 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', __( 'To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please %1click here%2.', __( 'Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please %1click here%2.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'No ignored abandoned plugins', __( 'No ignored abandoned plugins', 'mainwp' ) );
-
+		mainwpAddTranslation( $mainwpTranslations, 'Please upload plugins to install.', __( 'Please upload plugins to install.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Please upload themes to install.', __( 'Please upload themes to install.', 'mainwp' ) );
 
 
 		return $mainwpTranslations;

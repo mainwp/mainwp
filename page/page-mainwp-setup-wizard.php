@@ -652,7 +652,7 @@ class MainWP_Setup_Wizard {
 		<h1><?php _e( 'MainWP Extensions Sign Up', 'mainwp' ); ?></h1>				
 		<p><?php echo __("Skip this Step if you already have MainWP Extensions account.", "mainwp"); ?></p>
 		<p><?php echo __("This extension is free, however it requires MainWP Extensions account.", "mainwp"); ?></p>
-		<p><a href="https://extensions.mainwp.com/mainwp-register/" class="mainwp-upgrade-button button button-hero" target="_blank"><?php _e( 'Register for MainWP Account', 'mainwp' ); ?></a><br/><em style="font-size: 13px;"><?php _e("(you will be brought to a new page)", "mainwp"); ?></em></p>
+		<p><a href="https://mainwp.com/my-account/" class="mainwp-upgrade-button button button-hero" target="_blank"><?php _e( 'Register for MainWP Account', 'mainwp' ); ?></a><br/><em style="font-size: 13px;"><?php _e("(you will be brought to a new page)", "mainwp"); ?></em></p>
 		<p><?php echo sprintf(__("If you do not want to register now click %shere%s to use the MainWP Default Backups.", "mainwp"), '<a href="admin.php?page=mainwp-setup&step=primary_backup&method=default">', '</a>'); ?></p>
 		<p class="mwp-setup-actions step">			
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button-primary button button-large"><?php _e( 'Continue', 'mainwp' ); ?></a>
@@ -1293,13 +1293,13 @@ class MainWP_Setup_Wizard {
 				<h2><?php _e( 'Next Steps', 'mainwp' ); ?></h2>
 				<ul>
 					<li class="setup-product"><a class="button button-primary button-large" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php _e( 'Add New Site', 'mainwp' ); ?></a></li>
-					<li class="setup-product"><a class="button button-primary button-large" href="https://extensions.mainwp.com" target="_blank"><?php _e( 'Get MainWP Extensions', 'mainwp' ); ?></a></li>
+					<li class="setup-product"><a class="button button-primary button-large" href="https://mainwp.com/extensions/" target="_blank"><?php _e( 'Get MainWP Extensions', 'mainwp' ); ?></a></li>
 				</ul>
 			</div>
 			<div class="mwp-setup-next-steps-last">
 				<h2><?php _e( 'Helpful Links', 'mainwp' ); ?></h2>
 				<ul>
-					<li><a href="https://extensions.mainwp.com" target="_blank"><i class="fa fa-plug"></i> <?php _e( 'MainWP Extensions', 'mainwp' ); ?></a></li>
+					<li><a href="https://mainwp.com/extensions/" target="_blank"><i class="fa fa-plug"></i> <?php _e( 'MainWP Extensions', 'mainwp' ); ?></a></li>
 					<li><a href="http://docs.mainwp.com" target="_blank"><i class="fa fa-book"></i> <?php _e( 'MainWP Documentation', 'mainwp' ); ?></a></li>
 					<li><a href="http://support.mainwp.com" target="_blank"><i class="fa fa-life-ring"></i> <?php _e( 'MainWP Suppor', 'mainwp' ); ?></a></li>
 					<li><a href="https://mainwp.com/forum/" target="_blank"><i class="fa fa-comments-o"></i> <?php _e( 'Community Forum', 'mainwp' ); ?></a></li>

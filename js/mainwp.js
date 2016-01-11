@@ -3919,6 +3919,19 @@ mainwp_upload_bulk = function (type) {
 //    if (typeof(mainwp_onPrepareBulkUploadPluginTheme) == 'function') {
 //        mainwp_onPrepareBulkUploadPluginTheme(type, path = 'bulk');
 //    }
+    var files = [];
+    jQuery(".qq-upload-file").each(function (i) {
+        if (jQuery(this).parent().attr('class').replace(/^\s+|\s+$/g, "") == 'qq-upload-success') {
+            files.push(jQuery(this).html());
+        }
+    });
+    if (files.length == 0) {
+        if (type == 'plugin')
+            show_error('ajax-error-zone', __('Please upload plugins to install.'));
+        else
+            show_error('ajax-error-zone', __('Please upload themes to install.'));
+        return;
+    }
 
     var data = {
         action:'mainwp_preparebulkuploadplugintheme',
@@ -3957,12 +3970,6 @@ mainwp_upload_bulk = function (type) {
         data['selected_groups[]'] = selected_groups;
     }
 
-    var files = [];
-    jQuery(".qq-upload-file").each(function (i) {
-        if (jQuery(this).parent().attr('class').replace(/^\s+|\s+$/g, "") == 'qq-upload-success') {
-            files.push(jQuery(this).html());
-        }
-    });
     data['files[]'] = files;
 
     jQuery.post(ajaxurl, data, function(pType, pFiles, pActivatePlugin, pOverwrite) { return function (response) {
@@ -3976,7 +3983,7 @@ mainwp_upload_bulk = function (type) {
 
         jQuery('#mainwp_wrap-inside').html(installQueue);
         mainwp_upload_bulk_start_next(pType, response.urls, pActivatePlugin, pOverwrite);
-    } }(type, files, jQuery('#chk_activate_plugin_upload').is(':checked'), jQuery('#chk_overwrite_upload').is(':checked')), 'json');
+    } }(type, files, jQuery('#chk_activate_plugin').is(':checked'), jQuery('#chk_overwrite').is(':checked')), 'json');
 
     jQuery('#mainwp_wrap-inside').html('<div class="postbox"><div class="inside"><h3><i class="fa fa-spinner fa-pulse"></i> '+__('Preparing %1 installation.', type) + '</h3></div></div>');
     return false;

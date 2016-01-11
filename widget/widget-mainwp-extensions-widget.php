@@ -22,7 +22,7 @@ class MainWP_Extensions_Widget {
 				<div class="mainwp_info-box-yellow"><?php _e( 'You have no installed extensions.', 'mainwp' ); ?></div>
 				<br/>
 				<div style="text-align: center">
-					<a href="https://extensions.mainwp.com/" target="_blank" class="button button-hero button-primary"><?php _e( 'Add an Extension Today', 'mainwp' ); ?></a>
+					<a href="https://mainwp.com/extensions/" target="_blank" class="button button-hero button-primary"><?php _e( 'Add an Extension Today', 'mainwp' ); ?></a>
 				</div>
 				<br/>
 				<h3 style="color: #7fb100;"><?php _e( 'What are Extensions?', 'mainwp' ); ?></h3>
@@ -57,13 +57,13 @@ class MainWP_Extensions_Widget {
 					if ( isset( $extension['iconURI'] ) && ( $extension['iconURI'] != '' ) ) {
 						?>
 						<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>">
-						<img title="<?php echo $extension['name']; ?>" src="<?php echo MainWP_Utility::removeHttpPrefix( $extension['iconURI'] ); ?>" class="mainwp-widget-icon <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/>
+							<img title="<?php echo $extension['name']; ?>" src="<?php echo MainWP_Utility::removeHttpPrefix( $extension['iconURI'] ); ?>" class="mainwp-widget-icon <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/>
 						</a>
 						<?php
 					} else {
 						?>
 						<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>">
-						<img title="MainWP Placeholder" src="<?php echo plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) ); ?>" class="mainwp-widget-icon <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/>
+							<img title="MainWP Placeholder" src="<?php echo plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) ); ?>" class="mainwp-widget-icon <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/>
 						</a>
 						<?php
 					}
@@ -143,7 +143,7 @@ class MainWP_Extensions_Widget {
 				</tbody>
 			</table>
 			<div style="clear: both; text-align: left; font-size: 12px; padding: .5em; border-top: 1px solid #dfdfdf;">
-				<a href="https://extensions.mainwp.com/" target="_blank" class="button mainwp-upgrade-button"><?php _e( 'GET MORE EXTENSIONS', 'mainwp' ); ?></a>
+				<a href="https://mainwp.com/extensions/" target="_blank" class="button mainwp-upgrade-button"><?php _e( 'GET MORE EXTENSIONS', 'mainwp' ); ?></a>
 				<span style="float: right;">
 					<a href="#" class="mainwp-extension-widget-switch-grid" <?php echo( ! $showList ? "style='display:none;'" : '' ); ?>><?php _e( 'Show Grid View', 'mainwp' ); ?></a>
 					<a href="#" class="mainwp-extension-widget-switch-list" <?php echo( ! $showGrid ? "style='display:none;'" : '' ); ?>><?php _e( 'Show List View', 'mainwp' ); ?></a>

@@ -1062,7 +1062,7 @@ class MainWP_Themes {
 				</div>
 			</div>
 
-			<input type="button" value="<?php _e( "Complete Installation", 'mainwp' ); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_theme_bulk_install_btn" name="bulk-install">			
+			<input type="button" value="<?php _e( "Complete Installation", 'mainwp' ); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_theme_bulk_install_btn" name="bulk-install">
 			<input type="button" value="<?php _e( 'Complete Installation','mainwp' ); ?>" class="button-primary button button-hero button-right show-if-upload" onClick="mainwp_upload_bulk('themes');">
 
 		</div>

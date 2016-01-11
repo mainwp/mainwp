@@ -329,7 +329,7 @@ class MainWP_Manage_Sites_View {
                         <td>
                             <input type="text" id="mainwp_managesites_test_wpurl"
                                    name="mainwp_managesites_add_wpurl"
-                                   value="<?php if ( isset( $_REQUEST['site'] ) ) {echo $_REQUEST['site'];} ?>" autocompletelist="mainwp-test-sites" class="mainwp_autocomplete" /><span class="mainwp-form_hint">Proper Format: <strong>http://address.com/</strong> or <strong>http://www.address.com/</strong></span>
+                                   value="<?php if ( isset( $_REQUEST['site'] ) ) {echo esc_attr( $_REQUEST['site'] );} ?>" autocompletelist="mainwp-test-sites" class="mainwp_autocomplete" /><span class="mainwp-form_hint">Proper Format: <strong>http://address.com/</strong> or <strong>http://www.address.com/</strong></span>
                             <datalist id="mainwp-test-sites">
 								<?php
 								$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
@@ -915,7 +915,7 @@ class MainWP_Manage_Sites_View {
             </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>
-            <th scope="row"><?php _e( 'Archive Format','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( '','mainwp' ) ); ?></th>
+            <th scope="row"><?php _e( 'Archive Format','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( '' ); ?></th>
             <td>
                 <table class="mainwp-nomarkup">
                     <tr>
@@ -1608,7 +1608,7 @@ class MainWP_Manage_Sites_View {
 				$useGlobal = ($archiveFormat == 'global');
 				?>
                 <tr>
-                    <th scope="row"><?php _e( 'Archive Format','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( '','mainwp' ) ); ?></th>
+                    <th scope="row"><?php _e( 'Archive Format','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( '' ); ?></th>
                     <td>
                         <table class="mainwp-nomarkup">
                             <tr>
@@ -1788,8 +1788,8 @@ class MainWP_Manage_Sites_View {
 					$pluginConflicts = array_filter( $pluginConflicts );}
 				if ( is_array( $themeConflicts ) ) {
 					$themeConflicts = array_filter( $themeConflicts );}
-				$verifyCertificate = ( !isset( $_POST['verify_certificate'] ) || empty( $_POST['verify_certificate'] ) ? null : $_POST['verify_certificate']);
-				$sslVersion = MainWP_Utility::getCURLSSLVersion( !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version']);
+				$verifyCertificate = ( !isset( $_POST['verify_certificate'] ) || empty( $_POST['verify_certificate'] ) ? null : $_POST['verify_certificate'] );
+				$sslVersion = MainWP_Utility::getCURLSSLVersion( !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version'] );
 				$addUniqueId = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : '';
 				$http_user = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
 				$http_pass = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';

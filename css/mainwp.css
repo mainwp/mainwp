@@ -1446,7 +1446,7 @@ input[type=number]{
     position: relative;
 }
 
-.mainwp-checkbox:after {    
+.mainwp-checkbox:after {
     font: 15px/26px "Trebuchet MS", Helvetica, sans-serif;
     color: #a00;
     position: absolute;
@@ -1457,7 +1457,7 @@ input[type=number]{
     text-shadow: 1px 1px 0px rgba(255,255,255,.15);
 }
 
-.mainwp-checkbox:before {    
+.mainwp-checkbox:before {
     font: 15px/26px "Trebuchet MS", Helvetica, sans-serif;
     color: #7fb100;
     position: absolute;

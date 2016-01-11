@@ -71,12 +71,11 @@ class MainWP_Install_Bulk {
 					// in your app create uploader as soon as the DOM is ready
 					// don't wait for the window to load
 					createUploader();
-				</script>				
+				</script>
 			</div>
 		</div>
 		<?php
 	}
-
 
 	public static function prepareInstall() {
 		include_once( ABSPATH . '/wp-admin/includes/plugin-install.php' );

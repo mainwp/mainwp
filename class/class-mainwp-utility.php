@@ -1149,7 +1149,8 @@ class MainWP_Utility {
 		}
 
 		$str = explode( $search_for, $part );
-		$str = array_shift( explode( '"/>', $str[1] ) );
+		$str = explode( '"/>', $str[1] );
+		$str = array_shift( $str );
 		$str = explode( 'TEXT="', $str );
 
 		return $str[1];

@@ -33,7 +33,7 @@ But wait, How is MainWP free, what’s the catch, how will you continue to pay d
 We make money by selling [Extensions](https://mainwp.com/extensions/).
 
 
-Extensions enhance your MainWP Dashboard with additional features. The catalog of [MainWP Extensions](https://mainwp.com/extensions/) include additional features for backups, marketing, SEO, maintenance, security, monitoring and other tools to help you build a better network. 
+Extensions enhance your MainWP Dashboard with additional features. The catalog of [MainWP Extensions](https://mainwp.com/extensions/) include additional features for backups, marketing, SEO, maintenance, security, monitoring and other tools to help you build a better network.
 
 = Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
 
@@ -68,7 +68,7 @@ Is there a plugin or theme that you do not want to update for compatibility or o
 When a plugin hasn't had an update in a long time we tend to forget about it which could lead to security or compatibility issues, your MainWP Dashboard will alert you of possibly abandoned plugins or themes so that you can look for a more updated plugin or theme.
 
 = Reliable Backups =
-We understand that your WordPress data is valuable — you’re never more than a moment away from a complete disaster, so make sure you do it right! MainWP comes with a built in Backup Feature or you can use one of our [Free Backup Extensions](https://mainwp.com/extensions/extension-category/free/) that incorporate the most popular Backup plugins directly into your Dashboard. 
+We understand that your WordPress data is valuable — you’re never more than a moment away from a complete disaster, so make sure you do it right! MainWP comes with a built in Backup Feature or you can use one of our [Free Backup Extensions](https://mainwp.com/extensions/extension-category/free/) that incorporate the most popular Backup plugins directly into your Dashboard.
 
 = Multiple Backup Options =
 The MainWP Dashboard offers multiple backup options. Along with the default backup system, you are able to use our [Free Backup Extensions](https://mainwp.com/extensions/extension-category/free/) and find the best solution for managing your sites backups.

@@ -94,10 +94,10 @@ class MainWP_Site_Open {
 
 		$file = '';
 		if ( isset( $_GET['f'] ) ) {
-			$file = base64_decode( $_GET['f'] );
+			$file = base64_decode( esc_attr( esc_html( $_GET['f'] ) ) );
 		}
 
-		MainWP_Site_Open::openSiteRestore( $website, $file, $_GET['size'] );
+		MainWP_Site_Open::openSiteRestore( $website, $file, esc_attr( esc_html( $_GET['size'] ) ) );
 	}
 
 	public static function openSiteRestore( $website, $file, $size ) {

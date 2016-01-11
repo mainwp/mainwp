@@ -284,6 +284,9 @@ class MainWP_System {
 		MainWP_Plugins::init();
 		MainWP_Right_Now::init();
 		MainWP_Setup_Wizard::init();
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			MainWP_WP_CLI_Command::init();
+		}
 	}
 
 	function filter_fetchUrlsAuthed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
@@ -713,15 +716,17 @@ class MainWP_System {
 					$ignoredPluginsToUpdate = array();
 				}
 
-				if ( ( count( $pluginsNewUpdate ) != 0 ) || ( count( $pluginsToUpdate ) != 0 ) || ( count( $ignoredPluginsNewUpdate ) != 0 ) || ( count( $ignoredPluginsToUpdate ) != 0 ) ) {
+				if ( ( count( $pluginsNewUpdate ) != 0 ) || ( count( $pluginsToUpdate ) != 0 )
+//				     || ( count( $ignoredPluginsNewUpdate ) != 0 ) || ( count( $ignoredPluginsToUpdate ) != 0 )
+					) {
 					$sendMail = true;
 
 					$mail .= '<div><strong>WordPress Plugin Updates</strong></div>';
 					$mail .= '<ul>';
 					$mail .= $this->print_updates_array_lines( $pluginsNewUpdate, null );
 					$mail .= $this->print_updates_array_lines( $pluginsToUpdate, $sitesCheckCompleted );
-					$mail .= $this->print_updates_array_lines( $ignoredPluginsNewUpdate, null );
-					$mail .= $this->print_updates_array_lines( $ignoredPluginsToUpdate, null );
+//					$mail .= $this->print_updates_array_lines( $ignoredPluginsNewUpdate, null );
+//					$mail .= $this->print_updates_array_lines( $ignoredPluginsToUpdate, null );
 					$mail .= '</ul>';
 				}
 
@@ -742,15 +747,17 @@ class MainWP_System {
 					$ignoredThemesToUpdate = array();
 				}
 
-				if ( ( count( $themesNewUpdate ) != 0 ) || ( count( $themesToUpdate ) != 0 ) || ( count( $ignoredThemesNewUpdate ) != 0 ) || ( count( $ignoredThemesToUpdate ) != 0 ) ) {
+				if ( ( count( $themesNewUpdate ) != 0 ) || ( count( $themesToUpdate ) != 0 )
+//				     || ( count( $ignoredThemesNewUpdate ) != 0 ) || ( count( $ignoredThemesToUpdate ) != 0 )
+					) {
 					$sendMail = true;
 
 					$mail .= '<div><strong>WordPress Themes Updates</strong></div>';
 					$mail .= '<ul>';
 					$mail .= $this->print_updates_array_lines( $themesNewUpdate, null );
 					$mail .= $this->print_updates_array_lines( $themesToUpdate, $sitesCheckCompleted );
-					$mail .= $this->print_updates_array_lines( $ignoredThemesNewUpdate, null );
-					$mail .= $this->print_updates_array_lines( $ignoredThemesToUpdate, null );
+//					$mail .= $this->print_updates_array_lines( $ignoredThemesNewUpdate, null );
+//					$mail .= $this->print_updates_array_lines( $ignoredThemesToUpdate, null );
 					$mail .= '</ul>';
 				}
 
@@ -1167,7 +1174,9 @@ class MainWP_System {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_themeconflicts', $themeConflictsSaved . $themeConflicts );
 			}
 
-			if ( ( count( $coreToUpdate ) == 0 ) && ( count( $pluginsToUpdate ) == 0 ) && ( count( $themesToUpdate ) == 0 ) && ( count( $ignoredCoreToUpdate ) == 0 ) && ( count( $ignoredCoreNewUpdate ) == 0 ) && ( count( $ignoredPluginsToUpdate ) == 0 ) && ( count( $ignoredPluginsNewUpdate ) == 0 ) && ( count( $ignoredThemesToUpdate ) == 0 ) && ( count( $ignoredThemesNewUpdate ) == 0 ) && ( $pluginConflicts == '' ) && ( $themeConflicts == '' ) ) {
+			if ( ( count( $coreToUpdate ) == 0 ) && ( count( $pluginsToUpdate ) == 0 ) && ( count( $themesToUpdate ) == 0 ) && ( count( $ignoredCoreToUpdate ) == 0 ) && ( count( $ignoredCoreNewUpdate ) == 0 )
+//			     && ( count( $ignoredPluginsToUpdate ) == 0 ) && ( count( $ignoredPluginsNewUpdate ) == 0 ) && ( count( $ignoredThemesToUpdate ) == 0 ) && ( count( $ignoredThemesNewUpdate ) == 0 )
+			     && ( $pluginConflicts == '' ) && ( $themeConflicts == '' ) ) {
 				return;
 			}
 

@@ -1549,7 +1549,7 @@ themes.view.Installer = themes.view.Appearance.extend({
 		});
 		$( 'a.browse-themes' ).on( 'click', function( event ) {
 			event.preventDefault();
-			$( 'body' ).removeClass( 'show-upload-theme' );                        
+			$( 'body' ).removeClass( 'show-upload-theme' );
 			themes.router.navigate( themes.router.baseUrl( '' ), { replace: true } );
                         $(this).addClass('mainwp_action_down');
                         $( 'a.upload' ).removeClass('mainwp_action_down');

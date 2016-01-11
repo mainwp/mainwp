@@ -96,7 +96,7 @@ class MainWP_Manage_Backups {
 						foreach ( self::$subPages as $subPage ) {
 							?>
 							<a href="<?php echo admin_url( 'admin.php?page=ManageBackups' . $subPage['slug'] ); ?>"
-								class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
+							   class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
 							<?php
 						}
 					}
@@ -110,7 +110,7 @@ class MainWP_Manage_Backups {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage ) {
+public static function renderHeader( $shownPage ) {
 	?>
 	<div class="wrap">
 		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
@@ -151,17 +151,17 @@ class MainWP_Manage_Backups {
 		</div>
 		<div id="mainwp_wrap-inside">
 			<?php
-	}
+			}
 
-	/**
-	 * @param string $shownPage The page slug shown at this moment
-	 */
-	public static function renderFooter( $shownPage ) {
+			/**
+			 * @param string $shownPage The page slug shown at this moment
+			 */
+			public static function renderFooter( $shownPage ) {
 			?>
 		</div>
 	</div>
 	<?php
-	}
+}
 
 	/**
 	 * @param $pBackupTasks
@@ -245,7 +245,7 @@ class MainWP_Manage_Backups {
 			self::renderHeader( '' ); ?>
 			<?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
 				<tr>
-				<div class="mainwp_info-box"><?php echo sprintf( __( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
+					<div class="mainwp_info-box"><?php echo sprintf( __( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
 				</tr>
 			<?php } ?>
 			<div id="mainwp_managebackups_content">
@@ -527,7 +527,7 @@ class MainWP_Manage_Backups {
 									<th scope="row"><?php _e( 'Backup Subfolder:', 'mainwp' ); ?></th>
 									<td>
 										<input type="text" id="mainwp_managebackups_add_subfolder" name="backup_subfolder"
-											value="<?php echo( isset( $task ) ? $task->subfolder : 'MainWP Backups/%url%/%type%/%date%' ); ?>"/><span class="mainwp-form_hint" style="display: inline; max-width: 500px;">Allowed Structure Tags: <strong>%sitename%</strong>, <strong>%url%</strong>, <strong>%date%</strong>, <strong>%task%</strong>, <strong>%type%</strong></span>
+										       value="<?php echo( isset( $task ) ? $task->subfolder : 'MainWP Backups/%url%/%type%/%date%' ); ?>"/><span class="mainwp-form_hint" style="display: inline; max-width: 500px;">Allowed Structure Tags: <strong>%sitename%</strong>, <strong>%url%</strong>, <strong>%date%</strong>, <strong>%task%</strong>, <strong>%type%</strong></span>
 									</td>
 								</tr>
 								<?php
@@ -621,7 +621,7 @@ class MainWP_Manage_Backups {
 									</div>
 									<div style="clear:both"></div>
 									<input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors"
-										value="<?php echo $maximumFileDescriptors; ?>"/><span class="mainwp-form_hint"><?php _e( 'The maximum number of open file descriptors on the child hosting.  0 sets unlimited.', 'mainwp' ); ?></span>
+									       value="<?php echo $maximumFileDescriptors; ?>"/><span class="mainwp-form_hint"><?php _e( 'The maximum number of open file descriptors on the child hosting.  0 sets unlimited.', 'mainwp' ); ?></span>
 								</td>
 							</tr>
 							<tr class="archive_method archive_zip" <?php if ( $archiveFormat != 'zip' ) : ?>style="display: none;"<?php endif; ?>>

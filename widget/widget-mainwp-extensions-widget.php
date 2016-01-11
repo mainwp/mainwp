@@ -57,13 +57,13 @@ class MainWP_Extensions_Widget {
 					if ( isset( $extension['iconURI'] ) && ( $extension['iconURI'] != '' ) ) {
 						?>
 						<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>">
-						<img title="<?php echo $extension['name']; ?>" src="<?php echo MainWP_Utility::removeHttpPrefix( $extension['iconURI'] ); ?>" class="mainwp-widget-icon <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/>
+							<img title="<?php echo $extension['name']; ?>" src="<?php echo MainWP_Utility::removeHttpPrefix( $extension['iconURI'] ); ?>" class="mainwp-widget-icon <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/>
 						</a>
 						<?php
 					} else {
 						?>
 						<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>">
-						<img title="MainWP Placeholder" src="<?php echo plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) ); ?>" class="mainwp-widget-icon <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/>
+							<img title="MainWP Placeholder" src="<?php echo plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) ); ?>" class="mainwp-widget-icon <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/>
 						</a>
 						<?php
 					}

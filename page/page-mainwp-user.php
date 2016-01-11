@@ -714,7 +714,7 @@ class MainWP_User {
 
 			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">
 				<div class="mainwp_config_box_right">
-					<?php MainWP_UI::select_sites_box( __( 'Setp 2: Select Sites', 'mainwp' ) ); ?>
+					<?php MainWP_UI::select_sites_box( __( 'Step 2: Select Sites', 'mainwp' ) ); ?>
 					<input type="button" name="createuser" id="bulk_add_createuser" class="button-primary button button-hero button-right"
 						value="<?php _e( 'Add New User', 'mainwp' ); ?> "/>
 				</div>

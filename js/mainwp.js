@@ -3674,15 +3674,15 @@ mainwp_import_users = function () {
 jQuery(document).ready(function () {
     jQuery('#MainWPInstallBulkNavSearch').live('click', function (event) {
         event.preventDefault();
-        jQuery( 'body' ).removeClass( 'show-upload-plugin' );        
+        jQuery( 'body' ).removeClass( 'show-upload-plugin' );
         jQuery( '#MainWPInstallBulkNavUpload' ).removeClass('mainwp_action_down');
-        jQuery(this).addClass('mainwp_action_down');        
+        jQuery(this).addClass('mainwp_action_down');
     });
     jQuery('#MainWPInstallBulkNavUpload').live('click', function (event) {
         event.preventDefault();
         jQuery( 'body' ).addClass( 'show-upload-plugin' );
         jQuery( '#MainWPInstallBulkNavSearch' ).removeClass('mainwp_action_down');
-        jQuery(this).addClass('mainwp_action_down');        
+        jQuery(this).addClass('mainwp_action_down');
     });
     jQuery('.filter-links li.plugin-install a').live('click', function (event) {
         event.preventDefault();
@@ -3928,11 +3928,11 @@ mainwp_upload_bulk = function (type) {
     if (files.length == 0) {
         if (type == 'plugin')
             show_error('ajax-error-zone', __('Please upload plugins to install.'));
-        else 
+        else
             show_error('ajax-error-zone', __('Please upload themes to install.'));
         return;
     }
-    
+
     var data = {
         action:'mainwp_preparebulkuploadplugintheme',
         type:type,

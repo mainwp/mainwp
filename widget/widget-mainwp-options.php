@@ -92,7 +92,7 @@ class MainWP_Options {
 						<td>
 							<div class="mainwp-checkbox">
 								<input type="checkbox" name="mainwp_optimize"
-									   id="mainwp_optimize" <?php echo ((get_option('mainwp_optimize') == 1) ? 'checked="true"' : ''); ?> />
+								       id="mainwp_optimize" <?php echo ((get_option('mainwp_optimize') == 1) ? 'checked="true"' : ''); ?> />
 								<label for="mainwp_optimize"></label>
 							</div>
 						</td>
@@ -120,7 +120,7 @@ class MainWP_Options {
 						<td>
 							<div class="mainwp-checkbox">
 								<input type="checkbox" name="mainwp_options_wp_cron"
-									id="mainwp_options_wp_cron" <?php echo( ( get_option( 'mainwp_wp_cron' ) == 1 ) || ( get_option( 'mainwp_wp_cron' ) === false ) ? 'checked="true"' : '' ); ?>/>
+								       id="mainwp_options_wp_cron" <?php echo( ( get_option( 'mainwp_wp_cron' ) == 1 ) || ( get_option( 'mainwp_wp_cron' ) === false ) ? 'checked="true"' : '' ); ?>/>
 								<label for="mainwp_options_wp_cron"></label>
 							</div>
 						</td>
@@ -131,7 +131,7 @@ class MainWP_Options {
 							<td>
 								<div class="mainwp-checkbox">
 									<input type="checkbox" name="mainwp_seo"
-										id="mainwp_seo" <?php echo( ( get_option( 'mainwp_seo' ) == 1 ) ? 'checked="true"' : '' ); ?>/>
+									       id="mainwp_seo" <?php echo( ( get_option( 'mainwp_seo' ) == 1 ) ? 'checked="true"' : '' ); ?>/>
 									<label for="mainwp_seo"></label>
 								</div>
 							</td>
@@ -183,7 +183,7 @@ class MainWP_Options {
 						<th scope="row"><?php _e( 'Abandoned Plugins/Thems Tolerance', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( "In case the plugin or theme author didn't release an update for the set number of days, the plugin/theme will be marked and Possibly Abandoned.", 'mainwp' ) ); ?></th>
 						<td>
 							<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" class=""
-								id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo( ( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) === false ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
+							       id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo( ( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) === false ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
 						</td>
 					</tr>
 
@@ -203,14 +203,14 @@ class MainWP_Options {
 						<th scope="row"><?php _e( 'Maximum Number of Posts/Pages', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( '0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.', 'mainwp' ) ); ?></th>
 						<td>
 							<input type="text" name="mainwp_maximumPosts" class=""
-								id="mainwp_maximumPosts" value="<?php echo( ( get_option( 'mainwp_maximumPosts' ) === false ) ? 50 : get_option( 'mainwp_maximumPosts' ) ); ?>"/>
+							       id="mainwp_maximumPosts" value="<?php echo( ( get_option( 'mainwp_maximumPosts' ) === false ) ? 50 : get_option( 'mainwp_maximumPosts' ) ); ?>"/>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row"><?php _e( 'Maximum Number of Comments', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( '0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.', 'mainwp' ) ); ?></th>
 						<td>
 							<input type="text" name="mainwp_maximumComments" class=""
-								id="mainwp_maximumComments" value="<?php echo( ( get_option( 'mainwp_maximumComments' ) === false ) ? 50 : get_option( 'mainwp_maximumComments' ) ); ?>"/>
+							       id="mainwp_maximumComments" value="<?php echo( ( get_option( 'mainwp_maximumComments' ) === false ) ? 50 : get_option( 'mainwp_maximumComments' ) ); ?>"/>
 						</td>
 					</tr>
 					</tbody>

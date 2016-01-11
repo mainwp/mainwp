@@ -880,7 +880,7 @@ class MainWP_Manage_Sites_View {
         <tbody>
             <?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
                 <tr>
-		<div class="mainwp_info-box"><?php echo sprintf( __('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %Extensions Site%s for options.', 'mainwp' ), '<a href="https://extensions.mainwp.com/product-category/mainwp-extensions/backups/" target="_blank" ?>', '</a>' ); ?></div>
+		<div class="mainwp_info-box"><?php echo sprintf( __('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %Extensions Site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
                 </tr>
             <?php } ?>
         <?php
@@ -1082,7 +1082,7 @@ class MainWP_Manage_Sites_View {
         
         <?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
             <tr>
-			<div class="mainwp_info-box"><?php echo sprintf( __('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://extensions.mainwp.com/product-category/mainwp-extensions/backups/" target="_blank" ?>', '</a>' ); ?></div>
+			<div class="mainwp_info-box"><?php echo sprintf( __('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
             </tr>
         <?php } ?>
 
@@ -1315,7 +1315,7 @@ class MainWP_Manage_Sites_View {
                 <div class="postbox">
                     <h3 class="mainwp_box_title"><span>Sucuri Scan</span></h3>
                     <div class="inside">
-                        <?php  echo sprintf( __('The Sucuri Scan requires the free Sucuri Extension, please download from %shere%s', 'mainwp' ), '<a href="https://extensions.mainwp.com/product/mainwp-sucuri-extension/" title="Sucuri">', '</a>' ); ?>
+                        <?php  echo sprintf( __('The Sucuri Scan requires the free Sucuri Extension, please download from %shere%s', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension/sucuri/" title="Sucuri">', '</a>' ); ?>
                     </div>
                 </div>
                 <?php
@@ -1329,7 +1329,7 @@ class MainWP_Manage_Sites_View {
                 <div class="postbox">
                     <h3 class="mainwp_box_title"><span>Wordfence Security Scan</span></h3>
                     <div class="inside">
-                        <?php  echo sprintf( __('Wordfence status requires the Wordfence Extension, please order from %shere%s.', 'mainwp' ), '<a href="https://extensions.mainwp.com/product/mainwp-wordfence-extension/" title="Wordfence">', '</a>' ); ?>
+                        <?php  echo sprintf( __('Wordfence status requires the Wordfence Extension, please order from %shere%s.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension/wordfence/" title="Wordfence">', '</a>' ); ?>
                     </div>
                 </div>
         <?php }

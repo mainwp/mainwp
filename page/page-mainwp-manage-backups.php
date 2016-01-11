@@ -245,7 +245,7 @@ class MainWP_Manage_Backups {
 			self::renderHeader( '' ); ?>
 			<?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
 				<tr>
-				<div class="mainwp_info-box"><?php echo sprintf( __( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://extensions.mainwp.com/product-category/mainwp-extensions/backups/" target="_blank" ?>', '</a>' ); ?></div>
+				<div class="mainwp_info-box"><?php echo sprintf( __( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
 				</tr>
 			<?php } ?>
 			<div id="mainwp_managebackups_content">

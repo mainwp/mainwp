@@ -136,7 +136,7 @@ class MainWP_Security_Issues {
 									<a href="http://docs.mainwp.com/deleting-secure-link-admin/" style="text-decoration: none;"><?php _e( 'Documentation', 'mainwp' ); ?></a>
 								</li>
 								<li><?php _e( 'You have to change this yourself', 'mainwp' ); ?> -
-									<a href="http://blog.mainwp.com/change-default-wordpress-admin-username/" target="_blank" style="text-decoration: none;"><?php _e( 'Tutorial', 'mainwp' ); ?></a>
+									<a href="http://mainwp.com/change-default-wordpress-admin-username/" target="_blank" style="text-decoration: none;"><?php _e( 'Tutorial', 'mainwp' ); ?></a>
 								</li>
 							</ol>
 						</td>

@@ -196,7 +196,7 @@ class MainWP_Main {
 							<div id="mainwp-welocme-bar-top">
                     <span style="float:right;">
                     <a style="font-size: 18px;" class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWP_Right_Now::renderLastUpdate(); ?>"><i class="fa fa-refresh"></i> <?php _e( 'Sync Data with Child Sites', 'mainwp' ); ?></a>
-                    <a style="font-size: 18px;" class="button-hero button-primary button" target="_blank" href="https://extensions.mainwp.com"><i class="fa fa-cart-plus"></i> <?php _e( 'Get New Extensions', 'mainwp' ); ?></a>
+                    <a style="font-size: 18px;" class="button-hero button-primary button" target="_blank" href="https://mainwp.com/extensions/"><i class="fa fa-cart-plus"></i> <?php _e( 'Get New Extensions', 'mainwp' ); ?></a>
                     </span>
 								<?php
 								$current_wp_id = MainWP_Utility::get_current_wpid();

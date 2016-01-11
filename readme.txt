@@ -30,10 +30,10 @@ MainWP is the perfect solution for affiliates, marketers, developers, WordPress 
 
 But wait, How is MainWP free, what’s the catch, how will you continue to pay development costs?
 
-We make money by selling [Extensions](https://extensions.mainwp.com/).
+We make money by selling [Extensions](https://mainwp.com/extensions/).
 
 
-Extensions enhance your MainWP Dashboard with additional features. The catalog of [MainWP Extensions](https://extensions.mainwp.com/) include additional features for backups, marketing, SEO, maintenance, security, monitoring and other tools to help you build a better network. 
+Extensions enhance your MainWP Dashboard with additional features. The catalog of [MainWP Extensions](https://mainwp.com/extensions/) include additional features for backups, marketing, SEO, maintenance, security, monitoring and other tools to help you build a better network. 
 
 = Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
 
@@ -68,10 +68,10 @@ Is there a plugin or theme that you do not want to update for compatibility or o
 When a plugin hasn't had an update in a long time we tend to forget about it which could lead to security or compatibility issues, your MainWP Dashboard will alert you of possibly abandoned plugins or themes so that you can look for a more updated plugin or theme.
 
 = Reliable Backups =
-We understand that your WordPress data is valuable — you’re never more than a moment away from a complete disaster, so make sure you do it right! MainWP comes with a built in Backup Feature or you can use one of our [Free Backup Extensions](https://extensions.mainwp.com/product-category/mainwp-extensions/free/) that incorporate the most popular Backup plugins directly into your Dashboard. 
+We understand that your WordPress data is valuable — you’re never more than a moment away from a complete disaster, so make sure you do it right! MainWP comes with a built in Backup Feature or you can use one of our [Free Backup Extensions](https://mainwp.com/extensions/extension-category/free/) that incorporate the most popular Backup plugins directly into your Dashboard. 
 
 = Multiple Backup Options =
-The MainWP Dashboard offers multiple backup options. Along with the default backup system, you are able to use our [Free Backup Extensions](https://extensions.mainwp.com/product-category/mainwp-extensions/free/) and find the best solution for managing your sites backups.
+The MainWP Dashboard offers multiple backup options. Along with the default backup system, you are able to use our [Free Backup Extensions](https://mainwp.com/extensions/extension-category/free/) and find the best solution for managing your sites backups.
 
 = Content Management =
 The power of the MainWP Dashboard means that publishing content to sites is now as easy as can be. Pick your site from a list, write content, and publish, without the hassles of logging into each and every site. It’s just as easy to manage links, comments, and spam using our mass publish and delete functions.
@@ -100,11 +100,11 @@ Both the MainWP Dashboard and Child plugin are fully open source and GPL complia
 = More Information =
 [MainWP Documentation](http://docs.mainwp.com/)
 
-[MainWP Support](https://mainwp.com/forum/)
+[MainWP Support](http://support.mainwp.com/)
 
 [MainWP Videos](http://www.youtube.com/user/MyMainWP)
 
-[MainWP Extensions](https://extensions.mainwp.com/)
+[MainWP Extensions](https://mainwp.com/extensions/)
 
 [MainWP Ideas](http://ideas.mainwp.com/)
 

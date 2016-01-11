@@ -119,7 +119,7 @@ class MainWP_Settings {
 			<?php if ( $shownPage == 'OfflineChecks' ) { ?>
 				<?php if ( MainWP_Utility::showUserTip( 'mainwp-aumrecommend-tips' ) ) { ?>
 					<div class="mainwp-tips mainwp_info-box-blue">
-						<span class="mainwp-tip" id="mainwp-aumrecommend-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php echo sprintf( __( 'We currently recommend the free %sAdvanced Uptime Monitor Extension%s to perform more frequent tests.', 'mainwp' ), '<a href="https://extensions.mainwp.com/product/mainwp-advanced-uptime-monitor/" target="_blank">', '</a>' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
+						<span class="mainwp-tip" id="mainwp-aumrecommend-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php echo sprintf( __( 'We currently recommend the free %sAdvanced Uptime Monitor Extension%s to perform more frequent tests.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension/advanced-uptime-monitor/" target="_blank">', '</a>' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
 							</a></span></div>
 				<?php } ?>
 			<?php } ?>

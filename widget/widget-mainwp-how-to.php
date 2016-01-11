@@ -24,11 +24,11 @@ class MainWP_How_To
             </div>
             <div id="mainwp-how-tos">
                 <ul>
-                    <li><a href="http://blog.mainwp.com/how-to-set-two-factor-authentication-on-your-mainwp-dashboard/" target="_blank"><i class="fa fa-book"></i> How to set free two-factor authentication on your MainWP Dashboard</a></li>
-                    <li><a href="http://blog.mainwp.com/set-backupwordpress-extension-as-your-primary-backup-system/" target="_blank"><i class="fa fa-book"></i> How to set a Backup Extension as your primary backup system</a></li>
-                    <li><a href="http://blog.mainwp.com/how-you-can-make-sure-that-your-dashboard-can-communicate-with-your-child-site/" target="_blank"><i class="fa fa-book"></i> How to make sure that your MainWP Dashboard can communicate with your Child site</a></li>
-                    <li><a href="http://blog.mainwp.com/did-you-know-mainwp-can-install-updates-for-you-automatically/" target="_blank"><i class="fa fa-book"></i> Did you know MainWP can install updates for you automatically</a></li>
-                    <li><a href="http://blog.mainwp.com/how-to-use-desktopserver-to-run-your-mainwp-dashboard-locally/" target="_blank"><i class="fa fa-book"></i> How to use DesktopServer to run your MainWP Dashboard locally</a></li>
+                    <li><a href="http://mainwp.com/how-to-set-two-factor-authentication-on-your-mainwp-dashboard/" target="_blank"><i class="fa fa-book"></i> How to set free two-factor authentication on your MainWP Dashboard</a></li>
+                    <li><a href="http://mainwp.com/set-backupwordpress-extension-as-your-primary-backup-system/" target="_blank"><i class="fa fa-book"></i> How to set a Backup Extension as your primary backup system</a></li>
+                    <li><a href="http://mainwp.com/how-you-can-make-sure-that-your-dashboard-can-communicate-with-your-child-site/" target="_blank"><i class="fa fa-book"></i> How to make sure that your MainWP Dashboard can communicate with your Child site</a></li>
+                    <li><a href="http://mainwp.com/did-you-know-mainwp-can-install-updates-for-you-automatically/" target="_blank"><i class="fa fa-book"></i> Did you know MainWP can install updates for you automatically</a></li>
+                    <li><a href="http://mainwp.com/how-to-use-desktopserver-to-run-your-mainwp-dashboard-locally/" target="_blank"><i class="fa fa-book"></i> How to use DesktopServer to run your MainWP Dashboard locally</a></li>
                 </ul>
             </div>
         </div>

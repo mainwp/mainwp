@@ -2,9 +2,9 @@
 
 class MainWP_Api_Manager {
 
-	private $upgrade_url = 'https://extensions.mainwp.com/';
-	private $renew_license_url = 'https://extensions.mainwp.com/my-account';
-	const MAINWP_EXTENSIONS_SHOP_IP_ADDRESS = '69.167.133.91'; // replace for upgrade_url
+	private $upgrade_url = 'https://mainwp.com/';
+	private $renew_license_url = 'https://mainwp.com/my-account';
+	const MAINWP_EXTENSIONS_SHOP_IP_ADDRESS = '69.167.133.90'; // replace for upgrade_url
 	public $domain = '';
 	/**
 	 * @var The single instance of the class

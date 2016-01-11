@@ -1315,7 +1315,7 @@ class MainWP_Manage_Sites_View {
                 <div class="postbox">
                     <h3 class="mainwp_box_title"><span>Sucuri Scan</span></h3>
                     <div class="inside">
-                        <?php  echo sprintf( __('The Sucuri Scan requires the free Sucuri Extension, please download from %shere%s', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension/sucuri/" title="Sucuri">', '</a>' ); ?>
+                        <?php  echo sprintf( __('The Sucuri Scan requires the free Sucuri Extension, please download from %shere%s', 'mainwp' ), '<a href="https://mainwp.com/extension/sucuri/" title="Sucuri">', '</a>' ); ?>
                     </div>
                 </div>
                 <?php
@@ -1329,7 +1329,7 @@ class MainWP_Manage_Sites_View {
                 <div class="postbox">
                     <h3 class="mainwp_box_title"><span>Wordfence Security Scan</span></h3>
                     <div class="inside">
-                        <?php  echo sprintf( __('Wordfence status requires the Wordfence Extension, please order from %shere%s.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension/wordfence/" title="Wordfence">', '</a>' ); ?>
+                        <?php  echo sprintf( __('Wordfence status requires the Wordfence Extension, please order from %shere%s.', 'mainwp' ), '<a href="https://mainwp.com/extension/wordfence/" title="Wordfence">', '</a>' ); ?>
                     </div>
                 </div>
         <?php }

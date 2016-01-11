@@ -33,7 +33,7 @@ class MainWP_Offline_Checks {
 		?>
         <div class="mainwp_info-box-red">
         <strong>IMPORTANT:</strong> This feature is being retired and replaced by the Free MainWP Advanced Uptime Monitor Extension which provides more advanced monitoring system.<br/>
-        <a href="https://mainwp.com/extensions/extension/advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
+        <a href="https://mainwp.com/extension/advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
         </div>
 		<div class="mainwp_info-box">
 			<strong><?php _e( 'Notifications will be sent to', 'mainwp' ); ?>
@@ -303,7 +303,7 @@ class MainWP_Offline_Checks {
 			<div class="inside">
 				<div class="mainwp_info-box-red">
 					<strong>IMPORTANT:</strong> This feature is being retired and replaced by the Free MainWP Advanced Uptime Monitor Extension which provides more advanced monitoring system.<br/>
-					<a href="https://mainwp.com/extensions/extension/advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
+					<a href="https://mainwp.com/extension/advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
 				</div>
 				<table class="form-table">
 					<tbody>

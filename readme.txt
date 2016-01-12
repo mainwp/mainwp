@@ -1,19 +1,17 @@
 === MainWP Dashboard ===
 Contributors: mainwp
 Donate link: 
-Tags: WordPress management, management, manager, WordPress controller, network, MainWP, updates, updates, admin, administration, manage,  multiple, multi
+Tags: WordPress management, management, manager, manage, WordPress controller, network, MainWP, updates, admin, administration, multiple, multisite, plugin updates, theme updates, login, remote
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.4
-Stable tag: 2.0.30
+Tested up to: 4.4.1
+Stable tag: 3.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 Manage WP sites from one central location! Much more than just updates, get nearly complete control of all your sites from your self-hosted Dashboard.
-
-== Description ==
 
 == Description ==
 
@@ -28,7 +26,7 @@ MainWP is the perfect solution for affiliates, marketers, developers, WordPress 
 = Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
 
 
-But wait, How is MainWP free, what’s the catch, how will you continue to pay development costs?
+But wait, how is MainWP free, what’s the catch, how will you continue to pay development costs?
 
 We make money by selling [Extensions](https://mainwp.com/extensions/).
 
@@ -100,7 +98,7 @@ Both the MainWP Dashboard and Child plugin are fully open source and GPL complia
 = More Information =
 [MainWP Documentation](http://docs.mainwp.com/)
 
-[MainWP Support](http://support.mainwp.com/)
+[MainWP Support](https://mainwp.com/support/)
 
 [MainWP Videos](http://www.youtube.com/user/MyMainWP)
 
@@ -110,7 +108,7 @@ Both the MainWP Dashboard and Child plugin are fully open source and GPL complia
 
 [MainWP Codex](http://codex.mainwp.com)
 
-[MainWP on Github](http://mainwp.com/github/)
+[MainWP on Github](https://mainwp.com/github/)
 
 == Installation ==
 
@@ -130,7 +128,7 @@ Note: MainWP is not tested on multisite installs, we have reports that most func
 
 == Frequently Asked Questions ==
 = Do I need any other plugins for MainWP? =
-Yes you need to install the [MainWP Child Plugin](http://wordpress.org/plugins/mainwp-child/) on the sites you want to control with the Dashboard plugin.
+Yes you need to install the [MainWP Child Plugin](https://wordpress.org/plugins/mainwp-child/) on the sites you want to control with the Dashboard plugin.
 
 = Do you have any documentation? =
 Yes, please review the [documentation site](http://docs.mainwp.com/).
@@ -139,7 +137,7 @@ Yes, please review the [documentation site](http://docs.mainwp.com/).
 Yes, please read the [Quick Start – Setting up your MainWP](http://docs.mainwp.com/setting-up-your-mainwp/) guide on the doc site.
 
 = Where do I go for support or to ask for help? =
-Please open a [Support Ticket](http://support.mainwp.com/support/home)
+Please open a [Support Ticket](https://mainwp.com/support/)
 
 = Do you have any videos? =
 Yes, you can [see them on YouTube](http://www.youtube.com/user/MyMainWP).
@@ -148,7 +146,7 @@ Yes, you can [see them on YouTube](http://www.youtube.com/user/MyMainWP).
 Please add any ideas to the [MainWP Feature Request](http://support.mainwp.com/support/discussions/5000037246) site.
 
 = I have more questions, do you have any other information? =
-Sure we have a quick FAQ with a lot more questions and answers [here](http://mainwp.com/presales-faq/).
+Sure we have a quick FAQ with a lot more questions and answers [here](https://mainwp.com/presales-faq/).
 
 
 
@@ -162,6 +160,82 @@ Sure we have a quick FAQ with a lot more questions and answers [here](http://mai
 6. The Groups Screen
 
 == Changelog ==
+
+= 3.0 - 1-12-16 =
+* Fixed: Issue with “empty” Theme Conflicts
+* Fixed: Issue with including incorrect file when configuring cron jobs
+* Fixed: Stripe Slashes for site names issue
+* Fixed: Various PHP warnings
+* Fixed: Various PHP notices
+* Fixed: Verify certificates on test site page
+* Fixed: Translation issues
+* Fixed: Error Reporting issues on certain server setups
+* Fixed: SSL bug
+* Fixed: Google index stats reporting
+* Fixed: database error some user experienced when adding new sites
+* Added: Quick Setup wizard
+* Added: Information filter on the Child Server information Page
+* Added: Missing Extensions in the Available Extensions list
+* Added: Direct Cart link to the Order Now button in the Available Extensions list
+* Added: Section retirement notice on the Offline Checks feature
+* Added: Section retirement notice on the Offline Checks option on the Settings page
+* Added: How To widget on the main Dashboard page
+* Added: Select All and Select None button in the Extension Bulk Installation section
+* Added: Missing translation support
+* Added: Twitter promo notification for upgrade bulk actions in Manage Sites page
+* Added: Twitter promo notification for individual upgrades in the Right Now widget
+* Added: MainWP Settings info on the Server Information page
+* Added: Bulk Update WordPress Core action on the Manage Sites page
+* Added: New Table JS library for Plugins management
+* Added: New Table JS library for Themes management
+* Added: Hints for various Site Connection issues
+* Added: Filters for available Extensions in the Available MainWP Extensions box
+* Added: SSL version selection to site
+* Added: Allow to see MainWP child plugin in plugins search
+* Added: Ability to change site URL in Dashboard from http to https via site edit screen
+* Added: Dashboard widget showing sites not synced in last 24 hours
+* Added: Better notation in plugin code for non-MainWP Developers
+* Updated: Refactored code to meet WordPress Coding standards
+* Updated: API licensing management
+* Updated: Child Server Information page layout
+* Updated: Multiple buttons style
+* Updated: Main Sync Data button title
+* Updated: Font Awesome version
+* Updated: Notification message on Posts, Pages, Users, Themes and Plugins page
+* Updated: Layout on the Bulk Add Sites and Bulk Add Users page
+* Updated: Layout on the Manage Users Page
+* Updated: Layout on the Install Plugins page
+* Updated: Layout on the Install Themes page
+* Updated: Image icons replaced by Iconic Font on the Manage Sites page, Offline Checks page and in the Right Now widget
+* Updated: Manage Plugins and Manage Themes table layout
+* Updated: “Backups on External Sources” option label tweaked to “Backups on Remote Storage”
+* Updated: form-table CSS class layout
+* Updated: “Hide MainWP Child Plugin” option box renamed to “Network Optimization”
+* Updated: “Hide Network on Child Sites” option label renamed to “Hide MainWP Child Plugin from Search Engines”
+* Updated: “Optimize for Shared Hosting or Big Networks” moved to the Network Optimization” options box
+* Updated: Various small updates to match design consistency
+* Updated: Groups page layout
+* Updated: Reworded “Overwrite Existing” option label
+* Updated: Text messages on the Bulk Install and Activate section
+* Updated: mainwp-search-box class width
+* Updated: No-item message in the Scheduled Backups table
+* Updated: CSS to get more responsive layout
+* Updated: Translation files
+* Updated: Text messages and input labels in the Bulk Install and Activate Extensions box
+* Updated: List of purchased Extensions is divided in Extension Groups
+* Updated: Sync in last 24 hour message
+* Updated: URL for displaying WordPress.org plugin information
+* Removed: Spinner Extension “Free” label
+* Removed: Redundant messages on the Add New User and Bulk Add Sites page
+* Removed: View Updates per Site option from the Settings page
+* Removed: Forum signup form from the Settings page
+* Removed: Unused images
+* Removed: Form fields custom styles
+* Removed: URL row from the Select Sites box
+* Removed: Get MainWP Extensions promo box from the Extensions page
+* Removed: License link in the Plugin links on the WP > Plugins page
+* Removed: Ignored theme/plugin updates from daily reminder email
+* Improved: Speed of Extension page
 
 = 2.0.30 - 12-7-15 =
 * Code changes for WP 4.4 Compatibility

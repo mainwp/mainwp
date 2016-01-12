@@ -1,4 +1,4 @@
-=== MainWP Dashboard ===
+﻿=== MainWP Dashboard ===
 Contributors: mainwp
 Donate link: 
 Tags: WordPress management, management, manager, manage, WordPress controller, network, MainWP, updates, admin, administration, multiple, multisite, plugin updates, theme updates, login, remote
@@ -152,12 +152,15 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Screenshots ==
 
-1. The Dashboard Screen
-2. The Sites Screen
-3. The Posts Screen
-4. The Extensions Screen
-5. The Plugins Screen
-6. The Groups Screen
+1. Quick Setup Wizard
+2. Add New Site Screen
+3. Manage Sites Screen
+4. Install Plugins Screen
+5. Install Themes Screen
+6. Add New User Screen
+7. Manage Posts Screen
+8. MainWP Settings Screen
+9. Global Dashboard Screen
 
 == Changelog ==
 

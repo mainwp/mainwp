@@ -26,7 +26,7 @@ MainWP is the perfect solution for affiliates, marketers, developers, WordPress 
 = Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
 
 
-But wait, How is MainWP free, what’s the catch, how will you continue to pay development costs?
+But wait, how is MainWP free, what’s the catch, how will you continue to pay development costs?
 
 We make money by selling [Extensions](https://mainwp.com/extensions/).
 

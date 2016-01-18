@@ -34,7 +34,7 @@ class MainWP_Extensions_Widget {
 		} else {
 			$showGrid = get_option( 'mainwp_extension_widget_view', 'grid' ) == 'grid';
 			$showList = ! $showGrid;
-
+			$available_exts_data = MainWP_Extensions_View::getAvailableExtensions();
 			?>
 			<br/>
 			<div id="mainwp-extensions-widget-grid" <?php echo( ! $showGrid ? "style='display:none;'" : '' ); ?>>
@@ -42,6 +42,14 @@ class MainWP_Extensions_Widget {
 				foreach ( $currentExtensions as $extension ) {
 					if ( ! mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
 						continue;
+					}
+					$ext_data = isset( $available_exts_data[dirname($extension['slug'])] ) ? $available_exts_data[dirname($extension['slug'])] : array();
+					if ( isset($ext_data['img']) ) {
+						$img_url = $ext_data['img'];
+					} else if ( isset( $extension['iconURI'] ) && $extension['iconURI'] != '' )  {
+						$img_url = MainWP_Utility::removeHttpPrefix( $extension['iconURI'] );
+					} else {
+						$img_url = plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) );
 					}
 
 					if ( isset( $extension['direct_page'] ) && ! empty( $extension['direct_page'] ) ) {
@@ -53,21 +61,9 @@ class MainWP_Extensions_Widget {
 					$active = MainWP_Extensions::isExtensionEnabled( $extension['plugin'] );
 					?>
 					<span class="mainwp-widget-extensions">
-					<?php
-					if ( isset( $extension['iconURI'] ) && ( $extension['iconURI'] != '' ) ) {
-						?>
 						<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>">
-							<img title="<?php echo $extension['name']; ?>" src="<?php echo MainWP_Utility::removeHttpPrefix( $extension['iconURI'] ); ?>" class="mainwp-widget-icon <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/>
+							<img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-widget-icon <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/>
 						</a>
-						<?php
-					} else {
-						?>
-						<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>">
-							<img title="MainWP Placeholder" src="<?php echo plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) ); ?>" class="mainwp-widget-icon <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/>
-						</a>
-						<?php
-					}
-					?>
 						<h4>
 							<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>"><?php echo $extension['name'] ?></a>
 						</h4>
@@ -86,6 +82,15 @@ class MainWP_Extensions_Widget {
 						continue;
 					}
 
+					$ext_data = isset( $available_exts_data[dirname($extension['slug'])] ) ? $available_exts_data[dirname($extension['slug'])] : array();
+					if ( isset($ext_data['img']) ) {
+						$img_url = $ext_data['img'];
+					} else if ( isset( $extension['iconURI'] ) && $extension['iconURI'] != '' )  {
+						$img_url = MainWP_Utility::removeHttpPrefix( $extension['iconURI'] );
+					} else {
+						$img_url = plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) );
+					}
+
 					if ( isset( $extension['direct_page'] ) && ! empty( $extension['direct_page'] ) ) {
 						$ext_page = $extension['direct_page'];
 					} else {
@@ -95,11 +100,8 @@ class MainWP_Extensions_Widget {
 					$active = MainWP_Extensions::isExtensionEnabled( $extension['plugin'] );
 					?>
 					<tr class="mainwp-widget-extensions-list mainwp-extensions-childHolder" extension_slug="<?php echo $extension['slug']; ?>">
-						<?php
-						if ( isset( $extension['iconURI'] ) && ( $extension['iconURI'] != '' ) ) {
-							?>
 							<td>
-								<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo MainWP_Utility::removeHttpPrefix( $extension['iconURI'] ); ?>" class="mainwp-widget-icon-list <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/></a>
+								<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-widget-icon-list <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/></a>
 							</td>
 							<td class="mainwp-extension-widget-title-list">
 								<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>"><?php echo $extension['name'] ?></a>
@@ -114,28 +116,6 @@ class MainWP_Extensions_Widget {
 									<span style="color: #a00;"><i class="fa fa-lock"></i> <?php _e( 'Deactivated', 'mainwp' ); ?></span>
 								<?php } ?>
 							</td>
-							<?php
-						} else {
-							?>
-							<td>
-								<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>"><img title="MainWP Placeholder" src="<?php echo plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) ); ?>" class="mainwp-widget-icon-list <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/></a>
-							</td>
-							<td class="mainwp-extension-widget-title-list">
-								<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>"><?php echo $extension['name'] ?></a>
-							</td>
-							<td class="mainwp-extension-widget-version"><?php echo $extension['version']; ?></td>
-							<td class="mainwp-api-status-check" align="right" style="padding-right: 10px;">
-								<?php
-								if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && ! empty( $extension['api_key'] ) ) { ?>
-									<span style="color: #7fb100;"><i class="fa fa-unlock"></i> <?php _e( 'Activated', 'mainwp' ); ?></span>
-								<?php } else {
-									?>
-									<span style="color: #a00;"><i class="fa fa-lock"></i> <?php _e( 'Deactivated', 'mainwp' ); ?></span>
-								<?php } ?>
-							</td>
-							<?php
-						}
-						?>
 					</tr>
 					<?php
 				}

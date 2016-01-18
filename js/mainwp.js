@@ -1918,7 +1918,7 @@ managebackups_backup_upload_file_retry_fail = function(pData, pSiteId, pSiteName
 							}
 						} }(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId),
 						error: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId) { return function (response) {
-							managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pUnique, pRemoteDestId, pSize);
+							managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
 						} }(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId),
                         dataType: 'json'
                     });
@@ -4471,9 +4471,9 @@ backup_upload_file = function(pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDes
             url: ajaxurl,
             data: data,
             success: function(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pUnique, pRemoteDestId) { return function (response) {
-	            if (response.error || !response.result)
+	            if (!response || response.error || !response.result)
 				{
-					backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, response.error ? response.error : '');
+					backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, response && response.error ? response.error : '');
 				}
 				else
                 {

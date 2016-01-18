@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.4.1
-Stable tag: 3.0
+Stable tag: 3.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -165,6 +165,17 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.0.1 - 1-18-16 =
+* Updated: Extensions Icons
+* Fixed: Issue with reconnecting child site with unique ID
+* Fixed: PHP Warning
+* Fixed: Issue with displaying Twitter brag messges
+* Fixed: Issue with Availble Updates in email notification
+* Fixed: Backup task javascript error
+* Fixed: Setup wizard loop on multisite setup
+* Added: Warning message for multisite setup
+* Added: Hooks to enable extension logging
 
 = 3.0 - 1-12-16 =
 * Fixed: Issue with “empty” Theme Conflicts

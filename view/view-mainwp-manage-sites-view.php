@@ -915,7 +915,7 @@ class MainWP_Manage_Sites_View {
             </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>
-            <th scope="row"><?php _e( 'Archive Format','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( '' ); ?></th>
+            <th scope="row"><?php _e( 'Archive Format','mainwp' ); ?>&nbsp;</th>
             <td>
                 <table class="mainwp-nomarkup">
                     <tr>
@@ -1608,7 +1608,7 @@ class MainWP_Manage_Sites_View {
 				$useGlobal = ($archiveFormat == 'global');
 				?>
                 <tr>
-                    <th scope="row"><?php _e( 'Archive Format','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( '' ); ?></th>
+                    <th scope="row"><?php _e( 'Archive Format','mainwp' ); ?>&nbsp;</th>
                     <td>
                         <table class="mainwp-nomarkup">
                             <tr>
@@ -1715,7 +1715,7 @@ class MainWP_Manage_Sites_View {
 					$pubkey = '-1';
 				}
 
-					$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array( 'pubkey' => $pubkey, 'server' => get_admin_url() ), true, $website->verify_certificate, $website->http_user, $website->http_pass, $website->ssl_version );
+					$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array( 'pubkey' => $pubkey, 'server' => get_admin_url(), 'uniqueId' => $website->uniqueId ), true, $website->verify_certificate, $website->http_user, $website->http_pass, $website->ssl_version );
 
 				if ( isset( $information['error'] ) && $information['error'] != '' ) {
 					throw new Exception( $information['error'] );

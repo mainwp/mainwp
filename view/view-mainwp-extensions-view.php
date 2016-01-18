@@ -194,7 +194,7 @@ class MainWP_Extensions_View {
 				<div id="mainwp-extensions-list">
 					<?php
 					$user_can_manage_extensions = mainwp_current_user_can( 'dashboard', 'manage_extensions' );
-
+					$available_exts_data = MainWP_Extensions_View::getAvailableExtensions();
 					if ( isset( $extensions ) && is_array( $extensions ) ) {
 						foreach ( $extensions as $extension ) {
 							if ( ! mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
@@ -202,7 +202,7 @@ class MainWP_Extensions_View {
 							}
 							$active = MainWP_Extensions::isExtensionActivated( $extension['plugin'] );
 							$enabled = MainWP_Extensions::isExtensionEnabled( $extension['plugin'] );
-
+							$ext_data = isset( $available_exts_data[dirname($extension['slug'])] ) ? $available_exts_data[dirname($extension['slug'])] : array();
 							$queue_status = '';
 
 							if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) {
@@ -213,14 +213,15 @@ class MainWP_Extensions_View {
 								<table style="width: 100%">
 									<td class="mainwp-extensions-childIcon">
 										<?php
-										if ( isset( $extension['iconURI'] ) && ( $extension['iconURI'] != '' ) ) {
-											?>
-											<img title="<?php echo $extension['name']; ?>" src="<?php echo MainWP_Utility::removeHttpPrefix( $extension['iconURI'] ); ?>" class="mainwp-extensions-img large <?php echo( $enabled ? '' : 'mainwp-extension-icon-desaturated' ); ?>" /><?php
+										if ( isset($ext_data['img']) ) {
+											$img_url = $ext_data['img'];
+										} else if ( isset( $extension['iconURI'] ) && $extension['iconURI'] != '' )  {
+											$img_url = MainWP_Utility::removeHttpPrefix( $extension['iconURI'] );
 										} else {
-											?>
-											<img title="MainWP Placeholder" src="<?php echo plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) ); ?>" class="mainwp-extensions-img large <?php echo( $enabled ? '' : 'mainwp-extension-icon-desaturated' ); ?>" /><?php
+											$img_url = plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) );
 										}
 										?>
+											<img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-extensions-img large <?php echo( $enabled ? '' : 'mainwp-extension-icon-desaturated' ); ?>" />
 									</td>
 									<td valign="top">
 										<table style="width: 100%">
@@ -444,6 +445,7 @@ class MainWP_Extensions_View {
 
 	public static function getAvailableExtensions() {
 		return array(
+			'advanced-uptime-monitor-extension' =>
 			array(
 				'free'       => true,
 				'slug'       => 'advanced-uptime-monitor-extension',
@@ -455,6 +457,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '218',
 				'group' => array('admin')
 			),
+			'mainwp-article-uploader-extension' =>
 			array(
 				'slug'       => 'mainwp-article-uploader-extension',
 				'title'      => 'MainWP Article Uploader Extension',
@@ -465,6 +468,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '15340',
 				'group' => array('content')
 			),
+			'mainwp-backupwordpress-extension' =>
 			array(
 				'slug'       => 'mainwp-backupwordpress-extension',
 				'title'      => 'MainWP BackUpWordPress Extension',
@@ -475,6 +479,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '273535',
 				'group' => array('backup')
 			),
+			'mainwp-blogvault-backup-extension' =>
 			array(
 				'free' => true,
 				'slug' => 'mainwp-blogvault-backup-extension',
@@ -486,6 +491,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '347111',
 				'group' => array('backup')
 			),
+			'boilerplate-extension' =>
 			array(
 				'slug'       => 'boilerplate-extension',
 				'title'      => 'MainWP Boilerplate Extension',
@@ -496,6 +502,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1188',
 				'group' => array('content')
 			),
+			'mainwp-branding-extension' =>
 			array(
 				'slug'       => 'mainwp-branding-extension',
 				'title'      => 'MainWP Branding Extension',
@@ -506,6 +513,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '10679',
 				'group' => array('admin')
 			),
+			'mainwp-broken-links-checker-extension' =>
 			array(
 				'slug'       => 'mainwp-broken-links-checker-extension',
 				'title'      => 'MainWP Broken Links Checker Extension',
@@ -516,6 +524,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '12737',
 				'group' => array('performance')
 			),
+			'mainwp-bulk-settings-manager' =>
 			array(
 				'slug' => 'mainwp-bulk-settings-manager',
 				'title' => 'MainWP Bulk Settings Manager',
@@ -526,6 +535,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '347704',
 				'group' => array('admin')
 			),
+			'mainwp-clean-and-lock-extension' =>
 			array(
 				'free'       => true,
 				'slug'       => 'mainwp-clean-and-lock-extension',
@@ -537,6 +547,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '12907',
 				'group' => array('security')
 			),
+			'mainwp-client-reports-extension' =>
 			array(
 				'slug'       => 'mainwp-client-reports-extension',
 				'title'      => 'MainWP Client Reports Extension',
@@ -547,6 +558,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '12139',
 				'group' => array('admin')
 			),
+			'mainwp-clone-extension' =>
 			array(
 				'slug' => 'mainwp-clone-extension',
 				'title' => 'MainWP Clone Extension',
@@ -557,6 +569,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1555',
 				'group' => array('admin')
 			),
+			'mainwp-code-snippets-extension' =>
 			array(
 				'slug' => 'mainwp-code-snippets-extension',
 				'title' => 'MainWP Code Snippets Extension',
@@ -567,6 +580,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '11196',
 				'group' => array('admin')
 			),
+			'mainwp-comments-extension' =>
 			array(
 				'slug' => 'mainwp-comments-extension',
 				'title' => 'MainWP Comments Extension',
@@ -577,6 +591,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1551',
 				'group' => array('admin')
 			),
+			'mainwp-favorites-extension' =>
 			array(
 				'slug' => 'mainwp-favorites-extension',
 				'title' => 'MainWP Favorites Extension',
@@ -587,6 +602,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1379',
 				'group' => array('admin')
 			),
+			'mainwp-file-uploader-extension' =>
 			array(
 				'slug' => 'mainwp-file-uploader-extension',
 				'title' => 'MainWP File Uploader Extension',
@@ -597,6 +613,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '11637',
 				'group' => array('content')
 			),
+			'mainwp-google-analytics-extension' =>
 			array(
 				'slug' => 'mainwp-google-analytics-extension',
 				'title' => 'MainWP Google Analytics Extension',
@@ -607,6 +624,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1554',
 				'group' => array('visitor')
 			),
+			'mainwp-inmotion-hosting-extension' =>
 			array(
 				'free' => true,
 				'slug' => 'mainwp-inmotion-hosting-extension',
@@ -618,6 +636,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '336219',
 				'group' => array('hosting')
 			),
+			'mainwp-links-manager-extension' =>
 			array(
 				'slug' => 'mainwp-links-manager-extension',
 				'title' => 'MainWP Links Manager',
@@ -628,6 +647,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '317',
 				'group' => array('content')
 			),
+			'mainwp-maintenance-extension' =>
 			array(
 				'slug' => 'mainwp-maintenance-extension',
 				'title' => 'MainWP Maintenance Extension',
@@ -638,6 +658,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1141',
 				'group' => array('admin')
 			),
+			'mainwp-piwik-extension' =>
 			array(
 				'slug' => 'mainwp-piwik-extension',
 				'title' => 'MainWP Piwik Extension',
@@ -648,6 +669,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '10523',
 				'group' => array('visitor')
 			),
+			'mainwp-post-dripper-extension' =>
 			array(
 				'slug' => 'mainwp-post-dripper-extension',
 				'title' => 'MainWP Post Dripper Extension',
@@ -658,6 +680,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '11756',
 				'group' => array('content')
 			),
+			'mainwp-remote-backup-extension' =>
 			array(
 				'slug' => 'mainwp-remote-backup-extension',
 				'title' => 'MainWP Remote Backups Extension',
@@ -668,6 +691,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1553',
 				'group' => array('backup')
 			),
+			'mainwp-rocket-extension' =>
 			array(
 				'slug' => 'mainwp-rocket-extension',
 				'title' => 'MainWP Rocket Extension',
@@ -678,6 +702,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '335257',
 				'group' => array('performance')
 			),
+			'mainwp-spinner' =>
 			array(
 				'slug' => 'mainwp-spinner',
 				'title' => 'MainWP Spinner',
@@ -688,6 +713,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '110',
 				'group' => array('content')
 			),
+			'mainwp-sucuri-extension' =>
 			array(
 				'free' => true,
 				'slug' => 'mainwp-sucuri-extension',
@@ -699,6 +725,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '10777',
 				'group' => array('security')
 			),
+			'mainwp-team-control' =>
 			array(
 				'slug' => 'mainwp-team-control',
 				'title' => 'MainWP Team Control',
@@ -709,6 +736,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '23936',
 				'group' => array('admin')
 			),
+			'mainwp-updraftplus-extension' =>
 			array(
 				'free' => true,
 				'slug' => 'mainwp-updraftplus-extension',
@@ -720,6 +748,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '165843',
 				'group' => array('backup')
 			),
+			'mainwp-url-extractor-extension' =>
 			array(
 				'slug' => 'mainwp-url-extractor-extension',
 				'title' => 'MainWP URL Extractor Extension',
@@ -730,6 +759,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '11965',
 				'group' => array('admin')
 			),
+			'mainwp-woocommerce-shortcuts-extension' =>
 			array(
 				'free' => true,
 				'slug' => 'mainwp-woocommerce-shortcuts-extension',
@@ -741,6 +771,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '12706',
 				'group' => array('admin')
 			),
+			'mainwp-woocommerce-status-extension' =>
 			array(
 				'slug' => 'mainwp-woocommerce-status-extension',
 				'title' => 'MainWP WooCommerce Status Extension',
@@ -751,6 +782,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '12671',
 				'group' => array('admin')
 			),
+			'mainwp-wordfence-extension' =>
 			array(
 				'slug' => 'mainwp-wordfence-extension',
 				'title' => 'MainWP WordFence Extension',
@@ -761,6 +793,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '19678',
 				'group' => array('security')
 			),
+			'wordpress-seo-extension' =>
 			array(
 				'slug' => 'wordpress-seo-extension',
 				'title' => 'MainWP WordPress SEO Extension',
@@ -771,6 +804,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '12080',
 				'group' => array('content')
 			),
+			'mainwp-page-speed-extension' =>
 			array(
 				'slug' => 'mainwp-page-speed-extension',
 				'title' => 'MainWP Page Speed Extension',
@@ -781,6 +815,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '12581',
 				'group' => array('perfomance')
 			),
+			'mainwp-ithemes-security-extension' =>
 			array(
 				'slug' => 'mainwp-ithemes-security-extension',
 				'title' => 'MainWP iThemes Security Extension',
@@ -791,6 +826,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '113355',
 				'group' => array('security')
 			),
+			'mainwp-post-plus-extension' =>
 			array(
 				'slug' => 'mainwp-post-plus-extension',
 				'title' => 'MainWP Post Plus Extension',

@@ -717,7 +717,7 @@ class MainWP_System {
 				}
 
 				if ( ( count( $pluginsNewUpdate ) != 0 ) || ( count( $pluginsToUpdate ) != 0 )
-//				     || ( count( $ignoredPluginsNewUpdate ) != 0 ) || ( count( $ignoredPluginsToUpdate ) != 0 )
+				     || ( count( $ignoredPluginsNewUpdate ) != 0 ) || ( count( $ignoredPluginsToUpdate ) != 0 )
 					) {
 					$sendMail = true;
 
@@ -725,8 +725,8 @@ class MainWP_System {
 					$mail .= '<ul>';
 					$mail .= $this->print_updates_array_lines( $pluginsNewUpdate, null );
 					$mail .= $this->print_updates_array_lines( $pluginsToUpdate, $sitesCheckCompleted );
-//					$mail .= $this->print_updates_array_lines( $ignoredPluginsNewUpdate, null );
-//					$mail .= $this->print_updates_array_lines( $ignoredPluginsToUpdate, null );
+					$mail .= $this->print_updates_array_lines( $ignoredPluginsNewUpdate, null );
+					$mail .= $this->print_updates_array_lines( $ignoredPluginsToUpdate, null );
 					$mail .= '</ul>';
 				}
 
@@ -748,7 +748,7 @@ class MainWP_System {
 				}
 
 				if ( ( count( $themesNewUpdate ) != 0 ) || ( count( $themesToUpdate ) != 0 )
-//				     || ( count( $ignoredThemesNewUpdate ) != 0 ) || ( count( $ignoredThemesToUpdate ) != 0 )
+				     || ( count( $ignoredThemesNewUpdate ) != 0 ) || ( count( $ignoredThemesToUpdate ) != 0 )
 					) {
 					$sendMail = true;
 
@@ -756,8 +756,8 @@ class MainWP_System {
 					$mail .= '<ul>';
 					$mail .= $this->print_updates_array_lines( $themesNewUpdate, null );
 					$mail .= $this->print_updates_array_lines( $themesToUpdate, $sitesCheckCompleted );
-//					$mail .= $this->print_updates_array_lines( $ignoredThemesNewUpdate, null );
-//					$mail .= $this->print_updates_array_lines( $ignoredThemesToUpdate, null );
+					$mail .= $this->print_updates_array_lines( $ignoredThemesNewUpdate, null );
+					$mail .= $this->print_updates_array_lines( $ignoredThemesToUpdate, null );
 					$mail .= '</ul>';
 				}
 

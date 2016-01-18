@@ -1473,6 +1473,8 @@ class MainWP_Post_Handler {
 				$current_options['request_reviews2_starttime'] = time();
 			} else if ( $_POST['notice'] == 'trust_child' ) {
 				$current_options['trust_child'] = 1;
+			} else if ( $_POST['notice'] == 'multi_site' ) {
+				$current_options['hide_multi_site_notice'] = 1;
 			}
 			update_option( 'mainwp_showhide_events_notice', $current_options );
 		}

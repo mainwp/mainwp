@@ -341,6 +341,22 @@ class MainWP_System {
 			delete_option( 'mainwp_refresh' );
 		}
 
+		$current_options = get_option( 'mainwp_showhide_events_notice' );
+		if ( ! is_array( $current_options ) ) {
+			$current_options = array();
+		}
+
+		if ( is_multisite() && ( !isset( $current_options['hide_multi_site_notice'] ) || empty( $current_options['hide_multi_site_notice'] ) ) ) {
+			?>
+			<div class="mainwp-events-notice mainwp_info-box-red">
+				<span style="float: right;"><a class="mainwp-events-notice-dismiss" notice="multi_site"
+						      style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
+				<span><i class="fa fa-exclamation-triangle fa-2x mwp-red"></i> <strong><?php esc_html_e( 'Warning! WordPress Multisite detected.', 'mainwp' ); ?></strong></span>
+				<p><?php esc_html_e( 'MainWP Plugin is not designed nor fully tested on WordPress Multi Site installations. Varisous features may not work propely. We highly recommend insallting it on a Single Site installation!', 'mainwp' ); ?></p>
+			</div>
+			<?php
+		}
+
 		if ( MainWP_DB::Instance()->getWebsitesCount() == 0 ) {
 			echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';
 			update_option( 'mainwp_first_site_events_notice', 'yes' );
@@ -349,7 +365,7 @@ class MainWP_System {
 				?>
 				<div class="mainwp-events-notice updated fade">
 					<p>
-						<span style="float: right;" class="mainwp-events-notice-dismiss" notice="first_site"
+						<span style="float: right;"><a class="mainwp-events-notice-dismiss" notice="first_site"
 						      style="text-decoration: none;" href="#"><i
 								class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span><span><strong><?php echo sprintf( __( 'Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected %sScheduled Events%s', 'mainwp' ), '<a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">', '</a>' ) ; ?></strong></span>
 					</p>
@@ -377,11 +393,6 @@ class MainWP_System {
 					<?php
 				}
 			}
-		}
-
-		$current_options = get_option( 'mainwp_showhide_events_notice' );
-		if ( ! is_array( $current_options ) ) {
-			$current_options = array();
 		}
 
 		if ( ! isset( $current_options['trust_child'] ) || empty( $current_options['trust_child'] ) ) {

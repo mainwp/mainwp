@@ -324,10 +324,10 @@ class MainWP_Main {
 					'upgrade_all_themes',
 				);
 				foreach ( $filter as $what ) {
-					$twitters = MainWP_Twitter::getTwitterNotice( $what );					
+					$twitters = MainWP_Twitter::getTwitterNotice( $what );
 					if ( is_array( $twitters ) ) {
-						foreach ( $twitters as $timeid => $twit_mess ) {							
-							if ( ! empty( $twit_mess ) ) {								
+						foreach ( $twitters as $timeid => $twit_mess ) {
+							if ( ! empty( $twit_mess ) ) {
 								$sendText = MainWP_Twitter::getTwitToSend($what, $timeid);
 								if (!empty($sendText)) {
 									?>

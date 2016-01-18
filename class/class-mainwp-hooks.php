@@ -41,7 +41,20 @@ class MainWP_Hooks {
 			'isExtensionAvailable',
 		) );
 		add_filter( 'mainwp-extension-decrypt-string', array( &$this, 'hookDecryptString' ) );
-		add_action('mainwp_enable_extension', array(&$this, 'hookEnableExtension'), 10, 1);
+		add_action( 'mainwp_enable_extension', array( &$this, 'hookEnableExtension' ), 10, 1 );
+		add_action( 'mainp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
+		add_action( 'mainp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
+		add_action( 'mainp_log_warning', array( &$this, 'mainwp_log_warning' ), 10, 1 );
+	}
+
+	public function mainwp_log_debug( $pText ) {
+		MainWP_Logger::Instance()->debug( $pText );
+	}
+	public function mainwp_log_info( $pText ) {
+		MainWP_Logger::Instance()->info( $pText );
+	}
+	public function mainwp_log_warning( $pText ) {
+		MainWP_Logger::Instance()->warning( $pText );
 	}
 
 	public function cache_getcontext( $page ) {

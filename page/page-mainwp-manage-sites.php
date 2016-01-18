@@ -1051,9 +1051,9 @@ class MainWP_Manage_Sites {
 			foreach ( $filter as $what ) {
 				$twitters = MainWP_Twitter::getTwitterNotice( $what );
 				if ( is_array( $twitters ) ) {
-					foreach ( $twitters as $timeid => $twit_mess ) {						
+					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( !empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );						
+							$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
 							if ( !empty( $sendText ) ) {
 								?>
 								<div class="mainwp-tips mainwp_info-box-blue twitter"><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText );?><span><a href="#" class="mainwp-dismiss-twit" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>

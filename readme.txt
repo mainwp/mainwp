@@ -1,4 +1,4 @@
-=== MainWP Dashboard ===
+﻿=== MainWP Dashboard ===
 Contributors: mainwp
 Donate link: 
 Tags: WordPress management, management, manager, manage, WordPress controller, network, MainWP, updates, admin, administration, multiple, multisite, plugin updates, theme updates, login, remote
@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.4.1
-Stable tag: 3.0
+Stable tag: 3.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -152,14 +152,27 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Screenshots ==
 
-1. The Dashboard Screen
-2. The Sites Screen
-3. The Posts Screen
-4. The Extensions Screen
-5. The Plugins Screen
-6. The Groups Screen
+1. Quick Setup Wizard
+2. Add New Site Screen
+3. Manage Sites Screen
+4. Install Plugins Screen
+5. Install Themes Screen
+6. Add New User Screen
+7. Manage Posts Screen
+8. MainWP Settings Screen
+9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.0.1 - 1-18-16 =
+* Updated: Extensions Icons
+* Fixed: Issue with reconnecting child site with unique ID
+* Fixed: PHP Warning
+* Fixed: Issue with displaying Twitter brag messges
+* Fixed: Issue with Availble Updates in email notification
+* Fixed: Backup task javascript error
+* Added: Warning message for Multisite settup
+* Added: Hooks to enable extension logging
 
 = 3.0 - 1-12-16 =
 * Fixed: Issue with “empty” Theme Conflicts

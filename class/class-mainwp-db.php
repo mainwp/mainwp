@@ -48,6 +48,7 @@ class MainWP_DB {
 
 	//Installs new DB
 	function install() {
+		//get_site_option is multisite aware!
 		$currentVersion = get_site_option( 'mainwp_db_version' );
 
 		$rslt = MainWP_DB::Instance()->query( "SHOW TABLES LIKE '" . $this->tableName( 'wp' ) . "'" );
@@ -300,7 +301,11 @@ class MainWP_DB {
 
 		$this->post_update();
 
-		MainWP_Utility::update_option( 'mainwp_db_version', $this->mainwp_db_version );
+		if ( !is_multisite() ) {
+			MainWP_Utility::update_option( 'mainwp_db_version', $this->mainwp_db_version );
+		} else {
+			update_site_option( 'mainwp_db_version', $this->mainwp_db_version );
+		}
 	}
 
 	//Check for update - if required, update..
@@ -318,6 +323,7 @@ class MainWP_DB {
 	}
 
 	function post_update() {
+		//get_site_option is multisite aware!
 		$currentVersion = get_site_option( 'mainwp_db_version' );
 		if ( $currentVersion === false ) {
 			return;

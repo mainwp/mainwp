@@ -153,7 +153,7 @@ class MainWP_Extensions_View {
 	}
 
 	public static function render( &$extensions ) {
-		
+
 		$loader_url = '<i class="fa fa-spinner fa-pulse"></i>';
 		if ( mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
 

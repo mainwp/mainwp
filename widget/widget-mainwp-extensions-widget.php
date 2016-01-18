@@ -42,8 +42,8 @@ class MainWP_Extensions_Widget {
 				foreach ( $currentExtensions as $extension ) {
 					if ( ! mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
 						continue;
-					}					
-					$ext_data = isset( $available_exts_data[dirname($extension['slug'])] ) ? $available_exts_data[dirname($extension['slug'])] : array();					
+					}
+					$ext_data = isset( $available_exts_data[dirname($extension['slug'])] ) ? $available_exts_data[dirname($extension['slug'])] : array();
 					if ( isset($ext_data['img']) ) {
 						$img_url = $ext_data['img'];
 					} else if ( isset( $extension['iconURI'] ) && $extension['iconURI'] != '' )  {
@@ -51,7 +51,7 @@ class MainWP_Extensions_Widget {
 					} else {
 						$img_url = plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) );
 					}
-										
+
 					if ( isset( $extension['direct_page'] ) && ! empty( $extension['direct_page'] ) ) {
 						$ext_page = $extension['direct_page'];
 					} else {
@@ -63,7 +63,7 @@ class MainWP_Extensions_Widget {
 					<span class="mainwp-widget-extensions">
 						<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>">
 							<img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-widget-icon <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/>
-						</a>						
+						</a>
 						<h4>
 							<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>"><?php echo $extension['name'] ?></a>
 						</h4>
@@ -82,7 +82,7 @@ class MainWP_Extensions_Widget {
 						continue;
 					}
 
-					$ext_data = isset( $available_exts_data[dirname($extension['slug'])] ) ? $available_exts_data[dirname($extension['slug'])] : array();					
+					$ext_data = isset( $available_exts_data[dirname($extension['slug'])] ) ? $available_exts_data[dirname($extension['slug'])] : array();
 					if ( isset($ext_data['img']) ) {
 						$img_url = $ext_data['img'];
 					} else if ( isset( $extension['iconURI'] ) && $extension['iconURI'] != '' )  {
@@ -99,7 +99,7 @@ class MainWP_Extensions_Widget {
 
 					$active = MainWP_Extensions::isExtensionEnabled( $extension['plugin'] );
 					?>
-					<tr class="mainwp-widget-extensions-list mainwp-extensions-childHolder" extension_slug="<?php echo $extension['slug']; ?>">						
+					<tr class="mainwp-widget-extensions-list mainwp-extensions-childHolder" extension_slug="<?php echo $extension['slug']; ?>">
 							<td>
 								<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-widget-icon-list <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/></a>
 							</td>

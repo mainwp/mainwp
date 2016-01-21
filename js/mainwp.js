@@ -3922,7 +3922,7 @@ mainwp_upload_bulk = function (type) {
     var files = [];
     jQuery(".qq-upload-file").each(function (i) {
         if (jQuery(this).parent().attr('class').replace(/^\s+|\s+$/g, "") == 'qq-upload-success') {
-            files.push(jQuery(this).html());
+            files.push(jQuery(this).attr('filename'));
         }
     });
     if (files.length == 0) {

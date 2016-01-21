@@ -1787,7 +1787,8 @@ class MainWP_Manage_Sites_View {
 				if ( is_array( $pluginConflicts ) ) {
 					$pluginConflicts = array_filter( $pluginConflicts );}
 				if ( is_array( $themeConflicts ) ) {
-					$themeConflicts = array_filter( $themeConflicts );}
+					$themeConflicts = array_filter( $themeConflicts );
+				}
 				$verifyCertificate = ( !isset( $_POST['verify_certificate'] ) || empty( $_POST['verify_certificate'] ) ? null : $_POST['verify_certificate'] );
 				$sslVersion = MainWP_Utility::getCURLSSLVersion( !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version'] );
 				$addUniqueId = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : '';

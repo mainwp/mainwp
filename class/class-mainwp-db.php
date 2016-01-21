@@ -1072,7 +1072,7 @@ class MainWP_DB {
 				'themeConflicts'          => '',
 				'ignored_pluginConflicts' => '',
 				'ignored_themeConflicts'  => '',
-				'verify_certificate'      => $verifyCertificate,
+				'verify_certificate'      => intval( $verifyCertificate ),
 				'ssl_version'             => $sslVersion,
 				'uniqueId'                => $uniqueId,
 				'mainwpdir'               => 0,

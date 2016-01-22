@@ -21,30 +21,25 @@ And, just because it is free does not mean it’s been stripped down.   The Main
 
 The Dashboard plugin allows you to connect and control completely independent WordPress sites even those on different hosts and servers.
 
-MainWP is the perfect solution for affiliates, marketers, developers, WordPress shops and anyone else with multiple WordPress sites.  
-
-= MainWP Overview =
-
-[youtube https://youtu.be/PV3L-MGQOyM]
-
-= Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
-
+MainWP is the perfect solution for affiliates, marketers, developers, WordPress shops and anyone else with multiple WordPress sites. 
 
 But wait, how is MainWP free, what’s the catch, how will you continue to pay development costs?
 
 We make money by selling [Extensions](https://mainwp.com/extensions/).
 
-
 Extensions enhance your MainWP Dashboard with additional features. The catalog of [MainWP Extensions](https://mainwp.com/extensions/) include additional features for backups, marketing, SEO, maintenance, security, monitoring and other tools to help you build a better network.
-
-= Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
-
 
 **Note:  MainWP requires two (2) plugins.**
 
 **This is the MainWP Dashboard plugin that you install on your own separate WordPress install and the [MainWP child plugin](https://wordpress.org/plugins/mainwp-child/) that you install on the sites you want to control (child sites) .**
 
 **Please check the [Quick Start - Setting up your MainWP](http://docs.mainwp.com/setting-up-your-mainwp/) support doc for more information.**
+
+= Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
+
+[youtube https://www.youtube.com/watch?v=PV3L-MGQOyM]
+
+
 
 
 = Some of the Free MainWP Features include: =

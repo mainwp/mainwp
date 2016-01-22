@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.4.1
-Stable tag: 3.0.1
+Stable tag: 3.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,10 @@ And, just because it is free does not mean it’s been stripped down.   The Main
 The Dashboard plugin allows you to connect and control completely independent WordPress sites even those on different hosts and servers.
 
 MainWP is the perfect solution for affiliates, marketers, developers, WordPress shops and anyone else with multiple WordPress sites.  
+
+= MainWP Overview =
+
+[youtube https://youtu.be/PV3L-MGQOyM]
 
 = Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
 
@@ -163,6 +167,10 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.0.2 - 1-22-16 =
+* Fixed: Bug that was stripping long plugin and theme names
+* Fixed: Issue adding sites when SSL is set to no
 
 = 3.0.1 - 1-18-16 =
 * Updated: Extensions Icons

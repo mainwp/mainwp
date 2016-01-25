@@ -83,7 +83,7 @@ class MainWP_Extensions {
 
 	static function filter_ApiUpgradeUrl( $api_url ) {
 		// apply for mainwp.com only
-		return str_replace( 'mainwp.com', MainWP_Api_Manager::MAINWP_EXTENSIONS_SHOP_IP_ADDRESS, $api_url );
+		return str_replace( '//mainwp.com/', "//" .MainWP_Api_Manager::MAINWP_EXTENSIONS_SHOP_IP_ADDRESS . "/", $api_url );
 	}
 
 	public static function initMenu() {

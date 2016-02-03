@@ -161,7 +161,6 @@ class MainWP_System {
 		do_action( 'mainwp_cronload_action' );
 
 		//Cron every 5 minutes
-		add_action( 'mainwp_cronofflinecheck_action', array( $this, 'mainwp_cronofflinecheck_action' ) );
 		add_action( 'mainwp_cronstats_action', array( $this, 'mainwp_cronstats_action' ) );
 		add_action( 'mainwp_cronbackups_action', array( $this, 'mainwp_cronbackups_action' ) );
 		add_action( 'mainwp_cronbackups_continue_action', array( $this, 'mainwp_cronbackups_continue_action' ) );
@@ -172,14 +171,9 @@ class MainWP_System {
 
 		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
 
-		if ( ( $sched = wp_next_scheduled( 'mainwp_cronofflinecheck_action' ) ) == false ) {
-			if ( $useWPCron ) {
-				wp_schedule_event( time(), '5minutely', 'mainwp_cronofflinecheck_action' );
-			}
-		} else {
-			if ( ! $useWPCron ) {
-				wp_unschedule_event( $sched, 'mainwp_cronofflinecheck_action' );
-			}
+		//todo: remove in next version
+		if ( ( $sched = wp_next_scheduled( 'mainwp_cronofflinecheck_action' ) ) != false ) {
+			wp_unschedule_event( $sched, 'mainwp_cronofflinecheck_action' );
 		}
 
 		if ( ( $sched = wp_next_scheduled( 'mainwp_cronstats_action' ) ) == false ) {
@@ -285,7 +279,7 @@ class MainWP_System {
 		MainWP_Right_Now::init();
 		MainWP_Setup_Wizard::init();
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			//MainWP_WP_CLI_Command::init();
+			MainWP_WP_CLI_Command::init();
 		}
 	}
 
@@ -631,17 +625,6 @@ class MainWP_System {
 		}
 
 		return false;
-	}
-
-	function mainwp_cronofflinecheck_action() {
-		MainWP_Logger::Instance()->info( 'CRON :: offlinecheck' );
-
-		MainWP_Utility::update_option( 'mainwp_cron_last_offlinecheck', time() );
-		//Do cronjobs!
-		//Config this in crontab: 0 0 * * * wget -q http://mainwp.com/wp-admin/?do=checkSites -O /dev/null 2>&1
-		//this will execute once every day to check if websites are offline
-		MainWP_Offline_Checks::performAllChecks();
-		die();
 	}
 
 	function print_updates_array_lines( $array, $backupChecks ) {
@@ -1664,8 +1647,6 @@ class MainWP_System {
 			$this->mainwp_cronbackups_continue_action();
 		} else if ( isset( $_GET['do'] ) && $_GET['do'] == 'cronStats' ) {
 			$this->mainwp_cronstats_action();
-		} else if ( isset( $_GET['do'] ) && $_GET['do'] == 'checkSites' ) {
-			$this->mainwp_cronofflinecheck_action();
 		} else if ( isset( $_GET['do'] ) && $_GET['do'] == 'cronUpdatesCheck' ) {
 			$this->mainwp_cronupdatescheck_action();
 		} else if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
@@ -2393,7 +2374,6 @@ class MainWP_System {
 			MainWP_Plugins::initMenu();
 			MainWP_User::initMenu();
 			MainWP_Manage_Backups::initMenu();
-			MainWP_Offline_Checks::initMenu();
 			MainWP_Bulk_Update_Admin_Passwords::initMenu();
 			MainWP_Manage_Groups::initMenu();
 			MainWP_Settings::initMenu();

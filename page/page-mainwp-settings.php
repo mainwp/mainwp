@@ -278,7 +278,6 @@ class MainWP_Settings {
 
 		$updated = MainWP_Options::handleSettingsPost();
 		$updated |= MainWP_Manage_Sites::handleSettingsPost();
-		$updated |= MainWP_Offline_Checks::handleSettingsPost();
 		$updated |= MainWP_Footprint::handleSettingsPost();
 
 		self::renderHeader( '' ); ?>
@@ -297,8 +296,6 @@ class MainWP_Settings {
 			MainWP_Options::renderSettings();
 
 			MainWP_Manage_Sites::renderSettings();
-
-			MainWP_Offline_Checks::renderSettings();
 
 			MainWP_Footprint::renderSettings();
 

@@ -1251,7 +1251,7 @@ class MainWP_Manage_Sites {
 			$ret['response'] = 'ERROR You already added your site to MainWP';
 		} else {
 			try {
-				$verify_cert = ( !isset( $_POST['verify_certificate'] ) || empty( $_POST['verify_certificate'] ) ? null : $_POST['verify_certificate'] );
+				$verify_cert = ( !isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( $_POST['verify_certificate'] !== '0' ) ) ? null : $_POST['verify_certificate'] );
 				$http_user   = ( isset( $_POST['http_user'] ) ? $_POST['http_user'] : '' );
 				$http_pass   = ( isset( $_POST['http_pass'] ) ? $_POST['http_pass'] : '' );
 				$information = MainWP_Utility::fetchUrlNotAuthed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass ); //Fetch the stats with the given admin name

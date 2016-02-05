@@ -266,11 +266,11 @@ class MainWP_Install_Bulk {
 			$information = unserialize( base64_decode( $result ) );
 			if ( isset( $information['installation'] ) && $information['installation'] == 'SUCCESS' ) {
 				$output->ok[ $website->id ] = array( $website->name );
-			} else if ( isset( $information['error'] ) ) {
+			} else if ( isset( $information['error'] ) ) {								
 				$error = $information['error'];
-				if ( $error == 'folder_exists' ) {
+				if ( isset($information['error_code']) && 'folder_exists' ==  $information['error_code'] ) {
 					$error = __( 'Already installed', 'mainwp' );
-				}
+				} 
 				$output->errors[ $website->id ] = array( $website->name, $error );
 			} else {
 				$output->errors[ $website->id ] = array(

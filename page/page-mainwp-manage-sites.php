@@ -1297,11 +1297,12 @@ class MainWP_Manage_Sites {
 		$ret     = array();
 		$error   = '';
 		$message = '';
-
+		$site_id = 0;
+		
 		if ( isset( $_POST['managesites_add_wpurl'] ) && isset( $_POST['managesites_add_wpadmin'] ) ) {
 			//Check if already in DB
 			$website = MainWP_DB::Instance()->getWebsitesByUrl( $_POST['managesites_add_wpurl'] );
-			list( $message, $error ) = MainWP_Manage_Sites_View::addSite( $website );
+			list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::addSite( $website );
 		}
 
 		$ret['add_me'] = ( isset( $_POST['add_me'] ) ? $_POST['add_me'] : null );
@@ -1310,12 +1311,26 @@ class MainWP_Manage_Sites {
 			die( json_encode( $ret ) );
 		}
 		$ret['response'] = $message;
+		$ret['siteid'] = $site_id;
+		
 		if ( MainWP_DB::Instance()->getWebsitesCount() == 1 ) {
 			$ret['redirectUrl'] = admin_url( 'admin.php?page=managesites' );
 		}
 
 		die( json_encode( $ret ) );
 	}
+	
+	public static function apply_plugin_settings() {
+		$site_id = $_POST['siteId'];
+		$ext_dir_slug = $_POST['ext_dir_slug'];	
+		if ( empty( $site_id ) ) {
+			die( json_encode( array( 'error' => 'Error: empty site id' ) ) ); 			
+		}	
+
+		do_action('mainwp_applypluginsettings_' . $ext_dir_slug, $site_id);
+		die( json_encode( array( 'error' => __('Undefined error', 'mainwp' ) ) ) );
+	}
+	
 
 	public static function saveNote() {
 		if ( isset( $_POST['websiteid'] ) && MainWP_Utility::ctype_digit( $_POST['websiteid'] ) ) {

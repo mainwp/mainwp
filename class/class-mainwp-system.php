@@ -287,6 +287,31 @@ class MainWP_System {
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			//MainWP_WP_CLI_Command::init();
 		}
+		//WP-Cron
+		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+			if ( isset($_GET[ 'mainwp_run' ]) && ! empty( $_GET[ 'mainwp_run' ] ) ) {								
+				add_action( 'init', array( $this, 'cron_active' ), PHP_INT_MAX );
+			} 			
+		}
+			
+	}
+	
+	function cron_active() {		
+		if ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) {
+			return;
+		}
+		if ( empty( $_GET[ 'mainwp_run' ] ) || 'test' !== $_GET[ 'mainwp_run' ] ) {
+			return;
+		}
+		@session_write_close();
+		@header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ), TRUE );
+		@header( 'X-Robots-Tag: noindex, nofollow', TRUE );
+		@header( 'X-MainWP-Version: ' . MainWP_System::$version, TRUE );
+		nocache_headers();
+		if ( $_GET[ 'mainwp_run' ] == 'test' ) {
+			die( 'MainWP Test' );
+		}
+		die( '' );
 	}
 
 	function filter_fetchUrlsAuthed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
@@ -503,7 +528,7 @@ class MainWP_System {
 
 	public function check_update_custom( $transient ) {
 		if ( isset( $_POST['action'] ) && ( ( $_POST['action'] == 'update-plugin' ) || ( $_POST['action'] == 'update-selected' ) ) ) {
-			$extensions = MainWP_Extensions::getExtensions();
+			$extensions = MainWP_Extensions::getExtensions( array( 'activated' => true ) );
 			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && $_POST['action'] == 'update-plugin' ) {
 				$plugin_slug = $_POST['plugin'];
 				if ( isset( $extensions[ $plugin_slug ] ) ) {
@@ -598,7 +623,7 @@ class MainWP_System {
 		}
 
 		if ($this->upgradeVersionInfo != null && property_exists( $this->upgradeVersionInfo , 'result' ) && is_array( $this->upgradeVersionInfo->result ) ) {
-			$extensions = MainWP_Extensions::getExtensions();
+			$extensions = MainWP_Extensions::getExtensions( array( 'activated' => true ) );
 			foreach ( $this->upgradeVersionInfo->result as $rslt ) {
 				$plugin_slug = MainWP_Extensions::getPluginSlug( $rslt->slug );
 				if ( isset( $extensions[ $plugin_slug ] ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
@@ -1714,7 +1739,8 @@ class MainWP_System {
 		<div id="mainwp-installation-warning" class="mainwp_info-box-red">
 			<h3><?php esc_html_e( 'Stop! Before you continue,', 'mainwp' ); ?></h3>
 			<strong><?php esc_html_e( 'We HIGHLY recommend a NEW WordPress install for your Main Dashboard.', 'mainwp' ); ?></strong><br/><br/>
-			<?php esc_html_e( 'Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard off an active site. Most hosting companies provide free subdomains ("<strong>demo.yourdomain.com</strong>") and we recommend creating one if you do not have a specific dedicated domain to run your Network Main Dashboard.<br/><br/> If you are not sure how to set up a subdomain here is a quick step by step with <a href="http://docs.mainwp.com/creating-a-subdomain-in-cpanel/">cPanel</a>, <a href="http://docs.mainwp.com/creating-a-subdomain-in-plesk/">Plesk</a> or <a href="http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/">Direct Admin</a>. If you are not sure what you have, contact your hosting companies support.', 'mainwp' ); ?>
+			<?php echo sprintf( __( 'Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard off an active site. Most hosting companies provide free subdomains %s and we recommend creating one if you do not have a specific dedicated domain to run your Network Main Dashboard.', 'mainwp' ), '("<strong>demo.yourdomain.com</strong>")' ) ; ?><br/><br/>
+			<?php echo sprintf( __( 'If you are not sure how to set up a subdomain here is a quick step by step with %s, %s or %s. If you are not sure what you have, contact your hosting companies support.', 'mainwp' ), '<a href="http://docs.mainwp.com/creating-a-subdomain-in-cpanel/">cPanel</a>', '<a href="http://docs.mainwp.com/creating-a-subdomain-in-plesk/">Plesk</a>', '<a href="http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/">Direct Admin</a>' ) ; ?>			
 			<br/><br/>
 			<div style="text-align: center">
 				<a href="#" class="button button-primary" id="remove-mainwp-installation-warning"><?php esc_html_e('I have read the warning and I want to proceed', 'mainwp' ); ?></a>

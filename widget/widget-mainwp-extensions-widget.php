@@ -56,16 +56,14 @@ class MainWP_Extensions_Widget {
 						$ext_page = $extension['direct_page'];
 					} else {
 						$ext_page = $extension['page'];
-					}
-
-					$active = MainWP_Extensions::isExtensionEnabled( $extension['plugin'] );
+					}			
 					?>
 					<span class="mainwp-widget-extensions">
-						<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>">
-							<img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-widget-icon <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/>
+						<a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>">
+							<img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-widget-icon"/>
 						</a>
 						<h4>
-							<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>"><?php echo $extension['name'] ?></a>
+							<a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><?php echo $extension['name'] ?></a>
 						</h4>
 					</span>
 					<?php
@@ -97,14 +95,13 @@ class MainWP_Extensions_Widget {
 						$ext_page = $extension['page'];
 					}
 
-					$active = MainWP_Extensions::isExtensionEnabled( $extension['plugin'] );
 					?>
 					<tr class="mainwp-widget-extensions-list mainwp-extensions-childHolder" extension_slug="<?php echo $extension['slug']; ?>">
 							<td>
-								<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-widget-icon-list <?php echo( $active ? '' : 'mainwp-extension-icon-desaturated' ); ?>"/></a>
+								<a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-widget-icon-list"/></a>
 							</td>
 							<td class="mainwp-extension-widget-title-list">
-								<a href="<?php echo( $active ? admin_url( 'admin.php?page=' . $ext_page ) : '' ) ?>" style="<?php echo( $active ? '' : 'pointer-events: none;' ) ?>"><?php echo $extension['name'] ?></a>
+								<a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><?php echo $extension['name'] ?></a>
 							</td>
 							<td class="mainwp-extension-widget-version"><?php echo $extension['version']; ?></td>
 							<td class="mainwp-api-status-check" align="right" style="padding-right: 10px;">

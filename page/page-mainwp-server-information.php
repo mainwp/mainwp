@@ -226,6 +226,11 @@ class MainWP_Server_Information {
 				</tr>
 				<tr>
 					<td></td>
+					<td><?php _e( 'Sever self connect', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::serverSelfConnect(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
 					<td><?php _e( 'Server Admin', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getServerAdmin(); ?></td>
 				</tr>
@@ -911,6 +916,34 @@ class MainWP_Server_Information {
 			echo __( 'OFF', 'mainwp' );
 		}
 	}
+	
+	protected static function serverSelfConnect() {		
+		$url = site_url( 'wp-cron.php' );		
+		$query_args = array('mainwp_run' => 'test');
+		$url = add_query_arg( $query_args, $url );		
+		$args = array(	'blocking'   	=> TRUE,
+						'sslverify'		=> apply_filters( 'https_local_ssl_verify', true ),
+						'timeout' 		=> 15														
+					);
+		$response =  wp_remote_post( $url, $args );				
+		$test_result = '';
+		if ( is_wp_error( $response ) ) {
+			$test_result .= sprintf( __( 'The HTTP response test get an error "%s"','mainwp' ), $response->get_error_message() );
+		}
+		$response_code = wp_remote_retrieve_response_code( $response );
+		if ( $response_code < 200  && $response_code > 204 ) {
+			$test_result .= sprintf( __( 'The HTTP response test get a false http status (%s)','mainwp' ), wp_remote_retrieve_response_code( $response ) );
+		} else {
+			$response_body = wp_remote_retrieve_body( $response );
+			if ( FALSE === strstr( $response_body, 'MainWP Test' ) ) {
+				$test_result .= sprintf( __( 'Not expected HTTP response body: %s','mainwp' ), esc_attr( strip_tags( $response_body ) ) );
+			}
+		}
+		if ( empty( $test_result ) ) {
+			_e( 'Response Test O.K.', 'mainwp' );			
+		} else 
+			echo $test_result;
+	}	
 
 	protected static function getRemoteAddress() {
 		echo $_SERVER['REMOTE_ADDR'];

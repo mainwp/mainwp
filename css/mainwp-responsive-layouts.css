@@ -51,28 +51,72 @@
 		display: none;
 	}
 
+	select {
+		width: 100% !important;
+		max-width: 100% !important;
+	}
+
+	.alignleft {
+		float: none;
+		width: 100%;
+	}
+
 	/*--- Dasbhaord ---*/
 
-	#mainwp-refresh-bar {
-		text-align: center;
+	#mainwp-welocme-bar-top,
+	#mainwp-welocme-bar-top span {
+		display: block;
+		width: 100%;
+		float: none;
 	}
 
-	#mainwp-welcome-bar {
+	#mainwp-welcome-bar .welcome-panel .welcome-panel-column li {
+		display: block !important;
+	}
+
+	#mainwp_tab-general .mainwp-row {
+		display: block;
+		clear: both;
+		margin: 1em 0;
+	}
+
+	#mainwp_tab-general .mainwp-left-col {
+		display: block;
+		width: 100%;
+		margin-bottom: .5em;
+		float: none;
+	}
+
+	#mainwp_tab-general .mainwp-mid-col {
+		display: none;
+		float: none;
+	}
+
+	#mainwp_tab-general .mainwp-right-col {
+		display: block;
+		width: 100%;
+		margin-bottom: .5em;
+		float: none;
+	}
+
+	#mainwp_tab-general .mainwp-row-actions {
+		display: block !important;
+	}
+
+	.mainwp-ui input[type="text"] {
 		width: 100% !important;
-		display: block !important;
-		margin-bottom: 1em;
+		margin: .5em 0!important;
 	}
 
-	#mainwp-refresh-bar-buttons {
+	
+	.mainwp-ui .button,
+	.mainwp-ui .button-hero,
+	.mainwp-ui .button-primary {
 		width: 100% !important;
+		font-size: 16px!important;
+		text-align: center!important;
+		margin: .5em 0!important;
 		display: block !important;
-	}
-
-	#mainwp-refresh-bar-buttons a.button-hero {
-		width: 95% !important;
-		display: block !important;
-		text-align: center;
-		margin: .25em auto;
 	}
 
 	/*--- Sites ---*/
@@ -105,13 +149,15 @@
 	}
 
 	#mainwp_managesites_content table.sites .column-status {
-		width: 13% !important;
+		display: none !important;
 	}
 
 	#mainwp_managesites_content table.sites .column-site {
-		width: 77% !important;
+		width: 80% !important;
 	}
 
+/*
+	#mainwp_managesites_content table.sites .column-status,
 	#mainwp_managesites_content table.sites .column-url,
 	#mainwp_managesites_content table.sites .column-groups,
 	#mainwp_managesites_content table.sites .column-backup,
@@ -125,15 +171,12 @@
 	#mainwp_managesites_content table.sites .column-wfc_status {
 		display: none !important;
 	}
-
+*/
 	/*  -  Add  -  Test Connection  -  */
 
-	.mainwp-ui .form-field input,
-	.mainwp-ui .form-field input,
-	.mainwp-ui .form-field input,
+	.mainwp-ui input[type="text"],
 	.mainwp-ui #selected_groups,
-	.mainwp-ui .mainwp-field {
-		background-image: none !important;
+	.mainwp-ui select {
 		width: 100% !important;
 	}
 
@@ -143,6 +186,12 @@
 		width: 100%;
 		display: block;
 		margin-bottom: 2em;
+	}
+
+	#mainwp_managegroups-addnew-container {
+		display: block;
+		float: none;
+		padding: .5em 0;
 	}
 
 	/* --- Posts --- */
@@ -181,6 +230,16 @@
 		margin-bottom: 2em;
 	}
 
+	/* --- Users --- */
+
+	.mainwp-ui table#mainwp_users_table .column-author,
+	.mainwp-ui table#mainwp_users_table .column-role,
+	.mainwp-ui table#mainwp_users_table .column-email,
+	.mainwp-ui table#mainwp_users_table .column-posts,
+	.mainwp-ui table#mainwp_users_table .column-website {
+		display: none !important;
+	}
+
 	/* --- Backups --- */
 
 	.mainwp-form_hint {
@@ -200,34 +259,6 @@
 		max-width: 100% !important;
 		width: 100% !important;
 		min-width: 100% !important;
-	}
-
-	.mainwp_page_managesites .button-primary,
-	.mainwp_page_ManageGroups .button-primary,
-	.mainwp_page_PostBulkManage .button-primary,
-	.mainwp_page_PageBulkManage .button-primary,
-	.mainwp_page_ThemesManage .button-primary,
-	.mainwp_page_ThemesInstall .button-primary,
-	.mainwp_page_ThemesAutoUpdate .button-primary,
-	.mainwp_page_PluginsManage .button-primary,
-	.mainwp_page_PluginsInstall .button-primary,
-	.mainwp_page_PluginsAutoUpdate .button-primary,
-	.mainwp_page_UserBulkManage .button-primary,
-	.mainwp_page_UserBulkManage .button,
-	.mainwp_page_UserBulkAdd .button-primary,
-	.mainwp_page_UserBulkAdd .button,
-	.mainwp_page_UpdateAdminPasswords .button-primary,
-	.mainwp_page_UpdateAdminPasswords .button,
-	.mainwp_page_ManageBackupsAddNew .button-primary,
-	.mainwp_page_Settings .button-primary,
-	.mainwp_page_SettingsAdvanced .button-primary,
-	.mainwp_page_DashboardOptions .button-primary,
-	.mainwp_page_MainWPTools .button-primary,
-	.mainwp_page_Documentation .button {
-		width: 100%;
-		font-size: 16px;
-		height: 3em;
-		text-align: center;
 	}
 
 	.mainwp_page_Documentation .add-new-h2 {

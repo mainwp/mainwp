@@ -4,7 +4,7 @@ class MainWP_Api_Manager {
 
 	private $upgrade_url = 'https://mainwp.com/';
 	private $renew_license_url = 'https://mainwp.com/my-account';
-	const MAINWP_EXTENSIONS_SHOP_IP_ADDRESS = '69.167.133.90'; // replace for upgrade_url
+	const MAINWP_EXTENSIONS_SHOP_PASS_ADDRESS = 'activation.mainwp.com'; // replace for upgrade_url
 	public $domain = '';
 	/**
 	 * @var The single instance of the class
@@ -36,17 +36,12 @@ class MainWP_Api_Manager {
 	private function __wakeup() {
 	}
 
-	public function __construct() {
-		if ( is_admin() ) {
-			// Check for external connection blocking
-			add_action( 'admin_notices', array( $this, 'check_external_blocking' ) );
-		}
+	public function __construct() {		
 		$this->domain = str_ireplace( array( 'http://', 'https://' ), '', home_url() );
 	}
 
 	public function getUpgradeUrl() {
 		$url = apply_filters( 'mainwp_api_manager_upgrade_url', $this->upgrade_url );
-
 		return $url;
 	}
 
@@ -91,7 +86,7 @@ class MainWP_Api_Manager {
 			if ( $activate_results['activated'] == true ) {
 				$return['result']               = 'SUCCESS';
 				$mess                           = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
-				$return['message']              = __( 'Plugin activated. ', 'mainwp' ) . $mess;
+				$return['message']              = __( 'Extension activated. ', 'mainwp' ) . $mess;
 				$options['api_key']             = $api_key;
 				$options['activation_email']    = $api_email;
 				$options['activated_key']       = 'Activated';
@@ -111,25 +106,9 @@ class MainWP_Api_Manager {
 				$options['activated_key']    = 'Deactivated';
 			}
 
-			if ( isset( $activate_results['code'] ) ) {
-				switch ( $activate_results['code'] ) {
-					case '100':
-					case '101':
-					case '102':
-					case '103':
-					case '104':
-					case '105':
-					case '106':
-						$options['api_key']          = '';
-						$options['activation_email'] = '';
-						$options['activated_key']    = 'Deactivated';
-						$error                       = isset( $activate_results['error'] ) ? $activate_results['error'] : '';
-						$info                        = isset( $activate_results['additional info'] ) ? ' ' . $activate_results['additional info'] : '';
-						$return['error']             = $error . $info;
-						break;
-						break;
-				}
-			}
+			$error = $this->check_response_for_api_errors($activate_results);
+			if ( !empty( $error ) )
+				$return['error'] = $error;
 
 			MainWP_Utility::update_option( $api . '_APIManAdder', $options );
 
@@ -180,24 +159,9 @@ class MainWP_Api_Manager {
 				$return['activations_remaining'] = $activate_results['activations_remaining'];
 			}
 
-			if ( isset( $activate_results['code'] ) ) {
-				switch ( $activate_results['code'] ) {
-					case '100':
-					case '101':
-					case '102':
-					case '103':
-					case '104':
-					case '105':
-					case '106':
-						$options['api_key']          = '';
-						$options['activation_email'] = '';
-						$options['activated_key']    = 'Deactivated';
-						$error                       = isset( $activate_results['error'] ) ? $activate_results['error'] : '';
-						$info                        = isset( $activate_results['additional info'] ) ? ' ' . $activate_results['additional info'] : '';
-						$return['error']             = $error . $info;
-						break;
-				}
-			}
+			$error = $this->check_response_for_api_errors($activate_results);
+			if ( !empty( $error ) )
+				$return['error'] = $error;
 
 			MainWP_Utility::update_option( $api . '_APIManAdder', $options );
 
@@ -274,7 +238,7 @@ class MainWP_Api_Manager {
 				if ( is_array( $activate_results ) && $activate_results['activated'] == true && ! empty( $activate_results['api_key'] ) ) {
 					$return['result']               = 'SUCCESS';
 					$mess                           = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
-					$return['message']              = __( 'Plugin activated. ', 'mainwp' ) . $mess;
+					$return['message']              = __( 'Extension activated. ', 'mainwp' ) . $mess;
 					$options['api_key']             = $return['api_key'] = $activate_results['api_key'];
 					$options['activation_email']    = $return['activation_email'] = $activate_results['activation_email'];
 					$options['activated_key']       = 'Activated';
@@ -291,22 +255,11 @@ class MainWP_Api_Manager {
 						$return['error'] = __( 'Undefined error.', 'mainwp' );
 					}
 				}
-
-				if ( isset( $activate_results['code'] ) ) {
-					switch ( $activate_results['code'] ) {
-						case '100':
-						case '101':
-						case '102':
-						case '103':
-						case '104':
-						case '105':
-						case '106':
-							$error           = isset( $activate_results['error'] ) ? $activate_results['error'] : '';
-							$info            = isset( $activate_results['additional info'] ) ? ' ' . $activate_results['additional info'] : '';
-							$return['error'] = $error . $info;
-							break;
-					}
-				}
+				
+				$error = $this->check_response_for_api_errors($activate_results);
+				if ( !empty( $error ) )
+					$return['error'] = $error;
+				
 				MainWP_Utility::update_option( $api . '_APIManAdder', $options );
 
 				return $return;
@@ -319,10 +272,60 @@ class MainWP_Api_Manager {
 
 	}
 
-	public function download_revoked_error_notice( $software_title ) {
-		return sprintf( __( 'Download permission for %s has been revoked possibly due to a license key or subscription expiring. You can reactivate or purchase a license key from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $software_title, $this->renew_license_url );
+	public function check_response_for_api_errors( $response ) {
+		if ( !is_array($response) || !isset( $response['code'] ) )
+			return false;
+
+		$error = '';
+		switch ( $response['code'] ) {									
+			case '100':	
+				$error = __( 'Invalid Request. Please try to deactivate / re-activate the extension on the WP > Plugins page and try to activate again.', 'mainwp' );
+				break;
+			case '101':					
+			case '102':							
+			case '103':							
+			case '104':	
+				$error = __( 'Invalid Instance ID. Please try to deactivate / re-activate the extension on the WP > Plugins page and try to activate again.', 'mainwp' );
+				break;
+			case '105':							
+			case '106':			
+				$error           = isset( $response['error'] ) ? $response['error'] : '';
+				$info            = isset( $response['additional info'] ) ? ' ' . $response['additional info'] : '';
+				$error = $error . $info;
+				break;
+			case '900' :
+				$error = __( 'Your membership is On Hold. Reactivate your membership to activate MainWP Extensions', 'mainwp' );
+				break;
+			case '901' :
+				$error = __( 'Your membership has been Canceled. Reactivate your membership to activate MainWP Extensions', 'mainwp' );
+				break;
+			case '902' :
+				$error = __( 'Your membership has Expired. Reactivate your membership to activate MainWP Extensions', 'mainwp' );
+				break;		
+		}
+		return $error;					
 	}
 
+	public function check_response_for_intall_errors( $response, $software_title = "") {
+		if ( !is_array($response) || !isset( $response['error'] ) )
+			return false;	
+
+		switch ( $response['error'] ) {
+			case 'subscription_on_hold':
+				return __( 'Your membership is On Hold. Reactivate your membership to install MainWP Extensions.', 'mainwp' );
+				break;
+			case 'subscription_cancelled':
+				return __( 'Your membership has been Canceled. Reactivate your membership to install MainWP Extensions.', 'mainwp' );
+				break;
+			case 'subscription_expired':
+				return __( 'Your membership has Expired. Reactivate your membership to install MainWP Extensions.', 'mainwp' );
+				break;
+			default : //download_revoked
+				return sprintf( __( 'Download permission for %s has been revoked possibly due to a license key or membership expiring. You can reactivate or purchase a license key from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $software_title, $this->renew_license_url );
+				break;
+		}
+		return false;					
+	}
 
 	public function update_check( $args ) {
 		$args['domain'] = $this->domain;
@@ -336,30 +339,4 @@ class MainWP_Api_Manager {
 		return MainWP_Api_Manager_Plugin_Update::instance()->request( $args );
 	}
 
-
-	public function check_response_for_errors( $response ) {
-		return MainWP_Api_Manager_Plugin_Update::instance()->check_response_for_errors( $response, $this->renew_license_url );
-	}
-
-
-	/**
-	 * Check for external blocking contstant
-	 * @return string
-	 */
-	public function check_external_blocking() {
-		// show notice if external requests are blocked through the WP_HTTP_BLOCK_EXTERNAL constant
-		if ( defined( 'WP_HTTP_BLOCK_EXTERNAL' ) && WP_HTTP_BLOCK_EXTERNAL === true ) {
-
-			// check if our API endpoint is in the allowed hosts
-			$host = parse_url( $this->upgrade_url, PHP_URL_HOST );
-
-			if ( ! defined( 'WP_ACCESSIBLE_HOSTS' ) || stristr( WP_ACCESSIBLE_HOSTS, $host ) === false ) {
-				?>
-				<div class="error">
-					<p><?php printf( __( '<b>Warning!</b> You\'re blocking external requests which means you won\'t be able to get some MainWP Extensions updates. Please add %s to %s.', 'mainwp' ), '<strong>' . esc_html( $host ) . '</strong>', '<code>WP_ACCESSIBLE_HOSTS</code>' ); ?></p>
-				</div>
-				<?php
-			}
-		}
-	}
 } // End of class

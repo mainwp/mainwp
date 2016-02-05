@@ -83,7 +83,7 @@ class MainWP_Extensions {
 
 	static function filter_ApiUpgradeUrl( $api_url ) {
 		// apply for mainwp.com only
-		return str_replace( '//mainwp.com/', "//" .MainWP_Api_Manager::MAINWP_EXTENSIONS_SHOP_IP_ADDRESS . "/", $api_url );
+		return str_replace( '//mainwp.com/', "//" .MainWP_Api_Manager::MAINWP_EXTENSIONS_SHOP_PASS_ADDRESS . "/", $api_url );
 	}
 
 	public static function initMenu() {
@@ -137,8 +137,16 @@ class MainWP_Extensions {
 			) {
 				self::$extensions[] = $extension;
 				if ( mainwp_current_user_can( 'extension', dirname( $slug ) ) ) {
-					if ( isset( $extension['callback'] ) ) {
-						add_submenu_page( 'mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback'] );
+					if ( isset( $extension['callback'] ) ) {						
+						if (MainWP_Extensions::addedOnMenu( $slug )) {
+							$menu_name = str_replace( array(
+								   'Extension',
+								   'MainWP',
+							   ), '', $extension['name'] );
+							add_submenu_page( 'mainwp_tab', $extension['name'], $menu_name, 'read', $extension['page'], $extension['callback'] );
+						} else {
+							add_submenu_page( 'mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback'] );						
+						}
 					}
 				}
 			}
@@ -160,16 +168,27 @@ class MainWP_Extensions {
 		return self::$extensions;
 	}
 
-	public static function getExtensions() {
+	public static function getExtensions($args = array()) {
+		if (!is_array($args))
+			$args = array();
+		
 		$extensions = MainWP_Extensions::loadExtensions();
-		$array      = array();
+			
+		$return      = array();
 		foreach ( $extensions as $extension ) {
+			if ( isset( $args['activated'] ) && !empty( $args['activated'] ) ) {
+				if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) {
+					if ( !isset( $extension['activated_key'] ) || 'Activated' != $extension['activated_key'] ) 
+						continue;
+				}				
+			}						
 			$ext                         = array();
 			$ext['version']              = $extension['version'];
-			$array[ $extension['slug'] ] = $ext;
+			$ext['name']				 = $extension['name'];
+			$ext['page']				 = $extension['page'];
+			$return[ $extension['slug'] ] = $ext;
 		}
-
-		return $array;
+		return $return;
 	}
 
 	public static function genApiPassword( $length = 12, $special_chars = true, $extra_special_chars = false ) {
@@ -186,27 +205,26 @@ class MainWP_Extensions {
 		$html = '';
 		if ( isset( self::$extensions ) && is_array( self::$extensions ) ) {
 			foreach ( self::$extensions as $extension ) {
-				if ( MainWP_Extensions::isExtensionEnabled( $extension['plugin'] ) ) {
-
 					if ( defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) && ( MWP_TEAMCONTROL_PLUGIN_SLUG == $extension['slug'] ) && ! mainwp_current_user_can( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) {
 						continue;
+					}					
+					if (MainWP_Extensions::addedOnMenu( $extension['slug'] )) {
+						continue;
 					}
-
 					if ( isset( $extension['direct_page'] ) ) {
 						$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['direct_page'] ) . '"
-                               class="mainwp-submenu">' . str_replace( array(
+							   class="mainwp-submenu">' . str_replace( array(
 								   'Extension',
 								   'MainWP',
 							   ), '', $extension['name'] ) . '</a>';
-					} else {
+					} else {						
 						$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['page'] ) . '"
-                               class="mainwp-submenu">' . str_replace( array(
+							   class="mainwp-submenu">' . str_replace( array(
 								   'Extension',
 								   'MainWP',
-							   ), '', $extension['name'] ) . '</a>';
+							   ), '', $extension['name'] ) . '</a>';						
 					}
-				}
-			}
+			}			
 		}
 		if ( empty( $html ) ) {
 			return;
@@ -224,20 +242,19 @@ class MainWP_Extensions {
 	}
 
 	public static function initAjaxHandlers() {
-		add_action( 'wp_ajax_mainwp_extension_enable_all', array(
+//		add_action( 'wp_ajax_mainwp_extension_enable_all', array(
+//			MainWP_Extensions::getClassName(),
+//			'enableAllExtensions',
+//		) );
+//		add_action( 'wp_ajax_mainwp_extension_disable_all', array(
+//			MainWP_Extensions::getClassName(),
+//			'disableAllExtensions',
+//		) );
+		add_action( 'wp_ajax_mainwp_extension_add_menu', array( MainWP_Extensions::getClassName(), 'ajaxAddExtensionMenu' ) );
+		add_action( 'wp_ajax_mainwp_extension_remove_menu', array(
 			MainWP_Extensions::getClassName(),
-			'enableAllExtensions',
+			'removeExtensionMenuFromMainWPMenu',
 		) );
-		add_action( 'wp_ajax_mainwp_extension_disable_all', array(
-			MainWP_Extensions::getClassName(),
-			'disableAllExtensions',
-		) );
-		add_action( 'wp_ajax_mainwp_extension_enable', array( MainWP_Extensions::getClassName(), 'ajaxEnableExtension' ) );
-		add_action( 'wp_ajax_mainwp_extension_disable', array(
-			MainWP_Extensions::getClassName(),
-			'disableExtension',
-		) );
-		add_action( 'wp_ajax_mainwp_extension_trash', array( MainWP_Extensions::getClassName(), 'trashExtension' ) );
 		add_action( 'wp_ajax_mainwp_extension_activate', array(
 			MainWP_Extensions::getClassName(),
 			'activateExtension',
@@ -279,41 +296,41 @@ class MainWP_Extensions {
 		}
 	}
 
-	public static function enableAllExtensions() {
-		$snEnabledExtensions = array();
+//	public static function enableAllExtensions() {
+//		$snEnabledExtensions = array();
+//
+//		if ( isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ) {
+//			foreach ( $_POST['slugs'] as $slug ) {
+//				$snEnabledExtensions[] = $slug;
+//			}
+//		}
+//
+//		MainWP_Utility::update_option( 'mainwp_extloaded', $snEnabledExtensions );
+//
+//		die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+//	}
 
-		if ( isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ) {
-			foreach ( $_POST['slugs'] as $slug ) {
-				$snEnabledExtensions[] = $slug;
-			}
-		}
+//	public static function disableAllExtensions() {
+//		MainWP_Utility::update_option( 'mainwp_extloaded', array() );
+//
+//		die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+//	}
 
-		MainWP_Utility::update_option( 'mainwp_extloaded', $snEnabledExtensions );
-
-		die( json_encode( array( 'result' => 'SUCCESS' ) ) );
-	}
-
-	public static function disableAllExtensions() {
-		MainWP_Utility::update_option( 'mainwp_extloaded', array() );
-
-		die( json_encode( array( 'result' => 'SUCCESS' ) ) );
-	}
-
-	public static function ajaxEnableExtension()
+	public static function ajaxAddExtensionMenu()
 	{
-		self::enableExtension($_POST['slug']);
+		self::addExtensionMenu($_POST['slug']);
 		die(json_encode(array('result' => 'SUCCESS')));
 	}
 
-	public static function enableExtension($slug) {
-		$snEnabledExtensions = get_option( 'mainwp_extloaded' );
-		if ( ! is_array( $snEnabledExtensions ) ) {
-			$snEnabledExtensions = array();
+	public static function addExtensionMenu($slug) {
+		$snMenuExtensions = get_option( 'mainwp_extmenu' );
+		if ( ! is_array( $snMenuExtensions ) ) {
+			$snMenuExtensions = array();
 		}
 
-		$snEnabledExtensions[] = $slug;
+		$snMenuExtensions[] = $slug;
 
-		return MainWP_Utility::update_option( 'mainwp_extloaded', $snEnabledExtensions );
+		return MainWP_Utility::update_option( 'mainwp_extmenu', $snMenuExtensions );
 	}
 
 	public static function activateExtension() {
@@ -473,13 +490,21 @@ class MainWP_Extensions {
 				$grouped_exts = array();
 				foreach($installing_exts as $product_id => $product_info) {
 					$item_html = '';
+					$error = '';
 					$software_title = isset($all_available_exts[$product_id]) ? $all_available_exts[$product_id]['title'] : $product_id;
-					if (isset($product_info['error']) && $product_info['error'] == 'download_revoked') {
-						$item_html = '<div><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $software_title . "</strong></span> <span style=\"color: red;\"><strong>Error</strong> " . MainWP_Api_Manager::instance()->download_revoked_error_notice($software_title) . '</span></div>';
-					} else if (isset($product_info['package']) && !empty($product_info['package'])){
+					if (isset($product_info['package']) && !empty($product_info['package'])){
 						$package_url = apply_filters('mainwp_api_manager_upgrade_url', $product_info['package']);
 						$item_html = '<div class="extension_to_install" download-link="' . $package_url . '" product-id="' . $product_id . '"><input type="checkbox" status="queue" checked="true"> <span class="name"><strong>' . $software_title . "</strong></span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
+					} else if (isset($product_info['error']) && !empty($product_info['error'])) {
+						$error = MainWP_Api_Manager::instance()->check_response_for_intall_errors($product_info, $software_title);						
+					} else {
+						$error = __('Undefined error.', 'mainwp');
 					}
+					
+					if (!empty($error)) {
+						$item_html = '<div><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $software_title . "</strong></span> <span style=\"color: red;\"><strong>Error</strong> " . $error . '</span></div>';
+					}
+						
 					$group_id = isset($map_extensions_group[$product_id]) ? $map_extensions_group[$product_id] : false;
 					if (!empty($group_id) && isset($all_groups[$group_id]))
 						$grouped_exts[$group_id] .= $item_html;
@@ -545,7 +570,7 @@ class MainWP_Extensions {
 		}
 		die( json_encode( $return ) );
 	}
-
+	
 	public static function http_request_reject_unsafe_urls( $r, $url ) {
 		$r['reject_unsafe_urls'] = false;
 
@@ -612,16 +637,23 @@ class MainWP_Extensions {
 			remove_filter( 'http_request_args', array( MainWP_Extensions::getClassName(), 'noSSLFilterFunction' ), 99 );
 		}
 
+		if ( is_wp_error( $result ) ) {
+					if ( $result->get_error_data() && is_string( $result->get_error_data() ) ) {
+						$error = $result->get_error_data();
+						MainWP_Helper::error( $error );
+					} else {
+						$error = $result->get_error_code();
+						MainWP_Helper::error( implode( ', ', $error ) );
+					}
+				}
+				
 		$error = $output = $plugin_slug = null;
 		if ( is_wp_error( $result ) ) {
-			$error = $result->get_error_codes();
-			if ( is_array( $error ) ) {
-				if ( $error[0] == 'folder_exists' ) {
-					$error = __( 'Destination folder already exists.', 'mainwp' );
-				} else {
-					$error = implode( ', ', $error );
-				}
-			}
+			if ( $result->get_error_data() && is_string( $result->get_error_data() ) ) {
+				$error = $result->get_error_data();				
+			} else {
+				$error = $result->get_error_code();				
+			}			
 		} else {
 			$path = $result['destination'];
 			foreach ( $result['source_files'] as $srcFile ) {
@@ -644,8 +676,7 @@ class MainWP_Extensions {
 
 		if ( ! empty( $error ) ) {
 			$return['error'] = $error;
-		} else {
-			MainWP_Extensions::enableExtension($plugin_slug);
+		} else {			
 			$return['result'] = 'SUCCESS';
 			$return['output'] = $output;
 			$return['slug']   = $plugin_slug;
@@ -665,58 +696,19 @@ class MainWP_Extensions {
 		die( 'FAILED' );
 	}
 
-	public static function disableExtension() {
-		$snEnabledExtensions = get_option( 'mainwp_extloaded' );
-		if ( ! is_array( $snEnabledExtensions ) ) {
-			$snEnabledExtensions = array();
+	public static function removeExtensionMenuFromMainWPMenu() {
+		$snMenuExtensions = get_option( 'mainwp_extmenu' );
+		if ( ! is_array( $snMenuExtensions ) ) {
+			$snMenuExtensions = array();
 		}
 
-		$key = array_search( $_POST['slug'], $snEnabledExtensions );
+		$key = array_search( $_POST['slug'], $snMenuExtensions );
 
-		if ( $key != false ) {
-			unset( $snEnabledExtensions[ $key ] );
+		if ( $key !== false ) {
+			unset( $snMenuExtensions[ $key ] );
 		}
 
-		MainWP_Utility::update_option( 'mainwp_extloaded', $snEnabledExtensions );
-
-		die( json_encode( array( 'result' => 'SUCCESS' ) ) );
-	}
-
-	public static function trashExtension() {
-		ob_start();
-		$slug = $_POST['slug'];
-
-		include_once( ABSPATH . '/wp-admin/includes/plugin.php' );
-
-		$thePlugin = get_plugin_data( $slug );
-		if ( $thePlugin != null && $thePlugin != '' ) {
-			deactivate_plugins( $slug );
-		}
-
-		if ( file_exists( ABSPATH . '/wp-admin/includes/screen.php' ) ) {
-			include_once( ABSPATH . '/wp-admin/includes/screen.php' );
-		}
-		include_once( ABSPATH . '/wp-admin/includes/file.php' );
-		include_once( ABSPATH . '/wp-admin/includes/template.php' );
-		include_once( ABSPATH . '/wp-admin/includes/misc.php' );
-		include_once( ABSPATH . '/wp-admin/includes/class-wp-upgrader.php' );
-		include_once( ABSPATH . '/wp-admin/includes/class-wp-filesystem-base.php' );
-		include_once( ABSPATH . '/wp-admin/includes/class-wp-filesystem-direct.php' );
-
-		MainWP_Utility::getWPFilesystem();
-		/** @global WP_Filesystem_Base $wp_filesystem */
-		global $wp_filesystem;
-
-		if ( empty( $wp_filesystem ) ) {
-			$wp_filesystem = new WP_Filesystem_Direct( null );
-		}
-		$pluginUpgrader = new Plugin_Upgrader();
-
-		$thePlugin = get_plugin_data( $slug );
-		if ( $thePlugin != null && $thePlugin != '' ) {
-			$pluginUpgrader->delete_old_plugin( null, null, null, array( 'plugin' => $slug ) );
-		}
-		ob_end_clean();
+		MainWP_Utility::update_option( 'mainwp_extmenu', $snMenuExtensions );
 
 		die( json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
@@ -749,60 +741,52 @@ class MainWP_Extensions {
 			foreach ( $extensions as $extension ) {
 				$slug = dirname( $extension['slug'] );
 				if ( $slug == $pAPI ) {
-					$pluginFile = $extension['plugin'];
-					$result     = self::isExtensionEnabled( $pluginFile );
-
-					return ( $result == false ) ? false : true;
+					return true;
 				}
 			}
 		}
-
 		return false;
 	}
 
 	public static function isExtensionEnabled( $pluginFile ) {
+		return array( 'key' => md5( $pluginFile . '-SNNonceAdder' ) );
 		// To fix bug
-		self::loadExtensions();
-
-		$slug                = plugin_basename( $pluginFile );
-		$snEnabledExtensions = get_option( 'mainwp_extloaded' );
-		if ( ! is_array( $snEnabledExtensions ) ) {
-			$snEnabledExtensions = array();
-		}
-
-		$active = in_array( $slug, $snEnabledExtensions );
-		//return ($active ? array('key' => wp_create_nonce($pluginFile . '-SNNonceAdder')) : false);
-		return ($active ? array( 'key' => md5( $pluginFile . '-SNNonceAdder' ) ) : false );
+//		self::loadExtensions();
+//
+//		$slug                = plugin_basename( $pluginFile );
+//		$snEnabledExtensions = get_option( 'mainwp_extloaded' );
+//		if ( ! is_array( $snEnabledExtensions ) ) {
+//			$snEnabledExtensions = array();
+//		}
+//
+//		$active = in_array( $slug, $snEnabledExtensions );
+//		//return ($active ? array('key' => wp_create_nonce($pluginFile . '-SNNonceAdder')) : false);
+//		return ($active ? array( 'key' => md5( $pluginFile . '-SNNonceAdder' ) ) : false );
 	}
 
+	public static function addedOnMenu( $slug ) {		
+		$snMenuExtensions = get_option( 'mainwp_extmenu' );
+		if ( ! is_array( $snMenuExtensions ) ) {
+			$snMenuExtensions = array();
+		}
+		return in_array( $slug, $snMenuExtensions );		
+	}
+	
 	public static function isExtensionActivated( $pluginFile )
 	{
 		$active = false;
-
 		// To fix bug
-		self::loadExtensions();
-
+		self::loadExtensions();		
 		if ( isset( self::$extensions ) ) {
 			foreach ( self::$extensions as $extension ) {
 				if ( $extension['plugin'] == $pluginFile ) {
-					if ( isset( $extension['mainwp'] ) && ( $extension['mainwp'] == true ) ) {
-						if ( isset( $extension['api_key'] ) && ! empty( $extension['api_key'] ) ) {
-							if ( isset( $extension['activated_key'] ) && ( $extension['activated_key'] == 'Activated' ) ) {
-								$active = true;
-							} else {
-								$active = false;
-							}
-						} else {
-							$active = false;
-						}
-					} else {
-						$active = false;
-					}
+					if ( isset( $extension['mainwp'] ) && ( $extension['mainwp'] == true ) && isset( $extension['api_key'] ) && ! empty( $extension['api_key'] ) && isset( $extension['activated_key'] ) && ( $extension['activated_key'] == 'Activated' ) ) {					
+						$active = true;					
+					} 
 					break;
 				}
 			}
 		}
-
 		return $active;
 	}
 
@@ -814,7 +798,7 @@ class MainWP_Extensions {
 			include_once( ABSPATH . WPINC . '/pluggable.php' );
 		}
 
-		return ( self::isExtensionEnabled( $pluginFile ) && ( ( wp_verify_nonce( $key, $pluginFile . '-SNNonceAdder' ) == 1 ) || ( md5( $pluginFile . '-SNNonceAdder' ) == $key ) ) );
+		return ( ( wp_verify_nonce( $key, $pluginFile . '-SNNonceAdder' ) == 1 ) || ( md5( $pluginFile . '-SNNonceAdder' ) == $key ) );
 	}
 
 	public static function hookGetDashboardSites( $pluginFile, $key ) {

@@ -614,6 +614,43 @@ class MainWP_Manage_Sites_View {
                </div>
                </div>
 
+<?php
+	$sync_extensions_options = apply_filters( 'mainwp-sync-extensions-options', array() );
+	$working_extensions = MainWP_Extensions::getExtensions();	
+	
+	if ( count( $working_extensions ) > 0 && count($sync_extensions_options) > 0 ) {
+?>
+	       <div class="postbox" id="mainwp-managesites-exts-options">
+                <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Extensions Settings Synchronization','mainwp'); ?></span></h3>
+                <div class="inside">
+                    <?php			
+					
+						foreach ( $working_extensions as $slug => $data ) {
+							$dir_slug = dirname($slug);							
+							if (!isset($sync_extensions_options[$dir_slug]))
+								continue;								
+							$sync_info = isset( $sync_extensions_options[$dir_slug] ) ? $sync_extensions_options[$dir_slug] : array();
+							$ext_name = str_replace("MainWP", "", $data['name']);
+							$ext_name = str_replace("Extension", "", $ext_name);
+							
+							$html = '<div class="sync-ext-row" slug="' . $dir_slug. '" ext_name = "' . esc_attr($ext_name) . '"status="queue">';
+							$html .= '<h3>' . $ext_name . __('options', 'mainwp') . '</h3>';
+							if (isset($sync_info['plugin_slug']) && !empty($sync_info['plugin_slug'])) {
+								$html .= '<div class="sync-install-plugin" slug="' . esc_attr(dirname($sync_info['plugin_slug']) ) .'" plugin_name="' . esc_attr($sync_info['plugin_name']) . '"><label><input type="checkbox" class="chk-sync-install-plugin"checked="checked"/> ' . esc_html( sprintf( __('Install %s plugin', 'mainwp'), $sync_info['plugin_name']) ) . '</label> <i class="fa fa-spinner fa-pulse" style="display: none"></i> <span class="status"></span></div>';
+								if (!isset($sync_info['no_setting']) || empty($sync_info['no_setting'])) { 
+									$html .= '<div class="sync-options options-row"><label><input type="checkbox" checked="checked" /> ' . sprintf( __('Apply %s %ssettings%s', 'mainwp'), $sync_info['plugin_name'], '<a href="admin.php?page=' . $data['page'] . '">', '</a>' ) . '</label> <i class="fa fa-spinner fa-pulse" style="display: none"></i> <span class="status"></span></div>';
+								} 								
+							} else {																
+								$html .= '<div class="sync-global-options options-row"><label><input type="checkbox" checked="checked" /> ' . esc_html( sprintf( __('Apply global %s options', 'mainwp'), trim($ext_name)) ) . '</label> <i class="fa fa-spinner fa-pulse"  style="display: none"></i> <span class="status"></span></div>';								
+							}
+							$html .= '</div>';								
+							echo $html;
+						}					
+					?>
+				</div>
+			</div>			
+	<?php } ?>
+	   
             <div class="postbox" id="mainwp-managesites-adv-options">
                 <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Advanced Options','mainwp'); ?></span></h3>
                 <div class="inside">
@@ -1750,7 +1787,7 @@ class MainWP_Manage_Sites_View {
 	public static function addSite( $website ) {
 		$error = '';
 		$message = '';
-
+		$id = 0;
 		if ( $website ) {
 			$error = __( 'Your site is already added to MainWP','mainwp' );
 		} else {
@@ -1862,7 +1899,7 @@ class MainWP_Manage_Sites_View {
 			}
 		}
 
-		return array( $message, $error );
+		return array( $message, $error, $id );
 	}
 
 	public static function sitesPerPage() {

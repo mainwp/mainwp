@@ -184,8 +184,8 @@ class MainWP_Extensions_View {
 					<a class="mainwp_action left mainwp_action_down" href="#" id="mainwp-extensions-expand"><?php _e( 'Expand', 'mainwp' ); ?></a><a class="mainwp_action right" href="#" id="mainwp-extensions-collapse"><?php _e( 'Collapse', 'mainwp' ); ?></a>
 					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
 						<div style="float: right; margin-top: -3px;">
-							<a href="#" class="button mainwp-extensions-disable-all"><?php _e( 'Disable All', 'mainwp' ); ?></a>
-							<a href="#" class="button-primary mainwp-extensions-enable-all"><?php _e( 'Enable All', 'mainwp' ); ?></a>
+<!--							<a href="#" class="button mainwp-extensions-disable-all"><?php _e( 'Disable All', 'mainwp' ); ?></a>
+							<a href="#" class="button-primary mainwp-extensions-enable-all"><?php _e( 'Enable All', 'mainwp' ); ?></a>-->
 							<a href="<?php echo admin_url( 'plugin-install.php?tab=upload' ); ?>" class="mainwp-upgrade-button button-primary button"><?php _e( 'Install New Extension', 'mainwp' ); ?></a>
 						</div>
 						<div style="clear: both;"></div>
@@ -201,7 +201,7 @@ class MainWP_Extensions_View {
 								continue;
 							}
 							$active = MainWP_Extensions::isExtensionActivated( $extension['plugin'] );
-							$enabled = MainWP_Extensions::isExtensionEnabled( $extension['plugin'] );
+							$added_on_menu = MainWP_Extensions::addedOnMenu( $extension['slug'] );
 							$ext_data = isset( $available_exts_data[dirname($extension['slug'])] ) ? $available_exts_data[dirname($extension['slug'])] : array();
 							$queue_status = '';
 
@@ -221,7 +221,7 @@ class MainWP_Extensions_View {
 											$img_url = plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) );
 										}
 										?>
-											<img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-extensions-img large <?php echo( $enabled ? '' : 'mainwp-extension-icon-desaturated' ); ?>" />
+											<img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-extensions-img large" />
 									</td>
 									<td valign="top">
 										<table style="width: 100%">
@@ -244,52 +244,19 @@ class MainWP_Extensions_View {
 												</td>
 												<td class="mainwp-extensions-childVersion">V. <?php echo $extension['version']; ?></td>
 												<td class="mainwp-extensions-childActions">
+													<?php if ($added_on_menu) { ?>
+														<button class="button mainwp-extensions-remove-menu"><?php _e('Remove from MainWP menu','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+													<?php } else {  ?>
+														<button class="button-primary mainwp-extensions-add-menu" ><?php _e('Add to MainWP menu','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+													<?php } ?>
 													<?php if (isset($extension['apiManager']) && $extension['apiManager']) { ?>
 														<?php if ($active) { ?>
-															<a href="javascript:void(0)" class="api-status activated" ><?php _e('Activated','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-														<?php } else {?>
-															<a href="javascript:void(0)" class="api-status deactivated" title="Not Activated"><?php _e('Deactivated','mainwp'); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-														<?php } ?>
-													<?php } ?>
-
-
-													<?php if ($enabled) { ?>
-														<button href="#" <?php echo $user_can_manage_extensions ? 'class="button mainwp-extensions-disable"' : 'disabled="disabled"'; ?> ><?php _e('Disable','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-													<?php } else {  ?>
-														<button <?php echo $user_can_manage_extensions ? 'class="button-primary mainwp-extensions-enable"' : 'disabled="disabled"'; ?> ><?php _e('Enable','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-													<?php } ?>
-
-													<?php if (isset($extension['apiManager']) && $extension['apiManager']) { ?>
-														<?php if ($user_can_manage_extensions) { ?>
-															<?php if ($active) { ?>
-																<a href="#" class="mainwp-extensions-api-activation" style="font-size: 28px;"><i class="fa fa-lock"></i></a>
-															<?php } else {?>
-																<a href="#" class="mainwp-extensions-api-activation" style="font-size: 28px;"><i class="fa fa-unlock"></i></a>
-															<?php } ?>
+															<a href="javascript:void(0)" class="mainwp-extensions-api-activation api-status activated" ><i class="fa fa-unlock" style="font-size: 18px;"></i>&nbsp;&nbsp;&nbsp;<?php _e('Update Notification Enabled','mainwp'); ?></a>
 														<?php } else { ?>
-															<?php if ($active) { ?>
-																<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-lock"></i></span>
-															<?php } else {?>
-																<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-unlock"></i></span>
-															<?php } ?>
+															<a href="javascript:void(0)" class="mainwp-extensions-api-activation api-status deactivated" ><i class="fa fa-lock" style="font-size: 18px;"></i>&nbsp;&nbsp;&nbsp;<?php _e('Add API to Enable Update Notification','mainwp'); ?></a>
 														<?php } ?>
-													<?php } else { ?>
-														<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-lock"></i></span>
 													<?php } ?>
-
-													<?php if (isset($extension['direct_page']) && !empty($extension['direct_page'])) { ?>
-														<a href="<?php echo admin_url('admin.php?page='.$extension['direct_page']); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
-													<?php } else if (isset($extension['callback'])) { ?>
-														<a href="<?php echo admin_url('admin.php?page='.$extension['page']); ?>" style="font-size: 28px;"><i class="fa fa-wrench"></i></a>
-													<?php } else { ?>
-														<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-wrench"></i></span>
-													<?php } ?>
-
-													<?php if (false && $user_can_manage_extensions) { ?>
-														<a href="#" class="mainwp-extensions-trash" style="font-size: 28px"><i class="fa fa-trash"></i></a>
-													<?php } else { ?>
-														<span style="font-size: 28px; color: #e5e5e5;"><i class="fa fa-trash"></i></span>
-													<?php } ?>
+															
 												</td>
 											</tr>
 											<tr class="mainwp-extensions-extra mainwp-extension-description">

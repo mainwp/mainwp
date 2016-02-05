@@ -33,8 +33,11 @@ class MainWP_Api_Manager_Key {
 	}
 
 	// API Key URL
-	public function create_software_api_url( $args ) {
-		$api_url = esc_url_raw( add_query_arg( 'wc-api', 'am-software-api', MainWP_Api_Manager::instance()->getUpgradeUrl() ) );
+	public function create_software_api_url( $args, $wc_api = false ) {
+		if ($wc_api)
+			$api_url = esc_url_raw( add_query_arg( 'wc-api', 'am-software-api', MainWP_Api_Manager::instance()->getUpgradeUrl() ) );
+		else
+			$api_url = esc_url_raw( add_query_arg( 'mainwp-api', 'am-software-api', MainWP_Api_Manager::instance()->getUpgradeUrl() ) );
 
 		$query_url = '';
 		foreach ( $args as $key => $value ) {
@@ -75,7 +78,7 @@ class MainWP_Api_Manager_Key {
 
 		$args = wp_parse_args( $defaults, $args );
 
-		$target_url = self::create_software_api_url( $args );
+		$target_url = self::create_software_api_url( $args, true );
 		$request    = wp_remote_get( $target_url, array( 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {

@@ -817,13 +817,20 @@ class MainWP_Setup_Wizard {
 					$error = false;
 					$product_info = $purchased_data[$product_id];
 					$software_title = isset($all_available_exts[$product_id]) ? $all_available_exts[$product_id]['title'] : $product_id;
-					if (isset($product_info['error']) && $product_info['error'] == 'download_revoked') {
-						$error = true;
-						$html .= '<div><span class="name"><strong>' . $software_title . "</strong></span> <span style=\"color: red;\"><strong>Error</strong> " . MainWP_Api_Manager::instance()->download_revoked_error_notice($software_title) . '</span></div>';
-					} else if (isset($product_info['package']) && !empty($product_info['package'])){
+					$error_message = '';
+					if (isset($product_info['package']) && !empty($product_info['package'])){
 						$package_url = apply_filters('mainwp_api_manager_upgrade_url', $product_info['package']);
 						$html .= '<div class="extension_to_install" download-link="' . $package_url . '" product-id="' . $product_id . '"><span class="name"><strong>' . $software_title . "</strong></span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
+					} else if (isset($product_info['error'])  && !empty($product_info['error'])) {
+						$error = true;
+						$error_message = MainWP_Api_Manager::instance()->check_response_for_intall_errors($product_info, $software_title);
+						$html .= '<div><span class="name"><strong>' . $software_title . "</strong></span> <span style=\"color: red;\"><strong>Error</strong> " . $error_message . '</span></div>';
+					} else {
+						$error = true;
+						$error_message = __('Undefined error.', 'mainwp');						
+						$html .= '<div><span class="name"><strong>' . $software_title . "</strong></span> <span style=\"color: red;\"><strong>Error</strong> " . $error_message . '</span></div>';
 					}
+					
 				}
 				$html .= '</div>';
 				$html .= '</div>';

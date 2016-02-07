@@ -503,7 +503,7 @@ class MainWP_Extensions {
 				if ( empty( $installing_exts ) ) {
 					$html .= '<p>' . __( 'All purchased extensions are Installed', 'mainwp' ) . '</p>';
 				} else {
-					$html .= '<p><span class="description">' . __('You have access to all purchased Extensions but you DO NOT need to install all off them. We recommend adding them one at a time, as you need them, so you do not experience information overload. Uncheck any Extension you do not want to install', 'mainwp') . '</span></p>';
+					$html .= '<p><span class="description">' . __('You have access to all your purchased Extensions but you DO NOT need to install all off them. In order to avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Uncheck any Extension you do not want to install.', 'mainwp') . '</span></p>';
 					$html .= '<div><a id="mainwp-check-all-ext" href="javascript:void(0);"><i class="fa fa-check-square-o"></i> ' . __('Select All', 'mainwp') . '</a> | <a id="mainwp-uncheck-all-ext" href="javascript:void(0);"><i class="fa fa-square-o"></i> ' . __('Select None', 'mainwp') . '</a></div>';
 				}
 

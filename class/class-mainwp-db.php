@@ -2,7 +2,7 @@
 
 class MainWP_DB {
 	//Config
-	private $mainwp_db_version = '8.7';
+	private $mainwp_db_version = '8.8';
 	//Private
 	private $table_prefix;
 	//Singleton
@@ -93,6 +93,7 @@ class MainWP_DB {
   directories longtext NOT NULL,
   plugin_upgrades longtext NOT NULL,
   theme_upgrades longtext NOT NULL,
+  translation_upgrades longtext NOT NULL,
   premium_upgrades longtext NOT NULL,
   securityIssues longtext NOT NULL,
   themes longtext NOT NULL,
@@ -398,7 +399,6 @@ class MainWP_DB {
 				'mainwp_maximumIPRequests',
 				'mainwp_minimumIPDelay',
 				'mainwp_extensions',
-				'mainwp_extloaded',
 				'mainwp_api_username',
 				'mainwp_api_password',
 				'mainwp_extension_widget_view',
@@ -1057,6 +1057,7 @@ class MainWP_DB {
 				'directories'             => '',
 				'plugin_upgrades'         => '',
 				'theme_upgrades'          => '',
+				'translation_upgrades'    => '',
 				'securityIssues'          => '',
 				'themes'                  => '',
 				'ignored_themes'          => '',

@@ -30,51 +30,51 @@ jQuery(document).ready(function () {
     else
         jQuery('#mainwp-extensions-expand').click();
 })
+//
+//jQuery(document).on('click', '.mainwp-extensions-enable-all', function ()
+//{
+//    var extensionHolders = jQuery('.mainwp-extensions-childHolder');
+//
+//    var allExtensionSlugs = [];
+//    for (var i = 0; i < extensionHolders.length; i++)
+//    {
+//        var extensionEnableButton = jQuery(extensionHolders[i]).find('.mainwp-extensions-enable');
+//        if (extensionEnableButton && extensionEnableButton.is(":disabled")) continue;
+//
+//        allExtensionSlugs.push(jQuery(extensionHolders[i]).attr('extension_slug'));
+//    }
+//    var data = {
+//        action:'mainwp_extension_enable_all',
+//        slugs:allExtensionSlugs
+//    };
+//
+//    jQuery.post(ajaxurl, data, function (response)
+//    {
+//        if (response.result == 'SUCCESS') location.reload();
+//    }, 'json');
+//
+//    return false;
+//});
 
-jQuery(document).on('click', '.mainwp-extensions-enable-all', function ()
-{
-    var extensionHolders = jQuery('.mainwp-extensions-childHolder');
+//jQuery(document).on('click', '.mainwp-extensions-disable-all', function ()
+//{
+//    var data = {
+//        action:'mainwp_extension_disable_all'
+//    };
+//
+//    jQuery.post(ajaxurl, data, function (response)
+//    {
+//        if (response.result == 'SUCCESS') location.reload();
+//    }, 'json');
+//
+//    return false;
+//});
 
-    var allExtensionSlugs = [];
-    for (var i = 0; i < extensionHolders.length; i++)
-    {
-        var extensionEnableButton = jQuery(extensionHolders[i]).find('.mainwp-extensions-enable');
-        if (extensionEnableButton && extensionEnableButton.is(":disabled")) continue;
-
-        allExtensionSlugs.push(jQuery(extensionHolders[i]).attr('extension_slug'));
-    }
-    var data = {
-        action:'mainwp_extension_enable_all',
-        slugs:allExtensionSlugs
-    };
-
-    jQuery.post(ajaxurl, data, function (response)
-    {
-        if (response.result == 'SUCCESS') location.reload();
-    }, 'json');
-
-    return false;
-});
-
-jQuery(document).on('click', '.mainwp-extensions-disable-all', function ()
-{
-    var data = {
-        action:'mainwp_extension_disable_all'
-    };
-
-    jQuery.post(ajaxurl, data, function (response)
-    {
-        if (response.result == 'SUCCESS') location.reload();
-    }, 'json');
-
-    return false;
-});
-
-jQuery(document).on('click', '.mainwp-extensions-enable', function ()
+jQuery(document).on('click', '.mainwp-extensions-add-menu', function ()
 {
     var extensionSlug = jQuery(this).parents('.mainwp-extensions-childHolder').attr('extension_slug');
     var data = {
-        action:'mainwp_extension_enable',
+        action:'mainwp_extension_add_menu',
         slug:extensionSlug
     };
 
@@ -90,11 +90,11 @@ jQuery(document).on('click', '.mainwp-extensions-enable', function ()
     return false;
 });
 
-jQuery(document).on('click', '.mainwp-extensions-disable', function ()
+jQuery(document).on('click', '.mainwp-extensions-remove-menu', function ()
 {
     var extensionSlug = jQuery(this).parents('.mainwp-extensions-childHolder').attr('extension_slug');
     var data = {
-        action:'mainwp_extension_disable',
+        action:'mainwp_extension_remove_menu',
         slug:extensionSlug
     };
 
@@ -223,22 +223,6 @@ jQuery(document).on('click', '.mainwp-extensions-deactivate', function ()
     return false;
 });
 
-
-jQuery(document).on('click', '.mainwp-extensions-trash', function ()
-{
-    var extensionSlug = jQuery(this).parents('.mainwp-extensions-childHolder').attr('extension_slug');
-    var data = {
-        action:'mainwp_extension_trash',
-        slug:extensionSlug
-    };
-
-    jQuery.post(ajaxurl, data, function (response)
-    {
-        if (response.result == 'SUCCESS') location.reload();
-    }, 'json');
-
-    return false;
-});
 
 jQuery(document).on('click', '.mainwp-extension-widget-switch-list', function() {
     jQuery('#mainwp-extensions-widget-list').show();

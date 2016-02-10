@@ -20,7 +20,7 @@ class MainWP_Api_Manager_Plugin_Update {
 	 */
 	protected static $_instance = null;
 
-	/**	 
+	/**
 	 * @static
 	 * @return class instance
 	 */
@@ -128,43 +128,4 @@ class MainWP_Api_Manager_Plugin_Update {
 		}
 	}
 
-
-	public function check_response_for_errors( $response, $renew_license_url ) {
-		$error = '';
-		if ( ! empty( $response ) ) {
-			$plugins     = get_plugins();
-			$plugin_name = isset( $plugins[ $response->slug ] ) ? $plugins[ $response->slug ]['Name'] : $response->slug;
-			if ( isset( $response->errors['no_key'] ) && $response->errors['no_key'] == 'no_key' && isset( $response->errors['no_subscription'] ) && $response->errors['no_subscription'] == 'no_subscription' ) {
-				$error = sprintf( __( 'A license key for %s could not be found. Maybe you forgot to enter a license key when setting up %s, or the key was deactivated in your account. You can reactivate or purchase a license key from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $plugin_name, $plugin_name, $renew_license_url );
-				$error .= sprintf( __( 'A subscription for %s could not be found. You can purchase a subscription from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $plugin_name, $renew_license_url );
-			} else if ( isset( $response->errors['exp_license'] ) && $response->errors['exp_license'] == 'exp_license' ) {
-				$error = sprintf( __( 'The license key for %s has expired. You can reactivate or purchase a license key from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $plugin_name, $renew_license_url );
-			} else if ( isset( $response->errors['hold_subscription'] ) && $response->errors['hold_subscription'] == 'hold_subscription' ) {
-				$error = sprintf( __( 'The subscription for %s is on-hold. You can reactivate the subscription from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $plugin_name, $renew_license_url );
-			} else if ( isset( $response->errors['cancelled_subscription'] ) && $response->errors['cancelled_subscription'] == 'cancelled_subscription' ) {
-				$error = sprintf( __( 'The subscription for %s has been cancelled. You can renew the subscription from your account <a href="%s" target="_blank">dashboard</a>. A new license key will be emailed to you after your order has been completed.', 'mainwp' ), $plugin_name, $renew_license_url );
-			} else if ( isset( $response->errors['exp_subscription'] ) && $response->errors['exp_subscription'] == 'exp_subscription' ) {
-				$error = sprintf( __( 'The subscription for %s has expired. You can reactivate the subscription from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $plugin_name, $renew_license_url );
-			} else if ( isset( $response->errors['suspended_subscription'] ) && $response->errors['suspended_subscription'] == 'suspended_subscription' ) {
-				$error = sprintf( __( 'The subscription for %s has been suspended. You can reactivate the subscription from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $plugin_name, $renew_license_url );
-			} else if ( isset( $response->errors['pending_subscription'] ) && $response->errors['pending_subscription'] == 'pending_subscription' ) {
-				$error = sprintf( __( 'The subscription for %s is still pending. You can check on the status of the subscription from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $plugin_name, $renew_license_url );
-			} else if ( isset( $response->errors['trash_subscription'] ) && $response->errors['trash_subscription'] == 'trash_subscription' ) {
-				$error = sprintf( __( 'The subscription for %s has been placed in the trash and will be deleted soon. You can purchase a new subscription from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $plugin_name, $renew_license_url );
-			} else if ( isset( $response->errors['no_subscription'] ) && $response->errors['no_subscription'] == 'no_subscription' ) {
-				$error = sprintf( __( 'A subscription for %s could not be found. You can purchase a subscription from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $plugin_name, $renew_license_url );
-			} else if ( isset( $response->errors['no_activation'] ) && $response->errors['no_activation'] == 'no_activation' ) {
-				$error = sprintf( __( '%s has not been activated. Go to the settings page and enter the license key and license email to activate %s.', 'mainwp' ), $plugin_name, $plugin_name );
-			} else if ( isset( $response->errors['no_key'] ) && $response->errors['no_key'] == 'no_key' ) {
-				$error = sprintf( __( 'A license key for %s could not be found. Maybe you forgot to enter a license key when setting up %s, or the key was deactivated in your account. You can reactivate or purchase a license key from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $plugin_name, $plugin_name, $renew_license_url );
-			} else if ( isset( $response->errors['download_revoked'] ) && $response->errors['download_revoked'] == 'download_revoked' ) {
-				$error = sprintf( __( 'Download permission for %s has been revoked possibly due to a license key or subscription expiring. You can reactivate or purchase a license key from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $plugin_name, $renew_license_url );
-			} else if ( isset( $response->errors['switched_subscription'] ) && $response->errors['switched_subscription'] == 'switched_subscription' ) {
-				$error = sprintf( __( 'You changed the subscription for %s, so you will need to enter your new API License Key in the settings page. The License Key should have arrived in your email inbox, if not you can get it by logging into your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $plugin_name, $renew_license_url );
-			}
-		}
-
-		return $error;
-
-	}
 } // End of class

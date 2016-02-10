@@ -686,6 +686,16 @@ class MainWP_Utility {
 		if ( $params == null ) {
 			$params = array();
 		}
+
+		if ( $what == 'stats' || ( $what == 'upgradeplugintheme' && isset( $params['type'] ) && 'plugin' == $params['type'] ) ) {
+			// to fix bug
+			$try_tounch_plugins_page = get_option( 'mainwp_request_plugins_page_site_' . $website->id );
+			if ('yes' == $try_tounch_plugins_page) {
+				$page_plugins_url = MainWP_Utility::getGetDataAuthed( $website, 'plugins.php' );
+				wp_remote_get( $page_plugins_url, array( 'timeout' => 25, 'httpversion' => '1.1' ) );
+			}
+		}
+
 		$params['optimize'] = ( ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0 );
 
 		$postdata    = MainWP_Utility::getPostDataAuthed( $website, $what, $params );

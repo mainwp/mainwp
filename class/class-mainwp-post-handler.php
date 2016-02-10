@@ -28,6 +28,9 @@ class MainWP_Post_Handler {
 		//Page: ManageSites
 		$this->addAction( 'mainwp_checkwp', array( &$this, 'mainwp_checkwp' ) );
 		$this->addAction( 'mainwp_addwp', array( &$this, 'mainwp_addwp' ) );
+		$this->addAction( 'mainwp_ext_prepareinstallplugintheme', array( &$this, 'mainwp_ext_prepareinstallplugintheme' ) );
+		$this->addAction( 'mainwp_ext_performinstallplugintheme', array( &$this, 'mainwp_ext_performinstallplugintheme' ) );
+		$this->addAction( 'mainwp_ext_applypluginsettings', array( &$this, 'mainwp_ext_applypluginsettings' ) );
 
 		if ( mainwp_current_user_can( 'dashboard', 'test_connection' ) ) {
 			$this->addAction( 'mainwp_testwp', array( &$this, 'mainwp_testwp' ) );
@@ -1140,6 +1143,24 @@ class MainWP_Post_Handler {
 			MainWP_Manage_Sites::addSite();
 		} else {
 			die( json_encode( array( 'response' => 'ERROR Invalid request' ) ) );
+		}
+	}
+
+	function mainwp_ext_prepareinstallplugintheme() {
+
+		do_action( 'mainwp_prepareinstallplugintheme' );
+	}
+
+	function mainwp_ext_performinstallplugintheme() {
+
+		do_action( 'mainwp_performinstallplugintheme' );
+	}
+
+	function mainwp_ext_applypluginsettings() {
+		if ( $this->check_security( 'mainwp_ext_applypluginsettings', 'security' ) ) {
+			MainWP_Manage_Sites::apply_plugin_settings();
+		} else {
+			die( json_encode( array( 'error' => 'ERROR Invalid request' ) ) );
 		}
 	}
 

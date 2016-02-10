@@ -2430,6 +2430,19 @@ jQuery(document).ready(function () {
             dataType: 'json'});
         return false;
     });
+
+    jQuery(".chk-sync-install-plugin").change(function() {
+        var parent = jQuery(this).closest('.sync-ext-row');
+        var opts = parent.find(".sync-options input[type='checkbox']");
+        if (jQuery(this).is(':checked')) {
+            opts.removeAttr( "disabled");
+            opts.prop( "checked", true);
+        } else {
+            opts.prop( "checked", false);
+            opts.attr( "disabled", "disabled");
+        }
+    });
+
     managesites_init();
 });
 
@@ -2445,7 +2458,9 @@ managesites_init = function () {
 
     jQuery('#mainwp_managesites_test_errors').html();
     jQuery('#mainwp_managesites_test_message').html();    
-    
+    jQuery('.sync-ext-row span.status').html('');
+    jQuery('.sync-ext-row span.status').css('color', '#0073aa');
+
     managesites_bulk_init();
     
 };
@@ -2587,14 +2602,16 @@ mainwp_managesites_add = function (event) {
                 });
 
                 jQuery.post(ajaxurl, data, function (res_things) {
-					if (res_things.error)
-					{
-						response = 'ERROR ' + res_things.error;
-					}
-					else
-					{
-						response = res_things.response;
-					}
+                    var site_id = 0
+                    if (res_things.error)
+                    {
+                            response = 'ERROR ' + res_things.error;
+                    }
+                    else
+                    {
+                            response = res_things.response;
+                            site_id = res_things.siteid;
+                    }
                     response = jQuery.trim(response);
                     managesites_init();
 
@@ -2604,6 +2621,11 @@ mainwp_managesites_add = function (event) {
                     else {
                         //Message the WP was added
                         setHtml('#mainwp_managesites_add_message', response);
+                        if (site_id > 0) {
+                            jQuery('.sync-ext-row').attr('status', 'queue');
+                            jQuery('#mainwp_managesites_add_message').append( '<div id="mwp_applying_ext_settings"><i class="fa fa-spinner fa-pulse"></i> ' + __('Applying Extensions Settings...') + '<br/>');
+                            mainwp_managesites_sync_extension_start_next(site_id);
+                        }
 
                         //Reset fields
                         jQuery('#mainwp_managesites_add_wpname').val('');
@@ -2633,6 +2655,173 @@ mainwp_managesites_add = function (event) {
         }, 'json');
     }
 };
+
+mainwp_managesites_sync_extension_start_next = function(siteId)
+{
+    while ((pluginToInstall = jQuery('.sync-ext-row[status="queue"]:first')) && (pluginToInstall.length > 0)  && (bulkInstallCurrentThreads < bulkInstallMaxThreads))
+    {
+        mainwp_managesites_sync_extension_start_specific(pluginToInstall, siteId);
+    }
+
+    if ((pluginToInstall.length == 0) && (bulkInstallCurrentThreads == 0))
+    {
+      jQuery('#mwp_applying_ext_settings').remove();
+    }
+};
+
+mainwp_managesites_sync_extension_start_specific = function (pPluginToInstall, pSiteId)
+{
+    pPluginToInstall.attr('status', 'progress');
+    var syncGlobalSettings = pPluginToInstall.find(".sync-global-options input[type='checkbox']:checked").length > 0 ? true : false;
+    var install_plugin = pPluginToInstall.find(".sync-install-plugin input[type='checkbox']:checked").length > 0 ? true : false;
+
+    if (syncGlobalSettings) {
+        mainwp_extension_apply_plugin_settings(pPluginToInstall, pSiteId, true);
+    } else if (install_plugin) {
+        mainwp_extension_prepareinstallplugin(pPluginToInstall, pSiteId);
+    } else {
+        mainwp_managesites_sync_extension_start_next(pSiteId);
+        return;
+    }
+};
+
+mainwp_extension_prepareinstallplugin = function(pPluginToInstall, pSiteId) {
+    var site_Ids = [];
+    site_Ids.push(pSiteId);
+    bulkInstallCurrentThreads++;
+    var plugin_slug = pPluginToInstall.find(".sync-install-plugin").attr('slug');
+    var workingEl = pPluginToInstall.find(".sync-install-plugin i");
+    var statusEl = pPluginToInstall.find(".sync-install-plugin span.status");
+
+    var data = {
+		action: 'mainwp_ext_prepareinstallplugintheme',
+		type: 'plugin',
+		slug: plugin_slug,
+                'selected_sites[]': site_Ids,
+		selected_by: 'site',
+        };
+
+    workingEl.show();
+    statusEl.css('color','#0073aa');
+    statusEl.html(__('Prepare install...'));
+
+    jQuery.post(ajaxurl, data, function (response) {
+        workingEl.hide();
+        if (response.sites && response.sites[pSiteId]) {
+            statusEl.html(__('Installing...'));
+            var data = mainwp_secure_data({
+                    action: 'mainwp_ext_performinstallplugintheme',
+                    type: 'plugin',
+                    url: response.url,
+                    siteId: pSiteId,
+                    activatePlugin: true,
+                    overwrite: false,
+            });
+            workingEl.show();
+            jQuery.post(ajaxurl, data, function (response) {
+                    workingEl.hide();
+                    var apply_settings = false;
+                    var syc_msg = '';
+                    var _success = false;
+                    if ((response.ok != undefined) && (response.ok[pSiteId] != undefined)) {
+                            syc_msg = __( 'Installation Successful' );
+                            statusEl.html( syc_msg );
+                            apply_settings = pPluginToInstall.find(".sync-options input[type='checkbox']:checked").length > 0 ? true : false;
+                            if (apply_settings) {
+                                mainwp_extension_apply_plugin_settings(pPluginToInstall, pSiteId, false);
+                            }
+                            _success = true;
+                    } else if ((response.errors != undefined) && (response.errors[pSiteId] != undefined)) {
+                            syc_msg = __( 'Installation failed' ) + ': ' + response.errors[pSiteId][1];
+                            statusEl.html( syc_msg );
+                            statusEl.css( 'color', 'red' );
+                    } else {
+                            syc_msg = __( 'Installation failed' );
+                            statusEl.html( syc_msg );
+                            statusEl.css( 'color', 'red' );
+                    }
+
+                    if (syc_msg != '') {
+                        if (_success)
+                            syc_msg = '<span style="color:#0073aa">' + syc_msg + '!</span>';
+                        else
+                            syc_msg = '<span style="color:red">' + syc_msg + '!</span>';
+                        jQuery('#mainwp_managesites_add_message').append( pPluginToInstall.find(".sync-install-plugin").attr('plugin_name') + ' ' + syc_msg + '<br/>');
+                    }
+
+                    if (!apply_settings) {
+                        bulkInstallCurrentThreads--;
+                        mainwp_managesites_sync_extension_start_next( pSiteId );
+                    }
+            }, 'json');
+        } else {
+            statusEl.css('color','red');
+            statusEl.html(__('Error prepare install.'));
+            bulkInstallCurrentThreads--;
+        }
+    }, 'json');
+}
+
+mainwp_extension_apply_plugin_settings = function(pPluginToInstall, pSiteId, pGlobal) {
+    var extSlug = pPluginToInstall.attr('slug');
+    var workingEl = pPluginToInstall.find(".options-row i");
+    var statusEl = pPluginToInstall.find(".options-row span.status");
+    if (pGlobal)
+        bulkInstallCurrentThreads++;
+
+    var data = mainwp_secure_data({
+		action: 'mainwp_ext_applypluginsettings',
+		ext_dir_slug: extSlug,
+                siteId: pSiteId
+        });
+
+    workingEl.show();
+    statusEl.html( __( 'Applying...' ) );
+    jQuery.post(ajaxurl, data, function (response) {
+        workingEl.hide();
+        var syc_msg = '';
+        var _success = false;
+        if (response) {
+            if (response.result && response.result == 'success') {
+                var msg = '';
+                if (response.message != undefined) {
+                    msg = ' ' + response.message;
+                }
+                statusEl.html( __( 'Successful' ) + msg );
+                syc_msg = __( 'Successful' );
+                _success = true
+            } else if (response.error != undefined) {
+                    statusEl.html( __( 'Applying failed' ) + ': ' + response.error);
+                    statusEl.css( 'color', 'red' );
+                    syc_msg = __('failed');
+            } else {
+                    statusEl.html( __( 'Applying failed' ) );
+                    statusEl.css( 'color', 'red' );
+                    syc_msg = __('failed');
+            }
+        } else {
+                statusEl.html( __( 'Undefined error.' ) );
+                statusEl.css( 'color', 'red' );
+                syc_msg = __('failed');
+        }
+
+        if (syc_msg != '') {
+            if (_success)
+                syc_msg = '<span style="color:#0073aa">' + syc_msg + '!</span>';
+            else
+                syc_msg = '<span style="color:red">' + syc_msg + '!</span>';
+            if (pGlobal) {
+                syc_msg = __('Apply global %1 options', pPluginToInstall.attr('ext_name')) + ' ' + syc_msg + '<br/>';
+            } else {
+                syc_msg = __('Apply %1 Settings', pPluginToInstall.find('.sync-install-plugin').attr('plugin_name')) + ' ' + syc_msg + '<br/>';
+            }
+            jQuery('#mainwp_managesites_add_message').append( syc_msg );
+        }
+        bulkInstallCurrentThreads--;
+        mainwp_managesites_sync_extension_start_next( pSiteId );
+    }, 'json');
+}
+
 mainwp_managesites_test = function (event) {
     managesites_init();
 

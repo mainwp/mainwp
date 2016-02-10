@@ -1815,21 +1815,17 @@ input[type=checkbox].mainwp-checkbox3:checked {
 
 .mainwp-extensions-childName {
     font-size: 20px;
-    width: 40%;
+    width: 36%;
 }
 .mainwp-extensions-childVersion {
     font-size: large;
     font-family: Georgia ;
     font-style: italic;
     color: #aaa;
-    width: 20%;
+    width: 6%;
 }
 .mainwp-extensions-childActions {
     text-align: right;
-}
-
-.mainwp-extensions-childActions i {
-    margin-left: .5em;
 }
 
 .mainwp-extensions-childActions img {
@@ -1837,14 +1833,6 @@ input[type=checkbox].mainwp-checkbox3:checked {
 }
 .mainwp-extensions-childActions img:hover {
     opacity: 0.6 ;
-}
-
-.mainwp-extension-icon-desaturated {
-    opacity: 0.5 !important;
-    -webkit-filter: grayscale(100%);
-    -moz-filter: grayscale(100%);
-    -ms-filter: grayscale(100%);
-    -o-filter: grayscale(100%);
 }
 
 .mainwp-extension-description {
@@ -2513,7 +2501,7 @@ input[type=checkbox].mainwp-checkbox3:checked {
     background: #7fb100;
     color: #fff;
     text-decoration: none;
-    padding: 6px 23px;
+    padding: 6px 15px;
 }
 
 .mainwp_api_postbox .handlediv{
@@ -2881,4 +2869,10 @@ body.show-upload-plugin .mainwp-upload-plugin {
 }
 #plugin-information-footer a {
     display: none;
+}
+.sync-ext-row .sync-options {
+    margin-left: 15px;
+}
+.sync-ext-row{
+    margin: 5px 0;
 }

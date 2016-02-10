@@ -1251,7 +1251,7 @@ class MainWP_Manage_Sites {
 			$ret['response'] = 'ERROR You already added your site to MainWP';
 		} else {
 			try {
-				$verify_cert = ( !isset( $_POST['verify_certificate'] ) || empty( $_POST['verify_certificate'] ) ? null : $_POST['verify_certificate'] );
+				$verify_cert = ( !isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( $_POST['verify_certificate'] !== '0' ) ) ? null : $_POST['verify_certificate'] );
 				$http_user   = ( isset( $_POST['http_user'] ) ? $_POST['http_user'] : '' );
 				$http_pass   = ( isset( $_POST['http_pass'] ) ? $_POST['http_pass'] : '' );
 				$information = MainWP_Utility::fetchUrlNotAuthed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass ); //Fetch the stats with the given admin name
@@ -1298,7 +1298,7 @@ class MainWP_Manage_Sites {
 		$error   = '';
 		$message = '';
 		$site_id = 0;
-		
+
 		if ( isset( $_POST['managesites_add_wpurl'] ) && isset( $_POST['managesites_add_wpadmin'] ) ) {
 			//Check if already in DB
 			$website = MainWP_DB::Instance()->getWebsitesByUrl( $_POST['managesites_add_wpurl'] );
@@ -1312,25 +1312,25 @@ class MainWP_Manage_Sites {
 		}
 		$ret['response'] = $message;
 		$ret['siteid'] = $site_id;
-		
+
 		if ( MainWP_DB::Instance()->getWebsitesCount() == 1 ) {
 			$ret['redirectUrl'] = admin_url( 'admin.php?page=managesites' );
 		}
 
 		die( json_encode( $ret ) );
 	}
-	
+
 	public static function apply_plugin_settings() {
 		$site_id = $_POST['siteId'];
-		$ext_dir_slug = $_POST['ext_dir_slug'];	
+		$ext_dir_slug = $_POST['ext_dir_slug'];
 		if ( empty( $site_id ) ) {
-			die( json_encode( array( 'error' => 'Error: empty site id' ) ) ); 			
-		}	
+			die( json_encode( array( 'error' => 'Error: empty site id' ) ) );
+		}
 
 		do_action('mainwp_applypluginsettings_' . $ext_dir_slug, $site_id);
 		die( json_encode( array( 'error' => __('Undefined error', 'mainwp' ) ) ) );
 	}
-	
+
 
 	public static function saveNote() {
 		if ( isset( $_POST['websiteid'] ) && MainWP_Utility::ctype_digit( $_POST['websiteid'] ) ) {

@@ -56,7 +56,7 @@ class MainWP_Extensions_Widget {
 						$ext_page = $extension['direct_page'];
 					} else {
 						$ext_page = $extension['page'];
-					}			
+					}
 					?>
 					<span class="mainwp-widget-extensions">
 						<a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>">
@@ -97,22 +97,22 @@ class MainWP_Extensions_Widget {
 
 					?>
 					<tr class="mainwp-widget-extensions-list mainwp-extensions-childHolder" extension_slug="<?php echo $extension['slug']; ?>">
-							<td>
-								<a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-widget-icon-list"/></a>
-							</td>
-							<td class="mainwp-extension-widget-title-list">
-								<a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><?php echo $extension['name'] ?></a>
-							</td>
-							<td class="mainwp-extension-widget-version"><?php echo $extension['version']; ?></td>
-							<td class="mainwp-api-status-check" align="right" style="padding-right: 10px;">
-								<?php
-								if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && ! empty( $extension['api_key'] ) ) { ?>
-									<span style="color: #7fb100;"><i class="fa fa-unlock"></i> <?php _e( 'Activated', 'mainwp' ); ?></span>
-								<?php } else {
-									?>
-									<span style="color: #a00;"><i class="fa fa-lock"></i> <?php _e( 'Deactivated', 'mainwp' ); ?></span>
-								<?php } ?>
-							</td>
+						<td>
+							<a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-widget-icon-list"/></a>
+						</td>
+						<td class="mainwp-extension-widget-title-list">
+							<a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><?php echo $extension['name'] ?></a>
+						</td>
+						<td class="mainwp-extension-widget-version"><?php echo $extension['version']; ?></td>
+						<td class="mainwp-api-status-check" align="right" style="padding-right: 10px;">
+							<?php
+							if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && ! empty( $extension['api_key'] ) ) { ?>
+								<span style="color: #7fb100;"><i class="fa fa-unlock"></i> <?php _e( 'Activated', 'mainwp' ); ?></span>
+							<?php } else {
+								?>
+								<span style="color: #a00;"><i class="fa fa-lock"></i> <?php _e( 'Deactivated', 'mainwp' ); ?></span>
+							<?php } ?>
+						</td>
 					</tr>
 					<?php
 				}

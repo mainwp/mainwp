@@ -37,6 +37,11 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		echo __( 'No sites found.', 'mainwp' ) . '<br/><br/><em>' . __( 'If sites are missing from your Display but you know those sites are connected to your Dashboard be sure to check the Status drop down filter and adjust it to your needs.', 'mainwp' ) . '</em>';
 	}
 
+
+	protected function get_default_primary_column_name() {
+		return 'site';
+	}
+
 	function column_default( $item, $column_name ) {
 
 		$item = apply_filters( 'mainwp-sitestable-item', $item, $item );
@@ -284,7 +289,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			//            if (is_array($websiteThemes)) $cnt += count($websiteThemes);
 
 			if ( $cnt > 0 ) {
-				$output .= '<span class="fa-stack fa-lg" title="'. $cnt . ' ' . _n( 'Availble Update', 'Availble Updates', $cnt, 'mainwp' ) . '">
+				$output .= '<span class="fa-stack fa-lg" title="'. $cnt . ' ' . _n( 'Available Update', 'Available Updates', $cnt, 'mainwp' ) . '">
                 <i class="fa fa-circle fa-stack-2x mwp-d-green"></i><strong class="mwp-white fa-stack-1x">' . $cnt . '</strong></span>';
 			}
 		}

@@ -36,7 +36,7 @@ class MainWP_Api_Manager {
 	private function __wakeup() {
 	}
 
-	public function __construct() {		
+	public function __construct() {
 		$this->domain = str_ireplace( array( 'http://', 'https://' ), '', home_url() );
 	}
 
@@ -255,11 +255,11 @@ class MainWP_Api_Manager {
 						$return['error'] = __( 'Undefined error.', 'mainwp' );
 					}
 				}
-				
+
 				$error = $this->check_response_for_api_errors($activate_results);
 				if ( !empty( $error ) )
 					$return['error'] = $error;
-				
+
 				MainWP_Utility::update_option( $api . '_APIManAdder', $options );
 
 				return $return;
@@ -277,18 +277,18 @@ class MainWP_Api_Manager {
 			return false;
 
 		$error = '';
-		switch ( $response['code'] ) {									
-			case '100':	
+		switch ( $response['code'] ) {
+			case '100':
 				$error = __( 'Invalid Request. Please try to deactivate / re-activate the extension on the WP > Plugins page and try to activate again.', 'mainwp' );
 				break;
-			case '101':					
-			case '102':							
-			case '103':							
-			case '104':	
+			case '101':
+			case '102':
+			case '103':
+			case '104':
 				$error = __( 'Invalid Instance ID. Please try to deactivate / re-activate the extension on the WP > Plugins page and try to activate again.', 'mainwp' );
 				break;
-			case '105':							
-			case '106':			
+			case '105':
+			case '106':
 				$error           = isset( $response['error'] ) ? $response['error'] : '';
 				$info            = isset( $response['additional info'] ) ? ' ' . $response['additional info'] : '';
 				$error = $error . $info;
@@ -301,14 +301,14 @@ class MainWP_Api_Manager {
 				break;
 			case '902' :
 				$error = __( 'Your membership has Expired. Reactivate your membership to activate MainWP Extensions', 'mainwp' );
-				break;		
+				break;
 		}
-		return $error;					
+		return $error;
 	}
 
 	public function check_response_for_intall_errors( $response, $software_title = "") {
 		if ( !is_array($response) || !isset( $response['error'] ) )
-			return false;	
+			return false;
 
 		switch ( $response['error'] ) {
 			case 'subscription_on_hold':
@@ -324,7 +324,7 @@ class MainWP_Api_Manager {
 				return sprintf( __( 'Download permission for %s has been revoked possibly due to a license key or membership expiring. You can reactivate or purchase a license key from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $software_title, $this->renew_license_url );
 				break;
 		}
-		return false;					
+		return false;
 	}
 
 	public function update_check( $args ) {

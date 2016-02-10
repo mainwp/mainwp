@@ -137,15 +137,15 @@ class MainWP_Extensions {
 			) {
 				self::$extensions[] = $extension;
 				if ( mainwp_current_user_can( 'extension', dirname( $slug ) ) ) {
-					if ( isset( $extension['callback'] ) ) {						
+					if ( isset( $extension['callback'] ) ) {
 						if (MainWP_Extensions::addedOnMenu( $slug )) {
 							$menu_name = str_replace( array(
-								   'Extension',
-								   'MainWP',
-							   ), '', $extension['name'] );
+								'Extension',
+								'MainWP',
+							), '', $extension['name'] );
 							add_submenu_page( 'mainwp_tab', $extension['name'], $menu_name, 'read', $extension['page'], $extension['callback'] );
 						} else {
-							add_submenu_page( 'mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback'] );						
+							add_submenu_page( 'mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback'] );
 						}
 					}
 				}
@@ -171,17 +171,17 @@ class MainWP_Extensions {
 	public static function getExtensions($args = array()) {
 		if (!is_array($args))
 			$args = array();
-		
+
 		$extensions = MainWP_Extensions::loadExtensions();
-			
+
 		$return      = array();
 		foreach ( $extensions as $extension ) {
 			if ( isset( $args['activated'] ) && !empty( $args['activated'] ) ) {
 				if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) {
-					if ( !isset( $extension['activated_key'] ) || 'Activated' != $extension['activated_key'] ) 
+					if ( !isset( $extension['activated_key'] ) || 'Activated' != $extension['activated_key'] )
 						continue;
-				}				
-			}						
+				}
+			}
 			$ext                         = array();
 			$ext['version']              = $extension['version'];
 			$ext['name']				 = $extension['name'];
@@ -205,39 +205,39 @@ class MainWP_Extensions {
 		$html = '';
 		if ( isset( self::$extensions ) && is_array( self::$extensions ) ) {
 			foreach ( self::$extensions as $extension ) {
-					if ( defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) && ( MWP_TEAMCONTROL_PLUGIN_SLUG == $extension['slug'] ) && ! mainwp_current_user_can( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) {
-						continue;
-					}					
-					if (MainWP_Extensions::addedOnMenu( $extension['slug'] )) {
-						continue;
-					}
-					if ( isset( $extension['direct_page'] ) ) {
-						$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['direct_page'] ) . '"
+				if ( defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) && ( MWP_TEAMCONTROL_PLUGIN_SLUG == $extension['slug'] ) && ! mainwp_current_user_can( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) {
+					continue;
+				}
+				if (MainWP_Extensions::addedOnMenu( $extension['slug'] )) {
+					continue;
+				}
+				if ( isset( $extension['direct_page'] ) ) {
+					$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['direct_page'] ) . '"
 							   class="mainwp-submenu">' . str_replace( array(
-								   'Extension',
-								   'MainWP',
-							   ), '', $extension['name'] ) . '</a>';
-					} else {						
-						$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['page'] ) . '"
+							'Extension',
+							'MainWP',
+						), '', $extension['name'] ) . '</a>';
+				} else {
+					$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['page'] ) . '"
 							   class="mainwp-submenu">' . str_replace( array(
-								   'Extension',
-								   'MainWP',
-							   ), '', $extension['name'] ) . '</a>';						
-					}
-			}			
+							'Extension',
+							'MainWP',
+						), '', $extension['name'] ) . '</a>';
+				}
+			}
 		}
 		if ( empty( $html ) ) {
 			return;
 		}
 		?>
-        <div id="menu-mainwp-Extensions" class="mainwp-submenu-wrapper" xmlns="http://www.w3.org/1999/html">
-            <div class="wp-submenu sub-open" style="">
-                <div class="mainwp_boxout mainwp-submenu-wide">
-                    <div class="mainwp_boxoutin"></div>
-						<?php echo $html; ?>
-                </div>
-            </div>
-        </div>
+		<div id="menu-mainwp-Extensions" class="mainwp-submenu-wrapper" xmlns="http://www.w3.org/1999/html">
+			<div class="wp-submenu sub-open" style="">
+				<div class="mainwp_boxout mainwp-submenu-wide">
+					<div class="mainwp_boxoutin"></div>
+					<?php echo $html; ?>
+				</div>
+			</div>
+		</div>
 		<?php
 	}
 
@@ -496,15 +496,15 @@ class MainWP_Extensions {
 						$package_url = apply_filters('mainwp_api_manager_upgrade_url', $product_info['package']);
 						$item_html = '<div class="extension_to_install" download-link="' . $package_url . '" product-id="' . $product_id . '"><input type="checkbox" status="queue" checked="true"> <span class="name"><strong>' . $software_title . "</strong></span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
 					} else if (isset($product_info['error']) && !empty($product_info['error'])) {
-						$error = MainWP_Api_Manager::instance()->check_response_for_intall_errors($product_info, $software_title);						
+						$error = MainWP_Api_Manager::instance()->check_response_for_intall_errors($product_info, $software_title);
 					} else {
 						$error = __('Undefined error.', 'mainwp');
 					}
-					
+
 					if (!empty($error)) {
 						$item_html = '<div><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $software_title . "</strong></span> <span style=\"color: red;\"><strong>Error</strong> " . $error . '</span></div>';
 					}
-						
+
 					$group_id = isset($map_extensions_group[$product_id]) ? $map_extensions_group[$product_id] : false;
 					if (!empty($group_id) && isset($all_groups[$group_id]))
 						$grouped_exts[$group_id] .= $item_html;
@@ -528,7 +528,7 @@ class MainWP_Extensions {
 				if ( empty( $installing_exts ) ) {
 					$html .= '<p>' . __( 'All purchased extensions are Installed', 'mainwp' ) . '</p>';
 				} else {
-					$html .= '<p><span class="description">' . __('You have access to all purchased Extensions but you DO NOT need to install all off them. We recommend adding them one at a time, as you need them, so you do not experience information overload. Uncheck any Extension you do not want to install', 'mainwp') . '</span></p>';
+					$html .= '<p><span class="description">' . __('You have access to all your purchased Extensions but you DO NOT need to install all off them. In order to avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Uncheck any Extension you do not want to install.', 'mainwp') . '</span></p>';
 					$html .= '<div><a id="mainwp-check-all-ext" href="javascript:void(0);"><i class="fa fa-check-square-o"></i> ' . __('Select All', 'mainwp') . '</a> | <a id="mainwp-uncheck-all-ext" href="javascript:void(0);"><i class="fa fa-square-o"></i> ' . __('Select None', 'mainwp') . '</a></div>';
 				}
 
@@ -570,7 +570,7 @@ class MainWP_Extensions {
 		}
 		die( json_encode( $return ) );
 	}
-	
+
 	public static function http_request_reject_unsafe_urls( $r, $url ) {
 		$r['reject_unsafe_urls'] = false;
 
@@ -638,22 +638,22 @@ class MainWP_Extensions {
 		}
 
 		if ( is_wp_error( $result ) ) {
-					if ( $result->get_error_data() && is_string( $result->get_error_data() ) ) {
-						$error = $result->get_error_data();
-						MainWP_Helper::error( $error );
-					} else {
-						$error = $result->get_error_code();
-						MainWP_Helper::error( implode( ', ', $error ) );
-					}
-				}
-				
+			if ( $result->get_error_data() && is_string( $result->get_error_data() ) ) {
+				$error = $result->get_error_data();
+				MainWP_Helper::error( $error );
+			} else {
+				$error = $result->get_error_code();
+				MainWP_Helper::error( implode( ', ', $error ) );
+			}
+		}
+
 		$error = $output = $plugin_slug = null;
 		if ( is_wp_error( $result ) ) {
 			if ( $result->get_error_data() && is_string( $result->get_error_data() ) ) {
-				$error = $result->get_error_data();				
+				$error = $result->get_error_data();
 			} else {
-				$error = $result->get_error_code();				
-			}			
+				$error = $result->get_error_code();
+			}
 		} else {
 			$path = $result['destination'];
 			foreach ( $result['source_files'] as $srcFile ) {
@@ -676,7 +676,7 @@ class MainWP_Extensions {
 
 		if ( ! empty( $error ) ) {
 			$return['error'] = $error;
-		} else {			
+		} else {
 			$return['result'] = 'SUCCESS';
 			$return['output'] = $output;
 			$return['slug']   = $plugin_slug;
@@ -764,25 +764,25 @@ class MainWP_Extensions {
 //		return ($active ? array( 'key' => md5( $pluginFile . '-SNNonceAdder' ) ) : false );
 	}
 
-	public static function addedOnMenu( $slug ) {		
+	public static function addedOnMenu( $slug ) {
 		$snMenuExtensions = get_option( 'mainwp_extmenu' );
 		if ( ! is_array( $snMenuExtensions ) ) {
 			$snMenuExtensions = array();
 		}
-		return in_array( $slug, $snMenuExtensions );		
+		return in_array( $slug, $snMenuExtensions );
 	}
-	
+
 	public static function isExtensionActivated( $pluginFile )
 	{
 		$active = false;
 		// To fix bug
-		self::loadExtensions();		
+		self::loadExtensions();
 		if ( isset( self::$extensions ) ) {
 			foreach ( self::$extensions as $extension ) {
 				if ( $extension['plugin'] == $pluginFile ) {
-					if ( isset( $extension['mainwp'] ) && ( $extension['mainwp'] == true ) && isset( $extension['api_key'] ) && ! empty( $extension['api_key'] ) && isset( $extension['activated_key'] ) && ( $extension['activated_key'] == 'Activated' ) ) {					
-						$active = true;					
-					} 
+					if ( isset( $extension['mainwp'] ) && ( $extension['mainwp'] == true ) && isset( $extension['api_key'] ) && ! empty( $extension['api_key'] ) && isset( $extension['activated_key'] ) && ( $extension['activated_key'] == 'Activated' ) ) {
+						$active = true;
+					}
 					break;
 				}
 			}

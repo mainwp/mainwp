@@ -161,7 +161,6 @@ class MainWP_System {
 		do_action( 'mainwp_cronload_action' );
 
 		//Cron every 5 minutes
-		add_action( 'mainwp_cronofflinecheck_action', array( $this, 'mainwp_cronofflinecheck_action' ) );
 		add_action( 'mainwp_cronstats_action', array( $this, 'mainwp_cronstats_action' ) );
 		add_action( 'mainwp_cronbackups_action', array( $this, 'mainwp_cronbackups_action' ) );
 		add_action( 'mainwp_cronbackups_continue_action', array( $this, 'mainwp_cronbackups_continue_action' ) );
@@ -172,14 +171,9 @@ class MainWP_System {
 
 		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
 
-		if ( ( $sched = wp_next_scheduled( 'mainwp_cronofflinecheck_action' ) ) == false ) {
-			if ( $useWPCron ) {
-				wp_schedule_event( time(), '5minutely', 'mainwp_cronofflinecheck_action' );
-			}
-		} else {
-			if ( ! $useWPCron ) {
-				wp_unschedule_event( $sched, 'mainwp_cronofflinecheck_action' );
-			}
+		//todo: remove in next version
+		if ( ( $sched = wp_next_scheduled( 'mainwp_cronofflinecheck_action' ) ) != false ) {
+			wp_unschedule_event( $sched, 'mainwp_cronofflinecheck_action' );
 		}
 
 		if ( ( $sched = wp_next_scheduled( 'mainwp_cronstats_action' ) ) == false ) {
@@ -285,18 +279,18 @@ class MainWP_System {
 		MainWP_Right_Now::init();
 		MainWP_Setup_Wizard::init();
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			//MainWP_WP_CLI_Command::init();
+			MainWP_WP_CLI_Command::init();
 		}
 		//WP-Cron
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
-			if ( isset($_GET[ 'mainwp_run' ]) && ! empty( $_GET[ 'mainwp_run' ] ) ) {								
+			if ( isset($_GET[ 'mainwp_run' ]) && ! empty( $_GET[ 'mainwp_run' ] ) ) {
 				add_action( 'init', array( $this, 'cron_active' ), PHP_INT_MAX );
-			} 			
+			}
 		}
-			
+
 	}
-	
-	function cron_active() {		
+
+	function cron_active() {
 		if ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) {
 			return;
 		}
@@ -658,17 +652,6 @@ class MainWP_System {
 		return false;
 	}
 
-	function mainwp_cronofflinecheck_action() {
-		MainWP_Logger::Instance()->info( 'CRON :: offlinecheck' );
-
-		MainWP_Utility::update_option( 'mainwp_cron_last_offlinecheck', time() );
-		//Do cronjobs!
-		//Config this in crontab: 0 0 * * * wget -q http://mainwp.com/wp-admin/?do=checkSites -O /dev/null 2>&1
-		//this will execute once every day to check if websites are offline
-		MainWP_Offline_Checks::performAllChecks();
-		die();
-	}
-
 	function print_updates_array_lines( $array, $backupChecks ) {
 		$output = '';
 		foreach ( $array as $line ) {
@@ -753,7 +736,7 @@ class MainWP_System {
 				}
 
 				if ( ( count( $pluginsNewUpdate ) != 0 ) || ( count( $pluginsToUpdate ) != 0 )
-				     || ( count( $ignoredPluginsNewUpdate ) != 0 ) || ( count( $ignoredPluginsToUpdate ) != 0 )
+//				     || ( count( $ignoredPluginsNewUpdate ) != 0 ) || ( count( $ignoredPluginsToUpdate ) != 0 )
 					) {
 					$sendMail = true;
 
@@ -761,8 +744,8 @@ class MainWP_System {
 					$mail .= '<ul>';
 					$mail .= $this->print_updates_array_lines( $pluginsNewUpdate, null );
 					$mail .= $this->print_updates_array_lines( $pluginsToUpdate, $sitesCheckCompleted );
-					$mail .= $this->print_updates_array_lines( $ignoredPluginsNewUpdate, null );
-					$mail .= $this->print_updates_array_lines( $ignoredPluginsToUpdate, null );
+//					$mail .= $this->print_updates_array_lines( $ignoredPluginsNewUpdate, null );
+//					$mail .= $this->print_updates_array_lines( $ignoredPluginsToUpdate, null );
 					$mail .= '</ul>';
 				}
 
@@ -784,7 +767,7 @@ class MainWP_System {
 				}
 
 				if ( ( count( $themesNewUpdate ) != 0 ) || ( count( $themesToUpdate ) != 0 )
-				     || ( count( $ignoredThemesNewUpdate ) != 0 ) || ( count( $ignoredThemesToUpdate ) != 0 )
+//				     || ( count( $ignoredThemesNewUpdate ) != 0 ) || ( count( $ignoredThemesToUpdate ) != 0 )
 					) {
 					$sendMail = true;
 
@@ -792,8 +775,8 @@ class MainWP_System {
 					$mail .= '<ul>';
 					$mail .= $this->print_updates_array_lines( $themesNewUpdate, null );
 					$mail .= $this->print_updates_array_lines( $themesToUpdate, $sitesCheckCompleted );
-					$mail .= $this->print_updates_array_lines( $ignoredThemesNewUpdate, null );
-					$mail .= $this->print_updates_array_lines( $ignoredThemesToUpdate, null );
+//					$mail .= $this->print_updates_array_lines( $ignoredThemesNewUpdate, null );
+//					$mail .= $this->print_updates_array_lines( $ignoredThemesToUpdate, null );
 					$mail .= '</ul>';
 				}
 
@@ -1689,8 +1672,6 @@ class MainWP_System {
 			$this->mainwp_cronbackups_continue_action();
 		} else if ( isset( $_GET['do'] ) && $_GET['do'] == 'cronStats' ) {
 			$this->mainwp_cronstats_action();
-		} else if ( isset( $_GET['do'] ) && $_GET['do'] == 'checkSites' ) {
-			$this->mainwp_cronofflinecheck_action();
 		} else if ( isset( $_GET['do'] ) && $_GET['do'] == 'cronUpdatesCheck' ) {
 			$this->mainwp_cronupdatescheck_action();
 		} else if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
@@ -1740,7 +1721,7 @@ class MainWP_System {
 			<h3><?php esc_html_e( 'Stop! Before you continue,', 'mainwp' ); ?></h3>
 			<strong><?php esc_html_e( 'We HIGHLY recommend a NEW WordPress install for your Main Dashboard.', 'mainwp' ); ?></strong><br/><br/>
 			<?php echo sprintf( __( 'Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard off an active site. Most hosting companies provide free subdomains %s and we recommend creating one if you do not have a specific dedicated domain to run your Network Main Dashboard.', 'mainwp' ), '("<strong>demo.yourdomain.com</strong>")' ) ; ?><br/><br/>
-			<?php echo sprintf( __( 'If you are not sure how to set up a subdomain here is a quick step by step with %s, %s or %s. If you are not sure what you have, contact your hosting companies support.', 'mainwp' ), '<a href="http://docs.mainwp.com/creating-a-subdomain-in-cpanel/">cPanel</a>', '<a href="http://docs.mainwp.com/creating-a-subdomain-in-plesk/">Plesk</a>', '<a href="http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/">Direct Admin</a>' ) ; ?>			
+			<?php echo sprintf( __( 'If you are not sure how to set up a subdomain here is a quick step by step with %s, %s or %s. If you are not sure what you have, contact your hosting companies support.', 'mainwp' ), '<a href="http://docs.mainwp.com/creating-a-subdomain-in-cpanel/">cPanel</a>', '<a href="http://docs.mainwp.com/creating-a-subdomain-in-plesk/">Plesk</a>', '<a href="http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/">Direct Admin</a>' ) ; ?>
 			<br/><br/>
 			<div style="text-align: center">
 				<a href="#" class="button button-primary" id="remove-mainwp-installation-warning"><?php esc_html_e('I have read the warning and I want to proceed', 'mainwp' ); ?></a>
@@ -2419,7 +2400,6 @@ class MainWP_System {
 			MainWP_Plugins::initMenu();
 			MainWP_User::initMenu();
 			MainWP_Manage_Backups::initMenu();
-			MainWP_Offline_Checks::initMenu();
 			MainWP_Bulk_Update_Admin_Passwords::initMenu();
 			MainWP_Manage_Groups::initMenu();
 			MainWP_Settings::initMenu();

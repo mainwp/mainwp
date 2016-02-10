@@ -108,7 +108,7 @@
 		margin: .5em 0!important;
 	}
 
-	
+
 	.mainwp-ui .button,
 	.mainwp-ui .button-hero,
 	.mainwp-ui .button-primary {
@@ -156,22 +156,22 @@
 		width: 80% !important;
 	}
 
-/*
-	#mainwp_managesites_content table.sites .column-status,
-	#mainwp_managesites_content table.sites .column-url,
-	#mainwp_managesites_content table.sites .column-groups,
-	#mainwp_managesites_content table.sites .column-backup,
-	#mainwp_managesites_content table.sites .column-last_sync,
-	#mainwp_managesites_content table.sites .column-last_post,
-	#mainwp_managesites_content table.sites .column-seo,
-	#mainwp_managesites_content table.sites .column-notes,
-	#mainwp_managesites_content table.sites .column-site_actions,
-	#mainwp_managesites_content table.sites .column-score_mobile,
-	#mainwp_managesites_content table.sites .column-score_desktop,
-	#mainwp_managesites_content table.sites .column-wfc_status {
-		display: none !important;
-	}
-*/
+	/*
+        #mainwp_managesites_content table.sites .column-status,
+        #mainwp_managesites_content table.sites .column-url,
+        #mainwp_managesites_content table.sites .column-groups,
+        #mainwp_managesites_content table.sites .column-backup,
+        #mainwp_managesites_content table.sites .column-last_sync,
+        #mainwp_managesites_content table.sites .column-last_post,
+        #mainwp_managesites_content table.sites .column-seo,
+        #mainwp_managesites_content table.sites .column-notes,
+        #mainwp_managesites_content table.sites .column-site_actions,
+        #mainwp_managesites_content table.sites .column-score_mobile,
+        #mainwp_managesites_content table.sites .column-score_desktop,
+        #mainwp_managesites_content table.sites .column-wfc_status {
+            display: none !important;
+        }
+    */
 	/*  -  Add  -  Test Connection  -  */
 
 	.mainwp-ui input[type="text"],

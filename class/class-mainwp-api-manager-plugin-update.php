@@ -20,7 +20,7 @@ class MainWP_Api_Manager_Plugin_Update {
 	 */
 	protected static $_instance = null;
 
-	/**	 
+	/**
 	 * @static
 	 * @return class instance
 	 */

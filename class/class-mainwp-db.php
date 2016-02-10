@@ -2,7 +2,7 @@
 
 class MainWP_DB {
 	//Config
-	private $mainwp_db_version = '8.7';
+	private $mainwp_db_version = '8.8';
 	//Private
 	private $table_prefix;
 	//Singleton
@@ -93,6 +93,7 @@ class MainWP_DB {
   directories longtext NOT NULL,
   plugin_upgrades longtext NOT NULL,
   theme_upgrades longtext NOT NULL,
+  translation_upgrades longtext NOT NULL,
   premium_upgrades longtext NOT NULL,
   securityIssues longtext NOT NULL,
   themes longtext NOT NULL,
@@ -397,7 +398,7 @@ class MainWP_DB {
 				'mainwp_minimumDelay',
 				'mainwp_maximumIPRequests',
 				'mainwp_minimumIPDelay',
-				'mainwp_extensions',				
+				'mainwp_extensions',
 				'mainwp_api_username',
 				'mainwp_api_password',
 				'mainwp_extension_widget_view',
@@ -1056,6 +1057,7 @@ class MainWP_DB {
 				'directories'             => '',
 				'plugin_upgrades'         => '',
 				'theme_upgrades'          => '',
+				'translation_upgrades'    => '',
 				'securityIssues'          => '',
 				'themes'                  => '',
 				'ignored_themes'          => '',
@@ -1071,7 +1073,7 @@ class MainWP_DB {
 				'themeConflicts'          => '',
 				'ignored_pluginConflicts' => '',
 				'ignored_themeConflicts'  => '',
-				'verify_certificate'      => $verifyCertificate,
+				'verify_certificate'      => intval( $verifyCertificate ),
 				'ssl_version'             => $sslVersion,
 				'uniqueId'                => $uniqueId,
 				'mainwpdir'               => 0,

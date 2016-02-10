@@ -31,7 +31,7 @@ class MainWP_Post_Handler {
 		$this->addAction( 'mainwp_ext_prepareinstallplugintheme', array( &$this, 'mainwp_ext_prepareinstallplugintheme' ) );
 		$this->addAction( 'mainwp_ext_performinstallplugintheme', array( &$this, 'mainwp_ext_performinstallplugintheme' ) );
 		$this->addAction( 'mainwp_ext_applypluginsettings', array( &$this, 'mainwp_ext_applypluginsettings' ) );
-		
+
 		if ( mainwp_current_user_can( 'dashboard', 'test_connection' ) ) {
 			$this->addAction( 'mainwp_testwp', array( &$this, 'mainwp_testwp' ) );
 		}
@@ -1155,15 +1155,15 @@ class MainWP_Post_Handler {
 
 		do_action( 'mainwp_performinstallplugintheme' );
 	}
-	
+
 	function mainwp_ext_applypluginsettings() {
 		if ( $this->check_security( 'mainwp_ext_applypluginsettings', 'security' ) ) {
 			MainWP_Manage_Sites::apply_plugin_settings();
 		} else {
 			die( json_encode( array( 'error' => 'ERROR Invalid request' ) ) );
 		}
-	}	
-	
+	}
+
 	function mainwp_testwp() {
 		$this->secure_request( 'mainwp_testwp' );
 

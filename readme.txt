@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.4.1
-Stable tag: 3.0.1
+Stable tag: 3.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,26 +21,25 @@ And, just because it is free does not mean it’s been stripped down.   The Main
 
 The Dashboard plugin allows you to connect and control completely independent WordPress sites even those on different hosts and servers.
 
-MainWP is the perfect solution for affiliates, marketers, developers, WordPress shops and anyone else with multiple WordPress sites.  
-
-= Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
-
+MainWP is the perfect solution for affiliates, marketers, developers, WordPress shops and anyone else with multiple WordPress sites. 
 
 But wait, how is MainWP free, what’s the catch, how will you continue to pay development costs?
 
 We make money by selling [Extensions](https://mainwp.com/extensions/).
 
-
 Extensions enhance your MainWP Dashboard with additional features. The catalog of [MainWP Extensions](https://mainwp.com/extensions/) include additional features for backups, marketing, SEO, maintenance, security, monitoring and other tools to help you build a better network.
-
-= Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
-
 
 **Note:  MainWP requires two (2) plugins.**
 
 **This is the MainWP Dashboard plugin that you install on your own separate WordPress install and the [MainWP child plugin](https://wordpress.org/plugins/mainwp-child/) that you install on the sites you want to control (child sites) .**
 
 **Please check the [Quick Start - Setting up your MainWP](http://docs.mainwp.com/setting-up-your-mainwp/) support doc for more information.**
+
+= Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
+
+[youtube https://www.youtube.com/watch?v=PV3L-MGQOyM]
+
+
 
 
 = Some of the Free MainWP Features include: =
@@ -112,6 +111,8 @@ Both the MainWP Dashboard and Child plugin are fully open source and GPL complia
 
 == Installation ==
 
+= Note: MainWP is not tested on or designed for multisite installs, we have reports that most functions work correctly but support will be limited.  We DO NOT recommend installing the MainWP Dashboard plugin on a Multi-site install. = 
+
 1. We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.
 Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard from an active site. Most hosting companies provide free subdomains ("demo.yourdomain.com") and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.
 If you are not sure how to set up a subdomain here is a quick step by step with [cPanel](http://docs.mainwp.com/creating-a-subdomain-in-cpanel/), [Plesk](http://docs.mainwp.com/creating-a-subdomain-in-plesk/) or [Direct Admin](http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/). If you are not sure what you have, contact your hosting companies support.
@@ -123,8 +124,6 @@ If you are not sure how to set up a subdomain here is a quick step by step with 
 4. Add your first child site to the MainWP Dashboard - [Documentation](http://docs.mainwp.com/setting-up-your-mainwp/)
 
 5. Set your MainWP Settings - [Documentation](http://docs.mainwp.com/mainwp-settings-overview/)
-
-Note: MainWP is not tested on multisite installs, we have reports that most functions work but support will be limited.
 
 == Frequently Asked Questions ==
 = Do I need any other plugins for MainWP? =
@@ -164,6 +163,10 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 3.0.2 - 1-22-16 =
+* Fixed: Bug that was stripping long plugin and theme names
+* Fixed: Issue adding sites when SSL is set to no
+
 = 3.0.1 - 1-18-16 =
 * Updated: Extensions Icons
 * Fixed: Issue with reconnecting child site with unique ID
@@ -171,7 +174,8 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: Issue with displaying Twitter brag messges
 * Fixed: Issue with Availble Updates in email notification
 * Fixed: Backup task javascript error
-* Added: Warning message for Multisite settup
+* Fixed: Setup wizard loop on multisite setup
+* Added: Warning message for multisite setup
 * Added: Hooks to enable extension logging
 
 = 3.0 - 1-12-16 =

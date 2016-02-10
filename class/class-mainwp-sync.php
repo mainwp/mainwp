@@ -97,6 +97,7 @@ class MainWP_Sync {
 			'directories'          => $emptyArray,
 			'plugin_upgrades'      => $emptyArray,
 			'theme_upgrades'       => $emptyArray,
+			'translation_upgrades' => $emptyArray,
 			'securityIssues'       => $emptyArray,
 			'themes'               => $emptyArray,
 			'plugins'              => $emptyArray,
@@ -152,6 +153,11 @@ class MainWP_Sync {
 			$done                            = true;
 		}
 
+		if ( isset( $information['translation_updates'] ) ) {
+			$websiteValues['translation_upgrades'] = @json_encode( $information['translation_updates'] );
+			$done                            = true;
+		}
+
 		if ( isset( $information['premium_updates'] ) ) {
 			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'premium_upgrades', @json_encode( $information['premium_updates'] ) );
 			$done = true;
@@ -190,26 +196,26 @@ class MainWP_Sync {
 			$done                    = true;
 		}
 
-		
-		$to_fix = false;	
+
+		$to_fix = false;
 		if ( isset( $information['plugins'] ) ) {
 			foreach( $information['plugins'] as $info ) {
 				if ( isset($info['slug']) && in_array( $info['slug'], array( 'ithemes-security-pro/ithemes-security-pro.php', 'monarch/monarch.php') ) ) {
 					$to_fix = true;
 				}
-			}	
+			}
 			$websiteValues['plugins'] = @json_encode( $information['plugins'] );
 			$done                     = true;
 		}
-		
+
 		if ( $to_fix ) {
 			$request = get_option( 'mainwp_request_plugins_page_site_' . $pWebsite->id );
-			if ( empty( $request ) )			
+			if ( empty( $request ) )
 				update_option( 'mainwp_request_plugins_page_site_' . $pWebsite->id, 'yes' );
 		} else {
 			if ( 'yes' == get_option( 'mainwp_request_plugins_page_site_' . $pWebsite->id ) )
 				delete_option( 'mainwp_request_plugins_page_site_' . $pWebsite->id );
-		}	
+		}
 
 		if ( isset( $information['users'] ) ) {
 			$websiteValues['users'] = @json_encode( $information['users'] );

@@ -40,7 +40,7 @@ class MainWP_Hooks {
 			MainWP_Extensions::getClassName(),
 			'isExtensionAvailable',
 		) );
-		add_filter( 'mainwp-extension-decrypt-string', array( &$this, 'hookDecryptString' ) );		
+		add_filter( 'mainwp-extension-decrypt-string', array( &$this, 'hookDecryptString' ) );
 		add_action( 'mainp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
 		add_action( 'mainp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
 		add_action( 'mainp_log_warning', array( &$this, 'mainwp_log_warning' ), 10, 1 );

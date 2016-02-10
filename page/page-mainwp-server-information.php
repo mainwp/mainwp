@@ -916,16 +916,16 @@ class MainWP_Server_Information {
 			echo __( 'OFF', 'mainwp' );
 		}
 	}
-	
-	protected static function serverSelfConnect() {		
-		$url = site_url( 'wp-cron.php' );		
+
+	protected static function serverSelfConnect() {
+		$url = site_url( 'wp-cron.php' );
 		$query_args = array('mainwp_run' => 'test');
-		$url = add_query_arg( $query_args, $url );		
+		$url = add_query_arg( $query_args, $url );
 		$args = array(	'blocking'   	=> TRUE,
 						'sslverify'		=> apply_filters( 'https_local_ssl_verify', true ),
-						'timeout' 		=> 15														
+						'timeout' 		=> 15
 					);
-		$response =  wp_remote_post( $url, $args );				
+		$response =  wp_remote_post( $url, $args );
 		$test_result = '';
 		if ( is_wp_error( $response ) ) {
 			$test_result .= sprintf( __( 'The HTTP response test get an error "%s"','mainwp' ), $response->get_error_message() );
@@ -940,10 +940,10 @@ class MainWP_Server_Information {
 			}
 		}
 		if ( empty( $test_result ) ) {
-			_e( 'Response Test O.K.', 'mainwp' );			
-		} else 
+			_e( 'Response Test O.K.', 'mainwp' );
+		} else
 			echo $test_result;
-	}	
+	}
 
 	protected static function getRemoteAddress() {
 		echo $_SERVER['REMOTE_ADDR'];

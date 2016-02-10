@@ -2370,7 +2370,7 @@ jQuery(document).ready(function () {
     {
         mainwp_managesites_reconnect(jQuery(this), false);
         return false;
-    });    
+    });
     jQuery('.mainwp_rightnow_site_reconnect').live('click', function(event)
     {
         mainwp_managesites_reconnect(jQuery(this), true);
@@ -2431,12 +2431,12 @@ jQuery(document).ready(function () {
         return false;
     });
 
-    jQuery(".chk-sync-install-plugin").change(function() {    
-        var parent = jQuery(this).closest('.sync-ext-row');         
-        var opts = parent.find(".sync-options input[type='checkbox']");                
+    jQuery(".chk-sync-install-plugin").change(function() {
+        var parent = jQuery(this).closest('.sync-ext-row');
+        var opts = parent.find(".sync-options input[type='checkbox']");
         if (jQuery(this).is(':checked')) {
             opts.removeAttr( "disabled");
-            opts.prop( "checked", true);            
+            opts.prop( "checked", true);
         } else {
             opts.prop( "checked", false);
             opts.attr( "disabled", "disabled");
@@ -2460,7 +2460,7 @@ managesites_init = function () {
     jQuery('#mainwp_managesites_test_message').html();    
     jQuery('.sync-ext-row span.status').html('');
     jQuery('.sync-ext-row span.status').css('color', '#0073aa');
-    
+
     managesites_bulk_init();
     
 };
@@ -2622,11 +2622,11 @@ mainwp_managesites_add = function (event) {
                         //Message the WP was added
                         setHtml('#mainwp_managesites_add_message', response);
                         if (site_id > 0) {
-                            jQuery('.sync-ext-row').attr('status', 'queue');  
+                            jQuery('.sync-ext-row').attr('status', 'queue');
                             jQuery('#mainwp_managesites_add_message').append( '<div id="mwp_applying_ext_settings"><i class="fa fa-spinner fa-pulse"></i> ' + __('Applying Extensions Settings...') + '<br/>');
                             mainwp_managesites_sync_extension_start_next(site_id);
                         }
-                            
+
                         //Reset fields
                         jQuery('#mainwp_managesites_add_wpname').val('');
                         jQuery('#mainwp_managesites_add_wpurl').val('');
@@ -2659,26 +2659,26 @@ mainwp_managesites_add = function (event) {
 mainwp_managesites_sync_extension_start_next = function(siteId)
 {
     while ((pluginToInstall = jQuery('.sync-ext-row[status="queue"]:first')) && (pluginToInstall.length > 0)  && (bulkInstallCurrentThreads < bulkInstallMaxThreads))
-    {        
+    {
         mainwp_managesites_sync_extension_start_specific(pluginToInstall, siteId);
     }
 
     if ((pluginToInstall.length == 0) && (bulkInstallCurrentThreads == 0))
-    {      
+    {
       jQuery('#mwp_applying_ext_settings').remove();
     }
 };
 
 mainwp_managesites_sync_extension_start_specific = function (pPluginToInstall, pSiteId)
-{    
+{
     pPluginToInstall.attr('status', 'progress');
     var syncGlobalSettings = pPluginToInstall.find(".sync-global-options input[type='checkbox']:checked").length > 0 ? true : false;
     var install_plugin = pPluginToInstall.find(".sync-install-plugin input[type='checkbox']:checked").length > 0 ? true : false;
-    
-    if (syncGlobalSettings) {        
+
+    if (syncGlobalSettings) {
         mainwp_extension_apply_plugin_settings(pPluginToInstall, pSiteId, true);
-    } else if (install_plugin) {        
-        mainwp_extension_prepareinstallplugin(pPluginToInstall, pSiteId);        
+    } else if (install_plugin) {
+        mainwp_extension_prepareinstallplugin(pPluginToInstall, pSiteId);
     } else {
         mainwp_managesites_sync_extension_start_next(pSiteId);
         return;
@@ -2688,8 +2688,8 @@ mainwp_managesites_sync_extension_start_specific = function (pPluginToInstall, p
 mainwp_extension_prepareinstallplugin = function(pPluginToInstall, pSiteId) {
     var site_Ids = [];
     site_Ids.push(pSiteId);
-    bulkInstallCurrentThreads++;    
-    var plugin_slug = pPluginToInstall.find(".sync-install-plugin").attr('slug'); 
+    bulkInstallCurrentThreads++;
+    var plugin_slug = pPluginToInstall.find(".sync-install-plugin").attr('slug');
     var workingEl = pPluginToInstall.find(".sync-install-plugin i");
     var statusEl = pPluginToInstall.find(".sync-install-plugin span.status");
 
@@ -2700,15 +2700,15 @@ mainwp_extension_prepareinstallplugin = function(pPluginToInstall, pSiteId) {
                 'selected_sites[]': site_Ids,
 		selected_by: 'site',
         };
-        
-    workingEl.show();    
+
+    workingEl.show();
     statusEl.css('color','#0073aa');
     statusEl.html(__('Prepare install...'));
-    
-    jQuery.post(ajaxurl, data, function (response) {            
+
+    jQuery.post(ajaxurl, data, function (response) {
         workingEl.hide();
         if (response.sites && response.sites[pSiteId]) {
-            statusEl.html(__('Installing...'));         
+            statusEl.html(__('Installing...'));
             var data = mainwp_secure_data({
                     action: 'mainwp_ext_performinstallplugintheme',
                     type: 'plugin',
@@ -2718,9 +2718,9 @@ mainwp_extension_prepareinstallplugin = function(pPluginToInstall, pSiteId) {
                     overwrite: false,
             });
             workingEl.show();
-            jQuery.post(ajaxurl, data, function (response) {                    
-                    workingEl.hide();         
-                    var apply_settings = false;                            
+            jQuery.post(ajaxurl, data, function (response) {
+                    workingEl.hide();
+                    var apply_settings = false;
                     var syc_msg = '';
                     var _success = false;
                     if ((response.ok != undefined) && (response.ok[pSiteId] != undefined)) {
@@ -2728,8 +2728,8 @@ mainwp_extension_prepareinstallplugin = function(pPluginToInstall, pSiteId) {
                             statusEl.html( syc_msg );
                             apply_settings = pPluginToInstall.find(".sync-options input[type='checkbox']:checked").length > 0 ? true : false;
                             if (apply_settings) {
-                                mainwp_extension_apply_plugin_settings(pPluginToInstall, pSiteId, false);                                                                            
-                            }        
+                                mainwp_extension_apply_plugin_settings(pPluginToInstall, pSiteId, false);
+                            }
                             _success = true;
                     } else if ((response.errors != undefined) && (response.errors[pSiteId] != undefined)) {
                             syc_msg = __( 'Installation failed' ) + ': ' + response.errors[pSiteId][1];
@@ -2741,7 +2741,7 @@ mainwp_extension_prepareinstallplugin = function(pPluginToInstall, pSiteId) {
                             statusEl.css( 'color', 'red' );
                     }
 
-                    if (syc_msg != '') {  
+                    if (syc_msg != '') {
                         if (_success)
                             syc_msg = '<span style="color:#0073aa">' + syc_msg + '!</span>';
                         else
@@ -2749,48 +2749,48 @@ mainwp_extension_prepareinstallplugin = function(pPluginToInstall, pSiteId) {
                         jQuery('#mainwp_managesites_add_message').append( pPluginToInstall.find(".sync-install-plugin").attr('plugin_name') + ' ' + syc_msg + '<br/>');
                     }
 
-                    if (!apply_settings) { 
+                    if (!apply_settings) {
                         bulkInstallCurrentThreads--;
-                        mainwp_managesites_sync_extension_start_next( pSiteId );                            
+                        mainwp_managesites_sync_extension_start_next( pSiteId );
                     }
             }, 'json');
         } else {
             statusEl.css('color','red');
             statusEl.html(__('Error prepare install.'));
             bulkInstallCurrentThreads--;
-        }            
-    }, 'json');                        
+        }
+    }, 'json');
 }
 
 mainwp_extension_apply_plugin_settings = function(pPluginToInstall, pSiteId, pGlobal) {
-    var extSlug = pPluginToInstall.attr('slug'); 
+    var extSlug = pPluginToInstall.attr('slug');
     var workingEl = pPluginToInstall.find(".options-row i");
     var statusEl = pPluginToInstall.find(".options-row span.status");
     if (pGlobal)
         bulkInstallCurrentThreads++;
-     
+
     var data = mainwp_secure_data({
-		action: 'mainwp_ext_applypluginsettings',		
+		action: 'mainwp_ext_applypluginsettings',
 		ext_dir_slug: extSlug,
-                siteId: pSiteId		
+                siteId: pSiteId
         });
-        
-    workingEl.show();  
+
+    workingEl.show();
     statusEl.html( __( 'Applying...' ) );
-    jQuery.post(ajaxurl, data, function (response) {             
-        workingEl.hide();  
+    jQuery.post(ajaxurl, data, function (response) {
+        workingEl.hide();
         var syc_msg = '';
         var _success = false;
-        if (response) { 
-            if (response.result && response.result == 'success') { 
+        if (response) {
+            if (response.result && response.result == 'success') {
                 var msg = '';
-                if (response.message != undefined) {                                        
+                if (response.message != undefined) {
                     msg = ' ' + response.message;
                 }
                 statusEl.html( __( 'Successful' ) + msg );
                 syc_msg = __( 'Successful' );
                 _success = true
-            } else if (response.error != undefined) {                    
+            } else if (response.error != undefined) {
                     statusEl.html( __( 'Applying failed' ) + ': ' + response.error);
                     statusEl.css( 'color', 'red' );
                     syc_msg = __('failed');
@@ -2799,27 +2799,27 @@ mainwp_extension_apply_plugin_settings = function(pPluginToInstall, pSiteId, pGl
                     statusEl.css( 'color', 'red' );
                     syc_msg = __('failed');
             }
-        } else {            
+        } else {
                 statusEl.html( __( 'Undefined error.' ) );
-                statusEl.css( 'color', 'red' ); 
+                statusEl.css( 'color', 'red' );
                 syc_msg = __('failed');
         }
-        
+
         if (syc_msg != '') {
             if (_success)
                 syc_msg = '<span style="color:#0073aa">' + syc_msg + '!</span>';
             else
                 syc_msg = '<span style="color:red">' + syc_msg + '!</span>';
             if (pGlobal) {
-                syc_msg = __('Apply global %1 options', pPluginToInstall.attr('ext_name')) + ' ' + syc_msg + '<br/>'; 
+                syc_msg = __('Apply global %1 options', pPluginToInstall.attr('ext_name')) + ' ' + syc_msg + '<br/>';
             } else {
-                syc_msg = __('Apply %1 Settings', pPluginToInstall.find('.sync-install-plugin').attr('plugin_name')) + ' ' + syc_msg + '<br/>'; 
+                syc_msg = __('Apply %1 Settings', pPluginToInstall.find('.sync-install-plugin').attr('plugin_name')) + ' ' + syc_msg + '<br/>';
             }
             jQuery('#mainwp_managesites_add_message').append( syc_msg );
-        }        
+        }
         bulkInstallCurrentThreads--;
-        mainwp_managesites_sync_extension_start_next( pSiteId ); 
-    }, 'json');    
+        mainwp_managesites_sync_extension_start_next( pSiteId );
+    }, 'json');
 }
 
 mainwp_managesites_test = function (event) {
@@ -4111,7 +4111,7 @@ mainwp_upload_bulk = function (type) {
     var files = [];
     jQuery(".qq-upload-file").each(function (i) {
         if (jQuery(this).parent().attr('class').replace(/^\s+|\s+$/g, "") == 'qq-upload-success') {
-            files.push(jQuery(this).html());
+            files.push(jQuery(this).attr('filename'));
         }
     });
     if (files.length == 0) {

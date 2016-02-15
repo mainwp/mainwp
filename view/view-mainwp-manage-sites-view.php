@@ -617,12 +617,13 @@ class MainWP_Manage_Sites_View {
 <?php
 	$sync_extensions_options = apply_filters( 'mainwp-sync-extensions-options', array() );
 	$working_extensions = MainWP_Extensions::getExtensions();
-
+	$available_exts_data = MainWP_Extensions_View::getAvailableExtensions();
 	if ( count( $working_extensions ) > 0 && count($sync_extensions_options) > 0 ) {
 ?>
 	       <div class="postbox" id="mainwp-managesites-exts-options">
                 <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Extensions Settings Synchronization','mainwp'); ?></span></h3>
                 <div class="inside">
+                <div class="mainwp_info-box-blue"><?php _e( 'You have Extensions installed that require an additional plugin to be installed on this new Child site for the Extension to work correctly. From the list below select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
                     <?php
 
 						foreach ( $working_extensions as $slug => $data ) {
@@ -633,8 +634,14 @@ class MainWP_Manage_Sites_View {
 							$ext_name = str_replace("MainWP", "", $data['name']);
 							$ext_name = str_replace("Extension", "", $ext_name);
 
+							$ext_data = isset( $available_exts_data[dirname($slug)] ) ? $available_exts_data[dirname($slug)] : array();
+							if ( isset($ext_data['img']) ) {
+								$img_url = $ext_data['img'];
+							} else {
+								$img_url = plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) );
+							}
 							$html = '<div class="sync-ext-row" slug="' . $dir_slug. '" ext_name = "' . esc_attr($ext_name) . '"status="queue">';
-							$html .= '<h3>' . $ext_name . __('options', 'mainwp') . '</h3>';
+							$html .= '<br/><img src="' . $img_url .'" height="24" style="margin-bottom: -5px;">' . '<h3 style="display: inline;">' . $ext_name . '</h3><br/><br/>';
 							if (isset($sync_info['plugin_slug']) && !empty($sync_info['plugin_slug'])) {
 								$html .= '<div class="sync-install-plugin" slug="' . esc_attr(dirname($sync_info['plugin_slug']) ) .'" plugin_name="' . esc_attr($sync_info['plugin_name']) . '"><label><input type="checkbox" class="chk-sync-install-plugin"checked="checked"/> ' . esc_html( sprintf( __('Install %s plugin', 'mainwp'), $sync_info['plugin_name']) ) . '</label> <i class="fa fa-spinner fa-pulse" style="display: none"></i> <span class="status"></span></div>';
 								if (!isset($sync_info['no_setting']) || empty($sync_info['no_setting'])) {

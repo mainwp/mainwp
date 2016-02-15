@@ -341,63 +341,21 @@ class MainWP_Right_Now {
      * $type = theme/plugin
      * $list = name of theme/plugin (seperated by ,)
      */
-	public static function upgradePluginTheme( $id, $type, $list ) {
+	public static function upgradePluginThemeTranslation( $id, $type, $list ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 			$website = MainWP_DB::Instance()->getWebsiteById( $id );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
-				$information = MainWP_Utility::fetchUrlAuthed( $website, 'upgradeplugintheme', array(
+				$information = MainWP_Utility::fetchUrlAuthed( $website, ( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ), array(
 					'type' => $type,
 					'list' => urldecode( $list ),
 				) );
 				if ( isset( $information['upgrades'] ) ) {
 					$tmp = array();
-					//todo: 20130718: the syncing in else branch may be removed in the future, it now works with the sync below (just here for older childs..)
-					if ( isset( $information['sync'] ) ) {
+					if ( isset( $information['upgrades'] ) ) {
 						foreach ( $information['upgrades'] as $k => $v ) {
 							$tmp[ urlencode( $k ) ] = $v;
-						}
-					} else {
-						$decodedPluginUpgrades  = json_decode( $website->plugin_upgrades, true );
-						$decodedThemeUpgrades   = json_decode( $website->theme_upgrades, true );
-						$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
-						if ( is_array( $decodedPremiumUpgrades ) ) {
-							foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-								if ( $premiumUpgrade['type'] == 'plugin' ) {
-									if ( ! is_array( $decodedPluginUpgrades ) ) {
-										$decodedPluginUpgrades = array();
-									}
-									$decodedPluginUpgrades[ $crrSlug ] = $premiumUpgrade;
-								} else if ( $premiumUpgrade['type'] == 'theme' ) {
-									if ( ! is_array( $decodedThemeUpgrades ) ) {
-										$decodedThemeUpgrades = array();
-									}
-									$decodedThemeUpgrades[ $crrSlug ] = $premiumUpgrade;
-								}
-							}
-						}
-						foreach ( $information['upgrades'] as $k => $v ) {
-							$tmp[ urlencode( $k ) ] = $v;
-							if ( $v == 1 ) {
-								if ( $type == 'plugin' ) {
-									if ( isset( $decodedPluginUpgrades[ $k ] ) ) {
-										unset( $decodedPluginUpgrades[ $k ] );
-									}
-								}
-								if ( $type == 'theme' ) {
-									if ( isset( $decodedThemeUpgrades[ $k ] ) ) {
-										unset( $decodedThemeUpgrades[ $k ] );
-									}
-								}
-							}
-						}
-						if ( $type == 'plugin' ) {
-							MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'plugin_upgrades' => json_encode( $decodedPluginUpgrades ) ) );
-						}
-						if ( $type == 'theme' ) {
-							MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'theme_upgrades' => json_encode( $decodedThemeUpgrades ) ) );
 						}
 					}
-
 					return $tmp;
 				} else if ( isset( $information['error'] ) ) {
 					throw new MainWP_Exception( 'WPERROR', $information['error'] );
@@ -413,6 +371,7 @@ class MainWP_Right_Now {
      * $id = site id in db
      * $type = theme/plugin
      */
+	//todo: rename for Translation
 	public static function getPluginThemeSlugs( $id, $type ) {
 
 		$userExtension = MainWP_DB::Instance()->getUserExtension();
@@ -490,6 +449,13 @@ class MainWP_Right_Now {
 			if ( is_array( $theme_upgrades ) ) {
 				foreach ( $theme_upgrades as $slug => $theme_upgrade ) {
 					$slugs[] = $slug;
+				}
+			}
+		} else if ( $type == 'translation' ) {
+			$translation_upgrades         = json_decode( $website->translation_upgrades, true );
+			if ( is_array( $translation_upgrades ) ) {
+				foreach ( $translation_upgrades as $translation_upgrade ) {
+					$slugs[] = $translation_upgrade['slug'];
 				}
 			}
 		}
@@ -615,6 +581,7 @@ class MainWP_Right_Now {
 
 		$total_wp_upgrades     = 0;
 		$total_plugin_upgrades = 0;
+		$total_translation_upgrades = 0;
 		$total_theme_upgrades  = 0;
 		$total_sync_errors     = 0;
 		$total_uptodate        = 0;
@@ -623,6 +590,8 @@ class MainWP_Right_Now {
 		$total_plugins_outdate = 0;
 		$total_themes_outdate  = 0;
 
+		$allTranslations  = array();
+		$translationsInfo = array();
 		$allPlugins  = array();
 		$pluginsInfo = array();
 		$allThemes   = array();
@@ -655,6 +624,11 @@ class MainWP_Right_Now {
 				$total_wp_upgrades ++;
 			}
 
+			$translation_upgrades = json_decode( $website->translation_upgrades, true );
+//			if ( $website->is_ignoreTranlsationUpdates ) {
+//				$translation_upgrades = array();
+//			}
+
 			$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
 			if ( $website->is_ignorePluginUpdates ) {
 				$plugin_upgrades = array();
@@ -686,6 +660,21 @@ class MainWP_Right_Now {
 						}
 					}
 				}
+			}
+
+
+			if ( is_array( $translation_upgrades ) ) {
+//				$ignored_translations = json_decode( $website->ignored_translations, true );
+//				if ( is_array( $ignored_translations ) ) {
+//					$translation_upgrades = array_diff_key( $translation_upgrades, $ignored_translations );
+//				}
+//
+//				$ignored_translations = json_decode( $userExtension->ignored_translations, true );
+//				if ( is_array( $ignored_translations ) ) {
+//					$translation_upgrades = array_diff_key( $translation_upgrades, $ignored_translations );
+//				}
+
+				$total_translation_upgrades += count( $translation_upgrades );
 			}
 
 			if ( is_array( $plugin_upgrades ) ) {
@@ -766,6 +755,24 @@ class MainWP_Right_Now {
 			}
 
 			if ( $userExtension->site_view == 0 ) { //site view disabled
+				if ( is_array( $translation_upgrades ) ) {
+					foreach ( $translation_upgrades as $translation_upgrade ) {
+						$slug = $translation_upgrade['slug'];
+						if ( ! isset( $allTranslations[ $slug ] ) ) {
+							$allTranslations[ $slug ] = 1;
+						} else {
+							$allTranslations[ $slug ] ++;
+						}
+
+						$translationsInfo[ $slug ] = array(
+							'name'    => isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $slug,
+							'slug'    => $slug,
+							'version' => $translation_upgrade['version']
+						);
+					}
+				}
+				ksort( $allTranslations );
+
 				//Keep track of all the plugins & themes
 				if ( is_array( $plugin_upgrades ) ) {
 					foreach ( $plugin_upgrades as $slug => $plugin_upgrade ) {
@@ -1014,6 +1021,182 @@ class MainWP_Right_Now {
 			</div>
 		</div>
 
+
+		<?php
+		//Translation upgrades!
+		?>
+		<div class="clear">
+			<div class="mainwp-row">
+				<span class="mainwp-left-col">
+					<a href="#" id="mainwp_translation_upgrades_show" onClick="return rightnow_show('translation_upgrades', true);">
+						<span class="mainwp-rightnow-number"><?php echo $total_translation_upgrades; ?> </span> <?php echo _n( 'Translation upgrade', 'Translation upgrades', $total_wp_upgrades, 'mainwp') ?> <?php _e('available','mainwp'); ?>
+					</a>
+				</span>
+				<span class="mainwp-mid-col">&nbsp;</span>
+				<span class="mainwp-right-col"><?php if (mainwp_current_user_can("dashboard", "update_translations")) {  ?><?php if ($total_translation_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_translations_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_translation_upgrades, 'mainwp'); ?></a><?php } else if ($total_translation_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_translations_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_translation_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } }?></span>
+			</div>
+			<div id="wp_translation_upgrades" style="display: none">
+				<?php
+				if ( $userExtension->site_view == 1 ) {
+					@MainWP_DB::data_seek( $websites, 0 );
+					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+//						if ( $website->is_ignoreTranslationUpdates ) {
+//							continue;
+//						}
+//
+						$translation_upgrades        = json_decode( $website->translation_upgrades, true );
+
+//						$ignored_translations = json_decode( $website->ignored_translations, true );
+//						if ( is_array( $ignored_translations ) ) {
+//							$translation_upgrades = array_diff_key( $translation_upgrades, $ignored_translations );
+//						}
+
+//						$ignored_translations = json_decode( $userExtension->ignored_translations, true );
+//						if ( is_array( $ignored_translations ) ) {
+//							$translation_upgrades = array_diff_key( $translation_upgrades, $ignored_translations );
+//						}
+
+						if ( $globalView ) {
+							?>
+							<div class="mainwp-row">
+								<span class="mainwp-left-col"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_translation_<?php echo $website->id; ?>" value="<?php if ( count( $translation_upgrades ) > 0 ) {
+										echo '0';
+									} else {
+										echo '1';
+									} ?>"/></span>
+								<span class="mainwp-mid-col translationsInfo" id="wp_upgrade_translation_<?php echo $website->id; ?>">
+									<?php
+									if ( count( $translation_upgrades ) > 0 ) {
+										?>
+										<a href="#" id="mainwp_translation_upgrades_<?php echo $website->id; ?>_show" onClick="return rightnow_show('translation_upgrades_<?php echo $website->id; ?>', true);"> <?php echo count( $translation_upgrades ); ?> <?php echo _n( 'Upgrade', 'Upgrades', count($translation_upgrades), 'mainwp' ); ?></a>
+										<?php
+									} else {
+										if ( $website->sync_errors != '' ) {
+											echo __( 'Site Error - No update Information available', 'mainwp' );
+										} else {
+											echo __( 'Hooray, No Updates Available!', 'mainwp' );
+										}
+									}
+									?>
+								</span>
+								<span class="mainwp-right-col translationsAction">
+									<div id="wp_upgradebuttons_translation_<?php echo $website->id; ?>">
+										<?php
+										if ( mainwp_current_user_can( 'dashboard', 'update_translations' ) ) {
+											if ( count( $translation_upgrades ) > 0 ) { ?>
+												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_translation_all(<?php echo $website->id; ?>)"><?php echo _n( 'Upgrade', 'Upgrade All', count( $translation_upgrades ), 'mainwp' ); ?></a> &nbsp;
+											<?php } ?>
+										<?php } ?>
+										<a href="<?php echo $website->url; ?>" target="_blank" class="mainwp-open-button button"><?php _e( 'Open', 'mainwp' ); ?></a>
+									</div>
+								</span>
+							</div>
+							<?php
+						}
+						?>
+						<div id="wp_translation_upgrades_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
+							<?php
+							foreach ( $translation_upgrades as $translation_upgrade) {
+								$translation_name = isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $translation_upgrade['slug'];
+								$translation_slug = $translation_upgrade['slug'];
+								?>
+								<div class="mainwp-row" translation_slug="<?php echo $translation_slug; ?>" updated="0">
+									<span class="mainwp-left-col">
+										<?php if ( $globalView ) { ?>&nbsp;&nbsp;&nbsp;<?php } ?>
+											<?php echo $translation_name; ?>
+										<input type="hidden" id="wp_upgraded_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>" value="0"/>
+									</span>
+									<span class="mainwp-mid-col translationsInfo" id="wp_upgrade_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>">
+										<?php echo $translation_upgrade['version']; ?>
+									</span>
+									<span class="mainwp-right-col translationsAction">
+										<div id="wp_upgradebuttons_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>">
+											<?php if ( mainwp_current_user_can( 'dashboard', 'update_translations' ) ) { ?>
+												&nbsp;
+												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_translation(<?php echo $website->id; ?>//, '<?php echo $translation_slug; ?>//')"><?php _e( 'Upgrade', 'mainwp' ); ?></a>
+											<?php } ?>
+										</div>
+									</span>
+								</div>
+							<?php }
+							?>
+						</div>
+						<?php
+					}
+				} else {
+					foreach ( $allTranslations as $slug => $cnt ) {
+						if ( $globalView ) {
+							?>
+							<div class="mainwp-row">
+                        <span class="mainwp-left-col">
+	                            <?php echo $translationsInfo[ $slug ]['name']; ?>
+                        </span>
+                        <span class="mainwp-mid-col translationsInfo">
+                            <a href="#" onClick="return rightnow_translations_detail('<?php echo $slug; ?>');">
+	                            <?php echo $cnt; ?> <?php _e( 'Upgrade', 'mainwp' ); ?><?php echo( $cnt > 1 ? 's' : '' ); ?>
+                            </a>
+                        </span>
+                        <span class="mainwp-right-col translationsAction">
+	                        <?php if ( mainwp_current_user_can( 'dashboard', 'update_translations' ) ) { ?>
+		                        &nbsp; <?php if ( $cnt > 0 ) { ?>
+			                        <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_translations_upgrade_all('<?php echo $slug; ?>', '<?php echo urlencode( $translationsInfo[ $slug ]['name'] ); ?>')"><?php echo _n( 'Upgrade', 'Upgrade All', $cnt, 'mainwp' ); ?></a><?php } else { ?> &nbsp;
+			                        <a class="button" disabled="disabled"><?php _e( 'No Upgrades', 'mainwp' ); ?></a> <?php } ?>
+	                        <?php } ?>                            
+                        </span>
+							</div>
+							<?php
+						}
+						?>
+						<div translation_slug="<?php echo $slug; ?>" translation_name="<?php echo urlencode( $translationsInfo[ $slug ]['name'] ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
+							<?php
+							@MainWP_DB::data_seek( $websites, 0 );
+							while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+//								if ( $website->is_ignoreTranslationUpdates ) {
+//									continue;
+//								}
+								$translation_upgrades        = json_decode( $website->translation_upgrades, true );
+
+								$translation_upgrade = null;
+								foreach ( $translation_upgrades as $current_translation_upgrade ) {
+									if ( $current_translation_upgrade['slug'] == $slug ) {
+										$translation_upgrade = $current_translation_upgrade;
+										break;
+									}
+								}
+
+								if ( null === $translation_upgrade ) {
+									continue;
+								}
+
+								?>
+								<div class="mainwp-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" updated="0">
+                                <span class="mainwp-left-col">
+                                    <?php if ( $globalView ) { ?>
+	                                    &nbsp;&nbsp;&nbsp;
+	                                    <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+                                    <?php } else { ?>
+		                                    <?php echo $translationsInfo[ $slug ]['name']; ?>
+                                    <?php } ?>
+                                </span>
+									<span class="mainwp-mid-col translationsInfo"><?php echo $translation_upgrade['version']; ?></span>
+                                <span class="mainwp-right-col translationsAction">
+	                                <?php if ( mainwp_current_user_can( 'dashboard', 'update_translations' ) ) { ?>
+		                                &nbsp;
+		                                <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_translations_upgrade('<?php echo $slug; ?>', <?php echo $website->id; ?>)"><?php _e( 'Upgrade', 'mainwp' ); ?></a>
+	                                <?php } ?>
+                                </span>
+								</div>
+								<?php
+							}
+							?>
+						</div>
+						<?php
+					}
+				}
+				?>
+			</div>
+		</div>
+
 		<?php
 		//WP plugin upgrades!
 		?>
@@ -1157,7 +1340,7 @@ class MainWP_Right_Now {
 		                        &nbsp; <?php if ( $cnt > 0 ) { ?>
 			                        <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_plugins_upgrade_all('<?php echo $plugin_name; ?>', '<?php echo urlencode( $pluginsInfo[ $slug ]['name'] ); ?>')"><?php echo _n( 'Upgrade', 'Upgrade All', $cnt, 'mainwp' ); ?></a><?php } else { ?> &nbsp;
 			                        <a class="button" disabled="disabled"><?php _e( 'No Upgrades', 'mainwp' ); ?></a> <?php } ?>
-	                        <?php } ?>                            
+	                        <?php } ?>
                         </span>
 							</div>
 							<?php

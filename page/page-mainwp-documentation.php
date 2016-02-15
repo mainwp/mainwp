@@ -79,9 +79,6 @@ class MainWP_Documentation {
 								<a style="text-decoration: none;" href="//docs.mainwp.com/manage-admin-passwords/" target="_blank"><i class="fa fa-file-text-o"></i> Manage Admin Passwords</a>
 							</li>
 							<li>
-								<a style="text-decoration: none;" href="//docs.mainwp.com/manage-offline-checks/" target="_blank"><i class="fa fa-file-text-o"></i> Manage Offline Checks</a>
-							</li>
-							<li>
 								<a style="text-decoration: none;" href="//docs.mainwp.com/manage-backups/" target="_blank"><i class="fa fa-file-text-o"></i> Manage Backups</a>
 							</li>
 						</ul>

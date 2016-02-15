@@ -1276,6 +1276,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
+	//todo: rename
 	function mainwp_upgradeplugintheme() {
 		if ( $_POST['type'] == 'plugin' && ! mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) {
 			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update plugins', 'mainwp' ), $echo = false ) ) ) );
@@ -1283,6 +1284,10 @@ class MainWP_Post_Handler {
 
 		if ( $_POST['type'] == 'theme' && ! mainwp_current_user_can( 'dashboard', 'update_themes' ) ) {
 			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update themes', 'mainwp' ), $echo = false ) ) ) );
+		}
+
+		if ( $_POST['type'] == 'translation' && ! mainwp_current_user_can( 'dashboard', 'update_translations' ) ) {
+			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update translations', 'mainwp' ), $echo = false ) ) ) );
 		}
 
 		$this->secure_request( 'mainwp_upgradeplugintheme' );
@@ -1303,7 +1308,7 @@ class MainWP_Post_Handler {
 		}
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		try {
-			$info = array( 'result' => MainWP_Right_Now::upgradePluginTheme( $websiteId, $_POST['type'], $slugs ) );
+			$info = array( 'result' => MainWP_Right_Now::upgradePluginThemeTranslation( $websiteId, $_POST['type'], $slugs ) );
 			if (!empty($website)) {
 				$info['site_url'] = esc_url($website->url);
 			}

@@ -1115,6 +1115,14 @@ pluginthemeconflict_unignore = function(what, name, siteid) {
 };
 
 
+rightnow_translations_detail = function (slug) {
+    jQuery('div[translation_slug="'+slug+'"]').toggle(100, 'linear');
+    return false;
+};
+rightnow_translations_detail_show = function (slug) {
+    jQuery('div[translation_slug="'+slug+'"]').show(100, 'linear');
+    return false;
+};
 rightnow_plugins_detail = function (slug) {
     jQuery('div[plugin_slug="'+slug+'"]').toggle(100, 'linear');
     return false;
@@ -1254,6 +1262,9 @@ rightnow_themes_unignore_globally = function (slug) {
     }, 'json');
     return false;
 };
+rightnow_translations_upgrade = function (slug, websiteid) {
+    return rightnow_translations_upgrade_int(slug, websiteid);
+};
 rightnow_plugins_upgrade = function (slug, websiteid) {
     return rightnow_plugins_upgrade_int(slug, websiteid);
 };
@@ -1271,13 +1282,23 @@ rightnow_wp_sync = function (websiteid) {
     return false;
 };
 
+rightnow_upgrade_translation = function (id, slug) {
+    return rightnow_upgrade_plugintheme('translation', id, slug);
+};
+
+rightnow_upgrade_translation_all = function (id) {
+    if (!confirm(__('Are you sure you want to upgrade everything?')))
+        return false;    
+    rightnow_show_if_required('translation_upgrades', false);
+    return rightnow_upgrade_plugintheme_all('translation', id);
+};
 rightnow_upgrade_plugin = function (id, slug) {
     return rightnow_upgrade_plugintheme('plugin', id, slug);
 };
 
-rightnow_upgrade_plugin_all = function (id) {     
+rightnow_upgrade_plugin_all = function (id) {
     if (!confirm(__('Are you sure you want to upgrade everything?')))
-        return false;    
+        return false;
     rightnow_show_if_required('plugin_upgrades', false);
     return rightnow_upgrade_plugintheme_all('plugin', id);
 };
@@ -1297,31 +1318,19 @@ rightnow_upgrade_plugintheme = function (what, id, name) {
 rightnow_upgrade_plugintheme_all = function (what, id, noCheck) {
     rightnowContinueAfterBackup = function(pId, pWhat) { return function()
     {
-//        if (pId == undefined) {
-//            jQuery("#wp_" + pWhat + "_upgrades [id^=wp_upgrade_" + pWhat + "]").each(function (index, value) {
-//                var re = new RegExp('^wp_upgrade_' + pWhat + '_([0-9]+)$');
-//                if (divId = re.exec(value.id)) {
-//                    if (jQuery('#wp_upgraded_' + pWhat + '_' + divId[1]).val() == 0) {
-//                        rightnow_upgrade_plugintheme_all(pWhat, parseInt(divId[1]), true);
-//                    }
-//                }
-//            });
-//        }
-//        else {
-            rightnow_show_if_required(pWhat+'_upgrades_'+pId, true);
-            var list = [];
-            jQuery("#wp_" + pWhat + "_upgrades_" + pId + " [id^=wp_upgrade_" + pWhat + "_" + pId + "]").each(function (index, value) {
-                var re = new RegExp('^wp_upgrade_' + pWhat + '_' + pId + '_(.*)$');
-                if (divId = re.exec(value.id)) {
-                    if (document.getElementById('wp_upgraded_' + pWhat + '_' + pId + '_' + divId[1]).value == 0) {
-                        //value.parent().attr('premium')
-                        list.push(divId[1]);
-                    }
+        rightnow_show_if_required(pWhat+'_upgrades_'+pId, true);
+        var list = [];
+        jQuery("#wp_" + pWhat + "_upgrades_" + pId + " [id^=wp_upgrade_" + pWhat + "_" + pId + "]").each(function (index, value) {
+            var re = new RegExp('^wp_upgrade_' + pWhat + '_' + pId + '_(.*)$');
+            if (divId = re.exec(value.id)) {
+                if (document.getElementById('wp_upgraded_' + pWhat + '_' + pId + '_' + divId[1]).value == 0) {
+                    //value.parent().attr('premium')
+                    list.push(divId[1]);
                 }
-            });
+            }
+        });
 
-            rightnow_upgrade_plugintheme_list(what, pId, list, true);
-//        }
+        rightnow_upgrade_plugintheme_list(what, pId, list, true);
     } }(id, what);
 
     if (noCheck)
@@ -1333,23 +1342,9 @@ rightnow_upgrade_plugintheme_all = function (what, id, noCheck) {
     var sitesToUpdate = [];
     var siteNames = [];
 
-//    if (id == undefined) {
-//        jQuery("#wp_" + what + "_upgrades [id^=wp_upgrade_" + what + "]").each(function (index, value) {
-//            var re = new RegExp('^wp_upgrade_' + what + '_([0-9]+)$');
-//            if (divId = re.exec(value.id)) {
-//                if (jQuery('#wp_upgraded_' + what + '_' + divId[1]).val() == 0) {
-//                    sitesToUpdate.push(parseInt(divId[1]));
-//                    siteNames[parseInt(divId[1])] = jQuery('.mainwp_wordpress_upgrade[site_id="' + parseInt(divId[1]) + '"]').attr('site_name');
-//                }
-//            }
-//        });
-//    }
-//    else
-//    {
-        rightnow_show_if_required(what+'_upgrades_'+id, true);
-        sitesToUpdate.push(id);
-        siteNames[id] = jQuery('div[site_id="' + id + '"]').attr('site_name');
-//    }
+    rightnow_show_if_required(what+'_upgrades_'+id, true);
+    sitesToUpdate.push(id);
+    siteNames[id] = jQuery('div[site_id="' + id + '"]').attr('site_name');
 
     return mainwp_rightnow_checkBackups(sitesToUpdate, siteNames);
 };
@@ -1362,11 +1357,8 @@ rightnow_upgrade_plugintheme_list = function (what, id, list, noCheck)
             var item = pList[i];
             if (document.getElementById('wp_upgraded_' + pWhat + '_' + pId + '_' + item).value == 0) {
                 document.getElementById('wp_upgrade_' + pWhat + '_' + pId + '_' + item).innerHTML = __('Upgrading..');
-                //jQuery('#wp_upgrade_'+pWhat+'_'+pId+'_'+item).html('Upgrading..');
                 document.getElementById('wp_upgraded_' + pWhat + '_' + pId + '_' + item).value = 1;
-                //jQuery('#wp_upgraded_'+pWhat+'_'+pId+'_'+item).val(1);
                 document.getElementById('wp_upgradebuttons_' + pWhat + '_' + pId + '_' + item).style.display = 'none';
-                //jQuery('#wp_upgradebuttons_'+pWhat+'_'+pId+'_'+item).hide();
                 newList.push(item);
             }
         }
@@ -1375,6 +1367,8 @@ rightnow_upgrade_plugintheme_list = function (what, id, list, noCheck)
         starttimeDashboardAction = dateObj.getTime();
         if (pWhat == 'plugin')
             dashboardActionName = 'upgrade_all_plugins';
+        else if (pWhat == 'translation')
+            dashboardActionName = 'upgrade_all_translations';
         else
             dashboardActionName = 'upgrade_all_themes';
         countRealItemsUpdated = 0;
@@ -3907,29 +3901,6 @@ jQuery(document).ready(function () {
         return false;
     });
 });
-
-// mainwp_install_set_install_links = function (event) {
-//    jQuery('a[id^="install-"]').each(function (index, value) {
-//        if (divId = /^install-([^\-]*)-(.*)$/.exec(value.id)) {
-//            jQuery(value).bind('click', function (event, what, slug) {
-//                return function () {
-//                    mainwp_install_bulk(what, slug);
-//                    return false;
-//                }
-//            }(event, divId[1], divId[2]));
-//        }
-//    });
-//};
-
-//mainwp_install_set_install_button = function (what) {
-//    var selected = jQuery("input[type='radio'][name='install-" + what + "']:checked");
-//    if (selected.length == 0) {
-//        show_error('ajax-error-zone', __('Please select %1 on the left side to install files.', what));
-//    } else if (divId = /^install-([^\-]*)-(.*)$/.exec(selected.attr('id'))) {
-//        mainwp_install_bulk(what, divId[2]);
-//    }
-//    return false;
-//};
 
 bulkInstallTotal = 0;
 bulkInstallDone = 0;

@@ -103,7 +103,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					$warnings++;
 				}
 			} catch ( Exception $e ) {
-				WP_CLI::error( '  Sync failed' );
+				WP_CLI::error( '  Sync failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
 				$errors++;
 			}
 		}
@@ -260,13 +260,19 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 						$tmp[] = $key;
 					}
 
+					if ( count( $tmp ) == 0 ) {
+						WP_CLI::line( 'No available plugin upgrades for ' . $website->name);
+
+						continue;
+					}
+
 					WP_CLI::line( 'Upgrading ' . count($tmp) . ' plugins for ' . $website->name);
 
 					try {
-						MainWP_Right_Now::upgradePluginTheme( $website->id, 'plugin', implode( ',', $tmp ) );
+						MainWP_Right_Now::upgradePluginThemeTranslation( $website->id, 'plugin', implode( ',', $tmp ) );
 						WP_CLI::success( 'Upgrades completed' );
 					} catch (Exception $e) {
-						WP_CLI::error( 'Upgrades failed: ' . $e->getMessage() );
+						WP_CLI::error( 'Upgrades failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
 					}
 				}
 			}
@@ -416,13 +422,19 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 						$tmp[] = $key;
 					}
 
+					if ( count( $tmp ) == 0 ) {
+						WP_CLI::line( 'No available theme upgrades for ' . $website->name);
+
+						continue;
+					}
+
 					WP_CLI::line( 'Upgrading ' . count($tmp) . ' themes for ' . $website->name);
 
 					try {
-						MainWP_Right_Now::upgradePluginTheme( $website->id, 'theme', implode( ',', $tmp ) );
+						MainWP_Right_Now::upgradePluginThemeTranslation( $website->id, 'theme', implode( ',', $tmp ) );
 						WP_CLI::success( 'Upgrades completed' );
 					} catch (Exception $e) {
-						WP_CLI::error( 'Upgrades failed: ' . $e->getMessage() );
+						WP_CLI::error( 'Upgrades failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
 					}
 				}
 			}

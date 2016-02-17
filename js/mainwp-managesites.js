@@ -73,6 +73,9 @@ mainwp_update_pluginsthemes = function (updateType, updateSiteIds)
         else if (pType == 'theme') {
             jQuery('#refresh-status-box').attr('title', __("Upgrading Themes"));
         }
+        else if (pType == 'translation') {
+            jQuery('#refresh-status-box').attr('title', __("Upgrading Translations"));
+        }
         jQuery('#refresh-status-text').html(__('updated'));
         jQuery('#refresh-status-progress').progressbar({value: 0, max: sitesCount});
         jQuery('#refresh-status-box').dialog({
@@ -102,6 +105,8 @@ managesites_update_pluginsthemes = function(pType, websiteIds)
 
     if (pType == 'plugin')
         dashboardActionName = 'upgrade_all_plugins';
+    else if (pType == 'translation')
+        dashboardActionName = 'upgrade_all_translations';
     else
         dashboardActionName = 'upgrade_all_themes';
     var dateObj = new Date();

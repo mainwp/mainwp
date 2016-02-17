@@ -460,6 +460,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			'update_plugins'  => __( 'Update Plugins', 'mainwp' ),
 			'update_themes'   => __( 'Update Themes', 'mainwp' ),
 			'update_wpcore'   => __('Update Wordpress', 'mainwp'),
+			'update_translations'   => __('Update Translations', 'mainwp'),
 		);
 
 		return apply_filters( 'mainwp_managesites_bulk_actions', $actions );

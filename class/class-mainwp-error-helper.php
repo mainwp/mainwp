@@ -16,4 +16,16 @@ class MainWP_Error_Helper {
 
 		return $error;
 	}
+
+	public static function getConsoleErrorMessage( $pException ) {
+		$error = $pException->getMessage();
+
+		if ( $pException->getMessage() == 'HTTPERROR' ) {
+			$error = 'HTTP error' . ( $pException->getMessageExtra() != null ? ' - ' . $pException->getMessageExtra() : '' );
+		} else if ( $pException->getMessage() == 'NOMAINWP' ) {
+			$error = sprintf( __( 'No MainWP Child Plugin detected, first install and activate the plugin and add your site to MainWP Dashboard afterwards. If you continue experiencing this issue please test your connection or post as much information as possible on the error in the support forum (%s).', 'mainwp' ), 'https://mainwp.com/forum/' );
+		}
+
+		return $error;
+	}
 }

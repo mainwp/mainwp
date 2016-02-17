@@ -242,7 +242,7 @@ class MainWP_Extensions_View {
 														echo $extension['name'];
 													} ?>
 												</td>
-												<td class="mainwp-extensions-childVersion">V. <?php echo $extension['version']; ?></td>
+												<td class="mainwp-extensions-childVersion"><?php echo $extension['version']; ?></td>
 												<td class="mainwp-extensions-childActions">
 													<?php if ($added_on_menu) { ?>
 														<button class="button mainwp-extensions-remove-menu"><?php _e('Remove from MainWP menu','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -444,6 +444,17 @@ class MainWP_Extensions_View {
 					'img'        => plugins_url( 'images/extensions/backupwordpress.png', dirname( __FILE__ ) ),
 					'product_id' => 'MainWP BackUpWordPress Extension',
 					'catalog_id' => '273535',
+					'group' => array('backup')
+				),
+			'mainwp-backwpup-extension' =>
+				array(
+					'slug'       => 'mainwp-backwpup-extension',
+					'title'      => 'MainWP BackWPup Extension',
+					'desc'       => 'MainWP BackWPup Extension combines the power of your MainWP Dashboard with the popular WordPress BackWPup Plugin. It allows you to schedule backups on your child sites.',
+					'link'       => 'https://mainwp.com/extension/backwpup/',
+					'img'        => plugins_url( 'images/extensions/backwpup.png', dirname( __FILE__ ) ),
+					'product_id' => 'MainWP BackWPup Extension',
+					'catalog_id' => '995008',
 					'group' => array('backup')
 				),
 			'mainwp-blogvault-backup-extension' =>

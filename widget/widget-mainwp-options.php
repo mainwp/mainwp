@@ -20,6 +20,8 @@ class MainWP_Options {
 				MainWP_Utility::update_option( 'mainwp_seo', ( ! isset( $_POST['mainwp_seo'] ) ? 0 : 1 ) );
 				$val = ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 2 : $_POST['mainwp_automaticDailyUpdate'] );
 				MainWP_Utility::update_option( 'mainwp_automaticDailyUpdate', $val );
+				$val = ( ! isset( $_POST['mainwp_show_language_updates'] ) ? 0 : 1 );
+				MainWP_Utility::update_option( 'mainwp_show_language_updates', $val );
 				$val = ( ! isset( $_POST['mainwp_backup_before_upgrade'] ) ? 0 : 1 );
 				MainWP_Utility::update_option( 'mainwp_backup_before_upgrade', $val );
 				MainWP_Utility::update_option( 'mainwp_maximumPosts', $_POST['mainwp_maximumPosts'] );
@@ -42,6 +44,7 @@ class MainWP_Options {
 		$siteview               = $userExtension->site_view;
 		$snAutomaticDailyUpdate = get_option( 'mainwp_automaticDailyUpdate' );
 		$backup_before_upgrade  = get_option( 'mainwp_backup_before_upgrade' );
+		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 		$lastAutomaticUpdate    = MainWP_DB::Instance()->getWebsitesLastAutomaticSync();
 
 		if ( $lastAutomaticUpdate == 0 ) {
@@ -149,6 +152,15 @@ class MainWP_Options {
 			<div class="inside">
 				<table class="form-table">
 					<tbody>
+					<tr>
+						<th scope="row"><?php _e( 'Show Wordpress Language Updates', 'mainwp' ); ?></th>
+						<td>
+							<div class="mainwp-checkbox">
+								<input type="checkbox" name="mainwp_show_language_updates" id="mainwp_show_language_updates" size="35" <?php echo( $mainwp_show_language_updates == 1 ? 'checked="true"' : '' ); ?>/>
+								<label for="mainwp_show_language_updates"></label>
+							</div>
+						</td>
+					</tr>
 					<tr>
 						<th scope="row"><?php _e( 'Require Backup Before Upgrade', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'With this option enabled, when you try to upgrade a plugin, theme or WordPress core, MainWP will check if there is a full backup created for the site(s) you are trying to upgrade in last 7 days. If you have a fresh backup of the site(s) MainWP will proceed to the upgrade process, if not it will ask you to create a full backup.', 'mainwp' ) ); ?></th>
 						<td>

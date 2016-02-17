@@ -144,16 +144,6 @@ class MainWP_Post_Handler {
 		) ); //ok
 		add_action( 'wp_ajax_mainwp_reset_usercookies', array( &$this, 'mainwp_reset_usercookies' ) ); //ok
 
-		//Page: OfflineChecks
-		if ( mainwp_current_user_can( 'dashboard', 'manage_offline_checks' ) ) {
-			add_action( 'wp_ajax_mainwp_offline_check_save', array( &$this, 'mainwp_offline_check_save' ) ); //ok
-			add_action( 'wp_ajax_mainwp_offline_check_save_bulk', array(
-				&$this,
-				'mainwp_offline_check_save_bulk',
-			) ); //ok
-			add_action( 'wp_ajax_mainwp_offline_check_check', array( &$this, 'mainwp_offline_check_check' ) ); //ok
-		}
-
 		//Page: Recent Posts
 		if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
 			$this->addAction( 'mainwp_post_unpublish', array( &$this, 'mainwp_post_unpublish' ) );
@@ -566,27 +556,6 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_page_restore' );
 
 		MainWP_Page::restore();
-	}
-
-	/**
-	 * Page: OfflineChecks
-	 */
-	function mainwp_offline_check_save() {
-		$this->secure_request();
-
-		die( MainWP_Offline_Checks::updateWebsite() );
-	}
-
-	function mainwp_offline_check_save_bulk() {
-		$this->secure_request();
-
-		die( MainWP_Offline_Checks::updateWebsites() );
-	}
-
-	function mainwp_offline_check_check() {
-		$this->secure_request();
-
-		die( json_encode( MainWP_Offline_Checks::checkWebsite() ) );
 	}
 
 	/**
@@ -1276,6 +1245,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
+	//todo: rename
 	function mainwp_upgradeplugintheme() {
 		if ( $_POST['type'] == 'plugin' && ! mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) {
 			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update plugins', 'mainwp' ), $echo = false ) ) ) );
@@ -1283,6 +1253,10 @@ class MainWP_Post_Handler {
 
 		if ( $_POST['type'] == 'theme' && ! mainwp_current_user_can( 'dashboard', 'update_themes' ) ) {
 			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update themes', 'mainwp' ), $echo = false ) ) ) );
+		}
+
+		if ( $_POST['type'] == 'translation' && ! mainwp_current_user_can( 'dashboard', 'update_translations' ) ) {
+			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update translations', 'mainwp' ), $echo = false ) ) ) );
 		}
 
 		$this->secure_request( 'mainwp_upgradeplugintheme' );
@@ -1303,7 +1277,7 @@ class MainWP_Post_Handler {
 		}
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		try {
-			$info = array( 'result' => MainWP_Right_Now::upgradePluginTheme( $websiteId, $_POST['type'], $slugs ) );
+			$info = array( 'result' => MainWP_Right_Now::upgradePluginThemeTranslation( $websiteId, $_POST['type'], $slugs ) );
 			if (!empty($website)) {
 				$info['site_url'] = esc_url($website->url);
 			}

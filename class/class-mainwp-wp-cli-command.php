@@ -29,7 +29,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 * @synopsis [--list]
 	 */
 	public function sites( $args, $assoc_args ) {
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, true) );
 		$idLength = strlen('id');
 		$nameLength = strlen('name');
 		$urlLength = strlen('url');
@@ -87,7 +87,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 		if ( ( count($sites) == 0 ) && ( !isset( $assoc_args['all'] ) ) ) WP_CLI::error('Please specify one or more child sites, or use --all.');
 
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, true) );
 		WP_CLI::line( 'Sync started' );
 		$warnings = 0;
 		$errors   = 0;
@@ -103,7 +103,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					$warnings++;
 				}
 			} catch ( Exception $e ) {
-				WP_CLI::error( '  Sync failed' );
+				WP_CLI::error( '  Sync failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
 				$errors++;
 			}
 		}
@@ -157,7 +157,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 		}
 
 		if ( isset( $assoc_args['list'] ) ) {
-			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, true) );
 			$userExtension = MainWP_DB::Instance()->getUserExtension();
 			$websites_to_upgrade = array();
 			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
@@ -233,7 +233,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			}
 
 
-			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, true) );
 			$userExtension = MainWP_DB::Instance()->getUserExtension();
 			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
@@ -260,13 +260,19 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 						$tmp[] = $key;
 					}
 
+					if ( count( $tmp ) == 0 ) {
+						WP_CLI::line( 'No available plugin upgrades for ' . $website->name);
+
+						continue;
+					}
+
 					WP_CLI::line( 'Upgrading ' . count($tmp) . ' plugins for ' . $website->name);
 
 					try {
-						MainWP_Right_Now::upgradePluginTheme( $website->id, 'plugin', implode( ',', $tmp ) );
+						MainWP_Right_Now::upgradePluginThemeTranslation( $website->id, 'plugin', implode( ',', $tmp ) );
 						WP_CLI::success( 'Upgrades completed' );
 					} catch (Exception $e) {
-						WP_CLI::error( 'Upgrades failed: ' . $e->getMessage() );
+						WP_CLI::error( 'Upgrades failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
 					}
 				}
 			}
@@ -313,7 +319,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 		}
 
 		if ( isset( $assoc_args['list'] ) ) {
-			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, true) );
 			$userExtension = MainWP_DB::Instance()->getUserExtension();
 			$websites_to_upgrade = array();
 			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
@@ -389,7 +395,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			}
 
 
-			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, true) );
 			$userExtension = MainWP_DB::Instance()->getUserExtension();
 			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
@@ -416,13 +422,19 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 						$tmp[] = $key;
 					}
 
+					if ( count( $tmp ) == 0 ) {
+						WP_CLI::line( 'No available theme upgrades for ' . $website->name);
+
+						continue;
+					}
+
 					WP_CLI::line( 'Upgrading ' . count($tmp) . ' themes for ' . $website->name);
 
 					try {
-						MainWP_Right_Now::upgradePluginTheme( $website->id, 'theme', implode( ',', $tmp ) );
+						MainWP_Right_Now::upgradePluginThemeTranslation( $website->id, 'theme', implode( ',', $tmp ) );
 						WP_CLI::success( 'Upgrades completed' );
 					} catch (Exception $e) {
-						WP_CLI::error( 'Upgrades failed: ' . $e->getMessage() );
+						WP_CLI::error( 'Upgrades failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
 					}
 				}
 			}

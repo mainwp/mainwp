@@ -726,17 +726,17 @@ class MainWP_System {
 				if ( ! is_array( $pluginsToUpdate ) ) {
 					$pluginsToUpdate = array();
 				}
-				$ignoredPluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins_new' );
-				if ( ! is_array( $ignoredPluginsNewUpdate ) ) {
-					$ignoredPluginsNewUpdate = array();
+				$notTrustedPluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins_new' );
+				if ( ! is_array( $notTrustedPluginsNewUpdate ) ) {
+					$notTrustedPluginsNewUpdate = array();
 				}
-				$ignoredPluginsToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins' );
-				if ( ! is_array( $ignoredPluginsToUpdate ) ) {
-					$ignoredPluginsToUpdate = array();
+				$notTrustedPluginsToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins' );
+				if ( ! is_array( $notTrustedPluginsToUpdate ) ) {
+					$notTrustedPluginsToUpdate = array();
 				}
 
 				if ( ( count( $pluginsNewUpdate ) != 0 ) || ( count( $pluginsToUpdate ) != 0 )
-//				     || ( count( $ignoredPluginsNewUpdate ) != 0 ) || ( count( $ignoredPluginsToUpdate ) != 0 )
+				     || ( count( $notTrustedPluginsNewUpdate ) != 0 ) || ( count( $notTrustedPluginsToUpdate ) != 0 )
 					) {
 					$sendMail = true;
 
@@ -744,8 +744,8 @@ class MainWP_System {
 					$mail .= '<ul>';
 					$mail .= $this->print_updates_array_lines( $pluginsNewUpdate, null );
 					$mail .= $this->print_updates_array_lines( $pluginsToUpdate, $sitesCheckCompleted );
-//					$mail .= $this->print_updates_array_lines( $ignoredPluginsNewUpdate, null );
-//					$mail .= $this->print_updates_array_lines( $ignoredPluginsToUpdate, null );
+					$mail .= $this->print_updates_array_lines( $notTrustedPluginsNewUpdate, null );
+					$mail .= $this->print_updates_array_lines( $notTrustedPluginsToUpdate, null );
 					$mail .= '</ul>';
 				}
 
@@ -757,17 +757,17 @@ class MainWP_System {
 				if ( ! is_array( $themesToUpdate ) ) {
 					$themesToUpdate = array();
 				}
-				$ignoredThemesNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes_new' );
-				if ( ! is_array( $ignoredThemesNewUpdate ) ) {
-					$ignoredThemesNewUpdate = array();
+				$notTrustedThemesNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes_new' );
+				if ( ! is_array( $notTrustedThemesNewUpdate ) ) {
+					$notTrustedThemesNewUpdate = array();
 				}
-				$ignoredThemesToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes' );
-				if ( ! is_array( $ignoredThemesToUpdate ) ) {
-					$ignoredThemesToUpdate = array();
+				$notTrustedThemesToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes' );
+				if ( ! is_array( $notTrustedThemesToUpdate ) ) {
+					$notTrustedThemesToUpdate = array();
 				}
 
 				if ( ( count( $themesNewUpdate ) != 0 ) || ( count( $themesToUpdate ) != 0 )
-//				     || ( count( $ignoredThemesNewUpdate ) != 0 ) || ( count( $ignoredThemesToUpdate ) != 0 )
+				     || ( count( $notTrustedThemesNewUpdate ) != 0 ) || ( count( $notTrustedThemesToUpdate ) != 0 )
 					) {
 					$sendMail = true;
 
@@ -775,8 +775,8 @@ class MainWP_System {
 					$mail .= '<ul>';
 					$mail .= $this->print_updates_array_lines( $themesNewUpdate, null );
 					$mail .= $this->print_updates_array_lines( $themesToUpdate, $sitesCheckCompleted );
-//					$mail .= $this->print_updates_array_lines( $ignoredThemesNewUpdate, null );
-//					$mail .= $this->print_updates_array_lines( $ignoredThemesToUpdate, null );
+					$mail .= $this->print_updates_array_lines( $notTrustedThemesNewUpdate, null );
+					$mail .= $this->print_updates_array_lines( $notTrustedThemesToUpdate, null );
 					$mail .= '</ul>';
 				}
 
@@ -917,14 +917,14 @@ class MainWP_System {
 			$pluginsToUpdateNow      = array();
 			$pluginsToUpdate         = array();
 			$pluginsNewUpdate        = array();
-			$ignoredPluginsToUpdate  = array();
-			$ignoredPluginsNewUpdate = array();
+			$notTrustedPluginsToUpdate  = array();
+			$notTrustedPluginsNewUpdate = array();
 
 			$themesToUpdateNow      = array();
 			$themesToUpdate         = array();
 			$themesNewUpdate        = array();
-			$ignoredThemesToUpdate  = array();
-			$ignoredThemesNewUpdate = array();
+			$notTrustedThemesToUpdate  = array();
+			$notTrustedThemesNewUpdate = array();
 
 			$pluginConflicts = '';
 			$themeConflicts  = '';
@@ -1032,9 +1032,9 @@ class MainWP_System {
 					} else {
 						//Not trusted
 						if ( $newUpdate ) {
-							$ignoredPluginsNewUpdate[] = array( $website->id, $infoNewTxt, $infoNotTrustedText );
+							$notTrustedPluginsNewUpdate[] = array( $website->id, $infoNewTxt, $infoNotTrustedText );
 						} else {
-							$ignoredPluginsToUpdate[] = array( $website->id, $infoTxt, $infoNotTrustedText );
+							$notTrustedPluginsToUpdate[] = array( $website->id, $infoTxt, $infoNotTrustedText );
 						}
 					}
 				}
@@ -1062,9 +1062,9 @@ class MainWP_System {
 					} else {
 						//Not trusted
 						if ( $newUpdate ) {
-							$ignoredThemesNewUpdate[] = array( $website->id, $infoNewTxt, $infoNotTrustedText );
+							$notTrustedThemesNewUpdate[] = array( $website->id, $infoNewTxt, $infoNotTrustedText );
 						} else {
-							$ignoredThemesToUpdate[] = array( $website->id, $infoTxt, $infoNotTrustedText );
+							$notTrustedThemesToUpdate[] = array( $website->id, $infoTxt, $infoNotTrustedText );
 						}
 					}
 				}
@@ -1157,24 +1157,24 @@ class MainWP_System {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_core_new', MainWP_Utility::array_merge( $ignoredCoreNewUpdateSaved, $ignoredCoreNewUpdate ) );
 			}
 
-			if ( count( $ignoredPluginsToUpdate ) != 0 ) {
-				$ignoredPluginsToUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_plugins' );
-				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_plugins', MainWP_Utility::array_merge( $ignoredPluginsToUpdateSaved, $ignoredPluginsToUpdate ) );
+			if ( count( $notTrustedPluginsToUpdate ) != 0 ) {
+				$notTrustedPluginsToUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_plugins' );
+				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_plugins', MainWP_Utility::array_merge( $notTrustedPluginsToUpdateSaved, $notTrustedPluginsToUpdate ) );
 			}
 
-			if ( count( $ignoredPluginsNewUpdate ) != 0 ) {
-				$ignoredPluginsNewUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_plugins_new' );
-				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_plugins_new', MainWP_Utility::array_merge( $ignoredPluginsNewUpdateSaved, $ignoredPluginsNewUpdate ) );
+			if ( count( $notTrustedPluginsNewUpdate ) != 0 ) {
+				$notTrustedPluginsNewUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_plugins_new' );
+				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_plugins_new', MainWP_Utility::array_merge( $notTrustedPluginsNewUpdateSaved, $notTrustedPluginsNewUpdate ) );
 			}
 
-			if ( count( $ignoredThemesToUpdate ) != 0 ) {
-				$ignoredThemesToUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_themes' );
-				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_themes', MainWP_Utility::array_merge( $ignoredThemesToUpdateSaved, $ignoredThemesToUpdate ) );
+			if ( count( $notTrustedThemesToUpdate ) != 0 ) {
+				$notTrustedThemesToUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_themes' );
+				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_themes', MainWP_Utility::array_merge( $notTrustedThemesToUpdateSaved, $notTrustedThemesToUpdate ) );
 			}
 
-			if ( count( $ignoredThemesNewUpdate ) != 0 ) {
-				$ignoredThemesNewUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_themes_new' );
-				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_themes_new', MainWP_Utility::array_merge( $ignoredThemesNewUpdateSaved, $ignoredThemesNewUpdate ) );
+			if ( count( $notTrustedThemesNewUpdate ) != 0 ) {
+				$notTrustedThemesNewUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_themes_new' );
+				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_themes_new', MainWP_Utility::array_merge( $notTrustedThemesNewUpdateSaved, $notTrustedThemesNewUpdate ) );
 			}
 
 			if ( $pluginConflicts != '' ) {
@@ -1194,7 +1194,7 @@ class MainWP_System {
 			}
 
 			if ( ( count( $coreToUpdate ) == 0 ) && ( count( $pluginsToUpdate ) == 0 ) && ( count( $themesToUpdate ) == 0 ) && ( count( $ignoredCoreToUpdate ) == 0 ) && ( count( $ignoredCoreNewUpdate ) == 0 )
-//			     && ( count( $ignoredPluginsToUpdate ) == 0 ) && ( count( $ignoredPluginsNewUpdate ) == 0 ) && ( count( $ignoredThemesToUpdate ) == 0 ) && ( count( $ignoredThemesNewUpdate ) == 0 )
+			     && ( count( $notTrustedPluginsToUpdate ) == 0 ) && ( count( $notTrustedPluginsNewUpdate ) == 0 ) && ( count( $notTrustedThemesToUpdate ) == 0 ) && ( count( $notTrustedThemesNewUpdate ) == 0 )
 			     && ( $pluginConflicts == '' ) && ( $themeConflicts == '' ) ) {
 				return;
 			}

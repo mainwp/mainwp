@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.4.1
-Stable tag: 3.0.2
+Stable tag: 3.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -114,8 +114,11 @@ Both the MainWP Dashboard and Child plugin are fully open source and GPL complia
 = Note: MainWP is not tested on or designed for multisite installs, we have reports that most functions work correctly but support will be limited.  We DO NOT recommend installing the MainWP Dashboard plugin on a Multi-site install. = 
 
 1. We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.
+
 Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard from an active site. Most hosting companies provide free subdomains ("demo.yourdomain.com") and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.
 If you are not sure how to set up a subdomain here is a quick step by step with [cPanel](http://docs.mainwp.com/creating-a-subdomain-in-cpanel/), [Plesk](http://docs.mainwp.com/creating-a-subdomain-in-plesk/) or [Direct Admin](http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/). If you are not sure what you have, contact your hosting companies support.
+
+You can even install your MainWP Dashboard on a WordPress site located on your local computer using [DesktopServer](https://mainwp.com/how-to-use-desktopserver-to-run-your-mainwp-dashboard-locally/), WAMP or any other setup that allows you to run [WordPress locally](https://make.wordpress.org/core/handbook/tutorials/installing-a-local-server/).   
 
 2. Once you have setup the separate WordPress install you can install the MainWP Dashboard plugin following your normal installation procedure either the Automatic process by searching MainWP or by uploading the MainWP plugin to the '/wp-content/plugins/' directory.
 
@@ -162,6 +165,20 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.1 - 2-17-16 =
+Fixed: Not all plugin and theme updates in the email notification
+Fixed: PHP notices
+Fixed: Typo's
+Fixed: Update issue for the iThemes Security Pro and the Monarch plugin
+Fixed: Issue with localhost settups (Quick Setup Wizard)
+Added: Basic WP-CLI support
+Added: Wordpress translation updates for child sites
+Added: Add/Remove to MainWP Menu function for Extensions
+Added: Server self-connect check in the Server Information page
+Added: Auto install plugin and apply extension settings when adding a new site
+Added: Support for the new API management
+Updated: API Manager messages
 
 = 3.0.2 - 1-22-16 =
 * Fixed: Bug that was stripping long plugin and theme names

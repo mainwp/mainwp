@@ -13,10 +13,10 @@ if (file_exists(__DIR__ . '/../../../../wp-load.php')) {
     include_once __DIR__ . '/../../../../wp-load.php';
     $included = true;
 } else {
-    foreach (glob(__DIR__ . '/../../../../*/wp-load.php', GLOB_NOSORT) as $dir) {
+    foreach (glob(__DIR__ . '/../../../../*/wp-load.php', GLOB_NOSORT) as $filepath) {
 
-        if (!empty($dir)) {
-            include_once $dir;
+        if (!empty($filepath)) {
+            include_once $filepath;
             $included = true;
             break;
         }

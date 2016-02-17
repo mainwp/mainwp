@@ -1024,13 +1024,15 @@ class MainWP_Right_Now {
 
 		<?php
 		//Translation upgrades!
+		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
+		if ( $mainwp_show_language_updates == 1 ) {
 		?>
 		<div class="clear">
 			<div class="mainwp-row">
 				<span class="mainwp-left-col">
 					<a href="#" id="mainwp_translation_upgrades_show" onClick="return rightnow_show('translation_upgrades', true);">
 						<span class="mainwp-rightnow-number"><?php echo $total_translation_upgrades; ?> </span> <?php echo _n( 'Translation upgrade', 'Translation upgrades', $total_wp_upgrades, 'mainwp') ?> <?php _e('available','mainwp'); ?>
-					</a>
+					</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('If you have non-English WordPress installations on your child sites, available Translation updates can be managed from this line. To disable the Translation Updates, go to the Settings page and disable the option in the Updates Option box.','mainwp'), 'https://make.wordpress.org/polyglots/handbook/about/what-we-do/', 'images/info.png', 'float: none !important;'); ?>
 				</span>
 				<span class="mainwp-mid-col">&nbsp;</span>
 				<span class="mainwp-right-col"><?php if (mainwp_current_user_can("dashboard", "update_translations")) {  ?><?php if ($total_translation_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_translations_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_translation_upgrades, 'mainwp'); ?></a><?php } else if ($total_translation_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_translations_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_translation_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } }?></span>
@@ -1196,8 +1198,9 @@ class MainWP_Right_Now {
 				?>
 			</div>
 		</div>
-
 		<?php
+		}
+
 		//WP plugin upgrades!
 		?>
 		<div class="clear">

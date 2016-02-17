@@ -408,6 +408,7 @@ class MainWP_DB {
 				'mainwp_seo',
 				'mainwp_automaticDailyUpdate',
 				'mainwp_backup_before_upgrade',
+				'mainwp_show_language_updates',
 				'mainwp_maximumPosts',
 				'mainwp_maximumComments',
 				'mainwp_cron_jobs',

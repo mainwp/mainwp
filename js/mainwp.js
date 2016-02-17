@@ -7136,12 +7136,12 @@ jQuery(document).on('click', '#mainwp_managesites_content #doaction2', function(
 
 mainwp_managesites_doaction = function(action) {
 
-    if (action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore') {
+    if (action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' ) {
 
         if (bulkManageSitesTaskRunning)
             return false;
 
-        if (action == 'delete' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' ) {
+        if (action == 'delete' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' ) {
             if (!confirm("Are you sure?"))
                 return false;
         }
@@ -7171,6 +7171,9 @@ mainwp_managesites_doaction = function(action) {
         } else if (action == 'update_wpcore') {
             var selectedIds = jQuery.map(jQuery('#the-list .check-column INPUT:checkbox:checked'), function(el) { return jQuery(el).val(); });
             managesites_wordpress_global_upgrade_all(selectedIds);
+        } else if (action == 'update_translations') {
+            var selectedIds = jQuery.map(jQuery('#the-list .check-column INPUT:checkbox:checked'), function(el) { return jQuery(el).val(); });
+            mainwp_update_pluginsthemes('translation', selectedIds);
         }
     }
 

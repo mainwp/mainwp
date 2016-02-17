@@ -1476,29 +1476,6 @@ class MainWP_Manage_Sites_View {
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row"><?php _e( 'Offline Checks','mainwp' ); ?></th>
-                    <td>
-                        <input type="radio" name="offline_checks" id="check_disabled" value="disabled"
-                            <?php echo ( ! in_array( $website->offline_checks, $statusses ) ? 'checked="true"'
-								: ''); ?> /> <?php _e( 'Disabled','mainwp' ); ?> &nbsp;&nbsp;&nbsp;
-                        <input type="radio" name="offline_checks" id="check_hourly"
-                               value="hourly" <?php echo ($website->offline_checks == 'hourly' ? 'checked="true"'
-								: ''); ?>/> <?php _e( 'Hourly','mainwp' ); ?> &nbsp;&nbsp;&nbsp;
-                        <input type="radio" name="offline_checks" id="check_2xday"
-                               value="2xday" <?php echo ($website->offline_checks == '2xday' ? 'checked="true"'
-								: ''); ?>/> <?php _e( '2x Day','mainwp' ); ?> &nbsp;&nbsp;&nbsp;
-                        <input type="radio" name="offline_checks" id="check_daily"
-                               value="daily" <?php echo ($website->offline_checks == 'daily' ? 'checked="true"'
-								: ''); ?>/> <?php _e( 'Daily','mainwp' ); ?> &nbsp;&nbsp;&nbsp;
-                        <input type="radio" name="offline_checks" id="check_weekly" value="weekly"
-                            <?php echo ($website->offline_checks == 'weekly' ? 'checked="true"' : ''); ?>/>
-                        Weekly  &nbsp;
-                    <span class="mainwp-form_hint-display"><?php _e( 'Notifications are sent to:','mainwp' ); ?> <?php echo MainWP_Utility::getNotificationEmail(); ?>
-                        (<?php _e( 'this address can be changed','mainwp' ); ?> <a
-                                href="<?php echo get_admin_url(); ?>admin.php?page=Settings"><?php _e( 'here','mainwp' ); ?></a>)</span>
-                    </td>
-                </tr>
-                <tr>
                     <th scope="row"><?php _e( 'Client Plugin Folder Option','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'Default, files/folders on the child site are viewable.<br />Hidden, when attempting to view files a 404 file will be returned, however a footprint does still exist.<br /><strong>Hiding the Child Plugin does require the plugin to make changes to your .htaccess file that in rare instances or server configurations could cause problems.</strong>' ); ?></th>
                     <td>
                         <div class="mainwp-radio" style="float: left;">

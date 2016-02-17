@@ -144,16 +144,6 @@ class MainWP_Post_Handler {
 		) ); //ok
 		add_action( 'wp_ajax_mainwp_reset_usercookies', array( &$this, 'mainwp_reset_usercookies' ) ); //ok
 
-		//Page: OfflineChecks
-		if ( mainwp_current_user_can( 'dashboard', 'manage_offline_checks' ) ) {
-			add_action( 'wp_ajax_mainwp_offline_check_save', array( &$this, 'mainwp_offline_check_save' ) ); //ok
-			add_action( 'wp_ajax_mainwp_offline_check_save_bulk', array(
-				&$this,
-				'mainwp_offline_check_save_bulk',
-			) ); //ok
-			add_action( 'wp_ajax_mainwp_offline_check_check', array( &$this, 'mainwp_offline_check_check' ) ); //ok
-		}
-
 		//Page: Recent Posts
 		if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
 			$this->addAction( 'mainwp_post_unpublish', array( &$this, 'mainwp_post_unpublish' ) );
@@ -566,27 +556,6 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_page_restore' );
 
 		MainWP_Page::restore();
-	}
-
-	/**
-	 * Page: OfflineChecks
-	 */
-	function mainwp_offline_check_save() {
-		$this->secure_request();
-
-		die( MainWP_Offline_Checks::updateWebsite() );
-	}
-
-	function mainwp_offline_check_save_bulk() {
-		$this->secure_request();
-
-		die( MainWP_Offline_Checks::updateWebsites() );
-	}
-
-	function mainwp_offline_check_check() {
-		$this->secure_request();
-
-		die( json_encode( MainWP_Offline_Checks::checkWebsite() ) );
 	}
 
 	/**

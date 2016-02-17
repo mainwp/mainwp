@@ -1381,7 +1381,7 @@ rightnow_global_upgrade_all = function ()
     rightnow_upgrade_all_int(sitesToUpdate, sitesToUpgrade, sitesPluginSlugs, sitesThemeSlugs);
 
     return false;
-}
+};
 
 rightnow_upgrade_all_int = function (pSitesToUpdate, pSitesToUpgrade, pSitesPluginSlugs, pSitesThemeSlugs)
 {

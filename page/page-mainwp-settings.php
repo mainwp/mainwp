@@ -89,7 +89,6 @@ class MainWP_Settings {
 						?>
 						<a href="<?php echo admin_url( 'admin.php?page=DashboardOptions' ); ?>" class="mainwp-submenu"><?php _e( 'Dashboard Options', 'mainwp' ); ?></a>
 						<a href="<?php echo admin_url( 'admin.php?page=MainWPTools' ); ?>" class="mainwp-submenu"><?php _e( 'MainWP Tools', 'mainwp' ); ?></a>
-						<a href="<?php echo admin_url( 'admin.php?page=OfflineChecks' ); ?>" class="mainwp-submenu"><?php _e( 'Offline Checks', 'mainwp' ); ?></a>
 					</div>
 				</div>
 			</div>
@@ -148,9 +147,6 @@ class MainWP_Settings {
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'MainWPTools' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=MainWPTools"><?php _e( 'MainWP Tools', 'mainwp' ); ?></a>
-			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'OfflineChecks' ) {
-				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=OfflineChecks"><?php _e( 'Offline Checks', 'mainwp' ); ?></a>
 			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">

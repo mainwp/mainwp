@@ -309,13 +309,13 @@ class MainWP_Setup_Wizard {
 		if ($hosting_type != 2 || $system_type != 3) {
 			wp_redirect( $this->get_next_step_link() );
 		}
-		$openssl_loc = get_option('mwp_setup_opensslLibLocation', 'c:\\\\xampplite\\\\appache\\\\conf\\\\openssl.conf');
+		$openssl_loc = get_option('mwp_setup_opensslLibLocation', 'c:\xampplite\appache\conf\openssl.conf');
 		?>
 		<h1><?php _e( 'Windows Localhost', 'mainwp' ); ?></h1>
 		<form method="post" class="form-table">
 			<p><?php _e( 'Due to bug with PHP on Windows please enter your OpenSSL Library location.<br /> Usually it is here:', 'mainwp' ); ?></p>
 			<p><input type="text" class="" style="width: 100%" name="mwp_setup_openssl_lib_location" value="<?php echo esc_html($openssl_loc); ?>"></p>
-			<em><?php echo sprintf( __( 'In most cases %s should be your path if using a normal install.%sIf not your will need to change that to match your specific path.', 'mainwp' ), 'c:\\\\xampplite\\\\appache\\\\conf\\\\openssl.conf', '<br />' ); ?></em>
+			<em><?php echo sprintf( __( 'In most cases %s should be your path if using a normal install.%sIf not your will need to change that to match your specific path.', 'mainwp' ), 'c:\\xampplite\\appache\\conf\\openssl.conf', '<br />' ); ?></em>
 			<br /><br />
 			<p class="mwp-setup-actions step">
 				<input type="submit" class="button-primary button button-large" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />

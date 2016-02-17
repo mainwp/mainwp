@@ -167,18 +167,18 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 == Changelog ==
 
 = 3.1 - 2-17-16 =
-Fixed: Not all plugin and theme updates in the email notification
-Fixed: PHP notices
-Fixed: Typo's
-Fixed: Update issue for the iThemes Security Pro and the Monarch plugin
-Fixed: Issue with localhost settups (Quick Setup Wizard)
-Added: Basic WP-CLI support
-Added: Wordpress translation updates for child sites
-Added: Add/Remove to MainWP Menu function for Extensions
-Added: Server self-connect check in the Server Information page
-Added: Auto install plugin and apply extension settings when adding a new site
-Added: Support for the new API management
-Updated: API Manager messages
+* Fixed: Not all plugin and theme updates in the email notification
+* Fixed: PHP notices
+* Fixed: Typo's
+* Fixed: Update issue for the iThemes Security Pro and the Monarch plugin
+* Fixed: Issue with localhost settups (Quick Setup Wizard)
+* Added: Basic WP-CLI support [MainWP WP-CLI Commands](http://docs.mainwp.com/wp-cli-commands/)
+* Added: Wordpress translation updates for child sites
+* Added: Add/Remove to MainWP Menu function for Extensions
+* Added: Server self-connect check in the Server Information page
+* Added: Auto install plugin and apply extension settings when adding a new site
+* Added: Support for the new API management
+* Updated: API Manager messages
 
 = 3.0.2 - 1-22-16 =
 * Fixed: Bug that was stripping long plugin and theme names

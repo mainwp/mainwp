@@ -6,7 +6,7 @@ class MainWP_Footprint {
 	}
 
 	public static function handleSettingsPost() {
-		if ( isset( $_POST['submit'] ) ) {
+		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 			$userExtension            = MainWP_DB::Instance()->getUserExtension();
 			$userExtension->heatMap   = ( ! isset( $_POST['mainwp_options_footprint_heatmap'] ) ? 1 : 0 );
 			$userExtension->pluginDir = ( ! isset( $_POST['mainwp_options_footprint_plugin_folder'] ) ? 'default' : 'hidden' );

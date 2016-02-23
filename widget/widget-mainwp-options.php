@@ -6,7 +6,7 @@ class MainWP_Options {
 	}
 
 	public static function handleSettingsPost() {
-		if ( isset( $_POST['submit'] ) ) {
+		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 			$userExtension             = MainWP_DB::Instance()->getUserExtension();
 			$userExtension->user_email = esc_html( $_POST['mainwp_options_email'] );
 			$userExtension->site_view  = ( ! isset( $_POST['mainwp_options_siteview'] ) ? 0 : 1 );

@@ -1380,7 +1380,7 @@ class MainWP_Manage_Sites {
 
 	public static function handleSettingsPost() {
 		if ( MainWP_Utility::isAdmin() ) {
-			if ( isset( $_POST['submit'] ) ) {
+			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_backupOnServer'] ) && $_POST['mainwp_options_backupOnServer'] > 0 ) {
 					MainWP_Utility::update_option( 'mainwp_backupsOnServer', $_POST['mainwp_options_backupOnServer'] );
 				}

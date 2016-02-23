@@ -170,7 +170,7 @@ class MainWP_Settings {
 			return;
 		}
 
-		if ( isset( $_POST['submit'] ) ) {
+		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'SettingsAdvanced' ) ) {
 			MainWP_Utility::update_option( 'mainwp_maximumRequests', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumRequests'] ) ? intval( $_POST['mainwp_maximumRequests'] ) : 4 );
 			MainWP_Utility::update_option( 'mainwp_minimumDelay', MainWP_Utility::ctype_digit( $_POST['mainwp_minimumDelay'] ) ? intval( $_POST['mainwp_minimumDelay'] ) : 200 );
 			MainWP_Utility::update_option( 'mainwp_maximumIPRequests', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumIPRequests'] ) ? intval( $_POST['mainwp_maximumIPRequests'] ) : 1 );
@@ -181,6 +181,7 @@ class MainWP_Settings {
 		self::renderHeader( 'Advanced' );
 		?>
 		<form method="POST" action="" id="mainwp-settings-page-form">
+			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'SettingsAdvanced' ); ?>" />
 			<div class="postbox" id="mainwp-advanced-options">
 				<h3 class="mainwp_box_title">
 					<span><i class="fa fa-cog"></i> <?php _e( 'Cross IP Settings', 'mainwp' ); ?></span></h3>
@@ -272,9 +273,11 @@ class MainWP_Settings {
 			return;
 		}
 
-		$updated = MainWP_Options::handleSettingsPost();
-		$updated |= MainWP_Manage_Sites::handleSettingsPost();
-		$updated |= MainWP_Footprint::handleSettingsPost();
+		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
+			$updated = MainWP_Options::handleSettingsPost();
+			$updated |= MainWP_Manage_Sites::handleSettingsPost();
+			$updated |= MainWP_Footprint::handleSettingsPost();
+		}
 
 		self::renderHeader( '' ); ?>
 		<?php if ( $updated ) {
@@ -287,6 +290,7 @@ class MainWP_Settings {
 		?>
 
 		<form method="POST" action="admin.php?page=Settings" id="mainwp-settings-page-form">
+			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'Settings' ); ?>" />
 			<?php
 
 			MainWP_Options::renderSettings();
@@ -314,6 +318,7 @@ class MainWP_Settings {
 		self::renderHeader( 'DashboardOptions' );
 		?>
 		<form method="POST" action="" id="mainwp-settings-page-form">
+			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'DashboardOptions' ); ?>" />
 			<div class="postbox" id="mainwp-dashboard-options">
 				<h3 class="mainwp_box_title">
 					<span><i class="fa fa-cog"></i> <?php _e( 'Dashboard Options', 'mainwp' ); ?></span></h3>
@@ -402,6 +407,7 @@ class MainWP_Settings {
 		self::renderHeader( 'MainWPTools' );
 		?>
 		<form method="POST" action="">
+			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPTools' ); ?>" />
 			<div class="postbox" id="mainwp-tools">
 				<h3 class="mainwp_box_title">
 					<span><i class="fa fa-wrench"></i> <?php _e( 'MainWP Tools', 'mainwp' ); ?></span></h3>

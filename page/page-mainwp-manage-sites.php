@@ -1174,7 +1174,7 @@ class MainWP_Manage_Sites {
 		} else {
 			$updated = false;
 			//Edit website!
-			if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && $_POST['mainwp_managesites_edit_siteadmin'] != '' ) {
+			if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( $_POST['mainwp_managesites_edit_siteadmin'] != '' ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {
 				//update site
 				$groupids   = array();
 				$groupnames = array();
@@ -1457,7 +1457,7 @@ class MainWP_Manage_Sites {
 
 
 	static function on_edit_site( $website ) {
-		if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && $_POST['mainwp_managesites_edit_siteadmin'] != '' ) {
+		if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( $_POST['mainwp_managesites_edit_siteadmin'] != '' ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {
 			if ( isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ) {
 				?>
 				<script type="text/javascript">

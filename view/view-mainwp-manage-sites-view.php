@@ -1430,6 +1430,7 @@ class MainWP_Manage_Sites_View {
 		}
 		?>
         <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data">
+			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsite' . $website->id ); ?>" />
             <div class="postbox">
             <h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'General Options','mainwp' ); ?></h3>
             <div class="inside">

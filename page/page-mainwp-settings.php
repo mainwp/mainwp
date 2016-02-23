@@ -171,10 +171,10 @@ class MainWP_Settings {
 		}
 
 		if ( isset( $_POST['submit'] ) ) {
-			MainWP_Utility::update_option( 'mainwp_maximumRequests', $_POST['mainwp_maximumRequests'] );
-			MainWP_Utility::update_option( 'mainwp_minimumDelay', $_POST['mainwp_minimumDelay'] );
-			MainWP_Utility::update_option( 'mainwp_maximumIPRequests', $_POST['mainwp_maximumIPRequests'] );
-			MainWP_Utility::update_option( 'mainwp_minimumIPDelay', $_POST['mainwp_minimumIPDelay'] );
+			MainWP_Utility::update_option( 'mainwp_maximumRequests', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumRequests'] ) ? intval( $_POST['mainwp_maximumRequests'] ) : 4 );
+			MainWP_Utility::update_option( 'mainwp_minimumDelay', MainWP_Utility::ctype_digit( $_POST['mainwp_minimumDelay'] ) ? intval( $_POST['mainwp_minimumDelay'] ) : 200 );
+			MainWP_Utility::update_option( 'mainwp_maximumIPRequests', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumIPRequests'] ) ? intval( $_POST['mainwp_maximumIPRequests'] ) : 1 );
+			MainWP_Utility::update_option( 'mainwp_minimumIPDelay', MainWP_Utility::ctype_digit( $_POST['mainwp_minimumIPDelay'] ) ? intval( $_POST['mainwp_minimumIPDelay'] ) : 1000 );
 			MainWP_Utility::update_option( 'mainwp_sslVerifyCertificate', isset( $_POST['mainwp_sslVerifyCertificate'] ) ? 1 : 0 );
 		}
 

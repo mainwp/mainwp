@@ -43,7 +43,7 @@ class MainWP_Post_Handler {
 
 		//Page: ManageGroups
 		$this->addAction( 'mainwp_group_rename', array( &$this, 'mainwp_group_rename' ) );
-		add_action( 'wp_ajax_mainwp_group_delete', array( &$this, 'mainwp_group_delete' ) ); //ok
+		$this->addAction( 'mainwp_group_delete', array( &$this, 'mainwp_group_delete' ) ); //ok
 		$this->addAction( 'mainwp_group_add', array( &$this, 'mainwp_group_add' ) );
 		add_action( 'wp_ajax_mainwp_group_getsites', array( &$this, 'mainwp_group_getsites' ) ); //ok
 		$this->addAction( 'mainwp_group_updategroup', array( &$this, 'mainwp_group_updategroup' ) );
@@ -983,7 +983,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_group_delete() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_group_delete');
 
 		MainWP_Manage_Groups::deleteGroup();
 	}

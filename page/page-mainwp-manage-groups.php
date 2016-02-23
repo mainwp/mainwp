@@ -132,10 +132,10 @@ class MainWP_Manage_Groups {
 						parentObj.css( 'background-color', '#F8E0E0' );
 						var groupId = parentObj.attr( 'id' );
 
-						var data = {
+						var data = mainwp_secure_data( {
 							action: 'mainwp_group_delete',
 							groupId: groupId
-						};
+						} );
 
 						jQuery.post( ajaxurl, data, function ( pParentObj ) {
 							return function ( response ) {
@@ -320,6 +320,8 @@ class MainWP_Manage_Groups {
 		if ( $groupName == '' ) {
 			$groupName = __( 'New Group', 'mainwp' );
 		}
+
+		$groupName = esc_html($groupName);
 
 		$cnt = null;
 		if ( preg_match( '/(.*) \(\d\)/', $groupName, $matches ) ) {

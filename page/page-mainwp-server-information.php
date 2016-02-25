@@ -231,6 +231,11 @@ class MainWP_Server_Information {
 				</tr>
 				<tr>
 					<td></td>
+					<td><?php esc_html_e( 'User Agent', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getUserAgent(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
 					<td><?php _e( 'Server Admin', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getServerAdmin(); ?></td>
 				</tr>
@@ -246,13 +251,73 @@ class MainWP_Server_Information {
 				</tr>
 				<tr>
 					<td></td>
+					<td><?php esc_html_e( 'Memory Usage', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::memoryUsage(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Complete URL', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getCompleteURL(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
 					<td><?php _e( 'Request Method', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getServerRequestMethod(); ?></td>
 				</tr>
 				<tr>
 					<td></td>
+					<td><?php esc_html_e( 'Request Time', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getServerRequestTime(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Query String', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getServerQueryString(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
 					<td><?php _e( 'Accept Content', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getServerHTTPAccept(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Accept-Charset Content', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getServerAcceptCharset(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Currently Executing Script Pathname', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getScriptFileName(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Server Signature', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getServerSignature(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Currently Executing Script', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getCurrentlyExecutingScript(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Path Translated', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getServerPathTranslated(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Current Script Path', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getScriptName(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Current Page URI', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getCurrentPageURI(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Remote Address', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getRemoteAddress(); ?></td>
 				</tr>
 				<tr>
 					<td></td>

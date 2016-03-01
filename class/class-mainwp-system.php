@@ -18,7 +18,9 @@ class MainWP_System {
 	private static $instance = null;
 
 	private $upgradeVersionInfo;
-	private $posthandler;
+
+	/** @var $posthandler MainWP_DB */
+	public $posthandler;
 	public $metaboxes;
 
 	/**

@@ -4,6 +4,7 @@ class MainWP_Post_Handler {
 	protected $security_nonces;
 
 	function __construct() {
+
 	}
 
 	function init() {

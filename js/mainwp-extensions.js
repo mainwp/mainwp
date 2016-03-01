@@ -130,12 +130,12 @@ function mainwp_extensions_activate(pObj, retring) {
         statusEl.hide();
     loadingEl.show();
     var extensionSlug = jQuery(pObj).parents('.mainwp-extensions-childHolder').attr('extension_slug');
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_extension_activate',
         slug:extensionSlug,
         key: api_row.find('input.api_key:text').val(),
         email: api_row.find('input.api_email:text').val()
-    };
+    });
 
     jQuery.post(ajaxurl, data, function (response)
     {
@@ -183,10 +183,10 @@ jQuery(document).on('click', '.mainwp-extensions-deactivate', function ()
         return false;
 
     var extensionSlug = jQuery(this).parents('.mainwp-extensions-childHolder').attr('extension_slug');
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_extension_deactivate',
         slug:extensionSlug
-    };
+    });
 
     var loadingEl = api_row.find(".mainwp_loading");
     statusEl.hide();
@@ -268,12 +268,12 @@ function mainwp_extensions_savelogin(pObj, retring) {
     var statusEl = parent.find('span.status');
     var loadingEl = parent.find("i");
 
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_extension_saveextensionapilogin',
         username: username,
         password: pwd,
         saveLogin: jQuery('#extensions_api_savemylogin_chk').is(':checked') ? '1' : '0'
-    };
+    });
 
     if (retring == true) {
         statusEl.css('color', '#0074a2');

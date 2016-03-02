@@ -493,7 +493,7 @@ jQuery(document).on('click', '.securityIssues_dashboard_allFixAll', function() {
     for (var i = 0; i < sites.length; i++)
     {
         var site = jQuery(sites[i]);
-        if (site.find('.securityIssues_dashboard_fixAll').val() != 'Fix All') continue;
+        //if (site.find('.securityIssues_dashboard_fixAll').val() != 'Fix All') continue;
         completedSecurityIssues++;
         mainwp_securityIssues_fixAll(site.attr('siteid'), false);
     }
@@ -519,7 +519,7 @@ mainwp_securityIssues_fixAll = function(siteId, refresh)
         el.show();
         if (pRefresh || (completedSecurityIssues != undefined && --completedSecurityIssues <= 0))
         {
-            location.reload();
+            location.href = location.href;
         }
     } }(refresh, el), 'json');
 };
@@ -536,7 +536,7 @@ jQuery(document).on('click', '.securityIssues_dashboard_unfixAll', function() {
     jQuery('.securityIssues_dashboard_unfixAll').attr('disabled', 'true');
 
     jQuery.post(ajaxurl, data, function (response) {
-        location.reload();
+        location.href = location.href;
     }, 'json');
 });
 securityIssues_unfix = function (feature) {

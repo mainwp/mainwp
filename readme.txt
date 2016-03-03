@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.4.1
-Stable tag: 3.1
+Stable tag: 3.1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -165,6 +165,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.1.1 - 3-3-16 =
+* Fixed: Bug Fix All Security Issues feature not run in non-English language 
+* Fixed: Bug JavaScript conflict with download monitor plugin
+* Added: Server Information items
+* Updated: API URL
 
 = 3.1 - 2-17-16 =
 * Fixed: Not all plugin and theme updates in the email notification

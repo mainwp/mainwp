@@ -6,9 +6,9 @@ class MainWP_Options {
 	}
 
 	public static function handleSettingsPost() {
-		if ( isset( $_POST['submit'] ) ) {
+		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 			$userExtension             = MainWP_DB::Instance()->getUserExtension();
-			$userExtension->user_email = $_POST['mainwp_options_email'];
+			$userExtension->user_email = esc_html( $_POST['mainwp_options_email'] );
 			$userExtension->site_view  = ( ! isset( $_POST['mainwp_options_siteview'] ) ? 0 : 1 );
 
 			$userExtension->heatMap   = ( ! isset( $_POST['mainwp_options_footprint_heatmap'] ) ? 1 : 0 );
@@ -24,11 +24,11 @@ class MainWP_Options {
 				MainWP_Utility::update_option( 'mainwp_show_language_updates', $val );
 				$val = ( ! isset( $_POST['mainwp_backup_before_upgrade'] ) ? 0 : 1 );
 				MainWP_Utility::update_option( 'mainwp_backup_before_upgrade', $val );
-				MainWP_Utility::update_option( 'mainwp_maximumPosts', $_POST['mainwp_maximumPosts'] );
-				MainWP_Utility::update_option( 'mainwp_maximumComments', $_POST['mainwp_maximumComments'] );
+				MainWP_Utility::update_option( 'mainwp_maximumPosts', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumPosts'] ) ? intval( $_POST['mainwp_maximumPosts'] ) : 50 );
+				MainWP_Utility::update_option( 'mainwp_maximumComments', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumComments'] ) ? intval( $_POST['mainwp_maximumComments'] ) : 50 );
 				MainWP_Utility::update_option( 'mainwp_wp_cron', ( ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1 ) );
 				//MainWP_Utility::update_option('mainwp_use_favicon', (!isset($_POST['mainwp_use_favicon']) ? 0 : 1));
-				MainWP_Utility::update_option( 'mainwp_numberdays_Outdate_Plugin_Theme', $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] );
+				MainWP_Utility::update_option( 'mainwp_numberdays_Outdate_Plugin_Theme', MainWP_Utility::ctype_digit( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) ? intval( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) : 365 );
 			}
 
 			return true;

@@ -3,7 +3,7 @@
 class MainWP_Api_Manager {
 
 	private $upgrade_url = 'https://mainwp.com/';
-	private $renew_license_url = 'https://mainwp.com/my-account';	
+	private $renew_license_url = 'https://mainwp.com/my-account';
 	public $domain = '';
 	/**
 	 * @var The single instance of the class

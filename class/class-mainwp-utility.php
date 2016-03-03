@@ -503,6 +503,257 @@ class MainWP_Utility {
 			return false;
 		}
 
+		$debug = false;
+		if ($debug)
+		{
+			$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
+
+			$timeout = 20 * 60 * 60; //20 minutes
+
+			$handleToWebsite    = array();
+			$requestUrls        = array();
+			$requestHandles     = array();
+
+			$dirs      = self::getMainWPDir();
+			$cookieDir = $dirs[0] . 'cookies';
+			if ( ! @is_dir( $cookieDir ) ) {
+				@mkdir( $cookieDir, 0777, true );
+			}
+
+			if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
+				$file_htaccess = @fopen( $cookieDir . '/.htaccess', 'w+' );
+				@fwrite( $file_htaccess, 'deny from all' );
+				@fclose( $file_htaccess );
+			}
+
+			if ( ! file_exists( $cookieDir . '/index.php' ) ) {
+				$file_index = @fopen( $cookieDir . '/index.php', 'w+' );
+				@fclose( $file_index );
+			}
+
+			foreach ( $websites as $website ) {
+				$url = $website->url;
+				if ( substr( $url, - 1 ) != '/' ) {
+					$url .= '/';
+				}
+
+				if ( strpos( $url, 'wp-admin' ) === false ) {
+					$url .= 'wp-admin/';
+				}
+
+				if ( $whatPage != null ) {
+					$url .= $whatPage;
+				} else {
+					$url .= 'admin-ajax.php';
+				}
+
+				if ( property_exists( $website, 'http_user' ) ) $http_user = $website->http_user;
+				if ( property_exists( $website, 'http_pass' ) ) $http_pass = $website->http_pass;
+
+				$_new_post = null;
+				if ( isset( $params ) && isset( $params['new_post'] ) ) {
+					$_new_post = $params['new_post'];
+					$params    = apply_filters( 'mainwp-pre-posting-posts', ( is_array( $params ) ? $params : array() ), (object) array(
+						'id'   => $website->id,
+						'url'  => $website->url,
+						'name' => $website->name,
+					) );
+				}
+
+				$ch = curl_init();
+
+				if ( $website != null ) {
+					$cookieFile = $cookieDir . '/' . sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
+					if ( ! file_exists( $cookieFile ) ) {
+						@file_put_contents( $cookieFile, '' );
+					}
+
+					if ( file_exists( $cookieFile ) ) {
+						@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
+						@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
+					}
+				}
+
+				@curl_setopt( $ch, CURLOPT_URL, $url );
+				@curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+				@curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+				@curl_setopt( $ch, CURLOPT_POST, true );
+				$postdata = MainWP_Utility::getPostDataAuthed( $website, $what, $params );
+				@curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
+				@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+				@curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+				if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
+					curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
+				}
+
+				$ssl_verifyhost    = false;
+				$verifyCertificate = isset( $website->verify_certificate ) ? $website->verify_certificate : null;
+				if ( $verifyCertificate !== null ) {
+					if ( $verifyCertificate == 1 ) {
+						$ssl_verifyhost = true;
+					} else if ( $verifyCertificate == 2 ) { // use global setting
+						if ( ( ( get_option( 'mainwp_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_sslVerifyCertificate' ) == 1 ) ) ) {
+							$ssl_verifyhost = true;
+						}
+					}
+				} else {
+					if ( ( ( get_option( 'mainwp_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_sslVerifyCertificate' ) == 1 ) ) ) {
+						$ssl_verifyhost = true;
+					}
+				}
+
+				if ( $ssl_verifyhost ) {
+					@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
+					@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+				} else {
+					@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+					@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+				}
+
+				@curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
+
+				@curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); //20minutes
+				if ( ! ini_get( 'safe_mode' ) ) {
+					@set_time_limit( $timeout );
+				} //20minutes
+				@ini_set( 'max_execution_time', $timeout );
+
+				$handleToWebsite[ self::get_resource_id( $ch ) ] = $website;
+				$requestUrls[ self::get_resource_id( $ch ) ]     = $website->url;
+				$requestHandles[ self::get_resource_id( $ch ) ]  = $ch;
+
+				if ( $_new_post != null ) {
+					$params['new_post'] = $_new_post;
+				} // reassign new_post
+			}
+
+			foreach ( $requestHandles as $id => $ch ) {
+				$website = &$handleToWebsite[ self::get_resource_id( $ch ) ];
+
+				$identifier = null;
+				$semLock = '103218'; //SNSyncLock
+				//Lock
+				$identifier = MainWP_Utility::getLockIdentifier( $semLock );
+
+				//Check the delays
+				//In MS
+				$minimumDelay = ( ( get_option( 'mainwp_minimumDelay' ) === false ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
+				if ( $minimumDelay > 0 ) {
+					$minimumDelay = $minimumDelay / 1000;
+				}
+				$minimumIPDelay = ( ( get_option( 'mainwp_minimumIPDelay' ) === false ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) );
+				if ( $minimumIPDelay > 0 ) {
+					$minimumIPDelay = $minimumIPDelay / 1000;
+				}
+
+				MainWP_Utility::endSession();
+				$delay = true;
+				while ( $delay ) {
+					MainWP_Utility::lock( $identifier );
+
+					if ( $minimumDelay > 0 ) {
+						//Check last request overall
+						$lastRequest = MainWP_DB::Instance()->getLastRequestTimestamp();
+						if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
+							//Delay!
+							MainWP_Utility::release( $identifier );
+							usleep( ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
+							continue;
+						}
+					}
+
+					if ( $minimumIPDelay > 0 && $website != null ) {
+						//Get ip of this site url
+						$ip = MainWP_DB::Instance()->getWPIp( $website->id );
+
+						if ( $ip != null && $ip != '' ) {
+							//Check last request for this site
+							$lastRequest = MainWP_DB::Instance()->getLastRequestTimestamp( $ip );
+
+							//Check last request for this subnet?
+							if ( $lastRequest > ( ( microtime( true ) ) - $minimumIPDelay ) ) {
+								//Delay!
+								MainWP_Utility::release( $identifier );
+								usleep( ( $minimumIPDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
+								continue;
+							}
+						}
+					}
+
+					$delay = false;
+				}
+
+				//Check the simultaneous requests
+				$maximumRequests   = ( ( get_option( 'mainwp_maximumRequests' ) === false ) ? 4 : get_option( 'mainwp_maximumRequests' ) );
+				$maximumIPRequests = ( ( get_option( 'mainwp_maximumIPRequests' ) === false ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) );
+
+				$first = true;
+				$delay = true;
+				while ( $delay ) {
+					if ( ! $first ) {
+						MainWP_Utility::lock( $identifier );
+					} else {
+						$first = false;
+					}
+
+					//Clean old open requests (may have timed out or something..)
+					MainWP_DB::Instance()->closeOpenRequests();
+
+					if ( $maximumRequests > 0 ) {
+						$nrOfOpenRequests = MainWP_DB::Instance()->getNrOfOpenRequests();
+						if ( $nrOfOpenRequests >= $maximumRequests ) {
+							//Delay!
+							MainWP_Utility::release( $identifier );
+							//Wait 200ms
+							usleep( 200000 );
+							continue;
+						}
+					}
+
+					if ( $maximumIPRequests > 0 && $website != null ) {
+						//Get ip of this site url
+						$ip = MainWP_DB::Instance()->getWPIp( $website->id );
+
+						if ( $ip != null && $ip != '' ) {
+							$nrOfOpenRequests = MainWP_DB::Instance()->getNrOfOpenRequests( $ip );
+							if ( $nrOfOpenRequests >= $maximumIPRequests ) {
+								//Delay!
+								MainWP_Utility::release( $identifier );
+								//Wait 200ms
+								usleep( 200000 );
+								continue;
+							}
+						}
+					}
+
+					$delay = false;
+				}
+
+
+				if ( $website != null ) {
+					//Log the start of this request!
+					MainWP_DB::Instance()->insertOrUpdateRequestLog( $website->id, null, microtime( true ), null );
+				}
+
+				if ( $identifier != null ) {
+					//Unlock
+					MainWP_Utility::release( $identifier );
+				}
+
+				$data = curl_exec( $ch );
+
+				if ( $website != null ) {
+					MainWP_DB::Instance()->insertOrUpdateRequestLog( $website->id, $ip, null, microtime( true ) );
+				}
+
+				if ( $handler != null ) {
+					call_user_func( $handler, $data, $website, $output );
+				}
+			}
+
+			return true;
+		}
+
 		//$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$mh    = curl_multi_init();

@@ -1508,11 +1508,11 @@ jQuery(document).ready(function () {
     });
     managebackups_init();
 
-    var elem = jQuery('#backup_exclude_folders');    
+    var elem = jQuery('#backup_exclude_folders');
     if (elem.length) {
         var siteId = jQuery('#backup_exclude_folders').attr('siteid');
         var sites = jQuery('#backup_exclude_folders').attr('sites');
-        var groups = jQuery('#backup_exclude_folders').attr('groups');    
+        var groups = jQuery('#backup_exclude_folders').attr('groups');
         if (jQuery('#backup_task_id').val() == undefined) jQuery('#backup_exclude_folders').fileTree({ root: '', script: ajaxurl + '?action=mainwp_site_dirs&site='+encodeURIComponent(siteId == undefined ? '' : siteId)+'&sites='+encodeURIComponent(sites == undefined ? '' : sites)+'&groups='+encodeURIComponent(groups == undefined ? '' : groups), multiFolder: false, postFunction: updateExcludedFolders});
         jQuery('.jqueryFileTree li a').live('mouseover', function() { jQuery(this).children('.exclude_folder_control').show() });
         jQuery('.jqueryFileTree li a').live('mouseout', function() { jQuery(this).children('.exclude_folder_control').hide() });

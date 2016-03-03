@@ -73,12 +73,12 @@ class MainWP_Server_Information {
 		<?php
 	}
 
-	public static function renderFooter( $shownPage ) {
-		?>
-		</div>
-		</div>
-		<?php
-	}
+public static function renderFooter( $shownPage ) {
+	?>
+	</div>
+	</div>
+	<?php
+}
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
@@ -457,30 +457,30 @@ class MainWP_Server_Information {
 			$serverInformation = MainWP_Utility::fetchUrlAuthed( $website, 'serverInformation' );
 			?>
 
-        <div id="mainwp-server-information-section">
-			<h2><i class="fa fa-server"></i>
-				<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Server Information' ); ?>
-			</h2>
-			<?php echo $serverInformation['information']; ?>
-		</div>
-        <div id="mainwp-cron-schedules-section">
-			<h2><i class="fa fa-server"></i>
-				<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Cron Schedules', 'mainwp' ); ?>
-			</h2>
-			<?php echo $serverInformation['cron']; ?>
-		</div>
-			<?php if ( isset( $serverInformation['wpconfig'] ) ) { ?>
-        	<div id="mainwp-wp-config-section">
+			<div id="mainwp-server-information-section">
 				<h2><i class="fa fa-server"></i>
-					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'WP-Config File', 'mainwp' ); ?>
+					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Server Information' ); ?>
 				</h2>
-				<?php echo $serverInformation['wpconfig']; ?>
+				<?php echo $serverInformation['information']; ?>
 			</div>
-			<div id="mainwp-error-log-section">
+			<div id="mainwp-cron-schedules-section">
 				<h2><i class="fa fa-server"></i>
-					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Error Log', 'mainwp' ); ?></h2>
-				<?php echo $serverInformation['error']; ?>
+					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Cron Schedules', 'mainwp' ); ?>
+				</h2>
+				<?php echo $serverInformation['cron']; ?>
 			</div>
+			<?php if ( isset( $serverInformation['wpconfig'] ) ) { ?>
+				<div id="mainwp-wp-config-section">
+					<h2><i class="fa fa-server"></i>
+						<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'WP-Config File', 'mainwp' ); ?>
+					</h2>
+					<?php echo $serverInformation['wpconfig']; ?>
+				</div>
+				<div id="mainwp-error-log-section">
+					<h2><i class="fa fa-server"></i>
+						<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Error Log', 'mainwp' ); ?></h2>
+					<?php echo $serverInformation['error']; ?>
+				</div>
 			<?php } ?>
 			<?php
 		} catch ( MainWP_Exception $e ) {
@@ -987,9 +987,9 @@ class MainWP_Server_Information {
 		$query_args = array('mainwp_run' => 'test');
 		$url = add_query_arg( $query_args, $url );
 		$args = array(	'blocking'   	=> TRUE,
-						'sslverify'		=> apply_filters( 'https_local_ssl_verify', true ),
-						'timeout' 		=> 15
-					);
+		                  'sslverify'		=> apply_filters( 'https_local_ssl_verify', true ),
+		                  'timeout' 		=> 15
+		);
 		$response =  wp_remote_post( $url, $args );
 		$test_result = '';
 		if ( is_wp_error( $response ) ) {

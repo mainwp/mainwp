@@ -348,7 +348,7 @@ class MainWP_Right_Now {
 				$information = MainWP_Utility::fetchUrlAuthed( $website, ( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ), array(
 					'type' => $type,
 					'list' => urldecode( $list ),
-				) );
+				), true );
 				if ( isset( $information['upgrades'] ) ) {
 					$tmp = array();
 					if ( isset( $information['upgrades'] ) ) {

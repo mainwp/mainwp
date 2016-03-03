@@ -74,7 +74,7 @@ class MainWP_Extensions {
 		add_filter( 'mainwp-extensions-apigeneratepassword', array(
 			MainWP_Extensions::getClassName(),
 			'genApiPassword',
-		), 10, 3 );		
+		), 10, 3 );
 	}
 
 	public static function initMenu() {
@@ -246,11 +246,11 @@ class MainWP_Extensions {
 			MainWP_Extensions::getClassName(),
 			'removeExtensionMenuFromMainWPMenu',
 		) );
-		add_action( 'wp_ajax_mainwp_extension_activate', array(
+		MainWP_System::Instance()->posthandler->addAction( 'mainwp_extension_activate', array(
 			MainWP_Extensions::getClassName(),
 			'activateExtension',
 		) );
-		add_action( 'wp_ajax_mainwp_extension_deactivate', array(
+		MainWP_System::Instance()->posthandler->addAction( 'mainwp_extension_deactivate', array(
 			MainWP_Extensions::getClassName(),
 			'deactivateExtension',
 		) );
@@ -264,7 +264,7 @@ class MainWP_Extensions {
 				MainWP_Extensions::getClassName(),
 				'grabapikeyExtension',
 			) );
-			add_action( 'wp_ajax_mainwp_extension_saveextensionapilogin', array(
+			MainWP_System::Instance()->posthandler->addAction( 'mainwp_extension_saveextensionapilogin', array(
 				MainWP_Extensions::getClassName(),
 				'saveExtensionsApiLogin',
 			) );
@@ -272,11 +272,11 @@ class MainWP_Extensions {
 				MainWP_Extensions::getClassName(),
 				'getPurchasedExts',
 			) );
-			add_action( 'wp_ajax_mainwp_extension_downloadandinstall', array(
+			MainWP_System::Instance()->posthandler->addAction( 'mainwp_extension_downloadandinstall', array(
 				MainWP_Extensions::getClassName(),
 				'downloadAndInstall',
 			) );
-			add_action( 'wp_ajax_mainwp_extension_bulk_activate', array(
+			MainWP_System::Instance()->posthandler->addAction( 'mainwp_extension_bulk_activate', array(
 				MainWP_Extensions::getClassName(),
 				'bulkActivate',
 			) );
@@ -325,6 +325,7 @@ class MainWP_Extensions {
 	}
 
 	public static function activateExtension() {
+		MainWP_System::Instance()->posthandler->secure_request( 'mainwp_extension_activate' );
 		$api       = dirname( $_POST['slug'] );
 		$api_key   = trim( $_POST['key'] );
 		$api_email = trim( $_POST['email'] );
@@ -333,6 +334,7 @@ class MainWP_Extensions {
 	}
 
 	public static function deactivateExtension() {
+		MainWP_System::Instance()->posthandler->secure_request( 'mainwp_extension_deactivate' );
 		$api    = dirname( $_POST['slug'] );
 		$result = MainWP_Api_Manager::instance()->license_key_deactivation( $api );
 		die( json_encode( $result ) );
@@ -348,6 +350,8 @@ class MainWP_Extensions {
 	}
 
 	public static function saveExtensionsApiLogin() {
+		MainWP_System::Instance()->posthandler->secure_request('mainwp_extension_saveextensionapilogin');
+
 		$username = trim( $_POST['username'] );
 		$password = trim( $_POST['password'] );
 		if ( ( $username == '' ) && ( $password == '' ) ) {
@@ -583,6 +587,7 @@ class MainWP_Extensions {
 	}
 
 	public static function downloadAndInstall() {
+		MainWP_System::Instance()->posthandler->secure_request( 'mainwp_extension_downloadandinstall' );
 		$return = self::installPlugin( $_POST['download_link'] );
 		die( '<mainwp>' . json_encode( $return ) . '</mainwp>' );
 	}
@@ -627,10 +632,10 @@ class MainWP_Extensions {
 		if ( $ssl_verifyhost === '0' ) {
 			remove_filter( 'http_request_args', array( MainWP_Extensions::getClassName(), 'noSSLFilterFunction' ), 99 );
 		}
-		
+
 		$error = $output = $plugin_slug = null;
 		if ( is_wp_error( $result ) ) {
-			$error_code = $result->get_error_code();			
+			$error_code = $result->get_error_code();
 			if ( $result->get_error_data() && is_string( $result->get_error_data() ) ) {
 				$error = $error_code . " - " .$result->get_error_data();
 			} else {
@@ -668,6 +673,7 @@ class MainWP_Extensions {
 	}
 
 	public static function bulkActivate() {
+		MainWP_System::Instance()->posthandler->secure_request( 'mainwp_extension_bulk_activate' );
 		$plugins = $_POST['plugins'];
 		if ( is_array( $plugins ) && count( $plugins ) > 0 ) {
 			if ( current_user_can( 'activate_plugins' ) ) {

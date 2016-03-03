@@ -18,7 +18,9 @@ class MainWP_System {
 	private static $instance = null;
 
 	private $upgradeVersionInfo;
-	private $posthandler;
+
+	/** @var $posthandler MainWP_DB */
+	public $posthandler;
 	public $metaboxes;
 
 	/**
@@ -1836,9 +1838,13 @@ class MainWP_System {
 	}
 
 	function handleSettingsPost() {
+		if ( ! function_exists( 'wp_create_nonce' ) ) {
+			include_once( ABSPATH . WPINC . '/pluggable.php' );
+		}
+
 		if ( isset( $_GET['page'] ) ) {
 			if ( $_GET['page'] == 'DashboardOptions' ) {
-				if ( isset( $_POST['submit'] ) ) {
+				if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'DashboardOptions' ) ) {
 					MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
 					MainWP_Utility::update_option( 'mainwp_hide_footer', ( ! isset( $_POST['mainwp_hide_footer'] ) ? 0 : 1 ) );
 					MainWP_Utility::update_option( 'mainwp_hide_tips', ( ! isset( $_POST['mainwp_hide_tips'] ) ? 0 : 1 ) );
@@ -1849,13 +1855,13 @@ class MainWP_System {
 					}
 				}
 			} else if ( $_GET['page'] == 'Settings' ) {
-				if ( isset( $_POST['submit'] ) ) {
+				if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 					if ( isset( $_POST['mainwp_primaryBackup'] ) ) {
 						MainWP_Utility::update_option( 'mainwp_primaryBackup', $_POST['mainwp_primaryBackup'] );
 					}
 				}
 			} else if ( $_GET['page'] == 'MainWPTools' ) {
-				if ( isset( $_POST['submit'] ) ) {
+				if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPTools' ) ) {
 					$hide_menus = array();
 					if ( isset( $_POST['mainwp_hide_wpmenu'] ) && is_array( $_POST['mainwp_hide_wpmenu'] ) && count( $_POST['mainwp_hide_wpmenu'] ) > 0 ) {
 						foreach ( $_POST['mainwp_hide_wpmenu'] as $value ) {

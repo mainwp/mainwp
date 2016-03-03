@@ -1255,7 +1255,6 @@ class MainWP_Setup_Wizard {
 		$url = $this->uptime_robot_api_url . "/getAlertContacts?apiKey=" . $apiKey;
 		$url .= "&format=json";
 		$result = $this->uptime_robot_fetch( $url );
-		//error_log($url . "===>" . print_r($result, true));
 		$result = json_decode( $result );
 		if ( $result->stat != 'fail' && is_object($result) && property_exists($result, 'alertcontacts')) {
 			$number_contacts = count( $result->alertcontacts->alertcontact );

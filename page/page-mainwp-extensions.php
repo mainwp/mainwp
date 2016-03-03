@@ -74,16 +74,7 @@ class MainWP_Extensions {
 		add_filter( 'mainwp-extensions-apigeneratepassword', array(
 			MainWP_Extensions::getClassName(),
 			'genApiPassword',
-		), 10, 3 );
-		add_filter( 'mainwp_api_manager_upgrade_url', array(
-			MainWP_Extensions::getClassName(),
-			'filter_ApiUpgradeUrl',
-		) );
-	}
-
-	static function filter_ApiUpgradeUrl( $api_url ) {
-		// apply for mainwp.com only
-		return str_replace( '//mainwp.com/', "//" .MainWP_Api_Manager::MAINWP_EXTENSIONS_SHOP_PASS_ADDRESS . "/", $api_url );
+		), 10, 3 );		
 	}
 
 	public static function initMenu() {
@@ -636,23 +627,14 @@ class MainWP_Extensions {
 		if ( $ssl_verifyhost === '0' ) {
 			remove_filter( 'http_request_args', array( MainWP_Extensions::getClassName(), 'noSSLFilterFunction' ), 99 );
 		}
-
-		if ( is_wp_error( $result ) ) {
-			if ( $result->get_error_data() && is_string( $result->get_error_data() ) ) {
-				$error = $result->get_error_data();
-				MainWP_Helper::error( $error );
-			} else {
-				$error = $result->get_error_code();
-				MainWP_Helper::error( implode( ', ', $error ) );
-			}
-		}
-
+		
 		$error = $output = $plugin_slug = null;
 		if ( is_wp_error( $result ) ) {
+			$error_code = $result->get_error_code();			
 			if ( $result->get_error_data() && is_string( $result->get_error_data() ) ) {
-				$error = $result->get_error_data();
+				$error = $error_code . " - " .$result->get_error_data();
 			} else {
-				$error = $result->get_error_code();
+				$error = $error_code;
 			}
 		} else {
 			$path = $result['destination'];

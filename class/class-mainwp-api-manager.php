@@ -3,8 +3,7 @@
 class MainWP_Api_Manager {
 
 	private $upgrade_url = 'https://mainwp.com/';
-	private $renew_license_url = 'https://mainwp.com/my-account';
-	const MAINWP_EXTENSIONS_SHOP_PASS_ADDRESS = 'activation.mainwp.com'; // replace for upgrade_url
+	private $renew_license_url = 'https://mainwp.com/my-account';	
 	public $domain = '';
 	/**
 	 * @var The single instance of the class

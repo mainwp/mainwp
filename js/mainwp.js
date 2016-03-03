@@ -493,7 +493,7 @@ jQuery(document).on('click', '.securityIssues_dashboard_allFixAll', function() {
     for (var i = 0; i < sites.length; i++)
     {
         var site = jQuery(sites[i]);
-        if (site.find('.securityIssues_dashboard_fixAll').val() != 'Fix All') continue;
+        //if (site.find('.securityIssues_dashboard_fixAll').val() != 'Fix All') continue;
         completedSecurityIssues++;
         mainwp_securityIssues_fixAll(site.attr('siteid'), false);
     }
@@ -519,7 +519,7 @@ mainwp_securityIssues_fixAll = function(siteId, refresh)
         el.show();
         if (pRefresh || (completedSecurityIssues != undefined && --completedSecurityIssues <= 0))
         {
-            location.reload();
+            location.href = location.href;
         }
     } }(refresh, el), 'json');
 };
@@ -536,7 +536,7 @@ jQuery(document).on('click', '.securityIssues_dashboard_unfixAll', function() {
     jQuery('.securityIssues_dashboard_unfixAll').attr('disabled', 'true');
 
     jQuery.post(ajaxurl, data, function (response) {
-        location.reload();
+        location.href = location.href;
     }, 'json');
 });
 securityIssues_unfix = function (feature) {
@@ -1508,12 +1508,15 @@ jQuery(document).ready(function () {
     });
     managebackups_init();
 
-    var siteId = jQuery('#backup_exclude_folders').attr('siteid');
-    var sites = jQuery('#backup_exclude_folders').attr('sites');
-    var groups = jQuery('#backup_exclude_folders').attr('groups');
-    if (jQuery('#backup_task_id').val() == undefined) jQuery('#backup_exclude_folders').fileTree({ root: '', script: ajaxurl + '?action=mainwp_site_dirs&site='+encodeURIComponent(siteId == undefined ? '' : siteId)+'&sites='+encodeURIComponent(sites == undefined ? '' : sites)+'&groups='+encodeURIComponent(groups == undefined ? '' : groups), multiFolder: false, postFunction: updateExcludedFolders});
-    jQuery('.jqueryFileTree li a').live('mouseover', function() { jQuery(this).children('.exclude_folder_control').show() });
-    jQuery('.jqueryFileTree li a').live('mouseout', function() { jQuery(this).children('.exclude_folder_control').hide() });
+    var elem = jQuery('#backup_exclude_folders');
+    if (elem.length) {
+        var siteId = jQuery('#backup_exclude_folders').attr('siteid');
+        var sites = jQuery('#backup_exclude_folders').attr('sites');
+        var groups = jQuery('#backup_exclude_folders').attr('groups');
+        if (jQuery('#backup_task_id').val() == undefined) jQuery('#backup_exclude_folders').fileTree({ root: '', script: ajaxurl + '?action=mainwp_site_dirs&site='+encodeURIComponent(siteId == undefined ? '' : siteId)+'&sites='+encodeURIComponent(sites == undefined ? '' : sites)+'&groups='+encodeURIComponent(groups == undefined ? '' : groups), multiFolder: false, postFunction: updateExcludedFolders});
+        jQuery('.jqueryFileTree li a').live('mouseover', function() { jQuery(this).children('.exclude_folder_control').show() });
+        jQuery('.jqueryFileTree li a').live('mouseout', function() { jQuery(this).children('.exclude_folder_control').hide() });
+    }
 });
 managebackups_exclude_folder = function(pElement, pEvent)
 {

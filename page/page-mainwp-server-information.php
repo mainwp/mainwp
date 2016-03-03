@@ -73,12 +73,12 @@ class MainWP_Server_Information {
 		<?php
 	}
 
-	public static function renderFooter( $shownPage ) {
-		?>
-		</div>
-		</div>
-		<?php
-	}
+public static function renderFooter( $shownPage ) {
+	?>
+	</div>
+	</div>
+	<?php
+}
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
@@ -231,6 +231,11 @@ class MainWP_Server_Information {
 				</tr>
 				<tr>
 					<td></td>
+					<td><?php esc_html_e( 'User Agent', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getUserAgent(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
 					<td><?php _e( 'Server Admin', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getServerAdmin(); ?></td>
 				</tr>
@@ -246,13 +251,73 @@ class MainWP_Server_Information {
 				</tr>
 				<tr>
 					<td></td>
+					<td><?php esc_html_e( 'Memory Usage', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::memoryUsage(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Complete URL', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getCompleteURL(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
 					<td><?php _e( 'Request Method', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getServerRequestMethod(); ?></td>
 				</tr>
 				<tr>
 					<td></td>
+					<td><?php esc_html_e( 'Request Time', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getServerRequestTime(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Query String', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getServerQueryString(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
 					<td><?php _e( 'Accept Content', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getServerHTTPAccept(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Accept-Charset Content', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getServerAcceptCharset(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Currently Executing Script Pathname', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getScriptFileName(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Server Signature', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getServerSignature(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Currently Executing Script', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getCurrentlyExecutingScript(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Path Translated', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getServerPathTranslated(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Current Script Path', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getScriptName(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Current Page URI', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getCurrentPageURI(); ?></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td><?php esc_html_e( 'Remote Address', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getRemoteAddress(); ?></td>
 				</tr>
 				<tr>
 					<td></td>
@@ -392,30 +457,30 @@ class MainWP_Server_Information {
 			$serverInformation = MainWP_Utility::fetchUrlAuthed( $website, 'serverInformation' );
 			?>
 
-        <div id="mainwp-server-information-section">
-			<h2><i class="fa fa-server"></i>
-				<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Server Information' ); ?>
-			</h2>
-			<?php echo $serverInformation['information']; ?>
-		</div>
-        <div id="mainwp-cron-schedules-section">
-			<h2><i class="fa fa-server"></i>
-				<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Cron Schedules', 'mainwp' ); ?>
-			</h2>
-			<?php echo $serverInformation['cron']; ?>
-		</div>
-			<?php if ( isset( $serverInformation['wpconfig'] ) ) { ?>
-        	<div id="mainwp-wp-config-section">
+			<div id="mainwp-server-information-section">
 				<h2><i class="fa fa-server"></i>
-					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'WP-Config File', 'mainwp' ); ?>
+					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Server Information' ); ?>
 				</h2>
-				<?php echo $serverInformation['wpconfig']; ?>
+				<?php echo $serverInformation['information']; ?>
 			</div>
-			<div id="mainwp-error-log-section">
+			<div id="mainwp-cron-schedules-section">
 				<h2><i class="fa fa-server"></i>
-					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Error Log', 'mainwp' ); ?></h2>
-				<?php echo $serverInformation['error']; ?>
+					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Cron Schedules', 'mainwp' ); ?>
+				</h2>
+				<?php echo $serverInformation['cron']; ?>
 			</div>
+			<?php if ( isset( $serverInformation['wpconfig'] ) ) { ?>
+				<div id="mainwp-wp-config-section">
+					<h2><i class="fa fa-server"></i>
+						<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'WP-Config File', 'mainwp' ); ?>
+					</h2>
+					<?php echo $serverInformation['wpconfig']; ?>
+				</div>
+				<div id="mainwp-error-log-section">
+					<h2><i class="fa fa-server"></i>
+						<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Error Log', 'mainwp' ); ?></h2>
+					<?php echo $serverInformation['error']; ?>
+				</div>
 			<?php } ?>
 			<?php
 		} catch ( MainWP_Exception $e ) {
@@ -922,9 +987,9 @@ class MainWP_Server_Information {
 		$query_args = array('mainwp_run' => 'test');
 		$url = add_query_arg( $query_args, $url );
 		$args = array(	'blocking'   	=> TRUE,
-						'sslverify'		=> apply_filters( 'https_local_ssl_verify', true ),
-						'timeout' 		=> 15
-					);
+		                  'sslverify'		=> apply_filters( 'https_local_ssl_verify', true ),
+		                  'timeout' 		=> 15
+		);
 		$response =  wp_remote_post( $url, $args );
 		$test_result = '';
 		if ( is_wp_error( $response ) ) {

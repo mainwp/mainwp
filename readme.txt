@@ -167,10 +167,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 == Changelog ==
 
 = 3.1.1 - 3-3-16 =
-* Fixed: Bug Fix All Security Issues feature not run in non-English language 
-* Fixed: Bug JavaScript conflict with download monitor plugin
+* Fixed: Fix All Security Issues feature not running in non-English language
+* Fixed: JavaScript conflict with download monitor plugin
+* Fixed: Potential XSS/CSRF issues
 * Added: Server Information items
 * Updated: API URL
+* Tweaked: Reduce server load when updating themes/plugins in bulk
 
 = 3.1 - 2-17-16 =
 * Fixed: Not all plugin and theme updates in the email notification

@@ -6,7 +6,7 @@
   Author: MainWP
   Author URI: http://mainwp.com
   Text Domain: mainwp
-  Version: 3.1
+  Version: 3.1.1
  */
 
 if ( ! defined( 'MAINWP_PLUGIN_FILE' ) ) {

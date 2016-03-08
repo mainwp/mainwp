@@ -1701,19 +1701,19 @@ class MainWP_Plugins {
 					<ol>
 						<li>
 							Select do you want to see your Active or Inactive plugins.<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-plutins-active.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-plutins-active.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Optionaly, Enter the keyword for the search <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-plutins-keywords.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-plutins-keywords.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Select the sites from the Select Site Box <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-plutins-sites.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-plutins-sites.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Hit the Show Plugins button <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-plutins-show.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-plutins-show.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li><h4>To Deactivate a Plugin: </h4><br/>
 							<ol>
@@ -1765,11 +1765,11 @@ class MainWP_Plugins {
 						</li>
 						<li>
 							Click Search Plugins button <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-pulgins-search.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-pulgins-search.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Select the site(s) you want to install the plugin, and click Install
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-pulgins-install.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-pulgins-install.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 					</ol>
 					<h4>Upload Plugins</h4>
@@ -1782,7 +1782,7 @@ class MainWP_Plugins {
 						</li>
 						<li>
 							Click 'Upload Now' button<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-plugins-upload.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-plugins-upload.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Locate your Plugin
@@ -1809,7 +1809,7 @@ class MainWP_Plugins {
 						</li>
 						<li>
 							Click 'Show' in 'Plugin Upgrades Available' area <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-available-plugins.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-available-plugins.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Click the middle upgrades link to show the drop down of the available upgrades for that site
@@ -1817,7 +1817,7 @@ class MainWP_Plugins {
 						<li>
 							Select 'Upgrade' next to the name of the plugin or 'Upgrade All' to upgrade all plugins on the site
 							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-available-plugins-upgrade.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-available-plugins-upgrade.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 					</ol>
 					</p>
@@ -1841,7 +1841,7 @@ class MainWP_Plugins {
 						</li>
 						<li>
 							Click 'Ignore' next to the name of the plugin<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-ignore-plugin.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-ignore-plugin.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 					</ol>
 					</p>

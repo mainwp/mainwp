@@ -1187,19 +1187,19 @@ class MainWP_Post {
 					<ol>
 						<li>
 							Select statuses of your posts you want to find. Select between standard WordPress post statuses: Published, Draft, Pending, Future, Private and Trash<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-post-status.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-post-status.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Optionaly, enter a Keyword <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-post-keyword.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-post-keyword.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Optionaly, use the provided Date Picker to select date range for wanted posts <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-post-date.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-post-date.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Use the Select Sites box to select the sites to be searched <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-post-sites.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-post-sites.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Click the Show Posts button and MainWP Plugin will gather all your posts based on your search parameters in one list
@@ -1224,7 +1224,7 @@ class MainWP_Post {
 						<li>
 							Here is the standard WordPress publishing mechanism. Only difference is the Select Sites box which enables you to select sites where you want to post the article.
 							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-post-new-1024x480.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-post-new-1024x480.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 					</ol>
 					</p>

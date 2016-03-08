@@ -80,7 +80,6 @@ class MainWP_System {
 			$this->upgradeVersionInfo = null;
 		}
 
-		$this->handleSettingsPost();
 
 		$ssl_api_verifyhost = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
 		if ( $ssl_api_verifyhost == 0 ) {
@@ -1621,7 +1620,9 @@ class MainWP_System {
 				return apply_filters( 'mainwp_currentusercan', true, $cap_type, $cap );
 			}
 		}
-
+		
+		$this->handleSettingsPost();
+		
 		remove_all_filters( 'admin_footer_text' );
 		add_filter( 'admin_footer_text', array( &$this, 'admin_footer_text' ) );
 	}

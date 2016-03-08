@@ -1302,7 +1302,7 @@ class MainWP_User {
 					<ol>
 						<li>
 							Select the roles you want and select sites you want to search on<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-manage-users.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-manage-users.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Hit the Show Users button. Plugin will gather all users with selected role(s) from selected sites in one table.
@@ -1313,7 +1313,7 @@ class MainWP_User {
 						<li>
 							To change the user(s) password select the user or users from the results table and enter a new password to the right
 							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-user-passwords-1024x507.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-user-passwords-1024x507.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							To Delete user(s) use bulk action menu above the list
@@ -1321,7 +1321,7 @@ class MainWP_User {
 						<li>
 							To Change Role of user(s), select user(s) in the list and, select the new role in the menu above the table and click Change button
 							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-edit-user-1024x130.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-edit-user-1024x130.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 					</ol>
 					</p>
@@ -1344,11 +1344,11 @@ class MainWP_User {
 								<li>Users website</li>
 								<li>Password for the new user. Type the password second time to confirm.</li>
 							</ol>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-add-user.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-add-user.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Select a role for the user <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-add-user-role.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-add-user-role.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>Select a site(s) to add user to</li>
 						<li>Click the Add New User button</li>
@@ -1365,7 +1365,7 @@ class MainWP_User {
 						</li>
 						<li>
 							Go to: MainWP > Users > Add New and scroll down to Bulk Upload Section
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/03/new-bulk-add-users-1024x202.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/03/new-bulk-add-users-1024x202.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							The fields in the csv file are as follows

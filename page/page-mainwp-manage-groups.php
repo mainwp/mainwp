@@ -346,8 +346,8 @@ class MainWP_Manage_Groups {
 		global $current_user;
 		if ( isset( $_POST['newName'] ) ) {
 			$groupId = MainWP_DB::Instance()->addGroup( $current_user->ID, self::checkGroupName( $_POST['newName'] ) );
-			$group   = MainWP_DB::Instance()->getGroupById( $groupId );
-
+			do_action('mainwp_added_new_group', $groupId);
+			$group   = MainWP_DB::Instance()->getGroupById( $groupId );			
 			self::createGroupItem( $group );
 			die();
 		}

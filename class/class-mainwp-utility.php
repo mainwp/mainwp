@@ -2269,6 +2269,7 @@ class MainWP_Utility {
 			} else {
 				$faviurl = $site->url . $favi;
 			}
+			$faviurl = str_replace( array( 'http://', 'https://'), array( '//', '//' ), $faviurl );			
 		} else {
 			$faviurl = plugins_url( 'images/sitefavi.png', dirname( __FILE__ ) );
 		}

@@ -252,7 +252,7 @@ class MainWP_Post {
 			<div class="clear"></div>
 			<div id="mainwp_posts_content">
 				<table class="wp-list-table widefat fixed posts tablesorter" id="mainwp_posts_table"
-					cellspacing="0">
+				       cellspacing="0">
 					<thead>
 					<tr>
 						<th scope="col" id="cb" class="manage-column column-cb check-column" style=""><input
@@ -272,7 +272,7 @@ class MainWP_Post {
 						<th scope="col" id="comments" class="manage-column column-comments num sortable desc" style="">
 							<a href="#" onclick="return false;">
                                 <span><span class="vers"><img alt="Comments"
-			                                src="<?php echo admin_url( 'images/comment-grey-bubble.png' ); ?>"></span></span>
+                                                              src="<?php echo admin_url( 'images/comment-grey-bubble.png' ); ?>"></span></span>
 								<span class="sorting-indicator"></span>
 							</a>
 						</th>
@@ -307,7 +307,7 @@ class MainWP_Post {
 						<th scope="col" id="comments" class="manage-column column-comments num sortable desc" style="">
 							<a href="#" onclick="return false;">
                                 <span><span class="vers"><img alt="Comments"
-			                                src="<?php echo admin_url( 'images/comment-grey-bubble.png' ); ?>"></span></span>
+                                                              src="<?php echo admin_url( 'images/comment-grey-bubble.png' ); ?>"></span></span>
 								<span class="sorting-indicator"></span>
 							</a>
 						</th>
@@ -472,8 +472,8 @@ class MainWP_Post {
 				ob_start();
 				?>
 				<tr id="post-1"
-					class="post-1 post type-post status-publish format-standard hentry category-uncategorized alternate iedit author-self"
-					valign="top">
+				    class="post-1 post type-post status-publish format-standard hentry category-uncategorized alternate iedit author-self"
+				    valign="top">
 					<th scope="row" class="check-column"><input type="checkbox" name="post[]" value="1"></th>
 					<td class="post-title page-title column-title">
 						<input class="postId" type="hidden" name="id" value="<?php echo $post['id']; ?>"/>
@@ -492,8 +492,8 @@ class MainWP_Post {
 							<abbr title="<?php echo $post['title']; ?>">
 								<?php if ( $post['status'] != 'trash' ) { ?>
 									<a class="row-title"
-										href="admin.php?page=SiteOpen&websiteid=<?php echo $website->id; ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>"
-										title="Edit '<?php echo $post['title']; ?>'"><?php echo $post['title']; ?></a>
+									   href="admin.php?page=SiteOpen&websiteid=<?php echo $website->id; ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>"
+									   title="Edit '<?php echo $post['title']; ?>'"><?php echo $post['title']; ?></a>
 								<?php } else { ?>
 									<?php echo $post['title']; ?>
 								<?php } ?>
@@ -1063,75 +1063,6 @@ class MainWP_Post {
 
 		return $results;
 	}
-
-	// public static function getTotalEZinePost($startdate, $enddate,  $keyword_meta, $websiteId )
-	// {
-	// if (empty($keyword_meta)) return;
-	// if (!MainWP_Utility::ctype_digit($websiteId)) return;
-	// $website = MainWP_DB::Instance()->getWebsiteById($websiteId);
-	// if (!MainWP_Utility::can_edit_website($website)) return;
-	// try
-	// {
-	// $results = MainWP_Utility::fetchUrlAuthed($website, 'get_total_ezine_post', array('start_date' => base64_encode($startdate),
-	// 'end_date' => base64_encode($enddate),
-	// 'keyword_meta' => base64_encode($keyword_meta)));
-	// }
-	// catch (MainWP_Exception $e)
-	// {
-	// return;
-	// }
-	// return $results;
-
-	// }
-
-	// public static function GetNextTime_handler($data, $website, &$output)
-	// {
-	// if (preg_match('/<mainwp>(.*)<\/mainwp>/', $data, $results) > 0) {
-	// $result = $results[1];
-	// $information = unserialize(base64_decode($result));
-	// unset($results);
-	// unset($result);
-	// if(isset($information['error']))
-	// {
-	// $output->error = $information['error'];
-	// }
-	// else
-	// {
-	// if (is_array($information) && isset($information['next_post_date'])) {
-	// $time = strtotime($information['next_post_date']);
-	// $time_next = strtotime($output->next_post_date);
-	// if ($time > 0)
-	// {
-	// if ($time_next == 0 || $time_next > $time)
-	// {
-	// $output->next_post_date =  date('Y-m-d H:i:s', $time);
-	// $output->next_post_id = $information['next_post_id'];   ;
-	// $output->next_post_website_id = $website->id;
-	// $output->next_posts= $information['next_posts'];
-	// $output->error = NULL;
-	// }
-	// }
-	// }
-	// }
-	// }
-	// }
-
-	// public static function getNextTimeToPost($post_type_function = 'get_next_time_to_post')
-	// {
-	// $websites = MainWP_DB::Instance()->query(MainWP_DB::Instance()->getSQLWebsitesForCurrentUser());
-	// $dbwebsites = array();
-	// while ($websites && ($website = @MainWP_DB::fetch_object($websites)))
-	// {
-	// $dbwebsites[$website->id] = MainWP_Utility::mapSite($website, array('id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey'));
-	// }
-	// @MainWP_DB::free_result($websites);
-	// $output = new stdClass();
-	// if (count($dbwebsites) > 0)
-	// {
-	// MainWP_Utility::fetchUrlsAuthed($dbwebsites, $post_type_function, '', array(MainWP_Post::getClassName(), 'GetNextTime_handler'), $output);
-	// }
-	// return get_object_vars($output);
-	// }
 
 	public static function addStickyOption() {
 		global $wp_meta_boxes;

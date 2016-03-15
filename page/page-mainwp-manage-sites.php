@@ -259,7 +259,7 @@ class MainWP_Manage_Sites {
 					'pid'                    => $pid,
 				) );
 
-				$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', array(
+				$params = array(
 					'type'                                       => $type,
 					'exclude'                                    => $exclude,
 					'excludebackup'                              => $excludebackup,
@@ -272,8 +272,13 @@ class MainWP_Manage_Sites {
 					'loadFilesBeforeZip'                         => $loadFilesBeforeZip,
 					'pid'                                        => $pid,
 					MainWP_Utility::getFileParameter( $website ) => $file,
-				), false, false, false );
+				);
+
+				MainWP_Logger::Instance()->debugForWebsite( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
+
+				$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', $params, false, false, false );
 			} catch ( MainWP_Exception $e ) {
+				MainWP_Logger::Instance()->warningForWebsite( $website, 'backup', 'Error: ' . $e->getMessage()  . ' (' . $e->getMessageExtra() . ')' );
 				$stop = microtime( true );
 				//Bigger then 30 seconds means a timeout
 				if ( ( $stop - $start ) > 30 ) {
@@ -814,7 +819,8 @@ class MainWP_Manage_Sites {
 		}
 
 		MainWP_Utility::endSession();
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', array(
+
+		$params = array(
 			'type'                                       => $pType,
 			'exclude'                                    => $pExclude,
 			'excludebackup'                              => $excludebackup,
@@ -829,7 +835,11 @@ class MainWP_Manage_Sites {
 			'fileUID'                                    => $pFileNameUID,
 			'pid'                                        => $pid,
 			'append'                                     => ( $append ? 1 : 0 ),
-		), false, false, false );
+		);
+
+		MainWP_Logger::Instance()->debugForWebsite( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
+
+		$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', $params, false, false, false );
 		do_action( 'mainwp_managesite_backup', $website, array( 'type' => $pType ), $information );
 
 		if ( isset( $information['error'] ) ) {

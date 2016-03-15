@@ -109,9 +109,9 @@ class MainWP_Themes {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage ) {
-		?>
-		<div class="wrap">
+public static function renderHeader( $shownPage ) {
+	?>
+	<div class="wrap">
 		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
 		<h2><i class="fa fa-paint-brush"></i> <?php _e( 'Themes', 'mainwp' ); ?></h2>
 		<div style="clear: both;"></div><br/>
@@ -169,18 +169,18 @@ class MainWP_Themes {
 			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">
-		<?php
-	}
+			<?php
+			}
 
-		/**
-		 * @param string $shownPage The page slug shown at this moment
-		 */
-	public static function renderFooter( $shownPage ) {
-		?>
+			/**
+			 * @param string $shownPage The page slug shown at this moment
+			 */
+			public static function renderFooter( $shownPage ) {
+			?>
 		</div>
-		</div>
-		<?php
-	}
+	</div>
+	<?php
+}
 
 	public static function render() {
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Themes' );
@@ -746,7 +746,7 @@ class MainWP_Themes {
 			</div>
 			<div id="mainwp_notes_content">
                 <textarea style="width: 580px !important; height: 300px;"
-	                id="mainwp_notes_note"></textarea>
+                          id="mainwp_notes_note"></textarea>
 			</div>
 			<form>
 				<div style="float: right" id="mainwp_notes_status"></div>
@@ -996,7 +996,7 @@ class MainWP_Themes {
 							if (!empty($favoritesCallback)) {
 								?>
 								<div class="favorites-add-link"><a style="font-size: 16px;" class="add-favorites" href="#" id="add-favorite-theme-{{data.slug}}"
-																   title="{{data.name}} {{data.version}}"><?php  _e( 'Add To Favorites', 'mainwp' ); ?></a></div>
+								                                   title="{{data.name}} {{data.version}}"><?php  _e( 'Add To Favorites', 'mainwp' ); ?></a></div>
 								<?php
 							}
 							?>

@@ -561,6 +561,10 @@ class MainWP_DB {
 	}
 
 	public function getWebsiteOption( $website, $option ) {
+		if ( property_exists( $website, $option ) ) {
+			return $website->{$option};
+		}
+
 		return $this->wpdb->get_var( 'SELECT value FROM ' . $this->tableName( 'wp_options' ) . ' WHERE wpid = ' . $website->id . ' AND name = "' . $this->escape( $option ) . '"' );
 	}
 
@@ -644,7 +648,19 @@ class MainWP_DB {
 		return null;
 	}
 
-	public function getSQLWebsitesForCurrentUser( $selectgroups = false, $search_site = null, $orderBy = 'wp.url', $offset = false, $rowcount = false, $extraWhere = null, $for_manager = false ) {
+	public function getSQLWebsitesOptionsExtra( $options = array( 'favi_icon' ) ) {
+		$options_extra = '';
+		if ( is_array( $options ) && ( count( $options ) > 0 ) ) {
+			foreach ( $options as $option ) {
+				$options_extra .= ',';
+				$options_extra .= "(SELECT $option.value FROM " . $this->tableName( 'wp_options' ) . " $option WHERE $option.wpid = wp.id AND $option.name = \"$option\" LIMIT 1) AS $option";
+			}
+		}
+
+		return $options_extra;
+	}
+
+	public function getSQLWebsitesForCurrentUser( $selectgroups = false, $search_site = null, $orderBy = 'wp.url', $offset = false, $rowcount = false, $extraWhere = null, $for_manager = false, $options = array( 'favi_icon' ) ) {
 		$where = '';
 		if ( MainWP_System::Instance()->isMultiUser() ) {
 			global $current_user;
@@ -664,8 +680,10 @@ class MainWP_DB {
 			$where .= $this->getWhereAllowAccessSites( 'wp' );
 		}
 
+		$options_extra = $this->getSQLWebsitesOptionsExtra($options);
+
 		if ( $selectgroups ) {
-			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
+			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups' . $options_extra . '
             FROM ' . $this->tableName( 'wp' ) . ' wp
             LEFT JOIN ' . $this->tableName( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
             LEFT JOIN ' . $this->tableName( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -675,7 +693,7 @@ class MainWP_DB {
             GROUP BY wp.id
             ORDER BY ' . $orderBy;
 		} else {
-			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*
+			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*' . $options_extra . '
             FROM ' . $this->tableName( 'wp' ) . ' wp
             JOIN ' . $this->tableName( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->getOptionView() . ' wp_optionview ON wp.id = wp_optionview.wpid
@@ -882,11 +900,12 @@ class MainWP_DB {
 		return $this->getRowResult( $this->getSQLWebsiteById( $id, $selectGroups ) );
 	}
 
-	public function getSQLWebsiteById( $id, $selectGroups = false ) {
+	public function getSQLWebsiteById( $id, $selectGroups = false, $options = array( 'favi_icon' ) ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			$where = $this->getWhereAllowAccessSites( 'wp' );
+			$options_extra = $this->getSQLWebsitesOptionsExtra($options);
 			if ( $selectGroups ) {
-				return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
+				return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups' . $options_extra . '
                 FROM ' . $this->tableName( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->tableName( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->tableName( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -896,7 +915,7 @@ class MainWP_DB {
                 GROUP BY wp.id';
 			}
 
-			return 'SELECT wp.*,wp_sync.*,wp_optionview.*
+			return 'SELECT wp.*,wp_sync.*,wp_optionview.* ' . $options_extra . '
                     FROM ' . $this->tableName( 'wp' ) . ' wp
                     JOIN ' . $this->tableName( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
                     JOIN ' . $this->getOptionView() . ' wp_optionview ON wp.id = wp_optionview.wpid

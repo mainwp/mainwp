@@ -641,7 +641,7 @@ class MainWP_Utility {
 				if ( $minimumDelay > 0 ) {
 					$minimumDelay = $minimumDelay / 1000;
 				}
-				$minimumIPDelay = ( ( get_option( 'mainwp_minimumIPDelay' ) === false ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) );
+				$minimumIPDelay = ( ( get_option( 'mainwp_minimumIPDelay' ) === false ) ? 400 : get_option( 'mainwp_minimumIPDelay' ) );
 				if ( $minimumIPDelay > 0 ) {
 					$minimumIPDelay = $minimumIPDelay / 1000;
 				}
@@ -1027,6 +1027,8 @@ class MainWP_Utility {
 		//$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
+		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'Request to ['. $url . '] [' . print_r( $postdata, 1 ) . ']' );
+
 		if ( ! $pForceFetch ) {
 			//todo: RS:
 			//check if offline
@@ -1044,7 +1046,7 @@ class MainWP_Utility {
 			if ( $minimumDelay > 0 ) {
 				$minimumDelay = $minimumDelay / 1000;
 			}
-			$minimumIPDelay = ( ( get_option( 'mainwp_minimumIPDelay' ) === false ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) );
+			$minimumIPDelay = ( ( get_option( 'mainwp_minimumIPDelay' ) === false ) ? 400 : get_option( 'mainwp_minimumIPDelay' ) );
 			if ( $minimumIPDelay > 0 ) {
 				$minimumIPDelay = $minimumIPDelay / 1000;
 			}
@@ -1218,6 +1220,8 @@ class MainWP_Utility {
 		@ini_set( 'max_execution_time', $timeout );
 		MainWP_Utility::endSession();
 
+		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'Executing handlers' );
+
 		$disabled_functions = ini_get( 'disable_functions' );
 		if ( empty( $disabled_functions ) || ( stristr( $disabled_functions, 'curl_multi_exec' ) === false ) ) {
 			$mh = @curl_multi_init();
@@ -1259,6 +1263,9 @@ class MainWP_Utility {
 			MainWP_DB::Instance()->insertOrUpdateRequestLog( $website->id, $ip, null, microtime( true ) );
 		}
 
+
+		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
+
 		if ( ( $data === false ) && ( $http_status == 0 ) ) {
 			MainWP_Logger::Instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
 			throw new MainWP_Exception( 'HTTPERROR', $err );
@@ -1268,7 +1275,7 @@ class MainWP_Utility {
 		} else if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result      = $results[1];
 			$information = unserialize( base64_decode( $result ) );
-
+			MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'information: [OK]' );
 			return $information;
 		} else {
 			MainWP_Logger::Instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] Result was: [' . $data . ']' );
@@ -2269,7 +2276,6 @@ class MainWP_Utility {
 			} else {
 				$faviurl = $site->url . $favi;
 			}
-			$faviurl = str_replace( array( 'http://', 'https://'), array( '//', '//' ), $faviurl );			
 		} else {
 			$faviurl = plugins_url( 'images/sitefavi.png', dirname( __FILE__ ) );
 		}

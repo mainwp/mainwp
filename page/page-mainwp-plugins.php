@@ -126,9 +126,9 @@ class MainWP_Plugins {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage ) {
-		?>
-		<div class="wrap">
+public static function renderHeader( $shownPage ) {
+	?>
+	<div class="wrap">
 		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
 		<h2><i class="fa fa-plug"></i> <?php _e( 'Plugins', 'mainwp' ); ?></h2>
 		<div style="clear: both;"></div><br/>
@@ -186,18 +186,18 @@ class MainWP_Plugins {
 			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">
-		<?php
-	}
+			<?php
+			}
 
-	/**
-	 * @param string $shownPage The page slug shown at this moment
-	 */
-	public static function renderFooter( $shownPage ) {
-		?>
+			/**
+			 * @param string $shownPage The page slug shown at this moment
+			 */
+			public static function renderFooter( $shownPage ) {
+			?>
 		</div>
-		</div>
-		<?php
-	}
+	</div>
+	<?php
+}
 
 	public static function render() {
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Plugins' );
@@ -525,7 +525,7 @@ class MainWP_Plugins {
 			</div>
 			<div id="mainwp_notes_content">
                 <textarea style="width: 580px !important; height: 300px;"
-	                id="mainwp_notes_note"></textarea>
+                          id="mainwp_notes_note"></textarea>
 			</div>
 			<form>
 				<div style="float: right" id="mainwp_notes_status"></div>

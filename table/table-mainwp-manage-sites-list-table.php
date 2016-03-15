@@ -752,12 +752,12 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			<form method="GET" action="">
 				<input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
 				<input type="text" value="<?php echo( isset( $_REQUEST['s'] ) ? esc_attr( $_REQUEST['s'] ) : '' ); ?>"
-					autocompletelist="sites" name="s" class="mainwp_autocomplete"/>
+				       autocompletelist="sites" name="s" class="mainwp_autocomplete"/>
 				<datalist id="sites">
 					<?php
 					if ( MainWP_DB::is_result( $this->items ) ) {
 						while ( $this->items && ( $item = @MainWP_DB::fetch_array( $this->items ) ) ) {
-							echo '<option>' . $item['name'] . '</option>';
+							echo '<option>' . stripslashes( $item['name'] ) . '</option>';
 						}
 
 						MainWP_DB::data_seek( $this->items, 0 );

@@ -1866,7 +1866,8 @@ class MainWP_Manage_Sites_View {
 						$id = MainWP_DB::Instance()->addWebsite($current_user->ID, $_POST['managesites_add_wpname'], $_POST['managesites_add_wpurl'], $_POST['managesites_add_wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], (isset( $information['nosslkey'] )
 								? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion);
 						$message = sprintf( __( 'Site successfully added - Visit the Site\'s %sDashboard%s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' );
-						$website = MainWP_DB::Instance()->getWebsiteById( $id );
+						do_action('mainwp_added_new_site', $id); // must before getWebsiteById to update team control permisions
+						$website = MainWP_DB::Instance()->getWebsiteById( $id );						
 						MainWP_Sync::syncInformationArray( $website, $information );
 					} else {
 						$error = __('Undefined error.', 'mainwp' );

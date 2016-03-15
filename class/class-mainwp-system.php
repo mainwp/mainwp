@@ -51,6 +51,7 @@ class MainWP_System {
 
 	public function __construct( $mainwp_plugin_file ) {
 		MainWP_System::$instance = $this;
+		$this->load_all_options();
 		$this->update();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 		list ( $t1, $t2 ) = explode( '/', $this->plugin_slug );
@@ -80,7 +81,6 @@ class MainWP_System {
 			$this->upgradeVersionInfo = null;
 		}
 
-		$this->handleSettingsPost();
 
 		$ssl_api_verifyhost = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
 		if ( $ssl_api_verifyhost == 0 ) {
@@ -290,6 +290,32 @@ class MainWP_System {
 			}
 		}
 
+	}
+
+	function load_all_options() {
+		global $wpdb;
+
+		if ( !defined( 'WP_INSTALLING' ) || !is_multisite() )
+			$alloptions = wp_cache_get( 'alloptions', 'options' );
+		else
+			$alloptions = false;
+
+		if ( !isset($alloptions['mainwp_db_version']) ) {
+			$suppress = $wpdb->suppress_errors();
+			$alloptions_db = $wpdb->get_results( "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in ('mainwp_db_version', 'mainwp_plugin_version', 'mainwp_upgradeVersionInfo', 'mainwp_extensions', 'mainwp_manager_extensions')" );
+			$wpdb->suppress_errors($suppress);
+			if ( !is_array( $alloptions ) ) $alloptions = array();
+			if ( is_array( $alloptions_db ) ) {
+				foreach ( (array) $alloptions_db as $o ) {
+					$alloptions[ $o->option_name ] = $o->option_value;
+				}
+				if ( ! defined( 'WP_INSTALLING' ) || ! is_multisite() ) {
+					wp_cache_set( 'alloptions', $alloptions, 'options' );
+				}
+			}
+		}
+
+		return $alloptions;
 	}
 
 	function cron_active() {
@@ -1622,6 +1648,8 @@ class MainWP_System {
 			}
 		}
 
+		$this->handleSettingsPost();
+
 		remove_all_filters( 'admin_footer_text' );
 		add_filter( 'admin_footer_text', array( &$this, 'admin_footer_text' ) );
 	}
@@ -2232,8 +2260,10 @@ class MainWP_System {
 
 	function sites_fly_menu() {
 		global $wpdb;
-		$where    = MainWP_DB::Instance()->getWhereAllowAccessSites();
-		$websites = $wpdb->get_results( 'SELECT id,name,url FROM `' . $wpdb->prefix . 'mainwp_wp` WHERE 1 ' . $where );
+		$where    = MainWP_DB::Instance()->getWhereAllowAccessSites( 'wp' );
+
+		$options_extra = MainWP_DB::Instance()->getSQLWebsitesOptionsExtra();
+		$websites = $wpdb->get_results( 'SELECT wp.id,wp.name,wp.url' . $options_extra . ' FROM `' . $wpdb->prefix . 'mainwp_wp` wp WHERE 1 ' . $where );
 		?>
 		<div id="mainwp-sites-menu" style="direction: rtl;">
 			<div style="direction: ltr;">

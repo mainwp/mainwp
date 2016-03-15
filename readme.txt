@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.4.1
-Stable tag: 3.1.1
+Stable tag: 3.1.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -165,6 +165,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.1.2 - 3-15-16 =
+* Fixed: Slashes added in sitenames when using quotes
+* Fixed: Multiple mixed content warnings
+* Fixed: Conflict with wpMandrill and Postman SMTP plugins
+* Added: Support for the new Team Control feature
+* Tweaked: Page loading times and syncing times reduced
 
 = 3.1.1 - 3-3-16 =
 * Fixed: Fix All Security Issues feature not running in non-English language

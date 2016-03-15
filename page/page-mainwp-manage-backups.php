@@ -1320,15 +1320,15 @@ public static function renderHeader( $shownPage ) {
 						</li>
 						<li>
 							Choose a Backup Type <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/12/backup-type.png" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/12/backup-type.png" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							In case you don't need all files to be included in backup, click the EXCLUDE FILES link, this will show your site file map and you will be able to easily exclude any files and folders<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/12/exclude-files.png" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/12/exclude-files.png" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Choose where do you want to keep you backup <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/12/backup-server.png" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/12/backup-server.png" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Select sites you want to backup
@@ -1347,11 +1347,11 @@ public static function renderHeader( $shownPage ) {
 						<li>
 							If you want to use external storage, click the Remote Destination button when setting a backup
 							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/12/remote-destination.png" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/12/remote-destination.png" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Enter destination Title and Directory <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/12/dropbox-settings.png" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/12/dropbox-settings.png" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Click the Connect to Dropbox button<br/>
@@ -1360,12 +1360,12 @@ public static function renderHeader( $shownPage ) {
 						<li>
 							Once you Sign In, Dropbox will ask you if you want to allow MainWP to access your Dropbox. Click the Allow button.
 							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/12/drobbox-allow.png" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/12/drobbox-allow.png" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							After you get the success message, return to dashboard and click the Yes, I've authorized MainWP to Dropbox button
 							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/12/dropbox-authorized.png" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/12/dropbox-authorized.png" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Click the Test Settings button, if it returns success message click the Save Destination button.
@@ -1377,12 +1377,12 @@ public static function renderHeader( $shownPage ) {
 						<li>
 							After choosing Remote Destination for keeping your backups, to select the Amazon S3, click the Add button next to the Amazon icon
 							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/12/amazon-add.png" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/12/amazon-add.png" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Settings fields will appear, here you need to provide a few details for proper use of the external source
 							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/12/amazon-settings.png" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/12/amazon-settings.png" style="wight: 100% !important;" alt="screenshot"/>
 							<ol>
 								<li>Destination title, something that will help you to manage your locations easier in future</li>
 								<li>Access Key ID and Secret Key, provided by Amazon in your account</li>
@@ -1400,11 +1400,11 @@ public static function renderHeader( $shownPage ) {
 						<li>
 							After choosing Remote Destination for keeping your backups, to use the remote FTP location, click the Add button next to the FTP icon
 							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/12/ftp-add.png" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/12/ftp-add.png" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Settings fields will appear, you need to enter following <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/12/amazon-settings.png" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/12/amazon-settings.png" style="wight: 100% !important;" alt="screenshot"/>
 							<ol>
 								<li>Title</li>
 								<li>Server address</li>
@@ -1427,7 +1427,7 @@ public static function renderHeader( $shownPage ) {
 					<ol>
 						<li>
 							Go to the Settings page and set the 'Execute backuptasks in chunks' option to YES <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/11/settings-chunk-backups-1024x227.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/11/settings-chunk-backups-1024x227.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 					</ol>
 					</p>

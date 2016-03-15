@@ -259,7 +259,7 @@ class MainWP_Manage_Sites {
 					'pid'                    => $pid,
 				) );
 
-				$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', array(
+				$params = array(
 					'type'                                       => $type,
 					'exclude'                                    => $exclude,
 					'excludebackup'                              => $excludebackup,
@@ -272,8 +272,13 @@ class MainWP_Manage_Sites {
 					'loadFilesBeforeZip'                         => $loadFilesBeforeZip,
 					'pid'                                        => $pid,
 					MainWP_Utility::getFileParameter( $website ) => $file,
-				), false, false, false );
+				);
+
+				MainWP_Logger::Instance()->debugForWebsite( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
+
+				$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', $params, false, false, false );
 			} catch ( MainWP_Exception $e ) {
+				MainWP_Logger::Instance()->warningForWebsite( $website, 'backup', 'Error: ' . $e->getMessage()  . ' (' . $e->getMessageExtra() . ')' );
 				$stop = microtime( true );
 				//Bigger then 30 seconds means a timeout
 				if ( ( $stop - $start ) > 30 ) {
@@ -814,7 +819,8 @@ class MainWP_Manage_Sites {
 		}
 
 		MainWP_Utility::endSession();
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', array(
+
+		$params = array(
 			'type'                                       => $pType,
 			'exclude'                                    => $pExclude,
 			'excludebackup'                              => $excludebackup,
@@ -829,7 +835,11 @@ class MainWP_Manage_Sites {
 			'fileUID'                                    => $pFileNameUID,
 			'pid'                                        => $pid,
 			'append'                                     => ( $append ? 1 : 0 ),
-		), false, false, false );
+		);
+
+		MainWP_Logger::Instance()->debugForWebsite( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
+
+		$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', $params, false, false, false );
 		do_action( 'mainwp_managesite_backup', $website, array( 'type' => $pType ), $information );
 
 		if ( isset( $information['error'] ) ) {
@@ -1553,7 +1563,7 @@ class MainWP_Manage_Sites {
 					<ol>
 						<li>
 							Click the 'Add New Site' button in or go to MainWP > Sites > Add New<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-add-new-site-1024x64.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-add-new-site-1024x64.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Enter Site Name, Site URL and Administrator Username <br/><br/>
@@ -1576,7 +1586,7 @@ class MainWP_Manage_Sites {
 						<li>Click 'Require Unique Security ID'</li>
 						<li>
 							Click Save Changes <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/04/new-sec-id.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/04/new-sec-id.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>In Your Main Network site Click the Add New Site button</li>
 						<li>In the Child Unique Security ID field enter the Unique ID you received from your child</li>
@@ -1593,7 +1603,7 @@ class MainWP_Manage_Sites {
 						<li>
 							Locate the wanted site in the list and click the 'Dashboard' link under the site name or just click on the site name
 							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/12/new-dashboard-link-1024x77.png" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/12/new-dashboard-link-1024x77.png" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 					</ol>
 					</p>
@@ -1609,7 +1619,7 @@ class MainWP_Manage_Sites {
 						<li>Enter your sites URL</li>
 						<li>
 							Click Test Connection <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-test-connection.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-test-connection.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 					</ol>
 					</p>

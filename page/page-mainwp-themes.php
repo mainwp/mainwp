@@ -109,9 +109,9 @@ class MainWP_Themes {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage ) {
-		?>
-		<div class="wrap">
+public static function renderHeader( $shownPage ) {
+	?>
+	<div class="wrap">
 		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
 		<h2><i class="fa fa-paint-brush"></i> <?php _e( 'Themes', 'mainwp' ); ?></h2>
 		<div style="clear: both;"></div><br/>
@@ -169,18 +169,18 @@ class MainWP_Themes {
 			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">
-		<?php
-	}
+			<?php
+			}
 
-		/**
-		 * @param string $shownPage The page slug shown at this moment
-		 */
-	public static function renderFooter( $shownPage ) {
-		?>
+			/**
+			 * @param string $shownPage The page slug shown at this moment
+			 */
+			public static function renderFooter( $shownPage ) {
+			?>
 		</div>
-		</div>
-		<?php
-	}
+	</div>
+	<?php
+}
 
 	public static function render() {
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Themes' );
@@ -746,7 +746,7 @@ class MainWP_Themes {
 			</div>
 			<div id="mainwp_notes_content">
                 <textarea style="width: 580px !important; height: 300px;"
-	                id="mainwp_notes_note"></textarea>
+                          id="mainwp_notes_note"></textarea>
 			</div>
 			<form>
 				<div style="float: right" id="mainwp_notes_status"></div>
@@ -996,7 +996,7 @@ class MainWP_Themes {
 							if (!empty($favoritesCallback)) {
 								?>
 								<div class="favorites-add-link"><a style="font-size: 16px;" class="add-favorites" href="#" id="add-favorite-theme-{{data.slug}}"
-																   title="{{data.name}} {{data.version}}"><?php  _e( 'Add To Favorites', 'mainwp' ); ?></a></div>
+								                                   title="{{data.name}} {{data.version}}"><?php  _e( 'Add To Favorites', 'mainwp' ); ?></a></div>
 								<?php
 							}
 							?>
@@ -1608,19 +1608,19 @@ class MainWP_Themes {
 					<ol>
 						<li>
 							Select do you want to see your Active or Inactive themes.<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-themes-active.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-themes-active.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Optionaly, Enter the keyword for the search <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-themes-keyword.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-themes-keyword.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Select the sites from the Select Site Box <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-themes-sites.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-themes-sites.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Hit the Show Themes button <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-themes-show.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-themes-show.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li><h4>To Deactivate a Theme: </h4><br/>
 							<ol>
@@ -1672,7 +1672,7 @@ class MainWP_Themes {
 						</li>
 						<li>
 							Click Search Theme button <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-themes-install.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-themes-install.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Select the site(s) you want to install the theme, and click Install
@@ -1688,7 +1688,7 @@ class MainWP_Themes {
 						</li>
 						<li>
 							Click 'Upload Now' button<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-theme-upload.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-theme-upload.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Locate your Theme
@@ -1715,17 +1715,17 @@ class MainWP_Themes {
 						</li>
 						<li>
 							Click 'Show' on 'Theme Upgrades Available' area <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-available-themes.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-available-themes.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Click the middle upgrades link to show the drop down of the available upgrades for that site
 							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-available-themes-show.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-available-themes-show.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Select 'Upgrade' next to the name of the theme or 'Upgrade All' to upgrade all themes on the site
 							<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-available-themes-upgrade.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-available-themes-upgrade.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 					</ol>
 					</p>
@@ -1743,14 +1743,14 @@ class MainWP_Themes {
 						</li>
 						<li>
 							Click 'Show' on 'Theme Upgrades Available' area <br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-available-themes.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-available-themes.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 						<li>
 							Click the middle upgrades link to show the drop down of the available upgrades for that site
 						</li>
 						<li>
 							Click 'Ignore' next to the name of the theme<br/><br/>
-							<img src="http://docs.mainwp.com/wp-content/uploads/2013/05/new-plugin-ignore.jpg" style="wight: 100% !important;" alt="screenshot"/>
+							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-plugin-ignore.jpg" style="wight: 100% !important;" alt="screenshot"/>
 						</li>
 					</ol>
 					</p>

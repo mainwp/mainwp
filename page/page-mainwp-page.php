@@ -692,15 +692,15 @@ class MainWP_Page {
 						<ol>
 							<li>
 								Select statuses of your pages you want to find. Select between standard WordPress page statuses: Published, Draft, Pending, Future, Private and Trash<br/><br/>
-								<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-pages-status.jpg" style="wight: 100% !important;" alt="screenshot"/>
+								<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-pages-status.jpg" style="wight: 100% !important;" alt="screenshot"/>
 							</li>
 							<li>
 								Optionaly, enter a Keyword and use the provided Date Picker to select date range for wanted pages <br/><br/>
-								<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-pages-keyword.jpg" style="wight: 100% !important;" alt="screenshot"/>
+								<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-pages-keyword.jpg" style="wight: 100% !important;" alt="screenshot"/>
 							</li>
 							<li>
 								Use the Select Sites box to select the sites to be searched <br/><br/>
-								<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-pages-sites.jpg" style="wight: 100% !important;" alt="screenshot"/>
+								<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-pages-sites.jpg" style="wight: 100% !important;" alt="screenshot"/>
 							</li>
 							<li>
 								Click the Show Pages button and MainWP Plugin will gather all your pages based on your search parameters in one list
@@ -723,7 +723,7 @@ class MainWP_Page {
 							</li>
 							<li>
 								Here is the standard WordPress publishing mechanism. Only difference is the Select Sites box which enables you to select sites where you want to create a new page. <br/><br/>
-								<img src="http://docs.mainwp.com/wp-content/uploads/2013/02/new-post-new-1024x480.jpg" style="wight: 100% !important;" alt="screenshot"/>
+								<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-post-new-1024x480.jpg" style="wight: 100% !important;" alt="screenshot"/>
 							</li>
 						</ol>
 					</p>

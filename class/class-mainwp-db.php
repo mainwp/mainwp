@@ -1035,7 +1035,7 @@ class MainWP_DB {
 			$values = array(
 				'userid'                  => $userid,
 				'adminname'               => $this->escape( $admin ),
-				'name'                    => $this->escape( htmlspecialchars( $name ) ),
+				'name'                    => $name, // escape by insert
 				'url'                     => $this->escape( $url ),
 				'pubkey'                  => $this->escape( $pubkey ),
 				'privkey'                 => $this->escape( $privkey ),

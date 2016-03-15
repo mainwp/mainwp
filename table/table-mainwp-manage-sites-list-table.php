@@ -757,7 +757,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 					<?php
 					if ( MainWP_DB::is_result( $this->items ) ) {
 						while ( $this->items && ( $item = @MainWP_DB::fetch_array( $this->items ) ) ) {
-							echo '<option>' . $item['name'] . '</option>';
+							echo '<option>' . stripslashes( $item['name'] ) . '</option>';
 						}
 
 						MainWP_DB::data_seek( $this->items, 0 );

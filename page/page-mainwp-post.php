@@ -686,6 +686,26 @@ class MainWP_Post {
 						$post_custom = get_post_custom( $id );
 						//                if (isset($post_custom['_tags'])) $post_custom['_tags'] = base64_decode(trim($post_custom['_tags']));
 
+						$galleries = get_post_gallery( $id, false );
+						$post_gallery_images = array();
+
+						if ( is_array($galleries) && isset($galleries['ids']) ) {
+							$attached_images = explode( ',', $galleries['ids'] );							
+							foreach( $attached_images as $attachment_id ) {
+								$attachment = get_post( $attachment_id );
+								if ( $attachment ) {
+									$post_gallery_images[] = array(
+										'id' => $attachment_id,
+										'alt' => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
+										'caption' => $attachment->post_excerpt,
+										'description' => $attachment->post_content,									
+										'src' => $attachment->guid,
+										'title' => $attachment->post_title
+									);
+								}
+							}
+						}
+												
 						include_once( ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php' );
 						$post_featured_image = get_post_thumbnail_id( $id );
 						$mainwp_upload_dir   = wp_upload_dir();
@@ -758,6 +778,7 @@ class MainWP_Post {
 								'post_custom'         => base64_encode( serialize( $post_custom ) ),
 								'post_category'       => base64_encode( $post_category ),
 								'post_featured_image' => base64_encode( $post_featured_image ),
+								'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ),
 								'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ),
 							);
 							MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newpost', $post_data, array(

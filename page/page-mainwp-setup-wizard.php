@@ -750,7 +750,7 @@ class MainWP_Setup_Wizard {
 		if (empty($product_id))
 			return array('error' => __('Invalid product id', 'mainwp'));
 
-		$data = MainWPApiManager::instance()->purchase_software($username, $password, $product_id);
+		$data = MainWP_Api_Manager::instance()->purchase_software($username, $password, $product_id);
 		$result = json_decode($data, true);
 		$undefined_error = false;
 		if (is_array($result)) {

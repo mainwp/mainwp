@@ -51,14 +51,14 @@ class MainWP_DB {
 		//get_site_option is multisite aware!
 		$currentVersion = get_site_option( 'mainwp_db_version' );
 
+		if ( empty( $currentVersion ) ) {				
+			set_transient( '_mainwp_activation_redirect', 1, 30 );
+			update_site_option( 'mainwp_run_quick_setup', 'yes' );
+		}
+		
 		$rslt = MainWP_DB::Instance()->query( "SHOW TABLES LIKE '" . $this->tableName( 'wp' ) . "'" );
 		if ( @MainWP_DB::num_rows( $rslt ) == 0 ) {
 			$currentVersion = false;
-		}
-
-		if ( empty( $currentVersion ) ) {
-			set_transient( '_mainwp_activation_redirect', 1, 30 );
-			update_site_option( 'mainwp_run_quick_setup', 'yes' );
 		}
 
 		if ( $currentVersion == $this->mainwp_db_version ) {

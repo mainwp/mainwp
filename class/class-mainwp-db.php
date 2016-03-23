@@ -1301,6 +1301,23 @@ class MainWP_DB {
 		return $progress;
 	}
 
+	public function backupFullTaskRunning( $wp_id ) {		
+		$progresses = $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp_backup_progress' ) . ' WHERE wp_id = ' . $wp_id );
+		if ( is_array( $progresses ) ) {
+			foreach( $progresses as $progress ) {
+				if ($progress->downloadedDBComplete == 0 && $progress->downloadedFULLComplete == 0) {
+					if ( $task = $this->getBackupTaskById( $progress->task_id ) ) {
+						if ( 'full' == $task->type && !$task->paused) {
+							return true;
+						}
+					}
+					
+				}
+			}
+		}
+		return false;
+	}
+	
 	public function removeBackupTask( $id ) {
 		$this->wpdb->query( 'DELETE FROM ' . $this->tableName( 'wp_backup' ) . ' WHERE id = ' . $id );
 	}

@@ -1273,6 +1273,10 @@ class MainWP_Post_Handler {
 			}
 		}
 
+		if ( MainWP_DB::Instance()->backupFullTaskRunning( $websiteId ) ) {
+			die( json_encode( array( 'error' =>  __( 'Full backup running for the site', 'mainwp' ) ) ) );
+		}
+		
 		if ( empty( $slugs ) ) {
 			die( json_encode( array( 'message' => __( 'Not found items slugs to update.' ) ) ) );
 		}

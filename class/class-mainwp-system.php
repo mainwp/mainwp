@@ -713,8 +713,17 @@ class MainWP_System {
 			return;
 		}
 
-		$websites = MainWP_DB::Instance()->getWebsitesCheckUpdates( 4 );
-		MainWP_Logger::Instance()->debug( 'CRON :: updates check :: found ' . count( $websites ) . ' websites' );
+		$websites = array();
+		$checkupdate_websites = MainWP_DB::Instance()->getWebsitesCheckUpdates( 4 );
+		
+		foreach ($checkupdate_websites as $website) {
+			if ( ! MainWP_DB::Instance()->backupFullTaskRunning( $website->id ) ) {
+				$websites[] = $website;	
+			}
+		}
+		
+		MainWP_Logger::Instance()->debug( 'CRON :: updates check :: found ' . count( $checkupdate_websites ) . ' websites' );
+		MainWP_Logger::Instance()->debug( 'CRON :: backup task running :: found ' . (count( $checkupdate_websites )  - count( $websites )) . ' websites' );
 
 		$userid = null;
 		foreach ( $websites as $website ) {
@@ -728,7 +737,7 @@ class MainWP_System {
 			MainWP_DB::Instance()->updateWebsiteSyncValues( $website->id, $websiteValues );
 		}
 
-		if ( count( $websites ) == 0 ) {
+		if ( count( $checkupdate_websites ) == 0 ) {
 			$busyCounter = MainWP_DB::Instance()->getWebsitesCountWhereDtsAutomaticSyncSmallerThenStart();
 
 			if ( $busyCounter == 0 ) {

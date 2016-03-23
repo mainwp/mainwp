@@ -34,13 +34,14 @@ class MainWP_Install_Bulk {
 
 	//Renders the upload sub part
 	public static function renderUpload( $title ) {
+		$type = ($title == 'Plugins') ? 'plugin' : 'theme';
 		?>
 		<div class="postbox">
 			<h3 class="mainwp_box_title">
-				<i class="fa fa-upload"></i> <?php echo ($title == 'Plugins') ? __( 'Step 1: Upload Plugins', 'mainwp' ) : __( 'Step 1: Upload Themes', 'mainwp' ); ?></h3>
+				<i class="fa fa-upload"></i> <?php echo ($type == 'plugin') ? __( 'Step 1: Upload Plugins', 'mainwp' ) : __( 'Step 1: Upload Themes', 'mainwp' ); ?></h3>
 
 			<div class="inside">
-				<?php if ( $title == 'Plugins' ) { ?>
+				<?php if ( $type == 'plugin' ) { ?>
 					<div class="mainwp_info-box-red" id="mainwp-ext-notice" style="margin-top: 1em;">
 						<span><?php _e( '<strong>Do Not upload extensions here</strong>, they do not go on the child sites, upload and activate them via your dashboard sites', 'mainwp' ) ?>
 							<a href="<?php echo get_admin_url(); ?>plugin-install.php" style="text-decoration: none;"> <?php _e( 'plugin screen.', 'mainwp' ); ?></a></span>
@@ -57,7 +58,7 @@ class MainWP_Install_Bulk {
 						var uploader = new qq.FileUploader( {
 							element: document.getElementById( 'mainwp-file-uploader' ),
 							action: location.href,
-							<?php $extraOptions = apply_filters( 'mainwp_uploadbulk_uploader_options', '' );
+							<?php $extraOptions = apply_filters( 'mainwp_uploadbulk_uploader_options', '', $type );
 							$extraOptions = trim( $extraOptions );
 							$extraOptions = trim( trim( $extraOptions, ',' ) );
 							if ( $extraOptions != '' ) {

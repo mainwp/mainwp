@@ -787,15 +787,15 @@ public static function renderFooter( $shownPage ) {
 
 	protected static function getSSLWarning() {
 		$conf = array( 'private_key_bits' => 384 );
-		$conf_loc = MainWP_System::get_openssl_conf();
+		$conf_loc = MainWP_System::get_openssl_conf();		
 		if ( !empty( $conf_loc ) ) {
 			$conf['config'] = $conf_loc;
-		}
+		}		
 		$res  = @openssl_pkey_new( $conf );
-		@openssl_pkey_export( $res, $privkey );
-
+		@openssl_pkey_export( $res, $privkey, null, $conf );
+		
 		$str = openssl_error_string();
-
+		
 		return ( stristr( $str, 'NCONF_get_string:no value' ) ? '' : $str );
 	}
 

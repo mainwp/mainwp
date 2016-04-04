@@ -715,6 +715,7 @@ class MainWP_Manage_Sites_View {
                                             style="width: 350px;"
                                             name="mainwp_managesites_add_http_user"
                                             value=""
+											autocomplete="off"
                                             class=""/>
                             </td>
                         </tr>
@@ -726,6 +727,7 @@ class MainWP_Manage_Sites_View {
                                            style="width: 350px;"
                                            name="mainwp_managesites_add_http_pass"
                                            value=""
+										   autocomplete="off"
                                            class=""/>
                             </td>
                         </tr>
@@ -1597,11 +1599,11 @@ class MainWP_Manage_Sites_View {
 
                 <tr class="form-field form-required">
                      <th scope="row"><?php _e( 'HTTP username ','mainwp' ); ?></th>
-                     <td><input type="text" id="mainwp_managesites_edit_http_user" style="width: 350px;" name="mainwp_managesites_edit_http_user" value="<?php echo (empty( $website->http_user ) ? '' : $website->http_user); ?>" class=""/></td>
+                     <td><input type="text" id="mainwp_managesites_edit_http_user" style="width: 350px;" name="mainwp_managesites_edit_http_user" value="<?php echo (empty( $website->http_user ) ? '' : $website->http_user); ?>" autocomplete="off" class=""/></td>
                 </tr>
                 <tr class="form-field form-required">
                      <th scope="row"><?php _e( 'HTTP password ','mainwp' ); ?></th>
-                     <td><input type="password" id="mainwp_managesites_edit_http_pass" style="width: 350px;" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty( $website->http_pass ) ? '' : $website->http_pass); ?>" class=""/></td>
+                     <td><input type="password" id="mainwp_managesites_edit_http_pass" style="width: 350px;" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty( $website->http_pass ) ? '' : $website->http_pass); ?>" autocomplete="off" class=""/></td>
                 </tr>
             </table>
             </div>

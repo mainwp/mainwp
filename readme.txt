@@ -103,8 +103,6 @@ Both the MainWP Dashboard and Child plugin are fully open source and GPL complia
 
 [MainWP Extensions](https://mainwp.com/extensions/)
 
-[MainWP Ideas](http://ideas.mainwp.com/)
-
 [MainWP Codex](http://codex.mainwp.com)
 
 [MainWP on Github](https://mainwp.com/github/)

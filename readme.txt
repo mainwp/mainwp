@@ -1,7 +1,7 @@
 ﻿=== MainWP Dashboard ===
 Contributors: mainwp
 Donate link: 
-Tags: WordPress management, management, manager, manage, WordPress controller, network, MainWP, updates, admin, administration, multiple, multisite, plugin updates, theme updates, login, remote
+Tags: MainWP, Manage WordPress, Managed WordPress, WordPress Management, Manage Multiple Sites, WordPress manager , WordPress management, Control multiple sites, WordPress site management, WordPress management dashboard 
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com

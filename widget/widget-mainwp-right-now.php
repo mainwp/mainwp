@@ -759,9 +759,9 @@ class MainWP_Right_Now {
 					foreach ( $translation_upgrades as $translation_upgrade ) {
 						$slug = $translation_upgrade['slug'];
 						if ( ! isset( $allTranslations[ $slug ] ) ) {
-							$allTranslations[ $slug ] = 1;
+							$allTranslations[ $slug ] = array('name' => isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $slug, 'cnt' => 1);
 						} else {
-							$allTranslations[ $slug ] ++;
+							$allTranslations[ $slug ]['cnt'] ++;
 						}
 
 						$translationsInfo[ $slug ] = array(
@@ -771,7 +771,8 @@ class MainWP_Right_Now {
 						);
 					}
 				}
-				ksort( $allTranslations );
+				//ksort( $allTranslations );
+				MainWP_Utility::array_sort( $allTranslations, 'name' );
 
 				//Keep track of all the plugins & themes
 				if ( is_array( $plugin_upgrades ) ) {
@@ -791,7 +792,7 @@ class MainWP_Right_Now {
 					}
 				}
 				//ksort( $allPlugins );
-				MainWP_Utility::array_sort($allPlugins, 'name');
+				MainWP_Utility::array_sort( $allPlugins, 'name' );
 				
 				if ( is_array( $theme_upgrades ) ) {
 					foreach ( $theme_upgrades as $slug => $theme_upgrade ) {
@@ -808,7 +809,7 @@ class MainWP_Right_Now {
 					}
 				}
 				//ksort( $allThemes );
-				MainWP_Utility::array_sort($allThemes, 'name');
+				MainWP_Utility::array_sort( $allThemes, 'name' );
 				
 				if ( is_array( $plugins_outdate ) ) {
 					foreach ( $plugins_outdate as $slug => $plugin_outdate ) {
@@ -826,7 +827,7 @@ class MainWP_Right_Now {
 					}
 				}
 				//ksort( $allPluginsOutdate );
-				MainWP_Utility::array_sort($allPluginsOutdate, 'name');
+				MainWP_Utility::array_sort( $allPluginsOutdate, 'name' );
 
 				if ( is_array( $themes_outdate ) ) {
 					foreach ( $themes_outdate as $slug => $theme_outdate ) {
@@ -843,7 +844,7 @@ class MainWP_Right_Now {
 					}
 				}
 				//ksort( $allThemesOutdate );
-				MainWP_Utility::array_sort($allThemesOutdate, 'name');
+				MainWP_Utility::array_sort( $allThemesOutdate, 'name' );
 
 			}
 
@@ -1130,7 +1131,8 @@ class MainWP_Right_Now {
 						<?php
 					}
 				} else {
-					foreach ( $allTranslations as $slug => $cnt ) {
+					foreach ( $allTranslations as $slug => $val ) {
+						$cnt = $val['cnt'];
 						if ( $globalView ) {
 							?>
 							<div class="mainwp-row">

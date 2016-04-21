@@ -716,7 +716,7 @@ class MainWP_Post_Handler {
 				throw new MainWP_Exception( 'Invalid request' );
 			}
 
-			die( json_encode( array( 'result' => MainWP_Manage_Sites::backup( $_POST['site_id'], 'full', '', '', 0, 0, 0, 0 ) ) ) );
+			die( json_encode( array( 'result' => MainWP_Manage_Sites::backup( $_POST['site_id'], 'full', '', '', 1, 1, 1, 1 ) ) ) );
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(
 				'error' => array(

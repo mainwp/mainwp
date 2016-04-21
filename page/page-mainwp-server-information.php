@@ -540,9 +540,7 @@ public static function renderFooter( $shownPage ) {
 			'Backups continue' => 'mainwp_cron_last_backups_continue',
 			'Updates check'    => 'mainwp_cron_last_updatescheck',
 			'Stats'            => 'mainwp_cron_last_stats',
-			'Ping childs'      => 'mainwp_cron_last_ping',
-			'Offline checks'   => 'mainwp_cron_last_offlinecheck',
-			'Conflicts update' => 'mainwp_cron_last_cronconflicts',
+			'Ping childs'      => 'mainwp_cron_last_ping'
 		);
 		?>
 		<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">

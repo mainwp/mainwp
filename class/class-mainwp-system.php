@@ -178,6 +178,11 @@ class MainWP_System {
 			wp_unschedule_event( $sched, 'mainwp_cronofflinecheck_action' );
 		}
 
+		//todo: remove in next version
+		if ( ( $sched = wp_next_scheduled( 'mainwp_cron_last_cronconflicts' ) ) != false ) {
+			wp_unschedule_event( $sched, 'mainwp_cron_last_cronconflicts' );
+		}
+
 		if ( ( $sched = wp_next_scheduled( 'mainwp_cronstats_action' ) ) == false ) {
 			if ( $useWPCron ) {
 				wp_schedule_event( time(), 'hourly', 'mainwp_cronstats_action' );
@@ -1720,10 +1725,12 @@ class MainWP_System {
 		}
 		else if ( isset( $_GET['page'] ) )
 		{
-			switch ( $_GET['page'] ) {
-				case 'mainwp-setup' :
-					new MainWP_Setup_Wizard();
-					break;
+			if ( MainWP_Utility::isAdmin() ) {
+				switch ( $_GET['page'] ) {
+					case 'mainwp-setup' :
+						new MainWP_Setup_Wizard();
+						break;
+				}
 			}
 		}
 	}

@@ -1265,6 +1265,7 @@ class MainWP_Utility {
 
 
 		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
+		if ($http_status == '400') MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'post data: [' . print_r($postdata , 1). ']' );
 
 		if ( ( $data === false ) && ( $http_status == 0 ) ) {
 			MainWP_Logger::Instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );

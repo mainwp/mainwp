@@ -777,9 +777,9 @@ class MainWP_Right_Now {
 				if ( is_array( $plugin_upgrades ) ) {
 					foreach ( $plugin_upgrades as $slug => $plugin_upgrade ) {
 						if ( ! isset( $allPlugins[ $slug ] ) ) {
-							$allPlugins[ $slug ] = 1;
+							$allPlugins[ $slug ] = array('name' => $plugin_upgrade['Name'], 'cnt' => 1);
 						} else {
-							$allPlugins[ $slug ] ++;
+							$allPlugins[ $slug ]['cnt'] ++;
 						}
 
 						$pluginsInfo[ $slug ] = array(
@@ -790,14 +790,15 @@ class MainWP_Right_Now {
 						);
 					}
 				}
-				ksort( $allPlugins );
-
+				//ksort( $allPlugins );
+				MainWP_Utility::array_sort($allPlugins, 'name');
+				
 				if ( is_array( $theme_upgrades ) ) {
 					foreach ( $theme_upgrades as $slug => $theme_upgrade ) {
 						if ( ! isset( $allThemes[ $slug ] ) ) {
-							$allThemes[ $slug ] = 1;
+							$allThemes[ $slug ] = array('name' => $theme_upgrade['Name'], 'cnt' => 1);
 						} else {
-							$allThemes[ $slug ] ++;
+							$allThemes[ $slug ]['cnt'] ++;
 						}
 
 						$themesInfo[ $slug ] = array(
@@ -806,14 +807,15 @@ class MainWP_Right_Now {
 						);
 					}
 				}
-				ksort( $allThemes );
-
+				//ksort( $allThemes );
+				MainWP_Utility::array_sort($allThemes, 'name');
+				
 				if ( is_array( $plugins_outdate ) ) {
 					foreach ( $plugins_outdate as $slug => $plugin_outdate ) {
 						if ( ! isset( $allPluginsOutdate[ $slug ] ) ) {
-							$allPluginsOutdate[ $slug ] = 1;
+							$allPluginsOutdate[ $slug ] = array( 'name' => $plugin_outdate['Name'], 'cnt' => 1);
 						} else {
-							$allPluginsOutdate[ $slug ] ++;
+							$allPluginsOutdate[ $slug ]['cnt'] ++;
 						}
 						$pluginsOutdateInfo[ $slug ] = array(
 							'Name'         => $plugin_outdate['Name'],
@@ -823,14 +825,15 @@ class MainWP_Right_Now {
 						);
 					}
 				}
-				ksort( $allPluginsOutdate );
+				//ksort( $allPluginsOutdate );
+				MainWP_Utility::array_sort($allPluginsOutdate, 'name');
 
 				if ( is_array( $themes_outdate ) ) {
 					foreach ( $themes_outdate as $slug => $theme_outdate ) {
 						if ( ! isset( $allThemesOutdate[ $slug ] ) ) {
-							$allThemesOutdate[ $slug ] = 1;
+							$allThemesOutdate[ $slug ] = array('name' => $theme_outdate['Name'], 'cnt' => 1 );
 						} else {
-							$allThemesOutdate[ $slug ] ++;
+							$allThemesOutdate[ $slug ]['cnt'] ++;
 						}
 						$themesOutdateInfo[ $slug ] = array(
 							'name'         => $theme_outdate['Name'],
@@ -839,7 +842,8 @@ class MainWP_Right_Now {
 						);
 					}
 				}
-				ksort( $allThemesOutdate );
+				//ksort( $allThemesOutdate );
+				MainWP_Utility::array_sort($allThemesOutdate, 'name');
 
 			}
 
@@ -1319,7 +1323,8 @@ class MainWP_Right_Now {
 						<?php
 					}
 				} else {
-					foreach ( $allPlugins as $slug => $cnt ) {
+					foreach ( $allPlugins as $slug => $val ) {
+						$cnt = $val['cnt'];
 						$plugin_name = urlencode( $slug );
 						if ( $globalView ) {
 							?>
@@ -1532,7 +1537,8 @@ class MainWP_Right_Now {
 						<?php
 					}
 				} else {
-					foreach ( $allThemes as $slug => $cnt ) {
+					foreach ( $allThemes as $slug => $val ) {
+						$cnt = $val['cnt'];
 						$theme_name = urlencode( $slug );
 						if ( $globalView ) {
 							?>
@@ -1721,7 +1727,8 @@ class MainWP_Right_Now {
 						<?php
 					}
 				} else {
-					foreach ( $allPluginsOutdate as $slug => $cnt ) {
+					foreach ( $allPluginsOutdate as $slug => $val ) {
+						$cnt = $val['cnt'];
 						$plugin_name = urlencode( $slug );
 						if ( $globalView ) {
 							?>
@@ -1906,7 +1913,8 @@ class MainWP_Right_Now {
 						<?php
 					}
 				} else {
-					foreach ( $allThemesOutdate as $slug => $cnt ) {
+					foreach ( $allThemesOutdate as $slug => $val ) {
+						$cnt = $val['cnt'];
 						$slug = urlencode( $slug );
 
 						if ( $globalView ) {

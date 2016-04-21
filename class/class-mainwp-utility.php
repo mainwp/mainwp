@@ -2303,4 +2303,18 @@ class MainWP_Utility {
 				return 0; //CURL_SSLVERSION_DEFAULT;
 		}
 	}
+	
+	public static function array_sort ( &$array, $key, $sort_flag = SORT_STRING ) {
+		$sorter = array();
+		$ret = array();
+		reset( $array );
+		foreach ( $array as $ii => $val ) {
+			$sorter[$ii]=$val[$key];
+		}
+		asort($sorter, $sort_flag);
+		foreach ($sorter as $ii => $val) {
+			$ret[$ii]=$array[$ii];
+		}
+		$array = $ret;
+	}
 }

@@ -386,7 +386,7 @@ class MainWP_Setup_Wizard {
 					</tr>
 				<?php } ?>
 				<tr>
-					<th scope="row"><label for="mwp_setup_manage_planning"><?php _e("How many child site you are planing to manage?", "mainwp"); ?></label></th>
+					<th scope="row"><label for="mwp_setup_manage_planning"><?php _e("How many child sites are you planning to manage?", "mainwp"); ?></label></th>
 					<td>
 						<span class="mainwp-select-bg"><select name="mwp_setup_manage_planning" id="mwp_setup_manage_planning">
 								<option value="1" <?php if (($managePlanning == false) || ($managePlanning == 1)) {
@@ -1307,7 +1307,7 @@ class MainWP_Setup_Wizard {
 				<ul>
 					<li><a href="https://mainwp.com/extensions/" target="_blank"><i class="fa fa-plug"></i> <?php _e( 'MainWP Extensions', 'mainwp' ); ?></a></li>
 					<li><a href="http://docs.mainwp.com" target="_blank"><i class="fa fa-book"></i> <?php _e( 'MainWP Documentation', 'mainwp' ); ?></a></li>
-					<li><a href="http://support.mainwp.com" target="_blank"><i class="fa fa-life-ring"></i> <?php _e( 'MainWP Suppor', 'mainwp' ); ?></a></li>
+					<li><a href="http://support.mainwp.com" target="_blank"><i class="fa fa-life-ring"></i> <?php _e( 'MainWP Support', 'mainwp' ); ?></a></li>
 					<li><a href="https://mainwp.com/forum/" target="_blank"><i class="fa fa-comments-o"></i> <?php _e( 'Community Forum', 'mainwp' ); ?></a></li>
 				</ul>
 			</div>

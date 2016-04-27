@@ -559,6 +559,26 @@ class MainWP_Page {
 						$post_featured_image = $img[0];
 					}
 
+					$galleries = get_post_gallery( $id, false );
+					$post_gallery_images = array();
+
+					if ( is_array($galleries) && isset($galleries['ids']) ) {
+						$attached_images = explode( ',', $galleries['ids'] );							
+						foreach( $attached_images as $attachment_id ) {
+							$attachment = get_post( $attachment_id );
+							if ( $attachment ) {
+								$post_gallery_images[] = array(
+									'id' => $attachment_id,
+									'alt' => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
+									'caption' => $attachment->post_excerpt,
+									'description' => $attachment->post_content,									
+									'src' => $attachment->guid,
+									'title' => $attachment->post_title
+								);
+							}
+						}
+					}
+						
 					$dbwebsites = array();
 					if ( $selected_by == 'site' ) { //Get all selected websites
 						foreach ( $selected_sites as $k ) {
@@ -590,6 +610,7 @@ class MainWP_Page {
 							'new_post' => base64_encode( serialize( $new_post ) ),
 							'post_custom' => base64_encode( serialize( $post_custom ) ),
 							'post_featured_image' => base64_encode( $post_featured_image ),
+							'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ),
 							'mainwp_upload_dir' => base64_encode( serialize( $mainwp_upload_dir ) ),
 						);
 						$post_data = apply_filters( 'mainwp_bulkpage_posting', $post_data, $id );

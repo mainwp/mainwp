@@ -672,12 +672,13 @@ public static function renderFooter( $shownPage ) {
 		<?php
 	}
 
-	protected static function render_row_with_description( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $description = '', $whatType = null, $errorType = self::WARNING )
+	protected static function render_row_with_description( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $toolTip = null, $whatType = null, $errorType = self::WARNING )
 	{
 		$currentVersion = call_user_func(array(MainWP_Server_Information::getClassName(), $pGetter));
 		?>
 		<tr>
-			<td><?php echo $pConfig; ?></td>
+			<td><?php if ( ! empty( $toolTip ) ) { ?>
+					<a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWP_Utility::renderToolTip( $toolTip ); ?></a><?php } ?> <?php echo $pConfig; ?></td>
 			<td><?php echo $pCompare; ?>  <?php echo ($pVersion === true ? 'true' : ( is_array($pVersion) && isset($pVersion['version']) ? $pVersion['version'] : $pVersion)) . ' ' . $pExtraText; ?></td>
 			<td><?php echo ($currentVersion === true ? 'true' : $currentVersion); ?></td>
 			<?php if ($whatType == 'filesize') { ?>
@@ -790,7 +791,7 @@ public static function renderFooter( $shownPage ) {
 			$conf['config'] = $conf_loc;
 		}
 		$res  = @openssl_pkey_new( $conf );
-		@openssl_pkey_export( $res, $privkey );
+		@openssl_pkey_export( $res, $privkey, null, $conf );
 
 		$str = openssl_error_string();
 

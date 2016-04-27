@@ -1,4 +1,17 @@
 jQuery(document).ready(function () {
+
+    // to fix conflict with bootstrap tooltip
+    jQuery.widget.bridge('uitooltip', jQuery.ui.tooltip);
+    jQuery(document).uitooltip({
+        items:"span.tooltip",
+        track:true,
+        content:function ()
+        {
+            var element = jQuery(this);
+            return element.parents('.tooltipcontainer').children('.tooltipcontent').html();
+        }
+    });
+
     jQuery('input[type=radio][name=mwp_setup_installation_hosting_type]').change(function() {
         if (this.value == 2) {
             jQuery('input[name="mwp_setup_installation_system_type"]').removeAttr("disabled");
@@ -11,43 +24,22 @@ jQuery(document).ready(function () {
     });
 
     jQuery('#mwp_setup_planning_backup').change(function() {
-        var archiveFormat = false;
         if (jQuery(this).is(':checked')) {
             jQuery('#mwp_setup_tr_backup_method').fadeIn(500);
             jQuery('#mwp_setup_backup_method').removeAttr('disabled');
-            if (jQuery('#mwp_setup_backup_method option:selected').val() == '' )
-            {
-                jQuery('#mwp_setup_tr_backup_archive_type').fadeIn(500);
-                jQuery('#mwp_setup_archive_format').removeAttr('disabled');
-                archiveFormat = true;
-            }
         }
         else {
             jQuery('#mwp_setup_tr_backup_method').fadeOut(500);
             jQuery('#mwp_setup_backup_method').attr('disabled', 'disabled');
         }
-
-        if (!archiveFormat) {
-            jQuery('#mwp_setup_tr_backup_archive_type').fadeOut(500);
-            jQuery('#mwp_setup_archive_format').attr('disabled', 'disabled');
-        }
     });
 
     jQuery('#mwp_setup_backup_method').on('change', function() {
-        var bkmethod = jQuery(this).val();        
+        var bkmethod = jQuery(this).val();
         jQuery('.mainwp-backups-notice').hide();
-        if (bkmethod == '' )
-        {                        
-            jQuery('.mainwp-backups-notice[method="default"]').show();
-            jQuery('#mwp_setup_tr_backup_archive_type').fadeIn(500);
-            jQuery('#mwp_setup_archive_format').removeAttr('disabled');
-        } else {            
-            jQuery('.mainwp-backups-notice[method="' + bkmethod + '"]').show();            
-            jQuery('#mwp_setup_tr_backup_archive_type').fadeOut(500);
-            jQuery('#mwp_setup_archive_format').attr('disabled', 'disabled');
-        }
+        jQuery('.mainwp-backups-notice[method="' + bkmethod + '"]').show();
     });
-    
+
     jQuery('#mwp_setup_manage_planning').change(function() {
         if ((jQuery(this).val() == 2) && (jQuery('#mwp_setup_type_hosting').val() == 3)) {
             jQuery('#mwp_setup_hosting_notice').fadeIn(500);
@@ -55,7 +47,7 @@ jQuery(document).ready(function () {
             jQuery('#mwp_setup_hosting_notice').fadeOut(1000);
         }
     })
-    
+
     jQuery('#mwp_setup_manage_planning').change(function() {
         mainwp_setup_showhide_hosting_notice();
     })
@@ -63,6 +55,12 @@ jQuery(document).ready(function () {
         mainwp_setup_showhide_hosting_notice();
     })
 });
+
+mainwp_setup_auth_uptime_robot = function(url) {
+    window.open(url, 'Authorize Uptime Robot', 'height=600,width=700');
+    return false;
+}
+
 
 mainwp_setup_showhide_hosting_notice = function() {
     if ((jQuery('#mwp_setup_manage_planning').val() == 2) && (jQuery('#mwp_setup_type_hosting').val() == 3)) {
@@ -72,7 +70,7 @@ mainwp_setup_showhide_hosting_notice = function() {
     }
 }
 
-mainwp_setup_grab_extension = function(retring) {
+mainwp_setup_grab_extension = function(retring, pRegisterLater) {
     var parent = jQuery("#mwp_setup_auto_install_loading");
     var statusEl = parent.find('span.status');
     var loadingEl = parent.find("i");
@@ -86,7 +84,8 @@ mainwp_setup_grab_extension = function(retring) {
 
     var data = {
         action:'mainwp_setup_extension_getextension',
-        productId: extProductId
+        productId: extProductId,
+        register_later: pRegisterLater
     };
 
     if (retring == true) {
@@ -103,12 +102,12 @@ mainwp_setup_grab_extension = function(retring) {
         if (response) {
             if (response.result == 'SUCCESS') {
                 jQuery('#mwp_setup-install-extension').html(response.data);
-                mainwp_setup_extension_install();
+                mainwp_setup_extension_install(pRegisterLater);
             } else if (response.error) {
                 statusEl.css('color', 'red');
                 statusEl.html(response.error).fadeIn();
             } else if (response.retry_action && response.retry_action == 1){
-                mainwp_setup_grab_extension(true);
+                mainwp_setup_grab_extension(true, pRegisterLater);
                 return false;
             } else {
                 undefError = true;
@@ -125,7 +124,7 @@ mainwp_setup_grab_extension = function(retring) {
     return false;
 }
 
-mainwp_setup_extension_install = function() {
+mainwp_setup_extension_install = function(pRegisterLater) {
     var pExtToInstall = jQuery('.mwp_setup_extension_installing .extension_to_install');
     var loadingEl = pExtToInstall.find('.ext_installing i');
     var statusEl = pExtToInstall.find('.ext_installing .status');
@@ -159,8 +158,10 @@ mainwp_setup_extension_install = function() {
                     statusEl.css('color', '#21759B')
                     statusEl.html(response.output).show();
                     jQuery('.mwp_setup_extension_installing').append('<span class="extension_installed_success" slug="' + response.slug + '"></span>');
-                    jQuery('#mwp_setup_active_extension').fadeIn(500);
-                    mainwp_setup_extension_activate(false);
+                    if (!pRegisterLater) {
+                        jQuery('#mwp_setup_active_extension').fadeIn(500);
+                        mainwp_setup_extension_activate(false);
+                    }
                 } else if (response.error) {
                     statusEl.css('color', 'red');
                     statusEl.html('<strong><i class="fa fa-exclamation-circle"></i> Error:</strong> ' + response.error).show();

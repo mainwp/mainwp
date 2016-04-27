@@ -51,14 +51,14 @@ class MainWP_DB {
 		//get_site_option is multisite aware!
 		$currentVersion = get_site_option( 'mainwp_db_version' );
 
-		$rslt = MainWP_DB::Instance()->query( "SHOW TABLES LIKE '" . $this->tableName( 'wp' ) . "'" );
-		if ( @MainWP_DB::num_rows( $rslt ) == 0 ) {
-			$currentVersion = false;
-		}
-
 		if ( empty( $currentVersion ) ) {
 			set_transient( '_mainwp_activation_redirect', 1, 30 );
 			update_site_option( 'mainwp_run_quick_setup', 'yes' );
+		}
+
+		$rslt = MainWP_DB::Instance()->query( "SHOW TABLES LIKE '" . $this->tableName( 'wp' ) . "'" );
+		if ( @MainWP_DB::num_rows( $rslt ) == 0 ) {
+			$currentVersion = false;
 		}
 
 		if ( $currentVersion == $this->mainwp_db_version ) {
@@ -107,10 +107,6 @@ class MainWP_DB {
   automatic_update tinyint(1) NOT NULL,
   backup_before_upgrade tinyint(1) NOT NULL DEFAULT 2,
   last_db_backup_size int(11) NOT NULL,
-  pluginConflicts text NOT NULL,
-  themeConflicts text NOT NULL,
-  ignored_pluginConflicts text NOT NULL,
-  ignored_themeConflicts text NOT NULL,
   backups text NOT NULL,
   mainwpdir int(11) NOT NULL,
   loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,  
@@ -189,9 +185,7 @@ class MainWP_DB {
   site_view tinyint(1) NOT NULL DEFAULT '0',
   pluginDir text NOT NULL DEFAULT '',
   dismissed_plugins longtext NOT NULL DEFAULT '',
-  dismissed_themes longtext NOT NULL DEFAULT '',
-  ignored_pluginConflicts text NOT NULL DEFAULT '',
-  ignored_themeConflicts text NOT NULL DEFAULT ''";
+  dismissed_themes longtext NOT NULL DEFAULT ''";
 		if ( $currentVersion == '' ) {
 			$tbl .= ',
   PRIMARY KEY  (userid)  ';
@@ -377,14 +371,9 @@ class MainWP_DB {
 				'mainwp_updatescheck_mail_ignore_core_new',
 				'mainwp_updatescheck_mail_ignore_plugins_new',
 				'mainwp_updatescheck_mail_ignore_themes_new',
-				'mainwp_updatescheck_mail_pluginconflicts',
-				'mainwp_updatescheck_mail_themeconflicts',
 				'mainwp_updatescheck_last',
 				'mainwp_updatescheck_mail_email',
 				'mainwp_cron_last_ping',
-				'mainwp_cron_last_cronconflicts',
-				'mainwp_pluginConflicts',
-				'mainwp_themeConflicts',
 				'mainwp_cron_last_backups_continue',
 				'mainwp_cron_last_backups',
 				'mainwp_cron_last_stats',
@@ -1089,10 +1078,6 @@ class MainWP_DB {
 				'pluginDir'               => '',
 				'automatic_update'        => 0,
 				'backup_before_upgrade'   => 0,
-				'pluginConflicts'         => '',
-				'themeConflicts'          => '',
-				'ignored_pluginConflicts' => '',
-				'ignored_themeConflicts'  => '',
 				'verify_certificate'      => intval( $verifyCertificate ),
 				'ssl_version'             => $sslVersion,
 				'uniqueId'                => $uniqueId,
@@ -1299,6 +1284,22 @@ class MainWP_DB {
 		}
 
 		return $progress;
+	}
+
+	public function backupFullTaskRunning( $wp_id ) {
+		$progresses = $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp_backup_progress' ) . ' WHERE wp_id = ' . $wp_id );
+		if ( is_array( $progresses ) ) {
+			foreach ( $progresses as $progress ) {
+				if ( ( $progress->downloadedDBComplete == 0 ) && ( $progress->downloadedFULLComplete == 0 ) ) {
+					if ( $task = $this->getBackupTaskById( $progress->task_id ) ) {
+						if ( ( 'full' == $task->type ) && !$task->paused) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	public function removeBackupTask( $id ) {
@@ -1580,9 +1581,7 @@ class MainWP_DB {
 			'ignored_themes'          => '',
 			'trusted_themes'          => '',
 			'trusted_themes_notes'    => '',
-			'pluginDir'               => '',
-			'ignored_pluginConflicts' => '',
-			'ignored_themeConflicts'  => '',
+			'pluginDir'               => ''
 		);
 
 		$this->wpdb->insert( $this->tableName( 'users' ), $fields );

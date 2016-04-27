@@ -1767,7 +1767,7 @@ class MainWP_Utility {
                             <span style="display: inline-block; margin-right: .8em;"><a href="https://mainwp.com/extensions/" style="font-family: Helvetica, Sans; color: #7fb100; text-transform: uppercase; font-size: 14px;">Extensions</a></span>
                             <span style="display: inline-block; margin-right: .8em;"><a style="font-family: Helvetica, Sans; color: #7fb100; text-transform: uppercase; font-size: 14px;" href="https://mainwp.com/support/">Support</a></span>
                             <span style="display: inline-block; margin-right: .8em;"><a style="font-family: Helvetica, Sans; color: #7fb100; text-transform: uppercase; font-size: 14px;" href="http://docs.mainwp.com">Documentation</a></span>
-                            <span style="display: inline-block; margin-right: .5em;" class="mainwp-memebers-area"><a href="https://maiwnp.com/my-account/" style="padding: .6em .5em ; border-radius: 50px ; -moz-border-radius: 50px ; -webkit-border-radius: 50px ; background: #1c1d1b; border: 1px Solid #000; color: #fff !important; font-size: .9em !important; font-weight: normal ; -webkit-box-shadow:  0px 0px 0px 5px rgba(0, 0, 0, .1); box-shadow:  0px 0px 0px 5px rgba(0, 0, 0, .1);">My Account</a></span>
+                            <span style="display: inline-block; margin-right: .5em;" class="mainwp-memebers-area"><a href="https://mainwp.com/my-account/" style="padding: .6em .5em ; border-radius: 50px ; -moz-border-radius: 50px ; -webkit-border-radius: 50px ; background: #1c1d1b; border: 1px Solid #000; color: #fff !important; font-size: .9em !important; font-weight: normal ; -webkit-box-shadow:  0px 0px 0px 5px rgba(0, 0, 0, .1); box-shadow:  0px 0px 0px 5px rgba(0, 0, 0, .1);">My Account</a></span>
                          </div><div style="clear: both;"></div>
                       </div>
                     </div>
@@ -2301,5 +2301,19 @@ class MainWP_Utility {
 			default:
 				return 0; //CURL_SSLVERSION_DEFAULT;
 		}
+	}
+
+	public static function array_sort ( &$array, $key, $sort_flag = SORT_STRING ) {
+		$sorter = array();
+		$ret = array();
+		reset( $array );
+		foreach ( $array as $ii => $val ) {
+			$sorter[$ii] = $val[$key];
+		}
+		asort( $sorter, $sort_flag );
+		foreach ( $sorter as $ii => $val ) {
+			$ret[$ii] = $array[$ii];
+		}
+		$array = $ret;
 	}
 }

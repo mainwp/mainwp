@@ -715,6 +715,7 @@ class MainWP_Manage_Sites_View {
                                             style="width: 350px;"
                                             name="mainwp_managesites_add_http_user"
                                             value=""
+											autocomplete="off"
                                             class=""/>
                             </td>
                         </tr>
@@ -726,6 +727,7 @@ class MainWP_Manage_Sites_View {
                                            style="width: 350px;"
                                            name="mainwp_managesites_add_http_pass"
                                            value=""
+										   autocomplete="off"
                                            class=""/>
                             </td>
                         </tr>
@@ -1048,57 +1050,6 @@ class MainWP_Manage_Sites_View {
 				if ( $website->mainwpdir == -1 ) {
 					echo '<div class="mainwp_info-box-yellow"><span class="mainwp_conflict" siteid="' . $website->id . '"><strong>Configuration issue detected</strong>: MainWP has no write privileges to the uploads directory. Because of this some of the functionality might not work, please check <a href="http://docs.mainwp.com/install-or-update-of-a-plugin-fails-on-managed-site/" target="_blank">this FAQ for further information</a></span></div>';
 				}
-				$userExtension = MainWP_DB::Instance()->getUserExtension();
-
-				$ignoredPluginConflicts = json_decode( $website->ignored_pluginConflicts, true );
-				if ( ! is_array( $ignoredPluginConflicts ) ) {$ignoredPluginConflicts = array();}
-				$globalIgnoredPluginConflicts = json_decode( $userExtension->ignored_pluginConflicts, true );
-				if ( ! is_array( $globalIgnoredPluginConflicts ) ) {$globalIgnoredPluginConflicts = array();}
-				$ignoredThemeConflicts = json_decode( $website->ignored_themeConflicts, true );
-				if ( ! is_array( $ignoredThemeConflicts ) ) {$ignoredThemeConflicts = array();}
-				$globalIgnoredThemeConflicts = json_decode( $userExtension->ignored_themeConflicts, true );
-				if ( ! is_array( $globalIgnoredThemeConflicts ) ) {$globalIgnoredThemeConflicts = array();}
-
-				$pluginConflicts = json_decode( $website->pluginConflicts, true );
-				$themeConflicts = json_decode( $website->themeConflicts, true );
-				$savedPluginConflicts = get_option( 'mainwp_pluginConflicts' );
-				$savedThemeConflicts = get_option( 'mainwp_themeConflicts' );
-
-				$startShown = false;
-				$found = false;
-				if ( count( $pluginConflicts ) > 0 ) {
-					foreach ( $pluginConflicts as $pluginConflict ) {
-						if ( in_array( $pluginConflict, $ignoredPluginConflicts ) || in_array( $pluginConflict, $globalIgnoredPluginConflicts ) ) {continue;}
-
-						if ( ! $startShown ) { echo '<div class="mainwp_info-box-yellow">';
-							$startShown = true; }
-
-						if ( ! $found ) {
-							$found = true;
-						} else {
-							echo '<br />';
-						}
-							echo '<span class="mainwp_conflict" siteid="' . $website->id . '" plugin="' . urlencode( $pluginConflict ) . '"><strong>Conflict Plugin Detected</strong>: MainWP has found "' . $pluginConflict . '" installed on this site, please check <a href="' . $savedPluginConflicts[ $pluginConflict ] . '">this FAQ for further information</a> - <strong><a href="#" class="mainwp_conflict_ignore">Ignore</a></strong> - <strong><a href="#" class="mainwp_conflict_ignore_globally">Ignore Globally</a></strong></span>';
-					}
-				}
-
-				if ( count( $themeConflicts ) > 0 ) {
-					foreach ( $themeConflicts as $themeConflict ) {
-						if ( in_array( $themeConflict, $ignoredThemeConflicts ) || in_array( $themeConflict, $globalIgnoredThemeConflicts ) ) {continue;}
-
-						if ( ! $startShown ) { echo '<div class="mainwp_info-box-yellow">';
-							$startShown = true; }
-
-						if ( ! $found ) {
-							$found = true;
-						} else {
-							echo '<br />';
-						}
-							echo '<span class="mainwp_conflict" siteid="' . $website->id . '" theme="' . urlencode( $themeConflict ) . '"><strong>Conflict Theme Detected</strong>: MainWP has found "' . $themeConflict . '" installed on this site, please check <a href="' . $savedThemeConflicts[ $themeConflict ] . '">this FAQ for further information</a> - <strong><a href="#" class="mainwp_conflict_ignore">Ignore</a></strong> - <strong><a href="#" class="mainwp_conflict_ignore_globally">Ignore Globally</a></strong></span>';
-					}
-				}
-				if ( $startShown ) {echo '</div>';}
-
 				global $screen_layout_columns;
 				MainWP_Main::renderDashboardBody( array( $website ), $page, $screen_layout_columns );
 				?>
@@ -1597,11 +1548,11 @@ class MainWP_Manage_Sites_View {
 
                 <tr class="form-field form-required">
                      <th scope="row"><?php _e( 'HTTP username ','mainwp' ); ?></th>
-                     <td><input type="text" id="mainwp_managesites_edit_http_user" style="width: 350px;" name="mainwp_managesites_edit_http_user" value="<?php echo (empty( $website->http_user ) ? '' : $website->http_user); ?>" class=""/></td>
+                     <td><input type="text" id="mainwp_managesites_edit_http_user" style="width: 350px;" name="mainwp_managesites_edit_http_user" value="<?php echo (empty( $website->http_user ) ? '' : $website->http_user); ?>" autocomplete="off" class=""/></td>
                 </tr>
                 <tr class="form-field form-required">
                      <th scope="row"><?php _e( 'HTTP password ','mainwp' ); ?></th>
-                     <td><input type="password" id="mainwp_managesites_edit_http_pass" style="width: 350px;" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty( $website->http_pass ) ? '' : $website->http_pass); ?>" class=""/></td>
+                     <td><input type="password" id="mainwp_managesites_edit_http_pass" style="width: 350px;" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty( $website->http_pass ) ? '' : $website->http_pass); ?>" autocomplete="off" class=""/></td>
                 </tr>
             </table>
             </div>
@@ -1700,10 +1651,7 @@ class MainWP_Manage_Sites_View {
 
 				$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
 			if ( ! is_array( $plugin_upgrades ) ) {$plugin_upgrades = array();}
-
-				$userExtension = MainWP_DB::Instance()->getUserExtension();
-				$globalIgnoredPluginConflicts = json_decode( $userExtension->ignored_pluginConflicts, true );
-
+			$userExtension = MainWP_DB::Instance()->getUserExtension();
 			?>
             <?php
 			do_action( 'mainwp-extension-sites-edit', $website );
@@ -1795,22 +1743,6 @@ class MainWP_Manage_Sites_View {
 
 				$url = $_POST['managesites_add_wpurl'];
 
-				$pluginConflicts = get_option( 'mainwp_pluginConflicts' );
-				if ( $pluginConflicts !== false ) {
-					$pluginConflicts = array_keys( $pluginConflicts );
-				}
-
-				$themeConflicts = get_option( 'mainwp_themeConflicts' );
-				if ( $themeConflicts !== false ) {
-					$themeConflicts = array_keys( $themeConflicts );
-				}
-
-				 // to fix bug
-				if ( is_array( $pluginConflicts ) ) {
-					$pluginConflicts = array_filter( $pluginConflicts );}
-				if ( is_array( $themeConflicts ) ) {
-					$themeConflicts = array_filter( $themeConflicts );
-				}
 				$verifyCertificate = ( !isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( $_POST['verify_certificate'] !== '0' ) ) ? null : $_POST['verify_certificate'] );
 				$sslVersion = MainWP_Utility::getCURLSSLVersion( !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version'] );
 				$addUniqueId = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : '';
@@ -1820,9 +1752,7 @@ class MainWP_Manage_Sites_View {
 					array(
 					'pubkey' => $pubkey,
 						'server' => get_admin_url(),
-						'uniqueId' => $addUniqueId,
-						'pluginConflicts' => json_encode( $pluginConflicts ),
-						'themeConflicts' => json_encode( $themeConflicts ),
+						'uniqueId' => $addUniqueId				
 					),
 					false,
 					$verifyCertificate, $http_user, $http_pass, $sslVersion

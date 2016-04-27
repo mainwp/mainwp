@@ -1041,17 +1041,7 @@ class MainWP_Manage_Sites {
 
 		$userExtension = MainWP_DB::Instance()->getUserExtension();
 
-		$globalIgnoredPluginConflicts = json_decode( $userExtension->ignored_pluginConflicts, true );
-		if ( ! is_array( $globalIgnoredPluginConflicts ) ) {
-			$globalIgnoredPluginConflicts = array();
-		}
-
-		$globalIgnoredThemeConflicts = json_decode( $userExtension->ignored_themeConflicts, true );
-		if ( ! is_array( $globalIgnoredThemeConflicts ) ) {
-			$globalIgnoredThemeConflicts = array();
-		}
-
-		self::$sitesTable->prepare_items( $globalIgnoredPluginConflicts, $globalIgnoredThemeConflicts );
+		self::$sitesTable->prepare_items();
 
 		if ( MainWP_Twitter::enabledTwitterMessages() ) {
 			$filter = array(    'upgrade_all_plugins',

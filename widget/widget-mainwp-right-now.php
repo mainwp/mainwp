@@ -569,16 +569,6 @@ class MainWP_Right_Now {
 		$decodedDismissedPlugins = json_decode( $userExtension->dismissed_plugins, true );
 		$decodedDismissedThemes  = json_decode( $userExtension->dismissed_themes, true );
 
-		$globalIgnoredPluginConflicts = json_decode( $userExtension->ignored_pluginConflicts, true );
-		if ( ! is_array( $globalIgnoredPluginConflicts ) ) {
-			$globalIgnoredPluginConflicts = array();
-		}
-
-		$globalIgnoredThemeConflicts = json_decode( $userExtension->ignored_themeConflicts, true );
-		if ( ! is_array( $globalIgnoredThemeConflicts ) ) {
-			$globalIgnoredThemeConflicts = array();
-		}
-
 		$total_wp_upgrades     = 0;
 		$total_plugin_upgrades = 0;
 		$total_translation_upgrades = 0;
@@ -586,7 +576,6 @@ class MainWP_Right_Now {
 		$total_sync_errors     = 0;
 		$total_uptodate        = 0;
 		$total_offline         = 0;
-		$total_conflict        = 0;
 		$total_plugins_outdate = 0;
 		$total_themes_outdate  = 0;
 
@@ -759,9 +748,9 @@ class MainWP_Right_Now {
 					foreach ( $translation_upgrades as $translation_upgrade ) {
 						$slug = $translation_upgrade['slug'];
 						if ( ! isset( $allTranslations[ $slug ] ) ) {
-							$allTranslations[ $slug ] = 1;
+							$allTranslations[ $slug ] = array('name' => isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $slug, 'cnt' => 1);
 						} else {
-							$allTranslations[ $slug ] ++;
+							$allTranslations[ $slug ]['cnt'] ++;
 						}
 
 						$translationsInfo[ $slug ] = array(
@@ -771,15 +760,16 @@ class MainWP_Right_Now {
 						);
 					}
 				}
-				ksort( $allTranslations );
+				//ksort( $allTranslations );
+				MainWP_Utility::array_sort( $allTranslations, 'name' );
 
 				//Keep track of all the plugins & themes
 				if ( is_array( $plugin_upgrades ) ) {
 					foreach ( $plugin_upgrades as $slug => $plugin_upgrade ) {
 						if ( ! isset( $allPlugins[ $slug ] ) ) {
-							$allPlugins[ $slug ] = 1;
+							$allPlugins[ $slug ] = array('name' => $plugin_upgrade['Name'], 'cnt' => 1);
 						} else {
-							$allPlugins[ $slug ] ++;
+							$allPlugins[ $slug ]['cnt'] ++;
 						}
 
 						$pluginsInfo[ $slug ] = array(
@@ -790,14 +780,15 @@ class MainWP_Right_Now {
 						);
 					}
 				}
-				ksort( $allPlugins );
+				//ksort( $allPlugins );
+				MainWP_Utility::array_sort( $allPlugins, 'name' );
 
 				if ( is_array( $theme_upgrades ) ) {
 					foreach ( $theme_upgrades as $slug => $theme_upgrade ) {
 						if ( ! isset( $allThemes[ $slug ] ) ) {
-							$allThemes[ $slug ] = 1;
+							$allThemes[ $slug ] = array('name' => $theme_upgrade['Name'], 'cnt' => 1);
 						} else {
-							$allThemes[ $slug ] ++;
+							$allThemes[ $slug ]['cnt'] ++;
 						}
 
 						$themesInfo[ $slug ] = array(
@@ -806,14 +797,15 @@ class MainWP_Right_Now {
 						);
 					}
 				}
-				ksort( $allThemes );
+				//ksort( $allThemes );
+				MainWP_Utility::array_sort( $allThemes, 'name' );
 
 				if ( is_array( $plugins_outdate ) ) {
 					foreach ( $plugins_outdate as $slug => $plugin_outdate ) {
 						if ( ! isset( $allPluginsOutdate[ $slug ] ) ) {
-							$allPluginsOutdate[ $slug ] = 1;
+							$allPluginsOutdate[ $slug ] = array( 'name' => $plugin_outdate['Name'], 'cnt' => 1);
 						} else {
-							$allPluginsOutdate[ $slug ] ++;
+							$allPluginsOutdate[ $slug ]['cnt'] ++;
 						}
 						$pluginsOutdateInfo[ $slug ] = array(
 							'Name'         => $plugin_outdate['Name'],
@@ -823,14 +815,15 @@ class MainWP_Right_Now {
 						);
 					}
 				}
-				ksort( $allPluginsOutdate );
+				//ksort( $allPluginsOutdate );
+				MainWP_Utility::array_sort( $allPluginsOutdate, 'name' );
 
 				if ( is_array( $themes_outdate ) ) {
 					foreach ( $themes_outdate as $slug => $theme_outdate ) {
 						if ( ! isset( $allThemesOutdate[ $slug ] ) ) {
-							$allThemesOutdate[ $slug ] = 1;
+							$allThemesOutdate[ $slug ] = array('name' => $theme_outdate['Name'], 'cnt' => 1 );
 						} else {
-							$allThemesOutdate[ $slug ] ++;
+							$allThemesOutdate[ $slug ]['cnt'] ++;
 						}
 						$themesOutdateInfo[ $slug ] = array(
 							'name'         => $theme_outdate['Name'],
@@ -839,7 +832,8 @@ class MainWP_Right_Now {
 						);
 					}
 				}
-				ksort( $allThemesOutdate );
+				//ksort( $allThemesOutdate );
+				MainWP_Utility::array_sort( $allThemesOutdate, 'name' );
 
 			}
 
@@ -853,38 +847,6 @@ class MainWP_Right_Now {
 				$total_offline ++;
 			}
 
-			$pluginConflicts = json_decode( $website->pluginConflicts, true );
-			$themeConflicts  = json_decode( $website->themeConflicts, true );
-
-			$ignoredPluginConflicts = json_decode( $website->ignored_pluginConflicts, true );
-			if ( ! is_array( $ignoredPluginConflicts ) ) {
-				$ignoredPluginConflicts = array();
-			}
-			$ignoredThemeConflicts = json_decode( $website->ignored_themeConflicts, true );
-			if ( ! is_array( $ignoredThemeConflicts ) ) {
-				$ignoredThemeConflicts = array();
-			}
-
-			$isConflict = false;
-			if ( count( $pluginConflicts ) > 0 ) {
-				foreach ( $pluginConflicts as $pluginConflict ) {
-					if ( ! in_array( $pluginConflict, $ignoredPluginConflicts ) && ! in_array( $pluginConflict, $globalIgnoredPluginConflicts ) ) {
-						$isConflict = true;
-					}
-				}
-			}
-
-			if ( ! $isConflict && ( count( $themeConflicts ) > 0 ) ) {
-				foreach ( $themeConflicts as $themeConflict ) {
-					if ( ! in_array( $themeConflict, $ignoredThemeConflicts ) && ! in_array( $themeConflict, $globalIgnoredThemeConflicts ) ) {
-						$isConflict = true;
-					}
-				}
-			}
-
-			if ( $isConflict ) {
-				$total_conflict ++;
-			}
 		}
 		$errorsDismissed = get_user_option( 'mainwp_syncerrors_dismissed' );
 		?>
@@ -1126,7 +1088,8 @@ class MainWP_Right_Now {
 						<?php
 					}
 				} else {
-					foreach ( $allTranslations as $slug => $cnt ) {
+					foreach ( $allTranslations as $slug => $val ) {
+						$cnt = $val['cnt'];
 						if ( $globalView ) {
 							?>
 							<div class="mainwp-row">
@@ -1319,7 +1282,8 @@ class MainWP_Right_Now {
 						<?php
 					}
 				} else {
-					foreach ( $allPlugins as $slug => $cnt ) {
+					foreach ( $allPlugins as $slug => $val ) {
+						$cnt = $val['cnt'];
 						$plugin_name = urlencode( $slug );
 						if ( $globalView ) {
 							?>
@@ -1532,7 +1496,8 @@ class MainWP_Right_Now {
 						<?php
 					}
 				} else {
-					foreach ( $allThemes as $slug => $cnt ) {
+					foreach ( $allThemes as $slug => $val ) {
+						$cnt = $val['cnt'];
 						$theme_name = urlencode( $slug );
 						if ( $globalView ) {
 							?>
@@ -1721,7 +1686,8 @@ class MainWP_Right_Now {
 						<?php
 					}
 				} else {
-					foreach ( $allPluginsOutdate as $slug => $cnt ) {
+					foreach ( $allPluginsOutdate as $slug => $val ) {
+						$cnt = $val['cnt'];
 						$plugin_name = urlencode( $slug );
 						if ( $globalView ) {
 							?>
@@ -1906,7 +1872,8 @@ class MainWP_Right_Now {
 						<?php
 					}
 				} else {
-					foreach ( $allThemesOutdate as $slug => $cnt ) {
+					foreach ( $allThemesOutdate as $slug => $val ) {
+						$cnt = $val['cnt'];
 						$slug = urlencode( $slug );
 
 						if ( $globalView ) {
@@ -2076,15 +2043,6 @@ class MainWP_Right_Now {
                             </span>
 						<?php
 					}
-					else if ($total_conflict > 0)
-					{
-						?>
-						<span class="fa-stack" title="Plugin or Theme Conflict found">
-                                <i class="fa fa-circle fa-stack-2x mwp-red"></i>
-                                <i class="fa fa-flag fa-stack-1x mwp-white"></i>
-                            </span>
-						<?php
-					}
 					else if ($total_offline > 0)
 					{
 						?>
@@ -2113,53 +2071,18 @@ class MainWP_Right_Now {
 				//Loop 3 times, first we show the conflicts, then we show the down sites, then we show the up sites
 
 				$SYNCERRORS = 0;
-				$CONFLICTS  = 1;
 				$DOWN       = 2;
 				$UP         = 3;
 
 				for ( $j = 0; $j <= 3; $j ++ ) {
 					@MainWP_DB::data_seek( $websites, 0 );
 					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
-						$pluginConflicts = json_decode( $website->pluginConflicts, true );
-						$themeConflicts  = json_decode( $website->themeConflicts, true );
-
-						$ignoredPluginConflicts = json_decode( $website->ignored_pluginConflicts, true );
-						if ( ! is_array( $ignoredPluginConflicts ) ) {
-							$ignoredPluginConflicts = array();
-						}
-						$ignoredThemeConflicts = json_decode( $website->ignored_themeConflicts, true );
-						if ( ! is_array( $ignoredThemeConflicts ) ) {
-							$ignoredThemeConflicts = array();
-						}
-
 						$hasSyncErrors = ( $website->sync_errors != '' );
 
-						$isConflict = false;
-						if ( ! $hasSyncErrors ) {
-							if ( count( $pluginConflicts ) > 0 ) {
-								foreach ( $pluginConflicts as $pluginConflict ) {
-									if ( ! in_array( $pluginConflict, $ignoredPluginConflicts ) && ! in_array( $pluginConflict, $globalIgnoredPluginConflicts ) ) {
-										$isConflict = true;
-									}
-								}
-							}
-
-							if ( ! $isConflict && ( count( $themeConflicts ) > 0 ) ) {
-								foreach ( $themeConflicts as $themeConflict ) {
-									if ( ! in_array( $themeConflict, $ignoredThemeConflicts ) && ! in_array( $themeConflict, $globalIgnoredThemeConflicts ) ) {
-										$isConflict = true;
-									}
-								}
-							}
-						}
-
-						$isDown = ( ! $hasSyncErrors && ! $isConflict && ( $website->offline_check_result == - 1 ) );
-						$isUp   = ( ! $hasSyncErrors && ! $isConflict && ! $isDown );
+						$isDown = ( ! $hasSyncErrors && ( $website->offline_check_result == - 1 ) );
+						$isUp   = ( ! $hasSyncErrors && ! $isDown );
 
 						if ( ( $j == $SYNCERRORS ) && ! $hasSyncErrors ) {
-							continue;
-						}
-						if ( ( $j == $CONFLICTS ) && ! $isConflict ) {
 							continue;
 						}
 						if ( ( $j == $DOWN ) && ! $isDown ) {
@@ -2173,8 +2096,6 @@ class MainWP_Right_Now {
 						<div class="mainwp-row">
 							<span class="mainwp-left-col"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></span>
                         <span class="mainwp-mid-col">&nbsp;
-	                        <?php if ( $isConflict ) { ?>
-		                        <span class="mainwp_status_conflict"><?php _e( 'Conflict Found', 'mainwp' ); ?></span> <?php } ?>
                         </span>
                         <span class="mainwp-right-col">
                             <?php
@@ -2185,15 +2106,6 @@ class MainWP_Right_Now {
 								<span class="fa-stack fa-lg" title="Disconnected">
                                         <i class="fa fa-circle fa-stack-2x mwp-red"></i>
                                         <i class="fa fa-plug fa-stack-1x mwp-white"></i>
-                                    </span>
-								<?php
-							}
-							else if ($isConflict)
-							{
-								?>
-								<span class="fa-stack fa-lg" title="Plugin or Theme Conflict found">
-                                        <i class="fa fa-circle fa-stack-2x mwp-red"></i>
-                                        <i class="fa fa-flag fa-stack-1x mwp-white"></i>
                                     </span>
 								<?php
 							}

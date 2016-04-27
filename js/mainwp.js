@@ -2873,12 +2873,12 @@ mainwp_managesites_test = function (event) {
                 if (response.httpCode)
                 {
                     setHtml('#mainwp_managesites_test_errors',
-                        __('Connection test failed.')+' '+__('URL:')+' '+response.host+' - '+__('HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' - '+__('Error message:')+' ' + response.error + ' <br/> <em>' + __('To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', '<a href="http://docs.mainwp.com/http-status-codes/" target="_blank">', '</a>', response.httpCode) + '</em>');
+                        __('Connection test failed.')+' '+__('URL:')+' '+response.host+' - '+__('HTTP-code:')+' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' - '+__('Error message:')+' ' + response.error + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : '') + ' <br/> <em>' + __('To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', '<a href="http://docs.mainwp.com/http-status-codes/" target="_blank">', '</a>', response.httpCode) + '</em>');
                 }
                 else
                 {
                     setHtml('#mainwp_managesites_test_errors',
-                        __('Connection test failed.')+' '+__('Error message:')+' ' + response.error);
+                        __('Connection test failed.')+' '+__('Error message:')+' ' + response.error + (response.ip != undefined ? ' (IP: ' + response.ip + ')' : ''));
                 }
             }
             else if (response.httpCode)

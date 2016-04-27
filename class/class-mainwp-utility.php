@@ -167,17 +167,14 @@ class MainWP_Utility {
 
 		MainWP_Logger::Instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [error=' . $err . '] [data=' . $data . ']' );
 
-		if ( $data === false ) {
-			return array( 'error' => ( $err == '' ? 'Invalid host.' : $err ) );
-		}
-
-		$host   = parse_url( $realurl, PHP_URL_HOST );
+		$host   = parse_url( ( empty( $realurl ) ? $url : $realurl ), PHP_URL_HOST );
 		$ip     = false;
 		$target = false;
 
 		$dnsRecord = @dns_get_record( $host );
+		MainWP_Logger::Instance()->debug( ' :: tryVisit :: [dnsRecord=' . print_r( $dnsRecord, 1 ) . ']' );
 		if ( $dnsRecord === false ) {
-			return array( 'error' => 'Invalid host.' );
+			$data = false;
 		} else if ( is_array( $dnsRecord ) ) {
 			if ( ! isset( $dnsRecord['ip'] ) ) {
 				foreach ( $dnsRecord as $dnsRec ) {
@@ -209,7 +206,8 @@ class MainWP_Utility {
 			}
 
 			if ( ! $found ) {
-				return array( 'error' => 'Invalid host.' ); // Got redirected to: ' . $dnsRecord['host'])));
+				$data = false;
+				//return array( 'error' => ( $err == '' ? 'Invalid host.' : $err ) ); // Got redirected to: ' . $dnsRecord['host'])));
 			}
 		}
 
@@ -221,9 +219,9 @@ class MainWP_Utility {
 		}
 
 		$out = array(
-		'host'           => $host,
+					  'host'           => $host,
 		              'httpCode'       => $http_status,
-		              'error'          => $err,
+		              'error'          => ( $err == '' && $data === false ? 'Invalid host.' : $err ),
 		              'httpCodeString' => self::getHttpStatusErrorString( $http_status ),
 		);
 		if ( $ip !== false ) {

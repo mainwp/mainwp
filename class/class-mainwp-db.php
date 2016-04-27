@@ -107,10 +107,6 @@ class MainWP_DB {
   automatic_update tinyint(1) NOT NULL,
   backup_before_upgrade tinyint(1) NOT NULL DEFAULT 2,
   last_db_backup_size int(11) NOT NULL,
-  pluginConflicts text NOT NULL,
-  themeConflicts text NOT NULL,
-  ignored_pluginConflicts text NOT NULL,
-  ignored_themeConflicts text NOT NULL,
   backups text NOT NULL,
   mainwpdir int(11) NOT NULL,
   loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,  
@@ -189,9 +185,7 @@ class MainWP_DB {
   site_view tinyint(1) NOT NULL DEFAULT '0',
   pluginDir text NOT NULL DEFAULT '',
   dismissed_plugins longtext NOT NULL DEFAULT '',
-  dismissed_themes longtext NOT NULL DEFAULT '',
-  ignored_pluginConflicts text NOT NULL DEFAULT '',
-  ignored_themeConflicts text NOT NULL DEFAULT ''";
+  dismissed_themes longtext NOT NULL DEFAULT ''";
 		if ( $currentVersion == '' ) {
 			$tbl .= ',
   PRIMARY KEY  (userid)  ';
@@ -376,15 +370,10 @@ class MainWP_DB {
 				'mainwp_updatescheck_mail_ignore_themes',
 				'mainwp_updatescheck_mail_ignore_core_new',
 				'mainwp_updatescheck_mail_ignore_plugins_new',
-				'mainwp_updatescheck_mail_ignore_themes_new',
-				'mainwp_updatescheck_mail_pluginconflicts',
-				'mainwp_updatescheck_mail_themeconflicts',
+				'mainwp_updatescheck_mail_ignore_themes_new',				
 				'mainwp_updatescheck_last',
 				'mainwp_updatescheck_mail_email',
-				'mainwp_cron_last_ping',
-				'mainwp_cron_last_cronconflicts',
-				'mainwp_pluginConflicts',
-				'mainwp_themeConflicts',
+				'mainwp_cron_last_ping',								
 				'mainwp_cron_last_backups_continue',
 				'mainwp_cron_last_backups',
 				'mainwp_cron_last_stats',
@@ -1088,11 +1077,7 @@ class MainWP_DB {
 				'categories'              => '',
 				'pluginDir'               => '',
 				'automatic_update'        => 0,
-				'backup_before_upgrade'   => 0,
-				'pluginConflicts'         => '',
-				'themeConflicts'          => '',
-				'ignored_pluginConflicts' => '',
-				'ignored_themeConflicts'  => '',
+				'backup_before_upgrade'   => 0,				
 				'verify_certificate'      => intval( $verifyCertificate ),
 				'ssl_version'             => $sslVersion,
 				'uniqueId'                => $uniqueId,
@@ -1597,9 +1582,7 @@ class MainWP_DB {
 			'ignored_themes'          => '',
 			'trusted_themes'          => '',
 			'trusted_themes_notes'    => '',
-			'pluginDir'               => '',
-			'ignored_pluginConflicts' => '',
-			'ignored_themeConflicts'  => '',
+			'pluginDir'               => ''			
 		);
 
 		$this->wpdb->insert( $this->tableName( 'users' ), $fields );

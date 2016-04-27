@@ -46,16 +46,6 @@ class MainWP_Sync {
 				}
 			}
 
-			$pluginConflicts = get_option( 'mainwp_pluginConflicts' );
-			if ( $pluginConflicts !== false ) {
-				$pluginConflicts = array_keys( $pluginConflicts );
-			}
-
-			$themeConflicts = get_option( 'mainwp_themeConflicts' );
-			if ( $themeConflicts !== false ) {
-				$themeConflicts = array_keys( $themeConflicts );
-			}
-
 			$othersData  = apply_filters( 'mainwp-sync-others-data', array(), $pWebsite );
 			$information = MainWP_Utility::fetchUrlAuthed( $pWebsite, 'stats',
 				array(
@@ -63,8 +53,6 @@ class MainWP_Sync {
 					'heatMap'                      => ( MainWP_Extensions::isExtensionAvailable( 'mainwp-heatmap-extension' ) ? $userExtension->heatMap : 0 ),
 					'pluginDir'                    => $pluginDir,
 					'cloneSites'                   => ( ! $cloneEnabled ? 0 : urlencode( json_encode( $cloneSites ) ) ),
-					'pluginConflicts'              => json_encode( $pluginConflicts ),
-					'themeConflicts'               => json_encode( $themeConflicts ),
 					'othersData'                   => json_encode( $othersData ),
 					'server'                       => get_admin_url(),
 					'numberdaysOutdatePluginTheme' => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
@@ -102,9 +90,7 @@ class MainWP_Sync {
 			'themes'               => $emptyArray,
 			'plugins'              => $emptyArray,
 			'users'                => $emptyArray,
-			'categories'           => $emptyArray,
-			'pluginConflicts'      => $emptyArray,
-			'themeConflicts'       => $emptyArray,
+			'categories'           => $emptyArray,			
 			'offline_check_result' => $offline_check_result,
 		);
 		$websiteSyncValues = array(
@@ -240,16 +226,6 @@ class MainWP_Sync {
 		if ( isset( $information['extauth'] ) ) {
 			$websiteSyncValues['extauth'] = $information['extauth'];
 			$done                         = true;
-		}
-
-		if ( isset( $information['pluginConflicts'] ) ) {
-			$websiteValues['pluginConflicts'] = @json_encode( $information['pluginConflicts'] );
-			$done                             = true;
-		}
-
-		if ( isset( $information['themeConflicts'] ) ) {
-			$websiteValues['themeConflicts'] = @json_encode( array_filter( $information['themeConflicts'] ) );
-			$done                            = true;
 		}
 
 		if ( isset( $information['last_post_gmt'] ) ) {

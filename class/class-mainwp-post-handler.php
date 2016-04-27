@@ -139,6 +139,8 @@ class MainWP_Post_Handler {
 		add_action( 'wp_ajax_mainwp_managetips_update', array( &$this, 'mainwp_managetips_update' ) ); //ok
 		add_action( 'wp_ajax_mainwp_tips_update', array( &$this, 'mainwp_tips_update' ) ); //ok
 		add_action( 'wp_ajax_mainwp_dismiss_twit', array( &$this, 'mainwp_dismiss_twit' ) );
+		add_action( 'wp_ajax_mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
+		
 		add_action( 'wp_ajax_mainwp_twitter_dashboard_action', array(
 			&$this,
 			'mainwp_twitter_dashboard_action',
@@ -216,13 +218,6 @@ class MainWP_Post_Handler {
 			$this->addAction( 'mainwp_plugin_ignore_updates', array( &$this, 'mainwp_plugin_ignore_updates' ) );
 		}
 		$this->addAction( 'mainwp_trusted_plugin_notes_save', array( &$this, 'mainwp_trusted_plugin_notes_save' ) );
-
-		//Plugins
-		$this->addAction( 'mainwp_ignorepluginthemeconflict', array( &$this, 'mainwp_ignorepluginthemeconflict' ) );
-		$this->addAction( 'mainwp_unignorepluginthemeconflicts', array(
-			&$this,
-			'mainwp_unignorepluginthemeconflicts',
-		) );
 
 		//Widget: Plugins
 		$this->addAction( 'mainwp_widget_plugin_activate', array( &$this, 'mainwp_widget_plugin_activate' ) );
@@ -593,6 +588,22 @@ class MainWP_Post_Handler {
 		}
 		die( 1 );
 	}
+	
+	function dismiss_activate_notice() {
+		$this->secure_request();
+
+		global $current_user;
+		if ( ( $user_id = $current_user->ID ) && isset( $_POST['slug'] ) && ! empty( $_POST['slug'] ) ) {
+			$activate_notices = get_user_option( 'mainwp_hide_activate_notices' );
+			if ( ! is_array( $activate_notices ) ) {
+				$activate_notices = array();
+			}
+			$activate_notices[ $_POST['slug'] ] = time();
+			update_user_option( $user_id, 'mainwp_hide_activate_notices', $activate_notices );
+		}
+		die( 1 );
+	}
+	
 
 	function mainwp_twitter_dashboard_action() {
 		$success = false;
@@ -1344,25 +1355,6 @@ class MainWP_Post_Handler {
 			die( json_encode( array( 'error' => 'Invalid request' ) ) );
 		}
 		die( json_encode( array( 'result' => MainWP_Right_Now::dismissPluginsThemes( $_POST['type'], $_POST['slug'], $_POST['name'] ) ) ) );
-	}
-
-
-	function mainwp_ignorepluginthemeconflict() {
-		$this->secure_request( 'mainwp_ignorepluginthemeconflict' );
-
-		if ( ! isset( $_POST['siteid'] ) ) {
-			die( json_encode( array( 'error' => 'Invalid request' ) ) );
-		}
-		die( json_encode( array( 'result' => MainWP_Plugins::ignorePluginThemeConflict( $_POST['type'], $_POST['name'], $_POST['siteid'] ) ) ) );
-	}
-
-	function mainwp_unignorepluginthemeconflicts() {
-		$this->secure_request( 'mainwp_unignorepluginthemeconflicts' );
-
-		if ( ! isset( $_POST['siteid'] ) ) {
-			die( json_encode( array( 'error' => 'Invalid request' ) ) );
-		}
-		die( json_encode( array( 'result' => MainWP_Plugins::unIgnorePluginThemeConflict( $_POST['type'], $_POST['name'], $_POST['siteid'] ) ) ) );
 	}
 
 	function mainwp_unignoreplugintheme() {

@@ -169,7 +169,14 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'No ignored abandoned plugins', __( 'No ignored abandoned plugins', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please upload plugins to install.', __( 'Please upload plugins to install.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please upload themes to install.', __( 'Please upload themes to install.', 'mainwp' ) );
-
+		mainwpAddTranslation( $mainwpTranslations, 'Did you know with the %1 you can control the settings of this plugin directly from your MainWP Dashboard?', __( 'Did you know with the %1 you can control the settings of this plugin directly from your MainWP Dashboard?', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Did you know with the %1 you can control the settings of theses plugins directly from your MainWP Dashboard?', __( 'Did you know with the %1 you can control the settings of theses plugins directly from your MainWP Dashboard?', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Did you know with the %1 you can control the settings of this theme directly from your MainWP Dashboard?', __( 'Did you know with the %1 you can control the settings of this theme directly from your MainWP Dashboard?', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Did you know with the %1 you can control the settings of theses themes directly from your MainWP Dashboard?', __( 'Did you know with the %1 you can control the settings of theses themes directly from your MainWP Dashboard?', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', __( 'Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with theses plugin? Check out the %1Documentation%2.', __( 'Would you like to use the Bulk Settings Manager with theses plugin? Check out the %1Documentation%2.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', __( 'Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with theses themes? Check out the %1Documentation%2.', __( 'Would you like to use the Bulk Settings Manager with theses themes? Check out the %1Documentation%2.', 'mainwp' ) );
 
 		return $mainwpTranslations;
 	}

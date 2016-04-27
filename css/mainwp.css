@@ -1939,10 +1939,6 @@ input[type=checkbox].mainwp-checkbox3:checked {
     margin-left: -8px !important;
     margin-top: -8px !important;
 }
-.mainwp_status_conflict {
-    color: #bb7239;
-    font-weight: bold;
-}
 .siteBulkInstall .progress,.siteBulInstall .status {
     display: none;
 }

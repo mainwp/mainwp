@@ -44,6 +44,7 @@ class MainWP_Hooks {
 		add_action( 'mainp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
 		add_action( 'mainp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
 		add_action( 'mainp_log_warning', array( &$this, 'mainwp_log_warning' ), 10, 1 );
+		add_filter( 'mainwp_getactivateextensionnotice', array( &$this, 'get_activate_extension_notice' ), 10, 1 );		
 	}
 
 	public function mainwp_log_debug( $pText ) {
@@ -55,7 +56,33 @@ class MainWP_Hooks {
 	public function mainwp_log_warning( $pText ) {
 		MainWP_Logger::Instance()->warning( $pText );
 	}
-
+	
+	public function get_activate_extension_notice( $pluginFile ) {		
+		$active = MainWP_Extensions::isExtensionActivated( $pluginFile );				
+		if ($active)
+			return false;
+		
+		$now = time();
+		$register_time = get_option( 'mainwp_setup_register_later_time', 0 );
+		if ($register_time > 0) {			
+			if ($now - $register_time > 24 * 60 * 60){	
+				delete_option('mainwp_setup_register_later_time');
+			} else {
+				return false;
+			}			
+		} 				
+		
+		$activate_notices = get_user_option( 'mainwp_hide_activate_notices' );		
+		if ( is_array( $activate_notices ) ) {
+			$slug = basename($pluginFile, ".php");
+			if (isset($activate_notices[$slug])) {
+				return false; // hide it
+			}
+		}		
+		
+		return sprintf(__("You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %sExtensions%s page and enter your API.", 'mainwp'), '<a href="admin.php?page=Extensions">', '</a>');
+	}
+		
 	public function cache_getcontext( $page ) {
 		return MainWP_Cache::getCachedContext( $page );
 	}

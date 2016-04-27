@@ -193,7 +193,7 @@ class MainWP_Api_Manager {
 		) );
 	}
 
-	public function get_purchased_software( $username, $password, $productId = "" ) {
+	public function get_purchased_software( $username, $password, $productId = "" , $no_register = false) {
 		if ( empty( $username ) || empty( $password ) ) {
 			return false;
 		}
@@ -201,7 +201,8 @@ class MainWP_Api_Manager {
 		return MainWP_Api_Manager_Key::instance()->getpurchasedsoftware( array(
 			'username' => $username,
 			'password' => $password,
-			'product_id' => $productId
+			'product_id' => $productId,
+			'noauth' => $no_register ? 1 : 0
 		) );
 	}
 

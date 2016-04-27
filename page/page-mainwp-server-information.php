@@ -541,8 +541,7 @@ public static function renderFooter( $shownPage ) {
 			'Updates check'    => 'mainwp_cron_last_updatescheck',
 			'Stats'            => 'mainwp_cron_last_stats',
 			'Ping childs'      => 'mainwp_cron_last_ping',
-			'Offline checks'   => 'mainwp_cron_last_offlinecheck',
-			'Conflicts update' => 'mainwp_cron_last_cronconflicts',
+			'Offline checks'   => 'mainwp_cron_last_offlinecheck'			
 		);
 		?>
 		<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
@@ -674,12 +673,13 @@ public static function renderFooter( $shownPage ) {
 		<?php
 	}
 
-	protected static function render_row_with_description( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $description = '', $whatType = null, $errorType = self::WARNING )
+	protected static function render_row_with_description( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $toolTip = null, $whatType = null, $errorType = self::WARNING )
 	{
 		$currentVersion = call_user_func(array(MainWP_Server_Information::getClassName(), $pGetter));
 		?>
 		<tr>
-			<td><?php echo $pConfig; ?></td>
+			<td><?php if ( ! empty( $toolTip ) ) { ?>
+					<a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWP_Utility::renderToolTip( $toolTip ); ?></a><?php } ?> <?php echo $pConfig; ?></td>
 			<td><?php echo $pCompare; ?>  <?php echo ($pVersion === true ? 'true' : ( is_array($pVersion) && isset($pVersion['version']) ? $pVersion['version'] : $pVersion)) . ' ' . $pExtraText; ?></td>
 			<td><?php echo ($currentVersion === true ? 'true' : $currentVersion); ?></td>
 			<?php if ($whatType == 'filesize') { ?>

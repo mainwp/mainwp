@@ -846,32 +846,6 @@ class MainWP_System {
 					$mail .= '</ul>';
 				}
 
-				$pluginConflicts = get_option( 'mainwp_updatescheck_mail_pluginconflicts' );
-				if ( $pluginConflicts === false ) {
-					$pluginConflicts = '';
-				}
-
-				if ( $pluginConflicts != '' ) {
-					$sendMail = true;
-					$mail .= '<div><strong>WordPress Plugin Conflicts</strong></div>';
-					$mail .= '<ul>';
-					$mail .= $pluginConflicts;
-					$mail .= '</ul>';
-				}
-
-				$themeConflicts = get_option( 'mainwp_updatescheck_mail_themeconflicts' );
-				if ( $themeConflicts === false ) {
-					$themeConflicts = '';
-				}
-
-				if ( $themeConflicts != '' ) {
-					$sendMail = true;
-					$mail .= '<div><strong>WordPress Theme Conflicts</strong></div>';
-					$mail .= '<ul>';
-					$mail .= $themeConflicts;
-					$mail .= '</ul>';
-				}
-
 				MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', '' );
 
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_update_core_new', '' );
@@ -889,10 +863,6 @@ class MainWP_System {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_core_new', '' );
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_plugins_new', '' );
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_themes_new', '' );
-
-				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_pluginconflicts', '' );
-
-				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_themeconflicts', '' );
 
 				MainWP_Utility::update_option( 'mainwp_updatescheck_last', date( 'd/m/Y' ) );
 				if ( ! $sendMail ) {
@@ -962,9 +932,6 @@ class MainWP_System {
 			$themesNewUpdate        = array();
 			$notTrustedThemesToUpdate  = array();
 			$notTrustedThemesNewUpdate = array();
-
-			$pluginConflicts = '';
-			$themeConflicts  = '';
 
 			$allWebsites = array();
 
@@ -1106,44 +1073,7 @@ class MainWP_System {
 					}
 				}
 
-				/**
-				 * Show plugin conflicts
-				 */
-				$sitePluginConflicts = json_decode( $website->pluginConflicts, true );
-				if ( count( $sitePluginConflicts ) > 0 ) {
-					$infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name )  . '</a> - ';
-
-					$pluginConflicts .= '<li>' . $infoTxt;
-					$added = false;
-					foreach ( $sitePluginConflicts as $sitePluginConflict ) {
-						if ( $added ) {
-							$pluginConflicts .= ', ';
-						}
-						$pluginConflicts .= $sitePluginConflict;
-						$added = true;
-					}
-					$pluginConflicts .= '</li>' . "\n";
-				}
-
-				/**
-				 * Show theme conflicts
-				 */
-				$siteThemeConflicts = json_decode( $website->themeConflicts, true );
-				if ( count( $siteThemeConflicts ) > 0 ) {
-					$infoTxt = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ';
-
-					$themeConflicts .= '<li>' . $infoTxt;
-					$added = false;
-					foreach ( $siteThemeConflicts as $siteThemeConflict ) {
-						if ( $added ) {
-							$themeConflicts .= ', ';
-						}
-						$themeConflicts .= $siteThemeConflict;
-						$added = true;
-					}
-					$themeConflicts .= '</li>' . "\n";
-				}
-
+				
 				//Loop over last plugins & current plugins, check if we need to upgrade them..
 				$user  = get_userdata( $website->userid );
 				$email = MainWP_Utility::getNotificationEmail( $user );
@@ -1214,25 +1144,10 @@ class MainWP_System {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_themes_new', MainWP_Utility::array_merge( $notTrustedThemesNewUpdateSaved, $notTrustedThemesNewUpdate ) );
 			}
 
-			if ( $pluginConflicts != '' ) {
-				$pluginConflictsSaved = get_option( 'mainwp_updatescheck_mail_pluginconflicts' );
-				if ( $pluginConflictsSaved == false ) {
-					$pluginConflictsSaved = '';
-				}
-				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_pluginconflicts', $pluginConflictsSaved . $pluginConflicts );
-			}
-
-			if ( $themeConflicts != '' ) {
-				$themeConflictsSaved = get_option( 'mainwp_updatescheck_mail_themeconflicts' );
-				if ( $themeConflictsSaved == false ) {
-					$themeConflictsSaved = '';
-				}
-				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_themeconflicts', $themeConflictsSaved . $themeConflicts );
-			}
 
 			if ( ( count( $coreToUpdate ) == 0 ) && ( count( $pluginsToUpdate ) == 0 ) && ( count( $themesToUpdate ) == 0 ) && ( count( $ignoredCoreToUpdate ) == 0 ) && ( count( $ignoredCoreNewUpdate ) == 0 )
 			     && ( count( $notTrustedPluginsToUpdate ) == 0 ) && ( count( $notTrustedPluginsNewUpdate ) == 0 ) && ( count( $notTrustedThemesToUpdate ) == 0 ) && ( count( $notTrustedThemesNewUpdate ) == 0 )
-			     && ( $pluginConflicts == '' ) && ( $themeConflicts == '' ) ) {
+			     ) {
 				return;
 			}
 
@@ -1820,6 +1735,7 @@ class MainWP_System {
 			'time_format'           => get_option( 'time_format' ),
 			'enabledTwit'           => MainWP_Twitter::enabledTwitterMessages(),
 			'maxSecondsTwit'        => MAINWP_TWITTER_MAX_SECONDS,
+			'installedBulkSettingsManager'	=> MainWP_Extensions::isExtensionAvailable( 'mainwp-bulk-settings-manager' ) ? 1 : 0,
 		);
 		wp_localize_script( 'mainwp', 'mainwpParams', $mainwpParams );
 		wp_enqueue_script( 'mainwp-tristate', MAINWP_PLUGIN_URL . 'js/tristate.min.js', array( 'mainwp' ), $this->current_version );

@@ -569,24 +569,13 @@ class MainWP_Right_Now {
 		$decodedDismissedPlugins = json_decode( $userExtension->dismissed_plugins, true );
 		$decodedDismissedThemes  = json_decode( $userExtension->dismissed_themes, true );
 
-		$globalIgnoredPluginConflicts = json_decode( $userExtension->ignored_pluginConflicts, true );
-		if ( ! is_array( $globalIgnoredPluginConflicts ) ) {
-			$globalIgnoredPluginConflicts = array();
-		}
-
-		$globalIgnoredThemeConflicts = json_decode( $userExtension->ignored_themeConflicts, true );
-		if ( ! is_array( $globalIgnoredThemeConflicts ) ) {
-			$globalIgnoredThemeConflicts = array();
-		}
-
 		$total_wp_upgrades     = 0;
 		$total_plugin_upgrades = 0;
 		$total_translation_upgrades = 0;
 		$total_theme_upgrades  = 0;
 		$total_sync_errors     = 0;
 		$total_uptodate        = 0;
-		$total_offline         = 0;
-		$total_conflict        = 0;
+		$total_offline         = 0;		
 		$total_plugins_outdate = 0;
 		$total_themes_outdate  = 0;
 
@@ -858,38 +847,6 @@ class MainWP_Right_Now {
 				$total_offline ++;
 			}
 
-			$pluginConflicts = json_decode( $website->pluginConflicts, true );
-			$themeConflicts  = json_decode( $website->themeConflicts, true );
-
-			$ignoredPluginConflicts = json_decode( $website->ignored_pluginConflicts, true );
-			if ( ! is_array( $ignoredPluginConflicts ) ) {
-				$ignoredPluginConflicts = array();
-			}
-			$ignoredThemeConflicts = json_decode( $website->ignored_themeConflicts, true );
-			if ( ! is_array( $ignoredThemeConflicts ) ) {
-				$ignoredThemeConflicts = array();
-			}
-
-			$isConflict = false;
-			if ( count( $pluginConflicts ) > 0 ) {
-				foreach ( $pluginConflicts as $pluginConflict ) {
-					if ( ! in_array( $pluginConflict, $ignoredPluginConflicts ) && ! in_array( $pluginConflict, $globalIgnoredPluginConflicts ) ) {
-						$isConflict = true;
-					}
-				}
-			}
-
-			if ( ! $isConflict && ( count( $themeConflicts ) > 0 ) ) {
-				foreach ( $themeConflicts as $themeConflict ) {
-					if ( ! in_array( $themeConflict, $ignoredThemeConflicts ) && ! in_array( $themeConflict, $globalIgnoredThemeConflicts ) ) {
-						$isConflict = true;
-					}
-				}
-			}
-
-			if ( $isConflict ) {
-				$total_conflict ++;
-			}
 		}
 		$errorsDismissed = get_user_option( 'mainwp_syncerrors_dismissed' );
 		?>
@@ -2085,16 +2042,7 @@ class MainWP_Right_Now {
                                 <i class="fa fa-plug fa-stack-1x mwp-white"></i>
                             </span>
 						<?php
-					}
-					else if ($total_conflict > 0)
-					{
-						?>
-						<span class="fa-stack" title="Plugin or Theme Conflict found">
-                                <i class="fa fa-circle fa-stack-2x mwp-red"></i>
-                                <i class="fa fa-flag fa-stack-1x mwp-white"></i>
-                            </span>
-						<?php
-					}
+					}					
 					else if ($total_offline > 0)
 					{
 						?>
@@ -2122,56 +2070,21 @@ class MainWP_Right_Now {
 				<?php
 				//Loop 3 times, first we show the conflicts, then we show the down sites, then we show the up sites
 
-				$SYNCERRORS = 0;
-				$CONFLICTS  = 1;
+				$SYNCERRORS = 0;				
 				$DOWN       = 2;
 				$UP         = 3;
 
 				for ( $j = 0; $j <= 3; $j ++ ) {
 					@MainWP_DB::data_seek( $websites, 0 );
-					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
-						$pluginConflicts = json_decode( $website->pluginConflicts, true );
-						$themeConflicts  = json_decode( $website->themeConflicts, true );
-
-						$ignoredPluginConflicts = json_decode( $website->ignored_pluginConflicts, true );
-						if ( ! is_array( $ignoredPluginConflicts ) ) {
-							$ignoredPluginConflicts = array();
-						}
-						$ignoredThemeConflicts = json_decode( $website->ignored_themeConflicts, true );
-						if ( ! is_array( $ignoredThemeConflicts ) ) {
-							$ignoredThemeConflicts = array();
-						}
-
+					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {					
 						$hasSyncErrors = ( $website->sync_errors != '' );
 
-						$isConflict = false;
-						if ( ! $hasSyncErrors ) {
-							if ( count( $pluginConflicts ) > 0 ) {
-								foreach ( $pluginConflicts as $pluginConflict ) {
-									if ( ! in_array( $pluginConflict, $ignoredPluginConflicts ) && ! in_array( $pluginConflict, $globalIgnoredPluginConflicts ) ) {
-										$isConflict = true;
-									}
-								}
-							}
-
-							if ( ! $isConflict && ( count( $themeConflicts ) > 0 ) ) {
-								foreach ( $themeConflicts as $themeConflict ) {
-									if ( ! in_array( $themeConflict, $ignoredThemeConflicts ) && ! in_array( $themeConflict, $globalIgnoredThemeConflicts ) ) {
-										$isConflict = true;
-									}
-								}
-							}
-						}
-
-						$isDown = ( ! $hasSyncErrors && ! $isConflict && ( $website->offline_check_result == - 1 ) );
-						$isUp   = ( ! $hasSyncErrors && ! $isConflict && ! $isDown );
+						$isDown = ( ! $hasSyncErrors && ( $website->offline_check_result == - 1 ) );
+						$isUp   = ( ! $hasSyncErrors && ! $isDown );
 
 						if ( ( $j == $SYNCERRORS ) && ! $hasSyncErrors ) {
 							continue;
-						}
-						if ( ( $j == $CONFLICTS ) && ! $isConflict ) {
-							continue;
-						}
+						}						
 						if ( ( $j == $DOWN ) && ! $isDown ) {
 							continue;
 						}
@@ -2182,9 +2095,7 @@ class MainWP_Right_Now {
 						?>
 						<div class="mainwp-row">
 							<span class="mainwp-left-col"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></span>
-                        <span class="mainwp-mid-col">&nbsp;
-	                        <?php if ( $isConflict ) { ?>
-		                        <span class="mainwp_status_conflict"><?php _e( 'Conflict Found', 'mainwp' ); ?></span> <?php } ?>
+                        <span class="mainwp-mid-col">&nbsp;	                        
                         </span>
                         <span class="mainwp-right-col">
                             <?php
@@ -2197,16 +2108,7 @@ class MainWP_Right_Now {
                                         <i class="fa fa-plug fa-stack-1x mwp-white"></i>
                                     </span>
 								<?php
-							}
-							else if ($isConflict)
-							{
-								?>
-								<span class="fa-stack fa-lg" title="Plugin or Theme Conflict found">
-                                        <i class="fa fa-circle fa-stack-2x mwp-red"></i>
-                                        <i class="fa fa-flag fa-stack-1x mwp-white"></i>
-                                    </span>
-								<?php
-							}
+							}							
 							else if ($isDown)
 							{
 								?>

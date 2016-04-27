@@ -448,7 +448,7 @@ class MainWP_Settings {
 					<table class="form-table">
 						<tbody>
 						<tr>
-							<th scope="row"><?php _e( 'Hide WP Menus', 'mainwp' ); ?></th>
+							<th scope="row"><?php _e( 'Cleanup your Dashboard', 'mainwp' ); ?></th>
 							<td>
 								<ul class="mainwp_checkboxes mainwp_hide_wpmenu_checkboxes">
 									<?php

@@ -108,7 +108,7 @@ class MainWP_Setup_Wizard {
 				'handler' => array( $this, 'mwp_setup_uptime_robot_save' ),
 			),
 			'hide_wp_menus' => array(
-				'name'    =>  __( 'Hide WP Menus', 'mainwp' ),
+				'name'    =>  __( 'Cleanup', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_hide_wp_menu' ),
 				'handler' => array( $this, 'mwp_setup_hide_wp_menu_save' ),
 			),
@@ -125,7 +125,13 @@ class MainWP_Setup_Wizard {
 			                       'slug' => 'mainwp-updraftplus-extension/mainwp-updraftplus-extension.php'),
 			'backupwp' => array('name' => 'MainWP BackUpWordPress Extension',
 			                    'product_id' => 'MainWP BackUpWordPress Extension',
-			                    'slug' => 'mainwp-backupwordpress-extension/mainwp-backupwordpress-extension.php')
+			                    'slug' => 'mainwp-backupwordpress-extension/mainwp-backupwordpress-extension.php'),
+			'blogvault' => array('name' => 'MainWP BlogVault Backup Extension',
+			                    'product_id' => 'MainWP BlogVault Backup Extension',
+			                    'slug' => 'mainwp-blogvault-backup-extension/mainwp-blogvault-backup-extension.php'),
+			'backwpup' => array('name' => 'MainWP BackWPup Extension',
+			                    'product_id' => 'MainWP BackWPup Extension',
+			                    'slug' => 'mainwp-backwpup-extension/mainwp-backwpup-extension.php')
 		);
 
 		$this->step = isset( $_GET['step'] ) ? sanitize_key( $_GET['step'] ) : current( array_keys( $this->steps ) );
@@ -262,9 +268,9 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1><?php _e( 'Installation', 'mainwp' ); ?></h1>
 		<form method="post">
-			<p><?php  _e( 'Where did you install your MainWP Dashboard?' ); ?></p>
+			<p><?php  _e( 'Where type of server is this?' ); ?></p>
 			<ul class="mwp-setup-list os-list" id="mwp_setup_installation_hosting_type">
-				<li><label><input type="radio" name="mwp_setup_installation_hosting_type" required = "required" <?php echo ($hostingType == 1 ? 'checked="true"' : ''); ?> value="1"> <?php _e( 'WebHost', 'mainwp' ); ?></label></li>
+				<li><label><input type="radio" name="mwp_setup_installation_hosting_type" required = "required" <?php echo ($hostingType == 1 ? 'checked="true"' : ''); ?> value="1"> <?php _e( 'Web Host', 'mainwp' ); ?></label></li>
 				<li><label><input type="radio" name="mwp_setup_installation_hosting_type" required = "required" <?php echo ($hostingType == 2 ? 'checked="true"' : ''); ?> value="2"> <?php _e( 'Localhost', 'mainwp' ); ?></label></li>
 			</ul>
 			<div id="mwp_setup_os_type" <?php echo $style; ?>>
@@ -315,7 +321,7 @@ class MainWP_Setup_Wizard {
 		<form method="post" class="form-table">
 			<p><?php _e( 'Due to bug with PHP on Windows please enter your OpenSSL Library location.<br /> Usually it is here:', 'mainwp' ); ?></p>
 			<p><input type="text" class="" style="width: 100%" name="mwp_setup_openssl_lib_location" value="<?php echo esc_html($openssl_loc); ?>"></p>
-			<em><?php echo sprintf( __( 'In most cases %s should be your path if using a normal install.%sIf not your will need to change that to match your specific path.', 'mainwp' ), 'c:\\xampplite\\apache\\conf\\openssl.cnf', '<br />' ); ?></em>
+			<em><?php echo sprintf( __( 'If your openssl.cnf file is saved to a different path from what is entered above please enter your exact path. In most cases %s should be your path if using a normal install.', 'mainwp' ), 'c:\\xampplite\\apache\\conf\\openssl.cnf', '<br />' ); ?></em>
 			<br /><br />
 			<p class="mwp-setup-actions step">
 				<input type="submit" class="button-primary button button-large" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
@@ -372,10 +378,10 @@ class MainWP_Setup_Wizard {
 						<th scope="row"><?php _e("What type of hosting is this Dashboard site on?", "mainwp"); ?></th>
 						<td>
 						<span class="mainwp-select-bg"><select name="mwp_setup_type_hosting" id="mwp_setup_type_hosting">
-								<option value="3" <?php if ($typeHosting == 3) {
+								<option value="3" <?php if ( false == $typeHosting || 3 == $typeHosting ) {
 								?>selected<?php } ?>><?php _e('Shared', 'mainwp'); ?>
 								</option>
-								<option value="1" <?php if (($typeHosting == false) || ($typeHosting == 1)) {
+								<option value="1" <?php if ($typeHosting == 1) {
 								?>selected<?php } ?>><?php _e('VPS', 'mainwp'); ?>
 								</option>
 								<option value="2" <?php if ($typeHosting == 2) {
@@ -386,7 +392,7 @@ class MainWP_Setup_Wizard {
 					</tr>
 				<?php } ?>
 				<tr>
-					<th scope="row"><label for="mwp_setup_manage_planning"><?php _e("How many child site you are planing to manage?", "mainwp"); ?></label></th>
+					<th scope="row"><label for="mwp_setup_manage_planning"><?php _e("How many child sites are you planning to manage?", "mainwp"); ?></label></th>
 					<td>
 						<span class="mainwp-select-bg"><select name="mwp_setup_manage_planning" id="mwp_setup_manage_planning">
 								<option value="1" <?php if (($managePlanning == false) || ($managePlanning == 1)) {
@@ -442,14 +448,18 @@ class MainWP_Setup_Wizard {
 		<form method="post">
 			<table class="form-table">
 				<tr>
-					<th scope="row"><?php _e('Hide Network on Child Sites','mainwp'); ?></th>
+					<th scope="row"><?php _e('Hide your MainWP Network?','mainwp'); ?></th>
 					<td>
 						<div class="mainwp-checkbox">
 							<input type="checkbox" value="hidden" name="mwp_setup_options_footprint_plugin_folder" id="mwp_setup_options_footprint_plugin_folder_default" <?php echo ($pluginDir == 'hidden' ? 'checked="true"' : ''); ?>/><label for="mwp_setup_options_footprint_plugin_folder_default"></label>
 						</div>
 						<br /><br />
 						<em>
-							<?php _e('This will make anyone including Search Engines trying find your Child Plugin encounter a 404 page. Hiding the Child Plugin does require the plugin to make changes to your .htaccess file that in rare instances or server configurations could cause problems.','mainwp'); ?>
+							<?php _e('This will make anyone including your competitors or Search Engines trying find the MainWP Child Plugin encounter a 404 page. This does not stop Admins from seeing the plugin is installed.','mainwp'); ?>							
+						</em>
+						<br /><br />
+						<em>
+							<?php _e('Hiding the Child Plugin does require the plugin to make changes to your .htaccess file that in rare instances or server configurations could cause problems.','mainwp'); ?>							
 						</em>
 					</td>
 				</tr>
@@ -556,9 +566,7 @@ class MainWP_Setup_Wizard {
 	}
 
 
-	public function mwp_setup_backup() {
-		$archiveFormat = get_option('mainwp_archiveFormat');
-		if ($archiveFormat == false) $archiveFormat = 'tar.gz';
+	public function mwp_setup_backup() {		
 		$planning_backup = get_option('mwp_setup_planningBackup');
 		$backup_method = get_option('mwp_setup_primaryBackup');
 
@@ -585,7 +593,8 @@ class MainWP_Setup_Wizard {
 								<select name="mwp_setup_backup_method" id="mwp_setup_backup_method">
 									<option value="updraftplus" <?php if ($backup_method == 'updraftplus'): ?>selected<?php endif; ?>>UpdraftPlus (Free Extension)</option>
 									<option value="backupwp" <?php if ($backup_method == 'backupwp'): ?>selected<?php endif; ?>>BackUpWordPress (Free Extension)</option>
-									<option value="" <?php if (empty($backup_method)): ?>selected<?php endif; ?>>Default Backups</option>
+									<option value="blogvault" <?php if ($backup_method == 'blogvault'): ?>selected<?php endif; ?>>BlogVault (Free Extension)</option>
+									<option value="backwpup" <?php if ($backup_method == 'backwpup'): ?>selected<?php endif; ?>>BackWPup (Free Extension)</option>									
 								</select>						
 						</span>
 						<br /><br />
@@ -593,30 +602,15 @@ class MainWP_Setup_Wizard {
 							<span class="mainwp-backups-notice" method="default" <?php echo empty($backup_method) ? "" : 'style="display:none"'; ?> ><?php _e( 'This is a backup solution developed by MainWP.','mainwp' ); ?></span>
 							<span class="mainwp-backups-notice" method="updraftplus" <?php echo ($backup_method == 'updraftplus') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the UpdraftPlus backup plugin for your Backups.','mainwp' ); ?></span>
 							<span class="mainwp-backups-notice" method="backupwp" <?php echo ($backup_method == 'backupwp') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the BackupWordPress backup plugin for your Backups.','mainwp' ); ?></span>
+							<span class="mainwp-backups-notice" method="blogvault" <?php echo ($backup_method == 'blogvault') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the BlogVault backup plugin for your Backups.','mainwp' ); ?></span>
+							<span class="mainwp-backups-notice" method="backwpup" <?php echo ($backup_method == 'backwpup') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the BackWPup backup plugin for your Backups.','mainwp' ); ?></span>
 						</em>
 						<br /><br />
 						<em>
 							<?php _e( 'You can change this at any time.','mainwp' ); ?>
 						</em>
 					</td>
-				</tr>
-				<tr id="mwp_setup_tr_backup_archive_type" <?php echo $style_archive; ?>>
-					<th scope="row"><?php _e('Backup File Archive Type:','mainwp'); ?></th>
-					<td valign="top">
-                        <span class="mainwp-select-bg"><select name="mwp_setup_archive_format" id="mwp_setup_archive_format">
-		                        <option value="zip" <?php if ($archiveFormat == 'zip'): ?>selected<?php endif; ?>>Zip</option>
-		                        <option value="tar" <?php if ($archiveFormat == 'tar'): ?>selected<?php endif; ?>>Tar</option>
-		                        <option value="tar.gz" <?php if ($archiveFormat == 'tar.gz'): ?>selected<?php endif; ?>>Tar GZip</option>
-		                        <option value="tar.bz2" <?php if ($archiveFormat == 'tar.bz2'): ?>selected<?php endif; ?>>Tar BZip2</option>
-	                        </select></span>
-						<ul class="mwp-setup-list">
-							<li>Zip - Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)</li>
-							<li>Tar - Creates an uncompressed tar-archive. (No compression, fast, low memory usage)</li>
-							<li>Tar GZip - Creates a GZipped tar-archive. (Good compression, fast, low memory usage)</li>
-							<li>Tar BZip2 - Creates a BZipped tar-archive. (Best compression, fast, low memory usage)</li>
-						</ul>
-					</td>
-				</tr>
+				</tr>				
 			</table>
 			<p class="mwp-setup-actions step">
 				<input type="submit" class="button-primary button button-large" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
@@ -634,10 +628,7 @@ class MainWP_Setup_Wizard {
 		$backup_method = !empty($backup_method) && isset($this->backup_extensions[$backup_method]) ? $backup_method : "";
 
 		update_option( 'mwp_setup_planningBackup', $planning_backup );
-		update_option( 'mwp_setup_primaryBackup', $backup_method );
-		if (isset($_POST['mwp_setup_archive_format'])) {
-			update_option( 'mainwp_archiveFormat', $_POST['mwp_setup_archive_format'] );
-		}
+		update_option( 'mwp_setup_primaryBackup', $backup_method );		
 
 		if ($planning_backup && !empty($backup_method) ) {
 			wp_redirect( $this->get_next_step_link() );
@@ -648,12 +639,17 @@ class MainWP_Setup_Wizard {
 	}
 
 	public function mwp_setup_mainwp_register() {
+		$backup_method = get_option('mwp_setup_primaryBackup');		
+		$ext_product_id = 0;
+		if (isset($this->backup_extensions[$backup_method])) {
+			$ext_product_id = $this->backup_extensions[$backup_method]['product_id'];			
+		}
 		?>
-		<h1><?php _e( 'MainWP Extensions Sign Up', 'mainwp' ); ?></h1>
+		<h1><?php _e( 'MainWP Signup', 'mainwp' ); ?></h1>
 		<p><?php echo __("Skip this Step if you already have MainWP Extensions account.", "mainwp"); ?></p>
-		<p><?php echo __("This extension is free, however it requires MainWP Extensions account.", "mainwp"); ?></p>
+		<p><?php echo __("This Extension if free, however it requires a free MainWP account to receive updates and support.", "mainwp"); ?></p>
 		<p><a href="https://mainwp.com/my-account/" class="mainwp-upgrade-button button button-hero" target="_blank"><?php _e( 'Register for MainWP Account', 'mainwp' ); ?></a><br/><em style="font-size: 13px;"><?php _e("(you will be brought to a new page)", "mainwp"); ?></em></p>
-		<p><?php echo sprintf(__("If you do not want to register now click %shere%s to use the MainWP Default Backups.", "mainwp"), '<a href="admin.php?page=mainwp-setup&step=primary_backup&method=default">', '</a>'); ?></p>
+		<p><?php echo sprintf(__("If you prefer to register later, click %shere%s to automatically download and install the Extension.", "mainwp"), '<a href="admin.php?page=mainwp-setup&step=install_extension&mwp-setup=' . wp_create_nonce( 'mwp-setup' ) . '&noregister=1">', '</a>'); ?></p>
 		<p class="mwp-setup-actions step">
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button-primary button button-large"><?php _e( 'Continue', 'mainwp' ); ?></a>
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button button-large"><?php _e( 'Skip this step', 'mainwp' ); ?></a>
@@ -684,7 +680,9 @@ class MainWP_Setup_Wizard {
 		$error = get_option('mwp_setup_error_purchase_extension');
 		$message = get_option('mwp_setup_message_purchase_extension');
 		?>
-		<h1><?php _e( 'Purchase', 'mainwp' ); ?></h1>
+		<h1><?php _e( 'MainWP Login', 'mainwp' ); ?></h1>
+		
+		<p><?php echo __('Log into your MainWP account to auto install your new Extension.', 'mainwp'); ?></p>
 		<p><?php echo $ext_name; ?></p>
 		<?php
 		if (!empty($message)) {
@@ -700,13 +698,13 @@ class MainWP_Setup_Wizard {
 			<input type="hidden" name="mwp_setup_purchase_product_id"  value="<?php echo esc_attr($ext_product_id); ?>">
 			<table class="form-table">
 				<tr>
-					<th scope="row"><label for="mwp_setup_purchase_username"><?php _e("Username:", "mainwp"); ?></label></th>
+					<th scope="row"><label for="mwp_setup_purchase_username"><?php _e("MainWP Username:", "mainwp"); ?></label></th>
 					<td>
 						<input type="text" id="mwp_setup_purchase_username" name="mwp_setup_purchase_username" required = "required" class="input-text" value="<?php echo esc_attr( $username ); ?>" />
 					</td>
 				</tr>
 				<tr>
-					<th scope="row"><label for="mwp_setup_purchase_passwd"><?php _e("Password:", "mainwp"); ?></label></th>
+					<th scope="row"><label for="mwp_setup_purchase_passwd"><?php _e("MainWP Password:", "mainwp"); ?></label></th>
 					<td>
 						<input type="password" id="mwp_setup_purchase_passwd" name="mwp_setup_purchase_passwd" required = "required" class="input-text" value="<?php echo esc_attr( $password ); ?>" />
 					</td>
@@ -786,19 +784,23 @@ class MainWP_Setup_Wizard {
 
 	public static function ajax_get_backup_extension() {
 
+		$product_id = trim( $_POST['productId'] );
+		$register_later = ( isset( $_POST['register_later'] ) && !empty( $_POST['register_later'] ) ) ? true : false;
+		
 		$enscrypt_u = get_option('mainwp_extensions_api_username');
 		$enscrypt_p = get_option('mainwp_extensions_api_password');
 		$username = !empty($enscrypt_u) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_u) : "";
 		$password = !empty($enscrypt_p) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_p) : "";
-
-		$product_id = trim( $_POST['productId'] );
-
-		if (($username == '') || ($password == ''))
-		{
-			die(json_encode(array('error' => __('Login Invalid.','mainwp'))));
+		
+		if (!$register_later) {
+			if (($username == '') || ($password == ''))
+			{
+				die(json_encode(array('error' => __('Login Invalid.','mainwp'))));
+			}
 		}
-
-		$data = MainWP_Api_Manager::instance()->get_purchased_software( $username, $password, $product_id);
+		$data = MainWP_Api_Manager::instance()->get_purchased_software( $username, $password, $product_id, $register_later);
+		
+		
 		$result = json_decode($data, true);
 		$return = array();
 		if (is_array($result)) {
@@ -864,14 +866,11 @@ class MainWP_Setup_Wizard {
 		die(json_encode($result));
 	}
 
-	public function mwp_setup_install_extension() {
-		$enscrypt_u = get_option('mainwp_extensions_api_username');
-		$enscrypt_p = get_option('mainwp_extensions_api_password');
-		$username = !empty($enscrypt_u) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_u) : "";
-		$password = !empty($enscrypt_p) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_p) : "";
-
+	public function mwp_setup_install_extension() {		
+		
+		$register_later = isset($_GET['noregister']) && (int) $_GET['noregister']  ? : 0;
+		
 		$backup_method = get_option('mwp_setup_primaryBackup');
-
 		$ext_product_id = $ext_name = $ext_slug = "";
 		if (isset($this->backup_extensions[$backup_method])) {
 			$ext_product_id = $this->backup_extensions[$backup_method]['product_id'];
@@ -891,6 +890,12 @@ class MainWP_Setup_Wizard {
 				break;
 			}
 		}
+		
+		$back_step = "";
+		if ($register_later) {
+			$back_step = 'mainwp_register';
+			MainWP_Utility::update_option('mainwp_setup_register_later_time', time());
+		}		
 
 		?>
 		<h1><?php _e( 'Install and Activate', 'mainwp' ); ?></h1>
@@ -899,18 +904,18 @@ class MainWP_Setup_Wizard {
 				<?php echo !empty($ext_name) ? '<p>' . $ext_name . '</p>' : ""; ?>
 				<input type="hidden" name="mwp_setup_extension_product_id" id="mwp_setup_extension_product_id" value="<?php echo esc_attr($ext_product_id); ?>" slug="<?php echo esc_attr($ext_slug); ?>">
 				<?php
-				if ($ext_installed) {
-					echo '<p><img src="' . plugins_url('images/ok.png', dirname(__FILE__)) .'" alt="Ok"/>&nbsp;' . $ext_name . " was installed on your dashboard.</p>";
-				if (!$ext_activated) {
-					?>
-					<script type="text/javascript">
-						jQuery(document).ready(function () {
-							jQuery('#mwp_setup_active_extension').fadeIn(500);
-							mainwp_setup_extension_activate(false);
-						})
-					</script>
-				<?php
-				}
+					if ($ext_installed) {
+						echo '<p><img src="' . plugins_url('images/ok.png', dirname(__FILE__)) .'" alt="Ok"/>&nbsp;' . $ext_name . " was installed on your dashboard.</p>";
+					if (!$ext_activated && !$register_later) {
+						?>
+						<script type="text/javascript">
+							jQuery(document).ready(function () {
+								jQuery('#mwp_setup_active_extension').fadeIn(500);
+								mainwp_setup_extension_activate(false);
+							})
+						</script>
+					<?php
+					}
 				} else {
 				?>
 					<div id="mwp_setup-install-extension">
@@ -920,12 +925,12 @@ class MainWP_Setup_Wizard {
 	                    </span>
 						<script type="text/javascript">
 							jQuery(document).ready(function () {
-								mainwp_setup_grab_extension(false);
+								mainwp_setup_grab_extension(false, <?php echo $register_later; ?>);
 							})
 						</script>
 					</div>
 					<div id="mwp_setup_extension_retry_install" style="display: none;"><p><span class="mwp_setup_loading_wrap">
-	                    <input type="button" value="Retry Install Extension" id="mwp_setup_extension_install_btn" class="mainwp-upgrade-button button-primary">
+	                    <input type="button" value="Retry Install Extension" onclick="mainwp_setup_grab_extension(false, <?php echo $register_later; ?>); return false;" id="mwp_setup_extension_install_btn" class="mainwp-upgrade-button button-primary">
 	                        <i style="display: none;" class="fa fa-spinner fa-pulse"></i><span class="status hidden"></span>
 	                    </span></p>
 					</div>
@@ -945,7 +950,7 @@ class MainWP_Setup_Wizard {
 			<p class="mwp-setup-actions step">
 				<input type="submit" class="button-primary button button-large" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
 				<input type="submit" class="button button-large" value="<?php esc_attr_e( 'Skip this step', 'mainwp' ); ?>" name="save_step" />
-				<a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="button button-large"><?php _e( 'Back', 'mainwp' ); ?></a>
+				<a href="<?php echo esc_url( $this->get_back_step_link($back_step) ); ?>" class="button button-large"><?php _e( 'Back', 'mainwp' ); ?></a>
 				<?php wp_nonce_field( 'mwp-setup' ); ?>
 			</p>
 		</form>
@@ -1023,7 +1028,7 @@ class MainWP_Setup_Wizard {
 		if (!is_array($hide_menus))
 			$hide_menus = array();
 		?>
-		<h1><?php _e( 'Hide WP Menus', 'mainwp' ); ?></h1>
+		<h1><?php _e( 'Cleanup your Dashboard', 'mainwp' ); ?></h1>
 		<p>
 			<?php _e( 'If you installed your MainWP Dashboard on a brand new site dedicated to MainWP these are sections that you will not need and you can hide in order to declutter your site.', 'mainwp' ); ?>
 		</p>
@@ -1034,7 +1039,7 @@ class MainWP_Setup_Wizard {
 			<table class="form-table">
 
 				<tr>
-					<th scope="row"><?php _e("Hide WP Menus:", "mainwp"); ?></th>
+					<th scope="row"><?php _e("Cleanup your Dashboard:", "mainwp"); ?></th>
 					<td>
 						<ul class="mainwp_checkboxes mainwp_hide_wpmenu_checkboxes">
 							<?php
@@ -1101,7 +1106,7 @@ class MainWP_Setup_Wizard {
 
 		?>
 		<h1><?php _e( 'WP-Cron Trigger', 'mainwp' ); ?></h1>
-		<p><?php _e( 'MainWP by default relies on a built in WordPress file called wp-cron.php to trigger scheduled events. The wp-cron.php file is called each time your site is viewed and is sufficient in most cases.', 'mainwp' ); ?></p>
+		<p><?php _e( 'MainWP relies on a built in WordPress file called wp-cron.php to trigger scheduled events.', 'mainwp' ); ?></p>
 		<p><?php _e( 'However, since we suggest you install your MainWP Dashboard on a fresh dedicated site it will get almost no traffic which means your scheduled tasks such as backups and automatic updates may not be triggered in a timely manner.', 'mainwp' ); ?></p>
 		<p><?php _e( 'In order to work around that we suggest you sign up for the free Uptime Robot service that will "visit" your dashboard site and make sure that Cron Jobs are regularly triggered.', 'mainwp' ); ?></p>
 		<?php
@@ -1113,7 +1118,7 @@ class MainWP_Setup_Wizard {
 		$error_settings = false;
 		?>
 		<p>
-			<a class="button button-primary button-hero" target="_blank" href="<?php echo $uptimerobot_url; ?>"><?php _e( 'Authorize Uptime Robot', 'mainwp' ); ?></a>
+			<a class="button button-primary button-hero" target="_blank" onclick="return mainwp_setup_auth_uptime_robot('<?php echo $uptimerobot_url; ?>');" href="<?php echo $uptimerobot_url; ?>"><?php _e( 'Authorize Uptime Robot', 'mainwp' ); ?></a>
 		</p>
 		<form method="post">
 			<table class="form-table">
@@ -1152,7 +1157,7 @@ class MainWP_Setup_Wizard {
 					<tr>
 						<th scope="row">&nbsp;</th>
 						<td>
-							<label><input type="checkbox" <?php echo $error_settings ? 'disabled="disabled"' : ""; ?> name="mwp_setup_add_dashboard_as_monitor" id="mwp_setup_add_dashboard_as_monitor" /> <?php _e("Add dashboard as a monitor", "mainwp");?></label>
+							<label><input type="checkbox" <?php echo $error_settings ? 'disabled="disabled"' : ""; ?> checked="checked" name="mwp_setup_add_dashboard_as_monitor" id="mwp_setup_add_dashboard_as_monitor" /> <?php _e("Add dashboard as a monitor", "mainwp");?></label>
 						</td>
 					</tr>
 				<?php } ?>
@@ -1292,14 +1297,13 @@ class MainWP_Setup_Wizard {
 	public function mwp_setup_ready() {
 		$this->mwp_setup_ready_actions();
 		?>
-		<h1><?php _e( 'Your MainWP is Ready!', 'mainwp' ); ?></h1>
+		<h1><?php _e( 'Your MainWP Dashboard is Ready!', 'mainwp' ); ?></h1>
 		<p><?php  _e( 'Congratulations! Now you are ready to start managing your WordPress sites.', 'mainwp' ); ?></p>
 		<div class="mwp-setup-next-steps">
 			<div class="mwp-setup-next-steps-first">
-				<h2><?php _e( 'Next Steps', 'mainwp' ); ?></h2>
+				<h2><?php _e( 'Next Step', 'mainwp' ); ?></h2>
 				<ul>
-					<li class="setup-product"><a class="button button-primary button-large" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php _e( 'Add New Site', 'mainwp' ); ?></a></li>
-					<li class="setup-product"><a class="button button-primary button-large" href="https://mainwp.com/extensions/" target="_blank"><?php _e( 'Get MainWP Extensions', 'mainwp' ); ?></a></li>
+					<li class="setup-product"><a class="button button-primary button-large" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php _e( 'Add New Site', 'mainwp' ); ?></a></li>					
 				</ul>
 			</div>
 			<div class="mwp-setup-next-steps-last">

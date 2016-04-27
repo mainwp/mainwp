@@ -51,11 +51,7 @@ class MainWP_Themes {
 		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'ThemesIgnore', array(
 			MainWP_Themes::getClassName(),
 			'renderIgnore',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Conflicts', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredConflicts', array(
-			MainWP_Themes::getClassName(),
-			'renderIgnoredConflicts',
-		) );
+		) );		
 		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredAbandoned', array(
 			MainWP_Themes::getClassName(),
 			'renderIgnoredAbandoned',
@@ -88,8 +84,7 @@ class MainWP_Themes {
 						<a href="<?php echo admin_url( 'admin.php?page=ThemesInstall' ); ?>" class="mainwp-submenu"><?php _e( 'Install', 'mainwp' ); ?></a>
 					<?php } ?>
 					<a href="<?php echo admin_url( 'admin.php?page=ThemesAutoUpdate' ); ?>" class="mainwp-submenu"><?php _e( 'Auto Updates', 'mainwp' ); ?></a>
-					<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnore' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>
-					<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnoredConflicts' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Conflicts', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnore' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>					
 					<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnoredAbandoned' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Abandoned', 'mainwp' ); ?></a>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -145,10 +140,7 @@ public static function renderHeader( $shownPage ) {
 			} ?>" href="admin.php?page=ThemesAutoUpdate"><?php _e( 'Auto Updates', 'mainwp' ); ?></a>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Ignore' ) {
 				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=ThemesIgnore"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>
-			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'IgnoredConflicts' ) {
-				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=ThemesIgnoredConflicts"><?php _e( 'Ignored Conflicts', 'mainwp' ); ?></a>
+			} ?>" href="admin.php?page=ThemesIgnore"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>			
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'IgnoreAbandoned' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=ThemesIgnoredAbandoned"><?php _e( 'Ignored Abandoned', 'mainwp' ); ?></a>
@@ -1160,122 +1152,6 @@ public static function renderHeader( $shownPage ) {
 			<?php
 		}
 		self::renderFooter( 'AutoUpdate' );
-	}
-
-	public static function renderIgnoredConflicts() {
-		$websites                     = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-		$userExtension                = MainWP_DB::Instance()->getUserExtension();
-		$decodedIgnoredThemeConflicts = json_decode( $userExtension->ignored_themeConflicts, true );
-		$ignoredThemeConflicts        = ( is_array( $decodedIgnoredThemeConflicts ) && ( count( $decodedIgnoredThemeConflicts ) > 0 ) );
-
-		$cnt = 0;
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
-			$tmpDecodedIgnoredThemeConflicts = json_decode( $website->ignored_themeConflicts, true );
-			if ( ! is_array( $tmpDecodedIgnoredThemeConflicts ) || count( $tmpDecodedIgnoredThemeConflicts ) == 0 ) {
-				continue;
-			}
-			$cnt ++;
-		}
-
-		self::renderHeader( 'IgnoredConflicts' );
-		?>
-		<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
-			<caption><?php _e( 'Globally Ignored Theme Conflict List', 'mainwp' ); ?></caption>
-			<thead>
-			<tr>
-				<th scope="col" class="manage-column" style="width: 300px"><?php _e( 'Theme', 'mainwp' ); ?></th>
-				<th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ( $ignoredThemeConflicts ) { ?>
-						<a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return pluginthemeconflict_unignore('theme', undefined, undefined);"><?php _e( 'Allow All', 'mainwp' ); ?></a><?php } ?>
-				</th>
-			</tr>
-			</thead>
-			<tbody id="globally-ignored-themeconflict-list" class="list:sites">
-			<?php
-			if ( $ignoredThemeConflicts ) {
-				foreach ( $decodedIgnoredThemeConflicts as $ignoredThemeName ) {
-					?>
-					<tr theme="<?php echo urlencode( $ignoredThemeName ); ?>">
-						<td>
-							<strong><?php echo $ignoredThemeName; ?></strong>
-						</td>
-						<td style="text-align: right; padding-right: 30px">
-							<a href="#" onClick="return pluginthemeconflict_unignore('theme', '<?php echo urlencode( $ignoredThemeName ); ?>', undefined);"><i class="fa fa-check"></i> <?php _e( 'Allow', 'mainwp' ); ?>
-							</a>
-						</td>
-					</tr>
-					<?php
-				}
-				?>
-				<?php
-			} else {
-				?>
-				<tr>
-					<td colspan="2"><?php _e( 'No ignored theme conflicts', 'mainwp' ); ?></td>
-				</tr>
-				<?php
-			}
-			?>
-			</tbody>
-		</table>
-
-		<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
-			<caption><?php _e( 'Per Site Ignored Theme Conflict List', 'mainwp' ); ?></caption>
-			<thead>
-			<tr>
-				<th scope="col" class="manage-column" style="width: 300px"><?php _e( 'Site', 'mainwp' ); ?></th>
-				<th scope="col" class="manage-column" style="width: 650px"><?php _e( 'Themes', 'mainwp' ); ?></th>
-				<th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ( $cnt > 0 ) { ?>
-						<a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return pluginthemeconflict_unignore('theme', undefined, '_ALL_');"><?php _e( 'Allow All', 'mainwp' ); ?></a><?php } ?>
-				</th>
-			</tr>
-			</thead>
-			<tbody id="ignored-themeconflict-list" class="list:sites">
-			<?php
-			if ( $cnt > 0 ) {
-				@MainWP_DB::data_seek( $websites, 0 );
-				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
-					$decodedIgnoredThemeConflicts = json_decode( $website->ignored_themeConflicts, true );
-					if ( ! is_array( $decodedIgnoredThemeConflicts ) || count( $decodedIgnoredThemeConflicts ) == 0 ) {
-						continue;
-					}
-					$first = true;
-
-					foreach ( $decodedIgnoredThemeConflicts as $ignoredThemeConflictName ) {
-						?>
-						<tr site_id="<?php echo $website->id; ?>" theme="<?php echo urlencode( $ignoredThemeConflictName ); ?>">
-							<td>
-                            <span class="websitename" <?php if ( ! $first ) {
-	                            echo 'style="display: none;"';
-                            } else {
-	                            $first = false;
-                            } ?>>
-                                <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-                            </span>
-							</td>
-							<td>
-								<strong><?php echo $ignoredThemeConflictName; ?></strong>
-							</td>
-							<td style="text-align: right; padding-right: 30px">
-								<a href="#" onClick="return pluginthemeconflict_unignore('theme', '<?php echo urlencode( $ignoredThemeConflictName ); ?>', <?php echo $website->id; ?>)"><i class="fa fa-check"></i> <?php _e( 'Allow', 'mainwp' ); ?>
-								</a>
-							</td>
-						</tr>
-						<?php
-					}
-				}
-				@MainWP_DB::free_result( $websites );
-			} else {
-				?>
-				<tr>
-					<td colspan="3"><?php _e( 'No ignored theme conflicts', 'mainwp' ); ?></td>
-				</tr>
-				<?php
-			}
-			?>
-			</tbody>
-		</table>
-		<?php
-		self::renderFooter( 'IgnoredConflicts' );
 	}
 
 	public static function renderIgnore() {

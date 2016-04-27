@@ -6,9 +6,6 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
 
 
 class MainWP_Manage_Sites_List_Table extends WP_List_Table {
-	protected $globalIgnoredPluginConflicts;
-	protected $globalIgnoredThemeConflicts;
-
 	function __construct() {
 		parent::__construct( array(
 			'singular' => __( 'site', 'mainwp' ), //singular name of the listed records
@@ -166,41 +163,13 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 	}
 
-	function column_status( $item ) {
-		$pluginConflicts = json_decode( $item['pluginConflicts'], true );
-		$themeConflicts  = json_decode( $item['themeConflicts'], true );
-
-		$ignoredPluginConflicts = json_decode( $item['ignored_pluginConflicts'], true );
-		if ( ! is_array( $ignoredPluginConflicts ) ) {
-			$ignoredPluginConflicts = array();
-		}
-		$ignoredThemeConflicts = json_decode( $item['ignored_themeConflicts'], true );
-		if ( ! is_array( $ignoredThemeConflicts ) ) {
-			$ignoredThemeConflicts = array();
-		}
-
-		$isConflict = false;
-		if ( count( $pluginConflicts ) > 0 ) {
-			foreach ( $pluginConflicts as $pluginConflict ) {
-				if ( ! in_array( $pluginConflict, $ignoredPluginConflicts ) && ! in_array( $pluginConflict, $this->globalIgnoredPluginConflicts ) ) {
-					$isConflict = true;
-				}
-			}
-		}
-
-		if ( ! $isConflict && ( count( $themeConflicts ) > 0 ) ) {
-			foreach ( $themeConflicts as $themeConflict ) {
-				if ( ! in_array( $themeConflict, $ignoredThemeConflicts ) && ! in_array( $themeConflict, $this->globalIgnoredThemeConflicts ) ) {
-					$isConflict = true;
-				}
-			}
-		}
+	function column_status( $item ) {	
 
 		$hasSyncErrors = ( $item['sync_errors'] != '' );
 
 		$output = '';
 		$cnt    = 0;
-		if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors && ! $isConflict ) {
+		if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
 			$website               = (object) $item;
 			$userExtension         = MainWP_DB::Instance()->getUserExtension();
 			$total_wp_upgrades     = 0;
@@ -295,20 +264,13 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		}
 
 		$output .= '
-       <span title="Site is Offline" ' . ($item['offline_check_result'] == -1 && !$hasSyncErrors && !$isConflict ? '' : 'style="display:none;"') . '>
+       <span title="Site is Offline" ' . ($item['offline_check_result'] == -1 && !$hasSyncErrors ? '' : 'style="display:none;"') . '>
             <span class="fa-stack fa-lg">
                 <i class="fa fa-exclamation-circle fa-2x mwp-red"></i>
             </span>
        </span>
 
-       <span title="Plugin or Theme Conflict Found" ' . (!$hasSyncErrors && $isConflict ? '' : 'style="display:none;"') . '>
-            <span class="fa-stack fa-lg">
-                <i class="fa fa-circle fa-stack-2x mwp-red"></i>
-                <i class="fa fa-flag fa-stack-1x mwp-white"></i>
-            </span>
-       </span>
-
-       <span title="Site is Online" ' . ($item['offline_check_result'] == 1 && !$hasSyncErrors && !$isConflict && ($cnt == 0) ? '' : 'style="display:none;"'). '>
+       <span title="Site is Online" ' . ($item['offline_check_result'] == 1 && !$hasSyncErrors && ($cnt == 0) ? '' : 'style="display:none;"'). '>
             <span class="fa-stack fa-lg">
                 <i class="fa fa-check-circle fa-2x mwp-l-green"></i>
             </span>
@@ -472,10 +434,8 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		);
 	}
 
-	function prepare_items( $globalIgnoredPluginConflicts = array(), $globalIgnoredThemeConflicts = array() ) {
-		$this->globalIgnoredPluginConflicts = $globalIgnoredPluginConflicts;
-		$this->globalIgnoredThemeConflicts  = $globalIgnoredThemeConflicts;
-
+	function prepare_items() {
+		
 		$orderby = 'wp.url';
 
 		if ( ! isset( $_GET['orderby'] ) ) {
@@ -498,9 +458,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			} else if ( ( $_GET['orderby'] == 'group' ) ) {
 				$orderby = 'GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") ' . ( $_GET['order'] == 'asc' ? 'asc' : 'desc' );
 			} else if ( ( $_GET['orderby'] == 'status' ) ) {
-				$orderby = 'CASE true
-                                WHEN ((pluginConflicts <> "[]") AND (pluginConflicts IS NOT NULL) AND (pluginConflicts <> ""))
-                                    THEN 1
+				$orderby = 'CASE true                                
                                 WHEN (offline_check_result = -1)
                                     THEN 2
                                 WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")

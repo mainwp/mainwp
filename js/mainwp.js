@@ -991,130 +991,6 @@ rightnow_unignore_plugintheme_by_site_all = function (what) {
 };
 
 /**Plugins part**/
-jQuery(document).on('click', '.mainwp_conflict_ignore', function() {
-   var parentEl = jQuery(jQuery(this).parents('.mainwp_conflict')[0]);
-   if (parentEl.attr('plugin'))
-   {
-       pluginthemeconflict_ignore('plugin', parentEl.attr('plugin'), parentEl.attr('siteid'), parentEl);
-   }
-   else
-   {
-       pluginthemeconflict_ignore('theme', parentEl.attr('theme'), parentEl.attr('siteid'), parentEl);
-   }
-    return false;
-});
-jQuery(document).on('click', '.mainwp_conflict_ignore_globally', function() {
-   var parentEl = jQuery(jQuery(this).parents('.mainwp_conflict')[0]);
-   if (parentEl.attr('plugin'))
-   {
-       pluginthemeconflict_ignore('plugin', parentEl.attr('plugin'), undefined, parentEl);
-   }
-   else
-   {
-       pluginthemeconflict_ignore('theme', parentEl.attr('theme'), undefined, parentEl);
-   }
-    return false;
-});
-pluginthemeconflict_ignore = function (what, name, siteid, parentEl) {
-    var data = mainwp_secure_data({
-        action: 'mainwp_ignorepluginthemeconflict',
-        type: what,
-        name: name,
-        siteid: (siteid == undefined ? '' : siteid)
-    });
-
-    jQuery.post(ajaxurl, data, function (pParentEl) {
-        return function (response) {
-            if (response.result) {
-                var parent = pParentEl.parent();
-                pParentEl.remove();
-                if (parent.children('.mainwp_conflict').length == 0)
-                {
-                    parent.remove();
-                }
-            }
-            return false;
-        }
-    }(parentEl), 'json');
-    return false;
-};
-pluginthemeconflict_unignore = function(what, name, siteid) {
-    var data = mainwp_secure_data({
-        action:'mainwp_unignorepluginthemeconflicts',
-        type: what,
-        name: (name == undefined ? '' : name),
-        siteid: (siteid == undefined ? '' : siteid)
-    });
-    jQuery.post(ajaxurl, data, function(pWhat, pName, pSiteId) { return function (response) {
-        if (response.result)
-        {
-            if (pSiteId == undefined)
-            {
-                //Global
-                if (pName == undefined)
-                {
-                    //all
-                    var tableElement = jQuery('#globally-ignored-'+pWhat+'conflict-list');
-                    tableElement.find('tr').remove();
-                    jQuery('.mainwp-unignore-globally-all').hide();
-                    tableElement.append('<tr><td colspan="2">'+__('No ignored %1 conflicts', pWhat)+'</td></tr>');
-                }
-                else
-                {
-                    //specific plugin
-                    var ignoreElement = jQuery('#globally-ignored-'+pWhat+'conflict-list tr['+pWhat+'="'+pName+'"]');
-                    var parent = ignoreElement.parent();
-                    ignoreElement.remove();
-                    if (parent.children('tr').size() == 0) {
-                        jQuery('.mainwp-unignore-globally-all').hide();
-                        parent.append('<tr><td colspan="2">'+__('No ignored %1 conflicts', pWhat)+'</td></tr>');
-                    }
-                }
-            }
-            else
-            {
-                if (pSiteId == '_ALL_')
-                {
-                    //all
-                    var tableElement = jQuery('#ignored-'+pWhat+'conflict-list');
-                    tableElement.find('tr').remove();
-                    tableElement.append('<tr><td colspan="3">'+__('No ignored %1 conflicts', pWhat)+'</td></tr>');
-                    jQuery('.mainwp-unignore-detail-all').hide();
-                }
-                else
-                {
-                    //specific plugin
-                    var siteElement = jQuery('tr[site_id="'+pSiteId+'"]['+pWhat+'="'+pName+'"]');
-
-                    if (!siteElement.find('.websitename').is(':visible'))
-                    {
-                        siteElement.remove();
-                        return;
-                    }
-                     //Check if previous tr is same site..
-                    //Check if next tr is same site..
-                    var siteAfter = siteElement.next();
-                    if (siteAfter.exists() && (siteAfter.attr('site_id') == pId))
-                    {
-                        siteAfter.find('.websitename').show();
-                        siteElement.remove();
-                        return;
-                    }
-                     var parent = siteElement.parent();
-                    siteElement.remove();
-                    if (parent.children('tr').size() == 0) {
-                        parent.append('<tr><td colspan="3">'+__('No ignored %1 conflicts', pWhat)+'</td></tr>');
-                        jQuery('.mainwp-unignore-detail-all').hide();
-                    }
-              }
-            }
-        }
-        return false;
-    } }(what, name, siteid), 'json');
-    return false;
-};
-
-
 rightnow_translations_detail = function (slug) {
     jQuery('div[translation_slug="'+slug+'"]').toggle(100, 'linear');
     return false;
@@ -4011,7 +3887,8 @@ mainwp_install_bulk_start_next = function(pType, pUrl, pActivatePlugin, pOverwri
                     }
                 });   
             }
-        } 
+        }        
+        jQuery('#bulk_install_info').before('<div class="mainwp_info-box-blue">' + mainwp_install_bulk_you_know_msg(pType, 1) + '</div>');        
     }
 };
 
@@ -4070,6 +3947,36 @@ mainwp_install_bulk_start_specific = function (pType, pUrl, pActivatePlugin, pOv
         }
     }(pType, pUrl, pActivatePlugin, pOverwrite, pSiteToInstall), 'json');
 };
+
+mainwp_install_bulk_you_know_msg = function(pType, pTotal) {
+    var msg = ''; 
+    if (mainwpParams.installedBulkSettingsManager && mainwpParams.installedBulkSettingsManager == 1) {
+        if (pType == 'plugin') {
+            if (pTotal == 1)
+                msg = __('Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
+            else 
+                msg = __('Would you like to use the Bulk Settings Manager with theses plugins? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
+        } else {
+            if (pTotal == 1)
+                msg = __('Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
+            else 
+                msg = __('Would you like to use the Bulk Settings Manager with theses themes? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
+        }
+    } else {
+        if (pType == 'plugin') {
+            if (pTotal == 1)
+                msg = __('Did you know with the %1 you can control the settings of this plugin directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extensions/bulk-settings-manager" target="_blank">Bulk Settings Extension</a>');
+            else 
+                msg = __('Did you know with the %1 you can control the settings of theses plugins directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extensions/bulk-settings-manager" target="_blank">Bulk Settings Extension</a>');
+        } else {
+            if (pTotal == 1)
+                msg = __('Did you know with the %1 you can control the settings of this theme directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extensions/bulk-settings-manager" target="_blank">Bulk Settings Extension</a>');
+            else 
+                msg = __('Did you know with the %1 you can control the settings of theses themes directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extensions/bulk-settings-manager" target="_blank">Bulk Settings Extension</a>');
+        }
+    }
+    return msg; 
+}
 
 mainwp_upload_bulk = function (type) {
     if (type == 'plugins') {
@@ -4142,6 +4049,7 @@ mainwp_upload_bulk = function (type) {
             var site = response.sites[siteId];
             installQueue += '<span class="siteBulkInstall" siteid="' + siteId + '" status="queue"><strong>' + site['name'].replace(/\\(.)/mg, "$1") + '</strong>: <span class="queue"><i class="fa fa-clock-o"></i> '+__('Queued')+'</span><span class="progress"><i class="fa fa-spinner fa-pulse"></i> '+__('In progress')+'</span><span class="status"></span></span><br />';
         }
+        installQueue += '<div id="bulk_upload_info" number-files="' + pFiles.length + '"></div>';
         installQueue += '</div></div>';
 
         jQuery('#mainwp_wrap-inside').html(installQueue);
@@ -4165,9 +4073,11 @@ mainwp_upload_bulk_start_next = function(pType, pUrls, pActivatePlugin, pOverwri
             action:'mainwp_cleanbulkuploadplugintheme'
         });
         jQuery.post(ajaxurl, data, function (resp)
-            {
-            });
-    }
+        {
+        });  
+        var msg = mainwp_install_bulk_you_know_msg(pType, jQuery('#bulk_upload_info').attr('number-files'));
+        jQuery('#bulk_upload_info').html('<div class="mainwp_info-box-blue">' + msg + '</div>');        
+    }    
 };
 
 mainwp_upload_bulk_start_specific = function (pType, pUrls, pActivatePlugin, pOverwrite, pSiteToInstall)
@@ -6876,6 +6786,17 @@ jQuery(document).on('click', '.mainwp-dismiss', function(){
     var data = {
         action:'mainwp_tips_update',
         tipId: jQuery(this).closest('.mainwp-tips').find('.mainwp-tip').attr('id')
+    };
+    jQuery.post(ajaxurl, data, function (res) {
+    });    
+    return false;
+});
+
+jQuery(document).on('click', '.mainwp-activate-notice-dismiss', function(){
+    jQuery(this).closest('tr').fadeOut("slow");    
+    var data = {
+        action:'mainwp_dismiss_activate_notice',
+        slug: jQuery(this).closest('tr').attr('slug')
     };
     jQuery.post(ajaxurl, data, function (res) {
     });    

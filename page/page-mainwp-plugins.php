@@ -735,11 +735,13 @@ public static function renderHeader( $shownPage ) {
 		$sites          = array(); //id -> url
 		$sitePlugins    = array(); //site_id -> plugin_version_name -> plugin obj
 		$plugins        = array(); //name_version -> slug
+		$muPlugins      = array(); //name_version -> 0/1
 		$pluginsVersion = $pluginsName = $pluginsMainWP = array(); //name_version -> title_version
 		$pluginsRealVersion = array(); //name_version -> title_version
 		foreach ( $output->plugins as $plugin ) {
 			$sites[ $plugin['websiteid'] ]                                = $plugin['websiteurl'];
 			$plugins[ $plugin['name'] . '_' . $plugin['version'] ]        = $plugin['slug'];
+			$muPlugins[ $plugin['name'] . '_' . $plugin['version'] ]      = $plugin['mu'];
 			$pluginsName[ $plugin['name'] . '_' . $plugin['version'] ]    = $plugin['name'];
 			$pluginsVersion[ $plugin['name'] . '_' . $plugin['version'] ] = $plugin['name'] . ' ' . $plugin['version'];
 			$pluginsMainWP[ $plugin['name'] . '_' . $plugin['version'] ]  = isset($plugin['mainwp']) ? $plugin['mainwp'] : 'F';
@@ -749,6 +751,7 @@ public static function renderHeader( $shownPage ) {
 			}
 			$sitePlugins[ $plugin['websiteid'] ][ $plugin['name'] . '_' . $plugin['version'] ] = $plugin;
 		}
+
 		?>
 		<div id="mainwp-table-overflow" style="overflow: auto !important ;">
 			<table class="ui-tinytable wp-list-table widefat fixed pages" id="plugins_fixedtable" style="width: auto; word-wrap: normal">
@@ -761,7 +764,7 @@ public static function renderHeader( $shownPage ) {
 					foreach ( $pluginsVersion as $plugin_name => $plugin_title ) {
 						?>
 						<th height="100" width="120" style="padding: 5px;">
-							<div style="max-width: 120px; text-align: center;" title="<?php echo $plugin_title; ?>">
+							<div style="max-width: 120px; text-align: center;" title="<?php echo $plugin_title . ( $muPlugins[ $plugin_name ] == 1 ? ' (' . _('Must Use Plugin') . ')' : ''); ?>">
 								<input type="checkbox" value="<?php echo $plugins[$plugin_name]; ?>" id="<?php echo $plugin_name; ?>" version="<?php echo $pluginsRealVersion[$plugin_name]; ?>" class="mainwp_plugin_check_all" style="display: none ;" />
 								<label for="<?php echo $plugin_name; ?>"><?php echo $plugin_title; ?></label>
 							</div>
@@ -784,7 +787,7 @@ public static function renderHeader( $shownPage ) {
 						<?php
 						foreach ( $pluginsVersion as $plugin_name => $plugin_title ) {
 							echo '<td class="long" style="text-align: center">';
-							if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( !isset($pluginsMainWP[$plugin_name]) || $pluginsMainWP[$plugin_name] === 'F')) {
+							if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( !isset($pluginsMainWP[$plugin_name]) || $pluginsMainWP[$plugin_name] === 'F' ) && ( $muPlugins[ $plugin_name ] == 0 ) ) {
 								echo '<input type="checkbox" value="' . $plugins[ $plugin_name ] . '" name="' . $pluginsName[ $plugin_name ] . '" class="selected_plugin" />';
 							}
 							echo '</td>';

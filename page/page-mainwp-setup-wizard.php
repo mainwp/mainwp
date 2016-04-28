@@ -96,12 +96,6 @@ class MainWP_Setup_Wizard {
 				'handler' => array( $this, 'mwp_setup_install_extension_save' ),
 				'hidden' => true
 			),
-			'primary_backup' => array(
-				'name'    =>  __( 'Primary Backup System', 'mainwp' ),
-				'view'    => array( $this, 'mwp_setup_primary_backup' ),
-				'handler' => array( $this, 'mwp_setup_primary_backup_save' ),
-				'hidden' => true
-			),
 			'uptime_robot' => array(
 				'name'    =>  __( 'WP-Cron Trigger', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_uptime_robot' ),
@@ -126,9 +120,6 @@ class MainWP_Setup_Wizard {
 			'backupwp' => array('name' => 'MainWP BackUpWordPress Extension',
 			                    'product_id' => 'MainWP BackUpWordPress Extension',
 			                    'slug' => 'mainwp-backupwordpress-extension/mainwp-backupwordpress-extension.php'),
-			'blogvault' => array('name' => 'MainWP BlogVault Backup Extension',
-			                     'product_id' => 'MainWP BlogVault Backup Extension',
-			                     'slug' => 'mainwp-blogvault-backup-extension/mainwp-blogvault-backup-extension.php'),
 			'backwpup' => array('name' => 'MainWP BackWPup Extension',
 			                    'product_id' => 'MainWP BackWPup Extension',
 			                    'slug' => 'mainwp-backwpup-extension/mainwp-backwpup-extension.php')
@@ -168,18 +159,18 @@ class MainWP_Setup_Wizard {
 
 	public function get_next_step_link($step = '') {
 		if (!empty($step) && isset($step, $this->steps)) {
-			return add_query_arg( 'step', $step );
+			return remove_query_arg('noregister', add_query_arg( 'step', $step ));
 		}
 		$keys = array_keys( $this->steps );
-		return add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) + 1 ] );
+		return remove_query_arg('noregister', add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) + 1 ] ));
 	}
 
 	public function get_back_step_link($step = '') {
 		if (!empty($step) && isset($step, $this->steps)) {
-			return add_query_arg( 'step', $step );
+			return remove_query_arg('noregister', add_query_arg( 'step', $step ));
 		}
 		$keys = array_keys( $this->steps );
-		return add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) - 1 ] );
+		return remove_query_arg('noregister', add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) - 1 ] ) );
 	}
 
 	public function setup_wizard_header() {
@@ -268,7 +259,7 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1><?php _e( 'Installation', 'mainwp' ); ?></h1>
 		<form method="post">
-			<p><?php  _e( 'Where type of server is this?' ); ?></p>
+			<p><?php  _e( 'What type of server is this?' ); ?></p>
 			<ul class="mwp-setup-list os-list" id="mwp_setup_installation_hosting_type">
 				<li><label><input type="radio" name="mwp_setup_installation_hosting_type" required = "required" <?php echo ($hostingType == 1 ? 'checked="true"' : ''); ?> value="1"> <?php _e( 'Web Host', 'mainwp' ); ?></label></li>
 				<li><label><input type="radio" name="mwp_setup_installation_hosting_type" required = "required" <?php echo ($hostingType == 2 ? 'checked="true"' : ''); ?> value="2"> <?php _e( 'Localhost', 'mainwp' ); ?></label></li>
@@ -319,7 +310,7 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1><?php _e( 'Windows Localhost', 'mainwp' ); ?></h1>
 		<form method="post" class="form-table">
-			<p><?php _e( 'Due to bug with PHP on Windows please enter your OpenSSL Library location.<br /> Usually it is here:', 'mainwp' ); ?></p>
+			<p><?php _e( 'Due to bug with PHP on Windows please enter your OpenSSL Library location so MainWP Dashboard can connect to your child sites.<br /> Usually it is here:', 'mainwp' ); ?></p>
 			<p><input type="text" class="" style="width: 100%" name="mwp_setup_openssl_lib_location" value="<?php echo esc_html($openssl_loc); ?>"></p>
 			<em><?php echo sprintf( __( 'If your openssl.cnf file is saved to a different path from what is entered above please enter your exact path. In most cases %s should be your path if using a normal install.', 'mainwp' ), 'c:\\xampplite\\apache\\conf\\openssl.cnf', '<br />' ); ?></em>
 			<br /><br />
@@ -567,7 +558,7 @@ class MainWP_Setup_Wizard {
 
 
 	public function mwp_setup_backup() {
-		$planning_backup = get_option('mwp_setup_planningBackup');
+		$planning_backup = get_option('mwp_setup_planningBackup' , 1);
 		$backup_method = get_option('mwp_setup_primaryBackup');
 
 		$style = $planning_backup == 1 ? "" : 'style="display: none"';
@@ -593,7 +584,6 @@ class MainWP_Setup_Wizard {
 								<select name="mwp_setup_backup_method" id="mwp_setup_backup_method">
 									<option value="updraftplus" <?php if ($backup_method == 'updraftplus'): ?>selected<?php endif; ?>>UpdraftPlus (Free Extension)</option>
 									<option value="backupwp" <?php if ($backup_method == 'backupwp'): ?>selected<?php endif; ?>>BackUpWordPress (Free Extension)</option>
-									<option value="blogvault" <?php if ($backup_method == 'blogvault'): ?>selected<?php endif; ?>>BlogVault (Free Extension)</option>
 									<option value="backwpup" <?php if ($backup_method == 'backwpup'): ?>selected<?php endif; ?>>BackWPup (Free Extension)</option>
 								</select>						
 						</span>
@@ -602,7 +592,6 @@ class MainWP_Setup_Wizard {
 							<span class="mainwp-backups-notice" method="default" <?php echo empty($backup_method) ? "" : 'style="display:none"'; ?> ><?php _e( 'This is a backup solution developed by MainWP.','mainwp' ); ?></span>
 							<span class="mainwp-backups-notice" method="updraftplus" <?php echo ($backup_method == 'updraftplus') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the UpdraftPlus backup plugin for your Backups.','mainwp' ); ?></span>
 							<span class="mainwp-backups-notice" method="backupwp" <?php echo ($backup_method == 'backupwp') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the BackupWordPress backup plugin for your Backups.','mainwp' ); ?></span>
-							<span class="mainwp-backups-notice" method="blogvault" <?php echo ($backup_method == 'blogvault') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the BlogVault backup plugin for your Backups.','mainwp' ); ?></span>
 							<span class="mainwp-backups-notice" method="backwpup" <?php echo ($backup_method == 'backwpup') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the BackWPup backup plugin for your Backups.','mainwp' ); ?></span>
 						</em>
 						<br /><br />
@@ -631,8 +620,10 @@ class MainWP_Setup_Wizard {
 		update_option( 'mwp_setup_primaryBackup', $backup_method );
 
 		if ($planning_backup && !empty($backup_method) ) {
+			MainWP_Utility::update_option('mainwp_primaryBackup', $backup_method);
 			wp_redirect( $this->get_next_step_link() );
 		} else {
+			delete_option('mainwp_primaryBackup');
 			wp_redirect( $this->get_next_step_link( 'uptime_robot' ) );
 		}
 		exit;
@@ -822,7 +813,7 @@ class MainWP_Setup_Wizard {
 					$error_message = '';
 					if (isset($product_info['package']) && !empty($product_info['package'])){
 						$package_url = apply_filters('mainwp_api_manager_upgrade_url', $product_info['package']);
-						$html .= '<div class="extension_to_install" download-link="' . $package_url . '" product-id="' . $product_id . '"><span class="name"><strong>' . $software_title . "</strong></span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
+						$html .= '<div class="extension_to_install" download-link="' . $package_url . '" product-id="' . $product_id . '"><span class="name">Installing <strong>' . $software_title . "</strong> ...</span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
 					} else if (isset($product_info['error'])  && !empty($product_info['error'])) {
 						$error = true;
 						$error_message = MainWP_Api_Manager::instance()->check_response_for_intall_errors($product_info, $software_title);
@@ -868,7 +859,7 @@ class MainWP_Setup_Wizard {
 
 	public function mwp_setup_install_extension() {
 
-		$register_later = isset($_GET['noregister']) && (int) $_GET['noregister']  ? : 0;
+		$register_later = isset($_GET['noregister']) && (int) $_GET['noregister']  ? 1 : 0;
 
 		$backup_method = get_option('mwp_setup_primaryBackup');
 		$ext_product_id = $ext_name = $ext_slug = "";
@@ -919,7 +910,7 @@ class MainWP_Setup_Wizard {
 				} else {
 				?>
 					<div id="mwp_setup-install-extension">
-						<p><?php _e("Automatically install the Extension."); ?></p>
+						<p><?php _e("Automatically install the Extension.", 'mainwp'); ?></p>
 						<span id="mwp_setup_auto_install_loading">
 	                        <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
 	                    </span>
@@ -930,7 +921,7 @@ class MainWP_Setup_Wizard {
 						</script>
 					</div>
 					<div id="mwp_setup_extension_retry_install" style="display: none;"><p><span class="mwp_setup_loading_wrap">
-	                    <input type="button" value="Retry Install Extension" onclick="mainwp_setup_grab_extension(false, <?php echo $register_later; ?>); return false;" id="mwp_setup_extension_install_btn" class="mainwp-upgrade-button button-primary">
+	                    <input type="button" value="Retry Install Extension" onclick="this.disabled = true;mainwp_setup_grab_extension(false, <?php echo $register_later; ?>); return false;" id="mwp_setup_extension_install_btn" class="mainwp-upgrade-button button-primary">
 	                        <i style="display: none;" class="fa fa-spinner fa-pulse"></i><span class="status hidden"></span>
 	                    </span></p>
 					</div>
@@ -940,13 +931,15 @@ class MainWP_Setup_Wizard {
 					echo '<p><img src="' . plugins_url('images/ok.png', dirname(__FILE__)) .'" alt="Ok"/>&nbsp;' . $ext_name . " was activated on your dashboard.</p>";
 				} else { ?>
 					<div id="mwp_setup_active_extension" style="display: none;">
-						<p><span class="description"><?php _e("Grabing API Key and activate the Extension ...", "mainwp"); ?></span></p>
-					    <span id="mwp_setup_grabing_api_key_loading">
-		                    <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
-		                </span>
+						<p><span class="description"><?php _e("Grabbing the API Key and activating the Extension ...", "mainwp"); ?></span>
+							<span id="mwp_setup_grabing_api_key_loading">
+								<i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
+							</span>
+						</p>
 					</div>
 				<?php } ?>
 			</div>
+			<br/>
 			<p class="mwp-setup-actions step">
 				<input type="submit" class="button-primary button button-large" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
 				<input type="submit" class="button button-large" value="<?php esc_attr_e( 'Skip this step', 'mainwp' ); ?>" name="save_step" />
@@ -959,54 +952,6 @@ class MainWP_Setup_Wizard {
 
 	public function mwp_setup_install_extension_save() {
 		check_admin_referer( 'mwp-setup' );
-		wp_redirect( $this->get_next_step_link() );
-		exit;
-	}
-
-	public function mwp_setup_primary_backup() {
-		if (isset($_GET['method']) && $_GET['method'] == 'default') {
-			delete_option('mainwp_primaryBackup');
-		}
-
-		$primaryBackup = get_option('mainwp_primaryBackup');
-		$primaryBackupMethods = apply_filters("mainwp-getprimarybackup-methods", array());
-		if (!is_array($primaryBackupMethods)) {
-			$primaryBackupMethods = array();
-		}
-		?>
-		<h1><?php _e( 'Set Primary Backup', 'mainwp' ); ?></h1>
-		<form method="post">
-			<table class="form-table">
-				<tr>
-					<th scope="row"><?php _e('Select Primary Backup System','mainwp'); ?></th>
-					<td>
-	                <span><select name="mainwp_primaryBackup" id="mainwp_primaryBackup">
-			                <option value="" >Default MainWP Backups</option>
-			                <?php
-			                foreach($primaryBackupMethods as $method) {
-				                echo '<option value="' . $method['value'] . '" ' . (($primaryBackup == $method['value']) ? "selected" : "") . '>' . $method['title'] . '</option>';
-			                }
-			                ?>
-		                </select><label></label></span>
-					</td>
-				</tr>
-			</table>
-
-			<p class="mwp-setup-actions step">
-				<input type="submit" class="button-primary button button-large" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
-				<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button button-large"><?php _e( 'Skip this step', 'mainwp' ); ?></a>
-				<a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="button button-large"><?php _e( 'Back', 'mainwp' ); ?></a>
-				<?php wp_nonce_field( 'mwp-setup' ); ?>
-			</p>
-		</form>
-		<?php
-	}
-
-	public function mwp_setup_primary_backup_save() {
-		check_admin_referer( 'mwp-setup' );
-		if (isset($_POST['mainwp_primaryBackup'])) {
-			MainWP_Utility::update_option('mainwp_primaryBackup', $_POST['mainwp_primaryBackup']);
-		}
 		wp_redirect( $this->get_next_step_link() );
 		exit;
 	}
@@ -1311,8 +1256,7 @@ class MainWP_Setup_Wizard {
 				<ul>
 					<li><a href="https://mainwp.com/extensions/" target="_blank"><i class="fa fa-plug"></i> <?php _e( 'MainWP Extensions', 'mainwp' ); ?></a></li>
 					<li><a href="http://docs.mainwp.com" target="_blank"><i class="fa fa-book"></i> <?php _e( 'MainWP Documentation', 'mainwp' ); ?></a></li>
-					<li><a href="http://support.mainwp.com" target="_blank"><i class="fa fa-life-ring"></i> <?php _e( 'MainWP Suppor', 'mainwp' ); ?></a></li>
-					<li><a href="https://mainwp.com/forum/" target="_blank"><i class="fa fa-comments-o"></i> <?php _e( 'Community Forum', 'mainwp' ); ?></a></li>
+					<li><a href="https://mainwp.com/support/" target="_blank"><i class="fa fa-life-ring"></i> <?php _e( 'MainWP Support', 'mainwp' ); ?></a></li>
 				</ul>
 			</div>
 		</div>

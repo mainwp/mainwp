@@ -83,8 +83,7 @@ class MainWP_Logger {
 		$stackTrace = '';
 		if ( $addStackTrace ) {
 			@ob_start();
-			@debug_print_backtrace();
-
+			@debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
 			$stackTrace = "\n" . @ob_get_clean();
 		}
 		if ( empty( $pWebsite ) ) {

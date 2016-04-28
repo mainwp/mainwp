@@ -179,7 +179,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Quick Start Wizard steps
 * Removed: Plugin and Theme conflicts check feature
 * Removed: Unused old code
-* Cosmetic: Slashes added in sitenames with quotes
+* Cosmetic: Removed slashes added in sitenames with quotes
 
 = 3.1.2 - 3-15-16 =
 * Fixed: Slashes added in sitenames when using quotes

@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.5
-Stable tag: 3.1.2
+Tested up to: 4.5.1
+Stable tag: 3.1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -163,6 +163,22 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.1.3 - 4-28-16 =
+* Fixed: Available updates sorting issue
+* Fixed: Incorrect openssl.cnf file name and openssl warning on the Server Information page
+* Fixed: Quick Setup Wizard loop bug
+* Fixed: Fatal error introduced by incorrect class name
+* Fixed: Incorrect URL
+* Fixed: Favorites extension bug
+* Added: Bulk Settings Manager promo notice
+* Added: Support for publishing Image Galleries in Posts and Pages
+* Added: French translation files
+* Updated: Auto Backup process to exclude zip files, known backup locations, non WordPress directories to prevent timeout issues
+* Updated: Disabled auto-complete for the HTTP Auth Username and Password fields
+* Updated: Update process to not run in case backup process is running
+* Updated: Quick Start Wizard steps
+* Removed: Plugin and Theme conflicts check feature
 
 = 3.1.2 - 3-15-16 =
 * Fixed: Slashes added in sitenames when using quotes

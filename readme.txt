@@ -171,11 +171,15 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Added: Bulk Settings Manager promo notice
 * Added: Support for publishing Image Galleries in Posts and Pages
 * Added: French translation files
+* Added: MU-Plugins support in Plugin overview
+* Added: Extra feedback on test connection
 * Updated: Auto Backup process to exclude zip files, known backup locations, non WordPress directories to prevent timeout issues
 * Updated: Disabled auto-complete for the HTTP Auth Username and Password fields
 * Updated: Update process to not run in case backup process is running
 * Updated: Quick Start Wizard steps
 * Removed: Plugin and Theme conflicts check feature
+* Removed: Unused old code
+* Cosmetic: Slashes added in sitenames with quotes
 
 = 3.1.2 - 3-15-16 =
 * Fixed: Slashes added in sitenames when using quotes

@@ -82,9 +82,8 @@ class MainWP_Logger {
 	public function warningForWebsite( $pWebsite, $pAction, $pMessage, $addStackTrace = true ) {
 		$stackTrace = '';
 		if ( $addStackTrace ) {
-			@ob_start();
-			@debug_print_backtrace();
-
+			@ob_start();			
+			@debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS); 
 			$stackTrace = "\n" . @ob_get_clean();
 		}
 		if ( empty( $pWebsite ) ) {

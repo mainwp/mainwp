@@ -51,11 +51,11 @@ class MainWP_DB {
 		//get_site_option is multisite aware!
 		$currentVersion = get_site_option( 'mainwp_db_version' );
 
-		if ( empty( $currentVersion ) ) {				
+		if ( empty( $currentVersion ) ) {
 			set_transient( '_mainwp_activation_redirect', 1, 30 );
 			update_site_option( 'mainwp_run_quick_setup', 'yes' );
 		}
-		
+
 		$rslt = MainWP_DB::Instance()->query( "SHOW TABLES LIKE '" . $this->tableName( 'wp' ) . "'" );
 		if ( @MainWP_DB::num_rows( $rslt ) == 0 ) {
 			$currentVersion = false;
@@ -370,10 +370,10 @@ class MainWP_DB {
 				'mainwp_updatescheck_mail_ignore_themes',
 				'mainwp_updatescheck_mail_ignore_core_new',
 				'mainwp_updatescheck_mail_ignore_plugins_new',
-				'mainwp_updatescheck_mail_ignore_themes_new',				
+				'mainwp_updatescheck_mail_ignore_themes_new',
 				'mainwp_updatescheck_last',
 				'mainwp_updatescheck_mail_email',
-				'mainwp_cron_last_ping',								
+				'mainwp_cron_last_ping',
 				'mainwp_cron_last_backups_continue',
 				'mainwp_cron_last_backups',
 				'mainwp_cron_last_stats',
@@ -1077,7 +1077,7 @@ class MainWP_DB {
 				'categories'              => '',
 				'pluginDir'               => '',
 				'automatic_update'        => 0,
-				'backup_before_upgrade'   => 0,				
+				'backup_before_upgrade'   => 0,
 				'verify_certificate'      => intval( $verifyCertificate ),
 				'ssl_version'             => $sslVersion,
 				'uniqueId'                => $uniqueId,
@@ -1286,23 +1286,22 @@ class MainWP_DB {
 		return $progress;
 	}
 
-	public function backupFullTaskRunning( $wp_id ) {		
+	public function backupFullTaskRunning( $wp_id ) {
 		$progresses = $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp_backup_progress' ) . ' WHERE wp_id = ' . $wp_id );
 		if ( is_array( $progresses ) ) {
-			foreach( $progresses as $progress ) {
-				if ($progress->downloadedDBComplete == 0 && $progress->downloadedFULLComplete == 0) {
+			foreach ( $progresses as $progress ) {
+				if ( ( $progress->downloadedDBComplete == 0 ) && ( $progress->downloadedFULLComplete == 0 ) ) {
 					if ( $task = $this->getBackupTaskById( $progress->task_id ) ) {
-						if ( 'full' == $task->type && !$task->paused) {
+						if ( ( 'full' == $task->type ) && !$task->paused) {
 							return true;
 						}
 					}
-					
 				}
 			}
 		}
 		return false;
 	}
-	
+
 	public function removeBackupTask( $id ) {
 		$this->wpdb->query( 'DELETE FROM ' . $this->tableName( 'wp_backup' ) . ' WHERE id = ' . $id );
 	}
@@ -1582,7 +1581,7 @@ class MainWP_DB {
 			'ignored_themes'          => '',
 			'trusted_themes'          => '',
 			'trusted_themes_notes'    => '',
-			'pluginDir'               => ''			
+			'pluginDir'               => ''
 		);
 
 		$this->wpdb->insert( $this->tableName( 'users' ), $fields );

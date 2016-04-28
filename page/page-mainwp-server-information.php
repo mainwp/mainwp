@@ -540,8 +540,7 @@ public static function renderFooter( $shownPage ) {
 			'Backups continue' => 'mainwp_cron_last_backups_continue',
 			'Updates check'    => 'mainwp_cron_last_updatescheck',
 			'Stats'            => 'mainwp_cron_last_stats',
-			'Ping childs'      => 'mainwp_cron_last_ping',
-			'Offline checks'   => 'mainwp_cron_last_offlinecheck'			
+			'Ping childs'      => 'mainwp_cron_last_ping'
 		);
 		?>
 		<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
@@ -787,15 +786,15 @@ public static function renderFooter( $shownPage ) {
 
 	protected static function getSSLWarning() {
 		$conf = array( 'private_key_bits' => 384 );
-		$conf_loc = MainWP_System::get_openssl_conf();		
+		$conf_loc = MainWP_System::get_openssl_conf();
 		if ( !empty( $conf_loc ) ) {
 			$conf['config'] = $conf_loc;
-		}		
+		}
 		$res  = @openssl_pkey_new( $conf );
 		@openssl_pkey_export( $res, $privkey, null, $conf );
-		
+
 		$str = openssl_error_string();
-		
+
 		return ( stristr( $str, 'NCONF_get_string:no value' ) ? '' : $str );
 	}
 

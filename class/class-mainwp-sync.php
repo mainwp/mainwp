@@ -90,7 +90,7 @@ class MainWP_Sync {
 			'themes'               => $emptyArray,
 			'plugins'              => $emptyArray,
 			'users'                => $emptyArray,
-			'categories'           => $emptyArray,			
+			'categories'           => $emptyArray,
 			'offline_check_result' => $offline_check_result,
 		);
 		$websiteSyncValues = array(

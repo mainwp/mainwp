@@ -575,7 +575,7 @@ class MainWP_Right_Now {
 		$total_theme_upgrades  = 0;
 		$total_sync_errors     = 0;
 		$total_uptodate        = 0;
-		$total_offline         = 0;		
+		$total_offline         = 0;
 		$total_plugins_outdate = 0;
 		$total_themes_outdate  = 0;
 
@@ -782,7 +782,7 @@ class MainWP_Right_Now {
 				}
 				//ksort( $allPlugins );
 				MainWP_Utility::array_sort( $allPlugins, 'name' );
-				
+
 				if ( is_array( $theme_upgrades ) ) {
 					foreach ( $theme_upgrades as $slug => $theme_upgrade ) {
 						if ( ! isset( $allThemes[ $slug ] ) ) {
@@ -799,7 +799,7 @@ class MainWP_Right_Now {
 				}
 				//ksort( $allThemes );
 				MainWP_Utility::array_sort( $allThemes, 'name' );
-				
+
 				if ( is_array( $plugins_outdate ) ) {
 					foreach ( $plugins_outdate as $slug => $plugin_outdate ) {
 						if ( ! isset( $allPluginsOutdate[ $slug ] ) ) {
@@ -2042,7 +2042,7 @@ class MainWP_Right_Now {
                                 <i class="fa fa-plug fa-stack-1x mwp-white"></i>
                             </span>
 						<?php
-					}					
+					}
 					else if ($total_offline > 0)
 					{
 						?>
@@ -2070,13 +2070,13 @@ class MainWP_Right_Now {
 				<?php
 				//Loop 3 times, first we show the conflicts, then we show the down sites, then we show the up sites
 
-				$SYNCERRORS = 0;				
+				$SYNCERRORS = 0;
 				$DOWN       = 2;
 				$UP         = 3;
 
 				for ( $j = 0; $j <= 3; $j ++ ) {
 					@MainWP_DB::data_seek( $websites, 0 );
-					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {					
+					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 						$hasSyncErrors = ( $website->sync_errors != '' );
 
 						$isDown = ( ! $hasSyncErrors && ( $website->offline_check_result == - 1 ) );
@@ -2084,7 +2084,7 @@ class MainWP_Right_Now {
 
 						if ( ( $j == $SYNCERRORS ) && ! $hasSyncErrors ) {
 							continue;
-						}						
+						}
 						if ( ( $j == $DOWN ) && ! $isDown ) {
 							continue;
 						}
@@ -2095,7 +2095,7 @@ class MainWP_Right_Now {
 						?>
 						<div class="mainwp-row">
 							<span class="mainwp-left-col"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></span>
-                        <span class="mainwp-mid-col">&nbsp;	                        
+                        <span class="mainwp-mid-col">&nbsp;
                         </span>
                         <span class="mainwp-right-col">
                             <?php
@@ -2108,7 +2108,7 @@ class MainWP_Right_Now {
                                         <i class="fa fa-plug fa-stack-1x mwp-white"></i>
                                     </span>
 								<?php
-							}							
+							}
 							else if ($isDown)
 							{
 								?>

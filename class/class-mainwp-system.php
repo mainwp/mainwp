@@ -178,6 +178,11 @@ class MainWP_System {
 			wp_unschedule_event( $sched, 'mainwp_cronofflinecheck_action' );
 		}
 
+		//todo: remove in next version
+		if ( ( $sched = wp_next_scheduled( 'mainwp_cron_last_cronconflicts' ) ) != false ) {
+			wp_unschedule_event( $sched, 'mainwp_cron_last_cronconflicts' );
+		}
+
 		if ( ( $sched = wp_next_scheduled( 'mainwp_cronstats_action' ) ) == false ) {
 			if ( $useWPCron ) {
 				wp_schedule_event( time(), 'hourly', 'mainwp_cronstats_action' );
@@ -715,13 +720,13 @@ class MainWP_System {
 
 		$websites = array();
 		$checkupdate_websites = MainWP_DB::Instance()->getWebsitesCheckUpdates( 4 );
-		
+
 		foreach ($checkupdate_websites as $website) {
 			if ( ! MainWP_DB::Instance()->backupFullTaskRunning( $website->id ) ) {
-				$websites[] = $website;	
+				$websites[] = $website;
 			}
 		}
-		
+
 		MainWP_Logger::Instance()->debug( 'CRON :: updates check :: found ' . count( $checkupdate_websites ) . ' websites' );
 		MainWP_Logger::Instance()->debug( 'CRON :: backup task running :: found ' . (count( $checkupdate_websites )  - count( $websites )) . ' websites' );
 
@@ -1073,7 +1078,7 @@ class MainWP_System {
 					}
 				}
 
-				
+
 				//Loop over last plugins & current plugins, check if we need to upgrade them..
 				$user  = get_userdata( $website->userid );
 				$email = MainWP_Utility::getNotificationEmail( $user );
@@ -1644,10 +1649,12 @@ class MainWP_System {
 		}
 		else if ( isset( $_GET['page'] ) )
 		{
-			switch ( $_GET['page'] ) {
-				case 'mainwp-setup' :
-					new MainWP_Setup_Wizard();
-					break;
+			if ( MainWP_Utility::isAdmin() ) {
+				switch ( $_GET['page'] ) {
+					case 'mainwp-setup' :
+						new MainWP_Setup_Wizard();
+						break;
+				}
 			}
 		}
 	}

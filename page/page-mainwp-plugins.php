@@ -54,7 +54,7 @@ class MainWP_Plugins {
 		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'PluginsIgnore', array(
 			MainWP_Plugins::getClassName(),
 			'renderIgnore',
-		) );		
+		) );
 		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'PluginsIgnoredAbandoned', array(
 			MainWP_Plugins::getClassName(),
 			'renderIgnoredAbandoned',
@@ -101,7 +101,7 @@ class MainWP_Plugins {
 						<a href="<?php echo admin_url( 'admin.php?page=PluginsInstall' ); ?>" class="mainwp-submenu"><?php _e( 'Install', 'mainwp' ); ?></a>
 					<?php } ?>
 					<a href="<?php echo admin_url( 'admin.php?page=PluginsAutoUpdate' ); ?>" class="mainwp-submenu"><?php _e( 'Auto Updates', 'mainwp' ); ?></a>
-					<a href="<?php echo admin_url( 'admin.php?page=PluginsIgnore' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>					
+					<a href="<?php echo admin_url( 'admin.php?page=PluginsIgnore' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>
 					<a href="<?php echo admin_url( 'admin.php?page=PluginsIgnoredAbandoned' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Abandoned', 'mainwp' ); ?></a>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -157,7 +157,7 @@ public static function renderHeader( $shownPage ) {
 			} ?>" href="admin.php?page=PluginsAutoUpdate"><?php _e( 'Auto Updates', 'mainwp' ); ?></a>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Ignore' ) {
 				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=PluginsIgnore"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>			
+			} ?>" href="admin.php?page=PluginsIgnore"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'IgnoreAbandoned' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=PluginsIgnoredAbandoned"><?php _e( 'Ignored Abandoned', 'mainwp' ); ?></a>
@@ -727,11 +727,13 @@ public static function renderHeader( $shownPage ) {
 		$sites          = array(); //id -> url
 		$sitePlugins    = array(); //site_id -> plugin_version_name -> plugin obj
 		$plugins        = array(); //name_version -> slug
+		$muPlugins      = array(); //name_version -> 0/1
 		$pluginsVersion = $pluginsName = $pluginsMainWP = array(); //name_version -> title_version
 		$pluginsRealVersion = array(); //name_version -> title_version
 		foreach ( $output->plugins as $plugin ) {
 			$sites[ $plugin['websiteid'] ]                                = $plugin['websiteurl'];
 			$plugins[ $plugin['name'] . '_' . $plugin['version'] ]        = $plugin['slug'];
+			$muPlugins[ $plugin['name'] . '_' . $plugin['version'] ]      = $plugin['mu'];
 			$pluginsName[ $plugin['name'] . '_' . $plugin['version'] ]    = $plugin['name'];
 			$pluginsVersion[ $plugin['name'] . '_' . $plugin['version'] ] = $plugin['name'] . ' ' . $plugin['version'];
 			$pluginsMainWP[ $plugin['name'] . '_' . $plugin['version'] ]  = isset($plugin['mainwp']) ? $plugin['mainwp'] : 'F';
@@ -741,6 +743,7 @@ public static function renderHeader( $shownPage ) {
 			}
 			$sitePlugins[ $plugin['websiteid'] ][ $plugin['name'] . '_' . $plugin['version'] ] = $plugin;
 		}
+
 		?>
 		<div id="mainwp-table-overflow" style="overflow: auto !important ;">
 			<table class="ui-tinytable wp-list-table widefat fixed pages" id="plugins_fixedtable" style="width: auto; word-wrap: normal">
@@ -753,7 +756,7 @@ public static function renderHeader( $shownPage ) {
 					foreach ( $pluginsVersion as $plugin_name => $plugin_title ) {
 						?>
 						<th height="100" width="120" style="padding: 5px;">
-							<div style="max-width: 120px; text-align: center;" title="<?php echo $plugin_title; ?>">
+							<div style="max-width: 120px; text-align: center;" title="<?php echo $plugin_title . ( $muPlugins[ $plugin_name ] == 1 ? ' (' . _('Must Use Plugin') . ')' : ''); ?>">
 								<input type="checkbox" value="<?php echo $plugins[$plugin_name]; ?>" id="<?php echo $plugin_name; ?>" version="<?php echo $pluginsRealVersion[$plugin_name]; ?>" class="mainwp_plugin_check_all" style="display: none ;" />
 								<label for="<?php echo $plugin_name; ?>"><?php echo $plugin_title; ?></label>
 							</div>
@@ -776,7 +779,7 @@ public static function renderHeader( $shownPage ) {
 						<?php
 						foreach ( $pluginsVersion as $plugin_name => $plugin_title ) {
 							echo '<td class="long" style="text-align: center">';
-							if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( !isset($pluginsMainWP[$plugin_name]) || $pluginsMainWP[$plugin_name] === 'F')) {
+							if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( !isset($pluginsMainWP[$plugin_name]) || $pluginsMainWP[$plugin_name] === 'F' ) && ( $muPlugins[ $plugin_name ] == 0 ) ) {
 								echo '<input type="checkbox" value="' . $plugins[ $plugin_name ] . '" name="' . $pluginsName[ $plugin_name ] . '" class="selected_plugin" />';
 							}
 							echo '</td>';

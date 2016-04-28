@@ -140,7 +140,7 @@ class MainWP_Post_Handler {
 		add_action( 'wp_ajax_mainwp_tips_update', array( &$this, 'mainwp_tips_update' ) ); //ok
 		add_action( 'wp_ajax_mainwp_dismiss_twit', array( &$this, 'mainwp_dismiss_twit' ) );
 		add_action( 'wp_ajax_mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
-		
+
 		add_action( 'wp_ajax_mainwp_twitter_dashboard_action', array(
 			&$this,
 			'mainwp_twitter_dashboard_action',
@@ -588,7 +588,7 @@ class MainWP_Post_Handler {
 		}
 		die( 1 );
 	}
-	
+
 	function dismiss_activate_notice() {
 		$this->secure_request();
 
@@ -603,7 +603,7 @@ class MainWP_Post_Handler {
 		}
 		die( 1 );
 	}
-	
+
 
 	function mainwp_twitter_dashboard_action() {
 		$success = false;
@@ -1287,7 +1287,7 @@ class MainWP_Post_Handler {
 		if ( MainWP_DB::Instance()->backupFullTaskRunning( $websiteId ) ) {
 			die( json_encode( array( 'error' =>  __( 'Full backup running for the site', 'mainwp' ) ) ) );
 		}
-		
+
 		if ( empty( $slugs ) ) {
 			die( json_encode( array( 'message' => __( 'Not found items slugs to update.' ) ) ) );
 		}

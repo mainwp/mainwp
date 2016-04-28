@@ -690,7 +690,7 @@ class MainWP_Post {
 						$post_gallery_images = array();
 
 						if ( is_array($galleries) && isset($galleries['ids']) ) {
-							$attached_images = explode( ',', $galleries['ids'] );							
+							$attached_images = explode( ',', $galleries['ids'] );
 							foreach( $attached_images as $attachment_id ) {
 								$attachment = get_post( $attachment_id );
 								if ( $attachment ) {
@@ -698,14 +698,14 @@ class MainWP_Post {
 										'id' => $attachment_id,
 										'alt' => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
 										'caption' => $attachment->post_excerpt,
-										'description' => $attachment->post_content,									
+										'description' => $attachment->post_content,
 										'src' => $attachment->guid,
 										'title' => $attachment->post_title
 									);
 								}
 							}
 						}
-												
+
 						include_once( ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php' );
 						$post_featured_image = get_post_thumbnail_id( $id );
 						$mainwp_upload_dir   = wp_upload_dir();

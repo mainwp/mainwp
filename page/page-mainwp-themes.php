@@ -51,7 +51,7 @@ class MainWP_Themes {
 		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'ThemesIgnore', array(
 			MainWP_Themes::getClassName(),
 			'renderIgnore',
-		) );		
+		) );
 		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredAbandoned', array(
 			MainWP_Themes::getClassName(),
 			'renderIgnoredAbandoned',
@@ -84,7 +84,7 @@ class MainWP_Themes {
 						<a href="<?php echo admin_url( 'admin.php?page=ThemesInstall' ); ?>" class="mainwp-submenu"><?php _e( 'Install', 'mainwp' ); ?></a>
 					<?php } ?>
 					<a href="<?php echo admin_url( 'admin.php?page=ThemesAutoUpdate' ); ?>" class="mainwp-submenu"><?php _e( 'Auto Updates', 'mainwp' ); ?></a>
-					<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnore' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>					
+					<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnore' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>
 					<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnoredAbandoned' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Abandoned', 'mainwp' ); ?></a>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -140,7 +140,7 @@ public static function renderHeader( $shownPage ) {
 			} ?>" href="admin.php?page=ThemesAutoUpdate"><?php _e( 'Auto Updates', 'mainwp' ); ?></a>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Ignore' ) {
 				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=ThemesIgnore"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>			
+			} ?>" href="admin.php?page=ThemesIgnore"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'IgnoreAbandoned' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=ThemesIgnoredAbandoned"><?php _e( 'Ignored Abandoned', 'mainwp' ); ?></a>

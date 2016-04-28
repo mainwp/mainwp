@@ -163,7 +163,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 	}
 
-	function column_status( $item ) {	
+	function column_status( $item ) {
 
 		$hasSyncErrors = ( $item['sync_errors'] != '' );
 
@@ -435,7 +435,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	}
 
 	function prepare_items() {
-		
+
 		$orderby = 'wp.url';
 
 		if ( ! isset( $_GET['orderby'] ) ) {

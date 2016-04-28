@@ -1,5 +1,5 @@
 jQuery(document).ready(function () {
-    
+
     // to fix conflict with bootstrap tooltip
     jQuery.widget.bridge('uitooltip', jQuery.ui.tooltip);
     jQuery(document).uitooltip({
@@ -23,10 +23,10 @@ jQuery(document).ready(function () {
         }
     });
 
-    jQuery('#mwp_setup_planning_backup').change(function() {        
+    jQuery('#mwp_setup_planning_backup').change(function() {
         if (jQuery(this).is(':checked')) {
             jQuery('#mwp_setup_tr_backup_method').fadeIn(500);
-            jQuery('#mwp_setup_backup_method').removeAttr('disabled');            
+            jQuery('#mwp_setup_backup_method').removeAttr('disabled');
         }
         else {
             jQuery('#mwp_setup_tr_backup_method').fadeOut(500);
@@ -35,11 +35,11 @@ jQuery(document).ready(function () {
     });
 
     jQuery('#mwp_setup_backup_method').on('change', function() {
-        var bkmethod = jQuery(this).val();        
-        jQuery('.mainwp-backups-notice').hide();                   
-        jQuery('.mainwp-backups-notice[method="' + bkmethod + '"]').show();                    
+        var bkmethod = jQuery(this).val();
+        jQuery('.mainwp-backups-notice').hide();
+        jQuery('.mainwp-backups-notice[method="' + bkmethod + '"]').show();
     });
-    
+
     jQuery('#mwp_setup_manage_planning').change(function() {
         if ((jQuery(this).val() == 2) && (jQuery('#mwp_setup_type_hosting').val() == 3)) {
             jQuery('#mwp_setup_hosting_notice').fadeIn(500);
@@ -47,13 +47,13 @@ jQuery(document).ready(function () {
             jQuery('#mwp_setup_hosting_notice').fadeOut(1000);
         }
     })
-    
+
     jQuery('#mwp_setup_manage_planning').change(function() {
         mainwp_setup_showhide_hosting_notice();
     })
     jQuery('#mwp_setup_type_hosting').change(function() {
         mainwp_setup_showhide_hosting_notice();
-    })    
+    })
 });
 
 mainwp_setup_auth_uptime_robot = function(url) {
@@ -85,7 +85,7 @@ mainwp_setup_grab_extension = function(retring, pRegisterLater) {
     var data = {
         action:'mainwp_setup_extension_getextension',
         productId: extProductId,
-        register_later: pRegisterLater        
+        register_later: pRegisterLater
     };
 
     if (retring == true) {

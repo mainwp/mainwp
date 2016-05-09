@@ -2071,25 +2071,28 @@ class MainWP_Right_Now {
 				//Loop 3 times, first we show the conflicts, then we show the down sites, then we show the up sites
 
 				$SYNCERRORS = 0;
-				$DOWN       = 2;
-				$UP         = 3;
+				$DOWN       = 1;
+				$UP         = 2;
 
-				for ( $j = 0; $j <= 3; $j ++ ) {
+				for ( $j = 0; $j < 3; $j ++ ) {
 					@MainWP_DB::data_seek( $websites, 0 );
 					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 						$hasSyncErrors = ( $website->sync_errors != '' );
 
 						$isDown = ( ! $hasSyncErrors && ( $website->offline_check_result == - 1 ) );
 						$isUp   = ( ! $hasSyncErrors && ! $isDown );
-
-						if ( ( $j == $SYNCERRORS ) && ! $hasSyncErrors ) {
-							continue;
+						
+						if ( ( $j == $SYNCERRORS ) ) {
+							if ( ! $hasSyncErrors ) 						
+								continue;							
+						}						
+						if ( ( $j == $DOWN ) ) {
+							if (! $isDown ) 						
+								continue;
 						}
-						if ( ( $j == $DOWN ) && ! $isDown ) {
-							continue;
-						}
-						if ( ( $j == $UP ) && ! $isUp ) {
-							continue;
+						if ( ( $j == $UP ) ) {
+							if ( ! $isUp )						
+								continue;
 						}
 
 						?>

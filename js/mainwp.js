@@ -6959,7 +6959,7 @@ mainwp_managesites_bulk_remove_specific  = function (pCheckedBox) {
         }
 
         if (error != '') {
-            err = '<div class="mainwp_info-box-red mainwp_append_error">' + err + '</div>';
+            err = '<div class="mainwp_info-box-red mainwp_append_error">' + error + '</div>';
             jQuery('#mainwp_managesites_add_other_message').after(err);
         }
         //if (error == '') {

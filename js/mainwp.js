@@ -3222,7 +3222,8 @@ mainwp_newpost_updateCategories = function()
             action:'mainwp_get_categories',
             sites: encodeURIComponent(sites.join(',')),
             groups: encodeURIComponent(groups.join(',')),
-            selected_categories: encodeURIComponent(selected_categories.join(','))
+            selected_categories: encodeURIComponent(selected_categories.join(',')),
+            post_id: jQuery('#post_ID').val()
         };
 
         jQuery.post(ajaxurl, data, function(pSiteCategories) {
@@ -5706,7 +5707,8 @@ mainwp_fetch_posts = function (postId, userId) {
         'groups[]':selected_groups,
         'sites[]':selected_sites,
         postId: (postId == undefined ? '' : postId),
-        userId: (userId == undefined ? '' : userId)
+        userId: (userId == undefined ? '' : userId),
+        post_type: jQuery("#mainwp_get_custom_post_types_select").val()
     };
 
     jQuery('#mainwp_posts_loading').show();

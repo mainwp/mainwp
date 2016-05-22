@@ -406,7 +406,10 @@ class MainWP_Post_Handler {
 	 */
 	function mainwp_posts_search() {
 		$this->secure_request();
-		MainWP_Post::renderTable( $_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ), $_POST['postId'], $_POST['userId'] );
+        $post_type = (isset($_POST['post_type']) && strlen(trim($_POST['post_type'])) > 0 ? $_POST['post_type'] : 'post');
+        
+        MainWP_Post::renderTable($_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], (isset($_POST['groups']) ? $_POST['groups'] : ''), (isset($_POST['sites']) ? $_POST['sites'] : ''), $_POST['postId'], $_POST['userId'], $post_type);
+        
 		die();
 	}
 

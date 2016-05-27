@@ -926,7 +926,7 @@ class MainWP_Manage_Sites_View {
         <tbody>
             <?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
                 <tr>
-		<div class="mainwp_info-box"><?php echo sprintf( __('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %Extensions Site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
+		<div class="mainwp_info-box"><?php echo sprintf( __('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
                 </tr>
             <?php } ?>
         <?php

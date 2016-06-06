@@ -1743,6 +1743,8 @@ class MainWP_System {
 			'enabledTwit'           => MainWP_Twitter::enabledTwitterMessages(),
 			'maxSecondsTwit'        => MAINWP_TWITTER_MAX_SECONDS,
 			'installedBulkSettingsManager'	=> MainWP_Extensions::isExtensionAvailable( 'mainwp-bulk-settings-manager' ) ? 1 : 0,
+			'maximumSyncRequests'   => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
+			'maximumInstallUpdateRequests'   => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
 		);
 		wp_localize_script( 'mainwp', 'mainwpParams', $mainwpParams );
 		wp_enqueue_script( 'mainwp-tristate', MAINWP_PLUGIN_URL . 'js/tristate.min.js', array( 'mainwp' ), $this->current_version );

@@ -529,7 +529,7 @@ jQuery(document).on('click', '#mainwp-extensions-installnow', function () {
     return false;
 })
 
-bulkExtensionsMaxThreads = 3;
+bulkExtensionsMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
 bulkExtensionsCurrentThreads = 0;
 bulkExtensionsTotal = 0;
 bulkExtensionsFinished = 0;

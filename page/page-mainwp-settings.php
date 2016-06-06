@@ -175,6 +175,8 @@ class MainWP_Settings {
 			MainWP_Utility::update_option( 'mainwp_minimumDelay', MainWP_Utility::ctype_digit( $_POST['mainwp_minimumDelay'] ) ? intval( $_POST['mainwp_minimumDelay'] ) : 200 );
 			MainWP_Utility::update_option( 'mainwp_maximumIPRequests', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumIPRequests'] ) ? intval( $_POST['mainwp_maximumIPRequests'] ) : 1 );
 			MainWP_Utility::update_option( 'mainwp_minimumIPDelay', MainWP_Utility::ctype_digit( $_POST['mainwp_minimumIPDelay'] ) ? intval( $_POST['mainwp_minimumIPDelay'] ) : 400 );
+			MainWP_Utility::update_option( 'mainwp_maximumSyncRequests', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumSyncRequests'] ) ? intval( $_POST['mainwp_maximumSyncRequests'] ) : 8 );
+			MainWP_Utility::update_option( 'mainwp_maximumInstallUpdateRequests', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumInstallUpdateRequests'] ) ? intval( $_POST['mainwp_maximumInstallUpdateRequests'] ) : 3 );
 			MainWP_Utility::update_option( 'mainwp_sslVerifyCertificate', isset( $_POST['mainwp_sslVerifyCertificate'] ) ? 1 : 0 );
 		}
 
@@ -231,6 +233,33 @@ class MainWP_Settings {
 								<input type="text" name="mainwp_minimumIPDelay" class=""
 								       id="mainwp_minimumIPDelay" value="<?php echo( ( get_option( 'mainwp_minimumIPDelay' ) === false ) ? 400 : get_option( 'mainwp_minimumIPDelay' ) ); ?>"/>
 								<i>Default: 1000</i>
+							</td>
+						</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="postbox" id="mainwp-advanced-options">
+				<h3 class="mainwp_box_title">
+					<span><i class="fa fa-cog"></i> <?php _e( 'Frontend Request Settings', 'mainwp' ); ?></span></h3>
+
+				<div class="inside">
+					<table class="form-table">
+						<tbody>
+						<tr>
+							<th scope="row"><?php _e( 'Maximum simultaneous sync requests', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Maximum simultaneous sync requests. When too many requests are sent to the backend some hosts will block the requests.', 'mainwp' ) ); ?></th>
+							<td>
+								<input type="text" name="mainwp_maximumSyncRequests" class=""
+								       id="mainwp_maximumSyncRequests" value="<?php echo( ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/>
+								<i>Default: 8</i>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php _e( 'Minimum simultaneous install/update requests', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Minimum simultaneous install/update requests. When too many requests are sent to the backend some hosts will block the requests.', 'mainwp' ) ); ?></th>
+							<td>
+								<input type="text" name="mainwp_maximumInstallUpdateRequests" class=""
+								       id="mainwp_maximumInstallUpdateRequests" value="<?php echo( ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
+								<i>Default: 3</i>
 							</td>
 						</tr>
 						</tbody>

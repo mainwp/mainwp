@@ -681,7 +681,7 @@ var websitesError = 0;
 var currentWebsite = 0;
 var bulkTaskRunning = false;
 var currentThreads = 0;
-var maxThreads = 8;
+var maxThreads = mainwpParams['maximumSyncRequests'] == undefined ? 8 : mainwpParams['maximumSyncRequests'];
 
 dashboard_update = function(websiteIds)
 {
@@ -3852,7 +3852,7 @@ mainwp_install_bulk = function (type, slug) {
     jQuery('#mainwp_wrap-inside').html('<div class="postbox"><div class="inside"><h3><i class="fa fa-spinner fa-pulse"></i> '+ __('Preparing %1 installation.', type) + '</h3></div></div>');
 };
 
-bulkInstallMaxThreads = 3;
+bulkInstallMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
 bulkInstallCurrentThreads = 0;
 
 
@@ -6890,7 +6890,7 @@ mainwp_managegroups_ss_select = function (me, val) {
 };
 
 
-bulkManageSitesMaxThreads = 3;
+bulkManageSitesMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
 bulkManageSitesCurrentThreads = 0;
 bulkManageSitesTotal = 0;
 bulkManageSitesFinished = 0;
@@ -6903,7 +6903,7 @@ managesites_bulk_init = function () {
     jQuery('#mainwp_managesites_add_other_message').hide();
 
     if (bulkManageSitesTaskRunning == false) {
-        bulkManageSitesMaxThreads = 3;
+        bulkManageSitesMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
         bulkManageSitesCurrentThreads = 0;
         bulkManageSitesTotal = 0;
         bulkManageSitesFinished = 0;

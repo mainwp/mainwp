@@ -134,10 +134,15 @@ class MainWP_Extensions {
 								'Extension',
 								'MainWP',
 							), '', $extension['name'] );
-							add_submenu_page( 'mainwp_tab', $extension['name'], $menu_name, 'read', $extension['page'], $extension['callback'] );
+							$_page = add_submenu_page( 'mainwp_tab', $extension['name'], $menu_name, 'read', $extension['page'], $extension['callback'] );
 						} else {
-							add_submenu_page( 'mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback'] );
+							$_page = add_submenu_page( 'mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback'] );
 						}
+						
+						if ( isset( $extension['on_load_callback'] ) && !empty($extension['on_load_callback'])) {							
+							add_action( 'load-' . $_page, $extension['on_load_callback']);		
+						}
+						
 					}
 				}
 			}

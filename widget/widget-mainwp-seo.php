@@ -11,8 +11,8 @@ class MainWP_SEO {
 
 	public static function render() {
 		global $wpdb;
-
-		$websites = $wpdb->get_results( 'SELECT id,name,url,pagerank,indexed,alexia,pagerank_old,indexed_old,alexia_old FROM `' . $wpdb->prefix . 'mainwp_wp`' );
+		$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser();
+		$websites = MainWP_DB::Instance()->query( $sql );
 
 		if ( count( $websites ) == 0 ) {
 			echo __( 'No Websites', 'mainwp' );
@@ -33,7 +33,7 @@ class MainWP_SEO {
 				</thead>
 				<tbody>
 				<?php
-				foreach ( $websites as $website ) {
+				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 					?>
 					<tr>
 						<td style="padding-right: 2em">
@@ -84,6 +84,7 @@ class MainWP_SEO {
 					} );
 				} );</script>
 			<?php
+			@MainWP_DB::free_result( $websites );
 		}
 	}
 }

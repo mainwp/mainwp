@@ -950,7 +950,7 @@ class MainWP_Manage_Sites_View {
             <th scope="row"><?php _e( 'Backups on Server', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The number of backups to keep on your server.  This does not affect external sources.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/' ); ?></th>
             <td>
                 <input type="text" name="mainwp_options_backupOnServer"  class=""
-                       value="<?php echo ($backupsOnServer === false ? 1 : $backupsOnServer); ?>"/><span class="mainwp-form_hint"><?php _e( 'The number of backups to keep on your server. This does not affect external sources. 0 sets unlimited.','mainwp' ); ?></span>
+                       value="<?php echo ($backupsOnServer === false ? 1 : $backupsOnServer); ?>"/><span class="mainwp-form_hint"><?php _e( 'The number of backups to keep on your server. This does not affect external sources.','mainwp' ); ?></span>
             </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>

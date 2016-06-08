@@ -1438,7 +1438,7 @@ class MainWP_System {
 
 			MainWP_DB::Instance()->updateWebsiteStats( $website->id, $pageRank, $newIndexed, $newAlexia, $website->pagerank, $oldIndexed, $oldAlexia, $statsUpdated );
 
-			if ( $website->sync_errors != '' ) {
+			if ( property_exists($website, 'sync_errors') && $website->sync_errors != '' ) {
 				//Try reconnecting
 				MainWP_Logger::Instance()->infoForWebsite( $website, 'reconnect', 'Trying to reconnect' );
 				try {

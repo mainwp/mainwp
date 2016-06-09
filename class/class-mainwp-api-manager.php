@@ -224,9 +224,9 @@ class MainWP_Api_Manager {
 				$args = array(
 					'username'         => $username,
 					'password'         => $password,
-					'product_id'       => $options['product_id'],
-					'instance'         => $options['instance_id'],
-					'software_version' => $options['software_version'],
+					'product_id'       => isset( $options['product_id'] ) ? $options['product_id'] : '',
+					'instance'         => isset( $options['instance_id'] ) ? $options['instance_id'] : '',
+					'software_version' => isset( $options['software_version'] ) ? $options['software_version'] : '',
 					'platform'         => $this->domain,
 				);
 
@@ -235,7 +235,7 @@ class MainWP_Api_Manager {
 				$options['activation_email'] = '';
 				$options['activated_key']    = 'Deactivated';
 
-				if ( is_array( $activate_results ) && $activate_results['activated'] == true && ! empty( $activate_results['api_key'] ) ) {
+				if ( is_array( $activate_results ) && isset( $activate_results['activated'] ) && ( $activate_results['activated'] == true ) && ! empty( $activate_results['api_key'] ) ) {
 					$return['result']               = 'SUCCESS';
 					$mess                           = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
 					$return['message']              = __( 'Extension activated. ', 'mainwp' ) . $mess;

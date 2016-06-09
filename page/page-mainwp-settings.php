@@ -302,6 +302,7 @@ class MainWP_Settings {
 			return;
 		}
 
+		$updated = false;
 		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 			$updated = MainWP_Options::handleSettingsPost();
 			$updated |= MainWP_Manage_Sites::handleSettingsPost();

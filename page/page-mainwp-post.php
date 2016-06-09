@@ -508,8 +508,10 @@ class MainWP_Post {
 	            reset($posts);
 
 	            $connections_ids = MainWPCustomPostTypeDB::Instance()->get_dash_post_ids_from_connections($website->id, $child_post_ids);
-	            foreach ($connections_ids as $key) {
-	                $child_to_dash_array[$key->child_post_id] = $key->dash_post_id;
+	            if ( ! empty( $connections_ids ) ) {
+		            foreach ( $connections_ids as $key ) {
+			            $child_to_dash_array[ $key->child_post_id ] = $key->dash_post_id;
+		            }
 	            }
 	        }
 
@@ -715,6 +717,9 @@ class MainWP_Post {
             	$selectedCategories2 = get_post_meta( $post_id, '_categories', true );		
         	}
         }
+
+		if ( ! is_array( $selectedCategories ) ) $selectedCategories = array();
+		if ( ! is_array( $selectedCategories2 ) ) $selectedCategories2 = array();
 
 		$allCategories = array( 'Uncategorized' );
 		if ( count( $websites ) > 0 ) {

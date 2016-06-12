@@ -858,7 +858,7 @@ class MainWP_Right_Now {
 					<?php if ( $globalView ) { ?>
 						<span style="float: right;"><a href="#" id="mainwp-right-now-message-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
 							</a></span>
-					<span id="mainwp-right-now-message-content"><?php echo $total_sync_errors; ?> <?php echo _n( 'Site Timed Out / Errored Out', 'Sites Timed Out / Errored Out', $total_sync_errors, 'mainwp' ); ?>.<br/><?php echo sprintf( __('There was an error syncing some of your sites. %sPlease check this help doc for possible solutions%s.', 'mainwp' ), '<a href="http://docs.mainwp.com/sync-error/">', '</a>'); ?></span>
+						<span id="mainwp-right-now-message-content"><?php echo $total_sync_errors; ?> <?php echo _n( 'Site Timed Out / Errored Out', 'Sites Timed Out / Errored Out', $total_sync_errors, 'mainwp' ); ?>.<br/><?php echo sprintf( __('There was an error syncing some of your sites. %sPlease check this help doc for possible solutions%s.', 'mainwp' ), '<a href="http://docs.mainwp.com/sync-error/">', '</a>'); ?></span>
 					<?php } else { ?>
 						<span id="mainwp-right-now-message-content"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $currentSite->id ); ?>"><?php echo stripslashes( $currentSite->name ); ?></a> <?php _e( 'Timed Out / Errored Out', 'mainwp' ); ?>.<br/><?php echo sprintf( __('There was an error syncing some of your sites. %sPlease check this help doc for possible solutions%s.', 'mainwp' ), '<a href="http://docs.mainwp.com/sync-error/">', '</a>'); ?></span>
 					<?php } ?>
@@ -988,27 +988,27 @@ class MainWP_Right_Now {
 		//Translation upgrades!
 		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 		if ( $mainwp_show_language_updates == 1 ) {
-		?>
-		<div class="clear">
-			<div class="mainwp-row">
+			?>
+			<div class="clear">
+				<div class="mainwp-row">
 				<span class="mainwp-left-col">
 					<a href="#" id="mainwp_translation_upgrades_show" onClick="return rightnow_show('translation_upgrades', true);">
 						<span class="mainwp-rightnow-number"><?php echo $total_translation_upgrades; ?> </span> <?php echo _n( 'Translation upgrade', 'Translation upgrades', $total_wp_upgrades, 'mainwp') ?> <?php _e('available','mainwp'); ?>
 					</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('If you have non-English WordPress installations on your child sites, available Translation updates can be managed from this line. To disable the Translation Updates, go to the Settings page and disable the option in the Updates Option box.','mainwp'), 'https://make.wordpress.org/polyglots/handbook/about/what-we-do/', 'images/info.png', 'float: none !important;'); ?>
 				</span>
-				<span class="mainwp-mid-col">&nbsp;</span>
-				<span class="mainwp-right-col"><?php if (mainwp_current_user_can("dashboard", "update_translations")) {  ?><?php if ($total_translation_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_translations_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_translation_upgrades, 'mainwp'); ?></a><?php } else if ($total_translation_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_translations_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_translation_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } }?></span>
-			</div>
-			<div id="wp_translation_upgrades" style="display: none">
-				<?php
-				if ( $userExtension->site_view == 1 ) {
-					@MainWP_DB::data_seek( $websites, 0 );
-					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+					<span class="mainwp-mid-col">&nbsp;</span>
+					<span class="mainwp-right-col"><?php if (mainwp_current_user_can("dashboard", "update_translations")) {  ?><?php if ($total_translation_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_translations_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_translation_upgrades, 'mainwp'); ?></a><?php } else if ($total_translation_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_translations_global_upgrade_all();" class="button-primary"><?php echo _n('Upgrade', 'Upgrade All', $total_translation_upgrades, 'mainwp'); ?></a><?php } else { ?> &nbsp; <a class="button" disabled="disabled"><?php _e('No Upgrades','mainwp'); ?></a> <?php } }?></span>
+				</div>
+				<div id="wp_translation_upgrades" style="display: none">
+					<?php
+					if ( $userExtension->site_view == 1 ) {
+						@MainWP_DB::data_seek( $websites, 0 );
+						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 //						if ( $website->is_ignoreTranslationUpdates ) {
 //							continue;
 //						}
 //
-						$translation_upgrades        = json_decode( $website->translation_upgrades, true );
+							$translation_upgrades        = json_decode( $website->translation_upgrades, true );
 
 //						$ignored_translations = json_decode( $website->ignored_translations, true );
 //						if ( is_array( $ignored_translations ) ) {
@@ -1020,9 +1020,9 @@ class MainWP_Right_Now {
 //							$translation_upgrades = array_diff_key( $translation_upgrades, $ignored_translations );
 //						}
 
-						if ( $globalView ) {
-							?>
-							<div class="mainwp-row">
+							if ( $globalView ) {
+								?>
+								<div class="mainwp-row">
 								<span class="mainwp-left-col"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_translation_<?php echo $website->id; ?>" value="<?php if ( count( $translation_upgrades ) > 0 ) {
 										echo '0';
 									} else {
@@ -1054,20 +1054,20 @@ class MainWP_Right_Now {
 										<a href="<?php echo $website->url; ?>" target="_blank" class="mainwp-open-button button"><?php _e( 'Open', 'mainwp' ); ?></a>
 									</div>
 								</span>
-							</div>
-							<?php
-						}
-						?>
-						<div id="wp_translation_upgrades_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
-							<?php
-							foreach ( $translation_upgrades as $translation_upgrade) {
-								$translation_name = isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $translation_upgrade['slug'];
-								$translation_slug = $translation_upgrade['slug'];
-								?>
-								<div class="mainwp-row" translation_slug="<?php echo $translation_slug; ?>" updated="0">
+								</div>
+								<?php
+							}
+							?>
+							<div id="wp_translation_upgrades_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
+								<?php
+								foreach ( $translation_upgrades as $translation_upgrade) {
+									$translation_name = isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $translation_upgrade['slug'];
+									$translation_slug = $translation_upgrade['slug'];
+									?>
+									<div class="mainwp-row" translation_slug="<?php echo $translation_slug; ?>" updated="0">
 									<span class="mainwp-left-col">
 										<?php if ( $globalView ) { ?>&nbsp;&nbsp;&nbsp;<?php } ?>
-											<?php echo $translation_name; ?>
+										<?php echo $translation_name; ?>
 										<input type="hidden" id="wp_upgraded_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>" value="0"/>
 									</span>
 									<span class="mainwp-mid-col translationsInfo" id="wp_upgrade_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>">
@@ -1081,18 +1081,18 @@ class MainWP_Right_Now {
 											<?php } ?>
 										</div>
 									</span>
-								</div>
-							<?php }
-							?>
-						</div>
-						<?php
-					}
-				} else {
-					foreach ( $allTranslations as $slug => $val ) {
-						$cnt = $val['cnt'];
-						if ( $globalView ) {
-							?>
-							<div class="mainwp-row">
+									</div>
+								<?php }
+								?>
+							</div>
+							<?php
+						}
+					} else {
+						foreach ( $allTranslations as $slug => $val ) {
+							$cnt = $val['cnt'];
+							if ( $globalView ) {
+								?>
+								<div class="mainwp-row">
                         <span class="mainwp-left-col">
 	                            <?php echo $translationsInfo[ $slug ]['name']; ?>
                         </span>
@@ -1108,60 +1108,60 @@ class MainWP_Right_Now {
 			                        <a class="button" disabled="disabled"><?php _e( 'No Upgrades', 'mainwp' ); ?></a> <?php } ?>
 	                        <?php } ?>                            
                         </span>
-							</div>
-							<?php
-						}
-						?>
-						<div translation_slug="<?php echo $slug; ?>" translation_name="<?php echo urlencode( $translationsInfo[ $slug ]['name'] ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
-							<?php
-							@MainWP_DB::data_seek( $websites, 0 );
-							while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+								</div>
+								<?php
+							}
+							?>
+							<div translation_slug="<?php echo $slug; ?>" translation_name="<?php echo urlencode( $translationsInfo[ $slug ]['name'] ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
+								<?php
+								@MainWP_DB::data_seek( $websites, 0 );
+								while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 //								if ( $website->is_ignoreTranslationUpdates ) {
 //									continue;
 //								}
-								$translation_upgrades        = json_decode( $website->translation_upgrades, true );
+									$translation_upgrades        = json_decode( $website->translation_upgrades, true );
 
-								$translation_upgrade = null;
-								foreach ( $translation_upgrades as $current_translation_upgrade ) {
-									if ( $current_translation_upgrade['slug'] == $slug ) {
-										$translation_upgrade = $current_translation_upgrade;
-										break;
+									$translation_upgrade = null;
+									foreach ( $translation_upgrades as $current_translation_upgrade ) {
+										if ( $current_translation_upgrade['slug'] == $slug ) {
+											$translation_upgrade = $current_translation_upgrade;
+											break;
+										}
 									}
-								}
 
-								if ( null === $translation_upgrade ) {
-									continue;
-								}
+									if ( null === $translation_upgrade ) {
+										continue;
+									}
 
-								?>
-								<div class="mainwp-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" updated="0">
+									?>
+									<div class="mainwp-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" updated="0">
                                 <span class="mainwp-left-col">
                                     <?php if ( $globalView ) { ?>
 	                                    &nbsp;&nbsp;&nbsp;
 	                                    <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
                                     <?php } else { ?>
-		                                    <?php echo $translationsInfo[ $slug ]['name']; ?>
+	                                    <?php echo $translationsInfo[ $slug ]['name']; ?>
                                     <?php } ?>
                                 </span>
-									<span class="mainwp-mid-col translationsInfo"><?php echo $translation_upgrade['version']; ?></span>
+										<span class="mainwp-mid-col translationsInfo"><?php echo $translation_upgrade['version']; ?></span>
                                 <span class="mainwp-right-col translationsAction">
 	                                <?php if ( mainwp_current_user_can( 'dashboard', 'update_translations' ) ) { ?>
 		                                &nbsp;
 		                                <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_translations_upgrade('<?php echo $slug; ?>', <?php echo $website->id; ?>)"><?php _e( 'Upgrade', 'mainwp' ); ?></a>
 	                                <?php } ?>
                                 </span>
-								</div>
-								<?php
-							}
-							?>
-						</div>
-						<?php
+									</div>
+									<?php
+								}
+								?>
+							</div>
+							<?php
+						}
 					}
-				}
-				?>
+					?>
+				</div>
 			</div>
-		</div>
-		<?php
+			<?php
 		}
 
 		//WP plugin upgrades!
@@ -1290,7 +1290,7 @@ class MainWP_Right_Now {
 							<div class="mainwp-row">
                         <span class="mainwp-left-col">
                             <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $pluginsInfo[ $slug ]['slug'] . '&url=' . ( isset( $pluginsInfo[ $slug ]['uri'] ) ? rawurlencode( $pluginsInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsInfo[ $slug ]['name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-	                            class="thickbox" title="More information about <?php echo $pluginsInfo[ $slug ]['name']; ?>">
+                               class="thickbox" title="More information about <?php echo $pluginsInfo[ $slug ]['name']; ?>">
 	                            <?php echo $pluginsInfo[ $slug ]['name']; ?>
                             </a>
                         </span>
@@ -1353,7 +1353,7 @@ class MainWP_Right_Now {
 	                                    <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
                                     <?php } else { ?>
 	                                    <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $pluginsInfo[ $slug ]['slug'] . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-		                                    class="thickbox" title="More information about <?php echo $pluginsInfo[ $slug ]['name']; ?>">
+	                                       class="thickbox" title="More information about <?php echo $pluginsInfo[ $slug ]['name']; ?>">
 		                                    <?php echo $pluginsInfo[ $slug ]['name']; ?>
 	                                    </a>
                                     <?php } ?>
@@ -1669,7 +1669,7 @@ class MainWP_Right_Now {
                                 <span class="mainwp-left-col">
                                     <?php if ( $globalView ) { ?>&nbsp;&nbsp;&nbsp;<?php } ?>
 	                                <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-		                                class="thickbox" title="More information about <?php echo $plugin_outdate['Name']; ?>"><?php echo $plugin_outdate['Name']; ?></a><input type="hidden" id="wp_dismissed_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" value="0"/></span>
+	                                   class="thickbox" title="More information about <?php echo $plugin_outdate['Name']; ?>"><?php echo $plugin_outdate['Name']; ?></a><input type="hidden" id="wp_dismissed_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" value="0"/></span>
 									<span class="mainwp-mid-col pluginsInfo" id="wp_outdate_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>"><?php echo $plugin_outdate['Version']; ?> | <?php echo $outdate_notice; ?></span>
                                 <span class="mainwp-right-col pluginsAction">
                                     <div id="wp_dismissbuttons_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
@@ -1694,7 +1694,7 @@ class MainWP_Right_Now {
 							<div class="mainwp-row">
                         <span class="mainwp-left-col">
                             <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $pluginsOutdateInfo[ $slug ]['uri-'] ) ? rawurlencode( $pluginsOutdateInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsOutdateInfo[ $slug ]['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-	                            class="thickbox" title="More information about <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>">
+                               class="thickbox" title="More information about <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>">
 	                            <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>
                             </a>
                         </span>
@@ -1752,7 +1752,7 @@ class MainWP_Right_Now {
 	                                    <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
                                     <?php } else { ?>
 	                                    <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-		                                    class="thickbox" title="More information about <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>">
+	                                       class="thickbox" title="More information about <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>">
 		                                    <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>
 	                                    </a>
                                     <?php } ?>
@@ -2034,32 +2034,32 @@ class MainWP_Right_Now {
                 <span class="mainwp-left-col">
                 <span style="position: relative; top: -5px;">
                     <?php
-					if ($total_sync_errors > 0)
-					{
-						?>
-						<span class="fa-stack" title="Disconnected">
+                    if ($total_sync_errors > 0)
+                    {
+	                    ?>
+	                    <span class="fa-stack" title="Disconnected">
                                 <i class="fa fa-circle fa-stack-2x mwp-red"></i>
                                 <i class="fa fa-plug fa-stack-1x mwp-white"></i>
                             </span>
-						<?php
-					}
-					else if ($total_offline > 0)
-					{
-						?>
-						<span class="fa-stack" title="Site is Offline">
+	                    <?php
+                    }
+                    else if ($total_offline > 0)
+                    {
+	                    ?>
+	                    <span class="fa-stack" title="Site is Offline">
                                 <i class="fa fa-exclamation-circle fa-2x mwp-red"></i>
                             </span>
-						<?php
-					}
-					else
-					{
-						?>
-						<span class="fa-stack" title="Site is Online">
+	                    <?php
+                    }
+                    else
+                    {
+	                    ?>
+	                    <span class="fa-stack" title="Site is Online">
                                 <i class="fa fa-check-circle fa-2x mwp-l-green"></i>
                             </span>
-						<?php
-					}
-					?></span><h2 style="display: inline;"><?php _e('Status','mainwp'); ?></h2>
+	                    <?php
+                    }
+                    ?></span><h2 style="display: inline;"><?php _e('Status','mainwp'); ?></h2>
 				</span>
 				<span class="mainwp-mid-col">&nbsp;</span>
 				<span class="mainwp-right-col">
@@ -2081,17 +2081,17 @@ class MainWP_Right_Now {
 
 						$isDown = ( ! $hasSyncErrors && ( $website->offline_check_result == - 1 ) );
 						$isUp   = ( ! $hasSyncErrors && ! $isDown );
-						
+
 						if ( ( $j == $SYNCERRORS ) ) {
-							if ( ! $hasSyncErrors ) 						
-								continue;							
-						}						
+							if ( ! $hasSyncErrors )
+								continue;
+						}
 						if ( ( $j == $DOWN ) ) {
-							if (! $isDown ) 						
+							if (! $isDown )
 								continue;
 						}
 						if ( ( $j == $UP ) ) {
-							if ( ! $isUp )						
+							if ( ! $isUp )
 								continue;
 						}
 
@@ -2102,32 +2102,32 @@ class MainWP_Right_Now {
                         </span>
                         <span class="mainwp-right-col">
                             <?php
-							if ($hasSyncErrors)
-							{
-								?>
-								<div style="position: absolute; padding-right: 10px; right: 50px; font-size: 13px;"><a href="#" class="mainwp_rightnow_site_reconnect" siteid="<?php echo $website->id; ?>"><?php _e('Reconnect','mainwp'); ?></a><br /></div>
-								<span class="fa-stack fa-lg" title="Disconnected">
+                            if ($hasSyncErrors)
+                            {
+	                            ?>
+	                            <div style="position: absolute; padding-right: 10px; right: 50px; font-size: 13px;"><a href="#" class="mainwp_rightnow_site_reconnect" siteid="<?php echo $website->id; ?>"><?php _e('Reconnect','mainwp'); ?></a><br /></div>
+	                            <span class="fa-stack fa-lg" title="Disconnected">
                                         <i class="fa fa-circle fa-stack-2x mwp-red"></i>
                                         <i class="fa fa-plug fa-stack-1x mwp-white"></i>
                                     </span>
-								<?php
-							}
-							else if ($isDown)
-							{
-								?>
-								<span class="fa-stack fa-lg" title="Site is Offline">
+	                            <?php
+                            }
+                            else if ($isDown)
+                            {
+	                            ?>
+	                            <span class="fa-stack fa-lg" title="Site is Offline">
                                         <i class="fa fa-exclamation-circle fa-2x mwp-red"></i>
                                     </span>
-								<?php
-							}
-							else
-							{
-								?>
-								<span class="fa-stack fa-lg" title="Site is Online">
+	                            <?php
+                            }
+                            else
+                            {
+	                            ?>
+	                            <span class="fa-stack fa-lg" title="Site is Online">
                                         <i class="fa fa-check-circle fa-2x mwp-l-green"></i>
                                     </span>
-								<?php
-							}
+	                            <?php
+                            }
                             ?>
                         </span>
 						</div>

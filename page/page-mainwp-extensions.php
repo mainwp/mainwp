@@ -138,11 +138,11 @@ class MainWP_Extensions {
 						} else {
 							$_page = add_submenu_page( 'mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback'] );
 						}
-						
-						if ( isset( $extension['on_load_callback'] ) && !empty($extension['on_load_callback'])) {							
-							add_action( 'load-' . $_page, $extension['on_load_callback']);		
+
+						if ( isset( $extension['on_load_callback'] ) && !empty($extension['on_load_callback'])) {
+							add_action( 'load-' . $_page, $extension['on_load_callback']);
 						}
-						
+
 					}
 				}
 			}

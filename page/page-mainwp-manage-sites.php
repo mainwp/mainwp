@@ -94,8 +94,8 @@ class MainWP_Manage_Sites {
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
 				$_page = add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'ManageSites' . $subPage['slug'], $subPage['callback'] );
-				if ( isset( $subPage['on_load_callback'] ) && !empty($subPage['on_load_callback'])) {							
-					add_action( 'load-' . $_page, $subPage['on_load_callback']);	
+				if ( isset( $subPage['on_load_callback'] ) && !empty($subPage['on_load_callback'])) {
+					add_action( 'load-' . $_page, $subPage['on_load_callback']);
 				}
 			}
 		}

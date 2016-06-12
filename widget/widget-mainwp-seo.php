@@ -11,9 +11,9 @@ class MainWP_SEO {
 
 	public static function render() {
 		global $wpdb;
-		$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser();		
+		$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser();
 		$websites = MainWP_DB::Instance()->query( $sql );
-	
+
 		if ( count( $websites ) == 0 ) {
 			echo __( 'No Websites', 'mainwp' );
 		} else {
@@ -33,7 +33,7 @@ class MainWP_SEO {
 				</thead>
 				<tbody>
 				<?php
-				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {				
+				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 					?>
 					<tr>
 						<td style="padding-right: 2em">

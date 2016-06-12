@@ -681,7 +681,7 @@ var websitesError = 0;
 var currentWebsite = 0;
 var bulkTaskRunning = false;
 var currentThreads = 0;
-var maxThreads = 8;
+var maxThreads = mainwpParams['maximumSyncRequests'] == undefined ? 8 : mainwpParams['maximumSyncRequests'];
 
 dashboard_update = function(websiteIds)
 {
@@ -3222,7 +3222,8 @@ mainwp_newpost_updateCategories = function()
             action:'mainwp_get_categories',
             sites: encodeURIComponent(sites.join(',')),
             groups: encodeURIComponent(groups.join(',')),
-            selected_categories: encodeURIComponent(selected_categories.join(','))
+            selected_categories: encodeURIComponent(selected_categories.join(',')),
+            post_id: jQuery('#post_ID').val()
         };
 
         jQuery.post(ajaxurl, data, function(pSiteCategories) {
@@ -3851,7 +3852,7 @@ mainwp_install_bulk = function (type, slug) {
     jQuery('#mainwp_wrap-inside').html('<div class="postbox"><div class="inside"><h3><i class="fa fa-spinner fa-pulse"></i> '+ __('Preparing %1 installation.', type) + '</h3></div></div>');
 };
 
-bulkInstallMaxThreads = 3;
+bulkInstallMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
 bulkInstallCurrentThreads = 0;
 
 
@@ -5706,7 +5707,8 @@ mainwp_fetch_posts = function (postId, userId) {
         'groups[]':selected_groups,
         'sites[]':selected_sites,
         postId: (postId == undefined ? '' : postId),
-        userId: (userId == undefined ? '' : userId)
+        userId: (userId == undefined ? '' : userId),
+        post_type: jQuery("#mainwp_get_custom_post_types_select").val()
     };
 
     jQuery('#mainwp_posts_loading').show();
@@ -6888,7 +6890,7 @@ mainwp_managegroups_ss_select = function (me, val) {
 };
 
 
-bulkManageSitesMaxThreads = 3;
+bulkManageSitesMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
 bulkManageSitesCurrentThreads = 0;
 bulkManageSitesTotal = 0;
 bulkManageSitesFinished = 0;
@@ -6901,7 +6903,7 @@ managesites_bulk_init = function () {
     jQuery('#mainwp_managesites_add_other_message').hide();
 
     if (bulkManageSitesTaskRunning == false) {
-        bulkManageSitesMaxThreads = 3;
+        bulkManageSitesMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
         bulkManageSitesCurrentThreads = 0;
         bulkManageSitesTotal = 0;
         bulkManageSitesFinished = 0;
@@ -6959,7 +6961,7 @@ mainwp_managesites_bulk_remove_specific  = function (pCheckedBox) {
         }
 
         if (error != '') {
-            err = '<div class="mainwp_info-box-red mainwp_append_error">' + err + '</div>';
+            err = '<div class="mainwp_info-box-red mainwp_append_error">' + error + '</div>';
             jQuery('#mainwp_managesites_add_other_message').after(err);
         }
         //if (error == '') {

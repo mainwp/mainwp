@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.5.1
-Stable tag: 3.1.3
+Tested up to: 4.5.2
+Stable tag: 3.1.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,21 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.1.5 - 6-12-16 =
+* Fixed: Issue with displaying double sites in the Status row of the Right Now widget
+* Fixed: Issue with displaying restricted sites by the Team Control extension
+* Fixed: Incorrect tooltip text for the Backups on Server tooltip
+* Fixed: Issue with extensions auto activation in the Quick Setup process
+* Fixed: PHP Notices
+* Fixed: Variable naming issue that throws a ReferenceError
+* Added: Maximum sync request settings in Advanced Options
+* Added: Support for the new version of the MainWP Rocket Extension
+* Added: Support for the new version of the MainWP iThemes Security Extension
+* Added: Support for the upcoming extension
+
+= 3.1.4 - 5-11-16 =
+* Added: Backup process timeout to prevent updates from failing
 
 = 3.1.3 - 4-28-16 =
 * Fixed: Available updates sorting issue

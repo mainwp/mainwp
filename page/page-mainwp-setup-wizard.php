@@ -131,7 +131,7 @@ class MainWP_Setup_Wizard {
 
 		wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'js/mainwp-setup.js', array( 'jquery', 'jquery-ui-tooltip' ), MAINWP_VERSION );
 		wp_localize_script('mainwp-setup', 'mainwpSetupLocalize', array('nonce' => wp_create_nonce('mainwp-setup-nonce')));
-		
+
 		wp_localize_script('mainwp-setup', 'mainwpSetupLocalize', array('nonce' => wp_create_nonce('MainWPSetup')));
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'css/mainwp.css', array(), MAINWP_VERSION );
 
@@ -846,7 +846,7 @@ class MainWP_Setup_Wizard {
 	}
 
 	public static function ajax_download_and_install() {
-		self::secure_request();	
+		self::secure_request();
 		$return = MainWP_Extensions::installPlugin($_POST['download_link']);
 		die('<mainwp>' . json_encode($return) . '</mainwp>');
 	}
@@ -855,20 +855,20 @@ class MainWP_Setup_Wizard {
 		if ( !isset($_POST['action']) || !isset($_POST['security']) || !wp_verify_nonce($_POST['security'], 'MainWPSetup') )
 			die( 0 );
 	}
-	
+
 	public static function ajax_activate_plugin() {
-		self::secure_request();		
+		self::secure_request();
 		$slug = $_POST['plugins'];
 		if (is_array($slug))
-			$slug = current($slug);		
-		if ( current_user_can( 'activate_plugins' ) ) {				
-			activate_plugin( $slug, '', false, true );			
-			do_action( 'mainwp_api_extension_activated', WP_PLUGIN_DIR . '/' .$slug );			
+			$slug = current($slug);
+		if ( current_user_can( 'activate_plugins' ) ) {
+			activate_plugin( $slug, '', false, true );
+			do_action( 'mainwp_api_extension_activated', WP_PLUGIN_DIR . '/' .$slug );
 			die( 'SUCCESS' );
-		}		
+		}
 		die( 'FAILED' );
-	}	
-		
+	}
+
 	public static function ajax_grab_api_key( ) {
 		$enscrypt_u = get_option('mainwp_extensions_api_username');
 		$enscrypt_p = get_option('mainwp_extensions_api_password');

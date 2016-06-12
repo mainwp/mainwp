@@ -158,7 +158,7 @@ mainwp_setup_extension_install = function(pRegisterLater) {
                     statusEl.css('color', '#21759B')
                     statusEl.html(response.output).show();
                     jQuery('.mwp_setup_extension_installing').append('<span class="extension_installed_success" slug="' + response.slug + '"></span>');
-                    mainwp_setup_extension_activate_plugin(pRegisterLater);                    
+                    mainwp_setup_extension_activate_plugin(pRegisterLater);
                 } else if (response.error) {
                     statusEl.css('color', 'red');
                     statusEl.html('<strong><i class="fa fa-exclamation-circle"></i> Error:</strong> ' + response.error).show();
@@ -184,16 +184,16 @@ mainwp_setup_extension_activate_plugin = function(pRegisterLater) {
         plugins.push(jQuery(this).attr('slug'));
     });
 
-    if (plugins.length == 0) {        
+    if (plugins.length == 0) {
         return;
     }
-    
+
     var data = {
         action:'mainwp_setup_extension_activate_plugin',
         plugins: plugins,
         security: mainwpSetupLocalize.nonce
     };
-    
+
     jQuery.post(ajaxurl, data,  function(response) {
         if (response == 'SUCCESS') {
             if (!pRegisterLater) {
@@ -201,7 +201,7 @@ mainwp_setup_extension_activate_plugin = function(pRegisterLater) {
                 mainwp_setup_extension_activate(false);
             }
         } else {
-            
+
         }
     });
 }

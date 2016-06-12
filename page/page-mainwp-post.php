@@ -163,9 +163,15 @@ class MainWP_Post {
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Post' );
 
 		//Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
-		self::renderHeader( 'BulkManage' ); ?>
+		self::renderHeader( 'BulkManage' );
+		if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php') ):
+        ?>
+            <div class="updated">You have Custom Post Type Extension activated. You can choose post type.</div>
+        <?php
+        endif;
+        ?>
 		<div class="mainwp-search-form">
-			<div class="postbox mainwp-postbox">
+			<div class="postbox mainwp-postbox" style="height: 400px">
 				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Step 1: Search Posts', 'mainwp' ); ?>
 				</h3>
 
@@ -212,6 +218,24 @@ class MainWP_Post {
 							echo $cachedSearch['dtsstop'];
 						} ?>"/>
 					</p>
+					<?php
+					if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')):
+		            ?>
+		                <p>
+		                    <?php _e('Post type:','mainwp'); ?><br />
+		                    <select id="mainwp_get_custom_post_types_select">
+		                        <option value="any"><?php _e('All post types', 'mainwp'); ?></option>
+		                        <?php
+		                        foreach (get_post_types(array('_builtin' => false)) as $key) {
+		                        	if (!in_array($key, MainWPCustomPostType::$default_post_types))
+		                            echo '<option value="'.esc_attr($key).'">'.esc_html($key).'</option>';
+		                        }
+		                        ?>
+		                    </select>
+		                </p>
+		            <?php
+		            endif;
+		            ?>
 				</div>
 			</div>
 			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select Sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
@@ -269,6 +293,15 @@ class MainWP_Post {
 						<th scope="col" id="tags" class="manage-column column-tags sortable desc" style="">
 							<a href="#" onclick="return false;"><span><?php _e( 'Tags', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
 						</th>
+						<?php
+						if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')):
+						?>
+							<th scope="col" id="tags" class="manage-column column-post-type sortable desc" style="">
+	                            <a href="#" onclick="return false;"><span><?php _e('Post type','mainwp'); ?></span><span class="sorting-indicator"></span></a>
+	                        </th>
+	                    <?php
+	                    endif;
+	                    ?>
 						<th scope="col" id="comments" class="manage-column column-comments num sortable desc" style="">
 							<a href="#" onclick="return false;">
                                 <span><span class="vers"><img alt="Comments"
@@ -353,7 +386,7 @@ class MainWP_Post {
 		self::renderFooter( 'BulkManage' );
 	}
 
-	public static function renderTable( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId ) {
+	public static function renderTable( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type ) {
 		MainWP_Cache::initCache( 'Post' );
 
 		//Fetch all!
@@ -410,6 +443,12 @@ class MainWP_Post {
 				'status'     => $status,
 				'maxRecords' => ( ( get_option( 'mainwp_maximumPosts' ) === false ) ? 50 : get_option( 'mainwp_maximumPosts' ) ),
 			);
+
+			// Add support for custom post type
+            if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')) {
+                $post_data['post_type'] = $post_type;
+            }
+
 			if ( isset( $postId ) && ( $postId != '' ) ) {
 				$post_data['postId'] = $postId;
 			} else if ( isset( $userId ) && ( $userId != '' ) ) {
@@ -421,7 +460,7 @@ class MainWP_Post {
 			), $output );
 		}
 
-		MainWP_Cache::addContext( 'Post', array(
+		MainWP_Cache::addContext( 'Post' . $post_type, array(
 			'count'    => $output->posts,
 			'keyword'  => $keyword,
 			'dtsstart' => $dtsstart,
@@ -458,6 +497,24 @@ class MainWP_Post {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$posts = unserialize( base64_decode( $results[1] ) );
 			unset( $results );
+
+            $child_to_dash_array = array();
+
+            if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')) {
+            	$child_post_ids = array();
+	            foreach ($posts as $post) {
+	                $child_post_ids[] = $post['id'];
+	            }
+	            reset($posts);
+
+	            $connections_ids = MainWPCustomPostTypeDB::Instance()->get_dash_post_ids_from_connections($website->id, $child_post_ids);
+	            if ( ! empty( $connections_ids ) ) {
+		            foreach ( $connections_ids as $key ) {
+			            $child_to_dash_array[ $key->child_post_id ] = $key->dash_post_id;
+		            }
+	            }
+	        }
+
 			foreach ( $posts as $post ) {
 				if ( isset( $post['dts'] ) ) {
 					if ( ! stristr( $post['dts'], '-' ) ) {
@@ -502,9 +559,21 @@ class MainWP_Post {
 
 						<div class="row-actions">
 							<?php if ( $post['status'] != 'trash' ) { ?>
-								<span class="edit"><a
-										href="admin.php?page=SiteOpen&websiteid=<?php echo $website->id; ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>"
-										title="Edit this item"><?php _e( 'Edit', 'mainwp' ); ?></a></span>
+								<span class="edit">
+		                        <?php
+		                        if (isset($child_to_dash_array[$post['id']])) {
+		                            ?>
+		                            <img src="<?php echo plugin_dir_url(__FILE__); ?>../../mainwp/images/mainwpicon.png">
+		                            <a href="post.php?post=<?php echo (int) $child_to_dash_array[$post['id']]; ?>&action=edit&select=<?php echo (int) $website->id;?>" title="Edit this item"><?php _e('Edit','mainwp'); ?></a>
+		                            <?php
+		                        } else {
+		                            ?>
+		                            <a href="admin.php?page=SiteOpen&websiteid=<?php echo (int) $website->id; ?>&location=<?php echo base64_encode('post.php?post=' . $post['id'] . '&action=edit'); ?>"
+		                                title="Edit this item"><?php _e('Edit','mainwp'); ?></a>
+		                            <?php
+		                        }
+		                        ?>
+		                        </span>
 								<span class="trash">
                             | <a class="post_submitdelete" title="Move this item to the Trash" href="#"><?php _e( 'Trash', 'mainwp' ); ?></a>
                         </span>
@@ -553,6 +622,13 @@ class MainWP_Post {
 						<?php echo $post['categories']; ?>
 					</td>
 					<td class="tags column-tags"><?php echo( $post['tags'] == '' ? 'No Tags' : $post['tags'] ); ?></td>
+					<?php
+	                if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')):
+	                ?>
+	                    <td><?php echo esc_html($post['post_type']) ?></td>
+	                <?php
+	                endif;
+	                ?>
 					<td class="comments column-comments">
 						<div class="post-com-count-wrapper">
 							<a href="<?php echo admin_url( 'admin.php?page=CommentBulkManage&siteid=' . $website->id . '&postid=' . $post['id'] ); ?>" title="0 pending" class="post-com-count"><span
@@ -629,9 +705,21 @@ class MainWP_Post {
 		}
 
 		$selectedCategories = array();
+		$selectedCategories2 = array();
+
 		if ( isset( $_REQUEST['selected_categories'] ) && ( $_REQUEST['selected_categories'] != '' ) ) {
 			$selectedCategories = explode( ',', urldecode( $_REQUEST['selected_categories'] ) );
 		}
+
+		if (isset($_REQUEST['post_id'])) {
+			$post_id = (int) $_REQUEST['post_id'];
+			if (current_user_can('edit_post', $post_id)) {
+            	$selectedCategories2 = get_post_meta( $post_id, '_categories', true );		
+        	}
+        }
+
+		if ( ! is_array( $selectedCategories ) ) $selectedCategories = array();
+		if ( ! is_array( $selectedCategories2 ) ) $selectedCategories2 = array();
 
 		$allCategories = array( 'Uncategorized' );
 		if ( count( $websites ) > 0 ) {
@@ -646,7 +734,7 @@ class MainWP_Post {
 		if ( count( $allCategories ) > 0 ) {
 			natcasesort( $allCategories );
 			foreach ( $allCategories as $category ) {
-				echo '<li class="popular-category sitecategory"><label class="selectit"><input value="' . $category . '" type="checkbox" name="post_category[]" ' . ( in_array( $category, $selectedCategories ) ? 'checked' : '' ) . '> ' . $category . '</label></li>';
+				echo '<li class="popular-category sitecategory"><label class="selectit"><input value="' . $category . '" type="checkbox" name="post_category[]" ' . ( in_array( $category, $selectedCategories ) || in_array( $category, $selectedCategories2 ) ? 'checked' : '' ) . '> ' . $category . '</label></li>';
 			}
 		}
 		die();

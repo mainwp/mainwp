@@ -984,7 +984,7 @@ public static function renderFooter( $shownPage ) {
 	protected static function serverSelfConnect() {
 		$url = site_url( 'wp-cron.php' );
 		$query_args = array('mainwp_run' => 'test');
-		$url = add_query_arg( $query_args, $url );
+		$url = esc_url_raw(add_query_arg( $query_args, $url ));
 		$args = array(	'blocking'   	=> TRUE,
 		                  'sslverify'		=> apply_filters( 'https_local_ssl_verify', true ),
 		                  'timeout' 		=> 15

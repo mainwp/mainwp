@@ -162,18 +162,18 @@ class MainWP_Setup_Wizard {
 
 	public function get_next_step_link($step = '') {
 		if (!empty($step) && isset($step, $this->steps)) {
-			return remove_query_arg('noregister', add_query_arg( 'step', $step ));
+			return esc_url_raw( remove_query_arg('noregister', add_query_arg( 'step', $step )) );
 		}
 		$keys = array_keys( $this->steps );
-		return remove_query_arg('noregister', add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) + 1 ] ));
+		return esc_url_raw( remove_query_arg('noregister', add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) + 1 ] )) );
 	}
 
 	public function get_back_step_link($step = '') {
 		if (!empty($step) && isset($step, $this->steps)) {
-			return remove_query_arg('noregister', add_query_arg( 'step', $step ));
+			return esc_url_raw( remove_query_arg('noregister', add_query_arg( 'step', $step )) );
 		}
 		$keys = array_keys( $this->steps );
-		return remove_query_arg('noregister', add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) - 1 ] ) );
+		return esc_url_raw( remove_query_arg('noregister', add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) - 1 ] ) ) );
 	}
 
 	public function setup_wizard_header() {
@@ -186,7 +186,7 @@ class MainWP_Setup_Wizard {
 			<title><?php _e( 'MainWP &rsaquo; Setup Wizard', 'mainwp' ); ?></title>
 			<?php wp_print_scripts( 'mainwp-setup' ); ?>
 			<?php do_action( 'admin_print_styles' );  ?>
-			<script type="text/javascript"> var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';</script>
+			<script type="text/javascript"> var ajaxurl = '<?php echo esc_url( admin_url('admin-ajax.php') ); ?>';</script>
 		</head>
 		<body class="mwp-setup wp-core-ui">
 		<h1 id="mwp-logo"><a href="//mainwp.com"><img src="<?php echo MAINWP_PLUGIN_URL; ?>/images/logo-mainwp1.png" alt="MainWP" /></a></h1>
@@ -1016,7 +1016,7 @@ class MainWP_Setup_Wizard {
 									$_selected = 'checked'; }
 								?>
 								<li>
-									<input type="checkbox" id="mainwp_hide_wpmenu_<?php echo $name; ?>" name="mainwp_hide_wpmenu[]" <?php echo $_selected; ?> value="<?php echo $name; ?>" class="mainwp-checkbox2">
+									<input type="checkbox" id="mainwp_hide_wpmenu_<?php echo $name; ?>" name="mainwp_hide_wpmenu[]" <?php echo $_selected; ?> value="<?php esc_attr_e( $name ); ?>" class="mainwp-checkbox2">
 									<label for="mainwp_hide_wpmenu_<?php echo $name; ?>" class="mainwp-label2"><?php echo $item; ?></label>
 								</li>
 							<?php }

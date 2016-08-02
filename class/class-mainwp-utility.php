@@ -1783,7 +1783,7 @@ class MainWP_Utility {
 
                     <div style="display: block; width: 100% ; background: #1c1d1b;">
                       <div style="display: block; width: 95% ; margin-left: auto ; margin-right: auto ; padding: .5em 0 ;">
-                        <div style="padding: .5em 0 ; float: left;"><p style="color: #fff; font-family: Helvetica, Sans; font-size: 12px ;">Â© 2013 MainWP. All Rights Reserved.</p></div>
+                        <div style="padding: .5em 0 ; float: left;"><p style="color: #fff; font-family: Helvetica, Sans; font-size: 12px ;">&copy; <?php echo date("Y"); ?> MainWP. All Rights Reserved.</p></div>
                         <div style="float: right;"><a href="https://mainwp.com"><img src="' . plugins_url( 'images/g-all-top-menu-item.png', dirname( __FILE__ ) ) . '" height="45"/></a></div><div style="clear: both;"></div>
                       </div>
                    </div>

@@ -162,8 +162,10 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 == Changelog ==
 
 = 3.1.6 - 8-2-16 =
-* Fixed: a couple of PHP Warnings
-* Fixed: a couple of issues with escaping HTML attributes
+* Fixed: PHP Warnings
+* Fixed: Issues with escaping HTML attributes
+* Fixed: Copyright footer year (thanks dipakcg) 
+* Fixed: Spelling issues (thanks 	jorrit) 
 
 = 3.1.5 - 6-12-16 =
 * Fixed: Issue with displaying double sites in the Status row of the Right Now widget

@@ -165,7 +165,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: PHP Warnings
 * Fixed: Issues with escaping HTML attributes
 * Fixed: Copyright footer year (thanks dipakcg) 
-* Fixed: Spelling issues (thanks 	jorrit) 
+* Fixed: Spelling issues (thanks jorrit) 
 
 = 3.1.5 - 6-12-16 =
 * Fixed: Issue with displaying double sites in the Status row of the Right Now widget

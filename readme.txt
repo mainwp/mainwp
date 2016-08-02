@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.5.2
-Stable tag: 3.1.5
+Tested up to: 4.5.3
+Stable tag: 3.1.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,10 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.1.6 - 8-2-16 =
+* Fixed: a couple of PHP Warnings
+* Fixed: a couple of issues with escaping HTML attributes
 
 = 3.1.5 - 6-12-16 =
 * Fixed: Issue with displaying double sites in the Status row of the Right Now widget

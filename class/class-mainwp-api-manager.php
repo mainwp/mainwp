@@ -281,8 +281,12 @@ class MainWP_Api_Manager {
 			case '100':
 				$error = __( 'Invalid Request. Please try to deactivate / re-activate the extension on the WP > Plugins page and try to activate again.', 'mainwp' );
 				break;
-			case '101':
-			case '102':
+			case '102':				
+				$error = __( 'Activation error. There is no download permission for this product purchase.', 'mainwp' );
+				break;
+			case '101':		
+				$error = __( 'No matching API license key exists. Activation error.', 'mainwp' );
+				break;					
 			case '103':
 			case '104':
 				$error = __( 'Invalid Instance ID. Please try to deactivate / re-activate the extension on the WP > Plugins page and try to activate again.', 'mainwp' );

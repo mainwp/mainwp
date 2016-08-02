@@ -2439,6 +2439,7 @@ mainwp_managesites_add = function (event) {
             if (url.substr(-1) != '/') {
                 url += '/';
             }
+            url = url.replace(/"/g, '&quot;');
 
             if (response == 'HTTPERROR') {
                 errors.push('HTTP error - website does not exist');
@@ -2475,7 +2476,7 @@ mainwp_managesites_add = function (event) {
                 });
 
                 jQuery.post(ajaxurl, data, function (res_things) {
-                    var site_id = 0
+                    var site_id = 0;
                     if (res_things.error)
                     {
                         response = 'ERROR ' + res_things.error;
@@ -2976,6 +2977,7 @@ mainwp_managesites_import_sites = function () {
         if (url.substr(-1) != '/') {
             url += '/';
         }
+        url = url.replace(/"/g, '&quot;');
 
         if (response == 'HTTPERROR') {
             errors.push(check_result + __('HTTP error - website does not exist'));

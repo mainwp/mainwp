@@ -487,7 +487,7 @@ class MainWP_Extensions {
 
 				//todo update to coding standards
 				$all_groups = MainWP_Extensions_View::getExtensionGroups();
-				$grouped_exts = array();
+				$grouped_exts = array( 'others' => '');				
 				foreach($installing_exts as $product_id => $product_info) {
 					$item_html = '';
 					$error = '';
@@ -506,19 +506,27 @@ class MainWP_Extensions {
 					}
 
 					$group_id = isset($map_extensions_group[$product_id]) ? $map_extensions_group[$product_id] : false;
-					if (!empty($group_id) && isset($all_groups[$group_id]))
-						$grouped_exts[$group_id] .= $item_html;
-					else
+					if (!empty($group_id) && isset($all_groups[$group_id])) {						
+						if (isset($grouped_exts[$group_id]))							
+							$grouped_exts[$group_id] .= $item_html;
+						else
+							$grouped_exts[$group_id] = $item_html;
+					} else {
 						$grouped_exts['others'] .= $item_html;
+					}
 				}
 
 				foreach($not_purchased_exts as $product_id => $ext) {
 					$item_html = '<div class="extension_not_purchased" product-id="' . $product_id . '"><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $ext['title'] . '</strong></span> ' . __( 'Extension not purchased.', 'mainwp' ) . ' <a href="' . $ext['link'] . '" target="_blank">' .  __( 'Get it here!', 'mainwp') . '</a>' . (in_array($product_id, $free_group) ? " <em>" . __( 'It\'s free.', 'mainwp' ) ."</em>" : '') .'</div>';
 					$group_id = isset($map_extensions_group[$product_id]) ? $map_extensions_group[$product_id] : false;
-					if (!empty($group_id) && isset($all_groups[$group_id]))
-						$grouped_exts[$group_id] .= $item_html;
-					else
+					if (!empty($group_id) && isset($all_groups[$group_id])) {
+						if (isset($grouped_exts[$group_id]))							
+							$grouped_exts[$group_id] .= $item_html;
+						else
+							$grouped_exts[$group_id] = $item_html;
+					} else {
 						$grouped_exts['others'] .= $item_html;
+					}
 				}
 
 				//todo update coding standards
@@ -539,7 +547,7 @@ class MainWP_Extensions {
 					}
 				}
 
-				if (isset($grouped_exts['others'])) {
+				if (isset($grouped_exts['others']) && ! empty($grouped_exts['others'])) {
 					$html .= '<h3>Others</h3>';
 					$html .= $grouped_exts['others'];
 				}

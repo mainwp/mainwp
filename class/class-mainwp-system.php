@@ -1414,7 +1414,7 @@ class MainWP_System {
 			if ( !$errors ) {
 				$indexed = MainWP_Utility::getGoogleCount( $website->url );
 
-				if ($indexed == NULL) {
+				if ($indexed === NULL) {
 					$errors = true;
 				}
 			}
@@ -1422,7 +1422,7 @@ class MainWP_System {
 			if ( !$errors ) {
 				$alexia = MainWP_Utility::getAlexaRank( $website->url );
 
-				if ($alexia == NULL) {
+				if ($alexia === NULL) {
 					$errors = true;
 				}
 			}

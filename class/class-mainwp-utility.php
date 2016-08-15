@@ -611,7 +611,7 @@ class MainWP_Utility {
 				@curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
 
 				@curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); //20minutes
-				if ( ! ini_get( 'safe_mode' ) ) {
+				if ( version_compare(phpversion(), '5.3.0') >= 0 || ! ini_get( 'safe_mode' ) ) {
 					@set_time_limit( $timeout );
 				} //20minutes
 				@ini_set( 'max_execution_time', $timeout );
@@ -862,7 +862,7 @@ class MainWP_Utility {
 			@curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
 
 			@curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); //20minutes
-			if ( ! ini_get( 'safe_mode' ) ) {
+			if ( version_compare(phpversion(), '5.3.0') >= 0 || ! ini_get( 'safe_mode' ) ) {
 				@set_time_limit( $timeout );
 			} //20minutes
 			@ini_set( 'max_execution_time', $timeout );
@@ -904,7 +904,7 @@ class MainWP_Utility {
 
 					if ( $handler != null ) {
 						$site = &$handleToWebsite[ self::get_resource_id( $info['handle'] ) ];
-						call_user_func( $handler, $data, $site, $output );
+						call_user_func( $handler, $data, $site, array(&$output) );
 					}
 
 					unset( $handleToWebsite[ self::get_resource_id( $info['handle'] ) ] );
@@ -1212,7 +1212,7 @@ class MainWP_Utility {
 
 		$timeout = 20 * 60 * 60; //20 minutes
 		@curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
-		if ( ! ini_get( 'safe_mode' ) ) {
+		if ( version_compare(phpversion(), '5.3.0') >= 0 || ! ini_get( 'safe_mode' ) ) {
 			@set_time_limit( $timeout );
 		}
 		@ini_set( 'max_execution_time', $timeout );

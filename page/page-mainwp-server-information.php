@@ -856,8 +856,10 @@ public static function renderFooter( $shownPage ) {
 	}
 
 	protected static function getPHPSafeMode() {
-		if ( ! ini_get( 'safe_mode' ) ) {
-			;
+		if ( version_compare(self::getPHPVersion(), '5.3.0') >= 0 ) return true;
+
+		if ( ini_get( 'safe_mode' ) ) {
+			return false;
 		}
 
 		return true;

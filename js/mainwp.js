@@ -6786,9 +6786,9 @@ jQuery(document).on('click', '#mainwp_btn_autoupdate_and_trust', function()
 jQuery(document).on('click', '#remove-mainwp-installation-warning', function()
 {
     jQuery('#mainwp-installation-warning').hide();
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_installation_warning_hide'
-    };
+    });
     jQuery.post(ajaxurl, data, function (res) {    });
     return false;
 });

@@ -248,7 +248,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_installation_warning_hide() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_installation_warning_hide' );
 
 		update_option( 'mainwp_installation_warning_hide_the_notice', 'yes' );
 		die( 'ok' );

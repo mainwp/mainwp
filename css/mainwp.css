@@ -2802,6 +2802,18 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {
     font-style: italic;
 }
 
+body.show-upload-theme #mainwp_wrap-inside .upload-theme + .wp-filter,
+body.show-upload-theme #mainwp_wrap-inside .upload-theme + .wp-filter + .theme-browser {
+	display: none;
+}
+body.show-upload-theme #mainwp_wrap-inside .upload-theme,
+.mainwp_wrap-inside .upload-plugin {
+	display: block;
+}
+#mainwp_wrap-inside .upload-plugin, #mainwp_wrap-inside .upload-theme {
+    padding: 0 !important;
+}
+
 .mainwp-upload-plugin, body.show-upload-plugin .hide-if-upload, body.show-upload-theme .hide-if-upload{
     display: none;
 }

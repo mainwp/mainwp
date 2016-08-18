@@ -1211,7 +1211,7 @@ class MainWP_Manage_Sites {
 				$http_pass = $_POST['mainwp_managesites_edit_http_pass'];
 				$url = $_POST['mainwp_managesites_edit_siteurl_protocol'] . '://' . MainWP_Utility::removeHttpPrefix( $website->url, true);
 
-				MainWP_DB::Instance()->updateWebsite( $website->id, $url, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, '', $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass );
+				MainWP_DB::Instance()->updateWebsite( $website->id, $url, $current_user->ID, htmlentities( $_POST['mainwp_managesites_edit_sitename'] ), $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, '', $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass );
 				do_action( 'mainwp_update_site', $website->id );
 
 				$backup_before_upgrade = isset( $_POST['mainwp_backup_before_upgrade'] ) ? intval( $_POST['mainwp_backup_before_upgrade'] ) : 2;
@@ -1339,7 +1339,7 @@ class MainWP_Manage_Sites {
 		if ( isset( $_POST['websiteid'] ) && MainWP_Utility::ctype_digit( $_POST['websiteid'] ) ) {
 			$website = MainWP_DB::Instance()->getWebsiteById( $_POST['websiteid'] );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
-				MainWP_DB::Instance()->updateNote( $website->id, $_POST['note'] );
+				MainWP_DB::Instance()->updateNote( $website->id, htmlentities( $_POST['note'] ) );
 				die( json_encode( array( 'result' => 'SUCCESS' ) ) );
 			} else {
 				die( json_encode( array( 'error' => 'Not your website' ) ) );

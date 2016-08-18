@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.5.3
-Stable tag: 3.1.6
+Tested up to: 4.6
+Stable tag: 3.1.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,9 +161,17 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 3.1.7 - 8-18-16 =
+* Fixed: Issues with PHP 7 - The MainWP Dashboard is now PHP 7 friendly! :-) 
+* Fixed: Themes Installation (upload) page layout issue
+* Security Fix: Fixed minor XSS vulnerabilities (thanks hat_mast3r via Hackerone)
+* Security Fix: Fixed minor CSRF vulnerability where the admin can hide MainWP (thanks jaypatel via Hackerone)
+
 = 3.1.6 - 8-2-16 =
-* Fixed: a couple of PHP Warnings
-* Fixed: a couple of issues with escaping HTML attributes
+* Fixed: PHP Warnings
+* Fixed: Issues with escaping HTML attributes
+* Fixed: Copyright footer year (thanks dipakcg) 
+* Fixed: Spelling issues (thanks jorrit) 
 
 = 3.1.5 - 6-12-16 =
 * Fixed: Issue with displaying double sites in the Status row of the Right Now widget

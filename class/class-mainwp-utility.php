@@ -745,7 +745,7 @@ class MainWP_Utility {
 				}
 
 				if ( $handler != null ) {
-					call_user_func( $handler, $data, $website, array(&$output) );
+					call_user_func_array( $handler, array($data, $website, &$output) );
 				}
 			}
 
@@ -904,7 +904,7 @@ class MainWP_Utility {
 
 					if ( $handler != null ) {
 						$site = &$handleToWebsite[ self::get_resource_id( $info['handle'] ) ];
-						call_user_func( $handler, $data, $site, array(&$output) );
+						call_user_func_array( $handler, array($data, $site, &$output) );
 					}
 
 					unset( $handleToWebsite[ self::get_resource_id( $info['handle'] ) ] );
@@ -923,7 +923,7 @@ class MainWP_Utility {
 
 				if ( $handler != null ) {
 					$site = &$handleToWebsite[ self::get_resource_id( $ch ) ];
-					call_user_func( $handler, $data, $site, array(&$output) );
+					call_user_func_array( $handler, array($data, $site, &$output) );
 				}
 			}
 		}

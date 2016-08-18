@@ -745,7 +745,7 @@ class MainWP_Utility {
 				}
 
 				if ( $handler != null ) {
-					call_user_func( $handler, $data, $website, $output );
+					call_user_func( $handler, $data, $website, array(&$output) );
 				}
 			}
 
@@ -923,7 +923,7 @@ class MainWP_Utility {
 
 				if ( $handler != null ) {
 					$site = &$handleToWebsite[ self::get_resource_id( $ch ) ];
-					call_user_func( $handler, $data, $site, $output );
+					call_user_func( $handler, $data, $site, array(&$output) );
 				}
 			}
 		}

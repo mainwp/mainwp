@@ -692,7 +692,7 @@ public static function renderHeader( $shownPage ) {
 		$maximumFileDescriptorsAuto     = $_POST['maximumFileDescriptorsAuto'] == 1;
 		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? $_POST['maximumFileDescriptors'] : 150;
 
-		if ( MainWP_DB::Instance()->updateBackupTask( $task->id, $current_user->ID, $name, $schedule, $type, $excludedFolder, $sites, $groups, $_POST['subfolder'], $_POST['filename'], $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['loadFilesBeforeZip'] ) === false ) {
+		if ( MainWP_DB::Instance()->updateBackupTask( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $_POST['subfolder'], $_POST['filename'], $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['loadFilesBeforeZip'] ) === false ) {
 			die( json_encode( array( 'error' => 'An unspecified error occured.' ) ) );
 		} else {
 			die( json_encode( array( 'result' => 'The backup task was updated successfully' ) ) );
@@ -736,7 +736,7 @@ public static function renderHeader( $shownPage ) {
 		$maximumFileDescriptorsAuto     = $_POST['maximumFileDescriptorsAuto'] == 1;
 		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? $_POST['maximumFileDescriptors'] : 150;
 
-		$task = MainWP_DB::Instance()->addBackupTask( $current_user->ID, $name, $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], 0, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['loadFilesBeforeZip'] );
+		$task = MainWP_DB::Instance()->addBackupTask( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], 0, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['loadFilesBeforeZip'] );
 		if ( ! $task ) {
 			die( json_encode( array( 'error' => 'An unspecified error occured.' ) ) );
 		} else {

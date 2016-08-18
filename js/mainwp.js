@@ -1876,10 +1876,12 @@ mainwp_managebackups_update = function (event) {
         jQuery('#mainwp_managebackups_update').attr('disabled', 'true'); //disable button to add..
 
         var loadFilesBeforeZip = jQuery('[name="mainwp_options_loadFilesBeforeZip"]:checked').val();
+        var name = jQuery('#mainwp_managebackups_add_name').val();
+        name = name.replace(/"/g, '&quot;');
         var data = mainwp_secure_data({
             action:'mainwp_updatebackup',
             id:jQuery('#mainwp_managebackups_edit_id').val(),
-            name:jQuery('#mainwp_managebackups_add_name').val(),
+            name:name,
             schedule: (jQuery('#mainwp_managebackups_schedule_daily').hasClass('mainwp_action_down') ? 'daily' : (jQuery('#mainwp_managebackups_schedule_weekly').hasClass('mainwp_action_down') ? 'weekly' : 'monthly')),
             type:(jQuery('#backup_type_full').hasClass('mainwp_action_down') ? 'full' : 'db'),
             exclude:jQuery('#excluded_folders_list').val(),
@@ -1975,9 +1977,11 @@ mainwp_managebackups_add = function (event) {
 
         jQuery('#mainwp_managesites_add').attr('disabled', 'true'); //Disable add button
         var loadFilesBeforeZip = jQuery('[name="mainwp_options_loadFilesBeforeZip"]:checked').val();
+        var name = jQuery('#mainwp_managebackups_add_name').val();
+        name = name.replace(/"/g, '&quot;');
         var data = mainwp_secure_data({
             action:'mainwp_addbackup',
-            name:jQuery('#mainwp_managebackups_add_name').val(),
+            name:name,
             schedule:(jQuery('#mainwp_managebackups_schedule_daily').hasClass('mainwp_action_down') ? 'daily' : (jQuery('#mainwp_managebackups_schedule_weekly').hasClass('mainwp_action_down') ? 'weekly' : 'monthly')),
             type:(jQuery('#backup_type_full').hasClass('mainwp_action_down') ? 'full' : 'db'),
             exclude:(jQuery('#backup_type_full').hasClass('mainwp_action_down') ? jQuery('#excluded_folders_list').val() : ''),
@@ -2421,9 +2425,11 @@ mainwp_managesites_add = function (event) {
         if (url.substr(-1) != '/') {
             url += '/';
         }
+        var name = jQuery('#mainwp_managesites_add_wpname').val();
+        name = name.replace(/"/g, '&quot;');
         var data = mainwp_secure_data({
             action:'mainwp_checkwp',
-            name:jQuery('#mainwp_managesites_add_wpname').val(),
+            name:name,
             url:url,
             admin:jQuery('#mainwp_managesites_add_wpadmin').val(),
             verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val(),
@@ -2461,9 +2467,11 @@ mainwp_managesites_add = function (event) {
                     groupids.push(jQuery(this).val());
                 });
 
+                var name = jQuery('#mainwp_managesites_add_wpname').val();
+                name = name.replace(/"/g, '&quot;');
                 var data = mainwp_secure_data({
                     action:'mainwp_addwp',
-                    managesites_add_wpname:jQuery('#mainwp_managesites_add_wpname').val(),
+                    managesites_add_wpname:name,
                     managesites_add_wpurl:url,
                     managesites_add_wpadmin:jQuery('#mainwp_managesites_add_wpadmin').val(),
                     managesites_add_uniqueId:jQuery('#mainwp_managesites_add_uniqueId').val(),
@@ -5026,7 +5034,7 @@ mainwp_notes_save = function () {
     var data = mainwp_secure_data({
         action:'mainwp_notes_save',
         websiteid:jQuery('#mainwp_notes_websiteid').val(),
-        note:jQuery('#mainwp_notes_note').val()
+        note:newnote
     });
     jQuery('#mainwp_notes_status').html('<i class="fa fa-spinner fa-pulse"></i> '+__('Please wait while we are saving your note'));
     jQuery.post(ajaxurl, data, function (response) {
@@ -5037,7 +5045,7 @@ mainwp_notes_save = function () {
         else if (response.result == 'SUCCESS') {
             jQuery('#mainwp_notes_status').html(__('Note saved.'));
             if (jQuery('#mainwp_notes_' + normalid + '_note')) {
-                jQuery('#mainwp_notes_' + normalid + '_note').html(jQuery('#mainwp_notes_note').val());
+                jQuery('#mainwp_notes_' + normalid + '_note').text(jQuery('#mainwp_notes_note').val());
             }
             if (newnote == '') {
                 jQuery('#mainwp_notes_img_' + normalid).hide();
@@ -5346,14 +5354,14 @@ jQuery(document).ready(function () {
         var data = {
             action:'mainwp_trusted_plugin_notes_save',
             slug:slug,
-            note:jQuery('#mainwp_notes_note').val()
+            note:newnote
         };
         jQuery('#mainwp_notes_status').html('<i class="fa fa-spinner fa-pulse"></i> '+__('Please wait while we are saving your note'));
         jQuery.post(ajaxurl, data, function(pSlug) { return function (response) {
             var rowEl = jQuery('tr[plugin_slug="'+pSlug+'"]');
             if (response.result == 'SUCCESS') {
                 jQuery('#mainwp_notes_status').html('<i class="fa fa-check-circle"></i> '+__('Note Saved'));
-                rowEl.find('.note').html(jQuery('#mainwp_notes_note').val());
+                rowEl.find('.note').text(jQuery('#mainwp_notes_note').val());
 
                 if (newnote == '') {
                     rowEl.find('.mainwp_notes_img').hide();
@@ -5390,14 +5398,14 @@ jQuery(document).ready(function () {
         var data = {
             action:'mainwp_trusted_theme_notes_save',
             slug:slug,
-            note:jQuery('#mainwp_notes_note').val()
+            note:newnote
         };
         jQuery('#mainwp_notes_status').html('<i class="fa fa-spinner fa-pulse"></i> '+__('Please wait while we are saving your note'));
         jQuery.post(ajaxurl, data, function(pSlug) { return function (response) {
             var rowEl = jQuery('tr[theme_slug="'+pSlug+'"]');
             if (response.result == 'SUCCESS') {
                 jQuery('#mainwp_notes_status').html(__('Note saved.'));
-                rowEl.find('.note').html(jQuery('#mainwp_notes_note').val());
+                rowEl.find('.note').text(jQuery('#mainwp_notes_note').val());
 
                 if (newnote == '') {
                     rowEl.find('.mainwp_notes_img').hide();

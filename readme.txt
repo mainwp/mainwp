@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.6
-Stable tag: 3.1.7
+Stable tag: 3.1.7.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.1.7.1 - 8-18-16 =
+* Fixed: Issue where some server setups were unable to use the Manage Plugins feature
 
 = 3.1.7 - 8-18-16 =
 * Fixed: Issues with PHP 7 - The MainWP Dashboard is now PHP 7 friendly! :-) 

@@ -803,7 +803,7 @@ public static function renderHeader( $shownPage ) {
 		MainWP_Cache::addBody( 'Plugins', $newOutput );
 	}
 
-	public static function PluginsSearch_handler( $data, &$website, &$output ) {
+	public static function PluginsSearch_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$plugins = unserialize( base64_decode( $results[1] ) );
 			unset( $results );

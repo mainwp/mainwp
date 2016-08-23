@@ -10,7 +10,9 @@ class MainWP_Backup_Tasks {
 	}
 
 	public static function render() {
-
+           global $mainwpUseExternalPrimaryBackupsMethod;
+           
+           if ( empty( $mainwpUseExternalPrimaryBackupsMethod ) ) {                    
 		$tasks = MainWP_DB::Instance()->getBackupTasksForUser();
 
 		if ( count( $tasks ) == 0 ) {
@@ -85,5 +87,8 @@ class MainWP_Backup_Tasks {
 		</div>
 		<?php
 		}
+           } else if ('backupbuddy' == $mainwpUseExternalPrimaryBackupsMethod) {
+                do_action('mainwp_primarybackups_list_schedules_backups');
+            }
 	}
 }

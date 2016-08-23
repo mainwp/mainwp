@@ -99,7 +99,7 @@ class MainWP_Main {
 			), $page, 'normal', 'core' );
 		}
 		global $mainwpUseExternalPrimaryBackupsMethod;
-		if ( empty( $mainwpUseExternalPrimaryBackupsMethod ) ) {
+		if (empty( $mainwpUseExternalPrimaryBackupsMethod ) || 'backupbuddy' == $mainwpUseExternalPrimaryBackupsMethod ) {
 			add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Backup_Tasks::getName(), array(
 				MainWP_Backup_Tasks::getClassName(),
 				'render',

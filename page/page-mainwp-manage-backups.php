@@ -1278,23 +1278,18 @@ public static function renderHeader( $shownPage ) {
 		if ( ! $website ) {
 			return;
 		}
-                global $mainwpUseExternalPrimaryBackupsMethod;
-		
-                if ( empty( $mainwpUseExternalPrimaryBackupsMethod ) ) {
-                    $website = MainWP_DB::Instance()->getWebsiteById( $website );
 
-                    MainWP_Manage_Sites::showBackups( $website );
-                    ?>
-                    <?php if ( mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) { ?>
-                            <hr/>
-                            <div style="text-align: center;">
-                                    <a href="<?php echo admin_url( 'admin.php?page=managesites&backupid=' . $website->id ); ?>" class="button-primary"><?php _e( 'Backup Now', 'mainwp' ); ?></a>
-                            </div>
-                    <?php } ?>
-                    <?php
-                } else if ('backupbuddy' == $mainwpUseExternalPrimaryBackupsMethod) {
-                    do_action('mainwp_primarybackups_list_backups', $website);
-                }
+		$website = MainWP_DB::Instance()->getWebsiteById( $website );
+
+		MainWP_Manage_Sites::showBackups( $website );
+		?>
+		<?php if ( mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) { ?>
+			<hr/>
+			<div style="text-align: center;">
+				<a href="<?php echo admin_url( 'admin.php?page=managesites&backupid=' . $website->id ); ?>" class="button-primary"><?php _e( 'Backup Now', 'mainwp' ); ?></a>
+			</div>
+		<?php } ?>
+		<?php
 	}
 
 	public static function QSGManageBackups() {

@@ -956,15 +956,15 @@ class MainWP_Manage_Sites {
 				'renderMetabox',
 			), self::$page, 'normal', 'core' );
 		}
-                
-                global $mainwpUseExternalPrimaryBackupsMethod;		
-                if (empty( $mainwpUseExternalPrimaryBackupsMethod ) || 'backupbuddy' == $mainwpUseExternalPrimaryBackupsMethod ) {
-                    add_meta_box( self::$page . '-metaboxes-contentbox-' . $i ++, MainWP_Manage_Backups::getMetaboxName(), array(
-                            MainWP_Manage_Backups::getClassName(),
-                            'renderMetabox',
-                    ), self::$page, 'normal', 'core' );		
-                }
-                
+
+		global $mainwpUseExternalPrimaryBackupsMethod;
+		if ( empty( $mainwpUseExternalPrimaryBackupsMethod ) ) {
+			add_meta_box( self::$page . '-metaboxes-contentbox-' . $i ++, MainWP_Manage_Backups::getMetaboxName(), array(
+				MainWP_Manage_Backups::getClassName(),
+				'renderMetabox',
+			), self::$page, 'normal', 'core' );
+		}
+
 		add_meta_box( self::$page . '-metaboxes-contentbox-' . $i ++, MainWP_Widget_Plugins::getName(), array(
 			MainWP_Widget_Plugins::getClassName(),
 			'render',

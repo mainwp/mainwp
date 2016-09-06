@@ -161,6 +161,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 3.1.8 - 9-6-16 =
+* Fixed: CSS issues with update notices
+* Added: Updates page
+* Added: Missing info for MainWP Buddy and Custom Post Types Extensions
+* Updated: Right Now widget style
+
 = 3.1.7.1 - 8-19-16 =
 * Fixed: Issue where some server setups were unable to use the Manage Plugins feature
 

@@ -276,6 +276,7 @@ class MainWP_System {
 
 		do_action( 'mainwp-activated' );
 
+		MainWP_Updates::init();
 		MainWP_Post::init();
 		MainWP_Settings::init();
 		MainWP_Manage_Backups::init();
@@ -402,7 +403,7 @@ class MainWP_System {
 			?>
 			<div class="mainwp-events-notice mainwp_info-box-red">
 				<span style="float: right;"><a class="mainwp-events-notice-dismiss" notice="multi_site"
-						      style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
+				                               style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
 				<span><i class="fa fa-exclamation-triangle fa-2x mwp-red"></i> <strong><?php esc_html_e( 'Warning! WordPress Multisite detected.', 'mainwp' ); ?></strong></span>
 				<p><?php esc_html_e( 'MainWP Plugin is not designed nor fully tested on WordPress Multi Site installations. Varisous features may not work propely. We highly recommend insallting it on a Single Site installation!', 'mainwp' ); ?></p>
 			</div>
@@ -418,8 +419,8 @@ class MainWP_System {
 				<div class="mainwp-events-notice updated fade">
 					<p>
 						<span style="float: right;"><a class="mainwp-events-notice-dismiss" notice="first_site"
-						      style="text-decoration: none;" href="#"><i
-								class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span><span><strong><?php echo sprintf( __( 'Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected %sScheduled Events%s', 'mainwp' ), '<a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">', '</a>' ) ; ?></strong></span>
+						                               style="text-decoration: none;" href="#"><i
+									class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span><span><strong><?php echo sprintf( __( 'Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected %sScheduled Events%s', 'mainwp' ), '<a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">', '</a>' ) ; ?></strong></span>
 					</p>
 				</div>
 				<?php
@@ -779,7 +780,7 @@ class MainWP_System {
 
 				if ( ( count( $pluginsNewUpdate ) != 0 ) || ( count( $pluginsToUpdate ) != 0 )
 				     || ( count( $notTrustedPluginsNewUpdate ) != 0 ) || ( count( $notTrustedPluginsToUpdate ) != 0 )
-					) {
+				) {
 					$sendMail = true;
 
 					$mail .= '<div><strong>WordPress Plugin Updates</strong></div>';
@@ -810,7 +811,7 @@ class MainWP_System {
 
 				if ( ( count( $themesNewUpdate ) != 0 ) || ( count( $themesToUpdate ) != 0 )
 				     || ( count( $notTrustedThemesNewUpdate ) != 0 ) || ( count( $notTrustedThemesToUpdate ) != 0 )
-					) {
+				) {
 					$sendMail = true;
 
 					$mail .= '<div><strong>WordPress Themes Updates</strong></div>';
@@ -1152,7 +1153,7 @@ class MainWP_System {
 
 			if ( ( count( $coreToUpdate ) == 0 ) && ( count( $pluginsToUpdate ) == 0 ) && ( count( $themesToUpdate ) == 0 ) && ( count( $ignoredCoreToUpdate ) == 0 ) && ( count( $ignoredCoreNewUpdate ) == 0 )
 			     && ( count( $notTrustedPluginsToUpdate ) == 0 ) && ( count( $notTrustedPluginsNewUpdate ) == 0 ) && ( count( $notTrustedThemesToUpdate ) == 0 ) && ( count( $notTrustedThemesNewUpdate ) == 0 )
-			     ) {
+			) {
 				return;
 			}
 
@@ -2363,6 +2364,7 @@ class MainWP_System {
 			//Adding the page to manage your added sites/groups
 			//The first page which will display the post area etc..
 			MainWP_Security_Issues::initMenu();
+			MainWP_Updates::initMenu();
 			MainWP_Manage_Sites::initMenu();
 			MainWP_Post::initMenu();
 			MainWP_Page::initMenu();

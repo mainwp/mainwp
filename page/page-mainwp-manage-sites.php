@@ -996,6 +996,13 @@ class MainWP_Manage_Sites {
 		self::renderFooter( 'ManageSitesDashboard' );
 	}
 
+	public static function renderUpdates( $website ) {
+		MainWP_Utility::set_current_wpid( $website->id );
+		self::renderHeader( 'ManageSitesUpdates' );
+		MainWP_Manage_Sites_View::renderUpdates();
+		self::renderFooter( 'ManageSitesUpdates' );
+	}
+
 	public static function renderBackupSite( $website ) {
 		self::renderHeader( 'ManageSitesBackups' );
 		MainWP_Manage_Sites_View::renderBackupSite( $website );
@@ -1159,6 +1166,15 @@ class MainWP_Manage_Sites {
 			if ( MainWP_Utility::can_edit_website( $dashboardWebsite ) ) {
 				MainWP_Manage_Sites::renderDashboard( $dashboardWebsite );
 
+				return;
+			}
+		}
+
+		if ( isset( $_GET['updateid'] ) && MainWP_Utility::ctype_digit( $_GET['updateid'] ) ) {
+			$websiteid = $_GET['updateid'];
+			$updatesWebsite = MainWP_DB::Instance()->getWebsiteById( $websiteid );
+			if ( MainWP_Utility::can_edit_website( $updatesWebsite ) ) {
+				MainWP_Manage_Sites::renderUpdates( $updatesWebsite );
 				return;
 			}
 		}

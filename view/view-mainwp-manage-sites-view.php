@@ -55,6 +55,10 @@ class MainWP_Manage_Sites_View {
 				$site_id = $_GET['dashboard'];
 				$page = 'dashboard';
 				break;
+                        case 'ManageSitesUpdates':
+				$site_id = $_GET['updateid'];
+				$page = 'updates';
+				break;
 			case 'ManageSitesBulkUpload':
 				$page = 'bulkupload';
 				break;
@@ -92,20 +96,26 @@ class MainWP_Manage_Sites_View {
 
 		$page_links = array(
 			'mainwp' => array(
-		'href' => 'admin.php?page=mainwp_tab',
+                                                        'href' => 'admin.php?page=mainwp_tab',
 							'text' => __( 'MainWP', 'mainwp' ),
 							'alt' => '',
 							'parent' => '',
 							),
 			'site' => array(
-			'href' => 'admin.php?page=managesites',
+                                                        'href' => 'admin.php?page=managesites',
 							'text' => __( 'Sites', 'mainwp' ),
 							'alt' => '',
 							'parent' => 'mainwp',
 							),
 			'dashboard' => array(
-			'href' => '',
+                                                        'href' => '',
 							'text' => $current_site . __( 'Dashboard', 'mainwp' ),
+							'alt' => '',
+							'parent' => 'site',
+							),
+                        'updates' => array(
+                                                        'href' => '',
+							'text' => $current_site . __( 'Updates', 'mainwp' ),
 							'alt' => '',
 							'parent' => 'site',
 							),
@@ -180,6 +190,7 @@ class MainWP_Manage_Sites_View {
 						<option value="">' . __( 'Select Page ','mainwp' ) . '</option>
 						<option value="dashboard">' . __( 'Dashboard ','mainwp' ) . '</option>
 						<option value="id">' . __( 'Edit ','mainwp' ) . '</option>
+                                                <option value="updateid">' . __( 'Updates','mainwp' ) . '</option>
 						<option value="backupid">' . __( 'Backup ','mainwp' ) . '</option>
 						<option value="scanid">' . __( 'Security Scan ','mainwp' ) . '</option>
 					</select>
@@ -198,9 +209,14 @@ class MainWP_Manage_Sites_View {
 
 		$site_id = 0;
 		if ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) {
-			$site_id = $_GET['id'];} else if ( isset( $_GET['backupid'] ) && ! empty( $_GET['backupid'] ) ) {
-			 $site_id = $_GET['backupid'];} else if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) {
-				$site_id = $_GET['dashboard'];} else if ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) {
+			$site_id = $_GET['id'];                        
+                } else if ( isset( $_GET['backupid'] ) && ! empty( $_GET['backupid'] ) ) {
+			 $site_id = $_GET['backupid'];                         
+                } else if ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) {
+			 $site_id = $_GET['updateid'];                         
+                } else if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) {
+				$site_id = $_GET['dashboard'];                                
+                } else if ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) {
 					$site_id = $_GET['scanid'];}
 
 				$managesites_pages = array(
@@ -211,11 +227,12 @@ class MainWP_Manage_Sites_View {
 				);
 
 		$site_pages = array(
-		'ManageSitesDashboard' => array( 'href' => 'admin.php?page=managesites&dashboard=' . $site_id, 'title' => __( 'Dashboard','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ),
-							 'ManageSitesEdit' => array( 'href' => 'admin.php?page=managesites&id=' . $site_id, 'title' => __( 'Edit','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'edit_sites' ) ),
-							'ManageSitesBackups' => array( 'href' => 'admin.php?page=managesites&backupid=' . $site_id, 'title' => __( 'Backups','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'execute_backups' ) ),
-							'SecurityScan' => array( 'href' => 'admin.php?page=managesites&scanid=' . $site_id, 'title' => __( 'Security Scan','mainwp' ), 'access' => true ),
-						);
+                                'ManageSitesDashboard' => array( 'href' => 'admin.php?page=managesites&dashboard=' . $site_id, 'title' => __( 'Dashboard','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ),
+                                'ManageSitesEdit' => array( 'href' => 'admin.php?page=managesites&id=' . $site_id, 'title' => __( 'Edit','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'edit_sites' ) ),
+                                'ManageSitesUpdates' => array( 'href' => 'admin.php?page=managesites&updateid=' . $site_id, 'title' => __( 'Updates','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ),
+                                'ManageSitesBackups' => array( 'href' => 'admin.php?page=managesites&backupid=' . $site_id, 'title' => __( 'Backups','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'execute_backups' ) ),
+                                'SecurityScan' => array( 'href' => 'admin.php?page=managesites&scanid=' . $site_id, 'title' => __( 'Security Scan','mainwp' ), 'access' => true ),
+                        );
 		global $mainwpUseExternalPrimaryBackupsMethod;
 		if ( ! empty( $mainwpUseExternalPrimaryBackupsMethod ) ) {
 			unset( $site_pages['ManageSitesBackups'] );
@@ -1056,6 +1073,23 @@ class MainWP_Manage_Sites_View {
             </div>
     <?php
 	}
+        
+        public static function renderUpdates() { 
+            $website = MainWP_Utility::get_current_wpid();
+            if (  $website ) {
+                    $website = MainWP_DB::Instance()->getWebsiteById( $website );
+                    MainWP_Main::renderDashboardBody( array($website), null, null, true);
+            }   
+            ?>
+            <div class="postbox" id="mainwp_page_updates_tab-contextbox-1">
+                <h3 class="mainwp_box_title">
+                        <span><i class="fa fa-refresh" aria-hidden="true"></i> <?php _e( 'Updates', 'mainwp' ); ?></span></h3>
+                            <div class="inside">                
+                            <div id="rightnow_list" xmlns="http://www.w3.org/1999/html"><?php MainWP_Right_Now::renderSites($updates = true); ?></div>
+                    </div>
+            </div>
+            <?php
+        }
 
 	public static function renderBackupSite( &$website ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {

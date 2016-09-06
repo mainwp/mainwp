@@ -326,6 +326,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	function column_url( $item ) {
 		$actions = array(
 			'open' => sprintf( '<a href="admin.php?page=SiteOpen&websiteid=%1$s" class="open_wpadmin">' . __( 'Open WP Admin', 'mainwp' ) . '</a> (<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=%1$s" class="open_newwindow_wpadmin" target="_blank">' . __( 'New Window', 'mainwp' ) . '</a>)', $item['id'] ),
+			'updates' => sprintf( '<a href="admin.php?page=managesites&updateid=%1$s" class="open_updates">' . __( 'Updates', 'mainwp' ) . '</a>', $item['id'] ),
 			'test' => '<a href="#" class="mainwp_site_testconnection" class="test_connection">' . __( 'Test Connection', 'mainwp' ) . '</a> <span style="display: none;"><i class="fa fa-spinner fa-pulse"></i>' . __( 'Testing Connection', 'mainwp' ) . '</span>',
 			'scan' => '<a href="admin.php?page=managesites&scanid=' . $item['id'] . '">' . __( 'Security Scan', 'mainwp' ) . '</a>',
 		);

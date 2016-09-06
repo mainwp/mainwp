@@ -1016,6 +1016,8 @@ rightnow_themes_detail_show = function (slug) {
     return false;
 };
 rightnow_plugins_ignore_detail = function (slug, name, id) {
+    if (!confirm(__('Are you sure you want to ignore this plugin updates?  The updates will no longer be visible in your MainWP Dashboard.')))
+        return false;
     return rightnow_ignore_plugintheme_by_site('plugin', slug, name, id);
 };
 rightnow_plugins_unignore_detail = function (slug, id) {
@@ -1025,6 +1027,8 @@ rightnow_plugins_unignore_detail_all = function () {
     return rightnow_unignore_plugintheme_by_site_all('plugin');
 };
 rightnow_themes_ignore_detail = function (slug, name, id) {
+    if (!confirm(__('Are you sure you want to ignore this theme updates?  The updates will no longer be visible in your MainWP Dashboard.')))
+        return false;
     return rightnow_ignore_plugintheme_by_site('theme', slug, name, id);
 };
 rightnow_themes_unignore_detail = function (slug, id) {
@@ -1034,6 +1038,8 @@ rightnow_themes_unignore_detail_all = function () {
     return rightnow_unignore_plugintheme_by_site_all('theme');
 };
 rightnow_plugins_ignore_all = function (slug, name) {
+    if (!confirm(__('Are you sure you want to ignore this plugin updates?  The updates will no longer be visible in your MainWP Dashboard.')))
+        return false;
     rightnow_plugins_detail_show(slug);
     var data = {
         action:'mainwp_ignorepluginsthemes',
@@ -1086,6 +1092,8 @@ rightnow_plugins_unignore_globally = function (slug) {
     return false;
 };
 rightnow_themes_ignore_all = function (slug, name) {
+    if (!confirm(__('Are you sure you want to ignore this theme updates?  The updates will no longer be visible in your MainWP Dashboard.')))
+        return false;
     rightnow_themes_detail_show(slug);
     var data = {
         action:'mainwp_ignorepluginsthemes',
@@ -7166,12 +7174,12 @@ jQuery(document).ready(function($) {
         var shortcuts = jQuery('#mainwp-welcome-bar-shotcuts');
         if (status == 'show') {
             $(this).attr('status', 'hide');
-            $(this).text(__('Show Shortcuts'));
+            $(this).html('<i class="fa fa-eye-slash" aria-hidden="true"></i> '+__('Show Quick Start Shortcuts'));
             shortcuts.hide();
             status = 'hide';
         } else {
             $(this).attr('status', 'show');
-            $(this).text(__('Hide Shortcuts'));
+            $(this).html('<i class="fa fa-eye-slash" aria-hidden="true"></i> '+__('Hide Quick Start Shortcuts'));
             shortcuts.show();
             mainwp_setCookie('mainwp_showhide_welcome_shortcuts', 'show');
             status = 'show';

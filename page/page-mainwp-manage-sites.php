@@ -995,10 +995,10 @@ class MainWP_Manage_Sites {
 		MainWP_Manage_Sites_View::renderDashboard( $website, self::$page );
 		self::renderFooter( 'ManageSitesDashboard' );
 	}
-        
-        public static function renderUpdates( $website ) {
-                MainWP_Utility::set_current_wpid( $website->id );
-                self::renderHeader( 'ManageSitesUpdates' );
+
+	public static function renderUpdates( $website ) {
+		MainWP_Utility::set_current_wpid( $website->id );
+		self::renderHeader( 'ManageSitesUpdates' );
 		MainWP_Manage_Sites_View::renderUpdates();
 		self::renderFooter( 'ManageSitesUpdates' );
 	}
@@ -1170,15 +1170,15 @@ class MainWP_Manage_Sites {
 			}
 		}
 
-                if ( isset( $_GET['updateid'] ) && MainWP_Utility::ctype_digit( $_GET['updateid'] ) ) {
-			$websiteid = $_GET['updateid'];                        
+		if ( isset( $_GET['updateid'] ) && MainWP_Utility::ctype_digit( $_GET['updateid'] ) ) {
+			$websiteid = $_GET['updateid'];
 			$updatesWebsite = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $updatesWebsite ) ) {
-                            MainWP_Manage_Sites::renderUpdates( $updatesWebsite );
-                            return;
+				MainWP_Manage_Sites::renderUpdates( $updatesWebsite );
+				return;
 			}
 		}
-                
+
 		if ( isset( $_GET['id'] ) && MainWP_Utility::ctype_digit( $_GET['id'] ) ) {
 			$websiteid = $_GET['id'];
 
@@ -1187,7 +1187,7 @@ class MainWP_Manage_Sites {
 				$website = null;
 			}
 		}
-                
+
 		if ( $website == null ) {
 			self::_renderAllSites();
 		} else {

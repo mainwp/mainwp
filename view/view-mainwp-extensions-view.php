@@ -815,7 +815,7 @@ class MainWP_Extensions_View {
 					'catalog_id' => '12458',
 					'group' => array('admin')
 				),
-                        'mainwp-custom-post-types' =>
+			'mainwp-custom-post-types' =>
 				array(
 					'slug' => 'mainwp-custom-post-types',
 					'title' => 'MainWP Custom Post Type',
@@ -826,7 +826,7 @@ class MainWP_Extensions_View {
 					'catalog_id' => '1002564',
 					'group' => array('content')
 				),
-                        'mainwp-buddy-extension' =>
+			'mainwp-buddy-extension' =>
 				array(
 					'slug' => 'mainwp-buddy-extension',
 					'title' => 'MainWP Buddy Extension',

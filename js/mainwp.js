@@ -1017,7 +1017,7 @@ rightnow_themes_detail_show = function (slug) {
 };
 rightnow_plugins_ignore_detail = function (slug, name, id) {
     if (!confirm(__('Are you sure you want to ignore this plugin updates?  The updates will no longer be visible in your MainWP Dashboard.')))
-       return false;
+        return false;
     return rightnow_ignore_plugintheme_by_site('plugin', slug, name, id);
 };
 rightnow_plugins_unignore_detail = function (slug, id) {
@@ -1028,7 +1028,7 @@ rightnow_plugins_unignore_detail_all = function () {
 };
 rightnow_themes_ignore_detail = function (slug, name, id) {
     if (!confirm(__('Are you sure you want to ignore this theme updates?  The updates will no longer be visible in your MainWP Dashboard.')))
-       return false; 
+        return false;
     return rightnow_ignore_plugintheme_by_site('theme', slug, name, id);
 };
 rightnow_themes_unignore_detail = function (slug, id) {
@@ -1039,7 +1039,7 @@ rightnow_themes_unignore_detail_all = function () {
 };
 rightnow_plugins_ignore_all = function (slug, name) {
     if (!confirm(__('Are you sure you want to ignore this plugin updates?  The updates will no longer be visible in your MainWP Dashboard.')))
-       return false; 
+        return false;
     rightnow_plugins_detail_show(slug);
     var data = {
         action:'mainwp_ignorepluginsthemes',
@@ -1093,7 +1093,7 @@ rightnow_plugins_unignore_globally = function (slug) {
 };
 rightnow_themes_ignore_all = function (slug, name) {
     if (!confirm(__('Are you sure you want to ignore this theme updates?  The updates will no longer be visible in your MainWP Dashboard.')))
-       return false; 
+        return false;
     rightnow_themes_detail_show(slug);
     var data = {
         action:'mainwp_ignorepluginsthemes',

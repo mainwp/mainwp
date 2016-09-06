@@ -815,6 +815,28 @@ class MainWP_Extensions_View {
 					'catalog_id' => '12458',
 					'group' => array('admin')
 				),
+                        'mainwp-custom-post-types' =>
+				array(
+					'slug' => 'mainwp-custom-post-types',
+					'title' => 'MainWP Custom Post Type',
+					'desc' => 'Custom Post Types Extension is an extension for the MainWP Plugin that allows you to manage almost any custom post type on your child sites and that includes Publishing, Editing, and Deleting custom post type content.',
+					'link' => 'https://mainwp.com/extension/custom-post-types/',
+					'img' => plugins_url( 'images/extensions/custom-post.png', dirname( __FILE__ ) ),
+					'product_id' => 'MainWP Custom Post Type',
+					'catalog_id' => '1002564',
+					'group' => array('content')
+				),
+                        'mainwp-buddy-extension' =>
+				array(
+					'slug' => 'mainwp-buddy-extension',
+					'title' => 'MainWP Buddy Extension',
+					'desc' => 'With the MainWP Buddy Extension, you can control the BackupBuddy Plugin settings for all your child sites directly from your MainWP Dashboard. This includes giving you the ability to create your child site backups and even set Backup schedules directly from your MainWP Dashboard.',
+					'link' => 'https://mainwp.com/extension/mainwpbuddy/',
+					'img' => plugins_url( 'images/extensions/mainwp-buddy.png', dirname( __FILE__ ) ),
+					'product_id' => 'MainWP Buddy Extension',
+					'catalog_id' => '1006044',
+					'group' => array('backup')
+				),
 		);
 	}
 }

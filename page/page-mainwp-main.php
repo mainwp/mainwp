@@ -178,7 +178,7 @@ class MainWP_Main {
 		<?php
 	}
 
-	public static function renderDashboardBody( $websites, $pDashboard, $pScreenLayout ) {
+	public static function renderDashboardBody( $websites, $pDashboard, $pScreenLayout , $hideShortcuts = false) {
 		$opts           = get_option( 'mainwp_opts_showhide_sections', false );
 		$hide_shortcuts = ( is_array( $opts ) && isset( $opts['welcome_shortcuts'] ) && $opts['welcome_shortcuts'] == 'hide' ) ? true : false;
 		?>
@@ -188,16 +188,11 @@ class MainWP_Main {
 			<?php wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false ); ?>
 			<input type="hidden" name="action" value="save_howto_testPages_general"/>
 
-			<div id="mainwp-welocme-bar" class="welcome-panel" style="padding-left: 2em;">
-				<table id="mainwp-refresh-bar" width="100%">
-					<tbody>
-					<tr>
-						<td>
-							<div id="mainwp-welocme-bar-top">
-                    <span style="float:right;">
-                    <a style="font-size: 18px;" class="button-hero button mainwp-upgrade-button" id="dashboard_refresh" title="<?php echo MainWP_Right_Now::renderLastUpdate(); ?>"><i class="fa fa-refresh"></i> <?php _e( 'Sync Data with Child Sites', 'mainwp' ); ?></a>
-                    <a style="font-size: 18px;" class="button-hero button-primary button" target="_blank" href="https://mainwp.com/extensions/"><i class="fa fa-cart-plus"></i> <?php _e( 'Get New Extensions', 'mainwp' ); ?></a>
-                    </span>
+			<!-- Welcome Widget -->
+
+			<div id="mainwp-welocme-bar" class="welcome-panel">
+				<div id="mainwp-welocme-bar-top" class="mainwp-padding-10">
+					<div class="mainwp-cols-2 mainwp-left mainwp-padding-top-10">
 								<?php
 								$current_wp_id = MainWP_Utility::get_current_wpid();
 								$website       = null;
@@ -215,58 +210,69 @@ class MainWP_Main {
 								}
 								if ($website !== null) {
 									if ( ( time() - $website->dtsSync ) > ( 60 * 60 * 24 ) ) {
-										?><h3>
+								?><h2>
 										<i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?>
-										</h3>
+								</h2>
 										<p class="about-description"><?php _e( 'Click the Sync Data button to get the latest data from child sites.', 'mainwp' ); ?></p>
 										<?php
 									} else {
 										?>
-										<h3><?php echo sprintf( __( 'Welcome to %s Dashboard!', 'mainwp' ), stripslashes( $website->name ) ); ?></h3>
+								<h2><?php echo sprintf( __( 'Welcome to %s Dashboard!', 'mainwp' ), stripslashes( $website->name ) ); ?></h2>
 										<p class="about-description"><?php echo sprintf( __( 'This information is only for %s%s', 'mainwp' ), $imgfavi, MainWP_Utility::getNiceURL( $website->url, true ) ); ?></p>
 										<?php
 									}
 								} else {
 									$sync_status = MainWP_DB::Instance()->getLastSyncStatus();
 									if ( $sync_status === 'not_synced' ) {
-										?><h3>
+								?><h2>
 										<i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?>
-										</h3>
+								</h2>
 										<p class="about-description"><?php _e( 'Click the Sync Data button to get the latest data from child sites.', 'mainwp' ); ?></p>
 										<?php
 									} else if ( $sync_status === 'all_synced' ) {
 										?>
-										<h3><?php echo __( 'All sites have been synced within the last 24 hours', 'mainwp' ); ?>!</h3>
-										<p class="about-description"><?php echo __( 'Manage your WordPress sites with ease.', 'mainwp' ); ?></p>
+								<h2><?php echo __( 'All sites have been synced within the last 24 hours', 'mainwp' ); ?>!</h2>
+								<p class="about-description"><?php echo __( 'Management is more than just updates!', 'mainwp' ); ?></p>
 										<?php
 									} else {
 										?>
-										<h3><i class="fa fa-flag"></i> <?php echo __( "Some child sites didn't sync correctly!", 'mainwp' ); ?></h3>
+								<h2><i class="fa fa-flag"></i> <?php echo __( "Some child sites didn't sync correctly!", 'mainwp' ); ?></h2>
 										<p class="about-description"><?php echo __( 'Check the Sync Status widget to review sites that have not been synced.', 'mainwp' ); ?></p>
 										<?php
 									}
 								}
 								?>
 							</div>
-							<br/>
-							<span style="float: right; margin-right: 1em;"><a id="mainwp-link-showhide-welcome-shortcuts" status="<?php echo( $hide_shortcuts ? 'hide' : 'show' ); ?>" href="#"><?php echo( $hide_shortcuts ? __( 'Show Shortcuts', 'mainwp' ) : __( 'Hide Shortcuts', 'mainwp' ) ); ?></a></span>
-
-							<div id="mainwp-welcome-bar-shotcuts" style="clear: both;<?php echo( $hide_shortcuts ? 'display: none;' : '' ); ?>">
+					<div class="mainwp-cols-2 mainwp-right mainwp-t-align-right">
+						<a class="button-hero button mainwp-upgrade-button mainwp-large" id="dashboard_refresh" title="<?php echo MainWP_Right_Now::renderLastUpdate(); ?>"><i class="fa fa-refresh"></i> <?php _e( 'Sync Data with Child Sites', 'mainwp' ); ?></a>
+		                <a class="button-hero button-primary button mainwp-large" target="_blank" href="https://mainwp.com/mainwp-extensions"><i class="fa fa-cart-plus"></i> <?php _e( 'Get New Extensions', 'mainwp' ); ?></a>
+					</div>
+					<div class="mainwp-clear"></div>
+				</div>
+                    <?php if (!$hideShortcuts) { ?>
+				<div class="mainwp-postbox-actions-bottom">
+					<div>
+						<a id="mainwp-link-showhide-welcome-shortcuts" status="<?php echo( $hide_shortcuts ? 'hide' : 'show' ); ?>" href="#">
+							<i class="fa fa-eye-slash" aria-hidden="true"></i> <?php echo( $hide_shortcuts ? __( 'Show Quick Start Shortcuts', 'mainwp' ) : __( 'Hide Quick Start Shortcuts', 'mainwp' ) ); ?>
+						</a>
+					</div>
+					<div id="mainwp-welcome-bar-shotcuts" style="<?php echo( $hide_shortcuts ? 'display: none;' : '' ); ?>">
+						<div class="welcome-panel-column-container">
 								<div class="welcome-panel-column">
 									<h4><?php _e( 'Get Started', 'mainwp' ); ?></h4>
 									<ul>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=managesites&do=new"><i class="fa fa-globe"></i> <?php _e( 'Add New Site', 'mainwp' ); ?>
-											</a></li>
+										<a href="<?php echo get_admin_url(); ?>admin.php?page=managesites&do=new"><i class="fa fa-globe"></i> <?php _e( 'Add New Site', 'mainwp' ); ?></a>
+									</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=ManageGroups"><i class="fa fa-globe"></i> <?php _e( 'Create Child Site Groups', 'mainwp' ); ?>
-											</a></li>
+										<a href="<?php echo get_admin_url(); ?>admin.php?page=ManageGroups"><i class="fa fa-globe"></i> <?php _e( 'Create Child Site Groups', 'mainwp' ); ?></a>
+									</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=ManageBackupsAddNew"><i class="fa fa-hdd-o"></i> <?php _e( 'Schedule Backups', 'mainwp' ); ?>
-											</a></li>
+										<a href="<?php echo get_admin_url(); ?>admin.php?page=ManageBackupsAddNew"><i class="fa fa-hdd-o"></i> <?php _e( 'Schedule Backups', 'mainwp' ); ?></a>
+									</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=Settings"><i class="fa fa-cogs"></i> <?php _e( 'Check MainWP Settings', 'mainwp' ); ?>
-											</a></li>
+										<a href="<?php echo get_admin_url(); ?>admin.php?page=Settings"><i class="fa fa-cogs"></i> <?php _e( 'Check MainWP Settings', 'mainwp' ); ?></a>
+									</li>
 
 									</ul>
 								</div>
@@ -274,47 +280,46 @@ class MainWP_Main {
 									<h4><?php _e( 'Next Steps', 'mainwp' ); ?></h4>
 									<ul>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=PostBulkAdd"><i class="fa fa-file-text"></i> <?php _e( 'Add Post to Child Site(s)', 'mainwp' ); ?>
-											</a></li>
+										<a href="<?php echo get_admin_url(); ?>admin.php?page=PostBulkAdd"><i class="fa fa-file-text"></i> <?php _e( 'Add Post to Child Site(s)', 'mainwp' ); ?></a>
+									</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=PageBulkAdd"><i class="fa fa-file"></i> <?php _e( 'Add Page to Child Site(s)', 'mainwp' ); ?>
-											</a></li>
+										<a href="<?php echo get_admin_url(); ?>admin.php?page=PageBulkAdd"><i class="fa fa-file"></i> <?php _e( 'Add Page to Child Site(s)', 'mainwp' ); ?></a>
+									</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=PluginsInstall"><i class="fa fa-plug"></i> <?php _e( 'Add Plugin to Child Site(s)', 'mainwp' ); ?>
-											</a></li>
+										<a href="<?php echo get_admin_url(); ?>admin.php?page=PluginsInstall"><i class="fa fa-plug"></i> <?php _e( 'Add Plugin to Child Site(s)', 'mainwp' ); ?></a>
+									</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=ThemesInstall"><i class="fa fa-paint-brush"></i> <?php _e( 'Add Theme to Child Site(s)', 'mainwp' ); ?>
-											</a></li>
+										<a href="<?php echo get_admin_url(); ?>admin.php?page=ThemesInstall"><i class="fa fa-paint-brush"></i> <?php _e( 'Add Theme to Child Site(s)', 'mainwp' ); ?></a>
+									</li>
 									</ul>
 								</div>
 								<div class="welcome-panel-column welcome-panel-last">
 									<h4><?php _e( 'More Actions', 'mainwp' ); ?></h4>
 									<ul>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=managesites&do=test"><i class="fa fa-globe"></i> <?php _e( 'Test Connection', 'mainwp' ); ?>
-											</a></li>
+										<a href="<?php echo get_admin_url(); ?>admin.php?page=managesites&do=test"><i class="fa fa-globe"></i> <?php _e( 'Test Connection', 'mainwp' ); ?></a>
+									</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=Extensions"><i class="fa fa-plug"></i> <?php _e( 'Manage Extensions', 'mainwp' ); ?>
-											</a></li>
+										<a href="<?php echo get_admin_url(); ?>admin.php?page=Extensions"><i class="fa fa-plug"></i> <?php _e( 'Manage Extensions', 'mainwp' ); ?></a>
+									</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=ServerInformation"><i class="fa fa-server"></i> <?php _e( 'Check MainWP Requirements', 'mainwp' ); ?>
-											</a></li>
+										<a href="<?php echo get_admin_url(); ?>admin.php?page=ServerInformation"><i class="fa fa-server"></i> <?php _e( 'Check MainWP Requirements', 'mainwp' ); ?></a>
+									</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=DashboardOptions"><i class="fa fa-cogs"></i> <?php _e( 'Set Your Preferences', 'mainwp' ); ?>
-											</a></li>
+										<a href="<?php echo get_admin_url(); ?>admin.php?page=DashboardOptions"><i class="fa fa-cogs"></i> <?php _e( 'Set Your Preferences', 'mainwp' ); ?></a>
+									</li>
 									</ul>
 								</div>
+							<div class="mainwp-clear"></div>
 							</div>
-							<div id="dashboard_refresh_statusextra" style="display: none">
-								<i class="fa fa-spinner fa-pulse"></i></div>
 			</div>
-			<div id="mainwp_dashboard_refresh_status"></div>
-			</td></tr></tbody>
-			</table>
 			</div>
-			<div id="mainwp_main_errors" class="mainwp_error"></div>
+                    <?php } ?>
+			</div>
 		</form>
-
+                
+                <?php if ($hideShortcuts) return; ?>
+                
 		<div id="mainwp-dashboard-info-box">
 			<?php if ( empty( $current_wp_id ) && MainWP_Twitter::enabledTwitterMessages() ) {
 				$filter = array(
@@ -331,10 +336,10 @@ class MainWP_Main {
 								$sendText = MainWP_Twitter::getTwitToSend($what, $timeid);
 								if (!empty($sendText)) {
 									?>
-									<div class="mainwp-tips mainwp_info-box-blue twitter">
+									<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter">
 									<span class="mainwp-tip" twit-what="<?php echo $what; ?>"
 									      twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton($sendText); ?>
-										<span><a href="#" class="mainwp-dismiss-twit"><i
+										<span><a href="#" class="mainwp-dismiss-twit mainwp-right"><i
 													class="fa fa-times-circle"></i> <?php _e('Dismiss', 'mainwp'); ?>
 											</a></span></div>
 									<?php

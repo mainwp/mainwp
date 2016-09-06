@@ -275,7 +275,8 @@ class MainWP_System {
 		$this->posthandler = new MainWP_Post_Handler();
 
 		do_action( 'mainwp-activated' );
-
+                
+                MainWP_Updates::init();                
 		MainWP_Post::init();
 		MainWP_Settings::init();
 		MainWP_Manage_Backups::init();
@@ -2363,7 +2364,8 @@ class MainWP_System {
 			//Adding the page to manage your added sites/groups
 			//The first page which will display the post area etc..
 			MainWP_Security_Issues::initMenu();
-			MainWP_Manage_Sites::initMenu();
+                        MainWP_Updates::initMenu();
+			MainWP_Manage_Sites::initMenu();                        
 			MainWP_Post::initMenu();
 			MainWP_Page::initMenu();
 			MainWP_Themes::initMenu();

@@ -163,6 +163,8 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 = 3.1.8.1 - 9-6-16 =
 * Fixed: Grammar issues
+* Fixed: Cosmetic issues
+* Removed: Unused Code
 
 = 3.1.8 - 9-6-16 =
 * Fixed: CSS issues with update notices

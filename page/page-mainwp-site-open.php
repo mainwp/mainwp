@@ -51,7 +51,7 @@ class MainWP_Site_Open {
 				} else {
 					?>
 					<div style="padding-top: 10px; padding-bottom: 10px">
-						<a href="<?php echo admin_url( 'admin.php?page=managesites' ); ?>" class="mainwp-backlink">← <?php _e( 'Back to Sites', 'mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;
+						<a href="<?php echo admin_url( 'admin.php?page=managesites' ); ?>" class="mainwp-backlink">← <?php _e( 'Back to sites', 'mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;
 						<input type="button" class="button cont" id="mainwp_notes_show" value="<?php _e( 'Notes', 'mainwp' ); ?>"/>
 					</div>
 					<iframe width="100%" height="1000"
@@ -68,7 +68,7 @@ class MainWP_Site_Open {
 						</div>
 						<form>
 							<div style="float: right" id="mainwp_notes_status"></div>
-							<input type="button" class="button cont" id="mainwp_notes_save" value="Save Note"/>
+							<input type="button" class="button cont" id="mainwp_notes_save" value="Save note"/>
 							<input type="button" class="button cont" id="mainwp_notes_cancel" value="Close"/>
 							<input type="hidden" id="mainwp_notes_websiteid"
 								value="<?php echo $website->id; ?>"/>

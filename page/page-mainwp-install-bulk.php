@@ -38,12 +38,12 @@ class MainWP_Install_Bulk {
 		?>
 		<div class="postbox">
 			<h3 class="mainwp_box_title">
-				<i class="fa fa-upload"></i> <?php echo ($type == 'plugin') ? __( 'Step 1: Upload Plugins', 'mainwp' ) : __( 'Step 1: Upload Themes', 'mainwp' ); ?></h3>
+				<i class="fa fa-upload"></i> <?php echo ($type == 'plugin') ? __( 'Step 1: Upload plugins', 'mainwp' ) : __( 'Step 1: Upload themes', 'mainwp' ); ?></h3>
 
 			<div class="inside">
 				<?php if ( $type == 'plugin' ) { ?>
 					<div class="mainwp_info-box-red" id="mainwp-ext-notice" style="margin-top: 1em;">
-						<span><?php _e( '<strong>Do Not upload extensions here</strong>, they do not go on the child sites, upload and activate them via your dashboard sites', 'mainwp' ) ?>
+						<span><?php _e( '<strong>Do not upload extensions here</strong>, they do not go on the child sites, upload and activate them via your dashboard sites', 'mainwp' ) ?>
 							<a href="<?php echo get_admin_url(); ?>plugin-install.php" style="text-decoration: none;"> <?php _e( 'plugin screen.', 'mainwp' ); ?></a></span>
 					</div>
 				<?php } ?>
@@ -276,11 +276,11 @@ class MainWP_Install_Bulk {
 			} else {
 				$output->errors[ $website->id ] = array(
 					$website->name,
-					__( 'Undefined error - please reinstall the MainWP Child plugin on the client', 'mainwp' ),
+					__( 'Undefined error! Please reinstall the MainWP Child plugin on the child site', 'mainwp' ),
 				);
 			}
 		} else {
-			$output->errors[ $website->id ] = array( $website->name, 'Error Installing' );
+			$output->errors[ $website->id ] = array( $website->name, 'Error while installing' );
 		}
 	}
 }
@@ -446,13 +446,13 @@ class qq2FileUploader {
 		//        }
 
 		if ( ! $this->file ) {
-			return array( 'error' => 'No files were uploaded.' );
+			return array( 'error' => 'No files were uploaded!' );
 		}
 
 		$size = $this->file->getSize();
 
 		if ( $size == 0 ) {
-			return array( 'error' => 'File is empty' );
+			return array( 'error' => 'File is empty!' );
 		}
 
 		$postSize   = $this->toBytes( ini_get( 'post_max_size' ) );
@@ -484,8 +484,8 @@ class qq2FileUploader {
 				return array( 'success' => true );
 			} else {
 				return array(
-					'error' => __( 'Could not save uploaded file.', 'mainwp' ) .
-					           _( 'The upload was cancelled, or server error encountered', 'mainwp' ),
+					'error' => __( 'Could not save uploaded file!', 'mainwp' ) .
+					           _( 'The upload was cancelled, or server error encountered.', 'mainwp' ),
 				);
 			}
 		} catch ( Exception $e ) {

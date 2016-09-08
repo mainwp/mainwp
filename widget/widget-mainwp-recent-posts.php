@@ -10,7 +10,7 @@ class MainWP_Recent_Posts {
 	}
 
 	public static function getName() {
-		return '<i class="fa fa-file-text"></i> ' . __( 'Recent Posts', 'mainwp' );
+		return '<i class="fa fa-file-text"></i> ' . __( 'Recent posts', 'mainwp' );
 	}
 
 	public static function render() {
@@ -60,7 +60,7 @@ class MainWP_Recent_Posts {
 
 		?>
 		<div class="clear">
-			<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd&select=' . ( $current_wpid ? $current_wpid : 'all' ) ); ?>" class="button-primary" style="float: right"><?php _e( 'Add New', 'mainwp' ); ?></a>
+			<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd&select=' . ( $current_wpid ? $current_wpid : 'all' ) ); ?>" class="button-primary" style="float: right"><?php _e( 'Add new', 'mainwp' ); ?></a>
 			<a class="mainwp_action left mainwp_action_down recent_posts_published_lnk" href="#"><?php _e( 'Published', 'mainwp' ); ?> (<?php echo count( $recent_posts_published ); ?>)</a><a class="mainwp_action mid recent_posts_draft_lnk" href="#"><?php _e( 'Draft', 'mainwp' ); ?> (<?php echo count( $recent_posts_draft ); ?>)</a><a class="mainwp_action mid recent_posts_pending_lnk" href="#"><?php _e( 'Pending', 'mainwp' ); ?> (<?php echo count( $recent_posts_pending ); ?>)</a><a class="mainwp_action right recent_posts_trash_lnk" href="#"><?php _e( 'Trash', 'mainwp' ); ?> (<?php echo count( $recent_posts_trash ); ?>)</a><br/><br/>
 
 			<div class="recent_posts_published">
@@ -93,10 +93,10 @@ class MainWP_Recent_Posts {
 							<a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_posts_published[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post"><?php _e( 'Edit', 'mainwp' ); ?></a> |
 							<a href="#" class="mainwp-post-trash"><?php _e( 'Trash', 'mainwp' ); ?></a>|
 							<a href="<?php echo $recent_posts_published[ $i ]['website']->url . ( substr( $recent_posts_published[ $i ]['website']->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . $recent_posts_published[ $i ]['id']; ?>" target="_blank" title="View '<?php echo $recent_posts_published[ $i ]['title']; ?>'" rel="permalink"><?php _e( 'View', 'mainwp' ); ?></a> |
-							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View All', 'mainwp' ); ?></a>
+							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View all', 'mainwp' ); ?></a>
 						</div>
 						<div class="mainwp-row-actions-working">
-							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait', 'mainwp' ); ?>
+							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?>
 							<div>&nbsp;</div>
 						</div>
 					</div>
@@ -132,10 +132,10 @@ class MainWP_Recent_Posts {
 							<a href="#" class="mainwp-post-publish"><?php _e( 'Publish', 'mainwp' ); ?></a> |
 							<a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_posts_draft[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_draft[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post"><?php _e( 'Edit', 'mainwp' ); ?></a> |
 							<a href="#" class="mainwp-post-trash"><?php _e( 'Trash', 'mainwp' ); ?></a> |
-							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View All', 'mainwp' ); ?></a>
+							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View all', 'mainwp' ); ?></a>
 						</div>
 						<div class="mainwp-row-actions-working">
-							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait', 'mainwp' ); ?>
+							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?>
 						</div>
 						<div>&nbsp;</div>
 					</div>
@@ -171,10 +171,10 @@ class MainWP_Recent_Posts {
 							<a href="#" class="mainwp-post-publish"><?php _e( 'Publish', 'mainwp' ); ?></a> |
 							<a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_posts_pending[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_pending[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post"><?php _e( 'Edit', 'mainwp' ); ?></a> |
 							<a href="#" class="mainwp-post-trash"><?php _e( 'Trash', 'mainwp' ); ?></a> |
-							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View All', 'mainwp' ); ?></a>
+							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View all', 'mainwp' ); ?></a>
 						</div>
 						<div class="mainwp-row-actions-working">
-							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait', 'mainwp' ); ?>
+							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?>
 						</div>
 						<div>&nbsp;</div>
 					</div>
@@ -207,10 +207,10 @@ class MainWP_Recent_Posts {
 						<div style="clear: left;"></div>
 						<div class="mainwp-row-actions">
 							<a href="#" class="mainwp-post-restore"><?php _e( 'Restore', 'mainwp' ); ?></a> |
-							<a href="#" class="mainwp-post-delete delete" style="color: red;"><?php _e( 'Delete Permanently', 'mainwp' ); ?></a>
+							<a href="#" class="mainwp-post-delete delete" style="color: red;"><?php _e( 'Delete permanently', 'mainwp' ); ?></a>
 						</div>
 						<div class="mainwp-row-actions-working">
-							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait', 'mainwp' ); ?>
+							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?>
 						</div>
 						<div>&nbsp;</div>
 					</div>
@@ -226,32 +226,32 @@ class MainWP_Recent_Posts {
 
 	public static function publish() {
 		MainWP_Recent_Posts::action( 'publish' );
-		die( json_encode( array( 'result' => __( 'Post has been published', 'mainwp' ) ) ) );
+		die( json_encode( array( 'result' => __( 'Post has been published!', 'mainwp' ) ) ) );
 	}
 
 	public static function approve() {
 		MainWP_Recent_Posts::action( 'publish' );
-		die( json_encode( array( 'result' => __( 'Post has been approved', 'mainwp' ) ) ) );
+		die( json_encode( array( 'result' => __( 'Post has been approved!', 'mainwp' ) ) ) );
 	}
 
 	public static function unpublish() {
 		MainWP_Recent_Posts::action( 'unpublish' );
-		die( json_encode( array( 'result' => __( 'Post has been unpublished', 'mainwp' ) ) ) );
+		die( json_encode( array( 'result' => __( 'Post has been unpublished!', 'mainwp' ) ) ) );
 	}
 
 	public static function trash() {
 		MainWP_Recent_Posts::action( 'trash' );
-		die( json_encode( array( 'result' => __( 'Post has been moved to trash', 'mainwp' ) ) ) );
+		die( json_encode( array( 'result' => __( 'Post has been moved to trash!', 'mainwp' ) ) ) );
 	}
 
 	public static function delete() {
 		MainWP_Recent_Posts::action( 'delete' );
-		die( json_encode( array( 'result' => __( 'Post has been permanently deleted', 'mainwp' ) ) ) );
+		die( json_encode( array( 'result' => __( 'Post has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
 	public static function restore() {
 		MainWP_Recent_Posts::action( 'restore' );
-		die( json_encode( array( 'result' => __( 'Post has been restored', 'mainwp' ) ) ) );
+		die( json_encode( array( 'result' => __( 'Post has been restored!', 'mainwp' ) ) ) );
 	}
 
 	public static function action( $pAction ) {
@@ -259,16 +259,16 @@ class MainWP_Recent_Posts {
 		$websiteIdEnc = $_POST['websiteId'];
 
 		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
-			die( json_encode( array( 'error' => 'Invalid Request.' ) ) );
+			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 		$websiteId = $websiteIdEnc;
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => 'Invalid Request.' ) ) );
+			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => 'You can not edit this website.' ) ) );
+			die( json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
 		try {
@@ -281,7 +281,7 @@ class MainWP_Recent_Posts {
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
-			die( json_encode( array( 'error' => 'Unexpected error.' ) ) );
+			die( json_encode( array( 'error' => 'Unexpected error!' ) ) );
 		}
 	}
 

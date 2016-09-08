@@ -42,7 +42,7 @@ class MainWP_Extensions_View {
 				<div class="postbox mainwp_api_postbox" section="1">
 					<!-- <div class="handlediv"><br></div> -->
 					<h3 class="mainwp_box_title">
-						<span><i class="fa fa-cog"></i> <?php _e( 'Bulk Install and Activate Extensions', 'mainwp' ); ?></span>
+						<span><i class="fa fa-cog"></i> <?php _e( 'Bulk install and activate extensions', 'mainwp' ); ?></span>
 					</h3>
 
 					<div class="mainwp-inside" style="clear: both;">
@@ -66,19 +66,19 @@ class MainWP_Extensions_View {
 							<strong><?php _e( 'Step 1', 'mainwp' ); ?></strong>
 
 							<p>
-								<span class="description"><?php _e( 'Enter your MainWP (https://mainwp.com/) Login to automatically install and activate purchased extensions.' ); ?></span>
+								<span class="description"><?php _e( 'Enter your MainWP (https://mainwp.com/) login to automatically install and activate purchased extensions.' ); ?></span>
 							</p>
-							<span><?php _e( 'MainWP Extensions Login:', 'mainwp' ); ?></span><br/><br/>
+							<span><?php _e( 'MainWP extensions Login:', 'mainwp' ); ?></span><br/><br/>
 
 							<div class="api-grabbing-fields">
 								<input type="text" class="input username" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" value="<?php echo $username; ?>"/>&nbsp;
 								<input type="password" class="input passwd" placeholder="<?php esc_attr_e( 'Password', 'mainwp' ); ?>" value="<?php echo $password; ?>"/>&nbsp;
-								<label><input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e( 'Check to Save API login', 'mainwp' ); ?>
+								<label><input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e( 'Check to save API login', 'mainwp' ); ?>
 								</label>
 							</div>
 							<p>
 				<span class="extension_api_loading">
-					<input type="button" class="button-primary button button-hero" id="mainwp-extensions-savelogin" value="<?php _e( 'Save Login', 'mainwp' ); ?>">
+					<input type="button" class="button-primary button button-hero" id="mainwp-extensions-savelogin" value="<?php _e( 'Save login', 'mainwp' ); ?>">
 					<i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
 				</span>
 							</p>
@@ -90,7 +90,7 @@ class MainWP_Extensions_View {
 
 							<div id="mainwp-install-purchased-extensions">
 								<p>
-									<span class="description"><?php echo sprintf( __( 'The Show Purchased Extensions button will show you all your MainWP Extensions. After the list appears, you can select wanted extensions and install them automatically. You can also install them manually using the directions %shere%s.', 'mainwp' ), '<a href="http://docs.mainwp.com/how-to-install-mainwp-extensions/" >', '</a>' ); ?></span>
+									<span class="description"><?php echo sprintf( __( 'The show purchased extensions button will show you all your MainWP extensions. After the list appears, you can select wanted extensions and install them automatically. You can also install them manually using the directions %shere%s.', 'mainwp' ), '<a href="http://docs.mainwp.com/how-to-install-mainwp-extensions/" >', '</a>' ); ?></span>
 								</p>
 
 								<p>
@@ -106,12 +106,12 @@ class MainWP_Extensions_View {
 							<strong><?php _e( 'Step 3', 'mainwp' ); ?></strong>
 
 							<p>
-								<span class="description"><?php echo sprintf( __( 'The Grab API Keys will automatically add your API Keys for Extension automatic updates. You can also manually enter your API for each Extension following the steps %shere%s.', 'mainwp' ), '<a href="http://docs.mainwp.com/enter-extensions-api-keys/" >', '</a>' ); ?></span>
+								<span class="description"><?php echo sprintf( __( 'The grab API Keys will automatically add your API Keys for extension automatic updates. You can also manually enter your API for each Extension following the steps %shere%s.', 'mainwp' ), '<a href="http://docs.mainwp.com/enter-extensions-api-keys/" >', '</a>' ); ?></span>
 							</p>
 
 							<p>
 				<span class="extension_api_loading">
-					<input type="button" class="mainwp-upgrade-button button-primary button button-hero" id="mainwp-extensions-grabkeys" value="<?php _e( 'Grab Api Keys', 'mainwp' ); ?>">
+					<input type="button" class="mainwp-upgrade-button button-primary button button-hero" id="mainwp-extensions-grabkeys" value="<?php _e( 'Grab API keys', 'mainwp' ); ?>">
 					<i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
 				</span>
 							</p>
@@ -126,7 +126,7 @@ class MainWP_Extensions_View {
 		<div class="mainwp-tabs" id="mainwp-tabs">
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === '' ) {
 				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=Extensions"><?php _e( 'Manage Extensions', 'mainwp' ); ?></a>
+			} ?>" href="admin.php?page=Extensions"><?php _e( 'Manage extensions', 'mainwp' ); ?></a>
 			<?php
 			if ( isset( $extensions ) && is_array( $extensions ) ) {
 				foreach ( $extensions as $extension ) {
@@ -161,7 +161,7 @@ class MainWP_Extensions_View {
 		<div class="postbox">
 		<div class="handlediv"><br></div>
 		<h3 class="mainwp_box_title">
-			<span><?php printf( _n( '%d Installed MainWP Extension', '%d Installed MainWP Extensions', ( count( $extensions ) == 1 ? 1 : 2 ), 'mainwp' ), count( $extensions ) ); ?></span>
+			<span><?php printf( _n( '%d Installed MainWP extension', '%d Installed MainWP extensions', ( count( $extensions ) == 1 ? 1 : 2 ), 'mainwp' ), count( $extensions ) ); ?></span>
 		</h3>
 
 
@@ -169,9 +169,9 @@ class MainWP_Extensions_View {
 			<?php if ( count( $extensions ) == 0 ) { ?>
 				<div class="inside">
 					<div class="mainwp_info-box-blue">
-						<h3><?php _e( 'What are Extensions?', 'mainwp' ); ?></h3>
+						<h3><?php _e( 'What are extensions?', 'mainwp' ); ?></h3>
 						<?php _e( 'Extensions are specific features or tools created for the purpose of expanding the basic functionality of MainWP.', 'mainwp' ); ?>
-						<h3><?php _e( 'Why have Extensions?', 'mainwp' ); ?></h3>
+						<h3><?php _e( 'Why have extensions?', 'mainwp' ); ?></h3>
 						<?php _e( 'The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat. Extensions offer custom functions and features so that each user can tailor their MainWP to their specific needs.', 'mainwp' ); ?>
 						<p>
 							<a href="https://mainwp.com/extensions/"><?php _e( 'Download your first extension now.', 'mainwp' ); ?></a>
@@ -277,9 +277,9 @@ class MainWP_Extensions_View {
 													<?php echo ( isset( $extension['SupportForumURI'] ) && ! empty( $extension['SupportForumURI'] ) ) ? ' | <a href="' . str_replace( array(
 															'http:',
 															'https:'
-														), '', $extension['SupportForumURI'] ) . '" target="_blank" title="' . __( 'Support Forum', 'mainwp' ) . '">' . __( 'Support Forum', 'mainwp' ) . '</a>' : ''; ?>
+														), '', $extension['SupportForumURI'] ) . '" target="_blank" title="' . __( 'Support forum', 'mainwp' ) . '">' . __( 'Support forum', 'mainwp' ) . '</a>' : ''; ?>
 													<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
-														<?php echo ' | <a href="#" class="mainwp-extensions-api-activation" >' . __( 'Enter Activation API', 'mainwp' ) . '</a>'; ?>
+														<?php echo ' | <a href="#" class="mainwp-extensions-api-activation" >' . __( 'Enter API key', 'mainwp' ) . '</a>'; ?>
 													<?php } ?>
 												</td>
 											</tr>
@@ -288,13 +288,13 @@ class MainWP_Extensions_View {
 													<td colspan="3">
 														<div class="api-row-div">
 															<span>
-																<input type="text" class="input api_key" placeholder="<?php esc_attr_e( 'API License Key', 'mainwp' ); ?>" value="<?php echo $extension['api_key']; ?>"/>
-																<input type="text" class="input api_email" placeholder="<?php esc_attr_e( 'API License Email', 'mainwp' ); ?>" value="<?php echo $extension['activation_email']; ?>"/>
+																<input type="text" class="input api_key" placeholder="<?php esc_attr_e( 'API license key', 'mainwp' ); ?>" value="<?php echo $extension['api_key']; ?>"/>
+																<input type="text" class="input api_email" placeholder="<?php esc_attr_e( 'API license email', 'mainwp' ); ?>" value="<?php echo $extension['activation_email']; ?>"/>
 																<input type="button" class="button-primary mainwp-extensions-activate" value="<?php esc_attr_e( 'Activate', 'mainwp' ); ?>">
 																<span class="mainwp_loading"><i class="fa fa-spinner fa-pulse"></i></span>
 															</span>
 															<span style="float:right">
-																<?php _e( 'Deactivate License Key', 'mainwp' ); ?>
+																<?php _e( 'Deactivate license key', 'mainwp' ); ?>
 																<input type="checkbox" class="mainwp-extensions-deactivate-chkbox" <?php echo $extension['deactivate_checkbox'] == 'on' ? 'checked' : ''; ?>>
 																<input type="button" class="button-primary mainwp-extensions-deactivate" value="<?php _e( 'Deactivate', 'mainwp' ); ?>">
 															</span>
@@ -336,7 +336,7 @@ class MainWP_Extensions_View {
 		?>
 		<div class="postbox" id="mainwp-available-extensions">
 			<div class="handle"></div>
-			<h3 class="mainwp_box_title"><?php echo sprintf( __('Available %sMainWP Extensions%s', 'mainwp'), '<a href="https://mainwp.com/extensions/">', '</a>' ); ?></h3>
+			<h3 class="mainwp_box_title"><?php echo sprintf( __('Available %sMainWP extensions%s', 'mainwp'), '<a href="https://mainwp.com/extensions/">', '</a>' ); ?></h3>
 
 			<div>
 				<div id="mainwp-extensions-filter" style="background: #eee; padding: 1em .6em;">
@@ -375,7 +375,7 @@ class MainWP_Extensions_View {
 								?>
 								<a target="_blank"
 								   href="<?php echo str_replace(array("http:", "https:"), "", $ext['link']); ?>"
-								   class="button"><?php _e( 'Find Out More', 'mainwp' ); ?></a>
+								   class="button"><?php _e( 'Find out more', 'mainwp' ); ?></a>
 							</div>
 							<div class="mainwp-av-ext-desciption">
 								<h2><?php echo $ext['title'] ?></h2>
@@ -390,7 +390,7 @@ class MainWP_Extensions_View {
 					?>
 				</div>
 				<div class="installed-group-exts" style="clear: both; display: none">
-					<?php echo __('All selected group extensions are Installed.', 'mainwp') ?>
+					<?php echo __('All selected group extensions are installed.', 'mainwp') ?>
 				</div>
 			</div>
 		</div>

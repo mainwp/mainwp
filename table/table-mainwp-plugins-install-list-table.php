@@ -52,7 +52,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		$tabs = array();
 
 		if ( 'search' == $tab )
-			$tabs['search']	= __( 'Search Results', 'mainwp' );
+		$tabs['search']	= __( 'Search Results', 'mainwp' );
 		$tabs['featured']  = _x( 'Featured', 'Plugin Installer' );
 		$tabs['popular']   = _x( 'Popular', 'Plugin Installer' );
 		$tabs['recommended']   = _x( 'Recommended', 'Plugin Installer' );
@@ -191,7 +191,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 
 ?>
 <div class="wp-filter">
-<h3 class="mainwp_box_title"><?php _e( 'Step 1: Select a Plugin', 'mainwp' ); ?></h3>
+<h3 class="mainwp_box_title"><?php _e( 'Step 1: Select a plugin', 'mainwp' ); ?></h3>
 	<ul class="filter-links">
 		<?php
 		if ( ! empty( $views ) ) {

@@ -71,7 +71,7 @@ class MainWP_Sync {
 				$sync_errors          = __( 'HTTP error', 'mainwp' ) . ( $e->getMessageExtra() != null ? ' - ' . $e->getMessageExtra() : '' );
 				$offline_check_result = - 1;
 			} else if ( $e->getMessage() == 'NOMAINWP' ) {
-				$sync_errors          = __( 'MainWP not detected', 'mainwp' );
+				$sync_errors          = __( 'MainWP Child plugin not detected', 'mainwp' );
 				$offline_check_result = 1;
 			}
 
@@ -272,7 +272,7 @@ class MainWP_Sync {
 				MainWP_Logger::Instance()->warningForWebsite( $pWebsite, 'SYNC ERROR', '[' . $information['error'] . ']' );
 				$error                            = true;
 				$done                             = true;
-				$websiteSyncValues['sync_errors'] = __( 'Error - ', 'mainwp' ) . $information['error'];
+				$websiteSyncValues['sync_errors'] = __( 'ERROR: ', 'mainwp' ) . $information['error'];
 			} else if ( ! empty( $sync_errors ) ) {
 				MainWP_Logger::Instance()->warningForWebsite( $pWebsite, 'SYNC ERROR', '[' . $sync_errors . ']' );
 
@@ -286,7 +286,7 @@ class MainWP_Sync {
 				MainWP_Logger::Instance()->warningForWebsite( $pWebsite, 'SYNC ERROR', '[Undefined error]' );
 				$error = true;
 				if ( $pAllowDisconnect ) {
-					$websiteSyncValues['sync_errors'] = __( 'Undefined error - please reinstall the MainWP Child Plugin on the client site', 'mainwp' );
+					$websiteSyncValues['sync_errors'] = __( 'Undefined error! Please, reinstall the MainWP Child plugin on the child site.', 'mainwp' );
 				}
 			}
 		}

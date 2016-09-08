@@ -6,7 +6,7 @@
   Author: MainWP
   Author URI: http://mainwp.com
   Text Domain: mainwp
-  Version: 3.1.8
+  Version: 3.1.8.1
 */
 
 if ( ! defined( 'MAINWP_PLUGIN_FILE' ) ) {
@@ -57,7 +57,7 @@ if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
 	function mainwp_do_not_have_permissions( $where = '', $echo = true ) {
 		$msg = sprintf( __( 'You do not have sufficient permissions to access this page (%s).', 'mainwp' ), ucwords( $where ) );
 		if ( $echo ) {
-			echo '<div class="mainwp-permission-error"><p>' . esc_html( $msg ) . '</p>If you need access to this page please contact the Dashboard Administrator.</div>';
+			echo '<div class="mainwp-permission-error"><p>' . esc_html( $msg ) . '</p>If you need access to this page please contact the dashboard administrator.</div>';
 		} else {
 			return $msg;
 		}

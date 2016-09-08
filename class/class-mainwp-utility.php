@@ -1300,7 +1300,7 @@ class MainWP_Utility {
 		}
 
 		if ( ! @file_exists( @dirname( $file ) ) ) {
-			throw new MainWP_Exception( __( 'Could not create directory to download the file.', 'mainwp' ) );
+			throw new MainWP_Exception( __( 'MainWP plugin could not create directory in order to download the file.', 'mainwp' ) );
 		}
 
 		if ( ! @is_writable( @dirname( $file ) ) ) {
@@ -1764,7 +1764,7 @@ class MainWP_Utility {
                       <div style="display: block; width: 95% ; margin-left: auto ; margin-right: auto ; padding: .5em 0 ;">
                          <div style="float: left;"><a href="https://mainwp.com"><img src="' . plugins_url( 'images/logo.png', dirname( __FILE__ ) ) . '" alt="MainWP" height="30"/></a></div>
                          <div style="float: right; margin-top: .6em ;">
-                            <span style="display: inline-block; margin-right: .8em;"><a href="https://mainwp.com/extensions/" style="font-family: Helvetica, Sans; color: #7fb100; text-transform: uppercase; font-size: 14px;">Extensions</a></span>
+                            <span style="display: inline-block; margin-right: .8em;"><a href="https://mainwp.com/mainwp-extensions/" style="font-family: Helvetica, Sans; color: #7fb100; text-transform: uppercase; font-size: 14px;">Extensions</a></span>
                             <span style="display: inline-block; margin-right: .8em;"><a style="font-family: Helvetica, Sans; color: #7fb100; text-transform: uppercase; font-size: 14px;" href="https://mainwp.com/support/">Support</a></span>
                             <span style="display: inline-block; margin-right: .8em;"><a style="font-family: Helvetica, Sans; color: #7fb100; text-transform: uppercase; font-size: 14px;" href="http://docs.mainwp.com">Documentation</a></span>
                             <span style="display: inline-block; margin-right: .5em;" class="mainwp-memebers-area"><a href="https://mainwp.com/my-account/" style="padding: .6em .5em ; border-radius: 50px ; -moz-border-radius: 50px ; -webkit-border-radius: 50px ; background: #1c1d1b; border: 1px Solid #000; color: #fff !important; font-size: .9em !important; font-weight: normal ; -webkit-box-shadow:  0px 0px 0px 5px rgba(0, 0, 0, .1); box-shadow:  0px 0px 0px 5px rgba(0, 0, 0, .1);">My Account</a></span>

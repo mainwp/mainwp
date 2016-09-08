@@ -103,7 +103,7 @@ class MainWP_Child_Scan {
 				$pluginfound = ! (is_array( $rslt ) && count( $rslt ) == 0);
 
 				if ( ! $pluginfound ) {
-					die( json_encode( array( 'success' => 'No issues found.' ) ) );
+					die( json_encode( array( 'success' => 'No issues found!' ) ) );
 				}
 			}
 

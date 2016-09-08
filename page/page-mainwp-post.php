@@ -103,7 +103,7 @@ class MainWP_Post {
 		<div id="mainwp-tip-zone">
 			<?php if ( $shownPage == 'BulkManage' ) { ?>
 				<?php if ( MainWP_Utility::showUserTip( 'mainwp-manageposts-tips' ) ) { ?>
-					<div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-manageposts-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php _e( 'You can also quickly see all Published, Draft, Pending and Trash Posts for a single site from your Individual Site Dashboard Recent Posts widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Dashboard.', 'mainwp' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
+					<div class="mainwp-tips mainwp_info-box-blue"><span class="mainwp-tip" id="mainwp-manageposts-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php _e( 'You can also quickly see all Published, Draft, Pending and Trash Posts for a single site from your individual site dashboard recent posts widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Dashboard.', 'mainwp' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
 							</a></span></div>
 				<?php } ?>
 			<?php } ?>
@@ -115,7 +115,7 @@ class MainWP_Post {
 				} ?>" href="admin.php?page=PostBulkManage"><?php _e( 'Manage', 'mainwp' ); ?></a>
 				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkAdd' ) {
 					echo 'nav-tab-active';
-				} ?>" href="admin.php?page=PostBulkAdd"><?php _e( 'Add New', 'mainwp' ); ?></a>
+				} ?>" href="admin.php?page=PostBulkAdd"><?php _e( 'Add new', 'mainwp' ); ?></a>
 			<?php } ?>
 			<a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ( $shownPage === 'PostsHelp' ) {
 				echo 'nav-tab-active';
@@ -172,7 +172,7 @@ class MainWP_Post {
         ?>
 		<div class="mainwp-search-form">
 			<div class="postbox mainwp-postbox" style="height: 400px">
-				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Step 1: Search Posts', 'mainwp' ); ?>
+				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Step 1: Search posts', 'mainwp' ); ?>
 				</h3>
 
 				<div class="inside">
@@ -203,7 +203,7 @@ class MainWP_Post {
 						</li>
 					</ul>
 					<p>
-						<?php _e( 'Containing Keyword:', 'mainwp' ); ?><br/>
+						<?php _e( 'Containing keyword:', 'mainwp' ); ?><br/>
 						<input type="text" id="mainwp_post_search_by_keyword" class="" size="50" value="<?php if ( $cachedSearch != null ) {
 							echo $cachedSearch['keyword'];
 						} ?>"/>
@@ -238,7 +238,7 @@ class MainWP_Post {
 		            ?>
 				</div>
 			</div>
-			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select Sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
+			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
 			<div style="clear: both;"></div>
 
 			<input type="button" name="mainwp_show_posts" id="mainwp_show_posts" class="button-primary button button-hero button-right" value="<?php _e( 'Show Posts', 'mainwp' ); ?>"/>
@@ -265,7 +265,7 @@ class MainWP_Post {
 					<option value="unpublish"><?php _e( 'Unpublish', 'mainwp' ); ?></option>
 					<option value="trash"><?php _e( 'Move to Trash', 'mainwp' ); ?></option>
 					<option value="restore"><?php _e( 'Restore', 'mainwp' ); ?></option>
-					<option value="delete"><?php _e( 'Delete Permanently', 'mainwp' ); ?></option>
+					<option value="delete"><?php _e( 'Delete permanently', 'mainwp' ); ?></option>
 				</select>
 				<input type="button" name="" id="mainwp_bulk_post_action_apply" class="button" value="<?php _e( 'Apply', 'mainwp' ); ?>"/>
 			</div>
@@ -613,7 +613,7 @@ class MainWP_Post {
 							<?php } ?>
 						</div>
 						<div class="row-actions-working">
-							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait', 'mainwp' ); ?></div>
+							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?></div>
 					</td>
 					<td class="author column-author">
 						<?php echo $post['author']; ?>
@@ -948,7 +948,7 @@ class MainWP_Post {
 					?>
 					<div class="error below-h2">
 						<p>
-							<strong><?php _e( 'ERROR', 'mainwp' ); ?></strong>: <?php _e( 'An undefined error occured.', 'mainwp' ); ?>
+							<strong><?php _e( 'ERROR', 'mainwp' ); ?></strong>: <?php _e( 'An undefined error occured!', 'mainwp' ); ?>
 						</p>
 					</div>
 					<?php
@@ -956,7 +956,7 @@ class MainWP_Post {
 			} // no skip posting
 			?>
 			<br/>
-			<a href="<?php echo get_admin_url() ?>admin.php?page=PostBulkAdd" class="add-new-h2" target="_top"><?php _e( 'Add New', 'mainwp' ); ?></a>
+			<a href="<?php echo get_admin_url() ?>admin.php?page=PostBulkAdd" class="add-new-h2" target="_top"><?php _e( 'Add new', 'mainwp' ); ?></a>
 			<a href="<?php echo get_admin_url() ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php _e( 'Return
             to Dashboard', 'mainwp' ); ?></a>
 
@@ -1051,12 +1051,12 @@ class MainWP_Post {
 							}
 						}
 					} else {
-						$ret .= '<p>No categories have been found</p>';
+						$ret .= '<p>No categories have been found!</p>';
 					}
 				}
 			}
 		} else {
-			$ret .= '<p>' . __( 'Error - ', 'mainwp' ) . ' no site</p>';
+			$ret .= '<p>' . __( 'ERROR: ', 'mainwp' ) . ' no site</p>';
 		}
 		echo $ret;
 	}

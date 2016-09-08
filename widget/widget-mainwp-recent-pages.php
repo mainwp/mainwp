@@ -10,7 +10,7 @@ class MainWP_Recent_Pages {
 	}
 
 	public static function getName() {
-		return '<i class="fa fa-file"></i> ' . __( 'Recent Pages', 'mainwp' );
+		return '<i class="fa fa-file"></i> ' . __( 'Recent pages', 'mainwp' );
 	}
 
 	public static function render() {
@@ -60,7 +60,7 @@ class MainWP_Recent_Pages {
 
 		?>
 		<div class="clear">
-			<a href="<?php echo admin_url( 'admin.php?page=PageBulkAdd&select=' . ( $current_wpid ? $current_wpid : 'all' ) ); ?>" class="button-primary" style="float: right"><?php _e( 'Add New', 'mainwp' ); ?></a>
+			<a href="<?php echo admin_url( 'admin.php?page=PageBulkAdd&select=' . ( $current_wpid ? $current_wpid : 'all' ) ); ?>" class="button-primary" style="float: right"><?php _e( 'Add new', 'mainwp' ); ?></a>
 			<a class="mainwp_action left mainwp_action_down recent_posts_published_lnk" href="#"><?php _e( 'Published', 'mainwp' ); ?> (<?php echo count( $recent_pages_published ); ?>)</a><a class="mainwp_action mid recent_posts_draft_lnk" href="#"><?php _e( 'Draft', 'mainwp' ); ?> (<?php echo count( $recent_pages_draft ); ?>)</a><a class="mainwp_action mid recent_posts_pending_lnk" href="#"><?php _e( 'Pending', 'mainwp' ); ?> (<?php echo count( $recent_pages_pending ); ?>)</a><a class="mainwp_action right recent_posts_trash_lnk" href="#"><?php _e( 'Trash', 'mainwp' ); ?> (<?php echo count( $recent_pages_trash ); ?>)</a><br/><br/>
 
 			<div class="recent_posts_published">
@@ -98,10 +98,10 @@ class MainWP_Recent_Pages {
 							<a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_pages_published[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_pages_published[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post"><?php _e( 'Edit', 'mainwp' ); ?></a> |
 							<a href="#" class="mainwp-post-trash"><?php _e( 'Trash', 'mainwp' ); ?></a>|
 							<a href="<?php echo $recent_pages_published[ $i ]['website']->url . ( substr( $recent_pages_published[ $i ]['website']->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . $recent_pages_published[ $i ]['id']; ?>" target="_blank" title="View '<?php echo $recent_pages_published[ $i ]['title']; ?>'" rel="permalink"><?php _e( 'View', 'mainwp' ); ?></a> |
-							<a href="admin.php?page=PageBulkManage" class="mainwp-post-viewall"><?php _e( 'View All', 'mainwp' ); ?></a>
+							<a href="admin.php?page=PageBulkManage" class="mainwp-post-viewall"><?php _e( 'View all', 'mainwp' ); ?></a>
 						</div>
 						<div class="mainwp-row-actions-working">
-							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait', 'mainwp' ); ?>
+							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?>
 							<div>&nbsp;</div>
 						</div>
 					</div>
@@ -137,10 +137,10 @@ class MainWP_Recent_Pages {
 							<a href="#" class="mainwp-post-publish"><?php _e( 'Publish', 'mainwp' ); ?></a> |
 							<a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_pages_draft[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_pages_draft[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post"><?php _e( 'Edit', 'mainwp' ); ?></a> |
 							<a href="#" class="mainwp-post-trash"><?php _e( 'Trash', 'mainwp' ); ?></a> |
-							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View All', 'mainwp' ); ?></a>
+							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View all', 'mainwp' ); ?></a>
 						</div>
 						<div class="mainwp-row-actions-working">
-							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait', 'mainwp' ); ?>
+							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?>
 						</div>
 						<div>&nbsp;</div>
 					</div>
@@ -176,10 +176,10 @@ class MainWP_Recent_Pages {
 							<a href="#" class="mainwp-post-publish"><?php _e( 'Publish', 'mainwp' ); ?></a> |
 							<a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_pages_pending[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_pages_pending[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post"><?php _e( 'Edit', 'mainwp' ); ?></a> |
 							<a href="#" class="mainwp-post-trash"><?php _e( 'Trash', 'mainwp' ); ?></a> |
-							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View All', 'mainwp' ); ?></a>
+							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View all', 'mainwp' ); ?></a>
 						</div>
 						<div class="mainwp-row-actions-working">
-							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait', 'mainwp' ); ?>
+							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?>
 						</div>
 						<div>&nbsp;</div>
 					</div>
@@ -212,10 +212,10 @@ class MainWP_Recent_Pages {
 						<div style="clear: left;"></div>
 						<div class="mainwp-row-actions">
 							<a href="#" class="mainwp-post-restore"><?php _e( 'Restore', 'mainwp' ); ?></a> |
-							<a href="#" class="mainwp-post-delete delete" style="color: red;"><?php _e( 'Delete Permanently', 'mainwp' ); ?></a>
+							<a href="#" class="mainwp-post-delete delete" style="color: red;"><?php _e( 'Delete permanently', 'mainwp' ); ?></a>
 						</div>
 						<div class="mainwp-row-actions-working">
-							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait', 'mainwp' ); ?>
+							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?>
 						</div>
 						<div>&nbsp;</div>
 					</div>

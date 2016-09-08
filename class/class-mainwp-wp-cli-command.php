@@ -149,7 +149,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			$args_exploded = explode( ',', $args[0] );
 			foreach ($args_exploded as $arg) {
 				if ( ! is_numeric( trim( $arg ) ) ) {
-					WP_CLI::error('Child site ids should be numeric.');
+					WP_CLI::error('Child site IDs should be numeric.');
 				}
 
 				$sites[] = trim( $arg );
@@ -261,18 +261,18 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					}
 
 					if ( count( $tmp ) == 0 ) {
-						WP_CLI::line( 'No available plugin upgrades for ' . $website->name);
+						WP_CLI::line( 'No available plugin updates for ' . $website->name);
 
 						continue;
 					}
 
-					WP_CLI::line( 'Upgrading ' . count($tmp) . ' plugins for ' . $website->name);
+					WP_CLI::line( 'Updating ' . count($tmp) . ' plugins for ' . $website->name);
 
 					try {
 						MainWP_Right_Now::upgradePluginThemeTranslation( $website->id, 'plugin', implode( ',', $tmp ) );
-						WP_CLI::success( 'Upgrades completed' );
+						WP_CLI::success( 'Updates completed' );
 					} catch (Exception $e) {
-						WP_CLI::error( 'Upgrades failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
+						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
 					}
 				}
 			}
@@ -311,7 +311,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			$args_exploded = explode( ',', $args[0] );
 			foreach ($args_exploded as $arg) {
 				if ( ! is_numeric( trim( $arg ) ) ) {
-					WP_CLI::error('Child site ids should be numeric.');
+					WP_CLI::error('Child site IDs should be numeric.');
 				}
 
 				$sites[] = trim( $arg );
@@ -423,18 +423,18 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					}
 
 					if ( count( $tmp ) == 0 ) {
-						WP_CLI::line( 'No available theme upgrades for ' . $website->name);
+						WP_CLI::line( 'No available theme updates for ' . $website->name);
 
 						continue;
 					}
 
-					WP_CLI::line( 'Upgrading ' . count($tmp) . ' themes for ' . $website->name);
+					WP_CLI::line( 'Updating ' . count($tmp) . ' themes for ' . $website->name);
 
 					try {
 						MainWP_Right_Now::upgradePluginThemeTranslation( $website->id, 'theme', implode( ',', $tmp ) );
-						WP_CLI::success( 'Upgrades completed' );
+						WP_CLI::success( 'Updates completed' );
 					} catch (Exception $e) {
-						WP_CLI::error( 'Upgrades failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
+						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
 					}
 				}
 			}

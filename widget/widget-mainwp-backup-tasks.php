@@ -6,7 +6,7 @@ class MainWP_Backup_Tasks {
 	}
 
 	public static function getName() {
-		return '<i class="fa fa-tasks"></i> ' . __( 'Backup Tasks','mainwp' );
+		return '<i class="fa fa-tasks"></i> ' . __( 'Backup tasks','mainwp' );
 	}
 
 	public static function render() {
@@ -20,7 +20,7 @@ class MainWP_Backup_Tasks {
 		<div class"mainwp-row-top" style="text-align: right; margin-bottom: 1em;">
 			<a href="admin.php?page=ManageBackups" class="button" ><?php _e( 'Manage Backups','mainwp' ); ?></a>
 			<?php if ( mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) { ?>
-				&nbsp;&nbsp;<a href="admin.php?page=ManageBackupsAddNew" class="button-primary" ><?php _e( 'Add New Task','mainwp' ); ?></a>
+				&nbsp;&nbsp;<a href="admin.php?page=ManageBackupsAddNew" class="button-primary" ><?php _e( 'Add new task','mainwp' ); ?></a>
 			<?php } ?>
 		</div>
 		<div id="mainwp-backup-tasks-widget">
@@ -59,7 +59,7 @@ class MainWP_Backup_Tasks {
 			<div class="mainwp-row mainwp-recent">
 				<span class="mainwp-left-col" style="width: 40%">
 					<strong><a href="admin.php?page=ManageBackups&id=<?php echo $task->id; ?>"><?php echo $task->name; ?></a></strong><br />
-					<span style="font-size: 11px">(<?php echo strtoupper( $task->schedule ); ?> - <?php echo ($task->type == 'db' ? __( 'Database Backup','mainwp' ) : __( 'Full Backup','mainwp' )); ?>)</span>
+					<span style="font-size: 11px">(<?php echo strtoupper( $task->schedule ); ?> - <?php echo ($task->type == 'db' ? __( 'Database backup','mainwp' ) : __( 'Full backup','mainwp' )); ?>)</span>
 				</span>
 				<span class="mainwp-mid-col">
 					<?php

@@ -21,9 +21,9 @@ class MainWP_Bulk_Add {
 					$output->added_id[ $website->id ] = $information['added_id'];
 				}
 			} else if ( isset( $information['error'] ) ) {
-				$output->errors[ $website->id ] = __( 'Error - ', 'mainwp' ) . $information['error'];
+				$output->errors[ $website->id ] = __( 'ERROR: ', 'mainwp' ) . $information['error'];
 			} else {
-				$output->errors[ $website->id ] = __( 'Undefined error - please reinstall the MainWP Child plugin on the client', 'mainwp' );
+				$output->errors[ $website->id ] = __( 'Undefined error! Please reinstall the MainWP Child plugin on the child site', 'mainwp' );
 			}
 		} else {
 			$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( 'NOMAINWP', $website->url ) );

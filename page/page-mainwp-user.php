@@ -154,11 +154,11 @@ class MainWP_User {
 		self::renderHeader( '' ); ?>
 		<div>
             <div class="postbox mainwp-postbox">
-            	<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Step 1:','mainwp'); ?> <?php _e('Search Users','mainwp'); ?></h3>
+            	<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e('Step 1:','mainwp'); ?> <?php _e('Search users','mainwp'); ?></h3>
 
 				<div class="inside">
 					<div class="mainwp-search-box">
-                        <div class="mainwp_info-box-blue"><?php _e( 'To search users by username, enter the wanted username here, select sites and click the Search Users button.', 'mainwp' ); ?></div>
+                        <div class="mainwp_info-box-blue"><?php _e( 'To search users by username, enter the wanted username here, select sites and click the Search users button.', 'mainwp' ); ?></div>
 						<input type="text" aria-required="true" value="<?php if ( $cachedSearch != null && isset( $cachedSearch['keyword'] ) ) {
 							echo $cachedSearch['keyword'];
 						} ?>"
@@ -194,7 +194,7 @@ class MainWP_User {
 					</ul>
 				</div>
 			</div>
-            <?php MainWP_UI::select_sites_box(__("Step 2: Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
+            <?php MainWP_UI::select_sites_box(__("Step 2: Select sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
             <div style="clear: both;"></div>
             <input type="button" name="mainwp_show_users" id="mainwp_show_users" class="button-primary button button-hero button-right" value="<?php _e('Show Users','mainwp'); ?>"/>
             <br/><br/>
@@ -655,16 +655,16 @@ class MainWP_User {
 		$pass         = $_POST['update_password'];
 
 		if ( ! MainWP_Utility::ctype_digit( $userId ) ) {
-			die( json_encode( array( 'error' => 'Invalid Request.' ) ) );
+			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 		$websiteId = $websiteIdEnc;
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => 'Invalid Request.' ) ) );
+			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => 'You can not edit this website.' ) ) );
+			die( json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
 		if ( ( $pAction == 'delete' ) && ( $website->adminname == $userName ) ) {
@@ -714,13 +714,13 @@ class MainWP_User {
 
 			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">
 				<div class="mainwp_config_box_right">
-					<?php MainWP_UI::select_sites_box( __( 'Step 2: Select Sites', 'mainwp' ) ); ?>
+					<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ) ); ?>
 					<input type="button" name="createuser" id="bulk_add_createuser" class="button-primary button button-hero button-right"
 						value="<?php _e( 'Add New User', 'mainwp' ); ?> "/>
 				</div>
 				<div class="mainwp_config_box_left" style="width: calc(100% - 290px);">
 					<div class="postbox">
-                		<h3 class="mainwp_box_title"><span><i class="fa fa-user-plus"></i> <?php _e('Step 1: Add a Single User','mainwp'); ?></span></h3>
+                		<h3 class="mainwp_box_title"><span><i class="fa fa-user-plus"></i> <?php _e('Step 1: Add a single user','mainwp'); ?></span></h3>
 
                     	<div class="inside">
 							<table class="form-table">
@@ -748,7 +748,7 @@ class MainWP_User {
 								</tr>
 								<tr class="form-field">
 									<th scope="row">
-										<label for="first_name"><?php _e( 'First Name', 'mainwp' ); ?> </label></th>
+										<label for="first_name"><?php _e( 'First name', 'mainwp' ); ?> </label></th>
 									<td>
 										<input class="" name="first_name" type="text" id="first_name" value="<?php
 										if ( isset( $_POST['first_name'] ) ) {
@@ -758,7 +758,7 @@ class MainWP_User {
 								</tr>
 								<tr class="form-field">
 									<th scope="row">
-										<label for="last_name"><?php _e( 'Last Name', 'mainwp' ); ?> </label></th>
+										<label for="last_name"><?php _e( 'Last name', 'mainwp' ); ?> </label></th>
 									<td>
 										<input class="" name="last_name" type="text" id="last_name" value="<?php
 										if ( isset( $_POST['last_name'] ) ) {
@@ -788,7 +788,7 @@ class MainWP_User {
 											<input class="" name="pass2" type="password" id="pass2" autocomplete="off"/>
 											<br/>
 
-											<div id="pass-strength-result" style="display: block"><?php _e( 'Strength Indicator', 'mainwp' ); ?></div>
+											<div id="pass-strength-result" style="display: block"><?php _e( 'Strength indicator', 'mainwp' ); ?></div>
 											<br><br>
 										</td>
 									</tr>
@@ -797,7 +797,7 @@ class MainWP_User {
 									<tr class="form-field form-required user-pass1-wrap">
 										<th scope="row">
 											<label for="pass1">
-												<?php _e( 'New Password', 'mainwp' ); ?>
+												<?php _e( 'New password', 'mainwp' ); ?>
 												<span class="description hide-if-js"><?php _e( '(required)', 'mainwp' ); ?></span>
 											</label>
 										</th>
@@ -820,7 +820,7 @@ class MainWP_User {
 										</td>
 									</tr>
 									<tr class="form-field form-required user-pass2-wrap hide-if-js">
-										<td scope="row"><label for="pass2"><?php _e( 'Repeat Password', 'mainwp' ); ?>
+										<td scope="row"><label for="pass2"><?php _e( 'Repeat password', 'mainwp' ); ?>
 												<span class="description"><?php _e( '(required)', 'mainwp' ); ?></span></label>
 										</td>
 										<td>
@@ -837,7 +837,7 @@ class MainWP_User {
 								</tr>
 								<tr>
 									<th scope="row">
-										<label for="send_password"><?php _e( 'Send Password?', 'mainwp' ); ?></label>
+										<label for="send_password"><?php _e( 'Send password?', 'mainwp' ); ?></label>
 									</th>
 									<td><label for="send_password"><input type="checkbox" name="send_password"
 												id="send_password" <?php
@@ -888,7 +888,7 @@ class MainWP_User {
 						</div>
 					</div>
 					<div class="postbox">
-                        <h3 class="mainwp_box_title"><span><i class="fa fa-user-plus"></i> <?php _e('Bulk Upload','mainwp'); ?></span></h3>
+                        <h3 class="mainwp_box_title"><span><i class="fa fa-user-plus"></i> <?php _e('Bulk upload','mainwp'); ?></span></h3>
 
 						<div class="inside">
 							<table>
@@ -1070,7 +1070,7 @@ class MainWP_User {
 				<?php } ?>
 			</div>
 			<br/>
-			<a href="<?php echo get_admin_url() ?>admin.php?page=UserBulkAdd" class="add-new-h2" target="_top"><?php _e( 'Add New', 'mainwp' ); ?></a>
+			<a href="<?php echo get_admin_url() ?>admin.php?page=UserBulkAdd" class="add-new-h2" target="_top"><?php _e( 'Add new', 'mainwp' ); ?></a>
 			<a href="<?php echo get_admin_url() ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php _e( 'Return to
             Dashboard', 'mainwp' ); ?></a>
 			<?php
@@ -1127,7 +1127,7 @@ class MainWP_User {
 											 class="button-primary button button-hero" value="<?php _e('Pause','mainwp'); ?>"/>
 											 <input type="button" name="import_user_btn_save_csv"
 											 id="import_user_btn_save_csv" disabled="disabled"
-											 class="button-hero button" value="<?php _e('Save Failed','mainwp'); ?>"/>
+											 class="button-hero button" value="<?php _e('Save failed','mainwp'); ?>"/>
 							 </p>
 
 							<p><div class="import_user_import_listing" id="import_user_import_fail_logging" style="display: none;">

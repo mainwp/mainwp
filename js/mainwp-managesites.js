@@ -69,12 +69,12 @@ mainwp_update_pluginsthemes = function (updateType, updateSiteIds)
     managesitesContinueAfterBackup = function(pType, sitesCount, pAllWebsiteIds) { return function()
     {
         if (pType == 'plugin')
-            jQuery('#refresh-status-box').attr('title', __("Upgrading Plugins"));
+            jQuery('#refresh-status-box').attr('title', __("Updating plugins..."));
         else if (pType == 'theme') {
-            jQuery('#refresh-status-box').attr('title', __("Upgrading Themes"));
+            jQuery('#refresh-status-box').attr('title', __("Updating themes..."));
         }
         else if (pType == 'translation') {
-            jQuery('#refresh-status-box').attr('title', __("Upgrading Translations"));
+            jQuery('#refresh-status-box').attr('title', __("Updating translations..."));
         }
         jQuery('#refresh-status-text').html(__('updated'));
         jQuery('#refresh-status-progress').progressbar({value: 0, max: sitesCount});
@@ -155,7 +155,7 @@ managesites_update_pluginsthemes_done = function(pType)
             }
             else
             {
-                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed Out / Errored Out. (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)';
+                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed / Errored out. (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)';
                 jQuery('#refresh-status-content').prepend('<font color="red"><strong>' + message + '</strong></font><br /><br />');
                 jQuery('#mainwp-right-now-message-content').html(message);
                 jQuery('#mainwp-right-now-message').show();
@@ -253,7 +253,7 @@ mainwp_managesites_checkBackups = function(sitesToUpdate, siteNames)
 
         var backupBox = jQuery('#managesites-backup-box');
         backupBox.attr('title', __('Checking backup settings'));
-        jQuery('div[aria-describedby="managesites-backup-box"]').find('.ui-dialog-title').html(__('Checking backup settings'));
+        jQuery('div[aria-describedby="managesites-backup-box"]').find('.ui-dialog-title').html(__('Checking backup settings...'));
         if (managesitesShowBusy)
         {
             backupBox.dialog({
@@ -294,8 +294,8 @@ mainwp_managesites_checkBackups = function(sitesToUpdate, siteNames)
             jQuery('#managesites-backup-all').show();
             jQuery('#managesites-backup-ignore').show();
 
-            backupBox.attr('title', __('Full backup required'));
-            jQuery('div[aria-describedby="managesites-backup-box"]').find('.ui-dialog-title').html(__('Full backup required'));
+            backupBox.attr('title', __('Full backup required!'));
+            jQuery('div[aria-describedby="managesites-backup-box"]').find('.ui-dialog-title').html(__('Full backup required!'));
 
 
             var siteFeedback = undefined;
@@ -407,7 +407,7 @@ var managesitesBackupDownloadRunning;
 
 managesites_backup_run = function()
 {
-    jQuery('#managesites-backupnow-content').html(dateToHMS(new Date()) + ' ' + __('Starting required backup(s).'));
+    jQuery('#managesites-backupnow-content').html(dateToHMS(new Date()) + ' ' + __('Starting required backup(s)...'));
     jQuery('#managesites-backupnow-close').prop('value', __('Cancel'));
     jQuery('#managesites-backupnow-close').prop('cancel', '1');
     managesites_backup_run_next();
@@ -417,17 +417,17 @@ managesites_backup_run_next = function()
 {
     if (managesitesBackupSites.length == 0)
     {
-        appendToDiv('#managesites-backupnow-content', __('Required backup(s) complete') + (managesitesBackupError ? ' <font color="red">'+__('with errors')+'</font>' : '') + '.');
+        appendToDiv('#managesites-backupnow-content', __('Required backup(s) completed') + (managesitesBackupError ? ' <font color="red">'+__('with errors')+'</font>' : '') + '.');
 
         jQuery('#managesites-backupnow-close').prop('cancel', '0');
         if (managesitesBackupError)
         {
             //Error...
-            jQuery('#managesites-backupnow-close').prop('value', __('Continue upgrade anyway'));
+            jQuery('#managesites-backupnow-close').prop('value', __('Continue update anyway'));
         }
         else
         {
-            jQuery('#managesites-backupnow-close').prop('value', __('Continue upgrade'));
+            jQuery('#managesites-backupnow-close').prop('value', __('Continue update'));
         }
 //        setTimeout(function() {
 //                    jQuery('#managebackups-task-status-box').dialog('destroy');
@@ -437,7 +437,7 @@ managesites_backup_run_next = function()
     }
 
     var siteName = managesitesBackupSites[0]['name'];
-    appendToDiv('#managesites-backupnow-content', '[' + siteName + '] '+__('Creating backupfile.'));
+    appendToDiv('#managesites-backupnow-content', '[' + siteName + '] '+__('Creating backup file...'));
 
     var siteId = managesitesBackupSites[0]['id'];
     managesitesBackupSites.shift();
@@ -455,7 +455,7 @@ managesites_backup_run_next = function()
         }
         else
         {
-            appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] '+__('Backupfile created successfully.'));
+            appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] '+__('Backup file created successfully!'));
 
             managesites_backupnow_download_file(pSiteId, pSiteName, response.result.type, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder);
         }
@@ -500,7 +500,7 @@ managesites_backupnow_download_file = function(pSiteId, pSiteName, type, url, fi
 
         if (response.error)
         {
-            appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] <font color="red">Error: '+ getErrorMessage(response.error) + '</font>');
+            appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] <font color="red">ERROR: '+ getErrorMessage(response.error) + '</font>');
             appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] <font color="red">'+__('Backup failed') + '</font>');
 
             managesitesBackupError = true;
@@ -510,8 +510,8 @@ managesites_backupnow_download_file = function(pSiteId, pSiteName, type, url, fi
 
         jQuery('#managesites-backupnow-status-progress[siteId="'+pSiteId+'"]').progressbar();
         jQuery('#managesites-backupnow-status-progress[siteId="'+pSiteId+'"]').progressbar('value', pSize);
-        appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] '+__('Download from site child completed.'));
-        appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] '+__('Backup complete.'));
+        appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] '+__('Download from the child site completed.'));
+        appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] '+__('Backup completed.'));
 
         var newData = mainwp_secure_data({
             action:'mainwp_backup_delete_file',
@@ -640,7 +640,7 @@ managesites_wordpress_upgrade_int = function (websiteId)
     var websiteHolder = jQuery('div.mainwp_wordpress_upgrade[site_id="' + websiteId + '"]');
 
     websiteHolder.find('.wordpressAction').hide();
-    websiteHolder.find('.wordpressInfo').html('<i class="fa fa-spinner fa-pulse"></i> '+__('Upgrading'));
+    websiteHolder.find('.wordpressInfo').html('<i class="fa fa-spinner fa-pulse"></i> '+__('Updating...'));
 
     var data = mainwp_secure_data({
         action:'mainwp_upgradewp',

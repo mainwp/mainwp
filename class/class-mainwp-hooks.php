@@ -80,7 +80,7 @@ class MainWP_Hooks {
 			}
 		}
 
-		return sprintf(__("You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %sExtensions%s page and enter your API.", 'mainwp'), '<a href="admin.php?page=Extensions">', '</a>');
+		return sprintf(__("You have a MainWP extension that does not have an active API entered. This means you will not receive updates or support.  Please visit the %sExtensions%s page and enter your API key.", 'mainwp'), '<a href="admin.php?page=Extensions">', '</a>');
 	}
 
 	public function cache_getcontext( $page ) {

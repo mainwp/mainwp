@@ -49,18 +49,18 @@ class MainWP_Setup_Wizard {
 				'handler' => array( $this, 'mwp_setup_installation_save' ),
 			),
 			'windows_localhost' => array(
-				'name'    =>  __( 'Windows Localhost', 'mainwp' ),
+				'name'    =>  __( 'Windows localhost', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_windows_locahost' ),
 				'handler' => array( $this, 'mwp_setup_windows_locahost_save' ),
 				'hidden' => true
 			),
 			'system_check' => array(
-				'name'    =>  __( 'System Checkup', 'mainwp' ),
+				'name'    =>  __( 'System checkup', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_system_requirements' ),
 				'handler' => ''
 			),
 			'hosting_setup' => array(
-				'name'    =>  __( 'Hosting Setup', 'mainwp' ),
+				'name'    =>  __( 'Hosting setup', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_hosting' ),
 				'handler' => array( $this, 'mwp_setup_hosting_save' )
 			),
@@ -80,25 +80,25 @@ class MainWP_Setup_Wizard {
 				'handler' => array( $this, 'mwp_setup_backup_save' )
 			),
 			'mainwp_register' => array(
-				'name'    =>  __( 'Mainwp Extensions Sign Up', 'mainwp' ),
+				'name'    =>  __( 'Mainwp extensions sign up', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_mainwp_register' ),
 				'handler' => '',
 				'hidden' => true
 			),
 			'purchase_extension' => array(
-				'name'    =>  __( 'Order Extension', 'mainwp' ),
+				'name'    =>  __( 'Order xtension', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_purchase_extension' ),
 				'handler' => array( $this, 'mwp_setup_purchase_extension_save' ),
 				'hidden' => true
 			),
 			'install_extension' => array(
-				'name'    =>  __( 'Install Extension', 'mainwp' ),
+				'name'    =>  __( 'Install extension', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_install_extension' ),
 				'handler' => array( $this, 'mwp_setup_install_extension_save' ),
 				'hidden' => true
 			),
 			'uptime_robot' => array(
-				'name'    =>  __( 'WP-Cron Trigger', 'mainwp' ),
+				'name'    =>  __( 'WP-Cron trigger', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_uptime_robot' ),
 				'handler' => array( $this, 'mwp_setup_uptime_robot_save' ),
 			),

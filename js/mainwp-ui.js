@@ -27,7 +27,7 @@ function load_url( href, obj, e )
 	{
 		if ( typeof e !== 'undefined' )
 			e.preventDefault();
-		jQuery('#wpbody-content').html('<div class="mainwp-loading"><img src="images/loading.gif" /> '+__('Please wait')+'</div>');
+		jQuery('#wpbody-content').html('<div class="mainwp-loading"><img src="images/loading.gif" /> '+__('Please wait...')+'</div>');
 		if ( jQuery(obj).hasClass('menu-top') )
 		{
 			var top = jQuery(obj).closest('li.menu-top');

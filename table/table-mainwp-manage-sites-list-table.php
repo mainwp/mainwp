@@ -31,7 +31,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	//    }
 
 	function no_items() {
-		echo __( 'No sites found.', 'mainwp' ) . '<br/><br/><em>' . __( 'If sites are missing from your Display but you know those sites are connected to your Dashboard be sure to check the Status drop down filter and adjust it to your needs.', 'mainwp' ) . '</em>';
+		echo __( 'No sites found.', 'mainwp' ) . '<br/><br/><em>' . __( 'If sites are missing from your display but you know those sites are connected to your dashboard be sure to check the Status drop down filter and adjust it to your needs.', 'mainwp' ) . '</em>';
 	}
 
 
@@ -102,7 +102,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 	function column_site_actions( $item ) {
 		if ( $item['sync_errors'] != '' ) {
-			$reconnect_lnk = '<a class="mainwp_site_reconnect" href="#" siteid="' . $item['id'] . '" style="margin-right: .5em;" title="Reconnect Child Site"><i class="fa fa-plug fa-lg"></i></a>';
+			$reconnect_lnk = '<a class="mainwp_site_reconnect" href="#" siteid="' . $item['id'] . '" style="margin-right: .5em;" title="Reconnect child site"><i class="fa fa-plug fa-lg"></i></a>';
 		} else {
 			$reconnect_lnk = '';
 		}
@@ -110,10 +110,10 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		if ( ! mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) {
 			$dashboard_lnk = '';
 		} else {
-			$dashboard_lnk = '<a href="admin.php?page=managesites&dashboard=' . $item['id'] . '" style="margin-right: .5em;" title="Open Child Site Dashboard"><i class="fa fa-tachometer fa-lg"></i></a>';
+			$dashboard_lnk = '<a href="admin.php?page=managesites&dashboard=' . $item['id'] . '" style="margin-right: .5em;" title="Open child site dashboard"><i class="fa fa-tachometer fa-lg"></i></a>';
 		}
 
-		$sync_lnk = '<a href="#" class="managesites_syncdata" style="margin-right: .5em;" title="Sync Child Site"><i class="fa fa-refresh fa-lg"></i></a>';
+		$sync_lnk = '<a href="#" class="managesites_syncdata" style="margin-right: .5em;" title="Sync child site"><i class="fa fa-refresh fa-lg"></i></a>';
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
 			$edit_lnk = '';
@@ -325,10 +325,10 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 	function column_url( $item ) {
 		$actions = array(
-			'open' => sprintf( '<a href="admin.php?page=SiteOpen&websiteid=%1$s" class="open_wpadmin">' . __( 'Open WP Admin', 'mainwp' ) . '</a> (<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=%1$s" class="open_newwindow_wpadmin" target="_blank">' . __( 'New Window', 'mainwp' ) . '</a>)', $item['id'] ),
+			'open' => sprintf( '<a href="admin.php?page=SiteOpen&websiteid=%1$s" class="open_wpadmin">' . __( 'Open WP Admin', 'mainwp' ) . '</a> (<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=%1$s" class="open_newwindow_wpadmin" target="_blank">' . __( 'New window', 'mainwp' ) . '</a>)', $item['id'] ),
 			'updates' => sprintf( '<a href="admin.php?page=managesites&updateid=%1$s" class="open_updates">' . __( 'Updates', 'mainwp' ) . '</a>', $item['id'] ),
-			'test' => '<a href="#" class="mainwp_site_testconnection" class="test_connection">' . __( 'Test Connection', 'mainwp' ) . '</a> <span style="display: none;"><i class="fa fa-spinner fa-pulse"></i>' . __( 'Testing Connection', 'mainwp' ) . '</span>',
-			'scan' => '<a href="admin.php?page=managesites&scanid=' . $item['id'] . '">' . __( 'Security Scan', 'mainwp' ) . '</a>',
+			'test' => '<a href="#" class="mainwp_site_testconnection" class="test_connection">' . __( 'Test connection', 'mainwp' ) . '</a> <span style="display: none;"><i class="fa fa-spinner fa-pulse"></i>' . __( 'Testing connection...', 'mainwp' ) . '</span>',
+			'scan' => '<a href="admin.php?page=managesites&scanid=' . $item['id'] . '">' . __( 'Security scan', 'mainwp' ) . '</a>',
 		);
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
@@ -375,7 +375,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		}
 
 		if ( mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
-			$output .= sprintf( '<a href="admin.php?page=managesites&backupid=%s">' . '<i class="fa fa-hdd-o"></i> ' . __( 'Backup Now', 'mainwp' ) . '</a>', $item['id'] );
+			$output .= sprintf( '<a href="admin.php?page=managesites&backupid=%s">' . '<i class="fa fa-hdd-o"></i> ' . __( 'Backup now', 'mainwp' ) . '</a>', $item['id'] );
 		}
 
 		return $output;
@@ -386,7 +386,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		if ( $item['dtsSync'] != 0 ) {
 			$output = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $item['dtsSync'] ) ) . '<br />';
 		}
-		$output .= sprintf( '<a href="#" class="managesites_syncdata">' . '<i class="fa fa-refresh"></i> ' . __( 'Sync Data', 'mainwp' ) . '</a>', $item['id'] );
+		$output .= sprintf( '<a href="#" class="managesites_syncdata">' . '<i class="fa fa-refresh"></i> ' . __( 'Sync data', 'mainwp' ) . '</a>', $item['id'] );
 
 		return $output;
 	}
@@ -396,7 +396,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		if ( $item['last_post_gmt'] != 0 ) {
 			$output .= MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $item['last_post_gmt'] ) ) . '<br />';
 		}
-		$output .= sprintf( '<a href="admin.php?page=PostBulkAdd&select=%s">' . '<i class="fa fa-plus"></i> ' . __( 'Add New', 'mainwp' ) . '</a>', $item['id'] );
+		$output .= sprintf( '<a href="admin.php?page=PostBulkAdd&select=%s">' . '<i class="fa fa-plus"></i> ' . __( 'Add new', 'mainwp' ) . '</a>', $item['id'] );
 
 		return $output;
 	}
@@ -415,15 +415,15 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		$actions = array(
 			'sync'            => __( 'Sync', 'mainwp' ),
 			'delete'          => __( 'Delete', 'mainwp' ),
-			'test_connection' => __( 'Test Connection', 'mainwp' ),
+			'test_connection' => __( 'Test connection', 'mainwp' ),
 			'reconnect'       => __( 'Reconnect', 'mainwp' ),
 			'open_wpadmin'    => __( 'Open WP Admin', 'mainwp' ),
-			'open_frontpage'  => __( 'Open Frontpage', 'mainwp' ),
-			'open_frontpage'  => __( 'Open Frontpage', 'mainwp' ),
-			'update_plugins'  => __( 'Update Plugins', 'mainwp' ),
-			'update_themes'   => __( 'Update Themes', 'mainwp' ),
-			'update_wpcore'   => __('Update Wordpress', 'mainwp'),
-			'update_translations'   => __('Update Translations', 'mainwp'),
+			'open_frontpage'  => __( 'Open Front Page', 'mainwp' ),
+			'open_frontpage'  => __( 'Open Front Page', 'mainwp' ),
+			'update_plugins'  => __( 'Update plugins', 'mainwp' ),
+			'update_themes'   => __( 'Update themes', 'mainwp' ),
+			'update_wpcore'   => __('Update WordPress', 'mainwp'),
+			'update_translations'   => __('Update translations', 'mainwp'),
 		);
 
 		return apply_filters( 'mainwp_managesites_bulk_actions', $actions );
@@ -698,10 +698,10 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 				<input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
 				<select name="status">
 					<option value=""><?php _e( 'All Statuses', 'mainwp' ); ?></option>
-					<option value="online" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'online' ? 'selected' : '' ); ?>>Online</option>
-					<option value="offline" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'offline' ? 'selected' : '' ); ?>>Offline</option>
-					<option value="disconnected" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'disconnected' ? 'selected' : '' ); ?>>Disconnected</option>
-					<option value="update" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'update' ? 'selected' : '' ); ?>>Available update</option>
+					<option value="online" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'online' ? 'selected' : '' ); ?>><?php _e( 'Online', 'mainwp' ); ?></option>
+					<option value="offline" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'offline' ? 'selected' : '' ); ?>><?php _e( 'Offline', 'mainwp' ); ?></option>
+					<option value="disconnected" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'disconnected' ? 'selected' : '' ); ?>><?php _e( 'Disconnected', 'mainwp' ); ?></option>
+					<option value="update" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'update' ? 'selected' : '' ); ?>><?php _e( 'Available update', 'mainwp' ); ?></option>
 				</select>
 				<input type="submit" value="<?php _e( 'Display', 'mainwp' ); ?>" class="button" name="">
 			</form>
@@ -723,7 +723,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 					}
 					?>
 				</datalist>
-				<input type="submit" value="<?php _e( 'Search Sites', 'mainwp' ); ?>" class="button" name=""/>
+				<input type="submit" value="<?php _e( 'Search sites', 'mainwp' ); ?>" class="button" name=""/>
 			</form>
 		</div>
 		<?php

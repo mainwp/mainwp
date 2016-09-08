@@ -15,7 +15,7 @@ class MainWP_SEO {
 		$websites = MainWP_DB::Instance()->query( $sql );
 
 		if ( count( $websites ) == 0 ) {
-			echo __( 'No Websites', 'mainwp' );
+			echo __( 'No websites found', 'mainwp' );
 		} else {
 			?>
 			<style type="text/css">
@@ -26,8 +26,8 @@ class MainWP_SEO {
 			<br/>
 			<table id="mainwp-seo-list">
 				<thead align="left">
-				<th style="padding-bottom: 1em; cursor: pointer;" class="sortable"><?php _e( 'Child Site', 'mainwp' ); ?></th>
-				<th style="padding-bottom: 1em; cursor: pointer;" class="sortable"><?php _e( 'Alexa Rank', 'mainwp' ); ?></th>
+				<th style="padding-bottom: 1em; cursor: pointer;" class="sortable"><?php _e( 'Child site', 'mainwp' ); ?></th>
+				<th style="padding-bottom: 1em; cursor: pointer;" class="sortable"><?php _e( 'Alexa rank', 'mainwp' ); ?></th>
 				<!--            			<th style="padding-bottom: 1em; cursor: pointer;" class="sortable"><?php _e( 'Google PR', 'mainwp' ); ?></th>-->
 				<th style="padding-bottom: 1em; cursor: pointer;" class="sortable"><?php _e( 'Indexed', 'mainwp' ); ?></th>
 				</thead>

@@ -185,11 +185,11 @@ class MainWP_Page {
 					</p>
 				</div>
 			</div>
-			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select Sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
+			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
 			<div style="clear: both;"></div>
-            <input type="button" name="mainwp_show_pages" id="mainwp_show_pages" class="button-primary button button-hero button-right" value="<?php _e( 'Show Pages', 'mainwp' ); ?>"/>
+            <input type="button" name="mainwp_show_pages" id="mainwp_show_pages" class="button-primary button button-hero button-right" value="<?php _e( 'Show pages', 'mainwp' ); ?>"/>
             <br/><br/>
-            <span id="mainwp_pages_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e( 'Grabbing information from Child Sites', 'mainwp' ) ?></em></span>
+            <span id="mainwp_pages_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e( 'Grabbing information from child sites', 'mainwp' ) ?></em></span>
             <br/><br/>
 		</div>
 		<div class="clear"></div>
@@ -198,10 +198,10 @@ class MainWP_Page {
 		<div id="mainwp_pages_main" <?php if ( $cachedSearch != null ) { echo 'style="display: block;"'; } ?>>
 			<div class="alignleft">
 				<select name="bulk_action" id="mainwp_bulk_action">
-					<option value="none"><?php _e( 'Bulk Action','mainwp' ); ?></option>
-					<option value="trash"><?php _e( 'Move to Trash','mainwp' ); ?></option>
+					<option value="none"><?php _e( 'Bulk action','mainwp' ); ?></option>
+					<option value="trash"><?php _e( 'Move to trash','mainwp' ); ?></option>
 					<option value="restore"><?php _e( 'Restore','mainwp' ); ?></option>
-					<option value="delete"><?php _e( 'Delete Permanently','mainwp' ); ?></option>
+					<option value="delete"><?php _e( 'Delete permanently','mainwp' ); ?></option>
 				</select>
 				<input type="button" name="" id="mainwp_bulk_page_action_apply" class="button" value="<?php esc_attr_e( 'Apply','mainwp' ); ?>"/>
 			</div>
@@ -423,12 +423,12 @@ class MainWP_Page {
 							<a class="page_submitrestore" title="Restore this item" href="#"><?php _e( 'Restore','mainwp' ); ?></a>
 						</span>
 						<span class="trash">
-							| <a class="page_submitdelete_perm" title="Delete this item permanently" href="#"><?php _e('Delete Permanently','mainwp'); ?></a>
+							| <a class="page_submitdelete_perm" title="Delete this item permanently" href="#"><?php _e('Delete permanently','mainwp'); ?></a>
 						</span>
 						<?php } ?>
 					</div>
 					<div class="row-actions-working">
-						<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait','mainwp' ); ?>
+						<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...','mainwp' ); ?>
 					</div>
 				</td>
 				<td class="author column-author">
@@ -470,27 +470,27 @@ class MainWP_Page {
 
 	public static function publish() {
 		MainWP_Recent_Posts::action( 'publish' );
-		die( json_encode( array( 'result' => 'Page has been published' ) ) );
+		die( json_encode( array( 'result' => 'Page has been published!' ) ) );
 	}
 
 	public static function unpublish() {
 		MainWP_Recent_Posts::action( 'unpublish' );
-		die( json_encode( array( 'result' => 'Page has been unpublished' ) ) );
+		die( json_encode( array( 'result' => 'Page has been unpublished!' ) ) );
 	}
 
 	public static function trash() {
 		MainWP_Recent_Posts::action( 'trash' );
-		die( json_encode( array( 'result' => 'Page has been moved to trash' ) ) );
+		die( json_encode( array( 'result' => 'Page has been moved to trash!' ) ) );
 	}
 
 	public static function delete() {
 		MainWP_Recent_Posts::action( 'delete' );
-		die( json_encode( array( 'result' => 'Page has been permanently deleted' ) ) );
+		die( json_encode( array( 'result' => 'Page has been permanently deleted!' ) ) );
 	}
 
 	public static function restore() {
 		MainWP_Recent_Posts::action( 'restore' );
-		die( json_encode( array( 'result' => 'Page has been restored' ) ) );
+		die( json_encode( array( 'result' => 'Page has been restored!' ) ) );
 	}
 
 	public static function renderBulkAdd() {
@@ -690,8 +690,8 @@ class MainWP_Page {
 		} // no skip posting
 		?>
 		<br/>
-		<a href="<?php echo get_admin_url() ?>admin.php?page=PageBulkAdd" class="add-new-h2" target="_top"><?php _e( 'Add New','mainwp' ); ?></a>
-		<a href="<?php echo get_admin_url() ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php _e('Return to Dashboard','mainwp'); ?></a>
+		<a href="<?php echo get_admin_url() ?>admin.php?page=PageBulkAdd" class="add-new-h2" target="_top"><?php _e( 'Add new','mainwp' ); ?></a>
+		<a href="<?php echo get_admin_url() ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php _e('Return to dashboard','mainwp'); ?></a>
 	</div>
 	<?php
 	}
@@ -700,7 +700,7 @@ class MainWP_Page {
 		self::renderHeader( 'PagesHelp' );
 		?>
 		<div style="text-align: center">
-			<a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e( 'Show Quick Start Guide','mainwp' ); ?></a>
+			<a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e( 'Show Quick Start guide','mainwp' ); ?></a>
 		</div>
 		<div  class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
 			<span><a href="#" class="mainwp-show-qsg" number="1"><?php _e( 'Manage Pages','mainwp' ) ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg"  number="2"><?php _e( 'Create a New Page','mainwp' ) ?></a></span>

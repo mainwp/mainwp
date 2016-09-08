@@ -108,7 +108,7 @@ public static function renderFooter( $shownPage ) {
 					<th scope="col" class="manage-column column-posts mwp-not-generate-row" style="width: 1px;">&nbsp;</th>
 					<th scope="col" class="manage-column sorted" style="">
 						<span><?php _e( 'Server Configuration', 'mainwp' ); ?></span></th>
-					<th scope="col" class="manage-column column-posts" style=""><?php _e( 'Required Value', 'mainwp' ); ?></th>
+					<th scope="col" class="manage-column column-posts" style=""><?php _e( 'Required value', 'mainwp' ); ?></th>
 					<th scope="col" class="manage-column column-posts" style=""><?php _e( 'Value', 'mainwp' ); ?></th>
 					<th scope="col" class="manage-column column-posts" style=""><?php _e( 'Status', 'mainwp' ); ?></th>
 				</tr>

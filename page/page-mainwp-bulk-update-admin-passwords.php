@@ -44,15 +44,15 @@ class MainWP_Bulk_Update_Admin_Passwords {
 					}
 				}
 				if ( ( $_POST['select_by'] == 'group' && count( $selected_groups ) == 0 ) || ( $_POST['select_by'] == 'site' && count( $selected_sites ) == 0 ) ) {
-					$errors[] = __( 'Please select the sites or groups where you want to change the admin password.', 'mainwp' );
+					$errors[] = __( 'Please select the sites or groups where you want to change the administrator password.', 'mainwp' );
 				}
 			} else {
-				$errors[] = __( 'Please select whether you want to change the admin password for specific sites or groups.', 'mainwp' );
+				$errors[] = __( 'Please select whether you want to change the administrator password for specific sites or groups.', 'mainwp' );
 			}
 			if ( ! isset( $_POST['pass1'] ) || $_POST['pass1'] == '' || ! isset( $_POST['pass2'] ) || $_POST['pass2'] == '' ) {
 				$errors[] = __( 'Please enter the password twice.', 'mainwp' );
 			} else if ( $_POST['pass1'] != $_POST['pass2'] ) {
-				$errors[] = __( 'Please enter the same password in the two password fields.', 'mainwp' );
+				$errors[] = __( 'Please enter the same password in the both password fields.', 'mainwp' );
 			}
 			if ( count( $errors ) == 0 ) {
 				$show_form = false;
@@ -130,7 +130,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				</div>
 				<br/>
 				<a href="<?php echo get_admin_url() ?>admin.php?page=UpdateAdminPasswords" class="add-new-h2" target="_top"><?php esc_html_e( 'Update admin passwords', 'mainwp' ); ?></a>
-				<a href="<?php echo get_admin_url() ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php esc_html_e( 'Return to Dashboard', 'mainwp' ); ?></a>
+				<a href="<?php echo get_admin_url() ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php esc_html_e( 'Return to dashboard', 'mainwp' ); ?></a>
 			</div>
 			<?php
 		} else {
@@ -143,12 +143,12 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				<input type="hidden" name="security" value="<?php echo wp_create_nonce( 'mainwp_updateadminpassword' ); ?>"/>
 
 				<div class="mainwp_config_box_right">
-					<?php MainWP_UI::select_sites_box( __( 'Select Sites to Update', 'mainwp' ) ); ?>
+					<?php MainWP_UI::select_sites_box( __( 'Select sites to update', 'mainwp' ) ); ?>
 				</div>
 
 				<div class="mainwp_config_box_left postbox mainwp-postbox">
 					<h3 class="mainwp_box_title">
-						<i class="fa fa-key"></i> <?php _e( 'Bulk Update Administrator Passwords', 'mainwp' ); ?></h3>
+						<i class="fa fa-key"></i> <?php _e( 'Bulk update administrator passwords', 'mainwp' ); ?></h3>
 
 					<div class="inside">
 						<table class="form-table">
@@ -156,7 +156,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							global $wp_version;
 							if ( version_compare( '4.3-alpha', $wp_version, '>=' ) ) : ?>
 								<tr class="form-field form-required">
-									<th scope="row"><label for="pass1"><?php _e( 'Enter New Password ', 'mainwp' ); ?>
+									<th scope="row"><label for="pass1"><?php _e( 'Enter new password ', 'mainwp' ); ?>
 											<br/><span class="description"><?php _e( '(twice, required)', 'mainwp' ); ?></span></label>
 									</th>
 									<td>
@@ -174,7 +174,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								<tr class="form-field form-required user-pass1-wrap">
 									<th scope="row">
 										<label for="pass1">
-											<?php _e( 'New Password', 'mainwp' ); ?>
+											<?php _e( 'New password', 'mainwp' ); ?>
 											<span class="description hide-if-js"><?php esc_html_e( '(required)', 'mainwp' ); ?></span>
 										</label>
 									</th>
@@ -198,7 +198,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 									</td>
 								</tr>
 								<tr class="form-field form-required user-pass2-wrap hide-if-js">
-									<td scope="row"><label for="pass2"><?php _e( 'Repeat Password', 'mainwp' ); ?>
+									<td scope="row"><label for="pass2"><?php _e( 'Repeat password', 'mainwp' ); ?>
 											<span class="description"><?php _e( '(required)', 'mainwp' ); ?></span></label></td>
 									<td>
 										<input name="pass2" type="password" id="pass2" value="<?php echo esc_attr( $initial_password ); ?>" autocomplete="off"/>
@@ -215,7 +215,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							<tr>
 								<td></td>
 								<td colspan="2">
-									<input type="submit" name="updateadminpassword" id="bulk_updateadminpassword" class="button-primary button button-hero" value="<?php _e( 'Update Now', 'mainwp' ); ?>"/>
+									<input type="submit" name="updateadminpassword" id="bulk_updateadminpassword" class="button-primary button button-hero" value="<?php _e( 'Update now', 'mainwp' ); ?>"/>
 								</td>
 							</tr>
 						</table>
@@ -233,10 +233,10 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		MainWP_User::renderHeader( 'AdminPasswordsHelp' );
 		?>
 		<div style="text-align: center">
-			<a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e( 'Show Quick Start Guide', 'mainwp' ); ?></a>
+			<a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e( 'Show Quick Start guide', 'mainwp' ); ?></a>
 		</div>
 		<div class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
-			<span><a href="#" class="mainwp-show-qsg" number="1"><?php _e( 'Manage Admin Passwords', 'mainwp' ) ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
+			<span><a href="#" class="mainwp-show-qsg" number="1"><?php _e( 'Manage administrtor passwords', 'mainwp' ) ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
 				</a></span>
 
 			<div class="clear"></div>

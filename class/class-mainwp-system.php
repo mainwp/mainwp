@@ -13,7 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
-	public static $version = '3.0';
+	public static $version = '3.1';
 	//Singleton
 	private static $instance = null;
 
@@ -92,10 +92,6 @@ class MainWP_System {
 
 		MainWP_Extensions::init();
 
-		add_action( 'in_plugin_update_message-' . $this->plugin_slug, array(
-			$this,
-			'in_plugin_update_message',
-		), 10, 2 );
 		add_action( 'init', array( &$this, 'localization' ) );
 
 		// define the alternative API for updating checking
@@ -363,18 +359,6 @@ class MainWP_System {
 		$this->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
 	}
 
-	public function in_plugin_update_message( $plugin_data, $r ) {
-		if ( empty( $r ) || ! is_object( $r ) ) {
-			return;
-		}
-
-		if ( property_exists( $r, 'key_status' ) && $r->key_status == 'NOK' ) {
-			echo '<br />Your Log-in and Password are invalid, please update your login settings <a href="' . admin_url( 'admin.php?page=Settings' ) . '">here</a>.';
-		} else if ( property_exists( $r, 'package' ) && empty( $r->package ) ) {
-			echo '<br />Your update license has expired, please log into <a href="https://mainwp.com/member">the members area</a> and upgrade your support and update license.';
-		}
-	}
-
 	public function localization() {
 		load_plugin_textdomain( 'mainwp', false, dirname( dirname( plugin_basename( __FILE__ ) ) ) . '/languages/' );
 	}
@@ -405,13 +389,13 @@ class MainWP_System {
 				<span style="float: right;"><a class="mainwp-events-notice-dismiss" notice="multi_site"
 				                               style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
 				<span><i class="fa fa-exclamation-triangle fa-2x mwp-red"></i> <strong><?php esc_html_e( 'Warning! WordPress Multisite detected.', 'mainwp' ); ?></strong></span>
-				<p><?php esc_html_e( 'MainWP Plugin is not designed nor fully tested on WordPress Multi Site installations. Varisous features may not work propely. We highly recommend insallting it on a Single Site installation!', 'mainwp' ); ?></p>
+				<p><?php esc_html_e( 'MainWP plugin is not designed nor fully tested on WordPress Multisite installations. Various features may not work properly. We highly recommend installing it on a single site installation!', 'mainwp' ); ?></p>
 			</div>
 			<?php
 		}
 
 		if ( MainWP_DB::Instance()->getWebsitesCount() == 0 ) {
-			echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please <a href="' . admin_url() . 'admin.php?page=managesites&do=new">enter your first site</a>.</strong></p></div>';
+			echo '<div id="message" class="mainwp-api-message-valid updated fade"><p><strong>MainWP is almost ready. Please, <a href="' . admin_url() . 'admin.php?page=managesites&do=new">connect your first site</a>.</strong></p></div>';
 			update_option( 'mainwp_first_site_events_notice', 'yes' );
 		} else {
 			if ( get_option( 'mainwp_first_site_events_notice' ) == 'yes' ) {
@@ -420,31 +404,10 @@ class MainWP_System {
 					<p>
 						<span style="float: right;"><a class="mainwp-events-notice-dismiss" notice="first_site"
 						                               style="text-decoration: none;" href="#"><i
-									class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span><span><strong><?php echo sprintf( __( 'Warning: Your setup is almost complete we recommend following the directions in the following help doc to be sure your scheduled events occur as expected %sScheduled Events%s', 'mainwp' ), '<a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">', '</a>' ) ; ?></strong></span>
+									class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span><span><strong><?php echo sprintf( __( 'Attention! Your setup is almost complete we recommend following the directions in the following help document to be sure your scheduled events occur as expected %sScheduled Events%s', 'mainwp' ), '<a href="http://docs.mainwp.com/backups-scheduled-events-occurring/">', '</a>' ) ; ?></strong></span>
 					</p>
 				</div>
 				<?php
-			}
-		}
-
-		if ( $this->current_version == '2.0.22' || $this->current_version == '2.0.23' ) {
-			if ( get_option( 'mainwp_installation_warning_hide_the_notice' ) == 'yes' ) {
-				if ( get_option( 'mainwp_fixed_security_2022' ) != 1 ) {
-					?>
-					<div class="mainwp_info-box-red">
-						<span><strong><?php esc_html_e( 'This update includes additional security hardening.', 'mainwp' ); ?></strong>
-							<p><?php esc_html_e( 'In order to complete the security hardening process follow these steps:', 'mainwp' ); ?></p>
-							<ol>
-								<li><?php esc_html_e( 'Update all your Child Sites to the latest version MainWP Child.', 'mainwp' ); ?></li>
-								<li><?php echo sprintf( __( 'Then Go to the MainWP Tools Page by clicking %sHere%s.', 'mainwp' ), '<a style="text-decoration: none;" href="admin.php?page=MainWPTools" "MainWP Tools">', '</a>' ) ; ?></li>
-								<li><?php esc_html_e( 'Press the Establish New Connection Button and Let it Run.', 'mainwp' ); ?></li>
-								<li><?php esc_html_e( 'Once completed the security hardening is done.', 'mainwp' ); ?></li>
-							</ol>
-							<em><?php esc_html_e( 'This message will automatically go away once you have completed the hardening process.', 'mainwp' ); ?></em>
-						</span>
-					</div>
-					<?php
-				}
 			}
 		}
 
@@ -455,9 +418,9 @@ class MainWP_System {
 					<div id="" class="mainwp-events-notice error fade">
 						<p>
 							<span style="float: right;"><a class="mainwp-events-notice-dismiss" notice="trust_child" style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
-							<strong><?php esc_html_e( 'You have not set your MainWP Child Plugins for auto updates, this is highly recommended', 'mainwp' ); ?></strong>
-							&nbsp;<a id="mainwp_btn_autoupdate_and_trust" class="button-primary" href="#"><?php esc_html_e( 'Turn On', 'mainwp' ); ?></a>
-							&nbsp;<a class="button" href="//docs.mainwp.com/setting-mainwp-as-a-trusted-plugin/" target="_blank"><?php esc_html_e( 'Learn More', 'mainwp' ); ?></a>
+							<strong><?php esc_html_e( 'You have not set your MainWP Child plugins for auto updates, this is highly recommended!', 'mainwp' ); ?></strong>
+							&nbsp;<a id="mainwp_btn_autoupdate_and_trust" class="button-primary" href="#"><?php esc_html_e( 'Turn on', 'mainwp' ); ?></a>
+							&nbsp;<a class="button" href="//docs.mainwp.com/setting-mainwp-as-a-trusted-plugin/" target="_blank"><?php esc_html_e( 'Learn more', 'mainwp' ); ?></a>
 						</p>
 					</div>
 					<?php
@@ -505,18 +468,18 @@ class MainWP_System {
 					<span style="font-size: 14px;">
 						<?php esc_html_e( 'Hi, I noticed you having been using MainWP for over 30 days and that\'s awesome!', 'mainwp' ); ?>
 						<br/>
-						<?php esc_html_e( 'Could you please do me a BIG favor and give it a 5-star rating on WordPress?  Reviews from users like you really help the MainWP community to grow.', 'mainwp' ); ?>
+						<?php esc_html_e( 'Could you please do me a BIG favor and give it a 5-star rating on WordPress? Reviews from users like you really help the MainWP community to grow.', 'mainwp' ); ?>
 						<br/><br/>
-						<?php esc_html_e( 'Thank You', 'mainwp' ); ?><br/>
+						<?php esc_html_e( 'Thank You!', 'mainwp' ); ?><br/>
 						<?php esc_html_e( '~ Dennis', 'mainwp' ); ?><br/><br/>
-						<a href="https://wordpress.org/support/view/plugin-reviews/mainwp#postform" target="_blank" class="button mainwp-upgrade-button"><?php esc_html_e( 'Ok, you deserve', 'mainwp' ); ?>
+						<a href="https://wordpress.org/support/view/plugin-reviews/mainwp#postform" target="_blank" class="button mainwp-upgrade-button"><?php esc_html_e( 'Ok, you deserve!', 'mainwp' ); ?>
 							<i class="fa fa-star"></i>
 							<i class="fa fa-star"></i>
 							<i class="fa fa-star"></i>
 							<i class="fa fa-star"></i>
 							<i class="fa fa-star"></i>
-						</a>&nbsp;&nbsp;&nbsp;&nbsp; <a href="" class="button mainwp-events-notice-dismiss" notice="request_reviews1"><?php esc_html_e( 'Nope, maybe later', 'mainwp' ); ?></a>
-						<a href="" class="button mainwp-events-notice-dismiss" notice="request_reviews1_forever"><?php esc_html_e( 'I already did', 'mainwp' ); ?></a>
+						</a>&nbsp;&nbsp;&nbsp;&nbsp; <a href="" class="button mainwp-events-notice-dismiss" notice="request_reviews1"><?php esc_html_e( 'Nope, maybe later.', 'mainwp' ); ?></a>
+						<a href="" class="button mainwp-events-notice-dismiss" notice="request_reviews1_forever"><?php esc_html_e( 'I already did.', 'mainwp' ); ?></a>
 					</span>
 				</p>
 			</div>
@@ -525,14 +488,14 @@ class MainWP_System {
 				<p>
 					<span style="float: right;"><a class="mainwp-events-notice-dismiss" notice="request_reviews2" style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
 					<span style="font-size: 14px;">
-						<?php esc_html_e( 'Hi, I noticed you have a few MainWP Extensions installed and that\'s awesome!', 'mainwp' ); ?>
+						<?php esc_html_e( 'Hi, I noticed you have a few MainWP extensions installed and that\'s awesome!', 'mainwp' ); ?>
 						<br/>
-						<?php esc_html_e( 'Could you please do me a BIG favor and give it a 5-star rating on WordPress?  Reviews from users like you really help the MainWP community to grow.', 'mainwp' ); ?>
+						<?php esc_html_e( 'Could you please do me a BIG favor and give it a 5-star rating on WordPress? Reviews from users like you really help the MainWP community to grow.', 'mainwp' ); ?>
 						<br/><br/>
 						<?php esc_html_e( 'Thank You', 'mainwp' ); ?><br/>
 						<?php esc_html_e( '~ Dennis', 'mainwp' ); ?><br/><br/>
 						<a href="https://wordpress.org/support/view/plugin-reviews/mainwp#postform" target="_blank" class="button mainwp-upgrade-button">
-							<?php esc_html_e( 'Ok, you deserve', 'mainwp' ); ?>
+							<?php esc_html_e( 'Ok, you deserve!', 'mainwp' ); ?>
 							<i class="fa fa-star"></i>
 							<i class="fa fa-star"></i>
 							<i class="fa fa-star"></i>
@@ -540,8 +503,8 @@ class MainWP_System {
 							<i class="fa fa-star"></i>
 						</a>
 						&nbsp;&nbsp;&nbsp;&nbsp;
-						<a href="" class="button mainwp-events-notice-dismiss" notice="request_reviews2"><?php esc_html_e( 'Nope, maybe later', 'mainwp' ); ?></a>
-						<a href="" class="button mainwp-events-notice-dismiss" notice="request_reviews2_forever"><?php esc_html_e( 'I already did', 'mainwp' ); ?></a>
+						<a href="" class="button mainwp-events-notice-dismiss" notice="request_reviews2"><?php esc_html_e( 'Nope, maybe later.', 'mainwp' ); ?></a>
+						<a href="" class="button mainwp-events-notice-dismiss" notice="request_reviews2_forever"><?php esc_html_e( 'I already did.', 'mainwp' ); ?></a>
 					</span>
 				</p>
 			</div>
@@ -625,7 +588,7 @@ class MainWP_System {
 		$obj              = new stdClass();
 		$obj->slug        = $pRslt->slug;
 		$obj->new_version = $pRslt->latest_version;
-		$obj->url         = 'http://mainwp.com/';
+		$obj->url         = 'https://mainwp.com/';
 		$obj->package     = $pRslt->download_url;
 		$obj->key_status  = $pRslt->key_status;
 
@@ -885,7 +848,7 @@ class MainWP_System {
 						$mail = '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>
                                  <div></div>
                                  ' . $mail . '
-                                 Update Key: (<strong><span style="color:#008000">Trusted</span></strong>) will be auto updated within 24 hours. (<strong><span style="color:#ff0000">Not Trusted</span></strong>) you will need to log into your Main Dashboard and update
+                                 Update Key: (<strong><span style="color:#008000">Trusted</span></strong>) will be auto updated within 24 hours. (<strong><span style="color:#ff0000">Not Trusted</span></strong>) you will need to log into your MainWP Dashboard and update
                                  <div> </div>
                                  <div>If your MainWP is configured to use Auto Updates these upgrades will be installed in the next 24 hours. To find out how to enable automatic updates please see the FAQs below.</div>
                                  <div><a href="http://docs.mainwp.com/marking-a-plugin-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-plugin-as-trusted/</a></div>
@@ -1668,8 +1631,8 @@ class MainWP_System {
 	}
 
 	function post_updated_messages( $messages ) {
-		$messages['post'][98] = 'Wordpress Seo values saved.';
-		$messages['post'][99] = 'You have to select the sites you wish to publish to.';
+		$messages['post'][98] = __( 'WordPress SEO values have been saved.', 'mainwp' );
+		$messages['post'][99] = __( 'You have to select the sites you wish to publish to.', 'mainwp' );
 
 		return $messages;
 	}
@@ -1681,8 +1644,8 @@ class MainWP_System {
 		?>
 		<div id="mainwp-installation-warning" class="mainwp_info-box-red">
 			<h3><?php esc_html_e( 'Stop! Before you continue,', 'mainwp' ); ?></h3>
-			<strong><?php esc_html_e( 'We HIGHLY recommend a NEW WordPress install for your Main Dashboard.', 'mainwp' ); ?></strong><br/><br/>
-			<?php echo sprintf( __( 'Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard off an active site. Most hosting companies provide free subdomains %s and we recommend creating one if you do not have a specific dedicated domain to run your Network Main Dashboard.', 'mainwp' ), '("<strong>demo.yourdomain.com</strong>")' ) ; ?><br/><br/>
+			<strong><?php esc_html_e( 'We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.', 'mainwp' ); ?></strong><br/><br/>
+			<?php echo sprintf( __( 'Using a new WordPress install will help to cut down on plugin conflicts and other issues that can be caused by trying to run your MainWP Dashboard off an active site. Most hosting companies provide free subdomains %s and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.', 'mainwp' ), '("<strong>demo.yourdomain.com</strong>")' ) ; ?><br/><br/>
 			<?php echo sprintf( __( 'If you are not sure how to set up a subdomain here is a quick step by step with %s, %s or %s. If you are not sure what you have, contact your hosting companies support.', 'mainwp' ), '<a href="http://docs.mainwp.com/creating-a-subdomain-in-cpanel/">cPanel</a>', '<a href="http://docs.mainwp.com/creating-a-subdomain-in-plesk/">Plesk</a>', '<a href="http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/">Direct Admin</a>' ) ; ?>
 			<br/><br/>
 			<div style="text-align: center">

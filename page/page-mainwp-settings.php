@@ -186,7 +186,7 @@ class MainWP_Settings {
 			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'SettingsAdvanced' ); ?>" />
 			<div class="postbox" id="mainwp-advanced-options">
 				<h3 class="mainwp_box_title">
-					<span><i class="fa fa-cog"></i> <?php _e( 'Cross IP Settings', 'mainwp' ); ?></span></h3>
+					<span><i class="fa fa-cog"></i> <?php _e( 'Cross IP settings', 'mainwp' ); ?></span></h3>
 
 				<div class="inside">
 
@@ -214,7 +214,7 @@ class MainWP_Settings {
 			</div>
 			<div class="postbox" id="mainwp-advanced-options">
 				<h3 class="mainwp_box_title">
-					<span><i class="fa fa-cog"></i> <?php _e( 'IP Settings', 'mainwp' ); ?></span></h3>
+					<span><i class="fa fa-cog"></i> <?php _e( 'IP settings', 'mainwp' ); ?></span></h3>
 
 				<div class="inside">
 					<table class="form-table">
@@ -241,7 +241,7 @@ class MainWP_Settings {
 			</div>
 			<div class="postbox" id="mainwp-advanced-options">
 				<h3 class="mainwp_box_title">
-					<span><i class="fa fa-cog"></i> <?php _e( 'Frontend Request Settings', 'mainwp' ); ?></span></h3>
+					<span><i class="fa fa-cog"></i> <?php _e( 'Frontend request settings', 'mainwp' ); ?></span></h3>
 
 				<div class="inside">
 					<table class="form-table">
@@ -268,7 +268,7 @@ class MainWP_Settings {
 			</div>
 			<div class="postbox" id="mainwp-advanced-options">
 				<h3 class="mainwp_box_title">
-					<span><i class="fa fa-cog"></i> <?php _e( 'SSL Settings', 'mainwp' ); ?></span></h3>
+					<span><i class="fa fa-cog"></i> <?php _e( 'SSL settings', 'mainwp' ); ?></span></h3>
 
 				<div class="inside">
 					<table class="form-table">
@@ -288,7 +288,7 @@ class MainWP_Settings {
 				</div>
 			</div>
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e( 'Save settings', 'mainwp' ); ?>"/>
 			</p>
 		</form>
 		<?php
@@ -331,7 +331,7 @@ class MainWP_Settings {
 
 			?>
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e( 'Save settings', 'mainwp' ); ?>"/>
 			</p>
 		</form>
 		<?php
@@ -351,13 +351,13 @@ class MainWP_Settings {
 			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'DashboardOptions' ); ?>" />
 			<div class="postbox" id="mainwp-dashboard-options">
 				<h3 class="mainwp_box_title">
-					<span><i class="fa fa-cog"></i> <?php _e( 'Dashboard Options', 'mainwp' ); ?></span></h3>
+					<span><i class="fa fa-cog"></i> <?php _e( 'Dashboard options', 'mainwp' ); ?></span></h3>
 
 				<div class="inside">
 					<table class="form-table">
 						<tbody>
 						<tr>
-							<th scope="row"><?php _e( 'Hide MainWP Footer', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'If set to YES, fixed footer will be appended to the bottom of the page', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Hide MainWP footer', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'If set to YES, fixed footer will be appended to the bottom of the page', 'mainwp' ) ); ?></th>
 							<td>
 								<div class="mainwp-checkbox">
 									<input type="checkbox" name="mainwp_hide_footer"
@@ -367,7 +367,7 @@ class MainWP_Settings {
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><?php _e( 'Use Child Site Favicon', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Set to YES if you want to use Child Site Favicon.', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Use child site favicon', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Set to YES if you want to use Child Site Favicon.', 'mainwp' ) ); ?></th>
 							<td>
 								<div class="mainwp-checkbox">
 									<input type="checkbox" name="mainwp_use_favicon"
@@ -377,7 +377,7 @@ class MainWP_Settings {
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><?php _e( 'Hide MainWP Tips', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'If set to YES, MainWP Tips will be hidden', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Hide MainWP tips', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'If set to YES, MainWP Tips will be hidden', 'mainwp' ) ); ?></th>
 							<td>
 								<div class="mainwp-checkbox">
 									<input type="checkbox" name="mainwp_hide_tips"
@@ -387,7 +387,7 @@ class MainWP_Settings {
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><?php _e( 'Turn off Brag Button', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'If set to YES, Twitter messages will be turn off', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Turn off brag button', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'If set to YES, Twitter messages will be turn off', 'mainwp' ) ); ?></th>
 							<td>
 								<div class="mainwp-checkbox">
 									<input type="checkbox" name="mainwp_hide_twitters_message"
@@ -401,7 +401,7 @@ class MainWP_Settings {
 				</div>
 			</div>
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e( 'Save settings', 'mainwp' ); ?>"/>
 			</p>
 		</form>
 		<?php
@@ -440,17 +440,17 @@ class MainWP_Settings {
 			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPTools' ); ?>" />
 			<div class="postbox" id="mainwp-tools">
 				<h3 class="mainwp_box_title">
-					<span><i class="fa fa-wrench"></i> <?php _e( 'MainWP Tools', 'mainwp' ); ?></span></h3>
+					<span><i class="fa fa-wrench"></i> <?php _e( 'MainWP tools', 'mainwp' ); ?></span></h3>
 
 				<div class="inside">
 					<table class="form-table">
 						<tbody>
 						<tr>
-							<th scope="row"><?php _e( 'Force Dashboard to Establish New Connection', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Use this option to establish new connection with child sites.', 'mainwp' ) ); ?></th>
+							<th scope="row"><?php _e( 'Force dashboard to sstablish new connection', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Use this option to establish new connection with child sites.', 'mainwp' ) ); ?></th>
 							<td>
 								<input type="submit" name="" id="force-destroy-sessions-button" class="button-primary button" value="<?php esc_attr_e( 'Establish New Connection', 'mainwp' ); ?>"/><br/>
 								<em>
-									<?php _e( 'Forces your Dashboard to reconnect with your Child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>
+									<?php _e( 'Forces your dashboard to reconnect with your child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>
 								</em>
 							</td>
 						</tr>
@@ -464,9 +464,9 @@ class MainWP_Settings {
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><?php _e('MainWP Quick Setup','mainwp'); ?></th>
+							<th scope="row"><?php _e('MainWP quick setup','mainwp'); ?></th>
 							<td>
-								<a href="admin.php?page=mainwp-setup" class="button-primary button"/><?php _e('Start Quick Setup','mainwp'); ?></a><br/>
+								<a href="admin.php?page=mainwp-setup" class="button-primary button"/><?php _e('Start quick setup','mainwp'); ?></a><br/>
 								<em>
 									<?php _e('MainWP Quick Setup allows you to quickly set your MainWP Dashboard preferences.','mainwp'); ?>
 								</em>
@@ -478,7 +478,7 @@ class MainWP_Settings {
 					<table class="form-table">
 						<tbody>
 						<tr>
-							<th scope="row"><?php _e( 'Cleanup your Dashboard', 'mainwp' ); ?></th>
+							<th scope="row"><?php _e( 'Cleanup your dashboard', 'mainwp' ); ?></th>
 							<td>
 								<ul class="mainwp_checkboxes mainwp_hide_wpmenu_checkboxes">
 									<?php
@@ -500,7 +500,7 @@ class MainWP_Settings {
 					</table>
 				</div>
 			</div>
-			<p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e('Save Settings','mainwp'); ?>"/></p>
+			<p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e('Save settings','mainwp'); ?>"/></p>
 		</form>
 		<?php
 		self::renderFooter( 'MainWPTools' );
@@ -510,7 +510,7 @@ class MainWP_Settings {
 		self::renderHeader( 'SettingsHelp' );
 		?>
 		<div style="text-align: center">
-			<a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e( 'Show Quick Start Guide', 'mainwp' ); ?></a>
+			<a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e( 'Show Quick Start guide', 'mainwp' ); ?></a>
 		</div>
 		<div class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
 			<span><a href="#" class="mainwp-show-qsg" number="1"><?php _e( 'Settings Overview', 'mainwp' ) ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>

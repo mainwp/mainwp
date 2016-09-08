@@ -32,7 +32,7 @@ class MainWP_Right_Now {
 				$name = $_REQUEST['name'];
 			}
 
-			$res = new WP_Error( 'plugins_api_failed', __( '<h3>No Plugin Information Found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( $url == '' ? __( 'Please visit the Plugin website for more information.', 'mainwp' ) : __( 'Please visit the Plugin website for more information: ', 'mainwp' ) . '<a href="' . rawurldecode( $url ) . '" target="_blank">' . rawurldecode( $name ) . '</a>' ), $request->get_error_message() );
+			$res = new WP_Error( 'plugins_api_failed', __( '<h3>No plugin information found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( $url == '' ? __( 'Please visit the plugin website for more information.', 'mainwp' ) : __( 'Please visit the plugin website for more information: ', 'mainwp' ) . '<a href="' . rawurldecode( $url ) . '" target="_blank">' . rawurldecode( $name ) . '</a>' ), $request->get_error_message() );
 
 			return $res;
 		}
@@ -41,7 +41,7 @@ class MainWP_Right_Now {
 	}
 
 	public static function getName() {
-		return '<i class="fa fa-pie-chart"></i> ' . __( 'Right Now', 'mainwp' );
+		return '<i class="fa fa-pie-chart"></i> ' . __( 'Right now', 'mainwp' );
 	}
 
 	public static function render() {
@@ -59,11 +59,11 @@ class MainWP_Right_Now {
 				if ( isset( $information['upgrade'] ) && ( $information['upgrade'] == 'SUCCESS' ) ) {
 					MainWP_DB::Instance()->updateWebsiteOption( $website, 'wp_upgrades', json_encode( array() ) );
 
-					return __( 'Update Successful', 'mainwp' ) . '! Open your site <a href="' . esc_url( $website->url ) . '" target="_blank">Front page</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $id . '" target="_blank">WP Admin</a>';
+					return __( 'Update successful!', 'mainwp' ) . '! Open your site <a href="' . esc_url( $website->url ) . '" target="_blank">Front page</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $id . '" target="_blank">WP Admin</a>';
 				} else if ( isset( $information['upgrade'] ) ) {
 					$errorMsg = '';
 					if ( $information['upgrade'] == 'LOCALIZATION' ) {
-						$errorMsg = __( 'No update found for your set locale', 'mainwp' );
+						$errorMsg = __( 'No update found for the set locale', 'mainwp' );
 					} else if ( $information['upgrade'] == 'NORESPONSE' ) {
 						$errorMsg = __( 'No response from the WordPress update server', 'mainwp' );
 					}
@@ -77,7 +77,7 @@ class MainWP_Right_Now {
 			}
 		}
 
-		throw new MainWP_Exception( 'ERROR', __( 'Invalid Request', 'mainwp' ) );
+		throw new MainWP_Exception( 'ERROR', __( 'Invalid request!', 'mainwp' ) );
 	}
 
 	public static function ignorePluginTheme( $type, $slug, $name, $id ) {
@@ -360,11 +360,11 @@ class MainWP_Right_Now {
 				} else if ( isset( $information['error'] ) ) {
 					throw new MainWP_Exception( 'WPERROR', $information['error'] );
 				} else {
-					throw new MainWP_Exception( 'ERROR', 'Invalid response from site' );
+					throw new MainWP_Exception( 'ERROR', 'Invalid response from site!' );
 				}
 			}
 		}
-		throw new MainWP_Exception( 'ERROR', __( 'Invalid request', 'mainwp' ) );
+		throw new MainWP_Exception( 'ERROR', __( 'Invalid request!', 'mainwp' ) );
 	}
 
 	/*
@@ -476,7 +476,7 @@ class MainWP_Right_Now {
 			//No settings saved!
 			return;
 		} else {
-			echo __( '(Last complete sync: ', 'mainwp' ) . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $dtsSync ) ) . ')';
+			echo __( '(Last completed sync: ', 'mainwp' ) . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $dtsSync ) ) . ')';
 		}
 	}
 
@@ -487,7 +487,7 @@ class MainWP_Right_Now {
 		}
 
 		if ( $website == null ) {
-			die( json_encode( array( 'error' => 'Invalid Request' ) ) );
+			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
 		$maxRequestsInThirtySeconds = get_option( 'mainwp_maximumRequests' );
@@ -864,7 +864,7 @@ class MainWP_Right_Now {
 			<div class="mainwp-postbox-actions-top mainwp-padding-5">
 				<div class="mainwp-cols-s mainwp-right mainwp-t-align-right">
 					<form method="post" action="">
-						<label for="mainwp_select_options_siteview"><?php _e( 'View Updates per: ', 'mainwp' ); ?></label>
+						<label for="mainwp_select_options_siteview"><?php _e( 'View updates per: ', 'mainwp' ); ?></label>
 						<select class="mainwp-select2" id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
 							<option value="1" <?php echo $userExtension->site_view == 1 ? 'selected' : ''; ?>><?php esc_html_e( 'Site', 'mainwp' ); ?></option>
 							<option value="0" <?php echo $userExtension->site_view == 0 ? 'selected' : ''; ?>><?php esc_html_e( 'Plugin/Theme', 'mainwp' ); ?></option>
@@ -934,7 +934,7 @@ class MainWP_Right_Now {
 		}
 
 		$show_updates_title = __('Click to see available updates', 'mainwp');
-		$visit_dashboard_title = __('Visit this Dashboard', 'mainwp');
+		$visit_dashboard_title = __('Visit this dashboard', 'mainwp');
 		$see_ignored_title = __('Click here to see all ignored updates', 'mainwp');
 
 		?>
@@ -948,8 +948,8 @@ class MainWP_Right_Now {
 			</div>
 			<?php if ( mainwp_current_user_can( 'dashboard', 'update_wordpress' ) && mainwp_current_user_can( 'dashboard', 'update_plugins' ) && mainwp_current_user_can( 'dashboard', 'update_themes' ) ) { ?>
 				<div class="mainwp-right mainwp-cols-2 mainwp-t-align-right"><?php if ( ( $total_upgrades ) == 0 ) { ?>
-						<a class="button button-hero" disabled="disabled"><?php _e( 'Update Everything', 'mainwp' ); ?></a><?php } else { ?>
-						<a href="#" onClick="return rightnow_global_upgrade_all();" class="mainwp-upgrade-button button-hero button"><?php _e( 'Update Everything', 'mainwp' ); ?></a><?php } ?>
+						<a class="button button-hero" disabled="disabled"><?php _e( 'Update everything', 'mainwp' ); ?></a><?php } else { ?>
+						<a href="#" onClick="return rightnow_global_upgrade_all();" class="mainwp-upgrade-button button-hero button"><?php _e( 'Update everything', 'mainwp' ); ?></a><?php } ?>
 				</div>
 			<?php } ?>
 			<div class="mainwp-clear"></div>
@@ -988,7 +988,7 @@ class MainWP_Right_Now {
 				}
 
 				?>
-				<div class="mainwp-sub-row mainwp_wordpress_upgrade" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" updated="<?php echo ( count( $wp_upgrades ) > 0 ) ? '0' : '1'; ?>">
+				<div class="mainwp-sub-row mainwp_wordpress_upgrade" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( count( $wp_upgrades ) > 0 ) ? '0' : '1'; ?>">
 					<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-3"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_<?php echo $website->id; ?>" value="<?php if ( count( $wp_upgrades ) > 0 ) {
 							echo '0';
 						} else {
@@ -1133,7 +1133,7 @@ class MainWP_Right_Now {
 							<?php
 						}
 						?>
-						<div id="wp_plugin_upgrades_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
+						<div id="wp_plugin_upgrades_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
 							<?php
 							foreach ( $plugin_upgrades as $plugin_name => $plugin_upgrade ) {
 								$plugin_name = urlencode( $plugin_name );
@@ -1239,7 +1239,7 @@ class MainWP_Right_Now {
 
 								$plugin_upgrade = $plugin_upgrades[ $slug ];
 								?>
-								<div class="mainwp-sub-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" updated="0">
+								<div class="mainwp-sub-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0">
 									<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-3">
 										<?php if ( $globalView ) { ?>
 											&nbsp;&nbsp;&nbsp;
@@ -1377,7 +1377,7 @@ class MainWP_Right_Now {
 							<?php
 						}
 						?>
-						<div id="wp_theme_upgrades_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
+						<div id="wp_theme_upgrades_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
 							<?php
 							foreach ( $theme_upgrades as $theme_name => $theme_upgrade ) {
 								$theme_name = urlencode( $theme_name );
@@ -1475,7 +1475,7 @@ class MainWP_Right_Now {
 
 								$theme_upgrade = $theme_upgrades[ $slug ];
 								?>
-								<div class="mainwp-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" updated="0">
+								<div class="mainwp-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0">
 									<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-3">
 										<?php if ( $globalView ) { ?>
 											&nbsp;&nbsp;&nbsp;
@@ -1595,7 +1595,7 @@ class MainWP_Right_Now {
 							<?php
 						}
 						?>
-						<div class="mainwp-sub-section" id="wp_translation_upgrades_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
+						<div class="mainwp-sub-section" id="wp_translation_upgrades_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
 							<?php
 							foreach ( $translation_upgrades as $translation_upgrade) {
 								$translation_name = isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $translation_upgrade['slug'];
@@ -1673,7 +1673,7 @@ class MainWP_Right_Now {
 								}
 
 								?>
-								<div class="mainwp-sub-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" updated="0">
+								<div class="mainwp-sub-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0">
 									<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">
 										<?php if ( $globalView ) { ?>
 											&nbsp;&nbsp;&nbsp;
@@ -1783,7 +1783,7 @@ class MainWP_Right_Now {
 								<?php
 							}
 							?>
-							<div id="wp_plugins_outdate_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
+							<div id="wp_plugins_outdate_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
 								<?php
 								foreach ( $plugins_outdate as $slug => $plugin_outdate ) {
 									$plugin_name = urlencode( $slug );
@@ -1880,7 +1880,7 @@ class MainWP_Right_Now {
 									$outdate_notice = sprintf( $str_format, $diff_in_days );
 
 									?>
-									<div class="mainwp-sub-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" outdate="1">
+									<div class="mainwp-sub-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" outdate="1">
 										<div class="mainwp-left mainwp-cols-3">
 											<?php if ( $globalView ) { ?>
 												&nbsp;&nbsp;&nbsp;
@@ -1991,7 +1991,7 @@ class MainWP_Right_Now {
 								<?php
 							}
 							?>
-							<div id="wp_themes_outdate_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
+							<div id="wp_themes_outdate_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
 								<?php
 								foreach ( $themes_outdate as $slug => $theme_outdate ) {
 									$slug                    = urlencode( $slug );
@@ -2082,7 +2082,7 @@ class MainWP_Right_Now {
 									$outdate_notice          = sprintf( $str_format, $diff_in_days );
 
 									?>
-									<div class="mainwp-sub-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>" outdate="1">
+									<div class="mainwp-sub-row" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" outdate="1">
 										<div class="mainwp-left mainwp-cols-3">
 											<?php if ( $globalView ) { ?>
 												&nbsp;&nbsp;&nbsp;

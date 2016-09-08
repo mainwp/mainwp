@@ -158,7 +158,7 @@ class MainWP_Ajax {
 
 			//$screen_layout_columns = 2;
 
-			$help = '<p>' . __( 'Welcome to your WordPress Dashboard! This is the screen you will see when you log in to your site, and gives you access to all the site management features of WordPress. You can get help for any screen by clicking the Help tab in the upper corner.', 'mainwp' ) . '</p>';
+			$help = '<p>' . __( 'Welcome to your WordPress Dashboard! This is the screen you will see when you log into your site and gives you access to all the site management features of WordPress. You can get help for any screen by clicking the Help tab in the upper corner.', 'mainwp' ) . '</p>';
 
 			get_current_screen()->add_help_tab( array(
 				'id'      => 'overview',
@@ -169,7 +169,7 @@ class MainWP_Ajax {
 			// Help tabs
 
 			$help = '<p>' . __( 'The left-hand navigation menu provides links to all of the WordPress administration screens, with submenu items displayed on hover. You can minimize this menu to a narrow icon strip by clicking on the Collapse Menu arrow at the bottom.', 'mainwp' ) . '</p>';
-			$help .= '<p>' . __( 'Links in the Toolbar at the top of the screen connect your dashboard and the front end of your site, and provide access to your profile and helpful WordPress information.', 'mainwp' ) . '</p>';
+			$help .= '<p>' . __( 'Links in the Toolbar at the top of the screen connect your dashboard and the front end of your site and provide access to your profile and helpful WordPress information.', 'mainwp' ) . '</p>';
 
 			get_current_screen()->add_help_tab( array(
 				'id'      => 'help-navigation',

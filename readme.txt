@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.6
-Stable tag: 3.1.8
+Tested up to: 4.6.1
+Stable tag: 3.1.8.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.1.8.1 - 9-8-16 =
+* Fixed: Grammar issues
+* Fixed: Cosmetic issues
+* Removed: Unused Code
 
 = 3.1.8 - 9-6-16 =
 * Fixed: CSS issues with update notices

@@ -78,7 +78,7 @@ mainwp_setup_grab_extension = function(retring, pRegisterLater) {
     var extProductId = jQuery('#mwp_setup_extension_product_id').val();
     if (extProductId == '') {
         statusEl.css('color', 'red');
-        statusEl.html(' ' + "Error: empty extension product id.").fadeIn();
+        statusEl.html(' ' + "ERROR: empty extension product id.").fadeIn();
         return false;
     }
 
@@ -90,7 +90,7 @@ mainwp_setup_grab_extension = function(retring, pRegisterLater) {
 
     if (retring == true) {
         statusEl.css('color', '#0074a2');
-        statusEl.html(' ' + "Connection error detected. The Verify Certificate option has been switched to NO. Retrying in progress.").fadeIn();
+        statusEl.html(' ' + "Connection error detected. The Verify Certificate option has been switched to NO. Retrying...").fadeIn();
     } else
         statusEl.hide();
 
@@ -118,7 +118,7 @@ mainwp_setup_grab_extension = function(retring, pRegisterLater) {
 
         if (undefError) {
             statusEl.css('color', 'red');
-            statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn();
+            statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined error!').fadeIn();
         }
     }, 'json');
     return false;
@@ -130,7 +130,7 @@ mainwp_setup_extension_install = function(pRegisterLater) {
     var statusEl = pExtToInstall.find('.ext_installing .status');
     loadingEl.show();
     statusEl.css('color', '#000');
-    statusEl.html('Installing ...');
+    statusEl.html('Installing...');
 
     var data = {
         action:'mainwp_setup_extension_downloadandinstall',
@@ -161,14 +161,14 @@ mainwp_setup_extension_install = function(pRegisterLater) {
                     mainwp_setup_extension_activate_plugin(pRegisterLater);
                 } else if (response.error) {
                     statusEl.css('color', 'red');
-                    statusEl.html('<strong><i class="fa fa-exclamation-circle"></i> Error:</strong> ' + response.error).show();
+                    statusEl.html('<strong><i class="fa fa-exclamation-circle"></i> ERROR:</strong> ' + response.error).show();
                 } else {
                     statusEl.css('color', 'red');
-                    statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').show();
+                    statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined error!').show();
                 }
             } else {
                 statusEl.css('color', 'red');
-                statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').show();
+                statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined error!').show();
             }
             if (failed) {
                 jQuery('#mwp_setup-install-extension').append(jQuery('#mwp_setup_extension_retry_install')[0].innerHTML);
@@ -219,7 +219,7 @@ mainwp_setup_extension_activate = function(retring)
 
     if (retring == true) {
         statusEl.css('color', '#0074a2');
-        statusEl.html(' ' + "Connection error detected. The Verify Certificate option has been switched to NO. Retrying in progress.").fadeIn();
+        statusEl.html(' ' + "Connection error detected. The Verify Certificate option has been switched to NO. Retrying...").fadeIn();
     } else
         statusEl.hide();
 
@@ -230,7 +230,7 @@ mainwp_setup_extension_activate = function(retring)
         if (response) {
             if (response.result == 'SUCCESS') {
                 statusEl.css('color', '#0074a2');
-                statusEl.html('<i class="fa fa-check-circle"></i> ' + "Extension Activated Successfully").fadeIn();
+                statusEl.html('<i class="fa fa-check-circle"></i> ' + "Extension has been activated successfully!").fadeIn();
             } else if (response.error) {
                 statusEl.css('color', 'red');
                 statusEl.html(response.error).fadeIn();
@@ -240,11 +240,11 @@ mainwp_setup_extension_activate = function(retring)
                 return false;
             } else {
                 statusEl.css('color', 'red');
-                statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn();
+                statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined error!').fadeIn();
             }
         } else {
             statusEl.css('color', 'red');
-            statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined Error').fadeIn();
+            statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined error!').fadeIn();
         }
     }, 'json');
 };

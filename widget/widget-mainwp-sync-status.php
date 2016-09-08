@@ -10,7 +10,7 @@ class MainWP_Sync_Status {
 	}
 
 	public static function getName() {
-		return '<i class="fa fa-refresh"></i> ' . __( 'Sync Status', 'mainwp' );
+		return '<i class="fa fa-refresh"></i> ' . __( 'Sync status', 'mainwp' );
 	}
 
 	public static function render() {
@@ -53,7 +53,7 @@ class MainWP_Sync_Status {
 						</span>
 						<span class="mainwp-right-col wordpressAction">
 							<div id="wp_syncs_<?php echo $website->id; ?>">
-								<a class="mainwp-upgrade-button button" onClick="rightnow_wp_sync('<?php echo $website->id; ?>')"><?php _e( 'Sync Now', 'mainwp' ); ?></a>
+								<a class="mainwp-upgrade-button button" onClick="rightnow_wp_sync('<?php echo $website->id; ?>')"><?php _e( 'Sync now', 'mainwp' ); ?></a>
 							</div>
 						</span>
 					</div>

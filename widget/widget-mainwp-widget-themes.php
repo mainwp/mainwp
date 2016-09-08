@@ -132,7 +132,7 @@ class MainWP_Widget_Themes {
 						</div>
 						<div style="clear: left;"></div>
 						<div class="mainwp-row-actions-working">
-							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait', 'mainwp' ); ?></div>
+							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?></div>
 						<div>&nbsp;</div>
 					</div>
 				<?php } ?>
@@ -147,12 +147,12 @@ class MainWP_Widget_Themes {
 
 	public static function activateTheme() {
 		self::action( 'activate' );
-		die( json_encode( array( 'result' => __( 'Theme has been activated', 'mainwp' ) ) ) );
+		die( json_encode( array( 'result' => __( 'Theme has been activated!', 'mainwp' ) ) ) );
 	}
 
 	public static function deleteTheme() {
 		self::action( 'delete' );
-		die( json_encode( array( 'result' => __( 'Theme has been permanently deleted', 'mainwp' ) ) ) );
+		die( json_encode( array( 'result' => __( 'Theme has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
 	public static function action( $pAction ) {
@@ -160,16 +160,16 @@ class MainWP_Widget_Themes {
 		$websiteIdEnc = $_POST['websiteId'];
 
 		if ( empty( $theme ) ) {
-			die( json_encode( array( 'error' => 'Invalid Request.' ) ) );
+			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 		$websiteId = $websiteIdEnc;
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => 'Invalid Request.' ) ) );
+			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => 'You can not edit this website.' ) ) );
+			die( json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
 		try {
@@ -182,7 +182,7 @@ class MainWP_Widget_Themes {
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
-			die( json_encode( array( 'error' => 'Unexpected error.' ) ) );
+			die( json_encode( array( 'error' => 'Unexpected error!' ) ) );
 		}
 	}
 }

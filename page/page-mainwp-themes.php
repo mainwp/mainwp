@@ -179,14 +179,14 @@ public static function renderHeader( $shownPage ) {
 		self::renderHeader( 'Manage' ); ?>
 		<div class="mainwp-search-form">
 			<div class="postbox mainwp-postbox">
-				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Step 1: Search Themes', 'mainwp' ); ?>
+				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Step 1: Search themes', 'mainwp' ); ?>
 				</h3>
 
 				<div class="inside">
 					<div class="mainwp_info-box-blue">
-						<?php _e( 'To only <strong>View or Ignore</strong> themes select <strong>All Themes</strong>', 'mainwp' ); ?>
+						<?php _e( 'To only <strong>view or ignore</strong> themes select <strong>all themes</strong>', 'mainwp' ); ?>
 						<br/>
-						<?php _e( 'To <strong>Activate</strong> or <strong>Delete</strong> a Theme select <strong>Inactive</strong> (A theme needs to be Deactivated in order for it to be Enabled)', 'mainwp' ); ?>
+						<?php _e( 'To <strong>activate</strong> or <strong>delete</strong> a theme select <strong>inactive</strong> (A theme needs to be deactivated in order for it to be enabled)', 'mainwp' ); ?>
 						<br/>
 					</div>
 					<p>
@@ -211,11 +211,11 @@ public static function renderHeader( $shownPage ) {
 					</p>
 				</div>
 			</div>
-			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select Sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
+			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
 			<div style="clear: both;"></div>
-			<input type="button" name="mainwp_show_themes" id="mainwp_show_themes" class="button-primary button button-hero button-right" value="<?php _e( 'Show Themes', 'mainwp' ); ?>"/>
+			<input type="button" name="mainwp_show_themes" id="mainwp_show_themes" class="button-primary button button-hero button-right" value="<?php _e( 'Show themes', 'mainwp' ); ?>"/>
 			<br /><br />
-			<span id="mainwp_themes_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e( 'Grabbing information from Child Sites', 'mainwp' ) ?></em></span>
+			<span id="mainwp_themes_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e( 'Grabbing information from child sites', 'mainwp' ) ?></em></span>
 			<span id="mainwp_themes_loading_info" class="mainwp-grabbing-info-note"> - <?php _e( 'Automatically refreshing to get up to date information.', 'mainwp' ); ?></span>
 			<br/><br/>
 		</div>
@@ -395,7 +395,7 @@ public static function renderHeader( $shownPage ) {
 					<?php } ?>
 				<?php } ?>
 				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
-					<option value="ignore_updates"><?php _e( 'Ignore Updates', 'mainwp' ); ?></option>
+					<option value="ignore_updates"><?php _e( 'Ignore updates', 'mainwp' ); ?></option>
 				<?php } ?>
 			</select>
 			<input type="button" name="" id="mainwp_bulk_theme_action_apply" class="button" value="<?php _e( 'Confirm', 'mainwp' ); ?>"/>
@@ -438,8 +438,8 @@ public static function renderHeader( $shownPage ) {
 			<table class="wp-list-table widefat fixed pages" id="themes_fixedtable" style="width: auto; word-wrap: normal">
 				<thead>
 				<tr>
-					<th class="headcol" style="text-align: center; border-bottom: 1px Solid #e1e1e1; font-size: 18px; z-index:999; padding: auto; width: 15em !important;"><?php _e( 'Child Site / Theme', 'mainwp' ); ?>
-						<p style="font-size: 10px; line-height: 12px;"><?php _e( 'Click on the Theme Name to select the theme on all sites or click the Site URL to select all themes on the site.', 'mainwp' ); ?></p>
+					<th class="headcol" style="text-align: center; border-bottom: 1px Solid #e1e1e1; font-size: 18px; z-index:999; padding: auto; width: 15em !important;"><?php _e( 'Child site / Theme', 'mainwp' ); ?>
+						<p style="font-size: 10px; line-height: 12px;"><?php _e( 'Click on the theme name to select the theme on all sites or click the Site URL to select all themes on the site.', 'mainwp' ); ?></p>
 					</th>
 					<?php
 					foreach ( $themesVersion as $theme_name => $theme_title ) {
@@ -608,7 +608,7 @@ public static function renderHeader( $shownPage ) {
 		?>
 		<div class="alignleft">
 			<select name="bulk_action" id="mainwp_bulk_action">
-				<option value="none"><?php _e( 'Choose Action', 'mainwp' ); ?></option>
+				<option value="none"><?php _e( 'Choose action', 'mainwp' ); ?></option>
 				<option value="trust"><?php _e( 'Trust', 'mainwp' ); ?></option>
 				<option value="untrust"><?php _e( 'Untrust', 'mainwp' ); ?></option>
 			</select>
@@ -650,10 +650,10 @@ public static function renderHeader( $shownPage ) {
 					<a href="#"><span><?php _e( 'Status', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
 				</th>
 				<th scope="col" id="trustlvl" class="manage-column column-title sortable desc" style="">
-					<a href="#"><span><?php _e( 'Trust Level', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+					<a href="#"><span><?php _e( 'Trust level', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
 				</th>
 				<th scope="col" id="ignoredstatus" class="manage-column column-title sortable desc" style="">
-					<a href="#"><span><?php _e( 'Ignored Status', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+					<a href="#"><span><?php _e( 'Ignored status', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
 				</th>
 				<th scope="col" id="notes" class="manage-column column-posts" style=""><?php _e( 'Notes', 'mainwp' ); ?></th>
 			</tr>
@@ -667,8 +667,8 @@ public static function renderHeader( $shownPage ) {
 				<th scope="col" id="theme_footer" class="manage-column column-title sortable desc" style="">
 					<span><?php _e( 'Theme', 'mainwp' ); ?></span></th>
 				<th scope="col" id="thmstatus_footer" class="manage-column column-posts" style=""><?php _e( 'Status', 'mainwp' ); ?></th>
-				<th scope="col" id="trustlvl_footer" class="manage-column column-posts" style=""><?php _e( 'Trust Level', 'mainwp' ); ?></th>
-				<th scope="col" id="ignoredstatus_footer" class="manage-column column-posts" style=""><?php _e( 'Ignored Status', 'mainwp' ); ?></th>
+				<th scope="col" id="trustlvl_footer" class="manage-column column-posts" style=""><?php _e( 'Trust level', 'mainwp' ); ?></th>
+				<th scope="col" id="ignoredstatus_footer" class="manage-column column-posts" style=""><?php _e( 'Ignored status', 'mainwp' ); ?></th>
 				<th scope="col" id="notes_footer" class="manage-column column-posts" style=""><?php _e( 'Notes', 'mainwp' ); ?></th>
 			</tr>
 			</tfoot>
@@ -704,7 +704,7 @@ public static function renderHeader( $shownPage ) {
 						if ( in_array( $slug, $trustedThemes ) ) {
 							echo '<font color="#7fb100">Trusted</font>';
 						} else {
-							echo '<font color="#c00">Not Trusted</font>';
+							echo '<font color="#c00">Not trusted</font>';
 						}
 						?>
 					</td>
@@ -742,7 +742,7 @@ public static function renderHeader( $shownPage ) {
 			</div>
 			<form>
 				<div style="float: right" id="mainwp_notes_status"></div>
-				<input type="button" class="button cont button-primary" id="mainwp_trusted_theme_notes_save" value="<?php _e( 'Save Note', 'mainwp' ); ?>"/>
+				<input type="button" class="button cont button-primary" id="mainwp_trusted_theme_notes_save" value="<?php _e( 'Save note', 'mainwp' ); ?>"/>
 				<input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php _e( 'Close', 'mainwp' ); ?>"/>
 				<input type="hidden" id="mainwp_notes_slug" value=""/>
 			</form>
@@ -879,16 +879,16 @@ public static function renderHeader( $shownPage ) {
 				'adminUrl'      => parse_url( self_admin_url(), PHP_URL_PATH )
 			),
 			'l10n' => array(
-				'addNew' => __( 'Add New Theme' ),
-				'search' => __( 'Search Themes' ),
+				'addNew' => __( 'Add new theme' ),
+				'search' => __( 'Search themes' ),
 				'searchPlaceholder' => __( 'Search themes...' ), // placeholder (no ellipsis)
-				'upload' => __( 'Upload Theme' ),
+				'upload' => __( 'Upload theme' ),
 				'back'   => __( 'Back' ),
 				'error'  => __( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="https://wordpress.org/support/">support forums</a>.' ),
-				'themesFound'   => __( 'Number of Themes found: %d' ),
+				'themesFound'   => __( 'Number of themes found: %d' ),
 				'noThemesFound' => __( 'No themes found. Try a different search.' ),
-				'collapseSidebar'    => __( 'Collapse Sidebar' ),
-				'expandSidebar'      => __( 'Expand Sidebar' ),
+				'collapseSidebar'    => __( 'Collapse sidebar' ),
+				'expandSidebar'      => __( 'Expand sidebar' ),
 			),
 			'installedThemes' => array(),
 			'favoritesOnActionCallback' => $favorites_callback
@@ -916,7 +916,7 @@ public static function renderHeader( $shownPage ) {
 				<?php MainWP_Install_Bulk::renderUpload('Themes'); ?>
 			</div>
 			<div class="wp-filter">
-				<h3 class="mainwp_box_title"><?php _e( 'Step 1: Select a Theme', 'mainwp' ); ?></h3>
+				<h3 class="mainwp_box_title"><?php _e( 'Step 1: Select a theme', 'mainwp' ); ?></h3>
 				<div class="filter-count">
 					<span class="count theme-count"></span>
 				</div>
@@ -926,12 +926,12 @@ public static function renderHeader( $shownPage ) {
 					<li><a href="#" data-sort="popular"><?php _ex( 'Popular', 'themes' ); ?></a></li>
 					<li><a href="#" data-sort="new"><?php _ex( 'Latest', 'themes' ); ?></a></li>
 				</ul>
-				<a class="drawer-toggle" href="#"><?php _e( 'Feature Filter', 'mainwp' ); ?></a>
+				<a class="drawer-toggle" href="#"><?php _e( 'Feature filter', 'mainwp' ); ?></a>
 
 				<div class="search-form"></div>
 				<div class="filter-drawer">
 					<div class="buttons">
-						<a class="apply-filters button button-secondary" href="#"><?php _e( 'Apply Filters', 'mainwp' ); ?><span></span></a>
+						<a class="apply-filters button button-secondary" href="#"><?php _e( 'Apply filters', 'mainwp' ); ?><span></span></a>
 						<a class="clear-filters button button-secondary" href="#"><?php _e( 'Clear', 'mainwp' ); ?></a>
 					</div>
 					<?php
@@ -960,7 +960,7 @@ public static function renderHeader( $shownPage ) {
 			<div class="theme-browser content-filterable hide-if-upload"></div>
 			<div class="theme-install-overlay wp-full-overlay expanded"></div>
 
-			<p class="no-themes"><?php _e( 'No themes found. Try a different search.' ); ?></p>
+			<p class="no-themes"><?php _e( 'No themes found. Try a different search.', 'mainwp' ); ?></p>
 			<span class="spinner"></span>
 
 			<br class="clear" />
@@ -1045,7 +1045,7 @@ public static function renderHeader( $shownPage ) {
 				<iframe src="{{ data.preview_url }}" title="<?php esc_attr_e( 'Preview', 'mainwp' ); ?>" />
 			</div>
 		</script>
-		<?php MainWP_UI::select_sites_box( __("Step 2: Select Sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right' ); ?>
+		<?php MainWP_UI::select_sites_box( __("Step 2: Select sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right' ); ?>
 		<div class="mainwp_config_box_right">
 			<div class="postbox install-theme-settings">
 				<h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'Step 3: Installation Options', 'mainwp' ); ?></h3>
@@ -1082,22 +1082,22 @@ public static function renderHeader( $shownPage ) {
 			$snAutomaticDailyUpdate = get_option( 'mainwp_automaticDailyUpdate' );
 			?>
 			<div id="mainwp-au" class=""><strong><?php if ( $snAutomaticDailyUpdate == 1 ) { ?>
-						<div class="mainwp-au-on"><?php _e( 'Auto Updates are ON and Trusted Plugins will be Automatically Updated', 'mainwp' ); ?> -
-							<a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e( 'Change this in Settings', 'mainwp' ); ?></a>
+						<div class="mainwp-au-on"><?php _e( 'Auto updates are ON and trusted plugins will be automatically updated', 'mainwp' ); ?> -
+							<a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e( 'Change this in settings', 'mainwp' ); ?></a>
 						</div>
 					<?php } elseif ( ( $snAutomaticDailyUpdate === false ) || ( $snAutomaticDailyUpdate == 2 ) ) { ?>
-						<div class="mainwp-au-email"><?php _e( 'Auto Updates are OFF - Email Update Notification is ON', 'mainwp' ); ?> -
-							<a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e( 'Change this in Settings', 'mainwp' ); ?></a>
+						<div class="mainwp-au-email"><?php _e( 'Auto updates are OFF - email update notification is ON', 'mainwp' ); ?> -
+							<a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e( 'Change this in settings', 'mainwp' ); ?></a>
 						</div>
 					<?php } else { ?>
-						<div class="mainwp-au-off"><?php _e( 'Auto Updates are OFF - Email Update Notification is OFF', 'mainwp' ); ?> -
-							<a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e( 'Change this in Settings', 'mainwp' ); ?></a>
+						<div class="mainwp-au-off"><?php _e( 'Auto updates are OFF - email update notification is OFF', 'mainwp' ); ?> -
+							<a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e( 'Change this in settings', 'mainwp' ); ?></a>
 						</div>
 					<?php } ?></strong></div>
-			<div class="mainwp_info-box"><?php _e( 'Only mark Themes as Trusted if you are absolutely sure they can be updated', 'mainwp' ); ?></div>
+			<div class="mainwp_info-box"><?php _e( 'Only mark themes as trusted if you are absolutely sure they can be updated', 'mainwp' ); ?></div>
 
 			<div class="postbox">
-				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Search Themes', 'mainwp' ); ?>
+				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Search themes', 'mainwp' ); ?>
 				</h3>
 
 				<div class="inside">
@@ -1175,13 +1175,13 @@ public static function renderHeader( $shownPage ) {
 		self::renderHeader( 'Ignore' );
 		?>
 		<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
-			<caption><?php _e( 'Globally Ignored Themes', 'mainwp' ); ?></caption>
+			<caption><?php _e( 'Globally ignored themes', 'mainwp' ); ?></caption>
 			<thead>
 			<tr>
 				<th scope="col" class="manage-column" style="width: 300px"><?php _e( 'Theme', 'mainwp' ); ?></th>
-				<th scope="col" class="manage-column" style="width: 650px"><?php _e( 'Theme File', 'mainwp' ); ?></th>
+				<th scope="col" class="manage-column" style="width: 650px"><?php _e( 'Theme file', 'mainwp' ); ?></th>
 				<th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ( $ignoredThemes ) { ?>
-						<a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return rightnow_themes_unignore_globally_all();"><?php _e( 'Allow All', 'mainwp' ); ?></a><?php } ?>
+						<a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return rightnow_themes_unignore_globally_all();"><?php _e( 'Allow all', 'mainwp' ); ?></a><?php } ?>
 				</th>
 			</tr>
 			</thead>
@@ -1222,14 +1222,14 @@ public static function renderHeader( $shownPage ) {
 		</table>
 
 		<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
-			<caption><?php _e( 'Per Site Ignored Themes', 'mainwp' ); ?></caption>
+			<caption><?php _e( 'Per site ignored themes', 'mainwp' ); ?></caption>
 			<thead>
 			<tr>
 				<th scope="col" class="manage-column" style="width: 300px"><?php _e( 'Site', 'mainwp' ); ?></th>
 				<th scope="col" class="manage-column" style="width: 650px"><?php _e( 'Themes', 'mainwp' ); ?></th>
 				<th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
 						if ( $cnt > 0 ) { ?>
-							<a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return rightnow_themes_unignore_detail_all();"><?php _e( 'Allow All', 'mainwp' ); ?></a><?php }
+							<a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return rightnow_themes_unignore_detail_all();"><?php _e( 'Allow all', 'mainwp' ); ?></a><?php }
 					} ?></th>
 			</tr>
 			</thead>
@@ -1305,13 +1305,13 @@ public static function renderHeader( $shownPage ) {
 		self::renderHeader( 'IgnoreAbandoned' );
 		?>
 		<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
-			<caption><?php _e( 'Globally Ignored Abandoned Themes', 'mainwp' ); ?></caption>
+			<caption><?php _e( 'Globally ignored abandoned themes', 'mainwp' ); ?></caption>
 			<thead>
 			<tr>
 				<th scope="col" class="manage-column" style="width: 300px"><?php _e( 'Theme', 'mainwp' ); ?></th>
 				<th scope="col" class="manage-column" style="width: 650px"><?php _e( 'Theme File', 'mainwp' ); ?></th>
 				<th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ( $ignoredThemes ) { ?>
-						<a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return rightnow_themes_abandoned_unignore_globally_all();"><?php _e( 'Allow All', 'mainwp' ); ?></a><?php } ?>
+						<a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return rightnow_themes_abandoned_unignore_globally_all();"><?php _e( 'Allow all', 'mainwp' ); ?></a><?php } ?>
 				</th>
 			</tr>
 			</thead>
@@ -1352,7 +1352,7 @@ public static function renderHeader( $shownPage ) {
 		</table>
 
 		<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
-			<caption><?php _e( 'Per Site Ignored Abandoned Themes', 'mainwp' ); ?></caption>
+			<caption><?php _e( 'Per site ignored abandoned themes', 'mainwp' ); ?></caption>
 			<thead>
 			<tr>
 				<th scope="col" class="manage-column" style="width: 300px"><?php _e( 'Site', 'mainwp' ); ?></th>

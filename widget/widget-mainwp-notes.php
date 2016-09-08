@@ -29,7 +29,7 @@ class MainWP_Notes {
 				?>
 			</div>
 			<div style="text-align: center; border-top: 1px Solid #f4f4f4; padding-top: 1em;">
-				<a href="#" class="mainwp_notes_show_all button button-primary" id="mainwp_notes_<?php echo $website->id; ?>"><?php _e( 'Edit Notes', 'mainwp' ); ?></a>
+				<a href="#" class="mainwp_notes_show_all button button-primary" id="mainwp_notes_<?php echo $website->id; ?>"><?php _e( 'Edit notes', 'mainwp' ); ?></a>
 			</div>
 		</div>
 		<?php

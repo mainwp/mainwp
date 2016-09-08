@@ -34,11 +34,11 @@ class MainWP_Security_Issues {
 			<div class="wrap">
 			<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
 			<img src="<?php echo plugins_url( 'images/icons/mainwp-security.png', dirname( __FILE__ ) ); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="MainWP Security Issues" height="32"/>
-			<h2><?php _e( 'Security Issues', 'mainwp' ); ?></h2>
+			<h2><?php _e( 'Security issues', 'mainwp' ); ?></h2>
 			<div style="clear: both;"></div><br/>
 			<div id="mainwp_background-box">
 		<?php } ?>
-		<div class="mainwp_info-box"><?php _e( 'We highly suggest you make a full backup before you run the Security Update.', 'mainwp' ); ?></div>
+		<div class="mainwp_info-box"><?php _e( 'We highly suggest you make a full backup before you run the security update.', 'mainwp' ); ?></div>
 		<div class="postbox">
 			<h3 class="mainwp_box_title">
 				<span><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a> (<?php echo $website->url; ?>)</span>
@@ -69,7 +69,7 @@ class MainWP_Security_Issues {
 						<td>
 							<span id="rsd_loading"><i class="fa fa-spinner fa-lg fa-pulse"></i></span><span id="rsd_ok" class="mainwp-success-green" style="display: none;"><i class="fa fa-check fa-lg"></i></span><span id="rsd_nok" class="mainwp-error-red" style="display: none;"><i class="fa fa-times fa-lg"></i></span>
 						</td>
-						<td><?php _e( 'Removed Really Simple Discovery meta tag', 'mainwp' ); ?></td>
+						<td><?php _e( 'Removed really simple discovery meta tag', 'mainwp' ); ?></td>
 						<td>
 							<span id="rsd_fix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Fix', 'mainwp' ); ?>
 								</a></span><span id="rsd_unfix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Unfix', 'mainwp' ); ?>
@@ -79,7 +79,7 @@ class MainWP_Security_Issues {
 						<td>
 							<span id="wlw_loading"><i class="fa fa-spinner fa-lg fa-pulse"></i></span><span id="wlw_ok" class="mainwp-success-green" style="display: none;"><i class="fa fa-check fa-lg"></i></span><span id="wlw_nok" class="mainwp-error-red" style="display: none;"><i class="fa fa-times fa-lg"></i></span>
 						</td>
-						<td><?php _e( 'Removed Windows Live Writer meta tag', 'mainwp' ); ?></td>
+						<td><?php _e( 'Removed Windows Live writer meta tag', 'mainwp' ); ?></td>
 						<td>
 							<span id="wlw_fix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Fix', 'mainwp' ); ?>
 								</a></span><span id="wlw_unfix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Unfix', 'mainwp' ); ?>
@@ -129,10 +129,10 @@ class MainWP_Security_Issues {
 						<td>
 							<span id="admin_loading"><i class="fa fa-spinner fa-lg fa-pulse"></i></span><span id="admin_ok" class="mainwp-success-green" style="display: none;"><i class="fa fa-check fa-lg"></i></span><span id="admin_nok" class="mainwp-error-red" style="display: none;"><i class="fa fa-times fa-lg"></i></span>
 						</td>
-						<td><?php _e( 'Administrator username should not be Admin', 'mainwp' ); ?></td>
+						<td><?php _e( 'Administrator username should not be admin', 'mainwp' ); ?></td>
 						<td><span id="admin_fix" style="display: none"></span>
 							<ol>
-								<li><?php _e( 'If this user was used as your MainWP Secure Link Admin, you will need to change your Administrator Username in the MainWP Dashboard for the site.', 'mainwp' ); ?> -
+								<li><?php _e( 'If this user was used as your MainWP Secure Link Admin, you will need to change your administrator username in the MainWP Dashboard for the site.', 'mainwp' ); ?> -
 									<a href="http://docs.mainwp.com/deleting-secure-link-admin/" style="text-decoration: none;"><?php _e( 'Documentation', 'mainwp' ); ?></a>
 								</li>
 								<li><?php _e( 'You have to change this yourself', 'mainwp' ); ?> -
@@ -208,7 +208,7 @@ class MainWP_Security_Issues {
 	}
 
 	public static function getMetaboxName() {
-		return '<i class="fa fa-shield"></i> ' . __( 'Security Issues', 'mainwp' );
+		return '<i class="fa fa-shield"></i> ' . __( 'Security issues', 'mainwp' );
 	}
 
 	public static function renderMetabox() {
@@ -248,7 +248,7 @@ class MainWP_Security_Issues {
 				<div class="mainwp-row-top darkred">
 					<span class="mainwp-left-col"><span class="mainwp-rightnow-number"><?php echo $total_securityIssues; ?></span> <?php echo _n( 'Security issue', 'Security issues', $total_securityIssues, 'mainwp' ); ?></span>
 					<span class="mainwp-mid-col">&nbsp;</span>
-					<span class="mainwp-right-col"><a href="#" id="mainwp_securityissues_show" onClick="return rightnow_show('securityissues');"><i class="fa fa-eye-slash"></i> <?php _e( 'Show All', 'mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" class="securityIssues_dashboard_allFixAll button-primary" value="<?php _e( 'Fix All', 'mainwp' ); ?>"/></span>
+					<span class="mainwp-right-col"><a href="#" id="mainwp_securityissues_show" onClick="return rightnow_show('securityissues');"><i class="fa fa-eye-slash"></i> <?php _e( 'Show all', 'mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" class="securityIssues_dashboard_allFixAll button-primary" value="<?php _e( 'Fix All', 'mainwp' ); ?>"/></span>
 				</div>
 				<div id="wp_securityissues" style="display: none">
 					<?php
@@ -263,9 +263,9 @@ class MainWP_Security_Issues {
 							<span class="mainwp-mid-col"><span class="<?php echo( $website->securityIssues > 0 ? 'darkred' : 'mainwp_ga_plus' ); ?>"><span class="mainwp-rightnow-number"><?php echo $website->securityIssues; ?></span> <?php echo _n( 'Issue', 'Issues', $website->securityIssues, 'mainwp' ); ?></span></span>
 							<span class="mainwp-right-col">
 								<?php if ( $website->securityIssues == 0 ) { ?>
-									<input type="button" class="securityIssues_dashboard_unfixAll button" value="<?php esc_attr_e( 'Unfix All', 'mainwp' ); ?>"/>
+									<input type="button" class="securityIssues_dashboard_unfixAll button" value="<?php esc_attr_e( 'Unfix all', 'mainwp' ); ?>"/>
 								<?php } else { ?>
-									<input type="button" class="securityIssues_dashboard_fixAll button-primary" value="<?php esc_attr_e( 'Fix All', 'mainwp' ); ?>"/>
+									<input type="button" class="securityIssues_dashboard_fixAll button-primary" value="<?php esc_attr_e( 'Fix all', 'mainwp' ); ?>"/>
 								<?php } ?>
 								<i class="fa fa-spinner fa-pulse img-loader" style="display: none;"></i>
 							</span>
@@ -275,7 +275,7 @@ class MainWP_Security_Issues {
 			</div>
 			<?php
 		} else {
-			esc_html_e( 'No security issues detected.', 'mainwp' );
+			esc_html_e( 'No security issues detected!', 'mainwp' );
 		}
 	}
 }

@@ -22,11 +22,11 @@ class MainWP_Extensions_Widget {
 				<div class="mainwp_info-box-yellow"><?php _e( 'You have no installed extensions.', 'mainwp' ); ?></div>
 				<br/>
 				<div style="text-align: center">
-					<a href="https://mainwp.com/extensions/" target="_blank" class="button button-hero button-primary"><?php _e( 'Add an Extension Today', 'mainwp' ); ?></a>
+					<a href="https://mainwp.com/extensions/" target="_blank" class="button button-hero button-primary"><?php _e( 'Add an extension today', 'mainwp' ); ?></a>
 				</div>
 				<br/>
 				<h3 style="color: #7fb100;"><?php _e( 'What are Extensions?', 'mainwp' ); ?></h3>
-				<p><?php _e( 'MainWP Extensions are specific features or tools created for the purpose of expanding the basic functionality of the MainWP plugin.', 'mainwp' ); ?></p>
+				<p><?php _e( 'MainWP extensions are specific features or tools created for the purpose of expanding the basic functionality of the MainWP plugin.', 'mainwp' ); ?></p>
 				<h3 style="color: #7fb100;"><?php _e( 'Why have Extensions?', 'mainwp' ); ?></h3>
 				<p><?php _e( 'The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat. Extensions offer custom functions and features so that each user can tailor their MainWP to their specific needs.', 'mainwp' ); ?></p>
 			</span>
@@ -132,7 +132,7 @@ class MainWP_Extensions_Widget {
 
 	public static function changeDefaultView() {
 		if ( ! isset( $_POST['view'] ) ) {
-			throw new Exception( __( 'Invalid Request', 'mainwp' ) );
+			throw new Exception( __( 'Invalid request!', 'mainwp' ) );
 		}
 
 		if ( $_POST['view'] == 'list' ) {

@@ -37,7 +37,7 @@ class MainWP_DB {
 
 	private function test_connection() {
 		if ( ! self::ping( $this->wpdb->dbh ) ) {
-			MainWP_Logger::Instance()->info( 'Trying to reconnect Wordpress DB Connection' );
+			MainWP_Logger::Instance()->info( __( 'Trying to reconnect Wordpress database connection...', 'mainwp' ) );
 			$this->wpdb->db_connect();
 		}
 	}

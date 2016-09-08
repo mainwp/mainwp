@@ -217,7 +217,7 @@ class MainWP_Main {
 								<?php
 							} else {
 								?>
-								<h2><?php echo sprintf( __( 'Welcome to %s Dashboard!', 'mainwp' ), stripslashes( $website->name ) ); ?></h2>
+								<h2><?php echo sprintf( __( 'Welcome to %s dashboard!', 'mainwp' ), stripslashes( $website->name ) ); ?></h2>
 								<p class="about-description"><?php echo sprintf( __( 'This information is only for %s%s', 'mainwp' ), $imgfavi, MainWP_Utility::getNiceURL( $website->url, true ) ); ?></p>
 								<?php
 							}
@@ -244,8 +244,8 @@ class MainWP_Main {
 						?>
 					</div>
 					<div class="mainwp-cols-2 mainwp-right mainwp-t-align-right">
-						<a class="button-hero button mainwp-upgrade-button mainwp-large" id="dashboard_refresh" title="<?php echo MainWP_Right_Now::renderLastUpdate(); ?>"><i class="fa fa-refresh"></i> <?php _e( 'Sync Data with Child Sites', 'mainwp' ); ?></a>
-						<a class="button-hero button-primary button mainwp-large" target="_blank" href="https://mainwp.com/mainwp-extensions"><i class="fa fa-cart-plus"></i> <?php _e( 'Get New Extensions', 'mainwp' ); ?></a>
+						<a class="button-hero button mainwp-upgrade-button mainwp-large" id="dashboard_refresh" title="<?php echo MainWP_Right_Now::renderLastUpdate(); ?>"><i class="fa fa-refresh"></i> <?php _e( 'Sync Data with child sites', 'mainwp' ); ?></a>
+						<a class="button-hero button-primary button mainwp-large" target="_blank" href="https://mainwp.com/mainwp-extensions"><i class="fa fa-cart-plus"></i> <?php _e( 'Get new extensions', 'mainwp' ); ?></a>
 					</div>
 					<div class="mainwp-clear"></div>
 				</div>
@@ -253,60 +253,60 @@ class MainWP_Main {
 					<div class="mainwp-postbox-actions-bottom">
 						<div>
 							<a id="mainwp-link-showhide-welcome-shortcuts" status="<?php echo( $hide_shortcuts ? 'hide' : 'show' ); ?>" href="#">
-								<i class="fa fa-eye-slash" aria-hidden="true"></i> <?php echo( $hide_shortcuts ? __( 'Show Quick Start Shortcuts', 'mainwp' ) : __( 'Hide Quick Start Shortcuts', 'mainwp' ) ); ?>
+								<i class="fa fa-eye-slash" aria-hidden="true"></i> <?php echo( $hide_shortcuts ? __( 'Show Quick Start shortcuts', 'mainwp' ) : __( 'Hide Quick Start shortcuts', 'mainwp' ) ); ?>
 							</a>
 						</div>
 						<div id="mainwp-welcome-bar-shotcuts" style="<?php echo( $hide_shortcuts ? 'display: none;' : '' ); ?>">
 							<div class="welcome-panel-column-container">
 								<div class="welcome-panel-column">
-									<h4><?php _e( 'Get Started', 'mainwp' ); ?></h4>
+									<h4><?php _e( 'Get started', 'mainwp' ); ?></h4>
 									<ul>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=managesites&do=new"><i class="fa fa-globe"></i> <?php _e( 'Add New Site', 'mainwp' ); ?></a>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=managesites&do=new"><i class="fa fa-globe"></i> <?php _e( 'Add new site', 'mainwp' ); ?></a>
 										</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=ManageGroups"><i class="fa fa-globe"></i> <?php _e( 'Create Child Site Groups', 'mainwp' ); ?></a>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=ManageGroups"><i class="fa fa-globe"></i> <?php _e( 'Create child site groups', 'mainwp' ); ?></a>
 										</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=ManageBackupsAddNew"><i class="fa fa-hdd-o"></i> <?php _e( 'Schedule Backups', 'mainwp' ); ?></a>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=ManageBackupsAddNew"><i class="fa fa-hdd-o"></i> <?php _e( 'Schedule backups', 'mainwp' ); ?></a>
 										</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=Settings"><i class="fa fa-cogs"></i> <?php _e( 'Check MainWP Settings', 'mainwp' ); ?></a>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=Settings"><i class="fa fa-cogs"></i> <?php _e( 'Check MainWP settings', 'mainwp' ); ?></a>
 										</li>
 
 									</ul>
 								</div>
 								<div class="welcome-panel-column">
-									<h4><?php _e( 'Next Steps', 'mainwp' ); ?></h4>
+									<h4><?php _e( 'Next steps', 'mainwp' ); ?></h4>
 									<ul>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=PostBulkAdd"><i class="fa fa-file-text"></i> <?php _e( 'Add Post to Child Site(s)', 'mainwp' ); ?></a>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=PostBulkAdd"><i class="fa fa-file-text"></i> <?php _e( 'Add post to child site(s)', 'mainwp' ); ?></a>
 										</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=PageBulkAdd"><i class="fa fa-file"></i> <?php _e( 'Add Page to Child Site(s)', 'mainwp' ); ?></a>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=PageBulkAdd"><i class="fa fa-file"></i> <?php _e( 'Add page to child site(s)', 'mainwp' ); ?></a>
 										</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=PluginsInstall"><i class="fa fa-plug"></i> <?php _e( 'Add Plugin to Child Site(s)', 'mainwp' ); ?></a>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=PluginsInstall"><i class="fa fa-plug"></i> <?php _e( 'Add plugin to child site(s)', 'mainwp' ); ?></a>
 										</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=ThemesInstall"><i class="fa fa-paint-brush"></i> <?php _e( 'Add Theme to Child Site(s)', 'mainwp' ); ?></a>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=ThemesInstall"><i class="fa fa-paint-brush"></i> <?php _e( 'Add theme to child site(s)', 'mainwp' ); ?></a>
 										</li>
 									</ul>
 								</div>
 								<div class="welcome-panel-column welcome-panel-last">
-									<h4><?php _e( 'More Actions', 'mainwp' ); ?></h4>
+									<h4><?php _e( 'More actions', 'mainwp' ); ?></h4>
 									<ul>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=managesites&do=test"><i class="fa fa-globe"></i> <?php _e( 'Test Connection', 'mainwp' ); ?></a>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=managesites&do=test"><i class="fa fa-globe"></i> <?php _e( 'Test connection', 'mainwp' ); ?></a>
 										</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=Extensions"><i class="fa fa-plug"></i> <?php _e( 'Manage Extensions', 'mainwp' ); ?></a>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=Extensions"><i class="fa fa-plug"></i> <?php _e( 'Manage extensions', 'mainwp' ); ?></a>
 										</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=ServerInformation"><i class="fa fa-server"></i> <?php _e( 'Check MainWP Requirements', 'mainwp' ); ?></a>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=ServerInformation"><i class="fa fa-server"></i> <?php _e( 'Check MainWP requirements', 'mainwp' ); ?></a>
 										</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=DashboardOptions"><i class="fa fa-cogs"></i> <?php _e( 'Set Your Preferences', 'mainwp' ); ?></a>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=DashboardOptions"><i class="fa fa-cogs"></i> <?php _e( 'Set your preferences', 'mainwp' ); ?></a>
 										</li>
 									</ul>
 								</div>

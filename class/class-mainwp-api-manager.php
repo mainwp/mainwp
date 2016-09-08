@@ -85,7 +85,7 @@ class MainWP_Api_Manager {
 			if ( $activate_results['activated'] == true ) {
 				$return['result']               = 'SUCCESS';
 				$mess                           = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
-				$return['message']              = __( 'Extension activated. ', 'mainwp' ) . $mess;
+				$return['message']              = __( 'The extension has been activated. ', 'mainwp' ) . $mess;
 				$options['api_key']             = $api_key;
 				$options['activation_email']    = $api_email;
 				$options['activated_key']       = 'Activated';
@@ -246,13 +246,13 @@ class MainWP_Api_Manager {
 				} else {
 
 					if ( $activate_results == false ) {
-						$return['error'] = __( 'Connection failed to the License Key API server. Try again later.', "mainwp" );
+						$return['error'] = __( 'Connection with the API license server could not be established. Please, try again later.', "mainwp" );
 					} else if ( isset( $activate_results['error'] ) ) {
 						$return['error'] =  $activate_results['error'];
 					} else if ( empty( $activate_results['api_key'] ) ) {
-						$return['error'] = __( 'License key is empty.', 'mainwp' );
+						$return['error'] = __( 'License key could not be found.', 'mainwp' );
 					} else {
-						$return['error'] = __( 'Undefined error.', 'mainwp' );
+						$return['error'] = __( 'An undefined error occurred. Please try again later or contact MainWP Support.', 'mainwp' );
 					}
 				}
 
@@ -264,7 +264,7 @@ class MainWP_Api_Manager {
 
 				return $return;
 			} else {
-				return array( 'error' => __( 'Username and Password is required to grab Extension API Key.', 'mainwp' ) );
+				return array( 'error' => __( 'Username and Password are required in order to grab extensions API keys.', 'mainwp' ) );
 			}
 		}
 
@@ -279,17 +279,17 @@ class MainWP_Api_Manager {
 		$error = '';
 		switch ( $response['code'] ) {
 			case '100':
-				$error = __( 'Invalid Request. Please try to deactivate / re-activate the extension on the WP > Plugins page and try to activate again.', 'mainwp' );
+				$error = __( 'Invalid request! Please try to deactivate and re-activate the extension on the WP > Plugins page and try to activate API key again.', 'mainwp' );
 				break;
 			case '102':				
-				$error = __( 'Activation error. There is no download permission for this product purchase.', 'mainwp' );
+				$error = __( 'Activation error!  Download permission for this product could not be found.', 'mainwp' );
 				break;
 			case '101':		
-				$error = __( 'No matching API license key exists. Activation error.', 'mainwp' );
+				$error = __( 'Activation error! Matching API key could not be found.', 'mainwp' );
 				break;					
 			case '103':
 			case '104':
-				$error = __( 'Invalid Instance ID. Please try to deactivate / re-activate the extension on the WP > Plugins page and try to activate again.', 'mainwp' );
+				$error = __( 'Invalid Instance ID! Please try to deactivate and re-activate the extension on the WP > Plugins page and try to activate API key again.', 'mainwp' );
 				break;
 			case '105':
 			case '106':
@@ -298,13 +298,13 @@ class MainWP_Api_Manager {
 				$error = $error . $info;
 				break;
 			case '900' :
-				$error = __( 'Your membership is On Hold. Reactivate your membership to activate MainWP Extensions', 'mainwp' );
+				$error = __( 'Your membership is on hold. Reactivate your membership to activate MainWP extensions', 'mainwp' );
 				break;
 			case '901' :
-				$error = __( 'Your membership has been Canceled. Reactivate your membership to activate MainWP Extensions', 'mainwp' );
+				$error = __( 'Your membership has been canceled. Reactivate your membership to activate MainWP extensions', 'mainwp' );
 				break;
 			case '902' :
-				$error = __( 'Your membership has Expired. Reactivate your membership to activate MainWP Extensions', 'mainwp' );
+				$error = __( 'Your membership has expired. Reactivate your membership to activate MainWP extensions', 'mainwp' );
 				break;
 		}
 		return $error;
@@ -316,13 +316,13 @@ class MainWP_Api_Manager {
 
 		switch ( $response['error'] ) {
 			case 'subscription_on_hold':
-				return __( 'Your membership is On Hold. Reactivate your membership to install MainWP Extensions.', 'mainwp' );
+				return __( 'Your membership is on hold. Reactivate your membership to install MainWP extensions.', 'mainwp' );
 				break;
 			case 'subscription_cancelled':
-				return __( 'Your membership has been Canceled. Reactivate your membership to install MainWP Extensions.', 'mainwp' );
+				return __( 'Your membership has been canceled. Reactivate your membership to install MainWP extensions.', 'mainwp' );
 				break;
 			case 'subscription_expired':
-				return __( 'Your membership has Expired. Reactivate your membership to install MainWP Extensions.', 'mainwp' );
+				return __( 'Your membership has expired. Reactivate your membership to install MainWP extensions.', 'mainwp' );
 				break;
 			default : //download_revoked
 				return sprintf( __( 'Download permission for %s has been revoked possibly due to a license key or membership expiring. You can reactivate or purchase a license key from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $software_title, $this->renew_license_url );

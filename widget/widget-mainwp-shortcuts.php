@@ -24,7 +24,7 @@ class MainWP_Shortcuts {
 		</div>
 		<div class="mainwp-row">
 			<div style="display: inline-block; width: 100px;"><?php _e( 'Notes:', 'mainwp' ); ?></div>
-			<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_<?php echo $website->id; ?>"><i class="fa fa-pencil"></i> <?php _e( 'Open Notes', 'mainwp' ); ?>
+			<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_<?php echo $website->id; ?>"><i class="fa fa-pencil"></i> <?php _e( 'Open notes', 'mainwp' ); ?>
 			</a><img src="<?php echo plugins_url( 'images/notes.png', dirname( __FILE__ ) ); ?>" class="mainwp_notes_img" id="mainwp_notes_img_<?php echo $website->id; ?>" <?php if ( $website->note == '' ) {
 				echo 'style="display: none;"';
 			} ?> />
@@ -39,10 +39,10 @@ class MainWP_Shortcuts {
 			</a>
 		</div>
 		<div class="mainwp-row">
-			<div style="display: inline-block; width: 100px;"><?php _e( 'Child Site:', 'mainwp' ); ?></div>
+			<div style="display: inline-block; width: 100px;"><?php _e( 'Child site:', 'mainwp' ); ?></div>
 			<a href="admin.php?page=managesites&id=<?php echo $website->id; ?>"><i class="fa fa-pencil-square-o"></i> <?php _e( 'Edit', 'mainwp' ); ?>
 			</a> |
-			<a target="_blank" href="admin.php?page=managesites&scanid=<?php echo $website->id; ?>"><i class="fa fa-shield"></i> <?php _e( 'Security Scan', 'mainwp' ); ?>
+			<a target="_blank" href="admin.php?page=managesites&scanid=<?php echo $website->id; ?>"><i class="fa fa-shield"></i> <?php _e( 'Security scan', 'mainwp' ); ?>
 			</a>
 		</div>
 
@@ -64,7 +64,7 @@ class MainWP_Shortcuts {
 
 			<form>
 				<div style="float: right" id="mainwp_notes_status"></div>
-				<input type="button" class="button cont button-primary" id="mainwp_notes_save" value="<?php _e( 'Save Note', 'mainwp' ); ?>"/>
+				<input type="button" class="button cont button-primary" id="mainwp_notes_save" value="<?php _e( 'Save note', 'mainwp' ); ?>"/>
 				<input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php _e( 'Close', 'mainwp' ); ?>"/>
 				<input type="hidden" id="mainwp_notes_websiteid" value=""/>
 			</form>

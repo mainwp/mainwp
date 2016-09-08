@@ -112,7 +112,7 @@ class MainWP_Widget_Plugins {
 						</div>
 						<div style="clear: left;"></div>
 						<div class="mainwp-row-actions-working">
-							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait', 'mainwp' ); ?></div>
+							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?></div>
 						<div>&nbsp;</div>
 					</div>
 				<?php } ?>
@@ -155,7 +155,7 @@ class MainWP_Widget_Plugins {
 						</div>
 						<div style="clear: left;"></div>
 						<div class="mainwp-row-actions-working">
-							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait', 'mainwp' ); ?></div>
+							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?></div>
 						<div>&nbsp;</div>
 					</div>
 				<?php } ?>
@@ -170,17 +170,17 @@ class MainWP_Widget_Plugins {
 
 	public static function activatePlugin() {
 		self::action( 'activate' );
-		die( json_encode( array( 'result' => __( 'Plugin has been activated', 'mainwp' ) ) ) );
+		die( json_encode( array( 'result' => __( 'Plugin has been activated!', 'mainwp' ) ) ) );
 	}
 
 	public static function deactivatePlugin() {
 		self::action( 'deactivate' );
-		die( json_encode( array( 'result' => __( 'Plugin has been deactivated', 'mainwp' ) ) ) );
+		die( json_encode( array( 'result' => __( 'Plugin has been deactivated!', 'mainwp' ) ) ) );
 	}
 
 	public static function deletePlugin() {
 		self::action( 'delete' );
-		die( json_encode( array( 'result' => __( 'Plugin has been permanently deleted', 'mainwp' ) ) ) );
+		die( json_encode( array( 'result' => __( 'Plugin has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
 	public static function action( $pAction ) {
@@ -188,16 +188,16 @@ class MainWP_Widget_Plugins {
 		$websiteIdEnc = $_POST['websiteId'];
 
 		if ( empty( $plugin ) ) {
-			die( json_encode( array( 'error' => 'Invalid Request.' ) ) );
+			die( json_encode( array( 'error' => 'Invalid Request!' ) ) );
 		}
 		$websiteId = $websiteIdEnc;
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => 'Invalid Request.' ) ) );
+			die( json_encode( array( 'error' => 'Invalid Request!' ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => 'You can not edit this website.' ) ) );
+			die( json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
 		try {
@@ -210,7 +210,7 @@ class MainWP_Widget_Plugins {
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
-			die( json_encode( array( 'error' => 'Unexpected error.' ) ) );
+			die( json_encode( array( 'error' => 'Unexpected error!' ) ) );
 		}
 	}
 }

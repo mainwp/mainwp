@@ -7,7 +7,7 @@ class MainWP_UI {
 			<div class="postbox">
 				<h3 class="mainwp_box_title">
 					<span>
-						<i class="fa fa-globe"></i> <?php echo esc_html( ( $title ) ? $title : translate( 'Select Sites', 'mainwp' ) ) ?>
+						<i class="fa fa-globe"></i> <?php echo esc_html( ( $title ) ? $title : translate( 'Select sites', 'mainwp' ) ) ?>
 						<div class="mainwp_sites_selectcount"><?php echo esc_html( ! is_array( $selected_websites ) ? '0' : count( $selected_websites ) ); ?></div>
 					</span>
 				</h3>
@@ -113,7 +113,7 @@ class MainWP_UI {
 		?>
 		<div class="mainwp_select_sites_box mainwp_select_categories <?php if ( $class ) { echo esc_attr( $class ); } ?> mainwp_select_sites_wrapper" style="<?php if ( $style ) { echo esc_attr( $style ); } ?>">
 			<div class="postbox">
-				<h3 class="box_title mainwp_box_title"><?php echo esc_html( ( $title ) ? $title : __( 'Select Categories', 'mainwp' ) ) ?></h3>
+				<h3 class="box_title mainwp_box_title"><?php echo esc_html( ( $title ) ? $title : __( 'Select categories', 'mainwp' ) ) ?></h3>
 				<div class="inside mainwp_inside ">
 					<input type="hidden" name="select_by_<?php echo esc_attr( $prefix ); ?>" class="select_by" value="<?php echo esc_attr( $selected_by ) ?>"/>
 					<?php if ( $show_group ) :  ?>

@@ -245,7 +245,7 @@ public static function renderHeader( $shownPage ) {
 			self::renderHeader( '' ); ?>
 			<?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
 				<tr>
-					<div class="mainwp_info-box"><?php echo sprintf( __( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
+					<div class="mainwp_info-box"><?php echo sprintf( __( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %sextensions site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
 				</tr>
 			<?php } ?>
 			<div id="mainwp_managebackups_content">
@@ -297,7 +297,7 @@ public static function renderHeader( $shownPage ) {
 				MainWP_Manage_Backups::renderNewEdit( $task );
 				?>
 				<p class="submit">
-					<input type="button" name="mainwp_managebackups_update" id="mainwp_managebackups_update" class="button-primary" value="<?php esc_attr_e( 'Update Task', 'mainwp' ); ?>"/>
+					<input type="button" name="mainwp_managebackups_update" id="mainwp_managebackups_update" class="button-primary" value="<?php esc_attr_e( 'Update task', 'mainwp' ); ?>"/>
 				</p>
 			</form>
 		</div>
@@ -325,7 +325,7 @@ public static function renderHeader( $shownPage ) {
 				?>
 
 				<p class="submit">
-					<input type="button" name="mainwp_managebackups_add" id="mainwp_managebackups_add" class="button-primary button button-hero" value="<?php esc_attr_e( 'Add New Task', 'mainwp' ); ?>"/>
+					<input type="button" name="mainwp_managebackups_add" id="mainwp_managebackups_add" class="button-primary button button-hero" value="<?php esc_attr_e( 'Add new task', 'mainwp' ); ?>"/>
 				</p>
 			</form>
 		</div>
@@ -360,24 +360,24 @@ public static function renderHeader( $shownPage ) {
 
 				<div class="postbox">
 					<h3 class="mainwp_box_title">
-						<span><i class="fa fa-history"></i> <?php _e( 'Schedule Backup', 'mainwp' ); ?></span></h3>
+						<span><i class="fa fa-history"></i> <?php _e( 'Schedule backup', 'mainwp' ); ?></span></h3>
 
 					<div class="inside">
 						<table class="form-table" style="width: 100%">
 							<tr class="form-field form-required">
-								<th scope="row"><?php _e( 'Task Name:', 'mainwp' ); ?></th>
+								<th scope="row"><?php _e( 'Task name:', 'mainwp' ); ?></th>
 								<td>
 									<input type="text" id="mainwp_managebackups_add_name" class="" name="mainwp_managebackups_add_name" value="<?php echo( isset( $task ) ? $task->name : '' ); ?>"/><span class="mainwp-form_hint">e.g. Site1 Daily, Site1 Full Weekly, ...</span>
 								</td>
 							</tr>
 							<tr>
-								<th scope="row"><?php _e( 'Task Schedule:', 'mainwp' ); ?></th>
+								<th scope="row"><?php _e( 'Task schedule:', 'mainwp' ); ?></th>
 								<td>
 									<a class="mainwp_action left backuptaskschedule <?php echo( ! isset( $task ) || $task->schedule == 'daily' ? 'mainwp_action_down' : '' ); ?>" href="#" id="mainwp_managebackups_schedule_daily"><?php _e( 'DAILY', 'mainwp' ); ?></a><a class="mainwp_action mid backuptaskschedule <?php echo( isset( $task ) && $task->schedule == 'weekly' ? 'mainwp_action_down' : '' ); ?>" href="#" id="mainwp_managebackups_schedule_weekly"><?php _e( 'WEEKLY', 'mainwp' ); ?></a><a class="mainwp_action right backuptaskschedule <?php echo( isset( $task ) && $task->schedule == 'monthly' ? 'mainwp_action_down' : '' ); ?>" href="#" id="mainwp_managebackups_schedule_monthly"><?php _e( 'MONTHLY', 'mainwp' ); ?></a>
 								</td>
 							</tr>
 							<tr>
-								<th scope="row"><?php _e( 'Backup File Name:', 'mainwp' ); ?></th>
+								<th scope="row"><?php _e( 'Backup tile name:', 'mainwp' ); ?></th>
 								<td>
 									<input type="text" name="backup_filename" id="backup_filename" class="" value="<?php echo( isset( $task ) ? $task->filename : '' ); ?>"/><span class="mainwp-form_hint" style="display: inline; max-width: 500px;">Allowed Structure Tags: <strong>%url%</strong>, <strong>%date%</strong>, <strong>%time%</strong>, <strong>%type%</strong></span>
 								</td>
@@ -388,7 +388,7 @@ public static function renderHeader( $shownPage ) {
 								</td>
 							</tr>
 							<tr>
-								<th scope="row"><?php _e( 'Backup Type:', 'mainwp' ); ?></th>
+								<th scope="row"><?php _e( 'Backup type:', 'mainwp' ); ?></th>
 								<td>
 									<a class="mainwp_action left <?php echo( ! isset( $task ) || $task->type != 'db' ? 'mainwp_action_down' : '' ); ?>" href="#" id="backup_type_full"><?php _e( 'FULL BACKUP', 'mainwp' ); ?></a><a class="mainwp_action right <?php echo( isset( $task ) && $task->type == 'db' ? 'mainwp_action_down' : '' ); ?>" href="#" id="backup_type_db"><?php _e( 'DATABASE BACKUP', 'mainwp' ); ?></a>
 								</td>
@@ -399,14 +399,14 @@ public static function renderHeader( $shownPage ) {
 								</td>
 							</tr>
 							<tr class="mainwp-exclude-suggested">
-								<th scope="row" style="vertical-align: top"><?php _e( 'Suggested Exclude', 'mainwp' ); ?>:</th>
+								<th scope="row" style="vertical-align: top"><?php _e( 'Suggested exclude', 'mainwp' ); ?>:</th>
 								<td>
 									<p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e( 'Every WordPress website is different but the sections below generally do not need to be backed up and since many of them are large in size they can even cause issues with your backup including server timeouts.', 'mainwp' ); ?></p>
 								</td>
 							</tr>
 							<tr class="mainwp-exclude-backup-locations">
 								<td colspan="2"><h4>
-										<i class="fa fa-cloud-upload"></i> <?php _e( 'Known Backup Locations', 'mainwp' ); ?>
+										<i class="fa fa-cloud-upload"></i> <?php _e( 'Known backup locations', 'mainwp' ); ?>
 									</h4></td>
 							</tr>
 							<tr class="mainwp-exclude-backup-locations">
@@ -414,9 +414,9 @@ public static function renderHeader( $shownPage ) {
 									<label for="mainwp-known-backup-locations"><?php _e( 'Exclude', 'mainwp' ); ?></label><input type="checkbox" id="mainwp-known-backup-locations" <?php echo( ! isset( $task ) || $task->excludebackup == 1 ? 'checked' : '' ); ?>>
 								</td>
 								<td class="mainwp-td-des">
-									<a href="#" id="mainwp-show-kbl-folders"><?php _e( '+ Show Excluded Folders', 'mainwp' ); ?></a><a href="#" id="mainwp-hide-kbl-folders"><?php _e( '- Hide Excluded Folders', 'mainwp' ); ?></a><br/>
+									<a href="#" id="mainwp-show-kbl-folders"><?php _e( '+ Show excluded folders', 'mainwp' ); ?></a><a href="#" id="mainwp-hide-kbl-folders"><?php _e( '- Hide excluded folders', 'mainwp' ); ?></a><br/>
 									<textarea id="mainwp-kbl-content" disabled></textarea>
-									<br/><?php _e( 'This adds known backup locations of popular WordPress backup plugins to the exclude list.  Old backups can take up a lot of space and can cause your current MainWP backup to timeout.', 'mainwp' ); ?>
+									<br/><?php _e( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to timeout.', 'mainwp' ); ?>
 								</td>
 							</tr>
 							<tr class="mainwp-exclude-separator">
@@ -426,7 +426,7 @@ public static function renderHeader( $shownPage ) {
 							</tr>
 							<tr class="mainwp-exclude-cache-locations">
 								<td colspan="2"><h4>
-										<i class="fa fa-cubes"></i> <?php _e( 'Known Cache Locations', 'mainwp' ); ?>
+										<i class="fa fa-cubes"></i> <?php _e( 'Known cache locations', 'mainwp' ); ?>
 									</h4></td>
 							</tr>
 							<tr class="mainwp-exclude-cache-locations">
@@ -434,9 +434,9 @@ public static function renderHeader( $shownPage ) {
 									<label for="mainwp-known-cache-locations"><?php _e( 'Exclude', 'mainwp' ); ?></label><input type="checkbox" id="mainwp-known-cache-locations" <?php echo( ! isset( $task ) || $task->excludecache == 1 ? 'checked' : '' ); ?>>
 								</td>
 								<td class="mainwp-td-des">
-									<a href="#" id="mainwp-show-kcl-folders"><?php _e( '+ Show Excluded Folders', 'mainwp' ); ?></a><a href="#" id="mainwp-hide-kcl-folders"><?php _e( '- Hide Excluded Folders', 'mainwp' ); ?></a><br/>
+									<a href="#" id="mainwp-show-kcl-folders"><?php _e( '+ Show excluded folders', 'mainwp' ); ?></a><a href="#" id="mainwp-hide-kcl-folders"><?php _e( '- Hide Excluded Folders', 'mainwp' ); ?></a><br/>
 									<textarea id="mainwp-kcl-content" disabled></textarea>
-									<br/><?php _e( 'This adds known cache locations of popular WordPress cache plugins to the exclude list.  A cache can be massive with thousands of files and can cause your current MainWP backup to timeout.  Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?>
+									<br/><?php _e( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to timeout. Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?>
 								</td>
 							</tr>
 							<tr class="mainwp-exclude-separator">
@@ -446,7 +446,7 @@ public static function renderHeader( $shownPage ) {
 							</tr>
 							<tr class="mainwp-exclude-nonwp-folders">
 								<td colspan="2"><h4>
-										<i class="fa fa-folder"></i> <?php _e( 'Non-WordPress Folders', 'mainwp' ); ?>
+										<i class="fa fa-folder"></i> <?php _e( 'Non-WordPress folders', 'mainwp' ); ?>
 									</h4></td>
 							</tr>
 							<tr class="mainwp-exclude-nonwp-folders">
@@ -454,7 +454,7 @@ public static function renderHeader( $shownPage ) {
 									<label for="mainwp-non-wordpress-folders"><?php _e( 'Exclude', 'mainwp' ); ?></label><input type="checkbox" id="mainwp-non-wordpress-folders" <?php echo( ! isset( $task ) || $task->excludenonwp == 1 ? 'checked' : '' ); ?>>
 								</td>
 								<td class="mainwp-td-des">
-									<a href="#" id="mainwp-show-nwl-folders"><?php _e( '+ Show Excluded Folders', 'mainwp' ); ?></a><a href="#" id="mainwp-hide-nwl-folders"><?php _e( '- Hide Excluded Folders', 'mainwp' ); ?></a><br/>
+									<a href="#" id="mainwp-show-nwl-folders"><?php _e( '+ Show Excluded Folders', 'mainwp' ); ?></a><a href="#" id="mainwp-hide-nwl-folders"><?php _e( '- Hide excluded folders', 'mainwp' ); ?></a><br/>
 									<textarea id="mainwp-nwl-content" disabled></textarea>
 									<br/><?php _e( 'This adds folders that are not part of the WordPress core (wp-admin, wp-content and wp-include) to the exclude list. Non-WordPress folders can contain a large amount of data or may be a sub-domain or add-on domain that should be backed up individually and not with this backup.', 'mainwp' ); ?>
 								</td>
@@ -466,7 +466,7 @@ public static function renderHeader( $shownPage ) {
 							</tr>
 							<tr class="mainwp-exclude-zips">
 								<td colspan="2"><h4>
-										<i class="fa fa-file-archive-o"></i> <?php _e( 'ZIP Archives', 'mainwp' ); ?>
+										<i class="fa fa-file-archive-o"></i> <?php _e( 'ZIP archives', 'mainwp' ); ?>
 									</h4></td>
 							</tr>
 							<tr class="mainwp-exclude-zips">
@@ -482,7 +482,7 @@ public static function renderHeader( $shownPage ) {
 							</tr>
 							<tr class="mainwp_backup_exclude_files_content" <?php echo( isset( $task ) && $task->type == 'db' ? 'style="display: none;"' : '' ); ?>>
 								<th scope="row" style="vertical-align: top"><h4 class="mainwp-custom-excludes">
-										<i class="fa fa-minus-circle"></i> <?php _e( 'Custom Excludes', 'mainwp' ); ?>
+										<i class="fa fa-minus-circle"></i> <?php _e( 'Custom excludes', 'mainwp' ); ?>
 									</h4></th>
 								<td>
 									<p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e( 'Exclude any additional files that you do not need backed up for this site. Click a folder name to drill down into the directory.', 'mainwp' ); ?></p>
@@ -518,13 +518,13 @@ public static function renderHeader( $shownPage ) {
 							if ( $hasRemoteDestinations !== null ) {
 								?>
 								<tr>
-									<th scope="row"><?php _e( 'Store Backup In:', 'mainwp' ); ?></th>
+									<th scope="row"><?php _e( 'Store backup in:', 'mainwp' ); ?></th>
 									<td>
 										<a class="mainwp_action left <?php echo( ! $hasRemoteDestinations ? 'mainwp_action_down' : '' ); ?>" href="#" id="backup_location_local"><?php _e( 'LOCAL SERVER ONLY', 'mainwp' ); ?></a><a class="mainwp_action right <?php echo( $hasRemoteDestinations ? 'mainwp_action_down' : '' ); ?>" href="#" id="backup_location_remote"><?php _e( 'REMOTE DESTINATION', 'mainwp' ); ?></a>
 									</td>
 								</tr>
 								<tr class="mainwp_backup_destinations" <?php echo( ! $hasRemoteDestinations ? 'style="display: none;"' : '' ); ?>>
-									<th scope="row"><?php _e( 'Backup Subfolder:', 'mainwp' ); ?></th>
+									<th scope="row"><?php _e( 'Backup subfolder:', 'mainwp' ); ?></th>
 									<td>
 										<input type="text" id="mainwp_managebackups_add_subfolder" name="backup_subfolder"
 										       value="<?php echo( isset( $task ) ? $task->subfolder : 'MainWP Backups/%url%/%type%/%date%' ); ?>"/><span class="mainwp-form_hint" style="display: inline; max-width: 500px;">Allowed Structure Tags: <strong>%sitename%</strong>, <strong>%url%</strong>, <strong>%date%</strong>, <strong>%task%</strong>, <strong>%type%</strong></span>
@@ -559,7 +559,7 @@ public static function renderHeader( $shownPage ) {
 							$useSite       = ( $archiveFormat == '' || $archiveFormat == 'site' );
 							?>
 							<tr>
-								<th scope="row"><?php _e( 'Archive Format', 'mainwp' ); ?></th>
+								<th scope="row"><?php _e( 'Archive format', 'mainwp' ); ?></th>
 								<td>
 									<table class="mainwp-nomarkup">
 										<tr>
@@ -598,7 +598,7 @@ public static function renderHeader( $shownPage ) {
 							$maximumFileDescriptors         = isset( $task ) ? $task->maximumFileDescriptors : 150;
 							?>
 							<tr class="archive_method archive_zip" <?php if ( $archiveFormat != 'zip' ) : ?>style="display: none;"<?php endif; ?>>
-								<th scope="row"><?php _e( 'Maximum File Descriptors on Child', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/' ); ?></th>
+								<th scope="row"><?php _e( 'Maximum file descriptors on child', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/' ); ?></th>
 								<td>
 									<div class="mainwp-radio" style="float: left;">
 										<input type="radio" value="" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_global" <?php echo( ! $maximumFileDescriptorsOverride ? 'checked="true"' : '' ); ?>"/>
@@ -693,9 +693,9 @@ public static function renderHeader( $shownPage ) {
 		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? $_POST['maximumFileDescriptors'] : 150;
 
 		if ( MainWP_DB::Instance()->updateBackupTask( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $_POST['subfolder'], $_POST['filename'], $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['loadFilesBeforeZip'] ) === false ) {
-			die( json_encode( array( 'error' => 'An unspecified error occured.' ) ) );
+			die( json_encode( array( 'error' => 'An unspecified error occured!' ) ) );
 		} else {
-			die( json_encode( array( 'result' => 'The backup task was updated successfully' ) ) );
+			die( json_encode( array( 'result' => 'The backup task was updated successfully!' ) ) );
 		}
 	}
 
@@ -703,7 +703,7 @@ public static function renderHeader( $shownPage ) {
 		global $current_user;
 		$name = $_POST['name'];
 		if ( $name == '' ) {
-			die( json_encode( array( 'error' => __('Please enter a valid name for your backup task') ) ) );
+			die( json_encode( array( 'error' => __('Please enter a valid name for your backup task.') ) ) );
 		}
 		$schedule       = $_POST['schedule'];
 		$type           = $_POST['type'];
@@ -742,7 +742,7 @@ public static function renderHeader( $shownPage ) {
 		} else {
 			do_action( 'mainwp_add_backuptask', $task->id );
 
-			die( json_encode( array( 'result' => __('The backup task was added successfully', 'mainwp') ) ) );
+			die( json_encode( array( 'result' => __('The backup task has been added successfully.', 'mainwp') ) ) );
 		}
 	}
 
@@ -793,10 +793,10 @@ public static function renderHeader( $shownPage ) {
 					$output .= '&nbsp;&bull;&nbsp;<a href="' . $website->url . '">' . MainWP_Utility::getNiceURL( $website->url ) . '</a><br />';
 				}
 
-				$output .= '<br />Backup Details:<br /><br />';
-				$output .= '<strong>Backup Task</strong>' . ' - ' . $task->name . '<br />';
-				$output .= '<strong>Backup Type</strong>' . ' - ' . ( $task->type == 'db' ? 'DATABASE BACKUP' : 'FULL BACKUP' ) . '<br />';
-				$output .= '<strong>Backup Schedule</strong>' . ' - ' . strtoupper( $task->schedule ) . '<br />';
+				$output .= '<br />Backup details:<br /><br />';
+				$output .= '<strong>Backup task</strong>' . ' - ' . $task->name . '<br />';
+				$output .= '<strong>Backup type</strong>' . ' - ' . ( $task->type == 'db' ? 'DATABASE BACKUP' : 'FULL BACKUP' ) . '<br />';
+				$output .= '<strong>Backup schedule</strong>' . ' - ' . strtoupper( $task->schedule ) . '<br />';
 
 				wp_mail( $email, 'A Scheduled Backup has been Started - MainWP', MainWP_Utility::formatEmail( $email, $output ), 'content-type: text/html' );
 				MainWP_DB::Instance()->updateBackupTaskWithValues( $task->id, array( 'lastStartNotificationSent' => time() ) );
@@ -895,7 +895,7 @@ public static function renderHeader( $shownPage ) {
 					if ( $task->backup_errors != '' ) {
 						$errorOutput = 'Errors occurred while executing task: <strong>' . $task->name . '</strong><br /><br />' . $task->backup_errors;
 
-						wp_mail( $email, 'A Scheduled Backup had an Error - MainWP', MainWP_Utility::formatEmail( $email, $errorOutput ), 'content-type: text/html' );
+						wp_mail( $email, 'A scheduled backup had an Error - MainWP', MainWP_Utility::formatEmail( $email, $errorOutput ), 'content-type: text/html' );
 
 						MainWP_DB::Instance()->updateBackupErrors( $task->id, '' );
 					}
@@ -1008,7 +1008,7 @@ public static function renderHeader( $shownPage ) {
 		}
 
 		if ( count( $websites ) == 0 ) {
-			die( '<i><strong>Select a site or group first</strong></i>' );
+			die( '<i><strong>Select a site or group first.</strong></i>' );
 		} //Nothing selected!
 
 		$allFiles            = array();
@@ -1286,7 +1286,7 @@ public static function renderHeader( $shownPage ) {
 		<?php if ( mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) { ?>
 			<hr/>
 			<div style="text-align: center;">
-				<a href="<?php echo admin_url( 'admin.php?page=managesites&backupid=' . $website->id ); ?>" class="button-primary"><?php _e( 'Backup Now', 'mainwp' ); ?></a>
+				<a href="<?php echo admin_url( 'admin.php?page=managesites&backupid=' . $website->id ); ?>" class="button-primary"><?php _e( 'Backup now', 'mainwp' ); ?></a>
 			</div>
 		<?php } ?>
 		<?php
@@ -1296,7 +1296,7 @@ public static function renderHeader( $shownPage ) {
 		self::renderHeader( 'BackupsHelp' );
 		?>
 		<div style="text-align: center">
-			<a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e( 'Show Quick Start Guide', 'mainwp' ); ?></a>
+			<a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e( 'Show Quick Start guide', 'mainwp' ); ?></a>
 		</div>
 		<div class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
 			<span><a href="#" class="mainwp-show-qsg" number="1"><?php _e( 'Scheduling a Backup Task', 'mainwp' ) ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="2"><?php _e( 'Backup Remote Destinations', 'mainwp' ) ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="3"><?php _e( 'How to execute backups in chunks', 'mainwp' ) ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>

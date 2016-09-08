@@ -281,7 +281,7 @@ class MainWP_Manage_Sites {
 
 				$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', $params, false, false, false );
 			} catch ( MainWP_Exception $e ) {
-				MainWP_Logger::Instance()->warningForWebsite( $website, 'backup', 'Error: ' . $e->getMessage()  . ' (' . $e->getMessageExtra() . ')' );
+				MainWP_Logger::Instance()->warningForWebsite( $website, 'backup', 'ERROR: ' . $e->getMessage()  . ' (' . $e->getMessageExtra() . ')' );
 				$stop = microtime( true );
 				//Bigger then 30 seconds means a timeout
 				if ( ( $stop - $start ) > 30 ) {
@@ -562,7 +562,7 @@ class MainWP_Manage_Sites {
 				}
 			}
 		} else {
-			throw new MainWP_Exception( 'Database backup failed due to an undefined error' );
+			throw new MainWP_Exception( 'Database backup failed due to an undefined error.' );
 		}
 
 		return $backup_result;
@@ -1098,7 +1098,7 @@ class MainWP_Manage_Sites {
 		<div id="managesites-backup-box" title="Full backup required" style="display: none; text-align: center">
 			<div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesites-backup-content">
 			</div>
-			<input id="managesites-backup-all" type="button" name="Backup All" value="<?php esc_attr_e( 'Backup All', 'mainwp' ); ?>" class="button-primary"/>
+			<input id="managesites-backup-all" type="button" name="Backup All" value="<?php esc_attr_e( 'Backup all', 'mainwp' ); ?>" class="button-primary"/>
 			<input id="managesites-backup-ignore" type="button" name="Ignore" value="<?php esc_attr_e( 'Ignore', 'mainwp' ); ?>" class="button"/>
 		</div>
 
@@ -1305,7 +1305,7 @@ class MainWP_Manage_Sites {
 			die( 'ERROR ' . $e->getMessage() );
 		}
 
-		die( sprintf( __( 'Site successfully reconnected - Visit the Site\'s %sDashboard%s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $siteId . '" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' ) );
+		die( sprintf( __( 'Site successfully reconnected - Visit the site\'s %sdashboard%s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $siteId . '" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' ) );
 	}
 
 	public static function _reconnectSite( $website ) {
@@ -1343,11 +1343,11 @@ class MainWP_Manage_Sites {
 		$site_id = $_POST['siteId'];
 		$ext_dir_slug = $_POST['ext_dir_slug'];
 		if ( empty( $site_id ) ) {
-			die( json_encode( array( 'error' => 'Error: empty site id' ) ) );
+			die( json_encode( array( 'error' => 'ERROR: empty site id' ) ) );
 		}
 
 		do_action('mainwp_applypluginsettings_' . $ext_dir_slug, $site_id);
-		die( json_encode( array( 'error' => __('Undefined error', 'mainwp' ) ) ) );
+		die( json_encode( array( 'error' => __('Undefined error!', 'mainwp' ) ) ) );
 	}
 
 
@@ -1358,7 +1358,7 @@ class MainWP_Manage_Sites {
 				MainWP_DB::Instance()->updateNote( $website->id, htmlentities( $_POST['note'] ) );
 				die( json_encode( array( 'result' => 'SUCCESS' ) ) );
 			} else {
-				die( json_encode( array( 'error' => 'Not your website' ) ) );
+				die( json_encode( array( 'error' => 'Not your website!' ) ) );
 			}
 		}
 		die( json_encode( array( 'undefined_error' => true ) ) );
@@ -1557,10 +1557,10 @@ class MainWP_Manage_Sites {
 		self::renderHeader( 'SitesHelp' );
 		?>
 		<div style="text-align: center">
-			<a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e( 'Show Quick Start Guide', 'mainwp' ); ?></a>
+			<a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e( 'Show Quick Start guide', 'mainwp' ); ?></a>
 		</div>
 		<div class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
-			<span><a href="#" class="mainwp-show-qsg" number="1"><?php _e( 'Adding a Site To MainWP Dashboard', 'mainwp' ) ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="2"><?php _e( 'How to use the Child Unique Security ID', 'mainwp' ) ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="3"><?php _e( 'Individual Site Dashboard', 'mainwp' ) ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="4"><?php _e( 'How to test a Site Connection', 'mainwp' ) ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
+			<span><a href="#" class="mainwp-show-qsg" number="1"><?php _e( 'Adding a site to MainWP Dashboard', 'mainwp' ) ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="2"><?php _e( 'How to use the Child Unique Security ID', 'mainwp' ) ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="3"><?php _e( 'Individual Site Dashboard', 'mainwp' ) ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="4"><?php _e( 'How to test a Site Connection', 'mainwp' ) ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
 				</a></span>
 
 			<div class="clear"></div>

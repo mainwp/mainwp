@@ -133,11 +133,11 @@ class MainWP_Meta_Boxes {
 		<div id="taxonomy-category" class="categorydiv">
 			<div>
 				<label><input value="1" type="checkbox" <?php echo $post_only ? 'checked' : ''; ?>
-				              name="post_only_existing"><?php esc_html_e( 'Post only to existing Categories', 'mainwp' ); ?>
+				              name="post_only_existing"><?php esc_html_e( 'Post only to existing categories', 'mainwp' ); ?>
 				</label>
 			</div>
 			<ul id="category-tabs" class="category-tabs">
-				<li class="tabs"><a href="#category-all"><?php esc_html_e( 'All Categories', 'mainwp' ); ?></a></li>
+				<li class="tabs"><a href="#category-all"><?php esc_html_e( 'All categories', 'mainwp' ); ?></a></li>
 			</ul>
 
 			<div id="category-all" class="tabs-panel" style="display: block;">
@@ -164,15 +164,15 @@ class MainWP_Meta_Boxes {
 
 			<div id="category-adder" class="wp-hidden-children">
 				<h4><a id="category-add-toggle" href="#category-add"
-				       class="hide-if-no-js"><?php esc_html_e( '+ Add New Category', 'mainwp' ); ?></a></h4>
+				       class="hide-if-no-js"><?php esc_html_e( '+ Add new category', 'mainwp' ); ?></a></h4>
 
 				<p id="category-add" class="category-add wp-hidden-child">
 					<label class="screen-reader-text"
-					       for="newcategory"><?php esc_html_e( 'Add New Category', 'mainwp' ); ?></label>
+					       for="newcategory"><?php esc_html_e( 'Add new category', 'mainwp' ); ?></label>
 					<input type="text" name="newcategory" id="newcategory" class="form-required"
-					       value="<?php esc_attr_e( 'New Category Name', 'mainwp' ); ?>" aria-required="true">
+					       value="<?php esc_attr_e( 'New category name', 'mainwp' ); ?>" aria-required="true">
 					<input type="button" id="mainwp-category-add-submit" class="button mainwp-category-add-submit"
-					       value="<?php esc_attr_e( 'Add New Category', 'mainwp' ); ?>">
+					       value="<?php esc_attr_e( 'Add new category', 'mainwp' ); ?>">
 					<input type="hidden" id="_ajax_nonce-add-category" name="_ajax_nonce-add-category"
 					       value="<?php echo esc_attr( wp_create_nonce( 'add-category' . $post->ID ) ); ?>">
 					<span id="category-ajax-response"></span>

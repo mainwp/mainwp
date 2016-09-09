@@ -3045,7 +3045,7 @@ body.show-upload-plugin .mainwp-upload-plugin {
 .sync-ext-row{
     margin: 5px 0;
 }
-.plugin-update-tr.active > td > div.update-message {
+.plugin-update-tr.active > td > div.api-deactivate {
     margin: 10px 20px 10px 40px;
     padding: 10px;
 }
@@ -3059,3 +3059,17 @@ body.show-upload-plugin .mainwp-upload-plugin {
 /* Welcome Panel */
 
 #mainwp-welocme-bar { padding: 0; }
+
+.mainwp-ui .plugin-update-tr .update-message {
+    margin:5px 20px 15px 40px;
+    background-color: #fff8e5;
+    border-left: 4px solid #ffb900;
+    padding: 1px 12px;
+}
+.mainwp-ui .plugin-update-tr .update-message p:before{
+    color: #f56e28;
+    content: "\f463";
+    margin-right: 6px;
+    margin-top: 6px;
+    vertical-align: bottom;
+}

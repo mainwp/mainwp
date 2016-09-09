@@ -187,7 +187,7 @@ public static function renderFooter( $shownPage ) {
 				<tr>
 					<td></td>
 					<td><?php _e( 'Server Name', 'mainwp' ); ?></td>
-					<td colspan="3"><?php self::getSeverName(); ?></td>
+					<td colspan="3"><?php self::getServerName(); ?></td>
 				</tr>
 				<tr>
 					<td></td>
@@ -226,7 +226,7 @@ public static function renderFooter( $shownPage ) {
 				</tr>
 				<tr>
 					<td></td>
-					<td><?php _e( 'Sever self connect', 'mainwp' ); ?></td>
+					<td><?php _e( 'Server self connect', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::serverSelfConnect(); ?></td>
 				</tr>
 				<tr>
@@ -927,7 +927,7 @@ public static function renderFooter( $shownPage ) {
 		echo $_SERVER['SERVER_ADDR'];
 	}
 
-	protected static function getSeverName() {
+	protected static function getServerName() {
 		echo $_SERVER['SERVER_NAME'];
 	}
 

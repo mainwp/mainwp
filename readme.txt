@@ -483,7 +483,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Added: Support for translation for missed strings
 * Added: Invitation for review on WordPress.org messages
 * Added: New links to the Shortcuts widget
-* Added: New checks to the Sever Information page
+* Added: New checks to the Server Information page
 * Added: Support for the upcoming extension
 * Fixed: Multiple PHP Warning 
 * Fixed: Multiple spelling errors
@@ -498,7 +498,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Layout of the bulk extension installing process screen 
 * Updated: Extensions sub-menu (removed the "MainWP" and "Extension" from menu items)
 * Updated: Individual site Require backup before upgrade setting
-* Removed: Unnecessary checks from the Sever Information page
+* Removed: Unnecessary checks from the Server Information page
 
 = 2.0.14 - 4-28-15 =
 * Added: OpenSSL Notification and the SSL Verify option for Extension site connection

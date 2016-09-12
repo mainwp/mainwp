@@ -192,7 +192,7 @@ class MainWP_Options {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php _e( 'Abandoned plugins/thems tolerance', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( "In case the plugin or theme author didn't release an update for the set number of days, the plugin/theme will be marked and Possibly Abandoned.", 'mainwp' ) ); ?></th>
+						<th scope="row"><?php _e( 'Abandoned plugins/themes tolerance', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( "In case the plugin or theme author didn't release an update for the set number of days, the plugin/theme will be marked and Possibly Abandoned.", 'mainwp' ) ); ?></th>
 						<td>
 							<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" class=""
 							       id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo( ( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) === false ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>

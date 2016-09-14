@@ -822,7 +822,7 @@ class MainWP_Extensions_View {
 					'desc' => 'Custom Post Types Extension is an extension for the MainWP Plugin that allows you to manage almost any custom post type on your child sites and that includes Publishing, Editing, and Deleting custom post type content.',
 					'link' => 'https://mainwp.com/extension/custom-post-types/',
 					'img' => plugins_url( 'images/extensions/custom-post.png', dirname( __FILE__ ) ),
-					'product_id' => 'MainWP Custom Post Type',
+					'product_id' => 'MainWP Custom Post Types',
 					'catalog_id' => '1002564',
 					'group' => array('content')
 				),

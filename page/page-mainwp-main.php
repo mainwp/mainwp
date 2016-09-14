@@ -316,8 +316,9 @@ class MainWP_Main {
 					</div>
 				<?php } ?>
 			</div>
+                        <div id="mainwp_main_errors" class="mainwp_error error"></div>
 		</form>
-
+                
 		<?php if ($hideShortcuts) return; ?>
 
 		<div id="mainwp-dashboard-info-box">

@@ -37,10 +37,9 @@ class MainWP_Sync_Status {
 			return;
 		}
 				
-		$top_row = true;
-		
+		$top_row = true;		
+                $top_up_row = true;
 		?>
-
 		<div class="clear">
 			<div id="wp_syncs">
 				<?php
@@ -48,80 +47,114 @@ class MainWP_Sync_Status {
 				$SYNCERRORS = 0;
 				$DOWN       = 1;
 				$UP         = 2;
-
-				ob_start();
+                                
+                                $html_up_sites = '';
+				
+                                
 				for ( $j = 0; $j < 3; $j ++ ) {
-				@MainWP_DB::data_seek( $websites, 0 );
-				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
-						if ( empty( $website ) )
-						continue;
+                                        @MainWP_DB::data_seek( $websites, 0 );
+                                        while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+                                                if ( empty( $website ) )
+                                                    continue;
 
-						$hasSyncErrors = ( $website->sync_errors != '' );
-						$isDown = ( ! $hasSyncErrors && ( $website->offline_check_result == - 1 ) );
-						$isUp   = ( ! $hasSyncErrors && ! $isDown );
+                                                $hasSyncErrors = ( $website->sync_errors != '' );
+                                                $isDown = ( ! $hasSyncErrors && ( $website->offline_check_result == - 1 ) );
+                                                $isUp   = ( ! $hasSyncErrors && ! $isDown );
 
-						if ( ( $j == $SYNCERRORS ) ) {
-							if ( ! $hasSyncErrors ) 						
-								continue;							
-					}
-						if ( ( $j == $DOWN ) ) {
-							if (! $isDown ) 						
-						continue;
-					}
-						if ( ( $j == $UP ) ) {
-							if ( ! $isUp )						
-								continue;
-						}
-												
-						if ( time() - $website->dtsSync < 60 * 60 * 24 ) {
-							$synced24 = true;
-						} else 
-							$synced24 = false;
-						
-					$lastSyncTime = ! empty( $website->dtsSync ) ? MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $website->dtsSync ) ) : '';
-					?>
-					<div class="<?php echo $top_row ? 'mainwp-row-top' : 'mainwp-row' ?> mainwp_wp_sync" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
-							<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-10">
-								<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_sync<?php echo $website->id; ?>" />
-							</div>
-							<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-10 wordpressInfo" id="wp_sync_<?php echo $website->id; ?>">
-								<span><?php echo $lastSyncTime; ?></span>
-							</div>
-							<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right mainwp-padding-top-5 wordpressAction">
-								<?php
-								if ($hasSyncErrors)
-								{
-									?>
-									<div style="position: absolute; padding-top: 5px; padding-right: 10px; right: 50px;"><a href="#" class="mainwp_rightnow_site_reconnect" siteid="<?php echo $website->id; ?>"><?php _e('Reconnect','mainwp'); ?></a></div>
-									<span class="fa-stack fa-lg" title="Disconnected">
-											<i class="fa fa-circle fa-stack-2x mainwp-red"></i>
-											<i class="fa fa-plug fa-stack-1x mainwp-white"></i>
-						</span>
-									<?php
-								} else {
-									if ( !$synced24 ) { ?>									
-									<a href="javascript:void(0)" onClick="rightnow_wp_sync('<?php echo $website->id; ?>')"><?php _e( 'Sync Now', 'mainwp' ); ?></a>&nbsp;&nbsp;
-									<?php } ?>
-									<span class="fa-stack fa-lg" title="Site is Online">
-										<i class="fa fa-check-circle fa-2x mainwp-green"></i>
-									</span>
-									<?php
-								}								
-								?>
-								
-					</div>
-							<div class="mainwp-clear"></div>
-						</div>
-					<?php
-					$top_row = false;
-				}
+                                                if ( $j == $SYNCERRORS ) {
+                                                    if ( ! $hasSyncErrors ) 						
+                                                        continue;							
+                                                }
+                                                if ( $j == $DOWN  ) {
+                                                    if (! $isDown ) 						
+                                                        continue;
+                                                }
+                                                if ( $j == $UP ) {
+                                                    if ( ! $isUp ) {
+                                                        continue;
+                                                    } 
+                                                }
+
+                                                if ( time() - $website->dtsSync < 60 * 60 * 24 ) {
+                                                        $synced24 = true;
+                                                } else {
+                                                        $synced24 = false;
+                                                }
+
+                                                $lastSyncTime = ! empty( $website->dtsSync ) ? MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $website->dtsSync ) ) : '';
+                                                
+                                                $is_top_row = false;                                                
+                                                if (($j == $UP && $top_up_row) || ($j != $UP && $top_row)) {
+                                                    $is_top_row = true;
+                                                }
+                                                
+                                                ob_start();
+                                                ?>
+                                                <div class="<?php echo $is_top_row ? 'mainwp-row-top' : 'mainwp-row' ?> mainwp_wp_sync" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
+                                                            <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-10">
+                                                                    <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_sync<?php echo $website->id; ?>" />
+                                                            </div>
+                                                            <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-10 wordpressInfo" id="wp_sync_<?php echo $website->id; ?>">
+                                                                    <span><?php echo $lastSyncTime; ?></span>
+                                                            </div>
+                                                            <div class="mainwp-right mainwp-cols-4 mainwp-t-align-right mainwp-padding-top-5 wordpressAction">
+                                                                <?php
+                                                                if ($hasSyncErrors)
+                                                                {
+                                                                        ?>
+                                                                        <div style="position: absolute; padding-top: 5px; padding-right: 10px; right: 50px;"><a href="#" class="mainwp_rightnow_site_reconnect" siteid="<?php echo $website->id; ?>"><?php _e('Reconnect','mainwp'); ?></a></div>
+                                                                        <span class="fa-stack fa-lg" title="Disconnected">
+                                                                                        <i class="fa fa-circle fa-stack-2x mainwp-red"></i>
+                                                                                        <i class="fa fa-plug fa-stack-1x mainwp-white"></i>
+                                                                        </span>
+                                                                        <?php
+                                                                } else {
+                                                                        if ( !$synced24 ) { ?>									
+                                                                            <a href="javascript:void(0)" onClick="rightnow_wp_sync('<?php echo $website->id; ?>')"><?php _e( 'Sync Now', 'mainwp' ); ?></a>&nbsp;&nbsp;
+                                                                        <?php } ?>
+                                                                        <span class="fa-stack fa-lg" title="Site is Online">
+                                                                                <i class="fa fa-check-circle fa-2x mainwp-green"></i>
+                                                                        </span>
+                                                                        <?php
+                                                                }								
+                                                                ?>
+
+                                                            </div>
+                                                            <div class="mainwp-clear"></div>
+                                                    </div>
+                                                <?php                                                
+                                                $output = ob_get_clean();                                                
+                                                if ( $j == $UP ) {
+                                                       $top_up_row = false;
+                                                       $html_up_sites .= $output;
+                                                } else {
+                                                       $top_row = false;
+                                                       echo $output;
+                                                }                                        
+                                        }
 				}
 				
-				$output = ob_get_clean();
-					echo $output;
+				
 				?>
 			</div>
-		</div>
+		
+                
+                        <?php                  
+                        $opts           = get_option( 'mainwp_opts_showhide_sections', false );
+                        $hide_sites = ( is_array( $opts ) && isset( $opts['synced_sites'] ) && $opts['synced_sites'] == 'hide' ) ? true : false;
+                        ?>                        
+                        <div class="mainwp-postbox-actions-top">                              
+                            <div style="float:right">
+                                    <a id="mainwp-link-showhide-synced-sites" status="<?php echo( $hide_sites ? 'hide' : 'show' ); ?>" href="#">
+                                            <i class="fa fa-eye-slash" aria-hidden="true"></i> <?php echo( $hide_sites ? __( 'Show online sites', 'mainwp' ) : __( 'Hide online sites', 'mainwp' ) ); ?>
+                                    </a>
+                                </div>                         
+                                <div class="clear"></div>
+                                <div id="mainwp-synced-status-sites-wrap" style="<?php echo( $hide_sites ? 'display: none;' : '' ); ?>">
+                                        <?php echo $html_up_sites; ?>
+                                </div>
+                        </div>
+                </div>
 		<?php
 		@MainWP_DB::free_result( $websites );
 	}

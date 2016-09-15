@@ -7055,14 +7055,30 @@ jQuery(document).ready(function($) {
         } else {
             $(this).attr('status', 'show');
             $(this).html('<i class="fa fa-eye-slash" aria-hidden="true"></i> '+__('Hide Quick Start shortcuts'));
-            shortcuts.show();
-            mainwp_setCookie('mainwp_showhide_welcome_shortcuts', 'show');
+            shortcuts.show();            
             status = 'show';
         }
         mainwp_save_showhide_sections('welcome_shortcuts', status);
         return false;
     });
-
+    
+    $('#mainwp-link-showhide-synced-sites').live('click', function(){
+        var status = $(this).attr('status');
+        var wrap = jQuery('#mainwp-synced-status-sites-wrap');
+        if (status == 'show') {
+            $(this).attr('status', 'hide');
+            $(this).html('<i class="fa fa-eye-slash" aria-hidden="true"></i> '+__('Show online sites'));
+            wrap.hide();
+            status = 'hide';
+        } else {
+            $(this).attr('status', 'show');
+            $(this).html('<i class="fa fa-eye-slash" aria-hidden="true"></i> '+__('Hide online sites'));
+            wrap.show();            
+            status = 'show';
+        }
+        mainwp_save_showhide_sections('synced_sites', status);
+        return false;
+    });
 });
 
 mainwp_save_showhide_sections = function(pSec, pStatus) {

@@ -2078,7 +2078,7 @@ class MainWP_System {
 		wp_enqueue_script( 'mainwp-date', MAINWP_PLUGIN_URL . 'js/date.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-tablesorter', MAINWP_PLUGIN_URL . 'js/jquery.tablesorter.min.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-tablesorter-pager', MAINWP_PLUGIN_URL . 'js/jquery.tablesorter.pager.js', array(), $this->current_version );
-		wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'js/moment.min.js', array(), $this->current_version );
+		wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'js/moment.min.js', array(), $this->current_version );		
 	}
 
 	function admin_enqueue_styles( $hook ) {
@@ -2098,7 +2098,7 @@ class MainWP_System {
 		}
 
 		wp_enqueue_style( 'mainwp-filetree', MAINWP_PLUGIN_URL . 'css/jqueryFileTree.css', array(), $this->current_version );
-		wp_enqueue_style( 'mainwp-font-awesome', MAINWP_PLUGIN_URL . 'css/font-awesome/css/font-awesome.min.css', array(), $this->current_version );
+		wp_enqueue_style( 'mainwp-font-awesome', MAINWP_PLUGIN_URL . 'css/font-awesome/css/font-awesome.min.css', array(), $this->current_version );		
 	}
 
 	function admin_head() {
@@ -2133,6 +2133,23 @@ class MainWP_System {
 	}
 
 
+	public  static function enqueue_postbox_scripts() {
+		wp_enqueue_script( 'common' );
+		wp_enqueue_script( 'wp-lists' );
+		wp_enqueue_script( 'postbox' );
+	}
+	
+	public static function do_mainwp_meta_boxes($_postpage, $screen = 'normal') {			
+		wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
+		wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
+		?>
+		<div class="metabox-holder columns-1">
+		<?php do_meta_boxes($_postpage, $screen, null ); ?>
+		</div>
+		<script type="text/javascript"> var mainwp_postbox_page = '<?php echo $_postpage; ?>';</script>					
+		<?php
+	}
+	
 	public function remove_wp_menus() {
 		$hide_menus = get_option( 'mwp_setup_hide_wp_menus', array() );
 		if ( ! is_array( $hide_menus ) ) {

@@ -78,8 +78,9 @@ class MainWP_Extensions {
 	}
 
 	public static function initMenu() {
-		MainWP_Extensions_View::initMenu();
-
+		$page = MainWP_Extensions_View::initMenu();		
+		add_action( 'load-' . $page, array(MainWP_Extensions::getClassName(), 'on_load_page'));		
+		
 		self::$extensions = array();
 		$all_extensions   = array();
 
@@ -152,6 +153,45 @@ class MainWP_Extensions {
 		self::$extensionsLoaded = true;
 	}
 
+	public static function on_load_page() {
+		MainWP_System::enqueue_postbox_scripts();
+		self::add_meta_boxes();		
+	}
+	
+	public static function add_meta_boxes() {
+		$i = 1;		
+		if ( mainwp_current_user_can( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
+			add_meta_box(
+				'mwp-extension-contentbox-' . $i++,
+				'<i class="fa fa-cog"></i> ' . __( 'Bulk install and activate extensions', 'mainwp' ),
+				array( 'MainWP_Extensions_View', 'renderInstallAndActive' ),
+				'mainwp_postboxes_manage_extensions',
+				'normal',
+				'core'	
+			);
+		}
+		
+		add_meta_box(
+			'mwp-extension-contentbox-' . $i++,
+			'<i class="fa fa-cog"></i> ' . sprintf( _n( '%d Installed MainWP Extension', '%d Installed MainWP Extensions', ( count( self::$extensions ) == 1 ? 1 : 2 ), 'mainwp' ), count( self::$extensions ) ),
+			array( 'MainWP_Extensions_View', 'renderInstalledExtensions' ),
+			'mainwp_postboxes_manage_extensions',
+			'normal',
+			'core',
+			array( 'extensions' => self::$extensions )	
+		);
+		
+		add_meta_box(
+			'mwp-extension-contentbox-' . $i++,
+			'<i class="fa fa-cog"></i> ' . sprintf( __('Available %sMainWP Extensions%s', 'mainwp'), '<a href="https://mainwp.com/mainwp-extensions">', '</a>' ),
+			array( 'MainWP_Extensions_View', 'renderAvailableExtensions' ),
+			'mainwp_postboxes_manage_extensions',
+			'normal',
+			'core',
+			array( 'extensions' => self::$extensions )	
+		);
+	}
+	
 	public static function loadExtensions() {
 		if ( ! isset( self::$extensions ) ) {
 			self::$extensions = get_option( 'mainwp_extensions' );
@@ -182,11 +222,29 @@ class MainWP_Extensions {
 			$ext['version']              = $extension['version'];
 			$ext['name']				 = $extension['name'];
 			$ext['page']				 = $extension['page'];
+			$ext['page']				 = $extension['page'];
+			if ( isset( $extension['activated_key'] ) && 'Activated' == $extension['activated_key'] ) {
+				$ext['activated_key']              = 'Activated';
+			} 
 			$return[ $extension['slug'] ] = $ext;
 		}
 		return $return;
 	}
 
+	public static function getExtensionsPageSlug() {
+		$currentExtensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
+
+		if ( ! is_array( $currentExtensions ) || empty( $currentExtensions ) ) {
+			return array();
+		}
+		$pageSlugs = array();
+		foreach ( $currentExtensions as $extension ) {
+			$pageSlugs[] = $extension['page'];
+		}
+
+		return $pageSlugs;
+	}
+	
 	public static function genApiPassword( $length = 12, $special_chars = true, $extra_special_chars = false ) {
 		$api_manager_password_management = new MainWP_Api_Manager_Password_Management();
 
@@ -725,15 +783,20 @@ class MainWP_Extensions {
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function renderFooter( $shownPage ) {
-		MainWP_Extensions_View::renderFooter( $shownPage, self::$extensions );
+		MainWP_Extensions_View::renderFooter( $shownPage );
 	}
 
 	public static function render() {
-		self::renderHeader( '' );
-
+		?>
+		<div class="wrap">
+			<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
+					src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50"
+					alt="MainWP"/></a>
+			<h2><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h2>
+			<div style="clear: both;"></div><br/><br/>
+		<?php	
 		MainWP_Extensions_View::render( self::$extensions );
-
-		self::renderFooter( '' );
+		echo '</div>';		
 	}
 
 	public static function isExtensionAvailable( $pAPI ) {
@@ -751,18 +814,6 @@ class MainWP_Extensions {
 
 	public static function isExtensionEnabled( $pluginFile ) {
 		return array( 'key' => md5( $pluginFile . '-SNNonceAdder' ) );
-		// To fix bug
-//		self::loadExtensions();
-//
-//		$slug                = plugin_basename( $pluginFile );
-//		$snEnabledExtensions = get_option( 'mainwp_extloaded' );
-//		if ( ! is_array( $snEnabledExtensions ) ) {
-//			$snEnabledExtensions = array();
-//		}
-//
-//		$active = in_array( $slug, $snEnabledExtensions );
-//		//return ($active ? array('key' => wp_create_nonce($pluginFile . '-SNNonceAdder')) : false);
-//		return ($active ? array( 'key' => md5( $pluginFile . '-SNNonceAdder' ) ) : false );
 	}
 
 	public static function addedOnMenu( $slug ) {
@@ -773,22 +824,10 @@ class MainWP_Extensions {
 		return in_array( $slug, $snMenuExtensions );
 	}
 
-	public static function isExtensionActivated( $pluginFile )
-	{
-		$active = false;
-		// To fix bug
-		self::loadExtensions();
-		if ( isset( self::$extensions ) ) {
-			foreach ( self::$extensions as $extension ) {
-				if ( $extension['plugin'] == $pluginFile ) {
-					if ( isset( $extension['mainwp'] ) && ( $extension['mainwp'] == true ) && isset( $extension['api_key'] ) && ! empty( $extension['api_key'] ) && isset( $extension['activated_key'] ) && ( $extension['activated_key'] == 'Activated' ) ) {
-						$active = true;
-					}
-					break;
-				}
-			}
-		}
-		return $active;
+	public static function isExtensionActivated( $plugin_slug )
+	{		
+		$extensions = MainWP_Extensions::getExtensions( array( 'activated' => true ) );
+		return isset($extensions[$plugin_slug]) ? true : false;	
 	}
 
 	public static function create_nonce_function() {

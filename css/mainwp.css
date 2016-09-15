@@ -183,11 +183,21 @@ a.mainwp-post-trash {color: #a00;}
 
 
 /* MAINWP GENERAL STYLES */
+
+#mwp-extension-contentbox-1 .inside,
+#mwp-extension-contentbox-2 .inside,
+#mwp-extension-contentbox-3 .inside,
 #mainwp_page_updates_tab-contextbox-1 .inside,
 #mainwp_page_managesites-metaboxes-contentbox-1 .inside,
 #toplevel_page_mainwp_tab-contentbox-1 .inside {
     padding: 0;
     margin: 0;
+}
+
+#mwp-extension-contentbox-1 .inside .inside,
+#mwp-extension-contentbox-2 .inside .inside,
+#mwp-extension-contentbox-3 .inside .inside {
+    padding: 10px;
 }
 
 .mainwp-action-lnks, .mainwp-theme-lnks {
@@ -320,6 +330,15 @@ a.mainwp-post-trash {
 #adminmenuback, #adminmenuwrap, #adminmenu, #adminmenu .wp-submenu, #adminmenu .wp-submenu-wrap, .folded #adminmenu .wp-has-current-submenu .wp-submenu {
     width: 180px;
 }
+
+.select2-container { margin-right: 2px !important; }
+.select2-search-choice-close {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	     -o-transition: all 0 none;
+	        transition: none;
+}
+#mainwp_wrap-inside .select2-container.select2-allowclear .select2-choice abbr { margin-top: -2px; }
 
 .branch-3-3 .wp-menu-arrow {
     -moz-transform: translate(181px);
@@ -648,6 +667,29 @@ div.legacy-star img {
     width: 19px;
     height: 19px;
 }
+
+
+/* MAINWP PAGE - EXTENSIONS */
+
+#mainwp-extensions-list .plugin-card .plugin-card-top { min-height: 180px; }
+
+#mainwp-extensions-list .plugin-card.collapsed .plugin-card-top { min-height: 75px; }
+#mainwp-extensions-list .plugin-card.collapsed .name, #mainwp-extensions-list .plugin-card.collapsed .desc { margin-left: 80px; margin-right: 105px; }
+#mainwp-extensions-list .plugin-card.collapsed img.mainwp-extension-icon { width: 64px; height: 64px; }
+#mainwp-extensions-list .plugin-card.collapsed .extension-description { display: none; }
+
+#mainwp-available-extensions-list .plugin-card { 
+    margin-left: 2px !important; 
+    margin-right: 2px !important;
+    width: 100%;
+    display: block;
+}
+
+#mainwp-available-extensions-list .plugin-card .plugin-card-top { min-height: 135px; }
+
+/*---------------------------------------------------------------------------------------------------------------*/
+
+
 
 #mainwp_plugin-information-header {
     margin: 0;

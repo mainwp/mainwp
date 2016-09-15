@@ -7025,7 +7025,7 @@ jQuery(document).on('click', '.managesites_syncdata', function(){
 
 jQuery(document).ready(function() {
     jQuery('.mainwp-extensions-api-activation').live('click', function () {
-        jQuery(this).closest("table").find("tr.mainwp-extensions-api-row .api-row-div").toggle();
+        jQuery(this).closest("div.plugin-card").find("div.mainwp-extensions-api-row .api-row-div").toggle();
         return false;
     });
 });
@@ -7341,3 +7341,11 @@ mainwpTweetUrlBuilder = function(o){
         '&text=', o.text
     ].join('');
 };
+
+jQuery(document).ready(function () {    
+    if ( typeof postboxes !== "undefined" && typeof mainwp_postbox_page !== "undefined") {
+        postboxes.add_postbox_toggles( mainwp_postbox_page);
+    }
+})
+
+

@@ -189,7 +189,9 @@ a.mainwp-post-trash {color: #a00;}
 #mwp-extension-contentbox-3 .inside,
 #mainwp_page_updates_tab-contextbox-1 .inside,
 #mainwp_page_managesites-metaboxes-contentbox-1 .inside,
-#toplevel_page_mainwp_tab-contentbox-1 .inside {
+#toplevel_page_mainwp_tab-contentbox-1 .inside,
+#toplevel_page_mainwp_tab-contentbox-2 .inside
+{
     padding: 0;
     margin: 0;
 }

@@ -4928,7 +4928,7 @@ mainwp_notes_save = function () {
         else if (response.result == 'SUCCESS') {
             jQuery('#mainwp_notes_status').html(__('Note saved.'));
             if (jQuery('#mainwp_notes_' + normalid + '_note')) {
-                jQuery('#mainwp_notes_' + normalid + '_note').text(jQuery('#mainwp_notes_note').val());
+                jQuery('#mainwp_notes_' + normalid + '_note').html(jQuery('#mainwp_notes_note').val());                
             }
             if (newnote == '') {
                 jQuery('#mainwp_notes_img_' + normalid).hide();
@@ -5244,7 +5244,7 @@ jQuery(document).ready(function () {
             var rowEl = jQuery('tr[plugin_slug="'+pSlug+'"]');
             if (response.result == 'SUCCESS') {
                 jQuery('#mainwp_notes_status').html('<i class="fa fa-check-circle"></i> '+__('Note saved!'));
-                rowEl.find('.note').text(jQuery('#mainwp_notes_note').val());
+                rowEl.find('.note').html(jQuery('#mainwp_notes_note').val());
 
                 if (newnote == '') {
                     rowEl.find('.mainwp_notes_img').hide();
@@ -5288,7 +5288,7 @@ jQuery(document).ready(function () {
             var rowEl = jQuery('tr[theme_slug="'+pSlug+'"]');
             if (response.result == 'SUCCESS') {
                 jQuery('#mainwp_notes_status').html(__('Note saved!'));
-                rowEl.find('.note').text(jQuery('#mainwp_notes_note').val());
+                rowEl.find('.note').html(jQuery('#mainwp_notes_note').val());
 
                 if (newnote == '') {
                     rowEl.find('.mainwp_notes_img').hide();

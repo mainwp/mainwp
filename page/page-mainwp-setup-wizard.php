@@ -80,13 +80,13 @@ class MainWP_Setup_Wizard {
 				'handler' => array( $this, 'mwp_setup_backup_save' )
 			),
 			'mainwp_register' => array(
-				'name'    =>  __( 'Mainwp extensions sign up', 'mainwp' ),
+				'name'    =>  __( 'MainWP extensions sign up', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_mainwp_register' ),
 				'handler' => '',
 				'hidden' => true
 			),
 			'purchase_extension' => array(
-				'name'    =>  __( 'Order xtension', 'mainwp' ),
+				'name'    =>  __( 'Order extension', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_purchase_extension' ),
 				'handler' => array( $this, 'mwp_setup_purchase_extension_save' ),
 				'hidden' => true

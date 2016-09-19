@@ -1745,7 +1745,7 @@ class MainWP_Manage_Sites_View {
 				}
 			}
 		} else {
-			throw new Exception( __( 'Not allowed this operation.','mainwp' ) );
+			throw new Exception( __( 'This operation is not allowed!','mainwp' ) );
 		}
 
 		return false;

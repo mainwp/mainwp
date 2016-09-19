@@ -117,7 +117,7 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient.', __( 'Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Backupfile on child site created successfully.', __( 'Backupfile on child site created successfully.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Downloading the file.', __( 'Downloading the file.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Download from site child completed.', __( 'Download from site child completed.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Download from child site completed.', __( 'Download from child site completed.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please wait while we are saving your note', __( 'Please wait while we are saving your note', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Note saved.', __( 'Note saved.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'An error occured while saving your message.', __( 'An error occured while saving your message.', 'mainwp' ) );

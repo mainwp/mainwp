@@ -869,6 +869,7 @@ class MainWP_Post {
 								'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ),
 								'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ),
 							);
+							$post_data = apply_filters( 'mainwp_bulkpost_posting', $post_data, $id );
 							MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newpost', $post_data, array(
 								MainWP_Bulk_Add::getClassName(),
 								'PostingBulk_handler',

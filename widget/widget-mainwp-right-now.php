@@ -1254,7 +1254,7 @@ class MainWP_Right_Now {
 										<?php } ?>
 									</div>
 									<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-5 pluginsInfo">
-										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $pluginsInfo[ $slug ]['slug'] . '&TB_iframe=true&width=640&height=477'; ?>&section=changelog" target="_blank"
+										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $pluginsInfo[ $slug ]['slug'] . '&TB_iframe=true&width=640&height=477&section=changelog'; ?>" target="_blank"
 											   class="thickbox" title="Changelog <?php echo $pluginsInfo[ $slug ]['name']; ?>">
 											<?php echo $plugin_upgrade['Version']; ?> to <?php echo $plugin_upgrade['update']['new_version']; ?>
 										</a>
@@ -1901,7 +1901,7 @@ class MainWP_Right_Now {
 											<?php } ?>
 										</div>
 										<div class="mainwp-left mainwp-cols-3 pluginsInfo" id="wp_outdate_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
-											<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&TB_iframe=true&width=640&height=477'; ?>&section=changelog" target="_blank"
+											<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&TB_iframe=true&width=640&height=477&section=changelog'; ?>" target="_blank"
 												   class="thickbox" title="Changelog about <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>">
 												<?php echo $plugin_outdate['Version']; ?> | <?php echo $outdate_notice; ?>
 											</a>

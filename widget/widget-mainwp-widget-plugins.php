@@ -142,7 +142,7 @@ class MainWP_Widget_Plugins {
 						<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $inactive_plugins[ $i ]['name']; ?>">
 							<?php echo $inactive_plugins[ $i ]['name']; ?>
 						</a>
-						<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477'; ?>&section=changelog" target="_blank" class="thickbox" title="Changelog <?php echo $inactive_plugins[ $i ]['name']; ?>">
+						<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477&section=changelog'; ?>" target="_blank" class="thickbox" title="Changelog <?php echo $inactive_plugins[ $i ]['name']; ?>">
 							<?php echo ' ' . $inactive_plugins[ $i ]['version']; ?> <?php echo $outdate_notice; ?>
 						</a>
 						</span>

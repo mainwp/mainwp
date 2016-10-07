@@ -1541,10 +1541,9 @@ class MainWP_Manage_Sites_View {
             <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e( 'Advanced options','mainwp' ); ?></span></h3>
             <div class="inside">
             <table class="form-table" style="width: 100%">
-                <?php $disabled_unique = empty( $website->uniqueId ) ? true : false; ?>
                 <tr class="form-field form-required">
                     <th scope="row"><?php _e('Child unique security ID ','mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The unique security ID adds additional protection between the child plugin and your MainWP Dashboard. The unique security ID will need to match when being added to the MainWP Dashboard. This is additional security and should not be needed in most situations.' ); ?></th>
-                    <td><input type="text" id="mainwp_managesites_edit_uniqueId" style="width: 350px;" <?php echo $disabled_unique ? 'disabled="disabled"' : ''; ?>
+                    <td><input type="text" id="mainwp_managesites_edit_uniqueId" style="width: 350px;"
                              name="mainwp_managesites_edit_uniqueId" value="<?php echo $website->uniqueId; ?>" class=""/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
                 </tr>                
                  <tr class="form-field form-required">

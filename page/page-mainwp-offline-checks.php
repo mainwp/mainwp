@@ -31,11 +31,11 @@ class MainWP_Offline_Checks {
 		do_action( 'mainwp-pageheader-settings', 'OfflineChecks' );
 
 		?>
-        <div class="mainwp_info-box-red">
+        <div class="mainwp-notice mainwp-notice-red">
         <strong>IMPORTANT:</strong> This feature is being retired and replaced by the Free MainWP Advanced Uptime Monitor Extension which provides more advanced monitoring system.<br/>
         <a href="https://mainwp.com/extension/advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
         </div>
-		<div class="mainwp_info-box">
+		<div class="mainwp-notice mainwp-notice-green">
 			<strong><?php _e( 'Notifications will be sent to', 'mainwp' ); ?>
 				<i><?php echo MainWP_Utility::getNotificationEmail(); ?></i> (<a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e( 'change', 'mainwp' ); ?></a>)</strong>
 			<br/><br/><?php _e( 'MainWP performs two tests when checking your site for up-time.', 'mainwp' ); ?>
@@ -82,8 +82,8 @@ class MainWP_Offline_Checks {
 						<a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php echo stripslashes( $website->name ); ?></a>
 						<span class="offline_check_saved"><?php _e( 'Saved', 'mainwp' ); ?></span></td>
 					<td>
-                        <i class="fa fa-exclamation-circle fa-2x mwp-red" title="Site Offline" <?php echo ( $website->offline_check_result == -1 ? '' : 'style="display:none;"' ); ?>></i>
-                        <i class="fa fa-check-circle fa-2x mwp-l-green" title="Site Online" <?php echo ( $website->offline_check_result == 1 ? '' : 'style="display:none;"' ); ?>></i>
+                        <i class="fa fa-exclamation-circle fa-2x mainwp-red" title="Site Offline" <?php echo ( $website->offline_check_result == -1 ? '' : 'style="display:none;"' ); ?>></i>
+                        <i class="fa fa-check-circle fa-2x mainwp-green" title="Site Online" <?php echo ( $website->offline_check_result == 1 ? '' : 'style="display:none;"' ); ?>></i>
                    </td>
 					<td class="column-rating">
 						<input type="radio" id="disabled" class="mainwp_offline_check" value="disabled"
@@ -178,8 +178,8 @@ class MainWP_Offline_Checks {
 			if ( $errors ) {
 				$emailOutput .= '<br /><br />Please take a look at the issues and make sure everything is ok.';
 			}
-			$email = MainWP_DB::Instance()->getUserNotificationEmail( $website->userid );
-			wp_mail( $email, ( $errors ? 'Down Time Alert - MainWP' : 'Up Time Alert - MainWP' ), MainWP_Utility::formatEmail( $email, $emailOutput ), array(
+			$email = MainWP_DB::Instance()->getUserNotificationEmail( $website->userid );                        
+			wp_mail( $email, $mail_title = ( $errors ? 'Down Time Alert - MainWP' : 'Up Time Alert - MainWP' ), MainWP_Utility::formatEmail( $email, $emailOutput, $mail_title ), array(
 				'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
 				'content-type: text/html',
 			) );
@@ -248,7 +248,8 @@ class MainWP_Offline_Checks {
 			$body = 'We\'ve had some issues trying to reach your website <a href="' . $website->url . '">' . stripslashes( $website->name ) . '</a>. ' . ( isset( $result['error'] ) && ( $result['error'] != '' ) ? ' Error message: ' . $result['error'] . '.' : 'Received HTTP-code: ' . $result['httpCode'] . ( $result['httpCodeString'] != '' ? ' (' . $result['httpCodeString'] . ').' : '' ) );
 			if ( $emailOutput === null ) {
 				$email = MainWP_DB::Instance()->getUserNotificationEmail( $website->userid );
-				wp_mail( $email, 'Down Time Alert - MainWP', MainWP_Utility::formatEmail( $email, $body . '<br /><br />Please take a look at the <a href="' . $website->url . '">website</a> and make sure everything is ok.' ), array(
+                                
+				wp_mail( $email, $mail_title = 'Down Time Alert - MainWP', MainWP_Utility::formatEmail( $email, $body . '<br /><br />Please take a look at the <a href="' . $website->url . '">website</a> and make sure everything is ok.', $mail_title ), array(
 					'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
 					'content-type: text/html',
 				) );
@@ -267,8 +268,8 @@ class MainWP_Offline_Checks {
 				$body = 'Your website <a href="' . $website->url . '">' . stripslashes( $website->name ) . '</a> is up and responding as expected!';
 				//if set in config!
 				if ( $emailOutput === null ) {
-					$email = MainWP_DB::Instance()->getUserNotificationEmail( $website->userid );
-					wp_mail( $email, 'Up Time Alert - MainWP', MainWP_Utility::formatEmail( $email, $body ), array(
+					$email = MainWP_DB::Instance()->getUserNotificationEmail( $website->userid );                                        
+					wp_mail( $email, $mail_title = 'Up Time Alert - MainWP', MainWP_Utility::formatEmail( $email, $body, $mail_title ), array(
 						'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
 						'content-type: text/html',
 					) );
@@ -302,7 +303,7 @@ class MainWP_Offline_Checks {
 				<span><i class="fa fa-cog"></i> <?php _e( 'Offline Check Options', 'mainwp' ); ?></span></h3>
 
 			<div class="inside">
-				<div class="mainwp_info-box-red">
+				<div class="mainwp-notice mainwp-notice-red">
 					<strong>IMPORTANT:</strong> This feature is being retired and replaced by the Free MainWP Advanced Uptime Monitor Extension which provides more advanced monitoring system.<br/>
 					<a href="https://mainwp.com/extension/advanced-uptime-monitor/">Get the Free MainWP Advanced Uptime Monitor Extension here!</a>
 				</div>

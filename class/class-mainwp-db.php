@@ -37,7 +37,7 @@ class MainWP_DB {
 
 	private function test_connection() {
 		if ( ! self::ping( $this->wpdb->dbh ) ) {
-			MainWP_Logger::Instance()->info( __( 'Trying to reconnect Wordpress database connection...', 'mainwp' ) );
+			MainWP_Logger::Instance()->info( __( 'Trying to reconnect WordPress database connection...', 'mainwp' ) );
 			$this->wpdb->db_connect();
 		}
 	}
@@ -54,7 +54,10 @@ class MainWP_DB {
 		if ( empty( $currentVersion ) ) {
 			set_transient( '_mainwp_activation_redirect', 1, 30 );
 			update_site_option( 'mainwp_run_quick_setup', 'yes' );
-		}
+                        MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
+		} else if (false === get_option('mainwp_enableLegacyBackupFeature')) {
+                        MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+                }
 
 		$rslt = MainWP_DB::Instance()->query( "SHOW TABLES LIKE '" . $this->tableName( 'wp' ) . "'" );
 		if ( @MainWP_DB::num_rows( $rslt ) == 0 ) {

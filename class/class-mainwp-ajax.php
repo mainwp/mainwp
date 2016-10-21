@@ -189,7 +189,7 @@ class MainWP_Ajax {
 			) );
 
 			$help = '<p>' . __( 'The boxes on your Dashboard screen are:', 'mainwp' ) . '</p>';
-			$help .= '<p>' . __( '<strong>Right Now</strong> - Displays a summary of the content on your site and identifies which theme and version of WordPress you are using.', 'mainwp' ) . '</p>';
+			$help .= '<p>' . __( '<strong>Update Overview</strong> - Displays a summary of the content on your site and identifies which theme and version of WordPress you are using.', 'mainwp' ) . '</p>';
 			$help .= '<p>' . __( '<strong>Recent Comments</strong> - Shows the most recent comments on your posts (configurable, up to 30) and allows you to moderate them.', 'mainwp' ) . '</p>';
 			$help .= '<p>' . __( '<strong>Incoming Links</strong> - Shows links to your site found by Google Blog Search.', 'mainwp' ) . '</p>';
 			$help .= '<p>' . __( '<strong>QuickPress</strong> - Allows you to create a new post and either publish it or save it as a draft.', 'mainwp' ) . '</p>';

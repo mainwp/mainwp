@@ -19,6 +19,27 @@ class MainWP_Widget_Plugins {
 		<?php
 	}
 
+	public function prepare_icons() {
+		include( ABSPATH . 'wp-admin/includes/plugin-install.php' );
+
+		$args = array(
+			'fields' => array(
+				'last_updated' => true,
+				'icons' => true,
+				'active_installs' => true
+			)
+		);
+
+		$api = plugins_api( 'query_plugins', $args );
+
+		if ( is_wp_error( $api ) ) {
+			$this->error = $api;
+			return;
+		}
+
+		$this->items = $api->plugins;
+	}
+
 	public static function renderWidget( $renew, $pExit = true ) {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 		if ( empty( $current_wpid ) ) {
@@ -74,15 +95,17 @@ class MainWP_Widget_Plugins {
 
 		?>
 		<div class="clear mwp_plugintheme_widget">
-			<a class="mainwp_action left mainwp_action_down plugins_actived_lnk" href="#"><?php _e( 'Active', 'mainwp' ); ?> (<?php echo count( $actived_plugins ); ?>)</a><a class="mainwp_action mid plugins_inactive_lnk right" href="#"><?php _e( 'Inactive', 'mainwp' ); ?> (<?php echo count( $inactive_plugins ); ?>)</a><br/><br/>
-
+		<div class="mainwp-postbox-actions-top">
+			<a class="mainwp_action left mainwp_action_down plugins_actived_lnk" href="#"><?php _e( 'Active', 'mainwp' ); ?> (<?php echo count( $actived_plugins ); ?>)</a><a class="mainwp_action mid plugins_inactive_lnk right" href="#"><?php _e( 'Inactive', 'mainwp' ); ?> (<?php echo count( $inactive_plugins ); ?>)</a>
+		</div>
 			<div class="mainwp_plugins_active">
 				<?php
-				$str_format = __( ' | Last Updated %s Days Ago', 'mainwp' );
-				for ( $i = 0; $i < count( $actived_plugins ); $i ++ ) {
-					$outdate_notice = '';
-					$slug           = $actived_plugins[ $i ]['slug'];
 
+				$str_format = __( 'Last Updated %s Days Ago', 'mainwp' );
+				for ( $i = 0; $i < count( $actived_plugins ); $i ++ ) {
+					$outdate_notice    = '';
+					$slug              = $actived_plugins[ $i ]['slug'];
+					
 					if ( isset( $plugins_outdate[ $slug ] ) ) {
 						$plugin_outdate = $plugins_outdate[ $slug ];
 
@@ -97,20 +120,21 @@ class MainWP_Widget_Plugins {
 					<div class="mainwp-row mainwp-active">
 						<input class="pluginSlug" type="hidden" name="slug" value="<?php echo $actived_plugins[ $i ]['slug']; ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
-						<span class="mainwp-left-col">
+						<span class="mainwp-left mainwp-cols-2">
 							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $actived_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $actived_plugins[ $i ]['name']; ?>">
 								<?php echo $actived_plugins[ $i ]['name']; ?>
 							</a>
-							<?php echo ' ' . $actived_plugins[ $i ]['version']; ?> <?php echo $outdate_notice; ?>
+							<?php echo ' ' . $actived_plugins[ $i ]['version']; ?> 
+							<br />
+							<span class="mainwp-small"><?php echo $outdate_notice; ?></span>
 						</span>
-
-						<div class="mainwp-right-col pluginsAction">
+						<div class="mainwp-right mainwp-cols-2 mainwp-t-align-right pluginsAction">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
 								<a href="#" class="mainwp-plugin-deactivate"><i class="fa fa-toggle-off"></i> <?php _e( 'Deactivate', 'mainwp' ); ?>
 								</a>
 							<?php } ?>
 						</div>
-						<div style="clear: left;"></div>
+						<div class="mainwp-clear"></div>
 						<div class="mainwp-row-actions-working">
 							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?></div>
 						<div>&nbsp;</div>
@@ -123,6 +147,7 @@ class MainWP_Widget_Plugins {
 				for ( $i = 0; $i < count( $inactive_plugins ); $i ++ ) {
 					$outdate_notice = '';
 					$slug           = $inactive_plugins[ $i ]['slug'];
+					$plugin_i_icon_url= '//ps.w.org/' . $slug . '/assets/icon-128x128.png';
 					if ( isset( $plugins_outdate[ $slug ] ) ) {
 						$plugin_outdate = $plugins_outdate[ $slug ];
 
@@ -136,14 +161,15 @@ class MainWP_Widget_Plugins {
 					<div class="mainwp-row mainwp-inactive">
 						<input class="pluginSlug" type="hidden" name="slug" value="<?php echo $inactive_plugins[ $i ]['slug']; ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
-						<span class="mainwp-left-col">
+						<span class="mainwp-left mainwp-cols-2">
 						<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $inactive_plugins[ $i ]['name']; ?>">
 							<?php echo $inactive_plugins[ $i ]['name']; ?>
 						</a>
-						<?php echo ' ' . $inactive_plugins[ $i ]['version']; ?> <?php echo $outdate_notice; ?>
+						<?php echo ' ' . $inactive_plugins[ $i ]['version']; ?>
+						<br />
+						<span class="mainwp-small"><?php echo $outdate_notice; ?></span>
 						</span>
-
-						<div class="mainwp-right-col pluginsAction">
+						<div class="mainwp-right mainwp-cols-2 mainwp-t-align-right pluginsAction">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
 								<a href="#" class="mainwp-plugin-activate"><i class="fa fa-toggle-on"></i> <?php _e( 'Activate', 'mainwp' ); ?>
 								</a> |
@@ -153,7 +179,7 @@ class MainWP_Widget_Plugins {
 								</a>
 							<?php } ?>
 						</div>
-						<div style="clear: left;"></div>
+						<div class="mainwp-clear"></div>
 						<div class="mainwp-row-actions-working">
 							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?></div>
 						<div>&nbsp;</div>
@@ -161,7 +187,7 @@ class MainWP_Widget_Plugins {
 				<?php } ?>
 			</div>
 		</div>
-		<div class="clear"></div>
+		<div class="mainwp-clear"></div>
 		<?php
 		if ( $pExit == true ) {
 			exit();

@@ -41,7 +41,7 @@ class MainWP_Right_Now {
 	}
 
 	public static function getName() {
-		return '<i class="fa fa-pie-chart"></i> ' . __( 'Right now', 'mainwp' );
+		return '<i class="fa fa-refresh" aria-hidden="true"></i> ' . __( 'Update Overview', 'mainwp' );
 	}
 
 	public static function render() {
@@ -58,8 +58,7 @@ class MainWP_Right_Now {
 
 				if ( isset( $information['upgrade'] ) && ( $information['upgrade'] == 'SUCCESS' ) ) {
 					MainWP_DB::Instance()->updateWebsiteOption( $website, 'wp_upgrades', json_encode( array() ) );
-
-					return __( 'Update successful!', 'mainwp' ) . '! Open your site <a href="' . esc_url( $website->url ) . '" target="_blank">Front page</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $id . '" target="_blank">WP Admin</a>';
+					return __( 'Update successful!', 'mainwp' ) . '<br/><a href="' . esc_url( $website->url ) . '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $id . '" target="_blank">WP Admin</a>';
 				} else if ( isset( $information['upgrade'] ) ) {
 					$errorMsg = '';
 					if ( $information['upgrade'] == 'LOCALIZATION' ) {
@@ -548,9 +547,49 @@ class MainWP_Right_Now {
 		if ( ! $websites ) {
 			return;
 		}
-
-		$userExtension = MainWP_DB::Instance()->getUserExtension();
-
+                
+                $userExtension = MainWP_DB::Instance()->getUserExtension();
+                
+                // NEW 4.0: group view                
+                if ( $globalView && $userExtension->site_view == 2 ) {                        
+                        $site_offset = array();
+                        $all_groups = array();
+                        $groups = MainWP_DB::Instance()->getGroupsForCurrentUser();       
+                        foreach($groups as $group) {
+                            $all_groups[$group->id] = $group->name;                             
+                        }
+                        
+                        $sites_in_groups = array();
+                        $all_groups_sites = array();                        
+                        foreach($all_groups as $group_id => $group_name) {
+                            $all_groups_sites[$group_id] = array(); // to fix
+                            $group_sites = MainWP_DB::Instance()->getWebsitesByGroupId($group_id); 
+                            foreach($group_sites as $site) {
+                                if ( ! isset($sites_in_groups[$site->id]) )
+                                    $sites_in_groups[$site->id] = 1;
+                                $all_groups_sites[$group_id][] = $site->id;
+                            }
+                            unset($group_sites);
+                        }     
+                        
+                        $sites_not_in_groups = array();
+                        $pos = 0;
+                        @MainWP_DB::data_seek( $websites, 0 );
+                        while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {    
+                            $site_offset[$website->id] = $pos;
+                            $pos++;
+                            if (!isset($sites_in_groups[$website->id])) {
+                                $sites_not_in_groups[] = $website->id;
+                            }
+                        }                        
+                        
+                        // sites not in group put at array at index 0                        
+                        if (count($sites_not_in_groups) > 0) {
+                            $all_groups_sites[0] = $sites_not_in_groups; 
+                            $all_groups[0] = __('Others', 'mainwp');
+                        }
+                }
+                                
 		$total_themesIgnored          = $total_pluginsIgnored = 0;
 		$total_themesIgnoredAbandoned = $total_pluginsIgnoredAbandoned = 0;
 
@@ -603,7 +642,7 @@ class MainWP_Right_Now {
 			if ( ! $globalView ) {
 				$currentSite = $website;
 			}
-
+                                                
 			$wp_upgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true );
 			if ( $website->is_ignoreCoreUpdates ) {
 				$wp_upgrades = array();
@@ -676,7 +715,7 @@ class MainWP_Right_Now {
 					$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
 				}
 
-				$total_plugin_upgrades += count( $plugin_upgrades );
+				$total_plugin_upgrades += count( $plugin_upgrades );                                      
 			}
 
 			if ( is_array( $theme_upgrades ) ) {
@@ -692,7 +731,7 @@ class MainWP_Right_Now {
 
 				$total_theme_upgrades += count( $theme_upgrades );
 			}
-
+                                                
 			$ignored_plugins = json_decode( $website->ignored_plugins, true );
 			$ignored_themes  = json_decode( $website->ignored_themes, true );
 			if ( is_array( $ignored_plugins ) ) {
@@ -741,7 +780,7 @@ class MainWP_Right_Now {
 
 				$total_themes_outdate += count( $themes_outdate );
 			}
-
+                         
 			if ( $userExtension->site_view == 0 ) { //site view disabled
 				if ( is_array( $translation_upgrades ) ) {
 					foreach ( $translation_upgrades as $translation_upgrade ) {
@@ -846,8 +885,7 @@ class MainWP_Right_Now {
 			}
 			if ( $website->offline_check_result == - 1 ) {
 				$total_offline ++;
-			}
-
+			}                       
 		}
 
 		$total_pluginsIgnored += count( $pluginsIgnored_perSites );
@@ -855,19 +893,22 @@ class MainWP_Right_Now {
 
 		$total_pluginsIgnoredAbandoned += count( $pluginsIgnoredAbandoned_perSites );
 		$total_themesIgnoredAbandoned += count( $themesIgnoredAbandoned_perSites );
-
+                
 		//WP Upgrades part:
 		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
-		if ( $globalView ) {
-			$userExtension->site_view;
+		if ( $globalView ) {			
 			?>
 			<div class="mainwp-postbox-actions-top mainwp-padding-5">
+				<div class="mainwp-cols-s mainwp-left mainwp-t-align-left mainwp-padding-top-5">
+					<?php _e( 'This widget shows you all your available updates', 'mainwp' ); ?>
+				</div>
 				<div class="mainwp-cols-s mainwp-right mainwp-t-align-right">
 					<form method="post" action="">
 						<label for="mainwp_select_options_siteview"><?php _e( 'View updates per: ', 'mainwp' ); ?></label>
-						<select id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
+						<select class="mainwp-select2" id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
 							<option value="1" <?php echo $userExtension->site_view == 1 ? 'selected' : ''; ?>><?php esc_html_e( 'Site', 'mainwp' ); ?></option>
 							<option value="0" <?php echo $userExtension->site_view == 0 ? 'selected' : ''; ?>><?php esc_html_e( 'Plugin/Theme', 'mainwp' ); ?></option>
+                                                        <option value="2" <?php echo $userExtension->site_view == 2 ? 'selected' : ''; ?>><?php esc_html_e( 'Group', 'mainwp' ); ?></option>
 						</select>
 					</form>
 				</div>
@@ -936,7 +977,9 @@ class MainWP_Right_Now {
 		$show_updates_title = __('Click to see available updates', 'mainwp');
 		$visit_dashboard_title = __('Visit this dashboard', 'mainwp');
 		$see_ignored_title = __('Click here to see all ignored updates', 'mainwp');
-
+                $visit_group_title = __('Visit this group', 'mainwp');
+                
+               
 		?>
 		<div class="mainwp-row-top">
 			<div id="mainwp-right-now-total-updates" class="mainwp-left mainwp-cols-2">
@@ -954,6 +997,7 @@ class MainWP_Right_Now {
 			<?php } ?>
 			<div class="mainwp-clear"></div>
 		</div>
+                             
 		<div class="mainwp-row">
 			<div class="mainwp-left mainwp-cols-2">
 				<a href="#" id="mainwp_upgrades_show" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_show('upgrades', true);">
@@ -968,15 +1012,108 @@ class MainWP_Right_Now {
 				<?php if ( mainwp_current_user_can( 'dashboard', 'update_wordpress' ) ) {
 					if ( $total_wp_upgrades > 0 ) { ?>
 						&nbsp;
-						<a href="#" onClick="return rightnow_wordpress_global_upgrade_all();" class="button-primary"><?php echo _n( 'Update', 'Update All', $total_wp_upgrades, 'mainwp' ); ?></a>
+						<a href="#" onClick="return rightnow_wordpress_global_upgrade_all();" class="button-primary"><?php echo _n( 'Update All', 'Update All', $total_wp_upgrades, 'mainwp' ); ?></a>
 					<?php }
 				} ?>
 			</div>
 			<div class="mainwp-clear"></div>
-		</div>
-		<div id="wp_upgrades" style="display: none" class="mainwp-sub-section">
-			<?php
-			@MainWP_DB::data_seek( $websites, 0 );
+		</div>      
+                <div id="wp_upgrades" style="display: none" class="mainwp-sub-section">
+                 <?php 
+                    if ( $globalView && $userExtension->site_view == 2 ) {                                    
+                        // WP updates group sites
+                        foreach($all_groups_sites as $group_id => $site_ids ) {  
+                            $total_group_wp_updates = 0;
+                            $group_name = $all_groups[$group_id];      
+                            
+                             ?>                                           
+                                <div class="mainwp-sub-row" id="top_row_wp_upgrades_group_<?php echo $group_id; ?>">
+                                        <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5"><?php if ($group_id !== 0) { ?><a href="<?php echo admin_url( 'admin.php?page=managesites&g=' . $group_id ); ?>" title="<?php echo esc_attr($visit_group_title);?>"><?php echo stripslashes( $group_name ); ?></a> <?php } else { echo stripslashes( $group_name ); } ?>
+                                        </div>
+                                        <div class="mainwp-left mainwp-cols-4 mainwp-padding-top-5">                                                      
+                                            <a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('wp_upgrades_group', <?php echo intval($group_id); ?>);"> <span id="total_wp_upgrades_group_<?php echo $group_id; ?>"></span></a>                                                               
+                                        </div>
+                                        <div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">
+                                                <?php
+                                                if ( mainwp_current_user_can( 'dashboard', 'update_wordpress' ) ) { ?>        
+                                                    <a href="#" id="wp_upgrades_all_btn_group_<?php echo $group_id; ?>" style="display:none" class="mainwp-upgrade-button button" onClick="return rightnow_wordpress_global_upgrade_all(<?php echo $group_id; ?>)"><?php echo __( 'Update All', 'mainwp' ); ?></a>                                                        
+                                                <?php } ?>  
+                                        </div>
+                                        <div class="mainwp-clear"></div>
+                                </div>
+                                <?php
+                                foreach ( $site_ids as $site_id ) {
+                                        $seek = $site_offset[$site_id]; 
+                                        @MainWP_DB::data_seek( $websites, $seek );
+
+                                        $website = @MainWP_DB::fetch_object( $websites ); 
+                                        if ( $website->is_ignoreCoreUpdates ) {
+                                                continue;
+                                        }
+                                        
+                                        $wp_upgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true );
+                                        if ( ( count( $wp_upgrades ) == 0 ) && ( $website->sync_errors == '' ) ) {
+                                                continue;
+                                        }                                        
+                                        $total_group_wp_updates += 1;
+                                        
+                                        ?>
+                                        <div class="wp_wp_upgrades_group_<?php echo $group_id; ?>" style="display: none">
+                                            <div class="mainwp-sub-row mainwp_wordpress_upgrade" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( count( $wp_upgrades ) > 0 ) ? '0' : '1'; ?>">
+                                                <div class="mainwp-left mainwp-padding-top-5 mainwp-cols-3">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_<?php echo $website->id; ?>" value="<?php if ( count( $wp_upgrades ) > 0 ) {
+                                                                    echo '0';
+                                                            } else {
+                                                                    echo '1';
+                                                            } ?>"/>
+                                                    </div>
+                                                    <div class="mainwp-cols-3 mainwp-left mainwp-padding-top-5 wordpressInfo" id="wp_upgrade_<?php echo $website->id; ?>">
+                                                            <?php
+                                                            if ( count( $wp_upgrades ) > 0 ) {
+                                                                    echo $wp_upgrades['current'] . ' to ' . $wp_upgrades['new'];
+                                                            } else {
+                                                                    if ( $website->sync_errors != '' ) {
+                                                                            echo __( 'Site not connected', 'mainwp' );
+                                                                    } else {
+                                                                            echo __( 'No updates available!', 'mainwp' );
+                                                                    }
+                                                            }
+                                                            ?>
+                                                    </div>
+                                                    <div class="mainwp-right mainwp-t-align-right mainwp-cols-3 wordpressAction">
+                                                            <div id="wp_upgradebuttons_<?php echo $website->id; ?>">
+                                                                    <?php
+                                                                    if ( mainwp_current_user_can( 'dashboard', 'update_wordpress' ) ) {
+                                                                            if ( count( $wp_upgrades ) > 0 ) {
+                                                                                    ?>
+                                                                                    <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade(<?php echo $website->id; ?>, this)"><?php _e( 'Update', 'mainwp' ); ?></a>
+                                                                                    <?php
+                                                                            }
+                                                                    }
+                                                                    ?>
+                                                            </div>
+                                                    </div>
+                                                    <div class="mainwp-clear"></div>
+                                            </div>   
+                                        </div>    
+                                <?php                                        
+                                } // end foreach $site_ids
+                                
+                                ?>
+                                <script type="text/javascript">
+                                    jQuery(document).ready(function () {    
+                                        <?php if ($total_group_wp_updates == 0) { ?>
+                                                rightnow_updates_group_remove_empty_rows('wp_upgrades', <?php echo intval($group_id); ?>);                                            
+                                        <?php } else { 
+                                                $show_button_update_all = mainwp_current_user_can( 'dashboard', 'update_wordpress' ) ? 1 : 0;
+                                                ?>
+                                                rightnow_updates_group_set_status('wp_upgrades', <?php echo intval($group_id); ?>, <?php echo intval($total_group_wp_updates); ?>, <?php echo $show_button_update_all; ?>);                                                   
+                                        <?php } ?>
+                                    })
+                                </script>  
+                                <?php
+                        }
+                } else {
+                	@MainWP_DB::data_seek( $websites, 0 );
 			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( $website->is_ignoreCoreUpdates ) {
 					continue;
@@ -1014,25 +1151,23 @@ class MainWP_Right_Now {
 							if ( mainwp_current_user_can( 'dashboard', 'update_wordpress' ) ) {
 								if ( count( $wp_upgrades ) > 0 ) {
 									?>
-									<a href="#" class="mainwp-upgrade-button button" onClick="rightnow_upgrade(<?php echo $website->id; ?>)"><?php _e( 'Update', 'mainwp' ); ?></a>
+									<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade(<?php echo $website->id; ?>, this)"><?php _e( 'Update', 'mainwp' ); ?></a>
 									<?php
 								}
 							}
 							?>
-							&nbsp;
-								<span class="mainwp-padding-top-5">
-								<a href="<?php echo $website->url; ?>" target="_blank"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
-						</span>
 						</div>
 					</div>
 					<div class="mainwp-clear"></div>
 				</div>
 				<?php
 			}
-			?>
+			
+                }
+                ?>
 		</div>
-
-
+                
+                
 		<?php
 		//WP plugin updates!                
 		?>
@@ -1049,7 +1184,7 @@ class MainWP_Right_Now {
 				</div>
 				<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">
 					<?php if (mainwp_current_user_can("dashboard", "update_plugins")) {  ?>
-						<?php if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Update', 'Update All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Update', 'Update All', $total_plugin_upgrades, 'mainwp'); ?></a>
+						<?php if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 1 || $userExtension->site_view == 2)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Update All', 'Update All', $total_plugin_upgrades, 'mainwp'); ?></a><?php } else if ($total_plugin_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_plugins_global_upgrade_all();" class="button-primary"><?php echo _n('Update All', 'Update All', $total_plugin_upgrades, 'mainwp'); ?></a>
 						<?php } } ?>
 				</div>
 				<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right mainwp-padding-top-5">
@@ -1059,7 +1194,7 @@ class MainWP_Right_Now {
 			</div>
 			<div id="wp_plugin_upgrades" style="display: none" class="mainwp-sub-section">
 				<?php
-				if ( $userExtension->site_view == 1 ) {
+				if ( $userExtension->site_view == 1 || (!$globalView && $userExtension->site_view == 2) ) {
 					@MainWP_DB::data_seek( $websites, 0 );
 					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 						if ( $website->is_ignorePluginUpdates ) {
@@ -1123,9 +1258,6 @@ class MainWP_Right_Now {
 												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_plugin_all(<?php echo $website->id; ?>)"><?php echo _n( 'Update', 'Update All', count( $plugin_upgrades ), 'mainwp' ); ?></a> &nbsp;
 											<?php } ?>
 										<?php } ?>
-										<span class="mainwp-padding-top-5">
-										<a href="<?php echo $website->url; ?>" target="_blank"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
-                                                                                </span>
 									</div>
 								</div>
 								<div class="mainwp-clear"></div>
@@ -1171,7 +1303,156 @@ class MainWP_Right_Now {
 						</div>
 						<?php
 					}
-				} else {
+				} else if ( $globalView && $userExtension->site_view == 2 ) {                                    
+                                    // plugins updates group sites
+                                    foreach($all_groups_sites as $group_id => $site_ids ) {  
+                                        $total_group_plugin_updates = 0;
+                                        $group_name = $all_groups[$group_id];      
+                                        
+                                        ?>                                           
+                                        <div class="mainwp-sub-row" id="top_row_plugin_updates_group_<?php echo $group_id; ?>">
+                                                <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5"><?php if ($group_id !== 0) { ?><a href="<?php echo admin_url( 'admin.php?page=managesites&g=' . $group_id ); ?>" title="<?php echo esc_attr($visit_group_title);?>"><?php echo stripslashes( $group_name ); ?></a><?php } else { echo stripslashes( $group_name ); } ?>
+                                                </div>
+                                                <div class="mainwp-left mainwp-cols-4 mainwp-padding-top-5">                                                      
+                                                    <a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('plugin_upgrades_group', <?php echo intval($group_id); ?>);"> <span id="total_plugin_updates_group_<?php echo $group_id; ?>"></span></a>                                                               
+                                                </div>
+                                                <div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">
+                                                        <?php
+                                                        if ( mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) { ?>        
+                                                            <a href="#" id="plugin_updates_all_btn_group_<?php echo $group_id; ?>" style="display:none" class="mainwp-upgrade-button button" onClick="return rightnow_plugins_global_upgrade_all(<?php echo $group_id; ?>)"><?php echo __( 'Update All', 'mainwp' ); ?></a>                                                        
+                                                        <?php } ?>  
+                                                </div>
+                                                <div class="mainwp-clear"></div>
+                                        </div>
+                                        <?php
+                                        foreach ( $site_ids as $site_id ) {
+                                                $seek = $site_offset[$site_id]; 
+                                                @MainWP_DB::data_seek( $websites, $seek );
+
+                                                $website = @MainWP_DB::fetch_object( $websites ); 
+                                                if ( $website->is_ignorePluginUpdates ) {
+                                                        continue;
+                                                }
+                                                
+                                                $plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
+                                                $decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
+                                                if ( is_array( $decodedPremiumUpgrades ) ) {
+                                                        foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+                                                                $premiumUpgrade['premium'] = true;
+
+                                                                if ( $premiumUpgrade['type'] == 'plugin' ) {
+                                                                        if ( ! is_array( $plugin_upgrades ) ) {
+                                                                                $plugin_upgrades = array();
+                                                                        }
+                                                                        $plugin_upgrades[ $crrSlug ] = $premiumUpgrade;
+                                                                }
+                                                        }
+                                                }
+
+                                                $ignored_plugins = json_decode( $website->ignored_plugins, true );
+                                                if ( is_array( $ignored_plugins ) ) {
+                                                        $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                                                }
+
+                                                $ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
+                                                if ( is_array( $ignored_plugins ) ) {
+                                                        $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                                                }
+                                                
+                                                $total_group_plugin_updates += count($plugin_upgrades);
+                                                
+                                                ?>
+                                                <div class="wp_plugin_upgrades_group_<?php echo $group_id; ?>" style="display: none">
+                                                        <div class="mainwp-sub-row">
+                                                            <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>" value="<?php if ( count( $plugin_upgrades ) > 0 ) {
+                                                                                echo '0';
+                                                                        } else {
+                                                                                echo '1';
+                                                                        } ?>"/>
+                                                                </div>
+                                                                <div class="mainwp-left mainwp-cols-5 mainwp-padding-top-5" id="wp_upgrade_plugin_<?php echo $website->id; ?>">
+                                                                        <?php
+                                                                        if ( count( $plugin_upgrades ) > 0 ) {
+                                                                                ?>
+                                                                                <a href="#" id="mainwp_plugin_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_show" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_show('plugin_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>', true);"> <?php echo count( $plugin_upgrades ); ?> <?php echo _n( 'Update', 'Updates', count($plugin_upgrades), 'mainwp' ); ?></a>
+                                                                                <?php
+                                                                        } else {
+                                                                                if ( $website->sync_errors != '' ) {
+                                                                                        echo __( 'Site not connected', 'mainwp' );
+                                                                                } else {
+                                                                                        echo __( 'No updates available!', 'mainwp' );
+                                                                                }
+                                                                        }
+                                                                        ?>
+                                                                </div>
+                                                                <div class="mainwp-right mainwp-cols-3 mainwp-t-align-right">
+                                                                        <div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>">
+                                                                                <?php
+                                                                                if ( mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) {
+                                                                                        if ( count( $plugin_upgrades ) > 0 ) { ?>
+                                                                                                <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_plugin_all(<?php echo $website->id; ?>, <?php echo $group_id; ?>)"><?php echo _n( 'Update', 'Update All', count( $plugin_upgrades ), 'mainwp' ); ?></a> &nbsp;
+                                                                                        <?php } ?>
+                                                                                <?php } ?>
+                                                                        </div>
+                                                                </div>
+                                                                <div class="mainwp-clear"></div>
+                                                        </div>
+
+                                                        <div id="wp_plugin_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" style="display: none" class="show-child-row">
+                                                                <?php
+                                                                foreach ( $plugin_upgrades as $plugin_name => $plugin_upgrade ) {
+                                                                        $plugin_name = urlencode( $plugin_name );
+                                                                        ?>
+                                                                        <div class="mainwp-sub-row" plugin_slug="<?php echo $plugin_name; ?>" premium="<?php echo ( isset( $plugin_upgrade['premium'] ) ? $plugin_upgrade['premium'] : 0 ) ? 1 : 0; ?>" updated="0">
+                                                                                <div class="mainwp-left mainwp-padding-top-5 mainwp-cols-3">
+                                                                                        &nbsp;&nbsp;&nbsp;
+                                                                                        <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $plugin_upgrade['Name']; ?>">
+                                                                                                <?php echo $plugin_upgrade['Name']; ?>
+                                                                                        </a>
+                                                                                        <input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $plugin_name; ?>" value="0"/>
+                                                                                </div>
+                                                                                <div class="mainwp-left mainwp-padding-top-5 mainwp-cols-5 pluginsInfo" id="wp_upgrade_plugin_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $plugin_name; ?>">
+                                                                                        <?php echo $plugin_upgrade['Version']; ?> to <?php echo $plugin_upgrade['update']['new_version']; ?>
+                                                                                </div>
+
+                                                                                <div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $plugin_name; ?>" site_id="<?php echo $website->id; ?>" >
+                                                                                        <div class="mainwp-right mainwp-cols-4 mainwp-t-align-right pluginsAction">
+                                                                                                <?php if ( mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) { ?>
+                                                                                                        &nbsp;
+                                                                                                        <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_plugin(<?php echo $website->id; ?>, '<?php echo $plugin_name; ?>', <?php echo $group_id; ?>)"><?php _e( 'Update', 'mainwp' ); ?></a>
+                                                                                                <?php } ?>
+                                                                                        </div>
+                                                                                        <div class="mainwp-right mainwp-cols-6 mainwp-t-align-right pluginsAction">
+                                                                                                <?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
+                                                                                                        <a href="#" onClick="return rightnow_plugins_ignore_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_upgrade['Name'] ); ?>', <?php echo $website->id; ?>, <?php echo $group_id; ?>)" class="button"><?php _e( 'Ignore', 'mainwp' ); ?></a>
+                                                                                                <?php } ?>
+                                                                                        </div>
+                                                                                </div>
+
+                                                                                <div class="mainwp-clear"></div>
+                                                                        </div>
+                                                                <?php }
+                                                                ?>
+                                                        </div>
+                                                </div>
+                                            <?php
+                                        }  // end foreach $site_ids                                      
+                                        ?>
+                                        <script type="text/javascript">
+                                               jQuery(document).ready(function () {    
+                                                   <?php if ($total_group_plugin_updates == 0) { ?>
+                                                           rightnow_updates_group_remove_empty_rows('plugin_updates', <?php echo intval($group_id); ?>);                                            
+                                                   <?php } else { 
+                                                           $show_button_update_all = mainwp_current_user_can( 'dashboard', 'update_plugins' ) ? 1 : 0;
+                                                           ?>
+                                                           rightnow_updates_group_set_status('plugin_updates', <?php echo intval($group_id); ?>, <?php echo intval($total_group_plugin_updates); ?>, <?php echo $show_button_update_all; ?>);                                                   
+                                                   <?php } ?>
+                                               })
+                                           </script>  
+                                        <?php
+                                    }
+                                                                     
+                                } else {                                    
 					foreach ( $allPlugins as $slug => $val ) {
 						$cnt = $val['cnt'];
 						$plugin_name = urlencode( $slug );
@@ -1291,11 +1572,11 @@ class MainWP_Right_Now {
 					</span><?php _e(' Theme update','mainwp'); ?><?php if ($total_theme_upgrades <> 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?>
 					</a>
 				</div>
-				<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">
+            	<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">
 					<?php if ( mainwp_current_user_can( 'dashboard', 'update_themes' ) ) { ?>
-						<?php if ( $total_theme_upgrades > 0 && ( $userExtension->site_view == 1 ) ) { ?>&nbsp;
-							<a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n( 'Update', 'Update All', $total_theme_upgrades, 'mainwp' ); ?></a><?php } else if ( $total_theme_upgrades > 0 && ( $userExtension->site_view == 0 ) ) { ?>&nbsp;
-							<a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n( 'Update', 'Update All', $total_theme_upgrades, 'mainwp' ); ?></a><?php } ?>
+						<?php if ( $total_theme_upgrades > 0 && ( $userExtension->site_view == 1 ||  $userExtension->site_view == 2) ) { ?>&nbsp;
+							<a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n( 'Update All', 'Update All', $total_theme_upgrades, 'mainwp' ); ?></a><?php } else if ( $total_theme_upgrades > 0 && ( $userExtension->site_view == 0 ) ) { ?>&nbsp;
+							<a href="#" onClick="return rightnow_themes_global_upgrade_all();" class="button-primary"><?php echo _n( 'Update All', 'Update All', $total_theme_upgrades, 'mainwp' ); ?></a><?php } ?>
 					<?php } ?>
 				</div>
 				<div class="mainwp-cols-4 mainwp-right mainwp-t-align-right mainwp-padding-top-5">
@@ -1305,13 +1586,12 @@ class MainWP_Right_Now {
 			</div>
 			<div id="wp_theme_upgrades" style="display: none" class="mainwp-sub-section">
 				<?php
-				if ( $userExtension->site_view == 1 ) {
+				if ( $userExtension->site_view == 1 || (!$globalView && $userExtension->site_view == 2)  ) {
 					@MainWP_DB::data_seek( $websites, 0 );
 					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 						if ( $website->is_ignoreThemeUpdates ) {
 							continue;
 						}
-
 						$theme_upgrades         = json_decode( $website->theme_upgrades, true );
 						$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
 						if ( is_array( $decodedPremiumUpgrades ) ) {
@@ -1367,9 +1647,6 @@ class MainWP_Right_Now {
 												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_theme_all(<?php echo $website->id; ?>)"><?php echo _n( 'Update', 'Update All', count( $theme_upgrades ), 'mainwp' ); ?></a> &nbsp;
 											<?php } ?>
 										<?php } ?>
-										<span class="mainwp-padding-top-5">
-				                        <a href="<?php echo $website->url; ?>" target="_blank"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
-                    </span>
 									</div>
 								</div>
 								<div class="mainwp-clear"></div>
@@ -1394,7 +1671,7 @@ class MainWP_Right_Now {
 										<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right pluginsAction">
 											<?php if ( mainwp_current_user_can( 'dashboard', 'update_themes' ) ) { ?>
 												&nbsp;
-												<a href="#" class="mainwp-upgrade-button button" onClick="rightnow_upgrade_theme(<?php echo $website->id; ?>, '<?php echo $theme_name; ?>')"><?php _e( 'Update', 'mainwp' ); ?></a>
+												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_theme(<?php echo $website->id; ?>, '<?php echo $theme_name; ?>')"><?php _e( 'Update', 'mainwp' ); ?></a>
 											<?php } ?>
 										</div>
 										<div class="mainwp-right mainwp-cols-6 mainwp-t-align-right pluginsAction">
@@ -1410,7 +1687,146 @@ class MainWP_Right_Now {
 						</div>
 						<?php
 					}
-				} else {
+				} else if ( $globalView && $userExtension->site_view == 2 ) {
+                                    // themes update group sites
+                                    foreach($all_groups_sites as $group_id => $site_ids ) {   
+                                            $total_group_theme_updates = 0;
+                                            $group_name = $all_groups[$group_id];
+                                            ?>                                    
+                                            <div class="mainwp-sub-row" id="top_row_theme_updates_group_<?php echo $group_id; ?>">
+                                                            <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5"><?php if ($group_id !== 0) { ?><a href="<?php echo admin_url( 'admin.php?page=managesites&g=' . $group_id ); ?>" title="<?php echo esc_attr($visit_group_title);?>"><?php echo stripslashes( $group_name ); ?></a><?php } else { echo stripslashes( $group_name ); } ?>
+                                                            </div>
+                                                            <div class="mainwp-cols-4 mainwp-left">                                                              
+                                                                    <a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('theme_upgrades_group', <?php echo intval($group_id); ?>);"> <span id="total_theme_updates_group_<?php echo $group_id; ?>"></span></a>                                                                           
+                                                            </div>
+                                                            <div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">									
+                                                                <?php if ( mainwp_current_user_can( 'dashboard', 'update_themes' ) ) { ?>                                                                        
+                                                                        <a href="#" id="theme_updates_all_btn_group_<?php echo $group_id; ?>" style="display:none" class="mainwp-upgrade-button button" onClick="return rightnow_themes_global_upgrade_all(<?php echo $group_id; ?>)"><?php echo __( 'Update All', 'mainwp' ); ?></a>                                                                        
+                                                                <?php } ?>										
+                                                            </div>
+                                                        <div class="mainwp-clear"></div>
+                                            </div>
+
+                                            <?php
+                                            foreach ( $site_ids as $site_id ) {
+                                                    $seek = $site_offset[$site_id]; 
+                                                    @MainWP_DB::data_seek( $websites, $seek );
+
+                                                    $website = @MainWP_DB::fetch_object( $websites ); 
+                                                    if ( $website->is_ignorePluginUpdates ) {
+                                                            continue;
+                                                    }
+                                                    $theme_upgrades         = json_decode( $website->theme_upgrades, true );
+                                                    $decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
+                                                    if ( is_array( $decodedPremiumUpgrades ) ) {
+                                                            foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+                                                                    $premiumUpgrade['premium'] = true;
+
+                                                                    if ( $premiumUpgrade['type'] == 'theme' ) {
+                                                                            if ( ! is_array( $theme_upgrades ) ) {
+                                                                                    $theme_upgrades = array();
+                                                                            }
+                                                                            $theme_upgrades[ $crrSlug ] = $premiumUpgrade;
+                                                                    }
+                                                            }
+                                                    }
+
+                                                    $ignored_themes = json_decode( $website->ignored_themes, true );
+                                                    if ( is_array( $ignored_themes ) ) {
+                                                            $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                                                    }
+
+                                                    $ignored_themes = json_decode( $userExtension->ignored_themes, true );
+                                                    if ( is_array( $ignored_themes ) ) {
+                                                            $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                                                    }	
+                                                    $total_group_theme_updates += count($theme_upgrades);
+                                                ?>
+                                                <div class="wp_theme_upgrades_group_<?php echo $group_id; ?>" style="display: none" >
+							<div class="mainwp-sub-row">
+                                                            <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>" value="<?php if ( count( $theme_upgrades ) > 0 ) {
+                                                                                echo '0';
+                                                                        } else {
+                                                                                echo '1';
+                                                                        } ?>"/>
+                                                                </div>
+                                                                <div class="mainwp-cols-5 mainwp-left" id="wp_upgrade_theme_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>">
+                                                                        <?php
+                                                                        if ( count( $theme_upgrades ) > 0 ) {
+                                                                                ?>
+                                                                                <a href="#" id="mainwp_theme_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_show" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_show('theme_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>', true);"> <?php echo count( $theme_upgrades ); ?> <?php echo _n( 'Update', 'Updates', count( $theme_upgrades ), 'mainwp' ); ?></a>
+                                                                                <?php
+                                                                        } else {
+                                                                                if ( $website->sync_errors != '' ) {
+                                                                                        echo __( 'Site not connected', 'mainwp' );
+                                                                                } else {
+                                                                                        echo __( 'No updates available!', 'mainwp' );
+                                                                                }
+                                                                        }
+                                                                        ?>
+                                                                </div>
+                                                                <div class="mainwp-right mainwp-cols-3 mainwp-t-align-right">
+                                                                        <div id="wp_upgradebuttons_theme_<?php echo $website->id; ?>">
+                                                                                <?php if ( mainwp_current_user_can( 'dashboard', 'update_themes' ) ) { ?>
+                                                                                        <?php if ( count( $theme_upgrades ) > 0 ) { ?>
+                                                                                                <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_theme_all(<?php echo $website->id; ?>, <?php echo $group_id; ?>)"><?php echo _n( 'Update', 'Update All', count( $theme_upgrades ), 'mainwp' ); ?></a> &nbsp;
+                                                                                        <?php } ?>
+                                                                                <?php } ?>
+                                                                        </div>
+                                                                </div>
+                                                                <div class="mainwp-clear"></div>
+                                                        </div>
+
+                                                        <div id="wp_theme_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" style="display: none" class="show-child-row">
+                                                                <?php
+                                                                foreach ( $theme_upgrades as $theme_name => $theme_upgrade ) {
+                                                                        $theme_name = urlencode( $theme_name );
+                                                                        ?>
+                                                                        <div class="mainwp-sub-row" theme_slug="<?php echo $theme_name; ?>" theme_name="<?php echo $theme_upgrade['Name']; ?>" premium="<?php echo ( isset( $themesInfo[ $theme_name ]['premium'] ) && $themesInfo[ $theme_name ]['premium'] ) ? 1 : 0; ?>" updated="0">
+                                                                                <div class="mainwp-left mainwp-padding-top-5 mainwp-cols-3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?php echo $theme_upgrade['Name']; ?>
+                                                                                        <input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $theme_name; ?>" value="0"/>
+                                                                                </div>
+                                                                                <div class="mainwp-left mainwp-cols-5 mainwp-padding-top-5 pluginsInfo" id="wp_upgrade_theme_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $theme_name; ?>">
+                                                                                        <?php echo $theme_upgrade['Version']; ?> to <?php echo $theme_upgrade['update']['new_version']; ?>
+                                                                                </div>
+                                                                                
+                                                                                <div id="wp_upgradebuttons_theme_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $theme_name; ?>" site_id="<?php echo $website->id; ?>">
+                                                                                        <div class="mainwp-right mainwp-cols-4 mainwp-t-align-right pluginsAction">
+                                                                                                <?php if ( mainwp_current_user_can( 'dashboard', 'update_themes' ) ) { ?>
+                                                                                                        &nbsp;
+                                                                                                        <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_theme(<?php echo $website->id; ?>, '<?php echo $theme_name; ?>', <?php echo $group_id; ?> )"><?php _e( 'Update', 'mainwp' ); ?></a>
+                                                                                                <?php } ?>
+                                                                                        </div>
+                                                                                        <div class="mainwp-right mainwp-cols-6 mainwp-t-align-right pluginsAction">
+                                                                                                <?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
+                                                                                                        <a href="#" class="button" onClick="return rightnow_themes_ignore_detail('<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_upgrade['Name'] ); ?>', <?php echo $website->id; ?>, <?php echo $group_id; ?>)"><?php _e( 'Ignore', 'mainwp' ); ?></a>
+                                                                                                <?php } ?>
+                                                                                        </div>
+                                                                                </div>
+                                                                                
+                                                                                <div class="mainwp-clear"></div>
+                                                                        </div>
+                                                                <?php } ?>
+                                                        </div>
+                                                </div>
+                                            <?php     
+                                            } // end foreach $site_ids                                            
+                                            ?>
+                                            <script type="text/javascript">
+                                               jQuery(document).ready(function () {    
+                                                   <?php if ($total_group_theme_updates == 0) { ?>
+                                                           rightnow_updates_group_remove_empty_rows('theme_updates', <?php echo intval($group_id); ?>);                                            
+                                                   <?php } else { 
+                                                           $show_button_update_all = mainwp_current_user_can( 'dashboard', 'update_themes' ) ? 1 : 0;
+                                                           ?>
+                                                           rightnow_updates_group_set_status('theme_updates', <?php echo intval($group_id); ?>, <?php echo intval($total_group_theme_updates); ?>, <?php echo $show_button_update_all; ?>);                                                   
+                                                   <?php } ?>
+                                               })
+                                           </script>                              
+                                        <?php
+                                    }
+                                    
+                                } else {                                        
 					foreach ( $allThemes as $slug => $val ) {
 						$cnt = $val['cnt'];
 						$theme_name = urlencode( $slug );
@@ -1528,13 +1944,13 @@ class MainWP_Right_Now {
 					</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('If you have non-English WordPress installations on your child sites, available Translation updates can be managed from this line. To disable the Translation Updates, go to the Settings page and disable the option in the Updates Option box.','mainwp'), 'https://make.wordpress.org/polyglots/handbook/about/what-we-do/', 'images/info.png', 'float: none !important;'); ?>
 				</div>
 				<div class="mainwp-right mainwp-cols-2 mainwp-t-align-right">
-					<?php if (mainwp_current_user_can("dashboard", "update_translations")) {  ?><?php if ($total_translation_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_translations_global_upgrade_all();" class="button-primary"><?php echo _n('Update', 'Update All', $total_translation_upgrades, 'mainwp'); ?></a><?php } else if ($total_translation_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_translations_global_upgrade_all();" class="button-primary"><?php echo _n('Update', 'Update All', $total_translation_upgrades, 'mainwp'); ?></a><?php } }?>
+					<?php if (mainwp_current_user_can("dashboard", "update_translations")) {  ?><?php if ($total_translation_upgrades > 0 && ($userExtension->site_view == 1)) { ?>&nbsp; <a href="#" onClick="return rightnow_translations_global_upgrade_all();" class="button-primary"><?php echo _n('Update All', 'Update All', $total_translation_upgrades, 'mainwp'); ?></a><?php } else if ($total_translation_upgrades > 0 && ($userExtension->site_view == 0)) { ?>&nbsp; <a href="#" onClick="return rightnow_translations_global_upgrade_all();" class="button-primary"><?php echo _n('Update All', 'Update All', $total_translation_upgrades, 'mainwp'); ?></a><?php } }?>
 				</div>
 				<div class="mainwp-clear"></div>
 			</div>
 			<div id="wp_translation_upgrades" style="display: none" class="mainwp-sub-section">
 				<?php
-				if ( $userExtension->site_view == 1 ) {
+				if ( $userExtension->site_view == 1  || (!$globalView && $userExtension->site_view == 2) ) {
 					@MainWP_DB::data_seek( $websites, 0 );
 					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 //						if ( $website->is_ignoreTranslationUpdates ) {
@@ -1585,9 +2001,6 @@ class MainWP_Right_Now {
 												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_translation_all(<?php echo $website->id; ?>)"><?php echo _n( 'Update', 'Update All', count( $translation_upgrades ), 'mainwp' ); ?></a> &nbsp;
 											<?php } ?>
 										<?php } ?>
-										<span class="mainwp-padding-top-5">
-											<a href="<?php echo $website->url; ?>" target="_blank"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
-								</span>
 									</div>
 								</div>
 								<div class="mainwp-clear"></div>
@@ -1605,7 +2018,7 @@ class MainWP_Right_Now {
 									<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">
 										<?php if ( $globalView ) { ?>&nbsp;&nbsp;&nbsp;<?php } ?>
 										<?php echo $translation_name; ?>
-										<input type="hidden" id="wp_upgraded_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>" value="0"/>
+										<input type="hidden" id="wp_upgraded_group_<?php echo $group_id; ?>_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>" value="0"/>
 									</div>
 									<div class="mainwp-left mainwp-cols-5 mainwp-padding-top-5 translationsInfo" id="wp_upgrade_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>">
 										<?php echo $translation_upgrade['version']; ?>
@@ -1625,7 +2038,124 @@ class MainWP_Right_Now {
 						</div>
 						<?php
 					}
-				} else {
+				} else if ( $globalView && $userExtension->site_view == 2 ) {
+                                    // translations update group sites
+                                    foreach($all_groups_sites as $group_id => $site_ids ) {   
+                                            $total_group_translation_updates = 0;
+                                            $group_name = $all_groups[$group_id]; 
+                                            
+                                             ?>                                    
+                                            <div class="mainwp-sub-row"  id="top_row_translation_updates_group_<?php echo $group_id; ?>">
+                                                            <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5"><?php if ($group_id !== 0) { ?><a href="<?php echo admin_url( 'admin.php?page=managesites&g=' . $group_id ); ?>" title="<?php echo esc_attr($visit_group_title);?>"><?php echo stripslashes( $group_name ); ?></a><?php } else { echo stripslashes( $group_name ); } ?>
+                                                            </div>
+                                                            <div class="mainwp-cols-4 mainwp-left">                                                              
+                                                                    <a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('translation_upgrades_group', <?php echo intval($group_id); ?>);"> <span id="total_translation_updates_group_<?php echo $group_id; ?>"></span></a>                                                                           
+                                                            </div>
+                                                            <div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">									
+                                                                <?php if ( mainwp_current_user_can( 'dashboard', 'update_themes' ) ) { ?>                                                                        
+                                                                        <a href="#" id="translation_updates_all_btn_group_<?php echo $group_id; ?>" style="display:none" class="mainwp-upgrade-button button" onClick="return rightnow_translations_global_upgrade_all(<?php echo $group_id; ?>)"><?php echo __( 'Update All', 'mainwp' ); ?></a>                                                                        
+                                                                <?php } ?>										
+                                                            </div>
+                                                        <div class="mainwp-clear"></div>
+                                            </div>
+
+                                            <?php
+                                            foreach ( $site_ids as $site_id ) {
+                                                    $seek = $site_offset[$site_id]; 
+                                                    @MainWP_DB::data_seek( $websites, $seek );
+
+                                                    $website = @MainWP_DB::fetch_object( $websites ); 
+//                                                    if ( $website->is_ignoreTranslationUpdates ) {
+//                                                            continue;
+//                                                    }
+                                                    $translation_upgrades        = json_decode( $website->translation_upgrades, true );                                                    
+                                                    
+                                                    $total_group_translation_updates += count($translation_upgrades);
+                                                    ?>
+                                                <div class="wp_translation_upgrades_group_<?php echo $group_id; ?>" style="display: none" >
+                                                        <div class="mainwp-sub-row">
+                                                            <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_translation_<?php echo $website->id; ?>" value="<?php if ( count( $translation_upgrades ) > 0 ) {
+                                                                            echo '0';
+                                                                    } else {
+                                                                            echo '1';
+                                                                    } ?>"/>
+                                                            </div>
+                                                            <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5 translationsInfo" id="wp_upgrade_translation_<?php echo $website->id; ?>">
+                                                                    <?php
+                                                                    if ( count( $translation_upgrades ) > 0 ) {
+                                                                            ?>
+                                                                            <a href="#" id="mainwp_translation_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_show" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_show('translation_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>', true);"> <?php echo count( $translation_upgrades ); ?> <?php echo _n( 'Update', 'Updates', count($translation_upgrades), 'mainwp' ); ?></a>
+                                                                            <?php
+                                                                    } else {
+                                                                            if ( $website->sync_errors != '' ) {
+                                                                                    echo __( 'Site not connected', 'mainwp' );
+                                                                            } else {
+                                                                                    echo __( 'No updates available!', 'mainwp' );
+                                                                            }
+                                                                    }
+                                                                    ?>
+                                                            </div>
+                                                            <div class="mainwp-right mainwp-cols-3 mainwp-t-align-right translationsAction">
+                                                                    <div id="wp_upgradebuttons_translation_<?php echo $website->id; ?>">
+                                                                            <?php
+                                                                            if ( mainwp_current_user_can( 'dashboard', 'update_translations' ) ) {
+                                                                                    if ( count( $translation_upgrades ) > 0 ) { ?>
+                                                                                            <a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_translation_all(<?php echo $website->id; ?>, <?php echo $group_id; ?>)"><?php echo _n( 'Update', 'Update All', count( $translation_upgrades ), 'mainwp' ); ?></a> &nbsp;
+                                                                                    <?php } ?>
+                                                                            <?php } ?>
+                                                                    </div>
+                                                            </div>
+                                                            <div class="mainwp-clear"></div>
+                                                    </div>
+                                                        
+                                                    <div class="mainwp-sub-section" id="wp_translation_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
+							<?php
+							foreach ( $translation_upgrades as $translation_upgrade) {
+								$translation_name = isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $translation_upgrade['slug'];
+								$translation_slug = $translation_upgrade['slug'];
+								?>
+								<div class="mainwp-sub-row" translation_slug="<?php echo $translation_slug; ?>" updated="0">
+									<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">
+										<?php if ( $globalView ) { ?>&nbsp;&nbsp;&nbsp;<?php } ?>
+										<?php echo $translation_name; ?>
+										<input type="hidden" id="wp_upgraded_translation_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $translation_slug; ?>" value="0"/>
+									</div>
+									<div class="mainwp-left mainwp-cols-5 mainwp-padding-top-5 translationsInfo" id="wp_upgrade_translation_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $translation_slug; ?>">
+										<?php echo $translation_upgrade['version']; ?>
+									</div>
+									<div class="mainwp-right mainwp-cols-3 mainwp-t-align-right translationsAction">
+										<div id="wp_upgradebuttons_translation_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $translation_slug; ?>">
+											<?php if ( mainwp_current_user_can( 'dashboard', 'update_translations' ) ) { ?>
+												&nbsp;
+												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_translation(<?php echo $website->id; ?>//, '<?php echo $translation_slug; ?>//')"><?php _e( 'Update', 'mainwp' ); ?></a>
+											<?php } ?>
+										</div>
+									</div>
+									<div class="mainwp-clear"></div>
+								</div>
+							<?php }
+							?>
+                                                    </div>
+                                            </div>
+                                            <?php
+                                            } // end of foreach $site_ids
+                                            ?>                                           
+                                            <script type="text/javascript">
+                                               jQuery(document).ready(function () {    
+                                                   <?php if ($total_group_translation_updates == 0) { ?>
+                                                           rightnow_updates_group_remove_empty_rows('translation_updates', <?php echo intval($group_id); ?>);                                            
+                                                   <?php } else { 
+                                                           $show_button_update_all = mainwp_current_user_can( 'dashboard', 'update_translations' ) ? 1 : 0;
+                                                           ?>
+                                                           rightnow_updates_group_set_status('translation_updates', <?php echo intval($group_id); ?>, <?php echo intval($total_group_translation_updates); ?>, <?php echo $show_button_update_all; ?>);                                                   
+                                                   <?php } ?>
+                                               })
+                                           </script>  
+                            
+                                        <?php                                            
+                                    }
+                                    
+                                } else {
 					foreach ( $allTranslations as $slug => $val ) {
 						$cnt = $val['cnt'];
 						if ( $globalView ) {
@@ -1720,7 +2250,7 @@ class MainWP_Right_Now {
 							<?php echo _n( 'Plugin', 'Plugins', $total_plugins_outdate, 'mainwp'); ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
 						</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('This feature checks the last updated status of plugins and alerts you if not updated in a specific amount of time. This gives you insight on if a plugin may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
 					</div>
-					<div class="mainwp-left mainwp-cols-4 mainwp-padding-top-5">
+					<div class="mainwp-left mainwp-cols-4 mainwp-padding-top-5 mainwp-t-align-right">
 						<a href="<?php echo admin_url( 'admin.php?page=PluginsIgnoredAbandoned' ); ?>"><?php _e( 'Ignored', 'mainwp' ); ?> (<?php echo $total_pluginsIgnoredAbandoned; ?>)</a>
 					</div>
 					<div class="mainwp-right mainwp-cols-4"></div>
@@ -1729,7 +2259,7 @@ class MainWP_Right_Now {
 				<div id="wp_plugins_outdate" style="display: none" class="mainwp-sub-section">
 					<?php
 					$str_format = __( 'Updated %s Days Ago', 'mainwp' );
-					if ( $userExtension->site_view == 1 ) {
+					if ( $userExtension->site_view == 1   || (!$globalView && $userExtension->site_view == 2) ) {
 						@MainWP_DB::data_seek( $websites, 0 );
 						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 							$plugins_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_info' ), true );
@@ -1819,7 +2349,137 @@ class MainWP_Right_Now {
 							</div>
 							<?php
 						}
-					} else {
+					} else if ( $globalView && $userExtension->site_view == 2 ) {
+                                            // plugins outdate group sites
+                                            foreach($all_groups_sites as $group_id => $site_ids ) {   
+                                                    $total_group_plugins_outdate = 0;
+                                                    $group_name = $all_groups[$group_id]; 
+
+                                                     ?>                                    
+                                                    <div class="mainwp-sub-row" id="top_row_plugins_outdate_group_<?php echo $group_id; ?>">
+                                                                    <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5"><?php if ($group_id !== 0) { ?><a href="<?php echo admin_url( 'admin.php?page=managesites&g=' . $group_id ); ?>" title="<?php echo esc_attr($visit_group_title);?>"><?php echo stripslashes( $group_name ); ?></a><?php } else { echo stripslashes( $group_name ); } ?>
+                                                                    </div>
+                                                                    <div class="mainwp-cols-4 mainwp-left">                                                              
+                                                                            <a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('plugins_outdate_group', <?php echo intval($group_id); ?>);"> <span id="total_plugins_outdate_group_<?php echo $group_id; ?>"></span></a>                                                                           
+                                                                    </div>
+                                                                    <div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">&nbsp;
+                                                                    </div>
+                                                                <div class="mainwp-clear"></div>
+                                                    </div>
+
+                                                    <?php
+                                                foreach ( $site_ids as $site_id ) {
+                                                        $seek = $site_offset[$site_id]; 
+                                                        @MainWP_DB::data_seek( $websites, $seek );
+
+                                                        $website = @MainWP_DB::fetch_object( $websites ); 
+
+                                                        $plugins_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_info' ), true );
+
+							if ( ! is_array( $plugins_outdate ) ) {
+								$plugins_outdate = array();
+							}
+
+							if ( count( $plugins_outdate ) > 0 ) {
+								$pluginsOutdateDismissed = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_dismissed' ), true );
+								if ( is_array( $pluginsOutdateDismissed ) ) {
+									$plugins_outdate = array_diff_key( $plugins_outdate, $pluginsOutdateDismissed );
+								}
+
+								if ( is_array( $decodedDismissedPlugins ) ) {
+									$plugins_outdate = array_diff_key( $plugins_outdate, $decodedDismissedPlugins );
+								}
+							}
+                                                        
+                                                        $total_group_plugins_outdate += count($plugins_outdate);
+							
+                                                        ?>
+                                                    <div class="wp_plugins_outdate_group_<?php echo $group_id; ?>" style="display: none" >
+                                                        <div class="mainwp-sub-row">
+                                                                <div class="mainwp-left mainwp-cols-3">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>" value="<?php if ( count( $plugins_outdate ) > 0 ) {
+                                                                                echo '0';
+                                                                        } else {
+                                                                                echo '1';
+                                                                        } ?>"/>
+                                                                </div>
+                                                                <div class="mainwp-left mainwp-cols-3" id="wp_outdate_plugin_<?php echo $website->id; ?>">
+                                                                        <?php
+                                                                        if ( count( $plugins_outdate ) > 0 ) {
+                                                                                ?>
+                                                                                <a href="#" id="mainwp_plugins_outdate_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_show" onClick="return rightnow_show('plugins_outdate_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>', true);"> <?php echo count( $plugins_outdate ); ?> <?php echo _n( 'Plugin', 'Plugins', count( $plugins_outdate ), 'mainwp' ); ?></a>
+                                                                                <?php
+                                                                        } else {
+                                                                                if ( $website->sync_errors != '' ) {
+                                                                                        echo __( 'Site not connected', 'mainwp' );
+                                                                                } else {
+                                                                                        echo __( 'No abandoned plugins!', 'mainwp' );
+                                                                                }
+                                                                        }
+                                                                        ?>
+                                                                </div>
+                                                                <div class="mainwp-right mainwp-padding-top-5 mainwp-cols-4 mainwp-t-align-right">
+                                                                        <div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>">
+                                                                                <a href="<?php echo $website->url; ?>" target="_blank"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
+                                                                        </div>
+                                                                </div>
+                                                                <div class="mainwp-clear"></div>
+                                                        </div>
+								
+							<div id="wp_plugins_outdate_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" style="display: none">
+								<?php
+								foreach ( $plugins_outdate as $slug => $plugin_outdate ) {
+									$plugin_name = urlencode( $slug );
+
+									$now                      = new \DateTime();
+									$last_updated             = $plugin_outdate['last_updated'];
+									$plugin_last_updated_date = new \DateTime( '@' . $last_updated );
+									$diff_in_days             = $now->diff( $plugin_last_updated_date )->format( '%a' );
+
+									$outdate_notice = sprintf( $str_format, $diff_in_days );
+									?>
+									<div class="mainwp-sub-row" plugin_outdate_slug="<?php echo $plugin_name; ?>" dismissed="0">
+										<div class="mainwp-left mainwp-cols-3">
+											&nbsp;&nbsp;&nbsp;&nbsp;
+											<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
+											   class="thickbox" title="More information about <?php echo $plugin_outdate['Name']; ?>"><?php echo $plugin_outdate['Name']; ?></a><input type="hidden" id="wp_dismissed_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" value="0"/>
+										</div>
+										<div class="mainwp-left mainwp-cols-3 pluginsInfo" id="wp_outdate_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
+											<?php echo $plugin_outdate['Version']; ?> | <?php echo $outdate_notice; ?>
+										</div>
+										<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right pluginsAction">
+											<div id="wp_dismissbuttons_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
+												<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
+													&nbsp;
+													<a href="#" class="button" onClick="return rightnow_plugins_dismiss_outdate_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_outdate['Name'] ); ?>', <?php echo $website->id; ?>)"><?php _e( 'Ignore', 'mainwp' ); ?></a>
+												<?php } ?>
+											</div>
+										</div>
+										<div class="mainwp-clear"></div>
+									</div>
+								<?php }
+								?>
+							</div>
+                                                        
+                                                    </div>
+                                    
+							<?php
+                                                    } // end of foreach $site_ds
+                                                    ?>                                                   
+                                                    <script type="text/javascript">
+                                                        jQuery(document).ready(function () {    
+                                                            <?php if ($total_group_plugins_outdate == 0) { ?>
+                                                                    rightnow_updates_group_remove_empty_rows('plugins_outdate', <?php echo intval($group_id); ?>);                                            
+                                                            <?php } else {                                                                            
+                                                                    ?>
+                                                                    jQuery('#total_plugins_outdate_group_<?php echo intval($group_id); ?>').html('<?php echo intval($total_group_plugins_outdate) . " " .  _n( 'Plugin', 'Plugins', $total_group_plugins_outdate, 'mainwp' ); ?>');                                                            
+                                                            <?php } ?>
+                                                        })
+                                                    </script>  
+                                            <?php
+                                                    
+                                            }
+                                    
+                                        } else {
 						foreach ( $allPluginsOutdate as $slug => $val ) {
 							$cnt = $val['cnt'];
 							$plugin_name = urlencode( $slug );
@@ -1929,7 +2589,7 @@ class MainWP_Right_Now {
 							<?php echo _n( 'Theme', 'Themes', $total_themes_outdate, 'mainwp'); ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
 						</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('This feature checks the last updated status of themes and alerts you if not updated in a specific amount of time. This gives you insight on if a theme may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
 					</div>
-					<div class="mainwp-left mainwp-cols-4 mainwp-padding-top-5">
+					<div class="mainwp-left mainwp-cols-4 mainwp-padding-top-5 mainwp-t-align-right">
 						<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnoredAbandoned' ); ?>"><?php _e( 'Ignored', 'mainwp' ); ?> (<?php echo $total_themesIgnoredAbandoned; ?>)</a>
 					</div>
 					<div class="mainwp-right mainwp-cols-4"></div>
@@ -1937,7 +2597,7 @@ class MainWP_Right_Now {
 				</div>
 				<div id="wp_themes_outdate" style="display: none" class="mainwp-sub-section">
 					<?php
-					if ( $userExtension->site_view == 1 ) {
+					if ( $userExtension->site_view == 1 || (!$globalView && $userExtension->site_view == 2)) {
 						@MainWP_DB::data_seek( $websites, 0 );
 						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 							$themes_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_info' ), true );
@@ -2024,7 +2684,131 @@ class MainWP_Right_Now {
 							</div>
 							<?php
 						}
-					} else {
+					} else if ( $globalView && $userExtension->site_view == 2 ) {
+                                            // themes outdate group sites
+                                            foreach($all_groups_sites as $group_id => $site_ids ) {   
+                                                    $total_group_themes_outdate = 0;
+                                                    $group_name = $all_groups[$group_id]; 
+                                                    
+                                                     ?>                                    
+                                                    <div class="mainwp-sub-row" id="top_row_themes_outdate_group_<?php echo $group_id; ?>">
+                                                                    <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5"><?php if ($group_id !== 0) { ?><a href="<?php echo admin_url( 'admin.php?page=managesites&g=' . $group_id ); ?>" title="<?php echo esc_attr($visit_group_title);?>"><?php echo stripslashes( $group_name ); ?></a><?php } else { echo stripslashes( $group_name ); } ?>
+                                                                    </div>
+                                                                    <div class="mainwp-cols-4 mainwp-left">                                                              
+                                                                            <a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('themes_outdate_group', <?php echo intval($group_id); ?>);"> <span id="total_themes_outdate_group_<?php echo $group_id; ?>"></span></a>                                                                           
+                                                                    </div>
+                                                                    <div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">&nbsp;
+                                                                    </div>
+                                                                <div class="mainwp-clear"></div>
+                                                    </div>
+                                                    <?php
+                                                    foreach ( $site_ids as $site_id ) {
+                                                        $seek = $site_offset[$site_id]; 
+                                                        @MainWP_DB::data_seek( $websites, $seek );
+
+                                                        $website = @MainWP_DB::fetch_object( $websites ); 
+                                                        $themes_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_info' ), true );
+
+							if ( ! is_array( $themes_outdate ) ) {
+								$themes_outdate = array();
+							}
+
+							if ( count( $themes_outdate ) > 0 ) {
+								$themesOutdateDismissed = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
+								if ( is_array( $themesOutdateDismissed ) ) {
+									$themes_outdate = array_diff_key( $themes_outdate, $themesOutdateDismissed );
+								}
+
+								if ( is_array( $decodedDismissedThemes ) ) {
+									$themes_outdate = array_diff_key( $themes_outdate, $decodedDismissedThemes );
+								}
+							}
+                                                        $total_group_themes_outdate += count($themes_outdate);
+                                                        
+                                                    ?>
+                                                <div class="wp_themes_outdate_group_<?php echo $group_id; ?>" style="display: none" >
+                                                        <div class="mainwp-sub-row">
+                                                                <div class="mainwp-left mainwp-cols-3">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>" value="<?php if ( count( $themes_outdate ) > 0 ) {
+                                                                                echo '0';
+                                                                        } else {
+                                                                                echo '1';
+                                                                        } ?>"/>
+                                                                </div>
+                                                                <div class="mainwp-left mainwp-cols-3" id="wp_outdate_theme_<?php echo $website->id; ?>">
+                                                                        <?php
+                                                                        if ( count( $themes_outdate ) > 0 ) {
+                                                                                ?>
+                                                                                <a href="#" id="mainwp_themes_outdate_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_show" onClick="return rightnow_show('themes_outdate_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>', true);"> <?php echo count( $themes_outdate ); ?> <?php echo _n( 'Theme', 'Themes', count( $themes_outdate ), 'mainwp' ); ?></a>
+                                                                                <?php
+                                                                        } else {
+                                                                                if ( $website->sync_errors != '' ) {
+                                                                                        echo __( 'Site not connected', 'mainwp' );
+                                                                                } else {
+                                                                                        echo __( 'No abandoned themes!', 'mainwp' );
+                                                                                }
+                                                                        }
+                                                                        ?>
+                                                                </div>
+                                                                <div class="mainwp-right mainwp-cols-4 mainwp-padding-top-5 mainwp-t-align-right">
+                                                                        <div id="wp_upgradebuttons_theme_<?php echo $website->id; ?>">
+                                                                                <a href="<?php echo $website->url; ?>" target="_blank"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
+                                                                        </div>
+                                                                </div>
+                                                                <div class="mainwp-clear"></div>
+                                                        </div>
+
+							<div id="wp_themes_outdate_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" style="display: none">
+								<?php
+								foreach ( $themes_outdate as $slug => $theme_outdate ) {
+									$slug                    = urlencode( $slug );
+									$now                     = new \DateTime();
+									$last_updated            = $theme_outdate['last_updated'];
+									$theme_last_updated_date = new \DateTime( '@' . $last_updated );
+									$diff_in_days            = $now->diff( $theme_last_updated_date )->format( '%a' );
+									$outdate_notice          = sprintf( $str_format, $diff_in_days );
+									?>
+									<div class="mainwp-sub-row" theme_outdate_slug="<?php echo $slug; ?>" dismissed="0">
+										<div class="mainwp-left mainwp-cols-3">
+											&nbsp;&nbsp;&nbsp;&nbsp;<?php echo $theme_outdate['Name']; ?>
+											<input type="hidden" id="wp_dismissed_theme_<?php echo $website->id; ?>_<?php echo $slug; ?>" value="0"/>
+										</div>
+										<div class="mainwp-left mainwp-cols-3 pluginsInfo" id="wp_outdate_theme_<?php echo $website->id; ?>_<?php echo $slug; ?>">
+											<?php echo $theme_outdate['Version']; ?> | <?php echo $outdate_notice; ?>
+										</div>
+										<div class="mainwp-right mainwp-cols-3 mainwp-t-align-right pluginsAction">
+											<div id="wp_dismissbuttons_theme_<?php echo $website->id; ?>_<?php echo $slug; ?>">
+												<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
+													&nbsp;
+													<a href="#" class="button" onClick="return rightnow_themes_dismiss_outdate_detail('<?php echo $slug; ?>', '<?php echo urlencode( $theme_outdate['Name'] ); ?>', <?php echo $website->id; ?>)"><?php _e( 'Ignore', 'mainwp' ); ?></a>
+												<?php } ?>
+											</div>
+										</div>
+										<div class="mainwp-clear"></div>
+									</div>
+								<?php }
+								?>
+							</div>
+                                                    
+                                                    </div>
+                                                    <?php
+                                                        
+                                                    } // end of foreach $site_ids
+                                                    ?>                                                    
+                                                    <script type="text/javascript">
+                                                        jQuery(document).ready(function () {    
+                                                            <?php if ($total_group_themes_outdate == 0) { ?>
+                                                                    rightnow_updates_group_remove_empty_rows('themes_outdate', <?php echo intval($group_id); ?>);                                            
+                                                            <?php } else {                                                                            
+                                                                    ?>
+                                                                    jQuery('#total_themes_outdate_group_<?php echo intval($group_id); ?>').html('<?php echo intval($total_group_themes_outdate) . " " .  _n( 'Theme', 'Themes', $total_group_themes_outdate, 'mainwp' ); ?>');                                                            
+                                                            <?php } ?>
+                                                        })
+                                                    </script>  
+                                            <?php                                                    
+
+                                            }
+                                            
+                                        } else {
 						foreach ( $allThemesOutdate as $slug => $val ) {
 							$cnt = $val['cnt'];
 							$slug = urlencode( $slug );
@@ -2160,7 +2944,7 @@ class MainWP_Right_Now {
 		<div id="rightnow-upgrade-status-box" title="Upgrade" style="display: none; text-align: center">
 			<div id="rightnow-upgrade-status-progress"></div>
 			<span id="rightnow-upgrade-status-current">0</span> /
-			<span id="rightnow-upgrade-status-total"></span> <?php _e( 'upgraded', 'mainwp' ); ?>
+			<span id="rightnow-upgrade-status-total"></span> <?php _e( 'updated', 'mainwp' ); ?>
 			<div style="height: 160px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left">
 				<table style="width: 100%" id="rightnow-upgrade-list">
 				</table>

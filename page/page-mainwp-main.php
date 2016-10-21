@@ -40,7 +40,7 @@ class MainWP_Main {
 			), plugins_url( 'images/mainwpicon.png', dirname( __FILE__ ) ), '2.00001' );
 
 			if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
-				add_submenu_page( 'mainwp_tab', 'MainWP', __( 'Dashboard', 'mainwp' ), 'read', 'mainwp_tab', array(
+				add_submenu_page( 'mainwp_tab', 'MainWP', __( 'Overview', 'mainwp' ), 'read', 'mainwp_tab', array(
 					$this,
 					'on_show_page',
 				) );
@@ -63,7 +63,7 @@ class MainWP_Main {
 		wp_enqueue_script( 'wp-lists' );
 		wp_enqueue_script( 'postbox' );
 		wp_enqueue_script( 'dashboard' );
-		wp_enqueue_script( 'widgets' );
+		wp_enqueue_script( 'widgets' );		
 
 		self::add_meta_boxes( $this->dashBoard );
 	}
@@ -75,8 +75,8 @@ class MainWP_Main {
 			'render',
 		), $page, 'normal', 'core' );
 		if ( !MainWP_Utility::get_current_wpid() ) {
-			add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Sync_Status::getName(), array(
-				MainWP_Sync_Status::getClassName(),
+			add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Connection_Status::getName(), array(
+				MainWP_Connection_Status::getClassName(),
 				'render',
 			), $page, 'normal', 'core' );
 		}
@@ -100,10 +100,12 @@ class MainWP_Main {
 		}
 		global $mainwpUseExternalPrimaryBackupsMethod;
 		if ( empty( $mainwpUseExternalPrimaryBackupsMethod ) ) {
-			add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Backup_Tasks::getName(), array(
-				MainWP_Backup_Tasks::getClassName(),
-				'render',
-			), $page, 'normal', 'core' );
+                        if (get_option('mainwp_enableLegacyBackupFeature')) {
+                            add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Backup_Tasks::getName(), array(
+                                    MainWP_Backup_Tasks::getClassName(),
+                                    'render',
+                            ), $page, 'normal', 'core' );
+                        }
 		}
 		if ( mainwp_current_user_can( 'dashboard', 'see_seo_statistics' ) ) {
 			if ( get_option( 'mainwp_seo' ) == 1 ) {
@@ -116,15 +118,17 @@ class MainWP_Main {
 		add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Extensions_Widget::getName(), array(
 			MainWP_Extensions_Widget::getClassName(),
 			'render',
-		), $page, 'normal', 'core' );
-		add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Help::getName(), array(
-			MainWP_Help::getClassName(),
+		), $page, 'normal', 'core' );			
+
+		add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Helpful_Links_Widget::getName(), array(
+			MainWP_Helpful_Links_Widget::getClassName(),
 			'render',
 		), $page, 'normal', 'core' );
-		add_meta_box($page.'-contentbox-' . $i++, MainWP_How_To::getName(), array(
-			MainWP_How_To::getClassName(),
-			'render'
-		), $page, 'normal', 'core');
+
+		add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Blogroll_Widget::getName(), array(
+			MainWP_Blogroll_Widget::getClassName(),
+			'render',
+		), $page, 'normal', 'core' );	
 
 		/**
 		 * This hook allows you to add extra metaboxes to the dashboard via the 'mainwp-getmetaboxes' filter.
@@ -139,7 +143,7 @@ class MainWP_Main {
 
 	function require_registration() {
 		?>
-		<h2><?php _e( 'MainWP Dashboard', 'mainwp' ); ?></h2>
+		<h2><?php _e( 'Overview', 'mainwp' ); ?></h2>
 		<?php _e( 'MainWP needs to be activated before using', 'mainwp' ); ?> -
 		<a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e( 'Activate here', 'mainwp' ); ?></a>.
 		<?php
@@ -157,13 +161,13 @@ class MainWP_Main {
 		<div id="mainwp_tab-general" class="wrap">
 			<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
 
-			<h2><i class="fa fa-tachometer"></i> <?php _e( 'MainWP Dashboard', 'mainwp' ); ?></h2>
+			<h2><i class="fa fa-tachometer"></i> <?php _e( 'Overview', 'mainwp' ); ?></h2>
 
 			<div style="clear: both;"></div>
 			<br/><br/>
 			<?php if ( MainWP_Utility::showUserTip( 'mainwp-dashboard-tips' ) ) { ?>
 				<div id="mainwp-tip-zone">
-					<div class="mainwp-tips mainwp_info-box-blue">
+					<div class="mainwp-tips mainwp-notice mainwp-notice-blue">
 						<span class="mainwp-tip" id="mainwp-dashboard-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php _e( 'You can move the Widgets around to fit your needs and even adjust the number of columns by selecting "Screen Options" on the top right.', 'mainwp' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
 							</a></span></div>
 				</div>
@@ -181,6 +185,7 @@ class MainWP_Main {
 	public static function renderDashboardBody( $websites, $pDashboard, $pScreenLayout , $hideShortcuts = false) {
 		$opts           = get_option( 'mainwp_opts_showhide_sections', false );
 		$hide_shortcuts = ( is_array( $opts ) && isset( $opts['welcome_shortcuts'] ) && $opts['welcome_shortcuts'] == 'hide' ) ? true : false;
+		$current_screen = get_current_screen();
 		?>
 		<form action="admin-post.php" method="post">
 			<?php wp_nonce_field( 'mainwp_tab-general' ); ?>
@@ -189,7 +194,14 @@ class MainWP_Main {
 			<input type="hidden" name="action" value="save_howto_testPages_general"/>
 
 			<!-- Welcome Widget -->
-
+			<?php
+			if ( $current_screen->id === 'renderUpdatesTour' ) {
+				MainWP_Tours::renderOverviewTour();
+			}
+			else {
+				MainWP_Tours::renderOverviewTour();
+			}
+			?>
 			<div id="mainwp-welocme-bar" class="welcome-panel">
 				<div id="mainwp-welocme-bar-top" class="mainwp-padding-10">
 					<div class="mainwp-cols-2 mainwp-left mainwp-padding-top-10">
@@ -262,17 +274,18 @@ class MainWP_Main {
 									<h4><?php _e( 'Get started', 'mainwp' ); ?></h4>
 									<ul>
 										<li>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=Settings"><i class="fa fa-cogs"></i> <?php _e( 'Check MainWP Dashboard settings', 'mainwp' ); ?></a>
+										</li>
+										<li>
 											<a href="<?php echo get_admin_url(); ?>admin.php?page=managesites&do=new"><i class="fa fa-globe"></i> <?php _e( 'Add new site', 'mainwp' ); ?></a>
 										</li>
 										<li>
 											<a href="<?php echo get_admin_url(); ?>admin.php?page=ManageGroups"><i class="fa fa-globe"></i> <?php _e( 'Create child site groups', 'mainwp' ); ?></a>
 										</li>
 										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=ManageBackupsAddNew"><i class="fa fa-hdd-o"></i> <?php _e( 'Schedule backups', 'mainwp' ); ?></a>
+											<a href="<?php echo get_admin_url(); ?>admin.php?page=Extensions"><i class="fa fa-plug"></i> <?php _e( 'Browse MainWP Extensions', 'mainwp' ); ?></a>
 										</li>
-										<li>
-											<a href="<?php echo get_admin_url(); ?>admin.php?page=Settings"><i class="fa fa-cogs"></i> <?php _e( 'Check MainWP settings', 'mainwp' ); ?></a>
-										</li>
+										
 
 									</ul>
 								</div>

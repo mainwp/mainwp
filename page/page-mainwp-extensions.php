@@ -153,7 +153,7 @@ class MainWP_Extensions {
 		self::$extensionsLoaded = true;
 	}
 
-	public static function on_load_page() {
+	public static function on_load_page() {		
 		MainWP_System::enqueue_postbox_scripts();
 		self::add_meta_boxes();		
 	}

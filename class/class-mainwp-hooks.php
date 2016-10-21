@@ -45,6 +45,8 @@ class MainWP_Hooks {
 		add_action( 'mainp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
 		add_action( 'mainp_log_warning', array( &$this, 'mainwp_log_warning' ), 10, 1 );
 		add_filter( 'mainwp_getactivateextensionnotice', array( &$this, 'get_activate_extension_notice' ), 10, 1 );
+		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
+		add_action( 'mainwp_do_meta_boxes', array( &$this, 'mainwp_do_meta_boxes' ), 10, 1 );
 	}
 
 	public function mainwp_log_debug( $pText ) {
@@ -55,6 +57,14 @@ class MainWP_Hooks {
 	}
 	public function mainwp_log_warning( $pText ) {
 		MainWP_Logger::Instance()->warning( $pText );
+	}
+
+	public function enqueue_meta_boxes_scripts() {		
+		MainWP_System::enqueue_postbox_scripts();
+	}
+
+	public function mainwp_do_meta_boxes( $postpage ) {		
+		MainWP_System::do_mainwp_meta_boxes( $postpage );
 	}
 
 	public function get_activate_extension_notice( $pluginFile ) {

@@ -1,8 +1,7 @@
 <?php
 class MainWP_Manage_Sites_View {
 	public static function initMenu() {
-
-		return add_submenu_page( 'mainwp_tab', __( 'Sites','mainwp' ), '<span id="mainwp-Sites">'.__( 'Sites','mainwp' ).'</span>', 'read', 'managesites', array( MainWP_Manage_Sites::getClassName(), 'renderAllSites' ) );
+		return add_submenu_page( 'mainwp_tab', __( 'Sites','mainwp' ), '<span id="mainwp-Sites">'.__( 'Sites','mainwp' ).'</span>', 'read', 'managesites', array( MainWP_Manage_Sites::getClassName(), 'renderManageSites' ) );
 	}
 
 	public static function initMenuSubPages( &$subPages ) {
@@ -15,6 +14,7 @@ class MainWP_Manage_Sites_View {
 					<a href="<?php echo admin_url( 'admin.php?page=managesites' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Sites','mainwp' ); ?></a>
 					<?php if ( mainwp_current_user_can( 'dashboard', 'add_sites' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=managesites&do=new' ); ?>" class="mainwp-submenu"><?php _e( 'Add New','mainwp' ); ?></a>
+						<a href="<?php echo admin_url( 'admin.php?page=managesites&do=bulknew' ); ?>" class="mainwp-submenu"><?php _e( 'Import Sites','mainwp' ); ?></a>
 					<?php } ?>
 					<a href="<?php echo admin_url( 'admin.php?page=managesites&do=test' ); ?>" class="mainwp-submenu"><?php _e( 'Test Connection','mainwp' ); ?></a>
 					<a href="<?php echo admin_url( 'admin.php?page=ManageGroups' ); ?>" class="mainwp-submenu"><?php _e( 'Groups','mainwp' ); ?></a>
@@ -45,6 +45,7 @@ class MainWP_Manage_Sites_View {
 				}
 			}
 		}
+                                
 		$site_id = null;
 		$page = '';
 		switch ( $pShowpage ) {
@@ -54,13 +55,6 @@ class MainWP_Manage_Sites_View {
 			case 'ManageSitesDashboard':
 				$site_id = $_GET['dashboard'];
 				$page = 'dashboard';
-				break;
-                        case 'ManageSitesUpdates':
-				$site_id = $_GET['updateid'];
-				$page = 'updates';
-				break;
-			case 'ManageSitesBulkUpload':
-				$page = 'bulkupload';
 				break;
 			case 'SecurityScan':
 				$site_id = $_GET['scanid'];
@@ -73,7 +67,11 @@ class MainWP_Manage_Sites_View {
 			case 'ManageSitesBackups':
 				$site_id = $_GET['backupid'];
 				$page = 'backup';
-				break;
+				break;                            
+                        case 'ManageSitesUpdates':
+                            $site_id = $_GET['updateid'];
+                            $page = 'update';
+                            break;
 			case 'Test':
 				$page = 'test';
 				break;
@@ -109,7 +107,7 @@ class MainWP_Manage_Sites_View {
 							),
 			'dashboard' => array(
                                                         'href' => '',
-							'text' => $current_site . __( 'Dashboard', 'mainwp' ),
+							'text' => $current_site . __( 'Overview', 'mainwp' ),
 							'alt' => '',
 							'parent' => 'site',
 							),
@@ -124,13 +122,7 @@ class MainWP_Manage_Sites_View {
 							'text' => __( 'Bulk Upload', 'mainwp' ),
 							'alt' => '',
 							'parent' => 'site',
-							),
-			'help' => array(
-			'href' => '',
-							'text' => __( 'Help', 'mainwp' ),
-							'alt' => '',
-							'parent' => 'site',
-							),
+							),			
 			'edit' => array(
 			'href' => '',
 							'text' => $current_site . __( 'Edit', 'mainwp' ),
@@ -142,7 +134,13 @@ class MainWP_Manage_Sites_View {
 							'text' => $current_site . __( 'Backups', 'mainwp' ),
 							'alt' => '',
 							'parent' => 'site',
-							),
+							),     
+                        'update' => array(
+			'href' => '',
+							'text' => $current_site . __( 'Updates', 'mainwp' ),
+							'alt' => '',
+							'parent' => 'site',
+							),     
 			'scan' => array(
 			'href' => '',
 							'text' => $current_site . __( 'Security Scan', 'mainwp' ),
@@ -175,27 +173,44 @@ class MainWP_Manage_Sites_View {
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 		$html = '';
 		if ( ! empty( $str_breadcrumb ) ) {
-			$html = '<div class="mainwp_breadcrumb"><strong>' . __( 'You are here: ','mainwp' ) . '</strong> &nbsp;&nbsp;' .  $str_breadcrumb . '
-                    <span id="mainwp-ind-dash-quick-jump" style="float: right;"><strong>' .  __( 'Jump to ','mainwp' ) . '</strong>
-                        <select id="mainwp-quick-jump-child" name="">
-                            <option value="">' . __( 'Select site ','mainwp' ) . '</option>';
+			$html = '<div class="postbox"><div class="inside"><span class="mainwp-left mainwp-cols-2 mainwp-padding-top-15"><i class="fa fa-map-signs" aria-hidden="true"></i> ' . __( 'You are here: ','mainwp' ) . '&nbsp;&nbsp;' .  $str_breadcrumb . '
+                    </span><span class="mainwp-right mainwp-padding-top-10 mainwp-cols-2 mainwp-t-align-right">' .  __( 'Jump to ','mainwp' ) . '
+                        <select id="mainwp-quick-jump-child" name="" class="mainwp-select2">
+                            <option value="">' . __( 'Select Site ','mainwp' ) . '</option>';
 			while ( $websites && ($website = @MainWP_DB::fetch_object( $websites )) ) {
 				$html .= '<option value="'.$website->id.'">' . stripslashes( $website->name ) . '</option>';
 			}
 				@MainWP_DB::free_result( $websites );
 
+                
+		
+                
 			$html .= '
 					</select>
-					<select id="mainwp-quick-jump-page" name="">
+					<select id="mainwp-quick-jump-page" name="" class="mainwp-select2">
 						<option value="">' . __( 'Select page ','mainwp' ) . '</option>
-						<option value="dashboard">' . __( 'Dashboard ','mainwp' ) . '</option>
+						<option value="dashboard">' . __( 'Overview ','mainwp' ) . '</option>
 						<option value="id">' . __( 'Edit ','mainwp' ) . '</option>
-                                                <option value="updateid">' . __( 'Updates','mainwp' ) . '</option>
-						<option value="backupid">' . __( 'Backup ','mainwp' ) . '</option>
-						<option value="scanid">' . __( 'Security Scan ','mainwp' ) . '</option>
+                                                <option value="updateid">' . __( 'Updates','mainwp' ) . '</option>';
+                        
+                        $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
+                        if ($enableLegacyBackupFeature) {
+                            $html .= '<option value="backupid">' . __( 'Backup ','mainwp' ) . '</option>';
+                        } else {
+                            $primaryBackup = get_option( 'mainwp_primaryBackup' );
+                            if (!empty($primaryBackup)) {
+                                $customPage = apply_filters( 'mainwp-getcustompage-backups', false );
+                                if ( is_array( $customPage ) && isset( $customPage['slug'] )) {
+                                    $html .= '<option value="' . 'ManageBackups' . $customPage['slug'] . '">' . $customPage['title'] . '</option>';
+                                }
+
+                            }
+                        }   
+                        $html .= '<option value="scanid">' . __( 'Security Scan ','mainwp' ) . '</option>
 					</select>
 				</span>
 				<div style="clear: both;"></div>
+				</div>
 			</div>';
 		}
 
@@ -211,35 +226,43 @@ class MainWP_Manage_Sites_View {
 		if ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) {
 			$site_id = $_GET['id'];                        
                 } else if ( isset( $_GET['backupid'] ) && ! empty( $_GET['backupid'] ) ) {
-			 $site_id = $_GET['backupid'];                         
+                        $site_id = $_GET['backupid'];                         
                 } else if ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) {
-			 $site_id = $_GET['updateid'];                         
+                        $site_id = $_GET['updateid'];                         
                 } else if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) {
-				$site_id = $_GET['dashboard'];                                
+                        $site_id = $_GET['dashboard'];                                
                 } else if ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) {
-					$site_id = $_GET['scanid'];}
-
-				$managesites_pages = array(
-				'ManageSites' => array( 'href' => 'admin.php?page=managesites', 'title' => __( 'Manage','mainwp' ), 'access' => true ),
-									'AddNew' => array( 'href' => 'admin.php?page=managesites&do=new', 'title' => __( 'Add New','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'add_sites' ) ),
-									'Test' => array( 'href' => 'admin.php?page=managesites&do=test', 'title' => __( 'Test Connection','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'test_connection' ) ),
-									'ManageGroups' => array( 'href' => 'admin.php?page=ManageGroups', 'title' => __( 'Groups','mainwp' ), 'access' => true ),
-				);
+                        $site_id = $_GET['scanid'];                                        
+                }
+                
+                $managesites_pages = array(
+                        'ManageSites' => array( 'href' => 'admin.php?page=managesites', 'title' => __( 'Manage Sites','mainwp' ), 'access' => true ),
+                        'AddNew' => array( 'href' => 'admin.php?page=managesites&do=new', 'title' => __( 'Add New','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'add_sites' ) ),
+                        'BulkAddNew' => array( 'href' => 'admin.php?page=managesites&do=bulknew', 'title' => __( 'Import Sites','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'add_sites' ) ),
+                        'Test' => array( 'href' => 'admin.php?page=managesites&do=test', 'title' => __( 'Test Connection','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'test_connection' ) ),
+                        'ManageGroups' => array( 'href' => 'admin.php?page=ManageGroups', 'title' => __( 'Groups','mainwp' ), 'access' => true ),
+                );
 
 		$site_pages = array(
-                                'ManageSitesDashboard' => array( 'href' => 'admin.php?page=managesites&dashboard=' . $site_id, 'title' => __( 'Dashboard','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ),
-                                'ManageSitesEdit' => array( 'href' => 'admin.php?page=managesites&id=' . $site_id, 'title' => __( 'Edit','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'edit_sites' ) ),
-                                'ManageSitesUpdates' => array( 'href' => 'admin.php?page=managesites&updateid=' . $site_id, 'title' => __( 'Updates','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ),
-                                'ManageSitesBackups' => array( 'href' => 'admin.php?page=managesites&backupid=' . $site_id, 'title' => __( 'Backups','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'execute_backups' ) ),
-                                'SecurityScan' => array( 'href' => 'admin.php?page=managesites&scanid=' . $site_id, 'title' => __( 'Security Scan','mainwp' ), 'access' => true ),
-                        );
+                        'ManageSitesDashboard' => array( 'href' => 'admin.php?page=managesites&dashboard=' . $site_id, 'title' => __( 'Overview','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ),
+                        'ManageSitesEdit' => array( 'href' => 'admin.php?page=managesites&id=' . $site_id, 'title' => __( 'Edit','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'edit_sites' ) ),
+                        'ManageSitesUpdates' => array( 'href' => 'admin.php?page=managesites&updateid=' . $site_id, 'title' => __( 'Updates','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ),
+                        'ManageSitesBackups' => array( 'href' => 'admin.php?page=managesites&backupid=' . $site_id, 'title' => __( 'Backups','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'execute_backups' ) ),
+                        'SecurityScan' => array( 'href' => 'admin.php?page=managesites&scanid=' . $site_id, 'title' => __( 'Security Scan','mainwp' ), 'access' => true ),
+                );
+                
+                
 		global $mainwpUseExternalPrimaryBackupsMethod;
 		if ( ! empty( $mainwpUseExternalPrimaryBackupsMethod ) ) {
 			unset( $site_pages['ManageSitesBackups'] );
-		}
-
+		} else if (!get_option('mainwp_enableLegacyBackupFeature')) {
+                    if (isset($site_pages['ManageSitesBackups'])) {
+                        unset($site_pages['ManageSitesBackups']);
+                    }
+                }
+                               
 		$breadcrumd = '';
-		if ( $shownPage != 'SitesHelp' && ! isset( $managesites_pages[ $shownPage ] ) ) {
+		if ( ! isset( $managesites_pages[ $shownPage ] ) ) {
 			$breadcrumd = self::getBreadcrumb( $shownPage, $subPages );
 		}
 
@@ -255,7 +278,7 @@ class MainWP_Manage_Sites_View {
 		<div id="mainwp-tip-zone">
 			<?php if ( $shownPage == '' ) { ?>
 				<?php if ( MainWP_Utility::showUserTip( 'mainwp-managesites-tips' ) ) { ?>
-					<div class="mainwp-tips mainwp_info-box-blue">
+					<div class="mainwp-tips mainwp-notice mainwp-notice-blue">
 						<span class="mainwp-tip" id="mainwp-managesites-tips"><strong><?php _e( 'MainWP tip','mainwp' ); ?>: </strong><?php _e( 'You can show more or less information per row by selecting "Screen Options" on the top right.','mainwp' ); ?></span>
 						<span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss','mainwp' ); ?></a></span>
 					</div>
@@ -263,7 +286,7 @@ class MainWP_Manage_Sites_View {
 			<?php } ?>
 			<?php if ( $shownPage == 'ManageSitesDashboard' ) { ?>
 				<?php if ( MainWP_Utility::showUserTip( 'mainwp-managesitesdashboard-tips' ) ) { ?>
-					<div class="mainwp-tips mainwp_info-box-blue">
+					<div class="mainwp-tips mainwp-notice mainwp-notice-blue">
 						<span class="mainwp-tip" id="mainwp-managesitesdashboard-tips"><strong><?php _e( 'MainWP tip','mainwp' ); ?>: </strong><?php _e( 'You can move widgets around to fit your needs and even adjust the number of columns by selecting "Screen Options" on the top right.','mainwp' ); ?></span>
 						<span><a href="#" class="mainwp-dismiss" ><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss','mainwp' ); ?></a></span>
 					</div>
@@ -274,11 +297,7 @@ class MainWP_Manage_Sites_View {
 		<div class="mainwp-tabs" id="mainwp-tabs">
             <?php echo ! empty( $breadcrumd ) ? $breadcrumd . '<br />' : ''; ?>
 			<?php
-			if ( $shownPage == 'ManageSitesBulkUpload' ) {
-				?>
-				<a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e( 'Bulk upload','mainwp' ); ?></a>
-				<?php
-			} else if ( $shownPage == 'SitesHelp' || isset( $managesites_pages[ $shownPage ] ) ) {
+			if ( isset( $managesites_pages[ $shownPage ] ) ) {
 				foreach ( $managesites_pages as $page => $value ) {
 					if ( ! $value['access'] ) {
 						continue;
@@ -308,8 +327,7 @@ class MainWP_Manage_Sites_View {
 					<?php
 				}
 			}
-			?>
-			<a class="mainwp-help-tab nav-tab pos-nav-tab <?php echo $shownPage == 'SitesHelp' ? 'nav-tab-active' : '' ?>" style="float:right" href="admin.php?page=SitesHelp"><?php echo __( 'Help', 'mainwp' ); ?></a>
+			?>			
 			<div class="clear"></div>
 		</div>
 
@@ -323,99 +341,82 @@ class MainWP_Manage_Sites_View {
 		</div>
 		<?php
 	}
-
-
-	public static function renderTest() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'test_connection' ) ) {
-			mainwp_do_not_have_permissions( __( 'test connection', 'mainwp' ) );
-			return;
-		}
-		?>
-            <div id="mainwp_managesites_test_errors" class="mainwp_error error"></div>
-            <div id="mainwp_managesites_test_message" class="mainwp_updated updated"></div>
-            <form method="POST" action="" enctype="multipart/form-data" id="mainwp_testconnection_form">
-            <div class="mainwp_info-box-blue">
-                <span><?php _e( 'The test connection feature is specifically testing what your Dashboard can "see" and what your dashboard "sees" and what my dashboard "sees" or what your browser "sees" can be completely different things.','mainwp' ); ?></span>
-            </div>
-            <div class="postbox">
-            <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e( 'Test a site connection','mainwp' ); ?></span></h3>
-            <div class="inside">
-                <table class="form-table">
-                    <tr class="form-field form-required">
-                        <th scope="row"><?php _e( 'Site URL:','mainwp' ); ?></th>
-                        <td>
-                            <input type="text" id="mainwp_managesites_test_wpurl"
-                                   name="mainwp_managesites_add_wpurl"
-                                   value="<?php if ( isset( $_REQUEST['site'] ) ) {echo esc_attr( $_REQUEST['site'] );} ?>" autocompletelist="mainwp-test-sites" class="mainwp_autocomplete" /><span class="mainwp-form_hint">Proper Format: <strong>http://address.com/</strong> or <strong>http://www.address.com/</strong></span>
-                            <datalist id="mainwp-test-sites">
-								<?php
-								$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-								while ( $websites && ($website = @MainWP_DB::fetch_object( $websites )) ) {
-									echo '<option>'.$website->url.'</option>';
-								}
-								@MainWP_DB::free_result( $websites );
-								?>
-                            </datalist>
-                            <br/><em><?php _e( 'Please only use the domain URL, do not add /wp-admin.','mainwp' ); ?></em>
-                        </td>
-                    </tr>
-                </table>
-                </div>
-                </div>
-                <div class="postbox">
-                <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e( 'Advanced options','mainwp' ); ?></span></h3>
-                <div class="inside">
-                    <table class="form-table">
-                    <tr class="form-field form-required">
-                       <th scope="row"><?php _e( 'Verify certificate','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp' ) ); ?></th>
-                        <td>
-                            <select id="mainwp_managesites_test_verifycertificate" name="mainwp_managesites_test_verifycertificate">
-                                 <option selected value="1"><?php _e( 'Yes','mainwp' ); ?></option>
-                                 <option value="0"><?php _e( 'No','mainwp' ); ?></option>
-                                 <option value="2"><?php _e( 'Use global setting','mainwp' ); ?></option>
-                             </select> <em>(<?php _e( 'Default: Yes','mainwp' ); ?>)</em>
-                        </td>
-                    </tr>
-                    <tr class="form-field form-required">
-                       <th scope="row"><?php _e( 'SSL version','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Prefered SSL version to connect to your site.','mainwp' ) ); ?></th>
-                        <td>
-                            <select id="mainwp_managesites_test_ssl_version" name="mainwp_managesites_test_ssl_version">
-                                 <option selected value="auto"><?php _e( 'Auto detect','mainwp' ); ?></option>
-                                 <option value="1.x"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
-                                 <option value="2"><?php _e( 'SSL v2','mainwp' ); ?></option>
-                                 <option value="3"><?php _e( 'SSL v3','mainwp' ); ?></option>
-                                 <option value="1.0"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
-                                 <option value="1.1"><?php _e( 'TLS v1.1','mainwp' ); ?></option>
-                                 <option value="1.2"><?php _e( 'TLS v1.2','mainwp' ); ?></option>
-                             </select> <em>(<?php _e( 'Default: Auto detect','mainwp' ); ?>)</em>
-                        </td>
-                    </tr>
-
-                    <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
-                    <input style="display:none" type="text" name="fakeusernameremembered"/>
-                    <input style="display:none" type="password" name="fakepasswordremembered"/>
-                    <tr>
-                        <td colspan="2"><div class="mainwp_info-box"><?php _e( 'If your child site is protected with HTTP basic authentication, please set the username and password for authentication here.','mainwp' ); ?></div></td>
-                    </tr>
-
-                    <tr class="form-field form-required">
-                         <th scope="row"><?php _e( 'HTTP username: ','mainwp' ); ?></th>
-                         <td><input type="text" id="mainwp_managesites_test_http_user" style="width: 350px;" name="mainwp_managesites_test_http_user" value="" class=""/></td>
-                    </tr>
-                    <tr class="form-field form-required">
-                         <th scope="row"><?php _e( 'HTTP password: ','mainwp' ); ?></th>
-                         <td><input type="password" id="mainwp_managesites_test_http_pass" style="width: 350px;" name="mainwp_managesites_test_http_pass" value="" class=""/></td>
-                    </tr>
-                </table>
-                
-            </form>
-        </div>
-    </div>
-    <p class="submit"><input type="button" name="mainwp_managesites_test" id="mainwp_managesites_test" class="button-primary button button-hero" value="<?php _e( 'Test connection','mainwp' ); ?>"/></p>
-    <?php
+	
+	public static function renderTestConnection() {
+	?>
+		<div class="mainwp-postbox-actions-top">
+			<?php _e( 'The Test Connection feature is specifically testing what your Dashboard can "see" and what your Dashboard "sees" and what my Dashboard "sees" or what your browser "sees" can be completely different things.','mainwp' ); ?>
+		</div>
+		<div class="inside">
+			<table class="form-table">
+				<tr class="form-field form-required">
+					<th scope="row"><?php _e( 'Site URL:','mainwp' ); ?></th>
+					<td>
+						<input type="text" id="mainwp_managesites_test_wpurl"
+							   name="mainwp_managesites_add_wpurl"
+							   value="<?php if ( isset( $_REQUEST['site'] ) ) {echo esc_attr( $_REQUEST['site'] );} ?>" autocompletelist="mainwp-test-sites" class="mainwp_autocomplete" />
+						<datalist id="mainwp-test-sites">
+							<?php
+							$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+							while ( $websites && ($website = @MainWP_DB::fetch_object( $websites )) ) {
+								echo '<option>'.$website->url.'</option>';
+							}
+							@MainWP_DB::free_result( $websites );
+							?>
+						</datalist>
+						<br/><em><?php _e( 'Please only use the domain URL, do not add /wp-admin.','mainwp' ); ?></em>
+					</td>
+				</tr>
+			</table>
+		</div>
+	<?php
 	}
+	
+	public static function renderTestAdvancedOptions() {
+	?>
+		<table class="form-table">
+			<tr class="form-field form-required">
+			   <th scope="row"><?php _e( 'Verify certificate','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp' ) ); ?></th>
+				<td>
+					<select class="mainwp-select2" id="mainwp_managesites_test_verifycertificate" name="mainwp_managesites_test_verifycertificate">
+						 <option selected value="1"><?php _e( 'Yes','mainwp' ); ?></option>
+						 <option value="0"><?php _e( 'No','mainwp' ); ?></option>
+						 <option value="2"><?php _e( 'Use Global Setting','mainwp' ); ?></option>
+					 </select> <em>(<?php _e( 'Default: Yes','mainwp' ); ?>)</em>
+				</td>
+			</tr>
+			<tr class="form-field form-required">
+			   <th scope="row"><?php _e( 'SSL version','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Prefered SSL Version to connect to your site.','mainwp' ) ); ?></th>
+				<td>
+					<select class="mainwp-select2" id="mainwp_managesites_test_ssl_version" name="mainwp_managesites_test_ssl_version">
+						 <option selected value="auto"><?php _e( 'Auto detect','mainwp' ); ?></option>
+                                                 <option value="1.2"><?php _e( "Let's encrypt (TLS v1.2)",'mainwp' ); ?></option>
+						 <option value="1.x"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
+						 <option value="2"><?php _e( 'SSL v2','mainwp' ); ?></option>
+						 <option value="3"><?php _e( 'SSL v3','mainwp' ); ?></option>
+						 <option value="1.0"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
+						 <option value="1.1"><?php _e( 'TLS v1.1','mainwp' ); ?></option>						 
+					 </select> <em>(<?php _e( 'Default: Auto detect','mainwp' ); ?>)</em>
+				</td>
+			</tr>
 
-	public static function renderBulkUpload() {
+			<!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
+			<input style="display:none" type="text" name="fakeusernameremembered"/>
+			<input style="display:none" type="password" name="fakepasswordremembered"/>
+
+			<tr class="form-field form-required">
+				 <th scope="row"><?php _e( 'HTTP username: ','mainwp' ); ?></th>
+				 <td><input type="text" id="mainwp_managesites_test_http_user" name="mainwp_managesites_test_http_user" value="" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the username for authentication here.','mainwp' ); ?></em></td>
+			</tr>
+			<tr class="form-field form-required">
+				 <th scope="row"><?php _e( 'HTTP password: ','mainwp' ); ?></th>
+				 <td><input type="password" id="mainwp_managesites_test_http_pass" name="mainwp_managesites_test_http_pass" value="" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the password for authentication here.','mainwp' ); ?></em></td>
+			</tr>
+		</table>
+	<?php
+	}
+	
+	public static function renderImportSites() {
 		?>
             <div id="MainWPBulkUploadSitesLoading" class="updated" style="display: none;">
                 <div><i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Importing sites','mainwp' ); ?></div>
@@ -485,10 +486,7 @@ class MainWP_Manage_Sites_View {
 							$i++;
 						}
 
-						?>
-                        <div class="postbox">
-                        <h3 class="mainwp_box_title"><i class="fa fa-globe"></i> <?php _e('Importing bew child sites','mainwp'); ?></h3>
-                        <div class="inside">
+						?>                        
                         <input type="hidden" id="mainwp_managesites_do_import" value="1"/>
                         <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo $i ?>"/>
 
@@ -497,7 +495,7 @@ class MainWP_Manage_Sites_View {
                             <pre class="log"><?php echo esc_attr($header_line); ?></pre>
                         </div></p>
 
-                        <p class="submit"><input type="button" name="mainwp_managesites_btn_import"
+                        <p class="submit" style="float:left;"><input type="button" name="mainwp_managesites_btn_import"
                                                  id="mainwp_managesites_btn_import"
                                                  class="button-primary button button-hero" value="<?php _e('Pause','mainwp'); ?>"/>
                             <input type="button" name="mainwp_managesites_btn_save_csv"
@@ -509,9 +507,8 @@ class MainWP_Manage_Sites_View {
                         <div class="mainwp_managesites_import_listing"
                              id="mainwp_managesites_import_fail_logging" style="display: none;">
                             <pre class="log"><?php echo esc_attr($header_line); ?></pre>
-                        </div></p>
-                        </div>
-                        </div>
+                        </div></p>                        
+						<br style="clear:both" />
                         <?php
 					} else {
 						$errors[] = __( 'ERROR: Data is not valid!', 'mainwp' ) . '<br />';
@@ -540,56 +537,88 @@ class MainWP_Manage_Sites_View {
 			}
 	}
 
-	public static function _renderNewSite( &$groups ) {
-		if ( ! mainwp_current_user_can( 'dashboard', 'add_sites' ) ) {
-			mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
-			return;
-		}
 
-		$passed_curl_ssl = MainWP_Server_Information::checkCURLSSLInfo();
-
+	public static function renderNewSite() {				
+		$groups = MainWP_DB::Instance()->getGroupsForCurrentUser();
+		if (!is_array($groups))
+			$groups = array();
 		?>
-       <div id="mainwp_managesites_add_errors" class="mainwp_info-box-red"></div>
-       <div id="mainwp_managesites_add_message" class="mainwp_info-box"></div>
-       <div class="postbox" id="mainwp-add-a-single-site">
-       <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e( 'Add a single site','mainwp' ); ?></span></h3>
-       <div class="inside">
-        <div id="mainwp-add-site-notice-box" >
-       <div id="mainwp-add-site-notice-show" class="mainwp_info-box-blue" style="background-position: 10px 10px !important; display: none; text-align: center;"><a href="#" class="button button-primary" id="mainwp-add-site-notice-show-link"><?php _e( 'Having trouble adding your site?','mainwp' ); ?></a></div>
-       <div id="mainwp-add-site-notice" class="mainwp_info-box-blue" style="background-position: 10px 25px !important;">
-         <p>
-			<?php echo sprintf( __( 'If you are having trouble adding your site please use the %sTest Connection tab%s. This tells you the header response being received by your dashboard from that child site. <br/><strong>The Test Connection feature is specifically testing what your Dashboard can "see" and what your dashboard "sees" and what my dashboard "sees" or what your browser "sees" can be completely different things.</strong>','mainwp' ), '<a href="/wp-admin/admin.php?page=managesites&do=test" style="text-decoration: none;">', '</a>' ); ?>
-         </p>
-         <p>
-           <strong><?php _e( 'Most common reasons for sites not being added are:','mainwp' ); ?></strong>
-           <ol>
-			   <li><strong><?php echo sprintf( __('You have a security plugin blocking the connection. If you have a security plugin installed and are having an issue please check the %sPlugin Conflict page%s for how to resolve.','mainwp' ), '<a href="http://docs.mainwp.com/known-plugin-conflicts/" style="text-decoration: none;">', '</a>' ); ?></strong></li>
-             <li><?php _e( 'Your dashboard is on the same host as your Child site. Some hosts will not allow two sites on the same server to communicate with each other. In this situation you would contact your host for assistance or move your dashboard or child site to a different host.','mainwp' ); ?></li>
-             <li><?php _e( 'You may have recently moved the child site and your dashboard\'s server may not have an updated DNS or your server may be experiencing DNS issues.  To check this use the Test Connection tab and verify the IP that shows up with the IP that shows on your child sites MainWP > Server Information page. ','mainwp' ); ?></li>
-             <li class="curl-notice" <?php echo ($passed_curl_ssl ? 'style="display: none;"' : ''); ?>><?php _e( 'Your dashboard or child site is experiencing SSL or cURL errors which can make it so you are unable to the new child site.  You can check for these errors on the Server Information page for both the MainWP Dashboard and Child plugin.','mainwp' ); ?></li>
-           </ol>
-         </p>
-         <p style="text-align: center;"><a href="#" class="button button-primary" style="text-decoration: none;" id="mainwp-add-site-notice-dismiss"><?php _e( 'Hide this message','mainwp' ); ?></a></p>         
+		<div class="mainwp-postbox-actions-top">
+	        <?php echo sprintf( __( 'If you are having trouble adding your site please see the %s%s List of Most Common Reasons%s.','mainwp' ), '<a href="#" id="mainwp-most-common-reasons">', '<i class="fa fa-eye-slash" aria-hidden="true"></i>', '</a>' ); ?>
+	        <div id="mainwp-most-common-reasons-content" style="display: none;">
+	        	<h3><?php _e( 'MainWP Child plugin missing', 'mainwp' ); ?></h3>
+	        	<p><?php _e( 'To be able to connect your website you need to make sure that the MainWP Child plugin is installed on your website that you are trying to connect.', 'mainwp' ); ?></p>
+	        	<h3><?php _e( 'MainWP Child plugin installed but not activated', 'mainwp' ); ?></h3>
+	        	<p><?php _e( 'If you are not able to connect your website to your MainWP Dashboard, and you are sure that you have installed the MainWP Child plugin on your website, make sure that the plugin is activated.', 'mainwp' ); ?></p>
+	        	<h3><?php _e( 'Plugin conflict', 'mainwp' ); ?></h3>
+	        	<p><?php _e( 'If after verifying that the MainWP Child plugin is installed and activated on your website, the website still can’t be connected to your MainWP Dashboard, try to disable all plugins except for MainWP Child and connect your site after that.', 'mainwp' ); ?></p>
+	        	<em><?php _e( 'If you are not able to disable all your plugins, be sure to at least disable all security and caching plugins.', 'mainwp' ); ?></em>
+	        	<h3><?php _e( 'Dashboard Site Server Misconfiguration', 'mainwp' ); ?></h3>
+	        	<p><?php _e( 'To be sure that your Dashboard Site server is configured properly and can be used for hosting MainWP Dashboard plugin:', 'mainwp' ); ?></p>
+	        	<ol>
+	        		<li><?php _e( 'Log in to your Dashboard Site', 'mainwp' ); ?></li>
+	        		<li><?php _e( 'Go to the MainWP > Server Information page', 'mainwp' ); ?></li>
+	        		<li><?php _e( 'Locate following checks and make sure that all of them display the Pass response:', 'mainwp' ); ?></li>
+	        		<li>
+	        			<ul>
+	        				<li><?php _e( 'SSL Extension Enabled', 'mainwp' ); ?></li>
+	        				<li><?php _e( 'SSL Warnings', 'mainwp' ); ?></li>
+	        				<li><?php _e( 'cURL Version', 'mainwp' ); ?></li>
+	        				<li><?php _e( 'cURL OpenSSL Version', 'mainwp' ); ?></li>
+	        			</ul>
+	        		</li>
+	        	</ol>
+	        	<h3><?php _e( 'Child Site Server Misconfiguration', 'mainwp' ); ?></h3>
+	        	<p><?php _e( 'To be sure that your Child Site server is configured properly and can be connected to your MainWP Dashboard:', 'mainwp' ); ?></p>
+	        	<ol>
+	        		<li><?php _e( 'Log in to your Child Site', 'mainwp' ); ?></li>
+	        		<li><?php _e( 'Go to the WP > Settings > MainWP Child > Server Information page', 'mainwp' ); ?></li>
+	        		<li><?php _e( 'Locate following checks and make sure that all of them display the Pass response:', 'mainwp' ); ?></li>
+	        		<li>
+	        			<ul>
+	        				<li><?php _e( 'MainWP Upload Directory', 'mainwp' ); ?></li>
+	        				<li><?php _e( 'SSL Extension Enabled', 'mainwp' ); ?></li>
+	        				<li><?php _e( 'SSL Warnings', 'mainwp' ); ?></li>
+	        				<li><?php _e( 'cURL Version', 'mainwp' ); ?></li>
+	        				<li><?php _e( 'cURL OpenSSL Version', 'mainwp' ); ?></li>
+	        			</ul>
+	        		</li>
+	        	</ol>
+	        	<h3><?php _e( 'Dashboard and Child site on the same server with disabled loopback connections', 'mainwp' ); ?></h3>
+	        	<p><?php _e( 'In case your Dashboard Site is on the same server as your website that you are trying to connect to it, you need to make sure that the loopback connections are allowed and enabled on your server. To do that;', 'mainwp' ); ?></p>
+	        	<ol>
+	        		<li><?php _e( 'Log in to your Dashboard Site', 'mainwp' ); ?></li>
+	        		<li><?php _e( 'Go to the MainWP > Server Information page', 'mainwp' ); ?></li>
+	        		<li><?php _e( 'Locate the Server self-connect check', 'mainwp' ); ?></li>
+	        	</ol>
+	        	<p><?php _e( 'If you see anything different then Response Test O.K. it means that the loopback connections are disabled. In that case, you will need to contact your host support and request enabling this feature. If, by any chance, that is not possible, you should consider moving your Dashboard Site to another Webserver or Localhost.', 'mainwp' ); ?></p>
+	        	<h3><?php _e( 'Website has been migrated recently', 'mainwp' ); ?></h3>
+	        	<p><?php _e( 'You may have recently moved the website to another server and your Dashboard’s Server may not have an updated DNS or your server may be experiencing DNS issues. To check this use the Test Connection tab and verify the IP that shows up with the IP that shows on your website WP > Settings > MainWP Child > Server Information page.', 'mainwp' ); ?></p>
+	        	<p><?php _e( 'In case there is an IP address mismatch, you will need to contact your hosting provider and request 2 things:', 'mainwp' ); ?></p>
+	        	<ol>
+	        		<li><?php _e( 'Dashboard Site host: request DNS Cache flush', 'mainwp' ); ?></li>
+	        		<li><?php _e( 'Child Site host: request DNS Settings verification', 'mainwp' ); ?></li>
+	        	</ol>
+	        	<em><?php _e( 'In most cases, this issue resolves itself in up to 48 hours, however, some host companies do not flush DNS cache that often and more time is needed.', 'mainwp' ); ?></em>
+	        	<h3><?php _e( 'Requests being blocked by Child Site server', 'mainwp' ); ?></h3>
+	        	<p><?php _e( 'n some cases, the Child Site server blocks requests sent from the Dashboard site, and your website may return message that the MainWP Child plugin can’t be found. In this case, you need to contact your Child Site host support department and have them check if the server Firewall or Mod_Security is blocking access by reviewing server logs.', 'mainwp' ); ?></p>
+	        	<h3><?php _e( 'Connection being Blocked by CloudFlare', 'mainwp' ); ?></h3>
+	        	<p><?php _e( 'Some users with CloudFlare have reported trouble connecting their website to their MainWP Dashboard. If you are experiencing this issue please try the two resolution steps.', 'mainwp' ); ?></p>
+	        	<ol>
+	        		<li><?php _e( 'Add your Dashboard IP to your CloudFlare Trusted IP list', 'mainwp' ); ?></li>
+	        		<li><?php _e( 'Add your WP-Admin to CloudFlare Bypass Catch as site.com/wp-admin*', 'mainwp' ); ?></li>
+	        	</ol>
+	        </div>
        </div>
-        </div>
-       <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
-           <table class="form-table">
-               <tr class="form-field form-required">
-                   <th scope="row"><?php _e('Site name','mainwp'); ?></th>
-                   <td>
-                            <input type="text"
-                                   id="mainwp_managesites_add_wpname"
-                                   name="mainwp_managesites_add_wpname"
-                                   value=""
-                                   class=""/>
-                    </td>
-               </tr>
+       <div class="inside">
+           <table class="form-table" id="mainwp_managesites_add_new_form">
                <tr class="form-field form-required">
                    <th scope="row"><?php _e('Site URL','mainwp'); ?></th>
-                   <td><select id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol"><option value="http">http://</option><option value="https">https://</option></select> <input type="text"
+                   <td><span id="mainwp_managesites_add_wpurl_protocol_wrap"><select class="mainwp-select2-wpurl-protocol" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol"><option value="http">http://</option><option value="https">https://</option></select></span> <input type="text"
                                id="mainwp_managesites_add_wpurl"
                                name="mainwp_managesites_add_wpurl"
                                value=""
+							   style="width: 262px !important"
                                class="" />
                     </td>
                </tr>
@@ -603,44 +632,118 @@ class MainWP_Manage_Sites_View {
                                class="" />
                     </td>
                </tr>
+               <tr class="form-field form-required">
+                   <th scope="row"><?php _e('Friendly site name','mainwp'); ?></th>
+                   <td>
+                            <input type="text"
+                                   id="mainwp_managesites_add_wpname"
+                                   name="mainwp_managesites_add_wpname"
+                                   value=""
+                                   class=""/>
+                    </td>
+               </tr> 
                <tr>
                    <th scope="row"><?php _e('Groups','mainwp'); ?></th>
-                   <td>
-                        <input type="text"
-                               name="mainwp_managesites_add_addgroups"
+                   <td><span id="mainwp_managesites_add_addgroups_wrap">
+                        <select 
+                               name="selected_groups[]"
                                id="mainwp_managesites_add_addgroups"
-                               value=""
-                               class="regular-text form-control" />
-                        <span class="mainwp-form_hint"><?php _e( 'Separate groups by commas (e.g. Group 1, Group 2)', 'mainwp' ); ?></span>
-                       <div id="selected_groups" style="display: block; width: 25em">
-                           <?php
-                           if (count($groups) == 0)
-                           {
-                               echo 'No groups added yet.';
-                           }
+							   multiple="multiple" /><?php 
                            foreach ($groups as $group)
                            {
-                               echo '<div class="mainwp_selected_groups_item"><input type="checkbox" name="selected_groups[]" value="' . $group->id . '" /> &nbsp ' . stripslashes($group->name) . '</div>';
+								echo '<option value="' . $group->id . '">' . stripslashes($group->name)  . '</option>';
                            }
-                           ?>
-                       </div>
-                       <span class="description"><?php _e('Or assign existing groups','mainwp'); ?></span>
+							?></select></span>
                    </td>
                </tr>
-               </table>
-               </div>
+               </table>   
+           
+               
+               <?php
+                    $current_options = get_option( 'mainwp_opts_saving_status' );
+                    $disabled_pop_notice = (is_array($current_options) && isset($current_options['disable_newsite_notice'])) ? true : false;                                                            
+                    
+                    if (!$disabled_pop_notice) {
+                        $value = MainWP_DB::Instance()->getWebsitesCount();
+                        if ($value > 0) {
+                            $disabled_pop_notice = true;
+                            $current_options = get_option( 'mainwp_opts_saving_status' );
+                            $current_options['disable_newsite_notice'] = 1;
+                            update_option( 'mainwp_opts_saving_status', $current_options );
+                        }
+                        if (!$disabled_pop_notice) {
+                            ?>
+                            <div id="newsite-pop-box" title="<?php _e('Not sure what to add here?'); ?>" style="display: none;">
+                                <?php _e('Please check this page:', 'mainwp');?> <a href="" id="connection_detail_lnk" target="_blank"></a>                            
+                                <br/><br/>
+                                <p style="text-align: center">
+                                    <input id="newsite-pop-box-close" type="button" name="close" value="Close" class="button"/>
+                                    <input id="newsite-pop-box-disable" type="button" name="donotshow" value="<?php echo esc_attr('Don\'t show this again', 'mainwp'); ?>" class="button"/>                                
+                                </p>
+                            </div>
+                            <?php
+                        }
+                    }
+                    
+               ?>
+                    <script type="text/javascript">
+                            jQuery( document ).ready( function () {			
+                                    <?php if (count($groups) == 0) { ?>
+                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
+                                    jQuery('#mainwp_managesites_add_addgroups').prop("disabled", true);
+                                    <?php } else { ?>
+                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true});							
+                                    <?php } ?>                                         
+                                    <?php if (!$disabled_pop_notice) { ?>                                            
+                                            var pop_showed = false;
+                                            jQuery("#mainwp_managesites_add_wpurl").blur(function() {                                                
+                                                var detail_url = jQuery('#mainwp_managesites_add_wpurl_protocol option:selected').text() + jQuery('#mainwp_managesites_add_wpurl').val().trim() + '/wp-admin/options-general.php?page=mainwp_child_tab&tab=connection-detail';
+                                                jQuery('#connection_detail_lnk').attr('href', detail_url).text(__('Connection Details'));
+                                                if (!pop_showed) {
+                                                    pop_showed = true;
+                                                    jQuery('#newsite-pop-box').dialog({
+                                                        resizable: false,
+                                                        height: 150,
+                                                        width: 500,
+                                                        modal: true,
+                                                        close: function(event, ui) {jQuery('#newsite-pop-box').dialog('destroy');}});                                                
+                                                } 
+                                            });
+                                            jQuery('#newsite-pop-box-close').live('click', function(event)
+                                            {                                                
+                                                jQuery('#newsite-pop-box').dialog('destroy');
+                                            });
+                                            
+                                            jQuery('#newsite-pop-box-disable').live('click', function(event)
+                                            {       
+                                                var data = {
+                                                    action:'mainwp_saving_status',
+                                                    saving_status: 'disable_newsite_notice',
+                                                    value: 1,
+                                                    nonce: mainwp_ajax_nonce
+                                                };
+                                                jQuery.post(ajaxurl, data, function (res) {
+                                                });
+                                                jQuery('#newsite-pop-box').dialog('destroy');
+                                            });
+                                            
+                                    <?php } ?> 
+                            });
+                    </script>
                </div>
 
 <?php
+		return;
+
+	}
+
+	public static function renderSyncExtsSettings() {	
 	$sync_extensions_options = apply_filters( 'mainwp-sync-extensions-options', array() );
 	$working_extensions = MainWP_Extensions::getExtensions();
 	$available_exts_data = MainWP_Extensions_View::getAvailableExtensions();
 	if ( count( $working_extensions ) > 0 && count($sync_extensions_options) > 0 ) {
 ?>
-	       <div class="postbox" id="mainwp-managesites-exts-options">
-                <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Extensions settings synchronization','mainwp'); ?></span></h3>
-                <div class="inside">
-                <div class="mainwp_info-box-blue"><?php _e( 'You have extensions installed that require an additional plugin to be installed on this new Child site for the extension to work correctly. From the list below select the plugins you want to install and if you want to apply the extensions default settings to this child site.', 'mainwp' ); ?></div>
+			<div class="mainwp-notice mainwp-notice-blue" id="mainwp_addnew_sync_exts_settings_notice"><?php _e( 'You have Extensions installed that require an additional plugin to be installed on this new Child site for the Extension to work correctly. From the list below select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
                     <?php
 
 						foreach ( $working_extensions as $slug => $data ) {
@@ -671,48 +774,49 @@ class MainWP_Manage_Sites_View {
 							echo $html;
 						}
 					?>
-				</div>
-			</div>
-	<?php } ?>
+	<?php }
+	}
 
-            <div class="postbox" id="mainwp-managesites-adv-options">
-                <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e('Advanced options','mainwp'); ?></span></h3>
-                <div class="inside">
+	public static function renderAdvancedOptions() {
+	?>	
                     <table class="form-table">
                         <tr class="form-field form-required">
-                             <th scope="row"><?php _e('Child unique security
-                               ID ','mainwp'); ?>&nbsp;&nbsp;<?php MainWP_Utility::renderToolTip('The Unique Security ID adds additional protection between the child plugin and your MainWP Dashboard. The unique security ID will need to match when being added to the MainWP Dashboard. This is additional security and should not be needed in most situations.'); ?></th>
+				 <th scope="row"><?php _e('Child Unique Security
+				   ID ','mainwp'); ?>&nbsp;&nbsp;<?php MainWP_Utility::renderToolTip('The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.'); ?></th>
                              <td>
                              <input type="text"
                                     id="mainwp_managesites_add_uniqueId"
-                                    style="width: 350px;"
                                     name="mainwp_managesites_add_uniqueId"
                                     value=""
                                     class=""/>
-                            <span class="mainwp-form_hint"><?php _e( 'The unique security ID adds additional protection between the child plugin and your MainWP Dashboard. The unique security ID will need to match when being added to the MainWP Dashboard. This is additional security and should not be needed in most situations.','mainwp'); ?></span></td>
+				</td>
                         </tr>
                         <tr class="form-field form-required">
                             <th scope="row"><?php _e('Verify certificate','mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
                             <td>
-                                    <select id="mainwp_managesites_verify_certificate" name="mainwp_managesites_verify_certificate" class="form-control">
+					<span id="mainwp_managesites_verify_certificate_wrap">
+						<select  id="mainwp_managesites_verify_certificate" name="mainwp_managesites_verify_certificate" class="form-control mainwp-select2">
                                          <option selected value="1"><?php _e('Yes','mainwp'); ?></option>
                                          <option value="0"><?php _e('No','mainwp'); ?></option>
                                          <option value="2"><?php _e('Use global setting','mainwp'); ?></option>
                                     </select> <em><?php _e( 'Default: Yes', 'mainwp' ); ?></em>
+					</span>
                             </td>
                         </tr>
 	                    <tr class="form-field form-required">
 	                       <th scope="row"><?php _e( 'SSL version','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Prefered SSL version to connect to your site.','mainwp' ) ); ?></th>
 	                        <td>
-	                            <select id="mainwp_managesites_ssl_version" name="mainwp_managesites_ssl_version">
+					<span id="mainwp_managesites_ssl_version_wrap">
+						<select class="mainwp-select2" id="mainwp_managesites_ssl_version" name="mainwp_managesites_ssl_version">
 	                                 <option selected value="auto"><?php _e( 'Auto detect','mainwp' ); ?></option>
+                                         <option value="1.2"><?php _e( "Let's encrypt (TLS v1.2)",'mainwp' ); ?></option>                                         
 	                                 <option value="1.x"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
 	                                 <option value="2"><?php _e( 'SSL v2','mainwp' ); ?></option>
 	                                 <option value="3"><?php _e( 'SSL v3','mainwp' ); ?></option>
 	                                 <option value="1.0"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
-	                                 <option value="1.1"><?php _e( 'TLS v1.1','mainwp' ); ?></option>
-	                                 <option value="1.2"><?php _e( 'TLS v1.2','mainwp' ); ?></option>
+	                                 <option value="1.1"><?php _e( 'TLS v1.1','mainwp' ); ?></option>	                                 
 	                             </select> <em>(<?php _e( 'Default: Auto detect','mainwp' ); ?>)</em>
+					 </span>
 	                        </td>
 	                    </tr>
 
@@ -720,20 +824,16 @@ class MainWP_Manage_Sites_View {
                         <input style="display:none" type="text" name="fakeusernameremembered"/>
                         <input style="display:none" type="password" name="fakepasswordremembered"/>
 
-                        <tr>
-                            <td colspan="2"><div class="mainwp_info-box"><?php _e('If your child site is protected with HTTP basic authentication, please set the username and password for authentication here.','mainwp'); ?></div></td>
-                        </tr>
 
                         <tr class="form-field form-required">
                              <th scope="row"><?php _e('HTTP username ','mainwp'); ?></th>
                              <td>
                                      <input type="text"
                                             id="mainwp_managesites_add_http_user"
-                                            style="width: 350px;"
                                             name="mainwp_managesites_add_http_user"
                                             value=""
 											autocomplete="off"
-                                            class=""/>
+								class=""/><br/><em><?php _e( 'If your child site is protected with HTTP basic authentication, please set the username and password for authentication here.','mainwp' ); ?></em>
                             </td>
                         </tr>
                         <tr class="form-field form-required">
@@ -741,73 +841,71 @@ class MainWP_Manage_Sites_View {
                              <td>
                                     <input type="password"
                                            id="mainwp_managesites_add_http_pass"
-                                           style="width: 350px;"
                                            name="mainwp_managesites_add_http_pass"
                                            value=""
 										   autocomplete="off"
-                                           class=""/>
+							   class=""/><br/><em><?php _e( 'If your child site is protected with HTTP basic authentication, please set the username and password for authentication here.','mainwp' ); ?></em>
                             </td>
                         </tr>
                     </table>
-                    </div>
-                </div>
-
-               <div class="postbox" id="mainwp-bulk-upload-sites">
-               <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e( 'Bulk upload','mainwp' ); ?></span></h3>
-               <div class="inside">
-               <table>
-                   <th scope="row"></th>
-                   <td>
-                       <input type="file" name="mainwp_managesites_file_bulkupload"
-                              id="mainwp_managesites_file_bulkupload"
-                              accept="text/comma-separated-values"
-                              class="regular-text" disabled="disabled"/>
-                      <span
-                              class="description"><?php _e('File must be in CSV format.','mainwp'); ?> <a
-                              href="<?php echo plugins_url('csv/sample.csv', dirname(__FILE__)); ?>"><?php _e('Click
-                          here to download sample CSV file.','mainwp'); ?></a></span>
-
-                       <div>
-                           <p>
-                               <input type="checkbox" name="mainwp_managesites_chk_bulkupload"
-                                      id="mainwp_managesites_chk_bulkupload" value="1"/>
-                               <label for="mainwp_managesites_chk_bulkupload"><span class="description"><?php _e('Upload file','mainwp'); ?></span></label>
-                           </p>
-
-                           <p>
-                               <input type="checkbox" name="mainwp_managesites_chk_header_first"
-                                      disabled="disabled" checked="checked"
-                                      id="mainwp_managesites_chk_header_first" value="1"/>
-                               <label for="mainwp_managesites_chk_header_first"><span class="description"><?php _e('CSV file contains a header.','mainwp'); ?></span></label>
-                           </p>
-                       </div>
-                   </td>
-           </table>
-           </div>
-           </div>
-
-
-
-           <p class="submit"><input type="button" name="mainwp_managesites_add"
-                                    id="mainwp_managesites_add"
-                                    class="button-primary button button-hero" value="<?php _e('Add new site','mainwp'); ?>"/></p>
-       </form>
 <?php
 	}
+        
+	public static function renderBulkUpload() {
+		?>	
+			<div class="mainwp-postbox-actions-top">
+           		<?php _e('Import sites allows you to connect a large number of child sites at once by uploading a CSV file. The MainWP Child plugin needs to be installed and activated before using the Import Sites option.','mainwp'); ?>
+           </div>
+			<div class="inside">
+				<table>
+					<th scope="row"></th>
+					<td>
+						<input type="file" name="mainwp_managesites_file_bulkupload"
+							   id="mainwp_managesites_file_bulkupload"
+							   accept="text/comma-separated-values"
+							   class="regular-text"/>
+					   
+
+						<div>						
+							<p>
+								<input type="checkbox" name="mainwp_managesites_chk_header_first"
+									   checked="checked"
+									   id="mainwp_managesites_chk_header_first" value="1"/>
+								<label for="mainwp_managesites_chk_header_first"><span class="description"><?php _e('CSV file contains a header.','mainwp'); ?></span></label>
+							</p>
+						</div>
+					</td>
+	           </table>
+           </div>
+           <div class="mainwp-postbox-actions-bottom">
+           		<?php _e('File must be in CSV format.','mainwp'); ?> <a href="<?php echo plugins_url('csv/sample.csv', dirname(__FILE__)); ?>"><?php _e('Click here to download sample CSV file.','mainwp'); ?></a>
+           </div>
+		<?php
+	}
+	
+
 
 	public static function renderSeoPage( &$website ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'see_seo_statistics' ) ) {
 			mainwp_do_not_have_permissions( __( 'see seo statistics', 'mainwp' ) );
 			return;
 		}
+						
 			?>
       <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
               src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
           <h2><i class="fa fa-globe"></i> <?php echo stripslashes( $website->name ); ?> (<?php echo $website->url; ?>)</h2>
-
           <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
           <div id="ajax-information-zone" class="updated" style="display: none;"></div>
           <div id="mainwp_background-box">
+				<?php
+				$seo_retired = get_option('mainwp_seo_retired', null);
+				if ('waiting' == $seo_retired) {
+					?>
+					<div class="mainwp-notice mainwp-notice-red"><?php _e('SEO feature will be completely retired in July 1, 2016', 'mainwp'); ?></div>
+					<?php
+				}
+				?>
 				<?php
 				if ( $website->statsUpdate == 0 ) {
 				?>
@@ -820,7 +918,7 @@ class MainWP_Manage_Sites_View {
 					<?php
 					if ( get_option( 'mainwp_seo' ) == 0 ) {
 						?>
-					  <div class="mainwp_info-box-red"><?php echo sprintf( __('Basic SEO has been SEO turned Off. <strong>Historic information only</strong>. You can turn back on in the %settings page%.','mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
+					  <div class="mainwp-notice mainwp-notice-red"><?php echo sprintf( __('Basic SEO has been SEO turned Off. <strong>Historic information only</strong>. You can turn back on in the %settings page%.','mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
                     <?php
 					}
 					?>
@@ -843,6 +941,12 @@ class MainWP_Manage_Sites_View {
 	}
 
 	public static function showSEOWidget( &$website ) {
+		$seo_retired = get_option('mainwp_seo_retired', null);
+		if ('waiting' == $seo_retired) {
+			?>
+			<div class="mainwp-notice mainwp-notice-red"><?php _e('SEO feature will be completely retired in July 1, 2016', 'mainwp'); ?></div>
+			<?php
+		}
 		if ( $website->statsUpdate == 0 ) {
 			echo $website->url ?> &nbsp;-&nbsp; <em><?php _e( 'Not updated yet!','mainwp' ); ?></em> <?php
 		} else {
@@ -909,6 +1013,7 @@ class MainWP_Manage_Sites_View {
 
 
 	public static function renderSettings() {
+
 		$backupsOnServer = get_option( 'mainwp_backupsOnServer' );
 		$backupOnExternalSources = get_option( 'mainwp_backupOnExternalSources' );
 		$archiveFormat = get_option( 'mainwp_archiveFormat' );
@@ -919,7 +1024,8 @@ class MainWP_Manage_Sites_View {
 		$notificationOnBackupFail = get_option( 'mainwp_notificationOnBackupFail' );
 		$notificationOnBackupStart = get_option( 'mainwp_notificationOnBackupStart' );
 		$chunkedBackupTasks = get_option( 'mainwp_chunkedBackupTasks' );
-
+                $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
+                
 		$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
 		$loadFilesBeforeZip = ($loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false);
 
@@ -931,29 +1037,46 @@ class MainWP_Manage_Sites_View {
 
 		global $mainwpUseExternalPrimaryBackupsMethod;
 		$hiddenCls = '';
-		if ( ! empty( $primaryBackup ) && $primaryBackup == $mainwpUseExternalPrimaryBackupsMethod ) {
+		if ( !$enableLegacyBackupFeature || (! empty( $primaryBackup ) && $primaryBackup == $mainwpUseExternalPrimaryBackupsMethod )) {
 			$hiddenCls = 'class="hidden"';
 		}
 
 		?>
-    <div class="postbox" id="mainwp-backup-options-settings">
-    <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> Backup Options</span></h3>
-    <div class="inside">
     <table class="form-table">
         <tbody>
             <?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
                 <tr>
-		<div class="mainwp_info-box"><?php echo sprintf( __('Did you know that MainWP has extensions for working with popular backup plugins? Visit the %ssxtensions site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
+		<div class="mainwp-notice mainwp-notice-blue"><?php echo sprintf( __('Did you know that MainWP has extensions for working with popular backup plugins? Visit the %sextensions site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
                 </tr>
             <?php } ?>
+                <tr>
+            <th scope="row"><?php _e( 'Enable legacy backup feature','mainwp' ); ?></th>
+               <td>
+                 <div class="mainwp-checkbox">
+                   <input type="checkbox" id="mainwp_options_enableLegacyBackupFeature" name="mainwp_options_enableLegacyBackupFeature"  <?php echo ($enableLegacyBackupFeature == 0 ? '' : 'checked="checked"'); ?> />
+                   <label for="mainwp_options_enableLegacyBackupFeature"></label>
+                </div>
+                <em><?php echo sprintf(__('It is highly recommended to use some of our %sBackup Extensions%s instead of the Legacy Backups. MainWP is actively moving away from the legacy backups feature.', 'mainwp'), '<a href="https://mainwp.com/mainwp-extensions/extension-category/backup/" target="_blank">', '</a>'); ?></em>
+            </td>
+        </tr>
         <?php
 		if ( count( $primaryBackupMethods ) > 0 ) {
 		?>
         <tr>
             <th scope="row"><?php _e( 'Select primary backup system','mainwp' ); ?></th>
                <td>
-                <span><select name="mainwp_primaryBackup" id="mainwp_primaryBackup">
-                        <option value="" >Default MainWP Backups</option>
+                <span><select class="mainwp-select2" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
+                        <?php 
+                        if ($enableLegacyBackupFeature) { 
+                        ?>
+                        <option value="" ><?php echo __('Default MainWP Backups', 'mainwp')?></option>
+                        <?php
+                        } else {
+                        ?>
+                        <option value="" ><?php echo __('N/A', 'mainwp')?></option>
+                        <?php
+                        }
+                        ?>
                         <?php
 						foreach ( $primaryBackupMethods as $method ) {
 							echo '<option value="' . $method['value'] . '" ' . (($primaryBackup == $method['value']) ? 'selected' : '') . '>' . $method['title'] . '</option>';
@@ -967,7 +1090,7 @@ class MainWP_Manage_Sites_View {
             <th scope="row"><?php _e( 'Backups on server', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The number of backups to keep on your server. This does not affect external sources. 0 is not allowed, the backups always require one local backup to upload to external sources.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/' ); ?></th>
             <td>
                 <input type="text" name="mainwp_options_backupOnServer"  class=""
-                       value="<?php echo ($backupsOnServer === false ? 1 : $backupsOnServer); ?>"/><span class="mainwp-form_hint"><?php _e( 'The number of backups to keep on your server. This does not affect external sources.','mainwp' ); ?></span>
+                       value="<?php echo ($backupsOnServer === false ? 1 : $backupsOnServer); ?>"/>
             </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>
@@ -983,7 +1106,7 @@ class MainWP_Manage_Sites_View {
                 <table class="mainwp-nomarkup">
                     <tr>
                         <td valign="top">
-                            <span class="mainwp-select-bg"><select name="mainwp_archiveFormat" id="mainwp_archiveFormat">
+                            <span class="mainwp-select-bg"><select class="mainwp-select2" name="mainwp_archiveFormat" id="mainwp_archiveFormat">
                                 <option value="zip" <?php if ( $archiveFormat == 'zip' ) :  ?>selected<?php endif; ?>>Zip</option>
                                 <option value="tar" <?php if ( $archiveFormat == 'tar' ) :  ?>selected<?php endif; ?>>Tar</option>
                                 <option value="tar.gz" <?php if ( ($archiveFormat === false) || ($archiveFormat == 'tar.gz') ) :  ?>selected<?php endif; ?>>Tar GZip</option>
@@ -992,7 +1115,7 @@ class MainWP_Manage_Sites_View {
                         </td>
                         <td>
                             <i>
-                            <span id="info_zip" class="archive_info" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>><?php _e( 'Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)','mainwp' ); ?></span>
+                            <span id="info_zip" class="archive_info" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>><?php _e( 'Uses PHP native Zip-library, when missing, the PCLZip library included in WordPress will be used. (Good compression, fast with native zip-library)','mainwp' ); ?></span>
                             <span id="info_tar" class="archive_info" <?php if ( $archiveFormat != 'tar' ) :  ?>style="display: none;"<?php endif; ?>><?php _e( 'Creates an uncompressed tar-archive. (No compression, fast, low memory usage)','mainwp' ); ?></span>
                             <span id="info_tar.gz" class="archive_info" <?php if ( $archiveFormat != 'tar.gz' && $archiveFormat !== false ) :  ?>style="display: none;"<?php endif; ?>><?php _e( 'Creates a GZipped tar-archive. (Good compression, fast, low memory usage)','mainwp' ); ?></span>
                             <span id="info_tar.bz2" class="archive_info" <?php if ( $archiveFormat != 'tar.bz2' ) :  ?>style="display: none;"<?php endif; ?>><?php _e( 'Creates a BZipped tar-archive. (Best compression, fast, low memory usage)','mainwp' ); ?></span>
@@ -1005,9 +1128,15 @@ class MainWP_Manage_Sites_View {
         <tr class="archive_method archive_zip <?php echo ! empty( $hiddenCls ) ? 'hidden' : ''; ?>" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>>
             <th scope="row"><?php _e( 'Maximum file descriptors on child','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/' ); ?></th>
             <td>
-                <div style="float: left">Auto detect:&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e( 'Enter a fallback value because not all hosts support this function.','mainwp' ); ?>)</i></div><div style="clear:both"></div>
-                <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors"
-                       value="<?php echo ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors); ?>"/><span class="mainwp-form_hint"><?php _e( 'The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp' ); ?></span>
+            <table>
+            	<tr>
+            		<td><?php _e( 'Auto detect:', 'mainwp'); ?></td>
+            		<td><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div></td>
+            	</tr>
+            </table>
+                <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors" value="<?php echo ($maximumFileDescriptors === false ? 150 : $maximumFileDescriptors); ?>"/>
+                <br/>
+                <em>(<?php _e( 'Enter a fallback value because not all hosts support this function.','mainwp' ); ?>)</em>
             </td>
         </tr>
         <tr class="archive_method archive_zip <?php echo ! empty( $hiddenCls ) ? 'hidden' : ''; ?>" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>>
@@ -1039,18 +1168,16 @@ class MainWP_Manage_Sites_View {
             </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>
-            <th scope="row"><?php _e( 'Execute backup tasks in cunks','mainwp' ); ?></th>
+            <th scope="row"><?php _e( 'Execute backup tasks in chunks','mainwp' ); ?></th>
                <td>
                  <div class="mainwp-checkbox">
                    <input type="checkbox" id="mainwp_options_chunkedBackupTasks" name="mainwp_options_chunkedBackupTasks"  <?php echo ($chunkedBackupTasks == 0 ? '' : 'checked="checked"'); ?> />
                    <label for="mainwp_options_chunkedBackupTasks"></label>
                 </div>
             </td>
-        </tr>
+        </tr>        
         </tbody>
     </table>
-    </div>
-    </div>
     <?php
 	}
 
@@ -1065,7 +1192,7 @@ class MainWP_Manage_Sites_View {
             <div id="howto-metaboxes-general" class="wrap">
                 <?php
 				if ( $website->mainwpdir == -1 ) {
-					echo '<div class="mainwp_info-box-yellow"><span class="mainwp_conflict" siteid="' . $website->id . '"><strong>Configuration issue detected</strong>: MainWP has no write privileges to the uploads directory. Because of this some of the functionality might not work, please check <a href="http://docs.mainwp.com/install-or-update-of-a-plugin-fails-on-managed-site/" target="_blank">this FAQ for further information</a></span></div>';
+					echo '<div class="mainwp-notice mainwp-notice-yellow"><span class="mainwp_conflict" siteid="' . $website->id . '"><strong>Configuration issue detected</strong>: MainWP has no write privileges to the uploads directory. Because of this some of the functionality might not work, please check <a href="http://docs.mainwp.com/install-or-update-of-a-plugin-fails-on-managed-site/" target="_blank">this FAQ for further information</a></span></div>';
 				}
 				global $screen_layout_columns;
 				MainWP_Main::renderDashboardBody( array( $website ), $page, $screen_layout_columns );
@@ -1074,7 +1201,7 @@ class MainWP_Manage_Sites_View {
     <?php
 	}
         
-        public static function renderUpdates() { 
+         public static function renderUpdates() { 
             $website = MainWP_Utility::get_current_wpid();
             if (  $website ) {
                     $website = MainWP_DB::Instance()->getWebsiteById( $website );
@@ -1090,7 +1217,7 @@ class MainWP_Manage_Sites_View {
             </div>
             <?php
         }
-
+        
 	public static function renderBackupSite( &$website ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
 			mainwp_do_not_have_permissions( __( 'execute backups', 'mainwp' ) );
@@ -1101,41 +1228,49 @@ class MainWP_Manage_Sites_View {
 		if ( ! is_array( $primaryBackupMethods ) ) {
 			$primaryBackupMethods = array();
 		}
-
-		$remote_destinations = apply_filters( 'mainwp_backups_remote_get_destinations', null, array( 'website' => $website->id ) );
-		$hasRemoteDestinations = ($remote_destinations == null ? $remote_destinations : count( $remote_destinations ));
 		?>
-
         <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
         
         <?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
-            <tr>
-			<div class="mainwp_info-box"><?php echo sprintf( __('Did you know that MainWP has extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
-            </tr>
-        <?php } ?>
-
-            <div class="postbox" id="mainwp-backup-details">
-                <h3 class="mainwp_box_title"><span><i class="fa fa-hdd-o"></i> <?php _e( 'Backup details','mainwp' ); ?></span></h3>
-                <div class="inside">
+			<div class="mainwp-notice mainwp-notice-blue"><?php echo sprintf( __('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>           
+        <?php } 
+			MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_managesites_backup'); 		
+			?>
+			<div id="managesite-backup-status-box" title="Backup <?php echo stripslashes( $website->name ); ?>" style="display: none; text-align: center">
+				<div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesite-backup-status-text">
+				</div>
+				<input id="managesite-backup-status-close" type="button" name="Close" value="Cancel" class="button" />
+			</div>
                 <?php
-				if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-					die( 'This is not your website.' );
 				}
 
+	public static function renderBackupDetails($post, $metabox) {	
+		$websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );		
+		if ( empty( $website ) )
+			return;			
 				MainWP_Manage_Sites::showBackups( $website );
+	}
+			
+	public static function renderBackupOptions($post, $metabox) {	
+		$websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );		
+		if ( empty( $website ) )
+			return;	
+
+		$remote_destinations = apply_filters( 'mainwp_backups_remote_get_destinations', null, array( 'website' => $website->id ) );
+		$hasRemoteDestinations = ($remote_destinations == null ? $remote_destinations : count( $remote_destinations ));
 				?>
-                </div>
-            </div>
-            <div class="postbox" id="mainwp-backup-optins-site">
-            <h3 class="mainwp_box_title"><span><i class="fa fa-hdd-o"></i> <?php _e( 'Backup options','mainwp' ); ?></span></h3>
-            <div class="inside">
             <form method="POST" action="" id="mainwp_backup_sites_page">
+			<input type="hidden" name="site_id" id="backup_site_id" value="<?php echo $website->id; ?>"/>
+			<input type="hidden" name="backup_site_full_size" id="backup_site_full_size" value="<?php echo $website->totalsize; ?>"/>
+			<input type="hidden" name="backup_site_db_size" id="backup_site_db_size" value="<?php echo $website->dbsize; ?>"/>							
             <table class="form-table">
                 <tbody>
                 <tr>
-                    <th scope="row"><?php _e( 'Backup file name:','mainwp' ); ?></th>
-                    <td><input type="text" name="backup_filename" id="backup_filename" value="" class="" /><span class="mainwp-form_hint" style="display: inline; max-width: 500px;"><?php _e( 'Allowed structure tags:','mainwp' ); ?> <strong>%sitename%</strong>, <strong>%url%</strong>, <strong>%date%</strong>, <strong>%time%</strong>, <strong>%type%</strong></span>
+					 <th scope="row"><?php _e( 'Backup file name:','mainwp' ); ?></th>
+					 <td><input type="text" name="backup_filename" id="backup_filename" value="" class="" />
                     </td>
                 </tr>
                 <tr><td colspan="2"><hr /></td></tr>
@@ -1147,35 +1282,35 @@ class MainWP_Manage_Sites_View {
                 </tr>
                 <tr class="mainwp_backup_exclude_files_content"><td colspan="2"><hr /></td></tr>
                 <tr class="mainwp-exclude-suggested">
-                    <th scope="row" style="vertical-align: top"><?php _e( 'Suggested exclude', 'mainwp' ); ?>:</th>
+					 <th scope="row" style="vertical-align: top"><?php _e( 'Suggested exclude', 'mainwp' ); ?>:</th>
                     <td><p style="background: #7fb100; color: #ffffff; padding: .5em;"><?php _e( 'Every WordPress website is different but the sections below generally do not need to be backed up and since many of them are large in size they can even cause issues with your backup including server timeouts.', 'mainwp' ); ?></p></td>
                 </tr>
                 <tr class="mainwp-exclude-backup-locations">
-                    <td colspan="2"><h4><i class="fa fa-cloud-upload"></i> <?php _e( 'Known backup locations', 'mainwp' ); ?></h4></td>
+					 <td colspan="2"><h4><i class="fa fa-cloud-upload"></i> <?php _e( 'Known backup locations', 'mainwp' ); ?></h4></td>
                 </tr>
                 <tr class="mainwp-exclude-backup-locations">
                     <td><label for="mainwp-known-backup-locations"><?php _e( 'Exclude', 'mainwp' ); ?></label><input type="checkbox" id="mainwp-known-backup-locations" checked></td>
-                    <td class="mainwp-td-des"><a href="#" id="mainwp-show-kbl-folders"><?php _e( '+ Show Excluded Folders', 'mainwp' ); ?></a><a href="#" id="mainwp-hide-kbl-folders"><?php _e( '- Hide excluded folders', 'mainwp' ); ?></a><br/>
+					 <td class="mainwp-td-des"><a href="#" id="mainwp-show-kbl-folders"><?php _e( '+ Show excluded folders', 'mainwp' ); ?></a><a href="#" id="mainwp-hide-kbl-folders"><?php _e( '- Hide excluded folders', 'mainwp' ); ?></a><br/>
                         <textarea id="mainwp-kbl-content" disabled></textarea>
                         <br/><?php _e( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to timeout.', 'mainwp' ); ?></td>
                 </tr>
                 <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
                 <tr class="mainwp-exclude-cache-locations">
-                    <td colspan="2"><h4><i class="fa fa-cubes"></i> <?php _e( 'Known cache locations', 'mainwp' ); ?></h4></td>
+					 <td colspan="2"><h4><i class="fa fa-cubes"></i> <?php _e( 'Known cache locations', 'mainwp' ); ?></h4></td>
                 </tr>
                 <tr class="mainwp-exclude-cache-locations">
                     <td><label for="mainwp-known-cache-locations"><?php _e( 'Exclude', 'mainwp' ); ?></label><input type="checkbox" id="mainwp-known-cache-locations" checked></td>
-                    <td class="mainwp-td-des"><a href="#" id="mainwp-show-kcl-folders"><?php _e( '+ Show Excluded Folders', 'mainwp' ); ?></a><a href="#" id="mainwp-hide-kcl-folders"><?php _e( '- Hide excluded folders', 'mainwp' ); ?></a><br/>
+					 <td class="mainwp-td-des"><a href="#" id="mainwp-show-kcl-folders"><?php _e( '+ Show excluded folders', 'mainwp' ); ?></a><a href="#" id="mainwp-hide-kcl-folders"><?php _e( '- Hide excluded folders', 'mainwp' ); ?></a><br/>
                         <textarea id="mainwp-kcl-content" disabled></textarea>
                         <br/><?php _e( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to timeout.  Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?></td>
                 </tr>
                 <tr class="mainwp-exclude-separator"><td colspan="2" style="padding: 0 !important;"><hr /></td></tr>
                 <tr class="mainwp-exclude-nonwp-folders">
-                    <td colspan="2"><h4><i class="fa fa-folder"></i> <?php _e( 'Non-WordPress folders', 'mainwp' ); ?></h4></td>
+					 <td colspan="2"><h4><i class="fa fa-folder"></i> <?php _e( 'Non-WordPress folders', 'mainwp' ); ?></h4></td>
                 </tr>
                 <tr class="mainwp-exclude-nonwp-folders">
                     <td><label for="mainwp-non-wordpress-folders"><?php _e( 'Exclude', 'mainwp' ); ?></label><input type="checkbox" id="mainwp-non-wordpress-folders" checked></td>
-                    <td class="mainwp-td-des"><a href="#" id="mainwp-show-nwl-folders"><?php _e( '+ Show Excluded Folders', 'mainwp' ); ?></a><a href="#" id="mainwp-hide-nwl-folders"><?php _e( '- Hide excluded folders', 'mainwp' ); ?></a><br/>
+					 <td class="mainwp-td-des"><a href="#" id="mainwp-show-nwl-folders"><?php _e( '+ Show excluded folders', 'mainwp' ); ?></a><a href="#" id="mainwp-hide-nwl-folders"><?php _e( '- Hide excluded folders', 'mainwp' ); ?></a><br/>
                         <textarea id="mainwp-nwl-content" disabled></textarea>
                         <br/><?php _e( 'This adds folders that are not part of the WordPress core (wp-admin, wp-content and wp-include) to the exclude list. Non-WordPress folders can contain a large amount of data or may be a sub-domain or add-on domain that should be backed up individually and not with this backup.', 'mainwp' ); ?></td>
                 </tr>
@@ -1223,7 +1358,7 @@ class MainWP_Manage_Sites_View {
                 <tr class="mainwp_backup_destinations" <?php echo ( ! $hasRemoteDestinations ? 'style="display: none;"' : ''); ?>>
                     <th scope="row"><?php _e( 'Backup Subfolder:','mainwp' ); ?></th>
                     <td><input type="text" id="backup_subfolder" name="backup_subfolder"
-                                                           value="MainWP Backups/%url%/%type%/%date%"/><span class="mainwp-form_hint" style="display: inline; max-width: 500px;">Allowed Structure Tags: <strong>%sitename%</strong>, <strong>%url%</strong>, <strong>%date%</strong>, <strong>%task%</strong>, <strong>%type%</strong></span></td>
+															value="MainWP Backups/%url%/%type%/%date%"/></td>
                 </tr>
                 <?php
 				}
@@ -1249,12 +1384,12 @@ class MainWP_Manage_Sites_View {
 				?>
                 <tr><td colspan="2"><hr /></td></tr>
                 <tr>
-                    <th scope="row"><?php _e( 'Archive Format','mainwp' ); ?></th>
+                    <th scope="row"><?php _e( 'Archive format','mainwp' ); ?></th>
                     <td>
                         <table class="mainwp-nomarkup">
                             <tr>
                                 <td valign="top">
-                                    <span class="mainwp-select-bg"><select name="mainwp_archiveFormat" id="mainwp_archiveFormat">
+									 <span class="mainwp-select-bg"><select class="mainwp-select2" name="mainwp_archiveFormat" id="mainwp_archiveFormat">
                                         <option value="global" <?php if ( $useGlobal ) :  ?>selected<?php endif; ?>>Global setting (<?php echo $globalArchiveFormatText; ?>)</option>
                                         <option value="zip" <?php if ( $archiveFormat == 'zip' ) :  ?>selected<?php endif; ?>>Zip</option>
                                         <option value="tar" <?php if ( $archiveFormat == 'tar' ) :  ?>selected<?php endif; ?>>Tar</option>
@@ -1265,11 +1400,11 @@ class MainWP_Manage_Sites_View {
                                 <td>
                                     <i>
                                     <span id="info_global" class="archive_info" <?php if ( ! $useGlobal ) :  ?>style="display: none;"<?php endif; ?>><?php
-									if ( $globalArchiveFormat == 'zip' ) :  ?>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)<?php
-										elseif ( $globalArchiveFormat == 'tar' ) :  ?>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)<?php
+									if ( $globalArchiveFormat == 'zip' ) :  ?>Uses PHP native Zip-library, when missing, the PCLZip library included in WordPress will be used. (Good compression, fast with native zip-library)<?php
+										elseif ( $globalArchiveFormat == 'tar' ) :  ?>Uses PHP native Zip-library, when missing, the PCLZip library included in WordPress will be used. (Good compression, fast with native zip-library)<?php
 										elseif ( $globalArchiveFormat == 'tar.gz' ) :  ?>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)<?php
 										elseif ( $globalArchiveFormat == 'tar.bz2' ) :  ?>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)<?php endif; ?></span>
-                                    <span id="info_zip" class="archive_info" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)</span>
+                                    <span id="info_zip" class="archive_info" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>>Uses PHP native Zip-library, when missing, the PCLZip library included in WordPress will be used. (Good compression, fast with native zip-library)</span>
                                     <span id="info_tar" class="archive_info" <?php if ( $archiveFormat != 'tar' ) :  ?>style="display: none;"<?php endif; ?>>Creates an uncompressed tar-archive. (No compression, fast, low memory usage)</span>
                                     <span id="info_tar.gz" class="archive_info" <?php if ( $archiveFormat != 'tar.gz' ) :  ?>style="display: none;"<?php endif; ?>>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)</span>
                                     <span id="info_tar.bz2" class="archive_info" <?php if ( $archiveFormat != 'tar.bz2' ) :  ?>style="display: none;"<?php endif; ?>>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)</span>
@@ -1288,18 +1423,22 @@ class MainWP_Manage_Sites_View {
                 <tr class="archive_method archive_zip" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>>
                     <th scope="row"><?php _e( 'Maximum File Descriptors on Child','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/' ); ?></th>
                     <td>
-                        <div class="mainwp-radio" style="float: left;">
-                          <input type="radio" value="" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_global" <?php echo ( ! $maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?>"/>
-                          <label for="mainwp_options_maximumFileDescriptorsOverride_global"></label>
-                        </div>Global Setting (<a href="<?php echo admin_url( 'admin.php?page=Settings' ); ?>">Change Here</a>)<br/>
-                        <div class="mainwp-radio" style="float: left;">
-                          <input type="radio" value="override" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_override" <?php echo ($maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?>"/>
-                          <label for="mainwp_options_maximumFileDescriptorsOverride_override"></label>
-                        </div><?php _e( 'Override','mainwp' ); ?><br/><br />
-
-                        <div style="float: left"><?php _e( 'Auto detect:','mainwp' ); ?>&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e( 'Enter a fallback value because not all hosts support this function.','mainwp' ); ?>)</i></div><div style="clear:both"></div>
-                        <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors"
-                               value="<?php echo $maximumFileDescriptors; ?>"/><span class="mainwp-form_hint"><?php _e( 'The maximum number of open file descriptors on the child hosting.  0 sets unlimited.','mainwp' ); ?></span>
+						<input type="radio" value="" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_global" <?php echo ( ! $maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?>/>
+						<label for="mainwp_options_maximumFileDescriptorsOverride_global"><?php _e( 'Global Setting', 'mainwp' ); ?> (<a href="<?php echo admin_url( 'admin.php?page=Settings' ); ?>"><?php _e( 'Change Here', 'mainwp' ); ?></a>)</label>
+						<br/>
+						<input type="radio" value="override" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_override" <?php echo ($maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?> />
+						<label for="mainwp_options_maximumFileDescriptorsOverride_override"><?php _e( 'Override','mainwp' ); ?></label>
+						<table>
+							<tr>
+								<td><?php _e( 'Auto detect:','mainwp' ); ?></td>
+								<td><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div></td>
+							</tr>
+						</table>
+						 <input type="text" 
+						 		name="mainwp_options_maximumFileDescriptors" 
+						 		id="mainwp_options_maximumFileDescriptors"
+								value="<?php echo $maximumFileDescriptors; ?>"/><br/>
+						<em>(<?php _e( 'Enter a fallback value because not all hosts support this function.','mainwp' ); ?>)</em>
                     </td>
                 </tr>
                 <tr class="archive_method archive_zip" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>>
@@ -1311,61 +1450,66 @@ class MainWP_Manage_Sites_View {
                     </td>
                 </tr>
             </table>
-
-                <input type="hidden" name="site_id" id="backup_site_id" value="<?php echo $website->id; ?>"/>
-                <input type="hidden" name="backup_site_full_size" id="backup_site_full_size" value="<?php echo $website->totalsize; ?>"/>
-                <input type="hidden" name="backup_site_db_size" id="backup_site_db_size" value="<?php echo $website->dbsize; ?>"/>
-
-                <p class="submit"><input type="button" name="backup_btnSubmit" id="backup_btnSubmit"
+			<input type="button" 
+					name="backup_btnSubmit" 
+					id="backup_btnSubmit"
                                          class="button-primary button button-hero"
-                                         value="Backup Now"/></p>
-
+                    value="Backup Now"/>
             </form>
-            </div>
-        </div>
-
-    <div id="managesite-backup-status-box" title="Backup <?php echo stripslashes( $website->name ); ?>" style="display: none; text-align: center">
-        <div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesite-backup-status-text">
-        </div>
-        <input id="managesite-backup-status-close" type="button" name="Close" value="Cancel" class="button" />
-    </div>
     <?php
 	}
 
 	public static function renderScanSite( &$website ) {
-		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
-			do_action( 'mainwp-securityissues-sites', $website );}
+		if ( ! mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
+			mainwp_do_not_have_permissions( __( 'security scan', 'mainwp' ) );
+			return;
+		}		
+		wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
+		wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
+		?>
+		<div class="metabox-holder columns-1">
+		<?php	
+		$_postpage = 'mainwp_postboxes_managesites_scan';
+		do_meta_boxes($_postpage, 'normal', null );	
 
 		if ( mainwp_current_user_can( 'extension', 'mainwp-sucuri-extension' ) ) {
-			if ( apply_filters( 'mainwp-extension-available-check', 'mainwp-sucuri-extension' ) ) {
+			if ( MainWP_Extensions::isExtensionAvailable( 'mainwp-sucuri-extension' ) ) {			
 				do_action( 'mainwp-sucuriscan-sites', $website );
-			} else {
-				?>
-                <div class="postbox">
-                    <h3 class="mainwp_box_title"><span>Sucuri scan</span></h3>
-                    <div class="inside">
-                        <?php  echo sprintf( __('The Sucuri scan requires the free Sucuri sxtension, please download from %shere%s', 'mainwp' ), '<a href="https://mainwp.com/extension/sucuri/" title="Sucuri">', '</a>' ); ?>
-                    </div>
-                </div>
-                <?php
 			}
 		}
 
 		if ( mainwp_current_user_can( 'extension', 'mainwp-wordfence-extension' ) ) {
-			if ( apply_filters( 'mainwp-extension-available-check', 'mainwp-wordfence-extension' ) ) {
+			if ( MainWP_Extensions::isExtensionAvailable( 'mainwp-wordfence-extension' ) ) {			
 				do_action( 'mainwp-wordfence-sites', $website );
-			} else {  ?>
-                <div class="postbox">
-                    <h3 class="mainwp_box_title"><span>Wordfence security scan</span></h3>
-                    <div class="inside">
-                        <?php  echo sprintf( __('Wordfence status requires the Wordfence sxtension, please order from %shere%s.', 'mainwp' ), '<a href="https://mainwp.com/extension/wordfence/" title="Wordfence">', '</a>' ); ?>
+			} 
+		}
+		
+		?>
                     </div>
-                </div>
-        <?php }
+		<script type="text/javascript"> var mainwp_postbox_page = '<?php echo $_postpage; ?>';</script>			
+		<?php	
 		}
 
+	public static function renderScanIssues( $post, $metabox ) {
+		$websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );		
+		if ( empty( $website ) )
+			return;
+		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {			
+			do_action( 'mainwp-securityissues-sites', $website );			
+	}
 	}
 
+	public static function renderSucuriScan( $post, $metabox ) {	
+		//metabox show message only
+		echo sprintf( __('The Sucuri Scan requires the free Sucuri Extension, please download from %shere%s', 'mainwp' ), '<a href="https://mainwp.com/extension/sucuri/" title="Sucuri">', '</a>' ); 		
+	}
+	
+	public static function renderWordfenceScan( $post, $metabox ) {	
+		//metabox show message only
+		echo sprintf( __('Wordfence status requires the Wordfence Extension, please order from %shere%s.', 'mainwp' ), '<a href="https://mainwp.com/extension/wordfence/" title="Wordfence">', '</a>' );		
+	}
+	
 	public static function _renderInfo() {
 
 		//todo: RS: Remove method
@@ -1395,6 +1539,51 @@ class MainWP_Manage_Sites_View {
         <?php
 	}
 
+        public static function renderEditSite( $websiteid, $updated ) {
+		if ( ! mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
+			mainwp_do_not_have_permissions( __( 'edit sites', 'mainwp' ) );
+			return;
+		}
+
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
+		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+			$website = null;
+		}
+		
+		if (empty($website))
+			return;
+		
+		?>
+                <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
+                <div id="ajax-information-zone" class="updated" style="display: none;"></div>
+                <?php
+                        if ( $updated ) {
+                        ?>
+                    <div id="mainwp_managesites_edit_message" class="updated"><p><?php _e( 'Website updated.','mainwp' ); ?></p></div>
+                    <?php
+                        }
+                        ?>
+                <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data">
+                                <input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsite' . $website->id ); ?>" />			
+                    <?php 
+                                wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
+                                wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
+                                ?>
+                                <div class="metabox-holder columns-1">
+                                <?php	
+                                $_postpage = 'mainwp_postboxes_managesites_edit';
+                                do_meta_boxes($_postpage, 'normal', null );	
+                                do_action( 'mainwp-extension-sites-edit', $website );
+                                ?>
+                                </div>
+                                <script type="text/javascript"> var mainwp_postbox_page = '<?php echo $_postpage; ?>';</script>			
+                                <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero"
+                                                value="<?php _e( 'Update Site','mainwp' ); ?>"/></p>
+                </form>       
+                <?php
+	}
+
+        
 
 	public static function renderAllSites( &$website, $updated, $groups, $statusses, $pluginDir ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
@@ -1402,8 +1591,14 @@ class MainWP_Manage_Sites_View {
 			return;
 		}
 
-		$remote_destinations = apply_filters( 'mainwp_backups_remote_get_destinations', null, array( 'website' => $website->id ) );
-		$hasRemoteDestinations = ($remote_destinations == null ? $remote_destinations : count( $remote_destinations ));
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
+		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+			$website = null;
+		}
+		
+		if (empty($website))
+			return;
+		
 		?>
         <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
@@ -1416,21 +1611,40 @@ class MainWP_Manage_Sites_View {
 		?>
         <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data">
 			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsite' . $website->id ); ?>" />
-            <div class="postbox">
-            <h3 class="mainwp_box_title"><i class="fa fa-cog"></i> <?php _e( 'General options','mainwp' ); ?></h3>
-            <div class="inside">
+            <?php 
+			wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
+			wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
+			?>
+			<div class="metabox-holder columns-1">
+			<?php	
+			$_postpage = 'mainwp_postboxes_managesites_edit';
+			do_meta_boxes($_postpage, 'normal', null );	
+			do_action( 'mainwp-extension-sites-edit', $website );
+			?>
+			</div>
+			<script type="text/javascript"> var mainwp_postbox_page = '<?php echo $_postpage; ?>';</script>			
+			<p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero"
+					value="<?php _e( 'Update Site','mainwp' ); ?>"/></p>
+        </form>       
+        <?php
+	}
+
+	public static function renderSiteGeneralOptions( $post, $metabox ) {
+		$websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );		
+		if ( empty( $website ) )
+			return;
+		
+		$groups    = MainWP_DB::Instance()->getGroupsForCurrentUser();
+		$pluginDir = $website->pluginDir;
+		
+		?>
             <table class="form-table">
                 <tbody>
                 <tr>
-                    <th scope="row"><?php _e( 'Site name','mainwp' ); ?></th>
-                    <td><input type="text" name="mainwp_managesites_edit_sitename"
-                               value="<?php echo stripslashes( $website->name ); ?>" class="regular-text"/></td>
-                </tr>
-                <tr>
                     <th scope="row"><?php _e( 'Site URL','mainwp' ); ?></th>
-                    <td><select id="mainwp_managesites_edit_siteurl_protocol" name="mainwp_managesites_edit_siteurl_protocol"><option <?php echo (MainWP_Utility::startsWith($website->url, 'http:') ? 'selected' : ''); ?> value="http">http://</option><option <?php echo (MainWP_Utility::startsWith($website->url, 'https:') ? 'selected' : ''); ?> value="https">https://</option></select> <input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled"
-                               value="<?php echo MainWP_Utility::removeHttpPrefix($website->url, true); ?>" class="regular-text" /> <span
-                            class="mainwp-form_hint-display"><?php _e( 'Site URL cannot be changed.','mainwp' ); ?></span></td>
+                    <td><select class="mainwp-select2-wpurl-protocol" id="mainwp_managesites_edit_siteurl_protocol" name="mainwp_managesites_edit_siteurl_protocol"><option <?php echo (MainWP_Utility::startsWith($website->url, 'http:') ? 'selected' : ''); ?> value="http">http://</option><option <?php echo (MainWP_Utility::startsWith($website->url, 'https:') ? 'selected' : ''); ?> value="https">https://</option></select> <input type="text" id="mainwp_managesites_edit_siteurl" style="width: 262px !important" disabled="disabled"
+                               value="<?php echo MainWP_Utility::removeHttpPrefix($website->url, true); ?>" class="regular-text" /></td>
                 </tr>
                 <tr>
                     <th scope="row"><?php _e( 'Administrator username','mainwp' ); ?></th>
@@ -1440,48 +1654,52 @@ class MainWP_Manage_Sites_View {
                                class="regular-text"/></td>
                 </tr>
                 <tr>
+                    <th scope="row"><?php _e( 'Friendly site name','mainwp' ); ?></th>
+                    <td><input type="text" name="mainwp_managesites_edit_sitename"
+                               value="<?php echo stripslashes( $website->name ); ?>" class="regular-text"/></td>
+                </tr>
+                <tr>
                     <th scope="row"><?php _e( 'Groups','mainwp' ); ?></th>
                     <td>
-                        <input type="text" name="mainwp_managesites_edit_addgroups"
-                               id="mainwp_managesites_edit_addgroups" value=""
-                               class="regular-text"/> <span
-                            class="mainwp-form_hint"><?php _e( 'Separate groups by commas (e.g. Group 1, Group 2).','mainwp' ); ?></span>
-
-                        <div id="selected_groups" style="display: block; width: 25em">
-                            <?php
-							if ( count( $groups ) == 0 ) {
-								echo 'No groups added yet.';
-							}
+						<select 
+                               name="selected_groups[]"
+                               id="mainwp_managesites_edit_addgroups"                                                             
+							   multiple="multiple" /><?php 						
 							$groupsSite = MainWP_DB::Instance()->getGroupsByWebsiteId( $website->id );
-							foreach ( $groups as $group ) {
-								echo '<div class="mainwp_selected_groups_item"><input type="checkbox" name="selected_groups[]" value="' . $group->id . '" ' . (isset( $groupsSite[ $group->id ] ) && $groupsSite[ $group->id ] ? 'checked' : '') . ' />&nbsp' . stripslashes( $group->name ) . '</div>';
+							foreach ($groups as $group)
+							{
+								echo '<option value="' . $group->id . '" ' . (isset( $groupsSite[ $group->id ] ) && $groupsSite[ $group->id ] ? 'selected="selected"' : '') . ' >' . stripslashes($group->name)  . '</option>';
 							}
-							?>
-                        </div>
-                        <span class="description"><?php _e( 'Or assign existing groups','mainwp' ); ?></span>
+						?></select>						                                                
                     </td>
                 </tr>
+				<script type="text/javascript">
+					jQuery( document ).ready( function () {			
+						<?php if (count($groups) == 0) { ?>
+						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
+						jQuery('#mainwp_managesites_edit_addgroups').prop("disabled", true);
+						<?php } else { ?>
+						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true});							
+						<?php } ?>
+					});
+				</script>
                 <tr>
                     <th scope="row"><?php _e( 'Client plugin folder option','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'Default, files/folders on the child site are viewable.<br />Hidden, when attempting to view files a 404 file will be returned, however a footprint does still exist.<br /><strong>Hiding the child plugin does require the plugin to make changes to your .htaccess file that in rare instances or server configurations could cause problems.</strong>' ); ?></th>
                     <td>
-                        <div class="mainwp-radio" style="float: left;">
-                          <input type="radio" value="" name="mainwp_options_footprint_plugin_folder" id="mainwp_options_footprint_plugin_folder_global" <?php echo ($pluginDir == '' ? 'checked="true"' : ''); ?>"/>
-                          <label for="mainwp_options_footprint_plugin_folder_global"></label>
-                        </div>Global Setting (<a href="<?php echo admin_url( 'admin.php?page=Settings#network-footprint' ); ?>">Change here</a>)<br/>
-                        <div class="mainwp-radio" style="float: left;">
-                          <input type="radio" value="default" name="mainwp_options_footprint_plugin_folder" id="mainwp_options_footprint_plugin_folder_default" <?php echo ($pluginDir == 'default' ? 'checked="true"' : ''); ?>"/>
-                          <label for="mainwp_options_footprint_plugin_folder_default"></label>
-                        </div>Default<br/>
-                        <div class="mainwp-radio" style="float: left;">
+						<input type="radio" value="" name="mainwp_options_footprint_plugin_folder" id="mainwp_options_footprint_plugin_folder_global" <?php echo ($pluginDir == '' ? 'checked="true"' : ''); ?> />
+                        <label for="mainwp_options_footprint_plugin_folder_global"><?php _e( 'Global Setting', 'mainwp' ); ?> (<a href="<?php echo admin_url( 'admin.php?page=Settings#network-footprint' ); ?>" ><?php _e( 'Change Here', 'mainwp' ); ?></a>)</label>
+                        <br/>
+                        <input type="radio" value="default" name="mainwp_options_footprint_plugin_folder" id="mainwp_options_footprint_plugin_folder_default" <?php echo ($pluginDir == 'default' ? 'checked="true"' : ''); ?> />
+                        <label for="mainwp_options_footprint_plugin_folder_default"><?php _e( 'Default', 'mainwp' ); ?></label>
+                        <br/>
                           <input type="radio" value="hidden" name="mainwp_options_footprint_plugin_folder" id="mainwp_options_footprint_plugin_folder_hidden" <?php echo ($pluginDir == 'hidden' ? 'checked="true"' : ''); ?>/>
-                          <label for="mainwp_options_footprint_plugin_folder_hidden"></label>
-                        </div>Hidden (<strong>Note: </strong><i>If the heatmap is turned on, the heatmap javascript will still be visible.</i>) <br/>
+                        <label for="mainwp_options_footprint_plugin_folder_hidden"><?php _e( 'Hidden (<strong>Note: </strong><em>If the heatmap is turned on, the heatmap javascript will still be visible.</em>)', 'mainwp' ); ?></label>
                     </td>
                 </tr>               
                 <tr>
                     <th scope="row"><?php _e( 'Require backup before update','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Backup only works when enabled in the global settings as well.','mainwp' ), admin_url( 'admin.php?page=Settings' ) ); ?></th>
                     <td>
-                         <select id="mainwp_backup_before_upgrade" name="mainwp_backup_before_upgrade">
+                         <select class="mainwp-select2" id="mainwp_backup_before_upgrade" name="mainwp_backup_before_upgrade">
                              <option <?php echo ($website->backup_before_upgrade == 1) ? 'selected' : ''; ?> value="1"><?php _e( 'Yes','mainwp' ); ?></option>
                              <option <?php echo ($website->backup_before_upgrade == 0) ? 'selected' : ''; ?> value="0"><?php _e( 'No','mainwp' ); ?></option>
                              <option <?php echo ($website->backup_before_upgrade == 2) ? 'selected' : ''; ?> value="2"><?php _e( 'Use global setting','mainwp' ); ?></option>
@@ -1534,23 +1752,27 @@ class MainWP_Manage_Sites_View {
                 <?php do_action( 'mainwp_extension_sites_edit_tablerow', $website ); ?>
                 </tbody>
             </table>
-            </div>
-            </div>
-            <div class="clear"></div>
-            <div class="postbox">
-            <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e( 'Advanced options','mainwp' ); ?></span></h3>
-            <div class="inside">
+		<?php
+	}
+	
+	public static function renderSiteAdvancedOptions( $post, $metabox ) {
+		$websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );		
+		if ( empty( $website ) )
+			return;	
+			
+		?>
             <table class="form-table" style="width: 100%">
                 <?php $disabled_unique = empty( $website->uniqueId ) ? true : false; ?>
                 <tr class="form-field form-required">
                     <th scope="row"><?php _e('Child unique security ID ','mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The unique security ID adds additional protection between the child plugin and your MainWP Dashboard. The unique security ID will need to match when being added to the MainWP Dashboard. This is additional security and should not be needed in most situations.' ); ?></th>
-                    <td><input type="text" id="mainwp_managesites_edit_uniqueId" style="width: 350px;" <?php echo $disabled_unique ? 'disabled="disabled"' : ''; ?>
-                             name="mainwp_managesites_edit_uniqueId" value="<?php echo $website->uniqueId; ?>" class=""/><span class="mainwp-form_hint">The Unique Security ID adds additional protection between the Child plugin and your Main Dashboard. The Unique Security ID will need to match when being added to the Main Dashboard. This is additional security and should not be needed in most situations.</span></td>
+                    <td><input type="text" id="mainwp_managesites_edit_uniqueId" <?php echo $disabled_unique ? 'disabled="disabled"' : ''; ?>
+						 name="mainwp_managesites_edit_uniqueId" value="<?php echo $website->uniqueId; ?>" class=""/></td>
                 </tr>                
                  <tr class="form-field form-required">
                     <th scope="row"><?php _e( 'Verify certificate','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp' ) ); ?></th>
                     <td>
-                        <select id="mainwp_managesites_edit_verifycertificate" name="mainwp_managesites_edit_verifycertificate">
+					<select class="mainwp-select2" id="mainwp_managesites_edit_verifycertificate" name="mainwp_managesites_edit_verifycertificate">
                              <option <?php echo ($website->verify_certificate == 1) ? 'selected' : ''; ?> value="1"><?php _e( 'Yes','mainwp' ); ?></option>
                              <option <?php echo ($website->verify_certificate == 0) ? 'selected' : ''; ?> value="0"><?php _e( 'No','mainwp' ); ?></option>
                              <option <?php echo ($website->verify_certificate == 2) ? 'selected' : ''; ?> value="2"><?php _e( 'Use global setting','mainwp' ); ?></option>
@@ -1560,14 +1782,14 @@ class MainWP_Manage_Sites_View {
                 <tr class="form-field form-required">
                    <th scope="row"><?php _e( 'SSL version','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Prefered SSL version to connect to your site.','mainwp' ) ); ?></th>
                     <td>
-                        <select id="mainwp_managesites_edit_ssl_version" name="mainwp_managesites_edit_ssl_version">
+					<select class="mainwp-select2" id="mainwp_managesites_edit_ssl_version" name="mainwp_managesites_edit_ssl_version">
                              <option <?php echo ($website->ssl_version == 'auto') ? 'selected' : ''; ?> value="auto"><?php _e( 'Auto detect','mainwp' ); ?></option>
+                             <option <?php echo ($website->ssl_version == '1.2') ? 'selected' : ''; ?> value="1.2"><?php _e( "Let's encrypt (TLS v1.2)",'mainwp' ); ?></option>
                              <option <?php echo ($website->ssl_version == '1.x') ? 'selected' : ''; ?> value="1.x"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
                              <option <?php echo ($website->ssl_version == '2') ? 'selected' : ''; ?> value="2"><?php _e( 'SSL v2','mainwp' ); ?></option>
                              <option <?php echo ($website->ssl_version == '3') ? 'selected' : ''; ?> value="3"><?php _e( 'SSL v3','mainwp' ); ?></option>
                              <option <?php echo ($website->ssl_version == '1.0') ? 'selected' : ''; ?> value="1.0"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
-                             <option <?php echo ($website->ssl_version == '1.1') ? 'selected' : ''; ?> value="1.1"><?php _e( 'TLS v1.1','mainwp' ); ?></option>
-                             <option <?php echo ($website->ssl_version == '1.2') ? 'selected' : ''; ?> value="1.2"><?php _e( 'TLS v1.2','mainwp' ); ?></option>
+                             <option <?php echo ($website->ssl_version == '1.1') ? 'selected' : ''; ?> value="1.1"><?php _e( 'TLS v1.1','mainwp' ); ?></option>                             
                          </select> <em>(<?php _e( 'Default: Auto detect','mainwp' ); ?>)</em>
                     </td>
                 </tr>
@@ -1576,26 +1798,28 @@ class MainWP_Manage_Sites_View {
                 <input style="display:none" type="text" name="fakeusernameremembered"/>
                 <input style="display:none" type="password" name="fakepasswordremembered"/>
 
-                <tr>
-                    <td colspan="2"><div class="mainwp_info-box"><?php _e( 'If your child site is protected with HTTP basic authentication, please set the username and password for authentication here.','mainwp' ); ?></div></td>
-                </tr>
-
                 <tr class="form-field form-required">
                      <th scope="row"><?php _e( 'HTTP username ','mainwp' ); ?></th>
-                     <td><input type="text" id="mainwp_managesites_edit_http_user" style="width: 350px;" name="mainwp_managesites_edit_http_user" value="<?php echo (empty( $website->http_user ) ? '' : $website->http_user); ?>" autocomplete="off" class=""/></td>
+				 <td><input type="text" id="mainwp_managesites_edit_http_user" name="mainwp_managesites_edit_http_user" value="<?php echo (empty( $website->http_user ) ? '' : $website->http_user); ?>" autocomplete="off" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the username for authentication here.','mainwp' ); ?></em></td>
                 </tr>
                 <tr class="form-field form-required">
                      <th scope="row"><?php _e( 'HTTP password ','mainwp' ); ?></th>
-                     <td><input type="password" id="mainwp_managesites_edit_http_pass" style="width: 350px;" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty( $website->http_pass ) ? '' : $website->http_pass); ?>" autocomplete="off" class=""/></td>
+				 <td><input type="password" id="mainwp_managesites_edit_http_pass" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty( $website->http_pass ) ? '' : $website->http_pass); ?>" autocomplete="off" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the password for authentication here.','mainwp' ); ?></em></td>
                 </tr>
             </table>
-            </div>
-            </div>
+	<?php
+	}	
             
-            <div class="clear"></div>
-            <div class="postbox">
-            <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e( 'Backup settings','mainwp' ); ?></span></h3>
-            <div class="inside">
+	public static function renderSiteBackupSettings( $post, $metabox ) {
+		$websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );		
+		if ( empty( $website ) )
+			return;
+		
+		$remote_destinations = apply_filters( 'mainwp_backups_remote_get_destinations', null, array( 'website' => $website->id ) );
+		$hasRemoteDestinations = ($remote_destinations == null ? $remote_destinations : count( $remote_destinations ));
+		
+	?>
             <table class="form-table" style="width: 100%">
                 <?php
 				$globalArchiveFormat = get_option( 'mainwp_archiveFormat' );
@@ -1620,7 +1844,7 @@ class MainWP_Manage_Sites_View {
                         <table class="mainwp-nomarkup">
                             <tr>
                                 <td valign="top">
-                                    <span class="mainwp-select-bg"><select name="mainwp_archiveFormat" id="mainwp_archiveFormat">
+								<span class="mainwp-select-bg"><select class="mainwp-select2" name="mainwp_archiveFormat" id="mainwp_archiveFormat">
                                         <option value="global" <?php if ( $useGlobal ) :  ?>selected<?php endif; ?>>Global setting (<?php echo $globalArchiveFormatText; ?>)</option>
                                         <option value="zip" <?php if ( $archiveFormat == 'zip' ) :  ?>selected<?php endif; ?>>Zip</option>
                                         <option value="tar" <?php if ( $archiveFormat == 'tar' ) :  ?>selected<?php endif; ?>>Tar</option>
@@ -1631,11 +1855,11 @@ class MainWP_Manage_Sites_View {
                                 <td>
                                     <i>
                                     <span id="info_global" class="archive_info" <?php if ( ! $useGlobal ) :  ?>style="display: none;"<?php endif; ?>><?php
-									if ( $globalArchiveFormat == 'zip' ) :  ?>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)<?php
-										elseif ( $globalArchiveFormat == 'tar' ) :  ?>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)<?php
+									if ( $globalArchiveFormat == 'zip' ) :  ?>Uses PHP native Zip-library, when missing, the PCLZip library included in WordPress will be used. (Good compression, fast with native zip-library)<?php
+										elseif ( $globalArchiveFormat == 'tar' ) :  ?>Uses PHP native Zip-library, when missing, the PCLZip library included in WordPress will be used. (Good compression, fast with native zip-library)<?php
 										elseif ( $globalArchiveFormat == 'tar.gz' ) :  ?>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)<?php
 										elseif ( $globalArchiveFormat == 'tar.bz2' ) :  ?>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)<?php endif; ?></span>
-                                    <span id="info_zip" class="archive_info" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)</span>
+                                    <span id="info_zip" class="archive_info" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>>Uses PHP native Zip-library, when missing, the PCLZip library included in WordPress will be used. (Good compression, fast with native zip-library)</span>
                                     <span id="info_tar" class="archive_info" <?php if ( $archiveFormat != 'tar' ) :  ?>style="display: none;"<?php endif; ?>>Creates an uncompressed tar-archive. (No compression, fast, low memory usage)</span>
                                     <span id="info_tar.gz" class="archive_info" <?php if ( $archiveFormat != 'tar.gz' ) :  ?>style="display: none;"<?php endif; ?>>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)</span>
                                     <span id="info_tar.bz2" class="archive_info" <?php if ( $archiveFormat != 'tar.bz2' ) :  ?>style="display: none;"<?php endif; ?>>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)</span>
@@ -1654,18 +1878,20 @@ class MainWP_Manage_Sites_View {
                 <tr class="archive_method archive_zip" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>>
                     <th scope="row"><?php _e( 'Maximum file descriptors on child','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/' ); ?></th>
                     <td>
-                        <div class="mainwp-radio" style="float: left;">
-                          <input type="radio" value="" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_global" <?php echo ( ! $maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?>"/>
-                          <label for="mainwp_options_maximumFileDescriptorsOverride_global"></label>
-                        </div>Global Setting (<a href="<?php echo admin_url( 'admin.php?page=Settings' ); ?>">Change Here</a>)<br/>
-                        <div class="mainwp-radio" style="float: left;">
-                          <input type="radio" value="override" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_override" <?php echo ($maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?>"/>
-                          <label for="mainwp_options_maximumFileDescriptorsOverride_override"></label>
-                        </div>Override<br/><br />
-
-                        <div style="float: left">Auto detect:&nbsp;</div><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div><div style="float: left"><i>(<?php _e( 'Enter a fallback value because not all hosts support this function.','mainwp' ); ?>)</i></div><div style="clear:both"></div>
-                        <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors"
-                               value="<?php echo $maximumFileDescriptors; ?>"/><span class="mainwp-form_hint"><?php _e( 'The maximum number of open file descriptors on the child hosting. 0 sets unlimited.','mainwp' ); ?></span>
+					<input type="radio" value="" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_global" <?php echo ( ! $maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?> />
+					<label for="mainwp_options_maximumFileDescriptorsOverride_global">Global Setting (<a href="<?php echo admin_url( 'admin.php?page=Settings' ); ?>">Change Here</a>)</label>
+					<br/>
+					<input type="radio" value="override" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_override" <?php echo ($maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?> />
+					<label for="mainwp_options_maximumFileDescriptorsOverride_override">Override</label>
+					<table>
+						<tr>
+							<td>Auto Detect:</td>
+							<td><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div></td>
+						</tr>
+					</table>
+					<input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors" value="<?php echo $maximumFileDescriptors; ?>"/>
+					<br/>
+					<em>(<?php _e( 'Enter a fallback value because not all hosts support this function.','mainwp' ); ?>)</em>
                     </td>
                 </tr>
                 <tr class="archive_method archive_zip" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>>
@@ -1678,21 +1904,7 @@ class MainWP_Manage_Sites_View {
                 </tr>
                 <?php if ( $hasRemoteDestinations !== null ) { do_action( 'mainwp_backups_remote_settings', array( 'website' => $website->id, 'hide' => 'no' ) ); } ?>
             </table>
-            </div>
-            </div>
-            
             <?php
-
-				$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
-			if ( ! is_array( $plugin_upgrades ) ) {$plugin_upgrades = array();}
-			$userExtension = MainWP_DB::Instance()->getUserExtension();
-			?>
-            <?php
-			do_action( 'mainwp-extension-sites-edit', $website );
-			?><p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero"
-                                     value="<?php _e( 'Update Site','mainwp' ); ?>"/></p>
-        </form>       
-        <?php
 	}
 
 	public static function _reconnectSite( $website ) {
@@ -1745,7 +1957,7 @@ class MainWP_Manage_Sites_View {
 				}
 			}
 		} else {
-			throw new Exception( __( 'Not allowed this operation.','mainwp' ) );
+			throw new Exception( __( 'This operation is not allowed!','mainwp' ) );
 		}
 
 		return false;
@@ -1804,11 +2016,8 @@ class MainWP_Manage_Sites_View {
 								$groupids[] = $group;
 							}
 						}
-						if ( (isset( $_POST['groupnames'] ) && $_POST['groupnames'] != '') || (isset( $_POST['groupnames_import'] ) && $_POST['groupnames_import'] != '') ) {
-							if ( $_POST['groupnames'] ) {
-								$tmpArr = explode( ',', $_POST['groupnames'] );} else if ( $_POST['groupnames_import'] ) {
-								$tmpArr = explode( ';', $_POST['groupnames_import'] );}
-
+						if ( (isset( $_POST['groupnames_import'] ) && $_POST['groupnames_import'] != '') ) {								
+								$tmpArr = explode( ';', $_POST['groupnames_import'] );						
 								foreach ( $tmpArr as $tmp ) {
 									$group = MainWP_DB::Instance()->getGroupByNameForUser( trim( $tmp ) );
 									if ( $group ) {

@@ -28,16 +28,66 @@
 
 	/*--- General ---*/
 
-	a#mainwplogo {
-		display: none;
+	.mainwp-cols-1,
+	.mainwp-cols-2, 
+	.mainwp-cols-2.mainwp-left,
+	.mainwp-cols-2.mainwp-right,
+	.mainwp-cols-3, 
+	.mainwp-cols-3.mainwp-left, 
+	.mainwp-cols-3.mainwp-right, 
+	.mainwp-cols-4, 
+	.mainwp-cols-5  {
+	    width: 100%;
 	}
 
 	#mainwp-tabs {
 
 	}
 
+	.mainwp-ui ul li {
+		display: block;
+	}
+
+	.mainwp-ui .ui-dialog {
+		width: 98% !important;
+		max-width: 98% !important;
+	}
+
+	.mainwp_checkboxes {
+		-webkit-column-count: 1;
+	    -moz-column-count: 1;
+	    column-count: 1;
+	}
+
+	.mainwp_boxout {
+		display: none;
+	}
+
+	#mainwplogo {
+		display: none;
+	}
+
+	.mainwp-ui .button,
+	.mainwp-ui .button-primary {
+		width: 100%;
+		font-size: 14px;
+    	height: 46px;
+    	line-height: 44px;
+    	padding: 0 36px;
+    	display: block;
+	}
+
+	.mainwp-postbox {
+		width: 100% !important;
+		display: block;
+		clear: both;
+		margin-bottom: 1em;
+		height: auto !important;
+	}
+
 	.mainwp-ui input[type="text"] {
 		width: 100% !important;
+		display: block;
 	}
 
 	#mainwp-tabs .nav-tab {
@@ -51,22 +101,33 @@
 		display: none;
 	}
 
-	select {
-		width: 100% !important;
+	.mainwp-ui select,
+	.mainwp-ui .select2-container {
+		width: 100%;
 		max-width: 100% !important;
+		margin-bottom: 10px;
 	}
 
-	.alignleft {
+	.alignleft, .mainwp-t-align-left {
 		float: none;
 		width: 100%;
 	}
 
-	/*--- Dasbhaord ---*/
+	/*--- Overview ---*/
+	#wpbody-content #mainwp_tab-general #dashboard-widgets.columns-2 #postbox-container-1, 
+	#wpbody-content #mainwp_wrap-inside #dashboard-widgets.columns-2 #postbox-container-1,
+	#wpbody-content #mainwp_tab-general #dashboard-widgets.columns-2 #postbox-container-2, 
+	#wpbody-content #mainwp_wrap-inside #dashboard-widgets.columns-2 #postbox-container-2,
+	#wpbody-content #mainwp_tab-general #dashboard-widgets.columns-3 #postbox-container-1, 
+	#wpbody-content #mainwp_wrap-inside #dashboard-widgets.columns-3 #postbox-container-1,
+	#wpbody-content #mainwp_tab-general #dashboard-widgets.columns-3 #postbox-container-2, 
+	#wpbody-content #mainwp_wrap-inside #dashboard-widgets.columns-3 #postbox-container-2 {
+		width: 100% !important;
+	}
 
 	#mainwp-welocme-bar-top,
 	#mainwp-welocme-bar-top span {
 		display: block;
-		width: 100%;
 		float: none;
 	}
 
@@ -103,9 +164,19 @@
 		display: block !important;
 	}
 
-	.mainwp-ui input[type="text"] {
-		width: 100% !important;
+	.mainwp-ui .form-table textarea, 
+	.mainwp-ui .form-table span.description, 
+	.mainwp-ui .form-table td input[type=text], 
+	.mainwp-ui .form-table td input[type=password], 
+	.mainwp-ui .form-table td input[type=email], 
+	.mainwp-ui .form-table td select, 
+	.mainwp-ui .form-table td textarea {
+		width: 88% !important;
+		max-width: 88% !important;
+		min-width: 88% !important;
 		margin: .5em 0!important;
+		clear: both;
+		display: block !important;
 	}
 
 
@@ -118,6 +189,18 @@
 		margin: .5em 0!important;
 		display: block !important;
 	}
+
+	body.show-upload-theme .show-if-upload, 
+	body.show-upload-plugin .show-if-upload {
+		display: block !important;
+	}
+
+	body.show-upload-theme .hide-if-upload, 
+	body.show-upload-plugin .hide-if-upload {
+		display: none !important;
+	}
+
+	#mainwp-extensions-list-widget img {display: none;}
 
 	/*--- Sites ---*/
 
@@ -230,6 +313,17 @@
 		margin-bottom: 2em;
 	}
 
+	#mainwp-table-overflow {
+		height: auto;
+		max-width: 100%;
+		overflow: visible !important;
+		overflow-x: scroll !important 
+	}
+
+	#mainwp-table-overflow .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column) {
+		display: table-cell !important;
+	}
+
 	/* --- Users --- */
 
 	.mainwp-ui table#mainwp_users_table .column-author,
@@ -242,10 +336,7 @@
 
 	/* --- Backups --- */
 
-	.mainwp-form_hint {
-		display: none !important;
-	}
-
+	
 	/*  -  Manage  -  */
 
 	.mainwp-ui .postbox {
@@ -269,47 +360,35 @@
 
 	/* --- Extensions --- */
 
-	#mainwp-extensions-categories-menu {
-		display: none;
+	.mainwp-ui #mwp-extension-contentbox-2 .column-description,
+	.mainwp-ui #mwp-extension-contentbox-2 .column-name,
+	.mainwp-ui #mwp-extension-contentbox-2 .action-links,
+	.mainwp-ui #mwp-extension-contentbox-2 .plugin-action-buttons {
+		width: 100% !important;
+		margin: 0 !important;
+		padding: 10px !important;
 	}
 
-	.mainwp_api_postbox input, .mainwp_api_postbox select {
-		width: 100%;
+	.mainwp-ui #mwp-extension-contentbox-3 .column-description,
+	.mainwp-ui #mwp-extension-contentbox-3 .column-name,
+	.mainwp-ui #mwp-extension-contentbox-3 .action-links,
+	.mainwp-ui #mwp-extension-contentbox-3 .plugin-action-buttons {
+		width: 100% !important;
+		margin: 0 !important;
+		padding: 10px !important;
 	}
 
-	#mainwp-extensions-wrap .mainwp-extensions-disable-all,
-	#mainwp-extensions-wrap .mainwp-extensions-enable-all,
-	#mainwp-extensions-wrap #mainwp-extensions-expand,
-	#mainwp-extensions-wrap #mainwp-extensions-collapse {
+	.mainwp-ui .plugin-icon.mainwp-extension-icon,
+	.mainwp-ui #mwp-extension-contentbox-3 .plugin-icon {
 		display: none !important;
 	}
 
+	/* --- Server Information --- */
 
-	#mainwp-extensions-list td.mainwp-extensions-childName,
-	#mainwp-extensions-list td.mainwp-extensions-childActions {
-		display: block;
-		width: 100%;
-		margin-bottom: 2em;
-	}
-
-	#mainwp-extensions-list td.mainwp-extensions-childActions .api-status,
-	#mainwp-extensions-list td.mainwp-extensions-childActions .button {
-		display: block;
-		width: 100%;
-		padding: 1em 0;
-		margin-bottom: 1em;
-		text-align: center;
-	}
-
-	#mainwp-extensions-list td.mainwp-extensions-childIcon,
-	#mainwp-extensions-list td.mainwp-extensions-childVersion,
-	#mainwp-extensions-list td.mainwp-extensions-extra {
-		display: none;
-	}
-
-	#mainwp-available-extensions {
-		display: none;
-	}
-
-
+	.mwp_server_info_box { overflow-x: scroll; }
+	.mwp_server_info_box table td { display: table-cell !important; }
+	.mwp_server_info_box table th:nth-child(5) { width: 100px !important; }
+	.mainwp_page_ErrorLog  table td { display: table-cell !important; }
+	.mainwp_page_ServerInformationCron table td { display: table-cell !important; }
+	.mainwp_page_ServerInformationCron table:nth-of-type(2) { display: none !important; }
 }

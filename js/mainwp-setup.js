@@ -158,7 +158,10 @@ mainwp_setup_extension_install = function(pRegisterLater) {
                     statusEl.css('color', '#21759B')
                     statusEl.html(response.output).show();
                     jQuery('.mwp_setup_extension_installing').append('<span class="extension_installed_success" slug="' + response.slug + '"></span>');
-                    mainwp_setup_extension_activate_plugin(pRegisterLater);
+                    if (!pRegisterLater) {
+                        jQuery('#mwp_setup_active_extension').fadeIn(500);
+                        mainwp_setup_extension_activate(false);
+                    }
                 } else if (response.error) {
                     statusEl.css('color', 'red');
                     statusEl.html('<strong><i class="fa fa-exclamation-circle"></i> ERROR:</strong> ' + response.error).show();
@@ -177,6 +180,7 @@ mainwp_setup_extension_install = function(pRegisterLater) {
     });
     return false;
 }
+
 
 mainwp_setup_extension_activate_plugin = function(pRegisterLater) {
     var plugins = [];
@@ -249,3 +253,14 @@ mainwp_setup_extension_activate = function(retring)
     }, 'json');
 };
 
+jQuery(document).ready(function () {                                
+        jQuery('.mwp_remove_email').live('click', function () {                                        
+            jQuery(this).closest('.mwp_email_box').remove();                                        
+            return false;
+        });
+        jQuery('#mwp_add_other_email').live('click', function () {                                        
+            jQuery('#mwp_add_other_email').before('<div class="mwp_email_box"><input type="text" name="mainwp_options_email[]" size="35" value=""/>&nbsp;&nbsp;<a href="#" class="mwp_remove_email"><i class="fa fa-minus-circle fa-lg mainwp-red" aria-hidden="true"></i></a></div>');
+            return false;
+        });
+});
+                

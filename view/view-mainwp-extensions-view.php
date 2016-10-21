@@ -18,7 +18,7 @@ class MainWP_Extensions_View {
 		<div style="clear: both;"></div><br/><br/>
 		
 		<div class="mainwp-tabs" id="mainwp-tabs">
-			<a class="nav-tab pos-nav-tab" href="admin.php?page=Extensions"><?php _e( 'Manage extensions', 'mainwp' ); ?></a>
+			<a class="nav-tab pos-nav-tab" href="admin.php?page=Extensions"><?php _e( 'Manage Extensions', 'mainwp' ); ?></a>
 			<?php
 			if ( isset( $extensions ) && is_array( $extensions ) ) {
 				foreach ( $extensions as $extension ) {
@@ -45,6 +45,7 @@ class MainWP_Extensions_View {
 	}
 	
 	public static function render() {
+		MainWP_Tours::renderExtensionsTour();
 		MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_manage_extensions');
 	}
 	
@@ -69,8 +70,8 @@ class MainWP_Extensions_View {
 		<div class="inside">
 			<h4><?php _e( 'MainWP extensions Login:', 'mainwp' ); ?></h4>
 			<div class="api-grabbing-fields">
-				<input type="text" class="input username" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" value="<?php echo $username; ?>"/>&nbsp;
-				<input type="password" class="input passwd" placeholder="<?php esc_attr_e( 'Password', 'mainwp' ); ?>" value="<?php echo $password; ?>"/>&nbsp;
+				<input type="text" id="mainwp_com_username" class="input username" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" value="<?php echo $username; ?>"/>&nbsp;
+				<input type="password" id="mainwp_com_password" class="input passwd" placeholder="<?php esc_attr_e( 'Password', 'mainwp' ); ?>" value="<?php echo $password; ?>"/>&nbsp;
 				<label><input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e( 'Check to save API login', 'mainwp' ); ?>
 				</label>
 			</div>
@@ -296,42 +297,41 @@ class MainWP_Extensions_View {
 			</div>
 			<div class="inside">
 			<div id="mainwp-available-extensions-list" class="wp-list-table widefat plugin-install">
-				<div id="the-list">
-				<?php
-                    $i = 0;
-                    foreach ($all_extensions as $ext) {
-                        if (in_array($ext['slug'], $installed_slugs))
-                            continue;
-                        $is_free = (isset($ext['free']) && $ext['free']) ? true : false;
-                        $group_class = implode(" group-", $ext['group']);
-                        $group_class = " group-" . $group_class;
-                        ?>
-                        <div class="mainwp-availbale-extension-holder plugin-card <?php echo $group_class; ?> <?php echo ($is_free) ? 'mainwp-free group-free' : 'mainwp-paid'; ?>">
-							<div class="plugin-card-top">
-								<div class="name column-name">
-									<h3>
-										<a href="<?php echo $extension_page_url; ?>">
-											<?php echo $ext['title'] ?>
-											<img src="<?php echo $ext['img'] ?>" title="<?php echo $extension['name']; ?>" alt="<?php echo $extension['name']; ?>" class="plugin-icon"/>
-										</a>
-									</h3>
-								</div>
-								<div class="action-links">
-									<ul class="plugin-action-buttons">
-										<li><a target="_blank" href="<?php echo str_replace(array("http:", "https:"), "", $ext['link']); ?>" class="button"><?php _e( 'Find Out More', 'mainwp' ); ?></a></li>
-										<li class="mainwp-padding-top-10"><?php echo $is_free ? '<span class="mainwp-price"></span>' : ''; ?></li>
-									</ul>
-								</div>
-								<div class="desc column-description">
-									<p><?php echo $ext['desc'] ?></p>
-								</div>
-							</div>
-						</div>
-                        <?php
-                        $i++;
-                    }
-                ?>
-				</div>
+                        <div id="the-list">
+                        <?php       
+                        $extension_page_url = admin_url( 'admin.php?page=Extensions' );
+                        foreach ($all_extensions as $ext) {
+                            if (in_array($ext['slug'], $installed_slugs))
+                                continue;
+                            $is_free = (isset($ext['free']) && $ext['free']) ? true : false;
+                            $group_class = implode(" group-", $ext['group']);
+                            $group_class = " group-" . $group_class;
+                            ?>
+                            <div class="mainwp-availbale-extension-holder plugin-card <?php echo $group_class; ?> <?php echo ($is_free) ? 'mainwp-free group-free' : 'mainwp-paid'; ?>">
+                                                            <div class="plugin-card-top">
+                                                                    <div class="name column-name">
+                                                                            <h3>
+                                                                                    <a href="<?php echo $extension_page_url; ?>">
+                                                                                            <?php echo $ext['title'] ?>
+                                                                                            <img src="<?php echo $ext['img'] ?>" title="<?php echo $ext['title']; ?>" alt="<?php echo $ext['title']; ?>" class="plugin-icon"/>
+                                                                                    </a>
+                                                                            </h3>
+                                                                    </div>
+                                                                    <div class="action-links">
+                                                                            <ul class="plugin-action-buttons">
+                                                                                    <li><a target="_blank" href="<?php echo str_replace(array("http:", "https:"), "", $ext['link']); ?>" class="button"><?php _e( 'Find Out More', 'mainwp' ); ?></a></li>
+                                                                                    <li class="mainwp-padding-top-10"><?php echo $is_free ? '<span class="mainwp-price"></span>' : ''; ?></li>
+                                                                            </ul>
+                                                                    </div>
+                                                                    <div class="desc column-description">
+                                                                            <p><?php echo $ext['desc'] ?></p>
+                                                                    </div>
+                                                            </div>
+                                                    </div>
+                            <?php                        
+                        }
+                    ?>
+                        </div>
 			</div>
 			<div class="mainwp-clear"></div>
 			</div>
@@ -738,7 +738,7 @@ class MainWP_Extensions_View {
 					'img' => plugins_url( 'images/extensions/page-speed.png', dirname( __FILE__ ) ),
 					'product_id' => 'MainWP Page Speed Extension',
 					'catalog_id' => '12581',
-					'group' => array('perfomance')
+					'group' => array('performance')
 				),
 			'mainwp-ithemes-security-extension' =>
 				array(

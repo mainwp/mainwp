@@ -4,14 +4,14 @@ class MainWP_UI {
 	public static function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false ) {
 		?>
 		<div class="mainwp_select_sites_box <?php if ( $class ) { echo esc_attr( $class ); } ?> mainwp_select_sites_wrapper" style="<?php if ( $style ) { echo esc_attr( $style ); } ?>">
-			<div class="postbox">
+			<div id="mainwp-select-sites-postbox" class="postbox">
 				<h3 class="mainwp_box_title">
 					<span>
 						<i class="fa fa-globe"></i> <?php echo esc_html( ( $title ) ? $title : translate( 'Select sites', 'mainwp' ) ) ?>
-						<div class="mainwp_sites_selectcount"><?php echo esc_html( ! is_array( $selected_websites ) ? '0' : count( $selected_websites ) ); ?></div>
+						<div class="mainwp_sites_selectcount mainwp-right"><?php echo esc_html( ! is_array( $selected_websites ) ? '0' : count( $selected_websites ) ); ?></div>
 					</span>
 				</h3>
-				<div class="inside mainwp_inside">
+				<div class="inside">
 					<?php self::select_sites_box_body( $selected_websites, $selected_groups, $type, $show_group, $show_select_all, false, $enableOfflineSites ); ?>
 				</div>
 			</div>
@@ -24,13 +24,14 @@ class MainWP_UI {
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 		$groups   = MainWP_DB::Instance()->getNotEmptyGroups( null, $enableOfflineSites );
 		?>
+		<div class="mainwp-postbox-actions-top">
         <input type="hidden" name="select_by" id="select_by" value="<?php echo esc_attr( count( $selected_groups ) > 0 ? 'group' : 'site' ); ?>"/>
 		<?php if ( $show_select_all ) :  ?>
-			<div style="float:right"><?php esc_html_e( 'Select: ', 'mainwp' ); ?>
-				<a href="#" onClick="return mainwp_ss_select(this, true)"><?php esc_html_e( 'All', 'mainwp' ); ?></a>
-				| <a href="#" onClick="return mainwp_ss_select(this, false)"><?php esc_html_e( 'None', 'mainwp' ); ?></a>
+				<div class="mainwp-right"><?php esc_html_e( 'Select: ', 'mainwp' ); ?>
+					<a href="#" onClick="return mainwp_ss_select(this, true)"><?php esc_html_e( 'All', 'mainwp' ); ?></a> | 
+					<a href="#" onClick="return mainwp_ss_select(this, false)"><?php esc_html_e( 'None', 'mainwp' ); ?></a>
 			</div>
-		<?php endif ?>
+                    <?php endif; ?>
 		<?php if ( $show_group ) :  ?>
 			<div id="mainwp_ss_site_link" <?php echo esc_html( count( $selected_groups ) > 0 ? 'style="display: inline-block;"' : '' ); ?>>
 				<a href="#" onClick="return mainwp_ss_select_by(this, 'site')"><?php esc_html_e( 'By site', 'mainwp' ); ?></a>
@@ -43,11 +44,12 @@ class MainWP_UI {
 			<div id="mainwp_ss_group_text" <?php echo esc_html( count( $selected_groups ) > 0 ? 'style="display: inline-block;"' : '' ); ?>>
 				<?php esc_html_e( 'By group', 'mainwp' ); ?>
 			</div>
-		<?php endif ?>
+			<?php endif; ?>
+		</div>
 		<div id="selected_sites" <?php echo esc_html( count( $selected_groups ) > 0 ? 'style="display: none;"' : '' ); ?>>
 			<?php
 			if ( ! $websites ) {
-				echo '<p>' . esc_html( 'No websites have been found.', 'mainwp' ) . '</p>';
+					echo '<p class="mainwp-padding-5">' . esc_html( 'No websites have been found.', 'mainwp' ) . '</p>';
 			} else {
 				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 					$imgfavi = '';
@@ -62,33 +64,38 @@ class MainWP_UI {
 					if ( $website->sync_errors == '' || $enableOfflineSites ) {
 						$selected = ( $selected_websites == 'all' || in_array( $website->id, $selected_websites ) );
 
-						echo '<div title="'. $website->url .'" class="mainwp_selected_sites_item ' . ( $selected ? 'selected_sites_item_checked' : '' ) . '"><input onClick="mainwp_site_select(this)" type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_site' : 'selected_sites[]' ) . '" siteid="' . $website->id . '" value="' . $website->id . '" id="selected_sites_' . $website->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+							echo '<div title="'. $website->url .'" class="mainwp_selected_sites_item mainwp-padding-5' . ( $selected ? 'selected_sites_item_checked' : '' ) . '"><input onClick="mainwp_site_select(this)" type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_site' : 'selected_sites[]' ) . '" siteid="' . $website->id . '" value="' . $website->id . '" id="selected_sites_' . $website->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
 					}
 					else
 					{
-						echo '<div title="'. $website->url . '" class="mainwp_selected_sites_item disabled"><input type="' . $type . '" disabled=disabled /> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+							echo '<div title="'. $website->url . '" class="mainwp_selected_sites_item mainwp-padding-5 disabled"><input type="' . $type . '" disabled=disabled /> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
 					}
 				}
 				@MainWP_DB::free_result( $websites );
 			}
 			?>
 		</div>
-		<input id="selected_sites-filter" style="margin-top: .5em" type="text" value="" placeholder="<?php esc_attr_e( 'Type here to filter sites', 'mainwp'); ?>" <?php echo esc_attr( count( $selected_groups ) > 0 ? 'style="display: none;"' : '' ); ?> />
+		
 		<?php if ( $show_group ) :  ?>
 			<div id="selected_groups" <?php echo esc_html( count( $selected_groups ) > 0 ? 'style="display: block;"' : '' ); ?>>
 				<?php
 				if ( count( $groups ) == 0 ) {
-					echo wp_kses_post( sprintf( '<p>%s</p>', __( 'No groups with entries have been found.', 'mainwp' ) ) );
+						echo wp_kses_post( sprintf( '<p class="mainwp-padding-5">%s</p>', __( 'No groups with entries have been found.', 'mainwp' ) ) );
 				}
 				foreach ( $groups as $group ) {
 					$selected = in_array( $group->id, $selected_groups );
 
-					echo '<div class="mainwp_selected_groups_item ' . ( $selected ? 'selected_groups_item_checked' : '' ) . '"><input onClick="mainwp_group_select(this)" type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_group' : 'selected_groups[]' ) . '" value="' . $group->id . '" id="selected_groups_' . $group->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_groups_' . $group->id . '">' . stripslashes( $group->name ) . '</label></div>';
+						echo '<div class="mainwp_selected_groups_item mainwp-padding-5' . ( $selected ? 'selected_groups_item_checked' : '' ) . '"><input onClick="mainwp_group_select(this)" type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_group' : 'selected_groups[]' ) . '" value="' . $group->id . '" id="selected_groups_' . $group->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_groups_' . $group->id . '">' . stripslashes( $group->name ) . '</label></div>';
 				}
 				?>
             </div>
-		<input id="selected_groups-filter" style="margin-top: .5em" type="text" value="" placeholder="<?php esc_attr_e( 'Type here to filter groups', 'mainwp' );?>" <?php echo esc_attr( count( $selected_groups ) > 0 ? 'style="display: block;"' : '' ); ?> />
-		<?php endif ?>
+			<?php endif; ?>
+		<div class="mainwp-postbox-actions-bottom">
+			<input id="selected_sites-filter" type="text" value="" placeholder="<?php esc_attr_e( 'Type here to filter sites', 'mainwp'); ?>" <?php echo esc_attr( count( $selected_groups ) > 0 ? 'style="display: none;"' : '' ); ?> />
+			<?php if ( $show_group ) :  ?>
+	            <input id="selected_groups-filter" type="text" value="" placeholder="<?php esc_attr_e( 'Type here to filter groups', 'mainwp' );?>" <?php echo esc_attr( count( $selected_groups ) > 0 ? 'style="display: block;"' : '' ); ?> />
+			<?php endif; ?>
+		</div>
 		<?php
 		if ( $updateQty ) {
 			echo '<script>jQuery(document).ready(function () {jQuery(".mainwp_sites_selectcount").html(' . ( ! is_array( $selected_websites ) ? '0' : count( $selected_websites ) ) . ');});</script>';

@@ -19,7 +19,7 @@ class MainWP_Setup_Wizard {
 
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'admin_menus' ) );
-		add_action( 'admin_init', array( $this, 'setup_wizard' ), 999 );
+		add_action( 'admin_init', array( $this, 'setup_wizard' ), 999 );                
 	}
 
 	public static function init() {
@@ -86,7 +86,7 @@ class MainWP_Setup_Wizard {
 				'hidden' => true
 			),
 			'purchase_extension' => array(
-				'name'    =>  __( 'Order xtension', 'mainwp' ),
+				'name'    =>  __( 'Order extension', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_purchase_extension' ),
 				'handler' => array( $this, 'mwp_setup_purchase_extension_save' ),
 				'hidden' => true
@@ -128,16 +128,17 @@ class MainWP_Setup_Wizard {
 
 		$this->step = isset( $_GET['step'] ) ? sanitize_key( $_GET['step'] ) : current( array_keys( $this->steps ) );
 		$this->check_redirect();
-
-		wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'js/mainwp-setup.js', array( 'jquery', 'jquery-ui-tooltip' ), MAINWP_VERSION );
-		wp_localize_script('mainwp-setup', 'mainwpSetupLocalize', array('nonce' => wp_create_nonce('mainwp-setup-nonce')));
-
+                wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'js/mainwp-setup.js', array( 'jquery', 'jquery-ui-tooltip' ), MAINWP_VERSION );		
+		wp_enqueue_script( 'mainwp-setup-select2', MAINWP_PLUGIN_URL . 'js/select2/select2.js', array( 'jquery' ), MAINWP_VERSION );			
+		wp_enqueue_script( 'mainwp-setup-admin', MAINWP_PLUGIN_URL . 'js/mainwp-admin.js', array(), MAINWP_VERSION );		
+		
 		wp_localize_script('mainwp-setup', 'mainwpSetupLocalize', array('nonce' => wp_create_nonce('MainWPSetup')));
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'css/mainwp.css', array(), MAINWP_VERSION );
 
 		wp_enqueue_style( 'mainwp-font-awesome', MAINWP_PLUGIN_URL . 'css/font-awesome/css/font-awesome.min.css', array(), MAINWP_VERSION);
 		wp_enqueue_style( 'jquery-ui-style' );
 		wp_enqueue_style( 'mainwp-setup', MAINWP_PLUGIN_URL . 'css/mainwp-setup.css', array( 'dashicons', 'install' ), MAINWP_VERSION );
+		wp_enqueue_style( 'mainwp-setup-select2', MAINWP_PLUGIN_URL . 'js/select2/select2.css', array(), '3.4.5' );
 
 		if ( ! empty( $_POST['save_step'] ) && isset( $this->steps[ $this->step ]['handler'] ) ) {
 			call_user_func( $this->steps[ $this->step ]['handler'] );
@@ -150,7 +151,7 @@ class MainWP_Setup_Wizard {
 		$this->setup_wizard_footer();
 		exit;
 	}
-
+        
 	public function check_redirect() {
 		if ($this->step == 'install_extension') {
 			$backup_method = get_option('mwp_setup_primaryBackup');
@@ -196,7 +197,7 @@ class MainWP_Setup_Wizard {
 	public function setup_wizard_footer() {
 		?>
 		<?php if ( 'next_steps' === $this->step ) : ?>
-			<a class="mwp-return-to-dashboard" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php _e( 'Go to the MainWP Dashboard', 'mainwp' ); ?></a>
+			<a class="mwp-return-to-dashboard" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php _e( 'Go to the MainWP Overview', 'mainwp' ); ?></a>
 		<?php endif; ?>
 		</body>
 		</html>
@@ -249,7 +250,7 @@ class MainWP_Setup_Wizard {
 
 		<p class="mwp-setup-actions step">
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button-primary button button-large"><?php _e( 'Let\'s Go!', 'mainwp' ); ?></a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>" class="button button-large"><?php _e( 'Not right now', 'mainwp' ); ?></a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new&start_tour=1' ) ); ?>" class="button button-large"><?php _e( 'Not right now', 'mainwp' ); ?></a>
 		</p>
 		<?php
 	}
@@ -364,14 +365,14 @@ class MainWP_Setup_Wizard {
 		$managePlanning = isset($hosting_settings['manage_planning']) ? $hosting_settings['manage_planning']  : false;
 		$style = ($typeHosting == 3) && ($managePlanning == 2) ?  "" : ' style="display: none" ';
 		?>
-		<h1><?php _e( 'Hosting Setup', 'mainwp' ); ?></h1>
+		<h1><?php _e( 'Hosting setup', 'mainwp' ); ?></h1>
 		<form method="post">
 			<table class="form-table">
 				<?php if ($installation_hosting_type == 1) { ?>
 					<tr>
 						<th scope="row"><?php _e("What type of hosting is this Dashboard site on?", "mainwp"); ?></th>
 						<td>
-						<span class="mainwp-select-bg"><select name="mwp_setup_type_hosting" id="mwp_setup_type_hosting">
+						<span class="mainwp-select-bg"><select class="mainwp-select2" name="mwp_setup_type_hosting" id="mwp_setup_type_hosting">
 								<option value="3" <?php if ( false == $typeHosting || 3 == $typeHosting ) {
 								?>selected<?php } ?>><?php _e('Shared', 'mainwp'); ?>
 								</option>
@@ -388,7 +389,7 @@ class MainWP_Setup_Wizard {
 				<tr>
 					<th scope="row"><label for="mwp_setup_manage_planning"><?php _e("How many child sites are you planning to manage?", "mainwp"); ?></label></th>
 					<td>
-						<span class="mainwp-select-bg"><select name="mwp_setup_manage_planning" id="mwp_setup_manage_planning">
+						<span class="mainwp-select-bg"><select class="mainwp-select2" name="mwp_setup_manage_planning" id="mwp_setup_manage_planning">
 								<option value="1" <?php if (($managePlanning == false) || ($managePlanning == 1)) {
 								?>selected<?php } ?>><?php _e('Less than 50', 'mainwp'); ?>
 								</option>
@@ -436,7 +437,12 @@ class MainWP_Setup_Wizard {
 		$trustedPlugins = json_decode($userExtension->trusted_plugins, true);
 		if (!is_array($trustedPlugins)) $trustedPlugins = array();
 		$slug = "mainwp-child/mainwp-child.php";
-		$mainwp_strusted = in_array($slug, $trustedPlugins) ? 1 : 0;
+                if (false === get_option('mwp_setup_mainwpTrustedUpdate')) {
+                    $mainwp_strusted = 1;
+                } else {
+                    $mainwp_strusted = in_array($slug, $trustedPlugins) ? 1 : 0;
+                }
+                
 		?>
 		<h1><?php _e( 'Optimization', 'mainwp' ); ?></h1>
 		<form method="post">
@@ -498,6 +504,9 @@ class MainWP_Setup_Wizard {
 		} else {
 			$trustedPlugins = array_diff($trustedPlugins, array(urldecode($slug)));
 		}
+                
+                MainWP_Utility::update_option('mwp_setup_mainwpTrustedUpdate', isset($_POST['mwp_setup_add_mainwp_to_trusted_update']) ? 1 : 0);
+                
 		$userExtension->trusted_plugins = json_encode($trustedPlugins);
 		MainWP_DB::Instance()->updateUserExtension($userExtension);
 
@@ -507,7 +516,9 @@ class MainWP_Setup_Wizard {
 
 	public function mwp_setup_notification() {
 		$important_notification            = get_option( 'mwp_setup_importantNotification', false );
-		$user_email = MainWP_Utility::getNotificationEmail();
+		$user_emails = MainWP_Utility::getNotificationEmail();                
+                $user_emails = explode(',', $user_emails);                
+                $i = 0;
 		?>
 		<h1><?php _e( 'Notification', 'mainwp' ); ?></h1>
 		<form method="post">
@@ -531,7 +542,17 @@ class MainWP_Setup_Wizard {
 				<tr>
 					<th scope="row"><?php _e('Enter Your Email Address','mainwp'); ?></th>
 					<td>
-						<input type="email"  class="" name="mwp_setup_options_email" size="35" value="<?php echo esc_attr($user_email); ?>"/>
+                                             <?php foreach($user_emails as $email) { 
+                                                $i++;                                        
+                                                ?>
+                                                <div class="mwp_email_box">
+						<input type="text" class="" id="mainwp_options_email" name="mainwp_options_email[<?php echo $i; ?>]" size="35" value="<?php echo esc_attr($email); ?>"/>&nbsp;
+                                                <?php if ($i != 1) { ?>
+                                                <a href="#" class="mwp_remove_email"><i class="fa fa-minus-circle fa-lg mainwp-red" aria-hidden="true"></i></a>
+                                                <?php } ?>
+                                                </div>                                                
+                                            <?php } ?>
+                                            <a href="#" id="mwp_add_other_email" class="mainwp-small"><?php _e( '+ Add New'); ?></a>
 					</td>
 				</tr>
 			</table>
@@ -553,7 +574,19 @@ class MainWP_Setup_Wizard {
 		MainWP_Utility::update_option('mainwp_automaticDailyUpdate', $important_notification ? 2 : 0);
 		$userExtension = MainWP_DB::Instance()->getUserExtension();
 		$userExtension->offlineChecksOnlineNotification = $important_notification;
-		$userExtension->user_email = isset( $_POST['mwp_setup_options_email'] ) && !empty($_POST['mwp_setup_options_email']) ? $_POST['mwp_setup_options_email'] : "";
+                
+                $save_emails = array();
+                $user_emails = $_POST['mainwp_options_email'];
+                if (is_array($user_emails)) {
+                    foreach($user_emails as $email) {
+                        $email = esc_html(trim($email)); 
+                        if (!empty($email) && !in_array($email, $save_emails)) {
+                            $save_emails[] = $email;
+                        }
+                    }
+                }
+                $save_emails = implode(',', $save_emails);
+		$userExtension->user_email = $save_emails;
 		MainWP_DB::Instance()->updateUserExtension($userExtension);
 		wp_redirect( $this->get_next_step_link() );
 		exit;
@@ -565,7 +598,7 @@ class MainWP_Setup_Wizard {
 		$backup_method = get_option('mwp_setup_primaryBackup');
 
 		$style = $planning_backup == 1 ? "" : 'style="display: none"';
-		$style_archive = ($planning_backup == 1 && empty($backup_method)) ? "" : 'style="display: none"';
+//		$style_archive = ($planning_backup == 1 && empty($backup_method)) ? "" : 'style="display: none"';
 		?>
 		<h1><?php _e( 'Backup', 'mainwp' ); ?></h1>
 		<form method="post">
@@ -584,16 +617,15 @@ class MainWP_Setup_Wizard {
 					<th scope="row"><?php _e('Choose how you want to handle backups:','mainwp'); ?></th>
 					<td>
 						<span class="mainwp-select-bg">						
-								<select name="mwp_setup_backup_method" id="mwp_setup_backup_method">
-									<option value="updraftplus" <?php if ($backup_method == 'updraftplus'): ?>selected<?php endif; ?>>UpdraftPlus (Free Extension)</option>
+								<select class="mainwp-select2" name="mwp_setup_backup_method" id="mwp_setup_backup_method">
+									<option value="updraftplus" <?php if ($backup_method == 'updraftplus' || $backup_method == ''): ?>selected<?php endif; ?>>UpdraftPlus (Free Extension)</option>
 									<option value="backupwp" <?php if ($backup_method == 'backupwp'): ?>selected<?php endif; ?>>BackUpWordPress (Free Extension)</option>
 									<option value="backwpup" <?php if ($backup_method == 'backwpup'): ?>selected<?php endif; ?>>BackWPup (Free Extension)</option>
 								</select>						
 						</span>
 						<br /><br />
-						<em>
-							<span class="mainwp-backups-notice" method="default" <?php echo empty($backup_method) ? "" : 'style="display:none"'; ?> ><?php _e( 'This is a backup solution developed by MainWP.','mainwp' ); ?></span>
-							<span class="mainwp-backups-notice" method="updraftplus" <?php echo ($backup_method == 'updraftplus') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the UpdraftPlus backup plugin for your Backups.','mainwp' ); ?></span>
+						<em>							
+							<span class="mainwp-backups-notice" method="updraftplus" <?php echo ($backup_method == 'updraftplus' || $backup_method == '') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the UpdraftPlus backup plugin for your Backups.','mainwp' ); ?></span>
 							<span class="mainwp-backups-notice" method="backupwp" <?php echo ($backup_method == 'backupwp') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the BackupWordPress backup plugin for your Backups.','mainwp' ); ?></span>
 							<span class="mainwp-backups-notice" method="backwpup" <?php echo ($backup_method == 'backwpup') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the BackWPup backup plugin for your Backups.','mainwp' ); ?></span>
 						</em>
@@ -681,11 +713,11 @@ class MainWP_Setup_Wizard {
 		<?php
 		if (!empty($message)) {
 			delete_option('mwp_setup_message_purchase_extension');
-			echo '<div class="mainwp_info-box">' . $message . '</div>';
+			echo '<div class="mainwp-notice mainwp-notice-green">' . $message . '</div>';
 		}
 		if (!empty($error)) {
 			delete_option('mwp_setup_error_purchase_extension');
-			echo '<div class="mainwp_info-box-red">' . __( 'Error:' , 'mainwp' ) . " " .  $error . '</div>';
+			echo '<div class="mainwp-notice mainwp-notice-red">' . __( 'Error:' , 'mainwp' ) . " " .  $error . '</div>';
 		}
 		?>
 		<form method="post">
@@ -847,7 +879,7 @@ class MainWP_Setup_Wizard {
 
 	public static function ajax_download_and_install() {
 		self::secure_request();
-		$return = MainWP_Extensions::installPlugin($_POST['download_link']);
+		$return = MainWP_Extensions::installPlugin($_POST['download_link'], true);
 		die('<mainwp>' . json_encode($return) . '</mainwp>');
 	}
 
@@ -1016,8 +1048,8 @@ class MainWP_Setup_Wizard {
 									$_selected = 'checked'; }
 								?>
 								<li>
-									<input type="checkbox" id="mainwp_hide_wpmenu_<?php echo $name; ?>" name="mainwp_hide_wpmenu[]" <?php echo $_selected; ?> value="<?php esc_attr_e( $name ); ?>" class="mainwp-checkbox2">
-									<label for="mainwp_hide_wpmenu_<?php echo $name; ?>" class="mainwp-label2"><?php echo $item; ?></label>
+									<input type="checkbox" id="mainwp_hide_wpmenu_<?php echo $name; ?>" name="mainwp_hide_wpmenu[]" <?php echo $_selected; ?> value="<?php esc_attr_e($name); ?>">
+									<label for="mainwp_hide_wpmenu_<?php echo $name; ?>"><?php echo $item; ?></label>
 								</li>
 							<?php }
 							?>
@@ -1080,7 +1112,7 @@ class MainWP_Setup_Wizard {
 		$error = get_option('mainwp_setup_error_create_uptime_robot');
 		if (!empty($error)) {
 			delete_option('mainwp_setup_error_create_uptime_robot');
-			echo '<div class="mainwp_info-box-red">' . __( 'Error -', 'mainwp' ) . " " .  $error . '</div>';
+			echo '<div class="mainwp-notice mainwp-notice-red">' . __( 'ERROR: ', 'mainwp' ) . " " .  $error . '</div>';
 		}
 		$error_settings = false;
 		?>
@@ -1102,7 +1134,7 @@ class MainWP_Setup_Wizard {
 							<?php
 							if ( is_array( $options['list_notification_contact'] ) && count( $options['list_notification_contact'] ) > 0 ) {
 								?>
-								<select name="mwp_setup_uptime_robot_default_contact_id">
+								<select class="mainwp-select2" name="mwp_setup_uptime_robot_default_contact_id">
 									<?php
 									foreach ( $options['list_notification_contact'] as $key => $val ) {
 										if ( $options['uptime_default_notification_contact_id'] == $key ) {
@@ -1270,14 +1302,14 @@ class MainWP_Setup_Wizard {
 			<div class="mwp-setup-next-steps-first">
 				<h2><?php _e( 'Next Step', 'mainwp' ); ?></h2>
 				<ul>
-					<li class="setup-product"><a class="button button-primary button-large" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php _e( 'Add New Site', 'mainwp' ); ?></a></li>
+					<li class="setup-product"><a class="button button-primary button-large" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new&start_tour=1' ) ); ?>"><?php _e( 'Add New Site', 'mainwp' ); ?></a></li>
 				</ul>
 			</div>
 			<div class="mwp-setup-next-steps-last">
 				<h2><?php _e( 'Helpful Links', 'mainwp' ); ?></h2>
 				<ul>
-					<li><a href="https://mainwp.com/extensions/" target="_blank"><i class="fa fa-plug"></i> <?php _e( 'MainWP Extensions', 'mainwp' ); ?></a></li>
-					<li><a href="http://docs.mainwp.com" target="_blank"><i class="fa fa-book"></i> <?php _e( 'MainWP Documentation', 'mainwp' ); ?></a></li>
+					<li><a href="https://mainwp.com/mainwp-extensions/" target="_blank"><i class="fa fa-plug"></i> <?php _e( 'MainWP Extensions', 'mainwp' ); ?></a></li>
+					<li><a href="https://mainwp.com/help/" target="_blank"><i class="fa fa-book"></i> <?php _e( 'MainWP Documentation', 'mainwp' ); ?></a></li>
 					<li><a href="https://mainwp.com/support/" target="_blank"><i class="fa fa-life-ring"></i> <?php _e( 'MainWP Support', 'mainwp' ); ?></a></li>
 				</ul>
 			</div>

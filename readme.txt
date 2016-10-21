@@ -161,6 +161,59 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 3.2 - 10-21-16 =
+* Fixed: An issue with loading themes on the Auto Updates page
+* Fixed: Multiple typos and grammar issues
+* Fixed: An issue with displaying disconneceted sites in the Sync Status widget
+* Fixed: An issue with activating backup extensions from the Quick Start Wizard
+* Fixed: An issue with displayin extensions in incorrect categories
+* Added: The MainWP Welcome page
+* Added: Help tab on all MainWP Dashboard page
+* Added: MainWP Blogroll widget
+* Added: Helpful Links widget
+* Added: Updates per group selection in the Update Overview widget and Updates page
+* Added: Help tours on all MainWP Dahboard plugin pages
+* Added: Scheduled filter in the Recent Posts widget
+* Added: Scheduled filter in the Recent Pages widget
+* Added: Ability to move columns in the MainWP tables
+* Added: Ability to move and collapse all Option Boxes in the MainWP pages
+* Added: New checks in the Server Information page
+* Added: Ability to enable/disable auto updates for Plugins, Themes and WP Core separatelly
+* Added: Ability to set multiple email addresses for notifications
+* Added: Option on the Settnigs page to enable legacy backups feature
+* Added: Ability to edit users directly from dashboard
+* Added: Select2 style to all select form fields
+* Added: General UI improvements
+* Updated: Add New Site page layout
+* Updated: Groups selection field on the Add New Site page
+* Updated: Manage Groups page
+* Updated: The Select Sites metabox layout
+* Updated: Extensions page layout
+* Updated: Extensions widget layout
+* Updated: Dashboard page renamed to Overview
+* Updated: Right Now widget renamed to Update Overview
+* Updated: Sync Status eidget renamed to Connection Status
+* Updated: Future status renamed to Scheduled on the Search Posts box
+* Updated: Future status renamed to Scheduled on the Search Pages box
+* Updated: The Sync and Update popup box style
+* Updated: The Auto Updates page layout
+* Updated: MainWP native backups deactivated for new users
+* Updated: Tabs order on the MainWP Settings page
+* Updated: Form fields type on the MainWP Advanced Options page
+* Updated: Data return options moved to Manage Posts and Manage pages with ability to set separatelly
+* Updated: Manage Users page layout
+* Updated: Search Users mechanism
+* Updated: Import Sites feature extracted to a separate page
+* Updated: Import Users feature extracted to a separate page
+* Updated: General CSS styles
+* Updated: Extension icons optimized for faster loading and plugin size reduction
+* Updated: Email Notification template
+* Removed: How to widget
+* Removed: Help widget
+* Removed: Unreferenced CSS classes
+* Removed: Tracking basic SEO stats
+* Removed: Documentation page
+
 = 3.1.8.1 - 9-8-16 =
 * Fixed: Grammar issues
 * Fixed: Cosmetic issues

@@ -1,6 +1,6 @@
 <?php
 
-class MainWP_Sync_Status {
+class MainWP_Connection_Status {
 	public static function getClassName() {
 		return __CLASS__;
 	}
@@ -10,12 +10,12 @@ class MainWP_Sync_Status {
 	}
 
 	public static function getName() {
-		return '<i class="fa fa-refresh"></i> ' . __( 'Sync status', 'mainwp' );
+		return '<i class="fa fa-heartbeat" aria-hidden="true"></i> ' . __( 'Connection status', 'mainwp' );
 	}
 
 	public static function render() {
 		?>
-		<div id="sync_status_list" xmlns="http://www.w3.org/1999/html"><?php MainWP_Sync_Status::renderSites(); ?></div>
+		<div id="sync_status_list" xmlns="http://www.w3.org/1999/html"><?php MainWP_Connection_Status::renderSites(); ?></div>
 		<?php
 	}
 
@@ -49,7 +49,7 @@ class MainWP_Sync_Status {
 
                         $html_online_sites = '';
                         $html_other_sites = '';
-
+                        
 
                         for ( $j = 0; $j < 3; $j ++ ) {
                                 @MainWP_DB::data_seek( $websites, 0 );
@@ -123,36 +123,37 @@ class MainWP_Sync_Status {
                                                     <div class="mainwp-clear"></div>
                                             </div>
                                         <?php                                                
-                                        $output = ob_get_clean();   
+                                        $output = ob_get_clean();  
 
                                         if ( $j == $UP ) {
                                                $top_up_row = false;
                                                $html_online_sites .= $output;
                                         } else {
-                                               $top_row = false;
+                                        $top_row = false;                                    
                                                $html_other_sites .= $output;
-                                        }                                                                   
                                 }
+                        }
                         }
 
                         
                         $opts           = get_option( 'mainwp_opts_showhide_sections', false );
                         $hide_sites = ( is_array( $opts ) && isset( $opts['synced_sites'] ) && $opts['synced_sites'] == 'hide' ) ? true : false;
-                        ?>                        
-                    <div class="mainwp-postbox-actions-top" style="padding:10px 0px;">                              
-                            <div style="float:right; padding: 0px 10px;">
-                                    <a id="mainwp-link-showhide-synced-sites" status="<?php echo( $hide_sites ? 'hide' : 'show' ); ?>" href="#">
-                                            <i class="fa fa-eye-slash" aria-hidden="true"></i> <?php echo( $hide_sites ? __( 'Show online sites', 'mainwp' ) : __( 'Hide online sites', 'mainwp' ) ); ?>
-                                    </a>
-                                </div>   
-                            <div class="mainwp-clear"></div>
-                            <div id="mainwp-synced-status-sites-wrap" style="<?php echo( $hide_sites ? 'display: none;' : '' ); ?>">
-                                    <?php echo $html_online_sites; ?>
-                            </div>
-                        </div>
-                                            
-                        <?php echo $html_other_sites; ?>
-                    
+                    ?>
+                    <div class="mainwp-postbox-actions-top mainwp-padding-10">   
+                        <span class="mainwp-left">
+                            <?php _e( 'Monitor the connection status between your dashboard and child sites', 'mainwp' ); ?>
+                        </span>                           
+                        <span class="mainwp-right">
+                                <a id="mainwp-link-showhide-synced-sites" status="<?php echo( $hide_sites ? 'hide' : 'show' ); ?>" href="#">
+                                    <i class="fa fa-eye-slash" aria-hidden="true"></i> <?php echo( $hide_sites ? __( 'Show online sites', 'mainwp' ) : __( 'Hide online sites', 'mainwp' ) ); ?>
+                                </a>
+                        </span>
+                        <div class="mainwp-clear"></div>
+                    </div>
+                    <div id="mainwp-synced-status-sites-wrap" style="<?php echo( $hide_sites ? 'display: none;' : '' ); ?>">
+                        <?php echo $html_online_sites; ?>
+                    </div>
+                         <?php echo $html_other_sites; ?>
                 </div>
 		<?php
 		@MainWP_DB::free_result( $websites );

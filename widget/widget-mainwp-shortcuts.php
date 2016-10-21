@@ -24,10 +24,9 @@ class MainWP_Shortcuts {
 		</div>
 		<div class="mainwp-row">
 			<div style="display: inline-block; width: 100px;"><?php _e( 'Notes:', 'mainwp' ); ?></div>
-			<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_<?php echo $website->id; ?>"><i class="fa fa-pencil"></i> <?php _e( 'Open notes', 'mainwp' ); ?>
-			</a><img src="<?php echo plugins_url( 'images/notes.png', dirname( __FILE__ ) ); ?>" class="mainwp_notes_img" id="mainwp_notes_img_<?php echo $website->id; ?>" <?php if ( $website->note == '' ) {
-				echo 'style="display: none;"';
-			} ?> />
+			<a href="#" class="mainwp_notes_show_all <?php echo $website->note == '' ? '' : 'mainwp-green'; ?>" id="mainwp_notes_<?php echo $website->id; ?>">
+				<i class="fa fa fa-pencil-square-o"></i> <?php _e( 'Open notes', 'mainwp' ); ?>
+			</a>
 		</div>
 		<span style="display: none"
 			id="mainwp_notes_<?php echo $website->id; ?>_note"><?php echo $website->note; ?></span>

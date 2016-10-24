@@ -64,7 +64,7 @@ class MainWP_UI {
 					if ( $website->sync_errors == '' || $enableOfflineSites ) {
 						$selected = ( $selected_websites == 'all' || in_array( $website->id, $selected_websites ) );
 
-							echo '<div title="'. $website->url .'" class="mainwp_selected_sites_item mainwp-padding-5' . ( $selected ? 'selected_sites_item_checked' : '' ) . '"><input onClick="mainwp_site_select(this)" type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_site' : 'selected_sites[]' ) . '" siteid="' . $website->id . '" value="' . $website->id . '" id="selected_sites_' . $website->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+							echo '<div title="'. $website->url .'" class="mainwp_selected_sites_item mainwp-padding-5' . ( $selected ? ' selected_sites_item_checked' : '' ) . '"><input onClick="mainwp_site_select(this)" type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_site' : 'selected_sites[]' ) . '" siteid="' . $website->id . '" value="' . $website->id . '" id="selected_sites_' . $website->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
 					}
 					else
 					{
@@ -85,7 +85,7 @@ class MainWP_UI {
 				foreach ( $groups as $group ) {
 					$selected = in_array( $group->id, $selected_groups );
 
-						echo '<div class="mainwp_selected_groups_item mainwp-padding-5' . ( $selected ? 'selected_groups_item_checked' : '' ) . '"><input onClick="mainwp_group_select(this)" type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_group' : 'selected_groups[]' ) . '" value="' . $group->id . '" id="selected_groups_' . $group->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_groups_' . $group->id . '">' . stripslashes( $group->name ) . '</label></div>';
+						echo '<div class="mainwp_selected_groups_item mainwp-padding-5' . ( $selected ? ' selected_groups_item_checked' : '' ) . '"><input onClick="mainwp_group_select(this)" type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_group' : 'selected_groups[]' ) . '" value="' . $group->id . '" id="selected_groups_' . $group->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_groups_' . $group->id . '">' . stripslashes( $group->name ) . '</label></div>';
 				}
 				?>
             </div>

@@ -203,13 +203,22 @@ class MainWP_User {
 		}
                 
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Users' );
+                
+                $selected_sites = $selected_groups = array();
+                if ($cachedSearch != null) {
+                    if (is_array($cachedSearch['sites'])) {
+                        $selected_sites = $cachedSearch['sites'];
+                    } else if (is_array($cachedSearch['groups'])) {
+                        $selected_groups = $cachedSearch['groups'];
+                    }
+                }
 		self::renderHeader( '' ); ?>
 		<div>
 		<div class="mainwp-padding-bottom-10"><?php MainWP_Tours::renderSearchUsersTours(); ?></div>
             <div class="mainwp-postbox">
             	<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_search_users'); ?>				
 			</div>
-            <?php MainWP_UI::select_sites_box(__("Step 2: Select sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left'); ?>
+            <?php MainWP_UI::select_sites_box(__("Step 2: Select sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups); ?>
             <div style="clear: both;"></div>
             <input type="button" name="mainwp_show_users" id="mainwp_show_users" class="button-primary button button-hero mainwp-button-right" value="<?php _e('Show Users','mainwp'); ?>"/>
             <br/><br/>
@@ -692,6 +701,8 @@ class MainWP_User {
 			'count'   => $output->users,
 			'keyword' => $search,
 			'status'  => ( isset( $_POST['role'] ) ? $_POST['role'] : 'administrator' ),
+                        'sites' => $sites != '' ? $sites : '',
+                        'groups' => $groups != '' ? $groups : ''
 		) );
 		//Sort if required
 

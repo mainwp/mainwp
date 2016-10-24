@@ -741,39 +741,38 @@ class MainWP_Manage_Sites_View {
 	$sync_extensions_options = apply_filters( 'mainwp-sync-extensions-options', array() );
 	$working_extensions = MainWP_Extensions::getExtensions();
 	$available_exts_data = MainWP_Extensions_View::getAvailableExtensions();
-	if ( count( $working_extensions ) > 0 && count($sync_extensions_options) > 0 ) {
-?>
-			<div class="mainwp-notice mainwp-notice-blue" id="mainwp_addnew_sync_exts_settings_notice"><?php _e( 'You have Extensions installed that require an additional plugin to be installed on this new Child site for the Extension to work correctly. From the list below select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
+	if ( count( $working_extensions ) > 0 && count($sync_extensions_options) > 0 ) {?>
+            <div class="mainwp-notice mainwp-notice-blue" id="mainwp_addnew_sync_exts_settings_notice"><?php _e( 'You have Extensions installed that require an additional plugin to be installed on this new Child site for the Extension to work correctly. From the list below select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
+            <div><a id="mainwp-check-all-sync-ext" href="javascript:void(0);"><i class="fa fa-check-square-o"></i> <?php echo __('Select All', 'mainwp'); ?></a> | <a id="mainwp-uncheck-all-sync-ext" href="javascript:void(0);"><i class="fa fa-square-o"></i> <?php echo __('Select None', 'mainwp'); ?></a></div>
                     <?php
+                        foreach ( $working_extensions as $slug => $data ) {
+                                $dir_slug = dirname($slug);
+                                if (!isset($sync_extensions_options[$dir_slug]))
+                                        continue;
+                                $sync_info = isset( $sync_extensions_options[$dir_slug] ) ? $sync_extensions_options[$dir_slug] : array();
+                                $ext_name = str_replace("MainWP", "", $data['name']);
+                                $ext_name = str_replace("Extension", "", $ext_name);
 
-						foreach ( $working_extensions as $slug => $data ) {
-							$dir_slug = dirname($slug);
-							if (!isset($sync_extensions_options[$dir_slug]))
-								continue;
-							$sync_info = isset( $sync_extensions_options[$dir_slug] ) ? $sync_extensions_options[$dir_slug] : array();
-							$ext_name = str_replace("MainWP", "", $data['name']);
-							$ext_name = str_replace("Extension", "", $ext_name);
-
-							$ext_data = isset( $available_exts_data[dirname($slug)] ) ? $available_exts_data[dirname($slug)] : array();
-							if ( isset($ext_data['img']) ) {
-								$img_url = $ext_data['img'];
-							} else {
-								$img_url = plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) );
-							}
-							$html = '<div class="sync-ext-row" slug="' . $dir_slug. '" ext_name = "' . esc_attr($ext_name) . '"status="queue">';
-							$html .= '<br/><img src="' . $img_url .'" height="24" style="margin-bottom: -5px;">' . '<h3 style="display: inline;">' . $ext_name . '</h3><br/><br/>';
-							if (isset($sync_info['plugin_slug']) && !empty($sync_info['plugin_slug'])) {
-								$html .= '<div class="sync-install-plugin" slug="' . esc_attr(dirname($sync_info['plugin_slug']) ) .'" plugin_name="' . esc_attr($sync_info['plugin_name']) . '"><label><input type="checkbox" class="chk-sync-install-plugin"checked="checked"/> ' . esc_html( sprintf( __('Install %s plugin', 'mainwp'), $sync_info['plugin_name']) ) . '</label> <i class="fa fa-spinner fa-pulse" style="display: none"></i> <span class="status"></span></div>';
-								if (!isset($sync_info['no_setting']) || empty($sync_info['no_setting'])) {
-									$html .= '<div class="sync-options options-row"><label><input type="checkbox" checked="checked" /> ' . sprintf( __('Apply %s %ssettings%s', 'mainwp'), $sync_info['plugin_name'], '<a href="admin.php?page=' . $data['page'] . '">', '</a>' ) . '</label> <i class="fa fa-spinner fa-pulse" style="display: none"></i> <span class="status"></span></div>';
-								}
-							} else {
-								$html .= '<div class="sync-global-options options-row"><label><input type="checkbox" checked="checked" /> ' . esc_html( sprintf( __('Apply global %s options', 'mainwp'), trim($ext_name)) ) . '</label> <i class="fa fa-spinner fa-pulse"  style="display: none"></i> <span class="status"></span></div>';
-							}
-							$html .= '</div>';
-							echo $html;
-						}
-					?>
+                                $ext_data = isset( $available_exts_data[dirname($slug)] ) ? $available_exts_data[dirname($slug)] : array();
+                                if ( isset($ext_data['img']) ) {
+                                        $img_url = $ext_data['img'];
+                                } else {
+                                        $img_url = plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) );
+                                }
+                                $html = '<div class="sync-ext-row" slug="' . $dir_slug. '" ext_name = "' . esc_attr($ext_name) . '"status="queue">';
+                                $html .= '<br/><img src="' . $img_url .'" height="24" style="margin-bottom: -5px;">' . '<h3 style="display: inline;">' . $ext_name . '</h3><br/><br/>';
+                                if (isset($sync_info['plugin_slug']) && !empty($sync_info['plugin_slug'])) {
+                                        $html .= '<div class="sync-install-plugin" slug="' . esc_attr(dirname($sync_info['plugin_slug']) ) .'" plugin_name="' . esc_attr($sync_info['plugin_name']) . '"><label><input type="checkbox" class="chk-sync-install-plugin" /> ' . esc_html( sprintf( __('Install %s plugin', 'mainwp'), $sync_info['plugin_name']) ) . '</label> <i class="fa fa-spinner fa-pulse" style="display: none"></i> <span class="status"></span></div>';
+                                        if (!isset($sync_info['no_setting']) || empty($sync_info['no_setting'])) {
+                                                $html .= '<div class="sync-options options-row"><label><input type="checkbox" /> ' . sprintf( __('Apply %s %ssettings%s', 'mainwp'), $sync_info['plugin_name'], '<a href="admin.php?page=' . $data['page'] . '">', '</a>' ) . '</label> <i class="fa fa-spinner fa-pulse" style="display: none"></i> <span class="status"></span></div>';
+                                        }
+                                } else {
+                                        $html .= '<div class="sync-global-options options-row"><label><input type="checkbox" /> ' . esc_html( sprintf( __('Apply global %s options', 'mainwp'), trim($ext_name)) ) . '</label> <i class="fa fa-spinner fa-pulse"  style="display: none"></i> <span class="status"></span></div>';
+                                }
+                                $html .= '</div>';
+                                echo $html;
+                        }
+                ?>
 	<?php }
 	}
 
@@ -1525,14 +1524,17 @@ class MainWP_Manage_Sites_View {
             <div id="mainwp_notes_title" class="mainwp_popup_title"></span>
             </div>
             <div id="mainwp_notes_content">
+                <div id="mainwp_notes_html" style="width: 580px !important; height: 300px;"></div>
                 <textarea style="width: 580px !important; height: 300px;"
                           id="mainwp_notes_note"></textarea>
             </div>
             <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
             <form>
                 <div style="float: right" id="mainwp_notes_status"></div>
-                <input type="button" class="button cont button-primary" id="mainwp_notes_save" value="<?php _e( 'Save note','mainwp' ); ?>"/>
-                <input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php _e( 'Close','mainwp' ); ?>"/>
+                <input type="button" class="button cont button-primary" id="mainwp_notes_save" value="<?php esc_attr_e( 'Save note','mainwp' ); ?>"/>
+                <input type="button" class="button cont" id="mainwp_notes_edit" value="<?php esc_attr_e( 'Edit','mainwp' ); ?>"/>                
+                <input type="button" class="button cont" id="mainwp_notes_view" value="<?php esc_attr_e( 'View','mainwp' ); ?>"/>                                
+                <input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php esc_attr_e( 'Close','mainwp' ); ?>"/>
                 <input type="hidden" id="mainwp_notes_websiteid" value=""/>
             </form>
         </div>

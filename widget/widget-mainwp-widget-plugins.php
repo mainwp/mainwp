@@ -130,7 +130,7 @@ class MainWP_Widget_Plugins {
 						</span>
 						<div class="mainwp-right mainwp-cols-2 mainwp-t-align-right pluginsAction">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-								<a href="#" class="mainwp-plugin-deactivate"><i class="fa fa-toggle-off"></i> <?php _e( 'Deactivate', 'mainwp' ); ?>
+								<a href="#" class="mainwp-plugin-deactivate button button-primary"><?php _e( 'Deactivate', 'mainwp' ); ?>
 								</a>
 							<?php } ?>
 						</div>
@@ -171,11 +171,11 @@ class MainWP_Widget_Plugins {
 						</span>
 						<div class="mainwp-right mainwp-cols-2 mainwp-t-align-right pluginsAction">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-								<a href="#" class="mainwp-plugin-activate"><i class="fa fa-toggle-on"></i> <?php _e( 'Activate', 'mainwp' ); ?>
-								</a> |
+								<a href="#" class="mainwp-plugin-activate button button-primary"><?php _e( 'Activate', 'mainwp' ); ?>
+								</a>
 							<?php } ?>
 							<?php if ( mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
-								<a href="#" class="mainwp-plugin-delete mainwp-red"><i class="fa fa-trash"></i> <?php _e( 'Delete', 'mainwp' ); ?>
+								<a href="#" class="mainwp-plugin-delete mainwp-red button"><?php _e( 'Delete', 'mainwp' ); ?>
 								</a>
 							<?php } ?>
 						</div>

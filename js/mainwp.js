@@ -5001,16 +5001,31 @@ jQuery(document).ready(function () {
         mainwp_notes_show_all(jQuery(this).attr('id').substr(13));
         return false;
     });
+    
+    jQuery('#mainwp_notes_edit').live('click', function () {        
+        jQuery('#mainwp_notes').addClass('edit-mode');                
+        return false;
+    });      
+    jQuery('#mainwp_notes_view').live('click', function () {          
+        jQuery('#mainwp_notes_html').html(jQuery('#mainwp_notes_note').val());
+        jQuery('#mainwp_notes').removeClass('edit-mode');   
+        return false;
+    });  
     jQuery('#redirectForm').submit();
 });
+
 mainwp_notes_show_all = function (id) {
+    jQuery('#mainwp_notes').removeClass('edit-mode');
     var url = jQuery('#mainwp_notes_' + id + '_url').html();
     var note = jQuery('#mainwp_notes_' + id + '_note').html();
-    jQuery('#mainwp_notes_title').html(url);
+    jQuery('#mainwp_notes_title').html(url);    
+    jQuery('#mainwp_notes_html').html( note == '' ? 'No Saved Notes' : note );
     jQuery('#mainwp_notes_note').val(note);
     jQuery('#mainwp_notes_websiteid').val(id);
     mainwp_notes_show();
 };
+
+
 mainwp_notes_show = function () {
     jQuery('#mainwp_notes_status').html('');
     jQuery('#mainwp_notes_overlay').height(jQuery(document).height());
@@ -5337,8 +5352,9 @@ jQuery(document).ready(function () {
         var slug = rowEl.attr('plugin_slug');
         var name = rowEl.attr('plugin_name');
         var note = rowEl.find('.note').html();
-
+        jQuery('#mainwp_notes').removeClass('edit-mode');   
         jQuery('#mainwp_notes_title').html(decodeURIComponent(name));
+        jQuery('#mainwp_notes_html').html(note == '' ? 'No Saved Notes' : note);
         jQuery('#mainwp_notes_note').val(note);
         jQuery('#mainwp_notes_slug').val(slug);
         mainwp_notes_show();
@@ -5381,8 +5397,9 @@ jQuery(document).ready(function () {
         var slug = rowEl.attr('theme_slug');
         var name = rowEl.attr('theme_name');
         var note = rowEl.find('.note').html();
-
-        jQuery('#mainwp_notes_title').html(decodeURIComponent(name));
+        jQuery('#mainwp_notes').removeClass('edit-mode');        
+        jQuery('#mainwp_notes_title').html(decodeURIComponent(name));                
+        jQuery('#mainwp_notes_html').html(note == '' ? 'No Saved Notes' : note);
         jQuery('#mainwp_notes_note').val(note);
         jQuery('#mainwp_notes_slug').val(slug);
         mainwp_notes_show();

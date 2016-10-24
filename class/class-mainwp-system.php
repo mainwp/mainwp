@@ -918,12 +918,15 @@ class MainWP_System {
                                             $mail = '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>
                                  <div></div>
                                  ' . $mail . '
-                                 Update Key: (<strong><span style="color:#008000">Trusted</span></strong>) will be auto updated within 24 hours. (<strong><span style="color:#ff0000">Not Trusted</span></strong>) you will need to log into your MainWP Dashboard and update
+                                 <div><strong>Update Key</strong>:</div>
+                                 <div><span style="color:#008000">Trusted</span> - will be updated within 24 hours.</div>
+                                 <div><span style="color:#ff0000">Not Trusted</span> - you will need to log into your MainWP Dashboard and update.</div>
                                  <div> </div>
-                                 <div>If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours. To find out how to enable automatic updates please see the FAQs below.</div>
-                                 <div><a href="http://docs.mainwp.com/marking-a-plugin-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-plugin-as-trusted/</a></div>
-                                 <div><a href="http://docs.mainwp.com/marking-a-theme-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-theme-as-trusted/</a></div>
-                                 <div><a href="http://docs.mainwp.com/marking-a-sites-wp-core-updates-as-trusted/" style="color:#446200" target="_blank">http://docs.mainwp.com/marking-a-sites-wp-core-updates-as-trusted/</a></div>';
+                                 <div>If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.</div>
+                                 <div><strong>More about MainWP Automatic Updates</strong>:</div>
+                                 <div><a href="http://mainwp.com/help/docs/managing-plugins-with-mainwp/plugins-auto-updates/" style="color:#446200" target="_blank">http://mainwp.com/help/docs/managing-plugins-with-mainwp/plugins-auto-updates/</a></div>
+                                 <div><a href="http://mainwp.com/help/docs/managing-themes-with-mainwp/themes-auto-updates/" style="color:#446200" target="_blank">http://mainwp.com/help/docs/managing-themes-with-mainwp/themes-auto-updates/</a></div>
+                                 <div><a href="http://mainwp.com/help/docs/auto-update-wordpress-core/" style="color:#446200" target="_blank">http://mainwp.com/help/docs/auto-update-wordpress-core/</a></div>';
 						wp_mail( $email, $mail_title = 'MainWP - Trusted Updates', MainWP_Utility::formatEmail( $email, $mail, $mail_title ), array(
 							'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
 							'content-type: text/html',

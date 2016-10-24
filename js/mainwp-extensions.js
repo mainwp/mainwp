@@ -679,6 +679,16 @@ jQuery(document).ready(function($) {
             $(this).attr('checked', false);
         });
     });
+    $('#mainwp-check-all-sync-ext').live('click', function() {
+        $('.sync-ext-row').find("input:checkbox").each(function(){
+            $(this).attr('checked', true);
+        });
+    });
+    $('#mainwp-uncheck-all-sync-ext').live('click', function() {
+        $('.sync-ext-row').find("input:checkbox").each(function(){
+            $(this).attr('checked', false);
+        });
+    });
 
     $('.mainwp-show-extensions').live('click', function() {
         $('a.mainwp-show-extensions').removeClass('mainwp_action_down');

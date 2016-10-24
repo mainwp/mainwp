@@ -185,8 +185,8 @@ a.mainwp-post-trash {color: #a00;}
 #mwp-extension-contentbox-2 .inside,
 #mwp-extension-contentbox-3 .inside,
 #toplevel_page_mainwp_tab-contentbox-2 .inside,
+#mainwp_page_managesites-metaboxes-contentbox-7 .inside,
 #mainwp_page_managesites-metaboxes-contentbox-8 .inside,
-#mainwp_page_managesites-metaboxes-contentbox-9 .inside,
 #toplevel_page_mainwp_tab-contentbox-3 .inside,
 #mainwp_page_managesites-contentbox-2 .inside,
 #mainwp_page_managesites-metaboxes-contentbox-6 .inside,
@@ -1183,6 +1183,21 @@ h3.mainwp_box_title {
     /*width: 580px;*/
     height: auto;
     width: auto;
+}
+
+#mainwp_notes #mainwp_notes_note,
+#mainwp_notes #mainwp_notes_view {
+    display: none;
+}
+
+#mainwp_notes.edit-mode #mainwp_notes_html,
+#mainwp_notes.edit-mode #mainwp_notes_edit {
+    display: none;
+}
+
+#mainwp_notes.edit-mode #mainwp_notes_note,
+#mainwp_notes.edit-mode #mainwp_notes_view {
+    display: inline;
 }
 
 .mainwp_notes_img {

@@ -172,6 +172,15 @@ class MainWP_Post {
 		}
 		
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Post' );
+                
+                $selected_sites = $selected_groups = array();
+                if ($cachedSearch != null) {
+                    if (is_array($cachedSearch['sites'])) {
+                        $selected_sites = $cachedSearch['sites'];
+                    } else if (is_array($cachedSearch['groups'])) {
+                        $selected_groups = $cachedSearch['groups'];
+                    }
+                }
 
 		//Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
 		self::renderHeader( 'BulkManage' );
@@ -186,7 +195,7 @@ class MainWP_Post {
 			<div class="mainwp-postbox">
 			<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_search_posts'); ?>
 			</div>			
-			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
+			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
                         
 			<div style="clear: both;"></div>
 
@@ -530,7 +539,9 @@ class MainWP_Post {
 			'dtsstart' => $dtsstart,
 			'dtsstop'  => $dtsstop,
 			'status'   => $status,
-		) );
+                        'sites'    => ($sites != '') ? $sites : '',
+                        'groups'   => ($groups != '') ? $groups : ''
+		));
 
 		//Sort if required
 		if ( $output->posts == 0 ) {

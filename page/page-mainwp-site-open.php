@@ -74,12 +74,16 @@ class MainWP_Site_Open {
 						<div id="mainwp_notes_title" class="mainwp_popup_title"><?php echo $website->url; ?></span>
 						</div>
 						<div id="mainwp_notes_content">
-                    <textarea style="width: 580px !important; height: 300px;"
-	                    id="mainwp_notes_note"><?php echo $website->note; ?></textarea>
+                                                    <div id="mainwp_notes_html" style="width: 580px !important; height: 300px;"><?php echo $website->note; ?></div>
+                                                    <textarea style="width: 580px !important; height: 300px;"
+                                                            id="mainwp_notes_note"><?php echo $website->note; ?></textarea>
 						</div>
+                                                <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>                            
 						<form>
 							<div style="float: right" id="mainwp_notes_status"></div>
-							<input type="button" class="button cont" id="mainwp_notes_save" value="Save note"/>
+							<input type="button" class="button button-primary" id="mainwp_notes_save" value="<?php esc_attr_e( 'Save note', 'mainwp' ); ?>"/>
+                                                        <input type="button" class="button cont" id="mainwp_notes_edit" value="<?php esc_attr_e( 'Edit','mainwp' ); ?>"/>                
+                                                        <input type="button" class="button cont" id="mainwp_notes_view" value="<?php esc_attr_e( 'View','mainwp' ); ?>"/>                
 							<input type="button" class="button cont" id="mainwp_notes_cancel" value="Close"/>
 							<input type="hidden" id="mainwp_notes_websiteid"
 								value="<?php echo $website->id; ?>"/>

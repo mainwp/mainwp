@@ -19,7 +19,7 @@ class MainWP_Notes {
 		$website = MainWP_DB::Instance()->getWebsiteById( $current_wpid, true );
 		?>
 		<div id="mainwp-notes-area">
-			<div id="mainwp-notes-note" style="padding-bottom: 1em;">
+			<div style="padding-bottom: 1em;">
 				<?php
 				if ( $website->note == '' ) {
 					echo 'No Saved Notes';

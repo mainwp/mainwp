@@ -204,6 +204,16 @@ class MainWP_Plugins {
 
 	public static function render() {
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Plugins' );
+                
+                $selected_sites = $selected_groups = array();
+                if ($cachedSearch != null) {
+                    if (is_array($cachedSearch['sites'])) {
+                        $selected_sites = $cachedSearch['sites'];
+                    } else if (is_array($cachedSearch['groups'])) {
+                        $selected_groups = $cachedSearch['groups'];
+                    }
+                }
+                
 		?>
 		<?php self::renderHeader( 'Manage' ); ?>
 		<div class="mainwp-search-form">
@@ -211,7 +221,7 @@ class MainWP_Plugins {
 			<div class="mainwp-postbox">
 				<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_search_plugins'); ?>				
 			</div>
-			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
+			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left','', $selected_sites, $selected_groups  ); ?>
 			<div style="clear: both;"></div>
 			<input type="button" name="mainwp_show_plugins" id="mainwp_show_plugins" class="button-primary button button-hero mainwp-button-right" value="<?php esc_attr_e( 'Show Plugins', 'mainwp' ); ?>"/>
 			<br /><br />
@@ -530,12 +540,16 @@ class MainWP_Plugins {
 			<div id="mainwp_notes_title" class="mainwp_popup_title"></span>
 			</div>
 			<div id="mainwp_notes_content">
-                <textarea style="width: 580px !important; height: 300px;"
-                          id="mainwp_notes_note"></textarea>
+                            <div id="mainwp_notes_html" style="width: 580px !important; height: 300px;"></div>
+                            <textarea style="width: 580px !important; height: 300px;"
+                                      id="mainwp_notes_note"></textarea>
 			</div>
+                        <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
 			<form>
 				<div style="float: right" id="mainwp_notes_status"></div>
 				<input type="button" class="button cont button-primary" id="mainwp_trusted_plugin_notes_save" value="<?php esc_attr_e( 'Save note', 'mainwp' ); ?>"/>
+                                <input type="button" class="button cont" id="mainwp_notes_edit" value="<?php esc_attr_e( 'Edit','mainwp' ); ?>"/>                
+                                <input type="button" class="button cont" id="mainwp_notes_view" value="<?php esc_attr_e( 'View','mainwp' ); ?>"/>                
 				<input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"/>
 				<input type="hidden" id="mainwp_notes_slug" value=""/>
 			</form>
@@ -695,7 +709,10 @@ class MainWP_Plugins {
 			}
 		}
 
-		MainWP_Cache::addContext( 'Plugins', array( 'keyword' => $keyword, 'the_status' => $status ) );
+		MainWP_Cache::addContext( 'Plugins', array( 'keyword' => $keyword, 'the_status' => $status,
+                                                    'sites'    => ($sites != '') ? $sites : '',
+                                                    'groups'   => ($groups != '') ? $groups : ''
+                                                ) );
 
 		ob_start();
 		?>
@@ -763,7 +780,7 @@ class MainWP_Plugins {
 			<table class="ui-tinytable wp-list-table widefat fixed pages" id="plugins_fixedtable" style="width: auto; word-wrap: normal">
 				<thead>
 				<tr>
-					<th class="headcol" id="cb" style="text-align: center; border-bottom: 1px Solid #e1e1e1; font-size: 18px; z-index:999; padding: auto; width: 15em !important;"><?php _e( 'Child site / Plugin', 'mainwp' ); ?>
+					<th class="headcol" id="cb" style="vertical-align: top;text-align: center; border-bottom: 1px Solid #e1e1e1; font-size: 18px; z-index:999; padding: auto; width: 15em !important;"><?php _e( 'Child site / Plugin', 'mainwp' ); ?>
 						<p style="font-size: 10px; line-height: 12px;"><?php _e( 'Click on the plugin name to select the plugin on all sites or click the site URL to select all plugins on the site.', 'mainwp' ); ?></p>
 					</th>
 					<?php
@@ -771,7 +788,7 @@ class MainWP_Plugins {
                                                 $th_id = strtolower($plugin_name);
                                                 $th_id = preg_replace('/[[:space:]]+/', '_', $th_id);                                                    
 						?>
-                                                <th height="100" width="120" style="padding: 5px;" class="drag-enable" id="<?php echo esc_attr($th_id); ?>">
+                                                <th height="100" width="120" style="padding: 5px;vertical-align: top;" class="drag-enable" id="<?php echo esc_attr($th_id); ?>">
                                                         <div class="table-handle"></div>
 							<div style="max-width: 120px; text-align: center;" title="<?php echo $plugin_title . ( $muPlugins[ $plugin_name ] == 1 ? ' (' . _('Must Use Plugin') . ')' : ''); ?>">
 								<input type="checkbox" value="<?php echo $plugins[$plugin_name]; ?>" id="<?php echo $plugin_name; ?>" version="<?php echo $pluginsRealVersion[$plugin_name]; ?>" class="mainwp_plugin_check_all" style="display: none ;" />

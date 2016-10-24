@@ -189,13 +189,23 @@ public static function renderHeader( $shownPage ) {
 
 	public static function render() {
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Themes' );
+                
+                $selected_sites = $selected_groups = array();                
+                if ($cachedSearch != null) {
+                    if (is_array($cachedSearch['sites'])) {
+                        $selected_sites = $cachedSearch['sites'];
+                    } else if (is_array($cachedSearch['groups'])) {
+                        $selected_groups = $cachedSearch['groups'];
+                    }
+                }
+                
 		self::renderHeader( 'Manage' ); ?>
 		<div class="mainwp-search-form">
 		<div class="mainwp-padding-bottom-10"><?php MainWP_Tours::renderSearchThemesTours(); ?></div>
 			<div class="mainwp-postbox">
 				<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_search_themes'); ?>				
 			</div>
-			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
+			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
 			<div style="clear: both;"></div>
 			<input type="button" name="mainwp_show_themes" id="mainwp_show_themes" class="button-primary button button-hero mainwp-button-right" value="<?php _e( 'Show themes', 'mainwp' ); ?>"/>
 			<br /><br />
@@ -399,7 +409,10 @@ public static function renderHeader( $shownPage ) {
 			}
 		}
 
-		MainWP_Cache::addContext( 'Themes', array( 'keyword' => $keyword, 'the_status' => $status ) );
+		MainWP_Cache::addContext( 'Themes', array( 'keyword' => $keyword, 'the_status' => $status, 
+                                                            'sites'    => ($sites != '') ? $sites : '',
+                                                            'groups'   => ($groups != '') ? $groups : ''
+                                                        ) );
 
 		ob_start();
 		?>
@@ -460,7 +473,7 @@ public static function renderHeader( $shownPage ) {
 			<table class="wp-list-table widefat fixed pages" id="themes_fixedtable" style="width: auto; word-wrap: normal">
 				<thead>
 				<tr>
-					<th class="headcol" id="cb" style="text-align: center; border-bottom: 1px Solid #e1e1e1; font-size: 18px; z-index:999; padding: auto; width: 15em !important;"><?php _e( 'Child site / Theme', 'mainwp' ); ?>
+					<th class="headcol" id="cb" style="vertical-align: top;text-align: center; border-bottom: 1px Solid #e1e1e1; font-size: 18px; z-index:999; padding: auto; width: 15em !important;"><?php _e( 'Child site / Theme', 'mainwp' ); ?>
 						<p style="font-size: 10px; line-height: 12px;"><?php _e( 'Click on the theme name to select the theme on all sites or click the Site URL to select all themes on the site.', 'mainwp' ); ?></p>
 					</th>
 					<?php
@@ -468,7 +481,7 @@ public static function renderHeader( $shownPage ) {
                                                 $th_id = strtolower($theme_name);
                                                 $th_id = preg_replace('/[[:space:]]+/', '_', $th_id);
 						?>
-						<th height="100" style="padding: 5px;" class="drag-enable" id="<?php echo $th_id; ?>">
+						<th height="100" style="vertical-align: top;padding: 5px;" class="drag-enable" id="<?php echo $th_id; ?>">
                                                         <div class="table-handle"></div>
 							<div style="max-width: 120px; text-align: center;" title="<?php echo $theme_title; ?>" >
 								<input type="checkbox" value="<?php echo $themes[$theme_name]; ?>" id="<?php echo $theme_name; ?>" version="<?php echo $themesRealVersion[$theme_name]; ?>" class="mainwp_theme_check_all" style="display: none ;" />
@@ -761,13 +774,17 @@ public static function renderHeader( $shownPage ) {
 			<div id="mainwp_notes_title" class="mainwp_popup_title"></span>
 			</div>
 			<div id="mainwp_notes_content">
-                <textarea style="width: 580px !important; height: 300px;"
-                          id="mainwp_notes_note"></textarea>
+                            <div id="mainwp_notes_html" style="width: 580px !important; height: 300px;"></div>
+                            <textarea style="width: 580px !important; height: 300px;"
+                                      id="mainwp_notes_note"></textarea>
 			</div>
+                        <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
 			<form>
 				<div style="float: right" id="mainwp_notes_status"></div>
-				<input type="button" class="button cont button-primary" id="mainwp_trusted_theme_notes_save" value="<?php _e( 'Save note', 'mainwp' ); ?>"/>
-				<input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php _e( 'Close', 'mainwp' ); ?>"/>
+				<input type="button" class="button cont button-primary" id="mainwp_trusted_theme_notes_save" value="<?php esc_attr_e( 'Save note', 'mainwp' ); ?>"/>
+                                <input type="button" class="button cont" id="mainwp_notes_edit" value="<?php esc_attr_e( 'Edit','mainwp' ); ?>"/>                
+                                <input type="button" class="button cont" id="mainwp_notes_view" value="<?php esc_attr_e( 'View','mainwp' ); ?>"/>                                
+				<input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"/>
 				<input type="hidden" id="mainwp_notes_slug" value=""/>
 			</form>
 		</div>

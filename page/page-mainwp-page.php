@@ -157,7 +157,16 @@ class MainWP_Page {
 		}
 
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Page' );
-
+                
+                $selected_sites = $selected_groups = array();
+                if ($cachedSearch != null) {
+                    if (is_array($cachedSearch['sites'])) {
+                        $selected_sites = $cachedSearch['sites'];
+                    } else if (is_array($cachedSearch['groups'])) {
+                        $selected_groups = $cachedSearch['groups'];
+                    }
+                }
+                
 		//Loads the page screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
 		?>   
 		<?php self::renderHeader( 'BulkManage' ); ?>
@@ -166,7 +175,7 @@ class MainWP_Page {
 			<div class="mainwp-postbox">
 				<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_search_pages'); ?>				
 			</div>
-			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
+			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
 			<div style="clear: both;"></div>
             <input type="button" name="mainwp_show_pages" id="mainwp_show_pages" class="button-primary button button-hero mainwp-button-right" value="<?php _e( 'Show pages', 'mainwp' ); ?>"/>
             <br/><br/>
@@ -418,7 +427,11 @@ class MainWP_Page {
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_pages', $post_data, array( MainWP_Page::getClassName(), 'PagesSearch_handler' ), $output );
 		}
 
-		MainWP_Cache::addContext( 'Page', array( 'count' => $output->pages, 'keyword' => $keyword, 'dtsstart' => $dtsstart, 'dtsstop' => $dtsstop, 'status' => $status ) );
+		MainWP_Cache::addContext( 'Page', array( 'count' => $output->pages, 'keyword' => $keyword, 'dtsstart' => $dtsstart, 'dtsstop' => $dtsstop, 'status' => $status,
+                        'sites'    => ($sites != '') ? $sites : '',
+                        'groups'   => ($groups != '') ? $groups : ''
+                ));
+                
 		//Sort if required
 
 		if ( $output->pages == 0 ) {

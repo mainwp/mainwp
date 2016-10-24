@@ -44,10 +44,9 @@ class MainWP_Server_Information {
 		<div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
 				src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
 		<h2><i class="fa fa-server"></i> <?php _e( 'Server Information', 'mainwp' ); ?></h2>
-		<div style="clear: both;"></div><br/>
+		<div class="mainwp-clear"></div><br/>
 
-		<div class="clear"></div>
-		<div class="wrap">
+		<div class="mainwp-clear"></div>
 		<div class="mainwp-tabs" id="mainwp-tabs">
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === '' ) {
 				echo 'nav-tab-active';
@@ -76,7 +75,6 @@ class MainWP_Server_Information {
 public static function renderFooter( $shownPage ) {
 	?>
 	</div>
-	</div>
 	<?php
 }
 
@@ -89,16 +87,19 @@ public static function renderFooter( $shownPage ) {
 
 		self::renderHeader( '' );
 		?>
-		<div class="updated below-h2">
-			<p><?php _e( 'Please include this information when requesting support:', 'mainwp' ); ?></p>
-			<span class="mwp_close_srv_info"><a href="#" id="mwp_download_srv_info"><?php _e( 'Download', 'mainwp' ); ?></a> | <a href="#" id="mwp_close_srv_info"><i class="fa fa-eye-slash"></i> <?php _e( 'Hide', 'mainwp' ); ?>
-				</a></span>
-
-			<p class="submit">
-				<a class="button-primary mwp-get-system-report-btn" href="#"><?php _e( 'Get System Report', 'mainwp' ); ?></a>
-			</p>
-
-			<div id="mwp-server-information"><textarea readonly="readonly" wrap="off"></textarea></div>
+		<div class="postbox">
+			<div class="mainwp-postbox-actions-top">
+				<?php _e( 'Please include this information when requesting support:', 'mainwp' ); ?>
+			</div>
+			<div class="mainwp-padding-10">
+				<span class="mwp_close_srv_info">
+					<a href="#" id="mwp_download_srv_info"><?php _e( 'Download', 'mainwp' ); ?></a> | <a href="#" id="mwp_close_srv_info"><i class="fa fa-eye-slash"></i> <?php _e( 'Hide', 'mainwp' ); ?></a>
+				</span>
+					<a class="button button-primary mwp-get-system-report-btn" href="#"><?php _e( 'Get System Report', 'mainwp' ); ?></a>
+				<div id="mwp-server-information">
+					<textarea readonly="readonly" wrap="off"></textarea>
+				</div>
+			</div>
 		</div>
 		<br/>
 		<div class="mwp_server_info_box">
@@ -119,13 +120,35 @@ public static function renderFooter( $shownPage ) {
 					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'MAINWP DASHBOARD', 'mainwp' ); ?></td>
 				</tr>
 				<tr>
-					<td><?php MainWP_Utility::renderToolTip( 'MainWP requires the latest version to be installed for extension and child plugin compatibility issues.', 'mainwp' ); ?></td>
+                                        <td class="mwp-not-generate-row"><?php MainWP_Utility::renderToolTip( 'MainWP requires the latest version to be installed for extension and child plugin compatibility issues.', 'mainwp' ); ?></td>
 					<td><?php _e( 'MainWP Dashboard Version', 'mainwp' ); ?></td>
 					<td><?php echo self::getMainWPVersion(); ?></td>
 					<td><?php echo self::getCurrentVersion(); ?></td>
 					<td><?php echo self::getMainWPVersionCheck(); ?></td>
 				</tr>
 				<?php self::checkDirectoryMainWPDirectory(); ?>
+				<tr>
+					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'MAINWP EXTENSIONS', 'mainwp' ); ?></td>
+				</tr>
+				<?php
+				$extensions = MainWP_Extensions::loadExtensions();		
+				$extensions_slugs = array();
+                                if (count($extensions) == 0) {
+                                    echo '<tr><td colspan="5">' . __('No installed extensions', 'mainwp') . '</td></tr>';
+                                } 
+				foreach($extensions as $extension) {	
+					$extensions_slugs[] = $extension['slug'];
+				?>
+				<tr>
+                                        <td class="mwp-not-generate-row"><?php MainWP_Utility::renderToolTip( $extension['description'] ); ?></td>
+					<td><?php echo $extension['name']; ?></td>					
+					<td><?php echo $extension['version']; ?></td>					
+					<td><?php echo $extension['activated_key'] == 'Activated' ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>					
+					<td><?php echo $extension['activated_key'] == 'Activated' ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( self::WARNING ); ?></td>					
+				</tr>				
+				<?php
+				}				
+				?>
 				<tr>
 					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'WORDPRESS', 'mainwp' ); ?></td>
 				</tr><?php
@@ -134,6 +157,15 @@ public static function renderFooter( $shownPage ) {
 				self::renderRow( 'MultiSite Disabled', '=', true, 'checkIfMultisite', '', '', null, 'MainWP Plugin has not been tested on WordPress Multisite Setups. There is a chance that some features will not work properly' );
 				?>
 				<tr>
+                                        <td class="mwp-not-generate-row">
+						<a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWP_Utility::renderToolTip( 'MainWP requires the FS_METHOD to be set to direct' ); ?></a>
+					</td>
+					<td><?php _e( 'FileSystem Method', 'mainwp' ); ?></td>
+					<td><?php echo '= ' . 'direct'; ?></td>
+					<td><?php echo self::getFileSystemMethod(); ?></td>
+					<td><?php echo self::getFileSystemMethodCheck(); ?></td>
+				</tr>
+				<tr>
 					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'PHP SETTINGS', 'mainwp' ); ?></td>
 				</tr><?php
 				self::renderRow( 'PHP Version', '>=', '5.3', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.3 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you. Click the help icon to read more.', null, self::ERROR);
@@ -141,6 +173,7 @@ public static function renderFooter( $shownPage ) {
 				self::renderRow( 'PHP Max Execution Time', '>=', '30', 'getMaxExecutionTime', 'seconds', '=', '0', 'Changed by modifying the value max_execution_time in your php.ini file. Click the help icon to read more.' );
 				self::renderRow( 'PHP Max Input Time', '>=', '30', 'getMaxInputTime', 'seconds', '=', '0', 'Required 30 or more for larger backups. Changed by modifying the value max_input_time in your php.ini file. Click the help icon to read more.' );
 				self::renderRow( 'PHP Memory Limit', '>=', '128M', 'getPHPMemoryLimit', '', '', null, 'MainWP requires at least 128MB for proper functioning (256M+ recommended for big backups)', 'filesize' );
+				self::renderRow( 'PCRE Backtracking Limit', '>=', '10000', 'getOutputBufferSize', '', '', null, 'Changed by modifying the value pcre.backtrack_limit in your php.ini file. Click the help icon to read more.' );
 				self::renderRow( 'PHP Upload Max Filesize', '>=', '2M', 'getUploadMaxFilesize', '(2MB+ best for upload of big plugins)', '', null, 'Changed by modifying the value upload_max_filesize in your php.ini file. Click the help icon to read more.', 'filesize' );
 				self::renderRow( 'PHP Post Max Size', '>=', '2M', 'getPostMaxSize', '(2MB+ best for upload of big plugins)', '', null, 'Changed by modifying the value post_max_size in your php.ini file. Click the help icon to read more.', 'filesize' );
 				self::renderRow( 'SSL Extension Enabled', '=', true, 'getSSLSupport', '', '', null, 'Changed by uncommenting the ;extension=php_openssl.dll line in your php.ini file by removing the ";" character. Click the help icon to read more.' );
@@ -159,23 +192,7 @@ public static function renderFooter( $shownPage ) {
 					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'MySQL SETTINGS', 'mainwp' ); ?></td>
 				</tr><?php
 				self::renderRow( 'MySQL Version', '>=', '5.0', 'getMySQLVersion', '', '', null, 'MainWP requires the MySQL version 5.0 or higher. If the condition is not met, MySQL version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you. Click the help icon to read more.', null, self::ERROR );
-
-				?>
-				<tr>
-					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'MISC', 'mainwp' ); ?></td>
-				</tr><?php
-				self::renderRow( 'PCRE Backtracking Limit', '>=', '10000', 'getOutputBufferSize', '', '', null, 'Changed by modifying the value pcre.backtrack_limit in your php.ini file. Click the help icon to read more.' );
-				?>
-				<tr>
-					<td>
-						<a href="http://docs.mainwp.com/child-site-issues/" target="_blank">&nbsp;<?php MainWP_Utility::renderToolTip( 'MainWP requires the FS_METHOD to be set to direct' ); ?></a>
-					</td>
-					<td><?php _e( 'FileSystem Method', 'mainwp' ); ?></td>
-					<td><?php echo '= ' . 'direct'; ?></td>
-					<td><?php echo self::getFileSystemMethod(); ?></td>
-					<td><?php echo self::getFileSystemMethodCheck(); ?></td>
-				</tr><?php
-				?>
+				?>				
 				<tr>
 					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'SERVER INFORMATION', 'mainwp' ); ?></td>
 				</tr>
@@ -187,7 +204,7 @@ public static function renderFooter( $shownPage ) {
 				<tr>
 					<td></td>
 					<td><?php _e( 'Server Name', 'mainwp' ); ?></td>
-					<td colspan="3"><?php self::getSeverName(); ?></td>
+					<td colspan="3"><?php self::getServerName(); ?></td>
 				</tr>
 				<tr>
 					<td></td>
@@ -226,19 +243,14 @@ public static function renderFooter( $shownPage ) {
 				</tr>
 				<tr>
 					<td></td>
-					<td><?php _e( 'Sever self connect', 'mainwp' ); ?></td>
+					<td><?php _e( 'Server self connect', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::serverSelfConnect(); ?></td>
 				</tr>
 				<tr>
 					<td></td>
 					<td><?php esc_html_e( 'User Agent', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getUserAgent(); ?></td>
-				</tr>
-				<tr>
-					<td></td>
-					<td><?php _e( 'Server Admin', 'mainwp' ); ?></td>
-					<td colspan="3"><?php self::getServerAdmin(); ?></td>
-				</tr>
+				</tr>				
 				<tr>
 					<td></td>
 					<td><?php _e( 'Server Port', 'mainwp' ); ?></td>
@@ -246,8 +258,8 @@ public static function renderFooter( $shownPage ) {
 				</tr>
 				<tr>
 					<td></td>
-					<td><?php _e( 'Getaway Interface', 'mainwp' ); ?></td>
-					<td colspan="3"><?php self::getServerGetawayInterface(); ?></td>
+					<td><?php _e( 'Gateway Interface', 'mainwp' ); ?></td>
+					<td colspan="3"><?php self::getServerGatewayInterface(); ?></td>
 				</tr>
 				<tr>
 					<td></td>
@@ -258,22 +270,12 @@ public static function renderFooter( $shownPage ) {
 					<td></td>
 					<td><?php esc_html_e( 'Complete URL', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getCompleteURL(); ?></td>
-				</tr>
-				<tr>
-					<td></td>
-					<td><?php _e( 'Request Method', 'mainwp' ); ?></td>
-					<td colspan="3"><?php self::getServerRequestMethod(); ?></td>
-				</tr>
+				</tr>				
 				<tr>
 					<td></td>
 					<td><?php esc_html_e( 'Request Time', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getServerRequestTime(); ?></td>
-				</tr>
-				<tr>
-					<td></td>
-					<td><?php esc_html_e( 'Query String', 'mainwp' ); ?></td>
-					<td colspan="3"><?php self::getServerQueryString(); ?></td>
-				</tr>
+				</tr>				
 				<tr>
 					<td></td>
 					<td><?php _e( 'Accept Content', 'mainwp' ); ?></td>
@@ -288,27 +290,7 @@ public static function renderFooter( $shownPage ) {
 					<td></td>
 					<td><?php esc_html_e( 'Currently Executing Script Pathname', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getScriptFileName(); ?></td>
-				</tr>
-				<tr>
-					<td></td>
-					<td><?php esc_html_e( 'Server Signature', 'mainwp' ); ?></td>
-					<td colspan="3"><?php self::getServerSignature(); ?></td>
-				</tr>
-				<tr>
-					<td></td>
-					<td><?php esc_html_e( 'Currently Executing Script', 'mainwp' ); ?></td>
-					<td colspan="3"><?php self::getCurrentlyExecutingScript(); ?></td>
-				</tr>
-				<tr>
-					<td></td>
-					<td><?php esc_html_e( 'Path Translated', 'mainwp' ); ?></td>
-					<td colspan="3"><?php self::getServerPathTranslated(); ?></td>
-				</tr>
-				<tr>
-					<td></td>
-					<td><?php esc_html_e( 'Current Script Path', 'mainwp' ); ?></td>
-					<td colspan="3"><?php self::getScriptName(); ?></td>
-				</tr>
+				</tr>																
 				<tr>
 					<td></td>
 					<td><?php esc_html_e( 'Current Page URI', 'mainwp' ); ?></td>
@@ -379,6 +361,26 @@ public static function renderFooter( $shownPage ) {
 					<td style="background: #333; color: #fff;" colspan="5"><?php _e('MAINWP SETTINGS','mainwp'); ?></td>
 				</tr>
 				<?php self::displayMainWPOptions(); ?>
+				<tr>
+					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'WORDPRESS PLUGINS', 'mainwp' ); ?></td>
+				</tr>
+				<?php				
+				$all_extensions = MainWP_Extensions_View::getAvailableExtensions();				
+				$all_plugins = get_plugins();				
+				foreach ( $all_plugins as $slug => $plugin) {						
+					if (isset($all_extensions[dirname($slug)]))
+						continue;					
+				?>
+				<tr>
+                                    <td class="mwp-not-generate-row"><?php MainWP_Utility::renderToolTip( $plugin['Description'] ); ?></td>
+					<td><?php echo $plugin['Name']; ?></td>					
+					<td><?php echo $plugin['Version']; ?></td>					
+					<td><?php echo is_plugin_active($slug) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>					
+					<td>&nbsp;</td>
+				</tr>
+				<?php
+				}				
+				?>
 				</tbody>
 			</table>
 		</div>
@@ -502,8 +504,8 @@ public static function renderFooter( $shownPage ) {
 			<h3 class="mainwp_box_title"><?php _e( 'Child Site Server Information', 'mainwp' ); ?></h3>
 			<div class="inside">
 				<?php _e( 'Select Child Site: ', 'mainwp' ); ?>
-				<select name="" id="mainwp_serverInformation_child" style="margin-right: 2em">
-					<option value="-1"><?php _e( 'Select Child Site', 'mainwp' ); ?></option>
+				<select class="mainwp-select2-super"  data-placeholder="<?php _e( 'Select Child Site', 'mainwp' ); ?>" name="" id="mainwp_serverInformation_child" style="margin-right: 2em">
+					<option value=""></option>
 					<?php
 					while ($websites && ($website = @MainWP_DB::fetch_object($websites)))
 					{
@@ -513,8 +515,8 @@ public static function renderFooter( $shownPage ) {
 					?>
 				</select>
 				<?php _e( 'Select Information: ', 'mainwp' ); ?>
-				<select name="" id="mainwp-server-info-filter">
-					<option value=""><?php _e( 'Full Information', 'mainwp' ); ?></option>
+				<select class="mainwp-select2" name="" data-placeholder="<?php _e( 'Full Information', 'mainwp' ); ?>" id="mainwp-server-info-filter">
+					<option value=""></option>
 					<option value="server-information"><?php _e( 'Server Information', 'mainwp' ); ?></option>
 					<option value="cron-schedules"><?php _e( 'Cron Schedules', 'mainwp' ); ?></option>
 					<option value="wp-config"><?php _e( 'WP-Config.php', 'mainwp' ); ?></option>
@@ -677,7 +679,7 @@ public static function renderFooter( $shownPage ) {
 		$currentVersion = call_user_func(array(MainWP_Server_Information::getClassName(), $pGetter));
 		?>
 		<tr>
-			<td><?php if ( ! empty( $toolTip ) ) { ?>
+			<td class="mwp-not-generate-row"><?php if ( ! empty( $toolTip ) ) { ?>
 					<a href="http://docs.mainwp.com/child-site-issues/" target="_blank"><?php MainWP_Utility::renderToolTip( $toolTip ); ?></a><?php } ?> <?php echo $pConfig; ?></td>
 			<td><?php echo $pCompare; ?>  <?php echo ($pVersion === true ? 'true' : ( is_array($pVersion) && isset($pVersion['version']) ? $pVersion['version'] : $pVersion)) . ' ' . $pExtraText; ?></td>
 			<td><?php echo ($currentVersion === true ? 'true' : $currentVersion); ?></td>
@@ -919,7 +921,7 @@ public static function renderFooter( $shownPage ) {
 		echo $_SERVER['PHP_SELF'];
 	}
 
-	protected static function getServerGetawayInterface() {
+	protected static function getServerGatewayInterface() {
 		echo $_SERVER['GATEWAY_INTERFACE'];
 	}
 
@@ -927,7 +929,7 @@ public static function renderFooter( $shownPage ) {
 		echo $_SERVER['SERVER_ADDR'];
 	}
 
-	protected static function getSeverName() {
+	protected static function getServerName() {
 		echo $_SERVER['SERVER_NAME'];
 	}
 
@@ -1280,7 +1282,7 @@ public static function renderFooter( $shownPage ) {
 			<div style="padding: 1em;">
 				<form method="POST" action="">
 					Status:
-					<select name="actionlogs_status">
+					<select class="mainwp-select2" name="actionlogs_status">
 						<option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php if ( MainWP_Logger::DISABLED == $enabled ) : echo 'selected';
 						endif; ?>>Disabled
 						</option>
@@ -1336,15 +1338,17 @@ public static function renderFooter( $shownPage ) {
 	//todo apply coding rules
 	public static function mainwpOptions() {
 		$mainwp_options = array(
+			'mainwp_number_of_child_sites' => __('Number Of Child Sites','mainwp'),
 			'mainwp_options_footprint_plugin_folder_default' => __('Hide Network on Child Sites','mainwp'),
 			'mainwp_wp_cron' => __('Use WP-Cron','mainwp'),
 			'mainwp_optimize' => __('Optimize for Shared Hosting or Big Networks','mainwp'),
 			'mainwp_seo' => __('Show Basic SEO Stats','mainwp'),
-			'select_mainwp_options_siteview' => __('View Upgrades per Site','mainwp'),
-			'mainwp_backup_before_upgrade' => __('Require Backup Before Upgrade','mainwp'),
+			'select_mainwp_options_siteview' => __('View Updates per Site','mainwp'),
+			'mainwp_backup_before_upgrade' => __('Require Backup Before Update','mainwp'),
 			'mainwp_automaticDailyUpdate' => __('Automatic Daily Update','mainwp'),
-			'mainwp_numberdays_Outdate_Plugin_Theme' => __('Abandoned Plugins/Thems Tolerance','mainwp'),
-			'mainwp_maximumPosts' => __('Maximum Number of Posts/Pages','mainwp'),
+			'mainwp_numberdays_Outdate_Plugin_Theme' => __('Abandoned Plugins/Themes Tolerance','mainwp'),
+			'mainwp_maximumPosts' => __('Maximum number of posts to return','mainwp'),
+                        'mainwp_maximumPages' => __('Maximum number of pages to return','mainwp'),
 			'mainwp_maximumComments' => __('Maximum Number of Comments','mainwp'),
 			'mainwp_primaryBackup' => __('Primary Backup System','mainwp'),
 			'mainwp_backupsOnServer' => __('Backups on Server','mainwp'),
@@ -1359,12 +1363,24 @@ public static function renderFooter( $shownPage ) {
 			'mainwp_maximumIPRequests' => __('Maximum simultaneous requests per ip','mainwp'),
 			'mainwp_minimumIPDelay' => __('Minimum delay between requests to the same ip','mainwp')
 		);
+		
+		if ( !MainWP_Extensions::isExtensionAvailable('mainwp-comments-extension') ) {
+			unset($mainwp_options['mainwp_maximumComments']);
+		}		
+		
+		$seo_retired = get_option('mainwp_seo_retired', null);		
+		if ($seo_retired == 'yes') {
+			unset($mainwp_options['mainwp_seo']);			
+		}
 
 		$options_value = array();
 		$userExtension = MainWP_DB::Instance()->getUserExtension();
 		foreach($mainwp_options as $opt => $label){
 			$value  = get_option($opt, false);
 			switch($opt) {
+				case 'mainwp_number_of_child_sites':							
+					$value = MainWP_DB::Instance()->getWebsitesCount();
+					break;
 				case 'mainwp_options_footprint_plugin_folder_default':
 					$pluginDir = (($userExtension == null) || (($userExtension->pluginDir == null) || ($userExtension->pluginDir == '')) ? 'default' : $userExtension->pluginDir);
 					$value = ($pluginDir == 'hidden' ? 'Yes' : 'No');
@@ -1382,8 +1398,8 @@ public static function renderFooter( $shownPage ) {
 					break;
 				case 'mainwp_numberdays_Outdate_Plugin_Theme';
 				case 'mainwp_maximumPosts';
+                                case 'mainwp_maximumPages';                                    
 				case 'mainwp_maximumComments';
-
 					break;
 				case 'mainwp_archiveFormat':
 

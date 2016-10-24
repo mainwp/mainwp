@@ -2,15 +2,13 @@
 
 class MainWP_Extensions_View {
 	public static function initMenu() {
-
-		add_submenu_page( 'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
+		return add_submenu_page( 'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
 			MainWP_Extensions::getClassName(),
 			'render'
 		) );
 	}
 
 	public static function renderHeader( $shownPage, &$extensions ) {
-
 		?>
 		<div class="wrap">
 		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
@@ -18,115 +16,9 @@ class MainWP_Extensions_View {
 				alt="MainWP"/></a>
 		<h2><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h2>
 		<div style="clear: both;"></div><br/><br/>
-		<?php if ( $shownPage === '' ) {
-			$loader_url = '<i class="fa fa-spinner fa-pulse"></i>';
-			if ( mainwp_current_user_can( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
-
-				$username     = $password = '';
-				$checked_save = false;
-				if ( get_option( 'mainwp_extensions_api_save_login' ) == true ) {
-					$enscrypt_u   = get_option( 'mainwp_extensions_api_username' );
-					$enscrypt_p   = get_option( 'mainwp_extensions_api_password' );
-					$username     = ! empty( $enscrypt_u ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_u ) : '';
-					$password     = ! empty( $enscrypt_p ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_p ) : '';
-					$checked_save = true;
-				}
-
-				if ( ! MainWP_Utility::resetUserCookie( 'api_bulk_install' ) ) {
-					?>
-					<span id="mainwp_api_postbox_reset_showhide"></span>
-					<?php
-				}
-				?>
-
-				<div class="postbox mainwp_api_postbox" section="1">
-					<!-- <div class="handlediv"><br></div> -->
-					<h3 class="mainwp_box_title">
-						<span><i class="fa fa-cog"></i> <?php _e( 'Bulk install and activate extensions', 'mainwp' ); ?></span>
-					</h3>
-
-					<div class="mainwp-inside" style="clear: both;">
-						<div style="padding: 0 5px;">
-							<?php
-
-							if ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) {
-								update_option( 'mainwp_api_sslVerifyCertificate', 0 );
-							}
-
-							//                $apisslverify = get_option('mainwp_api_sslVerifyCertificate');
-							//                if (defined('OPENSSL_VERSION_NUMBER') && (OPENSSL_VERSION_NUMBER <= 0x009080bf) && ($apisslverify === false)) {
-							//                    $apisslverify = 0;
-							//                    MainWP_Utility::update_option("mainwp_api_sslVerifyCertificate", $apisslverify);
-							//                }
-							//                $_selected_1 = (($apisslverify === false) || ($apisslverify == 1)) ? "selected" : '';
-							//                $_selected_0 = empty($_selected_1) ? "selected" : "";
-
-							?>
-
-							<strong><?php _e( 'Step 1', 'mainwp' ); ?></strong>
-
-							<p>
-								<span class="description"><?php _e( 'Enter your MainWP (https://mainwp.com/) login to automatically install and activate purchased extensions.' ); ?></span>
-							</p>
-							<span><?php _e( 'MainWP extensions Login:', 'mainwp' ); ?></span><br/><br/>
-
-							<div class="api-grabbing-fields">
-								<input type="text" class="input username" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" value="<?php echo $username; ?>"/>&nbsp;
-								<input type="password" class="input passwd" placeholder="<?php esc_attr_e( 'Password', 'mainwp' ); ?>" value="<?php echo $password; ?>"/>&nbsp;
-								<label><input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e( 'Check to save API login', 'mainwp' ); ?>
-								</label>
-							</div>
-							<p>
-				<span class="extension_api_loading">
-					<input type="button" class="button-primary button button-hero" id="mainwp-extensions-savelogin" value="<?php _e( 'Save login', 'mainwp' ); ?>">
-					<i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
-				</span>
-							</p>
-
-							<p>
-							<hr>
-							</p>
-							<strong><?php _e( 'Step 2', 'mainwp' ); ?></strong>
-
-							<div id="mainwp-install-purchased-extensions">
-								<p>
-									<span class="description"><?php echo sprintf( __( 'The show purchased extensions button will show you all your MainWP extensions. After the list appears, you can select wanted extensions and install them automatically. You can also install them manually using the directions %shere%s.', 'mainwp' ), '<a href="http://docs.mainwp.com/how-to-install-mainwp-extensions/" >', '</a>' ); ?></span>
-								</p>
-
-								<p>
-				<span class="extension_api_loading">
-					<input type="button" class="mainwp-upgrade-button button-primary button button-hero" id="mainwp-extensions-bulkinstall" value="<?php _e( 'Show purchased extensions', 'mainwp' ); ?>">
-					<i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
-				</span>
-								</p>
-							</div>
-							<p>
-							<hr>
-							</p>
-							<strong><?php _e( 'Step 3', 'mainwp' ); ?></strong>
-
-							<p>
-								<span class="description"><?php echo sprintf( __( 'The grab API Keys will automatically add your API Keys for extension automatic updates. You can also manually enter your API for each Extension following the steps %shere%s.', 'mainwp' ), '<a href="http://docs.mainwp.com/enter-extensions-api-keys/" >', '</a>' ); ?></span>
-							</p>
-
-							<p>
-				<span class="extension_api_loading">
-					<input type="button" class="mainwp-upgrade-button button-primary button button-hero" id="mainwp-extensions-grabkeys" value="<?php _e( 'Grab API keys', 'mainwp' ); ?>">
-					<i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
-				</span>
-							</p>
-
-							<div style="clear: both;"></div>
-						</div>
-					</div>
-				</div>
-			<?php } ?>
-		<?php } ?>
-
+		
 		<div class="mainwp-tabs" id="mainwp-tabs">
-			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === '' ) {
-				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=Extensions"><?php _e( 'Manage extensions', 'mainwp' ); ?></a>
+			<a class="nav-tab pos-nav-tab" href="admin.php?page=Extensions"><?php _e( 'Manage Extensions', 'mainwp' ); ?></a>
 			<?php
 			if ( isset( $extensions ) && is_array( $extensions ) ) {
 				foreach ( $extensions as $extension ) {
@@ -144,256 +36,311 @@ class MainWP_Extensions_View {
 		<?php
 	}
 
-	public static function renderFooter( $shownPage, &$extensions ) {
+	public static function renderFooter( $shownPage ) {
 
 		?>
 		</div>
 		</div>
 		<?php
 	}
-
-	public static function render( &$extensions ) {
-
-		$loader_url = '<i class="fa fa-spinner fa-pulse"></i>';
-		if ( mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
-
-		<?php } ?>
-		<div class="postbox">
-		<div class="handlediv"><br></div>
-		<h3 class="mainwp_box_title">
-			<span><?php printf( _n( '%d Installed MainWP extension', '%d Installed MainWP extensions', ( count( $extensions ) == 1 ? 1 : 2 ), 'mainwp' ), count( $extensions ) ); ?></span>
-		</h3>
-
-
-		<div id="mainwp-extensions-wrap">
-			<?php if ( count( $extensions ) == 0 ) { ?>
-				<div class="inside">
-					<div class="mainwp_info-box-blue">
-						<h3><?php _e( 'What are extensions?', 'mainwp' ); ?></h3>
-						<?php _e( 'Extensions are specific features or tools created for the purpose of expanding the basic functionality of MainWP.', 'mainwp' ); ?>
-						<h3><?php _e( 'Why have extensions?', 'mainwp' ); ?></h3>
-						<?php _e( 'The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat. Extensions offer custom functions and features so that each user can tailor their MainWP to their specific needs.', 'mainwp' ); ?>
-						<p>
-							<a href="https://mainwp.com/extensions/"><?php _e( 'Download your first extension now.', 'mainwp' ); ?></a>
-						</p>
-					</div>
-				</div>
-			<?php } else {
-				?>
-				<div style="background: #eee; padding: 1em .6em;">
-					<a class="mainwp_action left mainwp_action_down" href="#" id="mainwp-extensions-expand"><?php _e( 'Expand', 'mainwp' ); ?></a><a class="mainwp_action right" href="#" id="mainwp-extensions-collapse"><?php _e( 'Collapse', 'mainwp' ); ?></a>
-					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
-						<div style="float: right; margin-top: -3px;">
-							<!--							<a href="#" class="button mainwp-extensions-disable-all"><?php _e( 'Disable All', 'mainwp' ); ?></a>
-							<a href="#" class="button-primary mainwp-extensions-enable-all"><?php _e( 'Enable All', 'mainwp' ); ?></a>-->
-							<a href="<?php echo admin_url( 'plugin-install.php?tab=upload' ); ?>" class="mainwp-upgrade-button button-primary button"><?php _e( 'Install New Extension', 'mainwp' ); ?></a>
-						</div>
-						<div style="clear: both;"></div>
-					<?php } ?>
-				</div>
-				<div id="mainwp-extensions-list">
-					<?php
-					$user_can_manage_extensions = mainwp_current_user_can( 'dashboard', 'manage_extensions' );
-					$available_exts_data = MainWP_Extensions_View::getAvailableExtensions();
-					if ( isset( $extensions ) && is_array( $extensions ) ) {
-						foreach ( $extensions as $extension ) {
-							if ( ! mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
-								continue;
-							}
-							$active = MainWP_Extensions::isExtensionActivated( $extension['plugin'] );
-							$added_on_menu = MainWP_Extensions::addedOnMenu( $extension['slug'] );
-							$ext_data = isset( $available_exts_data[dirname($extension['slug'])] ) ? $available_exts_data[dirname($extension['slug'])] : array();
-							$queue_status = '';
-
-							if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) {
-								$queue_status = 'status="queue"';
-							}
-							?>
-							<div class="mainwp-extensions-childHolder" extension_slug="<?php echo $extension['slug']; ?>" <?php echo $queue_status; ?> license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
-								<table style="width: 100%">
-									<td class="mainwp-extensions-childIcon">
-										<?php
-										if ( isset($ext_data['img']) ) {
-											$img_url = $ext_data['img'];
-										} else if ( isset( $extension['iconURI'] ) && $extension['iconURI'] != '' )  {
-											$img_url = MainWP_Utility::removeHttpPrefix( $extension['iconURI'] );
-										} else {
-											$img_url = plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) );
-										}
-										?>
-										<img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" class="mainwp-extensions-img large" />
-									</td>
-									<td valign="top">
-										<table style="width: 100%">
-											<tr>
-												<td class="mainwp-extensions-childName">
-													<?php
-													if ( isset( $extension['direct_page'] ) && ! empty( $extension['direct_page'] ) ) {
-														?>
-														<a href="<?php echo admin_url( 'admin.php?page=' . $extension['direct_page'] ); ?>" style="text-decoration: none;">
-															<?php echo $extension['name']; ?>
-														</a>
-													<?php } else if ( isset( $extension['callback'] ) ) {
-														?>
-														<a href="<?php echo admin_url( 'admin.php?page=' . $extension['page'] ); ?>" style="text-decoration: none;">
-															<?php echo $extension['name']; ?>
-														</a>
-													<?php } else {
-														echo $extension['name'];
-													} ?>
-												</td>
-												<td class="mainwp-extensions-childVersion"><?php echo $extension['version']; ?></td>
-												<td class="mainwp-extensions-childActions">
-													<?php if ($added_on_menu) { ?>
-														<button class="button mainwp-extensions-remove-menu"><?php _e('Remove from MainWP menu','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-													<?php } else {  ?>
-														<button class="button-primary mainwp-extensions-add-menu" ><?php _e('Add to MainWP menu','mainwp'); ?></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-													<?php } ?>
-													<?php if (isset($extension['apiManager']) && $extension['apiManager']) { ?>
-														<?php if ($active) { ?>
-															<a href="javascript:void(0)" class="mainwp-extensions-api-activation api-status activated" ><i class="fa fa-unlock" style="font-size: 18px;"></i>&nbsp;&nbsp;&nbsp;<?php _e('Update Notification Enabled','mainwp'); ?></a>
-														<?php } else { ?>
-															<a href="javascript:void(0)" class="mainwp-extensions-api-activation api-status deactivated" ><i class="fa fa-lock" style="font-size: 18px;"></i>&nbsp;&nbsp;&nbsp;<?php _e('Add API to Enable Update Notification','mainwp'); ?></a>
-														<?php } ?>
-													<?php } ?>
-
-												</td>
-											</tr>
-											<tr class="mainwp-extensions-extra mainwp-extension-description">
-												<td colspan="3">
-													<br/><br/><?php echo preg_replace( '/\<cite\>.*\<\/cite\>/', '', $extension['description'] ); ?>
-													<br/><br/></td>
-											</tr>
-											<tr class="mainwp-extensions-links">
-												<td colspan="3">
-													<?php printf( __( 'By %s', 'mainwp' ), str_replace( array(
-														'http:',
-														'https:'
-													), '', $extension['author'] ) ); ?>
-													<?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' | <a href="' . str_replace( array(
-															'http:',
-															'https:'
-														), '', $extension['DocumentationURI'] ) . '" target="_blank" title="' . __( 'Documentation', 'mainwp' ) . '">' . __( 'Documentation', 'mainwp' ) . '</a>' : ''; ?>
-													<?php echo ( isset( $extension['SupportForumURI'] ) && ! empty( $extension['SupportForumURI'] ) ) ? ' | <a href="' . str_replace( array(
-															'http:',
-															'https:'
-														), '', $extension['SupportForumURI'] ) . '" target="_blank" title="' . __( 'Support forum', 'mainwp' ) . '">' . __( 'Support forum', 'mainwp' ) . '</a>' : ''; ?>
-													<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
-														<?php echo ' | <a href="#" class="mainwp-extensions-api-activation" >' . __( 'Enter API key', 'mainwp' ) . '</a>'; ?>
-													<?php } ?>
-												</td>
-											</tr>
-											<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
-												<tr class="mainwp-extensions-api-row">
-													<td colspan="3">
-														<div class="api-row-div">
-															<span>
-																<input type="text" class="input api_key" placeholder="<?php esc_attr_e( 'API license key', 'mainwp' ); ?>" value="<?php echo $extension['api_key']; ?>"/>
-																<input type="text" class="input api_email" placeholder="<?php esc_attr_e( 'API license email', 'mainwp' ); ?>" value="<?php echo $extension['activation_email']; ?>"/>
-																<input type="button" class="button-primary mainwp-extensions-activate" value="<?php esc_attr_e( 'Activate', 'mainwp' ); ?>">
-																<span class="mainwp_loading"><i class="fa fa-spinner fa-pulse"></i></span>
-															</span>
-															<span style="float:right">
-																<?php _e( 'Deactivate license key', 'mainwp' ); ?>
-																<input type="checkbox" class="mainwp-extensions-deactivate-chkbox" <?php echo $extension['deactivate_checkbox'] == 'on' ? 'checked' : ''; ?>>
-																<input type="button" class="button-primary mainwp-extensions-deactivate" value="<?php _e( 'Deactivate', 'mainwp' ); ?>">
-															</span>
-														</div>
-														<span class="activate-api-status hidden"></span>
-													</td>
-												</tr>
-											<?php } ?>
-										</table>
-									</td>
-								</table>
-							</div>
-
-							<?php
-						}
-					}
-					?>
-
-				</div>
-				<?php
-			}
-			?>
-		</div></div><?php
-		self::mainwpAvailableExtensions( $extensions );
+	
+	public static function render() {
+		MainWP_Tours::renderExtensionsTour();
+		MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_manage_extensions');
 	}
+	
+	public static function renderInstallAndActive() {
+		$username     = $password = '';
+		$checked_save = false;
+		if ( get_option( 'mainwp_extensions_api_save_login' ) == true ) {
+			$enscrypt_u   = get_option( 'mainwp_extensions_api_username' );
+			$enscrypt_p   = get_option( 'mainwp_extensions_api_password' );
+			$username     = ! empty( $enscrypt_u ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_u ) : '';
+			$password     = ! empty( $enscrypt_p ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_p ) : '';
+			$checked_save = true;
+		}
+		
+		if ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) {
+			update_option( 'mainwp_api_sslVerifyCertificate', 0 );
+		}
+		?>
+		<div class="mainwp-postbox-actions-top">
+			<strong><?php _e( 'Step 1', 'mainwp' ); ?>: </strong><?php _e( 'Enter your MainWP (https://mainwp.com/) login to automatically install and activate purchased extensions.' ); ?>
+		</div>
+		<div class="inside">
+			<h4><?php _e( 'MainWP extensions Login:', 'mainwp' ); ?></h4>
+			<div class="api-grabbing-fields">
+				<input type="text" id="mainwp_com_username" class="input username" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" value="<?php echo $username; ?>"/>&nbsp;
+				<input type="password" id="mainwp_com_password" class="input passwd" placeholder="<?php esc_attr_e( 'Password', 'mainwp' ); ?>" value="<?php echo $password; ?>"/>&nbsp;
+				<label><input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e( 'Check to save API login', 'mainwp' ); ?>
+				</label>
+			</div>
+			<p>
+				<span class="extension_api_loading">
+					<input type="button" class="button-primary button button-hero" id="mainwp-extensions-savelogin" value="<?php _e( 'Save Login', 'mainwp' ); ?>">
+					<span class="mainwp-large mainwp-padding-top-20" style="display: block;"><i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span></span>
+				</span>
+			</p>
+		</div>
+		<div class="mainwp-postbox-actions-mid">
+			<strong><?php _e( 'Step 2', 'mainwp' ); ?>: </strong><?php echo sprintf( __( 'The show purchased extensions button will show you all your MainWP Extensions. After the list appears, you can select wanted extensions and install them automatically. You can also install them manually using the directions %shere%s.', 'mainwp' ), '<a href="http://docs.mainwp.com/how-to-install-mainwp-extensions/" >', '</a>' ); ?>
+		</div>
+		<div class="inside">
+			<div id="mainwp-install-purchased-extensions" class="mainwp-padding-top-10 mainwp-padding-bottom-10">
+				<span class="extension_api_loading">
+					<input type="button" class="mainwp-upgrade-button button-primary button button-hero" id="mainwp-extensions-bulkinstall" value="<?php _e( 'Show purchased extensions', 'mainwp' ); ?>">
+					<span class="mainwp-large mainwp-padding-top-20" style="display: block;"><i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span></span>
+				</span>
+			</div>
+		</div>
+		<div class="mainwp-postbox-actions-mid">
+			<strong><?php _e( 'Step 3', 'mainwp' ); ?>: </strong><?php echo sprintf( __( 'The grab API Keys will automatically add your API Keys for extension automatic updates. You can also manually enter your API for each Extension following the steps %shere%s.', 'mainwp' ), '<a href="http://docs.mainwp.com/enter-extensions-api-keys/" >', '</a>' ); ?>
+		</div>
+		<div class="inside">
+			<div class="mainwp-padding-top-10 mainwp-padding-bottom-10">
+				<span class="extension_api_loading">
+					<input type="button" class="mainwp-upgrade-button button button-hero" id="mainwp-extensions-grabkeys" value="<?php _e( 'Grab Api Keys', 'mainwp' ); ?>">
+					<span class="mainwp-large mainwp-padding-top-20" style="display: block;"><i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span></span>
+				</span>
+			</div>
+		</div>
+		<?php
+	}
+	
+	public static function renderInstalledExtensions($post, $metabox) {	
+	$extensions = isset($metabox['args']['extensions']) ? $metabox['args']['extensions'] : array();		
+	if ( !is_array( $extensions ) )
+		$extensions = array();	
+	
+	?>
+	<?php if ( count( $extensions ) == 0 ) { ?>
+		<div class="mainwp-notice mainwp-notice-blue">
+			<h3><?php _e( 'What are extensions?', 'mainwp' ); ?></h3>
+			<?php _e( 'Extensions are specific features or tools created for the purpose of expanding the basic functionality of MainWP.', 'mainwp' ); ?>
+			<h3><?php _e( 'Why have extensions?', 'mainwp' ); ?></h3>
+			<?php _e( 'The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat. Extensions offer custom functions and features so that each user can tailor their MainWP to their specific needs.', 'mainwp' ); ?>
+			<p>
+				<a href="https://mainwp.com/mainwp-extensions/"><?php _e( 'Download your first extension now.', 'mainwp' ); ?></a>
+			</p>
+		</div>
+	<?php } else { ?>
+		<div class="mainwp-postbox-actions-top">
+            <a class="mainwp_action left mainwp_action_down" href="#" id="mainwp-extensions-expand"><?php _e( 'Expand', 'mainwp' ); ?></a><a class="mainwp_action right" href="#" id="mainwp-extensions-collapse"><?php _e( 'Collapse', 'mainwp' ); ?></a>
+            <?php if ( mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
+                <div style="float: right; margin-top: -3px;">                           
+                    <a href="<?php echo admin_url( 'plugin-install.php?tab=upload' ); ?>" class="mainwp-upgrade-button button-primary button"><?php _e( 'Install New Extension', 'mainwp' ); ?></a>
+                </div>
+                <div class="mainwp-clear"></div>
+            <?php } ?>
+        </div>
+        <div class="inside">
+		<div id="mainwp-extensions-list" class="wp-list-table widefat plugin-install">
+			<div id="the-list">
+			<?php					
+				$available_exts_data = MainWP_Extensions_View::getAvailableExtensions();
+				if ( isset( $extensions ) && is_array( $extensions ) ) {
+					foreach ( $extensions as $extension ) {
+						if ( ! mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
+							continue;
+						}
+						$active = MainWP_Extensions::isExtensionActivated( $extension['slug'] );
+						$added_on_menu = MainWP_Extensions::addedOnMenu( $extension['slug'] );
+						$ext_data = isset( $available_exts_data[dirname($extension['slug'])] ) ? $available_exts_data[dirname($extension['slug'])] : array();
+						$queue_status = '';
 
-	public static function mainwpAvailableExtensions( $extensions ) {
+						if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) {
+							$queue_status = 'status="queue"';
+						}
 
+						if ( isset($ext_data['img']) ) {
+                            $img_url = $ext_data['img'];
+                        } else if ( isset( $extension['iconURI'] ) && $extension['iconURI'] != '' )  {
+                            $img_url = MainWP_Utility::removeHttpPrefix( $extension['iconURI'] );
+                        } else {
+                            $img_url = plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) );
+                        }
+
+                        if ( isset( $extension['direct_page'] ) && ! empty( $extension['direct_page'] ) ) {
+                        	$extension_page_url = admin_url( 'admin.php?page=' . $extension['direct_page'] );
+                        } else if ( isset( $extension['callback'] ) ) {
+                        	$extension_page_url = admin_url( 'admin.php?page=' . $extension['page'] );
+                        } else {
+                        	$extension_page_url = admin_url( 'admin.php?page=Extensions' );
+                        }
+
+                        if ( $added_on_menu ) {
+                        	$extensino_to_menu_buton = '<button class="button mainwp-extensions-remove-menu">' . __('Remove from menu','mainwp') . '</button>';
+                        } else {
+                        	$extensino_to_menu_buton = '<button class="button-primary mainwp-extensions-add-menu" >' . __('Add to menu','mainwp') . '</button>';
+                  		}
+
+                  		if (isset($extension['apiManager']) && $extension['apiManager']) { 
+                            if ($active) { 
+                               $extension_api_status = '<a href="javascript:void(0)" class="mainwp-extensions-api-activation api-status mainwp-green"><i class="fa fa-unlock"></i> ' . __('Update Notification Enabled','mainwp') . '</a>';
+                            } else { 
+                               $extension_api_status = '<a href="javascript:void(0)" class="mainwp-extensions-api-activation api-status mainwp-red"><i class="fa fa-lock"></i> ' . __('Add API to Enable Update Notification','mainwp') . '</a>';
+                            } 
+                        }
+
+						?>
+					
+							<div class="plugin-card plugin-card-<?php echo $extension['name']; ?>" extension_slug="<?php echo $extension['slug']; ?>" <?php echo $queue_status; ?> license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
+								<div class="plugin-card-top">
+									<div class="name column-name">
+										<h3>
+											<a href="<?php echo $extension_page_url; ?>">
+												<?php echo $extension['name']; ?>
+												<img src="<?php echo $img_url; ?>" title="<?php echo $extension['name']; ?>" alt="<?php echo $extension['name']; ?>" class="plugin-icon mainwp-extension-icon"/>
+											</a>
+										</h3>
+									</div>
+									<div class="action-links">
+										<ul class="plugin-action-buttons">
+											<li><?php echo $extensino_to_menu_buton; ?></li>
+											<li>
+											<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
+                                                <?php echo '<a href="#" class="mainwp-extensions-api-activation" ><i class="fa fa-key" aria-hidden="true"></i> ' . __( 'Enter API Key', 'mainwp' ) . '</a>'; ?>
+                                            <?php } ?>
+											</li>
+										</ul>
+									</div>
+									<div class="desc column-description">
+										<p class="extension-description"><?php echo preg_replace( '/\<cite\>.*\<\/cite\>/', '', $extension['description'] ); ?></p>
+										<p class="authors">
+											<cite>
+												<?php printf( __( 'By %s', 'mainwp' ), str_replace( array(
+                                                    'http:',
+                                                    'https:'
+                                                ), '', $extension['author'] ) ); ?>
+                                                <?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' | <a href="' . str_replace( array(
+                                                        'http:',
+                                                        'https:'
+                                                ), '', $extension['DocumentationURI'] ) . '" target="_blank" title="' . __( 'Documentation', 'mainwp' ) . '">' . __( 'Documentation', 'mainwp' ) . '</a>' : ''; ?>
+											</cite>
+										</p>
+									</div>
+								</div>
+								<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
+								<div class="mainwp-extensions-api-row">
+									<div class="api-row-div">
+                                        <div class="mainwp-cols-1">
+                                        	<span class="mainwp-left" style="width: 63%;">
+                                        		<input type="text" class="input api_key" placeholder="<?php esc_attr_e( 'API License Key', 'mainwp' ); ?>" value="<?php echo $extension['api_key']; ?>"/>
+	                                            <br/>
+	                                            <input type="text" class="input api_email" placeholder="<?php esc_attr_e( 'API License Email', 'mainwp' ); ?>" value="<?php echo $extension['activation_email']; ?>"/>
+                                        	</span>
+                         					<span class="mainwp-right mainwp-cols-3 mainwp-padding-top-5">
+                                            	<input type="button" <?php if ( $active ) { echo 'disabled'; }  ?> class="button-primary button button-hero mainwp-extensions-activate" value="<?php esc_attr_e( 'Activate API', 'mainwp' ); ?>">
+                                           	</span>
+                                           	<div class="mainwp-clear"></div>
+                                        </div>
+                                        <?php if ( $active ) { ?>
+                                        	<div class="mainwp-cols-1 mainwp-padding-10">
+                                        		<span class="mainwp-padding-top-20" style="width: 60%;">
+		                                            <label for="extension-deactivate-cb"><?php _e( 'Deactivate License Key', 'mainwp' ); ?></label>
+		                                            <input type="checkbox" id="extension-deactivate-cb" class="mainwp-extensions-deactivate-chkbox" <?php echo $extension['deactivate_checkbox'] == 'on' ? 'checked' : ''; ?>>
+	                                            </span>
+	                                            <span class="mainwp-right mainwp-cols-3">
+	                                            	<input type="button" class="button mainwp-extensions-deactivate" value="<?php _e( 'Deactivate', 'mainwp' ); ?>">
+	                                            </span>
+	                                        </div>
+                                        <?php } ?>
+                                        <div class="mainwp-clear"></div>
+                                        <div class="mainwp_loading mainwp-padding-20"><i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?></div>
+                                    </div>
+								</div>
+								<div class="activate-api-status hidden mainwp-padding-20"></div>
+								<?php } ?>
+								<div class="plugin-card-bottom">
+									<div class="vers column-rating">Version: <?php echo $extension['version']; ?></div>
+									<div class="column-updated"><?php echo $extension_api_status; ?></div>
+								</div>
+							</div>
+				<?php } ?>
+		<?php } ?>
+		</div>
+	</div>
+	<div class="mainwp-clear"></div>
+	</div>
+	<?php
+	}
+}
+			
+	public static function renderAvailableExtensions( $post, $metabox ) {
+		$extensions = isset($metabox['args']['extensions']) ? $metabox['args']['extensions'] : array();		
+		
+		if ( !is_array( $extensions ) )
+			$extensions = array();	
+		
 		$all_extensions = self::getAvailableExtensions();
 		$all_groups = self::getExtensionGroups();
 
 		$installed_slugs = array();
-		if (is_array($extensions)) {
-			foreach ($extensions as $ext) {
-				$installed_slugs[] = dirname($ext['slug']);
-			}
+		
+		foreach ($extensions as $ext) {
+			$installed_slugs[] = dirname($ext['slug']);
 		}
+		
 
 		?>
-		<div class="postbox" id="mainwp-available-extensions">
-			<div class="handle"></div>
-			<h3 class="mainwp_box_title"><?php echo sprintf( __('Available %sMainWP extensions%s', 'mainwp'), '<a href="https://mainwp.com/extensions/">', '</a>' ); ?></h3>
-
-			<div>
-				<div id="mainwp-extensions-filter" style="background: #eee; padding: 1em .6em;">
-					<a class="mainwp_action left mainwp-show-extensions mainwp_action_down" href="#"
-					   group="all"><?php _e('All', 'mainwp'); ?></a><!--
-			 --><a class="mainwp_action mid mainwp-show-extensions" href="#"
-                   group="free"><?php _e("Free", 'mainwp'); ?></a><?php
-					$i = 0;
-					foreach ($all_groups as $gr_id => $gr_name) {
-						$i++;
-						?><a
-						class="mainwp_action <?php echo ($i < count($all_groups)) ? 'mid' : 'right'; ?> mainwp-show-extensions"
-						href="#" group="<?php echo $gr_id; ?>"><?php echo esc_html($gr_name); ?></a><?php
-					}
-					?>
-				</div>
-				<div id="mainwp-available-extensions-list">
-					<?php
-					$i = 0;
-					foreach ($all_extensions as $ext) {
-						if (in_array($ext['slug'], $installed_slugs))
-							continue;
-						$is_free = (isset($ext['free']) && $ext['free']) ? true : false;
-						$group_class = implode(" group-", $ext['group']);
-						$group_class = " group-" . $group_class;
-						?>
-						<div
-							class="mainwp-availbale-extension-holder <?php echo ($i % 2) ? 'mainwp-odd' : ''; ?> <?php echo ($is_free) ? 'mainwp-free group-free' : 'mainwp-paid'; ?> <?php echo $group_class; ?>"
-							style="clear: both;">
-							<div class="mainwp-av-ext-icon">
-								<img src="<?php echo $ext['img'] ?>"/>
-							</div>
-							<div class="mainwp-av-ext-buttons">
-								<?php
-								echo $is_free ? '<span class="mainwp-price"></span>' : '';
-								?>
-								<a target="_blank"
-								   href="<?php echo str_replace(array("http:", "https:"), "", $ext['link']); ?>"
-								   class="button"><?php _e( 'Find out more', 'mainwp' ); ?></a>
-							</div>
-							<div class="mainwp-av-ext-desciption">
-								<h2><?php echo $ext['title'] ?></h2>
-
-								<p><?php echo $ext['desc'] ?></p>
-							</div>
-
-						</div>
-						<?php
-						$i++;
-					}
-					?>
-				</div>
+		<div id="mainwp-available-extensions">
+			<div id="mainwp-extensions-filter" class="mainwp-postbox-actions-top">
+				<a class="mainwp_action left mainwp-show-extensions mainwp_action_down" href="#"
+				   group="all"><?php _e('All', 'mainwp'); ?></a><a class="mainwp_action mid mainwp-show-extensions" href="#"
+			   group="free"><?php _e("Free", 'mainwp'); ?></a><?php
+				$i = 0;
+				foreach ($all_groups as $gr_id => $gr_name) {
+					$i++;
+					?><a class="mainwp_action <?php echo ($i < count($all_groups)) ? 'mid' : 'right'; ?> mainwp-show-extensions" href="#" group="<?php echo $gr_id; ?>"><?php echo esc_html($gr_name); ?></a><?php
+				}
+				?>
+			</div>
+			<div class="inside">
+			<div id="mainwp-available-extensions-list" class="wp-list-table widefat plugin-install">
+                        <div id="the-list">
+                        <?php       
+                        $extension_page_url = admin_url( 'admin.php?page=Extensions' );
+                        foreach ($all_extensions as $ext) {
+                            if (in_array($ext['slug'], $installed_slugs))
+                                continue;
+                            $is_free = (isset($ext['free']) && $ext['free']) ? true : false;
+                            $group_class = implode(" group-", $ext['group']);
+                            $group_class = " group-" . $group_class;
+                            ?>
+                            <div class="mainwp-availbale-extension-holder plugin-card <?php echo $group_class; ?> <?php echo ($is_free) ? 'mainwp-free group-free' : 'mainwp-paid'; ?>">
+                                                            <div class="plugin-card-top">
+                                                                    <div class="name column-name">
+                                                                            <h3>
+                                                                                    <a href="<?php echo $extension_page_url; ?>">
+                                                                                            <?php echo $ext['title'] ?>
+                                                                                            <img src="<?php echo $ext['img'] ?>" title="<?php echo $ext['title']; ?>" alt="<?php echo $ext['title']; ?>" class="plugin-icon"/>
+                                                                                    </a>
+                                                                            </h3>
+                                                                    </div>
+                                                                    <div class="action-links">
+                                                                            <ul class="plugin-action-buttons">
+                                                                                    <li><a target="_blank" href="<?php echo str_replace(array("http:", "https:"), "", $ext['link']); ?>" class="button"><?php _e( 'Find Out More', 'mainwp' ); ?></a></li>
+                                                                                    <li class="mainwp-padding-top-10"><?php echo $is_free ? '<span class="mainwp-price"></span>' : ''; ?></li>
+                                                                            </ul>
+                                                                    </div>
+                                                                    <div class="desc column-description">
+                                                                            <p><?php echo $ext['desc'] ?></p>
+                                                                    </div>
+                                                            </div>
+                                                    </div>
+                            <?php                        
+                        }
+                    ?>
+                        </div>
+			</div>
+			<div class="mainwp-clear"></div>
+			</div>
+			<div class="inside">
 				<div class="installed-group-exts" style="clear: both; display: none">
 					<?php echo __('All selected group extensions are installed.', 'mainwp') ?>
 				</div>
 			</div>
-		</div>
+		</div>		
 		<?php
 	}
 
@@ -791,7 +738,7 @@ class MainWP_Extensions_View {
 					'img' => plugins_url( 'images/extensions/page-speed.png', dirname( __FILE__ ) ),
 					'product_id' => 'MainWP Page Speed Extension',
 					'catalog_id' => '12581',
-					'group' => array('perfomance')
+					'group' => array('performance')
 				),
 			'mainwp-ithemes-security-extension' =>
 				array(
@@ -822,7 +769,7 @@ class MainWP_Extensions_View {
 					'desc' => 'Custom Post Types Extension is an extension for the MainWP Plugin that allows you to manage almost any custom post type on your child sites and that includes Publishing, Editing, and Deleting custom post type content.',
 					'link' => 'https://mainwp.com/extension/custom-post-types/',
 					'img' => plugins_url( 'images/extensions/custom-post.png', dirname( __FILE__ ) ),
-					'product_id' => 'MainWP Custom Post Type',
+					'product_id' => 'MainWP Custom Post Types',
 					'catalog_id' => '1002564',
 					'group' => array('content')
 				),

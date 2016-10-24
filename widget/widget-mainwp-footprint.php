@@ -26,20 +26,13 @@ class MainWP_Footprint {
 		}
 
 		?>
-		<div class="postbox" id="mainwp-footprint-settings">
-			<h3 class="mainwp_box_title"><span><?php _e( 'Network footprint', 'mainwp' ); ?></span></h3>
-			<a name="network-footprint"></a>
-
-			<div class="inside">
-				<table class="form-table">
-					<tbody>
-					<?php do_action( 'mainwp_settings_networkfootprint' ); ?>
-					</tbody>
-				</table>
-				<div class="mainwp_info-box">
-					<strong>Note: </strong><i><?php _e( 'After pressing "Save settings" below you will need to return to MainWP Dashboard and press the Sync Data button to synchronize the settings.', 'mainwp' ); ?></i>
-				</div>
-			</div>
+		<table class="form-table">
+			<tbody>
+			<?php do_action( 'mainwp_settings_networkfootprint' ); ?>
+			</tbody>
+		</table>
+		<div class="mainwp-notice mainwp-notice-green">
+			<strong>Note: </strong><i><?php _e( 'After pressing "Save settings" below you will need to return to MainWP Dashboard and press the Sync Data button to synchronize the settings.', 'mainwp' ); ?></i>
 		</div>
 
 		<?php

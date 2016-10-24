@@ -68,7 +68,7 @@ class MainWP_Updates {
 	}
         
         public static function render() {            
-            self::renderHeader( 'UpdatesManage' );
+            self::renderHeader( 'UpdatesManage' );            
             MainWP_Main::renderDashboardBody( array(), null, null, true);
             ?>     
             <div class="postbox" id="mainwp_page_updates_tab-contextbox-1">

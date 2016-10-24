@@ -1,13 +1,14 @@
-rightnow_upgrade = function (id)
+rightnow_upgrade = function (id, obj)
 {
-    var upgradeElement = jQuery('#wp_upgraded_' + id);
+    var parent = jQuery(obj).closest('.mainwp-sub-row');
+    var upgradeElement = jQuery(parent).find('#wp_upgraded_' + id);
     if (upgradeElement.val() != 0) return false;
 
     rightnowContinueAfterBackup = function(pId, pUpgradeElement) { return function()
     {
-        jQuery('#wp_upgrade_' + pId).html(__('Updating...'));
+        jQuery(parent).find('#wp_upgrade_' + pId).html(__('Updating...'));
         pUpgradeElement.val(1);
-        jQuery('#wp_upgradebuttons_' + pId).hide();
+        jQuery(parent).find('#wp_upgradebuttons_' + pId).hide();
         var data = mainwp_secure_data({
             action:'mainwp_upgradewp',
             id:pId
@@ -23,7 +24,7 @@ rightnow_upgrade = function (id)
             {
                 result = response.result;
             }
-            jQuery('#wp_upgrade_' + pId).html(result);
+            jQuery(parent).find('#wp_upgrade_' + pId).html(result);
         }, 'json');
     } }(id, upgradeElement);
 
@@ -34,8 +35,8 @@ rightnow_upgrade = function (id)
     return mainwp_rightnow_checkBackups(sitesToUpdate, siteNames);
 };
 
-/** Upgrade bulk **/
-//<editor-fold desc="Wordpress bulk upgrade">
+/** Update bulk **/
+//<editor-fold desc="Wordpress bulk update">
 var websitesToUpgrade = [];
 var rightnowContinueAfterBackup = undefined;
 jQuery(document).on('click', '#rightnow-backup-ignore', function() {
@@ -53,19 +54,28 @@ var countRealItemsUpdated = 0;
 var couttItemsToUpdate = 0;
 var itemsToUpdate = [];
 
-rightnow_wordpress_global_upgrade_all = function ()
+rightnow_wordpress_global_upgrade_all = function (groupId)
 {
     if (bulkTaskRunning) return false;
 
     if (!confirm(__('Are you sure?')))
         return false;
 
-    rightnow_show_if_required('wp_upgrades', false);
+    if (typeof groupId !== 'undefined')
+        rightnow_show_if_required('wp_upgrades_group', false, groupId);
+    else
+        rightnow_show_if_required('upgrades', false);
 
     //Step 1: build form
     var sitesToUpdate = [];
     var siteNames = {};
-    var foundChildren = jQuery('#wp_upgrades').find('div[updated="0"]');
+    var foundChildren = [];
+
+    if (typeof groupId !== 'undefined')
+        foundChildren = jQuery('.wp_wp_upgrades_group_' + groupId).find('div[updated="0"]');
+    else
+        foundChildren = jQuery('#wp_upgrades').find('div[updated="0"]');
+
     if (foundChildren.length == 0) return false;
     var sitesCount = 0;
 
@@ -87,7 +97,7 @@ rightnow_wordpress_global_upgrade_all = function ()
 
     for (var j = 0; j < sitesToUpdate.length; j++)
     {
-        upgradeList.append('<tr><td>' + decodeURIComponent(siteNames[sitesToUpdate[j]]) + ' (WordPress update)</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + sitesToUpdate[j] + '">'+__('PENDING')+'</span></td></tr>');
+        upgradeList.append('<tr><td>' + decodeURIComponent(siteNames[sitesToUpdate[j]]) + ' (WordPress update)</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + sitesToUpdate[j] + '">'+'<i class="fa fa-clock-o" aria-hidden="true"></i> ' +  __('PENDING')+'</span></td></tr>');
     }
 
     rightnowContinueAfterBackup = function(pSitesCount, pSitesToUpdate) { return function()
@@ -113,7 +123,7 @@ rightnow_wordpress_global_upgrade_all = function ()
         dashboardActionName = 'upgrade_all_wp_core';
         starttimeDashboardAction = dateObj.getTime();
 
-        //Step 3: start upgrades
+        //Step 3: start updates
         rightnow_wordpress_upgrade_all_int(pSitesToUpdate);
 
         rightnowContinueAfterBackup = undefined;
@@ -195,12 +205,12 @@ rightnow_wordpress_upgrade_int = function (websiteId, bulkMode)
             if (response.error)
             {
                 result = getErrorMessage(response.error);
-                if (pBulkMode) rightnow_wordpress_upgrade_all_update_site_status(pWebsiteId, __('FAILED'));
+                if (pBulkMode) rightnow_wordpress_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('FAILED') + '</span>' );
             }
             else
             {
                 result = response.result;
-                if (pBulkMode) rightnow_wordpress_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
+                if (pBulkMode) rightnow_wordpress_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>');
                 websiteHolder.attr('updated', 1);
                 countRealItemsUpdated++;
                 couttItemsToUpdate++;
@@ -218,23 +228,32 @@ rightnow_wordpress_upgrade_int = function (websiteId, bulkMode)
 };
 //</editor-fold desc="">
 
-//<editor-fold desc="Translations bulk upgrade">
+//<editor-fold desc="Translations bulk update">
 var currentTranslationSlugToUpgrade = undefined;
 var websitesTranslationSlugsToUpgrade = undefined;
-rightnow_translations_global_upgrade_all = function()
+rightnow_translations_global_upgrade_all = function(groupId)
 {
     if (bulkTaskRunning) return false;
 
     if (!confirm(__('Are you sure?')))
         return false;
 
-    rightnow_show_if_required('translation_upgrades', false);
+    if (typeof groupId !== 'undefined')
+        rightnow_show_if_required('translation_upgrades_group', false, groupId);
+    else
+        rightnow_show_if_required('translation_upgrades', false);
 
     //Step 1: build form
     var sitesToUpdate = [];
     var siteNames = {};
     var sitesTranslationSlugs = {};
-    var foundChildren = jQuery('#wp_translation_upgrades').find('div[updated="0"]');
+    var foundChildren = [];
+
+    if (typeof groupId !== 'undefined')
+        foundChildren = jQuery('.wp_translation_upgrades_group_' + groupId).find('div[updated="0"]');
+    else
+        foundChildren = jQuery('#wp_translation_upgrades').find('div[updated="0"]');
+
     if (foundChildren.length == 0) return false;
     var sitesCount = 0;
 
@@ -288,7 +307,7 @@ rightnow_translations_global_upgrade_all = function()
         if (updateCount == null) updateCount = 1;
         else updateCount = updateCount.length + 1;
 
-        upgradeList.append('<tr><td>' + decodeURIComponent(siteNames[sitesToUpdate[i]]) + ' (' + updateCount + ' translations)</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + sitesToUpdate[i] + '">'+__('PENDING')+'</span></td></tr>');
+        upgradeList.append('<tr><td>' + decodeURIComponent(siteNames[sitesToUpdate[i]]) + ' (' + updateCount + ' translations)</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + sitesToUpdate[i] + '">'+ '<i class="fa fa-clock-o" aria-hidden="true"></i> ' +  __('PENDING')+'</span></td></tr>');
     }
 
     rightnowContinueAfterBackup = function(pSitesCount, pSitesToUpdate, pSitesTranslationSlugs) { return function()
@@ -314,7 +333,7 @@ rightnow_translations_global_upgrade_all = function()
         starttimeDashboardAction = dateObj.getTime();
         countRealItemsUpdated = 0;
 
-        //Step 3: start upgrades
+        //Step 3: start updates
         rightnow_translations_upgrade_all_int(undefined, pSitesToUpdate, pSitesTranslationSlugs);
 
         rightnowContinueAfterBackup = undefined;
@@ -349,7 +368,7 @@ rightnow_translations_upgrade_all = function (slug, translationName)
         var siteName = jQuery(child).attr('site_name');
         siteNames[siteId] = siteName;
         sitesToUpdate.push(siteId);
-        upgradeList.append('<tr><td>' + decodeURIComponent(siteName) + '</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + siteId + '">'+__('PENDING')+'</span></td></tr>');
+        upgradeList.append('<tr><td>' + decodeURIComponent(siteName) + '</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + siteId + '">'+ '<i class="fa fa-clock-o" aria-hidden="true"></i> ' +  __('PENDING')+'</span></td></tr>');
     }
 
     rightnowContinueAfterBackup = function(pSitesCount, pSlug, pSitesToUpdate) { return function()
@@ -378,7 +397,7 @@ rightnow_translations_upgrade_all = function (slug, translationName)
         countRealItemsUpdated = 0;
         itemsToUpdate = [];
 
-        //Step 3: start upgrades
+        //Step 3: start updates
         rightnow_translations_upgrade_all_int(pSlug, pSitesToUpdate);
 
         rightnowContinueAfterBackup = undefined;
@@ -486,7 +505,7 @@ rightnow_translations_upgrade_int = function (slug, websiteId, bulkMode, noCheck
                     if (response.error)
                     {
                         result = getErrorMessage(response.error);
-                        if (!done && pBulkMode) rightnow_translations_upgrade_all_update_site_status(pWebsiteId, __('FAILED'));
+                        if (!done && pBulkMode) rightnow_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('FAILED') + '</span>' );
                     }
                     else
                     {
@@ -494,10 +513,10 @@ rightnow_translations_upgrade_int = function (slug, websiteId, bulkMode, noCheck
 
                         if (res[slugParts[i]])
                         {
-                            if (!done && pBulkMode) rightnow_translations_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
+                            if (!done && pBulkMode) rightnow_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>');
                             result = __('Update successful!');
                             if (response.site_url)
-                                result = result + '! ' + 'Open your site <a href="' + response.site_url + '" target="_blank">Front Page</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>.';
+                                result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
 
                             websiteHolder.attr('updated', 1);
                             countRealItemsUpdated++;
@@ -505,7 +524,7 @@ rightnow_translations_upgrade_int = function (slug, websiteId, bulkMode, noCheck
                         }
                         else
                         {
-                            if (!done && pBulkMode) rightnow_translations_upgrade_all_update_site_status(pWebsiteId, __('FAILED'));
+                            if (!done && pBulkMode) rightnow_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('FAILED') + '</span>' );
                             result = __('Update Failed!');
                         }
                     }
@@ -541,23 +560,31 @@ rightnow_translations_upgrade_int = function (slug, websiteId, bulkMode, noCheck
 };
 //</editor-fold>
 
-//<editor-fold desc="Plugins bulk upgrade">
+//<editor-fold desc="Plugins bulk update">
 var currentPluginSlugToUpgrade = undefined;
 var websitesPluginSlugsToUpgrade = undefined;
-rightnow_plugins_global_upgrade_all = function()
+rightnow_plugins_global_upgrade_all = function(groupId)
 {
     if (bulkTaskRunning) return false;
 
     if (!confirm(__('Are you sure?')))
         return false;
 
-    rightnow_show_if_required('plugin_upgrades', false);
+    if (typeof groupId !== 'undefined')
+        rightnow_show_if_required('plugin_upgrades_group', false, groupId);
+    else
+        rightnow_show_if_required('plugin_upgrades', false);
 
     //Step 1: build form
     var sitesToUpdate = [];
     var siteNames = {};
     var sitesPluginSlugs = {};
-    var foundChildren = jQuery('#wp_plugin_upgrades').find('div[updated="0"]');
+    var foundChildren = [];
+    if (typeof groupId !== 'undefined')
+        foundChildren = jQuery('.wp_plugin_upgrades_group_' + groupId).find('div[updated="0"]');
+    else
+        foundChildren = jQuery('#wp_plugin_upgrades').find('div[updated="0"]');
+
     if (foundChildren.length == 0) return false;
     var sitesCount = 0;
 
@@ -611,7 +638,7 @@ rightnow_plugins_global_upgrade_all = function()
         if (updateCount == null) updateCount = 1;
         else updateCount = updateCount.length + 1;
 
-        upgradeList.append('<tr><td>' + decodeURIComponent(siteNames[sitesToUpdate[i]]) + ' (' + updateCount + ' plugins)</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + sitesToUpdate[i] + '">'+__('PENDING')+'</span></td></tr>');
+        upgradeList.append('<tr><td>' + decodeURIComponent(siteNames[sitesToUpdate[i]]) + ' (' + updateCount + ' plugins)</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + sitesToUpdate[i] + '">'+ '<i class="fa fa-clock-o" aria-hidden="true"></i> ' + __('PENDING')+'</span></td></tr>');
     }
 
     rightnowContinueAfterBackup = function(pSitesCount, pSitesToUpdate, pSitesPluginSlugs) { return function()
@@ -637,7 +664,7 @@ rightnow_plugins_global_upgrade_all = function()
         starttimeDashboardAction = dateObj.getTime();
         countRealItemsUpdated = 0;
 
-        //Step 3: start upgrades
+        //Step 3: start updates
         rightnow_plugins_upgrade_all_int(undefined, pSitesToUpdate, pSitesPluginSlugs);
 
         rightnowContinueAfterBackup = undefined;
@@ -672,7 +699,7 @@ rightnow_plugins_upgrade_all = function (slug, pluginName)
         var siteName = jQuery(child).attr('site_name');
         siteNames[siteId] = siteName;
         sitesToUpdate.push(siteId);
-        upgradeList.append('<tr><td>' + decodeURIComponent(siteName) + '</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + siteId + '">'+__('PENDING')+'</span></td></tr>');
+        upgradeList.append('<tr><td>' + decodeURIComponent(siteName) + '</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + siteId + '">'+'<i class="fa fa-clock-o" aria-hidden="true"></i> ' +  __('PENDING')+'</span></td></tr>');
     }
 
     rightnowContinueAfterBackup = function(pSitesCount, pSlug, pSitesToUpdate) { return function()
@@ -701,7 +728,7 @@ rightnow_plugins_upgrade_all = function (slug, pluginName)
         countRealItemsUpdated = 0;
         itemsToUpdate = [];
 
-        //Step 3: start upgrades
+        //Step 3: start updates
         rightnow_plugins_upgrade_all_int(pSlug, pSitesToUpdate);
 
         rightnowContinueAfterBackup = undefined;
@@ -803,7 +830,7 @@ rightnow_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck)
             }
 
             websiteHolder.find('.pluginsAction').hide();
-            websiteHolder.find('.pluginsInfo').html('<i class="fa fa-spinner fa-pulse"></i> '+'Updating..');
+            websiteHolder.find('.pluginsInfo').html('<i class="fa fa-spinner fa-pulse"></i> '+'Updating...');
         }
 
         var data = mainwp_secure_data({
@@ -831,7 +858,7 @@ rightnow_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck)
                     if (response.error)
                     {
                         result = getErrorMessage(response.error);
-                        if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, __('FAILED'));
+                        if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('FAILED') + '</span>' );
                     }
                     else
                     {
@@ -839,10 +866,10 @@ rightnow_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck)
 
                         if (res[slugParts[i]])
                         {
-                            if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
+                            if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>');
                             result = __('Update successful!');
                             if (response.site_url)
-                                result = result + '! ' + 'Open your site <a href="' + response.site_url + '" target="_blank">Front Page</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>.';
+                                result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
 
                             websiteHolder.attr('updated', 1);
                             countRealItemsUpdated++;
@@ -850,7 +877,7 @@ rightnow_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck)
                         }
                         else
                         {
-                            if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, __('FAILED'));
+                            if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('FAILED') + '</span>' );
                             result = __('Update failed!');
                         }
                     }
@@ -886,23 +913,31 @@ rightnow_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck)
 };
 //</editor-fold>
 
-//<editor-fold desc="Themes bulk upgrade">
+//<editor-fold desc="Themes bulk update">
 var currentThemeSlugToUpgrade = undefined;
 var websitesThemeSlugsToUpgrade = undefined;
-rightnow_themes_global_upgrade_all = function ()
+rightnow_themes_global_upgrade_all = function (groupId)
 {
     if (bulkTaskRunning) return false;
 
     if (!confirm(__('Are you sure?')))
         return false;
+    if (typeof groupId !== 'undefined')
+        rightnow_show_if_required('theme_upgrades_group', false, groupId);
+    else
+        rightnow_show_if_required('theme_upgrades', false);
 
-    rightnow_show_if_required('theme_upgrades', false);
 
     //Step 1: build form
     var sitesToUpdate = [];
     var siteNames = {};
     var sitesPluginSlugs = {};
-    var foundChildren = jQuery('#wp_theme_upgrades').find('div[updated="0"]');
+    var foundChildren = [];
+    if (typeof groupId !== 'undefined')
+        foundChildren = jQuery('.wp_theme_upgrades_group_' + groupId).find('div[updated="0"]');
+    else
+        foundChildren = jQuery('#wp_theme_upgrades').find('div[updated="0"]');
+
     if (foundChildren.length == 0) return false;
     var sitesCount = 0;
 
@@ -955,7 +990,7 @@ rightnow_themes_global_upgrade_all = function ()
         if (updateCount == null) updateCount = 1;
         else updateCount = updateCount.length + 1;
 
-        upgradeList.append('<tr><td>' + decodeURIComponent(siteNames[sitesToUpdate[i]]) + ' (' + updateCount + ' themes)</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + sitesToUpdate[i] + '">'+__('PENDING')+'</span></td></tr>');
+        upgradeList.append('<tr><td>' + decodeURIComponent(siteNames[sitesToUpdate[i]]) + ' (' + updateCount + ' themes)</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + sitesToUpdate[i] + '">'+ '<i class="fa fa-clock-o" aria-hidden="true"></i> ' + __('PENDING')+'</span></td></tr>');
     }
 
     rightnowContinueAfterBackup = function(pSitesCount, pSitesToUpdate, pSitesPluginSlugs) { return function()
@@ -981,7 +1016,7 @@ rightnow_themes_global_upgrade_all = function ()
         starttimeDashboardAction = dateObj.getTime();
         countRealItemsUpdated = 0;
 
-        //Step 3: start upgrades
+        //Step 3: start updates
         rightnow_themes_upgrade_all_int(undefined, pSitesToUpdate, pSitesPluginSlugs);
 
         rightnowContinueAfterBackup = undefined;
@@ -1014,7 +1049,7 @@ rightnow_themes_upgrade_all = function (slug, themeName)
         var siteName = jQuery(child).attr('site_name');
         siteNames[siteId] = siteName;
         sitesToUpdate.push(siteId);
-        upgradeList.append('<tr><td>' + decodeURIComponent(siteName) + '</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + siteId + '">'+__('PENDING')+'</span></td></tr>');
+        upgradeList.append('<tr><td>' + decodeURIComponent(siteName) + '</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + siteId + '">'+'<i class="fa fa-clock-o" aria-hidden="true"></i> ' +  __('PENDING')+'</span></td></tr>');
     }
     rightnowContinueAfterBackup = function(pSitesCount, pSlug, pSitesToUpdate) { return function()
     {
@@ -1041,7 +1076,7 @@ rightnow_themes_upgrade_all = function (slug, themeName)
         starttimeDashboardAction = dateObj.getTime();
         itemsToUpdate = [];
 
-        //Step 3: start upgrades
+        //Step 3: start updates
         rightnow_themes_upgrade_all_int(pSlug, pSitesToUpdate);
 
         rightnowContinueAfterBackup = undefined;
@@ -1144,7 +1179,7 @@ rightnow_themes_upgrade_int = function (slug, websiteId, bulkMode)
                 if (response.error)
                 {
                     result = getErrorMessage(response.error);
-                    if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, __('FAILED'));
+                    if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('FAILED') + '</span>' );
                 }
                 else
                 {
@@ -1152,17 +1187,17 @@ rightnow_themes_upgrade_int = function (slug, websiteId, bulkMode)
 
                     if (res[pSlug])
                     {
-                        if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
+                        if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>' );
                         result = __('Update successful!');
                         if (response.site_url)
-                            result = result + '! ' + 'Open your site <a href="' + response.site_url + '" target="_blank">Front Page</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + websiteId + '" target="_blank">WP Admin</a>.';
+                            result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + websiteId + '" target="_blank">WP Admin</a>';
                         websiteHolder.attr('updated', 1);
                         countRealItemsUpdated++;
                         if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
                     }
                     else
                     {
-                        if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, __('FAILED'));
+                        if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('FAILED') + '</span>' );
                         result = __('Update failed!');
                     }
 
@@ -1209,7 +1244,7 @@ rightnow_global_upgrade_all = function ()
     var sitesCount = 0;
     var foundChildren = undefined;
 
-    //Find wordpress to upgrade
+    //Find wordpress to update
     foundChildren = jQuery('#wp_upgrades').find('div[updated="0"]');
     if (foundChildren.length != 0)
     {
@@ -1228,7 +1263,7 @@ rightnow_global_upgrade_all = function ()
         }
     }
 
-    //Find plugins to upgrade
+    //Find plugins to update
     foundChildren = jQuery('#wp_plugin_upgrades').find('div[updated="0"]');
     if (foundChildren.length != 0)
     {
@@ -1275,7 +1310,7 @@ rightnow_global_upgrade_all = function ()
         }
     }
 
-    //Find themes to upgrade
+    //Find themes to update
     foundChildren = jQuery('#wp_theme_upgrades').find('div[updated="0"]');
     if (foundChildren.length != 0)
     {
@@ -1352,7 +1387,7 @@ rightnow_global_upgrade_all = function ()
             whatToUpgrade += '<span class="theme">' + updateCount + ' theme' + (updateCount > 1 ? 's' : '') + '</span>';
         }
 
-        upgradeList.append('<tr><td>' + decodeURIComponent(siteNames[siteId]) + ' (' + whatToUpgrade + ')</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + siteId + '">'+__('PENDING')+'</span></td></tr>');
+        upgradeList.append('<tr><td>' + decodeURIComponent(siteNames[siteId]) + ' (' + whatToUpgrade + ')</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + siteId + '">'+ '<i class="fa fa-clock-o" aria-hidden="true"></i> ' +  __('PENDING')+'</span></td></tr>');
     }
 
     //Step 2: show form
@@ -1377,7 +1412,7 @@ rightnow_global_upgrade_all = function ()
     starttimeDashboardAction = dateObj.getTime();
     countRealItemsUpdated = 0;
 
-    //Step 3: start upgrades
+    //Step 3: start updates
     rightnow_upgrade_all_int(sitesToUpdate, sitesToUpgrade, sitesPluginSlugs, sitesThemeSlugs);
 
     return false;
@@ -1531,7 +1566,7 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                         {
                             result = __('Update successful!');
                             if (response.site_url)
-                                result = result + '! ' + 'Open your site <a href="' + response.site_url + '" target="_blank">Front Page</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>.';
+                                result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
                             websiteHolder.attr('updated', 1);
                             countRealItemsUpdated++;
                             if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
@@ -1586,7 +1621,7 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                         {
                             result = __('Update successful!');
                             if (response.site_url)
-                                result = result + '! ' + 'Open your site <a href="' + response.site_url + '" target="_blank">Front Page</a> or <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>.';
+                                result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
                             websiteHolder.attr('updated', 1);
                             countRealItemsUpdated++;
                             if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
@@ -1645,7 +1680,7 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
     }
     else
     {
-        rightnow_upgrade_all_update_site_status(pWebsiteId, __('DONE'));
+        rightnow_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>' );
         rightnow_upgrade_all_update_done();
         if (websitesDone == websitesTotal)
         {
@@ -1743,7 +1778,7 @@ mainwp_rightnow_checkBackups = function(sitesToUpdate, siteNames)
             if (siteFeedback != undefined)
             {
                 var backupContent = jQuery('#rightnow-backup-content');
-                var output = '<font color="red">'+__('A full backup has not been taken in the last 7 days for the following sites:')+'</font><br /><br />';
+                var output = '<span class="mainwp-red">'+__('A full backup has not been taken in the last 7 days for the following sites:')+'</span><br /><br />';
                 for (var j = 0; j < siteFeedback.length; j++)
                 {
                     output += '<span class="rightnow-backup-site" siteid="' + siteFeedback[j] + '">' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
@@ -1835,7 +1870,7 @@ rightnow_backup_run_next = function()
 {
     if (rightnowBackupSites.length == 0)
     {
-        appendToDiv('#rightnow-backupnow-content', __('Required backup(s) completed') + (rightnowBackupError ? ' <font color="red">'+__('with errors')+'</font>' : '') + '.');
+        appendToDiv('#rightnow-backupnow-content', __('Required backup(s) completed') + (rightnowBackupError ? ' <span class="mainwp-red">'+__('with errors')+'</span>' : '') + '.');
 
         jQuery('#rightnow-backupnow-close').prop('cancel', '0');
         if (rightnowBackupError)
@@ -1867,7 +1902,7 @@ rightnow_backup_run_next = function()
     jQuery.post(ajaxurl, data, function(pSiteId, pSiteName) { return function (response) {
         if (response.error)
         {
-            appendToDiv('#rightnow-backupnow-content', '[' + pSiteName + '] <font color="red">ERROR: ' + getErrorMessage(response.error) + '</font>');
+            appendToDiv('#rightnow-backupnow-content', '[' + pSiteName + '] <span class="mainwp-red">ERROR: ' + getErrorMessage(response.error) + '</span>');
             rightnowBackupError = true;
             rightnow_backup_run_next();
         }
@@ -1918,8 +1953,8 @@ rightnow_backupnow_download_file = function(pSiteId, pSiteName, type, url, file,
 
         if (response.error)
         {
-            appendToDiv('#rightnow-backupnow-content', '[' + pSiteName + '] <font color="red">ERROR: '+ getErrorMessage(response.error) + '</font>');
-            appendToDiv('#rightnow-backupnow-content', '[' + pSiteName + '] <font color="red">'+__('Backup failed!') + '</font>');
+            appendToDiv('#rightnow-backupnow-content', '[' + pSiteName + '] <span class="mainwp-red">ERROR: '+ getErrorMessage(response.error) + '</span>');
+            appendToDiv('#rightnow-backupnow-content', '[' + pSiteName + '] <span class="mainwp-red">'+__('Backup failed!') + '</span>');
 
             rightnowBackupError = true;
             rightnow_backup_run_next();

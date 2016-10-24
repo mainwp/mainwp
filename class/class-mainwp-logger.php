@@ -212,7 +212,7 @@ class MainWP_Logger {
 			}
 
 			if ( $firstLinePassedProcessed && ! $firstLinePassed ) {
-				echo ' <strong><font color="green">[multiline, click to read full]</font></strong></div><div style="display: none;">';
+				echo ' <strong><span class="mainwp-green">[multiline, click to read full]</span></strong></div><div style="display: none;">';
 			} else {
 				echo '<br />';
 			}

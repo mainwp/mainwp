@@ -58,7 +58,7 @@ class MainWP_Backup_Tasks {
 			?>
 			<div class="mainwp-row mainwp-recent">
 				<span class="mainwp-left-col" style="width: 40%">
-					<strong><a href="admin.php?page=ManageBackups&id=<?php echo $task->id; ?>"><?php echo $task->name; ?></a></strong><br />
+					<strong><a href="admin.php?page=ManageBackups&id=<?php echo $task->id; ?>"><?php echo stripslashes($task->name); ?></a></strong><br />
 					<span style="font-size: 11px">(<?php echo strtoupper( $task->schedule ); ?> - <?php echo ($task->type == 'db' ? __( 'Database backup','mainwp' ) : __( 'Full backup','mainwp' )); ?>)</span>
 				</span>
 				<span class="mainwp-mid-col">
@@ -78,8 +78,9 @@ class MainWP_Backup_Tasks {
 					<strong><?php _e( 'LAST RUN: ','mainwp' ); ?></strong>&nbsp;<?php echo ($task->last_run == 0 ? '-' : MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $task->last_run ) )); ?><br />
 					<strong><?php _e( 'NEXT RUN: ','mainwp' ); ?></strong>&nbsp;<?php echo ($task->last_run == 0 ? __( 'Any minute','mainwp' ) : MainWP_Utility::formatTimestamp( ($task->schedule == 'daily' ? (60 * 60 * 24) : ($task->schedule == 'weekly' ? (60 * 60 * 24 * 7) : (60 * 60 * 24 * 30))) + MainWP_Utility::getTimestamp( $task->last_run ) )); ?>
 				</span>
-				<div style="clear: left;"></div>
+				
 			</div>
+			<div class="mainwp-clear"></div>
 			<?php
 		} ?>
 		</div>

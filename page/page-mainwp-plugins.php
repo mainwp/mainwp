@@ -36,10 +36,11 @@ class MainWP_Plugins {
 	}
 
 	public static function initMenu() {
-		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<span id="mainwp-Plugins">' . __( 'Plugins', 'mainwp' ) . '</span>', 'read', 'PluginsManage', array(
+		$_page = add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<span id="mainwp-Plugins">' . __( 'Plugins', 'mainwp' ) . '</span>', 'read', 'PluginsManage', array(
 			MainWP_Plugins::getClassName(),
 			'render',
 		) );
+		add_action( 'load-' . $_page, array(MainWP_Plugins::getClassName(), 'on_load_page'));	
 		if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) {
 			$page = add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>', 'read', 'PluginsInstall', array(
 				MainWP_Plugins::getClassName(),
@@ -59,11 +60,7 @@ class MainWP_Plugins {
 			MainWP_Plugins::getClassName(),
 			'renderIgnoredAbandoned',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Plugins Help', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Plugins Help', 'mainwp' ) . '</div>', 'read', 'PluginsHelp', array(
-			MainWP_Plugins::getClassName(),
-			'QSGManagePlugins',
-		) );
-
+		
 		/**
 		 * This hook allows you to add extra sub pages to the Plugins page via the 'mainwp-getsubpages-plugins' filter.
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-plugins
@@ -75,8 +72,25 @@ class MainWP_Plugins {
 			}
 		}
 	}
-
-	public static function load_page() {
+	
+	public static function on_load_page() {		
+		MainWP_System::enqueue_postbox_scripts();		
+		self::add_meta_boxes();
+	}
+	
+	public static function add_meta_boxes() {		
+		$i = 1;		
+		add_meta_box(
+			'mwp-plugins-contentbox-' . $i++,
+			'<i class="fa fa-binoculars"></i> ' . __( 'Step 1: Search Plugins', 'mainwp' ),
+			array( 'MainWP_Plugins', 'renderSearchPlugins' ),
+			'mainwp_postboxes_search_plugins',
+			'normal',
+			'core'
+		);	
+	}
+	
+	public static function load_page() {		
 		self::$pluginsTable = new MainWP_Plugins_Install_List_Table();
 		$pagenum = self::$pluginsTable->get_pagenum();
 
@@ -121,122 +135,95 @@ class MainWP_Plugins {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-public static function renderHeader( $shownPage ) {
-	?>
-	<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
-		<h2><i class="fa fa-plug"></i> <?php _e( 'Plugins', 'mainwp' ); ?></h2>
-		<div style="clear: both;"></div><br/>
-		<div id="mainwp-tip-zone">
-			<?php if ( $shownPage == 'Manage' ) { ?>
-				<?php if ( MainWP_Utility::showUserTip( 'mainwp-manageplugins-tips' ) ) { ?>
-					<div class="mainwp-tips mainwp_info-box-blue">
-						<span class="mainwp-tip" id="mainwp-manageplugins-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php _e( 'You can also quickly activate and deactivate installed plugins for a single site from your individual site dashboard plugins widget by visiting sites &rarr; manage sites &rarr; child site &rarr; dashboard.', 'mainwp' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
-							</a></span></div>
+	public static function renderHeader( $shownPage ) {
+		?>
+		<div class="wrap">
+			<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
+			<h2><i class="fa fa-plug"></i> <?php _e( 'Plugins', 'mainwp' ); ?></h2>
+			<div style="clear: both;"></div><br/>
+			<div id="mainwp-tip-zone">
+				<?php if ( $shownPage == 'Manage' ) { ?>
+					<?php if ( MainWP_Utility::showUserTip( 'mainwp-manageplugins-tips' ) ) { ?>
+						<div class="mainwp-tips mainwp-notice mainwp-notice-blue">
+							<span class="mainwp-tip" id="mainwp-manageplugins-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php _e( 'You can also quickly activate and deactivate installed Plugins for a single site from your Individual Site Overview Plugins widget by visiting Sites &rarr; Manage Sites &rarr; Child Site &rarr; Overview.', 'mainwp' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
+								</a></span></div>
+					<?php } ?>
 				<?php } ?>
-			<?php } ?>
-			<?php if ( $shownPage == 'Install' ) { ?>
-				<?php if ( MainWP_Utility::showUserTip( 'mainwp-installplugins-tips' ) ) { ?>
-					<div class="mainwp-tips mainwp_info-box-blue">
-						<span class="mainwp-tip" id="mainwp-installplugins-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php _e( 'If you check the "Overwrite Existing" option while installing a plugin you can easily update or rollback the plugin on your child sites.', 'mainwp' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
-							</a></span></div>
+				<?php if ( $shownPage == 'Install' ) { ?>
+					<?php if ( MainWP_Utility::showUserTip( 'mainwp-installplugins-tips' ) ) { ?>
+						<div class="mainwp-tips mainwp-notice mainwp-notice-blue">
+							<span class="mainwp-tip" id="mainwp-installplugins-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php _e( 'If you check the "Overwrite Existing" option while installing a plugin you can easily update or rollback the plugin on your child sites.', 'mainwp' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
+								</a></span></div>
+					<?php } ?>
 				<?php } ?>
-			<?php } ?>
-		</div>
-		<div class="mainwp-tabs" id="mainwp-tabs">
-			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Manage' ) {
-				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=PluginsManage"><?php _e( 'Manage', 'mainwp' ); ?></a>
-			<?php if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) { ?>
-				<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Install' ) {
+			</div>
+			<div class="mainwp-tabs" id="mainwp-tabs">
+				<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Manage' ) {
 					echo 'nav-tab-active';
-				} ?>" href="admin.php?page=PluginsInstall"><?php _e( 'Install', 'mainwp' ); ?></a>
-			<?php } ?>
-			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'AutoUpdate' ) {
-				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=PluginsAutoUpdate"><?php _e( 'Auto Updates', 'mainwp' ); ?></a>
-			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Ignore' ) {
-				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=PluginsIgnore"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>
-			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'IgnoreAbandoned' ) {
-				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=PluginsIgnoredAbandoned"><?php _e( 'Ignored Abandoned', 'mainwp' ); ?></a>
-			<a style="float: right" class="mainwp-help-tab nav-tab pos-nav-tab <?php if ( $shownPage === 'PluginsHelp' ) {
-				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=PluginsHelp"><?php _e( 'Help', 'mainwp' ); ?></a>
-			<?php
-			if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-				foreach ( self::$subPages as $subPage ) {
-					?>
-					<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) {
+				} ?>" href="admin.php?page=PluginsManage"><?php _e( 'Manage Plugins', 'mainwp' ); ?></a>
+				<?php if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) { ?>
+					<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Install' ) {
 						echo 'nav-tab-active';
-					} ?>" href="admin.php?page=Plugins<?php echo $subPage['slug']; ?>"><?php echo $subPage['title']; ?></a>
-					<?php
+					} ?>" href="admin.php?page=PluginsInstall"><?php _e( 'Install', 'mainwp' ); ?></a>
+				<?php } ?>
+				<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'AutoUpdate' ) {
+					echo 'nav-tab-active';
+				} ?>" href="admin.php?page=PluginsAutoUpdate"><?php _e( 'Auto Updates', 'mainwp' ); ?></a>
+				<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Ignore' ) {
+					echo 'nav-tab-active';
+				} ?>" href="admin.php?page=PluginsIgnore"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>
+				<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'IgnoreAbandoned' ) {
+					echo 'nav-tab-active';
+				} ?>" href="admin.php?page=PluginsIgnoredAbandoned"><?php _e( 'Ignored Abandoned', 'mainwp' ); ?></a>				
+				<?php
+				if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
+					foreach ( self::$subPages as $subPage ) {
+						?>
+						<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) {
+							echo 'nav-tab-active';
+						} ?>" href="admin.php?page=Plugins<?php echo $subPage['slug']; ?>"><?php echo $subPage['title']; ?></a>
+						<?php
+					}
 				}
-			}
-			?>
-			<div class="clear"></div>
-		</div>
-		<div id="mainwp_wrap-inside">
-			<?php
-			}
+				?>
+				<div class="clear"></div>
+			</div>
+			<div id="mainwp_wrap-inside">
+				<?php
+				}
 
-			/**
-			 * @param string $shownPage The page slug shown at this moment
-			 */
-			public static function renderFooter( $shownPage ) {
-			?>
+				/**
+				 * @param string $shownPage The page slug shown at this moment
+				 */
+				public static function renderFooter( $shownPage ) {
+				?>
+			</div>
 		</div>
-	</div>
-	<?php
-}
+		<?php
+	}
 
 	public static function render() {
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Plugins' );
+                
+                $selected_sites = $selected_groups = array();
+                if ($cachedSearch != null) {
+                    if (is_array($cachedSearch['sites'])) {
+                        $selected_sites = $cachedSearch['sites'];
+                    } else if (is_array($cachedSearch['groups'])) {
+                        $selected_groups = $cachedSearch['groups'];
+                    }
+                }
+                
 		?>
 		<?php self::renderHeader( 'Manage' ); ?>
 		<div class="mainwp-search-form">
-			<div class="postbox mainwp-postbox">
-				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Step 1:', 'mainwp' ); ?> <?php _e( 'Search plugins', 'mainwp' ); ?>
-				</h3>
-
-				<div class="inside">
-					<div class="mainwp_info-box-blue">
-						<?php _e( 'To only <strong>View or Ignore</strong> plugins select <strong>All plugins</strong>', 'mainwp' ); ?>
-						<br/>
-						<?php _e( 'To <strong>Deactivate</strong> a Plugin select <strong>Active</strong> (A plugin needs to be active in order to be deactivated)', 'mainwp' ); ?>
-						<br/>
-						<?php _e( 'To <strong>activate</strong> or <strong>delete</strong> a plugin select <strong>Inactive</strong> (A plugin needs to be deactivated in order for it to be activated or deleted)', 'mainwp' ); ?>
-						<br/>
-					</div>
-					<div class="mainwp_info-box-blue">
-						<span><a href="http://docs.mainwp.com/why-does-the-mainwp-client-plugin-not-show-up-on-the-plugin-list-for-my-managed-site/" target="_blank"><?php _e( 'Why does the MainWP Child plugin NOT show in the list?', 'mainwp' ); ?></a></span>
-					</div>
-					<p>
-						<?php _e( 'Status:', 'mainwp' ); ?><br/>
-						<select name="mainwp_plugin_search_by_status" id="mainwp_plugin_search_by_status">
-							<option value="active" <?php if ( $cachedSearch != null && $cachedSearch['the_status'] == 'active' ) {
-								echo 'selected';
-							} ?>><?php _e( 'Active', 'mainwp' ); ?></option>
-							<option value="inactive" <?php if ( $cachedSearch != null && $cachedSearch['the_status'] == 'inactive' ) {
-								echo 'selected';
-							} ?>><?php _e( 'Inactive', 'mainwp' ); ?></option>
-							<option value="all" <?php if ( $cachedSearch != null && $cachedSearch['the_status'] == 'all' ) {
-								echo 'selected';
-							} ?>><?php _e( 'All Plugins', 'mainwp' ); ?></option>
-						</select>
-					</p>
-					<p>
-						<?php _e( 'Containing keyword:', 'mainwp' ); ?><br/>
-						<input type="text" id="mainwp_plugin_search_by_keyword" class="" size="50" value="<?php if ( $cachedSearch != null ) {
-							echo $cachedSearch['keyword'];
-						} ?>"/>
-					</p>
-				</div>
+		<div class="mainwp-padding-bottom-10"><?php MainWP_Tours::renderSearchPluginsTours(); ?></div>
+			<div class="mainwp-postbox">
+				<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_search_plugins'); ?>				
 			</div>
-			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left' ); ?>
+			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left','', $selected_sites, $selected_groups  ); ?>
 			<div style="clear: both;"></div>
-			<input type="button" name="mainwp_show_plugins" id="mainwp_show_plugins" class="button-primary button button-hero button-right" value="<?php esc_attr_e( 'Show plugins', 'mainwp' ); ?>"/>
+			<input type="button" name="mainwp_show_plugins" id="mainwp_show_plugins" class="button-primary button button-hero mainwp-button-right" value="<?php esc_attr_e( 'Show Plugins', 'mainwp' ); ?>"/>
 			<br /><br />
 			<span id="mainwp_plugins_loading" class="mainwp-grabbing-info-note"> <i class="fa fa-spinner fa-pulse"></i> <em><?php _e( 'Grabbing information from child sites', 'mainwp' ) ?></em></span>
 			<span id="mainwp_plugins_loading_info" class="mainwp-grabbing-info-note"> - <?php _e( 'Automatically refreshing to get up to date information.', 'mainwp' ); ?></span>
@@ -250,14 +237,53 @@ public static function renderHeader( $shownPage ) {
 			<div id="mainwp_plugins_content">
 				<?php MainWP_Cache::echoBody( 'Plugins' ); ?>
 			</div>
-		</div>
-		<?php
-		/*if ( $cachedSearch != null ) {
-			echo '<script>mainwp_plugins_all_table_reinit();</script>';
-		}*/
+		</div>                
+		<?php                
+		if ( $cachedSearch != null ) {
+                    ?>
+			<script type="text/javascript">                            
+                            mainwp_table_draggable_init('plugin', 'plugins_fixedtable');                            
+                        </script>
+                    <?php
+                }
 		self::renderFooter( 'Manage' );
 	}
-
+	public static function renderSearchPlugins() {
+		$cachedSearch = MainWP_Cache::getCachedContext( 'Plugins' );
+		?>
+		<div class="mainwp-postbox-actions-top">
+			<?php _e( 'To only <strong>View or Ignore</strong> plugins select <strong>All Plugins</strong>', 'mainwp' ); ?>
+			<br/>
+			<?php _e( 'To <strong>Deactivate</strong> a Plugin select <strong>Active</strong> (A plugin needs to be Active in order to be Deactivated)', 'mainwp' ); ?>
+			<br/>
+			<?php _e( 'To <strong>Activate</strong> or <strong>Delete</strong> a Plugin select <strong>Inactive</strong> (A plugin needs to be Deactivated in order for it to be Activated or Deleted)', 'mainwp' ); ?>
+			<br/>
+		</div>
+		<div class="inside">
+			<p>
+				<?php _e( 'Status:', 'mainwp' ); ?><br/>
+				<select class="mainwp-select2" name="mainwp_plugin_search_by_status" id="mainwp_plugin_search_by_status">
+					<option value="active" <?php if ( $cachedSearch != null && $cachedSearch['the_status'] == 'active' ) {
+						echo 'selected';
+					} ?>><?php _e( 'Active', 'mainwp' ); ?></option>
+					<option value="inactive" <?php if ( $cachedSearch != null && $cachedSearch['the_status'] == 'inactive' ) {
+						echo 'selected';
+					} ?>><?php _e( 'Inactive', 'mainwp' ); ?></option>
+					<option value="all" <?php if ( $cachedSearch != null && $cachedSearch['the_status'] == 'all' ) {
+						echo 'selected';
+					} ?>><?php _e( 'All Plugins', 'mainwp' ); ?></option>
+				</select>
+			</p>
+			<p>
+				<?php _e( 'Containing Keyword:', 'mainwp' ); ?><br/>
+				<input type="text" id="mainwp_plugin_search_by_keyword" class="" size="50" value="<?php if ( $cachedSearch != null ) {
+					echo $cachedSearch['keyword'];
+				} ?>"/>
+			</p>
+		</div>
+		<?php
+	}
+	
 	public static function renderAllActiveTable( $output = null ) {
 		$keyword       = null;
 		$search_status = 'all';
@@ -386,7 +412,7 @@ public static function renderHeader( $shownPage ) {
 		}
 		?>
 		<div class="alignleft">
-			<select name="bulk_action" id="mainwp_bulk_action">
+			<select class="mainwp-select2" name="bulk_action" id="mainwp_bulk_action">
 				<option value="none"><?php _e( 'Choose action', 'mainwp' ); ?></option>
 				<option value="trust"><?php _e( 'Trust', 'mainwp' ); ?></option>
 				<option value="untrust"><?php _e( 'Untrust', 'mainwp' ); ?></option>
@@ -466,7 +492,7 @@ public static function renderHeader( $shownPage ) {
 					}
 				}
 				?>
-				<tr id="post-1" class="post-1 post type-post status-publish format-standard hentry category-uncategorized alternate iedit author-self" valign="top" plugin_slug="<?php echo rawurlencode( $slug ); ?>" plugin_name="<?php echo urlencode( $name ); ?>">
+                            <tr id="post-1" class="post-1 post type-post status-publish format-standard hentry category-uncategorized alternate iedit author-self" valign="top" plugin_slug="<?php echo rawurlencode( $slug ); ?>" plugin_name="<?php echo esc_attr( $name ); ?>">
 					<th scope="row" class="check-column">
 						<input type="checkbox" name="plugin[]" value="<?php echo urlencode( $slug ); ?>"></th>
 					<td scope="col" id="info_content" class="manage-column" style=""> <?php if ( isset( $decodedIgnoredPlugins[ $slug ] ) ) {
@@ -481,22 +507,20 @@ public static function renderHeader( $shownPage ) {
 					<td scope="col" id="trustlvl_content" class="manage-column" style="">
 						<?php
 						if ( in_array( $slug, $trustedPlugins ) ) {
-							echo '<font color="#7fb100">Trusted</font>';
+							echo '<span class="mainwp-green">Trusted</span>';
 						} else {
-							echo '<font color="#c00">Not trusted</font>';
+							echo '<span class="mainwp-red">Not Trusted</span>';
 						}
 						?>
 					</td>
 					<td scope="col" id="ignoredstatus_content" class="manage-column" style="">
 						<?php if ( isset( $decodedIgnoredPlugins[ $slug ] ) ) {
-							echo '<font color="#c00">Ignored</font>';
+							echo '<span class="mainwp-green">Ignored</span>';
 						} ?>
 					</td>
 					<td scope="col" id="notes_content" class="manage-column" style="">
-						<img src="<?php echo plugins_url( 'images/notes.png', dirname( __FILE__ ) ); ?>" class="mainwp_notes_img" <?php if ( ! isset( $trustedPluginsNotes[ $slug ] ) || $trustedPluginsNotes[ $slug ] == '' ) {
-							echo 'style="display: none;"';
-						} ?> />
-						<a href="#" class="mainwp_trusted_plugin_notes_show"><i class="fa fa-pencil"></i> <?php _e( 'Open', 'mainwp' ); ?>
+						<a href="#" class="mainwp_trusted_plugin_notes_show <?php echo ! isset( $trustedPluginsNotes[ $slug ] ) || $trustedPluginsNotes[ $slug ] == '' ? '' : 'mainwp-green'; ?>">
+							<i class="fa fa-pencil-square-o"></i> <?php _e( 'Notes', 'mainwp' ); ?>
 						</a>
 
 						<div style="display: none" class="note"><?php if ( isset( $trustedPluginsNotes[ $slug ] ) ) {
@@ -516,12 +540,16 @@ public static function renderHeader( $shownPage ) {
 			<div id="mainwp_notes_title" class="mainwp_popup_title"></span>
 			</div>
 			<div id="mainwp_notes_content">
-                <textarea style="width: 580px !important; height: 300px;"
-                          id="mainwp_notes_note"></textarea>
+                            <div id="mainwp_notes_html" style="width: 580px !important; height: 300px;"></div>
+                            <textarea style="width: 580px !important; height: 300px;"
+                                      id="mainwp_notes_note"></textarea>
 			</div>
+                        <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
 			<form>
 				<div style="float: right" id="mainwp_notes_status"></div>
 				<input type="button" class="button cont button-primary" id="mainwp_trusted_plugin_notes_save" value="<?php esc_attr_e( 'Save note', 'mainwp' ); ?>"/>
+                                <input type="button" class="button cont" id="mainwp_notes_edit" value="<?php esc_attr_e( 'Edit','mainwp' ); ?>"/>                
+                                <input type="button" class="button cont" id="mainwp_notes_view" value="<?php esc_attr_e( 'View','mainwp' ); ?>"/>                
 				<input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"/>
 				<input type="hidden" id="mainwp_notes_slug" value=""/>
 			</form>
@@ -533,7 +561,7 @@ public static function renderHeader( $shownPage ) {
 				<input type="text" class="pagedisplay">
 				<img src="<?php echo plugins_url( 'images/next.png', dirname( __FILE__ ) ); ?>" class="next">
 				<img src="<?php echo plugins_url( 'images/last.png', dirname( __FILE__ ) ); ?>" class="last">
-				<span>&nbsp;&nbsp;<?php _e( 'Show:', 'mainwp' ); ?> </span><select class="pagesize">
+				<span>&nbsp;&nbsp;<?php _e( 'Show:', 'mainwp' ); ?> </span><select class="mainwp-select2 pagesize">
 					<option selected="selected" value="10">10</option>
 					<option value="20">20</option>
 					<option value="30">30</option>
@@ -681,7 +709,10 @@ public static function renderHeader( $shownPage ) {
 			}
 		}
 
-		MainWP_Cache::addContext( 'Plugins', array( 'keyword' => $keyword, 'the_status' => $status ) );
+		MainWP_Cache::addContext( 'Plugins', array( 'keyword' => $keyword, 'the_status' => $status,
+                                                    'sites'    => ($sites != '') ? $sites : '',
+                                                    'groups'   => ($groups != '') ? $groups : ''
+                                                ) );
 
 		ob_start();
 		?>
@@ -689,18 +720,18 @@ public static function renderHeader( $shownPage ) {
 			<select name="bulk_action" id="mainwp_bulk_action">
 				<option value="none"><?php _e( 'Choose Action', 'mainwp' ); ?></option>
 				<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-					<?php if ( $status == 'active' ) { ?>
+					<?php if ( $status == 'active' || $status == 'all' ) { ?>
 						<option value="deactivate"><?php _e( 'Deactivate', 'mainwp' ); ?></option>
 					<?php } ?>
 				<?php } ?>
-				<?php if ( $status == 'inactive' ) { ?>
+				<?php if ( $status == 'inactive' || $status == 'all' ) { ?>
 					<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
 						<option value="activate"><?php _e( 'Activate', 'mainwp' ); ?></option>
 					<?php } ?>
-					<?php if ( mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
-						<option value="delete"><?php _e( 'Delete', 'mainwp' ); ?></option>
-					<?php } ?>
-				<?php } ?>
+                                        <?php if ( mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
+                                        <option value="delete"><?php _e( 'Delete', 'mainwp' ); ?></option>
+                                    <?php } ?>
+				<?php } ?>                               
 				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
 					<option value="ignore_updates"><?php _e( 'Ignore updates', 'mainwp' ); ?></option>
 				<?php } ?>
@@ -749,13 +780,16 @@ public static function renderHeader( $shownPage ) {
 			<table class="ui-tinytable wp-list-table widefat fixed pages" id="plugins_fixedtable" style="width: auto; word-wrap: normal">
 				<thead>
 				<tr>
-					<th class="headcol" style="text-align: center; border-bottom: 1px Solid #e1e1e1; font-size: 18px; z-index:999; padding: auto; width: 15em !important;"><?php _e( 'Child site / Plugin', 'mainwp' ); ?>
+					<th class="headcol" id="cb" style="vertical-align: top;text-align: center; border-bottom: 1px Solid #e1e1e1; font-size: 18px; z-index:999; padding: auto; width: 15em !important;"><?php _e( 'Child site / Plugin', 'mainwp' ); ?>
 						<p style="font-size: 10px; line-height: 12px;"><?php _e( 'Click on the plugin name to select the plugin on all sites or click the site URL to select all plugins on the site.', 'mainwp' ); ?></p>
 					</th>
 					<?php
 					foreach ( $pluginsVersion as $plugin_name => $plugin_title ) {
+                                                $th_id = strtolower($plugin_name);
+                                                $th_id = preg_replace('/[[:space:]]+/', '_', $th_id);                                                    
 						?>
-						<th height="100" width="120" style="padding: 5px;">
+                                                <th height="100" width="120" style="padding: 5px;vertical-align: top;" class="drag-enable" id="<?php echo esc_attr($th_id); ?>">
+                                                        <div class="table-handle"></div>
 							<div style="max-width: 120px; text-align: center;" title="<?php echo $plugin_title . ( $muPlugins[ $plugin_name ] == 1 ? ' (' . _('Must Use Plugin') . ')' : ''); ?>">
 								<input type="checkbox" value="<?php echo $plugins[$plugin_name]; ?>" id="<?php echo $plugin_name; ?>" version="<?php echo $pluginsRealVersion[$plugin_name]; ?>" class="mainwp_plugin_check_all" style="display: none ;" />
 								<label for="<?php echo $plugin_name; ?>"><?php echo $plugin_title; ?></label>
@@ -794,6 +828,7 @@ public static function renderHeader( $shownPage ) {
 		</div>
 		<script type="text/javascript">
 			jQuery(document).ready(function() {
+				jQuery('#mainwp_bulk_action').select2({minimumResultsForSearch: 10, width: '170px', allowClear: true});
 				jQuery("#plugins_fixedtable").tableHeadFixer({"left" : 1});
 			});
 		</script>
@@ -908,7 +943,7 @@ public static function renderHeader( $shownPage ) {
 
 	//@see MainWP_Install_Bulk
 	public static function renderInstall() {
-		$favorites_callback = apply_filters('mainwp_favorites_links_onaction_callback', '');
+		$favorites_callback = apply_filters('mainwp_favorites_links_onaction_callback', '');		
 		self::renderHeader('Install');
 		//MainWP_Install_Bulk::render( 'Plugins', 'plugin' );
 		self::renderPluginsTable($favorites_callback);
@@ -926,7 +961,7 @@ public static function renderHeader( $shownPage ) {
 		?>
 		<a href="#" id="MainWPInstallBulkNavSearch" class="mainwp_action left <?php echo $tab !== 'upload' ? 'mainwp_action_down' : ''; ?>" ><?php _e('Search','mainwp'); ?></a><a href="#" id="MainWPInstallBulkNavUpload" class="mainwp_action <?php echo $tab === 'upload' ? 'mainwp_action_down' : ''; ?> right upload" ><?php _e('Upload','mainwp'); ?></a>
 		<br class="clear" /><br />
-
+		<div class="mainwp-padding-bottom-10"><?php MainWP_Tours::renderInstallPluginsTour(); ?></div>
 		<div class="mainwp_config_box_left" style="width: calc(100% - 290px);">
 			<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
 			<div class="mainwp-upload-plugin">
@@ -959,7 +994,7 @@ public static function renderHeader( $shownPage ) {
 				</div>
 			</div>
 			<input type="button" value="<?php _e( "Complete installation", 'mainwp' ); ?>" class="button-primary button button-hero button-right hide-if-upload" id="mainwp_plugin_bulk_install_btn" name="bulk-install">
-			<input type="button" value="<?php _e( 'Complete installation','mainwp' ); ?>" class="button-primary button button-hero button-right show-if-upload" onClick="mainwp_upload_bulk('plugins');">
+			<input type="button" value="<?php _e( 'Complete installation','mainwp' ); ?>" class="button-primary button button-hero button-right show-if-upload" id="mainwp_plugin_bulk_install_upload_btn" onClick="mainwp_upload_bulk('plugins');">
 		</div>
 		<div style="clear: both;"></div>
 
@@ -984,59 +1019,109 @@ public static function renderHeader( $shownPage ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
 			mainwp_do_not_have_permissions( __( 'trust/untrust updates', 'mainwp' ) );
 		} else {
-			$snAutomaticDailyUpdate = get_option( 'mainwp_automaticDailyUpdate' );
-			?>
-			<div id="mainwp-au" class=""><strong><?php if ( $snAutomaticDailyUpdate == 1 ) { ?>
-						<div class="mainwp-au-on"><?php _e( 'Auto updates are ON and trusted plugins will be automatically updated', 'mainwp' ); ?> -
-							<a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e( 'Change this in settings', 'mainwp' ); ?></a>
-						</div>
-					<?php } elseif ( ( $snAutomaticDailyUpdate === false ) || ( $snAutomaticDailyUpdate == 2 ) ) { ?>
-						<div class="mainwp-au-email"><?php _e( 'Auto updates are OFF - email update notification is ON', 'mainwp' ); ?> -
-							<a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e( 'Change this in settings', 'mainwp' ); ?></a>
-						</div>
-					<?php } else { ?>
-						<div class="mainwp-au-off"><?php _e( 'Auto updates are OFF - email update notification is OFF', 'mainwp' ); ?> -
-							<a href="<?php echo admin_url(); ?>admin.php?page=Settings"><?php _e( 'Change this in settings', 'mainwp' ); ?></a>
-						</div>
-					<?php } ?></strong></div>
-			<div class="mainwp_info-box"><?php _e( 'Only mark plugins as trusted if you are absolutely sure they can be updated without breaking your sites or your network.', 'mainwp' ); ?>
-				<strong><?php _e( 'Ignored plugins can not be automatically updated.', 'mainwp' ); ?></strong></div>
+			$snPluginAutomaticDailyUpdate = get_option( 'mainwp_pluginAutomaticDailyUpdate' );
+                        
+                        if($snPluginAutomaticDailyUpdate === false) {
+                            $snPluginAutomaticDailyUpdate = get_option( 'mainwp_automaticDailyUpdate' );
+                            update_option('mainwp_pluginAutomaticDailyUpdate', $snPluginAutomaticDailyUpdate);
+                        }
+                            
+                        $update_time    = MainWP_Utility::getWebsitesAutomaticUpdateTime();                
+                        $lastAutomaticUpdate = $update_time['last'];
+                        $nextAutomaticUpdate = $update_time['next'];
+                
+                        ?>			
+			<?php MainWP_Tours::renderPluginsAutoUpdatesTours(); ?>
+                        <br/>     
+                        
+                        <?php if ( isset($_GET['message']) && $_GET['message'] = 'saved') {
+                            ?>
+                            <div class="mainwp-notice mainwp-notice-green">
+                                    <?php _e( 'Your settings have been saved.', 'mainwp' ); ?>
+                            </div>
+                            <?php
+                        }
+                        ?>
 			<div class="postbox">
-				<h3 class="mainwp_box_title"><i class="fa fa-binoculars"></i> <?php _e( 'Search plugins', 'mainwp' ); ?>
-				</h3>
-
+				<h3 class="mainwp_box_title"><i class="fa fa-power-off" aria-hidden="true"></i> <?php _e( 'Automatic updates', 'mainwp' ); ?></h3>
+				<div class="mainwp-postbox-actions-top">
+					<?php _e( 'The MainWP Auto Updates feature is a tool for your Dashboard to automatically update plugins that you trust to be updated without breaking your Child sites.', 'mainwp' ); ?>
+					<?php _e( 'This is a 2 step process:', 'mainwp' ); ?>
+					<br/><br/><?php _e( 'Step 1:  Tells your Dashboard what to do with Trusted plugins', 'mainwp' ); ?>
+					<br/><?php _e( 'Step 2:  Deciding which of your plugins you want to mark as “Trusted”', 'mainwp' ); ?>
+					<br/><br/><?php _e( 'Only mark plugins as trusted if you are absolutely sure they can be automatically updated by your MainWP Dashboard without causing issues on the Child sites!', 'mainwp' ); ?>
+					<br/><strong><?php _e( 'Auto Updates a delayed approximately 24 hours from the update release.', 'mainwp' ); ?></strong>
+					<strong><?php _e( 'Ignored plugins can not be automatically updated.', 'mainwp' ); ?></strong>
+				</div>
+				<h3 class="mainwp_box_title"><?php _e( 'Step 1:  Tell your Dashboard what to do with Trusted plugins', 'mainwp' ); ?></h3>
 				<div class="inside">
-					<span><?php _e( 'Status:', 'mainwp' ); ?> </span>
-					<select id="mainwp_au_plugin_status">
-						<option value="all" <?php if ( $cachedAUSearch != null && $cachedAUSearch['plugin_status'] == 'all' ) {
-							echo 'selected';
-						} ?>><?php _e( 'All plugins', 'mainwp' ); ?></option>
-						<option value="active" <?php if ( $cachedAUSearch != null && $cachedAUSearch['plugin_status'] == 'active' ) {
-							echo 'selected';
-						} ?>><?php _e( 'Active plugins', 'mainwp' ); ?></option>
-						<option value="inactive" <?php if ( $cachedAUSearch != null && $cachedAUSearch['plugin_status'] == 'inactive' ) {
-							echo 'selected';
-						} ?>><?php _e( 'Inactive plugins', 'mainwp' ); ?></option>
-					</select>&nbsp;&nbsp;
-					<span><?php _e( 'Trust status:', 'mainwp' ); ?> </span>
-					<select id="mainwp_au_plugin_trust_status">
-						<option value="all" <?php if ( $cachedAUSearch != null && $cachedAUSearch['status'] == 'all' ) {
-							echo 'selected';
-						} ?>><?php _e( 'All plugins', 'mainwp' ); ?></option>
-						<option value="trust" <?php if ( $cachedAUSearch != null && $cachedAUSearch['status'] == 'trust' ) {
-							echo 'selected';
-						} ?>><?php _e( 'Trusted plugins', 'mainwp' ); ?></option>
-						<option value="untrust" <?php if ( $cachedAUSearch != null && $cachedAUSearch['status'] == 'untrust' ) {
-							echo 'selected';
-						} ?>><?php _e( 'Not trusted plugins', 'mainwp' ); ?></option>
-						<option value="ignored" <?php if ( $cachedAUSearch != null && $cachedAUSearch['status'] == 'ignored' ) {
-							echo 'selected';
-						} ?>><?php _e( 'Ignored plugins', 'mainwp' ); ?></option>
-					</select>&nbsp;&nbsp;
-					<span><?php _e( 'Containing keywords:', 'mainwp' ); ?> </span>
-					<input type="text" class="" id="mainwp_au_plugin_keyword" style="width: 350px;" value="<?php echo ( $cachedAUSearch !== null ) ? $cachedAUSearch['keyword'] : ''; ?>">&nbsp;&nbsp;
-					<a href="#" class="button-primary" id="mainwp_show_all_active_plugins"><?php _e( 'Show plugins', 'mainwp' ); ?></a>
-					<span id="mainwp_plugins_loading"><i class="fa fa-spinner fa-pulse"></i></span>
+					 <form method="POST" action="">
+					 	<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'PluginAutoUpdate' ); ?>" /> 
+					 	<table class="form-table">
+                            <tbody>
+                                <tr>
+                                    <th scope="row"><?php _e( 'Plugin Automatic Daily Update', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Choose to have MainWP install updates, or notify you by email of available updates.', 'mainwp' ) ); ?></th>
+                                    <td>
+                                        <table class="mainwp-nomarkup">
+                                            <tr>
+                                                <td valign="top">
+                                                    <span class="mainwp-select-bg">
+                                                        <select class="mainwp-select2-super" name="mainwp_pluginAutomaticDailyUpdate" id="mainwp_pluginAutomaticDailyUpdate">
+                                                            <option value="2" <?php if ( ( $snPluginAutomaticDailyUpdate === false ) || ( $snPluginAutomaticDailyUpdate == 2 ) ) { ?>selected<?php } ?>>E-mail Notifications of New Updates</option>
+                                                            <option value="1" <?php if ( $snPluginAutomaticDailyUpdate == 1 ) {?>selected<?php } ?>>Install Trusted Updates</option>
+                                                             <option value="0" <?php if ( $snPluginAutomaticDailyUpdate !== false && $snPluginAutomaticDailyUpdate == 0 ) {?>selected<?php } ?>>Off</option>
+                                                        </select>
+                                                        <label></label>
+                                                    </span>
+                                                    <br/><em><?php _e( 'Last run: ', 'mainwp' ); ?><?php echo $lastAutomaticUpdate; ?></em>
+                                                    <br /><em><?php _e( 'Next run: ', 'mainwp' ); ?><?php echo $nextAutomaticUpdate; ?></em>
+                                                </td>
+                                                <td style="vertical-align:top">
+                                                	<p class="submit" style="padding: 0; margin-top: 0;"  id="mainwp-save-apu-options"><input type="submit" name="submit" id="submit" class="button-primary button" value="<?php esc_attr_e( 'Save settings', 'mainwp' ); ?>"/></p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+					 </form>
+				</div>
+				<h3 class="mainwp_box_title" style="border-top: 1px solid #eee;"><?php _e( 'Step 2:  Decide which of your plugins you want to mark as "Trusted"', 'mainwp' ); ?></h3>
+				<div class="inside">
+					<div class="mainwp-padding-top-10">
+						<span><?php _e( 'Status:', 'mainwp' ); ?> </span>
+						<select class="mainwp-select2" id="mainwp_au_plugin_status">
+							<option value="all" <?php if ( $cachedAUSearch != null && $cachedAUSearch['plugin_status'] == 'all' ) {
+								echo 'selected';
+							} ?>><?php _e( 'All plugins', 'mainwp' ); ?></option>
+							<option value="active" <?php if ( $cachedAUSearch != null && $cachedAUSearch['plugin_status'] == 'active' ) {
+								echo 'selected';
+							} ?>><?php _e( 'Active plugins', 'mainwp' ); ?></option>
+							<option value="inactive" <?php if ( $cachedAUSearch != null && $cachedAUSearch['plugin_status'] == 'inactive' ) {
+								echo 'selected';
+							} ?>><?php _e( 'Inactive plugins', 'mainwp' ); ?></option>
+						</select>&nbsp;&nbsp;
+						<span><?php _e( 'Trust status:', 'mainwp' ); ?> </span>
+						<select class="mainwp-select2" id="mainwp_au_plugin_trust_status">
+							<option value="all" <?php if ( $cachedAUSearch != null && $cachedAUSearch['status'] == 'all' ) {
+								echo 'selected';
+							} ?>><?php _e( 'All plugins', 'mainwp' ); ?></option>
+							<option value="trust" <?php if ( $cachedAUSearch != null && $cachedAUSearch['status'] == 'trust' ) {
+								echo 'selected';
+							} ?>><?php _e( 'Trusted plugins', 'mainwp' ); ?></option>
+							<option value="untrust" <?php if ( $cachedAUSearch != null && $cachedAUSearch['status'] == 'untrust' ) {
+								echo 'selected';
+							} ?>><?php _e( 'Not trusted plugins', 'mainwp' ); ?></option>
+							<option value="ignored" <?php if ( $cachedAUSearch != null && $cachedAUSearch['status'] == 'ignored' ) {
+								echo 'selected';
+							} ?>><?php _e( 'Ignored plugins', 'mainwp' ); ?></option>
+						</select>&nbsp;&nbsp;
+						<span><?php _e( 'Containing keywords:', 'mainwp' ); ?> </span>
+						<input type="text" class="" id="mainwp_au_plugin_keyword" value="<?php echo ( $cachedAUSearch !== null ) ? $cachedAUSearch['keyword'] : ''; ?>">&nbsp;&nbsp;
+						<a href="#" class="button-primary" id="mainwp_show_all_active_plugins"><?php _e( 'Show plugins', 'mainwp' ); ?></a>
+						<span id="mainwp_plugins_loading"><i class="fa fa-spinner fa-pulse"></i></span>
+					</div>
 				</div>
 			</div>
 
@@ -1068,14 +1153,14 @@ public static function renderHeader( $shownPage ) {
 
 		// assume no $type_selector means it's a simplified search form
 		if ( ! $type_selector ) {
-			$input_attrs = 'class="wp-filter-search" placeholder="' . esc_attr__( 'Search plugins', 'mainwp' ) . '" ';
+			$input_attrs = 'class="wp-filter-search" id="wp-filter-search-plugins-input" placeholder="' . esc_attr__( 'Search plugins', 'mainwp' ) . '" ';
 		}
 
 		?><form class="search-form search-plugins" method="get" action="<?php echo admin_url("admin.php?page=PluginsInstall"); ?>">
 		<input type="hidden" name="tab" value="search" />
 		<input type="hidden" name="page" value="PluginsInstall" />
 		<?php if ( $type_selector ) : ?>
-			<select name="type" id="typeselector">
+			<select class="mainwp-select2" name="type" id="typeselector">
 				<option value="term"<?php selected('term', $type) ?>><?php _e('Keyword', 'mainwp' ); ?></option>
 				<option value="author"<?php selected('author', $type) ?>><?php ;_e( 'Author', 'mainwp' ) ?></option>
 				<option value="tag"<?php selected('tag', $type) ?>><?php _ex('Tag', 'Plugin Installer'); ?></option>
@@ -1109,13 +1194,15 @@ public static function renderHeader( $shownPage ) {
 
 		self::renderHeader( 'Ignore' );
 		?>
-		<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
-			<caption><?php _e( 'Globally Ignored Plugins', 'mainwp' ); ?></caption>
+		<div class="mainwp-notice mainwp-notice-blue"><?php _e( 'These are plugins you have told your MainWP Dashboard to ignore updates and not notify you about pending updates.', 'mainwp' ); ?></div>		
+		<?php MainWP_Tours::renderPluginsIgnoredUpdatesTour(); ?>
+		<br/>
+		<table id="mainwp-table" class="wp-list-table widefat mainwp-globally-ignored-plugins" cellspacing="0">
 			<thead>
 			<tr>
-				<th scope="col" class="manage-column" style="width: 300px"><?php _e( 'Plugin', 'mainwp' ); ?></th>
+				<th scope="col" class="manage-column" id="mainwp_g_plugin" style="width: 300px"><?php _e( 'Globally Ignored Plugins', 'mainwp' ); ?></th>
 				<th scope="col" class="manage-column" style="width: 650px"><?php _e( 'Plugin file', 'mainwp' ); ?></th>
-				<th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+				<th scope="col" class="manage-column" id="mainwp_g_plugin_allow" style="text-align: right; padding-right: 10px"><?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
 						if ( $ignoredPlugins ) { ?>
 							<a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return rightnow_plugins_unignore_globally_all();"><?php _e( 'Allow All', 'mainwp' ); ?></a><?php }
 					} ?></th>
@@ -1154,14 +1241,13 @@ public static function renderHeader( $shownPage ) {
 			?>
 			</tbody>
 		</table>
-
-		<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
-			<caption><?php _e( 'Per site ignored plugins', 'mainwp' ); ?></caption>
+		<br/>
+		<table id="mainwp-table" class="wp-list-table widefat mainwp-per-site-ignored-plugins" cellspacing="0">
 			<thead>
 			<tr>
-				<th scope="col" class="manage-column" style="width: 300px"><?php _e( 'Site', 'mainwp' ); ?></th>
+				<th scope="col" class="manage-column" id="mainwp_s_plugin" style="width: 300px"><?php _e( 'Per site ignored plugins', 'mainwp' ); ?></th>
 				<th scope="col" class="manage-column" style="width: 650px"><?php _e( 'Plugins', 'mainwp' ); ?></th>
-				<th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ( $cnt > 0 ) { ?>
+				<th scope="col" class="manage-column" id="mainwp_s_plugin_allow" style="text-align: right; padding-right: 10px"><?php if ( $cnt > 0 ) { ?>
 						<a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return rightnow_plugins_unignore_detail_all();"><?php _e( 'Allow all', 'mainwp' ); ?></a><?php } ?>
 				</th>
 			</tr>
@@ -1235,13 +1321,15 @@ public static function renderHeader( $shownPage ) {
 
 		self::renderHeader( 'IgnoreAbandoned' );
 		?>
-		<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
-			<caption><?php _e( 'Globally Ignored Abandoned Plugins', 'mainwp' ); ?></caption>
+		<div class="mainwp-notice mainwp-notice-blue"><?php echo sprintf( __( 'These are plugins you have told your MainWP Dashboard to ignore even though they have passed your Abandoned Plugin Tolerance date as set up in the %sMainWP Settings%s.', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>		
+		<?php MainWP_Tours::renderPluginsIgnoredAbandonedTour(); ?>
+		<br/>
+		<table id="mainwp-table" class="wp-list-table widefat mainwp-globally-ignored-plugins" cellspacing="0">
 			<thead>
 			<tr>
-				<th scope="col" class="manage-column" style="width: 300px"><?php _e( 'Plugin', 'mainwp' ); ?></th>
+				<th scope="col" class="manage-column" id="mainwp_g_plugin" style="width: 300px"><?php _e( 'Globally Ignored Abandoned Plugins', 'mainwp' ); ?></th>
 				<th scope="col" class="manage-column" style="width: 650px"><?php _e( 'Plugin file', 'mainwp' ); ?></th>
-				<th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+				<th scope="col" class="manage-column" id="mainwp_g_plugin_allow" style="text-align: right; padding-right: 10px"><?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
 						if ( $ignoredPlugins ) { ?>
 							<a href="#" class="button-primary mainwp-unignore-globally-all" onClick="return rightnow_plugins_abandoned_unignore_globally_all();"><?php _e( 'Allow all', 'mainwp' ); ?></a><?php }
 					} ?></th>
@@ -1280,14 +1368,13 @@ public static function renderHeader( $shownPage ) {
 			?>
 			</tbody>
 		</table>
-
-		<table id="mainwp-table" class="wp-list-table widefat" cellspacing="0">
-			<caption><?php _e( 'Per site ignored abandoned plugins', 'mainwp' ); ?></caption>
+		<br/>
+		<table id="mainwp-table" class="wp-list-table widefat mainwp-per-site-ignored-plugins" cellspacing="0">
 			<thead>
 			<tr>
-				<th scope="col" class="manage-column" style="width: 300px"><?php _e( 'Site', 'mainwp' ); ?></th>
+				<th scope="col" class="manage-column" id="mainwp_s_plugin" style="width: 300px"><?php _e( 'Per site ignored abandoned plugins', 'mainwp' ); ?></th>
 				<th scope="col" class="manage-column" style="width: 650px"><?php _e( 'Plugins', 'mainwp' ); ?></th>
-				<th scope="col" class="manage-column" style="text-align: right; padding-right: 10px"><?php if ( $cnt > 0 ) { ?>
+				<th scope="col" class="manage-column" id="mainwp_s_plugin_allow" style="text-align: right; padding-right: 10px"><?php if ( $cnt > 0 ) { ?>
 						<a href="#" class="button-primary mainwp-unignore-detail-all" onClick="return rightnow_plugins_unignore_abandoned_detail_all();"><?php _e( 'Allow all', 'mainwp' ); ?></a><?php } ?>
 				</th>
 			</tr>
@@ -1421,175 +1508,5 @@ public static function renderHeader( $shownPage ) {
 
 		$userExtension->trusted_plugins_notes = json_encode( $trustedPluginsNotes );
 		MainWP_DB::Instance()->updateUserExtension( $userExtension );
-	}
-
-	public static function QSGManagePlugins() {
-		self::renderHeader( 'PluginsHelp' );
-		?>
-		<div style="text-align: center">
-			<a href="#" class="button button-primary" id="mainwp-quick-start-guide"><?php _e( 'Show Quick Start Guide', 'mainwp' ); ?></a>
-		</div>
-		<div class="mainwp_info-box-yellow" id="mainwp-qsg-tips">
-			<span><a href="#" class="mainwp-show-qsg" number="1"><?php _e( 'Manage Plugins', 'mainwp' ) ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="2"><?php _e( 'How to install a Plugin', 'mainwp' ) ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="3"><?php _e( 'How to update Plugins', 'mainwp' ) ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="mainwp-show-qsg" number="4"><?php _e( 'Ignore a plugin update', 'mainwp' ) ?></a></span><span><a href="#" id="mainwp-qsg-dismiss" style="float: right;"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
-				</a></span>
-
-			<div class="clear"></div>
-			<div id="mainwp-qsgs">
-				<div class="mainwp-qsg" number="1">
-					<h3>Manage Themes</h3>
-
-					<p>
-					<ol>
-						<li>
-							Select do you want to see your Active or Inactive plugins.<br/><br/>
-							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-plutins-active.jpg" style="wight: 100% !important;" alt="screenshot"/>
-						</li>
-						<li>
-							Optionaly, Enter the keyword for the search <br/><br/>
-							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-plutins-keywords.jpg" style="wight: 100% !important;" alt="screenshot"/>
-						</li>
-						<li>
-							Select the sites from the Select Site Box <br/><br/>
-							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-plutins-sites.jpg" style="wight: 100% !important;" alt="screenshot"/>
-						</li>
-						<li>
-							Hit the Show Plugins button <br/><br/>
-							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-plutins-show.jpg" style="wight: 100% !important;" alt="screenshot"/>
-						</li>
-						<li><h4>To Deactivate a Plugin: </h4><br/>
-							<ol>
-								<li>Select Active in Status dropdown list</li>
-								<li>Select Site(s)</li>
-								<li>Click Show Plugins button</li>
-								<li>After list generates, select wanted plugin(s)</li>
-								<li>Choose Deactivate from Bulk Action menu</li>
-								<li>Click Confirm</li>
-							</ol>
-						</li>
-						<li><h4>To delete a Plugin(s) from a site: </h4><br/>
-							<ol>
-								<li>Set the Inactive themes in status drop-down list</li>
-								<li>Select Site(s)</li>
-								<li>Click Show Plugins button</li>
-								<li>After list generates, select wanted plugin(s)</li>
-								<li>Choose Delete from Bulk Action menu</li>
-								<li>Click Confirm</li>
-							</ol>
-						</li>
-						<li><h4>To activate Plugin(s): </h4><br/>
-							<ol>
-								<li>Set the Inactive theme in status drop-down list</li>
-								<li>Select Site(s)</li>
-								<li>Click Show Plugins button</li>
-								<li>After list generates, select wanted plugin(s)</li>
-								<li>Choose Activate from Bulk Action menu</li>
-								<li>Click Confirm</li>
-							</ol>
-						</li>
-					</ol>
-					</p>
-				</div>
-				<div class="mainwp-qsg" number="2">
-					<h3>How to install a Plugin</h3>
-
-					<p>You can install new plugin by searching WordPress theme repository or by uploading the plugin from your computer
-					<h4>Search Plugins</h4>
-					<ol>
-						<li>
-							Click the Install Tab
-						</li>
-						<li>
-							Select if you want to make the search by Term, Author or Tag
-						</li>
-						<li>
-							Enter a search keyword
-						</li>
-						<li>
-							Click Search Plugins button <br/><br/>
-							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-pulgins-search.jpg" style="wight: 100% !important;" alt="screenshot"/>
-						</li>
-						<li>
-							Select the site(s) you want to install the plugin, and click Install
-							<img src="//docs.mainwp.com/wp-content/uploads/2013/02/new-pulgins-install.jpg" style="wight: 100% !important;" alt="screenshot"/>
-						</li>
-					</ol>
-					<h4>Upload Plugins</h4>
-					<ol>
-						<li>
-							Click the Install Tab
-						</li>
-						<li>
-							Click the Upload toggle Button
-						</li>
-						<li>
-							Click 'Upload Now' button<br/><br/>
-							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-plugins-upload.jpg" style="wight: 100% !important;" alt="screenshot"/>
-						</li>
-						<li>
-							Locate your Plugin
-						</li>
-						<li>
-							Select sites you want to install the Plugin
-						</li>
-						<li>
-							Click 'Install Now' button
-						</li>
-					</ol>
-					</p>
-				</div>
-				<div class="mainwp-qsg" number="3">
-					<h3>How to update Plugins</h3>
-
-					<p>
-					<ol>
-						<li>
-							Go to main MainWP Dashboard
-						</li>
-						<li>
-							Locate your 'Right Now' Widget
-						</li>
-						<li>
-							Click 'Show' in 'Plugin Upgrades Available' area <br/><br/>
-							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-available-plugins.jpg" style="wight: 100% !important;" alt="screenshot"/>
-						</li>
-						<li>
-							Click the middle upgrades link to show the drop down of the available upgrades for that site
-						</li>
-						<li>
-							Select 'Upgrade' next to the name of the plugin or 'Upgrade All' to upgrade all plugins on the site
-							<br/><br/>
-							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-available-plugins-upgrade.jpg" style="wight: 100% !important;" alt="screenshot"/>
-						</li>
-					</ol>
-					</p>
-				</div>
-				<div class="mainwp-qsg" number="4">
-					<h3>Ignore a Plugin update</h3>
-
-					<p>
-					<ol>
-						<li>
-							Go to main MainWP Dashboard
-						</li>
-						<li>
-							Locate your 'Right Now' Widget
-						</li>
-						<li>
-							Click 'Show' on 'Plugin Upgrades Available' area
-						</li>
-						<li>
-							Click the middle upgrades link to show the drop down of the available upgrades for that site
-						</li>
-						<li>
-							Click 'Ignore' next to the name of the plugin<br/><br/>
-							<img src="//docs.mainwp.com/wp-content/uploads/2013/05/new-ignore-plugin.jpg" style="wight: 100% !important;" alt="screenshot"/>
-						</li>
-					</ol>
-					</p>
-				</div>
-			</div>
-		</div>
-		<?php
-		self::renderFooter( 'PluginsHelp' );
 	}
 }

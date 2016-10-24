@@ -118,7 +118,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	}
 
 	/**
-	 * List information about plugin upgrades
+	 * List information about plugin updates
 	 *
 	 * ## OPTIONS
 	 *
@@ -126,13 +126,13 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 * : The id (or ids, comma separated) of the child sites that need to be listed/upgraded, when omitted all childsites are used.
 	 *
 	 * [--list]
-	 * : Get a list of plugins with available upgrades
+	 * : Get a list of plugins with available updates
 	 *
 	 * [--upgrade=<pluginslug>]
-	 * : Upgrade the plugin slugs
+	 * : Update the plugin slugs
 	 *
 	 * [--upgrade-all]
-	 * : Upgrade all plugins
+	 * : Update all plugins
 	 *
 	 * ## EXAMPLES
 	 *
@@ -225,7 +225,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ). "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ). "s+%'--" . ( $newVersionLength + 2 ). "s+", '', '', '', '', '' ) );
 		}
 		else if ( isset( $assoc_args['upgrade'] ) || isset( $assoc_args['upgrade-all'] ) ) {
-			//slugs to upgrade
+			//slugs to update
 
 			$pluginSlugs = array();
 			if ( isset( $assoc_args['upgrade'] ) ) {
@@ -280,7 +280,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	}
 
 	/**
-	 * List information about theme upgrades
+	 * List information about theme updates
 	 *
 	 * ## OPTIONS
 	 *
@@ -288,13 +288,13 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 * : The id (or ids, comma separated) of the child sites that need to be listed/upgraded, when omitted all childsites are used.
 	 *
 	 * [--list]
-	 * : Get a list of themes with available upgrades
+	 * : Get a list of themes with available updates
 	 *
 	 * [--upgrade=<theme>]
-	 * : Upgrade the themes
+	 * : Update the themes
 	 *
 	 * [--upgrade-all]
-	 * : Upgrade all themes
+	 * : Update all themes
 	 *
 	 * ## EXAMPLES
 	 *
@@ -387,7 +387,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ). "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ). "s+%'--" . ( $newVersionLength + 2 ). "s+", '', '', '', '', '' ) );
 		}
 		else if ( isset( $assoc_args['upgrade'] ) || isset( $assoc_args['upgrade-all'] ) ) {
-			//slugs to upgrade
+			//slugs to update
 
 			$themeSlugs = array();
 			if ( isset( $assoc_args['upgrade'] ) ) {

@@ -13,7 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
-	public static $version = '3.1';
+	public static $version = '3.2';
 	//Singleton
 	private static $instance = null;
 
@@ -1765,7 +1765,7 @@ class MainWP_System {
 
 		if ( get_option( 'mainwp_activated' ) == 'yes' ) {
 			delete_option( 'mainwp_activated' );
-			wp_redirect( admin_url( 'admin.php?page=mainwp_about' ) );
+			wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
 
 			return;
 		}
@@ -2489,15 +2489,25 @@ class MainWP_System {
 		wp_enqueue_script( 'postbox' );
 	}
 
-	public static function do_mainwp_meta_boxes($_postpage, $screen = 'normal') {
+	public static function do_mainwp_meta_boxes($_postpage, $screen = 'normal', $force_show = true) {
 		wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
 		wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
+		if ($force_show) {
+			add_filter('hidden_meta_boxes', array(self::$instance, 'force_show_meta_box'), 10, 3);
+		}
 		?>
 		<div class="metabox-holder columns-1">
 			<?php do_meta_boxes($_postpage, $screen, null ); ?>
 		</div>
 		<script type="text/javascript"> var mainwp_postbox_page = '<?php echo $_postpage; ?>';</script>
 		<?php
+		if ($force_show) {
+			remove_filter('hidden_meta_boxes', array(self::$instance, 'force_show_meta_box'));
+		}
+	}
+
+	public function force_show_meta_box($hidden, $screen) {
+		return array();
 	}
 
 	public function remove_wp_menus() {

@@ -5,14 +5,14 @@ class MainWP_Updates {
 		return __CLASS__;
 	}
 
-	
+
 	public static function init() {
 		/**
 		 * This hook allows you to render the Post page header via the 'mainwp-pageheader-updates' action.
-		 * 
+		 *
 		 *
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-updates'
-		 * 
+		 *
 		 *
 		 * @see \MainWP_Updates::renderHeader
 		 */
@@ -20,10 +20,10 @@ class MainWP_Updates {
 
 		/**
 		 * This hook allows you to render the Updates page footer via the 'mainwp-pagefooter-updates' action.
-		 * 
+		 *
 		 *
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-updates'
-		 * 
+		 *
 		 *
 		 * @see \MainWP_Updates::renderFooter
 		 */
@@ -35,7 +35,7 @@ class MainWP_Updates {
 			MainWP_Updates::getClassName(),
 			'render',
 		) );
-		
+
 	}
 
 	/**
@@ -46,11 +46,11 @@ class MainWP_Updates {
 		<div class="wrap">
 		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
 		<h2><i class="fa fa-file-text"></i> <?php _e( 'Updates', 'mainwp' ); ?></h2>
-		<div style="clear: both;"></div><br/>		
-		<div class="mainwp-tabs" id="mainwp-tabs">			
-                        <a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'UpdatesManage' ) {
-                                echo 'nav-tab-active';
-                        } ?>" href="admin.php?page=UpdatesManage"><?php _e( 'Updates', 'mainwp' ); ?></a>				
+		<div style="clear: both;"></div><br/>
+		<div class="mainwp-tabs" id="mainwp-tabs">
+			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'UpdatesManage' ) {
+				echo 'nav-tab-active';
+			} ?>" href="admin.php?page=UpdatesManage"><?php _e( 'Updates', 'mainwp' ); ?></a>
 			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">
@@ -66,20 +66,43 @@ class MainWP_Updates {
 		</div>
 		<?php
 	}
-        
-        public static function render() {            
-            self::renderHeader( 'UpdatesManage' );            
-            MainWP_Main::renderDashboardBody( array(), null, null, true);
-            ?>     
-            <div class="postbox" id="mainwp_page_updates_tab-contextbox-1">
-                <h3 class="mainwp_box_title">
-                        <span><i class="fa fa-refresh" aria-hidden="true"></i> <?php _e( 'Updates', 'mainwp' ); ?></span></h3>
-                            <div class="inside">                
-                            <div id="rightnow_list" xmlns="http://www.w3.org/1999/html"><?php MainWP_Right_Now::renderSites($updates = true); ?></div>
-                    </div>
-            </div>
-            <?php
-            self::renderFooter();
-        }
-       
+
+	public static function render() {
+		self::renderHeader( 'UpdatesManage' );
+		MainWP_Main::renderDashboardBody( array(), null, null, true);
+
+		if ( MainWP_Twitter::enabledTwitterMessages() ) {
+			$filter = array(
+				'upgrade_all_plugins',
+				'upgrade_all_themes',
+				'upgrade_all_wp_core'
+			);
+			foreach ( $filter as $what ) {
+				$twitters = MainWP_Twitter::getTwitterNotice( $what );
+				if ( is_array( $twitters ) ) {
+					foreach ( $twitters as $timeid => $twit_mess ) {
+						if ( !empty( $twit_mess ) ) {
+							$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
+							if ( !empty( $sendText ) ) {
+								?>
+								<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText );?><span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
+								<?php
+							}
+						}
+					}
+				}
+			}
+		}
+		?>
+		<div class="postbox" id="mainwp_page_updates_tab-contextbox-1">
+			<h3 class="mainwp_box_title">
+				<span><i class="fa fa-refresh" aria-hidden="true"></i> <?php _e( 'Updates', 'mainwp' ); ?></span></h3>
+			<div class="inside">
+				<div id="rightnow_list" xmlns="http://www.w3.org/1999/html"><?php MainWP_Right_Now::renderSites($updates = true); ?></div>
+			</div>
+		</div>
+		<?php
+		self::renderFooter();
+	}
+
 }

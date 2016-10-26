@@ -155,7 +155,7 @@ managesites_update_pluginsthemes_done = function(pType)
             }
             else
             {
-                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed / Errored out. <br/><span class="mainwp-small">(There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)</span>';
+                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed / Errored out. <br/><span class="mainwp-small">(There was an error syncing some of your sites. <a href="http://mainwp.com/help/docs/potential-issues/">Please check this help doc for possible solutions.</a>)</span>';
                 jQuery('#refresh-status-content').prepend('<span class="mainwp-red"><strong>' + message + '</strong></span><br /><br />');
                 jQuery('#mainwp-right-now-message-content').html(message);
                 jQuery('#mainwp-right-now-message').show();

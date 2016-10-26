@@ -57,8 +57,8 @@ class MainWP_Recent_Posts {
 		$recent_posts_pending   = MainWP_Utility::sortmulti( $recent_posts_pending, 'dts', 'desc' );
 		$recent_posts_trash     = MainWP_Utility::getSubArrayHaving( $allPosts, 'status', 'trash' );
 		$recent_posts_trash     = MainWP_Utility::sortmulti( $recent_posts_trash, 'dts', 'desc' );
-                $recent_posts_future     = MainWP_Utility::getSubArrayHaving( $allPosts, 'status', 'future' );
-		$recent_posts_future     = MainWP_Utility::sortmulti( $recent_posts_future, 'dts', 'desc' );                
+		$recent_posts_future     = MainWP_Utility::getSubArrayHaving( $allPosts, 'status', 'future' );
+		$recent_posts_future     = MainWP_Utility::sortmulti( $recent_posts_future, 'dts', 'desc' );
 		?>
 		<div class="mainwp-clear">
 			<div class="mainwp-postbox-actions-top">
@@ -68,9 +68,9 @@ class MainWP_Recent_Posts {
 
 			<div class="recent_posts_published">
 				<?php
-                                if (count( $recent_posts_published ) == 0)
-                                    echo '<div class="inside">' . __('No published posts', 'mainwp') . '</div>';
-                                 
+				if (count( $recent_posts_published ) == 0)
+					echo '<div class="inside">' . __('No published posts', 'mainwp') . '</div>';
+
 				for ( $i = 0; $i < count( $recent_posts_published ) && $i < 5; $i ++ ) {
 					if ( ! isset( $recent_posts_published[ $i ]['title'] ) || ( $recent_posts_published[ $i ]['title'] == '' ) ) {
 						$recent_posts_published[ $i ]['title'] = '(No Title)';
@@ -113,9 +113,9 @@ class MainWP_Recent_Posts {
 
 			<div class="recent_posts_draft" style="display: none">
 				<?php
-                                if (count( $recent_posts_draft ) == 0)
-                                    echo '<div class="inside">' . __('No draft posts', 'mainwp') . '</div>';
-                                
+				if (count( $recent_posts_draft ) == 0)
+					echo '<div class="inside">' . __('No draft posts', 'mainwp') . '</div>';
+
 				for ( $i = 0; $i < count( $recent_posts_draft ) && $i < 5; $i ++ ) {
 					if ( ! isset( $recent_posts_draft[ $i ]['title'] ) || ( $recent_posts_draft[ $i ]['title'] == '' ) ) {
 						$recent_posts_draft[ $i ]['title'] = '(No Title)';
@@ -156,9 +156,9 @@ class MainWP_Recent_Posts {
 
 			<div class="recent_posts_pending" style="display: none">
 				<?php
-                                if (count( $recent_posts_pending ) == 0)
-                                    echo '<div class="inside">' . __('No pending posts', 'mainwp') . '</div>';
-                                
+				if (count( $recent_posts_pending ) == 0)
+					echo '<div class="inside">' . __('No pending posts', 'mainwp') . '</div>';
+
 				for ( $i = 0; $i < count( $recent_posts_pending ) && $i < 5; $i ++ ) {
 					if ( ! isset( $recent_posts_pending[ $i ]['title'] ) || ( $recent_posts_pending[ $i ]['title'] == '' ) ) {
 						$recent_posts_pending[ $i ]['title'] = '(No Title)';
@@ -196,11 +196,11 @@ class MainWP_Recent_Posts {
 					</div>
 				<?php } ?>
 			</div>
-                        <div class="recent_posts_future" style="display: none">
-				<?php                                
-                                if (count( $recent_posts_future ) == 0)
-                                    echo '<div class="inside">' . __('No scheduled posts', 'mainwp') . '</div>';                                
-                                
+			<div class="recent_posts_future" style="display: none">
+				<?php
+				if (count( $recent_posts_future ) == 0)
+					echo '<div class="inside">' . __('No scheduled posts', 'mainwp') . '</div>';
+
 				for ( $i = 0; $i < count( $recent_posts_future ) && $i < 5; $i ++ ) {
 					if ( ! isset( $recent_posts_future[ $i ]['title'] ) || ( $recent_posts_future[ $i ]['title'] == '' ) ) {
 						$recent_posts_future[ $i ]['title'] = '(No Title)';
@@ -228,7 +228,7 @@ class MainWP_Recent_Posts {
 							<a href="#" class="mainwp-post-publish"><?php _e( 'Publish', 'mainwp' ); ?></a> |
 							<a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_posts_future[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_future[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post"><?php _e( 'Edit', 'mainwp' ); ?></a> |
 							<a href="#" class="mainwp-post-trash"><?php _e( 'Trash', 'mainwp' ); ?></a> |
-                                                        <a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_posts_future[ $i ]['website']->id; ?>&newWindow=yes&openUrl=yes&location=<?php echo base64_encode( '?p=' . $recent_posts_future[ $i ]['id'] . '&preview=true' ); ?>" target="_blank" title="Preview '<?php echo $recent_posts_future[ $i ]['title']; ?>'" rel="permalink"><?php _e( 'Preview', 'mainwp' ); ?></a> |
+							<a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_posts_future[ $i ]['website']->id; ?>&newWindow=yes&openUrl=yes&location=<?php echo base64_encode( '?p=' . $recent_posts_future[ $i ]['id'] . '&preview=true' ); ?>" target="_blank" title="Preview '<?php echo $recent_posts_future[ $i ]['title']; ?>'" rel="permalink"><?php _e( 'Preview', 'mainwp' ); ?></a> |
 							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View all', 'mainwp' ); ?></a>
 						</div>
 						<div class="mainwp-row-actions-working">
@@ -241,9 +241,9 @@ class MainWP_Recent_Posts {
 			</div>
 			<div class="recent_posts_trash" style="display: none">
 				<?php
-                                if (count( $recent_posts_trash ) == 0)
-                                    echo '<div class="inside">' . __('No trash posts', 'mainwp') . '</div>';
-                                
+				if (count( $recent_posts_trash ) == 0)
+					echo '<div class="inside">' . __('No trash posts', 'mainwp') . '</div>';
+
 				for ( $i = 0; $i < count( $recent_posts_trash ) && $i < 5; $i ++ ) {
 					if ( ! isset( $recent_posts_trash[ $i ]['title'] ) || ( $recent_posts_trash[ $i ]['title'] == '' ) ) {
 						$recent_posts_trash[ $i ]['title'] = '(No Title)';
@@ -339,7 +339,7 @@ class MainWP_Recent_Posts {
 				'id'     => $postId,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => $e->getMessage() ) ) );
+			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage($e) ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {

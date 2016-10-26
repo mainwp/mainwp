@@ -567,6 +567,7 @@ class MainWP_Utility {
 					}
 
 					if ( file_exists( $cookieFile ) ) {
+						@chmod( $cookieFile, 0777 );
 						@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 						@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 					}
@@ -818,6 +819,7 @@ class MainWP_Utility {
 				}
 
 				if ( file_exists( $cookieFile ) ) {
+					@chmod( $cookieFile, 0777 );
 					@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 					@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 				}
@@ -1169,6 +1171,7 @@ class MainWP_Utility {
 			}
 
 			if ( file_exists( $cookieFile ) ) {
+				@chmod( $cookieFile, 0777 );
 				@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 				@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 			}

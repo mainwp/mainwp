@@ -879,7 +879,7 @@ class MainWP_User {
                                 'optimize'  => $optimize,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => $e->getMessage() ) ) );
+			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage($e) ) ) );
 		}
                 
                 if (is_array($information) && isset($information['error'])) {

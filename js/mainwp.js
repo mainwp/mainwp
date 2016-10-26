@@ -759,7 +759,7 @@ dashboard_update_done = function()
             }
             else
             {
-                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed / Errored Out. <br/><span class="mainwp-small">(There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help document for possible solutions.</a>)</span>';
+                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed / Errored Out. <br/><span class="mainwp-small">(There was an error syncing some of your sites. <a href="http://mainwp.com/help/docs/potential-issues/">Please check this help document for possible solutions.</a>)</span>';
                 jQuery('#refresh-status-content').prepend('<span class="mainwp-red"><strong>' + message + '</strong></span><br /><br />');
                 jQuery('#mainwp-right-now-message-content').html(message);
                 jQuery('#mainwp-right-now-message').show();
@@ -7564,12 +7564,15 @@ jQuery(document).on('click', '#mainwp-most-common-reasons', function(){
     return false;
 });
 
-mainwp_get_blogroll = function() {
+mainwp_get_blogroll = function(reLoad) {
     jQuery('#mainwp_blogroll_content').html('<i class="fa fa-spinner fa-pulse"></i> ' + __('Loading...')).show();
     var data = {
         action:'mainwp_get_blogroll',
-        nonce: mainwp_ajax_nonce
+        nonce: mainwp_ajax_nonce,
     };
+    if (typeof reLoad !== "undefined" && reLoad) {
+        data['reload'] = 1;
+    }
     jQuery.post(ajaxurl, data, function (res) {
         jQuery('#mainwp_blogroll_content').html(res);
     });

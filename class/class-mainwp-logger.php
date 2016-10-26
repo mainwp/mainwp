@@ -183,6 +183,18 @@ class MainWP_Logger {
 		}
 	}
 
+	public static function clearLog() {
+		$logFile = MainWP_Logger::Instance()->getLogFile();
+		if ( ! @unlink( $logFile, 'r' ) ) {
+			$fh      = @fopen( $logFile, 'w' );
+			if ( $fh === false ) {
+				return;
+			}
+
+			@fclose($fh);
+		}
+	}
+
 	public static function showLog() {
 		$logFile = MainWP_Logger::Instance()->getLogFile();
 		$fh      = @fopen( $logFile, 'r' );

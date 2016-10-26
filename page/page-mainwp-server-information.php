@@ -1270,6 +1270,10 @@ public static function renderFooter( $shownPage ) {
 			MainWP_Utility::update_option( 'mainwp_actionlogs', $_REQUEST['actionlogs_status'] );
 		}
 
+		if ( isset( $_REQUEST['actionlogs_clear'] ) ) {
+			MainWP_Logger::clearLog();
+		}
+
 		$enabled = get_option( 'mainwp_actionlogs' );
 		if ( $enabled === false ) {
 			$enabled = MainWP_Logger::DISABLED;
@@ -1295,7 +1299,7 @@ public static function renderFooter( $shownPage ) {
 						<option value="<?php echo MainWP_Logger::DEBUG; ?>" <?php if ( MainWP_Logger::DEBUG == $enabled ) : echo 'selected';
 						endif; ?>>Debug
 						</option>
-					</select> <input type="submit" class="button button-primary" value="Save"/>
+					</select> <input type="submit" class="button button-primary" value="Save"/> <input type="submit" class="button button-primary" name="actionlogs_clear" value="Clear"/>
 				</form>
 			</div>
 			<div style="padding: 1em;"><?php MainWP_Logger::showLog(); ?></div>

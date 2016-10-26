@@ -2104,7 +2104,10 @@ body.show-upload-theme #mainwp_wrap-inside .upload-theme,
 
 #mainwp_managesites_content table thead .table-handle,
 #mainwp_plugins_content table thead .table-handle,
-#mainwp_themes_content table thead .table-handle {
+#mainwp_themes_content table thead .table-handle,
+#mainwp_users_content table thead .table-handle,
+#mainwp_posts_content table thead .table-handle,
+#mainwp_pages_content table thead .table-handle {
     background-image: url(../images/dots-l.png);
     background-repeat: no-repeat;
     background-size: 20px;

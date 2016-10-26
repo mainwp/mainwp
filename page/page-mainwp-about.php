@@ -54,8 +54,17 @@ class MainWP_About {
 		?>
 		<br/>
 		<h3>MainWP 3.2 a Usability Update</h3>
-		<p>MainWP <?php echo $mainWP->getVersion(); ?> introduces significant usabitlity and style updates. </p>
-		<p>You can read our <a href="https://mainwp.com/mainwp-3-2-usability-update/?utm_source=dashboard&utm_campaign=welcome-page&utm_medium=plugin" target="_blank">Blog Article</a> to see the full list of updates.</p>
+		<div class="mainwp-notice mainwp-notice-blue">
+			<strong class="mainwp-large">Important note</strong> 
+			<p>This version introduces CSS and Javascript updates.  To ensure you see the latest versions of scripts you need to clear your browser cache memory. This is done by doing a force refresh by pressing both control and F5 buttons simultaneously on your keyboard (depending on your browser).</p>
+			<p>Depending on your operating system all you need to do is to press the following key combination:</p>
+			<ul>
+				<li>Windows: ctrl + F5</li>
+				<li>Mac/Apple: Apple + R or command + R</li>
+				<li>Linux: F5</li>
+			</ul>
+		</div>
+		<p>You can read our <a href="https://mainwp.com/mainwp-3-2-usuability-update/?utm_source=dashboard&utm_campaign=welcome-page&utm_medium=plugin" target="_blank">Blog Article</a> to see the full list of updates.</p>
 		<hr/>
 		<?php
 	}

@@ -56,7 +56,7 @@ class MainWP_About {
 		<h3>MainWP 3.2 a Usability Update</h3>
 		<div class="mainwp-notice mainwp-notice-blue">
 			<strong class="mainwp-large">Important note</strong> 
-			<p>This version introduces CSS and Javascript updates.  To ensure you see the latest versions of scripts you need to clear your browser cache memory. This is done by doing a force refresh by pressing both control and F5 buttons simultaneously on your keyboard (depending on your browser).</p>
+			<p>This version introduces CSS and Javascript updates. To ensure you see the latest versions of scripts you need to clear your browser cache memory. This is done by doing a force refresh.</p>
 			<p>Depending on your operating system all you need to do is to press the following key combination:</p>
 			<ul>
 				<li>Windows: ctrl + F5</li>

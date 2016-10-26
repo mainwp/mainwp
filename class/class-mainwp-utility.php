@@ -219,10 +219,10 @@ class MainWP_Utility {
 		}
 
 		$out = array(
-					  'host'           => $host,
-		              'httpCode'       => $http_status,
-		              'error'          => ( $err == '' && $data === false ? 'Invalid host.' : $err ),
-		              'httpCodeString' => self::getHttpStatusErrorString( $http_status ),
+			'host'           => $host,
+			'httpCode'       => $http_status,
+			'error'          => ( $err == '' && $data === false ? 'Invalid host.' : $err ),
+			'httpCodeString' => self::getHttpStatusErrorString( $http_status ),
 		);
 		if ( $ip !== false ) {
 			$out['ip'] = $ip;
@@ -567,6 +567,7 @@ class MainWP_Utility {
 					}
 
 					if ( file_exists( $cookieFile ) ) {
+						@chmod( $cookieFile, 0777 );
 						@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 						@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 					}
@@ -804,8 +805,8 @@ class MainWP_Utility {
 				$_new_post = $params['new_post'];
 				$params    = apply_filters( 'mainwp-pre-posting-posts', ( is_array( $params ) ? $params : array() ), (object) array(
 					'id'   => $website->id,
-				                                                                                                                     'url'  => $website->url,
-				                                                                                                                     'name' => $website->name,
+					'url'  => $website->url,
+					'name' => $website->name,
 				) );
 			}
 
@@ -818,6 +819,7 @@ class MainWP_Utility {
 				}
 
 				if ( file_exists( $cookieFile ) ) {
+					@chmod( $cookieFile, 0777 );
 					@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 					@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 				}
@@ -992,7 +994,7 @@ class MainWP_Utility {
 			return $data;
 		}
 	}
-	                
+
 	static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null, $sslVersion = 0 ) {
 		$start = time();
 
@@ -1169,6 +1171,7 @@ class MainWP_Utility {
 			}
 
 			if ( file_exists( $cookieFile ) ) {
+				@chmod( $cookieFile, 0777 );
 				@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 				@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 			}
@@ -1528,7 +1531,7 @@ class MainWP_Utility {
 
 	public static function getGoogleCount( $domain ) {
 		$content = file_get_contents( 'https://ajax.googleapis.com/ajax/services/' .
-		'search/web?v=1.0&filter=0&q=site:' . urlencode( $domain ) );
+		                              'search/web?v=1.0&filter=0&q=site:' . urlencode( $domain ) );
 		$data    = json_decode( $content );
 
 		if ( empty( $data ) ) {
@@ -1755,8 +1758,8 @@ class MainWP_Utility {
 	}
 
 	public static function formatEmail( $to, $body, $title = '' ) {
-            $current_year = date("Y");
-            $content = <<<EOT
+		$current_year = date("Y");
+		$content = <<<EOT
             <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
     <head>
@@ -2089,8 +2092,8 @@ class MainWP_Utility {
     </body>
 </html>
 EOT;
-        return $content;   
-        
+		return $content;
+
 	}
 
 	public static function endSession() {
@@ -2278,9 +2281,9 @@ EOT;
 
 		return $schedules;
 	}
-        
-        public static function getWebsitesAutomaticUpdateTime() {
-                $lastAutomaticUpdate    = MainWP_DB::Instance()->getWebsitesLastAutomaticSync();
+
+	public static function getWebsitesAutomaticUpdateTime() {
+		$lastAutomaticUpdate    = MainWP_DB::Instance()->getWebsitesLastAutomaticSync();
 
 		if ( $lastAutomaticUpdate == 0 ) {
 			$nextAutomaticUpdate = 'Any minute';
@@ -2295,12 +2298,12 @@ EOT;
 		} else {
 			$lastAutomaticUpdate = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $lastAutomaticUpdate ) );
 		}
-                
-                return array(
-                    'last' => $lastAutomaticUpdate,
-                    'next' => $nextAutomaticUpdate
-                );
-        }      
+
+		return array(
+			'last' => $lastAutomaticUpdate,
+			'next' => $nextAutomaticUpdate
+		);
+	}
 
 	public static function mime_content_type( $filename ) {
 		if ( function_exists( 'finfo_open' ) ) {

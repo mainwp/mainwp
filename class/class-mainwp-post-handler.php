@@ -166,9 +166,9 @@ class MainWP_Post_Handler {
 		}
 		//Page: Users
 		$this->addAction( 'mainwp_user_delete', array( &$this, 'mainwp_user_delete' ) );
-                $this->addAction( 'mainwp_user_edit', array( &$this, 'mainwp_user_edit' ) );
+		$this->addAction( 'mainwp_user_edit', array( &$this, 'mainwp_user_edit' ) );
 		$this->addAction( 'mainwp_user_update_password', array( &$this, 'mainwp_user_update_password' ) );
-                $this->addAction( 'mainwp_user_update_user', array( &$this, 'mainwp_user_update_user' ) );
+		$this->addAction( 'mainwp_user_update_user', array( &$this, 'mainwp_user_update_user' ) );
 
 		//Page: Posts
 		add_action( 'wp_ajax_mainwp_posts_search', array( &$this, 'mainwp_posts_search' ) ); //ok
@@ -181,7 +181,7 @@ class MainWP_Post_Handler {
 
 		//Page: User
 		add_action( 'wp_ajax_mainwp_users_search', array( &$this, 'mainwp_users_search' ) ); //ok
-		
+
 		//Page: Themes
 		add_action( 'wp_ajax_mainwp_themes_search', array( &$this, 'mainwp_themes_search' ) ); //ok
 		add_action( 'wp_ajax_mainwp_themes_search_all', array( &$this, 'mainwp_themes_search_all' ) ); //ok
@@ -230,7 +230,7 @@ class MainWP_Post_Handler {
 		$this->addAction( 'mainwp_extension_change_view', array( &$this, 'mainwp_extension_change_view' ) );
 		$this->addAction( 'mainwp_events_notice_hide', array( &$this, 'mainwp_events_notice_hide' ) );
 		$this->addAction( 'mainwp_showhide_sections', array( &$this, 'mainwp_showhide_sections' ) );
-                $this->addAction( 'mainwp_saving_status', array( &$this, 'mainwp_saving_status' ) );
+		$this->addAction( 'mainwp_saving_status', array( &$this, 'mainwp_saving_status' ) );
 		$this->addAction( 'mainwp_autoupdate_and_trust_child', array( &$this, 'mainwp_autoupdate_and_trust_child' ) );
 		$this->addAction( 'mainwp_installation_warning_hide', array( &$this, 'mainwp_installation_warning_hide' ) );
 		$this->addAction( 'mainwp_force_destroy_sessions', array( &$this, 'mainwp_force_destroy_sessions' ) );
@@ -238,20 +238,18 @@ class MainWP_Post_Handler {
 		MainWP_Extensions::initAjaxHandlers();
 
 		add_action( 'wp_ajax_mainwp_childscan', array( &$this, 'mainwp_childscan' ) ); //ok
-                add_action( 'wp_ajax_mainwp_get_blogroll', array( &$this, 'mainwp_get_blogroll' ) ); 
-                
-                
+		add_action( 'wp_ajax_mainwp_get_blogroll', array( &$this, 'mainwp_get_blogroll' ) );
 	}
 
 	function mainwp_childscan() {
 		MainWP_Child_Scan::scan();
 	}
-        
-        function mainwp_get_blogroll() {            
-            MainWP_Blogroll_Widget::get_mainwp_blogroll();
-            die();
-        }
-        
+
+	function mainwp_get_blogroll() {
+		MainWP_Blogroll_Widget::get_mainwp_blogroll();
+		die();
+	}
+
 	function mainwp_installation_warning_hide() {
 		$this->secure_request( 'mainwp_installation_warning_hide' );
 
@@ -403,15 +401,15 @@ class MainWP_Post_Handler {
 	 */
 	function mainwp_posts_search() {
 		$this->secure_request();
-                
-                $post_type = (isset($_POST['post_type']) && strlen(trim($_POST['post_type'])) > 0 ? $_POST['post_type'] : 'post');
-                
-                if (isset($_POST['maximum'])) {
-                    MainWP_Utility::update_option( 'mainwp_maximumPosts', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
-                }
-                
-                MainWP_Post::renderTable(false, $_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], (isset($_POST['groups']) ? $_POST['groups'] : ''), (isset($_POST['sites']) ? $_POST['sites'] : ''), $_POST['postId'], $_POST['userId'], $post_type);
-        
+
+		$post_type = (isset($_POST['post_type']) && strlen(trim($_POST['post_type'])) > 0 ? $_POST['post_type'] : 'post');
+
+		if (isset($_POST['maximum'])) {
+			MainWP_Utility::update_option( 'mainwp_maximumPosts', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
+		}
+
+		MainWP_Post::renderTable(false, $_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], (isset($_POST['groups']) ? $_POST['groups'] : ''), (isset($_POST['sites']) ? $_POST['sites'] : ''), $_POST['postId'], $_POST['userId'], $post_type);
+
 		die();
 	}
 
@@ -438,10 +436,10 @@ class MainWP_Post_Handler {
 	 */
 	function mainwp_pages_search() {
 		$this->secure_request();
-                if (isset($_POST['maximum'])) {
-                    MainWP_Utility::update_option( 'mainwp_maximumPages', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
-                }                
-                
+		if (isset($_POST['maximum'])) {
+			MainWP_Utility::update_option( 'mainwp_maximumPages', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
+		}
+
 		MainWP_Page::renderTable( false, $_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ) );
 		die();
 	}
@@ -454,8 +452,8 @@ class MainWP_Post_Handler {
 
 		MainWP_User::delete();
 	}
-        
-        function mainwp_user_edit() {
+
+	function mainwp_user_edit() {
 		$this->secure_request( 'mainwp_user_edit' );
 
 		MainWP_User::edit();
@@ -466,8 +464,8 @@ class MainWP_Post_Handler {
 
 		MainWP_User::updatePassword();
 	}
-        
-        function mainwp_user_update_user() {
+
+	function mainwp_user_update_user() {
 		$this->secure_request( 'mainwp_user_update_user' );
 
 		MainWP_User::updateUser();
@@ -1218,7 +1216,7 @@ class MainWP_Post_Handler {
      */
 
 	function mainwp_syncsites() {
-		$this->secure_request( 'mainwp_syncsites' );                
+		$this->secure_request( 'mainwp_syncsites' );
 		MainWP_Right_Now::dismissSyncErrors( false );
 		MainWP_Right_Now::syncSite();
 	}
@@ -1476,40 +1474,40 @@ class MainWP_Post_Handler {
 		die( 'failed' );
 	}
 
-        function mainwp_saving_status() {
-                if (!isset($_REQUEST['nonce']) || !wp_verify_nonce( $_REQUEST['nonce'], 'mainwp_ajax' ) ) {
-                    die('Invalid request.');                
-                }
+	function mainwp_saving_status() {
+		if (!isset($_REQUEST['nonce']) || !wp_verify_nonce( $_REQUEST['nonce'], 'mainwp_ajax' ) ) {
+			die('Invalid request.');
+		}
 		if ( isset( $_POST['saving_status'] ) ) {
 			$current_options = get_option( 'mainwp_opts_saving_status' );
 			if ( ! is_array( $current_options ) ) {
 				$current_options = array();
-			} 
-                        
-                        if ( $_POST['saving_status'] == 'posts_col_order' || $_POST['saving_status'] == 'pages_col_order' || $_POST['saving_status'] == 'users_col_order' || $_POST['saving_status'] == 'sites_col_order' ||
-                                $_POST['saving_status'] == 'plugins_col_order' || $_POST['saving_status'] == 'themes_col_order'
-                            ) {
-                                $value = json_decode(stripslashes($_POST['value']));                                                                          
-                                $order = array();
-                                if (is_array($value)) {
-                                    $i = 0;
-                                    foreach($value as $id) {
-                                        $i++;
-                                        $order[$id] = $i;
-                                    }
-                                }                                                                
-                                $order = json_encode($order);
+			}
+
+			if ( $_POST['saving_status'] == 'posts_col_order' || $_POST['saving_status'] == 'pages_col_order' || $_POST['saving_status'] == 'users_col_order' || $_POST['saving_status'] == 'sites_col_order' ||
+			     $_POST['saving_status'] == 'plugins_col_order' || $_POST['saving_status'] == 'themes_col_order'
+			) {
+				$value = json_decode(stripslashes($_POST['value']));
+				$order = array();
+				if (is_array($value)) {
+					$i = 0;
+					foreach($value as $id) {
+						$i++;
+						$order[$id] = $i;
+					}
+				}
+				$order = json_encode($order);
 				$current_options[$_POST['saving_status']] = $order;
 			} else if (!empty($_POST['saving_status'])) {
-                            $current_options[$_POST['saving_status']] = $_POST['value'];
-                        }   
-                        
+				$current_options[$_POST['saving_status']] = $_POST['value'];
+			}
+
 			update_option( 'mainwp_opts_saving_status', $current_options );
 		}
 		die( 'ok' );
 	}
-        
-        
+
+
 	function mainwp_autoupdate_and_trust_child() {
 		$this->secure_request( 'mainwp_autoupdate_and_trust_child' );
 		if ( get_option( 'mainwp_automaticDailyUpdate' ) != 1 ) {

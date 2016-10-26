@@ -39,8 +39,8 @@ class MainWP_Post {
 			MainWP_Post::getClassName(),
 			'render',
 		) );
-		add_action( 'load-' . $_page, array(MainWP_Post::getClassName(), 'on_load_page'));	
-		
+		add_action( 'load-' . $_page, array(MainWP_Post::getClassName(), 'on_load_page'));
+
 		add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ). '</div>', 'read', 'PostBulkAdd', array(
 			MainWP_Post::getClassName(),
 			'renderBulkAdd',
@@ -49,7 +49,7 @@ class MainWP_Post {
 			MainWP_Post::getClassName(),
 			'posting',
 		) ); //removed from menu afterwards
-				
+
 		/**
 		 * This hook allows you to add extra sub pages to the Post page via the 'mainwp-getsubpages-post' filter.
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
@@ -62,13 +62,13 @@ class MainWP_Post {
 		}
 	}
 
-	public static function on_load_page() {	
-		MainWP_System::enqueue_postbox_scripts();		
+	public static function on_load_page() {
+		MainWP_System::enqueue_postbox_scripts();
 		self::add_meta_boxes();
 	}
-		
-	public static function add_meta_boxes() {			
-		$i = 1;	
+
+	public static function add_meta_boxes() {
+		$i = 1;
 		add_meta_box(
 			'mwp-postbulk-contentbox-' . $i++,
 			'<i class="fa fa-binoculars"></i> ' . __( 'Step 1: Search Posts', 'mainwp' ),
@@ -76,9 +76,9 @@ class MainWP_Post {
 			'mainwp_postboxes_search_posts',
 			'normal',
 			'core'
-		);	
+		);
 	}
-		
+
 	public static function initMenuSubPages() {
 		?>
 		<div id="menu-mainwp-Posts" class="mainwp-submenu-wrapper">
@@ -109,9 +109,9 @@ class MainWP_Post {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage ) {
-		?>
-		<div class="wrap">
+public static function renderHeader( $shownPage ) {
+	?>
+	<div class="wrap">
 		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
 		<h2><i class="fa fa-file-text"></i> <?php _e( 'Posts', 'mainwp' ); ?></h2>
 		<div style="clear: both;"></div><br/>
@@ -131,7 +131,7 @@ class MainWP_Post {
 				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkAdd' ) {
 					echo 'nav-tab-active';
 				} ?>" href="admin.php?page=PostBulkAdd"><?php _e( 'Add new', 'mainwp' ); ?></a>
-			<?php } ?>			
+			<?php } ?>
 			<?php
 			if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 				foreach ( self::$subPages as $subPage ) {
@@ -151,18 +151,18 @@ class MainWP_Post {
 			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">
-		<?php
-	}
+			<?php
+			}
 
-	/**
-	 * @param string $shownPage The page slug shown at this moment
-	 */
-	public static function renderFooter( $shownPage ) {
-		?>
+			/**
+			 * @param string $shownPage The page slug shown at this moment
+			 */
+			public static function renderFooter( $shownPage ) {
+			?>
 		</div>
-		</div>
-		<?php
-	}
+	</div>
+	<?php
+}
 
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
@@ -170,33 +170,33 @@ class MainWP_Post {
 
 			return;
 		}
-		
+
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Post' );
-                
-                $selected_sites = $selected_groups = array();
-                if ($cachedSearch != null) {
-                    if (is_array($cachedSearch['sites'])) {
-                        $selected_sites = $cachedSearch['sites'];
-                    } else if (is_array($cachedSearch['groups'])) {
-                        $selected_groups = $cachedSearch['groups'];
-                    }
-                }
+
+		$selected_sites = $selected_groups = array();
+		if ($cachedSearch != null) {
+			if (is_array($cachedSearch['sites'])) {
+				$selected_sites = $cachedSearch['sites'];
+			} else if (is_array($cachedSearch['groups'])) {
+				$selected_groups = $cachedSearch['groups'];
+			}
+		}
 
 		//Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
 		self::renderHeader( 'BulkManage' );
 		if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php') ):
-        ?>
-            <div class="updated">You have Custom Post Type Extension activated. You can choose post type.</div>
-        <?php
-        endif;
-        ?>
-        <div class="mainwp-padding-bottom-10"><?php MainWP_Tours::renderSearchPostsTours(); ?></div>
+			?>
+			<div class="updated">You have Custom Post Type Extension activated. You can choose post type.</div>
+			<?php
+		endif;
+		?>
+		<div class="mainwp-padding-bottom-10"><?php MainWP_Tours::renderSearchPostsTours(); ?></div>
 		<div class="mainwp-search-form">
 			<div class="mainwp-postbox">
-			<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_search_posts'); ?>
-			</div>			
+				<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_search_posts'); ?>
+			</div>
 			<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ), 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
-                        
+
 			<div style="clear: both;"></div>
 
 			<input type="button" name="mainwp_show_posts" id="mainwp_show_posts" class="button-primary button button-hero mainwp-button-right" value="<?php _e( 'Show Posts', 'mainwp' ); ?>"/>
@@ -233,41 +233,41 @@ class MainWP_Post {
 			</div>
 			<div class="clear"></div>
 			<div id="mainwp_posts_content">
-                            <div id="mainwp_posts_wrap_table">
-                                <?php MainWP_Post::renderTable( true ); ?>				
-                            </div>
+				<div id="mainwp_posts_wrap_table">
+					<?php MainWP_Post::renderTable( true ); ?>
+				</div>
 				<div class="clear"></div>
 			</div>
-		</div>  
-                <?php
-                
-                $current_options = get_option( 'mainwp_opts_saving_status' );
-                $col_orders = "";
-                if (is_array($current_options) && isset($current_options['posts_col_order'])) {
-                    $col_orders = $current_options['posts_col_order'];
-                }
-                ?>
-                <script type="text/javascript"> var postsColOrder = '<?php echo $col_orders; ?>' ;</script>
-		<?php                
-                 
-                if ( $cachedSearch != null ) { 
-                ?>
-                    <script type="text/javascript">
-                        jQuery(document).ready(function () {
-                            mainwp_table_sort_draggable_init('post', 'mainwp_posts_table', postsColOrder);                                                   
-                        });    
-                        mainwp_posts_table_reinit();
-                    </script>
-                <?php                 
-                } 
-                
+		</div>
+		<?php
+
+		$current_options = get_option( 'mainwp_opts_saving_status' );
+		$col_orders = "";
+		if (is_array($current_options) && isset($current_options['posts_col_order'])) {
+			$col_orders = $current_options['posts_col_order'];
+		}
+		?>
+		<script type="text/javascript"> var postsColOrder = '<?php echo $col_orders; ?>' ;</script>
+		<?php
+
+		if ( $cachedSearch != null ) {
+			?>
+			<script type="text/javascript">
+				jQuery(document).ready(function () {
+					mainwp_table_sort_draggable_init('post', 'mainwp_posts_table', postsColOrder);
+				});
+				mainwp_posts_table_reinit();
+			</script>
+			<?php
+		}
+
 		self::renderFooter( 'BulkManage' );
 	}
 
 	public static function renderSearchPosts() {
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Post' );
-	?>
-			<ul class="mainwp_checkboxes">
+		?>
+		<ul class="mainwp_checkboxes">
 			<li>
 				<input type="checkbox" id="mainwp_post_search_type_publish" <?php echo ( $cachedSearch == null || ( $cachedSearch != null && in_array( 'publish', $cachedSearch['status'] ) ) ) ? 'checked="checked"' : ''; ?> />
 				<label for="mainwp_post_search_type_publish" ><?php _e( 'Published', 'mainwp' ); ?></label>
@@ -296,11 +296,11 @@ class MainWP_Post {
 		<div class="mainwp-padding-bottom-20">
 			<div class="mainwp-cols-2 mainwp-left">
 				<label for="mainwp_post_search_by_keyword"><?php _e( 'Containing Keyword:', 'mainwp' ); ?></label><br/>
-				<input type="text" 
-					   id="mainwp_post_search_by_keyword" 
-					   class="" 
-					   size="50" 
-					   value="<?php if ( $cachedSearch != null ) { echo $cachedSearch['keyword']; } ?>"/>
+				<input type="text"
+				       id="mainwp_post_search_by_keyword"
+				       class=""
+				       size="50"
+				       value="<?php if ( $cachedSearch != null ) { echo $cachedSearch['keyword']; } ?>"/>
 			</div>
 			<div class="mainwp-cols-2 mainwp-left">
 				<label for="mainwp_post_search_by_dtsstart"><?php _e( 'Date Range:', 'mainwp' ); ?></label><br/>
@@ -313,152 +313,152 @@ class MainWP_Post {
 			</div>
 			<div sytle="clear:both;"></div>
 		</div>
-                <?php
-               if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')):
-                ?>
-                <br/><br/>
-                <div class="mainwp-padding-bottom-20">
-                    <div class="mainwp-cols-2 mainwp-left">
-                        <label for="mainwp_get_custom_post_types_select"><?php _e('Post type:','mainwp'); ?></label><br/>
-                        <select id="mainwp_get_custom_post_types_select">
-                            <option value="any"><?php _e('All post types', 'mainwp'); ?></option>
-                            <?php
-                            foreach (get_post_types(array('_builtin' => false)) as $key) {
-                                    if (!in_array($key, MainWPCustomPostType::$default_post_types))
-                                        echo '<option value="'.esc_attr($key).'">'.esc_html($key).'</option>';
-                            }
-                            ?>
-                        </select>
-                    </div>
-                    <div sytle="clear:both;"></div>
-                </div>
-                <?php
-                endif;
-                ?>
+		<?php
+		if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')):
+			?>
+			<br/><br/>
+			<div class="mainwp-padding-bottom-20">
+				<div class="mainwp-cols-2 mainwp-left">
+					<label for="mainwp_get_custom_post_types_select"><?php _e('Post type:','mainwp'); ?></label><br/>
+					<select id="mainwp_get_custom_post_types_select">
+						<option value="any"><?php _e('All post types', 'mainwp'); ?></option>
+						<?php
+						foreach (get_post_types(array('_builtin' => false)) as $key) {
+							if (!in_array($key, MainWPCustomPostType::$default_post_types))
+								echo '<option value="'.esc_attr($key).'">'.esc_html($key).'</option>';
+						}
+						?>
+					</select>
+				</div>
+				<div sytle="clear:both;"></div>
+			</div>
+			<?php
+		endif;
+		?>
 		<br/><br/>
 		<div class="mainwp-padding-bottom-20 mainwp-padding-top-20">
-			<label for="mainwp_maximumPosts"><?php _e( 'Maximum number of posts to return', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( '0 for unlimited, CAUTION: depending on your server settings a large return amount may decrease the speed of results or temporarily break communication between Dashboard and Child.', 'mainwp' ) ); ?></label><br/>	
-            <input type="number" 
-            	   name="mainwp_maximumPosts" 
-            	   class=""
-                   id="mainwp_maximumPosts" 
-                   value="<?php echo( ( get_option( 'mainwp_maximumPosts' ) === false ) ? 50 : get_option( 'mainwp_maximumPosts' ) ); ?>"/>	
+			<label for="mainwp_maximumPosts"><?php _e( 'Maximum number of posts to return', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( '0 for unlimited, CAUTION: depending on your server settings a large return amount may decrease the speed of results or temporarily break communication between Dashboard and Child.', 'mainwp' ) ); ?></label><br/>
+			<input type="number"
+			       name="mainwp_maximumPosts"
+			       class=""
+			       id="mainwp_maximumPosts"
+			       value="<?php echo( ( get_option( 'mainwp_maximumPosts' ) === false ) ? 50 : get_option( 'mainwp_maximumPosts' ) ); ?>"/>
 		</div>
-	<?php
+		<?php
 	}
 
-        public static function renderTable( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0 ) {            
-            ?>
-            <table class="wp-list-table widefat fixed posts tablesorter fix-select-all-ajax-table" id="mainwp_posts_table"
-                    cellspacing="0">
-                     <thead>
-                     <tr>
-                             <th scope="col" id="cb" class="manage-column column-cb check-column" style=""><input
-                                             type="checkbox"></th>
-                             <th scope="col" id="title" class="drag-enable manage-column column-title sortable desc" style="">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Title', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                             <th scope="col" id="author" class="drag-enable manage-column column-author sortable desc" style="">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Author', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                             <th scope="col" id="categories" class="drag-enable manage-column column-categories sortable desc" style="">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Categories', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                             <th scope="col" id="tags" class="drag-enable manage-column column-tags sortable desc" style="">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Tags', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                             <?php
-                             if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')):
-                             ?>
-                                     <th scope="col" id="tags" class="drag-enable manage-column column-post-type sortable desc" style="">
-                                        <a href="#" onclick="return false;"><span><?php _e('Post type','mainwp'); ?></span><span class="sorting-indicator"></span></a>
-                                    </th>
-                                <?php
-                                endif;
-                                ?>
-                             <th scope="col" id="comments" class="drag-enable manage-column column-comments num sortable desc" style="">
-                                     <a href="#" onclick="return false;">
+	public static function renderTable( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0 ) {
+		?>
+		<table class="wp-list-table widefat fixed posts tablesorter fix-select-all-ajax-table" id="mainwp_posts_table"
+		       cellspacing="0">
+			<thead>
+			<tr>
+				<th scope="col" id="cb" class="manage-column column-cb check-column" style=""><input
+						type="checkbox"></th>
+				<th scope="col" id="title" class="drag-enable manage-column column-title sortable desc" style="">
+					<a href="#" onclick="return false;"><span><?php _e( 'Title', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+				<th scope="col" id="author" class="drag-enable manage-column column-author sortable desc" style="">
+					<a href="#" onclick="return false;"><span><?php _e( 'Author', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+				<th scope="col" id="categories" class="drag-enable manage-column column-categories sortable desc" style="">
+					<a href="#" onclick="return false;"><span><?php _e( 'Categories', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+				<th scope="col" id="tags" class="drag-enable manage-column column-tags sortable desc" style="">
+					<a href="#" onclick="return false;"><span><?php _e( 'Tags', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+				<?php
+				if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')):
+					?>
+					<th scope="col" id="tags" class="drag-enable manage-column column-post-type sortable desc" style="">
+						<a href="#" onclick="return false;"><span><?php _e('Post type','mainwp'); ?></span><span class="sorting-indicator"></span></a>
+					</th>
+					<?php
+				endif;
+				?>
+				<th scope="col" id="comments" class="drag-enable manage-column column-comments num sortable desc" style="">
+					<a href="#" onclick="return false;">
              <span><span class="vers"><img alt="Comments"
                                            src="<?php echo admin_url( 'images/comment-grey-bubble.png' ); ?>"></span></span>
-                                             <span class="sorting-indicator"></span>
-                                     </a>
-                             </th>
-                             <th scope="col" id="date" class="drag-enable manage-column column-date sortable asc" style="">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Date', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                             <th scope="col" id="status" class="drag-enable manage-column column-status sortable asc" style="width: 120px;">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Status', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                             <th scope="col" id="website" class="drag-enable manage-column column-categories sortable desc" style="">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Website', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                     </tr>
-                     </thead>
+						<span class="sorting-indicator"></span>
+					</a>
+				</th>
+				<th scope="col" id="date" class="drag-enable manage-column column-date sortable asc" style="">
+					<a href="#" onclick="return false;"><span><?php _e( 'Date', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+				<th scope="col" id="status" class="drag-enable manage-column column-status sortable asc" style="width: 120px;">
+					<a href="#" onclick="return false;"><span><?php _e( 'Status', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+				<th scope="col" id="website" class="drag-enable manage-column column-categories sortable desc" style="">
+					<a href="#" onclick="return false;"><span><?php _e( 'Website', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+			</tr>
+			</thead>
 
-                     <tfoot>
-                     <tr>
-                             <th scope="col" id="cb" class="manage-column column-cb check-column" style=""><input
-                                             type="checkbox"></th>
-                             <th scope="col" id="title" class="manage-column column-title sortable desc" style="">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Title', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                             <th scope="col" id="author" class="manage-column column-author sortable desc" style="">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Author', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                             <th scope="col" id="categories" class="manage-column column-categories sortable desc" style="">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Categories', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                             <th scope="col" id="tags" class="manage-column column-tags sortable desc" style="">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Tags', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                             <th scope="col" id="comments" class="manage-column column-comments num sortable desc" style="">
-                                     <a href="#" onclick="return false;">
+			<tfoot>
+			<tr>
+				<th scope="col" id="cb" class="manage-column column-cb check-column" style=""><input
+						type="checkbox"></th>
+				<th scope="col" id="title" class="manage-column column-title sortable desc" style="">
+					<a href="#" onclick="return false;"><span><?php _e( 'Title', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+				<th scope="col" id="author" class="manage-column column-author sortable desc" style="">
+					<a href="#" onclick="return false;"><span><?php _e( 'Author', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+				<th scope="col" id="categories" class="manage-column column-categories sortable desc" style="">
+					<a href="#" onclick="return false;"><span><?php _e( 'Categories', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+				<th scope="col" id="tags" class="manage-column column-tags sortable desc" style="">
+					<a href="#" onclick="return false;"><span><?php _e( 'Tags', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+				<th scope="col" id="comments" class="manage-column column-comments num sortable desc" style="">
+					<a href="#" onclick="return false;">
                                          <span><span class="vers"><img alt="Comments"
-                                                     src="<?php echo admin_url( 'images/comment-grey-bubble.png' ); ?>"></span></span>
-                                             <span class="sorting-indicator"></span>
-                                     </a>
-                             </th>
-                             <th scope="col" id="date" class="manage-column column-date sortable asc" style="">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Date', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                             <th scope="col" id="status" class="manage-column column-status sortable asc" style="width: 120px;">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Status', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                             <th scope="col" id="website" class="manage-column column-categories sortable desc" style="">
-                                     <a href="#" onclick="return false;"><span><?php _e( 'Website', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                             </th>
-                     </tr>
-                     </tfoot>
+                                                                       src="<?php echo admin_url( 'images/comment-grey-bubble.png' ); ?>"></span></span>
+						<span class="sorting-indicator"></span>
+					</a>
+				</th>
+				<th scope="col" id="date" class="manage-column column-date sortable asc" style="">
+					<a href="#" onclick="return false;"><span><?php _e( 'Date', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+				<th scope="col" id="status" class="manage-column column-status sortable asc" style="width: 120px;">
+					<a href="#" onclick="return false;"><span><?php _e( 'Status', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+				<th scope="col" id="website" class="manage-column column-categories sortable desc" style="">
+					<a href="#" onclick="return false;"><span><?php _e( 'Website', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
+				</th>
+			</tr>
+			</tfoot>
 
-                     <tbody id="the-posts-list" class="list:posts">
-                     <?php  
-                        if ($cached) { 
-                            MainWP_Cache::echoBody( 'Post' ); 
-                        } else {
-                            MainWP_Post::renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId ); 
-                        }                         
-                    ?>
-                     </tbody>
-             </table>
-             <div class="pager" id="pager">
-                     <form>
-                             <img src="<?php echo plugins_url( 'images/first.png', dirname( __FILE__ ) ); ?>" class="first">
-                             <img src="<?php echo plugins_url( 'images/prev.png', dirname( __FILE__ ) ); ?>" class="prev">
-                             <input type="text" class="pagedisplay"/>
-                             <img src="<?php echo plugins_url( 'images/next.png', dirname( __FILE__ ) ); ?>" class="next">
-                             <img src="<?php echo plugins_url( 'images/last.png', dirname( __FILE__ ) ); ?>" class="last">
-                             <span>&nbsp;&nbsp;<?php _e( 'Show:', 'mainwp' ); ?> </span><select class="mainwp-select2 pagesize">
-                                     <option selected="selected" value="10">10</option>
-                                     <option value="25">25</option>
-                                     <option value="50">50</option>
-                                     <option value="100">100</option>
-                                     <option value="1000000000">All</option>
-                             </select><span> <?php _e( 'Posts per page', 'mainwp' ); ?></span>
-                     </form>
-             </div>    
-            <?php
-        }
-            
+			<tbody id="the-posts-list" class="list:posts">
+			<?php
+			if ($cached) {
+				MainWP_Cache::echoBody( 'Post' );
+			} else {
+				MainWP_Post::renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId );
+			}
+			?>
+			</tbody>
+		</table>
+		<div class="pager" id="pager">
+			<form>
+				<img src="<?php echo plugins_url( 'images/first.png', dirname( __FILE__ ) ); ?>" class="first">
+				<img src="<?php echo plugins_url( 'images/prev.png', dirname( __FILE__ ) ); ?>" class="prev">
+				<input type="text" class="pagedisplay"/>
+				<img src="<?php echo plugins_url( 'images/next.png', dirname( __FILE__ ) ); ?>" class="next">
+				<img src="<?php echo plugins_url( 'images/last.png', dirname( __FILE__ ) ); ?>" class="last">
+				<span>&nbsp;&nbsp;<?php _e( 'Show:', 'mainwp' ); ?> </span><select class="mainwp-select2 pagesize">
+					<option selected="selected" value="10">10</option>
+					<option value="25">25</option>
+					<option value="50">50</option>
+					<option value="100">100</option>
+					<option value="1000000000">All</option>
+				</select><span> <?php _e( 'Posts per page', 'mainwp' ); ?></span>
+			</form>
+		</div>
+		<?php
+	}
+
 	public static function renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId ) {
 		MainWP_Cache::initCache( 'Post' );
 
@@ -518,9 +518,9 @@ class MainWP_Post {
 			);
 
 			// Add support for custom post type
-            if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')) {
-                $post_data['post_type'] = $post_type;
-            }
+			if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')) {
+				$post_data['post_type'] = $post_type;
+			}
 
 			if ( isset( $postId ) && ( $postId != '' ) ) {
 				$post_data['postId'] = $postId;
@@ -539,8 +539,8 @@ class MainWP_Post {
 			'dtsstart' => $dtsstart,
 			'dtsstop'  => $dtsstop,
 			'status'   => $status,
-                        'sites'    => ($sites != '') ? $sites : '',
-                        'groups'   => ($groups != '') ? $groups : ''
+			'sites'    => ($sites != '') ? $sites : '',
+			'groups'   => ($groups != '') ? $groups : ''
 		));
 
 		//Sort if required
@@ -573,22 +573,22 @@ class MainWP_Post {
 			$posts = unserialize( base64_decode( $results[1] ) );
 			unset( $results );
 
-            $child_to_dash_array = array();
+			$child_to_dash_array = array();
 
-            if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')) {
-            	$child_post_ids = array();
-	            foreach ($posts as $post) {
-	                $child_post_ids[] = $post['id'];
-	            }
-	            reset($posts);
+			if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')) {
+				$child_post_ids = array();
+				foreach ($posts as $post) {
+					$child_post_ids[] = $post['id'];
+				}
+				reset($posts);
 
-	            $connections_ids = MainWPCustomPostTypeDB::Instance()->get_dash_post_ids_from_connections($website->id, $child_post_ids);
-	            if ( ! empty( $connections_ids ) ) {
-		            foreach ( $connections_ids as $key ) {
-			            $child_to_dash_array[ $key->child_post_id ] = $key->dash_post_id;
-		            }
-	            }
-	        }
+				$connections_ids = MainWPCustomPostTypeDB::Instance()->get_dash_post_ids_from_connections($website->id, $child_post_ids);
+				if ( ! empty( $connections_ids ) ) {
+					foreach ( $connections_ids as $key ) {
+						$child_to_dash_array[ $key->child_post_id ] = $key->dash_post_id;
+					}
+				}
+			}
 
 			foreach ( $posts as $post ) {
 				if ( isset( $post['dts'] ) ) {
@@ -637,15 +637,15 @@ class MainWP_Post {
 								<span class="edit">
 		                        <?php
 		                        if (isset($child_to_dash_array[$post['id']])) {
-		                            ?>
-		                            <img src="<?php echo plugin_dir_url(__FILE__); ?>../../mainwp/images/mainwpicon.png">
-		                            <a href="post.php?post=<?php echo (int) $child_to_dash_array[$post['id']]; ?>&action=edit&select=<?php echo (int) $website->id;?>" title="Edit this item"><?php _e('Edit','mainwp'); ?></a>
-		                            <?php
+			                        ?>
+			                        <img src="<?php echo plugin_dir_url(__FILE__); ?>../../mainwp/images/mainwpicon.png">
+			                        <a href="post.php?post=<?php echo (int) $child_to_dash_array[$post['id']]; ?>&action=edit&select=<?php echo (int) $website->id;?>" title="Edit this item"><?php _e('Edit','mainwp'); ?></a>
+			                        <?php
 		                        } else {
-		                            ?>
-		                            <a href="admin.php?page=SiteOpen&websiteid=<?php echo (int) $website->id; ?>&location=<?php echo base64_encode('post.php?post=' . $post['id'] . '&action=edit'); ?>"
-		                                title="Edit this item"><?php _e('Edit','mainwp'); ?></a>
-		                            <?php
+			                        ?>
+			                        <a href="admin.php?page=SiteOpen&websiteid=<?php echo (int) $website->id; ?>&location=<?php echo base64_encode('post.php?post=' . $post['id'] . '&action=edit'); ?>"
+			                           title="Edit this item"><?php _e('Edit','mainwp'); ?></a>
+			                        <?php
 		                        }
 		                        ?>
 		                        </span>
@@ -698,12 +698,12 @@ class MainWP_Post {
 					</td>
 					<td class="tags column-tags"><?php echo( $post['tags'] == '' ? 'No Tags' : $post['tags'] ); ?></td>
 					<?php
-	                if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')):
-	                ?>
-	                    <td><?php echo esc_html($post['post_type']) ?></td>
-	                <?php
-	                endif;
-	                ?>
+					if (is_plugin_active('mainwp-custom-post-types/mainwp-custom-post-types.php')):
+						?>
+						<td><?php echo esc_html($post['post_type']) ?></td>
+						<?php
+					endif;
+					?>
 					<td class="comments column-comments">
 						<div class="post-com-count-wrapper">
 							<a href="<?php echo admin_url( 'admin.php?page=CommentBulkManage&siteid=' . $website->id . '&postid=' . $post['id'] ); ?>" title="0 pending" class="post-com-count"><span
@@ -789,9 +789,9 @@ class MainWP_Post {
 		if (isset($_REQUEST['post_id'])) {
 			$post_id = (int) $_REQUEST['post_id'];
 			if (current_user_can('edit_post', $post_id)) {
-            	$selectedCategories2 = get_post_meta( $post_id, '_categories', true );		
-        	}
-        }
+				$selectedCategories2 = get_post_meta( $post_id, '_categories', true );
+			}
+		}
 
 		if ( ! is_array( $selectedCategories ) ) $selectedCategories = array();
 		if ( ! is_array( $selectedCategories2 ) ) $selectedCategories2 = array();
@@ -1011,8 +1011,8 @@ class MainWP_Post {
 						<div class="mainwp-notice mainwp-notice-green">
 							<?php foreach ( $dbwebsites as $website ) {
 								?>
-                                                                <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-                                                                : <?php echo( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ? 'New post created. ' . '<a href="' . $output->link[ $website->id ] . '" target="_blank">View Post</a>' : 'ERROR: ' . $output->errors[ $website->id ] ); ?><br/>
+								<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+								: <?php echo( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ? 'New post created. ' . '<a href="' . $output->link[ $website->id ] . '" target="_blank">View Post</a>' : 'ERROR: ' . $output->errors[ $website->id ] ); ?><br/>
 							<?php } ?>
 						</div>
 						<?php

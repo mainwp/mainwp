@@ -78,9 +78,9 @@ class MainWP_Extensions {
 	}
 
 	public static function initMenu() {
-		$page = MainWP_Extensions_View::initMenu();		
-		add_action( 'load-' . $page, array(MainWP_Extensions::getClassName(), 'on_load_page'));		
-		
+		$page = MainWP_Extensions_View::initMenu();
+		add_action( 'load-' . $page, array(MainWP_Extensions::getClassName(), 'on_load_page'));
+
 		self::$extensions = array();
 		$all_extensions   = array();
 
@@ -153,13 +153,13 @@ class MainWP_Extensions {
 		self::$extensionsLoaded = true;
 	}
 
-	public static function on_load_page() {		
+	public static function on_load_page() {
 		MainWP_System::enqueue_postbox_scripts();
-		self::add_meta_boxes();		
+		self::add_meta_boxes();
 	}
-	
+
 	public static function add_meta_boxes() {
-		$i = 1;		
+		$i = 1;
 		if ( mainwp_current_user_can( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
 			add_meta_box(
 				'mwp-extension-contentbox-' . $i++,
@@ -167,10 +167,10 @@ class MainWP_Extensions {
 				array( 'MainWP_Extensions_View', 'renderInstallAndActive' ),
 				'mainwp_postboxes_manage_extensions',
 				'normal',
-				'core'	
+				'core'
 			);
 		}
-		
+
 		add_meta_box(
 			'mwp-extension-contentbox-' . $i++,
 			'<i class="fa fa-cog"></i> ' . sprintf( _n( '%d Installed MainWP Extension', '%d Installed MainWP Extensions', ( count( self::$extensions ) == 1 ? 1 : 2 ), 'mainwp' ), count( self::$extensions ) ),
@@ -178,9 +178,9 @@ class MainWP_Extensions {
 			'mainwp_postboxes_manage_extensions',
 			'normal',
 			'core',
-			array( 'extensions' => self::$extensions )	
+			array( 'extensions' => self::$extensions )
 		);
-		
+
 		add_meta_box(
 			'mwp-extension-contentbox-' . $i++,
 			'<i class="fa fa-cog"></i> ' . sprintf( __('Available %sMainWP Extensions%s', 'mainwp'), '<a href="https://mainwp.com/mainwp-extensions">', '</a>' ),
@@ -188,10 +188,10 @@ class MainWP_Extensions {
 			'mainwp_postboxes_manage_extensions',
 			'normal',
 			'core',
-			array( 'extensions' => self::$extensions )	
+			array( 'extensions' => self::$extensions )
 		);
 	}
-	
+
 	public static function loadExtensions() {
 		if ( ! isset( self::$extensions ) ) {
 			self::$extensions = get_option( 'mainwp_extensions' );
@@ -225,7 +225,7 @@ class MainWP_Extensions {
 			$ext['page']				 = $extension['page'];
 			if ( isset( $extension['activated_key'] ) && 'Activated' == $extension['activated_key'] ) {
 				$ext['activated_key']              = 'Activated';
-			} 
+			}
 			$return[ $extension['slug'] ] = $ext;
 		}
 		return $return;
@@ -244,7 +244,7 @@ class MainWP_Extensions {
 
 		return $pageSlugs;
 	}
-	
+
 	public static function genApiPassword( $length = 12, $special_chars = true, $extra_special_chars = false ) {
 		$api_manager_password_management = new MainWP_Api_Manager_Password_Management();
 
@@ -545,7 +545,7 @@ class MainWP_Extensions {
 
 				//todo update to coding standards
 				$all_groups = MainWP_Extensions_View::getExtensionGroups();
-				$grouped_exts = array( 'others' => '');				
+				$grouped_exts = array( 'others' => '');
 				foreach($installing_exts as $product_id => $product_info) {
 					$item_html = '';
 					$error = '';
@@ -564,8 +564,8 @@ class MainWP_Extensions {
 					}
 
 					$group_id = isset($map_extensions_group[$product_id]) ? $map_extensions_group[$product_id] : false;
-					if (!empty($group_id) && isset($all_groups[$group_id])) {						
-						if (isset($grouped_exts[$group_id]))							
+					if (!empty($group_id) && isset($all_groups[$group_id])) {
+						if (isset($grouped_exts[$group_id]))
 							$grouped_exts[$group_id] .= $item_html;
 						else
 							$grouped_exts[$group_id] = $item_html;
@@ -578,7 +578,7 @@ class MainWP_Extensions {
 					$item_html = '<div class="extension_not_purchased" product-id="' . $product_id . '"><input type="checkbox" disabled="disabled"> <span class="name"><strong>' . $ext['title'] . '</strong></span> ' . __( 'Extension not purchased.', 'mainwp' ) . ' <a href="' . $ext['link'] . '" target="_blank">' .  __( 'Get it here!', 'mainwp') . '</a>' . (in_array($product_id, $free_group) ? " <em>" . __( 'It\'s free.', 'mainwp' ) ."</em>" : '') .'</div>';
 					$group_id = isset($map_extensions_group[$product_id]) ? $map_extensions_group[$product_id] : false;
 					if (!empty($group_id) && isset($all_groups[$group_id])) {
-						if (isset($grouped_exts[$group_id]))							
+						if (isset($grouped_exts[$group_id]))
 							$grouped_exts[$group_id] .= $item_html;
 						else
 							$grouped_exts[$group_id] = $item_html;
@@ -789,14 +789,14 @@ class MainWP_Extensions {
 	public static function render() {
 		?>
 		<div class="wrap">
-			<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
-					src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50"
-					alt="MainWP"/></a>
-			<h2><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h2>
-			<div style="clear: both;"></div><br/><br/>
-		<?php	
+		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
+				src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50"
+				alt="MainWP"/></a>
+		<h2><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h2>
+		<div style="clear: both;"></div><br/><br/>
+		<?php
 		MainWP_Extensions_View::render( self::$extensions );
-		echo '</div>';		
+		echo '</div>';
 	}
 
 	public static function isExtensionAvailable( $pAPI ) {
@@ -825,9 +825,9 @@ class MainWP_Extensions {
 	}
 
 	public static function isExtensionActivated( $plugin_slug )
-	{		
+	{
 		$extensions = MainWP_Extensions::getExtensions( array( 'activated' => true ) );
-		return isset($extensions[$plugin_slug]) ? true : false;	
+		return isset($extensions[$plugin_slug]) ? true : false;
 	}
 
 	public static function create_nonce_function() {

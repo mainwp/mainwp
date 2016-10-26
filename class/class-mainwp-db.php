@@ -54,10 +54,10 @@ class MainWP_DB {
 		if ( empty( $currentVersion ) ) {
 			set_transient( '_mainwp_activation_redirect', 1, 30 );
 			update_site_option( 'mainwp_run_quick_setup', 'yes' );
-                        MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
+			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
 		} else if (false === get_option('mainwp_enableLegacyBackupFeature')) {
-                        MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 1 );
-                }
+			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+		}
 
 		$rslt = MainWP_DB::Instance()->query( "SHOW TABLES LIKE '" . $this->tableName( 'wp' ) . "'" );
 		if ( @MainWP_DB::num_rows( $rslt ) == 0 ) {
@@ -673,11 +673,11 @@ class MainWP_DB {
 		}
 
 		$options_extra = $this->getSQLWebsitesOptionsExtra($options);
-                
-                if ($orderBy == 'wp.url') {
-                    $orderBy = "replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www', '')";
-                }
-                
+
+		if ($orderBy == 'wp.url') {
+			$orderBy = "replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www', '')";
+		}
+
 		if ( $selectgroups ) {
 			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups' . $options_extra . '
             FROM ' . $this->tableName( 'wp' ) . ' wp
@@ -700,7 +700,7 @@ class MainWP_DB {
 		if ( ( $offset !== false ) && ( $rowcount !== false ) ) {
 			$qry .= ' LIMIT ' . $offset . ', ' . $rowcount;
 		}
-                
+
 		return $qry;
 	}
 
@@ -1514,7 +1514,7 @@ class MainWP_DB {
 
 	public function getBackupTasksToComplete() {
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp_backup' ) . ' WHERE paused = 0 AND completed < last_run'//AND '. time() . ' - last_run >= 120 AND ' . time() . ' - last >= 120'
-		, OBJECT );
+			, OBJECT );
 	}
 
 	public function getBackupTasksTodoDaily() {

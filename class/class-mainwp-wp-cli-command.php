@@ -129,7 +129,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 * : Get a list of plugins with available updates
 	 *
 	 * [--upgrade=<pluginslug>]
-	* : Update the plugin slugs
+	 * : Update the plugin slugs
 	 *
 	 * [--upgrade-all]
 	 * : Update all plugins

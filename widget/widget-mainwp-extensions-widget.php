@@ -86,49 +86,49 @@ class MainWP_Extensions_Widget {
 			$available_exts_data = MainWP_Extensions_View::getAvailableExtensions();
 			?>
 			<div class="inside">
-			<table id="mainwp-extensions-widget-list" cellspacing="0" cellpadding="1">
-				<tbody>
-				<?php
-				foreach ( $currentExtensions as $extension ) {
-					if ( ! mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
-						continue;
-					}
-
-					$ext_data = isset( $available_exts_data[dirname($extension['slug'])] ) ? $available_exts_data[dirname($extension['slug'])] : array();
-					if ( isset($ext_data['img']) ) {
-						$img_url = $ext_data['img'];
-					} else if ( isset( $extension['iconURI'] ) && $extension['iconURI'] != '' )  {
-						$img_url = MainWP_Utility::removeHttpPrefix( $extension['iconURI'] );
-					} else {
-						$img_url = plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) );
-					}
-
-					if ( isset( $extension['direct_page'] ) && ! empty( $extension['direct_page'] ) ) {
-						$ext_page = $extension['direct_page'];
-					} else {
-						$ext_page = $extension['page'];
-					}
-
-					?>
-					<div id="mainwp-extensions-list-widget">
-						<div class="mainwp-padding-5 mainwp-t-align-left mainwp-cols-10 mainwp-left"><a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" /></a></div>
-						<div class="mainwp-padding-15 mainwp-t-align-left mainwp-cols-2 mainwp-left"><a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><?php echo $extension['name'] ?></a> - <em><?php echo $extension['version']; ?></em></div>
-						<div class="mainwp-padding-15 mainwp-t-align-right mainwp-cols-5 mainwp-right">
-							<?php
-							if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && ! empty( $extension['api_key'] ) ) { ?>
-								<span class="mainwp-green"><i class="fa fa-unlock"></i> <?php _e( 'Activated', 'mainwp' ); ?></span>
-							<?php } else {
-								?>
-								<span class="mainwp-red"><i class="fa fa-lock"></i> <?php _e( 'Deactivated', 'mainwp' ); ?></span>
-							<?php } ?>
-						</div>
-						<div class="mainwp-clear"></div>
-					</div>
+				<table id="mainwp-extensions-widget-list" cellspacing="0" cellpadding="1">
+					<tbody>
 					<?php
-				}
-				?>
-				</tbody>
-			</table>
+					foreach ( $currentExtensions as $extension ) {
+						if ( ! mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
+							continue;
+						}
+
+						$ext_data = isset( $available_exts_data[dirname($extension['slug'])] ) ? $available_exts_data[dirname($extension['slug'])] : array();
+						if ( isset($ext_data['img']) ) {
+							$img_url = $ext_data['img'];
+						} else if ( isset( $extension['iconURI'] ) && $extension['iconURI'] != '' )  {
+							$img_url = MainWP_Utility::removeHttpPrefix( $extension['iconURI'] );
+						} else {
+							$img_url = plugins_url( 'images/extensions/placeholder.png', dirname( __FILE__ ) );
+						}
+
+						if ( isset( $extension['direct_page'] ) && ! empty( $extension['direct_page'] ) ) {
+							$ext_page = $extension['direct_page'];
+						} else {
+							$ext_page = $extension['page'];
+						}
+
+						?>
+						<div id="mainwp-extensions-list-widget">
+							<div class="mainwp-padding-5 mainwp-t-align-left mainwp-cols-10 mainwp-left"><a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" /></a></div>
+							<div class="mainwp-padding-15 mainwp-t-align-left mainwp-cols-2 mainwp-left"><a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><?php echo $extension['name'] ?></a> - <em><?php echo $extension['version']; ?></em></div>
+							<div class="mainwp-padding-15 mainwp-t-align-right mainwp-cols-5 mainwp-right">
+								<?php
+								if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && ! empty( $extension['api_key'] ) ) { ?>
+									<span class="mainwp-green"><i class="fa fa-unlock"></i> <?php _e( 'Activated', 'mainwp' ); ?></span>
+								<?php } else {
+									?>
+									<span class="mainwp-red"><i class="fa fa-lock"></i> <?php _e( 'Deactivated', 'mainwp' ); ?></span>
+								<?php } ?>
+							</div>
+							<div class="mainwp-clear"></div>
+						</div>
+						<?php
+					}
+					?>
+					</tbody>
+				</table>
 			</div>
 			<div class="mainwp-postbox-actions-bottom mainwp-t-align-center">
 				<a href="https://mainwp.com/mainwp-extensions/?utm_source=dashboard&utm_medium=plugin&utm_campaign=widget" target="_blank" class="button mainwp-upgrade-button button-hero"><?php _e( 'Explore more MainWP Extensions', 'mainwp' ); ?></a>

@@ -253,14 +253,14 @@ mainwp_setup_extension_activate = function(retring)
     }, 'json');
 };
 
-jQuery(document).ready(function () {                                
-        jQuery('.mwp_remove_email').live('click', function () {                                        
-            jQuery(this).closest('.mwp_email_box').remove();                                        
-            return false;
-        });
-        jQuery('#mwp_add_other_email').live('click', function () {                                        
-            jQuery('#mwp_add_other_email').before('<div class="mwp_email_box"><input type="text" name="mainwp_options_email[]" size="35" value=""/>&nbsp;&nbsp;<a href="#" class="mwp_remove_email"><i class="fa fa-minus-circle fa-lg mainwp-red" aria-hidden="true"></i></a></div>');
-            return false;
-        });
+jQuery(document).ready(function () {
+    jQuery('.mwp_remove_email').live('click', function () {
+        jQuery(this).closest('.mwp_email_box').remove();
+        return false;
+    });
+    jQuery('#mwp_add_other_email').live('click', function () {
+        jQuery('#mwp_add_other_email').before('<div class="mwp_email_box"><input type="text" name="mainwp_options_email[]" size="35" value=""/>&nbsp;&nbsp;<a href="#" class="mwp_remove_email"><i class="fa fa-minus-circle fa-lg mainwp-red" aria-hidden="true"></i></a></div>');
+        return false;
+    });
 });
                 

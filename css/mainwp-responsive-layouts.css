@@ -29,15 +29,15 @@
 	/*--- General ---*/
 
 	.mainwp-cols-1,
-	.mainwp-cols-2, 
+	.mainwp-cols-2,
 	.mainwp-cols-2.mainwp-left,
 	.mainwp-cols-2.mainwp-right,
-	.mainwp-cols-3, 
-	.mainwp-cols-3.mainwp-left, 
-	.mainwp-cols-3.mainwp-right, 
-	.mainwp-cols-4, 
+	.mainwp-cols-3,
+	.mainwp-cols-3.mainwp-left,
+	.mainwp-cols-3.mainwp-right,
+	.mainwp-cols-4,
 	.mainwp-cols-5  {
-	    width: 100%;
+		width: 100%;
 	}
 
 	#mainwp-tabs {
@@ -55,8 +55,8 @@
 
 	.mainwp_checkboxes {
 		-webkit-column-count: 1;
-	    -moz-column-count: 1;
-	    column-count: 1;
+		-moz-column-count: 1;
+		column-count: 1;
 	}
 
 	.mainwp_boxout {
@@ -71,10 +71,10 @@
 	.mainwp-ui .button-primary {
 		width: 100%;
 		font-size: 14px;
-    	height: 46px;
-    	line-height: 44px;
-    	padding: 0 36px;
-    	display: block;
+		height: 46px;
+		line-height: 44px;
+		padding: 0 36px;
+		display: block;
 	}
 
 	.mainwp-postbox {
@@ -114,13 +114,13 @@
 	}
 
 	/*--- Overview ---*/
-	#wpbody-content #mainwp_tab-general #dashboard-widgets.columns-2 #postbox-container-1, 
+	#wpbody-content #mainwp_tab-general #dashboard-widgets.columns-2 #postbox-container-1,
 	#wpbody-content #mainwp_wrap-inside #dashboard-widgets.columns-2 #postbox-container-1,
-	#wpbody-content #mainwp_tab-general #dashboard-widgets.columns-2 #postbox-container-2, 
+	#wpbody-content #mainwp_tab-general #dashboard-widgets.columns-2 #postbox-container-2,
 	#wpbody-content #mainwp_wrap-inside #dashboard-widgets.columns-2 #postbox-container-2,
-	#wpbody-content #mainwp_tab-general #dashboard-widgets.columns-3 #postbox-container-1, 
+	#wpbody-content #mainwp_tab-general #dashboard-widgets.columns-3 #postbox-container-1,
 	#wpbody-content #mainwp_wrap-inside #dashboard-widgets.columns-3 #postbox-container-1,
-	#wpbody-content #mainwp_tab-general #dashboard-widgets.columns-3 #postbox-container-2, 
+	#wpbody-content #mainwp_tab-general #dashboard-widgets.columns-3 #postbox-container-2,
 	#wpbody-content #mainwp_wrap-inside #dashboard-widgets.columns-3 #postbox-container-2 {
 		width: 100% !important;
 	}
@@ -164,12 +164,12 @@
 		display: block !important;
 	}
 
-	.mainwp-ui .form-table textarea, 
-	.mainwp-ui .form-table span.description, 
-	.mainwp-ui .form-table td input[type=text], 
-	.mainwp-ui .form-table td input[type=password], 
-	.mainwp-ui .form-table td input[type=email], 
-	.mainwp-ui .form-table td select, 
+	.mainwp-ui .form-table textarea,
+	.mainwp-ui .form-table span.description,
+	.mainwp-ui .form-table td input[type=text],
+	.mainwp-ui .form-table td input[type=password],
+	.mainwp-ui .form-table td input[type=email],
+	.mainwp-ui .form-table td select,
 	.mainwp-ui .form-table td textarea {
 		width: 88% !important;
 		max-width: 88% !important;
@@ -190,12 +190,12 @@
 		display: block !important;
 	}
 
-	body.show-upload-theme .show-if-upload, 
+	body.show-upload-theme .show-if-upload,
 	body.show-upload-plugin .show-if-upload {
 		display: block !important;
 	}
 
-	body.show-upload-theme .hide-if-upload, 
+	body.show-upload-theme .hide-if-upload,
 	body.show-upload-plugin .hide-if-upload {
 		display: none !important;
 	}
@@ -317,7 +317,7 @@
 		height: auto;
 		max-width: 100%;
 		overflow: visible !important;
-		overflow-x: scroll !important 
+		overflow-x: scroll !important
 	}
 
 	#mainwp-table-overflow .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column) {
@@ -336,7 +336,7 @@
 
 	/* --- Backups --- */
 
-	
+
 	/*  -  Manage  -  */
 
 	.mainwp-ui .postbox {

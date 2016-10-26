@@ -68,9 +68,9 @@ class MainWP_Widget_Themes {
 
 		?>
 		<div class="clear">
-		<div class="mainwp-postbox-actions-top">
-			<a class="mainwp_action left mainwp_action_down themes_actived_lnk" href="#"><?php _e( 'Active', 'mainwp' ); ?> (<?php echo count( $actived_themes ); ?>)</a><a class="mainwp_action mid themes_inactive_lnk right" href="#"><?php _e( 'Inactive', 'mainwp' ); ?> (<?php echo count( $inactive_themes ); ?>)</a>
-		</div>
+			<div class="mainwp-postbox-actions-top">
+				<a class="mainwp_action left mainwp_action_down themes_actived_lnk" href="#"><?php _e( 'Active', 'mainwp' ); ?> (<?php echo count( $actived_themes ); ?>)</a><a class="mainwp_action mid themes_inactive_lnk right" href="#"><?php _e( 'Inactive', 'mainwp' ); ?> (<?php echo count( $inactive_themes ); ?>)</a>
+			</div>
 			<div class="mainwp_themes_active">
 				<?php
 				$str_format = __( 'Last Updated %s Days Ago', 'mainwp' );

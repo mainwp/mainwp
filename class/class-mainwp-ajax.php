@@ -218,21 +218,21 @@ class MainWP_Ajax {
 			screen_meta( $current_screen ); // Back compatibility with 3.2
 			//$current_screen->render_screen_meta(); // For 3.3
 			?>
-            <div class="wrap">
+			<div class="wrap">
 				<?php screen_icon( 'index' ); ?>
 				<h2><?php echo esc_html( $title ); ?></h2>
 
 				<?php wp_welcome_panel(); ?>
 
-                <div id="dashboard-widgets-wrap">
+				<div id="dashboard-widgets-wrap">
 
 					<?php wp_dashboard(); ?>
 
-                    <div class="clear"></div>
-                </div>
-                <!-- dashboard-widgets-wrap -->
+					<div class="clear"></div>
+				</div>
+				<!-- dashboard-widgets-wrap -->
 
-            </div><!-- wrap -->
+			</div><!-- wrap -->
 			<?php
 		}
 		exit;

@@ -20,25 +20,20 @@ class MainWP_Connection_Status {
 	}
 
 	public static function renderSites() {
-		$globalView = true;
-		
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {
-			$sql        = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid );
-			$globalView = false;
+			$sql = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid );
 		} else {
-		$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser();
+		    $sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser();
 		}
 
 		$websites = MainWP_DB::Instance()->query( $sql );
 
-		if ( ! $websites ) {
-			return;
-		}
+		if ( ! $websites ) return;
 				
 		$top_row = true;		
-                $top_up_row = true;
+        $top_up_row = true;
 		?>
 		<div class="clear">			
                         <?php

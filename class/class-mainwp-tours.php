@@ -1517,6 +1517,3 @@ class MainWP_Tours {
 		<?php
 	}
 }
-
-
-

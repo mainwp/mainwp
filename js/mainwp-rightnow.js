@@ -32,7 +32,7 @@ rightnow_upgrade = function (id, obj)
     var siteNames = [];
     siteNames[id] = jQuery('.mainwp_wordpress_upgrade[site_id="' + id + '"]').attr('site_name');
 
-    return mainwp_rightnow_checkBackups(sitesToUpdate, siteNames);    
+    return mainwp_rightnow_checkBackups(sitesToUpdate, siteNames);
 };
 
 /** Update bulk **/
@@ -70,12 +70,12 @@ rightnow_wordpress_global_upgrade_all = function (groupId)
     var sitesToUpdate = [];
     var siteNames = {};
     var foundChildren = [];
-    
+
     if (typeof groupId !== 'undefined')
         foundChildren = jQuery('.wp_wp_upgrades_group_' + groupId).find('div[updated="0"]');
-    else        
+    else
         foundChildren = jQuery('#wp_upgrades').find('div[updated="0"]');
-    
+
     if (foundChildren.length == 0) return false;
     var sitesCount = 0;
 
@@ -237,7 +237,7 @@ rightnow_translations_global_upgrade_all = function(groupId)
 
     if (!confirm(__('Are you sure?')))
         return false;
-    
+
     if (typeof groupId !== 'undefined')
         rightnow_show_if_required('translation_upgrades_group', false, groupId);
     else
@@ -248,12 +248,12 @@ rightnow_translations_global_upgrade_all = function(groupId)
     var siteNames = {};
     var sitesTranslationSlugs = {};
     var foundChildren = [];
-        
+
     if (typeof groupId !== 'undefined')
         foundChildren = jQuery('.wp_translation_upgrades_group_' + groupId).find('div[updated="0"]');
     else
         foundChildren = jQuery('#wp_translation_upgrades').find('div[updated="0"]');
-    
+
     if (foundChildren.length == 0) return false;
     var sitesCount = 0;
 
@@ -569,7 +569,7 @@ rightnow_plugins_global_upgrade_all = function(groupId)
 
     if (!confirm(__('Are you sure?')))
         return false;
-    
+
     if (typeof groupId !== 'undefined')
         rightnow_show_if_required('plugin_upgrades_group', false, groupId);
     else
@@ -579,15 +579,15 @@ rightnow_plugins_global_upgrade_all = function(groupId)
     var sitesToUpdate = [];
     var siteNames = {};
     var sitesPluginSlugs = {};
-    var foundChildren = [];    
+    var foundChildren = [];
     if (typeof groupId !== 'undefined')
         foundChildren = jQuery('.wp_plugin_upgrades_group_' + groupId).find('div[updated="0"]');
     else
         foundChildren = jQuery('#wp_plugin_upgrades').find('div[updated="0"]');
-        
+
     if (foundChildren.length == 0) return false;
     var sitesCount = 0;
-    
+
     var upgradeList = jQuery('#rightnow-upgrade-list');
     upgradeList.empty();
 
@@ -926,7 +926,7 @@ rightnow_themes_global_upgrade_all = function (groupId)
         rightnow_show_if_required('theme_upgrades_group', false, groupId);
     else
         rightnow_show_if_required('theme_upgrades', false);
-        
+
 
     //Step 1: build form
     var sitesToUpdate = [];
@@ -937,7 +937,7 @@ rightnow_themes_global_upgrade_all = function (groupId)
         foundChildren = jQuery('.wp_theme_upgrades_group_' + groupId).find('div[updated="0"]');
     else
         foundChildren = jQuery('#wp_theme_upgrades').find('div[updated="0"]');
-    
+
     if (foundChildren.length == 0) return false;
     var sitesCount = 0;
 

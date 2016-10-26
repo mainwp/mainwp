@@ -59,11 +59,11 @@ class MainWP_Hooks {
 		MainWP_Logger::Instance()->warning( $pText );
 	}
 
-	public function enqueue_meta_boxes_scripts() {		
+	public function enqueue_meta_boxes_scripts() {
 		MainWP_System::enqueue_postbox_scripts();
 	}
 
-	public function mainwp_do_meta_boxes( $postpage ) {		
+	public function mainwp_do_meta_boxes( $postpage ) {
 		MainWP_System::do_mainwp_meta_boxes( $postpage );
 	}
 

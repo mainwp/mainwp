@@ -167,6 +167,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: An issue with displaying disconnected sites in the Sync Status widget
 * Fixed: An issue with activating backup extensions from the Quick Start Wizard
 * Fixed: An issue with displaying extensions in incorrect categories
+* Fixed: Potential security issues reported by HackerOne
 * Added: The MainWP Welcome page
 * Added: Help tab on all MainWP Dashboard page
 * Added: MainWP Blogroll widget

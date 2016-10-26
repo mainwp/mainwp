@@ -1220,32 +1220,6 @@ class MainWP_Post {
 		return;
 	}
 
-	public static function getPostMeta( $postId, $keys, $value, $websiteId ) {
-		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
-			return;
-		}
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			return;
-		}
-
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			return;
-		}
-
-		try {
-			$results = MainWP_Utility::fetchUrlAuthed( $website, 'get_post_meta', array(
-				'id'    => base64_encode( $postId ),
-				'keys'  => base64_encode( $keys ),
-				'value' => base64_encode( $value ),
-			) );
-		} catch ( MainWP_Exception $e ) {
-			return;
-		}
-
-		return $results;
-	}
-
 	public static function addStickyOption() {
 		global $wp_meta_boxes;
 

@@ -497,7 +497,7 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {color: #fff;text-decor
 .mainwp_ga_minus {color: red;}
 .mainwp_ga_plus {color:green;}
 .mainwp_ga_graph_legend {text-align: center;padding-bottom: 20px;}
-#mainwp_ga_graph_legend_blue, 
+#mainwp_ga_graph_legend_blue,
 #mainwp_ga_graph_legend_green {
     height: 15px;
     width: 15px;
@@ -649,8 +649,8 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {color: #fff;text-decor
 #mainwp-extensions-list .plugin-card.collapsed img.mainwp-extension-icon { width: 64px; height: 64px; }
 #mainwp-extensions-list .plugin-card.collapsed .extension-description { display: none; }
 
-#mainwp-available-extensions-list .plugin-card { 
-    margin-left: 2px !important; 
+#mainwp-available-extensions-list .plugin-card {
+    margin-left: 2px !important;
     margin-right: 2px !important;
     width: 100%;
     display: block;
@@ -675,7 +675,7 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {color: #fff;text-decor
 .mainwp-ui a:focus { -webkit-box-shadow: none !important; box-shadow: none !important; color: inherit;}
 .mainwp-ui .form-table tr th[scope="row"] { width: 300px !important; }
 .mainwp-ui .wp-filter-search::-webkit-input-placeholder { color: #333; }
-.mainwp-ui input[type=radio], 
+.mainwp-ui input[type=radio],
 .mainwp-ui input[type=checkbox] {
     width: 20px;
     height: 20px;
@@ -804,10 +804,10 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {color: #fff;text-decor
 
 .select2-container { margin-right: 2px !important; }
 .select2-search-choice-close {
-	-webkit-transition: none;
-	   -moz-transition: none;
-	     -o-transition: all 0 none;
-	        transition: none;
+    -webkit-transition: none;
+    -moz-transition: none;
+    -o-transition: all 0 none;
+    transition: none;
 }
 #mainwp_wrap-inside .select2-container.select2-allowclear .select2-choice abbr { margin-top: -2px; }
 
@@ -1107,7 +1107,7 @@ h3.mainwp_box_title {
 
 
 .mainwp_datepicker {
-/*    background: url('../images/date-button.gif') no-repeat 5px 50%;*/
+    /*    background: url('../images/date-button.gif') no-repeat 5px 50%;*/
     padding-left: 25px;
     width: 150px;
 }
@@ -1700,13 +1700,13 @@ li.hoverli {
 
 /* INPUT STYLES */
 
-.mainwp-ui .form-field input[type=text], 
-.mainwp-ui .form-field input[type=password], 
-.mainwp-ui .form-field input[type=email], 
-.mainwp-ui .form-field input[type=number], 
-.mainwp-ui .form-field input[type=search], 
-.mainwp-ui .form-field input[type=tel], 
-.mainwp-ui .form-field input[type=url], 
+.mainwp-ui .form-field input[type=text],
+.mainwp-ui .form-field input[type=password],
+.mainwp-ui .form-field input[type=email],
+.mainwp-ui .form-field input[type=number],
+.mainwp-ui .form-field input[type=search],
+.mainwp-ui .form-field input[type=tel],
+.mainwp-ui .form-field input[type=url],
 .mainwp-ui .form-field textarea { width: 25em; max-width: 100%;}
 
 /* New Select Box Style */
@@ -2104,18 +2104,21 @@ body.show-upload-theme #mainwp_wrap-inside .upload-theme,
 
 #mainwp_managesites_content table thead .table-handle,
 #mainwp_plugins_content table thead .table-handle,
-#mainwp_themes_content table thead .table-handle {
-	background-image: url(../images/dots-l.png);
-	background-repeat: no-repeat;
+#mainwp_themes_content table thead .table-handle,
+#mainwp_users_content table thead .table-handle,
+#mainwp_posts_content table thead .table-handle,
+#mainwp_pages_content table thead .table-handle {
+    background-image: url(../images/dots-l.png);
+    background-repeat: no-repeat;
     background-size: 20px;
     background-position: center;
-	height: 8px;
+    height: 8px;
     width: 100%;
-	margin: 0 1px;
-	cursor: move; /* fallback if grab cursor is unsupported */
+    margin: 0 1px;
+    cursor: move; /* fallback if grab cursor is unsupported */
     cursor: grab;
     cursor: -moz-grab;
-    cursor: -webkit-grab;      
+    cursor: -webkit-grab;
 }
 #mainwp_wrap-inside table thead .table-handle:hover {
     background-image: url(../images/dots-d.png);
@@ -2145,7 +2148,7 @@ div.pw-wrap.form-invalid {
 }
 
 /* Legacy Classes */
-.mainwp_info-box-red { 
+.mainwp_info-box-red {
     margin: 5px 0 15px;
     padding: .6em;
     background: #fff;

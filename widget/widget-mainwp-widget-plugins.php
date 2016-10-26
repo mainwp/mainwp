@@ -232,7 +232,7 @@ class MainWP_Widget_Plugins {
 				'plugin' => $plugin,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => $e->getMessage() ) ) );
+			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage($e) ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {

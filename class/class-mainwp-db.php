@@ -673,7 +673,11 @@ class MainWP_DB {
 		}
 
 		$options_extra = $this->getSQLWebsitesOptionsExtra($options);
-
+                
+                if ($orderBy == 'wp.url') {
+                    $orderBy = "replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www', '')";
+                }
+                
 		if ( $selectgroups ) {
 			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups' . $options_extra . '
             FROM ' . $this->tableName( 'wp' ) . ' wp
@@ -696,7 +700,7 @@ class MainWP_DB {
 		if ( ( $offset !== false ) && ( $rowcount !== false ) ) {
 			$qry .= ' LIMIT ' . $offset . ', ' . $rowcount;
 		}
-
+                
 		return $qry;
 	}
 

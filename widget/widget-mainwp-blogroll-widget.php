@@ -11,9 +11,10 @@ class MainWP_Blogroll_Widget {
 	}
         
         public static function get_mainwp_blogroll() {
-            $cache_key = 'mainwp_blogroll_feed_content';
             
-            if ( false !== ( $output = get_transient( $cache_key ) ) ) {
+            $cache_key = 'mainwp_blogroll_feed_content';
+            $reload = isset($_POST['reload']) && $_POST['reload'] ? true : false;            
+            if ( !$reload && false !== ( $output = get_transient( $cache_key ) ) ) {
                 echo $output;
                 return true;
             }   
@@ -38,7 +39,7 @@ class MainWP_Blogroll_Widget {
                         <?php // Loop through each feed item and display each item as a hyperlink. ?>
                         <?php foreach ( $rss_items as $item ) : ?>
                                     <li>
-                                        <a href="<?php echo esc_url( $item->get_permalink() ); ?>"
+                                        <a href="<?php echo esc_url( $item->get_permalink() ) . '?utm_source=dashboard&utm_campaign=blog-widget&utm_medium=plugin'; ?>"
                                             target="_blank" title="<?php printf( __( 'Posted %s', 'mainwp' ), $item->get_date('j F Y | g:i a') ); ?>">
                                             <?php echo esc_html( $item->get_title() ); ?>
                                         </a>
@@ -86,21 +87,21 @@ class MainWP_Blogroll_Widget {
                        }
                     ?>
                     jQuery('#enable_mainwp_blogroll').change(function() {                       
-                        if (jQuery(this).is(':checked')) {
-                            var data = {
-                                action:'mainwp_saving_status',
-                                saving_status: 'mainwp_blogroll_enabled',
-                                value: jQuery(this).is(':checked') ? 1 : 0,
-                                nonce: mainwp_ajax_nonce
-                            };
-                            jQuery.post(ajaxurl, data, function (res) {                                
-                            });                             
-                            mainwp_get_blogroll();
+                        if (jQuery(this).is(':checked')) {                                                      
+                            mainwp_get_blogroll(true);
                             jQuery('#mainwp_blogroll_open_wrap').fadeOut(0);
                         } else {
                             jQuery('#mainwp_blogroll_content').hide();
                             jQuery('#mainwp_blogroll_open_wrap').fadeIn(1000);
                         }                                            
+                        var data = {
+                                action:'mainwp_saving_status',
+                                saving_status: 'mainwp_blogroll_enabled',
+                                value: jQuery(this).is(':checked') ? 1 : 0,
+                                nonce: mainwp_ajax_nonce
+                        };                        
+                        jQuery.post(ajaxurl, data, function (res) {                                
+                        });  
                     });
                 })
 

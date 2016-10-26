@@ -196,7 +196,7 @@ class MainWP_Hooks {
 				}
 			}
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => $e->getMessage() ) ) );
+			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage($e) ) ) );
 		}
 
 		die();

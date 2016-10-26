@@ -92,11 +92,18 @@ class MainWP_Widget_Themes {
 					<div class="mainwp-row mainwp-active">
 						<input class="themeName" type="hidden" name="name" value="<?php echo $actived_themes[ $i ]['name']; ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
-						<div class="mainwp-cols-1">
+						<div class="mainwp-cols-2 mainwp-left">
 							<?php echo $actived_themes[ $i ]['name'] . ' ' . $actived_themes[ $i ]['version']; ?>
 							<br />
 							<span class="mainwp-small"><?php echo $outdate_notice; ?></span>
 						</div>
+						<div class="mainwp-right mainwp-cols-2 mainwp-t-align-right mainwp-padding-bottom-15">
+							<input type="button" class="button button-primary" disabled value="<?php _e( 'Deactivate', 'mainwp' ); ?>" />
+						</div>
+					</div>
+					<div class="mainwpc-clear"></div>
+					<div class="mainwp-postbox-actions-bottom">
+						<?php _e( 'Change the theme by activating an inactive theme.', 'mainwp' ); ?>
 					</div>
 				<?php } ?>
 			</div>
@@ -183,7 +190,7 @@ class MainWP_Widget_Themes {
 				'theme'  => $theme,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => $e->getMessage() ) ) );
+			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage($e) ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {

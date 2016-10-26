@@ -7565,12 +7565,15 @@ jQuery(document).on('click', '#mainwp-most-common-reasons', function(){
     return false;
 });
 
-mainwp_get_blogroll = function() {
+mainwp_get_blogroll = function(reLoad) {
     jQuery('#mainwp_blogroll_content').html('<i class="fa fa-spinner fa-pulse"></i> ' + __('Loading...')).show();
     var data = {
         action:'mainwp_get_blogroll',        
-        nonce: mainwp_ajax_nonce
+        nonce: mainwp_ajax_nonce,
     };
+    if (typeof reLoad !== "undefined" && reLoad) {
+        data['reload'] = 1;
+    }
     jQuery.post(ajaxurl, data, function (res) {
         jQuery('#mainwp_blogroll_content').html(res);
     }); 

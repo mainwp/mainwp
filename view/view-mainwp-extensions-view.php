@@ -319,7 +319,7 @@ class MainWP_Extensions_View {
                                                                     </div>
                                                                     <div class="action-links">
                                                                             <ul class="plugin-action-buttons">
-                                                                                    <li><a target="_blank" href="<?php echo str_replace(array("http:", "https:"), "", $ext['link']); ?>" class="button"><?php _e( 'Find Out More', 'mainwp' ); ?></a></li>
+                                                                                    <li><a target="_blank" href="<?php echo str_replace(array("http:", "https:"), "", $ext['link']) .'?utm_source=dashboard&utm_campaign=extensions-page&utm_medium=plugin'; ?>" class="button"><?php _e( 'Find Out More', 'mainwp' ); ?></a></li>
                                                                                     <li class="mainwp-padding-top-10"><?php echo $is_free ? '<span class="mainwp-price"></span>' : ''; ?></li>
                                                                             </ul>
                                                                     </div>

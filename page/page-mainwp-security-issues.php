@@ -119,7 +119,7 @@ class MainWP_Security_Issues {
 						<strong id="versions-status-nok"><?php _e( 'Scripts and Stylesheets version information has not been removed from URLs', 'mainwp' ); ?></strong>
 						<strong id="versions-status-ok" style="display: none;"><?php _e( 'Scripts and Stylesheets version information has been removed from URLs', 'mainwp' ); ?></strong>
 						<br />
-						<em><?php _e( 'After fixing this issue, database error reporting will be disabled', 'mainwp' ); ?></em>
+						<em><?php _e( 'After fixing this issue, versions will be removed', 'mainwp' ); ?></em>
 					</td>
 					<td class="mainwp-padding-10 mainwp-cols-10">
 							<span id="versions_fix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Fix', 'mainwp' ); ?>

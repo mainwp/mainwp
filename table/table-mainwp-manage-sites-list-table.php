@@ -83,17 +83,9 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			'backup'       => __( 'Backup', 'mainwp' ),
 			'last_sync'    => __( 'Last Sync', 'mainwp' ),
 			'last_post'    => __( 'Last Post', 'mainwp' ),
-			'seo'          => __( 'SEO', 'mainwp' ),
 			'notes'        => __( 'Notes', 'mainwp' ),
 			'site_actions' => __( 'Actions', 'mainwp' ),
 		);
-
-		if ( ! mainwp_current_user_can( 'dashboard', 'see_seo_statistics' ) ) {
-			unset( $columns['seo'] );
-		}
-		if ( get_option( 'mainwp_seo' ) != 1 ) {
-			unset( $columns['seo'] );
-		}
 
 		$columns = apply_filters( 'mainwp-sitestable-getcolumns', $columns, $columns );
 
@@ -159,22 +151,14 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 		$post_lnk = '<a href="admin.php?page=PostBulkAdd&select=' . $item['id'] . '" style="margin-right: .5em;" title="Add New Post"><i class="fa fa-file-text fa-lg"></i></a>';
 
-		if ( ! mainwp_current_user_can( 'dashboard', 'see_seo_statistics' ) ) {
-			$seo_lnk = '';
-		} else {
-			$seo_lnk = '<a href="admin.php?page=managesites&seowebsiteid=' . $item['id'] . '" style="margin-right: .5em;" title="Show Child Site SEO"><i class="fa fa-search fa-lg"></i></a>';
-		}
-
 		$notes_lnk = '<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_' . $item['id'] . '" style="margin-right: .5em;" title="Open Child Site Notes"><i class="fa fa-pencil fa-lg"></i></a>';
 
 		$security_lnk = '<a href="admin.php?page=managesites&scanid=' . $item['id'] . '" style="margin-right: .5em;" title="Show Security Scan Report"><i class="fa fa-shield fa-lg"></i></a>';
 
 		if ( $item['sync_errors'] != '' ) {
 			$mainwp_actions = $reconnect_lnk;
-		} else if ( get_option( 'mainwp_seo' ) != 1 ) {
-			$mainwp_actions = $dashboard_lnk . $edit_lnk . $wp_admin_new_lnk . $sync_lnk . $security_lnk . $test_lnk . $backup_lnk . $post_lnk . $notes_lnk;
 		} else {
-			$mainwp_actions = $dashboard_lnk . $edit_lnk . $wp_admin_new_lnk . $sync_lnk . $security_lnk . $test_lnk . $backup_lnk . $post_lnk . $seo_lnk . $notes_lnk;
+			$mainwp_actions = $dashboard_lnk . $edit_lnk . $wp_admin_new_lnk . $sync_lnk . $security_lnk . $test_lnk . $backup_lnk . $post_lnk  . $notes_lnk;
 		}
 
 		echo $mainwp_actions;

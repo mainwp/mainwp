@@ -1346,7 +1346,6 @@ public static function renderFooter( $shownPage ) {
 			'mainwp_options_footprint_plugin_folder_default' => __('Hide Network on Child Sites','mainwp'),
 			'mainwp_wp_cron' => __('Use WP-Cron','mainwp'),
 			'mainwp_optimize' => __('Optimize for Shared Hosting or Big Networks','mainwp'),
-			'mainwp_seo' => __('Show Basic SEO Stats','mainwp'),
 			'select_mainwp_options_siteview' => __('View Updates per Site','mainwp'),
 			'mainwp_backup_before_upgrade' => __('Require Backup Before Update','mainwp'),
 			'mainwp_automaticDailyUpdate' => __('Automatic Daily Update','mainwp'),
@@ -1372,11 +1371,6 @@ public static function renderFooter( $shownPage ) {
 			unset($mainwp_options['mainwp_maximumComments']);
 		}		
 		
-		$seo_retired = get_option('mainwp_seo_retired', null);		
-		if ($seo_retired == 'yes') {
-			unset($mainwp_options['mainwp_seo']);			
-		}
-
 		$options_value = array();
 		$userExtension = MainWP_DB::Instance()->getUserExtension();
 		foreach($mainwp_options as $opt => $label){

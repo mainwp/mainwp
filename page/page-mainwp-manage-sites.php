@@ -237,9 +237,7 @@ class MainWP_Manage_Sites {
 				}					
 				
 				return;
-		} else if ( isset( $_GET['seowebsiteid'] ) && MainWP_Utility::ctype_digit( $_GET['seowebsiteid'] ) ) {
-				return;
-		} else if ( isset( $_GET['id'] ) && MainWP_Utility::ctype_digit( $_GET['id'] ) ) {					
+		} else if ( isset( $_GET['id'] ) && MainWP_Utility::ctype_digit( $_GET['id'] ) ) {
 				$websiteid = $_GET['id'];
 				// edit site 
 				add_meta_box(
@@ -1141,10 +1139,6 @@ class MainWP_Manage_Sites {
 		}
 	}
 
-	public static function renderSeoPage( $website ) {
-		MainWP_Manage_Sites_View::renderSeoPage( $website );
-	}
-
 	public static function on_load_page_dashboard() {
 		wp_enqueue_script( 'common' );
 		wp_enqueue_script( 'wp-lists' );
@@ -1180,12 +1174,6 @@ class MainWP_Manage_Sites {
 		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
 			add_meta_box( self::$page . '-metaboxes-contentbox-' . $i ++, MainWP_Security_Issues::getMetaboxName(), array(
 				MainWP_Security_Issues::getClassName(),
-				'renderMetabox',
-			), self::$page, 'normal', 'core' );
-		}
-		if ( get_option( 'mainwp_seo' ) == 1 ) {
-			add_meta_box( self::$page . '-metaboxes-contentbox-' . $i ++, MainWP_Manage_Sites::getMetaboxName(), array(
-				MainWP_Manage_Sites::getClassName(),
 				'renderMetabox',
 			), self::$page, 'normal', 'core' );
 		}
@@ -1399,19 +1387,6 @@ class MainWP_Manage_Sites {
 			}
 		}
 		
-		$seo_retired = get_option('mainwp_seo_retired', null);
-		if ('yes' !== $seo_retired ) {
-			if ( isset( $_GET['seowebsiteid'] ) && MainWP_Utility::ctype_digit( $_GET['seowebsiteid'] ) ) {
-				$websiteid = $_GET['seowebsiteid'];
-
-				$seoWebsite = MainWP_DB::Instance()->getWebsiteById( $websiteid );
-				if ( MainWP_Utility::can_edit_website( $seoWebsite ) ) {
-					MainWP_Manage_Sites::renderSeoPage( $seoWebsite );
-					return;
-				}
-			}
-		}
-
 		if ( isset( $_GET['dashboard'] ) && MainWP_Utility::ctype_digit( $_GET['dashboard'] ) ) {
 			$websiteid = $_GET['dashboard'];
 
@@ -1760,37 +1735,4 @@ class MainWP_Manage_Sites {
 
 		return null;
 	}
-
-	protected static function getPerPage() {
-		// get the current user ID
-		$user = get_current_user_id();
-		// get the current admin screen
-		$screen = get_current_screen();
-		// retrieve the "per_page" option
-		$screen_option = $screen->get_option( 'per_page', 'option' );
-		// retrieve the value of the option stored for the current user
-		$per_page = get_user_meta( $user, $screen_option, true );
-		if ( empty( $per_page ) || $per_page < 1 ) {
-			// get the default value if none is set
-			$per_page = $screen->get_option( 'per_page', 'default' );
-		}
-
-		return $per_page;
-	}
-
-	public static function getMetaboxName() {
-		return '<i class="fa fa-search"></i> SEO Details';
-	}
-
-	public static function renderMetabox() {
-		$website = MainWP_Utility::get_current_wpid();
-		if ( ! $website ) {
-			return;
-		}
-
-		$website = MainWP_DB::Instance()->getWebsiteById( $website );
-
-		MainWP_Manage_Sites_View::showSEOWidget( $website );
-	}
-
 }

@@ -74,19 +74,6 @@ class MainWP_System {
 				delete_option('mainwp_getting_started');
 			}
 
-			$seo_retired = get_option('mainwp_seo_retired', null);
-			MainWP_Utility::update_option( 'mainwp_seo_retired', 'yes' );
-			if (empty($currentVersion)) {
-				MainWP_Utility::update_option( 'mainwp_seo_retired', 'yes' );
-			} else if (empty($seo_retired)){
-				MainWP_Utility::update_option( 'mainwp_seo_retired', 'waiting' );
-			} else if ('waiting' == $seo_retired) {
-				if (time() >= strtotime("1 July 2017")) {
-					MainWP_Utility::update_option( 'mainwp_seo_retired', 'yes' );
-					delete_option('mainwp_seo');
-				}
-			}
-
 			MainWP_Utility::update_option( 'mainwp_plugin_version', $this->current_version );
 		}
 
@@ -1462,9 +1449,6 @@ class MainWP_System {
 		MainWP_Logger::Instance()->info( 'CRON :: stats' );
 
 		MainWP_Utility::update_option( 'mainwp_cron_last_stats', time() );
-		if ( get_option( 'mainwp_seo' ) != 1 ) {
-			return;
-		}
 
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getWebsitesStatsUpdateSQL() );
 
@@ -1475,33 +1459,7 @@ class MainWP_System {
 				break;
 			}
 
-			$errors = false;
-			if ( !$errors ) {
-				$indexed = MainWP_Utility::getGoogleCount( $website->url );
-
-				if ($indexed === NULL) {
-					$errors = true;
-				}
-			}
-
-			if ( !$errors ) {
-				$alexia = MainWP_Utility::getAlexaRank( $website->url );
-
-				if ($alexia === NULL) {
-					$errors = true;
-				}
-			}
-
-			$pageRank = 0;//MainWP_Utility::getPagerank($website->url);
-
-
-			$newIndexed = ($errors ? $website->indexed : $indexed);
-			$oldIndexed = ($errors ? $website->indexed_old : $website->indexed);
-			$newAlexia = ($errors ? $website->alexia : $alexia);
-			$oldAlexia = ($errors ? $website->alexia_old : $website->alexia);
-			$statsUpdated = ($errors ? $website->statsUpdate : time());
-
-			MainWP_DB::Instance()->updateWebsiteStats( $website->id, $pageRank, $newIndexed, $newAlexia, $website->pagerank, $oldIndexed, $oldAlexia, $statsUpdated );
+			MainWP_DB::Instance()->updateWebsiteStats( $website->id, time() );
 
 			if ( property_exists($website, 'sync_errors') && $website->sync_errors != '' ) {
 				//Try reconnecting

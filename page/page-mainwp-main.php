@@ -107,14 +107,6 @@ class MainWP_Main {
                             ), $page, 'normal', 'core' );
                         }
 		}
-		if ( mainwp_current_user_can( 'dashboard', 'see_seo_statistics' ) ) {
-			if ( get_option( 'mainwp_seo' ) == 1 ) {
-				add_meta_box( $page . '-contentbox-' . $i ++, MainWP_SEO::getName(), array(
-					MainWP_SEO::getClassName(),
-					'render',
-				), $page, 'normal', 'core' );
-			}
-		}
 		add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Extensions_Widget::getName(), array(
 			MainWP_Extensions_Widget::getClassName(),
 			'render',

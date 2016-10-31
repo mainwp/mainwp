@@ -499,9 +499,9 @@ securityIssues_fix = function (feature) {
 var completedSecurityIssues = undefined;
 jQuery(document).on('click', '.securityIssues_dashboard_allFixAll', function() {
     jQuery(this).hide();
-    rightnow_show('securityissues');
+    jQuery('#wp_securityissues').show();
 
-    var sites = jQuery('#wp_securityissues').find('.mainwp-row');
+    var sites = jQuery('#wp_securityissues').find('.mainwp-sub-row');
     completedSecurityIssues = 0;
     for (var i = 0; i < sites.length; i++)
     {
@@ -511,8 +511,8 @@ jQuery(document).on('click', '.securityIssues_dashboard_allFixAll', function() {
         mainwp_securityIssues_fixAll(site.attr('siteid'), false);
     }
 });
-jQuery(document).on('click', '.securityIssues_dashboard_fixAll', function() {
-    mainwp_securityIssues_fixAll(jQuery(jQuery(this).parents('div')[0]).attr('siteid'), true);
+jQuery(document).on('click', '.securityIssues_dashboard_fixAll', function() {    
+    mainwp_securityIssues_fixAll(jQuery(this).closest('.mainwp-sub-row').attr('siteid'), true);
 });
 mainwp_securityIssues_fixAll = function(siteId, refresh)
 {
@@ -522,7 +522,7 @@ mainwp_securityIssues_fixAll = function(siteId, refresh)
         id:siteId
     };
 
-    var el = jQuery('#wp_securityissues .mainwp-row[siteid="'+siteId+'"] .securityIssues_dashboard_fixAll');
+    var el = jQuery('#wp_securityissues .mainwp-sub-row[siteid="'+siteId+'"] .securityIssues_dashboard_fixAll');
     el.hide();
     el.next('.img-loader').show();
     jQuery('.securityIssues_dashboard_fixAll').attr('disabled', 'true');

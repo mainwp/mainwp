@@ -440,7 +440,7 @@ class MainWP_Utility {
 			return $params;
 		}
 
-		$url = ( isset( $website->siteurl ) && $website->siteurl != '' ? $website->siteurl : $website->url );
+		$url = ( isset( $website->url ) && $website->url != '' ? $website->url : $website->siteurl );
 		$url .= ( substr( $url, - 1 ) != '/' ? '/' : '' );
 		$url .= '?';
 

@@ -1499,10 +1499,10 @@ class MainWP_Manage_Sites {
 	}
 
 	public static function renderEditSite($websiteid, $updated) {		
-			self::renderHeader( 'ManageSitesEdit' );
-		MainWP_Manage_Sites_View::renderEditSite( $websiteid, $updated);
-			self::renderFooter( 'ManageSitesEdit' );
-		}
+            self::renderHeader( 'ManageSitesEdit' );
+            MainWP_Manage_Sites_View::renderEditSite( $websiteid, $updated);
+            self::renderFooter( 'ManageSitesEdit' );
+        }
 
 	public static function checkSite() {
 		$website = MainWP_DB::Instance()->getWebsitesByUrl( $_POST['url'] );

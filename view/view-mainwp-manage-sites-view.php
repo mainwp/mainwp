@@ -551,7 +551,7 @@ class MainWP_Manage_Sites_View {
 	        	<h3><?php _e( 'MainWP Child plugin installed but not activated', 'mainwp' ); ?></h3>
 	        	<p><?php _e( 'If you are not able to connect your website to your MainWP Dashboard, and you are sure that you have installed the MainWP Child plugin on your website, make sure that the plugin is activated.', 'mainwp' ); ?></p>
 	        	<h3><?php _e( 'Plugin conflict', 'mainwp' ); ?></h3>
-	        	<p><?php _e( 'If after verifying that the MainWP Child plugin is installed and activated on your website, the website still can’t be connected to your MainWP Dashboard, try to disable all plugins except for MainWP Child and connect your site after that.', 'mainwp' ); ?></p>
+	        	<p><?php _e( 'If after verifying that the MainWP Child plugin is installed and activated on your website, the website still can\'t be connected to your MainWP Dashboard, try to disable all plugins except for MainWP Child and connect your site after that.', 'mainwp' ); ?></p>
 	        	<em><?php _e( 'If you are not able to disable all your plugins, be sure to at least disable all security and caching plugins.', 'mainwp' ); ?></em>
 	        	<h3><?php _e( 'Dashboard Site Server Misconfiguration', 'mainwp' ); ?></h3>
 	        	<p><?php _e( 'To be sure that your Dashboard Site server is configured properly and can be used for hosting MainWP Dashboard plugin:', 'mainwp' ); ?></p>
@@ -593,7 +593,7 @@ class MainWP_Manage_Sites_View {
 	        	</ol>
 	        	<p><?php _e( 'If you see anything different then Response Test O.K. it means that the loopback connections are disabled. In that case, you will need to contact your host support and request enabling this feature. If, by any chance, that is not possible, you should consider moving your Dashboard Site to another Webserver or Localhost.', 'mainwp' ); ?></p>
 	        	<h3><?php _e( 'Website has been migrated recently', 'mainwp' ); ?></h3>
-	        	<p><?php _e( 'You may have recently moved the website to another server and your Dashboard’s Server may not have an updated DNS or your server may be experiencing DNS issues. To check this use the Test Connection tab and verify the IP that shows up with the IP that shows on your website WP > Settings > MainWP Child > Server Information page.', 'mainwp' ); ?></p>
+	        	<p><?php _e( 'You may have recently moved the website to another server and your Dashboard\'s Server may not have an updated DNS or your server may be experiencing DNS issues. To check this use the Test Connection tab and verify the IP that shows up with the IP that shows on your website WP > Settings > MainWP Child > Server Information page.', 'mainwp' ); ?></p>
 	        	<p><?php _e( 'In case there is an IP address mismatch, you will need to contact your hosting provider and request 2 things:', 'mainwp' ); ?></p>
 	        	<ol>
 	        		<li><?php _e( 'Dashboard Site host: request DNS Cache flush', 'mainwp' ); ?></li>
@@ -601,7 +601,7 @@ class MainWP_Manage_Sites_View {
 	        	</ol>
 	        	<em><?php _e( 'In most cases, this issue resolves itself in up to 48 hours, however, some host companies do not flush DNS cache that often and more time is needed.', 'mainwp' ); ?></em>
 	        	<h3><?php _e( 'Requests being blocked by Child Site server', 'mainwp' ); ?></h3>
-	        	<p><?php _e( 'n some cases, the Child Site server blocks requests sent from the Dashboard site, and your website may return message that the MainWP Child plugin can’t be found. In this case, you need to contact your Child Site host support department and have them check if the server Firewall or Mod_Security is blocking access by reviewing server logs.', 'mainwp' ); ?></p>
+	        	<p><?php _e( 'n some cases, the Child Site server blocks requests sent from the Dashboard site, and your website may return message that the MainWP Child plugin can\'t be found. In this case, you need to contact your Child Site host support department and have them check if the server Firewall or Mod_Security is blocking access by reviewing server logs.', 'mainwp' ); ?></p>
 	        	<h3><?php _e( 'Connection being Blocked by CloudFlare', 'mainwp' ); ?></h3>
 	        	<p><?php _e( 'Some users with CloudFlare have reported trouble connecting their website to their MainWP Dashboard. If you are experiencing this issue please try the two resolution steps.', 'mainwp' ); ?></p>
 	        	<ol>
@@ -1528,7 +1528,7 @@ class MainWP_Manage_Sites_View {
                 <textarea style="width: 580px !important; height: 300px;"
                           id="mainwp_notes_note"></textarea>
             </div>
-            <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
+            <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div><br/>
             <form>
                 <div style="float: right" id="mainwp_notes_status"></div>
                 <input type="button" class="button cont button-primary" id="mainwp_notes_save" value="<?php esc_attr_e( 'Save note','mainwp' ); ?>"/>

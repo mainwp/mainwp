@@ -186,7 +186,7 @@ class MainWP_Sync {
 		$to_fix = false;
 		if ( isset( $information['plugins'] ) ) {
 			foreach( $information['plugins'] as $info ) {
-				if ( isset($info['slug']) && in_array( $info['slug'], array( 'ithemes-security-pro/ithemes-security-pro.php', 'monarch/monarch.php') ) ) {
+				if ( isset($info['slug']) && in_array( $info['slug'], array( 'ithemes-security-pro/ithemes-security-pro.php', 'monarch/monarch.php', 'cornerstone/cornerstone.php', 'updraftplus/updraftplus.php') ) ) {
 					$to_fix = true;
 				}
 			}

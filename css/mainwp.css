@@ -1183,6 +1183,7 @@ h3.mainwp_box_title {
     /*width: 580px;*/
     height: auto;
     width: auto;
+    overflow-y: auto;
 }
 
 #mainwp_notes #mainwp_notes_note,

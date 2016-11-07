@@ -44,8 +44,12 @@ class MainWP_Api_Manager_Plugin_Update {
 	}
 
 	// Update API URL
-	private function create_upgrade_api_url( $args ) {
-		$upgrade_url = esc_url_raw( add_query_arg( 'wc-api', 'upgrade-api', MainWP_Api_Manager::instance()->getUpgradeUrl() ) );
+	private function create_upgrade_api_url( $args, $wc_api = true ) {
+                if ($wc_api)
+                    $upgrade_url = esc_url_raw( add_query_arg( 'wc-api', 'upgrade-api', MainWP_Api_Manager::instance()->getUpgradeUrl() ) );			
+		else
+                    $upgrade_url = esc_url_raw( add_query_arg( 'mainwp-api', 'am-software-api', MainWP_Api_Manager::instance()->getUpgradeUrl() ) );
+		
 		$query_url   = '';
 		foreach ( $args as $key => $value ) {
 			$query_url .= $key . '=' . urlencode( $value ) . '&';
@@ -74,6 +78,15 @@ class MainWP_Api_Manager_Plugin_Update {
 		return $this->plugin_information( $args );
 	}
 
+        public function bulk_update_check( $plugins ) {
+            $args = array(
+                    'request'          => 'bulkupdatecheck',                   
+                    'domain'           => MainWP_Api_Manager::instance()->get_domain(),                    
+                    'extensions'            => base64_encode(serialize($plugins)),
+            );
+            return $this->plugin_information( $args , true );
+        }
+        
 	public function request( $args ) {
 
 		$args['request'] = 'plugininformation';
@@ -93,10 +106,9 @@ class MainWP_Api_Manager_Plugin_Update {
 	 * @since  1.0.0
 	 * @return object $response
 	 */
-	public function plugin_information( $args ) {
-
-		$target_url = $this->create_upgrade_api_url( $args );
-
+	public function plugin_information( $args, $bulk_check = false ) {
+                $wc_api = $bulk_check ? false : true;
+		$target_url = $this->create_upgrade_api_url( $args, $wc_api );
 		$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
 
 		$request = wp_remote_get( $target_url, array( 'timeout' => 50, 'sslverify' => $apisslverify ) );
@@ -106,9 +118,13 @@ class MainWP_Api_Manager_Plugin_Update {
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			return false;
 		}
-
+                if ($bulk_check) {
+                    $response = wp_remote_retrieve_body( $request );
+                    $response = unserialize( base64_decode($response) );
+                } else {
 		$response = unserialize( wp_remote_retrieve_body( $request ) );
-
+                }
+              
 		/**
 		 * For debugging errors from the API
 		 * For errors like: unserialize(): Error at offset 0 of 170 bytes
@@ -116,16 +132,19 @@ class MainWP_Api_Manager_Plugin_Update {
 		 */
 		// $response = wp_remote_retrieve_body( $request );
 		// print_r($response); exit;
-
-		if ( is_object( $response ) ) {
-			if ( isset( $response->package ) ) {
-				$response->package = apply_filters( 'mainwp_api_manager_upgrade_url', $response->package );
-			}
-
-			return $response;
-		} else {
-			return false;
-		}
+                
+                if (!$bulk_check) {                    
+                    if ( is_object( $response ) ) {
+                            if ( isset( $response->package ) ) {
+                                    $response->package = apply_filters( 'mainwp_api_manager_upgrade_url', $response->package );
+                            }
+                            return $response;
+                    } 
+                } else if (is_array( $response ) ) {     
+                    return $response;                    
+                }
+                
+                return false;
 	}
 
 } // End of class

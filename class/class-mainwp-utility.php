@@ -939,7 +939,7 @@ class MainWP_Utility {
 		}
 
 		if ( $what == 'stats' || ( $what == 'upgradeplugintheme' && isset( $params['type'] ) && 'plugin' == $params['type'] ) ) {
-			// to fix bug
+			// to fix bug: update upgrade plugin information
 			$try_tounch_plugins_page = get_option( 'mainwp_request_plugins_page_site_' . $website->id );
 			if ('yes' == $try_tounch_plugins_page) {
 				$page_plugins_url = MainWP_Utility::getGetDataAuthed( $website, 'plugins.php' );

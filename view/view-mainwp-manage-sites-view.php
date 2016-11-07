@@ -1965,6 +1965,20 @@ class MainWP_Manage_Sites_View {
 	}
 
 	public static function addSite( $website ) {
+                $params['url'] = $_POST['managesites_add_wpurl'];
+                $params['name'] = $_POST['managesites_add_wpname'];                
+                $params['wpadmin'] = $_POST['managesites_add_wpadmin'];
+                $params['unique_id'] = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : '';
+                $params['ssl_verify'] = ( !isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( $_POST['verify_certificate'] !== '0' ) ) ? null : $_POST['verify_certificate'] );                
+                $params['ssl_version'] = !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version'];                
+                $params['http_user'] = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
+                $params['http_pass'] = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';                
+                $params['groupids'] = isset( $_POST['groupids'] ) ? $_POST['groupids'] : array();                
+                $params['groupnames_import'] = isset( $_POST['groupnames_import'] ) ? $_POST['groupnames_import'] : '';                
+                return MainWP_Manage_Sites_View::addWPSite($website, $params);                		
+	}
+
+        public static function addWPSite( $website, $params = array()  ) {
 		$error = '';
 		$message = '';
 		$id = 0;
@@ -1988,14 +2002,14 @@ class MainWP_Manage_Sites_View {
 					$pubkey = '-1';
 				}
 
-				$url = $_POST['managesites_add_wpurl'];
+				$url = $params['url'];
 
-				$verifyCertificate = ( !isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( $_POST['verify_certificate'] !== '0' ) ) ? null : $_POST['verify_certificate'] );
-				$sslVersion = MainWP_Utility::getCURLSSLVersion( !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version'] );
-				$addUniqueId = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : '';
-				$http_user = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
-				$http_pass = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';
-				$information = MainWP_Utility::fetchUrlNotAuthed($url, $_POST['managesites_add_wpadmin'], 'register',
+				$verifyCertificate = ( !isset( $params['ssl_verify'] ) || ( empty( $params['ssl_verify'] ) && ( $params['ssl_verify'] !== '0' ) ) ? null : $params['ssl_verify'] );
+				$sslVersion = MainWP_Utility::getCURLSSLVersion( !isset( $params['ssl_version'] ) || empty( $params['ssl_version'] ) ? null : $params['ssl_version'] );
+				$addUniqueId = isset( $params['unique_id'] ) ? $params['unique_id'] : '';
+				$http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
+				$http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
+				$information = MainWP_Utility::fetchUrlNotAuthed($url, $params['wpadmin'], 'register',
 					array(
 					'pubkey' => $pubkey,
 						'server' => get_admin_url(),
@@ -2012,13 +2026,13 @@ class MainWP_Manage_Sites_View {
 						//Add website to database
 						$groupids = array();
 						$groupnames = array();
-						if ( isset( $_POST['groupids'] ) ) {
-							foreach ( $_POST['groupids'] as $group ) {
+						if ( isset( $params['groupids'] ) ) {
+							foreach ( $params['groupids'] as $group ) {
 								$groupids[] = $group;
 							}
 						}
-						if ( (isset( $_POST['groupnames_import'] ) && $_POST['groupnames_import'] != '') ) {								
-								$tmpArr = explode( ';', $_POST['groupnames_import'] );						
+						if ( (isset( $params['groupnames_import'] ) && $params['groupnames_import'] != '') ) {								
+								$tmpArr = explode( ';', $params['groupnames_import'] );						
 								foreach ( $tmpArr as $tmp ) {
 									$group = MainWP_DB::Instance()->getGroupByNameForUser( trim( $tmp ) );
 									if ( $group ) {
@@ -2034,10 +2048,10 @@ class MainWP_Manage_Sites_View {
 						if ( ! isset( $information['uniqueId'] ) || empty( $information['uniqueId'] ) ) {
 							$addUniqueId = '';}
 
-						$http_user = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
-						$http_pass = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';
+						$http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
+						$http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
 						global $current_user;
-						$id = MainWP_DB::Instance()->addWebsite($current_user->ID, htmlentities( $_POST['managesites_add_wpname'] ), $_POST['managesites_add_wpurl'], $_POST['managesites_add_wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], (isset( $information['nosslkey'] )
+						$id = MainWP_DB::Instance()->addWebsite($current_user->ID, htmlentities( $params['name'] ), $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], (isset( $information['nosslkey'] )
 								? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion);
 						$message = sprintf( __( 'Site successfully added - Visit the Site\'s %sDashboard%s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' );
 						do_action('mainwp_added_new_site', $id); // must before getWebsiteById to update team control permisions

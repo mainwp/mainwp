@@ -665,7 +665,7 @@ public static function renderFooter( $shownPage ) {
 				<td><?php echo( self::filesize_compare( $currentVersion, $pVersion, $pCompare ) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( $errorType ) ); ?></td>
 			<?php } else if ( $whatType == 'curlssl' ) { ?>
 				<td><?php echo( self::curlssl_compare( $pVersion, $pCompare ) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( $errorType ) ); ?></td>
-			<?php } else if ($pGetter == 'getMaxInputTime' && $currentVersion == -1) { ?>
+			<?php } else if (($pGetter == 'getMaxInputTime' || $pGetter == 'getMaxExecutionTime') && $currentVersion == -1) { ?>
 				<td><?php echo '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>'; ?></td>
 			<?php } else { ?>
 				<td><?php echo (version_compare($currentVersion, $pVersion, $pCompare) || (($pExtraCompare != null) && version_compare($currentVersion, $pExtraVersion, $pExtraCompare)) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( $errorType )); ?></td>

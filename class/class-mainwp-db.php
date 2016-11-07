@@ -2,7 +2,7 @@
 
 class MainWP_DB {
 	//Config
-	private $mainwp_db_version = '8.8';
+	private $mainwp_db_version = '8.9';
 	//Private
 	private $table_prefix;
 	//Singleton
@@ -86,6 +86,7 @@ class MainWP_DB {
   offline_checks_last int(11) NOT NULL,
   offline_check_result int(11) NOT NULL,
   note text NOT NULL,
+  note_lastupdate int(11) NOT NULL DEFAULT 0,
   statsUpdate int(11) NOT NULL,
   pagerank int(11) NOT NULL,
   indexed int(11) NOT NULL,
@@ -1182,7 +1183,7 @@ class MainWP_DB {
 	}
 
 	public function updateNote( $websiteid, $note ) {
-		$this->wpdb->query( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET note="' . $this->escape( $note ) . '" WHERE id=' . $websiteid );
+		$this->wpdb->query( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET note="' . $this->escape( $note ) . '", note_lastupdate = ' . time() . ' WHERE id=' . $websiteid );
 	}
 
 	public function updateWebsiteOfflineCheckSetting( $websiteid, $offlineChecks ) {

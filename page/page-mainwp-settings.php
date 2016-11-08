@@ -485,7 +485,7 @@ class MainWP_Settings {
 			<table class="form-table">
 			<tbody>
 			<tr>
-				<th scope="row"><?php _e( 'Hide MainWP footer', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'If set to YES, fixed footer will be appended to the bottom of the page', 'mainwp' ) ); ?></th>
+				<th scope="row"><?php _e( 'Hide MainWP footer', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'If set to YES, fixed footer will be removed from the bottom of the page', 'mainwp' ) ); ?></th>
 				<td>
 					<div class="mainwp-checkbox">
 						<input type="checkbox" name="mainwp_hide_footer"

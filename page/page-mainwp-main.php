@@ -249,7 +249,7 @@ class MainWP_Main {
 							} else {
 								?>
 								<h2><i class="fa fa-flag"></i> <?php echo __( "Some child sites didn't sync correctly!", 'mainwp' ); ?></h2>
-								<p class="about-description"><?php echo __( 'Check the Sync Status widget to review sites that have not been synced.', 'mainwp' ); ?></p>
+								<p class="about-description"><?php echo __( 'Check the Connection status widget to review sites that are not synchronized.', 'mainwp' ); ?></p>
 								<?php
 							}
 						}

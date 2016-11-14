@@ -2587,11 +2587,7 @@ mainwp_managesites_add = function (event) {
                 }
             } else if (response == 'OK') {
                 jQuery('#mainwp_managesites_add').attr('disabled', 'true'); //Disable add button
-                var groupids = [];
-                jQuery("input[name='selected_groups[]']:checked").each(function (i) {
-                    groupids.push(jQuery(this).val());
-                });
-
+               
                 var name = jQuery('#mainwp_managesites_add_wpname').val();
                 name = name.replace(/"/g, '&quot;');
                 var data = mainwp_secure_data({
@@ -2599,9 +2595,8 @@ mainwp_managesites_add = function (event) {
                     managesites_add_wpname:name,
                     managesites_add_wpurl:url,
                     managesites_add_wpadmin:jQuery('#mainwp_managesites_add_wpadmin').val(),
-                    managesites_add_uniqueId:jQuery('#mainwp_managesites_add_uniqueId').val(),
-                    'groupids[]':groupids,
-                    groupnames:jQuery('#mainwp_managesites_add_addgroups').val(),
+                    managesites_add_uniqueId:jQuery('#mainwp_managesites_add_uniqueId').val(),                    
+                    groupids:jQuery('#mainwp_managesites_add_addgroups').val(),
                     verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val(),
                     ssl_version:jQuery('#mainwp_managesites_ssl_version').val(),
                     managesites_add_http_user:jQuery('#mainwp_managesites_add_http_user').val(),

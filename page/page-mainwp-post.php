@@ -132,12 +132,12 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkManage' ) {
 					echo 'nav-tab-active';
 				} ?>" href="admin.php?page=PostBulkManage"><?php _e( 'Manage Posts', 'mainwp' ); ?></a>
-				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkAdd' ) {
-					echo 'nav-tab-active';
-				} ?>" href="admin.php?page=PostBulkAdd"><?php _e( 'Add new', 'mainwp' ); ?></a>                    
                                 <?php if ( $shownPage == 'BulkEdit' ) { ?>
                                         <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=PostBulkEdit&post_id=<?php echo esc_attr($post_id); ?>"><?php _e( 'Edit Post', 'mainwp' ); ?></a>
                                 <?php } ?>
+				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkAdd' ) {
+					echo 'nav-tab-active';
+				} ?>" href="admin.php?page=PostBulkAdd"><?php _e( 'Add new', 'mainwp' ); ?></a>                                                    
 			<?php } ?>
 			<?php
 			if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -1066,8 +1066,8 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			?>
 			<br/>
 			<a href="<?php echo get_admin_url() ?>admin.php?page=PostBulkAdd" class="add-new-h2" target="_top"><?php _e( 'Add new', 'mainwp' ); ?></a>
-			<a href="<?php echo get_admin_url() ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php _e( 'Return
-            to Overview', 'mainwp' ); ?></a>
+			<a href="<?php echo get_admin_url() ?>admin.php?page=PostBulkManage" class="add-new-h2" target="_top"><?php _e( 'Return
+            to Manage Posts', 'mainwp' ); ?></a>
 
 		</div>
 		<?php

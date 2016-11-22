@@ -2215,3 +2215,7 @@ div.pw-wrap.form-invalid {
 {
     padding: 3px;
 }
+.post-type-bulkpost #wpwrap .wrap h1 a.page-title-action,
+.post-type-bulkpage #wpwrap .wrap h1 a.page-title-action {
+    display: none;
+}

@@ -345,7 +345,6 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		$actions = array(
 			'open' => sprintf( '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=%1$s" class="open_newwindow_wpadmin" target="_blank">' . __( 'Open WP Admin', 'mainwp' ) . '</a>', $item['id'] ),
 			'updates' => sprintf( '<a href="admin.php?page=managesites&updateid=%1$s" class="open_updates">' . __( 'Updates', 'mainwp' ) . '</a>', $item['id'] ),
-			'test' => '<a href="#" class="mainwp_site_testconnection" class="test_connection">' . __( 'Test connection', 'mainwp' ) . '</a> <span style="display: none;"><i class="fa fa-spinner fa-pulse"></i>' . __( 'Testing connection...', 'mainwp' ) . '</span>',
 			'scan' => '<a href="admin.php?page=managesites&scanid=' . $item['id'] . '">' . __( 'Security scan', 'mainwp' ) . '</a>',
 		);
 

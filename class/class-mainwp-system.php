@@ -28,7 +28,7 @@ class MainWP_System {
 	 * @var string
 	 */
 	private $current_version = null;
-
+        
 	/**
 	 * Plugin Slug (plugin_directory/plugin_file.php)
 	 * @var string
@@ -40,7 +40,7 @@ class MainWP_System {
 	 * @var string
 	 */
 	public $slug;
-
+        
 	/**
 	 * @static
 	 * @return MainWP_System
@@ -150,9 +150,10 @@ class MainWP_System {
 
 		//Handle the bulkpage
 		add_action( 'publish_bulkpage', array( &$this, 'publish_bulkpage' ) );
-
+                add_action( 'add_meta_boxes_bulkpage', array( 'MainWP_Page', 'modify_bulkpage_metabox' ) );
+                
 		//Add meta boxes for the bulkpost
-		add_action( 'admin_init', array( &$this, 'admin_init' ) );
+		add_action( 'admin_init', array( &$this, 'admin_init' ) );                
 
 		//Create the post types for bulkpost/...
 		add_action( 'init', array( &$this, 'create_post_type' ) );
@@ -382,6 +383,7 @@ class MainWP_System {
 	function hookBulkPageMetaboxHandle( $post_id ) {
 		$this->metaboxes->select_sites_handle( $post_id, 'bulkpage' );
 		$this->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
+                MainWP_Page::add_status_handle( $post_id );
 	}
 
 	public function after_extensions_plugin_row( $plugin_slug, $plugin_data, $status ) {
@@ -2039,7 +2041,7 @@ class MainWP_System {
 			add_filter( 'redirect_post_location', create_function( '$location', 'return esc_url_raw(add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location));' ) );
 		} else {
 			$this->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
-
+                        MainWP_Page::add_status_handle( $post_id );
 			//Redirect to handle page! (to actually post the messages)
 			wp_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&hideall=1&id=' . $post_id );
 			die();

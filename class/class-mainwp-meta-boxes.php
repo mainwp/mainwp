@@ -56,7 +56,7 @@ class MainWP_Meta_Boxes {
 		?><input type="hidden" name="select_sites_nonce" id="select_sites_nonce"
 		         value="<?php echo wp_create_nonce( 'select_sites_' . $post->ID ); ?>" /><?php
 
-					MainWP_UI::select_sites_box_body( $selected_sites, $selected_groups, 'checkbox', true, true, true );
+					MainWP_UI::select_sites_box_body( $selected_sites, $selected_groups, 'checkbox', true, true, true, false, $post->ID );
 	}
 
 	function select_sites_handle( $post_id, $post_type ) {
@@ -109,7 +109,7 @@ class MainWP_Meta_Boxes {
 
 		// depdecated, 1.0.9.2-beta
 		$categories = apply_filters( 'mainwp_bulkpost_saved_categories', $post, array() );
-		if ( empty( $categories ) || ( is_array( $categories ) && count( $categories ) == 1 && empty( $categories[0] ) ) ) { // to compatible
+		if ( empty( $categories ) || !is_array( $categories ) || ( is_array( $categories ) && count( $categories ) == 1 && empty( $categories[0] ) ) ) { // to compatible
 			if ( $post ) {
 				$categories = base64_decode( get_post_meta( $post->ID, '_categories', true ) );
 				$categories = explode( ',', $categories );

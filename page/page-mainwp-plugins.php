@@ -1034,7 +1034,7 @@ public static function renderHeader( $shownPage ) {
 			<?php MainWP_Tours::renderPluginsAutoUpdatesTours(); ?>
 			<br/>
 
-			<?php if ( isset($_GET['message']) && $_GET['message'] = 'saved') {
+			<?php if ( isset($_GET['message']) && $_GET['message'] == 'saved') {
 				?>
 				<div class="mainwp-notice mainwp-notice-green">
 					<?php _e( 'Your settings have been saved.', 'mainwp' ); ?>

@@ -96,7 +96,7 @@ class MainWP_Recent_Posts {
 						<div class="mainwp-clear"></div>
 						<div class="mainwp-row-actions">
 							<a href="#" class="mainwp-post-unpublish"><?php _e( 'Unpublish', 'mainwp' ); ?></a> |
-							<a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_posts_published[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post"><?php _e( 'Edit', 'mainwp' ); ?></a> |
+							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $recent_posts_published[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post" target="_blank"><?php _e( 'Edit', 'mainwp' ); ?></a> |
 							<a href="#" class="mainwp-post-trash"><?php _e( 'Trash', 'mainwp' ); ?></a>|
 							<a href="<?php echo $recent_posts_published[ $i ]['website']->url . ( substr( $recent_posts_published[ $i ]['website']->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . $recent_posts_published[ $i ]['id']; ?>" target="_blank" title="View '<?php echo $recent_posts_published[ $i ]['title']; ?>'" rel="permalink"><?php _e( 'View', 'mainwp' ); ?></a> |
 							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View all', 'mainwp' ); ?></a>
@@ -141,7 +141,7 @@ class MainWP_Recent_Posts {
 						<div class="mainwp-clear"></div>
 						<div class="mainwp-row-actions">
 							<a href="#" class="mainwp-post-publish"><?php _e( 'Publish', 'mainwp' ); ?></a> |
-							<a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_posts_draft[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_draft[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post"><?php _e( 'Edit', 'mainwp' ); ?></a> |
+							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $recent_posts_draft[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_draft[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post" target="_blank"><?php _e( 'Edit', 'mainwp' ); ?></a> |
 							<a href="#" class="mainwp-post-trash"><?php _e( 'Trash', 'mainwp' ); ?></a> |
 							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View all', 'mainwp' ); ?></a>
 						</div>
@@ -184,7 +184,7 @@ class MainWP_Recent_Posts {
 						<div class="mainwp-clear"></div>
 						<div class="mainwp-row-actions">
 							<a href="#" class="mainwp-post-publish"><?php _e( 'Publish', 'mainwp' ); ?></a> |
-							<a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_posts_pending[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_pending[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post"><?php _e( 'Edit', 'mainwp' ); ?></a> |
+							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $recent_posts_pending[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_pending[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post" target="_blank"><?php _e( 'Edit', 'mainwp' ); ?></a> |
 							<a href="#" class="mainwp-post-trash"><?php _e( 'Trash', 'mainwp' ); ?></a> |
 							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View all', 'mainwp' ); ?></a>
 						</div>
@@ -226,9 +226,9 @@ class MainWP_Recent_Posts {
 						<div class="mainwp-clear"></div>
 						<div class="mainwp-row-actions">
 							<a href="#" class="mainwp-post-publish"><?php _e( 'Publish', 'mainwp' ); ?></a> |
-							<a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_posts_future[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_future[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post"><?php _e( 'Edit', 'mainwp' ); ?></a> |
+							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $recent_posts_future[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_future[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post" target="_blank"><?php _e( 'Edit', 'mainwp' ); ?></a> |
 							<a href="#" class="mainwp-post-trash"><?php _e( 'Trash', 'mainwp' ); ?></a> |
-							<a href="admin.php?page=SiteOpen&websiteid=<?php echo $recent_posts_future[ $i ]['website']->id; ?>&newWindow=yes&openUrl=yes&location=<?php echo base64_encode( '?p=' . $recent_posts_future[ $i ]['id'] . '&preview=true' ); ?>" target="_blank" title="Preview '<?php echo $recent_posts_future[ $i ]['title']; ?>'" rel="permalink"><?php _e( 'Preview', 'mainwp' ); ?></a> |
+							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $recent_posts_future[ $i ]['website']->id; ?>&newWindow=yes&openUrl=yes&location=<?php echo base64_encode( '?p=' . $recent_posts_future[ $i ]['id'] . '&preview=true' ); ?>" target="_blank" title="Preview '<?php echo $recent_posts_future[ $i ]['title']; ?>'" rel="permalink"><?php _e( 'Preview', 'mainwp' ); ?></a> |
 							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View all', 'mainwp' ); ?></a>
 						</div>
 						<div class="mainwp-row-actions-working">

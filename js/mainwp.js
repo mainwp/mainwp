@@ -5562,6 +5562,17 @@ jQuery(document).ready(function () {
         mainwppost_postAction(jQuery(this), 'restore');
         return false;
     });
+    
+    jQuery('.post_getedit').live('click', function () {       
+        mainwppost_postAction(jQuery(this), 'get_edit', 'post');        
+        return false;
+    });
+    
+    jQuery('.page_getedit').live('click', function () {       
+        mainwppost_postAction(jQuery(this), 'get_edit', 'page');        
+        return false;
+    });    
+   
     jQuery('#mainwp_bulk_post_action_apply').live('click', function () {
         var action = jQuery('#mainwp_bulk_action').val();
         if (action == 'none') return false;
@@ -5590,12 +5601,12 @@ jQuery(document).ready(function () {
     })
 });
 
-mainwppost_postAction = function (elem, what) {
+mainwppost_postAction = function (elem, what, postType) {
     var rowElement = jQuery(elem).parents('tr');
     var postId = rowElement.find('.postId').val();
-    var websiteId = rowElement.find('.websiteId').val();
+    var websiteId = rowElement.find('.websiteId').val();    
     if (rowElement.find('.allowedBulkActions').val().indexOf('|'+what+'|') == -1)
-    {
+    {       
         jQuery(elem).removeAttr('checked');
         countReceived++;
 
@@ -5607,11 +5618,21 @@ mainwppost_postAction = function (elem, what) {
 
         return;
     }
-    var data = mainwp_secure_data({
+    
+    if ( what == 'get_edit' && postType === 'page' ) {
+        postId = rowElement.find('.pageId').val();
+    }
+    
+    var data = {
         action:'mainwp_post_' + what,
         postId:postId,
         websiteId:websiteId
-    });
+    };    
+    if (typeof postType !== "undefined") {
+        data['postType'] = postType;
+    }
+    data = mainwp_secure_data(data);
+    
     rowElement.find('.row-actions').hide();
     rowElement.find('.row-actions-working').show();
     jQuery.post(ajaxurl, data, function (response) {
@@ -5622,8 +5643,16 @@ mainwppost_postAction = function (elem, what) {
             rowElement.html('<td colspan="9"><i class="fa fa-check-circle"></i> ' + response.result + '</td>');
         }
         else {
-            rowElement.find('.row-actions-working').hide();
+            rowElement.find('.row-actions-working').hide();            
+            if (what == 'get_edit' && response.id) {
+                if (postType == 'post') {
+                    location.href = 'admin.php?page=PostBulkEdit&post_id=' + response.id;
+                } else if (postType == 'page') {
+                    location.href = 'admin.php?page=PageBulkEdit&post_id=' + response.id;
+                }
+            }
         }
+        
         countReceived++;
 
         if (countReceived == countSent) {

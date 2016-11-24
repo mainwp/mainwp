@@ -48,6 +48,7 @@ class MainWP_Hooks {
 		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
 		add_action( 'mainwp_do_meta_boxes', array( &$this, 'mainwp_do_meta_boxes' ), 10, 1 );
         add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
+        add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
 	}
 
 	public function mainwp_log_debug( $pText ) {
@@ -90,7 +91,7 @@ class MainWP_Hooks {
                 list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::addWPSite( $website, $params );
 
                 if ( $error != '' ) {
-                    return array( 'error' => $error );
+                    return array( 'error' => $error);
                 }
                 $ret['response'] = $message;
                 $ret['siteid'] = $site_id;
@@ -100,54 +101,71 @@ class MainWP_Hooks {
         return $ret;
     }
 
+    /**
+     * Hook to edit site
+     *
+     * @since 3.2.2
+     * @param array $params site data fields: websiteid, name, wpadmin, unique_id
+     *
+     * @return array
+     *
+     */
+    public function mainwp_edit_site( $params ) {
+        $ret = array();
+        if (is_array($params)) {
+            if (isset($params['websiteid']) && MainWP_Utility::ctype_digit( $websiteid = $params['websiteid'] ) )  {
+                $ret['siteid'] = MainWP_Hooks::updateWPSite( $params );
+                return $ret;
+            }
+        }
+        return $ret;
+    }
+
     public static function updateWPSite( $params ) {
+		if ( ! isset( $params['websiteid'] ) || !MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
+			return 0;
+		}
 
-	if ( ! isset( $params['websiteid'] ) || !MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
-		return 0;
-	}
+		$website = MainWP_DB::Instance()->getWebsiteById( $params['websiteid'] );
+	    if ( $website == null ) {
+			return 0;
+		}
 
-	$website = MainWP_DB::Instance()->getWebsiteById( $params['websiteid'] );
+		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+			return 0;
+		}
 
-            if ( $website == null ) {
-		return 0;
-	}
+        $data = array();
 
-	if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-		return 0;
-	}
+        $uniqueId = null;
 
-            $data = array();
+        if ( isset( $params['name'] ) && !empty( $params['name'] ) ) {
+            $data['name'] =  htmlentities( $params['name'] );
+        }
 
-            $uniqueId = null;
+        if ( isset( $params['wpadmin'] ) && !empty( $params['wpadmin'] ) ) {
+            $data['adminname'] =  $params['wpadmin'];
+        }
 
-            if (isset($params['name']) && !empty($params['name'])) {
-                $data['name'] =  htmlentities( $params['name'] );
+        if ( isset( $params['unique_id'] ) ) {
+            $data['uniqueId'] = $uniqueId =  $params['unique_id'];
+        }
+
+        if ( empty( $data ) ) {
+                return 0;
+        }
+
+        MainWP_DB::Instance()->updateWebsiteValues( $website->id, $data );
+        if ( null !== $uniqueId ) {
+            try {
+                $information = MainWP_Utility::fetchUrlAuthed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
+            } catch ( MainWP_Exception $e ) {
+                $error = $e->getMessage();
             }
-
-            if (isset($params['wpadmin']) && !empty($params['wpadmin'])) {
-                $data['adminname'] =  $params['wpadmin'];
-            }
-
-            if (isset($params['unique_id'])) {
-                $data['uniqueId'] = $uniqueId =  $params['unique_id'];
-            }
-
-            if (empty($data)) {
-                    return 0;
-            }
-
-            MainWP_DB::Instance()->updateWebsiteValues( $website->id, $data);
-            if ($uniqueId !== null) {
-                try {
-                        $information = MainWP_Utility::fetchUrlAuthed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
-                } catch ( MainWP_Exception $e ) {
-                        $error = $e->getMessage();
-                }
-            }
+        }
 		return $website->id;
 	}
-        
-        
+
 	public function get_activate_extension_notice( $pluginFile ) {
 		$active = MainWP_Extensions::isExtensionActivated( $pluginFile );
 		if ($active)

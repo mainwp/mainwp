@@ -20,10 +20,24 @@ class MainWP_UI {
 	}
 
 
-	public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false ) {
+	public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false, $postId = 0 ) {
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 		$groups   = MainWP_DB::Instance()->getNotEmptyGroups( null, $enableOfflineSites );
-		?>
+
+        $edit_site_id = null;
+        if ( $postId ) {
+            $edit_site_id = get_post_meta( $postId, '_mainwp_edit_post_site_id', true );
+            if ( empty( $edit_site_id ) ) {
+	            $edit_site_id = null;
+            }
+        }
+
+        $fix_style = '';
+        if ( null !== $edit_site_id ) {
+            $show_group = false;
+            $fix_style = '<br/>';
+        }
+        ?>
 		<div class="mainwp-postbox-actions-top">
 			<input type="hidden" name="select_by" id="select_by" value="<?php echo esc_attr( count( $selected_groups ) > 0 ? 'group' : 'site' ); ?>"/>
 			<?php if ( $show_select_all ) :  ?>
@@ -45,6 +59,7 @@ class MainWP_UI {
 					<?php esc_html_e( 'By group', 'mainwp' ); ?>
 				</div>
 			<?php endif; ?>
+            <?php echo $fix_style; ?>
 		</div>
 		<div id="selected_sites" <?php echo esc_html( count( $selected_groups ) > 0 ? 'style="display: none;"' : '' ); ?>>
 			<?php
@@ -63,12 +78,17 @@ class MainWP_UI {
 
 					if ( $website->sync_errors == '' || $enableOfflineSites ) {
 						$selected = ( $selected_websites == 'all' || in_array( $website->id, $selected_websites ) );
-
-						echo '<div title="'. $website->url .'" class="mainwp_selected_sites_item mainwp-padding-5 ' . ( $selected ? 'selected_sites_item_checked' : '' ) . '"><input onClick="mainwp_site_select(this)" type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_site' : 'selected_sites[]' ) . '" siteid="' . $website->id . '" value="' . $website->id . '" id="selected_sites_' . $website->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+                        $disabled = '';
+                        if ( null !== $edit_site_id ) {
+                            if ( $website->id != $edit_site_id ) {
+                                $disabled = 'disabled="disabled"';
+                            }
+                        }
+						echo '<div title="'. $website->url .'" class="mainwp_selected_sites_item mainwp-padding-5 ' . ( $selected ? 'selected_sites_item_checked' : '' ) . '"><input onClick="mainwp_site_select(this)" ' . $disabled .' type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_site' : 'selected_sites[]' ) . '" siteid="' . $website->id . '" value="' . $website->id . '" id="selected_sites_' . $website->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
 					}
 					else
 					{
-						echo '<div title="'. $website->url . '" class="mainwp_selected_sites_item mainwp-padding-5 disabled"><input type="' . $type . '" disabled=disabled /> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+						echo '<div title="'. $website->url . '" class="mainwp_selected_sites_item mainwp-padding-5 disabled"><input type="' . $type . '" disabled="disabled" /> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
 					}
 				}
 				@MainWP_DB::free_result( $websites );
@@ -100,6 +120,16 @@ class MainWP_UI {
 		if ( $updateQty ) {
 			echo '<script>jQuery(document).ready(function () {jQuery(".mainwp_sites_selectcount").html(' . ( ! is_array( $selected_websites ) ? '0' : count( $selected_websites ) ) . ');});</script>';
 		}
+        if ( null !== $edit_site_id ) {
+            ?>
+                <script>
+                    jQuery(document).ready(function () {
+                        var edit_site_el = jQuery('#selected_sites_<?php echo $edit_site_id; ?>');
+                        mainwp_site_select(edit_site_el);
+                    });
+                </script>
+            <?php
+        }
 	}
 
 	public static function select_categories_box( $params ) {

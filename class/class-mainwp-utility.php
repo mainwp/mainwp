@@ -939,7 +939,7 @@ class MainWP_Utility {
 		}
 
 		if ( $what == 'stats' || ( $what == 'upgradeplugintheme' && isset( $params['type'] ) && 'plugin' == $params['type'] ) ) {
-			// to fix bug
+			// to fix bug: update upgrade plugin information
 			$try_tounch_plugins_page = get_option( 'mainwp_request_plugins_page_site_' . $website->id );
 			if ('yes' == $try_tounch_plugins_page) {
 				$page_plugins_url = MainWP_Utility::getGetDataAuthed( $website, 'plugins.php' );
@@ -1329,6 +1329,45 @@ class MainWP_Utility {
 		curl_exec( $ch );
 		curl_close( $ch );
 		fclose( $fp );
+	}
+
+	static function uploadImage( $img_url, $img_data = array()  ) {
+		if (!is_array($img_data))
+			$img_data = array();
+		include_once( ABSPATH . 'wp-admin/includes/file.php' ); //Contains download_url
+		//Download $img_url
+		$temporary_file = download_url( $img_url );
+
+		if ( is_wp_error( $temporary_file ) ) {
+			throw new Exception( 'Error: ' . $temporary_file->get_error_message() );
+		} else {
+			$upload_dir     = wp_upload_dir();
+			$local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url ); //Local name
+			$local_img_url  = $upload_dir['url'] . '/' . basename( $img_url );
+			$moved          = @rename( $temporary_file, $local_img_path );
+			if ( $moved ) {
+				$wp_filetype = wp_check_filetype( basename( $img_url ), null ); //Get the filetype to set the mimetype
+				$attachment  = array(
+					'post_mime_type' => $wp_filetype['type'],
+					'post_title'     => isset( $img_data['title'] ) && !empty( $img_data['title'] ) ? $img_data['title'] : preg_replace( '/\.[^.]+$/', '', basename( $img_url ) ),
+					'post_content'   => isset( $img_data['description'] ) && !empty( $img_data['description'] ) ? $img_data['description'] : '',
+					'post_excerpt' => isset( $img_data['caption'] ) && !empty( $img_data['caption'] ) ? $img_data['caption'] : '',
+					'post_status'    => 'inherit',
+				);
+				$attach_id   = wp_insert_attachment( $attachment, $local_img_path ); //Insert the image in the database
+				require_once( ABSPATH . 'wp-admin/includes/image.php' );
+				$attach_data = wp_generate_attachment_metadata( $attach_id, $local_img_path );
+				wp_update_attachment_metadata( $attach_id, $attach_data ); //Update generated metadata
+				if ( isset( $img_data['alt'] ) && !empty( $img_data['alt'] ) )
+					update_post_meta( $attach_id, '_wp_attachment_image_alt', $img_data['alt'] );
+				return array( 'id' => $attach_id, 'url' => $local_img_url );
+			}
+		}
+		if ( file_exists( $temporary_file ) ) {
+			unlink( $temporary_file );
+		}
+
+		return null;
 	}
 
 	static function getBaseDir() {

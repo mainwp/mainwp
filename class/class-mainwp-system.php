@@ -137,6 +137,7 @@ class MainWP_System {
 
 		//Handle the bulkpage
 		add_action( 'publish_bulkpage', array( &$this, 'publish_bulkpage' ) );
+        add_action( 'add_meta_boxes_bulkpage', array( 'MainWP_Page', 'modify_bulkpage_metabox' ) );
 
 		//Add meta boxes for the bulkpost
 		add_action( 'admin_init', array( &$this, 'admin_init' ) );
@@ -369,6 +370,7 @@ class MainWP_System {
 	function hookBulkPageMetaboxHandle( $post_id ) {
 		$this->metaboxes->select_sites_handle( $post_id, 'bulkpage' );
 		$this->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
+        MainWP_Page::add_status_handle( $post_id );
 	}
 
 	public function after_extensions_plugin_row( $plugin_slug, $plugin_data, $status ) {
@@ -400,20 +402,17 @@ class MainWP_System {
 		}
 
 		$notice = sprintf(__("You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %sExtensions%s page and enter your API.", 'mainwp'), '<a href="admin.php?page=Extensions">', '</a>');
-		if (!empty($notice) && $notice != $plugin_slug) {
-
-			?>
-			<style type="text/css">
-				tr[data-plugin="<?php echo $plugin_slug; ?>"] {
-					box-shadow: none;
-				}
-			</style>
-			<tr class="plugin-update-tr active" slug="<?php echo $slug; ?>"><td colspan="3" class="plugin-update colspanchange"><div class="update-message api-deactivate">
-						<?php echo $notice; ?>
-						<span class="mainwp-right"><a href="#" class="mainwp-activate-notice-dismiss" ><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss','mainwp' ); ?></a></span>
-					</div></td></tr>
-			<?php
-		}
+		?>
+		<style type="text/css">
+			tr[data-plugin="<?php echo $plugin_slug; ?>"] {
+				box-shadow: none;
+			}
+		</style>
+		<tr class="plugin-update-tr active" slug="<?php echo $slug; ?>"><td colspan="3" class="plugin-update colspanchange"><div class="update-message api-deactivate">
+					<?php echo $notice; ?>
+					<span class="mainwp-right"><a href="#" class="mainwp-activate-notice-dismiss" ><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss','mainwp' ); ?></a></span>
+				</div></td></tr>
+		<?php
 	}
 
 
@@ -1999,7 +1998,7 @@ class MainWP_System {
 			add_filter( 'redirect_post_location', create_function( '$location', 'return esc_url_raw(add_query_arg(array("message" => "' . $message_id . '", "hideall" => 1), $location));' ) );
 		} else {
 			$this->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
-
+            MainWP_Page::add_status_handle( $post_id );
 			//Redirect to handle page! (to actually post the messages)
 			wp_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&hideall=1&id=' . $post_id );
 			die();

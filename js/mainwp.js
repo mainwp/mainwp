@@ -2587,10 +2587,6 @@ mainwp_managesites_add = function (event) {
                 }
             } else if (response == 'OK') {
                 jQuery('#mainwp_managesites_add').attr('disabled', 'true'); //Disable add button
-                var groupids = [];
-                jQuery("input[name='selected_groups[]']:checked").each(function (i) {
-                    groupids.push(jQuery(this).val());
-                });
 
                 var name = jQuery('#mainwp_managesites_add_wpname').val();
                 name = name.replace(/"/g, '&quot;');
@@ -2600,8 +2596,7 @@ mainwp_managesites_add = function (event) {
                     managesites_add_wpurl:url,
                     managesites_add_wpadmin:jQuery('#mainwp_managesites_add_wpadmin').val(),
                     managesites_add_uniqueId:jQuery('#mainwp_managesites_add_uniqueId').val(),
-                    'groupids[]':groupids,
-                    groupnames:jQuery('#mainwp_managesites_add_addgroups').val(),
+                    groupids:jQuery('#mainwp_managesites_add_addgroups').val(),
                     verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val(),
                     ssl_version:jQuery('#mainwp_managesites_ssl_version').val(),
                     managesites_add_http_user:jQuery('#mainwp_managesites_add_http_user').val(),
@@ -5567,6 +5562,17 @@ jQuery(document).ready(function () {
         mainwppost_postAction(jQuery(this), 'restore');
         return false;
     });
+
+    jQuery('.post_getedit').live('click', function () {
+        mainwppost_postAction(jQuery(this), 'get_edit', 'post');
+        return false;
+    });
+
+    jQuery('.page_getedit').live('click', function () {
+        mainwppost_postAction(jQuery(this), 'get_edit', 'page');
+        return false;
+    });
+
     jQuery('#mainwp_bulk_post_action_apply').live('click', function () {
         var action = jQuery('#mainwp_bulk_action').val();
         if (action == 'none') return false;
@@ -5595,7 +5601,7 @@ jQuery(document).ready(function () {
     })
 });
 
-mainwppost_postAction = function (elem, what) {
+mainwppost_postAction = function (elem, what, postType) {
     var rowElement = jQuery(elem).parents('tr');
     var postId = rowElement.find('.postId').val();
     var websiteId = rowElement.find('.websiteId').val();
@@ -5612,11 +5618,21 @@ mainwppost_postAction = function (elem, what) {
 
         return;
     }
-    var data = mainwp_secure_data({
+
+    if ( what == 'get_edit' && postType === 'page' ) {
+        postId = rowElement.find('.pageId').val();
+    }
+
+    var data = {
         action:'mainwp_post_' + what,
         postId:postId,
         websiteId:websiteId
-    });
+    };
+    if (typeof postType !== "undefined") {
+        data['postType'] = postType;
+    }
+    data = mainwp_secure_data(data);
+
     rowElement.find('.row-actions').hide();
     rowElement.find('.row-actions-working').show();
     jQuery.post(ajaxurl, data, function (response) {
@@ -5628,7 +5644,15 @@ mainwppost_postAction = function (elem, what) {
         }
         else {
             rowElement.find('.row-actions-working').hide();
+            if (what == 'get_edit' && response.id) {
+                if (postType == 'post') {
+                    location.href = 'admin.php?page=PostBulkEdit&post_id=' + response.id;
+                } else if (postType == 'page') {
+                    location.href = 'admin.php?page=PageBulkEdit&post_id=' + response.id;
+                }
+            }
         }
+
         countReceived++;
 
         if (countReceived == countSent) {

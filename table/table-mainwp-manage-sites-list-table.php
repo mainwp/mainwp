@@ -327,9 +327,8 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 	function column_url( $item ) {
 		$actions = array(
-			'open' => sprintf( '<a href="admin.php?page=SiteOpen&websiteid=%1$s" class="open_wpadmin">' . __( 'Open WP Admin', 'mainwp' ) . '</a> (<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=%1$s" class="open_newwindow_wpadmin" target="_blank">' . __( 'New window', 'mainwp' ) . '</a>)', $item['id'] ),
+			'open' => sprintf( '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=%1$s" class="open_newwindow_wpadmin" target="_blank">' . __( 'Open WP Admin', 'mainwp' ) . '</a>', $item['id'] ),
 			'updates' => sprintf( '<a href="admin.php?page=managesites&updateid=%1$s" class="open_updates">' . __( 'Updates', 'mainwp' ) . '</a>', $item['id'] ),
-			'test' => '<a href="#" class="mainwp_site_testconnection" class="test_connection">' . __( 'Test connection', 'mainwp' ) . '</a> <span style="display: none;"><i class="fa fa-spinner fa-pulse"></i>' . __( 'Testing connection...', 'mainwp' ) . '</span>',
 			'scan' => '<a href="admin.php?page=managesites&scanid=' . $item['id'] . '">' . __( 'Security scan', 'mainwp' ) . '</a>',
 		);
 
@@ -408,12 +407,17 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	}
 
 	function column_notes( $item ) {
-		$note = strip_tags( $item['note'], '<p><strong><em><br/><hr/><a></p></strong></em></a>' );
+        $note = wp_kses_post( $item['note'] );
+        $lastupdate = $item['note_lastupdate'];
+
+        $txt_lastupdate = '';
+        if ($lastupdate)
+            $txt_lastupdate = '<br/>' . __('Last update:', 'mainwp') . ' ' . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $lastupdate ) );
 
 		if ( $item['note'] == '' ) {
-			return sprintf( '<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_%1$s">' . '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) . '</a><span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $note );
+			return sprintf( '<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_%1$s">' . '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) . '</a>' . $txt_lastupdate . '<span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $note );
 		} else {
-			return sprintf( '<a href="#" class="mainwp_notes_show_all mainwp-green" id="mainwp_notes_%1$s">' . '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) . '</a><span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $note );
+			return sprintf( '<a href="#" class="mainwp_notes_show_all mainwp-green" id="mainwp_notes_%1$s">' . '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) . '</a>' . $txt_lastupdate . '<span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $note );
 		}
 	}
 

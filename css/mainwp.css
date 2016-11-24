@@ -1183,6 +1183,7 @@ h3.mainwp_box_title {
     /*width: 580px;*/
     height: auto;
     width: auto;
+    overflow-y: auto;
 }
 
 #mainwp_notes #mainwp_notes_note,
@@ -2213,4 +2214,8 @@ div.pw-wrap.form-invalid {
 .mainwp_page_Extensions-Mainwp-Favorites-Extension .managegroups_site-listitem
 {
     padding: 3px;
+}
+.post-type-bulkpost #wpwrap .wrap h1 a.page-title-action,
+.post-type-bulkpage #wpwrap .wrap h1 a.page-title-action {
+    display: none;
 }

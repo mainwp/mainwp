@@ -175,6 +175,7 @@ class MainWP_Post_Handler {
 		add_action( 'wp_ajax_mainwp_get_categories', array( &$this, 'mainwp_get_categories' ) ); //ok
 		add_action( 'wp_ajax_mainwp_posts_get_terms', array( &$this, 'mainwp_posts_get_terms' ) ); //ok
 		add_action( 'wp_ajax_mainwp_posts_test_post', array( &$this, 'mainwp_posts_test_post' ) ); //ok
+        $this->addAction( 'mainwp_post_get_edit', array( &$this, 'mainwp_post_get_edit' ) );
 
 		//Page: Pages
 		add_action( 'wp_ajax_mainwp_pages_search', array( &$this, 'mainwp_pages_search' ) ); //ok
@@ -428,6 +429,12 @@ class MainWP_Post_Handler {
 	function mainwp_get_categories() {
 		$this->secure_request();
 		MainWP_Post::getCategories();
+		die();
+	}
+
+    function mainwp_post_get_edit() {
+		$this->secure_request( 'mainwp_post_get_edit' );
+		MainWP_Post::getPost();
 		die();
 	}
 

@@ -792,7 +792,7 @@ class MainWP_User {
 						href="<?php echo $website->url; ?>"><?php echo $website->url; ?></a>
 
 					<div class="row-actions">
-						<span class="edit"><a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php _e( 'Overview', 'mainwp' ); ?></a> | <a href="admin.php?page=SiteOpen&websiteid=<?php echo $website->id; ?>"><?php _e( 'WP Admin', 'mainwp' ); ?></a></span>
+						<span class="edit"><a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php _e( 'Overview', 'mainwp' ); ?></a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>" target="_blank"><?php _e( 'WP Admin', 'mainwp' ); ?></a></span>
 					</div>
 				</td>
 			</tr>

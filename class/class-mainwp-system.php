@@ -568,6 +568,7 @@ class MainWP_System {
 			$extensions = MainWP_Extensions::getExtensions( array( 'activated' => true ) );
 			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && $_POST['action'] == 'update-plugin' ) {
 				$plugin_slug = $_POST['plugin'];
+                // get download pakage url to prevent expire
 				if ( isset( $extensions[ $plugin_slug ] ) ) {
 					if ( isset( $transient->response[ $plugin_slug ] ) && version_compare( $transient->response[ $plugin_slug ]->new_version, $extensions[ $plugin_slug ]['version'], '=' ) ) {
 						return $transient;
@@ -650,12 +651,12 @@ class MainWP_System {
 		MainWP_Utility::update_option( 'mainwp_upgradeVersionInfo', serialize( $this->upgradeVersionInfo ) );
 	}
 
-	public function pre_check_update_custom( $transient ) {
-		//        if (empty($transient->checked)) {
-		//            return $transient;
-		//        }
+	public function pre_check_update_custom( $transient ) {                    
+        if ( !isset( $transient->checked ) ) {                    
+            return $transient;
+        }
 
-		if ( ( $this->upgradeVersionInfo == null ) || ( ( time() - $this->upgradeVersionInfo->updated ) > 60 * 60 * 12 ) ) {
+		if ( ( $this->upgradeVersionInfo == null ) || ( ( time() - $this->upgradeVersionInfo->updated ) > 60 ) ) {  // one minute before recheck to prevent check update information to many times                                     
 			$this->checkUpgrade();
 		}
 
@@ -671,18 +672,21 @@ class MainWP_System {
 
 		return $transient;
 	}
-
-	public function check_info( $false, $action, $arg ) {
+        
+	public function check_info( $false, $action, $arg ) {                
+        if ( 'plugin_information' !== $action ) {
+			return $false;
+		}
+                
 		if ( ! isset( $arg->slug ) || ( $arg->slug == '' ) ) {
-			return false;
+			return $false;
 		}
 
 		if ( $arg->slug === $this->slug ) {
-			return false;
+			return $false;
 		}
 
 		$result   = MainWP_Extensions::getSlugs();
-		$slugs    = $result['slugs'];
 		$am_slugs = $result['am_slugs'];
 
 		if ( $am_slugs != '' ) {
@@ -692,7 +696,7 @@ class MainWP_System {
 			}
 		}
 
-		return false;
+		return $false;
 	}
 
 	function print_updates_array_lines( $array, $backupChecks ) {
@@ -1720,7 +1724,7 @@ class MainWP_System {
 		if ( ! MainWP_Utility::isAdmin() ) {
 			return;
 		}
-
+                                
 		if ( get_option( 'mainwp_activated' ) == 'yes' ) {
 			delete_option( 'mainwp_activated' );
 			wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );

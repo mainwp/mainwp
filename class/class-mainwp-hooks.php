@@ -47,6 +47,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getactivateextensionnotice', array( &$this, 'get_activate_extension_notice' ), 10, 1 );
 		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
 		add_action( 'mainwp_do_meta_boxes', array( &$this, 'mainwp_do_meta_boxes' ), 10, 1 );
+        add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
 	}
 
 	public function mainwp_log_debug( $pText ) {
@@ -66,7 +67,87 @@ class MainWP_Hooks {
 	public function mainwp_do_meta_boxes( $postpage ) {
 		MainWP_System::do_mainwp_meta_boxes( $postpage );
 	}
+               
+    /**
+     * Hook to add site
+     *
+     * @since 3.2.2
+     * @param array $params site data fields: url, name, wpadmin, unique_id, groupids, ssl_verify, ssl_version, http_user, http_pass, websiteid - if edit site
+     *
+     * @return array
+     *
+     */
+    public function mainwp_add_site( $params ) {
+        $ret = array();
 
+        if ( is_array( $params ) ) {
+            if ( isset( $params[ 'websiteid' ] ) && MainWP_Utility::ctype_digit( $websiteid = $params['websiteid'] ) )  {
+                $ret['siteid'] = MainWP_Hooks::updateWPSite( $params );
+                return $ret;
+            } else if ( isset( $params['url'] ) && isset( $params['url'] ) ) {
+                //Check if already in DB
+                $website = MainWP_DB::Instance()->getWebsitesByUrl( $params['url'] );
+                list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::addWPSite( $website, $params );
+
+                if ( $error != '' ) {
+                    return array( 'error' => $error );
+                }
+                $ret['response'] = $message;
+                $ret['siteid'] = $site_id;
+            }
+        }
+
+        return $ret;
+    }
+
+    public static function updateWPSite( $params ) {
+
+	if ( ! isset( $params['websiteid'] ) || !MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
+		return 0;
+	}
+
+	$website = MainWP_DB::Instance()->getWebsiteById( $params['websiteid'] );
+
+            if ( $website == null ) {
+		return 0;
+	}
+
+	if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		return 0;
+	}
+
+            $data = array();
+
+            $uniqueId = null;
+
+            if (isset($params['name']) && !empty($params['name'])) {
+                $data['name'] =  htmlentities( $params['name'] );
+            }
+
+            if (isset($params['wpadmin']) && !empty($params['wpadmin'])) {
+                $data['adminname'] =  $params['wpadmin'];
+            }
+
+            if (isset($params['unique_id'])) {
+                $data['uniqueId'] = $uniqueId =  $params['unique_id'];
+            }
+
+            if (empty($data)) {
+                    return 0;
+            }
+
+            MainWP_DB::Instance()->updateWebsiteValues( $website->id, $data);
+            if ($uniqueId !== null) {
+                try {
+                        $information = MainWP_Utility::fetchUrlAuthed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
+                } catch ( MainWP_Exception $e ) {
+                        $error = $e->getMessage();
+                }
+            }
+		return $website->id;
+	}
+        
+        
 	public function get_activate_extension_notice( $pluginFile ) {
 		$active = MainWP_Extensions::isExtensionActivated( $pluginFile );
 		if ($active)

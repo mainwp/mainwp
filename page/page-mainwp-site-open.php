@@ -129,7 +129,7 @@ class MainWP_Site_Open {
 				<?php
                                 
 				_e( 'Will redirect to your website immediately.', 'mainwp' );
-				$url = ( isset( $website->siteurl ) && $website->siteurl != '' ? $website->siteurl : $website->url );
+				$url = ( isset( $website->url ) && $website->url != '' ? $website->url : $website->siteurl );
 				$url .= ( substr( $url, - 1 ) != '/' ? '/' : '' );
 
 				$postdata         = MainWP_Utility::getGetDataAuthed( $website, $file, MainWP_Utility::getFileParameter( $website ), true );
@@ -160,7 +160,7 @@ class MainWP_Site_Open {
 			<div id="mainwp_background-box">
                                 <div style="font-size: 30px; text-align: center; margin-top: 5em;"><?php _e( 'You will be redirected to your website immediately.', 'mainwp' ); ?></div>
 				<?php				
-				$url = ( isset( $website->siteurl ) && $website->siteurl != '' ? $website->siteurl : $website->url );
+				$url = ( isset( $website->url ) && $website->url != '' ? $website->url : $website->siteurl );
 				$url .= ( substr( $url, - 1 ) != '/' ? '/' : '' );
 
 				$postdata         = MainWP_Utility::getGetDataAuthed( $website, 'index.php', 'where', true );

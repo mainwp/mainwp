@@ -2208,9 +2208,11 @@ class MainWP_System {
 		}
 
 		if ( self::isMainWP_Pages() ) {
+                        wp_deregister_script( 'select2' );			
 			wp_enqueue_script( 'mainwp-rightnow', MAINWP_PLUGIN_URL . 'js/mainwp-rightnow.js', array(), $this->current_version );
 			wp_enqueue_script( 'mainwp-managesites', MAINWP_PLUGIN_URL . 'js/mainwp-managesites.js', array(), $this->current_version );
 			wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'js/mainwp-extensions.js', array(), $this->current_version );
+                        wp_enqueue_script( 'select2', MAINWP_PLUGIN_URL . 'js/select2/select2.min.js', array( 'jquery' ), '3.4.5', true );
 		}
 
 		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'js/mainwp-ui.js', array(), $this->current_version );
@@ -2218,8 +2220,7 @@ class MainWP_System {
 		wp_enqueue_script( 'mainwp-date', MAINWP_PLUGIN_URL . 'js/date.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-tablesorter', MAINWP_PLUGIN_URL . 'js/jquery.tablesorter.min.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-tablesorter-pager', MAINWP_PLUGIN_URL . 'js/jquery.tablesorter.pager.js', array(), $this->current_version );
-		wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'js/moment.min.js', array(), $this->current_version );
-		wp_enqueue_script( 'select2', MAINWP_PLUGIN_URL . 'js/select2/select2.js', array( 'jquery' ), '3.4.5', true );
+		wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'js/moment.min.js', array(), $this->current_version );		
 		if (isset($_GET['page'])) {
 			if ($_GET['page'] == 'managesites' || $_GET['page'] == 'PluginsManage' || $_GET['page'] == 'ThemesManage' ) {
 				wp_enqueue_script( 'dragtable', MAINWP_PLUGIN_URL . 'js/dragtable/jquery.dragtable.js', array( 'jquery' ), '1.0', false );
@@ -2244,10 +2245,12 @@ class MainWP_System {
 		if ( version_compare( $wp_version, '4.3.1', '>' ) ) {
 			wp_enqueue_style( 'mainwp-44', MAINWP_PLUGIN_URL . 'css/mainwp-44.css', array(), $this->current_version );
 		}
-
-		wp_enqueue_style( 'mainwp-filetree', MAINWP_PLUGIN_URL . 'css/jqueryFileTree.css', array(), $this->current_version );
-		wp_enqueue_style( 'mainwp-font-awesome', MAINWP_PLUGIN_URL . 'css/font-awesome/css/font-awesome.min.css', array(), $this->current_version );
-		wp_enqueue_style( 'select2', MAINWP_PLUGIN_URL . 'js/select2/select2.css', array(), '3.4.5' );
+                if ( self::isMainWP_Pages() ) {
+                    wp_deregister_style( 'select2' );
+                    wp_enqueue_style( 'mainwp-filetree', MAINWP_PLUGIN_URL . 'css/jqueryFileTree.css', array(), $this->current_version );
+                    wp_enqueue_style( 'mainwp-font-awesome', MAINWP_PLUGIN_URL . 'css/font-awesome/css/font-awesome.min.css', array(), $this->current_version );
+                    wp_enqueue_style( 'select2', MAINWP_PLUGIN_URL . 'js/select2/select2.css', array(), '3.4.5' );
+                }
 		if (isset($_GET['page'])) {
 			if ($_GET['page'] == 'managesites'  || $_GET['page'] == 'PluginsManage' || $_GET['page'] == 'ThemesManage' ) {
 				wp_enqueue_style( 'dragtable', MAINWP_PLUGIN_URL . 'css/dragtable/dragtable.css', array(), '1.0' );

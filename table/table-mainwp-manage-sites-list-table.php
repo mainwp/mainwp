@@ -483,7 +483,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 				$orderby = 'wp.name ' . ( $_GET['order'] == 'asc' ? 'asc' : 'desc' );
 			} else if ( ( $_GET['orderby'] == 'url' ) ) {
 				$orderby = 'wp.url ' . ( $_GET['order'] == 'asc' ? 'asc' : 'desc' );
-			} else if ( ( $_GET['orderby'] == 'group' ) ) {
+			} else if ( ( $_GET['orderby'] == 'groups' ) ) {
 				$orderby = 'GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") ' . ( $_GET['order'] == 'asc' ? 'asc' : 'desc' );
 			} else if ( ( $_GET['orderby'] == 'status' ) ) {
 				$orderby = 'CASE true                                
@@ -557,7 +557,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			if ( $websites ) {
 				@MainWP_DB::free_result( $websites );
 			}
-			if ( isset( $_GET['orderby'] ) && ( $_GET['orderby'] == 'group' ) ) {
+			if ( isset( $_GET['orderby'] ) && ( $_GET['orderby'] == 'groups' ) ) {
 				$orderby = 'wp.url';
 			}
 			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $_REQUEST['g'], true, $orderby, ( ( $currentPage - 1 ) * $perPage ), $perPage, $where ) );

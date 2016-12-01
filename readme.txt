@@ -140,7 +140,7 @@ Please open a [Support Ticket](https://mainwp.com/support/)
 Yes, you can [see them on YouTube](http://www.youtube.com/user/MyMainWP).
 
 = I have an idea for MainWP how do I let you know? =
-Please add any ideas to the [MainWP Feature Request](http://support.mainwp.com/support/discussions/5000037246) site.
+Please follow the steps out lined in the [MainWP Roadmaps](https://mainwp.com/mainwp-roadmaps/) so we can add your idea to Trello to be voted on. 
 
 = I have more questions, do you have any other information? =
 Sure we have a quick FAQ with a lot more questions and answers [here](https://mainwp.com/presales-faq/).
@@ -160,6 +160,23 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.2.1 - 12-01-16 =
+* Fixed: an issue with saving site groups on the Add New site form
+* Fixed: an issue with false alert with PHP Max Execution time set to -1
+* Fixed: issue with allowed tags in the notes popup
+* Fixed: an issue with opening a site WP Admin section
+* Fixed: an issue with updating site URL on the Site Edit page
+* Fixed: an issue with the Fix All (security issues) button in the Security Issues widget
+* Added: support for %sitename% and %site_url% tokens for directory path settings for the UpdraftPlus extension
+* Added: support for the new Edit Posts and Pages process
+* Added: 'mainwp_create_post_custom_author' hook
+* Added: Add and Edit Site hooks
+* Added: Last Update time stamp in the Notes column of the Manage Sites table
+* Updated: auto request extensions update information
+* Updated: PHP requirement bumped to 5.6
+* Removed: Test Connection action from the action row of the Manage Sites table
+* Removed: Links for opening Child Site WP Admin in an iframe
 
 = 3.2 - 10-26-16 =
 * Fixed: An issue with loading themes on the Auto Updates page

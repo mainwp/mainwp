@@ -2354,13 +2354,13 @@ rightnow_themes_unignore_abandoned_detail_all = function () {
 };
 
 rightnow_dismiss_outdate_plugintheme_by_site = function (what, slug, name, id) {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_dismissoutdateplugintheme',
         type:what,
         id:id,
         slug:slug,
         name:name
-    };
+    });
     jQuery(document.getElementById('wp_outdate_' + what + '_' + id + '_' + slug)).html(__('Ignoring...'));
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
@@ -2379,12 +2379,12 @@ rightnow_dismiss_outdate_plugintheme_by_site = function (what, slug, name, id) {
 };
 
 rightnow_unignore_plugintheme_abandoned_by_site = function (what, slug, id) {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_unignoreabandonedplugintheme',
         type:what,
         id:id,
         slug:slug
-    };
+    });
     jQuery.post(ajaxurl, data, function (pWhat, pSlug, pId) { return function (response) {
         if (response.result) {
             var siteElement;
@@ -2424,12 +2424,12 @@ rightnow_unignore_plugintheme_abandoned_by_site = function (what, slug, id) {
     return false;
 };
 rightnow_unignore_plugintheme_abandoned_by_site_all = function (what) {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_unignoreabandonedplugintheme',
         type:what,
         id:'_ALL_',
         slug:'_ALL_'
-    };
+    });
     jQuery.post(ajaxurl, data, function (pWhat) { return function (response) {
         if (response.result) {
             var tableElement = jQuery('#ignored-'+pWhat+'s-list');
@@ -2442,12 +2442,12 @@ rightnow_unignore_plugintheme_abandoned_by_site_all = function (what) {
 };
 rightnow_plugins_abandoned_ignore_all = function (slug, name) {
     rightnow_plugins_outdate_detail_show(slug);
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_dismissoutdatepluginsthemes',
         type: 'plugin',
         slug:slug,
         name:name
-    };
+    });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
             jQuery('div[plugin_outdate_slug="'+slug+'"]').find('.pluginsInfo').html(__('Ignored!'));
@@ -2458,11 +2458,11 @@ rightnow_plugins_abandoned_ignore_all = function (slug, name) {
     return false;
 };
 rightnow_plugins_abandoned_unignore_globally_all = function() {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_unignoreabandonedpluginsthemes',
         type: 'plugin',
         slug: '_ALL_'
-    };
+    });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
             var tableElement = jQuery('#globally-ignored-plugins-list');
@@ -2474,11 +2474,11 @@ rightnow_plugins_abandoned_unignore_globally_all = function() {
     return false;
 };
 rightnow_plugins_abandoned_unignore_globally = function (slug) {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_unignoreabandonedpluginsthemes',
         type: 'plugin',
         slug:slug
-    };
+    });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
             var ignoreElement = jQuery('#globally-ignored-plugins-list tr[plugin_slug="'+slug+'"]');
@@ -2494,12 +2494,12 @@ rightnow_plugins_abandoned_unignore_globally = function (slug) {
 };
 rightnow_themes_abandoned_ignore_all = function (slug, name) {
     rightnow_themes_outdate_detail_show(slug);
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_dismissoutdatepluginsthemes',
         type: 'theme',
         slug:slug,
         name:name
-    };
+    });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
             jQuery('div[theme_outdate_slug="'+slug+'"]').find('.pluginsInfo').html(__('Ignored!'));
@@ -2510,11 +2510,11 @@ rightnow_themes_abandoned_ignore_all = function (slug, name) {
     return false;
 };
 rightnow_themes_abandoned_unignore_globally_all = function() {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_unignoreabandonedpluginsthemes',
         type: 'theme',
         slug: '_ALL_'
-    };
+    });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
             var tableElement = jQuery('#globally-ignored-themes-list');
@@ -2526,11 +2526,11 @@ rightnow_themes_abandoned_unignore_globally_all = function() {
     return false;
 };
 rightnow_themes_abandoned_unignore_globally = function (slug) {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_unignoreabandonedpluginsthemes',
         type: 'theme',
         slug:slug
-    };
+    });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
             var ignoreElement = jQuery('#globally-ignored-themes-list tr[theme_slug="'+slug+'"]');

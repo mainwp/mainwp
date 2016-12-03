@@ -174,7 +174,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Added: Add and Edit Site hooks
 * Added: Last Update time stamp in the Notes column of the Manage Sites table
 * Updated: auto request extensions update information
-* Updated: PHP requirement bumped to 5.6
+* Updated: PHP recommendation bumped to 5.6
 * Removed: Test Connection action from the action row of the Manage Sites table
 * Removed: Links for opening Child Site WP Admin in an iframe
 

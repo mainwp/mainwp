@@ -40,7 +40,7 @@ class MainWP_Post_Handler {
 		$this->addAction( 'mainwp_removesite', array( &$this, 'mainwp_removesite' ) );
 		$this->addAction( 'mainwp_notes_save', array( &$this, 'mainwp_notes_save' ) );
 		add_action( 'wp_ajax_mainwp_reconnectwp', array( &$this, 'mainwp_reconnectwp' ) ); //ok
-		add_action( 'wp_ajax_mainwp_updatechildsite_value', array( &$this, 'mainwp_updatechildsite_value' ) ); //ok
+		$this->addAction( 'mainwp_updatechildsite_value', array( &$this, 'mainwp_updatechildsite_value' ) ); //ok
 
 		//Page: ManageGroups
 		$this->addAction( 'mainwp_group_rename', array( &$this, 'mainwp_group_rename' ) );
@@ -77,26 +77,26 @@ class MainWP_Post_Handler {
 		$this->addAction( 'mainwp_syncsites', array( &$this, 'mainwp_syncsites' ) );
 		$this->addAction( 'mainwp_upgradewp', array( &$this, 'mainwp_upgradewp' ) );
 		$this->addAction( 'mainwp_upgradeplugintheme', array( &$this, 'mainwp_upgradeplugintheme' ) );
-		add_action( 'wp_ajax_mainwp_ignoreplugintheme', array( &$this, 'mainwp_ignoreplugintheme' ) ); //ok
-		add_action( 'wp_ajax_mainwp_unignoreplugintheme', array( &$this, 'mainwp_unignoreplugintheme' ) ); //ok
-		add_action( 'wp_ajax_mainwp_ignorepluginsthemes', array( &$this, 'mainwp_ignorepluginsthemes' ) ); //ok
-		add_action( 'wp_ajax_mainwp_unignorepluginsthemes', array(
+		$this->addAction( 'mainwp_ignoreplugintheme', array( &$this, 'mainwp_ignoreplugintheme' ) ); //ok
+		$this->addAction( 'mainwp_unignoreplugintheme', array( &$this, 'mainwp_unignoreplugintheme' ) ); //ok
+		$this->addAction( 'mainwp_ignorepluginsthemes', array( &$this, 'mainwp_ignorepluginsthemes' ) ); //ok
+		$this->addAction( 'mainwp_unignorepluginsthemes', array(
 			&$this,
 			'mainwp_unignorepluginsthemes',
 		) ); //ok
-		add_action( 'wp_ajax_mainwp_unignoreabandonedplugintheme', array(
+		$this->addAction( 'mainwp_unignoreabandonedplugintheme', array(
 			&$this,
 			'mainwp_unignoreabandonedplugintheme',
 		) ); //ok
-		add_action( 'wp_ajax_mainwp_unignoreabandonedpluginsthemes', array(
+		$this->addAction( 'mainwp_unignoreabandonedpluginsthemes', array(
 			&$this,
 			'mainwp_unignoreabandonedpluginsthemes',
 		) ); //ok
-		add_action( 'wp_ajax_mainwp_dismissoutdateplugintheme', array(
+		$this->addAction( 'mainwp_dismissoutdateplugintheme', array(
 			&$this,
 			'mainwp_dismissoutdateplugintheme',
 		) ); //ok
-		add_action( 'wp_ajax_mainwp_dismissoutdatepluginsthemes', array(
+		$this->addAction( 'mainwp_dismissoutdatepluginsthemes', array(
 			&$this,
 			'mainwp_dismissoutdatepluginsthemes',
 		) ); //ok
@@ -131,15 +131,15 @@ class MainWP_Post_Handler {
 				&$this,
 				'mainwp_securityIssues_request',
 			) ); //ok
-			add_action( 'wp_ajax_mainwp_securityIssues_fix', array( &$this, 'mainwp_securityIssues_fix' ) ); //ok
-			add_action( 'wp_ajax_mainwp_securityIssues_unfix', array( &$this, 'mainwp_securityIssues_unfix' ) ); //ok
+			$this->addAction( 'mainwp_securityIssues_fix', array( &$this, 'mainwp_securityIssues_fix' ) ); //ok
+			$this->addAction( 'mainwp_securityIssues_unfix', array( &$this, 'mainwp_securityIssues_unfix' ) ); //ok
 		}
 
 		//Page: ManageTips
-		add_action( 'wp_ajax_mainwp_managetips_update', array( &$this, 'mainwp_managetips_update' ) ); //ok
-		add_action( 'wp_ajax_mainwp_tips_update', array( &$this, 'mainwp_tips_update' ) ); //ok
-		add_action( 'wp_ajax_mainwp_dismiss_twit', array( &$this, 'mainwp_dismiss_twit' ) );
-		add_action( 'wp_ajax_mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
+		$this->addAction( 'mainwp_managetips_update', array( &$this, 'mainwp_managetips_update' ) ); //ok
+		$this->addAction( 'mainwp_tips_update', array( &$this, 'mainwp_tips_update' ) ); //ok
+		$this->addAction( 'mainwp_dismiss_twit', array( &$this, 'mainwp_dismiss_twit' ) );
+		$this->addAction( 'mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
 
 		add_action( 'wp_ajax_mainwp_twitter_dashboard_action', array(
 			&$this,
@@ -554,14 +554,14 @@ class MainWP_Post_Handler {
 	 * Page: ManageTips
 	 */
 	function mainwp_managetips_update() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_managetips_update' );
 
 		MainWP_Manage_Tips::updateTipSettings();
 		die();
 	}
 
 	function mainwp_tips_update() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_tips_update' );
 
 		global $current_user;
 		if ( ( $user_id = $current_user->ID ) && isset( $_POST['tipId'] ) && ! empty( $_POST['tipId'] ) ) {
@@ -576,7 +576,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_dismiss_twit() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_dismiss_twit' );
 
 		global $current_user;
 		if ( ( $user_id = $current_user->ID ) && isset( $_POST['twitId'] ) && ! empty( $_POST['twitId'] ) && isset( $_POST['what'] ) && ! empty( $_POST['what'] ) ) {
@@ -586,7 +586,7 @@ class MainWP_Post_Handler {
 	}
 
 	function dismiss_activate_notice() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_dismiss_activate_notice');
 
 		global $current_user;
 		if ( ( $user_id = $current_user->ID ) && isset( $_POST['slug'] ) && ! empty( $_POST['slug'] ) ) {
@@ -665,7 +665,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_securityIssues_fix() {
-		$this->secure_request();
+		$this->secure_request( 'securityIssues_fix' );
 
 		try {
 			die( json_encode( array( 'result' => MainWP_Security_Issues::fixSecurityIssue() ) ) );
@@ -680,7 +680,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_securityIssues_unfix() {
-		$this->secure_request();
+		$this->secure_request( 'securityIssues_unfix' );
 
 		try {
 			die( json_encode( array( 'result' => MainWP_Security_Issues::unfixSecurityIssue() ) ) );
@@ -1213,7 +1213,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_updatechildsite_value() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_updatechildsite_value' );
 
 		MainWP_Manage_Sites::updateChildsiteValue();
 	}
@@ -1304,7 +1304,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_ignoreplugintheme() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_ignoreplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
 			die( json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
@@ -1313,7 +1313,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_unignoreabandonedplugintheme() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_unignoreabandonedplugintheme ');
 
 		if ( ! isset( $_POST['id'] ) ) {
 			die( json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
@@ -1322,7 +1322,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_unignoreabandonedpluginsthemes() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_unignoreabandonedpluginsthemes' );
 
 		if ( ! isset( $_POST['slug'] ) ) {
 			die( json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
@@ -1331,7 +1331,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_dismissoutdateplugintheme() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_dismissoutdateplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
 			die( json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
@@ -1340,7 +1340,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_dismissoutdatepluginsthemes() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_dismissoutdatepluginsthemes' );
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
 			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
@@ -1353,7 +1353,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_unignoreplugintheme() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_unignoreplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
 			die( json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
@@ -1362,7 +1362,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_ignorepluginsthemes() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_ignorepluginsthemes' );
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
 			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
@@ -1375,7 +1375,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_unignorepluginsthemes() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_unignorepluginsthemes' );
 
 		if ( ! isset( $_POST['slug'] ) ) {
 			die( json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
@@ -1442,6 +1442,8 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_events_notice_hide() {
+		$this->secure_request( 'mainwp_events_notice_hide');
+
 		if ( isset( $_POST['notice'] ) ) {
 			$current_options = get_option( 'mainwp_showhide_events_notice' );
 			if ( ! is_array( $current_options ) ) {

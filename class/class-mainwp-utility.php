@@ -1805,7 +1805,7 @@ class MainWP_Utility {
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=U=TF-8">
-        <title> -- TITLE HERE -- </title>
+        <title> {$title} </title>
         <style type="text/css">
         outlook a{padding:0;}
         body{width:100% !important;}

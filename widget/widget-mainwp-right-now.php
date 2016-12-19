@@ -2017,8 +2017,8 @@ class MainWP_Right_Now {
 								<div class="mainwp-sub-row" translation_slug="<?php echo $translation_slug; ?>" updated="0">
 									<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">
 										<?php if ( $globalView ) { ?>&nbsp;&nbsp;&nbsp;<?php } ?>
-										<?php echo $translation_name; ?>
-										<input type="hidden" id="wp_upgraded_group_<?php echo $group_id; ?>_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>" value="0"/>
+										<?php echo $translation_name; ?>                                                                                
+                                                                                <input type="hidden" id="wp_upgraded_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>" value="0"/>
 									</div>
 									<div class="mainwp-left mainwp-cols-5 mainwp-padding-top-5 translationsInfo" id="wp_upgrade_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>">
 										<?php echo $translation_upgrade['version']; ?>
@@ -2027,7 +2027,7 @@ class MainWP_Right_Now {
 										<div id="wp_upgradebuttons_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>">
 											<?php if ( mainwp_current_user_can( 'dashboard', 'update_translations' ) ) { ?>
 												&nbsp;
-												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_translation(<?php echo $website->id; ?>//, '<?php echo $translation_slug; ?>//')"><?php _e( 'Update', 'mainwp' ); ?></a>
+												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_upgrade_translation(<?php echo $website->id; ?>, '<?php echo $translation_slug; ?>')"><?php _e( 'Update', 'mainwp' ); ?></a>
 											<?php } ?>
 										</div>
 									</div>
@@ -2127,7 +2127,7 @@ class MainWP_Right_Now {
 										<div id="wp_upgradebuttons_translation_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $translation_slug; ?>">
 											<?php if ( mainwp_current_user_can( 'dashboard', 'update_translations' ) ) { ?>
 												&nbsp;
-												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_translation(<?php echo $website->id; ?>//, '<?php echo $translation_slug; ?>//')"><?php _e( 'Update', 'mainwp' ); ?></a>
+												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_translation(<?php echo $website->id; ?>, '<?php echo $translation_slug; ?>', <?php echo $group_id; ?>)"><?php _e( 'Update', 'mainwp' ); ?></a>
 											<?php } ?>
 										</div>
 									</div>

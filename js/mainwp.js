@@ -1195,7 +1195,7 @@ rightnow_upgrade_translation = function (id, slug) {
 };
 
 rightnow_group_upgrade_translation = function (id, slug, groupId) {
-    return rightnow_group_upgrade_plugintheme('translation', id, slug, groupId);
+    return rightnow_upgrade_plugintheme('translation', id, slug, groupId);
 };
 
 rightnow_upgrade_translation_all = function (id) {
@@ -1206,7 +1206,7 @@ rightnow_upgrade_translation_all = function (id) {
 };
 
 rightnow_group_upgrade_translation_all = function (id, groupId) {
-    if (!confirm(__('Are you sure you want to update all themes?')))
+    if (!confirm(__('Are you sure you want to update all translations?')))
         return false;
     rightnow_group_show_if_required('translation_upgrades', id, groupId);
     return rightnow_group_upgrade_plugintheme_all('translation', id, false, groupId);
@@ -1334,10 +1334,10 @@ rightnow_upgrade_plugintheme_list = function (what, id, list, noCheck, groupId)
         var strGroup = '';
         if (typeof pGroupId !== 'undefined') {
             strGroup = '_group_' + pGroupId;
-        }
+        }                
         var newList = [];
         for (var i = pList.length - 1; i >= 0; i--) {
-            var item = pList[i];
+            var item = pList[i];           
             if (document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item).value == 0) {
                 document.getElementById('wp_upgrade_' + pWhat + '_' + pId + strGroup + '_' + item).innerHTML = __('Updating...');
                 document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item).value = 1;

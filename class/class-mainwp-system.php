@@ -1067,8 +1067,17 @@ class MainWP_System {
 
 					$infoTxt    = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
 					$infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
-
+                                        if ($pluginInfo['update']['url'] && false !== strpos( $pluginInfo['update']['url'], 'wordpress.org/plugins' )) {                                            
+                                            $change_log = $pluginInfo['update']['url'];
+                                            if ( substr( $change_log, - 1 ) != '/' ) {
+                                                    $change_log .= '/';
+                                            }
+                                            $change_log .= 'changelog/';
+                                            $infoTxt .= ' - ' . '<a href="' . $change_log .  '" target="_blank">Changelog</a>';
+                                            $infoNewTxt .= ' - ' . '<a href="' . $change_log .  '" target="_blank">Changelog</a>';
+                                        }                                        
 					$newUpdate = ! ( isset( $websiteLastPlugins[ $pluginSlug ] ) && ( $pluginInfo['Version'] == $websiteLastPlugins[ $pluginSlug ]['Version'] ) && ( $pluginInfo['update']['new_version'] == $websiteLastPlugins[ $pluginSlug ]['update']['new_version'] ) );
+                                        
 					//update this..
 					if ( in_array( $pluginSlug, $trustedPlugins ) ) {
 						//Trusted

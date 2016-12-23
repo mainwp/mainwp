@@ -2026,7 +2026,7 @@ class MainWP_Manage_Sites_View {
 						//Add website to database
 						$groupids = array();
 						$groupnames = array();
-						if ( isset( $params['groupids'] ) ) {
+						if ( isset( $params['groupids'] ) && is_array( $params['groupids']) ) {
 							foreach ( $params['groupids'] as $group ) {
 								$groupids[] = $group;
 							}

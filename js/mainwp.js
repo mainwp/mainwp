@@ -6858,10 +6858,10 @@ jQuery(document).on('click', '.mainwp-events-notice-dismiss', function()
 {
     var notice = jQuery(this).attr('notice');
     jQuery(this).closest('.mainwp-events-notice').fadeOut(500);
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_events_notice_hide',
         notice: notice
-    };
+    });
     jQuery.post(ajaxurl, data, function (res) {
     });
     return false;

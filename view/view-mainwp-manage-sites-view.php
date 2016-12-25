@@ -1831,7 +1831,7 @@ class MainWP_Manage_Sites_View {
 					$pubkey = '-1';
 				}
 
-					$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array( 'pubkey' => $pubkey, 'server' => get_admin_url(), 'uniqueId' => $website->uniqueId ), true, $website->verify_certificate, $website->http_user, $website->http_pass, $website->ssl_version );
+				$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array( 'pubkey' => $pubkey, 'server' => get_admin_url(), 'uniqueId' => $website->uniqueId ), true, $website->verify_certificate, $website->http_user, $website->http_pass, $website->ssl_version );
 
 				if ( isset( $information['error'] ) && $information['error'] != '' ) {
 					throw new Exception( $information['error'] );

@@ -745,6 +745,7 @@ class MainWP_Post_Handler {
 			$excludedFolder = trim( $_POST['exclude'], "\n" );
 			$excludedFolder = explode( "\n", $excludedFolder );
 			$excludedFolder = array_map( array( 'MainWP_Utility', 'trimSlashes' ), $excludedFolder );
+			$excludedFolder = array_map( 'htmlentities' , $excludedFolder );
 			$excludedFolder = implode( ',', $excludedFolder );
 
 			$result = MainWP_Manage_Sites::backup( $_POST['site_id'], $_POST['type'], ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset( $_POST['fileNameUID'] ) ? $_POST['fileNameUID'] : '', $_POST['archiveFormat'], ( $_POST['maximumFileDescriptorsOverride'] == 1 ), ( $_POST['maximumFileDescriptorsAuto'] == 1 ), $_POST['maximumFileDescriptors'], $_POST['loadFilesBeforeZip'], $_POST['pid'], ( isset( $_POST['append'] ) && ( $_POST['append'] == 1 ) ) );

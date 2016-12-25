@@ -168,10 +168,11 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	function column_status( $item ) {
 
 		$hasSyncErrors = ( $item['sync_errors'] != '' );
+		$md5Connection = ( ! $hasSyncErrors && ( $item['nossl'] == 1 ) );
 
 		$output = '';
 		$cnt    = 0;
-		if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
+		if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors && ! $md5Connection ) {
 			$website               = (object) $item;
 			$userExtension         = MainWP_DB::Instance()->getUserExtension();
 			$total_wp_upgrades     = 0;
@@ -266,13 +267,13 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		}
 
 		$output .= '
-       <span title="Site is Offline" ' . ($item['offline_check_result'] == -1 && !$hasSyncErrors ? '' : 'style="display:none;"') . '>
+       <span title="Site is Offline" ' . ($item['offline_check_result'] == -1 && !$hasSyncErrors && !$md5Connection ? '' : 'style="display:none;"') . '>
             <span class="fa-stack fa-lg">
                 <i class="fa fa-exclamation-circle fa-2x mainwp-red"></i>
             </span>
        </span>
 
-       <span title="Site is Online" ' . ($item['offline_check_result'] == 1 && !$hasSyncErrors && ($cnt == 0) ? '' : 'style="display:none;"'). '>
+       <span title="Site is Online" ' . ($item['offline_check_result'] == 1 && !$hasSyncErrors && !$md5Connection && ($cnt == 0) ? '' : 'style="display:none;"'). '>
             <span class="fa-stack fa-lg">
                 <i class="fa fa-check-circle fa-2x mainwp-green"></i>
             </span>
@@ -282,6 +283,13 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
             <span class="fa-stack fa-lg">
                 <i class="fa fa-circle fa-stack-2x mainwp-red"></i>
                 <i class="fa fa-plug fa-stack-1x mainwp-white"></i>
+            </span>
+       </span>
+
+       <span title="Unsecure connection" ' . ($md5Connection ? '' : 'style="display:none;"') . '>
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x mainwp-red"></i>
+          <i class="fa fa-chain-broken fa-stack-1x mainwp-white"></i>
             </span>
        </span>
        ';

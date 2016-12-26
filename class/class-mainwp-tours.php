@@ -8,8 +8,20 @@ class MainWP_Tours {
 		wp_enqueue_script( 'jquery.joyride-2.1', MAINWP_PLUGIN_URL . 'js/jquery.joyride-2.1.js', array(), $_ver );
 		wp_enqueue_style( 'joyride-2.1', MAINWP_PLUGIN_URL . 'css/joyride-2.1.css', array(), $_ver );		
 	}
-
-	public static function renderMainWPToolsTour() {
+        
+        public static function gen_tour_message($tour_id) {
+        ?>
+            <div class="mainwp-walkthrough mainwp-notice-wrap"><?php _e('Need help getting started?', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a>
+                    <span class="mainwp-right"><a class="mainwp-notice-dismiss" notice-id="tour_<?php echo $tour_id; ?>"
+                                style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
+                </div>
+        <?php
+        }
+        
+        public static function renderMainWPToolsTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'tools' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="force-destroy-sessions-button" data-button="Next">
@@ -28,7 +40,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the button to save changes.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+                <?php echo self::gen_tour_message('tools'); ?>		
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -51,6 +63,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderAdvancedOptionsTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'adv_option' ) ) { 
+                    return;
+                }                
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="mainwp_maximumRequests" data-button="Next">
@@ -79,7 +94,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the button to save changes.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('adv_option'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -102,6 +117,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderThemesIgnoredUpdatesTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'theme_ignore_update' ) ) { 
+                    return;
+                } 
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-class="mainwp-globally-ignored-themes" data-button="Next">
@@ -123,7 +141,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the Allow button for the theme to unignore it.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('theme_ignore_update'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -146,6 +164,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderThemesIgnoredAbandenedTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'theme_ignore_abn' ) ) { 
+                    return;
+                } 
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-class="mainwp-globally-ignored-themes" data-button="Next">
@@ -167,7 +188,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the Allow button for the theme to unignore it.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('theme_ignore_abn'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -190,6 +211,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderPluginsIgnoredUpdatesTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'plugin_ignore_update' ) ) { 
+                    return;
+                } 
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-class="mainwp-globally-ignored-plugins" data-button="Next">
@@ -211,7 +235,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the Allow button for the plugin to unignore it.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('plugin_ignore_update'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -234,6 +258,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderPluginsIgnoredAbandonedTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'plugin_ignore_abn' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-class="mainwp-globally-ignored-plugins" data-button="Next">
@@ -255,7 +282,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the Allow button for the plugin to unignore it.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('plugin_ignore_abn'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -278,6 +305,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderExtensionsTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'extensions' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="mainwp_com_username" data-button="Next">
@@ -308,7 +338,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Use your extensions.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('extensions'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -331,6 +361,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderDashboardOptionsTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'dashboad_opts' ) ) { 
+                    return;
+                }
 		?>
 		 <ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="mainwp_hide_footer" data-button="Next">
@@ -349,7 +382,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the button to save your changes.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('dashboad_opts'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -372,6 +405,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderGeneralSettingsTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'general_opts' ) ) { 
+                    return;
+                }
 		?>
 		 <ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="mainwp_options_footprint_plugin_folder_default" data-button="Next" data-options="tipLocation:bottom;">
@@ -408,7 +444,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the button to save your changes.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('general_opts'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -431,6 +467,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderInstallThemesTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'install_theme' ) ) { 
+                    return;
+                }
 		?>
 		 <ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="mainwp-browse-themes" data-button="Next">
@@ -467,7 +506,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the button to start the installation process.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('install_theme'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -490,6 +529,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderThemesAutoUpdatesTours() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'theme_auto_update' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="s2id_mainwp_themeAutomaticDailyUpdate" data-button="Next">
@@ -520,7 +562,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the button to complete the process.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('theme_auto_update'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -543,6 +585,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderInstallPluginsTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'install_plugin' ) ) { 
+                    return;
+                }
 		?>
 		 <ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="MainWPInstallBulkNavSearch" data-button="Next">
@@ -585,7 +630,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the button to start the installation process.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('install_plugin'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -608,6 +653,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderPluginsAutoUpdatesTours() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'plugin_auto_update' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="s2id_mainwp_pluginAutomaticDailyUpdate" data-button="Next">
@@ -638,7 +686,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the button to complete the process.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('plugin_auto_update'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -661,6 +709,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderAddPostTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'add_post' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="title" data-button="Next">
@@ -694,7 +745,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the Publish button', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('add_post'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -717,6 +768,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderAddPageTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'add_page' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="title" data-button="Next">
@@ -747,7 +801,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the Publish button', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('add_page'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -770,6 +824,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderGroupsTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'group' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="mainwp_managegroups-addnew-container" data-button="Next">
@@ -784,7 +841,7 @@ class MainWP_Tours {
 		    <p><?php _e( 'Click the button to save the group.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('group'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -807,6 +864,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderSitesImportTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'site_import' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="mainwp_managesites_file_bulkupload" data-button="Next">
@@ -821,7 +881,7 @@ class MainWP_Tours {
 		  	<p><?php _e( 'Click the button to start the process.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('site_import'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -844,6 +904,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderTestConnectionTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'test_connec' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="mainwp_managesites_test_wpurl" data-button="Next">
@@ -869,7 +932,7 @@ class MainWP_Tours {
 		  	<p><?php _e( 'Click the button to start the process.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('test_connec'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -892,6 +955,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderSitesTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'sites' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 			<li data-id="mainwp_managesites_content" data-button="Next">
@@ -937,7 +1003,7 @@ class MainWP_Tours {
 				<p><?php _e( 'If you need any additional help, you can always find the MainWP Documentation in the Help menu.', 'mainwp' ); ?></p>
 			</li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('sites'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -960,6 +1026,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderUpdatesTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'updates' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 			<li data-id="dashboard_refresh" data-button="Next">
@@ -978,7 +1047,7 @@ class MainWP_Tours {
 				<p><?php _e( 'Click the link to see the list of all availabe updates.', 'mainwp' ); ?></p>
 			</li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('updates'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -1001,6 +1070,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderOverviewTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'overview' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 			<li data-id="mainwp-welocme-bar" data-button="Next">
@@ -1075,7 +1147,7 @@ class MainWP_Tours {
 				<p><?php _e( 'If you need any additional help, you can always find the MainWP Documentation in the Help menu.', 'mainwp' ); ?></p>
 			</li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('overview'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -1098,6 +1170,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderCreateNewUserTours() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'new_user' ) ) { 
+                    return;
+                }
 		?>
 			<ol id="mainwp-tours-content" style="display: none">
 				<li data-id="user_login" data-button="Next">
@@ -1131,7 +1206,7 @@ class MainWP_Tours {
 					<p><?php _e( 'Click this button to create the user.', 'mainwp' ); ?></p>
 				</li>
 			</ol>
-			<div class="mainwp-walkthrough"><?php _e( 'Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+			<?php echo self::gen_tour_message('new_user'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -1154,6 +1229,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderUsersImportTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'user_import' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="mwp-adduser-contentbox-1" data-button="Next">
@@ -1168,7 +1246,7 @@ class MainWP_Tours {
 		  	<p><?php _e( 'Click the button to start the process.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('user_import'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -1191,6 +1269,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderUpdateAdminPasswordTour() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'admin_pass' ) ) { 
+                    return;
+                }
 		?>
 		<ol id="mainwp-tours-content" style="display: none">
 		  <li data-id="mwp-password-contentbox-1" data-button="Next" data-options="tipLocation:right">
@@ -1207,7 +1288,7 @@ class MainWP_Tours {
 		  	<p><?php _e( 'Click the button to start the process.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('admin_pass'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -1230,6 +1311,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderSearchUsersTours() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'search_user' ) ) { 
+                    return;
+                }
 		?>
 			<ol id="mainwp-tours-content" style="display: none">				
 				<li data-id="mainwp_user_role_administrator" data-button="Next">
@@ -1245,7 +1329,7 @@ class MainWP_Tours {
 					<p><?php _e( 'Click the button to start the search process.', 'mainwp' ); ?></p>
 				</li>
 			</ol>
-			<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+			<?php echo self::gen_tour_message('search_user'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -1268,6 +1352,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderSearchPluginsTours() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'search_plugin' ) ) { 
+                    return;
+                }
 		?>
 			<ol id="mainwp-tours-content" style="display: none">
 				<li data-id="s2id_mainwp_plugin_search_by_status" data-button="Next">
@@ -1283,7 +1370,7 @@ class MainWP_Tours {
 					<p><?php _e( 'Click the button to complete the search process.', 'mainwp' ); ?></p>
 				</li>
 			</ol>
-			<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+			<?php echo self::gen_tour_message('search_plugin'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -1306,6 +1393,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderSearchThemesTours() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'search_theme' ) ) { 
+                    return;
+                }
 		?>
 			<ol id="mainwp-tours-content" style="display: none">
 				<li data-id="s2id_mainwp_theme_search_by_status" data-button="Next">
@@ -1321,7 +1411,7 @@ class MainWP_Tours {
 					<p><?php _e( 'Click the button to complete the search process.', 'mainwp' ); ?></p>
 				</li>
 			</ol>
-			<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+			<?php echo self::gen_tour_message('search_theme'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -1344,6 +1434,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderSearchPagesTours() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'search_page' ) ) { 
+                    return;
+                }
 		?>
 			<ol id="mainwp-tours-content" style="display: none">
 				<li data-id="mainwp_page_search_type_publish" data-button="Next">
@@ -1366,7 +1459,7 @@ class MainWP_Tours {
 					<p><?php _e( 'Click the button to complete the search.', 'mainwp' ); ?></p>
 				</li>
 			</ol>
-			<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+			<?php echo self::gen_tour_message('search_page'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -1389,6 +1482,9 @@ class MainWP_Tours {
 	}
 
 	public static function renderSearchPostsTours() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'search_post' ) ) { 
+                    return;
+                }
 		?>
 			<ol id="mainwp-tours-content" style="display: none">
 				<li data-id="mainwp_post_search_type_publish" data-button="Next">
@@ -1411,7 +1507,7 @@ class MainWP_Tours {
 					<p><?php _e( 'Click the button to complete the search.', 'mainwp' ); ?></p>
 				</li>
 			</ol>
-			<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+			<?php echo self::gen_tour_message('search_post'); ?>
 			<script type="text/javascript">		
 				jQuery(window).load(function() {					
 					jQuery("#mainwp-tours-content").joyride({
@@ -1434,6 +1530,9 @@ class MainWP_Tours {
 	}
 	
 	public static function renderAddNewSiteTours() {
+                if ( !MainWP_Utility::showMainWPMessage( 'tour', 'add_new_site' ) ) { 
+                    return;
+                }
 		$url_home = "https://mainwp.com/help/";
 		$help_urls = array( 
 			'add_site' => $url_home . '/docs/set-up-the-mainwp-plugin/add-site-to-your-dashboard/',
@@ -1490,7 +1589,7 @@ class MainWP_Tours {
 		  	<p><?php _e( 'Click the button to complete the process.', 'mainwp' ); ?></p>
 		  </li>
 		</ol>
-		<div class="mainwp-walkthrough"><?php _e('Need help getting started? ', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a></div>
+		<?php echo self::gen_tour_message('add_new_site'); ?>
 		<script type="text/javascript">		
                      <?php  if (isset($_GET['start_tour'])) { ?>
                             var autoStartTour = true;

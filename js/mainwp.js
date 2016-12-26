@@ -6904,6 +6904,20 @@ jQuery(document).on('click', '.mainwp-dismiss', function(){
     return false;
 });
 
+jQuery(document).on('click', '.mainwp-notice-dismiss', function(){
+    var notice_id = jQuery(this).attr('notice-id');
+    jQuery(this).closest('.mainwp-notice-wrap').fadeOut("slow");       
+    var data = {
+        action:'mainwp_notice_status_update'        
+    };
+    if (notice_id.indexOf('tour_') === 0) {
+        data['tour_id'] = notice_id.replace('tour_', '');        
+    }
+    jQuery.post(ajaxurl, data, function (res) {
+    });
+    return false;
+});
+
 jQuery(document).on('click', '.mainwp-activate-notice-dismiss', function(){
     jQuery(this).closest('tr').fadeOut("slow");
     var data = {

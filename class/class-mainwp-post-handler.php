@@ -138,6 +138,7 @@ class MainWP_Post_Handler {
 		//Page: ManageTips
 		add_action( 'wp_ajax_mainwp_managetips_update', array( &$this, 'mainwp_managetips_update' ) ); //ok
 		add_action( 'wp_ajax_mainwp_tips_update', array( &$this, 'mainwp_tips_update' ) ); //ok
+                add_action( 'wp_ajax_mainwp_notice_status_update', array( &$this, 'mainwp_notice_status_update' ) );                 
 		add_action( 'wp_ajax_mainwp_dismiss_twit', array( &$this, 'mainwp_dismiss_twit' ) );
 		add_action( 'wp_ajax_mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
 
@@ -560,6 +561,23 @@ class MainWP_Post_Handler {
 		die();
 	}
 
+        function mainwp_notice_status_update() {
+		$this->secure_request();
+
+		global $current_user;
+		if ( ( $user_id = $current_user->ID )) {
+                    if (isset( $_POST['tour_id'] ) && ! empty( $_POST['tour_id'] ) ) {
+                        $status = get_user_option( 'mainwp_tours_status' );
+                        if ( ! is_array( $status ) ) {
+                                $status = array();
+                        }
+                        $status[ $_POST['tour_id'] ] = 1;
+                        update_user_option( $user_id, 'mainwp_tours_status', $status );
+                    }
+		}
+		die( 1 );
+	}
+        
 	function mainwp_tips_update() {
 		$this->secure_request();
 

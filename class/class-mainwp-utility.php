@@ -2584,6 +2584,19 @@ EOT;
 		return true;
 	}
 
+        public static function showMainWPMessage( $type, $notice_id ) {
+                if ($type == 'tour') {
+                    $status = get_user_option( 'mainwp_tours_status' );
+                }
+                if ( ! is_array( $status ) ) {
+                        $status = array();
+                }
+                if ( isset( $status[ $notice_id ] ) ) {
+                    return false;
+                }		
+		return true;
+	}
+        
 	public static function resetUserCookie( $what, $value = '' ) {
 		global $current_user;
 		if ( $user_id = $current_user->ID ) {

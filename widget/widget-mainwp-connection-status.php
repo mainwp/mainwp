@@ -70,12 +70,7 @@ class MainWP_Connection_Status {
                                             } 
                                         }
 
-                                        if ( time() - $website->dtsSync < 60 * 60 * 24 ) {
-                                                $synced24 = true;
-                                        } else {
-                                                $synced24 = false;
-                                        }
-
+                                        
                                         $lastSyncTime = ! empty( $website->dtsSync ) ? MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $website->dtsSync ) ) : '';
 
                                         $is_top_row = false;                                                
@@ -103,10 +98,9 @@ class MainWP_Connection_Status {
                                                                                 <i class="fa fa-plug fa-stack-1x mainwp-white"></i>
                                                                 </span>
                                                                 <?php
-                                                        } else {
-                                                                if ( !$synced24 ) { ?>									
-                                                                    <a href="javascript:void(0)" onClick="rightnow_wp_sync('<?php echo $website->id; ?>')"><?php _e( 'Sync Now', 'mainwp' ); ?></a>&nbsp;&nbsp;
-                                                                <?php } ?>
+                                                        } else {                                                                                                                                                                                                   
+                                                            ?>									
+                                                                <a href="javascript:void(0)" sync-today="<?php echo $website->id; ?>" onClick="rightnow_wp_sync('<?php echo $website->id; ?>')"><?php _e( 'Sync Now', 'mainwp' ); ?></a>&nbsp;&nbsp;                                                         
                                                                 <span class="fa-stack fa-lg" title="Site is Online">
                                                                         <i class="fa fa-check-circle fa-2x mainwp-green"></i>
                                                                 </span>
@@ -124,9 +118,9 @@ class MainWP_Connection_Status {
                                                $top_up_row = false;
                                                $html_online_sites .= $output;
                                         } else {
-                                        $top_row = false;                                    
-                                               $html_other_sites .= $output;
-                                }
+                                            $top_row = false;                                    
+                                            $html_other_sites .= $output;
+                                        }
                         }
                         }
 
@@ -145,10 +139,10 @@ class MainWP_Connection_Status {
                         </span>
                         <div class="mainwp-clear"></div>
                     </div>
-                    <div id="mainwp-synced-status-sites-wrap" style="<?php echo( $hide_sites ? 'display: none;' : '' ); ?>">
+                    <div id="mainwp-synced-status-sites-wrap" style="<?php echo( $hide_sites ? 'display: none;' : '' ); ?>">                    
                         <?php echo $html_online_sites; ?>
-                    </div>
-                         <?php echo $html_other_sites; ?>
+                    </div>                        
+                    <?php echo $html_other_sites; ?>                    
                 </div>
 		<?php
 		@MainWP_DB::free_result( $websites );

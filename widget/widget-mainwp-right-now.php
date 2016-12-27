@@ -905,7 +905,7 @@ class MainWP_Right_Now {
 				<div class="mainwp-cols-s mainwp-right mainwp-t-align-right">
 					<form method="post" action="">
 						<label for="mainwp_select_options_siteview"><?php _e( 'View updates per: ', 'mainwp' ); ?></label>
-						<select class="mainwp-select2" data-placeholder=" " id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
+						<select class="mainwp-select2-mini" data-placeholder=" " id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
 							<option value="1" <?php echo $userExtension->site_view == 1 ? 'selected' : ''; ?>><?php esc_html_e( 'Site', 'mainwp' ); ?></option>
 							<option value="0" <?php echo $userExtension->site_view == 0 ? 'selected' : ''; ?>><?php esc_html_e( 'Plugin/Theme', 'mainwp' ); ?></option>
                                                         <option value="2" <?php echo $userExtension->site_view == 2 ? 'selected' : ''; ?>><?php esc_html_e( 'Group', 'mainwp' ); ?></option>

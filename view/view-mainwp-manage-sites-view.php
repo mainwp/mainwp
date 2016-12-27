@@ -175,7 +175,7 @@ class MainWP_Manage_Sites_View {
 		if ( ! empty( $str_breadcrumb ) ) {
 			$html = '<div class="postbox"><div class="inside"><span class="mainwp-left mainwp-cols-2 mainwp-padding-top-15"><i class="fa fa-map-signs" aria-hidden="true"></i> ' . __( 'You are here: ','mainwp' ) . '&nbsp;&nbsp;' .  $str_breadcrumb . '
                     </span><span class="mainwp-right mainwp-padding-top-10 mainwp-cols-2 mainwp-t-align-right">' .  __( 'Jump to ','mainwp' ) . '
-                        <select id="mainwp-quick-jump-child" name="" class="mainwp-select2">
+                        <select id="mainwp-quick-jump-child" name="" class="mainwp-select2" data-placeholder=" ">
                             <option value="">' . __( 'Select Site ','mainwp' ) . '</option>';
 			while ( $websites && ($website = @MainWP_DB::fetch_object( $websites )) ) {
 				$html .= '<option value="'.$website->id.'">' . stripslashes( $website->name ) . '</option>';
@@ -187,7 +187,7 @@ class MainWP_Manage_Sites_View {
                 
 			$html .= '
 					</select>
-					<select id="mainwp-quick-jump-page" name="" class="mainwp-select2">
+					<select id="mainwp-quick-jump-page" name="" class="mainwp-select2" data-placeholder=" ">
 						<option value="">' . __( 'Select page ','mainwp' ) . '</option>
 						<option value="dashboard">' . __( 'Overview ','mainwp' ) . '</option>
 						<option value="id">' . __( 'Edit ','mainwp' ) . '</option>
@@ -378,7 +378,7 @@ class MainWP_Manage_Sites_View {
 			<tr class="form-field form-required">
 			   <th scope="row"><?php _e( 'Verify certificate','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp' ) ); ?></th>
 				<td>
-					<select class="mainwp-select2" id="mainwp_managesites_test_verifycertificate" name="mainwp_managesites_test_verifycertificate">
+					<select class="mainwp-select2" id="mainwp_managesites_test_verifycertificate" name="mainwp_managesites_test_verifycertificate" data-placeholder=" ">
 						 <option selected value="1"><?php _e( 'Yes','mainwp' ); ?></option>
 						 <option value="0"><?php _e( 'No','mainwp' ); ?></option>
 						 <option value="2"><?php _e( 'Use Global Setting','mainwp' ); ?></option>
@@ -388,7 +388,7 @@ class MainWP_Manage_Sites_View {
 			<tr class="form-field form-required">
 			   <th scope="row"><?php _e( 'SSL version','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Prefered SSL Version to connect to your site.','mainwp' ) ); ?></th>
 				<td>
-					<select class="mainwp-select2" id="mainwp_managesites_test_ssl_version" name="mainwp_managesites_test_ssl_version">
+					<select class="mainwp-select2" id="mainwp_managesites_test_ssl_version" name="mainwp_managesites_test_ssl_version" data-placeholder=" ">
 						 <option selected value="auto"><?php _e( 'Auto detect','mainwp' ); ?></option>
                                                  <option value="1.2"><?php _e( "Let's encrypt (TLS v1.2)",'mainwp' ); ?></option>
 						 <option value="1.x"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
@@ -614,7 +614,7 @@ class MainWP_Manage_Sites_View {
            <table class="form-table" id="mainwp_managesites_add_new_form">
                <tr class="form-field form-required">
                    <th scope="row"><?php _e('Site URL','mainwp'); ?></th>
-                   <td><span id="mainwp_managesites_add_wpurl_protocol_wrap"><select class="mainwp-select2-wpurl-protocol" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol"><option value="http">http://</option><option value="https">https://</option></select></span> <input type="text"
+                   <td><span id="mainwp_managesites_add_wpurl_protocol_wrap"><select class="mainwp-select2-wpurl-protocol" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol" data-placeholder=" "><option value="http">http://</option><option value="https">https://</option></select></span> <input type="text"
                                id="mainwp_managesites_add_wpurl"
                                name="mainwp_managesites_add_wpurl"
                                value=""
@@ -647,13 +647,13 @@ class MainWP_Manage_Sites_View {
                    <td><span id="mainwp_managesites_add_addgroups_wrap">
                         <select 
                                name="selected_groups[]"
-                               id="mainwp_managesites_add_addgroups"
+                               id="mainwp_managesites_add_addgroups" style="width: 350px"
 							   multiple="multiple" /><?php 
                            foreach ($groups as $group)
-                           {
-								echo '<option value="' . $group->id . '">' . stripslashes($group->name)  . '</option>';
+                           {                               
+                            echo '<option value="' . $group->id . '">' . stripslashes($group->name)  . '</option>';
                            }
-							?></select></span>
+                        ?></select></span>
                    </td>
                </tr>
                </table>   
@@ -689,10 +689,10 @@ class MainWP_Manage_Sites_View {
                     <script type="text/javascript">
                             jQuery( document ).ready( function () {			
                                     <?php if (count($groups) == 0) { ?>
-                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
+                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
                                     jQuery('#mainwp_managesites_add_addgroups').prop("disabled", true);
                                     <?php } else { ?>
-                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true});							
+                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true, placeholder: " "});
                                     <?php } ?>                                         
                                     <?php if (!$disabled_pop_notice) { ?>                                            
                                             var pop_showed = false;
@@ -794,7 +794,7 @@ class MainWP_Manage_Sites_View {
                             <th scope="row"><?php _e('Verify certificate','mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip(__('Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp')); ?></th>
                             <td>
 					<span id="mainwp_managesites_verify_certificate_wrap">
-						<select  id="mainwp_managesites_verify_certificate" name="mainwp_managesites_verify_certificate" class="form-control mainwp-select2">
+						<select  id="mainwp_managesites_verify_certificate" name="mainwp_managesites_verify_certificate" class="form-control mainwp-select2" data-placeholder=" ">
                                          <option selected value="1"><?php _e('Yes','mainwp'); ?></option>
                                          <option value="0"><?php _e('No','mainwp'); ?></option>
                                          <option value="2"><?php _e('Use global setting','mainwp'); ?></option>
@@ -806,7 +806,7 @@ class MainWP_Manage_Sites_View {
 	                       <th scope="row"><?php _e( 'SSL version','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Prefered SSL version to connect to your site.','mainwp' ) ); ?></th>
 	                        <td>
 					<span id="mainwp_managesites_ssl_version_wrap">
-						<select class="mainwp-select2" id="mainwp_managesites_ssl_version" name="mainwp_managesites_ssl_version">
+						<select class="mainwp-select2" data-placeholder=" " id="mainwp_managesites_ssl_version" name="mainwp_managesites_ssl_version">
 	                                 <option selected value="auto"><?php _e( 'Auto detect','mainwp' ); ?></option>
                                          <option value="1.2"><?php _e( "Let's encrypt (TLS v1.2)",'mainwp' ); ?></option>                                         
 	                                 <option value="1.x"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
@@ -1064,7 +1064,7 @@ class MainWP_Manage_Sites_View {
         <tr>
             <th scope="row"><?php _e( 'Select primary backup system','mainwp' ); ?></th>
                <td>
-                <span><select class="mainwp-select2" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
+                <span><select class="mainwp-select2" data-placeholder=" " name="mainwp_primaryBackup" id="mainwp_primaryBackup">
                         <?php 
                         if ($enableLegacyBackupFeature) { 
                         ?>
@@ -1105,7 +1105,7 @@ class MainWP_Manage_Sites_View {
                 <table class="mainwp-nomarkup">
                     <tr>
                         <td valign="top">
-                            <span class="mainwp-select-bg"><select class="mainwp-select2" name="mainwp_archiveFormat" id="mainwp_archiveFormat">
+                            <span class="mainwp-select-bg"><select class="mainwp-select2" data-placeholder=" " name="mainwp_archiveFormat" id="mainwp_archiveFormat">
                                 <option value="zip" <?php if ( $archiveFormat == 'zip' ) :  ?>selected<?php endif; ?>>Zip</option>
                                 <option value="tar" <?php if ( $archiveFormat == 'tar' ) :  ?>selected<?php endif; ?>>Tar</option>
                                 <option value="tar.gz" <?php if ( ($archiveFormat === false) || ($archiveFormat == 'tar.gz') ) :  ?>selected<?php endif; ?>>Tar GZip</option>
@@ -1388,7 +1388,7 @@ class MainWP_Manage_Sites_View {
                         <table class="mainwp-nomarkup">
                             <tr>
                                 <td valign="top">
-									 <span class="mainwp-select-bg"><select class="mainwp-select2" name="mainwp_archiveFormat" id="mainwp_archiveFormat">
+									 <span class="mainwp-select-bg"><select class="mainwp-select2" data-placeholder=" " name="mainwp_archiveFormat" id="mainwp_archiveFormat">
                                         <option value="global" <?php if ( $useGlobal ) :  ?>selected<?php endif; ?>>Global setting (<?php echo $globalArchiveFormatText; ?>)</option>
                                         <option value="zip" <?php if ( $archiveFormat == 'zip' ) :  ?>selected<?php endif; ?>>Zip</option>
                                         <option value="tar" <?php if ( $archiveFormat == 'tar' ) :  ?>selected<?php endif; ?>>Tar</option>
@@ -1645,7 +1645,7 @@ class MainWP_Manage_Sites_View {
                 <tbody>
                 <tr>
                     <th scope="row"><?php _e( 'Site URL','mainwp' ); ?></th>
-                    <td><select class="mainwp-select2-wpurl-protocol" id="mainwp_managesites_edit_siteurl_protocol" name="mainwp_managesites_edit_siteurl_protocol"><option <?php echo (MainWP_Utility::startsWith($website->url, 'http:') ? 'selected' : ''); ?> value="http">http://</option><option <?php echo (MainWP_Utility::startsWith($website->url, 'https:') ? 'selected' : ''); ?> value="https">https://</option></select> <input type="text" id="mainwp_managesites_edit_siteurl" style="width: 262px !important" disabled="disabled"
+                    <td><select class="mainwp-select2-wpurl-protocol" data-placeholder=" " id="mainwp_managesites_edit_siteurl_protocol" name="mainwp_managesites_edit_siteurl_protocol"><option <?php echo (MainWP_Utility::startsWith($website->url, 'http:') ? 'selected' : ''); ?> value="http">http://</option><option <?php echo (MainWP_Utility::startsWith($website->url, 'https:') ? 'selected' : ''); ?> value="https">https://</option></select> <input type="text" id="mainwp_managesites_edit_siteurl" style="width: 262px !important" disabled="disabled"
                                value="<?php echo MainWP_Utility::removeHttpPrefix($website->url, true); ?>" class="regular-text" /></td>
                 </tr>
                 <tr>
@@ -1665,7 +1665,7 @@ class MainWP_Manage_Sites_View {
                     <td>
 						<select 
                                name="selected_groups[]"
-                               id="mainwp_managesites_edit_addgroups"                                                             
+                               id="mainwp_managesites_edit_addgroups"  style="width: 350px"                                                           
 							   multiple="multiple" /><?php 						
 							$groupsSite = MainWP_DB::Instance()->getGroupsByWebsiteId( $website->id );
 							foreach ($groups as $group)
@@ -1678,10 +1678,10 @@ class MainWP_Manage_Sites_View {
 				<script type="text/javascript">
 					jQuery( document ).ready( function () {			
 						<?php if (count($groups) == 0) { ?>
-						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
+						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
 						jQuery('#mainwp_managesites_edit_addgroups').prop("disabled", true);
 						<?php } else { ?>
-						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true});							
+						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true});							
 						<?php } ?>
 					});
 				</script>
@@ -1701,7 +1701,7 @@ class MainWP_Manage_Sites_View {
                 <tr>
                     <th scope="row"><?php _e( 'Require backup before update','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Backup only works when enabled in the global settings as well.','mainwp' ), admin_url( 'admin.php?page=Settings' ) ); ?></th>
                     <td>
-                         <select class="mainwp-select2" id="mainwp_backup_before_upgrade" name="mainwp_backup_before_upgrade">
+                         <select class="mainwp-select2" data-placeholder=" " id="mainwp_backup_before_upgrade" name="mainwp_backup_before_upgrade">
                              <option <?php echo ($website->backup_before_upgrade == 1) ? 'selected' : ''; ?> value="1"><?php _e( 'Yes','mainwp' ); ?></option>
                              <option <?php echo ($website->backup_before_upgrade == 0) ? 'selected' : ''; ?> value="0"><?php _e( 'No','mainwp' ); ?></option>
                              <option <?php echo ($website->backup_before_upgrade == 2) ? 'selected' : ''; ?> value="2"><?php _e( 'Use global setting','mainwp' ); ?></option>
@@ -1773,7 +1773,7 @@ class MainWP_Manage_Sites_View {
                  <tr class="form-field form-required">
                     <th scope="row"><?php _e( 'Verify certificate','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp' ) ); ?></th>
                     <td>
-					<select class="mainwp-select2" id="mainwp_managesites_edit_verifycertificate" name="mainwp_managesites_edit_verifycertificate">
+					<select class="mainwp-select2" data-placeholder=" " id="mainwp_managesites_edit_verifycertificate" name="mainwp_managesites_edit_verifycertificate">
                              <option <?php echo ($website->verify_certificate == 1) ? 'selected' : ''; ?> value="1"><?php _e( 'Yes','mainwp' ); ?></option>
                              <option <?php echo ($website->verify_certificate == 0) ? 'selected' : ''; ?> value="0"><?php _e( 'No','mainwp' ); ?></option>
                              <option <?php echo ($website->verify_certificate == 2) ? 'selected' : ''; ?> value="2"><?php _e( 'Use global setting','mainwp' ); ?></option>
@@ -1783,7 +1783,7 @@ class MainWP_Manage_Sites_View {
                 <tr class="form-field form-required">
                    <th scope="row"><?php _e( 'SSL version','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Prefered SSL version to connect to your site.','mainwp' ) ); ?></th>
                     <td>
-					<select class="mainwp-select2" id="mainwp_managesites_edit_ssl_version" name="mainwp_managesites_edit_ssl_version">
+					<select class="mainwp-select2" data-placeholder=" " id="mainwp_managesites_edit_ssl_version" name="mainwp_managesites_edit_ssl_version">
                              <option <?php echo ($website->ssl_version == 'auto') ? 'selected' : ''; ?> value="auto"><?php _e( 'Auto detect','mainwp' ); ?></option>
                              <option <?php echo ($website->ssl_version == '1.2') ? 'selected' : ''; ?> value="1.2"><?php _e( "Let's encrypt (TLS v1.2)",'mainwp' ); ?></option>
                              <option <?php echo ($website->ssl_version == '1.x') ? 'selected' : ''; ?> value="1.x"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
@@ -1845,7 +1845,7 @@ class MainWP_Manage_Sites_View {
                         <table class="mainwp-nomarkup">
                             <tr>
                                 <td valign="top">
-								<span class="mainwp-select-bg"><select class="mainwp-select2" name="mainwp_archiveFormat" id="mainwp_archiveFormat">
+								<span class="mainwp-select-bg"><select class="mainwp-select2" data-placeholder=" " name="mainwp_archiveFormat" id="mainwp_archiveFormat">
                                         <option value="global" <?php if ( $useGlobal ) :  ?>selected<?php endif; ?>>Global setting (<?php echo $globalArchiveFormatText; ?>)</option>
                                         <option value="zip" <?php if ( $archiveFormat == 'zip' ) :  ?>selected<?php endif; ?>>Zip</option>
                                         <option value="tar" <?php if ( $archiveFormat == 'tar' ) :  ?>selected<?php endif; ?>>Tar</option>
@@ -2026,11 +2026,27 @@ class MainWP_Manage_Sites_View {
 						//Add website to database
 						$groupids = array();
 						$groupnames = array();
+                                                $tmpArr = array();      
 						if ( isset( $params['groupids'] ) && is_array( $params['groupids']) ) {
 							foreach ( $params['groupids'] as $group ) {
-								$groupids[] = $group;
+								if (is_numeric($group)) {
+                                                                    $groupids[] = $group;
+                                                                } else {
+                                                                    $tmpArr[] = $group;
+                                                                }
 							}
+                                                        foreach ( $tmpArr as $tmp ) {
+                                                                $getgroup = MainWP_DB::Instance()->getGroupByNameForUser( trim( $tmp ) );
+                                                                if ( $getgroup ) {
+                                                                        if ( ! in_array( $getgroup->id, $groupids ) ) {
+                                                                                $groupids[] = $getgroup->id;
+                                                                        }
+                                                                } else {
+                                                                        $groupnames[] = trim( $tmp );
+                                                                }
+                                                        } 
 						}
+                                                
 						if ( (isset( $params['groupnames_import'] ) && $params['groupnames_import'] != '') ) {								
 								$tmpArr = explode( ';', $params['groupnames_import'] );						
 								foreach ( $tmpArr as $tmp ) {

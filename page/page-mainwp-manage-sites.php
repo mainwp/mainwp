@@ -1446,13 +1446,26 @@ class MainWP_Manage_Sites {
 						//update site
 						$groupids   = array();
 						$groupnames = array();
+                                                $tmpArr = array();                                                
 						if ( isset( $_POST['selected_groups'] ) ) {
 							foreach ( $_POST['selected_groups'] as $group ) {
+                                                            if (is_numeric($group)) {
 								$groupids[] = $group;
+                                                            } else {
+                                                                $tmpArr[] = $group;
+                                                            }
 							}
-						} else {
-							$groupnames[] = trim( $tmp );
-						}
+                                                        foreach ( $tmpArr as $tmp ) {
+                                                                $getgroup = MainWP_DB::Instance()->getGroupByNameForUser( trim( $tmp ) );
+                                                                if ( $getgroup ) {
+                                                                        if ( ! in_array( $getgroup->id, $groupids ) ) {
+                                                                                $groupids[] = $getgroup->id;
+                                                                        }
+                                                                } else {
+                                                                        $groupnames[] = trim( $tmp );
+                                                                }
+                                                        }                                        
+						} 
 				
 				$newPluginDir = ( isset( $_POST['mainwp_options_footprint_plugin_folder'] ) ? $_POST['mainwp_options_footprint_plugin_folder'] : '' );
 

@@ -437,7 +437,48 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			return sprintf( '<a href="#" class="mainwp_notes_show_all mainwp-green" id="mainwp_notes_%1$s">' . '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) . '</a>' . $txt_lastupdate . '<span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $note );
 		}
 	}
+        // to fix data-placeholder
+        protected function bulk_actions( $which = '' ) {                
+		if ( is_null( $this->_actions ) ) {
+			$no_new_actions = $this->_actions = $this->get_bulk_actions();
+			/**
+			 * Filter the list table Bulk Actions drop-down.
+			 *
+			 * The dynamic portion of the hook name, `$this->screen->id`, refers
+			 * to the ID of the current screen, usually a string.
+			 *
+			 * This filter can currently only be used to remove bulk actions.
+			 *
+			 * @since 3.5.0
+			 *
+			 * @param array $actions An array of the available bulk actions.
+			 */
+			$this->_actions = apply_filters( "bulk_actions-{$this->screen->id}", $this->_actions );
+			$this->_actions = array_intersect_assoc( $this->_actions, $no_new_actions );
+			$two = '';
+		} else {
+			$two = '2';
+		}
 
+		if ( empty( $this->_actions ) )
+			return;
+
+		echo '<label for="bulk-action-selector-' . esc_attr( $which ) . '" class="screen-reader-text">' . __( 'Select bulk action' ) . '</label>';
+		echo '<select data-placeholder=" " class="mainwp-select2" name="action' . $two . '" id="bulk-action-selector-' . esc_attr( $which ) . "\">\n";
+		echo '<option value="-1">' . __( 'Bulk Actions' ) . "</option>\n";
+
+		foreach ( $this->_actions as $name => $title ) {
+			$class = 'edit' === $name ? ' class="hide-if-no-js"' : '';
+
+			echo "\t" . '<option value="' . $name . '"' . $class . '>' . $title . "</option>\n";
+		}
+
+		echo "</select>\n";
+
+		submit_button( __( 'Apply' ), 'action', '', false, array( 'id' => "doaction$two" ) );
+		echo "\n";
+	}
+        
 	function get_bulk_actions() {
 		$actions = array(
 			'sync'            => __( 'Sync', 'mainwp' ),
@@ -793,7 +834,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		<div class="alignleft actions">
 			<form method="GET" action="">
 				<input type="hidden" value="<?php echo esc_attr( $_REQUEST['page'] ); ?>" name="page"/>
-				<select name="g" class="mainwp-select2" data-placeholder="<?php _e( 'All Groups', 'mainwp' ); ?>">
+				<select name="g" class="mainwp-select2 allowclear" data-placeholder="<?php _e( 'All Groups', 'mainwp' ); ?>">
 					<option value=""></option>
 					<?php
 					$groups = MainWP_DB::Instance()->getGroupsForCurrentUser();
@@ -804,7 +845,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 				</select>
 
 				<input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
-				<select name="status"  class="mainwp-select2" data-placeholder="<?php _e( 'All Statuses', 'mainwp' ); ?>">					
+				<select name="status"  class="mainwp-select2 allowclear" data-placeholder="<?php _e( 'All Statuses', 'mainwp' ); ?>">					
 					<option value=""></option>
 					<option value="online" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'online' ? 'selected' : '' ); ?>><?php _e( 'Online', 'mainwp' ); ?></option>
 					<option value="offline" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'offline' ? 'selected' : '' ); ?>><?php _e( 'Offline', 'mainwp' ); ?></option>

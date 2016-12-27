@@ -200,7 +200,7 @@ class MainWP_Options {
 						<tr>
 							<td valign="top">
 								<span class="mainwp-select-bg">
-									<select class="mainwp-select2-super" name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate">
+									<select class="mainwp-select2-super" data-placeholder=" " name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate">
 										<option value="2" <?php if ( ( $snAutomaticDailyUpdate === false ) || ( $snAutomaticDailyUpdate == 2 ) ) { ?>selected<?php } ?>>E-mail Notifications of New Updates</option>
 										<option value="1" <?php if ( $snAutomaticDailyUpdate == 1 ) {?>selected<?php } ?>>Install Trusted Updates</option>
 										<option value="0" <?php if ( $snAutomaticDailyUpdate !== false && $snAutomaticDailyUpdate == 0 ) {?>selected<?php } ?>>Off</option>

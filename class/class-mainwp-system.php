@@ -2220,8 +2220,8 @@ class MainWP_System {
                         wp_deregister_script( 'select2' );			
 			wp_enqueue_script( 'mainwp-rightnow', MAINWP_PLUGIN_URL . 'js/mainwp-rightnow.js', array(), $this->current_version );
 			wp_enqueue_script( 'mainwp-managesites', MAINWP_PLUGIN_URL . 'js/mainwp-managesites.js', array(), $this->current_version );
-			wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'js/mainwp-extensions.js', array(), $this->current_version );
-                        wp_enqueue_script( 'select2', MAINWP_PLUGIN_URL . 'js/select2/select2.min.js', array( 'jquery' ), '3.4.5', true );
+			wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'js/mainwp-extensions.js', array(), $this->current_version );                        
+                        wp_enqueue_script( 'select2', MAINWP_PLUGIN_URL . 'js/select2/js/select2.min.js', array( 'jquery' ), '4.0.3', true );
 		}
 
 		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'js/mainwp-ui.js', array(), $this->current_version );
@@ -2257,8 +2257,8 @@ class MainWP_System {
                 if ( self::isMainWP_Pages() ) {
                     wp_deregister_style( 'select2' );
                     wp_enqueue_style( 'mainwp-filetree', MAINWP_PLUGIN_URL . 'css/jqueryFileTree.css', array(), $this->current_version );
-                    wp_enqueue_style( 'mainwp-font-awesome', MAINWP_PLUGIN_URL . 'css/font-awesome/css/font-awesome.min.css', array(), $this->current_version );
-                    wp_enqueue_style( 'select2', MAINWP_PLUGIN_URL . 'js/select2/select2.css', array(), '3.4.5' );
+                    wp_enqueue_style( 'mainwp-font-awesome', MAINWP_PLUGIN_URL . 'css/font-awesome/css/font-awesome.min.css', array(), $this->current_version );                    
+                    wp_enqueue_style( 'select2', MAINWP_PLUGIN_URL . 'js/select2/css/select2.css', array(), '4.0.4' );
                 }
 		if (isset($_GET['page'])) {
 			if ($_GET['page'] == 'managesites'  || $_GET['page'] == 'PluginsManage' || $_GET['page'] == 'ThemesManage' ) {

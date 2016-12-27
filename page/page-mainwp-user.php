@@ -231,7 +231,7 @@ class MainWP_User {
         <div id="mainwp_users_error"></div>
         <div id="mainwp_users_main" <?php if ( $cachedSearch != null ) { echo 'style="display: block;"'; } ?>>
         		<div class="alignleft">
-				<select class="mainwp-select2" name="bulk_action" id="mainwp_bulk_action">
+				<select class="mainwp-select2" name="bulk_action" id="mainwp_bulk_action" data-placeholder=" ">
 					<option value="none"><?php _e( 'Bulk Action', 'mainwp' ); ?></option>
                                         <option value="edit"><?php _e( 'Edit', 'mainwp' ); ?></option>
 					<option value="delete"><?php _e( 'Delete', 'mainwp' ); ?></option>
@@ -535,7 +535,7 @@ class MainWP_User {
                                 <input type="text" class="pagedisplay">
                                 <img src="<?php echo plugins_url( 'images/next.png', dirname( __FILE__ ) ); ?>" class="next">
                                 <img src="<?php echo plugins_url( 'images/last.png', dirname( __FILE__ ) ); ?>" class="last">
-                                <span>&nbsp;&nbsp;<?php _e( 'Show:', 'mainwp' ); ?> </span><select class="mainwp-select2 pagesize">
+                                <span>&nbsp;&nbsp;<?php _e( 'Show:', 'mainwp' ); ?> </span><select class="mainwp-select2 pagesize" data-placeholder=" ">
                                         <option selected="selected" value="10">10</option>
                                         <option value="25">25</option>
                                         <option value="50">50</option>
@@ -1099,7 +1099,7 @@ class MainWP_User {
 			<tr class="form-field">
 				<th scope="row"><label for="role"><?php _e( 'Role', 'mainwp' ); ?></label></th>
 				<td>
-					<select class="mainwp-select2" name="role" id="role">
+					<select class="mainwp-select2" name="role" id="role" data-placeholder=" ">
 						<option value='subscriber' <?php
 						if ( isset( $_POST['role'] ) && $_POST['role'] == 'subscriber' ) {
 							echo 'selected';

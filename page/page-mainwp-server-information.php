@@ -515,7 +515,7 @@ public static function renderFooter( $shownPage ) {
 					?>
 				</select>
 				<?php _e( 'Select Information: ', 'mainwp' ); ?>
-				<select class="mainwp-select2" name="" data-placeholder="<?php _e( 'Full Information', 'mainwp' ); ?>" id="mainwp-server-info-filter">
+				<select class="mainwp-select2 allowclear" name="" data-placeholder="<?php _e( 'Full Information', 'mainwp' ); ?>" id="mainwp-server-info-filter">
 					<option value=""></option>
 					<option value="server-information"><?php _e( 'Server Information', 'mainwp' ); ?></option>
 					<option value="cron-schedules"><?php _e( 'Cron Schedules', 'mainwp' ); ?></option>
@@ -1286,7 +1286,7 @@ public static function renderFooter( $shownPage ) {
 			<div style="padding: 1em;">
 				<form method="POST" action="">
 					Status:
-					<select class="mainwp-select2" name="actionlogs_status">
+					<select class="mainwp-select2" name="actionlogs_status" data-placeholder=" ">
 						<option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php if ( MainWP_Logger::DISABLED == $enabled ) : echo 'selected';
 						endif; ?>>Disabled
 						</option>

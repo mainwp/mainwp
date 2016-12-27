@@ -372,7 +372,7 @@ class MainWP_Setup_Wizard {
 					<tr>
 						<th scope="row"><?php _e("What type of hosting is this Dashboard site on?", "mainwp"); ?></th>
 						<td>
-						<span class="mainwp-select-bg"><select class="mainwp-select2" name="mwp_setup_type_hosting" id="mwp_setup_type_hosting">
+						<span class="mainwp-select-bg"><select class="mainwp-select2" name="mwp_setup_type_hosting" id="mwp_setup_type_hosting" data-placeholder=" ">
 								<option value="3" <?php if ( false == $typeHosting || 3 == $typeHosting ) {
 								?>selected<?php } ?>><?php _e('Shared', 'mainwp'); ?>
 								</option>
@@ -389,7 +389,7 @@ class MainWP_Setup_Wizard {
 				<tr>
 					<th scope="row"><label for="mwp_setup_manage_planning"><?php _e("How many child sites are you planning to manage?", "mainwp"); ?></label></th>
 					<td>
-						<span class="mainwp-select-bg"><select class="mainwp-select2" name="mwp_setup_manage_planning" id="mwp_setup_manage_planning">
+						<span class="mainwp-select-bg"><select class="mainwp-select2" name="mwp_setup_manage_planning" id="mwp_setup_manage_planning" data-placeholder=" ">
 								<option value="1" <?php if (($managePlanning == false) || ($managePlanning == 1)) {
 								?>selected<?php } ?>><?php _e('Less than 50', 'mainwp'); ?>
 								</option>
@@ -617,7 +617,7 @@ class MainWP_Setup_Wizard {
 					<th scope="row"><?php _e('Choose how you want to handle backups:','mainwp'); ?></th>
 					<td>
 						<span class="mainwp-select-bg">						
-								<select class="mainwp-select2" name="mwp_setup_backup_method" id="mwp_setup_backup_method">
+								<select class="mainwp-select2" name="mwp_setup_backup_method" id="mwp_setup_backup_method" data-placeholder=" ">
 									<option value="updraftplus" <?php if ($backup_method == 'updraftplus' || $backup_method == ''): ?>selected<?php endif; ?>>UpdraftPlus (Free Extension)</option>
 									<option value="backupwp" <?php if ($backup_method == 'backupwp'): ?>selected<?php endif; ?>>BackUpWordPress (Free Extension)</option>
 									<option value="backwpup" <?php if ($backup_method == 'backwpup'): ?>selected<?php endif; ?>>BackWPup (Free Extension)</option>
@@ -1134,7 +1134,7 @@ class MainWP_Setup_Wizard {
 							<?php
 							if ( is_array( $options['list_notification_contact'] ) && count( $options['list_notification_contact'] ) > 0 ) {
 								?>
-								<select class="mainwp-select2" name="mwp_setup_uptime_robot_default_contact_id">
+								<select class="mainwp-select2" name="mwp_setup_uptime_robot_default_contact_id" data-placeholder=" ">
 									<?php
 									foreach ( $options['list_notification_contact'] as $key => $val ) {
 										if ( $options['uptime_default_notification_contact_id'] == $key ) {

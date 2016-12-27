@@ -233,7 +233,7 @@ class MainWP_Page {
 		<div id="mainwp_pages_error"></div>
 		<div id="mainwp_pages_main" <?php if ( $cachedSearch != null ) { echo 'style="display: block;"'; } ?>>
 			<div class="alignleft">
-				<select name="bulk_action" class="mainwp-select2" id="mainwp_bulk_action">
+				<select name="bulk_action" class="mainwp-select2" id="mainwp_bulk_action" data-placeholder=" ">
 					<option value="none"><?php _e( 'Bulk action','mainwp' ); ?></option>
 					<option value="trash"><?php _e( 'Move to trash','mainwp' ); ?></option>
 					<option value="restore"><?php _e( 'Restore','mainwp' ); ?></option>
@@ -417,7 +417,7 @@ class MainWP_Page {
                                 <img src="<?php echo plugins_url( 'images/next.png', dirname( __FILE__ ) ); ?>" class="next">
                                 <img src="<?php echo plugins_url( 'images/last.png', dirname( __FILE__ ) ); ?>" class="last">
                                 <span>&nbsp;&nbsp;<?php _e( 'Show:','mainwp' ); ?> </span>
-                                <select class="mainwp-select2 pagesize">
+                                <select class="mainwp-select2 pagesize" data-placeholder=" ">
                                         <option selected="selected" value="10">10</option>
                                         <option value="25">25</option>
                                         <option value="50">50</option>

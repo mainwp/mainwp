@@ -690,7 +690,7 @@ class MainWP_Manage_Sites_View {
                             jQuery( document ).ready( function () {			
                                     <?php if (count($groups) == 0) { ?>
                                     jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
-                                    jQuery('#mainwp_managesites_add_addgroups').prop("disabled", true);
+                                    //jQuery('#mainwp_managesites_add_addgroups').prop("disabled", true);
                                     <?php } else { ?>
                                     jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true, placeholder: " "});
                                     <?php } ?>                                         
@@ -1679,7 +1679,7 @@ class MainWP_Manage_Sites_View {
 					jQuery( document ).ready( function () {			
 						<?php if (count($groups) == 0) { ?>
 						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
-						jQuery('#mainwp_managesites_edit_addgroups').prop("disabled", true);
+						//jQuery('#mainwp_managesites_edit_addgroups').prop("disabled", true);
 						<?php } else { ?>
 						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true});							
 						<?php } ?>

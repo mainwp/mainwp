@@ -224,7 +224,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			echo 'style="display: block;"';
 		} ?>>
 			<div class="alignleft">
-				<select class="mainwp-select2" name="bulk_action" id="mainwp_bulk_action" data-placeholder=" ">
+				<select class="mainwp-select2" name="bulk_action" id="mainwp_bulk_action">
 					<option value="none"><?php _e( 'Bulk Action', 'mainwp' ); ?></option>
 					<option value="publish"><?php _e( 'Publish', 'mainwp' ); ?></option>
 					<option value="unpublish"><?php _e( 'Unpublish', 'mainwp' ); ?></option>
@@ -454,7 +454,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 				<input type="text" class="pagedisplay"/>
 				<img src="<?php echo plugins_url( 'images/next.png', dirname( __FILE__ ) ); ?>" class="next">
 				<img src="<?php echo plugins_url( 'images/last.png', dirname( __FILE__ ) ); ?>" class="last">
-				<span>&nbsp;&nbsp;<?php _e( 'Show:', 'mainwp' ); ?> </span><select class="mainwp-select2 pagesize" data-placeholder=" ">
+				<span>&nbsp;&nbsp;<?php _e( 'Show:', 'mainwp' ); ?> </span><select class="mainwp-select2 pagesize">
 					<option selected="selected" value="10">10</option>
 					<option value="25">25</option>
 					<option value="50">50</option>

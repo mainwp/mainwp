@@ -262,7 +262,7 @@ public static function renderHeader( $shownPage ) {
 		<div class="inside">
 			<p>
 				<?php _e( 'Status:', 'mainwp' ); ?><br/>
-				<select class="mainwp-select2" name="mainwp_plugin_search_by_status" id="mainwp_plugin_search_by_status" data-placeholder=" ">
+				<select class="mainwp-select2" name="mainwp_plugin_search_by_status" id="mainwp_plugin_search_by_status">
 					<option value="active" <?php if ( $cachedSearch != null && $cachedSearch['the_status'] == 'active' ) {
 						echo 'selected';
 					} ?>><?php _e( 'Active', 'mainwp' ); ?></option>
@@ -412,7 +412,7 @@ public static function renderHeader( $shownPage ) {
 		}
 		?>
 		<div class="alignleft">
-			<select class="mainwp-select2" name="bulk_action" id="mainwp_bulk_action" data-placeholder=" ">
+			<select class="mainwp-select2" name="bulk_action" id="mainwp_bulk_action">
 				<option value="none"><?php _e( 'Choose action', 'mainwp' ); ?></option>
 				<option value="trust"><?php _e( 'Trust', 'mainwp' ); ?></option>
 				<option value="untrust"><?php _e( 'Untrust', 'mainwp' ); ?></option>
@@ -561,7 +561,7 @@ public static function renderHeader( $shownPage ) {
 				<input type="text" class="pagedisplay">
 				<img src="<?php echo plugins_url( 'images/next.png', dirname( __FILE__ ) ); ?>" class="next">
 				<img src="<?php echo plugins_url( 'images/last.png', dirname( __FILE__ ) ); ?>" class="last">
-				<span>&nbsp;&nbsp;<?php _e( 'Show:', 'mainwp' ); ?> </span><select class="mainwp-select2 pagesize" data-placeholder=" ">
+				<span>&nbsp;&nbsp;<?php _e( 'Show:', 'mainwp' ); ?> </span><select class="mainwp-select2 pagesize">
 					<option selected="selected" value="10">10</option>
 					<option value="20">20</option>
 					<option value="30">30</option>
@@ -1066,7 +1066,7 @@ public static function renderHeader( $shownPage ) {
 										<tr>
 											<td valign="top">
                                                     <span class="mainwp-select-bg">
-                                                        <select class="mainwp-select2-super" name="mainwp_pluginAutomaticDailyUpdate" id="mainwp_pluginAutomaticDailyUpdate" data-placeholder=" ">
+                                                        <select class="mainwp-select2-super" name="mainwp_pluginAutomaticDailyUpdate" id="mainwp_pluginAutomaticDailyUpdate">
 	                                                        <option value="2" <?php if ( ( $snPluginAutomaticDailyUpdate === false ) || ( $snPluginAutomaticDailyUpdate == 2 ) ) { ?>selected<?php } ?>>E-mail Notifications of New Updates</option>
 	                                                        <option value="1" <?php if ( $snPluginAutomaticDailyUpdate == 1 ) {?>selected<?php } ?>>Install Trusted Updates</option>
 	                                                        <option value="0" <?php if ( $snPluginAutomaticDailyUpdate !== false && $snPluginAutomaticDailyUpdate == 0 ) {?>selected<?php } ?>>Off</option>
@@ -1091,7 +1091,7 @@ public static function renderHeader( $shownPage ) {
 				<div class="inside">
 					<div class="mainwp-padding-top-10">
 						<span><?php _e( 'Status:', 'mainwp' ); ?> </span>
-						<select class="mainwp-select2" id="mainwp_au_plugin_status" data-placeholder=" ">
+						<select class="mainwp-select2" id="mainwp_au_plugin_status">
 							<option value="all" <?php if ( $cachedAUSearch != null && $cachedAUSearch['plugin_status'] == 'all' ) {
 								echo 'selected';
 							} ?>><?php _e( 'All plugins', 'mainwp' ); ?></option>
@@ -1103,7 +1103,7 @@ public static function renderHeader( $shownPage ) {
 							} ?>><?php _e( 'Inactive plugins', 'mainwp' ); ?></option>
 						</select>&nbsp;&nbsp;
 						<span><?php _e( 'Trust status:', 'mainwp' ); ?> </span>
-						<select class="mainwp-select2" id="mainwp_au_plugin_trust_status" data-placeholder=" ">
+						<select class="mainwp-select2" id="mainwp_au_plugin_trust_status">
 							<option value="all" <?php if ( $cachedAUSearch != null && $cachedAUSearch['status'] == 'all' ) {
 								echo 'selected';
 							} ?>><?php _e( 'All plugins', 'mainwp' ); ?></option>
@@ -1160,7 +1160,7 @@ public static function renderHeader( $shownPage ) {
 		<input type="hidden" name="tab" value="search" />
 		<input type="hidden" name="page" value="PluginsInstall" />
 		<?php if ( $type_selector ) : ?>
-			<select class="mainwp-select2" name="type" id="typeselector" data-placeholder=" ">
+			<select class="mainwp-select2" name="type" id="typeselector">
 				<option value="term"<?php selected('term', $type) ?>><?php _e('Keyword', 'mainwp' ); ?></option>
 				<option value="author"<?php selected('author', $type) ?>><?php ;_e( 'Author', 'mainwp' ) ?></option>
 				<option value="tag"<?php selected('tag', $type) ?>><?php _ex('Tag', 'Plugin Installer'); ?></option>

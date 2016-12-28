@@ -2123,6 +2123,14 @@ body.show-upload-theme #mainwp_wrap-inside .upload-theme,
     cursor: -moz-grab;
     cursor: -webkit-grab;
 }
+#mainwp_managesites_content table th#wpcore_update, 
+#mainwp_managesites_content table th#plugin_update, 
+#mainwp_managesites_content table th#theme_update
+{
+    width: 50px;
+    text-align: center;
+}
+
 #mainwp_wrap-inside table thead .table-handle:hover {
     background-image: url(../images/dots-d.png);
     background-repeat: no-repeat;

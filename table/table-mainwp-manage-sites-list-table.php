@@ -45,6 +45,9 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 		switch ( $column_name ) {
 			case 'status':
+                        case 'wpcore_update':
+                        case 'plugin_update':
+                        case 'theme_update':
 			case 'site':
 			case 'url':
 			case 'groups':
@@ -64,7 +67,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	function get_sortable_columns() {
 		$sortable_columns = array(
 			'site'      => array( 'site', false ),
-			'url'       => array( 'url', false ),
+			'url'       => array( 'url', false ),                       
 			'groups'    => array( 'groups', false ),
 			'last_sync' => array( 'last_sync', false ),
 			'last_post' => array( 'last_post', false ),
@@ -77,6 +80,9 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		$columns = array(
 			'cb'           => '<input type="checkbox" />',
 			'status'       => __( 'Status', 'mainwp' ),
+                        'wpcore_update'       => '<i class="fa fa-wordpress" aria-hidden="true"></i>',
+                        'plugin_update'       => '<i class="fa fa-plug" aria-hidden="true"></i>',
+                        'theme_update'       => '<i class="fa fa-paint-brush" aria-hidden="true"></i>',
 			'site'         => __( 'Site', 'mainwp' ),
 			'url'          => __( 'URL', 'mainwp' ),
 			'groups'       => __( 'Groups', 'mainwp' ),
@@ -187,7 +193,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 		$output = '';
 		$cnt    = 0;
-		if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
+		if ( false && $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
 			$website               = (object) $item;
 			$userExtension         = MainWP_DB::Instance()->getUserExtension();
 			$total_wp_upgrades     = 0;
@@ -304,7 +310,156 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 		return $output;
 	}
+        
+        function column_wpcore_update( $item ) {
+            $hasSyncErrors = ( $item['sync_errors'] != '' );
+            $output = '';
+            $total_wp_upgrades = 0;    
+            if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
+			$website               = (object) $item;						
+			$wp_upgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true );
+			if ( $website->is_ignoreCoreUpdates ) {
+				$wp_upgrades = array();
+			}
 
+			if ( is_array( $wp_upgrades ) && count( $wp_upgrades ) > 0 ) {
+				$total_wp_upgrades ++;
+			}
+            }
+            
+            if ( $total_wp_upgrades == 0 ) {
+                    $mainwp_tu_color_code = 'mainwp-green';
+            } else if ( $total_wp_upgrades > 0 && $total_wp_upgrades < 5 ) {
+                    $mainwp_tu_color_code = 'mainwp-yellow';
+            } else {
+                    $mainwp_tu_color_code = 'mainwp-red';
+            }
+                
+            
+            $output .= '<span class="fa-stack fa-lg" title="'. $total_wp_upgrades . ' ' . _n( 'Available WP Core Update', 'Available WP Core Updates', $total_wp_upgrades, 'mainwp' ) . '">
+            <i class="fa fa-circle fa-stack-2x ' . $mainwp_tu_color_code . '"></i><strong class="mainwp-white fa-stack-1x">' . $total_wp_upgrades . '</strong></span>';
+            
+            
+            return $output;
+        }
+        
+        function column_plugin_update( $item ) {
+            $hasSyncErrors = ( $item['sync_errors'] != '' );
+            $output = '';
+            $total_plugin_upgrades = 0;    
+            if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
+			$website               = (object) $item;
+                        $userExtension         = MainWP_DB::Instance()->getUserExtension();
+			$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
+			if ( $website->is_ignorePluginUpdates ) {
+				$plugin_upgrades = array();
+			}
+
+			$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
+			if ( is_array( $decodedPremiumUpgrades ) ) {
+				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+					$premiumUpgrade['premium'] = true;
+
+					if ( $premiumUpgrade['type'] == 'plugin' ) {
+						if ( ! is_array( $plugin_upgrades ) ) {
+							$plugin_upgrades = array();
+						}
+						if ( ! $website->is_ignorePluginUpdates ) {
+							$plugin_upgrades[ $crrSlug ] = $premiumUpgrade;
+						}
+					} 
+				}
+			}
+
+			if ( is_array( $plugin_upgrades ) ) {
+				$ignored_plugins = json_decode( $website->ignored_plugins, true );
+				if ( is_array( $ignored_plugins ) ) {
+					$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+				}
+
+				$ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
+				if ( is_array( $ignored_plugins ) ) {
+					$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+				}
+
+				$total_plugin_upgrades += count( $plugin_upgrades );
+			}
+            }
+            
+            if ( $total_plugin_upgrades == 0 ) {
+                    $mainwp_tu_color_code = 'mainwp-green';
+            } else if ( $total_plugin_upgrades > 0 && $total_plugin_upgrades < 5 ) {
+                    $mainwp_tu_color_code = 'mainwp-yellow';
+            } else {
+                    $mainwp_tu_color_code = 'mainwp-red';
+            }
+            
+            
+            $output .= '<span class="fa-stack fa-lg" title="'. $total_plugin_upgrades . ' ' . _n( 'Available Plugin Update', 'Available Plugin Updates', $total_plugin_upgrades, 'mainwp' ) . '">
+            <i class="fa fa-circle fa-stack-2x ' . $mainwp_tu_color_code . '"></i><strong class="mainwp-white fa-stack-1x">' . $total_plugin_upgrades . '</strong></span>';
+            
+            
+            return $output;
+        }
+       
+        function column_theme_update( $item ) {
+            $hasSyncErrors = ( $item['sync_errors'] != '' );
+            $output = '';
+            $total_theme_upgrades = 0;    
+            if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
+			$website               = (object) $item;
+                        $userExtension         = MainWP_DB::Instance()->getUserExtension();
+			
+                        $theme_upgrades = json_decode( $website->theme_upgrades, true );
+			if ( $website->is_ignoreThemeUpdates ) {
+				$theme_upgrades = array();
+			}
+
+			$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
+			if ( is_array( $decodedPremiumUpgrades ) ) {
+				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+					$premiumUpgrade['premium'] = true;
+                                        if ( $premiumUpgrade['type'] == 'theme' ) {
+						if ( ! is_array( $theme_upgrades ) ) {
+							$theme_upgrades = array();
+						}
+						if ( ! $website->is_ignoreThemeUpdates ) {
+							$theme_upgrades[ $crrSlug ] = $premiumUpgrade;
+						}
+					}
+				}
+			}
+
+			if ( is_array( $theme_upgrades ) ) {
+				$ignored_themes = json_decode( $website->ignored_themes, true );
+				if ( is_array( $ignored_themes ) ) {
+					$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+				}
+
+				$ignored_themes = json_decode( $userExtension->ignored_themes, true );
+				if ( is_array( $ignored_themes ) ) {
+					$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+				}
+
+				$total_theme_upgrades += count( $theme_upgrades );
+			}
+            }
+            
+            if ( $total_theme_upgrades == 0 ) {
+                    $mainwp_tu_color_code = 'mainwp-green';
+            } else if ( $total_theme_upgrades > 0 && $total_theme_upgrades < 5 ) {
+                    $mainwp_tu_color_code = 'mainwp-yellow';
+            } else {
+                    $mainwp_tu_color_code = 'mainwp-red';
+            }
+            
+            
+            $output .= '<span class="fa-stack fa-lg" title="'. $total_theme_upgrades . ' ' . _n( 'Available Theme Update', 'Available Theme Updates', $total_theme_upgrades, 'mainwp' ) . '">
+            <i class="fa fa-circle fa-stack-2x ' . $mainwp_tu_color_code . '"></i><strong class="mainwp-white fa-stack-1x">' . $total_theme_upgrades . '</strong></span>';
+            
+            return $output;
+        }
+                
 	function column_site( $item ) {
 		$actions = array(
 			'dashboard' => sprintf( '<a href="admin.php?page=managesites&dashboard=%s">' . __( 'Overview', 'mainwp' ) . '</a>', $item['id'] ),
@@ -464,7 +619,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			return;
 
 		echo '<label for="bulk-action-selector-' . esc_attr( $which ) . '" class="screen-reader-text">' . __( 'Select bulk action' ) . '</label>';
-		echo '<select data-placeholder=" " class="mainwp-select2" name="action' . $two . '" id="bulk-action-selector-' . esc_attr( $which ) . "\">\n";
+		echo '<select class="mainwp-select2" name="action' . $two . '" id="bulk-action-selector-' . esc_attr( $which ) . "\">\n";
 		echo '<option value="-1">' . __( 'Bulk Actions' ) . "</option>\n";
 
 		foreach ( $this->_actions as $name => $title ) {
@@ -486,8 +641,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			'test_connection' => __( 'Test connection', 'mainwp' ),
 			'reconnect'       => __( 'Reconnect', 'mainwp' ),
 			'open_wpadmin'    => __( 'Open WP Admin', 'mainwp' ),
-			'open_frontpage'  => __( 'Open Front Page', 'mainwp' ),
-			'open_frontpage'  => __( 'Open Front Page', 'mainwp' ),
+			'open_frontpage'  => __( 'Open Front Page', 'mainwp' ),			
 			'update_plugins'  => __( 'Update plugins', 'mainwp' ),
 			'update_themes'   => __( 'Update themes', 'mainwp' ),
 			'update_wpcore'   => __('Update WordPress', 'mainwp'),

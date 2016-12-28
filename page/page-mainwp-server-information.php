@@ -1286,7 +1286,7 @@ public static function renderFooter( $shownPage ) {
 			<div style="padding: 1em;">
 				<form method="POST" action="">
 					Status:
-					<select class="mainwp-select2" name="actionlogs_status" data-placeholder=" ">
+					<select class="mainwp-select2" name="actionlogs_status">
 						<option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php if ( MainWP_Logger::DISABLED == $enabled ) : echo 'selected';
 						endif; ?>>Disabled
 						</option>

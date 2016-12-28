@@ -246,7 +246,7 @@ public static function renderHeader( $shownPage ) {
 		<div class="inside">
 			<p>
 				<?php _e( 'Status:', 'mainwp' ); ?><br/>
-				<select class="mainwp-select2" name="mainwp_theme_search_by_status" id="mainwp_theme_search_by_status" data-placeholder=" ">
+				<select class="mainwp-select2" name="mainwp_theme_search_by_status" id="mainwp_theme_search_by_status">
 					<option value="active" <?php if ( $cachedSearch != null && $cachedSearch['the_status'] == 'active' ) {
 						echo 'selected';
 					} ?>><?php _e( 'Active', 'mainwp' ); ?></option>
@@ -646,7 +646,7 @@ public static function renderHeader( $shownPage ) {
                                 
 		?>
 		<div class="alignleft">
-			<select class="mainwp-select2" name="bulk_action" id="mainwp_bulk_action" data-placeholder=" ">
+			<select class="mainwp-select2" name="bulk_action" id="mainwp_bulk_action">
 				<option value="none"><?php _e( 'Choose action', 'mainwp' ); ?></option>
 				<option value="trust"><?php _e( 'Trust', 'mainwp' ); ?></option>
 				<option value="untrust"><?php _e( 'Untrust', 'mainwp' ); ?></option>
@@ -795,7 +795,7 @@ public static function renderHeader( $shownPage ) {
 				<input type="text" class="pagedisplay">
 				<img src="<?php echo plugins_url( 'images/next.png', dirname( __FILE__ ) ); ?>" class="next">
 				<img src="<?php echo plugins_url( 'images/last.png', dirname( __FILE__ ) ); ?>" class="last">
-				<span>&nbsp;&nbsp;<?php _e( 'Show:', 'mainwp' ); ?> </span><select class="mainwp-select2 pagesize" data-placeholder=" ">
+				<span>&nbsp;&nbsp;<?php _e( 'Show:', 'mainwp' ); ?> </span><select class="mainwp-select2 pagesize">
 					<option selected="selected" value="10">10</option>
 					<option value="20">20</option>
 					<option value="30">30</option>
@@ -1167,7 +1167,7 @@ public static function renderHeader( $shownPage ) {
                                                         <tr>
                                                             <td valign="top">
                                                                 <span class="mainwp-select-bg">
-                                                                    <select class="mainwp-select2-super" name="mainwp_themeAutomaticDailyUpdate" id="mainwp_themeAutomaticDailyUpdate" data-placeholder=" ">
+                                                                    <select class="mainwp-select2-super" name="mainwp_themeAutomaticDailyUpdate" id="mainwp_themeAutomaticDailyUpdate">
                                                                             <option value="2" <?php if ( ( $snThemeAutomaticDailyUpdate === false ) || ( $snThemeAutomaticDailyUpdate == 2 ) ) { ?>selected<?php } ?>>E-mail Notifications of New Updates</option>
                                                                             <option value="1" <?php if ( $snThemeAutomaticDailyUpdate == 1 ) {?>selected<?php } ?>>Install Trusted Updates</option>
                                                                             <option value="0" <?php if ( $snThemeAutomaticDailyUpdate !== false && $snThemeAutomaticDailyUpdate == 0 ) {?>selected<?php } ?>>Off</option>
@@ -1193,7 +1193,7 @@ public static function renderHeader( $shownPage ) {
 							<div class="inside">
 								<div class="mainwp-padding-top-10">
 									<span><?php _e( 'Status:', 'mainwp' ); ?> </span>
-									<select class="mainwp-select2" id="mainwp_au_theme_status" data-placeholder=" ">
+									<select class="mainwp-select2" id="mainwp_au_theme_status">
 										<option value="all" <?php if ( $cachedThemesSearch != null && $cachedThemesSearch['theme_status'] == 'all' ) {
 											echo 'selected';
 										} ?>><?php _e( 'All Themes', 'mainwp' ); ?></option>
@@ -1205,7 +1205,7 @@ public static function renderHeader( $shownPage ) {
 										} ?>><?php _e( 'Inactive Themes', 'mainwp' ); ?></option>
 									</select>&nbsp;&nbsp;
 									<span><?php _e( 'Trust Status:', 'mainwp' ); ?> </span>
-									<select class="mainwp-select2" id="mainwp_au_theme_trust_status" data-placeholder=" ">
+									<select class="mainwp-select2" id="mainwp_au_theme_trust_status">
 										<option value="all" <?php if ( $cachedThemesSearch != null && $cachedThemesSearch['status'] == 'all' ) {
 											echo 'selected';
 										} ?>><?php _e( 'All Themes', 'mainwp' ); ?></option>

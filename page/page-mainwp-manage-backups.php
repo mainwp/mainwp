@@ -626,7 +626,7 @@ public static function renderHeader( $shownPage ) {
 						<table class="mainwp-nomarkup">
 							<tr>
 								<td valign="top">
-					<span class="mainwp-select-bg"><select name="mainwp_archiveFormat" class="mainwp-select2" id="mainwp_archiveFormat" data-placeholder=" ">							
+					<span class="mainwp-select-bg"><select name="mainwp_archiveFormat" class="mainwp-select2" id="mainwp_archiveFormat">							
 							<option value="site" <?php if ( $useSite ) : ?>selected<?php endif; ?>>Site specific setting</option>
 							<option value="global" <?php if ( $useGlobal ) : ?>selected<?php endif; ?>>Global setting (<?php echo $globalArchiveFormatText; ?>)</option>
 							<option value="zip" <?php if ( $archiveFormat == 'zip' ) : ?>selected<?php endif; ?>>Zip</option>

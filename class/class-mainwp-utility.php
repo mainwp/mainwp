@@ -1726,6 +1726,15 @@ class MainWP_Utility {
 		$output .= '</span></span>';
 		echo $output;
 	}
+        
+        public static function renderNoteTooltip( $pText, $pImage = '<i class="fa fa-pencil-square-o"></i>') {            
+		$output = '<span class="tooltipcontainer">';
+		$output .= '<span style="font-size: 14px;" class="tooltip">' . $pImage . '</span>';		
+		$output .= '<span class="tooltipcontent" style="display: none;">' . $pText;		
+		$output .= '</span></span>';
+		return $output;
+	}
+        
 
 	public static function encrypt( $str, $pass ) {
 		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
@@ -1799,8 +1808,10 @@ class MainWP_Utility {
 	}
 
 	public static function formatEmail( $to, $body, $title = '' ) {
+         
 		$current_year = date("Y");
-		$content = <<<EOT
+                
+                $mail_send['header']  = <<<EOT
             <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
     <head>
@@ -2051,9 +2062,11 @@ class MainWP_Utility {
                                         <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateBody">
                                             <tr>
                                                 <td valign="top" class="bodyContent" style="border-collapse: collapse;background-color: #FFFFFF;">
-                                    
-                                                    <!-- // Begin: Standard Content \\ -->
 
+                                                    <!-- // Begin: Standard Content \\ -->
+EOT;
+        
+$mail_send['body']  = <<<EOT
                                                     <table border="0" cellpadding="20" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td valign="top" style="border-collapse: collapse;">
@@ -2064,7 +2077,9 @@ class MainWP_Utility {
                                                             </td>
                                                         </tr>
                                                     </table>
-
+EOT;
+                                                                
+$mail_send['footer']  = <<<EOT
                                                     <!-- // End: Standard Content \\ -->
 
                                                 </td>
@@ -2133,7 +2148,9 @@ class MainWP_Utility {
     </body>
 </html>
 EOT;
-		return $content;
+        $mail_send = apply_filters('mainwp_format_email', $mail_send);                                                        
+                                                                
+		return $mail_send['header'] . $mail_send['body'] . $mail_send['footer'];
 
 	}
 

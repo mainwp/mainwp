@@ -665,7 +665,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_securityIssues_fix() {
-		$this->secure_request( 'securityIssues_fix' );
+		$this->secure_request( 'mainwp_securityIssues_fix' );
 
 		try {
 			die( json_encode( array( 'result' => MainWP_Security_Issues::fixSecurityIssue() ) ) );
@@ -680,7 +680,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_securityIssues_unfix() {
-		$this->secure_request( 'securityIssues_unfix' );
+		$this->secure_request( 'mainwp_securityIssues_unfix' );
 
 		try {
 			die( json_encode( array( 'result' => MainWP_Security_Issues::unfixSecurityIssue() ) ) );

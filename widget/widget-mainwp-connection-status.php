@@ -92,7 +92,7 @@ class MainWP_Connection_Status {
                                                 <?php
                                                 if ( $md5Connection ) {
                                                     ?>
-                                                    <div style="position: absolute; padding-top: 5px; padding-right: 10px; right: 50px;"><?php _e('MD5 Conncetion'); ?><br /><a href="http://mainwp.com/help/docs/md5-connection-issue/"><?php _e('Read More'); ?></a></div>
+                                                    <div style="position: absolute; padding-top: 5px; padding-right: 10px; right: 50px;"><?php _e('MD5 Conncetion'); ?><br /><a href="http://mainwp.com/help/docs/md5-connection-issue/" target="_blank"><?php _e('Read More'); ?></a></div>
                                                     <span class="fa-stack fa-lg" title="MD5 Connection">
                                                       <i class="fa fa-circle fa-stack-2x mainwp-red"></i>
                                                       <i class="fa fa-chain-broken fa-stack-1x mainwp-white"></i>

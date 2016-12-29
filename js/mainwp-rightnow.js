@@ -1302,10 +1302,10 @@ rightnow_themes_upgrade_int = function (slug, websiteId, bulkMode)
                         for (var i = 0; i < slugParts.length; i++)
                         {
                             var result;
-                            var websiteHolder = jQuery('div[theme_slug="' + pSlug + '"] div[site_id="' + pWebsiteId + '"]');
+                            var websiteHolder = jQuery('div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
                             if (!websiteHolder.exists())
                             {
-                                websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + pSlug + '"]');
+                                websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + slugParts[i] + '"]');
                             }
                             if (response.error)
                             {
@@ -1316,7 +1316,7 @@ rightnow_themes_upgrade_int = function (slug, websiteId, bulkMode)
                             {
                                 var res = response.result;
 
-                                if (res[pSlug])
+                                if (res[slugParts[i]])
                                 {
                                     if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>' );
                                     result = __('Update successful!');
@@ -1359,10 +1359,10 @@ rightnow_themes_upgrade_int = function (slug, websiteId, bulkMode)
                 for (var i = 0; i < slugParts.length; i++)
                 {
                     var result;
-                    var websiteHolder = jQuery('div[theme_slug="' + pSlug + '"] div[site_id="' + pWebsiteId + '"]');
+                    var websiteHolder = jQuery('div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
                     if (!websiteHolder.exists())
                     {
-                        websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + pSlug + '"]');
+                        websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + slugParts[i] + '"]');
                     }
 
                     result = __('FAILED');
@@ -1741,10 +1741,10 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                     for (var i = 0; i < slugParts.length; i++)
                     {
                         var result;
-                        var websiteHolder = jQuery('div[theme_slug="' + pSlug + '"] div[site_id="' + pWebsiteId + '"]');
+                        var websiteHolder = jQuery('div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
                         if (!websiteHolder.exists())
                         {
-                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + pSlug + '"]');
+                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + slugParts[i] + '"]');
                         }
                         if (response.error)
                         {
@@ -1755,7 +1755,7 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                         {
                             var res = response.result;
 
-                            if (res[pSlug])
+                            if (res[slugParts[i]])
                             {
                                 result = __('Update successful!');
                                 if (response.site_url)
@@ -1839,10 +1839,10 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                     for (var i = 0; i < slugParts.length; i++)
                     {
                         var result;
-                        var websiteHolder = jQuery('div[theme_slug="' + pSlug + '"] div[site_id="' + pWebsiteId + '"]');
+                        var websiteHolder = jQuery('div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
                         if (!websiteHolder.exists())
                         {
-                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + pSlug + '"]');
+                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + slugParts[i] + '"]');
                         }
                         if (response.error)
                         {
@@ -1853,7 +1853,7 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                         {
                             var res = response.result;
 
-                            if (res[pSlug])
+                            if (res[slugParts[i]])
                             {
                                 result = __('Update successful!');
                                 if (response.site_url)

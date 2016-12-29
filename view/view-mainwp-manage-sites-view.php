@@ -176,7 +176,7 @@ class MainWP_Manage_Sites_View {
 			$html = '<div class="postbox"><div class="inside"><span class="mainwp-left mainwp-cols-2 mainwp-padding-top-15"><i class="fa fa-map-signs" aria-hidden="true"></i> ' . __( 'You are here: ','mainwp' ) . '&nbsp;&nbsp;' .  $str_breadcrumb . '
                     </span><span class="mainwp-right mainwp-padding-top-10 mainwp-cols-2 mainwp-t-align-right">' .  __( 'Jump to ','mainwp' ) . '
                         <select id="mainwp-quick-jump-child" name="" class="mainwp-select2">
-                            <option value="">' . __( 'Select Site ','mainwp' ) . '</option>';
+                            <option value="" selected="selected">' . __( 'Select Site ','mainwp' ) . '</option>';
 			while ( $websites && ($website = @MainWP_DB::fetch_object( $websites )) ) {
 				$html .= '<option value="'.$website->id.'">' . stripslashes( $website->name ) . '</option>';
 			}
@@ -188,7 +188,7 @@ class MainWP_Manage_Sites_View {
 			$html .= '
 					</select>
 					<select id="mainwp-quick-jump-page" name="" class="mainwp-select2">
-						<option value="">' . __( 'Select page ','mainwp' ) . '</option>
+						<option value="" selected="selected">' . __( 'Select page ','mainwp' ) . '</option>
 						<option value="dashboard">' . __( 'Overview ','mainwp' ) . '</option>
 						<option value="id">' . __( 'Edit ','mainwp' ) . '</option>
                                                 <option value="updateid">' . __( 'Updates','mainwp' ) . '</option>';
@@ -647,7 +647,7 @@ class MainWP_Manage_Sites_View {
                    <td><span id="mainwp_managesites_add_addgroups_wrap">
                         <select 
                                name="selected_groups[]"
-                               id="mainwp_managesites_add_addgroups"
+                               id="mainwp_managesites_add_addgroups" style="width: 350px"
 							   multiple="multiple" /><?php 
                            foreach ($groups as $group)
                            {
@@ -689,10 +689,10 @@ class MainWP_Manage_Sites_View {
                     <script type="text/javascript">
                             jQuery( document ).ready( function () {			
                                     <?php if (count($groups) == 0) { ?>
-                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
-                                    jQuery('#mainwp_managesites_add_addgroups').prop("disabled", true);
+                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});
+                                    //jQuery('#mainwp_managesites_add_addgroups').prop("disabled", true);
                                     <?php } else { ?>
-                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true});							
+                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true, placeholder: " "});
                                     <?php } ?>                                         
                                     <?php if (!$disabled_pop_notice) { ?>                                            
                                             var pop_showed = false;
@@ -1564,7 +1564,7 @@ class MainWP_Manage_Sites_View {
                     <td>
 						<select 
                                name="selected_groups[]"
-                               id="mainwp_managesites_edit_addgroups"                                                             
+                               id="mainwp_managesites_edit_addgroups"  style="width: 350px"
 							   multiple="multiple" /><?php 						
 							$groupsSite = MainWP_DB::Instance()->getGroupsByWebsiteId( $website->id );
 							foreach ($groups as $group)
@@ -1577,10 +1577,10 @@ class MainWP_Manage_Sites_View {
 				<script type="text/javascript">
 					jQuery( document ).ready( function () {			
 						<?php if (count($groups) == 0) { ?>
-						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
-						jQuery('#mainwp_managesites_edit_addgroups').prop("disabled", true);
+						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});
+						//jQuery('#mainwp_managesites_edit_addgroups').prop("disabled", true);
 						<?php } else { ?>
-						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true});							
+						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true});
 						<?php } ?>
 					});
 				</script>
@@ -1925,11 +1925,27 @@ class MainWP_Manage_Sites_View {
 						//Add website to database
 						$groupids = array();
 						$groupnames = array();
-						if ( isset( $params['groupids'] ) ) {
+                        $tmpArr = array();
+						if ( isset( $params['groupids'] ) && is_array( $params['groupids']) ) {
 							foreach ( $params['groupids'] as $group ) {
-								$groupids[] = $group;
+								if (is_numeric($group)) {
+                                    $groupids[] = $group;
+                                } else {
+                                    $tmpArr[] = $group;
+                                }
 							}
+	                        foreach ( $tmpArr as $tmp ) {
+	                            $getgroup = MainWP_DB::Instance()->getGroupByNameForUser( trim( $tmp ) );
+	                            if ( $getgroup ) {
+	                                if ( ! in_array( $getgroup->id, $groupids ) ) {
+	                                    $groupids[] = $getgroup->id;
+	                                }
+	                            } else {
+	                                $groupnames[] = trim( $tmp );
+	                            }
+	                        }
 						}
+
 						if ( (isset( $params['groupnames_import'] ) && $params['groupnames_import'] != '') ) {								
 								$tmpArr = explode( ';', $params['groupnames_import'] );						
 								foreach ( $tmpArr as $tmp ) {

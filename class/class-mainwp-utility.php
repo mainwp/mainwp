@@ -1376,6 +1376,19 @@ class MainWP_Utility {
 		return $upload_dir['basedir'] . DIRECTORY_SEPARATOR;
 	}
 
+    public static function getIconsDir() {
+        $dirs = self::getMainWPDir();
+        $dir        = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
+        $url        = $dirs[1] . 'icons/';
+        if ( ! file_exists( $dir ) ) {
+                @mkdir( $dir, 0777, true );
+        }
+        if ( ! file_exists( $dir . 'index.php' ) ) {
+                @touch( $dir . 'index.php' );
+        }
+        return array( $dir, $url );
+    }
+
 	public static function getMainWPDir() {
 		$upload_dir = wp_upload_dir();
 		$dir        = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'mainwp' . DIRECTORY_SEPARATOR;
@@ -1554,6 +1567,12 @@ class MainWP_Utility {
 		}
 	}
 
+    public static function get_file_content( $url ) {
+		$data = self::file_get_contents_curl( $url );
+        if ( empty( $data ) ) return false;
+		return $data;
+	}
+
 	protected static function file_get_contents_curl( $url ) {
 		//$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -1725,6 +1744,15 @@ class MainWP_Utility {
 		echo $output;
 	}
 
+    public static function renderNoteTooltip( $pText, $pImage = '<i class="fa fa-pencil-square-o"></i>') {
+		$output = '<span class="tooltipcontainer">';
+		$output .= '<span style="font-size: 14px;" class="tooltip">' . $pImage . '</span>';
+		$output .= '<span class="tooltipcontent" style="display: none;">' . $pText;
+		$output .= '</span></span>';
+		return $output;
+	}
+
+
 	public static function encrypt( $str, $pass ) {
 		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
 		$stra = str_split( $str );
@@ -1798,12 +1826,12 @@ class MainWP_Utility {
 
 	public static function formatEmail( $to, $body, $title = '' ) {
 		$current_year = date("Y");
-		$content = <<<EOT
+		$mail_send['header']  = <<<EOT
             <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=U=TF-8">
-        <title> -- TITLE HERE -- </title>
+        <title> {$title} </title>
         <style type="text/css">
         outlook a{padding:0;}
         body{width:100% !important;}
@@ -2051,7 +2079,9 @@ class MainWP_Utility {
                                                 <td valign="top" class="bodyContent" style="border-collapse: collapse;background-color: #FFFFFF;">
                                     
                                                     <!-- // Begin: Standard Content \\ -->
+EOT;
 
+		$mail_send['body']  = <<<EOT
                                                     <table border="0" cellpadding="20" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td valign="top" style="border-collapse: collapse;">
@@ -2062,7 +2092,9 @@ class MainWP_Utility {
                                                             </td>
                                                         </tr>
                                                     </table>
+EOT;
 
+		$mail_send['footer']  = <<<EOT
                                                     <!-- // End: Standard Content \\ -->
 
                                                 </td>
@@ -2131,8 +2163,8 @@ class MainWP_Utility {
     </body>
 </html>
 EOT;
-		return $content;
-
+        $mail_send = apply_filters( 'mainwp_format_email', $mail_send );
+		return $mail_send['header'] . $mail_send['body'] . $mail_send['footer'];
 	}
 
 	public static function endSession() {
@@ -2582,6 +2614,19 @@ EOT;
 		return true;
 	}
 
+    public static function showMainWPMessage( $type, $notice_id ) {
+        if ( 'tour' == $type ) {
+            $status = get_user_option( 'mainwp_tours_status' );
+        }
+        if ( ! is_array( $status ) ) {
+                $status = array();
+        }
+        if ( isset( $status[ $notice_id ] ) ) {
+            return false;
+        }
+		return true;
+	}
+
 	public static function resetUserCookie( $what, $value = '' ) {
 		global $current_user;
 		if ( $user_id = $current_user->ID ) {
@@ -2610,15 +2655,26 @@ EOT;
 		return true;
 	}
 
-	public static function get_favico_url( $favi = '', $site = null ) {
+	public static function get_favico_url( $website ) {
+        $favi     = MainWP_DB::Instance()->getWebsiteOption( $website, 'favi_icon', '' );
+        $faviurl = '';
+
 		if ( ! empty( $favi ) ) {
-			// fix bug
-			if ( ( strpos( $favi, '//' ) === 0 ) || ( strpos( $favi, 'http' ) === 0 ) ) {
+            if ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) {
+                $dirs      = self::getIconsDir();
+                if ( file_exists( $dirs[0] . $favi ) ) {
+                    $faviurl = $dirs[1] . $favi;
+                } else {
+                    $faviurl = '';
+                }
+            } else if ( ( strpos( $favi, '//' ) === 0 ) || ( strpos( $favi, 'http' ) === 0 ) ) {
 				$faviurl = $favi;
 			} else {
-				$faviurl = $site->url . $favi;
+				$faviurl = $website->url . $favi;
+                $faviurl = MainWP_Utility::removeHttpPrefix( $faviurl );
 			}
-		} else {
+		}
+        if ( empty( $faviurl ) ){
 			$faviurl = plugins_url( 'images/sitefavi.png', dirname( __FILE__ ) );
 		}
 

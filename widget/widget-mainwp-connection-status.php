@@ -66,12 +66,6 @@ class MainWP_Connection_Status {
                                     if ( $md5Connection || !$isUp ) continue;
                                 }
 
-                                if ( time() - $website->dtsSync < 60 * 60 * 24 ) {
-                                        $synced24 = true;
-                                } else {
-                                        $synced24 = false;
-                                }
-
                                 $lastSyncTime = ! empty( $website->dtsSync ) ? MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $website->dtsSync ) ) : '';
 
                                 $is_top_row = false;
@@ -107,9 +101,7 @@ class MainWP_Connection_Status {
                                                         </span>
                                                         <?php
                                                 } else {
-                                                        if ( !$synced24 ) { ?>
-                                                            <a href="javascript:void(0)" onClick="rightnow_wp_sync('<?php echo $website->id; ?>')"><?php _e( 'Sync Now', 'mainwp' ); ?></a>&nbsp;&nbsp;
-                                                        <?php } ?>
+                                                        ?>
                                                         <span class="fa-stack fa-lg" title="Site is Online">
                                                                 <i class="fa fa-check-circle fa-2x mainwp-green"></i>
                                                         </span>

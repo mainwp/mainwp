@@ -1195,7 +1195,7 @@ rightnow_upgrade_translation = function (id, slug) {
 };
 
 rightnow_group_upgrade_translation = function (id, slug, groupId) {
-    return rightnow_group_upgrade_plugintheme('translation', id, slug, groupId);
+    return rightnow_upgrade_plugintheme('translation', id, slug, groupId);
 };
 
 rightnow_upgrade_translation_all = function (id) {
@@ -1206,7 +1206,7 @@ rightnow_upgrade_translation_all = function (id) {
 };
 
 rightnow_group_upgrade_translation_all = function (id, groupId) {
-    if (!confirm(__('Are you sure you want to update all themes?')))
+    if (!confirm(__('Are you sure you want to update all translations?')))
         return false;
     rightnow_group_show_if_required('translation_upgrades', id, groupId);
     return rightnow_group_upgrade_plugintheme_all('translation', id, false, groupId);
@@ -1478,18 +1478,18 @@ rightnow_show_if_required = function (what, leave_text, groupId) {
 
 rightnow_group_show_if_required = function (what, id, groupId) {
     jQuery('#wp_' + what + '_' + id + '_group_' + groupId).show(100);
-}
+};
 
 rightnow_updates_group_set_status = function(what, groupId, total, show_btn) {
     jQuery('#total_' + what + '_group_' + groupId).html(total + ' ' + (total == 1 ? __( 'Update' ) : __( 'Updates' )) );
     if (show_btn)
         jQuery('#' + what + '_all_btn_group_' + groupId).text(total == 1 ? __( 'Update' ) : __( 'Update All' )).show();
-}
+};
 
 rightnow_updates_group_remove_empty_rows = function(what, groupId) {
     jQuery('#top_row_' + what + '_group_' + groupId).remove();
     jQuery('.wp_' + what + '_group_' + groupId).remove();
-}
+};
 
 /**
  * Manage backups page
@@ -2625,9 +2625,12 @@ mainwp_managesites_add = function (event) {
                         //Message the WP was added
                         setHtml('#mainwp_managesites_add_message', response);
                         if (site_id > 0) {
+                            mainwp_get_site_icon(site_id);
                             jQuery('.sync-ext-row').attr('status', 'queue');
                             jQuery('#mainwp_managesites_add_message').append( '<div id="mwp_applying_ext_settings"><i class="fa fa-spinner fa-pulse"></i> ' + __('Applying extensions settings...') + '<br/>');
-                            mainwp_managesites_sync_extension_start_next(site_id);
+                            setTimeout(function(){
+                                mainwp_managesites_sync_extension_start_next(site_id);
+                            }, 1000);
                         }
 
                         //Reset fields
@@ -2826,6 +2829,29 @@ mainwp_extension_apply_plugin_settings = function(pPluginToInstall, pSiteId, pGl
         mainwp_managesites_sync_extension_start_next( pSiteId );
     }, 'json');
 }
+
+mainwp_get_site_icon = function(siteId) {
+    jQuery('#mainwp_managesites_add_message').append( '<span id="download_icon_working">' + '<br/>' + __('Downloading site icon...') + ' <i class="fa fa-spinner fa-pulse"></i>' + '</span>');
+    var data = mainwp_secure_data({
+        action: 'mainwp_get_site_icon',
+        siteId: siteId
+    });
+    jQuery.post(ajaxurl, data, function (response) {
+        jQuery('#mainwp_managesites_add_message').find('#download_icon_working').html('');
+        if (response) {
+            if (response.result && response.result == 'success') {
+                jQuery('#mainwp_managesites_add_message').find('#download_icon_working').html('<br/>' + __('Download site icon successful!'));
+            } else if (response.error != undefined) {
+                jQuery('#mainwp_managesites_add_errors').append(' ' + __('Download site icon failed') + ': ' + response.error);
+            } else {
+                jQuery('#mainwp_managesites_add_errors').append(' ' + __('Download site icon failed'));
+            }
+        } else {
+            jQuery('#mainwp_managesites_add_errors').append( ' ' + __('Download site icon failed') + ': ' + __( 'Undefined error!' ) );
+        }
+    }, 'json');
+}
+
 
 mainwp_managesites_test = function (event) {
     managesites_init();
@@ -6899,6 +6925,20 @@ jQuery(document).on('click', '.mainwp-dismiss', function(){
         action:'mainwp_tips_update',
         tipId: jQuery(this).closest('.mainwp-tips').find('.mainwp-tip').attr('id')
     });
+    jQuery.post(ajaxurl, data, function (res) {
+    });
+    return false;
+});
+
+jQuery(document).on('click', '.mainwp-notice-dismiss', function(){
+    var notice_id = jQuery(this).attr('notice-id');
+    jQuery(this).closest('.mainwp-notice-wrap').fadeOut("slow");
+    var data = {
+        action:'mainwp_notice_status_update'
+    };
+    if (notice_id.indexOf('tour_') === 0) {
+        data['tour_id'] = notice_id.replace('tour_', '');
+    }
     jQuery.post(ajaxurl, data, function (res) {
     });
     return false;

@@ -810,6 +810,8 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {color: #fff;text-decor
     transition: none;
 }
 #mainwp_wrap-inside .select2-container.select2-allowclear .select2-choice abbr { margin-top: -2px; }
+#mainwp_wrap-inside .select2-selection--single .select2-selection__clear { margin-top: -2px; }
+
 
 #wpbody-content #mainwp_tab-general #dashboard-widgets.columns-1 #postbox-container-1,#wpbody-content #mainwp_wrap-inside #dashboard-widgets.columns-1 #postbox-container-1{width: 100% !important;}
 #wpbody-content #mainwp_tab-general #dashboard-widgets.columns-2 #postbox-container-1,#wpbody-content #mainwp_wrap-inside #dashboard-widgets.columns-2 #postbox-container-1{width: 49% !important;}
@@ -2121,6 +2123,14 @@ body.show-upload-theme #mainwp_wrap-inside .upload-theme,
     cursor: -moz-grab;
     cursor: -webkit-grab;
 }
+#mainwp_managesites_content table th#wpcore_update,
+#mainwp_managesites_content table th#plugin_update,
+#mainwp_managesites_content table th#theme_update
+{
+    width: 50px;
+    text-align: center;
+}
+
 #mainwp_wrap-inside table thead .table-handle:hover {
     background-image: url(../images/dots-d.png);
     background-repeat: no-repeat;

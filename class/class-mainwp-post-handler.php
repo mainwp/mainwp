@@ -29,6 +29,7 @@ class MainWP_Post_Handler {
 		//Page: ManageSites
 		$this->addAction( 'mainwp_checkwp', array( &$this, 'mainwp_checkwp' ) );
 		$this->addAction( 'mainwp_addwp', array( &$this, 'mainwp_addwp' ) );
+        $this->addAction( 'mainwp_get_site_icon', array( &$this, 'get_site_icon' ) );
 		$this->addAction( 'mainwp_ext_prepareinstallplugintheme', array( &$this, 'mainwp_ext_prepareinstallplugintheme' ) );
 		$this->addAction( 'mainwp_ext_performinstallplugintheme', array( &$this, 'mainwp_ext_performinstallplugintheme' ) );
 		$this->addAction( 'mainwp_ext_applypluginsettings', array( &$this, 'mainwp_ext_applypluginsettings' ) );
@@ -558,6 +559,23 @@ class MainWP_Post_Handler {
 
 		MainWP_Manage_Tips::updateTipSettings();
 		die();
+	}
+
+	function mainwp_notice_status_update() {
+		$this->secure_request();
+
+		global $current_user;
+		if ( ( $user_id = $current_user->ID )) {
+			if (isset( $_POST['tour_id'] ) && ! empty( $_POST['tour_id'] ) ) {
+				$status = get_user_option( 'mainwp_tours_status' );
+				if ( ! is_array( $status ) ) {
+					$status = array();
+				}
+				$status[ $_POST['tour_id'] ] = 1;
+				update_user_option( $user_id, 'mainwp_tours_status', $status );
+			}
+		}
+		die( 1 );
 	}
 
 	function mainwp_tips_update() {
@@ -1121,6 +1139,15 @@ class MainWP_Post_Handler {
 			MainWP_Manage_Sites::addSite();
 		} else {
 			die( json_encode( array( 'response' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
+		}
+	}
+
+    function get_site_icon() {
+		if ( $this->check_security( 'mainwp_get_site_icon', 'security' ) ) {
+			$result = MainWP_System::sync_site_icon();
+                        die( json_encode( $result ) );
+		} else {
+			die( json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
 		}
 	}
 

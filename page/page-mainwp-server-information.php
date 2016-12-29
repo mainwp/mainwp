@@ -515,7 +515,7 @@ public static function renderFooter( $shownPage ) {
 					?>
 				</select>
 				<?php _e( 'Select Information: ', 'mainwp' ); ?>
-				<select class="mainwp-select2" name="" data-placeholder="<?php _e( 'Full Information', 'mainwp' ); ?>" id="mainwp-server-info-filter">
+				<select class="mainwp-select2 allowclear" name="" data-placeholder="<?php _e( 'Full Information', 'mainwp' ); ?>" id="mainwp-server-info-filter">
 					<option value=""></option>
 					<option value="server-information"><?php _e( 'Server Information', 'mainwp' ); ?></option>
 					<option value="cron-schedules"><?php _e( 'Cron Schedules', 'mainwp' ); ?></option>

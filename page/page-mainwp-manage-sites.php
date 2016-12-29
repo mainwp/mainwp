@@ -1421,12 +1421,25 @@ class MainWP_Manage_Sites {
 						//update site
 						$groupids   = array();
 						$groupnames = array();
+                        $tmpArr = array();
 						if ( isset( $_POST['selected_groups'] ) ) {
 							foreach ( $_POST['selected_groups'] as $group ) {
-								$groupids[] = $group;
+                                if (is_numeric($group)) {
+									$groupids[] = $group;
+                                } else {
+                                    $tmpArr[] = $group;
+                                }
 							}
-						} else {
-							$groupnames[] = trim( $tmp );
+                            foreach ( $tmpArr as $tmp ) {
+                                $getgroup = MainWP_DB::Instance()->getGroupByNameForUser( trim( $tmp ) );
+                                if ( $getgroup ) {
+                                    if ( ! in_array( $getgroup->id, $groupids ) ) {
+                                        $groupids[] = $getgroup->id;
+                                    }
+                                } else {
+                                    $groupnames[] = trim( $tmp );
+                                }
+                            }
 						}
 				
 				$newPluginDir = ( isset( $_POST['mainwp_options_footprint_plugin_folder'] ) ? $_POST['mainwp_options_footprint_plugin_folder'] : '' );
@@ -1474,10 +1487,10 @@ class MainWP_Manage_Sites {
 	}
 
 	public static function renderEditSite($websiteid, $updated) {		
-			self::renderHeader( 'ManageSitesEdit' );
-		MainWP_Manage_Sites_View::renderEditSite( $websiteid, $updated);
-			self::renderFooter( 'ManageSitesEdit' );
-		}
+        self::renderHeader( 'ManageSitesEdit' );
+        MainWP_Manage_Sites_View::renderEditSite( $websiteid, $updated);
+        self::renderFooter( 'ManageSitesEdit' );
+    }
 
 	public static function checkSite() {
 		$website = MainWP_DB::Instance()->getWebsitesByUrl( $_POST['url'] );
@@ -1592,6 +1605,15 @@ class MainWP_Manage_Sites {
 				} catch ( MainWP_Exception $e ) {
 					$error = $e->getMessage();
 				}
+
+                // delete icon file
+                $favi     = MainWP_DB::Instance()->getWebsiteOption( $website, 'favi_icon', '' );
+                if ( !empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) ) {
+                    $dirs      = MainWP_Utility::getIconsDir();
+                    if ( file_exists( $dirs[0] . $favi ) ) {
+                        unlink( $dirs[0] . $favi );
+                    }
+                }
 
 				//Remove from DB
 				MainWP_DB::Instance()->removeWebsite( $website->id );

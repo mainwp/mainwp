@@ -14,10 +14,10 @@ class MainWP_API_Settings {
 	}
 
 	public static function checkUpgrade() {
-                $extensions = MainWP_Extensions::loadExtensions();
-                $output       = array();
+		$extensions = MainWP_Extensions::loadExtensions();
+		$output       = array();
 		if ( is_array( $extensions ) ) {
-			foreach ( $extensions as $ext ) {                            
+			foreach ( $extensions as $ext ) {
 				if ( isset( $ext['activated_key'] ) && 'Activated' == $ext['activated_key'] ) {
 					$args                     = array();
 					$args['plugin_name']      = $ext['api'];
@@ -26,29 +26,29 @@ class MainWP_API_Settings {
 					$args['api_key']          = $ext['api_key'];
 					$args['activation_email'] = $ext['activation_email'];
 					$args['instance']         = $ext['instance_id'];
-					$args['software_version'] = $ext['software_version'];	
-                                        $check_exts[$args['plugin_name']] = $args;
+					$args['software_version'] = $ext['software_version'];
+					$check_exts[$args['plugin_name']] = $args;
 				}
 			}
-                        
-                        
-                        $results = MainWP_Api_Manager_Plugin_Update::instance()->bulk_update_check( $check_exts );                                        
-                        
-                        if ( is_array($results) && count($results) > 0 ) {                            
-                            foreach ( $results as $slug => $response ) { 
-                                $rslt                 = new stdClass();
-                                $rslt->slug           = $slug; 
-                                $rslt->latest_version = $response->new_version;
-                                $rslt->download_url   = $response->package;
-                                $rslt->key_status     = '';
-                                $rslt->apiManager     = 1;
-                                
-                                if ( isset( $response->errors ) ) {
-                                        $rslt->error = $response->errors;
-                                }
-                                $output[ $slug ] = $rslt;
-                            }
-                        }
+
+
+			$results = MainWP_Api_Manager_Plugin_Update::instance()->bulk_update_check( $check_exts );
+
+			if ( is_array($results) && count($results) > 0 ) {
+				foreach ( $results as $slug => $response ) {
+					$rslt                 = new stdClass();
+					$rslt->slug           = $slug;
+					$rslt->latest_version = $response->new_version;
+					$rslt->download_url   = $response->package;
+					$rslt->key_status     = '';
+					$rslt->apiManager     = 1;
+
+					if ( isset( $response->errors ) ) {
+						$rslt->error = $response->errors;
+					}
+					$output[ $slug ] = $rslt;
+				}
+			}
 		}
 		return $output;
 	}

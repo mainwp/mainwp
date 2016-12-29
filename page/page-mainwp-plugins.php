@@ -519,7 +519,7 @@ public static function renderHeader( $shownPage ) {
 						} ?>
 					</td>
 					<td scope="col" id="notes_content" class="manage-column" style="">
-						<a href="#" class="mainwp_trusted_plugin_notes_show <?php echo ! isset( $trustedPluginsNotes[ $slug ] ) || $trustedPluginsNotes[ $slug ] == '' ? '' : 'mainwp-green'; ?>">
+						<a href="javascript:void(0)" class="mainwp_trusted_plugin_notes_show <?php echo ! isset( $trustedPluginsNotes[ $slug ] ) || $trustedPluginsNotes[ $slug ] == '' ? '' : 'mainwp-green'; ?>">
 							<i class="fa fa-pencil-square-o"></i> <?php _e( 'Notes', 'mainwp' ); ?>
 						</a>
 

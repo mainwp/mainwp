@@ -38,8 +38,7 @@ class MainWP_Page {
 		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages','mainwp' ), '<span id="mainwp-Pages">'.__( 'Pages','mainwp' ).'</span>', 'read', 'PageBulkManage', array( MainWP_Page::getClassName(), 'render' ) );
 		add_action( 'load-' . $_page, array(MainWP_Page::getClassName(), 'on_load_page'));			
 		add_submenu_page( 'mainwp_tab', __( 'Pages','mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ). '</div>', 'read', 'PageBulkAdd', array( MainWP_Page::getClassName(), 'renderBulkAdd' ) );			
-                add_submenu_page( 'mainwp_tab', __( 'Pages','mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Page', 'mainwp' ). '</div>', 'read', 'PageBulkEdit', array( MainWP_Page::getClassName(), 'renderBulkEdit' ) );
-                
+        add_submenu_page( 'mainwp_tab', __( 'Pages','mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Page', 'mainwp' ). '</div>', 'read', 'PageBulkEdit', array( MainWP_Page::getClassName(), 'renderBulkEdit' ) );
 		add_submenu_page( 'mainwp_tab', __( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( MainWP_Page::getClassName(), 'posting' ) ); //removed from menu afterwards
 		
 
@@ -100,47 +99,47 @@ class MainWP_Page {
 		);	
 	}
 		
-        public static function modify_bulkpage_metabox() {
-            global $wp_meta_boxes;
-            
-            if ( isset( $wp_meta_boxes['bulkpage']['side']['core']['submitdiv'] ) ) {
-                    $wp_meta_boxes['bulkpage']['side']['core']['submitdiv']['callback'] = array(
-                            self::getClassName(),
-                            'post_submit_meta_box',
-                    );
-            }
+    public static function modify_bulkpage_metabox() {
+        global $wp_meta_boxes;
+
+        if ( isset( $wp_meta_boxes['bulkpage']['side']['core']['submitdiv'] ) ) {
+                $wp_meta_boxes['bulkpage']['side']['core']['submitdiv']['callback'] = array(
+                        self::getClassName(),
+                        'post_submit_meta_box',
+                );
         }
-        
-        public static function post_submit_meta_box( $post ) {
-                @ob_start();
+    }
+
+    public static function post_submit_meta_box( $post ) {
+        @ob_start();
 		post_submit_meta_box( $post );
-                
+
 		$out = @ob_get_contents();
 		@ob_end_clean();
-                
-                $edit_id = get_post_meta($post->ID, '_mainwp_edit_post_id', true); 
-                // modify html output
-                if ($edit_id) { 
-                    $find    = '<input type="submit" name="publish" id="publish" class="button button-primary button-large" value="' . translate( 'Publish' ) . '"  />';
-                    $replace = '<input type="submit" name="publish" id="publish" class="button button-primary button-large" value="' . translate( 'Update' ) . '"  />';                    
-                    $out = str_replace( $find, $replace, $out );
-                }                
-                
-                $find    = "<select name='post_status' id='post_status'>";
-                $replace = "<select name='mainwp_edit_post_status' id='post_status'>";  // to fix: saving pending status 
-                $out = str_replace( $find, $replace, $out );    
-                    
+
+        $edit_id = get_post_meta($post->ID, '_mainwp_edit_post_id', true);
+        // modify html output
+        if ($edit_id) {
+            $find    = '<input type="submit" name="publish" id="publish" class="button button-primary button-large" value="' . translate( 'Publish' ) . '"  />';
+            $replace = '<input type="submit" name="publish" id="publish" class="button button-primary button-large" value="' . translate( 'Update' ) . '"  />';
+            $out = str_replace( $find, $replace, $out );
+        }
+
+        $find    = "<select name='post_status' id='post_status'>";
+        $replace = "<select name='mainwp_edit_post_status' id='post_status'>";  // to fix: saving pending status
+        $out = str_replace( $find, $replace, $out );
+
 		echo str_replace( $find, $find . $replace, $out );
-        }
-        
-        public static function add_status_handle( $post_id ) {                
+    }
+
+    public static function add_status_handle( $post_id ) {
 		$post = get_post( $post_id );
-                if ($post->post_type == 'bulkpage' && isset($_POST['mainwp_edit_post_status'])) {
-                        update_post_meta( $post_id, '_edit_post_status', $_POST['mainwp_edit_post_status'] );
-                }                
-		return $post_id;
+        if ( $post->post_type == 'bulkpage' && isset( $_POST['mainwp_edit_post_status'] ) ) {
+            update_post_meta( $post_id, '_edit_post_status', $_POST['mainwp_edit_post_status'] );
         }
-        
+		return $post_id;
+    }
+
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
@@ -163,11 +162,11 @@ class MainWP_Page {
 			<div class="mainwp-tabs" id="mainwp-tabs">
 				<?php if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) { ?>
 				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkManage' ) { echo 'nav-tab-active'; } ?>" href="admin.php?page=PageBulkManage"><?php _e( 'Manage Pages','mainwp' ); ?></a>
-                                <?php if ( $shownPage == 'BulkEdit' ) { ?>
-                                        <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=PageBulkEdit&post_id=<?php echo esc_attr($post_id); ?>"><?php _e( 'Edit Page', 'mainwp' ); ?></a>
-                                <?php } ?>
-				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkAdd' ) { echo 'nav-tab-active'; } ?>" href="admin.php?page=PageBulkAdd"><?php _e( 'Add New','mainwp' ); ?></a>                                
-                                <?php } ?>
+        <?php if ( $shownPage == 'BulkEdit' ) { ?>
+                <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=PageBulkEdit&post_id=<?php echo esc_attr($post_id); ?>"><?php _e( 'Edit Page', 'mainwp' ); ?></a>
+        <?php } ?>
+				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkAdd' ) { echo 'nav-tab-active'; } ?>" href="admin.php?page=PageBulkAdd"><?php _e( 'Add New','mainwp' ); ?></a>
+        <?php } ?>
 				<?php
 				if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 					foreach ( self::$subPages as $subPage ) {
@@ -539,7 +538,7 @@ class MainWP_Page {
 						<span class="edit">
                                                     <a class="page_getedit"
                                                     href="#"
-                                                    title="Edit this item"><?php _e( 'Edit', 'mainwp' ); ?></a>                                                
+                                                    title="Edit this item"><?php _e( 'Edit', 'mainwp' ); ?></a>
 						</span>
 						<span class="trash">
 							| <a class="page_submitdelete" title="Move this item to the Trash" href="#"><?php _e( 'Trash','mainwp' ); ?></a>
@@ -636,43 +635,45 @@ class MainWP_Page {
 		$src = apply_filters( 'mainwp_bulkpost_edit_source', $src );
 		//Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
 		?>
-                    <?php self::renderHeader( 'BulkAdd' ); ?>
+                <?php self::renderHeader( 'BulkAdd' ); ?>
 				<iframe scrolling="auto" id="mainwp_iframe" src="<?php echo $src; ?>"></iframe>
 			</div>
 		</div>
 		<?php
 	}
 
-        public static function renderBulkEdit() {
+    public static function renderBulkEdit() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
 			return;
 		}
-                $post_id = isset($_REQUEST['post_id']) ? $_REQUEST['post_id'] : 0;
-                $src = get_site_url() . '/wp-admin/post.php?post_type=bulkpage&hideall=1&action=edit&post=' . esc_attr( $post_id );                
-                $src = apply_filters( 'mainwp_bulkpost_edit_source', $src );
-                
+
+        $post_id = isset($_REQUEST['post_id']) ? $_REQUEST['post_id'] : 0;
+        $src = get_site_url() . '/wp-admin/post.php?post_type=bulkpage&hideall=1&action=edit&post=' . esc_attr( $post_id );
+        $src = apply_filters( 'mainwp_bulkpost_edit_source', $src );
+
 		//Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
 		self::renderHeader( 'BulkEdit', $post_id ); ?>
 		<iframe scrolling="auto" id="mainwp_iframe" src="<?php echo $src; ?>"></iframe>
 		<?php
 		self::renderFooter( 'BulkEdit' );
 	}
-        
+
 	public static function posting() {
-                if ( isset( $_GET['id'] ) ) {
-                    $edit_id = get_post_meta($_GET['id'], '_mainwp_edit_post_id', true); 
-                    if ($edit_id) {
-                        $succes_message = __('Page has been updated successfully', 'mainwp');
-                    } else {
-                        $succes_message = __('New page created', 'mainwp');
-                    }
-                }
+		$succes_message = '';
+	    if ( isset( $_GET['id'] ) ) {
+	        $edit_id = get_post_meta($_GET['id'], '_mainwp_edit_post_id', true);
+	        if ($edit_id) {
+	            $succes_message = __('Page has been updated successfully', 'mainwp');
+	        } else {
+	            $succes_message = __('New page created', 'mainwp');
+	        }
+	    }
 		?>
 	<div class="wrap">
-                <h2><?php $edit_id ? _e('Edit Page', 'mainwp') : _e('New Page', 'mainwp') ?></h2>
+        <h2><?php $edit_id ? _e('Edit Page', 'mainwp') : _e('New Page', 'mainwp') ?></h2>
 		<?php //  Use this to add a new page. To bulk change pages click on the "Manage" tab.
-                
+
 		do_action( 'mainwp_bulkpage_before_post', $_GET['id'] );
 
 		$skip_post = false;
@@ -697,7 +698,7 @@ class MainWP_Page {
 					include_once( ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php' );
 					$post_featured_image = get_post_thumbnail_id( $id );
 					$mainwp_upload_dir = wp_upload_dir();
-                                        $post_status = get_post_meta( $id, '_edit_post_status', true );                                           
+                    $post_status = get_post_meta( $id, '_edit_post_status', true );
 					$new_post = array(
 						'post_title' => $post->post_title,
 						'post_content' => $post->post_content,

@@ -56,7 +56,7 @@ class MainWP_Meta_Boxes {
 		?><input type="hidden" name="select_sites_nonce" id="select_sites_nonce"
 		         value="<?php echo wp_create_nonce( 'select_sites_' . $post->ID ); ?>" /><?php
 
-					MainWP_UI::select_sites_box_body( $selected_sites, $selected_groups, 'checkbox', true, true, true, false, $post->ID );
+		MainWP_UI::select_sites_box_body( $selected_sites, $selected_groups, 'checkbox', true, true, true, false, $post->ID );
 	}
 
 	function select_sites_handle( $post_id, $post_type ) {

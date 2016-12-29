@@ -240,7 +240,7 @@ public static function renderHeader( $shownPage ) {
 		<div class="mainwp-postbox-actions-top">
 			<?php _e( 'To only <strong>view or ignore</strong> themes select <strong>all themes</strong>', 'mainwp' ); ?>
 			<br/>
-			<?php _e( 'To <strong>activate</strong> or <strong>aelete</strong> a aheme select <strong>inactive</strong> (A theme needs to be deactivated in order for it to be enabled)', 'mainwp' ); ?>
+			<?php _e( 'To <strong>activate</strong> or <strong>delete</strong> a theme select <strong>inactive</strong> (A theme needs to be deactivated in order for it to be enabled)', 'mainwp' ); ?>
 			<br/>
 		</div>
 		<div class="inside">

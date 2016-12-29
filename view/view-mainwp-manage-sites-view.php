@@ -650,10 +650,10 @@ class MainWP_Manage_Sites_View {
                                id="mainwp_managesites_add_addgroups" style="width: 350px"
 							   multiple="multiple" /><?php 
                            foreach ($groups as $group)
-                           {                               
-                            echo '<option value="' . $group->id . '">' . stripslashes($group->name)  . '</option>';
+                           {
+								echo '<option value="' . $group->id . '">' . stripslashes($group->name)  . '</option>';
                            }
-                        ?></select></span>
+							?></select></span>
                    </td>
                </tr>
                </table>   
@@ -689,7 +689,7 @@ class MainWP_Manage_Sites_View {
                     <script type="text/javascript">
                             jQuery( document ).ready( function () {			
                                     <?php if (count($groups) == 0) { ?>
-                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
+                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});
                                     //jQuery('#mainwp_managesites_add_addgroups').prop("disabled", true);
                                     <?php } else { ?>
                                     jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true, placeholder: " "});
@@ -882,107 +882,6 @@ class MainWP_Manage_Sites_View {
 		<?php
 	}
 	
-
-
-	public static function renderSeoPage( &$website ) {
-		if ( ! mainwp_current_user_can( 'dashboard', 'see_seo_statistics' ) ) {
-			mainwp_do_not_have_permissions( __( 'see seo statistics', 'mainwp' ) );
-			return;
-		}
-						
-			?>
-      <div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
-              src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
-          <h2><i class="fa fa-globe"></i> <?php echo stripslashes( $website->name ); ?> (<?php echo $website->url; ?>)</h2>
-          <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
-          <div id="ajax-information-zone" class="updated" style="display: none;"></div>
-          <div id="mainwp_background-box">
-				<?php
-				$seo_retired = get_option('mainwp_seo_retired', null);
-				if ('waiting' == $seo_retired) {
-					?>
-					<div class="mainwp-notice mainwp-notice-red"><?php _e('SEO feature will be completely retired in July 1, 2016', 'mainwp'); ?></div>
-					<?php
-				}
-				?>
-				<?php
-				if ( $website->statsUpdate == 0 ) {
-				?>
-					<h3><?php _e( 'SEO details','mainwp' ); ?></h3>
-					<?php _e( 'Not updated yet.','mainwp' ); ?>
-					<?php
-				} else {
-					?>
-					<h3><?php _e( 'SEO details','mainwp' ); ?> (Last Updated <?php echo MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $website->statsUpdate ) ); ?>)</h3>
-					<?php
-					if ( get_option( 'mainwp_seo' ) == 0 ) {
-						?>
-					  <div class="mainwp-notice mainwp-notice-red"><?php echo sprintf( __('Basic SEO has been SEO turned Off. <strong>Historic information only</strong>. You can turn back on in the %settings page%.','mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
-                    <?php
-					}
-					?>
-					<table>
-                      <tr>
-                          <th style="text-align: left; width: 180px;">Alexa Rank:</th>
-                          <td><?php echo $website->alexia; ?> <?php echo ($website->alexia_old != '' ? '(' . $website->alexia_old . ')' : ''); ?></td>
-                      </tr>                     
-                      <tr>
-                          <th style="text-align: left">Indexed Links on Google:</th>
-                          <td><?php echo $website->indexed; ?> <?php echo ($website->indexed_old != '' ? '(' . $website->indexed_old . ')' : ''); ?></td>
-                      </tr>
-					</table>
-					<?php
-				}
-				?>
-          </div>
-      </div>
-		<?php
-	}
-
-	public static function showSEOWidget( &$website ) {
-		$seo_retired = get_option('mainwp_seo_retired', null);
-		if ('waiting' == $seo_retired) {
-			?>
-			<div class="mainwp-notice mainwp-notice-red"><?php _e('SEO feature will be completely retired in July 1, 2016', 'mainwp'); ?></div>
-			<?php
-		}
-		if ( $website->statsUpdate == 0 ) {
-			echo $website->url ?> &nbsp;-&nbsp; <em><?php _e( 'Not updated yet!','mainwp' ); ?></em> <?php
-		} else {
-
-			echo $website->url; ?> &nbsp;-&nbsp; <em><?php _e( 'Last Updated','mainwp' ); ?> <?php echo MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $website->statsUpdate ) ); ?></em>
-      <br /><br />
-      <table>
-        <tr>
-          <th style="text-align: left; width: 300px;"><?php _e( 'Alexa Rank:','mainwp' ); ?></th>
-			<?php if ( $website->alexia < $website->alexia_old ) {
-				?> 
-                <td style="width: 100px" class="mainwp-green"><span><i class="fa fa-chevron-down"></i> <?php echo $website->alexia; ?></span></td>
-			<?php } else if ( $website->alexia == $website->alexia_old ) {
-				?>
-                <td style="width: 100px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->alexia; ?></span></td>
-			<?php } else { ?>
-                <td style="width: 100px" class="mainwp-red"><span><i class="fa fa-chevron-up"></i> <?php echo $website->alexia; ?></span></td>
-			<?php } ?>
-          <td style="width: 100px; color: #7B848B;"><?php echo ($website->alexia_old != '' ? $website->alexia_old : ''); ?></td>
-        </tr>
-        <tr>
-          <th style="text-align: left; width: 300px;"><?php _e( 'Indexed Links on Google:','mainwp' ); ?></th>
-			<?php if ( $website->indexed > $website->indexed_old ) { ?> 
-          <td style="width: 100px" class="mainwp-green"><span><i class="fa fa-chevron-up"></i> <?php echo $website->indexed; ?></span></td>
-			<?php } else if ( $website->indexed == $website->indexed_old ) { ?>
-          <td style="width: 100px"><span><i class="fa fa-chevron-right"></i> <?php echo $website->indexed; ?></span></td>
-			<?php } else { ?>
-          <td style="width: 100px" class="mainwp-red"><span><i class="fa fa-chevron-down"></i> <?php echo $website->indexed; ?></span></td>
-			<?php } ?>
-          <td style="width: 100px; color: #7B848B;"><?php echo ($website->indexed_old != '' ? $website->indexed_old : ''); ?></td>
-        </tr>
-      </table>
-
-		<?php
-		}
-	}
-
 	public static function showBackups( &$website, $fullBackups, $dbBackups ) {
 		$output = '';
 		echo '<table>';
@@ -1665,7 +1564,7 @@ class MainWP_Manage_Sites_View {
                     <td>
 						<select 
                                name="selected_groups[]"
-                               id="mainwp_managesites_edit_addgroups"  style="width: 350px"                                                           
+                               id="mainwp_managesites_edit_addgroups"  style="width: 350px"
 							   multiple="multiple" /><?php 						
 							$groupsSite = MainWP_DB::Instance()->getGroupsByWebsiteId( $website->id );
 							foreach ($groups as $group)
@@ -1678,10 +1577,10 @@ class MainWP_Manage_Sites_View {
 				<script type="text/javascript">
 					jQuery( document ).ready( function () {			
 						<?php if (count($groups) == 0) { ?>
-						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
+						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});
 						//jQuery('#mainwp_managesites_edit_addgroups').prop("disabled", true);
 						<?php } else { ?>
-						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true});							
+						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true});
 						<?php } ?>
 					});
 				</script>
@@ -1932,7 +1831,7 @@ class MainWP_Manage_Sites_View {
 					$pubkey = '-1';
 				}
 
-					$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array( 'pubkey' => $pubkey, 'server' => get_admin_url(), 'uniqueId' => $website->uniqueId ), true, $website->verify_certificate, $website->http_user, $website->http_pass, $website->ssl_version );
+				$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array( 'pubkey' => $pubkey, 'server' => get_admin_url(), 'uniqueId' => $website->uniqueId ), true, $website->verify_certificate, $website->http_user, $website->http_pass, $website->ssl_version );
 
 				if ( isset( $information['error'] ) && $information['error'] != '' ) {
 					throw new Exception( $information['error'] );
@@ -2026,27 +1925,27 @@ class MainWP_Manage_Sites_View {
 						//Add website to database
 						$groupids = array();
 						$groupnames = array();
-                                                $tmpArr = array();      
+                        $tmpArr = array();
 						if ( isset( $params['groupids'] ) && is_array( $params['groupids']) ) {
 							foreach ( $params['groupids'] as $group ) {
 								if (is_numeric($group)) {
-                                                                    $groupids[] = $group;
-                                                                } else {
-                                                                    $tmpArr[] = $group;
-                                                                }
+                                    $groupids[] = $group;
+                                } else {
+                                    $tmpArr[] = $group;
+                                }
 							}
-                                                        foreach ( $tmpArr as $tmp ) {
-                                                                $getgroup = MainWP_DB::Instance()->getGroupByNameForUser( trim( $tmp ) );
-                                                                if ( $getgroup ) {
-                                                                        if ( ! in_array( $getgroup->id, $groupids ) ) {
-                                                                                $groupids[] = $getgroup->id;
-                                                                        }
-                                                                } else {
-                                                                        $groupnames[] = trim( $tmp );
-                                                                }
-                                                        } 
+	                        foreach ( $tmpArr as $tmp ) {
+	                            $getgroup = MainWP_DB::Instance()->getGroupByNameForUser( trim( $tmp ) );
+	                            if ( $getgroup ) {
+	                                if ( ! in_array( $getgroup->id, $groupids ) ) {
+	                                    $groupids[] = $getgroup->id;
+	                                }
+	                            } else {
+	                                $groupnames[] = trim( $tmp );
+	                            }
+	                        }
 						}
-                                                
+
 						if ( (isset( $params['groupnames_import'] ) && $params['groupnames_import'] != '') ) {								
 								$tmpArr = explode( ';', $params['groupnames_import'] );						
 								foreach ( $tmpArr as $tmp ) {
@@ -2092,7 +1991,7 @@ class MainWP_Manage_Sites_View {
 
 		return array( $message, $error, $id );
 	}
-
+        
 	public static function sitesPerPage() {
 		return __( 'Sites per page', 'mainwp' );
 	}

@@ -73,7 +73,7 @@ class MainWP_About {
 		global $mainWP;
 		?>
 		<br/>
-		<h3><?php echo $mainWP->getVersion(); ?><?php _e( ' Changelog', 'mainwp' ); ?></h3>
+		<h3><?php echo $mainWP->getVersion(); ?>&nbsp;<?php _e( 'Changelog', 'mainwp' ); ?></h3>
 		<hr/>
 		<ul>
 			<li>Fixed: An issue with loading themes on the Auto Updates page</li>

@@ -2,7 +2,7 @@
 
 class MainWP_DB {
 	//Config
-	private $mainwp_db_version = '8.9';
+	private $mainwp_db_version = '8.10';
 	//Private
 	private $table_prefix;
 	//Singleton
@@ -398,7 +398,6 @@ class MainWP_DB {
 				'mainwp_news',
 				'mainwp_news_timestamp',
 				'mainwp_optimize',
-				'mainwp_seo',
 				'mainwp_automaticDailyUpdate',
 				'mainwp_backup_before_upgrade',
 				'mainwp_show_language_updates',
@@ -491,6 +490,11 @@ class MainWP_DB {
 				$this->wpdb->query( 'ALTER TABLE ' . $this->tableName( 'wp' ) . ' DROP COLUMN ' . $optionColumn );
 				$this->wpdb->suppress_errors( $suppress );
 			}
+		}
+
+		if ( version_compare( $currentVersion, '8.9', '<' ) ) {
+			delete_option('mainwp_seo');
+			delete_option('mainwp_seo_retired');
 		}
 	}
 
@@ -1501,15 +1505,9 @@ class MainWP_DB {
 		return 'SELECT * FROM ' . $this->tableName( 'wp' ) . ' WHERE (statsUpdate = 0 OR ' . time() . ' - statsUpdate >= ' . ( 60 * 60 * 24 * 7 ) . ')' . $where . ' ORDER BY statsUpdate ASC';
 	}
 
-	public function updateWebsiteStats( $websiteid, $pageRank, $indexed, $alexia, $pageRank_old, $indexed_old, $alexia_old, $statsUpdated ) {
+	public function updateWebsiteStats( $websiteid, $statsUpdated ) {
 		return $this->wpdb->update( $this->tableName( 'wp' ), array(
 			'statsUpdate'  => $statsUpdated,
-			'pagerank'     => $pageRank,
-			'indexed'      => $indexed,
-			'alexia'       => $alexia,
-			'pagerank_old' => $pageRank_old,
-			'indexed_old'  => $indexed_old,
-			'alexia_old'   => $alexia_old,
 		), array( 'id' => $websiteid ) );
 	}
 

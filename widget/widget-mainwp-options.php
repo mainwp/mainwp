@@ -29,7 +29,6 @@ class MainWP_Options {
 			MainWP_DB::Instance()->updateUserExtension( $userExtension );
 			if ( MainWP_Utility::isAdmin() ) {
 				MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
-				MainWP_Utility::update_option( 'mainwp_seo', ( ! isset( $_POST['mainwp_seo'] ) ? 0 : 1 ) );
 				$val = ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 2 : $_POST['mainwp_automaticDailyUpdate'] );
 				MainWP_Utility::update_option( 'mainwp_automaticDailyUpdate', $val );
 				$val = ( ! isset( $_POST['mainwp_show_language_updates'] ) ? 0 : 1 );

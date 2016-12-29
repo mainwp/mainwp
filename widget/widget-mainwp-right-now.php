@@ -518,7 +518,7 @@ class MainWP_Right_Now {
 
 		MainWP_DB::Instance()->updateWebsiteSyncValues( $website->id, array( 'dtsSyncStart' => time() ) );
 		MainWP_Utility::endSession();
-                
+
 		//Unlock
 		//        MainWP_Utility::release($identifier);
 		if ( MainWP_Sync::syncSite( $website ) ) {
@@ -977,19 +977,19 @@ class MainWP_Right_Now {
 		$show_updates_title = __('Click to see available updates', 'mainwp');
 		$visit_dashboard_title = __('Visit this dashboard', 'mainwp');
 		$see_ignored_title = __('Click here to see all ignored updates', 'mainwp');
-                $visit_group_title = __('Visit this group', 'mainwp');
-                
-                 
-                $trustedPlugins        = json_decode( $userExtension->trusted_plugins, true );                
+        $visit_group_title = __('Visit this group', 'mainwp');
+
+
+        $trustedPlugins        = json_decode( $userExtension->trusted_plugins, true );
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
 		}
-                $trustedThemes        = json_decode( $userExtension->trusted_themes, true );
+        $trustedThemes        = json_decode( $userExtension->trusted_themes, true );
 		if ( ! is_array( $trustedThemes ) ) {
 			$trustedThemes = array();
 		}
-                $trusted_icon = '<i class="fa fa-check-circle-o mainwp-green" aria-hidden="true" title="' . esc_attr__('Trusted', 'mainwp'). '"></i>&nbsp;';
-                
+        $trusted_icon = '<i class="fa fa-check-circle-o mainwp-green" aria-hidden="true" title="' . esc_attr__('Trusted', 'mainwp'). '"></i>&nbsp;';
+
 		?>
 		<div class="mainwp-row-top">
 			<div id="mainwp-right-now-total-updates" class="mainwp-left mainwp-cols-2">
@@ -1179,7 +1179,7 @@ class MainWP_Right_Now {
                 
                 
 		<?php
-		//WP plugin updates!  
+		//WP plugin updates!                
 		?>
 		<div class="mainwp-clear">
 			<div class="mainwp-row">
@@ -1285,7 +1285,7 @@ class MainWP_Right_Now {
 										<?php if ( $globalView ) { ?>&nbsp;&nbsp;&nbsp;<?php } ?><?php if (in_array( $slug, $trustedPlugins)) { echo $trusted_icon; } ; ?>
 										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $plugin_upgrade['Name']; ?>">
 											<?php echo $plugin_upgrade['Name']; ?>
-                                                                                </a>
+										</a>
 										<input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" value="0"/>
 									</div>
 									<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-5 pluginsInfo" id="wp_upgrade_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
@@ -1470,11 +1470,11 @@ class MainWP_Right_Now {
 							?>
 							<div class="mainwp-sub-row">
 								<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">
-                                                                        <?php if (in_array($slug, $trustedPlugins)) { echo $trusted_icon; } ; ?>
+                                    <?php if (in_array($slug, $trustedPlugins)) { echo $trusted_icon; } ; ?>
 									<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $pluginsInfo[ $slug ]['slug'] . '&url=' . ( isset( $pluginsInfo[ $slug ]['uri'] ) ? rawurlencode( $pluginsInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsInfo[ $slug ]['name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
 									   class="thickbox" title="More information about <?php echo $pluginsInfo[ $slug ]['name']; ?>">
 										<?php echo $pluginsInfo[ $slug ]['name']; ?>
-									</a> 
+									</a>
 								</div>
 								<div class="mainwp-left mainwp-padding-top-5">
 									<a href="#" onClick="return rightnow_plugins_detail('<?php echo $plugin_name; ?>');" title="<?php echo esc_attr($show_updates_title);?>">
@@ -1537,11 +1537,11 @@ class MainWP_Right_Now {
 											&nbsp;&nbsp;&nbsp;
 											<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a>
 										<?php } else { ?>
-                                                                                        <?php if (in_array($slug, $trustedPlugins)) { echo $trusted_icon; } ; ?>
+                                            <?php if (in_array($slug, $trustedPlugins)) { echo $trusted_icon; } ; ?>
 											<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $pluginsInfo[ $slug ]['slug'] . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
 											   class="thickbox" title="More information about <?php echo $pluginsInfo[ $slug ]['name']; ?>">
 												<?php echo $pluginsInfo[ $slug ]['name']; ?>
-											</a> 
+											</a>
 										<?php } ?>
 									</div>
 									<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-5 pluginsInfo">
@@ -1847,7 +1847,7 @@ class MainWP_Right_Now {
 							<div class="mainwp-sub-row">
 								<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">
 									<?php if (in_array( $slug, $trustedThemes )) echo $trusted_icon; ?>
-                                                                        <?php echo $themesInfo[ $slug ]['name']; ?>
+                                    <?php echo $themesInfo[ $slug ]['name']; ?>
 								</div>
 								<div class="mainwp-left mainwp-padding-top-5">
 									<a href="#" onClick="return rightnow_themes_detail('<?php echo $theme_name; ?>');">
@@ -1910,9 +1910,9 @@ class MainWP_Right_Now {
 											&nbsp;&nbsp;&nbsp;
 											<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a>
 										<?php } else {
-                                                                                        if (in_array( $slug, $trustedThemes )) echo $trusted_icon;
-											echo $themesInfo[ $slug ]['name'];                                                                                        
-										} ?>                                                                                
+                                            if (in_array( $slug, $trustedThemes )) echo $trusted_icon;
+											echo $themesInfo[ $slug ]['name'];
+										} ?>
 									</div>
 									<div class="mainwp-left mainwp-cols-5 mainwp-padding-top-5 pluginsInfo">
 										<?php echo $theme_upgrade['Version']; ?> to <?php echo $theme_upgrade['update']['new_version']; ?>
@@ -2031,8 +2031,8 @@ class MainWP_Right_Now {
 								<div class="mainwp-sub-row" translation_slug="<?php echo $translation_slug; ?>" updated="0">
 									<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">
 										<?php if ( $globalView ) { ?>&nbsp;&nbsp;&nbsp;<?php } ?>
-										<?php echo $translation_name; ?>                                                                                
-                                                                                <input type="hidden" id="wp_upgraded_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>" value="0"/>
+										<?php echo $translation_name; ?>
+                                        <input type="hidden" id="wp_upgraded_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>" value="0"/>
 									</div>
 									<div class="mainwp-left mainwp-cols-5 mainwp-padding-top-5 translationsInfo" id="wp_upgrade_translation_<?php echo $website->id; ?>_<?php echo $translation_slug; ?>">
 										<?php echo $translation_upgrade['version']; ?>

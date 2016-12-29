@@ -38,11 +38,11 @@ class MainWP_Api_Manager {
 	public function __construct() {
 		$this->domain = str_ireplace( array( 'http://', 'https://' ), '', home_url() );
 	}
-        
-        public function get_domain() {
-            return $this->domain;
-        }
-        
+
+    public function get_domain() {
+        return $this->domain;
+    }
+
 	public function getUpgradeUrl() {
 		$url = apply_filters( 'mainwp_api_manager_upgrade_url', $this->upgrade_url );
 		return $url;
@@ -340,7 +340,7 @@ class MainWP_Api_Manager {
 
 		return MainWP_Api_Manager_Plugin_Update::instance()->update_check( $args );
 	}
-        
+
 	public function request_plugin_information( $args ) {
 		$args['domain'] = $this->domain;
 

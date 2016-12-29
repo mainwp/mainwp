@@ -38,10 +38,10 @@ jQuery(document).on('change', '#mainwp_archiveFormat', function()
 });
 
 jQuery(document).ready(function () {
-    jQuery('select.mainwp-select2').select2({minimumResultsForSearch: 10, width: '170px', allowClear: false});        
+    jQuery('select.mainwp-select2').select2({minimumResultsForSearch: 10, width: '170px', allowClear: false});
     jQuery('select.mainwp-select2.allowclear').select2({minimumResultsForSearch: 10, width: '170px', allowClear: true});
     jQuery('select.mainwp-select2-super').select2({minimumResultsForSearch: 10, width: '250px', allowClear: false});
     jQuery('select.mainwp-select2-super.allowclear').select2({minimumResultsForSearch: 10, width: '250px', allowClear: true});
-    jQuery('select.mainwp-select2-wpurl-protocol').select2({minimumResultsForSearch: 10, width: '85px', allowClear: false});    
+    jQuery('select.mainwp-select2-wpurl-protocol').select2({minimumResultsForSearch: 10, width: '85px', allowClear: false});
     jQuery('select.mainwp-select2-mini').select2({minimumResultsForSearch: 10, width: '120px', allowClear: false});
 });

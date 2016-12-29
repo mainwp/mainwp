@@ -1346,7 +1346,6 @@ public static function renderFooter( $shownPage ) {
 			'mainwp_options_footprint_plugin_folder_default' => __('Hide Network on Child Sites','mainwp'),
 			'mainwp_wp_cron' => __('Use WP-Cron','mainwp'),
 			'mainwp_optimize' => __('Optimize for Shared Hosting or Big Networks','mainwp'),
-			'mainwp_seo' => __('Show Basic SEO Stats','mainwp'),
 			'select_mainwp_options_siteview' => __('View Updates per Site','mainwp'),
 			'mainwp_backup_before_upgrade' => __('Require Backup Before Update','mainwp'),
 			'mainwp_automaticDailyUpdate' => __('Automatic Daily Update','mainwp'),
@@ -1366,19 +1365,14 @@ public static function renderFooter( $shownPage ) {
 			'mainwp_minimumDelay' => __('Minimum delay between requests','mainwp'),
 			'mainwp_maximumIPRequests' => __('Maximum simultaneous requests per ip','mainwp'),
 			'mainwp_minimumIPDelay' => __('Minimum delay between requests to the same ip','mainwp'),
-                        'mainwp_maximumSyncRequests' => __('Maximum simultaneous sync requests','mainwp'),
-                        'mainwp_maximumInstallUpdateRequests' => __('Minimum simultaneous install/update requests','mainwp')
+            'mainwp_maximumSyncRequests' => __('Maximum simultaneous sync requests','mainwp'),
+            'mainwp_maximumInstallUpdateRequests' => __('Minimum simultaneous install/update requests','mainwp')
 		);
 		
 		if ( !MainWP_Extensions::isExtensionAvailable('mainwp-comments-extension') ) {
 			unset($mainwp_options['mainwp_maximumComments']);
 		}		
 		
-		$seo_retired = get_option('mainwp_seo_retired', null);		
-		if ($seo_retired == 'yes') {
-			unset($mainwp_options['mainwp_seo']);			
-		}
-
 		$options_value = array();
 		$userExtension = MainWP_DB::Instance()->getUserExtension();
 		foreach($mainwp_options as $opt => $label){
@@ -1404,9 +1398,9 @@ public static function renderFooter( $shownPage ) {
 					break;
 				case 'mainwp_numberdays_Outdate_Plugin_Theme';
 				case 'mainwp_maximumPosts';
-                                case 'mainwp_maximumPages';                                    
+                case 'mainwp_maximumPages';
 				case 'mainwp_maximumComments';
-                                case 'mainwp_maximumSyncRequests';                                    
+                case 'mainwp_maximumSyncRequests';
 				case 'mainwp_maximumInstallUpdateRequests';
 					break;
 				case 'mainwp_archiveFormat':

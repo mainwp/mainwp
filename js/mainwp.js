@@ -2625,11 +2625,14 @@ mainwp_managesites_add = function (event) {
                         //Message the WP was added
                         setHtml('#mainwp_managesites_add_message', response);
                         if (site_id > 0) {
+                            mainwp_get_site_icon(site_id);                            
                             jQuery('.sync-ext-row').attr('status', 'queue');
                             jQuery('#mainwp_managesites_add_message').append( '<div id="mwp_applying_ext_settings"><i class="fa fa-spinner fa-pulse"></i> ' + __('Applying extensions settings...') + '<br/>');
-                            mainwp_managesites_sync_extension_start_next(site_id);
+                            setTimeout(function(){
+                                mainwp_managesites_sync_extension_start_next(site_id);
+                            }, 1000);
                         }
-
+                        
                         //Reset fields
                         jQuery('#mainwp_managesites_add_wpname').val('');
                         jQuery('#mainwp_managesites_add_wpurl').val('');
@@ -2826,6 +2829,29 @@ mainwp_extension_apply_plugin_settings = function(pPluginToInstall, pSiteId, pGl
         mainwp_managesites_sync_extension_start_next( pSiteId );
     }, 'json');
 }
+
+mainwp_get_site_icon = function(siteId) {   
+    jQuery('#mainwp_managesites_add_message').append( '<span id="download_icon_working">' + '<br/>' + __('Downloading site icon...') + ' <i class="fa fa-spinner fa-pulse"></i>' + '</span>');
+    var data = mainwp_secure_data({
+        action: 'mainwp_get_site_icon',        
+        siteId: siteId
+    });
+    jQuery.post(ajaxurl, data, function (response) {
+        jQuery('#mainwp_managesites_add_message').find('#download_icon_working').html('');
+        if (response) {
+            if (response.result && response.result == 'success') {
+                jQuery('#mainwp_managesites_add_message').find('#download_icon_working').html('<br/>' + __('Download site icon successful!'));
+            } else if (response.error != undefined) {
+                jQuery('#mainwp_managesites_add_errors').append(' ' + __('Download site icon failed') + ': ' + response.error);
+            } else {
+                jQuery('#mainwp_managesites_add_errors').append(' ' + __('Download site icon failed'));
+            }
+        } else {
+            jQuery('#mainwp_managesites_add_errors').append( ' ' + __('Download site icon failed') + ': ' + __( 'Undefined error!' ) );
+        }
+    }, 'json');
+}
+
 
 mainwp_managesites_test = function (event) {
     managesites_init();

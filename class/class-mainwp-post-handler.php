@@ -29,6 +29,7 @@ class MainWP_Post_Handler {
 		//Page: ManageSites
 		$this->addAction( 'mainwp_checkwp', array( &$this, 'mainwp_checkwp' ) );
 		$this->addAction( 'mainwp_addwp', array( &$this, 'mainwp_addwp' ) );
+                $this->addAction( 'mainwp_get_site_icon', array( &$this, 'get_site_icon' ) );                
 		$this->addAction( 'mainwp_ext_prepareinstallplugintheme', array( &$this, 'mainwp_ext_prepareinstallplugintheme' ) );
 		$this->addAction( 'mainwp_ext_performinstallplugintheme', array( &$this, 'mainwp_ext_performinstallplugintheme' ) );
 		$this->addAction( 'mainwp_ext_applypluginsettings', array( &$this, 'mainwp_ext_applypluginsettings' ) );
@@ -1141,6 +1142,15 @@ class MainWP_Post_Handler {
 		}
 	}
 
+        function get_site_icon() {
+		if ( $this->check_security( 'mainwp_get_site_icon', 'security' ) ) {
+			$result = MainWP_System::sync_site_icon();
+                        die( json_encode( $result ) );
+		} else {
+			die( json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
+		}
+	}
+        
 	function mainwp_ext_prepareinstallplugintheme() {
 
 		do_action( 'mainwp_prepareinstallplugintheme' );

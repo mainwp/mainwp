@@ -1137,6 +1137,8 @@ class MainWP_System {
 				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_wp_upgrades', json_encode( $websiteCoreUpgrades ) );
 				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_plugin_upgrades', $website->plugin_upgrades );
 				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_theme_upgrades', $website->theme_upgrades );
+                                // sync site favico one time per day
+                                MainWP_System::sync_site_icon( $website->id );
 			}
 
 			if ( count( $coreNewUpdate ) != 0 ) {
@@ -1198,8 +1200,8 @@ class MainWP_System {
 				$notTrustedThemesNewUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_themes_new' );
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_themes_new', MainWP_Utility::array_merge( $notTrustedThemesNewUpdateSaved, $notTrustedThemesNewUpdate ) );
 			}
-
-
+                     
+                        
 			if ( ( count( $coreToUpdate ) == 0 ) && ( count( $pluginsToUpdate ) == 0 ) && ( count( $themesToUpdate ) == 0 ) && ( count( $ignoredCoreToUpdate ) == 0 ) && ( count( $ignoredCoreNewUpdate ) == 0 )
 			     && ( count( $notTrustedPluginsToUpdate ) == 0 ) && ( count( $notTrustedPluginsNewUpdate ) == 0 ) && ( count( $notTrustedThemesToUpdate ) == 0 ) && ( count( $notTrustedThemesNewUpdate ) == 0 )
 			) {
@@ -1349,6 +1351,59 @@ class MainWP_System {
 		}
 	}
 
+        public static function sync_site_icon($siteId = null) {
+                
+                if($siteId === null) {
+                    if ( isset( $_POST['siteId'] ) )
+                       $siteId = $_POST['siteId'];     
+                }
+                
+                if ( MainWP_Utility::ctype_digit( $siteId ) ) {
+			$website = MainWP_DB::Instance()->getWebsiteById( $siteId );
+			if ( MainWP_Utility::can_edit_website( $website ) ) {
+				$error = '';
+
+				try {
+					$information = MainWP_Utility::fetchUrlAuthed( $website, 'get_site_icon' );
+				} catch ( MainWP_Exception $e ) {
+					$error = $e->getMessage();
+				}
+                                
+				if ( $error != '' ) {
+					return array( 'error' => $error );
+				} else if ( isset( $information['faviIconUrl'] ) && !empty($information['faviIconUrl']) ) {  
+                                        MainWP_Logger::Instance()->debug( 'Downloading icon :: ' . $information['faviIconUrl'] );
+                                        $content =  MainWP_Utility::get_file_content( $information['faviIconUrl'] );
+                                        if (!empty($content)) {                                            
+                                            $dirs      = MainWP_Utility::getMainWPDir();
+                                            $iconsDir = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
+                                            if ( ! @is_dir( $iconsDir ) ) {
+                                                    @mkdir( $iconsDir, 0777, true );
+                                            }
+                                            if ( ! file_exists( $iconsDir . 'index.php' ) ) {
+                                                    @touch( $iconsDir . 'index.php' );
+                                            }
+                                            $filename = basename($information['faviIconUrl']);
+                                            if ($filename) {
+                                                $filename = 'favi-' . $siteId . '-' . $filename;
+                                                if (file_put_contents($iconsDir . $filename, $content)) {
+                                                        MainWP_DB::Instance()->updateWebsiteOption( $website, 'favi_icon', $filename );
+                                                        return array( 'result' => 'success' ) ;
+                                                } else {
+                                                        return array( 'error' => 'Save icon file failed.' ) ;
+                                                }
+                                            }
+                                            return array( 'undefined_error' => true ) ;
+                                        } else 
+                                            return array( 'error' => __('Download icon file failed', 'mainwp')) ;
+				} else {
+					return array( 'undefined_error' => true ) ;
+				}
+			}
+		}
+		return array( 'result' => 'NOSITE' );                
+	} 
+        
 	function mainwp_cronpingchilds_action() {
 		MainWP_Logger::Instance()->info( 'CRON :: ping childs' );
 
@@ -2563,9 +2618,8 @@ class MainWP_System {
 					foreach ( $websites as $website ) {
 						$imgfavi = '';
 						if ( $website !== null ) {
-							if ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) {
-								$favi     = MainWP_DB::Instance()->getWebsiteOption( $website, 'favi_icon', '' );
-								$favi_url = MainWP_Utility::get_favico_url( $favi, $website );
+							if ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) {								
+								$favi_url = MainWP_Utility::get_favico_url( $website );
 								$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:bottom;"/>&nbsp;';
 							}
 						}

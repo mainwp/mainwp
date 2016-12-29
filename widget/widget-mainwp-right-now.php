@@ -518,7 +518,7 @@ class MainWP_Right_Now {
 
 		MainWP_DB::Instance()->updateWebsiteSyncValues( $website->id, array( 'dtsSyncStart' => time() ) );
 		MainWP_Utility::endSession();
-
+                
 		//Unlock
 		//        MainWP_Utility::release($identifier);
 		if ( MainWP_Sync::syncSite( $website ) ) {

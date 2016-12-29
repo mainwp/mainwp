@@ -1377,7 +1377,20 @@ class MainWP_Utility {
 
 		return $upload_dir['basedir'] . DIRECTORY_SEPARATOR;
 	}
-
+        
+        public static function getIconsDir() {
+            $dirs = self::getMainWPDir();            
+            $dir        = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
+            $url        = $dirs[1] . 'icons/';
+            if ( ! file_exists( $dir ) ) {
+                    @mkdir( $dir, 0777, true );
+            }
+            if ( ! file_exists( $dir . 'index.php' ) ) {
+                    @touch( $dir . 'index.php' );
+            }
+            return array( $dir, $url );
+        }
+        
 	public static function getMainWPDir() {
 		$upload_dir = wp_upload_dir();
 		$dir        = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'mainwp' . DIRECTORY_SEPARATOR;
@@ -1556,6 +1569,13 @@ class MainWP_Utility {
 		}
 	}
 
+        public static function get_file_content( $url ) {
+		$data = self::file_get_contents_curl($url);
+                if (empty($data))
+                    return false;
+		return $data;
+	}
+        
 	protected static function file_get_contents_curl( $url ) {
 		//$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -2642,15 +2662,27 @@ EOT;
 		return true;
 	}
 
-	public static function get_favico_url( $favi = '', $site = null ) {
+	public static function get_favico_url( $website ) {
+                $favi     = MainWP_DB::Instance()->getWebsiteOption( $website, 'favi_icon', '' );                                
+                $faviurl = '';
+                
 		if ( ! empty( $favi ) ) {
-			// fix bug
-			if ( ( strpos( $favi, '//' ) === 0 ) || ( strpos( $favi, 'http' ) === 0 ) ) {
+                        if (false !== strpos($favi, 'favi-' . $website->id . '-')) {
+                            $dirs      = self::getIconsDir();                            
+                            if (file_exists($dirs[0] . $favi )) {
+                                $faviurl = $dirs[1] . $favi;
+                            } else {
+                                $faviurl = '';
+                            }
+                        } else if ( ( strpos( $favi, '//' ) === 0 ) || ( strpos( $favi, 'http' ) === 0 ) ) {
 				$faviurl = $favi;
 			} else {
-				$faviurl = $site->url . $favi;
+				$faviurl = $website->url . $favi;
+                                $faviurl = MainWP_Utility::removeHttpPrefix( $faviurl );
 			}
-		} else {
+		} 
+                
+                if (empty($faviurl)){
 			$faviurl = plugins_url( 'images/sitefavi.png', dirname( __FILE__ ) );
 		}
 

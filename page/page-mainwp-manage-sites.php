@@ -1592,7 +1592,7 @@ class MainWP_Manage_Sites {
 
 		die( json_encode( $ret ) );
 	}
-
+        
 	public static function apply_plugin_settings() {
 		$site_id = $_POST['siteId'];
 		$ext_dir_slug = $_POST['ext_dir_slug'];
@@ -1630,11 +1630,24 @@ class MainWP_Manage_Sites {
 				} catch ( MainWP_Exception $e ) {
 					$error = $e->getMessage();
 				}
-
+                                   
+                                 
+                                // delete icon file
+                                
+                                $favi     = MainWP_DB::Instance()->getWebsiteOption( $website, 'favi_icon', '' );                                    
+                                if (!empty($favi) && (false !== strpos($favi, 'favi-' . $website->id . '-'))) {
+                                    $dirs      = MainWP_Utility::getIconsDir();                               
+                                    if (file_exists($dirs[0] . $favi )) {
+                                        unlink( $dirs[0] . $favi );
+                                    } 
+                                }
+                                
 				//Remove from DB
 				MainWP_DB::Instance()->removeWebsite( $website->id );
 				do_action( 'mainwp_delete_site', $website );
-
+                                
+                            
+                                
 				if ( $error === 'NOMAINWP' ) {
 					$error = __( 'Be sure to deactivate the child plugin from the site to avoid potential security issues.', 'mainwp' );
 				}

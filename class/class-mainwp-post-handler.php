@@ -139,6 +139,7 @@ class MainWP_Post_Handler {
 		//Page: ManageTips
 		$this->addAction( 'mainwp_managetips_update', array( &$this, 'mainwp_managetips_update' ) ); //ok
 		$this->addAction( 'mainwp_tips_update', array( &$this, 'mainwp_tips_update' ) ); //ok
+                $this->addAction( 'mainwp_notice_status_update', array( &$this, 'mainwp_notice_status_update' ) );                 
 		$this->addAction( 'mainwp_dismiss_twit', array( &$this, 'mainwp_dismiss_twit' ) );
 		$this->addAction( 'mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
 
@@ -573,7 +574,14 @@ class MainWP_Post_Handler {
 				}
 				$status[ $_POST['tour_id'] ] = 1;
 				update_user_option( $user_id, 'mainwp_tours_status', $status );
-			}
+			} else {
+                                $status = get_user_option( 'mainwp_notice_saved_status' );
+				if ( ! is_array( $status ) ) {
+					$status = array();
+				}
+				$status[ $_POST['notice_id'] ] = 1;
+				update_user_option( $user_id, 'mainwp_notice_saved_status', $status );
+                        }
 		}
 		die( 1 );
 	}
@@ -592,7 +600,7 @@ class MainWP_Post_Handler {
 		}
 		die( 1 );
 	}
-
+      
 	function mainwp_dismiss_twit() {
 		$this->secure_request( 'mainwp_dismiss_twit' );
 

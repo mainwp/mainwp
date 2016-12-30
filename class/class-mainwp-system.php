@@ -439,7 +439,20 @@ class MainWP_System {
 		if ( ! is_array( $current_options ) ) {
 			$current_options = array();
 		}
-
+                
+                $phpver = phpversion();
+                if ( version_compare($phpver, '5.5', '<')) {  
+                    if ( MainWP_Utility::showMainWPMessage( 'notice', 'phpver_5_5' ) ) {			
+                        ?>
+                      <div class="mainwp-notice-wrap mainwp-notice mainwp-notice-red" style="margin-top: 2em">
+                           <?php echo sprintf(__('<strong>MainWP Notice:</strong> Your server is currently running PHP version %s in the next few months your MainWP Dashboard will require PHP 5.5 as a minimum.<br/><br/>Please upgrade your server to at least 5.5 but we recommend PHP 7. You can find a template email to send your host %shere%s.', 'mainwp' ), $phpver, '<a href="https://wordpress.org/about/requirements/" target="_blank">','</a>'); ?>
+                           <span class="mainwp-right"><a class="mainwp-notice-dismiss" notice-id="phpver_5_5"
+                                                         style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
+                       </div>
+                       <?php
+                    }                    
+                } 
+                        
 		if ( is_multisite() && ( !isset( $current_options['hide_multi_site_notice'] ) || empty( $current_options['hide_multi_site_notice'] ) ) ) {
 			?>
 			<div class="mainwp-events-notice mainwp-notice mainwp-notice-red">

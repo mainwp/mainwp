@@ -6938,6 +6938,8 @@ jQuery(document).on('click', '.mainwp-notice-dismiss', function(){
     };
     if (notice_id.indexOf('tour_') === 0) {
         data['tour_id'] = notice_id.replace('tour_', '');
+    } else {
+        data['notice_id'] = notice_id;
     }
     jQuery.post(ajaxurl, data, function (res) {
     });

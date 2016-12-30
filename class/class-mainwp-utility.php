@@ -2617,6 +2617,8 @@ EOT;
     public static function showMainWPMessage( $type, $notice_id ) {
         if ( 'tour' == $type ) {
             $status = get_user_option( 'mainwp_tours_status' );
+        }  else {
+            $status = get_user_option( 'mainwp_notice_saved_status' );
         }
         if ( ! is_array( $status ) ) {
                 $status = array();

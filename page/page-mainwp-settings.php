@@ -376,7 +376,8 @@ class MainWP_Settings {
             </div>
         </form>
         <?php
-        if ( !empty( get_option( 'live-report-responder-siteurl' ) ) )
+        $live = get_option( 'live-report-responder-siteurl' );
+        if ( !empty( $live ) )
             self::renderReportResponderUserPage();
     }
 

@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.7
-Stable tag: 3.2.1
+Stable tag: 3.2.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,27 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.2.2 - 12-30-16 =
+* Fixed: an issue with adding a new child site when a group is not selected
+* Fixed: an issue with updating translations in the Updates Overview widget
+* Fixed: an issue with sorting sites by a group name in Manage Sites table
+* Fixed: an issue with creating groups on the Add New Site form
+* Added: the ability to dismiss the Tour notices - [Trello Card](https://trello.com/c/nJfApKsn/48-hide-tours)
+* Added: plugin changelog link into the email notification
+* Added: new Font Awesome version version font awesome
+* Added: hook mainwp_format_email to custom notification email
+* Added: site note preview feature - [Trello Card](https://trello.com/c/KVrkXJZf/49-notes-section)
+* Added: new columns in the Mange Sites table WP Core, Plugins, Themes updates number - [Trello Card](https://trello.com/c/Amio60MQ/33-add-core-plugin-theme-update-columns-to-sites-list-view)
+* Added: icon for trusted plugins and themes in the Updates and Updates Overview sections - [Trello Card](https://trello.com/c/2Zk8aXDj/5-trusted-status-indicator-for-individual-plugins-and-themes-listed-in-main-dashboard-display)
+* Added: Sync Now button for all sites in the Connection Status widget - [Trello Card](https://trello.com/c/TEqC9ERt/52-sync-now-available-for-all-sites-in-the-connection-status-widget)
+* Updated: load Select2 Javascript library only on MainWP Dashboard pages
+* Updated: auto request extensions update information
+* Updated: display child site favicon feature
+* Updated: Select2 library
+* Updated: site connection process (MD5 encryption not supported)
+* Updated: multiple functions refactored
+* Removed: unused Google js api reference
 
 = 3.2.1 - 12-01-16 =
 * Fixed: an issue with saving site groups on the Add New site form

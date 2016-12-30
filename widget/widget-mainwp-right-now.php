@@ -2148,7 +2148,8 @@ class MainWP_Right_Now {
 									<div class="mainwp-clear"></div>
 								</div>
 							<?php }
-							?>
+
+								?>
                                                     </div>
                                             </div>
                                             <?php

@@ -181,6 +181,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: site connection process (MD5 encryption not supported)
 * Updated: multiple functions refactored
 * Removed: unused Google js api reference
+* Preventative: Security improvements
 
 = 3.2.1 - 12-01-16 =
 * Fixed: an issue with saving site groups on the Add New site form

@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.7
-Stable tag: 3.2.2
+Stable tag: 3.2.2.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,10 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 3.2.2.1 - 12-30-16 =
+* Fixed: a fatal error on PHP versions less than 5.5 
+* Added: a message for users on PHP versions less than 5.5 to upgrade
+
 = 3.2.2 - 12-30-16 =
 * Fixed: an issue with adding a new child site when a group is not selected
 * Fixed: an issue with updating translations in the Updates Overview widget
@@ -181,6 +185,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: site connection process (MD5 encryption not supported)
 * Updated: multiple functions refactored
 * Removed: unused Google js api reference
+* Preventative: Security improvements
 
 = 3.2.1 - 12-01-16 =
 * Fixed: an issue with saving site groups on the Add New site form

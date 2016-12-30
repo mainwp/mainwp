@@ -161,6 +161,10 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 3.2.2.1 - 12-30-16 =
+* Fixed: a fatal error on PHP versions less than 5.5 
+* Added: a message for users on PHP versions less than 5.5 to upgrade
+
 = 3.2.2 - 12-30-16 =
 * Fixed: an issue with adding a new child site when a group is not selected
 * Fixed: an issue with updating translations in the Updates Overview widget

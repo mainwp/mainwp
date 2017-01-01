@@ -2296,10 +2296,6 @@ class MainWP_System {
 	}
 
 	function admin_head() {
-		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'js/jsapi.js' . '"></script>';
-		echo '<script type="text/javascript">
-  				google.load("visualization", "1", {packages:["corechart"]});
-			</script>';
 		echo '<script type="text/javascript">var mainwp_ajax_nonce = "' . wp_create_nonce( 'mainwp_ajax' ) . '"</script>';
 		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'js/FileSaver.js' . '"></script>';
 		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'js/jqueryFileTree.js' . '"></script>';

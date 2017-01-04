@@ -2960,8 +2960,8 @@ class MainWP_Right_Now {
 			<div id="rightnow-upgrade-status-progress"></div>
 			<span id="rightnow-upgrade-status-current">0</span> /
 			<span id="rightnow-upgrade-status-total"></span> <?php _e( 'updated', 'mainwp' ); ?>
-			<div style="height: 160px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left">
-				<table style="width: 100%" id="rightnow-upgrade-list">
+			<div style="height: 160px; overflow: auto; margin-top: 10px; text-align: left">
+				<table style="width: 100%; padding:1em" id="rightnow-upgrade-list">
 				</table>
 			</div>
 			<input id="rightnow-upgrade-status-close" type="button" name="Close" value="<?php _e( 'Close', 'mainwp' ); ?>" class="button"/>

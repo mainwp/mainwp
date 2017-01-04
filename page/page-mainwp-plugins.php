@@ -828,7 +828,7 @@ public static function renderHeader( $shownPage ) {
 		</div>
 		<script type="text/javascript">
 			jQuery(document).ready(function() {
-				jQuery('#mainwp_bulk_action').select2({minimumResultsForSearch: 10, width: '170px', allowClear: true});
+				jQuery('#mainwp_bulk_action').select2({minimumResultsForSearch: 10, width: '170px', allowClear: false});
 				jQuery("#plugins_fixedtable").tableHeadFixer({"left" : 1});
 			});
 		</script>

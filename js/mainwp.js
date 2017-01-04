@@ -2375,7 +2375,7 @@ jQuery(document).ready(function () {
             jQuery('#mainwp_managesites_add_wpname').val(url);
         }
         jQuery('#mainwp_managesites_add_wpurl').val(url);
-        jQuery('#mainwp_managesites_add_wpurl_protocol').val(protocol);
+        jQuery('#mainwp_managesites_add_wpurl_protocol').val(protocol).trigger("change");        
     });
     jQuery('.mainwp_site_reconnect').live('click', function(event)
     {

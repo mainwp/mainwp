@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.7
-Stable tag: 3.2.2.1
+Stable tag: 3.2.2.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.2.2.2 - 1-5-17 =
+* Fixed: an issue with connecting HTTPS sites caused by the Select2 library bug
 
 = 3.2.2.1 - 12-30-16 =
 * Fixed: a fatal error on PHP versions less than 5.5 

@@ -5117,7 +5117,16 @@ jQuery(document).ready(function () {
 
         var tmp = jQuery("input[name='page[]']:checked");
         countSent = tmp.length;
-
+        
+        if (countSent == 0)
+            return false;
+        
+        if (action == 'delete') {
+            if (!confirm(__('You are about to delete %1 page(s). Are you sure you want to proceed?', countSent))) {
+                return false;
+            }
+        }
+        
         jQuery('#mainwp_bulk_page_action_apply').attr('disabled', 'true');
 
         tmp.each(
@@ -5605,7 +5614,16 @@ jQuery(document).ready(function () {
 
         var tmp = jQuery("input[name='post[]']:checked");
         countSent = tmp.length;
-
+            
+        if (countSent == 0)
+            return false;
+        
+        if (action == 'delete') {
+            if (!confirm(__('You are about to delete %1 post(s). Are you sure you want to proceed?', countSent))) {
+                return false;
+            }
+        }
+        
         jQuery('#mainwp_bulk_post_action_apply').attr('disabled', 'true');
 
         tmp.each(
@@ -6140,6 +6158,12 @@ jQuery(document).ready(function () {
         if (userCountSent == 0)
             return false;
 
+        if (action == 'delete') {
+            if (!confirm(__('You are about to delete %1 user(s). Are you sure you want to proceed?', userCountSent))) {
+                return false;
+            }
+        }
+        
         jQuery('#mainwp_bulk_user_action_apply').attr('disabled', 'true');
 
         if (action == 'edit') {

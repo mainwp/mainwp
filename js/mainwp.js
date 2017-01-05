@@ -6413,17 +6413,28 @@ mainwp_fetch_users = function () {
 };
 
 // to fix select all for ajax generate table
-jQuery('table.fix-select-all-ajax-table .column-cb input[type="checkbox"]').live('click', function () {
+jQuery('table.fix-select-all-ajax-table .column-cb input[type="checkbox"]').live('click', function () {    
     var selAll = jQuery(this).is(':checked');
-    jQuery('table.fix-select-all-ajax-table .check-column input[type="checkbox"]').each(function (i) {
+    jQuery('table.fix-select-all-ajax-table .check-column input[type="checkbox"]').each(function () {
+        this.checked = false;
+    })    
+    jQuery('table.fix-select-all-ajax-table .check-column input[type="checkbox"]:visible').each(function () {
         this.checked = selAll;
     });
 })
 jQuery('table.fix-select-all-ajax-table tbody .check-column input[type="checkbox"]').live('click', function () {
-    var count = jQuery('table.fix-select-all-ajax-table tbody .check-column input[type="checkbox"]').length;
-    jQuery('table.fix-select-all-ajax-table .column-cb input[type="checkbox"]').each(function () {
-        this.checked = (jQuery('table.fix-select-all-ajax-table tbody .check-column input[type="checkbox"]:checked').length == count) ? true : false;
-    });
+    var count = jQuery('table.fix-select-all-ajax-table tbody .check-column input[type="checkbox"]:visible').length;
+    var countChecked = 0;
+    jQuery('table.fix-select-all-ajax-table tbody .check-column input[type="checkbox"]:visible').each(function () {
+        if (this.checked)
+            countChecked++;        
+    });    
+    if (count == countChecked) {
+        jQuery('table.fix-select-all-ajax-table .column-cb input[type="checkbox"]').prop('checked',true);
+    } else {
+        jQuery('table.fix-select-all-ajax-table .column-cb input[type="checkbox"]').prop('checked',false);
+    }
+    
 })
 // end
 

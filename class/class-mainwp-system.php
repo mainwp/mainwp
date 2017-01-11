@@ -1892,14 +1892,15 @@ class MainWP_System {
 		$started = get_option('mainwp_getting_started');
 		if (!empty($started)) {
 			delete_option('mainwp_getting_started');
-			if ('started' == $started) {
-				wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=started' ) );
-				exit;
-			} else if ('whatnew' == $started) {
-				wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=whatnew' ) );
-				exit;
-			}
-
+                        if (! is_multisite()) {
+                            if ('started' == $started) {
+                                    wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=started' ) );
+                                    exit;
+                            } else if ('whatnew' == $started) {
+                                    wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=whatnew' ) );
+                                    exit;
+                            }
+                        }
 		}
 
 		if ( ! get_transient( '_mainwp_activation_redirect' ) || is_network_admin() ) {

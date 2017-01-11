@@ -883,7 +883,7 @@ class MainWP_Manage_Sites_View {
 	}
 	
 	public static function showBackups( &$website, $fullBackups, $dbBackups ) {
-		$output = '';
+		$output = '';                
 		echo '<table>';
 
 		$mwpDir = MainWP_Utility::getMainWPDir();
@@ -906,7 +906,7 @@ class MainWP_Manage_Sites_View {
 		}
 		if ( $output == '' ) {echo '<br />'. __( 'No database only backup has been taken yet','mainwp' ) . '<br /><br />';
 		} else { echo '<strong style="font-size: 14px">'. __( 'Last backups from your database:','mainwp' ) . '</strong>' . $output;}
-		echo '</table>';
+		echo '</table>';                
 	}
 
 

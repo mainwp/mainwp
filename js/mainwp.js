@@ -2362,7 +2362,7 @@ jQuery(document).ready(function () {
 
     jQuery('#mainwp_managesites_add_wpurl').live('change', function (event) {
         var url = jQuery('#mainwp_managesites_add_wpurl').val();
-        var protocol = 'http';
+        var protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
         if (url.lastIndexOf('http://') === 0) {
             protocol = 'http';
             url = url.substring(7);

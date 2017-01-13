@@ -436,12 +436,7 @@ class MainWP_Settings {
             </div>
             <?php
         } else {
-            if ( !empty( $all_users_result[ 'message' ] ) ) {
-                $message = $all_users_result['message'];
-            } else {
-                $message = 'Unknown Error';
-            }
-            echo '<div class="error" style="margin-top: 50px;"><p><strong>' . $message . '</strong></p></div>';
+             echo '<div class="error" style="margin-top: 50px;"><p>Connection to your MainWP Dashboard from '. esc_attr( get_option( 'live-report-responder-siteurl' ) ).' is open. Please connect your MainWP Dashboard to your Managed Client Reports for WooCommerce site.</strong></p></div>';
         }
     }
 
@@ -820,14 +815,15 @@ class Live_Reports_Responder_Class {
                     $info = curl_getinfo($ch);
 
                     if (empty($info['http_code'])) {
-
-                        if (!empty(curl_error($ch)))
+                        $curl_error=curl_error($ch);
+                        if (!empty($curl_error)){
 
                             $error_msg = curl_error($ch);
 
-                        else
+                        }else{
 
                             $error_msg = "Unknown Error";
+                        }
 
                     } else {
 

@@ -52,7 +52,9 @@ if ( ! function_exists( 'mainwpdir' ) ) {
 		return WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . dirname( plugin_basename( __FILE__ ) ) . DIRECTORY_SEPARATOR . 'libs' . DIRECTORY_SEPARATOR;
 	}
 }
-
+if ( file_exists( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename( __DIR__ ).DIRECTORY_SEPARATOR.'class'.DIRECTORY_SEPARATOR.'class-mainwp-creport.php' ) ) {
+    include_once WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename( __DIR__ ).DIRECTORY_SEPARATOR.'class'.DIRECTORY_SEPARATOR.'class-mainwp-creport.php';
+}
 if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
 	function mainwp_do_not_have_permissions( $where = '', $echo = true ) {
 		$msg = sprintf( __( 'You do not have sufficient permissions to access this page (%s).', 'mainwp' ), ucwords( $where ) );

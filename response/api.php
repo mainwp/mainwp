@@ -69,9 +69,9 @@ if ( isset( $_POST[ 'content' ] ) && isset( $_POST[ 'action' ] ) && ( 'displayco
 			$report->body = "";
 			$report->footer = "";
 			$report->type = 0;
-			$report->sites = "";
-			$report->groups = "";
-			$report->selected_site = $_POST['siteid'];
+                        $sites = base64_encode( serialize( array( $_POST['siteid'] ) ) );
+			$report->sites = $sites;
+			$report->groups = "";                        
 			$report->schedule_nextsend = 0;
 			$filtered_reports = MainWP_Live_Reports_Class::filter_report($report, '');
 			echo json_encode( array( "result" => "success", "data" => html_entity_decode( stripslashes( $filtered_reports[ $_POST[ 'siteid' ] ]->filtered_header ) ) ) );
@@ -112,11 +112,10 @@ if ( isset( $_POST[ 'content' ] ) && isset( $_POST[ 'action' ] ) && ( 'liverepor
 				$report->body = "";
 				$report->footer = "";
 				$report->type = 0;
-				$report->sites = "";
+				$sites = base64_encode( serialize( array( $_POST['siteid'] ) ) );
+                                $report->sites = $sites;
 				$report->groups = "";
-				$report->selected_site = $_POST['siteid'];
 				$report->schedule_nextsend = 0;
-
 				$filtered_reports = MainWP_Live_Reports_Class::filter_report( $report, $_POST[ 'allowed_tokens' ] );
 				echo json_encode( array( "result" => "success", "data" => html_entity_decode( stripslashes( $filtered_reports[ $_POST[ 'siteid' ] ]->filtered_header ) ) ) );
 				exit;

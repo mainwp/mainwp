@@ -486,62 +486,126 @@ rightnow_translations_upgrade_int = function (slug, websiteId, bulkMode, noCheck
             type:'translation',
             slug:pSlug
         });
-        jQuery.post(ajaxurl, data, function (pSlug, pWebsiteId, pBulkMode)
-        {
-            return function (response)
+        jQuery.ajax({
+            type: "POST",
+            url: ajaxurl,
+            data: data,
+            success: function (pSlug, pWebsiteId, pBulkMode)
+                    {
+                        return function (response)
+                        {
+                            var slugParts = pSlug.split(',');
+                            var done = false;
+                            for (var i = 0; i < slugParts.length; i++)
+                            {
+                                var result;
+                                //Siteview
+                                var websiteHolder = jQuery('div[translation_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
+                                if (!websiteHolder.exists())
+                                {
+                                    websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[translation_slug="' + slugParts[i] + '"]');
+                                }
+
+                                if (response.error)
+                                {
+                                    result = getErrorMessage(response.error);
+                                    if (!done && pBulkMode) rightnow_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('FAILED') + '</span>' );
+                                }
+                                else
+                                {
+                                    var res = response.result;
+
+                                    if (res[slugParts[i]])
+                                    {
+                                        if (!done && pBulkMode) rightnow_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>');
+                                        result = __('Update successful!');
+                                        if (response.site_url)
+                                            result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
+
+                                        websiteHolder.attr('updated', 1);
+                                        countRealItemsUpdated++;
+                                        if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
+                                    }
+                                    else
+                                    {
+                                        if (!done && pBulkMode) rightnow_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('FAILED') + '</span>' );
+                                        result = __('Update Failed!');
+                                    }
+                                }
+                                if (!done && pBulkMode)
+                                {
+                                    rightnow_translations_upgrade_all_update_done();
+                                    done = true;
+                                }
+                                websiteHolder.find('.translationsInfo').html(result);
+                            }
+
+                            if (websitesDone == websitesTotal)
+                            {
+                                couttItemsToUpdate = itemsToUpdate.length;
+                                rightnow_send_twitt_info();
+                            }
+                        }
+                    }(pSlug, pWebsiteId, pBulkMode),
+            tryCount : 0,
+            retryLimit : 3,
+            endError: function (pSlug, pWebsiteId, pBulkMode)
             {
-                var slugParts = pSlug.split(',');
-                var done = false;
-                for (var i = 0; i < slugParts.length; i++)
+                return function ()
                 {
-                    var result;
-                    //Siteview
-                    var websiteHolder = jQuery('div[translation_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
-                    if (!websiteHolder.exists())
+                    var slugParts = pSlug.split(',');
+                    var done = false;
+                    for (var i = 0; i < slugParts.length; i++)
                     {
-                        websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[translation_slug="' + slugParts[i] + '"]');
-                    }
-
-                    if (response.error)
-                    {
-                        result = getErrorMessage(response.error);
-                        if (!done && pBulkMode) rightnow_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('FAILED') + '</span>' );
-                    }
-                    else
-                    {
-                        var res = response.result;
-
-                        if (res[slugParts[i]])
+                        var result;
+                        //Siteview
+                        var websiteHolder = jQuery('div[translation_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
+                        if (!websiteHolder.exists())
                         {
-                            if (!done && pBulkMode) rightnow_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>');
-                            result = __('Update successful!');
-                            if (response.site_url)
-                                result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
+                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[translation_slug="' + slugParts[i] + '"]');
+                        }
 
-                            websiteHolder.attr('updated', 1);
-                            countRealItemsUpdated++;
-                            if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
-                        }
-                        else
+                        result = __('FAILED');
+                        if (!done && pBulkMode)
                         {
-                            if (!done && pBulkMode) rightnow_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('FAILED') + '</span>' );
-                            result = __('Update Failed!');
+                            rightnow_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('FAILED') + '</span>' );
+                            rightnow_translations_upgrade_all_update_done();
+                            done = true;
+                        }
+
+                        websiteHolder.find('.translationsInfo').html(result);
+                    }
+
+                    if (websitesDone == websitesTotal)
+                    {
+                        couttItemsToUpdate = itemsToUpdate.length;
+                        rightnow_send_twitt_info();
+                    }
+                }
+            }(pSlug, pWebsiteId, pBulkMode),
+            error: function(xhr, textStatus, errorThrown ) {
+                this.tryCount++;
+                if (this.tryCount >= this.retryLimit) {
+                    this.endError();
+                    return;
+                }
+
+                var fnc = function(pRqst, pXhr) {
+                    return function() {
+                        if (pXhr.status == 404) {
+                            //handle error
+                            jQuery.ajax(pRqst);
+                        } else if (pXhr.status == 500) {
+                            //handle error
+                        } else {
+                            //handle error
                         }
                     }
-                    if (!done && pBulkMode)
-                    {
-                        rightnow_translations_upgrade_all_update_done();
-                        done = true;
-                    }
-                    websiteHolder.find('.translationsInfo').html(result);
-                }
-                if (websitesDone == websitesTotal)
-                {
-                    couttItemsToUpdate = itemsToUpdate.length;
-                    rightnow_send_twitt_info();
-                }
-            }
-        }(pSlug, pWebsiteId, pBulkMode), 'json');
+                }(this, xhr);
+                setTimeout(fnc, 500);
+            },
+            dataType: 'json'
+        });
 
         rightnowContinueAfterBackup = undefined;
     } }(slug, websiteId, bulkMode);
@@ -839,62 +903,125 @@ rightnow_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck)
             type:'plugin',
             slug:pSlug
         });
-        jQuery.post(ajaxurl, data, function (pSlug, pWebsiteId, pBulkMode)
-        {
-            return function (response)
+        jQuery.ajax({
+            type: "POST",
+            url: ajaxurl,
+            data: data,
+            success: function (pSlug, pWebsiteId, pBulkMode)
+                    {
+                        return function (response)
+                        {
+                            var slugParts = pSlug.split(',');
+                            var done = false;
+                            for (var i = 0; i < slugParts.length; i++)
+                            {
+                                var result;
+                                //Siteview
+                                var websiteHolder = jQuery('div[plugin_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
+                                if (!websiteHolder.exists())
+                                {
+                                    websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[plugin_slug="' + slugParts[i] + '"]');
+                                }
+
+                                if (response.error)
+                                {
+                                    result = getErrorMessage(response.error);
+                                    if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('FAILED') + '</span>' );
+                                }
+                                else
+                                {
+                                    var res = response.result;
+
+                                    if (res[slugParts[i]])
+                                    {
+                                        if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>');
+                                        result = __('Update successful!');
+                                        if (response.site_url)
+                                            result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
+
+                                        websiteHolder.attr('updated', 1);
+                                        countRealItemsUpdated++;
+                                        if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
+                                    }
+                                    else
+                                    {
+                                        if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('FAILED') + '</span>' );
+                                        result = __('Update failed!');
+                                    }
+                                }
+                                if (!done && pBulkMode)
+                                {
+                                    rightnow_plugins_upgrade_all_update_done();
+                                    done = true;
+                                }
+                                websiteHolder.find('.pluginsInfo').html(result);
+                            }
+
+                            if (websitesDone == websitesTotal)
+                            {
+                                couttItemsToUpdate = itemsToUpdate.length;
+                                rightnow_send_twitt_info();
+                            }
+                        }
+                    }(pSlug, pWebsiteId, pBulkMode),
+            tryCount : 0,
+            retryLimit : 3,
+            endError: function (pSlug, pWebsiteId, pBulkMode)
             {
-                var slugParts = pSlug.split(',');
-                var done = false;
-                for (var i = 0; i < slugParts.length; i++)
+                return function ()
                 {
-                    var result;
-                    //Siteview
-                    var websiteHolder = jQuery('div[plugin_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
-                    if (!websiteHolder.exists())
+                    var slugParts = pSlug.split(',');
+                    var done = false;
+                    for (var i = 0; i < slugParts.length; i++)
                     {
-                        websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[plugin_slug="' + slugParts[i] + '"]');
-                    }
-
-                    if (response.error)
-                    {
-                        result = getErrorMessage(response.error);
-                        if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('FAILED') + '</span>' );
-                    }
-                    else
-                    {
-                        var res = response.result;
-
-                        if (res[slugParts[i]])
+                        var result;
+                        //Siteview
+                        var websiteHolder = jQuery('div[plugin_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
+                        if (!websiteHolder.exists())
                         {
-                            if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>');
-                            result = __('Update successful!');
-                            if (response.site_url)
-                                result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
+                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[plugin_slug="' + slugParts[i] + '"]');
+                        }
 
-                            websiteHolder.attr('updated', 1);
-                            countRealItemsUpdated++;
-                            if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
-                        }
-                        else
+                        result = __('FAILED');
+                        if (!done && pBulkMode)
                         {
-                            if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('FAILED') + '</span>' );
-                            result = __('Update failed!');
+                            rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('FAILED') + '</span>' );
+                            rightnow_plugins_upgrade_all_update_done();
+                            done = true;
+                        }
+                        websiteHolder.find('.pluginsInfo').html(result);
+                    }
+
+                    if (websitesDone == websitesTotal)
+                    {
+                        couttItemsToUpdate = itemsToUpdate.length;
+                        rightnow_send_twitt_info();
+                    }
+                }
+            }(pSlug, pWebsiteId, pBulkMode),
+            error: function(xhr, textStatus, errorThrown ) {
+                this.tryCount++;
+                if (this.tryCount >= this.retryLimit) {
+                    this.endError();
+                    return;
+                }
+
+                var fnc = function(pRqst, pXhr) {
+                    return function() {
+                        if (pXhr.status == 404) {
+                            //handle error
+                            jQuery.ajax(pRqst);
+                        } else if (pXhr.status == 500) {
+                            //handle error
+                        } else {
+                            //handle error
                         }
                     }
-                    if (!done && pBulkMode)
-                    {
-                        rightnow_plugins_upgrade_all_update_done();
-                        done = true;
-                    }
-                    websiteHolder.find('.pluginsInfo').html(result);
-                }
-                if (websitesDone == websitesTotal)
-                {
-                    couttItemsToUpdate = itemsToUpdate.length;
-                    rightnow_send_twitt_info();
-                }
-            }
-        }(pSlug, pWebsiteId, pBulkMode), 'json');
+                }(this, xhr);
+                setTimeout(fnc, 500);
+            },
+            dataType: 'json'
+        });
 
         rightnowContinueAfterBackup = undefined;
     } }(slug, websiteId, bulkMode);
@@ -1162,60 +1289,122 @@ rightnow_themes_upgrade_int = function (slug, websiteId, bulkMode)
         type:'theme',
         slug:slug
     });
-    jQuery.post(ajaxurl, data, function (pSlug, pWebsiteId, pBulkMode)
-    {
-        return function (response)
+    jQuery.ajax({
+        type: "POST",
+        url: ajaxurl,
+        data: data,
+        success: function (pSlug, pWebsiteId, pBulkMode)
+                {
+                    return function (response)
+                    {
+                        var slugParts = pSlug.split(',');
+                        var done = false;
+                        for (var i = 0; i < slugParts.length; i++)
+                        {
+                            var result;
+                            var websiteHolder = jQuery('div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
+                            if (!websiteHolder.exists())
+                            {
+                                websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + slugParts[i] + '"]');
+                            }
+                            if (response.error)
+                            {
+                                result = getErrorMessage(response.error);
+                                if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('FAILED') + '</span>' );
+                            }
+                            else
+                            {
+                                var res = response.result;
+
+                                if (res[slugParts[i]])
+                                {
+                                    if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>' );
+                                    result = __('Update successful!');
+                                    if (response.site_url)
+                                        result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + websiteId + '" target="_blank">WP Admin</a>';
+                                    websiteHolder.attr('updated', 1);
+                                    countRealItemsUpdated++;
+                                    if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
+                                }
+                                else
+                                {
+                                    if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('FAILED') + '</span>' );
+                                    result = __('Update failed!');
+                                }
+
+                            }
+                            if (!done && pBulkMode)
+                            {
+                                rightnow_themes_upgrade_all_update_done();
+                                done = true;
+                            }
+                            websiteHolder.find('.pluginsInfo').html(result);
+                        }
+
+                        if (websitesDone == websitesTotal)
+                        {
+                            couttItemsToUpdate = itemsToUpdate.length;
+                            rightnow_send_twitt_info();
+                        }
+                    }
+                }(slug, websiteId, bulkMode),
+        tryCount : 0,
+        retryLimit : 3,
+        endError: function (pSlug, pWebsiteId, pBulkMode)
         {
-            var slugParts = pSlug.split(',');
-            var done = false;
-            for (var i = 0; i < slugParts.length; i++)
+            return function ()
             {
-                var result;
-                var websiteHolder = jQuery('div[theme_slug="' + pSlug + '"] div[site_id="' + pWebsiteId + '"]');
-                if (!websiteHolder.exists())
+                var slugParts = pSlug.split(',');
+                var done = false;
+                for (var i = 0; i < slugParts.length; i++)
                 {
-                    websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + pSlug + '"]');
-                }
-                if (response.error)
-                {
-                    result = getErrorMessage(response.error);
-                    if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('FAILED') + '</span>' );
-                }
-                else
-                {
-                    var res = response.result;
-
-                    if (res[pSlug])
+                    var result;
+                    var websiteHolder = jQuery('div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
+                    if (!websiteHolder.exists())
                     {
-                        if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>' );
-                        result = __('Update successful!');
-                        if (response.site_url)
-                            result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + websiteId + '" target="_blank">WP Admin</a>';
-                        websiteHolder.attr('updated', 1);
-                        countRealItemsUpdated++;
-                        if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
-                    }
-                    else
-                    {
-                        if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('FAILED') + '</span>' );
-                        result = __('Update failed!');
+                        websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + slugParts[i] + '"]');
                     }
 
+                    result = __('FAILED');
+                    if (!done && pBulkMode)
+                    {
+                        rightnow_themes_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('FAILED') + '</span>' );
+                        rightnow_themes_upgrade_all_update_done();
+                        done = true;
+                    }
+                    websiteHolder.find('.pluginsInfo').html(result);
                 }
-                if (!done && pBulkMode)
+
+                if (websitesDone == websitesTotal)
                 {
-                    rightnow_themes_upgrade_all_update_done();
-                    done = true;
+                    couttItemsToUpdate = itemsToUpdate.length;
+                    rightnow_send_twitt_info();
                 }
-                websiteHolder.find('.pluginsInfo').html(result);
             }
-            if (websitesDone == websitesTotal)
-            {
-                couttItemsToUpdate = itemsToUpdate.length;
-                rightnow_send_twitt_info();
+        }(slug, websiteId, bulkMode),
+        error: function(xhr, textStatus, errorThrown ) {
+            this.tryCount++;
+            if (this.tryCount >= this.retryLimit) {
+                this.endError();
+                return;
             }
-        }
-    }(slug, websiteId, bulkMode), 'json');
+
+            var fnc = function(pRqst, pXhr) {
+                return function() {
+                    if (pXhr.status == 404) {
+                        //handle error
+                        jQuery.ajax(pRqst);
+                    } else if (pXhr.status == 500) {
+                        //handle error
+                    } else {
+                        //handle error
+                    }
+                }
+            }(this, xhr);
+            setTimeout(fnc, 500);
+        },
+        dataType: 'json'
+    });
 
     return false;
 };
@@ -1541,92 +1730,92 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
         });
 
         jQuery.ajax({
-                type: "POST",
-                url: ajaxurl,
-                data: data,
-                success: function (pWebsiteId, pSlug, pPluginSlugToUpgrade, pWordpressUpgrade, pPluginDone, pUpgradeDone, pErrorMessage)
+            type: "POST",
+            url: ajaxurl,
+            data: data,
+            success: function (pWebsiteId, pSlug, pPluginSlugToUpgrade, pWordpressUpgrade, pPluginDone, pUpgradeDone, pErrorMessage)
+            {
+                return function (response)
                 {
-                    return function (response)
+                    var slugParts = pSlug.split(',');
+                    for (var i = 0; i < slugParts.length; i++)
                     {
-                        var slugParts = pSlug.split(',');
-                        for (var i = 0; i < slugParts.length; i++)
+                        var result;
+                        var websiteHolder = jQuery('div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
+                        if (!websiteHolder.exists())
                         {
-                            var result;
-                            var websiteHolder = jQuery('div[theme_slug="' + pSlug + '"] div[site_id="' + pWebsiteId + '"]');
-                            if (!websiteHolder.exists())
+                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + slugParts[i] + '"]');
+                        }
+                        if (response.error)
+                        {
+                            result = getErrorMessage(response.error);
+                            pErrorMessage = result;
+                        }
+                        else
+                        {
+                            var res = response.result;
+
+                            if (res[slugParts[i]])
                             {
-                                websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + pSlug + '"]');
-                            }
-                            if (response.error)
-                            {
-                                result = getErrorMessage(response.error);
-                                pErrorMessage = result;
+                                result = __('Update successful!');
+                                if (response.site_url)
+                                    result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
+                                websiteHolder.attr('updated', 1);
+                                countRealItemsUpdated++;
+                                if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
                             }
                             else
                             {
-                                var res = response.result;
-
-                                if (res[pSlug])
-                                {
-                                    result = __('Update successful!');
-                                    if (response.site_url)
-                                        result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
-                                    websiteHolder.attr('updated', 1);
-                                    countRealItemsUpdated++;
-                                    if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
-                                }
-                                else
-                                {
-                                    result = __('Update failed!');
-                                    pErrorMessage = result;
-                                }
-
+                                result = __('Update failed!');
+                                pErrorMessage = result;
                             }
 
-                            websiteHolder.find('.pluginsInfo').html(result);
                         }
-                        rightnow_upgrade_all_update_site_bold(pWebsiteId, 'theme');
 
-                        //If all done: continue, else delay 100ms to not stress the server
-                        var fnc = function() {
-                            rightnow_upgrade_int_flow(pWebsiteId, pSlug, pPluginSlugToUpgrade, pWordpressUpgrade, true, pPluginDone, pUpgradeDone, pErrorMessage);
-                        };
-
-                        if (pPluginDone && pUpgradeDone) fnc();
-                        else setTimeout(fnc, 100);
+                        websiteHolder.find('.pluginsInfo').html(result);
                     }
-                }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pPluginDone, pUpgradeDone, pErrorMessage),
-                tryCount : 0,
-                retryLimit : 3,
-                endError: function (WebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage)
+                    rightnow_upgrade_all_update_site_bold(pWebsiteId, 'theme');
+
+                    //If all done: continue, else delay 400ms to not stress the server
+                    var fnc = function() {
+                        rightnow_upgrade_int_flow(pWebsiteId, pSlug, pPluginSlugToUpgrade, pWordpressUpgrade, true, pPluginDone, pUpgradeDone, pErrorMessage);
+                    };
+
+                    if (pPluginDone && pUpgradeDone) fnc();
+                    else setTimeout(fnc, 400);
+                }
+            }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pPluginDone, pUpgradeDone, pErrorMessage),
+            tryCount : 0,
+            retryLimit : 3,
+            endError: function (WebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage)
+            {
+                return function ()
                 {
-                    return function ()
-                    {
-                        rightnow_upgrade_int_flow(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, true, true, true, 'Error processing request');
-                    }
-                }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage),
-                error: function(xhr, textStatus, errorThrown ) {
-                    this.tryCount++;
-                    if (this.tryCount >= this.retryLimit) {
-                        this.endError();
-                        return;
-                    }
+                    rightnow_upgrade_int_flow(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, true, true, true, 'Error processing request');
+                }
+            }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage),
+            error: function(xhr, textStatus, errorThrown ) {
+                this.tryCount++;
+                if (this.tryCount >= this.retryLimit) {
+                    this.endError();
+                    return;
+                }
 
-                    var fnc = function(pRqst, pXhr) {
-                        return function() {
-                            if (pXhr.status == 404) {
-                                //handle error
-                                jQuery.ajax(pRqst);
-                            } else if (pXhr.status == 500) {
-                                //handle error
-                            } else {
-                                //handle error
-                            }
+                var fnc = function(pRqst, pXhr) {
+                    return function() {
+                        if (pXhr.status == 404) {
+                            //handle error
+                            jQuery.ajax(pRqst);
+                        } else if (pXhr.status == 500) {
+                            //handle error
+                        } else {
+                            //handle error
                         }
-                    }(this, xhr);
-                    setTimeout(fnc, 500);
-                },
-                dataType: 'json'
+                    }
+                }(this, xhr);
+                setTimeout(fnc, 1000);
+            },
+            dataType: 'json'
         });
     }
     else if (!pPluginDone)
@@ -1650,10 +1839,10 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                     for (var i = 0; i < slugParts.length; i++)
                     {
                         var result;
-                        var websiteHolder = jQuery('div[theme_slug="' + pSlug + '"] div[site_id="' + pWebsiteId + '"]');
+                        var websiteHolder = jQuery('div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
                         if (!websiteHolder.exists())
                         {
-                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + pSlug + '"]');
+                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + slugParts[i] + '"]');
                         }
                         if (response.error)
                         {
@@ -1664,7 +1853,7 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                         {
                             var res = response.result;
 
-                            if (res[pSlug])
+                            if (res[slugParts[i]])
                             {
                                 result = __('Update successful!');
                                 if (response.site_url)
@@ -1685,13 +1874,13 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                     }
                     rightnow_upgrade_all_update_site_bold(pWebsiteId, 'plugin');
 
-                    //If all done: continue, else delay 100ms to not stress the server
+                    //If all done: continue, else delay 400ms to not stress the server
                     var fnc = function() {
                         rightnow_upgrade_int_flow(pWebsiteId, pThemeSlugToUpgrade, pSlug, pWordpressUpgrade, pThemeDone, true, pUpgradeDone, pErrorMessage);
                     };
 
                     if (pThemeDone && pUpgradeDone) fnc();
-                    else setTimeout(fnc, 100);
+                    else setTimeout(fnc, 400);
                 }
             }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage),
             tryCount : 0,
@@ -1722,7 +1911,7 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                         }
                     }
                 }(this, xhr);
-                setTimeout(fnc, 500);
+                setTimeout(fnc, 1000);
             },
             dataType: 'json'
         });
@@ -1766,13 +1955,13 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                     websiteHolder.find('.wordpressInfo').html(result);
                     rightnow_upgrade_all_update_site_bold(pWebsiteId, 'wordpress');
 
-                    //If all done: continue, else delay 100ms to not stress the server
+                    //If all done: continue, else delay 400ms to not stress the server
                     var fnc = function() {
                         rightnow_upgrade_int_flow(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, true, pErrorMessage);
                     };
 
                     if (pThemeDone && pPluginDone) fnc();
-                    else setTimeout(fnc, 100);
+                    else setTimeout(fnc, 400);
                 }
             }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pErrorMessage),
             tryCount : 0,
@@ -1803,7 +1992,7 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                         }
                     }
                 }(this, xhr);
-                setTimeout(fnc, 500);
+                setTimeout(fnc, 1000);
             },
             dataType: 'json'
         });
@@ -2165,13 +2354,13 @@ rightnow_themes_unignore_abandoned_detail_all = function () {
 };
 
 rightnow_dismiss_outdate_plugintheme_by_site = function (what, slug, name, id) {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_dismissoutdateplugintheme',
         type:what,
         id:id,
         slug:slug,
         name:name
-    };
+    });
     jQuery(document.getElementById('wp_outdate_' + what + '_' + id + '_' + slug)).html(__('Ignoring...'));
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
@@ -2190,12 +2379,12 @@ rightnow_dismiss_outdate_plugintheme_by_site = function (what, slug, name, id) {
 };
 
 rightnow_unignore_plugintheme_abandoned_by_site = function (what, slug, id) {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_unignoreabandonedplugintheme',
         type:what,
         id:id,
         slug:slug
-    };
+    });
     jQuery.post(ajaxurl, data, function (pWhat, pSlug, pId) { return function (response) {
         if (response.result) {
             var siteElement;
@@ -2235,12 +2424,12 @@ rightnow_unignore_plugintheme_abandoned_by_site = function (what, slug, id) {
     return false;
 };
 rightnow_unignore_plugintheme_abandoned_by_site_all = function (what) {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_unignoreabandonedplugintheme',
         type:what,
         id:'_ALL_',
         slug:'_ALL_'
-    };
+    });
     jQuery.post(ajaxurl, data, function (pWhat) { return function (response) {
         if (response.result) {
             var tableElement = jQuery('#ignored-'+pWhat+'s-list');
@@ -2253,12 +2442,12 @@ rightnow_unignore_plugintheme_abandoned_by_site_all = function (what) {
 };
 rightnow_plugins_abandoned_ignore_all = function (slug, name) {
     rightnow_plugins_outdate_detail_show(slug);
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_dismissoutdatepluginsthemes',
         type: 'plugin',
         slug:slug,
         name:name
-    };
+    });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
             jQuery('div[plugin_outdate_slug="'+slug+'"]').find('.pluginsInfo').html(__('Ignored!'));
@@ -2269,11 +2458,11 @@ rightnow_plugins_abandoned_ignore_all = function (slug, name) {
     return false;
 };
 rightnow_plugins_abandoned_unignore_globally_all = function() {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_unignoreabandonedpluginsthemes',
         type: 'plugin',
         slug: '_ALL_'
-    };
+    });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
             var tableElement = jQuery('#globally-ignored-plugins-list');
@@ -2285,11 +2474,11 @@ rightnow_plugins_abandoned_unignore_globally_all = function() {
     return false;
 };
 rightnow_plugins_abandoned_unignore_globally = function (slug) {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_unignoreabandonedpluginsthemes',
         type: 'plugin',
         slug:slug
-    };
+    });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
             var ignoreElement = jQuery('#globally-ignored-plugins-list tr[plugin_slug="'+slug+'"]');
@@ -2305,12 +2494,12 @@ rightnow_plugins_abandoned_unignore_globally = function (slug) {
 };
 rightnow_themes_abandoned_ignore_all = function (slug, name) {
     rightnow_themes_outdate_detail_show(slug);
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_dismissoutdatepluginsthemes',
         type: 'theme',
         slug:slug,
         name:name
-    };
+    });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
             jQuery('div[theme_outdate_slug="'+slug+'"]').find('.pluginsInfo').html(__('Ignored!'));
@@ -2321,11 +2510,11 @@ rightnow_themes_abandoned_ignore_all = function (slug, name) {
     return false;
 };
 rightnow_themes_abandoned_unignore_globally_all = function() {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_unignoreabandonedpluginsthemes',
         type: 'theme',
         slug: '_ALL_'
-    };
+    });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
             var tableElement = jQuery('#globally-ignored-themes-list');
@@ -2337,11 +2526,11 @@ rightnow_themes_abandoned_unignore_globally_all = function() {
     return false;
 };
 rightnow_themes_abandoned_unignore_globally = function (slug) {
-    var data = {
+    var data = mainwp_secure_data({
         action:'mainwp_unignoreabandonedpluginsthemes',
         type: 'theme',
         slug:slug
-    };
+    });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
             var ignoreElement = jQuery('#globally-ignored-themes-list tr[theme_slug="'+slug+'"]');

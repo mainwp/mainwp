@@ -207,8 +207,7 @@ class MainWP_Main {
 						$imgfavi = '';
 						if ( $website !== null ) {
 							if ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) {
-								$favi     = MainWP_DB::Instance()->getWebsiteOption( $website, 'favi_icon', '' );
-								$favi_url = MainWP_Utility::get_favico_url( $favi, $website );
+								$favi_url = MainWP_Utility::get_favico_url( $website );
 								$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
 							}
 						}
@@ -241,7 +240,7 @@ class MainWP_Main {
 							} else {
 								?>
 								<h2><i class="fa fa-flag"></i> <?php echo __( "Some child sites didn't sync correctly!", 'mainwp' ); ?></h2>
-								<p class="about-description"><?php echo __( 'Check the Sync Status widget to review sites that have not been synced.', 'mainwp' ); ?></p>
+								<p class="about-description"><?php echo __( 'Check the Connection status widget to review sites that are not synchronized.', 'mainwp' ); ?></p>
 								<?php
 							}
 						}

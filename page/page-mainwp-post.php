@@ -45,6 +45,10 @@ class MainWP_Post {
 			MainWP_Post::getClassName(),
 			'renderBulkAdd',
 		) );
+        add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array(
+			MainWP_Post::getClassName(),
+			'renderBulkEdit',
+		) );
 		add_submenu_page( 'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . __( 'Posts', 'mainwp' ) . '</div>', 'read', 'PostingBulkPost', array(
 			MainWP_Post::getClassName(),
 			'posting',
@@ -109,7 +113,7 @@ class MainWP_Post {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-public static function renderHeader( $shownPage ) {
+public static function renderHeader( $shownPage, $post_id = null ) {
 	?>
 	<div class="wrap">
 		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
@@ -128,6 +132,9 @@ public static function renderHeader( $shownPage ) {
 				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkManage' ) {
 					echo 'nav-tab-active';
 				} ?>" href="admin.php?page=PostBulkManage"><?php _e( 'Manage Posts', 'mainwp' ); ?></a>
+	        <?php if ( $shownPage == 'BulkEdit' ) { ?>
+	                <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=PostBulkEdit&post_id=<?php echo esc_attr($post_id); ?>"><?php _e( 'Edit Post', 'mainwp' ); ?></a>
+	        <?php } ?>
 				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkAdd' ) {
 					echo 'nav-tab-active';
 				} ?>" href="admin.php?page=PostBulkAdd"><?php _e( 'Add new', 'mainwp' ); ?></a>
@@ -609,7 +616,7 @@ public static function renderHeader( $shownPage ) {
 					<th scope="row" class="check-column"><input type="checkbox" name="post[]" value="1"></th>
 					<td class="post-title page-title column-title">
 						<input class="postId" type="hidden" name="id" value="<?php echo $post['id']; ?>"/>
-						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|trash|delete|<?php if ( $post['status'] == 'publish' ) {
+						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php if ( $post['status'] == 'publish' ) {
 							echo 'unpublish|';
 						} ?><?php if ( $post['status'] == 'pending' ) {
 							echo 'approve|';
@@ -624,8 +631,8 @@ public static function renderHeader( $shownPage ) {
 							<abbr title="<?php echo $post['title']; ?>">
 								<?php if ( $post['status'] != 'trash' ) { ?>
 									<a class="row-title"
-									   href="admin.php?page=SiteOpen&websiteid=<?php echo $website->id; ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>"
-									   title="Edit '<?php echo $post['title']; ?>'"><?php echo $post['title']; ?></a>
+									   href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>"
+									   title="Edit '<?php echo $post['title']; ?>'" target="_blank"><?php echo $post['title']; ?></a>
 								<?php } else { ?>
 									<?php echo $post['title']; ?>
 								<?php } ?>
@@ -643,8 +650,10 @@ public static function renderHeader( $shownPage ) {
 			                        <?php
 		                        } else {
 			                        ?>
-			                        <a href="admin.php?page=SiteOpen&websiteid=<?php echo (int) $website->id; ?>&location=<?php echo base64_encode('post.php?post=' . $post['id'] . '&action=edit'); ?>"
-			                           title="Edit this item"><?php _e('Edit','mainwp'); ?></a>
+	                                <span class="edit"><a class="post_getedit"
+	                                                href="#"
+	                                                title="Edit this item"><?php _e( 'Edit', 'mainwp' ); ?></a>
+	                                </span>
 			                        <?php
 		                        }
 		                        ?>
@@ -718,7 +727,7 @@ public static function renderHeader( $shownPage ) {
 						<a href="<?php echo $website->url; ?>" target="_blank"><?php echo $website->url; ?></a>
 
 						<div class="row-actions">
-							<span class="edit"><a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php _e( 'Overview', 'mainwp' ); ?></a> | <a href="admin.php?page=SiteOpen&websiteid=<?php echo $website->id; ?>"><?php _e( 'WP Admin', 'mainwp' ); ?></a></span>
+							<span class="edit"><a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php _e( 'Overview', 'mainwp' ); ?></a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>" target="_blank"><?php _e( 'WP Admin', 'mainwp' ); ?></a></span>
 						</div>
 					</td>
 				</tr>
@@ -742,13 +751,31 @@ public static function renderHeader( $shownPage ) {
 			return;
 		}
 		$src = get_site_url() . '/wp-admin/post-new.php?post_type=bulkpost&hideall=1' . ( isset( $_REQUEST['select'] ) ? '&select=' . esc_attr( $_REQUEST['select'] ) : '' );
-		$src = apply_filters( 'mainwp_bulkpost_edit_source', $src );
+        $src = apply_filters( 'mainwp_bulkpost_edit_source', $src );
 		//Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
 		self::renderHeader( 'BulkAdd' ); ?>
 		<iframe scrolling="auto" id="mainwp_iframe" src="<?php echo $src; ?>"></iframe>
 		<?php
 		self::renderFooter( 'BulkAdd' );
 	}
+
+    public static function renderBulkEdit() {
+		if ( ! mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
+			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
+			return;
+		}
+
+        $post_id = isset( $_REQUEST['post_id'] ) ? $_REQUEST['post_id'] : 0;
+        $src = get_site_url() . '/wp-admin/post.php?post_type=bulkpost&hideall=1&action=edit&post=' . esc_attr( $post_id ) . ( isset( $_REQUEST['select'] ) ? '&select=' . esc_attr( $_REQUEST['select'] ) : '' ) ;
+        $src = apply_filters( 'mainwp_bulkpost_edit_source', $src );
+
+		//Loads the post screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
+		self::renderHeader( 'BulkEdit' , $post_id ); ?>
+		<iframe scrolling="auto" id="mainwp_iframe" src="<?php echo $src; ?>"></iframe>
+		<?php
+		self::renderFooter( 'BulkEdit' );
+	}
+
 
 	public static function getCategories() {
 		$websites = array();
@@ -815,11 +842,21 @@ public static function renderHeader( $shownPage ) {
 		die();
 	}
 
-	public static function posting() {
+    public static function posting() {
+	    $succes_message = '';
+        if ( isset( $_GET['id'] ) ) {
+            $edit_id = get_post_meta($_GET['id'], '_mainwp_edit_post_id', true);
+            if ($edit_id) {
+                $succes_message = __('Post has been updated successfully', 'mainwp');
+            } else {
+                $succes_message = __('New post created', 'mainwp');
+            }
+        }
+
 		//Posts the saved sites
 		?>
 		<div class="wrap">
-			<h2>New Post</h2>
+			<h2><?php $edit_id ? _e('Edit Post', 'mainwp') : _e('New Post', 'mainwp') ?></h2>
 			<?php
 			do_action( 'mainwp_bulkpost_before_post', $_GET['id'] );
 
@@ -872,10 +909,11 @@ public static function renderHeader( $shownPage ) {
 						include_once( ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php' );
 						$post_featured_image = get_post_thumbnail_id( $id );
 						$mainwp_upload_dir   = wp_upload_dir();
+                        $post_status = get_post_meta( $id, '_edit_post_status', true );
 						$new_post = array(
 							'post_title'     => $post->post_title,
 							'post_content'   => $post->post_content,
-							'post_status'    => $post->post_status, //was 'publish'
+							'post_status'    => ($post_status == 'pending') ? 'pending' : $post->post_status, //was 'publish'
 							'post_date'      => $post->post_date,
 							'post_date_gmt'  => $post->post_date_gmt,
 							'post_tags'      => $post_tags,
@@ -1012,7 +1050,7 @@ public static function renderHeader( $shownPage ) {
 							<?php foreach ( $dbwebsites as $website ) {
 								?>
 								<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-								: <?php echo( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ? 'New post created. ' . '<a href="' . $output->link[ $website->id ] . '" target="_blank">View Post</a>' : 'ERROR: ' . $output->errors[ $website->id ] ); ?><br/>
+								: <?php echo( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ? $succes_message . ' <a href="' . $output->link[ $website->id ] . '" target="_blank">View Post</a>' : 'ERROR: ' . $output->errors[ $website->id ] ); ?><br/>
 							<?php } ?>
 						</div>
 						<?php
@@ -1030,8 +1068,8 @@ public static function renderHeader( $shownPage ) {
 			?>
 			<br/>
 			<a href="<?php echo get_admin_url() ?>admin.php?page=PostBulkAdd" class="add-new-h2" target="_top"><?php _e( 'Add new', 'mainwp' ); ?></a>
-			<a href="<?php echo get_admin_url() ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php _e( 'Return
-            to Overview', 'mainwp' ); ?></a>
+			<a href="<?php echo get_admin_url() ?>admin.php?page=PostBulkManage" class="add-new-h2" target="_top"><?php _e( 'Return
+            to Manage Posts', 'mainwp' ); ?></a>
 
 		</div>
 		<?php
@@ -1133,6 +1171,221 @@ public static function renderHeader( $shownPage ) {
 		}
 		echo $ret;
 	}
+
+   public static function getPost() {
+        $postId       = $_POST['postId'];
+        $postType     = $_POST['postType'];
+        $websiteId = $_POST['websiteId'];
+
+        if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
+                die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+        }
+        if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
+                die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+        }
+
+        $website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+        if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+                die( json_encode( array( 'error' => 'You can not edit this website!' ) ) );
+        }
+
+        try {
+                $information = MainWP_Utility::fetchUrlAuthed( $website, 'post_action', array(
+                        'action'    => 'get_edit',
+                        'id'        => $postId,
+                        'post_type' => $postType
+                ) );
+
+        } catch ( MainWP_Exception $e ) {
+                die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage($e) ) ) );
+        }
+
+        if (is_array($information) && isset($information['error'])) {
+                die( json_encode( array( 'error' => $information['error'] ) ) );
+        }
+
+        if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
+                die( json_encode( array( 'error' => 'Unexpected error.' ) ) );
+        } else {
+                $ret = MainWP_Post::newPost($information['my_post']);
+                if (is_array($ret) && isset($ret['id'])) {
+                    update_post_meta( $ret['id'], '_selected_sites', base64_encode( serialize( array($websiteId) ) ) );
+                    update_post_meta( $ret['id'], '_mainwp_edit_post_site_id', $websiteId );
+                }
+                die( json_encode( $ret ) );
+        }
+    }
+
+    static function newPost($post_data = array() ) {
+		//Read form data
+		$new_post            = maybe_unserialize( base64_decode( $post_data['new_post'] ) );
+		$post_custom         = maybe_unserialize( base64_decode( $post_data['post_custom'] ) );
+		$post_category       = rawurldecode( isset( $post_data['post_category'] ) ? base64_decode( $post_data['post_category'] ) : null );
+		$post_tags           = rawurldecode( isset( $new_post['post_tags'] ) ? $new_post['post_tags'] : null );
+		$post_featured_image = base64_decode( $post_data['post_featured_image'] );
+                $post_gallery_images = base64_decode( $post_data['post_gallery_images'] );
+		$upload_dir          = maybe_unserialize( base64_decode( $post_data['child_upload_dir'] ) );
+		return MainWP_Post::createPost( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images );
+	}
+
+    static function createPost( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images) {
+		global $current_user;
+
+        if (!isset($new_post['edit_id']))
+            return array('error' => 'Empty post id');
+
+        $post_author = $current_user->ID;
+		$new_post['post_author'] = $post_author;
+        $new_post['post_type'] = isset($new_post['post_type']) && ($new_post['post_type'] == 'page') ? 'bulkpage' : 'bulkpost';
+
+        //Search for all the images added to the new post
+		//some images have a href tag to click to navigate to the image.. we need to replace this too
+		$foundMatches = preg_match_all( '/(<a[^>]+href=\"(.*?)\"[^>]*>)?(<img[^>\/]*src=\"((.*?)(png|gif|jpg|jpeg))\")/ix', $new_post['post_content'], $matches, PREG_SET_ORDER );
+		if ( $foundMatches > 0 ) {
+			//We found images, now to download them so we can start balbal
+			foreach ( $matches as $match ) {
+				$hrefLink = $match[2];
+				$imgUrl   = $match[4];
+
+				if ( ! isset( $upload_dir['baseurl'] ) || ( 0 !== strripos( $imgUrl, $upload_dir['baseurl'] ) ) ) {
+					continue;
+				}
+
+				if ( preg_match( '/-\d{3}x\d{3}\.[a-zA-Z0-9]{3,4}$/', $imgUrl, $imgMatches ) ) {
+					$search         = $imgMatches[0];
+					$replace        = '.' . $match[6];
+					$originalImgUrl = str_replace( $search, $replace, $imgUrl );
+				} else {
+					$originalImgUrl = $imgUrl;
+				}
+
+				try {
+					$downloadfile      = MainWP_Utility::uploadImage( $originalImgUrl );
+					$localUrl          = $downloadfile['url'];
+
+					$linkToReplaceWith = dirname( $localUrl );
+					if ( '' !== $hrefLink ) {
+						$server     = get_option( 'mainwp_child_server' );
+						$serverHost = parse_url( $server, PHP_URL_HOST );
+						if ( ! empty( $serverHost ) && strpos( $hrefLink, $serverHost ) !== false ) {
+							$serverHref               = 'href="' . $serverHost;
+							$replaceServerHref        = 'href="' . parse_url( $localUrl, PHP_URL_SCHEME ) . '://' . parse_url( $localUrl, PHP_URL_HOST );
+							$new_post['post_content'] = str_replace( $serverHref, $replaceServerHref, $new_post['post_content'] );
+						}
+					}
+					$lnkToReplace = dirname( $imgUrl );
+					if ( 'http:' !== $lnkToReplace && 'https:' !== $lnkToReplace ) {
+						$new_post['post_content'] = str_replace( $lnkToReplace, $linkToReplaceWith, $new_post['post_content'] );
+					}
+				} catch ( Exception $e ) {
+
+				}
+			}
+		}
+
+		if ( has_shortcode( $new_post['post_content'], 'gallery' ) ) {
+			if ( preg_match_all( '/\[gallery[^\]]+ids=\"(.*?)\"[^\]]*\]/ix', $new_post['post_content'], $matches, PREG_SET_ORDER ) ) {
+				$replaceAttachedIds = array();
+                                if (is_array($post_gallery_images)) {
+                                        foreach($post_gallery_images as $gallery){
+                                                if (isset($gallery['src'])) {
+                                                        try {
+                                                                $upload = MainWP_Utility::uploadImage( $gallery['src'], $gallery ); //Upload image to WP
+                                                                if ( null !== $upload ) {
+                                                                        $replaceAttachedIds[$gallery['id']] = $upload['id'];
+                                                                }
+                                                        } catch ( Exception $e ) {
+
+                                                        }
+                                                }
+                                        }
+                                }
+				if (count($replaceAttachedIds) > 0) {
+					foreach ( $matches as $match ) {
+						$idsToReplace = $match[1];
+						$idsToReplaceWith = "";
+						$originalIds = explode(',', $idsToReplace);
+						foreach($originalIds as $attached_id) {
+							if (!empty($originalIds) && isset($replaceAttachedIds[$attached_id])) {
+								$idsToReplaceWith .= $replaceAttachedIds[$attached_id].",";
+							}
+						}
+						$idsToReplaceWith = rtrim($idsToReplaceWith,",");
+						if (!empty($idsToReplaceWith)) {
+							$new_post['post_content'] = str_replace( '"' . $idsToReplace . '"', '"'.$idsToReplaceWith.'"', $new_post['post_content'] );
+						}
+					}
+				}
+			}
+		}
+
+        $is_sticky = false;
+        if (isset($new_post['is_sticky'])) {
+            $is_sticky = !empty($new_post['is_sticky']) ? true : false;
+            unset($new_post['is_sticky']);
+        }
+        $edit_id = $new_post['edit_id'];
+        unset($new_post['edit_id']);
+
+        $wp_error = null;
+		//Save the post to the wp
+		remove_filter( 'content_save_pre', 'wp_filter_post_kses' );  // to fix brake scripts or html
+		$post_status             = $new_post['post_status'];
+                $new_post['post_status'] = 'auto-draft';
+                $new_post_id             = wp_insert_post( $new_post, $wp_error );
+
+		//Show errors if something went wrong
+		if ( is_wp_error( $wp_error ) ) {
+			return array( 'error' => $wp_error->get_error_message());
+		}
+
+		if ( empty( $new_post_id ) ) {
+			return array( 'error' => 'Undefined error' );
+		}
+
+		wp_update_post( array( 'ID' => $new_post_id, 'post_status' => $post_status ) );
+
+		foreach ( $post_custom as $meta_key => $meta_values ) {
+                    foreach ( $meta_values as $meta_value ) {
+                        add_post_meta( $new_post_id, $meta_key, $meta_value );
+                    }
+		}
+
+                // update meta for bulkedit
+                update_post_meta( $new_post_id, '_mainwp_edit_post_id', $edit_id );
+                update_post_meta($new_post_id, '_slug', base64_encode($new_post['post_name']) );
+                if ( isset( $post_category ) && '' !== $post_category ) {
+                        update_post_meta($new_post_id, '_categories', base64_encode($post_category) );
+		}
+
+		if ( isset( $post_tags ) && '' !== $post_tags ) {
+                    update_post_meta($new_post_id, '_tags', base64_encode($post_tags) );
+		}
+                if ($is_sticky) {
+                    update_post_meta( $new_post_id, '_sticky', base64_encode('sticky') );
+                }
+                //end//
+
+
+		//If featured image exists - set it
+		if ( null !== $post_featured_image ) {
+			try {
+				$upload = MainWP_Utility::uploadImage( $post_featured_image ); //Upload image to WP
+
+				if ( null !== $upload ) {
+					update_post_meta( $new_post_id, '_thumbnail_id', $upload['id'] ); //Add the thumbnail to the post!
+				}
+			} catch ( Exception $e ) {
+
+			}
+		}
+
+		$ret['success']  = true;
+		$ret['id'] = $new_post_id;
+		return $ret;
+	}
+
+
 
 	public static function testPost() {
 		do_action( 'mainwp-do-action', 'test_post' );
@@ -1237,8 +1490,29 @@ public static function renderHeader( $shownPage ) {
 
 		$out = @ob_get_contents();
 		@ob_end_clean();
+
+	    $_sticky = get_post_meta($post->ID, '_sticky', true);
+	    $is_sticky = false;
+	    if (!empty($_sticky)) {
+	        $_sticky = base64_decode($_sticky);
+	        if ($_sticky == 'sticky')
+	            $is_sticky = true;
+	    }
+
+	    $edit_id = get_post_meta($post->ID, '_mainwp_edit_post_id', true);
+	    // modify html output
+	    if ($edit_id) {
+	        $find    = '<input type="submit" name="publish" id="publish" class="button button-primary button-large" value="' . translate( 'Publish' ) . '"  />';
+	        $replace = '<input type="submit" name="publish" id="publish" class="button button-primary button-large" value="' . translate( 'Update' ) . '"  />';
+	        $out = str_replace( $find, $replace, $out );
+	    }
+
+	    $find    = "<select name='post_status' id='post_status'>";
+	    $replace = "<select name='mainwp_edit_post_status' id='post_status'>";  // to fix: saving pending status
+	    $out = str_replace( $find, $replace, $out );
+
 		$find    = ' <label for="visibility-radio-public" class="selectit">' . translate( 'Public' ) . '</label><br />';
-		$replace = '<span id="sticky-span"><input id="sticky" name="sticky" type="checkbox" value="sticky" /> <label for="sticky" class="selectit">' . translate( 'Stick this post to the front page' ) . '</label><br /></span>';
+		$replace = '<span id="sticky-span"><input id="sticky" name="sticky" type="checkbox" value="sticky" ' . ( $is_sticky ? 'checked' : '' ) . '/> <label for="sticky" class="selectit">' . translate( 'Stick this post to the front page' ) . '</label><br /></span>';
 		$replace .= '<input type="checkbox" style="display:none" name="hidden_post_sticky" id="hidden-post-sticky" value="sticky" />';
 		echo str_replace( $find, $find . $replace, $out );
 	}
@@ -1251,6 +1525,10 @@ public static function renderHeader( $shownPage ) {
 
 			return base64_encode( $_POST['sticky'] );
 		}
+
+        if ($post->post_type == 'bulkpost' && isset($_POST['mainwp_edit_post_status'])) {
+                update_post_meta( $post_id, '_edit_post_status', $_POST['mainwp_edit_post_status'] );
+        }
 
 		return $post_id;
 	}

@@ -27,10 +27,10 @@ mainwp_tips_hide = function()
     jQuery('#mainwp_tips').hide();
     jQuery('#mainwp_tips_overlay').hide();
 
-    var data = {
+    var data = mainwp_secure_data({
         action: 'mainwp_managetips_update',
         status: (jQuery('#mainwp_tips_show').attr('checked') == 'checked' ? 0 : 1)
-    };
+    });
     jQuery.post(ajaxurl, data, function(response)
     {
     });

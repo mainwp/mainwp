@@ -78,7 +78,7 @@ class MainWP_Site_Open {
                                                     <textarea style="width: 580px !important; height: 300px;"
                                                             id="mainwp_notes_note"><?php echo $website->note; ?></textarea>
 						</div>
-                                                <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>                            
+                                                <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div><br/>
 						<form>
 							<div style="float: right" id="mainwp_notes_status"></div>
 							<input type="button" class="button button-primary" id="mainwp_notes_save" value="<?php esc_attr_e( 'Save note', 'mainwp' ); ?>"/>
@@ -129,7 +129,7 @@ class MainWP_Site_Open {
 				<?php
                                 
 				_e( 'Will redirect to your website immediately.', 'mainwp' );
-				$url = ( isset( $website->siteurl ) && $website->siteurl != '' ? $website->siteurl : $website->url );
+				$url = ( isset( $website->url ) && $website->url != '' ? $website->url : $website->siteurl );
 				$url .= ( substr( $url, - 1 ) != '/' ? '/' : '' );
 
 				$postdata         = MainWP_Utility::getGetDataAuthed( $website, $file, MainWP_Utility::getFileParameter( $website ), true );
@@ -160,7 +160,7 @@ class MainWP_Site_Open {
 			<div id="mainwp_background-box">
                                 <div style="font-size: 30px; text-align: center; margin-top: 5em;"><?php _e( 'You will be redirected to your website immediately.', 'mainwp' ); ?></div>
 				<?php				
-				$url = ( isset( $website->siteurl ) && $website->siteurl != '' ? $website->siteurl : $website->url );
+				$url = ( isset( $website->url ) && $website->url != '' ? $website->url : $website->siteurl );
 				$url .= ( substr( $url, - 1 ) != '/' ? '/' : '' );
 
 				$postdata         = MainWP_Utility::getGetDataAuthed( $website, 'index.php', 'where', true );

@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.6.1
-Stable tag: 3.2.1
+Tested up to: 4.7
+Stable tag: 3.2.2.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -140,7 +140,7 @@ Please open a [Support Ticket](https://mainwp.com/support/)
 Yes, you can [see them on YouTube](http://www.youtube.com/user/MyMainWP).
 
 = I have an idea for MainWP how do I let you know? =
-Please add any ideas to the [MainWP Feature Request](http://support.mainwp.com/support/discussions/5000037246) site.
+Please follow the steps out lined in the [MainWP Roadmaps](https://mainwp.com/mainwp-roadmaps/) so we can add your idea to Trello to be voted on. 
 
 = I have more questions, do you have any other information? =
 Sure we have a quick FAQ with a lot more questions and answers [here](https://mainwp.com/presales-faq/).
@@ -160,6 +160,52 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.2.2.2 - 1-5-17 =
+* Fixed: an issue with connecting HTTPS sites caused by the Select2 library bug
+
+= 3.2.2.1 - 12-30-16 =
+* Fixed: a fatal error on PHP versions less than 5.5 
+* Added: a message for users on PHP versions less than 5.5 to upgrade
+
+= 3.2.2 - 12-30-16 =
+* Fixed: an issue with adding a new child site when a group is not selected
+* Fixed: an issue with updating translations in the Updates Overview widget
+* Fixed: an issue with sorting sites by a group name in Manage Sites table
+* Fixed: an issue with creating groups on the Add New Site form
+* Added: the ability to dismiss the Tour notices - [Trello Card](https://trello.com/c/nJfApKsn/48-hide-tours)
+* Added: plugin changelog link into the email notification
+* Added: new Font Awesome version version font awesome
+* Added: hook mainwp_format_email to custom notification email
+* Added: site note preview feature - [Trello Card](https://trello.com/c/KVrkXJZf/49-notes-section)
+* Added: new columns in the Mange Sites table WP Core, Plugins, Themes updates number - [Trello Card](https://trello.com/c/Amio60MQ/33-add-core-plugin-theme-update-columns-to-sites-list-view)
+* Added: icon for trusted plugins and themes in the Updates and Updates Overview sections - [Trello Card](https://trello.com/c/2Zk8aXDj/5-trusted-status-indicator-for-individual-plugins-and-themes-listed-in-main-dashboard-display)
+* Added: Sync Now button for all sites in the Connection Status widget - [Trello Card](https://trello.com/c/TEqC9ERt/52-sync-now-available-for-all-sites-in-the-connection-status-widget)
+* Updated: load Select2 Javascript library only on MainWP Dashboard pages
+* Updated: auto request extensions update information
+* Updated: display child site favicon feature
+* Updated: Select2 library
+* Updated: site connection process (MD5 encryption not supported)
+* Updated: multiple functions refactored
+* Removed: unused Google js api reference
+* Preventative: Security improvements
+
+= 3.2.1 - 12-01-16 =
+* Fixed: an issue with saving site groups on the Add New site form
+* Fixed: an issue with false alert with PHP Max Execution time set to -1
+* Fixed: issue with allowed tags in the notes popup
+* Fixed: an issue with opening a site WP Admin section
+* Fixed: an issue with updating site URL on the Site Edit page
+* Fixed: an issue with the Fix All (security issues) button in the Security Issues widget
+* Added: support for %sitename% and %site_url% tokens for directory path settings for the UpdraftPlus extension
+* Added: support for the new Edit Posts and Pages process
+* Added: 'mainwp_create_post_custom_author' hook
+* Added: Add and Edit Site hooks
+* Added: Last Update time stamp in the Notes column of the Manage Sites table
+* Updated: auto request extensions update information
+* Updated: PHP recommendation bumped to 5.6
+* Removed: Test Connection action from the action row of the Manage Sites table
+* Removed: Links for opening Child Site WP Admin in an iframe
 
 = 3.2 - 10-26-16 =
 * Fixed: An issue with loading themes on the Auto Updates page

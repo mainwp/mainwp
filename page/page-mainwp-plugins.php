@@ -519,7 +519,7 @@ public static function renderHeader( $shownPage ) {
 						} ?>
 					</td>
 					<td scope="col" id="notes_content" class="manage-column" style="">
-						<a href="#" class="mainwp_trusted_plugin_notes_show <?php echo ! isset( $trustedPluginsNotes[ $slug ] ) || $trustedPluginsNotes[ $slug ] == '' ? '' : 'mainwp-green'; ?>">
+						<a href="javascript:void(0)" class="mainwp_trusted_plugin_notes_show <?php echo ! isset( $trustedPluginsNotes[ $slug ] ) || $trustedPluginsNotes[ $slug ] == '' ? '' : 'mainwp-green'; ?>">
 							<i class="fa fa-pencil-square-o"></i> <?php _e( 'Notes', 'mainwp' ); ?>
 						</a>
 
@@ -544,7 +544,7 @@ public static function renderHeader( $shownPage ) {
                             <textarea style="width: 580px !important; height: 300px;"
                                       id="mainwp_notes_note"></textarea>
 			</div>
-			<div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
+			<div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div><br/>
 			<form>
 				<div style="float: right" id="mainwp_notes_status"></div>
 				<input type="button" class="button cont button-primary" id="mainwp_trusted_plugin_notes_save" value="<?php esc_attr_e( 'Save note', 'mainwp' ); ?>"/>
@@ -828,7 +828,7 @@ public static function renderHeader( $shownPage ) {
 		</div>
 		<script type="text/javascript">
 			jQuery(document).ready(function() {
-				jQuery('#mainwp_bulk_action').select2({minimumResultsForSearch: 10, width: '170px', allowClear: true});
+				jQuery('#mainwp_bulk_action').select2({minimumResultsForSearch: 10, width: '170px', allowClear: false});
 				jQuery("#plugins_fixedtable").tableHeadFixer({"left" : 1});
 			});
 		</script>
@@ -1034,7 +1034,7 @@ public static function renderHeader( $shownPage ) {
 			<?php MainWP_Tours::renderPluginsAutoUpdatesTours(); ?>
 			<br/>
 
-			<?php if ( isset($_GET['message']) && $_GET['message'] = 'saved') {
+			<?php if ( isset($_GET['message']) && $_GET['message'] == 'saved') {
 				?>
 				<div class="mainwp-notice mainwp-notice-green">
 					<?php _e( 'Your settings have been saved.', 'mainwp' ); ?>

@@ -55,7 +55,13 @@ class MainWP_Settings {
 			MainWP_Settings::getClassName(),
 			'renderAdvanced',
 		) );
-		add_action( 'load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));		
+		add_action( 'load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
+
+		$_page = add_submenu_page('mainwp_tab', __('Managed Client Reports Responder', 'mainwp'), ' <div class="mainwp-hidden">' . __('Managed Client Reports Responder', 'mainwp') . '</div>', 'read', 'SettingsClientReportsResponder', array(
+			MainWP_Settings::getClassName(),
+			'renderReportResponder',
+		));
+		add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
 		
 
 		/**
@@ -213,6 +219,7 @@ class MainWP_Settings {
 						?>
 						<a href="<?php echo admin_url( 'admin.php?page=DashboardOptions' ); ?>" class="mainwp-submenu"><?php _e( 'Dashboard Options', 'mainwp' ); ?></a>
 						<a href="<?php echo admin_url( 'admin.php?page=MainWPTools' ); ?>" class="mainwp-submenu"><?php _e( 'MainWP Tools', 'mainwp' ); ?></a>
+						<a href="<?php echo admin_url('admin.php?page=SettingsClientReportsResponder'); ?>" class="mainwp-submenu"><?php _e('Managed Client Reports Responder', 'mainwp'); ?></a>
 					</div>
 				</div>
 			</div>
@@ -259,7 +266,12 @@ class MainWP_Settings {
 			} ?>" href="admin.php?page=SettingsAdvanced"><?php _e( 'Advanced Options', 'mainwp' ); ?></a>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'MainWPTools' ) {
 				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=MainWPTools"><?php _e( 'MainWP Tools', 'mainwp' ); ?></a>			
+			} ?>" href="admin.php?page=MainWPTools"><?php _e( 'MainWP Tools', 'mainwp' ); ?></a>
+			<a class="nav-tab pos-nav-tab <?php
+			if ($shownPage === 'SettingsClientReportsResponder') {
+				echo 'nav-tab-active';
+			}
+			?>" href="admin.php?page=SettingsClientReportsResponder"><?php _e('Managed Client Reports Responder', 'mainwp'); ?></a>
 			<?php
 			if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 				foreach ( self::$subPages as $subPage ) {
@@ -287,10 +299,155 @@ class MainWP_Settings {
 		<?php
 	}
 
-	public static function renderAdvanced() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
+    public static function renderReportResponder() {
+        self::renderHeader( 'SettingsClientReportsResponder' );
+        if ('SettingsClientReportsResponder' == $_REQUEST['page']) {
+            self::renderReportResponderDashboardPage();
+        }
+        self::renderFooter( 'SettingsClientReportsResponder' );
+    }
 
+    public static function renderReportResponderDashboardPage() {
+
+        if ( isset( $_POST[ 'save_changes' ] ) ) {
+            $nonce = $_REQUEST[ '_wpnonce' ];
+            if ( !wp_verify_nonce( $nonce, 'general_settings' ) ) {
+                echo "<div class='mainwp-notice-red'><p><strong>" . __( 'Unable to save settings, please refresh and try again.', 'mainwp' ) . "</strong></p></div>";
+            } else {
+                update_option( 'live-report-responder-siteurl', stripslashes( $_POST[ 'live_reponder_site_url' ] ) );
+                update_option( 'live-report-responder-provideaccess', $_POST[ 'live_reponder_provideaccess' ] );
+                $security_token = Live_Reports_Responder_Class::Live_Reports_Responder_generate_random_string();
+                update_option( 'live-reports-responder-security-id', ( isset( $_POST[ 'requireUniqueSecurityId' ] ) ) ? $_POST[ 'requireUniqueSecurityId' ] : '' );
+                update_option( 'live-reports-responder-security-code', stripslashes( $security_token ) );
+                echo '<div  class="mainwp-notice mainwp-notice-green">' . __( 'Settings Saved Successfully', 'mainwp' ) . '</div>';
+            }
+        }
+        ?>
+        <form method="POST">
+            <?php wp_nonce_field( 'general_settings' ); ?>
+            <div class="postbox">
+                <h3 class="mainwp_box_title"><span><i class="fa fa-cog"></i> <?php _e( 'General Options', 'mainwp' ); ?></span></h3>
+                <div class="inside">
+                    <table class="form-table">
+                        <tbody>
+                            <tr>
+                                <th scope="row"><?php _e( 'Client Reports Site Url:', 'mainwp' ); ?></th>
+                                <td>
+                                    <input type="text"  name="live_reponder_site_url" placeholder="http://thisisexample.com/" value="<?php echo esc_attr( get_option( 'live-report-responder-siteurl' ) ); ?>"  size="50" autocomplete="off">
+                                    <br><em><?php _e( 'With Trailing Slash', 'mainwp' ); ?></em>
+                                </td>
+                            </tr>
+                            <tr class="form-field form-required">
+                                <th scope="row"><?php _e( 'Allow Access:', 'mainwp' ); ?></th>
+                                <td>
+                                    <fieldset>
+                                        <legend class="screen-reader-text"><span><?php _e( 'Allow Access: ', 'mainwp' ); ?></span></legend>
+                                        <input type="checkbox" name="live_reponder_provideaccess" value="yes" <?php if ( get_option( 'live-report-responder-provideaccess') == 'yes' ) echo 'checked'; ?>>
+                                        <span><?php _e( 'Tick to allow access to Managed Client Reports for WooCommerce Plugin', 'mainwp' ); ?></span>
+                                    </fieldset>
+                                </td>
+                            </tr>
+                            <tr class="form-field form-required">
+                                <th scope="row"><?php _e( 'Secure Connection:', 'mainwp' ); ?></th>
+                                <td>
+
+                                    <div style="margin: 1em 0px 8px 0;">
+                                        <input name="requireUniqueSecurityId" type="checkbox" id="requireUniqueSecurityId" <?php if ( get_option( 'live-reports-responder-security-id' ) == 'on' ) echo 'checked'; ?>>
+                                        <label for="requireUniqueSecurityId" style="font-size: 15px;"><?php _e('Require Unique Security ID', 'mainwp'); ?></label>
+                                    </div>
+                                    <div class="howto" style="margin-bottom: 35px;"><?php _e( 'The Unique Security ID adds additional protection between the Managed Client Reports for WooCommerce Responder and your Managed Client Reports for WooCommerce Plugin. The Unique Security ID will need to match when being added to the Managed Client Reports for WooCommerce plugin. This is additional security and should not be needed in most situations.', 'mainwp' ); ?></div>
+                                    <?php if ( get_option( 'live-reports-responder-security-id' ) == 'on' ) { ?>
+                                        <div>
+                                            <span style="border: 1px dashed #e5e5e5; background: #fafafa; font-size: 24px; padding: 1em 2em;"><?php _e( 'Your Unique Security ID is:', 'mainwp' ); ?> <span style="font-weight: bold; color: #7fb100;">
+                                                    <?php
+                                                    echo get_option( 'live-reports-responder-security-code' );
+                                                    ?>
+                                                </span></span>
+                                        </div>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                            <tr><th></th><td><input type="submit" name="save_changes" value="Save Changes" class="button-primary button button-hero">
+
+
+                                </td></tr>
+                        </tbody></table>
+                </div>
+            </div>
+        </form>
+        <?php
+        $live = get_option( 'live-report-responder-siteurl' );
+        if ( !empty( $live ) )
+            self::renderReportResponderUserPage();
+    }
+
+    public static function renderReportResponderUserPage() {
+        $arr['action'] = 'getusers';
+        if ( get_option( 'live-reports-responder-security-id' ) == 'on') {
+            $arr['security'] = base64_encode( get_option( 'live-reports-responder-security-code' ) );
+        }
+        $all_users_result = json_decode( Live_Reports_Responder_Class::CurlRequest( $arr ), true );
+        if ( 'success' == $all_users_result[ 'result' ] ) {
+            ?>
+            <div class="postbox">
+                <form method="post">
+
+                    <h3 class="mainwp_box_title"><span><i class="fa fa-users"></i> All Users</span></h3>
+                    <table class="wp-list-table widefat fixed striped users " style="border: none;">
+                        <thead>
+                            <tr>
+                                <th><?php _e( 'Username', 'mainwp' ); ?></th>
+                                <th><?php _e( 'Name', 'mainwp' ); ?></th>
+                                <th><?php _e( 'Email', 'mainwp' ); ?></th>
+                                <th><?php _e( 'Last Login', 'mainwp' ); ?></th>
+                                <th><?php _e( 'Last Report Check', 'mainwp' ); ?></th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <?php
+                            foreach ( $all_users_result[ 'data' ] as $user ) {
+                                ?>
+                                <tr>
+                                    <td><?php echo $user[ 'user_login' ]; ?> </td>
+                                    <td><?php echo $user[ 'display_name' ]; ?> </td>
+                                    <td><?php echo $user[ 'user_email' ]; ?></td>
+                                    <td><?php echo $user[ 'last_login' ] ? : '__'; ?>  </td>
+                                    <td><?php echo $user[ 'last_reportcheck' ] ? : '__'; ?>  </td>
+                                </tr>
+                                <?php
+                            }
+                            ?>
+
+
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th><?php _e( 'Username', 'mainwp' ); ?></th>
+                                <th><?php _e( 'Name', 'mainwp' ); ?></th>
+                                <th><?php _e( 'Email', 'mainwp' ); ?></th>
+                                <th><?php _e( 'Last Login', 'mainwp' ); ?></th>
+                                <th><?php _e( 'Last Report Check', 'mainwp' ); ?></th>
+                            </tr>
+                        </tfoot>
+
+                    </table>
+                </form>
+            </div>
+            <?php
+        } else {
+            if ( !empty( $all_users_result[ 'message' ] ) ) {
+                $message = $all_users_result['message'];
+            } else {
+                $message = 'Unknown Error';
+            }
+            echo '<div class="error" style="margin-top: 50px;"><p><strong>' . $message . '</strong></p></div>';
+        }
+    }
+
+    public static function renderAdvanced() {
+        if ( !mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 			return;
 		}
 
@@ -485,7 +642,7 @@ class MainWP_Settings {
 			<table class="form-table">
 			<tbody>
 			<tr>
-				<th scope="row"><?php _e( 'Hide MainWP footer', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'If set to YES, fixed footer will be appended to the bottom of the page', 'mainwp' ) ); ?></th>
+				<th scope="row"><?php _e( 'Hide MainWP footer', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'If set to YES, fixed footer will be removed from the bottom of the page', 'mainwp' ) ); ?></th>
 				<td>
 					<div class="mainwp-checkbox">
 						<input type="checkbox" name="mainwp_hide_footer"

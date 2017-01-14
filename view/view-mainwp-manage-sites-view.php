@@ -176,7 +176,7 @@ class MainWP_Manage_Sites_View {
 			$html = '<div class="postbox"><div class="inside"><span class="mainwp-left mainwp-cols-2 mainwp-padding-top-15"><i class="fa fa-map-signs" aria-hidden="true"></i> ' . __( 'You are here: ','mainwp' ) . '&nbsp;&nbsp;' .  $str_breadcrumb . '
                     </span><span class="mainwp-right mainwp-padding-top-10 mainwp-cols-2 mainwp-t-align-right">' .  __( 'Jump to ','mainwp' ) . '
                         <select id="mainwp-quick-jump-child" name="" class="mainwp-select2">
-                            <option value="">' . __( 'Select Site ','mainwp' ) . '</option>';
+                            <option value="" selected="selected">' . __( 'Select Site ','mainwp' ) . '</option>';
 			while ( $websites && ($website = @MainWP_DB::fetch_object( $websites )) ) {
 				$html .= '<option value="'.$website->id.'">' . stripslashes( $website->name ) . '</option>';
 			}
@@ -188,7 +188,7 @@ class MainWP_Manage_Sites_View {
 			$html .= '
 					</select>
 					<select id="mainwp-quick-jump-page" name="" class="mainwp-select2">
-						<option value="">' . __( 'Select page ','mainwp' ) . '</option>
+						<option value="" selected="selected">' . __( 'Select page ','mainwp' ) . '</option>
 						<option value="dashboard">' . __( 'Overview ','mainwp' ) . '</option>
 						<option value="id">' . __( 'Edit ','mainwp' ) . '</option>
                                                 <option value="updateid">' . __( 'Updates','mainwp' ) . '</option>';
@@ -551,7 +551,7 @@ class MainWP_Manage_Sites_View {
 	        	<h3><?php _e( 'MainWP Child plugin installed but not activated', 'mainwp' ); ?></h3>
 	        	<p><?php _e( 'If you are not able to connect your website to your MainWP Dashboard, and you are sure that you have installed the MainWP Child plugin on your website, make sure that the plugin is activated.', 'mainwp' ); ?></p>
 	        	<h3><?php _e( 'Plugin conflict', 'mainwp' ); ?></h3>
-	        	<p><?php _e( 'If after verifying that the MainWP Child plugin is installed and activated on your website, the website still cant be connected to your MainWP Dashboard, try to disable all plugins except for MainWP Child and connect your site after that.', 'mainwp' ); ?></p>
+	        	<p><?php _e( 'If after verifying that the MainWP Child plugin is installed and activated on your website, the website still can\'t be connected to your MainWP Dashboard, try to disable all plugins except for MainWP Child and connect your site after that.', 'mainwp' ); ?></p>
 	        	<em><?php _e( 'If you are not able to disable all your plugins, be sure to at least disable all security and caching plugins.', 'mainwp' ); ?></em>
 	        	<h3><?php _e( 'Dashboard Site Server Misconfiguration', 'mainwp' ); ?></h3>
 	        	<p><?php _e( 'To be sure that your Dashboard Site server is configured properly and can be used for hosting MainWP Dashboard plugin:', 'mainwp' ); ?></p>
@@ -593,7 +593,7 @@ class MainWP_Manage_Sites_View {
 	        	</ol>
 	        	<p><?php _e( 'If you see anything different then Response Test O.K. it means that the loopback connections are disabled. In that case, you will need to contact your host support and request enabling this feature. If, by any chance, that is not possible, you should consider moving your Dashboard Site to another Webserver or Localhost.', 'mainwp' ); ?></p>
 	        	<h3><?php _e( 'Website has been migrated recently', 'mainwp' ); ?></h3>
-	        	<p><?php _e( 'You may have recently moved the website to another server and your Dashboards Server may not have an updated DNS or your server may be experiencing DNS issues. To check this use the Test Connection tab and verify the IP that shows up with the IP that shows on your website WP > Settings > MainWP Child > Server Information page.', 'mainwp' ); ?></p>
+	        	<p><?php _e( 'You may have recently moved the website to another server and your Dashboard\'s Server may not have an updated DNS or your server may be experiencing DNS issues. To check this use the Test Connection tab and verify the IP that shows up with the IP that shows on your website WP > Settings > MainWP Child > Server Information page.', 'mainwp' ); ?></p>
 	        	<p><?php _e( 'In case there is an IP address mismatch, you will need to contact your hosting provider and request 2 things:', 'mainwp' ); ?></p>
 	        	<ol>
 	        		<li><?php _e( 'Dashboard Site host: request DNS Cache flush', 'mainwp' ); ?></li>
@@ -601,7 +601,7 @@ class MainWP_Manage_Sites_View {
 	        	</ol>
 	        	<em><?php _e( 'In most cases, this issue resolves itself in up to 48 hours, however, some host companies do not flush DNS cache that often and more time is needed.', 'mainwp' ); ?></em>
 	        	<h3><?php _e( 'Requests being blocked by Child Site server', 'mainwp' ); ?></h3>
-	        	<p><?php _e( 'n some cases, the Child Site server blocks requests sent from the Dashboard site, and your website may return message that the MainWP Child plugin cant be found. In this case, you need to contact your Child Site host support department and have them check if the server Firewall or Mod_Security is blocking access by reviewing server logs.', 'mainwp' ); ?></p>
+	        	<p><?php _e( 'n some cases, the Child Site server blocks requests sent from the Dashboard site, and your website may return message that the MainWP Child plugin can\'t be found. In this case, you need to contact your Child Site host support department and have them check if the server Firewall or Mod_Security is blocking access by reviewing server logs.', 'mainwp' ); ?></p>
 	        	<h3><?php _e( 'Connection being Blocked by CloudFlare', 'mainwp' ); ?></h3>
 	        	<p><?php _e( 'Some users with CloudFlare have reported trouble connecting their website to their MainWP Dashboard. If you are experiencing this issue please try the two resolution steps.', 'mainwp' ); ?></p>
 	        	<ol>
@@ -647,7 +647,7 @@ class MainWP_Manage_Sites_View {
                    <td><span id="mainwp_managesites_add_addgroups_wrap">
                         <select 
                                name="selected_groups[]"
-                               id="mainwp_managesites_add_addgroups"
+                               id="mainwp_managesites_add_addgroups" style="width: 350px"
 							   multiple="multiple" /><?php 
                            foreach ($groups as $group)
                            {
@@ -689,10 +689,10 @@ class MainWP_Manage_Sites_View {
                     <script type="text/javascript">
                             jQuery( document ).ready( function () {			
                                     <?php if (count($groups) == 0) { ?>
-                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
-                                    jQuery('#mainwp_managesites_add_addgroups').prop("disabled", true);
+                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});
+                                    //jQuery('#mainwp_managesites_add_addgroups').prop("disabled", true);
                                     <?php } else { ?>
-                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true});							
+                                    jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true, placeholder: " "});
                                     <?php } ?>                                         
                                     <?php if (!$disabled_pop_notice) { ?>                                            
                                             var pop_showed = false;
@@ -1427,7 +1427,7 @@ class MainWP_Manage_Sites_View {
                 <textarea style="width: 580px !important; height: 300px;"
                           id="mainwp_notes_note"></textarea>
             </div>
-            <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br/&gt;, &lt;hr/&gt;, &lt;a&gt; </em></div><br/>
+            <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div><br/>
             <form>
                 <div style="float: right" id="mainwp_notes_status"></div>
                 <input type="button" class="button cont button-primary" id="mainwp_notes_save" value="<?php esc_attr_e( 'Save note','mainwp' ); ?>"/>
@@ -1564,7 +1564,7 @@ class MainWP_Manage_Sites_View {
                     <td>
 						<select 
                                name="selected_groups[]"
-                               id="mainwp_managesites_edit_addgroups"                                                             
+                               id="mainwp_managesites_edit_addgroups"  style="width: 350px"
 							   multiple="multiple" /><?php 						
 							$groupsSite = MainWP_DB::Instance()->getGroupsByWebsiteId( $website->id );
 							foreach ($groups as $group)
@@ -1577,10 +1577,10 @@ class MainWP_Manage_Sites_View {
 				<script type="text/javascript">
 					jQuery( document ).ready( function () {			
 						<?php if (count($groups) == 0) { ?>
-						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});						
-						jQuery('#mainwp_managesites_edit_addgroups').prop("disabled", true);
+						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});
+						//jQuery('#mainwp_managesites_edit_addgroups').prop("disabled", true);
 						<?php } else { ?>
-						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, width: '350px', allowClear: true});							
+						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true});
 						<?php } ?>
 					});
 				</script>
@@ -1831,7 +1831,7 @@ class MainWP_Manage_Sites_View {
 					$pubkey = '-1';
 				}
 
-					$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array( 'pubkey' => $pubkey, 'server' => get_admin_url(), 'uniqueId' => $website->uniqueId ), true, $website->verify_certificate, $website->http_user, $website->http_pass, $website->ssl_version );
+				$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array( 'pubkey' => $pubkey, 'server' => get_admin_url(), 'uniqueId' => $website->uniqueId ), true, $website->verify_certificate, $website->http_user, $website->http_pass, $website->ssl_version );
 
 				if ( isset( $information['error'] ) && $information['error'] != '' ) {
 					throw new Exception( $information['error'] );
@@ -1864,6 +1864,20 @@ class MainWP_Manage_Sites_View {
 	}
 
 	public static function addSite( $website ) {
+                $params['url'] = $_POST['managesites_add_wpurl'];
+                $params['name'] = $_POST['managesites_add_wpname'];                
+                $params['wpadmin'] = $_POST['managesites_add_wpadmin'];
+                $params['unique_id'] = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : '';
+                $params['ssl_verify'] = ( !isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( $_POST['verify_certificate'] !== '0' ) ) ? null : $_POST['verify_certificate'] );                
+                $params['ssl_version'] = !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version'];                
+                $params['http_user'] = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
+                $params['http_pass'] = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';                
+                $params['groupids'] = isset( $_POST['groupids'] ) ? $_POST['groupids'] : array();                
+                $params['groupnames_import'] = isset( $_POST['groupnames_import'] ) ? $_POST['groupnames_import'] : '';                
+                return MainWP_Manage_Sites_View::addWPSite($website, $params);                		
+	}
+
+        public static function addWPSite( $website, $params = array()  ) {
 		$error = '';
 		$message = '';
 		$id = 0;
@@ -1887,14 +1901,14 @@ class MainWP_Manage_Sites_View {
 					$pubkey = '-1';
 				}
 
-				$url = $_POST['managesites_add_wpurl'];
+				$url = $params['url'];
 
-				$verifyCertificate = ( !isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( $_POST['verify_certificate'] !== '0' ) ) ? null : $_POST['verify_certificate'] );
-				$sslVersion = MainWP_Utility::getCURLSSLVersion( !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version'] );
-				$addUniqueId = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : '';
-				$http_user = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
-				$http_pass = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';
-				$information = MainWP_Utility::fetchUrlNotAuthed($url, $_POST['managesites_add_wpadmin'], 'register',
+				$verifyCertificate = ( !isset( $params['ssl_verify'] ) || ( empty( $params['ssl_verify'] ) && ( $params['ssl_verify'] !== '0' ) ) ? null : $params['ssl_verify'] );
+				$sslVersion = MainWP_Utility::getCURLSSLVersion( !isset( $params['ssl_version'] ) || empty( $params['ssl_version'] ) ? null : $params['ssl_version'] );
+				$addUniqueId = isset( $params['unique_id'] ) ? $params['unique_id'] : '';
+				$http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
+				$http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
+				$information = MainWP_Utility::fetchUrlNotAuthed($url, $params['wpadmin'], 'register',
 					array(
 					'pubkey' => $pubkey,
 						'server' => get_admin_url(),
@@ -1911,13 +1925,29 @@ class MainWP_Manage_Sites_View {
 						//Add website to database
 						$groupids = array();
 						$groupnames = array();
-						if ( isset( $_POST['groupids'] ) ) {
-							foreach ( $_POST['groupids'] as $group ) {
-								$groupids[] = $group;
+                        $tmpArr = array();
+						if ( isset( $params['groupids'] ) && is_array( $params['groupids']) ) {
+							foreach ( $params['groupids'] as $group ) {
+								if (is_numeric($group)) {
+                                    $groupids[] = $group;
+                                } else {
+                                    $tmpArr[] = $group;
+                                }
 							}
+	                        foreach ( $tmpArr as $tmp ) {
+	                            $getgroup = MainWP_DB::Instance()->getGroupByNameForUser( trim( $tmp ) );
+	                            if ( $getgroup ) {
+	                                if ( ! in_array( $getgroup->id, $groupids ) ) {
+	                                    $groupids[] = $getgroup->id;
+	                                }
+	                            } else {
+	                                $groupnames[] = trim( $tmp );
+	                            }
+	                        }
 						}
-						if ( (isset( $_POST['groupnames_import'] ) && $_POST['groupnames_import'] != '') ) {								
-								$tmpArr = explode( ';', $_POST['groupnames_import'] );						
+
+						if ( (isset( $params['groupnames_import'] ) && $params['groupnames_import'] != '') ) {								
+								$tmpArr = explode( ';', $params['groupnames_import'] );						
 								foreach ( $tmpArr as $tmp ) {
 									$group = MainWP_DB::Instance()->getGroupByNameForUser( trim( $tmp ) );
 									if ( $group ) {
@@ -1933,10 +1963,10 @@ class MainWP_Manage_Sites_View {
 						if ( ! isset( $information['uniqueId'] ) || empty( $information['uniqueId'] ) ) {
 							$addUniqueId = '';}
 
-						$http_user = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
-						$http_pass = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';
+						$http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
+						$http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
 						global $current_user;
-						$id = MainWP_DB::Instance()->addWebsite($current_user->ID, htmlentities( $_POST['managesites_add_wpname'] ), $_POST['managesites_add_wpurl'], $_POST['managesites_add_wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], (isset( $information['nosslkey'] )
+						$id = MainWP_DB::Instance()->addWebsite($current_user->ID, htmlentities( $params['name'] ), $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], (isset( $information['nosslkey'] )
 								? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion);
 						$message = sprintf( __( 'Site successfully added - Visit the Site\'s %sDashboard%s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' );
 						do_action('mainwp_added_new_site', $id); // must before getWebsiteById to update team control permisions
@@ -1961,7 +1991,7 @@ class MainWP_Manage_Sites_View {
 
 		return array( $message, $error, $id );
 	}
-
+        
 	public static function sitesPerPage() {
 		return __( 'Sites per page', 'mainwp' );
 	}

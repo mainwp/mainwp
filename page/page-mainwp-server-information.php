@@ -168,7 +168,7 @@ public static function renderFooter( $shownPage ) {
 				<tr>
 					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'PHP SETTINGS', 'mainwp' ); ?></td>
 				</tr><?php
-				self::renderRow( 'PHP Version', '>=', '5.3', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.3 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you. Click the help icon to read more.', null, self::ERROR);
+				self::renderRow( 'PHP Version', '>=', '5.6', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.3 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you. Click the help icon to read more.', null, self::ERROR);
 				self::renderRow( 'PHP Safe Mode Disabled', '=', true, 'getPHPSafeMode', '', '', null, 'MainWP Requires PHP Safe Mode to be disabled.' );
 				self::renderRow( 'PHP Max Execution Time', '>=', '30', 'getMaxExecutionTime', 'seconds', '=', '0', 'Changed by modifying the value max_execution_time in your php.ini file. Click the help icon to read more.' );
 				self::renderRow( 'PHP Max Input Time', '>=', '30', 'getMaxInputTime', 'seconds', '=', '0', 'Required 30 or more for larger backups. Changed by modifying the value max_input_time in your php.ini file. Click the help icon to read more.' );
@@ -406,7 +406,7 @@ public static function renderFooter( $shownPage ) {
 
 				<tbody id="the-sites-list" class="list:sites">
 				<?php
-				self::render_row_with_description('PHP Version', '>=', '5.3', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.3 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you.');
+				self::render_row_with_description('PHP Version', '>=', '5.6', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.3 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you.');
 				self::render_row_with_description('SSL Extension Enabled', '=', true, 'getSSLSupport', '', '', null, 'Changed by uncommenting the ;extension=php_openssl.dll line in your php.ini file by removing the ";" character.');
 				self::render_row_with_description('cURL Extension Enabled', '=', true, 'getCurlSupport', '', '', null, 'Changed by uncommenting the ;extension=php_curl.dll line in your php.ini file by removing the ";" character.');
 				self::render_row_with_description('MySQL Version', '>=', '5.0', 'getMySQLVersion', '', '', null, 'MainWP requires the MySQL version 5.0 or higher. If the condition is not met, MySQL version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you.');
@@ -515,7 +515,7 @@ public static function renderFooter( $shownPage ) {
 					?>
 				</select>
 				<?php _e( 'Select Information: ', 'mainwp' ); ?>
-				<select class="mainwp-select2" name="" data-placeholder="<?php _e( 'Full Information', 'mainwp' ); ?>" id="mainwp-server-info-filter">
+				<select class="mainwp-select2 allowclear" name="" data-placeholder="<?php _e( 'Full Information', 'mainwp' ); ?>" id="mainwp-server-info-filter">
 					<option value=""></option>
 					<option value="server-information"><?php _e( 'Server Information', 'mainwp' ); ?></option>
 					<option value="cron-schedules"><?php _e( 'Cron Schedules', 'mainwp' ); ?></option>
@@ -665,7 +665,7 @@ public static function renderFooter( $shownPage ) {
 				<td><?php echo( self::filesize_compare( $currentVersion, $pVersion, $pCompare ) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( $errorType ) ); ?></td>
 			<?php } else if ( $whatType == 'curlssl' ) { ?>
 				<td><?php echo( self::curlssl_compare( $pVersion, $pCompare ) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( $errorType ) ); ?></td>
-			<?php } else if ($pGetter == 'getMaxInputTime' && $currentVersion == -1) { ?>
+			<?php } else if (($pGetter == 'getMaxInputTime' || $pGetter == 'getMaxExecutionTime') && $currentVersion == -1) { ?>
 				<td><?php echo '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>'; ?></td>
 			<?php } else { ?>
 				<td><?php echo (version_compare($currentVersion, $pVersion, $pCompare) || (($pExtraCompare != null) && version_compare($currentVersion, $pExtraVersion, $pExtraCompare)) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( $errorType )); ?></td>
@@ -1245,7 +1245,25 @@ public static function renderFooter( $shownPage ) {
 
 			<div class="inside">
 				<?php
-				show_source( ABSPATH . 'wp-config.php' );
+				if ( file_exists( ABSPATH . 'wp-config.php' ) ) {
+					@show_source( ABSPATH . 'wp-config.php' );
+				} else {
+					$files = @get_included_files();
+					$configFound = false;
+					if ( is_array( $files ) ) {
+						foreach ( $files as $file ) {
+							if ( stristr( $file, 'wp-config.php' ) ) {
+								$configFound = true;
+								@show_source( $file );
+								break;
+							}
+						}
+					}
+
+					if ( !$configFound ) {
+						_e( 'wp-config.php not found', 'mainwp' );
+					}
+				}
 				?>
 			</div>
 		</div>
@@ -1364,7 +1382,9 @@ public static function renderFooter( $shownPage ) {
 			'mainwp_maximumRequests' => __('Maximum simultaneous requests','mainwp'),
 			'mainwp_minimumDelay' => __('Minimum delay between requests','mainwp'),
 			'mainwp_maximumIPRequests' => __('Maximum simultaneous requests per ip','mainwp'),
-			'mainwp_minimumIPDelay' => __('Minimum delay between requests to the same ip','mainwp')
+			'mainwp_minimumIPDelay' => __('Minimum delay between requests to the same ip','mainwp'),
+            'mainwp_maximumSyncRequests' => __('Maximum simultaneous sync requests','mainwp'),
+            'mainwp_maximumInstallUpdateRequests' => __('Minimum simultaneous install/update requests','mainwp')
 		);
 		
 		if ( !MainWP_Extensions::isExtensionAvailable('mainwp-comments-extension') ) {
@@ -1396,8 +1416,10 @@ public static function renderFooter( $shownPage ) {
 					break;
 				case 'mainwp_numberdays_Outdate_Plugin_Theme';
 				case 'mainwp_maximumPosts';
-                                case 'mainwp_maximumPages';                                    
+                case 'mainwp_maximumPages';
 				case 'mainwp_maximumComments';
+                case 'mainwp_maximumSyncRequests';
+				case 'mainwp_maximumInstallUpdateRequests';
 					break;
 				case 'mainwp_archiveFormat':
 

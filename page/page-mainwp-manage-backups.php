@@ -761,6 +761,7 @@ public static function renderHeader( $shownPage ) {
 		$excludedFolder = trim( $_POST['exclude'], "\n" );
 		$excludedFolder = explode( "\n", $excludedFolder );
 		$excludedFolder = array_map( array( 'MainWP_Utility', 'trimSlashes' ), $excludedFolder );
+		$excludedFolder = array_map( 'htmlentities' , $excludedFolder );
 		$excludedFolder = implode( ',', $excludedFolder );
 
 		$sites  = '';

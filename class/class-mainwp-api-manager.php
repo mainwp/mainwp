@@ -39,6 +39,10 @@ class MainWP_Api_Manager {
 		$this->domain = str_ireplace( array( 'http://', 'https://' ), '', home_url() );
 	}
 
+    public function get_domain() {
+        return $this->domain;
+    }
+
 	public function getUpgradeUrl() {
 		$url = apply_filters( 'mainwp_api_manager_upgrade_url', $this->upgrade_url );
 		return $url;

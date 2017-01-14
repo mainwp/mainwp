@@ -219,10 +219,10 @@ class MainWP_Utility {
 		}
 
 		$out = array(
-					  'host'           => $host,
-		              'httpCode'       => $http_status,
-		              'error'          => ( $err == '' && $data === false ? 'Invalid host.' : $err ),
-		              'httpCodeString' => self::getHttpStatusErrorString( $http_status ),
+			'host'           => $host,
+			'httpCode'       => $http_status,
+			'error'          => ( $err == '' && $data === false ? 'Invalid host.' : $err ),
+			'httpCodeString' => self::getHttpStatusErrorString( $http_status ),
 		);
 		if ( $ip !== false ) {
 			$out['ip'] = $ip;
@@ -440,7 +440,7 @@ class MainWP_Utility {
 			return $params;
 		}
 
-		$url = ( isset( $website->siteurl ) && $website->siteurl != '' ? $website->siteurl : $website->url );
+		$url = ( isset( $website->url ) && $website->url != '' ? $website->url : $website->siteurl );
 		$url .= ( substr( $url, - 1 ) != '/' ? '/' : '' );
 		$url .= '?';
 
@@ -567,6 +567,7 @@ class MainWP_Utility {
 					}
 
 					if ( file_exists( $cookieFile ) ) {
+						@chmod( $cookieFile, 0777 );
 						@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 						@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 					}
@@ -804,8 +805,8 @@ class MainWP_Utility {
 				$_new_post = $params['new_post'];
 				$params    = apply_filters( 'mainwp-pre-posting-posts', ( is_array( $params ) ? $params : array() ), (object) array(
 					'id'   => $website->id,
-				                                                                                                                     'url'  => $website->url,
-				                                                                                                                     'name' => $website->name,
+					'url'  => $website->url,
+					'name' => $website->name,
 				) );
 			}
 
@@ -818,6 +819,7 @@ class MainWP_Utility {
 				}
 
 				if ( file_exists( $cookieFile ) ) {
+					@chmod( $cookieFile, 0777 );
 					@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 					@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 				}
@@ -937,7 +939,7 @@ class MainWP_Utility {
 		}
 
 		if ( $what == 'stats' || ( $what == 'upgradeplugintheme' && isset( $params['type'] ) && 'plugin' == $params['type'] ) ) {
-			// to fix bug
+			// to fix bug: update upgrade plugin information
 			$try_tounch_plugins_page = get_option( 'mainwp_request_plugins_page_site_' . $website->id );
 			if ('yes' == $try_tounch_plugins_page) {
 				$page_plugins_url = MainWP_Utility::getGetDataAuthed( $website, 'plugins.php' );
@@ -992,7 +994,7 @@ class MainWP_Utility {
 			return $data;
 		}
 	}
-	                
+
 	static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, $verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null, $sslVersion = 0 ) {
 		$start = time();
 
@@ -1169,6 +1171,7 @@ class MainWP_Utility {
 			}
 
 			if ( file_exists( $cookieFile ) ) {
+				@chmod( $cookieFile, 0777 );
 				@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 				@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 			}
@@ -1328,11 +1331,63 @@ class MainWP_Utility {
 		fclose( $fp );
 	}
 
+	static function uploadImage( $img_url, $img_data = array()  ) {
+		if (!is_array($img_data))
+			$img_data = array();
+		include_once( ABSPATH . 'wp-admin/includes/file.php' ); //Contains download_url
+		//Download $img_url
+		$temporary_file = download_url( $img_url );
+
+		if ( is_wp_error( $temporary_file ) ) {
+			throw new Exception( 'Error: ' . $temporary_file->get_error_message() );
+		} else {
+			$upload_dir     = wp_upload_dir();
+			$local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url ); //Local name
+			$local_img_url  = $upload_dir['url'] . '/' . basename( $img_url );
+			$moved          = @rename( $temporary_file, $local_img_path );
+			if ( $moved ) {
+				$wp_filetype = wp_check_filetype( basename( $img_url ), null ); //Get the filetype to set the mimetype
+				$attachment  = array(
+					'post_mime_type' => $wp_filetype['type'],
+					'post_title'     => isset( $img_data['title'] ) && !empty( $img_data['title'] ) ? $img_data['title'] : preg_replace( '/\.[^.]+$/', '', basename( $img_url ) ),
+					'post_content'   => isset( $img_data['description'] ) && !empty( $img_data['description'] ) ? $img_data['description'] : '',
+					'post_excerpt' => isset( $img_data['caption'] ) && !empty( $img_data['caption'] ) ? $img_data['caption'] : '',
+					'post_status'    => 'inherit',
+				);
+				$attach_id   = wp_insert_attachment( $attachment, $local_img_path ); //Insert the image in the database
+				require_once( ABSPATH . 'wp-admin/includes/image.php' );
+				$attach_data = wp_generate_attachment_metadata( $attach_id, $local_img_path );
+				wp_update_attachment_metadata( $attach_id, $attach_data ); //Update generated metadata
+				if ( isset( $img_data['alt'] ) && !empty( $img_data['alt'] ) )
+					update_post_meta( $attach_id, '_wp_attachment_image_alt', $img_data['alt'] );
+				return array( 'id' => $attach_id, 'url' => $local_img_url );
+			}
+		}
+		if ( file_exists( $temporary_file ) ) {
+			unlink( $temporary_file );
+		}
+
+		return null;
+	}
+
 	static function getBaseDir() {
 		$upload_dir = wp_upload_dir();
 
 		return $upload_dir['basedir'] . DIRECTORY_SEPARATOR;
 	}
+
+    public static function getIconsDir() {
+        $dirs = self::getMainWPDir();
+        $dir        = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
+        $url        = $dirs[1] . 'icons/';
+        if ( ! file_exists( $dir ) ) {
+                @mkdir( $dir, 0777, true );
+        }
+        if ( ! file_exists( $dir . 'index.php' ) ) {
+                @touch( $dir . 'index.php' );
+        }
+        return array( $dir, $url );
+    }
 
 	public static function getMainWPDir() {
 		$upload_dir = wp_upload_dir();
@@ -1512,6 +1567,12 @@ class MainWP_Utility {
 		}
 	}
 
+    public static function get_file_content( $url ) {
+		$data = self::file_get_contents_curl( $url );
+        if ( empty( $data ) ) return false;
+		return $data;
+	}
+
 	protected static function file_get_contents_curl( $url ) {
 		//$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -1528,7 +1589,7 @@ class MainWP_Utility {
 
 	public static function getGoogleCount( $domain ) {
 		$content = file_get_contents( 'https://ajax.googleapis.com/ajax/services/' .
-		'search/web?v=1.0&filter=0&q=site:' . urlencode( $domain ) );
+		                              'search/web?v=1.0&filter=0&q=site:' . urlencode( $domain ) );
 		$data    = json_decode( $content );
 
 		if ( empty( $data ) ) {
@@ -1683,6 +1744,15 @@ class MainWP_Utility {
 		echo $output;
 	}
 
+    public static function renderNoteTooltip( $pText, $pImage = '<i class="fa fa-pencil-square-o"></i>') {
+		$output = '<span class="tooltipcontainer">';
+		$output .= '<span style="font-size: 14px;" class="tooltip">' . $pImage . '</span>';
+		$output .= '<span class="tooltipcontent" style="display: none;">' . $pText;
+		$output .= '</span></span>';
+		return $output;
+	}
+
+
 	public static function encrypt( $str, $pass ) {
 		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
 		$stra = str_split( $str );
@@ -1754,64 +1824,347 @@ class MainWP_Utility {
 		return preg_replace( '/[\\\\\/\:"\*\?\<\>\|]+/', '', $str );
 	}
 
-	public static function formatEmail( $to, $body ) {
-		return '<br>
-<div>
-            <br>
-            <div style="background:#ffffff;padding:0 1.618em;font:13px/20px Helvetica,Arial,Sans-serif;padding-bottom:50px!important">
-                <div style="width:600px;background:#fff;margin-left:auto;margin-right:auto;margin-top:10px;margin-bottom:25px;padding:0!important;border:10px Solid #fff;border-radius:10px;overflow:hidden">
-                    <div style="display: block; width: 100% ; background: #fafafa; border-bottom: 2px Solid #7fb100 ; overflow: hidden;">
-                      <div style="display: block; width: 95% ; margin-left: auto ; margin-right: auto ; padding: .5em 0 ;">
-                         <div style="float: left;"><a href="https://mainwp.com"><img src="' . plugins_url( 'images/logo.png', dirname( __FILE__ ) ) . '" alt="MainWP" height="30"/></a></div>
-                         <div style="float: right; margin-top: .6em ;">
-                            <span style="display: inline-block; margin-right: .8em;"><a href="https://mainwp.com/mainwp-extensions/" style="font-family: Helvetica, Sans; color: #7fb100; text-transform: uppercase; font-size: 14px;">Extensions</a></span>
-                            <span style="display: inline-block; margin-right: .8em;"><a style="font-family: Helvetica, Sans; color: #7fb100; text-transform: uppercase; font-size: 14px;" href="https://mainwp.com/support/">Support</a></span>
-                            <span style="display: inline-block; margin-right: .8em;"><a style="font-family: Helvetica, Sans; color: #7fb100; text-transform: uppercase; font-size: 14px;" href="http://docs.mainwp.com">Documentation</a></span>
-                            <span style="display: inline-block; margin-right: .5em;" class="mainwp-memebers-area"><a href="https://mainwp.com/my-account/" style="padding: .6em .5em ; border-radius: 50px ; -moz-border-radius: 50px ; -webkit-border-radius: 50px ; background: #1c1d1b; border: 1px Solid #000; color: #fff !important; font-size: .9em !important; font-weight: normal ; -webkit-box-shadow:  0px 0px 0px 5px rgba(0, 0, 0, .1); box-shadow:  0px 0px 0px 5px rgba(0, 0, 0, .1);">My Account</a></span>
-                         </div><div style="clear: both;"></div>
-                      </div>
-                    </div>
-                    <div>
-                        <p>Hello MainWP User!<br></p>
-                        ' . $body . '
-                        <div></div>
-                        <br />
-                        <div>MainWP</div>
-                        <div><a href="http://www.MainWP.com" target="_blank">www.MainWP.com</a></div>
-                        <p></p>
-                    </div>
+	public static function formatEmail( $to, $body, $title = '' ) {
+		$current_year = date("Y");
+		$mail_send['header']  = <<<EOT
+            <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=U=TF-8">
+        <title> {$title} </title>
+        <style type="text/css">
+        outlook a{padding:0;}
+        body{width:100% !important;}
+        .ReadMsgBody{width:100%;}
+        .ExternalClass{width:100%;}
+        body{-webkit-text-size-adjust:none;}
+        body{margin:0;padding:0;}
+        img{
+        border:0;
+        height:auto;
+        line-height:100%;
+        outline:none;
+        text-decoration:none;
+        }
+        table td{
+        border-collapse:collapse;
+        }
+        #backgroundTable{
+        height:100% !important;
+        margin:0;
+        padding:0;
+        width:100% !important;
+        }
+        body,#backgroundTable{
+        background-color:#FAFAFA;
+        }
+        #templateContainer{
+        border:1px solid #DDDDDD;
+        }
+        h1,.h1{
+        color:#202020;
+        display:block;
+        font-family:Arial;
+        font-size:34px;
+        font-weight:bold;
+        line-height:100%;
+        margin-top:0;
+        margin-right:0;
+        margin-bottom:10px;
+        margin-left:0;
+        text-align:left;
+        }
+        h2,.h2{
+        color:#202020;
+        display:block;
+        font-family:Arial;
+        font-size:30px;
+        font-weight:bold;
+        line-height:100%;
+        margin-top:0;
+        margin-right:0;
+        margin-bottom:10px;
+        margin-left:0;
+        text-align:left;
+        }
+        h3,.h3{
+        color:#202020;
+        display:block;
+        font-family:Arial;
+        font-size:26px;
+        font-weight:bold;
+        line-height:100%;
+        margin-top:0;
+        margin-right:0;
+        margin-bottom:10px;
+        margin-left:0;
+        text-align:left;
+        }
+        h4,.h4{
+        color:#202020;
+        display:block;
+        font-family:Arial;
+        font-size:22px;
+        font-weight:bold;
+        line-height:100%;
+        margin-top:0;
+        margin-right:0;
+        margin-bottom:10px;
+        margin-left:0;
+        text-align:left;
+        }
+        #templatePreheader{
+        background-color:#FAFAFA;
+        }
+        .preheaderContent div{
+        color:#505050;
+        font-family:Arial;
+        font-size:10px;
+        line-height:100%;
+        text-align:left;
+        }
+        .preheaderContent div a:link,.preheaderContent div a:visited,.prehead=
+        erContent div a .yshortcuts {
+        color:#446200;
+        font-weight:normal;
+        text-decoration:underline;
+        }
+        #templateHeader{
+        background-color:#FFFFFF;
+        border-bottom:0;
+        }
+        .headerContent{
+        color:#202020;
+        font-family:Arial;
+        font-size:34px;
+        font-weight:bold;
+        line-height:100%;
+        padding:0;
+        text-align:center;
+        vertical-align:middle;
+        }
+        .headerContent a:link,.headerContent a:visited,.headerContent a .ysho=
+        rtcuts {
+        color:#446200;
+        font-weight:normal;
+        text-decoration:underline;
+        }
+        #headerImage{
+        height:auto;
+        max-width:600px !important;
+        }
+        #templateContainer,.bodyContent{
+        background-color:#FFFFFF;
+        }
+        .bodyContent div{
+        color:#505050;
+        font-family:Arial;
+        font-size:14px;
+        line-height:150%;
+        text-align:left;
+        }
+        .bodyContent div a:link,.bodyContent div a:visited,.bodyContent div a=
+         .yshortcuts {
+        color:#446200;
+        font-weight:bold;
+        text-decoration:underline;
+        }
+        .bodyContent img{
+        display:inline;
+        height:auto;
+        }
+        #templateFooter{
+        background-color:#1d1b1c;
+        border-top:4px solid #7fb100;
+        }
+        .footerContent div{
+        color:#b8b8b8;
+        font-family:Arial;
+        font-size:12px;
+        line-height:125%;
+        text-align:center;
+        }
+        .footerContent div a:link,.footerContent div a:visited,.footerContent=
+         div a .yshortcuts {
+        color:#336699;
+        font-weight:normal;
+        text-decoration:underline;
+        }
+        .footerContent img{
+        display:inline;
+        }
+        #social{
+        background-color:#1d1b1c;
+        border:0;
+        }
+        #social div{
+        text-align:center;
+        }
+        #utility{
+        background-color:#1d1b1c;
+        border:0;
+        }
+        #utility div{
+        text-align:center;
+        }
+        #monkeyRewards img{
+        max-width:190px;
+        }
+        </style>
+    </head>
+    <body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0" style="-webkit-text-size-adjust: none;margin: 0;padding: 0;background-color: #FAFAFA;width: 100% !important;">
+    <center>
+        <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%" id="backgroundTable" style="margin: 0;padding:0;background-color: #FAFAFA;height: 100% !important;width: 100% !important;">
+            <tr>
+                <td align="center" valign="top" style="border-collapse: collapse;">
 
-                    <div style="display: block; width: 100% ; background: #1c1d1b;">
-                      <div style="display: block; width: 95% ; margin-left: auto ; margin-right: auto ; padding: .5em 0 ;">
-                        <div style="padding: .5em 0 ; float: left;"><p style="color: #fff; font-family: Helvetica, Sans; font-size: 12px ;">&copy; <?php echo date("Y"); ?> MainWP. All Rights Reserved.</p></div>
-                        <div style="float: right;"><a href="https://mainwp.com"><img src="' . plugins_url( 'images/g-all-top-menu-item.png', dirname( __FILE__ ) ) . '" height="45"/></a></div><div style="clear: both;"></div>
-                      </div>
-                   </div>
-                </div>
-                <center>
-                    <br><br><br><br><br><br>
-                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#ffffff;border-top:1px solid #e5e5e5">
-                        <tbody><tr>
-                            <td align="center" valign="top" style="padding-top:20px;padding-bottom:20px">
-                                <table border="0" cellpadding="0" cellspacing="0">
-                                    <tbody><tr>
-                                        <td align="center" valign="top" style="color:#606060;font-family:Helvetica,Arial,sans-serif;font-size:11px;line-height:150%;padding-right:20px;padding-bottom:5px;padding-left:20px;text-align:center">
-                                            This email is sent from your MainWP Dashboard.
-                                            <br>
-                                            If you do not wish to receive these notices please re-check your preferences in the MainWP Settings page.
-                                            <br>
-                                            <br>
-                                        </td>
-                                    </tr>
-                                </tbody></table>
-                            </td>
-                        </tr>
-                    </tbody></table>
+                        <!-- // Begin: Template Pre-header \\ -->
 
-                </center>
-            </div>
-</div>
-<br>';
+                        <table border="0" cellpadding="10" cellspacing="0" width="600" id="templatePreheader" style="background-color: #FAFAFA;">
+                            <tr>
+                                <td valign="top" class="preheaderContent" style="border-collapse: collapse;">
+                                
+                                <!-- // Begin: Standard Preheader \ -->
+
+                                    <table border="0" cellpadding="10" cellspacing="0" width="100%">
+                                        <tr>
+                                            <td valign="top" style="border-collapse: collapse;">
+                                                <div style="color: #505050;font-family: Arial;font-size: 10px;line-height: 100%;text-align: left;"></div>
+                                            </td>
+                                            <td valign="top" width="190" style="border-collapse: collapse;">
+                                                <div style="color: #505050;font-family: Arial;font-size: 10px;line-height: 100%;text-align: left;"></div>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                <!-- // End: Standard Preheader \ -->
+                                
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- // End: Template Preheader \\ -->
+
+                        <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateContainer" style="border: 1px solid #DDDDDD;background-color: #FFFFFF;">
+                            <tr>
+                                <td align="center" valign="top" style="border-collapse: collapse;">
+
+                                        <!-- // Begin: Template Header \\ -->
+
+                                        <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateHeader" style="background-color: #FFFFFF;border-bottom: 0;">
+                                            <tr>
+                                                <td class="headerContent" style="border-collapse: collapse;color: #202020;font-family: Arial;font-size: 34px;font-weight: bold;line-height: 100%;padding: 0;text-align: center;vertical-align: middle;">
+                                                
+                                                <!-- // Begin: Standard Header Image \\ -->
+
+                                                <a href="https://mainwp.com" target="_blank" style="color: #446200;font-weight: normal;text-decoration: underline;"><img src="https://gallery.mailchimp.com/f3ac05fd307648a9c6bbe320a/images/header.png" alt="MainWP" border="0" style="border: px none;border-color: ;border-style: none;border-width: px;height: 130px;width: 600px;margin: 0;padding: 0;line-height: 100%;outline: none;text-decoration: none;" width="600" height="130"></a>
+                                                
+                                                <!-- // End: Standard Header Image \\ -->
+                                                
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- // End: Template Header \\ -->
+
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" valign="top" style="border-collapse: collapse;">
+
+                                        <!-- // Begin: Template Body \\ -->
+
+                                        <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateBody">
+                                            <tr>
+                                                <td valign="top" class="bodyContent" style="border-collapse: collapse;background-color: #FFFFFF;">
+                                    
+                                                    <!-- // Begin: Standard Content \\ -->
+EOT;
+
+		$mail_send['body']  = <<<EOT
+                                                    <table border="0" cellpadding="20" cellspacing="0" width="100%">
+                                                        <tr>
+                                                            <td valign="top" style="border-collapse: collapse;">
+                                                                <div style="color: #505050;font-family: Arial;font-size: 14px;line-height: 150%;text-align: left;"> Hi MainWP user, <br><br>
+                                                                <b style="color: rgb(127, 177, 0); font-family: Helvetica, Sans; font-size: medium; line-height: normal;"> {$title} </b><br>
+                                                                <br>{$body}<br>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+EOT;
+
+		$mail_send['footer']  = <<<EOT
+                                                    <!-- // End: Standard Content \\ -->
+
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- // End: Template Body \\ -->
+
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" valign="top" style="border-collapse: collapse;">
+
+                                        <!-- // Begin: Template Footer \\ -->
+
+                                        <table border="0" cellpadding="10" cellspacing="0" width="600" id="templateFooter" style="background-color: #1d1b1c;border-top: 4px solid #7fb100;">
+                                            <tr>
+                                                <td valign="top" class="footerContent" style="border-collapse: collapse;">
+                                                    
+                                                    <!-- // Begin: Standard Footer \\ -->
+
+                                                    <table border="0" cellpadding="10" cellspacing="0" width="100%">
+                                                        <tr>
+                                                            <td colspan="2" valign="middle" id="social" style="border-collapse: collapse;background-color: #1d1b1c;border: 0;">
+                                                                <div style="color: #b8b8b8;font-family: Arial;font-size: 12px;line-height: 125%;text-align: center;">
+                                                                    <style type="text/css">
+                                                                        #mainwp-links a {
+                                                                          text-transform: uppercase;
+                                                                          text-decoration: none;
+                                                                          color: #7fb100 ;
+                                                                        }
+                                                                    </style>
+                                                                    <div class="tpl-content-highlight" id="mainwp-links" style="color: #b8b8b8;font-family: Arial;font-size: 12px;line-height: 125%;text-align: center;">
+                                                                    <a href="https://mainwp.com" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">MainWP</a> | <a href="https://mainwp.com/mainwp-extensions/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Extensions</a> | <a href="https://mainwp.com/help/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration:none;text-transform: uppercase;">Documentation</a> | <a href="https://mainwp.com/mainwp-blog/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Blog</a> | <a href="http://codex.mainwp.com" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Codex</a> | <a href="https://mainwp.com/support/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Support</a></div>
+
+                                                                    <hr><br>
+                                                                    <a href="https://twitter.com/mymainwp" target="_blank" style="color: #336699;font-weight: normal;text-decoration: underline;">Follow us on Twitter</a> | <a href="https://www.facebook.com/mainwp" style="color:#336699;font-weight: normal;text-decoration: underline;">Friend us on Facebook</a>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td valign="top" width="350" style="border-collapse: collapse;">
+                                                                <div style="color: #b8b8b8;font-family: Arial;font-size: 12px;line-height: 125%;text-align: center;"><div style="text-align: left;color: #b8b8b8;font-family: Arial;font-size: 12px;line-height: 125%;"><em>Copyright &copy; {$current_year} MainWP, All rights reserved.</em><br></div></div>
+                                                            </td>
+                                                            <td valign="top" width="190" id="monkeyRewards" style="border-collapse: collapse;">
+                                                                <div style="color: #b8b8b8;font-family: Arial;font-size: 12px;line-height: 125%;text-align: center;"><a href="https://mainwp.com" target="_blank" style="color: #336699;font-weight: normal;text-decoration: underline;"><img align="none" alt="MainWP" height="60" src="http://mainwp.com/wp-content/uploads/2013/07/MainWP-Icon-300.png" style="width: 60px;height: 60px;float: right;border: 0;line-height: 100%;outline: none;text-decoration: none;display:inline;max-width: 190px;" width="60"></a></div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+
+                                                    <!-- // End: Standard Footer \\ -->
+                                                    
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- // End: Template Footer \\ -->
+
+                                    </td>
+                                </tr>
+                            </table>
+                        <br>
+                    </td>
+                </tr>
+            </table>
+        </center>
+    </body>
+</html>
+EOT;
+        $mail_send = apply_filters( 'mainwp_format_email', $mail_send );
+		return $mail_send['header'] . $mail_send['body'] . $mail_send['footer'];
 	}
 
 	public static function endSession() {
@@ -2000,6 +2353,28 @@ class MainWP_Utility {
 		return $schedules;
 	}
 
+	public static function getWebsitesAutomaticUpdateTime() {
+		$lastAutomaticUpdate    = MainWP_DB::Instance()->getWebsitesLastAutomaticSync();
+
+		if ( $lastAutomaticUpdate == 0 ) {
+			$nextAutomaticUpdate = 'Any minute';
+		} else if ( MainWP_DB::Instance()->getWebsitesCountWhereDtsAutomaticSyncSmallerThenStart() > 0 || MainWP_DB::Instance()->getWebsitesCheckUpdatesCount() > 0 ) {
+			$nextAutomaticUpdate = 'Processing your websites.';
+		} else {
+			$nextAutomaticUpdate = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( mktime( 0, 0, 0, date( 'n' ), date( 'j' ) + 1 ) ) );
+		}
+
+		if ( $lastAutomaticUpdate == 0 ) {
+			$lastAutomaticUpdate = 'Never';
+		} else {
+			$lastAutomaticUpdate = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $lastAutomaticUpdate ) );
+		}
+
+		return array(
+			'last' => $lastAutomaticUpdate,
+			'next' => $nextAutomaticUpdate
+		);
+	}
 
 	public static function mime_content_type( $filename ) {
 		if ( function_exists( 'finfo_open' ) ) {
@@ -2239,6 +2614,21 @@ class MainWP_Utility {
 		return true;
 	}
 
+    public static function showMainWPMessage( $type, $notice_id ) {
+        if ( 'tour' == $type ) {
+            $status = get_user_option( 'mainwp_tours_status' );
+        }  else {
+            $status = get_user_option( 'mainwp_notice_saved_status' );
+        }
+        if ( ! is_array( $status ) ) {
+                $status = array();
+        }
+        if ( isset( $status[ $notice_id ] ) ) {
+            return false;
+        }
+		return true;
+	}
+
 	public static function resetUserCookie( $what, $value = '' ) {
 		global $current_user;
 		if ( $user_id = $current_user->ID ) {
@@ -2267,15 +2657,26 @@ class MainWP_Utility {
 		return true;
 	}
 
-	public static function get_favico_url( $favi = '', $site = null ) {
+	public static function get_favico_url( $website ) {
+        $favi     = MainWP_DB::Instance()->getWebsiteOption( $website, 'favi_icon', '' );
+        $faviurl = '';
+
 		if ( ! empty( $favi ) ) {
-			// fix bug
-			if ( ( strpos( $favi, '//' ) === 0 ) || ( strpos( $favi, 'http' ) === 0 ) ) {
+            if ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) {
+                $dirs      = self::getIconsDir();
+                if ( file_exists( $dirs[0] . $favi ) ) {
+                    $faviurl = $dirs[1] . $favi;
+                } else {
+                    $faviurl = '';
+                }
+            } else if ( ( strpos( $favi, '//' ) === 0 ) || ( strpos( $favi, 'http' ) === 0 ) ) {
 				$faviurl = $favi;
 			} else {
-				$faviurl = $site->url . $favi;
+				$faviurl = $website->url . $favi;
+                $faviurl = MainWP_Utility::removeHttpPrefix( $faviurl );
 			}
-		} else {
+		}
+        if ( empty( $faviurl ) ){
 			$faviurl = plugins_url( 'images/sitefavi.png', dirname( __FILE__ ) );
 		}
 

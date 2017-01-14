@@ -62,7 +62,7 @@ mainwp_update_pluginsthemes = function (updateType, updateSiteIds)
 
     for (var i = 0; i < allWebsiteIds.length; i++)
     {
-        dashboard_update_site_status(allWebsiteIds[i], __('PENDING'));
+        dashboard_update_site_status(allWebsiteIds[i], '<i class="fa fa-clock-o" aria-hidden="true"></i> ' + __('PENDING'));
         siteNames[allWebsiteIds[i]] =  jQuery('.refresh-status-wp[siteid="'+allWebsiteIds[i]+'"]').attr('niceurl');
     }
 
@@ -155,8 +155,8 @@ managesites_update_pluginsthemes_done = function(pType)
             }
             else
             {
-                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed / Errored out. (There was an error syncing some of your sites. <a href="http://docs.mainwp.com/sync-error/">Please check this help doc for possible solutions.</a>)';
-                jQuery('#refresh-status-content').prepend('<font color="red"><strong>' + message + '</strong></font><br /><br />');
+                var message = websitesError + ' Site' + (websitesError > 1 ? 's' : '') + ' Timed / Errored out. <br/><span class="mainwp-small">(There was an error syncing some of your sites. <a href="http://mainwp.com/help/docs/potential-issues/">Please check this help doc for possible solutions.</a>)</span>';
+                jQuery('#refresh-status-content').prepend('<span class="mainwp-red"><strong>' + message + '</strong></span><br /><br />');
                 jQuery('#mainwp-right-now-message-content').html(message);
                 jQuery('#mainwp-right-now-message').show();
             }
@@ -188,9 +188,9 @@ managesites_update_pluginsthemes_next_int = function(websiteId, data, errors)
         data: data,
         success: function(pWebsiteId) { return function(response) {
             if (response.error) {
-                dashboard_update_site_status(pWebsiteId, '<font color="red">' + __('ERROR') + '</font>'); websitesError++;
+                dashboard_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('ERROR') + '</span>'); websitesError++;
             } else {
-                dashboard_update_site_status(websiteId, __('DONE'));
+                dashboard_update_site_status(websiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>', true );
                 if (response.result) {
                     for (slug in response.result) {
                         if (response.result[slug] == 1) {
@@ -206,7 +206,7 @@ managesites_update_pluginsthemes_next_int = function(websiteId, data, errors)
         error: function(pWebsiteId, pData, pErrors) { return function(response) {
             if (pErrors > 5)
             {
-                dashboard_update_site_status(pWebsiteId, '<font color="red">' +  __('TIMEOUT') + '</font>');
+                dashboard_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('TIMEOUT') + '</span>');
                 websitesError++;
                 managesites_update_pluginsthemes_done();
             }
@@ -245,7 +245,7 @@ mainwp_managesites_checkBackups = function(sitesToUpdate, siteNames)
     managesitesShowBusyFunction = function()
     {
         var backupContent = jQuery('#managesites-backup-content');
-        var output = __('Checking if a backup is required for the selected upgrades...');
+        var output = __('Checking if a backup is required for the selected updates...');
         backupContent.html(output);
 
         jQuery('#managesites-backup-all').hide();
@@ -323,7 +323,7 @@ mainwp_managesites_checkBackups = function(sitesToUpdate, siteNames)
             if (siteFeedback != undefined)
             {
                 var backupContent = jQuery('#managesites-backup-content');
-                var output = '<font color="red">'+__('A full backup has not been taken in the last 7 days for the following sites:')+'</font><br /><br />';
+                var output = '<span class="mainwp-red">'+__('A full backup has not been taken in the last 7 days for the following sites:')+'</span><br /><br />';
                 for (var j = 0; j < siteFeedback.length; j++)
                 {
                     output += '<span class="managesites-backup-site" siteid="' + siteFeedback[j] + '">' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
@@ -417,7 +417,7 @@ managesites_backup_run_next = function()
 {
     if (managesitesBackupSites.length == 0)
     {
-        appendToDiv('#managesites-backupnow-content', __('Required backup(s) completed') + (managesitesBackupError ? ' <font color="red">'+__('with errors')+'</font>' : '') + '.');
+        appendToDiv('#managesites-backupnow-content', __('Required backup(s) completed') + (managesitesBackupError ? ' <span class="mainwp-red">'+__('with errors')+'</span>' : '') + '.');
 
         jQuery('#managesites-backupnow-close').prop('cancel', '0');
         if (managesitesBackupError)
@@ -449,7 +449,7 @@ managesites_backup_run_next = function()
     jQuery.post(ajaxurl, data, function(pSiteId, pSiteName) { return function (response) {
         if (response.error)
         {
-            appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] <font color="red">Error: ' + getErrorMessage(response.error) + '</font>');
+            appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] <span class="mainwp-red">Error: ' + getErrorMessage(response.error) + '</span>');
             managesitesBackupError = true;
             managesites_backup_run_next();
         }
@@ -500,8 +500,8 @@ managesites_backupnow_download_file = function(pSiteId, pSiteName, type, url, fi
 
         if (response.error)
         {
-            appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] <font color="red">ERROR: '+ getErrorMessage(response.error) + '</font>');
-            appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] <font color="red">'+__('Backup failed') + '</font>');
+            appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] <span class="mainwp-red">ERROR: '+ getErrorMessage(response.error) + '</span>');
+            appendToDiv('#managesites-backupnow-content', '[' + pSiteName + '] <span class="mainwp-red">'+__('Backup failed') + '</span>');
 
             managesitesBackupError = true;
             managesites_backup_run_next();
@@ -555,14 +555,14 @@ managesites_wordpress_global_upgrade_all = function (updateSiteIds)
 
     for (var i = 0; i < allWebsiteIds.length; i++)
     {
-        dashboard_update_site_status(allWebsiteIds[i], __('PENDING'));
+        dashboard_update_site_status(allWebsiteIds[i], '<i class="fa fa-clock-o" aria-hidden="true"></i> ' + __('PENDING'));
         siteNames[allWebsiteIds[i]] =  jQuery('.refresh-status-wp[siteid="'+allWebsiteIds[i]+'"]').attr('niceurl');
     }
 
     managesitesContinueAfterBackup = function(sitesCount, pAllWebsiteIds) { return function()
     {
 
-        jQuery('#refresh-status-box').attr('title', __("Upgrading Wordpress"));
+        jQuery('#refresh-status-box').attr('title', __("Updating WordPress"));
         jQuery('#refresh-status-text').html(__('updated'));
         jQuery('#refresh-status-progress').progressbar({value: 0, max: sitesCount});
         jQuery('#refresh-status-box').dialog({
@@ -656,12 +656,12 @@ managesites_wordpress_upgrade_int = function (websiteId)
             if (response.error)
             {
                 result = getErrorMessage(response.error);
-                dashboard_update_site_status(pWebsiteId, __('FAILED'));
+                dashboard_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('FAILED') + '</span>', true );
             }
             else
             {
                 result = response.result;
-                dashboard_update_site_status(pWebsiteId, __('DONE'));
+                dashboard_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>' );
                 websiteHolder.attr('updated', 1);
                 countRealItemsUpdated++;
                 couttItemsToUpdate++;

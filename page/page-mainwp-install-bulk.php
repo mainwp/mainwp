@@ -39,14 +39,12 @@ class MainWP_Install_Bulk {
 		<div class="postbox">
 			<h3 class="mainwp_box_title">
 				<i class="fa fa-upload"></i> <?php echo ($type == 'plugin') ? __( 'Step 1: Upload plugins', 'mainwp' ) : __( 'Step 1: Upload themes', 'mainwp' ); ?></h3>
-
-			<div class="inside">
-				<?php if ( $type == 'plugin' ) { ?>
-					<div class="mainwp_info-box-red" id="mainwp-ext-notice" style="margin-top: 1em;">
-						<span><?php _e( '<strong>Do not upload extensions here</strong>, they do not go on the child sites, upload and activate them via your dashboard sites', 'mainwp' ) ?>
-							<a href="<?php echo get_admin_url(); ?>plugin-install.php" style="text-decoration: none;"> <?php _e( 'plugin screen.', 'mainwp' ); ?></a></span>
-					</div>
-				<?php } ?>
+			<?php if ( $type == 'plugin' ) { ?>
+				<div class="mainwp-postbox-actions-top">
+					<?php _e( '<strong>Do not upload extensions here</strong>, they do not go on the child sites, upload and activate them via your dashboard sites', 'mainwp' ) ?> <a href="<?php echo get_admin_url(); ?>plugin-install.php"> <?php _e( 'plugin screen.', 'mainwp' ); ?></a>
+				</div>
+			<?php } ?>
+			<div class="mainwp-padding-10">
 				<div style="font-size: 20px; text-align: center; margin: 3em 0;"><?php _e( 'If you have', 'mainwp' ); ?> <?php echo strtolower( $title ); ?> <?php _e( 'in a .zip format, you may install it by uploading it here.', 'mainwp' ); ?></div>
 				<div id="mainwp-file-uploader">
 					<noscript>
@@ -145,7 +143,18 @@ class MainWP_Install_Bulk {
 
 		die( json_encode( $output ) );
 	}
-
+        
+        public static function addition_post_data( &$post_data = array()) {
+            $clear_and_lock_opts = apply_filters( 'mainwp_clear_and_lock_options', array() );   
+            if ( isset($post_data['url']) && false !== strpos( $post_data['url'], 'mwpdl') && false !== strpos( $post_data['url'], 'sig') ) {
+                if ( is_array($clear_and_lock_opts) && isset($clear_and_lock_opts['wpadmin_user']) && !empty($clear_and_lock_opts['wpadmin_user']) && isset($clear_and_lock_opts['wpadmin_passwd']) && !empty($clear_and_lock_opts['wpadmin_passwd']) ) {
+                    $post_data['wpadmin_user'] = $clear_and_lock_opts['wpadmin_user'];
+                    $post_data['wpadmin_passwd'] = $clear_and_lock_opts['wpadmin_passwd'];
+                }
+            }           
+            return $post_data;
+        }
+        
 	public static function performInstall() {
 		MainWP_Utility::endSession();
 
@@ -159,7 +168,10 @@ class MainWP_Install_Bulk {
 		}
 		if ( $_POST['overwrite'] == 'true' ) {
 			$post_data['overwrite'] = true;
-		}
+		}            
+                
+                self::addition_post_data( $post_data );
+                
 		$output         = new stdClass();
 		$output->ok     = array();
 		$output->errors = array();
@@ -236,6 +248,7 @@ class MainWP_Install_Bulk {
 		if ( $_POST['overwrite'] == 'true' ) {
 			$post_data['overwrite'] = true;
 		}
+                self::addition_post_data( $post_data );
 		$output         = new stdClass();
 		$output->ok     = array();
 		$output->errors = array();

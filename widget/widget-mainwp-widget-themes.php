@@ -68,11 +68,12 @@ class MainWP_Widget_Themes {
 
 		?>
 		<div class="clear">
-			<a class="mainwp_action left mainwp_action_down themes_actived_lnk" href="#"><?php _e( 'Active', 'mainwp' ); ?> (<?php echo count( $actived_themes ); ?>)</a><a class="mainwp_action mid themes_inactive_lnk right" href="#"><?php _e( 'Inactive', 'mainwp' ); ?> (<?php echo count( $inactive_themes ); ?>)</a><br/><br/>
-
+			<div class="mainwp-postbox-actions-top">
+				<a class="mainwp_action left mainwp_action_down themes_actived_lnk" href="#"><?php _e( 'Active', 'mainwp' ); ?> (<?php echo count( $actived_themes ); ?>)</a><a class="mainwp_action mid themes_inactive_lnk right" href="#"><?php _e( 'Inactive', 'mainwp' ); ?> (<?php echo count( $inactive_themes ); ?>)</a>
+			</div>
 			<div class="mainwp_themes_active">
 				<?php
-				$str_format = __( ' | Last Updated %s Days Ago', 'mainwp' );
+				$str_format = __( 'Last Updated %s Days Ago', 'mainwp' );
 				for ( $i = 0; $i < count( $actived_themes ); $i ++ ) {
 					$outdate_notice = '';
 					$slug           = $actived_themes[ $i ]['slug'];
@@ -91,9 +92,18 @@ class MainWP_Widget_Themes {
 					<div class="mainwp-row mainwp-active">
 						<input class="themeName" type="hidden" name="name" value="<?php echo $actived_themes[ $i ]['name']; ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
-						<span class="mainwp-left-col">
-							<?php echo $actived_themes[ $i ]['name'] . ' ' . $actived_themes[ $i ]['version']; ?><?php echo $outdate_notice; ?>
-						</span>
+						<div class="mainwp-cols-2 mainwp-left">
+							<?php echo $actived_themes[ $i ]['name'] . ' ' . $actived_themes[ $i ]['version']; ?>
+							<br />
+							<span class="mainwp-small"><?php echo $outdate_notice; ?></span>
+						</div>
+						<div class="mainwp-right mainwp-cols-2 mainwp-t-align-right mainwp-padding-bottom-15">
+							<input type="button" class="button button-primary" disabled value="<?php _e( 'Deactivate', 'mainwp' ); ?>" />
+						</div>
+					</div>
+					<div class="mainwpc-clear"></div>
+					<div class="mainwp-postbox-actions-bottom">
+						<?php _e( 'Change the theme by activating an inactive theme.', 'mainwp' ); ?>
 					</div>
 				<?php } ?>
 			</div>
@@ -116,21 +126,23 @@ class MainWP_Widget_Themes {
 					<div class="mainwp-row mainwp-inactive">
 						<input class="themeName" type="hidden" name="name" value="<?php echo $inactive_themes[ $i ]['name']; ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
-						<span class="mainwp-left-col">
-							<?php echo $inactive_themes[ $i ]['name'] . ' ' . $inactive_themes[ $i ]['version']; ?><?php echo $outdate_notice; ?>
+						<span class="mainwp-left mainwp-cols-2">
+							<?php echo $inactive_themes[ $i ]['name'] . ' ' . $inactive_themes[ $i ]['version']; ?>
+							<br />
+							<span class="mainwp-small"><?php echo $outdate_notice; ?></span>
 						</span>
 
-						<div class="mainwp-right-col themesAction">
+						<div class="mainwp-right mainwp-cols-2 mainwp-t-align-right themesAction">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) { ?>
-								<a href="#" class="mainwp-theme-activate"><i class="fa fa-toggle-on"></i> <?php _e( 'Activate', 'mainwp' ); ?>
-								</a> |
+								<a href="#" class="mainwp-theme-activate button button-primary"><?php _e( 'Activate', 'mainwp' ); ?>
+								</a>
 							<?php } ?>
 							<?php if ( mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) { ?>
-								<a href="#" class="mainwp-theme-delete mainwp-red"><i class="fa fa-trash"></i> <?php _e( 'Delete', 'mainwp' ); ?>
+								<a href="#" class="mainwp-theme-delete mainwp-red button"><?php _e( 'Delete', 'mainwp' ); ?>
 								</a>
 							<?php } ?>
 						</div>
-						<div style="clear: left;"></div>
+						<div class="mainwpc-clear"></div>
 						<div class="mainwp-row-actions-working">
 							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?></div>
 						<div>&nbsp;</div>
@@ -178,7 +190,7 @@ class MainWP_Widget_Themes {
 				'theme'  => $theme,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => $e->getMessage() ) ) );
+			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage($e) ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {

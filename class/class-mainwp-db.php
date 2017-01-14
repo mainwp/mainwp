@@ -2,7 +2,7 @@
 
 class MainWP_DB {
 	//Config
-	private $mainwp_db_version = '8.8';
+	private $mainwp_db_version = '8.10';
 	//Private
 	private $table_prefix;
 	//Singleton
@@ -37,7 +37,7 @@ class MainWP_DB {
 
 	private function test_connection() {
 		if ( ! self::ping( $this->wpdb->dbh ) ) {
-			MainWP_Logger::Instance()->info( __( 'Trying to reconnect Wordpress database connection...', 'mainwp' ) );
+			MainWP_Logger::Instance()->info( __( 'Trying to reconnect WordPress database connection...', 'mainwp' ) );
 			$this->wpdb->db_connect();
 		}
 	}
@@ -54,6 +54,9 @@ class MainWP_DB {
 		if ( empty( $currentVersion ) ) {
 			set_transient( '_mainwp_activation_redirect', 1, 30 );
 			update_site_option( 'mainwp_run_quick_setup', 'yes' );
+			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
+		} else if (false === get_option('mainwp_enableLegacyBackupFeature')) {
+			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 1 );
 		}
 
 		$rslt = MainWP_DB::Instance()->query( "SHOW TABLES LIKE '" . $this->tableName( 'wp' ) . "'" );
@@ -83,6 +86,7 @@ class MainWP_DB {
   offline_checks_last int(11) NOT NULL,
   offline_check_result int(11) NOT NULL,
   note text NOT NULL,
+  note_lastupdate int(11) NOT NULL DEFAULT 0,
   statsUpdate int(11) NOT NULL,
   pagerank int(11) NOT NULL,
   indexed int(11) NOT NULL,
@@ -394,7 +398,6 @@ class MainWP_DB {
 				'mainwp_news',
 				'mainwp_news_timestamp',
 				'mainwp_optimize',
-				'mainwp_seo',
 				'mainwp_automaticDailyUpdate',
 				'mainwp_backup_before_upgrade',
 				'mainwp_show_language_updates',
@@ -487,6 +490,11 @@ class MainWP_DB {
 				$this->wpdb->query( 'ALTER TABLE ' . $this->tableName( 'wp' ) . ' DROP COLUMN ' . $optionColumn );
 				$this->wpdb->suppress_errors( $suppress );
 			}
+		}
+
+		if ( version_compare( $currentVersion, '8.9', '<' ) ) {
+			delete_option('mainwp_seo');
+			delete_option('mainwp_seo_retired');
 		}
 	}
 
@@ -670,6 +678,10 @@ class MainWP_DB {
 		}
 
 		$options_extra = $this->getSQLWebsitesOptionsExtra($options);
+
+		if ($orderBy == 'wp.url') {
+			$orderBy = "replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www', '')";
+		}
 
 		if ( $selectgroups ) {
 			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups' . $options_extra . '
@@ -1175,7 +1187,7 @@ class MainWP_DB {
 	}
 
 	public function updateNote( $websiteid, $note ) {
-		$this->wpdb->query( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET note="' . $this->escape( $note ) . '" WHERE id=' . $websiteid );
+		$this->wpdb->query( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET note="' . $this->escape( $note ) . '", note_lastupdate = ' . time() . ' WHERE id=' . $websiteid );
 	}
 
 	public function updateWebsiteOfflineCheckSetting( $websiteid, $offlineChecks ) {
@@ -1493,21 +1505,15 @@ class MainWP_DB {
 		return 'SELECT * FROM ' . $this->tableName( 'wp' ) . ' WHERE (statsUpdate = 0 OR ' . time() . ' - statsUpdate >= ' . ( 60 * 60 * 24 * 7 ) . ')' . $where . ' ORDER BY statsUpdate ASC';
 	}
 
-	public function updateWebsiteStats( $websiteid, $pageRank, $indexed, $alexia, $pageRank_old, $indexed_old, $alexia_old, $statsUpdated ) {
+	public function updateWebsiteStats( $websiteid, $statsUpdated ) {
 		return $this->wpdb->update( $this->tableName( 'wp' ), array(
 			'statsUpdate'  => $statsUpdated,
-			'pagerank'     => $pageRank,
-			'indexed'      => $indexed,
-			'alexia'       => $alexia,
-			'pagerank_old' => $pageRank_old,
-			'indexed_old'  => $indexed_old,
-			'alexia_old'   => $alexia_old,
 		), array( 'id' => $websiteid ) );
 	}
 
 	public function getBackupTasksToComplete() {
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp_backup' ) . ' WHERE paused = 0 AND completed < last_run'//AND '. time() . ' - last_run >= 120 AND ' . time() . ' - last >= 120'
-		, OBJECT );
+			, OBJECT );
 	}
 
 	public function getBackupTasksTodoDaily() {

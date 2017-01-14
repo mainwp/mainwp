@@ -56,6 +56,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			case 'last_post':
 			case 'seo':
 			case 'notes':
+            case 'phpversion':
 				//case 'site_actions':
 				return $item[ $column_name ];
 			default:
@@ -71,6 +72,10 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			'groups'    => array( 'groups', false ),
 			'last_sync' => array( 'last_sync', false ),
 			'last_post' => array( 'last_post', false ),
+            'phpversion' => array( 'phpversion', false ),
+            'wpcore_update' => array( 'wpcore_update', false ),
+            'plugin_update' => array( 'plugin_update', false ),
+            'theme_update' => array( 'theme_update', false ),
 		);
 
 		return $sortable_columns;
@@ -91,6 +96,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			'last_post'    => __( 'Last Post', 'mainwp' ),
 			'notes'        => __( 'Notes', 'mainwp' ),
 			'site_actions' => __( 'Actions', 'mainwp' ),
+            'phpversion'   => __( 'PHP Version', 'mainwp' ),
 		);
 
 		$columns = apply_filters( 'mainwp-sitestable-getcolumns', $columns, $columns );
@@ -585,6 +591,11 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			return sprintf( '<a href="#" class="mainwp_notes_show_all mainwp-green" id="mainwp_notes_%1$s">' . MainWP_Utility::renderNoteTooltip( $raw_note, '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) ) . '</a>' . $txt_lastupdate . '<span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $note );
 		}
 	}
+
+    function column_phpversion( $item ) {
+		return $item['phpversion'];
+	}
+
         // to fix data-placeholder
     protected function bulk_actions( $which = '' ) {
 		if ( is_null( $this->_actions ) ) {
@@ -673,6 +684,38 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 				$orderby = 'wp.url ' . ( $_GET['order'] == 'asc' ? 'asc' : 'desc' );
 			} else if ( ( $_GET['orderby'] == 'groups' ) ) {
 				$orderby = 'GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") ' . ( $_GET['order'] == 'asc' ? 'asc' : 'desc' );
+			} else if ( ( $_GET['orderby'] == 'wpcore_update' ) ) {
+				$orderby = 'CASE true
+                                WHEN (offline_check_result = -1)
+                                    THEN 2
+                                WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")
+                                    THEN 3
+                                ELSE 4
+                                    + (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
+                            END ' . ( $_GET['order'] == 'asc' ? 'asc' : 'desc' );
+			} else if ( ( $_GET['orderby'] == 'plugin_update' ) ) {
+				$orderby = 'CASE true
+                                WHEN (offline_check_result = -1)
+                                    THEN 2
+                                WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")
+                                    THEN 3
+                                ELSE 4
+                                    + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
+                            END ' . ( $_GET['order'] == 'asc' ? 'asc' : 'desc' );
+			} else if ( ( $_GET['orderby'] == 'theme_update' ) ) {
+				$orderby = 'CASE true
+                                WHEN (offline_check_result = -1)
+                                    THEN 2
+                                WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")
+                                    THEN 3
+                                ELSE 4
+                                    + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
+                            END ' . ( $_GET['order'] == 'asc' ? 'asc' : 'desc' );
+			} else if ( ( $_GET['orderby'] == 'phpversion' ) ) {
+				$orderby = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) ' . ( $_GET['order'] == 'asc' ? 'asc' : 'desc' );
+
+
+
 			} else if ( ( $_GET['orderby'] == 'status' ) ) {
 				$orderby = 'CASE true                                
                                 WHEN (offline_check_result = -1)

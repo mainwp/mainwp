@@ -128,10 +128,7 @@ class MainWP_Post_Handler {
 
 		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
 			//Page: SecurityIssues
-			add_action( 'wp_ajax_mainwp_securityIssues_request', array(
-				&$this,
-				'mainwp_securityIssues_request',
-			) ); //ok
+            $this->addAction( 'mainwp_securityIssues_request', array( &$this, 'mainwp_securityIssues_request' ) ); //ok
 			$this->addAction( 'mainwp_securityIssues_fix', array( &$this, 'mainwp_securityIssues_fix' ) ); //ok
 			$this->addAction( 'mainwp_securityIssues_unfix', array( &$this, 'mainwp_securityIssues_unfix' ) ); //ok
 		}
@@ -183,11 +180,11 @@ class MainWP_Post_Handler {
 		add_action( 'wp_ajax_mainwp_pages_search', array( &$this, 'mainwp_pages_search' ) ); //ok
 
 		//Page: User
-		add_action( 'wp_ajax_mainwp_users_search', array( &$this, 'mainwp_users_search' ) ); //ok
+        $this->addAction( 'mainwp_users_search', array( &$this, 'mainwp_users_search' ) );
 
 		//Page: Themes
-		add_action( 'wp_ajax_mainwp_themes_search', array( &$this, 'mainwp_themes_search' ) ); //ok
-		add_action( 'wp_ajax_mainwp_themes_search_all', array( &$this, 'mainwp_themes_search_all' ) ); //ok
+        $this->addAction( 'mainwp_themes_search', array( &$this, 'mainwp_themes_search' ) );
+        $this->addAction( 'mainwp_themes_search_all', array( &$this, 'mainwp_themes_search_all' ) );
 		if ( mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) {
 			$this->addAction( 'mainwp_theme_activate', array( &$this, 'mainwp_theme_activate' ) );
 		}
@@ -200,11 +197,9 @@ class MainWP_Post_Handler {
 		}
 
 		//Page: Plugins
-		add_action( 'wp_ajax_mainwp_plugins_search', array( &$this, 'mainwp_plugins_search' ) ); //ok
-		add_action( 'wp_ajax_mainwp_plugins_search_all_active', array(
-			&$this,
-			'mainwp_plugins_search_all_active',
-		) ); //ok
+        $this->addAction( 'mainwp_plugins_search', array( &$this, 'mainwp_plugins_search' ) );
+        $this->addAction( 'mainwp_plugins_search_all_active', array( &$this, 'mainwp_plugins_search_all_active' ) );
+
 		if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) {
 			$this->addAction( 'mainwp_plugin_activate', array( &$this, 'mainwp_plugin_activate' ) );
 			$this->addAction( 'mainwp_plugin_deactivate', array( &$this, 'mainwp_plugin_deactivate' ) );
@@ -264,7 +259,7 @@ class MainWP_Post_Handler {
 	 * Page: Users
 	 */
 	function mainwp_users_search() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_users_search' );
 
 		MainWP_User::renderTable( false, $_POST['role'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ), $_POST['search'] );
 		die();
@@ -274,7 +269,7 @@ class MainWP_Post_Handler {
 	 * Page: Themes
 	 */
 	function mainwp_themes_search() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_themes_search' );
 
 		MainWP_Themes::renderTable( $_POST['keyword'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ) );
 		die();
@@ -302,7 +297,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_themes_search_all() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_themes_search_all' );
 
 		MainWP_Themes::renderAllThemesTable();
 		die();
@@ -319,14 +314,14 @@ class MainWP_Post_Handler {
 	 * Page: Plugins
 	 */
 	function mainwp_plugins_search() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_plugins_search' );
 
 		MainWP_Plugins::renderTable( $_POST['keyword'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ) );
 		die();
 	}
 
 	function mainwp_plugins_search_all_active() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_plugins_search_all_active' );
 
 		MainWP_Plugins::renderAllActiveTable();
 		die();
@@ -563,7 +558,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_notice_status_update() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_notice_status_update' );
 
 		global $current_user;
 		if ( ( $user_id = $current_user->ID )) {
@@ -676,7 +671,7 @@ class MainWP_Post_Handler {
 	 * Page: SecurityIssues
 	 */
 	function mainwp_securityIssues_request() {
-		$this->secure_request();
+		$this->secure_request( 'mainwp_securityIssues_request' );
 
 		try {
 			die( json_encode( array( 'result' => MainWP_Security_Issues::fetchSecurityIssues() ) ) );

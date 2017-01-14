@@ -111,6 +111,20 @@ class MainWP_Sync {
 			$done                         = true;
 		}
 
+
+        $phpversion = '';
+        if ( isset( $information['site_info'] ) && $information['site_info'] != null ) {
+            if ( is_array( $information['site_info'] ) && isset( $information['site_info']['phpversion'] ) ) {
+                $phpversion = $information['site_info']['phpversion'];
+            }
+			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'site_info', @json_encode( $information['site_info'] ) );
+			$done = true;
+		} else {
+			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'site_info', $emptyArray );
+		}
+        MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'phpversion', $phpversion );
+
+
 		if ( isset( $information['directories'] ) && is_array( $information['directories'] ) ) {
 			$websiteValues['directories'] = @json_encode( $information['directories'] );
 			$done                         = true;

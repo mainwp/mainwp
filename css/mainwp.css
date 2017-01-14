@@ -1795,8 +1795,9 @@ li.hoverli {
 
 
 
-
-
+.mainwp-tips .mainwp-dismiss{
+    float:right;
+}
 
 
 

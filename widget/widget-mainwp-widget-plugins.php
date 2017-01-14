@@ -125,8 +125,8 @@ class MainWP_Widget_Plugins {
 								<?php echo $actived_plugins[ $i ]['name']; ?>
 							</a>
 							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $actived_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477&section=changelog'; ?>" target="_blank" class="thickbox" title="Changelog <?php echo $actived_plugins[ $i ]['name']; ?>">
-								<?php echo ' ' . $actived_plugins[ $i ]['version']; ?> <?php echo $outdate_notice; ?>
-							</a>
+								<?php echo ' ' . $actived_plugins[ $i ]['version']; ?>
+							</a><br /><span class="mainwp-small"><?php echo $outdate_notice; ?></span>
 						</span>
 						<div class="mainwp-right mainwp-cols-2 mainwp-t-align-right pluginsAction">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>

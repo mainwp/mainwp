@@ -436,12 +436,7 @@ class MainWP_Settings {
             </div>
             <?php
         } else {
-            if ( !empty( $all_users_result[ 'message' ] ) ) {
-                $message = $all_users_result['message'];
-            } else {
-                $message = 'Unknown Error';
-            }
-            echo '<div class="error" style="margin-top: 50px;"><p><strong>' . $message . '</strong></p></div>';
+             echo '<div class="error" style="margin-top: 50px;"><p>Connection to your MainWP Dashboard from '. esc_attr( get_option( 'live-report-responder-siteurl' ) ).' is open. Please connect your MainWP Dashboard to your Managed Client Reports for WooCommerce site.</strong></p></div>';
         }
     }
 
@@ -783,3 +778,197 @@ class MainWP_Settings {
 	}
 
 }
+
+//todo: refactor, useless class
+class Live_Reports_Responder_Class {
+
+
+
+        static function CurlRequest($arr) {
+
+            if (self::MainWP_live_reports_isCurl()) {
+
+                $livesiteurl = get_option('live-report-responder-siteurl');
+
+                $url = $livesiteurl . "wp-content/plugins/managed-client-reports-for-woocommerce/response/api.php";
+
+                $ch = curl_init();
+
+                curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+
+                curl_setopt($ch, CURLOPT_URL, $url);
+
+                curl_setopt($ch, CURLOPT_POST, 1);
+
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $arr);
+
+                $jsondata = curl_exec($ch);
+
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+                if ($httpCode == 200) {
+
+                    $jsondata;
+
+                } else {
+
+                    $info = curl_getinfo($ch);
+
+                    if (empty($info['http_code'])) {
+                        $curl_error=curl_error($ch);
+                        if (!empty($curl_error)){
+
+                            $error_msg = curl_error($ch);
+
+                        }else{
+
+                            $error_msg = "Unknown Error";
+                        }
+
+                    } else {
+
+                        $error_codes = self::MainWP_live_reports_curl_error_msg();
+
+                        $error_msg = "The server responded error code: " . $info['http_code'] . " (" . $error_codes[$info['http_code']] . ")";
+
+                    }
+
+
+
+                    $jsondata = json_encode(array("result" => "error", "message" => $error_msg));
+
+                }
+
+                curl_close($ch);
+
+            } else {
+
+                $jsondata = json_encode(array("result" => "error", "message" => "Curl Extension not enabled"));
+
+            }
+
+            return $jsondata;
+
+        }
+
+
+
+        static function MainWP_live_reports_curl_error_msg() {
+
+            $error_codes = array(
+
+                '200' => 'OK',
+
+                '201' => 'Created',
+
+                '202' => 'Accepted',
+
+                '203' => 'Non-Authoritative Information',
+
+                '204' => 'No Content',
+
+                '205' => 'Reset Content',
+
+                '206' => 'Partial Content',
+
+                '300' => 'Multiple Choices',
+
+                '301' => 'Moved Permanently',
+
+                '302' => 'Found',
+
+                '303' => 'See Other',
+
+                '304' => 'Not Modified',
+
+                '305' => 'Use Proxy',
+
+                '306' => '(Unused)',
+
+                '307' => 'Temporary Redirect',
+
+                '400' => 'Bad Request',
+
+                '401' => 'Unauthorized',
+
+                '402' => 'Payment Required',
+
+                '403' => 'Forbidden',
+
+                '404' => 'Not Found',
+
+                '405' => 'Method Not Allowed',
+
+                '406' => 'Not Acceptable',
+
+                '407' => 'Proxy Authentication Required',
+
+                '408' => 'Request Timeout',
+
+                '409' => 'Conflict',
+
+                '410' => 'Gone',
+
+                '411' => 'Length Required',
+
+                '412' => 'Precondition Failed',
+
+                '413' => 'Request Entity Too Large',
+
+                '414' => 'Request-URI Too Long',
+
+                '415' => 'Unsupported Media Type',
+
+                '416' => 'Requested Range Not Satisfiable',
+
+                '417' => 'Expectation Failed',
+
+                '500' => 'Internal Server Error',
+
+                '501' => 'Not Implemented',
+
+                '502' => 'Bad Gateway',
+
+                '503' => 'Service Unavailable',
+
+                '504' => 'Gateway Timeout',
+
+                '505' => 'HTTP Version Not Supported');
+
+            return $error_codes;
+
+        }
+
+
+
+        static function MainWP_live_reports_isCurl() {
+
+            return function_exists('curl_version');
+
+        }
+
+
+
+        static function Live_Reports_Responder_generate_random_string($length = 8) {
+
+            $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+            $charactersLength = strlen($characters);
+
+            $randomString = '';
+
+            for ($i = 0; $i < $length; $i++) {
+
+                $randomString .= $characters[rand(0, $charactersLength - 1)];
+
+            }
+
+            return $randomString;
+
+        }
+
+
+
+    }

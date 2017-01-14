@@ -831,7 +831,7 @@ class MainWP_Manage_Sites_View {
                                             id="mainwp_managesites_add_http_user"
                                             name="mainwp_managesites_add_http_user"
                                             value=""
-											autocomplete="off"
+											autocomplete="new-http-user"
 								class=""/><br/><em><?php _e( 'If your child site is protected with HTTP basic authentication, please set the username and password for authentication here.','mainwp' ); ?></em>
                             </td>
                         </tr>
@@ -842,7 +842,7 @@ class MainWP_Manage_Sites_View {
                                            id="mainwp_managesites_add_http_pass"
                                            name="mainwp_managesites_add_http_pass"
                                            value=""
-										   autocomplete="off"
+										   autocomplete="new-http-password"
 							   class=""/><br/><em><?php _e( 'If your child site is protected with HTTP basic authentication, please set the username and password for authentication here.','mainwp' ); ?></em>
                             </td>
                         </tr>
@@ -1700,11 +1700,11 @@ class MainWP_Manage_Sites_View {
 
                 <tr class="form-field form-required">
                      <th scope="row"><?php _e( 'HTTP username ','mainwp' ); ?></th>
-				 <td><input type="text" id="mainwp_managesites_edit_http_user" name="mainwp_managesites_edit_http_user" value="<?php echo (empty( $website->http_user ) ? '' : $website->http_user); ?>" autocomplete="off" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the username for authentication here.','mainwp' ); ?></em></td>
+				 <td><input type="text" id="mainwp_managesites_edit_http_user" name="mainwp_managesites_edit_http_user" value="<?php echo (empty( $website->http_user ) ? '' : $website->http_user); ?>" autocomplete="new-http-user" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the username for authentication here.','mainwp' ); ?></em></td>
                 </tr>
                 <tr class="form-field form-required">
                      <th scope="row"><?php _e( 'HTTP password ','mainwp' ); ?></th>
-				 <td><input type="password" id="mainwp_managesites_edit_http_pass" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty( $website->http_pass ) ? '' : $website->http_pass); ?>" autocomplete="off" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the password for authentication here.','mainwp' ); ?></em></td>
+				 <td><input type="password" id="mainwp_managesites_edit_http_pass" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty( $website->http_pass ) ? '' : $website->http_pass); ?>" autocomplete="new-http-password" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the password for authentication here.','mainwp' ); ?></em></td>
                 </tr>
             </table>
 	<?php

@@ -1,5 +1,7 @@
 <?php
-
+//todo: refactor so it uses correct class files
+//todo: remove old plugin activator
+//todo: cleanup api.php + mainwp.php (hard includes)
 class LiveReportResponder {
 
     public static $instance = null;
@@ -129,7 +131,7 @@ class MainWP_Live_Reports_Class {
     private static $count_sec_footer = 0;
 
     public function __construct() {
-        
+
     }
 
     public static function init() {
@@ -606,7 +608,7 @@ class MainWP_Live_Reports_Class {
                 'created' => array(
                     array('name' => 'backup.created.type', 'desc' => ' Displays the Created Backup type (Full or Database)'),
                     array('name' => 'backup.created.date', 'desc' => 'Displays the Backups Creation date'),
-                //array("name" => "backup.created.destination", "desc" => "Displays the Created Backup destination")
+                    //array("name" => "backup.created.destination", "desc" => "Displays the Created Backup destination")
                 ),
                 'additional' => array(
                     array('name' => 'backup.created.count', 'desc' => 'Displays the number of created backups during the selected date range'),
@@ -631,7 +633,7 @@ class MainWP_Live_Reports_Class {
                     array('name' => 'sucuri.check.date', 'desc' => 'Displays the Security Check date'),
                     array('name' => 'sucuri.check.status', 'desc' => 'Displays the Status info for the Child Site'),
                     array('name' => 'sucuri.check.webtrust', 'desc' => 'Displays the Webtrust info for the Child Site'),
-                //array("name" => "sucuri.check.results", "desc" => "Displays the Security Check details from the Security Scan Report"),
+                    //array("name" => "sucuri.check.results", "desc" => "Displays the Security Check details from the Security Scan Report"),
                 ),
                 'additional' => array(
                     array('name' => 'sucuri.checks.count', 'desc' => 'Displays the number of performed security checks during the selected date range'),
@@ -652,7 +654,7 @@ class MainWP_Live_Reports_Class {
                     array('name' => 'ga.visits.maximum', 'desc' => "Displays the maximum visitor number and it's day within the past month"),
                     array('name' => 'ga.startdate', 'desc' => 'Displays the startdate for the chart'),
                     array('name' => 'ga.enddate', 'desc' => 'Displays the enddate or the chart'),
-                //array("name" => "ga.visits.chart", "desc" => "...")
+                    //array("name" => "ga.visits.chart", "desc" => "...")
                 ),
             ),
             'piwik' => array(
@@ -878,7 +880,7 @@ class MainWP_Live_Reports_Class {
 
     function mainwp_postprocess_backup_sites_feedback($output, $unique) {
         if (!is_array($output)) {
-            
+
         } else {
             foreach ($output as $key => $value) {
                 $output[$key] = $value;
@@ -889,7 +891,7 @@ class MainWP_Live_Reports_Class {
     }
 
     public function init_cron() {
-        
+
     }
 
     public static function cal_schedule_nextsend($schedule, $start_recurring_date, $scheduleLastSend = 0) {
@@ -983,432 +985,432 @@ class MainWP_Live_Reports_Class {
             ?>
             <div class="mainwp-row">
                 <div style="display: inline-block; width: 100px;"><?php _e('Client Reports:', 'mainwp-client-reports-extension'); ?></div>
-            <?php echo $reports_lnk; ?>
+                <?php echo $reports_lnk; ?>
                 <a href="admin.php?page=Extensions-Mainwp-Client-Reports-Extension&action=newreport&selected_site=<?php echo $website->id; ?>"><?php _e('New Report', 'mainwp-client-reports-extension'); ?></a>
             </div>
-                <?php
-            }
+            <?php
         }
+    }
 
-        public function managesites_column_url($actions, $site_id) {
-            if (!empty($site_id)) {
-                $reports = LiveReportResponder_DB::get_instance()->get_report_by('site', $site_id);
-                $link = '';
-                if (is_array($reports) && count($reports) > 0) {
-                    $link = '<a href="admin.php?page=Extensions-Mainwp-Client-Reports-Extension&site=' . $site_id . '">' . __('Reports', 'mainwp-client-reports-extension') . '</a> ' .
-                            '( <a href="admin.php?page=Extensions-Mainwp-Client-Reports-Extension&action=newreport&selected_site=' . $site_id . '">' . __('New', 'mainwp-client-reports-extension') . '</a> )';
-                } else {
-                    $link = '<a href="admin.php?page=Extensions-Mainwp-Client-Reports-Extension&action=newreport&selected_site=' . $site_id . '">' . __('New Report', 'mainwp-client-reports-extension') . '</a>';
-                }
-                $actions['client_reports'] = $link;
+    public function managesites_column_url($actions, $site_id) {
+        if (!empty($site_id)) {
+            $reports = LiveReportResponder_DB::get_instance()->get_report_by('site', $site_id);
+            $link = '';
+            if (is_array($reports) && count($reports) > 0) {
+                $link = '<a href="admin.php?page=Extensions-Mainwp-Client-Reports-Extension&site=' . $site_id . '">' . __('Reports', 'mainwp-client-reports-extension') . '</a> ' .
+                        '( <a href="admin.php?page=Extensions-Mainwp-Client-Reports-Extension&action=newreport&selected_site=' . $site_id . '">' . __('New', 'mainwp-client-reports-extension') . '</a> )';
+            } else {
+                $link = '<a href="admin.php?page=Extensions-Mainwp-Client-Reports-Extension&action=newreport&selected_site=' . $site_id . '">' . __('New Report', 'mainwp-client-reports-extension') . '</a>';
             }
-            return $actions;
+            $actions['client_reports'] = $link;
         }
+        return $actions;
+    }
 
-        public static function save_report() {
-            if (isset($_REQUEST['action']) && 'editreport' == $_REQUEST['action'] && isset($_REQUEST['nonce']) && wp_verify_nonce($_REQUEST['nonce'], 'mwp_creport_nonce')) {
-                $messages = $errors = array();
-                $report = array();
-                $current_attach_files = '';
-                if (isset($_REQUEST['id']) && !empty($_REQUEST['id'])) {
-                    $report = LiveReportResponder_DB::get_instance()->get_report_by('id', $_REQUEST['id'], null, null, ARRAY_A);
-                    $current_attach_files = $report['attach_files'];
-                    //print_r($report);
-                }
-
-                if (isset($_POST['mwp_creport_title']) && ($title = trim($_POST['mwp_creport_title'])) != '') {
-                    $report['title'] = $title;
-                }
-
-                $start_time = $end_time = 0;
-                if (isset($_POST['mwp_creport_date_from']) && ($start_date = trim($_POST['mwp_creport_date_from'])) != '') {
-                    $start_time = strtotime($start_date);
-                }
-
-                if (isset($_POST['mwp_creport_date_to']) && ($end_date = trim($_POST['mwp_creport_date_to'])) != '') {
-                    $end_time = strtotime($end_date);
-                }
-
-                if (0 == $end_time) {
-                    $current = time();
-                    $end_time = mktime(0, 0, 0, date('m', $current), date('d', $current), date('Y', $current));
-                }
-
-                if ((0 != $start_time && 0 != $end_time) && ($start_time > $end_time)) {
-                    $tmp = $start_time;
-                    $start_time = $end_time;
-                    $end_time = $tmp;
-                }
-
-                $report['date_from'] = $start_time;
-                $report['date_to'] = $end_time + 24 * 3600 - 1;  // end of day
-
-                if (isset($_POST['mwp_creport_client'])) {
-                    $report['client'] = trim($_POST['mwp_creport_client']);
-                }
-
-                if (isset($_POST['mwp_creport_client_id'])) {
-                    $report['client_id'] = intval($_POST['mwp_creport_client_id']);
-                }
-
-                if (isset($_POST['mwp_creport_fname'])) {
-                    $report['fname'] = trim($_POST['mwp_creport_fname']);
-                }
-
-                if (isset($_POST['mwp_creport_fcompany'])) {
-                    $report['fcompany'] = trim($_POST['mwp_creport_fcompany']);
-                }
-
-                $from_email = '';
-                if (!empty($_POST['mwp_creport_femail'])) {
-                    $from_email = trim($_POST['mwp_creport_femail']);
-                    if (!preg_match('/^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/is', $from_email)) {
-                        $from_email = '';
-                        $errors[] = 'Incorrect Email Address in the Send From filed.';
-                    }
-                }
-                $report['femail'] = $from_email;
-
-                if (isset($_POST['mwp_creport_name'])) {
-                    $report['name'] = trim($_POST['mwp_creport_name']);
-                }
-
-                if (isset($_POST['mwp_creport_company'])) {
-                    $report['company'] = trim($_POST['mwp_creport_company']);
-                }
-
-                $to_email = '';
-                $valid_emails = array();
-                if (!empty($_POST['mwp_creport_email'])) {
-                    $to_emails = explode(',', trim($_POST['mwp_creport_email']));
-                    if (is_array($to_emails)) {
-                        foreach ($to_emails as $_email) {
-                            if (!preg_match('/^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/is', $_email) && !preg_match('/^\[.+\]/is', $_email)) {
-                                $to_email = '';
-                                $errors[] = 'Incorrect Email Address in the Send To field.';
-                            } else {
-                                $valid_emails[] = $_email;
-                            }
-                        }
-                    }
-                }
-
-                if (count($valid_emails) > 0) {
-                    $to_email = implode(',', $valid_emails);
-                } else {
-                    $to_email = '';
-                    $errors[] = 'Incorrect Email Address in the Send To field.';
-                }
-
-                $report['email'] = $to_email;
-
-                if (isset($_POST['mwp_creport_email_subject'])) {
-                    $report['subject'] = trim($_POST['mwp_creport_email_subject']);
-                }
-
-                //print_r($_POST);
-                if (isset($_POST['mainwp_creport_recurring_schedule'])) {
-                    $report['recurring_schedule'] = trim($_POST['mainwp_creport_recurring_schedule']);
-                }
-                if (isset($_POST['mainwp_creport_schedule_date'])) {
-                    $rec_date = trim($_POST['mainwp_creport_schedule_date']);
-                    $report['recurring_date'] = !empty($rec_date) ? strtotime($rec_date . ' ' . date('H:i:s')) : 0;
-                }
-                if (isset($_POST['mainwp_creport_schedule_send_email'])) {
-                    $report['schedule_send_email'] = trim($_POST['mainwp_creport_schedule_send_email']);
-                }
-                $report['schedule_bcc_me'] = isset($_POST['mainwp_creport_schedule_bbc_me_email']) ? 1 : 0;
-                if (isset($_POST['mainwp_creport_report_header'])) {
-                    $report['header'] = trim($_POST['mainwp_creport_report_header']);
-                }
-
-                if (isset($_POST['mainwp_creport_report_body'])) {
-                    $report['body'] = trim($_POST['mainwp_creport_report_body']);
-                }
-
-                if (isset($_POST['mainwp_creport_report_footer'])) {
-                    $report['footer'] = trim($_POST['mainwp_creport_report_footer']);
-                }
-
-                $creport_dir = apply_filters('mainwp_getspecificdir', 'client_report/');
-                if (!file_exists($creport_dir)) {
-                    @mkdir($creport_dir, 0777, true);
-                }
-                if (!file_exists($creport_dir . '/index.php')) {
-                    @touch($creport_dir . '/index.php');
-                }
-
-                $attach_files = 'NOTCHANGE';
-                $delete_files = false;
-                if (isset($_POST['mainwp_creport_delete_attach_files']) && '1' == $_POST['mainwp_creport_delete_attach_files']) {
-                    $attach_files = '';
-                    if (!empty($current_attach_files)) {
-                        self::delete_attach_files($current_attach_files, $creport_dir);
-                    }
-                }
-
-                $return = array();
-                if (isset($_FILES['mainwp_creport_attach_files']) && !empty($_FILES['mainwp_creport_attach_files']['name'][0])) {
-                    if (!empty($current_attach_files)) {
-                        self::delete_attach_files($current_attach_files, $creport_dir);
-                    }
-
-                    $output = self::handle_upload_files($_FILES['mainwp_creport_attach_files'], $creport_dir);
-                    //print_r($output);
-                    if (isset($output['error'])) {
-                        $return['error'] = $output['error'];
-                    }
-                    if (is_array($output) && isset($output['filenames']) && !empty($output['filenames'])) {
-                        $attach_files = implode(', ', $output['filenames']);
-                    }
-                }
-
-                if ('NOTCHANGE' !== $attach_files) {
-                    $report['attach_files'] = $attach_files;
-                }
-
-                $selected_site = 0;
-                $selected_sites = $selected_groups = array();
-                if (isset($_POST['mwp_creport_report_type']) && 'global' == $_POST['mwp_creport_report_type']) {
-                    if (isset($_POST['select_by'])) {
-                        if (isset($_POST['selected_sites']) && is_array($_POST['selected_sites'])) {
-                            foreach ($_POST['selected_sites'] as $selected) {
-                                $selected_sites[] = intval($selected);
-                            }
-                        }
-
-                        if (isset($_POST['selected_groups']) && is_array($_POST['selected_groups'])) {
-                            foreach ($_POST['selected_groups'] as $selected) {
-                                $selected_groups[] = intval($selected);
-                            }
-                        }
-                    }
-                    $report['type'] = 1;
-                } else {
-                    $report['type'] = 0;
-                    if (isset($_POST['select_by'])) {
-                        if (isset($_POST['selected_site'])) {
-                            $selected_site = intval($_POST['selected_site']);
-                        }
-                    }
-                }
-                $report['sites'] = base64_encode(serialize($selected_sites));
-                $report['groups'] = base64_encode(serialize($selected_groups));
-                $report['selected_site'] = $selected_site;
-
-                if ('schedule' === $_POST['mwp_creport_report_submit_action']) {
-                    $report['scheduled'] = 1;
-                }
-                $report['schedule_nextsend'] = self::cal_schedule_nextsend($report['recurring_schedule'], $report['recurring_date']);
-
-                if ('save' === $_POST['mwp_creport_report_submit_action'] ||
-                        'send' === $_POST['mwp_creport_report_submit_action'] ||
-                        'save_pdf' === $_POST['mwp_creport_report_submit_action'] ||
-                        'schedule' === $_POST['mwp_creport_report_submit_action'] ||
-                        'archive_report' === $_POST['mwp_creport_report_submit_action']) {
-                    //print_r($report);
-                    if ($result = LiveReportResponder_DB::get_instance()->update_report($report)) {
-                        $return['id'] = $result->id;
-                        $messages[] = 'Report has been saved.';
-                    } else {
-                        $messages[] = 'Report has not been changed - Report Saved.';
-                    }
-                    $return['saved'] = true;
-                } else if ('preview' === (string) $_POST['mwp_creport_report_submit_action'] ||
-                        'send_test_email' === (string) $_POST['mwp_creport_report_submit_action']
-                ) {
-                    $submit_report = json_decode(json_encode($report));
-                    $return['submit_report'] = $submit_report;
-                }
-
-                if (!isset($return['id']) && isset($report['id'])) {
-                    $return['id'] = $report['id'];
-                }
-
-                if (count($errors) > 0) {
-                    $return['error'] = $errors;
-                }
-
-                if (count($messages) > 0) {
-                    $return['message'] = $messages;
-                }
-
-                return $return;
+    public static function save_report() {
+        if (isset($_REQUEST['action']) && 'editreport' == $_REQUEST['action'] && isset($_REQUEST['nonce']) && wp_verify_nonce($_REQUEST['nonce'], 'mwp_creport_nonce')) {
+            $messages = $errors = array();
+            $report = array();
+            $current_attach_files = '';
+            if (isset($_REQUEST['id']) && !empty($_REQUEST['id'])) {
+                $report = LiveReportResponder_DB::get_instance()->get_report_by('id', $_REQUEST['id'], null, null, ARRAY_A);
+                $current_attach_files = $report['attach_files'];
+                //print_r($report);
             }
-            return null;
-        }
 
-        static function delete_attach_files($files, $dir) {
-            $files = explode(',', $files);
-            if (is_array($files)) {
-                foreach ($files as $file) {
-                    $file = trim($file);
-                    $file_path = $dir . $file;
-                    if (file_exists($file_path)) {
-                        @unlink($file_path);
-                    }
+            if (isset($_POST['mwp_creport_title']) && ($title = trim($_POST['mwp_creport_title'])) != '') {
+                $report['title'] = $title;
+            }
+
+            $start_time = $end_time = 0;
+            if (isset($_POST['mwp_creport_date_from']) && ($start_date = trim($_POST['mwp_creport_date_from'])) != '') {
+                $start_time = strtotime($start_date);
+            }
+
+            if (isset($_POST['mwp_creport_date_to']) && ($end_date = trim($_POST['mwp_creport_date_to'])) != '') {
+                $end_time = strtotime($end_date);
+            }
+
+            if (0 == $end_time) {
+                $current = time();
+                $end_time = mktime(0, 0, 0, date('m', $current), date('d', $current), date('Y', $current));
+            }
+
+            if ((0 != $start_time && 0 != $end_time) && ($start_time > $end_time)) {
+                $tmp = $start_time;
+                $start_time = $end_time;
+                $end_time = $tmp;
+            }
+
+            $report['date_from'] = $start_time;
+            $report['date_to'] = $end_time + 24 * 3600 - 1;  // end of day
+
+            if (isset($_POST['mwp_creport_client'])) {
+                $report['client'] = trim($_POST['mwp_creport_client']);
+            }
+
+            if (isset($_POST['mwp_creport_client_id'])) {
+                $report['client_id'] = intval($_POST['mwp_creport_client_id']);
+            }
+
+            if (isset($_POST['mwp_creport_fname'])) {
+                $report['fname'] = trim($_POST['mwp_creport_fname']);
+            }
+
+            if (isset($_POST['mwp_creport_fcompany'])) {
+                $report['fcompany'] = trim($_POST['mwp_creport_fcompany']);
+            }
+
+            $from_email = '';
+            if (!empty($_POST['mwp_creport_femail'])) {
+                $from_email = trim($_POST['mwp_creport_femail']);
+                if (!preg_match('/^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/is', $from_email)) {
+                    $from_email = '';
+                    $errors[] = 'Incorrect Email Address in the Send From filed.';
                 }
             }
-        }
+            $report['femail'] = $from_email;
 
-        public static function handle_upload_files($file_input, $dest_dir) {
-            $output = array();
-            $attachFiles = array();
-            $allowed_files = array('jpeg', 'jpg', 'gif', 'png', 'rar', 'zip', 'pdf');
+            if (isset($_POST['mwp_creport_name'])) {
+                $report['name'] = trim($_POST['mwp_creport_name']);
+            }
 
-            $tmp_files = $file_input['tmp_name'];
-            if (is_array($tmp_files)) {
-                foreach ($tmp_files as $i => $tmp_file) {
-                    if ((UPLOAD_ERR_OK == $file_input['error'][$i]) && is_uploaded_file($tmp_file)) {
-                        $file_size = $file_input['size'][$i];
-                        // = $file_input['type'][$i];
-                        $file_name = $file_input['name'][$i];
-                        $file_ext = strtolower(end(explode('.', $file_name)));
-                        if (($file_size > 5 * 1024 * 1024)) {
-                            $output['error'][] = $file_name . ' - ' . __('File size too big');
-                        } else if (!in_array($file_ext, $allowed_files)) {
-                            $output['error'][] = $file_name . ' - ' . __('File type are not allowed');
+            if (isset($_POST['mwp_creport_company'])) {
+                $report['company'] = trim($_POST['mwp_creport_company']);
+            }
+
+            $to_email = '';
+            $valid_emails = array();
+            if (!empty($_POST['mwp_creport_email'])) {
+                $to_emails = explode(',', trim($_POST['mwp_creport_email']));
+                if (is_array($to_emails)) {
+                    foreach ($to_emails as $_email) {
+                        if (!preg_match('/^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/is', $_email) && !preg_match('/^\[.+\]/is', $_email)) {
+                            $to_email = '';
+                            $errors[] = 'Incorrect Email Address in the Send To field.';
                         } else {
-                            $dest_file = $dest_dir . $file_name;
-                            $dest_file = dirname($dest_file) . '/' . wp_unique_filename(dirname($dest_file), basename($dest_file));
-                            if (move_uploaded_file($tmp_file, $dest_file)) {
-                                $attachFiles[] = basename($dest_file);
-                            } else {
-                                $output['error'][] = $file_name . ' - ' . __('Can not copy file');
-                            }
-                            ;
+                            $valid_emails[] = $_email;
                         }
                     }
                 }
             }
-            $output['filenames'] = $attachFiles;
-            return $output;
+
+            if (count($valid_emails) > 0) {
+                $to_email = implode(',', $valid_emails);
+            } else {
+                $to_email = '';
+                $errors[] = 'Incorrect Email Address in the Send To field.';
+            }
+
+            $report['email'] = $to_email;
+
+            if (isset($_POST['mwp_creport_email_subject'])) {
+                $report['subject'] = trim($_POST['mwp_creport_email_subject']);
+            }
+
+            //print_r($_POST);
+            if (isset($_POST['mainwp_creport_recurring_schedule'])) {
+                $report['recurring_schedule'] = trim($_POST['mainwp_creport_recurring_schedule']);
+            }
+            if (isset($_POST['mainwp_creport_schedule_date'])) {
+                $rec_date = trim($_POST['mainwp_creport_schedule_date']);
+                $report['recurring_date'] = !empty($rec_date) ? strtotime($rec_date . ' ' . date('H:i:s')) : 0;
+            }
+            if (isset($_POST['mainwp_creport_schedule_send_email'])) {
+                $report['schedule_send_email'] = trim($_POST['mainwp_creport_schedule_send_email']);
+            }
+            $report['schedule_bcc_me'] = isset($_POST['mainwp_creport_schedule_bbc_me_email']) ? 1 : 0;
+            if (isset($_POST['mainwp_creport_report_header'])) {
+                $report['header'] = trim($_POST['mainwp_creport_report_header']);
+            }
+
+            if (isset($_POST['mainwp_creport_report_body'])) {
+                $report['body'] = trim($_POST['mainwp_creport_report_body']);
+            }
+
+            if (isset($_POST['mainwp_creport_report_footer'])) {
+                $report['footer'] = trim($_POST['mainwp_creport_report_footer']);
+            }
+
+            $creport_dir = apply_filters('mainwp_getspecificdir', 'client_report/');
+            if (!file_exists($creport_dir)) {
+                @mkdir($creport_dir, 0777, true);
+            }
+            if (!file_exists($creport_dir . '/index.php')) {
+                @touch($creport_dir . '/index.php');
+            }
+
+            $attach_files = 'NOTCHANGE';
+            $delete_files = false;
+            if (isset($_POST['mainwp_creport_delete_attach_files']) && '1' == $_POST['mainwp_creport_delete_attach_files']) {
+                $attach_files = '';
+                if (!empty($current_attach_files)) {
+                    self::delete_attach_files($current_attach_files, $creport_dir);
+                }
+            }
+
+            $return = array();
+            if (isset($_FILES['mainwp_creport_attach_files']) && !empty($_FILES['mainwp_creport_attach_files']['name'][0])) {
+                if (!empty($current_attach_files)) {
+                    self::delete_attach_files($current_attach_files, $creport_dir);
+                }
+
+                $output = self::handle_upload_files($_FILES['mainwp_creport_attach_files'], $creport_dir);
+                //print_r($output);
+                if (isset($output['error'])) {
+                    $return['error'] = $output['error'];
+                }
+                if (is_array($output) && isset($output['filenames']) && !empty($output['filenames'])) {
+                    $attach_files = implode(', ', $output['filenames']);
+                }
+            }
+
+            if ('NOTCHANGE' !== $attach_files) {
+                $report['attach_files'] = $attach_files;
+            }
+
+            $selected_site = 0;
+            $selected_sites = $selected_groups = array();
+            if (isset($_POST['mwp_creport_report_type']) && 'global' == $_POST['mwp_creport_report_type']) {
+                if (isset($_POST['select_by'])) {
+                    if (isset($_POST['selected_sites']) && is_array($_POST['selected_sites'])) {
+                        foreach ($_POST['selected_sites'] as $selected) {
+                            $selected_sites[] = intval($selected);
+                        }
+                    }
+
+                    if (isset($_POST['selected_groups']) && is_array($_POST['selected_groups'])) {
+                        foreach ($_POST['selected_groups'] as $selected) {
+                            $selected_groups[] = intval($selected);
+                        }
+                    }
+                }
+                $report['type'] = 1;
+            } else {
+                $report['type'] = 0;
+                if (isset($_POST['select_by'])) {
+                    if (isset($_POST['selected_site'])) {
+                        $selected_site = intval($_POST['selected_site']);
+                    }
+                }
+            }
+            $report['sites'] = base64_encode(serialize($selected_sites));
+            $report['groups'] = base64_encode(serialize($selected_groups));
+            $report['selected_site'] = $selected_site;
+
+            if ('schedule' === $_POST['mwp_creport_report_submit_action']) {
+                $report['scheduled'] = 1;
+            }
+            $report['schedule_nextsend'] = self::cal_schedule_nextsend($report['recurring_schedule'], $report['recurring_date']);
+
+            if ('save' === $_POST['mwp_creport_report_submit_action'] ||
+                'send' === $_POST['mwp_creport_report_submit_action'] ||
+                'save_pdf' === $_POST['mwp_creport_report_submit_action'] ||
+                'schedule' === $_POST['mwp_creport_report_submit_action'] ||
+                'archive_report' === $_POST['mwp_creport_report_submit_action']) {
+                //print_r($report);
+                if ($result = LiveReportResponder_DB::get_instance()->update_report($report)) {
+                    $return['id'] = $result->id;
+                    $messages[] = 'Report has been saved.';
+                } else {
+                    $messages[] = 'Report has not been changed - Report Saved.';
+                }
+                $return['saved'] = true;
+            } else if ('preview' === (string) $_POST['mwp_creport_report_submit_action'] ||
+                       'send_test_email' === (string) $_POST['mwp_creport_report_submit_action']
+            ) {
+                $submit_report = json_decode(json_encode($report));
+                $return['submit_report'] = $submit_report;
+            }
+
+            if (!isset($return['id']) && isset($report['id'])) {
+                $return['id'] = $report['id'];
+            }
+
+            if (count($errors) > 0) {
+                $return['error'] = $errors;
+            }
+
+            if (count($messages) > 0) {
+                $return['message'] = $messages;
+            }
+
+            return $return;
         }
+        return null;
+    }
 
-        public static function handle_upload_image($file_input, $dest_dir, $max_height, $max_width = null) {
-            $output = array();
-            $processed_file = '';
-            if (UPLOAD_ERR_OK == $file_input['error']) {
-                $tmp_file = $file_input['tmp_name'];
-                if (is_uploaded_file($tmp_file)) {
-                    $file_size = $file_input['size'];
-                    $file_type = $file_input['type'];
-                    $file_name = $file_input['name'];
-                    $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+    static function delete_attach_files($files, $dir) {
+        $files = explode(',', $files);
+        if (is_array($files)) {
+            foreach ($files as $file) {
+                $file = trim($file);
+                $file_path = $dir . $file;
+                if (file_exists($file_path)) {
+                    @unlink($file_path);
+                }
+            }
+        }
+    }
 
-                    if (($file_size > 500 * 1025)) {
-                        $output['error'][] = 'File size is too large.';
-                    } elseif (
-                            ('image/jpeg' != $file_type) &&
-                            ('image/jpg' != $file_type) &&
-                            ('image/gif' != $file_type) &&
-                            ('image/png' != $file_type)
-                    ) {
-                        $output['error'][] = 'File Type is not allowed.';
-                    } elseif (
-                            ('jpeg' != $file_extension) &&
-                            ('jpg' != $file_extension) &&
-                            ('gif' != $file_extension) &&
-                            ('png' != $file_extension)
-                    ) {
-                        $output['error'][] = 'File Extension is not allowed.';
+    public static function handle_upload_files($file_input, $dest_dir) {
+        $output = array();
+        $attachFiles = array();
+        $allowed_files = array('jpeg', 'jpg', 'gif', 'png', 'rar', 'zip', 'pdf');
+
+        $tmp_files = $file_input['tmp_name'];
+        if (is_array($tmp_files)) {
+            foreach ($tmp_files as $i => $tmp_file) {
+                if ((UPLOAD_ERR_OK == $file_input['error'][$i]) && is_uploaded_file($tmp_file)) {
+                    $file_size = $file_input['size'][$i];
+                    // = $file_input['type'][$i];
+                    $file_name = $file_input['name'][$i];
+                    $file_ext = strtolower(end(explode('.', $file_name)));
+                    if (($file_size > 5 * 1024 * 1024)) {
+                        $output['error'][] = $file_name . ' - ' . __('File size too big');
+                    } else if (!in_array($file_ext, $allowed_files)) {
+                        $output['error'][] = $file_name . ' - ' . __('File type are not allowed');
                     } else {
                         $dest_file = $dest_dir . $file_name;
                         $dest_file = dirname($dest_file) . '/' . wp_unique_filename(dirname($dest_file), basename($dest_file));
-
                         if (move_uploaded_file($tmp_file, $dest_file)) {
-                            if (file_exists($dest_file)) {
-                                list( $width, $height, $type, $attr ) = getimagesize($dest_file);
-                            }
-
-                            $resize = false;
-                            //                        if ($width > $max_width) {
-                            //                            $dst_width = $max_width;
-                            //                            if ($height > $max_height)
-                            //                                $dst_height = $max_height;
-                            //                            else
-                            //                                $dst_height = $height;
-                            //                            $resize = true;
-                            //                        } else
-                            if ($height > $max_height) {
-                                $dst_height = $max_height;
-                                $dst_width = $width * $max_height / $height;
-                                $resize = true;
-                            }
-
-                            if ($resize) {
-                                $src = $dest_file;
-                                $cropped_file = wp_crop_image($src, 0, 0, $width, $height, $dst_width, $dst_height, false);
-                                if (!$cropped_file || is_wp_error($cropped_file)) {
-                                    $output['error'][] = __('Can not resize the image.');
-                                } else {
-                                    @unlink($dest_file);
-                                    $processed_file = basename($cropped_file);
-                                }
-                            } else {
-                                $processed_file = basename($dest_file);
-                            }
-
-                            $output['filename'] = $processed_file;
+                            $attachFiles[] = basename($dest_file);
                         } else {
-                            $output['error'][] = 'Can not copy the file.';
+                            $output['error'][] = $file_name . ' - ' . __('Can not copy file');
                         }
+                        ;
                     }
                 }
             }
-            return $output;
+        }
+        $output['filenames'] = $attachFiles;
+        return $output;
+    }
+
+    public static function handle_upload_image($file_input, $dest_dir, $max_height, $max_width = null) {
+        $output = array();
+        $processed_file = '';
+        if (UPLOAD_ERR_OK == $file_input['error']) {
+            $tmp_file = $file_input['tmp_name'];
+            if (is_uploaded_file($tmp_file)) {
+                $file_size = $file_input['size'];
+                $file_type = $file_input['type'];
+                $file_name = $file_input['name'];
+                $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+
+                if (($file_size > 500 * 1025)) {
+                    $output['error'][] = 'File size is too large.';
+                } elseif (
+                    ('image/jpeg' != $file_type) &&
+                    ('image/jpg' != $file_type) &&
+                    ('image/gif' != $file_type) &&
+                    ('image/png' != $file_type)
+                ) {
+                    $output['error'][] = 'File Type is not allowed.';
+                } elseif (
+                    ('jpeg' != $file_extension) &&
+                    ('jpg' != $file_extension) &&
+                    ('gif' != $file_extension) &&
+                    ('png' != $file_extension)
+                ) {
+                    $output['error'][] = 'File Extension is not allowed.';
+                } else {
+                    $dest_file = $dest_dir . $file_name;
+                    $dest_file = dirname($dest_file) . '/' . wp_unique_filename(dirname($dest_file), basename($dest_file));
+
+                    if (move_uploaded_file($tmp_file, $dest_file)) {
+                        if (file_exists($dest_file)) {
+                            list( $width, $height, $type, $attr ) = getimagesize($dest_file);
+                        }
+
+                        $resize = false;
+                        //                        if ($width > $max_width) {
+                        //                            $dst_width = $max_width;
+                        //                            if ($height > $max_height)
+                        //                                $dst_height = $max_height;
+                        //                            else
+                        //                                $dst_height = $height;
+                        //                            $resize = true;
+                        //                        } else
+                        if ($height > $max_height) {
+                            $dst_height = $max_height;
+                            $dst_width = $width * $max_height / $height;
+                            $resize = true;
+                        }
+
+                        if ($resize) {
+                            $src = $dest_file;
+                            $cropped_file = wp_crop_image($src, 0, 0, $width, $height, $dst_width, $dst_height, false);
+                            if (!$cropped_file || is_wp_error($cropped_file)) {
+                                $output['error'][] = __('Can not resize the image.');
+                            } else {
+                                @unlink($dest_file);
+                                $processed_file = basename($cropped_file);
+                            }
+                        } else {
+                            $processed_file = basename($dest_file);
+                        }
+
+                        $output['filename'] = $processed_file;
+                    } else {
+                        $output['error'][] = 'Can not copy the file.';
+                    }
+                }
+            }
+        }
+        return $output;
+    }
+
+    public function un_archive_report($report) {
+        if (!empty($report) && !is_object($report)) {
+            $report = LiveReportResponder_DB::get_instance()->get_report_by('id', $report);
         }
 
-        public function un_archive_report($report) {
-            if (!empty($report) && !is_object($report)) {
-                $report = LiveReportResponder_DB::get_instance()->get_report_by('id', $report);
-            }
+        if (!$report->is_archived) {
+            return true;
+        }
+        $update_archive = array(
+            'id' => $report->id,
+            'is_archived' => 0,
+            'archive_report' => '',
+            'archive_report_pdf' => '',
+        );
+        if (LiveReportResponder_DB::get_instance()->update_report($update_archive)) {
+            return true;
+        }
+        return false;
+    }
 
-            if (!$report->is_archived) {
-                return true;
-            }
-            $update_archive = array(
-                'id' => $report->id,
-                'is_archived' => 0,
-                'archive_report' => '',
-                'archive_report_pdf' => '',
-            );
-            if (LiveReportResponder_DB::get_instance()->update_report($update_archive)) {
-                return true;
-            }
-            return false;
+    public static function gen_report_content($reports, $combine_report = false) {
+        if (!is_array($reports)) {
+            $reports = array($reports);
         }
 
-        public static function gen_report_content($reports, $combine_report = false) {
-            if (!is_array($reports)) {
-                $reports = array($reports);
-            }
+        $remove_default_html = apply_filters('mainwp_client_reports_remove_default_html_tags', false, $reports);
 
-            $remove_default_html = apply_filters('mainwp_client_reports_remove_default_html_tags', false, $reports);
-
-            if ($combine_report) {
+        if ($combine_report) {
+            ob_start();
+        }
+        foreach ($reports as $site_id => $report) {
+            if (!$combine_report) {
                 ob_start();
             }
-            foreach ($reports as $site_id => $report) {
-                if (!$combine_report) {
-                    ob_start();
-                }
 
-                if (is_array($report) && isset($report['error'])) {
-                    ?>        
+            if (is_array($report) && isset($report['error'])) {
+                ?>
                 <br>
                 <div>
                     <br>
                     <div style="background:#ffffff;padding:0 1.618em;padding-bottom:50px!important">
                         <div style="width:600px;background:#fff;margin-left:auto;margin-right:auto;margin-top:10px;margin-bottom:25px;padding:0!important;border:10px Solid #fff;border-radius:10px;overflow:hidden">
                             <div style="display: block; width: 100% ; ">
-                                <div style="display: block; width: 100% ; padding: .5em 0 ;">       
-                <?php echo $report['error']; ?>
-                                </div>   
-                            </div>                            
+                                <div style="display: block; width: 100% ; padding: .5em 0 ;">
+                                    <?php echo $report['error']; ?>
+                                </div>
+                            </div>
                         </div>
-                    </div>  
-                </div>  
+                    </div>
+                </div>
                 <?php
             } else if (is_object($report)) {
                 if ($remove_default_html) {
@@ -1416,29 +1418,29 @@ class MainWP_Live_Reports_Class {
                     echo stripslashes(nl2br($report->filtered_body));
                     echo stripslashes(nl2br($report->filtered_footer));
                 } else {
-                    ?>        
+                    ?>
                     <br>
                     <div>
                         <br>
                         <div style="background:#ffffff;padding:0 1.618em;padding-bottom:50px!important">
                             <div style="width:600px;background:#fff;margin-left:auto;margin-right:auto;margin-top:10px;margin-bottom:25px;padding:0!important;border:10px Solid #fff;border-radius:10px;overflow:hidden">
                                 <div style="display: block; width: 100% ; ">
-                                    <div style="display: block; width: 100% ; padding: .5em 0 ;">                          
-                    <?php
-                    //echo apply_filters( 'the_content', $report->filtered_header );
-                    echo stripslashes(nl2br($report->filtered_header));
-                    //echo self::do_filter_content($report->filtered_header);
-                    ?>                          
+                                    <div style="display: block; width: 100% ; padding: .5em 0 ;">
+                                        <?php
+                                        //echo apply_filters( 'the_content', $report->filtered_header );
+                                        echo stripslashes(nl2br($report->filtered_header));
+                                        //echo self::do_filter_content($report->filtered_header);
+                                        ?>
                                         <div style="clear: both;"></div>
                                     </div>
                                 </div>
                                 <br><br><br>
                                 <div>
-                    <?php
-                    //echo apply_filters( 'the_content', $report->filtered_body );
-                    echo stripslashes(nl2br($report->filtered_body));
-                    //echo self::do_filter_content($report->filtered_body);
-                    ?>                        
+                                    <?php
+                                    //echo apply_filters( 'the_content', $report->filtered_body );
+                                    echo stripslashes(nl2br($report->filtered_body));
+                                    //echo self::do_filter_content($report->filtered_body);
+                                    ?>
                                 </div>
                                 <br><br><br>
                                 <div style="display: block; width: 100% ;">
@@ -1447,11 +1449,11 @@ class MainWP_Live_Reports_Class {
                                     echo stripslashes(nl2br($report->filtered_footer));
                                     //echo self::do_filter_content($report->filtered_footer);
                                     ?>
-                                </div>                                
+                                </div>
 
-                            </div>                            
+                            </div>
                         </div>
-                    </div>           
+                    </div>
                     <?php
                 }
             }
@@ -3059,10 +3061,10 @@ PRIMARY KEY  (`id`)  ';
         }
 
         if ($wpdb->insert($this->table_name('client_report_site_token'), array(
-                    'token_id' => $token_id,
-                    'token_value' => $token_value,
-                    'site_url' => $site_url,
-                ))) {
+            'token_id' => $token_id,
+            'token_value' => $token_value,
+            'site_url' => $site_url,
+        ))) {
             return $this->get_tokens_by('id', $token_id, $site_url);
         }
 
@@ -3091,7 +3093,7 @@ PRIMARY KEY  (`id`)  ';
         UPDATE " . $this->table_name('client_report_site_token') . "
         SET `token_value` = %s
         WHERE `token_id` = %d AND site_url = %s", $this->escape($token_value), intval($token_id), $this->escape($site_url)
-                ));
+        ));
 
         if ($wpdb->query($sql)) {
             return $this->get_tokens_by('id', $token_id, $site_url);
@@ -3176,7 +3178,7 @@ PRIMARY KEY  (`id`)  ';
             //                    $report['client_id'] = $updatedClient->clientid;
             //                } else if (isset($update_client['clientid'])) {
             //
-			//                }
+            //                }
             //            }
             // to fix bug not save report client
             if (empty($client_id) && !empty($report['client_id'])) {
@@ -3267,32 +3269,32 @@ PRIMARY KEY  (`id`)  ';
         $sql = '';
         if ('id' == $by) {
             $sql = $wpdb->prepare('SELECT rp.*, c.* FROM ' . $this->table_name('client_report') . ' rp '
-                    . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                    . ' ON rp.client_id = c.clientid '
-                    . ' WHERE `id`=%d ' . $_order_by, $value);
+                                  . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+                                  . ' ON rp.client_id = c.clientid '
+                                  . ' WHERE `id`=%d ' . $_order_by, $value);
         } if ('client' == $by) {
             $sql = $wpdb->prepare('SELECT rp.*, c.* FROM ' . $this->table_name('client_report') . ' rp '
-                    . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                    . ' ON rp.client_id = c.clientid '
-                    . ' WHERE `client_id` = %d ' . $_order_by, $value);
+                                  . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+                                  . ' ON rp.client_id = c.clientid '
+                                  . ' WHERE `client_id` = %d ' . $_order_by, $value);
             return $wpdb->get_results($sql, $output);
         } if ('site' == $by) {
             $sql = $wpdb->prepare('SELECT rp.*, c.* FROM ' . $this->table_name('client_report') . ' rp '
-                    . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                    . ' ON rp.client_id = c.clientid '
-                    . ' WHERE `selected_site` = %d ' . $_order_by, $value);
+                                  . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+                                  . ' ON rp.client_id = c.clientid '
+                                  . ' WHERE `selected_site` = %d ' . $_order_by, $value);
             return $wpdb->get_results($sql, $output);
         } if ('title' == $by) {
             $sql = $wpdb->prepare('SELECT rp.*, c.* FROM ' . $this->table_name('client_report') . ' rp '
-                    . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                    . ' ON rp.client_id = c.clientid '
-                    . ' WHERE `title` = %s ' . $_order_by, $value);
+                                  . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+                                  . ' ON rp.client_id = c.clientid '
+                                  . ' WHERE `title` = %s ' . $_order_by, $value);
             return $wpdb->get_results($sql, $output);
         } else if ('all' == $by) {
             $sql = 'SELECT * FROM ' . $this->table_name('client_report') . ' rp '
-                    . 'LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                    . ' ON rp.client_id = c.clientid '
-                    . ' WHERE 1 = 1 ' . $_order_by;
+                   . 'LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+                   . ' ON rp.client_id = c.clientid '
+                   . ' WHERE 1 = 1 ' . $_order_by;
             return $wpdb->get_results($sql, $output);
         }
         //echo $sql;
@@ -3306,12 +3308,12 @@ PRIMARY KEY  (`id`)  ';
     public function get_avail_archive_reports() {
         global $wpdb;
         $sql = 'SELECT rp.*, c.* FROM ' . $this->table_name('client_report') . ' rp '
-                . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                . ' ON rp.client_id = c.clientid '
-                . ' WHERE rp.is_archived = 0 AND rp.scheduled = 0'
-                . ' AND rp.date_from <= ' . (time() - 3600 * 24 * 30) . '  '
-                . ' AND rp.selected_site != 0 AND c.email IS NOT NULL '
-                . '';
+               . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+               . ' ON rp.client_id = c.clientid '
+               . ' WHERE rp.is_archived = 0 AND rp.scheduled = 0'
+               . ' AND rp.date_from <= ' . (time() - 3600 * 24 * 30) . '  '
+               . ' AND rp.selected_site != 0 AND c.email IS NOT NULL '
+               . '';
         //echo $sql;
         return $wpdb->get_results($sql);
     }
@@ -3319,9 +3321,9 @@ PRIMARY KEY  (`id`)  ';
     public function get_schedule_reports() {
         global $wpdb;
         $sql = 'SELECT rp.*, c.* FROM ' . $this->table_name('client_report') . ' rp '
-                . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                . ' ON rp.client_id = c.clientid '
-                . " WHERE rp.recurring_schedule != '' AND rp.scheduled = 1";
+               . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+               . ' ON rp.client_id = c.clientid '
+               . " WHERE rp.recurring_schedule != '' AND rp.scheduled = 1";
         //echo $sql;
         return $wpdb->get_results($sql);
     }
@@ -3351,13 +3353,13 @@ PRIMARY KEY  (`id`)  ';
         $sql = '';
         if ('clientid' == $by) {
             $sql = $wpdb->prepare('SELECT * FROM ' . $this->table_name('client_report_client')
-                    . ' WHERE `clientid` =%d ', $value);
+                                  . ' WHERE `clientid` =%d ', $value);
         } else if ('client' == $by) {
             $sql = $wpdb->prepare('SELECT * FROM ' . $this->table_name('client_report_client')
-                    . ' WHERE `client` = %s ', $value);
+                                  . ' WHERE `client` = %s ', $value);
         } else if ('email' == $by) {
             $sql = $wpdb->prepare('SELECT * FROM ' . $this->table_name('client_report_client')
-                    . ' WHERE `email` = %s ', $value);
+                                  . ' WHERE `email` = %s ', $value);
         }
 
         if (!empty($sql)) {
@@ -3399,7 +3401,7 @@ PRIMARY KEY  (`id`)  ';
     public function get_formats($type = null) {
         global $wpdb;
         return $wpdb->prepare('SELECT * FROM ' . $this->table_name('client_report_format')
-                        . ' WHERE `type` =%s ORDER BY title', $type);
+                              . ' WHERE `type` =%s ORDER BY title', $type);
 //		return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'client_report_format' ) . " WHERE type = '" . $type . "' ORDER BY title" );
     }
 
@@ -3411,10 +3413,10 @@ PRIMARY KEY  (`id`)  ';
         $sql = '';
         if ('id' == $by) {
             $sql = $wpdb->prepare('SELECT * FROM ' . $this->table_name('client_report_format')
-                    . ' WHERE `id` =%d ', $value);
+                                  . ' WHERE `id` =%d ', $value);
         } else if ('title' == $by) {
             $sql = $wpdb->prepare('SELECT * FROM ' . $this->table_name('client_report_format')
-                    . ' WHERE `title` =%s AND type = %s', $value, $type);
+                                  . ' WHERE `title` =%s AND type = %s', $value, $type);
         }
         //echo $sql;
         if (!empty($sql)) {
@@ -3610,4 +3612,3 @@ class MainWP_Live_Reports_Utility {
     }
 
 }
-

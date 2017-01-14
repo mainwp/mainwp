@@ -1208,13 +1208,13 @@ class MainWP_Manage_Sites {
 		$extMetaBoxs = MainWP_System::Instance()->apply_filter( 'mainwp-getmetaboxes', array() );
 		$extMetaBoxs = apply_filters( 'mainwp-getmetaboxs', $extMetaBoxs );
 		foreach ( $extMetaBoxs as $metaBox ) {
-			add_meta_box( self::$page . '-contentbox-' . $i ++, $metaBox['metabox_title'], $metaBox['callback'], self::$page, 'normal', 'core' );
+			add_meta_box( self::$page . '-contentbox-' . $i++, $metaBox['metabox_title'], $metaBox['callback'], self::$page, 'normal', 'core' );
 		}
-                
-                add_meta_box( self::$page . '-metaboxes-contentbox-' . $i ++, MainWP_Site_Info::getName(), array(
-                        MainWP_Site_Info::getClassName(),
-                        'render',
-                ), self::$page, 'normal', 'core' );
+
+        add_meta_box( self::$page . '-metaboxes-contentbox-' . $i++, MainWP_Site_Info::getName(), array(
+                MainWP_Site_Info::getClassName(),
+                'render',
+        ), self::$page, 'normal', 'core' );
 	}
         
         public static function renderUpdates( $website ) {
@@ -1310,12 +1310,12 @@ class MainWP_Manage_Sites {
                 }
 		?>
 		<div id="mainwp_managesites_content">
-                <?php MainWP_Tours::renderSitesTour(); ?>
-                            <?php if ( MainWP_Utility::showUserTip( 'mainwp-screenoptions-tips' ) ) { ?>
-                                <div class="mainwp-tips mainwp-notice mainwp-notice-blue">
-                                        <span class="mainwp-tip" id="mainwp-screenoptions-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php _e( 'You can manage table columns in the Screen Options tab.', 'mainwp' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?>
-                                                </a></span></div>
-                        <?php } ?>
+            <?php MainWP_Tours::renderSitesTour(); ?>
+            <?php if ( MainWP_Utility::showUserTip( 'mainwp-screenoptions-tips' ) ) { ?>
+                <div class="mainwp-tips mainwp-notice mainwp-notice-blue">
+                    <span class="mainwp-tip" id="mainwp-screenoptions-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php _e( 'You can manage table columns in the Screen Options tab.', 'mainwp' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss', 'mainwp' ); ?></a></span>
+                </div>
+            <?php } ?>
 			<div id="mainwp_managesites_add_errors" class="mainwp_error mainwp-notice mainwp-notice-red"></div>
 			<div id="mainwp_managesites_add_message" class="mainwp-notice mainwp-notice-green mainwp-notice mainwp-notice-green"></div>
 			<div id="mainwp_managesites_add_other_message" class="mainwp-notice mainwp-notice-green mainwp-notice mainwp-notice-green hidden"></div>
@@ -1713,13 +1713,13 @@ class MainWP_Manage_Sites {
 				$hidden = array();
 			}
 			$hidden[] = 'site_actions';
-                        $hidden[] = 'wpcore_update';
-                        $hidden[] = 'plugin_update';
-                        $hidden[] = 'theme_update';
-                        $hidden[] = 'groups';
-                        $hidden[] = 'last_post';
-                        $hidden[] = 'phpversion';
-                        
+            $hidden[] = 'wpcore_update';
+            $hidden[] = 'plugin_update';
+            $hidden[] = 'theme_update';
+            $hidden[] = 'groups';
+            $hidden[] = 'last_post';
+            $hidden[] = 'phpversion';
+
 			update_user_option( $current_user->ID, 'manage' . MainWP_Manage_Sites::$page . 'columnshidden', $hidden, true );
 			update_user_option( $current_user->ID, 'mainwp_default_hide_actions_column', 1 );
 		}

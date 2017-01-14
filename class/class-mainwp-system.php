@@ -13,7 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
-	public static $version = '3.2.2.1';
+	public static $version = '3.2.2.2';
 	//Singleton
 	private static $instance = null;
 
@@ -1892,15 +1892,15 @@ class MainWP_System {
 		$started = get_option('mainwp_getting_started');
 		if (!empty($started)) {
 			delete_option('mainwp_getting_started');
-                        if (! is_multisite()) {
-                            if ('started' == $started) {
-                                    wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=started' ) );
-                                    exit;
-                            } else if ('whatnew' == $started) {
-                                    wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=whatnew' ) );
-                                    exit;
-                            }
-                        }
+            if (! is_multisite()) {
+                if ( 'started' == $started ) {
+                    wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=started' ) );
+                    exit;
+                } else if ( 'whatnew' == $started ) {
+                    wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=whatnew' ) );
+                    exit;
+                }
+            }
 		}
 
 		if ( ! get_transient( '_mainwp_activation_redirect' ) || is_network_admin() ) {
@@ -2297,10 +2297,6 @@ class MainWP_System {
 	}
 
 	function admin_head() {
-		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'js/jsapi.js' . '"></script>';
-		echo '<script type="text/javascript">
-  				google.load("visualization", "1", {packages:["corechart"]});
-			</script>';
 		echo '<script type="text/javascript">var mainwp_ajax_nonce = "' . wp_create_nonce( 'mainwp_ajax' ) . '"</script>';
 		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'js/FileSaver.js' . '"></script>';
 		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'js/jqueryFileTree.js' . '"></script>';

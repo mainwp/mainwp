@@ -1245,7 +1245,25 @@ public static function renderFooter( $shownPage ) {
 
 			<div class="inside">
 				<?php
-				show_source( ABSPATH . 'wp-config.php' );
+				if ( file_exists( ABSPATH . 'wp-config.php' ) ) {
+					@show_source( ABSPATH . 'wp-config.php' );
+				} else {
+					$files = @get_included_files();
+					$configFound = false;
+					if ( is_array( $files ) ) {
+						foreach ( $files as $file ) {
+							if ( stristr( $file, 'wp-config.php' ) ) {
+								$configFound = true;
+								@show_source( $file );
+								break;
+							}
+						}
+					}
+
+					if ( !$configFound ) {
+						_e( 'wp-config.php not found', 'mainwp' );
+					}
+				}
 				?>
 			</div>
 		</div>

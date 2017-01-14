@@ -102,7 +102,7 @@ class MainWP_Connection_Status {
                                                         <?php
                                                 } else {
                                                         ?>
-                                                        <a href="javascript:void(0)" sync-today="<?php echo $website->id; ?>" onClick="rightnow_wp_sync('<?php echo $website->id; ?>')"><?php _e( 'Sync Now', 'mainwp' ); ?></a>&nbsp;&nbsp;                                                         
+                                                        <a href="javascript:void(0)" sync-today="<?php echo $website->id; ?>" onClick="rightnow_wp_sync('<?php echo $website->id; ?>')"><?php _e( 'Sync Now', 'mainwp' ); ?></a>&nbsp;&nbsp;
                                                         <span class="fa-stack fa-lg" title="Site is Online">
                                                                 <i class="fa fa-check-circle fa-2x mainwp-green"></i>
                                                         </span>

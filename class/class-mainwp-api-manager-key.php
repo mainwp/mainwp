@@ -124,14 +124,14 @@ class MainWP_Api_Manager_Key {
 
 		$target_url = self::create_software_api_url( $args );
 		$request    = wp_remote_get( $target_url, array( 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
-                
-                $log = $request;
-                if (is_array($log) && isset($log['http_response'])) {
-                    unset($log['http_response']); // for safe
-                } 
-                
-                MainWP_Logger::Instance()->debug( 'testloginapi:: RESULT :: ' . print_r( $log, true ) );
-                
+
+        $log = $request;
+        if ( is_array( $log ) && isset( $log['http_response'] ) ) {
+            unset( $log['http_response'] );
+        }
+
+        MainWP_Logger::Instance()->debug( 'testloginapi:: RESULT :: ' . print_r( $log, true ) );
+
 		//                $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . 'wc-api/am-software-api/', array('body' => $args) );
 
 		if ( is_wp_error( $request ) ) {

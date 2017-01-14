@@ -1289,7 +1289,9 @@ class MainWP_Right_Now {
 										<input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" value="0"/>
 									</div>
 									<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-5 pluginsInfo" id="wp_upgrade_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
-										<?php echo $plugin_upgrade['Version']; ?> to <?php echo $plugin_upgrade['update']['new_version']; ?>
+										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=640&height=477&section=changelog'; ?>" target="_blank" class="thickbox" title="Changelog <?php echo $plugin_upgrade['Name']; ?>">
+											<?php echo $plugin_upgrade['Version']; ?> to <?php echo $plugin_upgrade['update']['new_version']; ?>
+										</a>
 									</div>
 									<!--									<div class="mainwp-right mainwp-cols-3 mainwp-t-align-right pluginsAction">-->
 									<div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" site_id="<?php echo $website->id; ?>" >
@@ -1545,7 +1547,10 @@ class MainWP_Right_Now {
 										<?php } ?>
 									</div>
 									<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-5 pluginsInfo">
-										<?php echo $plugin_upgrade['Version']; ?> to <?php echo $plugin_upgrade['update']['new_version']; ?>
+										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $pluginsInfo[ $slug ]['slug'] . '&TB_iframe=true&width=640&height=477&section=changelog'; ?>" target="_blank"
+											   class="thickbox" title="Changelog <?php echo $pluginsInfo[ $slug ]['name']; ?>">
+											<?php echo $plugin_upgrade['Version']; ?> to <?php echo $plugin_upgrade['update']['new_version']; ?>
+										</a>
 									</div>
 									<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right pluginsAction">
 										<?php if ( mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) { ?>
@@ -2347,7 +2352,10 @@ class MainWP_Right_Now {
 											   class="thickbox" title="More information about <?php echo $plugin_outdate['Name']; ?>"><?php echo $plugin_outdate['Name']; ?></a><input type="hidden" id="wp_dismissed_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" value="0"/>
 										</div>
 										<div class="mainwp-left mainwp-cols-3 pluginsInfo" id="wp_outdate_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
-											<?php echo $plugin_outdate['Version']; ?> | <?php echo $outdate_notice; ?>
+											<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ) . '&TB_iframe=true&width=640&height=477&section=changelog'; ?>" target="_blank"
+											   class="thickbox" title="Changelog <?php echo $plugin_outdate['Name']; ?>">
+												<?php echo $plugin_outdate['Version']; ?> | <?php echo $outdate_notice; ?>
+											</a>
 										</div>
 										<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right pluginsAction">
 											<div id="wp_dismissbuttons_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
@@ -2568,7 +2576,10 @@ class MainWP_Right_Now {
 											<?php } ?>
 										</div>
 										<div class="mainwp-left mainwp-cols-3 pluginsInfo" id="wp_outdate_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
-											<?php echo $plugin_outdate['Version']; ?> | <?php echo $outdate_notice; ?>
+											<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&TB_iframe=true&width=640&height=477&section=changelog'; ?>" target="_blank"
+												   class="thickbox" title="Changelog about <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>">
+												<?php echo $plugin_outdate['Version']; ?> | <?php echo $outdate_notice; ?>
+											</a>
 										</div>
 										<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right pluginsAction">
 											<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>

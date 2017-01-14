@@ -2375,7 +2375,7 @@ jQuery(document).ready(function () {
             jQuery('#mainwp_managesites_add_wpname').val(url);
         }
         jQuery('#mainwp_managesites_add_wpurl').val(url);
-        jQuery('#mainwp_managesites_add_wpurl_protocol').val(protocol).trigger("change");        
+        jQuery('#mainwp_managesites_add_wpurl_protocol').val(protocol).trigger("change");
     });
     jQuery('.mainwp_site_reconnect').live('click', function(event)
     {
@@ -5117,16 +5117,16 @@ jQuery(document).ready(function () {
 
         var tmp = jQuery("input[name='page[]']:checked");
         countSent = tmp.length;
-        
+
         if (countSent == 0)
             return false;
-        
+
         if (action == 'delete') {
             if (!confirm(__('You are about to delete %1 page(s). Are you sure you want to proceed?', countSent))) {
                 return false;
             }
         }
-        
+
         jQuery('#mainwp_bulk_page_action_apply').attr('disabled', 'true');
 
         tmp.each(
@@ -5614,16 +5614,16 @@ jQuery(document).ready(function () {
 
         var tmp = jQuery("input[name='post[]']:checked");
         countSent = tmp.length;
-            
+
         if (countSent == 0)
             return false;
-        
+
         if (action == 'delete') {
             if (!confirm(__('You are about to delete %1 post(s). Are you sure you want to proceed?', countSent))) {
                 return false;
             }
         }
-        
+
         jQuery('#mainwp_bulk_post_action_apply').attr('disabled', 'true');
 
         tmp.each(
@@ -6163,7 +6163,7 @@ jQuery(document).ready(function () {
                 return false;
             }
         }
-        
+
         jQuery('#mainwp_bulk_user_action_apply').attr('disabled', 'true');
 
         if (action == 'edit') {
@@ -6437,11 +6437,11 @@ mainwp_fetch_users = function () {
 };
 
 // to fix select all for ajax generate table
-jQuery('table.fix-select-all-ajax-table .column-cb input[type="checkbox"]').live('click', function () {    
+jQuery('table.fix-select-all-ajax-table .column-cb input[type="checkbox"]').live('click', function () {
     var selAll = jQuery(this).is(':checked');
     jQuery('table.fix-select-all-ajax-table .check-column input[type="checkbox"]').each(function () {
         this.checked = false;
-    })    
+    })
     jQuery('table.fix-select-all-ajax-table .check-column input[type="checkbox"]:visible').each(function () {
         this.checked = selAll;
     });
@@ -6451,14 +6451,14 @@ jQuery('table.fix-select-all-ajax-table tbody .check-column input[type="checkbox
     var countChecked = 0;
     jQuery('table.fix-select-all-ajax-table tbody .check-column input[type="checkbox"]:visible').each(function () {
         if (this.checked)
-            countChecked++;        
-    });    
+            countChecked++;
+    });
     if (count == countChecked) {
         jQuery('table.fix-select-all-ajax-table .column-cb input[type="checkbox"]').prop('checked',true);
     } else {
         jQuery('table.fix-select-all-ajax-table .column-cb input[type="checkbox"]').prop('checked',false);
     }
-    
+
 })
 // end
 
@@ -6968,15 +6968,15 @@ jQuery(document).on('click', '.mainwp-dismiss', function(){
 jQuery(document).on('click', '.mainwp-notice-dismiss', function(){
     var notice_id = jQuery(this).attr('notice-id');
     jQuery(this).closest('.mainwp-notice-wrap').fadeOut("slow");
-    var data = mainwp_secure_data({
+    var data = {
         action:'mainwp_notice_status_update'
-    });
+    };
     if (notice_id.indexOf('tour_') === 0) {
         data['tour_id'] = notice_id.replace('tour_', '');
     } else {
         data['notice_id'] = notice_id;
     }
-    jQuery.post(ajaxurl, data, function (res) {
+    jQuery.post(ajaxurl, mainwp_secure_data(data), function (res) {
     });
     return false;
 });

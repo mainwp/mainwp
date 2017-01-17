@@ -123,10 +123,7 @@ class MainWP_Settings {
                 );
             } else if ('SettingsClientReportsResponder' == $_GET['page']) {
                 add_meta_box(
-                        'mwp-setting-contentbox-' . $i++, '<i class="fa fa-wrench"></i> ' . __('General Options', 'mainwp'), array('MainWP_Settings', 'renderReportResponderDashboardPage'), 'mainwp_postboxes_settings_responder', 'normal', 'core'
-                );
-                add_meta_box(
-                        'mwp-setting-contentbox-' . $i++, '<i class="fa fa-users"></i> ' . __('All Users', 'mainwp'), array('MainWP_Settings', 'renderReportResponderUserPage'), 'mainwp_postboxes_settings_responder', 'normal', 'core'
+                        'mwp-setting-contentbox-' . $i++, '<i class="fa fa-wrench"></i> ' . __('Connection Settings', 'mainwp'), array('MainWP_Settings', 'renderReportResponderDashboardPage'), 'mainwp_postboxes_settings_responder', 'normal', 'core'
                 );
             } else if ('SettingsAdvanced' == $_GET['page']) {
                 add_meta_box(
@@ -202,39 +199,39 @@ class MainWP_Settings {
             </div>
             <div class="mainwp-tabs" id="mainwp-tabs">
                 <a class="nav-tab pos-nav-tab <?php
-                if ($shownPage === '') {
-                    echo 'nav-tab-active';
-                }
+        if ($shownPage === '') {
+            echo 'nav-tab-active';
+        }
                 ?>" href="admin.php?page=Settings"><?php _e('Global Options', 'mainwp'); ?></a>						
                 <a class="nav-tab pos-nav-tab <?php
-                if ($shownPage === 'DashboardOptions') {
-                    echo 'nav-tab-active';
-                }
+        if ($shownPage === 'DashboardOptions') {
+            echo 'nav-tab-active';
+        }
                 ?>" href="admin.php?page=DashboardOptions"><?php _e('Dashboard Options', 'mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php
-                if ($shownPage === 'Advanced') {
-                    echo 'nav-tab-active';
-                }
+        if ($shownPage === 'Advanced') {
+            echo 'nav-tab-active';
+        }
                 ?>" href="admin.php?page=SettingsAdvanced"><?php _e('Advanced Options', 'mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php
-                if ($shownPage === 'MainWPTools') {
-                    echo 'nav-tab-active';
-                }
+        if ($shownPage === 'MainWPTools') {
+            echo 'nav-tab-active';
+        }
                 ?>" href="admin.php?page=MainWPTools"><?php _e('MainWP Tools', 'mainwp'); ?></a>
                 <a class="nav-tab pos-nav-tab <?php
-                if ($shownPage === 'SettingsClientReportsResponder') {
-                    echo 'nav-tab-active';
-                }
+        if ($shownPage === 'SettingsClientReportsResponder') {
+            echo 'nav-tab-active';
+        }
                 ?>" href="admin.php?page=SettingsClientReportsResponder"><?php _e('Managed Client Reports Responder', 'mainwp'); ?></a>
                    <?php
                    if (isset(self::$subPages) && is_array(self::$subPages)) {
                        foreach (self::$subPages as $subPage) {
                            ?>
                         <a class="nav-tab pos-nav-tab <?php
-                        if ($shownPage === $subPage['slug']) {
-                            echo 'nav-tab-active';
-                        }
-                        ?>" href="admin.php?page=Settings<?php echo $subPage['slug']; ?>"><?php echo $subPage['title']; ?></a>
+                if ($shownPage === $subPage['slug']) {
+                    echo 'nav-tab-active';
+                }
+                           ?>" href="admin.php?page=Settings<?php echo $subPage['slug']; ?>"><?php echo $subPage['title']; ?></a>
                            <?php
                        }
                    }
@@ -263,14 +260,18 @@ class MainWP_Settings {
 
 
         self::renderHeader('SettingsClientReportsResponder');
-
+       
         if (isset($_POST['save_changes'])) {
             $nonce = $_REQUEST['_wpnonce'];
             if (!wp_verify_nonce($nonce, 'general_settings')) {
                 echo "<div class='mainwp-notice-red'>" . __('Unable to save settings, please refresh and try again.', 'mainwp') . "</div>";
             } else {
-                update_option('live-report-responder-siteurl', stripslashes($_POST['live_reponder_site_url']));
-                update_option('live-report-responder-provideaccess', $_POST['live_reponder_provideaccess']);
+                $siteurl = stripslashes($_POST['live_reponder_site_url']);
+                if (substr($siteurl, -1) != '/') {
+                    $siteurl = $siteurl . "/";
+                }
+                update_option('live-report-responder-siteurl', $siteurl);
+                update_option('live-report-responder-provideaccess', ( isset($_POST['live_reponder_provideaccess']) ) ? $_POST['live_reponder_provideaccess'] : '');
                 $security_token = Live_Reports_Responder_Class::Live_Reports_Responder_generate_random_string();
                 update_option('live-reports-responder-security-id', ( isset($_POST['requireUniqueSecurityId']) ) ? $_POST['requireUniqueSecurityId'] : '' );
                 update_option('live-reports-responder-security-code', stripslashes($security_token));
@@ -334,63 +335,7 @@ class MainWP_Settings {
         <?php
     }
 
-    public static function renderReportResponderUserPage() {
-        $arr['action'] = 'getusers';
-        if (get_option('live-reports-responder-security-id') == 'on') {
-            $arr['security'] = base64_encode(get_option('live-reports-responder-security-code'));
-        }
-        $all_users_result = json_decode(Live_Reports_Responder_Class::CurlRequest($arr), true);
-        if ('success' == $all_users_result['result']) {
-            ?>
-
-            <form method="post">
-                <table class="wp-list-table widefat fixed striped users " style="border: none;">
-                    <thead>
-                        <tr>
-                            <th><?php _e('Username', 'mainwp'); ?></th>
-                            <th><?php _e('Name', 'mainwp'); ?></th>
-                            <th><?php _e('Email', 'mainwp'); ?></th>
-                            <th><?php _e('Last Login', 'mainwp'); ?></th>
-                            <th><?php _e('Last Report Check', 'mainwp'); ?></th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        <?php
-                        foreach ($all_users_result['data'] as $user) {
-                            ?>
-                            <tr>
-                                <td><?php echo $user['user_login']; ?> </td>
-                                <td><?php echo $user['display_name']; ?> </td>
-                                <td><?php echo $user['user_email']; ?></td>
-                                <td><?php echo $user['last_login'] ? : '__'; ?>  </td>
-                                <td><?php echo $user['last_reportcheck'] ? : '__'; ?>  </td>
-                            </tr>
-                            <?php
-                        }
-                        ?>
-
-
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <th><?php _e('Username', 'mainwp'); ?></th>
-                            <th><?php _e('Name', 'mainwp'); ?></th>
-                            <th><?php _e('Email', 'mainwp'); ?></th>
-                            <th><?php _e('Last Login', 'mainwp'); ?></th>
-                            <th><?php _e('Last Report Check', 'mainwp'); ?></th>
-                        </tr>
-                    </tfoot>
-
-                </table>
-            </form>
-
-            <?php
-        } else {
-            echo '<div class="error" style="margin-top: 50px;"><p>Connection to your MainWP Dashboard from ' . esc_attr(get_option('live-report-responder-siteurl')) . ' is open. Please connect your MainWP Dashboard to your Managed Client Reports for WooCommerce site.</strong></p></div>';
-        }
-    }
-
+ 
     public static function renderAdvanced() {
         if (!mainwp_current_user_can('dashboard', 'manage_dashboard_settings')) {
             mainwp_do_not_have_permissions(__('manage dashboard settings', 'mainwp'));
@@ -737,9 +682,7 @@ class Live_Reports_Responder_Class {
         if (self::MainWP_live_reports_isCurl()) {
 
             $livesiteurl = get_option('live-report-responder-siteurl');
-            if (substr($livesiteurl, -1) != '/') {
-                $livesiteurl=$livesiteurl."/";
-            }  
+
             $url = $livesiteurl . "wp-content/plugins/managed-client-reports-for-woocommerce/response/api.php";
 
             $ch = curl_init();

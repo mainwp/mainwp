@@ -1,13 +1,5 @@
 <?php
 
-define( 'DOING_AJAX', true );
-if ( !defined( 'WP_ADMIN' ) ) {
-	define( 'WP_ADMIN', true );
-}
-
-if ( file_exists( '../../../../wp-load.php' ) )
-	require_once( '../../../../wp-load.php' );
-
 function liveReportsResponderClasses() {
 	if ( file_exists( '../class/class-mainwp-creport.php' ) ) {
 		include_once '../class/class-mainwp-creport.php';
@@ -201,8 +193,7 @@ if ( isset( $_POST[ 'action' ] ) && ( 'getallsites' == $_POST['action'] ) ) {
 	}
 }
 if ( isset( $_POST[ 'action' ] ) && ('checkvalid_live_reports_responder_url' == $_POST[ 'action' ] ) ) {
-	if ( is_plugin_active( 'mainwp/mainwp.php' ) ) {
-		$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '' );
+ 		$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '' );
 		if ( $secureconnection ) {
 			$checkPermission = checkLiveReportingAccess( $_POST[ 'livereportingurl' ] );
 			if ( $checkPermission ) {
@@ -216,9 +207,6 @@ if ( isset( $_POST[ 'action' ] ) && ('checkvalid_live_reports_responder_url' == 
 			echo json_encode( array( 'result' => "error", "message" => "Error - Invalid Security ID" ) );
 			exit;
 		}
-	} else {
-		echo json_encode( array( "result" => "error", "message" => "Error - MainWp Plugin is not Activated" ) );
-		exit;
-	}
+ 
 }
 ?>

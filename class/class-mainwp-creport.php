@@ -1698,7 +1698,7 @@ class MainWP_Live_Reports_Class {
             $site_tokens = LiveReportResponder_DB::get_instance()->get_site_tokens($website['url']);
         }
 
-
+        $html='';
         if (is_array($tokens) && count($tokens) > 0) {
             $html .= '<table class="form-table" style="width: 100%">';
             foreach ($tokens as $token) {

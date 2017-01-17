@@ -84,7 +84,7 @@ if ( isset( $_POST[ 'content' ] ) && isset( $_POST[ 'action' ] ) && ( 'liverepor
 		if ( $checkPermission ) {
 			liveReportsResponderClasses();
 			$checkifvalidclient = checkifvalidclient( $_POST[ 'email' ], $_POST[ 'siteid' ] );
-			if ( 'success' == $checkifvalidclient[ 'result' ] ) {
+			if ( isset($checkifvalidclient[ 'result' ]) && 'success' == $checkifvalidclient[ 'result' ] ) {
 				$report = new stdClass();
 				$report->title = "Live Report";
 				$report->date_from = $_POST['date_from'];

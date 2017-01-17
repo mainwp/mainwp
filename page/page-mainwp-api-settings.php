@@ -17,6 +17,7 @@ class MainWP_API_Settings {
 		$extensions = MainWP_Extensions::loadExtensions();
 		$output       = array();
 		if ( is_array( $extensions ) ) {
+                        $check_exts = array();
 			foreach ( $extensions as $ext ) {
 				if ( isset( $ext['activated_key'] ) && 'Activated' == $ext['activated_key'] ) {
 					$args                     = array();
@@ -31,7 +32,9 @@ class MainWP_API_Settings {
 				}
 			}
 
-
+                        if (empty($check_exts))
+                            return false;
+                        
 			$results = MainWP_Api_Manager_Plugin_Update::instance()->bulk_update_check( $check_exts );
 
 			if ( is_array($results) && count($results) > 0 ) {

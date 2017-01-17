@@ -354,7 +354,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 		<?php
 	}
 
-	public static function renderTable( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0 ) {
+	public static function renderTable( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '' ) {
 		?>
 		<table class="wp-list-table widefat fixed posts tablesorter fix-select-all-ajax-table" id="mainwp_posts_table"
 		       cellspacing="0">
@@ -442,7 +442,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			if ($cached) {
 				MainWP_Cache::echoBody( 'Post' );
 			} else {
-				MainWP_Post::renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId );
+				MainWP_Post::renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type );
 			}
 			?>
 			</tbody>
@@ -465,8 +465,8 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 		</div>
 		<?php
 	}
-
-	public static function renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId ) {
+        
+	public static function renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '') {
 		MainWP_Cache::initCache( 'Post' );
 
 		//Fetch all!
@@ -540,7 +540,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			), $output );
 		}
 
-		MainWP_Cache::addContext( 'Post' . $post_type, array(
+		MainWP_Cache::addContext( 'Post', array(
 			'count'    => $output->posts,
 			'keyword'  => $keyword,
 			'dtsstart' => $dtsstart,

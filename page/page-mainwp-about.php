@@ -76,61 +76,17 @@ class MainWP_About {
 		<h3><?php echo $mainWP->getVersion(); ?>&nbsp;<?php _e( 'Changelog', 'mainwp' ); ?></h3>
 		<hr/>
 		<ul>
-			<li>Fixed: An issue with loading themes on the Auto Updates page</li>
-			<li>Fixed: Multiple typos and grammar issues</li>
-			<li>Fixed: An issue with displaying disconnected sites in the Sync Status widget</li>
-			<li>Fixed: An issue with activating backup extensions from the Quick Start Wizard</li>
-			<li>Fixed: An issue with displaying extensions in incorrect categories</li>
-			<li>Added: The MainWP Welcome page</li>
-			<li>Added: Help tab on all MainWP Dashboard page</li>
-			<li>Added: MainWP Blogroll widget</li>
-			<li>Added: Helpful Links widget</li>
-			<li>Added: Updates per group selection in the Update Overview widget and Updates page</li>
-			<li>Added: Help tours on all MainWP Dashboard plugin pages</li>
-			<li>Added: Scheduled filter in the Recent Posts widget</li>
-			<li>Added: Scheduled filter in the Recent Pages widget</li>
-			<li>Added: Ability to move columns in the MainWP tables</li>
-			<li>Added: Ability to move and collapse all Option Boxes in the MainWP pages</li>
-			<li>Added: New checks in the Server Information page</li>
-			<li>Added: Ability to enable/disable auto updates for Plugins, Themes and WP Core separately</li>
-			<li>Added: Ability to set multiple email addresses for notifications</li>
-			<li>Added: Option on the Settings page to enable legacy backups feature</li>
-			<li>Added: Ability to edit users directly from dashboard</li>
-			<li>Added: Select2 style to all select form fields</li>
-			<li>Added: General UI improvements</li>
-			<li>Added: Sites selection to cached search results</li>
-			<li>Updated: Add New Site page layout</li>
-			<li>Updated: Groups selection field on the Add New Site page</li>
-			<li>Updated: Manage Groups page</li>
-			<li>Updated: The Select Sites metabox layout</li>
-			<li>Updated: Extensions page layout</li>
-			<li>Updated: Extensions widget layout</li>
-			<li>Updated: Dashboard page renamed to Overview</li>
-			<li>Updated: Right Now widget renamed to Update Overview</li>
-			<li>Updated: Sync Status Widget renamed to Connection Status</li>
-			<li>Updated: Future status renamed to Scheduled on the Search Posts box</li>
-			<li>Updated: Future status renamed to Scheduled on the Search Pages box</li>
-			<li>Updated: The Sync and Update popup box style</li>
-			<li>Updated: The Auto Updates page layout</li>
-			<li>Updated: MainWP native backups deactivated for new users</li>
-			<li>Updated: Tabs order on the MainWP Settings page</li>
-			<li>Updated: Form fields type on the MainWP Advanced Options page</li>
-			<li>Updated: Data return options moved to Manage Posts and Manage pages with ability to set separatelly</li>
-			<li>Updated: Manage Users page layout</li>
-			<li>Updated: Search Users mechanism</li>
-			<li>Updated: Import Sites feature extracted to a separate page</li>
-			<li>Updated: Import Users feature extracted to a separate page</li>
-			<li>Updated: General CSS styles</li>
-			<li>Updated: Extension icons optimized for faster loading and plugin size reduction</li>
-			<li>Updated: Email Notification template</li>
-			<li>Updated: Notes dialog</li>
-			<li>Updated: Plugins Widget style</li>
-			<li>Updated: Themes Widget style</li>
-			<li>Removed: How to widget</li>
-			<li>Removed: Help widget</li>
-			<li>Removed: Unreferenced CSS classes</li>
-			<li>Removed: Tracking basic SEO stats</li>
-			<li>Removed: Documentation page</li>
+			<li>Fixed: an issue with selecting Posts, Pages and Users</li>
+			<li>Fixed: an issue with selecting Plugins and Themes on the Manage Plugins and Manage Themes page</li>
+			<li>Fixed: security checking issue</li>
+			<li>Fixed: multiple PHP Warnings and Notices</li>
+			<li>Added: site Info widget in the individual site overview page</li>
+			<li>Added: PHP Version column in the manage sites table</li>
+			<li>Added: Sync Now button for all online sites in connection status widget</li>
+			<li>Added: verification when user tries to delete Plugins, Pages, Posts, Themes and Users</li>
+			<li>Added: ability to sort Manage Sites table by WP, Plugin and Theme updates column</li>
+			<li>Added: Coding for future WooCommerce Extension</li>
+			<li>Preventative: Security improvements</li>
 		</ul>
 		<hr/>
 		<h3><?php _e( 'See older versions changelogs', 'mainwp' ); ?>:</h3>

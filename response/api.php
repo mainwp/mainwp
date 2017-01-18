@@ -1,13 +1,5 @@
 <?php
 
-define( 'DOING_AJAX', true );
-if ( !defined( 'WP_ADMIN' ) ) {
-	define( 'WP_ADMIN', true );
-}
-
-if ( file_exists( '../../../../wp-load.php' ) )
-	require_once( '../../../../wp-load.php' );
-
 function liveReportsResponderClasses() {
 	if ( file_exists( '../class/class-mainwp-creport.php' ) ) {
 		include_once '../class/class-mainwp-creport.php';
@@ -19,13 +11,40 @@ function checkLiveReportingAccess($siteurl) {
 	return ( ( 'yes' == $access ) && ( get_option('live-report-responder-siteurl') == $siteurl ) );
 }
 
-function LiveReportsResponderSecureConnection( $securitykey = NULL ) {
-	if ( get_option( 'live-reports-responder-security-id' ) == 'on' ) {
-		if ( isset( $securitykey ) && !empty( $securitykey ) ) {
-			return ( get_option( 'live-reports-responder-security-code' ) == base64_decode( $securitykey ) );
-		}
-		return FALSE;
+function LiveReportsResponderSecureConnection( $securitykey = null, $signature = null, $action = null, $timestamp = null, $pubkey = null ) {
+	if ( ( $signature == null ) || ( $action == null ) || ( $timestamp == null ) ) {
+		return array( 'error' => 'Invalid request.' );
 	}
+
+	if ( $timestamp < ( time() - 48 * 60 * 60 ) ) {
+		return array( 'error' => 'Outdated request.' );
+	}
+
+	$current_key = get_option( 'live-report-responder-pubkey' );
+	if ( ( $pubkey !== null ) ) {
+		if ( !empty( $current_key ) ) {
+			return array( 'error' => 'The dashboard is already connected, release the connection on the dashboard please.' );
+		}
+
+		MainWP_Utility::update_option( 'live-report-responder-pubkey', $pubkey );
+		$current_key = $pubkey;
+	}
+
+	if ( empty( $current_key ) ) {
+		return array( 'error' => 'The dashboard is not connected, please reconnect to establish a secure connection.' );
+	}
+
+	$auth = openssl_verify( $action . $securitykey . $timestamp, base64_decode( $signature ), base64_decode( $current_key ) );
+	if ( 0 === $auth ) {
+		return array( 'error' => 'An error occured while verifying the secure signature.' );
+	} else if ( -1 === $auth ) {
+		return array( 'error' => 'Authentication failed, please reconnect the dashboard.' );
+	}
+
+	if ( ( get_option( 'live-reports-responder-security-id' ) == 'on' ) && ( get_option( 'live-reports-responder-security-code' ) !== base64_decode( $securitykey ) ) ) {
+		return array( 'error' => 'Invalid security ID.' );
+	}
+
 	return TRUE;
 }
 
@@ -45,54 +64,60 @@ function checkifvalidclient( $email, $siteid ) {
 }
 
 if ( isset( $_POST[ 'content' ] ) && isset( $_POST[ 'action' ] ) && ( 'displaycontent' == $_POST[ 'action'] ) ) {
-	$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '' );
-	if ( $secureconnection ) {
-		$checkPermission = checkLiveReportingAccess( $_POST[ 'livereportingurl' ] );
+	$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST['securitykey'] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null);
+	if ( $secureconnection === true ) {
+		$checkPermission = checkLiveReportingAccess( $_POST['livereportingurl'] );
 		if ( $checkPermission ) {
 			liveReportsResponderClasses();
-			$report = new stdClass();
-			$report->title = 'Live Reports';
-			$report->date_from = strtotime(date("Y-m-01"));
-			$report->date_to = strtotime(date('Y-m-d'));
-			$report->client = "";
-			$report->client_id = 0;
-			$report->fname = "";
-			$report->fcompany = "";
-			$report->femail = "";
-			$report->name = "[client.name]";
-			$report->company = "";
-			$report->email = "";
-			$report->subject = "Report for [client.site.name]";
+			$report                     = new stdClass();
+			$report->title              = 'Live Reports';
+			$report->date_from          = strtotime( date( "Y-m-01" ) );
+			$report->date_to            = strtotime( date( 'Y-m-d' ) );
+			$report->client             = "";
+			$report->client_id          = 0;
+			$report->fname              = "";
+			$report->fcompany           = "";
+			$report->femail             = "";
+			$report->name               = "[client.name]";
+			$report->company            = "";
+			$report->email              = "";
+			$report->subject            = "Report for [client.site.name]";
 			$report->recurring_schedule = "";
-			$report->schedule_bcc_me = 0;
-			$report->header = $_POST['content'];
-			$report->body = "";
-			$report->footer = "";
-			$report->type = 0;
-			$report->sites = "";
-			$report->groups = "";
-			$report->selected_site = $_POST['siteid'];
-			$report->schedule_nextsend = 0;
-			$filtered_reports = MainWP_Live_Reports_Class::filter_report($report, '');
-			echo json_encode( array( "result" => "success", "data" => html_entity_decode( stripslashes( $filtered_reports[ $_POST[ 'siteid' ] ]->filtered_header ) ) ) );
+			$report->schedule_bcc_me    = 0;
+			$report->header             = $_POST['content'];
+			$report->body               = "";
+			$report->footer             = "";
+			$report->type               = 0;
+			$sites                      = base64_encode( serialize( array( $_POST['siteid'] ) ) );
+			$report->sites              = $sites;
+			$report->groups             = "";
+			$report->schedule_nextsend  = 0;
+			$filtered_reports           = MainWP_Live_Reports_Class::filter_report( $report, '' );
+			echo json_encode( array(
+				"result" => "success",
+				"data"   => html_entity_decode( stripslashes( $filtered_reports[ $_POST['siteid'] ]->filtered_header ) )
+			) );
 			exit;
 		} else {
 			echo json_encode( array( "result" => "error", "message" => "Permission Denied" ) );
 			exit;
 		}
+	} else if ( isset( $secureconnection['error'] ) ) {
+		echo json_encode( array( 'result' => "error", "message" => $secureconnection['error'] ) );
+		exit;
 	} else {
-		echo json_encode( array( "result" => "error", "message" => "Error - Invalid Security ID" ) );
+		echo json_encode( array( 'result' => "error", "message" => "Error - Invalid Request" ) );
 		exit;
 	}
 }
 if ( isset( $_POST[ 'content' ] ) && isset( $_POST[ 'action' ] ) && ( 'livereport' == $_POST[ 'action' ] ) ) {
-	$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST['securitykey'] : '' );
-	if ( $secureconnection ) {
+	$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST['securitykey'] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null );
+	if ( $secureconnection === true ) {
 		$checkPermission = checkLiveReportingAccess( $_POST[ 'livereportingurl' ] );
 		if ( $checkPermission ) {
 			liveReportsResponderClasses();
 			$checkifvalidclient = checkifvalidclient( $_POST[ 'email' ], $_POST[ 'siteid' ] );
-			if ( 'success' == $checkifvalidclient[ 'result' ] ) {
+			if ( isset( $checkifvalidclient[ 'result' ] ) && 'success' == $checkifvalidclient[ 'result' ] ) {
 				$report = new stdClass();
 				$report->title = "Live Report";
 				$report->date_from = $_POST['date_from'];
@@ -112,11 +137,10 @@ if ( isset( $_POST[ 'content' ] ) && isset( $_POST[ 'action' ] ) && ( 'liverepor
 				$report->body = "";
 				$report->footer = "";
 				$report->type = 0;
-				$report->sites = "";
+				$sites = base64_encode( serialize( array( $_POST['siteid'] ) ) );
+                $report->sites = $sites;
 				$report->groups = "";
-				$report->selected_site = $_POST['siteid'];
 				$report->schedule_nextsend = 0;
-
 				$filtered_reports = MainWP_Live_Reports_Class::filter_report( $report, $_POST[ 'allowed_tokens' ] );
 				echo json_encode( array( "result" => "success", "data" => html_entity_decode( stripslashes( $filtered_reports[ $_POST[ 'siteid' ] ]->filtered_header ) ) ) );
 				exit;
@@ -128,13 +152,16 @@ if ( isset( $_POST[ 'content' ] ) && isset( $_POST[ 'action' ] ) && ( 'liverepor
 			echo json_encode( array( "result" => "error", "message" => "Permission Denied" ) );
 			exit;
 		}
+	} else if ( isset( $secureconnection['error'] ) ) {
+		echo json_encode( array( 'result' => "error", "message" => $secureconnection['error'] ) );
+		exit;
 	} else {
-		echo json_encode( array( "result" => "error", "message" => "Error - Invalid Security ID" ) );
+		echo json_encode( array( 'result' => "error", "message" => "Error - Invalid Request" ) );
 		exit;
 	}
 }
 if ( isset( $_POST[ 'email' ] ) && isset( $_POST[ 'action' ] ) && ( 'getallsitesbyemail' == $_POST[ 'action' ] ) && !empty( $_POST[ 'email' ] ) ) {
-	$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '' );
+	$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null );
 	if ( $secureconnection ) {
 		$checkPermission = checkLiveReportingAccess( $_POST[ 'livereportingurl' ] );
 		if ( $checkPermission ) {
@@ -162,14 +189,17 @@ if ( isset( $_POST[ 'email' ] ) && isset( $_POST[ 'action' ] ) && ( 'getallsites
 			echo json_encode( array( "result" => "error", "message" => "Permission Denied" ) );
 			exit;
 		}
+	} else if ( isset( $secureconnection['error'] ) ) {
+		echo json_encode( array( 'result' => "error", "message" => $secureconnection['error'] ) );
+		exit;
 	} else {
-		echo json_encode( array( "result" => "error", "message" => "Error - Invalid Security ID" ) );
+		echo json_encode( array( 'result' => "error", "message" => "Error - Invalid Request" ) );
 		exit;
 	}
 }
 if ( isset( $_POST[ 'action' ] ) && ( 'getallsites' == $_POST['action'] ) ) {
-	$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '' );
-	if ($secureconnection) {
+	$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null );
+	if ( $secureconnection === true ) {
 		$checkPermission = checkLiveReportingAccess( $_POST[ 'livereportingurl'  ] );
 		if ( $checkPermission ) {
 			liveReportsResponderClasses();
@@ -196,29 +226,30 @@ if ( isset( $_POST[ 'action' ] ) && ( 'getallsites' == $_POST['action'] ) ) {
 			echo json_encode( array( 'result' => "error", "message" => "Permission Denied" ) );
 			exit;
 		}
+	} else if ( isset( $secureconnection['error'] ) ) {
+		echo json_encode( array( 'result' => "error", "message" => $secureconnection['error'] ) );
+		exit;
 	} else {
-		echo json_encode( array( 'result' => "error", "message" => "Error - Invalid Security ID" ) );
+		echo json_encode( array( 'result' => "error", "message" => "Error - Invalid Request" ) );
 		exit;
 	}
 }
 if ( isset( $_POST[ 'action' ] ) && ('checkvalid_live_reports_responder_url' == $_POST[ 'action' ] ) ) {
-	if ( is_plugin_active( 'mainwp/mainwp.php' ) ) {
-		$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '' );
-		if ( $secureconnection ) {
-			$checkPermission = checkLiveReportingAccess( $_POST[ 'livereportingurl' ] );
-			if ( $checkPermission ) {
-				echo json_encode( array( 'result' => "success", "message" => "Access has been granted" ) );
-				exit;
-			} else {
-				echo json_encode( array( 'result' => "error", "message" => "Error - Connection not allowed in the Managed Client Reports for WooCommerce Responder settings" ) );
-				exit;
-			}
+    $secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null, isset( $_POST[ 'pubkey'] ) ? $_POST['pubkey'] : null );
+	if ( $secureconnection === true ) {
+		$checkPermission = checkLiveReportingAccess( $_POST[ 'livereportingurl' ] );
+		if ( $checkPermission ) {
+			echo json_encode( array( 'result' => "success", "message" => "Access has been granted" ) );
+			exit;
 		} else {
-			echo json_encode( array( 'result' => "error", "message" => "Error - Invalid Security ID" ) );
+			echo json_encode( array( 'result' => "error", "message" => "Error - Connection not allowed in the Managed Client Reports for WooCommerce Responder settings" ) );
 			exit;
 		}
+	} else if ( isset( $secureconnection['error'] ) ) {
+		echo json_encode( array( 'result' => "error", "message" => $secureconnection['error'] ) );
+		exit;
 	} else {
-		echo json_encode( array( "result" => "error", "message" => "Error - MainWp Plugin is not Activated" ) );
+		echo json_encode( array( 'result' => "error", "message" => "Error - Invalid Request" ) );
 		exit;
 	}
 }

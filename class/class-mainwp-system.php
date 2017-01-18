@@ -97,7 +97,7 @@ class MainWP_System {
 		}
 
 		MainWP_Extensions::init();
-
+        add_action( 'parse_request', array( &$this, 'parse_request' ) );
 		add_action( 'init', array( &$this, 'localization' ) );
 
 		// define the alternative API for updating checking
@@ -415,6 +415,11 @@ class MainWP_System {
 		<?php
 	}
 
+    public function parse_request(){
+         if ( file_exists( MAINWP_PLUGIN_DIR."/response/api.php" ) ){
+            include_once MAINWP_PLUGIN_DIR."/response/api.php";
+         }
+    }
 
 	public function localization() {
 		load_plugin_textdomain( 'mainwp', false, dirname( dirname( plugin_basename( __FILE__ ) ) ) . '/languages/' );

@@ -72,7 +72,21 @@ class LiveReportResponder_Activator {
         if (function_exists('mainwp_current_user_can') && !mainwp_current_user_can('extension', 'mainwp-client-reports-extension')) {
             return;
         }
+
+        if (!in_array('mainwp-client-reports-extension/mainwp-client-reports-extension.php', apply_filters('active_plugins', get_option('active_plugins')))) {
+            if (get_option('live-report-responder-provideaccess') == 'yes')
+                add_action('mainwp_postboxes_on_load_site_page', array(&$this, 'on_load_site_page'), 10, 1);
+        }
         new LiveReportResponder();
+    }
+
+    function on_load_site_page($websiteid) {
+        $i = 1;
+        if (!empty($websiteid)) {
+            add_meta_box(
+                    'creport-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Managed Client Reports Settings', 'mainwp-client-reports-extension'), array('MainWP_Live_Reports_Class', 'site_token'), 'mainwp_postboxes_managesites_edit', 'normal', 'core', array('websiteid' => $websiteid)
+            );
+        }
     }
 
     public function get_child_key() {
@@ -116,16 +130,14 @@ global $mainWPCReportExtensionActivator;
 $mainWPCReportExtensionActivator = new LiveReportResponder_Activator();
 
 class MainWP_Live_Reports_Class {
-
-    private static $stream_tokens = array();
-    private static $tokens_nav_top = array();
     private static $buffer = array();
-    private static $order = '';
     private static $enabled_piwik = null;
     private static $enabled_sucuri = false;
     private static $enabled_ga = null;
     private static $enabled_aum = null;
     private static $enabled_woocomstatus = null;
+    public static $enabled_pagespeed = null;
+    public static $enabled_brokenlinks = null;
     private static $count_sec_header = 0;
     private static $count_sec_body = 0;
     private static $count_sec_footer = 0;
@@ -135,613 +147,29 @@ class MainWP_Live_Reports_Class {
     }
 
     public static function init() {
-        self::$stream_tokens = array(
-            'client' => array(
-                'nav_group_tokens' => array(
-                    'tokens' => 'Tokens',
-                ),
-                'tokens' => array(),
-            ),
-            'plugins' => array(
-                'sections' => array(
-                    array('name' => 'section.plugins.installed', 'desc' => 'Loops through Plugins Installed during the selected date range'),
-                    array('name' => 'section.plugins.activated', 'desc' => 'Loops through Plugins Activated during the selected date range'),
-                    array('name' => 'section.plugins.edited', 'desc' => 'Loops through Plugins Edited during the selected date range'),
-                    array('name' => 'section.plugins.deactivated', 'desc' => 'Loops through Plugins Deactivated during the selected date range'),
-                    array('name' => 'section.plugins.updated', 'desc' => 'Loops through Plugins Updated during the selected date range'),
-                    array('name' => 'section.plugins.deleted', 'desc' => 'Loops through Plugins Deleted during the selected date range'),
-                ),
-                'nav_group_tokens' => array(
-                    'sections' => 'Sections',
-                    'installed' => 'Installed',
-                    'activated' => 'Activated',
-                    'edited' => 'Edited',
-                    'deactivated' => 'Deactivated',
-                    'updated' => 'Updated',
-                    'deleted' => 'Deleted',
-                    'additional' => 'Additional',
-                ),
-                'installed' => array(
-                    array('name' => 'plugin.name', 'desc' => 'Displays the Plugin Name'),
-                    array('name' => 'plugin.installed.date', 'desc' => 'Displays the Plugin Installation Date'),
-                    array('name' => 'plugin.installed.author', 'desc' => 'Displays the User who Installed the Plugin'),
-                ),
-                'activated' => array(
-                    array('name' => 'plugin.name', 'desc' => 'Displays the Plugin Name'),
-                    array('name' => 'plugin.activated.date', 'desc' => 'Displays the Plugin Activation Date'),
-                    array('name' => 'plugin.activated.author', 'desc' => 'Displays the User who Activated the Plugin'),
-                ),
-                'edited' => array(
-                    array('name' => 'plugin.name', 'desc' => 'Displays the Plugin Name'),
-                    array('name' => 'plugin.edited.date', 'desc' => 'Displays the Plugin Editing Date'),
-                    array('name' => 'plugin.edited.author', 'desc' => 'Displays the User who Edited the Plugin'),
-                ),
-                'deactivated' => array(
-                    array('name' => 'plugin.name', 'desc' => 'Displays the Plugin Name'),
-                    array('name' => 'plugin.deactivated.date', 'desc' => 'Displays the Plugin Deactivation Date'),
-                    array('name' => 'plugin.deactivated.author', 'desc' => 'Displays the User who Deactivated the Plugin'),
-                ),
-                'updated' => array(
-                    array('name' => 'plugin.old.version', 'desc' => 'Displays the Plugin Version Before Update'),
-                    array('name' => 'plugin.current.version', 'desc' => 'Displays the Plugin Current Vesion'),
-                    array('name' => 'plugin.name', 'desc' => 'Displays the Plugin Name'),
-                    array('name' => 'plugin.updated.date', 'desc' => 'Displays the Plugin Update Date'),
-                    array('name' => 'plugin.updated.author', 'desc' => 'Displays the User who Updated the Plugin'),
-                ),
-                'deleted' => array(
-                    array('name' => 'plugin.name', 'desc' => 'Displays the Plugin Name'),
-                    array('name' => 'plugin.deleted.date', 'desc' => 'Displays the Plugin Deliting Date'),
-                    array('name' => 'plugin.deleted.author', 'desc' => 'Displays the User who Deleted the Plugin'),
-                ),
-                'additional' => array(
-                    array('name' => 'plugin.installed.count', 'desc' => 'Displays the Number of Installed Plugins'),
-                    array('name' => 'plugin.edited.count', 'desc' => 'Displays the Number of Edited Plugins'),
-                    array('name' => 'plugin.activated.count', 'desc' => 'Displays the Number of Activated Plugins'),
-                    array('name' => 'plugin.deactivated.count', 'desc' => 'Displays the Number of Deactivated Plugins'),
-                    array('name' => 'plugin.deleted.count', 'desc' => 'Displays the Number of Deleted Plugins'),
-                    array('name' => 'plugin.updated.count', 'desc' => 'Displays the Number of Updated Plugins'),
-                ),
-            ),
-            'themes' => array(
-                'sections' => array(
-                    array('name' => 'section.themes.installed', 'desc' => 'Loops through Themes Installed during the selected date range'),
-                    array('name' => 'section.themes.activated', 'desc' => 'Loops through Themes Activated during the selected date range'),
-                    array('name' => 'section.themes.edited', 'desc' => 'Loops through Themes Edited during the selected date range'),
-                    array('name' => 'section.themes.updated', 'desc' => 'Loops through Themes Updated during the selected date range'),
-                    array('name' => 'section.themes.deleted', 'desc' => 'Loops through Themes Deleted during the selected date range'),
-                ),
-                'nav_group_tokens' => array(
-                    'sections' => 'Sections',
-                    'installed' => 'Installed',
-                    'activated' => 'Activated',
-                    'edited' => 'Edited',
-                    'updated' => 'Updated',
-                    'deleted' => 'Deleted',
-                    'additional' => 'Additional',
-                ),
-                'installed' => array(
-                    array('name' => 'theme.name', 'desc' => 'Displays the Theme Name'),
-                    array('name' => 'theme.installed.date', 'desc' => 'Displays the Theme Installation Date'),
-                    array('name' => 'theme.installed.author', 'desc' => 'Displays the User who Installed the Theme'),
-                ),
-                'activated' => array(
-                    array('name' => 'theme.name', 'desc' => 'Displays the Theme Name'),
-                    array('name' => 'theme.activated.date', 'desc' => 'Displays the Theme Activation Date'),
-                    array('name' => 'theme.activated.author', 'desc' => 'Displays the User who Activated the Theme'),
-                ),
-                'edited' => array(
-                    array('name' => 'theme.name', 'desc' => 'Displays the Theme Name'),
-                    array('name' => 'theme.edited.date', 'desc' => 'Displays the Theme Editing Date'),
-                    array('name' => 'theme.edited.author', 'desc' => 'Displays the User who Edited the Theme'),
-                ),
-                'updated' => array(
-                    array('name' => 'theme.old.version', 'desc' => 'Displays the Theme Version Before Update'),
-                    array('name' => 'theme.current.version', 'desc' => 'Displays the Theme Current Version'),
-                    array('name' => 'theme.name', 'desc' => 'Displays the Theme Name'),
-                    array('name' => 'theme.updated.date', 'desc' => 'Displays the Theme Update Date'),
-                    array('name' => 'theme.updated.author', 'desc' => 'Displays the User who Updated the Theme'),
-                ),
-                'deleted' => array(
-                    array('name' => 'theme.name', 'desc' => 'Displays the Theme Name'),
-                    array('name' => 'theme.deleted.date', 'desc' => 'Displays the Theme Deleting Date'),
-                    array('name' => 'theme.deleted.author', 'desc' => 'Displays the User who Deleted the Theme'),
-                ),
-                'additional' => array(
-                    array('name' => 'theme.installed.count', 'desc' => 'Displays the Number of Installed Themes'),
-                    array('name' => 'theme.edited.count', 'desc' => 'Displays the Number of Edited Themes'),
-                    array('name' => 'theme.activated.count', 'desc' => 'Displays the Number of Activated Themes'),
-                    array('name' => 'theme.deleted.count', 'desc' => 'Displays the Number of Deleted Themes'),
-                    array('name' => 'theme.updated.count', 'desc' => 'Displays the Number of Updated Themes'),
-                ),
-            ),
-            'posts' => array(
-                'sections' => array(
-                    array('name' => 'section.posts.created', 'desc' => 'Loops through Posts Created during the selected date range'),
-                    array('name' => 'section.posts.updated', 'desc' => 'Loops through Posts Updated during the selected date range'),
-                    array('name' => 'section.posts.trashed', 'desc' => 'Loops through Posts Trashed during the selected date range'),
-                    array('name' => 'section.posts.deleted', 'desc' => 'Loops through Posts Deleted during the selected date range'),
-                    array('name' => 'section.posts.restored', 'desc' => 'Loops through Posts Restored during the selected date range'),
-                ),
-                'nav_group_tokens' => array(
-                    'sections' => 'Sections',
-                    'created' => 'Created',
-                    'updated' => 'Updated',
-                    'trashed' => 'Trashed',
-                    'deleted' => 'Deleted',
-                    'restored' => 'Restored',
-                    'additional' => 'Additional',
-                ),
-                'created' => array(
-                    array('name' => 'post.title', 'desc' => 'Displays the Post Title'),
-                    array('name' => 'post.created.date', 'desc' => 'Displays the Post Createion Date'),
-                    array('name' => 'post.created.author', 'desc' => 'Displays the User who Created the Post'),
-                ),
-                'updated' => array(
-                    array('name' => 'post.title', 'desc' => 'Displays the Post Title'),
-                    array('name' => 'post.updated.date', 'desc' => 'Displays the Post Update Date'),
-                    array('name' => 'post.updated.author', 'desc' => 'Displays the User who Updated the Post'),
-                ),
-                'trashed' => array(
-                    array('name' => 'post.title', 'desc' => 'Displays the Post Title'),
-                    array('name' => 'post.trashed.date', 'desc' => 'Displays the Post Trashing Date'),
-                    array('name' => 'post.trashed.author', 'desc' => 'Displays the User who Trashed the Post'),
-                ),
-                'deleted' => array(
-                    array('name' => 'post.title', 'desc' => 'Displays the Post Title'),
-                    array('name' => 'post.deleted.date', 'desc' => 'Displays the Post Deleting Date'),
-                    array('name' => 'post.deleted.author', 'desc' => 'Displays the User who Deleted the Post'),
-                ),
-                'restored' => array(
-                    array('name' => 'post.title', 'desc' => 'Displays Post Title'),
-                    array('name' => 'post.restored.date', 'desc' => 'Displays the Post Restoring Date'),
-                    array('name' => 'post.restored.author', 'desc' => 'Displays the User who Restored the Post'),
-                ),
-                'additional' => array(
-                    array('name' => 'post.created.count', 'desc' => 'Displays the Number of Created Posts'),
-                    array('name' => 'post.updated.count', 'desc' => 'Displays the Number of Updated Posts'),
-                    array('name' => 'post.trashed.count', 'desc' => 'Displays the Number of Trashed Posts'),
-                    array('name' => 'post.restored.count', 'desc' => 'Displays the Number of Restored Posts'),
-                    array('name' => 'post.deleted.count', 'desc' => 'Displays the Number of Deleted Posts'),
-                ),
-            ),
-            'pages' => array(
-                'sections' => array(
-                    array('name' => 'section.pages.created', 'desc' => 'Loops through Pages Created during the selected date range'),
-                    array('name' => 'section.pages.updated', 'desc' => 'Loops through Pages Updated during the selected date range'),
-                    array('name' => 'section.pages.trashed', 'desc' => 'Loops through Pages Trashed during the selected date range'),
-                    array('name' => 'section.pages.deleted', 'desc' => 'Loops through Pages Deleted during the selected date range'),
-                    array('name' => 'section.pages.restored', 'desc' => 'Loops through Pages Restored during the selected date range'),
-                ),
-                'nav_group_tokens' => array(
-                    'sections' => 'Sections',
-                    'created' => 'Created',
-                    'updated' => 'Updated',
-                    'trashed' => 'Trashed',
-                    'deleted' => 'Deleted',
-                    'restored' => 'Restored',
-                    'additional' => 'Additional',
-                ),
-                'created' => array(
-                    array('name' => 'page.title', 'desc' => 'Displays the Page Title'),
-                    array('name' => 'page.created.date', 'desc' => 'Displays the Page Createion Date'),
-                    array('name' => 'page.created.author', 'desc' => 'Displays the User who Created the Page'),
-                ),
-                'updated' => array(
-                    array('name' => 'page.title', 'desc' => 'Displays the Page Title'),
-                    array('name' => 'page.updated.date', 'desc' => 'Displays the Page Updating Date'),
-                    array('name' => 'page.updated.author', 'desc' => 'Displays the User who Updated the Page'),
-                ),
-                'trashed' => array(
-                    array('name' => 'page.title', 'desc' => 'Displays the Page Title'),
-                    array('name' => 'page.trashed.date', 'desc' => 'Displays the Page Trashing Date'),
-                    array('name' => 'page.trashed.author', 'desc' => 'Displays the User who Trashed the Page'),
-                ),
-                'deleted' => array(
-                    array('name' => 'page.title', 'desc' => 'Displays the Page Title'),
-                    array('name' => 'page.deleted.date', 'desc' => 'Displays the Page Deleting Date'),
-                    array('name' => 'page.deleted.author', 'desc' => 'Displays the User who Deleted the Page'),
-                ),
-                'restored' => array(
-                    array('name' => 'page.title', 'desc' => 'Displays the Page Title'),
-                    array('name' => 'page.restored.date', 'desc' => 'Displays the Page Restoring Date'),
-                    array('name' => 'page.restored.author', 'desc' => 'Displays the User who Restored the Page'),
-                ),
-                'additional' => array(
-                    array('name' => 'page.created.count', 'desc' => 'Displays the Number of Created Pages'),
-                    array('name' => 'page.updated.count', 'desc' => 'Displays the Number of Updated Pages'),
-                    array('name' => 'page.trashed.count', 'desc' => 'Displays the Number of Trashed Pages'),
-                    array('name' => 'page.restored.count', 'desc' => 'Displays the Number of Restored Pages'),
-                    array('name' => 'page.deleted.count', 'desc' => 'Displays the Number of Deleted Pages'),
-                ),
-            ),
-            'comments' => array(
-                'sections' => array(
-                    array('name' => 'section.comments.created', 'desc' => 'Loops through Comments Created during the selected date range'),
-                    array('name' => 'section.comments.updated', 'desc' => 'Loops through Comments Updated during the selected date range'),
-                    array('name' => 'section.comments.trashed', 'desc' => 'Loops through Comments Trashed during the selected date range'),
-                    array('name' => 'section.comments.deleted', 'desc' => 'Loops through Comments Deleted during the selected date range'),
-                    array('name' => 'section.comments.edited', 'desc' => 'Loops through Comments Edited during the selected date range'),
-                    array('name' => 'section.comments.restored', 'desc' => 'Loops through Comments Restored during the selected date range'),
-                    array('name' => 'section.comments.approved', 'desc' => 'Loops through Comments Approved during the selected date range'),
-                    array('name' => 'section.comments.spam', 'desc' => 'Loops through Comments Spammed during the selected date range'),
-                    array('name' => 'section.comments.replied', 'desc' => 'Loops through Comments Replied during the selected date range'),
-                ),
-                'nav_group_tokens' => array(
-                    'sections' => 'Sections',
-                    'created' => 'Created',
-                    'updated' => 'Updated',
-                    'trashed' => 'Trashed',
-                    'deleted' => 'Deleted',
-                    'edited' => 'Edited',
-                    'restored' => 'Restored',
-                    'approved' => 'Approved',
-                    'spam' => 'Spam',
-                    'replied' => 'Replied',
-                    'additional' => 'Additional',
-                ),
-                'created' => array(
-                    array('name' => 'comment.title', 'desc' => 'Displays the Title of the Post or the Page where the Comment is Created'),
-                    array('name' => 'comment.created.date', 'desc' => 'Displays the Comment Creating Date'),
-                    array('name' => 'comment.created.author', 'desc' => 'Displays the User who Created the Comment'),
-                ),
-                'updated' => array(
-                    array('name' => 'comment.title', 'desc' => 'Displays the Title of the Post or the Page where the Comment is Updated'),
-                    array('name' => 'comment.updated.date', 'desc' => 'Displays the Comment Updating Date'),
-                    array('name' => 'comment.updated.author', 'desc' => 'Displays the User who Updated the Comment'),
-                ),
-                'trashed' => array(
-                    array('name' => 'comment.title', 'desc' => 'Displays the Title of the Post or the Page where the Comment is Trashed'),
-                    array('name' => 'comment.trashed.date', 'desc' => 'Displays the Comment Trashing Date'),
-                    array('name' => 'comment.trashed.author', 'desc' => 'Displays the User who Trashed the Comment'),
-                ),
-                'deleted' => array(
-                    array('name' => 'comment.title', 'desc' => 'Displays the Title of the Post or the Page where the Comment is Deleted'),
-                    array('name' => 'comment.deleted.date', 'desc' => 'Displays the Comment Deleting Date'),
-                    array('name' => 'comment.deleted.author', 'desc' => 'Displays the User who Deleted the Comment'),
-                ),
-                'edited' => array(
-                    array('name' => 'comment.title', 'desc' => 'Displays the Title of the Post or the Page where the Comment is Edited'),
-                    array('name' => 'comment.edited.date', 'desc' => 'Displays the Comment Editing Date'),
-                    array('name' => 'comment.edited.author', 'desc' => 'Displays the User who Edited the Comment'),
-                ),
-                'restored' => array(
-                    array('name' => 'comment.title', 'desc' => 'Displays the Title of the Post or the Page where the Comment is Restored'),
-                    array('name' => 'comment.restored.date', 'desc' => 'Displays the Comment Restoring Date'),
-                    array('name' => 'comment.restored.author', 'desc' => 'Displays the User who Restored the Comment'),
-                ),
-                'approved' => array(
-                    array('name' => 'comment.title', 'desc' => 'Displays the Title of the Post or the Page where the Comment is Approved'),
-                    array('name' => 'comment.approved.date', 'desc' => 'Displays the Comment Approving Date'),
-                    array('name' => 'comment.approved.author', 'desc' => 'Displays the User who Approved the Comment'),
-                ),
-                'spam' => array(
-                    array('name' => 'comment.title', 'desc' => 'Displays the Title of the Post or the Page where the Comment is Spammed'),
-                    array('name' => 'comment.spam.date', 'desc' => 'Displays the Comment Spamming Date'),
-                    array('name' => 'comment.spam.author', 'desc' => 'Displays the User who Spammed the Comment'),
-                ),
-                'replied' => array(
-                    array('name' => 'comment.title', 'desc' => 'Displays the Title of the Post or the Page where the Comment is Replied'),
-                    array('name' => 'comment.replied.date', 'desc' => 'Displays the Comment Replying Date'),
-                    array('name' => 'comment.replied.author', 'desc' => 'Displays the User who Replied the Comment'),
-                ),
-                'additional' => array(
-                    array('name' => 'comment.created.count', 'desc' => 'Displays the Number of Created Comments'),
-                    array('name' => 'comment.trashed.count', 'desc' => 'Displays the Number of Trashed Comments'),
-                    array('name' => 'comment.deleted.count', 'desc' => 'Displays the Number of Deleted Comments'),
-                    array('name' => 'comment.edited.count', 'desc' => 'Displays the Number of Edited Comments'),
-                    array('name' => 'comment.restored.count', 'desc' => 'Displays the Number of Restored Comments'),
-                    array('name' => 'comment.deleted.count', 'desc' => 'Displays the Number of Deleted Comments'),
-                    array('name' => 'comment.approved.count', 'desc' => 'Displays the Number of Approved Comments'),
-                    array('name' => 'comment.spam.count', 'desc' => 'Displays the Number of Spammed Comments'),
-                    array('name' => 'comment.replied.count', 'desc' => 'Displays the Number of Replied Comments'),
-                ),
-            ),
-            'users' => array(
-                'sections' => array(
-                    array('name' => 'section.users.created', 'desc' => 'Loops through Users Created during the selected date range'),
-                    array('name' => 'section.users.updated', 'desc' => 'Loops through Users Updated during the selected date range'),
-                    array('name' => 'section.users.deleted', 'desc' => 'Loops through Users Deleted during the selected date range'),
-                ),
-                'nav_group_tokens' => array(
-                    'sections' => 'Sections',
-                    'created' => 'Created',
-                    'updated' => 'Updated',
-                    'deleted' => 'Deleted',
-                    'additional' => 'Additional',
-                ),
-                'created' => array(
-                    array('name' => 'user.name', 'desc' => 'Displays the User Name'),
-                    array('name' => 'user.created.date', 'desc' => 'Displays the User Creation Date'),
-                    array('name' => 'user.created.author', 'desc' => 'Displays the User who Created the new User'),
-                    array('name' => 'user.created.role', 'desc' => 'Displays the Role of the Created User'),
-                ),
-                'updated' => array(
-                    array('name' => 'user.name', 'desc' => 'Displays the User Name'),
-                    array('name' => 'user.updated.date', 'desc' => 'Displays the User Updating Date'),
-                    array('name' => 'user.updated.author', 'desc' => 'Displays the User who Updated the new User'),
-                    array('name' => 'user.updated.role', 'desc' => 'Displays the Role of the Updated User'),
-                ),
-                'deleted' => array(
-                    array('name' => 'user.name', 'desc' => 'Displays the User Name'),
-                    array('name' => 'user.deleted.date', 'desc' => 'Displays the User Deleting Date'),
-                    array('name' => 'user.deleted.author', 'desc' => 'Displays the User who Deleted the new User'),
-                ),
-                'additional' => array(
-                    array('name' => 'user.created.count', 'desc' => 'Displays the Number of Created Users'),
-                    array('name' => 'user.updated.count', 'desc' => 'Displays the Number of Updated Users'),
-                    array('name' => 'user.deleted.count', 'desc' => 'Displays the Number of Deleted Users'),
-                ),
-            ),
-            'media' => array(
-                'sections' => array(
-                    array('name' => 'section.media.uploaded', 'desc' => 'Loops through Media Uploaded during the selected date range'),
-                    array('name' => 'section.media.updated', 'desc' => 'Loops through Media Updated during the selected date range'),
-                    array('name' => 'section.media.deleted', 'desc' => 'Loops through Media Deleted during the selected date range'),
-                ),
-                'nav_group_tokens' => array(
-                    'sections' => 'Sections',
-                    'uploaded' => 'Uploaded',
-                    'updated' => 'Updated',
-                    'deleted' => 'Deleted',
-                    'additional' => 'Additional',
-                ),
-                'uploaded' => array(
-                    array('name' => 'media.name', 'desc' => 'Displays the Media Name'),
-                    array('name' => 'media.uploaded.date', 'desc' => 'Displays the Media Uploading Date'),
-                    array('name' => 'media.uploaded.author', 'desc' => 'Displays the User who Uploaded the Media File'),
-                ),
-                'updated' => array(
-                    array('name' => 'media.name', 'desc' => 'Displays the Media Name'),
-                    array('name' => 'media.updated.date', 'desc' => 'Displays the Media Updating Date'),
-                    array('name' => 'media.updated.author', 'desc' => 'Displays the User who Updted the Media File'),
-                ),
-                'deleted' => array(
-                    array('name' => 'media.name', 'desc' => 'Displays the Media Name'),
-                    array('name' => 'media.deleted.date', 'desc' => 'Displays the Media Deleting Date'),
-                    array('name' => 'media.deleted.author', 'desc' => 'Displays the User who Deleted the Media File'),
-                ),
-                'additional' => array(
-                    array('name' => 'media.uploaded.count', 'desc' => 'Displays the Number of Uploaded Media Files'),
-                    array('name' => 'media.updated.count', 'desc' => 'Displays the Number of Updated Media Files'),
-                    array('name' => 'media.deleted.count', 'desc' => 'Displays the Number of Deleted Media Files'),
-                ),
-            ),
-            'widgets' => array(
-                'sections' => array(
-                    array('name' => 'section.widgets.added', 'desc' => 'Loops through Widgets Added during the selected date range'),
-                    array('name' => 'section.widgets.updated', 'desc' => 'Loops through Widgets Updated during the selected date range'),
-                    array('name' => 'section.widgets.deleted', 'desc' => 'Loops through Widgets Deleted during the selected date range'),
-                ),
-                'nav_group_tokens' => array(
-                    'sections' => 'Sections',
-                    'added' => 'Added',
-                    'updated' => 'Updated',
-                    'deleted' => 'Deleted',
-                    'additional' => 'Additional',
-                ),
-                'added' => array(
-                    array('name' => 'widget.title', 'desc' => 'Displays the Widget Title'),
-                    array('name' => 'widget.added.area', 'desc' => 'Displays the Widget Adding Area'),
-                    array('name' => 'widget.added.date', 'desc' => 'Displays the Widget Adding Date'),
-                    array('name' => 'widget.added.author', 'desc' => 'Displays the User who Added the Widget'),
-                ),
-                'updated' => array(
-                    array('name' => 'widget.title', 'desc' => 'Displays the Widget Name'),
-                    array('name' => 'widget.updated.area', 'desc' => 'Displays the Widget Updating Area'),
-                    array('name' => 'widget.updated.date', 'desc' => 'Displays the Widget Updating Date'),
-                    array('name' => 'widget.updated.author', 'desc' => 'Displays the User who Updated the Widget'),
-                ),
-                'deleted' => array(
-                    array('name' => 'widget.title', 'desc' => 'Displays the Widget Name'),
-                    array('name' => 'widget.deleted.area', 'desc' => 'Displays the Widget Deleting Area'),
-                    array('name' => 'widget.deleted.date', 'desc' => 'Displays the Widget Deleting Date'),
-                    array('name' => 'widget.deleted.author', 'desc' => 'Displays the User who Deleted the Widget'),
-                ),
-                'additional' => array(
-                    array('name' => 'widget.added.count', 'desc' => 'Displays the Number of Added Widgets'),
-                    array('name' => 'widget.updated.count', 'desc' => 'Displays the Number of Updated Widgets'),
-                    array('name' => 'widget.deleted.count', 'desc' => 'Displays the Number of Deleted Widgets'),
-                ),
-            ),
-            'menus' => array(
-                'sections' => array(
-                    array('name' => 'section.menus.created', 'desc' => 'Loops through Menus Created during the selected date range'),
-                    array('name' => 'section.menus.updated', 'desc' => 'Loops through Menus Updated during the selected date range'),
-                    array('name' => 'section.menus.deleted', 'desc' => 'Loops through Menus Deleted during the selected date range'),
-                ),
-                'nav_group_tokens' => array(
-                    'sections' => 'Sections',
-                    'created' => 'Created',
-                    'updated' => 'Updated',
-                    'deleted' => 'Deleted',
-                    'additional' => 'Additional',
-                ),
-                'created' => array(
-                    array('name' => 'menu.title', 'desc' => 'Displays the Menu Name'),
-                    array('name' => 'menu.created.date', 'desc' => 'Displays the Menu Creation Date'),
-                    array('name' => 'menu.created.author', 'desc' => 'Displays the User who Created the Menu'),
-                ),
-                'updated' => array(
-                    array('name' => 'menu.title', 'desc' => 'Displays the Menu Name'),
-                    array('name' => 'menu.updated.date', 'desc' => 'Displays the Menu Updating Date'),
-                    array('name' => 'menu.updated.author', 'desc' => 'Displays the User who Updated the Menu'),
-                ),
-                'deleted' => array(
-                    array('name' => 'menu.title', 'desc' => 'Displays the Menu Name'),
-                    array('name' => 'menu.deleted.date', 'desc' => 'Displays the Menu Deleting Date'),
-                    array('name' => 'menu.deleted.author', 'desc' => 'Displays the User who Deleted the Menu'),
-                ),
-                'additional' => array(
-                    array('name' => 'menu.created.count', 'desc' => 'Displays the Number of Created Menus'),
-                    array('name' => 'menu.updated.count', 'desc' => 'Displays the Number of Updated Menus'),
-                    array('name' => 'menu.deleted.count', 'desc' => 'Displays the Number of Deleted Menus'),
-                ),
-            ),
-            'wordpress' => array(
-                'sections' => array(
-                    array('name' => 'section.wordpress.updated', 'desc' => 'Loops through WordPress Updates during the selected date range'),
-                ),
-                'nav_group_tokens' => array(
-                    'sections' => 'Sections',
-                    'updated' => 'Updated',
-                    'additional' => 'Additional',
-                ),
-                'updated' => array(
-                    array('name' => 'wordpress.updated.date', 'desc' => 'Displays the WordPress Update Date'),
-                    array('name' => 'wordpress.updated.author', 'desc' => 'Displays the User who Updated the Site'),
-                ),
-                'additional' => array(
-                    array('name' => 'wordpress.old.version', 'desc' => 'Displays the WordPress Version Before Update'),
-                    array('name' => 'wordpress.current.version', 'desc' => 'Displays the Current WordPress Version'),
-                    array('name' => 'wordpress.updated.count', 'desc' => 'Displays the Number of WordPress Updates'),
-                ),
-            ),
-            'backups' => array(
-                'sections' => array(
-                    array('name' => 'section.backups.created', 'desc' => ' Loops through Backups Created during the selected date range'),
-                ),
-                'nav_group_tokens' => array(
-                    'sections' => 'Sections',
-                    'created' => 'Created',
-                    'additional' => 'Additional',
-                ),
-                'created' => array(
-                    array('name' => 'backup.created.type', 'desc' => ' Displays the Created Backup type (Full or Database)'),
-                    array('name' => 'backup.created.date', 'desc' => 'Displays the Backups Creation date'),
-                    //array("name" => "backup.created.destination", "desc" => "Displays the Created Backup destination")
-                ),
-                'additional' => array(
-                    array('name' => 'backup.created.count', 'desc' => 'Displays the number of created backups during the selected date range'),
-                ),
-            ),
-            'report' => array(
-                'nav_group_tokens' => array('report' => 'Report'),
-                'report' => array(
-                    array('name' => 'report.daterange', 'desc' => 'Displays the report date range'),
-                ),
-            ),
-            'sucuri' => array(
-                'sections' => array(
-                    array('name' => 'section.sucuri.checks', 'desc' => 'Loops through Security Checks during the selected date range'),
-                ),
-                'nav_group_tokens' => array(
-                    'sections' => 'Sections',
-                    'check' => 'Checks',
-                    'additional' => 'Additional',
-                ),
-                'check' => array(
-                    array('name' => 'sucuri.check.date', 'desc' => 'Displays the Security Check date'),
-                    array('name' => 'sucuri.check.status', 'desc' => 'Displays the Status info for the Child Site'),
-                    array('name' => 'sucuri.check.webtrust', 'desc' => 'Displays the Webtrust info for the Child Site'),
-                    //array("name" => "sucuri.check.results", "desc" => "Displays the Security Check details from the Security Scan Report"),
-                ),
-                'additional' => array(
-                    array('name' => 'sucuri.checks.count', 'desc' => 'Displays the number of performed security checks during the selected date range'),
-                ),
-            ),
-            'ga' => array(
-                'nav_group_tokens' => array(
-                    'ga' => 'GA',
-                ),
-                'ga' => array(
-                    array('name' => 'ga.visits', 'desc' => 'Displays the Number Visits during the selected date range'),
-                    array('name' => 'ga.pageviews', 'desc' => 'Displays the Number of Page Views during the selected date range'),
-                    array('name' => 'ga.pages.visit', 'desc' => 'Displays the Number of Page visit during the selected date range'),
-                    array('name' => 'ga.bounce.rate', 'desc' => 'Displays the Bounce Rate during the selected date range'),
-                    array('name' => 'ga.avg.time', 'desc' => 'Displays the Average Visit Time during the selected date range'),
-                    array('name' => 'ga.new.visits', 'desc' => 'Displays the Number of New Visits during the selected date range'),
-                    array('name' => 'ga.visits.chart', 'desc' => 'Displays a chart for the activity over the past month'),
-                    array('name' => 'ga.visits.maximum', 'desc' => "Displays the maximum visitor number and it's day within the past month"),
-                    array('name' => 'ga.startdate', 'desc' => 'Displays the startdate for the chart'),
-                    array('name' => 'ga.enddate', 'desc' => 'Displays the enddate or the chart'),
-                    //array("name" => "ga.visits.chart", "desc" => "...")
-                ),
-            ),
-            'piwik' => array(
-                'nav_group_tokens' => array(
-                    'piwik' => 'Piwik',
-                ),
-                'piwik' => array(
-                    array('name' => 'piwik.visits', 'desc' => 'Displays the Number Visits during the selected date range'),
-                    array('name' => 'piwik.pageviews', 'desc' => 'Displays the Number of Page Views during the selected date range'),
-                    array('name' => 'piwik.pages.visit', 'desc' => 'Displays the Number of Page visit during the selected date range'),
-                    array('name' => 'piwik.bounce.rate', 'desc' => 'Displays the Bounce Rate during the selected date range'),
-                    array('name' => 'piwik.avg.time', 'desc' => 'Displays the Average Visit Time during the selected date range'),
-                    array('name' => 'piwik.new.visits', 'desc' => 'Displays the Number of New Visits during the selected date range'),
-                ),
-            ),
-            'aum' => array(
-                'nav_group_tokens' => array(
-                    'aum' => 'AUM',
-                ),
-                'aum' => array(
-                    array('name' => 'aum.alltimeuptimeratio', 'desc' => 'Displays the Uptime ratio from the moment the monitor has been created'),
-                    array('name' => 'aum.uptime7', 'desc' => 'Displays the Uptime ratio for last 7 days'),
-                    array('name' => 'aum.uptime15', 'desc' => 'Displays the Uptime ration for last 15 days'),
-                    array('name' => 'aum.uptime30', 'desc' => 'Displays the Uptime ration for last 30 days'),
-                    array('name' => 'aum.uptime45', 'desc' => 'Displays the Uptime ration for last 45 days'),
-                    array('name' => 'aum.uptime60', 'desc' => 'Displays the Uptime ration for last 60 days'),
-                ),
-            ),
-            'woocomstatus' => array(
-                'nav_group_tokens' => array(
-                    'woocomstatus' => 'WooCommerce Status',
-                ),
-                'woocomstatus' => array(
-                    array('name' => 'wcomstatus.sales', 'desc' => 'Displays total sales during the selected data range'),
-                    array('name' => 'wcomstatus.topseller', 'desc' => 'Displays the top seller product during the selected data range'),
-                    array('name' => 'wcomstatus.awaitingprocessing', 'desc' => 'Displays the number of products currently awaiting for processing'),
-                    array('name' => 'wcomstatus.onhold', 'desc' => 'Displays the number of orders currently on hold'),
-                    array('name' => 'wcomstatus.lowonstock', 'desc' => 'Displays the number of products currently low on stock'),
-                    array('name' => 'wcomstatus.outofstock', 'desc' => 'Displays the number of products currently out of stock'),
-                ),
-            ),
-        );
 
-        self::$tokens_nav_top = array(
-            'client' => 'Client Tokens',
-            'report' => 'Report',
-            'plugins' => 'Plugins',
-            'themes' => 'Themes',
-            'posts' => 'Posts',
-            'pages' => 'Pages',
-            'comments' => 'Comments',
-            'users' => 'Users',
-            'media' => 'Media',
-            'widgets' => 'Widgets',
-            'menus' => 'Menus',
-            'wordpress' => 'WordPress',
-            'backups' => 'Backups',
-            'sucuri' => 'Sucuri',
-            'ga' => 'GA',
-            'piwik' => 'Piwik',
-            'aum' => 'AUM',
-            'woocomstatus' => 'WooCommerce Status',
-        );
     }
 
     public function admin_init() {
 
+//        if (!in_array('mainwp-client-reports-extension/mainwp-client-reports-extension.php', apply_filters('active_plugins', get_option('active_plugins')))) {
+//            add_action('mainwp-extension-sites-edit', array(&$this, 'site_token'), 9, 1);
+//        }
+
         if (!in_array('mainwp-client-reports-extension/mainwp-client-reports-extension.php', apply_filters('active_plugins', get_option('active_plugins')))) {
-            add_action('mainwp-extension-sites-edit', array(&$this, 'site_token'), 9, 1);
+            add_action('mainwp_update_site', array(&$this, 'update_site_update_tokens'), 8, 1);
+            add_action('mainwp_delete_site', array(&$this, 'delete_site_delete_tokens'), 8, 1);
+            add_action('mainwp_managesite_backup', array(&$this, 'managesite_backup'), 10, 3);
+            add_action('mainwp_sucuri_scan_done', array(&$this, 'sucuri_scan_done'), 10, 3);
         }
-
-
-        add_action('mainwp_update_site', array(&$this, 'update_site_update_tokens'), 8, 1);
-        add_action('mainwp_delete_site', array(&$this, 'delete_site_delete_tokens'), 8, 1);
-        add_action('mainwp_shortcuts_widget', array(&$this, 'shortcuts_widget'), 10, 1);
-        add_filter('mainwp_managesites_column_url', array(&$this, 'managesites_column_url'), 10, 2);
-        add_action('mainwp_managesite_backup', array(&$this, 'managesite_backup'), 10, 3);
-        add_action('mainwp_sucuri_scan_done', array(&$this, 'sucuri_scan_done'), 10, 3);
 
         self::$enabled_piwik = apply_filters('mainwp-extension-available-check', 'mainwp-piwik-extension');
         self::$enabled_sucuri = apply_filters('mainwp-extension-available-check', 'mainwp-sucuri-extension');
         self::$enabled_ga = apply_filters('mainwp-extension-available-check', 'mainwp-google-analytics-extension');
         self::$enabled_aum = apply_filters('mainwp-extension-available-check', 'advanced-uptime-monitor-extension');
         self::$enabled_woocomstatus = apply_filters('mainwp-extension-available-check', 'mainwp-woocommerce-status-extension');
-
-        self::$stream_tokens = apply_filters('mainwp_client_reports_tokens_groups', self::$stream_tokens);
-        self::$tokens_nav_top = apply_filters('mainwp_client_reports_tokens_nav_top', self::$tokens_nav_top);
+        self::$enabled_pagespeed = apply_filters( 'mainwp-extension-available-check', 'mainwp-page-speed-extension' );
+        self::$enabled_brokenlinks = apply_filters( 'mainwp-extension-available-check', 'mainwp-broken-links-checker-extension' );
     }
 
     function managesite_backup($website, $args, $information) {
@@ -975,38 +403,6 @@ class MainWP_Live_Reports_Class {
         return strtotime($year_to_send . '-' . $month_to_send . '-' . $day_to_send . ' 23:59:59');
     }
 
-    public function shortcuts_widget($website) {
-        if (!empty($website)) {
-            $reports = LiveReportResponder_DB::get_instance()->get_report_by('site', $website->id);
-            $reports_lnk = '';
-            if (is_array($reports) && count($reports) > 0) {
-                $reports_lnk = '<a href="admin.php?page=Extensions-Mainwp-Client-Reports-Extension&site=' . $website->id . '">' . __('Reports', 'mainwp-client-reports-extension') . '</a> | ';
-            }
-            ?>
-            <div class="mainwp-row">
-                <div style="display: inline-block; width: 100px;"><?php _e('Client Reports:', 'mainwp-client-reports-extension'); ?></div>
-                <?php echo $reports_lnk; ?>
-                <a href="admin.php?page=Extensions-Mainwp-Client-Reports-Extension&action=newreport&selected_site=<?php echo $website->id; ?>"><?php _e('New Report', 'mainwp-client-reports-extension'); ?></a>
-            </div>
-            <?php
-        }
-    }
-
-    public function managesites_column_url($actions, $site_id) {
-        if (!empty($site_id)) {
-            $reports = LiveReportResponder_DB::get_instance()->get_report_by('site', $site_id);
-            $link = '';
-            if (is_array($reports) && count($reports) > 0) {
-                $link = '<a href="admin.php?page=Extensions-Mainwp-Client-Reports-Extension&site=' . $site_id . '">' . __('Reports', 'mainwp-client-reports-extension') . '</a> ' .
-                        '( <a href="admin.php?page=Extensions-Mainwp-Client-Reports-Extension&action=newreport&selected_site=' . $site_id . '">' . __('New', 'mainwp-client-reports-extension') . '</a> )';
-            } else {
-                $link = '<a href="admin.php?page=Extensions-Mainwp-Client-Reports-Extension&action=newreport&selected_site=' . $site_id . '">' . __('New Report', 'mainwp-client-reports-extension') . '</a>';
-            }
-            $actions['client_reports'] = $link;
-        }
-        return $actions;
-    }
-
     public static function save_report() {
         if (isset($_REQUEST['action']) && 'editreport' == $_REQUEST['action'] && isset($_REQUEST['nonce']) && wp_verify_nonce($_REQUEST['nonce'], 'mwp_creport_nonce')) {
             $messages = $errors = array();
@@ -1169,34 +565,26 @@ class MainWP_Live_Reports_Class {
                 $report['attach_files'] = $attach_files;
             }
 
-            $selected_site = 0;
-            $selected_sites = $selected_groups = array();
-            if (isset($_POST['mwp_creport_report_type']) && 'global' == $_POST['mwp_creport_report_type']) {
-                if (isset($_POST['select_by'])) {
-                    if (isset($_POST['selected_sites']) && is_array($_POST['selected_sites'])) {
-                        foreach ($_POST['selected_sites'] as $selected) {
-                            $selected_sites[] = intval($selected);
-                        }
-                    }
 
-                    if (isset($_POST['selected_groups']) && is_array($_POST['selected_groups'])) {
-                        foreach ($_POST['selected_groups'] as $selected) {
-                            $selected_groups[] = intval($selected);
-                        }
+            $selected_sites = $selected_groups = array();
+            if (isset($_POST['select_by'])) {
+                if (isset($_POST['selected_sites']) && is_array($_POST['selected_sites'])) {
+                    foreach ($_POST['selected_sites'] as $selected) {
+                        $selected_sites[] = intval($selected);
                     }
                 }
-                $report['type'] = 1;
-            } else {
-                $report['type'] = 0;
-                if (isset($_POST['select_by'])) {
-                    if (isset($_POST['selected_site'])) {
-                        $selected_site = intval($_POST['selected_site']);
+
+                if (isset($_POST['selected_groups']) && is_array($_POST['selected_groups'])) {
+                    foreach ($_POST['selected_groups'] as $selected) {
+                        $selected_groups[] = intval($selected);
                     }
                 }
             }
+
+
             $report['sites'] = base64_encode(serialize($selected_sites));
             $report['groups'] = base64_encode(serialize($selected_groups));
-            $report['selected_site'] = $selected_site;
+
 
             if ('schedule' === $_POST['mwp_creport_report_submit_action']) {
                 $report['scheduled'] = 1;
@@ -1204,10 +592,10 @@ class MainWP_Live_Reports_Class {
             $report['schedule_nextsend'] = self::cal_schedule_nextsend($report['recurring_schedule'], $report['recurring_date']);
 
             if ('save' === $_POST['mwp_creport_report_submit_action'] ||
-                'send' === $_POST['mwp_creport_report_submit_action'] ||
-                'save_pdf' === $_POST['mwp_creport_report_submit_action'] ||
-                'schedule' === $_POST['mwp_creport_report_submit_action'] ||
-                'archive_report' === $_POST['mwp_creport_report_submit_action']) {
+                    'send' === $_POST['mwp_creport_report_submit_action'] ||
+                    'save_pdf' === $_POST['mwp_creport_report_submit_action'] ||
+                    'schedule' === $_POST['mwp_creport_report_submit_action'] ||
+                    'archive_report' === $_POST['mwp_creport_report_submit_action']) {
                 //print_r($report);
                 if ($result = LiveReportResponder_DB::get_instance()->update_report($report)) {
                     $return['id'] = $result->id;
@@ -1361,25 +749,6 @@ class MainWP_Live_Reports_Class {
         return $output;
     }
 
-    public function un_archive_report($report) {
-        if (!empty($report) && !is_object($report)) {
-            $report = LiveReportResponder_DB::get_instance()->get_report_by('id', $report);
-        }
-
-        if (!$report->is_archived) {
-            return true;
-        }
-        $update_archive = array(
-            'id' => $report->id,
-            'is_archived' => 0,
-            'archive_report' => '',
-            'archive_report_pdf' => '',
-        );
-        if (LiveReportResponder_DB::get_instance()->update_report($update_archive)) {
-            return true;
-        }
-        return false;
-    }
 
     public static function gen_report_content($reports, $combine_report = false) {
         if (!is_array($reports)) {
@@ -1481,114 +850,35 @@ class MainWP_Live_Reports_Class {
         return $content;
     }
 
-    public static function gen_email_content_pdf($report, $combine_report = false) {
-        // to fix bug from mainwp
-        if (!function_exists('wp_verify_nonce')) {
-            include_once( ABSPATH . WPINC . '/pluggable.php' );
-        }
-
-        if (!empty($report) && is_object($report)) {
-            if ($report->is_archived) {
-                if (!is_serialized($report->archive_report_pdf)) {
-                    return array($report->archive_report_pdf);
-                } else {
-                    return unserialize($report->archive_report_pdf);
-                }
-            } else {
-                $filtered_reports = self::filter_report($report, $allowed_tokens);
-                return self::gen_report_content_pdf($filtered_reports, $combine_report);
-            }
-        }
-        return '';
-    }
-
-    public static function gen_report_content_pdf($reports, $combine_report = false) {
-        if (!is_array($reports)) {
-            $reports = array(0 => $reports);
-        }
-
-        $remove_default_html = apply_filters('mainwp_client_reports_remove_default_html_tags', false, $reports);
-
-        $output = array();
-        if ($combine_report) {
-            ob_start();
-        }
-
-        foreach ($reports as $site_id => $report) {
-            if (!$combine_report) {
-                ob_start();
-            }
-
-            if (is_array($report) && isset($report['error'])) {
-                echo $report['error'];
-            } else if (is_object($report)) {
-                if ($remove_default_html) {
-                    echo stripslashes(nl2br($report->filtered_header));
-                    echo stripslashes(nl2br($report->filtered_body));
-                    echo stripslashes(nl2br($report->filtered_footer));
-                } else {
-                    echo stripslashes(nl2br($report->filtered_header));
-                    echo '<br><br>';
-                    echo stripslashes(nl2br($report->filtered_body));
-                    echo '<br><br>';
-                    echo stripslashes(nl2br($report->filtered_footer));
-                    echo '<br><br>';
-                }
-            }
-
-            if (!$combine_report) {
-                $html = ob_get_clean();
-                $output[$site_id] = $html;
-            }
-        }
-        if ($combine_report) {
-            $html = ob_get_clean();
-            $output[] = $html;
-        }
-        return $output;
-    }
 
     public static function filter_report($report, $allowed_tokens) {
         global $mainWPCReportExtensionActivator;
         $websites = array();
-        if (empty($report->type)) {
-            if ($report->selected_site) {
-                global $mainWPCReportExtensionActivator;
-                $website = apply_filters('mainwp-getsites', $mainWPCReportExtensionActivator->get_child_file(), $mainWPCReportExtensionActivator->get_child_key(), $report->selected_site);
-                if ($website && is_array($website)) {
-                    $websites[] = current($website);
-                }
-            }
-        } else {
-            $sel_sites = unserialize(base64_decode($report->sites));
-            $sel_groups = unserialize(base64_decode($report->groups));
-            if (!is_array($sel_sites)) {
-                $sel_sites = array();
-            }
-            if (!is_array($sel_groups)) {
-                $sel_groups = array();
-            }
-            $dbwebsites = apply_filters('mainwp-getdbsites', $mainWPCReportExtensionActivator->get_child_file(), $mainWPCReportExtensionActivator->get_child_key(), $sel_sites, $sel_groups);
-            $websites = array();
-            if (is_array($dbwebsites)) {
-                foreach ($dbwebsites as $site) {
-                    $websites[] = MainWP_Live_Reports_Utility::map_site($site, array('id', 'name', 'url'));
-                }
-            }
-        }
+        $sel_sites = unserialize( base64_decode( $report->sites ) );
+        $sel_groups = unserialize( base64_decode( $report->groups ) );
+        if ( ! is_array( $sel_sites ) ) {
+                $sel_sites = array(); }
+        if ( ! is_array( $sel_groups ) ) {
+                $sel_groups = array(); }
+        $dbwebsites = apply_filters( 'mainwp-getdbsites', $mainWPCReportExtensionActivator->get_child_file(), $mainWPCReportExtensionActivator->get_child_key(), $sel_sites, $sel_groups );
 
-        if (count($websites) == 0) {
-            return $report;
+        if ( is_array( $dbwebsites ) ) {
+                foreach ( $dbwebsites as $site ) {
+                        $websites[] = MainWP_Live_Reports_Utility::map_site( $site, array( 'id', 'name', 'url' ) );
+                }
         }
-
         $filtered_reports = array();
-        foreach ($websites as $site) {
-            $filtered_reports[$site['id']] = self::filter_report_website($report, $site, $allowed_tokens);
+        if ( count( $websites ) == 0 ) {
+                return $filtered_reports;
+        }
+
+        foreach ( $websites as $site ) {
+                $filtered_reports[ $site['id'] ] = self::filter_report_website( $report, $site );
         }
         return $filtered_reports;
     }
 
-    public static function filter_report_website($report, $website, $allowed_tokens) {
+    public static function filter_report_website($report, $website, $allowed_tokens = array()) {
         $output = new stdClass();
         $output->filtered_header = $report->header;
         $output->filtered_body = $report->body;
@@ -1601,6 +891,8 @@ class MainWP_Live_Reports_Class {
         $get_piwik_tokens = ((strpos($report->header, '[piwik.') !== false) || (strpos($report->body, '[piwik.') !== false) || (strpos($report->footer, '[piwik.') !== false)) ? true : false;
         $get_aum_tokens = ((strpos($report->header, '[aum.') !== false) || (strpos($report->body, '[aum.') !== false) || (strpos($report->footer, '[aum.') !== false)) ? true : false;
         $get_woocom_tokens = ((strpos($report->header, '[wcomstatus.') !== false) || (strpos($report->body, '[wcomstatus.') !== false) || (strpos($report->footer, '[wcomstatus.') !== false)) ? true : false;
+        $get_pagespeed_tokens = ((strpos( $report->header, '[pagespeed.' ) !== false) || (strpos( $report->body, '[pagespeed.' ) !== false) || (strpos( $report->footer, '[pagespeed.' ) !== false)) ? true : false;
+        $get_brokenlinks_tokens = ((strpos( $report->header, '[brokenlinks.' ) !== false) || (strpos( $report->body, '[brokenlinks.' ) !== false) || (strpos( $report->footer, '[brokenlinks.' ) !== false)) ? true : false;
         if (null !== $website) {
             $tokens = LiveReportResponder_DB::get_instance()->get_tokens();
             $site_tokens = LiveReportResponder_DB::get_instance()->get_site_tokens($website['url']);
@@ -1644,8 +936,26 @@ class MainWP_Live_Reports_Class {
                     }
                 }
             }
+            if ( $get_pagespeed_tokens ) {
+                    $pagespeed_tokens = self::pagespeed_tokens( $website['id'], $report->date_from, $report->date_to );
+                    if ( is_array( $pagespeed_tokens ) ) {
+                            foreach ( $pagespeed_tokens as $token => $value ) {
+                                    $replace_tokens_values['[' . $token . ']'] = $value;
+                            }
+                    }
+            }
+
+            if ( $get_brokenlinks_tokens ) {
+                    $brokenlinks_tokens = self::brokenlinks_tokens( $website['id'], $report->date_from, $report->date_to );
+                    if ( is_array( $brokenlinks_tokens ) ) {
+                            foreach ( $brokenlinks_tokens as $token => $value ) {
+                                    $replace_tokens_values['[' . $token . ']'] = $value;
+                            }
+                    }
+            }
+
             $replace_tokens_values['[report.daterange]'] = MainWP_Live_Reports_Utility::format_timestamp($report->date_from) . ' - ' . MainWP_Live_Reports_Utility::format_timestamp($report->date_to);
-            ;
+
             $replace_tokens_values = apply_filters('mainwp_client_reports_custom_tokens', $replace_tokens_values, $report);
 
             $report_header = $report->header;
@@ -2276,6 +1586,54 @@ class MainWP_Live_Reports_Class {
         return $output;
     }
 
+    static function pagespeed_tokens( $site_id, $start_date, $end_date ) {
+
+		// fix bug cron job
+		if ( null === self::$enabled_pagespeed ) {
+			self::$enabled_pagespeed = apply_filters( 'mainwp-extension-available-check', 'mainwp-page-speed-extension' ); }
+
+		if ( ! self::$enabled_pagespeed ) {
+			return false;
+                }
+
+		if ( ! $site_id || ! $start_date || ! $end_date ) {
+			return false;
+                }
+
+		$uniq = 'pagespeed_' . $site_id . '_' . $start_date . '_' . $end_date;
+		if ( isset( self::$buffer[ $uniq ] ) ) {
+                    return self::$buffer[ $uniq ];
+                }
+
+		$data = apply_filters( 'mainwp_pagespeed_get_data', array(), $site_id, $start_date, $end_date );
+		self::$buffer[ $uniq ] = $data;
+		return $data;
+    }
+
+    static function brokenlinks_tokens( $site_id, $start_date, $end_date ) {
+
+            // fix bug cron job
+            if ( null === self::$enabled_brokenlinks ) {
+                    self::$enabled_brokenlinks = apply_filters( 'mainwp-extension-available-check', 'mainwp-broken-links-checker-extension' ); }
+
+            if ( ! self::$enabled_brokenlinks ) {
+                    return false;
+            }
+
+            if ( ! $site_id || ! $start_date || ! $end_date ) {
+                    return false;
+            }
+
+            $uniq = 'brokenlinks_' . $site_id . '_' . $start_date . '_' . $end_date;
+            if ( isset( self::$buffer[ $uniq ] ) ) {
+                return self::$buffer[ $uniq ];
+            }
+
+            $data = apply_filters( 'mainwp_brokenlinks_get_data', array(), $site_id, $start_date, $end_date );
+            self::$buffer[ $uniq ] = $data;
+            return $data;
+    }
+
     private static function format_stats_values($value, $round = false, $perc = false, $showAsTime = false) {
         if ($showAsTime) {
             $value = MainWP_Live_Reports_Utility::sec2hms($value);
@@ -2320,18 +1678,27 @@ class MainWP_Live_Reports_Class {
         }
     }
 
-    public function site_token($website) {
-        global $wpdb;
+    public static function site_token($post, $metabox) {
+        global $mainWPCReportExtensionActivator;
+
+        $websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;
+        $website = apply_filters('mainwp-getsites', $mainWPCReportExtensionActivator->get_child_file(), $mainWPCReportExtensionActivator->get_child_key(), $websiteid);
+
+        if ($website && is_array($website)) {
+            $website = current($website);
+        }
+
+        if (empty($website))
+            return;
+
         $tokens = LiveReportResponder_DB::get_instance()->get_tokens();
 
         $site_tokens = array();
         if ($website) {
-            $site_tokens = LiveReportResponder_DB::get_instance()->get_site_tokens($website->url);
+            $site_tokens = LiveReportResponder_DB::get_instance()->get_site_tokens($website['url']);
         }
 
-        $html = '<div class="postbox"> 
-                            <h3 class="mainwp_box_title"><span>Managed Client Reports Settings</span></h3>
-                            <div class="inside">';
+        $html='';
         if (is_array($tokens) && count($tokens) > 0) {
             $html .= '<table class="form-table" style="width: 100%">';
             foreach ($tokens as $token) {
@@ -2355,8 +1722,6 @@ class MainWP_Live_Reports_Class {
         } else {
             $html .= 'Not found tokens.';
         }
-        $html .= '                                   
-                </div></div>';
         echo $html;
     }
 
@@ -2377,10 +1742,6 @@ class MainWP_Live_Reports_Class {
                 $input_name = 'creport_token_' . str_replace(array('.', ' ', '-'), '_', $token->token_name);
                 if (isset($_POST[$input_name])) {
                     $token_value = $_POST[$input_name];
-
-                    // default token
-                    //                    if ($token->type == 1 && empty($token_value))
-                    //                        continue;
 
                     $current = LiveReportResponder_DB::get_instance()->get_tokens_by('id', $token->id, $website['url']);
                     if ($current) {
@@ -2403,7 +1764,7 @@ class MainWP_Live_Reports_Class {
 
 class LiveReportResponder_DB {
 
-    private $mainwp_wpcreport_db_version = '4.2';
+    private $mainwp_wpcreport_db_version = '5.6';
     private $table_prefix;
     //Singleton
     private static $instance = null;
@@ -2738,7 +2099,7 @@ class LiveReportResponder_DB {
     function install() {
         global $wpdb;
         $currentVersion = get_site_option('mainwp_wpcreport_db_version');
-        if ($currentVersion == $this->mainwp_wpcreport_db_version) {
+        if (!empty($currentVersion)) {
             return;
         }
 
@@ -2777,28 +2138,28 @@ PRIMARY KEY  (`id`)  ';
 `fname` VARCHAR(512),
 `fcompany` VARCHAR(512),
 `femail` VARCHAR(128),
+`bcc_email` VARCHAR(128),
 `client_id` int(11) NOT NULL,
-`header` text NOT NULL,
-`body` text NOT NULL,
-`footer` text NOT NULL,
+`header` longtext NOT NULL,
+`body` longtext NOT NULL,
+`footer` longtext NOT NULL,
 `attach_files` text NOT NULL,
 `lastsend` int(11) NOT NULL,
 `nextsend` int(11) NOT NULL,
 `subject` text NOT NULL,
 `recurring_schedule` VARCHAR(32) NOT NULL DEFAULT "",
-`recurring_date` int(11) NOT NULL,
+`recurring_day` VARCHAR(10) DEFAULT NULL,
 `schedule_send_email` VARCHAR(32) NOT NULL,
 `schedule_bcc_me` tinyint(1) NOT NULL DEFAULT 0,
 `scheduled` tinyint(1) NOT NULL DEFAULT 0,
 `schedule_nextsend` int(11) NOT NULL,
 `schedule_lastsend` int(11) NOT NULL,
+`completed` int(11) NOT NULL,
+`completed_sites` text NOT NULL,
+`sending_errors` text NOT NULL,
 `is_archived` tinyint(1) NOT NULL DEFAULT 0,
-`archive_report` text NOT NULL,
-`archive_report_pdf` text NOT NULL,
-`type` tinyint(1) NOT NULL DEFAULT 0, 
 `sites` text NOT NULL,
-`groups` text NOT NULL,
-`selected_site` int(11) NOT NULL';
+`groups` text NOT NULL';
 
         if ('' == $currentVersion) {
             $tbl .= ',
@@ -2823,7 +2184,7 @@ PRIMARY KEY  (`clientid`)  ';
         $tbl = 'CREATE TABLE `' . $this->table_name('client_report_format') . '` (
 `id` int(11) NOT NULL AUTO_INCREMENT,
 `title` VARCHAR(512), 
-`content` text NOT NULL,
+`content` longtext NOT NULL,
 `type` CHAR(1)';
         if ('' == $currentVersion || '1.3' == $currentVersion) {
             $tbl .= ',
@@ -3193,36 +2554,33 @@ PRIMARY KEY  (`id`)  ';
         }
 
         $report_fields = array(
-            'id',
-            'title',
-            'date_from',
-            'date_to',
-            'fname',
-            'fcompany',
-            'femail',
-            'client_id',
-            'header',
-            'body',
-            'footer',
-            'logo_file',
-            'lastsend',
-            'nextsend',
-            'subject',
-            'selected_site',
-            'recurring_schedule',
-            'recurring_date',
-            'schedule_send_email',
-            'schedule_bcc_me',
-            'is_archived',
-            'archive_report',
-            'archive_report_pdf',
-            'attach_files',
-            'scheduled',
-            'schedule_lastsend',
-            'schedule_nextsend',
-            'type',
-            'sites',
-            'groups',
+                'id',
+                'title',
+                'date_from',
+                'date_to',
+                'fname',
+                'fcompany',
+                'femail',
+                'bcc_email',
+                'client_id',
+                'header',
+                'body',
+                'footer',
+                'logo_file',
+                'lastsend',
+                'nextsend',
+                'subject',
+                'recurring_schedule',
+                'recurring_day',
+                'schedule_send_email',
+                'schedule_bcc_me',
+                'is_archived',
+                'attach_files',
+                'scheduled',
+                'schedule_lastsend',
+                'schedule_nextsend',
+                'sites',
+                'groups',
         );
 
         $update_report = array();

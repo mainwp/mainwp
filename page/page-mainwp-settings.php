@@ -261,24 +261,24 @@ class MainWP_Settings {
 
 		self::renderHeader('SettingsClientReportsResponder');
 
-		if (isset($_POST['save_changes'])) {
+		if (isset($_POST['save_changes']) || isset($_POST['reset_connection'])) {
 			$nonce = $_REQUEST['_wpnonce'];
 			if (!wp_verify_nonce($nonce, 'general_settings')) {
 				echo "<div class='mainwp-notice-red'>" . __('Unable to save settings, please refresh and try again.', 'mainwp') . "</div>";
 			} else {
-				$siteurl = stripslashes($_POST['live_reponder_site_url']);
-				if (substr($siteurl, -1) != '/') {
-					$siteurl = $siteurl . "/";
-				}
-				update_option('live-report-responder-siteurl', $siteurl);
-				update_option('live-report-responder-provideaccess', ( isset($_POST['live_reponder_provideaccess']) ) ? $_POST['live_reponder_provideaccess'] : '');
-				$security_token = Live_Reports_Responder_Class::Live_Reports_Responder_generate_random_string();
-				update_option('live-reports-responder-security-id', ( isset($_POST['requireUniqueSecurityId']) ) ? $_POST['requireUniqueSecurityId'] : '' );
-				update_option('live-reports-responder-security-code', stripslashes($security_token));
-				echo '<div  class="mainwp-notice mainwp-notice-green">' . __('Settings Saved Successfully', 'mainwp') . '</div>';
-
-				if (isset($_POST['resetConnection'])) {
+				if (isset($_POST['reset_connection'])) {
 					MainWP_Utility::update_option( 'live-report-responder-pubkey', '' );
+				} else {
+					$siteurl = stripslashes( $_POST['live_reponder_site_url'] );
+					if ( substr( $siteurl, - 1 ) != '/' ) {
+						$siteurl = $siteurl . "/";
+					}
+					update_option( 'live-report-responder-siteurl', $siteurl );
+					update_option( 'live-report-responder-provideaccess', ( isset( $_POST['live_reponder_provideaccess'] ) ) ? $_POST['live_reponder_provideaccess'] : '' );
+					$security_token = Live_Reports_Responder_Class::Live_Reports_Responder_generate_random_string();
+					update_option( 'live-reports-responder-security-id', ( isset( $_POST['requireUniqueSecurityId'] ) ) ? $_POST['requireUniqueSecurityId'] : '' );
+					update_option( 'live-reports-responder-security-code', stripslashes( $security_token ) );
+					echo '<div  class="mainwp-notice mainwp-notice-green">' . __( 'Settings Saved Successfully', 'mainwp' ) . '</div>';
 				}
 			}
 		}
@@ -289,13 +289,14 @@ class MainWP_Settings {
 	public static function renderReportResponderDashboardPage() {
 		?>
 		<form method="POST">
-			<?php wp_nonce_field('general_settings'); ?>
+			<?php wp_nonce_field('general_settings');
+			$pubkey = get_option('live-report-responder-pubkey');?>
 			<table class="form-table">
 				<tbody>
 				<tr>
 					<th scope="row"><?php _e('Client Reports Site Url:', 'mainwp'); ?></th>
 					<td>
-						<input type="text"  name="live_reponder_site_url" placeholder="http://thisisexample.com/" value="<?php echo esc_attr(get_option('live-report-responder-siteurl')); ?>"  size="50" autocomplete="off">
+						<input type="text"  name="live_reponder_site_url" placeholder="http://thisisexample.com/" value="<?php echo esc_attr(get_option('live-report-responder-siteurl')); ?>"  size="50" autocomplete="off" <?php if (!empty($pubkey)) { echo 'disabled'; } ?>>
 						<br><em><?php _e('With Trailing Slash', 'mainwp'); ?></em>
 					</td>
 				</tr>
@@ -304,7 +305,7 @@ class MainWP_Settings {
 					<td>
 						<fieldset>
 							<legend class="screen-reader-text"><span><?php _e('Allow Access: ', 'mainwp'); ?></span></legend>
-							<input type="checkbox" name="live_reponder_provideaccess" value="yes" <?php if (get_option('live-report-responder-provideaccess') == 'yes') echo 'checked'; ?>>
+							<input type="checkbox" name="live_reponder_provideaccess" value="yes" <?php if (get_option('live-report-responder-provideaccess') == 'yes') echo 'checked'; ?> <?php if (!empty($pubkey)) { echo 'disabled'; } ?>>
 							<span><?php _e('Tick to allow access to Managed Client Reports for WooCommerce Plugin', 'mainwp'); ?></span>
 						</fieldset>
 					</td>
@@ -314,7 +315,7 @@ class MainWP_Settings {
 					<td>
 
 						<div style="margin: 1em 0px 8px 0;">
-							<input name="requireUniqueSecurityId" type="checkbox" id="requireUniqueSecurityId" <?php if (get_option('live-reports-responder-security-id') == 'on') echo 'checked'; ?>>
+							<input name="requireUniqueSecurityId" type="checkbox" id="requireUniqueSecurityId" <?php if (get_option('live-reports-responder-security-id') == 'on') echo 'checked'; ?> <?php if (!empty($pubkey)) { echo 'disabled'; } ?>>
 							<label for="requireUniqueSecurityId" style="font-size: 15px;"><?php _e('Require Unique Security ID', 'mainwp'); ?></label>
 						</div>
 						<div class="howto" style="margin-bottom: 35px;"><?php _e('The Unique Security ID adds additional protection between the Managed Client Reports for WooCommerce Responder and your Managed Client Reports for WooCommerce Plugin. The Unique Security ID will need to match when being added to the Managed Client Reports for WooCommerce plugin. This is additional security and should not be needed in most situations.', 'mainwp'); ?></div>
@@ -329,21 +330,7 @@ class MainWP_Settings {
 						<?php } ?>
 					</td>
 				</tr>
-				<?php
-				$pubkey = get_option('live-report-responder-pubkey');
-				if (!empty($pubkey)) { ?>
-					<tr class="form-field form-required">
-						<th scope="row"><?php _e( 'Reset connection:', 'mainwp' ); ?></th>
-						<td>
-							<input name="resetConnection" type="checkbox" id="resetConnectionId">
-							<label for="resetConnectionId"
-							       style="font-size: 15px;"><?php _e( 'Resets the current active connection', 'mainwp' ); ?></label>
-						</td>
-					</tr>
-					<?php
-				}
-					?>
-				<tr><th></th><td><input type="submit" name="save_changes" value="Save Changes" class="button-primary button button-hero">
+				<tr><th></th><td><input type="submit" name="save_changes" value="Save Changes" class="button-primary button button-hero" <?php if (!empty($pubkey)) { echo 'disabled'; } ?>> <?php if (!empty($pubkey)) { ?><input type="submit" name="reset_connection" value="Reset Connection" class="button-primary button button-hero"><?php } ?>
 
 
 					</td></tr>

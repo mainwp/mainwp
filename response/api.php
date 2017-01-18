@@ -11,9 +11,14 @@ function checkLiveReportingAccess($siteurl) {
 	return ( ( 'yes' == $access ) && ( get_option('live-report-responder-siteurl') == $siteurl ) );
 }
 
-function LiveReportsResponderSecureConnection( $securitykey = null, $signature = null, $action = null, $timestamp = null, $pubkey = null ) {
-	if ( ( $signature == null ) || ( $action == null ) || ( $timestamp == null ) ) {
+function LiveReportsResponderSecureConnection( $siteurl = null, $securitykey = null, $signature = null, $action = null, $timestamp = null, $pubkey = null ) {
+	if ( ( $siteurl == null ) || ( $signature == null ) || ( $action == null ) || ( $timestamp == null ) ) {
 		return array( 'error' => 'Invalid request.' );
+	}
+
+	$access = get_option( 'live-report-responder-provideaccess' );
+	if ( ( 'yes' != $access ) || ( get_option('live-report-responder-siteurl') != $siteurl ) ) {
+		return array( 'error' => 'Error - Connection not allowed in the Managed Client Reports for WooCommerce Responder settings' );
 	}
 
 	if ( $timestamp < ( time() - 48 * 60 * 60 ) ) {
@@ -64,7 +69,7 @@ function checkifvalidclient( $email, $siteid ) {
 }
 
 if ( isset( $_POST[ 'content' ] ) && isset( $_POST[ 'action' ] ) && ( 'displaycontent' == $_POST[ 'action'] ) ) {
-	$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST['securitykey'] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null);
+	$secureconnection = LiveReportsResponderSecureConnection( $_POST[ 'livereportingurl' ], ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST['securitykey'] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null);
 	if ( $secureconnection === true ) {
 		$checkPermission = checkLiveReportingAccess( $_POST['livereportingurl'] );
 		if ( $checkPermission ) {
@@ -111,7 +116,7 @@ if ( isset( $_POST[ 'content' ] ) && isset( $_POST[ 'action' ] ) && ( 'displayco
 	}
 }
 if ( isset( $_POST[ 'content' ] ) && isset( $_POST[ 'action' ] ) && ( 'livereport' == $_POST[ 'action' ] ) ) {
-	$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST['securitykey'] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null );
+	$secureconnection = LiveReportsResponderSecureConnection( $_POST[ 'livereportingurl' ], ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST['securitykey'] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null );
 	if ( $secureconnection === true ) {
 		$checkPermission = checkLiveReportingAccess( $_POST[ 'livereportingurl' ] );
 		if ( $checkPermission ) {
@@ -161,7 +166,7 @@ if ( isset( $_POST[ 'content' ] ) && isset( $_POST[ 'action' ] ) && ( 'liverepor
 	}
 }
 if ( isset( $_POST[ 'email' ] ) && isset( $_POST[ 'action' ] ) && ( 'getallsitesbyemail' == $_POST[ 'action' ] ) && !empty( $_POST[ 'email' ] ) ) {
-	$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null );
+	$secureconnection = LiveReportsResponderSecureConnection( $_POST[ 'livereportingurl' ], ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null );
 	if ( $secureconnection ) {
 		$checkPermission = checkLiveReportingAccess( $_POST[ 'livereportingurl' ] );
 		if ( $checkPermission ) {
@@ -198,7 +203,7 @@ if ( isset( $_POST[ 'email' ] ) && isset( $_POST[ 'action' ] ) && ( 'getallsites
 	}
 }
 if ( isset( $_POST[ 'action' ] ) && ( 'getallsites' == $_POST['action'] ) ) {
-	$secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null );
+	$secureconnection = LiveReportsResponderSecureConnection( $_POST[ 'livereportingurl' ], ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null );
 	if ( $secureconnection === true ) {
 		$checkPermission = checkLiveReportingAccess( $_POST[ 'livereportingurl'  ] );
 		if ( $checkPermission ) {
@@ -235,7 +240,7 @@ if ( isset( $_POST[ 'action' ] ) && ( 'getallsites' == $_POST['action'] ) ) {
 	}
 }
 if ( isset( $_POST[ 'action' ] ) && ('checkvalid_live_reports_responder_url' == $_POST[ 'action' ] ) ) {
-    $secureconnection = LiveReportsResponderSecureConnection( ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null, isset( $_POST[ 'pubkey'] ) ? $_POST['pubkey'] : null );
+    $secureconnection = LiveReportsResponderSecureConnection( $_POST[ 'livereportingurl' ], ( isset( $_POST[ 'securitykey' ] ) ) ? $_POST[ 'securitykey' ] : '', isset( $_POST[ 'signature'] ) ? $_POST['signature'] : null, isset( $_POST[ 'action'] ) ? $_POST['action'] : null, isset( $_POST[ 'timestamp'] ) ? $_POST['timestamp'] : null, isset( $_POST[ 'pubkey'] ) ? $_POST['pubkey'] : null );
 	if ( $secureconnection === true ) {
 		$checkPermission = checkLiveReportingAccess( $_POST[ 'livereportingurl' ] );
 		if ( $checkPermission ) {

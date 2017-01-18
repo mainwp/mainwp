@@ -262,12 +262,12 @@ class MainWP_Sync {
 			$done                      = true;
 		}
 
-		if ( isset( $information['faviIcon'] ) ) {
-			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'favi_icon', trim( $information['faviIcon'] ) );
-			$done = true;
-		} else {
-			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'favi_icon', '' );
-		}
+//		if ( isset( $information['faviIcon'] ) ) {
+//			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'favi_icon', trim( $information['faviIcon'] ) );
+//			$done = true;
+//		} else {
+//			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'favi_icon', '' );
+//		}
 
 		if ( isset( $information['plugins_outdate_info'] ) ) {
 			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'plugins_outdate_info', @json_encode( $information['plugins_outdate_info'] ) );

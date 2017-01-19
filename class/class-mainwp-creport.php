@@ -130,7 +130,7 @@ global $mainWPCReportExtensionActivator;
 $mainWPCReportExtensionActivator = new LiveReportResponder_Activator();
 
 class MainWP_Live_Reports_Class {
-    private static $buffer = array();    
+    private static $buffer = array();
     private static $enabled_piwik = null;
     private static $enabled_sucuri = false;
     private static $enabled_ga = null;
@@ -143,11 +143,11 @@ class MainWP_Live_Reports_Class {
     private static $count_sec_footer = 0;
 
     public function __construct() {
-        
+
     }
 
     public static function init() {
-       
+
     }
 
     public function admin_init() {
@@ -158,18 +158,18 @@ class MainWP_Live_Reports_Class {
 
         if (!in_array('mainwp-client-reports-extension/mainwp-client-reports-extension.php', apply_filters('active_plugins', get_option('active_plugins')))) {
             add_action('mainwp_update_site', array(&$this, 'update_site_update_tokens'), 8, 1);
-            add_action('mainwp_delete_site', array(&$this, 'delete_site_delete_tokens'), 8, 1);               
+            add_action('mainwp_delete_site', array(&$this, 'delete_site_delete_tokens'), 8, 1);
             add_action('mainwp_managesite_backup', array(&$this, 'managesite_backup'), 10, 3);
             add_action('mainwp_sucuri_scan_done', array(&$this, 'sucuri_scan_done'), 10, 3);
         }
-        
+
         self::$enabled_piwik = apply_filters('mainwp-extension-available-check', 'mainwp-piwik-extension');
         self::$enabled_sucuri = apply_filters('mainwp-extension-available-check', 'mainwp-sucuri-extension');
         self::$enabled_ga = apply_filters('mainwp-extension-available-check', 'mainwp-google-analytics-extension');
         self::$enabled_aum = apply_filters('mainwp-extension-available-check', 'advanced-uptime-monitor-extension');
         self::$enabled_woocomstatus = apply_filters('mainwp-extension-available-check', 'mainwp-woocommerce-status-extension');
         self::$enabled_pagespeed = apply_filters( 'mainwp-extension-available-check', 'mainwp-page-speed-extension' );
-        self::$enabled_brokenlinks = apply_filters( 'mainwp-extension-available-check', 'mainwp-broken-links-checker-extension' );        
+        self::$enabled_brokenlinks = apply_filters( 'mainwp-extension-available-check', 'mainwp-broken-links-checker-extension' );
     }
 
     function managesite_backup($website, $args, $information) {
@@ -308,7 +308,7 @@ class MainWP_Live_Reports_Class {
 
     function mainwp_postprocess_backup_sites_feedback($output, $unique) {
         if (!is_array($output)) {
-            
+
         } else {
             foreach ($output as $key => $value) {
                 $output[$key] = $value;
@@ -319,7 +319,7 @@ class MainWP_Live_Reports_Class {
     }
 
     public function init_cron() {
-        
+
     }
 
     public static function cal_schedule_nextsend($schedule, $start_recurring_date, $scheduleLastSend = 0) {
@@ -565,8 +565,8 @@ class MainWP_Live_Reports_Class {
                 $report['attach_files'] = $attach_files;
             }
 
-            
-            $selected_sites = $selected_groups = array();            
+
+            $selected_sites = $selected_groups = array();
             if (isset($_POST['select_by'])) {
                 if (isset($_POST['selected_sites']) && is_array($_POST['selected_sites'])) {
                     foreach ($_POST['selected_sites'] as $selected) {
@@ -580,11 +580,11 @@ class MainWP_Live_Reports_Class {
                     }
                 }
             }
-                
-            
+
+
             $report['sites'] = base64_encode(serialize($selected_sites));
             $report['groups'] = base64_encode(serialize($selected_groups));
-            
+
 
             if ('schedule' === $_POST['mwp_creport_report_submit_action']) {
                 $report['scheduled'] = 1;
@@ -605,7 +605,7 @@ class MainWP_Live_Reports_Class {
                 }
                 $return['saved'] = true;
             } else if ('preview' === (string) $_POST['mwp_creport_report_submit_action'] ||
-                    'send_test_email' === (string) $_POST['mwp_creport_report_submit_action']
+                       'send_test_email' === (string) $_POST['mwp_creport_report_submit_action']
             ) {
                 $submit_report = json_decode(json_encode($report));
                 $return['submit_report'] = $submit_report;
@@ -689,17 +689,17 @@ class MainWP_Live_Reports_Class {
                 if (($file_size > 500 * 1025)) {
                     $output['error'][] = 'File size is too large.';
                 } elseif (
-                        ('image/jpeg' != $file_type) &&
-                        ('image/jpg' != $file_type) &&
-                        ('image/gif' != $file_type) &&
-                        ('image/png' != $file_type)
+                    ('image/jpeg' != $file_type) &&
+                    ('image/jpg' != $file_type) &&
+                    ('image/gif' != $file_type) &&
+                    ('image/png' != $file_type)
                 ) {
                     $output['error'][] = 'File Type is not allowed.';
                 } elseif (
-                        ('jpeg' != $file_extension) &&
-                        ('jpg' != $file_extension) &&
-                        ('gif' != $file_extension) &&
-                        ('png' != $file_extension)
+                    ('jpeg' != $file_extension) &&
+                    ('jpg' != $file_extension) &&
+                    ('gif' != $file_extension) &&
+                    ('png' != $file_extension)
                 ) {
                     $output['error'][] = 'File Extension is not allowed.';
                 } else {
@@ -766,20 +766,20 @@ class MainWP_Live_Reports_Class {
             }
 
             if (is_array($report) && isset($report['error'])) {
-                ?>        
+                ?>
                 <br>
                 <div>
                     <br>
                     <div style="background:#ffffff;padding:0 1.618em;padding-bottom:50px!important">
                         <div style="width:600px;background:#fff;margin-left:auto;margin-right:auto;margin-top:10px;margin-bottom:25px;padding:0!important;border:10px Solid #fff;border-radius:10px;overflow:hidden">
                             <div style="display: block; width: 100% ; ">
-                                <div style="display: block; width: 100% ; padding: .5em 0 ;">       
+                                <div style="display: block; width: 100% ; padding: .5em 0 ;">
                                     <?php echo $report['error']; ?>
-                                </div>   
-                            </div>                            
+                                </div>
+                            </div>
                         </div>
-                    </div>  
-                </div>  
+                    </div>
+                </div>
                 <?php
             } else if (is_object($report)) {
                 if ($remove_default_html) {
@@ -787,19 +787,19 @@ class MainWP_Live_Reports_Class {
                     echo stripslashes(nl2br($report->filtered_body));
                     echo stripslashes(nl2br($report->filtered_footer));
                 } else {
-                    ?>        
+                    ?>
                     <br>
                     <div>
                         <br>
                         <div style="background:#ffffff;padding:0 1.618em;padding-bottom:50px!important">
                             <div style="width:600px;background:#fff;margin-left:auto;margin-right:auto;margin-top:10px;margin-bottom:25px;padding:0!important;border:10px Solid #fff;border-radius:10px;overflow:hidden">
                                 <div style="display: block; width: 100% ; ">
-                                    <div style="display: block; width: 100% ; padding: .5em 0 ;">                          
+                                    <div style="display: block; width: 100% ; padding: .5em 0 ;">
                                         <?php
                                         //echo apply_filters( 'the_content', $report->filtered_header );
                                         echo stripslashes(nl2br($report->filtered_header));
                                         //echo self::do_filter_content($report->filtered_header);
-                                        ?>                          
+                                        ?>
                                         <div style="clear: both;"></div>
                                     </div>
                                 </div>
@@ -809,7 +809,7 @@ class MainWP_Live_Reports_Class {
                                     //echo apply_filters( 'the_content', $report->filtered_body );
                                     echo stripslashes(nl2br($report->filtered_body));
                                     //echo self::do_filter_content($report->filtered_body);
-                                    ?>                        
+                                    ?>
                                 </div>
                                 <br><br><br>
                                 <div style="display: block; width: 100% ;">
@@ -818,11 +818,11 @@ class MainWP_Live_Reports_Class {
                                     echo stripslashes(nl2br($report->filtered_footer));
                                     //echo self::do_filter_content($report->filtered_footer);
                                     ?>
-                                </div>                                
+                                </div>
 
-                            </div>                            
+                            </div>
                         </div>
-                    </div>           
+                    </div>
                     <?php
                 }
             }
@@ -849,9 +849,9 @@ class MainWP_Live_Reports_Class {
         //        }
         return $content;
     }
-        
 
-    public static function filter_report($report, $allowed_tokens) {        
+
+    public static function filter_report($report, $allowed_tokens) {
         global $mainWPCReportExtensionActivator;
         $websites = array();
         $sel_sites = unserialize( base64_decode( $report->sites ) );
@@ -869,7 +869,7 @@ class MainWP_Live_Reports_Class {
         }
         $filtered_reports = array();
         if ( count( $websites ) == 0 ) {
-                return $filtered_reports;                         
+                return $filtered_reports;
         }
 
         foreach ( $websites as $site ) {
@@ -939,7 +939,7 @@ class MainWP_Live_Reports_Class {
             if ( $get_pagespeed_tokens ) {
                     $pagespeed_tokens = self::pagespeed_tokens( $website['id'], $report->date_from, $report->date_to );
                     if ( is_array( $pagespeed_tokens ) ) {
-                            foreach ( $pagespeed_tokens as $token => $value ) {						
+                            foreach ( $pagespeed_tokens as $token => $value ) {
                                     $replace_tokens_values['[' . $token . ']'] = $value;
                             }
                     }
@@ -948,14 +948,14 @@ class MainWP_Live_Reports_Class {
             if ( $get_brokenlinks_tokens ) {
                     $brokenlinks_tokens = self::brokenlinks_tokens( $website['id'], $report->date_from, $report->date_to );
                     if ( is_array( $brokenlinks_tokens ) ) {
-                            foreach ( $brokenlinks_tokens as $token => $value ) {						
+                            foreach ( $brokenlinks_tokens as $token => $value ) {
                                     $replace_tokens_values['[' . $token . ']'] = $value;
                             }
                     }
             }
 
             $replace_tokens_values['[report.daterange]'] = MainWP_Live_Reports_Utility::format_timestamp($report->date_from) . ' - ' . MainWP_Live_Reports_Utility::format_timestamp($report->date_to);
-            
+
             $replace_tokens_values = apply_filters('mainwp_client_reports_custom_tokens', $replace_tokens_values, $report);
 
             $report_header = $report->header;
@@ -1593,23 +1593,23 @@ class MainWP_Live_Reports_Class {
 			self::$enabled_pagespeed = apply_filters( 'mainwp-extension-available-check', 'mainwp-page-speed-extension' ); }
 
 		if ( ! self::$enabled_pagespeed ) {
-			return false;                         
+			return false;
                 }
 
 		if ( ! $site_id || ! $start_date || ! $end_date ) {
-			return false;                         
+			return false;
                 }
-                
+
 		$uniq = 'pagespeed_' . $site_id . '_' . $start_date . '_' . $end_date;
 		if ( isset( self::$buffer[ $uniq ] ) ) {
-                    return self::$buffer[ $uniq ];                         
+                    return self::$buffer[ $uniq ];
                 }
 
 		$data = apply_filters( 'mainwp_pagespeed_get_data', array(), $site_id, $start_date, $end_date );
 		self::$buffer[ $uniq ] = $data;
 		return $data;
     }
-        
+
     static function brokenlinks_tokens( $site_id, $start_date, $end_date ) {
 
             // fix bug cron job
@@ -1617,16 +1617,16 @@ class MainWP_Live_Reports_Class {
                     self::$enabled_brokenlinks = apply_filters( 'mainwp-extension-available-check', 'mainwp-broken-links-checker-extension' ); }
 
             if ( ! self::$enabled_brokenlinks ) {
-                    return false;                         
+                    return false;
             }
 
             if ( ! $site_id || ! $start_date || ! $end_date ) {
-                    return false;                         
+                    return false;
             }
 
             $uniq = 'brokenlinks_' . $site_id . '_' . $start_date . '_' . $end_date;
             if ( isset( self::$buffer[ $uniq ] ) ) {
-                return self::$buffer[ $uniq ];                         
+                return self::$buffer[ $uniq ];
             }
 
             $data = apply_filters( 'mainwp_brokenlinks_get_data', array(), $site_id, $start_date, $end_date );
@@ -2380,7 +2380,7 @@ PRIMARY KEY  (`id`)  ';
         }
         return $return;
     }
-          
+
     public function _get_default_token_site($token_name, $site_url) {
         $website = apply_filters('mainwp_getwebsitesbyurl', $site_url);
         if (empty($this->default_tokens[$token_name]) || !$website) {
@@ -2422,10 +2422,10 @@ PRIMARY KEY  (`id`)  ';
         }
 
         if ($wpdb->insert($this->table_name('client_report_site_token'), array(
-                    'token_id' => $token_id,
-                    'token_value' => $token_value,
-                    'site_url' => $site_url,
-                ))) {
+            'token_id' => $token_id,
+            'token_value' => $token_value,
+            'site_url' => $site_url,
+        ))) {
             return $this->get_tokens_by('id', $token_id, $site_url);
         }
 
@@ -2450,20 +2450,19 @@ PRIMARY KEY  (`id`)  ';
 //				' WHERE token_id = ' . intval( $token_id ) .
 //				" AND site_url = '" . $this->escape( $site_url ) . "'";
         //echo $sql."<br />";
-        
-        $sql = $wpdb->prepare("
-            UPDATE " . $this->table_name('client_report_site_token') . "
-            SET `token_value` = %s
-            WHERE `token_id` = %d AND site_url = %s", $this->escape($token_value), intval($token_id), $this->escape($site_url)
-        );
-        
+        $sql = $wpdb->query($wpdb->prepare("
+        UPDATE " . $this->table_name('client_report_site_token') . "
+        SET `token_value` = %s
+        WHERE `token_id` = %d AND site_url = %s", $this->escape($token_value), intval($token_id), $this->escape($site_url)
+        ));
+
         if ($wpdb->query($sql)) {
             return $this->get_tokens_by('id', $token_id, $site_url);
         }
 
         return false;
     }
-     
+
     public function delete_site_tokens($token_id = null, $site_url = null) {
         global $wpdb;
         if (!empty($token_id)) {
@@ -2540,7 +2539,7 @@ PRIMARY KEY  (`id`)  ';
             //                    $report['client_id'] = $updatedClient->clientid;
             //                } else if (isset($update_client['clientid'])) {
             //
-			//                }
+            //                }
             //            }
             // to fix bug not save report client
             if (empty($client_id) && !empty($report['client_id'])) {
@@ -2570,20 +2569,19 @@ PRIMARY KEY  (`id`)  ';
                 'logo_file',
                 'lastsend',
                 'nextsend',
-                'subject',			
+                'subject',
                 'recurring_schedule',
                 'recurring_day',
                 'schedule_send_email',
                 'schedule_bcc_me',
-                'is_archived',			
+                'is_archived',
                 'attach_files',
-                'scheduled',                        
+                'scheduled',
                 'schedule_lastsend',
-                'schedule_nextsend',			
+                'schedule_nextsend',
                 'sites',
                 'groups',
         );
-        
 
         $update_report = array();
         foreach ($report as $key => $value) {
@@ -2629,32 +2627,32 @@ PRIMARY KEY  (`id`)  ';
         $sql = '';
         if ('id' == $by) {
             $sql = $wpdb->prepare('SELECT rp.*, c.* FROM ' . $this->table_name('client_report') . ' rp '
-                    . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                    . ' ON rp.client_id = c.clientid '
-                    . ' WHERE `id`=%d ' . $_order_by, $value);
+                                  . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+                                  . ' ON rp.client_id = c.clientid '
+                                  . ' WHERE `id`=%d ' . $_order_by, $value);
         } if ('client' == $by) {
             $sql = $wpdb->prepare('SELECT rp.*, c.* FROM ' . $this->table_name('client_report') . ' rp '
-                    . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                    . ' ON rp.client_id = c.clientid '
-                    . ' WHERE `client_id` = %d ' . $_order_by, $value);
+                                  . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+                                  . ' ON rp.client_id = c.clientid '
+                                  . ' WHERE `client_id` = %d ' . $_order_by, $value);
             return $wpdb->get_results($sql, $output);
         } if ('site' == $by) {
             $sql = $wpdb->prepare('SELECT rp.*, c.* FROM ' . $this->table_name('client_report') . ' rp '
-                    . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                    . ' ON rp.client_id = c.clientid '
-                    . ' WHERE `selected_site` = %d ' . $_order_by, $value);
+                                  . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+                                  . ' ON rp.client_id = c.clientid '
+                                  . ' WHERE `selected_site` = %d ' . $_order_by, $value);
             return $wpdb->get_results($sql, $output);
         } if ('title' == $by) {
             $sql = $wpdb->prepare('SELECT rp.*, c.* FROM ' . $this->table_name('client_report') . ' rp '
-                    . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                    . ' ON rp.client_id = c.clientid '
-                    . ' WHERE `title` = %s ' . $_order_by, $value);
+                                  . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+                                  . ' ON rp.client_id = c.clientid '
+                                  . ' WHERE `title` = %s ' . $_order_by, $value);
             return $wpdb->get_results($sql, $output);
         } else if ('all' == $by) {
             $sql = 'SELECT * FROM ' . $this->table_name('client_report') . ' rp '
-                    . 'LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                    . ' ON rp.client_id = c.clientid '
-                    . ' WHERE 1 = 1 ' . $_order_by;
+                   . 'LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+                   . ' ON rp.client_id = c.clientid '
+                   . ' WHERE 1 = 1 ' . $_order_by;
             return $wpdb->get_results($sql, $output);
         }
         //echo $sql;
@@ -2668,12 +2666,12 @@ PRIMARY KEY  (`id`)  ';
     public function get_avail_archive_reports() {
         global $wpdb;
         $sql = 'SELECT rp.*, c.* FROM ' . $this->table_name('client_report') . ' rp '
-                . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                . ' ON rp.client_id = c.clientid '
-                . ' WHERE rp.is_archived = 0 AND rp.scheduled = 0'
-                . ' AND rp.date_from <= ' . (time() - 3600 * 24 * 30) . '  '
-                . ' AND rp.selected_site != 0 AND c.email IS NOT NULL '
-                . '';
+               . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+               . ' ON rp.client_id = c.clientid '
+               . ' WHERE rp.is_archived = 0 AND rp.scheduled = 0'
+               . ' AND rp.date_from <= ' . (time() - 3600 * 24 * 30) . '  '
+               . ' AND rp.selected_site != 0 AND c.email IS NOT NULL '
+               . '';
         //echo $sql;
         return $wpdb->get_results($sql);
     }
@@ -2681,9 +2679,9 @@ PRIMARY KEY  (`id`)  ';
     public function get_schedule_reports() {
         global $wpdb;
         $sql = 'SELECT rp.*, c.* FROM ' . $this->table_name('client_report') . ' rp '
-                . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
-                . ' ON rp.client_id = c.clientid '
-                . " WHERE rp.recurring_schedule != '' AND rp.scheduled = 1";
+               . ' LEFT JOIN ' . $this->table_name('client_report_client') . ' c '
+               . ' ON rp.client_id = c.clientid '
+               . " WHERE rp.recurring_schedule != '' AND rp.scheduled = 1";
         //echo $sql;
         return $wpdb->get_results($sql);
     }
@@ -2713,13 +2711,13 @@ PRIMARY KEY  (`id`)  ';
         $sql = '';
         if ('clientid' == $by) {
             $sql = $wpdb->prepare('SELECT * FROM ' . $this->table_name('client_report_client')
-                    . ' WHERE `clientid` =%d ', $value);
+                                  . ' WHERE `clientid` =%d ', $value);
         } else if ('client' == $by) {
             $sql = $wpdb->prepare('SELECT * FROM ' . $this->table_name('client_report_client')
-                    . ' WHERE `client` = %s ', $value);
+                                  . ' WHERE `client` = %s ', $value);
         } else if ('email' == $by) {
             $sql = $wpdb->prepare('SELECT * FROM ' . $this->table_name('client_report_client')
-                    . ' WHERE `email` = %s ', $value);
+                                  . ' WHERE `email` = %s ', $value);
         }
 
         if (!empty($sql)) {
@@ -2761,7 +2759,7 @@ PRIMARY KEY  (`id`)  ';
     public function get_formats($type = null) {
         global $wpdb;
         return $wpdb->prepare('SELECT * FROM ' . $this->table_name('client_report_format')
-                        . ' WHERE `type` =%s ORDER BY title', $type);
+                              . ' WHERE `type` =%s ORDER BY title', $type);
 //		return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'client_report_format' ) . " WHERE type = '" . $type . "' ORDER BY title" );
     }
 
@@ -2773,10 +2771,10 @@ PRIMARY KEY  (`id`)  ';
         $sql = '';
         if ('id' == $by) {
             $sql = $wpdb->prepare('SELECT * FROM ' . $this->table_name('client_report_format')
-                    . ' WHERE `id` =%d ', $value);
+                                  . ' WHERE `id` =%d ', $value);
         } else if ('title' == $by) {
             $sql = $wpdb->prepare('SELECT * FROM ' . $this->table_name('client_report_format')
-                    . ' WHERE `title` =%s AND type = %s', $value, $type);
+                                  . ' WHERE `title` =%s AND type = %s', $value, $type);
         }
         //echo $sql;
         if (!empty($sql)) {
@@ -2972,4 +2970,3 @@ class MainWP_Live_Reports_Utility {
     }
 
 }
-

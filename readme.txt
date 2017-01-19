@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.7
-Stable tag: 3.2.2.2
+Tested up to: 4.7.1
+Stable tag: 3.2.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,19 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.2.3 - 1-19-17 =
+* Fixed: an issue with selecting Posts, Pages and Users
+* Fixed: an issue with selecting Plugins and Themes on the Manage Plugins and Manage Themes page
+* Fixed: security checking issue
+* Fixed: multiple PHP Warnings and Notices
+* Added: site Info widget in the individual site overview page
+* Added: PHP Version column in the manage sites table
+* Added: Sync Now button for all online sites in connection status widget
+* Added: verification when user tries to delete Plugins, Pages, Posts, Themes and Users
+* Added: ability to sort Manage Sites table by WP, Plugin and Theme updates column
+* Added: Coding for future WooCommerce Extension
+* Preventative: Security improvements
 
 = 3.2.2.2 - 1-5-17 =
 * Fixed: an issue with connecting HTTPS sites caused by the Select2 library bug

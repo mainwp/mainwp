@@ -13,7 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
-	public static $version = '3.2.2.2';
+	public static $version = '3.2.3';
 	//Singleton
 	private static $instance = null;
 
@@ -97,7 +97,7 @@ class MainWP_System {
 		}
 
 		MainWP_Extensions::init();
-                add_action( 'parse_request', array( &$this, 'parse_request' ) );
+        add_action( 'parse_request', array( &$this, 'parse_request' ) );
 		add_action( 'init', array( &$this, 'localization' ) );
 
 		// define the alternative API for updating checking
@@ -306,7 +306,6 @@ class MainWP_System {
 		}
 
 	}
-        
 
 	function load_all_options() {
 		global $wpdb;
@@ -416,11 +415,12 @@ class MainWP_System {
 		<?php
 	}
 
-        public function parse_request(){
-             if(file_exists(MAINWP_PLUGIN_DIR."/response/api.php")){
-                include_once MAINWP_PLUGIN_DIR."/response/api.php";
-             } 
-        }
+    public function parse_request(){
+         if ( file_exists( MAINWP_PLUGIN_DIR."/response/api.php" ) ){
+            include_once MAINWP_PLUGIN_DIR."/response/api.php";
+         }
+    }
+
 	public function localization() {
 		load_plugin_textdomain( 'mainwp', false, dirname( dirname( plugin_basename( __FILE__ ) ) ) . '/languages/' );
 	}
@@ -909,11 +909,11 @@ class MainWP_System {
 
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_core_new', '' );
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_plugins_new', '' );
-				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_themes_new', '' );                                
-                                
+				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_themes_new', '' );
+
 				MainWP_Utility::update_option( 'mainwp_updatescheck_last', date( 'd/m/Y' ) );
-                                MainWP_Utility::update_option( 'mainwp_updatescheck_sites_icon', '' );
-                                
+                MainWP_Utility::update_option( 'mainwp_updatescheck_sites_icon', '' );
+
 				if ( ! $sendMail ) {
 					MainWP_Logger::Instance()->debug( 'CRON :: updates check :: sendMail is false' );
 
@@ -1142,17 +1142,17 @@ class MainWP_System {
 				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_wp_upgrades', json_encode( $websiteCoreUpgrades ) );
 				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_plugin_upgrades', $website->plugin_upgrades );
 				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_theme_upgrades', $website->theme_upgrades );
-                                
+
                                 // sync site favico one time per day
-                                $updatescheckSitesIcon = get_option( 'mainwp_updatescheck_sites_icon' );
-                                if ( ! is_array( $updatescheckSitesIcon ) ) {
+                $updatescheckSitesIcon = get_option( 'mainwp_updatescheck_sites_icon' );
+                if ( !is_array( $updatescheckSitesIcon ) ) {
 					$updatescheckSitesIcon = array();
 				}
-                                if (!in_array($website->id, $updatescheckSitesIcon)) {
-                                    MainWP_System::sync_site_icon( $website->id );
-                                    $updatescheckSitesIcon[] = $website->id;
-                                    MainWP_Utility::update_option( 'mainwp_updatescheck_sites_icon', $updatescheckSitesIcon );
-                                }
+	            if ( !in_array( $website->id, $updatescheckSitesIcon ) ) {
+	                MainWP_System::sync_site_icon( $website->id );
+	                $updatescheckSitesIcon[] = $website->id;
+	                MainWP_Utility::update_option( 'mainwp_updatescheck_sites_icon', $updatescheckSitesIcon );
+	            }
 			}
 
 			if ( count( $coreNewUpdate ) != 0 ) {

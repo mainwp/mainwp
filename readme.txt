@@ -161,7 +161,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 3.2.3 - 1-18-17 =
+= 3.2.3 - 1-19-17 =
 * Fixed: an issue with selecting Posts, Pages and Users
 * Fixed: an issue with selecting Plugins and Themes on the Manage Plugins and Manage Themes page
 * Fixed: security checking issue

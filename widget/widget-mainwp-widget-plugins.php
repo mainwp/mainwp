@@ -121,10 +121,10 @@ class MainWP_Widget_Plugins {
 						<input class="pluginSlug" type="hidden" name="slug" value="<?php echo $actived_plugins[ $i ]['slug']; ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
 						<span class="mainwp-left mainwp-cols-2">
-							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $actived_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $actived_plugins[ $i ]['name']; ?>">
+							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $actived_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="More information about <?php echo $actived_plugins[ $i ]['name']; ?>">
 								<?php echo $actived_plugins[ $i ]['name']; ?>
 							</a>
-							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $actived_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477&section=changelog'; ?>" target="_blank" class="thickbox" title="Changelog <?php echo $actived_plugins[ $i ]['name']; ?>">
+							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $actived_plugins[ $i ]['slug'] ) . '&section=changelog&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="Changelog <?php echo $actived_plugins[ $i ]['name']; ?>">
 								<?php echo ' ' . $actived_plugins[ $i ]['version']; ?>
 							</a><br /><span class="mainwp-small"><?php echo $outdate_notice; ?></span>
 						</span>
@@ -162,10 +162,10 @@ class MainWP_Widget_Plugins {
 						<input class="pluginSlug" type="hidden" name="slug" value="<?php echo $inactive_plugins[ $i ]['slug']; ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
 						<span class="mainwp-left mainwp-cols-2">
-						<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $inactive_plugins[ $i ]['name']; ?>">
+						<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="More information about <?php echo $inactive_plugins[ $i ]['name']; ?>">
 							<?php echo $inactive_plugins[ $i ]['name']; ?>
 						</a>
-						<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477&section=changelog'; ?>" target="_blank" class="thickbox" title="Changelog <?php echo $inactive_plugins[ $i ]['name']; ?>">
+						<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) . '&section=changelog&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="Changelog <?php echo $inactive_plugins[ $i ]['name']; ?>">
 							<?php echo ' ' . $inactive_plugins[ $i ]['version']; ?>
 						</a><br /><span class="mainwp-small"><?php echo $outdate_notice; ?></span>
 						</span>

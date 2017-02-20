@@ -359,7 +359,85 @@ class MainWP_Utility {
 
 		return null;
 	}
-
+        
+        static function check_ignored_http_code( $value ) {
+            if ($value == 200)
+                return true;
+            
+            $ignored_code = get_option('mainwp_ignore_HTTP_response_status', '');
+            $ignored_code = trim($ignored_code);
+            if (!empty($ignored_code)) {
+                $ignored_code = explode(',', $ignored_code);
+                foreach($ignored_code as $code) {
+                    $code = trim($code);
+                    if ($value == $code) {
+                        return true;
+                    }
+                }
+            }
+            return false;                
+        }
+        
+        static function activated_primary_backup_plugin( $what, $website ) {            
+            $plugins = json_decode( $website->plugins, 1 );
+            if ( !is_array( $plugins ) || count( $plugins ) == 0 ) {
+                return false;
+            }
+            
+            $installed = false; 
+            switch( $what ) {
+                case 'backupbuddy':
+                    foreach ( $plugins as $plugin ) {
+                        if ( ('backupbuddy/backupbuddy.php' == strtolower($plugin['slug'])) ) {
+                            if ( $plugin['active'] ) {
+                                $installed = true;
+                            }
+                            break;
+                        }
+                    }
+                    break;
+                case 'backupwp':
+                    foreach ( $plugins as $plugin ) {
+                        if ( ('backupwordpress/backupwordpress.php' == $plugin['slug']) ) {
+                            if ( $plugin['active'] ) {
+                                $installed = true;
+                            }
+                            break;
+                        }
+                    }                    
+                    break;
+                case 'backwpup':
+                    foreach ( $plugins as $plugin ) {
+                        if ( ( strcmp( $plugin['slug'], "backwpup/backwpup.php" ) === 0 ) || strcmp( $plugin['slug'], "backwpup-pro/backwpup.php" ) === 0 ) {
+                            if ( $plugin['active'] ) {
+                                $installed = true;
+                            }
+                            break;
+                        }
+                    }  
+                    break;
+                case 'updraftplus':
+                    foreach ( $plugins as $plugin ) {
+                        if ( ('updraftplus/updraftplus.php' == $plugin['slug']) ) {
+                            if ( $plugin['active'] ) {
+                                $installed = true;
+                            }
+                            break;
+                        }
+                    } 
+                    break;
+            }
+            return $installed;
+        }        
+        
+         public static function get_primary_backup() {             
+            $enable_legacy_backup = get_option('mainwp_enableLegacyBackupFeature');
+            if (!$enable_legacy_backup) {
+                return get_option('mainwp_primaryBackup', false);
+            }            
+            return false;                
+        }
+        
 	static function getNotificationEmail( $user = null ) {
 		if ( $user == null ) {
 			global $current_user;
@@ -956,7 +1034,43 @@ class MainWP_Utility {
 			MainWP_Sync::syncInformationArray( $website, $information['sync'] );
 			unset( $information['sync'] );
 		}
-
+                
+                if ($what == 'upgradeplugintheme' || $what == 'upgrade' || $what == 'upgradetranslation') {      
+                    
+                    if ($what == 'upgradeplugintheme' || $what == 'upgradetranslation') {
+                        $type = $params['type'];
+                        $list = $params['list'];
+                    } else {
+                        $type = 'wp';
+                        $list = '';
+                    }
+                    
+                    do_action('mainwp_website_updated', $website, $type, $list );
+                    
+                    if (1 == get_option('mainwp_check_http_response', 0)) {                        
+                        $result = MainWP_Utility::isWebsiteAvailable( $website );                           
+                        $http_code = ( is_array($result) && isset($result['httpCode']) ) ? $result['httpCode'] : 0;
+                        $online_detected = MainWP_Utility::check_ignored_http_code( $http_code );                        
+                        MainWP_DB::Instance()->updateWebsiteValues( $website->id, array(
+                            'offline_check_result' => $online_detected ? 1 : -1,
+                            'offline_checks_last'  => time(),
+                            'http_response_code' => $http_code
+                        ) );  
+                        
+                        if ( defined( 'DOING_CRON' ) && DOING_CRON && !$online_detected) {
+                            $sitesHttpChecks = get_option( 'mainwp_automaticUpdate_httpChecks' );
+                            if ( ! is_array( $sitesHttpChecks ) ) {
+                                $sitesHttpChecks = array();
+                            }   
+                            
+                            if (!in_array($website->id, $sitesHttpChecks)) {
+                                $sitesHttpChecks[] = $website->id;
+                                MainWP_Utility::update_option( 'mainwp_automaticUpdate_httpChecks', $sitesHttpChecks );
+                            }
+                        }
+                    }
+                }
+                
 		return $information;
 	}
 
@@ -2658,8 +2772,8 @@ EOT;
 	}
 
 	public static function get_favico_url( $website ) {
-        $favi     = MainWP_DB::Instance()->getWebsiteOption( $website, 'favi_icon', '' );
-        $faviurl = '';
+            $favi     = MainWP_DB::Instance()->getWebsiteOption( $website, 'favi_icon', '' );
+            $faviurl = '';
 
 		if ( ! empty( $favi ) ) {
             if ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) {
@@ -2676,14 +2790,14 @@ EOT;
                 $faviurl = MainWP_Utility::removeHttpPrefix( $faviurl );
 			}
 		}
-        if ( empty( $faviurl ) ){
+             if ( empty( $faviurl ) ){
 			$faviurl = plugins_url( 'images/sitefavi.png', dirname( __FILE__ ) );
 		}
 
 		return $faviurl;
 	}
-
-	public static function getCURLSSLVersion( $sslVersion )
+       
+        public static function getCURLSSLVersion( $sslVersion )
 	{
 		switch ($sslVersion)
 		{

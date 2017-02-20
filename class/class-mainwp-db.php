@@ -2,7 +2,7 @@
 
 class MainWP_DB {
 	//Config
-	private $mainwp_db_version = '8.10';
+	private $mainwp_db_version = '8.11';
 	//Private
 	private $table_prefix;
 	//Singleton
@@ -85,6 +85,7 @@ class MainWP_DB {
   offline_checks text NOT NULL,
   offline_checks_last int(11) NOT NULL,
   offline_check_result int(11) NOT NULL,
+  http_response_code int(11) NOT NULL DEFAULT 0,
   note text NOT NULL,
   note_lastupdate int(11) NOT NULL DEFAULT 0,
   statsUpdate int(11) NOT NULL,
@@ -1090,7 +1091,7 @@ class MainWP_DB {
 				'categories'              => '',
 				'pluginDir'               => '',
 				'automatic_update'        => 0,
-				'backup_before_upgrade'   => 0,
+				'backup_before_upgrade'   => 2,
 				'verify_certificate'      => intval( $verifyCertificate ),
 				'ssl_version'             => $sslVersion,
 				'uniqueId'                => $uniqueId,

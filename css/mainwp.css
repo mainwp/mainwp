@@ -2230,3 +2230,13 @@ div.pw-wrap.form-invalid {
 .post-type-bulkpage #wpwrap .wrap h1 a.page-title-action {
     display: none;
 }
+span.http-ok-status {
+    display: none;
+}
+div.http-response-ok span.http-ok-status{
+    display: inline-block;
+}
+div.http-response-ok span.http-notok-status{
+    display: none;
+}
+

@@ -36,6 +36,7 @@ class MainWP_Hooks {
 
 		add_filter( 'mainwp_getmetaboxes', array( &$this, 'getMetaBoxes' ), 10, 0 );
 		add_filter( 'mainwp_getnotificationemail', array( 'MainWP_Utility', 'getNotificationEmail' ), 10, 0 );
+                add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array(
 			MainWP_Extensions::getClassName(),
 			'isExtensionAvailable',
@@ -247,7 +248,11 @@ class MainWP_Hooks {
 	function getMetaBoxes() {
 		return MainWP_System::Instance()->metaboxes;
 	}
-
+        
+        function get_format_email($body, $email, $title = '' ) {
+            return MainWP_Utility::formatEmail( $email, $body, $title );
+        }
+        
 	function activePlugin() {
 		MainWP_Plugins::activatePlugins();
 		die();

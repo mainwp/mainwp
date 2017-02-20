@@ -963,7 +963,7 @@ class MainWP_Manage_Sites_View {
         <tr>
             <th scope="row"><?php _e( 'Select primary backup system','mainwp' ); ?></th>
                <td>
-                <span><select class="mainwp-select2" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
+                <span><select class="mainwp-select2-super" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
                         <?php 
                         if ($enableLegacyBackupFeature) { 
                         ?>

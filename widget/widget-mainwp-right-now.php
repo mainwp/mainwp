@@ -991,7 +991,24 @@ class MainWP_Right_Now {
         $trusted_icon = '<i class="fa fa-check-circle-o mainwp-green" aria-hidden="true" title="' . esc_attr__('Trusted', 'mainwp'). '"></i>&nbsp;';
 
 		?>
-		<div class="mainwp-row-top">
+                <?php if ($globalView) { ?>
+                <div class="mainwp-row-top">
+			<div class="mainwp-left">
+				<strong><?php _e('Check site HTTP response after update');?></strong>&nbsp;
+                                <?php MainWP_Utility::renderToolTip(__('Check site HTTP response after update.','mainwp'), '', 'images/info.png', 'float: none !important;'); ?>
+			</div>	
+                        <div class="mainwp-right">
+                            <div class="mainwp-checkbox">
+                                <input type="checkbox" name="mainwp_check_http_response"
+                                       id="mainwp_check_http_response" <?php echo( ( get_option('mainwp_check_http_response', 0) == 1 ) ? 'checked="true"' : '' ); ?>/>
+                                <label for="mainwp_check_http_response"></label>
+                            </div>	                            
+			</div>
+			<div class="mainwp-clear"></div>
+		</div>
+                <?php } ?>
+                
+		<div class="<?php echo ($globalView ? 'mainwp-row' : 'mainwp-row-top'); ?>">
 			<div id="mainwp-right-now-total-updates" class="mainwp-left mainwp-cols-2">
 				<span class="fa-stack fa-lg">
 					<i class="fa fa-circle fa-stack-2x <?php echo $mainwp_tu_color_code; ?>"></i>
@@ -2254,8 +2271,72 @@ class MainWP_Right_Now {
 			</div>
 			<?php
 		}
-
-
+                
+                if ($globalView) { 
+                    $enable_http_check = get_option('mainwp_check_http_response', 0);
+                    if ( $enable_http_check ) {                        
+                        $enable_legacy_backup = get_option('mainwp_enableLegacyBackupFeature');
+                        $mainwp_primaryBackup = get_option('mainwp_primaryBackup');
+                        $customPage = apply_filters( 'mainwp-getcustompage-backups', false );                        
+                        $restorePageSlug = '';                        
+                        if ( empty($enable_legacy_backup) && !empty($mainwp_primaryBackup) && is_array( $customPage ) && isset( $customPage['managesites_slug'] )) {                            
+                            $restorePageSlug = 'admin.php?page=ManageSites' . $customPage['managesites_slug'] ;                                                      
+                        } else if ($enable_legacy_backup) {
+                            $restorePageSlug = 'admin.php?page=managesites';
+                        }
+                        
+                        ?>
+                        <div class="mainwp-sub-section">
+                        <?php
+                        @MainWP_DB::data_seek( $websites, 0 );
+                        while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+                            if ( $website->offline_check_result == 1 || $website->http_response_code == '-1') 
+                                continue;
+                            
+                            $restoreSlug = '';                            
+                            if (!empty($restorePageSlug)) {                                                 
+                                if ($enable_legacy_backup) {
+                                    $restoreSlug = $restorePageSlug . '&backupid=' . $website->id;
+                                } else if (MainWP_Utility::activated_primary_backup_plugin($mainwp_primaryBackup, $website)) {
+                                    $restoreSlug = $restorePageSlug . '&id=' . $website->id;
+                                }
+                            }
+                            
+                            ?>
+                            
+                                <div class="mainwp-sub-row">                                        
+                                    <div class="mainwp-left mainwp-cols-2 mainwp-padding-top-5">
+                                        <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a>                                        
+                                        <div>
+                                            <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>" class="open_newwindow_wpadmin" target="_blank"><?php _e( 'WP Admin', 'mainwp' ); ?></a> | 
+                                            <a href="#" onclick="return rightnow_recheck_http(this, <?php echo $website->id; ?>)"><?php _e('Recheck', 'mainwp'); ?></a> |      
+                                            <a href="#" onClick="return rightnow_ignore_http_response(this, <?php echo $website->id; ?>)"><?php _e( 'Ignore', 'mainwp' ); ?></a>                                                                          
+                                        </div>
+                                    </div>
+                                    <div class="mainwp-left mainwp-cols-5 mainwp-padding-top-5" id="wp_http_response_code_<?php echo $website->id; ?>">
+                                        <span class="fa-stack fa-lg http-ok-status">
+                                            <i class="fa fa-check-circle fa-2x mainwp-green"></i>
+                                        </span>
+                                        <span class="fa-stack fa-lg http-notok-status" title="<?php echo 'HTTP ' . $website->http_response_code; ?>">
+                                            <i class="fa fa-exclamation-circle fa-stack-2x mainwp-red"></i>
+                                        </span>
+                                        <span class="http-code"><?php echo 'HTTP ' . $website->http_response_code; ?></span>
+                                    </div>
+                                    <div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">                                            
+                                            <?php if (!empty($restoreSlug)) { ?>
+                                            <a href="<?php echo $restoreSlug; ?>" class="button-primary"><?php _e('Restore', 'mainwp'); ?></a>
+                                            <?php } ?>
+                                    </div>
+                                    <div class="mainwp-clear"></div>
+                                </div>
+                            
+                            <?php
+                        }                        
+                        ?>                    
+                        </div>                       
+                        <?php
+                    }                    
+                }
 		//WP plugin Abandoned!
 		if (!$isUpdatesPage) {
 			?>
@@ -2979,14 +3060,15 @@ class MainWP_Right_Now {
 		</div>
 
 		<div id="rightnow-backup-box" title="Full backup required" style="display: none; text-align: center">
-			<div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="rightnow-backup-content">
+			<div style="height: 190px; overflow: auto; margin-top: 20px; margin: 10px; text-align: left" id="rightnow-backup-content">
 			</div>
 			<input id="rightnow-backup-all" type="button" name="Backup All" value="<?php _e( 'Backup All', 'mainwp' ); ?>" class="button-primary"/>
+                        <a id="rightnow-backup-now" href="#" target="_blank" style="display: none"  class="button-primary button"><?php _e( 'Backup Now', 'mainwp' ); ?></a>
 			<input id="rightnow-backup-ignore" type="button" name="Ignore" value="<?php _e( 'Ignore', 'mainwp' ); ?>" class="button"/>
 		</div>
 
 		<div id="rightnow-backupnow-box" title="Full backup" style="display: none; text-align: center">
-			<div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="rightnow-backupnow-content">
+			<div style="height: 190px; overflow: auto; margin-top: 20px; margin: 10px; text-align: left" id="rightnow-backupnow-content">
 			</div>
 			<input id="rightnow-backupnow-close" type="button" name="Ignore" value="<?php _e( 'Cancel', 'mainwp' ); ?>" class="button"/>
 		</div>
@@ -3014,6 +3096,8 @@ class MainWP_Right_Now {
 		if ( ! is_array( $_POST['sites'] ) ) {
 			return true;
 		}
+                
+                $primaryBackup = MainWP_Utility::get_primary_backup();                
 		$global_backup_before_upgrade = get_option( 'mainwp_backup_before_upgrade' );
 
 		$output = array();
@@ -3021,24 +3105,32 @@ class MainWP_Right_Now {
 			$website = MainWP_DB::Instance()->getWebsiteById( $siteId );
 			if ( ( $website->backup_before_upgrade == 0 ) || ( ( $website->backup_before_upgrade == 2 ) && ( $global_backup_before_upgrade == 0 ) ) ) {
 				continue;
-			}
+			}                        
+                        if (!empty($primaryBackup)) {
+                            $lastBackup =  MainWP_DB::Instance()->getWebsiteOption( $website, 'primary_lasttime_backup' );                         
+                            
+                            if ($lastBackup != -1) { // installed backup plugin                                                               
+                                $output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( 7 * 24 * 60 * 60 ) ) ? false : true );
+                            }
+                            $output['primary_backup'] = $primaryBackup;
+                        } else {
+                            $dir = MainWP_Utility::getMainWPSpecificDir( $siteId );
+                            //Check if backup ok
+                            $lastBackup = - 1;
+                            if ( file_exists( $dir ) && ( $dh = opendir( $dir ) ) ) {
+                                    while ( ( $file = readdir( $dh ) ) !== false ) {
+                                            if ( $file != '.' && $file != '..' ) {
+                                                    $theFile = $dir . $file;
+                                                    if ( MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
+                                                            $lastBackup = filemtime( $theFile );
+                                                    }
+                                            }
+                                    }
+                                    closedir( $dh );
+                            }
 
-			$dir = MainWP_Utility::getMainWPSpecificDir( $siteId );
-			//Check if backup ok
-			$lastBackup = - 1;
-			if ( file_exists( $dir ) && ( $dh = opendir( $dir ) ) ) {
-				while ( ( $file = readdir( $dh ) ) !== false ) {
-					if ( $file != '.' && $file != '..' ) {
-						$theFile = $dir . $file;
-						if ( MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
-							$lastBackup = filemtime( $theFile );
-						}
-					}
-				}
-				closedir( $dh );
-			}
-
-			$output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( 7 * 24 * 60 * 60 ) ) ? false : true );
+                            $output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( 7 * 24 * 60 * 60 ) ) ? false : true );
+                        }
 		}
 
 		return $output;

@@ -42,6 +42,8 @@ class MainWP_Options {
 				MainWP_Utility::update_option( 'mainwp_wp_cron', ( ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1 ) );
 				//MainWP_Utility::update_option('mainwp_use_favicon', (!isset($_POST['mainwp_use_favicon']) ? 0 : 1));
 				MainWP_Utility::update_option( 'mainwp_numberdays_Outdate_Plugin_Theme', MainWP_Utility::ctype_digit( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) ? intval( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) : 365 );
+                                $ignore_http = isset($_POST['mainwp_ignore_http_response_status']) ? $_POST['mainwp_ignore_http_response_status'] : '';                                
+                                MainWP_Utility::update_option( 'mainwp_ignore_HTTP_response_status', $ignore_http );
 			}
 
 			return true;
@@ -166,7 +168,7 @@ class MainWP_Options {
                 
                 $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
                 $primaryBackup = get_option('mainwp_primaryBackup');  
-                $style = ($enableLegacyBackupFeature && empty($primaryBackup)) ? '' : 'style="display:none"';
+                $style = (($enableLegacyBackupFeature && empty($primaryBackup)) || (empty($enableLegacyBackupFeature) && !empty($primaryBackup))) ? '' : 'style="display:none"';
                 
 	?>
 		<table class="form-table">
@@ -220,7 +222,13 @@ class MainWP_Options {
 						   id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo( ( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) === false ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
 				</td>
 			</tr>
-
+                        <tr>
+				<th scope="row"><?php _e( 'Ignore HTTP response status', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( "Ignore HTTP response status.", 'mainwp' ) ); ?></th>
+				<td>
+					<input type="text" name="mainwp_ignore_http_response_status" class=""
+						   id="mainwp_ignore_http_response_status" value="<?php echo( get_option( 'mainwp_ignore_HTTP_response_status', '' ) ); ?>"/>
+				</td>
+			</tr>                        
 			</tbody>
 		</table>
 	<?php

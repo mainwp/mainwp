@@ -784,6 +784,17 @@ class MainWP_Extensions_View {
 					'catalog_id' => '1006044',
 					'group' => array('backup')
 				),
+                        'mainwp-vulnerability-checker-extension' =>
+				array(
+					'slug' => 'mainwp-vulnerability-checker-extension',
+					'title' => 'MainWP Vulnerability Checker Extension',
+					'desc' => 'MainWP Vulnerability Checker Extension.',
+					'link' => 'https://mainwp.com/extension/post-plus/',
+					'img' => plugins_url( 'images/extensions/vulnerability-checker.png', dirname( __FILE__ ) ),
+					'product_id' => 'MainWP Vulnerability Checker Extension',
+					'catalog_id' => '12458',
+					'group' => array('admin')
+				),
 		);
 	}
 }

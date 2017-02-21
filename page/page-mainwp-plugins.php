@@ -1496,7 +1496,7 @@ public static function renderHeader( $shownPage ) {
 
 	public static function saveTrustedPluginNote() {
 		$slug = urldecode( $_POST['slug'] );
-		$note = $_POST['note'];
+		$note = esc_html( $_POST['note'] );
 
 		$userExtension       = MainWP_DB::Instance()->getUserExtension();
 		$trustedPluginsNotes = json_decode( $userExtension->trusted_plugins_notes, true );

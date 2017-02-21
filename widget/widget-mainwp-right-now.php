@@ -10,6 +10,8 @@ class MainWP_Right_Now {
 	}
 
 	public static function plugins_api( $default, $action, $args ) {
+		if ( property_exists( $args, 'slug' )  && ( 'mainwp' === $args->slug ) ) return $default;
+
 		$url = $http_url = 'http://api.wordpress.org/plugins/info/1.0/';
 		if ( $ssl = wp_http_supports( array( 'ssl' ) ) ) {
 			$url = set_url_scheme( $url, 'https' );

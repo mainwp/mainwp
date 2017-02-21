@@ -748,6 +748,25 @@ class MainWP_Setup_Wizard {
 	}
 
 	public function mwp_setup_purchase_extension_save() {
+		$purchase_extension_history = isset( $_SESSION['purchase_extension_history'] ) ? $_SESSION['purchase_extension_history'] : array();
+
+		$new_purchase_extension_history = array();
+		$requests = 0;
+		foreach ( $purchase_extension_history as $purchase_extension ) {
+			if ( $purchase_extension['time'] > ( time() - 1 * 60 ) ) {
+				$new_purchase_extension_history[] = $purchase_extension;
+				$requests++;
+			}
+		}
+
+		if ( $requests > 4 ) {
+			$_SESSION['purchase_extension_history'] = $new_purchase_extension_history;
+			return;
+		} else {
+			$new_purchase_extension_history[] = array( 'time' => time() );
+			$_SESSION['purchase_extension_history'] = $new_purchase_extension_history;
+		}
+
 		check_admin_referer( 'mwp-setup' );
 		$username = ! empty( $_POST['mwp_setup_purchase_username'] ) ? sanitize_text_field( $_POST['mwp_setup_purchase_username'] ) : '';
 		$password = ! empty( $_POST['mwp_setup_purchase_passwd'] ) ? sanitize_text_field( $_POST['mwp_setup_purchase_passwd'] ) : '';

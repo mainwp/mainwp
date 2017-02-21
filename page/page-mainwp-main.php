@@ -100,12 +100,12 @@ class MainWP_Main {
 		}
 		global $mainwpUseExternalPrimaryBackupsMethod;
 		if ( empty( $mainwpUseExternalPrimaryBackupsMethod ) ) {
-                        if (get_option('mainwp_enableLegacyBackupFeature')) {
-                            add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Backup_Tasks::getName(), array(
-                                    MainWP_Backup_Tasks::getClassName(),
-                                    'render',
-                            ), $page, 'normal', 'core' );
-                        }
+            if (get_option('mainwp_enableLegacyBackupFeature')) {
+                add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Backup_Tasks::getName(), array(
+                        MainWP_Backup_Tasks::getClassName(),
+                        'render',
+                ), $page, 'normal', 'core' );
+            }
 		}
 		add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Extensions_Widget::getName(), array(
 			MainWP_Extensions_Widget::getClassName(),

@@ -415,6 +415,25 @@ class MainWP_Extensions {
 	public static function saveExtensionsApiLogin() {
 		MainWP_System::Instance()->posthandler->secure_request('mainwp_extension_saveextensionapilogin');
 
+		$api_login_history = isset( $_SESSION['api_login_history'] ) ? $_SESSION['api_login_history'] : array();
+
+		$new_api_login_history = array();
+		$requests = 0;
+		foreach ( $api_login_history as $api_login ) {
+			if ( $api_login['time'] > ( time() - 1 * 60 ) ) {
+				$new_api_login_history[] = $api_login;
+				$requests++;
+			}
+		}
+
+		if ( $requests > 4 ) {
+			$_SESSION['api_login_history'] = $new_api_login_history;
+			die( json_encode( array( 'error' => __( 'Too many requests', 'mainwp' ) ) ) );
+		} else {
+			$new_api_login_history[] = array( 'time' => time() );
+			$_SESSION['api_login_history'] = $new_api_login_history;
+		}
+
 		$username = trim( $_POST['username'] );
 		$password = trim( $_POST['password'] );
 		if ( ( $username == '' ) && ( $password == '' ) ) {

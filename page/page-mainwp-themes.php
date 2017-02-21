@@ -1545,7 +1545,7 @@ public static function renderHeader( $shownPage ) {
 
 	public static function saveTrustedThemeNote() {
 		$slug = urldecode( $_POST['slug'] );
-		$note = $_POST['note'];
+		$note = esc_html( $_POST['note'] );
 
 		$userExtension      = MainWP_DB::Instance()->getUserExtension();
 		$trustedThemesNotes = json_decode( $userExtension->trusted_themes_notes, true );

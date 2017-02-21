@@ -240,6 +240,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_childscan() {
+		//todo: RS: secure action
 		MainWP_Child_Scan::scan();
 	}
 

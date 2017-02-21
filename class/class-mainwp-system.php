@@ -315,17 +315,73 @@ class MainWP_System {
 		else
 			$alloptions = false;
 
+		if ( !defined( 'WP_INSTALLING' ) || !is_multisite() )
+			$notoptions = wp_cache_get( 'notoptions', 'options' );
+		else
+			$notoptions = false;
+
 		if ( !isset($alloptions['mainwp_db_version']) ) {
 			$suppress = $wpdb->suppress_errors();
-			$alloptions_db = $wpdb->get_results( "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in ('mainwp_db_version', 'mainwp_plugin_version', 'mainwp_upgradeVersionInfo', 'mainwp_extensions', 'mainwp_manager_extensions')" );
+			$options = array('mainwp_db_version', 'mainwp_plugin_version', 'mainwp_upgradeVersionInfo', 'mainwp_extensions', 'mainwp_manager_extensions','mainwp_getting_started',
+				'_transient__mainwp_activation_redirect',
+				'_transient_timeout__mainwp_activation_redirect',
+				'mainwp_activated',
+				'mainwp_api_sslVerifyCertificate',
+				'mainwp_automaticDailyUpdate',
+				'mainwp_backup_before_upgrade',
+				'mainwp_backupwordpress_ext_enabled',
+				'mainwp_backwpup_ext_enabled',
+				'mainwp_branding_button_contact_label',
+				'mainwp_branding_child_hide',
+				'mainwp_branding_ext_enabled',
+				'mainwp_branding_extra_settings',
+				'mainwp_branding_plugin_header',
+				'mainwp_branding_remove_permalink',
+				'mainwp_branding_remove_setting',
+				'mainwp_branding_remove_wp_setting',
+				'mainwp_branding_remove_wp_tools',
+				'mainwp_creport_ext_branding_enabled',
+				'mainwp_enableLegacyBackupFeature',
+				'mainwp_ext_snippets_enabled',
+				'mainwp_hide_footer',
+				'mainwp_hide_twitters_message',
+				'mainwp_ithemes_ext_enabled',
+				'mainwp_keyword_links_htaccess_set',
+				'mainwp_linkschecker_ext_enabled',
+				'mainwp_maximumInstallUpdateRequests',
+				'mainwp_maximumSyncRequests',
+				'mainwp_pagespeed_ext_enabled',
+				'mainwp_primaryBackup',
+				'mainwp_refresh',
+				'mainwp_security',
+				'mainwp_updraftplus_ext_enabled',
+				'mainwp_use_favicon',
+				'mainwp_wordfence_ext_enabled',
+				'mainwp_wp_cron',
+				'mainwp_wpcreport_extension',
+				'mainwp_wprocket_ext_enabled',
+				'mainwp_hide_tips');
+			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";
+			foreach ($options as $option) {
+				$query .= "'" . $option . "', ";
+			}
+			$query = substr($query, 0, strlen($query) - 2);
+			$query .= ")";
+
+			$alloptions_db = $wpdb->get_results( $query );
 			$wpdb->suppress_errors($suppress);
 			if ( !is_array( $alloptions ) ) $alloptions = array();
 			if ( is_array( $alloptions_db ) ) {
 				foreach ( (array) $alloptions_db as $o ) {
 					$alloptions[ $o->option_name ] = $o->option_value;
+					unset($options[array_search($o->option_name, $options)]);
+				}
+				foreach ($options as $option ) {
+					$notoptions[ $option ] = true;
 				}
 				if ( ! defined( 'WP_INSTALLING' ) || ! is_multisite() ) {
 					wp_cache_set( 'alloptions', $alloptions, 'options' );
+					wp_cache_set( 'notoptions', $notoptions, 'options' );
 				}
 			}
 		}

@@ -19,6 +19,8 @@ class MainWP_Hooks {
 		add_action( 'mainwp_activePlugin', array( &$this, 'activePlugin' ), 10, 0 );
 		add_action( 'mainwp_deactivePlugin', array( &$this, 'deactivePlugin' ), 10, 0 );
 		add_action( 'mainwp_upgradePluginTheme', array( &$this, 'upgradePluginTheme' ), 10, 0 );
+                add_action( 'mainwp_deletePlugin', array( &$this, 'deletePlugin' ), 10, 0 );
+                add_action( 'mainwp_deleteTheme', array( &$this, 'deleteTheme' ), 10, 0 );
 
 		//Internal hook - deprecated
 		add_filter( 'mainwp_getUserExtension', array( &$this, 'getUserExtension' ) );
@@ -262,7 +264,18 @@ class MainWP_Hooks {
 		MainWP_Plugins::deactivatePlugins();
 		die();
 	}
-
+        
+        function deletePlugin() {
+		MainWP_Plugins::deletePlugins();
+		die();
+	}
+        
+        function deleteTheme() {
+		MainWP_Themes::deleteThemes();
+		die();
+	}
+        
+        
 	function upgradePluginTheme() {
 		try {
 			$websiteId = $type = null;

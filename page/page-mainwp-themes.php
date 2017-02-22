@@ -864,11 +864,15 @@ public static function renderHeader( $shownPage ) {
 			die( 'FAIL' );
 		}
 
-		if ( ! isset( $information['out'] ) || ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
+                if (isset( $information['error'] )) {
+                    die( json_encode( $information ) );
+                }
+                
+		if (  ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
 			die( 'FAIL' );
 		}
-
-		die( $information['out'] );
+                
+		die( json_encode( array( 'result' => true ) ) );
 	}
 
 	public static function ignoreUpdates() {

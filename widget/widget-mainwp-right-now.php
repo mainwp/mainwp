@@ -44,7 +44,7 @@ class MainWP_Right_Now {
 		return '<i class="fa fa-refresh" aria-hidden="true"></i> ' . __( 'Update Overview', 'mainwp' );
 	}
 
-	public static function render() {
+	public static function render() {                
 		?>
 		<div id="rightnow_list" xmlns="http://www.w3.org/1999/html"><?php MainWP_Right_Now::renderSites(); ?></div>
 		<?php
@@ -989,7 +989,16 @@ class MainWP_Right_Now {
 			$trustedThemes = array();
 		}
         $trusted_icon = '<i class="fa fa-check-circle-o mainwp-green" aria-hidden="true" title="' . esc_attr__('Trusted', 'mainwp'). '"></i>&nbsp;';
-
+                
+                if (!$isUpdatesPage) {
+                    $total_vulner = apply_filters('mainwp_vulner_getvulner', $current_wpid);
+                    if ($total_vulner > 0) {
+                        ?>
+                <div class="mainwp_info-box-red"><?php echo sprintf(_n('There is %d vulnerability update. %sClick here to see all vulnerability issues.%s', 'There are %d vulnerability updates. %sClick here to see all vulnerability issues.%s', $total_vulner, 'mainwp'), $total_vulner, '<a href="admin.php?page=Extensions-Mainwp-Vulnerability-Checker-Extension">', '</a>' ); ?></div>
+                        <?php
+                    }            
+                }
+                
 		?>
                 <?php if ($globalView) { ?>
                 <div class="mainwp-row-top">

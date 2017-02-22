@@ -94,7 +94,7 @@ class MainWP_Updates {
 			}
 		}
                 
-                $total_vulner = apply_filters('mainwp_vulner_getvulner');                    
+                $total_vulner = apply_filters('mainwp_vulner_getvulner', false);                    
                 if ($total_vulner > 0) {
                     ?>
             <div class="mainwp_info-box-red"><?php echo sprintf(_n('There is %d vulnerability update. %sClick here to see all vulnerability issues.%s', 'There are %d vulnerability updates. %sClick here to see all vulnerability issues.%s', $total_vulner, 'mainwp'), $total_vulner, '<a href="admin.php?page=Extensions-Mainwp-Vulnerability-Checker-Extension">', '</a>' ); ?></div>

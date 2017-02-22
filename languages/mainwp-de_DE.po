@@ -3694,8 +3694,8 @@ msgstr "Aktualisiert Ihren Plan"
 
 #: view/MainWPSystemView.view.php:136
 #@ mainwp
-msgid "A full backup has not been taken in the last 7 days for the following sites:"
-msgstr "Es wurde kein Voll-Backup in den letzten 7 Tagen für die folgenden Seiten getroffen:"
+msgid "A full backup has not been taken in the last %1 days for the following sites:"
+msgstr "Es wurde kein Voll-Backup in den letzten %1 Tagen für die folgenden Seiten getroffen:"
 
 #: view/MainWPSystemView.view.php:137
 #@ mainwp

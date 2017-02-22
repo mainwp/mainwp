@@ -13,7 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
-	public static $version = '3.2.3';
+	public static $version = '3.3';
 	//Singleton
 	private static $instance = null;
 
@@ -970,6 +970,43 @@ class MainWP_System {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_last', date( 'd/m/Y' ) );
                 MainWP_Utility::update_option( 'mainwp_updatescheck_sites_icon', '' );
 
+                if ( 1 == get_option( 'mainwp_check_http_response', 0 ) ) {
+
+                    $sitesHttpCheckIds = get_option( 'mainwp_automaticUpdate_httpChecks' );
+                    if ( ! is_array( $sitesHttpCheckIds ) ) {
+                        $sitesHttpCheckIds = array();
+                    }
+
+                    $mail_offline = '';
+
+                    $sitesOffline = MainWP_DB::Instance()->getWebsitesByIds( $sitesHttpCheckIds );
+                    if (is_array($sitesOffline) && count($sitesOffline) > 0) {
+                        foreach($sitesOffline as $site) {
+                            if ($site->offline_check_result == -1) {
+                                $mail_offline .= '<li>' . $site->name . ' - [' . $site->url . '] - [' . $site->http_response_code . ']</li>';
+                            }
+                        }
+                    }
+
+                    $email = get_option( 'mainwp_updatescheck_mail_email' );
+                    if ( !empty( $email ) && $mail_offline != '') {
+                            MainWP_Logger::Instance()->debug( 'CRON :: http check :: send mail to ' . $email );
+                            $mail_offline = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
+                                <div></div>
+                                <ul>
+                                ' . $mail_offline . '
+                                </ul>
+                                <div></div>
+                                <div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
+                            wp_mail( $email, $mail_title = 'MainWP - HTTP response check', MainWP_Utility::formatEmail( $email, $mail_offline, $mail_title ), array(
+                                    'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
+                                    'content-type: text/html',
+                            ) );
+                    }
+                    MainWP_Utility::update_option( 'mainwp_automaticUpdate_httpChecks', '' );
+                }
+
+
 				if ( ! $sendMail ) {
 					MainWP_Logger::Instance()->debug( 'CRON :: updates check :: sendMail is false' );
 
@@ -1333,7 +1370,10 @@ class MainWP_System {
 						closedir( $dh );
 					}
 
-					$backupRequired = ( $lastBackup < ( time() - ( 7 * 24 * 60 * 60 ) ) ? true : false );
+					$mainwp_backup_before_upgrade_days  = get_option( 'mainwp_backup_before_upgrade_days' );
+					if ( empty( $mainwp_backup_before_upgrade_days ) || !ctype_digit( $mainwp_backup_before_upgrade_days ) ) $mainwp_backup_before_upgrade_days = 7;
+
+					$backupRequired = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? true : false );
 
 					if ( ! $backupRequired ) {
 						$sitesCheckCompleted[ $siteId ] = true;
@@ -1356,7 +1396,7 @@ class MainWP_System {
 			}
 
 			if ($plugin_automaticDailyUpdate == 1) {
-				//Update$plugin_automaticDailyUpdate plugins
+				//Update plugins
 				foreach ( $pluginsToUpdateNow as $websiteId => $slugs ) {
 					if ( ( $sitesCheckCompleted != null ) && ( $sitesCheckCompleted[ $websiteId ] == false ) ) {
 						continue;

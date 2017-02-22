@@ -135,7 +135,9 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'Upgrading %1', __( 'Upgrading %1', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Updating your plan...', __( 'Updating your plan...', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Updated your plan', __( 'Updated your plan', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'A full backup has not been taken in the last 7 days for the following sites:', __( 'A full backup has not been taken in the last 7 days for the following sites:', 'mainwp' ) );
+		$mainwp_backup_before_upgrade_days  = get_option( 'mainwp_backup_before_upgrade_days' );
+		if ( empty( $mainwp_backup_before_upgrade_days ) || !ctype_digit( $mainwp_backup_before_upgrade_days ) ) $mainwp_backup_before_upgrade_days = 7;
+		mainwpAddTranslation( $mainwpTranslations, 'A full backup has not been taken in the last days for the following sites:', str_replace( '%1', '' . $mainwp_backup_before_upgrade_days, __( 'A full backup has not been taken in the last %1 days for the following sites:', 'mainwp' ) ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Starting required backup(s).', __( 'Starting required backup(s).', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Required backup(s) complete', __( 'Required backup(s) complete', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Continue update anyway', __( 'Continue update anyway', 'mainwp' ) );

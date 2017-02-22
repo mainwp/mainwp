@@ -1579,32 +1579,63 @@ rightnow_global_upgrade_all = function ()
         upgradeList.append('<tr><td>' + decodeURIComponent(siteNames[siteId]) + ' (' + whatToUpgrade + ')</td><td style="width: 80px"><span class="rightnow-upgrade-status-wp" siteid="' + siteId + '">'+ '<i class="fa fa-clock-o" aria-hidden="true"></i> ' +  __('PENDING')+'</span></td></tr>');
     }
 
-    //Step 2: show form
-    var upgradeStatusBox = jQuery('#rightnow-upgrade-status-box');
-    upgradeStatusBox.attr('title', 'Upgrading all');
-    jQuery('#rightnow-upgrade-status-total').html(sitesCount);
-    jQuery('#rightnow-upgrade-status-progress').progressbar({value:0, max:sitesCount});
-    upgradeStatusBox.dialog({
-        resizable:false,
-        height:350,
-        width:500,
-        modal:true,
-        close:function (event, ui)
-        {
-            bulkTaskRunning = false;
-            jQuery('#rightnow-upgrade-status-box').dialog('destroy');
-            location.reload();
-        }});
+//    //Step 2: show form
+//    var upgradeStatusBox = jQuery('#rightnow-upgrade-status-box');
+//    upgradeStatusBox.attr('title', 'Upgrading all');
+//    jQuery('#rightnow-upgrade-status-total').html(sitesCount);
+//    jQuery('#rightnow-upgrade-status-progress').progressbar({value:0, max:sitesCount});
+//    upgradeStatusBox.dialog({
+//        resizable:false,
+//        height:350,
+//        width:500,
+//        modal:true,
+//        close:function (event, ui)
+//        {
+//            bulkTaskRunning = false;
+//            jQuery('#rightnow-upgrade-status-box').dialog('destroy');
+//            location.reload();
+//        }});
+//
+//    var dateObj = new Date();
+//    dashboardActionName = 'upgrade_everything';
+//    starttimeDashboardAction = dateObj.getTime();
+//    countRealItemsUpdated = 0;
+//
+//    //Step 3: start updates
+//    rightnow_upgrade_all_int(sitesToUpdate, sitesToUpgrade, sitesPluginSlugs, sitesThemeSlugs);
 
-    var dateObj = new Date();
-    dashboardActionName = 'upgrade_everything';
-    starttimeDashboardAction = dateObj.getTime();
-    countRealItemsUpdated = 0;
+    rightnowContinueAfterBackup = function(pSitesCount, pSitesToUpdate, pSitesToUpgrade, pSitesPluginSlugs, pSitesThemeSlugs) { return function()
+    {
+        //Step 2: show form
+        var upgradeStatusBox = jQuery('#rightnow-upgrade-status-box');
+        upgradeStatusBox.attr('title', 'Upgrading all');
+        jQuery('#rightnow-upgrade-status-total').html(pSitesCount);
+        jQuery('#rightnow-upgrade-status-progress').progressbar({value:0, max:pSitesCount});
+        upgradeStatusBox.dialog({
+            resizable:false,
+            height:350,
+            width:500,
+            modal:true,
+            close:function (event, ui)
+            {
+                bulkTaskRunning = false;
+                jQuery('#rightnow-upgrade-status-box').dialog('destroy');
+                location.reload();
+            }});
 
-    //Step 3: start updates
-    rightnow_upgrade_all_int(sitesToUpdate, sitesToUpgrade, sitesPluginSlugs, sitesThemeSlugs);
+        var dateObj = new Date();
+        dashboardActionName = 'upgrade_everything';
+        starttimeDashboardAction = dateObj.getTime();
+        countRealItemsUpdated = 0;
 
-    return false;
+        //Step 3: start updates
+        rightnow_upgrade_all_int(pSitesToUpdate, pSitesToUpgrade, pSitesPluginSlugs, pSitesThemeSlugs);
+
+        rightnowContinueAfterBackup = undefined;
+    } }(sitesCount, sitesToUpdate, sitesToUpgrade, sitesPluginSlugs, sitesThemeSlugs);
+
+    return mainwp_rightnow_checkBackups(sitesToUpdate, siteNames);
+
 };
 
 rightnow_upgrade_all_int = function (pSitesToUpdate, pSitesToUpgrade, pSitesPluginSlugs, pSitesThemeSlugs)
@@ -2072,8 +2103,8 @@ mainwp_rightnow_checkBackups = function(sitesToUpdate, siteNames)
             }
             catch (e) {}
 
-            jQuery('#rightnow-backup-all').show();
-            jQuery('#rightnow-backup-ignore').show();
+            //jQuery('#rightnow-backup-all').show();
+            //jQuery('#rightnow-backup-ignore').show();
 
             backupBox.attr('title', __('Full backup required!'));
             jQuery('div[aria-describedby="rightnow-backup-box"]').find('.ui-dialog-title').html(__('Full backup required!'));
@@ -2104,11 +2135,34 @@ mainwp_rightnow_checkBackups = function(sitesToUpdate, siteNames)
             if (siteFeedback != undefined)
             {
                 var backupContent = jQuery('#rightnow-backup-content');
-                var output = '<span class="mainwp-red">'+__('A full backup has not been taken in the last 7 days for the following sites:')+'</span><br /><br />';
-                for (var j = 0; j < siteFeedback.length; j++)
-                {
-                    output += '<span class="rightnow-backup-site" siteid="' + siteFeedback[j] + '">' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
+
+                var backupPrimary = '';
+                if (response['result']['primary_backup'] && response['result']['primary_backup'] != undefined)
+                    backupPrimary = response['result']['primary_backup'];
+
+                if(backupPrimary == '') {
+                    jQuery('#rightnow-backup-all').show();
+                    jQuery('#rightnow-backup-ignore').show();
+                } else {
+                    var backupLink = mainwp_get_primaryBackup_link(backupPrimary);
+                    jQuery('#rightnow-backup-now').attr('href', backupLink).show();
+                    jQuery('#rightnow-backup-ignore').val(__('Proceed with Updates')).show();
                 }
+
+                var output = '<span class="mainwp-red">'+__('A full backup has not been taken in the last days for the following sites:')+'</span><br /><br />';
+
+                if (backupPrimary == '') { // default backup feature
+                    for (var j = 0; j < siteFeedback.length; j++)
+                    {
+                        output += '<span class="rightnow-backup-site" siteid="' + siteFeedback[j] + '">' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
+                    }
+                } else {
+                    for (var j = 0; j < siteFeedback.length; j++)
+                    {
+                        output += '<span>' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
+                    }
+                }
+
                 backupContent.html(output);
 
                 //backupBox = jQuery('#rightnow-backup-box');
@@ -2552,4 +2606,55 @@ jQuery(document).ready(function ()
     jQuery('#mainwp_select_options_siteview').change(function() {
         jQuery(this).closest("form").submit();
     });
-})
+
+    jQuery( '#mainwp_check_http_response' ).on('change', function () {
+            var data = mainwp_secure_data({
+                    action: 'mainwp_save_option',
+                    name: 'mainwp_check_http_response',
+                    value: jQuery( this ).is(':checked') ? 1 : 0
+                });
+            jQuery.post(ajaxurl, data, function (response) {
+            }, 'json');
+            return false;
+    });
+});
+
+rightnow_recheck_http = function(elem, id) {
+    var data = mainwp_secure_data({
+        action:'mainwp_recheck_http',
+        websiteid: id
+    });
+    jQuery(elem).attr('disabled', 'true');
+    jQuery('#wp_http_response_code_' + id + ' .http-code').html('<i class="fa fa-spinner fa-pulse"></i>');
+    jQuery.post(ajaxurl, data, function (response) {
+        jQuery(elem).removeAttr('disabled');
+        if (response) {
+            var hc = (response && response.httpcode) ? response.httpcode : '';
+            jQuery('#wp_http_response_code_' + id + ' .http-code').html('HTTP ' + hc);
+            if (response.status) {
+                jQuery('#wp_http_response_code_' + id).addClass('http-response-ok');
+            } else {
+                jQuery('#wp_http_response_code_' + id).removeClass('http-response-ok');
+            }
+        } else {
+            jQuery('#wp_http_response_code_' + id + ' .http-code').html(__('Undefined error!'));
+        }
+    }, 'json');
+    return false;
+};
+
+rightnow_ignore_http_response = function(elem, id) {
+    var data = mainwp_secure_data({
+        action:'mainwp_ignore_http_response',
+        websiteid: id
+    });
+    jQuery(elem).attr('disabled', 'true');
+    jQuery('#wp_http_response_code_' + id + ' .http-code').html('<i class="fa fa-spinner fa-pulse"></i>');
+    jQuery.post(ajaxurl, data, function (response) {
+        jQuery(elem).removeAttr('disabled');
+        if (response && response.ok) {
+            jQuery(elem).closest('.mainwp-sub-row').remove();
+        }
+    }, 'json');
+    return false;
+};

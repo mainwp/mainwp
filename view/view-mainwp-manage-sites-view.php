@@ -963,7 +963,7 @@ class MainWP_Manage_Sites_View {
         <tr>
             <th scope="row"><?php _e( 'Select primary backup system','mainwp' ); ?></th>
                <td>
-                <span><select class="mainwp-select2" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
+                <span><select class="mainwp-select2-super" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
                         <?php 
                         if ($enableLegacyBackupFeature) { 
                         ?>
@@ -1100,11 +1100,19 @@ class MainWP_Manage_Sites_View {
 	}
         
          public static function renderUpdates() { 
-            $website = MainWP_Utility::get_current_wpid();
-            if (  $website ) {
-                    $website = MainWP_DB::Instance()->getWebsiteById( $website );
-                    MainWP_Main::renderDashboardBody( array($website), null, null, true);
-            }   
+            $website_id = MainWP_Utility::get_current_wpid();
+            $total_vulner = 0;
+            if ( $website_id ) {
+                $website = MainWP_DB::Instance()->getWebsiteById( $website_id );
+                MainWP_Main::renderDashboardBody( array($website), null, null, true);
+                $total_vulner = apply_filters('mainwp_vulner_getvulner', $website_id);
+            }
+
+            if ( $total_vulner > 0 ) {
+                ?>
+        <div class="mainwp_info-box-red"><?php echo sprintf(_n('There is %d vulnerability update. %sClick here to see all vulnerability issues.%s', 'There are %d vulnerability updates. %sClick here to see all vulnerability issues.%s', $total_vulner, 'mainwp'), $total_vulner, '<a href="admin.php?page=Extensions-Mainwp-Vulnerability-Checker-Extension">', '</a>' ); ?></div>
+                <?php
+            }
             ?>
             <div class="postbox" id="mainwp_page_updates_tab-contextbox-1">
                 <h3 class="mainwp_box_title">

@@ -46,6 +46,8 @@ class MainWP_Sync {
 				}
 			}
 
+            $primaryBackup = MainWP_Utility::get_primary_backup();
+
 			$othersData  = apply_filters( 'mainwp-sync-others-data', array(), $pWebsite );
 			$information = MainWP_Utility::fetchUrlAuthed( $pWebsite, 'stats',
 				array(
@@ -56,10 +58,11 @@ class MainWP_Sync {
 					'othersData'                   => json_encode( $othersData ),
 					'server'                       => get_admin_url(),
 					'numberdaysOutdatePluginTheme' => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
+                    'primaryBackup' => $primaryBackup
 				),
 				true, $pForceFetch
 			);
-
+            MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'primary_lasttime_backup', isset( $information['primaryLasttimeBackup'] ) ? $information['primaryLasttimeBackup'] : 0 );
 			$return = self::syncInformationArray( $pWebsite, $information, '', 1, false, $pAllowDisconnect );
 
 			return $return;

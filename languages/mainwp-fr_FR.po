@@ -4104,8 +4104,8 @@ msgstr "Mettre à niveau votre plan"
 
 #: view/view-mainwp-system-view.php:138
 #@ mainwp
-msgid "A full backup has not been taken in the last 7 days for the following sites:"
-msgstr "Une sauvegarde complète n'a pas été faite dans les 7 derniers jours pour les sites suivants :"
+msgid "A full backup has not been taken in the last %1 days for the following sites:"
+msgstr "Une sauvegarde complète n'a pas été faite dans les %1 derniers jours pour les sites suivants :"
 
 #: view/view-mainwp-system-view.php:139
 #@ mainwp

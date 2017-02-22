@@ -1659,7 +1659,7 @@ managebackups_run_next = function()
         error: function(pInterVal, pSiteName) { return function() {
             backupCreateRunning = false;
             clearInterval(pInterVal);
-            appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] ' + '<span class="mainwp-red">ERROR: Backup timed out - <a href="http://docs.mainwp.com/backup-failed-php-ini-settings/">Please check this help document for more information and possible fixes</a></span>');
+            appendToDiv('#managebackups-task-status-text', '[' + pSiteName + '] ' + '<span class="mainwp-red">ERROR: Backup timed out - <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>');
         } }(interVal, siteName), dataType: 'json'});
 };
 
@@ -2562,7 +2562,7 @@ mainwp_managesites_add = function (event) {
             http_user:jQuery('#mainwp_managesites_add_http_user').val(),
             http_pass:jQuery('#mainwp_managesites_add_http_pass').val()
         });
-        var hint_msg = __('If you are experiencing an issue with connecting your website to your MainWP Dashboard, please check this help document.');
+        var hint_msg = __('If you are experiencing an issue with connecting your website to your MainWP Dashboard, please check <a href="https://mainwp.com/help/category/troubleshooting/adding-a-child-site-issues/" target="_blank">this help document</a>.');
         jQuery.post(ajaxurl, data, function (res_things) {
             response = res_things.response;
             response = jQuery.trim(response);
@@ -4464,7 +4464,7 @@ backup_retry_fail = function(siteId, pData, remoteDestinations, pid, type, subfo
                     }
                     else
                     {
-                        appendToDiv('#managesite-backup-status-text', ' <span class="mainwp-red">ERROR: Backup timed out! <a href="http://docs.mainwp.com/backup-failed-php-ini-settings/">Please check this help document for more information and possible fixes</a></span>');
+                        appendToDiv('#managesite-backup-status-text', ' <span class="mainwp-red">ERROR: Backup timed out! <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>');
                     }
                 }
                 else
@@ -4514,7 +4514,7 @@ backup_retry_fail = function(siteId, pData, remoteDestinations, pid, type, subfo
                 }
                 else
                 {
-                    appendToDiv('#managesite-backup-status-text', ' <span class="mainwp-red">ERROR: Backup timed out! <a href="http://docs.mainwp.com/backup-failed-php-ini-settings/">Please check this help document for more information and possible fixes</a></span>');
+                    appendToDiv('#managesite-backup-status-text', ' <span class="mainwp-red">ERROR: Backup timed out! <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>');
                 }
             }
             else

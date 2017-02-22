@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.7.1
-Stable tag: 3.2.3
+Tested up to: 4.7.2
+Stable tag: 3.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,14 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.3 - 2-22-17 =
+* Added: Check HTTP header response after update feature
+* Added: Backup Extensions support for the Require backup before update feature
+* Added: Support for the MainWP Vulnerability Checker Extension
+* Updated: links to MainWP Documentation
+* Performance:  removed excessive queries  
+* Preventative: security improvements
 
 = 3.2.3 - 1-19-17 =
 * Fixed: an issue with selecting Posts, Pages and Users

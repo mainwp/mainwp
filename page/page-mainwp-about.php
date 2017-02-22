@@ -76,17 +76,12 @@ class MainWP_About {
 		<h3><?php echo $mainWP->getVersion(); ?>&nbsp;<?php _e( 'Changelog', 'mainwp' ); ?></h3>
 		<hr/>
 		<ul>
-			<li>Fixed: an issue with selecting Posts, Pages and Users</li>
-			<li>Fixed: an issue with selecting Plugins and Themes on the Manage Plugins and Manage Themes page</li>
-			<li>Fixed: security checking issue</li>
-			<li>Fixed: multiple PHP Warnings and Notices</li>
-			<li>Added: site Info widget in the individual site overview page</li>
-			<li>Added: PHP Version column in the manage sites table</li>
-			<li>Added: Sync Now button for all online sites in connection status widget</li>
-			<li>Added: verification when user tries to delete Plugins, Pages, Posts, Themes and Users</li>
-			<li>Added: ability to sort Manage Sites table by WP, Plugin and Theme updates column</li>
-			<li>Added: Coding for future WooCommerce Extension</li>
-			<li>Preventative: Security improvements</li>
+			<li>Added: Check HTTP header response after update feature</li>
+			<li>Added: Backup Extensions support for the Require backup before update feature</li>
+			<li>Added: Support for the MainWP Vulnerability Checker Extension</li>
+			<li>Updated: links to MainWP Documentation</li>
+			<li>Performance:  removed excessive queries</li>
+			<li>Preventative: security improvements</li>
 		</ul>
 		<hr/>
 		<h3><?php _e( 'See older versions changelogs', 'mainwp' ); ?>:</h3>

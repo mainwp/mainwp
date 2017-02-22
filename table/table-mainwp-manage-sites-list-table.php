@@ -6,6 +6,8 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
 
 
 class MainWP_Manage_Sites_List_Table extends WP_List_Table {
+	protected $userExtension = NULL;
+
 	function __construct() {
 		parent::__construct( array(
 			'singular' => __( 'site', 'mainwp' ), //singular name of the listed records
@@ -186,7 +188,6 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		$cnt    = 0;
 		if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors && ! $md5Connection ) {
 			$website               = (object) $item;
-			$userExtension         = MainWP_DB::Instance()->getUserExtension();
 			$total_wp_upgrades     = 0;
 			$total_plugin_upgrades = 0;
 			$total_theme_upgrades  = 0;
@@ -239,7 +240,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 					$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
 				}
 
-				$ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
+				$ignored_plugins = json_decode( $this->userExtension->ignored_plugins, true );
 				if ( is_array( $ignored_plugins ) ) {
 					$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
 				}
@@ -253,7 +254,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 					$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
 				}
 
-				$ignored_themes = json_decode( $userExtension->ignored_themes, true );
+				$ignored_themes = json_decode( $this->userExtension->ignored_themes, true );
 				if ( is_array( $ignored_themes ) ) {
 					$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
 				}
@@ -347,7 +348,6 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
         $total_plugin_upgrades = 0;
         if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
 		$website               = (object) $item;
-                    $userExtension         = MainWP_DB::Instance()->getUserExtension();
 		$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
 		if ( $website->is_ignorePluginUpdates ) {
 			$plugin_upgrades = array();
@@ -375,7 +375,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 				$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
 			}
 
-			$ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
+			$ignored_plugins = json_decode( $this->userExtension->ignored_plugins, true );
 			if ( is_array( $ignored_plugins ) ) {
 				$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
 			}
@@ -406,9 +406,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
         $total_theme_upgrades = 0;
         if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
 		$website               = (object) $item;
-                    $userExtension         = MainWP_DB::Instance()->getUserExtension();
-
-                    $theme_upgrades = json_decode( $website->theme_upgrades, true );
+        $theme_upgrades = json_decode( $website->theme_upgrades, true );
 		if ( $website->is_ignoreThemeUpdates ) {
 			$theme_upgrades = array();
 		}
@@ -434,7 +432,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 				$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
 			}
 
-			$ignored_themes = json_decode( $userExtension->ignored_themes, true );
+			$ignored_themes = json_decode( $this->userExtension->ignored_themes, true );
 			if ( is_array( $ignored_themes ) ) {
 				$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
 			}
@@ -662,6 +660,9 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	}
 
 	function prepare_items() {
+		if ( NULL === $this->userExtension ) {
+			$this->userExtension = MainWP_DB::Instance()->getUserExtension();
+		}
 
 		$orderby = 'wp.url';
 
@@ -820,9 +821,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	function get_available_update_siteids() {
 		$site_ids      = array();
 		$websites      = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-		$userExtension = MainWP_DB::Instance()->getUserExtension();
 
-                
 		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 			$hasSyncErrors = ( $website->sync_errors != '' );
 			$cnt           = 0;
@@ -879,7 +878,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 						$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
 					}
 
-					$ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
+					$ignored_plugins = json_decode( $this->userExtension->ignored_plugins, true );
 					if ( is_array( $ignored_plugins ) ) {
 						$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
 					}
@@ -893,7 +892,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 						$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
 					}
 
-					$ignored_themes = json_decode( $userExtension->ignored_themes, true );
+					$ignored_themes = json_decode( $this->userExtension->ignored_themes, true );
 					if ( is_array( $ignored_themes ) ) {
 						$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
 					}

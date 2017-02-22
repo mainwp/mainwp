@@ -864,14 +864,14 @@ public static function renderHeader( $shownPage ) {
 			die( 'FAIL' );
 		}
 
-                if (isset( $information['error'] )) {
-                    die( json_encode( $information ) );
-                }
-                
+        if (isset( $information['error'] )) {
+            die( json_encode( $information ) );
+        }
+
 		if (  ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
 			die( 'FAIL' );
 		}
-                
+
 		die( json_encode( array( 'result' => true ) ) );
 	}
 
@@ -1549,7 +1549,7 @@ public static function renderHeader( $shownPage ) {
 
 	public static function saveTrustedThemeNote() {
 		$slug = urldecode( $_POST['slug'] );
-		$note = $_POST['note'];
+		$note = esc_html( $_POST['note'] );
 
 		$userExtension      = MainWP_DB::Instance()->getUserExtension();
 		$trustedThemesNotes = json_decode( $userExtension->trusted_themes_notes, true );

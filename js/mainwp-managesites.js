@@ -319,14 +319,14 @@ mainwp_managesites_checkBackups = function(sitesToUpdate, siteNames)
                 }
                 if (siteFeedback.length == 0) siteFeedback = undefined;
             }
-            
+
             if (siteFeedback != undefined)
             {
                 var backupContent = jQuery('#managesites-backup-content');
                 var backupPrimary = '';
                 if (response['result']['primary_backup'] && response['result']['primary_backup'] != undefined)
                     backupPrimary = response['result']['primary_backup'];
-                
+
                 if(backupPrimary == '') {
                     jQuery('#managesites-backup-all').show();
                     jQuery('#managesites-backup-ignore').show();
@@ -335,8 +335,8 @@ mainwp_managesites_checkBackups = function(sitesToUpdate, siteNames)
                     jQuery('#managesites-backup-now').attr('href', backupLink).show();
                     jQuery('#managesites-backup-ignore').val(__('Proceed with Updates')).show();
                 }
-                
-                var output = '<span class="mainwp-red">'+__('A full backup has not been taken in the last 7 days for the following sites:')+'</span><br /><br />';
+
+                var output = '<span class="mainwp-red">'+__('A full backup has not been taken in the last days for the following sites:')+'</span><br /><br />';
                 if (backupPrimary == '') { // default backup feature
                     for (var j = 0; j < siteFeedback.length; j++)
                     {
@@ -383,26 +383,26 @@ mainwp_managesites_checkBackups = function(sitesToUpdate, siteNames)
 mainwp_get_primaryBackup_link = function(what, site_id){
     var slug = '';
     switch(what) {
-        case 'backupbuddy':                 
+        case 'backupbuddy':
             slug = 'Extensions-Mainwp-Buddy-Extension&subpage=backup';
-            break;            
-        case 'backupwp':      
+            break;
+        case 'backupwp':
             slug = 'Extensions-Mainwp-Backupwordpress-Extension&tab=schedules';
-            break;            
-        case 'backwpup':            
+            break;
+        case 'backwpup':
             slug = 'Extensions-Mainwp-Backwpup-Extension';
-            break;            
-        case 'updraftplus':            
+            break;
+        case 'updraftplus':
             slug = 'Extensions-Mainwp-Updraftplus-Extension';
             break;
-        default:            
-    }    
-    
+        default:
+    }
+
     var pageSlug = '';
-    
+
     if (slug != '')
         pageSlug = 'admin.php?page=' + slug;
-    
+
     return pageSlug;
 }
 jQuery(document).on('click', '#managesites-backupnow-close', function() {

@@ -784,7 +784,7 @@ class MainWP_Extensions_View {
 					'catalog_id' => '1006044',
 					'group' => array('backup')
 				),
-                        'mainwp-vulnerability-checker-extension' =>
+            'mainwp-vulnerability-checker-extension' =>
 				array(
 					'slug' => 'mainwp-vulnerability-checker-extension',
 					'title' => 'MainWP Vulnerability Checker Extension',

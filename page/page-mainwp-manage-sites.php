@@ -1337,7 +1337,7 @@ class MainWP_Manage_Sites {
                     })
                 </script>
                 
-		</div>                
+		</div>
 		<div id="managesites-backup-box" title="Full backup required" style="display: none; text-align: center">
 			<div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesites-backup-content">
 			</div>
@@ -1593,7 +1593,7 @@ class MainWP_Manage_Sites {
 		if ( isset( $_POST['websiteid'] ) && MainWP_Utility::ctype_digit( $_POST['websiteid'] ) ) {
 			$website = MainWP_DB::Instance()->getWebsiteById( $_POST['websiteid'] );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
-				MainWP_DB::Instance()->updateNote( $website->id, stripslashes( $_POST['note'] ) );
+				MainWP_DB::Instance()->updateNote( $website->id, esc_html( stripslashes( $_POST['note'] ) ) );
 				die( json_encode( array( 'result' => 'SUCCESS' ) ) );
 			} else {
 				die( json_encode( array( 'error' => 'Not your website!' ) ) );

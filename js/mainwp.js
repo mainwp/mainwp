@@ -96,7 +96,7 @@ jQuery(document).ready(function () {
         showThemesList(jQuery(this), false, true);
         return false;
     });
-    
+
 });
 
 postAction = function (elem, what) {
@@ -171,7 +171,7 @@ pluginAction = function (elem, what) {
 
     return false;
 };
- 
+
 /**
  * Themes Widget
  */

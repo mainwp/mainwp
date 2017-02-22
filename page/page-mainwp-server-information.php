@@ -425,6 +425,9 @@ public static function renderFooter( $shownPage ) {
 	}
 
 	protected static function getMainwpVersion() {
+		if ( ( isset( $_SESSION['cachedVersion'] ) ) && ( NULL !== $_SESSION['cachedVersion'] ) && ( ( $_SESSION['cachedTime'] + ( 60 * 30 ) ) > time() ) ) {
+			return $_SESSION['cachedVersion'];
+		}
 		include_once( ABSPATH . '/wp-admin/includes/plugin-install.php' );
 		$api = plugins_api( 'plugin_information', array(
 			'slug'    => 'mainwp',
@@ -432,7 +435,9 @@ public static function renderFooter( $shownPage ) {
 			'timeout' => 60,
 		) );
 		if ( is_object( $api ) && isset( $api->version ) ) {
-			return $api->version;
+			$_SESSION['cachedTime'] = time();
+			$_SESSION['cachedVersion'] = $api->version;
+			return $_SESSION['cachedVersion'];
 		}
 
 		return false;

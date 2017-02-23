@@ -1529,7 +1529,7 @@ class MainWP_Post_Handler {
 			}
 
 			if ( $_POST['saving_status'] == 'posts_col_order' || $_POST['saving_status'] == 'pages_col_order' || $_POST['saving_status'] == 'users_col_order' || $_POST['saving_status'] == 'sites_col_order' ||
-			     $_POST['saving_status'] == 'plugins_col_order' || $_POST['saving_status'] == 'themes_col_order' || 
+			     $_POST['saving_status'] == 'plugins_col_order' || $_POST['saving_status'] == 'themes_col_order' ||
                                 strpos($_POST['saving_status'], '_col_order' ) !== false // for extensions saving column order status
 			) {
 				$value = json_decode(stripslashes($_POST['value']));

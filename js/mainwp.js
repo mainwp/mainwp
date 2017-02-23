@@ -5709,7 +5709,7 @@ mainwppost_postAction = function (elem, what, postType) {
     return false;
 };
 
-mainwp_table_sort_draggable_init = function (table, tableId, pState ) {
+mainwp_table_sort_draggable_init = function (table, tableId, pState, pStatusName ) {
     try{
         savedState = JSON.parse(pState);
     } catch(e) {
@@ -5724,6 +5724,8 @@ mainwp_table_sort_draggable_init = function (table, tableId, pState ) {
         statusName = 'pages_col_order';
     } else if (table == 'user') {
         statusName = 'users_col_order';
+    } else if (typeof pStatusName !== "undefined") {
+        statusName = pStatusName;
     }
 
     jQuery('#' + tableId).dragtable({
@@ -5751,7 +5753,7 @@ mainwp_table_sort_draggable_init = function (table, tableId, pState ) {
 }
 
 
-mainwp_table_draggable_init = function (table, tableId, pState ) {
+mainwp_table_draggable_init = function (table, tableId, pState, pStatusName) {
     try{
         savedState = JSON.parse(pState);
     } catch(e) {
@@ -5765,6 +5767,8 @@ mainwp_table_draggable_init = function (table, tableId, pState ) {
         statusName = 'plugins_col_order';
     } else if (table == 'theme') {
         statusName = 'themes_col_order';
+    } else if (typeof pStatusName !== "undefined") {
+        statusName = pStatusName;
     }
 
     var tblSelector = '#' + tableId;

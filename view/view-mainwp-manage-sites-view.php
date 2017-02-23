@@ -1105,7 +1105,7 @@ class MainWP_Manage_Sites_View {
             if ( $website_id ) {
                 $website = MainWP_DB::Instance()->getWebsiteById( $website_id );
                 MainWP_Main::renderDashboardBody( array($website), null, null, true);
-                $total_vulner = apply_filters('mainwp_vulner_getvulner', $website_id);
+                $total_vulner = apply_filters('mainwp_vulner_getvulner', 0, $website_id);
             }
 
             if ( $total_vulner > 0 ) {

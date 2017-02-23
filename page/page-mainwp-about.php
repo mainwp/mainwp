@@ -82,6 +82,8 @@ class MainWP_About {
 			<li>Updated: links to MainWP Documentation</li>
 			<li>Performance:  removed excessive queries</li>
 			<li>Preventative: security improvements</li>
+			<li>Fixed: an issue with displaying Vulnerability data on individual Overview page when the Extension is not installed</li>
+			<li>Updated: the Vulnerability Extension info on the MainWP Extensions page.</li>
 		</ul>
 		<hr/>
 		<h3><?php _e( 'See older versions changelogs', 'mainwp' ); ?>:</h3>

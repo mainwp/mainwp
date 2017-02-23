@@ -788,12 +788,12 @@ class MainWP_Extensions_View {
 				array(
 					'slug' => 'mainwp-vulnerability-checker-extension',
 					'title' => 'MainWP Vulnerability Checker Extension',
-					'desc' => 'MainWP Vulnerability Checker Extension.',
-					'link' => 'https://mainwp.com/extension/post-plus/',
+					'desc' => 'MainWP Vulnerability Checker extension uses WPScan Vulnerability Database API to bring you information about vulnerable plugins on your Child Sites so you can act accordingly.',
+					'link' => 'https://mainwp.com/extension/vulnerability-checker/',
 					'img' => plugins_url( 'images/extensions/vulnerability-checker.png', dirname( __FILE__ ) ),
 					'product_id' => 'MainWP Vulnerability Checker Extension',
 					'catalog_id' => '12458',
-					'group' => array('admin')
+					'group' => array('security')
 				),
 		);
 	}

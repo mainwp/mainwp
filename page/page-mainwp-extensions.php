@@ -896,8 +896,8 @@ class MainWP_Extensions {
 			}
 
 			return MainWP_Utility::fetchUrlAuthed( $website, $what, $params );
-		} catch ( MainWP_Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		} catch ( MainWP_Exception $e ) {                    
+			return array( 'error' => MainWP_Error_Helper::getErrorMessage($e) );
 		}
 	}
 

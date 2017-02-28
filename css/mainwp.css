@@ -2075,6 +2075,9 @@ body.show-upload-theme #mainwp_wrap-inside .upload-theme,
     border-left: 4px solid #ffb900;
     padding: 1px 12px;
 }
+.mainwp-ui #wpfooter{
+    z-index: 1000;
+}
 .mainwp-no-extensions {
     margin: 0 12px 12px;
 }

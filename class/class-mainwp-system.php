@@ -978,8 +978,10 @@ class MainWP_System {
                     }
 
                     $mail_offline = '';
-
-                    $sitesOffline = MainWP_DB::Instance()->getWebsitesByIds( $sitesHttpCheckIds );
+                    $sitesOffline = array();
+                    if (count($sitesHttpCheckIds) > 0) {
+                        $sitesOffline = MainWP_DB::Instance()->getWebsitesByIds( $sitesHttpCheckIds );
+                    }
                     if (is_array($sitesOffline) && count($sitesOffline) > 0) {
                         foreach($sitesOffline as $site) {
                             if ($site->offline_check_result == -1) {

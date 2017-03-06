@@ -505,7 +505,9 @@ class MainWP_Page {
 			$pages = unserialize( base64_decode( $results[1] ) );
 			unset( $results );
 			foreach ( $pages as $page ) {
+                                $raw_dts = '';
 				if ( isset( $page['dts'] ) ) {
+                                        $raw_dts = $page['dts'];
 					if ( ! stristr( $page['dts'], '-' ) ) {
 						$page['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $page['dts'] ) );
 					}
@@ -574,7 +576,7 @@ class MainWP_Page {
 					</div>
 				</td>
 				<td class="date column-date">
-					<abbr title="<?php echo $page['dts']; ?>"><?php echo $page['dts']; ?></abbr>
+					<abbr raw_value="<?php echo $raw_dts; ?>" title="<?php echo $page['dts']; ?>"><?php echo $page['dts']; ?></abbr>
 				</td>
 				<td class="status column-status"><?php echo self::getStatus( $page['status'] ); ?>
 				</td>

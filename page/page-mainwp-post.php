@@ -598,8 +598,10 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			}
 
 			foreach ( $posts as $post ) {
+                                $raw_dts = '';
 				if ( isset( $post['dts'] ) ) {
-					if ( ! stristr( $post['dts'], '-' ) ) {
+                                        $raw_dts = $post['dts'];
+					if ( ! stristr( $post['dts'], '-' ) ) {                                                
 						$post['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $post['dts'] ) );
 					}
 				}
@@ -719,7 +721,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 									class="comment-count"><abbr title="<?php echo $post['comment_count']; ?>"><?php echo $post['comment_count']; ?></abbr></span></a>
 						</div>
 					</td>
-					<td class="date column-date"><abbr
+					<td class="date column-date"><abbr raw_value="<?php echo $raw_dts; ?>"
 							title="<?php echo $post['dts']; ?>"><?php echo $post['dts']; ?></abbr>
 					</td>
 					<td class="date column-status"><?php echo self::getStatus( $post['status'] ); ?></td>

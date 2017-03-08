@@ -472,7 +472,7 @@ class MainWP_Manage_Sites_View {
 										}
 									}
 								}
-								if ( empty( $val ) ) {
+								if ( is_null( $val ) ) {
 									$val = $default[$x];
 								}
 								$line .= $val;

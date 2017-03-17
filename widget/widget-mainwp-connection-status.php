@@ -44,7 +44,7 @@ class MainWP_Connection_Status {
 
                         $html_online_sites = '';
                         $html_other_sites = '';
-                        
+                        $disconnect_site_ids = array(); // to fix double display
 
                         for ( $j = 0; $j < 3; $j ++ ) {
                             @MainWP_DB::data_seek( $websites, 0 );
@@ -119,7 +119,8 @@ class MainWP_Connection_Status {
                                 if ( $j == $UP ) {
                                     $top_up_row = false;
                                     $html_online_sites .= $output;
-                                } else {
+                                } else if (!in_array($website->id, $disconnect_site_ids)) {  
+                                    $disconnect_site_ids[] = $website->id;                                    
                                     $top_row = false;
                                     $html_other_sites .= $output;
                                 }

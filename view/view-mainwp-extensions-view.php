@@ -2,20 +2,20 @@
 
 class MainWP_Extensions_View {
 	public static function initMenu() {
-		return add_submenu_page( 'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
+                $page =  add_submenu_page( 'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
 			MainWP_Extensions::getClassName(),
 			'render'
-		) );
+		) );    
+                MainWP_System::add_sub_left_menu(__('Extensions', 'mainwp'), 'mainwp_tab', 'Extensions', 'admin.php?page=Extensions', '<i class="fa fa-plug"></i>', '' );			
+                return $page;
 	}
-
-	public static function renderHeader( $shownPage, &$extensions ) {
+        // not used ?
+	public static function renderHeader( $shownPage, &$extensions ) {     
+                MainWP_UI::render_left_menu();
 		?>
-		<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
-				src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50"
-				alt="MainWP"/></a>
-		<h2><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h2>
-		<div style="clear: both;"></div><br/><br/>
+		<div class="mainwp-wrap">
+		
+		<h1 class="mainwp-margin-top-0"><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h1>
 
 		<div class="mainwp-tabs" id="mainwp-tabs">
 			<a class="nav-tab pos-nav-tab" href="admin.php?page=Extensions"><?php _e( 'Manage Extensions', 'mainwp' ); ?></a>

@@ -71,6 +71,8 @@ class MainWP_Plugins {
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Plugins' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
+                
+                MainWP_Plugins::init_sub_sub_left_menu(self::$subPages);
 	}
 
 	public static function on_load_page() {
@@ -132,15 +134,58 @@ class MainWP_Plugins {
 		<?php
 	}
 
+        static function init_sub_sub_left_menu( $subPages = array() ) {            
+                MainWP_System::add_sub_left_menu(__('Plugins', 'mainwp'), 'mainwp_tab', 'PluginsManage', 'admin.php?page=PluginsManage', '<i class="fa fa-plug"></i>', '' );			
+                
+                $init_sub_subleftmenu = array(                
+                        array(  'title' => __('Manage Plugins', 'mainwp'), 
+                                'parent_key' => 'PluginsManage', 
+                                'href' => 'admin.php?page=PluginsManage',
+                                'slug' => 'PluginsManage',
+                                'right' => ''
+                            ), 
+                        array(  'title' => __('Install', 'mainwp'), 
+                                'parent_key' => 'PluginsManage', 
+                                'href' => 'admin.php?page=PluginsInstall',
+                                'slug' => 'PluginsInstall',
+                                'right' => 'install_plugins'
+                            ),
+                    array(  'title' => __('Auto Updates', 'mainwp'), 
+                                'parent_key' => 'PluginsManage', 
+                                'href' => 'admin.php?page=PluginsAutoUpdate',
+                                'slug' => 'PluginsAutoUpdate',
+                                'right' => ''
+                            ),
+                    array(  'title' => __('Ignored Updates', 'mainwp'), 
+                                'parent_key' => 'PluginsManage', 
+                                'href' => 'admin.php?page=PluginsIgnore',
+                                'slug' => 'PluginsIgnore',
+                                'right' => ''
+                            ),
+                    array(  'title' => __('Ignored Abandoned', 'mainwp'), 
+                                'parent_key' => 'PluginsManage', 
+                                'href' => 'admin.php?page=PluginsIgnoredAbandoned',
+                                'slug' => 'PluginsIgnoredAbandoned',
+                                'right' => ''
+                            )                   
+                );
+                MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'PluginsManage', 'Plugins');
+                
+                foreach($init_sub_subleftmenu as $item) {
+                    MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
+                }
+        }
+        
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 public static function renderHeader( $shownPage ) {
+        MainWP_UI::render_left_menu();
 	?>
-	<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
-		<h2><i class="fa fa-plug"></i> <?php _e( 'Plugins', 'mainwp' ); ?></h2>
-		<div style="clear: both;"></div><br/>
+	<div class="mainwp-wrap">
+		
+		<h1 class="mainwp-margin-top-0"><i class="fa fa-plug"></i> <?php _e( 'Plugins', 'mainwp' ); ?></h1>
+		
 		<div id="mainwp-tip-zone">
 			<?php if ( $shownPage == 'Manage' ) { ?>
 				<?php if ( MainWP_Utility::showUserTip( 'mainwp-manageplugins-tips' ) ) { ?>

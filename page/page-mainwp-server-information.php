@@ -37,14 +37,19 @@ class MainWP_Server_Information {
 			MainWP_Server_Information::getClassName(),
 			'renderActionLogs',
 		) );
+                MainWP_Server_Information::init_sub_sub_left_menu();
 	}
 
+        static function init_sub_sub_left_menu() {            
+                MainWP_System::add_sub_left_menu(__('Server Information', 'mainwp'), 'mainwp_tab', 'ServerInformation', 'admin.php?page=ServerInformation', '<i class="fa fa-server"></i>', '' );                            
+        }
+        
 	public static function renderHeader( $shownPage ) {
+                MainWP_UI::render_left_menu();
 		?>
-		<div class="wrap"><a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
-				src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
-		<h2><i class="fa fa-server"></i> <?php _e( 'Server Information', 'mainwp' ); ?></h2>
-		<div class="mainwp-clear"></div><br/>
+		<div class="mainwp-wrap">
+
+		<h1 class="mainwp-margin-top-0"><i class="fa fa-server"></i> <?php _e( 'Server Information', 'mainwp' ); ?></h1>
 
 		<div class="mainwp-clear"></div>
 		<div class="mainwp-tabs" id="mainwp-tabs">

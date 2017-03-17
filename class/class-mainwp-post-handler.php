@@ -136,10 +136,11 @@ class MainWP_Post_Handler {
 		//Page: ManageTips
 		$this->addAction( 'mainwp_managetips_update', array( &$this, 'mainwp_managetips_update' ) ); //ok
 		$this->addAction( 'mainwp_tips_update', array( &$this, 'mainwp_tips_update' ) ); //ok
-        $this->addAction( 'mainwp_notice_status_update', array( &$this, 'mainwp_notice_status_update' ) );
+                $this->addAction( 'mainwp_notice_status_update', array( &$this, 'mainwp_notice_status_update' ) );                
 		$this->addAction( 'mainwp_dismiss_twit', array( &$this, 'mainwp_dismiss_twit' ) );
 		$this->addAction( 'mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
-
+                $this->addAction( 'mainwp_status_saving', array( &$this, 'mainwp_status_saving' ) );
+                
 		add_action( 'wp_ajax_mainwp_twitter_dashboard_action', array(
 			&$this,
 			'mainwp_twitter_dashboard_action',
@@ -585,6 +586,33 @@ class MainWP_Post_Handler {
 		die( 1 );
 	}
 
+        function mainwp_status_saving() {
+		$this->secure_request( 'mainwp_status_saving' );
+                $values = get_option('mainwp_status_saved_values');                  
+                if (!isset($_POST['status']) || !isset($_POST['key'])) {
+                    die(-1);
+                }
+                
+                // open one menu item close all other items
+                if ($_POST['status'] == 'status_leftmenu' && in_array($_POST['key'], array('mainwp_tab', 'Extensions', 'childsites_menu' ))) {
+                    if (isset($values['status_leftmenu']['mainwp_tab']))
+                        unset($values['status_leftmenu']['mainwp_tab']);
+                    if (isset($values['status_leftmenu']['Extensions']))
+                        unset($values['status_leftmenu']['Extensions']);
+                    if (isset($values['status_leftmenu']['childsites_menu']))
+                        unset($values['status_leftmenu']['childsites_menu']);
+                }
+                
+                if (!isset($_POST['value']) || empty($_POST['value'])) {
+                    if (isset($values[$_POST['status']][$_POST['key']]))
+                        unset($values[$_POST['status']][$_POST['key']]);
+                } else {
+                    $values[$_POST['status']][$_POST['key']] = $_POST['value'];
+                }
+                update_option('mainwp_status_saved_values', $values);
+                die(1);
+	}
+        
 	function mainwp_tips_update() {
 		$this->secure_request( 'mainwp_tips_update' );
 

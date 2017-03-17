@@ -50,14 +50,39 @@ class MainWP_Main {
 			if ( ! MainWP_Utility::ctype_digit( $val ) ) {
 				update_user_option( $current_user->ID, 'screen_layout_' . $this->dashBoard, 2, true );
 			}
-			add_action( 'load-' . $this->dashBoard, array( &$this, 'on_load_page' ) );
+			add_action( 'load-' . $this->dashBoard, array( &$this, 'on_load_page' ) );                        
+                        MainWP_Main::init_left_menu();
 		}
 		//        else
 		//        {
 		//            $this->dashBoard = add_menu_page('MainWP', 'MainWP', 'read', 'mainwp_tab', array($this, 'require_registration'), plugins_url('images/mainwpicon.png', dirname(__FILE__)), '2.0001');
 		//        }
 	}
-
+        
+           
+        static function init_left_menu( $subPages = array() ) {   
+                $init_leftmenu = array(                
+                    array(  'title' => __('MainWP Dashboard', 'mainwp'), 
+                            'key' => 'mainwp_tab', 
+                            'href' => 'admin.php?page=mainwp_tab'                            
+                        ), 
+                    array(  'title' => __('MainWP Extensions', 'mainwp'), 
+                            'key' => 'Extensions', 
+                            'href' => 'admin.php?page=Extensions'                            
+                        ),
+                    array(  'title' => __('Child Sites', 'mainwp'), 
+                            'key' => 'childsites_menu', 
+                            'href' => 'admin.php?page=managesites'                                                  
+                        )
+                );
+                   
+                foreach($init_leftmenu as $item) {
+                    MainWP_System::add_left_menu($item['title'], $item['key'], $item['href'], $item['desc']);
+                }
+                MainWP_System::add_sub_left_menu(__('Overview', 'mainwp'), 'mainwp_tab', 'mainwp_tab', 'admin.php?page=mainwp_tab', '<i class="fa fa-tachometer"></i>', '' );
+        }
+      
+        
 	function on_load_page() {
 		wp_enqueue_script( 'common' );
 		wp_enqueue_script( 'wp-lists' );
@@ -141,7 +166,7 @@ class MainWP_Main {
 		<?php
 	}
 
-	function on_show_page() {
+	function on_show_page() {                  
 		if ( ! mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
 			mainwp_do_not_have_permissions( __( 'global dashboard', 'mainwp' ) );
 
@@ -149,14 +174,13 @@ class MainWP_Main {
 		}
 
 		global $screen_layout_columns;
+                MainWP_UI::render_left_menu();
 		?>
-		<div id="mainwp_tab-general" class="wrap">
-			<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
-
-			<h2><i class="fa fa-tachometer"></i> <?php _e( 'Overview', 'mainwp' ); ?></h2>
-
-			<div style="clear: both;"></div>
-			<br/><br/>
+		<div id="mainwp_tab-general" class="mainwp-wrap">
+			
+			<h1 class="mainwp-margin-top-0"><i class="fa fa-tachometer"></i> <?php _e( 'Overview', 'mainwp' ); ?></h1>
+			<br/>
+			
 			<?php if ( MainWP_Utility::showUserTip( 'mainwp-dashboard-tips' ) ) { ?>
 				<div id="mainwp-tip-zone">
 					<div class="mainwp-tips mainwp-notice mainwp-notice-blue">

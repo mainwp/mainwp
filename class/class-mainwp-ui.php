@@ -291,14 +291,11 @@ class MainWP_UI {
 	}
 
 	public static function renderHeader( $title, $icon_url ) {
+                MainWP_UI::render_left_menu();
 		?>
-		<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank">
-			<img src="<?php echo esc_attr( plugins_url( 'images/logo.png', dirname( __FILE__ ) ) ); ?>" height="50" alt="MainWP"/>
-		</a>
-		<img src="<?php echo esc_attr( $icon_url ); ?>" style="float: left; margin-right: 8px; margin-top: 7px ;" alt="<?php echo esc_attr( $title ); ?>" height="32"/>
+		<div class="mainwp-wrap">
 		<h2><?php echo esc_html( $title ); ?></h2>
-		<div style="clear: both;"></div><br/>
+		<div style="clear: both;"></div>
 		<div class="clear"></div>
 		<div class="wrap">
 		<?php
@@ -316,4 +313,156 @@ class MainWP_UI {
 		<img src="<?php echo esc_attr( plugins_url( $img, dirname( __FILE__ ) ) ); ?>" class="<?php echo esc_attr( $class ); ?>" alt="<?php echo esc_attr( $alt ); ?>" <?php echo esc_attr( $height == null ? '' : 'height="' . $height . '"' ); ?> />
 		<?php
 	}
+        
+    public static function render_left_menu( ) {    
+        if ( !get_option( 'mainwp_disable_wp_main_menu' ) )
+            return;           
+        global $mainwp_leftmenu, $mainwp_sub_leftmenu, $mainwp_sub_subleftmenu, $plugin_page;             
+        
+        $first = true;     
+        $values = get_option('mainwp_status_saved_values');
+        $menuStatus = isset($values['status_leftmenu']) ? $values['status_leftmenu'] : array(); 
+                
+        ?>            
+        <div class="mainwp_leftmenu_wrap">                    
+                <a href="https://mainwp.com" id="mainwpmenulogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
+                <div class="mainwp_leftmenu_content">     
+                <ul>                       
+                    <?php           
+                    foreach($mainwp_leftmenu as $key => $item) {
+                        $class = array();
+                        $class[] = 'mainwp-menu-item';
+
+                        if ( $first ) {
+                                $class[] = 'mainwp-menu-first-item';
+                                $first = false;
+                        }                        
+                        $title = wptexturize( $item[0] );
+                        $item_key = $item[1];
+                        $submenu_items = array();
+                        if ( ! empty( $mainwp_sub_leftmenu[$item_key] ) ) {
+                            $class[] = 'mainwp-menu-has-submenu';
+                            $submenu_items = $mainwp_sub_leftmenu[$item_key];
+                        } 
+
+                        if ($item_key == 'childsites_menu') {
+                            $class[] = 'menu-sites-wrap';
+                        }
+
+                        $arrow = '<span class="handlediv"></span>';                            
+                        
+                        $forced_child_menu_open_to_fix = false;
+                        if ($plugin_page == 'managesites' && (count($_GET) > 0) && !isset($_GET['do'])) {
+                            $forced_child_menu_open_to_fix = true;
+                        }
+                                               
+                        if (!isset($menuStatus[$item_key]) || empty($menuStatus[$item_key]))
+                            $class[] = 'closed';
+                            
+                        $class = $class ? ' class="' . join( ' ', $class ) . '"' : '';                        
+                        echo "\n\t<li$class item-key=\"$item_key\">";
+                        echo "<div class='handle'><div class='mainwp-menu-name'>$title</div>$arrow</div>";
+                        if ( ! empty( $submenu_items ) ) {                            
+                            echo "\n\t<ul class='mainwp-menu-sub-wrap'>";  
+                            if ($item_key == 'childsites_menu') { 
+                                ?>
+                                <li class="mainwp-menu-sub-item-filer">
+                                   <div id="mainwp-sites-menu-filter">
+                                           <input id="mainwp-lefmenu-sites-filter" style="margin-top: .5em; width: 100%;" type="text" value="" placeholder="<?php esc_attr_e( 'Type here to filter sites', 'mainwp' ); ?>" />
+                                   </div>
+                                </li>
+                               <?php
+                            }
+                            
+                            foreach($submenu_items as $sub_item) {                                
+                                $title = wptexturize($sub_item[0]);
+                                $sub_key = $sub_item[1];
+                                $href = $sub_item[2];
+                                $icon = isset($sub_item[3]) && !empty($sub_item[3]) ? $sub_item[3] . ' ' : '';                                
+                                //$desc = isset($sub_item[4]) && !empty($sub_item[4]) ? '<div class="mainwp-menu-item-desc">' . $sub_item[4] . '</div>' : '';                        
+
+                                $arrow = '<span class="handlediv"></span>';  
+                                $has_sub = true;
+                                if(!isset($mainwp_sub_subleftmenu[$sub_key]) || empty($mainwp_sub_subleftmenu[$sub_key])) {
+                                    $arrow = '';
+                                    $has_sub = false;
+                                }                                
+                                if ($item_key == 'childsites_menu') {
+                                    $arrow = '';
+                                }                                
+                                $sub_closed = '';
+                                if (!isset($menuStatus[$item_key . '-' . $sub_key]) || empty($menuStatus[$item_key . '-' . $sub_key]))
+                                    $sub_closed = 'closed';
+                                
+                                echo "<li class='mainwp-menu-sub-item $sub_closed " . (empty($icon) ? 'no-icon' : '') . "' item-key=\"$item_key-$sub_key\"><div class='mainwp-menu-name'>$icon<a href='{$href}'$class>$title</a></div>$arrow";
+                                if ($has_sub) {     
+                                    self::render_sub_sub_left_menu($sub_key, $item_key );                                    
+                                }
+                                echo "</li>";
+                            }  
+                            echo "</ul>";
+                        } else {
+                            echo "\n\t<ul class='mainwp-menu-sub-wrap'>"; 
+                            echo "<li class='mainwp-menu-sub-item closed'><div class='mainwp-menu-name'>&nbsp;</div></li>";
+                            echo "</ul>";
+                        }
+                        echo "\n\t</li>";
+                    }
+                    ?>
+                </ul>
+            </div>  
+        </div>   
+        <?php
+}
+    
+    public static function render_sub_sub_left_menu($parent_key, $item_key = '') { 
+        if(empty($parent_key))
+            return;        
+        global $mainwp_sub_subleftmenu;                                      
+        $submenu_items = $mainwp_sub_subleftmenu[$parent_key];
+        
+        if (!is_array($submenu_items) || count($submenu_items) == 0)
+            return;
+        
+        if ($item_key == 'childsites_menu') {
+            echo '<div class="leftmenu_sites_actions">';
+             foreach($submenu_items as $sub_key => $sub_items ) {
+                $title = $sub_items[0];
+                $href = $sub_items[1];
+                $right = $sub_items[2];
+                if (empty($right) || (!empty($right) && mainwp_current_user_can( $right_group, $right ) )) { 
+                ?>
+                    <a href="<?php echo $href; ?>" class="mainwp-submenu"><?php echo $title; ?></a>
+                <?php 
+                }
+             }   
+             echo '</div>';
+             echo '<div class="clear"></div>';
+            return;
+        }
+        
+                  
+        echo '<ul class="mainwp-menu-sub2-wrap">';            
+        foreach($submenu_items as $sub_key => $sub_items ) {
+            $title = $sub_items[0];
+            $href = $sub_items[1];
+            $right = $sub_items[2];
+
+            $right_group = 'dashboard';
+
+            if (!empty($right)) {                    
+               if (strpos($right, 'extension_') === 0) {
+                  $right_group = 'extension';
+                  $right = str_replace('extension_', '', $right);
+               }
+            }                 
+            if (empty($right) || (!empty($right) && mainwp_current_user_can( $right_group, $right ) )) {                     
+                ?>
+                    <li class="mainwp-menu-sub2-item"><div class="mainwp-menu-name"><a href="<?php echo $href; ?>" class="mainwp-submenu"><?php echo $title; ?></a></div></li>                                
+                <?php                     
+            }
+        }  
+        echo "</ul>";
+        
+    }
 }

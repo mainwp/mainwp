@@ -19,7 +19,7 @@ class MainWP_Manage_Groups {
 			return;
 		}
 		?>
-		<div class="wrap">
+		
 			<?php do_action( 'mainwp-pageheader-sites', 'ManageGroups' ); ?>			
 			<?php MainWP_Tours::renderGroupsTour(); ?>
 			<div class="mainwp-notice mainwp-notice-blue">
@@ -65,7 +65,7 @@ class MainWP_Manage_Groups {
 			</div>
 			<input type="button" id="mainwp-save-group-selection" name="Save selection" value="<?php _e( 'Save Selection', 'mainwp' ); ?>" class="managegroups-saveAll button-primary button button-hero"/>
 			<span id="managegroups-saved"><?php _e( 'Saved', 'mainwp' ); ?></span>
-		</div>
+		
 		<?php do_action( 'mainwp-pagefooter-sites', 'ManageGroups' ); ?>
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {

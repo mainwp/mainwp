@@ -19,8 +19,8 @@ class MainWP_Hooks {
 		add_action( 'mainwp_activePlugin', array( &$this, 'activePlugin' ), 10, 0 );
 		add_action( 'mainwp_deactivePlugin', array( &$this, 'deactivePlugin' ), 10, 0 );
 		add_action( 'mainwp_upgradePluginTheme', array( &$this, 'upgradePluginTheme' ), 10, 0 );
-        add_action( 'mainwp_deletePlugin', array( &$this, 'deletePlugin' ), 10, 0 );
-        add_action( 'mainwp_deleteTheme', array( &$this, 'deleteTheme' ), 10, 0 );
+                add_action( 'mainwp_deletePlugin', array( &$this, 'deletePlugin' ), 10, 0 );
+                add_action( 'mainwp_deleteTheme', array( &$this, 'deleteTheme' ), 10, 0 );
 
 		//Internal hook - deprecated
 		add_filter( 'mainwp_getUserExtension', array( &$this, 'getUserExtension' ) );
@@ -38,7 +38,7 @@ class MainWP_Hooks {
 
 		add_filter( 'mainwp_getmetaboxes', array( &$this, 'getMetaBoxes' ), 10, 0 );
 		add_filter( 'mainwp_getnotificationemail', array( 'MainWP_Utility', 'getNotificationEmail' ), 10, 0 );
-        add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
+                add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array(
 			MainWP_Extensions::getClassName(),
 			'isExtensionAvailable',
@@ -50,8 +50,9 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getactivateextensionnotice', array( &$this, 'get_activate_extension_notice' ), 10, 1 );
 		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
 		add_action( 'mainwp_do_meta_boxes', array( &$this, 'mainwp_do_meta_boxes' ), 10, 1 );
-        add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
-        add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
+                add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
+                add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
+                add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hookAddSubLeftMenu' ), 10, 6 );
 	}
 
 	public function mainwp_log_debug( $pText ) {
@@ -123,6 +124,10 @@ class MainWP_Hooks {
         }
         return $ret;
     }
+    
+    public function hookAddSubLeftMenu($title, $parent_key, $slug, $href, $icon = '', $desc = '' ) {
+        MainWP_System::add_sub_left_menu($title, $parent_key, $slug, $href, $icon, $desc );			
+    }    
 
     public static function updateWPSite( $params ) {
 		if ( ! isset( $params['websiteid'] ) || !MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {

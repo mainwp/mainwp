@@ -103,7 +103,9 @@ class MainWP_Sync {
 		);
 
 		$done = false;
-
+                
+                $information = apply_filters('mainwp_before_save_sync_result', $information);
+                
 		if ( isset( $information['siteurl'] ) ) {
 			$websiteValues['siteurl'] = $information['siteurl'];
 			$done                     = true;

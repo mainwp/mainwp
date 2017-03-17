@@ -74,6 +74,8 @@ class MainWP_Settings {
 				add_submenu_page('mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Settings' . $subPage['slug'], $subPage['callback']);
 			}
 		}
+                
+                MainWP_Settings::init_sub_sub_left_menu(self::$subPages);
 	}
 
 	public static function on_load_page() {
@@ -170,17 +172,25 @@ class MainWP_Settings {
 		}
 	}
 
+        static function init_sub_sub_left_menu( $subPages = array() ) {            
+                MainWP_System::add_sub_left_menu(__('Settings', 'mainwp'), 'mainwp_tab', 'Settings', 'admin.php?page=Settings', '<i class="fa fa-cogs"></i>', '' );			                
+                $init_sub_subleftmenu = array();
+                MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'ThemesManage', 'Themes');                
+                foreach($init_sub_subleftmenu as $item) {
+                    MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
+                }              
+        }        
+        
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function renderHeader($shownPage) {
+                MainWP_UI::render_left_menu();
 		?>
-		<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
-				src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
-				alt="MainWP"/></a>
-		<h2><i class="fa fa-cogs"></i> <?php _e('MainWP Settings', 'mainwp'); ?></h2>
-		<div style="clear: both;"></div><br/>
+		<div class="mainwp-wrap">
+		
+		<h1 class="mainwp-margin-top-0"><i class="fa fa-cogs"></i> <?php _e('MainWP Settings', 'mainwp'); ?></h1>
+		
 		<div id="mainwp-tip-zone">
 			<?php if ($shownPage == '') { ?>
 				<?php if (MainWP_Utility::showUserTip('mainwp-settings-tips')) { ?>
@@ -573,6 +583,16 @@ class MainWP_Settings {
 						<input type="checkbox" name="mainwp_hide_twitters_message"
 						       id="mainwp_hide_twitters_message" <?php echo( ( get_option('mainwp_hide_twitters_message', 0) == 1 ) ? 'checked="true"' : '' ); ?>/>
 						<label for="mainwp_hide_twitters_message"></label>
+					</div>
+				</td>
+			</tr>
+                        <tr>
+				<th scope="row"><?php _e('Show MainWP Custom Menu', 'mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip(__('If enabled, the MainWP Plugin will collapse the WordPress Admin menu and replace it with the custom MainWP Menu.', 'mainwp')); ?></th>
+				<td>
+					<div class="mainwp-checkbox">
+						<input type="checkbox" name="mainwp_disable_wp_main_menu"
+						       id="mainwp_disable_wp_main_menu" <?php echo( ( get_option('mainwp_disable_wp_main_menu', 0) == 1 ) ? 'checked="true"' : '' ); ?>/>
+						<label for="mainwp_disable_wp_main_menu"></label>
 					</div>
 				</td>
 			</tr>

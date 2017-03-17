@@ -100,10 +100,9 @@ class MainWP_Api_Manager_Plugin_Update {
 	 * @return object $response
 	 */
 	public function plugin_information( $args, $bulk_check = false ) {
-        $wc_api = $bulk_check ? false : true;
+                $wc_api = $bulk_check ? false : true;
 		$target_url = $this->create_upgrade_api_url( $args, $wc_api );
-		$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
-
+		$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;                
 		$request = wp_remote_get( $target_url, array( 'timeout' => 50, 'sslverify' => $apisslverify ) );
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {

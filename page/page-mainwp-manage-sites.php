@@ -73,19 +73,20 @@ class MainWP_Manage_Sites {
 		/**
 		 * This hook allows you to add extra sub pages to the Sites page via the 'mainwp-getsubpages-sites' filter.
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-sites
-		 */
+		 */                
 		self::$subPages = apply_filters( 'mainwp-getsubpages-sites', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
 				$_page = add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'ManageSites' . $subPage['slug'], $subPage['callback'] );
 				if ( isset( $subPage['on_load_callback'] ) && !empty($subPage['on_load_callback'])) {
 					add_action( 'load-' . $_page, $subPage['on_load_callback']);
-				}
+				}                                
 			}
-		}
+		}                     
+                MainWP_Manage_Sites_View::init_sub_sub_left_menu(self::$subPages);
 	}
-
-	public static function initMenuSubPages() {
+        
+        public static function initMenuSubPages() {
 		MainWP_Manage_Sites_View::initMenuSubPages( self::$subPages );
 	}
 	

@@ -8,14 +8,14 @@ class MainWP_About {
 	public static function init() {
 
 	}
-
+        // not used ?
 	public static function initMenu() {
 		add_submenu_page( 'mainwp_tab', __( 'About MainWP', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'About MainWP', 'mainwp' ) . '</div>', 'read', 'mainwp_about', array(
 			MainWP_About::getClassName(),
 			'render',
 		) );
 	}
-
+        
 	public static function render() {
 		global $mainWP;
 

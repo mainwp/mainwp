@@ -38,7 +38,7 @@ class MainWP_Page {
 		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages','mainwp' ), '<span id="mainwp-Pages">'.__( 'Pages','mainwp' ).'</span>', 'read', 'PageBulkManage', array( MainWP_Page::getClassName(), 'render' ) );
 		add_action( 'load-' . $_page, array(MainWP_Page::getClassName(), 'on_load_page'));			
 		add_submenu_page( 'mainwp_tab', __( 'Pages','mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ). '</div>', 'read', 'PageBulkAdd', array( MainWP_Page::getClassName(), 'renderBulkAdd' ) );			
-        add_submenu_page( 'mainwp_tab', __( 'Pages','mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Page', 'mainwp' ). '</div>', 'read', 'PageBulkEdit', array( MainWP_Page::getClassName(), 'renderBulkEdit' ) );
+                add_submenu_page( 'mainwp_tab', __( 'Pages','mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Page', 'mainwp' ). '</div>', 'read', 'PageBulkEdit', array( MainWP_Page::getClassName(), 'renderBulkEdit' ) );
 		add_submenu_page( 'mainwp_tab', __( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( MainWP_Page::getClassName(), 'posting' ) ); //removed from menu afterwards
 		
 
@@ -51,7 +51,8 @@ class MainWP_Page {
 			foreach ( self::$subPages as $subPage ) {
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Page' . $subPage['slug'], $subPage['callback'] );
 			}
-		}
+		}                
+                MainWP_Page::init_sub_sub_left_menu(self::$subPages);                
 	}
 
 
@@ -82,6 +83,30 @@ class MainWP_Page {
 		<?php
 	}
 
+        static function init_sub_sub_left_menu( $subPages = array() ) {            
+                MainWP_System::add_sub_left_menu(__('Pages', 'mainwp'), 'mainwp_tab', 'PageBulkManage', 'admin.php?page=PageBulkManage', '<i class="fa fa-file"></i>', '' );			
+                
+                $init_sub_subleftmenu = array(                
+                        array(  'title' => __('Manage Pages', 'mainwp'), 
+                                'parent_key' => 'PageBulkManage', 
+                                'href' => 'admin.php?page=PageBulkManage',
+                                'slug' => 'PageBulkManage',
+                                'right' => 'manage_pages'
+                            ), 
+                        array(  'title' => __('Add New', 'mainwp'), 
+                                'parent_key' => 'PageBulkManage', 
+                                'href' => 'admin.php?page=PageBulkAdd',
+                                'slug' => 'PageBulkAdd',
+                                'right' => 'manage_pages'
+                            )
+                );
+                MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'PageBulkManage', 'Page');
+                
+                foreach($init_sub_subleftmenu as $item) {
+                    MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
+                }
+        }
+        
 	public static function on_load_page() {		
 		MainWP_System::enqueue_postbox_scripts();		
 		self::add_meta_boxes();	
@@ -144,11 +169,12 @@ class MainWP_Page {
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function renderHeader( $shownPage, $post_id = null ) {
+                MainWP_UI::render_left_menu();
 		?>
-		<div class="wrap">
-			<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP" /></a>
-			<h2><i class="fa fa-file"></i> <?php _e( 'Pages','mainwp' ); ?></h2>
-			<div style="clear: both;"></div><br/>
+		<div class="mainwp-wrap">
+			
+			<h1 class="mainwp-margin-top-0"><i class="fa fa-file"></i> <?php _e( 'Pages','mainwp' ); ?></h1>
+			
 			<div id="mainwp-tip-zone">
 				<?php if ( $shownPage == 'BulkManage' ) { ?>
 					<?php if ( MainWP_Utility::showUserTip( 'mainwp-managepage-tips' ) ) { ?>
@@ -469,6 +495,7 @@ class MainWP_Page {
 				'status' => $status,
 				'maxRecords' => ((get_option( 'mainwp_maximumPages' ) === false) ? 50 : get_option( 'mainwp_maximumPages' )),
 			);
+                        $post_data = apply_filters('mainwp_get_all_pages_data', $post_data);
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_pages', $post_data, array( MainWP_Page::getClassName(), 'PagesSearch_handler' ), $output );
 		}
 

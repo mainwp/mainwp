@@ -11,8 +11,9 @@ class MainWP_Child_Scan {
 	}
 
 	public static function renderHeader( $shownPage ) {
+                MainWP_UI::render_left_menu();
 		?>
-		<div class="wrap">
+		<div class="mainwp-wrap">
 			<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank">
 				<img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/>
 			</a>

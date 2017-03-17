@@ -7691,6 +7691,67 @@ mainwp_get_blogroll = function(reLoad) {
     });
 };
 
+jQuery(document).ready(function() {    
+    jQuery('.mainwp_leftmenu_content').on("click", '.mainwp-menu-item div.handle', function(event){        
+        var pr = jQuery( this ).closest('li.mainwp-menu-item');
+        var closed = pr.hasClass('closed');        
+        jQuery( '.mainwp_leftmenu_content li.mainwp-menu-item' ).addClass('closed');
+        if (closed) {
+            pr.removeClass( 'closed' ); 
+        } else {
+            pr.addClass( 'closed' ); 
+        }        
+        mainwp_leftmenu_change_status(pr, closed);            
+    });
+    
+    jQuery( '.mainwp_leftmenu_content .mainwp-menu-sub-item .handlediv' ).live('click', function () {
+            var pr = jQuery( this ).closest('li');
+            var closed = pr.hasClass('closed');   
+            if (closed) {
+                pr.removeClass( 'closed' ); 
+            } else {
+                pr.addClass( 'closed' ); 
+            }
+            
+            mainwp_leftmenu_change_status(pr, closed);
+            
+    }); 
+    mainwp_leftmenu_change_status = function(row, value) {
+        console.log(row);
+        var data = {
+            action:'mainwp_status_saving',
+            status: 'status_leftmenu',
+            key: jQuery(row).attr('item-key'),
+            value: value ? 1 : 0 // 1 open
+        };
+        jQuery.post(ajaxurl, mainwp_secure_data(data), function (res) {                
+        });
+    };
+})
 
 
+
+jQuery(document).on('keyup', '#mainwp-lefmenu-sites-filter', function() {    
+    jQuery('li.mainwp-menu-item').addClass('closed');
+    jQuery('li.menu-sites-wrap').removeClass('closed');
+    
+    var filter = jQuery(this).val();
+    var siteItems = jQuery('.menu-sites-wrap').find('.mainwp-menu-sub-item');
+    for (var i = 0; i < siteItems.length; i++)
+    {
+        var currentElement = jQuery(siteItems[i]);
+        var value = currentElement.find('a.mainwp-menu-item').text();
+        if (value.indexOf(filter) > -1)
+        {
+            currentElement.show();
+        }
+        else
+        {
+            currentElement.hide();
+            
+        }
+    }
+//    mainwp_managebackups_updateExcludefolders();
+//    mainwp_newpost_updateCategories();
+});
 

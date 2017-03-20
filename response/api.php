@@ -1,5 +1,5 @@
 <?php
-
+define('DOING_CRON', true);
 function liveReportsResponderClasses() {
 	if ( file_exists( '../class/class-mainwp-creport.php' ) ) {
 		include_once '../class/class-mainwp-creport.php';
@@ -210,7 +210,7 @@ if ( isset( $_POST[ 'action' ] ) && ( 'getallsites' == $_POST['action'] ) ) {
 			liveReportsResponderClasses();
 			global $wpdb;
 			$result = array();
-			$get_allsites = $wpdb->get_results( $wpdb->prepare( "SELECT `site_url` FROM `{$wpdb->prefix}mainwp_client_report_site_token` WHERE token_id= %d ORDER BY `id` DESC", 12 ) );
+			$get_allsites = $wpdb->get_results( $wpdb->prepare( "SELECT `site_url`,`token_value` FROM `{$wpdb->prefix}mainwp_client_report_site_token` WHERE token_id= %d ORDER BY `id` DESC", 12 ) );
 
 			if ( $get_allsites ) {
 				foreach ( $get_allsites as $site ) {
@@ -221,7 +221,7 @@ if ( isset( $_POST[ 'action' ] ) && ( 'getallsites' == $_POST['action'] ) ) {
 						$result['data'][] = $get_site_details;
 					}
 				}
-			} else {
+			}else {
 				$result['result'] = 'error';
 				$result['message'] = 'No Site Found';
 			}

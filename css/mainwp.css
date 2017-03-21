@@ -2374,3 +2374,7 @@ div.http-response-ok span.http-notok-status{
     float: right;
     margin: 13px 0 0;    
 }
+.mainwp-ui-leftmenu #wpbody-content > div.error {
+    float:left;
+    margin-left: 200px;
+}

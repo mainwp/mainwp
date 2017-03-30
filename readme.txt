@@ -11,11 +11,11 @@ Stable tag: 3.3.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Manage WP sites from one central location! Much more than just updates, get nearly complete control of all your sites from your self-hosted Dashboard.
+MainWP is a private WordPress Manager that allows you to manage all your WordPress sites from one main site, your own self-hosted MainWP Dashboard.
 
 == Description ==
 
-[MainWP](https://mainwp.com) is the only free, fully open source and self-hosted WordPress management plugin available. 
+[MainWP](https://mainwp.com) is the only free, fully open source and self-hosted WordPress manager plugin available. 
 
 And, just because it is free does not mean it’s been stripped down.   The MainWP Dashboard allows you to control virtually all of your daily WordPress maintenance tasks at absolutely no cost. 
 

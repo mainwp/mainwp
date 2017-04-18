@@ -148,10 +148,29 @@ body {
 .mwp-setup-content .mwp-setup-next-steps h2 {
     margin-bottom: 12px
 }
+.mwp-setup-content .mwp-setup-next-steps .mwp-setup-next-steps-top {    
+    width: 100%;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    background-color: #fafafa;
+    padding: 10px;
+    border: 1px solid #e5e5e5;
+    
+}
+.mwp-setup-btn-green {     
+    color: #fff !important;
+    background-color: #7fb100 !important;
+    border-color: #7fb100 !important;
+    -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 1px 0 rgba(0, 0, 0, .15) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 1px 0 rgba(0, 0, 0, .15) !important
+}
 .mwp-setup-content .mwp-setup-next-steps .mwp-setup-next-steps-first {
     float: left;
     width: 50%;
     box-sizing: border-box
+}
+.mwp-setup-next-steps-top p{
+    margin-bottom: 0.5em;
 }
 .mwp-setup-content .mwp-setup-next-steps .mwp-setup-next-steps-last {
     float: right;

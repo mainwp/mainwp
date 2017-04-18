@@ -1591,7 +1591,7 @@ class MainWP_Tours {
 		</ol>
 		<?php echo self::gen_tour_message('add_new_site'); ?>
 		<script type="text/javascript">
-			<?php  if (isset($_GET['start_tour'])) { ?>
+			<?php  if ( MainWP_DB::Instance()->getWebsitesCount() == 0 ) { ?>
 			var autoStartTour = true;
 			<?php } else { ?>
 			var autoStartTour = false;

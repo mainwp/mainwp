@@ -1485,6 +1485,7 @@ class MainWP_Manage_Sites {
                                                 }
 
                                                 MainWP_DB::Instance()->updateWebsiteValues( $websiteid, $newValues );
+                                                
                                                 $updated = true;
                                             }
                                         }

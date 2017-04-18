@@ -2600,7 +2600,7 @@ mainwp_managesites_add = function (event) {
                     verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val(),
                     ssl_version:jQuery('#mainwp_managesites_ssl_version').val(),
                     managesites_add_http_user:jQuery('#mainwp_managesites_add_http_user').val(),
-                    managesites_add_http_pass:jQuery('#mainwp_managesites_add_http_pass').val()
+                    managesites_add_http_pass:jQuery('#mainwp_managesites_add_http_pass').val(),                    
                 });
 
                 jQuery.post(ajaxurl, data, function (res_things) {
@@ -7691,7 +7691,10 @@ mainwp_get_blogroll = function(reLoad) {
     });
 };
 
-jQuery(document).ready(function() {    
+jQuery(document).ready(function() { 
+    
+    mainwp_subleftmenu_check_showhide();
+    
     jQuery('.mainwp_leftmenu_content').on("click", '.mainwp-menu-item div.handle', function(event){        
         var pr = jQuery( this ).closest('li.mainwp-menu-item');
         var closed = pr.hasClass('closed');        
@@ -7705,10 +7708,10 @@ jQuery(document).ready(function() {
     });
     
     jQuery( '.mainwp_leftmenu_content .mainwp-menu-sub-item .handlediv' ).live('click', function () {
-            var pr = jQuery( this ).closest('li');
-            var closed = pr.hasClass('closed');   
+            var pr = jQuery( this ).closest('li');            
+            var closed = pr.hasClass('closed');               
             if (closed) {
-                pr.removeClass( 'closed' ); 
+                pr.removeClass( 'closed' );
             } else {
                 pr.addClass( 'closed' ); 
             }
@@ -7716,31 +7719,79 @@ jQuery(document).ready(function() {
             mainwp_leftmenu_change_status(pr, closed);
             
     }); 
-    mainwp_leftmenu_change_status = function(row, value) {
-        console.log(row);
-        var data = {
-            action:'mainwp_status_saving',
-            status: 'status_leftmenu',
-            key: jQuery(row).attr('item-key'),
-            value: value ? 1 : 0 // 1 open
-        };
-        jQuery.post(ajaxurl, mainwp_secure_data(data), function (res) {                
-        });
-    };
+    
+    jQuery('.mainwp_leftmenu_content li.mainwp-menu-sub-item.mainwp-menu-has-submenu > .mainwp-menu-name a').live("click", function(event){        
+        var pr = jQuery( this ).closest('li.mainwp-menu-sub-item');
+        var closed = pr.hasClass('closed');         
+        if (closed) {            
+            mainwp_leftmenu_set_showhide(pr, true);
+        }                
+    });
+    
+    jQuery('#mainwp-leftmenu-group-filter').on('change', function() {
+        var selgroup = this.value;
+        if (selgroup == ''){            
+            jQuery(".menu-sites-wrap .mainwp-menu-sub-item").each(function (i) {
+                jQuery(this).show();
+            });        
+            return;
+        } else {
+                var data = {
+                    action:'mainwp_leftmenu_filter_group',
+                    group_id: selgroup            
+                };
+                jQuery('.menu-sites-wrap #menu-sites-working').show();
+                jQuery.post(ajaxurl, mainwp_secure_data(data), function (res) {   
+                    jQuery('.menu-sites-wrap #menu-sites-working').hide(); 
+                    if (res != '') {
+                        var ids = res.split(',');                        
+                        var siteItems = jQuery('.menu-sites-wrap').find('.mainwp-menu-sub-item');
+                        for (var i = 0; i < siteItems.length; i++)
+                        {
+                            var currentElement = jQuery(siteItems[i]);
+                            var site_id = currentElement.attr('site-id');                            
+                            if (ids.indexOf(site_id) > -1)
+                            {
+                                currentElement.show();
+                            }
+                            else
+                            {
+                                currentElement.hide();
+
+                            }
+                        }
+                    } else {
+                        jQuery(".menu-sites-wrap .mainwp-menu-sub-item").each(function (i) {
+                            jQuery(this).hide();
+                        });
+                    }
+                });
+        }
+    })
 })
 
-
+mainwp_leftmenu_change_status = function(row, value) {       
+    var data = {
+        action:'mainwp_status_saving',
+        status: 'status_leftmenu',
+        key: jQuery(row).attr('item-key'),
+        value: value ? 1 : 0 // 1 open
+    };
+    jQuery.post(ajaxurl, mainwp_secure_data(data), function (res) {                
+    });
+};
 
 jQuery(document).on('keyup', '#mainwp-lefmenu-sites-filter', function() {    
     jQuery('li.mainwp-menu-item').addClass('closed');
     jQuery('li.menu-sites-wrap').removeClass('closed');
-    
-    var filter = jQuery(this).val();
+    jQuery('#mainwp-leftmenu-group-filter').val('').trigger('change');
+    var filter = jQuery(this).val();    
     var siteItems = jQuery('.menu-sites-wrap').find('.mainwp-menu-sub-item');
     for (var i = 0; i < siteItems.length; i++)
     {
         var currentElement = jQuery(siteItems[i]);
-        var value = currentElement.find('a.mainwp-menu-item').text();
+        var value = currentElement.find('.mainwp-menu-name a').text();  
+        
         if (value.indexOf(filter) > -1)
         {
             currentElement.show();
@@ -7755,3 +7806,23 @@ jQuery(document).on('keyup', '#mainwp-lefmenu-sites-filter', function() {
 //    mainwp_newpost_updateCategories();
 });
 
+
+mainwp_leftmenu_set_showhide = function(obj, show) {
+    var id = jQuery(obj).attr('item-key');  
+    if (show) {
+        jQuery(obj).removeClass('closed');
+        mainwp_setCookie('_leftmenu_' + id, 'show');
+    } 
+};
+
+mainwp_subleftmenu_check_showhide = function() {    
+    jQuery('li[item-key="mainwp_tab"] li.mainwp-menu-sub-item.closed').each(function() {
+        var pr = this;
+        var id = jQuery(pr).attr('item-key');        
+        if (mainwp_getCookie('_leftmenu_' + id) == 'show') {
+            jQuery(pr).removeClass('closed');
+            mainwp_setCookie('_leftmenu_' + id, ''); // clear it
+            mainwp_leftmenu_change_status(pr, true); // save status
+        } 
+    });
+};

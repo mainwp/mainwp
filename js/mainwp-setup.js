@@ -264,3 +264,34 @@ jQuery(document).ready(function () {
     });
 });
                 
+mainwp_setup_save_tracking = function(objBtn){
+    jQuery(objBtn).attr('disabled','disabled');
+    var parent = jQuery("#mwp_setup_save_tracking_loading");
+    var statusEl = parent.find('span.status');
+    var loadingEl = parent.find("i");    
+    var data = {
+        action:'mainwp_setup_saving_tracking',
+        dashboard: jQuery('#mwp_setup_tracking_dashboard').is( ":checked" ) ? 1 : 0,        
+        security: mainwpSetupLocalize.nonce
+    };
+    loadingEl.show();
+    jQuery.post(ajaxurl, data, function (response)
+    {
+        loadingEl.hide();
+        jQuery(objBtn).removeAttr('disabled');
+        if (response) {
+            if (response == 'OK') {
+                statusEl.css('color', '#0074a2');
+                statusEl.html('<i class="fa fa-check-circle"></i> ' + "Saved").fadeIn();
+                setTimeout(function() { statusEl.fadeOut(1000);}, 2000);
+            } else {
+                statusEl.css('color', 'red');
+                statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined error!').fadeIn();
+            }
+        } else {
+            statusEl.css('color', 'red');
+            statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined error!').fadeIn();
+        }
+    });
+    return false;
+}

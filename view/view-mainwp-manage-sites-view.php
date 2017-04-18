@@ -79,13 +79,13 @@ class MainWP_Manage_Sites_View {
                 }
                 
                 // init sites left menu
-                if (get_option('mainwp_disable_wp_main_menu')) { // to reduce db query
+                if (get_option('mainwp_disable_wp_main_menu', 1)) { // to reduce db query
                     $websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
                     while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
                         MainWP_System::add_sub_left_menu($website->name, 'childsites_menu', 'child_site_' . $website->id, 'admin.php?page=managesites&dashboard=' . $website->id, '', $website->url );
                         
                         $init_sub_subleftmenu = array(                                  
-                                array(  'title' => '<i class="fa fa-pencil-square-o fa-lg" title="' . __('Edit', 'mainwp'). '"></i>', 
+                                array(  'title' => '<i class="fa fa-pencil-square-o" title="' . __('Edit', 'mainwp'). '"></i>', 
                                         'parent_key' => 'child_site_' . $website->id, 
                                         'href' => 'admin.php?page=managesites&id=' . $website->id,
                                         'slug' => 'site_edit_' . $website->id ,

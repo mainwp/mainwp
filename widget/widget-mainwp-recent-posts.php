@@ -62,7 +62,6 @@ class MainWP_Recent_Posts {
 		?>
 		<div class="mainwp-clear">
 			<div class="mainwp-postbox-actions-top">
-				<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd&select=' . ( $current_wpid ? $current_wpid : 'all' ) ); ?>" class="button-primary" style="float: right"><?php _e( 'Add new', 'mainwp' ); ?></a>
 				<a class="mainwp_action left mainwp_action_down recent_posts_published_lnk" href="#"><?php _e( 'Published', 'mainwp' ); ?> (<?php echo count( $recent_posts_published ); ?>)</a><a class="mainwp_action mid recent_posts_draft_lnk" href="#"><?php _e( 'Draft', 'mainwp' ); ?> (<?php echo count( $recent_posts_draft ); ?>)</a><a class="mainwp_action mid recent_posts_pending_lnk" href="#"><?php _e( 'Pending', 'mainwp' ); ?> (<?php echo count( $recent_posts_pending ); ?>)</a><a class="mainwp_action right recent_posts_future_lnk" href="#"><?php _e( 'Scheduled', 'mainwp' ); ?> (<?php echo count( $recent_posts_future ); ?>)</a><a class="mainwp_action right recent_posts_trash_lnk" href="#"><?php _e( 'Trash', 'mainwp' ); ?> (<?php echo count( $recent_posts_trash ); ?>)</a>
 			</div>
 
@@ -277,6 +276,9 @@ class MainWP_Recent_Posts {
 						<div class="mainwp-clear"></div>
 					</div>
 				<?php } ?>
+			</div>
+			<div class="mainwp-postbox-actions-bottom">
+				<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd&select=' . ( $current_wpid ? $current_wpid : 'all' ) ); ?>" class="button-primary"><?php _e( 'Create new post', 'mainwp' ); ?></a>
 			</div>
 		</div>
 		<div class="mainwp-clear"></div>

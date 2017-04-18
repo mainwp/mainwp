@@ -188,11 +188,11 @@ class MainWP_Page {
 			<div class="mainwp-tabs" id="mainwp-tabs">
 				<?php if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) { ?>
 				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkManage' ) { echo 'nav-tab-active'; } ?>" href="admin.php?page=PageBulkManage"><?php _e( 'Manage Pages','mainwp' ); ?></a>
-        <?php if ( $shownPage == 'BulkEdit' ) { ?>
-                <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=PageBulkEdit&post_id=<?php echo esc_attr($post_id); ?>"><?php _e( 'Edit Page', 'mainwp' ); ?></a>
-        <?php } ?>
-				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkAdd' ) { echo 'nav-tab-active'; } ?>" href="admin.php?page=PageBulkAdd"><?php _e( 'Add New','mainwp' ); ?></a>
-        <?php } ?>
+                                <?php if ( $shownPage == 'BulkEdit' ) { ?>
+                                        <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=PageBulkEdit&post_id=<?php echo esc_attr($post_id); ?>"><?php _e( 'Edit Page', 'mainwp' ); ?></a>
+                                <?php } ?>
+                                        <a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkAdd' ) { echo 'nav-tab-active'; } ?>" href="admin.php?page=PageBulkAdd"><?php _e( 'Add New','mainwp' ); ?></a>
+                                <?php } ?>
 				<?php
 				if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 					foreach ( self::$subPages as $subPage ) {

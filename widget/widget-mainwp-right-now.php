@@ -901,9 +901,6 @@ class MainWP_Right_Now {
 		if ( $globalView ) {			
 			?>
 			<div class="mainwp-postbox-actions-top mainwp-padding-5">
-				<div class="mainwp-cols-s mainwp-left mainwp-t-align-left mainwp-padding-top-5">
-					<?php _e( 'This widget shows you all your available updates', 'mainwp' ); ?>
-				</div>
 				<div class="mainwp-cols-s mainwp-right mainwp-t-align-right">
 					<form method="post" action="">
 						<label for="mainwp_select_options_siteview"><?php _e( 'View updates per: ', 'mainwp' ); ?></label>
@@ -2360,13 +2357,13 @@ class MainWP_Right_Now {
 					<i class="fa fa-circle fa-stack-2x <?php echo $mainwp_ap_color_code; ?>"></i>
 						<strong class="fa-stack-1x mainwp-white"><?php echo $total_plugins_outdate; ?> </strong>
 					</span>
-							<?php echo _n( 'Plugin', 'Plugins', $total_plugins_outdate, 'mainwp'); ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
+							<?php echo _n( 'Plugin', 'Plugins', $total_plugins_outdate, 'mainwp'); ?> <?php _e('possibly abandoned', 'mainwp'); ?>
 						</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('This feature checks the last updated status of plugins and alerts you if not updated in a specific amount of time. This gives you insight on if a plugin may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
 					</div>
-					<div class="mainwp-left mainwp-cols-4 mainwp-padding-top-5 mainwp-t-align-right">
+					<div class="mainwp-right mainwp-cols-4 mainwp-padding-top-5 mainwp-t-align-right">
 						<a href="<?php echo admin_url( 'admin.php?page=PluginsIgnoredAbandoned' ); ?>"><?php _e( 'Ignored', 'mainwp' ); ?> (<?php echo $total_pluginsIgnoredAbandoned; ?>)</a>
 					</div>
-					<div class="mainwp-right mainwp-cols-4"></div>
+					<!-- <div class="mainwp-right mainwp-cols-4"></div> -->
 					<div class="mainwp-clear"></div>
 				</div>
 				<div id="wp_plugins_outdate" style="display: none" class="mainwp-sub-section">
@@ -2705,13 +2702,13 @@ class MainWP_Right_Now {
 						<i class="fa fa-circle fa-stack-2x <?php echo $mainwp_at_color_code; ?>"></i>
 						<strong class="fa-stack-1x mainwp-white"><?php echo $total_themes_outdate; ?> </strong> 
 					</span>
-							<?php echo _n( 'Theme', 'Themes', $total_themes_outdate, 'mainwp'); ?> <?php _e('Possibly Abandoned', 'mainwp'); ?>
+							<?php echo _n( 'Theme', 'Themes', $total_themes_outdate, 'mainwp'); ?> <?php _e('possibly abandoned', 'mainwp'); ?>
 						</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('This feature checks the last updated status of themes and alerts you if not updated in a specific amount of time. This gives you insight on if a theme may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
 					</div>
-					<div class="mainwp-left mainwp-cols-4 mainwp-padding-top-5 mainwp-t-align-right">
+					<div class="mainwp-right mainwp-cols-4 mainwp-padding-top-5 mainwp-t-align-right">
 						<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnoredAbandoned' ); ?>"><?php _e( 'Ignored', 'mainwp' ); ?> (<?php echo $total_themesIgnoredAbandoned; ?>)</a>
 					</div>
-					<div class="mainwp-right mainwp-cols-4"></div>
+					<!-- <div class="mainwp-right mainwp-cols-4"></div> -->
 					<div class="mainwp-clear"></div>
 				</div>
 				<div id="wp_themes_outdate" style="display: none" class="mainwp-sub-section">
@@ -3048,17 +3045,18 @@ class MainWP_Right_Now {
 				</div>
 			</div>
 		<?php } ?>
+		<div class="mainwp-clear"></div>
 
 		<?php
-		@MainWP_DB::data_seek( $websites, 0 );
-		$site_ids = array();
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
-			$site_ids[] = $website->id;
-		}
-		do_action( 'mainwp_rightnow_widget_bottom', $site_ids, $globalView );
-		?>
+			@MainWP_DB::data_seek( $websites, 0 );
+			$site_ids = array();
+			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+				$site_ids[] = $website->id;
+			}
+		
+		 do_action( 'mainwp_rightnow_widget_bottom', $site_ids, $globalView ); 
 
-		<div class="mainwp-clear"></div>
+		 ?>
 
 		<div id="rightnow-upgrade-status-box" title="Upgrade" style="display: none; text-align: center">
 			<div id="rightnow-upgrade-status-progress"></div>

@@ -1,0 +1,1662 @@
+# 
+# Translators:
+# Odyssey <8bitodyssey+github@gmail.com>, 2016
+# Takayuki Miyauchi <miya0001@users.noreply.github.com>, 2016
+msgid ""
+msgstr ""
+"Project-Id-Version: WordPress SDK\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: 2017-02-28 03:42+0000\n"
+"Last-Translator: Vova Feldman <vova@freemius.com>\n"
+"Language-Team: Japanese (Japan) (http://www.transifex.com/freemius/wordpress-sdk/language/ja_JP/)\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Language: ja_JP\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# Copyright (C) 2017 freemius
+# This file is distributed under the same license as the freemius package.
+#: includes/i18n.php41, includes/i18n.php:55
+msgid "Yes - I'm in!"
+msgstr "加入します"
+
+#: includes/i18n.php43, includes/i18n.php:57
+msgid "Not today"
+msgstr "今日はやめておく"
+
+#: includes/i18n.php:69
+msgid "Account"
+msgstr "アカウント"
+
+#: includes/i18n.php:71
+msgid "Add On"
+msgstr "アドオン"
+
+#: includes/i18n.php:73
+msgid "Contact Us"
+msgstr "連絡"
+
+#: includes/i18n.php:75
+msgid "Contact Support"
+msgstr "サポートに連絡"
+
+#: includes/i18n.php:77
+msgid "Change Ownership"
+msgstr "オーナーを変更"
+
+#: includes/i18n.php:79
+msgid "Support"
+msgstr "サポート"
+
+#: includes/i18n.php:81
+msgid "Support Forum"
+msgstr "サポートフォーラム"
+
+#: includes/i18n.php:83
+msgid "Add Ons"
+msgstr "アドオン"
+
+#: includes/i18n.php:85
+msgctxt "verb"
+msgid "Upgrade"
+msgstr "アップグレード"
+
+#: includes/i18n.php:87
+msgid "Awesome"
+msgstr "すごい!"
+
+#: includes/i18n.php:89
+msgctxt "noun"
+msgid "Pricing"
+msgstr "料金表"
+
+#: includes/i18n.php:91
+msgctxt "noun"
+msgid "Price"
+msgstr "料金"
+
+#: includes/i18n.php:93
+msgid "Unlimited Updates"
+msgstr "無制限のアップデート"
+
+#: includes/i18n.php:95
+msgctxt "verb"
+msgid "Downgrade"
+msgstr "ダウングレード"
+
+#: includes/i18n.php:97
+msgid "Cancel Trial"
+msgstr "トライアルをキャンセル"
+
+#: includes/i18n.php:99
+msgid "Free Trial"
+msgstr "フリートライアル"
+
+#: includes/i18n.php:101
+msgid "Start my free %s"
+msgstr "無料の %s を開始"
+
+#: includes/i18n.php:103
+msgid "No commitment for %s - cancel anytime"
+msgstr "%s の拘束はありません。いつでもキャンセルできます。"
+
+#: includes/i18n.php:105
+msgid "After your free %s, pay as little as %s"
+msgstr "無料の %s の後は、わずか %s  だけお支払ください。"
+
+#: includes/i18n.php:107
+msgid "Details"
+msgstr "詳細"
+
+#: includes/i18n.php:109
+msgid "Account Details"
+msgstr "アカウント詳細"
+
+#: includes/i18n.php:111
+msgctxt "verb"
+msgid "Delete"
+msgstr "削除"
+
+#: includes/i18n.php:113
+msgctxt "verb"
+msgid "Show"
+msgstr "表示"
+
+#: includes/i18n.php:115
+msgctxt "verb"
+msgid "Hide"
+msgstr "非表示"
+
+#: includes/i18n.php:117
+msgctxt "verb"
+msgid "Edit"
+msgstr "編集"
+
+#: includes/i18n.php:119
+msgctxt "verb"
+msgid "Update"
+msgstr "更新"
+
+#: includes/i18n.php:121
+msgid "Date"
+msgstr "日付"
+
+#: includes/i18n.php:123
+msgid "Amount"
+msgstr "総額"
+
+#: includes/i18n.php:125
+msgid "Invoice"
+msgstr "請求書"
+
+#: includes/i18n.php:127
+msgid "Billing"
+msgstr "請求書"
+
+#: includes/i18n.php:129
+msgid "Payments"
+msgstr "支払い"
+
+#: includes/i18n.php:131
+msgid "Delete Account"
+msgstr "アカウントを削除"
+
+#: includes/i18n.php:133
+msgctxt "as close a window"
+msgid "Dismiss"
+msgstr "却下"
+
+#: includes/i18n.php:135
+msgctxt "as product pricing plan"
+msgid "Plan"
+msgstr "プラン"
+
+#: includes/i18n.php:137
+msgid "Change Plan"
+msgstr "プラン変更"
+
+#: includes/i18n.php:139
+msgctxt "as download professional version"
+msgid "Download %s Version"
+msgstr "%s バージョンをダウンロード"
+
+#: includes/i18n.php:141
+msgctxt "as download professional version now"
+msgid "Download %s version now"
+msgstr "%s バージョンを今すぐダウンロード"
+
+#: includes/i18n.php:145
+msgctxt "as download latest version"
+msgid "Download Latest"
+msgstr "最新版をダウンロード"
+
+#: includes/i18n.php:147
+msgctxt "E.g. you have a professional license."
+msgid "You have a %s license."
+msgstr "%s ライセンスを持っています。"
+
+#: includes/i18n.php:151
+msgid "New"
+msgstr "新規"
+
+#: includes/i18n.php:153
+msgid "Free"
+msgstr "無料"
+
+#: includes/i18n.php:155
+msgctxt "as trial plan"
+msgid "Trial"
+msgstr "トライアル"
+
+#: includes/i18n.php:157
+msgctxt "as starting a trial plan"
+msgid "Start Trial"
+msgstr "トライアルを開始"
+
+#: includes/i18n.php:159
+msgctxt "verb"
+msgid "Purchase"
+msgstr "購入"
+
+#: includes/i18n.php:161
+msgid "Purchase License"
+msgstr "ライセンスを購入"
+
+#: includes/i18n.php:163
+msgctxt "verb"
+msgid "Buy"
+msgstr "買う"
+
+#: includes/i18n.php:165
+msgid "Buy License"
+msgstr "ライセンスを買う"
+
+#: includes/i18n.php:167
+msgid "Single Site License"
+msgstr "シングルサイトライセンス"
+
+#: includes/i18n.php:169
+msgid "Unlimited Licenses"
+msgstr "無制限ライセンス"
+
+#: includes/i18n.php:171
+msgid "Up to %s Sites"
+msgstr "%sサイトまで"
+
+#: includes/i18n.php:173
+msgid "%sRenew your license now%s to access version %s features and support."
+msgstr "%sいますぐライセンスを更新して%s バージョン %s の機能とサポートにアクセスする"
+
+#: includes/i18n.php:177
+msgid ""
+"Enter the email address you've used for the upgrade below and we will resend"
+" you the license key."
+msgstr "アップグレードに使用したメールアドレスを下に入力してください。そうすれば、ライセンスキーをお送りします。"
+
+#: includes/i18n.php:181
+msgctxt "e.g. Professional Plan"
+msgid "%s Plan"
+msgstr "%s プラン"
+
+#: includes/i18n.php:183
+msgid "You are just one step away - %s"
+msgstr "もうあとわずかです - %s"
+
+#: includes/i18n.php:185
+msgctxt "%s - plugin name. As complete \"Jetpack\" activation now"
+msgid "Complete \"%s\" Activation Now"
+msgstr "すぐに \"%s\" 有効化を完了してください"
+
+#: includes/i18n.php:189
+msgid "We made a few tweaks to the plugin, %s"
+msgstr "プラグインを微調整します, %s"
+
+#: includes/i18n.php:191
+msgid "Opt-in to make \"%s\" Better!"
+msgstr "\"%s\" をより良くするためにオプトインしてください!"
+
+#: includes/i18n.php:193
+msgid "Error"
+msgstr "エラー"
+
+#: includes/i18n.php:195
+msgid ""
+"Freemius SDK couldn't find the plugin's main file. Please contact "
+"sdk@freemius.com with the current error."
+msgstr "Freemius SDK がプラグインのメインファイルを見つけることができませんでした。現在のエラーを添えて  sdk@freemius.com に連絡してください。"
+
+#: includes/i18n.php:203
+msgctxt "as expiration date"
+msgid "Expiration"
+msgstr "期限切れ"
+
+#: includes/i18n.php:205
+msgctxt "as software license"
+msgid "License"
+msgstr "ライセンス"
+
+#: includes/i18n.php:207
+msgid "not verified"
+msgstr "未認証"
+
+#: includes/i18n.php:209
+msgid "Verify Email"
+msgstr "認証メール"
+
+#: includes/i18n.php:211
+msgctxt "e.g. expires in 2 months"
+msgid "Expires in %s"
+msgstr "%s で期間終了"
+
+#: includes/i18n.php:213
+msgctxt "e.g. auto renews in 2 months"
+msgid "Auto renews in %s"
+msgstr "%s に自動更新"
+
+#: includes/i18n.php:215
+msgid "No expiration"
+msgstr "有効期限なし"
+
+#: includes/i18n.php:217
+msgid "Expired"
+msgstr "期限切れ"
+
+#: includes/i18n.php:219
+msgid "Cancelled"
+msgstr "キャンセル"
+
+#: includes/i18n.php:221
+msgctxt "e.g. In 2 hours"
+msgid "In %s"
+msgstr "%s 内"
+
+#: includes/i18n.php:223
+msgctxt "e.g. 2 min ago"
+msgid "%s ago"
+msgstr "%s 前"
+
+#: includes/i18n.php:225
+msgctxt "as plugin version"
+msgid "Version"
+msgstr "バージョン"
+
+#: includes/i18n.php:227
+msgid "Name"
+msgstr "名前"
+
+#: includes/i18n.php:229
+msgid "Email"
+msgstr "Email"
+
+#: includes/i18n.php:231
+msgid "Email address"
+msgstr "メールアドレス"
+
+#: includes/i18n.php:233
+msgid "Verified"
+msgstr "認証済み"
+
+#: includes/i18n.php:235
+msgid "Plugin"
+msgstr "プラグイン"
+
+#: includes/i18n.php:237
+msgid "Plugins"
+msgstr "プラグイン"
+
+#: includes/i18n.php:239
+msgid "Themes"
+msgstr "テーマ"
+
+#: includes/i18n.php:241
+msgctxt "as file/folder path"
+msgid "Path"
+msgstr "パス"
+
+#: includes/i18n.php:243
+msgid "Title"
+msgstr "タイトル"
+
+#: includes/i18n.php:245
+msgid "Free version"
+msgstr "フリーバージョン"
+
+#: includes/i18n.php:247
+msgid "Premium version"
+msgstr "プレミアムバージョン"
+
+#: includes/i18n.php:249
+msgctxt "as WP plugin slug"
+msgid "Slug"
+msgstr "スラッグ"
+
+#: includes/i18n.php:251
+msgid "ID"
+msgstr "ID"
+
+#: includes/i18n.php:253
+msgid "Users"
+msgstr "ユーザー"
+
+#: includes/i18n.php:255
+msgid "Plugin Installs"
+msgstr "プラグインインストール数"
+
+#: includes/i18n.php:257
+msgctxt "like websites"
+msgid "Sites"
+msgstr "サイト数"
+
+#: includes/i18n.php:259
+msgid "User ID"
+msgstr "ユーザー ID"
+
+#: includes/i18n.php:261
+msgid "Site ID"
+msgstr "サイト ID"
+
+#: includes/i18n.php:263
+msgid "Public Key"
+msgstr "公開鍵"
+
+#: includes/i18n.php:265
+msgid "Secret Key"
+msgstr "秘密鍵"
+
+#: includes/i18n.php:267
+msgctxt "as secret encryption key missing"
+msgid "No Secret"
+msgstr "秘密鍵がありません"
+
+#: includes/i18n.php:269
+msgid "No ID"
+msgstr "ID がありません"
+
+#: includes/i18n.php:271
+msgctxt "as synchronize license"
+msgid "Sync License"
+msgstr "ライセンスを同期"
+
+#: includes/i18n.php:273
+msgctxt "as synchronize"
+msgid "Sync"
+msgstr "同期"
+
+#: includes/i18n.php:275
+msgid "Activate License"
+msgstr "ライセンスを有効化"
+
+#: includes/i18n.php:277
+msgid "Activate Free Version"
+msgstr "フリーバージョンを有効化"
+
+#: includes/i18n.php:279
+msgid ""
+"Please enter the license key that you received in the email right after the "
+"purchase:"
+msgstr "購入後すぐにメールで受け取ったライセンスキーを入力してください:"
+
+#: includes/i18n.php:283
+msgid "Activating license..."
+msgstr "ライセンスを有効化中…"
+
+#: includes/i18n.php:285
+msgid "Change License"
+msgstr "ライセンスを変更"
+
+#: includes/i18n.php:287
+msgid "Update License"
+msgstr "ライセンスを更新"
+
+#: includes/i18n.php:289
+msgid "Deactivate License"
+msgstr "ライセンスを無効化"
+
+#: includes/i18n.php:291
+msgid "Activate"
+msgstr "有効化"
+
+#: includes/i18n.php:293
+msgid "Deactivate"
+msgstr "無効化"
+
+#: includes/i18n.php:295
+msgid "Skip & Deactivate"
+msgstr "スキップし、無効化"
+
+#: includes/i18n.php:297
+msgid "No - just deactivate"
+msgstr "いいえ - すぐに無効化"
+
+#: includes/i18n.php:299
+msgid "Yes - do your thing"
+msgstr "はい - お構いなく"
+
+#: includes/i18n.php:301
+msgctxt "active mode"
+msgid "Active"
+msgstr "有効"
+
+#: includes/i18n.php:303
+msgctxt "is active mode?"
+msgid "Is Active"
+msgstr "有効"
+
+#: includes/i18n.php:305
+msgid "Install Now"
+msgstr "今すぐインストール"
+
+#: includes/i18n.php:307
+msgid "Install Update Now"
+msgstr "今すぐ更新をインストール"
+
+#: includes/i18n.php:309
+msgid "More information about %s"
+msgstr "%s に関する詳細情報"
+
+#: includes/i18n.php:311
+msgid "Localhost"
+msgstr "localhost"
+
+#: includes/i18n.php:313
+msgctxt "as activate Professional plan"
+msgid "Activate %s Plan"
+msgstr "%s プランを有効化"
+
+#: includes/i18n.php:315
+msgctxt "as 5 licenses left"
+msgid "%s left"
+msgstr "あと %s"
+
+#: includes/i18n.php:317
+msgid "Last license"
+msgstr "最新のライセンス"
+
+#: includes/i18n.php:319
+msgid "What is your %s?"
+msgstr "自分の %s はなんですか?"
+
+#: includes/i18n.php:321
+msgid "Activate this add-on"
+msgstr "このアドオンを有効化"
+
+#: includes/i18n.php:323
+msgid ""
+"Deactivating your license will block all premium features, but will enable "
+"you to activate the license on another site. Are you sure you want to "
+"proceed?"
+msgstr "ライセンスを無効化するとすべてのプレミアム機能が使えなくなりますが、他のサイトでライセンスを有効にすることができるようになります。本当に実行しますか?"
+
+#: includes/i18n.php:327
+msgid ""
+"Deleting the account will automatically deactivate your %s plan license so "
+"you can use it on other sites. If you want to terminate the recurring "
+"payments as well, click the \"Cancel\" button, and first \"Downgrade\" your "
+"account. Are you sure you would like to continue with the deletion?"
+msgstr "アカウントを削除すると自動的に %s プランライセンスが無効になり、他のサイトで使うことができます。定期の支払いも終了したい場合は、\"キャンセル\"ボタンをクリックし、まずアカウントを\"ダウングレード\"してください。本当に削除を続行してもいいですか?"
+
+#: includes/i18n.php:331
+msgid ""
+"Deletion is not temporary. Only delete if you no longer want to use this "
+"plugin anymore. Are you sure you would like to continue with the deletion?"
+msgstr "削除は一時的なものではありません。このプラグインを今後使いたくない場合にだけ削除してください。本当に削除を続行してもいいですか?"
+
+#: includes/i18n.php:335
+msgid ""
+"Downgrading your plan will immediately stop all future recurring payments "
+"and your %s plan license will expire in %s."
+msgstr "プランをダウングレードするとすぐに将来の定期の支払いはすべて停止し、%s プランライセンスは %s で期限切れとなります。"
+
+#: includes/i18n.php:339
+msgid ""
+"Cancelling the trial will immediately block access to all premium features. "
+"Are you sure?"
+msgstr "トライアルをキャンセルするとすぐにすべてのプレミアム機能へのアクセスができなくなります。本当に実行しますか?"
+
+#: includes/i18n.php:343
+msgid ""
+"You can still enjoy all %s features but you will not have access to plugin "
+"updates and support."
+msgstr "すべての %s 機能をまだ楽しむことができますが、プラグインの更新とサポートにアクセスすることはできなくなります。"
+
+#: includes/i18n.php:347
+msgid ""
+"Once your license expire you can still use the Free version but you will NOT"
+" have access to the %s features."
+msgstr "ライセンスが期限切れになるとフリーバージョンを使うことはできますが、%s 機能にアクセスすることはできなくなります。"
+
+#: includes/i18n.php:351
+msgid "Are you sure you want to proceed?"
+msgstr "本当に続行していいですか?"
+
+#: includes/i18n.php:357
+msgid "Add Ons for %s"
+msgstr "%s のアドオン"
+
+#: includes/i18n.php:359
+msgid ""
+"We could'nt load the add-ons list. It's probably an issue on our side, "
+"please try to come back in few minutes."
+msgstr "アドオンリストを読み込むことができませんでした。おそらく運営側の問題になりますので、しばらくしてからお試しください。"
+
+#: includes/i18n.php:365
+msgid "Anonymous feedback"
+msgstr "匿名のフィードバック"
+
+#: includes/i18n.php:367
+msgid "Quick feedback"
+msgstr "クイックフィードバック"
+
+#: includes/i18n.php:369
+msgid "If you have a moment, please let us know why you are deactivating"
+msgstr "お時間があれば、なぜ無効化するのか理由を教えてください。"
+
+#: includes/i18n.php:373
+msgid "Yes - Deactivate"
+msgstr "はい - 無効化します"
+
+#: includes/i18n.php:375
+msgid "Submit & Deactivate"
+msgstr "送信し無効化"
+
+#: includes/i18n.php:377
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: includes/i18n.php:379
+msgid "I no longer need the plugin"
+msgstr "もうプラグインを必要としていません"
+
+#: includes/i18n.php:381
+msgid "I found a better plugin"
+msgstr "もっと良いプラグインを見つけました"
+
+#: includes/i18n.php:383
+msgid "I only needed the plugin for a short period"
+msgstr "短期間プラグインを必要としていただけです"
+
+#: includes/i18n.php:385
+msgid "The plugin broke my site"
+msgstr "プラグインのせいでサイトが壊れました"
+
+#: includes/i18n.php:387
+msgid "The plugin suddenly stopped working"
+msgstr "プラグインはすぐに動かなくなりました"
+
+#: includes/i18n.php:389
+msgid "I can't pay for it anymore"
+msgstr "もう払うことができません"
+
+#: includes/i18n.php:391
+msgid "It's a temporary deactivation. I'm just debugging an issue."
+msgstr "一時的な無効化です。問題をデバッグしているだけです。"
+
+#: includes/i18n.php:395
+msgctxt ""
+"the text of the \"other\" reason for deactivating the plugin that is shown "
+"in the modal box."
+msgid "Other"
+msgstr "その他"
+
+#: includes/i18n.php:399
+msgid "Kindly tell us the reason so we can improve."
+msgstr "改善できるよう、どうか理由を教えてください。"
+
+#: includes/i18n.php:401
+msgid "What's the plugin's name?"
+msgstr "プラグイン名は何ですか?"
+
+#: includes/i18n.php:403
+msgid "What price would you feel comfortable paying?"
+msgstr " 支払ってもよいと思う価格はいくらですか?"
+
+#: includes/i18n.php:405
+msgid "I couldn't understand how to make it work"
+msgstr "どうしたら動作するか分かりませんでした。"
+
+#: includes/i18n.php:407
+msgid ""
+"The plugin is great, but I need specific feature that you don't support"
+msgstr "プラグインは素晴らしいけれど、サポートしていないある機能を必要としています"
+
+#: includes/i18n.php:411
+msgid "The plugin is not working"
+msgstr "プラグインが動いていません"
+
+#: includes/i18n.php:413
+msgid "It's not what I was looking for"
+msgstr "探していたものではありません"
+
+#: includes/i18n.php:415
+msgid "The plugin didn't work as expected"
+msgstr "プラグインは期待通りには動きませんでした"
+
+#: includes/i18n.php:417
+msgid "What feature?"
+msgstr "何の機能ですか?"
+
+#: includes/i18n.php:419
+msgid "Kindly share what didn't work so we can fix it for future users..."
+msgstr "将来のユーザーのために修正できるよう、何が動作しなかったのかどうか共有してください…"
+
+#: includes/i18n.php:423
+msgid "What you've been looking for?"
+msgstr "探していたのは何ですか?"
+
+#: includes/i18n.php:425
+msgid "What did you expect?"
+msgstr "何を期待していましたか?"
+
+#: includes/i18n.php:427
+msgid "The plugin didn't work"
+msgstr "プラグインが動作しませんでした"
+
+#: includes/i18n.php:429
+msgid "I don't like to share my information with you"
+msgstr "自分の情報を共有したくありません"
+
+#: includes/i18n.php:431
+msgid ""
+"You might have missed it, but you don't have to share any data and can just "
+"%s the opt-in."
+msgstr "見逃していたかもしれませんが、どんな情報も共有する必要はなく、オプトインを $s することができます。 "
+
+#: includes/i18n.php:441
+msgctxt "greeting"
+msgid "Hey %s,"
+msgstr "おおい %s さん、"
+
+#: includes/i18n.php:443
+msgctxt "a greeting. E.g. Thanks John!"
+msgid "Thanks %s!"
+msgstr "ありがとう $s さん!"
+
+#: includes/i18n.php:445
+msgid ""
+"Never miss an important update - opt-in to our security and feature updates "
+"notifications, and non-sensitive diagnostic tracking with %4$s."
+msgstr "重要な更新を逃さないように - セキュリティとおすすめの更新通知、%4$s とセンシティブではない診断トラッキングをオプトイン"
+
+#: includes/i18n.php:449
+msgid ""
+"Please help us improve %1$s! If you opt-in, some data about your usage of "
+"%1$s will be sent to %4$s. If you skip this, that's okay! %1$s will still "
+"work just fine."
+msgstr "%1$s を改善するのを手伝ってください。オプトインすれば、あなたの %1$s の使用に関するデータが %4$s へと送られます。これをスキップしても大丈夫です! %1$s は今でも素晴らしいでしょう。"
+
+#: includes/i18n.php:453
+msgid ""
+"You should receive an activation email for %s to your mailbox at %s. Please "
+"make sure you click the activation button in that email to %s."
+msgstr "%s のメールボックスに %s の有効化のメールを受け取っているはずです。%s のメールに記載された有効化ボタンをクリックしてください。"
+
+#: includes/i18n.php:455
+msgid "complete the install"
+msgstr "インストールを完了"
+
+#: includes/i18n.php:457
+msgid "start the trial"
+msgstr "トライアルを開始"
+
+#: includes/i18n.php:459
+msgid ""
+"Thanks for purchasing %s! To get started, please enter your license key:"
+msgstr "%s を購入いただきありがとうございます。はじめにライセンスキーを入力してください:"
+
+#: includes/i18n.php:463
+msgid ""
+"The plugin will be periodically sending data to %s to check for plugin "
+"updates and verify the validity of your license."
+msgstr "プラグインはプラグインの更新をチェックし、ライセンスが有効か確認するために、%s に周期的にデータを送信します。"
+
+#: includes/i18n.php:467
+msgid "What permissions are being granted?"
+msgstr "付与されているパーミッションは何ですか?"
+
+#: includes/i18n.php:469
+msgid "Your Profile Overview"
+msgstr "プロフィール概要"
+
+#: includes/i18n.php:471
+msgid "Name and email address"
+msgstr "名前とメールアドレス"
+
+#: includes/i18n.php:473
+msgid "Your Site Overview"
+msgstr "サイト概要"
+
+#: includes/i18n.php:475
+msgid "Site URL, WP version, PHP info, plugins & themes"
+msgstr "サイト URL、WP バージョン、PHP info、プラグインとテーマ"
+
+#: includes/i18n.php:479
+msgid "Current Plugin Events"
+msgstr "現在のプラグインイベント"
+
+#: includes/i18n.php:481
+msgid "Activation, deactivation and uninstall"
+msgstr "有効化、無効化、アンインストール"
+
+#: includes/i18n.php:483
+msgid "Plugins & Themes"
+msgstr "プラグインとテーマ"
+
+#: includes/i18n.php:485
+msgid "Titles, versions and state."
+msgstr "タイトル、バージョン、状態"
+
+#: includes/i18n.php:487
+msgid "Admin Notices"
+msgstr "管理者通知"
+
+#: includes/i18n.php:489
+msgid "Newsletter"
+msgstr "ニュースレター"
+
+#: includes/i18n.php:491
+msgid "Updates, announcements, marketing, no spam"
+msgstr "更新、発表、マーケティング、スパムなし"
+
+#: includes/i18n.php:493
+msgid "Privacy Policy"
+msgstr "プライバシーポリシー"
+
+#: includes/i18n.php:495
+msgid "Terms of Service"
+msgstr "利用規約"
+
+#: includes/i18n.php:497
+msgctxt "as activating plugin"
+msgid "Activating"
+msgstr "有効化中"
+
+#: includes/i18n.php:499
+msgctxt "as in the process of sending an email"
+msgid "Sending email"
+msgstr "メール送信中"
+
+#: includes/i18n.php:503
+msgctxt "button label"
+msgid "Allow & Continue"
+msgstr "許可して続ける"
+
+#: includes/i18n.php:505
+msgctxt "button label"
+msgid "Agree & Activate License"
+msgstr "同意してライセンスを有効化"
+
+#: includes/i18n.php:507
+msgctxt "verb"
+msgid "Skip"
+msgstr "スキップ"
+
+#: includes/i18n.php:509
+msgid "Click here to use the plugin anonymously"
+msgstr "匿名でプラグインを使用するにはこちらをクリック"
+
+#: includes/i18n.php:511
+msgid "Re-send activation email"
+msgstr "有効化メールを再送信"
+
+#: includes/i18n.php:513
+msgid "License key"
+msgstr "ライセンスキー"
+
+#: includes/i18n.php:515
+msgid "Send License Key"
+msgstr "ライセンスキーを送信"
+
+#: includes/i18n.php:517
+msgid "Sending license key"
+msgstr "ライセンスキーを送信中"
+
+#: includes/i18n.php:519
+msgid "Have a license key?"
+msgstr "ライセンスキーはお持ちですか?"
+
+#: includes/i18n.php:521
+msgid "Don't have a license key?"
+msgstr "ライセンスキーをお持ちではありませんか?"
+
+#: includes/i18n.php:523
+msgid "Can't find your license key?"
+msgstr "ライセンスキーは見つかりませんか?"
+
+#: includes/i18n.php:525
+msgid ""
+"We couldn't find your email address in the system, are you sure it's the "
+"right address?"
+msgstr "システムではメールアドレスを見つけることができませんでした。メールアドレスが正しいか確認してください。"
+
+#: includes/i18n.php:529
+msgid ""
+"We can't see any active licenses associated with that email address, are you"
+" sure it's the right address?"
+msgstr "メールアドレスに関連付けられた有効なライセンスが見つかりません。メールアドレスが正しいか確認してください。"
+
+#: includes/i18n.php:533
+msgid "Opt In"
+msgstr "オプトイン"
+
+#: includes/i18n.php:535
+msgid "Opt Out"
+msgstr "オプトアウト"
+
+#: includes/i18n.php:537
+msgid "On second thought - I want to continue helping"
+msgstr "第二の考えで - 手伝い続けたいです"
+
+#: includes/i18n.php:541
+msgid "Opting out..."
+msgstr "オプトアウト中…"
+
+#: includes/i18n.php:543
+msgid "Opting in..."
+msgstr "オプトイン中…"
+
+#: includes/i18n.php:545
+msgid ""
+"We appreciate your help in making the %s better by letting us track some "
+"usage data."
+msgstr "使用データを追跡できるよう許可してくれたことで、%s をより良くするための手助けに感謝致します。"
+
+#: includes/i18n.php:549
+msgid ""
+"Usage tracking is done in the name of making %s better. Making a better user"
+" experience, prioritizing new features, and more good things. We'd really "
+"appreciate if you'll reconsider letting us continue with the tracking."
+msgstr "使用の追跡は %s をより良くする名目の下に行われています。ユーザー体験をより良くし、新機能に優先順位をつけるためなどに使います。追跡を続けてもよいと再考してくれるなら本当に感謝致します。"
+
+#: includes/i18n.php:553
+msgid ""
+"By clicking \"Opt Out\", we will no longer be sending any data from %s to "
+"%s."
+msgstr "\"オプトアウト\"をクリックすることで、もう %s から %s へのデータの送信は行いません。"
+
+#: includes/i18n.php:563
+msgid "Screenshots"
+msgstr "スクリーンショット"
+
+#: includes/i18n.php:565
+msgid "Click to view full-size screenshot %d"
+msgstr "クリックしてフルサイズのスクリーンショットを見る %d"
+
+#: includes/i18n.php:573
+msgid "Freemius Debug"
+msgstr "Freemius デバッグ"
+
+#: includes/i18n.php:575
+msgctxt "as turned on"
+msgid "On"
+msgstr "オン"
+
+#: includes/i18n.php:577
+msgctxt "as turned off"
+msgid "Off"
+msgstr "オフ"
+
+#: includes/i18n.php:579
+msgctxt "as code debugging"
+msgid "Debugging"
+msgstr "デバッグ"
+
+#: includes/i18n.php:581
+msgid "Freemius State"
+msgstr "Freemius ステータス"
+
+#: includes/i18n.php:583
+msgctxt "as connection was successful"
+msgid "Connected"
+msgstr "接続"
+
+#: includes/i18n.php:585
+msgctxt "as connection blocked"
+msgid "Blocked"
+msgstr "ブロック"
+
+#: includes/i18n.php:587
+msgctxt "as application program interface"
+msgid "API"
+msgstr "API"
+
+#: includes/i18n.php:589
+msgctxt "as software development kit versions"
+msgid "SDK"
+msgstr "SDK"
+
+#: includes/i18n.php:591
+msgctxt "as software development kit versions"
+msgid "SDK Versions"
+msgstr "SDK バージョン"
+
+#: includes/i18n.php:595
+msgctxt "as plugin folder path"
+msgid "Plugin Path"
+msgstr "プラグインのパス"
+
+#: includes/i18n.php:597
+msgctxt "as sdk path"
+msgid "SDK Path"
+msgstr "SDK のパス"
+
+#: includes/i18n.php:599
+msgid "Add Ons of Plugin %s"
+msgstr "プラグインのアドオン %s"
+
+#: includes/i18n.php:601
+msgid "Are you sure you want to delete all Freemius data?"
+msgstr "ほんとうに全ての Freemius データを削除しますか?"
+
+#: includes/i18n.php:605
+msgid "Actions"
+msgstr "アクション"
+
+#: includes/i18n.php:607
+msgid "Delete All Accounts"
+msgstr "全てのアカウントを削除"
+
+#: includes/i18n.php:609
+msgid "Start Fresh"
+msgstr "初期化を開始"
+
+#: includes/i18n.php:611
+msgid "Clear API Cache"
+msgstr "API キャッシュをクリア"
+
+#: includes/i18n.php:613
+msgid "Sync Data From Server"
+msgstr "サーバーからのデータを同期"
+
+#: includes/i18n.php:615
+msgid "Scheduled Crons"
+msgstr "スケジュール Cron"
+
+#: includes/i18n.php:617
+msgid "Plugins & Themes Sync"
+msgstr "プラグインとテーマを同期"
+
+#: includes/i18n.php:625
+msgctxt "as congratulations"
+msgid "Congrats"
+msgstr "おめでとう"
+
+#: includes/i18n.php:627
+msgctxt "exclamation"
+msgid "Oops"
+msgstr "おっと"
+
+#: includes/i18n.php:629
+msgctxt "interjection expressing joy or exuberance"
+msgid "Yee-haw"
+msgstr "ヤッホー"
+
+#: includes/i18n.php:633
+msgctxt ""
+"(especially in electronic communication) used to express elation, "
+"enthusiasm, or triumph."
+msgid "W00t"
+msgstr "やったー"
+
+#: includes/i18n.php:637
+msgctxt "a positive response"
+msgid "Right on"
+msgstr "そうだ"
+
+#: includes/i18n.php:639
+msgctxt ""
+"something somebody says when they are thinking about what you have just "
+"said. "
+msgid "Hmm"
+msgstr "ふむ"
+
+#: includes/i18n.php:643
+msgid "O.K"
+msgstr "O.K"
+
+#: includes/i18n.php:645
+msgctxt "exclamation"
+msgid "Hey"
+msgstr "ヘイ"
+
+#: includes/i18n.php:647
+msgctxt "advance notice of something that will need attention."
+msgid "Heads up"
+msgstr "警告"
+
+#: includes/i18n.php:657
+msgid "Seems like you got the latest release."
+msgstr "最新版を取得できました。"
+
+#: includes/i18n.php:659
+msgid "You are all good!"
+msgstr "すべて完璧です!"
+
+#: includes/i18n.php:661
+msgid ""
+"Sorry, we could not complete the email update. Another user with the same "
+"email is already registered."
+msgstr "メールアドレスのアップデートを完了できませんでした。他のユーザーがすでに同じメールアドレスで登録しているようです。"
+
+#: includes/i18n.php:665
+msgid ""
+"If you would like to give up the ownership of the plugin's account to %s "
+"click the Change Ownership button."
+msgstr "もし%s にプラグインの所有権を譲りたいなら、所有権を変更ボタンをクリックしてください。"
+
+#: includes/i18n.php:669
+msgid ""
+"Your email was successfully updated. You should receive an email with "
+"confirmation instructions in few moments."
+msgstr "メールアドレスのアップデートが完了しました。まもなく確認メールが届きます。"
+
+#: includes/i18n.php:673
+msgid "Your name was successfully updated."
+msgstr "名前のアップデートが成功しました。"
+
+#: includes/i18n.php:675
+msgid "You have successfully updated your %s."
+msgstr "%s のアップデートが成功しました。"
+
+#: includes/i18n.php:677
+msgid "Please provide your full name."
+msgstr "フルネームを入力してください。"
+
+#: includes/i18n.php:679
+msgid ""
+"Verification mail was just sent to %s. If you can't find it after 5 min, "
+"please check your spam box."
+msgstr "%s に確認メールを送信しました。もし5分以内にそれが届かない場合、迷惑メールボックスを確認してください。"
+
+#: includes/i18n.php:683
+msgid ""
+"Just letting you know that the add-ons information of %s is being pulled "
+"from an external server."
+msgstr "%s のアドオンに関する情報は、外部サーバーから取得されます。"
+
+#: includes/i18n.php:687
+msgid "No credit card required"
+msgstr "クレジットカードは必要ありません。"
+
+#: includes/i18n.php:689
+msgid "Premium plugin version was successfully activated."
+msgstr "プレミアムプラグインのバージョンの有効化に成功しました。"
+
+#: includes/i18n.php:693
+msgid "The upgrade of %s was successfully completed."
+msgstr "%s のアップグレードが完了しました。"
+
+#: includes/i18n.php:695
+msgid "Your account was successfully activated with the %s plan."
+msgstr "アカウントが %s プランで有効化できました。"
+
+#: includes/i18n.php:699
+msgid "Download the latest %s version now"
+msgstr "%s の最新版をダウンロードする"
+
+#: includes/i18n.php:701
+msgid "Please follow these steps to complete the upgrade"
+msgstr "アップグレードを完了するには以下の手順を完了させてください。"
+
+#: includes/i18n.php:705
+msgid "Download the latest %s version"
+msgstr "最新の %s をダウンロード"
+
+#: includes/i18n.php:707
+msgid "Download the latest version"
+msgstr "最新版をダウンロード"
+
+#: includes/i18n.php:709
+msgid "Deactivate the free version"
+msgstr "無料バージョンを無効化"
+
+#: includes/i18n.php:711
+msgid "Upload and activate the downloaded version"
+msgstr "ダウンロードしたバージョンをアップロードして有効化"
+
+#: includes/i18n.php:713
+msgid "How to upload and activate?"
+msgstr "アップロードと有効化の方法"
+
+#: includes/i18n.php:715
+msgctxt "%s - product name, e.g. Facebook add-on was successfully..."
+msgid "%s Add-on was successfully purchased."
+msgstr "%s のアドオンの支払いが完了しました。"
+
+#: includes/i18n.php:719
+msgid "Your %s Add-on plan was successfully upgraded."
+msgstr "%s のアドオンのプランのアップグレードが完了しました。"
+
+#: includes/i18n.php:723
+msgid "Your email has been successfully verified - you are AWESOME!"
+msgstr "あなたのメールアドレスの承認が完了しました。すごい！"
+
+#: includes/i18n.php:727
+msgid "Your plan was successfully upgraded."
+msgstr "プランのアップグレードが成功しました。"
+
+#: includes/i18n.php:729
+msgid "Your plan was successfully changed to %s."
+msgstr "プランの %s への変更が成功しました。"
+
+#: includes/i18n.php:731
+msgid ""
+"Your license has expired. You can still continue using the free plugin "
+"forever."
+msgstr "ライセンスの有効期限が切れました。無料バージョンの利用を継続することができます。"
+
+#: includes/i18n.php:735
+msgid ""
+"Your license has been cancelled. If you think it's a mistake, please contact"
+" support."
+msgstr "ライセンスはキャンセルされました。もしそれが間違いだと思うならサポートに連絡してください。"
+
+#: includes/i18n.php:739
+msgid "Your trial has been successfully started."
+msgstr "トライアル版の利用を開始しました。"
+
+#: includes/i18n.php:741
+msgid "Your license was successfully activated."
+msgstr "ライセンスの有効化が成功しました。"
+
+#: includes/i18n.php:743
+msgid "It looks like your site currently doesn't have an active license."
+msgstr "サイトは有効なライセンスを持っていないようです。"
+
+#: includes/i18n.php:747
+msgid ""
+"Your license was successfully deactivated, you are back to the %s plan."
+msgstr "ライセンスの無効化が完了しました。%s プランに戻りました。"
+
+#: includes/i18n.php:751
+msgid "It looks like the license deactivation failed."
+msgstr "ライセンスの無効化ができませんでした。"
+
+#: includes/i18n.php:755
+msgid "It looks like the license could not be activated."
+msgstr "ライセンスの有効化ができませんでした。"
+
+#: includes/i18n.php:759
+msgid "Error received from the server:"
+msgstr "サーバーからエラーを受信しました。"
+
+#: includes/i18n.php:761
+msgid ""
+"Your trial has expired. You can still continue using all our free features."
+msgstr "トライアルの有効期限が切れました。引き続き無料の機能の利用を続けることができます。"
+
+#: includes/i18n.php:765
+msgid ""
+"Your plan was successfully downgraded. Your %s plan license will expire in "
+"%s."
+msgstr "プランのダウングレードが完了しました。%s プランは %s に有効期限が切れます。"
+
+#: includes/i18n.php:769
+msgid ""
+"Seems like we are having some temporary issue with your plan downgrade. "
+"Please try again in few minutes."
+msgstr "プランのダウングレードの際に一時的な問題が発生したようです。数分後に再度操作してください。"
+
+#: includes/i18n.php:773
+msgid ""
+"It looks like you are not in trial mode anymore so there's nothing to cancel"
+" :)"
+msgstr "すでにトライアルモードではないようなので、キャンセルする必要はありません :)"
+
+#: includes/i18n.php:777
+msgid "Your %s free trial was successfully cancelled."
+msgstr "%s のフリートライアルはキャンセルされました。"
+
+#: includes/i18n.php:781
+msgctxt "%s - numeric version number"
+msgid "Version %s was released."
+msgstr "バージョン %s をリリースしました。"
+
+#: includes/i18n.php:785
+msgid "Please download %s."
+msgstr "%s をダウンロードしてください。"
+
+#: includes/i18n.php:787
+msgctxt "%s - plan name, as the latest professional version here"
+msgid "the latest %s version here"
+msgstr "最新の %s バージョンはこちらです。"
+
+#: includes/i18n.php:791
+msgid ""
+"How do you like %s so far? Test all our %s premium features with a %d-day "
+"free trial."
+msgstr "%s はどうですか? 私たちの全ての %s のプレミアム機能をお試しください。"
+
+#: includes/i18n.php:795
+msgctxt "call to action"
+msgid "Start free trial"
+msgstr "フリートライアルを開始"
+
+#: includes/i18n.php:797
+msgid "Starting trial"
+msgstr "トライアルを開始"
+
+#: includes/i18n.php:799
+msgid "Please wait"
+msgstr "お待ちください"
+
+#: includes/i18n.php:801
+msgid ""
+"Seems like we are having some temporary issue with your trial cancellation. "
+"Please try again in few minutes."
+msgstr "トライアルのキャンセルに一時的な問題がありました。数分後に再度お試しください。"
+
+#: includes/i18n.php:805
+msgid "You already utilized a trial before."
+msgstr "以前すでに試用版を利用しました。"
+
+#: includes/i18n.php:807
+msgid "You are already running the plugin in a trial mode."
+msgstr "すでにトライアル版のプラグインを利用しています。"
+
+#: includes/i18n.php:811
+msgid "Plan %s do not exist, therefore, can't start a trial."
+msgstr "%s プランは存在しないため、試用を開始できません。"
+
+#: includes/i18n.php:815
+msgid "Plan %s does not support a trial period."
+msgstr "%s プランにはトライアル期間はありません。"
+
+#: includes/i18n.php:817
+msgid "None of the plugin's plans supports a trial period."
+msgstr "トライアル期間をサポートしているプランのプラグインはありません。"
+
+#: includes/i18n.php:821
+msgid ""
+"Unexpected API error. Please contact the plugin's author with the following "
+"error."
+msgstr "予期しない API のエラー。プラグイン開発者に連絡をとってください。"
+
+#: includes/i18n.php:825
+msgid "No commitment for %s days - cancel anytime!"
+msgstr "%s 日以内であればいつでもキャンセルできます。"
+
+#: includes/i18n.php:827
+msgid ""
+"Your license has expired. You can still continue using all the %s features, "
+"but you'll need to renew your license to continue getting updates and "
+"support."
+msgstr "ライセンスは有効期限がきれました。%s の機能を引き続き利用することができます。ただし、アップデートやサポートをうけるにはライセンスをアップデートする必要があります。"
+
+#: includes/i18n.php:831
+msgid "Couldn't activate %s."
+msgstr "%s を有効化できません。"
+
+#: includes/i18n.php:833
+msgid "Please contact us with the following message:"
+msgstr "以下のメッセージとともに私たちに連絡をください。"
+
+#: includes/i18n.php:835
+msgid ""
+"It looks like you are still on the %s plan. If you did upgrade or change "
+"your plan, it's probably an issue on our side - sorry."
+msgstr "まだ %s プランのようです。もしアップグレードやプランの変更をしたのなら、こちらで何らかの問題が発生しているようです。申し訳ありません。"
+
+#: includes/i18n.php:839
+msgid "Please contact us here"
+msgstr "こちらで私たちに連絡をとってください。"
+
+#: includes/i18n.php:841
+msgid ""
+"I have upgraded my account but when I try to Sync the License, the plan "
+"remains %s."
+msgstr "アカウントをアップグレードしましたが、ライセンスを同期しようとするとプランが %s のままです。"
+
+#: includes/i18n.php:849
+msgid "From unknown reason, the API connectivity test failed."
+msgstr "不明のエラーにより、API 接続ができませんでした。"
+
+#: includes/i18n.php:853
+msgid ""
+"It's probably a temporary issue on our end. Just to be sure, with your "
+"permission, would it be o.k to run another connectivity test?"
+msgstr "それは私たちの一時的な問題のようです。もし許可していただけるなら他の接続テストをしてもよいですか?"
+
+#: includes/i18n.php:857
+msgid ""
+"We use PHP cURL library for the API calls, which is a very common library "
+"and usually installed out of the box. Unfortunately, cURL is not installed "
+"on your server."
+msgstr "私たちは、API コールに PHP の cURL ライブラリを使用しています。これは一般的なライブラリで多くの場合インストールされていますが、あなたのサーバーにはインストールされていないようです。"
+
+#: includes/i18n.php:861
+msgid ""
+"From unknown reason, CloudFlare, the firewall we use, blocks the connection."
+msgstr "不明のエラーにより私たちが使用している CloudFlare のファイヤーウォールが接続を拒否したようです。"
+
+#: includes/i18n.php:865
+msgctxt "as pluginX requires an access to our API"
+msgid "%s requires an access to our API."
+msgstr "%s は、私たちの API への接続が必要です。"
+
+#: includes/i18n.php:869
+msgid ""
+"It looks like your server is using Squid ACL (access control lists), which "
+"blocks the connection."
+msgstr "サーバーは Squid ACL(Access control lists) を使用しているらしく、それが接続をブロックしています。"
+
+#: includes/i18n.php:873
+msgid "I don't know what is Squid or ACL, help me!"
+msgstr "Squid ACL について知りません。助けてください!"
+
+#: includes/i18n.php875, includes/i18n.php:889
+msgid ""
+"We'll make sure to contact your hosting company and resolve the issue. You "
+"will get a follow-up email to %s once we have an update."
+msgstr "ホスティング会社に連絡して問題を解決してください。 更新が完了したら、 ％s へのフォローアップメールが届きます。"
+
+#: includes/i18n.php:879
+msgid "I'm a system administrator"
+msgstr "私はシステム管理者です"
+
+#: includes/i18n.php:881
+msgid ""
+"Great, please whitelist the following domains: %s. Once you done, deactivate"
+" the plugin and activate it again."
+msgstr "以下のドメインを許可してください: %s 。それが完了したらそのプラグインを無効化して有効化してください。"
+
+#: includes/i18n.php:885
+msgid "I don't know what is cURL or how to install it, help me!"
+msgstr "cURL がなにか、そのインストール方法を知りません。助けてください。"
+
+#: includes/i18n.php:893
+msgid ""
+"Great, please install cURL and enable it in your php.ini file. To make sure "
+"it was successfully activated, use 'phpinfo()'. Once activated, deactivate "
+"the plugin and reactivate it back again."
+msgstr "cURLをインストールし、php.iniファイルで有効にしてください。 正常に起動されたことを確認するには、 'phpinfo()' を使用してください。 プラグインを有効化したら、プラグインを無効化して再度有効化し直してください。"
+
+#: includes/i18n.php:897
+msgid ""
+"We are sure it's an issue on our side and more than happy to resolve it for "
+"you ASAP if you give us a chance."
+msgstr "それは私たちの側の問題だと確信しています。もし機会をくれるなら私たちはそれを一刻でも早く修正します。"
+
+#: includes/i18n.php:901
+msgid ""
+"Sorry for the inconvenience and we are here to help if you give us a chance."
+msgstr "ご迷惑をおかけしてすいません。もし機会をいただけたらお手伝いをします。"
+
+#: includes/i18n.php:905
+msgid "Yes - I'm giving you a chance to fix it"
+msgstr "はい、修正をお願いします。"
+
+#: includes/i18n.php:907
+msgid ""
+"We will do our best to whitelist your server and resolve this issue ASAP. "
+"You will get a follow-up email to %s once we have an update."
+msgstr "私たちは、少しでも早くサーバーをホワイトリストに登録して問題を修正します。アップデートを行ったら、%s あてに報告を送信します。"
+
+#: includes/i18n.php:911
+msgid "Let's try your previous version"
+msgstr "以前のバージョンでお試しください。"
+
+#: includes/i18n.php:913
+msgid "Uninstall this version and install the previous one."
+msgstr "このバージョンをアンインストールして、以前のバージョンをインストールする。"
+
+#: includes/i18n.php:917
+msgid "That's exhausting, please deactivate"
+msgstr "それは、使用できません。無効化してください。"
+
+#: includes/i18n.php:919
+msgid ""
+"We feel your frustration and sincerely apologize for the inconvenience. Hope"
+" to see you again in the future."
+msgstr "ご迷惑をおかけして心からお詫び申し上げます。将来ふたたびお会いできることを楽しみにしています。"
+
+#: includes/i18n.php:923
+msgid ""
+"Thank for giving us the chance to fix it! A message was just sent to our "
+"technical staff. We will get back to you as soon as we have an update to %s."
+" Appreciate your patience."
+msgstr "修正するチャンスをいただきありがとうございます! テクニカルスタッフにメッセージが送信されました。 ％s への更新が行われるとすぐにあなたに連絡します。 あなたの忍耐に感謝します。"
+
+#: includes/i18n.php:927
+msgctxt "%1s - plugin title, %2s - API domain"
+msgid ""
+"Your server is blocking the access to Freemius' API, which is crucial for "
+"%1s synchronization. Please contact your host to whitelist %2s"
+msgstr "サーバーは %1s の同期に不可欠な Freemius の API へのアクセスをブロックしています。 ホワイトリストに %2s を追加していただけるようあなたのホスティング会社に連絡してください。"
+
+#: includes/i18n.php:931
+msgid ""
+"It seems like one of the authentication parameters is wrong. Update your "
+"Public Key, Secret Key & User ID, and try again."
+msgstr "認証パラメータの1つが間違っているようです。 公開鍵、秘密鍵、ユーザーIDを更新して、もう一度お試しください。"
+
+#: includes/i18n.php:939
+msgid ""
+"Please check your mailbox, you should receive an email via %s to confirm the"
+" ownership change. From security reasons, you must confirm the change within"
+" the next 15 min. If you cannot find the email, please check your spam "
+"folder."
+msgstr "メールボックスを確認してください。所有権の変更を確認するには、%s でメールを受け取る必要があります。 セキュリティ上の理由から、次の15分以内に変更を確認する必要があります。 電子メールが見つからない場合は、迷惑メールフォルダを確認してください。"
+
+#: includes/i18n.php:943
+msgid ""
+"Thanks for confirming the ownership change. An email was just sent to %s for"
+" final approval."
+msgstr "所有権の変更を確認していただきありがとうございます。 %s に承認メールが送信されました。"
+
+#: includes/i18n.php:947
+msgid "%s is the new owner of the account."
+msgstr "%s は新しいオーナーです。"
+
+#: includes/i18n.php:951
+msgctxt "addonX cannot run without pluginY"
+msgid "%s cannot run without %s."
+msgstr "%s は、%s が無いと実行することができません。"
+
+#: includes/i18n.php:955
+msgctxt "addonX cannot run..."
+msgid "%s cannot run without the plugin."
+msgstr "%s は、プラグインが無いと実行することができません。"
+
+#: includes/i18n.php:959
+msgctxt "pluginX activation was successfully..."
+msgid "%s activation was successfully completed."
+msgstr "%s の有効化が成功しました。"
+
+#: includes/i18n.php:963
+msgctxt "Plugin installer section title"
+msgid "Features & Pricing"
+msgstr "機能 & 料金"
+
+#: includes/i18n.php:967
+msgid "Add-on must be deployed to WordPress.org or Freemius."
+msgstr "アドオンが WordPress.org か Freemius にデプロイされている必要があります。"
+
+#: includes/i18n.php:971
+msgid "Paid add-on must be deployed to Freemius."
+msgstr "有料アドオンは Freemius にデプロイされている必要があります。"
+
+#: includes/i18n.php:979
+msgid ""
+"%s is a premium only add-on. You have to purchase a license first before "
+"activating the plugin."
+msgstr "%s はプレミアムのみのアドオンです。そのプラグインを有効化する前にライセンスを購入する必要があります。"
+
+#: includes/i18n.php:983
+msgid ""
+"%s free trial was successfully cancelled. Since the add-on is premium only "
+"it was automatically deactivated. If you like to use it in the future, "
+"you'll have to purchase a license."
+msgstr "%s の無料試用が正常にキャンセルされました。 アドオンはプレミアムなので、自動的に無効化されました。 将来使用したい場合は、ライセンスを購入する必要があります。"
+
+#: includes/i18n.php:995
+msgctxt "as every month"
+msgid "Monthly"
+msgstr "月"
+
+#: includes/i18n.php:997
+msgctxt "as monthly period"
+msgid "mo"
+msgstr "月"
+
+#: includes/i18n.php:999
+msgctxt "as once a year"
+msgid "Annual"
+msgstr "年次"
+
+#: includes/i18n.php:1001
+msgctxt "as once a year"
+msgid "Annually"
+msgstr "毎年"
+
+#: includes/i18n.php:1003
+msgctxt "as once a year"
+msgid "Once"
+msgstr "一度"
+
+#: includes/i18n.php:1005
+msgctxt "as annual period"
+msgid "year"
+msgstr "年"
+
+#: includes/i18n.php:1007
+msgid "Lifetime"
+msgstr "ライフタイム"
+
+#: includes/i18n.php:1009
+msgctxt "e.g. the best product"
+msgid "Best"
+msgstr "ベスト"
+
+#: includes/i18n.php:1011
+msgctxt "e.g. billed monthly"
+msgid "Billed %s"
+msgstr "%s への請求"
+
+#: includes/i18n.php:1013
+msgctxt "as a discount of $5 or 10%"
+msgid "Save %s"
+msgstr "%s を保存"
+
+#: includes/i18n.php:1017
+msgid "View details"
+msgstr "詳細を表示"
+
+#: includes/i18n.php:1025
+msgctxt "button label"
+msgid "Approve & Start Trial"
+msgstr "気に入ったのでトライアルを開始"
+
+#: includes/i18n.php:1029
+msgid ""
+"You are 1-click away from starting your %1$s-day free trial of the %2$s "
+"plan."
+msgstr "%2$s プランの%1$s日間のフリートライアルを開始するまであとワンクリックです。"
+
+#: includes/i18n.php:1033
+msgid ""
+"For compliance with the WordPress.org guidelines, before we start the trial "
+"we ask that you opt-in with your user and non-sensitive site information, "
+"allowing the plugin to periodically send data to %s to check for version "
+"updates and to validate your trial."
+msgstr "WordPress.org ガイドラインの遵守のため、ユーザーとセンシティブでないサイト情報をオプトインすること、バージョンの更新確認のために %s へとプラグインが一時的にデータを送信することの許可、トライアルを有効にすることの3つについて、トライアルの開始前にお尋ねします。"
+
+#: includes/i18n.php:1045
+msgid "Business name"
+msgstr "商号"
+
+#: includes/i18n.php:1047
+msgid "Tax / VAT ID"
+msgstr "税金 / VAT ID"
+
+#: includes/i18n.php:1049
+msgid "Address Line %d"
+msgstr "住所欄 %d"
+
+#: includes/i18n.php:1051
+msgid "Country"
+msgstr "国"
+
+#: includes/i18n.php:1053
+msgid "Select Country"
+msgstr "国を選択"
+
+#: includes/i18n.php:1055
+msgid "City"
+msgstr "市"
+
+#: includes/i18n.php:1057
+msgid "Town"
+msgstr "町"
+
+#: includes/i18n.php:1059
+msgid "State"
+msgstr "州"
+
+#: includes/i18n.php:1061
+msgid "Province"
+msgstr "県・州・省"
+
+#: includes/i18n.php:1063
+msgid "ZIP / Postal Code"
+msgstr "ZIP / 郵便番号"

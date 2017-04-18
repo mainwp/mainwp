@@ -140,6 +140,7 @@ class MainWP_Post_Handler {
 		$this->addAction( 'mainwp_dismiss_twit', array( &$this, 'mainwp_dismiss_twit' ) );
 		$this->addAction( 'mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
                 $this->addAction( 'mainwp_status_saving', array( &$this, 'mainwp_status_saving' ) );
+                $this->addAction( 'mainwp_leftmenu_filter_group', array( &$this, 'mainwp_leftmenu_filter_group' ) );
                 
 		add_action( 'wp_ajax_mainwp_twitter_dashboard_action', array(
 			&$this,
@@ -610,8 +611,24 @@ class MainWP_Post_Handler {
                     $values[$_POST['status']][$_POST['key']] = $_POST['value'];
                 }
                 update_option('mainwp_status_saved_values', $values);
-                die(1);
+                die('ok');
 	}
+        
+        function mainwp_leftmenu_filter_group() {
+		$this->secure_request( 'mainwp_leftmenu_filter_group' );
+                if(isset($_POST['group_id']) && !empty($_POST['group_id'])) {
+                    $ids = '';
+                    $websites     = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $_POST['group_id'], true ) );                    
+                    while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+                        $ids .= $website->id . ',';                            
+                    }
+                    @MainWP_DB::free_result( $websites );
+                    $ids = rtrim($ids, ',');
+                    die($ids);
+                }
+                die('');
+	}
+        
         
 	function mainwp_tips_update() {
 		$this->secure_request( 'mainwp_tips_update' );
@@ -1376,7 +1393,7 @@ class MainWP_Post_Handler {
 	}
 
 	function mainwp_unignoreabandonedplugintheme() {
-		$this->secure_request( 'mainwp_unignoreabandonedplugintheme ');
+		$this->secure_request( 'mainwp_unignoreabandonedplugintheme');
 
 		if ( ! isset( $_POST['id'] ) ) {
 			die( json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );

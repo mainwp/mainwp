@@ -2258,27 +2258,30 @@ div.http-response-ok span.http-notok-status{
 
 .mainwp-ui-leftmenu .mainwp_leftmenu_wrap {
     width: 200px;       
-    background-color: #fff;
+    background-color: #e5e5e5;
     margin: 0 20px 0 -20px;
     position: fixed;
     top: 32;
     left: 32;
+    border-right: 1px solid #e5e5e5;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
 .mainwp_leftmenu_content {    
-    height: calc(100vh - 80px);
+    height: calc(100vh - 125px);
 }
 
 .mainwp-menu-sub-wrap {
     overflow-y: auto;
     overflow-x: hidden !important;
-    max-height: calc(100vh - 200px);
+    max-height: calc(100vh - 245px);
 }
 .mainwp_leftmenu_content > ul {
     margin: 0px;
 }
 .mainwp_leftmenu_content > ul > li {
     padding: 0; 
-    border-bottom: 1px solid #e5e5e5;    
+    border-bottom: 1px solid #e5e5e5;  
+    background: #fff;  
     margin: 0px !important;
 }
 .mainwp_leftmenu_content > ul > li.mainwp-menu-first-item {
@@ -2372,9 +2375,53 @@ div.http-response-ok span.http-notok-status{
 
 .leftmenu_sites_actions{
     float: right;
-    margin: 13px 0 0;    
+    margin: 10px 5px 0 0;    
 }
 .mainwp-ui-leftmenu #wpbody-content > div.error {
     float:left;
     margin-left: 200px;
+}
+
+#mainwp-ui-leftmenu-footer {
+    width: 200px;
+    padding: 10px 0;
+    text-align: center;
+}
+
+#mainwp-ui-leftmenu-footer a {
+    color: #444;
+}
+
+.sidemenu-active .mainwp-menu-sub2-wrap > li{
+    background: #fafafa; 
+    width: calc(100% + 5px); /* to override border */
+}
+.menuitem-active{
+    font-weight: bold;
+}
+.mainwp_leftmenu_content .sidemenu-active {
+    border-right: 5px solid #7fb100;   
+}
+
+#mainwp-sites-menu-filter {
+    margin: 10px 0 0px 0;
+}
+li.mainwp-menu-sub-item-filer{
+    padding: 10px !important;        
+}
+/* to fix layout */
+.mainwp-ui-leftmenu .fs-notice.fs-has-title{
+    float: left !important; 
+    margin-left: 200px !important; 
+}
+.mainwp-ui-leftmenu .mainwp_admin_notices_wrap {
+    float: left !important; 
+    margin-left: 185px !important; 
+}
+/* end */
+.mainwp-menu-item.closed .handle .mainwp-menu-name{
+    font-weight: normal;
+}
+.mainwp-menu-item .handle .mainwp-menu-name{
+    font-weight: bold;
 }

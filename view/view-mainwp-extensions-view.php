@@ -6,16 +6,16 @@ class MainWP_Extensions_View {
 			MainWP_Extensions::getClassName(),
 			'render'
 		) );    
-                MainWP_System::add_sub_left_menu(__('Extensions', 'mainwp'), 'mainwp_tab', 'Extensions', 'admin.php?page=Extensions', '<i class="fa fa-plug"></i>', '' );			
+                MainWP_System::add_sub_left_menu(__('Add Extensions', 'mainwp'), 'Extensions', 'Extensions', 'admin.php?page=Extensions&leftmenu=1', '<i class="fa fa-plug"></i>', '' );			
+                MainWP_System::add_sub_left_menu(__('Extensions', 'mainwp'), 'mainwp_tab', 'Extensions', 'admin.php?page=Extensions', '<i class="fa fa-plug"></i>', '' );
                 return $page;
 	}
-        // not used ?
+        
 	public static function renderHeader( $shownPage, &$extensions ) {     
                 MainWP_UI::render_left_menu();
 		?>
-		<div class="mainwp-wrap">
-		
-		<h1 class="mainwp-margin-top-0"><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h1>
+		<div class="mainwp-wrap">               
+		<h1><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h1>
 
 		<div class="mainwp-tabs" id="mainwp-tabs">
 			<a class="nav-tab pos-nav-tab" href="admin.php?page=Extensions"><?php _e( 'Manage Extensions', 'mainwp' ); ?></a>
@@ -604,18 +604,7 @@ class MainWP_Extensions_View {
 					'product_id' => 'MainWP Post Dripper Extension',
 					'catalog_id' => '11756',
 					'group' => array('content')
-				),
-			'mainwp-remote-backup-extension' =>
-				array(
-					'slug' => 'mainwp-remote-backup-extension',
-					'title' => 'MainWP Remote Backups Extension',
-					'desc' => 'MainWP Remote Backup Extension is an extension for the MainWP plugin that enables you store your backups on different off site locations.',
-					'link' => 'https://mainwp.com/extension/remote-backups/',
-					'img' => plugins_url( 'images/extensions/remote-backups.png', dirname( __FILE__ ) ),
-					'product_id' => 'MainWP Remote Backup Extension',
-					'catalog_id' => '1553',
-					'group' => array('backup')
-				),
+				),			
 			'mainwp-rocket-extension' =>
 				array(
 					'slug' => 'mainwp-rocket-extension',

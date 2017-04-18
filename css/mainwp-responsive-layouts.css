@@ -59,6 +59,16 @@
 		column-count: 1;
 	}
 
+        .mainwp-ui-leftmenu .mainwp_leftmenu_wrap {
+		display: none;
+	}
+        
+        .mainwp-ui-leftmenu .mainwp-wrap{
+            width: 100% !important;
+            margin-right: 12px !important;
+            margin-left: auto !important;            
+        }
+        
 	.mainwp_boxout {
 		display: none;
 	}

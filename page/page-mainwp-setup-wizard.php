@@ -27,6 +27,7 @@ class MainWP_Setup_Wizard {
 		add_action('wp_ajax_mainwp_setup_extension_downloadandinstall', array('MainWP_Setup_Wizard', 'ajax_download_and_install'));
 		add_action('wp_ajax_mainwp_setup_extension_grabapikey', array('MainWP_Setup_Wizard', 'ajax_grab_api_key'));
 		add_action('wp_ajax_mainwp_setup_extension_activate_plugin', array('MainWP_Setup_Wizard', 'ajax_activate_plugin'));
+                add_action('wp_ajax_mainwp_setup_saving_tracking', array('MainWP_Setup_Wizard', 'ajax_saving_tracking'));                
 	}
 
 	public function admin_menus() {
@@ -250,7 +251,7 @@ class MainWP_Setup_Wizard {
 
 		<p class="mwp-setup-actions step">
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button-primary button button-large"><?php _e( 'Let\'s Go!', 'mainwp' ); ?></a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new&start_tour=1' ) ); ?>" class="button button-large"><?php _e( 'Not right now', 'mainwp' ); ?></a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>" class="button button-large"><?php _e( 'Not right now', 'mainwp' ); ?></a>
 		</p>
 		<?php
 	}
@@ -920,6 +921,12 @@ class MainWP_Setup_Wizard {
 		die( 'FAILED' );
 	}
 
+        public static function ajax_saving_tracking() {
+		self::secure_request();
+		update_option('mainwp_enabled_tracking_dashboard', intval($_POST['dashboard']));                
+		die( 'OK' );
+	}        
+        
 	public static function ajax_grab_api_key( ) {
 		$enscrypt_u = get_option('mainwp_extensions_api_username');
 		$enscrypt_p = get_option('mainwp_extensions_api_password');
@@ -1045,6 +1052,8 @@ class MainWP_Setup_Wizard {
 		$hide_menus = get_option('mwp_setup_hide_wp_menus', array());
 		if (!is_array($hide_menus))
 			$hide_menus = array();
+                
+                $disable_wp_main_menu = get_option( 'mainwp_disable_wp_main_menu', true );                
 		?>
 		<h1><?php _e( 'Cleanup your Dashboard', 'mainwp' ); ?></h1>
 		<p>
@@ -1075,6 +1084,17 @@ class MainWP_Setup_Wizard {
 						</ul>
 					</td>
 				</tr>
+                                <tr>
+                                        <th scope="row"><?php _e('Do you want to use MainWP custom Sidebar Navigation Menu?','mainwp'); ?></th>
+                                        <td>
+                                                <div class="mainwp-checkbox">
+                                                        <input type="checkbox" name="mwp_setup_options_use_custom_sidebar"
+                                                               id="mwp_setup_options_use_custom_sidebar" <?php echo ($disable_wp_main_menu ? 'checked="true"' : ''); ?> />
+                                                        <label for="mwp_setup_options_use_custom_sidebar"></label>
+                                                </div>                                                
+                                        </td>
+                                </tr>
+                            
 			</table>
 			<p class="mwp-setup-actions step">
 				<input type="submit" class="button-primary button button-large" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
@@ -1095,6 +1115,8 @@ class MainWP_Setup_Wizard {
 			}
 		}
 		MainWP_Utility::update_option('mwp_setup_hide_wp_menus', $hide_menus);
+                $disable_wp_main_menu = (isset($_POST['mwp_setup_options_use_custom_sidebar']) ? 1 : 0);
+                update_option( 'mainwp_disable_wp_main_menu', $disable_wp_main_menu );
 		wp_redirect( $this->get_next_step_link() );
 		exit;
 	}
@@ -1316,12 +1338,35 @@ class MainWP_Setup_Wizard {
 		$this->mwp_setup_ready_actions();
 		?>
 		<h1><?php _e( 'Your MainWP Dashboard is Ready!', 'mainwp' ); ?></h1>
-		<p><?php  _e( 'Congratulations! Now you are ready to start managing your WordPress sites.', 'mainwp' ); ?></p>
+		<p><?php  _e( 'Congratulations! Now you are ready to start managing your WordPress sites.', 'mainwp' ); ?></p>                
 		<div class="mwp-setup-next-steps">
+                        <div class="mwp-setup-next-steps-top">
+                            <p><?php echo sprintf( __( 'Allow MainWP to collect diagnostics and usage data with %sfreemius.com%s to make the plugin better.', 'mainwp' ), '<a href="https://freemius.com" target="_blank">', '</a>' ); ?></p>
+							<p><?php echo __( 'List of data that MainWP collects:', 'mainwp' ); ?></p>
+							<ul>
+								<li><strong><?php _e( 'Your profile overview', 'mainwp' ); ?></strong><br/><em><?php _e( 'Name, Email Address', 'mainwp' ); ?></em></li>
+								<li><strong><?php _e( 'Your MainWP Dashboard site overview', 'mainwp' ); ?></strong><br/><em><?php _e( 'Site URL, WP version, PHP info, Plugins, Themes', 'mainwp' ); ?></em></li>
+								<li><strong><?php _e( 'Admin notices', 'mainwp' ); ?></strong><br/><em><?php _e( 'Updates, Announcements, Marketing, No spam', 'mainwp' ); ?></em></li>
+								<li><strong><?php _e( 'Newsletter', 'mainwp' ); ?></strong><br/><em><?php _e( 'Updates, Announcements, Marketing, No spam', 'mainwp' ); ?></em></li>
+								<li><strong><?php _e( 'Current plugin events', 'mainwp' ); ?></strong><br/><em><?php _e( 'Activation, Deactivation, Uninstall', 'mainwp' ); ?></em></li>
+							</ul>
+							<br/>
+                            <ul class="mainwp_tracking_checks">
+                                <li>
+                                        <input type="checkbox" id="mwp_setup_tracking_dashboard" name="mwp_setup_tracking_dashboard" <?php echo( ( get_option('mainwp_enabled_tracking_dashboard', 0) == 1 ) ? 'checked="true"' : '' ); ?> value="1">
+                                        <label for="mwp_setup_tracking_dashboard" ><?php _e('Allow MainWP to collect dignostics and usage data', 'mainwp'); ?></label>
+                                </li>                                
+                            </ul>      
+                            <br/><br/>
+                            <input type="button" value="Allow Tracking" onclick="return mainwp_setup_save_tracking(this);" id="mwp_setup_allow_tracking_btn" class="mwp-setup-btn-green button">                            
+                            <span id="mwp_setup_save_tracking_loading">
+                                    <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
+                            </span>
+                        </div>
 			<div class="mwp-setup-next-steps-first">
 				<h2><?php _e( 'Next Step', 'mainwp' ); ?></h2>
 				<ul>
-					<li class="setup-product"><a class="button button-primary button-large" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new&start_tour=1' ) ); ?>"><?php _e( 'Add New Site', 'mainwp' ); ?></a></li>
+					<li class="setup-product"><a class="button button-primary button-large" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php _e( 'Add New Site', 'mainwp' ); ?></a></li>
 				</ul>
 			</div>
 			<div class="mwp-setup-next-steps-last">
@@ -1333,6 +1378,12 @@ class MainWP_Setup_Wizard {
 				</ul>
 			</div>
 		</div>
+                <script type="text/javascript">
+                        jQuery(document).ready(function () {
+                                jQuery('#mwp_setup_active_extension').fadeIn(500);
+                                mainwp_setup_extension_activate(false);
+                        })
+                </script>
 		<?php
 	}
 }

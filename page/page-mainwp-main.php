@@ -249,7 +249,10 @@ class MainWP_Main {
 								<?php
 							}
 						} else {
-							$sync_status = MainWP_DB::Instance()->getLastSyncStatus();
+							$result = MainWP_DB::Instance()->getLastSyncStatus();
+                                                        $sync_status = $result['sync_status'];
+                                                        $last_sync = $result['last_sync'];
+                                                        
 							if ( $sync_status === 'not_synced' ) {
 								?><h2>
 								<i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?>
@@ -258,7 +261,7 @@ class MainWP_Main {
 								<?php
 							} else if ( $sync_status === 'all_synced' ) {
 								?>
-								<h2><?php echo __( 'All sites have been synced within the last 24 hours', 'mainwp' ); ?>!</h2>
+                                                                <h2><?php echo empty($last_sync) ? __( 'All sites have been synced within the last 24 hours', 'mainwp' ) . '!' : sprintf(__('Sites last synced at %s (%s ago)', 'mainwp'), MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $last_sync )), human_time_diff( MainWP_Utility::getTimestamp( $last_sync ) )) ; ?></h2>
 								<p class="about-description"><?php echo __( 'Management is more than just updates!', 'mainwp' ); ?></p>
 								<?php
 							} else {

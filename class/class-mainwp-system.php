@@ -244,6 +244,17 @@ class MainWP_System {
 		}
 
 		add_action( 'admin_notices', array( &$this, 'admin_notices' ) );
+                // to fix layout
+                if ( get_option( 'mainwp_disable_wp_main_menu', 1 ) ) {
+                    add_action( 'admin_notices', array( &$this, 'admin_notices_start' ), 1 );
+                    add_action( 'admin_notices', array( &$this, 'admin_notices_end' ), 9999 );
+                    add_action( 'user_admin_notices', array( &$this, 'admin_notices_start' ), 1 );
+                    add_action( 'user_admin_notices', array( &$this, 'admin_notices_end' ), 9999 );
+                    add_action( 'all_admin_notices', array( &$this, 'admin_notices_start' ), 1 );
+                    add_action( 'all_admin_notices', array( &$this, 'admin_notices_end' ), 9999 );
+                }
+
+                        
 		add_action( 'after_plugin_row', array( &$this, 'after_extensions_plugin_row' ), 10, 3 );
 
 		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) );
@@ -280,9 +291,10 @@ class MainWP_System {
 		add_action( 'mainwp_bulkpage_metabox_handle', array( $this, 'hookBulkPageMetaboxHandle' ) );
 
 		$this->posthandler = new MainWP_Post_Handler();
-
+                
 		do_action( 'mainwp-activated' );
-
+                
+                MainWP_Tracking::init();
 		MainWP_Updates::init();
 		MainWP_Post::init();
 		MainWP_Settings::init();
@@ -501,7 +513,7 @@ class MainWP_System {
 			$current_options = array();
 		}
 
-        $phpver = phpversion();
+        $phpver = phpversion();        
         if ( version_compare( $phpver, '5.5', '<' ) ) {
             if ( MainWP_Utility::showMainWPMessage( 'notice', 'phpver_5_5' ) ) {
                 ?>
@@ -534,13 +546,11 @@ class MainWP_System {
 			if ( self::isMainWP_Pages() ) {
 				if ( ! MainWP_Plugins::checkAutoUpdatePlugin( 'mainwp-child/mainwp-child.php' ) ) {
 					?>
-					<div id="" class="mainwp-events-notice error fade">
-						<p>
-							<span class="mainwp-right"><a class="mainwp-events-notice-dismiss" notice="trust_child" style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
-							<strong><?php esc_html_e( 'You have not set your MainWP Child plugins for auto updates, this is highly recommended!', 'mainwp' ); ?></strong>
-							&nbsp;<a id="mainwp_btn_autoupdate_and_trust" class="button-primary" href="#"><?php esc_html_e( 'Turn on', 'mainwp' ); ?></a>
-							&nbsp;<a class="button" href="//docs.mainwp.com/setting-mainwp-as-a-trusted-plugin/" target="_blank"><?php esc_html_e( 'Learn more', 'mainwp' ); ?></a>
-						</p>
+					<div id="" class="mainwp-events-notice mainwp-notice mainwp-notice-red fade">						
+                                            <span class="mainwp-right"><a class="mainwp-events-notice-dismiss" notice="trust_child" style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
+                                            <strong><?php esc_html_e( 'You have not set your MainWP Child plugins for auto updates, this is highly recommended!', 'mainwp' ); ?></strong>
+                                            &nbsp;<a id="mainwp_btn_autoupdate_and_trust" class="button-primary" href="#"><?php esc_html_e( 'Turn on', 'mainwp' ); ?></a>
+                                            &nbsp;<a class="button" href="//docs.mainwp.com/setting-mainwp-as-a-trusted-plugin/" target="_blank"><?php esc_html_e( 'Learn more', 'mainwp' ); ?></a>						
 					</div>
 					<?php
 
@@ -627,10 +637,18 @@ class MainWP_System {
 					</span>
 				</p>
 			</div>
-			<?php
-		}
+			<?php                        
+		}                
 	}
 
+        public function admin_notices_start() {
+            echo '<div class="mainwp_admin_notices_wrap">';
+        }
+        
+        public function admin_notices_end() {
+            echo '</div>';
+        }
+        
 	public function getVersion() {
 		return $this->current_version;
 	}
@@ -765,7 +783,18 @@ class MainWP_System {
 		if ( $am_slugs != '' ) {
 			$am_slugs = explode( ',', $am_slugs );
 			if ( in_array( $arg->slug, $am_slugs ) ) {
-				return MainWP_API_Settings::getPluginInformation( $arg->slug );
+				$info = MainWP_API_Settings::getPluginInformation( $arg->slug );
+                                if (is_object($info) && property_exists($info, 'sections')) {
+                                    if (!is_array($info->sections) || isset($info->sections['changelog']) || empty($info->sections['changelog'])) {
+                                        $exts_data = MainWP_Extensions_View::getAvailableExtensions();
+                                        if (isset($exts_data[$arg->slug])) {
+                                            $ext_info = $exts_data[$arg->slug];
+                                            $changelog_link = rtrim($ext_info['link'],'/');
+                                            $info->sections['changelog'] = '<a href="' . $changelog_link . '#tab-changelog" target="_blank">' . $changelog_link . '#tab-changelog</a>';
+                                        }                                    
+                                    }
+                                }
+                                return $info;
 			}
 		}
 
@@ -1145,6 +1174,9 @@ class MainWP_System {
 					$infoTxt    = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $websiteCoreUpgrades['current'] . ' to ' . $websiteCoreUpgrades['new'];
 					$infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $websiteCoreUpgrades['current'] . ' to ' . $websiteCoreUpgrades['new'];
 					$newUpdate  = ! ( isset( $websiteLastCoreUpgrades['current'] ) && ( $websiteLastCoreUpgrades['current'] == $websiteCoreUpgrades['current'] ) && ( $websiteLastCoreUpgrades['new'] == $websiteCoreUpgrades['new'] ) );
+                                        if ($website->is_ignoreCoreUpdates) {
+                                            continue;
+                                        }
 					if ( $website->automatic_update == 1 ) {
 						if ( $newUpdate ) {
 							$coreNewUpdate[] = array( $website->id, $infoNewTxt, $infoTrustedText );
@@ -1193,7 +1225,9 @@ class MainWP_System {
 					if ( isset( $decodedIgnoredPlugins[ $pluginSlug ] ) || isset( $websiteDecodedIgnoredPlugins[ $pluginSlug ] ) ) {
 						continue;
 					}
-
+                                        if ($website->is_ignorePluginUpdates) {
+                                            continue;
+                                        }
 					$infoTxt    = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
 					$infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'];
                     if ( $pluginInfo['update']['url'] && ( false !== strpos( $pluginInfo['update']['url'], 'wordpress.org/plugins' ) ) ) {
@@ -1232,6 +1266,10 @@ class MainWP_System {
 						continue;
 					}
 
+                                        if ($website->is_ignoreThemeUpdates) {
+                                            continue;
+                                        }
+                                        
 					$infoTxt    = '<a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name )  . '</a> - ' . $themeInfo['Name'] . ' ' . $themeInfo['Version'] . ' to ' . $themeInfo['update']['new_version'];
 					$infoNewTxt = '*NEW* <a href="' . admin_url('admin.php?page=managesites&dashboard=' . $website->id) . '">' . stripslashes( $website->name ) . '</a> - ' . $themeInfo['Name'] . ' ' . $themeInfo['Version'] . ' to ' . $themeInfo['update']['new_version'];
 
@@ -1701,20 +1739,24 @@ class MainWP_System {
 		}
 		@MainWP_DB::free_result( $websites );
 	}
-
+ 
         public static function add_left_menu($title, $key, $href, $desc = '' ) {            
             global $mainwp_leftmenu;
             $mainwp_leftmenu[] = array($title, $key, $href, $desc);           
         }
         
         public static function add_sub_left_menu($title, $parent_key, $slug, $href, $icon = '', $desc = '' ) {            
-            global $mainwp_sub_leftmenu;
-            $mainwp_sub_leftmenu[$parent_key][] = array($title, $slug, $href, $icon, $desc);             
+            global $mainwp_sub_leftmenu, $mainwp_menu_active_slugs;
+            $mainwp_sub_leftmenu[$parent_key][] = array($title, $slug, $href, $icon, $desc); 
+            if (!empty($slug))
+                $mainwp_menu_active_slugs[$slug] = $slug; // to get active menu            
         }
         
         public static function add_sub_sub_left_menu($title, $parent_key, $slug, $href, $right = '' ) {            
-            global $mainwp_sub_subleftmenu;
-            $mainwp_sub_subleftmenu[$parent_key][] = array($title, $href, $right);              
+            global $mainwp_sub_subleftmenu, $mainwp_menu_active_slugs;
+            $mainwp_sub_subleftmenu[$parent_key][] = array($title, $href, $right);  
+            if (!empty($slug))
+                $mainwp_menu_active_slugs[$slug] = $parent_key; // to get active menu            
         }
         
         public static function init_subpages_left_menu($subPages, &$initSubpage, $parentKey, $slug ) {            
@@ -1738,7 +1780,7 @@ class MainWP_System {
 		MainWP_Post::initMenuSubPages();
 		MainWP_Manage_Sites::initMenuSubPages();
 		MainWP_Settings::initMenuSubPages();
-		MainWP_Extensions::initMenuSubPages();
+		MainWP_Extensions::initMenuSubPages();                
 		MainWP_Page::initMenuSubPages();
 		MainWP_Themes::initMenuSubPages();
 		MainWP_Plugins::initMenuSubPages();
@@ -1746,9 +1788,11 @@ class MainWP_System {
 		if (get_option('mainwp_enableLegacyBackupFeature')) {
 			MainWP_Manage_Backups::initMenuSubPages();
 		}
-
+                MainWP_Settings::initMenuSubPages();
 		do_action( 'mainwp_admin_menu_sub' );
-                if (get_option('mainwp_disable_wp_main_menu')) {
+                MainWP_Server_Information::initMenuSubPages();
+                if (get_option('mainwp_disable_wp_main_menu', 1)) {
+                    if ( self::isMainWP_Pages() ) {
                     ?>
                     <script type="text/javascript">                        
                         jQuery(document).ready(function()
@@ -1757,6 +1801,7 @@ class MainWP_System {
                         });
                     </script>
                     <?php
+                    }
                 }
 	}
 
@@ -1965,7 +2010,7 @@ class MainWP_System {
 	function mainwp_warning_notice() {
 		if ( get_option( 'mainwp_installation_warning_hide_the_notice' ) == 'yes' ) {
 			return;
-		}
+		}                
 		?>
 		<div id="mainwp-installation-warning" class="mainwp-notice mainwp-notice-red">
 			<h3><?php esc_html_e( 'Stop! Before you continue,', 'mainwp' ); ?></h3>
@@ -1977,7 +2022,7 @@ class MainWP_System {
 				<a href="#" class="button button-primary" id="remove-mainwp-installation-warning"><?php esc_html_e('I have read the warning and I want to proceed', 'mainwp' ); ?></a>
 			</div>
 		</div>
-		<?php
+		<?php                
 	}
 
 	function admin_init() {
@@ -2069,8 +2114,10 @@ class MainWP_System {
 			$hide_menus = array(); }
 		$hide_wp_dashboard = in_array( 'dashboard', $hide_menus );
 		if ( ($hide_wp_dashboard && strpos( $_SERVER['REQUEST_URI'], 'index.php' ) ) || (strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) == $_pos ) ) {
-			wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
-			die();
+                        if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) { // to fix
+                            wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+                            die();
+                        }
 		}
 
 		$started = get_option('mainwp_getting_started');
@@ -2121,6 +2168,16 @@ class MainWP_System {
 						MainWP_Twitter::clearAllTwitterMessages();
 					}
                                         MainWP_Utility::update_option( 'mainwp_disable_wp_main_menu', ( ! isset( $_POST['mainwp_disable_wp_main_menu'] ) ? 0 : 1 ) );
+                                        $old_tracking_val = get_option('mainwp_enabled_tracking_dashboard', 0);
+                                        $new_tracking_val = isset( $_POST['mainwp_tracking_dashboard'] ) ? 1 : 0;                                        
+                                        MainWP_Utility::update_option( 'mainwp_enabled_tracking_dashboard', $new_tracking_val );
+                                        
+                                        $redirect_url = admin_url( 'admin.php?page=DashboardOptions&message=saved');
+                                        if ($old_tracking_val != $new_tracking_val) {                                            
+                                            $redirect_url = add_query_arg( '_wpnonce_tracking', wp_create_nonce( 'mainwp-tracking' ), $redirect_url . '&allow=' . $new_tracking_val );
+                                        }
+                                        wp_redirect( $redirect_url );
+                                        exit();                                        
 				}
 			} else if ( $_GET['page'] == 'MainWPTools' ) {
 				if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPTools' ) ) {
@@ -2691,8 +2748,10 @@ class MainWP_System {
 			$class_string .= 'mainwp-ui';
                         
 		}
-                if (get_option('mainwp_disable_wp_main_menu')) {
-                    $class_string .= ' mainwp-ui-leftmenu folded';
+                if (get_option('mainwp_disable_wp_main_menu', 1)) {
+                    if ( self::isMainWP_Pages() ) {
+                        $class_string .= ' mainwp-ui-leftmenu folded';
+                    }
                 }    
 		return $class_string;
 	}

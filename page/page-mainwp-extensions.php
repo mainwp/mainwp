@@ -156,7 +156,10 @@ class MainWP_Extensions {
                 MainWP_Extensions::init_sub_sub_left_menu($extsPages);
 	}
 
-        static function init_sub_sub_left_menu($extPages) {      
+        static function init_sub_sub_left_menu($extPages) { 
+                global $mainwp_menu_active_slugs;
+                // to get parent menu items
+                $mainwp_menu_active_slugs['Extensions'] = 'Extensions';  
                 if (is_array($extPages)) {
                     foreach($extPages as $extension) {
                         MainWP_System::add_sub_left_menu($extension['title'], 'Extensions', $extension['page'], 'admin.php?page=' . $extension['page'], '', '' );                    
@@ -821,11 +824,8 @@ class MainWP_Extensions {
                 MainWP_UI::render_left_menu();
 		?>
 		<div class="mainwp-wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
-				src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50"
-				alt="MainWP"/></a>
-		<h2><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h2>
-		<div style="clear: both;"></div><br/><br/>
+		<h1 class="mainwp-margin-top-0"><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h1>
+		
 		<?php
 		MainWP_Extensions_View::render( self::$extensions );
 		echo '</div>';

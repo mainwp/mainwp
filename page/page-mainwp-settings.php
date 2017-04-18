@@ -88,34 +88,37 @@ class MainWP_Settings {
 		if (isset($_GET['page'])) {
 			if ('Settings' == $_GET['page']) {
 				add_meta_box(
-					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Network Optimization', 'mainwp'), array('MainWP_Options', 'renderNetworkOptimization'), 'mainwp_postboxes_global_settings', 'normal', 'core'
+					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Network optimization', 'mainwp'), array('MainWP_Options', 'renderNetworkOptimization'), 'mainwp_postboxes_global_settings', 'normal', 'core'
 				);
 
 				add_meta_box(
-					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Global Options', 'mainwp'), array('MainWP_Options', 'renderGlobalOptions'), 'mainwp_postboxes_global_settings', 'normal', 'core'
+					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Global options', 'mainwp'), array('MainWP_Options', 'renderGlobalOptions'), 'mainwp_postboxes_global_settings', 'normal', 'core'
 				);
 
 				add_meta_box(
-					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Update Options', 'mainwp'), array('MainWP_Options', 'renderUpdateOptions'), 'mainwp_postboxes_global_settings', 'normal', 'core'
+					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Update options', 'mainwp'), array('MainWP_Options', 'renderUpdateOptions'), 'mainwp_postboxes_global_settings', 'normal', 'core'
 				);
 
 				if (MainWP_Extensions::isExtensionAvailable('mainwp-comments-extension')) {
 					add_meta_box(
-						'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Data Return Options', 'mainwp'), array('MainWP_Options', 'renderDataReturnOptions'), 'mainwp_postboxes_global_settings', 'normal', 'core'
+						'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Data return Options', 'mainwp'), array('MainWP_Options', 'renderDataReturnOptions'), 'mainwp_postboxes_global_settings', 'normal', 'core'
 					);
 				}
 
 				add_meta_box(
-					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Backup Options', 'mainwp'), array('MainWP_Manage_Sites_View', 'renderSettings'), 'mainwp_postboxes_global_settings', 'normal', 'core'
+					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Backup options', 'mainwp'), array('MainWP_Manage_Sites_View', 'renderSettings'), 'mainwp_postboxes_global_settings', 'normal', 'core'
 				);
 
 				$filter = apply_filters('mainwp_has_settings_networkfootprint', false);
 				if ($filter) {
 					add_meta_box(
-						'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Network Footprint', 'mainwp'), array('MainWP_Footprint', 'renderSettings'), 'mainwp_postboxes_global_settings', 'normal', 'core'
+						'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Network footprint', 'mainwp'), array('MainWP_Footprint', 'renderSettings'), 'mainwp_postboxes_global_settings', 'normal', 'core'
 					);
 				}
 			} else if ('DashboardOptions' == $_GET['page']) {
+                                add_meta_box(
+					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-area-chart" aria-hidden="true"></i> ' . __('Freemius Opt-In settings', 'mainwp'), array('MainWP_Settings', 'renderTrackingMetabox'), 'mainwp_postboxes_dashboard_options', 'normal', 'core'
+				);                            
 				add_meta_box(
 					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Dashboard options', 'mainwp'), array('MainWP_Settings', 'renderDashboardOptionsMetabox'), 'mainwp_postboxes_dashboard_options', 'normal', 'core'
 				);
@@ -125,7 +128,7 @@ class MainWP_Settings {
 				);
 			} else if ('SettingsClientReportsResponder' == $_GET['page']) {
 				add_meta_box(
-					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-wrench"></i> ' . __('Connection Settings', 'mainwp'), array('MainWP_Settings', 'renderReportResponderDashboardPage'), 'mainwp_postboxes_settings_responder', 'normal', 'core'
+					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-wrench"></i> ' . __('Connection settings', 'mainwp'), array('MainWP_Settings', 'renderReportResponderDashboardPage'), 'mainwp_postboxes_settings_responder', 'normal', 'core'
 				);
 			} else if ('SettingsAdvanced' == $_GET['page']) {
 				add_meta_box(
@@ -146,39 +149,73 @@ class MainWP_Settings {
 		}
 	}
 
-	public static function initMenuSubPages() {
-		if (isset(self::$subPages) && is_array(self::$subPages) && ( count(self::$subPages) > 0 )) {
-			?>
-			<div id="menu-mainwp-Settings" class="mainwp-submenu-wrapper">
-				<div class="wp-submenu sub-open" style="">
-					<div class="mainwp_boxout">
-						<div class="mainwp_boxoutin"></div>
-						<a href="<?php echo admin_url('admin.php?page=Settings'); ?>" class="mainwp-submenu"><?php _e('Global Options', 'mainwp'); ?></a>
-						<?php
-						foreach (self::$subPages as $subPage) {
-							?>
-							<a href="<?php echo admin_url('admin.php?page=Settings' . $subPage['slug']); ?>"
-							   class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
-							<?php
-						}
-						?>
-						<a href="<?php echo admin_url('admin.php?page=DashboardOptions'); ?>" class="mainwp-submenu"><?php _e('Dashboard Options', 'mainwp'); ?></a>
-						<a href="<?php echo admin_url('admin.php?page=MainWPTools'); ?>" class="mainwp-submenu"><?php _e('MainWP Tools', 'mainwp'); ?></a>
-						<a href="<?php echo admin_url('admin.php?page=SettingsClientReportsResponder'); ?>" class="mainwp-submenu"><?php _e('Managed Client Reports Responder', 'mainwp'); ?></a>
-					</div>
-				</div>
-			</div>
-			<?php
-		}
+	public static function initMenuSubPages() {		
+            ?>
+            <div id="menu-mainwp-Settings" class="mainwp-submenu-wrapper">
+                    <div class="wp-submenu sub-open" style="">
+                            <div class="mainwp_boxout">
+                                    <div class="mainwp_boxoutin"></div>
+                                    <a href="<?php echo admin_url('admin.php?page=Settings'); ?>" class="mainwp-submenu"><?php _e('Global Options', 'mainwp'); ?></a>
+                                    <a href="<?php echo admin_url('admin.php?page=DashboardOptions'); ?>" class="mainwp-submenu"><?php _e('Dashboard Options', 'mainwp'); ?></a>
+                                    <a href="<?php echo admin_url('admin.php?page=SettingsAdvanced'); ?>" class="mainwp-submenu"><?php _e('Advanced Options', 'mainwp'); ?></a>
+                                    <a href="<?php echo admin_url('admin.php?page=MainWPTools'); ?>" class="mainwp-submenu"><?php _e('MainWP Tools', 'mainwp'); ?></a>
+                                    <a href="<?php echo admin_url('admin.php?page=SettingsClientReportsResponder'); ?>" class="mainwp-submenu"><?php _e('Managed Client Reports Responder', 'mainwp'); ?></a>
+                                    <?php
+                                    if (isset(self::$subPages) && is_array(self::$subPages) && ( count(self::$subPages) > 0 )) {
+                                        foreach (self::$subPages as $subPage) {
+                                                ?>
+                                                <a href="<?php echo admin_url('admin.php?page=Settings' . $subPage['slug']); ?>"
+                                                   class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
+                                                <?php
+                                        }
+                                    }
+                                    ?>                                    
+                            </div>
+                    </div>
+            </div>
+            <?php
 	}
 
         static function init_sub_sub_left_menu( $subPages = array() ) {            
                 MainWP_System::add_sub_left_menu(__('Settings', 'mainwp'), 'mainwp_tab', 'Settings', 'admin.php?page=Settings', '<i class="fa fa-cogs"></i>', '' );			                
-                $init_sub_subleftmenu = array();
-                MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'ThemesManage', 'Themes');                
+                
+                $init_sub_subleftmenu = array(                
+                        array(  'title' => __('Global Options', 'mainwp'), 
+                                'parent_key' => 'Settings', 
+                                'href' => 'admin.php?page=Settings',
+                                'slug' => 'Settings',
+                                'right' => ''
+                            ), 
+                        array(  'title' => __('Dashboard Options', 'mainwp'), 
+                                'parent_key' => 'Settings', 
+                                'href' => 'admin.php?page=DashboardOptions',
+                                'slug' => 'DashboardOptions',
+                                'right' => ''
+                            ),
+                        array(  'title' => __('Advanced Options', 'mainwp'), 
+                                'parent_key' => 'Settings', 
+                                'href' => 'admin.php?page=SettingsAdvanced',
+                                'slug' => 'SettingsAdvanced',
+                                'right' => ''
+                            ),
+                        array(  'title' => __('MainWP Tools', 'mainwp'), 
+                                'parent_key' => 'Settings', 
+                                'href' => 'admin.php?page=MainWPTools',
+                                'slug' => 'MainWPTools',
+                                'right' => ''
+                            ),
+                        array(  'title' => __('Managed Client Reports Responder', 'mainwp'), 
+                                'parent_key' => 'Settings', 
+                                'href' => 'admin.php?page=SettingsClientReportsResponder',
+                                'slug' => 'SettingsClientReportsResponder',
+                                'right' => ''
+                            )
+                );
+            
+                MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'Settings', 'Settings');                
                 foreach($init_sub_subleftmenu as $item) {
                     MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
-                }              
+                }  
         }        
         
 	/**
@@ -195,14 +232,14 @@ class MainWP_Settings {
 			<?php if ($shownPage == '') { ?>
 				<?php if (MainWP_Utility::showUserTip('mainwp-settings-tips')) { ?>
 					<div class="mainwp-tips mainwp-notice mainwp-notice-blue">
-						<span class="mainwp-tip" id="mainwp-settings-tips"><strong><?php _e('MainWP Tip', 'mainwp'); ?>: </strong><?php _e('The majority of these default settings can also be tweaked on the Site level by visiting Manage Sites &rarr; Edit Site.', 'mainwp'); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e('Dismiss', 'mainwp'); ?>
+						<span class="mainwp-tip" id="mainwp-settings-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php _e( 'The majority of these default settings can also be tweaked on the Site level by visiting Manage Sites &rarr; Edit Site.', 'mainwp' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e('Dismiss', 'mainwp'); ?>
 							</a></span></div>
 				<?php } ?>
 			<?php } ?>
 			<?php if ($shownPage == 'OfflineChecks') { ?>
 				<?php if (MainWP_Utility::showUserTip('mainwp-aumrecommend-tips')) { ?>
 					<div class="mainwp-tips mainwp-notice mainwp-notice-blue">
-						<span class="mainwp-tip" id="mainwp-aumrecommend-tips"><strong><?php _e('MainWP Tip', 'mainwp'); ?>: </strong><?php echo sprintf(__('We currently recommend the free %sAdvanced Uptime Monitor Extension%s to perform more frequent tests.', 'mainwp'), '<a href="https://mainwp.com/extension/advanced-uptime-monitor/" target="_blank">', '</a>'); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e('Dismiss', 'mainwp'); ?>
+						<span class="mainwp-tip" id="mainwp-aumrecommend-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php echo sprintf( __( 'We currently recommend the free %sAdvanced Uptime Monitor Extension%s to perform more frequent tests.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor/" target="_blank">', '</a>' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e('Dismiss', 'mainwp'); ?>
 							</a></span></div>
 				<?php } ?>
 			<?php } ?>
@@ -591,7 +628,7 @@ class MainWP_Settings {
 				<td>
 					<div class="mainwp-checkbox">
 						<input type="checkbox" name="mainwp_disable_wp_main_menu"
-						       id="mainwp_disable_wp_main_menu" <?php echo( ( get_option('mainwp_disable_wp_main_menu', 0) == 1 ) ? 'checked="true"' : '' ); ?>/>
+						       id="mainwp_disable_wp_main_menu" <?php echo( ( get_option('mainwp_disable_wp_main_menu', 1) == 1 ) ? 'checked="true"' : '' ); ?>/>
 						<label for="mainwp_disable_wp_main_menu"></label>
 					</div>
 				</td>
@@ -601,7 +638,45 @@ class MainWP_Settings {
 		<?php
 	}
 
-	public static function renderMainWPTools() {
+        public static function renderTrackingMetabox() {
+            ?>
+            <table class="form-table">
+                <tbody>
+                    <tr>
+                        <th scope="row">
+                            <?php _e( 'Allow MainWP to collect data', 'mainwp' ); ?>
+                        </th>
+                        <td>
+                            <div class="mainwp-checkbox mainwp_tracking_checks">
+                                <input type="checkbox" name="mainwp_tracking_dashboard" id="mainwp_tracking_dashboard" <?php echo( ( get_option('mainwp_enabled_tracking_dashboard', 0) == 1 ) ? 'checked="true"' : '' ); ?> value="1"/>
+                                <label for="mainwp_tracking_dashboard"></label>
+                                </div><br/><br/>
+                                <em><?php echo sprintf( __( 'Allow MainWP to collect diagnostics and usage data with %sfreemius.com%s to make the plugin better.', 'mainwp' ), '<a href="https://freemius.com" target="_blank">', '</a>' ); ?></em><br/>
+                                <p><?php echo __( 'List of data that MainWP collects:', 'mainwp' ); ?></p>
+                                <ul>
+                                        <li><strong><?php _e( 'Your profile overview', 'mainwp' ); ?></strong><br/><em><?php _e( 'Name, Email Address', 'mainwp' ); ?></em></li>
+                                        <li><strong><?php _e( 'Your MainWP Dashboard site overview', 'mainwp' ); ?></strong><br/><em><?php _e( 'Site URL, WP version, PHP info, Plugins, Themes', 'mainwp' ); ?></em></li>
+                                        <li><strong><?php _e( 'Admin notices', 'mainwp' ); ?></strong><br/><em><?php _e( 'Updates, Announcements, Marketing, No spam', 'mainwp' ); ?></em></li>
+                                        <li><strong><?php _e( 'Newsletter', 'mainwp' ); ?></strong><br/><em><?php _e( 'Updates, Announcements, Marketing, No spam', 'mainwp' ); ?></em></li>
+                                        <li><strong><?php _e( 'Current plugin events', 'mainwp' ); ?></strong><br/><em><?php _e( 'Activation, Deactivation, Uninstall', 'mainwp' ); ?></em></li>
+                                </ul>
+                        </td>
+                    </tr>                   
+                </tbody>
+            </table>            
+
+            <?php if (isset($_GET['_wpnonce_tracking']) && wp_verify_nonce( $_GET['_wpnonce_tracking'], 'mainwp-tracking' )) { 
+                $allow = (isset($_GET['allow']) && $_GET['allow']) ? true : false;                
+                MainWP_Tracking::set_mainwp_tracking($allow);
+                ?>
+                <script type="text/javascript">
+                    
+                </script>
+            <?php
+            }
+        }                
+
+        public static function renderMainWPTools() {
 		if (!mainwp_current_user_can('dashboard', 'manage_dashboard_settings')) {
 			mainwp_do_not_have_permissions(__('manage dashboard settings', 'mainwp'));
 

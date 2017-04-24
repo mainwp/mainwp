@@ -274,6 +274,7 @@ mainwp_setup_save_tracking = function(objBtn){
         dashboard: jQuery('#mwp_setup_tracking_dashboard').is( ":checked" ) ? 1 : 0,        
         security: mainwpSetupLocalize.nonce
     };
+    statusEl.hide();
     loadingEl.show();
     jQuery.post(ajaxurl, data, function (response)
     {

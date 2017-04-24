@@ -952,6 +952,8 @@ class MainWP_DB {
 	}
 
 	public function getWebsitesByGroupIds( $ids, $userId = null ) {
+        if (empty($ids))
+            return array();
 		if ( ( $userId == null ) && MainWP_System::Instance()->isMultiUser() ) {
 			global $current_user;
 			$userId = $current_user->ID;

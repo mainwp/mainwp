@@ -27,7 +27,7 @@ class MainWP_Setup_Wizard {
 		add_action('wp_ajax_mainwp_setup_extension_downloadandinstall', array('MainWP_Setup_Wizard', 'ajax_download_and_install'));
 		add_action('wp_ajax_mainwp_setup_extension_grabapikey', array('MainWP_Setup_Wizard', 'ajax_grab_api_key'));
 		add_action('wp_ajax_mainwp_setup_extension_activate_plugin', array('MainWP_Setup_Wizard', 'ajax_activate_plugin'));
-                add_action('wp_ajax_mainwp_setup_saving_tracking', array('MainWP_Setup_Wizard', 'ajax_saving_tracking'));                
+        add_action('wp_ajax_mainwp_setup_saving_tracking', array('MainWP_Setup_Wizard', 'ajax_saving_tracking'));                
 	}
 
 	public function admin_menus() {
@@ -129,7 +129,7 @@ class MainWP_Setup_Wizard {
 
 		$this->step = isset( $_GET['step'] ) ? sanitize_key( $_GET['step'] ) : current( array_keys( $this->steps ) );
 		$this->check_redirect();
-                wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'js/mainwp-setup.js', array( 'jquery', 'jquery-ui-tooltip' ), MAINWP_VERSION );		
+        wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'js/mainwp-setup.js', array( 'jquery', 'jquery-ui-tooltip' ), MAINWP_VERSION );		
 		wp_enqueue_script( 'mainwp-setup-select2', MAINWP_PLUGIN_URL . 'js/select2/select2.js', array( 'jquery' ), MAINWP_VERSION );			
 		wp_enqueue_script( 'mainwp-setup-admin', MAINWP_PLUGIN_URL . 'js/mainwp-admin.js', array(), MAINWP_VERSION );		
 		
@@ -242,7 +242,9 @@ class MainWP_Setup_Wizard {
 		echo '</div>';
 	}
 
-	public function mwp_setup_introduction() {
+	public function mwp_setup_introduction() {             
+        $this->mwp_setup_ready_actions();
+        
 		?>
 		<h1><?php _e( 'Welcome to MainWP Dashboard', 'mainwp' ); ?></h1>
 		<p><?php _e( 'Thank you for choosing MainWP for managing your WordPress sites. This quick setup wizard will help you configure the basic settings. It\'s completely optional and shouldn\'t take longer than five minutes.' ); ?></p>
@@ -921,9 +923,15 @@ class MainWP_Setup_Wizard {
 		die( 'FAILED' );
 	}
 
-        public static function ajax_saving_tracking() {
+    public static function ajax_saving_tracking() {
 		self::secure_request();
-		update_option('mainwp_enabled_tracking_dashboard', intval($_POST['dashboard']));                
+        $enabled = isset($_POST['dashboard']) && $_POST['dashboard'] ? 1 : 0;
+		update_option('mainwp_enabled_tracking_dashboard', $enabled); 
+        
+        if (MainWP_Tracking::is_tracking_registered()) {
+            MainWP_Tracking::set_tracking($enabled);            
+        }
+        
 		die( 'OK' );
 	}        
         
@@ -1335,34 +1343,17 @@ class MainWP_Setup_Wizard {
 	}
 
 	public function mwp_setup_ready() {
-		$this->mwp_setup_ready_actions();
+		
+        $enabled_tracking = get_option('mainwp_enabled_tracking_dashboard');
+        if ($enabled_tracking === false) {
+            $enabled_tracking = MainWP_Tracking::is_pending_activation() ? 1 : 0;
+            update_option( 'mainwp_enabled_tracking_dashboard', $enabled_tracking );
+        }        
 		?>
+        
 		<h1><?php _e( 'Your MainWP Dashboard is Ready!', 'mainwp' ); ?></h1>
 		<p><?php  _e( 'Congratulations! Now you are ready to start managing your WordPress sites.', 'mainwp' ); ?></p>                
-		<div class="mwp-setup-next-steps">
-                        <div class="mwp-setup-next-steps-top">
-                            <p><?php echo sprintf( __( 'Allow MainWP to collect diagnostics and usage data with %sfreemius.com%s to make the plugin better.', 'mainwp' ), '<a href="https://freemius.com" target="_blank">', '</a>' ); ?></p>
-							<p><?php echo __( 'List of data that MainWP collects:', 'mainwp' ); ?></p>
-							<ul>
-								<li><strong><?php _e( 'Your profile overview', 'mainwp' ); ?></strong><br/><em><?php _e( 'Name, Email Address', 'mainwp' ); ?></em></li>
-								<li><strong><?php _e( 'Your MainWP Dashboard site overview', 'mainwp' ); ?></strong><br/><em><?php _e( 'Site URL, WP version, PHP info, Plugins, Themes', 'mainwp' ); ?></em></li>
-								<li><strong><?php _e( 'Admin notices', 'mainwp' ); ?></strong><br/><em><?php _e( 'Updates, Announcements, Marketing, No spam', 'mainwp' ); ?></em></li>
-								<li><strong><?php _e( 'Newsletter', 'mainwp' ); ?></strong><br/><em><?php _e( 'Updates, Announcements, Marketing, No spam', 'mainwp' ); ?></em></li>
-								<li><strong><?php _e( 'Current plugin events', 'mainwp' ); ?></strong><br/><em><?php _e( 'Activation, Deactivation, Uninstall', 'mainwp' ); ?></em></li>
-							</ul>
-							<br/>
-                            <ul class="mainwp_tracking_checks">
-                                <li>
-                                        <input type="checkbox" id="mwp_setup_tracking_dashboard" name="mwp_setup_tracking_dashboard" <?php echo( ( get_option('mainwp_enabled_tracking_dashboard', 0) == 1 ) ? 'checked="true"' : '' ); ?> value="1">
-                                        <label for="mwp_setup_tracking_dashboard" ><?php _e('Allow MainWP to collect dignostics and usage data', 'mainwp'); ?></label>
-                                </li>                                
-                            </ul>      
-                            <br/><br/>
-                            <input type="button" value="Allow Tracking" onclick="return mainwp_setup_save_tracking(this);" id="mwp_setup_allow_tracking_btn" class="mwp-setup-btn-green button">                            
-                            <span id="mwp_setup_save_tracking_loading">
-                                    <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
-                            </span>
-                        </div>
+		<div class="mwp-setup-next-steps">                        
 			<div class="mwp-setup-next-steps-first">
 				<h2><?php _e( 'Next Step', 'mainwp' ); ?></h2>
 				<ul>
@@ -1377,6 +1368,45 @@ class MainWP_Setup_Wizard {
 					<li><a href="https://mainwp.com/support/" target="_blank"><i class="fa fa-life-ring"></i> <?php _e( 'MainWP Support', 'mainwp' ); ?></a></li>
 				</ul>
 			</div>
+            <div style="clear:both;"></div><br/><br/>
+			<h2><?php echo __( 'Help make MainWP better!', 'mainwp' ); ?></h2>
+            <div class="mwp-setup-next-steps-top">
+                <em><?php echo sprintf( __( 'Please help us improve MainWP Dashboard! If you opt-in, some data about your usage of MainWP Dashboard will be sent to %sfreemius.com%s If you skip this, that\'s okay! Your MainWP Dashboard will still work just fine.', 'mainwp' ), '<a href="https://freemius.com" target="_blank">', '</a>' ); ?></em><br/>
+                <br/>
+                <div class="mainwp-left mainwp-cols-2">
+                <h3><?php echo __( 'What permissions are being granted?', 'mainwp' ); ?></h3>
+                <ul>
+                        <li><strong><?php _e( 'Your profile overview', 'mainwp' ); ?></strong><br/><em><?php _e( 'Name, Email Address', 'mainwp' ); ?></em></li>
+                        <li><strong><?php _e( 'Your MainWP Dashboard site overview', 'mainwp' ); ?></strong><br/><em><?php _e( 'Site URL, WP version, PHP info, Plugins, Themes', 'mainwp' ); ?></em></li>
+                        <li><strong><?php _e( 'Admin notices', 'mainwp' ); ?></strong><br/><em><?php _e( 'Updates, Announcements, Marketing, No spam', 'mainwp' ); ?></em></li>
+                        <li><strong><?php _e( 'Newsletter', 'mainwp' ); ?></strong><br/><em><?php _e( 'Updates, Announcements, Marketing, No spam', 'mainwp' ); ?></em></li>
+                        <li><strong><?php _e( 'Current plugin events', 'mainwp' ); ?></strong><br/><em><?php _e( 'Activation, Deactivation, Uninstall', 'mainwp' ); ?></em></li>
+                </ul>
+                </div>
+                <div class="mainwp-left mainwp-cols-2">
+                <h3><?php echo __( 'What will be tracked in future?', 'mainwp' ); ?></h3>
+                <ul>
+                	<li><strong><?php _e( 'Dashboard site server information', 'mainwp'); ?></strong><br/><em><?php _e( 'PHP Memory Limit, PHP Execution Time, cURL Version, cURL SSL Version, Server Software, Server OS, MySQL Version', 'mainwp' ); ?></em></li>
+                	<li><strong><?php _e( 'Dashboard data', 'mainwp'); ?></strong><br/><em><?php _e( 'Number of child sites, Number of extensions in use', 'mainwp' ); ?></em></li>
+                	<li><strong><?php _e( 'Dashboard options', 'mainwp'); ?></strong><br/><em><?php _e( 'Hide MainWP Child plugin from search engines, Optimize for shared hosting or big networks, Use WP-Cron, Enable legacy backup feature, Default Backup System, Auto Plugin Updates, Auto Themes Updates, Auto WP Core Updates, Maximum simultaneous requests, Minimum delay between requests , Maximum simultaneous requests per ip, Minimum delay between requests to the same ip, Maximum simultaneous sync requests, Minimum simultaneous install/update requests', 'mainwp' ); ?></em></li>
+                	<li><strong><?php _e( 'Advanced tracking', 'mainwp'); ?></strong><br/><em><?php _e( 'Average sync speed, Average update speed', 'mainwp' ); ?></em></li>
+                </ul>
+                </div>
+                <div style="clear:both;"></div>
+                <div><a href="https://freemius.com/privacy/" target="_blank">Privacy Policy</a>  -  <a href="https://freemius.com/terms/" target="_blank">Terms of Service</a></div>
+				<br/>
+                <ul class="mainwp_tracking_checks">
+                    <li>
+                            <input type="checkbox" id="mwp_setup_tracking_dashboard" name="mwp_setup_tracking_dashboard" <?php echo( $enabled_tracking ? 'checked="true"' : '' ); ?> value="1">
+                            <label for="mwp_setup_tracking_dashboard" ><?php _e('Allow MainWP to collect dignostics and usage data', 'mainwp'); ?></label>
+                    </li>                                
+                </ul>      
+                <br/><br/>
+                <input type="button" value="Allow Tracking" onclick="return mainwp_setup_save_tracking(this);" id="mwp_setup_allow_tracking_btn" class="mwp-setup-btn-green button-hero button">                            
+                <span id="mwp_setup_save_tracking_loading">
+                        <i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
+                </span>
+            </div>
 		</div>
                 <script type="text/javascript">
                         jQuery(document).ready(function () {

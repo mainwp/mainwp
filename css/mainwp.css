@@ -2410,14 +2410,16 @@ li.mainwp-menu-sub-item-filer{
     padding: 10px !important;        
 }
 /* to fix layout */
-.mainwp-ui-leftmenu .fs-notice.fs-has-title{
-    float: left !important; 
-    margin-left: 200px !important; 
-}
 .mainwp-ui-leftmenu .mainwp_admin_notices_wrap {
     float: left !important; 
-    margin-left: 185px !important; 
+    margin-left: 200px !important; 
+    width: calc(100% - 220px);
 }
+.mainwp-ui-leftmenu .mainwp_admin_notices_wrap div.updated {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
 /* end */
 .mainwp-menu-item.closed .handle .mainwp-menu-name{
     font-weight: normal;

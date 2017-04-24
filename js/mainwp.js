@@ -7826,3 +7826,46 @@ mainwp_subleftmenu_check_showhide = function() {
         } 
     });
 };
+
+jQuery( '#mainwp_tracking_dashboard' ).live('click', function () {    
+    var checked_val = jQuery('#mainwp_tracking_dashboard').is( ":checked" ) ? 1 : 0;
+    var parent = jQuery("#mwp_settings_save_tracking_loading");
+    var statusEl = parent.find('span.status');
+    var loadingEl = parent.find("i");    
+    var data = {
+        action: 'mainwp_settings_saving_tracking',
+        tracking: checked_val,        
+        nonce: mainwp_ajax_nonce
+    };
+    statusEl.hide();
+    loadingEl.show();
+    jQuery.post(ajaxurl, data, function (response)
+    {
+        loadingEl.hide();   
+        var saved_ok = false;
+        if (response) {
+            if (response.result == 'ok') {
+                statusEl.css('color', '#0074a2');
+                statusEl.html('<i class="fa fa-check-circle"></i> ' + "Saved").fadeIn();
+                setTimeout(function() { statusEl.fadeOut(1000);}, 2000);      
+                saved_ok = true;
+            } else if (response.error) {
+                statusEl.css('color', 'red');
+                statusEl.html('<i class="fa fa-exclamation-circle"></i> ' + response.error).fadeIn();
+            } else {
+                statusEl.css('color', 'red');
+                statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined error!').fadeIn();
+            }
+        } else {
+            statusEl.css('color', 'red');
+            statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined error!').fadeIn();
+        }
+        if (!saved_ok) { 
+            setTimeout(function() { 
+                jQuery("#mainwp_tracking_dashboard").prop('checked', false); // uncheck
+            }, 500);             
+        }
+    }, 'json');
+    
+});
+  

@@ -77,7 +77,7 @@ class MainWP_Main {
                 );
                    
                 foreach($init_leftmenu as $item) {
-                    MainWP_System::add_left_menu($item['title'], $item['key'], $item['href'], $item['desc']);
+                    MainWP_System::add_left_menu($item['title'], $item['key'], $item['href']);
                 }
                 MainWP_System::add_sub_left_menu(__('Overview', 'mainwp'), 'mainwp_tab', 'mainwp_tab', 'admin.php?page=mainwp_tab', '<i class="fa fa-tachometer"></i>', '' );
         }

@@ -481,10 +481,10 @@ class MainWP_UI {
                 </ul>
             </div>
             <div class="mainwp-postbox-actions-bottom" id="mainwp-ui-leftmenu-footer">
-            	<span class="mainwp-cols-4 mainwp-left"><a href="https://www.facebook.com/groups/MainWPUsers/" target="_blank" title="MainWP Users Facebook Group"><i class="fa fa-users fa-lg" aria-hidden="true"></i></a></span>
-            	<span class="mainwp-cols-4 mainwp-left"><a href="https://mainwp.com/support/" target="_blank" title="MainWP Support"><i class="fa fa-life-ring fa-lg" aria-hidden="true"></i></a></span>
-            	<span class="mainwp-cols-4 mainwp-left"><a href="https://mainwp.com/help/" target="_blank" title="MainWP Documentation"><i class="fa fa-book fa-lg" aria-hidden="true"></i></a></span>
-            	<span class="mainwp-cols-4 mainwp-left"><a href="https://mainwp.com" target="_blank" title="MainWP.com"><i class="fa fa-users fa-lg" aria-hidden="true"></i></a></span>
+            	<span class="mainwp-cols-4 mainwp-left"><a href="https://www.facebook.com/groups/MainWPUsers/" target="_blank" title="MainWP Users Facebook Group"><i class="fa fa-users fa-lg" aria-hidden="true" style="line-height: 1em !important;"></i></a></span>
+            	<span class="mainwp-cols-4 mainwp-left"><a href="https://mainwp.com/support/" target="_blank" title="MainWP Support"><i class="fa fa-life-ring fa-lg" aria-hidden="true" style="line-height: 1em !important;"></i></a></span>
+            	<span class="mainwp-cols-4 mainwp-left"><a href="https://mainwp.com/help/" target="_blank" title="MainWP Documentation"><i class="fa fa-book fa-lg" aria-hidden="true" style="line-height: 1em !important;"></i></a></span>
+            	<span class="mainwp-cols-4 mainwp-left"><a href="https://mainwp.com/my-account/" target="_blank" title="My MainWP Account"><i class="fa fa-user-circle-o fa-lg" aria-hidden="true" style="line-height: 1em !important;"></i></a></span>
             	<div style="clear: both;"></div>
             </div>
         </div> 

@@ -62,18 +62,15 @@ class MainWP_System {
 			$pluginData            = get_plugin_data( $mainwp_plugin_file );
 			$this->current_version = $pluginData['Version'];
 			$currentVersion        = get_option( 'mainwp_plugin_version' );
-
-			if (empty($currentVersion)) {
-				MainWP_Utility::update_option( 'mainwp_getting_started', 'started' );
-			} else if ( version_compare( $currentVersion, $this->current_version, '<' ) ) {
-				update_option( 'mainwp_reset_user_tips', array() );
-				MainWP_Utility::update_option( 'mainwp_reset_user_cookies', array() );
-				MainWP_Utility::update_option( 'mainwp_getting_started', 'whatnew' );
-
-			} else {
-				delete_option('mainwp_getting_started');
-			}
-
+            if (empty($currentVersion)) {
+                MainWP_Utility::update_option( 'mainwp_getting_started', 'started' );
+            } else if ( version_compare( $currentVersion, $this->current_version, '<' ) ) {
+                update_option( 'mainwp_reset_user_tips', array() );
+                MainWP_Utility::update_option( 'mainwp_reset_user_cookies', array() );
+                MainWP_Utility::update_option( 'mainwp_getting_started', 'whatnew' );
+            } else {
+                delete_option('mainwp_getting_started');
+            }
 			MainWP_Utility::update_option( 'mainwp_plugin_version', $this->current_version );
 		}
 
@@ -244,15 +241,17 @@ class MainWP_System {
 		}
 
 		add_action( 'admin_notices', array( &$this, 'admin_notices' ) );
-                // to fix layout
-                if ( get_option( 'mainwp_disable_wp_main_menu', 1 ) ) {
-                    add_action( 'admin_notices', array( &$this, 'admin_notices_start' ), 1 );
-                    add_action( 'admin_notices', array( &$this, 'admin_notices_end' ), 9999 );
-                    add_action( 'user_admin_notices', array( &$this, 'admin_notices_start' ), 1 );
-                    add_action( 'user_admin_notices', array( &$this, 'admin_notices_end' ), 9999 );
-                    add_action( 'all_admin_notices', array( &$this, 'admin_notices_start' ), 1 );
-                    add_action( 'all_admin_notices', array( &$this, 'admin_notices_end' ), 9999 );
-                }
+        // to fix layout
+        if ( get_option( 'mainwp_disable_wp_main_menu', 1 ) ) {
+            if (isset($_GET['page']) && $_GET['page'] != 'mainwp_about') {
+                add_action( 'admin_notices', array( &$this, 'admin_notices_start' ), 1 );
+                add_action( 'admin_notices', array( &$this, 'admin_notices_end' ), 9999 );
+                add_action( 'user_admin_notices', array( &$this, 'admin_notices_start' ), 1 );
+                add_action( 'user_admin_notices', array( &$this, 'admin_notices_end' ), 9999 );
+                add_action( 'all_admin_notices', array( &$this, 'admin_notices_start' ), 1 );
+                add_action( 'all_admin_notices', array( &$this, 'admin_notices_end' ), 9999 );
+            }
+        }
 
                         
 		add_action( 'after_plugin_row', array( &$this, 'after_extensions_plugin_row' ), 10, 3 );
@@ -294,7 +293,7 @@ class MainWP_System {
                 
 		do_action( 'mainwp-activated' );
                 
-                MainWP_Tracking::init();
+        MainWP_Tracking::init();
 		MainWP_Updates::init();
 		MainWP_Post::init();
 		MainWP_Settings::init();
@@ -2108,18 +2107,27 @@ class MainWP_System {
 	}
 
 	public function admin_redirects() {
-		$_pos = strlen( $_SERVER['REQUEST_URI'] ) - strlen( '/wp-admin/' );
-		$hide_menus = get_option( 'mwp_setup_hide_wp_menus', array() );
-		if ( ! is_array( $hide_menus ) ) {
-			$hide_menus = array(); }
-		$hide_wp_dashboard = in_array( 'dashboard', $hide_menus );
-		if ( ($hide_wp_dashboard && strpos( $_SERVER['REQUEST_URI'], 'index.php' ) ) || (strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) == $_pos ) ) {
-                        if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) { // to fix
-                            wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
-                            die();
-                        }
+        
+        if ( MainWP_Tracking::is_connecting_tracking() ) {            
+            return; // to directo to fs page first
+        }
+                   
+//        if ( ! get_transient( '_mainwp_activation_redirect' ) || is_network_admin() ) {
+//			return;
+//		}
+//      
+		delete_transient( '_mainwp_activation_redirect' );
+             
+		if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'mainwp-setup' ) ) ) {
+			return;
 		}
-
+        
+		$quick_setup = get_site_option('mainwp_run_quick_setup', false);
+		if ($quick_setup == 'yes') {
+			wp_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );
+			exit;
+		}
+        
 		$started = get_option('mainwp_getting_started');
 		if (!empty($started)) {
 			delete_option('mainwp_getting_started');
@@ -2133,21 +2141,19 @@ class MainWP_System {
                 }
             }
 		}
-
-		if ( ! get_transient( '_mainwp_activation_redirect' ) || is_network_admin() ) {
-			return;
-		}
-
-		delete_transient( '_mainwp_activation_redirect' );
-
-		if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'mainwp-setup' ) ) ) {
-			return;
-		}
-
-		$quick_setup = get_site_option('mainwp_run_quick_setup', false);
-		if ($quick_setup == 'yes') {
-			wp_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );
-			exit;
+        
+        $_pos = strlen( $_SERVER['REQUEST_URI'] ) - strlen( '/wp-admin/' );
+		$hide_menus = get_option( 'mwp_setup_hide_wp_menus', array() );
+		if ( ! is_array( $hide_menus ) ) {
+			$hide_menus = array();             
+        }
+        
+		$hide_wp_dashboard = in_array( 'dashboard', $hide_menus );
+		if ( ($hide_wp_dashboard && strpos( $_SERVER['REQUEST_URI'], 'index.php' ) ) || (strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) == $_pos ) ) {
+            if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) { // to fix
+                wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+                die();
+            }
 		}
 	}
 
@@ -2155,7 +2161,7 @@ class MainWP_System {
 		if ( ! function_exists( 'wp_create_nonce' ) ) {
 			include_once( ABSPATH . WPINC . '/pluggable.php' );
 		}
-
+        
 		if ( isset( $_GET['page'] ) ) {
 			if ( $_GET['page'] == 'DashboardOptions' ) {
 				if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'DashboardOptions' ) ) {
@@ -2167,17 +2173,10 @@ class MainWP_System {
 					if ( ! $enabled_twit ) {
 						MainWP_Twitter::clearAllTwitterMessages();
 					}
-                                        MainWP_Utility::update_option( 'mainwp_disable_wp_main_menu', ( ! isset( $_POST['mainwp_disable_wp_main_menu'] ) ? 0 : 1 ) );
-                                        $old_tracking_val = get_option('mainwp_enabled_tracking_dashboard', 0);
-                                        $new_tracking_val = isset( $_POST['mainwp_tracking_dashboard'] ) ? 1 : 0;                                        
-                                        MainWP_Utility::update_option( 'mainwp_enabled_tracking_dashboard', $new_tracking_val );
-                                        
-                                        $redirect_url = admin_url( 'admin.php?page=DashboardOptions&message=saved');
-                                        if ($old_tracking_val != $new_tracking_val) {                                            
-                                            $redirect_url = add_query_arg( '_wpnonce_tracking', wp_create_nonce( 'mainwp-tracking' ), $redirect_url . '&allow=' . $new_tracking_val );
-                                        }
-                                        wp_redirect( $redirect_url );
-                                        exit();                                        
+                    MainWP_Utility::update_option( 'mainwp_disable_wp_main_menu', ( ! isset( $_POST['mainwp_disable_wp_main_menu'] ) ? 0 : 1 ) );
+                    $redirect_url = admin_url( 'admin.php?page=DashboardOptions&message=saved');                    
+                    wp_redirect( $redirect_url );
+                    exit();                                        
 				}
 			} else if ( $_GET['page'] == 'MainWPTools' ) {
 				if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPTools' ) ) {
@@ -2191,7 +2190,7 @@ class MainWP_System {
 				}
 			}
 		}
-
+        
 		if ( isset( $_POST['select_mainwp_options_siteview'] ) ) {
 			$userExtension            = MainWP_DB::Instance()->getUserExtension();
 			$userExtension->site_view = ( empty( $_POST['select_mainwp_options_siteview'] ) ? 0 : intval($_POST['select_mainwp_options_siteview']) );

@@ -50,9 +50,9 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getactivateextensionnotice', array( &$this, 'get_activate_extension_notice' ), 10, 1 );
 		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
 		add_action( 'mainwp_do_meta_boxes', array( &$this, 'mainwp_do_meta_boxes' ), 10, 1 );
-                add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
-                add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
-                add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hookAddSubLeftMenu' ), 10, 6 );
+        add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
+        add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
+        add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hookAddSubLeftMenu' ), 10, 6 );
 	}
 
 	public function mainwp_log_debug( $pText ) {
@@ -89,7 +89,7 @@ class MainWP_Hooks {
             if ( isset( $params[ 'websiteid' ] ) && MainWP_Utility::ctype_digit( $websiteid = $params['websiteid'] ) )  {
                 $ret['siteid'] = MainWP_Hooks::updateWPSite( $params );
                 return $ret;
-            } else if ( isset( $params['url'] ) && isset( $params['url'] ) ) {
+            } else if ( isset( $params['url'] ) && isset( $params['wpadmin'] ) ) {
                 //Check if already in DB
                 $website = MainWP_DB::Instance()->getWebsitesByUrl( $params['url'] );
                 list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::addWPSite( $website, $params );

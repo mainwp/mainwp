@@ -574,7 +574,8 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 	function column_notes( $item ) {
 		//$note = strip_tags( $item['note'], '<p><strong><em><br/><hr/><a></p></strong></em></a>' );
-        $note = wp_kses_post( $item['note'] );
+        //$note = wp_kses_post( $item['note'] );
+        $note = html_entity_decode($item['note']); // to fix
         $lastupdate = $item['note_lastupdate'];
 
         $txt_lastupdate = '';

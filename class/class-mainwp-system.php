@@ -2107,21 +2107,32 @@ class MainWP_System {
 	}
 
 	public function admin_redirects() {
+        if ( (defined( 'DOING_CRON' ) && DOING_CRON) ||  defined( 'DOING_AJAX' ) )  {
+            return;
+        }   
         
-        if ( MainWP_Tracking::is_connecting_tracking() ) {            
-            return; // to directo to fs page first
-        }
-                   
-//        if ( ! get_transient( '_mainwp_activation_redirect' ) || is_network_admin() ) {
-//			return;
-//		}
-//      
-		delete_transient( '_mainwp_activation_redirect' );
-             
-		if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'mainwp-setup' ) ) ) {
+        if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'mainwp-setup' ) ) ) {
 			return;
 		}
         
+        // before is_connecting_tracking
+        $reconnect_tracking = get_option('mainwp_open_reconnect_tracking', false);        
+		if ($reconnect_tracking == 'yes') {
+            delete_option('mainwp_open_reconnect_tracking');
+			wp_redirect( MainWP_Tracking::get_reconnect_url() );
+			exit;
+		}
+        
+        if ( MainWP_Tracking::is_connecting_tracking() ) {                        
+            return; // to directo to fs page first
+        }
+                   
+//       if ( ! get_transient( '_mainwp_activation_redirect' ) || is_network_admin() ) {
+//			return;
+//		}
+     
+		//delete_transient( '_mainwp_activation_redirect' );
+         
 		$quick_setup = get_site_option('mainwp_run_quick_setup', false);
 		if ($quick_setup == 'yes') {
 			wp_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );

@@ -74,7 +74,7 @@ a.mainwp-post-trash {color: #a00;}
 .mainwp-margin-left-1 {margin-left: 1em;}
 .mainwp-margin-left-2 {margin-left: 2em;}
 .mainwp-margin-left-3 {margin-left: 3em;}
-.mainwp-margin-top-0 {margin-top: 0;}
+.mainwp-margin-top-0 {margin-top: 0 !important;}
 
 /* MAINWP - LAYOUT */
 
@@ -422,6 +422,10 @@ a.mainwp-post-trash {color: #a00;}
     overflow-x: hidden;
 }
 
+.mainwp-ui-leftmenu #mainwp-sites-menu {
+    left: 240px;
+}
+
 #mainwp-sites-menu::-webkit-scrollbar {width: 14px;background: #333;}
 #mainwp-sites-menu::-webkit-scrollbar-track {width: 10px;background: #333;}
 #mainwp-sites-menu::-webkit-scrollbar-thumb {
@@ -642,6 +646,12 @@ a.mainpw-fly-meny-lnk:hover, a.mainwp-add-new-link:hover {color: #fff;text-decor
 /*---------------------------------------------------------------------------------------------------------------*/
 
 /* MAINWP PAGE - EXTENSIONS */
+
+.api-grabbing-fields .input.username,
+.api-grabbing-fields .input.passwd {
+    display: block;
+    width: 350px;
+}
 
 #mainwp-extensions-list .plugin-card .plugin-card-top { min-height: 180px; }
 
@@ -1711,7 +1721,7 @@ li.hoverli {
 .mainwp-ui .form-field input[type=search],
 .mainwp-ui .form-field input[type=tel],
 .mainwp-ui .form-field input[type=url],
-.mainwp-ui .form-field textarea { width: 25em; max-width: 100%;}
+.mainwp-ui .form-field textarea { width: 25em; max-width: 100%; }
 
 /* New Select Box Style */
 
@@ -2078,6 +2088,9 @@ body.show-upload-theme #mainwp_wrap-inside .upload-theme,
 }
 .mainwp-ui #wpfooter{
     z-index: 1000;
+}
+.mainwp-ui-leftmenu #wpfooter{
+    margin-left: 240px;
 }
 .mainwp-no-extensions {
     margin: 0 12px 12px;

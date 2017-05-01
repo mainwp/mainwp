@@ -52,7 +52,7 @@ class MainWP_DB {
 		$currentVersion = get_site_option( 'mainwp_db_version' );
 
 		if ( empty( $currentVersion ) ) {
-			set_transient( '_mainwp_activation_redirect', 1, 30 );
+			//set_transient( '_mainwp_activation_redirect', 1, 30 );
 			update_site_option( 'mainwp_run_quick_setup', 'yes' );
 			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
 		} else if (false === get_option('mainwp_enableLegacyBackupFeature')) {

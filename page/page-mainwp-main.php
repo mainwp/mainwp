@@ -237,36 +237,34 @@ class MainWP_Main {
 						}
 						if ($website !== null) {
 							if ( ( time() - $website->dtsSync ) > ( 60 * 60 * 24 ) ) {
-								?><h2>
-								<i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?>
-								</h2>
+								?>
+								<h3 class="mainwp-margin-top-0"><i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?></h3>
 								<p class="about-description"><?php _e( 'Click the Sync Data button to get the latest data from child sites.', 'mainwp' ); ?></p>
 								<?php
 							} else {
 								?>
-								<h2><?php echo sprintf( __( 'Welcome to %s dashboard!', 'mainwp' ), stripslashes( $website->name ) ); ?></h2>
+								<h3 class="mainwp-margin-top-0"><?php echo sprintf( __( 'Welcome to %s dashboard!', 'mainwp' ), stripslashes( $website->name ) ); ?></h3>
 								<p class="about-description"><?php echo sprintf( __( 'This information is only for %s%s', 'mainwp' ), $imgfavi, MainWP_Utility::getNiceURL( $website->url, true ) ); ?></p>
 								<?php
 							}
 						} else {
 							$result = MainWP_DB::Instance()->getLastSyncStatus();
-                                                        $sync_status = $result['sync_status'];
-                                                        $last_sync = $result['last_sync'];
+                            $sync_status = $result['sync_status'];
+                            $last_sync = $result['last_sync'];
                                                         
 							if ( $sync_status === 'not_synced' ) {
-								?><h2>
-								<i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?>
-								</h2>
+								?>
+								<h3 class="mainwp-margin-top-0"><i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?></h3>
 								<p class="about-description"><?php _e( 'Click the Sync Data button to get the latest data from child sites.', 'mainwp' ); ?></p>
 								<?php
 							} else if ( $sync_status === 'all_synced' ) {
 								?>
-                                                                <h2><?php echo empty($last_sync) ? __( 'All sites have been synced within the last 24 hours', 'mainwp' ) . '!' : sprintf(__('Sites last synced at %s (%s ago)', 'mainwp'), MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $last_sync )), human_time_diff( MainWP_Utility::getTimestamp( $last_sync ) )) ; ?></h2>
+                                <h3 class="mainwp-margin-top-0"><?php echo empty($last_sync) ? __( 'All sites have been synced within the last 24 hours', 'mainwp' ) . '!' : sprintf(__('Sites last synced at %s (%s ago)', 'mainwp'), MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $last_sync )), human_time_diff( MainWP_Utility::getTimestamp( $last_sync ) )) ; ?></h3>
 								<p class="about-description"><?php echo __( 'Management is more than just updates!', 'mainwp' ); ?></p>
 								<?php
 							} else {
 								?>
-								<h2><i class="fa fa-flag"></i> <?php echo __( "Some child sites didn't sync correctly!", 'mainwp' ); ?></h2>
+								<h3 class="mainwp-margin-top-0"><i class="fa fa-flag"></i> <?php echo __( "Some child sites didn't sync correctly!", 'mainwp' ); ?></h3>
 								<p class="about-description"><?php echo __( 'Check the Connection status widget to review sites that are not synchronized.', 'mainwp' ); ?></p>
 								<?php
 							}

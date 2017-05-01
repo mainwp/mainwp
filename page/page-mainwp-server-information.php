@@ -58,7 +58,7 @@ class MainWP_Server_Information {
                                         <a href="<?php echo admin_url( 'admin.php?page=ServerInformationCron' ); ?>" class="mainwp-submenu"><?php _e( 'Cron Schedules','mainwp' ); ?></a>
                                         <a href="<?php echo admin_url( 'admin.php?page=ErrorLog' ); ?>" class="mainwp-submenu"><?php _e( 'Error Log','mainwp' ); ?></a>
                                         <a href="<?php echo admin_url( 'admin.php?page=WPConfig' ); ?>" class="mainwp-submenu"><?php _e( 'WP-Config File','mainwp' ); ?></a>
-                                        <a href="<?php echo admin_url( 'admin.php?page=.htaccess' ); ?>" class="mainwp-submenu"><?php _e( '.HTAccess File','mainwp' ); ?></a><?php                                        
+                                        <a href="<?php echo admin_url( 'admin.php?page=.htaccess' ); ?>" class="mainwp-submenu"><?php _e( '.htaccess File','mainwp' ); ?></a><?php                                        
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
 							if ( ! isset( $subPage['menu_hidden'] ) || (isset( $subPage['menu_hidden'] ) && $subPage['menu_hidden'] != true) ) {
@@ -106,7 +106,7 @@ class MainWP_Server_Information {
                                 'slug' => 'WPConfig',
                                 'right' => ''
                             ),
-                        array(  'title' => __('.HTAccess File', 'mainwp'), 
+                        array(  'title' => __('.htaccess File', 'mainwp'), 
                                 'parent_key' => 'ServerInformation', 
                                 'href' => 'admin.php?page=.htaccess',
                                 'slug' => '.htaccess',

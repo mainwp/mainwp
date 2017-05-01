@@ -33,7 +33,15 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	//    }
 
 	function no_items() {
-		echo __( 'No sites found.', 'mainwp' ) . '<br/><br/><em>' . __( 'If sites are missing from your display but you know those sites are connected to your dashboard be sure to check the Status drop down filter and adjust it to your needs.', 'mainwp' ) . '</em>';
+		$out =  __( 'No sites found.', 'mainwp' );
+        if (!isset($_GET['s'])) {
+            $out .= '<br/><br/><em>' . __( 'If sites are missing from your display but you know those sites are connected to your dashboard be sure to check the Status drop down filter and adjust it to your needs.', 'mainwp' ) . '</em>';        
+            if ( MainWP_DB::Instance()->getWebsitesCount() > 0 ) {
+                $out .= '<br/><br/>';
+                $out .= '<em>' . sprintf(__('If all your child sites are missing from your MainWP Dashboard, please check this %shelp document%s.', 'mainwp'), '<a href="https://mainwp.com/help/docs/all-child-sites-disappeared-from-my-mainwp-dashboard/" target="_blank">', '</a>') . '</em>';
+            }
+        }
+        echo $out;
 	}
 
 
@@ -586,7 +594,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		if ( $item['note'] == '' ) {
 			return sprintf( '<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_%1$s">' . '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) . '</a>' . $txt_lastupdate . '<span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $note );
 		} else {
-            $raw_note = esc_html($note);
+            $raw_note = esc_html($note);            
 			return sprintf( '<a href="#" class="mainwp_notes_show_all mainwp-green" id="mainwp_notes_%1$s">' . MainWP_Utility::renderNoteTooltip( $raw_note, '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) ) . '</a>' . $txt_lastupdate . '<span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $note );
 		}
 	}

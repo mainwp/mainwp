@@ -15,40 +15,31 @@ class MainWP_Tracking {
         }
         
         public static function init( $activate_for_all = false ) {                                       
+                add_filter('fs_after_skip_url_mainwp', array( __CLASS__ , 'after_skip_url'));
+                add_action('wp_ajax_mainwp_settings_saving_tracking', array( __CLASS__ , 'ajax_saving_tracking'));
                 self::init_tracking();                     
                 self::check_synced_settings();                
-                add_action('wp_ajax_mainwp_settings_saving_tracking', array( __CLASS__ , 'ajax_saving_tracking'));
         }
         
-        static function init_tracking() {             
-            return self::get_freemius();       
+        static function init_tracking() {
+            $fs = self::get_freemius();       
+            return $fs;
         }  
         
         
         public static function check_synced_settings() {            
             if ( !defined( 'DOING_AJAX' ) ) {
-                if (self::is_tracking_registered()) {
+                //if (self::is_tracking_registered()) {
                     $fs = self::get_freemius();
                     // to sync setting value
                     $is_tracking = $fs->is_tracking_prohibited() ? 0 : 1;
                     if (get_option('mainwp_enabled_tracking_dashboard') != $is_tracking) {
                         update_option('mainwp_enabled_tracking_dashboard', $is_tracking);  
                     }                
-                }
+                //}
             }
         }
-           
-        public static function message( $message = 0 ) { 
-            switch ( $message ) {
-                case 0:
-                    return  __('Need to Opt in and activate Freemius from email to enable tracking!', 'mainwp');
-                    break;
-                default : 
-                    return '';
-                    break;
-            }
-            return '';
-        }        
+          
                 
         public static function is_tracking_registered() {                        
             $fs = self::get_freemius();
@@ -60,9 +51,22 @@ class MainWP_Tracking {
             return $fs->is_pending_activation();            
         }        
         
+        public static function is_anonymous() {                        
+            $fs = self::get_freemius();            
+            if ( $fs->is_anonymous()) {
+                return true;
+            }
+            return false;
+        }
+        
+        public static function get_reconnect_url() {
+            $fs = self::get_freemius();  
+            return $fs->get_reconnect_url();            
+        }
+        
         public static function is_connecting_tracking() {                        
-            $fs = self::get_freemius();
-            if ( $fs->is_pending_activation() || $fs->is_plugin_update() ) {
+            $fs = self::get_freemius();            
+            if ( $fs->is_pending_activation() || $fs->is_plugin_update()) {
                 return false;
             }
             return true;
@@ -73,16 +77,29 @@ class MainWP_Tracking {
                 die('Invalid request.');
             }            
             
-            if (!self::is_tracking_registered()) {
-                update_option('mainwp_enabled_tracking_dashboard', 0);  
-                die(json_encode(array('error' => self::message(0))));
-            }     
-            
             $enabled = !empty($_POST['tracking']) ? 1 : 0;
             // update option value first, before set tracking
             update_option('mainwp_enabled_tracking_dashboard', $enabled);  
-            self::set_tracking($enabled);
+            
+            if (!self::is_tracking_registered()) {
+                if ($enabled) {                    
+                    update_option('mainwp_open_reconnect_tracking', 'yes');            
+                } else {
+                    delete_option('mainwp_open_reconnect_tracking');            
+                }
+            } else {                
+                self::set_tracking($enabled);
+            }   
+            
             die(json_encode( array( 'result' => 'ok') ) );
+        }
+        
+        public static function after_skip_url($url){
+            $quick_setup = get_site_option('mainwp_run_quick_setup', false);
+            if ($quick_setup == 'yes') {
+                return admin_url( 'admin.php?page=mainwp-setup' );                
+            }
+            return $url;
         }
         
         public static function set_tracking( $enabled = false ) {
@@ -90,6 +107,13 @@ class MainWP_Tracking {
                 self::allow_fs_tracking();
             else
                 self::disable_fs_tracking();
+            return true;
+        }
+        
+        public static function opt_in_tracking() {
+            $fs = self::get_freemius();
+            $result = $fs->opt_in();
+            error_log(print_r($result, true));
             return true;
         }
         

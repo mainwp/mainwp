@@ -652,15 +652,7 @@ class MainWP_Settings {
                                     <label for="mainwp_tracking_dashboard"></label>
                                 </div>&nbsp;<span id="mwp_settings_save_tracking_loading">
                                     <i class="fa fa-spinner fa-pulse" style="display: none;"></i>
-                                    <span class="status">
-                                        <?php                                
-                                        if ( !MainWP_Tracking::is_tracking_registered() ) {
-                                            ?>                                            
-                                            <em style="color:red"><?php echo MainWP_Tracking::message(0); ?></em>
-                                            <?php                                    
-                                        }                                
-                                        ?>                                         
-                                    </span>
+                                    <span class="status"></span>
                                 </span>
                                 <br/><br/>
                                 <em><?php echo sprintf( __( 'Please help us improve MainWP Dashboard! If you opt-in, some data about your usage of MainWP Dashboard will be sent to %sfreemius.com%s If you skip this, that\'s okay! Your MainWP Dashboard will still work just fine.', 'mainwp' ), '<a href="https://freemius.com" target="_blank">', '</a>' ); ?></em><br/>

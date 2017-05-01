@@ -68,16 +68,20 @@ class MainWP_Extensions_View {
 			<strong><?php _e( 'Step 1', 'mainwp' ); ?>: </strong><?php _e( 'Enter your MainWP (https://mainwp.com/) login to automatically install and activate purchased extensions.' ); ?>
 		</div>
 		<div class="inside">
-			<h4><?php _e( 'MainWP extensions Login:', 'mainwp' ); ?></h4>
 			<div class="api-grabbing-fields">
-				<input type="text" id="mainwp_com_username" class="input username" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" value="<?php echo $username; ?>"/>&nbsp;
-				<input type="password" id="mainwp_com_password" class="input passwd" placeholder="<?php esc_attr_e( 'Password', 'mainwp' ); ?>" value="<?php echo $password; ?>"/>&nbsp;
-				<label><input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e( 'Check to save API login', 'mainwp' ); ?>
-				</label>
+				<div class="mainwp-padding-top-10 mainwp-padding-bottom-10">
+					<?php echo sprintf( __( 'Not registered? %sCreate MainWP account here.%s', 'mainwp'), '<a href="https://mainwp.com/my-account/" target="_blank">', '</a>' ); ?>
+				</div>
+				<input type="text" id="mainwp_com_username" class="input username" placeholder="<?php esc_attr_e( 'Your MainWP Username', 'mainwp' ); ?>" value="<?php echo $username; ?>"/>
+				<input type="password" id="mainwp_com_password" class="input passwd" placeholder="<?php esc_attr_e( 'Your MainWP Password', 'mainwp' ); ?>" value="<?php echo $password; ?>"/>
+				<div class="mainwp-padding-top-10 mainwp-padding-bottom-10">
+					<?php echo sprintf( __( 'Lost your password? %sReset password here.%s', 'mainwp'), '<a href="https://mainwp.com/my-account/lost-password/" target="_blank">', '</a>' ); ?>
+				</div>
+				<input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e( 'Remember me', 'mainwp' ); ?>
 			</div>
 			<p>
 				<span class="extension_api_loading">
-					<input type="button" class="button-primary button button-hero" id="mainwp-extensions-savelogin" value="<?php _e( 'Save Login', 'mainwp' ); ?>">
+					<input type="button" class="button-primary button button-hero" id="mainwp-extensions-savelogin" value="<?php _e( 'Verify your MainWP Login', 'mainwp' ); ?>">
 					<span class="mainwp-large mainwp-padding-top-20" style="display: block;"><i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span></span>
 				</span>
 			</p>

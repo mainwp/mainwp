@@ -927,18 +927,18 @@ class MainWP_Setup_Wizard {
 		self::secure_request();
         $enabled = isset($_POST['dashboard']) && $_POST['dashboard'] ? 1 : 0;
 		update_option('mainwp_enabled_tracking_dashboard', $enabled); 
-        
+        $out = array('ok' => 1);
         if (MainWP_Tracking::is_tracking_registered()) {
             MainWP_Tracking::set_tracking($enabled);            
         } else { 
             if ($enabled) {                    
-                update_option('mainwp_open_reconnect_tracking', 'yes');            
+                update_option('mainwp_open_reconnect_tracking', 'yes');   
+                $out['redirect'] = 1;
             } else {
                 delete_option('mainwp_open_reconnect_tracking');            
             }
-        }
-        
-		die( 'OK' );
+        }        
+		die( json_encode($out) );
 	}        
         
 	public static function ajax_grab_api_key( ) {

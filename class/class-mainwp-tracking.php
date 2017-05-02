@@ -80,10 +80,11 @@ class MainWP_Tracking {
             $enabled = !empty($_POST['tracking']) ? 1 : 0;
             // update option value first, before set tracking
             update_option('mainwp_enabled_tracking_dashboard', $enabled);  
-            
+            $out = array('ok' => 1);
             if (!self::is_tracking_registered()) {
                 if ($enabled) {                    
-                    update_option('mainwp_open_reconnect_tracking', 'yes');            
+                    update_option('mainwp_open_reconnect_tracking', 'yes');    
+                    $out['redirect'] = 1;
                 } else {
                     delete_option('mainwp_open_reconnect_tracking');            
                 }
@@ -91,7 +92,7 @@ class MainWP_Tracking {
                 self::set_tracking($enabled);
             }   
             
-            die(json_encode( array( 'result' => 'ok') ) );
+            die(json_encode( $out ) );
         }
         
         public static function after_skip_url($url){

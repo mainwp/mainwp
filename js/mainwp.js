@@ -7693,8 +7693,6 @@ mainwp_get_blogroll = function(reLoad) {
 
 jQuery(document).ready(function() { 
     
-    mainwp_subleftmenu_check_showhide();
-    
     jQuery('.mainwp_leftmenu_content').on("click", '.mainwp-menu-item div.handle', function(event){        
         var pr = jQuery( this ).closest('li.mainwp-menu-item');
         var closed = pr.hasClass('closed');        
@@ -7703,28 +7701,25 @@ jQuery(document).ready(function() {
             pr.removeClass( 'closed' ); 
         } else {
             pr.addClass( 'closed' ); 
-        }        
-        mainwp_leftmenu_change_status(pr, closed);            
+        }                           
     });
     
     jQuery( '.mainwp_leftmenu_content .mainwp-menu-sub-item .handlediv' ).live('click', function () {
             var pr = jQuery( this ).closest('li');            
-            var closed = pr.hasClass('closed');               
+            var closed = pr.hasClass('closed');              
+            mainwp_leftmenu_close_sub_menus();            
             if (closed) {
                 pr.removeClass( 'closed' );
             } else {
                 pr.addClass( 'closed' ); 
-            }
-            
-            mainwp_leftmenu_change_status(pr, closed);
-            
+            }            
     }); 
     
     jQuery('.mainwp_leftmenu_content li.mainwp-menu-sub-item.mainwp-menu-has-submenu > .mainwp-menu-name a').live("click", function(event){        
         var pr = jQuery( this ).closest('li.mainwp-menu-sub-item');
         var closed = pr.hasClass('closed');         
         if (closed) {            
-            mainwp_leftmenu_set_showhide(pr, true);
+            jQuery(pr).removeClass('closed');            
         }                
     });
     
@@ -7781,6 +7776,15 @@ mainwp_leftmenu_change_status = function(row, value) {
     });
 };
 
+mainwp_leftmenu_close_sub_menus = function(row, value) { 
+    // close all sub menu
+    jQuery('li.mainwp-menu-sub-item.mainwp-menu-has-submenu').each(function() {
+        if (!jQuery(this).hasClass('closed')) {
+            jQuery(this).addClass('closed');
+        }
+    });
+}
+
 jQuery(document).on('keyup', '#mainwp-lefmenu-sites-filter', function() {    
     jQuery('li.mainwp-menu-item').addClass('closed');
     jQuery('li.menu-sites-wrap').removeClass('closed');
@@ -7806,27 +7810,6 @@ jQuery(document).on('keyup', '#mainwp-lefmenu-sites-filter', function() {
 //    mainwp_newpost_updateCategories();
 });
 
-
-mainwp_leftmenu_set_showhide = function(obj, show) {
-    var id = jQuery(obj).attr('item-key');  
-    if (show) {
-        jQuery(obj).removeClass('closed');
-        mainwp_setCookie('_leftmenu_' + id, 'show');
-    } 
-};
-
-mainwp_subleftmenu_check_showhide = function() {    
-    jQuery('li[item-key="mainwp_tab"] li.mainwp-menu-sub-item.closed').each(function() {
-        var pr = this;
-        var id = jQuery(pr).attr('item-key');        
-        if (mainwp_getCookie('_leftmenu_' + id) == 'show') {
-            jQuery(pr).removeClass('closed');
-            mainwp_setCookie('_leftmenu_' + id, ''); // clear it
-            mainwp_leftmenu_change_status(pr, true); // save status
-        } 
-    });
-};
-
 jQuery( '#mainwp_tracking_dashboard' ).live('click', function () {    
     var checked_val = jQuery('#mainwp_tracking_dashboard').is( ":checked" ) ? 1 : 0;
     var parent = jQuery("#mwp_settings_save_tracking_loading");
@@ -7844,10 +7827,13 @@ jQuery( '#mainwp_tracking_dashboard' ).live('click', function () {
         loadingEl.hide();   
         var saved_ok = false;
         if (response) {
-            if (response.result == 'ok') {
+            if (response.ok) {
                 statusEl.css('color', '#0074a2');
                 statusEl.html('<i class="fa fa-check-circle"></i> ' + "Saved").fadeIn();
-                setTimeout(function() { statusEl.fadeOut(1000);}, 2000);      
+                setTimeout(function() { 
+                    statusEl.fadeOut(1000); 
+                    if (response.redirect) window.location = 'admin.php?page=mainwp_tab';
+                }, 1000);      
                 saved_ok = true;
             } else if (response.error) {
                 statusEl.css('color', 'red');

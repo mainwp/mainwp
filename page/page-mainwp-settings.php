@@ -624,7 +624,7 @@ class MainWP_Settings {
 				</td>
 			</tr>
                         <tr>
-				<th scope="row"><?php _e('Show MainWP Custom Menu', 'mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip(__('If enabled, the MainWP Plugin will collapse the WordPress Admin menu and replace it with the custom MainWP Menu.', 'mainwp')); ?></th>
+				<th scope="row"><?php _e('Show MainWP custom menu', 'mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip(__('If enabled, the MainWP Plugin will collapse the WordPress Admin menu and replace it with the custom MainWP Menu.', 'mainwp')); ?></th>
 				<td>
 					<div class="mainwp-checkbox">
 						<input type="checkbox" name="mainwp_disable_wp_main_menu"

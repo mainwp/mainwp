@@ -281,10 +281,13 @@ mainwp_setup_save_tracking = function(objBtn){
         loadingEl.hide();
         jQuery(objBtn).removeAttr('disabled');
         if (response) {
-            if (response == 'OK') {
+            if (response.ok) {
                 statusEl.css('color', '#0074a2');
                 statusEl.html('<i class="fa fa-check-circle"></i> ' + "Saved").fadeIn();
-                setTimeout(function() { statusEl.fadeOut(1000);}, 2000);
+                setTimeout(function() { 
+                    statusEl.fadeOut(1000); 
+                    if (response.redirect) window.location = 'admin.php?page=mainwp_tab'
+                }, 1000);
             } else {
                 statusEl.css('color', 'red');
                 statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined error!').fadeIn();
@@ -293,6 +296,6 @@ mainwp_setup_save_tracking = function(objBtn){
             statusEl.css('color', 'red');
             statusEl.html('<i class="fa fa-exclamation-circle"></i> Undefined error!').fadeIn();
         }
-    });
+    }, 'json');
     return false;
 }

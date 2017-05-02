@@ -594,14 +594,16 @@ class MainWP_Post_Handler {
                     die(-1);
                 }
                 
-                // open one menu item close all other items
-                if ($_POST['status'] == 'status_leftmenu' && in_array($_POST['key'], array('mainwp_tab', 'Extensions', 'childsites_menu' ))) {
-                    if (isset($values['status_leftmenu']['mainwp_tab']))
-                        unset($values['status_leftmenu']['mainwp_tab']);
-                    if (isset($values['status_leftmenu']['Extensions']))
-                        unset($values['status_leftmenu']['Extensions']);
-                    if (isset($values['status_leftmenu']['childsites_menu']))
-                        unset($values['status_leftmenu']['childsites_menu']);
+                // open one menu item, close all other items
+                if ($_POST['status'] == 'status_leftmenu') {
+                    if (in_array($_POST['key'], array('mainwp_tab', 'Extensions', 'childsites_menu' ))) {
+                        if (isset($values['status_leftmenu']['mainwp_tab']))
+                            unset($values['status_leftmenu']['mainwp_tab']);
+                        if (isset($values['status_leftmenu']['Extensions']))
+                            unset($values['status_leftmenu']['Extensions']);
+                        if (isset($values['status_leftmenu']['childsites_menu']))
+                            unset($values['status_leftmenu']['childsites_menu']);
+                    }
                 }
                 
                 if (!isset($_POST['value']) || empty($_POST['value'])) {

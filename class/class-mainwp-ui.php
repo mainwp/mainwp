@@ -411,8 +411,8 @@ class MainWP_UI {
                                     $site_id =  str_replace('child_site_', '', $sub_key);
                                     $site_id = 'site-id="' . $site_id .'"';
                                 }                                
-                                $sub_closed = '';
-                                if (!isset($menuStatus[$item_key . '-' . $sub_key]) || empty($menuStatus[$item_key . '-' . $sub_key]))
+//                                $sub_closed = '';
+//                                if (!isset($menuStatus[$item_key . '-' . $sub_key]) || empty($menuStatus[$item_key . '-' . $sub_key]))
                                     $sub_closed = 'closed';
                                 
                                 $active_item = '';
@@ -490,14 +490,18 @@ class MainWP_UI {
         </div> 
         <script type="text/javascript">
             jQuery(document).ready(function () {
-                var root_active_leftmenu = jQuery('li.mainwp-menu-sub-item.sidemenu-active').closest('li.mainwp-menu-item');
+                var _active_menu_item = jQuery('li.mainwp-menu-sub-item.sidemenu-active');
+                var root_active_leftmenu = jQuery(_active_menu_item).closest('li.mainwp-menu-item');
                 if (root_active_leftmenu.length > 0) {
                     jQuery( '.mainwp_leftmenu_content li.mainwp-menu-item' ).addClass('closed');
                     root_active_leftmenu.removeClass('closed');
                     //root_active_leftmenu.find('.handle .mainwp-menu-name').addClass('menuitem-active');
                     mainwp_leftmenu_change_status(root_active_leftmenu, true); // save open status
                 }
-                
+                var sub_active_leftmenu = jQuery(_active_menu_item).closest('li.mainwp-menu-sub-item');
+                if (jQuery(sub_active_leftmenu).hasClass('mainwp-menu-has-submenu')) {
+                    sub_active_leftmenu.removeClass('closed');                   
+                }                
             });
         </script>
         <?php

@@ -1229,7 +1229,9 @@ public static function renderFooter( $shownPage ) {
 	public static function renderErrorLog() {
 		$log_errors = ini_get( 'log_errors' );
 		if ( ! $log_errors ) {
-			echo '<tr><td colspan="2">' . __( 'Error logging disabled.', 'mainwp' ) . '</td></tr>';
+			echo '<tr><td colspan="2">' . __( 'Error logging disabled.', 'mainwp' );            
+            echo '<br/>' . sprintf(__('To enable error logging, please check this %shelp document%s.', 'mainwp'), '<a href="https://codex.wordpress.org/Debugging_in_WordPress" target="_blank">', '</a>');
+            echo '</td></tr>';            
 		}
 
 		$error_log = ini_get( 'error_log' );

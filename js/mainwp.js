@@ -1790,7 +1790,7 @@ managebackups_backup_upload_file = function(pSiteId, pSiteName, pFile, pRegexFil
             url: ajaxurl,
             data: data,
             success: function(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId) { return function (response) {
-                if (response.error || !response.result)
+                if (!response || response.error || !response.result)
                 {
                     managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, response.error ? response.error : '');
                 }

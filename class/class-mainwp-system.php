@@ -214,7 +214,14 @@ class MainWP_System {
 					wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
 				}
 			}
-		}
+		} else {
+            if ( $sched = wp_next_scheduled( 'mainwp_cronbackups_action' ) ) {			
+                wp_unschedule_event( $sched, 'mainwp_cronbackups_action' );				
+			}
+            if ( $sched = wp_next_scheduled( 'mainwp_cronbackups_continue_action' ) ) {			
+                wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );				
+			}
+        }
 
 		if ( ( $sched = wp_next_scheduled( 'mainwp_cronremotedestinationcheck_action' ) ) != false ) {
 			wp_unschedule_event( $sched, 'mainwp_cronremotedestinationcheck_action' );

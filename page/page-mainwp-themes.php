@@ -995,8 +995,11 @@ public static function renderHeader( $shownPage ) {
 		}
 
 		?>
-		<a href="#" class="mainwp_action left mainwp_action_down browse-themes" id="mainwp-browse-themes" ><?php _e('Search','mainwp'); ?></a><a href="#" class="mainwp_action right upload" id="mainwp-upload-themes"><?php _e('Upload','mainwp'); ?></a>
-		<br class="clear" /><br />
+		<div class="mainwp-subnav-tabs top">
+			<a href="#" class="mainwp_action left mainwp_action_down browse-themes" id="mainwp-browse-themes" ><i class="fa fa-wordpress fa-lg" aria-hidden="true"></i> <?php _e('Install from WordPress.org','mainwp'); ?></a>
+			<a href="#" class="mainwp_action right upload" id="mainwp-upload-themes"><i class="fa fa-upload fa-lg" aria-hidden="true"></i> <?php _e('Upload .zip file','mainwp'); ?></a>
+			<div style="clear: both;"></div>
+		</div>
 		<div class="mainwp-padding-bottom-10"><?php MainWP_Tours::renderInstallThemesTour(); ?></div>
 		<div class="mainwp_config_box_left" style="width: calc(100% - 290px);">
 			<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>

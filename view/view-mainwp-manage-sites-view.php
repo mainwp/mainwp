@@ -990,7 +990,7 @@ class MainWP_Manage_Sites_View {
 		$notificationOnBackupFail = get_option( 'mainwp_notificationOnBackupFail' );
 		$notificationOnBackupStart = get_option( 'mainwp_notificationOnBackupStart' );
 		$chunkedBackupTasks = get_option( 'mainwp_chunkedBackupTasks' );
-                $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
+        $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
                 
 		$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
 		$loadFilesBeforeZip = ($loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false);

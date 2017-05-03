@@ -48,7 +48,7 @@ themes.Model = Backbone.Model.extend({
 // Unifies and renders all available views
 themes.view.Appearance = wp.Backbone.View.extend({
 
-	el: '#wpbody-content .wrap .theme-browser',
+	el: '#wpbody-content .mainwp-wrap .theme-browser',
 
 	window: $( window ),
 	// Pagination instance
@@ -505,7 +505,7 @@ themes.view.Theme = wp.Backbone.View.extend({
 		}
 
 		// Append preview
-		$( 'div.wrap' ).append( preview.el );
+		$( 'div.mainwp-wrap' ).append( preview.el );
 
 		// Listen to our preview object
 		// for `theme:next` and `theme:previous` events.
@@ -1342,7 +1342,7 @@ themes.view.InstallerSearch =  themes.view.Search.extend({
 
 themes.view.Installer = themes.view.Appearance.extend({
 
-	el: '#wpbody-content .wrap',
+	el: '#wpbody-content .mainwp-wrap',
 
 	// Register events for sorting and filters in theme-navigation
 	events: {

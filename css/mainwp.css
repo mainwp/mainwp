@@ -170,6 +170,48 @@ a.mainwp-post-trash {color: #a00;}
     box-shadow: none;
 }
 
+.mainwp-subnav-tabs {
+    background: #fafafa;
+    margin: -10px -10px 0 -10px;
+    border-bottom: 1px solid #e5e5e5;
+    -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.mainwp-subnav-tabs .mainwp_action {
+    text-decoration: none;
+    text-transform: uppercase;
+    background: #fafafa;
+    border-right: 1px solid #e5e5e5;
+    border-top: none !important;
+    border-left: none !important;
+    border-bottom: 1px solid #fafafa !important;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 15px 30px;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    float: left;
+}
+
+.mainwp-subnav-tabs .mainwp_action:hover {
+    border-bottom: 1px solid #7fb100 !important;
+    color: #7fb100;
+    background: #fff;
+}
+.mainwp-subnav-tabs .mainwp_action.left { border-width: 1px; }
+.mainwp-subnav-tabs .mainwp_action.mid{ border-width: 1px; }
+.mainwp-subnav-tabs .mainwp_action.right{ border-width: 1px; }
+.mainwp-subnav-tabs .mainwp_action.single { border-width: 1px; }
+
+.mainwp-subnav-tabs .mainwp_action_down {
+    background: #fff;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    border-bottom: 1px solid #7fb100 !important;
+    color: #7fb100 !important;
+}
+
 /*---------------------------------------------------------------------------------------------------------------*/
 
 /* MAINWP GENERAL STYLES */

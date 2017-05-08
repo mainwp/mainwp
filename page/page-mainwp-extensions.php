@@ -922,6 +922,7 @@ class MainWP_Extensions {
 		'plugins'          => 'plugins',
 		'dtsSync'          => 'dtsSync',
 		'version'          => 'version',
+        'sync_errors'      => 'sync_errors'
 	);
 
 	public static function hookGetDBSites( $pluginFile, $key, $sites, $groups, $options = false ) {

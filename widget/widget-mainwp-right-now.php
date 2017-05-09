@@ -1003,7 +1003,7 @@ class MainWP_Right_Now {
                 <div class="mainwp-row-top">
 			<div class="mainwp-left">
 				<strong><?php _e('Check site HTTP response after update');?></strong>&nbsp;
-                                <?php MainWP_Utility::renderToolTip(__('Check site HTTP response after update.','mainwp'), '', 'images/info.png', 'float: none !important;'); ?>
+                                <?php MainWP_Utility::renderToolTip(__('If enabled, the MainWP Dashboard plugin will check header HTTP status for the updated sites and alert you if an unexpected code is returned. This way, you can know if something went wrong with your sites after an update.','mainwp'), '', 'images/info.png', 'float: none !important;'); ?>
 			</div>
                         <div class="mainwp-right">
                             <div class="mainwp-checkbox">

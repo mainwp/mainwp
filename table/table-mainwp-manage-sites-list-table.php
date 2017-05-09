@@ -520,8 +520,11 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	}
 
 	function column_backup( $item ) {
-
-		$backupnow_lnk = apply_filters( 'mainwp-managesites-getbackuplink', '', $item['id'] );
+        $siteObj = new stdClass();
+        $siteObj->id = $item['id'];
+        $lastBackup = MainWP_DB::Instance()->getWebsiteOption( $siteObj, 'primary_lasttime_backup' );
+        
+		$backupnow_lnk = apply_filters( 'mainwp-managesites-getbackuplink', '', $item['id'], $lastBackup );
 		if ( ! empty( $backupnow_lnk ) ) {
 			return $backupnow_lnk;
 		}

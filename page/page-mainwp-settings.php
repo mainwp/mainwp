@@ -723,7 +723,7 @@ class MainWP_Settings {
 			<tr>
 				<th scope="row"><?php _e('Force dashboard to establish new connection', 'mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip(__('Use this option to establish new connection with child sites.', 'mainwp')); ?></th>
 				<td>
-					<input type="submit" name="" id="force-destroy-sessions-button" class="button-primary button" value="<?php esc_attr_e('Establish New Connection', 'mainwp'); ?>"/><br/>
+					<input type="submit" name="" id="force-destroy-sessions-button" class="button-primary button" value="<?php esc_attr_e('Establish new connection', 'mainwp'); ?>"/><br/>
 					<em>
 						<?php _e('Forces your dashboard to reconnect with your child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp'); ?>
 					</em>

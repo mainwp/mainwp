@@ -451,7 +451,7 @@ public static function renderHeader( $shownPage ) {
 		}
 
 		if ( count( $output->plugins ) == 0 ) {
-			_e( 'No plugins found', 'mainwp' );
+			_e( 'No plugins found.', 'mainwp' );
 
 			return;
 		}
@@ -790,7 +790,7 @@ public static function renderHeader( $shownPage ) {
 		<?php
 		if ( count( $output->plugins ) == 0 ) {
 			?>
-			No plugins found
+			<div class="mainwp-notice mainwp-notice-yellow"><?php _e( 'No plugins found.', 'mainwp' ); ?></div>
 			<?php
 			$newOutput = ob_get_clean();
 			echo $newOutput;

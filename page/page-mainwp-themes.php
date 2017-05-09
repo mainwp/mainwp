@@ -485,7 +485,7 @@ public static function renderHeader( $shownPage ) {
 		<?php
 		if ( count( $output->themes ) == 0 ) {
 			?>
-			No themes found
+			<div class="mainwp-notice mainwp-notice-yellow"><?php _e( 'No themes found.', 'mainwp' ); ?></div>
 			<?php
 			$newOutput = ob_get_clean();
 			echo $newOutput;
@@ -683,7 +683,7 @@ public static function renderHeader( $shownPage ) {
 
 		if ( count( $output->themes ) == 0 ) {
 			?>
-			No themes found
+			<div class="mainwp-notice mainwp-notice-yellow"><?php _e( 'No themes found.', 'mainwp' ); ?></div>
 			<?php
 			return;
 		}

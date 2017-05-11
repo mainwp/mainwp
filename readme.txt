@@ -166,7 +166,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: an issue with abandoned Themes and Plugins checks
 * Fixed: an issue with detecting Extension updates
 * Fixed: a database query issue while performing updates
-* Fixed: warious PHP Warnings and Errors
+* Fixed: various PHP Warnings and Errors
 * Fixed: redirect issue for users that don't have permission to access MainWP Dashboard
 * Fixed: an issue with sorting Posts and Pages by Date
 * Fixed: multiple layout issues

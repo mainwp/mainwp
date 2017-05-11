@@ -162,6 +162,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 == Changelog ==
 
 = 3.4 - 5-11-17 =
+
+[Update Notes](https://mainwp.com/mainwp-3-4-additions/)
+
 * Fixed: an issue with encoding HTML tags in Notes view
 * Fixed: an issue with abandoned Themes and Plugins checks
 * Fixed: an issue with detecting Extension updates

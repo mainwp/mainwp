@@ -45,7 +45,8 @@ class MainWP_Install_Bulk {
 				</div>
 			<?php } ?>
 			<div class="mainwp-padding-10">
-				<div style="font-size: 20px; text-align: center; margin: 3em 0;"><?php _e( 'If you have', 'mainwp' ); ?> <?php echo strtolower( $title ); ?> <?php _e( 'in a .zip format, you may install it by uploading it here.', 'mainwp' ); ?></div>
+
+				<div style="font-size: 20px; text-align: center; margin: 3em 0;"><i class="fa fa-file-archive-o fa-4x" aria-hidden="true"></i> <br/><br/> <?php _e( 'If you have', 'mainwp' ); ?> <?php echo strtolower( $title ); ?> <?php _e( 'in a .zip format, you may install it by uploading it here.', 'mainwp' ); ?></div>
 				<div id="mainwp-file-uploader">
 					<noscript>
 						<p><?php _e( 'Please enable JavaScript to use file uploader.', 'mainwp' ); ?></p>

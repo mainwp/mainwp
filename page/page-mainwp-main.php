@@ -51,12 +51,35 @@ class MainWP_Main {
 				update_user_option( $current_user->ID, 'screen_layout_' . $this->dashBoard, 2, true );
 			}
 			add_action( 'load-' . $this->dashBoard, array( &$this, 'on_load_page' ) );
+            MainWP_Main::init_left_menu();
 		}
 		//        else
 		//        {
 		//            $this->dashBoard = add_menu_page('MainWP', 'MainWP', 'read', 'mainwp_tab', array($this, 'require_registration'), plugins_url('images/mainwpicon.png', dirname(__FILE__)), '2.0001');
 		//        }
 	}
+
+    static function init_left_menu( $subPages = array() ) {
+        $init_leftmenu = array(
+            array(  'title' => __('MainWP Dashboard', 'mainwp'),
+                    'key' => 'mainwp_tab',
+                    'href' => 'admin.php?page=mainwp_tab'
+                ),
+            array(  'title' => __('MainWP Extensions', 'mainwp'),
+                    'key' => 'Extensions',
+                    'href' => 'admin.php?page=Extensions'
+                ),
+            array(  'title' => __('Child Sites', 'mainwp'),
+                    'key' => 'childsites_menu',
+                    'href' => 'admin.php?page=managesites'
+                )
+        );
+
+        foreach($init_leftmenu as $item) {
+            MainWP_System::add_left_menu($item['title'], $item['key'], $item['href']);
+        }
+        MainWP_System::add_sub_left_menu(__('Overview', 'mainwp'), 'mainwp_tab', 'mainwp_tab', 'admin.php?page=mainwp_tab', '<i class="fa fa-tachometer"></i>', '' );
+    }
 
 	function on_load_page() {
 		wp_enqueue_script( 'common' );
@@ -149,14 +172,13 @@ class MainWP_Main {
 		}
 
 		global $screen_layout_columns;
+        MainWP_UI::render_left_menu();
 		?>
-		<div id="mainwp_tab-general" class="wrap">
-			<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
+		<div id="mainwp_tab-general" class="mainwp-wrap">
 
-			<h2><i class="fa fa-tachometer"></i> <?php _e( 'Overview', 'mainwp' ); ?></h2>
+			<h1 class="mainwp-margin-top-0"><i class="fa fa-tachometer"></i> <?php _e( 'Overview', 'mainwp' ); ?></h1>
+			<br/>
 
-			<div style="clear: both;"></div>
-			<br/><br/>
 			<?php if ( MainWP_Utility::showUserTip( 'mainwp-dashboard-tips' ) ) { ?>
 				<div id="mainwp-tip-zone">
 					<div class="mainwp-tips mainwp-notice mainwp-notice-blue">
@@ -213,33 +235,34 @@ class MainWP_Main {
 						}
 						if ($website !== null) {
 							if ( ( time() - $website->dtsSync ) > ( 60 * 60 * 24 ) ) {
-								?><h2>
-								<i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?>
-								</h2>
+								?>
+								<h3 class="mainwp-margin-top-0"><i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?></h3>
 								<p class="about-description"><?php _e( 'Click the Sync Data button to get the latest data from child sites.', 'mainwp' ); ?></p>
 								<?php
 							} else {
 								?>
-								<h2><?php echo sprintf( __( 'Welcome to %s dashboard!', 'mainwp' ), stripslashes( $website->name ) ); ?></h2>
+								<h3 class="mainwp-margin-top-0"><?php echo sprintf( __( 'Welcome to %s dashboard!', 'mainwp' ), stripslashes( $website->name ) ); ?></h3>
 								<p class="about-description"><?php echo sprintf( __( 'This information is only for %s%s', 'mainwp' ), $imgfavi, MainWP_Utility::getNiceURL( $website->url, true ) ); ?></p>
 								<?php
 							}
 						} else {
-							$sync_status = MainWP_DB::Instance()->getLastSyncStatus();
+							$result = MainWP_DB::Instance()->getLastSyncStatus();
+                            $sync_status = $result['sync_status'];
+                            $last_sync = $result['last_sync'];
+
 							if ( $sync_status === 'not_synced' ) {
-								?><h2>
-								<i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?>
-								</h2>
+								?>
+								<h3 class="mainwp-margin-top-0"><i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?></h3>
 								<p class="about-description"><?php _e( 'Click the Sync Data button to get the latest data from child sites.', 'mainwp' ); ?></p>
 								<?php
 							} else if ( $sync_status === 'all_synced' ) {
 								?>
-								<h2><?php echo __( 'All sites have been synced within the last 24 hours', 'mainwp' ); ?>!</h2>
+                                <h3 class="mainwp-margin-top-0"><?php echo empty($last_sync) ? __( 'All sites have been synced within the last 24 hours', 'mainwp' ) . '!' : sprintf(__('Sites last synced at %s (%s ago)', 'mainwp'), MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $last_sync )), human_time_diff( MainWP_Utility::getTimestamp( $last_sync ) )) ; ?></h3>
 								<p class="about-description"><?php echo __( 'Management is more than just updates!', 'mainwp' ); ?></p>
 								<?php
 							} else {
 								?>
-								<h2><i class="fa fa-flag"></i> <?php echo __( "Some child sites didn't sync correctly!", 'mainwp' ); ?></h2>
+								<h3 class="mainwp-margin-top-0"><i class="fa fa-flag"></i> <?php echo __( "Some child sites didn't sync correctly!", 'mainwp' ); ?></h3>
 								<p class="about-description"><?php echo __( 'Check the Connection status widget to review sites that are not synchronized.', 'mainwp' ); ?></p>
 								<?php
 							}

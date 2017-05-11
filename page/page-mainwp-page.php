@@ -52,6 +52,7 @@ class MainWP_Page {
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Page' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
+        MainWP_Page::init_sub_sub_left_menu(self::$subPages);
 	}
 
 
@@ -82,7 +83,31 @@ class MainWP_Page {
 		<?php
 	}
 
-	public static function on_load_page() {		
+    static function init_sub_sub_left_menu( $subPages = array() ) {
+            MainWP_System::add_sub_left_menu(__('Pages', 'mainwp'), 'mainwp_tab', 'PageBulkManage', 'admin.php?page=PageBulkManage', '<i class="fa fa-file"></i>', '' );
+
+            $init_sub_subleftmenu = array(
+                    array(  'title' => __('Manage Pages', 'mainwp'),
+                            'parent_key' => 'PageBulkManage',
+                            'href' => 'admin.php?page=PageBulkManage',
+                            'slug' => 'PageBulkManage',
+                            'right' => 'manage_pages'
+                        ),
+                    array(  'title' => __('Add New', 'mainwp'),
+                            'parent_key' => 'PageBulkManage',
+                            'href' => 'admin.php?page=PageBulkAdd',
+                            'slug' => 'PageBulkAdd',
+                            'right' => 'manage_pages'
+                        )
+            );
+            MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'PageBulkManage', 'Page');
+
+            foreach($init_sub_subleftmenu as $item) {
+                MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
+            }
+    }
+
+	public static function on_load_page() {
 		MainWP_System::enqueue_postbox_scripts();		
 		self::add_meta_boxes();	
 	}
@@ -144,11 +169,12 @@ class MainWP_Page {
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function renderHeader( $shownPage, $post_id = null ) {
+        MainWP_UI::render_left_menu();
 		?>
-		<div class="wrap">
-			<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP" /></a>
-			<h2><i class="fa fa-file"></i> <?php _e( 'Pages','mainwp' ); ?></h2>
-			<div style="clear: both;"></div><br/>
+		<div class="mainwp-wrap">
+
+			<h1 class="mainwp-margin-top-0"><i class="fa fa-file"></i> <?php _e( 'Pages','mainwp' ); ?></h1>
+
 			<div id="mainwp-tip-zone">
 				<?php if ( $shownPage == 'BulkManage' ) { ?>
 					<?php if ( MainWP_Utility::showUserTip( 'mainwp-managepage-tips' ) ) { ?>
@@ -162,11 +188,11 @@ class MainWP_Page {
 			<div class="mainwp-tabs" id="mainwp-tabs">
 				<?php if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) { ?>
 				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkManage' ) { echo 'nav-tab-active'; } ?>" href="admin.php?page=PageBulkManage"><?php _e( 'Manage Pages','mainwp' ); ?></a>
-        <?php if ( $shownPage == 'BulkEdit' ) { ?>
-                <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=PageBulkEdit&post_id=<?php echo esc_attr($post_id); ?>"><?php _e( 'Edit Page', 'mainwp' ); ?></a>
-        <?php } ?>
-				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkAdd' ) { echo 'nav-tab-active'; } ?>" href="admin.php?page=PageBulkAdd"><?php _e( 'Add New','mainwp' ); ?></a>
-        <?php } ?>
+                <?php if ( $shownPage == 'BulkEdit' ) { ?>
+                        <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=PageBulkEdit&post_id=<?php echo esc_attr($post_id); ?>"><?php _e( 'Edit Page', 'mainwp' ); ?></a>
+                <?php } ?>
+                        <a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkAdd' ) { echo 'nav-tab-active'; } ?>" href="admin.php?page=PageBulkAdd"><?php _e( 'Add New','mainwp' ); ?></a>
+                <?php } ?>
 				<?php
 				if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 					foreach ( self::$subPages as $subPage ) {
@@ -469,6 +495,7 @@ class MainWP_Page {
 				'status' => $status,
 				'maxRecords' => ((get_option( 'mainwp_maximumPages' ) === false) ? 50 : get_option( 'mainwp_maximumPages' )),
 			);
+            $post_data = apply_filters('mainwp_get_all_pages_data', $post_data);
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_pages', $post_data, array( MainWP_Page::getClassName(), 'PagesSearch_handler' ), $output );
 		}
 
@@ -505,7 +532,9 @@ class MainWP_Page {
 			$pages = unserialize( base64_decode( $results[1] ) );
 			unset( $results );
 			foreach ( $pages as $page ) {
+                $raw_dts = '';
 				if ( isset( $page['dts'] ) ) {
+                    $raw_dts = $page['dts'];
 					if ( ! stristr( $page['dts'], '-' ) ) {
 						$page['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $page['dts'] ) );
 					}
@@ -574,7 +603,7 @@ class MainWP_Page {
 					</div>
 				</td>
 				<td class="date column-date">
-					<abbr title="<?php echo $page['dts']; ?>"><?php echo $page['dts']; ?></abbr>
+					<abbr raw_value="<?php echo $raw_dts; ?>" title="<?php echo $page['dts']; ?>"><?php echo $page['dts']; ?></abbr>
 				</td>
 				<td class="status column-status"><?php echo self::getStatus( $page['status'] ); ?>
 				</td>

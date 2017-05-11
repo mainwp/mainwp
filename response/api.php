@@ -1,5 +1,5 @@
 <?php
-
+define('DOING_CRON', true);
 function liveReportsResponderClasses() {
 	if ( file_exists( '../class/class-mainwp-creport.php' ) ) {
 		include_once '../class/class-mainwp-creport.php';

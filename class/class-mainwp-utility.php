@@ -1160,7 +1160,7 @@ class MainWP_Utility {
 			if ( $minimumDelay > 0 ) {
 				$minimumDelay = $minimumDelay / 1000;
 			}
-			$minimumIPDelay = ( ( get_option( 'mainwp_minimumIPDelay' ) === false ) ? 400 : get_option( 'mainwp_minimumIPDelay' ) );
+			$minimumIPDelay = ( ( get_option( 'mainwp_minimumIPDelay' ) === false ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) );
 			if ( $minimumIPDelay > 0 ) {
 				$minimumIPDelay = $minimumIPDelay / 1000;
 			}

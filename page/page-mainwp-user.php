@@ -63,6 +63,8 @@ class MainWP_User {
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'UserBulk' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
+
+        MainWP_User::init_sub_sub_left_menu(self::$subPages);
 	}
 	
 	public static function on_load_page() {		
@@ -142,17 +144,52 @@ class MainWP_User {
 		<?php
 	}
 
+    static function init_sub_sub_left_menu( $subPages = array() ) {
+        MainWP_System::add_sub_left_menu(__('Users', 'mainwp'), 'mainwp_tab', 'UserBulkManage', 'admin.php?page=UserBulkManage', '<i class="fa fa-user"></i>', 'Manage users on your child sites' );
+        $init_sub_subleftmenu = array(
+                array(  'title' => __('Manage Users', 'mainwp'),
+                        'parent_key' => 'UserBulkManage',
+                        'href' => 'admin.php?page=UserBulkManage',
+                        'slug' => 'UserBulkManage',
+                        'right' => 'manage_users'
+                    ),
+                array(  'title' => __('Add New', 'mainwp'),
+                        'parent_key' => 'UserBulkManage',
+                        'href' => 'admin.php?page=UserBulkAdd',
+                        'slug' => 'UserBulkAdd',
+                        'right' => ''
+                    ),
+                array(  'title' => __('Import Users', 'mainwp'),
+                        'parent_key' => 'UserBulkManage',
+                        'href' => 'admin.php?page=BulkImportUsers',
+                        'slug' => 'BulkImportUsers',
+                        'right' => ''
+                    ),
+                array(  'title' => __('Admin Passwords', 'mainwp'),
+                        'parent_key' => 'UserBulkManage',
+                        'href' => 'admin.php?page=UpdateAdminPasswords',
+                        'slug' => 'UpdateAdminPasswords',
+                        'right' => ''
+                    )
+        );
+
+        MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'UserBulkManage', 'UserBulk');
+
+        foreach($init_sub_subleftmenu as $item) {
+            MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
+        }
+    }
+
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function renderHeader( $shownPage ) {
+        MainWP_UI::render_left_menu();
 		?>
-		<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
-				src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50"
-				alt="MainWP"/></a>
-		<h2><i class="fa fa-user"></i> <?php _e( 'Users', 'mainwp' ); ?></h2>
-		<div style="clear: both;"></div><br/>
+		<div class="mainwp-wrap">
+
+		<h1 class="mainwp-margin-top-0"><i class="fa fa-user"></i> <?php _e( 'Users', 'mainwp' ); ?></h1>
+
 		<div class="mainwp-tabs" id="mainwp-tabs">
 			<?php if ( mainwp_current_user_can( 'dashboard', 'manage_users' ) ) { ?>
 				<a class="nav-tab pos-nav-tab <?php if ( $shownPage == '' ) {

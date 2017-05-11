@@ -6,13 +6,13 @@ class MainWP_Child_Scan {
 	}
 
 	public static function initMenu() {
-
 		add_submenu_page( 'mainwp_tab', __( 'MainWP Child Scan','mainwp' ), '<div class="mainwp-hidden">' .  __( 'MainWP Child Scan','mainwp' ) . '</div>', 'read', 'MainWP_Child_Scan', array( MainWP_Child_Scan::getClassName(), 'render' ) );
 	}
 
 	public static function renderHeader( $shownPage ) {
+        MainWP_UI::render_left_menu();
 		?>
-		<div class="wrap">
+		<div class="mainwp-wrap">
 			<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank">
 				<img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/>
 			</a>

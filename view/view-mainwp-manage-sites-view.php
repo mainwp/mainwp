@@ -35,6 +35,75 @@ class MainWP_Manage_Sites_View {
 	<?php
 	}
 
+    static function init_sub_sub_left_menu( $subPages = array() ) {
+        MainWP_System::add_sub_left_menu(__('Sites', 'mainwp'), 'mainwp_tab', 'managesites', 'admin.php?page=managesites', '<i class="fa fa-globe"></i>', '');
+
+        $init_sub_subleftmenu = array(
+                array(  'title' => __('Manage Sites', 'mainwp'),
+                            'parent_key' => 'managesites',
+                            'slug' => 'managesites',
+                            'href' => 'admin.php?page=managesites',
+                            'right' => ''
+                    ),
+                array(  'title' => __('Add New', 'mainwp'),
+                            'parent_key' => 'managesites',
+                            'href' => 'admin.php?page=managesites&do=new',
+                            'slug' => 'managesites',
+                            'right' => 'add_sites'
+                        ),
+                array(  'title' => __('Import Sites', 'mainwp'),
+                            'parent_key' => 'managesites',
+                            'href' => 'admin.php?page=managesites&do=bulknew',
+                            'slug' => 'managesites',
+                            'right' => 'add_sites'
+                        ),
+                array(  'title' => __('Test Connection', 'mainwp'),
+                            'parent_key' => 'managesites',
+                            'href' => 'admin.php?page=managesites&do=test',
+                            'slug' => 'managesites',
+                            'right' => ''
+                        ),
+                array(  'title' => __('Groups', 'mainwp'),
+                            'parent_key' => 'managesites',
+                            'href' => 'admin.php?page=ManageGroups',
+                            'slug' => 'ManageGroups',
+                            'right' => ''
+                        )
+        );
+
+        MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'managesites', 'ManageSites');
+
+        foreach($init_sub_subleftmenu as $item) {
+            MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
+        }
+
+        // init sites left menu
+        if (get_option('mainwp_disable_wp_main_menu', 1)) { // to reduce db query
+            $websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+            while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+                MainWP_System::add_sub_left_menu($website->name, 'childsites_menu', 'child_site_' . $website->id, 'admin.php?page=managesites&dashboard=' . $website->id, '', $website->url );
+
+                $init_sub_subleftmenu = array(
+                        array(  'title' => '<i class="fa fa-pencil-square-o" title="' . __('Edit', 'mainwp'). '"></i>',
+                                'parent_key' => 'child_site_' . $website->id,
+                                'href' => 'admin.php?page=managesites&id=' . $website->id,
+                                'slug' => 'site_edit_' . $website->id ,
+                                'right' => ''
+                            ),
+                        array(  'title' => '<i class="fa fa-refresh" aria-hidden="true" title="' . __('Updates', 'mainwp'). '"></i>',
+                                'parent_key' => 'child_site_' . $website->id,
+                                'href' => 'admin.php?page=managesites&updateid=' . $website->id,
+                                'slug' => 'site_update_' . $website->id ,
+                                'right' => ''
+                            ),
+                );
+                foreach($init_sub_subleftmenu as $item ) {
+                    MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
+                }
+            }
+        }
+    }
+
 	static function getBreadcrumb( $pShowpage, $pSubPages ) {
 		$extra = array();
 		if ( isset( $pSubPages ) && is_array( $pSubPages ) ) {
@@ -266,14 +335,12 @@ class MainWP_Manage_Sites_View {
 			$breadcrumd = self::getBreadcrumb( $shownPage, $subPages );
 		}
 
+        MainWP_UI::render_left_menu();
+
 		?>
-	<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank">
-		<img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/>
-		</a>
-		<h2><i class="fa fa-globe"></i> <?php _e( 'Sites','mainwp' ); ?></h2>
-		<div style="clear: both;"></div>
-		<br/>
+	<div class="mainwp-wrap">
+
+		<h1 class="mainwp-margin-top-0"><i class="fa fa-globe"></i> <?php _e( 'Sites','mainwp' ); ?></h1>
 
 		<div id="mainwp-tip-zone">
 			<?php if ( $shownPage == '' ) { ?>
@@ -922,7 +989,7 @@ class MainWP_Manage_Sites_View {
 		$notificationOnBackupFail = get_option( 'mainwp_notificationOnBackupFail' );
 		$notificationOnBackupStart = get_option( 'mainwp_notificationOnBackupStart' );
 		$chunkedBackupTasks = get_option( 'mainwp_chunkedBackupTasks' );
-                $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
+        $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
                 
 		$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
 		$loadFilesBeforeZip = ($loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false);

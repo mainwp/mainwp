@@ -74,6 +74,8 @@ class MainWP_Settings {
 				add_submenu_page('mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Settings' . $subPage['slug'], $subPage['callback']);
 			}
 		}
+
+        MainWP_Settings::init_sub_sub_left_menu(self::$subPages);
 	}
 
 	public static function on_load_page() {
@@ -86,31 +88,31 @@ class MainWP_Settings {
 		if (isset($_GET['page'])) {
 			if ('Settings' == $_GET['page']) {
 				add_meta_box(
-					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Network Optimization', 'mainwp'), array('MainWP_Options', 'renderNetworkOptimization'), 'mainwp_postboxes_global_settings', 'normal', 'core'
+					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Network optimization', 'mainwp'), array('MainWP_Options', 'renderNetworkOptimization'), 'mainwp_postboxes_global_settings', 'normal', 'core'
 				);
 
 				add_meta_box(
-					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Global Options', 'mainwp'), array('MainWP_Options', 'renderGlobalOptions'), 'mainwp_postboxes_global_settings', 'normal', 'core'
+					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Global options', 'mainwp'), array('MainWP_Options', 'renderGlobalOptions'), 'mainwp_postboxes_global_settings', 'normal', 'core'
 				);
 
 				add_meta_box(
-					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Update Options', 'mainwp'), array('MainWP_Options', 'renderUpdateOptions'), 'mainwp_postboxes_global_settings', 'normal', 'core'
+					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Update options', 'mainwp'), array('MainWP_Options', 'renderUpdateOptions'), 'mainwp_postboxes_global_settings', 'normal', 'core'
 				);
 
 				if (MainWP_Extensions::isExtensionAvailable('mainwp-comments-extension')) {
 					add_meta_box(
-						'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Data Return Options', 'mainwp'), array('MainWP_Options', 'renderDataReturnOptions'), 'mainwp_postboxes_global_settings', 'normal', 'core'
+						'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Data return Options', 'mainwp'), array('MainWP_Options', 'renderDataReturnOptions'), 'mainwp_postboxes_global_settings', 'normal', 'core'
 					);
 				}
 
 				add_meta_box(
-					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Backup Options', 'mainwp'), array('MainWP_Manage_Sites_View', 'renderSettings'), 'mainwp_postboxes_global_settings', 'normal', 'core'
+					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Backup options', 'mainwp'), array('MainWP_Manage_Sites_View', 'renderSettings'), 'mainwp_postboxes_global_settings', 'normal', 'core'
 				);
 
 				$filter = apply_filters('mainwp_has_settings_networkfootprint', false);
 				if ($filter) {
 					add_meta_box(
-						'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Network Footprint', 'mainwp'), array('MainWP_Footprint', 'renderSettings'), 'mainwp_postboxes_global_settings', 'normal', 'core'
+						'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Network footprint', 'mainwp'), array('MainWP_Footprint', 'renderSettings'), 'mainwp_postboxes_global_settings', 'normal', 'core'
 					);
 				}
 			} else if ('DashboardOptions' == $_GET['page']) {
@@ -123,7 +125,7 @@ class MainWP_Settings {
 				);
 			} else if ('SettingsClientReportsResponder' == $_GET['page']) {
 				add_meta_box(
-					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-wrench"></i> ' . __('Connection Settings', 'mainwp'), array('MainWP_Settings', 'renderReportResponderDashboardPage'), 'mainwp_postboxes_settings_responder', 'normal', 'core'
+					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-wrench"></i> ' . __('Connection settings', 'mainwp'), array('MainWP_Settings', 'renderReportResponderDashboardPage'), 'mainwp_postboxes_settings_responder', 'normal', 'core'
 				);
 			} else if ('SettingsAdvanced' == $_GET['page']) {
 				add_meta_box(
@@ -145,54 +147,96 @@ class MainWP_Settings {
 	}
 
 	public static function initMenuSubPages() {
-		if (isset(self::$subPages) && is_array(self::$subPages) && ( count(self::$subPages) > 0 )) {
-			?>
-			<div id="menu-mainwp-Settings" class="mainwp-submenu-wrapper">
-				<div class="wp-submenu sub-open" style="">
-					<div class="mainwp_boxout">
-						<div class="mainwp_boxoutin"></div>
-						<a href="<?php echo admin_url('admin.php?page=Settings'); ?>" class="mainwp-submenu"><?php _e('Global Options', 'mainwp'); ?></a>
-						<?php
-						foreach (self::$subPages as $subPage) {
-							?>
-							<a href="<?php echo admin_url('admin.php?page=Settings' . $subPage['slug']); ?>"
-							   class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
-							<?php
-						}
-						?>
-						<a href="<?php echo admin_url('admin.php?page=DashboardOptions'); ?>" class="mainwp-submenu"><?php _e('Dashboard Options', 'mainwp'); ?></a>
-						<a href="<?php echo admin_url('admin.php?page=MainWPTools'); ?>" class="mainwp-submenu"><?php _e('MainWP Tools', 'mainwp'); ?></a>
-						<a href="<?php echo admin_url('admin.php?page=SettingsClientReportsResponder'); ?>" class="mainwp-submenu"><?php _e('Managed Client Reports Responder', 'mainwp'); ?></a>
-					</div>
-				</div>
-			</div>
-			<?php
-		}
+            ?>
+            <div id="menu-mainwp-Settings" class="mainwp-submenu-wrapper">
+                    <div class="wp-submenu sub-open" style="">
+                            <div class="mainwp_boxout">
+                                    <div class="mainwp_boxoutin"></div>
+                                    <a href="<?php echo admin_url('admin.php?page=Settings'); ?>" class="mainwp-submenu"><?php _e('Global Options', 'mainwp'); ?></a>
+                                    <a href="<?php echo admin_url('admin.php?page=DashboardOptions'); ?>" class="mainwp-submenu"><?php _e('Dashboard Options', 'mainwp'); ?></a>
+                                    <a href="<?php echo admin_url('admin.php?page=SettingsAdvanced'); ?>" class="mainwp-submenu"><?php _e('Advanced Options', 'mainwp'); ?></a>
+                                    <a href="<?php echo admin_url('admin.php?page=MainWPTools'); ?>" class="mainwp-submenu"><?php _e('MainWP Tools', 'mainwp'); ?></a>
+                                    <a href="<?php echo admin_url('admin.php?page=SettingsClientReportsResponder'); ?>" class="mainwp-submenu"><?php _e('Managed Client Reports Responder', 'mainwp'); ?></a>
+                                    <?php
+                                    if (isset(self::$subPages) && is_array(self::$subPages) && ( count(self::$subPages) > 0 )) {
+                                        foreach (self::$subPages as $subPage) {
+                                                ?>
+                                                <a href="<?php echo admin_url('admin.php?page=Settings' . $subPage['slug']); ?>"
+                                                   class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
+                                                <?php
+                                        }
+                                    }
+                                    ?>
+                            </div>
+                    </div>
+            </div>
+            <?php
 	}
+
+    static function init_sub_sub_left_menu( $subPages = array() ) {
+        MainWP_System::add_sub_left_menu(__('Settings', 'mainwp'), 'mainwp_tab', 'Settings', 'admin.php?page=Settings', '<i class="fa fa-cogs"></i>', '' );
+
+        $init_sub_subleftmenu = array(
+                array(  'title' => __('Global Options', 'mainwp'),
+                        'parent_key' => 'Settings',
+                        'href' => 'admin.php?page=Settings',
+                        'slug' => 'Settings',
+                        'right' => ''
+                    ),
+                array(  'title' => __('Dashboard Options', 'mainwp'),
+                        'parent_key' => 'Settings',
+                        'href' => 'admin.php?page=DashboardOptions',
+                        'slug' => 'DashboardOptions',
+                        'right' => ''
+                    ),
+                array(  'title' => __('Advanced Options', 'mainwp'),
+                        'parent_key' => 'Settings',
+                        'href' => 'admin.php?page=SettingsAdvanced',
+                        'slug' => 'SettingsAdvanced',
+                        'right' => ''
+                    ),
+                array(  'title' => __('MainWP Tools', 'mainwp'),
+                        'parent_key' => 'Settings',
+                        'href' => 'admin.php?page=MainWPTools',
+                        'slug' => 'MainWPTools',
+                        'right' => ''
+                    ),
+                array(  'title' => __('Managed Client Reports Responder', 'mainwp'),
+                        'parent_key' => 'Settings',
+                        'href' => 'admin.php?page=SettingsClientReportsResponder',
+                        'slug' => 'SettingsClientReportsResponder',
+                        'right' => ''
+                    )
+        );
+
+        MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'Settings', 'Settings');
+        foreach($init_sub_subleftmenu as $item) {
+            MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
+        }
+    }
 
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function renderHeader($shownPage) {
+        MainWP_UI::render_left_menu();
 		?>
-		<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
-				src="<?php echo plugins_url('images/logo.png', dirname(__FILE__)); ?>" height="50"
-				alt="MainWP"/></a>
-		<h2><i class="fa fa-cogs"></i> <?php _e('MainWP Settings', 'mainwp'); ?></h2>
-		<div style="clear: both;"></div><br/>
+		<div class="mainwp-wrap">
+
+		<h1 class="mainwp-margin-top-0"><i class="fa fa-cogs"></i> <?php _e('MainWP Settings', 'mainwp'); ?></h1>
+
 		<div id="mainwp-tip-zone">
 			<?php if ($shownPage == '') { ?>
 				<?php if (MainWP_Utility::showUserTip('mainwp-settings-tips')) { ?>
 					<div class="mainwp-tips mainwp-notice mainwp-notice-blue">
-						<span class="mainwp-tip" id="mainwp-settings-tips"><strong><?php _e('MainWP Tip', 'mainwp'); ?>: </strong><?php _e('The majority of these default settings can also be tweaked on the Site level by visiting Manage Sites &rarr; Edit Site.', 'mainwp'); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e('Dismiss', 'mainwp'); ?>
+						<span class="mainwp-tip" id="mainwp-settings-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php _e( 'The majority of these default settings can also be tweaked on the Site level by visiting Manage Sites &rarr; Edit Site.', 'mainwp' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e('Dismiss', 'mainwp'); ?>
 							</a></span></div>
 				<?php } ?>
 			<?php } ?>
 			<?php if ($shownPage == 'OfflineChecks') { ?>
 				<?php if (MainWP_Utility::showUserTip('mainwp-aumrecommend-tips')) { ?>
 					<div class="mainwp-tips mainwp-notice mainwp-notice-blue">
-						<span class="mainwp-tip" id="mainwp-aumrecommend-tips"><strong><?php _e('MainWP Tip', 'mainwp'); ?>: </strong><?php echo sprintf(__('We currently recommend the free %sAdvanced Uptime Monitor Extension%s to perform more frequent tests.', 'mainwp'), '<a href="https://mainwp.com/extension/advanced-uptime-monitor/" target="_blank">', '</a>'); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e('Dismiss', 'mainwp'); ?>
+						<span class="mainwp-tip" id="mainwp-aumrecommend-tips"><strong><?php _e( 'MainWP Tip', 'mainwp' ); ?>: </strong><?php echo sprintf( __( 'We currently recommend the free %sAdvanced Uptime Monitor Extension%s to perform more frequent tests.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor/" target="_blank">', '</a>' ); ?></span><span><a href="#" class="mainwp-dismiss"><i class="fa fa-times-circle"></i> <?php _e('Dismiss', 'mainwp'); ?>
 							</a></span></div>
 				<?php } ?>
 			<?php } ?>
@@ -351,7 +395,7 @@ class MainWP_Settings {
 			MainWP_Utility::update_option('mainwp_maximumRequests', MainWP_Utility::ctype_digit($_POST['mainwp_maximumRequests']) ? intval($_POST['mainwp_maximumRequests']) : 4 );
 			MainWP_Utility::update_option('mainwp_minimumDelay', MainWP_Utility::ctype_digit($_POST['mainwp_minimumDelay']) ? intval($_POST['mainwp_minimumDelay']) : 200 );
 			MainWP_Utility::update_option('mainwp_maximumIPRequests', MainWP_Utility::ctype_digit($_POST['mainwp_maximumIPRequests']) ? intval($_POST['mainwp_maximumIPRequests']) : 1 );
-			MainWP_Utility::update_option('mainwp_minimumIPDelay', MainWP_Utility::ctype_digit($_POST['mainwp_minimumIPDelay']) ? intval($_POST['mainwp_minimumIPDelay']) : 400 );
+			MainWP_Utility::update_option('mainwp_minimumIPDelay', MainWP_Utility::ctype_digit($_POST['mainwp_minimumIPDelay']) ? intval($_POST['mainwp_minimumIPDelay']) : 1000 );
 			MainWP_Utility::update_option('mainwp_maximumSyncRequests', MainWP_Utility::ctype_digit($_POST['mainwp_maximumSyncRequests']) ? intval($_POST['mainwp_maximumSyncRequests']) : 8 );
 			MainWP_Utility::update_option('mainwp_maximumInstallUpdateRequests', MainWP_Utility::ctype_digit($_POST['mainwp_maximumInstallUpdateRequests']) ? intval($_POST['mainwp_maximumInstallUpdateRequests']) : 3 );
 			MainWP_Utility::update_option('mainwp_sslVerifyCertificate', isset($_POST['mainwp_sslVerifyCertificate']) ? 1 : 0 );
@@ -423,7 +467,7 @@ class MainWP_Settings {
 					<th scope="row"><?php _e('Minimum delay between requests to the same ip (milliseconds)', 'mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip(__('Minimum delay between requests (milliseconds) per IP. With a typical shared host you should set this at 1000.', 'mainwp')); ?></th>
 					<td>
 						<input type="number" name="mainwp_minimumIPDelay" class=""
-						       id="mainwp_minimumIPDelay" value="<?php echo( ( get_option('mainwp_minimumIPDelay') === false ) ? 400 : get_option('mainwp_minimumIPDelay') ); ?>"/>
+						       id="mainwp_minimumIPDelay" value="<?php echo( ( get_option('mainwp_minimumIPDelay') === false ) ? 1000 : get_option('mainwp_minimumIPDelay') ); ?>"/>
 						<em><?php _e('Default: 1000', 'mainwp'); ?></em>
 					</td>
 				</tr>
@@ -576,12 +620,22 @@ class MainWP_Settings {
 					</div>
 				</td>
 			</tr>
+                        <tr>
+				<th scope="row"><?php _e('Show MainWP custom menu', 'mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip(__('If enabled, the MainWP Plugin will collapse the WordPress Admin menu and replace it with the custom MainWP Menu.', 'mainwp')); ?></th>
+				<td>
+					<div class="mainwp-checkbox">
+						<input type="checkbox" name="mainwp_disable_wp_main_menu"
+						       id="mainwp_disable_wp_main_menu" <?php echo( ( get_option('mainwp_disable_wp_main_menu', 1) == 1 ) ? 'checked="true"' : '' ); ?>/>
+						<label for="mainwp_disable_wp_main_menu"></label>
+					</div>
+				</td>
+			</tr>
 			</tbody>
 		</table>
 		<?php
 	}
 
-	public static function renderMainWPTools() {
+    public static function renderMainWPTools() {
 		if (!mainwp_current_user_can('dashboard', 'manage_dashboard_settings')) {
 			mainwp_do_not_have_permissions(__('manage dashboard settings', 'mainwp'));
 
@@ -624,7 +678,7 @@ class MainWP_Settings {
 			<tr>
 				<th scope="row"><?php _e('Force dashboard to establish new connection', 'mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip(__('Use this option to establish new connection with child sites.', 'mainwp')); ?></th>
 				<td>
-					<input type="submit" name="" id="force-destroy-sessions-button" class="button-primary button" value="<?php esc_attr_e('Establish New Connection', 'mainwp'); ?>"/><br/>
+					<input type="submit" name="" id="force-destroy-sessions-button" class="button-primary button" value="<?php esc_attr_e('Establish new connection', 'mainwp'); ?>"/><br/>
 					<em>
 						<?php _e('Forces your dashboard to reconnect with your child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp'); ?>
 					</em>

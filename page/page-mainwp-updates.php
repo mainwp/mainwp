@@ -36,17 +36,19 @@ class MainWP_Updates {
 			'render',
 		) );
 
+        MainWP_System::add_sub_left_menu(__('Updates', 'mainwp'), 'mainwp_tab', 'UpdatesManage', 'admin.php?page=UpdatesManage', '<i class="fa fa-refresh" aria-hidden="true"></i>', '' );
 	}
 
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function renderHeader( $shownPage ) {
+        MainWP_UI::render_left_menu();
 		?>
-		<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
-		<h2><i class="fa fa-file-text"></i> <?php _e( 'Updates', 'mainwp' ); ?></h2>
-		<div style="clear: both;"></div><br/>
+		<div class="mainwp-wrap">
+
+		<h1 class="mainwp-margin-top-0"><i class="fa fa-refresh" aria-hidden="true"></i> <?php _e( 'Updates', 'mainwp' ); ?></h1>
+
 		<div class="mainwp-tabs" id="mainwp-tabs">
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'UpdatesManage' ) {
 				echo 'nav-tab-active';
@@ -94,12 +96,12 @@ class MainWP_Updates {
 			}
 		}
 
-                $total_vulner = apply_filters('mainwp_vulner_getvulner', 0, false);
-                if ($total_vulner > 0) {
-                    ?>
-            <div class="mainwp_info-box-red"><?php echo sprintf(_n('There is %d vulnerability update. %sClick here to see all vulnerability issues.%s', 'There are %d vulnerability updates. %sClick here to see all vulnerability issues.%s', $total_vulner, 'mainwp'), $total_vulner, '<a href="admin.php?page=Extensions-Mainwp-Vulnerability-Checker-Extension">', '</a>' ); ?></div>
-                    <?php
-                }
+        $total_vulner = apply_filters('mainwp_vulner_getvulner', 0, false);
+        if ($total_vulner > 0) {
+            ?>
+    <div class="mainwp_info-box-red"><?php echo sprintf(_n('There is %d vulnerability update. %sClick here to see all vulnerability issues.%s', 'There are %d vulnerability updates. %sClick here to see all vulnerability issues.%s', $total_vulner, 'mainwp'), $total_vulner, '<a href="admin.php?page=Extensions-Mainwp-Vulnerability-Checker-Extension">', '</a>' ); ?></div>
+            <?php
+        }
 
 
 		?>

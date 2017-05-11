@@ -128,7 +128,7 @@ class MainWP_Setup_Wizard {
 
 		$this->step = isset( $_GET['step'] ) ? sanitize_key( $_GET['step'] ) : current( array_keys( $this->steps ) );
 		$this->check_redirect();
-                wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'js/mainwp-setup.js', array( 'jquery', 'jquery-ui-tooltip' ), MAINWP_VERSION );		
+        wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'js/mainwp-setup.js', array( 'jquery', 'jquery-ui-tooltip' ), MAINWP_VERSION );
 		wp_enqueue_script( 'mainwp-setup-select2', MAINWP_PLUGIN_URL . 'js/select2/select2.js', array( 'jquery' ), MAINWP_VERSION );			
 		wp_enqueue_script( 'mainwp-setup-admin', MAINWP_PLUGIN_URL . 'js/mainwp-admin.js', array(), MAINWP_VERSION );		
 		
@@ -242,6 +242,8 @@ class MainWP_Setup_Wizard {
 	}
 
 	public function mwp_setup_introduction() {
+        $this->mwp_setup_ready_actions();
+
 		?>
 		<h1><?php _e( 'Welcome to MainWP Dashboard', 'mainwp' ); ?></h1>
 		<p><?php _e( 'Thank you for choosing MainWP for managing your WordPress sites. This quick setup wizard will help you configure the basic settings. It\'s completely optional and shouldn\'t take longer than five minutes.' ); ?></p>
@@ -250,7 +252,7 @@ class MainWP_Setup_Wizard {
 
 		<p class="mwp-setup-actions step">
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="button-primary button button-large"><?php _e( 'Let\'s Go!', 'mainwp' ); ?></a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new&start_tour=1' ) ); ?>" class="button button-large"><?php _e( 'Not right now', 'mainwp' ); ?></a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>" class="button button-large"><?php _e( 'Not right now', 'mainwp' ); ?></a>
 		</p>
 		<?php
 	}
@@ -925,7 +927,7 @@ class MainWP_Setup_Wizard {
 		$enscrypt_p = get_option('mainwp_extensions_api_password');
 		$username = !empty($enscrypt_u) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_u) : "";
 		$password = !empty($enscrypt_p) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_p) : "";
-		$api = dirname($_POST['slug']);
+		$api = isset($_POST['slug']) ? dirname($_POST['slug']) : '';
 		$result = MainWP_Api_Manager::instance()->grab_license_key($api, $username, $password);
 		die(json_encode($result));
 	}
@@ -1045,6 +1047,8 @@ class MainWP_Setup_Wizard {
 		$hide_menus = get_option('mwp_setup_hide_wp_menus', array());
 		if (!is_array($hide_menus))
 			$hide_menus = array();
+
+        $disable_wp_main_menu = get_option( 'mainwp_disable_wp_main_menu', true );
 		?>
 		<h1><?php _e( 'Cleanup your Dashboard', 'mainwp' ); ?></h1>
 		<p>
@@ -1075,6 +1079,18 @@ class MainWP_Setup_Wizard {
 						</ul>
 					</td>
 				</tr>
+                <tr>
+                    <th scope="row"><?php _e('Use MainWP sidebar navigation?','mainwp'); ?></th>
+                    <td>
+                        <div class="mainwp-checkbox">
+                            <input type="checkbox" name="mwp_setup_options_use_custom_sidebar"
+                                   id="mwp_setup_options_use_custom_sidebar" <?php echo ($disable_wp_main_menu ? 'checked="true"' : ''); ?> />
+                            <label for="mwp_setup_options_use_custom_sidebar"></label>
+                        </div><br/><br/>
+                        <em><?php _e( 'If enabled, the MainWP Dashboard plguin will add custom sidebar navigation and collapse the WordPress Admin Menu. Custom navigation can be disabled/enabled at anytime on the MainWP > Settings > Dashboard Options page.', 'mainwp' ); ?></em>
+                    </td>
+                </tr>
+
 			</table>
 			<p class="mwp-setup-actions step">
 				<input type="submit" class="button-primary button button-large" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
@@ -1095,6 +1111,8 @@ class MainWP_Setup_Wizard {
 			}
 		}
 		MainWP_Utility::update_option('mwp_setup_hide_wp_menus', $hide_menus);
+        $disable_wp_main_menu = (isset($_POST['mwp_setup_options_use_custom_sidebar']) ? 1 : 0);
+        update_option( 'mainwp_disable_wp_main_menu', $disable_wp_main_menu );
 		wp_redirect( $this->get_next_step_link() );
 		exit;
 	}
@@ -1313,15 +1331,15 @@ class MainWP_Setup_Wizard {
 	}
 
 	public function mwp_setup_ready() {
-		$this->mwp_setup_ready_actions();
 		?>
+
 		<h1><?php _e( 'Your MainWP Dashboard is Ready!', 'mainwp' ); ?></h1>
 		<p><?php  _e( 'Congratulations! Now you are ready to start managing your WordPress sites.', 'mainwp' ); ?></p>
-		<div class="mwp-setup-next-steps">
+        <div class="mwp-setup-next-steps">
 			<div class="mwp-setup-next-steps-first">
 				<h2><?php _e( 'Next Step', 'mainwp' ); ?></h2>
 				<ul>
-					<li class="setup-product"><a class="button button-primary button-large" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new&start_tour=1' ) ); ?>"><?php _e( 'Add New Site', 'mainwp' ); ?></a></li>
+					<li class="setup-product"><a class="button button-primary button-large" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php _e( 'Add New Site', 'mainwp' ); ?></a></li>
 				</ul>
 			</div>
 			<div class="mwp-setup-next-steps-last">
@@ -1332,7 +1350,14 @@ class MainWP_Setup_Wizard {
 					<li><a href="https://mainwp.com/support/" target="_blank"><i class="fa fa-life-ring"></i> <?php _e( 'MainWP Support', 'mainwp' ); ?></a></li>
 				</ul>
 			</div>
+
 		</div>
+        <script type="text/javascript">
+                jQuery(document).ready(function () {
+                        jQuery('#mwp_setup_active_extension').fadeIn(500);
+                        mainwp_setup_extension_activate(false);
+                })
+        </script>
 		<?php
 	}
 }

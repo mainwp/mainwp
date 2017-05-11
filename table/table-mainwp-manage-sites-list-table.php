@@ -33,7 +33,15 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	//    }
 
 	function no_items() {
-		echo __( 'No sites found.', 'mainwp' ) . '<br/><br/><em>' . __( 'If sites are missing from your display but you know those sites are connected to your dashboard be sure to check the Status drop down filter and adjust it to your needs.', 'mainwp' ) . '</em>';
+		$out =  __( 'No sites found.', 'mainwp' );
+        if (!isset($_GET['s'])) {
+            $out .= '<br/><br/><em>' . __( 'If sites are missing from your display but you know those sites are connected to your dashboard be sure to check the Status drop down filter and adjust it to your needs.', 'mainwp' ) . '</em>';
+            if ( MainWP_DB::Instance()->getWebsitesCount() > 0 ) {
+                $out .= '<br/><br/>';
+                $out .= '<em>' . sprintf(__('If all your child sites are missing from your MainWP Dashboard, please check this %shelp document%s.', 'mainwp'), '<a href="https://mainwp.com/help/docs/all-child-sites-disappeared-from-my-mainwp-dashboard/" target="_blank">', '</a>') . '</em>';
+            }
+        }
+        echo $out;
 	}
 
 
@@ -512,8 +520,11 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	}
 
 	function column_backup( $item ) {
+        $siteObj = new stdClass();
+        $siteObj->id = $item['id'];
+        $lastBackup = MainWP_DB::Instance()->getWebsiteOption( $siteObj, 'primary_lasttime_backup' );
 
-		$backupnow_lnk = apply_filters( 'mainwp-managesites-getbackuplink', '', $item['id'] );
+		$backupnow_lnk = apply_filters( 'mainwp-managesites-getbackuplink', '', $item['id'], $lastBackup );
 		if ( ! empty( $backupnow_lnk ) ) {
 			return $backupnow_lnk;
 		}
@@ -574,7 +585,8 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 	function column_notes( $item ) {
 		//$note = strip_tags( $item['note'], '<p><strong><em><br/><hr/><a></p></strong></em></a>' );
-        $note = wp_kses_post( $item['note'] );
+        //$note = wp_kses_post( $item['note'] );
+        $note = html_entity_decode($item['note']); // to fix
         $lastupdate = $item['note_lastupdate'];
 
         $txt_lastupdate = '';

@@ -44,4 +44,5 @@ jQuery(document).ready(function () {
     jQuery('select.mainwp-select2-super.allowclear').select2({minimumResultsForSearch: 10, width: '250px', allowClear: true});
     jQuery('select.mainwp-select2-wpurl-protocol').select2({minimumResultsForSearch: 10, width: '85px', allowClear: false});
     jQuery('select.mainwp-select2-mini').select2({minimumResultsForSearch: 10, width: '120px', allowClear: false});
+    jQuery('select.mainwp-select2-full.allowclear').select2({minimumResultsForSearch: 10, width: '100%', allowClear: true});
 });

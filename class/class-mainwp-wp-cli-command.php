@@ -273,6 +273,9 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 						WP_CLI::success( 'Updates completed' );
 					} catch (Exception $e) {
 						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
+						if ( $e->getMesage() == 'WPERROR' ) {
+							WP_CLI::debug( 'Error: ' . print_r( $e->getMessageExtra(), 1 ) );
+						}
 					}
 				}
 			}
@@ -435,6 +438,9 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 						WP_CLI::success( 'Updates completed' );
 					} catch (Exception $e) {
 						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
+						if ( $e->getMesage() == 'WPERROR' ) {
+							WP_CLI::debug( 'Error: ' . print_r( $e->getMessageExtra(), 1 ) );
+						}
 					}
 				}
 			}

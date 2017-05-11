@@ -2,20 +2,20 @@
 
 class MainWP_Extensions_View {
 	public static function initMenu() {
-		return add_submenu_page( 'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
+        $page =  add_submenu_page( 'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
 			MainWP_Extensions::getClassName(),
 			'render'
 		) );
+        MainWP_System::add_sub_left_menu(__('Add Extensions', 'mainwp'), 'Extensions', 'Extensions', 'admin.php?page=Extensions&leftmenu=1', '<i class="fa fa-plug"></i>', '' );
+        MainWP_System::add_sub_left_menu(__('Extensions', 'mainwp'), 'mainwp_tab', 'Extensions', 'admin.php?page=Extensions', '<i class="fa fa-plug"></i>', '' );
+        return $page;
 	}
 
 	public static function renderHeader( $shownPage, &$extensions ) {
+        MainWP_UI::render_left_menu();
 		?>
-		<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
-				src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50"
-				alt="MainWP"/></a>
-		<h2><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h2>
-		<div style="clear: both;"></div><br/><br/>
+		<div class="mainwp-wrap">
+		<h1><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h1>
 
 		<div class="mainwp-tabs" id="mainwp-tabs">
 			<a class="nav-tab pos-nav-tab" href="admin.php?page=Extensions"><?php _e( 'Manage Extensions', 'mainwp' ); ?></a>
@@ -68,16 +68,20 @@ class MainWP_Extensions_View {
 			<strong><?php _e( 'Step 1', 'mainwp' ); ?>: </strong><?php _e( 'Enter your MainWP (https://mainwp.com/) login to automatically install and activate purchased extensions.' ); ?>
 		</div>
 		<div class="inside">
-			<h4><?php _e( 'MainWP extensions Login:', 'mainwp' ); ?></h4>
 			<div class="api-grabbing-fields">
-				<input type="text" id="mainwp_com_username" class="input username" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" value="<?php echo $username; ?>"/>&nbsp;
-				<input type="password" id="mainwp_com_password" class="input passwd" placeholder="<?php esc_attr_e( 'Password', 'mainwp' ); ?>" value="<?php echo $password; ?>"/>&nbsp;
-				<label><input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e( 'Check to save API login', 'mainwp' ); ?>
-				</label>
+				<div class="mainwp-padding-top-10 mainwp-padding-bottom-10">
+					<?php echo sprintf( __( 'Not registered? %sCreate MainWP account here.%s', 'mainwp'), '<a href="https://mainwp.com/my-account/" target="_blank">', '</a>' ); ?>
+				</div>
+				<input type="text" id="mainwp_com_username" class="input username" placeholder="<?php esc_attr_e( 'Your MainWP Username', 'mainwp' ); ?>" value="<?php echo $username; ?>"/>
+				<input type="password" id="mainwp_com_password" class="input passwd" placeholder="<?php esc_attr_e( 'Your MainWP Password', 'mainwp' ); ?>" value="<?php echo $password; ?>"/>
+				<div class="mainwp-padding-top-10 mainwp-padding-bottom-10">
+					<?php echo sprintf( __( 'Lost your password? %sReset password here.%s', 'mainwp'), '<a href="https://mainwp.com/my-account/lost-password/" target="_blank">', '</a>' ); ?>
+				</div>
+				<input type="checkbox" <?php echo $checked_save ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk"><?php _e( 'Remember me', 'mainwp' ); ?>
 			</div>
 			<p>
 				<span class="extension_api_loading">
-					<input type="button" class="button-primary button button-hero" id="mainwp-extensions-savelogin" value="<?php _e( 'Save Login', 'mainwp' ); ?>">
+					<input type="button" class="button-primary button button-hero" id="mainwp-extensions-savelogin" value="<?php _e( 'Verify your MainWP Login', 'mainwp' ); ?>">
 					<span class="mainwp-large mainwp-padding-top-20" style="display: block;"><i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span></span>
 				</span>
 			</p>
@@ -604,17 +608,6 @@ class MainWP_Extensions_View {
 					'product_id' => 'MainWP Post Dripper Extension',
 					'catalog_id' => '11756',
 					'group' => array('content')
-				),
-			'mainwp-remote-backup-extension' =>
-				array(
-					'slug' => 'mainwp-remote-backup-extension',
-					'title' => 'MainWP Remote Backups Extension',
-					'desc' => 'MainWP Remote Backup Extension is an extension for the MainWP plugin that enables you store your backups on different off site locations.',
-					'link' => 'https://mainwp.com/extension/remote-backups/',
-					'img' => plugins_url( 'images/extensions/remote-backups.png', dirname( __FILE__ ) ),
-					'product_id' => 'MainWP Remote Backup Extension',
-					'catalog_id' => '1553',
-					'group' => array('backup')
 				),
 			'mainwp-rocket-extension' =>
 				array(

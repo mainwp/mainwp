@@ -137,7 +137,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 			//Added to..
 			?>
 			<div class="wrap">
-                <h2 id="add-new-user"><i class="fa fa-key"></i> Update Admin Passwords</h2>
+                <h1 id="add-new-user" class="mainwp-margin-top-0"><i class="fa fa-key"></i> <?php _e( 'Update Admin Passwords', 'mainwp' ); ?></h1>
 
 				<div class="mainwp-notice mainwp-notice-green">
 					<?php foreach ( $dbwebsites as $website ) { ?>

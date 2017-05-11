@@ -64,6 +64,7 @@ class MainWP_Post {
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Post' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
+        MainWP_Post::init_sub_sub_left_menu(self::$subPages);
 	}
 
 	public static function on_load_page() {
@@ -110,15 +111,40 @@ class MainWP_Post {
 		<?php
 	}
 
+    static function init_sub_sub_left_menu( $subPages = array() ) {
+        MainWP_System::add_sub_left_menu(__('Posts', 'mainwp'), 'mainwp_tab', 'PostBulkManage', 'admin.php?page=PostBulkManage', '<i class="fa fa-file-text"></i>', '' );
+
+        $init_sub_subleftmenu = array(
+                array(  'title' => __('Manage Posts', 'mainwp'),
+                        'parent_key' => 'PostBulkManage',
+                        'href' => 'admin.php?page=PostBulkManage',
+                        'slug' => 'PostBulkManage',
+                        'right' => 'manage_posts'
+                    ),
+                array(  'title' => __('Add New', 'mainwp'),
+                        'parent_key' => 'PostBulkManage',
+                        'href' => 'admin.php?page=PostBulkAdd',
+                        'slug' => 'PostBulkAdd',
+                        'right' => 'manage_posts'
+                    )
+        );
+        MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'PostBulkManage', 'Post');
+
+        foreach($init_sub_subleftmenu as $item) {
+            MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
+        }
+    }
+
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-public static function renderHeader( $shownPage, $post_id = null ) {
+	public static function renderHeader( $shownPage, $post_id = null ) {
+        MainWP_UI::render_left_menu();
 	?>
-	<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
-		<h2><i class="fa fa-file-text"></i> <?php _e( 'Posts', 'mainwp' ); ?></h2>
-		<div style="clear: both;"></div><br/>
+	<div class="mainwp-wrap">
+
+		<h1 class="mainwp-margin-top-0"><i class="fa fa-file-text"></i> <?php _e( 'Posts', 'mainwp' ); ?></h1>
+
 		<div id="mainwp-tip-zone">
 			<?php if ( $shownPage == 'BulkManage' ) { ?>
 				<?php if ( MainWP_Utility::showUserTip( 'mainwp-manageposts-tips' ) ) { ?>
@@ -534,6 +560,8 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			} else if ( isset( $userId ) && ( $userId != '' ) ) {
 				$post_data['userId'] = $userId;
 			}
+
+            $post_data = apply_filters('mainwp_get_all_posts_data', $post_data);
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_posts', $post_data, array(
 				MainWP_Post::getClassName(),
 				'PostsSearch_handler',
@@ -598,7 +626,9 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			}
 
 			foreach ( $posts as $post ) {
+                $raw_dts = '';
 				if ( isset( $post['dts'] ) ) {
+                    $raw_dts = $post['dts'];
 					if ( ! stristr( $post['dts'], '-' ) ) {
 						$post['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $post['dts'] ) );
 					}
@@ -719,7 +749,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 									class="comment-count"><abbr title="<?php echo $post['comment_count']; ?>"><?php echo $post['comment_count']; ?></abbr></span></a>
 						</div>
 					</td>
-					<td class="date column-date"><abbr
+					<td class="date column-date"><abbr raw_value="<?php echo $raw_dts; ?>"
 							title="<?php echo $post['dts']; ?>"><?php echo $post['dts']; ?></abbr>
 					</td>
 					<td class="date column-status"><?php echo self::getStatus( $post['status'] ); ?></td>

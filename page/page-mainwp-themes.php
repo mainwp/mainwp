@@ -70,6 +70,7 @@ class MainWP_Themes {
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Themes' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
+        MainWP_Themes::init_sub_sub_left_menu(self::$subPages);
 	}
 
 	public static function initMenuSubPages() {
@@ -100,6 +101,48 @@ class MainWP_Themes {
 		<?php
 	}
 
+    static function init_sub_sub_left_menu( $subPages = array() ) {
+        MainWP_System::add_sub_left_menu(__('Themes', 'mainwp'), 'mainwp_tab', 'ThemesManage', 'admin.php?page=ThemesManage', '<i class="fa fa-paint-brush"></i>', '' );
+
+        $init_sub_subleftmenu = array(
+                array(  'title' => __('Manage Themes', 'mainwp'),
+                        'parent_key' => 'ThemesManage',
+                        'href' => 'admin.php?page=ThemesManage',
+                        'slug' => 'ThemesManage',
+                        'right' => ''
+                    ),
+                array(  'title' => __('Install', 'mainwp'),
+                        'parent_key' => 'ThemesManage',
+                        'href' => 'admin.php?page=ThemesInstall',
+                        'slug' => 'ThemesInstall',
+                        'right' => 'install_themes'
+                    ),
+            array(  'title' => __('Auto Updates', 'mainwp'),
+                        'parent_key' => 'ThemesManage',
+                        'href' => 'admin.php?page=ThemesAutoUpdate',
+                        'slug' => 'ThemesAutoUpdate',
+                        'right' => ''
+                    ),
+            array(  'title' => __('Ignored Updates', 'mainwp'),
+                        'parent_key' => 'ThemesManage',
+                        'href' => 'admin.php?page=ThemesIgnore',
+                        'slug' => 'ThemesIgnore',
+                        'right' => ''
+                    ),
+            array(  'title' => __('Ignored Abandoned', 'mainwp'),
+                        'parent_key' => 'ThemesManage',
+                        'href' => 'admin.php?page=ThemesIgnoredAbandoned',
+                        'slug' => 'ThemesIgnoredAbandoned',
+                        'right' => ''
+                    )
+        );
+        MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'ThemesManage', 'Themes');
+
+        foreach($init_sub_subleftmenu as $item) {
+            MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
+        }
+    }
+
 	public static function on_load_page() {
 		MainWP_System::enqueue_postbox_scripts();
 		self::add_meta_boxes();
@@ -120,12 +163,13 @@ class MainWP_Themes {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-public static function renderHeader( $shownPage ) {
+	public static function renderHeader( $shownPage ) {
+        MainWP_UI::render_left_menu();
 	?>
-	<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50" alt="MainWP"/></a>
-		<h2><i class="fa fa-paint-brush"></i> <?php _e( 'Themes', 'mainwp' ); ?></h2>
-		<div style="clear: both;"></div><br/>
+	<div class="mainwp-wrap">
+
+		<h1 class="mainwp-margin-top-0"><i class="fa fa-paint-brush"></i> <?php _e( 'Themes', 'mainwp' ); ?></h1>
+
 		<div id="mainwp-tip-zone">
 			<?php if ( $shownPage == 'Manage' ) { ?>
 				<?php if ( MainWP_Utility::showUserTip( 'mainwp-managethemes-tips' ) ) { ?>
@@ -441,7 +485,7 @@ public static function renderHeader( $shownPage ) {
 		<?php
 		if ( count( $output->themes ) == 0 ) {
 			?>
-			No themes found
+			<div class="mainwp-notice mainwp-notice-yellow"><?php _e( 'No themes found.', 'mainwp' ); ?></div>
 			<?php
 			$newOutput = ob_get_clean();
 			echo $newOutput;
@@ -639,7 +683,7 @@ public static function renderHeader( $shownPage ) {
 
 		if ( count( $output->themes ) == 0 ) {
 			?>
-			No themes found
+			<div class="mainwp-notice mainwp-notice-yellow"><?php _e( 'No themes found.', 'mainwp' ); ?></div>
 			<?php
 			return;
 		}
@@ -951,8 +995,11 @@ public static function renderHeader( $shownPage ) {
 		}
 
 		?>
-		<a href="#" class="mainwp_action left mainwp_action_down browse-themes" id="mainwp-browse-themes" ><?php _e('Search','mainwp'); ?></a><a href="#" class="mainwp_action right upload" id="mainwp-upload-themes"><?php _e('Upload','mainwp'); ?></a>
-		<br class="clear" /><br />
+		<div class="mainwp-subnav-tabs top">
+			<a href="#" class="mainwp_action left mainwp_action_down browse-themes" id="mainwp-browse-themes" ><i class="fa fa-wordpress fa-lg" aria-hidden="true"></i> <?php _e('Install from WordPress.org','mainwp'); ?></a>
+			<a href="#" class="mainwp_action right upload" id="mainwp-upload-themes"><i class="fa fa-upload fa-lg" aria-hidden="true"></i> <?php _e('Upload .zip file','mainwp'); ?></a>
+			<div style="clear: both;"></div>
+		</div>
 		<div class="mainwp-padding-bottom-10"><?php MainWP_Tours::renderInstallThemesTour(); ?></div>
 		<div class="mainwp_config_box_left" style="width: calc(100% - 290px);">
 			<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>

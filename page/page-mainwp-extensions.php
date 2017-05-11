@@ -90,6 +90,7 @@ class MainWP_Extensions {
 			'SupportForumURI'  => 'Support Forum URI',
 			'DocumentationURI' => 'Documentation URI',
 		);
+        $extsPages = array();
 		foreach ( $newExtensions as $extension ) {
 			$slug        = plugin_basename( $extension['plugin'] );
 			$plugin_data = get_plugin_data( $extension['plugin'] );
@@ -130,11 +131,11 @@ class MainWP_Extensions {
 				self::$extensions[] = $extension;
 				if ( mainwp_current_user_can( 'extension', dirname( $slug ) ) ) {
 					if ( isset( $extension['callback'] ) ) {
+                        $menu_name = str_replace( array(
+							'Extension',
+							'MainWP',
+						), '', $extension['name'] );
 						if (MainWP_Extensions::addedOnMenu( $slug )) {
-							$menu_name = str_replace( array(
-								'Extension',
-								'MainWP',
-							), '', $extension['name'] );
 							$_page = add_submenu_page( 'mainwp_tab', $extension['name'], $menu_name, 'read', $extension['page'], $extension['callback'] );
 						} else {
 							$_page = add_submenu_page( 'mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback'] );
@@ -143,7 +144,7 @@ class MainWP_Extensions {
 						if ( isset( $extension['on_load_callback'] ) && !empty($extension['on_load_callback'])) {
 							add_action( 'load-' . $_page, $extension['on_load_callback']);
 						}
-
+                        $extsPages[] = array('title' => $menu_name, 'page' => $extension['page']);
 					}
 				}
 			}
@@ -151,7 +152,19 @@ class MainWP_Extensions {
 		MainWP_Utility::update_option( 'mainwp_extensions', self::$extensions );
 		MainWP_Utility::update_option( 'mainwp_manager_extensions', $all_extensions );
 		self::$extensionsLoaded = true;
+        MainWP_Extensions::init_sub_sub_left_menu($extsPages);
 	}
+
+    static function init_sub_sub_left_menu($extPages) {
+        global $mainwp_menu_active_slugs;
+        // to get parent menu items
+        $mainwp_menu_active_slugs['Extensions'] = 'Extensions';
+        if (is_array($extPages)) {
+            foreach($extPages as $extension) {
+                MainWP_System::add_sub_left_menu($extension['title'], 'Extensions', $extension['page'], 'admin.php?page=' . $extension['page'], '', '' );
+            }
+        }
+    }
 
 	public static function on_load_page() {
 		MainWP_System::enqueue_postbox_scripts();
@@ -806,13 +819,11 @@ class MainWP_Extensions {
 	}
 
 	public static function render() {
+        MainWP_UI::render_left_menu();
 		?>
-		<div class="wrap">
-		<a href="https://mainwp.com" id="mainwplogo" title="MainWP" target="_blank"><img
-				src="<?php echo plugins_url( 'images/logo.png', dirname( __FILE__ ) ); ?>" height="50"
-				alt="MainWP"/></a>
-		<h2><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h2>
-		<div style="clear: both;"></div><br/><br/>
+		<div class="mainwp-wrap">
+		<h1 class="mainwp-margin-top-0"><i class="fa fa-plug"></i> <?php _e( 'Extensions', 'mainwp' ); ?></h1>
+
 		<?php
 		MainWP_Extensions_View::render( self::$extensions );
 		echo '</div>';
@@ -897,7 +908,7 @@ class MainWP_Extensions {
 
 			return MainWP_Utility::fetchUrlAuthed( $website, $what, $params );
 		} catch ( MainWP_Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+			return array( 'error' => MainWP_Error_Helper::getErrorMessage($e) );
 		}
 	}
 
@@ -909,6 +920,7 @@ class MainWP_Extensions {
 		'plugins'          => 'plugins',
 		'dtsSync'          => 'dtsSync',
 		'version'          => 'version',
+        'sync_errors'      => 'sync_errors'
 	);
 
 	public static function hookGetDBSites( $pluginFile, $key, $sites, $groups, $options = false ) {

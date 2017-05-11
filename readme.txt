@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.7.2
-Stable tag: 3.3.1
+Tested up to: 4.7.4
+Stable tag: 3.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,29 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.4 - 5-11-17 =
+* Fixed: an issue with encoding HTML tags in Notes view
+* Fixed: an issue with abandoned Themes and Plugins checks
+* Fixed: an issue with detecting Extension updates
+* Fixed: a database query issue while performing updates
+* Fixed: warious PHP Warnings and Errors
+* Fixed: redirect issue for users that don't have permission to access MainWP Dashboard
+* Fixed: an issue with sorting Posts and Pages by Date
+* Fixed: multiple layout issues
+* Fixed: an issue with email notificatios for available updates
+* Fixed: multiple translation issues
+* Added: MainWP Side menu
+* Added: mainwp_before_save_sync_result filter
+* Added: mainwp_get_all_pages_data filter
+* Added: mainwp_get_all_posts_data filter
+* Added: mainwp_updatescheck_sendmail_at_time filter
+* Added: mainwp_website_updated action
+* Added: mainwp_added_new_site action
+* Added: mainwp_update_site action
+* Added: mainwp_delete_site action
+* Added: multiple cosmetic improvements
+* Updated: multiple text notifications
 
 = 3.3.1 - 2-23-17 =
 * Fixed: an issue with displaying Vulnerability data on individual Overview page when the Extension is not installed

@@ -13,7 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
-	public static $version = '3.4';
+	public static $version = '3.4.1';
 	//Singleton
 	private static $instance = null;
 
@@ -898,6 +898,7 @@ class MainWP_System {
 			$busyCounter = MainWP_DB::Instance()->getWebsitesCountWhereDtsAutomaticSyncSmallerThenStart();
 
 			if ( $busyCounter == 0 ) {
+                update_option( 'mainwp_last_synced_all_sites', time() );
 				MainWP_Logger::Instance()->debug( 'CRON :: updates check :: got to the mail part' );
 
 				//Send the email & update all to this time!
@@ -1395,7 +1396,7 @@ class MainWP_System {
 			}
 
 			//Check if backups are required!
-			if ( get_option( 'mainwp_backup_before_upgrade' ) == 1 ) {
+			if ( get_option( 'mainwp_enableLegacyBackupFeature' ) && get_option( 'mainwp_backup_before_upgrade' ) == 1 ) {
 				$sitesCheckCompleted = get_option( 'mainwp_automaticUpdate_backupChecks' );
 				if ( ! is_array( $sitesCheckCompleted ) ) {
 					$sitesCheckCompleted = array();

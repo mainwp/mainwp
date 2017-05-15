@@ -1045,7 +1045,7 @@ class MainWP_Utility {
                 $list = '';
             }
 
-            do_action( 'mainwp_website_updated', $website, $type, $list );
+            do_action( 'mainwp_website_updated', $website, $type, $list, $information );
 
             if ( 1 == get_option( 'mainwp_check_http_response', 0 ) ) {
                 $result = MainWP_Utility::isWebsiteAvailable( $website );

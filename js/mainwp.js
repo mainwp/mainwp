@@ -655,7 +655,7 @@ jQuery(document).ready(function () {
 mainwp_refresh_dashboard = function (syncSiteIds)
 {
     var allWebsiteIds = jQuery('.dashboard_wp_id').map(function(indx, el){ return jQuery(el).val(); });
-
+    var globalSync = true;
     var selectedIds = [], excludeIds = [];
     if (syncSiteIds instanceof Array) {
         jQuery.grep(allWebsiteIds, function(el) {
@@ -671,7 +671,9 @@ mainwp_refresh_dashboard = function (syncSiteIds)
         }
         allWebsiteIds = selectedIds;
         jQuery('#refresh-status-total').text(allWebsiteIds.length);
+        globalSync = false;
     }
+
 
     for (var i = 0; i < allWebsiteIds.length; i++)
     {
@@ -686,6 +688,14 @@ mainwp_refresh_dashboard = function (syncSiteIds)
         modal: true,
         close: function(event, ui) {bulkTaskRunning = false; jQuery('#refresh-status-box').dialog('destroy'); location.href = location.href;}});
     dashboard_update(allWebsiteIds);
+    if (globalSync && nrOfWebsites > 0) {
+         var data = {
+            action:'mainwp_status_saving',
+            status: 'last_sync_sites'
+        };
+        jQuery.post(ajaxurl, mainwp_secure_data(data), function (res) {
+        });
+    }
 };
 
 var websitesToUpdate = [];

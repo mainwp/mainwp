@@ -256,8 +256,12 @@ class MainWP_Main {
 								<p class="about-description"><?php _e( 'Click the Sync Data button to get the latest data from child sites.', 'mainwp' ); ?></p>
 								<?php
 							} else if ( $sync_status === 'all_synced' ) {
+                                $now = time();
+                                $last_sync_all = get_option('mainwp_last_synced_all_sites', 0);
+                                if ($last_sync_all == 0)
+                                    $last_sync_all = $last_sync;
 								?>
-                                <h3 class="mainwp-margin-top-0"><?php echo empty($last_sync) ? __( 'All sites have been synced within the last 24 hours', 'mainwp' ) . '!' : sprintf(__('Sites last synced at %s (%s ago)', 'mainwp'), MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $last_sync )), human_time_diff( MainWP_Utility::getTimestamp( $last_sync ) )) ; ?></h3>
+                                <h3 class="mainwp-margin-top-0"><?php echo empty($last_sync) ? __( 'All sites have been synced within the last 24 hours', 'mainwp' ) . '!' : sprintf(__('Sites last synced at %s (%s ago)', 'mainwp'), MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $last_sync_all )), human_time_diff( MainWP_Utility::getTimestamp( $last_sync_all ), MainWP_Utility::getTimestamp( $now ) )) ; ?></h3>
 								<p class="about-description"><?php echo __( 'Management is more than just updates!', 'mainwp' ); ?></p>
 								<?php
 							} else {

@@ -590,8 +590,13 @@ class MainWP_Post_Handler {
     function mainwp_status_saving() {
 		$this->secure_request( 'mainwp_status_saving' );
         $values = get_option( 'mainwp_status_saved_values' );
-        if ( !isset( $_POST['status'] ) || !isset( $_POST['key'] ) ) {
+        if ( !isset( $_POST['status'] ) ) {
             die( -1 );
+        }
+
+        if ( 'last_sync_sites' == $_POST['status'] ) {
+            update_option( 'mainwp_last_synced_all_sites', time() );
+            die( 'ok' );
         }
 
         // open one menu item, close all other items

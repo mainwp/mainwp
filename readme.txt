@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.7.4
-Stable tag: 3.4
+Stable tag: 3.4.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,7 +161,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 3.4 - 5-11-17 = [Update Notes](https://mainwp.com/mainwp-3-4-additions/)
+= 3.4.1 - 5-15-17 =
+* Fixed: an issue with displaying Last Sync time
+* Fixed: an issue with triggering MainWP native backup system backups
+* Added: $information parameter in the mainwp_website_updated hook
+
+= 3.4 - 5-11-17 =
 * Fixed: an issue with encoding HTML tags in Notes view
 * Fixed: an issue with abandoned Themes and Plugins checks
 * Fixed: an issue with detecting Extension updates

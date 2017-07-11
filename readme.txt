@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 4.8
-Stable tag: 3.4.1
+Stable tag: 3.4.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,18 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.4.2 - 7-11-17 =
+* Fixed: an issue with sorting posts and pages by the publish date
+* Fixed: sync error caused by the WP-SpamShield plugin
+* Fixed: JavaScript (moment.js) conflict with the Gutenberg plugin
+* Fixed: an issue with sending email notifications about available updates for some users
+* Fixed: an issue with triggering unwanted backups 
+* Fixed: a usability issue with displaying incorrect last sync time
+* Fixed: incorrect changelog links
+* Added: mainwp_updatescheck_disable_notification_mail hook to disable email notifications about available updates
+* Updated: the Update Everything process includes Translations updates
+* Updated: the Update process will not check for required backups if a primary backup system is not set
 
 = 3.4.1 - 5-15-17 =
 * Fixed: an issue with displaying Last Sync time

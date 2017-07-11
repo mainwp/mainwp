@@ -74,27 +74,16 @@ class MainWP_About {
 		<h3><?php echo $mainWP->getVersion(); ?>&nbsp;<?php _e( 'Changelog', 'mainwp' ); ?></h3>
 		<hr/>
 		<ul>
-			<li>Fixed: an issue with encoding HTML tags in Notes view</li>
-			<li>Fixed: an issue with abandoned Themes and Plugins checks</li>
-			<li>Fixed: an issue with detecting Extension updates</li>
-			<li>Fixed: a database query issue while performing updates</li>
-			<li>Fixed: warious PHP Warnings and Errors</li>
-			<li>Fixed: redirect issue for users that don't have permission to access MainWP Dashboard</li>
-			<li>Fixed: an issue with sorting Posts and Pages by Date</li>
-			<li>Fixed: multiple layout issues</li>
-			<li>Fixed: an issue with email notificatios for available updates</li>
-			<li>Fixed: multiple translation issues</li>
-			<li>Added: MainWP Side menu</li>
-			<li>Added: mainwp_before_save_sync_result filter</li>
-			<li>Added: mainwp_get_all_pages_data filter</li>
-			<li>Added: mainwp_get_all_posts_data filter</li>
-			<li>Added: mainwp_updatescheck_sendmail_at_time</li>
-			<li>Added: mainwp_website_updated action</li>
-			<li>Added: mainwp_added_new_site action</li>
-			<li>Added: mainwp_update_site action</li>
-			<li>Added: mainwp_delete_site action</li>
-			<li>Added: multiple cosmetic improvements</li>
-			<li>Updated: multiple text notifications</li>
+			<li>Fixed: an issue with sorting posts and pages by the publish date</li>
+			<li>Fixed: sync error caused by the WP-SpamShield plugin</li>
+			<li>Fixed: JavaScript (moment.js) conflict with the Gutenberg plugin</li>
+			<li>Fixed: an issue with sending email notifications about available updates for some users</li>
+			<li>Fixed: an issue with triggering unwanted backups</li> 
+			<li>Fixed: a usability issue with displaying incorrect last sync time</li>
+			<li>Fixed: incorrect changelog links</li>
+			<li>Added: mainwp_updatescheck_disable_notification_mail hook to disable email notifications about available updates</li>
+			<li>Updated: the Update Everything process includes Translations updates</li>
+			<li>Updated: the Update process will not check for required backups if a primary backup system is not set</li>
 		</ul>
 		<hr/>
 		<h3><?php _e( 'See older versions changelogs', 'mainwp' ); ?>:</h3>

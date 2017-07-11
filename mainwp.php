@@ -6,7 +6,7 @@
   Author: MainWP
   Author URI: https://mainwp.com
   Text Domain: mainwp
-  Version: 3.4.2-alpha
+  Version: 3.4.2
 
 */
 

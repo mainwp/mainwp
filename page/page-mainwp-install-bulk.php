@@ -441,11 +441,14 @@ class qq2FileUploader {
 		$last = strtolower( $str[ strlen( $str ) - 1 ] );
 		switch ( $last ) {
 			case 'g':
-				$val *= 1024;
+				$val = substr($str, 0, strlen( $str ) - 1) * 1024 * 1024 * 1024;
+				break;
 			case 'm':
-				$val *= 1024;
+				$val = substr($str, 0, strlen( $str ) - 1) * 1024 * 1024;
+				break;
 			case 'k':
-				$val *= 1024;
+				$val = substr($str, 0, strlen( $str ) - 1) * 1024;
+				break;
 		}
 
 		return $val;

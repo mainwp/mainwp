@@ -111,20 +111,20 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 		$columns = apply_filters( 'mainwp-sitestable-getcolumns', $columns, $columns );
 
-                $disable_backup = false;
-                $primaryBackup = get_option('mainwp_primaryBackup');
+        $disable_backup = false;
+        $primaryBackup = get_option('mainwp_primaryBackup');
 		$primaryBackupMethods = apply_filters("mainwp-getprimarybackup-methods", array());                
-                if (empty($primaryBackup)) {
-                        if (!get_option('mainwp_enableLegacyBackupFeature')) {
-                            $disable_backup = true;
-                        }
-                } else if (!is_array($primaryBackupMethods) || empty($primaryBackupMethods)) {
-                    $disable_backup = true;                                                   
+        if (empty($primaryBackup)) {
+            if (!get_option('mainwp_enableLegacyBackupFeature')) {
+                $disable_backup = true;
+            }
+        } else if (!is_array($primaryBackupMethods) || empty($primaryBackupMethods)) {
+            $disable_backup = true;
 		}
                 
-                if ($disable_backup && isset($columns['backup'])) {
-                        unset($columns['backup']);
-                } 
+        if ($disable_backup && isset($columns['backup'])) {
+                unset($columns['backup']);
+        }
                 
 		return $columns;
 	}

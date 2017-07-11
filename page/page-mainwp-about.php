@@ -98,8 +98,8 @@ class MainWP_About {
 		</ul>
 		<hr/>
 		<h3><?php _e( 'See older versions changelogs', 'mainwp' ); ?>:</h3>
-		<a href="https://wordpress.org/plugins/mainwp/changelog/" target="_blank">MainWP Dashboard</a><br/>
-		<a href="https://wordpress.org/plugins/mainwp-child/changelog/" target="_blank">MainWP Child</a><br/>
+		<a href="https://wordpress.org/plugins/mainwp/#developers" target="_blank">MainWP Dashboard</a><br/>
+		<a href="https://wordpress.org/plugins/mainwp-child/#developers" target="_blank">MainWP Child</a><br/>
 		<?php
 	}
 

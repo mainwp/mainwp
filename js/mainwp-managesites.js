@@ -235,6 +235,11 @@ var managesitesShowBusyTimeout;
 var managesitesShowBusy;
 mainwp_managesites_checkBackups = function(sitesToUpdate, siteNames)
 {
+    if (mainwpParams['disable_checkBackupBeforeUpgrade'] == true) {
+        if (managesitesContinueAfterBackup != undefined) managesitesContinueAfterBackup();
+        return false;
+    }
+
 //    if (mainwpParams['backup_before_upgrade'] != true)
 //    {
 //        if (managesitesContinueAfterBackup != undefined) managesitesContinueAfterBackup();

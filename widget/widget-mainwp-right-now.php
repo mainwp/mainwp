@@ -897,7 +897,7 @@ class MainWP_Right_Now {
 		$total_themesIgnoredAbandoned += count( $themesIgnoredAbandoned_perSites );
                 
 		//WP Upgrades part:
-		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
+		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades + $total_translation_upgrades;
 		if ( $globalView ) {			
 			?>
 			<div class="mainwp-postbox-actions-top mainwp-padding-5">
@@ -1785,7 +1785,7 @@ class MainWP_Right_Now {
                                                     $total_group_theme_updates += count($theme_upgrades);
                                                 ?>
                                                 <div class="wp_theme_upgrades_group_<?php echo $group_id; ?>" style="display: none" >
-							<div class="mainwp-sub-row">
+                                                    <div class="mainwp-sub-row">
                                                             <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>" value="<?php if ( count( $theme_upgrades ) > 0 ) {
                                                                                 echo '0';
                                                                         } else {

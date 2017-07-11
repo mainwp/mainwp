@@ -376,6 +376,10 @@ class MainWP_Manage_Sites {
 	 * @throws MainWP_Exception
 	 */
 	public static function backupSite( $siteid, $pTask, $subfolder ) {
+        if ( !get_option('mainwp_enableLegacyBackupFeature')) {
+            return false;
+        }
+
 		$userid        = $pTask->userid;
 		$type          = $pTask->type;
 		$exclude       = $pTask->exclude;
@@ -958,6 +962,10 @@ class MainWP_Manage_Sites {
 	}
 
 	public static function backup( $pSiteId, $pType, $pSubfolder, $pExclude, $excludebackup, $excludecache, $excludenonwp, $excludezip, $pFilename = null, $pFileNameUID = '', $pArchiveFormat = false, $pMaximumFileDescriptorsOverride = false, $pMaximumFileDescriptorsAuto = false, $pMaximumFileDescriptors = false, $pLoadFilesBeforeZip = false, $pid = false, $append = false ) {
+        if ( !get_option('mainwp_enableLegacyBackupFeature')) {
+            return false;
+        }
+
 		if ( trim( $pFilename ) == '' ) {
 			$pFilename = null;
 		}

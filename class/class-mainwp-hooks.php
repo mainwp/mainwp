@@ -19,8 +19,8 @@ class MainWP_Hooks {
 		add_action( 'mainwp_activePlugin', array( &$this, 'activePlugin' ), 10, 0 );
 		add_action( 'mainwp_deactivePlugin', array( &$this, 'deactivePlugin' ), 10, 0 );
 		add_action( 'mainwp_upgradePluginTheme', array( &$this, 'upgradePluginTheme' ), 10, 0 );
-        add_action( 'mainwp_deletePlugin', array( &$this, 'deletePlugin' ), 10, 0 );
-        add_action( 'mainwp_deleteTheme', array( &$this, 'deleteTheme' ), 10, 0 );
+		add_action( 'mainwp_deletePlugin', array( &$this, 'deletePlugin' ), 10, 0 );
+		add_action( 'mainwp_deleteTheme', array( &$this, 'deleteTheme' ), 10, 0 );
 
 		//Internal hook - deprecated
 		add_filter( 'mainwp_getUserExtension', array( &$this, 'getUserExtension' ) );
@@ -38,7 +38,7 @@ class MainWP_Hooks {
 
 		add_filter( 'mainwp_getmetaboxes', array( &$this, 'getMetaBoxes' ), 10, 0 );
 		add_filter( 'mainwp_getnotificationemail', array( 'MainWP_Utility', 'getNotificationEmail' ), 10, 0 );
-        add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
+		add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array(
 			MainWP_Extensions::getClassName(),
 			'isExtensionAvailable',
@@ -50,9 +50,10 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getactivateextensionnotice', array( &$this, 'get_activate_extension_notice' ), 10, 1 );
 		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
 		add_action( 'mainwp_do_meta_boxes', array( &$this, 'mainwp_do_meta_boxes' ), 10, 1 );
-        add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
-        add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
-        add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hookAddSubLeftMenu' ), 10, 6 );
+		add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
+		add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
+		add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hookAddSubLeftMenu' ), 10, 6 );
+		add_filter( 'mainwp_getwebsiteoptions', array( &$this, 'getWebsiteOptions' ), 10, 3 );
 	}
 
 	public function mainwp_log_debug( $pText ) {
@@ -72,70 +73,70 @@ class MainWP_Hooks {
 	public function mainwp_do_meta_boxes( $postpage ) {
 		MainWP_System::do_mainwp_meta_boxes( $postpage );
 	}
-               
-    /**
-     * Hook to add site
-     *
-     * @since 3.2.2
-     * @param array $params site data fields: url, name, wpadmin, unique_id, groupids, ssl_verify, ssl_version, http_user, http_pass, websiteid - if edit site
-     *
-     * @return array
-     *
-     */
-    public function mainwp_add_site( $params ) {
-        $ret = array();
 
-        if ( is_array( $params ) ) {
-            if ( isset( $params[ 'websiteid' ] ) && MainWP_Utility::ctype_digit( $websiteid = $params['websiteid'] ) )  {
-                $ret['siteid'] = MainWP_Hooks::updateWPSite( $params );
-                return $ret;
-            } else if ( isset( $params['url'] ) && isset( $params['wpadmin'] ) ) {
-                //Check if already in DB
-                $website = MainWP_DB::Instance()->getWebsitesByUrl( $params['url'] );
-                list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::addWPSite( $website, $params );
+	/**
+	 * Hook to add site
+	 *
+	 * @since 3.2.2
+	 * @param array $params site data fields: url, name, wpadmin, unique_id, groupids, ssl_verify, ssl_version, http_user, http_pass, websiteid - if edit site
+	 *
+	 * @return array
+	 *
+	 */
+	public function mainwp_add_site( $params ) {
+		$ret = array();
 
-                if ( $error != '' ) {
-                    return array( 'error' => $error);
-                }
-                $ret['response'] = $message;
-                $ret['siteid'] = $site_id;
-            }
-        }
+		if ( is_array( $params ) ) {
+			if ( isset( $params[ 'websiteid' ] ) && MainWP_Utility::ctype_digit( $websiteid = $params['websiteid'] ) )  {
+				$ret['siteid'] = MainWP_Hooks::updateWPSite( $params );
+				return $ret;
+			} else if ( isset( $params['url'] ) && isset( $params['wpadmin'] ) ) {
+				//Check if already in DB
+				$website = MainWP_DB::Instance()->getWebsitesByUrl( $params['url'] );
+				list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::addWPSite( $website, $params );
 
-        return $ret;
-    }
+				if ( $error != '' ) {
+					return array( 'error' => $error);
+				}
+				$ret['response'] = $message;
+				$ret['siteid'] = $site_id;
+			}
+		}
 
-    /**
-     * Hook to edit site
-     *
-     * @since 3.2.2
-     * @param array $params site data fields: websiteid, name, wpadmin, unique_id
-     *
-     * @return array
-     *
-     */
-    public function mainwp_edit_site( $params ) {
-        $ret = array();
-        if (is_array($params)) {
-            if (isset($params['websiteid']) && MainWP_Utility::ctype_digit( $websiteid = $params['websiteid'] ) )  {
-                $ret['siteid'] = MainWP_Hooks::updateWPSite( $params );
-                return $ret;
-            }
-        }
-        return $ret;
-    }
+		return $ret;
+	}
 
-    public function hookAddSubLeftMenu( $title, $parent_key, $slug, $href, $icon = '', $desc = '' ) {
-        MainWP_System::add_sub_left_menu( $title, $parent_key, $slug, $href, $icon, $desc );
-    }
+	/**
+	 * Hook to edit site
+	 *
+	 * @since 3.2.2
+	 * @param array $params site data fields: websiteid, name, wpadmin, unique_id
+	 *
+	 * @return array
+	 *
+	 */
+	public function mainwp_edit_site( $params ) {
+		$ret = array();
+		if (is_array($params)) {
+			if (isset($params['websiteid']) && MainWP_Utility::ctype_digit( $websiteid = $params['websiteid'] ) )  {
+				$ret['siteid'] = MainWP_Hooks::updateWPSite( $params );
+				return $ret;
+			}
+		}
+		return $ret;
+	}
 
-    public static function updateWPSite( $params ) {
+	public function hookAddSubLeftMenu( $title, $parent_key, $slug, $href, $icon = '', $desc = '' ) {
+		MainWP_System::add_sub_left_menu( $title, $parent_key, $slug, $href, $icon, $desc );
+	}
+
+	public static function updateWPSite( $params ) {
 		if ( ! isset( $params['websiteid'] ) || !MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
 			return 0;
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $params['websiteid'] );
-	    if ( $website == null ) {
+		if ( $website == null ) {
 			return 0;
 		}
 
@@ -143,34 +144,34 @@ class MainWP_Hooks {
 			return 0;
 		}
 
-        $data = array();
+		$data = array();
 
-        $uniqueId = null;
+		$uniqueId = null;
 
-        if ( isset( $params['name'] ) && !empty( $params['name'] ) ) {
-            $data['name'] =  htmlentities( $params['name'] );
-        }
+		if ( isset( $params['name'] ) && !empty( $params['name'] ) ) {
+			$data['name'] =  htmlentities( $params['name'] );
+		}
 
-        if ( isset( $params['wpadmin'] ) && !empty( $params['wpadmin'] ) ) {
-            $data['adminname'] =  $params['wpadmin'];
-        }
+		if ( isset( $params['wpadmin'] ) && !empty( $params['wpadmin'] ) ) {
+			$data['adminname'] =  $params['wpadmin'];
+		}
 
-        if ( isset( $params['unique_id'] ) ) {
-            $data['uniqueId'] = $uniqueId =  $params['unique_id'];
-        }
+		if ( isset( $params['unique_id'] ) ) {
+			$data['uniqueId'] = $uniqueId =  $params['unique_id'];
+		}
 
-        if ( empty( $data ) ) {
-                return 0;
-        }
+		if ( empty( $data ) ) {
+			return 0;
+		}
 
-        MainWP_DB::Instance()->updateWebsiteValues( $website->id, $data );
-        if ( null !== $uniqueId ) {
-            try {
-                $information = MainWP_Utility::fetchUrlAuthed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
-            } catch ( MainWP_Exception $e ) {
-                $error = $e->getMessage();
-            }
-        }
+		MainWP_DB::Instance()->updateWebsiteValues( $website->id, $data );
+		if ( null !== $uniqueId ) {
+			try {
+				$information = MainWP_Utility::fetchUrlAuthed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
+			} catch ( MainWP_Exception $e ) {
+				$error = $e->getMessage();
+			}
+		}
 		return $website->id;
 	}
 
@@ -240,6 +241,20 @@ class MainWP_Hooks {
 		return MainWP_DB::Instance()->getUserExtension();
 	}
 
+	public function getWebsiteOptions($options, $website, $name = '') {
+
+		if (empty($name))
+			return $options;
+
+		if(is_numeric($website)) {
+			$obj = new stdClass();
+			$obj->id = $website;
+			$website = $obj;
+		}
+
+		return MainWP_DB::Instance()->getWebsiteOption( $website, $name );
+	}
+
 	public function getWebsitesByUrl( $url ) {
 		return MainWP_DB::Instance()->getWebsitesByUrl( $url );
 	}
@@ -256,9 +271,9 @@ class MainWP_Hooks {
 		return MainWP_System::Instance()->metaboxes;
 	}
 
-    function get_format_email($body, $email, $title = '' ) {
-        return MainWP_Utility::formatEmail( $email, $body, $title );
-    }
+	function get_format_email($body, $email, $title = '' ) {
+		return MainWP_Utility::formatEmail( $email, $body, $title );
+	}
 
 	function activePlugin() {
 		MainWP_Plugins::activatePlugins();
@@ -270,12 +285,12 @@ class MainWP_Hooks {
 		die();
 	}
 
-    function deletePlugin() {
+	function deletePlugin() {
 		MainWP_Plugins::deletePlugins();
 		die();
 	}
 
-    function deleteTheme() {
+	function deleteTheme() {
 		MainWP_Themes::deleteThemes();
 		die();
 	}

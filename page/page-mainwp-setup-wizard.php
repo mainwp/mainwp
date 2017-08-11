@@ -1087,7 +1087,7 @@ class MainWP_Setup_Wizard {
                                    id="mwp_setup_options_use_custom_sidebar" <?php echo ($disable_wp_main_menu ? 'checked="true"' : ''); ?> />
                             <label for="mwp_setup_options_use_custom_sidebar"></label>
                         </div><br/><br/>
-                        <em><?php _e( 'If enabled, the MainWP Dashboard plguin will add custom sidebar navigation and collapse the WordPress Admin Menu. Custom navigation can be disabled/enabled at anytime on the MainWP > Settings > Dashboard Options page.', 'mainwp' ); ?></em>
+                        <em><?php _e( 'If enabled, the MainWP Dashboard plugin will add custom sidebar navigation and collapse the WordPress Admin Menu. Custom navigation can be disabled/enabled at anytime on the MainWP > Settings > Dashboard Options page.', 'mainwp' ); ?></em>
                     </td>
                 </tr>
 

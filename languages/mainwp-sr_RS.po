@@ -3669,7 +3669,7 @@ msgstr "Ažuriraj"
 #: widget/MainWPRightNow.widget.php:518
 #@ mainwp
 msgid "Plugin upgrade"
-msgstr "Plguin upgrade"
+msgstr "Plugin upgrade"
 
 #: widget/MainWPRightNow.widget.php:570
 #: widget/MainWPRightNow.widget.php:620

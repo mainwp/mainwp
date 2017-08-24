@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.8
-Stable tag: 3.4.2
+Tested up to: 4.8.1
+Stable tag: 3.4.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,25 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.4.3 - 8-24-17 =
+* Fixed: an issue with saving Posts and Pages status
+* Fixed: multiple minor issues related to the Client Reports extension
+* Fixed: an issue with the Password field
+* Fixed: an issue with running updates on WP Engine hosted sites
+* Fixed: connection issue with WP Engine hosted sites 
+* Added: Screen Options (show/hide columns) for the Manage Posts and Manage Pages pages
+* Added: the new 'mainwp_limit_updates_all' hook for the support of limiting the number of updates to be performed at once
+* Added: a new Advanced Options setting to force IPv4 usage
+* Added: a new Advanced Options setting to allow custom configuration for the OpenSSL.cnf
+* Added: a new WP CLI command to list all plugins and themes (for example: wp mainwp plugin --list-all and wp mainwp theme --list-all)
+* Added: support for the new Yoast SEO features in the Manage Posts and Manage Pages table
+* Added: pull request to allow 0 as a non-default value in the Import Sites feature - Thanks [viawest-davidsix](https://github.com/viawest-davidsix)
+* Added: pull request to fix incorrect changelog URLs and CSS classes - Thanks [Filoz](https://github.com/Filoz)
+* Added: new CSS classes for each table row in the Manage Sites table
+* Updated: the Media Upload popup box layout for the Add Media feature on the Add Post and Add Page pages
+* Updated: various cosmetic updates
+* Updated: compatibility with the new version of the Managed Client Reports for WooCommerce plugin
 
 = 3.4.2 - 7-11-17 =
 * Fixed: an issue with sorting posts and pages by the publish date

@@ -252,6 +252,11 @@ class MainWP_Sync {
 			$done                   = true;
 		}
 
+		if ( isset( $information['wpe'] ) ) {
+			$websiteValues['wpe'] = $information['wpe'];
+			$done                   = true;
+		}
+
 		if ( isset( $information['last_post_gmt'] ) ) {
 			$websiteSyncValues['last_post_gmt'] = $information['last_post_gmt'];
 			$done                               = true;

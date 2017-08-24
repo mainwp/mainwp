@@ -54,12 +54,6 @@ class MainWP_Extensions_Widget {
 					<div class="mainwp-clear"></div>
 				</div>
 				<div class="mainwp-row">
-					<div class="mainwp-t-align-left mainwp-cols-10 mainwp-left"><img style="width: 45px; height: 45px;" src="<?php echo plugins_url( 'images/extensions/inmotion.png', dirname( __FILE__ ) ); ?>" /></div>
-					<div class="mainwp-padding-top-15 mainwp-t-align-left mainwp-cols-2 mainwp-left"><span class="mainwp-large mainwp-padding-top-10">InMotion Hosting</span></div>
-					<div class="mainwp-padding-top-10 mainwp-t-align-right mainwp-cols-5 mainwp-right"><a target="_blank" href="https://mainwp.com/extension/inmotion-hosting/?utm_source=dashboard&utm_medium=plugin&utm_campaign=overviewwidget" class="button"><?php _e( 'Add for free', 'mainwp' ); ?></a></div>
-					<div class="mainwp-clear"></div>
-				</div>
-				<div class="mainwp-row">
 					<div class="mainwp-t-align-left mainwp-cols-10 mainwp-left"><img style="width: 45px; height: 45px;" src="<?php echo plugins_url( 'images/extensions/sucuri.png', dirname( __FILE__ ) ); ?>" /></div>
 					<div class="mainwp-padding-top-15 mainwp-t-align-left mainwp-cols-2 mainwp-left"><span class="mainwp-large mainwp-padding-top-10">Sucuri</span></div>
 					<div class="mainwp-padding-top-10 mainwp-t-align-right mainwp-cols-5 mainwp-right"><a target="_blank" href="https://mainwp.com/extension/sucuri/?utm_source=dashboard&utm_medium=plugin&utm_campaign=overviewwidget" class="button"><?php _e( 'Add for free', 'mainwp' ); ?></a></div>

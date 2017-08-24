@@ -29,7 +29,7 @@ class MainWP_Post_Handler {
 		//Page: ManageSites
 		$this->addAction( 'mainwp_checkwp', array( &$this, 'mainwp_checkwp' ) );
 		$this->addAction( 'mainwp_addwp', array( &$this, 'mainwp_addwp' ) );
-        $this->addAction( 'mainwp_get_site_icon', array( &$this, 'get_site_icon' ) );
+		$this->addAction( 'mainwp_get_site_icon', array( &$this, 'get_site_icon' ) );
 		$this->addAction( 'mainwp_ext_prepareinstallplugintheme', array( &$this, 'mainwp_ext_prepareinstallplugintheme' ) );
 		$this->addAction( 'mainwp_ext_performinstallplugintheme', array( &$this, 'mainwp_ext_performinstallplugintheme' ) );
 		$this->addAction( 'mainwp_ext_applypluginsettings', array( &$this, 'mainwp_ext_applypluginsettings' ) );
@@ -128,7 +128,7 @@ class MainWP_Post_Handler {
 
 		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
 			//Page: SecurityIssues
-            $this->addAction( 'mainwp_securityIssues_request', array( &$this, 'mainwp_securityIssues_request' ) ); //ok
+			$this->addAction( 'mainwp_securityIssues_request', array( &$this, 'mainwp_securityIssues_request' ) ); //ok
 			$this->addAction( 'mainwp_securityIssues_fix', array( &$this, 'mainwp_securityIssues_fix' ) ); //ok
 			$this->addAction( 'mainwp_securityIssues_unfix', array( &$this, 'mainwp_securityIssues_unfix' ) ); //ok
 		}
@@ -136,11 +136,11 @@ class MainWP_Post_Handler {
 		//Page: ManageTips
 		$this->addAction( 'mainwp_managetips_update', array( &$this, 'mainwp_managetips_update' ) ); //ok
 		$this->addAction( 'mainwp_tips_update', array( &$this, 'mainwp_tips_update' ) ); //ok
-        $this->addAction( 'mainwp_notice_status_update', array( &$this, 'mainwp_notice_status_update' ) );
+		$this->addAction( 'mainwp_notice_status_update', array( &$this, 'mainwp_notice_status_update' ) );
 		$this->addAction( 'mainwp_dismiss_twit', array( &$this, 'mainwp_dismiss_twit' ) );
 		$this->addAction( 'mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
-        $this->addAction( 'mainwp_status_saving', array( &$this, 'mainwp_status_saving' ) );
-        $this->addAction( 'mainwp_leftmenu_filter_group', array( &$this, 'mainwp_leftmenu_filter_group' ) );
+		$this->addAction( 'mainwp_status_saving', array( &$this, 'mainwp_status_saving' ) );
+		$this->addAction( 'mainwp_leftmenu_filter_group', array( &$this, 'mainwp_leftmenu_filter_group' ) );
 
 		add_action( 'wp_ajax_mainwp_twitter_dashboard_action', array(
 			&$this,
@@ -176,17 +176,17 @@ class MainWP_Post_Handler {
 		add_action( 'wp_ajax_mainwp_get_categories', array( &$this, 'mainwp_get_categories' ) ); //ok
 		add_action( 'wp_ajax_mainwp_posts_get_terms', array( &$this, 'mainwp_posts_get_terms' ) ); //ok
 		add_action( 'wp_ajax_mainwp_posts_test_post', array( &$this, 'mainwp_posts_test_post' ) ); //ok
-        $this->addAction( 'mainwp_post_get_edit', array( &$this, 'mainwp_post_get_edit' ) );
+		$this->addAction( 'mainwp_post_get_edit', array( &$this, 'mainwp_post_get_edit' ) );
 
 		//Page: Pages
 		add_action( 'wp_ajax_mainwp_pages_search', array( &$this, 'mainwp_pages_search' ) ); //ok
 
 		//Page: User
-        $this->addAction( 'mainwp_users_search', array( &$this, 'mainwp_users_search' ) );
+		$this->addAction( 'mainwp_users_search', array( &$this, 'mainwp_users_search' ) );
 
 		//Page: Themes
-        $this->addAction( 'mainwp_themes_search', array( &$this, 'mainwp_themes_search' ) );
-        $this->addAction( 'mainwp_themes_search_all', array( &$this, 'mainwp_themes_search_all' ) );
+		$this->addAction( 'mainwp_themes_search', array( &$this, 'mainwp_themes_search' ) );
+		$this->addAction( 'mainwp_themes_search_all', array( &$this, 'mainwp_themes_search_all' ) );
 		if ( mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) {
 			$this->addAction( 'mainwp_theme_activate', array( &$this, 'mainwp_theme_activate' ) );
 		}
@@ -199,8 +199,8 @@ class MainWP_Post_Handler {
 		}
 
 		//Page: Plugins
-        $this->addAction( 'mainwp_plugins_search', array( &$this, 'mainwp_plugins_search' ) );
-        $this->addAction( 'mainwp_plugins_search_all_active', array( &$this, 'mainwp_plugins_search_all_active' ) );
+		$this->addAction( 'mainwp_plugins_search', array( &$this, 'mainwp_plugins_search' ) );
+		$this->addAction( 'mainwp_plugins_search_all_active', array( &$this, 'mainwp_plugins_search_all_active' ) );
 
 		if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) {
 			$this->addAction( 'mainwp_plugin_activate', array( &$this, 'mainwp_plugin_activate' ) );
@@ -234,9 +234,9 @@ class MainWP_Post_Handler {
 		$this->addAction( 'mainwp_autoupdate_and_trust_child', array( &$this, 'mainwp_autoupdate_and_trust_child' ) );
 		$this->addAction( 'mainwp_installation_warning_hide', array( &$this, 'mainwp_installation_warning_hide' ) );
 		$this->addAction( 'mainwp_force_destroy_sessions', array( &$this, 'mainwp_force_destroy_sessions' ) );
-        $this->addAction( 'mainwp_save_option', array( &$this, 'mainwp_save_option' ) );
-        $this->addAction( 'mainwp_recheck_http', array( &$this, 'mainwp_recheck_http' ) );
-        $this->addAction( 'mainwp_ignore_http_response', array( &$this, 'mainwp_ignore_http_response' ) );
+		$this->addAction( 'mainwp_save_option', array( &$this, 'mainwp_save_option' ) );
+		$this->addAction( 'mainwp_recheck_http', array( &$this, 'mainwp_recheck_http' ) );
+		$this->addAction( 'mainwp_ignore_http_response', array( &$this, 'mainwp_ignore_http_response' ) );
 
 		MainWP_Extensions::initAjaxHandlers();
 
@@ -435,7 +435,7 @@ class MainWP_Post_Handler {
 		die();
 	}
 
-    function mainwp_post_get_edit() {
+	function mainwp_post_get_edit() {
 		$this->secure_request( 'mainwp_post_get_edit' );
 		MainWP_Post::getPost();
 		die();
@@ -576,64 +576,64 @@ class MainWP_Post_Handler {
 				$status[ $_POST['tour_id'] ] = 1;
 				update_user_option( $user_id, 'mainwp_tours_status', $status );
 			} else {
-                $status = get_user_option( 'mainwp_notice_saved_status' );
+				$status = get_user_option( 'mainwp_notice_saved_status' );
 				if ( ! is_array( $status ) ) {
 					$status = array();
 				}
 				$status[ $_POST['notice_id'] ] = 1;
 				update_user_option( $user_id, 'mainwp_notice_saved_status', $status );
-            }
+			}
 		}
 		die( 1 );
 	}
 
-    function mainwp_status_saving() {
+	function mainwp_status_saving() {
 		$this->secure_request( 'mainwp_status_saving' );
-        $values = get_option( 'mainwp_status_saved_values' );
-        if ( !isset( $_POST['status'] ) ) {
-            die( -1 );
-        }
+		$values = get_option( 'mainwp_status_saved_values' );
+		if ( !isset( $_POST['status'] ) ) {
+			die( -1 );
+		}
 
-        if ( 'last_sync_sites' == $_POST['status'] ) {
-            update_option( 'mainwp_last_synced_all_sites', time() );
-            die( 'ok' );
-        }
+		if ( 'last_sync_sites' == $_POST['status'] ) {
+			update_option( 'mainwp_last_synced_all_sites', time() );
+			die( 'ok' );
+		}
 
-        // open one menu item, close all other items
-        if ( $_POST['status'] == 'status_leftmenu' ) {
-            if ( in_array( $_POST['key'], array( 'mainwp_tab', 'Extensions', 'childsites_menu' ) ) ) {
-                if ( isset($values['status_leftmenu']['mainwp_tab'] ) )
-                    unset( $values['status_leftmenu']['mainwp_tab'] );
-                if ( isset( $values['status_leftmenu']['Extensions'] ) )
-                    unset( $values['status_leftmenu']['Extensions'] );
-                if ( isset($values['status_leftmenu']['childsites_menu'] ) )
-                    unset( $values['status_leftmenu']['childsites_menu'] );
-            }
-        }
+		// open one menu item, close all other items
+		if ( $_POST['status'] == 'status_leftmenu' ) {
+			if ( in_array( $_POST['key'], array( 'mainwp_tab', 'Extensions', 'childsites_menu' ) ) ) {
+				if ( isset($values['status_leftmenu']['mainwp_tab'] ) )
+					unset( $values['status_leftmenu']['mainwp_tab'] );
+				if ( isset( $values['status_leftmenu']['Extensions'] ) )
+					unset( $values['status_leftmenu']['Extensions'] );
+				if ( isset($values['status_leftmenu']['childsites_menu'] ) )
+					unset( $values['status_leftmenu']['childsites_menu'] );
+			}
+		}
 
-        if ( !isset( $_POST['value'] ) || empty( $_POST['value'] ) ) {
-            if ( isset( $values[$_POST['status']][$_POST['key']] ) )
-                unset( $values[$_POST['status']][$_POST['key']] );
-        } else {
-            $values[$_POST['status']][$_POST['key']] = $_POST['value'];
-        }
-        update_option( 'mainwp_status_saved_values', $values );
-        die( 'ok' );
+		if ( !isset( $_POST['value'] ) || empty( $_POST['value'] ) ) {
+			if ( isset( $values[$_POST['status']][$_POST['key']] ) )
+				unset( $values[$_POST['status']][$_POST['key']] );
+		} else {
+			$values[$_POST['status']][$_POST['key']] = $_POST['value'];
+		}
+		update_option( 'mainwp_status_saved_values', $values );
+		die( 'ok' );
 	}
 
-    function mainwp_leftmenu_filter_group() {
+	function mainwp_leftmenu_filter_group() {
 		$this->secure_request( 'mainwp_leftmenu_filter_group' );
-        if ( isset( $_POST['group_id'] ) && !empty( $_POST['group_id'] ) ) {
-            $ids = '';
-            $websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $_POST['group_id'], true ) );
-            while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
-                $ids .= $website->id . ',';
-            }
-            @MainWP_DB::free_result( $websites );
-            $ids = rtrim( $ids, ',' );
-            die( $ids );
-        }
-        die( '' );
+		if ( isset( $_POST['group_id'] ) && !empty( $_POST['group_id'] ) ) {
+			$ids = '';
+			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $_POST['group_id'], true ) );
+			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+				$ids .= $website->id . ',';
+			}
+			@MainWP_DB::free_result( $websites );
+			$ids = rtrim( $ids, ',' );
+			die( $ids );
+		}
+		die( '' );
 	}
 
 	function mainwp_tips_update() {
@@ -1200,10 +1200,10 @@ class MainWP_Post_Handler {
 		}
 	}
 
-    function get_site_icon() {
+	function get_site_icon() {
 		if ( $this->check_security( 'mainwp_get_site_icon', 'security' ) ) {
 			$result = MainWP_System::sync_site_icon();
-                        die( json_encode( $result ) );
+			die( json_encode( $result ) );
 		} else {
 			die( json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
 		}
@@ -1239,6 +1239,7 @@ class MainWP_Post_Handler {
 		if ( isset( $_POST['url'] ) ) {
 			$url               = $_POST['url'];
 			$verifyCertificate = $_POST['test_verify_cert'];
+			$forceUseIPv4 = $_POST['test_force_use_ipv4'];
 			$sslVersion        = MainWP_Utility::getCURLSSLVersion( $_POST['test_ssl_version'] );
 			$http_user         = $_POST['http_user'];
 			$http_pass         = $_POST['http_pass'];
@@ -1248,20 +1249,21 @@ class MainWP_Post_Handler {
 				$url               = $website->url;
 				$name              = $website->name;
 				$verifyCertificate = $website->verify_certificate;
+				$forceUseIPv4      = $website->force_use_ipv4;
 				$sslVersion        = $website->ssl_version;
 				$http_user         = $website->http_user;
 				$http_pass         = $website->http_pass;
 			}
 		}
 
-		$rslt = MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion);
+		$rslt = MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4);
 
 		if ( isset( $rslt['error'] ) && ( $rslt['error'] != '' ) && ( substr( $url, - 9 ) != 'wp-admin/' ) ) {
 			if ( substr( $url, - 1 ) != '/' ) {
 				$url .= '/';
 			}
 			$url .= 'wp-admin/';
-			$newrslt = MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion );
+			$newrslt = MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
 			if ( isset( $newrslt['error'] ) && ( $rslt['error'] != '' ) ) {
 				$rslt = $newrslt;
 			}
@@ -1581,7 +1583,7 @@ class MainWP_Post_Handler {
 
 			if ( $_POST['saving_status'] == 'posts_col_order' || $_POST['saving_status'] == 'pages_col_order' || $_POST['saving_status'] == 'users_col_order' || $_POST['saving_status'] == 'sites_col_order' ||
 			     $_POST['saving_status'] == 'plugins_col_order' || $_POST['saving_status'] == 'themes_col_order' ||
-                                strpos($_POST['saving_status'], '_col_order' ) !== false // for extensions saving column order status
+			     strpos($_POST['saving_status'], '_col_order' ) !== false // for extensions saving column order status
 			) {
 				$value = json_decode(stripslashes($_POST['value']));
 				$order = array();
@@ -1603,60 +1605,60 @@ class MainWP_Post_Handler {
 		die( 'ok' );
 	}
 
-    function mainwp_save_option() {
+	function mainwp_save_option() {
 		if ( ! $this->check_security( 'mainwp_save_option' ) ) {
 			die( json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
 		}
 
-        if ( !isset( $_POST['name'] ) || empty( $_POST['name'] ) ) {
-            die(-1);
-        }
+		if ( !isset( $_POST['name'] ) || empty( $_POST['name'] ) ) {
+			die(-1);
+		}
 
-        update_option($_POST['name'], $_POST['value']);
-        die('ok');
-    }
+		update_option($_POST['name'], $_POST['value']);
+		die('ok');
+	}
 
-    function mainwp_recheck_http() {
+	function mainwp_recheck_http() {
 		if ( ! $this->check_security( 'mainwp_recheck_http' ) ) {
 			die( json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
 		}
 
-        if ( !isset($_POST['websiteid'] ) || empty( $_POST['websiteid'] ) ) {
-            die( -1 );
-        }
+		if ( !isset($_POST['websiteid'] ) || empty( $_POST['websiteid'] ) ) {
+			die( -1 );
+		}
 
-        $website = MainWP_DB::Instance()->getWebsiteById($_POST['websiteid'] );
-        if (empty($website))
-            die( -1 );
+		$website = MainWP_DB::Instance()->getWebsiteById($_POST['websiteid'] );
+		if (empty($website))
+			die( -1 );
 
-        $result = MainWP_Utility::isWebsiteAvailable( $website );
-        $http_code = ( is_array($result) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
-        $check_result = MainWP_Utility::check_ignored_http_code( $http_code );
-        MainWP_DB::Instance()->updateWebsiteValues( $website->id, array(
-            'offline_check_result' => $check_result ? '1' : '-1',
-            'offline_checks_last'  => time(),
-            'http_response_code' => $http_code
-        ) );
-        die( json_encode( array( 'httpcode' => $http_code, 'status' => $check_result ? 1 : 0 ) ) );
-    }
+		$result = MainWP_Utility::isWebsiteAvailable( $website );
+		$http_code = ( is_array($result) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
+		$check_result = MainWP_Utility::check_ignored_http_code( $http_code );
+		MainWP_DB::Instance()->updateWebsiteValues( $website->id, array(
+			'offline_check_result' => $check_result ? '1' : '-1',
+			'offline_checks_last'  => time(),
+			'http_response_code' => $http_code
+		) );
+		die( json_encode( array( 'httpcode' => $http_code, 'status' => $check_result ? 1 : 0 ) ) );
+	}
 
-    function mainwp_ignore_http_response() {
+	function mainwp_ignore_http_response() {
 		if ( ! $this->check_security( 'mainwp_ignore_http_response' ) ) {
 			die( json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
 		}
 
-        if ( !isset( $_POST['websiteid'] ) || empty( $_POST['websiteid'] ) ) {
-            die(-1);
-        }
+		if ( !isset( $_POST['websiteid'] ) || empty( $_POST['websiteid'] ) ) {
+			die(-1);
+		}
 
-        $website = MainWP_DB::Instance()->getWebsiteById($_POST['websiteid'] );
-        if ( empty( $website ) ) {
-	        die( -1 );
-        }
+		$website = MainWP_DB::Instance()->getWebsiteById($_POST['websiteid'] );
+		if ( empty( $website ) ) {
+			die( -1 );
+		}
 
-        MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'http_response_code' => '-1' ) );
-        die( json_encode( array( 'ok' => 1 ) ) );
-    }
+		MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'http_response_code' => '-1' ) );
+		die( json_encode( array( 'ok' => 1 ) ) );
+	}
 
 	function mainwp_autoupdate_and_trust_child() {
 		$this->secure_request( 'mainwp_autoupdate_and_trust_child' );

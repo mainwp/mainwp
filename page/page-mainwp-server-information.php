@@ -899,6 +899,16 @@ public static function renderFooter( $shownPage ) {
 		return ( stristr( $str, 'NCONF_get_string:no value' ) ? '' : $str );
 	}
 
+    public static function isOpensslConfigWarning() {
+        $ssl_warning = MainWP_Server_Information::getSSLWarning();
+        if ( $ssl_warning != '') {
+            if (stristr($ssl_warning, 'No such file or directory') !== false) {
+                return true;
+            }
+        }
+        return false;
+	}
+
 	public static function getCurlSupport() {
 		return function_exists( 'curl_version' );
 	}

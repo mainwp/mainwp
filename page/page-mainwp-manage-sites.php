@@ -1460,45 +1460,51 @@ class MainWP_Manage_Sites {
                             }
 						}
 				
-				$newPluginDir = ( isset( $_POST['mainwp_options_footprint_plugin_folder'] ) ? $_POST['mainwp_options_footprint_plugin_folder'] : '' );
+                        $newPluginDir = ( isset( $_POST['mainwp_options_footprint_plugin_folder'] ) ? $_POST['mainwp_options_footprint_plugin_folder'] : '' );
 
-                                                $maximumFileDescriptorsOverride = isset( $_POST['mainwp_options_maximumFileDescriptorsOverride'] );
-                                                $maximumFileDescriptorsAuto     = isset( $_POST['mainwp_maximumFileDescriptorsAuto'] );
-                                                $maximumFileDescriptors         = isset( $_POST['mainwp_options_maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['mainwp_options_maximumFileDescriptors'] ) ? $_POST['mainwp_options_maximumFileDescriptors'] : 150;
+                        $maximumFileDescriptorsOverride = isset( $_POST['mainwp_options_maximumFileDescriptorsOverride'] );
+                        $maximumFileDescriptorsAuto     = isset( $_POST['mainwp_maximumFileDescriptorsAuto'] );
+                        $maximumFileDescriptors         = isset( $_POST['mainwp_options_maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['mainwp_options_maximumFileDescriptors'] ) ? $_POST['mainwp_options_maximumFileDescriptors'] : 150;
 
-                                                $archiveFormat = isset( $_POST['mainwp_archiveFormat'] ) ? $_POST['mainwp_archiveFormat'] : 'global';
+                        $archiveFormat = isset( $_POST['mainwp_archiveFormat'] ) ? $_POST['mainwp_archiveFormat'] : 'global';
 
-                                                $http_user = $_POST['mainwp_managesites_edit_http_user'];
-                                                $http_pass = $_POST['mainwp_managesites_edit_http_pass'];
-                                                $url = $_POST['mainwp_managesites_edit_siteurl_protocol'] . '://' . MainWP_Utility::removeHttpPrefix( $website->url, true);
+                        $http_user = $_POST['mainwp_managesites_edit_http_user'];
+                        $http_pass = $_POST['mainwp_managesites_edit_http_pass'];
+                        $url = $_POST['mainwp_managesites_edit_siteurl_protocol'] . '://' . MainWP_Utility::removeHttpPrefix( $website->url, true);
 
-                                                MainWP_DB::Instance()->updateWebsite( $websiteid, $url, $current_user->ID, htmlentities( $_POST['mainwp_managesites_edit_sitename'] ), $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, '', $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass );
-                                                do_action( 'mainwp_update_site', $websiteid );
+                        MainWP_DB::Instance()->updateWebsite( $websiteid, $url, $current_user->ID, htmlentities( $_POST['mainwp_managesites_edit_sitename'] ), $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, '', $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass );
+                        do_action( 'mainwp_update_site', $websiteid );
 
-                                                $backup_before_upgrade = isset( $_POST['mainwp_backup_before_upgrade'] ) ? intval( $_POST['mainwp_backup_before_upgrade'] ) : 2;
-                                                if ( $backup_before_upgrade > 2 ) {
-                                                        $backup_before_upgrade = 2;
-                                                }
+                        $backup_before_upgrade = isset( $_POST['mainwp_backup_before_upgrade'] ) ? intval( $_POST['mainwp_backup_before_upgrade'] ) : 2;
+                        if ( $backup_before_upgrade > 2 ) {
+                                $backup_before_upgrade = 2;
+                        }
 
-                                                $newValues = array(
-                                                        'automatic_update'      => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
-                                                        'backup_before_upgrade' => $backup_before_upgrade,
-                                                        'loadFilesBeforeZip'    => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
-                                                );
+                        $forceuseipv4 = isset( $_POST['mainwp_managesites_edit_forceuseipv4'] ) ? intval( $_POST['mainwp_managesites_edit_forceuseipv4'] ) : 0;
+                        if ( $forceuseipv4 > 2 ) {
+                                $forceuseipv4 = 0;
+                        }
 
-                                                if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-                                                        $newValues['is_ignoreCoreUpdates']   = ( isset( $_POST['mainwp_is_ignoreCoreUpdates'] ) && $_POST['mainwp_is_ignoreCoreUpdates'] ) ? 1 : 0;
-                                                        $newValues['is_ignorePluginUpdates'] = ( isset( $_POST['mainwp_is_ignorePluginUpdates'] ) && ( $_POST['mainwp_is_ignorePluginUpdates'] ) ) ? 1 : 0;
-                                                        $newValues['is_ignoreThemeUpdates']  = ( isset( $_POST['mainwp_is_ignoreThemeUpdates'] ) && ( $_POST['mainwp_is_ignoreThemeUpdates'] ) ) ? 1 : 0;
-                                                }
+                        $newValues = array(
+                                'automatic_update'      => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
+                                'backup_before_upgrade' => $backup_before_upgrade,
+                                'force_use_ipv4' => $forceuseipv4,
+                                'loadFilesBeforeZip'    => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
+                        );
 
-                                                MainWP_DB::Instance()->updateWebsiteValues( $websiteid, $newValues );
-                                                $updated = true;
-                                            }
-                                        }
-                                        MainWP_Manage_Sites::renderEditSite($websiteid, $updated);
-                                        return;        
-                        }			
+                        if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+                                $newValues['is_ignoreCoreUpdates']   = ( isset( $_POST['mainwp_is_ignoreCoreUpdates'] ) && $_POST['mainwp_is_ignoreCoreUpdates'] ) ? 1 : 0;
+                                $newValues['is_ignorePluginUpdates'] = ( isset( $_POST['mainwp_is_ignorePluginUpdates'] ) && ( $_POST['mainwp_is_ignorePluginUpdates'] ) ) ? 1 : 0;
+                                $newValues['is_ignoreThemeUpdates']  = ( isset( $_POST['mainwp_is_ignoreThemeUpdates'] ) && ( $_POST['mainwp_is_ignoreThemeUpdates'] ) ) ? 1 : 0;
+                        }
+
+                        MainWP_DB::Instance()->updateWebsiteValues( $websiteid, $newValues );
+                        $updated = true;
+                    }
+                }
+                MainWP_Manage_Sites::renderEditSite($websiteid, $updated);
+                return;
+            }
 
 		} 		
 		MainWP_Manage_Sites::renderAllSites();
@@ -1518,9 +1524,10 @@ class MainWP_Manage_Sites {
 		} else {
 			try {
 				$verify_cert = ( !isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( $_POST['verify_certificate'] !== '0' ) ) ? null : $_POST['verify_certificate'] );
+                $force_use_ipv4 = ( !isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( $_POST['force_use_ipv4'] !== '0' ) ) ? null : $_POST['force_use_ipv4'] );
 				$http_user   = ( isset( $_POST['http_user'] ) ? $_POST['http_user'] : '' );
 				$http_pass   = ( isset( $_POST['http_pass'] ) ? $_POST['http_pass'] : '' );
-				$information = MainWP_Utility::fetchUrlNotAuthed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass ); //Fetch the stats with the given admin name
+				$information = MainWP_Utility::fetchUrlNotAuthed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array('force_use_ipv4' => $force_use_ipv4) ); //Fetch the stats with the given admin name
 
 				if ( isset( $information['wpversion'] ) ) { //Version found - able to add
 					$ret['response'] = 'OK';

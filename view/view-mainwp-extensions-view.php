@@ -553,18 +553,6 @@ class MainWP_Extensions_View {
 					'catalog_id' => '1554',
 					'group' => array('visitor')
 				),
-			'mainwp-inmotion-hosting-extension' =>
-				array(
-					'free' => true,
-					'slug' => 'mainwp-inmotion-hosting-extension',
-					'title' => 'MainWP InMotion Hosting Extension',
-					'desc' => 'MainWP InMotion Hosting Extension allows you to claim your coupon for 1 year of free hosting provided by the InMotion Hosting company.',
-					'link' => 'https://mainwp.com/extension/inmotion-hosting/',
-					'img' => plugins_url( 'images/extensions/inmotion.png', dirname( __FILE__ ) ),
-					'product_id' => 'MainWP InMotion Hosting Extension',
-					'catalog_id' => '336219',
-					'group' => array('hosting')
-				),
 			'mainwp-links-manager-extension' =>
 				array(
 					'slug' => 'mainwp-links-manager-extension',

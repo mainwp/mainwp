@@ -128,6 +128,9 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 * [--list]
 	 * : Get a list of plugins with available updates
 	 *
+     * [--list-all]
+	 * : List all plugins
+	 *
 	 * [--upgrade=<pluginslug>]
 	 * : Update the plugin slugs
 	 *
@@ -138,10 +141,11 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *
 	 *     wp mainwp plugin 2,5 --list
 	 *     wp mainwp plugin --list
+     *     wp mainwp plugin 2,5 --list-all
 	 *     wp mainwp plugin 2,5 --upgrade-all
 	 *     wp mainwp plugin 2,5 --upgrade=mainwpchild
 	 *
-	 * @synopsis [<websiteid>] [--list] [--upgrade=<pluginslug>] [--upgrade-all]
+	 * @synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<pluginslug>] [--upgrade-all]
 	 */
 	public function plugin( $args, $assoc_args ) {
 		$sites = array();
@@ -223,6 +227,60 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			}
 
 			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ). "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ). "s+%'--" . ( $newVersionLength + 2 ). "s+", '', '', '', '', '' ) );
+		} else if ( isset( $assoc_args['list-all'] ) ) {
+			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, true) );
+			$userExtension = MainWP_DB::Instance()->getUserExtension();
+			$websites_to_list = array();
+			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
+					continue;
+				}
+
+				$plugins_to_list = json_decode( $website->plugins, true );
+				if ( is_array( $plugins_to_list ) ) {
+					$tmp = array();
+					foreach ($plugins_to_list as $plugin) {
+						$tmp[] = array('name' => $plugin['slug'], 'version' => $plugin['version']);
+					}
+					$websites_to_list[] = array('id' => $website->id, 'name' => $website->name, 'plugins' => $tmp);
+				}
+			}
+
+			$idLength = strlen('id');
+			$nameLength = strlen('name');
+			$pluginLength = strlen('plugin');
+			$oldVersionLength = strlen('version');
+			foreach ( $websites_to_list as $website_item ) {
+				if ( $idLength < strlen( $website_item['id'] ) ) $idLength = strlen( $website_item['id'] );
+				if ( $nameLength < strlen( $website_item['name'] ) ) $nameLength = strlen( $website_item['name'] );
+
+				foreach ( $website_item['plugins'] as $plugin_item ) {
+					if ( $pluginLength < strlen( $plugin_item['name'] ) ) $pluginLength = strlen( $plugin_item['name'] );
+					if ( $oldVersionLength < strlen( $plugin_item['version'] ) ) $oldVersionLength = strlen( $plugin_item['version'] );
+				}
+			}
+
+
+			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ). "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ). "s+", '', '', '', '') );
+			WP_CLI::line( sprintf( "| %-" . $idLength . "s | %-" . $nameLength . "s | %-" . $pluginLength . "s | %-" . $oldVersionLength . "s |", 'id', 'name', 'plugin', 'version' ) );
+			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ). "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ). "s+", '', '', '', '') );
+
+			foreach ( $websites_to_list as $website_item ) {
+				if ( $idLength < strlen( $website_item['id'] ) ) $idLength = strlen( $website_item['id'] );
+				if ( $nameLength < strlen( $website_item['name'] ) ) $nameLength = strlen( $website_item['name'] );
+
+				$i = 0;
+				foreach ( $website_item['plugins'] as $plugin_item ) {
+					if ( $i == 0 ) {
+						WP_CLI::line( sprintf( "| %-" . $idLength . "s | %-" . $nameLength . "s | %-" . $pluginLength . "s | %-" . $oldVersionLength . "s |", $website_item['id'], $website_item['name'], $plugin_item['name'], $plugin_item['version']) );
+					} else {
+						WP_CLI::line( sprintf( "| %-" . $idLength . "s | %-" . $nameLength . "s | %-" . $pluginLength . "s | %-" . $oldVersionLength . "s |", '', '', $plugin_item['name'], $plugin_item['version'] ) );
+					}
+					$i++;
+				}
+			}
+
+			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ). "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ). "s+", '', '', '', '' ) );
 		}
 		else if ( isset( $assoc_args['upgrade'] ) || isset( $assoc_args['upgrade-all'] ) ) {
 			//slugs to update
@@ -293,6 +351,9 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 * [--list]
 	 * : Get a list of themes with available updates
 	 *
+     * [--list-all]
+	 * : list all themes
+     *
 	 * [--upgrade=<theme>]
 	 * : Update the themes
 	 *
@@ -306,7 +367,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp theme 2,5 --upgrade-all
 	 *     wp mainwp theme 2,5 --upgrade=twentysixteen
 	 *
-	 * @synopsis [<websiteid>] [--list] [--upgrade=<theme>] [--upgrade-all]
+	 * @synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<theme>] [--upgrade-all]
 	 */
 	public function theme( $args, $assoc_args ) {
 		$sites = array();
@@ -388,6 +449,60 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			}
 
 			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ). "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ). "s+%'--" . ( $newVersionLength + 2 ). "s+", '', '', '', '', '' ) );
+		} else if ( isset( $assoc_args['list-all'] ) ) {
+			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, true) );
+			$userExtension = MainWP_DB::Instance()->getUserExtension();
+			$websites_to_upgrade = array();
+			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
+					continue;
+				}
+				$theme_to_list = json_decode( $website->themes, true );
+				if ( is_array( $theme_to_list ) ) {
+					$tmp = array();
+					foreach ($theme_to_list as $theme) {
+						$tmp[] = array('name' => $theme['name'], 'active' => $theme['active'] ? 'yes' : '', 'version' => $theme['version']);
+					}
+					$websites_to_upgrade[] = array('id' => $website->id, 'name' => $website->name, 'themes' => $tmp);
+				}
+			}
+
+			$idLength = strlen('id');
+			$nameLength = strlen('name');
+			$themeLength = strlen('theme');
+			$oldVersionLength = strlen('version');
+            $activeLength = strlen('active');
+			foreach ( $websites_to_upgrade as $website_item ) {
+				if ( $idLength < strlen( $website_item['id'] ) ) $idLength = strlen( $website_item['id'] );
+				if ( $nameLength < strlen( $website_item['name'] ) ) $nameLength = strlen( $website_item['name'] );
+
+				foreach ( $website_item['themes'] as $theme_item ) {
+					if ( $themeLength < strlen( $theme_item['name'] ) ) $themeLength = strlen( $theme_item['name'] );
+					if ( $oldVersionLength < strlen( $theme_item['version'] ) ) $oldVersionLength = strlen( $theme_item['version'] );
+				}
+			}
+
+
+			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ). "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $activeLength + 2 ). "s+%'--" . ( $oldVersionLength + 2 ). "s+", '', '', '', '', '' ) );
+			WP_CLI::line( sprintf( "| %-" . $idLength . "s | %-" . $nameLength . "s | %-" . $themeLength . "s | %-" . $activeLength . "s | %-" . $oldVersionLength . "s |", 'id', 'name', 'theme', 'active' , 'version' ) );
+			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ). "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $activeLength + 2 ). "s+%'--" . ( $oldVersionLength + 2 ). "s+", '', '', '', '', '' ) );
+
+			foreach ( $websites_to_upgrade as $website_item ) {
+				if ( $idLength < strlen( $website_item['id'] ) ) $idLength = strlen( $website_item['id'] );
+				if ( $nameLength < strlen( $website_item['name'] ) ) $nameLength = strlen( $website_item['name'] );
+
+				$i = 0;
+				foreach ( $website_item['themes'] as $theme_item ) {
+					if ( $i == 0 ) {
+						WP_CLI::line( sprintf( "| %-" . $idLength . "s | %-" . $nameLength . "s | %-" . $themeLength . "s | %-" . $activeLength . "s | %-" . $oldVersionLength . "s |", $website_item['id'], $website_item['name'], $theme_item['name'], $theme_item['active'], $theme_item['version'] ) );
+					} else {
+						WP_CLI::line( sprintf( "| %-" . $idLength . "s | %-" . $nameLength . "s | %-" . $themeLength . "s | %-" . $activeLength . "s | %-" . $oldVersionLength . "s |", '', '', $theme_item['name'], $theme_item['active'], $theme_item['version'] ) );
+					}
+					$i++;
+				}
+			}
+
+			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ). "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $activeLength + 2 ). "s+%'--" . ( $oldVersionLength + 2 ). "s+", '', '', '', '', '' ) );
 		}
 		else if ( isset( $assoc_args['upgrade'] ) || isset( $assoc_args['upgrade-all'] ) ) {
 			//slugs to update

@@ -180,7 +180,7 @@ class MainWP_Install_Bulk {
 		MainWP_Utility::fetchUrlsAuthed( $websites, 'installplugintheme', $post_data, array(
 			MainWP_Install_Bulk::getClassName(),
 			'InstallPluginTheme_handler',
-		), $output );
+		), $output, null, array( 'upgrade' => true ) );
 
 		die( json_encode( $output ) );
 	}
@@ -257,7 +257,7 @@ class MainWP_Install_Bulk {
 		MainWP_Utility::fetchUrlsAuthed( $websites, 'installplugintheme', $post_data, array(
 			MainWP_Install_Bulk::getClassName(),
 			'InstallPluginTheme_handler',
-		), $output );
+		), $output, null, array( 'upgrade' => true ) );
 		die( json_encode( $output ) );
 	}
 

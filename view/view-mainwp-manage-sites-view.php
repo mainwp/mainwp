@@ -467,6 +467,17 @@ class MainWP_Manage_Sites_View {
 				</td>
 			</tr>
 
+            <tr class="form-field form-required">
+			   <th scope="row"><?php _e( 'Force use of IPv4','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Force use of IPv4.','mainwp' ) ); ?></th>
+				<td>
+					<select class="mainwp-select2" id="mainwp_managesites_test_forceuseipv4" name="mainwp_managesites_test_forceuseipv4">
+						 <option value="1"><?php _e( 'Yes','mainwp' ); ?></option>
+						 <option selected value="0"><?php _e( 'No','mainwp' ); ?></option>
+						 <option value="2"><?php _e( 'Use Global Setting','mainwp' ); ?></option>
+					 </select> <em>(<?php _e( 'Default: Yes','mainwp' ); ?>)</em>
+				</td>
+			</tr>
+            
 			<!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
 			<input style="display:none" type="text" name="fakeusernameremembered"/>
 			<input style="display:none" type="password" name="fakepasswordremembered"/>
@@ -539,7 +550,7 @@ class MainWP_Manage_Sites_View {
 										}
 									}
 								}
-								if ( empty( $val ) ) {
+								if ( is_null( $val ) ) {
 									$val = $default[$x];
 								}
 								$line .= $val;
@@ -885,7 +896,19 @@ class MainWP_Manage_Sites_View {
 					 </span>
 	                        </td>
 	                    </tr>
-
+                        <tr class="form-field form-required">
+                            <th scope="row"><?php _e('Force use of IPv4','mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip(__('Force use of IPv4.','mainwp')); ?></th>
+                            <td>
+                                <span id="mainwp_managesites_force_use_ipv4_wrap">
+                                    <select  id="mainwp_managesites_force_use_ipv4" name="mainwp_managesites_force_use_ipv4" class="form-control mainwp-select2">
+                                                     <option value="1"><?php _e('Yes','mainwp'); ?></option>
+                                                     <option selected value="0"><?php _e('No','mainwp'); ?></option>
+                                                     <option value="2"><?php _e('Use global setting','mainwp'); ?></option>
+                                                </select> <em><?php _e( 'Default: Yes', 'mainwp' ); ?></em>
+                                </span>
+                            </td>
+                        </tr>
+                        
                         <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
                         <input style="display:none" type="text" name="fakeusernameremembered"/>
                         <input style="display:none" type="password" name="fakepasswordremembered"/>
@@ -909,7 +932,7 @@ class MainWP_Manage_Sites_View {
                                            id="mainwp_managesites_add_http_pass"
                                            name="mainwp_managesites_add_http_pass"
                                            value=""
-										   autocomplete="new-http-password"
+										   autocomplete="new-password"
 							   class=""/><br/><em><?php _e( 'If your child site is protected with HTTP basic authentication, please set the username and password for authentication here.','mainwp' ); ?></em>
                             </td>
                         </tr>
@@ -1768,6 +1791,17 @@ class MainWP_Manage_Sites_View {
                          </select> <em>(<?php _e( 'Default: Auto detect','mainwp' ); ?>)</em>
                     </td>
                 </tr>
+                
+                <tr class="form-field form-required">
+                    <th scope="row"><?php _e( 'Force use of IPv4','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Force use of IPv4.','mainwp' ) ); ?></th>
+                    <td>
+					<select class="mainwp-select2" id="mainwp_managesites_edit_forceuseipv4" name="mainwp_managesites_edit_forceuseipv4">
+                             <option <?php echo ($website->force_use_ipv4 == 1) ? 'selected' : ''; ?> value="1"><?php _e( 'Yes','mainwp' ); ?></option>
+                             <option <?php echo ($website->force_use_ipv4 == 0) ? 'selected' : ''; ?> value="0"><?php _e( 'No','mainwp' ); ?></option>
+                             <option <?php echo ($website->force_use_ipv4 == 2) ? 'selected' : ''; ?> value="2"><?php _e( 'Use global setting','mainwp' ); ?></option>
+                         </select> <i>(Default: No)</i>
+                    </td>
+                </tr>
 
                 <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
                 <input style="display:none" type="text" name="fakeusernameremembered"/>
@@ -1779,7 +1813,7 @@ class MainWP_Manage_Sites_View {
                 </tr>
                 <tr class="form-field form-required">
                      <th scope="row"><?php _e( 'HTTP password ','mainwp' ); ?></th>
-				 <td><input type="password" id="mainwp_managesites_edit_http_pass" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty( $website->http_pass ) ? '' : $website->http_pass); ?>" autocomplete="new-http-password" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the password for authentication here.','mainwp' ); ?></em></td>
+				 <td><input type="password" id="mainwp_managesites_edit_http_pass" name="mainwp_managesites_edit_http_pass" value="<?php echo (empty( $website->http_pass ) ? '' : $website->http_pass); ?>" autocomplete="new-password" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the password for authentication here.','mainwp' ); ?></em></td>
                 </tr>
             </table>
 	<?php
@@ -1944,6 +1978,7 @@ class MainWP_Manage_Sites_View {
                 $params['wpadmin'] = $_POST['managesites_add_wpadmin'];
                 $params['unique_id'] = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : '';
                 $params['ssl_verify'] = ( !isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( $_POST['verify_certificate'] !== '0' ) ) ? null : $_POST['verify_certificate'] );                
+                $params['force_use_ipv4'] = ( !isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( $_POST['force_use_ipv4'] !== '0' ) ) ? null : $_POST['force_use_ipv4'] );
                 $params['ssl_version'] = !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version'];                
                 $params['http_user'] = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
                 $params['http_pass'] = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';                
@@ -1952,7 +1987,7 @@ class MainWP_Manage_Sites_View {
                 return MainWP_Manage_Sites_View::addWPSite($website, $params);                		
 	}
 
-        public static function addWPSite( $website, $params = array()  ) {
+    public static function addWPSite( $website, $params = array()  ) {
 		$error = '';
 		$message = '';
 		$id = 0;
@@ -1983,6 +2018,7 @@ class MainWP_Manage_Sites_View {
 				$addUniqueId = isset( $params['unique_id'] ) ? $params['unique_id'] : '';
 				$http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
 				$http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
+                $force_use_ipv4 = isset( $params['force_use_ipv4'] ) ? $params['force_use_ipv4'] : null;
 				$information = MainWP_Utility::fetchUrlNotAuthed($url, $params['wpadmin'], 'register',
 					array(
 					'pubkey' => $pubkey,
@@ -1990,7 +2026,7 @@ class MainWP_Manage_Sites_View {
 						'uniqueId' => $addUniqueId				
 					),
 					false,
-					$verifyCertificate, $http_user, $http_pass, $sslVersion
+					$verifyCertificate, $http_user, $http_pass, $sslVersion, array('force_use_ipv4' => $force_use_ipv4)
 				);
 
 				if ( isset( $information['error'] ) && $information['error'] != '' ) {

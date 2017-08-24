@@ -75,7 +75,7 @@ class MainWP_Settings {
 			}
 		}
 
-        MainWP_Settings::init_sub_sub_left_menu(self::$subPages);
+		MainWP_Settings::init_sub_sub_left_menu(self::$subPages);
 	}
 
 	public static function on_load_page() {
@@ -128,6 +128,11 @@ class MainWP_Settings {
 					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-wrench"></i> ' . __('Connection settings', 'mainwp'), array('MainWP_Settings', 'renderReportResponderDashboardPage'), 'mainwp_postboxes_settings_responder', 'normal', 'core'
 				);
 			} else if ('SettingsAdvanced' == $_GET['page']) {
+				if ( self::showOpensslLibConfig()) {
+					add_meta_box(
+						'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('OpenSSL library settings', 'mainwp'), array('MainWP_Settings', 'renderOpensslConfig'), 'mainwp_postboxes_settings_advanced', 'normal', 'core'
+					);
+				}
 				add_meta_box(
 					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('Cross IP settings', 'mainwp'), array('MainWP_Settings', 'renderCrossIPSettings'), 'mainwp_postboxes_settings_advanced', 'normal', 'core'
 				);
@@ -142,84 +147,88 @@ class MainWP_Settings {
 				add_meta_box(
 					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('SSL settings', 'mainwp'), array('MainWP_Settings', 'renderSSLSettings'), 'mainwp_postboxes_settings_advanced', 'normal', 'core'
 				);
+
+				add_meta_box(
+					'mwp-setting-contentbox-' . $i++, '<i class="fa fa-cog"></i> ' . __('IPv4 settings', 'mainwp'), array('MainWP_Settings', 'renderIPv4Settings'), 'mainwp_postboxes_settings_advanced', 'normal', 'core'
+				);
 			}
 		}
 	}
 
 	public static function initMenuSubPages() {
-            ?>
-            <div id="menu-mainwp-Settings" class="mainwp-submenu-wrapper">
-                    <div class="wp-submenu sub-open" style="">
-                            <div class="mainwp_boxout">
-                                    <div class="mainwp_boxoutin"></div>
-                                    <a href="<?php echo admin_url('admin.php?page=Settings'); ?>" class="mainwp-submenu"><?php _e('Global Options', 'mainwp'); ?></a>
-                                    <a href="<?php echo admin_url('admin.php?page=DashboardOptions'); ?>" class="mainwp-submenu"><?php _e('Dashboard Options', 'mainwp'); ?></a>
-                                    <a href="<?php echo admin_url('admin.php?page=SettingsAdvanced'); ?>" class="mainwp-submenu"><?php _e('Advanced Options', 'mainwp'); ?></a>
-                                    <a href="<?php echo admin_url('admin.php?page=MainWPTools'); ?>" class="mainwp-submenu"><?php _e('MainWP Tools', 'mainwp'); ?></a>
-                                    <a href="<?php echo admin_url('admin.php?page=SettingsClientReportsResponder'); ?>" class="mainwp-submenu"><?php _e('Managed Client Reports Responder', 'mainwp'); ?></a>
-                                    <?php
-                                    if (isset(self::$subPages) && is_array(self::$subPages) && ( count(self::$subPages) > 0 )) {
-                                        foreach (self::$subPages as $subPage) {
-                                                ?>
-                                                <a href="<?php echo admin_url('admin.php?page=Settings' . $subPage['slug']); ?>"
-                                                   class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
-                                                <?php
-                                        }
-                                    }
-                                    ?>
-                            </div>
-                    </div>
-            </div>
-            <?php
+		?>
+		<div id="menu-mainwp-Settings" class="mainwp-submenu-wrapper">
+			<div class="wp-submenu sub-open" style="">
+				<div class="mainwp_boxout">
+					<div class="mainwp_boxoutin"></div>
+					<a href="<?php echo admin_url('admin.php?page=Settings'); ?>" class="mainwp-submenu"><?php _e('Global Options', 'mainwp'); ?></a>
+					<a href="<?php echo admin_url('admin.php?page=DashboardOptions'); ?>" class="mainwp-submenu"><?php _e('Dashboard Options', 'mainwp'); ?></a>
+					<a href="<?php echo admin_url('admin.php?page=SettingsAdvanced'); ?>" class="mainwp-submenu"><?php _e('Advanced Options', 'mainwp'); ?></a>
+					<a href="<?php echo admin_url('admin.php?page=MainWPTools'); ?>" class="mainwp-submenu"><?php _e('MainWP Tools', 'mainwp'); ?></a>
+					<a href="<?php echo admin_url('admin.php?page=SettingsClientReportsResponder'); ?>" class="mainwp-submenu"><?php _e('Managed Client Reports Responder', 'mainwp'); ?></a>
+					<?php
+					if (isset(self::$subPages) && is_array(self::$subPages) && ( count(self::$subPages) > 0 )) {
+						foreach (self::$subPages as $subPage) {
+							?>
+							<a href="<?php echo admin_url('admin.php?page=Settings' . $subPage['slug']); ?>"
+							   class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
+							<?php
+						}
+					}
+					?>
+				</div>
+			</div>
+		</div>
+		<?php
 	}
 
-    static function init_sub_sub_left_menu( $subPages = array() ) {
-        MainWP_System::add_sub_left_menu(__('Settings', 'mainwp'), 'mainwp_tab', 'Settings', 'admin.php?page=Settings', '<i class="fa fa-cogs"></i>', '' );
+	static function init_sub_sub_left_menu( $subPages = array() ) {
+		MainWP_System::add_sub_left_menu(__('Settings', 'mainwp'), 'mainwp_tab', 'Settings', 'admin.php?page=Settings', '<i class="fa fa-cogs"></i>', '' );
 
-        $init_sub_subleftmenu = array(
-                array(  'title' => __('Global Options', 'mainwp'),
-                        'parent_key' => 'Settings',
-                        'href' => 'admin.php?page=Settings',
-                        'slug' => 'Settings',
-                        'right' => ''
-                    ),
-                array(  'title' => __('Dashboard Options', 'mainwp'),
-                        'parent_key' => 'Settings',
-                        'href' => 'admin.php?page=DashboardOptions',
-                        'slug' => 'DashboardOptions',
-                        'right' => ''
-                    ),
-                array(  'title' => __('Advanced Options', 'mainwp'),
-                        'parent_key' => 'Settings',
-                        'href' => 'admin.php?page=SettingsAdvanced',
-                        'slug' => 'SettingsAdvanced',
-                        'right' => ''
-                    ),
-                array(  'title' => __('MainWP Tools', 'mainwp'),
-                        'parent_key' => 'Settings',
-                        'href' => 'admin.php?page=MainWPTools',
-                        'slug' => 'MainWPTools',
-                        'right' => ''
-                    ),
-                array(  'title' => __('Managed Client Reports Responder', 'mainwp'),
-                        'parent_key' => 'Settings',
-                        'href' => 'admin.php?page=SettingsClientReportsResponder',
-                        'slug' => 'SettingsClientReportsResponder',
-                        'right' => ''
-                    )
-        );
+		$init_sub_subleftmenu = array(
+			array(  'title' => __('Global Options', 'mainwp'),
+			        'parent_key' => 'Settings',
+			        'href' => 'admin.php?page=Settings',
+			        'slug' => 'Settings',
+			        'right' => ''
+			),
+			array(  'title' => __('Dashboard Options', 'mainwp'),
+			        'parent_key' => 'Settings',
+			        'href' => 'admin.php?page=DashboardOptions',
+			        'slug' => 'DashboardOptions',
+			        'right' => ''
+			),
+			array(  'title' => __('Advanced Options', 'mainwp'),
+			        'parent_key' => 'Settings',
+			        'href' => 'admin.php?page=SettingsAdvanced',
+			        'slug' => 'SettingsAdvanced',
+			        'right' => ''
+			),
+			array(  'title' => __('MainWP Tools', 'mainwp'),
+			        'parent_key' => 'Settings',
+			        'href' => 'admin.php?page=MainWPTools',
+			        'slug' => 'MainWPTools',
+			        'right' => ''
+			),
+			array(  'title' => __('Managed Client Reports Responder', 'mainwp'),
+			        'parent_key' => 'Settings',
+			        'href' => 'admin.php?page=SettingsClientReportsResponder',
+			        'slug' => 'SettingsClientReportsResponder',
+			        'right' => ''
+			)
+		);
 
-        MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'Settings', 'Settings');
-        foreach($init_sub_subleftmenu as $item) {
-            MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
-        }
-    }
+		MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'Settings', 'Settings');
+		foreach($init_sub_subleftmenu as $item) {
+			MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
+		}
+	}
 
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function renderHeader($shownPage) {
-        MainWP_UI::render_left_menu();
+		MainWP_UI::render_left_menu();
 		?>
 		<div class="mainwp-wrap">
 
@@ -399,6 +408,14 @@ class MainWP_Settings {
 			MainWP_Utility::update_option('mainwp_maximumSyncRequests', MainWP_Utility::ctype_digit($_POST['mainwp_maximumSyncRequests']) ? intval($_POST['mainwp_maximumSyncRequests']) : 8 );
 			MainWP_Utility::update_option('mainwp_maximumInstallUpdateRequests', MainWP_Utility::ctype_digit($_POST['mainwp_maximumInstallUpdateRequests']) ? intval($_POST['mainwp_maximumInstallUpdateRequests']) : 3 );
 			MainWP_Utility::update_option('mainwp_sslVerifyCertificate', isset($_POST['mainwp_sslVerifyCertificate']) ? 1 : 0 );
+			MainWP_Utility::update_option('mainwp_forceUseIPv4', isset($_POST['mainwp_forceUseIPv4']) ? 1 : 0 );
+			if (isset($_POST['mainwp_openssl_lib_location'])) {
+				if ( self::isLocalWindowConfig() ) {
+					MainWP_Utility::update_option('mwp_setup_opensslLibLocation', stripslashes($_POST['mainwp_openssl_lib_location']));
+				} else {
+					MainWP_Utility::update_option('mainwp_opensslLibLocation', stripslashes($_POST['mainwp_openssl_lib_location']));
+				}
+			}
 		}
 
 		self::renderHeader('Advanced');
@@ -443,6 +460,59 @@ class MainWP_Settings {
 				</tr>
 				</tbody>
 			</table>
+		</div>
+		<?php
+	}
+
+	public static function showOpensslLibConfig() {
+		if ( MainWP_Server_Information::isOpensslConfigWarning()) {
+			return true;
+		} else {
+			if ( self::isLocalWindowConfig() ) {
+				return false;
+			} else {
+				// if it is not Openssl error but the setting is not empty the still show setting box to change
+				return get_option('mainwp_opensslLibLocation') != '' ? true : false;
+			}
+		}
+	}
+
+	public static function isLocalWindowConfig() {
+		$setup_hosting_type = get_option( 'mwp_setup_installationHostingType' );
+		$setup_system_type = get_option( 'mwp_setup_installationSystemType' );
+		if ( $setup_hosting_type == 2 && $setup_system_type == 3 ) {
+			return true;
+		}
+		return false;
+	}
+
+	public static function renderOpensslConfig() {
+		if ( self::isLocalWindowConfig()) {
+			$openssl_loc = get_option('mwp_setup_opensslLibLocation', 'c:\xampplite\apache\conf\openssl.cnf');
+		} else {
+			$openssl_loc = get_option('mainwp_opensslLibLocation', 'c:\xampplite\apache\conf\openssl.cnf');
+		}
+
+
+		?>
+		<div class="mainwp-postbox-actions-top">
+			<?php _e( 'Due to bug with PHP on Windows servers it is required to set the OpenSSL Library location so MainWP Dashboard can connect to your child sites.', 'mainwp' ); ?><br/><br/>
+			<?php echo __( 'If your <strong>openssl.cnf</strong> file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?>
+		</div>
+		<div class="inside">
+			<table class="form-table">
+				<tbody>
+				<tr>
+					<th scope="row"><?php _e('OpenSSL.cnf location', 'mainwp'); ?>
+					<td>
+						<input type="text" class="" style="width: 100%" name="mainwp_openssl_lib_location" value="<?php echo esc_html($openssl_loc); ?>">
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="mainwp-postbox-actions-bottom">
+			<?php echo sprintf( __( 'If you are not sure how to find the openssl.cnf location, please %scheck this help document%s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?>
 		</div>
 		<?php
 	}
@@ -520,6 +590,25 @@ class MainWP_Settings {
 					</div>
 				</td>
 				<td><em><?php _e('Default: YES', 'mainwp'); ?></em></td>
+			</tr>
+			</tbody>
+		</table>
+		<?php
+	}
+
+	public static function renderIPv4Settings() {
+		?>
+		<table class="form-table">
+			</tbody>
+			<tr>
+				<th scope="row"><?php _e('Force use of IPv4', 'mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip(__('Force use of IPv4.', 'mainwp')); ?></th>
+				<td style="width: 100px;">
+					<div class="mainwp-checkbox">
+						<input type="checkbox" name="mainwp_forceUseIPv4"
+						       id="mainwp_forceUseIPv4" value="checked" <?php echo ( get_option('mainwp_forceUseIPv4') == 1 ) ? 'checked="checked"' : ''; ?>/><label for="mainwp_forceUseIPv4"></label>
+					</div>
+				</td>
+				<td><em><?php _e('Default: NO', 'mainwp'); ?></em></td>
 			</tr>
 			</tbody>
 		</table>
@@ -620,7 +709,7 @@ class MainWP_Settings {
 					</div>
 				</td>
 			</tr>
-                        <tr>
+			<tr>
 				<th scope="row"><?php _e('Show MainWP custom menu', 'mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip(__('If enabled, the MainWP Plugin will collapse the WordPress Admin menu and replace it with the custom MainWP Menu.', 'mainwp')); ?></th>
 				<td>
 					<div class="mainwp-checkbox">
@@ -635,7 +724,7 @@ class MainWP_Settings {
 		<?php
 	}
 
-    public static function renderMainWPTools() {
+	public static function renderMainWPTools() {
 		if (!mainwp_current_user_can('dashboard', 'manage_dashboard_settings')) {
 			mainwp_do_not_have_permissions(__('manage dashboard settings', 'mainwp'));
 

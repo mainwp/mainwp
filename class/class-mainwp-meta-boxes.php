@@ -229,6 +229,17 @@ class MainWP_Meta_Boxes {
 
 	function add_slug( $post ) {
 		$this->add_extra( 'Slug', '_slug', 'add_slug', $post, false );
+        // to fix layout of popup media upload box
+        ?>
+        <style type="text/css">
+            .media-modal-content{
+                height: 600px !important ;
+            }
+            .media-modal{
+                top: 1400px !important ;
+            }
+		</style>
+        <?php
 	}
 
 	function add_slug_handle( $post_id, $post_type ) {

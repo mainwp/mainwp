@@ -2450,13 +2450,13 @@ PRIMARY KEY  (`id`)  ';
 //				' WHERE token_id = ' . intval( $token_id ) .
 //				" AND site_url = '" . $this->escape( $site_url ) . "'";
         //echo $sql."<br />";
-        $sql = $wpdb->query($wpdb->prepare("
+        $result = $wpdb->query($wpdb->prepare("
         UPDATE " . $this->table_name('client_report_site_token') . "
         SET `token_value` = %s
         WHERE `token_id` = %d AND site_url = %s", $this->escape($token_value), intval($token_id), $this->escape($site_url)
         ));
 
-        if ($wpdb->query($sql)) {
+        if ($result) {
             return $this->get_tokens_by('id', $token_id, $site_url);
         }
 

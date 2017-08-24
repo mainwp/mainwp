@@ -2568,6 +2568,7 @@ mainwp_managesites_add = function (event) {
             url:url,
             admin:jQuery('#mainwp_managesites_add_wpadmin').val(),
             verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val(),
+            force_use_ipv4:jQuery('#mainwp_managesites_force_use_ipv4').val(),
             ssl_version:jQuery('#mainwp_managesites_ssl_version').val(),
             http_user:jQuery('#mainwp_managesites_add_http_user').val(),
             http_pass:jQuery('#mainwp_managesites_add_http_pass').val()
@@ -2608,6 +2609,7 @@ mainwp_managesites_add = function (event) {
                     managesites_add_uniqueId:jQuery('#mainwp_managesites_add_uniqueId').val(),
                     groupids:jQuery('#mainwp_managesites_add_addgroups').val(),
                     verify_certificate:jQuery('#mainwp_managesites_verify_certificate').val(),
+                    force_use_ipv4:jQuery('#mainwp_managesites_force_use_ipv4').val(),
                     ssl_version:jQuery('#mainwp_managesites_ssl_version').val(),
                     managesites_add_http_user:jQuery('#mainwp_managesites_add_http_user').val(),
                     managesites_add_http_pass:jQuery('#mainwp_managesites_add_http_pass').val(),
@@ -2653,6 +2655,7 @@ mainwp_managesites_add = function (event) {
                         jQuery('#mainwp_managesites_add_addgroups > option' ).removeAttr("selected").trigger("change");
                         jQuery("input[name='selected_groups[]']:checked").attr('checked', false);
                         jQuery('#mainwp_managesites_verify_certificate').val(1);
+                        jQuery('#mainwp_managesites_force_use_ipv4').val(0);
                         jQuery('#mainwp_managesites_ssl_version').val('auto');
                         if (res_things.redirectUrl != undefined)
                         {
@@ -2904,6 +2907,7 @@ mainwp_managesites_test = function (event) {
             action:'mainwp_testwp',
             url:url,
             test_verify_cert: jQuery('#mainwp_managesites_test_verifycertificate').val(),
+            test_force_use_ipv4: jQuery('#mainwp_managesites_test_forceuseipv4').val(),
             test_ssl_version: jQuery('#mainwp_managesites_test_ssl_version').val(),
             http_user: jQuery('#mainwp_managesites_test_http_user').val(),
             http_pass: jQuery('#mainwp_managesites_test_http_pass').val()

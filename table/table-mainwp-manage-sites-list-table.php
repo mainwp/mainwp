@@ -34,14 +34,14 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 	function no_items() {
 		$out =  __( 'No sites found.', 'mainwp' );
-        if (!isset($_GET['s'])) {
-            $out .= '<br/><br/><em>' . __( 'If sites are missing from your display but you know those sites are connected to your dashboard be sure to check the Status drop down filter and adjust it to your needs.', 'mainwp' ) . '</em>';
-            if ( MainWP_DB::Instance()->getWebsitesCount() > 0 ) {
-                $out .= '<br/><br/>';
-                $out .= '<em>' . sprintf(__('If all your child sites are missing from your MainWP Dashboard, please check this %shelp document%s.', 'mainwp'), '<a href="https://mainwp.com/help/docs/all-child-sites-disappeared-from-my-mainwp-dashboard/" target="_blank">', '</a>') . '</em>';
-            }
-        }
-        echo $out;
+		if (!isset($_GET['s'])) {
+			$out .= '<br/><br/><em>' . __( 'If sites are missing from your display but you know those sites are connected to your dashboard be sure to check the Status drop down filter and adjust it to your needs.', 'mainwp' ) . '</em>';
+			if ( MainWP_DB::Instance()->getWebsitesCount() > 0 ) {
+				$out .= '<br/><br/>';
+				$out .= '<em>' . sprintf(__('If all your child sites are missing from your MainWP Dashboard, please check this %shelp document%s.', 'mainwp'), '<a href="https://mainwp.com/help/docs/all-child-sites-disappeared-from-my-mainwp-dashboard/" target="_blank">', '</a>') . '</em>';
+			}
+		}
+		echo $out;
 	}
 
 
@@ -55,9 +55,9 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 		switch ( $column_name ) {
 			case 'status':
-            case 'wpcore_update':
-            case 'plugin_update':
-            case 'theme_update':
+			case 'wpcore_update':
+			case 'plugin_update':
+			case 'theme_update':
 			case 'site':
 			case 'url':
 			case 'groups':
@@ -66,7 +66,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			case 'last_post':
 			case 'seo':
 			case 'notes':
-            case 'phpversion':
+			case 'phpversion':
 				//case 'site_actions':
 				return $item[ $column_name ];
 			default:
@@ -82,10 +82,10 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			'groups'    => array( 'groups', false ),
 			'last_sync' => array( 'last_sync', false ),
 			'last_post' => array( 'last_post', false ),
-            'phpversion' => array( 'phpversion', false ),
-            'wpcore_update' => array( 'wpcore_update', false ),
-            'plugin_update' => array( 'plugin_update', false ),
-            'theme_update' => array( 'theme_update', false ),
+			'phpversion' => array( 'phpversion', false ),
+			'wpcore_update' => array( 'wpcore_update', false ),
+			'plugin_update' => array( 'plugin_update', false ),
+			'theme_update' => array( 'theme_update', false ),
 		);
 
 		return $sortable_columns;
@@ -95,9 +95,9 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		$columns = array(
 			'cb'           => '<input type="checkbox" />',
 			'status'       => __( 'Status', 'mainwp' ),
-            'wpcore_update'       => '<i class="fa fa-wordpress" aria-hidden="true"></i>',
-            'plugin_update'       => '<i class="fa fa-plug" aria-hidden="true"></i>',
-            'theme_update'       => '<i class="fa fa-paint-brush" aria-hidden="true"></i>',
+			'wpcore_update'       => '<i class="fa fa-wordpress" aria-hidden="true"></i>',
+			'plugin_update'       => '<i class="fa fa-plug" aria-hidden="true"></i>',
+			'theme_update'       => '<i class="fa fa-paint-brush" aria-hidden="true"></i>',
 			'site'         => __( 'Site', 'mainwp' ),
 			'url'          => __( 'URL', 'mainwp' ),
 			'groups'       => __( 'Groups', 'mainwp' ),
@@ -106,29 +106,29 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			'last_post'    => __( 'Last Post', 'mainwp' ),
 			'notes'        => __( 'Notes', 'mainwp' ),
 			'site_actions' => __( 'Actions', 'mainwp' ),
-            'phpversion'   => __( 'PHP Version', 'mainwp' ),
+			'phpversion'   => __( 'PHP Version', 'mainwp' ),
 		);
 
 		$columns = apply_filters( 'mainwp-sitestable-getcolumns', $columns, $columns );
 
-        $disable_backup = false;
-        $primaryBackup = get_option('mainwp_primaryBackup');
-		$primaryBackupMethods = apply_filters("mainwp-getprimarybackup-methods", array());                
-        if (empty($primaryBackup)) {
-            if (!get_option('mainwp_enableLegacyBackupFeature')) {
-                $disable_backup = true;
-            }
-        } else if (!is_array($primaryBackupMethods) || empty($primaryBackupMethods)) {
-            $disable_backup = true;
+		$disable_backup = false;
+		$primaryBackup = get_option('mainwp_primaryBackup');
+		$primaryBackupMethods = apply_filters("mainwp-getprimarybackup-methods", array());
+		if (empty($primaryBackup)) {
+			if (!get_option('mainwp_enableLegacyBackupFeature')) {
+				$disable_backup = true;
+			}
+		} else if (!is_array($primaryBackupMethods) || empty($primaryBackupMethods)) {
+			$disable_backup = true;
 		}
-                
-        if ($disable_backup && isset($columns['backup'])) {
-                unset($columns['backup']);
-        }
-                
+
+		if ($disable_backup && isset($columns['backup'])) {
+			unset($columns['backup']);
+		}
+
 		return $columns;
 	}
-        
+
 	function column_site_actions( $item ) {
 		if ( $item['sync_errors'] != '' ) {
 			$reconnect_lnk = '<a class="mainwp_site_reconnect" href="#" siteid="' . $item['id'] . '" style="margin-right: .5em;" title="Reconnect child site"><i class="fa fa-plug fa-lg"></i></a>';
@@ -155,14 +155,14 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		} else {
 			$test_lnk = '<a href="#" class="mainwp_site_testconnection" class="test_connection" style="margin-right: .5em;" title="Test Connection"><i class="fa fa-link fa-lg"></i></a>';
 		}
-                
-                $backup_lnk = '';
+
+		$backup_lnk = '';
 		if ( ! mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
 			$backup_lnk = '';
 		} else {
-                    if (get_option('mainwp_enableLegacyBackupFeature')) {
-			$backup_lnk = '<a href="admin.php?page=managesites&backupid=' . $item['id'] . '" style="margin-right: .5em;" title="Backup Child Site"><i class="fa fa-hdd-o fa-lg"></i></a>';
-                    }
+			if (get_option('mainwp_enableLegacyBackupFeature')) {
+				$backup_lnk = '<a href="admin.php?page=managesites&backupid=' . $item['id'] . '" style="margin-right: .5em;" title="Backup Child Site"><i class="fa fa-hdd-o fa-lg"></i></a>';
+			}
 		}
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
@@ -318,151 +318,151 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		return $output;
 	}
 
-    function column_wpcore_update( $item ) {
-        $hasSyncErrors = ( $item['sync_errors'] != '' );
-        $output = '';
-        $total_wp_upgrades = 0;
-        if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
-		$website               = (object) $item;
-		$wp_upgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true );
-		if ( $website->is_ignoreCoreUpdates ) {
-			$wp_upgrades = array();
+	function column_wpcore_update( $item ) {
+		$hasSyncErrors = ( $item['sync_errors'] != '' );
+		$output = '';
+		$total_wp_upgrades = 0;
+		if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
+			$website               = (object) $item;
+			$wp_upgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true );
+			if ( $website->is_ignoreCoreUpdates ) {
+				$wp_upgrades = array();
+			}
+
+			if ( is_array( $wp_upgrades ) && count( $wp_upgrades ) > 0 ) {
+				$total_wp_upgrades ++;
+			}
 		}
 
-		if ( is_array( $wp_upgrades ) && count( $wp_upgrades ) > 0 ) {
-			$total_wp_upgrades ++;
+		if ( $total_wp_upgrades == 0 ) {
+			$mainwp_tu_color_code = 'mainwp-green';
+		} else if ( $total_wp_upgrades > 0 && $total_wp_upgrades < 5 ) {
+			$mainwp_tu_color_code = 'mainwp-yellow';
+		} else {
+			$mainwp_tu_color_code = 'mainwp-red';
 		}
-        }
-
-        if ( $total_wp_upgrades == 0 ) {
-                $mainwp_tu_color_code = 'mainwp-green';
-        } else if ( $total_wp_upgrades > 0 && $total_wp_upgrades < 5 ) {
-                $mainwp_tu_color_code = 'mainwp-yellow';
-        } else {
-                $mainwp_tu_color_code = 'mainwp-red';
-        }
 
 
-        $output .= '<span class="fa-stack fa-lg" title="'. $total_wp_upgrades . ' ' . _n( 'Available WP Core Update', 'Available WP Core Updates', $total_wp_upgrades, 'mainwp' ) . '">
+		$output .= '<span class="fa-stack fa-lg" title="'. $total_wp_upgrades . ' ' . _n( 'Available WP Core Update', 'Available WP Core Updates', $total_wp_upgrades, 'mainwp' ) . '">
         <i class="fa fa-circle fa-stack-2x ' . $mainwp_tu_color_code . '"></i><strong class="mainwp-white fa-stack-1x">' . $total_wp_upgrades . '</strong></span>';
 
 
-        return $output;
-    }
+		return $output;
+	}
 
-    function column_plugin_update( $item ) {
-        $hasSyncErrors = ( $item['sync_errors'] != '' );
-        $output = '';
-        $total_plugin_upgrades = 0;
-        if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
-		$website               = (object) $item;
-		$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
-		if ( $website->is_ignorePluginUpdates ) {
-			$plugin_upgrades = array();
-		}
+	function column_plugin_update( $item ) {
+		$hasSyncErrors = ( $item['sync_errors'] != '' );
+		$output = '';
+		$total_plugin_upgrades = 0;
+		if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
+			$website               = (object) $item;
+			$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
+			if ( $website->is_ignorePluginUpdates ) {
+				$plugin_upgrades = array();
+			}
 
-		$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
-		if ( is_array( $decodedPremiumUpgrades ) ) {
-			foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-				$premiumUpgrade['premium'] = true;
+			$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
+			if ( is_array( $decodedPremiumUpgrades ) ) {
+				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+					$premiumUpgrade['premium'] = true;
 
-				if ( $premiumUpgrade['type'] == 'plugin' ) {
-					if ( ! is_array( $plugin_upgrades ) ) {
-						$plugin_upgrades = array();
-					}
-					if ( ! $website->is_ignorePluginUpdates ) {
-						$plugin_upgrades[ $crrSlug ] = $premiumUpgrade;
+					if ( $premiumUpgrade['type'] == 'plugin' ) {
+						if ( ! is_array( $plugin_upgrades ) ) {
+							$plugin_upgrades = array();
+						}
+						if ( ! $website->is_ignorePluginUpdates ) {
+							$plugin_upgrades[ $crrSlug ] = $premiumUpgrade;
+						}
 					}
 				}
 			}
+
+			if ( is_array( $plugin_upgrades ) ) {
+				$ignored_plugins = json_decode( $website->ignored_plugins, true );
+				if ( is_array( $ignored_plugins ) ) {
+					$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+				}
+
+				$ignored_plugins = json_decode( $this->userExtension->ignored_plugins, true );
+				if ( is_array( $ignored_plugins ) ) {
+					$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+				}
+
+				$total_plugin_upgrades += count( $plugin_upgrades );
+			}
 		}
 
-		if ( is_array( $plugin_upgrades ) ) {
-			$ignored_plugins = json_decode( $website->ignored_plugins, true );
-			if ( is_array( $ignored_plugins ) ) {
-				$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
-			}
-
-			$ignored_plugins = json_decode( $this->userExtension->ignored_plugins, true );
-			if ( is_array( $ignored_plugins ) ) {
-				$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
-			}
-
-			$total_plugin_upgrades += count( $plugin_upgrades );
+		if ( $total_plugin_upgrades == 0 ) {
+			$mainwp_tu_color_code = 'mainwp-green';
+		} else if ( $total_plugin_upgrades > 0 && $total_plugin_upgrades < 5 ) {
+			$mainwp_tu_color_code = 'mainwp-yellow';
+		} else {
+			$mainwp_tu_color_code = 'mainwp-red';
 		}
-        }
-
-        if ( $total_plugin_upgrades == 0 ) {
-                $mainwp_tu_color_code = 'mainwp-green';
-        } else if ( $total_plugin_upgrades > 0 && $total_plugin_upgrades < 5 ) {
-                $mainwp_tu_color_code = 'mainwp-yellow';
-        } else {
-                $mainwp_tu_color_code = 'mainwp-red';
-        }
 
 
-        $output .= '<span class="fa-stack fa-lg" title="'. $total_plugin_upgrades . ' ' . _n( 'Available Plugin Update', 'Available Plugin Updates', $total_plugin_upgrades, 'mainwp' ) . '">
+		$output .= '<span class="fa-stack fa-lg" title="'. $total_plugin_upgrades . ' ' . _n( 'Available Plugin Update', 'Available Plugin Updates', $total_plugin_upgrades, 'mainwp' ) . '">
         <i class="fa fa-circle fa-stack-2x ' . $mainwp_tu_color_code . '"></i><strong class="mainwp-white fa-stack-1x">' . $total_plugin_upgrades . '</strong></span>';
 
 
-        return $output;
-    }
+		return $output;
+	}
 
-    function column_theme_update( $item ) {
-        $hasSyncErrors = ( $item['sync_errors'] != '' );
-        $output = '';
-        $total_theme_upgrades = 0;
-        if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
-		$website               = (object) $item;
-        $theme_upgrades = json_decode( $website->theme_upgrades, true );
-		if ( $website->is_ignoreThemeUpdates ) {
-			$theme_upgrades = array();
-		}
+	function column_theme_update( $item ) {
+		$hasSyncErrors = ( $item['sync_errors'] != '' );
+		$output = '';
+		$total_theme_upgrades = 0;
+		if ( $item['offline_check_result'] == 1 && ! $hasSyncErrors ) {
+			$website               = (object) $item;
+			$theme_upgrades = json_decode( $website->theme_upgrades, true );
+			if ( $website->is_ignoreThemeUpdates ) {
+				$theme_upgrades = array();
+			}
 
-		$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
-		if ( is_array( $decodedPremiumUpgrades ) ) {
-			foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-				$premiumUpgrade['premium'] = true;
-                                    if ( $premiumUpgrade['type'] == 'theme' ) {
-					if ( ! is_array( $theme_upgrades ) ) {
-						$theme_upgrades = array();
-					}
-					if ( ! $website->is_ignoreThemeUpdates ) {
-						$theme_upgrades[ $crrSlug ] = $premiumUpgrade;
+			$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
+			if ( is_array( $decodedPremiumUpgrades ) ) {
+				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+					$premiumUpgrade['premium'] = true;
+					if ( $premiumUpgrade['type'] == 'theme' ) {
+						if ( ! is_array( $theme_upgrades ) ) {
+							$theme_upgrades = array();
+						}
+						if ( ! $website->is_ignoreThemeUpdates ) {
+							$theme_upgrades[ $crrSlug ] = $premiumUpgrade;
+						}
 					}
 				}
 			}
+
+			if ( is_array( $theme_upgrades ) ) {
+				$ignored_themes = json_decode( $website->ignored_themes, true );
+				if ( is_array( $ignored_themes ) ) {
+					$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+				}
+
+				$ignored_themes = json_decode( $this->userExtension->ignored_themes, true );
+				if ( is_array( $ignored_themes ) ) {
+					$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+				}
+
+				$total_theme_upgrades += count( $theme_upgrades );
+			}
 		}
 
-		if ( is_array( $theme_upgrades ) ) {
-			$ignored_themes = json_decode( $website->ignored_themes, true );
-			if ( is_array( $ignored_themes ) ) {
-				$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
-			}
-
-			$ignored_themes = json_decode( $this->userExtension->ignored_themes, true );
-			if ( is_array( $ignored_themes ) ) {
-				$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
-			}
-
-			$total_theme_upgrades += count( $theme_upgrades );
+		if ( $total_theme_upgrades == 0 ) {
+			$mainwp_tu_color_code = 'mainwp-green';
+		} else if ( $total_theme_upgrades > 0 && $total_theme_upgrades < 5 ) {
+			$mainwp_tu_color_code = 'mainwp-yellow';
+		} else {
+			$mainwp_tu_color_code = 'mainwp-red';
 		}
-        }
-
-        if ( $total_theme_upgrades == 0 ) {
-                $mainwp_tu_color_code = 'mainwp-green';
-        } else if ( $total_theme_upgrades > 0 && $total_theme_upgrades < 5 ) {
-                $mainwp_tu_color_code = 'mainwp-yellow';
-        } else {
-                $mainwp_tu_color_code = 'mainwp-red';
-        }
 
 
-        $output .= '<span class="fa-stack fa-lg" title="'. $total_theme_upgrades . ' ' . _n( 'Available Theme Update', 'Available Theme Updates', $total_theme_upgrades, 'mainwp' ) . '">
+		$output .= '<span class="fa-stack fa-lg" title="'. $total_theme_upgrades . ' ' . _n( 'Available Theme Update', 'Available Theme Updates', $total_theme_upgrades, 'mainwp' ) . '">
         <i class="fa fa-circle fa-stack-2x ' . $mainwp_tu_color_code . '"></i><strong class="mainwp-white fa-stack-1x">' . $total_theme_upgrades . '</strong></span>';
 
-        return $output;
-    }
+		return $output;
+	}
 
 	function column_site( $item ) {
 		$actions = array(
@@ -520,9 +520,9 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	}
 
 	function column_backup( $item ) {
-        $siteObj = new stdClass();
-        $siteObj->id = $item['id'];
-        $lastBackup = MainWP_DB::Instance()->getWebsiteOption( $siteObj, 'primary_lasttime_backup' );
+		$siteObj = new stdClass();
+		$siteObj->id = $item['id'];
+		$lastBackup = MainWP_DB::Instance()->getWebsiteOption( $siteObj, 'primary_lasttime_backup' );
 
 		$backupnow_lnk = apply_filters( 'mainwp-managesites-getbackuplink', '', $item['id'], $lastBackup );
 		if ( ! empty( $backupnow_lnk ) ) {
@@ -585,29 +585,29 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 	function column_notes( $item ) {
 		//$note = strip_tags( $item['note'], '<p><strong><em><br/><hr/><a></p></strong></em></a>' );
-        //$note = wp_kses_post( $item['note'] );
-        $note = html_entity_decode($item['note']); // to fix
-        $lastupdate = $item['note_lastupdate'];
+		//$note = wp_kses_post( $item['note'] );
+		$note = html_entity_decode($item['note']); // to fix
+		$lastupdate = $item['note_lastupdate'];
 
-        $txt_lastupdate = '';
-        if ( $lastupdate ) {
-	        $txt_lastupdate = '<br/>' . __( 'Last update:', 'mainwp' ) . ' ' . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $lastupdate ) );
-        }
+		$txt_lastupdate = '';
+		if ( $lastupdate ) {
+			$txt_lastupdate = '<br/>' . __( 'Last update:', 'mainwp' ) . ' ' . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $lastupdate ) );
+		}
 
 		if ( $item['note'] == '' ) {
 			return sprintf( '<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_%1$s">' . '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) . '</a>' . $txt_lastupdate . '<span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $note );
 		} else {
-            $raw_note = esc_html($note);
+			$raw_note = esc_html($note);
 			return sprintf( '<a href="#" class="mainwp_notes_show_all mainwp-green" id="mainwp_notes_%1$s">' . MainWP_Utility::renderNoteTooltip( $raw_note, '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) ) . '</a>' . $txt_lastupdate . '<span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $note );
 		}
 	}
 
-    function column_phpversion( $item ) {
+	function column_phpversion( $item ) {
 		return $item['phpversion'];
 	}
 
-        // to fix data-placeholder
-    protected function bulk_actions( $which = '' ) {
+	// to fix data-placeholder
+	protected function bulk_actions( $which = '' ) {
 		if ( is_null( $this->_actions ) ) {
 			$no_new_actions = $this->_actions = $this->get_bulk_actions();
 			/**
@@ -939,14 +939,34 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 	function single_row( $item ) {
 		static $row_class = '';
-		$row_class = ( $row_class == '' ? ' class="alternate"' : '' );
+		$row_class = ( $row_class == '' ? 'alternate' : '' );
 
-		echo '<tr' . $row_class . ' siteid="' . $item['id'] . '" site-url="' . $item['url'] . '">';
+		$classes = '';
+		if (isset($item['groups']) && !empty($item['groups'])) {
+			$group_class = $item['groups'];
+			$group_class = explode(',', $group_class);
+			if(is_array($group_class)) {
+				foreach( $group_class as $_class) {
+					$_class = trim($_class);
+					$_class = MainWP_Utility::sanitize_file_name( $_class );
+					$classes .= " " . strtolower($_class);
+				}
+			} else {
+				$_class = MainWP_Utility::sanitize_file_name( $group_class );
+				$classes .= " " . strtolower($_class);
+			}
+		}
+
+
+		$classes = trim($classes);
+		$classes = ' class="child-site ' . $classes . " " . $row_class. '"';
+
+		echo '<tr id="child-site-' . $item['id'] . '"' . $classes . ' siteid="' . $item['id'] . '" site-url="' . $item['url'] . '">';
 		$this->single_row_columns( $item );
 		echo '</tr>';
 	}
-        
-        public function print_column_headers( $with_id = true ) {
+
+	public function print_column_headers( $with_id = true ) {
 		list( $columns, $hidden, $sortable, $primary ) = $this->get_column_info();
 
 		$current_url = set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
@@ -967,7 +987,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		if ( ! empty( $columns['cb'] ) ) {
 			static $cb_counter = 1;
 			$columns['cb'] = '<label class="screen-reader-text" for="cb-select-all-' . $cb_counter . '">' . __( 'Select All' ) . '</label>'
-				. '<input id="cb-select-all-' . $cb_counter . '" type="checkbox" />';
+			                 . '<input id="cb-select-all-' . $cb_counter . '" type="checkbox" />';
 			$cb_counter++;
 		}
 
@@ -1006,27 +1026,27 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			$tag = ( 'cb' === $column_key ) ? 'th' : 'th'; // to fix layout
 			$scope = ( 'th' === $tag ) ? 'scope="col"' : '';
 			$id = $with_id ? "id='$column_key'" : '';
-                        
-                        // support draggable column
-                        if ($column_key !== 'cb') {
-                            $class[] = 'drag-enable';
-                        }
-                        
+
+			// support draggable column
+			if ($column_key !== 'cb') {
+				$class[] = 'drag-enable';
+			}
+
 			if ( !empty( $class ) )
 				$class = "class='" . join( ' ', $class ) . "'";
-                        
-                        // to fix layout
-                        $column_display_name ='<div class="header-wrap">' . $column_display_name . '</div>';
-                        
-                        // drag col handle
-                        if ($column_key !== 'cb' ) {
-                            $column_display_name = '<div class="table-handle"></div>' . $column_display_name;
-                        }
-                        
+
+			// to fix layout
+			$column_display_name ='<div class="header-wrap">' . $column_display_name . '</div>';
+
+			// drag col handle
+			if ($column_key !== 'cb' ) {
+				$column_display_name = '<div class="table-handle"></div>' . $column_display_name;
+			}
+
 			echo "<$tag $scope $id $class>$column_display_name</$tag>";
 		}
 	}
-        
+
 
 	function extra_tablenav( $which ) {
 		?>

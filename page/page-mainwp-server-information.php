@@ -889,7 +889,7 @@ public static function renderFooter( $shownPage ) {
 	public static function getFileSystemMethodCheck() {
 		$fsmethod = self::getFileSystemMethod();
 		if ( $fsmethod == 'direct' ) {
-			return '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>';
+			return '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>';
 		} else {
 			return self::getWarningHTML();
 		}

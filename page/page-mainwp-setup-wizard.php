@@ -1312,6 +1312,20 @@ class MainWP_Setup_Wizard {
 	private function uptime_robot_fetch( $url ) {
 		$url = trim( $url );
 		$ch = curl_init();
+
+        // cURL offers really easy proxy support.
+        $proxy = new WP_HTTP_Proxy();
+        if ($proxy->is_enabled() && $proxy->send_through_proxy($url)) {
+            curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+            curl_setopt($ch, CURLOPT_PROXY, $proxy->host());
+            curl_setopt($ch, CURLOPT_PROXYPORT, $proxy->port());
+
+            if ($proxy->use_authentication()) {
+                curl_setopt($ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
+                curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy->authentication());
+            }
+        }
+
 		curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
 		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 50 );

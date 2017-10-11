@@ -105,7 +105,21 @@ class MainWP_Utility {
 		$postdata = array( 'test' => 'yes' );
 
 		$ch = curl_init();
-		curl_setopt( $ch, CURLOPT_URL, $url );
+
+        // cURL offers really easy proxy support.
+        $proxy = new WP_HTTP_Proxy();
+        if ($proxy->is_enabled() && $proxy->send_through_proxy($url)) {
+            curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+            curl_setopt($ch, CURLOPT_PROXY, $proxy->host());
+            curl_setopt($ch, CURLOPT_PROXYPORT, $proxy->port());
+
+            if ($proxy->use_authentication()) {
+                curl_setopt($ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
+                curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy->authentication());
+            }
+        }
+
+        curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
 		curl_setopt( $ch, CURLOPT_POST, true );
@@ -665,6 +679,19 @@ class MainWP_Utility {
 
 				$ch = curl_init();
 
+                // cURL offers really easy proxy support.
+                $proxy = new WP_HTTP_Proxy();
+                if ($proxy->is_enabled() && $proxy->send_through_proxy($url)) {
+                    curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+                    curl_setopt($ch, CURLOPT_PROXY, $proxy->host());
+                    curl_setopt($ch, CURLOPT_PROXYPORT, $proxy->port());
+
+                    if ($proxy->use_authentication()) {
+                        curl_setopt($ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
+                        curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy->authentication());
+                    }
+                }
+
 				//For WPE upgrades we require cookies too, for normal WPE syncing we do not require cookies, messes up the connection
 				if ( ( $website != null ) && ( ( $website->wpe != 1 ) || ( isset( $others['upgrade'] ) && ( $others['upgrade'] === true ) ) ) ) {
 					$cookieFile = $cookieDir . '/' . sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
@@ -941,6 +968,19 @@ class MainWP_Utility {
 
 			$ch = curl_init();
 
+            // cURL offers really easy proxy support.
+            $proxy = new WP_HTTP_Proxy();
+            if ($proxy->is_enabled() && $proxy->send_through_proxy($url)) {
+                curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+                curl_setopt($ch, CURLOPT_PROXY, $proxy->host());
+                curl_setopt($ch, CURLOPT_PROXYPORT, $proxy->port());
+
+                if ($proxy->use_authentication()) {
+                    curl_setopt($ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
+                    curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy->authentication());
+                }
+            }
+
 			//For WPE upgrades we require cookies too, for normal WPE syncing we do not require cookies, messes up the connection
 			if ( ( $website != null ) && ( ( $website->wpe != 1 ) || ( isset( $others['upgrade'] ) && ( $others['upgrade'] === true ) ) ) ) {
 				$cookieFile = $cookieDir . '/' . sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
@@ -1138,6 +1178,20 @@ class MainWP_Utility {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
 		$ch = curl_init();
+
+        // cURL offers really easy proxy support.
+        $proxy = new WP_HTTP_Proxy();
+        if ($proxy->is_enabled() && $proxy->send_through_proxy($url)) {
+            curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+            curl_setopt($ch, CURLOPT_PROXY, $proxy->host());
+            curl_setopt($ch, CURLOPT_PROXYPORT, $proxy->port());
+
+            if ($proxy->use_authentication()) {
+                curl_setopt($ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
+                curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy->authentication());
+            }
+        }
+
 		curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 		curl_setopt( $ch, CURLOPT_POST, true );
@@ -1330,6 +1384,19 @@ class MainWP_Utility {
 
 		$ch = curl_init();
 
+        // cURL offers really easy proxy support.
+        $proxy = new WP_HTTP_Proxy();
+        if ($proxy->is_enabled() && $proxy->send_through_proxy($url)) {
+            curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+            curl_setopt($ch, CURLOPT_PROXY, $proxy->host());
+            curl_setopt($ch, CURLOPT_PROXYPORT, $proxy->port());
+
+            if ($proxy->use_authentication()) {
+                curl_setopt($ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
+                curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy->authentication());
+            }
+        }
+
 		//For WPE upgrades we require cookies too, for normal WPE syncing we do not require cookies, messes up the connection
 		if ( ( $website != null ) && ( ( $website->wpe != 1 ) || ( isset( $others['upgrade'] ) && ( $others['upgrade'] === true ) ) ) ) {
 			$cookieFile = $cookieDir . '/' . sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
@@ -1511,6 +1578,20 @@ class MainWP_Utility {
 			}
 		}
 		$ch = curl_init( str_replace( ' ', '%20', $url ) );
+
+        // cURL offers really easy proxy support.
+        $proxy = new WP_HTTP_Proxy();
+        if ($proxy->is_enabled() && $proxy->send_through_proxy($url)) {
+            curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+            curl_setopt($ch, CURLOPT_PROXY, $proxy->host());
+            curl_setopt($ch, CURLOPT_PROXYPORT, $proxy->port());
+
+            if ($proxy->use_authentication()) {
+                curl_setopt($ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
+                curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy->authentication());
+            }
+        }
+
 		curl_setopt( $ch, CURLOPT_FILE, $fp );
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
 		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
@@ -1768,6 +1849,20 @@ class MainWP_Utility {
 		//$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$ch    = curl_init();
+
+        // cURL offers really easy proxy support.
+        $proxy = new WP_HTTP_Proxy();
+        if ($proxy->is_enabled() && $proxy->send_through_proxy($url)) {
+            curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+            curl_setopt($ch, CURLOPT_PROXY, $proxy->host());
+            curl_setopt($ch, CURLOPT_PROXYPORT, $proxy->port());
+
+            if ($proxy->use_authentication()) {
+                curl_setopt($ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
+                curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy->authentication());
+            }
+        }
+
 		curl_setopt( $ch, CURLOPT_HEADER, 0 );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 ); //Set curl to return the data instead of printing it to the browser.
 		curl_setopt( $ch, CURLOPT_URL, $url );

@@ -24,7 +24,7 @@ class MainWP_Notes {
 				if ( $website->note == '' ) {
 					echo 'No Saved Notes';
 				} else {
-					echo wp_kses_post( stripslashes( $website->note ) );
+					echo html_entity_decode($website->note);
 				}
 				?>
 			</div>

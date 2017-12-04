@@ -242,46 +242,76 @@ class MainWP_Manage_Sites_View {
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 		$html = '';
 		if ( ! empty( $str_breadcrumb ) ) {
-			$html = '<div class="postbox"><div class="inside"><span class="mainwp-left mainwp-cols-2 mainwp-padding-top-15"><i class="fa fa-map-signs" aria-hidden="true"></i> ' . __( 'You are here: ','mainwp' ) . '&nbsp;&nbsp;' .  $str_breadcrumb . '
-                    </span><span class="mainwp-right mainwp-padding-top-10 mainwp-cols-2 mainwp-t-align-right">' .  __( 'Jump to ','mainwp' ) . '
-                        <select id="mainwp-quick-jump-child" name="" class="mainwp-select2">
-                            <option value="" selected="selected">' . __( 'Select Site ','mainwp' ) . '</option>';
-			while ( $websites && ($website = @MainWP_DB::fetch_object( $websites )) ) {
-				$html .= '<option value="'.$website->id.'">' . stripslashes( $website->name ) . '</option>';
+            $selectOpts = array();
+            while ( $websites && ($website = @MainWP_DB::fetch_object( $websites )) ) {
+                $selectOpts[] = array( 'siteid' => $website->id, 'name' => stripslashes( $website->name ) );				
 			}
-				@MainWP_DB::free_result( $websites );
+            @MainWP_DB::free_result( $websites );
+            
+            if ($selectOpts) {    
+                $select_ops_html = '';
+                $prev_siteid = $next_siteid = 0;
+                foreach ( $selectOpts as $i => $val ) {
+                    $select_ops_html .= '<option value="'.$val['siteid'].'">' . $val['name'] . '</option>';
+                    if ($val['siteid'] == $site_id) {                        
+                        if ($i-1 >= 0) {
+                            $prev_siteid = $selectOpts[$i-1]['siteid'];
+                        }
+                        if ($i+1 <= count($selectOpts)) {
+                            $next_siteid = $selectOpts[$i+1]['siteid'];
+                        }
+                    }
+                }
+                
+                $pre_next_html = '<div class="sites-navi-buttons">';
+                if ($prev_siteid)
+                    $pre_next_html .= '<button class="left dashicons" onclick="location.href=\'admin.php?page=managesites&dashboard=' . $prev_siteid. '\';" title="' . __('Previous', 'mainwp') . '" ><span class="screen-reader-text">Previous</span></button>';
+                else
+                    $pre_next_html .= '<button class="left dashicons disabled"><span class="screen-reader-text">Edit previous media item</span></button>';
+                
+                if ($next_siteid) 
+                    $pre_next_html .= '<button class="right dashicons" onclick="location.href=\'admin.php?page=managesites&dashboard=' . $next_siteid. '\';" title="' . __('Next', 'mainwp') . '"><span class="screen-reader-text">Next</span></button>';
+                else
+                    $pre_next_html .= '<button class="right dashicons disabled"><span class="screen-reader-text">Edit next media item</span></button>';
+                
+                $pre_next_html .= '</div>';                        
+                                
+                $html = '<div class="postbox mainwp-breadcrumb"><div class="inside"><div class="breadcrumb-wrap">' . 
+                        '<span class="mainwp-left mainwp-cols-2 mainwp-padding-top-15"><i class="fa fa-map-signs" aria-hidden="true"></i> ' . __( 'You are here: ','mainwp' ) . '&nbsp;&nbsp;' .  $str_breadcrumb . '</span> ' .  
+                        '<span class="mainwp-right mainwp-padding-top-10 mainwp-cols-2 mainwp-t-align-right">' . __( 'Jump to ','mainwp' ) . '
+                            <select id="mainwp-quick-jump-child" name="" class="mainwp-select2">
+                                <option value="" selected="selected">' . __( 'Select Site ','mainwp' ) . '</option>';                
+                $html .= $select_ops_html;                
+                $html .= '
+                        </select>
+                        <select id="mainwp-quick-jump-page" name="" class="mainwp-select2">
+                            <option value="" selected="selected">' . __( 'Select page ','mainwp' ) . '</option>
+                            <option value="dashboard">' . __( 'Overview ','mainwp' ) . '</option>
+                            <option value="id">' . __( 'Edit ','mainwp' ) . '</option>
+                                                    <option value="updateid">' . __( 'Updates','mainwp' ) . '</option>';
 
-                
-		
-                
-			$html .= '
-					</select>
-					<select id="mainwp-quick-jump-page" name="" class="mainwp-select2">
-						<option value="" selected="selected">' . __( 'Select page ','mainwp' ) . '</option>
-						<option value="dashboard">' . __( 'Overview ','mainwp' ) . '</option>
-						<option value="id">' . __( 'Edit ','mainwp' ) . '</option>
-                                                <option value="updateid">' . __( 'Updates','mainwp' ) . '</option>';
-                        
-                        $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
-                        if ($enableLegacyBackupFeature) {
-                            $html .= '<option value="backupid">' . __( 'Backup ','mainwp' ) . '</option>';
-                        } else {
-                            $primaryBackup = get_option( 'mainwp_primaryBackup' );
-                            if (!empty($primaryBackup)) {
-                                $customPage = apply_filters( 'mainwp-getcustompage-backups', false );
-                                if ( is_array( $customPage ) && isset( $customPage['slug'] )) {
-                                    $html .= '<option value="' . 'ManageBackups' . $customPage['slug'] . '">' . $customPage['title'] . '</option>';
+                            $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
+                            if ($enableLegacyBackupFeature) {
+                                $html .= '<option value="backupid">' . __( 'Backup ','mainwp' ) . '</option>';
+                            } else {
+                                $primaryBackup = get_option( 'mainwp_primaryBackup' );
+                                if (!empty($primaryBackup)) {
+                                    $customPage = apply_filters( 'mainwp-getcustompage-backups', false );
+                                    if ( is_array( $customPage ) && isset( $customPage['slug'] )) {
+                                        $html .= '<option value="' . 'ManageBackups' . $customPage['slug'] . '">' . $customPage['title'] . '</option>';
+                                    }
+
                                 }
-
-                            }
-                        }   
-                        $html .= '<option value="scanid">' . __( 'Security Scan ','mainwp' ) . '</option>
-					</select>
-				</span>
-				<div style="clear: both;"></div>
-				</div>
-			</div>';
-		}
+                            }   
+                            $html .= '<option value="scanid">' . __( 'Security Scan ','mainwp' ) . '</option>
+                        </select>' .
+                    '</span>' .                     
+                     '</div>' .  // breadcrumb-wrap
+                    $pre_next_html .                    
+                    '</div>' . 
+                '</div>';
+            }
+        }
 
 		return $html;
 	}
@@ -750,6 +780,7 @@ class MainWP_Manage_Sites_View {
                             update_option( 'mainwp_opts_saving_status', $current_options );
                         }
                         if (!$disabled_pop_notice) {
+                            if (false) {
                             ?>
                             <div id="newsite-pop-box" title="<?php _e('Not sure what to add here?'); ?>" style="display: none;">
                                 <?php _e('Please check this page:', 'mainwp');?> <a href="" id="connection_detail_lnk" target="_blank"></a>                            
@@ -759,6 +790,24 @@ class MainWP_Manage_Sites_View {
                                     <input id="newsite-pop-box-disable" type="button" name="donotshow" value="<?php echo esc_attr('Don\'t show this again', 'mainwp'); ?>" class="button"/>                                
                                 </p>
                             </div>
+                            <?php } ?>
+                                <div class="mainwp-popup-overlay-hidden" id="newsite-pop-box" tabindex="0" role="dialog" style="text-align: center">        
+                                 <div class="mainwp-popup-backdrop"></div>
+                                 <div class="mainwp-popup-wrap wp-clearfix" role="document">
+                                     <div class="mainwp-popup-header">
+                                         <h2 class="title" ><?php _e('Not sure what to add here?'); ?></h2>
+                                         <button type="button" class="close dashicons dashicons-no"><span class="screen-reader-text"><?php _e( 'Close dialog' ); ?></span></button>
+                                     </div>                
+                                     <div class="mainwp-popup-content" style="text-align: left" id="refresh-status-content">
+                                         <?php _e('Please check this page:', 'mainwp');?> <a href="" id="connection_detail_lnk" target="_blank"></a>                                                                    
+                                     </div>    
+                                     <div class="mainwp-popup-actions">
+                                         <input id="newsite-pop-box-close" type="button" name="close" value="Close" class="button"/>
+                                         <input id="newsite-pop-box-disable" type="button" name="donotshow" value="<?php echo esc_attr('Don\'t show this again', 'mainwp'); ?>" class="button"/>                                
+                                     </div>
+                                 </div>        
+                             </div>   
+
                             <?php
                         }
                     }
@@ -774,22 +823,27 @@ class MainWP_Manage_Sites_View {
                                     <?php } ?>                                         
                                     <?php if (!$disabled_pop_notice) { ?>                                            
                                             var pop_showed = false;
-                                            jQuery("#mainwp_managesites_add_wpurl").blur(function() {                                                
+                                            jQuery("#mainwp_managesites_add_wpurl").blur(function() {      
+                                                if (jQuery('#mainwp_managesites_add_wpurl').val().trim() == '')
+                                                    return false;
                                                 var detail_url = jQuery('#mainwp_managesites_add_wpurl_protocol option:selected').text() + jQuery('#mainwp_managesites_add_wpurl').val().trim() + '/wp-admin/options-general.php?page=mainwp_child_tab&tab=connection-detail';
                                                 jQuery('#connection_detail_lnk').attr('href', detail_url).text(__('Connection Details'));
                                                 if (!pop_showed) {
                                                     pop_showed = true;
-                                                    jQuery('#newsite-pop-box').dialog({
-                                                        resizable: false,
-                                                        height: 150,
-                                                        width: 500,
-                                                        modal: true,
-                                                        close: function(event, ui) {jQuery('#newsite-pop-box').dialog('destroy');}});                                                
+//                                                    jQuery('#newsite-pop-box').dialog({
+//                                                        resizable: false,
+//                                                        height: 150,
+//                                                        width: 500,
+//                                                        modal: true,
+//                                                        close: function(event, ui) {jQuery('#newsite-pop-box').dialog('destroy');}});  
+                                                    mainwpPopup.setCustomWrapper('#newsite-pop-box');
+                                                    mainwpPopup.init({title: __("Not sure what to add here?"), reloadAfterClose: false}); // do not reload after popup closed
                                                 } 
                                             });
                                             jQuery('#newsite-pop-box-close').live('click', function(event)
                                             {                                                
-                                                jQuery('#newsite-pop-box').dialog('destroy');
+                                                //jQuery('#newsite-pop-box').dialog('destroy');                                                
+                                                mainwpPopup.close();        
                                             });
                                             
                                             jQuery('#newsite-pop-box-disable').live('click', function(event)
@@ -802,7 +856,8 @@ class MainWP_Manage_Sites_View {
                                                 };
                                                 jQuery.post(ajaxurl, data, function (res) {
                                                 });
-                                                jQuery('#newsite-pop-box').dialog('destroy');
+                                                //jQuery('#newsite-pop-box').dialog('destroy');                                                
+                                                mainwpPopup.close();        
                                             });
                                             
                                     <?php } ?> 
@@ -1231,15 +1286,36 @@ class MainWP_Manage_Sites_View {
         <?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
 			<div class="mainwp-notice mainwp-notice-blue"><?php echo sprintf( __('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>           
         <?php } 
-			MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_managesites_backup'); 		
-			?>
-			<div id="managesite-backup-status-box" title="Backup <?php echo stripslashes( $website->name ); ?>" style="display: none; text-align: center">
-				<div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesite-backup-status-text">
-				</div>
-				<input id="managesite-backup-status-close" type="button" name="Close" value="Cancel" class="button" />
-			</div>
-                <?php
-				}
+        MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_managesites_backup'); 
+        
+        if (false) {
+            ?>
+            <div id="managesite-backup-status-box" title="Backup <?php echo stripslashes( $website->name ); ?>" style="display: none; text-align: center">
+                <div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesite-backup-status-text">
+                </div>
+                <input id="managesite-backup-status-close" type="button" name="Close" value="Cancel" class="button" />
+            </div>
+            <?php
+        }
+        ?>
+            
+        <div class="mainwp-popup-overlay-hidden" id="managesite-backup-status-box" tabindex="0" role="dialog" style="text-align: center">        
+            <div class="mainwp-popup-backdrop"></div>
+            <div class="mainwp-popup-wrap wp-clearfix" role="document">
+                <div class="mainwp-popup-header">
+                    <h2 class="title" >Backup <?php echo stripslashes( $website->name ); ?></h2>
+                    <button type="button" class="close dashicons dashicons-no"><span class="screen-reader-text"><?php _e( 'Close dialog' ); ?></span></button>
+                </div>                
+                <div class="mainwp-popup-content" style="text-align: left" id="refresh-status-content">
+                </div>    
+                <div class="mainwp-popup-actions">
+                    <input id="managesite-backup-status-close" type="button" name="Close" value="Cancel" class="button" />
+                </div>
+            </div>        
+        </div>   
+            
+        <?php
+    }
 
 	public static function renderBackupDetails($post, $metabox) {	
 		$websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;

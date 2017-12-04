@@ -26,6 +26,7 @@ class MainWP_Bulk_Add {
 				$output->errors[ $website->id ] = __( 'Undefined error! Please reinstall the MainWP Child plugin on the child site', 'mainwp' );
 			}
 		} else {
+            MainWP_Logger::Instance()->debugForWebsite( $website, 'PostingBulk_handler', '[' . $website->url . '] Result was: [' . $data . ']' );
 			$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( 'NOMAINWP', $website->url ) );
 		}
 	}

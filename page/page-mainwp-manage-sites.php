@@ -1347,12 +1347,17 @@ class MainWP_Manage_Sites {
                 </script>
                 
 		</div>
+                                
+    <?php    
+    // not used this
+    if (false) { ?>            
+                                
 		<div id="managesites-backup-box" title="Full backup required" style="display: none; text-align: center">
 			<div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesites-backup-content">
 			</div>
-			<input id="managesites-backup-all" type="button" name="Backup All" value="<?php esc_attr_e( 'Backup all', 'mainwp' ); ?>" class="button-primary"/>
-                        <a id="managesites-backup-now" href="#" target="_blank" style="display: none"  class="button-primary button"><?php _e( 'Backup Now', 'mainwp' ); ?></a>
-			<input id="managesites-backup-ignore" type="button" name="Ignore" value="<?php esc_attr_e( 'Ignore', 'mainwp' ); ?>" class="button"/>
+            <input id="managesites-backup-all" type="button" name="Backup All" value="<?php esc_attr_e( 'Backup all', 'mainwp' ); ?>" class="button-primary"/>
+            <a id="managesites-backup-now" href="#" target="_blank" style="display: none"  class="button-primary button"><?php _e( 'Backup Now', 'mainwp' ); ?></a>&nbsp;
+            <input id="managesites-backup-ignore" type="button" name="Ignore" value="<?php esc_attr_e( 'Ignore', 'mainwp' ); ?>" class="button"/>            
 		</div>
 
 		<div id="managesites-backupnow-box" title="Full backup" style="display: none; text-align: center">
@@ -1360,9 +1365,25 @@ class MainWP_Manage_Sites {
 			</div>
 			<input id="managesites-backupnow-close" type="button" name="Ignore" value="<?php esc_attr_e( 'Cancel', 'mainwp' ); ?>" class="button"/>
 		</div>
-
-		<?php
-
+    <?php } ?>
+                                
+        <div class="mainwp-popup-overlay-hidden" id="managesites-backup-box" tabindex="0" role="dialog" style="text-align: center">        
+            <div class="mainwp-popup-backdrop"></div>
+            <div class="mainwp-popup-wrap wp-clearfix" role="document">
+                <div class="mainwp-popup-header">
+                    <h2 class="title" >Full backup required</h2>
+                    <button type="button" class="close dashicons dashicons-no"><span class="screen-reader-text"><?php _e( 'Close dialog' ); ?></span></button>
+                </div>                
+                <div class="mainwp-popup-content" style="text-align: left" id="refresh-status-content">
+                </div>    
+                <div class="mainwp-popup-actions">
+                    <input id="managesites-backup-all" type="button" name="Backup All" value="<?php esc_attr_e( 'Backup all', 'mainwp' ); ?>" class="button-primary"/>
+                    <a id="managesites-backup-now" href="#" target="_blank" style="display: none"  class="button-primary button"><?php _e( 'Backup Now', 'mainwp' ); ?></a>&nbsp;
+                    <input id="managesites-backup-ignore" type="button" name="Ignore" value="<?php esc_attr_e( 'Ignore', 'mainwp' ); ?>" class="button"/>                        
+                </div>
+            </div>        
+        </div>                
+        <?php                                
 		self::renderFooter( '' );
 	}
 
@@ -1625,12 +1646,18 @@ class MainWP_Manage_Sites {
 			$website = MainWP_DB::Instance()->getWebsiteById( $_POST['id'] );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				$error = '';
-
-				try {
-					$information = MainWP_Utility::fetchUrlAuthed( $website, 'deactivate' );
-				} catch ( MainWP_Exception $e ) {
-					$error = $e->getMessage();
-				}
+                
+                // deactive child plugin on live site only, 
+                // do not deactive child on staging site, it will deactive child plugin of source site
+                if (! $website->is_staging ) { 
+                    try {
+                        $information = MainWP_Utility::fetchUrlAuthed( $website, 'deactivate' );
+                    } catch ( MainWP_Exception $e ) {
+                        $error = $e->getMessage();
+                    }
+                } else {
+                    $information['removed'] = true;
+                }
 
                 // delete icon file
                 $favi     = MainWP_DB::Instance()->getWebsiteOption( $website, 'favi_icon', '' );
@@ -1653,6 +1680,8 @@ class MainWP_Manage_Sites {
 					die( json_encode( array( 'error' => $error ) ) );
 				} else if ( isset( $information['deactivated'] ) ) {
 					die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+				} else if ( isset( $information['removed'] ) ) {
+					die( json_encode( array( 'result' => 'REMOVED' ) ) );
 				} else {
 					die( json_encode( array( 'undefined_error' => true ) ) );
 				}

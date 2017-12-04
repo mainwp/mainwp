@@ -534,23 +534,53 @@ class MainWP_Right_Now {
 
 	public static function renderSites( $isUpdatesPage = false ) {
 		$globalView = true;
-
+        global $current_user;
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {
 			$sql        = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 			$globalView = false;
 		} else {
-			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
+            
+            // To support staging extension
+            $is_staging = 'no';             
+            if (apply_filters('mainwp-extension-available-check', 'mainwp-staging-extension')) {                
+                $staging_updates_view = get_user_option( 'mainwp_staging_options_updates_view', $current_user->ID );
+                if ($staging_updates_view == 'staging') {
+                    $is_staging = 'yes';                    
+                }
+            }            
+            // end support
+            
+			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
 		}
-
+        
+        $userExtension = MainWP_DB::Instance()->getUserExtension();
+        
+        if ( $globalView ) {
+			?>
+			<div class="mainwp-postbox-actions-top mainwp-padding-5">
+                <?php echo apply_filters('mainwp_widgetupdates_actions_top', ''); ?>
+				<div class="mainwp-cols-s mainwp-right mainwp-t-align-right">
+					<form method="post" action="">
+						<label for="mainwp_select_options_siteview"><?php _e( 'View updates per: ', 'mainwp' ); ?></label>
+						<select class="mainwp-select2-mini" id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
+							<option value="1" <?php echo $userExtension->site_view == 1 ? 'selected' : ''; ?>><?php esc_html_e( 'Site', 'mainwp' ); ?></option>
+							<option value="0" <?php echo $userExtension->site_view == 0 ? 'selected' : ''; ?>><?php esc_html_e( 'Plugin/Theme', 'mainwp' ); ?></option>
+							<option value="2" <?php echo $userExtension->site_view == 2 ? 'selected' : ''; ?>><?php esc_html_e( 'Group', 'mainwp' ); ?></option>
+						</select>
+					</form>
+				</div>
+				<div class="mainwp-clear"></div>
+			</div>
+			<?php
+		}
+        
 		$websites = MainWP_DB::Instance()->query( $sql );
 
-		if ( ! $websites ) {
+		if ( ! $websites ) {            
 			return;
 		}
-
-		$userExtension = MainWP_DB::Instance()->getUserExtension();
 
 		// NEW 4.0: group view
 		if ( $globalView && $userExtension->site_view == 2 ) {
@@ -897,24 +927,7 @@ class MainWP_Right_Now {
 		$total_themesIgnoredAbandoned += count( $themesIgnoredAbandoned_perSites );
 
 		//WP Upgrades part:
-		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades + $total_translation_upgrades;
-		if ( $globalView ) {
-			?>
-			<div class="mainwp-postbox-actions-top mainwp-padding-5">
-				<div class="mainwp-cols-s mainwp-right mainwp-t-align-right">
-					<form method="post" action="">
-						<label for="mainwp_select_options_siteview"><?php _e( 'View updates per: ', 'mainwp' ); ?></label>
-						<select class="mainwp-select2-mini" id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
-							<option value="1" <?php echo $userExtension->site_view == 1 ? 'selected' : ''; ?>><?php esc_html_e( 'Site', 'mainwp' ); ?></option>
-							<option value="0" <?php echo $userExtension->site_view == 0 ? 'selected' : ''; ?>><?php esc_html_e( 'Plugin/Theme', 'mainwp' ); ?></option>
-							<option value="2" <?php echo $userExtension->site_view == 2 ? 'selected' : ''; ?>><?php esc_html_e( 'Group', 'mainwp' ); ?></option>
-						</select>
-					</form>
-				</div>
-				<div class="mainwp-clear"></div>
-			</div>
-			<?php
-		}
+		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades + $total_translation_upgrades;		
 		?>
 		<?php
 		if ( $total_upgrades == 0 ) {
@@ -1524,7 +1537,7 @@ class MainWP_Right_Now {
 						<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">
 							<?php if (in_array($slug, $trustedPlugins)) { echo $trusted_icon; } ; ?>
 							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $pluginsInfo[ $slug ]['slug'] . '&url=' . ( isset( $pluginsInfo[ $slug ]['uri'] ) ? rawurlencode( $pluginsInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsInfo[ $slug ]['name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-							   class="thickbox" title="More information about <?php echo $pluginsInfo[ $slug ]['name']; ?>">
+									   class="thickbox open-plugin-details-modal" title="More information about <?php echo $pluginsInfo[ $slug ]['name']; ?>">
 								<?php echo $pluginsInfo[ $slug ]['name']; ?>
 							</a>
 						</div>
@@ -2657,7 +2670,7 @@ class MainWP_Right_Now {
 						<div class="mainwp-sub-row">
 							<div class="mainwp-left mainwp-cols-3">
 								<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $pluginsOutdateInfo[ $slug ]['uri-'] ) ? rawurlencode( $pluginsOutdateInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsOutdateInfo[ $slug ]['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-								   class="thickbox" title="More information about <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>">
+										   class="thickbox open-plugin-details-modal" title="More information about <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>">
 									<?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>
 								</a>
 							</div>
@@ -3113,7 +3126,7 @@ class MainWP_Right_Now {
 		do_action( 'mainwp_rightnow_widget_bottom', $site_ids, $globalView );
 
 		?>
-
+ <?php if (false) { ?>
 		<div id="rightnow-upgrade-status-box" title="Upgrade" style="display: none; text-align: center">
 			<div id="rightnow-upgrade-status-progress"></div>
 			<span id="rightnow-upgrade-status-current">0</span> /
@@ -3124,7 +3137,7 @@ class MainWP_Right_Now {
 			</div>
 			<input id="rightnow-upgrade-status-close" type="button" name="Close" value="<?php _e( 'Close', 'mainwp' ); ?>" class="button"/>
 		</div>
-
+   
 		<div id="rightnow-backup-box" title="Full backup required" style="display: none; text-align: center">
 			<div style="height: 190px; overflow: auto; margin-top: 20px; margin: 10px; text-align: left" id="rightnow-backup-content">
 			</div>
@@ -3138,6 +3151,24 @@ class MainWP_Right_Now {
 			</div>
 			<input id="rightnow-backupnow-close" type="button" name="Ignore" value="<?php _e( 'Cancel', 'mainwp' ); ?>" class="button"/>
 		</div>
+        
+    <?php } ?>                                        
+        <div class="mainwp-popup-overlay-hidden" id="rightnow-backup-box" tabindex="0" role="dialog" style="text-align: center">        
+            <div class="mainwp-popup-backdrop"></div>
+            <div class="mainwp-popup-wrap wp-clearfix" role="document">
+                <div class="mainwp-popup-header">
+                    <h2 class="title" >Full backup required</h2>
+                    <button type="button" class="close dashicons dashicons-no"><span class="screen-reader-text"><?php _e( 'Close dialog' ); ?></span></button>
+                </div>                
+                <div class="mainwp-popup-content" style="text-align: left" id="refresh-status-content">
+                </div>    
+                <div class="mainwp-popup-actions">
+                    <input id="rightnow-backup-all" type="button" name="Backup All" value="<?php _e( 'Backup All', 'mainwp' ); ?>" class="button-primary"/>
+                    <a id="rightnow-backup-now" href="#" target="_blank" style="display: none"  class="button-primary button"><?php _e( 'Backup Now', 'mainwp' ); ?></a>&nbsp;
+                    <input id="rightnow-backup-ignore" type="button" name="Ignore" value="<?php _e( 'Ignore', 'mainwp' ); ?>" class="button"/>
+                </div>
+            </div>        
+        </div>                
 
 		<?php
 		@MainWP_DB::free_result( $websites );

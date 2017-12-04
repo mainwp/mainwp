@@ -265,13 +265,13 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1><?php _e( 'Installation', 'mainwp' ); ?></h1>
 		<form method="post">
-			<p><?php  _e( 'What type of server is this?' ); ?></p>
+			<p><?php  _e( 'What type of server is this?', 'mainwp' ); ?></p>
 			<ul class="mwp-setup-list os-list" id="mwp_setup_installation_hosting_type">
 				<li><label><input type="radio" name="mwp_setup_installation_hosting_type" required = "required" <?php echo ($hostingType == 1 ? 'checked="true"' : ''); ?> value="1"> <?php _e( 'Web Host', 'mainwp' ); ?></label></li>
 				<li><label><input type="radio" name="mwp_setup_installation_hosting_type" required = "required" <?php echo ($hostingType == 2 ? 'checked="true"' : ''); ?> value="2"> <?php _e( 'Localhost', 'mainwp' ); ?></label></li>
 			</ul>
 			<div id="mwp_setup_os_type" <?php echo $style; ?>>
-				<p><?php  _e( 'What operating system do you use?' ); ?></p>
+				<p><?php  _e( 'What operating system do you use?', 'mainwp' ); ?></p>
 				<ul class="mwp-setup-list os-list">
 					<li><label><input type="radio" name="mwp_setup_installation_system_type" required = "required" <?php echo ($systemType == 1 ? 'checked="true"' : ''); ?> value="1" <?php echo $disabled; ?>> <?php _e( 'MacOS', 'mainwp' ); ?></label></li>
 					<li><label><input type="radio" name="mwp_setup_installation_system_type" required = "required" <?php echo ($systemType == 2 ? 'checked="true"' : ''); ?> value="2" <?php echo $disabled; ?>> <?php _e( 'Linux', 'mainwp' ); ?></label></li>
@@ -1087,7 +1087,7 @@ class MainWP_Setup_Wizard {
                                    id="mwp_setup_options_use_custom_sidebar" <?php echo ($disable_wp_main_menu ? 'checked="true"' : ''); ?> />
                             <label for="mwp_setup_options_use_custom_sidebar"></label>
                         </div><br/><br/>
-                        <em><?php _e( 'If enabled, the MainWP Dashboard plguin will add custom sidebar navigation and collapse the WordPress Admin Menu. Custom navigation can be disabled/enabled at anytime on the MainWP > Settings > Dashboard Options page.', 'mainwp' ); ?></em>
+                        <em><?php _e( 'If enabled, the MainWP Dashboard plugin will add custom sidebar navigation and collapse the WordPress Admin Menu. Custom navigation can be disabled/enabled at anytime on the MainWP > Settings > Dashboard Options page.', 'mainwp' ); ?></em>
                     </td>
                 </tr>
 
@@ -1312,6 +1312,20 @@ class MainWP_Setup_Wizard {
 	private function uptime_robot_fetch( $url ) {
 		$url = trim( $url );
 		$ch = curl_init();
+
+        // cURL offers really easy proxy support.
+        $proxy = new WP_HTTP_Proxy();
+        if ($proxy->is_enabled() && $proxy->send_through_proxy($url)) {
+            curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+            curl_setopt($ch, CURLOPT_PROXY, $proxy->host());
+            curl_setopt($ch, CURLOPT_PROXYPORT, $proxy->port());
+
+            if ($proxy->use_authentication()) {
+                curl_setopt($ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
+                curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy->authentication());
+            }
+        }
+
 		curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
 		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 50 );

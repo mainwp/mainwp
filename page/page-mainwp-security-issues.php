@@ -138,8 +138,8 @@ class MainWP_Security_Issues {
 					</td>
 					<td class="mainwp-padding-10 mainwp-cols-10">
 							<span id="readme_fix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Fix', 'mainwp' ); ?>
-								</a></span><span id="readme_unfix" style="display: none"><font color="gray"><i class="fa fa-wrench"></i> <?php _e( 'Unfix', 'mainwp' ); ?>
-								</font> - <?php _e( 'You need to re-upload the readme.html file manually to unfix this.', 'mainwp' ); ?></span>
+								</a></span><span id="readme_unfix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Unfix', 'mainwp' ); ?>
+								</a> - <?php _e( 'You need to re-upload the readme.html file manually to unfix this.', 'mainwp' ); ?></span>
 						</td>
 					</tr>
 					<tr>

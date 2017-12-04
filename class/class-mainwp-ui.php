@@ -20,10 +20,13 @@ class MainWP_UI {
 	}
 
 
-	public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false, $postId = 0 ) {
+	public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false, $postId = 0 ) {        
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 		$groups   = MainWP_DB::Instance()->getNotEmptyGroups( null, $enableOfflineSites );
 
+        // support staging extension        
+        $staging_enabled = apply_filters('mainwp-extension-available-check', 'mainwp-staging-extension');
+        
         $edit_site_id = null;
         if ( $postId ) {
             $edit_site_id = get_post_meta( $postId, '_mainwp_edit_post_site_id', true );
@@ -39,7 +42,21 @@ class MainWP_UI {
         }
         ?>
 		<div class="mainwp-postbox-actions-top">
-			<input type="hidden" name="select_by" id="select_by" value="<?php echo esc_attr( count( $selected_groups ) > 0 ? 'group' : 'site' ); ?>"/>
+            <input type="hidden" name="select_by" id="select_by" value="<?php echo esc_attr( count( $selected_groups ) > 0 ? 'group' : 'site' ); ?>"/>            
+            <?php if ( $staging_enabled ) :  ?>              
+                <div id="mainwp_ss_live_site_link" style="display: none;">
+                    <a href="#" onClick="return mainwp_ss_staging_select_by(this, 'live')"><?php esc_html_e( 'Live sites', 'mainwp' ); ?></a>
+                </div>
+                <div id="mainwp_ss_live_site_text" style="display: inline-block;">
+                    <?php esc_html_e( 'Live sites', 'mainwp' ); ?></div> |
+                <div id="mainwp_ss_staging_site_link" style="display: inline-block;">
+                    <a href="#" onClick="return mainwp_ss_staging_select_by(this, 'staging')"><?php esc_html_e( 'Staging sites', 'mainwp' ); ?></a>
+                </div>
+                <div id="mainwp_ss_staging_site_text" style="display: none;">
+                    <?php esc_html_e( 'Staging sites', 'mainwp' ); ?>
+                </div>    
+                <hr>
+            <?php endif; ?>			
 			<?php if ( $show_select_all ) :  ?>
 				<div class="mainwp-right"><?php esc_html_e( 'Select: ', 'mainwp' ); ?>
 					<a href="#" onClick="return mainwp_ss_select(this, true)"><?php esc_html_e( 'All', 'mainwp' ); ?></a> |
@@ -61,7 +78,7 @@ class MainWP_UI {
 			<?php endif; ?>
             <?php echo $fix_style; ?>
 		</div>
-		<div id="selected_sites" <?php echo esc_html( count( $selected_groups ) > 0 ? 'style="display: none;"' : '' ); ?>>
+		<div id="selected_sites" class="selected_sites_wrapper" is-staging="0" <?php echo esc_html( count( $selected_groups ) > 0 ? 'style="display: none;"' : '' ); ?>>
 			<?php
 			if ( ! $websites ) {
 				echo '<p class="mainwp-padding-5">' . esc_html( 'No websites have been found.', 'mainwp' ) . '</p>';
@@ -94,6 +111,46 @@ class MainWP_UI {
 			}
 			?>
 		</div>
+
+        <?php if ( $staging_enabled ) :   
+            $user_favicon = get_option( 'mainwp_use_favicon', 1 );
+            $websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ) , $is_staging = 'yes') );
+        ?>
+            <div id="selected_sites_staging" class="selected_sites_wrapper" is-staging="1" style="display: none;">
+                <?php
+                if ( ! $websites ) {
+                    echo '<p class="mainwp-padding-5">' . esc_html( 'No staging websites have been found.', 'mainwp' ) . '</p>';
+                } else {
+                    while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+                        $imgfavi = '';
+                        if ( $website !== null ) {
+                            if ( $user_favicon == 1 ) {
+                                $favi_url = MainWP_Utility::get_favico_url( $website );
+                                $imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
+                            }
+                        }
+
+                        if ( $website->sync_errors == '' || $enableOfflineSites ) {
+                            $selected = ( $selected_websites == 'all' || in_array( $website->id, $selected_websites ) );
+                            $disabled = '';
+                            if ( null !== $edit_site_id ) {
+                                if ( $website->id != $edit_site_id ) {
+                                    $disabled = 'disabled="disabled"';
+                                }
+                            }
+                            echo '<div title="'. $website->url .'" class="mainwp_selected_sites_item mainwp-padding-5 ' . ( $selected ? 'selected_sites_item_checked' : '' ) . '"><input onClick="mainwp_site_select(this)" ' . $disabled .' type="' . $type . '" name="' . ( $type == 'radio' ? 'selected_site' : 'selected_sites[]' ) . '" siteid="' . $website->id . '" value="' . $website->id . '" id="selected_sites_' . $website->id . '" ' . ( $selected ? 'checked="true"' : '' ) . '/> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+                        }
+                        else
+                        {
+                            echo '<div title="'. $website->url . '" class="mainwp_selected_sites_item mainwp-padding-5 disabled"><input type="' . $type . '" disabled="disabled" /> <label for="selected_sites_' . $website->id . '">' . $imgfavi . stripslashes($website->name) . '<span class="url">' . $website->url . '</span>' . '</label></div>';
+                        }
+                    }
+                    @MainWP_DB::free_result( $websites );
+                }
+                ?>
+            </div>
+        <?php
+        endif; ?>
 
 		<?php if ( $show_group ) :  ?>
 			<div id="selected_groups" <?php echo esc_html( count( $selected_groups ) > 0 ? 'style="display: block;"' : '' ); ?>>
@@ -130,7 +187,7 @@ class MainWP_UI {
             <?php
         }
 	}
-
+    // seems not used any more?
 	public static function select_categories_box( $params ) {
 		$title         = $params['title'];
 		$type          = isset( $params['type'] ) ? $params['type'] : 'checkbox';

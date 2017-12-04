@@ -230,7 +230,7 @@ public static function renderFooter( $shownPage ) {
 					<td><?php echo $extension['name']; ?></td>					
 					<td><?php echo $extension['version']; ?></td>					
 					<td><?php echo $extension['activated_key'] == 'Activated' ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>					
-					<td><?php echo $extension['activated_key'] == 'Activated' ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( self::WARNING ); ?></td>					
+					<td><?php echo $extension['activated_key'] == 'Activated' ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>' : self::getWarningHTML( self::WARNING ); ?></td>					
 				</tr>				
 				<?php
 				}				
@@ -492,10 +492,10 @@ public static function renderFooter( $shownPage ) {
 
 				<tbody id="the-sites-list" class="list:sites">
 				<?php
-				self::render_row_with_description('PHP Version', '>=', '5.6', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.3 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you.');
-				self::render_row_with_description('SSL Extension Enabled', '=', true, 'getSSLSupport', '', '', null, 'Changed by uncommenting the ;extension=php_openssl.dll line in your php.ini file by removing the ";" character.');
-				self::render_row_with_description('cURL Extension Enabled', '=', true, 'getCurlSupport', '', '', null, 'Changed by uncommenting the ;extension=php_curl.dll line in your php.ini file by removing the ";" character.');
-				self::render_row_with_description('MySQL Version', '>=', '5.0', 'getMySQLVersion', '', '', null, 'MainWP requires the MySQL version 5.0 or higher. If the condition is not met, MySQL version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you.');
+				self::render_row_with_description( __('PHP Version', 'mainwp' ), '>=', '5.6', 'getPHPVersion', '', '', null, 'MainWP requires the PHP version 5.3 or higher. If the condition is not met, PHP version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you.');
+				self::render_row_with_description( __('SSL Extension Enabled', 'mainwp' ), '=', true, 'getSSLSupport', '', '', null, 'Changed by uncommenting the ;extension=php_openssl.dll line in your php.ini file by removing the ";" character.');
+				self::render_row_with_description( __('cURL Extension Enabled', 'mainwp' ), '=', true, 'getCurlSupport', '', '', null, 'Changed by uncommenting the ;extension=php_curl.dll line in your php.ini file by removing the ";" character.');
+				self::render_row_with_description( __('MySQL Version', 'mainwp' ), '>=', '5.0', 'getMySQLVersion', '', '', null, 'MainWP requires the MySQL version 5.0 or higher. If the condition is not met, MySQL version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you.');
 				?>
 				</tbody>
 			</table>
@@ -541,7 +541,7 @@ public static function renderFooter( $shownPage ) {
 		$current = get_option( 'mainwp_plugin_version' );
 		$latest  = self::getMainwpVersion();
 		if ( $current == $latest ) {
-			return '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>';
+			return '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>';
 		} else {
 			return self::getWarningHTML();
 		}
@@ -743,7 +743,7 @@ public static function renderFooter( $shownPage ) {
 			<td><?php echo $pName; ?></td>
 			<td><?php echo $pCheck; ?></td>
 			<td><?php echo $pResult; ?></td>
-			<td><?php echo( $pPassed ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( $errorType ) ); ?></td>
+			<td><?php echo( $pPassed ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>' : self::getWarningHTML( $errorType ) ); ?></td>
 		</tr>
 		<?php
 		return true;
@@ -761,13 +761,13 @@ public static function renderFooter( $shownPage ) {
 			<td><?php echo $pCompare; ?><?php echo ( $pVersion === true ? 'true' : ( is_array( $pVersion ) && isset( $pVersion['version'] ) ? $pVersion['version'] : $pVersion ) ) . ' ' . $pExtraText; ?></td>
 			<td><?php echo( $currentVersion === true ? 'true' : $currentVersion ); ?></td>
 			<?php if ( $whatType == 'filesize' ) { ?>
-				<td><?php echo( self::filesize_compare( $currentVersion, $pVersion, $pCompare ) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( $errorType ) ); ?></td>
+				<td><?php echo( self::filesize_compare( $currentVersion, $pVersion, $pCompare ) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>' : self::getWarningHTML( $errorType ) ); ?></td>
 			<?php } else if ( $whatType == 'curlssl' ) { ?>
-				<td><?php echo( self::curlssl_compare( $pVersion, $pCompare ) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( $errorType ) ); ?></td>
+				<td><?php echo( self::curlssl_compare( $pVersion, $pCompare ) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>' : self::getWarningHTML( $errorType ) ); ?></td>
 			<?php } else if (($pGetter == 'getMaxInputTime' || $pGetter == 'getMaxExecutionTime') && $currentVersion == -1) { ?>
-				<td><?php echo '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>'; ?></td>
+				<td><?php echo '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>'; ?></td>
 			<?php } else { ?>
-				<td><?php echo (version_compare($currentVersion, $pVersion, $pCompare) || (($pExtraCompare != null) && version_compare($currentVersion, $pExtraVersion, $pExtraCompare)) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( $errorType )); ?></td>
+				<td><?php echo (version_compare($currentVersion, $pVersion, $pCompare) || (($pExtraCompare != null) && version_compare($currentVersion, $pExtraVersion, $pExtraCompare)) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>' : self::getWarningHTML( $errorType )); ?></td>
 			<?php } ?>
 		</tr>
 		<?php
@@ -783,13 +783,13 @@ public static function renderFooter( $shownPage ) {
 			<td><?php echo $pCompare; ?>  <?php echo ($pVersion === true ? 'true' : ( is_array($pVersion) && isset($pVersion['version']) ? $pVersion['version'] : $pVersion)) . ' ' . $pExtraText; ?></td>
 			<td><?php echo ($currentVersion === true ? 'true' : $currentVersion); ?></td>
 			<?php if ($whatType == 'filesize') { ?>
-				<td><?php echo (self::filesize_compare($currentVersion, $pVersion, $pCompare) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( $errorType ) ); ?></td>
+				<td><?php echo (self::filesize_compare($currentVersion, $pVersion, $pCompare) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>' : self::getWarningHTML( $errorType ) ); ?></td>
 			<?php } else if ($whatType == 'curlssl') { ?>
-				<td><?php echo (self::curlssl_compare($pVersion, $pCompare) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( $errorType ) ); ?></td>
+				<td><?php echo (self::curlssl_compare($pVersion, $pCompare) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>' : self::getWarningHTML( $errorType ) ); ?></td>
 			<?php } else if ($pGetter == 'getMaxInputTime' && $currentVersion == -1) { ?>
-				<td><?php echo '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>'; ?></td>
+				<td><?php echo '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>'; ?></td>
 			<?php } else { ?>
-				<td><?php echo( version_compare( $currentVersion, $pVersion, $pCompare ) || ( ( $pExtraCompare != null ) && version_compare( $currentVersion, $pExtraVersion, $pExtraCompare ) ) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>' : self::getWarningHTML( $errorType ) ); ?></td>
+				<td><?php echo( version_compare( $currentVersion, $pVersion, $pCompare ) || ( ( $pExtraCompare != null ) && version_compare( $currentVersion, $pExtraVersion, $pExtraCompare ) ) ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>' : self::getWarningHTML( $errorType ) ); ?></td>
 			<?php } ?>
 		</tr>
 		<?php
@@ -1612,8 +1612,8 @@ public static function renderFooter( $shownPage ) {
 	private static function getWarningHTML($errorType = self::WARNING)
 	{
 		if (self::WARNING == $errorType) {
-			return '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> Warning</span>';
+			return '<span class="mainwp-warning"><i class="fa fa-exclamation-circle"></i> ' . __( 'Warning', 'mainwp' ) . '</span>';
 		}
-		return '<span class="mainwp-fail"><i class="fa fa-exclamation-circle"></i> Fail</span>';
+		return '<span class="mainwp-fail"><i class="fa fa-exclamation-circle"></i> ' . __( 'Fail', 'mainwp' ) . '</span>';
 	}
 }

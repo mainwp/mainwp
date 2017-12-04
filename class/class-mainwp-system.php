@@ -13,7 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
-	public static $version = '3.4.3';
+	public static $version = '3.4.4';
 	//Singleton
 	private static $instance = null;
 
@@ -287,7 +287,7 @@ class MainWP_System {
 		 */
 		add_filter( 'mainwp-getgroups', array( MainWP_Extensions::getClassName(), 'hookGetGroups' ), 10, 4 );
 		add_action( 'mainwp_fetchurlsauthed', array( &$this, 'filter_fetchUrlsAuthed' ), 10, 7 );
-		add_filter( 'mainwp_fetchurlauthed', array( &$this, 'filter_fetchUrlAuthed' ), 10, 5 );
+		add_filter( 'mainwp_fetchurlauthed', array( &$this, 'filter_fetchUrlAuthed' ), 10, 6 );
 		add_filter( 'mainwp_getdashboardsites', array(
 			MainWP_Extensions::getClassName(),
 			'hookGetDashboardSites',
@@ -432,8 +432,8 @@ class MainWP_System {
 		return MainWP_Extensions::hookFetchUrlsAuthed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output );
 	}
 
-	function filter_fetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params ) {
-		return MainWP_Extensions::hookFetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params );
+	function filter_fetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {
+		return MainWP_Extensions::hookFetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $raw_response );
 	}
 
 	function hookBulkPostMetaboxHandle( $post_id ) {
@@ -880,6 +880,8 @@ class MainWP_System {
 			}
 		}
 
+        $disable_send_noti = apply_filters( 'mainwp_updatescheck_disable_sendmail', false );
+        
 		$websites = array();
 		$checkupdate_websites = MainWP_DB::Instance()->getWebsitesCheckUpdates( 4 );
 
@@ -1070,7 +1072,7 @@ class MainWP_System {
 					}
 
 					$email = get_option( 'mainwp_updatescheck_mail_email' );
-					if ( !empty( $email ) && $mail_offline != '') {
+					if ( !$disable_send_noti && !empty( $email ) && $mail_offline != '') {
 						MainWP_Logger::Instance()->debug( 'CRON :: http check :: send mail to ' . $email );
 						$mail_offline = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
                                 <div></div>
@@ -1097,7 +1099,7 @@ class MainWP_System {
 					return;
 				}
 
-				if ( ($mainwpAutomaticDailyUpdate !== false && $mainwpAutomaticDailyUpdate != 0) || !empty($plugin_automaticDailyUpdate) || !empty($theme_automaticDailyUpdate) ) {
+				if ( !$disable_send_noti && ( ($mainwpAutomaticDailyUpdate !== false && $mainwpAutomaticDailyUpdate != 0) || !empty($plugin_automaticDailyUpdate) || !empty($theme_automaticDailyUpdate) ) ) {                     
 					//Create a nice email to send
 					$email = get_option( 'mainwp_updatescheck_mail_email' );
 					MainWP_Logger::Instance()->debug( 'CRON :: updates check :: send mail to ' . $email );
@@ -1903,12 +1905,17 @@ class MainWP_System {
 	}
 
 	public static function get_openssl_conf() {
+        
+        if (defined('MAINWP_CRYPT_RSA_OPENSSL_CONFIG')) {
+            return MAINWP_CRYPT_RSA_OPENSSL_CONFIG;
+        } 
+        
 		$setup_conf_loc = '';
 		if ( MainWP_Settings::isLocalWindowConfig() ) {
 			$setup_conf_loc = get_option( 'mwp_setup_opensslLibLocation' );
 		} else if (get_option('mainwp_opensslLibLocation') != '') {
             $setup_conf_loc = get_option('mainwp_opensslLibLocation');
-        }
+        }        
 		return $setup_conf_loc;
 	}
 
@@ -2097,8 +2104,8 @@ class MainWP_System {
 
 		$enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$primaryBackup = get_option('mainwp_primaryBackup');
-		$disable_backup_checking = (empty($enableLegacyBackupFeature) && empty($primaryBackup)) ? true : false;
-
+		$disable_backup_checking = (empty($enableLegacyBackupFeature) && empty($primaryBackup)) ? true : false;        
+            
 		$mainwpParams = array(
 			'image_url'             => MAINWP_PLUGIN_URL . 'images/',
 			'backup_before_upgrade' => ( get_option( 'mainwp_backup_before_upgrade' ) == 1 ),
@@ -2531,6 +2538,7 @@ class MainWP_System {
 		}
 
 		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'js/mainwp-ui.js', array(), $this->current_version );
+        wp_enqueue_script( 'mainwp-js-popup', MAINWP_PLUGIN_URL . 'js/mainwp-popup.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'js/fileuploader.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-date', MAINWP_PLUGIN_URL . 'js/date.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-tablesorter', MAINWP_PLUGIN_URL . 'js/jquery.tablesorter.min.js', array(), $this->current_version );
@@ -2549,6 +2557,7 @@ class MainWP_System {
 		global $wp_version;
 		wp_register_style( 'mainwp-hidden', MAINWP_PLUGIN_URL . 'css/mainwp-hidden.css', array(), $this->current_version );
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'css/mainwp.css', array(), $this->current_version );
+        wp_enqueue_style( 'mainwp-popup', MAINWP_PLUGIN_URL . 'css/mainwp-popup.css', array(), $this->current_version );
 		wp_enqueue_style( 'mainwp-responsive-layouts', MAINWP_PLUGIN_URL . 'css/mainwp-responsive-layouts.css', array(), $this->current_version );
 		wp_enqueue_style( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'css/fileuploader.css', array(), $this->current_version );
 
@@ -2948,7 +2957,28 @@ class MainWP_System {
 			$website  = MainWP_DB::Instance()->getWebsiteById( $current_wpid );
 			$websites = array( $website );
 		} else {
-			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp_sync.dtsSync DESC, wp.url ASC' ) );
+            $is_staging = 'no'; 
+            if (isset( $_GET['page'] )) { 
+                // for manage sites page
+                if (('managesites' == $_GET['page']) && !isset( $_GET['id'] ) && !isset( $_GET['do']) && !isset( $_GET['dashboard'])) {		            
+                    $filter_group = get_option( 'mainwp_managesites_filter_group' );
+                    if ($filter_group) {                
+                        $staging_group = get_option('mainwp_stagingsites_group_id');                
+                        if ($staging_group == $filter_group) {
+                            $is_staging = 'yes';
+                        }
+                    }                          
+                } else if ('UpdatesManage' == $_GET['page'] || 'mainwp_tab'== $_GET['page'] ) { // for Updates and Overview page
+                    $staging_enabled = apply_filters('mainwp-extension-available-check', 'mainwp-staging-extension');
+                    if($staging_enabled) {
+                        $staging_view = get_user_option('mainwp_staging_options_updates_view') == 'staging' ? true : false;
+                        if ( $staging_view ) {
+                            $is_staging = 'yes';
+                        }
+                    }
+                }            
+            }
+			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp_sync.dtsSync DESC, wp.url ASC', false, false, null, false, array(), $is_staging ) ); 
 		}
 		ob_start();
 
@@ -2969,7 +2999,8 @@ class MainWP_System {
 				}
 			}
 		}
-
+    // not used this
+    if (false) {
 		?>
 		<div id="refresh-status-box" title="Syncing Websites" style="display: none; text-align: center">
 			<div id="refresh-status-progress"></div>
@@ -3003,6 +3034,52 @@ class MainWP_System {
 			</div>
 			<input id="refresh-status-close" type="button" name="Close" value="Close" class="button"/>
 		</div>
+    
+<?php } ?>
+        
+        <div class="mainwp-popup-overlay-hidden" id="refresh-status-box" tabindex="0" role="dialog" style="text-align: center">        
+            <div class="mainwp-popup-backdrop"></div>
+            <div class="mainwp-popup-wrap wp-clearfix" role="document">
+                <div class="mainwp-popup-header">
+                    <h2 class="title" >Syncing Websites</h2>
+                    <button type="button" class="close dashicons dashicons-no"><span class="screen-reader-text"><?php _e( 'Close details dialog' ); ?></span></button>
+                </div>
+                <div class="mainwp-popup-top">
+                    <div id="refresh-status-progress"></div>
+                    <span id="refresh-status-current">0</span> / <span id="refresh-status-total"><?php echo esc_html( $cntr ); ?></span>
+                    <span id="refresh-status-text"><?php esc_html_e( 'synced', 'mainwp' ); ?></span>
+                </div>  
+                <div class="mainwp-popup-content" style="text-align: left" id="refresh-status-content">                                        
+                    <table style="width: 100%" id="refresh-status-sites">
+                        <?php
+                        if ( is_array( $websites ) ) {
+                            for ( $i = 0; $i < count( $websites ); $i ++ ) {
+                                $website = $websites[ $i ];
+                                if ( $website->sync_errors == '' ) {
+                                    echo '<tr><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">PENDING</span></td></tr>';
+                                } else {
+                                    echo '<tr class="mainwp_wp_offline"><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">DISCONNECTED</span></td></tr>';
+                                }
+                            }
+                        } else {
+                            @MainWP_DB::data_seek( $websites, 0 );
+                            while ( $website = @MainWP_DB::fetch_object( $websites ) ) {
+                                if ( $website->sync_errors == '' ) {
+                                    echo '<tr><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">PENDING</span></td></tr>';
+                                } else {
+                                    echo '<tr class="mainwp_wp_offline"><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">DISCONNECTED</span></td></tr>';
+                                }
+                            }
+                        }
+                        ?>
+                    </table>                                                   
+                </div>    
+                <div class="mainwp-popup-actions">
+                    <button type="button" id="refresh-status-close" class="button"><?php _e( 'Close' ); ?></button>
+                </div>
+            </div>        
+        </div>    
+        
 		<?php
 
 		if ( ! self::isHideFooter() ) {

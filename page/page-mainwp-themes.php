@@ -512,6 +512,7 @@ class MainWP_Themes {
 			$siteThemes[ $theme['websiteid'] ][ $theme['name'] . '_' . $theme['version'] ] = $theme;
 
 		}
+        asort( $themesVersion );
 		?>
 		<div id="mainwp-table-overflow" style="overflow: auto !important ;">
 			<table class="wp-list-table widefat fixed pages" id="themes_fixedtable" style="width: auto; word-wrap: normal">

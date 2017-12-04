@@ -367,8 +367,8 @@ a.mainwp-post-trash {color: #a00;}
 #managesite-backup-status-box .ui-progressbar,
 #managebackups-task-status-box .ui-progressbar {
     background-color: #fafafa;
-    margin-top: 1em;
-    height: 1em;
+    margin-top: 0;
+    height: 8px;
     border-radius: 0 !important;
     -webkit-border-radius: 0 !important;
     -moz-border-radius: 0 !important;
@@ -2481,3 +2481,61 @@ li.mainwp-menu-sub-item-filer{
 }
 #mainwp-synced-status-sites-wrap {border-bottom: 1px solid #e5e5e5;}
 #mainwp_posts_wrap_table tr th#tags { width: auto !important;}
+
+.sites-navi-buttons{
+    float:right;
+}
+
+.sites-navi-buttons .left::before{
+    font: 400 20px/50px 'dashicons' !important;
+    content: "\f341"        
+}
+
+.sites-navi-buttons .right::before{
+    font: 400 20px/50px 'dashicons' !important;
+    content: "\f345"        
+}
+.sites-navi-buttons .left.disabled, 
+.sites-navi-buttons .right.disabled{
+    color: #ccc;
+    background: inherit;
+    cursor: default;
+    pointer-events: none;
+}
+
+.sites-navi-buttons .left,
+.sites-navi-buttons .right {
+	cursor: pointer;
+	color: #72777c;
+	background-color: transparent;
+	height: 60px;
+	width: 50px;
+	padding: 0;	
+	text-align: center;
+	border: 0;
+	border-left: 1px solid #ddd;
+	-webkit-transition: color .1s ease-in-out, background .1s ease-in-out;
+	transition: color .1s ease-in-out, background .1s ease-in-out;
+}
+
+.postbox.mainwp-breadcrumb .inside{
+    padding: 0 0 0 12px;
+    margin: 0;    
+}
+
+.breadcrumb-wrap{
+    width: calc(100% - 110px);
+    display:inline-block;
+    margin: 8px 0 10px 0;
+}
+#mainwp_post_search_by_keyword,
+#mainwp_page_search_by_keyword {
+    width: calc(100% - 145px);
+    
+}
+#mainwp-synced-status-sites-wrap .mainwp_wp_sync:hover .mainwp-row-actions {
+    display: block;    
+}
+#mainwp-synced-status-sites-wrap .mainwp-row-actions {
+    float: none;
+}

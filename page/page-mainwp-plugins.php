@@ -817,8 +817,8 @@ class MainWP_Plugins {
 				$sitePlugins[ $plugin['websiteid'] ] = array();
 			}
 			$sitePlugins[ $plugin['websiteid'] ][ $plugin['name'] . '_' . $plugin['version'] ] = $plugin;
-		}
-
+		}        
+        asort( $pluginsVersion );
 		?>
 		<div id="mainwp-table-overflow" style="overflow: auto !important ;">
 			<table class="ui-tinytable wp-list-table widefat fixed pages" id="plugins_fixedtable" style="width: auto; word-wrap: normal">
@@ -858,7 +858,7 @@ class MainWP_Plugins {
 						foreach ( $pluginsVersion as $plugin_name => $plugin_title ) {
 							echo '<td class="long" style="text-align: center">';
 							if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( !isset($pluginsMainWP[$plugin_name]) || $pluginsMainWP[$plugin_name] === 'F' ) && ( $muPlugins[ $plugin_name ] == 0 ) ) {
-								echo '<input type="checkbox" value="' . $plugins[ $plugin_name ] . '" name="' . $pluginsName[ $plugin_name ] . '" class="selected_plugin" />';
+								echo '<input type="checkbox" value="' . $plugins[ $plugin_name ] . '" name="' . $pluginsName[ $plugin_name ] . '" class="selected_plugin" version="' . $pluginsRealVersion[$plugin_name] . '" />';
 							}
 							echo '</td>';
 						}

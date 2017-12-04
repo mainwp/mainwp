@@ -322,7 +322,7 @@ class MainWP_Manage_Groups {
 		die( 'ERROR' );
 	}
 
-	protected static function checkGroupName( $groupName, $groupId = null ) {
+	public static function checkGroupName( $groupName, $groupId = null ) {
 		if ( $groupName == '' ) {
 			$groupName = __( 'New group', 'mainwp' );
 		}

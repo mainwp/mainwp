@@ -29,7 +29,7 @@ class MainWP_Shortcuts {
 			</a>
 		</div>
 		<span style="display: none"
-			id="mainwp_notes_<?php echo $website->id; ?>_note"><?php echo $website->note; ?></span>
+			id="mainwp_notes_<?php echo $website->id; ?>_note"><?php echo html_entity_decode( $website->note ); ?></span>
 		<div class="mainwp-row">
 			<div style="display: inline-block; width: 100px;"><?php _e( 'Go to:', 'mainwp' ); ?></div>
 			<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>" target="_blank"><i class="fa fa-external-link"></i> <?php _e( 'WP Admin', 'mainwp' ); ?>

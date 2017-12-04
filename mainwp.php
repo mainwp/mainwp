@@ -6,7 +6,7 @@
   Author: MainWP
   Author URI: https://mainwp.com
   Text Domain: mainwp
-  Version: 3.4.3
+  Version: 3.4.4
 */
 
 if ( ! defined( 'MAINWP_PLUGIN_FILE' ) ) {
@@ -70,7 +70,15 @@ if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
 	}
 }
 
-$mainWP = new MainWP_System( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename( __FILE__ ) );
-register_activation_hook( __FILE__, array( $mainWP, 'activation' ) );
-register_deactivation_hook( __FILE__, array( $mainWP, 'deactivation' ) );
-add_action( 'plugins_loaded', array( $mainWP, 'update' ) );
+$mainwp_is_secupress_scanning = false;
+if (!empty($_GET) && isset($_GET['test']) && isset($_GET['action']) && $_GET['action'] == 'secupress_scanner') {           
+        $mainwp_is_secupress_scanning = true;       
+}
+
+//to fix conflict with SecuPress plugin
+if ( !$mainwp_is_secupress_scanning ) { 
+    $mainWP = new MainWP_System( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename( __FILE__ ) );
+    register_activation_hook( __FILE__, array( $mainWP, 'activation' ) );
+    register_deactivation_hook( __FILE__, array( $mainWP, 'deactivation' ) );
+    add_action( 'plugins_loaded', array( $mainWP, 'update' ) );
+}

@@ -43,7 +43,7 @@ class MainWP_Manage_Backups {
         if ( is_array( $customPage ) && isset( $customPage['slug'] ) && !empty($mainwp_primaryBackup)) {
 			self::$hideSubmenuBackups = true;
 			$_page = add_submenu_page( 'mainwp_tab', $customPage['title'], '<span id="mainwp-Backups">' . $customPage['title'] . '</span>', 'read', 'ManageBackups' . $customPage['slug'], $customPage['callback'] );
-            MainWP_System::add_sub_left_menu($customPage['title'], 'mainwp_tab', 'ManageBackups' . $customPage, 'admin.php?page=ManageBackups' .  $customPage['slug'], '<i class="fa fa-hdd-o"></i>', '' );
+            MainWP_System::add_sub_left_menu($customPage['title'], 'mainwp_tab', 'ManageBackups' . $customPage['slug'], 'admin.php?page=ManageBackups' .  $customPage['slug'], '<i class="fa fa-hdd-o"></i>', '' );
             if ($enable_legacy_backup) {
                 add_action( 'load-' . $_page, array( MainWP_Manage_Backups::getClassName(), 'on_load_page' ) );
             }
@@ -320,11 +320,30 @@ public static function renderHeader( $shownPage ) {
 						?>
 					</form>
 				</div>
+                
+                <?php if (false) { ?>
 				<div id="managebackups-task-status-box" title="Running task" style="display: none; text-align: center">
 					<div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managebackups-task-status-text">
 					</div>
 					<input id="managebackups-task-status-close" type="button" name="Close" value="<?php _e( 'Cancel', 'mainwp' ); ?>" class="button"/>
 				</div>
+                <?php } ?>
+                
+                 <div class="mainwp-popup-overlay-hidden" id="managebackups-task-status-box" tabindex="0" role="dialog" style="text-align: center">        
+                        <div class="mainwp-popup-backdrop"></div>
+                        <div class="mainwp-popup-wrap wp-clearfix" role="document">
+                            <div class="mainwp-popup-header">
+                                <h2 class="title" >Running task</h2>
+                                <button type="button" class="close dashicons dashicons-no"><span class="screen-reader-text"><?php _e( 'Close dialog' ); ?></span></button>
+                            </div>                
+                            <div class="mainwp-popup-content" style="text-align: left" id="refresh-status-content">
+                            </div>    
+                            <div class="mainwp-popup-actions">
+                                <input id="managebackups-task-status-close" type="button" name="Close" value="<?php _e( 'Cancel', 'mainwp' ); ?>" class="button"/>
+                            </div>
+                        </div>        
+                    </div>      
+
 			</div>
 			<?php
 			self::renderFooter( '' );

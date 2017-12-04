@@ -1058,7 +1058,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 				<select name="g" class="mainwp-select2 allowclear" data-placeholder="<?php _e( 'All Groups', 'mainwp' ); ?>">
 					<option value=""></option>
 					<?php
-					$groups = MainWP_DB::Instance()->getGroupsForCurrentUser();
+					$groups = MainWP_DB::Instance()->getGroupsForManageSites();
 					foreach ( $groups as $group ) {
 						echo '<option value="' . $group->id . '" ' . ( isset( $_REQUEST['g'] ) && $_REQUEST['g'] == $group->id ? 'selected' : '' ) . '>' . stripslashes( $group->name ) . '</option>';
 					}

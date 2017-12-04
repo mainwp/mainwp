@@ -78,6 +78,10 @@ class MainWP_Connection_Status {
                                 <div class="<?php echo $is_top_row ? 'mainwp-row-top' : 'mainwp-row' ?> mainwp_wp_sync" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
                                             <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-10">
                                                     <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_sync<?php echo $website->id; ?>" />
+                                                    <div class="mainwp-row-actions">
+                                                        <span class="edit"><a href="<?php echo $website->url; ?>"  target="_blank" title="<?php _e( 'Visit Site', 'mainwp' ); ?>"><?php _e( 'Visit Site', 'mainwp' ); ?></a> | </span>                                                            
+                                                        <span class="edit"><a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>"  target="_blank" title="<?php _e( 'WP Admin', 'mainwp' ); ?>"><?php _e( 'WP Admin', 'mainwp' ); ?></a></span>                                                        
+                                                    </div>
                                             </div>
                                             <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-10 wordpressInfo" id="wp_sync_<?php echo $website->id; ?>">
                                                     <span><?php echo $lastSyncTime; ?></span>

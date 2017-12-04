@@ -373,6 +373,10 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 				<label for="mainwp_post_search_type_trash" ><?php _e( 'Trash', 'mainwp' ); ?></label>
 			</li>
 		</ul>
+        <?php
+        $searchon = 'title'; 
+        if ( $cachedSearch != null ) { $searchon = $cachedSearch['search_on']; }  
+        ?>
 		<div class="mainwp-padding-bottom-20">
 			<div class="mainwp-cols-2 mainwp-left">
 				<label for="mainwp_post_search_by_keyword"><?php _e( 'Containing Keyword:', 'mainwp' ); ?></label><br/>
@@ -380,7 +384,12 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 				       id="mainwp_post_search_by_keyword"
 				       class=""
 				       size="50"
-				       value="<?php if ( $cachedSearch != null ) { echo $cachedSearch['keyword']; } ?>"/>
+				       value="<?php if ( $cachedSearch != null ) { echo $cachedSearch['keyword']; } ?>"/> <?php _e('in', 'mainwp'); ?> 
+                       <select class="mainwp-select2-mini" name="post_search_on" id="mainwp_post_search_on">
+                            <option value="title" <?php echo $searchon == 'title' ? 'selected' : ''; ?>><?php _e( 'Title', 'mainwp' ); ?></option>
+                            <option value="content" <?php echo $searchon == 'content' ? 'selected' : ''; ?>><?php _e( 'Body', 'mainwp' ); ?></option>                
+                            <option value="all" <?php echo $searchon == 'all' ? 'selected' : ''; ?>><?php _e( 'Title and Body', 'mainwp' ); ?></option>                                                        
+                        </select>
 			</div>
 			<div class="mainwp-cols-2 mainwp-left">
 				<label for="mainwp_post_search_by_dtsstart"><?php _e( 'Date Range:', 'mainwp' ); ?></label><br/>
@@ -414,9 +423,9 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 				<div sytle="clear:both;"></div>
 			</div>
 			<?php
-		endif;
+		endif;               
 		?>
-		<br/><br/>
+        <br/><br/>        	
 		<div class="mainwp-padding-bottom-20 mainwp-padding-top-20">
 			<label for="mainwp_maximumPosts"><?php _e( 'Maximum number of posts to return', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( '0 for unlimited, CAUTION: depending on your server settings a large return amount may decrease the speed of results or temporarily break communication between Dashboard and Child.', 'mainwp' ) ); ?></label><br/>
 			<input type="number"
@@ -428,7 +437,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 		<?php
 	}
 
-	public static function renderTable( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '' ) {
+	public static function renderTable( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '', $search_on = 'all' ) {
 		// to fix for ajax call
 		$load_page = 'mainwp_page_PostBulkManage';
 		$hidden = get_user_option( 'manage' . strtolower($load_page) . 'columnshidden' );
@@ -567,7 +576,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			if ($cached) {
 				MainWP_Cache::echoBody( 'Post' );
 			} else {
-				MainWP_Post::renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type );
+				MainWP_Post::renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on );
 			}
 			?>
 			</tbody>
@@ -591,7 +600,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 		<?php
 	}
 
-	public static function renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '') {
+	public static function renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all') {
 		MainWP_Cache::initCache( 'Post' );
 
 		//Fetch all!
@@ -646,6 +655,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 				'dtsstart'   => $dtsstart,
 				'dtsstop'    => $dtsstop,
 				'status'     => $status,
+                'search_on' => $search_on,
 				'maxRecords' => ( ( get_option( 'mainwp_maximumPosts' ) === false ) ? 50 : get_option( 'mainwp_maximumPosts' ) ),
 			);
 
@@ -681,7 +691,8 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			'dtsstop'  => $dtsstop,
 			'status'   => $status,
 			'sites'    => ($sites != '') ? $sites : '',
-			'groups'   => ($groups != '') ? $groups : ''
+			'groups'   => ($groups != '') ? $groups : '',
+            'search_on' => $search_on
 		));
 
 		//Sort if required
@@ -935,6 +946,16 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 		self::renderFooter( 'BulkEdit' );
 	}
 
+    
+    public static function hookPostsSearch_handler( $data, $website, &$output ) {
+        $posts = array();
+		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
+			$posts = unserialize( base64_decode( $results[1] ) );
+			unset( $results );
+        }
+        $output->results[ $website->id ] = $posts;
+    }
+    
 
 	public static function getCategories() {
 		$websites = array();
@@ -1548,37 +1569,6 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 
 	public static function testPost() {
 		do_action( 'mainwp-do-action', 'test_post' );
-	}
-
-	public static function updatePostMeta( $websiteIdEnc, $postId, $values ) {
-		$values = base64_encode( serialize( $values ) );
-
-		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
-			return;
-		}
-		$websiteId = $websiteIdEnc;
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			return;
-		}
-
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			return;
-		}
-
-		try {
-			$information = MainWP_Utility::fetchUrlAuthed( $website, 'post_action', array(
-				'action' => 'upate_meta',
-				'id'     => $postId,
-				'values' => $values,
-			) );
-		} catch ( MainWP_Exception $e ) {
-			return;
-		}
-
-		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
-			return;
-		}
 	}
 
 	public static function setTerms( $postId, $cat_id, $taxonomy, $websiteIdEnc ) {

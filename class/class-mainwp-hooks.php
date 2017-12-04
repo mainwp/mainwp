@@ -51,9 +51,13 @@ class MainWP_Hooks {
 		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
 		add_action( 'mainwp_do_meta_boxes', array( &$this, 'mainwp_do_meta_boxes' ), 10, 1 );
 		add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
+        add_filter( 'mainwp_clonesite', array( &$this, 'filter_clone_site' ), 10, 6 );
+        add_filter( 'mainwp_deleteclonesite', array( &$this, 'filter_delete_clone_site' ), 10, 4 );
 		add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
 		add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hookAddSubLeftMenu' ), 10, 6 );
 		add_filter( 'mainwp_getwebsiteoptions', array( &$this, 'getWebsiteOptions' ), 10, 3 );
+        add_filter( 'mainwp_addgroup', array( 'MainWP_Extensions', 'hookAddGroup' ), 10, 3 );
+        add_filter( 'mainwp_getallposts', array( &$this, 'hookGetAllPosts' ), 10, 2 );
 	}
 
 	public function mainwp_log_debug( $pText ) {
@@ -106,6 +110,24 @@ class MainWP_Hooks {
 		return $ret;
 	}
 
+    /**
+	 * Hook to clone site
+	 *
+	 * @since 3.4.4
+	 * @param $pluginFile, $key, $websiteid, $cloneid
+	 *
+	 * @return array
+	 *
+	 */
+    
+    public function filter_clone_site( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update = false ) {
+		return MainWP_Extensions::hookCloneSite($pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update);
+	}  
+    
+    public function filter_delete_clone_site( $pluginFile, $key, $websiteid, $clone_url ) {
+		return MainWP_Extensions::hookDeleteCloneSite($pluginFile, $key, $websiteid, $clone_url);
+	}  
+    
 	/**
 	 * Hook to edit site
 	 *
@@ -259,6 +281,53 @@ class MainWP_Hooks {
 		return MainWP_DB::Instance()->getWebsitesByUrl( $url );
 	}
 
+    
+    
+    
+    /**
+	 * Hook to get posts from sites
+	 *
+	 * @since 3.4.4
+	 * @param $pluginFile, $key, $sites, $post_data
+	 * @param array $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type
+	 * @return array
+	 *
+	 */
+
+    public function hookGetAllPosts( $sites, $post_data = array()) {
+        
+		$dbwebsites = array();
+		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version' );
+
+		if ( $sites != '' ) {
+			foreach ( $sites as $k => $v ) {
+				if ( MainWP_Utility::ctype_digit( $v ) ) {
+					$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
+					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, $data );
+				}
+			}
+		}
+        
+        $default_data = array(
+            'post_type'     => 'post',
+            'status'     => 'publish',
+            'maxRecords' => 10			
+        );
+        
+        $post_data = array_merge($default_data, $post_data);
+        
+        $output         = new stdClass();
+        $output->results = array();
+        if ($dbwebsites) {
+            MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_posts', $post_data, array(
+                    MainWP_Post::getClassName(),
+                    'hookPostsSearch_handler',
+                ), $output );
+        }        
+        return $output;
+	}
+       
+    
 	public function isMultiUser() {
 		return MainWP_System::Instance()->isMultiUser();
 	}

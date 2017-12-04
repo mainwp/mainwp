@@ -1,0 +1,162 @@
+.mainwp-popup-overlay-hidden {
+    display: none;
+}
+/**
+ * Popup Overlay 
+ */
+.mainwp-popup-overlay .mainwp-popup-backdrop {
+	position: absolute;
+	left: -20px;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	background: #f1f1f1;
+	background: rgba( 238, 238, 238, 0.9 );
+	z-index: 10000; /* Over WP Pointers. */
+}
+
+
+.mainwp-popup-overlay .mainwp-popup-wrap {
+	clear: both;
+	position: fixed;
+	top: 9%;
+	left: 190px;
+	right: 30px;
+	bottom: 3%;
+	background: #fff;
+	box-shadow: 0 1px 20px 5px rgba(0, 0, 0, 0.1);
+	z-index: 10000; /* Over WP Pointers. */
+	box-sizing: border-box;
+	-webkit-overflow-scrolling: touch;
+}
+
+body.folded .mainwp-popup-overlay .mainwp-popup-wrap {
+	left: 70px;
+}
+
+body.folded.mainwp-ui-leftmenu .mainwp-popup-overlay .mainwp-popup-wrap {
+	left: 265px;
+}
+
+@media only screen and (min-width: 1680px) {
+	.mainwp-popup-overlay .mainwp-popup-wrap {
+		width: 1450px;
+		margin: 0 auto;
+	}
+}
+
+/* Admin menu is folded */
+@media only screen and (max-width: 900px) {
+	.mainwp-popup-overlay .mainwp-popup-wrap {
+		left: 65px;
+	}
+}
+
+@media only screen and (max-width: 780px) {
+	body.folded .mainwp-popup-overlay .mainwp-popup-wrap,
+	.mainwp-popup-overlay .mainwp-popup-wrap {
+		top: 0; /* The adminmenu isn't fixed on mobile, so this can use the full viewport height */
+		right: 0;
+		bottom: 0;
+		left: 0;
+		padding: 70px 20px 20px;
+		border: none;
+		z-index: 100000; /* should overlap #wpadminbar. */
+		position: fixed;
+	}
+}
+
+
+.mainwp-popup-overlay .mainwp-popup-header {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 48px;
+	border-bottom: 1px solid #ddd;
+        text-align: left;
+}
+
+.mainwp-popup-overlay .mainwp-popup-header button {
+	padding: 0;
+}
+
+.mainwp-popup-overlay .mainwp-popup-header .close {
+	cursor: pointer;
+	height: 48px;
+	width: 50px;
+	text-align: center;
+	float: right;
+	border: 0;
+	border-left: 1px solid #ddd;
+	background-color: transparent;
+	transition: color .1s ease-in-out, background .1s ease-in-out;
+}
+
+.mainwp-popup-overlay .mainwp-popup-header .close:before {
+	font: normal 22px/50px dashicons !important;
+	color: #72777c;
+	display: inline-block;
+	content: "\f335";
+	font-weight: 300;
+}
+
+.mainwp-popup-overlay .mainwp-popup-header .close:focus,
+.mainwp-popup-overlay .mainwp-popup-header .close:hover {
+	background: #ddd;
+	border-color: #ccc;
+	color: #000;
+}
+
+.mainwp-popup-overlay .mainwp-popup-header .close:focus:before,
+.mainwp-popup-overlay .mainwp-popup-header .close:hover:before {
+	color: #000;
+}
+
+.mainwp-popup-overlay .mainwp-popup-header .close:focus{
+    box-shadow: none;
+    outline: none;
+}
+
+.mainwp-popup-header .title{
+    text-transform: uppercase;
+    display: inline-block !important;
+    margin-left: 10px !important;
+}
+
+.mainwp-popup-top{
+    margin-top: 42px;
+}
+.mainwp-popup-overlay .mainwp-popup-content {
+	position: absolute;
+	top: 52px;
+	bottom: 57px;
+	left: 0;
+	right: 0;
+	overflow: auto;
+        padding:0;
+/*	padding: 2% 4%;*/
+}
+.mainwp-popup-overlay .mainwp-popup-actions {
+	position: absolute;
+	text-align: center;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	padding: 10px 25px 5px;
+	background: #f3f3f3;
+	z-index: 30;
+	box-sizing: border-box;
+	border-top: 1px solid #eee;
+}
+
+.mainwp-popup-overlay .mainwp-popup-actions a {
+	margin-right: 5px;
+	margin-bottom: 5px;
+}
+.mainwp-popup-top .ui-widget-header{
+    border: 0 !important;
+}
+.mainwp-popup-top .ui-widget-content {
+    background: none !important;
+}

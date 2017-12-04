@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.8.1
-Stable tag: 3.4.3
+Tested up to: 4.9.1
+Stable tag: 3.4.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,23 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.4.4 - 12-4-17 =
+* Fixed: an issue with the Unfix function for the removed readme.html security issue
+* Fixed: an issue with permissions for cookie files
+* Fixed: an issue with displaying site notes
+* Fixed: conflict with the SecuPress plugin
+* Fixed: an issue with auto installation of the extensions on specific server setups
+* Added: support for the upcoming extension
+* Added: the ability to search posts and pages by keyword in title and/or body
+* Added: the mainwp_getallposts hook for fetching posts and pages
+* Added: the mainwp_updatescheck_disable_sendmail hook for disabling email notifications for available updates
+* Added: support for the WordPress proxy setting for curl requests
+* Added: WP Admin and Open action links to the Connection Status widget
+* Updated: individual site mode navigation layout
+* Updated: sort method on the Manage Plugins and Themes page
+* Updated: confirmation messages for performing update process
+* Updated: various layout updates
 
 = 3.4.3 - 8-24-17 =
 * Fixed: an issue with saving Posts and Pages status

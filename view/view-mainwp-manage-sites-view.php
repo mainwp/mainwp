@@ -668,7 +668,7 @@ class MainWP_Manage_Sites_View {
 	        	</ol>
 	        	<em><?php _e( 'In most cases, this issue resolves itself in up to 48 hours, however, some host companies do not flush DNS cache that often and more time is needed.', 'mainwp' ); ?></em>
 	        	<h3><?php _e( 'Requests being blocked by Child Site server', 'mainwp' ); ?></h3>
-	        	<p><?php _e( 'n some cases, the Child Site server blocks requests sent from the Dashboard site, and your website may return message that the MainWP Child plugin can\'t be found. In this case, you need to contact your Child Site host support department and have them check if the server Firewall or Mod_Security is blocking access by reviewing server logs.', 'mainwp' ); ?></p>
+	        	<p><?php _e( 'In some cases, the Child Site server blocks requests sent from the Dashboard site, and your website may return message that the MainWP Child plugin can\'t be found. In this case, you need to contact your Child Site host support department and have them check if the server Firewall or Mod_Security is blocking access by reviewing server logs.', 'mainwp' ); ?></p>
 	        	<h3><?php _e( 'Connection being Blocked by CloudFlare', 'mainwp' ); ?></h3>
 	        	<p><?php _e( 'Some users with CloudFlare have reported trouble connecting their website to their MainWP Dashboard. If you are experiencing this issue please try the two resolution steps.', 'mainwp' ); ?></p>
 	        	<ol>

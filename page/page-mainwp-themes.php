@@ -67,6 +67,8 @@ class MainWP_Themes {
 		self::$subPages = apply_filters( 'mainwp-getsubpages-themes', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
+                if( MainWP_System::is_disable_menu_item(3, 'Themes' . $subPage['slug']) )
+                    continue;
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Themes' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
@@ -81,14 +83,24 @@ class MainWP_Themes {
 					<div class="mainwp_boxoutin"></div>
 					<a href="<?php echo admin_url( 'admin.php?page=ThemesManage' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Themes', 'mainwp' ); ?></a>
 					<?php if ( mainwp_current_user_can( 'dashboard', 'install_themes' ) ) { ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ThemesInstall') ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=ThemesInstall' ); ?>" class="mainwp-submenu"><?php _e( 'Install', 'mainwp' ); ?></a>
+                        <?php } ?>
 					<?php } ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ThemesAutoUpdate') ) { ?>
 					<a href="<?php echo admin_url( 'admin.php?page=ThemesAutoUpdate' ); ?>" class="mainwp-submenu"><?php _e( 'Auto Updates', 'mainwp' ); ?></a>
+                    <?php } ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ThemesIgnore') ) { ?>
 					<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnore' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>
+                    <?php } ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ThemesIgnoredAbandoned') ) { ?>
 					<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnoredAbandoned' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Abandoned', 'mainwp' ); ?></a>
+                    <?php } ?>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
+                            if ( MainWP_System::is_disable_menu_item(3, 'Themes' . $subPage['slug']) )
+                                continue;
 							?>
 							<a href="<?php echo admin_url( 'admin.php?page=Themes' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
 							<?php
@@ -139,6 +151,8 @@ class MainWP_Themes {
         MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'ThemesManage', 'Themes');
 
         foreach($init_sub_subleftmenu as $item) {
+            if( MainWP_System::is_disable_menu_item(3, $item['slug']) )
+                continue;
             MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
         }
     }
@@ -191,22 +205,32 @@ class MainWP_Themes {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=ThemesManage"><?php _e( 'Manage Themes', 'mainwp' ); ?></a>
 			<?php if ( mainwp_current_user_can( 'dashboard', 'install_themes' ) ) { ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ThemesInstall') ) { ?>
 				<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Install' ) {
 					echo 'nav-tab-active';
 				} ?>" href="admin.php?page=ThemesInstall"><?php _e( 'Install', 'mainwp' ); ?></a>
+            <?php } ?>
 			<?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ThemesAutoUpdate') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'AutoUpdate' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=ThemesAutoUpdate"><?php _e( 'Auto Updates', 'mainwp' ); ?></a>
+            <?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ThemesIgnore') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Ignore' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=ThemesIgnore"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>
+            <?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ThemesIgnoredAbandoned') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'IgnoreAbandoned' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=ThemesIgnoredAbandoned"><?php _e( 'Ignored Abandoned', 'mainwp' ); ?></a>
+            <?php } ?>
 			<?php
 			if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 				foreach ( self::$subPages as $subPage ) {
+                    if ( MainWP_System::is_disable_menu_item(3, 'Themes' . $subPage['slug']) )
+                        continue;
 					?>
 					<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) {
 						echo 'nav-tab-active';

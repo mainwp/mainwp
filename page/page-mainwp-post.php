@@ -40,21 +40,26 @@ class MainWP_Post {
 			'render',
 		) );
 		add_action( 'load-' . $_page, array(MainWP_Post::getClassName(), 'on_load_page'));
-		add_filter( 'manage_' . $_page . '_columns', array(MainWP_Post::getClassName(), 'get_manage_columns'));
-
-		add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ). '</div>', 'read', 'PostBulkAdd', array(
-			MainWP_Post::getClassName(),
-			'renderBulkAdd',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array(
-			MainWP_Post::getClassName(),
-			'renderBulkEdit',
-		) );
-		add_submenu_page( 'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . __( 'Posts', 'mainwp' ) . '</div>', 'read', 'PostingBulkPost', array(
-			MainWP_Post::getClassName(),
-			'posting',
-		) ); //removed from menu afterwards
-
+        add_filter( 'manage_' . $_page . '_columns', array(MainWP_Post::getClassName(), 'get_manage_columns'));
+        
+        if( !MainWP_System::is_disable_menu_item(3, 'PostBulkAdd') ) {
+            add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ). '</div>', 'read', 'PostBulkAdd', array(
+                MainWP_Post::getClassName(),
+                'renderBulkAdd',
+            ) );
+        }
+        if( !MainWP_System::is_disable_menu_item(3, 'PostBulkEdit') ) {
+            add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array(
+                MainWP_Post::getClassName(),
+                'renderBulkEdit',
+            ) );
+        }
+        
+        add_submenu_page( 'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . __( 'Posts', 'mainwp' ) . '</div>', 'read', 'PostingBulkPost', array(
+            MainWP_Post::getClassName(),
+            'posting',
+        ) ); //removed from menu afterwards
+        
 		/**
 		 * This hook allows you to add extra sub pages to the Post page via the 'mainwp-getsubpages-post' filter.
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
@@ -62,6 +67,8 @@ class MainWP_Post {
 		self::$subPages = apply_filters( 'mainwp-getsubpages-post', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
+                if( MainWP_System::is_disable_menu_item(3, 'Post' . $subPage['slug']) ) 
+                    continue;       
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Post' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
@@ -138,14 +145,19 @@ class MainWP_Post {
 			<div class="wp-submenu sub-open" style="">
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
-					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=PostBulkManage' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Posts', 'mainwp' ); ?></a>
+					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) { ?>                        
+						<a href="<?php echo admin_url( 'admin.php?page=PostBulkManage' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Posts', 'mainwp' ); ?></a>                                                
+                        <?php if ( ! MainWP_System::is_disable_menu_item(3, 'PostBulkAdd') ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd' ); ?>" class="mainwp-submenu"><?php _e( 'Add New', 'mainwp' ); ?></a>
+                        <?php } ?>
 					<?php } ?>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
 							if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && $subPage['menu_hidden'] != true ) ) {
+                                if ( MainWP_System::is_disable_menu_item(3, 'Post' . $subPage['slug']) ) {                                  
+                                    continue;
+                                }
 								?>
 								<a href="<?php echo admin_url( 'admin.php?page=Post' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
 								<?php
@@ -179,6 +191,9 @@ class MainWP_Post {
 		MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'PostBulkManage', 'Post');
 
 		foreach($init_sub_subleftmenu as $item) {
+            if ( MainWP_System::is_disable_menu_item(3, $item['slug']) ) {                                  
+                continue;
+            }
 			MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
 		}
 	}
@@ -209,13 +224,18 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 				<?php if ( $shownPage == 'BulkEdit' ) { ?>
 					<a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=PostBulkEdit&post_id=<?php echo esc_attr($post_id); ?>"><?php _e( 'Edit Post', 'mainwp' ); ?></a>
 				<?php } ?>
+                <?php if ( ! MainWP_System::is_disable_menu_item(3, 'PostBulkAdd') ) { ?>
 				<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkAdd' ) {
 					echo 'nav-tab-active';
 				} ?>" href="admin.php?page=PostBulkAdd"><?php _e( 'Add new', 'mainwp' ); ?></a>
+                <?php } ?>
 			<?php } ?>
 			<?php
 			if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 				foreach ( self::$subPages as $subPage ) {
+                    if ( MainWP_System::is_disable_menu_item(3, 'Post' . $subPage['slug']) )
+                            continue;
+                    
 					if ( isset( $subPage['tab_link_hidden'] ) && $subPage['tab_link_hidden'] == true ) {
 						$tab_link = '#';
 					} else {
@@ -1087,7 +1107,9 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 						}
 
 						include_once( ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php' );
-						$post_featured_image = get_post_thumbnail_id( $id );
+						$featured_image_id = get_post_thumbnail_id( $id );
+                        $post_featured_image = null;
+                        $featured_image_data = null;                        
 						$mainwp_upload_dir   = wp_upload_dir();
 						$post_status = get_post_meta( $id, '_edit_post_status', true );
 						$new_post = array(
@@ -1104,9 +1126,16 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 							'id_spin'        => $post->ID,
 						);
 
-						if ( $post_featured_image != null ) { //Featured image is set, retrieve URL
-							$img                 = wp_get_attachment_image_src( $post_featured_image, 'full' );
+						if ( $featured_image_id != null ) { //Featured image is set, retrieve URL
+							$img                 = wp_get_attachment_image_src( $featured_image_id, 'full' );
 							$post_featured_image = $img[0];
+                            $attachment = get_post( $featured_image_id );
+                            $featured_image_data = array(										
+										'alt' => get_post_meta( $featured_image_id, '_wp_attachment_image_alt', true ),
+										'caption' => $attachment->post_excerpt,
+										'description' => $attachment->post_content,										
+										'title' => $attachment->post_title
+									);
 						}
 
 						$dbwebsites = array();
@@ -1161,6 +1190,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 								'post_featured_image' => base64_encode( $post_featured_image ),
 								'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ),
 								'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ),
+                                'featured_image_data' => base64_encode( serialize( $featured_image_data ) ),
 							);
 							MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newpost', $post_data, array(
 								MainWP_Bulk_Add::getClassName(),

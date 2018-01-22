@@ -59,7 +59,8 @@ class MainWP_Recent_Pages {
 		$recent_pages_trash     = MainWP_Utility::sortmulti( $recent_pages_trash, 'dts', 'desc' );
                 $recent_pages_future     = MainWP_Utility::getSubArrayHaving( $allPages, 'status', 'future' );
 		$recent_pages_future     = MainWP_Utility::sortmulti( $recent_pages_future, 'dts', 'desc' );   
-                
+        
+        MainWP_UI::renderBeginReadyPopup();       
 		?>
 		<div class="mainwp-clear">
 		<div class="mainwp-postbox-actions-top">
@@ -282,12 +283,13 @@ class MainWP_Recent_Pages {
 					</div>
 				<?php } ?>
 			</div>
-			<div class="mainwp-postbox-actions-bottom">
-				<a href="<?php echo admin_url( 'admin.php?page=PageBulkAdd&select=' . ( $current_wpid ? $current_wpid : 'all' ) ); ?>" class="button-primary"><?php _e( 'Create new page', 'mainwp' ); ?></a>
-			</div>
+			<?php
+				$actions = '<a href="' . admin_url( 'admin.php?page=PageBulkAdd&select=' . ( $current_wpid ? $current_wpid : 'all' ) ). '" class="button-primary">' . __( 'Create new page', 'mainwp' ) . '</a>';
+			?>
 		</div>
-		<div class="clear"></div>
+		<div class="clear"></div>        
 		<?php
+          MainWP_UI::renderEndReadyPopup($actions, 'mainwp-postbox-actions-bottom');
 		if ( $pExit == true ) {
 			exit();
 		}

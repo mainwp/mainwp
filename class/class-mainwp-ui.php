@@ -364,6 +364,31 @@ class MainWP_UI {
 		</div>
 		<?php
 	}
+        
+    public static function renderBeginReadyPopup() {
+		?>
+        <div class="mainwp-popup-overlay-ready" tabindex="0" role="dialog" style="text-align: center">                   
+           <div class="mainwp-popup-backdrop"></div>
+           <div class="mainwp-popup-wrap wp-clearfix" role="document">
+               <div class="mainwp-popup-header">
+                   <h2 class="title" ></h2>
+                   <button type="button" class="close dashicons dashicons-no"><span class="screen-reader-text"><?php _e( 'Close dialog' ); ?></span></button>
+               </div>          
+               <div class="mainwp-popup-content" style="text-align: left"> 
+		<?php
+	}
+    
+    public static function renderEndReadyPopup($actions = '', $extra_class = '') {
+		?>		    
+                    </div>    
+                <div class="mainwp-popup-actions <?php echo $extra_class; ?>">
+                    <?php echo $actions; ?>
+                    <button type="button" class="mainwp-popup-close button"><?php _e( 'Close' ); ?></button>
+                </div>
+            </div>        
+        </div>    
+		<?php
+	}
 
 	public static function renderImage( $img, $alt, $class, $height = null ) {
 		?>
@@ -374,7 +399,7 @@ class MainWP_UI {
     public static function render_left_menu( ) {
         if ( !get_option( 'mainwp_disable_wp_main_menu', 1 ) )
             return;
-        global $mainwp_leftmenu, $mainwp_sub_leftmenu, $mainwp_sub_subleftmenu, $mainwp_menu_active_slugs, $plugin_page;
+        global $mainwp_leftmenu, $mainwp_sub_leftmenu, $mainwp_sub_subleftmenu, $_mainwp_menu_active_slugs, $plugin_page;
 
         $first = true;
         $values = get_option('mainwp_status_saved_values');
@@ -504,8 +529,8 @@ class MainWP_UI {
                                             $active_item = 'sidemenu-active';
                                             $set_actived = true;
                                         }
-                                    } else if ( isset($mainwp_menu_active_slugs[$plugin_page])) {
-                                        if ($sub_key == $mainwp_menu_active_slugs[$plugin_page]) {
+                                    } else if ( isset($_mainwp_menu_active_slugs[$plugin_page])) {
+                                        if ($sub_key == $_mainwp_menu_active_slugs[$plugin_page]) {
                                             // to fix Add Extension menu item
                                             if ($plugin_page == 'Extensions') {
                                                 if (($item_key == 'mainwp_tab' && !isset($_GET['leftmenu'])) || ($item_key == 'Extensions' && isset($_GET['leftmenu']))) {

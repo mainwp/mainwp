@@ -23,3 +23,5 @@
 #screen-meta {
     display: none;
 }
+
+.mce-menu{ position: fixed !important; top: 118px !important; }

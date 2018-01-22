@@ -68,6 +68,8 @@ class MainWP_Plugins {
 		self::$subPages = apply_filters( 'mainwp-getsubpages-plugins', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
+                if( MainWP_System::is_disable_menu_item(3, 'Plugins' . $subPage['slug']) )
+                    continue;
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Plugins' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
@@ -113,14 +115,24 @@ class MainWP_Plugins {
 					<div class="mainwp_boxoutin"></div>
 					<a href="<?php echo admin_url( 'admin.php?page=PluginsManage' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Plugins', 'mainwp' ); ?></a>
 					<?php if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) { ?>
+                        <?php if ( ! MainWP_System::is_disable_menu_item(3, 'PluginsInstall') ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=PluginsInstall' ); ?>" class="mainwp-submenu"><?php _e( 'Install', 'mainwp' ); ?></a>
+                        <?php } ?>
 					<?php } ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'PluginsAutoUpdate') ) { ?>
 					<a href="<?php echo admin_url( 'admin.php?page=PluginsAutoUpdate' ); ?>" class="mainwp-submenu"><?php _e( 'Auto Updates', 'mainwp' ); ?></a>
+                    <?php } ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'PluginsIgnore') ) { ?>
 					<a href="<?php echo admin_url( 'admin.php?page=PluginsIgnore' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>
+                    <?php } ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'PluginsIgnoredAbandoned') ) { ?>
 					<a href="<?php echo admin_url( 'admin.php?page=PluginsIgnoredAbandoned' ); ?>" class="mainwp-submenu"><?php _e( 'Ignored Abandoned', 'mainwp' ); ?></a>
+                    <?php } ?>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
+                            if ( MainWP_System::is_disable_menu_item(3, 'Plugins' . $subPage['slug'] ) ) 
+                                    continue; 
 							?>
 							<a href="<?php echo admin_url( 'admin.php?page=Plugins' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
 							<?php
@@ -171,6 +183,8 @@ class MainWP_Plugins {
         MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'PluginsManage', 'Plugins');
 
         foreach($init_sub_subleftmenu as $item) {
+            if( MainWP_System::is_disable_menu_item(3, $item['slug']) )
+                continue;
             MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
         }
     }
@@ -206,22 +220,32 @@ class MainWP_Plugins {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=PluginsManage"><?php _e( 'Manage Plugins', 'mainwp' ); ?></a>
 			<?php if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) { ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'PluginsInstall') ) { ?>
 				<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Install' ) {
 					echo 'nav-tab-active';
 				} ?>" href="admin.php?page=PluginsInstall"><?php _e( 'Install', 'mainwp' ); ?></a>
+            <?php } ?>
 			<?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'PluginsAutoUpdate') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'AutoUpdate' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=PluginsAutoUpdate"><?php _e( 'Auto Updates', 'mainwp' ); ?></a>
+            <?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'PluginsIgnore') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Ignore' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=PluginsIgnore"><?php _e( 'Ignored Updates', 'mainwp' ); ?></a>
+            <?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'PluginsIgnoredAbandoned') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'IgnoreAbandoned' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=PluginsIgnoredAbandoned"><?php _e( 'Ignored Abandoned', 'mainwp' ); ?></a>
+            <?php } ?>
 			<?php
 			if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 				foreach ( self::$subPages as $subPage ) {
+                    if ( MainWP_System::is_disable_menu_item(3, 'Plugins' . $subPage['slug'] ) ) 
+                            continue;
 					?>
 					<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) {
 						echo 'nav-tab-active';

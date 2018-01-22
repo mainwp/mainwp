@@ -127,7 +127,8 @@ if ( isset( $_POST[ 'content' ] ) && isset( $_POST[ 'action' ] ) && ( 'liverepor
 		if ( $checkPermission ) {
 			liveReportsResponderClasses();
 			$checkifvalidclient = checkifvalidclient( $_POST[ 'email' ], $_POST[ 'siteid' ] );
-			if ( isset( $checkifvalidclient[ 'result' ] ) && 'success' == $checkifvalidclient[ 'result' ] ) {
+			$allAccess = isset( $_POST[ 'allAccess' ] ) ? $_POST[ 'allAccess' ] : false;
+			if ( ( isset( $checkifvalidclient[ 'result' ] ) && 'success' == $checkifvalidclient[ 'result' ] ) || $allAccess ) {
 				$report = new stdClass();
 				$report->title = "Live Report";
 				$report->date_from = $_POST['date_from'];

@@ -577,7 +577,9 @@ class MainWP_Right_Now {
 		}
         
 		$websites = MainWP_DB::Instance()->query( $sql );
-
+        
+        MainWP_UI::renderBeginReadyPopup();
+        
 		if ( ! $websites ) {            
 			return;
 		}
@@ -2427,7 +2429,7 @@ class MainWP_Right_Now {
 						<strong class="fa-stack-1x mainwp-white"><?php echo $total_plugins_outdate; ?> </strong>
 					</span>
 							<?php echo _n( 'Plugin', 'Plugins', $total_plugins_outdate, 'mainwp'); ?> <?php _e('possibly abandoned', 'mainwp'); ?>
-						</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('This feature checks the last updated status of plugins and alerts you if not updated in a specific amount of time. This gives you insight on if a plugin may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
+						</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('This feature checks the last updated status of plugins and alerts you if not updated in a specific amount of time. This gives you insight on if a plugin may have been abandoned by the author.','mainwp'), 'https://mainwp.com/help/docs/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
 					</div>
 					<div class="mainwp-right mainwp-cols-4 mainwp-padding-top-5 mainwp-t-align-right">
 						<a href="<?php echo admin_url( 'admin.php?page=PluginsIgnoredAbandoned' ); ?>"><?php _e( 'Ignored', 'mainwp' ); ?> (<?php echo $total_pluginsIgnoredAbandoned; ?>)</a>
@@ -2772,7 +2774,7 @@ class MainWP_Right_Now {
 						<strong class="fa-stack-1x mainwp-white"><?php echo $total_themes_outdate; ?> </strong> 
 					</span>
 							<?php echo _n( 'Theme', 'Themes', $total_themes_outdate, 'mainwp'); ?> <?php _e('possibly abandoned', 'mainwp'); ?>
-						</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('This feature checks the last updated status of themes and alerts you if not updated in a specific amount of time. This gives you insight on if a theme may have been abandoned by the author.','mainwp'), 'http://docs.mainwp.com/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
+						</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('This feature checks the last updated status of themes and alerts you if not updated in a specific amount of time. This gives you insight on if a theme may have been abandoned by the author.','mainwp'), 'https://mainwp.com/help/docs/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
 					</div>
 					<div class="mainwp-right mainwp-cols-4 mainwp-padding-top-5 mainwp-t-align-right">
 						<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnoredAbandoned' ); ?>"><?php _e( 'Ignored', 'mainwp' ); ?> (<?php echo $total_themesIgnoredAbandoned; ?>)</a>
@@ -3124,7 +3126,7 @@ class MainWP_Right_Now {
 		}
 
 		do_action( 'mainwp_rightnow_widget_bottom', $site_ids, $globalView );
-
+        MainWP_UI::renderEndReadyPopup();
 		?>
  <?php if (false) { ?>
 		<div id="rightnow-upgrade-status-box" title="Upgrade" style="display: none; text-align: center">

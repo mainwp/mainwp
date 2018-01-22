@@ -46,7 +46,7 @@ class MainWP_Manage_Sites {
 		return $columns;
 	}
 
-	public static function initMenu() {
+	public static function initMenu() {        
 		self::$page = MainWP_Manage_Sites_View::initMenu();		
 		add_action( 'load-' . MainWP_Manage_Sites::$page, array(MainWP_Manage_Sites::getClassName(), 'on_load_page'));		
 		
@@ -60,7 +60,7 @@ class MainWP_Manage_Sites {
 				global $current_user;
 				update_user_option( $current_user->ID, 'screen_layout_' . self::$page, 2, true );
 			}
-		} 		
+		} 		        
 		add_submenu_page( 'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteOpen', array(
 			MainWP_Site_Open::getClassName(),
 			'render',
@@ -77,17 +77,25 @@ class MainWP_Manage_Sites {
 		self::$subPages = apply_filters( 'mainwp-getsubpages-sites', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
+                if( MainWP_System::is_disable_menu_item(2, 'ManageSites' . $subPage['slug']) ) {
+                    continue;
+                }
 				$_page = add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'ManageSites' . $subPage['slug'], $subPage['callback'] );
 				if ( isset( $subPage['on_load_callback'] ) && !empty($subPage['on_load_callback'])) {
 					add_action( 'load-' . $_page, $subPage['on_load_callback']);
 				}
 			}
 		}
-        MainWP_Manage_Sites_View::init_sub_sub_left_menu(self::$subPages);
+        
+        MainWP_Manage_Sites_View::init_sub_sub_left_menu(self::$subPages);        
+        
+        if( ! MainWP_System::is_disable_menu_item(1, 'childsites_menu') ) {
+            MainWP_Manage_Sites_View::init_child_sites_left_menu();
+        }        
 	}
 
-	public static function initMenuSubPages() {
-		MainWP_Manage_Sites_View::initMenuSubPages( self::$subPages );
+	public static function initMenuSubPages() {        
+        MainWP_Manage_Sites_View::initMenuSubPages( self::$subPages );        
 	}
 	
 	public static function on_load_page() {	

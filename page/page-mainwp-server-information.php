@@ -14,33 +14,49 @@ class MainWP_Server_Information {
 			MainWP_Server_Information::getClassName(),
 			'render',
 		) );
-		add_submenu_page( 'mainwp_tab', __( 'Cron Schedules', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Cron Schedules', 'mainwp' ) . '</div>', 'read', 'ServerInformationCron', array(
-			MainWP_Server_Information::getClassName(),
-			'renderCron',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Child Site Information', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Child Site Information', 'mainwp' ) . '</div>', 'read', 'ServerInformationChild', array(
-			MainWP_Server_Information::getClassName(),
-			'renderChild',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Error Log', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Error Log', 'mainwp' ) . '</div>', 'read', 'ErrorLog', array(
-			MainWP_Server_Information::getClassName(),
-			'renderErrorLogPage',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'WP-Config File', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'WP-Config File', 'mainwp' ) . '</div>', 'read', 'WPConfig', array(
-			MainWP_Server_Information::getClassName(),
-			'renderWPConfig',
-		) );
-		add_submenu_page( 'mainwp_tab', __( '.htaccess File', 'mainwp' ), '<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>', 'read', '.htaccess', array(
-			MainWP_Server_Information::getClassName(),
-			'renderhtaccess',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Action logs', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Action logs', 'mainwp' ) . '</div>', 'read', 'ActionLogs', array(
-			MainWP_Server_Information::getClassName(),
-			'renderActionLogs',
-		) );
+        if( !MainWP_System::is_disable_menu_item(3, 'ServerInformationCron') ) {
+            add_submenu_page( 'mainwp_tab', __( 'Cron Schedules', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Cron Schedules', 'mainwp' ) . '</div>', 'read', 'ServerInformationCron', array(
+                MainWP_Server_Information::getClassName(),
+                'renderCron',
+            ) );
+        }
+        
+        if( !MainWP_System::is_disable_menu_item(3, 'ServerInformationChild') ) {
+            add_submenu_page( 'mainwp_tab', __( 'Child Site Information', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Child Site Information', 'mainwp' ) . '</div>', 'read', 'ServerInformationChild', array(
+                MainWP_Server_Information::getClassName(),
+                'renderChild',
+            ) );
+        }
+        
+        if( !MainWP_System::is_disable_menu_item(3, 'ErrorLog') ) {
+            add_submenu_page( 'mainwp_tab', __( 'Error Log', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Error Log', 'mainwp' ) . '</div>', 'read', 'ErrorLog', array(
+                MainWP_Server_Information::getClassName(),
+                'renderErrorLogPage',
+            ) );
+        }
+        if( !MainWP_System::is_disable_menu_item(3, 'WPConfig') ) {
+            add_submenu_page( 'mainwp_tab', __( 'WP-Config File', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'WP-Config File', 'mainwp' ) . '</div>', 'read', 'WPConfig', array(
+                MainWP_Server_Information::getClassName(),
+                'renderWPConfig',
+            ) );
+        }
+        if( !MainWP_System::is_disable_menu_item(3, '.htaccess') ) {
+            add_submenu_page( 'mainwp_tab', __( '.htaccess File', 'mainwp' ), '<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>', 'read', '.htaccess', array(
+                MainWP_Server_Information::getClassName(),
+                'renderhtaccess',
+            ) );
+        }
+        if( !MainWP_System::is_disable_menu_item(3, 'ActionLogs') ) {
+            add_submenu_page( 'mainwp_tab', __( 'Action logs', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Action logs', 'mainwp' ) . '</div>', 'read', 'ActionLogs', array(
+                MainWP_Server_Information::getClassName(),
+                'renderActionLogs',
+            ) );
+        }
         self::$subPages = apply_filters('mainwp-getsubpages-server', array());
 		if (isset(self::$subPages) && is_array(self::$subPages)) {
 			foreach (self::$subPages as $subPage) {
+                if( MainWP_System::is_disable_menu_item(3,  'Server' . $subPage['slug'] ) ) 
+                        continue;
 				add_submenu_page('mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Server' . $subPage['slug'], $subPage['callback']);
 			}
 		}
@@ -54,21 +70,35 @@ class MainWP_Server_Information {
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
                                         <a href="<?php echo admin_url( 'admin.php?page=ServerInformation' ); ?>" class="mainwp-submenu"><?php _e( 'Server','mainwp' ); ?></a>
+                                        <?php if( !MainWP_System::is_disable_menu_item(3, 'ServerInformationCron') ) { ?>
                                         <a href="<?php echo admin_url( 'admin.php?page=ServerInformationCron' ); ?>" class="mainwp-submenu"><?php _e( 'Cron Schedules','mainwp' ); ?></a>
+                                        <?php } ?>
+                                        <?php if( !MainWP_System::is_disable_menu_item(3, 'ErrorLog') ) { ?>
                                         <a href="<?php echo admin_url( 'admin.php?page=ErrorLog' ); ?>" class="mainwp-submenu"><?php _e( 'Error Log','mainwp' ); ?></a>
+                                        <?php } ?>
+                                        <?php if( !MainWP_System::is_disable_menu_item(3, 'WPConfig') ) { ?>
                                         <a href="<?php echo admin_url( 'admin.php?page=WPConfig' ); ?>" class="mainwp-submenu"><?php _e( 'WP-Config File','mainwp' ); ?></a>
-                                        <a href="<?php echo admin_url( 'admin.php?page=.htaccess' ); ?>" class="mainwp-submenu"><?php _e( '.htaccess File','mainwp' ); ?></a><?php
+                                        <?php } ?>
+                                        <?php if( !MainWP_System::is_disable_menu_item(3, '.htaccess') ) { ?>
+                                        <a href="<?php echo admin_url( 'admin.php?page=.htaccess' ); ?>" class="mainwp-submenu"><?php _e( '.htaccess File','mainwp' ); ?></a>
+                                        <?php } ?>
+                                    <?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
 							if ( ! isset( $subPage['menu_hidden'] ) || (isset( $subPage['menu_hidden'] ) && $subPage['menu_hidden'] != true) ) {
-							?>
-                                                        <a href="<?php echo admin_url( 'admin.php?page=Server'.$subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
+                                if( MainWP_System::is_disable_menu_item(3,  'Server' . $subPage['slug'] ) ) 
+                                        continue;
+                                
+							?>                           
+                                <a href="<?php echo admin_url( 'admin.php?page=Server'.$subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
 							<?php
 							}
 						}
 					}
 					?>
+                    <?php if( !MainWP_System::is_disable_menu_item(3, 'ServerInformationChild') ) { ?>
                                         <a href="<?php echo admin_url( 'admin.php?page=ServerInformationChild' ); ?>" class="mainwp-submenu"><?php _e( 'Child Site Information','mainwp' ); ?></a>
+                    <?php } ?>
 				</div>
 			</div>
 		</div>
@@ -77,8 +107,8 @@ class MainWP_Server_Information {
 
         static function init_sub_sub_left_menu($subPages = array()) {
                 MainWP_System::add_sub_left_menu(__('Server Information', 'mainwp'), 'mainwp_tab', 'ServerInformation', 'admin.php?page=ServerInformation', '<i class="fa fa-server"></i>', '' );
-                global $mainwp_menu_active_slugs;
-                $mainwp_menu_active_slugs['ActionLogs'] = 'ServerInformation'; // hidden page
+                global $_mainwp_menu_active_slugs;
+                $_mainwp_menu_active_slugs['ActionLogs'] = 'ServerInformation'; // hidden page
 
                 $init_sub_subleftmenu = array(
                         array(  'title' => __('Server', 'mainwp'),
@@ -120,6 +150,8 @@ class MainWP_Server_Information {
                 );
                 MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'ServerInformation', 'Settings');
                 foreach($init_sub_subleftmenu as $item) {
+                    if( MainWP_System::is_disable_menu_item(3, $item['slug']) )
+                        continue;
                     MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
                 }
 
@@ -137,21 +169,31 @@ class MainWP_Server_Information {
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === '' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=ServerInformation"><?php _e( 'Server', 'mainwp' ); ?></a>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ServerInformationCron') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'ServerInformationCron' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=ServerInformationCron"><?php _e( 'Cron Schedules', 'mainwp' ); ?></a>
+            <?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ServerInformationChild') ) { ?>
 			<a style="float: right;" class="nav-tab pos-nav-tab <?php if ( $shownPage === 'ServerInformationChild' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=ServerInformationChild"><?php _e( 'Child Site Information', 'mainwp' ); ?></a>
+            <?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ErrorLog') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'ErrorLog' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=ErrorLog"><?php _e( 'Error Log', 'mainwp' ); ?></a>
+            <?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'WPConfig') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'WPConfig' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=WPConfig"><?php _e( 'WP-Config File', 'mainwp' ); ?></a>
+            <?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, '.htaccess') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === '.htaccess' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=.htaccess"><?php _e( '.htaccess File', 'mainwp' ); ?></a>
+            <?php } ?>
 			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">

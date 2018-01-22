@@ -12,7 +12,7 @@ class MainWP_Backup_Tasks {
 	public static function render() {
 
 		$tasks = MainWP_DB::Instance()->getBackupTasksForUser();
-
+         MainWP_UI::renderBeginReadyPopup();
 		if ( count( $tasks ) == 0 ) {
 			echo 'You have no scheduled backup tasks. <a href="admin.php?page=ManageBackupsAddNew">Go create one!</a>' ;
 		} else {
@@ -86,5 +86,6 @@ class MainWP_Backup_Tasks {
 		</div>
 		<?php
 		}
+        MainWP_UI::renderEndReadyPopup();
 	}
 }

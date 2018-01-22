@@ -368,7 +368,7 @@ a.mainwp-post-trash {color: #a00;}
 #managebackups-task-status-box .ui-progressbar {
     background-color: #fafafa;
     margin-top: 0;
-    height: 8px;
+    height: 2px;
     border-radius: 0 !important;
     -webkit-border-radius: 0 !important;
     -moz-border-radius: 0 !important;
@@ -1267,7 +1267,7 @@ h3.mainwp_box_title {
     -webkit-box-shadow: 0 0 6px rgba(0, 0, 0, 0.5), inset 0 1px 0 #fff !important;
     padding: 11px 10px 11px 10px;
     position: fixed;
-    z-index: 1101;
+    z-index: 11101;
     left: 50%;
 }
 
@@ -2112,12 +2112,6 @@ body.show-upload-theme #mainwp_wrap-inside .upload-theme,
 .plugin-update-tr.active > td > div.api-deactivate {
     margin: 10px 20px 10px 40px;
     padding: 10px;
-}
-.mainwp-postbox-actions-bottom {
-    padding: 10px;
-    clear: both;
-    border-top: 1px solid #ddd;
-    background: #f5f5f5;
 }
 .mainwp-ui .plugin-update-tr .update-message {
     margin:5px 20px 15px 40px;

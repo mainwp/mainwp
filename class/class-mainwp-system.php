@@ -13,7 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
-	public static $version = '3.4.4';
+	public static $version = '3.4.5';
 	//Singleton
 	private static $instance = null;
 
@@ -113,7 +113,34 @@ class MainWP_System {
 
 		MainWP_Manage_Sites::init();
 		new MainWP_Hooks(); //Init the hooks
-
+        
+        global $_mainwp_disable_menus_items;
+        if ($_mainwp_disable_menus_items === null) {    
+            // init some disable menu items, default is false
+            $_mainwp_disable_menus_items = array(
+                'level_1' => array( 
+                                    //'mainwp_tab' => false, // not hide this menu
+                                    'Extensions' => false,
+                                    'childsites_menu' => false,
+                                ),
+                'level_2' => array( 
+                                    //'mainwp_tab' => false,  // not hide this menu 
+                                    'UpdatesManage' => false,
+                                    'managesites' => false,
+                                    'PostBulkManage' => false,
+                                    'PageBulkManage' => false,
+                                    'ThemesManage' => false,
+                                    'PluginsManage' => false,
+                                    'UserBulkManage' => false,
+                                    'ManageBackups' => false,
+                                    'Settings' => false,
+                                    'Extensions' => false,
+                                    'ServerInformation' => false,
+                                ),
+                'level_3' => array()
+            );
+        }
+        
 		//Change menu & widgets
 		add_action( 'admin_menu', array( &$this, 'new_menus' ) );
 
@@ -808,7 +835,7 @@ class MainWP_System {
 			if ( in_array( $arg->slug, $am_slugs ) ) {
 				$info = MainWP_API_Settings::getPluginInformation( $arg->slug );
 				if ( is_object( $info ) && property_exists( $info, 'sections' ) ) {
-					if ( !is_array( $info->sections ) || isset( $info->sections['changelog'] ) || empty( $info->sections['changelog'] ) ) {
+					if ( !is_array( $info->sections ) || !isset( $info->sections['changelog'] ) || empty( $info->sections['changelog'] ) ) {
 						$exts_data = MainWP_Extensions_View::getAvailableExtensions();
 						if (isset($exts_data[$arg->slug])) {
 							$ext_info = $exts_data[$arg->slug];
@@ -1767,23 +1794,36 @@ class MainWP_System {
 		@MainWP_DB::free_result( $websites );
 	}
 
+    public static function is_disable_menu_item($level, $item){
+        global $_mainwp_disable_menus_items;
+        $_level = 'level_' . $level;
+        if ( is_array($_mainwp_disable_menus_items) && isset( $_mainwp_disable_menus_items[$_level] ) && isset( $_mainwp_disable_menus_items[$_level][$item] ) ) {
+            if ( $_mainwp_disable_menus_items[$_level][$item] )
+                return true; 
+            else 
+                return false; 
+        }
+        $_mainwp_disable_menus_items[$_level][$item] = false;
+        return false;
+    } 
+    
 	public static function add_left_menu($title, $key, $href, $desc = '' ) {
 		global $mainwp_leftmenu;
 		$mainwp_leftmenu[] = array($title, $key, $href, $desc);
 	}
 
 	public static function add_sub_left_menu($title, $parent_key, $slug, $href, $icon = '', $desc = '' ) {
-		global $mainwp_sub_leftmenu, $mainwp_menu_active_slugs;
+		global $mainwp_sub_leftmenu, $_mainwp_menu_active_slugs;
 		$mainwp_sub_leftmenu[$parent_key][] = array($title, $slug, $href, $icon, $desc);
 		if (!empty($slug))
-			$mainwp_menu_active_slugs[$slug] = $slug; // to get active menu
+			$_mainwp_menu_active_slugs[$slug] = $slug; // to get active menu
 	}
 
 	public static function add_sub_sub_left_menu($title, $parent_key, $slug, $href, $right = '' ) {
-		global $mainwp_sub_subleftmenu, $mainwp_menu_active_slugs;
+		global $mainwp_sub_subleftmenu, $_mainwp_menu_active_slugs;
 		$mainwp_sub_subleftmenu[$parent_key][] = array($title, $href, $right);
 		if (!empty($slug))
-			$mainwp_menu_active_slugs[$slug] = $parent_key; // to get active menu
+			$_mainwp_menu_active_slugs[$slug] = $parent_key; // to get active menu
 	}
 
 	public static function init_subpages_left_menu($subPages, &$initSubpage, $parentKey, $slug ) {
@@ -1792,32 +1832,62 @@ class MainWP_System {
 		}
 		foreach ( $subPages as $subPage ) {
 			if ( ! isset( $subPage['menu_hidden'] ) || (isset( $subPage['menu_hidden'] ) && $subPage['menu_hidden'] != true) ) {
-				$initSubpage[] = array(
+				$_item = array(
 					'title' => $subPage['title'],
 					'parent_key' => $parentKey,
 					'href' => 'admin.php?page=' . $slug . $subPage['slug'],
 					'slug' => $slug . $subPage['slug'],
 					'right' => ''
 				);
+                
+                if (isset($subPage['item_slug'])) {
+                    $_item['item_slug'] = $subPage['item_slug']; 
+                }                   
+                
+                $initSubpage[] = $_item; 
 			}
 		}
 	}
 
 	function admin_footer() {
-		MainWP_Post::initMenuSubPages();
-		MainWP_Manage_Sites::initMenuSubPages();
-		MainWP_Settings::initMenuSubPages();
-		MainWP_Extensions::initMenuSubPages();
-		MainWP_Page::initMenuSubPages();
-		MainWP_Themes::initMenuSubPages();
-		MainWP_Plugins::initMenuSubPages();
-		MainWP_User::initMenuSubPages();
+        if ( !self::is_disable_menu_item(2, 'PostBulkManage')) {
+            MainWP_Post::initMenuSubPages();
+        }        
+        if ( !self::is_disable_menu_item(2, 'managesites') ) {
+            MainWP_Manage_Sites::initMenuSubPages();   
+        }
+        
+        if ( !self::is_disable_menu_item(2, 'Settings') ) {
+            MainWP_Settings::initMenuSubPages();
+        }
+        
+        if ( !self::is_disable_menu_item(2, 'Extensions') ) {
+            MainWP_Extensions::initMenuSubPages();
+        }
+        if ( !self::is_disable_menu_item(2, 'PageBulkManage') ) {
+            MainWP_Page::initMenuSubPages();
+        }
+        if ( !self::is_disable_menu_item(2, 'ThemesManage') ) {
+            MainWP_Themes::initMenuSubPages();
+        }
+        if ( !self::is_disable_menu_item(2, 'PluginsManage') ) {
+            MainWP_Plugins::initMenuSubPages();
+        }
+        if ( !self::is_disable_menu_item(2, 'UserBulkManage') ) {
+            MainWP_User::initMenuSubPages();
+        }
 		if (get_option('mainwp_enableLegacyBackupFeature')) {
-			MainWP_Manage_Backups::initMenuSubPages();
+            if ( !self::is_disable_menu_item(2, 'ManageBackups') ) {
+                MainWP_Manage_Backups::initMenuSubPages();
+            }
 		}
-		MainWP_Settings::initMenuSubPages();
+        if (!self::is_disable_menu_item(2, 'Settings')) {
+            MainWP_Settings::initMenuSubPages();
+        }
 		do_action( 'mainwp_admin_menu_sub' );
-		MainWP_Server_Information::initMenuSubPages();
+        if (!self::is_disable_menu_item(2, 'ServerInformation')) {
+            MainWP_Server_Information::initMenuSubPages();
+        }
 		if (get_option('mainwp_disable_wp_main_menu', 1)) {
 			if ( self::isMainWP_Pages() ) {
 				?>
@@ -1829,7 +1899,10 @@ class MainWP_System {
 				</script>
 				<?php
 			}
-		}
+		} 
+        
+        global $_mainwp_disable_menus_items;
+        $_mainwp_disable_menus_items = apply_filters('mainwp_all_disablemenuitems', $_mainwp_disable_menus_items); // to support developer to debug       
 	}
 
 	function admin_print_styles() {
@@ -1920,6 +1993,10 @@ class MainWP_System {
 	}
 
 	function init() {
+        
+        global $_mainwp_disable_menus_items;        
+        $_mainwp_disable_menus_items = apply_filters('mainwp_disablemenuitems', $_mainwp_disable_menus_items);        
+       
 		if ( ! function_exists( 'mainwp_current_user_can' ) ) {
 			function mainwp_current_user_can( $cap_type = '', $cap ) {
 				global $current_user;
@@ -1953,7 +2030,7 @@ class MainWP_System {
 		header( 'Content-Description: File Transfer' );
 		if ( MainWP_Utility::endsWith( $file, '.tar.gz' ) ) {
 			header( 'Content-Type: application/x-gzip' );
-			header( "Content-Encoding: gzip'" );
+			header( "Content-Encoding: gzip" );
 		} else {
 			header( 'Content-Type: application/octet-stream' );
 		}
@@ -3032,7 +3109,7 @@ class MainWP_System {
 					?>
 				</table>
 			</div>
-			<input id="refresh-status-close" type="button" name="Close" value="Close" class="button"/>
+			<input class="mainwp-popup-close button" type="button" name="Close" value="<?php _e( 'Close' ); ?>"/>
 		</div>
     
 <?php } ?>
@@ -3075,7 +3152,7 @@ class MainWP_System {
                     </table>                                                   
                 </div>    
                 <div class="mainwp-popup-actions">
-                    <button type="button" id="refresh-status-close" class="button"><?php _e( 'Close' ); ?></button>
+                    <button type="button" class="mainwp-popup-close button"><?php _e( 'Close' ); ?></button>
                 </div>
             </div>        
         </div>    
@@ -3096,29 +3173,54 @@ class MainWP_System {
 
 		return $output . $newOutput;
 	}
-
-	function new_menus() {
-		if ( MainWP_Utility::isAdmin() ) {
+    
+    function new_menus() {        
+		if ( MainWP_Utility::isAdmin() ) {                        
 			//Adding the page to manage your added sites/groups
 			//The first page which will display the post area etc..			
-			MainWP_Updates::initMenu();
-			MainWP_Manage_Sites::initMenu();
-			MainWP_Post::initMenu();
-			MainWP_Page::initMenu();
-			MainWP_Themes::initMenu();
-			MainWP_Plugins::initMenu();
-			MainWP_User::initMenu();
-			MainWP_Manage_Backups::initMenu();
-			MainWP_Bulk_Update_Admin_Passwords::initMenu();
-			MainWP_Manage_Groups::initMenu();
-			MainWP_Settings::initMenu();
-			MainWP_Extensions::initMenu();
+            if (!self::is_disable_menu_item(2, 'UpdatesManage')) {
+                MainWP_Updates::initMenu();
+            }
+            if( !self::is_disable_menu_item(2, 'managesites') ) {
+                MainWP_Manage_Sites::initMenu();
+            }
+            if (!self::is_disable_menu_item(2, 'PostBulkManage')) {
+                MainWP_Post::initMenu();
+            }
+            if (!self::is_disable_menu_item(2, 'PageBulkManage')) {
+                MainWP_Page::initMenu();
+            }
+            if (!self::is_disable_menu_item(2, 'ThemesManage')) {
+                MainWP_Themes::initMenu();
+            }
+            if (!self::is_disable_menu_item(2, 'PluginsManage')) {
+                MainWP_Plugins::initMenu();
+            }
+            if (!self::is_disable_menu_item(2, 'UserBulkManage')) {
+                MainWP_User::initMenu();
+            }
+            if (!self::is_disable_menu_item(2, 'ManageBackups')) {
+                MainWP_Manage_Backups::initMenu();
+            }
+            if (!self::is_disable_menu_item(3, 'UpdateAdminPasswords')) {
+                MainWP_Bulk_Update_Admin_Passwords::initMenu();
+            }
+            if (!self::is_disable_menu_item(3, 'ManageGroups')) {
+                MainWP_Manage_Groups::initMenu();
+            }
+            if (!self::is_disable_menu_item(2, 'Settings')) {
+                MainWP_Settings::initMenu();
+            }            
+            MainWP_Extensions::initMenu(); //check disable menu item in the function
 			do_action( 'mainwp_admin_menu' );
-			MainWP_Server_Information::initMenu();
+            
+            if (!self::is_disable_menu_item(2, 'ServerInformation')) {
+                MainWP_Server_Information::initMenu();
+            }
+            
 			MainWP_About::initMenu();
 			MainWP_Child_Scan::initMenu();
-
-			MainWP_API_Settings::initMenu();
+            
 		}
 	}
 

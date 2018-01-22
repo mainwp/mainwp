@@ -51,6 +51,8 @@ class MainWP_Page {
 		self::$subPages = apply_filters( 'mainwp-getsubpages-page', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
+                if( MainWP_System::is_disable_menu_item(3, 'Page' . $subPage['slug']) )
+                    continue;
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Page' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
@@ -66,12 +68,16 @@ class MainWP_Page {
 					<div class="mainwp_boxoutin"></div>
 					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=PageBulkManage' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Pages','mainwp' ); ?></a>
+                        <?php if ( ! MainWP_System::is_disable_menu_item(3, 'PageBulkAdd') ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=PageBulkAdd' ); ?>" class="mainwp-submenu"><?php _e( 'Add New','mainwp' ); ?></a>
+                        <?php } ?>
 					<?php } ?>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
 							if ( ! isset( $subPage['menu_hidden'] ) || (isset( $subPage['menu_hidden'] ) && $subPage['menu_hidden'] != true) ) {
+                                if ( MainWP_System::is_disable_menu_item(3, 'Page' . $subPage['slug']) ) 
+                                    continue;
 							?>
 						<a href="<?php echo admin_url( 'admin.php?page=Page'.$subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
 							<?php
@@ -105,6 +111,8 @@ class MainWP_Page {
             MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'PageBulkManage', 'Page');
 
             foreach($init_sub_subleftmenu as $item) {
+                if( MainWP_System::is_disable_menu_item(3, $item['slug']) )
+                    continue;
                 MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
             }
     }
@@ -233,11 +241,16 @@ class MainWP_Page {
                 <?php if ( $shownPage == 'BulkEdit' ) { ?>
                         <a class="nav-tab pos-nav-tab nav-tab-active" href="admin.php?page=PageBulkEdit&post_id=<?php echo esc_attr($post_id); ?>"><?php _e( 'Edit Page', 'mainwp' ); ?></a>
                 <?php } ?>
+                        <?php if ( ! MainWP_System::is_disable_menu_item(3, 'PageBulkAdd') ) { ?>
                         <a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'BulkAdd' ) { echo 'nav-tab-active'; } ?>" href="admin.php?page=PageBulkAdd"><?php _e( 'Add New','mainwp' ); ?></a>
+                        <?php } ?>
                 <?php } ?>
 				<?php
 				if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 					foreach ( self::$subPages as $subPage ) {
+                        if ( MainWP_System::is_disable_menu_item(3, 'Page' . $subPage['slug']) )
+                                continue;
+                        
 						if ( isset( $subPage['tab_link_hidden'] ) && $subPage['tab_link_hidden'] == true ) {
 							$tab_link = '#';
 						} else { $tab_link = 'admin.php?page=Page'. $subPage['slug'];}
@@ -856,7 +869,9 @@ class MainWP_Page {
 					$post_slug = base64_decode( get_post_meta( $id, '_slug', true ) );
 					$post_custom = get_post_custom( $id );
 					include_once( ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php' );
-					$post_featured_image = get_post_thumbnail_id( $id );
+					$featured_image_id = get_post_thumbnail_id( $id );
+                    $post_featured_image = null;
+                    $featured_image_data = null;                          
 					$mainwp_upload_dir = wp_upload_dir();
                     $post_status = get_post_meta( $id, '_edit_post_status', true );
 					$new_post = array(
@@ -873,9 +888,16 @@ class MainWP_Page {
 						'id_spin' => $post->ID,
 					);
 
-					if ( $post_featured_image != null ) { //Featured image is set, retrieve URL
-						$img = wp_get_attachment_image_src( $post_featured_image, 'full' );
+					if ( $featured_image_id != null ) { //Featured image is set, retrieve URL
+						$img = wp_get_attachment_image_src( $featured_image_id, 'full' );
 						$post_featured_image = $img[0];
+                        $attachment = get_post( $featured_image_id );
+                        $featured_image_data = array(										
+                                    'alt' => get_post_meta( $featured_image_id, '_wp_attachment_image_alt', true ),
+                                    'caption' => $attachment->post_excerpt,
+                                    'description' => $attachment->post_content,										
+                                    'title' => $attachment->post_title
+                                );
 					}
 
 					$galleries = get_post_gallery( $id, false );
@@ -931,6 +953,7 @@ class MainWP_Page {
 							'post_featured_image' => base64_encode( $post_featured_image ),
 							'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ),
 							'mainwp_upload_dir' => base64_encode( serialize( $mainwp_upload_dir ) ),
+                            'featured_image_data' => base64_encode( serialize( $featured_image_data ) ),
 						);
 						$post_data = apply_filters( 'mainwp_bulkpage_posting', $post_data, $id );
 						MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newpost', $post_data, array( MainWP_Bulk_Add::getClassName(), 'PostingBulk_handler' ), $output );

@@ -60,6 +60,8 @@ class MainWP_User {
 		self::$subPages = apply_filters( 'mainwp-getsubpages-user', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
+                if( MainWP_System::is_disable_menu_item(3, 'UserBulk' . $subPage['slug']) )
+                    continue;
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'UserBulk' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
@@ -125,12 +127,20 @@ class MainWP_User {
 					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_users' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=UserBulkManage' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Users', 'mainwp' ); ?></a>
 					<?php } ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'UserBulkAdd') ) { ?>
 					<a href="<?php echo admin_url( 'admin.php?page=UserBulkAdd' ); ?>" class="mainwp-submenu"><?php _e( 'Add New', 'mainwp' ); ?></a>
+                    <?php } ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'BulkImportUsers') ) { ?>
 					<a href="<?php echo admin_url( 'admin.php?page=BulkImportUsers' ); ?>" class="mainwp-submenu"><?php _e( 'Import Users', 'mainwp' ); ?></a>
-					<a href="<?php echo admin_url( 'admin.php?page=UpdateAdminPasswords' ); ?>" class="mainwp-submenu"><?php _e( 'Admin Passwords', 'mainwp' ); ?></a>
+					<?php } ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'UpdateAdminPasswords') ) { ?>
+                    <a href="<?php echo admin_url( 'admin.php?page=UpdateAdminPasswords' ); ?>" class="mainwp-submenu"><?php _e( 'Admin Passwords', 'mainwp' ); ?></a>
+                    <?php } ?>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
+                             if ( MainWP_System::is_disable_menu_item(3, 'UserBulk' . $subPage['slug']) ) 
+                                continue;
 							?>
 							<a href="<?php echo admin_url( 'admin.php?page=UserBulk' . $subPage['slug'] ); ?>"
 								class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
@@ -176,6 +186,8 @@ class MainWP_User {
         MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'UserBulkManage', 'UserBulk');
 
         foreach($init_sub_subleftmenu as $item) {
+            if( MainWP_System::is_disable_menu_item(3, $item['slug']) )
+                continue;
             MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
         }
     }
@@ -196,18 +208,26 @@ class MainWP_User {
 					echo 'nav-tab-active';
 				} ?>" href="admin.php?page=UserBulkManage"><?php _e( 'Manage Users', 'mainwp' ); ?></a>
 			<?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'UserBulkAdd') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Add' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=UserBulkAdd"><?php _e( 'Add New', 'mainwp' ); ?></a>
+            <?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'BulkImportUsers') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'Import' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=BulkImportUsers"><?php _e( 'Import Users', 'mainwp' ); ?></a>
+            <?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'UpdateAdminPasswords') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'UpdateAdminPasswords' ) {
 				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=UpdateAdminPasswords"><?php _e( 'Admin Passwords', 'mainwp' ); ?></a>						
+			} ?>" href="admin.php?page=UpdateAdminPasswords"><?php _e( 'Admin Passwords', 'mainwp' ); ?></a>
+            <?php } ?>
 			<?php
 			if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 				foreach ( self::$subPages as $subPage ) {
+                    if ( MainWP_System::is_disable_menu_item(3, 'UserBulk' . $subPage['slug']) ) 
+                            continue;
 					?>
 					<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) {
 						echo 'nav-tab-active';

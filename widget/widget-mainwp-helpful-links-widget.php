@@ -17,11 +17,12 @@ class MainWP_Helpful_Links_Widget {
 		$facebook_group = 'https://www.facebook.com/groups/MainWPUsers/';
 		$twitter = 'https://twitter.com/mymainwp';
 		$trello = 'https://mainwp.com/mainwp-roadmaps/';
+        MainWP_UI::renderBeginReadyPopup();
 		?>
 		<div>
 			<div class="mainwp-row-top">
 				<h4><a href="<?php echo $documentation ; ?>" target="_blank"><i class="fa fa-book" aria-hidden="true"></i> <?php _e( 'MainWP Documentation', 'mainwp' ); ?></a></h4>
-				<em><?php _e( 'Review the MainWP docuumentation if you need help with getting started with the MainWP products.', 'mainwp' ); ?></em>
+				<em><?php _e( 'Review the MainWP documentation if you need help with getting started with the MainWP products.', 'mainwp' ); ?></em>
 			</div>
 			<div class="mainwp-row">
 				<h4><a href="<?php echo $support ; ?>" target="_blank"><i class="fa fa-life-ring" aria-hidden="true"></i> <?php _e( 'MainWP Support', 'mainwp' ); ?></a></h4>
@@ -45,5 +46,6 @@ class MainWP_Helpful_Links_Widget {
 			</div>
 		</div>
 		<?php
+        MainWP_UI::renderEndReadyPopup();
 	}
 }

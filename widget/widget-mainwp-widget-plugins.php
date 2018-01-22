@@ -92,7 +92,7 @@ class MainWP_Widget_Plugins {
 				$plugins_outdate = array_diff_key( $plugins_outdate, $decodedDismissedPlugins );
 			}
 		}
-
+        MainWP_UI::renderBeginReadyPopup();
 		?>
 		<div class="clear mwp_plugintheme_widget">
 			<div class="mainwp-postbox-actions-top">
@@ -189,6 +189,7 @@ class MainWP_Widget_Plugins {
 		</div>
 		<div class="mainwp-clear"></div>
 		<?php
+         MainWP_UI::renderEndReadyPopup();
 		if ( $pExit == true ) {
 			exit();
 		}

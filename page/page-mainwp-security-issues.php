@@ -226,9 +226,11 @@ class MainWP_Security_Issues {
 	}
 
 	public static function renderMetabox() {
+        MainWP_UI::renderBeginReadyPopup();
 		?>
 		<div id="securityissues_list" xmlns="http://www.w3.org/1999/html"><?php self::renderSites(); ?></div>
 		<?php
+        MainWP_UI::renderEndReadyPopup();
 	}
 
 	public static function renderSites() {

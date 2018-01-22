@@ -62,21 +62,24 @@ class MainWP_Main {
     static function init_left_menu( $subPages = array() ) {
         $init_leftmenu = array(
             array(  'title' => __('MainWP Dashboard', 'mainwp'),
-                    'key' => 'mainwp_tab',
+                    'slug' => 'mainwp_tab',
                     'href' => 'admin.php?page=mainwp_tab'
                 ),
             array(  'title' => __('MainWP Extensions', 'mainwp'),
-                    'key' => 'Extensions',
+                    'slug' => 'Extensions',
                     'href' => 'admin.php?page=Extensions'
                 ),
             array(  'title' => __('Child Sites', 'mainwp'),
-                    'key' => 'childsites_menu',
+                    'slug' => 'childsites_menu',
                     'href' => 'admin.php?page=managesites'
                 )
         );
 
         foreach($init_leftmenu as $item) {
-            MainWP_System::add_left_menu($item['title'], $item['key'], $item['href']);
+            if ( 'mainwp_tab' !==$item['slug'] && MainWP_System::is_disable_menu_item(1, $item['slug']) ) {
+                continue;
+            }
+            MainWP_System::add_left_menu($item['title'], $item['slug'], $item['href']);
         }
         MainWP_System::add_sub_left_menu(__('Overview', 'mainwp'), 'mainwp_tab', 'mainwp_tab', 'admin.php?page=mainwp_tab', '<i class="fa fa-tachometer"></i>', '' );
     }
@@ -244,12 +247,13 @@ class MainWP_Main {
 								<h3 class="mainwp-margin-top-0"><?php echo sprintf( __( 'Welcome to %s dashboard!', 'mainwp' ), stripslashes( $website->name ) ); ?></h3>
 								<p class="about-description"><?php echo sprintf( __( 'This information is only for %s%s', 'mainwp' ), $imgfavi, MainWP_Utility::getNiceURL( $website->url, true ) ); ?></p>
 								<?php
-							}
+							}                            
+                            $last_dtsSync = $website->dtsSync;
 						} else {
 							$result = MainWP_DB::Instance()->getLastSyncStatus();
                             $sync_status = $result['sync_status'];
-                            $last_sync = $result['last_sync'];
-
+                            $last_sync = $last_dtsSync = $result['last_sync'];
+                             
 							if ( $sync_status === 'not_synced' ) {
 								?>
 								<h3 class="mainwp-margin-top-0"><i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?></h3>
@@ -258,8 +262,11 @@ class MainWP_Main {
 							} else if ( $sync_status === 'all_synced' ) {
                                 $now = time();
                                 $last_sync_all = get_option('mainwp_last_synced_all_sites', 0);
-                                if ($last_sync_all == 0)
+                                if ($last_sync_all == 0) {
                                     $last_sync_all = $last_sync;
+                                } 
+                                $last_dtsSync = $last_sync_all;
+                                
 								?>
                                 <h3 class="mainwp-margin-top-0"><?php echo empty($last_sync) ? __( 'All sites have been synced within the last 24 hours', 'mainwp' ) . '!' : sprintf(__('Sites last synced at %s (%s ago)', 'mainwp'), MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $last_sync_all )), human_time_diff( MainWP_Utility::getTimestamp( $last_sync_all ), MainWP_Utility::getTimestamp( $now ) )) ; ?></h3>
 								<p class="about-description"><?php echo __( 'Management is more than just updates!', 'mainwp' ); ?></p>
@@ -271,10 +278,16 @@ class MainWP_Main {
 								<?php
 							}
 						}
+                        
+                        $lastSyncMsg = '';
+                        if ($last_dtsSync) {
+                            $lastSyncMsg = __( '(Last completed sync: ', 'mainwp' ) . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $last_dtsSync ) ) . ')';
+                        }
+                        
 						?>
 					</div>
 					<div class="mainwp-cols-2 mainwp-right mainwp-t-align-right">
-						<a class="button-hero button mainwp-upgrade-button mainwp-large" id="dashboard_refresh" title="<?php echo MainWP_Right_Now::renderLastUpdate(); ?>"><i class="fa fa-refresh"></i> <?php _e( 'Sync Data with child sites', 'mainwp' ); ?></a>
+						<a class="button-hero button mainwp-upgrade-button mainwp-large" id="dashboard_refresh" title="<?php echo $lastSyncMsg; ?>"><i class="fa fa-refresh"></i> <?php _e( 'Sync Data with child sites', 'mainwp' ); ?></a>
 						<a class="button-hero button-primary button mainwp-large" target="_blank" href="https://mainwp.com/mainwp-extensions"><i class="fa fa-cart-plus"></i> <?php _e( 'Get new extensions', 'mainwp' ); ?></a>
 					</div>
 					<div class="mainwp-clear"></div>
@@ -393,6 +406,42 @@ class MainWP_Main {
 
 			<div class="clear"></div>
 		</div><!-- dashboard-widgets-wrap -->
+        <?php
+        // for edit note
+        if ($website !== null) {            
+            ?>
+            <div id="mainwp_notes_overlay" class="mainwp_overlay"></div>
+            <div id="mainwp_notes" class="mainwp_popup">
+                <a id="mainwp_notes_closeX" class="mainwp_closeX" style="display: inline; "></a>
+
+                <div id="mainwp_notes_title" class="mainwp_popup_title">
+                    <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+                </div>
+                <div id="mainwp_notes_content">
+                                <div id="mainwp_notes_html" style="width: 580px !important; height: 300px;"></div>
+                                <textarea style="width: 580px !important; height: 300px;"
+                                        id="mainwp_notes_note"></textarea>
+                </div>
+                <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div><br/>
+                <form>
+                    <div style="float: right" id="mainwp_notes_status"></div>
+                    <input type="button" class="button cont button-primary" id="mainwp_notes_save" value="<?php esc_attr_e( 'Save note', 'mainwp' ); ?>"/>
+                                    <input type="button" class="button cont" id="mainwp_notes_edit" value="<?php esc_attr_e( 'Edit','mainwp' ); ?>"/>                
+                                    <input type="button" class="button cont" id="mainwp_notes_view" value="<?php esc_attr_e( 'View','mainwp' ); ?>"/>                
+                    <input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"/>
+                    <input type="hidden" id="mainwp_notes_websiteid" value=""/>
+                </form>
+            </div>
+            <?php
+        }
+        ?>
+        
+         <script type="text/javascript">
+            jQuery(window).load(function() {               
+               var $popup_widgets = jQuery('.mainwp-popup-overlay-ready').closest('div.postbox');
+               mainwpAddPopupButtons($popup_widgets);
+            });
+        </script>
 		<?php
 	}
 

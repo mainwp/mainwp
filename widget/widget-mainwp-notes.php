@@ -17,6 +17,8 @@ class MainWP_Notes {
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $current_wpid, true );
+        
+        MainWP_UI::renderBeginReadyPopup();
 		?>
 		<div id="mainwp-notes-area">
 			<div style="padding-bottom: 1em;">
@@ -27,11 +29,10 @@ class MainWP_Notes {
 					echo html_entity_decode($website->note);
 				}
 				?>
-			</div>
-			<div style="text-align: center; border-top: 1px Solid #f4f4f4; padding-top: 1em;">
-				<a href="#" class="mainwp_notes_show_all button button-primary" id="mainwp_notes_<?php echo $website->id; ?>"><?php _e( 'Edit notes', 'mainwp' ); ?></a>
-			</div>
+			</div>			
 		</div>
 		<?php
+         $actions = '<a href="#" class="mainwp_notes_show_all button button-primary" id="mainwp_notes_' .  $website->id . '">' . __( 'Edit notes', 'mainwp' ). '</a>';
+         MainWP_UI::renderEndReadyPopup($actions, 'mainwp-postbox-actions-bottom');
 	}
 }

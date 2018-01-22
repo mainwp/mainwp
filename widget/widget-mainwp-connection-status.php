@@ -34,7 +34,9 @@ class MainWP_Connection_Status {
 				
 		$top_row = true;		
         $top_up_row = true;
-		?>
+        
+         MainWP_UI::renderBeginReadyPopup();
+		?>            
 		<div class="clear">			
                         <?php
                         //Loop 3 times, first we show the conflicts, then we show the down sites, then we show the up sites
@@ -147,8 +149,10 @@ class MainWP_Connection_Status {
                         <?php echo $html_online_sites; ?>
                     </div>
                          <?php echo $html_other_sites; ?>
-                </div>
+                </div>    
 		<?php
+        MainWP_UI::renderEndReadyPopup();
+        
 		@MainWP_DB::free_result( $websites );
 	}
 }

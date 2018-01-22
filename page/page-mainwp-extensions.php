@@ -78,9 +78,14 @@ class MainWP_Extensions {
 	}
 
 	public static function initMenu() {
-		$page = MainWP_Extensions_View::initMenu();
-		add_action( 'load-' . $page, array(MainWP_Extensions::getClassName(), 'on_load_page'));
-
+        $disable_extensions_menu = MainWP_System::is_disable_menu_item(1, 'Extensions');
+        
+        if( !$disable_extensions_menu && !MainWP_System::is_disable_menu_item(2, 'Extensions')) {
+            // create Extensions menu item on left WP menu
+            $page = MainWP_Extensions_View::initMenu();        
+            add_action( 'load-' . $page, array(MainWP_Extensions::getClassName(), 'on_load_page'));
+        }
+        
 		self::$extensions = array();
 		$all_extensions   = array();
 
@@ -131,6 +136,10 @@ class MainWP_Extensions {
 				self::$extensions[] = $extension;
 				if ( mainwp_current_user_can( 'extension', dirname( $slug ) ) ) {
 					if ( isset( $extension['callback'] ) ) {
+                        
+                    if( $disable_extensions_menu || MainWP_System::is_disable_menu_item(2, $extension['page']) )
+                            continue;  
+                        
                         $menu_name = str_replace( array(
 							'Extension',
 							'MainWP',
@@ -152,13 +161,16 @@ class MainWP_Extensions {
 		MainWP_Utility::update_option( 'mainwp_extensions', self::$extensions );
 		MainWP_Utility::update_option( 'mainwp_manager_extensions', $all_extensions );
 		self::$extensionsLoaded = true;
-        MainWP_Extensions::init_sub_sub_left_menu($extsPages);
+        
+        if (!$disable_extensions_menu) {
+            MainWP_Extensions::init_sub_sub_left_menu($extsPages);
+        }
 	}
 
     static function init_sub_sub_left_menu($extPages) {
-        global $mainwp_menu_active_slugs;
+        global $_mainwp_menu_active_slugs;
         // to get parent menu items
-        $mainwp_menu_active_slugs['Extensions'] = 'Extensions';
+        $_mainwp_menu_active_slugs['Extensions'] = 'Extensions';
         if (is_array($extPages)) {
             foreach($extPages as $extension) {
                 MainWP_System::add_sub_left_menu($extension['title'], 'Extensions', $extension['page'], 'admin.php?page=' . $extension['page'], '', '' );
@@ -279,12 +291,17 @@ class MainWP_Extensions {
 					continue;
 				}
 				if ( isset( $extension['direct_page'] ) ) {
+                    if ( MainWP_System::is_disable_menu_item(2, $extension['direct_page']) )
+                            continue;
+                    
 					$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['direct_page'] ) . '"
 							   class="mainwp-submenu">' . str_replace( array(
 							'Extension',
 							'MainWP',
 						), '', $extension['name'] ) . '</a>';
 				} else {
+                    if ( MainWP_System::is_disable_menu_item(2, $extension['page']) )
+                            continue;
 					$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['page'] ) . '"
 							   class="mainwp-submenu">' . str_replace( array(
 							'Extension',
@@ -925,7 +942,7 @@ class MainWP_Extensions {
         'ignored_plugins'  => 'ignored_plugins'
 	);
 
-	public static function hookGetDBSites( $pluginFile, $key, $sites, $groups, $options = false ) {
+	public static function hookGetDBSites( $pluginFile, $key, $sites, $groups = '', $options = false ) {
 		if ( ! self::hookVerify( $pluginFile, $key ) ) {
 			return false;
 		}

@@ -14,7 +14,7 @@ class MainWP_Extensions_Widget {
 	}
 
 	public static function render() {
-
+        MainWP_UI::renderBeginReadyPopup();
 		$currentExtensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
 		if ( count( $currentExtensions ) == 0 ) {
 			?>
@@ -71,10 +71,7 @@ class MainWP_Extensions_Widget {
 					<div class="mainwp-padding-top-10 mainwp-t-align-right mainwp-cols-5 mainwp-right"><a target="_blank" href="https://mainwp.com/extension/woocommerce-shortcuts/?utm_source=dashboard&utm_medium=plugin&utm_campaign=overviewwidget" class="button"><?php _e( 'Add for free', 'mainwp' ); ?></a></div>
 					<div class="mainwp-clear"></div>
 				</div>
-			</div>
-			<div class="mainwp-postbox-actions-bottom mainwp-t-align-center">
-				<a href="https://mainwp.com/mainwp-extensions/?utm_source=dashboard&utm_medium=plugin&utm_campaign=widget" target="_blank" class="button mainwp-upgrade-button button-hero"><?php _e( 'Explore more MainWP Extensions', 'mainwp' ); ?></a>
-			</div>
+			</div>			
 			<?php
 		} else {
 			$available_exts_data = MainWP_Extensions_View::getAvailableExtensions();
@@ -123,11 +120,10 @@ class MainWP_Extensions_Widget {
 					?>
 					</tbody>
 				</table>
-			</div>
-			<div class="mainwp-postbox-actions-bottom mainwp-t-align-center">
-				<a href="https://mainwp.com/mainwp-extensions/?utm_source=dashboard&utm_medium=plugin&utm_campaign=widget" target="_blank" class="button mainwp-upgrade-button button-hero"><?php _e( 'Explore more MainWP Extensions', 'mainwp' ); ?></a>
-			</div>
-			<?php
+			</div>			
+			<?php           
 		}
+        $actions = '<a href="https://mainwp.com/mainwp-extensions/?utm_source=dashboard&utm_medium=plugin&utm_campaign=widget" target="_blank" class="button mainwp-upgrade-button button-hero">' . __( 'Explore more MainWP Extensions', 'mainwp' ) . '</a>';
+        MainWP_UI::renderEndReadyPopup($actions, 'mainwp-postbox-actions-bottom');
 	}
 }

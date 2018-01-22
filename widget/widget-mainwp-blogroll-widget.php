@@ -58,6 +58,7 @@ class MainWP_Blogroll_Widget {
     public static function render() {
         $current_options = get_option( 'mainwp_opts_saving_status' );
         $blogroll_enabled = (is_array($current_options) && isset($current_options['mainwp_blogroll_enabled']) && !empty($current_options['mainwp_blogroll_enabled'])) ? true : false;
+        MainWP_UI::renderBeginReadyPopup();
         ?>
         <div class="mainwp-postbox-actions-top">
             <div class="mainwp-left" style="width: 75%;"><?php _e( 'Would you like to receive notice of the latest posts from the MainWP blog directly in this widget?', 'mainwp' ); ?></div>
@@ -106,5 +107,6 @@ class MainWP_Blogroll_Widget {
 
         </script>
         <?php
+        MainWP_UI::renderEndReadyPopup();
     }
 }

@@ -38,7 +38,7 @@ class MainWP_Site_Info {
             'mysql_version' => __('MySQL Version', 'mainwp'),
             'ip' => __('Server IP', 'mainwp'),
         );
-                
+       MainWP_UI::renderBeginReadyPopup();          
 		?>
 		<div class="mainwp-widget-content widget-site-info">			
             <?php
@@ -63,6 +63,7 @@ class MainWP_Site_Info {
             ?>
         </div>
 		<?php
+        MainWP_UI::renderEndReadyPopup();
 		@MainWP_DB::free_result( $websites );
 	}
 }

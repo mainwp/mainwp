@@ -1,6 +1,6 @@
 <?php
 class MainWP_Manage_Sites_View {
-	public static function initMenu() {
+	public static function initMenu() {                
 		return add_submenu_page( 'mainwp_tab', __( 'Sites','mainwp' ), '<span id="mainwp-Sites">'.__( 'Sites','mainwp' ).'</span>', 'read', 'managesites', array( MainWP_Manage_Sites::getClassName(), 'renderManageSites' ) );
 	}
 
@@ -13,15 +13,26 @@ class MainWP_Manage_Sites_View {
 					<div class="mainwp_boxoutin"></div>
 					<a href="<?php echo admin_url( 'admin.php?page=managesites' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Sites','mainwp' ); ?></a>
 					<?php if ( mainwp_current_user_can( 'dashboard', 'add_sites' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=managesites&do=new' ); ?>" class="mainwp-submenu"><?php _e( 'Add New','mainwp' ); ?></a>
-						<a href="<?php echo admin_url( 'admin.php?page=managesites&do=bulknew' ); ?>" class="mainwp-submenu"><?php _e( 'Import Sites','mainwp' ); ?></a>
+                        <?php if ( ! MainWP_System::is_disable_menu_item(3, 'managesites_add_new') ) { ?>
+                            <a href="<?php echo admin_url( 'admin.php?page=managesites&do=new' ); ?>" class="mainwp-submenu"><?php _e( 'Add New','mainwp' ); ?></a>
+                        <?php } ?>
+                        <?php if ( ! MainWP_System::is_disable_menu_item(3, 'managesites_import') ) { ?>
+                            <a href="<?php echo admin_url( 'admin.php?page=managesites&do=bulknew' ); ?>" class="mainwp-submenu"><?php _e( 'Import Sites','mainwp' ); ?></a>
+                        <?php } ?>
 					<?php } ?>
-					<a href="<?php echo admin_url( 'admin.php?page=managesites&do=test' ); ?>" class="mainwp-submenu"><?php _e( 'Test Connection','mainwp' ); ?></a>
-					<a href="<?php echo admin_url( 'admin.php?page=ManageGroups' ); ?>" class="mainwp-submenu"><?php _e( 'Groups','mainwp' ); ?></a>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'managesites_test') ) { ?>
+                        <a href="<?php echo admin_url( 'admin.php?page=managesites&do=test' ); ?>" class="mainwp-submenu"><?php _e( 'Test Connection','mainwp' ); ?></a>
+                    <?php } ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ManageGroups') ) { ?>
+                        <a href="<?php echo admin_url( 'admin.php?page=ManageGroups' ); ?>" class="mainwp-submenu"><?php _e( 'Groups','mainwp' ); ?></a>
+                    <?php } ?>
 					<?php
 					if ( isset( $subPages ) && is_array( $subPages ) ) {
 						foreach ( $subPages as $subPage ) {
 							if ( ! isset( $subPage['menu_hidden'] ) || (isset( $subPage['menu_hidden'] ) && $subPage['menu_hidden'] != true) ) {
+                                if ( MainWP_System::is_disable_menu_item(3, 'ManageSites' . $subPage['slug']) ) {                                  
+                                    continue;
+                                }
 							?>
 								<a href="<?php echo admin_url( 'admin.php?page=ManageSites' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
 							<?php
@@ -49,19 +60,22 @@ class MainWP_Manage_Sites_View {
                             'parent_key' => 'managesites',
                             'href' => 'admin.php?page=managesites&do=new',
                             'slug' => 'managesites',
-                            'right' => 'add_sites'
+                            'right' => 'add_sites',
+                            'item_slug' => 'managesites_add_new'
                         ),
                 array(  'title' => __('Import Sites', 'mainwp'),
                             'parent_key' => 'managesites',
                             'href' => 'admin.php?page=managesites&do=bulknew',
                             'slug' => 'managesites',
-                            'right' => 'add_sites'
+                            'right' => 'add_sites',
+                            'item_slug' => 'managesites_import'
                         ),
                 array(  'title' => __('Test Connection', 'mainwp'),
                             'parent_key' => 'managesites',
                             'href' => 'admin.php?page=managesites&do=test',
                             'slug' => 'managesites',
-                            'right' => ''
+                            'right' => '',
+                            'item_slug' => 'managesites_test'
                         ),
                 array(  'title' => __('Groups', 'mainwp'),
                             'parent_key' => 'managesites',
@@ -74,13 +88,28 @@ class MainWP_Manage_Sites_View {
         MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'managesites', 'ManageSites');
 
         foreach($init_sub_subleftmenu as $item) {
+            if( isset($item['item_slug'])) {
+                if ( MainWP_System::is_disable_menu_item(3, $item['item_slug']) ) {
+                    continue;
+                }
+            } else {
+                if ( MainWP_System::is_disable_menu_item(3, $item['slug']) ) {
+                    continue;
+                }
+            }                
             MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
         }
 
-        // init sites left menu
+    }
+
+    static function init_child_sites_left_menu() {
+         // init sites left menu
         if (get_option('mainwp_disable_wp_main_menu', 1)) { // to reduce db query
             $websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
             while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+                if( MainWP_System::is_disable_menu_item(2, 'child_site_' . $website->id) ) {
+                    continue;
+                }
                 MainWP_System::add_sub_left_menu($website->name, 'childsites_menu', 'child_site_' . $website->id, 'admin.php?page=managesites&dashboard=' . $website->id, '', $website->url );
 
                 $init_sub_subleftmenu = array(
@@ -103,7 +132,7 @@ class MainWP_Manage_Sites_View {
             }
         }
     }
-
+    
 	static function getBreadcrumb( $pShowpage, $pSubPages ) {
 		$extra = array();
 		if ( isset( $pSubPages ) && is_array( $pSubPages ) ) {
@@ -396,6 +425,10 @@ class MainWP_Manage_Sites_View {
 			<?php
 			if ( isset( $managesites_pages[ $shownPage ] ) ) {
 				foreach ( $managesites_pages as $page => $value ) {
+                    
+                    if ( MainWP_System::is_disable_menu_item(3, $page) )
+                        continue;
+            
 					if ( ! $value['access'] ) {
 						continue;
 					}
@@ -405,6 +438,9 @@ class MainWP_Manage_Sites_View {
 				}
 			} else if ( $site_id ) {
 				foreach ( $site_pages as $page => $value ) {
+                    if ( MainWP_System::is_disable_menu_item(3, $page) )
+                        continue;
+                    
 					if ( ! $value['access'] ) {
 						continue;
 					}
@@ -416,6 +452,9 @@ class MainWP_Manage_Sites_View {
 
 			if ( isset( $subPages ) && is_array( $subPages ) ) {
 				foreach ( $subPages as $subPage ) {
+                    if ( MainWP_System::is_disable_menu_item(3, 'ManageSites' . $subPage['slug']) ) 
+                        continue;
+                    
 					if ( isset( $subPage['sitetab'] ) && $subPage['sitetab'] == true && empty( $site_id ) ) {
 						continue;
 					}
@@ -514,11 +553,11 @@ class MainWP_Manage_Sites_View {
 
 			<tr class="form-field form-required">
 				 <th scope="row"><?php _e( 'HTTP username: ','mainwp' ); ?></th>
-				 <td><input type="text" id="mainwp_managesites_test_http_user" name="mainwp_managesites_test_http_user" value="" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the username for authentication here.','mainwp' ); ?></em></td>
+				 <td><input type="text" id="mainwp_managesites_test_http_user" autocomplete="new-http-user" name="mainwp_managesites_test_http_user" value="" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the username for authentication here.','mainwp' ); ?></em></td>
 			</tr>
 			<tr class="form-field form-required">
 				 <th scope="row"><?php _e( 'HTTP password: ','mainwp' ); ?></th>
-				 <td><input type="password" id="mainwp_managesites_test_http_pass" name="mainwp_managesites_test_http_pass" value="" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the password for authentication here.','mainwp' ); ?></em></td>
+				 <td><input type="password" id="mainwp_managesites_test_http_pass" autocomplete="new-password" name="mainwp_managesites_test_http_pass" value="" class=""/><br/><em><?php _e( 'If your Child Site is protected with HTTP basic authentication, please set the password for authentication here.','mainwp' ); ?></em></td>
 			</tr>
 		</table>
 	<?php
@@ -835,18 +874,17 @@ class MainWP_Manage_Sites_View {
 //                                                        height: 150,
 //                                                        width: 500,
 //                                                        modal: true,
-//                                                        close: function(event, ui) {jQuery('#newsite-pop-box').dialog('destroy');}});  
-                                                    mainwpPopup.setCustomWrapper('#newsite-pop-box');
-                                                    mainwpPopup.init({title: __("Not sure what to add here?"), reloadAfterClose: false}); // do not reload after popup closed
+//                                                        close: function(event, ui) {jQuery('#newsite-pop-box').dialog('destroy');}});                                                      
+                                                    mainwpPopup('#newsite-pop-box').init({title: __("Not sure what to add here?")}); // do not reload after popup closed
                                                 } 
                                             });
-                                            jQuery('#newsite-pop-box-close').live('click', function(event)
+                                            jQuery('#newsite-pop-box-close').on('click', function(event)
                                             {                                                
                                                 //jQuery('#newsite-pop-box').dialog('destroy');                                                
-                                                mainwpPopup.close();        
+                                                mainwpPopup('#newsite-pop-box').close();        
                                             });
                                             
-                                            jQuery('#newsite-pop-box-disable').live('click', function(event)
+                                            jQuery('#newsite-pop-box-disable').on('click', function(event)
                                             {       
                                                 var data = {
                                                     action:'mainwp_saving_status',
@@ -857,7 +895,7 @@ class MainWP_Manage_Sites_View {
                                                 jQuery.post(ajaxurl, data, function (res) {
                                                 });
                                                 //jQuery('#newsite-pop-box').dialog('destroy');                                                
-                                                mainwpPopup.close();        
+                                                mainwpPopup('#newsite-pop-box').close();        
                                             });
                                             
                                     <?php } ?> 
@@ -1130,14 +1168,14 @@ class MainWP_Manage_Sites_View {
         </tr>
         <?php } ?>
         <tr <?php echo $hiddenCls; ?> >
-            <th scope="row"><?php _e( 'Backups on server', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The number of backups to keep on your server. This does not affect external sources. 0 is not allowed, the backups always require one local backup to upload to external sources.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/' ); ?></th>
+            <th scope="row"><?php _e( 'Backups on server', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The number of backups to keep on your server. This does not affect external sources. 0 is not allowed, the backups always require one local backup to upload to external sources.' ); ?></th>
             <td>
                 <input type="text" name="mainwp_options_backupOnServer"  class=""
                        value="<?php echo ($backupsOnServer === false ? 1 : $backupsOnServer); ?>"/>
             </td>
         </tr>
         <tr <?php echo $hiddenCls; ?>>
-            <th scope="row"><?php _e( 'Backups on remote storage','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The number of backups to keep on your external sources. This does not affect backups on the server. 0 sets unlimited.', 'http://docs.mainwp.com/recurring-backups-with-mainwp/' ); ?></th>
+            <th scope="row"><?php _e( 'Backups on remote storage','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The number of backups to keep on your external sources. This does not affect backups on the server. 0 sets unlimited.' ); ?></th>
             <td>
                 <input type="text" name="mainwp_options_backupOnExternalSources"  class=""
                        value="<?php echo ($backupOnExternalSources === false ? 1 : $backupOnExternalSources); ?>"/><span class="mainwp-form_hint"><?php _e( 'The number of backups to keep on your external sources.  This does not affect backups on the server.  0 sets unlimited.','mainwp' ); ?></span>
@@ -1493,7 +1531,7 @@ class MainWP_Manage_Sites_View {
 				$maximumFileDescriptors = $website->maximumFileDescriptors;
 				?>
                 <tr class="archive_method archive_zip" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>>
-                    <th scope="row"><?php _e( 'Maximum File Descriptors on Child','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/' ); ?></th>
+                    <th scope="row"><?php _e( 'Maximum File Descriptors on Child','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The maximum number of open file descriptors on the child hosting.' ); ?></th>
                     <td>
 						<input type="radio" value="" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_global" <?php echo ( ! $maximumFileDescriptorsOverride ? 'checked="true"' : ''); ?>/>
 						<label for="mainwp_options_maximumFileDescriptorsOverride_global"><?php _e( 'Global Setting', 'mainwp' ); ?> (<a href="<?php echo admin_url( 'admin.php?page=Settings' ); ?>"><?php _e( 'Change Here', 'mainwp' ); ?></a>)</label>
@@ -1514,7 +1552,7 @@ class MainWP_Manage_Sites_View {
                     </td>
                 </tr>
                 <tr class="archive_method archive_zip" <?php if ( $archiveFormat != 'zip' ) :  ?>style="display: none;"<?php endif; ?>>
-                    <th scope="row"><?php _e( 'Load files in memory before zipping','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advise to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/load-files-memory/' ); ?></th>
+                    <th scope="row"><?php _e( 'Load files in memory before zipping','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advise to disable this, memory usage will drop but we will use more file handlers when backing up.' ); ?></th>
                     <td>
                         <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_global" value="1" <?php if ( $website->loadFilesBeforeZip == false || $website->loadFilesBeforeZip == 1 ) :  ?>checked="true"<?php endif; ?>/> Global setting (<a href="<?php echo admin_url( 'admin.php?page=Settings' ); ?>">Change Here</a>)<br />
                         <input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_yes" value="2" <?php if ( $website->loadFilesBeforeZip == 2 ) :  ?>checked="true"<?php endif; ?>/> Yes<br />

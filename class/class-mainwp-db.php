@@ -67,7 +67,9 @@ class MainWP_DB {
 		if ( $currentVersion == $this->mainwp_db_version ) {
 			return;
 		}
-
+	
+        $charset_collate = $this->wpdb->get_charset_collate();
+    
 		$sql = array();
 		$tbl = 'CREATE TABLE ' . $this->tableName( 'wp' ) . ' (
    id int(11) NOT NULL auto_increment,
@@ -135,7 +137,7 @@ class MainWP_DB {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
 		}
-		$tbl .= ')';
+		$tbl .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl   = 'CREATE TABLE ' . $this->tableName( 'wp_sync' ) . ' (
@@ -151,20 +153,20 @@ class MainWP_DB {
   dbsize int(11) NOT NULL DEFAULT 0,
   extauth text NOT NULL DEFAULT "",
   last_post_gmt int(11) NOT NULL DEFAULT 0,
-  KEY idx_wpid (wpid))';
+  KEY idx_wpid (wpid)) ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl   = 'CREATE TABLE ' . $this->tableName( 'wp_options' ) . ' (
   wpid int(11) NOT NULL,
   name text NOT NULL DEFAULT "",
   value longtext NOT NULL DEFAULT "",
-  KEY idx_wpid (wpid))';
+  KEY idx_wpid (wpid)) ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl   = 'CREATE TABLE ' . $this->tableName( 'wp_settings_backup' ) . ' (
   wpid int(11) NOT NULL,
   archiveFormat text NOT NULL,
-  KEY idx_wpid (wpid))';
+  KEY idx_wpid (wpid)) ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl = 'CREATE TABLE ' . $this->tableName( 'tips' ) . ' (
@@ -175,7 +177,7 @@ class MainWP_DB {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
 		}
-		$tbl .= ')';
+		$tbl .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl = 'CREATE TABLE ' . $this->tableName( 'users' ) . " (
@@ -198,7 +200,7 @@ class MainWP_DB {
 			$tbl .= ',
   PRIMARY KEY  (userid)  ';
 		}
-		$tbl .= ')';
+		$tbl .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl = 'CREATE TABLE ' . $this->tableName( 'group' ) . ' (
@@ -209,7 +211,7 @@ class MainWP_DB {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
 		}
-		$tbl .= ')';
+		$tbl .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$sql[] = 'CREATE TABLE ' . $this->tableName( 'wp_group' ) . ' (
@@ -217,7 +219,7 @@ class MainWP_DB {
   groupid int(11) NOT NULL,
   KEY idx_wpid (wpid),
   KEY idx_groupid (groupid)
-        )';
+        ) ' . $charset_collate;
 
 		$tbl   = 'CREATE TABLE ' . $this->tableName( 'wp_backup_progress' ) . ' (
   task_id int(11) NOT NULL,
@@ -233,7 +235,7 @@ class MainWP_DB {
   last_error text NOT NULL DEFAULT "",
   pid int(11) NOT NULL DEFAULT 0,
   KEY idx_task_id (task_id)
-         )';
+         ) ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl = 'CREATE TABLE ' . $this->tableName( 'wp_backup' ) . ' (
@@ -269,7 +271,7 @@ class MainWP_DB {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
 		}
-		$tbl .= ');';
+		$tbl .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl = 'CREATE TABLE ' . $this->tableName( 'request_log' ) . ' (
@@ -283,7 +285,7 @@ class MainWP_DB {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
 		}
-		$tbl .= ');';
+		$tbl .= ') ' . $charset_collate . ";";
 		$sql[] = $tbl;
 
 		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );

@@ -48,22 +48,24 @@ class MainWP_Manage_Backups {
                 add_action( 'load-' . $_page, array( MainWP_Manage_Backups::getClassName(), 'on_load_page' ) );
             }
 		} else {
-                    if ($enable_legacy_backup) {
-			$page = add_submenu_page( 'mainwp_tab', __( 'Schedule Backup', 'mainwp' ), '<span id="mainwp-Backups">' . __( 'Schedule Backup', 'mainwp' ) . '</span>', 'read', 'ManageBackups', array(
-				MainWP_Manage_Backups::getClassName(),
-				'renderManager',
-			) );
-			add_action( 'load-' . $page, array( MainWP_Manage_Backups::getClassName(), 'on_load_page' ) );
-			if ( mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) {
-				$_page = add_submenu_page( 'mainwp_tab', __( 'Add New Schedule', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'ManageBackupsAddNew', array(
-					MainWP_Manage_Backups::getClassName(),
-					'renderNew',
-				) );
-				add_action( 'load-' . $_page, array( MainWP_Manage_Backups::getClassName(), 'on_load_page' ) );
-			}			
-                    } else {
-                        return;
-                    }
+                if ($enable_legacy_backup) {
+                    $page = add_submenu_page( 'mainwp_tab', __( 'Schedule Backup', 'mainwp' ), '<span id="mainwp-Backups">' . __( 'Schedule Backup', 'mainwp' ) . '</span>', 'read', 'ManageBackups', array(
+                        MainWP_Manage_Backups::getClassName(),
+                        'renderManager',
+                    ) );
+                    add_action( 'load-' . $page, array( MainWP_Manage_Backups::getClassName(), 'on_load_page' ) );
+                    if ( mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) {
+                        if( !MainWP_System::is_disable_menu_item(3, 'ManageBackupsAddNew') ) {
+                            $_page = add_submenu_page( 'mainwp_tab', __( 'Add New Schedule', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'ManageBackupsAddNew', array(
+                                MainWP_Manage_Backups::getClassName(),
+                                'renderNew',
+                            ) );
+                            add_action( 'load-' . $_page, array( MainWP_Manage_Backups::getClassName(), 'on_load_page' ) );
+                        }
+                    }			
+                } else {
+                    return;
+                }
 		}
 
 		/**
@@ -73,6 +75,8 @@ class MainWP_Manage_Backups {
 		self::$subPages = apply_filters( 'mainwp-getsubpages-backups', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
+                if( MainWP_System::is_disable_menu_item(3, 'ManageBackups' . $subPage['slug']) )
+                    continue;        
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'ManageBackups' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
@@ -113,12 +117,16 @@ class MainWP_Manage_Backups {
 						<div class="mainwp_boxoutin"></div>
 						<a href="<?php echo admin_url( 'admin.php?page=ManageBackups' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Backups', 'mainwp' ); ?></a>
 						<?php if ( mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) { ?>
+                        <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ManageBackupsAddNew') ) { ?>
 							<a href="<?php echo admin_url( 'admin.php?page=ManageBackupsAddNew' ); ?>" class="mainwp-submenu"><?php _e( 'Add New', 'mainwp' ); ?></a>
+                            <?php } ?>
 						<?php } ?>
 					<?php } ?>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
+                            if ( MainWP_System::is_disable_menu_item(3, 'ManageBackups' . $subPage['slug']) )
+                                    continue;
 							?>
 							<a href="<?php echo admin_url( 'admin.php?page=ManageBackups' . $subPage['slug'] ); ?>"
 							   class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
@@ -153,6 +161,8 @@ class MainWP_Manage_Backups {
             MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'ManageBackups', 'ManageBackups');
 
             foreach($init_sub_subleftmenu as $item) {
+                if( MainWP_System::is_disable_menu_item(3, $item['slug']) )
+                    continue;
                 MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
             }
         }
@@ -179,15 +189,20 @@ public static function renderHeader( $shownPage ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=ManageBackups"><?php _e( 'Manage Backups', 'mainwp' ); ?></a>
 			<?php if ( mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) { ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'ManageBackupsAddNew') ) { ?>
 				<a class="nav-tab pos-nav-tab <?php if ( $shownPage == 'AddNew' ) {
 					echo 'nav-tab-active';
 				} ?>" href="admin.php?page=ManageBackupsAddNew"><?php _e( 'Add New', 'mainwp' ); ?></a>
+            <?php } ?>	
 			<?php } ?>			
 			<?php if ( $shownPage == 'ManageBackupsEdit' ) { ?>
 				<a class="nav-tab pos-nav-tab nav-tab-active" href="#"><?php _e( 'Edit', 'mainwp' ); ?></a><?php } ?>
 			<?php
 			if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 				foreach ( self::$subPages as $subPage ) {
+                    if ( MainWP_System::is_disable_menu_item(3, 'ManageBackups' . $subPage['slug']) ) 
+                        continue;
+                
 					?>
 					<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) {
 						echo 'nav-tab-active';
@@ -708,7 +723,7 @@ public static function renderHeader( $shownPage ) {
 				$maximumFileDescriptors         = isset( $task ) ? $task->maximumFileDescriptors : 150;
 				?>
 				<tr class="archive_method archive_zip" <?php if ( $archiveFormat != 'zip' ) : ?>style="display: none;"<?php endif; ?>>
-					<th scope="row"><?php _e( 'Maximum file descriptors on child', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The maximum number of open file descriptors on the child hosting.', 'http://docs.mainwp.com/maximum-number-of-file-descriptors/' ); ?></th>
+					<th scope="row"><?php _e( 'Maximum file descriptors on child', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The maximum number of open file descriptors on the child hosting.' ); ?></th>
 					<td>
 						<div class="mainwp-radio" style="float: left;">
 							<input type="radio" value="" name="mainwp_options_maximumFileDescriptorsOverride" id="mainwp_options_maximumFileDescriptorsOverride_global" <?php echo( ! $maximumFileDescriptorsOverride ? 'checked="true"' : '' ); ?>"/>
@@ -735,7 +750,7 @@ public static function renderHeader( $shownPage ) {
 					</td>
 				</tr>
 				<tr class="archive_method archive_zip" <?php if ( $archiveFormat != 'zip' ) : ?>style="display: none;"<?php endif; ?>>
-					<th scope="row"><?php _e( 'Load files in memory before zipping', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advise to disable this, memory usage will drop but we will use more file handlers when backing up.', 'http://docs.mainwp.com/load-files-memory/' ); ?></th>
+					<th scope="row"><?php _e( 'Load files in memory before zipping', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'This causes the files to be opened and closed immediately, using less simultaneous I/O operations on the disk. For huge sites with a lot of files we advise to disable this, memory usage will drop but we will use more file handlers when backing up.' ); ?></th>
 					<td>
 						<input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_global" value="1" <?php if ( ! isset( $task ) || $task->loadFilesBeforeZip == false || $task->loadFilesBeforeZip == 1 ) : ?>checked="true"<?php endif; ?>/> Global setting (<a href="<?php echo admin_url( 'admin.php?page=Settings' ); ?>">Change Here</a>)<br/>
 						<input type="radio" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip_yes" value="2" <?php if ( isset( $task ) && $task->loadFilesBeforeZip == 2 ) : ?>checked="true"<?php endif; ?>/> Yes<br/>
@@ -1376,6 +1391,8 @@ public static function renderHeader( $shownPage ) {
 		if ( ! $website ) {
 			return;
 		}
+        
+        MainWP_UI::renderBeginReadyPopup();
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $website );
 
@@ -1388,6 +1405,7 @@ public static function renderHeader( $shownPage ) {
 			</div>
 		<?php } ?>
 		<?php
+        MainWP_UI::renderEndReadyPopup();
 	}
 
 }

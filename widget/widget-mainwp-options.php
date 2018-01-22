@@ -134,7 +134,7 @@ class MainWP_Options {
 				</tr>
                                 
 				<tr>
-					<th scope="row"><?php _e( 'Use WP-Cron', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'When not using WP-Cron you will need to set up a cron job via your hosting.', 'mainwp' ), 'http://docs.mainwp.com/disable-wp-cron/' ); ?></th>
+					<th scope="row"><?php _e( 'Use WP-Cron', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'When not using WP-Cron you will need to set up a cron job via your hosting.', 'mainwp' ), 'https://mainwp.com/help/docs/disable-wp-cron/' ); ?></th>
 					<td>
 						<div class="mainwp-checkbox">
 							<input type="checkbox" name="mainwp_options_wp_cron"

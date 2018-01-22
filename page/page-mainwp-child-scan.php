@@ -106,7 +106,7 @@ class MainWP_Child_Scan {
 				}
 			}
 
-			die( json_encode( array( 'success' => 'mainwp-child-id users found (<a href="http://docs.mainwp.com/mainwp-cleanup/" target="_blank">solution</a>)' ) ) );
+			die( json_encode( array( 'success' => 'mainwp-child-id users found' ) ) );
 		} catch (Exception $e) {
 			die( 'error' );
 		}

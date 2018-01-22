@@ -36,33 +36,39 @@ class MainWP_Settings {
 			MainWP_Settings::getClassName(),
 			'render',
 		));
-
 		add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
 
-		$_page = add_submenu_page('mainwp_tab', __('Dashboard Options', 'mainwp'), ' <div class="mainwp-hidden">' . __('Dashboard Options', 'mainwp') . '</div>', 'read', 'DashboardOptions', array(
-			MainWP_Settings::getClassName(),
-			'renderDashboardOptions',
-		));
-		add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
-
-		$_page = add_submenu_page('mainwp_tab', __('MainWP Tools', 'mainwp'), ' <div class="mainwp-hidden">' . __('MainWP Tools', 'mainwp') . '</div>', 'read', 'MainWPTools', array(
-			MainWP_Settings::getClassName(),
-			'renderMainWPTools',
-		));
-		add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
-
-		$_page = add_submenu_page('mainwp_tab', __('Advanced Options', 'mainwp'), ' <div class="mainwp-hidden">' . __('Advanced Options', 'mainwp') . '</div>', 'read', 'SettingsAdvanced', array(
-			MainWP_Settings::getClassName(),
-			'renderAdvanced',
-		));
-		add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
-
-		$_page = add_submenu_page('mainwp_tab', __('Managed Client Reports Responder', 'mainwp'), ' <div class="mainwp-hidden">' . __('Managed Client Reports Responder', 'mainwp') . '</div>', 'read', 'SettingsClientReportsResponder', array(
-			MainWP_Settings::getClassName(),
-			'renderReportResponder',
-		));
-		add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
-
+        if ( ! MainWP_System::is_disable_menu_item(3, 'DashboardOptions') ) {                                  
+            $_page = add_submenu_page('mainwp_tab', __('Dashboard Options', 'mainwp'), ' <div class="mainwp-hidden">' . __('Dashboard Options', 'mainwp') . '</div>', 'read', 'DashboardOptions', array(
+                MainWP_Settings::getClassName(),
+                'renderDashboardOptions',
+            ));        
+            add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
+        }
+        
+        if ( ! MainWP_System::is_disable_menu_item(3, 'MainWPTools') ) {
+            $_page = add_submenu_page('mainwp_tab', __('MainWP Tools', 'mainwp'), ' <div class="mainwp-hidden">' . __('MainWP Tools', 'mainwp') . '</div>', 'read', 'MainWPTools', array(
+                MainWP_Settings::getClassName(),
+                'renderMainWPTools',
+            ));
+            add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
+        }
+        
+        if ( ! MainWP_System::is_disable_menu_item(3, 'SettingsAdvanced') ) {
+            $_page = add_submenu_page('mainwp_tab', __('Advanced Options', 'mainwp'), ' <div class="mainwp-hidden">' . __('Advanced Options', 'mainwp') . '</div>', 'read', 'SettingsAdvanced', array(
+                MainWP_Settings::getClassName(),
+                'renderAdvanced',
+            ));
+            add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
+        }
+        
+        if ( ! MainWP_System::is_disable_menu_item(3, 'SettingsClientReportsResponder') ) {
+            $_page = add_submenu_page('mainwp_tab', __('Managed Client Reports Responder', 'mainwp'), ' <div class="mainwp-hidden">' . __('Managed Client Reports Responder', 'mainwp') . '</div>', 'read', 'SettingsClientReportsResponder', array(
+                MainWP_Settings::getClassName(),
+                'renderReportResponder',
+            ));
+            add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
+        }
 
 		/**
 		 * This hook allows you to add extra sub pages to the Settings page via the 'mainwp-getsubpages-settings' filter.
@@ -71,6 +77,9 @@ class MainWP_Settings {
 		self::$subPages = apply_filters('mainwp-getsubpages-settings', array());
 		if (isset(self::$subPages) && is_array(self::$subPages)) {
 			foreach (self::$subPages as $subPage) {
+                if ( MainWP_System::is_disable_menu_item(3, 'Settings' . $subPage['slug']) ) {
+                    continue;
+                }
 				add_submenu_page('mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Settings' . $subPage['slug'], $subPage['callback']);
 			}
 		}
@@ -162,13 +171,24 @@ class MainWP_Settings {
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
 					<a href="<?php echo admin_url('admin.php?page=Settings'); ?>" class="mainwp-submenu"><?php _e('Global Options', 'mainwp'); ?></a>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'DashboardOptions') ) { ?>
 					<a href="<?php echo admin_url('admin.php?page=DashboardOptions'); ?>" class="mainwp-submenu"><?php _e('Dashboard Options', 'mainwp'); ?></a>
+                     <?php } ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'SettingsAdvanced') ) { ?>
 					<a href="<?php echo admin_url('admin.php?page=SettingsAdvanced'); ?>" class="mainwp-submenu"><?php _e('Advanced Options', 'mainwp'); ?></a>
+                    <?php } ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'MainWPTools') ) { ?>
 					<a href="<?php echo admin_url('admin.php?page=MainWPTools'); ?>" class="mainwp-submenu"><?php _e('MainWP Tools', 'mainwp'); ?></a>
+                    <?php } ?>
+                    <?php if ( ! MainWP_System::is_disable_menu_item(3, 'SettingsClientReportsResponder') ) { ?>
 					<a href="<?php echo admin_url('admin.php?page=SettingsClientReportsResponder'); ?>" class="mainwp-submenu"><?php _e('Managed Client Reports Responder', 'mainwp'); ?></a>
+                    <?php } ?>
 					<?php
 					if (isset(self::$subPages) && is_array(self::$subPages) && ( count(self::$subPages) > 0 )) {
 						foreach (self::$subPages as $subPage) {
+                            if ( MainWP_System::is_disable_menu_item(3, 'Settings' . $subPage['slug']) ) {
+                                continue;
+                            }
 							?>
 							<a href="<?php echo admin_url('admin.php?page=Settings' . $subPage['slug']); ?>"
 							   class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
@@ -220,6 +240,9 @@ class MainWP_Settings {
 
 		MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'Settings', 'Settings');
 		foreach($init_sub_subleftmenu as $item) {
+            if ( MainWP_System::is_disable_menu_item(3, $item['slug']) ) 
+                continue;
+                
 			MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
 		}
 	}
@@ -261,24 +284,32 @@ class MainWP_Settings {
 				echo 'nav-tab-active';
 			}
 			?>" href="admin.php?page=DashboardOptions"><?php _e('Dashboard Options', 'mainwp'); ?></a>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'SettingsAdvanced') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php
 			if ($shownPage === 'Advanced') {
 				echo 'nav-tab-active';
 			}
 			?>" href="admin.php?page=SettingsAdvanced"><?php _e('Advanced Options', 'mainwp'); ?></a>
+            <?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'MainWPTools') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php
 			if ($shownPage === 'MainWPTools') {
 				echo 'nav-tab-active';
 			}
 			?>" href="admin.php?page=MainWPTools"><?php _e('MainWP Tools', 'mainwp'); ?></a>
+            <?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'SettingsClientReportsResponder') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php
 			if ($shownPage === 'SettingsClientReportsResponder') {
 				echo 'nav-tab-active';
 			}
 			?>" href="admin.php?page=SettingsClientReportsResponder"><?php _e('Managed Client Reports Responder', 'mainwp'); ?></a>
+            <?php } ?>
 			<?php
 			if (isset(self::$subPages) && is_array(self::$subPages)) {
 				foreach (self::$subPages as $subPage) {
+                    if ( MainWP_System::is_disable_menu_item(3, 'Settings' . $subPage['slug']) ) 
+                            continue;
 					?>
 					<a class="nav-tab pos-nav-tab <?php
 					if ($shownPage === $subPage['slug']) {

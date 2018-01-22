@@ -5,14 +5,6 @@ class MainWP_API_Settings {
 		return __CLASS__;
 	}
 
-	public static function initMenu() {
-		//MainWP_API_Settings_View::initMenu();
-	}
-
-	public static function render() {
-
-	}
-
 	public static function checkUpgrade() {
 		$extensions = MainWP_Extensions::loadExtensions();
 		$output       = array();

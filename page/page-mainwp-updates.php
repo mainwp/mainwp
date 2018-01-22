@@ -50,9 +50,11 @@ class MainWP_Updates {
 		<h1 class="mainwp-margin-top-0"><i class="fa fa-refresh" aria-hidden="true"></i> <?php _e( 'Updates', 'mainwp' ); ?></h1>
 
 		<div class="mainwp-tabs" id="mainwp-tabs">
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, 'UpdatesManage') ) { ?>
 			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === 'UpdatesManage' ) {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=UpdatesManage"><?php _e( 'Updates', 'mainwp' ); ?></a>
+            <?php } ?>
 			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">

@@ -5,15 +5,15 @@ Welcome to the MainWP Dashboard Plugin repository on GitHub. Here you can browse
 If you are not a developer, please download the [MainWP Dashboard Plugin](https://wordpress.org/plugins/mainwp/) on WordPress.org.
 
 ## Documentation
-* [MainWP Documentation](http://docs.mainwp.com/)
-* [MainWP Codex / API](http://codex.mainwp.com/)
+* [MainWP Documentation](https://mainwp.com/help/)
+* [MainWP Codex / API](https://codex.mainwp.com/)
 
 ## Contributing to MainWP
 We encourage developer help via Pull requests! :-)  
 
 If you have a patch, or stumbled upon an issue with the MainWP Dashboard Plugin, we encourage you to contribute this back to the code. Please read our [contributor guidelines](https://github.com/mainwp/mainwp/blob/master/CONTRIBUTING.md) for more information on how you can do this.
 
-If you have an idea for MainWP, please add it to our [Feature Request Board](https://mainwp.com/feature-requests/).
+If you have an idea for MainWP, please add it to our [Feature Request Board](https://mainwp.com/mainwp-roadmaps/).
 
 ## Support
 This repository is not suitable for support. 

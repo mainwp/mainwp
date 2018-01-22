@@ -65,7 +65,7 @@ class MainWP_Widget_Themes {
 				$themes_outdate = array_diff_key( $themes_outdate, $decodedDismissedThemes );
 			}
 		}
-
+        MainWP_UI::renderBeginReadyPopup();
 		?>
 		<div class="clear">
 			<div class="mainwp-postbox-actions-top">
@@ -152,6 +152,7 @@ class MainWP_Widget_Themes {
 		</div>
 		<div class="clear"></div>
 		<?php
+        MainWP_UI::renderEndReadyPopup();
 		if ( $pExit == true ) {
 			exit();
 		}

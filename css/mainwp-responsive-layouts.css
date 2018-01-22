@@ -251,7 +251,11 @@
 		width: 10% !important;
 	}
 
-	#mainwp_managesites_content table.sites .column-status {
+	#mainwp_managesites_content table.sites .column-status,
+        #mainwp_managesites_content table.sites .column-wpcore_update,
+        #mainwp_managesites_content table.sites .column-plugin_update,
+        #mainwp_managesites_content table.sites .column-theme_update
+        {
 		display: none !important;
 	}
 

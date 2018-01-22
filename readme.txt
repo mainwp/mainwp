@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.9.1
-Stable tag: 3.4.4
+Tested up to: 4.9.2
+Stable tag: 3.4.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,20 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.4.5 - 1-22-18 =
+* Fixed: an issue with missing hook parameter
+* Fixed: an issue with database encoding which caused incorrect display of some special characters
+* Fixed: an issue with passing metadata for featured images
+* Fixed: an issue with caching the Username and Password field values on the Test Connection page
+* Fixed: an issue with resetting User passwords on child sites
+* Fixed: the sync popup layout issue
+* Fixed: an issue with displaying extensions changelogs 
+* Fixed: multiple typos
+* Fixed: multiple incorrect URLs
+* Fixed: multiple cosmetic issues
+* Added: a new feature to open any Overview widget as a popup
+* Added: a new 'mainwp_disablemenuitems' hook
 
 = 3.4.4 - 12-4-17 =
 * Fixed: an issue with the Unfix function for the removed readme.html security issue

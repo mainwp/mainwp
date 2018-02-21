@@ -2527,9 +2527,9 @@ li.mainwp-menu-sub-item-filer{
     width: calc(100% - 145px);
     
 }
-#mainwp-synced-status-sites-wrap .mainwp_wp_sync:hover .mainwp-row-actions {
+#mainwp_connection_status_wrap .mainwp_wp_sync:hover .mainwp-row-actions {
     display: block;    
 }
-#mainwp-synced-status-sites-wrap .mainwp-row-actions {
+#mainwp_connection_status_wrap .mainwp-row-actions {
     float: none;
 }

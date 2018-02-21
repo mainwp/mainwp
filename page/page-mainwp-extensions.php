@@ -1134,7 +1134,7 @@ class MainWP_Extensions {
             $clone_name = $website->name . " - " . $cloneID;
             global $current_user; 
              
-            $id = MainWP_DB::Instance()->addWebsite($current_user->ID, htmlentities( $clone_name ), $clone_url, $website->adminname, $website->pubkey , $website->privkey, $website->nossl, $website->nosslkey, array(), array(), $website->verify_certificate, ($website->uniqueId !== null ? $website->uniqueId : '') , $website->http_user, $website->http_pass, $website->ssl_version, $website->wpe, $isStaging = 1);            
+            $id = MainWP_DB::Instance()->addWebsite($current_user->ID, $clone_name, $clone_url, $website->adminname, $website->pubkey , $website->privkey, $website->nossl, $website->nosslkey, array(), array(), $website->verify_certificate, ($website->uniqueId !== null ? $website->uniqueId : '') , $website->http_user, $website->http_pass, $website->ssl_version, $website->wpe, $isStaging = 1);            
             do_action('mainwp_added_new_site', $id); // must before getWebsiteById to update team control permisions            
             
             // add the site to staging group

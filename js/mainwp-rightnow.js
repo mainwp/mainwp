@@ -1440,8 +1440,10 @@ rightnow_themes_upgrade_all = function (slug, themeName)
     var foundChildren = jQuery('div[theme_slug="' + slug + '"]').children('div[updated="0"]');
     if (foundChildren.length == 0) return false;
 
+   
 //    var upgradeList = jQuery('#rightnow-upgrade-list');
-
+    mainwpPopup('#refresh-status-box').clearList();
+    
     for (var i = 0; i < foundChildren.length; i++)
     {
         if (limitUpdateAll > 0 && i >= limitUpdateAll) {

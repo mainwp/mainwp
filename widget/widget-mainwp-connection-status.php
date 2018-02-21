@@ -37,7 +37,7 @@ class MainWP_Connection_Status {
         
          MainWP_UI::renderBeginReadyPopup();
 		?>            
-		<div class="clear">			
+		<div class="clear" id="mainwp_connection_status_wrap">			
                         <?php
                         //Loop 3 times, first we show the conflicts, then we show the down sites, then we show the up sites
                         $SYNCERRORS = 0;

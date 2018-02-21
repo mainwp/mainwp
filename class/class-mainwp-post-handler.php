@@ -1238,6 +1238,10 @@ class MainWP_Post_Handler {
 		$sslVersion = 0;
 		if ( isset( $_POST['url'] ) ) {
 			$url               = $_POST['url'];
+            $temp_url = MainWP_Utility::removeHttpPrefix( $url, true);
+            if (strpos($temp_url,":")) {
+                die( json_encode( array( 'error' => __( 'Invalid URL.', 'mainwp' ) ) ) );
+            }
 			$verifyCertificate = $_POST['test_verify_cert'];
 			$forceUseIPv4 = $_POST['test_force_use_ipv4'];
 			$sslVersion        = MainWP_Utility::getCURLSSLVersion( $_POST['test_ssl_version'] );

@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.9.2
-Stable tag: 3.4.5
+Tested up to: 4.9.4
+Stable tag: 3.4.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,15 +25,15 @@ MainWP is the perfect solution for affiliates, marketers, developers, WordPress 
 
 = How is MainWP free, what’s the catch, how will you continue to pay development costs? = 
 
-We make money by selling [Extensions](https://mainwp.com/extensions/).
+We make money by selling [Extensions](https://mainwp.com/mainwp-extensions/).
 
-Extensions enhance your MainWP Dashboard with additional features. The catalog of [MainWP Extensions](https://mainwp.com/extensions/) include additional features for backups, marketing, SEO, maintenance, security, monitoring and other tools to help you build a better network.
+Extensions enhance your MainWP Dashboard with additional features. The catalog of [MainWP Extensions](https://mainwp.com/mainwp-extensions/) include additional features for backups, marketing, SEO, maintenance, security, monitoring and other tools to help you build a better network.
 
 **Note:  MainWP requires two (2) plugins.**
 
 **This is the MainWP Dashboard plugin that you install on your own separate WordPress install and the [MainWP child plugin](https://wordpress.org/plugins/mainwp-child/) that you install on the sites you want to control (child sites) .**
 
-Please check the [Quick Start - Setting up your MainWP](http://docs.mainwp.com/setting-up-your-mainwp/) support doc for more information.
+Please check the [Quick Start - Setting up your MainWP](https://mainwp.com/help/docs/set-up-the-mainwp-plugin/) support doc for more information.
 
 = Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
 
@@ -77,7 +77,7 @@ Posting content to multiple websites can prove difficult with WordPress alone. W
 Extensions offer custom functions and features so that each user can tailor their MainWP installation to their specific needs. 
 
 = Developer?  Code your own Extensions  =
-Building on the core principals of WordPress, MainWP allows third party developers to “hook” into it so anything you want can be developed to work within your MainWP Dashboard. You can find more information in the [MainWP Codex](http://codex.mainwp.com).  Build your own Extensions for both fun and profit.
+Building on the core principals of WordPress, MainWP allows third party developers to “hook” into it so anything you want can be developed to work within your MainWP Dashboard. You can find more information in the [MainWP Codex](https://mainwp.com/codex/).  Build your own Extensions for both fun and profit.
 
 = Self Hosted =
 Your MainWP Dashboard is hosted on your own WordPress install and not on our private servers. We do not keep records of your actions, sites, passwords or anything else.
@@ -92,15 +92,15 @@ We know some developers like to keep tight control of what is happening with the
 Both the MainWP Dashboard and Child plugin are fully open source and GPL compliant with no obfuscated code so you always know what is running on your server. Both plugins are also maintained on GitHub for easy code access. 
 
 = More Information =
-[MainWP Documentation](http://docs.mainwp.com/)
+[MainWP Documentation](https://mainwp.com/help/)
 
 [MainWP Support](https://mainwp.com/support/)
 
 [MainWP Videos](http://www.youtube.com/user/MyMainWP)
 
-[MainWP Extensions](https://mainwp.com/extensions/)
+[MainWP Extensions](https://mainwp.com/mainwp-extensions/)
 
-[MainWP Codex](http://codex.mainwp.com)
+[MainWP Codex](https://mainwp.com/codex/)
 
 [MainWP on Github](https://mainwp.com/github/)
 
@@ -111,7 +111,7 @@ Both the MainWP Dashboard and Child plugin are fully open source and GPL complia
 1. We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.
 
 Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard from an active site. Most hosting companies provide free subdomains ("demo.yourdomain.com") and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.
-If you are not sure how to set up a subdomain here is a quick step by step with [cPanel](http://docs.mainwp.com/creating-a-subdomain-in-cpanel/), [Plesk](http://docs.mainwp.com/creating-a-subdomain-in-plesk/) or [Direct Admin](http://docs.mainwp.com/creating-a-subdomain-in-directadmin-control-panel/). If you are not sure what you have, contact your hosting companies support.
+If you are not sure how to set up a subdomain, contact your hosting companies support.
 
 You can even install your MainWP Dashboard on a WordPress site located on your local computer using [DesktopServer](https://mainwp.com/how-to-use-desktopserver-to-run-your-mainwp-dashboard-locally/), WAMP or any other setup that allows you to run [WordPress locally](https://make.wordpress.org/core/handbook/tutorials/installing-a-local-server/).   
 
@@ -119,19 +119,19 @@ You can even install your MainWP Dashboard on a WordPress site located on your l
 
 3. Once installed then Activate the Plugin through the Plugins Menu in WordPress
 
-4. Add your first child site to the MainWP Dashboard - [Documentation](http://docs.mainwp.com/setting-up-your-mainwp/)
+4. Add your first child site to the MainWP Dashboard - [Documentation](https://mainwp.com/help/docs/set-up-the-mainwp-plugin/add-site-to-your-dashboard/)
 
-5. Set your MainWP Settings - [Documentation](http://docs.mainwp.com/mainwp-settings-overview/)
+5. Set your MainWP Settings - [Documentation](https://mainwp.com/help/docs/set-up-the-mainwp-plugin/mainwp-dashboard-settings/)
 
 == Frequently Asked Questions ==
 = Do I need any other plugins for MainWP? =
 Yes you need to install the [MainWP Child Plugin](https://wordpress.org/plugins/mainwp-child/) on the sites you want to control with the Dashboard plugin.
 
 = Do you have any documentation? =
-Yes, please review the [documentation site](http://docs.mainwp.com/).
+Yes, please review the [documentation site](https://mainwp.com/help/).
 
 = I just want to start using MainWP do you have a Quick Start Guide? =
-Yes, please read the [Quick Start – Setting up your MainWP](http://docs.mainwp.com/setting-up-your-mainwp/) guide on the doc site.
+Yes, please read the [Quick Start – Setting up your MainWP](https://mainwp.com/help/docs/set-up-the-mainwp-plugin/) guide on the doc site.
 
 = Where do I go for support or to ask for help? =
 Please open a [Support Ticket](https://mainwp.com/support/)
@@ -160,6 +160,10 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.4.6 - 2-21-18 =
+* Fixed: an issue with encoding some special characters
+* Added: multiple security enhancements
 
 = 3.4.5 - 1-22-18 =
 * Fixed: an issue with missing hook parameter

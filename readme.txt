@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.9.4
-Stable tag: 3.4.6
+Tested up to: 4.9.5
+Stable tag: 3.4.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -162,6 +162,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.4.7 - 4-17-18 =
+* Fixed: an issue with displaying a plugin name in the available updates section
+* Fixed: WP Cli issues caused by a conflict with the MainWP Team Control Extension
+* Fixed: an issue with syncing plugin data when the plugin contains UTF8 character in title
+* Fixed: MainWP Dashboard and the Postman plugin conflict
+* Updated: multiple cosmetic updates
 
 = 3.4.6 - 2-21-18 =
 * Fixed: an issue with encoding some special characters

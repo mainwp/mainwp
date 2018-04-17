@@ -882,11 +882,12 @@ class MainWP_Extensions {
 	}
 
 	public static function hookVerify( $pluginFile, $key ) {
-		if ( ! function_exists( 'wp_create_nonce' ) ) {
-			include_once( ABSPATH . WPINC . '/pluggable.php' );
-		}
+//		if ( ! function_exists( 'wp_create_nonce' ) ) {
+//			include_once( ABSPATH . WPINC . '/pluggable.php' );
+//		}
 
-		return ( ( wp_verify_nonce( $key, $pluginFile . '-SNNonceAdder' ) == 1 ) || ( md5( $pluginFile . '-SNNonceAdder' ) == $key ) );
+		//return ( ( wp_verify_nonce( $key, $pluginFile . '-SNNonceAdder' ) == 1 ) || ( md5( $pluginFile . '-SNNonceAdder' ) == $key ) );
+        return ( md5( $pluginFile . '-SNNonceAdder' ) == $key );
 	}
 
 	public static function hookGetDashboardSites( $pluginFile, $key ) {

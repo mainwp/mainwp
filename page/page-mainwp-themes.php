@@ -745,7 +745,7 @@ class MainWP_Themes {
 		}
 
 		?>
-		<table id="mainwp_themes_all_table" class="wp-list-table widefat fixed posts tablesorter" cellspacing="0">
+		<table id="mainwp_themes_all_table" class="widefat fixed posts tablesorter" cellspacing="0">
 			<thead>
 			<tr>
 				<th scope="col" id="cb" class="manage-column column-cb check-column" style="">
@@ -1345,7 +1345,7 @@ class MainWP_Themes {
 		<div class="mainwp-notice mainwp-notice-blue"><?php _e( 'These are themes you have told your MainWP Dashboard to ignore updates and not notify you about pending updates.', 'mainwp' ); ?></div>
 		<?php MainWP_Tours::renderThemesIgnoredUpdatesTour(); ?>
 		<br/>
-		<table id="mainwp-table" class="wp-list-table widefat mainwp-globally-ignored-themes" cellspacing="0">
+		<table id="mainwp-table" class="widefat mainwp-globally-ignored-themes" cellspacing="0">
 			<thead>
 			<tr>
 				<th scope="col" class="manage-column" id="mainwp_g_theme" style="width: 300px"><?php _e( 'Globally ignored themes', 'mainwp' ); ?></th>
@@ -1476,7 +1476,7 @@ class MainWP_Themes {
 		<div class="mainwp-notice mainwp-notice-blue"><?php echo sprintf( __( 'These are themes you have told your MainWP Dashboard to ignore even though they have passed your Abandoned Theme Tolerance date as set up in the %sMainWP Settings%s.', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
 		<?php MainWP_Tours::renderThemesIgnoredAbandenedTour(); ?>
 		<br/>
-		<table id="mainwp-table" class="wp-list-table widefat mainwp-globally-ignored-themes" cellspacing="0">
+		<table id="mainwp-table" class="widefat mainwp-globally-ignored-themes" cellspacing="0">
 			<thead>
 			<tr>
 				<th scope="col" class="manage-column" id="mainwp_g_theme" style="width: 300px"><?php _e( 'Globally ignored abandoned themes', 'mainwp' ); ?></th>

@@ -510,7 +510,7 @@ class MainWP_Plugins {
 		}
 
 		?>
-		<table id="mainwp_active_plugins_table" class="wp-list-table widefat fixed posts tablesorter" cellspacing="0">
+		<table id="mainwp_active_plugins_table" class="widefat fixed posts tablesorter" cellspacing="0">
 			<thead>
 			<tr>
 				<th scope="col" id="cb" class="manage-column column-cb check-column" style="">
@@ -1314,7 +1314,7 @@ class MainWP_Plugins {
 			</tbody>
 		</table>
 		<br/>
-		<table id="mainwp-table" class="wp-list-table widefat mainwp-per-site-ignored-plugins" cellspacing="0">
+		<table id="mainwp-table" class="widefat mainwp-per-site-ignored-plugins" cellspacing="0">
 			<thead>
 			<tr>
 				<th scope="col" class="manage-column" id="mainwp_s_plugin" style="width: 300px"><?php _e( 'Per site ignored plugins', 'mainwp' ); ?></th>
@@ -1396,7 +1396,7 @@ class MainWP_Plugins {
 		<div class="mainwp-notice mainwp-notice-blue"><?php echo sprintf( __( 'These are plugins you have told your MainWP Dashboard to ignore even though they have passed your Abandoned Plugin Tolerance date as set up in the %sMainWP Settings%s.', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
 		<?php MainWP_Tours::renderPluginsIgnoredAbandonedTour(); ?>
 		<br/>
-		<table id="mainwp-table" class="wp-list-table widefat mainwp-globally-ignored-plugins" cellspacing="0">
+		<table id="mainwp-table" class="widefat mainwp-globally-ignored-plugins" cellspacing="0">
 			<thead>
 			<tr>
 				<th scope="col" class="manage-column" id="mainwp_g_plugin" style="width: 300px"><?php _e( 'Globally Ignored Abandoned Plugins', 'mainwp' ); ?></th>
@@ -1441,7 +1441,7 @@ class MainWP_Plugins {
 			</tbody>
 		</table>
 		<br/>
-		<table id="mainwp-table" class="wp-list-table widefat mainwp-per-site-ignored-plugins" cellspacing="0">
+		<table id="mainwp-table" class="widefat mainwp-per-site-ignored-plugins" cellspacing="0">
 			<thead>
 			<tr>
 				<th scope="col" class="manage-column" id="mainwp_s_plugin" style="width: 300px"><?php _e( 'Per site ignored abandoned plugins', 'mainwp' ); ?></th>

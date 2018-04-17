@@ -751,6 +751,11 @@ class MainWP_DB {
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 			return $_where;
 		}
+		
+		// To fix bug run from wp cli
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			return $_where;
+		}
 
 		$allowed_sites = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
 

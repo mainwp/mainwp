@@ -205,11 +205,12 @@ class MainWP_Sync {
 		$to_fix = false;
 		if ( isset( $information['plugins'] ) ) {
 			foreach( $information['plugins'] as $info ) {
-				if ( isset($info['slug']) && in_array( $info['slug'], array( 'ithemes-security-pro/ithemes-security-pro.php', 'monarch/monarch.php', 'cornerstone/cornerstone.php', 'updraftplus/updraftplus.php', 'wp-all-import-pro/wp-all-import-pro.php') ) ) {
+				if ( isset($info['slug']) && (in_array( $info['slug'], array( 'ithemes-security-pro/ithemes-security-pro.php', 'monarch/monarch.php', 'cornerstone/cornerstone.php', 'updraftplus/updraftplus.php', 'wp-all-import-pro/wp-all-import-pro.php') ) || (strpos($info['slug'], 'yith-') !== false)) ) {
 					$to_fix = true;
 				}
 			}
-			$websiteValues['plugins'] = @json_encode( $information['plugins'] );
+			
+			$websiteValues['plugins'] = MainWP_Utility::safe_json_encode($information['plugins']);
 			$done                     = true;
 		}
 

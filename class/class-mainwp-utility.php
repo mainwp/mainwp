@@ -2792,6 +2792,27 @@ EOT;
 
 		return $text;
 	}
+	
+	public static function utf8ize($mixed) {
+		if (is_array($mixed)) {
+			foreach ($mixed as $key => $value) {
+				$mixed[$key] = utf8ize($value);
+			}
+		} elseif (is_string($mixed)) {
+			if ( function_exists( 'mb_convert_encoding' )) {
+				return mb_convert_encoding($mixed, "UTF-8", "UTF-8");
+			}
+		}
+		return $mixed;
+	}
+
+	public static function safe_json_encode($value, $options = 0, $depth = 512) {
+		$encoded = @json_encode($value, $options, $depth);
+		if ($encoded === false && $value && json_last_error() == JSON_ERROR_UTF8) {
+			$encoded = @json_encode(self::utf8ize($value), $options, $depth);
+		}
+		return $encoded;
+	}
 
 	public static function removeHttpPrefix( $pUrl, $pTrimSlashes = false ) {
 		return str_replace( array( 'http:' . ( $pTrimSlashes ? '//' : '' ), 'https:' . ( $pTrimSlashes ? '//' : '' ) ), array( '', '' ), $pUrl );

@@ -190,7 +190,7 @@ class MainWP_Setup_Wizard {
 			<script type="text/javascript"> var ajaxurl = '<?php echo esc_url( admin_url('admin-ajax.php') ); ?>';</script>
 		</head>
 		<body class="mwp-setup wp-core-ui">
-		<h1 id="mwp-logo"><a href="//mainwp.com"><img src="<?php echo MAINWP_PLUGIN_URL; ?>/images/logo-mainwp1.png" alt="MainWP" /></a></h1>
+		<h1 id="mwp-logo"><a href="//mainwp.com"><img src="<?php echo MAINWP_PLUGIN_URL; ?>images/logo-mainwp1.png" alt="MainWP" /></a></h1>
 		<?php
 	}
 

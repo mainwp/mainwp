@@ -129,7 +129,7 @@ class MainWP_Setup_Wizard {
 		$this->step = isset( $_GET['step'] ) ? sanitize_key( $_GET['step'] ) : current( array_keys( $this->steps ) );
 		$this->check_redirect();
         wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'js/mainwp-setup.js', array( 'jquery', 'jquery-ui-tooltip' ), MAINWP_VERSION );
-		wp_enqueue_script( 'mainwp-setup-select2', MAINWP_PLUGIN_URL . 'js/select2/select2.js', array( 'jquery' ), MAINWP_VERSION );			
+		wp_enqueue_script( 'mainwp-setup-select2', MAINWP_PLUGIN_URL . 'js/select2/js/select2.min.js', array( 'jquery' ), MAINWP_VERSION );			
 		wp_enqueue_script( 'mainwp-setup-admin', MAINWP_PLUGIN_URL . 'js/mainwp-admin.js', array(), MAINWP_VERSION );		
 		
 		wp_localize_script('mainwp-setup', 'mainwpSetupLocalize', array('nonce' => wp_create_nonce('MainWPSetup')));

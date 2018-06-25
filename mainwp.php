@@ -39,13 +39,7 @@ if ( ! function_exists( 'mainwp_autoload' ) ) {
 	}
 }
 
-if ( function_exists( 'spl_autoload_register' ) ) {
-	spl_autoload_register( 'mainwp_autoload' );
-} else {
-	function __autoload( $class_name ) {
-		mainwp_autoload( $class_name );
-	}
-}
+spl_autoload_register( 'mainwp_autoload' );
 
 if ( ! function_exists( 'mainwpdir' ) ) {
 	function mainwpdir() {

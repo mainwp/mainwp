@@ -203,17 +203,20 @@ managesites_update_pluginsthemes_next = function(pType)
     managesites_update_pluginsthemes_next_int(websiteId, data, 0);
 };
 
+var _tempVal = 0;
 managesites_update_pluginsthemes_next_int = function(websiteId, data, errors)
 {
+    // to enable chunk update, for manage sites page only
+    data['chunk_support'] = 1; 
+    
     jQuery.ajax({
         type: 'POST',
         url: ajaxurl,
         data: data,
-        success: function(pWebsiteId) { return function(response) {
-            if (response.error) {
+        success: function(pWebsiteId, pData, pErrors) { return function(response) {
+            if (response.error) {                
                 dashboard_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('ERROR') + '</span>'); websitesError++;
-            } else {
-                dashboard_update_site_status(websiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>', true );
+            } else {                
                 if (response.result) {
                     for (slug in response.result) {
                         if (response.result[slug] == 1) {
@@ -222,16 +225,28 @@ managesites_update_pluginsthemes_next_int = function(websiteId, data, errors)
                         }
                     }
                 }
-            }
-
-            managesites_update_pluginsthemes_done();
-        } }(websiteId),
+                // to support reduce update plugins/themes
+                if (response.chunk_slugs) {
+                    var msg = __('UPGRADING');
+                    _tempVal++;
+                    if(_tempVal % 2)
+                        msg = '<i class="fa fa-refresh fa-spin"></i>';                        
+                    dashboard_update_site_status(pWebsiteId, msg );                    
+                    pData['chunk_slugs'] = response.chunk_slugs;    
+                    managesites_update_pluginsthemes_next_int(pWebsiteId, pData, pErrors);                    
+                    return;
+                } else {
+                    dashboard_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>', true );
+                };
+            };            
+            managesites_update_pluginsthemes_done( pData['type'] );
+        } }(websiteId, data, errors),
         error: function(pWebsiteId, pData, pErrors) { return function(response) {
             if (pErrors > 5)
             {
                 dashboard_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' +  __('TIMEOUT') + '</span>');
                 websitesError++;
-                managesites_update_pluginsthemes_done();
+                managesites_update_pluginsthemes_done( pData['type'] );
             }
             else
             {

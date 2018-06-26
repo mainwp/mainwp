@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.9.5
-Stable tag: 3.4.7
+Tested up to: 4.9.6
+Stable tag: 3.4.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -162,6 +162,15 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.4.8 - 6-26-18 =
+* Fixed: syncing issues detected on specific hosts
+* Fixed: multiple issues caused by deprecated functions
+* Fixed: the issue with saving the SSL Version settings
+* Added: Export Sites feature
+* Added: Disconnect Sites feature
+* Added: mainwp_update_pluginthme_max filter for managing the maximum number of updates to fix update issues on specific setups
+* Improved: PHP 7.2 compatibility 
 
 = 3.4.7 - 4-17-18 =
 * Fixed: an issue with displaying a plugin name in the available updates section

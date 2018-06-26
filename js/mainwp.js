@@ -6068,7 +6068,7 @@ jQuery(document).ready(function () {
 
             if (action == 'activate' || action == 'ignore_updates') {
                 //Only activate the first
-                var themeToActivate = jQuery(selectedThemes[0]).val();
+                var themeToActivate = jQuery(selectedThemes[0]).attr('slug');
                 var themesToSend = [];
                 var namesToSend = [];
 
@@ -6105,7 +6105,8 @@ jQuery(document).ready(function () {
             else if (action == 'delete') {
                 var themesToDelete = [];
                 for (var i = 0; i < selectedThemes.length; i++) {
-                    themesToDelete.push(jQuery(selectedThemes[i]).val());
+                    //themesToDelete.push(jQuery(selectedThemes[i]).val());
+                    themesToDelete.push(jQuery(selectedThemes[i]).attr('slug'));                    
                 }
                 var data = mainwp_secure_data({
                     action:'mainwp_theme_delete',
@@ -7132,7 +7133,7 @@ mainwp_managesites_update_childsite_value = function(siteId, uniqueId) {
 
 jQuery(document).on('keyup', '#managegroups-filter', function() {
     var filter = jQuery(this).val();
-    var groupItems = jQuery(this).parent().find('li.managegroups-listitem');
+    var groupItems = jQuery(this).parent().parent().find('li.managegroups-listitem');
     for (var i = 0; i < groupItems.length; i++)
     {
         var currentElement = jQuery(groupItems[i]);
@@ -7152,7 +7153,7 @@ jQuery(document).on('keyup', '#managegroups-filter', function() {
 
 jQuery(document).on('keyup', '#managegroups_site-filter', function() {
     var filter = jQuery(this).val();
-    var siteItems = jQuery(this).parent().find('li.managegroups_site-listitem');
+    var siteItems = jQuery(this).parent().parent().find('li.managegroups_site-listitem');
     for (var i = 0; i < siteItems.length; i++)
     {
         var currentElement = jQuery(siteItems[i]);

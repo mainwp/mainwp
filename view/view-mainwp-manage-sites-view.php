@@ -525,13 +525,13 @@ class MainWP_Manage_Sites_View {
 			   <th scope="row"><?php _e( 'SSL version','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Prefered SSL Version to connect to your site.','mainwp' ) ); ?></th>
 				<td>
 					<select class="mainwp-select2" id="mainwp_managesites_test_ssl_version" name="mainwp_managesites_test_ssl_version">
-						 <option selected value="auto"><?php _e( 'Auto detect','mainwp' ); ?></option>
-                                                 <option value="1.2"><?php _e( "Let's encrypt (TLS v1.2)",'mainwp' ); ?></option>
-						 <option value="1.x"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
+						 <option selected value="0"><?php _e( 'Auto detect','mainwp' ); ?></option>
+                                                 <option value="6"><?php _e( "Let's encrypt (TLS v1.2)",'mainwp' ); ?></option>
+						 <option value="1"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
 						 <option value="2"><?php _e( 'SSL v2','mainwp' ); ?></option>
 						 <option value="3"><?php _e( 'SSL v3','mainwp' ); ?></option>
-						 <option value="1.0"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
-						 <option value="1.1"><?php _e( 'TLS v1.1','mainwp' ); ?></option>						 
+						 <option value="4"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
+						 <option value="5"><?php _e( 'TLS v1.1','mainwp' ); ?></option>						 
 					 </select> <em>(<?php _e( 'Default: Auto detect','mainwp' ); ?>)</em>
 				</td>
 			</tr>
@@ -573,7 +573,7 @@ class MainWP_Manage_Sites_View {
 			if ( $_FILES['mainwp_managesites_file_bulkupload']['error'] == UPLOAD_ERR_OK ) {
 				if ( is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
 					$content = file_get_contents( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] );
-					$lines = explode( "\r", $content );
+					$lines = explode( "\r\n", $content ); // PHP_EOL									
 					$allowedHeaders = array('site name', 'url', 'admin name', 'group', 'security id', 'http username', 'http password', 'verify certificate', 'ssl version');
 					$default = array('', '', '', '', '', '', '', '1', 'auto');
 
@@ -587,7 +587,7 @@ class MainWP_Manage_Sites_View {
 							if (MainWP_Utility::startsWith($line, '#')) continue;
 
 							if ( ( $header_line == null ) && $_POST['mainwp_managesites_chk_header_first'] ) {
-								$header_line = $line . "\n";
+								$header_line = $line . "\r\n"; // PHP_EOL
 								$header_line_split_tmp = explode( ',', $header_line );
 								$header_line_split = array();
 								for ($x = 0; $x < count($header_line_split_tmp); $x++)
@@ -599,6 +599,11 @@ class MainWP_Manage_Sites_View {
 							}
 
 							$items = explode( ',', $line );
+							
+							// to avoid empty rows issue
+							if (count($items) < 3) 
+								continue;
+							
 							$line = '';
 							for ($x = 0; $x < count($allowedHeaders); $x++)
 							{
@@ -614,8 +619,10 @@ class MainWP_Manage_Sites_View {
 									if ( $allowedHeaders[$x] == 'verify certificate' ) {
 										if ( $val == 'T' ) {
 											$val = '1';
-										} else {
+										} else if ( $val == 'Y' ) {
 											$val = '0';
+										} else {
+											// keep the value
 										}
 									}
 								}
@@ -1895,13 +1902,13 @@ class MainWP_Manage_Sites_View {
                    <th scope="row"><?php _e( 'SSL version','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Prefered SSL version to connect to your site.','mainwp' ) ); ?></th>
                     <td>
 					<select class="mainwp-select2" id="mainwp_managesites_edit_ssl_version" name="mainwp_managesites_edit_ssl_version">
-                             <option <?php echo ($website->ssl_version == 'auto') ? 'selected' : ''; ?> value="auto"><?php _e( 'Auto detect','mainwp' ); ?></option>
-                             <option <?php echo ($website->ssl_version == '1.2') ? 'selected' : ''; ?> value="1.2"><?php _e( "Let's encrypt (TLS v1.2)",'mainwp' ); ?></option>
-                             <option <?php echo ($website->ssl_version == '1.x') ? 'selected' : ''; ?> value="1.x"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
+                             <option <?php echo ($website->ssl_version == '0') ? 'selected' : ''; ?> value="0"><?php _e( 'Auto detect','mainwp' ); ?></option>
+                             <option <?php echo ($website->ssl_version == '6') ? 'selected' : ''; ?> value="6"><?php _e( "Let's encrypt (TLS v1.2)",'mainwp' ); ?></option>
+                             <option <?php echo ($website->ssl_version == '1') ? 'selected' : ''; ?> value="1"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
                              <option <?php echo ($website->ssl_version == '2') ? 'selected' : ''; ?> value="2"><?php _e( 'SSL v2','mainwp' ); ?></option>
                              <option <?php echo ($website->ssl_version == '3') ? 'selected' : ''; ?> value="3"><?php _e( 'SSL v3','mainwp' ); ?></option>
-                             <option <?php echo ($website->ssl_version == '1.0') ? 'selected' : ''; ?> value="1.0"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
-                             <option <?php echo ($website->ssl_version == '1.1') ? 'selected' : ''; ?> value="1.1"><?php _e( 'TLS v1.1','mainwp' ); ?></option>                             
+                             <option <?php echo ($website->ssl_version == '4') ? 'selected' : ''; ?> value="4"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
+                             <option <?php echo ($website->ssl_version == '5') ? 'selected' : ''; ?> value="5"><?php _e( 'TLS v1.1','mainwp' ); ?></option>                             
                          </select> <em>(<?php _e( 'Default: Auto detect','mainwp' ); ?>)</em>
                     </td>
                 </tr>
@@ -2093,7 +2100,7 @@ class MainWP_Manage_Sites_View {
                 $params['unique_id'] = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : '';
                 $params['ssl_verify'] = ( !isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( $_POST['verify_certificate'] !== '0' ) ) ? null : $_POST['verify_certificate'] );                
                 $params['force_use_ipv4'] = ( !isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( $_POST['force_use_ipv4'] !== '0' ) ) ? null : $_POST['force_use_ipv4'] );
-                $params['ssl_version'] = !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version'];                
+                $params['ssl_version'] = !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? 0 : $_POST['ssl_version'];                
                 $params['http_user'] = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
                 $params['http_pass'] = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';                
                 $params['groupids'] = isset( $_POST['groupids'] ) ? $_POST['groupids'] : array();                
@@ -2128,7 +2135,7 @@ class MainWP_Manage_Sites_View {
 				$url = $params['url'];
 
 				$verifyCertificate = ( !isset( $params['ssl_verify'] ) || ( empty( $params['ssl_verify'] ) && ( $params['ssl_verify'] !== '0' ) ) ? null : $params['ssl_verify'] );
-				$sslVersion = MainWP_Utility::getCURLSSLVersion( !isset( $params['ssl_version'] ) || empty( $params['ssl_version'] ) ? null : $params['ssl_version'] );
+				$sslVersion = !isset( $params['ssl_version'] ) || empty( $params['ssl_version'] ) ? 0 : $params['ssl_version'];
 				$addUniqueId = isset( $params['unique_id'] ) ? $params['unique_id'] : '';
 				$http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
 				$http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';

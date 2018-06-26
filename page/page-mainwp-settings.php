@@ -29,6 +29,12 @@ class MainWP_Settings {
 		 * @see \MainWP_Settings::renderFooter
 		 */
 		add_action('mainwp-pagefooter-settings', array(MainWP_Settings::getClassName(), 'renderFooter'));
+		add_action('admin_init', array(MainWP_Settings::getClassName(), 'admin_init'));
+		
+	}
+	
+	public static function admin_init() {
+		self::exportSites();
 	}
 
 	public static function initMenu() {
@@ -661,9 +667,8 @@ class MainWP_Settings {
 				<?php _e('Your settings have been saved.', 'mainwp'); ?>
 			</div>
 			<?php
-		}
+		}		
 		?>
-
 		<form method="POST" action="admin.php?page=Settings" id="mainwp-settings-page-form">
 			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce('Settings'); ?>" />
 			<?php MainWP_Options::renderSettings(); ?>
@@ -671,7 +676,7 @@ class MainWP_Settings {
 				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e('Save settings', 'mainwp'); ?>"/>
 			</p>
 		</form>
-		<?php
+		<?php		
 		self::renderFooter('');
 	}
 
@@ -762,7 +767,12 @@ class MainWP_Settings {
 			return;
 		}
 
-		self::renderHeader('MainWPTools');
+		self::renderHeader('MainWPTools');		
+		
+		if (isset($_GET['disconnectSites']) && isset($_GET['_wpnonce']) && wp_verify_nonce( $_GET['_wpnonce'], 'disconnect_sites' ) ) {
+			self::renderDisconnect();
+			return;
+		} else {		
 		?>
 		<form method="POST" action="">
 			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce('MainWPTools'); ?>" />
@@ -771,11 +781,11 @@ class MainWP_Settings {
 			<p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e('Save Settings', 'mainwp'); ?>"/></p>
 		</form>
 		<?php
+		}
 		self::renderFooter('MainWPTools');
 	}
 
 	public static function renderMainWPToolsMetabox() {
-
 		$wp_menu_items = array(
 			'dashboard' => __('Dashboard', 'mainwp'),
 			'posts' => __('Posts', 'mainwp'),
@@ -822,6 +832,24 @@ class MainWP_Settings {
 					</em>
 				</td>
 			</tr>
+			<tr>
+				<th scope="row"><?php _e('Export sites', 'mainwp'); ?></th>
+				<td>
+					<a href="admin.php?page=MainWPTools&doExportSites=yes&_wpnonce=<?php echo wp_create_nonce('export_sites'); ?>" class="button-primary button" target="_blank" /><?php _e('Export sites', 'mainwp'); ?></a><br/>
+					<em>
+						<?php _e('Export your child sites to a CSV file.', 'mainwp'); ?>
+					</em>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php _e('Disconnect sites', 'mainwp'); ?></th>
+				<td>
+					<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo wp_create_nonce('disconnect_sites'); ?>" class="button-primary button" onclick="return confirm('<?php esc_html_e('Are you sure that you want to disconnect your sites?', 'mainwp');?>')" /><?php _e('Disconnect sites', 'mainwp'); ?></a><br/>
+					<em>
+						<?php _e('This function will break the connection between your dashboard and child sites. After breaking the connection, MainWP Child plugin will stay active. Use this feature only if you attend to reconnect sites right away or connect sites to a different MainWP Dashboard.', 'mainwp'); ?>
+					</em>
+				</td>
+			</tr>
 			</tbody>
 		</table>
 		<div class="mainwp-notice mainwp-notice-yellow"><?php _e('Changing this settings will overwrite Clean & Lock Extension settings. Do not forget to migrate the settings you wish to keep.', 'mainwp'); ?></div>
@@ -851,7 +879,121 @@ class MainWP_Settings {
 		</table>
 		<?php
 	}
+	
+	public static function exportSites() {
+		if (isset($_GET['doExportSites']) && isset($_GET['_wpnonce']) && wp_verify_nonce( $_GET['_wpnonce'], 'export_sites' ) ) {
+			
+			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(true);
+			$websites = MainWP_DB::Instance()->query( $sql );
 
+			if ( ! $websites ) {            
+				die("Not found sites");			
+			}
+			
+			$keys = array('name', 'url', 'adminname', 'groups', 'uniqueId', 'http_user', 'http_pass', 'verify_certificate', 'ssl_version' );
+			$allowedHeaders = array('site name', 'url', 'admin name', 'group', 'security id', 'http username', 'http password', 'verify certificate', 'ssl version');
+			
+			$csv = implode(",", $allowedHeaders) .  "\r\n"; //PHP_EOL;
+			@MainWP_DB::data_seek( $websites, 0 );			
+			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {				
+				if ( empty($website) ) {
+					continue;
+				}				
+				$row = MainWP_Utility::mapSiteArray( $website, $keys );				
+				$csv .= '"' . implode('","', $row) . '"' .  "\r\n"; //PHP_EOL;				
+			}	
+			
+			header('Content-Type: text/csv; charset=utf-8');
+			header('Content-Disposition: attachment; filename=export-sites.csv');
+			echo $csv;						
+			exit();
+		}		
+	}
+	
+	public static function renderDisconnect() {		
+			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false);
+			$websites = MainWP_DB::Instance()->query( $sql );
+			if (!$websites)	{			
+				echo "Not found child sites";
+				return;
+			}		
+			?>				
+			<div class="postbox">
+				<h3 class="mainwp_box_title"><?php _e('Disconnect All Sites', 'mainwp'); ?></h3>
+				<div class="inside" id="disconnect-sites-wrap">
+				<?php		
+				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {					
+					echo '<span class="disconnect-sites-item queue" site-id="' . $website->id .'">' . esc_html($website->url) . ' <span class="disconnect_status"></span></span>';
+					?>
+					<br/>              
+				<?php            
+				}
+				@MainWP_DB::free_result( $websites );
+				?>
+				</div>
+			</div>
+		
+			<script type="text/javascript">
+
+					var disconnect_bulkMaxThreads = maxThreads;
+					var disconnect_bulkTotalThreads = 0;
+					var disconnect_bulkCurrentThreads = 0;
+					var disconnect_bulkFinishedThreads = 0;
+
+					jQuery(document).ready(function($) {							
+							disconnect_bulkTotalThreads = jQuery('.disconnect-sites-item.queue').length;                             
+							disconnect_bulkCurrentThreads = 0;
+							disconnect_bulkFinishedThreads = 0;
+							if (disconnect_bulkTotalThreads > 0) {									
+								mainwp_disc_sites_start_next();
+							}								
+					});
+
+					mainwp_disc_sites_start_next = function () {       
+						while ((objProcess = jQuery( '.disconnect-sites-item.queue:first' )) && (objProcess.length > 0) && (disconnect_bulkCurrentThreads < disconnect_bulkMaxThreads)) {
+							objProcess.removeClass( 'queue' );                            
+							mainwp_disc_sites_start_specific( objProcess);
+						}
+						if(disconnect_bulkFinishedThreads == disconnect_bulkTotalThreads) {
+							jQuery('#disconnect-sites-wrap').append('<br/><a href="admin.php?page=MainWPTools" class="button button-primary">Return to MainWP Tools</a>')
+						}
+					}
+
+					mainwp_disc_sites_start_specific = function (pObj) {                            
+							var statusEl = pObj.find( '.disconnect_status' );
+							disconnect_bulkCurrentThreads++; 
+							
+							var data = mainwp_secure_data({
+								action: 'mainwp_disconnect_site',
+								websiteId: pObj.attr( 'site-id' ),								
+							});
+							
+							statusEl.css( 'color', '#21759B' );
+							statusEl.html('<i class="fa fa-spinner fa-pulse" style=""></i>');                            
+							jQuery.post(ajaxurl, data, function (response) {                                
+								pObj.removeClass( 'queue' );
+								if (response && response['error']) {
+									statusEl.css( 'color', 'red' );
+									statusEl.html( response['error'] ).show();
+								} else if (response && response['result'] == 'success') {
+									statusEl.css( 'color', '#21759B' );
+									statusEl.html( 'Successful' );                                    
+								} else {
+									statusEl.css( 'color', 'red' );
+									statusEl.html( "Undefined error" );
+								}
+
+								disconnect_bulkCurrentThreads--;
+								disconnect_bulkFinishedThreads++;
+								mainwp_disc_sites_start_next();
+
+							}, 'json');
+							return false;
+					}                      
+				</script> 
+			<?php					 
+	}
+		
 }
 //todo: refactor, useless class
 class Live_Reports_Responder_Class {

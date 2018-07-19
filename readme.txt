@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.9.6
-Stable tag: 3.4.8
+Tested up to: 4.9.7
+Stable tag: 3.4.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -162,6 +162,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.4.9 - 7-19-18 =
+* Fixed: connection issues caused by HTTP Basic Authentication on some setups
+* Fixed: issues with Themes widget actions
+* Fixed: conflict with the Divi theme
+* Fixed: a few cosmetic issues
+* Fixed: an issue with the number of total updates calculation
 
 = 3.4.8 - 6-26-18 =
 * Fixed: syncing issues detected on specific hosts

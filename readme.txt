@@ -163,7 +163,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 3.4.9 - 7-19-18 =
+= 3.4.9 - 7-23-18 =
 * Fixed: connection issues caused by HTTP Basic Authentication on some setups
 * Fixed: issues with Themes widget actions
 * Fixed: conflict with the Divi theme

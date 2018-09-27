@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.9.7
-Stable tag: 3.4.9
+Tested up to: 4.9.8
+Stable tag: 3.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -162,6 +162,17 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.5 - 9-27-18 =
+* Fixed: multiple PHP warnings
+* Fixed: an issue with special characters used in HTTP passwords
+* Fixed: session start issues
+* Added: mainwp_detect_premiums_updates filter as a support for detecting updates for Premium plugins that don't use standard WP update API
+* Added: mainwp_text_format_email hook to change MainWP notification emails to clean text format
+* Added: a new option for fixing security issues 'Scripts and Stylesheets registered version'
+* Added: support for the security fix option
+* Added: support for the new UpdraftPlus plugin options
+* Updated: support for detecting premium plugins updates
 
 = 3.4.9 - 7-23-18 =
 * Fixed: connection issues caused by HTTP Basic Authentication on some setups

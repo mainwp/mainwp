@@ -125,6 +125,7 @@ class MainWP_Widget_Themes {
 					?>
 					<div class="mainwp-row mainwp-inactive">
 						<input class="themeName" type="hidden" name="name" value="<?php echo $inactive_themes[ $i ]['name']; ?>"/>
+                        <input class="themeSlug" type="hidden" name="slug" value="<?php echo $inactive_themes[ $i ]['slug']; ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
 						<span class="mainwp-left mainwp-cols-2">
 							<?php echo $inactive_themes[ $i ]['name'] . ' ' . $inactive_themes[ $i ]['version']; ?>

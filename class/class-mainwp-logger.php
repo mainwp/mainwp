@@ -142,7 +142,8 @@ class MainWP_Logger {
 					if ( $newLogHandle ) {
 						fclose( $newLogHandle );
 						unlink( $this->logCurrentFile );
-						rename( $newLogFile, $this->logCurrentFile );
+                        if (file_exists($newLogFile))
+                            rename( $newLogFile, $this->logCurrentFile );
 					}
 				}
 			}

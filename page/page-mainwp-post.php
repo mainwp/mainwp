@@ -638,6 +638,8 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 						'nossl',
 						'privkey',
 						'nosslkey',
+                        'http_user',
+                        'http_pass'
 					) );
 				}
 			}
@@ -658,6 +660,8 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 							'nossl',
 							'privkey',
 							'nosslkey',
+                            'http_user',
+                            'http_pass'
 						) );
 					}
 					@MainWP_DB::free_result( $websites );
@@ -1151,6 +1155,8 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 										'nossl',
 										'privkey',
 										'nosslkey',
+                                        'http_user',
+                                        'http_pass'
 									) );
 								}
 							}
@@ -1170,6 +1176,8 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 											'nossl',
 											'privkey',
 											'nosslkey',
+                                            'http_user',
+                                            'http_pass'
 										) );
 									}
 									@MainWP_DB::free_result( $websites );
@@ -1317,6 +1325,8 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 					'nossl',
 					'privkey',
 					'nosslkey',
+                    'http_user',
+                    'http_pass'
 				) );
 			}
 		}

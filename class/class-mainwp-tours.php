@@ -1035,7 +1035,7 @@ class MainWP_Tours {
 				<p><?php _e( 'Triggers the synchronization process which will load fresh data from your Child Sites', 'mainwp' ); ?></p>
 			</li>
 			<li data-id="mainwp_page_updates_tab-contextbox-1" data-button="Next">
-				<p><?php _e( 'The Updtes option box provides you a quick snapshot of your child sites. Here you can see all available updates and update Plugins, Themes and WordPress core files.', 'mainwp' ); ?></p>
+				<p><?php _e( 'The Updates option box provides you a quick snapshot of your child sites. Here you can see all available updates and update Plugins, Themes and WordPress core files.', 'mainwp' ); ?></p>
 			</li>
 			<li data-id="s2id_mainwp_select_options_siteview" data-button="Next" data-options="nubPosition:top-right;">
 				<p><?php _e( 'Quickly select if you want to see updates per Site, Plugin/Theme or Group.', 'mainwp' ); ?></p>

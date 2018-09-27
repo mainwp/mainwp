@@ -13,14 +13,14 @@ class MainWP_SEO {
 		global $wpdb;
 		$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser();
 		$websites = MainWP_DB::Instance()->query( $sql );
-		$seo_retired = get_option('mainwp_seo_retired', null);		
-		
+		$seo_retired = get_option('mainwp_seo_retired', null);
+
 		if ('waiting' == $seo_retired) {
 			?>
 			<div class="mainwp-notice mainwp-notice-red"><?php _e('SEO feature will be completely retired in July 1, 2016', 'mainwp'); ?></div>
 			<?php
 		}
-		
+
 		if ( count( $websites ) == 0 ) {
 			echo __( 'No websites found', 'mainwp' );
 		} else {

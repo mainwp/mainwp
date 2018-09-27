@@ -5,14 +5,14 @@ class MainWP_Security_Issues {
 		return __CLASS__;
 	}
 
-	public static function render( $website = null ) {		
-		
+	public static function render( $website = null ) {
+
 		if ( empty( $website ) ) {
 			if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 				return;
 			}
 			$website = MainWP_DB::Instance()->getWebsiteById( $_REQUEST['id'] );
-		} 
+		}
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			return;
@@ -124,6 +124,21 @@ class MainWP_Security_Issues {
 					<td class="mainwp-padding-10 mainwp-cols-10">
 							<span id="versions_fix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Fix', 'mainwp' ); ?>
 								</a></span><span id="versions_unfix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Unfix', 'mainwp' ); ?>
+								</a></span></td>
+					</tr>
+                    <tr>
+					<td class="mainwp-padding-10 mainwp-cols-10 mainwp-center">
+						<span id="registered_versions_loading"><i class="fa fa-spinner fa-2x fa-pulse"></i></span><span id="registered_versions_ok" class="mainwp-green" style="display: none;"><i class="fa fa-check fa-2x"></i></span><span id="registered_versions_nok" class="mainwp-red" style="display: none;"><i class="fa fa-times fa-2x"></i></span>
+						</td>
+					 <td class="mainwp-padding-10">
+						<strong id="registered_versions-status-nok"><?php _e( 'Scripts and Stylesheets registered version information has not been removed from URLs', 'mainwp' ); ?></strong>
+						<strong id="registered_versions-status-ok" style="display: none;"><?php _e( 'Scripts and Stylesheets registered version information has been removed from URLs', 'mainwp' ); ?></strong>
+						<br />
+						<em><?php _e( 'After fixing this issue, registered versions will be removed', 'mainwp' ); ?></em>
+					</td>
+					<td class="mainwp-padding-10 mainwp-cols-10">
+							<span id="registered_versions_fix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Fix', 'mainwp' ); ?>
+								</a></span><span id="registered_versions_unfix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Unfix', 'mainwp' ); ?>
 								</a></span></td>
 					</tr>
 					<tr>
@@ -271,13 +286,13 @@ class MainWP_Security_Issues {
 					<div class="mainwp-cols-2 mainwp-left">
 						<span class="fa-stack fa-lg">
 						<i class="fa fa-circle fa-stack-2x <?php echo $mainwp_si_color_code; ?>"></i>
-						<strong class="fa-stack-1x mainwp-white"><?php echo $total_securityIssues; ?></strong> 
+						<strong class="fa-stack-1x mainwp-white"><?php echo $total_securityIssues; ?></strong>
 						</span>
 						<a href="#" id="mainwp_securityissues_show" onClick="return rightnow_show('securityissues');">
 							<?php echo _n( 'Security issue', 'Security issues', $total_securityIssues, 'mainwp' ); ?>
 						</a>
 				</div>
-					<div class="mainwp-cols-2 mainwp-right mainwp-t-align-right mainwp-padding-top-5">						
+					<div class="mainwp-cols-2 mainwp-right mainwp-t-align-right mainwp-padding-top-5">
 						<input type="button" class="securityIssues_dashboard_allFixAll button button-primary" value="<?php _e( 'Fix All', 'mainwp' ); ?>"/>
 					</div>
 					<div class="mainwp-clear"></div>
@@ -297,7 +312,7 @@ class MainWP_Security_Issues {
 							<div class="mainwp-left mainwp-cols-3">
 								<span class="fa-stack fa-lg">
 									<i class="fa fa-circle fa-stack-2x <?php echo( $website->securityIssues > 0 ? 'mainwp-red' : 'mainwp-green' ); ?>"></i>
-									<strong class="fa-stack-1x mainwp-white"><?php echo $website->securityIssues; ?></strong> 
+									<strong class="fa-stack-1x mainwp-white"><?php echo $website->securityIssues; ?></strong>
 								</span>
 									<?php echo _n( 'Issue', 'Issues', $website->securityIssues, 'mainwp' ); ?>
 							</div>

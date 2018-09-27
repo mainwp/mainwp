@@ -577,7 +577,7 @@ class MainWP_Page {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$website = MainWP_DB::Instance()->getWebsiteById( $v );
-					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey' ) );
+					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
 				}
 			}
 		}
@@ -587,7 +587,7 @@ class MainWP_Page {
 					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
 					while ( $websites && ($website = @MainWP_DB::fetch_object( $websites )) ) {
 						if ( $website->sync_errors != '' ) {continue;}
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey' ) );
+						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
 					}
 					@MainWP_DB::free_result( $websites );
 				}
@@ -925,7 +925,7 @@ class MainWP_Page {
 						foreach ( $selected_sites as $k ) {
 							if ( MainWP_Utility::ctype_digit( $k ) ) {
 								$website = MainWP_DB::Instance()->getWebsiteById( $k );
-								$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey' ) );
+								$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
 							}
 						}
 					} else { //Get all websites from the selected groups
@@ -934,7 +934,7 @@ class MainWP_Page {
 								$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
 								while ( $websites && ($website = @MainWP_DB::fetch_object( $websites )) ) {
 									if ( $website->sync_errors != '' ) {continue;}
-									$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey' ) );
+									$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
 								}
 								@MainWP_DB::free_result( $websites );
 							}

@@ -1,5 +1,4 @@
 <?php
-define('DOING_CRON', true);
 function liveReportsResponderClasses() {
 	if ( file_exists( '../class/class-mainwp-creport.php' ) ) {
 		include_once '../class/class-mainwp-creport.php';
@@ -11,10 +10,13 @@ function checkLiveReportingAccess($siteurl) {
 	return ( ( 'yes' == $access ) && ( get_option('live-report-responder-siteurl') == $siteurl ) );
 }
 
-function LiveReportsResponderSecureConnection( $siteurl = null, $securitykey = null, $signature = null, $action = null, $timestamp = null, $pubkey = null ) {
+function LiveReportsResponderSecureConnection( $siteurl = null, $securitykey = null, $signature = null, $action = null, $timestamp = null, $pubkey = null ) {    
 	if ( ( $siteurl == null ) || ( $signature == null ) || ( $action == null ) || ( $timestamp == null ) ) {
 		return array( 'error' => 'Invalid request.' );
 	}
+    
+    // to fix conflict with divi theme
+    define('DOING_CRON', true); // to fix conflict issue with the team control extension
 
 	$access = get_option( 'live-report-responder-provideaccess' );
 	if ( ( 'yes' != $access ) || ( get_option('live-report-responder-siteurl') != $siteurl ) ) {

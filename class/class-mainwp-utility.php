@@ -127,6 +127,7 @@ class MainWP_Utility {
 		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
 		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
+            $http_pass = stripslashes($http_pass); // to fix
 			curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
 		}
 
@@ -715,6 +716,7 @@ class MainWP_Utility {
 				@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
 				@curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
 				if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
+                    $http_pass = stripslashes($http_pass); // to fix
 					curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
 				}
 
@@ -1004,6 +1006,7 @@ class MainWP_Utility {
 			@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
 			@curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
 			if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
+                $http_pass = stripslashes($http_pass); // to fix
 				curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
 			}
 
@@ -1110,9 +1113,9 @@ class MainWP_Utility {
 
 		if ( $what == 'stats' || ( $what == 'upgradeplugintheme' && isset( $params['type'] ) && 'plugin' == $params['type'] ) ) {
 			// to fix bug: update upgrade plugin information
-			$try_tounch_plugins_page = get_option( 'mainwp_request_plugins_page_site_' . $website->id );
-			if ('yes' == $try_tounch_plugins_page) {
-				$page_plugins_url = MainWP_Utility::getGetDataAuthed( $website, 'plugins.php' );
+			$try_detect_premiums_updates = get_option( 'mainwp_request_plugins_page_' . $website->id );
+			if ('yes' == $try_detect_premiums_updates) {
+				$page_plugins_url = MainWP_Utility::getGetDataAuthed( $website, 'plugins.php?_detect_plugins_updates=yes' );
 				wp_remote_get( $page_plugins_url, array( 'timeout' => 25, 'httpversion' => '1.1' ) );
 			}
 		}
@@ -1120,11 +1123,11 @@ class MainWP_Utility {
 		$params['optimize'] = ( ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0 );
 
 		$postdata    = MainWP_Utility::getPostDataAuthed( $website, $what, $params );
-        
+
         $others = array('force_use_ipv4' => $website->force_use_ipv4, 'upgrade' => ( $what == 'upgradeplugintheme' || $what == 'upgrade' || $what == 'upgradetranslation' ) );
         if (isset($rawResponse) && $rawResponse)
-            $others['raw_response'] = 'yes'; 
-        
+            $others['raw_response'] = 'yes';
+
 		$information = MainWP_Utility::fetchUrl( $website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
 
 		if ( is_array( $information ) && isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
@@ -1424,6 +1427,7 @@ class MainWP_Utility {
 		@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
 		@curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
 		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
+            $http_pass = stripslashes($http_pass); // to fix
 			@curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
 		}
 
@@ -1528,10 +1532,10 @@ class MainWP_Utility {
 		}
 
         $raw_response = isset($others['raw_response']) && $others['raw_response'] == 'yes' ? true : false;
-                
+
 		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
-		if ($http_status == '400') MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'post data: [' . print_r($postdata , 1). ']' );        
-		
+		if ($http_status == '400') MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'post data: [' . print_r($postdata , 1). ']' );
+
         if ( ( $data === false ) && ( $http_status == 0 ) ) {
 			MainWP_Logger::Instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
 			throw new MainWP_Exception( 'HTTPERROR', $err );
@@ -1544,7 +1548,7 @@ class MainWP_Utility {
 			MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'information: [OK]' );
 			return $information;
 		} else if ( $raw_response ) {
-            MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'Response: [RAW]' );            
+            MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'Response: [RAW]' );
             return $data;
 		} else {
 			MainWP_Logger::Instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] Result was: [' . $data . ']' );
@@ -1605,6 +1609,7 @@ class MainWP_Utility {
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
 		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
 		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
+            $http_pass = stripslashes($http_pass); // to fix
 			curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
 		}
 		curl_exec( $ch );
@@ -2119,8 +2124,25 @@ class MainWP_Utility {
 		return preg_replace( '/[\\\\\/\:"\*\?\<\>\|]+/', '', $str );
 	}
 
-	public static function formatEmail( $to, $body, $title = '' ) {
+	public static function formatEmail( $to, $body, $title = '', $text_format = false ) {
 		$current_year = date("Y");
+        if ($text_format) {
+            	$mail_send['header']  = '';
+
+                $mail_send['body']  = $title . "\r\n" . "\r\n" .
+                                      $body . "\r\n" . "\r\n";
+                $mail_send['footer']  = "MainWP: https://mainwp.com" . "\r\n" .
+                                        "Extensions: https://mainwp.com/mainwp-extensions/" . "\r\n" .
+                                        "Documentation: https://mainwp.com/help/" . "\r\n" .
+                                        "Blog: https://mainwp.com/mainwp-blog/" . "\r\n" .
+                                        "Codex: https://mainwp.com/codex/" . "\r\n" .
+                                        "Support: https://mainwp.com/support/" . "\r\n" . "\r\n" .
+                                        "Follow us on Twitter: https://twitter.com/mymainwp" . "\r\n" .
+                                        "Friend us on Facebook: https://www.facebook.com/mainwp" . "\r\n" . "\r\n" .
+                                        "Copyright {$current_year} MainWP, All rights reserved.";
+        }
+        else
+        {
 		$mail_send['header']  = <<<EOT
             <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -2318,7 +2340,7 @@ class MainWP_Utility {
                         <table border="0" cellpadding="10" cellspacing="0" width="600" id="templatePreheader" style="background-color: #FAFAFA;">
                             <tr>
                                 <td valign="top" class="preheaderContent" style="border-collapse: collapse;">
-                                
+
                                 <!-- // Begin: Standard Preheader \ -->
 
                                     <table border="0" cellpadding="10" cellspacing="0" width="100%">
@@ -2333,7 +2355,7 @@ class MainWP_Utility {
                                     </table>
 
                                 <!-- // End: Standard Preheader \ -->
-                                
+
                                 </td>
                             </tr>
                         </table>
@@ -2349,13 +2371,13 @@ class MainWP_Utility {
                                         <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateHeader" style="background-color: #FFFFFF;border-bottom: 0;">
                                             <tr>
                                                 <td class="headerContent" style="border-collapse: collapse;color: #202020;font-family: Arial;font-size: 34px;font-weight: bold;line-height: 100%;padding: 0;text-align: center;vertical-align: middle;">
-                                                
+
                                                 <!-- // Begin: Standard Header Image \\ -->
 
                                                 <a href="https://mainwp.com" target="_blank" style="color: #446200;font-weight: normal;text-decoration: underline;"><img src="https://gallery.mailchimp.com/f3ac05fd307648a9c6bbe320a/images/header.png" alt="MainWP" border="0" style="border: px none;border-color: ;border-style: none;border-width: px;height: 130px;width: 600px;margin: 0;padding: 0;line-height: 100%;outline: none;text-decoration: none;" width="600" height="130"></a>
-                                                
+
                                                 <!-- // End: Standard Header Image \\ -->
-                                                
+
                                                 </td>
                                             </tr>
                                         </table>
@@ -2372,7 +2394,7 @@ class MainWP_Utility {
                                         <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateBody">
                                             <tr>
                                                 <td valign="top" class="bodyContent" style="border-collapse: collapse;background-color: #FFFFFF;">
-                                    
+
                                                     <!-- // Begin: Standard Content \\ -->
 EOT;
 
@@ -2408,7 +2430,7 @@ EOT;
                                         <table border="0" cellpadding="10" cellspacing="0" width="600" id="templateFooter" style="background-color: #1d1b1c;border-top: 4px solid #7fb100;">
                                             <tr>
                                                 <td valign="top" class="footerContent" style="border-collapse: collapse;">
-                                                    
+
                                                     <!-- // Begin: Standard Footer \\ -->
 
                                                     <table border="0" cellpadding="10" cellspacing="0" width="100%">
@@ -2440,7 +2462,7 @@ EOT;
                                                     </table>
 
                                                     <!-- // End: Standard Footer \\ -->
-                                                    
+
                                                 </td>
                                             </tr>
                                         </table>
@@ -2458,6 +2480,8 @@ EOT;
     </body>
 </html>
 EOT;
+        }
+
         $mail_send = apply_filters( 'mainwp_format_email', $mail_send );
 		return $mail_send['header'] . $mail_send['body'] . $mail_send['footer'];
 	}
@@ -2554,16 +2578,16 @@ EOT;
 		foreach ( $keys as $key ) {
 			$outputSite[ $key ] = $website->$key;
 		}
-		
+
 		return (object) $outputSite;
 	}
-	
+
 	public static function mapSiteArray( &$website, $keys ) {
 		$outputSite = array();
 		foreach ( $keys as $key ) {
 			$outputSite[ $key ] = $website->$key;
 		}
-		
+
 		return $outputSite;
 	}
 
@@ -2801,7 +2825,7 @@ EOT;
 
 		return $text;
 	}
-	
+
 	public static function utf8ize($mixed) {
 		if (is_array($mixed)) {
 			foreach ($mixed as $key => $value) {
@@ -2825,6 +2849,11 @@ EOT;
 
 	public static function removeHttpPrefix( $pUrl, $pTrimSlashes = false ) {
 		return str_replace( array( 'http:' . ( $pTrimSlashes ? '//' : '' ), 'https:' . ( $pTrimSlashes ? '//' : '' ) ), array( '', '' ), $pUrl );
+	}
+
+    public static function removeHttpWWWPrefix( $pUrl ) {
+		$pUrl = self::removeHttpPrefix($pUrl, true);
+        return str_replace( 'www' , '', $pUrl );
 	}
 
 	public static function isArchive( $pFileName, $pPrefix = '', $pSuffix = '' ) {

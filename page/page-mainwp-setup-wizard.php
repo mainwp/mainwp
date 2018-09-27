@@ -19,7 +19,7 @@ class MainWP_Setup_Wizard {
 
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'admin_menus' ) );
-		add_action( 'admin_init', array( $this, 'setup_wizard' ), 999 );                
+		add_action( 'admin_init', array( $this, 'setup_wizard' ), 999 );
 	}
 
 	public static function init() {
@@ -129,16 +129,16 @@ class MainWP_Setup_Wizard {
 		$this->step = isset( $_GET['step'] ) ? sanitize_key( $_GET['step'] ) : current( array_keys( $this->steps ) );
 		$this->check_redirect();
         wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'js/mainwp-setup.js', array( 'jquery', 'jquery-ui-tooltip' ), MAINWP_VERSION );
-		wp_enqueue_script( 'mainwp-setup-select2', MAINWP_PLUGIN_URL . 'js/select2/select2.js', array( 'jquery' ), MAINWP_VERSION );			
-		wp_enqueue_script( 'mainwp-setup-admin', MAINWP_PLUGIN_URL . 'js/mainwp-admin.js', array(), MAINWP_VERSION );		
-		
+		wp_enqueue_script( 'mainwp-setup-select2', MAINWP_PLUGIN_URL . 'js/select2/js/select2.min.js', array( 'jquery' ), MAINWP_VERSION );
+		wp_enqueue_script( 'mainwp-setup-admin', MAINWP_PLUGIN_URL . 'js/mainwp-admin.js', array(), MAINWP_VERSION );
+
 		wp_localize_script('mainwp-setup', 'mainwpSetupLocalize', array('nonce' => wp_create_nonce('MainWPSetup')));
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'css/mainwp.css', array(), MAINWP_VERSION );
 
 		wp_enqueue_style( 'mainwp-font-awesome', MAINWP_PLUGIN_URL . 'css/font-awesome/css/font-awesome.min.css', array(), MAINWP_VERSION);
 		wp_enqueue_style( 'jquery-ui-style' );
 		wp_enqueue_style( 'mainwp-setup', MAINWP_PLUGIN_URL . 'css/mainwp-setup.css', array( 'dashicons', 'install' ), MAINWP_VERSION );
-		wp_enqueue_style( 'mainwp-setup-select2', MAINWP_PLUGIN_URL . 'js/select2/select2.css', array(), '3.4.5' );
+		wp_enqueue_style( 'mainwp-setup-select2', MAINWP_PLUGIN_URL . 'js/select2/css/select2.css', array(), '3.4.5' );
 
 		if ( ! empty( $_POST['save_step'] ) && isset( $this->steps[ $this->step ]['handler'] ) ) {
 			call_user_func( $this->steps[ $this->step ]['handler'] );
@@ -151,7 +151,7 @@ class MainWP_Setup_Wizard {
 		$this->setup_wizard_footer();
 		exit;
 	}
-        
+
 	public function check_redirect() {
 		if ($this->step == 'install_extension') {
 			$backup_method = get_option('mwp_setup_primaryBackup');
@@ -190,7 +190,7 @@ class MainWP_Setup_Wizard {
 			<script type="text/javascript"> var ajaxurl = '<?php echo esc_url( admin_url('admin-ajax.php') ); ?>';</script>
 		</head>
 		<body class="mwp-setup wp-core-ui">
-		<h1 id="mwp-logo"><a href="//mainwp.com"><img src="<?php echo MAINWP_PLUGIN_URL; ?>/images/logo-mainwp1.png" alt="MainWP" /></a></h1>
+		<h1 id="mwp-logo"><a href="//mainwp.com"><img src="<?php echo MAINWP_PLUGIN_URL; ?>images/logo-mainwp1.png" alt="MainWP" /></a></h1>
 		<?php
 	}
 
@@ -444,7 +444,7 @@ class MainWP_Setup_Wizard {
                 } else {
                     $mainwp_strusted = in_array($slug, $trustedPlugins) ? 1 : 0;
                 }
-                
+
 		?>
 		<h1><?php _e( 'Optimization', 'mainwp' ); ?></h1>
 		<form method="post">
@@ -506,9 +506,9 @@ class MainWP_Setup_Wizard {
 		} else {
 			$trustedPlugins = array_diff($trustedPlugins, array(urldecode($slug)));
 		}
-                
+
                 MainWP_Utility::update_option('mwp_setup_mainwpTrustedUpdate', isset($_POST['mwp_setup_add_mainwp_to_trusted_update']) ? 1 : 0);
-                
+
 		$userExtension->trusted_plugins = json_encode($trustedPlugins);
 		MainWP_DB::Instance()->updateUserExtension($userExtension);
 
@@ -518,8 +518,8 @@ class MainWP_Setup_Wizard {
 
 	public function mwp_setup_notification() {
 		$important_notification            = get_option( 'mwp_setup_importantNotification', false );
-		$user_emails = MainWP_Utility::getNotificationEmail();                
-                $user_emails = explode(',', $user_emails);                
+		$user_emails = MainWP_Utility::getNotificationEmail();
+                $user_emails = explode(',', $user_emails);
                 $i = 0;
 		?>
 		<h1><?php _e( 'Notification', 'mainwp' ); ?></h1>
@@ -544,15 +544,15 @@ class MainWP_Setup_Wizard {
 				<tr>
 					<th scope="row"><?php _e('Enter Your Email Address','mainwp'); ?></th>
 					<td>
-                                             <?php foreach($user_emails as $email) { 
-                                                $i++;                                        
+                                             <?php foreach($user_emails as $email) {
+                                                $i++;
                                                 ?>
                                                 <div class="mwp_email_box">
 						<input type="text" class="" id="mainwp_options_email" name="mainwp_options_email[<?php echo $i; ?>]" size="35" value="<?php echo esc_attr($email); ?>"/>&nbsp;
                                                 <?php if ($i != 1) { ?>
                                                 <a href="#" class="mwp_remove_email"><i class="fa fa-minus-circle fa-lg mainwp-red" aria-hidden="true"></i></a>
                                                 <?php } ?>
-                                                </div>                                                
+                                                </div>
                                             <?php } ?>
                                             <a href="#" id="mwp_add_other_email" class="mainwp-small"><?php _e( '+ Add New'); ?></a>
 					</td>
@@ -576,12 +576,12 @@ class MainWP_Setup_Wizard {
 		MainWP_Utility::update_option('mainwp_automaticDailyUpdate', $important_notification ? 2 : 0);
 		$userExtension = MainWP_DB::Instance()->getUserExtension();
 		$userExtension->offlineChecksOnlineNotification = $important_notification;
-                
+
                 $save_emails = array();
                 $user_emails = $_POST['mainwp_options_email'];
                 if (is_array($user_emails)) {
                     foreach($user_emails as $email) {
-                        $email = esc_html(trim($email)); 
+                        $email = esc_html(trim($email));
                         if (!empty($email) && !in_array($email, $save_emails)) {
                             $save_emails[] = $email;
                         }
@@ -618,15 +618,15 @@ class MainWP_Setup_Wizard {
 				<tr id="mwp_setup_tr_backup_method" <?php echo $style; ?>>
 					<th scope="row"><?php _e('Choose how you want to handle backups:','mainwp'); ?></th>
 					<td>
-						<span class="mainwp-select-bg">						
+						<span class="mainwp-select-bg">
 								<select class="mainwp-select2" name="mwp_setup_backup_method" id="mwp_setup_backup_method">
 									<option value="updraftplus" <?php if ($backup_method == 'updraftplus' || $backup_method == ''): ?>selected<?php endif; ?>>UpdraftPlus (Free Extension)</option>
 									<option value="backupwp" <?php if ($backup_method == 'backupwp'): ?>selected<?php endif; ?>>BackUpWordPress (Free Extension)</option>
 									<option value="backwpup" <?php if ($backup_method == 'backwpup'): ?>selected<?php endif; ?>>BackWPup (Free Extension)</option>
-								</select>						
+								</select>
 						</span>
 						<br /><br />
-						<em>							
+						<em>
 							<span class="mainwp-backups-notice" method="updraftplus" <?php echo ($backup_method == 'updraftplus' || $backup_method == '') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the UpdraftPlus backup plugin for your Backups.','mainwp' ); ?></span>
 							<span class="mainwp-backups-notice" method="backupwp" <?php echo ($backup_method == 'backupwp') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the BackupWordPress backup plugin for your Backups.','mainwp' ); ?></span>
 							<span class="mainwp-backups-notice" method="backwpup" <?php echo ($backup_method == 'backwpup') ? "" : 'style="display:none"'; ?> ><?php _e( 'This allows you to use the BackWPup backup plugin for your Backups.','mainwp' ); ?></span>
@@ -750,6 +750,9 @@ class MainWP_Setup_Wizard {
 	}
 
 	public function mwp_setup_purchase_extension_save() {
+        if ( session_id() == '' ) {
+            session_start();
+        }
 		$purchase_extension_history = isset( $_SESSION['purchase_extension_history'] ) ? $_SESSION['purchase_extension_history'] : array();
 
 		$new_purchase_extension_history = array();

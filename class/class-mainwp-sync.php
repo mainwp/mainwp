@@ -202,25 +202,33 @@ class MainWP_Sync {
 		}
 
 
-		$to_fix = false;
+		$to_detect = false;
 		if ( isset( $information['plugins'] ) ) {
-			foreach( $information['plugins'] as $info ) {
-				if ( isset($info['slug']) && (in_array( $info['slug'], array( 'ithemes-security-pro/ithemes-security-pro.php', 'monarch/monarch.php', 'cornerstone/cornerstone.php', 'updraftplus/updraftplus.php', 'wp-all-import-pro/wp-all-import-pro.php') )) ) {
-					$to_fix = true;
-				}
-			}
-			
+            $detect_premiums_updates = self::getDetectUpdates();
+            if ( is_array($detect_premiums_updates) && count($detect_premiums_updates) > 0 ) {
+                foreach( $information['plugins'] as $info ) {
+                    if ( isset($info['slug']) && (in_array( $info['slug'], $detect_premiums_updates )) ) {
+                        $to_detect = true;
+                        break;
+                    }
+                }
+            }
+
+            if ( ! $to_detect ) {
+                $to_detect= self::getDetectUpdates2( $information['plugins'] );
+            }
+
 			$websiteValues['plugins'] = MainWP_Utility::safe_json_encode($information['plugins']);
 			$done                     = true;
 		}
 
-		if ( $to_fix ) {
-			$request = get_option( 'mainwp_request_plugins_page_site_' . $pWebsite->id );
-			if ( empty( $request ) )
-				update_option( 'mainwp_request_plugins_page_site_' . $pWebsite->id, 'yes' );
+		if ( $to_detect ) {
+			$value = get_option( 'mainwp_request_plugins_page_' . $pWebsite->id );
+			if ( empty( $value ) )
+				update_option( 'mainwp_request_plugins_page_' . $pWebsite->id, 'yes' );
 		} else {
-			if ( 'yes' == get_option( 'mainwp_request_plugins_page_site_' . $pWebsite->id ) )
-				delete_option( 'mainwp_request_plugins_page_site_' . $pWebsite->id );
+			if ( 'yes' == get_option( 'mainwp_request_plugins_page_' . $pWebsite->id ) )
+				delete_option( 'mainwp_request_plugins_page_' . $pWebsite->id );
 		}
 
 		if ( isset( $information['users'] ) ) {
@@ -333,6 +341,45 @@ class MainWP_Sync {
 		}
 
 		return ( ! $error );
+	}
+
+    public static function getDetectUpdates(){
+
+        $premiums = array(
+                'ithemes-security-pro/ithemes-security-pro.php',
+                'monarch/monarch.php',
+                'cornerstone/cornerstone.php',
+                'updraftplus/updraftplus.php',
+                'wp-all-import-pro/wp-all-import-pro.php',
+                'bbq-pro/bbq-pro.php',
+                'seedprod-coming-soon-pro-5/seedprod-coming-soon-pro-5.php',
+                'elementor-pro/elementor-pro.php',
+                'bbpowerpack/bb-powerpack.php',
+                'bb-ultimate-addon/bb-ultimate-addon.php',
+                'webarx/webarx.php',
+                'leco-client-portal/leco-client-portal.php',
+                'elementor-extras/elementor-extras.php',
+                'wp-schema-pro/wp-schema-pro.php',
+                'convertpro/convertpro.php',
+                'astra-addon/astra-addon.php',
+                'custom-facebook-feed-pro/custom-facebook-feed.php'
+        );
+
+        return apply_filters('mainwp_detect_premiums_updates', $premiums);
+	}
+
+    public static function getDetectUpdates2( $plugins ){
+
+        if (!is_array($plugins))
+            return false;
+
+        foreach( $plugins as $info ) {
+            // detect for Yithemes plugins
+            if ( isset($info['slug']) && false !== strpos( $info['slug'], 'yith-'))  {
+                return true;
+            }
+        }
+        return false;
 	}
 
 	public static function statsUpdate( $pSite = null ) {

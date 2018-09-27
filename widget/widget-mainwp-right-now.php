@@ -398,8 +398,8 @@ class MainWP_Right_Now {
 						}
 						//$plugin_upgrades[ $crrSlug ] = $premiumUpgrade;
 						// to fix empty values
-						$premiumUpgrade = array_filter($premiumUpgrade);								
-						$plugin_upgrades[ $crrSlug ] = array_merge($plugin_upgrades[ $crrSlug ], $premiumUpgrade);							
+						$premiumUpgrade = array_filter($premiumUpgrade);
+						$plugin_upgrades[ $crrSlug ] = array_merge($plugin_upgrades[ $crrSlug ], $premiumUpgrade);
 					}
 				}
 			}
@@ -544,22 +544,22 @@ class MainWP_Right_Now {
 			$sql        = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 			$globalView = false;
 		} else {
-            
+            $staging_enabled = apply_filters('mainwp-extension-available-check', 'mainwp-staging-extension') || apply_filters('mainwp-extension-available-check', 'mainwp-timecapsule-extension');
             // To support staging extension
-            $is_staging = 'no';             
-            if (apply_filters('mainwp-extension-available-check', 'mainwp-staging-extension')) {                
+            $is_staging = 'no';
+            if ( $staging_enabled ) {
                 $staging_updates_view = get_user_option( 'mainwp_staging_options_updates_view', $current_user->ID );
                 if ($staging_updates_view == 'staging') {
-                    $is_staging = 'yes';                    
+                    $is_staging = 'yes';
                 }
-            }            
+            }
             // end support
-            
+
 			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
 		}
-        
+
         $userExtension = MainWP_DB::Instance()->getUserExtension();
-        
+
         if ( $globalView ) {
 			?>
 			<div class="mainwp-postbox-actions-top mainwp-padding-5">
@@ -578,15 +578,18 @@ class MainWP_Right_Now {
 			</div>
 			<?php
 		}
-        
+
 		$websites = MainWP_DB::Instance()->query( $sql );
-        
-		if ( ! $websites ) {            
+
+		if ( ! $websites ) {
 			return;
 		} else {
 			// to fix bug
 			MainWP_UI::renderBeginReadyPopup();
 		}
+
+        //Translation updates!
+		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 
 		// NEW 4.0: group view
 		if ( $globalView && $userExtension->site_view == 2 ) {
@@ -717,8 +720,10 @@ class MainWP_Right_Now {
 						if ( ! $website->is_ignorePluginUpdates ) {
 							//$plugin_upgrades[ $crrSlug ] = $premiumUpgrade;
 							// to fix empty values
-							$premiumUpgrade = array_filter($premiumUpgrade);								
-							$plugin_upgrades[ $crrSlug ] = array_merge($plugin_upgrades[ $crrSlug ], $premiumUpgrade);	
+							$premiumUpgrade = array_filter($premiumUpgrade);
+                            if (!isset($plugin_upgrades[ $crrSlug ]))
+                                $plugin_upgrades[ $crrSlug ] = array(); // to fix warning
+							$plugin_upgrades[ $crrSlug ] = array_merge($plugin_upgrades[ $crrSlug ], $premiumUpgrade);
 						}
 					} else if ( $premiumUpgrade['type'] == 'theme' ) {
 						if ( ! is_array( $theme_upgrades ) ) {
@@ -936,7 +941,13 @@ class MainWP_Right_Now {
 		$total_themesIgnoredAbandoned += count( $themesIgnoredAbandoned_perSites );
 
 		//WP Upgrades part:
-		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades + $total_translation_upgrades;		
+		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
+
+        // to fix incorrect total updates
+        if ($mainwp_show_language_updates) {
+            $total_upgrades += $total_translation_upgrades;
+        }
+
 		?>
 		<?php
 		if ( $total_upgrades == 0 ) {
@@ -1056,7 +1067,7 @@ class MainWP_Right_Now {
 			<div id="mainwp-right-now-total-updates" class="mainwp-left mainwp-cols-2">
 				<span class="fa-stack fa-lg">
 					<i class="fa fa-circle fa-stack-2x <?php echo $mainwp_tu_color_code; ?>"></i>
-					<strong class="fa-stack-1x mainwp-white" style="display: inline-block;"><?php echo $total_upgrades; ?></strong> 
+					<strong class="fa-stack-1x mainwp-white" style="display: inline-block;"><?php echo $total_upgrades; ?></strong>
 				</span>
 				<span class="fa-lg"><?php echo _n( 'Update', 'Updates', $total_upgrades, 'mainwp' ); ?> <?php _e( 'available', 'mainwp' ); ?></span>
 			</div>
@@ -1242,7 +1253,7 @@ class MainWP_Right_Now {
 
 
 		<?php
-		//WP plugin updates!                
+		//WP plugin updates!
 		?>
 		<div class="mainwp-clear">
 			<div class="mainwp-row">
@@ -1285,11 +1296,11 @@ class MainWP_Right_Now {
 							if ( $premiumUpgrade['type'] == 'plugin' ) {
 								if ( ! is_array( $plugin_upgrades ) ) {
 									$plugin_upgrades = array();
-								}								
+								}
 								//$plugin_upgrades[ $crrSlug ] = $premiumUpgrade;
 								// to fix empty values
-								$premiumUpgrade = array_filter($premiumUpgrade);								
-								$plugin_upgrades[ $crrSlug ] = array_merge($plugin_upgrades[ $crrSlug ], $premiumUpgrade);	
+								$premiumUpgrade = array_filter($premiumUpgrade);
+								$plugin_upgrades[ $crrSlug ] = array_merge($plugin_upgrades[ $crrSlug ], $premiumUpgrade);
 							}
 						}
 					}
@@ -1426,8 +1437,8 @@ class MainWP_Right_Now {
 							}
 							//$plugin_upgrades[ $crrSlug ] = $premiumUpgrade;
 							// to fix empty values
-							$premiumUpgrade = array_filter($premiumUpgrade);								
-							$plugin_upgrades[ $crrSlug ] = array_merge($plugin_upgrades[ $crrSlug ], $premiumUpgrade);	
+							$premiumUpgrade = array_filter($premiumUpgrade);
+							$plugin_upgrades[ $crrSlug ] = array_merge($plugin_upgrades[ $crrSlug ], $premiumUpgrade);
 						}
 					}
 				}
@@ -1600,8 +1611,10 @@ class MainWP_Right_Now {
 										}
 										//$plugin_upgrades[ $crrSlug ] = $premiumUpgrade;
 										// to fix empty values
-										$premiumUpgrade = array_filter($premiumUpgrade);								
-										$plugin_upgrades[ $crrSlug ] = array_merge($plugin_upgrades[ $crrSlug ], $premiumUpgrade);	
+										$premiumUpgrade = array_filter($premiumUpgrade);
+                                        if (!isset($plugin_upgrades[ $crrSlug ]))
+                                            $plugin_upgrades[ $crrSlug ] = array(); // to fix warning
+										$plugin_upgrades[ $crrSlug ] = array_merge($plugin_upgrades[ $crrSlug ], $premiumUpgrade);
 									}
 								}
 							}
@@ -1667,7 +1680,7 @@ class MainWP_Right_Now {
 		</div>
 
 		<?php
-		//WP theme updates!                
+		//WP theme updates!
 		?>
 		<div class="mainwp-clear">
 			<div class="mainwp-row">
@@ -1675,7 +1688,7 @@ class MainWP_Right_Now {
 					<a href="#" id="mainwp_theme_upgrades_show" title="<?php echo esc_attr($show_updates_title);?>"  onClick="return rightnow_show('theme_upgrades', true);">
 					<span class="fa-stack fa-lg">
 						<i class="fa fa-circle fa-stack-2x <?php echo $mainwp_th_color_code; ?>"></i>
-						<strong class="fa-stack-1x mainwp-white"><?php echo $total_theme_upgrades; ?></strong> 
+						<strong class="fa-stack-1x mainwp-white"><?php echo $total_theme_upgrades; ?></strong>
 					</span><?php _e(' Theme update','mainwp'); ?><?php if ($total_theme_upgrades <> 1) { ?>s<?php } ?> <?php _e('available','mainwp'); ?>
 					</a>
 				</div>
@@ -2055,8 +2068,7 @@ class MainWP_Right_Now {
 
 		<?php
 
-		//Translation updates!
-		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
+
 		if ( $mainwp_show_language_updates == 1 ) {
 			?>
 			<div class="mainwp-row">
@@ -2787,7 +2799,7 @@ class MainWP_Right_Now {
 						<a href="#" id="mainwp_themes_outdate_show" onClick="return rightnow_show('themes_outdate', true);">
 					<span class="fa-stack fa-lg">
 						<i class="fa fa-circle fa-stack-2x <?php echo $mainwp_at_color_code; ?>"></i>
-						<strong class="fa-stack-1x mainwp-white"><?php echo $total_themes_outdate; ?> </strong> 
+						<strong class="fa-stack-1x mainwp-white"><?php echo $total_themes_outdate; ?> </strong>
 					</span>
 							<?php echo _n( 'Theme', 'Themes', $total_themes_outdate, 'mainwp'); ?> <?php _e('possibly abandoned', 'mainwp'); ?>
 						</a>&nbsp;<?php MainWP_Utility::renderToolTip(__('This feature checks the last updated status of themes and alerts you if not updated in a specific amount of time. This gives you insight on if a theme may have been abandoned by the author.','mainwp'), 'https://mainwp.com/help/docs/what-does-possibly-abandoned-mean/', 'images/info.png', 'float: none !important;'); ?>
@@ -3155,7 +3167,7 @@ class MainWP_Right_Now {
 			</div>
 			<input id="rightnow-upgrade-status-close" type="button" name="Close" value="<?php _e( 'Close', 'mainwp' ); ?>" class="button"/>
 		</div>
-   
+
 		<div id="rightnow-backup-box" title="Full backup required" style="display: none; text-align: center">
 			<div style="height: 190px; overflow: auto; margin-top: 20px; margin: 10px; text-align: left" id="rightnow-backup-content">
 			</div>
@@ -3169,24 +3181,24 @@ class MainWP_Right_Now {
 			</div>
 			<input id="rightnow-backupnow-close" type="button" name="Ignore" value="<?php _e( 'Cancel', 'mainwp' ); ?>" class="button"/>
 		</div>
-        
-    <?php } ?>                                        
-        <div class="mainwp-popup-overlay-hidden" id="rightnow-backup-box" tabindex="0" role="dialog" style="text-align: center">        
+
+    <?php } ?>
+        <div class="mainwp-popup-overlay-hidden" id="rightnow-backup-box" tabindex="0" role="dialog" style="text-align: center">
             <div class="mainwp-popup-backdrop"></div>
             <div class="mainwp-popup-wrap wp-clearfix" role="document">
                 <div class="mainwp-popup-header">
                     <h2 class="title" >Full backup required</h2>
                     <button type="button" class="close dashicons dashicons-no"><span class="screen-reader-text"><?php _e( 'Close dialog' ); ?></span></button>
-                </div>                
+                </div>
                 <div class="mainwp-popup-content" style="text-align: left" id="refresh-status-content">
-                </div>    
+                </div>
                 <div class="mainwp-popup-actions">
                     <input id="rightnow-backup-all" type="button" name="Backup All" value="<?php _e( 'Backup All', 'mainwp' ); ?>" class="button-primary"/>
                     <a id="rightnow-backup-now" href="#" target="_blank" style="display: none"  class="button-primary button"><?php _e( 'Backup Now', 'mainwp' ); ?></a>&nbsp;
                     <input id="rightnow-backup-ignore" type="button" name="Ignore" value="<?php _e( 'Ignore', 'mainwp' ); ?>" class="button"/>
                 </div>
-            </div>        
-        </div>                
+            </div>
+        </div>
 
 		<?php
 		@MainWP_DB::free_result( $websites );

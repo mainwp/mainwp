@@ -2773,8 +2773,8 @@ msgstr "Arhitektura"
 
 #: page/MainWPServerInformation.page.php:39
 #@ mainwp
-msgid "HTTP Server Sofware"
-msgstr "HTTP Server Sofware"
+msgid "HTTP Server Software"
+msgstr "HTTP Server Software"
 
 #: page/MainWPServerInformation.page.php:40
 #@ mainwp

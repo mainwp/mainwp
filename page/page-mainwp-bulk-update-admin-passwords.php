@@ -92,6 +92,8 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								'nossl',
 								'privkey',
 								'nosslkey',
+                                'http_user',
+                                'http_pass'
 							) );
 						}
 					}
@@ -111,6 +113,8 @@ class MainWP_Bulk_Update_Admin_Passwords {
 									'nossl',
 									'privkey',
 									'nosslkey',
+                                    'http_user',
+                                    'http_pass'
 								) );
 							}
 							@MainWP_DB::free_result( $websites );

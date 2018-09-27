@@ -67,9 +67,9 @@ class MainWP_DB {
 		if ( $currentVersion == $this->mainwp_db_version ) {
 			return;
 		}
-	
+
         $charset_collate = $this->wpdb->get_charset_collate();
-    
+
 		$sql = array();
 		$tbl = 'CREATE TABLE ' . $this->tableName( 'wp' ) . ' (
    id int(11) NOT NULL auto_increment,
@@ -116,7 +116,7 @@ class MainWP_DB {
   last_db_backup_size int(11) NOT NULL,
   backups text NOT NULL,
   mainwpdir int(11) NOT NULL,
-  loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,  
+  loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,
   is_ignoreCoreUpdates tinyint(1) NOT NULL DEFAULT 0,
   is_ignorePluginUpdates tinyint(1) NOT NULL DEFAULT 0,
   is_ignoreThemeUpdates tinyint(1) NOT NULL DEFAULT 0,
@@ -730,28 +730,28 @@ class MainWP_DB {
 	}
 
 	public function getWhereAllowAccessSites( $site_table_alias = '', $is_staging = 'no') {
-        
+
 		if ( empty( $site_table_alias ) ) {
 			$site_table_alias = $this->tableName( 'wp' );
 		}
-        
+
         // check to filter the staging sites
-        $where_staging = ' AND ' . $site_table_alias . '.is_staging = 0 ';                
+        $where_staging = ' AND ' . $site_table_alias . '.is_staging = 0 ';
         if ( $is_staging == 'no') {
             $where_staging = ' AND ' . $site_table_alias . '.is_staging = 0 ';
         } else if ($is_staging == 'yes') {
             $where_staging = ' AND ' . $site_table_alias . '.is_staging = 1 ';
         } else if ( $is_staging == 'nocheckstaging' ) {
             $where_staging = '';
-        }       
+        }
         // end staging filter
-        
+
          $_where = $where_staging;
 		// To fix bug run from cron job
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 			return $_where;
 		}
-		
+
 		// To fix bug run from wp cli
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			return $_where;
@@ -778,24 +778,24 @@ class MainWP_DB {
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 			return '';
 		}
-        
+
 		if ( empty( $group_table_alias ) ) {
 			$group_table_alias = $this->tableName( 'group' );
 		}
-        
+
         // check to filter the staging group
         $where_staging_group = '';
         $staging_group = get_option('mainwp_stagingsites_group_id');
         if ($staging_group) {
             $where_staging_group = ' AND ' . $group_table_alias .'.id <> ' . $staging_group . ' '; // filter the staging group
             if ($with_staging == 'yes') {
-                $where_staging_group = ''; // will do not the filter staging group
+                $where_staging_group = ''; // will do not filter staging group
             }
-        }        
+        }
         // end staging filter
-        
+
         $_where = $where_staging_group;
-        
+
 		$allowed_groups = apply_filters( 'mainwp_currentuserallowedaccessgroups', 'all' );
 
 		if ( $allowed_groups == 'all' ) {
@@ -838,18 +838,25 @@ class MainWP_DB {
 
 		return null;
 	}
-    
+
     public function getGroupsForManageSites() {
 		$where = ' 1 ';
 		if ( MainWP_System::Instance()->isMultiUser() ) {
 			global $current_user;
 			$where = ' userid = ' . $current_user->ID . ' ';
 		}
-		$where .= $this->getWhereAllowGroups('' , $with_staging = 'yes');
+        $with_staging = 'yes';
+        $staging_enabled = apply_filters('mainwp-extension-available-check', 'mainwp-staging-extension') || apply_filters('mainwp-extension-available-check', 'mainwp-timecapsule-extension');
+
+        if ( !$staging_enabled ) {
+            $with_staging = 'no';
+        }
+
+		$where .= $this->getWhereAllowGroups('' , $with_staging );
 
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'group' ) . ' WHERE ' . $where . ' ORDER BY name', OBJECT_K );
 	}
-    
+
 	public function getGroupsForCurrentUser() {
 		$where = ' 1 ';
 		if ( MainWP_System::Instance()->isMultiUser() ) {
@@ -1016,17 +1023,17 @@ class MainWP_DB {
 	}
 
 	public function getSQLWebsitesByGroupId( $id, $selectgroups = false, $orderBy = 'wp.url', $offset = false, $rowcount = false, $where = null ) {
-        
+
         $is_staging = 'no';
-        if ($selectgroups) {            
+        if ($selectgroups) {
             if ($staging_group = get_option('mainwp_stagingsites_group_id')){
                 if ($id == $staging_group) {
-                    $is_staging = 'yes'; // will list staging sites 
+                    $is_staging = 'yes'; // will list staging sites
                 }
             }
         }
-        
-		if ( MainWP_Utility::ctype_digit( $id ) ) {           
+
+		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			$where_allowed = $this->getWhereAllowAccessSites( 'wp', $is_staging );
 			if ( $selectgroups ) {
 				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups

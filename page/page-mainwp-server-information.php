@@ -20,14 +20,14 @@ class MainWP_Server_Information {
                 'renderCron',
             ) );
         }
-        
+
         if( !MainWP_System::is_disable_menu_item(3, 'ServerInformationChild') ) {
             add_submenu_page( 'mainwp_tab', __( 'Child Site Information', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Child Site Information', 'mainwp' ) . '</div>', 'read', 'ServerInformationChild', array(
                 MainWP_Server_Information::getClassName(),
                 'renderChild',
             ) );
         }
-        
+
         if( !MainWP_System::is_disable_menu_item(3, 'ErrorLog') ) {
             add_submenu_page( 'mainwp_tab', __( 'Error Log', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Error Log', 'mainwp' ) . '</div>', 'read', 'ErrorLog', array(
                 MainWP_Server_Information::getClassName(),
@@ -41,10 +41,12 @@ class MainWP_Server_Information {
             ) );
         }
         if( !MainWP_System::is_disable_menu_item(3, '.htaccess') ) {
-            add_submenu_page( 'mainwp_tab', __( '.htaccess File', 'mainwp' ), '<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>', 'read', '.htaccess', array(
-                MainWP_Server_Information::getClassName(),
-                'renderhtaccess',
-            ) );
+            if (self::isApacheServerSoftware()) {
+                add_submenu_page( 'mainwp_tab', __( '.htaccess File', 'mainwp' ), '<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>', 'read', '.htaccess', array(
+                    MainWP_Server_Information::getClassName(),
+                    'renderhtaccess',
+                ) );
+            }
         }
         if( !MainWP_System::is_disable_menu_item(3, 'ActionLogs') ) {
             add_submenu_page( 'mainwp_tab', __( 'Action logs', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Action logs', 'mainwp' ) . '</div>', 'read', 'ActionLogs', array(
@@ -55,7 +57,7 @@ class MainWP_Server_Information {
         self::$subPages = apply_filters('mainwp-getsubpages-server', array());
 		if (isset(self::$subPages) && is_array(self::$subPages)) {
 			foreach (self::$subPages as $subPage) {
-                if( MainWP_System::is_disable_menu_item(3,  'Server' . $subPage['slug'] ) ) 
+                if( MainWP_System::is_disable_menu_item(3,  'Server' . $subPage['slug'] ) )
                         continue;
 				add_submenu_page('mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Server' . $subPage['slug'], $subPage['callback']);
 			}
@@ -79,17 +81,21 @@ class MainWP_Server_Information {
                                         <?php if( !MainWP_System::is_disable_menu_item(3, 'WPConfig') ) { ?>
                                         <a href="<?php echo admin_url( 'admin.php?page=WPConfig' ); ?>" class="mainwp-submenu"><?php _e( 'WP-Config File','mainwp' ); ?></a>
                                         <?php } ?>
-                                        <?php if( !MainWP_System::is_disable_menu_item(3, '.htaccess') ) { ?>
+                                        <?php if( !MainWP_System::is_disable_menu_item(3, '.htaccess') ) {
+                                            if (self::isApacheServerSoftware()) {
+                                            ?>
                                         <a href="<?php echo admin_url( 'admin.php?page=.htaccess' ); ?>" class="mainwp-submenu"><?php _e( '.htaccess File','mainwp' ); ?></a>
-                                        <?php } ?>
+                                        <?php }
+                                            }
+                                        ?>
                                     <?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
 							if ( ! isset( $subPage['menu_hidden'] ) || (isset( $subPage['menu_hidden'] ) && $subPage['menu_hidden'] != true) ) {
-                                if( MainWP_System::is_disable_menu_item(3,  'Server' . $subPage['slug'] ) ) 
+                                if( MainWP_System::is_disable_menu_item(3,  'Server' . $subPage['slug'] ) )
                                         continue;
-                                
-							?>                           
+
+							?>
                                 <a href="<?php echo admin_url( 'admin.php?page=Server'.$subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
 							<?php
 							}
@@ -148,6 +154,12 @@ class MainWP_Server_Information {
                                 'right' => ''
                             )
                 );
+
+                if ( !self::isApacheServerSoftware() ) {
+                    if ( $init_sub_subleftmenu[4]['slug'] == '.htaccess')
+                        unset($init_sub_subleftmenu[4]);
+                }
+
                 MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'ServerInformation', 'Settings');
                 foreach($init_sub_subleftmenu as $item) {
                     if( MainWP_System::is_disable_menu_item(3, $item['slug']) )
@@ -189,11 +201,16 @@ class MainWP_Server_Information {
 				echo 'nav-tab-active';
 			} ?>" href="admin.php?page=WPConfig"><?php _e( 'WP-Config File', 'mainwp' ); ?></a>
             <?php } ?>
-            <?php if ( ! MainWP_System::is_disable_menu_item(3, '.htaccess') ) { ?>
-			<a class="nav-tab pos-nav-tab <?php if ( $shownPage === '.htaccess' ) {
-				echo 'nav-tab-active';
-			} ?>" href="admin.php?page=.htaccess"><?php _e( '.htaccess File', 'mainwp' ); ?></a>
-            <?php } ?>
+            <?php if ( ! MainWP_System::is_disable_menu_item(3, '.htaccess') ) {
+                if (self::isApacheServerSoftware()) {
+                    ?>
+                    <a class="nav-tab pos-nav-tab <?php if ( $shownPage === '.htaccess' ) {
+                        echo 'nav-tab-active';
+                    } ?>" href="admin.php?page=.htaccess"><?php _e( '.htaccess File', 'mainwp' ); ?></a>
+                <?php
+                }
+            }
+            ?>
 			<div class="clear"></div>
 		</div>
 		<div id="mainwp_wrap-inside">
@@ -259,23 +276,23 @@ public static function renderFooter( $shownPage ) {
 					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'MAINWP EXTENSIONS', 'mainwp' ); ?></td>
 				</tr>
 				<?php
-				$extensions = MainWP_Extensions::loadExtensions();		
+				$extensions = MainWP_Extensions::loadExtensions();
 				$extensions_slugs = array();
                                 if (count($extensions) == 0) {
                                     echo '<tr><td colspan="5">' . __('No installed extensions', 'mainwp') . '</td></tr>';
-                                } 
-				foreach($extensions as $extension) {	
+                                }
+				foreach($extensions as $extension) {
 					$extensions_slugs[] = $extension['slug'];
 				?>
 				<tr>
                                         <td class="mwp-not-generate-row"><?php MainWP_Utility::renderToolTip( $extension['description'] ); ?></td>
-					<td><?php echo $extension['name']; ?></td>					
-					<td><?php echo $extension['version']; ?></td>					
-					<td><?php echo $extension['activated_key'] == 'Activated' ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>					
-					<td><?php echo $extension['activated_key'] == 'Activated' ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>' : self::getWarningHTML( self::WARNING ); ?></td>					
-				</tr>				
+					<td><?php echo $extension['name']; ?></td>
+					<td><?php echo $extension['version']; ?></td>
+					<td><?php echo $extension['activated_key'] == 'Activated' ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>
+					<td><?php echo $extension['activated_key'] == 'Activated' ? '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>' : self::getWarningHTML( self::WARNING ); ?></td>
+				</tr>
 				<?php
-				}				
+				}
 				?>
 				<tr>
 					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'WORDPRESS', 'mainwp' ); ?></td>
@@ -320,7 +337,7 @@ public static function renderFooter( $shownPage ) {
 					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'MySQL SETTINGS', 'mainwp' ); ?></td>
 				</tr><?php
 				self::renderRow( 'MySQL Version', '>=', '5.0', 'getMySQLVersion', '', '', null, 'MainWP requires the MySQL version 5.0 or higher. If the condition is not met, MySQL version needs to be updated on your server. Before doing anything by yourself, we highly recommend contacting your hosting support department and asking them to do it for you. Click the help icon to read more.', null, self::ERROR );
-				?>				
+				?>
 				<tr>
 					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'SERVER INFORMATION', 'mainwp' ); ?></td>
 				</tr>
@@ -336,7 +353,7 @@ public static function renderFooter( $shownPage ) {
 				</tr>
 				<tr>
 					<td></td>
-					<td><?php _e( 'Server Sofware', 'mainwp' ); ?></td>
+					<td><?php _e( 'Server Software', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getServerSoftware(); ?></td>
 				</tr>
 				<tr>
@@ -378,7 +395,7 @@ public static function renderFooter( $shownPage ) {
 					<td></td>
 					<td><?php esc_html_e( 'User Agent', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getUserAgent(); ?></td>
-				</tr>				
+				</tr>
 				<tr>
 					<td></td>
 					<td><?php _e( 'Server Port', 'mainwp' ); ?></td>
@@ -398,12 +415,12 @@ public static function renderFooter( $shownPage ) {
 					<td></td>
 					<td><?php esc_html_e( 'Complete URL', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getCompleteURL(); ?></td>
-				</tr>				
+				</tr>
 				<tr>
 					<td></td>
 					<td><?php esc_html_e( 'Request Time', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getServerRequestTime(); ?></td>
-				</tr>				
+				</tr>
 				<tr>
 					<td></td>
 					<td><?php _e( 'Accept Content', 'mainwp' ); ?></td>
@@ -418,7 +435,7 @@ public static function renderFooter( $shownPage ) {
 					<td></td>
 					<td><?php esc_html_e( 'Currently Executing Script Pathname', 'mainwp' ); ?></td>
 					<td colspan="3"><?php self::getScriptFileName(); ?></td>
-				</tr>																
+				</tr>
 				<tr>
 					<td></td>
 					<td><?php esc_html_e( 'Current Page URI', 'mainwp' ); ?></td>
@@ -492,22 +509,22 @@ public static function renderFooter( $shownPage ) {
 				<tr>
 					<td style="background: #333; color: #fff;" colspan="5"><?php _e( 'WORDPRESS PLUGINS', 'mainwp' ); ?></td>
 				</tr>
-				<?php				
-				$all_extensions = MainWP_Extensions_View::getAvailableExtensions();				
-				$all_plugins = get_plugins();				
-				foreach ( $all_plugins as $slug => $plugin) {						
+				<?php
+				$all_extensions = MainWP_Extensions_View::getAvailableExtensions();
+				$all_plugins = get_plugins();
+				foreach ( $all_plugins as $slug => $plugin) {
 					if (isset($all_extensions[dirname($slug)]))
-						continue;					
+						continue;
 				?>
 				<tr>
                                     <td class="mwp-not-generate-row"><?php MainWP_Utility::renderToolTip( $plugin['Description'] ); ?></td>
-					<td><?php echo $plugin['Name']; ?></td>					
-					<td><?php echo $plugin['Version']; ?></td>					
-					<td><?php echo is_plugin_active($slug) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>					
+					<td><?php echo $plugin['Name']; ?></td>
+					<td><?php echo $plugin['Version']; ?></td>
+					<td><?php echo is_plugin_active($slug) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>
 					<td>&nbsp;</td>
 				</tr>
 				<?php
-				}				
+				}
 				?>
 				</tbody>
 			</table>
@@ -561,6 +578,9 @@ public static function renderFooter( $shownPage ) {
 	}
 
 	public static function getMainwpVersion() {
+//        if ( session_id() == '' ) {
+//            session_start();
+//        }
 		if ( ( isset( $_SESSION['cachedVersion'] ) ) && ( NULL !== $_SESSION['cachedVersion'] ) && ( ( $_SESSION['cachedTime'] + ( 60 * 30 ) ) > time() ) ) {
 			return $_SESSION['cachedVersion'];
 		}
@@ -889,7 +909,7 @@ public static function renderFooter( $shownPage ) {
 	public static function getFileSystemMethodCheck() {
 		$fsmethod = self::getFileSystemMethod();
 		if ( $fsmethod == 'direct' ) {
-			return '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> Pass</span>';
+			return '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>';
 		} else {
 			return self::getWarningHTML();
 		}
@@ -1095,6 +1115,11 @@ public static function renderFooter( $shownPage ) {
             return $_SERVER['SERVER_SOFTWARE'];
         else
             echo $_SERVER['SERVER_SOFTWARE'];
+	}
+
+    public static function isApacheServerSoftware($return = false) {
+        $server = self::getServerSoftware(true);
+        return (stripos( $server, 'apache' ) !== false) ? true : false;
 	}
 
 	public static function getServerProtocol() {
@@ -1548,17 +1573,17 @@ public static function renderFooter( $shownPage ) {
             'mainwp_maximumSyncRequests' => __('Maximum simultaneous sync requests','mainwp'),
             'mainwp_maximumInstallUpdateRequests' => __('Minimum simultaneous install/update requests','mainwp')
 		);
-		
+
 		if ( !MainWP_Extensions::isExtensionAvailable('mainwp-comments-extension') ) {
 			unset($mainwp_options['mainwp_maximumComments']);
-		}		
-		
+		}
+
 		$options_value = array();
 		$userExtension = MainWP_DB::Instance()->getUserExtension();
 		foreach($mainwp_options as $opt => $label){
 			$value  = get_option($opt, false);
 			switch($opt) {
-				case 'mainwp_number_of_child_sites':							
+				case 'mainwp_number_of_child_sites':
 					$value = MainWP_DB::Instance()->getWebsitesCount();
 					break;
 				case 'mainwp_options_footprint_plugin_folder_default':

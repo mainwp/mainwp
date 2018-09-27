@@ -237,7 +237,8 @@ body {
     margin: 0;
     list-style: none;
     overflow: hidden;
-    color: #ccc
+    color: #ccc;
+    display: flex
 }
 .mwp-setup-steps li {
     width: 11%;

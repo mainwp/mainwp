@@ -131,8 +131,8 @@ class MainWP_Plugins {
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
-                            if ( MainWP_System::is_disable_menu_item(3, 'Plugins' . $subPage['slug'] ) ) 
-                                    continue; 
+                            if ( MainWP_System::is_disable_menu_item(3, 'Plugins' . $subPage['slug'] ) )
+                                    continue;
 							?>
 							<a href="<?php echo admin_url( 'admin.php?page=Plugins' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
 							<?php
@@ -244,7 +244,7 @@ class MainWP_Plugins {
 			<?php
 			if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 				foreach ( self::$subPages as $subPage ) {
-                    if ( MainWP_System::is_disable_menu_item(3, 'Plugins' . $subPage['slug'] ) ) 
+                    if ( MainWP_System::is_disable_menu_item(3, 'Plugins' . $subPage['slug'] ) )
                             continue;
 					?>
 					<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) {
@@ -355,7 +355,9 @@ class MainWP_Plugins {
 	public static function renderAllActiveTable( $output = null ) {
 		$keyword       = null;
 		$search_status = 'all';
-
+        if ( session_id() == '' ) {
+            session_start();
+        }
 		if ( $output == null ) {
 			$keyword              = isset( $_POST['keyword'] ) && ! empty( $_POST['keyword'] ) ? trim( $_POST['keyword'] ) : null;
 			$search_status        = isset( $_POST['status'] ) ? $_POST['status'] : 'all';
@@ -405,6 +407,8 @@ class MainWP_Plugins {
 						'nossl',
 						'privkey',
 						'nosslkey',
+                        'http_user',
+                        'http_pass'
 					) );
 				}
 				@MainWP_DB::free_result( $websites );
@@ -432,7 +436,6 @@ class MainWP_Plugins {
 					echo '<br />';
 
 					if ( count( $output->errors ) == count( $dbwebsites ) ) {
-						session_start();
 						$_SESSION['MainWP_PluginsActive']       = $output;
 						$_SESSION['MainWP_PluginsActiveStatus'] = array(
 							'keyword'       => $keyword,
@@ -445,9 +448,6 @@ class MainWP_Plugins {
 				}
 			}
 
-			if ( session_id() == '' ) {
-				session_start();
-			}
 			$_SESSION['MainWP_PluginsActive']       = $output;
 			$_SESSION['MainWP_PluginsActiveStatus'] = array(
 				'keyword'       => $keyword,
@@ -721,6 +721,8 @@ class MainWP_Plugins {
 							'nossl',
 							'privkey',
 							'nosslkey',
+                            'http_user',
+                            'http_pass'
 						) );
 					}
 				}
@@ -741,6 +743,8 @@ class MainWP_Plugins {
 								'nossl',
 								'privkey',
 								'nosslkey',
+                                'http_user',
+                                'http_pass'
 							) );
 						}
 						@MainWP_DB::free_result( $websites );
@@ -841,7 +845,7 @@ class MainWP_Plugins {
 				$sitePlugins[ $plugin['websiteid'] ] = array();
 			}
 			$sitePlugins[ $plugin['websiteid'] ][ $plugin['name'] . '_' . $plugin['version'] ] = $plugin;
-		}        
+		}
         asort( $pluginsVersion );
 		?>
 		<div id="mainwp-table-overflow" style="overflow: auto !important ;">
@@ -881,8 +885,12 @@ class MainWP_Plugins {
 						<?php
 						foreach ( $pluginsVersion as $plugin_name => $plugin_title ) {
 							echo '<td class="long" style="text-align: center">';
-							if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( !isset($pluginsMainWP[$plugin_name]) || $pluginsMainWP[$plugin_name] === 'F' ) && ( $muPlugins[ $plugin_name ] == 0 ) ) {
-								echo '<input type="checkbox" value="' . $plugins[ $plugin_name ] . '" name="' . $pluginsName[ $plugin_name ] . '" class="selected_plugin" version="' . $pluginsRealVersion[$plugin_name] . '" />';
+                            if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( $muPlugins[ $plugin_name ] == 0 ) ) {
+                                if ( !isset($pluginsMainWP[$plugin_name]) || $pluginsMainWP[$plugin_name] === 'F' ) {
+                                    echo '<input type="checkbox" value="' . $plugins[ $plugin_name ] . '" name="' . $pluginsName[ $plugin_name ] . '" class="selected_plugin" version="' . $pluginsRealVersion[$plugin_name] . '" />';
+                                } else if ( isset($pluginsMainWP[$plugin_name]) && $pluginsMainWP[$plugin_name] === 'T' ) {
+                                    echo '<i class="fa fa-check-circle-o" aria-hidden="true"></i>';
+                                }
 							}
 							echo '</td>';
 						}
@@ -1083,6 +1091,9 @@ class MainWP_Plugins {
 	}
 
 	public static function renderAutoUpdate() {
+        if ( session_id() == '' ) {
+            session_start();
+        }
 		$cachedAUSearch = null;
 		if ( isset( $_SESSION['MainWP_PluginsActiveStatus'] ) ) {
 			$cachedAUSearch = $_SESSION['MainWP_PluginsActiveStatus'];
@@ -1201,9 +1212,6 @@ class MainWP_Plugins {
 			<div id="mainwp_plugins_main" style="display: block; margin-top: 1.5em ;">
 				<div id="mainwp_plugins_content">
 					<?php
-					if ( session_id() == '' ) {
-						session_start();
-					}
 					if ( isset( $_SESSION['MainWP_PluginsActive'] ) ) {
 						self::renderAllActiveTable( $_SESSION['MainWP_PluginsActive'] );
 						echo '<script>mainwp_active_plugins_table_reinit();</script>';

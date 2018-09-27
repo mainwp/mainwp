@@ -39,20 +39,20 @@ class MainWP_User {
 			MainWP_User::getClassName(),
 			'render',
 		) );
-		add_action( 'load-' . $_page, array(MainWP_User::getClassName(), 'on_load_page'));	
-		
+		add_action( 'load-' . $_page, array(MainWP_User::getClassName(), 'on_load_page'));
+
 		$_page = add_submenu_page( 'mainwp_tab', __( 'Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'UserBulkAdd', array(
 			MainWP_User::getClassName(),
 			'renderBulkAdd',
 		) );
-		add_action( 'load-' . $_page, array(MainWP_User::getClassName(), 'on_load_page'));	
-		
+		add_action( 'load-' . $_page, array(MainWP_User::getClassName(), 'on_load_page'));
+
 		$_page = add_submenu_page( 'mainwp_tab', __( 'Import Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Import Users', 'mainwp' ) . '</div>', 'read', 'BulkImportUsers', array(
 			MainWP_User::getClassName(),
 			'renderBulkImportUsers',
 		) );
-		add_action( 'load-' . $_page, array(MainWP_User::getClassName(), 'on_load_page'));	
-		
+		add_action( 'load-' . $_page, array(MainWP_User::getClassName(), 'on_load_page'));
+
 		/**
 		 * This hook allows you to add extra sub pages to the User page via the 'mainwp-getsubpages-user' filter.
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-user
@@ -68,16 +68,16 @@ class MainWP_User {
 
         MainWP_User::init_sub_sub_left_menu(self::$subPages);
 	}
-	
-	public static function on_load_page() {		
-		MainWP_System::enqueue_postbox_scripts();		
-		self::add_meta_boxes();
-	}	
 
-	public static function add_meta_boxes() {		
-		$i = 1;	
+	public static function on_load_page() {
+		MainWP_System::enqueue_postbox_scripts();
+		self::add_meta_boxes();
+	}
+
+	public static function add_meta_boxes() {
+		$i = 1;
 		if ( isset($_GET['page'])) {
-			if ( 'UserBulkManage' == $_GET['page'] ) {		
+			if ( 'UserBulkManage' == $_GET['page'] ) {
 				add_meta_box(
 					'mwp-serchusers-contentbox-' . $i++,
 					'<i class="fa fa-binoculars"></i> ' . __( 'Step 1: Search users', 'mainwp' ),
@@ -86,7 +86,7 @@ class MainWP_User {
 					'normal',
 					'core'
 				);
-                                
+
                                 add_meta_box(
 					'mwp-serchusers-contentbox-' . $i++,
 					'<i class="fa fa-refresh" aria-hidden="true"></i> ' . __( 'Update selected users', 'mainwp' ),
@@ -95,7 +95,7 @@ class MainWP_User {
 					'normal',
 					'core'
 				);
-                                
+
 			} else if ( 'UserBulkAdd' == $_GET['page'] ) {
 				add_meta_box(
 					'mwp-adduser-contentbox-' . $i++,
@@ -104,8 +104,8 @@ class MainWP_User {
 					'mainwp_postboxes_add_user',
 					'normal',
 					'core'
-				);				
-			} else if ( 'BulkImportUsers' == $_GET['page'] ) {				
+				);
+			} else if ( 'BulkImportUsers' == $_GET['page'] ) {
 				add_meta_box(
 					'mwp-adduser-contentbox-' . $i++,
 					'<i class="fa fa-user-plus"></i> ' . __( 'Bulk upload', 'mainwp' ),
@@ -117,7 +117,7 @@ class MainWP_User {
 			}
 		}
 	}
-	
+
 	public static function initMenuSubPages() {
 		?>
 		<div id="menu-mainwp-Users" class="mainwp-submenu-wrapper">
@@ -139,7 +139,7 @@ class MainWP_User {
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
-                             if ( MainWP_System::is_disable_menu_item(3, 'UserBulk' . $subPage['slug']) ) 
+                             if ( MainWP_System::is_disable_menu_item(3, 'UserBulk' . $subPage['slug']) )
                                 continue;
 							?>
 							<a href="<?php echo admin_url( 'admin.php?page=UserBulk' . $subPage['slug'] ); ?>"
@@ -226,7 +226,7 @@ class MainWP_User {
 			<?php
 			if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 				foreach ( self::$subPages as $subPage ) {
-                    if ( MainWP_System::is_disable_menu_item(3, 'UserBulk' . $subPage['slug']) ) 
+                    if ( MainWP_System::is_disable_menu_item(3, 'UserBulk' . $subPage['slug']) )
                             continue;
 					?>
 					<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) {
@@ -258,9 +258,9 @@ class MainWP_User {
 
 			return;
 		}
-                
+
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Users' );
-                
+
                 $selected_sites = $selected_groups = array();
                 if ($cachedSearch != null) {
                     if (is_array($cachedSearch['sites'])) {
@@ -273,13 +273,13 @@ class MainWP_User {
 		<div>
 		<div class="mainwp-padding-bottom-10"><?php MainWP_Tours::renderSearchUsersTours(); ?></div>
             <div class="mainwp-postbox">
-            	<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_search_users'); ?>				
+            	<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_search_users'); ?>
 			</div>
             <?php MainWP_UI::select_sites_box(__("Step 2: Select sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups); ?>
             <div style="clear: both;"></div>
             <input type="button" name="mainwp_show_users" id="mainwp_show_users" class="button-primary button button-hero mainwp-button-right" value="<?php _e('Show Users','mainwp'); ?>"/>
             <br/><br/>
-            <span id="mainwp_users_loading" class="mainwp-grabbing-info-note"><i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span>            
+            <span id="mainwp_users_loading" class="mainwp-grabbing-info-note"><i class="fa fa-spinner fa-pulse"></i> <em><?php _e('Grabbing information from Child Sites','mainwp') ?></em></span>
             <span id="mainwp_users_loading_info" class="mainwp-grabbing-info-note"> - <?php _e( 'Automatically refreshing to get up to date information.', 'mainwp' ); ?></span>
             <br/><br/>
         </div>
@@ -293,7 +293,7 @@ class MainWP_User {
                                         <option value="edit"><?php _e( 'Edit', 'mainwp' ); ?></option>
 					<option value="delete"><?php _e( 'Delete', 'mainwp' ); ?></option>
 				</select>
-				<input type="button" name="" id="mainwp_bulk_user_action_apply" class="button" value="<?php _e( 'Apply', 'mainwp' ); ?>"/>				
+				<input type="button" name="" id="mainwp_bulk_user_action_apply" class="button" value="<?php _e( 'Apply', 'mainwp' ); ?>"/>
 			</div>
 			<div class="alignright" id="mainwp_users_total_results">
 				<?php _e( 'Total Results:', 'mainwp' ); ?>
@@ -303,30 +303,30 @@ class MainWP_User {
 			<div id="mainwp_users_content">
                             <div id="mainwp_users_wrap_table">
 				<?php MainWP_User::renderTable(true); ?>
-                            </div>                            
-                            <br>                            
-                            <div id="mainwp-update-users-box" style="display: none">
-                                <?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_update_users'); ?>				
                             </div>
-                        
+                            <br>
+                            <div id="mainwp-update-users-box" style="display: none">
+                                <?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_update_users'); ?>
+                            </div>
+
 				<div class="clear"></div>
                             <br/><br/>
 			</div>
-		</div>        
-                <?php                
+		</div>
+                <?php
                 $current_options = get_option( 'mainwp_opts_saving_status' );
                 $col_orders = "";
                 if (is_array($current_options) && isset($current_options['users_col_order'])) {
                     $col_orders = $current_options['users_col_order'];
-                }                
-                ?>                
+                }
+                ?>
                 <script type="text/javascript"> var usersColOrder = '<?php echo $col_orders; ?>' ; </script>
 		<?php
 		if ( $cachedSearch != null ) {
                     ?>
                         <script>
-                            jQuery(document).ready(function () {                                         
-                                mainwp_table_sort_draggable_init('user', 'mainwp_users_table', usersColOrder);                                                       
+                            jQuery(document).ready(function () {
+                                mainwp_table_sort_draggable_init('user', 'mainwp_users_table', usersColOrder);
                             });
                             mainwp_users_table_reinit();
                         </script>
@@ -334,10 +334,10 @@ class MainWP_User {
 		}
 		self::renderFooter( '' );
 	}
-	
+
 	public static function renderSearchUsers() {
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Users' );		
-	?>			
+		$cachedSearch = MainWP_Cache::getCachedContext( 'Users' );
+	?>
 			<div class="inside">
 				<ul class="mainwp_checkboxes">
 					<li>
@@ -361,48 +361,48 @@ class MainWP_User {
 						<label for="mainwp_user_role_subscriber" ><?php _e( 'Subscriber', 'mainwp' ); ?></label>
 					</li>
 				</ul>
-			</div>                        
+			</div>
 			<div class="inside">
 				<div class="mainwp-padding-top-20 mainwp-padding-bottom-20">
-                                        <?php _e('Username', 'mainwp'); ?><br/>
-					<input type="text" 
-						   aria-required="true" 
+                                        <?php _e('Username or email', 'mainwp'); ?><br/>
+					<input type="text"
+						   aria-required="true"
 						   value="<?php if ( $cachedSearch != null && isset( $cachedSearch['keyword'] ) ) { echo $cachedSearch['keyword']; } ?>"
 						   id="mainwp_search_users"
-						   size="50" 
+						   size="50"
 						   name="mainwp_search_users">
 				</div>
 			</div>
 		<?php
 	}
-	
-        
+
+
         public static function renderUpdateUsers() {
             $editable_roles = array(
-                    'donotupdate' => __('Do not update', 'mainwp'), 
+                    'donotupdate' => __('Do not update', 'mainwp'),
                     'administrator' => __('Administrator', 'mainwp'),
                     'subscriber' => __('Subscriber', 'mainwp'),
                     'contributor' => __('Contributor', 'mainwp'),
                     'author' => __('Author', 'mainwp'),
                     'editor' => __('Editor', 'mainwp'),
-                    '' => __('&mdash; No role for this site &mdash;', 'mainwp')                                                                                               
-                ); 
-            
-        ?>       
+                    '' => __('&mdash; No role for this site &mdash;', 'mainwp')
+                );
+
+        ?>
         <div class="mainwp-postbox-actions-top">
-        	<?php _e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?>     
+        	<?php _e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?>
         </div>
         <div class="inside mainwp_inside" style="padding-bottom: .2em !important;">
                 <input name="user_login" type="hidden" id="user_login" value="admin">
-                <form id="update_user_profile">					
+                <form id="update_user_profile">
                     <h2><?php _e( 'Name', 'mainwp' ); ?></h2>
-                    <table class="form-table">                                            
+                    <table class="form-table">
                         <tr class="user-role-wrap"><th><label for="role"><?php _e('Role', 'mainwp') ?></label></th>
                             <td><select name="role" id="role">
                             <?php
-                            foreach($editable_roles as $role_id => $role_name) {                                                                                                        
-                                echo '<option value="' . $role_id . '" ' . ( $role_id == 'donotupdate' ? 'selected="selected"' : '' ) .  '>' . $role_name . '</option>';                                                                                                                
-                            }                                                
+                            foreach($editable_roles as $role_id => $role_name) {
+                                echo '<option value="' . $role_id . '" ' . ( $role_id == 'donotupdate' ? 'selected="selected"' : '' ) .  '>' . $role_name . '</option>';
+                            }
                             ?>
                             </select>
                             </td>
@@ -410,7 +410,7 @@ class MainWP_User {
                         <tr class="user-first-name-wrap">
                               <th><label for="first_name"><?php _e('First Name', 'mainwp') ?></label></th>
                                   <td><input type="text" name="first_name" id="first_name" value="" class="regular-text" /></td>
-                        </tr>                                                
+                        </tr>
                         <tr class="user-last-name-wrap">
                                 <th><label for="last_name"><?php _e('Last Name', 'mainwp') ?></label></th>
                                 <td><input type="text" name="last_name" id="last_name" value="" class="regular-text" /></td>
@@ -418,15 +418,15 @@ class MainWP_User {
                         <tr class="user-nickname-wrap">
                                 <th><label for="nickname"><?php _e('Nickname', 'mainwp'); ?></label></th>
                                 <td><input type="text" name="nickname" id="nickname" value="" class="regular-text" /></td>
-                        </tr>                                           
+                        </tr>
                          <tr class="user-display-name-wrap">
                                 <th><label for="display_name"><?php _e('Display name publicly as', 'mainwp'); ?></label></th>
                                 <td>
-                                    <select name="display_name" id="display_name">					
+                                    <select name="display_name" id="display_name">
                                     </select>
                                 </td>
                         </tr>
-                     </table>    
+                     </table>
 
                     <h2><?php _e( 'Contact Info', 'mainwp' ); ?></h2>
 
@@ -450,7 +450,7 @@ class MainWP_User {
                                 <td><textarea name="description" id="description" rows="5" cols="30"></textarea>
                                 <p class="description"><?php _e('Share a little biographical information to fill out your profile. This may be shown publicly.', 'mainwp'); ?></p></td>
                         </tr>
-                    </table>                                       
+                    </table>
 
                     <h2><?php _e( 'Account Management', 'mainwp' ); ?></h2>
                     <table class="form-table">
@@ -468,12 +468,12 @@ class MainWP_User {
                                     </div>
                                     <div id="pass-strength-result" style="display: block"><?php _e( 'Strength Indicator', 'mainwp' ); ?></div>
                                 </td>
-                            </tr>    
-                    <?php else : ?>	
+                            </tr>
+                    <?php else : ?>
                                 <tr id="password" class="user-pass1-wrap">
                                         <th><label for="pass1"><?php _e( 'New Password', 'mainwp' ); ?></label></th>
                                         <td>
-                                                <input class="hidden" value=" "/>                                                                        
+                                                <input class="hidden" value=" "/>
                                                 <button type="button" class="button button-secondary wp-generate-pw hide-if-no-js"><?php _e( 'Generate Password', 'mainwp' ); ?></button>
                                                 <div class="wp-pwd hide-if-js">
                                                         <span class="password-input-wrapper">
@@ -495,9 +495,9 @@ class MainWP_User {
                                         <td>
                                                 <input name="pass2" type="password" id="pass2" value="" autocomplete="off"/>
                                         </td>
-                                </tr>						
+                                </tr>
                     <?php endif; ?>
-                    </table> 
+                    </table>
                     <br>
                     <p style="text-align: center;">
                             <input type="button" value="<?php _e( 'Update', 'mainwp' ); ?>" class="button-primary"
@@ -515,7 +515,7 @@ class MainWP_User {
 
             <?php
         }
-        
+
         public static function renderTable( $cached = true, $role = '', $groups = '', $sites = '', $search = null ) {
             ?>
             <table class="wp-list-table widefat fixed pages tablesorter fix-select-all-ajax-table" id="mainwp_users_table"
@@ -532,7 +532,7 @@ class MainWP_User {
                                 </th>
                                 <th scope="col" id="username" class="drag-enable manage-column column-username sortable desc" style="">
                                         <a href="#" onclick="return false;"><span><?php _e( 'Username', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                                </th>                                
+                                </th>
                                 <th scope="col" id="email" class="drag-enable manage-column column-email sortable desc" style="">
                                         <a href="#" onclick="return false;"><span><?php _e( 'E-mail', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
                                 </th>
@@ -560,7 +560,7 @@ class MainWP_User {
                                 </th>
                                 <th scope="col" id="username" class="manage-column column-username sortable desc" style="">
                                         <a href="#" onclick="return false;"><span><?php _e( 'Username', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
-                                </th>                                
+                                </th>
                                 <th scope="col" id="email" class="manage-column column-email sortable desc" style="">
                                         <a href="#" onclick="return false;"><span><?php _e( 'E-mail', 'mainwp' ); ?></span><span class="sorting-indicator"></span></a>
                                 </th>
@@ -577,9 +577,9 @@ class MainWP_User {
                         </tfoot>
 
                         <tbody id="the-list" class="list:user">
-                        <?php 
+                        <?php
                         if ($cached)
-                            MainWP_Cache::echoBody( 'Users' ); 
+                            MainWP_Cache::echoBody( 'Users' );
                         else
                             MainWP_User::renderTableBody($role, $groups, $sites, $search);
                         ?>
@@ -600,27 +600,27 @@ class MainWP_User {
                                         <option value="1000000000">All</option>
                                 </select><span> <?php _e( 'Users per page', 'mainwp' ); ?></span>
                         </form>
-                </div>            
-            <?php            
+                </div>
+            <?php
         }
-        
+
         public static function renderTableBody( $role = '', $groups = '', $sites = '', $search = null ) {
 		MainWP_Cache::initCache( 'Users' );
 
 		$output         = new stdClass();
 		$output->errors = array();
 		$output->users  = 0;
-                
+
 		if ( get_option( 'mainwp_optimize' ) == 1 ) {
-                        
-                        $check_users_role = false;                                
+
+                        $check_users_role = false;
                         if ( !empty($role) ) {
                             $roles = explode( ',', $role );
                             if ( is_array( $roles ) ) {
                                 $check_users_role = true;
                             }
                         }
-                        
+
 			//Search in local cache
 			if ( $sites != '' ) {
                                 foreach ( $sites as $k => $v ) {
@@ -628,36 +628,36 @@ class MainWP_User {
                                             $search_user_role = array();
                                             $website  = MainWP_DB::Instance()->getWebsiteById( $v );
                                             $allUsers = json_decode( $website->users, true );
-                                            
+
                                             if ($check_users_role) {
                                                 for ( $i = 0; $i < count( $allUsers ); $i ++ ) {
                                                     $user = $allUsers[ $i ];
                                                     foreach ( $roles as $_role ) {
                                                         if ( stristr( $user['role'], $_role ) ) {
                                                                 if (!in_array($user['id'], $search_user_role))
-                                                                    $search_user_role[] = $user['id'];											
+                                                                    $search_user_role[] = $user['id'];
                                                                 break;
                                                         }
                                                     }
                                                 }
                                             }
-                                            
+
                                             for ( $i = 0; $i < count( $allUsers ); $i ++ ) {
                                                 $user = $allUsers[ $i ];
                                                 if ( $search != '' && ! stristr( $user['login'], trim( $search ) ) && ! stristr( $user['display_name'], trim( $search ) ) && ! stristr( $user['email'], trim( $search ) ) ) {
                                                     continue;
                                                 }
-                                                
+
                                                 if ($check_users_role) {
                                                     if (!in_array($user['id'], $search_user_role))
                                                         continue;
                                                 }
 
                                                 $tmpUsers = array( $user );
-                                                $output->users += self::usersSearchHandlerRenderer( $tmpUsers, $website );                                                        
+                                                $output->users += self::usersSearchHandlerRenderer( $tmpUsers, $website );
                                             }
                                     }
-                                }                                                            
+                                }
 			}
 			if ( $groups != '' ) {
 				foreach ( $groups as $k => $v ) {
@@ -674,7 +674,7 @@ class MainWP_User {
                                                                 foreach ( $roles as $_role ) {
                                                                     if ( stristr( $user['role'], $_role ) ) {
                                                                             if (!in_array($user['id'], $search_user_role))
-                                                                                $search_user_role[] = $user['id'];											
+                                                                                $search_user_role[] = $user['id'];
                                                                             break;
                                                                     }
                                                                 }
@@ -692,7 +692,7 @@ class MainWP_User {
                                                             }
 
                                                             $tmpUsers = array( $user );
-                                                            $output->users += self::usersSearchHandlerRenderer( $tmpUsers, $website );                                                        
+                                                            $output->users += self::usersSearchHandlerRenderer( $tmpUsers, $website );
                                                         }
 						}
 						@MainWP_DB::free_result( $websites );
@@ -715,6 +715,8 @@ class MainWP_User {
 							'nossl',
 							'privkey',
 							'nosslkey',
+                            'http_user',
+                            'http_pass'
 						) );
 					}
 				}
@@ -735,6 +737,8 @@ class MainWP_User {
 								'nossl',
 								'privkey',
 								'nosslkey',
+                                'http_user',
+                                'http_pass'
 							) );
 						}
 						@MainWP_DB::free_result( $websites );
@@ -751,7 +755,7 @@ class MainWP_User {
                         MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'search_users', $post_data, array(
                                 MainWP_User::getClassName(),
                                 'UsersSearch_handler',
-                        ), $output );                        
+                        ), $output );
 		}
 
 		MainWP_Cache::addContext( 'Users', array(
@@ -834,11 +838,11 @@ class MainWP_User {
 					<div class="row-actions-working">
 						<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait', 'mainwp' ); ?>
 					</div>
-                                
-                                </td>                                
+
+                                </td>
 				<td class="username column-username">
 					<strong><abbr title="<?php echo $user['login']; ?>"><?php echo $user['login']; ?></abbr></strong>
-				</td>				
+				</td>
 				<td class="email column-email"><a
 						href="mailto:<?php echo $user['email']; ?>"><?php echo $user['email']; ?></a></td>
 				<td class="role column-role"><?php echo self::getRole( $user['role'] ); ?></td>
@@ -865,7 +869,7 @@ class MainWP_User {
 
 	public static function UsersSearch_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
-			$users = unserialize( base64_decode( $results[1] ) );         
+			$users = unserialize( base64_decode( $results[1] ) );
                         unset( $results );
 			$output->users += self::usersSearchHandlerRenderer( $users, $website );
 			unset( $users );
@@ -883,12 +887,12 @@ class MainWP_User {
 		$information = MainWP_User::action( 'edit' );
 		die( json_encode( $information ) );
 	}
-        
+
         public static function updateUser() {
 		MainWP_User::action( 'update_user' );
 		die( json_encode( array( 'result' => 'User has been updated' ) ) );
 	}
-        
+
 	public static function updatePassword() {
 		MainWP_User::action( 'update_password' );
 		die( json_encode( array( 'result' => 'User password has been updated' ) ) );
@@ -898,7 +902,7 @@ class MainWP_User {
 		$userId       = $_POST['userId'];
 		$userName     = $_POST['userName'];
 		$websiteIdEnc = $_POST['websiteId'];
-		$pass         = $_POST['update_password'];
+		$pass         = stripslashes(utf8_decode( urldecode($_POST['update_password']) )); // to fix specical character issue
 
 		if ( ! MainWP_Utility::ctype_digit( $userId ) ) {
 			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
@@ -918,14 +922,17 @@ class MainWP_User {
 		}
                 if ($pAction == 'update_user') {
                     $user_data = $_POST['user_data'];
-                    parse_str( $user_data, $extra);  
-                    if ( $website->adminname == $userName ) {                       
-			//This user is used for our secure link, you can not change the role.                        
-                        if (is_array($extra) && isset($extra['role'])) {                                
+                    parse_str( $user_data, $extra);
+                    if ( $website->adminname == $userName ) {
+                        //This user is used for our secure link, you can not change the role.
+                        if (is_array($extra) && isset($extra['role'])) {
                                 unset($extra['role']);
                         }
                     }
-                }   
+                    if (isset($extra['pass1'])) {
+                        $extra['pass1'] = $extra['pass2'] = $pass;
+                    }
+                }
                 $optimize = ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0;
 		try {
 			$information = MainWP_Utility::fetchUrlAuthed( $website, 'user_action', array(
@@ -933,16 +940,16 @@ class MainWP_User {
 				'id'        => $userId,
 				'extra'     => $extra,
 				'user_pass' => $pass,
-                                'optimize'  => $optimize,
+                'optimize'  => $optimize,
 			) );
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage($e) ) ) );
 		}
-                
+
                 if (is_array($information) && isset($information['error'])) {
                         die( json_encode( array( 'error' => $information['error'] ) ) );
                 }
-                
+
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
 			die( json_encode( array( 'error' => 'Unexpected error.' ) ) );
 		} else if ('update_user' === $pAction) {
@@ -951,20 +958,20 @@ class MainWP_User {
                         MainWP_DB::Instance()->updateWebsiteValues( $websiteId, $websiteValues );
                     }
                 }
-                
+
                 if ('edit' === $pAction) {
                     if ( $website->adminname == $userName ) {
-			//This user is used for our secure link, you can not change the role.                        
-                        if (is_array($information) && isset($information['user_data'])) {                                
+			//This user is used for our secure link, you can not change the role.
+                        if (is_array($information) && isset($information['user_data'])) {
                                 $information['is_secure_admin'] = 1;
                         }
-                    }                
+                    }
                 }
-                    
+
                 return $information;
 	}
 
-	public static function renderBulkAdd() {		
+	public static function renderBulkAdd() {
 		?>
 		<?php self::renderHeader( 'Add' ); ?>
 		<?php if ( isset( $errors ) && count( $errors ) > 0 ) { ?>
@@ -982,7 +989,7 @@ class MainWP_User {
 		<div class="mainwp-padding-bottom-10"><?php MainWP_Tours::renderCreateNewUserTours(); ?></div>
 			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate">
 				<div class="mainwp_config_box_left" style="width: calc(100% - 290px);">
-					<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_add_user'); ?>				
+					<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_add_user'); ?>
 				</div>
 				<div class="mainwp_config_box_right">
 					<?php MainWP_UI::select_sites_box( __( 'Step 2: Select sites', 'mainwp' ) ); ?>
@@ -995,10 +1002,10 @@ class MainWP_User {
 		<?php
 		self::renderFooter( 'Add' );
 	}
-	
+
 	public static function renderBulkImportUsers() {
-		if ( isset($_FILES['import_user_file_bulkupload']) && $_FILES['import_user_file_bulkupload']['error'] == UPLOAD_ERR_OK ) {			
-			self::renderBulkUpload();			
+		if ( isset($_FILES['import_user_file_bulkupload']) && $_FILES['import_user_file_bulkupload']['error'] == UPLOAD_ERR_OK ) {
+			self::renderBulkUpload();
 			return;
 		}
 		?>
@@ -1010,11 +1017,11 @@ class MainWP_User {
 				<?php } ?>
 			</div>
 		<?php } ?>
-		<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>		
+		<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
 		<div id="MainWP_Bulk_AddUser">
 		<div class="mainwp-padding-bottom-10"><?php MainWP_Tours::renderUsersImportTour(); ?></div>
-			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">								
-				<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_bulk_import_users'); ?>									
+			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">
+				<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_bulk_import_users'); ?>
 				<input type="button" name="createuser" id="bulk_import_createuser" class="button-primary button button-hero"
 					value="<?php _e( 'Import Users', 'mainwp' ); ?> "/>
 			</form>
@@ -1022,7 +1029,7 @@ class MainWP_User {
 		<?php
 		self::renderFooter( 'Import' );
 	}
-	
+
 	public static function renderAddUser() {
 		?>
 		<div class="inside">
@@ -1194,7 +1201,7 @@ class MainWP_User {
 		</div>
 		<?php
 	}
-	
+
 	public static function renderImportUsers() {
 		?>
 		<div class="mainwp-postbox-actions-top">
@@ -1205,16 +1212,16 @@ class MainWP_User {
 				<tr>
 					<th scope="row"></th>
 					<td>
-						<input type="file" 
+						<input type="file"
 							   name="import_user_file_bulkupload"
-							   id="import_user_file_bulkupload" 
+							   id="import_user_file_bulkupload"
 							   accept="text/comma-separated-values"
 							   class="regular-text"/>
 							<p>
-								<input type="checkbox" 
-									   name="import_user_chk_header_first" 
+								<input type="checkbox"
+									   name="import_user_chk_header_first"
 									   checked="checked"
-									   id="import_user_chk_header_first" 
+									   id="import_user_chk_header_first"
 									   value="1"/>
 								<span class="description"><?php _e( 'CSV file contains a header.', 'mainwp' ); ?></span>
 							</p>
@@ -1228,7 +1235,7 @@ class MainWP_User {
 		</div>
 		<?php
 	}
-	
+
 	public static function doPost() {
 		$errors      = array();
 		$errorFields = array();
@@ -1292,6 +1299,8 @@ class MainWP_User {
 							'nossl',
 							'privkey',
 							'nosslkey',
+                            'http_user',
+                            'http_pass'
 						) );
 					}
 				}
@@ -1308,6 +1317,8 @@ class MainWP_User {
 								'nossl',
 								'privkey',
 								'nosslkey',
+                                'http_user',
+                                'http_pass'
 							) );
 						}
 						@MainWP_DB::free_result( $websites );
@@ -1508,6 +1519,8 @@ class MainWP_User {
 							'nossl',
 							'privkey',
 							'nosslkey',
+                            'http_user',
+                            'http_pass'
 						) );
 					} else {
 						$not_valid[] = __( "Error - The website doesn't exist in the Network.", 'mainwp' ) . " " . $url;;
@@ -1529,6 +1542,8 @@ class MainWP_User {
 								'nossl',
 								'privkey',
 								'nosslkey',
+                                'http_user',
+                                'http_pass'
 							) );
 						}
 						@MainWP_DB::free_result( $websites );

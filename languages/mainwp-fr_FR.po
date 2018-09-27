@@ -2209,7 +2209,7 @@ msgstr "Nom serveur"
 
 #: page/page-mainwp-server-information.php:194
 #@ mainwp
-msgid "Server Sofware"
+msgid "Server Software"
 msgstr "Logiciel du serveur"
 
 #: page/page-mainwp-server-information.php:199

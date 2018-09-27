@@ -79,13 +79,13 @@ class MainWP_Extensions {
 
 	public static function initMenu() {
         $disable_extensions_menu = MainWP_System::is_disable_menu_item(1, 'Extensions');
-        
+
         if( !$disable_extensions_menu && !MainWP_System::is_disable_menu_item(2, 'Extensions')) {
             // create Extensions menu item on left WP menu
-            $page = MainWP_Extensions_View::initMenu();        
+            $page = MainWP_Extensions_View::initMenu();
             add_action( 'load-' . $page, array(MainWP_Extensions::getClassName(), 'on_load_page'));
         }
-        
+
 		self::$extensions = array();
 		$all_extensions   = array();
 
@@ -136,10 +136,10 @@ class MainWP_Extensions {
 				self::$extensions[] = $extension;
 				if ( mainwp_current_user_can( 'extension', dirname( $slug ) ) ) {
 					if ( isset( $extension['callback'] ) ) {
-                        
+
                     if( $disable_extensions_menu || MainWP_System::is_disable_menu_item(2, $extension['page']) )
-                            continue;  
-                        
+                            continue;
+
                         $menu_name = str_replace( array(
 							'Extension',
 							'MainWP',
@@ -161,7 +161,7 @@ class MainWP_Extensions {
 		MainWP_Utility::update_option( 'mainwp_extensions', self::$extensions );
 		MainWP_Utility::update_option( 'mainwp_manager_extensions', $all_extensions );
 		self::$extensionsLoaded = true;
-        
+
         if (!$disable_extensions_menu) {
             MainWP_Extensions::init_sub_sub_left_menu($extsPages);
         }
@@ -293,7 +293,7 @@ class MainWP_Extensions {
 				if ( isset( $extension['direct_page'] ) ) {
                     if ( MainWP_System::is_disable_menu_item(2, $extension['direct_page']) )
                             continue;
-                    
+
 					$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['direct_page'] ) . '"
 							   class="mainwp-submenu">' . str_replace( array(
 							'Extension',
@@ -443,6 +443,10 @@ class MainWP_Extensions {
 	}
 
 	public static function saveExtensionsApiLogin() {
+        if ( session_id() == '' ) {
+            session_start();
+        }
+
 		MainWP_System::Instance()->posthandler->secure_request('mainwp_extension_saveextensionapilogin');
 
 		$api_login_history = isset( $_SESSION['api_login_history'] ) ? $_SESSION['api_login_history'] : array();
@@ -949,7 +953,7 @@ class MainWP_Extensions {
 		}
 
 		$dbwebsites = array();
-		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version' );
+		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass' );
 
 		if ( is_array( $options ) ) {
 			foreach ( $options as $option_name => $value ) {
@@ -1088,32 +1092,39 @@ class MainWP_Extensions {
 	public static function hookManagerGetExtensions() {
 		return get_option( 'mainwp_manager_extensions' );
 	}
-    
+
     public static function hookCloneSite( $pluginFile, $key, $websiteid, $cloneID , $clone_url, $force_update = false) {
 		if ( ! self::hookVerify( $pluginFile, $key ) ) {
 			return false;
 		}
-		
-		if (!empty($websiteid) && !empty($cloneID) ) {  
-            
+
+		if (!empty($websiteid) && !empty($cloneID) ) {  // $cloneID: staging folder
+
             $sql = MainWP_DB::Instance()->getSQLWebsiteById( $websiteid );
     		$websites = MainWP_DB::Instance()->query( $sql );
         	$website       = @MainWP_DB::fetch_object( $websites );
-            
+
             if (empty($website))
                 return array('error' => __('Not found website', 'mainwp'));
-            
+
             $ret = array();
-            
+
             if ( substr( $clone_url, - 1 ) != '/' ) {
                 $clone_url .= '/';
-            }        
-            
-            $clone_sites = MainWP_DB::Instance()->getWebsitesByUrl( $clone_url );            
-            if ($clone_sites) {    
+            }
+
+            $tmp1 = MainWP_Utility::removeHttpWWWPrefix($website->url);
+            $tmp2 = MainWP_Utility::removeHttpWWWPrefix($clone_url);
+
+            if ( strpos($tmp2, $tmp1) === false)
+                    return false; // invalid clone url
+
+            $clone_sites = MainWP_DB::Instance()->getWebsitesByUrl( $clone_url );
+            // found the staging site then update
+            if ($clone_sites) {
                 $clone_site = current($clone_sites);
                 if($clone_site && $clone_site->is_staging) {
-                    if ($force_update) { // forced update clone site when clone site finished
+                    if ($force_update) { // forced update clone site when clone site finished, to update and prevent disconnect the staging site
                         MainWP_DB::Instance()->updateWebsiteValues( $clone_site->id, array(
                             'adminname' => $website->adminname,
                             'pubkey' => $website->pubkey,
@@ -1123,95 +1134,103 @@ class MainWP_Extensions {
                             'verify_certificate' =>  $website->verify_certificate,
                             'uniqueId' =>  ($website->uniqueId !== null ? $website->uniqueId : ''),
                             'http_user' =>  $website->http_user,
-                            'http_pass' =>  $website->http_pass,                    
-                            'ssl_version' =>  $website->ssl_version                        
+                            'http_pass' =>  $website->http_pass,
+                            'ssl_version' =>  $website->ssl_version
                         ));
-                    }                
+                    }
                     $ret['siteid'] = $clone_site->id;
-                    $ret['response'] = __('Site updated.', 'mainwp');                
+                    $ret['response'] = __('Site updated.', 'mainwp');
                 }
                 return $ret;
             }
             $clone_name = $website->name . " - " . $cloneID;
-            global $current_user; 
-             
-            $id = MainWP_DB::Instance()->addWebsite($current_user->ID, $clone_name, $clone_url, $website->adminname, $website->pubkey , $website->privkey, $website->nossl, $website->nosslkey, array(), array(), $website->verify_certificate, ($website->uniqueId !== null ? $website->uniqueId : '') , $website->http_user, $website->http_pass, $website->ssl_version, $website->wpe, $isStaging = 1);            
-            do_action('mainwp_added_new_site', $id); // must before getWebsiteById to update team control permisions            
-            
+            global $current_user;
+
+            // staging site not found, so add new
+            $id = MainWP_DB::Instance()->addWebsite($current_user->ID, $clone_name, $clone_url, $website->adminname, $website->pubkey , $website->privkey, $website->nossl, $website->nosslkey, array(), array(), $website->verify_certificate, ($website->uniqueId !== null ? $website->uniqueId : '') , $website->http_user, $website->http_pass, $website->ssl_version, $website->wpe, $isStaging = 1);
+            do_action('mainwp_added_new_site', $id); // must before getWebsiteById to update team control permisions
+
             // add the site to staging group
-            if ($id) {                 
-                if ( $group_id = get_option('mainwp_stagingsites_group_id')) { 
+            if ($id) {
+                if ( $group_id = get_option('mainwp_stagingsites_group_id')) {
                     $website = MainWP_DB::Instance()->getWebsiteById( $id );
                     if ( MainWP_Utility::can_edit_website( $website ) ) {
                         MainWP_Sync::syncSite( $website, false, false );
                         $group = MainWP_DB::Instance()->getGroupById( $group_id );
-                        if ( MainWP_Utility::can_edit_group( $group ) ) {                    
-                            MainWP_DB::Instance()->updateGroupSite( $group->id, $id );                    
+                        if ( MainWP_Utility::can_edit_group( $group ) ) {
+                            MainWP_DB::Instance()->updateGroupSite( $group->id, $id );
                         }
-                    }                
-                } 
+                    }
+                }
                 $ret['response'] =  __( 'Site successfully added.', 'mainwp');
-                $ret['siteid'] = $id;    
+                $ret['siteid'] = $id;
             }
             return $ret;
-		}   
-        
-        return false;			
+		}
+
+        return false;
 	}
-    
-    public static function hookDeleteCloneSite( $pluginFile, $key, $websiteid, $clone_url ) {
+
+    // $clone_url: to support delelte clone site by site url
+    // $clone_site_id: to support delelte clone site by site id
+    public static function hookDeleteCloneSite( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) {
 		if ( ! self::hookVerify( $pluginFile, $key ) ) {
 			return false;
 		}
-		        
-		if (!empty($websiteid) && !empty($clone_url) ) {  
-            
-            $sql = MainWP_DB::Instance()->getSQLWebsiteById( $websiteid );
-    		$websites = MainWP_DB::Instance()->query( $sql );
-        	$website       = @MainWP_DB::fetch_object( $websites );
-            
-            if (empty($website))
-                return array('error' => __('Not found website', 'mainwp'));
-            
+
+        if ((empty( $clone_url ) && empty($clone_site_id) ))
+            return false;
+
+        $clone_site = null;
+		if ( !empty($clone_url) ) {
+            // ok, delete staging site
             if ( substr( $clone_url, - 1 ) != '/' ) {
                 $clone_url .= '/';
-            }        
-            $clone_sites = MainWP_DB::Instance()->getWebsitesByUrl( $clone_url );            
-            if (empty($clone_sites)) { 
-                 return array('error' => __('Not found the clone website', 'mainwp'));
-            } else {
-                $clone_site = current($clone_sites);                 
-                if ( $clone_site ) {
-                    if ($clone_site->is_staging == 0)
-                        return false;
-                    
-                    // delete icon file
-                    $favi     = MainWP_DB::Instance()->getWebsiteOption( $clone_site, 'favi_icon', '' );
-                    if ( !empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $clone_site->id . '-' ) ) ) {
-                        $dirs      = MainWP_Utility::getIconsDir();
-                        if ( file_exists( $dirs[0] . $favi ) ) {
-                            unlink( $dirs[0] . $favi );
-                        }
-                    }
+            }
+            $clone_sites = MainWP_DB::Instance()->getWebsitesByUrl( $clone_url );
+            if (!empty($clone_sites)) {
+                $clone_site = current($clone_sites);
 
-                    //Remove from DB
-                    MainWP_DB::Instance()->removeWebsite( $clone_site->id );
-                    do_action( 'mainwp_delete_site', $clone_site );
-                    return array( 'result' => 'SUCCESS'); 
+            }
+		} else if ( !empty($clone_site_id) ) {
+            $sql = MainWP_DB::Instance()->getSQLWebsiteById( $clone_site_id );
+            $websites = MainWP_DB::Instance()->query( $sql );
+            $clone_site       = @MainWP_DB::fetch_object( $websites );
+        }
+
+        if ( empty($clone_site )) {
+            return array('error' => __('Not found the clone website', 'mainwp'));
+        }
+
+        if ( $clone_site ) {
+            if ($clone_site->is_staging == 0) // if ít is not clone then return
+                return false;
+
+            // delete icon file
+            $favi     = MainWP_DB::Instance()->getWebsiteOption( $clone_site, 'favi_icon', '' );
+            if ( !empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $clone_site->id . '-' ) ) ) {
+                $dirs      = MainWP_Utility::getIconsDir();
+                if ( file_exists( $dirs[0] . $favi ) ) {
+                    unlink( $dirs[0] . $favi );
                 }
             }
-		} 
-        
-        return false;			
+
+            //Remove from DB
+            MainWP_DB::Instance()->removeWebsite( $clone_site->id );
+            do_action( 'mainwp_delete_site', $clone_site );
+            return array( 'result' => 'SUCCESS');
+        }
+
+        return false;
 	}
-    
-    
+
+
     public static function hookAddGroup($pluginFile, $key, $newName) {
-        
+
         if ( ! self::hookVerify( $pluginFile, $key ) ) {
 			return false;
 		}
-		
+
 		global $current_user;
 		if ( !empty( $newName ) ) {
 			$groupId = MainWP_DB::Instance()->addGroup( $current_user->ID, MainWP_Manage_Groups::checkGroupName( $newName ) );
@@ -1220,5 +1239,5 @@ class MainWP_Extensions {
 		}
 		return false;
 	}
-    
+
 }

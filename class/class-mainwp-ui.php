@@ -20,13 +20,13 @@ class MainWP_UI {
 	}
 
 
-	public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false, $postId = 0 ) {        
+	public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false, $postId = 0 ) {
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 		$groups   = MainWP_DB::Instance()->getNotEmptyGroups( null, $enableOfflineSites );
 
-        // support staging extension        
-        $staging_enabled = apply_filters('mainwp-extension-available-check', 'mainwp-staging-extension');
-        
+        // support staging extension
+        $staging_enabled = apply_filters('mainwp-extension-available-check', 'mainwp-staging-extension') || apply_filters('mainwp-extension-available-check', 'mainwp-timecapsule-extension');
+
         $edit_site_id = null;
         if ( $postId ) {
             $edit_site_id = get_post_meta( $postId, '_mainwp_edit_post_site_id', true );
@@ -42,8 +42,8 @@ class MainWP_UI {
         }
         ?>
 		<div class="mainwp-postbox-actions-top">
-            <input type="hidden" name="select_by" id="select_by" value="<?php echo esc_attr( count( $selected_groups ) > 0 ? 'group' : 'site' ); ?>"/>            
-            <?php if ( $staging_enabled ) :  ?>              
+            <input type="hidden" name="select_by" id="select_by" value="<?php echo esc_attr( count( $selected_groups ) > 0 ? 'group' : 'site' ); ?>"/>
+            <?php if ( $staging_enabled ) :  ?>
                 <div id="mainwp_ss_live_site_link" style="display: none;">
                     <a href="#" onClick="return mainwp_ss_staging_select_by(this, 'live')"><?php esc_html_e( 'Live sites', 'mainwp' ); ?></a>
                 </div>
@@ -54,9 +54,9 @@ class MainWP_UI {
                 </div>
                 <div id="mainwp_ss_staging_site_text" style="display: none;">
                     <?php esc_html_e( 'Staging sites', 'mainwp' ); ?>
-                </div>    
+                </div>
                 <hr>
-            <?php endif; ?>			
+            <?php endif; ?>
 			<?php if ( $show_select_all ) :  ?>
 				<div class="mainwp-right"><?php esc_html_e( 'Select: ', 'mainwp' ); ?>
 					<a href="#" onClick="return mainwp_ss_select(this, true)"><?php esc_html_e( 'All', 'mainwp' ); ?></a> |
@@ -112,7 +112,7 @@ class MainWP_UI {
 			?>
 		</div>
 
-        <?php if ( $staging_enabled ) :   
+        <?php if ( $staging_enabled ) :
             $user_favicon = get_option( 'mainwp_use_favicon', 1 );
             $websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ) , $is_staging = 'yes') );
         ?>
@@ -364,29 +364,29 @@ class MainWP_UI {
 		</div>
 		<?php
 	}
-        
+
     public static function renderBeginReadyPopup() {
 		?>
-        <div class="mainwp-popup-overlay-ready" tabindex="0" role="dialog" style="text-align: center">                   
+        <div class="mainwp-popup-overlay-ready" tabindex="0" role="dialog" style="text-align: center">
            <div class="mainwp-popup-backdrop"></div>
            <div class="mainwp-popup-wrap wp-clearfix" role="document">
                <div class="mainwp-popup-header">
                    <h2 class="title" ></h2>
                    <button type="button" class="close dashicons dashicons-no"><span class="screen-reader-text"><?php _e( 'Close dialog' ); ?></span></button>
-               </div>          
-               <div class="mainwp-popup-content" style="text-align: left"> 
+               </div>
+               <div class="mainwp-popup-content" style="text-align: left">
 		<?php
 	}
-    
+
     public static function renderEndReadyPopup($actions = '', $extra_class = '') {
-		?>		    
-                    </div>    
+		?>
+                    </div>
                 <div class="mainwp-popup-actions <?php echo $extra_class; ?>">
                     <?php echo $actions; ?>
                     <button type="button" class="mainwp-popup-close button"><?php _e( 'Close' ); ?></button>
                 </div>
-            </div>        
-        </div>    
+            </div>
+        </div>
 		<?php
 	}
 

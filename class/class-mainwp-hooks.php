@@ -53,8 +53,9 @@ class MainWP_Hooks {
 		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
 		add_action( 'mainwp_do_meta_boxes', array( &$this, 'mainwp_do_meta_boxes' ), 10, 1 );
 		add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
-        add_filter( 'mainwp_clonesite', array( &$this, 'filter_clone_site' ), 10, 6 );
-        add_filter( 'mainwp_deleteclonesite', array( &$this, 'filter_delete_clone_site' ), 10, 4 );
+        add_filter( 'mainwp_clonesite', array( &$this, 'filter_clone_site' ), 10, 6 );        
+        add_filter( 'mainwp_deleteclonesite', array( &$this, '_deprecated_filter_delete_clone_site' ), 10, 5 ); //deprecated: remove later
+        add_filter( 'mainwp_delete_clonesite', array( &$this, 'filter_delete_clone_site' ), 10, 4 );
 		add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
 		add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hookAddSubLeftMenu' ), 10, 6 );
 		add_filter( 'mainwp_getwebsiteoptions', array( &$this, 'getWebsiteOptions' ), 10, 3 );
@@ -126,8 +127,12 @@ class MainWP_Hooks {
 		return MainWP_Extensions::hookCloneSite($pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update);
 	}  
     
-    public function filter_delete_clone_site( $pluginFile, $key, $websiteid, $clone_url ) {
-		return MainWP_Extensions::hookDeleteCloneSite($pluginFile, $key, $websiteid, $clone_url);
+    public function filter_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false) {
+		return MainWP_Extensions::hookDeleteCloneSite($pluginFile, $key, $clone_url, $clone_site_id );
+	} 
+    
+    public function _deprecated_filter_delete_clone_site( $pluginFile, $key, $websiteid, $clone_url = '', $clone_site_id = false) {
+		return MainWP_Extensions::hookDeleteCloneSite($pluginFile, $key, $clone_url, $clone_site_id );
 	}  
     
 	/**
@@ -159,6 +164,10 @@ class MainWP_Hooks {
 			return 0;
 		}
 
+        if ( isset( $params['is_staging'] ) ) {
+			unset($params['is_staging']); // do not allow change this value
+		}
+        
 		$website = MainWP_DB::Instance()->getWebsiteById( $params['websiteid'] );
 		if ( $website == null ) {
 			return 0;
@@ -299,7 +308,7 @@ class MainWP_Hooks {
     public function hookGetAllPosts( $sites, $post_data = array()) {
         
 		$dbwebsites = array();
-		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version' );
+		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass' );
 
 		if ( $sites != '' ) {
 			foreach ( $sites as $k => $v ) {

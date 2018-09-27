@@ -358,13 +358,13 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 
 			$action_links = array();
 
-			if ( current_user_can( 'install_plugins' ) || current_user_can( 'update_plugins' ) ) {
+			//if ( current_user_can( 'install_plugins' ) || current_user_can( 'update_plugins' ) ) {
 							/* translators: 1: Plugin name and version. */							
 //							$action_links[] = '<a class="install-now button" href="#" id="install-plugin-' . $plugin['slug'] . '"
 //                               title="Install ' . $plugin['name'] . '  ' . $plugin['version'] . '">' . __('Install Now','mainwp') . '</a>';
 							$action_links[] = '<label style="font-size: 16px;"><input name="install-plugin" type="radio" id="install-plugin-' . $plugin['slug'] . '"
                                title="Install ' . $plugin['name'] . '  ' . $plugin['version'] . '">' . __('Install this Plugin','mainwp') . '</label>';			
-			}
+			//}
 
 			$details_link   = self_admin_url( 'plugin-install.php?tab=plugin-information&amp;plugin=' . $plugin['slug'] .
 								'&amp;TB_iframe=true&amp;width=600&amp;height=550' );

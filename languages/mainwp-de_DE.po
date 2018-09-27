@@ -1339,7 +1339,7 @@ msgstr "Plugins"
 #: page/MainWPPlugins.page.php:1194
 #@ mainwp
 msgid "Manage Plugins"
-msgstr "Verwalte Plaugins"
+msgstr "Verwalte Plugins"
 
 #: page/MainWPPlugins.page.php:48
 #: page/MainWPPlugins.page.php:78
@@ -1943,7 +1943,7 @@ msgstr "Server Name"
 
 #: page/MainWPServerInformation.page.php:111
 #@ mainwp
-msgid "Server Sofware"
+msgid "Server Software"
 msgstr "Server Software"
 
 #: page/MainWPServerInformation.page.php:112

@@ -68,7 +68,7 @@ class MainWP_System {
 			} else if ( version_compare( $currentVersion, $this->current_version, '<' ) ) {
 				update_option( 'mainwp_reset_user_tips', array() );
 				MainWP_Utility::update_option( 'mainwp_reset_user_cookies', array() );
-				MainWP_Utility::update_option( 'mainwp_getting_started', 'whatnew' );
+				//MainWP_Utility::update_option( 'mainwp_getting_started', 'whatnew' );
 
 			} else {
 				delete_option('mainwp_getting_started');
@@ -506,15 +506,15 @@ class MainWP_System {
 			}
 		}
 
-		$notice = sprintf(__("You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %sExtensions%s page and enter your API.", 'mainwp'), '<a href="admin.php?page=Extensions">', '</a>');
+		$notice_html = sprintf(__("You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %sExtensions%s page and enter your API.", 'mainwp'), '<a href="admin.php?page=Extensions">', '</a>');
 		?>
 		<style type="text/css">
-			tr[data-plugin="<?php echo $plugin_slug; ?>"] {
+			tr[data-plugin="<?php echo esc_attr($plugin_slug); ?>"] {
 				box-shadow: none;
 			}
 		</style>
-		<tr class="plugin-update-tr active" slug="<?php echo $slug; ?>"><td colspan="3" class="plugin-update colspanchange"><div class="update-message api-deactivate">
-					<?php echo $notice; ?>
+		<tr class="plugin-update-tr active" slug="<?php echo esc_attr( $slug ); ?>"><td colspan="3" class="plugin-update colspanchange"><div class="update-message api-deactivate">
+					<?php echo $notice_html; ?>
 					<span class="mainwp-right"><a href="#" class="mainwp-activate-notice-dismiss" ><i class="fa fa-times-circle"></i> <?php _e( 'Dismiss','mainwp' ); ?></a></span>
 				</div></td></tr>
 		<?php
@@ -2020,6 +2020,10 @@ class MainWP_System {
 	}
 
 	public static function isMainWP_Pages() {
+        global $current_screen;
+        if ( empty( $current_screen ) )
+            set_current_screen();
+
 		$screen = get_current_screen();
 		if ( $screen && strpos( $screen->base, 'mainwp_' ) !== false ) {
 			return true;
@@ -2207,7 +2211,6 @@ class MainWP_System {
 			delete_option( 'mainwp_activated' );
 			wp_cache_delete( 'mainwp_activated' , 'options' );
 			wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
-
 			return;
 		}
 
@@ -2325,8 +2328,8 @@ class MainWP_System {
 					wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=started' ) );
 					exit;
 				} else if ( 'whatnew' == $started ) {
-					wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=whatnew' ) );
-					exit;
+//					wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=whatnew' ) );
+//					exit;
 				}
 			}
 		}
@@ -2337,12 +2340,19 @@ class MainWP_System {
 			$hide_menus = array();
 		}
 
+         // if open mainwp pages then don't redirect
+        if ( self::isMainWP_Pages() ) {
+            return;
+        }
+
 		$hide_wp_dashboard = in_array( 'dashboard', $hide_menus );
+        // it hide WP dashboard and open WP dashboard page or
+        // if open /wp-admin/ path then check to redirect to mainwp overview
 		if ( ($hide_wp_dashboard && strpos( $_SERVER['REQUEST_URI'], 'index.php' ) ) || (strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) == $_pos ) ) {
-			if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) { // to fix
-				wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
-				die();
-			}
+            if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) { // to fix
+                wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+                die();
+            }
 		}
 	}
 
@@ -2980,7 +2990,7 @@ class MainWP_System {
 		<div class="metabox-holder columns-1">
 			<?php do_meta_boxes($_postpage, $screen, null ); ?>
 		</div>
-		<script type="text/javascript"> var mainwp_postbox_page = '<?php echo $_postpage; ?>';</script>
+		<script type="text/javascript"> var mainwp_postbox_page = '<?php echo esc_html( $_postpage ); ?>';</script>
 		<?php
 		if ($force_show) {
 			remove_filter('hidden_meta_boxes', array(self::$instance, 'force_show_meta_box'));

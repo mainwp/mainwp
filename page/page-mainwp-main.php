@@ -53,10 +53,6 @@ class MainWP_Main {
 			add_action( 'load-' . $this->dashBoard, array( &$this, 'on_load_page' ) );
             MainWP_Main::init_left_menu();
 		}
-		//        else
-		//        {
-		//            $this->dashBoard = add_menu_page('MainWP', 'MainWP', 'read', 'mainwp_tab', array($this, 'require_registration'), plugins_url('images/mainwpicon.png', dirname(__FILE__)), '2.0001');
-		//        }
 	}
 
     static function init_left_menu( $subPages = array() ) {
@@ -89,7 +85,7 @@ class MainWP_Main {
 		wp_enqueue_script( 'wp-lists' );
 		wp_enqueue_script( 'postbox' );
 		wp_enqueue_script( 'dashboard' );
-		wp_enqueue_script( 'widgets' );		
+		wp_enqueue_script( 'widgets' );
 
 		self::add_meta_boxes( $this->dashBoard );
 	}
@@ -136,7 +132,7 @@ class MainWP_Main {
 		add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Extensions_Widget::getName(), array(
 			MainWP_Extensions_Widget::getClassName(),
 			'render',
-		), $page, 'normal', 'core' );			
+		), $page, 'normal', 'core' );
 
 		add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Helpful_Links_Widget::getName(), array(
 			MainWP_Helpful_Links_Widget::getClassName(),
@@ -146,7 +142,7 @@ class MainWP_Main {
 		add_meta_box( $page . '-contentbox-' . $i ++, MainWP_Blogroll_Widget::getName(), array(
 			MainWP_Blogroll_Widget::getClassName(),
 			'render',
-		), $page, 'normal', 'core' );	
+		), $page, 'normal', 'core' );
 
 		/**
 		 * This hook allows you to add extra metaboxes to the dashboard via the 'mainwp-getmetaboxes' filter.
@@ -247,13 +243,13 @@ class MainWP_Main {
 								<h3 class="mainwp-margin-top-0"><?php echo sprintf( __( 'Welcome to %s dashboard!', 'mainwp' ), stripslashes( $website->name ) ); ?></h3>
 								<p class="about-description"><?php echo sprintf( __( 'This information is only for %s%s', 'mainwp' ), $imgfavi, MainWP_Utility::getNiceURL( $website->url, true ) ); ?></p>
 								<?php
-							}                            
+							}
                             $last_dtsSync = $website->dtsSync;
 						} else {
 							$result = MainWP_DB::Instance()->getLastSyncStatus();
                             $sync_status = $result['sync_status'];
                             $last_sync = $last_dtsSync = $result['last_sync'];
-                             
+
 							if ( $sync_status === 'not_synced' ) {
 								?>
 								<h3 class="mainwp-margin-top-0"><i class="fa fa-flag"></i> <?php _e( 'Your MainWP Dashboard has not been synced for 24 hours!', 'mainwp' ); ?></h3>
@@ -264,9 +260,9 @@ class MainWP_Main {
                                 $last_sync_all = get_option('mainwp_last_synced_all_sites', 0);
                                 if ($last_sync_all == 0) {
                                     $last_sync_all = $last_sync;
-                                } 
+                                }
                                 $last_dtsSync = $last_sync_all;
-                                
+
 								?>
                                 <h3 class="mainwp-margin-top-0"><?php echo empty($last_sync) ? __( 'All sites have been synced within the last 24 hours', 'mainwp' ) . '!' : sprintf(__('Sites last synced at %s (%s ago)', 'mainwp'), MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $last_sync_all )), human_time_diff( MainWP_Utility::getTimestamp( $last_sync_all ), MainWP_Utility::getTimestamp( $now ) )) ; ?></h3>
 								<p class="about-description"><?php echo __( 'Management is more than just updates!', 'mainwp' ); ?></p>
@@ -278,16 +274,16 @@ class MainWP_Main {
 								<?php
 							}
 						}
-                        
+
                         $lastSyncMsg = '';
                         if ($last_dtsSync) {
                             $lastSyncMsg = __( '(Last completed sync: ', 'mainwp' ) . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $last_dtsSync ) ) . ')';
                         }
-                        
+
 						?>
 					</div>
 					<div class="mainwp-cols-2 mainwp-right mainwp-t-align-right">
-						<a class="button-hero button mainwp-upgrade-button mainwp-large" id="dashboard_refresh" title="<?php echo $lastSyncMsg; ?>"><i class="fa fa-refresh"></i> <?php _e( 'Sync Data with child sites', 'mainwp' ); ?></a>
+						<a class="button-hero button mainwp-upgrade-button mainwp-large" id="dashboard_refresh" title="<?php echo esc_attr($lastSyncMsg); ?>"><i class="fa fa-refresh"></i> <?php _e( 'Sync Data with child sites', 'mainwp' ); ?></a>
 						<a class="button-hero button-primary button mainwp-large" target="_blank" href="https://mainwp.com/mainwp-extensions"><i class="fa fa-cart-plus"></i> <?php _e( 'Get new extensions', 'mainwp' ); ?></a>
 					</div>
 					<div class="mainwp-clear"></div>
@@ -316,7 +312,7 @@ class MainWP_Main {
 										<li>
 											<a href="<?php echo get_admin_url(); ?>admin.php?page=Extensions"><i class="fa fa-plug"></i> <?php _e( 'Browse MainWP Extensions', 'mainwp' ); ?></a>
 										</li>
-										
+
 
 									</ul>
 								</div>
@@ -362,7 +358,7 @@ class MainWP_Main {
 			</div>
                         <div id="mainwp_main_errors" class="mainwp_error error"></div>
 		</form>
-                
+
 		<?php if ($hideShortcuts) return; ?>
 
 		<div id="mainwp-dashboard-info-box">
@@ -382,8 +378,8 @@ class MainWP_Main {
 								if (!empty($sendText)) {
 									?>
 									<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter">
-									<span class="mainwp-tip" twit-what="<?php echo $what; ?>"
-									      twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton($sendText); ?>
+									<span class="mainwp-tip" twit-what="<?php echo esc_attr($what); ?>"
+									      twit-id="<?php echo esc_attr($timeid); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton($sendText); ?>
 										<span><a href="#" class="mainwp-dismiss-twit mainwp-right"><i
 													class="fa fa-times-circle"></i> <?php _e('Dismiss', 'mainwp'); ?>
 											</a></span></div>
@@ -408,7 +404,7 @@ class MainWP_Main {
 		</div><!-- dashboard-widgets-wrap -->
         <?php
         // for edit note
-        if ($website !== null) {            
+        if ($website !== null) {
             ?>
             <div id="mainwp_notes_overlay" class="mainwp_overlay"></div>
             <div id="mainwp_notes" class="mainwp_popup">
@@ -422,12 +418,13 @@ class MainWP_Main {
                                 <textarea style="width: 580px !important; height: 300px;"
                                         id="mainwp_notes_note"></textarea>
                 </div>
-                <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div><br/>
+                <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div>
+                <br/>
                 <form>
                     <div style="float: right" id="mainwp_notes_status"></div>
                     <input type="button" class="button cont button-primary" id="mainwp_notes_save" value="<?php esc_attr_e( 'Save note', 'mainwp' ); ?>"/>
-                                    <input type="button" class="button cont" id="mainwp_notes_edit" value="<?php esc_attr_e( 'Edit','mainwp' ); ?>"/>                
-                                    <input type="button" class="button cont" id="mainwp_notes_view" value="<?php esc_attr_e( 'View','mainwp' ); ?>"/>                
+                                    <input type="button" class="button cont" id="mainwp_notes_edit" value="<?php esc_attr_e( 'Edit','mainwp' ); ?>"/>
+                                    <input type="button" class="button cont" id="mainwp_notes_view" value="<?php esc_attr_e( 'View','mainwp' ); ?>"/>
                     <input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"/>
                     <input type="hidden" id="mainwp_notes_websiteid" value=""/>
                 </form>
@@ -435,9 +432,9 @@ class MainWP_Main {
             <?php
         }
         ?>
-        
+
          <script type="text/javascript">
-            jQuery(window).load(function() {               
+            jQuery(window).load(function() {
                var $popup_widgets = jQuery('.mainwp-popup-overlay-ready').closest('div.postbox');
                mainwpAddPopupButtons($popup_widgets);
             });

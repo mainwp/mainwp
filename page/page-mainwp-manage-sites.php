@@ -46,10 +46,10 @@ class MainWP_Manage_Sites {
 		return $columns;
 	}
 
-	public static function initMenu() {        
-		self::$page = MainWP_Manage_Sites_View::initMenu();		
-		add_action( 'load-' . MainWP_Manage_Sites::$page, array(MainWP_Manage_Sites::getClassName(), 'on_load_page'));		
-		
+	public static function initMenu() {
+		self::$page = MainWP_Manage_Sites_View::initMenu();
+		add_action( 'load-' . MainWP_Manage_Sites::$page, array(MainWP_Manage_Sites::getClassName(), 'on_load_page'));
+
 		if ( isset( $_REQUEST['dashboard'] ) ) {
 			global $current_user;
 			delete_user_option( $current_user->ID, 'screen_layout_toplevel_page_managesites' );
@@ -60,7 +60,7 @@ class MainWP_Manage_Sites {
 				global $current_user;
 				update_user_option( $current_user->ID, 'screen_layout_' . self::$page, 2, true );
 			}
-		} 		        
+		}
 		add_submenu_page( 'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteOpen', array(
 			MainWP_Site_Open::getClassName(),
 			'render',
@@ -86,30 +86,30 @@ class MainWP_Manage_Sites {
 				}
 			}
 		}
-        
-        MainWP_Manage_Sites_View::init_sub_sub_left_menu(self::$subPages);        
-        
+
+        MainWP_Manage_Sites_View::init_sub_sub_left_menu(self::$subPages);
+
         if( ! MainWP_System::is_disable_menu_item(1, 'childsites_menu') ) {
             MainWP_Manage_Sites_View::init_child_sites_left_menu();
-        }        
+        }
 	}
 
-	public static function initMenuSubPages() {        
-        MainWP_Manage_Sites_View::initMenuSubPages( self::$subPages );        
+	public static function initMenuSubPages() {
+        MainWP_Manage_Sites_View::initMenuSubPages( self::$subPages );
 	}
-	
-	public static function on_load_page() {	
-		
-		if ( isset( $_REQUEST['dashboard'] ) ) {			
+
+	public static function on_load_page() {
+
+		if ( isset( $_REQUEST['dashboard'] ) ) {
 			self::on_load_page_dashboard();
 			return;
-		} 
-		
+		}
+
 		MainWP_System::enqueue_postbox_scripts();
-		
+
 		$i = 1;
-		if ( isset($_REQUEST['do']) ) { 
-			if ( 'new' == $_REQUEST['do'] ) {	
+		if ( isset($_REQUEST['do']) ) {
+			if ( 'new' == $_REQUEST['do'] ) {
 					add_meta_box(
 						'mwp-newsite-contentbox-' . $i++,
 						'<i class="fa fa-cog"></i> ' . __( 'Add a Single Site', 'mainwp' ),
@@ -120,7 +120,7 @@ class MainWP_Manage_Sites {
 					);
 
 					$sync_extensions_options = apply_filters( 'mainwp-sync-extensions-options', array() );
-					$working_extensions = MainWP_Extensions::getExtensions();		
+					$working_extensions = MainWP_Extensions::getExtensions();
 					if ( count( $working_extensions ) > 0 && count($sync_extensions_options) > 0 ) {
 						add_meta_box(
 							'mwp-newsite-contentbox-' . $i++,
@@ -140,7 +140,7 @@ class MainWP_Manage_Sites {
 						'core'
 					);
 					return;
-				} else if ( 'bulknew' == $_REQUEST['do'] ) {	
+				} else if ( 'bulknew' == $_REQUEST['do'] ) {
 					if ( isset($_FILES['mainwp_managesites_file_bulkupload']) && $_FILES['mainwp_managesites_file_bulkupload']['error'] == UPLOAD_ERR_OK ) {
 						add_meta_box(
 							'mwp-newsite-contentbox-' . $i++,
@@ -149,7 +149,7 @@ class MainWP_Manage_Sites {
 							'mainwp_postboxes_managesites_bulkupload',
 							'normal',
 							'core'
-						);			
+						);
 					} else {
 						add_meta_box(
 							'newsite-contentbox-' . $i++,
@@ -177,7 +177,7 @@ class MainWP_Manage_Sites {
 						'mainwp_postboxes_managesites_test',
 						'normal',
 						'core'
-					);	
+					);
 					return;
 				}
 		} else if ( isset( $_GET['backupid'] ) && MainWP_Utility::ctype_digit( $_GET['backupid'] ) ) {
@@ -199,12 +199,12 @@ class MainWP_Manage_Sites {
 					'normal',
 					'core',
 					array( 'websiteid' => $websiteid )
-				);		
+				);
 				return;
 		} else if ( isset( $_GET['scanid'] ) && MainWP_Utility::ctype_digit( $_GET['scanid'] ) ) {
 				$websiteid = $_GET['scanid'];
 				$scanwebsite = MainWP_DB::Instance()->getWebsiteById( $websiteid );
-				if ( empty( $scanwebsite ) ) {					
+				if ( empty( $scanwebsite ) ) {
 					return;
 				}
 				add_meta_box(
@@ -216,9 +216,9 @@ class MainWP_Manage_Sites {
 						'core',
 						array( 'websiteid' => $websiteid )
 					);
-				
+
 				if ( mainwp_current_user_can( 'extension', 'mainwp-sucuri-extension' ) ) {
-					if ( ! MainWP_Extensions::isExtensionAvailable( 'mainwp-sucuri-extension' ) ) {			
+					if ( ! MainWP_Extensions::isExtensionAvailable( 'mainwp-sucuri-extension' ) ) {
 						add_meta_box(
 							'mwp-scan-contentbox-' . $i++,
 							__( 'Sucuri Scan', 'mainwp' ),
@@ -229,10 +229,10 @@ class MainWP_Manage_Sites {
 							array( 'websiteid' => $websiteid )
 						);
 					}
-				}	
-		
+				}
+
 				if ( mainwp_current_user_can( 'extension', 'mainwp-wordfence-extension' ) ) {
-					if ( ! MainWP_Extensions::isExtensionAvailable( 'mainwp-wordfence-extension' ) ) {			
+					if ( ! MainWP_Extensions::isExtensionAvailable( 'mainwp-wordfence-extension' ) ) {
 						add_meta_box(
 							'mwp-scan-contentbox-' . $i++,
 							__( 'Wordfence Security Scan', 'mainwp' ),
@@ -243,12 +243,12 @@ class MainWP_Manage_Sites {
 							array( 'websiteid' => $websiteid )
 						);
 					}
-				}					
-				
+				}
+
 				return;
 		} else if ( isset( $_GET['id'] ) && MainWP_Utility::ctype_digit( $_GET['id'] ) ) {
 				$websiteid = $_GET['id'];
-				// edit site 
+				// edit site
 				add_meta_box(
 					'mwp-edit-contentbox-' . $i++,
 					'<i class="fa fa-cog"></i> ' . __( 'General Options', 'mainwp' ),
@@ -257,8 +257,8 @@ class MainWP_Manage_Sites {
 					'normal',
 					'core',
 					array( 'websiteid' => $websiteid )
-				);	
-				
+				);
+
 				add_meta_box(
 					'mwp-edit-contentbox-' . $i++,
 					'<i class="fa fa-cog"></i> ' . __( 'Advanced Options', 'mainwp' ),
@@ -267,10 +267,10 @@ class MainWP_Manage_Sites {
 					'normal',
 					'core',
 					array( 'websiteid' => $websiteid )
-				);	
-                                
+				);
+
                                 $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
-                                if ($enableLegacyBackupFeature) {  
+                                if ($enableLegacyBackupFeature) {
                                     add_meta_box(
                                             'mwp-edit-contentbox-' . $i++,
                                             '<i class="fa fa-cog"></i> ' . __( 'Backup Settings', 'mainwp' ),
@@ -279,16 +279,16 @@ class MainWP_Manage_Sites {
                                             'normal',
                                             'core',
                                             array( 'websiteid' => $websiteid )
-                                    );	
+                                    );
                                 }
-                                
+
 				do_action('mainwp_postboxes_on_load_site_page', $websiteid);
 				return;
-		} 
-		
-		self::add_options(); // manage sites screen		
+		}
+
+		self::add_options(); // manage sites screen
 	}
-	
+
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
@@ -303,10 +303,10 @@ class MainWP_Manage_Sites {
 		MainWP_Manage_Sites_View::renderFooter( $shownPage, self::$subPages );
 	}
 
-	public static function renderNewSite() {		
-		$showpage = 'AddNew';		
-		?>		
-		<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">	   
+	public static function renderNewSite() {
+		$showpage = 'AddNew';
+		?>
+		<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
 			<?php self::renderHeader( $showpage ); ?>
 			<div id="mainwp_managesites_add_errors" style="display: none" class="mainwp-notice mainwp-notice-red"></div>
 			<div id="mainwp_managesites_add_message" style="display: none" class="mainwp-notice mainwp-notice-green"></div>
@@ -314,48 +314,48 @@ class MainWP_Manage_Sites {
 				if ( ! mainwp_current_user_can( 'dashboard', 'add_sites' ) ) {
 					mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
 					return;
-				} else {				
+				} else {
 					MainWP_Tours::renderAddNewSiteTours();
-					MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_managesites_addnew');						
+					MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_managesites_addnew');
 					?>
 					<p class="submit"><input type="button" name="mainwp_managesites_add"
 							id="mainwp_managesites_add"
 							class="button-primary button button-hero" value="<?php _e('Add New Site','mainwp'); ?>"/></p>
-					<?php						
-				} 
+					<?php
+				}
 				self::renderFooter( $showpage );
 				?>
-		</form>		
-		<?php				
+		</form>
+		<?php
 	}
-	
-	public static function renderBulkNewSite() {	
-		$showpage = 'BulkAddNew';	
-		?>		
+
+	public static function renderBulkNewSite() {
+		$showpage = 'BulkAddNew';
+		?>
 		<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form">
 			<div id="mainwp_managesites_add_errors" style="display: none" class="mainwp-notice mainwp-notice-red"></div>
-			<div id="mainwp_managesites_add_message" style="display: none" class="mainwp-notice mainwp-notice-green"></div>	   
-			<?php self::renderHeader( $showpage );	
-			MainWP_Tours::renderSitesImportTour();	
+			<div id="mainwp_managesites_add_message" style="display: none" class="mainwp-notice mainwp-notice-green"></div>
+			<?php self::renderHeader( $showpage );
+			MainWP_Tours::renderSitesImportTour();
 				if ( ! mainwp_current_user_can( 'dashboard', 'add_sites' ) ) {
 					mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
 					return;
-				} else {					
+				} else {
 					if ( isset($_FILES['mainwp_managesites_file_bulkupload']) && $_FILES['mainwp_managesites_file_bulkupload']['error'] == UPLOAD_ERR_OK ) {
 						MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_managesites_bulkupload');
-					} else {												
-						MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_managesites_bulkaddnew');						
+					} else {
+						MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_managesites_bulkaddnew');
 						?>
 						<p class="submit"><input type="button" name="mainwp_managesites_add"
 								id="mainwp_managesites_bulkadd"
 								class="button-primary button button-hero" value="<?php _e('Import Sites','mainwp'); ?>"/></p>
-						<?php						
-					}					
-				} 
+						<?php
+					}
+				}
 				self::renderFooter( $showpage );
 				?>
-		</form>		
-		<?php		
+		</form>
+		<?php
 	}
 
 	public static function renderTest() {
@@ -365,16 +365,16 @@ class MainWP_Manage_Sites {
 		<div id="mainwp_managesites_test_message" class="mainwp-notice mainwp-notice-green"></div>
 		<?php
 		if ( ! mainwp_current_user_can( 'dashboard', 'test_connection' ) ) {
-			mainwp_do_not_have_permissions( __( 'test connection', 'mainwp' ) );				
-		} else { 			
-			?>			
+			mainwp_do_not_have_permissions( __( 'test connection', 'mainwp' ) );
+		} else {
+			?>
 			<form method="POST" action="" enctype="multipart/form-data" id="mainwp_testconnection_form">
-			<?php			
-			MainWP_Tours::renderTestConnectionTour();	
+			<?php
+			MainWP_Tours::renderTestConnectionTour();
 			MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_managesites_test');
 			?>
 			<p class="submit"><input type="button" name="mainwp_managesites_test" id="mainwp_managesites_test" class="button-primary button button-hero" value="<?php _e( 'Test Connection','mainwp' ); ?>"/></p>
-			</form> 
+			</form>
 		<?php
 		}
 		self::renderFooter( 'Test' );
@@ -1233,14 +1233,14 @@ class MainWP_Manage_Sites {
                 'render',
         ), self::$page, 'normal', 'core' );
 	}
-        
+
         public static function renderUpdates( $website ) {
 		MainWP_Utility::set_current_wpid( $website->id );
 		self::renderHeader( 'ManageSitesUpdates' );
 		MainWP_Manage_Sites_View::renderUpdates();
 		self::renderFooter( 'ManageSitesUpdates' );
 	}
-        
+
 	public static function renderDashboard( $website ) {
 		MainWP_Utility::set_current_wpid( $website->id );
 		self::renderHeader( 'ManageSitesDashboard' );
@@ -1311,7 +1311,7 @@ class MainWP_Manage_Sites {
 							$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
 							if ( !empty( $sendText ) ) {
 								?>
-								<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText );?><span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
+								<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="<?php echo esc_attr($what); ?>" twit-id="<?php echo esc_attr($timeid); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText );?><span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> <?php _e('Dismiss','mainwp'); ?></a></span></div>
 								<?php
 							}
 						}
@@ -1319,7 +1319,7 @@ class MainWP_Manage_Sites {
 				}
 			}
 		}
-                
+
                 $current_options = get_option( 'mainwp_opts_saving_status' );
                 $col_orders = "";
                 if (is_array($current_options) && isset($current_options['sites_col_order'])) {
@@ -1346,26 +1346,26 @@ class MainWP_Manage_Sites {
 				self::$sitesTable->display();
 				self::$sitesTable->clear_items();
 				?>
-			</form>                                           
+			</form>
                 <script type="text/javascript">
-                    jQuery( document ).ready( function () {       
-                            var sitesColOrder = '<?php echo $col_orders; ?>' ;  
+                    jQuery( document ).ready( function () {
+                            var sitesColOrder = '<?php echo esc_attr($col_orders); ?>' ;
                             mainwp_table_draggable_init('site', 'table.sites', sitesColOrder)
                     })
                 </script>
-                
+
 		</div>
-                                
-    <?php    
+
+    <?php
     // not used this
-    if (false) { ?>            
-                                
+    if (false) { ?>
+
 		<div id="managesites-backup-box" title="Full backup required" style="display: none; text-align: center">
 			<div style="height: 190px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="managesites-backup-content">
 			</div>
             <input id="managesites-backup-all" type="button" name="Backup All" value="<?php esc_attr_e( 'Backup all', 'mainwp' ); ?>" class="button-primary"/>
             <a id="managesites-backup-now" href="#" target="_blank" style="display: none"  class="button-primary button"><?php _e( 'Backup Now', 'mainwp' ); ?></a>&nbsp;
-            <input id="managesites-backup-ignore" type="button" name="Ignore" value="<?php esc_attr_e( 'Ignore', 'mainwp' ); ?>" class="button"/>            
+            <input id="managesites-backup-ignore" type="button" name="Ignore" value="<?php esc_attr_e( 'Ignore', 'mainwp' ); ?>" class="button"/>
 		</div>
 
 		<div id="managesites-backupnow-box" title="Full backup" style="display: none; text-align: center">
@@ -1374,24 +1374,24 @@ class MainWP_Manage_Sites {
 			<input id="managesites-backupnow-close" type="button" name="Ignore" value="<?php esc_attr_e( 'Cancel', 'mainwp' ); ?>" class="button"/>
 		</div>
     <?php } ?>
-                                
-        <div class="mainwp-popup-overlay-hidden" id="managesites-backup-box" tabindex="0" role="dialog" style="text-align: center">        
+
+        <div class="mainwp-popup-overlay-hidden" id="managesites-backup-box" tabindex="0" role="dialog" style="text-align: center">
             <div class="mainwp-popup-backdrop"></div>
             <div class="mainwp-popup-wrap wp-clearfix" role="document">
                 <div class="mainwp-popup-header">
                     <h2 class="title" >Full backup required</h2>
                     <button type="button" class="close dashicons dashicons-no"><span class="screen-reader-text"><?php _e( 'Close dialog' ); ?></span></button>
-                </div>                
+                </div>
                 <div class="mainwp-popup-content" style="text-align: left" id="refresh-status-content">
-                </div>    
+                </div>
                 <div class="mainwp-popup-actions">
                     <input id="managesites-backup-all" type="button" name="Backup All" value="<?php esc_attr_e( 'Backup all', 'mainwp' ); ?>" class="button-primary"/>
                     <a id="managesites-backup-now" href="#" target="_blank" style="display: none"  class="button-primary button"><?php _e( 'Backup Now', 'mainwp' ); ?></a>&nbsp;
-                    <input id="managesites-backup-ignore" type="button" name="Ignore" value="<?php esc_attr_e( 'Ignore', 'mainwp' ); ?>" class="button"/>                        
+                    <input id="managesites-backup-ignore" type="button" name="Ignore" value="<?php esc_attr_e( 'Ignore', 'mainwp' ); ?>" class="button"/>
                 </div>
-            </div>        
-        </div>                
-        <?php                                
+            </div>
+        </div>
+        <?php
 		self::renderFooter( '' );
 	}
 
@@ -1409,7 +1409,7 @@ class MainWP_Manage_Sites {
 
 			return;
 		}
-                
+
                 if (get_option('mainwp_enableLegacyBackupFeature')) {
                     if ( isset( $_GET['backupid'] ) && MainWP_Utility::ctype_digit( $_GET['backupid'] ) ) {
                             $websiteid = $_GET['backupid'];
@@ -1433,7 +1433,7 @@ class MainWP_Manage_Sites {
 				return;
 			}
 		}
-		
+
 		if ( isset( $_GET['dashboard'] ) && MainWP_Utility::ctype_digit( $_GET['dashboard'] ) ) {
 			$websiteid = $_GET['dashboard'];
 
@@ -1459,12 +1459,12 @@ class MainWP_Manage_Sites {
 
 			$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
-				
-				global $current_user;					
-				$updated = false;		
+
+				global $current_user;
+				$updated = false;
 				//Edit website!
-				if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( $_POST['mainwp_managesites_edit_siteadmin'] != '' ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {			
-					if ( mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {				
+				if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( $_POST['mainwp_managesites_edit_siteadmin'] != '' ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {
+					if ( mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
 						//update site
 						$groupids   = array();
 						$groupnames = array();
@@ -1488,7 +1488,16 @@ class MainWP_Manage_Sites {
                                 }
                             }
 						}
-				
+
+                        // to fix update staging site
+                        if ($website->is_staging) {
+                             if ( $stag_gid = get_option('mainwp_stagingsites_group_id')) {
+                                 if (!in_array($stag_gid, $groupids)) {
+                                     $groupids[] = $stag_gid; // staging site is always in Staging Sites group
+                                 }
+                             }
+                        }
+
                         $newPluginDir = ( isset( $_POST['mainwp_options_footprint_plugin_folder'] ) ? $_POST['mainwp_options_footprint_plugin_folder'] : '' );
 
                         $maximumFileDescriptorsOverride = isset( $_POST['mainwp_options_maximumFileDescriptorsOverride'] );
@@ -1535,11 +1544,11 @@ class MainWP_Manage_Sites {
                 return;
             }
 
-		} 		
+		}
 		MainWP_Manage_Sites::renderAllSites();
 	}
 
-	public static function renderEditSite($websiteid, $updated) {		
+	public static function renderEditSite($websiteid, $updated) {
         self::renderHeader( 'ManageSitesEdit' );
         MainWP_Manage_Sites_View::renderEditSite( $websiteid, $updated);
         self::renderFooter( 'ManageSitesEdit' );
@@ -1570,7 +1579,7 @@ class MainWP_Manage_Sites {
 				$ret['response'] = $e->getMessage();
 			}
 		}
-		$ret['check_me'] = ( isset( $_POST['check_me'] ) ? $_POST['check_me'] : null );
+		$ret['check_me'] = ( isset( $_POST['check_me'] ) ? intval( $_POST['check_me'] ) : null );
 		die( json_encode( $ret ) );
 	}
 
@@ -1607,7 +1616,7 @@ class MainWP_Manage_Sites {
 			list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::addSite( $website );
 		}
 
-		$ret['add_me'] = ( isset( $_POST['add_me'] ) ? $_POST['add_me'] : null );
+		$ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval($_POST['add_me']) : null );
 		if ( $error != '' ) {
 			$ret['response'] = 'ERROR ' . $error;
 			die( json_encode( $ret ) );
@@ -1638,8 +1647,11 @@ class MainWP_Manage_Sites {
 		if ( isset( $_POST['websiteid'] ) && MainWP_Utility::ctype_digit( $_POST['websiteid'] ) ) {
 			$website = MainWP_DB::Instance()->getWebsiteById( $_POST['websiteid'] );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
+                $note = stripslashes($_POST['note']);
+                $esc_note = MainWP_Utility::esc_content( $note );
+                MainWP_DB::Instance()->updateNote( $website->id, $esc_note );
 				//MainWP_DB::Instance()->updateNote( $website->id, esc_html( stripslashes( $_POST['note'] ) ) );
-                MainWP_DB::Instance()->updateNote( $website->id, htmlentities(stripslashes($_POST['note']))); // to fix
+                //MainWP_DB::Instance()->updateNote( $website->id, htmlentities(stripslashes($_POST['note']))); // to fix
 				die( json_encode( array( 'result' => 'SUCCESS' ) ) );
 			} else {
 				die( json_encode( array( 'error' => 'Not your website!' ) ) );
@@ -1654,10 +1666,10 @@ class MainWP_Manage_Sites {
 			$website = MainWP_DB::Instance()->getWebsiteById( $_POST['id'] );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				$error = '';
-                
-                // deactive child plugin on live site only, 
+
+                // deactive child plugin on live site only,
                 // do not deactive child on staging site, it will deactive child plugin of source site
-                if (! $website->is_staging ) { 
+                if (! $website->is_staging ) {
                     try {
                         $information = MainWP_Utility::fetchUrlAuthed( $website, 'deactivate' );
                     } catch ( MainWP_Exception $e ) {
@@ -1712,11 +1724,11 @@ class MainWP_Manage_Sites {
 					MainWP_Utility::update_option( 'mainwp_backupOnExternalSources', $_POST['mainwp_options_backupOnExternalSources'] );
 				}
 				MainWP_Utility::update_option( 'mainwp_archiveFormat', $_POST['mainwp_archiveFormat'] );
-                                
+
                                 $old_primaryBackup = get_option('mainwp_primaryBackup');
                                 $old_enableLegacyBackup = get_option('mainwp_enableLegacyBackupFeature');
                                 $updated_enableLegacyBackup = false;
-                                
+
 				if ( isset( $_POST['mainwp_primaryBackup'] ) ) {
                                     if (!empty($_POST['mainwp_primaryBackup'])) // not default backup method
                                     {
@@ -1724,25 +1736,25 @@ class MainWP_Manage_Sites {
                                             MainWP_Utility::update_option( 'mainwp_notificationOnBackupStart', 0 );
                                             MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', 0 );
                                             if (empty($old_primaryBackup)) {
-                                                MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );                                    
+                                                MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
                                                 $updated_enableLegacyBackup = true;
                                             }
-                                    } 
-                                    MainWP_Utility::update_option( 'mainwp_primaryBackup', $_POST['mainwp_primaryBackup'] );                                                                            
+                                    }
+                                    MainWP_Utility::update_option( 'mainwp_primaryBackup', $_POST['mainwp_primaryBackup'] );
                                 }
-                                
+
                                 if (!isset($_POST['mainwp_primaryBackup']) || empty($_POST['mainwp_primaryBackup'])) {
 					MainWP_Utility::update_option( 'mainwp_options_loadFilesBeforeZip', (!isset($_POST['mainwp_options_loadFilesBeforeZip']) ? 0 : 1) );
 					MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', (!isset($_POST['mainwp_options_notificationOnBackupFail']) ? 0 : 1) );
 					MainWP_Utility::update_option( 'mainwp_notificationOnBackupStart', (!isset($_POST['mainwp_options_notificationOnBackupStart']) ? 0 : 1) );
 					MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', (!isset($_POST['mainwp_options_chunkedBackupTasks']) ? 0 : 1) );
 				}
-                                                                
-                                $enableLegacyBackup = (isset($_POST['mainwp_options_enableLegacyBackupFeature']) && !empty($_POST['mainwp_options_enableLegacyBackupFeature'])) ? 1 : 0;                                
+
+                                $enableLegacyBackup = (isset($_POST['mainwp_options_enableLegacyBackupFeature']) && !empty($_POST['mainwp_options_enableLegacyBackupFeature'])) ? 1 : 0;
                                 if ($enableLegacyBackup && empty($old_enableLegacyBackup)) {
                                     MainWP_Utility::update_option( 'mainwp_primaryBackup', '' );
-                                }   
-                                
+                                }
+
                                 if (!$updated_enableLegacyBackup)
                                     MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', $enableLegacyBackup );
 				return true;
@@ -1778,7 +1790,7 @@ class MainWP_Manage_Sites {
 			update_user_option( $current_user->ID, 'mainwp_default_hide_actions_column', 1 );
 		}
 
-		self::$sitesTable = new MainWP_Manage_Sites_List_Table();		
+		self::$sitesTable = new MainWP_Manage_Sites_List_Table();
 	}
 
 
@@ -1788,7 +1800,7 @@ class MainWP_Manage_Sites {
 				?>
 				<script type="text/javascript">
 					jQuery( document ).ready( function () {
-						mainwp_managesites_update_childsite_value( <?php echo $website->id; ?>, '<?php echo $website->uniqueId; ?>' );
+						mainwp_managesites_update_childsite_value( <?php echo esc_attr($website->id); ?>, '<?php echo esc_attr($website->uniqueId); ?>' );
 					} );
 				</script>
 				<?php

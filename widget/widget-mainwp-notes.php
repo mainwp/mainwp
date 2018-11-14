@@ -17,8 +17,9 @@ class MainWP_Notes {
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $current_wpid, true );
-        
+
         MainWP_UI::renderBeginReadyPopup();
+        $esc_note = MainWP_Utility::esc_content($website->note);
 		?>
 		<div id="mainwp-notes-area">
 			<div style="padding-bottom: 1em;">
@@ -26,10 +27,10 @@ class MainWP_Notes {
 				if ( $website->note == '' ) {
 					echo 'No Saved Notes';
 				} else {
-					echo html_entity_decode($website->note);
+					echo $esc_note;
 				}
 				?>
-			</div>			
+			</div>
 		</div>
 		<?php
          $actions = '<a href="#" class="mainwp_notes_show_all button button-primary" id="mainwp_notes_' .  $website->id . '">' . __( 'Edit notes', 'mainwp' ). '</a>';

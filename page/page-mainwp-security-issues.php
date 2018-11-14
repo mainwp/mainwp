@@ -305,14 +305,14 @@ class MainWP_Security_Issues {
 							continue;
 						}
 						?>
-						<div class="mainwp-sub-row" siteid="<?php echo $website->id; ?>">
+						<div class="mainwp-sub-row" siteid="<?php echo esc_attr($website->id); ?>">
 							<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">
 								<a href="admin.php?page=managesites&scanid=<?php echo $website->id; ?>"><?php echo stripslashes( $website->name ); ?></a>
 							</div>
 							<div class="mainwp-left mainwp-cols-3">
 								<span class="fa-stack fa-lg">
 									<i class="fa fa-circle fa-stack-2x <?php echo( $website->securityIssues > 0 ? 'mainwp-red' : 'mainwp-green' ); ?>"></i>
-									<strong class="fa-stack-1x mainwp-white"><?php echo $website->securityIssues; ?></strong>
+									<strong class="fa-stack-1x mainwp-white"><?php echo esc_html($website->securityIssues); ?></strong>
 								</span>
 									<?php echo _n( 'Issue', 'Issues', $website->securityIssues, 'mainwp' ); ?>
 							</div>

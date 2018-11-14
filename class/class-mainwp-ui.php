@@ -180,7 +180,7 @@ class MainWP_UI {
             ?>
                 <script>
                     jQuery(document).ready(function () {
-                        var edit_site_el = jQuery('#selected_sites_<?php echo $edit_site_id; ?>');
+                        var edit_site_el = jQuery('#selected_sites_<?php echo esc_attr( $edit_site_id ) ; ?>');
                         mainwp_site_select(edit_site_el);
                     });
                 </script>
@@ -378,11 +378,11 @@ class MainWP_UI {
 		<?php
 	}
 
-    public static function renderEndReadyPopup($actions = '', $extra_class = '') {
+    public static function renderEndReadyPopup($html_actions = '', $extra_class = '') {
 		?>
                     </div>
-                <div class="mainwp-popup-actions <?php echo $extra_class; ?>">
-                    <?php echo $actions; ?>
+                <div class="mainwp-popup-actions <?php echo esc_attr($extra_class); ?>">
+                    <?php echo $html_actions; ?>
                     <button type="button" class="mainwp-popup-close button"><?php _e( 'Close' ); ?></button>
                 </div>
             </div>
@@ -400,6 +400,9 @@ class MainWP_UI {
         if ( !get_option( 'mainwp_disable_wp_main_menu', 1 ) )
             return;
         global $mainwp_leftmenu, $mainwp_sub_leftmenu, $mainwp_sub_subleftmenu, $_mainwp_menu_active_slugs, $plugin_page;
+
+        $mainwp_sub_leftmenu = apply_filters('mainwp_left_menu_sub', $mainwp_sub_leftmenu);
+        $mainwp_sub_subleftmenu = apply_filters('mainwp_subleft_menu_sub', $mainwp_sub_subleftmenu);
 
         $first = true;
         $values = get_option('mainwp_status_saved_values');
@@ -545,7 +548,7 @@ class MainWP_UI {
                                     }
                                 }
 
-                                echo "<li class='mainwp-menu-sub-item $active_item $sub_closed " . (empty($icon) ? 'no-icon' : '') . ($has_sub ? ' mainwp-menu-has-submenu' : '') ."' $site_id item-key=\"$item_key-$sub_key\"><div class='mainwp-menu-name'>$icon<a href='{$href}'>$title</a></div>$arrow";
+                                echo "<li class='mainwp-menu-sub-item $active_item $sub_closed " . (empty($icon) ? 'no-icon' : '') . ($has_sub ? ' mainwp-menu-has-submenu' : '') ."' $site_id item-key=\"" . esc_attr("$item_key-$sub_key") . "\"><div class='mainwp-menu-name'>" . $icon . "<a href='" . esc_url( $href ) . "'>" . esc_attr($title) . "</a></div>$arrow";
                                 if ($has_sub) {
                                     self::render_sub_sub_left_menu($sub_key, $item_key );
                                 }
@@ -606,7 +609,7 @@ class MainWP_UI {
                 $right = $sub_items[2];
                 if (empty($right) || (!empty($right) && mainwp_current_user_can( $right_group, $right ) )) {
                 ?>
-                    <a href="<?php echo $href; ?>"><?php echo $title; ?></a>
+                    <a href="<?php echo esc_url($href); ?>"><?php echo $title; ?></a>
                 <?php
                 }
              }
@@ -632,7 +635,7 @@ class MainWP_UI {
             }
             if (empty($right) || (!empty($right) && mainwp_current_user_can( $right_group, $right ) )) {
                 ?>
-                    <li class="mainwp-menu-sub2-item"><div class="mainwp-menu-name"><a href="<?php echo $href; ?>" class="mainwp-submenu"><?php echo $title; ?></a></div></li>
+                    <li class="mainwp-menu-sub2-item"><div class="mainwp-menu-name"><a href="<?php echo esc_url($href); ?>" class="mainwp-submenu"><?php echo esc_html($title); ?></a></div></li>
                 <?php
             }
         }

@@ -18,6 +18,8 @@ class MainWP_Shortcuts {
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $current_wpid, true );
         MainWP_UI::renderBeginReadyPopup();
+        $esc_note = MainWP_Utility::esc_content($website->note);
+
 		?>
 		<div class="mainwp-row-top">
 			<div style="display: inline-block; width: 100px;"><?php _e( 'Groups:', 'mainwp' ); ?></div>
@@ -30,7 +32,7 @@ class MainWP_Shortcuts {
 			</a>
 		</div>
 		<span style="display: none"
-			id="mainwp_notes_<?php echo $website->id; ?>_note"><?php echo html_entity_decode( $website->note ); ?></span>
+			id="mainwp_notes_<?php echo $website->id; ?>_note"><?php echo $esc_note; ?></span>
 		<div class="mainwp-row">
 			<div style="display: inline-block; width: 100px;"><?php _e( 'Go to:', 'mainwp' ); ?></div>
 			<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>" target="_blank"><i class="fa fa-external-link"></i> <?php _e( 'WP Admin', 'mainwp' ); ?>
@@ -46,8 +48,8 @@ class MainWP_Shortcuts {
 			</a>
 		</div>
 
-		<?php do_action( 'mainwp_shortcuts_widget', $website ); ?>		
+		<?php do_action( 'mainwp_shortcuts_widget', $website ); ?>
 		<?php
-        MainWP_UI::renderEndReadyPopup();        
+        MainWP_UI::renderEndReadyPopup();
 	}
 }

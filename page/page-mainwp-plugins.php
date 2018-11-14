@@ -134,7 +134,7 @@ class MainWP_Plugins {
                             if ( MainWP_System::is_disable_menu_item(3, 'Plugins' . $subPage['slug'] ) )
                                     continue;
 							?>
-							<a href="<?php echo admin_url( 'admin.php?page=Plugins' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
+							<a href="<?php echo admin_url( 'admin.php?page=Plugins' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html($subPage['title']); ?></a>
 							<?php
 						}
 					}
@@ -249,7 +249,7 @@ class MainWP_Plugins {
 					?>
 					<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) {
 						echo 'nav-tab-active';
-					} ?>" href="admin.php?page=Plugins<?php echo $subPage['slug']; ?>"><?php echo $subPage['title']; ?></a>
+					} ?>" href="admin.php?page=Plugins<?php echo esc_attr($subPage['slug']); ?>"><?php echo esc_html($subPage['title']); ?></a>
 					<?php
 				}
 			}
@@ -345,7 +345,7 @@ class MainWP_Plugins {
 			<p>
 				<?php _e( 'Containing Keyword:', 'mainwp' ); ?><br/>
 				<input type="text" id="mainwp_plugin_search_by_keyword" class="" size="50" value="<?php if ( $cachedSearch != null ) {
-					echo $cachedSearch['keyword'];
+					echo esc_attr($cachedSearch['keyword']);
 				} ?>"/>
 			</p>
 		</div>
@@ -562,12 +562,12 @@ class MainWP_Plugins {
 				?>
 				<tr id="post-1" class="post-1 post type-post status-publish format-standard hentry category-uncategorized alternate iedit author-self" valign="top" plugin_slug="<?php echo rawurlencode( $slug ); ?>" plugin_name="<?php echo esc_attr( $name ); ?>">
 					<th scope="row" class="check-column">
-						<input type="checkbox" name="plugin[]" value="<?php echo urlencode( $slug ); ?>"></th>
+						<input type="checkbox" name="plugin[]" value="<?php echo esc_url(urlencode( $slug )); ?>"></th>
 					<td scope="col" id="info_content" class="manage-column" style=""> <?php if ( isset( $decodedIgnoredPlugins[ $slug ] ) ) {
 							MainWP_Utility::renderToolTip( 'Ignored plugins will NOT be auto-updated.', null, 'images/icons/mainwp-red-info-16.png' );
 						} ?></td>
 					<td scope="col" id="plugin_content" class="manage-column sorted" style="">
-						<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $slug ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $name; ?>"><?php echo $name; ?></a>
+						<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $slug ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo esc_attr($name); ?>"><?php echo esc_html($name); ?></a>
 					</td>
 					<td scope="col" id="plgstatus_content" class="manage-column" style="">
 						<?php echo ( $plugin['active'] == 1 ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?>
@@ -592,7 +592,7 @@ class MainWP_Plugins {
 						</a>
 
 						<div style="display: none" class="note"><?php if ( isset( $trustedPluginsNotes[ $slug ] ) ) {
-								echo $trustedPluginsNotes[ $slug ];
+								echo MainWP_Utility::esc_content($trustedPluginsNotes[ $slug ]);
 							} ?></div>
 					</td>
 				</tr>
@@ -612,7 +612,8 @@ class MainWP_Plugins {
                             <textarea style="width: 580px !important; height: 300px;"
                                       id="mainwp_notes_note"></textarea>
 			</div>
-			<div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div><br/>
+			<div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div>
+            <br/>
 			<form>
 				<div style="float: right" id="mainwp_notes_status"></div>
 				<input type="button" class="button cont button-primary" id="mainwp_trusted_plugin_notes_save" value="<?php esc_attr_e( 'Save note', 'mainwp' ); ?>"/>
@@ -862,9 +863,9 @@ class MainWP_Plugins {
 						?>
 						<th height="100" width="120" style="padding: 5px;vertical-align: top;" class="drag-enable" id="<?php echo esc_attr($th_id); ?>">
 							<div class="table-handle"></div>
-							<div style="max-width: 120px; text-align: center;" title="<?php echo $plugin_title . ( $muPlugins[ $plugin_name ] == 1 ? ' (' . _('Must Use Plugin') . ')' : ''); ?>">
-								<input type="checkbox" value="<?php echo $plugins[$plugin_name]; ?>" id="<?php echo $plugin_name; ?>" version="<?php echo $pluginsRealVersion[$plugin_name]; ?>" class="mainwp_plugin_check_all" style="display: none ;" />
-								<label for="<?php echo $plugin_name; ?>"><?php echo $plugin_title; ?></label>
+							<div style="max-width: 120px; text-align: center;" title="<?php echo esc_attr($plugin_title) . ( $muPlugins[ $plugin_name ] == 1 ? ' (' . _('Must Use Plugin') . ')' : ''); ?>">
+								<input type="checkbox" value="<?php echo esc_attr($plugins[$plugin_name]); ?>" id="<?php echo esc_attr($plugin_name); ?>" version="<?php echo esc_attr($pluginsRealVersion[$plugin_name]); ?>" class="mainwp_plugin_check_all" style="display: none ;" />
+								<label for="<?php echo esc_attr($plugin_name); ?>"><?php echo esc_html($plugin_title); ?></label>
 							</div>
 						</th>
 						<?php
@@ -878,16 +879,16 @@ class MainWP_Plugins {
 					?>
 					<tr>
 						<td class="headcol">
-							<input class="websiteId" type="hidden" name="id" value="<?php echo $site_id; ?>"/>
-							<label for="<?php echo $site_url; ?>"><strong><?php echo $site_url; ?></strong></label>
-							<input type="checkbox" value="" id="<?php echo $site_url; ?>" class="mainwp_site_check_all" style="display: none ;"/>
+							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($site_id); ?>"/>
+							<label for="<?php echo esc_url($site_url); ?>"><strong><?php echo esc_html($site_url); ?></strong></label>
+							<input type="checkbox" value="" id="<?php echo esc_attr($site_url); ?>" class="mainwp_site_check_all" style="display: none ;"/>
 						</td>
 						<?php
 						foreach ( $pluginsVersion as $plugin_name => $plugin_title ) {
 							echo '<td class="long" style="text-align: center">';
                             if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( $muPlugins[ $plugin_name ] == 0 ) ) {
                                 if ( !isset($pluginsMainWP[$plugin_name]) || $pluginsMainWP[$plugin_name] === 'F' ) {
-                                    echo '<input type="checkbox" value="' . $plugins[ $plugin_name ] . '" name="' . $pluginsName[ $plugin_name ] . '" class="selected_plugin" version="' . $pluginsRealVersion[$plugin_name] . '" />';
+                                    echo '<input type="checkbox" value="' . esc_attr($plugins[ $plugin_name ]) . '" name="' . esc_attr( $pluginsName[ $plugin_name ] ) . '" class="selected_plugin" version="' . esc_attr( $pluginsRealVersion[$plugin_name] ) . '" />';
                                 } else if ( isset($pluginsMainWP[$plugin_name]) && $pluginsMainWP[$plugin_name] === 'T' ) {
                                     echo '<i class="fa fa-check-circle-o" aria-hidden="true"></i>';
                                 }
@@ -1083,7 +1084,7 @@ class MainWP_Plugins {
 			?>
 			<script type="text/javascript">
 				jQuery(document).ready(function () {
-					<?php echo $favoritesCallback.'()'; ?>
+					<?php echo esc_attr($favoritesCallback).'()'; ?>
 				});
 			</script>
 			<?php
@@ -1156,8 +1157,8 @@ class MainWP_Plugins {
                                                         </select>
                                                         <label></label>
                                                     </span>
-												<br/><em><?php _e( 'Last run: ', 'mainwp' ); ?><?php echo $lastAutomaticUpdate; ?></em>
-												<br /><em><?php _e( 'Next run: ', 'mainwp' ); ?><?php echo $nextAutomaticUpdate; ?></em>
+												<br/><em><?php _e( 'Last run: ', 'mainwp' ); ?><?php echo esc_html($lastAutomaticUpdate); ?></em>
+												<br /><em><?php _e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html($nextAutomaticUpdate); ?></em>
 											</td>
 											<td style="vertical-align:top">
 												<p class="submit" style="padding: 0; margin-top: 0;"  id="mainwp-save-apu-options"><input type="submit" name="submit" id="submit" class="button-primary button" value="<?php esc_attr_e( 'Save settings', 'mainwp' ); ?>"/></p>
@@ -1295,10 +1296,10 @@ class MainWP_Plugins {
 					?>
 					<tr plugin_slug="<?php echo urlencode( $ignoredPlugin ); ?>">
 						<td>
-							<strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $ignoredPluginName; ?>"><?php echo $ignoredPluginName; ?></a></strong>
+							<strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo esc_attr($ignoredPluginName); ?>"><?php echo esc_html($ignoredPluginName); ?></a></strong>
 						</td>
 						<td>
-							<?php echo $ignoredPlugin; ?>
+							<?php echo esc_html($ignoredPlugin); ?>
 						</td>
 						<td style="text-align: right; padding-right: 30px">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
@@ -1348,7 +1349,7 @@ class MainWP_Plugins {
 
 					foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
 						?>
-						<tr site_id="<?php echo $website->id; ?>" plugin_slug="<?php echo urlencode( $ignoredPlugin ); ?>">
+						<tr site_id="<?php echo esc_attr($website->id); ?>" plugin_slug="<?php echo urlencode( $ignoredPlugin ); ?>">
 							<td>
                             <span class="websitename" <?php if ( ! $first ) {
 	                            echo 'style="display: none;"';
@@ -1359,10 +1360,10 @@ class MainWP_Plugins {
                             </span>
 							</td>
 							<td>
-								<strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $ignoredPluginName; ?>"><?php echo $ignoredPluginName; ?></a></strong> (<?php echo $ignoredPlugin; ?>)
+								<strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo esc_attr($ignoredPluginName); ?>"><?php echo esc_html($ignoredPluginName); ?></a></strong> (<?php echo esc_html($ignoredPlugin); ?>)
 							</td>
 							<td style="text-align: right; padding-right: 30px">
-								<a href="#" onClick="return rightnow_plugins_unignore_detail('<?php echo urlencode( $ignoredPlugin ); ?>', <?php echo $website->id; ?>)"><i class="fa fa-check"></i> <?php _e( 'Allow', 'mainwp' ); ?>
+								<a href="#" onClick="return rightnow_plugins_unignore_detail('<?php echo urlencode( $ignoredPlugin ); ?>', <?php echo esc_attr($website->id); ?>)"><i class="fa fa-check"></i> <?php _e( 'Allow', 'mainwp' ); ?>
 								</a>
 							</td>
 						</tr>
@@ -1422,10 +1423,10 @@ class MainWP_Plugins {
 					?>
 					<tr plugin_slug="<?php echo urlencode( $ignoredPlugin ); ?>">
 						<td>
-							<strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $ignoredPluginName; ?>"><?php echo $ignoredPluginName; ?></a></strong>
+							<strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo esc_attr($ignoredPluginName); ?>"><?php echo esc_html($ignoredPluginName); ?></a></strong>
 						</td>
 						<td>
-							<?php echo $ignoredPlugin; ?>
+							<?php echo esc_html($ignoredPlugin); ?>
 						</td>
 						<td style="text-align: right; padding-right: 30px">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
@@ -1472,7 +1473,7 @@ class MainWP_Plugins {
 
 					foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
 						?>
-						<tr site_id="<?php echo $website->id; ?>" plugin_slug="<?php echo urlencode( $ignoredPlugin ); ?>">
+						<tr site_id="<?php echo esc_attr($website->id); ?>" plugin_slug="<?php echo urlencode( $ignoredPlugin ); ?>">
 							<td>
                             <span class="websitename" <?php if ( ! $first ) {
 	                            echo 'style="display: none;"';
@@ -1483,10 +1484,10 @@ class MainWP_Plugins {
                             </span>
 							</td>
 							<td>
-								<strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo $ignoredPluginName; ?>"><?php echo $ignoredPluginName; ?></a></strong> (<?php echo $ignoredPlugin; ?>)
+								<strong><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox" title="More information about <?php echo esc_attr($ignoredPluginName); ?>"><?php echo esc_html($ignoredPluginName); ?></a></strong> (<?php echo esc_html($ignoredPlugin); ?>)
 							</td>
 							<td style="text-align: right; padding-right: 30px">
-								<a href="#" onClick="return rightnow_plugins_unignore_abandoned_detail('<?php echo urlencode( $ignoredPlugin ); ?>', <?php echo $website->id; ?>)"><i class="fa fa-check"></i> <?php _e( 'Allow', 'mainwp' ); ?>
+								<a href="#" onClick="return rightnow_plugins_unignore_abandoned_detail('<?php echo urlencode( $ignoredPlugin ); ?>', <?php echo esc_attr($website->id); ?>)"><i class="fa fa-check"></i> <?php _e( 'Allow', 'mainwp' ); ?>
 								</a>
 							</td>
 						</tr>
@@ -1576,7 +1577,8 @@ class MainWP_Plugins {
 
 	public static function saveTrustedPluginNote() {
 		$slug = urldecode( $_POST['slug'] );
-		$note = esc_html( $_POST['note'] );
+        $note = stripslashes($_POST['note']);
+		$esc_note = MainWP_Utility::esc_content( $note );
 
 		$userExtension       = MainWP_DB::Instance()->getUserExtension();
 		$trustedPluginsNotes = json_decode( $userExtension->trusted_plugins_notes, true );
@@ -1584,7 +1586,7 @@ class MainWP_Plugins {
 			$trustedPluginsNotes = array();
 		}
 
-		$trustedPluginsNotes[ $slug ] = $note;
+		$trustedPluginsNotes[ $slug ] = $esc_note;
 
 		$userExtension->trusted_plugins_notes = json_encode( $trustedPluginsNotes );
 		MainWP_DB::Instance()->updateUserExtension( $userExtension );

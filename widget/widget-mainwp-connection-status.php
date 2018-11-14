@@ -31,13 +31,13 @@ class MainWP_Connection_Status {
 		$websites = MainWP_DB::Instance()->query( $sql );
 
 		if ( ! $websites ) return;
-				
-		$top_row = true;		
+
+		$top_row = true;
         $top_up_row = true;
-        
+
          MainWP_UI::renderBeginReadyPopup();
-		?>            
-		<div class="clear" id="mainwp_connection_status_wrap">			
+		?>
+		<div class="clear" id="mainwp_connection_status_wrap">
                         <?php
                         //Loop 3 times, first we show the conflicts, then we show the down sites, then we show the up sites
                         $SYNCERRORS = 0;
@@ -81,12 +81,12 @@ class MainWP_Connection_Status {
                                             <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-10">
                                                     <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_sync<?php echo $website->id; ?>" />
                                                     <div class="mainwp-row-actions">
-                                                        <span class="edit"><a href="<?php echo $website->url; ?>"  target="_blank" title="<?php _e( 'Visit Site', 'mainwp' ); ?>"><?php _e( 'Visit Site', 'mainwp' ); ?></a> | </span>                                                            
-                                                        <span class="edit"><a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>"  target="_blank" title="<?php _e( 'WP Admin', 'mainwp' ); ?>"><?php _e( 'WP Admin', 'mainwp' ); ?></a></span>                                                        
+                                                        <span class="edit"><a href="<?php echo $website->url; ?>"  target="_blank" title="<?php _e( 'Visit Site', 'mainwp' ); ?>"><?php _e( 'Visit Site', 'mainwp' ); ?></a> | </span>
+                                                        <span class="edit"><a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>"  target="_blank" title="<?php _e( 'WP Admin', 'mainwp' ); ?>"><?php _e( 'WP Admin', 'mainwp' ); ?></a></span>
                                                     </div>
                                             </div>
                                             <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-10 wordpressInfo" id="wp_sync_<?php echo $website->id; ?>">
-                                                    <span><?php echo $lastSyncTime; ?></span>
+                                                    <span><?php echo esc_attr($lastSyncTime); ?></span>
                                             </div>
                                             <div class="mainwp-right mainwp-cols-4 mainwp-t-align-right mainwp-padding-top-5 wordpressAction">
                                                 <?php
@@ -133,7 +133,7 @@ class MainWP_Connection_Status {
                             }
                         }
 
-                        
+
                         $opts           = get_option( 'mainwp_opts_showhide_sections', false );
                         $hide_sites = ( is_array( $opts ) && isset( $opts['synced_sites'] ) && $opts['synced_sites'] == 'hide' ) ? true : false;
                     ?>
@@ -149,10 +149,10 @@ class MainWP_Connection_Status {
                         <?php echo $html_online_sites; ?>
                     </div>
                          <?php echo $html_other_sites; ?>
-                </div>    
+                </div>
 		<?php
         MainWP_UI::renderEndReadyPopup();
-        
+
 		@MainWP_DB::free_result( $websites );
 	}
 }

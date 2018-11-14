@@ -71,14 +71,14 @@ class MainWP_About {
 		global $mainWP;
 		?>
 		<br/>
-		<h3><?php echo $mainWP->getVersion(); ?>&nbsp;<?php _e( 'Changelog', 'mainwp' ); ?></h3>
+		<h3><?php echo esc_html($mainWP->getVersion()); ?>&nbsp;<?php _e( 'Changelog', 'mainwp' ); ?></h3>
 		<hr/>
 		<ul>
 			<li>Fixed: an issue with sorting posts and pages by the publish date</li>
 			<li>Fixed: sync error caused by the WP-SpamShield plugin</li>
 			<li>Fixed: JavaScript (moment.js) conflict with the Gutenberg plugin</li>
 			<li>Fixed: an issue with sending email notifications about available updates for some users</li>
-			<li>Fixed: an issue with triggering unwanted backups</li> 
+			<li>Fixed: an issue with triggering unwanted backups</li>
 			<li>Fixed: a usability issue with displaying incorrect last sync time</li>
 			<li>Fixed: incorrect changelog links</li>
 			<li>Added: mainwp_updatescheck_disable_notification_mail hook to disable email notifications about available updates</li>

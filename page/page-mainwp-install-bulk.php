@@ -144,18 +144,18 @@ class MainWP_Install_Bulk {
 
 		die( json_encode( $output ) );
 	}
-        
+
         public static function addition_post_data( &$post_data = array()) {
-            $clear_and_lock_opts = apply_filters( 'mainwp_clear_and_lock_options', array() );   
+            $clear_and_lock_opts = apply_filters( 'mainwp_clear_and_lock_options', array() );
             if ( isset($post_data['url']) && false !== strpos( $post_data['url'], 'mwpdl') && false !== strpos( $post_data['url'], 'sig') ) {
                 if ( is_array($clear_and_lock_opts) && isset($clear_and_lock_opts['wpadmin_user']) && !empty($clear_and_lock_opts['wpadmin_user']) && isset($clear_and_lock_opts['wpadmin_passwd']) && !empty($clear_and_lock_opts['wpadmin_passwd']) ) {
                     $post_data['wpadmin_user'] = $clear_and_lock_opts['wpadmin_user'];
                     $post_data['wpadmin_passwd'] = $clear_and_lock_opts['wpadmin_passwd'];
                 }
-            }           
+            }
             return $post_data;
         }
-        
+
 	public static function performInstall() {
 		MainWP_Utility::endSession();
 
@@ -169,10 +169,10 @@ class MainWP_Install_Bulk {
 		}
 		if ( $_POST['overwrite'] == 'true' ) {
 			$post_data['overwrite'] = true;
-		}            
-                
+		}
+
                 self::addition_post_data( $post_data );
-                
+
 		$output         = new stdClass();
 		$output->ok     = array();
 		$output->errors = array();
@@ -182,7 +182,8 @@ class MainWP_Install_Bulk {
 			'InstallPluginTheme_handler',
 		), $output, null, array( 'upgrade' => true ) );
 
-		die( json_encode( $output ) );
+		//die( json_encode( $output ) );
+        wp_send_json( $output );
 	}
 
 	public static function prepareUpload() {
@@ -232,7 +233,8 @@ class MainWP_Install_Bulk {
 		$output['urls'] = implode( '||', $output['urls'] );
 		$output['urls'] = apply_filters( 'mainwp_installbulk_prepareupload', $output['urls'] );
 
-		die( json_encode( $output ) );
+		//die( json_encode( $output ) );
+        wp_send_json( $output );
 	}
 
 	public static function performUpload() {
@@ -258,7 +260,9 @@ class MainWP_Install_Bulk {
 			MainWP_Install_Bulk::getClassName(),
 			'InstallPluginTheme_handler',
 		), $output, null, array( 'upgrade' => true ) );
-		die( json_encode( $output ) );
+        
+		//die( json_encode( $output ) );
+        wp_send_json( $output );
 	}
 
 	public static function cleanUpload() {

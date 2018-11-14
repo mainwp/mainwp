@@ -26,7 +26,7 @@ class MainWP_Site_Open {
 		if ( isset( $_GET['location'] ) ) {
 			$location = base64_decode( $_GET['location'] );
 		}
-                
+
                 if ( isset( $_GET['openUrl']) && $_GET['openUrl'] == 'yes' ) {
                     MainWP_Site_Open::openSiteLocation( $website, $location );
                 } else {
@@ -53,16 +53,17 @@ class MainWP_Site_Open {
 					</form>
 					<?php
 				} else {
+                    $esc_note = MainWP_Utility::esc_content($website->note);
 					?>
 					<div style="padding-top: 10px; padding-bottom: 10px">
-                                            <?php
-                                            if (isset($_GET['from']) && $_GET['from'] == 'user') { ?>
-                                                <a href="<?php echo admin_url( 'admin.php?page=UserBulkManage' ); ?>" class="mainwp-backlink">← <?php _e( 'Back to users', 'mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;
-                                            <?php } else { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=managesites' ); ?>" class="mainwp-backlink">← <?php _e( 'Back to sites', 'mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;
-                                                <?php
-                                            }
-                                            ?>
+                        <?php
+                        if (isset($_GET['from']) && $_GET['from'] == 'user') { ?>
+                                    <a href="<?php echo admin_url( 'admin.php?page=UserBulkManage' ); ?>" class="mainwp-backlink">← <?php _e( 'Back to users', 'mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;
+                        <?php } else { ?>
+                                <a href="<?php echo admin_url( 'admin.php?page=managesites' ); ?>" class="mainwp-backlink">← <?php _e( 'Back to sites', 'mainwp' ); ?></a>&nbsp;&nbsp;&nbsp;
+                                <?php
+                            }
+                            ?>
 						<input type="button" class="button cont" id="mainwp_notes_show" value="<?php _e( 'Notes', 'mainwp' ); ?>"/>
 					</div>
 					<iframe width="100%" height="1000"
@@ -74,16 +75,17 @@ class MainWP_Site_Open {
 						<div id="mainwp_notes_title" class="mainwp_popup_title"><?php echo $website->url; ?></span>
 						</div>
 						<div id="mainwp_notes_content">
-                                                    <div id="mainwp_notes_html" style="width: 580px !important; height: 300px;"><?php echo $website->note; ?></div>
-                                                    <textarea style="width: 580px !important; height: 300px;"
-                                                            id="mainwp_notes_note"><?php echo $website->note; ?></textarea>
+                            <div id="mainwp_notes_html" style="width: 580px !important; height: 300px;"><?php echo $esc_note; ?></div>
+                            <textarea style="width: 580px !important; height: 300px;"
+                                    id="mainwp_notes_note"><?php echo $esc_note; ?></textarea>
 						</div>
-                                                <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div><br/>
+                                                <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div>
+                                                <br/>
 						<form>
 							<div style="float: right" id="mainwp_notes_status"></div>
 							<input type="button" class="button button-primary" id="mainwp_notes_save" value="<?php esc_attr_e( 'Save note', 'mainwp' ); ?>"/>
-                                                        <input type="button" class="button cont" id="mainwp_notes_edit" value="<?php esc_attr_e( 'Edit','mainwp' ); ?>"/>                
-                                                        <input type="button" class="button cont" id="mainwp_notes_view" value="<?php esc_attr_e( 'View','mainwp' ); ?>"/>                
+                                                        <input type="button" class="button cont" id="mainwp_notes_edit" value="<?php esc_attr_e( 'Edit','mainwp' ); ?>"/>
+                                                        <input type="button" class="button cont" id="mainwp_notes_view" value="<?php esc_attr_e( 'View','mainwp' ); ?>"/>
 							<input type="button" class="button cont" id="mainwp_notes_cancel" value="Close"/>
 							<input type="hidden" id="mainwp_notes_websiteid"
 								value="<?php echo $website->id; ?>"/>
@@ -127,7 +129,7 @@ class MainWP_Site_Open {
 
 			<div id="mainwp_background-box">
 				<?php
-                                
+
 				_e( 'Will redirect to your website immediately.', 'mainwp' );
 				$url = ( isset( $website->url ) && $website->url != '' ? $website->url : $website->siteurl );
 				$url .= ( substr( $url, - 1 ) != '/' ? '/' : '' );
@@ -135,7 +137,7 @@ class MainWP_Site_Open {
 				$postdata         = MainWP_Utility::getGetDataAuthed( $website, $file, MainWP_Utility::getFileParameter( $website ), true );
 				$postdata['size'] = $size;
 				?>
-				<form method="POST" action="<?php echo $url; ?>" id="redirectForm">
+				<form method="POST" action="<?php echo esc_url($url); ?>" id="redirectForm">
 					<?php
 					foreach ( $postdata as $name => $value ) {
 						echo '<input type="hidden" name="' . $name . '" value="' . $value . '" />';
@@ -146,7 +148,7 @@ class MainWP_Site_Open {
 		</div>
 		<?php
 	}
-        
+
         public static function openSiteLocation( $website, $open_location ) {
 		?>
 		<div class="wrap">
@@ -159,7 +161,7 @@ class MainWP_Site_Open {
 
 			<div id="mainwp_background-box">
                                 <div style="font-size: 30px; text-align: center; margin-top: 5em;"><?php _e( 'You will be redirected to your website immediately.', 'mainwp' ); ?></div>
-				<?php				
+				<?php
 				$url = ( isset( $website->url ) && $website->url != '' ? $website->url : $website->siteurl );
 				$url .= ( substr( $url, - 1 ) != '/' ? '/' : '' );
 
@@ -177,5 +179,5 @@ class MainWP_Site_Open {
 		</div>
 		<?php
 	}
-        
+
 }

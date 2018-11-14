@@ -711,7 +711,7 @@ class MainWP_Setup_Wizard {
 		<h1><?php _e( 'MainWP Login', 'mainwp' ); ?></h1>
 
 		<p><?php echo __('Log into your MainWP account to auto install your new Extension.', 'mainwp'); ?></p>
-		<p><?php echo $ext_name; ?></p>
+		<p><?php echo esc_html($ext_name); ?></p>
 		<?php
 		if (!empty($message)) {
 			delete_option('mwp_setup_message_purchase_extension');
@@ -868,11 +868,11 @@ class MainWP_Setup_Wizard {
 				} else {
 					$error = false;
 					$product_info = $purchased_data[$product_id];
-					$software_title = isset($all_available_exts[$product_id]) ? $all_available_exts[$product_id]['title'] : $product_id;
+					$software_title = isset($all_available_exts[$product_id]) ? esc_html( $all_available_exts[$product_id]['title'])  : esc_html( $product_id );
 					$error_message = '';
 					if (isset($product_info['package']) && !empty($product_info['package'])){
 						$package_url = apply_filters('mainwp_api_manager_upgrade_url', $product_info['package']);
-						$html .= '<div class="extension_to_install" download-link="' . $package_url . '" product-id="' . $product_id . '"><span class="name">Installing <strong>' . $software_title . "</strong> ...</span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
+						$html .= '<div class="extension_to_install" download-link="' . esc_attr( $package_url ) . '" product-id="' . esc_attr( $product_id ) . '"><span class="name">Installing <strong>' . $software_title . "</strong> ...</span> " . '<span class="ext_installing" status="queue"><i class="fa fa-spinner fa-pulse hidden" style="display: none;"></i> <span class="status hidden"><i class="fa fa-clock-o"></i> ' . __('Queued', 'mainwp') . '</span></span></div>';
 					} else if (isset($product_info['error'])  && !empty($product_info['error'])) {
 						$error = true;
 						$error_message = MainWP_Api_Manager::instance()->check_response_for_intall_errors($product_info, $software_title);
@@ -904,7 +904,7 @@ class MainWP_Setup_Wizard {
 	public static function ajax_download_and_install() {
 		self::secure_request();
 		$return = MainWP_Extensions::installPlugin($_POST['download_link'], true);
-		die('<mainwp>' . json_encode($return) . '</mainwp>');
+		die('<mainwp>' . json_encode($return) . '</mainwp>'); // ok
 	}
 
 	public static function secure_request() {
@@ -932,7 +932,8 @@ class MainWP_Setup_Wizard {
 		$password = !empty($enscrypt_p) ? MainWP_Api_Manager_Password_Management::decrypt_string($enscrypt_p) : "";
 		$api = isset($_POST['slug']) ? dirname($_POST['slug']) : '';
 		$result = MainWP_Api_Manager::instance()->grab_license_key($api, $username, $password);
-		die(json_encode($result));
+		//die(json_encode($result));
+        wp_send_json( $result );
 	}
 
 	public function mwp_setup_install_extension() {
@@ -970,7 +971,7 @@ class MainWP_Setup_Wizard {
 		<h1><?php _e( 'Install and Activate', 'mainwp' ); ?></h1>
 		<form method="post">
 			<div class="mwp_setup_install_extension_content">
-				<?php echo !empty($ext_name) ? '<p>' . $ext_name . '</p>' : ""; ?>
+				<?php echo !empty($ext_name) ? '<p>' . esc_html( $ext_name ) . '</p>' : ""; ?>
 				<input type="hidden" name="mwp_setup_extension_product_id" id="mwp_setup_extension_product_id" value="<?php echo esc_attr($ext_product_id); ?>" slug="<?php echo esc_attr($ext_slug); ?>">
 				<?php
 				if ($ext_installed) {
@@ -994,12 +995,12 @@ class MainWP_Setup_Wizard {
 	                    </span>
 						<script type="text/javascript">
 							jQuery(document).ready(function () {
-								mainwp_setup_grab_extension(false, <?php echo $register_later; ?>);
+								mainwp_setup_grab_extension(false, <?php echo esc_attr($register_later); ?>);
 							})
 						</script>
 					</div>
 					<div id="mwp_setup_extension_retry_install" style="display: none;"><p><span class="mwp_setup_loading_wrap">
-	                    <input type="button" value="Retry Install Extension" onclick="this.disabled = true;mainwp_setup_grab_extension(false, <?php echo $register_later; ?>); return false;" id="mwp_setup_extension_install_btn" class="mainwp-upgrade-button button-primary">
+	                    <input type="button" value="Retry Install Extension" onclick="this.disabled = true;mainwp_setup_grab_extension(false, <?php echo esc_attr($register_later); ?>); return false;" id="mwp_setup_extension_install_btn" class="mainwp-upgrade-button button-primary">
 	                        <i style="display: none;" class="fa fa-spinner fa-pulse"></i><span class="status hidden"></span>
 	                    </span></p>
 					</div>
@@ -1074,8 +1075,8 @@ class MainWP_Setup_Wizard {
 									$_selected = 'checked'; }
 								?>
 								<li>
-									<input type="checkbox" id="mainwp_hide_wpmenu_<?php echo $name; ?>" name="mainwp_hide_wpmenu[]" <?php echo $_selected; ?> value="<?php esc_attr_e($name); ?>">
-									<label for="mainwp_hide_wpmenu_<?php echo $name; ?>"><?php echo $item; ?></label>
+									<input type="checkbox" id="mainwp_hide_wpmenu_<?php echo esc_attr( $name ); ?>" name="mainwp_hide_wpmenu[]" <?php echo $_selected; ?> value="<?php echo esc_attr($name); ?>">
+									<label for="mainwp_hide_wpmenu_<?php echo esc_attr( $name ); ?>"><?php echo esc_html( $item ); ?></label>
 								</li>
 							<?php }
 							?>
@@ -1165,7 +1166,7 @@ class MainWP_Setup_Wizard {
 					<tr>
 						<th scope="row"><?php _e("Your Uptime Robot API Key:", "mainwp"); ?></th>
 						<td>
-							<input type="text" readonly = "readonly" class="" value="<?php echo $ur_api_key; ?>" size="35" name="mwp_setup_uptime_robot_api_key">
+							<input type="text" readonly = "readonly" class="" value="<?php echo esc_attr($ur_api_key); ?>" size="35" name="mwp_setup_uptime_robot_api_key">
 						</td>
 					</tr>
 					<tr>

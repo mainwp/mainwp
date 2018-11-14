@@ -227,7 +227,6 @@ class MainWP_Post_Handler {
 		//ServerInformation
 		add_action( 'wp_ajax_mainwp_serverInformation', array( &$this, 'mainwp_serverInformation' ) ); //ok
 
-		$this->addAction( 'mainwp_extension_change_view', array( &$this, 'mainwp_extension_change_view' ) );
 		$this->addAction( 'mainwp_events_notice_hide', array( &$this, 'mainwp_events_notice_hide' ) );
 		$this->addAction( 'mainwp_showhide_sections', array( &$this, 'mainwp_showhide_sections' ) );
 		$this->addAction( 'mainwp_saving_status', array( &$this, 'mainwp_saving_status' ) );
@@ -238,12 +237,12 @@ class MainWP_Post_Handler {
 		$this->addAction( 'mainwp_recheck_http', array( &$this, 'mainwp_recheck_http' ) );
 		$this->addAction( 'mainwp_ignore_http_response', array( &$this, 'mainwp_ignore_http_response' ) );
 		$this->addAction( 'mainwp_disconnect_site', array( &$this, 'ajax_disconnect_site' ) );
-		
+
 		MainWP_Extensions::initAjaxHandlers();
 
 		add_action( 'wp_ajax_mainwp_childscan', array( &$this, 'mainwp_childscan' ) ); //ok
 		add_action( 'wp_ajax_mainwp_get_blogroll', array( &$this, 'mainwp_get_blogroll' ) );
-		
+
 	}
 
 	function mainwp_childscan() {
@@ -598,6 +597,7 @@ class MainWP_Post_Handler {
 
 		if ( 'last_sync_sites' == $_POST['status'] ) {
 			update_option( 'mainwp_last_synced_all_sites', time() );
+            do_action( 'mainwp_synced_all_sites' );
 			die( 'ok' );
 		}
 
@@ -693,7 +693,7 @@ class MainWP_Post_Handler {
 					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( ! empty( $twit_mess ) ) {
 							$sendText = MainWP_Twitter::getTwitToSend( $_POST['actionName'], $timeid );
-							$html .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . $_POST['actionName'] . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::genTwitterButton( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
+							$html .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr($_POST['actionName']) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::genTwitterButton( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
 						}
 					}
 				}
@@ -731,7 +731,8 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_securityIssues_request' );
 
 		try {
-			die( json_encode( array( 'result' => MainWP_Security_Issues::fetchSecurityIssues() ) ) );
+			//die( json_encode( array( 'result' => MainWP_Security_Issues::fetchSecurityIssues() ) ) );
+            wp_send_json( array( 'result' => MainWP_Security_Issues::fetchSecurityIssues() ) );
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(
 				'error' => array(
@@ -746,7 +747,8 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_securityIssues_fix' );
 
 		try {
-			die( json_encode( array( 'result' => MainWP_Security_Issues::fixSecurityIssue() ) ) );
+			//die( json_encode( array( 'result' => MainWP_Security_Issues::fixSecurityIssue() ) ) );
+            wp_send_json( array( 'result' => MainWP_Security_Issues::fixSecurityIssue() ) );
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(
 				'error' => array(
@@ -761,7 +763,8 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_securityIssues_unfix' );
 
 		try {
-			die( json_encode( array( 'result' => MainWP_Security_Issues::unfixSecurityIssue() ) ) );
+			//die( json_encode( array( 'result' => MainWP_Security_Issues::unfixSecurityIssue() ) ) );
+            wp_send_json( array( 'result' => MainWP_Security_Issues::unfixSecurityIssue() ) );
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(
 				'error' => array(
@@ -772,32 +775,33 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	
+
 	public function ajax_disconnect_site() {
-		$this->secure_request( 'mainwp_disconnect_site' );    
-		
-        $siteid = $_POST['websiteId'];	
-					
+		$this->secure_request( 'mainwp_disconnect_site' );
+
+        $siteid = $_POST['websiteId'];
+
 		if ( empty( $siteid ) ) {
-			die( json_encode( array( 'error' => 'Error: site id empty' ) ) ); 			
+			die( json_encode( array( 'error' => 'Error: site id empty' ) ) );
 		}
-		
+
 		$website = MainWP_DB::Instance()->getWebsiteById( $siteid );
-		
+
 		if ( ! $website ) {
-			die( json_encode( array( 'error' => 'Not found site' ) ) ); 
+			die( json_encode( array( 'error' => 'Not found site' ) ) );
 		}
-		
-		try {			
+
+		try {
 			$information = MainWP_Utility::fetchUrlAuthed( $website, 'disconnect');
 		} catch ( Exception $e ) {
 			$information = array( 'error' => __( 'fetchUrlAuthed exception', 'mainwp' ) );
 		}
-		
-		die( json_encode( $information ) );
+
+		//die( json_encode( $information ) );
+        wp_send_json( $information );
     }
 
-	
+
 	/**
 	 * Page: CloneSite
 	 */
@@ -827,7 +831,10 @@ class MainWP_Post_Handler {
 				throw new MainWP_Exception( 'Invalid request' );
 			}
 
-			die( json_encode( array( 'result' => MainWP_Manage_Sites::backup( $_POST['site_id'], 'full', '', '', 1, 1, 1, 1 ) ) ) );
+			//die( json_encode( array( 'result' => MainWP_Manage_Sites::backup( $_POST['site_id'], 'full', '', '', 1, 1, 1, 1 ) ) ) );
+
+            $ret = array( 'result' => MainWP_Manage_Sites::backup( $_POST['site_id'], 'full', '', '', 1, 1, 1, 1 ) );
+            wp_send_json($ret);
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(
 				'error' => array(
@@ -837,8 +844,8 @@ class MainWP_Post_Handler {
 			) ) );
 		}
 	}
-	
-	
+
+
 	function mainwp_backup() {
 		$this->secure_request( 'mainwp_backup' );
 
@@ -854,7 +861,8 @@ class MainWP_Post_Handler {
 			$excludedFolder = implode( ',', $excludedFolder );
 
 			$result = MainWP_Manage_Sites::backup( $_POST['site_id'], $_POST['type'], ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset( $_POST['fileNameUID'] ) ? $_POST['fileNameUID'] : '', $_POST['archiveFormat'], ( $_POST['maximumFileDescriptorsOverride'] == 1 ), ( $_POST['maximumFileDescriptorsAuto'] == 1 ), $_POST['maximumFileDescriptors'], $_POST['loadFilesBeforeZip'], $_POST['pid'], ( isset( $_POST['append'] ) && ( $_POST['append'] == 1 ) ) );
-			die( json_encode( array( 'result' => $result ) ) );
+			//die( json_encode( array( 'result' => $result ) ) );
+            wp_send_json( array( 'result' => $result ) );
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(
 				'error' => array(
@@ -873,7 +881,9 @@ class MainWP_Post_Handler {
 				throw new MainWP_Exception( 'Invalid request' );
 			}
 
-			die( json_encode( MainWP_Manage_Sites::backupCheckpid( $_POST['site_id'], $_POST['pid'], $_POST['type'], $_POST['subfolder'], $_POST['filename'] ) ) );
+			//die( json_encode( MainWP_Manage_Sites::backupCheckpid( $_POST['site_id'], $_POST['pid'], $_POST['type'], $_POST['subfolder'], $_POST['filename'] ) ) );
+            wp_send_json( MainWP_Manage_Sites::backupCheckpid( $_POST['site_id'], $_POST['pid'], $_POST['type'], $_POST['subfolder'], $_POST['filename'] )  );
+
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(
 				'error' => array(
@@ -1017,7 +1027,8 @@ class MainWP_Post_Handler {
 			} else if ( isset( $array[ $_POST['unique'] ]['finished'] ) ) {
 				throw new MainWP_Exception( __( 'finished...', 'maiwnp' ) );
 			} else {
-				die( json_encode( array( 'result' => ( isset( $array[ $_POST['unique'] ]['offset'] ) ? $array[ $_POST['unique'] ]['offset'] : $array[ $_POST['unique'] ] ) ) ) );
+				//die( json_encode( array( 'result' => ( isset( $array[ $_POST['unique'] ]['offset'] ) ? $array[ $_POST['unique'] ]['offset'] : $array[ $_POST['unique'] ] ) ) ) );
+                wp_send_json( array( 'result' => ( isset( $array[ $_POST['unique'] ]['offset'] ) ? $array[ $_POST['unique'] ]['offset'] : $array[ $_POST['unique'] ] ) )  );
 			}
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(
@@ -1168,7 +1179,8 @@ class MainWP_Post_Handler {
 
 		$taskID = $_POST['task_id'];
 
-		die( json_encode( array( 'result' => MainWP_Manage_Backups::getBackupTaskSites( $taskID ) ) ) );
+		//die( json_encode( array( 'result' => MainWP_Manage_Backups::getBackupTaskSites( $taskID ) ) ) );
+        wp_send_json( array( 'result' => MainWP_Manage_Backups::getBackupTaskSites( $taskID ) ) );
 	}
 
 	function mainwp_backuptask_run_site() {
@@ -1179,7 +1191,8 @@ class MainWP_Post_Handler {
 				throw new MainWP_Exception( 'Invalid request' );
 			}
 
-			die( json_encode( array( 'result' => MainWP_Manage_Backups::backup( $_POST['task_id'], $_POST['site_id'], $_POST['fileNameUID'] ) ) ) );
+			//die( json_encode( array( 'result' => MainWP_Manage_Backups::backup( $_POST['task_id'], $_POST['site_id'], $_POST['fileNameUID'] ) ) ) );
+            wp_send_json( array( 'result' => MainWP_Manage_Backups::backup( $_POST['task_id'], $_POST['site_id'], $_POST['fileNameUID'] ) ) );
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(
 				'error' => array(
@@ -1232,7 +1245,8 @@ class MainWP_Post_Handler {
 	function get_site_icon() {
 		if ( $this->check_security( 'mainwp_get_site_icon', 'security' ) ) {
 			$result = MainWP_System::sync_site_icon();
-			die( json_encode( $result ) );
+            //die( json_encode( $result ) );
+            wp_send_json( $result );
 		} else {
 			die( json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
 		}
@@ -1303,10 +1317,11 @@ class MainWP_Post_Handler {
 		}
 
 		if ( $name != null ) {
-			$rslt['sitename'] = $name;
+			$rslt['sitename'] = esc_html($name);
 		}
 
-		die( json_encode( $rslt ) );
+		//die( json_encode( $rslt ) );
+        wp_send_json( $rslt );
 	}
 
 	//Remove a website from MainWP
@@ -1362,7 +1377,7 @@ class MainWP_Post_Handler {
 			if ( isset( $_POST['id'] ) ) {
 				$id = $_POST['id'];
 			}
-			die( json_encode( array( 'result' => MainWP_Right_Now::upgradeSite( $id ) ) ) );
+			die( json_encode( array( 'result' => MainWP_Right_Now::upgradeSite( $id ) ) ) ); //ok
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(
 				'error' => array(
@@ -1375,10 +1390,10 @@ class MainWP_Post_Handler {
 
 	//todo: rename
 	function mainwp_upgradeplugintheme() {
-		
+
 		if (!isset($_POST['type']))
 			die( json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
-		
+
 		if ( $_POST['type'] == 'plugin' && ! mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) {
 			die( json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update plugins', 'mainwp' ), $echo = false ) ) ) );
 		}
@@ -1392,65 +1407,66 @@ class MainWP_Post_Handler {
 		}
 
 		$this->secure_request( 'mainwp_upgradeplugintheme' );
-		
+
 		// at the moment: support chunk update for manage sites page only
-		$chunk_support = isset($_POST['chunk_support']) && $_POST['chunk_support'] ? true : false;		
+		$chunk_support = isset($_POST['chunk_support']) && $_POST['chunk_support'] ? true : false;
 		$max_update = 0;
-		$websiteId = null;		
+		$websiteId = null;
 		$slugs     = '';
 		if ( isset( $_POST['websiteId'] ) ) {
 			$websiteId = $_POST['websiteId'];
-			
+
 			if ($chunk_support) {
 				$max_update = apply_filters('mainwp_update_plugintheme_max', false, $websiteId );
 				if (empty($max_update)) {
 					$chunk_support = false; // there is not hook so disable chunk update support
 				}
-			}			
+			}
 			if ( $chunk_support ) {
 				if (isset($_POST['chunk_slugs'])) {
 					$slugs = $_POST['chunk_slugs'];  // chunk slugs send so use this
 				} else {
-					$slugs = MainWP_Right_Now::getPluginThemeSlugs( $websiteId, $_POST['type'] );				
+					$slugs = MainWP_Right_Now::getPluginThemeSlugs( $websiteId, $_POST['type'] );
 				}
 			} else if ( isset( $_POST['slug'] ) ) {
 				$slugs = $_POST['slug'];
 			} else {
-				$slugs = MainWP_Right_Now::getPluginThemeSlugs( $websiteId, $_POST['type'] );				
+				$slugs = MainWP_Right_Now::getPluginThemeSlugs( $websiteId, $_POST['type'] );
 			}
 		}
-		
+
 		if ( MainWP_DB::Instance()->backupFullTaskRunning( $websiteId ) ) {
 			die( json_encode( array( 'error' =>  __( 'Backup process in progress on the child site. Please, try again later.', 'mainwp' ) ) ) );
 		}
-		
+
 		$chunk_slugs = array();
-		
-		if ( $chunk_support ){		
+
+		if ( $chunk_support ){
 			// calculate update slugs here
 			if ( $max_update ) {
 				$slugs = explode(",", $slugs);
-				$chunk_slugs = array_slice($slugs, $max_update);	
+				$chunk_slugs = array_slice($slugs, $max_update);
 				$update_slugs = array_diff($slugs, $chunk_slugs);
 				$slugs = implode(",", $update_slugs);
-			}			
+			}
 		}
-		
+
 		if ( empty( $slugs ) && ! $chunk_support ) {
 			die( json_encode( array( 'message' => __( 'Item slug could not be found. Update process could not be executed.', 'mainwp' ) ) ) );
 		}
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
-		try {			
+		try {
 			$info = array( 'result' => MainWP_Right_Now::upgradePluginThemeTranslation( $websiteId, $_POST['type'], $slugs ) );
-			
+
 			if ( $chunk_support && (count($chunk_slugs) > 0) ) {
-				$info['chunk_slugs'] = implode(",", $chunk_slugs);				
+				$info['chunk_slugs'] = implode(",", $chunk_slugs);
 			}
-			
+
 			if (!empty($website)) {
 				$info['site_url'] = esc_url($website->url);
 			}
-			die( json_encode( $info ) );
+			//die( json_encode( $info ) );
+            wp_send_json( $info );
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(
 				'error' => array(
@@ -1467,7 +1483,8 @@ class MainWP_Post_Handler {
 		if ( ! isset( $_POST['id'] ) ) {
 			die( json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		die( json_encode( array( 'result' => MainWP_Right_Now::ignorePluginTheme( $_POST['type'], $_POST['slug'], $_POST['name'], $_POST['id'] ) ) ) );
+		//die( json_encode( array( 'result' => MainWP_Right_Now::ignorePluginTheme( $_POST['type'], $_POST['slug'], $_POST['name'], $_POST['id'] ) ) ) );
+        wp_send_json( array( 'result' => MainWP_Right_Now::ignorePluginTheme( $_POST['type'], $_POST['slug'], $_POST['name'], $_POST['id'] ) ) );
 	}
 
 	function mainwp_unignoreabandonedplugintheme() {
@@ -1476,7 +1493,7 @@ class MainWP_Post_Handler {
 		if ( ! isset( $_POST['id'] ) ) {
 			die( json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		die( json_encode( array( 'result' => MainWP_Right_Now::unIgnoreAbandonedPluginTheme( $_POST['type'], $_POST['slug'], $_POST['id'] ) ) ) );
+		die( json_encode( array( 'result' => MainWP_Right_Now::unIgnoreAbandonedPluginTheme( $_POST['type'], $_POST['slug'], $_POST['id'] ) ) ) ); //ok
 	}
 
 	function mainwp_unignoreabandonedpluginsthemes() {
@@ -1529,7 +1546,7 @@ class MainWP_Post_Handler {
 		if ( ! isset( $_POST['slug'] ) ) {
 			die( json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		die( json_encode( array( 'result' => MainWP_Right_Now::ignorePluginsThemes( $_POST['type'], $_POST['slug'], $_POST['name'] ) ) ) );
+		die( json_encode( array( 'result' => MainWP_Right_Now::ignorePluginsThemes( $_POST['type'], $_POST['slug'], $_POST['name'] ) ) ) ); //ok
 	}
 
 	function mainwp_unignorepluginsthemes() {
@@ -1559,7 +1576,8 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_checkbackups' );
 
 		try {
-			die( json_encode( array( 'result' => MainWP_Right_Now::checkBackups() ) ) );
+			//die( json_encode( array( 'result' => MainWP_Right_Now::checkBackups() ) ) );
+            wp_send_json( array( 'result' => MainWP_Right_Now::checkBackups() ) );
 		} catch ( Exception $e ) {
 			die( json_encode( array( 'error' => $e->getMessage() ) ) );
 		}
@@ -1580,23 +1598,6 @@ class MainWP_Post_Handler {
 
 		MainWP_Server_Information::fetchChildServerInformation( $_POST['siteId'] );
 		die();
-	}
-
-	function mainwp_extension_change_view() {
-		$this->secure_request( 'mainwp_extension_change_view' );
-
-		try {
-			die( json_encode( MainWP_Extensions_Widget::changeDefaultView() ) );
-		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array(
-				'error' => array(
-					'message' => $e->getMessage(),
-					'extra'   => $e->getMessageExtra(),
-				),
-			) ) );
-		} catch ( Exception $e ) {
-			die( json_encode( array( 'error' => array( 'message' => $e->getMessage() ) ) ) );
-		}
 	}
 
 	function mainwp_events_notice_hide() {
@@ -1709,7 +1710,7 @@ class MainWP_Post_Handler {
 			'offline_checks_last'  => time(),
 			'http_response_code' => $http_code
 		) );
-		die( json_encode( array( 'httpcode' => $http_code, 'status' => $check_result ? 1 : 0 ) ) );
+		die( json_encode( array( 'httpcode' => esc_html( $http_code ), 'status' => $check_result ? 1 : 0 ) ) );
 	}
 
 	function mainwp_ignore_http_response() {
@@ -1830,7 +1831,8 @@ class MainWP_Post_Handler {
 			$information = array( 'error' => __( 'fetchUrlAuthed exception', 'mainwp' ) );
 		}
 
-		die( json_encode( $information ) );
+		//die( json_encode( $information ) );
+        wp_send_json( $information );
 	}
 }
 

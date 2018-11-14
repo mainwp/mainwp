@@ -1,13 +1,13 @@
 ﻿=== MainWP Dashboard ===
 Contributors: mainwp
-Donate link: 
-Tags: MainWP, Manage WordPress, Managed WordPress, WordPress Management, Manage Multiple Sites, WordPress manager , WordPress management, Control multiple sites, WordPress site management, WordPress management dashboard 
+Donate link:
+Tags: MainWP, Manage WordPress, Managed WordPress, WordPress Management, Manage Multiple Sites, WordPress manager , WordPress management, Control multiple sites, WordPress site management, WordPress management dashboard
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 4.9.8
-Stable tag: 3.5
+Tested up to: 5.0
+Stable tag: 3.5.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,13 +17,13 @@ Manage WP sites from one central location! Much more than just updates, get near
 
 [MainWP](https://mainwp.com) is the only free, fully open source and self-hosted WordPress management plugin available.
 
-And, just because it is free does not mean it’s been stripped down.   The MainWP Dashboard allows you to control virtually all of your daily WordPress maintenance tasks at absolutely no cost. 
+And, just because it is free does not mean it’s been stripped down.   The MainWP Dashboard allows you to control virtually all of your daily WordPress maintenance tasks at absolutely no cost.
 
 The Dashboard plugin allows you to connect and control completely independent WordPress sites even those on different hosts and servers.
 
-MainWP is the perfect solution for affiliates, marketers, developers, WordPress shops and anyone else with multiple WordPress sites. 
+MainWP is the perfect solution for affiliates, marketers, developers, WordPress shops and anyone else with multiple WordPress sites.
 
-= How is MainWP free, what’s the catch, how will you continue to pay development costs? = 
+= How is MainWP free, what’s the catch, how will you continue to pay development costs? =
 
 We make money by selling [Extensions](https://mainwp.com/mainwp-extensions/).
 
@@ -35,7 +35,7 @@ Extensions enhance your MainWP Dashboard with additional features. The catalog o
 
 Please check the [Quick Start - Setting up your MainWP](https://mainwp.com/help/docs/set-up-the-mainwp-plugin/) support doc for more information.
 
-= Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! = 
+= Everything below and more is included in the MainWP Plugins at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! =
 
 [youtube https://www.youtube.com/watch?v=PV3L-MGQOyM]
 
@@ -45,15 +45,15 @@ Please check the [Quick Start - Setting up your MainWP](https://mainwp.com/help/
 = Some of the Free MainWP Features include: =
 
 = Easy Management =
-MainWP takes the hassle out of managing your themes and plugins. The MainWP Dashboard allows easy review of which of your WordPress sites have themes and plugins that need updating. 
+MainWP takes the hassle out of managing your themes and plugins. The MainWP Dashboard allows easy review of which of your WordPress sites have themes and plugins that need updating.
 
 Just one click will update all of your plugins and themes across all your sites.
 
 = Effortless Upgrades =
-Do you have a busy schedule and dread all of the work you’ll be putting into upgrading to the latest version of WordPress? Worry no more! With the click of a button from your MainWP dashboard, all of your WordPress sites will be upgraded to the latest stable version.  
+Do you have a busy schedule and dread all of the work you’ll be putting into upgrading to the latest version of WordPress? Worry no more! With the click of a button from your MainWP dashboard, all of your WordPress sites will be upgraded to the latest stable version.
 
 = One Click Access =
-Do you have too many WordPress sites to remember? Accessing all of your WordPress sites is now a breeze with our intuitive one-click access. Navigate to your sites sub-menu and click the admin link to open, and you’re instantly logged in and ready to work directly in that child site! 
+Do you have too many WordPress sites to remember? Accessing all of your WordPress sites is now a breeze with our intuitive one-click access. Navigate to your sites sub-menu and click the admin link to open, and you’re instantly logged in and ready to work directly in that child site!
 
 = Automated Updates =
 Using the Trusted Plugin and Theme option in your MainWP Dashboard will automatically update all Plugins and Themes that you trust with no further interaction from you. Your MainWP Dashboard will alert you by email with available updates and then will auto-update them the next day.
@@ -74,7 +74,7 @@ The power of the MainWP Dashboard means that publishing content to sites is now 
 Posting content to multiple websites can prove difficult with WordPress alone. With the MainWP Dashboard, posting content to multiple blogs couldn’t be easier. Create the content, select your blogs, and enjoy the time you saved.
 
 = Customize Your MainWP =
-Extensions offer custom functions and features so that each user can tailor their MainWP installation to their specific needs. 
+Extensions offer custom functions and features so that each user can tailor their MainWP installation to their specific needs.
 
 = Developer?  Code your own Extensions  =
 Building on the core principals of WordPress, MainWP allows third party developers to “hook” into it so anything you want can be developed to work within your MainWP Dashboard. You can find more information in the [MainWP Codex](https://mainwp.com/codex/).  Build your own Extensions for both fun and profit.
@@ -89,7 +89,7 @@ MainWP protects you from your competitors, search engines or anyone else with pr
 We know some developers like to keep tight control of what is happening with their plugins but this is your network and we have 100% respect for your privacy. You control and choose the hosting which means we do not have secret access to any of your sites or information.
 
 = Fully Auditable Code =
-Both the MainWP Dashboard and Child plugin are fully open source and GPL compliant with no obfuscated code so you always know what is running on your server. Both plugins are also maintained on GitHub for easy code access. 
+Both the MainWP Dashboard and Child plugin are fully open source and GPL compliant with no obfuscated code so you always know what is running on your server. Both plugins are also maintained on GitHub for easy code access.
 
 = More Information =
 [MainWP Documentation](https://mainwp.com/help/)
@@ -108,14 +108,14 @@ Both the MainWP Dashboard and Child plugin are fully open source and GPL complia
 
 == Installation ==
 
-= Note: MainWP is not tested on or designed for multisite installs, we have reports that most functions work correctly but support will be limited.  We DO NOT recommend installing the MainWP Dashboard plugin on a Multi-site install. = 
+= Note: MainWP is not tested on or designed for multisite installs, we have reports that most functions work correctly but support will be limited.  We DO NOT recommend installing the MainWP Dashboard plugin on a Multi-site install. =
 
 1. We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.
 
 Using a new WordPress install will help to cut down on Plugin Conflicts and other issues that can be caused by trying to run your MainWP Main Dashboard from an active site. Most hosting companies provide free subdomains ("demo.yourdomain.com") and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.
 If you are not sure how to set up a subdomain, contact your hosting companies support.
 
-You can even install your MainWP Dashboard on a WordPress site located on your local computer using [DesktopServer](https://mainwp.com/how-to-use-desktopserver-to-run-your-mainwp-dashboard-locally/), WAMP or any other setup that allows you to run [WordPress locally](https://make.wordpress.org/core/handbook/tutorials/installing-a-local-server/).   
+You can even install your MainWP Dashboard on a WordPress site located on your local computer using [DesktopServer](https://mainwp.com/how-to-use-desktopserver-to-run-your-mainwp-dashboard-locally/), WAMP or any other setup that allows you to run [WordPress locally](https://make.wordpress.org/core/handbook/tutorials/installing-a-local-server/).
 
 2. Once you have setup the separate WordPress install you can install the MainWP Dashboard plugin following your normal installation procedure either the Automatic process by searching MainWP or by uploading the MainWP plugin to the '/wp-content/plugins/' directory.
 
@@ -142,7 +142,7 @@ Please open a [Support Ticket](https://mainwp.com/support/)
 Yes, you can [see them on YouTube](http://www.youtube.com/user/MyMainWP).
 
 = I have an idea for MainWP how do I let you know? =
-Please follow the steps out lined in the [MainWP Roadmaps](https://mainwp.com/mainwp-roadmaps/) so we can add your idea to Trello to be voted on. 
+Please follow the steps out lined in the [MainWP Roadmaps](https://mainwp.com/mainwp-roadmaps/) so we can add your idea to Trello to be voted on.
 
 = I have more questions, do you have any other information? =
 Sure we have a quick FAQ with a lot more questions and answers [here](https://mainwp.com/presales-faq/).
@@ -162,6 +162,23 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.5.1 - 11-14-18 =
+* Fixed: an issue with generating incorrect URL for the Test Connection feature
+* Fixed: an issue with redirecting to the Overview page
+* Fixed multiple PHP warnings
+* Fixed: an issue with updating stagings sites
+* Added: support for custom extension icons
+* Added: a new feature for refreshing site favicons
+* Added: multiple security enhancements
+* Added: mainwp_getmainwpdir hook
+* Added: mainwp_updated_site hook
+* Added: mainwp_synced_all_sites hook
+* Added: mainwp_left_menu_sub hook
+* Added: mainwp_subleft_menu_sub hook
+* Added: mainwp_removed_extension_menu hook
+* Added: mainwp_extensions_top_header_after_tab hook
+* Added: support for the upcoming 3rd party extension
 
 = 3.5 - 9-27-18 =
 * Fixed: multiple PHP warnings
@@ -208,7 +225,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: an issue with caching the Username and Password field values on the Test Connection page
 * Fixed: an issue with resetting User passwords on child sites
 * Fixed: the sync popup layout issue
-* Fixed: an issue with displaying extensions changelogs 
+* Fixed: an issue with displaying extensions changelogs
 * Fixed: multiple typos
 * Fixed: multiple incorrect URLs
 * Fixed: multiple cosmetic issues
@@ -237,7 +254,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: multiple minor issues related to the Client Reports extension
 * Fixed: an issue with the Password field
 * Fixed: an issue with running updates on WP Engine hosted sites
-* Fixed: connection issue with WP Engine hosted sites 
+* Fixed: connection issue with WP Engine hosted sites
 * Added: Screen Options (show/hide columns) for the Manage Posts and Manage Pages pages
 * Added: the new 'mainwp_limit_updates_all' hook for the support of limiting the number of updates to be performed at once
 * Added: a new Advanced Options setting to force IPv4 usage
@@ -256,7 +273,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: sync error caused by the WP-SpamShield plugin
 * Fixed: JavaScript (moment.js) conflict with the Gutenberg plugin
 * Fixed: an issue with sending email notifications about available updates for some users
-* Fixed: an issue with triggering unwanted backups 
+* Fixed: an issue with triggering unwanted backups
 * Fixed: a usability issue with displaying incorrect last sync time
 * Fixed: incorrect changelog links
 * Added: mainwp_updatescheck_disable_notification_mail hook to disable email notifications about available updates
@@ -300,7 +317,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Added: Backup Extensions support for the Require backup before update feature
 * Added: Support for the MainWP Vulnerability Checker Extension
 * Updated: links to MainWP Documentation
-* Performance:  removed excessive queries  
+* Performance:  removed excessive queries
 * Preventative: security improvements
 
 = 3.2.3 - 1-19-17 =
@@ -320,7 +337,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: an issue with connecting HTTPS sites caused by the Select2 library bug
 
 = 3.2.2.1 - 12-30-16 =
-* Fixed: a fatal error on PHP versions less than 5.5 
+* Fixed: a fatal error on PHP versions less than 5.5
 * Added: a message for users on PHP versions less than 5.5 to upgrade
 
 = 3.2.2 - 12-30-16 =
@@ -435,7 +452,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: Issue where some server setups were unable to use the Manage Plugins feature
 
 = 3.1.7 - 8-18-16 =
-* Fixed: Issues with PHP 7 - The MainWP Dashboard is now PHP 7 friendly! :-) 
+* Fixed: Issues with PHP 7 - The MainWP Dashboard is now PHP 7 friendly! :-)
 * Fixed: Themes Installation (upload) page layout issue
 * Security Fix: Fixed minor XSS vulnerabilities (thanks hat_mast3r via Hackerone)
 * Security Fix: Fixed minor CSRF vulnerability where the admin can hide MainWP (thanks jaypatel via Hackerone)
@@ -443,8 +460,8 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 = 3.1.6 - 8-2-16 =
 * Fixed: PHP Warnings
 * Fixed: Issues with escaping HTML attributes
-* Fixed: Copyright footer year (thanks dipakcg) 
-* Fixed: Spelling issues (thanks jorrit) 
+* Fixed: Copyright footer year (thanks dipakcg)
+* Fixed: Spelling issues (thanks jorrit)
 
 = 3.1.5 - 6-12-16 =
 * Fixed: Issue with displaying double sites in the Status row of the Right Now widget
@@ -615,7 +632,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 = 2.0.28 - 9-10-2015 =
 * Fixed: Dashboard layout issue
 * Fixed: Typo
-* Added: Notice if MainWP Child plugin is not set to auto-update and a quick add button 
+* Added: Notice if MainWP Child plugin is not set to auto-update and a quick add button
 
 = 2.0.27 - 9-7-2015 =
 * Added: Confirmation before Upgrading Plugins and Themes
@@ -633,7 +650,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Various info messages
 * Updated: Default value for the Hide MainWP Footer option
 * Updated: Default status for the Plugins search
-* Updated: Default status for the Themes search 
+* Updated: Default status for the Themes search
 * Updated: Ignored Plugins and Themes will not show up in email summary
 * Removed: MainWP Heatmap Extension from the "Available Extensions" list
 * Removed: News Widget
@@ -650,7 +667,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 = 2.0.23 - 8-7-2015 =
 * Fixed: Potential security issue
 * Fixed: Incorrect URL in Email template
-* Fixed: Syntax error in the Right Now widget 
+* Fixed: Syntax error in the Right Now widget
 * Fixed: Incorrect URL for the FileSystem tooltip icon
 * Fixed: An issue with loading JS and CSS scripts
 * Fixed: An issue with Heatmaps not loading
@@ -686,7 +703,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 = 2.0.21 - 7-9-2015 =
 * Fixed: Bug where extensions updates were failing
-* Fixed: Bug where up to date extensions were showing available updates 
+* Fixed: Bug where up to date extensions were showing available updates
 * Fixed: Timeout issue with blocked request by CloudProxy
 * Fixed: Footer sites menu keyboard shortcut prevented typing of capital S (Keyboard shortcut changed to Shift + Ctrl + S)
 * Fixed: An issue with HTML tags in notes
@@ -744,7 +761,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Added: New links to the Shortcuts widget
 * Added: New checks to the Server Information page
 * Added: Support for the upcoming extension
-* Fixed: Multiple PHP Warning 
+* Fixed: Multiple PHP Warning
 * Fixed: Multiple spelling errors
 * Fixed: Individual site Require backup before upgrade settings bug
 * Updated: Required values on the Server Information page
@@ -754,7 +771,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Layout of the Install Themes page (install process screen)
 * Updated: Plugin CSS style
 * Updated: Form fields labels
-* Updated: Layout of the bulk extension installing process screen 
+* Updated: Layout of the bulk extension installing process screen
 * Updated: Extensions sub-menu (removed the "MainWP" and "Extension" from menu items)
 * Updated: Individual site Require backup before upgrade setting
 * Removed: Unnecessary checks from the Server Information page
@@ -767,7 +784,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Plugin install page layout
 * Updated: Theme install page layout
 * Changed: PHP required version on the Server Information page
-* Changed: Various small cosmetic features 
+* Changed: Various small cosmetic features
 
 = 2.0.13 - 4-22-15 =
 * Fixed: Security issue with add_query_arg and remove_query_arg
@@ -778,7 +795,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 = 2.0.12 - 4-16-15  =
 * Fixed: Typo on the Plugins widget
 * Added: Various Notices
-* Added: New Extension in the Available Extensions box on the Extensions page. 
+* Added: New Extension in the Available Extensions box on the Extensions page.
 * Tweaked: Layout of the Backup Options box on the Settings Page
 
 = 2.0.11 - 4-12-15 =
@@ -852,7 +869,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Added: Action logs (to provide better debugging)
 
 = 2.0.4 - 12-26-14 =
-* Added: Hooks for upcoming Team Control Extension 
+* Added: Hooks for upcoming Team Control Extension
 * Fixed: Issues with very large network Dashboard load times
 * Fixed: MainWP Tips dismiss button not removing the message
 * Fixed: Ignored Updates still showing in the Manage Sites table
@@ -909,7 +926,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Tweak: “Auto Update Trust” menu item renamed to “Auto Updates”
 * Tweak: “Child Unique Security Id” field moved to the Advanced Options field
 * Redesign: Warning message on the Sites > Add New page
-* Redesign: Warning message from the Settings page removed and added as an admin notice after the dashboard plugin activation. 
+* Redesign: Warning message from the Settings page removed and added as an admin notice after the dashboard plugin activation.
 * Redesign: The Advanced Settings options separated in different boxes
 * Redesign: New form field style
 * Redesign: New Search Posts, Search Pages, Search Themes, Search Plugin and Search Users form style
@@ -949,7 +966,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Added Several new subtasks to increase performance and reduce timeouts on Backups
 * Added New Hooks for Extensions
 * Fixed Backups allowing special characters that caused backups to fail
-* Fixed Text on Backup popup 
+* Fixed Text on Backup popup
 * Fixed Issue in how categories tree displayed
 * Fixed Exclude folders and categories duplicated in select list when selecting child sites fast
 * Fixed Error on first install that occurred on some Dashboards
@@ -1006,7 +1023,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 = 1.0.8.3 - 5-08-14 =
 * Fixed issue with some missing images
 * Fixed issue with Comments extension redirect
-* Fixed PHP Notice on Sync Now when using strict 
+* Fixed PHP Notice on Sync Now when using strict
 * Updated Test Connection to show the hostname
 * Added new German translations
 
@@ -1034,7 +1051,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Optimized the delay settings between requests and requests to the same ip to reduce timeouts
 
 = 1.0.6 - 3-31-14 =
-* Code changes for WP 3.9 Compatibility 
+* Code changes for WP 3.9 Compatibility
 * Added Plugin Widget to Individual Dashboard screen
 * Added Theme Widget to Individual Dashboard screen
 * Moved Bulk Update Admin password to the Users screen

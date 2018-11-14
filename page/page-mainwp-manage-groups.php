@@ -20,7 +20,7 @@ class MainWP_Manage_Groups {
 		}
 		?>
 
-			<?php do_action( 'mainwp-pageheader-sites', 'ManageGroups' ); ?>			
+			<?php do_action( 'mainwp-pageheader-sites', 'ManageGroups' ); ?>
 			<?php MainWP_Tours::renderGroupsTour(); ?>
 			<div class="mainwp-notice mainwp-notice-blue">
 				<span><?php _e( 'In case you are managing large number of WordPress sites, it would be very useful for you to split them in different groups. Later, you will be able to make site selection by group which will speed up your work and make it much easier.', 'mainwp' ); ?></span>
@@ -261,14 +261,14 @@ class MainWP_Manage_Groups {
 
 	private static function createGroupItem( $group ) {
 		?>
-		<li id="<?php echo $group->id; ?>" class="managegroups-listitem mainwp-padding-5">
+		<li id="<?php echo esc_attr($group->id); ?>" class="managegroups-listitem mainwp-padding-5">
 			<span class="mainwp-right actions-text hidden"><a href="#" class="managegroups-rename"><i class="fa fa-pencil-square-o"></i> <?php _e('Rename','mainwp'); ?></a> | <a href="#" class="managegroups-delete"><i class="fa fa-trash-o"></i> <?php _e('Delete','mainwp'); ?></a></span>
 			<span class="mainwp-right actions-input hidden"><a href="#" class="managegroups-save"><i class="fa fa-floppy-o"></i> <?php _e('Save','mainwp'); ?></a> | <a href="#" class="managegroups-delete"><i class="fa fa-trash-o"></i> <?php _e('Delete','mainwp'); ?></a></span>
-            	<input type="radio" name="groups" value="<?php echo $group->id; ?>" class="managegroups-radio" id="<?php echo MainWP_Utility::getNiceURL( $group->id ); ?>">
+            	<input type="radio" name="groups" value="<?php echo esc_attr($group->id); ?>" class="managegroups-radio" id="<?php echo MainWP_Utility::getNiceURL( $group->id ); ?>">
             	<label for="<?php echo MainWP_Utility::getNiceURL( $group->id ); ?>"></label>
 			<span class="text"><?php echo stripslashes( $group->name ); ?></span>
             <span class="input hidden">
-                <input type="text" style="width: 50%" name="name" placeholder="<?php esc_attr_e('Enter group name','mainwp'); ?>" value="<?php echo $group->name; ?>" />
+                <input type="text" style="width: 50%" name="name" placeholder="<?php esc_attr_e('Enter group name','mainwp'); ?>" value="<?php echo esc_attr($group->name); ?>" />
             </span>
 		</li>
 		<?php
@@ -280,7 +280,7 @@ class MainWP_Manage_Groups {
 		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 			?>
 			<li class="managegroups_site-listitem mainwp-padding-5">
-				<input type="checkbox" name="sites" value="<?php echo $website->id; ?>" id="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>" ><label for="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>"><span class="website_url" style="display: none;"><?php echo MainWP_Utility::getNiceURL( $website->url ); ?></span><span class="website_name"><?php echo stripslashes( $website->name ); ?></span></label>
+				<input type="checkbox" name="sites" value="<?php echo esc_attr($website->id); ?>" id="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>" ><label for="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>"><span class="website_url" style="display: none;"><?php echo MainWP_Utility::getNiceURL( $website->url ); ?></span><span class="website_name"><?php echo stripslashes( $website->name ); ?></span></label>
 			</li>
 			<?php
 		}

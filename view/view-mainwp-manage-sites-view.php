@@ -1,6 +1,6 @@
 <?php
 class MainWP_Manage_Sites_View {
-	public static function initMenu() {                
+	public static function initMenu() {
 		return add_submenu_page( 'mainwp_tab', __( 'Sites','mainwp' ), '<span id="mainwp-Sites">'.__( 'Sites','mainwp' ).'</span>', 'read', 'managesites', array( MainWP_Manage_Sites::getClassName(), 'renderManageSites' ) );
 	}
 
@@ -30,11 +30,11 @@ class MainWP_Manage_Sites_View {
 					if ( isset( $subPages ) && is_array( $subPages ) ) {
 						foreach ( $subPages as $subPage ) {
 							if ( ! isset( $subPage['menu_hidden'] ) || (isset( $subPage['menu_hidden'] ) && $subPage['menu_hidden'] != true) ) {
-                                if ( MainWP_System::is_disable_menu_item(3, 'ManageSites' . $subPage['slug']) ) {                                  
+                                if ( MainWP_System::is_disable_menu_item(3, 'ManageSites' . $subPage['slug']) ) {
                                     continue;
                                 }
 							?>
-								<a href="<?php echo admin_url( 'admin.php?page=ManageSites' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
+								<a href="<?php echo admin_url( 'admin.php?page=ManageSites' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html($subPage['title']); ?></a>
 							<?php
 							}
 						}
@@ -96,7 +96,7 @@ class MainWP_Manage_Sites_View {
                 if ( MainWP_System::is_disable_menu_item(3, $item['slug']) ) {
                     continue;
                 }
-            }                
+            }
             MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
         }
 
@@ -132,7 +132,7 @@ class MainWP_Manage_Sites_View {
             }
         }
     }
-    
+
 	static function getBreadcrumb( $pShowpage, $pSubPages ) {
 		$extra = array();
 		if ( isset( $pSubPages ) && is_array( $pSubPages ) ) {
@@ -143,7 +143,7 @@ class MainWP_Manage_Sites_View {
 				}
 			}
 		}
-                                
+
 		$site_id = null;
 		$page = '';
 		switch ( $pShowpage ) {
@@ -165,7 +165,7 @@ class MainWP_Manage_Sites_View {
 			case 'ManageSitesBackups':
 				$site_id = $_GET['backupid'];
 				$page = 'backup';
-				break;                            
+				break;
                         case 'ManageSitesUpdates':
                             $site_id = $_GET['updateid'];
                             $page = 'update';
@@ -220,7 +220,7 @@ class MainWP_Manage_Sites_View {
 							'text' => __( 'Bulk Upload', 'mainwp' ),
 							'alt' => '',
 							'parent' => 'site',
-							),			
+							),
 			'edit' => array(
 			'href' => '',
 							'text' => $current_site . __( 'Edit', 'mainwp' ),
@@ -232,13 +232,13 @@ class MainWP_Manage_Sites_View {
 							'text' => $current_site . __( 'Backups', 'mainwp' ),
 							'alt' => '',
 							'parent' => 'site',
-							),     
+							),
                         'update' => array(
 			'href' => '',
 							'text' => $current_site . __( 'Updates', 'mainwp' ),
 							'alt' => '',
 							'parent' => 'site',
-							),     
+							),
 			'scan' => array(
 			'href' => '',
 							'text' => $current_site . __( 'Security Scan', 'mainwp' ),
@@ -273,16 +273,16 @@ class MainWP_Manage_Sites_View {
 		if ( ! empty( $str_breadcrumb ) ) {
             $selectOpts = array();
             while ( $websites && ($website = @MainWP_DB::fetch_object( $websites )) ) {
-                $selectOpts[] = array( 'siteid' => $website->id, 'name' => stripslashes( $website->name ) );				
+                $selectOpts[] = array( 'siteid' => $website->id, 'name' => stripslashes( $website->name ) );
 			}
             @MainWP_DB::free_result( $websites );
-            
-            if ($selectOpts) {    
+
+            if ($selectOpts) {
                 $select_ops_html = '';
                 $prev_siteid = $next_siteid = 0;
                 foreach ( $selectOpts as $i => $val ) {
                     $select_ops_html .= '<option value="'.$val['siteid'].'">' . $val['name'] . '</option>';
-                    if ($val['siteid'] == $site_id) {                        
+                    if ($val['siteid'] == $site_id) {
                         if ($i-1 >= 0) {
                             $prev_siteid = $selectOpts[$i-1]['siteid'];
                         }
@@ -291,26 +291,26 @@ class MainWP_Manage_Sites_View {
                         }
                     }
                 }
-                
+
                 $pre_next_html = '<div class="sites-navi-buttons">';
                 if ($prev_siteid)
                     $pre_next_html .= '<button class="left dashicons" onclick="location.href=\'admin.php?page=managesites&dashboard=' . $prev_siteid. '\';" title="' . __('Previous', 'mainwp') . '" ><span class="screen-reader-text">Previous</span></button>';
                 else
                     $pre_next_html .= '<button class="left dashicons disabled"><span class="screen-reader-text">Edit previous media item</span></button>';
-                
-                if ($next_siteid) 
+
+                if ($next_siteid)
                     $pre_next_html .= '<button class="right dashicons" onclick="location.href=\'admin.php?page=managesites&dashboard=' . $next_siteid. '\';" title="' . __('Next', 'mainwp') . '"><span class="screen-reader-text">Next</span></button>';
                 else
                     $pre_next_html .= '<button class="right dashicons disabled"><span class="screen-reader-text">Edit next media item</span></button>';
-                
-                $pre_next_html .= '</div>';                        
-                                
-                $html = '<div class="postbox mainwp-breadcrumb"><div class="inside"><div class="breadcrumb-wrap">' . 
-                        '<span class="mainwp-left mainwp-cols-2 mainwp-padding-top-15"><i class="fa fa-map-signs" aria-hidden="true"></i> ' . __( 'You are here: ','mainwp' ) . '&nbsp;&nbsp;' .  $str_breadcrumb . '</span> ' .  
+
+                $pre_next_html .= '</div>';
+
+                $html = '<div class="postbox mainwp-breadcrumb"><div class="inside"><div class="breadcrumb-wrap">' .
+                        '<span class="mainwp-left mainwp-cols-2 mainwp-padding-top-15"><i class="fa fa-map-signs" aria-hidden="true"></i> ' . __( 'You are here: ','mainwp' ) . '&nbsp;&nbsp;' .  $str_breadcrumb . '</span> ' .
                         '<span class="mainwp-right mainwp-padding-top-10 mainwp-cols-2 mainwp-t-align-right">' . __( 'Jump to ','mainwp' ) . '
                             <select id="mainwp-quick-jump-child" name="" class="mainwp-select2">
-                                <option value="" selected="selected">' . __( 'Select Site ','mainwp' ) . '</option>';                
-                $html .= $select_ops_html;                
+                                <option value="" selected="selected">' . __( 'Select Site ','mainwp' ) . '</option>';
+                $html .= $select_ops_html;
                 $html .= '
                         </select>
                         <select id="mainwp-quick-jump-page" name="" class="mainwp-select2">
@@ -331,13 +331,13 @@ class MainWP_Manage_Sites_View {
                                     }
 
                                 }
-                            }   
+                            }
                             $html .= '<option value="scanid">' . __( 'Security Scan ','mainwp' ) . '</option>
                         </select>' .
-                    '</span>' .                     
+                    '</span>' .
                      '</div>' .  // breadcrumb-wrap
-                    $pre_next_html .                    
-                    '</div>' . 
+                    $pre_next_html .
+                    '</div>' .
                 '</div>';
             }
         }
@@ -352,17 +352,17 @@ class MainWP_Manage_Sites_View {
 
 		$site_id = 0;
 		if ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) {
-			$site_id = $_GET['id'];                        
+			$site_id = $_GET['id'];
                 } else if ( isset( $_GET['backupid'] ) && ! empty( $_GET['backupid'] ) ) {
-                        $site_id = $_GET['backupid'];                         
+                        $site_id = $_GET['backupid'];
                 } else if ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) {
-                        $site_id = $_GET['updateid'];                         
+                        $site_id = $_GET['updateid'];
                 } else if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) {
-                        $site_id = $_GET['dashboard'];                                
+                        $site_id = $_GET['dashboard'];
                 } else if ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) {
-                        $site_id = $_GET['scanid'];                                        
+                        $site_id = $_GET['scanid'];
                 }
-                
+
                 $managesites_pages = array(
                         'ManageSites' => array( 'href' => 'admin.php?page=managesites', 'title' => __( 'Manage Sites','mainwp' ), 'access' => true ),
                         'AddNew' => array( 'href' => 'admin.php?page=managesites&do=new', 'title' => __( 'Add New','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'add_sites' ) ),
@@ -378,8 +378,8 @@ class MainWP_Manage_Sites_View {
                         'ManageSitesBackups' => array( 'href' => 'admin.php?page=managesites&backupid=' . $site_id, 'title' => __( 'Backups','mainwp' ), 'access' => mainwp_current_user_can( 'dashboard', 'execute_backups' ) ),
                         'SecurityScan' => array( 'href' => 'admin.php?page=managesites&scanid=' . $site_id, 'title' => __( 'Security Scan','mainwp' ), 'access' => true ),
                 );
-                
-                
+
+
 		global $mainwpUseExternalPrimaryBackupsMethod;
 		if ( ! empty( $mainwpUseExternalPrimaryBackupsMethod ) ) {
 			unset( $site_pages['ManageSitesBackups'] );
@@ -388,7 +388,7 @@ class MainWP_Manage_Sites_View {
                         unset($site_pages['ManageSitesBackups']);
                     }
                 }
-                               
+
 		$breadcrumd = '';
 		if ( ! isset( $managesites_pages[ $shownPage ] ) ) {
 			$breadcrumd = self::getBreadcrumb( $shownPage, $subPages );
@@ -425,45 +425,45 @@ class MainWP_Manage_Sites_View {
 			<?php
 			if ( isset( $managesites_pages[ $shownPage ] ) ) {
 				foreach ( $managesites_pages as $page => $value ) {
-                    
+
                     if ( MainWP_System::is_disable_menu_item(3, $page) )
                         continue;
-            
+
 					if ( ! $value['access'] ) {
 						continue;
 					}
 					?>
-					<a class="nav-tab pos-nav-tab <?php echo $shownPage == $page ? 'nav-tab-active' : '' ?>" href="<?php echo $value['href']; ?>"><?php echo $value['title']; ?></a>
+					<a class="nav-tab pos-nav-tab <?php echo $shownPage == $page ? 'nav-tab-active' : '' ?>" href="<?php echo esc_url($value['href']); ?>"><?php echo esc_html($value['title']); ?></a>
 					<?php
 				}
 			} else if ( $site_id ) {
 				foreach ( $site_pages as $page => $value ) {
                     if ( MainWP_System::is_disable_menu_item(3, $page) )
                         continue;
-                    
+
 					if ( ! $value['access'] ) {
 						continue;
 					}
 					?>
-					<a class="nav-tab pos-nav-tab <?php echo $shownPage == $page ? 'nav-tab-active' : '' ?>" href="<?php echo $value['href']; ?>"><?php echo $value['title']; ?></a>
+					<a class="nav-tab pos-nav-tab <?php echo $shownPage == $page ? 'nav-tab-active' : '' ?>" href="<?php echo esc_url($value['href']); ?>"><?php echo esc_html($value['title']); ?></a>
 					<?php
 				}
 			}
 
 			if ( isset( $subPages ) && is_array( $subPages ) ) {
 				foreach ( $subPages as $subPage ) {
-                    if ( MainWP_System::is_disable_menu_item(3, 'ManageSites' . $subPage['slug']) ) 
+                    if ( MainWP_System::is_disable_menu_item(3, 'ManageSites' . $subPage['slug']) )
                         continue;
-                    
+
 					if ( isset( $subPage['sitetab'] ) && $subPage['sitetab'] == true && empty( $site_id ) ) {
 						continue;
 					}
 					?>
-					<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) { echo 'nav-tab-active'; } ?>" href="admin.php?page=ManageSites<?php echo $subPage['slug'] . ($site_id ? '&id=' . esc_attr( $site_id ) : ''); ?>"><?php echo $subPage['title']; ?></a>
+					<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) { echo 'nav-tab-active'; } ?>" href="admin.php?page=ManageSites<?php echo esc_attr($subPage['slug']) . ($site_id ? '&id=' . esc_attr( $site_id ) : ''); ?>"><?php echo esc_html($subPage['title']); ?></a>
 					<?php
 				}
 			}
-			?>			
+			?>
 			<div class="clear"></div>
 		</div>
 
@@ -477,7 +477,7 @@ class MainWP_Manage_Sites_View {
 		</div>
 		<?php
 	}
-	
+
 	public static function renderTestConnection() {
 	?>
 		<div class="mainwp-postbox-actions-top">
@@ -490,7 +490,7 @@ class MainWP_Manage_Sites_View {
 					<td>
 						<input type="text" id="mainwp_managesites_test_wpurl"
 							   name="mainwp_managesites_add_wpurl"
-							   value="<?php if ( isset( $_REQUEST['site'] ) ) {echo esc_attr( $_REQUEST['site'] );} ?>" autocompletelist="mainwp-test-sites" class="mainwp_autocomplete" />
+                               value="<?php if ( isset( $_REQUEST['site'] ) ) {echo esc_attr( urldecode($_REQUEST['site']) );} ?>" autocompletelist="mainwp-test-sites" class="mainwp_autocomplete" />
 						<datalist id="mainwp-test-sites">
 							<?php
 							$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
@@ -507,7 +507,7 @@ class MainWP_Manage_Sites_View {
 		</div>
 	<?php
 	}
-	
+
 	public static function renderTestAdvancedOptions() {
 	?>
 		<table class="form-table">
@@ -531,7 +531,7 @@ class MainWP_Manage_Sites_View {
 						 <option value="2"><?php _e( 'SSL v2','mainwp' ); ?></option>
 						 <option value="3"><?php _e( 'SSL v3','mainwp' ); ?></option>
 						 <option value="4"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
-						 <option value="5"><?php _e( 'TLS v1.1','mainwp' ); ?></option>						 
+						 <option value="5"><?php _e( 'TLS v1.1','mainwp' ); ?></option>
 					 </select> <em>(<?php _e( 'Default: Auto detect','mainwp' ); ?>)</em>
 				</td>
 			</tr>
@@ -546,7 +546,7 @@ class MainWP_Manage_Sites_View {
 					 </select> <em>(<?php _e( 'Default: Yes','mainwp' ); ?>)</em>
 				</td>
 			</tr>
-            
+
 			<!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
 			<input style="display:none" type="text" name="fakeusernameremembered"/>
 			<input style="display:none" type="password" name="fakepasswordremembered"/>
@@ -562,7 +562,7 @@ class MainWP_Manage_Sites_View {
 		</table>
 	<?php
 	}
-	
+
 	public static function renderImportSites() {
 		?>
             <div id="MainWPBulkUploadSitesLoading" class="updated" style="display: none;">
@@ -573,7 +573,7 @@ class MainWP_Manage_Sites_View {
 			if ( $_FILES['mainwp_managesites_file_bulkupload']['error'] == UPLOAD_ERR_OK ) {
 				if ( is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
 					$content = file_get_contents( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] );
-					$lines = explode( "\r\n", $content ); // PHP_EOL									
+					$lines = explode( "\r\n", $content ); // PHP_EOL
 					$allowedHeaders = array('site name', 'url', 'admin name', 'group', 'security id', 'http username', 'http password', 'verify certificate', 'ssl version');
 					$default = array('', '', '', '', '', '', '', '1', 'auto');
 
@@ -599,11 +599,11 @@ class MainWP_Manage_Sites_View {
 							}
 
 							$items = explode( ',', $line );
-							
+
 							// to avoid empty rows issue
-							if (count($items) < 3) 
+							if (count($items) < 3)
 								continue;
-							
+
 							$line = '';
 							for ($x = 0; $x < count($allowedHeaders); $x++)
 							{
@@ -640,7 +640,7 @@ class MainWP_Manage_Sites_View {
 							$i++;
 						}
 
-						?>                        
+						?>
                         <input type="hidden" id="mainwp_managesites_do_import" value="1"/>
                         <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo $i ?>"/>
 
@@ -661,7 +661,7 @@ class MainWP_Manage_Sites_View {
                         <div class="mainwp_managesites_import_listing"
                              id="mainwp_managesites_import_fail_logging" style="display: none;">
                             <pre class="log"><?php echo esc_attr($header_line); ?></pre>
-                        </div></p>                        
+                        </div></p>
 						<br style="clear:both" />
                         <?php
 					} else {
@@ -679,7 +679,7 @@ class MainWP_Manage_Sites_View {
                 <div class="error below-h2">
                     <?php foreach ( $errors as $error ) {
 					?>
-                    <p><strong>ERROR</strong>: <?php echo $error ?></p>
+                    <p><strong>ERROR</strong>: <?php echo esc_html($error); ?></p>
                     <?php } ?>
                 </div>
                 <br/>
@@ -692,7 +692,7 @@ class MainWP_Manage_Sites_View {
 	}
 
 
-	public static function renderNewSite() {				
+	public static function renderNewSite() {
 		$groups = MainWP_DB::Instance()->getGroupsForCurrentUser();
 		if (!is_array($groups))
 			$groups = array();
@@ -795,14 +795,14 @@ class MainWP_Manage_Sites_View {
                                    value=""
                                    class=""/>
                     </td>
-               </tr> 
+               </tr>
                <tr>
                    <th scope="row"><?php _e('Groups','mainwp'); ?></th>
                    <td><span id="mainwp_managesites_add_addgroups_wrap">
-                        <select 
+                        <select
                                name="selected_groups[]"
                                id="mainwp_managesites_add_addgroups" style="width: 350px"
-							   multiple="multiple" /><?php 
+							   multiple="multiple" /><?php
                            foreach ($groups as $group)
                            {
 								echo '<option value="' . $group->id . '">' . stripslashes($group->name)  . '</option>';
@@ -810,13 +810,13 @@ class MainWP_Manage_Sites_View {
 							?></select></span>
                    </td>
                </tr>
-               </table>   
-           
-               
+               </table>
+
+
                <?php
                     $current_options = get_option( 'mainwp_opts_saving_status' );
-                    $disabled_pop_notice = (is_array($current_options) && isset($current_options['disable_newsite_notice'])) ? true : false;                                                            
-                    
+                    $disabled_pop_notice = (is_array($current_options) && isset($current_options['disable_newsite_notice'])) ? true : false;
+
                     if (!$disabled_pop_notice) {
                         $value = MainWP_DB::Instance()->getWebsitesCount();
                         if ($value > 0) {
@@ -829,47 +829,47 @@ class MainWP_Manage_Sites_View {
                             if (false) {
                             ?>
                             <div id="newsite-pop-box" title="<?php _e('Not sure what to add here?'); ?>" style="display: none;">
-                                <?php _e('Please check this page:', 'mainwp');?> <a href="" id="connection_detail_lnk" target="_blank"></a>                            
+                                <?php _e('Please check this page:', 'mainwp');?> <a href="" id="connection_detail_lnk" target="_blank"></a>
                                 <br/><br/>
                                 <p style="text-align: center">
                                     <input id="newsite-pop-box-close" type="button" name="close" value="Close" class="button"/>
-                                    <input id="newsite-pop-box-disable" type="button" name="donotshow" value="<?php echo esc_attr('Don\'t show this again', 'mainwp'); ?>" class="button"/>                                
+                                    <input id="newsite-pop-box-disable" type="button" name="donotshow" value="<?php echo esc_attr('Don\'t show this again', 'mainwp'); ?>" class="button"/>
                                 </p>
                             </div>
                             <?php } ?>
-                                <div class="mainwp-popup-overlay-hidden" id="newsite-pop-box" tabindex="0" role="dialog" style="text-align: center">        
+                                <div class="mainwp-popup-overlay-hidden" id="newsite-pop-box" tabindex="0" role="dialog" style="text-align: center">
                                  <div class="mainwp-popup-backdrop"></div>
                                  <div class="mainwp-popup-wrap wp-clearfix" role="document">
                                      <div class="mainwp-popup-header">
                                          <h2 class="title" ><?php _e('Not sure what to add here?'); ?></h2>
                                          <button type="button" class="close dashicons dashicons-no"><span class="screen-reader-text"><?php _e( 'Close dialog' ); ?></span></button>
-                                     </div>                
+                                     </div>
                                      <div class="mainwp-popup-content" style="text-align: left" id="refresh-status-content">
-                                         <?php _e('Please check this page:', 'mainwp');?> <a href="" id="connection_detail_lnk" target="_blank"></a>                                                                    
-                                     </div>    
+                                         <?php _e('Please check this page:', 'mainwp');?> <a href="" id="connection_detail_lnk" target="_blank"></a>
+                                     </div>
                                      <div class="mainwp-popup-actions">
                                          <input id="newsite-pop-box-close" type="button" name="close" value="Close" class="button"/>
-                                         <input id="newsite-pop-box-disable" type="button" name="donotshow" value="<?php echo esc_attr('Don\'t show this again', 'mainwp'); ?>" class="button"/>                                
+                                         <input id="newsite-pop-box-disable" type="button" name="donotshow" value="<?php echo esc_attr('Don\'t show this again', 'mainwp'); ?>" class="button"/>
                                      </div>
-                                 </div>        
-                             </div>   
+                                 </div>
+                             </div>
 
                             <?php
                         }
                     }
-                    
+
                ?>
                     <script type="text/javascript">
-                            jQuery( document ).ready( function () {			
+                            jQuery( document ).ready( function () {
                                     <?php if (count($groups) == 0) { ?>
                                     jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});
                                     //jQuery('#mainwp_managesites_add_addgroups').prop("disabled", true);
                                     <?php } else { ?>
                                     jQuery('#mainwp_managesites_add_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, tags: true, placeholder: " "});
-                                    <?php } ?>                                         
-                                    <?php if (!$disabled_pop_notice) { ?>                                            
+                                    <?php } ?>
+                                    <?php if (!$disabled_pop_notice) { ?>
                                             var pop_showed = false;
-                                            jQuery("#mainwp_managesites_add_wpurl").blur(function() {      
+                                            jQuery("#mainwp_managesites_add_wpurl").blur(function() {
                                                 if (jQuery('#mainwp_managesites_add_wpurl').val().trim() == '')
                                                     return false;
                                                 var detail_url = jQuery('#mainwp_managesites_add_wpurl_protocol option:selected').text() + jQuery('#mainwp_managesites_add_wpurl').val().trim() + '/wp-admin/options-general.php?page=mainwp_child_tab&tab=connection-detail';
@@ -881,18 +881,18 @@ class MainWP_Manage_Sites_View {
 //                                                        height: 150,
 //                                                        width: 500,
 //                                                        modal: true,
-//                                                        close: function(event, ui) {jQuery('#newsite-pop-box').dialog('destroy');}});                                                      
+//                                                        close: function(event, ui) {jQuery('#newsite-pop-box').dialog('destroy');}});
                                                     mainwpPopup('#newsite-pop-box').init({title: __("Not sure what to add here?")}); // do not reload after popup closed
-                                                } 
+                                                }
                                             });
                                             jQuery('#newsite-pop-box-close').on('click', function(event)
-                                            {                                                
-                                                //jQuery('#newsite-pop-box').dialog('destroy');                                                
-                                                mainwpPopup('#newsite-pop-box').close();        
+                                            {
+                                                //jQuery('#newsite-pop-box').dialog('destroy');
+                                                mainwpPopup('#newsite-pop-box').close();
                                             });
-                                            
+
                                             jQuery('#newsite-pop-box-disable').on('click', function(event)
-                                            {       
+                                            {
                                                 var data = {
                                                     action:'mainwp_saving_status',
                                                     saving_status: 'disable_newsite_notice',
@@ -901,11 +901,11 @@ class MainWP_Manage_Sites_View {
                                                 };
                                                 jQuery.post(ajaxurl, data, function (res) {
                                                 });
-                                                //jQuery('#newsite-pop-box').dialog('destroy');                                                
-                                                mainwpPopup('#newsite-pop-box').close();        
+                                                //jQuery('#newsite-pop-box').dialog('destroy');
+                                                mainwpPopup('#newsite-pop-box').close();
                                             });
-                                            
-                                    <?php } ?> 
+
+                                    <?php } ?>
                             });
                     </script>
                </div>
@@ -915,7 +915,7 @@ class MainWP_Manage_Sites_View {
 
 	}
 
-	public static function renderSyncExtsSettings() {	
+	public static function renderSyncExtsSettings() {
 	$sync_extensions_options = apply_filters( 'mainwp-sync-extensions-options', array() );
 	$working_extensions = MainWP_Extensions::getExtensions();
 	$available_exts_data = MainWP_Extensions_View::getAvailableExtensions();
@@ -930,6 +930,8 @@ class MainWP_Manage_Sites_View {
                                 $sync_info = isset( $sync_extensions_options[$dir_slug] ) ? $sync_extensions_options[$dir_slug] : array();
                                 $ext_name = str_replace("MainWP", "", $data['name']);
                                 $ext_name = str_replace("Extension", "", $ext_name);
+                                $ext_name = trim($ext_name);
+                                $ext_name = esc_html($ext_name);
 
                                 $ext_data = isset( $available_exts_data[dirname($slug)] ) ? $available_exts_data[dirname($slug)] : array();
                                 if ( isset($ext_data['img']) ) {
@@ -940,12 +942,12 @@ class MainWP_Manage_Sites_View {
                                 $html = '<div class="sync-ext-row" slug="' . $dir_slug. '" ext_name = "' . esc_attr($ext_name) . '"status="queue">';
                                 $html .= '<br/><img src="' . $img_url .'" height="24" style="margin-bottom: -5px;">' . '<h3 style="display: inline;">' . $ext_name . '</h3><br/><br/>';
                                 if (isset($sync_info['plugin_slug']) && !empty($sync_info['plugin_slug'])) {
-                                        $html .= '<div class="sync-install-plugin" slug="' . esc_attr(dirname($sync_info['plugin_slug']) ) .'" plugin_name="' . esc_attr($sync_info['plugin_name']) . '"><label><input type="checkbox" class="chk-sync-install-plugin" /> ' . esc_html( sprintf( __('Install %s plugin', 'mainwp'), $sync_info['plugin_name']) ) . '</label> <i class="fa fa-spinner fa-pulse" style="display: none"></i> <span class="status"></span></div>';
+                                        $html .= '<div class="sync-install-plugin" slug="' . esc_attr(dirname($sync_info['plugin_slug']) ) .'" plugin_name="' . esc_attr($sync_info['plugin_name']) . '"><label><input type="checkbox" class="chk-sync-install-plugin" /> ' . esc_html( sprintf( __('Install %s plugin', 'mainwp'), esc_html($sync_info['plugin_name'])) ) . '</label> <i class="fa fa-spinner fa-pulse" style="display: none"></i> <span class="status"></span></div>';
                                         if (!isset($sync_info['no_setting']) || empty($sync_info['no_setting'])) {
-                                                $html .= '<div class="sync-options options-row"><label><input type="checkbox" /> ' . sprintf( __('Apply %s %ssettings%s', 'mainwp'), $sync_info['plugin_name'], '<a href="admin.php?page=' . $data['page'] . '">', '</a>' ) . '</label> <i class="fa fa-spinner fa-pulse" style="display: none"></i> <span class="status"></span></div>';
+                                                $html .= '<div class="sync-options options-row"><label><input type="checkbox" /> ' . sprintf( __('Apply %s %ssettings%s', 'mainwp'), esc_html($sync_info['plugin_name']), '<a href="admin.php?page=' . $data['page'] . '">', '</a>' ) . '</label> <i class="fa fa-spinner fa-pulse" style="display: none"></i> <span class="status"></span></div>';
                                         }
                                 } else {
-                                        $html .= '<div class="sync-global-options options-row"><label><input type="checkbox" /> ' . esc_html( sprintf( __('Apply global %s options', 'mainwp'), trim($ext_name)) ) . '</label> <i class="fa fa-spinner fa-pulse"  style="display: none"></i> <span class="status"></span></div>';
+                                        $html .= '<div class="sync-global-options options-row"><label><input type="checkbox" /> ' . esc_html( sprintf( __('Apply global %s options', 'mainwp'), $ext_name) ) . '</label> <i class="fa fa-spinner fa-pulse"  style="display: none"></i> <span class="status"></span></div>';
                                 }
                                 $html .= '</div>';
                                 echo $html;
@@ -955,7 +957,7 @@ class MainWP_Manage_Sites_View {
 	}
 
 	public static function renderAdvancedOptions() {
-	?>	
+	?>
                     <table class="form-table">
                         <tr class="form-field form-required">
 				 <th scope="row"><?php _e('Child Unique Security
@@ -986,12 +988,12 @@ class MainWP_Manage_Sites_View {
 					<span id="mainwp_managesites_ssl_version_wrap">
 						<select class="mainwp-select2" id="mainwp_managesites_ssl_version" name="mainwp_managesites_ssl_version">
 	                                 <option selected value="auto"><?php _e( 'Auto detect','mainwp' ); ?></option>
-                                         <option value="1.2"><?php _e( "Let's encrypt (TLS v1.2)",'mainwp' ); ?></option>                                         
+                                         <option value="1.2"><?php _e( "Let's encrypt (TLS v1.2)",'mainwp' ); ?></option>
 	                                 <option value="1.x"><?php _e( 'TLS v1.x','mainwp' ); ?></option>
 	                                 <option value="2"><?php _e( 'SSL v2','mainwp' ); ?></option>
 	                                 <option value="3"><?php _e( 'SSL v3','mainwp' ); ?></option>
 	                                 <option value="1.0"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
-	                                 <option value="1.1"><?php _e( 'TLS v1.1','mainwp' ); ?></option>	                                 
+	                                 <option value="1.1"><?php _e( 'TLS v1.1','mainwp' ); ?></option>
 	                             </select> <em>(<?php _e( 'Default: Auto detect','mainwp' ); ?>)</em>
 					 </span>
 	                        </td>
@@ -1008,7 +1010,7 @@ class MainWP_Manage_Sites_View {
                                 </span>
                             </td>
                         </tr>
-                        
+
                         <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
                         <input style="display:none" type="text" name="fakeusernameremembered"/>
                         <input style="display:none" type="password" name="fakepasswordremembered"/>
@@ -1039,9 +1041,9 @@ class MainWP_Manage_Sites_View {
                     </table>
 <?php
 	}
-        
+
 	public static function renderBulkUpload() {
-		?>	
+		?>
 			<div class="mainwp-postbox-actions-top">
            		<?php _e('Import sites allows you to connect a large number of child sites at once by uploading a CSV file. The MainWP Child plugin needs to be installed and activated before using the Import Sites option.','mainwp'); ?>
            </div>
@@ -1053,9 +1055,9 @@ class MainWP_Manage_Sites_View {
 							   id="mainwp_managesites_file_bulkupload"
 							   accept="text/comma-separated-values"
 							   class="regular-text"/>
-					   
 
-						<div>						
+
+						<div>
 							<p>
 								<input type="checkbox" name="mainwp_managesites_chk_header_first"
 									   checked="checked"
@@ -1071,7 +1073,7 @@ class MainWP_Manage_Sites_View {
            </div>
 		<?php
 	}
-	
+
 	public static function showBackups( &$website, $fullBackups, $dbBackups ) {
 		$output = '';
 		echo '<table>';
@@ -1113,7 +1115,7 @@ class MainWP_Manage_Sites_View {
 		$notificationOnBackupStart = get_option( 'mainwp_notificationOnBackupStart' );
 		$chunkedBackupTasks = get_option( 'mainwp_chunkedBackupTasks' );
         $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
-                
+
 		$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
 		$loadFilesBeforeZip = ($loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false);
 
@@ -1154,8 +1156,8 @@ class MainWP_Manage_Sites_View {
             <th scope="row"><?php _e( 'Select primary backup system','mainwp' ); ?></th>
                <td>
                 <span><select class="mainwp-select2-super" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
-                        <?php 
-                        if ($enableLegacyBackupFeature) { 
+                        <?php
+                        if ($enableLegacyBackupFeature) {
                         ?>
                         <option value="" ><?php echo __('Default MainWP Backups', 'mainwp')?></option>
                         <?php
@@ -1263,7 +1265,7 @@ class MainWP_Manage_Sites_View {
                    <label for="mainwp_options_chunkedBackupTasks"></label>
                 </div>
             </td>
-        </tr>        
+        </tr>
         </tbody>
     </table>
     <?php
@@ -1288,8 +1290,8 @@ class MainWP_Manage_Sites_View {
             </div>
     <?php
 	}
-        
-         public static function renderUpdates() { 
+
+         public static function renderUpdates() {
             $website_id = MainWP_Utility::get_current_wpid();
             $total_vulner = 0;
             if ( $website_id ) {
@@ -1307,13 +1309,13 @@ class MainWP_Manage_Sites_View {
             <div class="postbox" id="mainwp_page_updates_tab-contextbox-1">
                 <h3 class="mainwp_box_title">
                         <span><i class="fa fa-refresh" aria-hidden="true"></i> <?php _e( 'Updates', 'mainwp' ); ?></span></h3>
-                            <div class="inside">                
+                            <div class="inside">
                             <div id="rightnow_list" xmlns="http://www.w3.org/1999/html"><?php MainWP_Right_Now::renderSites($updates = true); ?></div>
                     </div>
             </div>
             <?php
         }
-        
+
 	public static function renderBackupSite( &$website ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
 			mainwp_do_not_have_permissions( __( 'execute backups', 'mainwp' ) );
@@ -1327,12 +1329,12 @@ class MainWP_Manage_Sites_View {
 		?>
         <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
-        
+
         <?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
-			<div class="mainwp-notice mainwp-notice-blue"><?php echo sprintf( __('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>           
-        <?php } 
-        MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_managesites_backup'); 
-        
+			<div class="mainwp-notice mainwp-notice-blue"><?php echo sprintf( __('Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %sExtensions Site%s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
+        <?php }
+        MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_managesites_backup');
+
         if (false) {
             ?>
             <div id="managesite-backup-status-box" title="Backup <?php echo stripslashes( $website->name ); ?>" style="display: none; text-align: center">
@@ -1343,46 +1345,46 @@ class MainWP_Manage_Sites_View {
             <?php
         }
         ?>
-            
-        <div class="mainwp-popup-overlay-hidden" id="managesite-backup-status-box" tabindex="0" role="dialog" style="text-align: center">        
+
+        <div class="mainwp-popup-overlay-hidden" id="managesite-backup-status-box" tabindex="0" role="dialog" style="text-align: center">
             <div class="mainwp-popup-backdrop"></div>
             <div class="mainwp-popup-wrap wp-clearfix" role="document">
                 <div class="mainwp-popup-header">
                     <h2 class="title" >Backup <?php echo stripslashes( $website->name ); ?></h2>
                     <button type="button" class="close dashicons dashicons-no"><span class="screen-reader-text"><?php _e( 'Close dialog' ); ?></span></button>
-                </div>                
+                </div>
                 <div class="mainwp-popup-content" style="text-align: left" id="refresh-status-content">
-                </div>    
+                </div>
                 <div class="mainwp-popup-actions">
                     <input id="managesite-backup-status-close" type="button" name="Close" value="Cancel" class="button" />
                 </div>
-            </div>        
-        </div>   
-            
+            </div>
+        </div>
+
         <?php
     }
 
-	public static function renderBackupDetails($post, $metabox) {	
+	public static function renderBackupDetails($post, $metabox) {
 		$websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );		
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 		if ( empty( $website ) )
-			return;			
+			return;
 				MainWP_Manage_Sites::showBackups( $website );
 	}
-			
-	public static function renderBackupOptions($post, $metabox) {	
+
+	public static function renderBackupOptions($post, $metabox) {
 		$websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );		
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 		if ( empty( $website ) )
-			return;	
+			return;
 
 		$remote_destinations = apply_filters( 'mainwp_backups_remote_get_destinations', null, array( 'website' => $website->id ) );
 		$hasRemoteDestinations = ($remote_destinations == null ? $remote_destinations : count( $remote_destinations ));
 				?>
             <form method="POST" action="" id="mainwp_backup_sites_page">
 			<input type="hidden" name="site_id" id="backup_site_id" value="<?php echo $website->id; ?>"/>
-			<input type="hidden" name="backup_site_full_size" id="backup_site_full_size" value="<?php echo $website->totalsize; ?>"/>
-			<input type="hidden" name="backup_site_db_size" id="backup_site_db_size" value="<?php echo $website->dbsize; ?>"/>							
+			<input type="hidden" name="backup_site_full_size" id="backup_site_full_size" value="<?php echo esc_attr($website->totalsize); ?>"/>
+			<input type="hidden" name="backup_site_db_size" id="backup_site_db_size" value="<?php echo esc_attr($website->dbsize); ?>"/>
             <table class="form-table">
                 <tbody>
                 <tr>
@@ -1507,7 +1509,7 @@ class MainWP_Manage_Sites_View {
                             <tr>
                                 <td valign="top">
 									 <span class="mainwp-select-bg"><select class="mainwp-select2" name="mainwp_archiveFormat" id="mainwp_archiveFormat">
-                                        <option value="global" <?php if ( $useGlobal ) :  ?>selected<?php endif; ?>>Global setting (<?php echo $globalArchiveFormatText; ?>)</option>
+                                        <option value="global" <?php if ( $useGlobal ) :  ?>selected<?php endif; ?>>Global setting (<?php echo esc_attr($globalArchiveFormatText); ?>)</option>
                                         <option value="zip" <?php if ( $archiveFormat == 'zip' ) :  ?>selected<?php endif; ?>>Zip</option>
                                         <option value="tar" <?php if ( $archiveFormat == 'tar' ) :  ?>selected<?php endif; ?>>Tar</option>
                                         <option value="tar.gz" <?php if ( $archiveFormat == 'tar.gz' ) :  ?>selected<?php endif; ?>>Tar GZip</option>
@@ -1551,10 +1553,10 @@ class MainWP_Manage_Sites_View {
 								<td><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div></td>
 							</tr>
 						</table>
-						 <input type="text" 
-						 		name="mainwp_options_maximumFileDescriptors" 
+						 <input type="text"
+						 		name="mainwp_options_maximumFileDescriptors"
 						 		id="mainwp_options_maximumFileDescriptors"
-								value="<?php echo $maximumFileDescriptors; ?>"/><br/>
+								value="<?php echo esc_attr($maximumFileDescriptors); ?>"/><br/>
 						<em>(<?php _e( 'Enter a fallback value because not all hosts support this function.','mainwp' ); ?>)</em>
                     </td>
                 </tr>
@@ -1567,8 +1569,8 @@ class MainWP_Manage_Sites_View {
                     </td>
                 </tr>
             </table>
-			<input type="button" 
-					name="backup_btnSubmit" 
+			<input type="button"
+					name="backup_btnSubmit"
 					id="backup_btnSubmit"
                                          class="button-primary button button-hero"
                     value="Backup Now"/>
@@ -1580,53 +1582,53 @@ class MainWP_Manage_Sites_View {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
 			mainwp_do_not_have_permissions( __( 'security scan', 'mainwp' ) );
 			return;
-		}		
+		}
 		wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
 		wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
 		?>
 		<div class="metabox-holder columns-1">
-		<?php	
+		<?php
 		$_postpage = 'mainwp_postboxes_managesites_scan';
-		do_meta_boxes($_postpage, 'normal', null );	
+		do_meta_boxes($_postpage, 'normal', null );
 
 		if ( mainwp_current_user_can( 'extension', 'mainwp-sucuri-extension' ) ) {
-			if ( MainWP_Extensions::isExtensionAvailable( 'mainwp-sucuri-extension' ) ) {			
+			if ( MainWP_Extensions::isExtensionAvailable( 'mainwp-sucuri-extension' ) ) {
 				do_action( 'mainwp-sucuriscan-sites', $website );
 			}
 		}
 
 		if ( mainwp_current_user_can( 'extension', 'mainwp-wordfence-extension' ) ) {
-			if ( MainWP_Extensions::isExtensionAvailable( 'mainwp-wordfence-extension' ) ) {			
+			if ( MainWP_Extensions::isExtensionAvailable( 'mainwp-wordfence-extension' ) ) {
 				do_action( 'mainwp-wordfence-sites', $website );
-			} 
+			}
 		}
-		
+
 		?>
                     </div>
-		<script type="text/javascript"> var mainwp_postbox_page = '<?php echo $_postpage; ?>';</script>			
-		<?php	
+		<script type="text/javascript"> var mainwp_postbox_page = '<?php echo esc_attr($_postpage); ?>';</script>
+		<?php
 		}
 
 	public static function renderScanIssues( $post, $metabox ) {
 		$websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );		
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 		if ( empty( $website ) )
 			return;
-		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {			
-			do_action( 'mainwp-securityissues-sites', $website );			
+		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
+			do_action( 'mainwp-securityissues-sites', $website );
 	}
 	}
 
-	public static function renderSucuriScan( $post, $metabox ) {	
+	public static function renderSucuriScan( $post, $metabox ) {
 		//metabox show message only
-		echo sprintf( __('The Sucuri Scan requires the free Sucuri Extension, please download from %shere%s', 'mainwp' ), '<a href="https://mainwp.com/extension/sucuri/" title="Sucuri">', '</a>' ); 		
+		echo sprintf( __('The Sucuri Scan requires the free Sucuri Extension, please download from %shere%s', 'mainwp' ), '<a href="https://mainwp.com/extension/sucuri/" title="Sucuri">', '</a>' );
 	}
-	
-	public static function renderWordfenceScan( $post, $metabox ) {	
+
+	public static function renderWordfenceScan( $post, $metabox ) {
 		//metabox show message only
-		echo sprintf( __('Wordfence status requires the Wordfence Extension, please order from %shere%s.', 'mainwp' ), '<a href="https://mainwp.com/extension/wordfence/" title="Wordfence">', '</a>' );		
+		echo sprintf( __('Wordfence status requires the Wordfence Extension, please order from %shere%s.', 'mainwp' ), '<a href="https://mainwp.com/extension/wordfence/" title="Wordfence">', '</a>' );
 	}
-	
+
 	public static function _renderInfo() {
 
 		//todo: RS: Remove method
@@ -1646,12 +1648,13 @@ class MainWP_Manage_Sites_View {
                 <textarea style="width: 580px !important; height: 300px;"
                           id="mainwp_notes_note"></textarea>
             </div>
-            <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div><br/>
+            <div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div>
+            <br/>
             <form>
                 <div style="float: right" id="mainwp_notes_status"></div>
                 <input type="button" class="button cont button-primary" id="mainwp_notes_save" value="<?php esc_attr_e( 'Save note','mainwp' ); ?>"/>
-                <input type="button" class="button cont" id="mainwp_notes_edit" value="<?php esc_attr_e( 'Edit','mainwp' ); ?>"/>                
-                <input type="button" class="button cont" id="mainwp_notes_view" value="<?php esc_attr_e( 'View','mainwp' ); ?>"/>                                
+                <input type="button" class="button cont" id="mainwp_notes_edit" value="<?php esc_attr_e( 'Edit','mainwp' ); ?>"/>
+                <input type="button" class="button cont" id="mainwp_notes_view" value="<?php esc_attr_e( 'View','mainwp' ); ?>"/>
                 <input type="button" class="button cont" id="mainwp_notes_cancel" value="<?php esc_attr_e( 'Close','mainwp' ); ?>"/>
                 <input type="hidden" id="mainwp_notes_websiteid" value=""/>
             </form>
@@ -1669,10 +1672,10 @@ class MainWP_Manage_Sites_View {
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			$website = null;
 		}
-		
+
 		if (empty($website))
 			return;
-		
+
 		?>
                 <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
                 <div id="ajax-information-zone" class="updated" style="display: none;"></div>
@@ -1684,26 +1687,26 @@ class MainWP_Manage_Sites_View {
                         }
                         ?>
                 <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data">
-                                <input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsite' . $website->id ); ?>" />			
-                    <?php 
+                                <input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsite' . $website->id ); ?>" />
+                    <?php
                                 wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
                                 wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
                                 ?>
                                 <div class="metabox-holder columns-1">
-                                <?php	
+                                <?php
                                 $_postpage = 'mainwp_postboxes_managesites_edit';
-                                do_meta_boxes($_postpage, 'normal', null );	
+                                do_meta_boxes($_postpage, 'normal', null );
                                 do_action( 'mainwp-extension-sites-edit', $website );
                                 ?>
                                 </div>
-                                <script type="text/javascript"> var mainwp_postbox_page = '<?php echo $_postpage; ?>';</script>			
+                                <script type="text/javascript"> var mainwp_postbox_page = '<?php echo esc_attr($_postpage); ?>';</script>
                                 <p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero"
                                                 value="<?php _e( 'Update Site','mainwp' ); ?>"/></p>
-                </form>       
+                </form>
                 <?php
 	}
 
-        
+
 
 	public static function renderAllSites( &$website, $updated, $groups, $statusses, $pluginDir ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
@@ -1715,10 +1718,10 @@ class MainWP_Manage_Sites_View {
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			$website = null;
 		}
-		
+
 		if (empty($website))
 			return;
-		
+
 		?>
         <div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
@@ -1731,33 +1734,33 @@ class MainWP_Manage_Sites_View {
 		?>
         <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data">
 			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsite' . $website->id ); ?>" />
-            <?php 
+            <?php
 			wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
 			wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
 			?>
 			<div class="metabox-holder columns-1">
-			<?php	
+			<?php
 			$_postpage = 'mainwp_postboxes_managesites_edit';
-			do_meta_boxes($_postpage, 'normal', null );	
+			do_meta_boxes($_postpage, 'normal', null );
 			do_action( 'mainwp-extension-sites-edit', $website );
 			?>
 			</div>
-			<script type="text/javascript"> var mainwp_postbox_page = '<?php echo $_postpage; ?>';</script>			
+			<script type="text/javascript"> var mainwp_postbox_page = '<?php echo esc_attr($_postpage); ?>';</script>
 			<p class="submit"><input type="submit" name="submit" id="submit" class="button-primary button button-hero"
 					value="<?php _e( 'Update Site','mainwp' ); ?>"/></p>
-        </form>       
+        </form>
         <?php
 	}
 
 	public static function renderSiteGeneralOptions( $post, $metabox ) {
 		$websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );		
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 		if ( empty( $website ) )
 			return;
-		
+
 		$groups    = MainWP_DB::Instance()->getGroupsForCurrentUser();
 		$pluginDir = $website->pluginDir;
-		
+
 		?>
             <table class="form-table">
                 <tbody>
@@ -1770,7 +1773,7 @@ class MainWP_Manage_Sites_View {
                     <th scope="row"><?php _e( 'Administrator username','mainwp' ); ?></th>
                     <td><input type="text" name="mainwp_managesites_edit_siteadmin"
                                id="mainwp_managesites_edit_siteadmin"
-                               value="<?php echo $website->adminname; ?>"
+                               value="<?php echo esc_attr($website->adminname); ?>"
                                class="regular-text"/></td>
                 </tr>
                 <tr>
@@ -1781,20 +1784,20 @@ class MainWP_Manage_Sites_View {
                 <tr>
                     <th scope="row"><?php _e( 'Groups','mainwp' ); ?></th>
                     <td>
-						<select 
+						<select
                                name="selected_groups[]"
                                id="mainwp_managesites_edit_addgroups"  style="width: 350px"
-							   multiple="multiple" /><?php 						
+							   multiple="multiple" /><?php
 							$groupsSite = MainWP_DB::Instance()->getGroupsByWebsiteId( $website->id );
 							foreach ($groups as $group)
 							{
 								echo '<option value="' . $group->id . '" ' . (isset( $groupsSite[ $group->id ] ) && $groupsSite[ $group->id ] ? 'selected="selected"' : '') . ' >' . stripslashes($group->name)  . '</option>';
 							}
-						?></select>						                                                
+						?></select>
                     </td>
                 </tr>
 				<script type="text/javascript">
-					jQuery( document ).ready( function () {			
+					jQuery( document ).ready( function () {
 						<?php if (count($groups) == 0) { ?>
 						jQuery('#mainwp_managesites_edit_addgroups').select2({minimumResultsForSearch: 10, allowClear: true, placeholder: "<?php _e("No groups added yet.", 'mainwp'); ?>"});
 						//jQuery('#mainwp_managesites_edit_addgroups').prop("disabled", true);
@@ -1815,7 +1818,7 @@ class MainWP_Manage_Sites_View {
                           <input type="radio" value="hidden" name="mainwp_options_footprint_plugin_folder" id="mainwp_options_footprint_plugin_folder_hidden" <?php echo ($pluginDir == 'hidden' ? 'checked="true"' : ''); ?>/>
                         <label for="mainwp_options_footprint_plugin_folder_hidden"><?php _e( 'Hidden (<strong>Note: </strong><em>If the heatmap is turned on, the heatmap javascript will still be visible.</em>)', 'mainwp' ); ?></label>
                     </td>
-                </tr>               
+                </tr>
                 <tr>
                     <th scope="row"><?php _e( 'Require backup before update','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Backup only works when enabled in the global settings as well.','mainwp' ), admin_url( 'admin.php?page=Settings' ) ); ?></th>
                     <td>
@@ -1824,7 +1827,7 @@ class MainWP_Manage_Sites_View {
                              <option <?php echo ($website->backup_before_upgrade == 0) ? 'selected' : ''; ?> value="0"><?php _e( 'No','mainwp' ); ?></option>
                              <option <?php echo ($website->backup_before_upgrade == 2) ? 'selected' : ''; ?> value="2"><?php _e( 'Use global setting','mainwp' ); ?></option>
                          </select> <i>(<?php _e( 'Default','mainwp' ); ?>: <?php _e( 'Use Global Setting','mainwp' ); ?>)</i>
-                         
+
                     </td>
                 </tr>
                  <tr>
@@ -1847,7 +1850,7 @@ class MainWP_Manage_Sites_View {
                         <label for="mainwp_is_ignoreCoreUpdates"></label>
                         </div>
                     </td>
-                </tr>  
+                </tr>
                 <tr>
                     <th scope="row"><?php _e( 'Ignore all plugin updates','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'Set to YES if you want to ignore all plugin updates.' ); ?></th>
                     <td>
@@ -1857,7 +1860,7 @@ class MainWP_Manage_Sites_View {
                         <label for="mainwp_is_ignorePluginUpdates"></label>
                         </div>
                     </td>
-                </tr>  
+                </tr>
                 <tr>
                     <th scope="row"><?php _e( 'Ignore all theme updates','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'Set to YES if you want to ignore all theme updates.' ); ?></th>
                     <td>
@@ -1874,20 +1877,20 @@ class MainWP_Manage_Sites_View {
             </table>
 		<?php
 	}
-	
+
 	public static function renderSiteAdvancedOptions( $post, $metabox ) {
 		$websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );		
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 		if ( empty( $website ) )
-			return;	
-			
+			return;
+
 		?>
             <table class="form-table" style="width: 100%">
                 <tr class="form-field form-required">
                     <th scope="row"><?php _e('Child unique security ID ','mainwp'); ?>&nbsp;<?php MainWP_Utility::renderToolTip( 'The unique security ID adds additional protection between the child plugin and your MainWP Dashboard. The unique security ID will need to match when being added to the MainWP Dashboard. This is additional security and should not be needed in most situations.' ); ?></th>
                     <td><input type="text" id="mainwp_managesites_edit_uniqueId"
-						 name="mainwp_managesites_edit_uniqueId" value="<?php echo $website->uniqueId; ?>" class=""/></td>
-                </tr>                
+						 name="mainwp_managesites_edit_uniqueId" value="<?php echo esc_attr($website->uniqueId); ?>" class=""/></td>
+                </tr>
                  <tr class="form-field form-required">
                     <th scope="row"><?php _e( 'Verify certificate','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Verify the childs SSL certificate. This should be disabled if you are using out of date or self signed certificates.','mainwp' ) ); ?></th>
                     <td>
@@ -1908,11 +1911,11 @@ class MainWP_Manage_Sites_View {
                              <option <?php echo ($website->ssl_version == '2') ? 'selected' : ''; ?> value="2"><?php _e( 'SSL v2','mainwp' ); ?></option>
                              <option <?php echo ($website->ssl_version == '3') ? 'selected' : ''; ?> value="3"><?php _e( 'SSL v3','mainwp' ); ?></option>
                              <option <?php echo ($website->ssl_version == '4') ? 'selected' : ''; ?> value="4"><?php _e( 'TLS v1.0','mainwp' ); ?></option>
-                             <option <?php echo ($website->ssl_version == '5') ? 'selected' : ''; ?> value="5"><?php _e( 'TLS v1.1','mainwp' ); ?></option>                             
+                             <option <?php echo ($website->ssl_version == '5') ? 'selected' : ''; ?> value="5"><?php _e( 'TLS v1.1','mainwp' ); ?></option>
                          </select> <em>(<?php _e( 'Default: Auto detect','mainwp' ); ?>)</em>
                     </td>
                 </tr>
-                
+
                 <tr class="form-field form-required">
                     <th scope="row"><?php _e( 'Force use of IPv4','mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Force use of IPv4.','mainwp' ) ); ?></th>
                     <td>
@@ -1938,17 +1941,17 @@ class MainWP_Manage_Sites_View {
                 </tr>
             </table>
 	<?php
-	}	
-            
+	}
+
 	public static function renderSiteBackupSettings( $post, $metabox ) {
 		$websiteid = isset($metabox['args']['websiteid']) ? $metabox['args']['websiteid'] : null;
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );		
+		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 		if ( empty( $website ) )
 			return;
-		
+
 		$remote_destinations = apply_filters( 'mainwp_backups_remote_get_destinations', null, array( 'website' => $website->id ) );
 		$hasRemoteDestinations = ($remote_destinations == null ? $remote_destinations : count( $remote_destinations ));
-		
+
 	?>
             <table class="form-table" style="width: 100%">
                 <?php
@@ -1975,7 +1978,7 @@ class MainWP_Manage_Sites_View {
                             <tr>
                                 <td valign="top">
 								<span class="mainwp-select-bg"><select class="mainwp-select2" name="mainwp_archiveFormat" id="mainwp_archiveFormat">
-                                        <option value="global" <?php if ( $useGlobal ) :  ?>selected<?php endif; ?>>Global setting (<?php echo $globalArchiveFormatText; ?>)</option>
+                                        <option value="global" <?php if ( $useGlobal ) :  ?>selected<?php endif; ?>>Global setting (<?php echo esc_attr($globalArchiveFormatText); ?>)</option>
                                         <option value="zip" <?php if ( $archiveFormat == 'zip' ) :  ?>selected<?php endif; ?>>Zip</option>
                                         <option value="tar" <?php if ( $archiveFormat == 'tar' ) :  ?>selected<?php endif; ?>>Tar</option>
                                         <option value="tar.gz" <?php if ( $archiveFormat == 'tar.gz' ) :  ?>selected<?php endif; ?>>Tar GZip</option>
@@ -2019,7 +2022,7 @@ class MainWP_Manage_Sites_View {
 							<td><div class="mainwp-checkbox"><input type="checkbox" id="mainwp_maximumFileDescriptorsAuto" name="mainwp_maximumFileDescriptorsAuto" <?php echo ($maximumFileDescriptorsAuto ? 'checked="checked"' : ''); ?> /> <label for="mainwp_maximumFileDescriptorsAuto"></label></div></td>
 						</tr>
 					</table>
-					<input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors" value="<?php echo $maximumFileDescriptors; ?>"/>
+					<input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors" value="<?php echo esc_attr($maximumFileDescriptors); ?>"/>
 					<br/>
 					<em>(<?php _e( 'Enter a fallback value because not all hosts support this function.','mainwp' ); ?>)</em>
                     </td>
@@ -2080,7 +2083,7 @@ class MainWP_Manage_Sites_View {
 					throw new Exception( 'HTTP error' . ($e->getMessageExtra() != null ? ' - ' . $e->getMessageExtra() : '') );
 				} else if ( $e->getMessage() == 'NOMAINWP' ) {
 					$error = __( 'No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please ','mainwp' );
-					if ( $e->getMessageExtra() != null ) {$error .= sprintf( __( 'test your connection %shere%s or ', 'mainwp' ), '<a href="' . admin_url( 'admin.php?page=managesites&do=test&site=' . urlencode( $e->getMessageExtra() ) ) . '">', '</a>' );}					
+					if ( $e->getMessageExtra() != null ) {$error .= sprintf( __( 'test your connection %shere%s or ', 'mainwp' ), '<a href="' . admin_url( 'admin.php?page=managesites&do=test&site=' . urlencode( $e->getMessageExtra() ) ) . '">', '</a>' );}
 					$error .= sprintf( __( 'post as much information as possible on the error in the %ssupport forum%s.','mainwp' ), '<a href="https://mainwp.com/forum/">', '</a>' );
 
 					throw new Exception( $error );
@@ -2095,17 +2098,17 @@ class MainWP_Manage_Sites_View {
 
 	public static function addSite( $website ) {
                 $params['url'] = $_POST['managesites_add_wpurl'];
-                $params['name'] = $_POST['managesites_add_wpname'];                
+                $params['name'] = $_POST['managesites_add_wpname'];
                 $params['wpadmin'] = $_POST['managesites_add_wpadmin'];
                 $params['unique_id'] = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : '';
-                $params['ssl_verify'] = ( !isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( $_POST['verify_certificate'] !== '0' ) ) ? null : $_POST['verify_certificate'] );                
+                $params['ssl_verify'] = ( !isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( $_POST['verify_certificate'] !== '0' ) ) ? null : $_POST['verify_certificate'] );
                 $params['force_use_ipv4'] = ( !isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( $_POST['force_use_ipv4'] !== '0' ) ) ? null : $_POST['force_use_ipv4'] );
-                $params['ssl_version'] = !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? 0 : $_POST['ssl_version'];                
+                $params['ssl_version'] = !isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? 0 : $_POST['ssl_version'];
                 $params['http_user'] = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
-                $params['http_pass'] = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';                
-                $params['groupids'] = isset( $_POST['groupids'] ) ? $_POST['groupids'] : array();                
-                $params['groupnames_import'] = isset( $_POST['groupnames_import'] ) ? $_POST['groupnames_import'] : '';                
-                return MainWP_Manage_Sites_View::addWPSite($website, $params);                		
+                $params['http_pass'] = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';
+                $params['groupids'] = isset( $_POST['groupids'] ) ? $_POST['groupids'] : array();
+                $params['groupnames_import'] = isset( $_POST['groupnames_import'] ) ? $_POST['groupnames_import'] : '';
+                return MainWP_Manage_Sites_View::addWPSite($website, $params);
 	}
 
     public static function addWPSite( $website, $params = array()  ) {
@@ -2144,7 +2147,7 @@ class MainWP_Manage_Sites_View {
 					array(
 					'pubkey' => $pubkey,
 						'server' => get_admin_url(),
-						'uniqueId' => $addUniqueId				
+						'uniqueId' => $addUniqueId
 					),
 					false,
 					$verifyCertificate, $http_user, $http_pass, $sslVersion, array('force_use_ipv4' => $force_use_ipv4)
@@ -2178,8 +2181,8 @@ class MainWP_Manage_Sites_View {
 	                        }
 						}
 
-						if ( (isset( $params['groupnames_import'] ) && $params['groupnames_import'] != '') ) {								
-								$tmpArr = explode( ';', $params['groupnames_import'] );						
+						if ( (isset( $params['groupnames_import'] ) && $params['groupnames_import'] != '') ) {
+								$tmpArr = explode( ';', $params['groupnames_import'] );
 								foreach ( $tmpArr as $tmp ) {
 									$group = MainWP_DB::Instance()->getGroupByNameForUser( trim( $tmp ) );
 									if ( $group ) {
@@ -2197,12 +2200,12 @@ class MainWP_Manage_Sites_View {
 
 						$http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
 						$http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
-						global $current_user;                        
+						global $current_user;
 						$id = MainWP_DB::Instance()->addWebsite($current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], (isset( $information['nosslkey'] )
 								? $information['nosslkey'] : null), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion);
 						$message = sprintf( __( 'Site successfully added - Visit the Site\'s %sDashboard%s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' );
 						do_action('mainwp_added_new_site', $id); // must before getWebsiteById to update team control permisions
-						$website = MainWP_DB::Instance()->getWebsiteById( $id );						
+						$website = MainWP_DB::Instance()->getWebsiteById( $id );
 						MainWP_Sync::syncInformationArray( $website, $information );
 					} else {
 						$error = __('Undefined error.', 'mainwp' );
@@ -2223,7 +2226,7 @@ class MainWP_Manage_Sites_View {
 
 		return array( $message, $error, $id );
 	}
-        
+
 	public static function sitesPerPage() {
 		return __( 'Sites per page', 'mainwp' );
 	}

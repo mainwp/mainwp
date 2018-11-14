@@ -12,7 +12,7 @@ class MainWP_Tours {
 	public static function gen_tour_message($tour_id) {
 		?>
 		<div class="mainwp-walkthrough mainwp-notice-wrap"><?php _e('Need help getting started?', 'mainwp' ); ?>&nbsp;&nbsp;&nbsp;<a href="" class="mainwp_starttours"> <i class="fa fa-play" aria-hidden="true"></i> <?php _e( "Start the Tour!", "mainwp" ); ?></a>
-                    <span class="mainwp-right"><a class="mainwp-notice-dismiss" notice-id="tour_<?php echo $tour_id; ?>"
+                    <span class="mainwp-right"><a class="mainwp-notice-dismiss" notice-id="tour_<?php echo esc_attr($tour_id); ?>"
                                                   style="text-decoration: none;" href="#"><i class="fa fa-times-circle"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
 		</div>
 		<?php

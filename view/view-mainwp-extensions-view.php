@@ -5,13 +5,13 @@ class MainWP_Extensions_View {
         $page =  add_submenu_page( 'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
             MainWP_Extensions::getClassName(),
             'render'
-        ) );       
-        
+        ) );
+
         if( ! MainWP_System::is_disable_menu_item(2, 'Extensions') ) { // Extensions menu item in MainWP Dashboard menu
             MainWP_System::add_sub_left_menu(__('Add Extensions', 'mainwp'), 'Extensions', 'Extensions', 'admin.php?page=Extensions&leftmenu=1', '<i class="fa fa-plug"></i>', '' );
             MainWP_System::add_sub_left_menu(__('Extensions', 'mainwp'), 'mainwp_tab', 'Extensions', 'admin.php?page=Extensions', '<i class="fa fa-plug"></i>', '' );
         }
-        
+
         return $page;
 	}
 
@@ -28,11 +28,12 @@ class MainWP_Extensions_View {
 				foreach ( $extensions as $extension ) {
 					if ( $extension['plugin'] == $shownPage ) {
 						?>
-						<a class="nav-tab pos-nav-tab echo nav-tab-active" href="admin.php?page=<?php echo $extension['page']; ?>"><?php echo $extension['name']; ?></a>
+						<a class="nav-tab pos-nav-tab echo nav-tab-active" href="admin.php?page=<?php echo esc_attr($extension['page']); ?>"><?php echo esc_html($extension['name']); ?></a>
 						<?php
 					}
 				}
 			}
+            do_action('mainwp_extensions_top_header_after_tab', $shownPage);
 			?>
 			<div class="clear"></div>
 		</div>
@@ -76,8 +77,8 @@ class MainWP_Extensions_View {
 				<div class="mainwp-padding-top-10 mainwp-padding-bottom-10">
 					<?php echo sprintf( __( 'Not registered? %sCreate MainWP account here.%s', 'mainwp'), '<a href="https://mainwp.com/my-account/" target="_blank">', '</a>' ); ?>
 				</div>
-				<input type="text" id="mainwp_com_username" class="input username" placeholder="<?php esc_attr_e( 'Your MainWP Username', 'mainwp' ); ?>" value="<?php echo $username; ?>"/>
-				<input type="password" id="mainwp_com_password" class="input passwd" placeholder="<?php esc_attr_e( 'Your MainWP Password', 'mainwp' ); ?>" value="<?php echo $password; ?>"/>
+				<input type="text" id="mainwp_com_username" class="input username" placeholder="<?php esc_attr_e( 'Your MainWP Username', 'mainwp' ); ?>" value="<?php echo esc_attr($username); ?>"/>
+				<input type="password" id="mainwp_com_password" class="input passwd" placeholder="<?php esc_attr_e( 'Your MainWP Password', 'mainwp' ); ?>" value="<?php echo esc_attr($password); ?>"/>
 				<div class="mainwp-padding-top-10 mainwp-padding-bottom-10">
 					<?php echo sprintf( __( 'Lost your password? %sReset password here.%s', 'mainwp'), '<a href="https://mainwp.com/my-account/lost-password/" target="_blank">', '</a>' ); ?>
 				</div>
@@ -192,13 +193,13 @@ class MainWP_Extensions_View {
 
 								?>
 
-								<div class="plugin-card plugin-card-<?php echo $extension['name']; ?>" extension_slug="<?php echo $extension['slug']; ?>" <?php echo $queue_status; ?> license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
+								<div class="plugin-card plugin-card-<?php echo esc_attr($extension['name']); ?>" extension_slug="<?php echo esc_attr($extension['slug']); ?>" <?php echo $queue_status; ?> license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
 									<div class="plugin-card-top">
 										<div class="name column-name">
 											<h3>
-												<a href="<?php echo $extension_page_url; ?>">
-													<?php echo $extension['name']; ?>
-													<img src="<?php echo $img_url; ?>" title="<?php echo $extension['name']; ?>" alt="<?php echo $extension['name']; ?>" class="plugin-icon mainwp-extension-icon"/>
+												<a href="<?php echo esc_url($extension_page_url); ?>">
+													<?php echo esc_html($extension['name']); ?>
+													<img src="<?php echo esc_url($img_url); ?>" title="<?php echo esc_attr($extension['name']); ?>" alt="<?php echo esc_attr($extension['name']); ?>" class="plugin-icon mainwp-extension-icon"/>
 												</a>
 											</h3>
 										</div>
@@ -233,9 +234,9 @@ class MainWP_Extensions_View {
 											<div class="api-row-div">
 												<div class="mainwp-cols-1">
                                         	<span class="mainwp-left" style="width: 63%;">
-                                        		<input type="text" class="input api_key" placeholder="<?php esc_attr_e( 'API License Key', 'mainwp' ); ?>" value="<?php echo $extension['api_key']; ?>"/>
+                                        		<input type="text" class="input api_key" placeholder="<?php esc_attr_e( 'API License Key', 'mainwp' ); ?>" value="<?php echo esc_attr($extension['api_key']); ?>"/>
 	                                            <br/>
-	                                            <input type="text" class="input api_email" placeholder="<?php esc_attr_e( 'API License Email', 'mainwp' ); ?>" value="<?php echo $extension['activation_email']; ?>"/>
+	                                            <input type="text" class="input api_email" placeholder="<?php esc_attr_e( 'API License Email', 'mainwp' ); ?>" value="<?php echo esc_attr($extension['activation_email']); ?>"/>
                                         	</span>
                          					<span class="mainwp-right mainwp-cols-3 mainwp-padding-top-5">
                                             	<input type="button" <?php if ( $active ) { echo 'disabled'; }  ?> class="button-primary button button-hero mainwp-extensions-activate" value="<?php esc_attr_e( 'Activate API', 'mainwp' ); ?>">
@@ -260,7 +261,7 @@ class MainWP_Extensions_View {
 										<div class="activate-api-status hidden mainwp-padding-20"></div>
 									<?php } ?>
 									<div class="plugin-card-bottom">
-										<div class="vers column-rating">Version: <?php echo $extension['version']; ?></div>
+										<div class="vers column-rating">Version: <?php echo esc_html($extension['version']); ?></div>
 										<div class="column-updated"><?php echo $extension_api_status; ?></div>
 									</div>
 								</div>
@@ -299,7 +300,7 @@ class MainWP_Extensions_View {
 				$i = 0;
 				foreach ($all_groups as $gr_id => $gr_name) {
 					$i++;
-					?><a class="mainwp_action <?php echo ($i < count($all_groups)) ? 'mid' : 'right'; ?> mainwp-show-extensions" href="#" group="<?php echo $gr_id; ?>"><?php echo esc_html($gr_name); ?></a><?php
+					?><a class="mainwp_action <?php echo ($i < count($all_groups)) ? 'mid' : 'right'; ?> mainwp-show-extensions" href="#" group="<?php echo esc_attr($gr_id); ?>"><?php echo esc_html($gr_name); ?></a><?php
 				}
 				?>
 			</div>
@@ -315,13 +316,13 @@ class MainWP_Extensions_View {
 							$group_class = implode(" group-", $ext['group']);
 							$group_class = " group-" . $group_class;
 							?>
-							<div class="mainwp-availbale-extension-holder plugin-card <?php echo $group_class; ?> <?php echo ($is_free) ? 'mainwp-free group-free' : 'mainwp-paid'; ?>">
+							<div class="mainwp-availbale-extension-holder plugin-card <?php echo esc_attr($group_class); ?> <?php echo ($is_free) ? 'mainwp-free group-free' : 'mainwp-paid'; ?>">
 								<div class="plugin-card-top">
 									<div class="name column-name">
 										<h3>
-											<a href="<?php echo $extension_page_url; ?>">
-												<?php echo $ext['title'] ?>
-												<img src="<?php echo $ext['img'] ?>" title="<?php echo $ext['title']; ?>" alt="<?php echo $ext['title']; ?>" class="plugin-icon"/>
+											<a href="<?php echo esc_url($extension_page_url); ?>">
+												<?php echo esc_html($ext['title']); ?>
+												<img src="<?php echo esc_url($ext['img']); ?>" title="<?php echo esc_attr($ext['title']); ?>" alt="<?php echo esc_attr($ext['title']); ?>" class="plugin-icon"/>
 											</a>
 										</h3>
 									</div>
@@ -332,7 +333,7 @@ class MainWP_Extensions_View {
 										</ul>
 									</div>
 									<div class="desc column-description">
-										<p><?php echo $ext['desc'] ?></p>
+										<p><?php echo esc_html($ext['desc']) ?></p>
 									</div>
 								</div>
 							</div>

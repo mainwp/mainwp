@@ -41,7 +41,7 @@ class MainWP_Post {
 		) );
 		add_action( 'load-' . $_page, array(MainWP_Post::getClassName(), 'on_load_page'));
         add_filter( 'manage_' . $_page . '_columns', array(MainWP_Post::getClassName(), 'get_manage_columns'));
-        
+
         if( !MainWP_System::is_disable_menu_item(3, 'PostBulkAdd') ) {
             add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ). '</div>', 'read', 'PostBulkAdd', array(
                 MainWP_Post::getClassName(),
@@ -54,12 +54,12 @@ class MainWP_Post {
                 'renderBulkEdit',
             ) );
         }
-        
+
         add_submenu_page( 'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . __( 'Posts', 'mainwp' ) . '</div>', 'read', 'PostingBulkPost', array(
             MainWP_Post::getClassName(),
             'posting',
         ) ); //removed from menu afterwards
-        
+
 		/**
 		 * This hook allows you to add extra sub pages to the Post page via the 'mainwp-getsubpages-post' filter.
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
@@ -67,8 +67,8 @@ class MainWP_Post {
 		self::$subPages = apply_filters( 'mainwp-getsubpages-post', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
-                if( MainWP_System::is_disable_menu_item(3, 'Post' . $subPage['slug']) ) 
-                    continue;       
+                if( MainWP_System::is_disable_menu_item(3, 'Post' . $subPage['slug']) )
+                    continue;
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Post' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
@@ -145,8 +145,8 @@ class MainWP_Post {
 			<div class="wp-submenu sub-open" style="">
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
-					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) { ?>                        
-						<a href="<?php echo admin_url( 'admin.php?page=PostBulkManage' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Posts', 'mainwp' ); ?></a>                                                
+					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) { ?>
+						<a href="<?php echo admin_url( 'admin.php?page=PostBulkManage' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Posts', 'mainwp' ); ?></a>
                         <?php if ( ! MainWP_System::is_disable_menu_item(3, 'PostBulkAdd') ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd' ); ?>" class="mainwp-submenu"><?php _e( 'Add New', 'mainwp' ); ?></a>
                         <?php } ?>
@@ -155,11 +155,11 @@ class MainWP_Post {
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
 							if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && $subPage['menu_hidden'] != true ) ) {
-                                if ( MainWP_System::is_disable_menu_item(3, 'Post' . $subPage['slug']) ) {                                  
+                                if ( MainWP_System::is_disable_menu_item(3, 'Post' . $subPage['slug']) ) {
                                     continue;
                                 }
 								?>
-								<a href="<?php echo admin_url( 'admin.php?page=Post' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
+								<a href="<?php echo admin_url( 'admin.php?page=Post' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html($subPage['title']); ?></a>
 								<?php
 							}
 						}
@@ -191,7 +191,7 @@ class MainWP_Post {
 		MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'PostBulkManage', 'Post');
 
 		foreach($init_sub_subleftmenu as $item) {
-            if ( MainWP_System::is_disable_menu_item(3, $item['slug']) ) {                                  
+            if ( MainWP_System::is_disable_menu_item(3, $item['slug']) ) {
                 continue;
             }
 			MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
@@ -235,7 +235,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 				foreach ( self::$subPages as $subPage ) {
                     if ( MainWP_System::is_disable_menu_item(3, 'Post' . $subPage['slug']) )
                             continue;
-                    
+
 					if ( isset( $subPage['tab_link_hidden'] ) && $subPage['tab_link_hidden'] == true ) {
 						$tab_link = '#';
 					} else {
@@ -244,7 +244,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 					?>
 					<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) {
 						echo 'nav-tab-active';
-					} ?>" href="<?php echo $tab_link; ?>"><?php echo $subPage['title']; ?></a>
+					} ?>" href="<?php echo esc_url($tab_link); ?>"><?php echo esc_html($subPage['title']); ?></a>
 					<?php
 				}
 			}
@@ -329,7 +329,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			</div>
 			<div class="alignright" id="mainwp_posts_total_results">
 				<?php _e( 'Total Results:', 'mainwp' ); ?>
-				<span id="mainwp_posts_total"><?php echo $cachedSearch != null ? $cachedSearch['count'] : '0'; ?></span>
+				<span id="mainwp_posts_total"><?php echo $cachedSearch != null ? esc_html($cachedSearch['count']) : '0'; ?></span>
 			</div>
 			<div class="clear"></div>
 			<div id="mainwp_posts_content">
@@ -347,7 +347,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			$col_orders = $current_options['posts_col_order'];
 		}
 		?>
-		<script type="text/javascript"> var postsColOrder = '<?php echo $col_orders; ?>' ;</script>
+		<script type="text/javascript"> var postsColOrder = '<?php echo esc_attr($col_orders); ?>' ;</script>
 		<?php
 
 		if ( $cachedSearch != null ) {
@@ -394,8 +394,8 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			</li>
 		</ul>
         <?php
-        $searchon = 'title'; 
-        if ( $cachedSearch != null ) { $searchon = $cachedSearch['search_on']; }  
+        $searchon = 'title';
+        if ( $cachedSearch != null ) { $searchon = $cachedSearch['search_on']; }
         ?>
 		<div class="mainwp-padding-bottom-20">
 			<div class="mainwp-cols-2 mainwp-left">
@@ -404,20 +404,20 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 				       id="mainwp_post_search_by_keyword"
 				       class=""
 				       size="50"
-				       value="<?php if ( $cachedSearch != null ) { echo $cachedSearch['keyword']; } ?>"/> <?php _e('in', 'mainwp'); ?> 
+				       value="<?php if ( $cachedSearch != null ) { echo esc_attr($cachedSearch['keyword']); } ?>"/> <?php _e('in', 'mainwp'); ?>
                        <select class="mainwp-select2-mini" name="post_search_on" id="mainwp_post_search_on">
                             <option value="title" <?php echo $searchon == 'title' ? 'selected' : ''; ?>><?php _e( 'Title', 'mainwp' ); ?></option>
-                            <option value="content" <?php echo $searchon == 'content' ? 'selected' : ''; ?>><?php _e( 'Body', 'mainwp' ); ?></option>                
-                            <option value="all" <?php echo $searchon == 'all' ? 'selected' : ''; ?>><?php _e( 'Title and Body', 'mainwp' ); ?></option>                                                        
+                            <option value="content" <?php echo $searchon == 'content' ? 'selected' : ''; ?>><?php _e( 'Body', 'mainwp' ); ?></option>
+                            <option value="all" <?php echo $searchon == 'all' ? 'selected' : ''; ?>><?php _e( 'Title and Body', 'mainwp' ); ?></option>
                         </select>
 			</div>
 			<div class="mainwp-cols-2 mainwp-left">
 				<label for="mainwp_post_search_by_dtsstart"><?php _e( 'Date Range:', 'mainwp' ); ?></label><br/>
 				<input type="text" id="mainwp_post_search_by_dtsstart" class="mainwp_datepicker" size="12" value="<?php if ( $cachedSearch != null ) {
-					echo $cachedSearch['dtsstart'];
+					echo esc_attr($cachedSearch['dtsstart']);
 				} ?>"/> <?php _e( 'to', 'mainwp' ); ?>
 				<input type="text" id="mainwp_post_search_by_dtsstop" class="mainwp_datepicker" size="12" value="<?php if ( $cachedSearch != null ) {
-					echo $cachedSearch['dtsstop'];
+					echo esc_attr($cachedSearch['dtsstop']);
 				} ?>"/>
 			</div>
 			<div sytle="clear:both;"></div>
@@ -443,9 +443,9 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 				<div sytle="clear:both;"></div>
 			</div>
 			<?php
-		endif;               
+		endif;
 		?>
-        <br/><br/>        	
+        <br/><br/>
 		<div class="mainwp-padding-bottom-20 mainwp-padding-top-20">
 			<label for="mainwp_maximumPosts"><?php _e( 'Maximum number of posts to return', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( '0 for unlimited, CAUTION: depending on your server settings a large return amount may decrease the speed of results or temporarily break communication between Dashboard and Child.', 'mainwp' ) ); ?></label><br/>
 			<input type="number"
@@ -790,7 +790,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 				    valign="top">
 					<th scope="row" class="check-column"><input type="checkbox" name="post[]" value="1"></th>
 					<td class="title <?php MainWP_Utility::gen_hidden_column('title', $hidden); ?> column-title">
-						<input class="postId" type="hidden" name="id" value="<?php echo $post['id']; ?>"/>
+						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr($post['id']); ?>"/>
 						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php if ( $post['status'] == 'publish' ) {
 							echo 'unpublish|';
 						} ?><?php if ( $post['status'] == 'pending' ) {
@@ -800,16 +800,16 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 						} ?><?php if ( $post['status'] == 'future' || $post['status'] == 'draft' ) {
 							echo 'publish|';
 						} ?>"/>
-						<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
+						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($website->id); ?>"/>
 
 						<strong>
-							<abbr title="<?php echo $post['title']; ?>">
+							<abbr title="<?php echo esc_attr($post['title']); ?>">
 								<?php if ( $post['status'] != 'trash' ) { ?>
 									<a class="row-title"
 									   href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>"
-									   title="Edit '<?php echo $post['title']; ?>'" target="_blank"><?php echo $post['title']; ?></a>
+									   title="Edit '<?php echo esc_attr($post['title']); ?>'" target="_blank"><?php echo esc_html($post['title']); ?></a>
 								<?php } else { ?>
-									<?php echo $post['title']; ?>
+									<?php echo esc_html( $post['title'] ); ?>
 								<?php } ?>
 							</abbr>
 						</strong>
@@ -854,7 +854,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 								<span class="view">
                             | <a
 										href="<?php echo $website->url . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . $post['id']; ?>"
-										target="_blank" title="View â€œ<?php echo $post['title']; ?>ï¿½?" rel="permalink"><?php _e( 'View', 'mainwp' ); ?></a>
+										target="_blank" title="View â€œ<?php echo esc_attr($post['title']); ?>ï¿½?" rel="permalink"><?php _e( 'View', 'mainwp' ); ?></a>
                         </span>
 								<span class="unpublish">
                             | <a class="post_submitunpublish" title="Unpublish this item" href="#"><?php _e( 'Unpublish', 'mainwp' ); ?></a>
@@ -875,10 +875,10 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 							<i class="fa fa-spinner fa-pulse"></i> <?php _e( 'Please wait...', 'mainwp' ); ?></div>
 					</td>
 					<td class="author <?php MainWP_Utility::gen_hidden_column('author', $hidden); ?> column-author">
-						<?php echo $post['author']; ?>
+						<?php echo esc_attr($post['author']); ?>
 					</td>
 					<td class="categories <?php MainWP_Utility::gen_hidden_column('categories', $hidden); ?> column-categories">
-						<?php echo $post['categories']; ?>
+						<?php echo esc_attr( $post['categories'] ); ?>
 					</td>
 					<td class="tags <?php MainWP_Utility::gen_hidden_column('tags', $hidden); ?> column-tags"><?php echo( $post['tags'] == '' ? 'No Tags' : $post['tags'] ); ?></td>
 					<?php
@@ -891,11 +891,11 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 					<td class="comments <?php MainWP_Utility::gen_hidden_column('comments', $hidden); ?> column-comments">
 						<div class="post-com-count-wrapper">
 							<a href="<?php echo admin_url( 'admin.php?page=CommentBulkManage&siteid=' . $website->id . '&postid=' . $post['id'] ); ?>" title="0 pending" class="post-com-count"><span
-									class="comment-count"><abbr title="<?php echo $post['comment_count']; ?>"><?php echo $post['comment_count']; ?></abbr></span></a>
+									class="comment-count"><abbr title="<?php echo esc_attr($post['comment_count']); ?>"><?php echo esc_attr($post['comment_count']); ?></abbr></span></a>
 						</div>
 					</td>
-					<td class="date <?php MainWP_Utility::gen_hidden_column('date', $hidden); ?> column-date"><abbr raw_value="<?php echo $raw_dts; ?>"
-					                                                                                                title="<?php echo $post['dts']; ?>"><?php echo $post['dts']; ?></abbr>
+					<td class="date <?php MainWP_Utility::gen_hidden_column('date', $hidden); ?> column-date"><abbr raw_value="<?php echo esc_attr($raw_dts); ?>"
+					                                                                                                title="<?php echo esc_attr($post['dts']); ?>"><?php echo esc_html($post['dts']); ?></abbr>
 					</td>
 					<td class="status <?php MainWP_Utility::gen_hidden_column('status', $hidden); ?> column-status"><?php echo self::getStatus( $post['status'] ); ?></td>
 					<?php
@@ -912,13 +912,13 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 						?>
 						<td class="<?php MainWP_Utility::gen_hidden_column('seo-links', $hidden); ?> column-seo-links" ><abbr raw_value="<?php echo $count_seo_links !== null ? $count_seo_links : -1; ?>" title=""><?php echo $count_seo_links !== null ? $count_seo_links : ''; ?></abbr></td>
 						<td class="<?php MainWP_Utility::gen_hidden_column('seo-linked', $hidden); ?> column-seo-linked"><abbr raw_value="<?php echo $count_seo_linked !== null ? $count_seo_linked : -1; ?>" title=""><?php echo $count_seo_linked !== null ? $count_seo_linked : ''; ?></abbr></td>
-						<td class="<?php MainWP_Utility::gen_hidden_column('seo-score', $hidden); ?> column-seo-score"><abbr raw_value="<?php echo $seo_score ? 1 : 0; ?>" title=""><?php echo $seo_score; ?></abbr></td>
-						<td class="<?php MainWP_Utility::gen_hidden_column('seo-readability', $hidden); ?> column-seo-readability"><abbr raw_value="<?php echo $readability_score ? 1 : 0; ?>" title=""><?php echo $readability_score; ?></abbr></td>
+						<td class="<?php MainWP_Utility::gen_hidden_column('seo-score', $hidden); ?> column-seo-score"><abbr raw_value="<?php echo $seo_score ? 1 : 0; ?>" title=""><?php echo esc_html( $seo_score ); ?></abbr></td>
+						<td class="<?php MainWP_Utility::gen_hidden_column('seo-readability', $hidden); ?> column-seo-readability"><abbr raw_value="<?php echo $readability_score ? 1 : 0; ?>" title=""><?php echo esc_html( $readability_score ); ?></abbr></td>
 						<?php
 					};
 					?>
 					<td class="website <?php MainWP_Utility::gen_hidden_column('website', $hidden); ?> column-website">
-						<a href="<?php echo $website->url; ?>" target="_blank"><?php echo $website->url; ?></a>
+						<a href="<?php echo esc_url($website->url); ?>" target="_blank"><?php echo esc_html($website->url); ?></a>
 
 						<div class="row-actions">
 							<span class="edit"><a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php _e( 'Overview', 'mainwp' ); ?></a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>" target="_blank"><?php _e( 'WP Admin', 'mainwp' ); ?></a></span>
@@ -970,7 +970,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 		self::renderFooter( 'BulkEdit' );
 	}
 
-    
+
     public static function hookPostsSearch_handler( $data, $website, &$output ) {
         $posts = array();
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
@@ -979,7 +979,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
         }
         $output->results[ $website->id ] = $posts;
     }
-    
+
 
 	public static function getCategories() {
 		$websites = array();
@@ -1077,7 +1077,6 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 					$id   = $_GET['id'];
 					$post = get_post( $id );
 					if ( $post ) {
-						//                die('<pre>'.print_r($post, 1).'</pre>');
 						$selected_by     = get_post_meta( $id, '_selected_by', true );
 						$selected_sites  = unserialize( base64_decode( get_post_meta( $id, '_selected_sites', true ) ) );
 						$selected_groups = unserialize( base64_decode( get_post_meta( $id, '_selected_groups', true ) ) );
@@ -1113,7 +1112,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 						include_once( ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php' );
 						$featured_image_id = get_post_thumbnail_id( $id );
                         $post_featured_image = null;
-                        $featured_image_data = null;                        
+                        $featured_image_data = null;
 						$mainwp_upload_dir   = wp_upload_dir();
 						$post_status = get_post_meta( $id, '_edit_post_status', true );
 						$new_post = array(
@@ -1134,10 +1133,10 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 							$img                 = wp_get_attachment_image_src( $featured_image_id, 'full' );
 							$post_featured_image = $img[0];
                             $attachment = get_post( $featured_image_id );
-                            $featured_image_data = array(										
+                            $featured_image_data = array(
 										'alt' => get_post_meta( $featured_image_id, '_wp_attachment_image_alt', true ),
 										'caption' => $attachment->post_excerpt,
-										'description' => $attachment->post_content,										
+										'description' => $attachment->post_content,
 										'title' => $attachment->post_title
 									);
 						}
@@ -1432,7 +1431,8 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 				update_post_meta( $ret['id'], '_selected_sites', base64_encode( serialize( array($websiteId) ) ) );
 				update_post_meta( $ret['id'], '_mainwp_edit_post_site_id', $websiteId );
 			}
-			die( json_encode( $ret ) );
+			//die( json_encode( $ret ) );
+            wp_send_json( $ret );
 		}
 	}
 

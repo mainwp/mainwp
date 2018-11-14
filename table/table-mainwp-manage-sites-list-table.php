@@ -494,7 +494,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
 		}
 
-		$loader = '<span class="bulk_running"><i class="fa fa-spinner fa-pulse" style="display:none"></i><span class="status hidden"></span></span>';
+		$loader = '<span class="bulk_running"><i class="fa fa-spinner fa-pulse" style="display:none"></i><span id="site-status-' . $item['id'] . '" class="status hidden"></span></span>';
 
 		return $imgfavi . sprintf( '<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], stripslashes( $item['name'] ), $this->row_actions( $actions ) );
 	}
@@ -584,9 +584,10 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	}
 
 	function column_notes( $item ) {
-		//$note = strip_tags( $item['note'], '<p><strong><em><br/><hr/><a></p></strong></em></a>' );
-		//$note = wp_kses_post( $item['note'] );
-		$note = html_entity_decode($item['note']); // to fix
+        //$note = strip_tags( $item['note'], '<p><strong><em><br/><hr/><a></p></strong></em></a>' );
+//		$esc_note = esc_html( $item['note'] ); // to fix
+        $esc_note = MainWP_Utility::esc_content( $item['note'] ); // to fix
+
 		$lastupdate = $item['note_lastupdate'];
 
 		$txt_lastupdate = '';
@@ -595,10 +596,10 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		}
 
 		if ( $item['note'] == '' ) {
-			return sprintf( '<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_%1$s">' . '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) . '</a>' . $txt_lastupdate . '<span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $note );
+			return sprintf( '<a href="#" class="mainwp_notes_show_all" id="mainwp_notes_%1$s">' . '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) . '</a>' . $txt_lastupdate . '<span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $esc_note );
 		} else {
-			$raw_note = esc_html($note);
-			return sprintf( '<a href="#" class="mainwp_notes_show_all mainwp-green" id="mainwp_notes_%1$s">' . MainWP_Utility::renderNoteTooltip( $raw_note, '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) ) . '</a>' . $txt_lastupdate . '<span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $note );
+            $strip_note = strip_tags($esc_note);
+			return sprintf( '<a href="#" class="mainwp_notes_show_all mainwp-green" id="mainwp_notes_%1$s">' . MainWP_Utility::renderNoteTooltip( $strip_note, '<i class="fa fa-pencil-square-o"></i> ' . __( 'Notes', 'mainwp' ) ) . '</a>' . $txt_lastupdate . '<span style="display: none" id="mainwp_notes_%1$s_note">%3$s</span>', $item['id'], ( $item['note'] == '' ? 'display: none;' : '' ), $esc_note );
 		}
 	}
 
@@ -639,7 +640,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		foreach ( $this->_actions as $name => $title ) {
 			$class = 'edit' === $name ? ' class="hide-if-no-js"' : '';
 
-			echo "\t" . '<option value="' . $name . '"' . $class . '>' . $title . "</option>\n";
+			echo "\t" . '<option value="' . esc_attr($name) . '"' . $class . '>' . esc_html($title) . "</option>\n";
 		}
 
 		echo "</select>\n";
@@ -660,6 +661,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			'update_themes'   => __( 'Update themes', 'mainwp' ),
 			'update_wpcore'   => __('Update WordPress', 'mainwp'),
 			'update_translations'   => __('Update translations', 'mainwp'),
+            'refresh_favico'  => __( 'Refresh Favico', 'mainwp' ),
 		);
 
 		return apply_filters( 'mainwp_managesites_bulk_actions', $actions );
@@ -730,7 +732,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 
 			} else if ( ( $_GET['orderby'] == 'status' ) ) {
-				$orderby = 'CASE true                                
+				$orderby = 'CASE true
                                 WHEN (offline_check_result = -1)
                                     THEN 2
                                 WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")
@@ -1065,7 +1067,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 					?>
 				</select>
 
-				<input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
+				<input type="hidden" value="<?php echo esc_attr($_REQUEST['page']); ?>" name="page"/>
 				<select name="status"  class="mainwp-select2 allowclear" data-placeholder="<?php _e( 'All Statuses', 'mainwp' ); ?>">
 					<option value=""></option>
 					<option value="online" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'online' ? 'selected' : '' ); ?>><?php _e( 'Online', 'mainwp' ); ?></option>
@@ -1079,7 +1081,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 		<div class="alignleft actions">
 			<form method="GET" action="">
-				<input type="hidden" value="<?php echo $_REQUEST['page']; ?>" name="page"/>
+				<input type="hidden" value="<?php echo esc_attr( $_REQUEST['page'] ); ?>" name="page"/>
 				<input type="text" value="<?php echo( isset( $_REQUEST['s'] ) ? esc_attr( $_REQUEST['s'] ) : '' ); ?>"
 				       autocompletelist="sites" name="s" class="mainwp_autocomplete"/>
 				<datalist id="sites">

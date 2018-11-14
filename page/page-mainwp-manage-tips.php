@@ -55,11 +55,11 @@ class MainWP_Manage_Tips {
 						?>
 						<tr>
 							<td valign="top">
-								<input type="text" name="tip_<?php echo $tip->id; ?>_seq" size="1"
-									value="<?php echo $tip->seq; ?>" class="mainwp_managetips_tip_seq"/>
+								<input type="text" name="tip_<?php echo esc_attr($tip->id); ?>_seq" size="1"
+									value="<?php echo esc_attr($tip->seq); ?>" class="mainwp_managetips_tip_seq"/>
 							</td>
 							<td>
-                            <textarea rows="4" cols="150" name="tip_<?php echo $tip->id; ?>_content"
+                            <textarea rows="4" cols="150" name="tip_<?php echo esc_attr($tip->id); ?>_content"
 	                            class="mainwp_managetips_tip_content"><?php echo $tip->content; ?></textarea>
 							</td>
 							<td valign="top"><a href="#" class="mainwp_managetips_remove">Remove</a></td>
@@ -96,7 +96,7 @@ class MainWP_Manage_Tips {
 				foreach ( $tips as $tip ) {
 					?>
 					<span <?php echo( $currTip == $tip->seq ? '' : 'class="mainwp_tips_content_individual"' ); ?>
-						id="mainwp_tips_content_<?php echo $tip->seq; ?>"><?php echo $tip->content; ?></span>
+						id="mainwp_tips_content_<?php echo esc_attr($tip->seq); ?>"><?php echo esc_html($tip->content); ?></span>
 					<?php
 
 				}

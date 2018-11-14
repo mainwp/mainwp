@@ -143,7 +143,7 @@ class MainWP_User {
                                 continue;
 							?>
 							<a href="<?php echo admin_url( 'admin.php?page=UserBulk' . $subPage['slug'] ); ?>"
-								class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
+								class="mainwp-submenu"><?php echo esc_html($subPage['title']); ?></a>
 							<?php
 						}
 					}
@@ -231,7 +231,7 @@ class MainWP_User {
 					?>
 					<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) {
 						echo 'nav-tab-active';
-					} ?>" href="admin.php?page=UserBulk<?php echo $subPage['slug']; ?>"><?php echo $subPage['title']; ?></a>
+					} ?>" href="admin.php?page=UserBulk<?php echo esc_attr($subPage['slug']); ?>"><?php echo esc_html($subPage['title']); ?></a>
 					<?php
 				}
 			}
@@ -297,7 +297,7 @@ class MainWP_User {
 			</div>
 			<div class="alignright" id="mainwp_users_total_results">
 				<?php _e( 'Total Results:', 'mainwp' ); ?>
-				<span id="mainwp_users_total"><?php echo $cachedSearch != null ? $cachedSearch['count'] : '0'; ?></span>
+				<span id="mainwp_users_total"><?php echo $cachedSearch != null ? esc_attr($cachedSearch['count']) : '0'; ?></span>
 			</div>
 			<div class="clear"></div>
 			<div id="mainwp_users_content">
@@ -320,7 +320,7 @@ class MainWP_User {
                     $col_orders = $current_options['users_col_order'];
                 }
                 ?>
-                <script type="text/javascript"> var usersColOrder = '<?php echo $col_orders; ?>' ; </script>
+                <script type="text/javascript"> var usersColOrder = '<?php echo esc_attr($col_orders); ?>' ; </script>
 		<?php
 		if ( $cachedSearch != null ) {
                     ?>
@@ -367,7 +367,7 @@ class MainWP_User {
                                         <?php _e('Username or email', 'mainwp'); ?><br/>
 					<input type="text"
 						   aria-required="true"
-						   value="<?php if ( $cachedSearch != null && isset( $cachedSearch['keyword'] ) ) { echo $cachedSearch['keyword']; } ?>"
+						   value="<?php if ( $cachedSearch != null && isset( $cachedSearch['keyword'] ) ) { echo esc_attr($cachedSearch['keyword']); } ?>"
 						   id="mainwp_search_users"
 						   size="50"
 						   name="mainwp_search_users">
@@ -815,11 +815,11 @@ class MainWP_User {
 					} ?>
                                 </td>
                                 <td class="name column-name">
-                                    <input class="userId" type="hidden" name="id" value="<?php echo $user['id']; ?>"/>
-					<input class="userName" type="hidden" name="name" value="<?php echo $user['login']; ?>"/>
+                                    <input class="userId" type="hidden" name="id" value="<?php echo esc_attr($user['id']); ?>"/>
+					<input class="userName" type="hidden" name="name" value="<?php echo esc_attr($user['login']); ?>"/>
 					<input class="websiteId" type="hidden" name="id"
-						value="<?php echo $website->id; ?>"/>
-					<?php echo !empty($user['display_name']) ? $user['display_name'] : '&nbsp;' ; ?>
+						value="<?php echo esc_attr($website->id); ?>"/>
+					<?php echo !empty($user['display_name']) ? esc_html($user['display_name']) : '&nbsp;' ; ?>
 					<div class="row-actions">
                     <span class="edit"><a class="user_getedit"
 		                    href="#"
@@ -841,19 +841,19 @@ class MainWP_User {
 
                                 </td>
 				<td class="username column-username">
-					<strong><abbr title="<?php echo $user['login']; ?>"><?php echo $user['login']; ?></abbr></strong>
+					<strong><abbr title="<?php echo esc_attr($user['login']); ?>"><?php echo esc_html($user['login']); ?></abbr></strong>
 				</td>
 				<td class="email column-email"><a
-						href="mailto:<?php echo $user['email']; ?>"><?php echo $user['email']; ?></a></td>
+						href="mailto:<?php echo esc_attr($user['email']); ?>"><?php echo esc_html($user['email']); ?></a></td>
 				<td class="role column-role"><?php echo self::getRole( $user['role'] ); ?></td>
 				<td class="posts column-posts" style="text-align: left; padding-left: 1.7em ;">
-					<a href="<?php echo admin_url( 'admin.php?page=PostBulkManage&siteid=' . $website->id . '&userid=' . $user['id'] ); ?>"><?php echo $user['post_count']; ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=PostBulkManage&siteid=' . $website->id . '&userid=' . $user['id'] ); ?>"><?php echo esc_html($user['post_count']); ?></a>
 				</td>
 				<td class="website column-website"><a
-						href="<?php echo $website->url; ?>"><?php echo $website->url; ?></a>
+						href="<?php echo esc_url($website->url); ?>"><?php echo esc_html($website->url); ?></a>
 
 					<div class="row-actions">
-						<span class="edit"><a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php _e( 'Overview', 'mainwp' ); ?></a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>" target="_blank"><?php _e( 'WP Admin', 'mainwp' ); ?></a></span>
+						<span class="edit"><a href="admin.php?page=managesites&dashboard=<?php echo esc_attr($website->id); ?>"><?php _e( 'Overview', 'mainwp' ); ?></a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr($website->id); ?>" target="_blank"><?php _e( 'WP Admin', 'mainwp' ); ?></a></span>
 					</div>
 				</td>
 			</tr>
@@ -883,9 +883,10 @@ class MainWP_User {
 		die( json_encode( array( 'result' => 'User has been deleted' ) ) );
 	}
 
-        public static function edit() {
+    public static function edit() {
 		$information = MainWP_User::action( 'edit' );
-		die( json_encode( $information ) );
+		//die( json_encode( $information ) );
+        wp_send_json( $information );
 	}
 
         public static function updateUser() {
@@ -947,7 +948,8 @@ class MainWP_User {
 		}
 
                 if (is_array($information) && isset($information['error'])) {
-                        die( json_encode( array( 'error' => $information['error'] ) ) );
+                        //die( json_encode( array( 'error' => $information['error'] ) ) );
+                        wp_send_json( array( 'error' => $information['error'] ) );
                 }
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
@@ -974,13 +976,6 @@ class MainWP_User {
 	public static function renderBulkAdd() {
 		?>
 		<?php self::renderHeader( 'Add' ); ?>
-		<?php if ( isset( $errors ) && count( $errors ) > 0 ) { ?>
-			<div class="error below-h2">
-				<?php foreach ( $errors as $error ) { ?>
-					<p><strong>ERROR</strong>: <?php echo $error ?></p>
-				<?php } ?>
-			</div>
-		<?php } ?>
 		<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
 		<div id="MainWP_Bulk_AddUserLoading" class="updated">
             <div><i class="fa fa-spinner fa-pulse"></i> <?php _e('Adding the user','mainwp'); ?></div>
@@ -1010,13 +1005,6 @@ class MainWP_User {
 		}
 		?>
 		<?php self::renderHeader( 'Import' ); ?>
-		<?php if ( isset( $errors ) && count( $errors ) > 0 ) { ?>
-			<div class="error below-h2">
-				<?php foreach ( $errors as $error ) { ?>
-					<p><strong>ERROR</strong>: <?php echo $error ?></p>
-				<?php } ?>
-			</div>
-		<?php } ?>
 		<div class="error below-h2" style="display: none;" id="ajax-error-zone"></div>
 		<div id="MainWP_Bulk_AddUser">
 		<div class="mainwp-padding-bottom-10"><?php MainWP_Tours::renderUsersImportTour(); ?></div>
@@ -1041,7 +1029,7 @@ class MainWP_User {
 				<td>
 					<input class="" name="user_login" type="text" id="user_login" value="<?php
 					if ( isset( $_POST['user_login'] ) ) {
-						echo $_POST['user_login'];
+						echo esc_html($_POST['user_login']);
 					}
 					?>" aria-required="true"/></td>
 			</tr>
@@ -1052,7 +1040,7 @@ class MainWP_User {
 				<td>
 					<input class="" name="email" type="text" id="email" value="<?php
 					if ( isset( $_POST['email'] ) ) {
-						echo $_POST['email'];
+						echo esc_html($_POST['email']);
 					}
 					?>"/></td>
 			</tr>
@@ -1062,7 +1050,7 @@ class MainWP_User {
 				<td>
 					<input class="" name="first_name" type="text" id="first_name" value="<?php
 					if ( isset( $_POST['first_name'] ) ) {
-						echo $_POST['first_name'];
+						echo esc_html($_POST['first_name']);
 					}
 					?>"/></td>
 			</tr>
@@ -1072,7 +1060,7 @@ class MainWP_User {
 				<td>
 					<input class="" name="last_name" type="text" id="last_name" value="<?php
 					if ( isset( $_POST['last_name'] ) ) {
-						echo $_POST['last_name'];
+						echo esc_html( $_POST['last_name'] );
 					}
 					?>"/></td>
 			</tr>
@@ -1081,7 +1069,7 @@ class MainWP_User {
 				<td>
 					<input class="" name="url" type="text" id="url" class="code" value="<?php
 					if ( isset( $_POST['url'] ) ) {
-						echo $_POST['url'];
+						echo esc_html( $_POST['url'] );
 					}
 					?>"/></td>
 			</tr>
@@ -1415,7 +1403,7 @@ class MainWP_User {
 							$line = trim( $items[0] ) . ',' . trim( $items[1] ) .','. trim( $items[2] ) . ',' . trim( $items[3] ) . ',' . trim( $items[4] ) . ',' . trim( $items[5] ). ',' . intval( $items[6] ) . ',' . trim( strtolower( $items[7] ) ). ',' . trim( $items[8] ) . ',' . trim( $items[9] );
 
 							?>
-						   <input type="hidden" id="user_import_csv_line_<?php echo ($i + 1) // to starting by 1 ?>"  value="<?php echo $line ?>"/>
+						   <input type="hidden" id="user_import_csv_line_<?php echo ($i + 1) // to starting by 1 ?>"  value="<?php echo esc_attr($line) ?>"/>
 							<?php
 							$i++;
 						}
@@ -1428,7 +1416,7 @@ class MainWP_User {
 						   <input type="hidden" id="import_user_total_import" value="<?php echo $i ?>"/>
 
 							<p><div class="import_user_import_listing" id="import_user_import_logging">
-							   <pre class="log"><?php echo $header_line; ?></pre>
+							   <pre class="log"><?php echo esc_html($header_line); ?></pre>
 							</div></p>
 
 							 <p class="submit"><input type="button" name="import_user_btn_import"
@@ -1440,7 +1428,7 @@ class MainWP_User {
 							 </p>
 
 							<p><div class="import_user_import_listing" id="import_user_import_fail_logging" style="display: none;">
-							   <pre class="log"><?php echo $header_line; ?></pre>
+							   <pre class="log"><?php echo esc_html($header_line); ?></pre>
 							</div></p>
 						   </div>
 						</div>
@@ -1461,7 +1449,7 @@ class MainWP_User {
 				?>
 				<div class="error below-h2">
 					<?php foreach ( $errors as $error ) { ?>
-						<p><strong>ERROR</strong>: <?php echo $error ?></p>
+						<p><strong>ERROR</strong>: <?php echo esc_html($error); ?></p>
 					<?php } ?>
 				</div>
 				<br/>
@@ -1523,7 +1511,7 @@ class MainWP_User {
                             'http_pass'
 						) );
 					} else {
-						$not_valid[] = __( "Error - The website doesn't exist in the Network.", 'mainwp' ) . " " . $url;;
+						$not_valid[] = __( "Error - The website doesn't exist in the Network.", 'mainwp' ) . " " . $url;
 						$error_sites .= $url . ';';
 					}
 				}
@@ -1575,9 +1563,9 @@ class MainWP_User {
 		$ret['ok_list'] = $ret['error_list'] = array();
 		foreach ( $dbwebsites as $website ) {
 			if ( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ) {
-				$ret['ok_list'][] = 'New user(s) created: ' . stripslashes( $website->name );
+				$ret['ok_list'][] = 'New user(s) created: ' . esc_html( stripslashes( $website->name ) );
 			} else {
-				$ret['error_list'][] = $output->errors[ $website->id ] . ' ' . stripslashes( $website->name );
+				$ret['error_list'][] = esc_html( $output->errors[ $website->id ] . ' ' . stripslashes( $website->name ) );
 				$error_sites .= $website->url . ';';
 			}
 		}
@@ -1589,11 +1577,12 @@ class MainWP_User {
 		$ret['failed_logging'] = '';
 		if ( ! empty( $error_sites ) ) {
 			$error_sites           = rtrim( $error_sites, ';' );
-			$ret['failed_logging'] = $_POST['user_login'] . ',' . $_POST['email'] . ',' . $_POST['first_name'] . ',' . $_POST['last_name'] . ',' . $_POST['url'] . ',' . $_POST['pass1'] . ',' . intval( $_POST['send_password'] ) . ',' . $_POST['role'] . ',' . $error_sites . ',';
+			$ret['failed_logging'] = esc_html( $_POST['user_login'] . ',' . $_POST['email'] . ',' . $_POST['first_name'] . ',' . $_POST['last_name'] . ',' . $_POST['url'] . ',' . $_POST['pass1'] . ',' . intval( $_POST['send_password'] ) . ',' . $_POST['role'] . ',' . $error_sites . ',' );
 		}
 
-		$ret['line_number'] = $_POST['line_number'];
-		die( json_encode( $ret ) );
+		$ret['line_number'] = intval($_POST['line_number']);
+
+        wp_send_json($ret);
 	}
 
 }

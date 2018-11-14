@@ -683,11 +683,12 @@ mainwp_refresh_dashboard = function (syncSiteIds)
 
     mainwpPopup('#refresh-status-box').init({title: __('Syncing Websites'), total: allWebsiteIds.length, pMax: nrOfWebsites, callback: function() {bulkTaskRunning = false; location.href = location.href;}});
 
-    dashboard_update(allWebsiteIds);
+    dashboard_update(allWebsiteIds, globalSync);
     if (globalSync && nrOfWebsites > 0) {
         var data = {
             action:'mainwp_status_saving',
-            status: 'last_sync_sites'
+            status: 'last_sync_sites',
+            isGlobalSync: globalSync
         };
         jQuery.post(ajaxurl, mainwp_secure_data(data), function (res) {
         });
@@ -703,15 +704,16 @@ var currentWebsite = 0;
 var bulkTaskRunning = false;
 var currentThreads = 0;
 var maxThreads = mainwpParams['maximumSyncRequests'] == undefined ? 8 : mainwpParams['maximumSyncRequests'];
+var globalSync = true;
 
-dashboard_update = function(websiteIds)
+dashboard_update = function(websiteIds, isGlobalSync)
 {
     websitesToUpdate = websiteIds;
     currentWebsite = 0;
     websitesDone = 0;
     websitesError = 0;
     websitesTotal = websitesLeft = websitesToUpdate.length;
-
+    globalSync = isGlobalSync;
     bulkTaskRunning = true;
 
     if (websitesTotal == 0)
@@ -789,7 +791,8 @@ dashboard_update_next = function()
     dashboard_update_site_status(websiteId,'<i class="fa fa-refresh fa-spin"></i> ' + __('SYNCING'));
     var data = mainwp_secure_data({
         action:'mainwp_syncsites',
-        wp_id: websiteId
+        wp_id: websiteId,
+        isGlobalSync: globalSync
     });
     dashboard_update_next_int(websiteId, data, 0);
 };
@@ -5108,6 +5111,9 @@ jQuery(document).ready(function () {
     });
 
     jQuery('#mainwp_notes_edit').live('click', function () {
+        var value = jQuery('#mainwp_notes_html').html();
+        console.log(value);
+        jQuery('#mainwp_notes_note').val(value);
         jQuery('#mainwp_notes').addClass('edit-mode');
         return false;
     });
@@ -5123,6 +5129,7 @@ mainwp_notes_show_all = function (id) {
     jQuery('#mainwp_notes').removeClass('edit-mode');
     var url = jQuery('#mainwp_notes_' + id + '_url').html();
     var note = jQuery('#mainwp_notes_' + id + '_note').html();
+    console.log(note);
     jQuery('#mainwp_notes_title').html(url);
     jQuery('#mainwp_notes_html').html( note == '' ? 'No Saved Notes' : note );
     jQuery('#mainwp_notes_note').val(note);
@@ -6575,7 +6582,7 @@ getErrorMessage = function(pError)
         var error = '';
         if (pError.extra)
         {
-            error = __('MainWP Child plugin not detected! First install and activate the MainWP Child plugin and add your site to MainWP Dashboard afterwards. If you continue experiencing this issue please test your connection <a href="admin.php?page=managesites&do=test&site=%1">here</a> or post as much information as possible on the error in the <a href="https://mainwp.com/forum/">support forum</a>.', encodeURIComponent(pError.extra));
+            error = __('MainWP Child plugin not detected! First install and activate the MainWP Child plugin and add your site to MainWP Dashboard afterwards. If you continue experiencing this issue please test your connection <a href="admin.php?page=managesites&do=test&site=%1">here</a> or post as much information as possible on the error in the <a href="https://mainwp.com/forum/">support forum</a>.', pError.extra); // to fix incorrect encoding
         }
         else
         {
@@ -7332,6 +7339,59 @@ mainwp_managesites_bulk_test_connection_specific = function(pCheckedBox) {
     return false;
 };
 
+mainwp_managesites_bulk_refresh_favico = function() {
+    while ((checkedBox = jQuery('#the-list .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0)  && (bulkManageSitesCurrentThreads < bulkManageSitesMaxThreads))
+    {
+        mainwp_managesites_refresh_favico_specific(checkedBox);
+    }
+    if ((bulkManageSitesTotal > 0) && (bulkManageSitesFinished == bulkManageSitesTotal)) {
+        setHtml('#mainwp_managesites_add_other_message', __("Refresh favico finished."));
+    }
+}
+
+mainwp_managesites_refresh_favico_specific = function(pCheckedBox) {
+    pCheckedBox.attr('status', 'running');
+    var rowObj = pCheckedBox.closest('tr');
+
+    bulkManageSitesCurrentThreads++;
+    var loadingEl = rowObj.find('.column-site .bulk_running i');
+    loadingEl.show();
+    var siteid = rowObj.attr('siteid');
+
+    var data = mainwp_secure_data({
+        action:'mainwp_get_site_icon',
+        siteId: siteid
+    });
+
+    jQuery('#site-status-' + siteid).html( __('Downloading site icon...') ).show();
+
+    jQuery.ajax({
+        type: 'POST',
+        url: ajaxurl,
+        data: data,
+        success: function(pLoadingEl, pSiteid) { return function (response) {
+            bulkManageSitesCurrentThreads--;
+            bulkManageSitesFinished++;
+            pLoadingEl.hide();
+            var result = '';
+
+            if (response.error != undefined)
+            {
+                result = '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('Download site icon failed') + ': ' + response.error + '</div>';
+            } else if (response.result && response.result == 'success') {
+                result = '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' +  __('Download site icon successful!') + '</div>';
+            } else {
+                result = '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('Download site icon failed') + '</div>';
+            }
+            jQuery('#site-status-' + pSiteid).html( result );
+            //setTimeout(function() { jQuery('#site-status-' + pSiteid).fadeOut(1000);}, 5000);
+
+            mainwp_managesites_bulk_refresh_favico();
+        } }(loadingEl, siteid),
+        dataType: 'json'});
+    return false;
+};
+
 jQuery(document).on('click', '#mainwp_managesites_content #doaction', function(){
     var action = jQuery('#bulk-action-selector-top').val();
     if (action == -1)
@@ -7350,7 +7410,7 @@ jQuery(document).on('click', '#mainwp_managesites_content #doaction2', function(
 
 mainwp_managesites_doaction = function(action) {
 
-    if (action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' ) {
+    if (action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'refresh_favico' ) {
 
         if (bulkManageSitesTaskRunning)
             return false;
@@ -7401,6 +7461,9 @@ mainwp_managesites_doaction = function(action) {
         } else if (action == 'update_translations') {
             var selectedIds = jQuery.map(jQuery('#the-list .check-column INPUT:checkbox:checked'), function(el) { return jQuery(el).val(); });
             mainwp_update_pluginsthemes('translation', selectedIds);
+        } else if (action == 'refresh_favico') {
+            var selectedIds = jQuery.map(jQuery('#the-list .check-column INPUT:checkbox:checked'), function(el) { return jQuery(el).val(); });
+            mainwp_managesites_bulk_refresh_favico(selectedIds);
         }
     }
 

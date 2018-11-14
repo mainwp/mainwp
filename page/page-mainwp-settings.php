@@ -30,9 +30,9 @@ class MainWP_Settings {
 		 */
 		add_action('mainwp-pagefooter-settings', array(MainWP_Settings::getClassName(), 'renderFooter'));
 		add_action('admin_init', array(MainWP_Settings::getClassName(), 'admin_init'));
-		
+
 	}
-	
+
 	public static function admin_init() {
 		self::exportSites();
 	}
@@ -44,14 +44,14 @@ class MainWP_Settings {
 		));
 		add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
 
-        if ( ! MainWP_System::is_disable_menu_item(3, 'DashboardOptions') ) {                                  
+        if ( ! MainWP_System::is_disable_menu_item(3, 'DashboardOptions') ) {
             $_page = add_submenu_page('mainwp_tab', __('Dashboard Options', 'mainwp'), ' <div class="mainwp-hidden">' . __('Dashboard Options', 'mainwp') . '</div>', 'read', 'DashboardOptions', array(
                 MainWP_Settings::getClassName(),
                 'renderDashboardOptions',
-            ));        
+            ));
             add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
         }
-        
+
         if ( ! MainWP_System::is_disable_menu_item(3, 'MainWPTools') ) {
             $_page = add_submenu_page('mainwp_tab', __('MainWP Tools', 'mainwp'), ' <div class="mainwp-hidden">' . __('MainWP Tools', 'mainwp') . '</div>', 'read', 'MainWPTools', array(
                 MainWP_Settings::getClassName(),
@@ -59,7 +59,7 @@ class MainWP_Settings {
             ));
             add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
         }
-        
+
         if ( ! MainWP_System::is_disable_menu_item(3, 'SettingsAdvanced') ) {
             $_page = add_submenu_page('mainwp_tab', __('Advanced Options', 'mainwp'), ' <div class="mainwp-hidden">' . __('Advanced Options', 'mainwp') . '</div>', 'read', 'SettingsAdvanced', array(
                 MainWP_Settings::getClassName(),
@@ -67,7 +67,7 @@ class MainWP_Settings {
             ));
             add_action('load-' . $_page, array(MainWP_Settings::getClassName(), 'on_load_page'));
         }
-        
+
         if ( ! MainWP_System::is_disable_menu_item(3, 'SettingsClientReportsResponder') ) {
             $_page = add_submenu_page('mainwp_tab', __('Managed Client Reports Responder', 'mainwp'), ' <div class="mainwp-hidden">' . __('Managed Client Reports Responder', 'mainwp') . '</div>', 'read', 'SettingsClientReportsResponder', array(
                 MainWP_Settings::getClassName(),
@@ -197,7 +197,7 @@ class MainWP_Settings {
                             }
 							?>
 							<a href="<?php echo admin_url('admin.php?page=Settings' . $subPage['slug']); ?>"
-							   class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
+							   class="mainwp-submenu"><?php echo esc_html($subPage['title']); ?></a>
 							<?php
 						}
 					}
@@ -246,9 +246,9 @@ class MainWP_Settings {
 
 		MainWP_System::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'Settings', 'Settings');
 		foreach($init_sub_subleftmenu as $item) {
-            if ( MainWP_System::is_disable_menu_item(3, $item['slug']) ) 
+            if ( MainWP_System::is_disable_menu_item(3, $item['slug']) )
                 continue;
-                
+
 			MainWP_System::add_sub_sub_left_menu($item['title'], $item['parent_key'], $item['slug'], $item['href'], $item['right']);
 		}
 	}
@@ -314,14 +314,14 @@ class MainWP_Settings {
 			<?php
 			if (isset(self::$subPages) && is_array(self::$subPages)) {
 				foreach (self::$subPages as $subPage) {
-                    if ( MainWP_System::is_disable_menu_item(3, 'Settings' . $subPage['slug']) ) 
+                    if ( MainWP_System::is_disable_menu_item(3, 'Settings' . $subPage['slug']) )
                             continue;
 					?>
 					<a class="nav-tab pos-nav-tab <?php
 					if ($shownPage === $subPage['slug']) {
 						echo 'nav-tab-active';
 					}
-					?>" href="admin.php?page=Settings<?php echo $subPage['slug']; ?>"><?php echo $subPage['title']; ?></a>
+					?>" href="admin.php?page=Settings<?php echo esc_attr($subPage['slug']); ?>"><?php echo esc_html($subPage['title']); ?></a>
 					<?php
 				}
 			}
@@ -667,7 +667,7 @@ class MainWP_Settings {
 				<?php _e('Your settings have been saved.', 'mainwp'); ?>
 			</div>
 			<?php
-		}		
+		}
 		?>
 		<form method="POST" action="admin.php?page=Settings" id="mainwp-settings-page-form">
 			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce('Settings'); ?>" />
@@ -676,7 +676,7 @@ class MainWP_Settings {
 				<input type="submit" name="submit" id="submit" class="button-primary button button-hero" value="<?php esc_attr_e('Save settings', 'mainwp'); ?>"/>
 			</p>
 		</form>
-		<?php		
+		<?php
 		self::renderFooter('');
 	}
 
@@ -767,12 +767,12 @@ class MainWP_Settings {
 			return;
 		}
 
-		self::renderHeader('MainWPTools');		
-		
+		self::renderHeader('MainWPTools');
+
 		if (isset($_GET['disconnectSites']) && isset($_GET['_wpnonce']) && wp_verify_nonce( $_GET['_wpnonce'], 'disconnect_sites' ) ) {
 			self::renderDisconnect();
 			return;
-		} else {		
+		} else {
 		?>
 		<form method="POST" action="">
 			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce('MainWPTools'); ?>" />
@@ -867,8 +867,8 @@ class MainWP_Settings {
 							}
 							?>
 							<li>
-								<input type="checkbox" id="mainwp_hide_wpmenu_<?php echo $name; ?>" name="mainwp_hide_wpmenu[]" <?php echo $_selected; ?> value="<?php echo $name; ?>">
-								<label for="mainwp_hide_wpmenu_<?php echo $name; ?>" ><?php echo $item; ?></label>
+								<input type="checkbox" id="mainwp_hide_wpmenu_<?php echo esc_attr($name); ?>" name="mainwp_hide_wpmenu[]" <?php echo $_selected; ?> value="<?php echo esc_attr($name); ?>">
+								<label for="mainwp_hide_wpmenu_<?php echo esc_attr($name); ?>" ><?php echo esc_html($item); ?></label>
 							</li>
 						<?php }
 						?>
@@ -879,60 +879,60 @@ class MainWP_Settings {
 		</table>
 		<?php
 	}
-	
+
 	public static function exportSites() {
 		if (isset($_GET['doExportSites']) && isset($_GET['_wpnonce']) && wp_verify_nonce( $_GET['_wpnonce'], 'export_sites' ) ) {
-			
+
 			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(true);
 			$websites = MainWP_DB::Instance()->query( $sql );
 
-			if ( ! $websites ) {            
-				die("Not found sites");			
+			if ( ! $websites ) {
+				die("Not found sites");
 			}
-			
+
 			$keys = array('name', 'url', 'adminname', 'groups', 'uniqueId', 'http_user', 'http_pass', 'verify_certificate', 'ssl_version' );
 			$allowedHeaders = array('site name', 'url', 'admin name', 'group', 'security id', 'http username', 'http password', 'verify certificate', 'ssl version');
-			
+
 			$csv = implode(",", $allowedHeaders) .  "\r\n"; //PHP_EOL;
-			@MainWP_DB::data_seek( $websites, 0 );			
-			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {				
+			@MainWP_DB::data_seek( $websites, 0 );
+			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( empty($website) ) {
 					continue;
-				}				
-				$row = MainWP_Utility::mapSiteArray( $website, $keys );				
-				$csv .= '"' . implode('","', $row) . '"' .  "\r\n"; //PHP_EOL;				
-			}	
-			
+				}
+				$row = MainWP_Utility::mapSiteArray( $website, $keys );
+				$csv .= '"' . implode('","', $row) . '"' .  "\r\n"; //PHP_EOL;
+			}
+
 			header('Content-Type: text/csv; charset=utf-8');
 			header('Content-Disposition: attachment; filename=export-sites.csv');
-			echo $csv;						
+			echo $csv;
 			exit();
-		}		
+		}
 	}
-	
-	public static function renderDisconnect() {		
+
+	public static function renderDisconnect() {
 			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false);
 			$websites = MainWP_DB::Instance()->query( $sql );
-			if (!$websites)	{			
+			if (!$websites)	{
 				echo "Not found child sites";
 				return;
-			}		
-			?>				
+			}
+			?>
 			<div class="postbox">
 				<h3 class="mainwp_box_title"><?php _e('Disconnect All Sites', 'mainwp'); ?></h3>
 				<div class="inside" id="disconnect-sites-wrap">
-				<?php		
-				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {					
+				<?php
+				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 					echo '<span class="disconnect-sites-item queue" site-id="' . $website->id .'">' . esc_html($website->url) . ' <span class="disconnect_status"></span></span>';
 					?>
-					<br/>              
-				<?php            
+					<br/>
+				<?php
 				}
 				@MainWP_DB::free_result( $websites );
 				?>
 				</div>
 			</div>
-		
+
 			<script type="text/javascript">
 
 					var disconnect_bulkMaxThreads = maxThreads;
@@ -940,18 +940,18 @@ class MainWP_Settings {
 					var disconnect_bulkCurrentThreads = 0;
 					var disconnect_bulkFinishedThreads = 0;
 
-					jQuery(document).ready(function($) {							
-							disconnect_bulkTotalThreads = jQuery('.disconnect-sites-item.queue').length;                             
+					jQuery(document).ready(function($) {
+							disconnect_bulkTotalThreads = jQuery('.disconnect-sites-item.queue').length;
 							disconnect_bulkCurrentThreads = 0;
 							disconnect_bulkFinishedThreads = 0;
-							if (disconnect_bulkTotalThreads > 0) {									
+							if (disconnect_bulkTotalThreads > 0) {
 								mainwp_disc_sites_start_next();
-							}								
+							}
 					});
 
-					mainwp_disc_sites_start_next = function () {       
+					mainwp_disc_sites_start_next = function () {
 						while ((objProcess = jQuery( '.disconnect-sites-item.queue:first' )) && (objProcess.length > 0) && (disconnect_bulkCurrentThreads < disconnect_bulkMaxThreads)) {
-							objProcess.removeClass( 'queue' );                            
+							objProcess.removeClass( 'queue' );
 							mainwp_disc_sites_start_specific( objProcess);
 						}
 						if(disconnect_bulkFinishedThreads == disconnect_bulkTotalThreads) {
@@ -959,25 +959,25 @@ class MainWP_Settings {
 						}
 					}
 
-					mainwp_disc_sites_start_specific = function (pObj) {                            
+					mainwp_disc_sites_start_specific = function (pObj) {
 							var statusEl = pObj.find( '.disconnect_status' );
-							disconnect_bulkCurrentThreads++; 
-							
+							disconnect_bulkCurrentThreads++;
+
 							var data = mainwp_secure_data({
 								action: 'mainwp_disconnect_site',
-								websiteId: pObj.attr( 'site-id' ),								
+								websiteId: pObj.attr( 'site-id' ),
 							});
-							
+
 							statusEl.css( 'color', '#21759B' );
-							statusEl.html('<i class="fa fa-spinner fa-pulse" style=""></i>');                            
-							jQuery.post(ajaxurl, data, function (response) {                                
+							statusEl.html('<i class="fa fa-spinner fa-pulse" style=""></i>');
+							jQuery.post(ajaxurl, data, function (response) {
 								pObj.removeClass( 'queue' );
 								if (response && response['error']) {
 									statusEl.css( 'color', 'red' );
 									statusEl.html( response['error'] ).show();
 								} else if (response && response['result'] == 'success') {
 									statusEl.css( 'color', '#21759B' );
-									statusEl.html( 'Successful' );                                    
+									statusEl.html( 'Successful' );
 								} else {
 									statusEl.css( 'color', 'red' );
 									statusEl.html( "Undefined error" );
@@ -989,11 +989,11 @@ class MainWP_Settings {
 
 							}, 'json');
 							return false;
-					}                      
-				</script> 
-			<?php					 
+					}
+				</script>
+			<?php
 	}
-		
+
 }
 //todo: refactor, useless class
 class Live_Reports_Responder_Class {

@@ -90,10 +90,10 @@ class MainWP_Widget_Themes {
 
 					?>
 					<div class="mainwp-row mainwp-active">
-						<input class="themeName" type="hidden" name="name" value="<?php echo $actived_themes[ $i ]['name']; ?>"/>
+						<input class="themeName" type="hidden" name="name" value="<?php echo esc_attr($actived_themes[ $i ]['name']); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
 						<div class="mainwp-cols-2 mainwp-left">
-							<?php echo $actived_themes[ $i ]['name'] . ' ' . $actived_themes[ $i ]['version']; ?>
+							<?php echo esc_html($actived_themes[ $i ]['name']) . ' ' . esc_html($actived_themes[ $i ]['version']); ?>
 							<br />
 							<span class="mainwp-small"><?php echo $outdate_notice; ?></span>
 						</div>
@@ -124,11 +124,11 @@ class MainWP_Widget_Themes {
 					}
 					?>
 					<div class="mainwp-row mainwp-inactive">
-						<input class="themeName" type="hidden" name="name" value="<?php echo $inactive_themes[ $i ]['name']; ?>"/>
-                        <input class="themeSlug" type="hidden" name="slug" value="<?php echo $inactive_themes[ $i ]['slug']; ?>"/>
+						<input class="themeName" type="hidden" name="name" value="<?php echo esc_attr($inactive_themes[ $i ]['name']); ?>"/>
+                        <input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr($inactive_themes[ $i ]['slug']); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
 						<span class="mainwp-left mainwp-cols-2">
-							<?php echo $inactive_themes[ $i ]['name'] . ' ' . $inactive_themes[ $i ]['version']; ?>
+							<?php echo esc_html($inactive_themes[ $i ]['name']) . ' ' . esc_html($inactive_themes[ $i ]['version']); ?>
 							<br />
 							<span class="mainwp-small"><?php echo $outdate_notice; ?></span>
 						</span>

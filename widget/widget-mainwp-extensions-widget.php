@@ -71,7 +71,7 @@ class MainWP_Extensions_Widget {
 					<div class="mainwp-padding-top-10 mainwp-t-align-right mainwp-cols-5 mainwp-right"><a target="_blank" href="https://mainwp.com/extension/woocommerce-shortcuts/?utm_source=dashboard&utm_medium=plugin&utm_campaign=overviewwidget" class="button"><?php _e( 'Add for free', 'mainwp' ); ?></a></div>
 					<div class="mainwp-clear"></div>
 				</div>
-			</div>			
+			</div>
 			<?php
 		} else {
 			$available_exts_data = MainWP_Extensions_View::getAvailableExtensions();
@@ -102,8 +102,8 @@ class MainWP_Extensions_Widget {
 
 						?>
 						<div id="mainwp-extensions-list-widget">
-							<div class="mainwp-padding-5 mainwp-t-align-left mainwp-cols-10 mainwp-left"><a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><img title="<?php echo $extension['name']; ?>" src="<?php echo $img_url; ?>" /></a></div>
-							<div class="mainwp-padding-15 mainwp-t-align-left mainwp-cols-2 mainwp-left"><a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><?php echo $extension['name'] ?></a> - <em><?php echo $extension['version']; ?></em></div>
+							<div class="mainwp-padding-5 mainwp-t-align-left mainwp-cols-10 mainwp-left"><a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><img title="<?php echo esc_attr($extension['name']); ?>" src="<?php echo esc_url($img_url); ?>" /></a></div>
+							<div class="mainwp-padding-15 mainwp-t-align-left mainwp-cols-2 mainwp-left"><a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><?php echo esc_html($extension['name']); ?></a> - <em><?php echo esc_attr($extension['version']); ?></em></div>
 							<div class="mainwp-padding-15 mainwp-t-align-right mainwp-cols-5 mainwp-right">
 								<?php
 								if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && ! empty( $extension['api_key'] ) ) { ?>
@@ -120,8 +120,8 @@ class MainWP_Extensions_Widget {
 					?>
 					</tbody>
 				</table>
-			</div>			
-			<?php           
+			</div>
+			<?php
 		}
         $actions = '<a href="https://mainwp.com/mainwp-extensions/?utm_source=dashboard&utm_medium=plugin&utm_campaign=widget" target="_blank" class="button mainwp-upgrade-button button-hero">' . __( 'Explore more MainWP Extensions', 'mainwp' ) . '</a>';
         MainWP_UI::renderEndReadyPopup($actions, 'mainwp-postbox-actions-bottom');

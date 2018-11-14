@@ -185,9 +185,9 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		return $display_tabs;
 	}
 
-	
+
 	public function views() {
-		$views = $this->get_views();		
+		$views = $this->get_views();
 
 ?>
 <div class="wp-filter">
@@ -225,7 +225,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 ?>
 <div class="wp-list-table <?php echo implode( ' ', $this->get_table_classes() ); ?>">
 
-	<div id="the-list"<?php echo $data_attr; ?>>
+	<div id="the-list"<?php echo esc_attr($data_attr); ?>>
 		<?php $this->display_rows_or_placeholder(); ?>
 	</div>
 </div>
@@ -359,11 +359,11 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 			$action_links = array();
 
 			//if ( current_user_can( 'install_plugins' ) || current_user_can( 'update_plugins' ) ) {
-							/* translators: 1: Plugin name and version. */							
+							/* translators: 1: Plugin name and version. */
 //							$action_links[] = '<a class="install-now button" href="#" id="install-plugin-' . $plugin['slug'] . '"
 //                               title="Install ' . $plugin['name'] . '  ' . $plugin['version'] . '">' . __('Install Now','mainwp') . '</a>';
 							$action_links[] = '<label style="font-size: 16px;"><input name="install-plugin" type="radio" id="install-plugin-' . $plugin['slug'] . '"
-                               title="Install ' . $plugin['name'] . '  ' . $plugin['version'] . '">' . __('Install this Plugin','mainwp') . '</label>';			
+                               title="Install ' . $plugin['name'] . '  ' . $plugin['version'] . '">' . __('Install this Plugin','mainwp') . '</label>';
 			//}
 
 			$details_link   = self_admin_url( 'plugin-install.php?tab=plugin-information&amp;plugin=' . $plugin['slug'] .
@@ -391,10 +391,10 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 			<div class="plugin-card-top">
 				<a href="<?php echo esc_url( $details_link ); ?>" class="thickbox"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" class="plugin-icon" /></a>
 				<div class="name column-name" style="margin-right: 0!important;">
-					<h3><a href="<?php echo esc_url( $details_link ); ?>" class="thickbox"><?php echo $title; ?></a></h3>
+					<h3><a href="<?php echo esc_url( $details_link ); ?>" class="thickbox"><?php echo esc_html($title); ?></a></h3>
 				</div>
 				<div class="desc column-description" style="margin-right: 0!important;">
-					<p><?php echo $description; ?></p>
+					<p><?php echo esc_html($description); ?></p>
 					<p class="authors"><?php echo $author; ?></p>
 				</div>
 			</div>

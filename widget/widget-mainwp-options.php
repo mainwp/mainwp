@@ -12,13 +12,13 @@ class MainWP_Options {
                         $user_emails = $_POST['mainwp_options_email'];
                         if (is_array($user_emails)) {
                             foreach($user_emails as $email) {
-                                $email = esc_html(trim($email)); 
+                                $email = esc_html(trim($email));
                                 if (!empty($email) && !in_array($email, $save_emails)) {
                                     $save_emails[] = $email;
                                 }
                             }
                         }
-                        
+
                         $save_emails = implode(',', $save_emails);
 			$userExtension->user_email = $save_emails;
 			$userExtension->site_view  = ( ! isset( $_POST['mainwp_options_siteview'] ) ? 0 : 1 );
@@ -39,7 +39,7 @@ class MainWP_Options {
 				MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_days', $val );
 
 				//MainWP_Utility::update_option( 'mainwp_maximumPosts', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumPosts'] ) ? intval( $_POST['mainwp_maximumPosts'] ) : 50 );
-				if ( MainWP_Extensions::isExtensionAvailable('mainwp-comments-extension') ) { 
+				if ( MainWP_Extensions::isExtensionAvailable('mainwp-comments-extension') ) {
 					MainWP_Utility::update_option( 'mainwp_maximumComments', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumComments'] ) ? intval( $_POST['mainwp_maximumComments'] ) : 50 );
 				}
 				MainWP_Utility::update_option( 'mainwp_wp_cron', ( ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1 ) );
@@ -57,9 +57,9 @@ class MainWP_Options {
 
 	public static function renderSettings() {
 		MainWP_Tours::renderGeneralSettingsTour();
-		MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_global_settings'); 		
+		MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_global_settings');
 	}
-	
+
 	public static function renderNetworkOptimization() {
 		$userExtension          = MainWP_DB::Instance()->getUserExtension();
 		$pluginDir              = ( ( $userExtension == null ) || ( ( $userExtension->pluginDir == null ) || ( $userExtension->pluginDir == '' ) ) ? 'default' : $userExtension->pluginDir );
@@ -108,31 +108,31 @@ class MainWP_Options {
 			</div>
 		<?php
 	}
-	
+
 	public static function renderGlobalOptions() {
 		$user_emails             = MainWP_Utility::getNotificationEmail();
-                $user_emails = explode(',', $user_emails);                
+                $user_emails = explode(',', $user_emails);
                 $i = 0;
 		?>
 		<table class="form-table">
-				<tbody>                               
+				<tbody>
 				<tr>
 					<th scope="row"><?php _e( 'Notification Emails', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Those addresses are used to send monitoring alerts.', 'mainwp' ) ); ?></th>
 					<td>
-                                             <?php foreach($user_emails as $email) { 
-                                                $i++;                                        
+                                             <?php foreach($user_emails as $email) {
+                                                $i++;
                                                 ?>
                                                 <div class="mwp_email_box">
-						<input type="text" class="" id="mainwp_options_email" name="mainwp_options_email[<?php echo $i; ?>]" size="35" value="<?php echo $email; ?>"/>&nbsp;
+						<input type="text" class="" id="mainwp_options_email" name="mainwp_options_email[<?php echo $i; ?>]" size="35" value="<?php echo esc_attr($email); ?>"/>&nbsp;
                                                 <?php if ($i != 1) { ?>
                                                 <a href="#" class="mwp_remove_email"><i class="fa fa-minus-circle fa-lg mainwp-red" aria-hidden="true"></i></a>
                                                 <?php } ?>
-                                                </div>                                                
+                                                </div>
                                             <?php } ?>
                                             <a href="#" id="mwp_add_other_email" class="mainwp-small"><?php _e( '+ Add New'); ?></a>
 					</td>
 				</tr>
-                                
+
 				<tr>
 					<th scope="row"><?php _e( 'Use WP-Cron', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'When not using WP-Cron you will need to set up a cron job via your hosting.', 'mainwp' ), 'https://mainwp.com/help/docs/disable-wp-cron/' ); ?></th>
 					<td>
@@ -142,16 +142,16 @@ class MainWP_Options {
 							<label for="mainwp_options_wp_cron"></label>
 						</div>
 					</td>
-				</tr>			
+				</tr>
 				</tbody>
 			</table>
                 <script type="text/javascript">
-                    jQuery(document).ready(function () {                                
-                            jQuery('.mwp_remove_email').live('click', function () {                                        
-                                jQuery(this).closest('.mwp_email_box').remove();                                        
+                    jQuery(document).ready(function () {
+                            jQuery('.mwp_remove_email').live('click', function () {
+                                jQuery(this).closest('.mwp_email_box').remove();
                                 return false;
                             });
-                            jQuery('#mwp_add_other_email').live('click', function () {                                        
+                            jQuery('#mwp_add_other_email').live('click', function () {
                                 jQuery('#mwp_add_other_email').before('<div class="mwp_email_box"><input type="text" name="mainwp_options_email[]" size="35" value=""/>&nbsp;&nbsp;<a href="#" class="mwp_remove_email"><i class="fa fa-minus-circle fa-lg mainwp-red" aria-hidden="true"></i></a></div>');
                                 return false;
                             });
@@ -159,22 +159,22 @@ class MainWP_Options {
                 </script>
 		<?php
 	}
-	
+
 	public static function renderUpdateOptions() {
 		$snAutomaticDailyUpdate = get_option( 'mainwp_automaticDailyUpdate' );
 		$backup_before_upgrade  = get_option( 'mainwp_backup_before_upgrade' );
 		$mainwp_backup_before_upgrade_days  = get_option( 'mainwp_backup_before_upgrade_days' );
 		if ( empty( $mainwp_backup_before_upgrade_days ) || !ctype_digit( $mainwp_backup_before_upgrade_days ) ) $mainwp_backup_before_upgrade_days = 7;
 		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
-		
-                $update_time    = MainWP_Utility::getWebsitesAutomaticUpdateTime();                
+
+                $update_time    = MainWP_Utility::getWebsitesAutomaticUpdateTime();
                 $lastAutomaticUpdate = $update_time['last'];
                 $nextAutomaticUpdate = $update_time['next'];
-                
+
                 $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
-                $primaryBackup = get_option('mainwp_primaryBackup');  
+                $primaryBackup = get_option('mainwp_primaryBackup');
                 $style = (($enableLegacyBackupFeature && empty($primaryBackup)) || (empty($enableLegacyBackupFeature) && !empty($primaryBackup))) ? '' : 'style="display:none"';
-                
+
 	?>
 		<table class="form-table">
 			<tbody>
@@ -187,8 +187,8 @@ class MainWP_Options {
 					</div>
 				</td>
 			</tr>
-                        <?php 
-                        
+                        <?php
+
                         ?>
 			<tr <?php echo $style; ?>>
 				<th scope="row"><?php _e( 'Require Backup Before Update', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'With this option enabled, when you try to update a plugin, theme or WordPress core, MainWP will check if there is a full backup created for the site(s) you are trying to update in last 7 days. If you have a fresh backup of the site(s) MainWP will proceed to the update process, if not it will ask you to create a full backup.', 'mainwp' ) ); ?></th>
@@ -197,9 +197,9 @@ class MainWP_Options {
 						<input type="checkbox" name="mainwp_backup_before_upgrade" id="mainwp_backup_before_upgrade" size="35" <?php echo( $backup_before_upgrade == 1 ? 'checked="true"' : '' ); ?>/>
 						<label for="mainwp_backup_before_upgrade"></label>
 					</div>
-					If a full backup has not been taken in the last <input type="text" name="mainwp_backup_before_upgrade_days" id="mainwp_backup_before_upgrade_days" size="2" value="<?php echo $mainwp_backup_before_upgrade_days; ?>" /> days.
+					If a full backup has not been taken in the last <input type="text" name="mainwp_backup_before_upgrade_days" id="mainwp_backup_before_upgrade_days" size="2" value="<?php echo esc_attr($mainwp_backup_before_upgrade_days); ?>" /> days.
 				</td>
-			</tr>                        
+			</tr>
 			<tr>
 				<th scope="row"><?php _e( 'WP Core auto updates', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( 'Choose to have MainWP install updates, or notify you by email of available updates.  Updates apply to WordPress Core files.', 'mainwp' ) ); ?></th>
 				<td>
@@ -214,8 +214,8 @@ class MainWP_Options {
 									</select>
 									<label></label>
 								</span>
-								<br/><em><?php _e( 'Last run: ', 'mainwp' ); ?><?php echo $lastAutomaticUpdate; ?></em>
-								<br /><em><?php _e( 'Next run: ', 'mainwp' ); ?><?php echo $nextAutomaticUpdate; ?></em>
+								<br/><em><?php _e( 'Last run: ', 'mainwp' ); ?><?php echo esc_html($lastAutomaticUpdate); ?></em>
+								<br /><em><?php _e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html($nextAutomaticUpdate); ?></em>
 							</td>
 						</tr>
 					</table>
@@ -239,11 +239,11 @@ class MainWP_Options {
 		</table>
 	<?php
 	}
-	
+
 	public static function renderDataReturnOptions() {
 	?>
 		<table class="form-table">
-				<tbody>							
+				<tbody>
 				<?php //if ( MainWP_Extensions::isExtensionAvailable('mainwp-comments-extension') ) { ?>
 				<tr>
 					<th scope="row"><?php _e( 'Maximum Number of Comments', 'mainwp' ); ?>&nbsp;<?php MainWP_Utility::renderToolTip( __( '0 for unlimited, CAUTION: a large amount will decrease the speed and might crash the communication.', 'mainwp' ) ); ?></th>

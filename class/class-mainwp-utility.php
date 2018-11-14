@@ -1116,7 +1116,20 @@ class MainWP_Utility {
 			$try_detect_premiums_updates = get_option( 'mainwp_request_plugins_page_' . $website->id );
 			if ('yes' == $try_detect_premiums_updates) {
 				$page_plugins_url = MainWP_Utility::getGetDataAuthed( $website, 'plugins.php?_detect_plugins_updates=yes' );
-				wp_remote_get( $page_plugins_url, array( 'timeout' => 25, 'httpversion' => '1.1' ) );
+
+                $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
+                $args = array(
+                    'timeout' => 25,
+                    'httpversion' => '1.1',
+                    'User-Agent'   => $agent,
+                );
+
+                if (!empty($website->http_user) && !empty($website->http_pass) ) {
+                    $args['headers'] = array(
+                        'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . $website->http_pass )
+                    );
+                }
+				$ret = wp_remote_get( $page_plugins_url, $args );
 			}
 		}
 
@@ -2030,13 +2043,13 @@ class MainWP_Utility {
 	public static function renderToolTip( $pText, $pUrl = null, $pImage = 'images/info.png', $style = null ) {
 		$output = '<span class="tooltipcontainer">';
 		if ( $pUrl != null ) {
-			$output .= '<a href="' . $pUrl . '" target="_blank">';
+			$output .= '<a href="' . esc_url($pUrl) . '" target="_blank">';
 		}
 		$output .= '<span style="color: #0074a2; font-size: 14px;" class="tooltip"><i class="fa fa-question-circle"></i></span>';
 		if ( $pUrl != null ) {
 			$output .= '</a>';
 		}
-		$output .= '<span class="tooltipcontent" style="display: none;">' . $pText;
+		$output .= '<span class="tooltipcontent" style="display: none;">' . esc_html($pText);
 		if ( $pUrl != null ) {
 			$output .= ' (Click to read more)';
 		}
@@ -2935,6 +2948,35 @@ EOT;
 		$s = preg_replace( '@\x{00ff}@u', 'y', $s );    // ÿ => y
 		return $s;
 	}
+
+    public static function esc_content( $content, $type = 'note' ) {
+        if ( $type == 'note' ) {
+
+            $allowed_html = array(
+                'a' => array(
+                    'href' => array(),
+                    'title' => array()
+                ),
+                'br' => array(),
+                'em' => array(),
+                'strong' => array(),
+                'p' => array(),
+                'hr' => array(),
+                'ul' => array(),
+                'ol' => array(),
+                'li' => array(),
+                'h1' => array(),
+                'h2' => array(),
+            );
+
+            $content = wp_kses( $content, $allowed_html );
+
+        } else {
+            $content = wp_kses_post( $content );
+        }
+
+        return $content;
+    }
 
 	public static function showUserTip( $tip_id ) {
 		global $current_user;

@@ -13,7 +13,7 @@ class MainWP_Site_Info {
 		return '<i class="fa fa-info" aria-hidden="true"></i> ' . __( 'Site info', 'mainwp' );
 	}
 
-	public static function render() {		
+	public static function render() {
         MainWP_Site_Info::renderSiteInfo();
 	}
 
@@ -22,10 +22,10 @@ class MainWP_Site_Info {
         if ( empty( $current_wpid ) ) return;
 
         $sql = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid );
-                
+
 		$websites = MainWP_DB::Instance()->query( $sql );
 		if ( empty($websites) ) return;
-                
+
         $website = @MainWP_DB::fetch_object( $websites );
 
         $website_info = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'site_info' ), true );
@@ -38,9 +38,9 @@ class MainWP_Site_Info {
             'mysql_version' => __('MySQL Version', 'mainwp'),
             'ip' => __('Server IP', 'mainwp'),
         );
-       MainWP_UI::renderBeginReadyPopup();          
+       MainWP_UI::renderBeginReadyPopup();
 		?>
-		<div class="mainwp-widget-content widget-site-info">			
+		<div class="mainwp-widget-content widget-site-info">
             <?php
             if ( !is_array( $website_info ) || !isset( $website_info['wpversion'] ) ) {
                 echo __( 'Site info empty', 'mainwp' );
@@ -52,7 +52,7 @@ class MainWP_Site_Info {
                     <?php
                     foreach ( $infor_items as $index => $title ) {
                         ?>
-                        <tr><td style="width: 40%"><?php echo $title; ?>:</td><td><strong><?php echo isset($website_info[$index]) ? $website_info[$index] : '' ?></strong></td></tr>
+                        <tr><td style="width: 40%"><?php echo esc_html($title); ?>:</td><td><strong><?php echo isset($website_info[$index]) ? esc_html($website_info[$index]) : '' ?></strong></td></tr>
                         <?php
                     }
                     ?>

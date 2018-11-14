@@ -102,7 +102,7 @@ class MainWP_Themes {
                             if ( MainWP_System::is_disable_menu_item(3, 'Themes' . $subPage['slug']) )
                                 continue;
 							?>
-							<a href="<?php echo admin_url( 'admin.php?page=Themes' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo $subPage['title']; ?></a>
+							<a href="<?php echo admin_url( 'admin.php?page=Themes' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html($subPage['title']); ?></a>
 							<?php
 						}
 					}
@@ -234,7 +234,7 @@ class MainWP_Themes {
 					?>
 					<a class="nav-tab pos-nav-tab <?php if ( $shownPage === $subPage['slug'] ) {
 						echo 'nav-tab-active';
-					} ?>" href="admin.php?page=Themes<?php echo $subPage['slug']; ?>"><?php echo $subPage['title']; ?></a>
+					} ?>" href="admin.php?page=Themes<?php echo esc_attr($subPage['slug']); ?>"><?php echo esc_html($subPage['title']); ?></a>
 					<?php
 				}
 			}
@@ -329,7 +329,7 @@ class MainWP_Themes {
 			<p>
 				<?php _e( 'Containing Keyword:', 'mainwp' ); ?><br/>
 				<input type="text" id="mainwp_theme_search_by_keyword" class="" size="50" value="<?php if ( $cachedSearch != null ) {
-					echo $cachedSearch['keyword'];
+					echo esc_attr($cachedSearch['keyword']);
 				} ?>"/>
 			</p>
 		</div>
@@ -554,11 +554,11 @@ class MainWP_Themes {
 						$th_id = strtolower($theme_name);
 						$th_id = preg_replace('/[[:space:]]+/', '_', $th_id);
 						?>
-						<th height="100" style="vertical-align: top;padding: 5px;" class="drag-enable" id="<?php echo $th_id; ?>">
+						<th height="100" style="vertical-align: top;padding: 5px;" class="drag-enable" id="<?php echo esc_attr($th_id); ?>">
 							<div class="table-handle"></div>
-							<div style="max-width: 120px; text-align: center;" title="<?php echo $theme_title; ?>" >
-								<input type="checkbox" value="<?php echo $themes[$theme_name]; ?>" id="<?php echo $theme_name; ?>" version="<?php echo $themesRealVersion[$theme_name]; ?>" class="mainwp_theme_check_all" style="display: none ;" />
-								<label for="<?php echo $theme_name; ?>"><?php echo $theme_title; ?></label>
+							<div style="max-width: 120px; text-align: center;" title="<?php echo esc_attr($theme_title); ?>" >
+								<input type="checkbox" value="<?php echo esc_attr($themes[$theme_name]); ?>" id="<?php echo esc_attr($theme_name); ?>" version="<?php echo esc_attr($themesRealVersion[$theme_name]); ?>" class="mainwp_theme_check_all" style="display: none ;" />
+								<label for="<?php echo esc_attr($theme_name); ?>"><?php echo esc_attr($theme_title); ?></label>
 							</div>
 						</th>
 						<?php
@@ -572,9 +572,9 @@ class MainWP_Themes {
 					?>
 					<tr>
 						<td class="headcol">
-							<input class="websiteId" type="hidden" name="id" value="<?php echo $site_id; ?>"/>
-							<label for="<?php echo $site_url; ?>"><?php echo $site_url; ?></label>
-							<input type="checkbox" value="" id="<?php echo $site_url; ?>" class="mainwp_site_check_all" style="display: none ;"/>
+							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($site_id); ?>"/>
+							<label for="<?php echo esc_url($site_url); ?>"><?php echo esc_html($site_url); ?></label>
+							<input type="checkbox" value="" id="<?php echo esc_attr($site_url); ?>" class="mainwp_site_check_all" style="display: none ;"/>
 						</td>
 						<?php
 						foreach ( $themesVersion as $theme_name => $theme_title ) {
@@ -803,12 +803,12 @@ class MainWP_Themes {
 				?>
 				<tr id="post-1" class="post-1 post type-post status-publish format-standard hentry category-uncategorized alternate iedit author-self" valign="top" theme_slug="<?php echo urlencode( $slug ); ?>" theme_name="<?php echo rawurlencode( $name ); ?>">
 					<th scope="row" class="check-column">
-						<input type="checkbox" name="theme[]" value="<?php echo urlencode( $slug ); ?>"></th>
+						<input type="checkbox" name="theme[]" value="<?php echo esc_url(urlencode( $slug )); ?>"></th>
 					<td scope="col" id="info_content" class="manage-column" style=""> <?php if ( isset( $decodedIgnoredThemes[ $slug ] ) ) {
 							MainWP_Utility::renderToolTip( 'Ignored themes will NOT be auto-updated.', null, 'images/icons/mainwp-red-info-16.png' );
 						} ?></td>
 					<td scope="col" id="theme_content" class="manage-column sorted" style="">
-						<?php echo $name; ?>
+						<?php echo esc_html($name); ?>
 					</td>
 					<td scope="col" id="plgstatus_content" class="manage-column" style="">
 						<?php echo ( $theme['active'] == 1 ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?>
@@ -833,7 +833,7 @@ class MainWP_Themes {
 						</a>
 
 						<div style="display: none" class="note"><?php if ( isset( $trustedThemesNotes[ $slug ] ) ) {
-								echo $trustedThemesNotes[ $slug ];
+								echo MainWP_Utility::esc_content($trustedThemesNotes[ $slug ]);
 							} ?></div>
 					</td>
 				</tr>
@@ -853,7 +853,8 @@ class MainWP_Themes {
                             <textarea style="width: 580px !important; height: 300px;"
                                       id="mainwp_notes_note"></textarea>
 			</div>
-			<div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div><br/>
+			<div><em><?php _e( 'Allowed HTML Tags:','mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </em></div>
+            <br/>
 			<form>
 				<div style="float: right" id="mainwp_notes_status"></div>
 				<input type="button" class="button cont button-primary" id="mainwp_trusted_theme_notes_save" value="<?php esc_attr_e( 'Save note', 'mainwp' ); ?>"/>
@@ -940,7 +941,8 @@ class MainWP_Themes {
 		}
 
         if (isset( $information['error'] )) {
-            die( json_encode( $information ) );
+            //die( json_encode( $information ) );
+            wp_send_json( $information );
         }
 
 		if (  ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
@@ -1259,8 +1261,8 @@ class MainWP_Themes {
                                                                     </select>
                                                                     <label></label>
                                                                 </span>
-												<br/><em><?php _e( 'Last run: ', 'mainwp' ); ?><?php echo $lastAutomaticUpdate; ?></em>
-												<br /><em><?php _e( 'Next run: ', 'mainwp' ); ?><?php echo $nextAutomaticUpdate; ?></em>
+												<br/><em><?php _e( 'Last run: ', 'mainwp' ); ?><?php echo esc_attr($lastAutomaticUpdate); ?></em>
+												<br /><em><?php _e( 'Next run: ', 'mainwp' ); ?><?php echo esc_attr($nextAutomaticUpdate); ?></em>
 											</td>
 											<td style="vertical-align:top">
 												<p class="submit" style="padding: 0; margin-top: 0;"  id="mainwp-save-apu-options"><input type="submit" name="submit" id="submit" class="button-primary button" value="<?php esc_attr_e( 'Save settings', 'mainwp' ); ?>"/></p>
@@ -1370,10 +1372,10 @@ class MainWP_Themes {
 					?>
 					<tr theme_slug="<?php echo urlencode( $ignoredTheme ); ?>">
 						<td>
-							<strong><?php echo $ignoredThemeName; ?></strong>
+							<strong><?php echo esc_html($ignoredThemeName); ?></strong>
 						</td>
 						<td>
-							<?php echo $ignoredTheme; ?>
+							<?php echo esc_html($ignoredTheme); ?>
 						</td>
 						<td style="text-align: right; padding-right: 30px">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
@@ -1424,7 +1426,7 @@ class MainWP_Themes {
 					$first = true;
 					foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) {
 						?>
-						<tr site_id="<?php echo $website->id; ?>" theme_slug="<?php echo urlencode( $ignoredTheme ); ?>">
+						<tr site_id="<?php echo esc_attr($website->id); ?>" theme_slug="<?php echo urlencode( $ignoredTheme ); ?>">
 							<td>
                        <span class="websitename" <?php if ( ! $first ) {
 	                       echo 'style="display: none;"';
@@ -1435,11 +1437,11 @@ class MainWP_Themes {
                        </span>
 							</td>
 							<td>
-								<strong><?php echo $ignoredThemeName; ?></strong> (<?php echo $ignoredTheme; ?>)
+								<strong><?php echo esc_html($ignoredThemeName); ?></strong> (<?php echo esc_html($ignoredTheme); ?>)
 							</td>
 							<td style="text-align: right; padding-right: 30px">
 								<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
-									<a href="#" onClick="return rightnow_themes_unignore_detail('<?php echo urlencode( $ignoredTheme ); ?>', <?php echo $website->id; ?>)"><i class="fa fa-check"></i> <?php _e( 'Allow', 'mainwp' ); ?>
+									<a href="#" onClick="return rightnow_themes_unignore_detail('<?php echo urlencode( $ignoredTheme ); ?>', <?php echo esc_attr($website->id); ?>)"><i class="fa fa-check"></i> <?php _e( 'Allow', 'mainwp' ); ?>
 									</a>
 								<?php } ?>
 							</td>
@@ -1501,10 +1503,10 @@ class MainWP_Themes {
 					?>
 					<tr theme_slug="<?php echo urlencode( $ignoredTheme ); ?>">
 						<td>
-							<strong><?php echo $ignoredThemeName; ?></strong>
+							<strong><?php echo esc_html($ignoredThemeName); ?></strong>
 						</td>
 						<td>
-							<?php echo $ignoredTheme; ?>
+							<?php echo esc_html($ignoredTheme); ?>
 						</td>
 						<td style="text-align: right; padding-right: 30px">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
@@ -1551,7 +1553,7 @@ class MainWP_Themes {
 					$first = true;
 					foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) {
 						?>
-						<tr site_id="<?php echo $website->id; ?>" theme_slug="<?php echo urlencode( $ignoredTheme ); ?>">
+						<tr site_id="<?php echo esc_attr($website->id); ?>" theme_slug="<?php echo urlencode( $ignoredTheme ); ?>">
 							<td>
                        <span class="websitename" <?php if ( ! $first ) {
 	                       echo 'style="display: none;"';
@@ -1562,11 +1564,11 @@ class MainWP_Themes {
                        </span>
 							</td>
 							<td>
-								<strong><?php echo $ignoredThemeName; ?></strong> (<?php echo $ignoredTheme; ?>)
+								<strong><?php echo esc_html($ignoredThemeName); ?></strong> (<?php echo esc_html($ignoredTheme); ?>)
 							</td>
 							<td style="text-align: right; padding-right: 30px">
 								<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
-									<a href="#" onClick="return rightnow_themes_unignore_abandoned_detail('<?php echo urlencode( $ignoredTheme ); ?>', <?php echo $website->id; ?>)"><i class="fa fa-check"></i> <?php _e( 'Allow', 'mainwp' ); ?>
+									<a href="#" onClick="return rightnow_themes_unignore_abandoned_detail('<?php echo urlencode( $ignoredTheme ); ?>', <?php echo esc_attr($website->id); ?>)"><i class="fa fa-check"></i> <?php _e( 'Allow', 'mainwp' ); ?>
 									</a>
 								<?php } ?>
 							</td>
@@ -1627,7 +1629,8 @@ class MainWP_Themes {
 
 	public static function saveTrustedThemeNote() {
 		$slug = urldecode( $_POST['slug'] );
-		$note = esc_html( $_POST['note'] );
+        $note = stripslashes($_POST['note']);
+        $esc_note = MainWP_Utility::esc_content( $note );
 
 		$userExtension      = MainWP_DB::Instance()->getUserExtension();
 		$trustedThemesNotes = json_decode( $userExtension->trusted_themes_notes, true );
@@ -1635,7 +1638,7 @@ class MainWP_Themes {
 			$trustedThemesNotes = array();
 		}
 
-		$trustedThemesNotes[ $slug ] = $note;
+		$trustedThemesNotes[ $slug ] = $esc_note;
 
 		$userExtension->trusted_themes_notes = json_encode( $trustedThemesNotes );
 		MainWP_DB::Instance()->updateUserExtension( $userExtension );

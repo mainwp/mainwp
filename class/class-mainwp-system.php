@@ -13,7 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
-	public static $version = '3.5';
+	public static $version = '3.5.2';
 	//Singleton
 	private static $instance = null;
 
@@ -483,6 +483,10 @@ class MainWP_System {
 		if ( !isset( $extensions[$plugin_slug] )) {
 			return;
 		}
+
+        if (!isset($extensions[$plugin_slug]['apiManager']) || !$extensions[$plugin_slug]['apiManager']) {
+            return;
+        }
 
 		if ( isset($extensions[$plugin_slug]['activated_key']) && 'Activated' == $extensions[$plugin_slug]['activated_key'] ) {
 			return;
@@ -1675,7 +1679,8 @@ class MainWP_System {
 						$filename = basename( $information['faviIconUrl'] );
 						if ( $filename ) {
 							$filename = 'favi-' . $siteId . '-' . $filename;
-							if ( file_put_contents( $iconsDir . $filename, $content ) ) {
+							if ( $size = file_put_contents( $iconsDir . $filename, $content ) ) {
+                                MainWP_Logger::Instance()->debug( 'Icon size :: ' . $size );
 								MainWP_DB::Instance()->updateWebsiteOption( $website, 'favi_icon', $filename );
 								return array( 'result' => 'success' ) ;
 							} else {
@@ -2020,10 +2025,6 @@ class MainWP_System {
 	}
 
 	public static function isMainWP_Pages() {
-        global $current_screen;
-        if ( empty( $current_screen ) )
-            set_current_screen();
-
 		$screen = get_current_screen();
 		if ( $screen && strpos( $screen->base, 'mainwp_' ) !== false ) {
 			return true;
@@ -2340,13 +2341,8 @@ class MainWP_System {
 			$hide_menus = array();
 		}
 
-         // if open mainwp pages then don't redirect
-        if ( self::isMainWP_Pages() ) {
-            return;
-        }
-
 		$hide_wp_dashboard = in_array( 'dashboard', $hide_menus );
-        // it hide WP dashboard and open WP dashboard page or
+        // if hide WP dashboard and open WP dashboard page or
         // if open /wp-admin/ path then check to redirect to mainwp overview
 		if ( ($hide_wp_dashboard && strpos( $_SERVER['REQUEST_URI'], 'index.php' ) ) || (strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) == $_pos ) ) {
             if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) { // to fix

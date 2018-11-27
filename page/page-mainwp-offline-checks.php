@@ -178,7 +178,7 @@ class MainWP_Offline_Checks {
 			if ( $errors ) {
 				$emailOutput .= '<br /><br />Please take a look at the issues and make sure everything is ok.';
 			}
-			$email = MainWP_DB::Instance()->getUserNotificationEmail( $website->userid );                        
+			$email = MainWP_DB::Instance()->getUserNotificationEmail( $website->userid );
 			wp_mail( $email, $mail_title = ( $errors ? 'Down Time Alert - MainWP' : 'Up Time Alert - MainWP' ), MainWP_Utility::formatEmail( $email, $emailOutput, $mail_title ), array(
 				'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
 				'content-type: text/html',
@@ -195,7 +195,7 @@ class MainWP_Offline_Checks {
 				try {
 					//Add
 					if ( function_exists( 'openssl_pkey_new' ) ) {
-						$conf = array( 'private_key_bits' => 384 );
+						$conf = array( 'private_key_bits' => 2048 );
 	                    $conf_loc = MainWP_System::get_openssl_conf();
 	                    if ( !empty( $conf_loc ) ) {
 		                    $conf['config'] = $conf_loc;
@@ -248,7 +248,7 @@ class MainWP_Offline_Checks {
 			$body = 'We\'ve had some issues trying to reach your website <a href="' . $website->url . '">' . stripslashes( $website->name ) . '</a>. ' . ( isset( $result['error'] ) && ( $result['error'] != '' ) ? ' Error message: ' . $result['error'] . '.' : 'Received HTTP-code: ' . $result['httpCode'] . ( $result['httpCodeString'] != '' ? ' (' . $result['httpCodeString'] . ').' : '' ) );
 			if ( $emailOutput === null ) {
 				$email = MainWP_DB::Instance()->getUserNotificationEmail( $website->userid );
-                                
+
 				wp_mail( $email, $mail_title = 'Down Time Alert - MainWP', MainWP_Utility::formatEmail( $email, $body . '<br /><br />Please take a look at the <a href="' . $website->url . '">website</a> and make sure everything is ok.', $mail_title ), array(
 					'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
 					'content-type: text/html',
@@ -268,7 +268,7 @@ class MainWP_Offline_Checks {
 				$body = 'Your website <a href="' . $website->url . '">' . stripslashes( $website->name ) . '</a> is up and responding as expected!';
 				//if set in config!
 				if ( $emailOutput === null ) {
-					$email = MainWP_DB::Instance()->getUserNotificationEmail( $website->userid );                                        
+					$email = MainWP_DB::Instance()->getUserNotificationEmail( $website->userid );
 					wp_mail( $email, $mail_title = 'Up Time Alert - MainWP', MainWP_Utility::formatEmail( $email, $body, $mail_title ), array(
 						'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
 						'content-type: text/html',

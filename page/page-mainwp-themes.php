@@ -803,7 +803,7 @@ class MainWP_Themes {
 				?>
 				<tr id="post-1" class="post-1 post type-post status-publish format-standard hentry category-uncategorized alternate iedit author-self" valign="top" theme_slug="<?php echo urlencode( $slug ); ?>" theme_name="<?php echo rawurlencode( $name ); ?>">
 					<th scope="row" class="check-column">
-						<input type="checkbox" name="theme[]" value="<?php echo esc_url(urlencode( $slug )); ?>"></th>
+						<input type="checkbox" name="theme[]" value="<?php echo urlencode( $slug ); ?>"></th>
 					<td scope="col" id="info_content" class="manage-column" style=""> <?php if ( isset( $decodedIgnoredThemes[ $slug ] ) ) {
 							MainWP_Utility::renderToolTip( 'Ignored themes will NOT be auto-updated.', null, 'images/icons/mainwp-red-info-16.png' );
 						} ?></td>

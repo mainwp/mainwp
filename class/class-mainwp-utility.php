@@ -126,6 +126,8 @@ class MainWP_Utility {
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
 		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+        curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix very rare case
+
 		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
             $http_pass = stripslashes($http_pass); // to fix
 			curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
@@ -715,6 +717,7 @@ class MainWP_Utility {
 				@curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
 				@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
 				@curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+                @curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix very rare case
 				if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
                     $http_pass = stripslashes($http_pass); // to fix
 					curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
@@ -1005,6 +1008,7 @@ class MainWP_Utility {
 			@curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
 			@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
 			@curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+            @curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix very rare case
 			if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
                 $http_pass = stripslashes($http_pass); // to fix
 				curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
@@ -1218,6 +1222,7 @@ class MainWP_Utility {
 		curl_setopt( $ch, CURLOPT_POST, true );
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+        @curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix very rare case
 
 		if ( ( ( get_option( 'mainwp_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_sslVerifyCertificate' ) == 1 ) ) ) {
 			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
@@ -1439,6 +1444,7 @@ class MainWP_Utility {
 		@curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
 		@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
 		@curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+        @curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix very rare case
 		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
             $http_pass = stripslashes($http_pass); // to fix
 			@curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
@@ -1621,6 +1627,7 @@ class MainWP_Utility {
 		curl_setopt( $ch, CURLOPT_FILE, $fp );
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
 		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+        curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix very rare case
 		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
             $http_pass = stripslashes($http_pass); // to fix
 			curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
@@ -1894,10 +1901,18 @@ class MainWP_Utility {
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 ); //Set curl to return the data instead of printing it to the browser.
 		curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		$data = curl_exec( $ch );
-		curl_close( $ch );
+        curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 
-		return $data;
+		$data = @curl_exec( $ch );
+		$httpCode = @curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        curl_close( $ch );
+
+        if ($httpCode == 200) {
+            return $data;
+        } else {
+            return false;
+        }
 	}
 
 	public static function getGoogleCount( $domain ) {

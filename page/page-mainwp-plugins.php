@@ -562,7 +562,7 @@ class MainWP_Plugins {
 				?>
 				<tr id="post-1" class="post-1 post type-post status-publish format-standard hentry category-uncategorized alternate iedit author-self" valign="top" plugin_slug="<?php echo rawurlencode( $slug ); ?>" plugin_name="<?php echo esc_attr( $name ); ?>">
 					<th scope="row" class="check-column">
-						<input type="checkbox" name="plugin[]" value="<?php echo esc_url(urlencode( $slug )); ?>"></th>
+						<input type="checkbox" name="plugin[]" value="<?php echo urlencode( $slug ); ?>"></th>
 					<td scope="col" id="info_content" class="manage-column" style=""> <?php if ( isset( $decodedIgnoredPlugins[ $slug ] ) ) {
 							MainWP_Utility::renderToolTip( 'Ignored plugins will NOT be auto-updated.', null, 'images/icons/mainwp-red-info-16.png' );
 						} ?></td>

@@ -105,13 +105,16 @@ class MainWP_Extensions_Widget {
 							<div class="mainwp-padding-5 mainwp-t-align-left mainwp-cols-10 mainwp-left"><a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><img title="<?php echo esc_attr($extension['name']); ?>" src="<?php echo esc_url($img_url); ?>" /></a></div>
 							<div class="mainwp-padding-15 mainwp-t-align-left mainwp-cols-2 mainwp-left"><a href="<?php echo admin_url( 'admin.php?page=' . $ext_page ); ?>"><?php echo esc_html($extension['name']); ?></a> - <em><?php echo esc_attr($extension['version']); ?></em></div>
 							<div class="mainwp-padding-15 mainwp-t-align-right mainwp-cols-5 mainwp-right">
-								<?php
-								if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && ! empty( $extension['api_key'] ) ) { ?>
-									<span class="mainwp-green"><i class="fa fa-unlock"></i> <?php _e( 'Activated', 'mainwp' ); ?></span>
-								<?php } else {
-									?>
-									<span class="mainwp-red"><i class="fa fa-lock"></i> <?php _e( 'Deactivated', 'mainwp' ); ?></span>
-								<?php } ?>
+                            <?php
+                            if (isset( $extension['apiManager'] ) && $extension['apiManager']) {
+                                if ( empty( $extension['api_key'] ) ) { ?>
+                                    <span class="mainwp-green"><i class="fa fa-unlock"></i> <?php _e( 'Activated', 'mainwp' ); ?></span>
+                                <?php } else {
+                                    ?>
+                                    <span class="mainwp-red"><i class="fa fa-lock"></i> <?php _e( 'Deactivated', 'mainwp' ); ?></span>
+                                <?php }
+                            }
+                            ?>
 							</div>
 							<div class="mainwp-clear"></div>
 						</div>

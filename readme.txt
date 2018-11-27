@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.0
-Stable tag: 3.5.1
+Stable tag: 3.5.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -162,6 +162,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.5.2 - 11-27-18 =
+* Fixed: an issue with connecting new sites caused by recent OpenSSL update
+* Fixed: an issue with marking plugins as Trusted
+* Fixed: an issue with activation notices for 3rd party plugins
 
 = 3.5.1 - 11-14-18 =
 * Fixed: an issue with generating incorrect URL for the Test Connection feature

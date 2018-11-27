@@ -1333,6 +1333,8 @@ class MainWP_Setup_Wizard {
 		curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
 		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 50 );
+        curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix very rare case
+        
 		$result = curl_exec( $ch );
 		curl_close( $ch );
 		if ( strpos( $result,'UptimeRobotApi' ) == false )

@@ -34,7 +34,8 @@ class MainWP_Main {
 		if ( MainWP_Utility::isAdmin() ) {
 			global $current_user;
 			delete_user_option( $current_user->ID, 'screen_layout_toplevel_page_mainwp_tab' );
-			$this->dashBoard = add_menu_page( 'MainWP', 'MainWP', 'read', 'mainwp_tab', array(
+            // don't custom $page_title, $menu_title
+			$this->dashBoard = add_menu_page( 'MainWP' , 'MainWP' , 'read', 'mainwp_tab', array(
 				$this,
 				'on_show_page',
 			), plugins_url( 'images/mainwpicon.png', dirname( __FILE__ ) ), '2.00001' );

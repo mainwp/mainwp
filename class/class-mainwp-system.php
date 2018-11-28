@@ -2437,8 +2437,8 @@ class MainWP_System {
                 return esc_url_raw(add_query_arg([
                     "message" => "' . $message_id . '",
                     "hideall" => 1
-                ]), $location );
-            });
+                ] ), $location );
+            } );
         } else {
             $this->metaboxes->add_categories_handle( $post_id, 'bulkpost' );
             $this->metaboxes->add_tags_handle( $post_id, 'bulkpost' );
@@ -2490,8 +2490,8 @@ class MainWP_System {
                 return esc_url_raw(add_query_arg([
                     "message" => "' . $message_id . '",
                     "hideall" => 1
-                ]), $location );
-            });
+                ] ), $location );
+            } );
         } else if ( $pid == $post_id ) {
             /** @var $wpdb wpdb */
             global $wpdb;
@@ -2501,8 +2501,8 @@ class MainWP_System {
                 return esc_url_raw(add_query_arg([
                     "message" => "' . $message_id . '",
                     "hideall" => 1
-                ]), $location );
-            });
+                ] ), $location );
+            } );
         } else if ( isset( $_POST['publish'] ) ) {
             //Redirect to handle page! (to actually post the messages)
             wp_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&hideall=1&id=' . $post_id );
@@ -2532,8 +2532,8 @@ class MainWP_System {
                 return esc_url_raw(add_query_arg([
                     "message" => "' . $message_id . '",
                     "hideall" => 1
-                ]), $location );
-            });
+                ] ), $location );
+            } );
         } else {
             $this->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
             MainWP_Page::add_status_handle( $post_id );
@@ -2579,8 +2579,8 @@ class MainWP_System {
                 return esc_url_raw(add_query_arg([
                     "message" => "' . $message_id . '",
                     "hideall" => 1
-                ]), $location );
-            });
+                ] ), $location );
+            } );
         } else if ( $pid == $post_id ) {
             /** @var $wpdb wpdb */
             global $wpdb;
@@ -2590,8 +2590,8 @@ class MainWP_System {
                 return esc_url_raw(add_query_arg([
                     "message" => "' . $message_id . '",
                     "hideall" => 1
-                ]), $location );
-            });
+                ] ), $location );
+            } );
         } else {
             //Redirect to handle page! (to actually post the messages)
             wp_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&hideall=1&id=' . $post_id );

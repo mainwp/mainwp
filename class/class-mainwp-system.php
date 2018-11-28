@@ -2433,11 +2433,11 @@ class MainWP_System {
             global $wpdb;
             // fixed by submitbox_misc_actions
             //$wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $post_id ) );
-            add_filter( 'redirect_post_location', function($location) use ($message_id){
+            add_filter( 'redirect_post_location', function( $location ) use ( $message_id ) {
                 return esc_url_raw(add_query_arg([
                     "message" => "' . $message_id . '",
                     "hideall" => 1
-                ]), $location);
+                ]), $location );
             });
         } else {
             $this->metaboxes->add_categories_handle( $post_id, 'bulkpost' );
@@ -2486,22 +2486,22 @@ class MainWP_System {
             global $wpdb;
             // fixed by submitbox_misc_actions
             //$wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $post_id ) );
-            add_filter( 'redirect_post_location', function($location) use ($message_id){
+            add_filter( 'redirect_post_location', function( $location ) use ( $message_id ) {
                 return esc_url_raw(add_query_arg([
                     "message" => "' . $message_id . '",
                     "hideall" => 1
-                ]), $location);
+                ]), $location );
             });
         } else if ( $pid == $post_id ) {
             /** @var $wpdb wpdb */
             global $wpdb;
             // fixed by submitbox_misc_actions
             //$wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $post_id ) );
-            add_filter( 'redirect_post_location', function($location) use ($message_id){
+            add_filter( 'redirect_post_location', function( $location ) use ( $message_id ) {
                 return esc_url_raw(add_query_arg([
                     "message" => "' . $message_id . '",
                     "hideall" => 1
-                ]), $location);
+                ]), $location );
             });
         } else if ( isset( $_POST['publish'] ) ) {
             //Redirect to handle page! (to actually post the messages)
@@ -2528,11 +2528,11 @@ class MainWP_System {
             global $wpdb;
             // fixed by submitbox_misc_actions
             //$wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $post_id ) );
-            add_filter( 'redirect_post_location', function($location) use ($message_id){
+            add_filter( 'redirect_post_location', function( $location ) use ( $message_id ) {
                 return esc_url_raw(add_query_arg([
                     "message" => "' . $message_id . '",
                     "hideall" => 1
-                ]), $location);
+                ]), $location );
             });
         } else {
             $this->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
@@ -2575,22 +2575,22 @@ class MainWP_System {
             global $wpdb;
             // fixed by submitbox_misc_actions
             //$wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $post_id ) );
-            add_filter( 'redirect_post_location', function($location) use ($message_id){
+            add_filter( 'redirect_post_location', function( $location ) use ( $message_id ) {
                 return esc_url_raw(add_query_arg([
                     "message" => "' . $message_id . '",
                     "hideall" => 1
-                ]), $location);
+                ]), $location );
             });
         } else if ( $pid == $post_id ) {
             /** @var $wpdb wpdb */
             global $wpdb;
             // fixed by submitbox_misc_actions
             //$wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $post_id ) );
-            add_filter( 'redirect_post_location', function($location) use ($message_id){
+            add_filter( 'redirect_post_location', function( $location ) use ( $message_id ) {
                 return esc_url_raw(add_query_arg([
                     "message" => "' . $message_id . '",
                     "hideall" => 1
-                ]), $location);
+                ]), $location );
             });
         } else {
             //Redirect to handle page! (to actually post the messages)

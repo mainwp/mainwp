@@ -85,13 +85,13 @@ class MainWP_Recent_Posts {
 					<div class="mainwp-row mainwp-recent">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr($recent_posts_published[ $i ]['id']); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($recent_posts_published[ $i ]['website']->id); ?>"/>
-						<span class="mainwp-left mainwp-cols-2"><a href="<?php echo esc_url($recent_posts_published[ $i ]['website']->url); ?>?p=<?php echo esc_attr($recent_posts_published[ $i ]['id']); ?>" target="_blank"><?php echo htmlentities( $recent_posts_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a></span>
+						<span class="mainwp-left mainwp-cols-2"><a href="<?php echo esc_url($recent_posts_published[ $i ]['website']->url); ?>?p=<?php echo esc_attr($recent_posts_published[ $i ]['id']); ?>" target="_blank" class="mainwp-may-hide-referrer"><?php echo htmlentities( $recent_posts_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a></span>
 						<span class="mainwp-cols-10">
 							<a href="<?php echo admin_url( 'admin.php?page=CommentBulkManage&siteid=' . $recent_posts_published[ $i ]['website']->id . '&postid=' . $recent_posts_published[ $i ]['id'] ); ?>" title="<?php echo esc_attr($recent_posts_published[ $i ]['comment_count']); ?>" class="post-com-count" style="display: inline-block !important;">
 								<span class="comment-count"><i class="fa fa-comment" aria-hidden="true"></i> <?php echo esc_html($recent_posts_published[ $i ]['comment_count']); ?></span>
 							</a>
 						</span>
-						<span class="mainwp-right mainwp-cols-3"><a href="<?php echo esc_url($recent_posts_published[ $i ]['website']->url); ?>" target="_blank"><i class="fa fa-external-link"></i> <?php echo MainWP_Utility::getNiceURL( $recent_posts_published[ $i ]['website']->url ); ?>
+						<span class="mainwp-right mainwp-cols-3"><a href="<?php echo esc_url($recent_posts_published[ $i ]['website']->url); ?>" target="_blank" class="mainwp-may-hide-referrer"><i class="fa fa-external-link"></i> <?php echo MainWP_Utility::getNiceURL( $recent_posts_published[ $i ]['website']->url ); ?>
 							</a> <div class="mainwp-small"><?php echo esc_html($recent_posts_published[ $i ]['dts']); ?></div>
 						</span>
 						<div class="mainwp-clear"></div>
@@ -99,7 +99,7 @@ class MainWP_Recent_Posts {
 							<a href="#" class="mainwp-post-unpublish"><?php _e( 'Unpublish', 'mainwp' ); ?></a> |
 							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr($recent_posts_published[ $i ]['website']->id); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post" target="_blank"><?php _e( 'Edit', 'mainwp' ); ?></a> |
 							<a href="#" class="mainwp-post-trash"><?php _e( 'Trash', 'mainwp' ); ?></a>|
-							<a href="<?php echo esc_url($recent_posts_published[ $i ]['website']->url) . ( substr( $recent_posts_published[ $i ]['website']->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . $recent_posts_published[ $i ]['id']; ?>" target="_blank" title="View '<?php echo esc_html( $recent_posts_published[ $i ]['title'] ); ?>'" rel="permalink"><?php _e( 'View', 'mainwp' ); ?></a> |
+							<a href="<?php echo esc_url($recent_posts_published[ $i ]['website']->url) . ( substr( $recent_posts_published[ $i ]['website']->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . $recent_posts_published[ $i ]['id']; ?>" target="_blank" class="mainwp-may-hide-referrer" title="View '<?php echo esc_html( $recent_posts_published[ $i ]['title'] ); ?>'" rel="permalink"><?php _e( 'View', 'mainwp' ); ?></a> |
 							<a href="admin.php?page=PostBulkManage" class="mainwp-post-viewall"><?php _e( 'View all', 'mainwp' ); ?></a>
 						</div>
 						<div class="mainwp-row-actions-working">
@@ -130,7 +130,7 @@ class MainWP_Recent_Posts {
 					<div class="mainwp-row mainwp-recent">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr($recent_posts_draft[ $i ]['id']); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($recent_posts_draft[ $i ]['website']->id); ?>"/>
-						<span class="mainwp-left mainwp-cols-2"><a href="<?php echo esc_url($recent_posts_draft[ $i ]['website']->url); ?>?p=<?php echo esc_attr($recent_posts_draft[ $i ]['id']); ?>" target="_blank"><?php echo htmlentities( $recent_posts_draft[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a></span>
+						<span class="mainwp-left mainwp-cols-2"><a href="<?php echo esc_url($recent_posts_draft[ $i ]['website']->url); ?>?p=<?php echo esc_attr($recent_posts_draft[ $i ]['id']); ?>" target="_blank" class="mainwp-may-hide-referrer"><?php echo htmlentities( $recent_posts_draft[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a></span>
 						<span class="mainwp-cols-10">
 							<a href="<?php echo admin_url( 'admin.php?page=CommentBulkManage&siteid=' . $recent_posts_draft[ $i ]['website']->id . '&postid=' . $recent_posts_draft[ $i ]['id'] ); ?>" title="<?php echo esc_attr($recent_posts_draft[ $i ]['comment_count']); ?>" class="post-com-count" style="display: inline-block !important;">
 								<span class="comment-count"><i class="fa fa-comment" aria-hidden="true"></i> <?php echo esc_html($recent_posts_draft[ $i ]['comment_count']); ?></span>
@@ -173,7 +173,7 @@ class MainWP_Recent_Posts {
 					<div class="mainwp-row mainwp-recent">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr($recent_posts_pending[ $i ]['id']); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($recent_posts_pending[ $i ]['website']->id); ?>"/>
-						<span class="mainwp-left mainwp-cols-2"><a href="<?php echo esc_url($recent_posts_pending[ $i ]['website']->url); ?>?p=<?php echo esc_attr($recent_posts_pending[ $i ]['id']); ?>" target="_blank"><?php echo htmlentities( $recent_posts_pending[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a></span>
+						<span class="mainwp-left mainwp-cols-2"><a href="<?php echo esc_url($recent_posts_pending[ $i ]['website']->url); ?>?p=<?php echo esc_attr($recent_posts_pending[ $i ]['id']); ?>" target="_blank" class="mainwp-may-hide-referrer"><?php echo htmlentities( $recent_posts_pending[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a></span>
 						<span class="mainwp-cols-10">
 							<a href="<?php echo admin_url( 'admin.php?page=CommentBulkManage&siteid=' . $recent_posts_pending[ $i ]['website']->id . '&postid=' . $recent_posts_pending[ $i ]['id'] ); ?>" title="<?php echo esc_attr($recent_posts_pending[ $i ]['comment_count']); ?>" class="post-com-count" style="display: inline-block !important;">
 								<span class="comment-count"><i class="fa fa-comment" aria-hidden="true"></i> <?php echo esc_html($recent_posts_pending[ $i ]['comment_count']); ?></span>
@@ -215,7 +215,7 @@ class MainWP_Recent_Posts {
 					<div class="mainwp-row mainwp-recent">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr($recent_posts_future[ $i ]['id']); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($recent_posts_future[ $i ]['website']->id); ?>"/>
-						<span class="mainwp-left mainwp-cols-2"><a href="<?php echo esc_url($recent_posts_future[ $i ]['website']->url); ?>?p=<?php echo esc_attr($recent_posts_future[ $i ]['id']); ?>" target="_blank"><?php echo htmlentities( $recent_posts_future[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a></span>
+						<span class="mainwp-left mainwp-cols-2"><a href="<?php echo esc_url($recent_posts_future[ $i ]['website']->url); ?>?p=<?php echo esc_attr($recent_posts_future[ $i ]['id']); ?>" target="_blank" class="mainwp-may-hide-referrer"><?php echo htmlentities( $recent_posts_future[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a></span>
 						<span class="mainwp-cols-10">
 							<a href="<?php echo admin_url( 'admin.php?page=CommentBulkManage&siteid=' . $recent_posts_future[ $i ]['website']->id . '&postid=' . $recent_posts_future[ $i ]['id'] ); ?>" title="<?php echo esc_attr($recent_posts_future[ $i ]['comment_count']); ?>" class="post-com-count" style="display: inline-block !important;">
 								<span class="comment-count"><i class="fa fa-comment" aria-hidden="true"></i> <?php echo esc_html($recent_posts_future[ $i ]['comment_count']); ?></span>

@@ -648,7 +648,7 @@ rightnow_translations_upgrade_int = function (slug, websiteId, bulkMode, noCheck
                                 if (!done && pBulkMode) rightnow_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>');
                                 result = __('Update successful!');
                                 if (response.site_url)
-                                    result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
+                                    result = result + '<br/>' + mainwp_links_visit_site_and_admin(response.site_url, pWebsiteId);
 
                                 websiteHolder.attr('updated', 1);
                                 countRealItemsUpdated++;
@@ -1168,7 +1168,7 @@ rightnow_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck)
                                 if (!done && pBulkMode) rightnow_plugins_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>');
                                 result = __('Update successful!');
                                 if (response.site_url)
-                                    result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
+                                    result = result + '<br/>' + mainwp_links_visit_site_and_admin(response.site_url, pWebsiteId);
 
                                 websiteHolder.attr('updated', 1);
                                 countRealItemsUpdated++;
@@ -1628,7 +1628,7 @@ rightnow_themes_upgrade_int = function (slug, websiteId, bulkMode)
                             if (!done && pBulkMode) rightnow_themes_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' + __('DONE') + '</span>' );
                             result = __('Update successful!');
                             if (response.site_url)
-                                result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + websiteId + '" target="_blank">WP Admin</a>';
+                                result = result + '<br/>' + mainwp_links_visit_site_and_admin(response.site_url, websiteId);
                             websiteHolder.attr('updated', 1);
                             countRealItemsUpdated++;
                             if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
@@ -2208,7 +2208,7 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                             {
                                 result = __('Update successful!');
                                 if (response.site_url)
-                                    result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
+                                    result = result + '<br/>' + mainwp_links_visit_site_and_admin(response.site_url, pWebsiteId);
                                 websiteHolder.attr('updated', 1);
                                 countRealItemsUpdated++;
                                 if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
@@ -2306,7 +2306,7 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                             {
                                 result = __('Update successful!');
                                 if (response.site_url)
-                                    result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
+                                    result = result + '<br/>' + mainwp_links_visit_site_and_admin(response.site_url, pWebsiteId);
                                 websiteHolder.attr('updated', 1);
                                 countRealItemsUpdated++;
                                 if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
@@ -2485,7 +2485,7 @@ rightnow_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSl
                             {
                                 result = __('Update successful!');
                                 if (response.site_url)
-                                    result = result + '<br/>' + '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pWebsiteId + '" target="_blank">WP Admin</a>';
+                                    result = result + '<br/>' + mainwp_links_visit_site_and_admin(response.site_url, pWebsiteId);
                                 websiteHolder.attr('updated', 1);
                                 countRealItemsUpdated++;
                                 if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);

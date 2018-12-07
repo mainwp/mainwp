@@ -740,8 +740,8 @@ class MainWP_Page {
                         $seo_data = $page['seo_data'];
                         $count_seo_links = esc_html($seo_data['count_seo_links']);
                         $count_seo_linked = esc_html($seo_data['count_seo_linked']);
-                        $seo_score = esc_html( $seo_data['seo_score'] );
-                        $readability_score = esc_html( $seo_data['readability_score'] );
+                        $seo_score =  $seo_data['seo_score'];
+                        $readability_score = $seo_data['readability_score'];
                     }
                     ?>
                     <td class="<?php MainWP_Utility::gen_hidden_column('seo-links', $hidden); ?> column-seo-links"><abbr raw_value="<?php echo $count_seo_links !== null ? $count_seo_links : -1; ?>" title=""><?php echo $count_seo_links !== null ? $count_seo_links : ''; ?></abbr></td>
@@ -752,7 +752,7 @@ class MainWP_Page {
                 };
                 ?>
 				<td class="website <?php MainWP_Utility::gen_hidden_column('website', $hidden); ?> column-website">
-					<a href="<?php echo $website->url; ?>" target="_blank"><?php echo $website->url; ?></a>
+					<a href="<?php echo $website->url; ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $website->url; ?></a>
 					<div class="row-actions">
 						<span class="edit">
 							<a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php _e( 'Overview','mainwp' ); ?></a>
@@ -1015,7 +1015,7 @@ class MainWP_Page {
 				<div class="mainwp-notice mainwp-notice-green">
 					<?php foreach ( $dbwebsites as $website ) { ?>
                                             <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-                                            : <?php echo (isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ? $succes_message .' <a href="'.$output->link[ $website->id ].'"  target="_blank">View Page</a>' : 'ERROR: ' . $output->errors[ $website->id ]); ?><br/>
+                                            : <?php echo (isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ? $succes_message .' <a href="'.$output->link[ $website->id ].'"  class="mainwp-may-hide-referrer" target="_blank">View Page</a>' : 'ERROR: ' . $output->errors[ $website->id ]); ?><br/>
 					<?php } ?>
 				</div>
 

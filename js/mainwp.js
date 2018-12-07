@@ -819,6 +819,10 @@ dashboard_update_next_int = function(websiteId, data, errors)
 };
 
 
+mainwp_links_visit_site_and_admin = function(pUrl, pSiteId ) {
+    return '<a href="' + pUrl + '" target="_blank" class="mainwp-may-hide-referrer">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pSiteId + '" target="_blank">WP Admin</a>';
+}
+
 //Ignore plugin
 jQuery(document).ready(function() {
     jQuery(document).on('click', 'input[name="plugins"]', function(event)
@@ -1392,7 +1396,7 @@ rightnow_upgrade_plugintheme_list = function (what, id, list, noCheck, groupId)
                         if (res[item]) {
                             var msg = __('Update successful!');
                             if (response.site_url)
-                                msg = msg + '<br/>' +  '<a href="' + response.site_url + '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + pId + '" target="_blank">WP Admin</a>';
+                                msg = msg + '<br/>' +  mainwp_links_visit_site_and_admin(response.site_url, pId);
                             document.getElementById('wp_upgrade_' + pWhat + '_' + pId + strGroup + '_' + item ).innerHTML = '<span style="color: #0073aa;"><i class="fa fa-check-circle"></i> '+ msg + '</span>';
                             countRealItemsUpdated++;
                         }

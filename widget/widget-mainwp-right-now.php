@@ -60,7 +60,7 @@ class MainWP_Right_Now {
 
 				if ( isset( $information['upgrade'] ) && ( $information['upgrade'] == 'SUCCESS' ) ) {
 					MainWP_DB::Instance()->updateWebsiteOption( $website, 'wp_upgrades', json_encode( array() ) );
-					return __( 'Update successful!', 'mainwp' ) . '<br/><a href="' . esc_url( $website->url ) . '" target="_blank">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $id . '" target="_blank">WP Admin</a>';
+					return __( 'Update successful!', 'mainwp' ) . '<br/><a href="' . esc_url( $website->url ) . '" target="_blank" class="mainwp-may-hide-referrer">View Site</a> | <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $id . '" target="_blank">WP Admin</a>';
 				} else if ( isset( $information['upgrade'] ) ) {
 					$errorMsg = '';
 					if ( $information['upgrade'] == 'LOCALIZATION' ) {
@@ -2512,7 +2512,7 @@ class MainWP_Right_Now {
 							</div>
 							<div class="mainwp-right mainwp-padding-top-5 mainwp-cols-4 mainwp-t-align-right">
 								<div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>">
-									<a href="<?php echo $website->url; ?>" target="_blank"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
+									<a href="<?php echo $website->url; ?>" target="_blank" class="mainwp-may-hide-referrer"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
 								</div>
 							</div>
 							<div class="mainwp-clear"></div>
@@ -2629,7 +2629,7 @@ class MainWP_Right_Now {
 								</div>
 								<div class="mainwp-right mainwp-padding-top-5 mainwp-cols-4 mainwp-t-align-right">
 									<div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>">
-										<a href="<?php echo $website->url; ?>" target="_blank"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
+										<a href="<?php echo $website->url; ?>" target="_blank" class="mainwp-may-hide-referrer"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
 									</div>
 								</div>
 								<div class="mainwp-clear"></div>
@@ -2856,7 +2856,7 @@ class MainWP_Right_Now {
 							</div>
 							<div class="mainwp-right mainwp-cols-4 mainwp-padding-top-5 mainwp-t-align-right">
 								<div id="wp_upgradebuttons_theme_<?php echo $website->id; ?>">
-									<a href="<?php echo $website->url; ?>" target="_blank"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
+									<a href="<?php echo $website->url; ?>" target="_blank" class="mainwp-may-hide-referrer"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
 								</div>
 							</div>
 							<div class="mainwp-clear"></div>
@@ -2964,7 +2964,7 @@ class MainWP_Right_Now {
 								</div>
 								<div class="mainwp-right mainwp-cols-4 mainwp-padding-top-5 mainwp-t-align-right">
 									<div id="wp_upgradebuttons_theme_<?php echo $website->id; ?>">
-										<a href="<?php echo $website->url; ?>" target="_blank"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
+										<a href="<?php echo $website->url; ?>" target="_blank" class="mainwp-may-hide-referrer"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a>
 									</div>
 								</div>
 								<div class="mainwp-clear"></div>
@@ -3136,7 +3136,7 @@ class MainWP_Right_Now {
 						<div class="mainwp-row">
 							<span class="mainwp-left-col"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a></span>
 							<span class="mainwp-mid-col">&nbsp;</span>
-							<span class="mainwp-right-col"><a href="<?php echo $website->url; ?>" target="_blank"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a></span>
+							<span class="mainwp-right-col"><a href="<?php echo $website->url; ?>" target="_blank" class="mainwp-may-hide-referrer"><i class="fa fa-external-link" aria-hidden="true"></i> <?php _e( 'Open', 'mainwp' ); ?></a></span>
 						</div>
 					<?php } ?>
 				</div>

@@ -37,7 +37,7 @@ class MainWP_Shortcuts {
 			<div style="display: inline-block; width: 100px;"><?php _e( 'Go to:', 'mainwp' ); ?></div>
 			<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>" target="_blank"><i class="fa fa-external-link"></i> <?php _e( 'WP Admin', 'mainwp' ); ?>
 			</a> |
-			<a target="_blank" href="<?php echo $website->url; ?>"><i class="fa fa-external-link"></i> <?php _e( 'Front Page', 'mainwp' ); ?>
+			<a target="_blank" class="mainwp-may-hide-referrer" href="<?php echo $website->url; ?>"><i class="fa fa-external-link"></i> <?php _e( 'Front Page', 'mainwp' ); ?>
 			</a>
 		</div>
 		<div class="mainwp-row">

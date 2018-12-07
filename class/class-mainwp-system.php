@@ -13,7 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
-	public static $version = '3.5.2';
+	public static $version = '3.5.3';
 	//Singleton
 	private static $instance = null;
 
@@ -1965,6 +1965,25 @@ class MainWP_System {
 			}
 		}
 
+        $hide_ref = apply_filters('mainwp_open_hide_referrer', false);
+        if ($hide_ref) {
+        ?>
+                <script type="text/javascript">
+                    jQuery(document).on('click', 'a.mainwp-may-hide-referrer', function(e) {
+                      e.preventDefault();
+                      mainwp_open_hide_referrer(e.target.href);
+                    });
+
+                    function mainwp_open_hide_referrer(url) {
+                      var site = window.open("", "mainwp_hide_referrer");
+                      site.document.open();
+                      site.document.writeln('<script type="text/javascript">window.location = "' + url + '";<\/script>');
+                      site.document.close();
+                    }
+                </script>
+           <?php
+        }
+
         global $_mainwp_disable_menus_items;
         $_mainwp_disable_menus_items = apply_filters('mainwp_all_disablemenuitems', $_mainwp_disable_menus_items); // to support developer to debug
 	}
@@ -2090,9 +2109,6 @@ class MainWP_System {
 		}
 
 		$this->handleSettingsPost();
-
-		remove_all_filters( 'admin_footer_text' );
-		add_filter( 'admin_footer_text', array( &$this, 'admin_footer_text' ) );
 	}
 
 	function uploadFile( $file ) {
@@ -2742,6 +2758,12 @@ class MainWP_System {
 	}
 
 	function admin_head() {
+
+        if ( self::isMainWP_Pages() && ! self::isHideFooter() ) {
+            remove_all_filters( 'admin_footer_text' );
+            add_filter( 'admin_footer_text', array( &$this, 'admin_footer_text' ) );
+        }
+
 		echo '<script type="text/javascript">var mainwp_ajax_nonce = "' . wp_create_nonce( 'mainwp_ajax' ) . '"</script>';
 		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'js/FileSaver.js' . '"></script>';
 		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'js/jqueryFileTree.js' . '"></script>';
@@ -3064,13 +3086,6 @@ class MainWP_System {
 
 	//Empty footer text
 	function admin_footer_text() {
-		if ( ! self::isMainWP_Pages() ) {
-			return;
-		}
-		if ( self::isHideFooter() ) {
-			return;
-		}
-
 		return wp_kses_post( '<a href="javascript:void(0)" id="mainwp-sites-menu-button" class="mainwp-white mainwp-margin-right-2"><i class="fa fa-globe fa-2x"></i></a>' . '<span style="font-size: 14px;"><i class="fa fa-info-circle"></i> ' . __( 'Currently managing ', 'mainwp' ) . MainWP_DB::Instance()->getWebsitesCount() . __( ' child sites with MainWP ', 'mainwp' ) . $this->current_version . __( ' version. ', 'mainwp' ) . '</span>' );
 	}
 

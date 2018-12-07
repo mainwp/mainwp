@@ -78,7 +78,7 @@ class MainWP_Extensions_View {
 					<?php echo sprintf( __( 'Not registered? %sCreate MainWP account here.%s', 'mainwp'), '<a href="https://mainwp.com/my-account/" target="_blank">', '</a>' ); ?>
 				</div>
 				<input type="text" id="mainwp_com_username" class="input username" placeholder="<?php esc_attr_e( 'Your MainWP Username', 'mainwp' ); ?>" value="<?php echo esc_attr($username); ?>"/>
-				<input type="password" id="mainwp_com_password" class="input passwd" placeholder="<?php esc_attr_e( 'Your MainWP Password', 'mainwp' ); ?>" value="<?php echo esc_attr($password); ?>"/>
+				<input type="password" id="mainwp_com_password" class="input passwd" placeholder="<?php esc_attr_e( 'Your MainWP Password', 'mainwp' ); ?>" value="<?php echo stripslashes(esc_attr($password)); ?>"/>
 				<div class="mainwp-padding-top-10 mainwp-padding-bottom-10">
 					<?php echo sprintf( __( 'Lost your password? %sReset password here.%s', 'mainwp'), '<a href="https://mainwp.com/my-account/lost-password/" target="_blank">', '</a>' ); ?>
 				</div>

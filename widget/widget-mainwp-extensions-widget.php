@@ -107,7 +107,7 @@ class MainWP_Extensions_Widget {
 							<div class="mainwp-padding-15 mainwp-t-align-right mainwp-cols-5 mainwp-right">
                             <?php
                             if (isset( $extension['apiManager'] ) && $extension['apiManager']) {
-                                if ( empty( $extension['api_key'] ) ) { ?>
+                                if ( ! empty( $extension['api_key'] ) ) { ?>
                                     <span class="mainwp-green"><i class="fa fa-unlock"></i> <?php _e( 'Activated', 'mainwp' ); ?></span>
                                 <?php } else {
                                     ?>

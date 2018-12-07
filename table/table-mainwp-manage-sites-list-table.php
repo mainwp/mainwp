@@ -516,7 +516,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 		$actions = apply_filters( 'mainwp_managesites_column_url', $actions, $item['id'] );
 
-		return sprintf( '<strong><a target="_blank" href="%1$s" class="site_url">%1$s</a></strong>%2$s', $item['url'], $this->row_actions( $actions ) );
+		return sprintf( '<strong><a target="_blank" href="%1$s" class="site_url mainwp-may-hide-referrer">%1$s</a></strong>%2$s', $item['url'], $this->row_actions( $actions ) );
 	}
 
 	function column_backup( $item ) {
@@ -829,6 +829,9 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			'total_items' => $totalRecords, //WE have to calculate the total number of items
 			'per_page'    => $perPage,//WE have to determine how many items to show on a page
 		) );
+
+        do_action('mainwp-sitestable-prepared-items', $websites);
+
 		$this->items = $websites;
 	}
 

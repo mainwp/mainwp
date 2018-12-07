@@ -362,7 +362,14 @@ class MainWP_Sync {
                 'wp-schema-pro/wp-schema-pro.php',
                 'convertpro/convertpro.php',
                 'astra-addon/astra-addon.php',
-                'custom-facebook-feed-pro/custom-facebook-feed.php'
+                'astra-portfolio/astra-portfolio.php',
+                'astra-pro-sites/astra-pro-sites.php',
+                'custom-facebook-feed-pro/custom-facebook-feed.php',
+                'convertpro/convertpro.php',
+                'convertpro-addon/convertpro-addon.php',
+                'wp-schema-pro/wp-schema-pro.php',
+                'ultimate-elementor/ultimate-elementor.php',
+                'gp-premium/gp-premium.php'
         );
 
         return apply_filters('mainwp_detect_premiums_updates', $premiums);

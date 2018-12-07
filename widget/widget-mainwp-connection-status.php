@@ -81,7 +81,7 @@ class MainWP_Connection_Status {
                                             <div class="mainwp-left mainwp-cols-3 mainwp-padding-top-10">
                                                     <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_sync<?php echo $website->id; ?>" />
                                                     <div class="mainwp-row-actions">
-                                                        <span class="edit"><a href="<?php echo $website->url; ?>"  target="_blank" title="<?php _e( 'Visit Site', 'mainwp' ); ?>"><?php _e( 'Visit Site', 'mainwp' ); ?></a> | </span>
+                                                        <span class="edit"><a href="<?php echo $website->url; ?>"  class="mainwp-may-hide-referrer" target="_blank" title="<?php _e( 'Visit Site', 'mainwp' ); ?>"><?php _e( 'Visit Site', 'mainwp' ); ?></a> | </span>
                                                         <span class="edit"><a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>"  target="_blank" title="<?php _e( 'WP Admin', 'mainwp' ); ?>"><?php _e( 'WP Admin', 'mainwp' ); ?></a></span>
                                                     </div>
                                             </div>

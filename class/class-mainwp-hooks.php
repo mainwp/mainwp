@@ -276,10 +276,10 @@ class MainWP_Hooks {
 		return MainWP_DB::Instance()->getUserExtension();
 	}
 
-	public function getWebsiteOptions($options, $website, $name = '') {
+	public function getWebsiteOptions($boolean, $website, $name = '') {
 
 		if (empty($name))
-			return $options;
+			return $boolean;
 
 		if(is_numeric($website)) {
 			$obj = new stdClass();

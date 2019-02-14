@@ -62,7 +62,7 @@ class MainWP_User {
 			foreach ( self::$subPages as $subPage ) {
                 if( MainWP_System::is_disable_menu_item(3, 'UserBulk' . $subPage['slug']) )
                     continue;
-				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'UserBulk' . $subPage['slug'], $subPage['callback'] );
+				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . esc_html($subPage['title']) . '</div>', 'read', 'UserBulk' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
 

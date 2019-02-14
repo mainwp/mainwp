@@ -496,7 +496,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 		$loader = '<span class="bulk_running"><i class="fa fa-spinner fa-pulse" style="display:none"></i><span id="site-status-' . $item['id'] . '" class="status hidden"></span></span>';
 
-		return $imgfavi . sprintf( '<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], stripslashes( $item['name'] ), $this->row_actions( $actions ) );
+		return $imgfavi . sprintf( '<a href="admin.php?page=managesites&dashboard=%s" id="mainwp_notes_%s_url">%s</a>%s' . $loader, $item['id'], $item['id'], stripslashes( $item['name']), $this->row_actions( $actions ) );
 	}
 
 	function column_url( $item ) {
@@ -586,7 +586,8 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 	function column_notes( $item ) {
         //$note = strip_tags( $item['note'], '<p><strong><em><br/><hr/><a></p></strong></em></a>' );
 //		$esc_note = esc_html( $item['note'] ); // to fix
-        $esc_note = MainWP_Utility::esc_content( $item['note'] ); // to fix
+        $note = html_entity_decode($item['note']); // to compatible
+        $esc_note = MainWP_Utility::esc_content( $note ); // to fix
 
 		$lastupdate = $item['note_lastupdate'];
 

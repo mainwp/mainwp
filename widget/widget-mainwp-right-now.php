@@ -676,13 +676,17 @@ class MainWP_Right_Now {
 
 		$currentSite = null;
 
-		$pluginsIgnored_perSites          = $themesIgnored_perSites = array();
-		$pluginsIgnoredAbandoned_perSites = $themesIgnoredAbandoned_perSites = array();
+        // to fix
+//		$pluginsIgnored_perSites          = $themesIgnored_perSites = array();
+//		$pluginsIgnoredAbandoned_perSites = $themesIgnoredAbandoned_perSites = array();
 
 		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
 			if ( ! $globalView ) {
 				$currentSite = $website;
 			}
+
+            $pluginsIgnored_perSites          = $themesIgnored_perSites = array();
+            $pluginsIgnoredAbandoned_perSites = $themesIgnoredAbandoned_perSites = array();
 
 			$wp_upgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true );
 			if ( $website->is_ignoreCoreUpdates ) {
@@ -1115,7 +1119,7 @@ class MainWP_Right_Now {
 					<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5"><?php if ($group_id !== 0) { ?><a href="<?php echo admin_url( 'admin.php?page=managesites&g=' . $group_id ); ?>" title="<?php echo esc_attr($visit_group_title);?>"><?php echo stripslashes( $group_name ); ?></a> <?php } else { echo stripslashes( $group_name ); } ?>
 					</div>
 					<div class="mainwp-left mainwp-cols-4 mainwp-padding-top-5">
-						<a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('wp_upgrades_group', <?php echo intval($group_id); ?>);"> <span id="total_wp_upgrades_group_<?php echo $group_id; ?>"></span></a>
+						<a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('wp_upgrades_group', <?php echo intval($group_id); ?>);"> <span id="total_wp_upgrades_group_<?php echo esc_attr($group_id); ?>"></span></a>
 					</div>
 					<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">
 						<?php
@@ -1142,7 +1146,7 @@ class MainWP_Right_Now {
 			$total_group_wp_updates += 1;
 
 			?>
-				<div class="wp_wp_upgrades_group_<?php echo $group_id; ?>" style="display: none">
+				<div class="wp_wp_upgrades_group_<?php echo esc_attr($group_id); ?>" style="display: none">
 					<div class="mainwp-sub-row mainwp_wordpress_upgrade" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( count( $wp_upgrades ) > 0 ) ? '0' : '1'; ?>">
 						<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-3">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_<?php echo $website->id; ?>" value="<?php if ( count( $wp_upgrades ) > 0 ) {
 								echo '0';
@@ -1400,16 +1404,16 @@ class MainWP_Right_Now {
 				$group_name = $all_groups[$group_id];
 
 				?>
-					<div class="mainwp-sub-row" id="top_row_plugin_updates_group_<?php echo $group_id; ?>">
+					<div class="mainwp-sub-row" id="top_row_plugin_updates_group_<?php echo esc_attr($group_id); ?>">
 						<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5"><?php if ($group_id !== 0) { ?><a href="<?php echo admin_url( 'admin.php?page=managesites&g=' . $group_id ); ?>" title="<?php echo esc_attr($visit_group_title);?>"><?php echo stripslashes( $group_name ); ?></a><?php } else { echo stripslashes( $group_name ); } ?>
 						</div>
 						<div class="mainwp-left mainwp-cols-4 mainwp-padding-top-5">
-							<a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('plugin_upgrades_group', <?php echo intval($group_id); ?>);"> <span id="total_plugin_updates_group_<?php echo $group_id; ?>"></span></a>
+							<a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('plugin_upgrades_group', <?php echo intval($group_id); ?>);"> <span id="total_plugin_updates_group_<?php echo esc_attr($group_id); ?>"></span></a>
 						</div>
 						<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">
 							<?php
 							if ( mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) { ?>
-								<a href="#" id="plugin_updates_all_btn_group_<?php echo $group_id; ?>" style="display:none" class="mainwp-upgrade-button button" onClick="return rightnow_plugins_global_upgrade_all(<?php echo $group_id; ?>)"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+								<a href="#" id="plugin_updates_all_btn_group_<?php echo esc_attr($group_id); ?>" style="display:none" class="mainwp-upgrade-button button" onClick="return rightnow_plugins_global_upgrade_all(<?php echo esc_attr($group_id); ?>)"><?php echo __( 'Update All', 'mainwp' ); ?></a>
 							<?php } ?>
 						</div>
 						<div class="mainwp-clear"></div>
@@ -1455,9 +1459,9 @@ class MainWP_Right_Now {
 				$total_group_plugin_updates += count($plugin_upgrades);
 
 				?>
-					<div class="wp_plugin_upgrades_group_<?php echo $group_id; ?>" style="display: none">
+					<div class="wp_plugin_upgrades_group_<?php echo esc_attr($group_id); ?>" style="display: none">
 						<div class="mainwp-sub-row">
-							<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>" value="<?php if ( count( $plugin_upgrades ) > 0 ) {
+							<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>" value="<?php if ( count( $plugin_upgrades ) > 0 ) {
 									echo '0';
 								} else {
 									echo '1';
@@ -1467,7 +1471,7 @@ class MainWP_Right_Now {
 								<?php
 								if ( count( $plugin_upgrades ) > 0 ) {
 									?>
-									<a href="#" id="mainwp_plugin_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_show" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_show('plugin_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>', true);"> <?php echo count( $plugin_upgrades ); ?> <?php echo _n( 'Update', 'Updates', count($plugin_upgrades), 'mainwp' ); ?></a>
+									<a href="#" id="mainwp_plugin_upgrades_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_show" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_show('plugin_upgrades_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>', true);"> <?php echo count( $plugin_upgrades ); ?> <?php echo _n( 'Update', 'Updates', count($plugin_upgrades), 'mainwp' ); ?></a>
 									<?php
 								} else {
 									if ( $website->sync_errors != '' ) {
@@ -1483,7 +1487,7 @@ class MainWP_Right_Now {
 									<?php
 									if ( mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) {
 										if ( count( $plugin_upgrades ) > 0 ) { ?>
-											<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_plugin_all(<?php echo $website->id; ?>, <?php echo $group_id; ?>)"><?php echo _n( 'Update', 'Update All', count( $plugin_upgrades ), 'mainwp' ); ?></a> &nbsp;
+											<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_plugin_all(<?php echo $website->id; ?>, <?php echo esc_attr($group_id); ?>)"><?php echo _n( 'Update', 'Update All', count( $plugin_upgrades ), 'mainwp' ); ?></a> &nbsp;
 										<?php } ?>
 									<?php } ?>
 								</div>
@@ -1491,7 +1495,7 @@ class MainWP_Right_Now {
 							<div class="mainwp-clear"></div>
 						</div>
 
-						<div id="wp_plugin_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" style="display: none" class="show-child-row">
+						<div id="wp_plugin_upgrades_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" style="display: none" class="show-child-row">
 							<?php
 							foreach ( $plugin_upgrades as $slug => $plugin_upgrade ) {
 								$plugin_name = urlencode( $slug );
@@ -1502,22 +1506,22 @@ class MainWP_Right_Now {
 										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="More information about <?php echo $plugin_upgrade['Name']; ?>">
 											<?php echo $plugin_upgrade['Name']; ?>
 										</a>
-										<input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $plugin_name; ?>" value="0"/>
+										<input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_<?php echo $plugin_name; ?>" value="0"/>
 									</div>
-									<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-5 pluginsInfo" id="wp_upgrade_plugin_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $plugin_name; ?>">
+									<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-5 pluginsInfo" id="wp_upgrade_plugin_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_<?php echo $plugin_name; ?>">
 										<?php echo $plugin_upgrade['Version']; ?> to <?php echo $plugin_upgrade['update']['new_version']; ?>
 									</div>
 
-									<div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $plugin_name; ?>" site_id="<?php echo $website->id; ?>" >
+									<div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_<?php echo $plugin_name; ?>" site_id="<?php echo $website->id; ?>" >
 										<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right pluginsAction">
 											<?php if ( mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) { ?>
 												&nbsp;
-												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_plugin(<?php echo $website->id; ?>, '<?php echo $plugin_name; ?>', <?php echo $group_id; ?>)"><?php _e( 'Update', 'mainwp' ); ?></a>
+												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_plugin(<?php echo $website->id; ?>, '<?php echo $plugin_name; ?>', <?php echo esc_attr($group_id); ?>)"><?php _e( 'Update', 'mainwp' ); ?></a>
 											<?php } ?>
 										</div>
 										<div class="mainwp-right mainwp-cols-6 mainwp-t-align-right pluginsAction">
 											<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
-												<a href="#" onClick="return rightnow_plugins_ignore_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_upgrade['Name'] ); ?>', <?php echo $website->id; ?>, <?php echo $group_id; ?>)" class="button"><?php _e( 'Ignore', 'mainwp' ); ?></a>
+												<a href="#" onClick="return rightnow_plugins_ignore_detail('<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_upgrade['Name'] ); ?>', <?php echo $website->id; ?>, <?php echo esc_attr($group_id); ?>)" class="button"><?php _e( 'Ignore', 'mainwp' ); ?></a>
 											<?php } ?>
 										</div>
 									</div>
@@ -1813,15 +1817,15 @@ class MainWP_Right_Now {
 				$total_group_theme_updates = 0;
 				$group_name = $all_groups[$group_id];
 				?>
-					<div class="mainwp-sub-row" id="top_row_theme_updates_group_<?php echo $group_id; ?>">
+					<div class="mainwp-sub-row" id="top_row_theme_updates_group_<?php echo esc_attr($group_id); ?>">
 						<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5"><?php if ($group_id !== 0) { ?><a href="<?php echo admin_url( 'admin.php?page=managesites&g=' . $group_id ); ?>" title="<?php echo esc_attr($visit_group_title);?>"><?php echo stripslashes( $group_name ); ?></a><?php } else { echo stripslashes( $group_name ); } ?>
 						</div>
 						<div class="mainwp-cols-4 mainwp-left">
-							<a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('theme_upgrades_group', <?php echo intval($group_id); ?>);"> <span id="total_theme_updates_group_<?php echo $group_id; ?>"></span></a>
+							<a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('theme_upgrades_group', <?php echo intval($group_id); ?>);"> <span id="total_theme_updates_group_<?php echo esc_attr($group_id); ?>"></span></a>
 						</div>
 						<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'update_themes' ) ) { ?>
-								<a href="#" id="theme_updates_all_btn_group_<?php echo $group_id; ?>" style="display:none" class="mainwp-upgrade-button button" onClick="return rightnow_themes_global_upgrade_all(<?php echo $group_id; ?>)"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+								<a href="#" id="theme_updates_all_btn_group_<?php echo esc_attr($group_id); ?>" style="display:none" class="mainwp-upgrade-button button" onClick="return rightnow_themes_global_upgrade_all(<?php echo esc_attr($group_id); ?>)"><?php echo __( 'Update All', 'mainwp' ); ?></a>
 							<?php } ?>
 						</div>
 						<div class="mainwp-clear"></div>
@@ -1862,7 +1866,7 @@ class MainWP_Right_Now {
 				}
 				$total_group_theme_updates += count($theme_upgrades);
 				?>
-					<div class="wp_theme_upgrades_group_<?php echo $group_id; ?>" style="display: none" >
+					<div class="wp_theme_upgrades_group_<?php echo esc_attr($group_id); ?>" style="display: none" >
 						<div class="mainwp-sub-row">
 							<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>" value="<?php if ( count( $theme_upgrades ) > 0 ) {
 									echo '0';
@@ -1870,11 +1874,11 @@ class MainWP_Right_Now {
 									echo '1';
 								} ?>"/>
 							</div>
-							<div class="mainwp-cols-5 mainwp-left" id="wp_upgrade_theme_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>">
+							<div class="mainwp-cols-5 mainwp-left" id="wp_upgrade_theme_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>">
 								<?php
 								if ( count( $theme_upgrades ) > 0 ) {
 									?>
-									<a href="#" id="mainwp_theme_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_show" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_show('theme_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>', true);"> <?php echo count( $theme_upgrades ); ?> <?php echo _n( 'Update', 'Updates', count( $theme_upgrades ), 'mainwp' ); ?></a>
+									<a href="#" id="mainwp_theme_upgrades_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_show" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_show('theme_upgrades_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>', true);"> <?php echo count( $theme_upgrades ); ?> <?php echo _n( 'Update', 'Updates', count( $theme_upgrades ), 'mainwp' ); ?></a>
 									<?php
 								} else {
 									if ( $website->sync_errors != '' ) {
@@ -1889,7 +1893,7 @@ class MainWP_Right_Now {
 								<div id="wp_upgradebuttons_theme_<?php echo $website->id; ?>">
 									<?php if ( mainwp_current_user_can( 'dashboard', 'update_themes' ) ) { ?>
 										<?php if ( count( $theme_upgrades ) > 0 ) { ?>
-											<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_theme_all(<?php echo $website->id; ?>, <?php echo $group_id; ?>)"><?php echo _n( 'Update', 'Update All', count( $theme_upgrades ), 'mainwp' ); ?></a> &nbsp;
+											<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_theme_all(<?php echo $website->id; ?>, <?php echo esc_attr($group_id); ?>)"><?php echo _n( 'Update', 'Update All', count( $theme_upgrades ), 'mainwp' ); ?></a> &nbsp;
 										<?php } ?>
 									<?php } ?>
 								</div>
@@ -1897,29 +1901,29 @@ class MainWP_Right_Now {
 							<div class="mainwp-clear"></div>
 						</div>
 
-						<div id="wp_theme_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" style="display: none" class="show-child-row">
+						<div id="wp_theme_upgrades_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" style="display: none" class="show-child-row">
 							<?php
 							foreach ( $theme_upgrades as $slug => $theme_upgrade ) {
 								$theme_name = urlencode( $slug );
 								?>
 								<div class="mainwp-sub-row" theme_slug="<?php echo $theme_name; ?>" theme_name="<?php echo $theme_upgrade['Name']; ?>" premium="<?php echo ( isset( $themesInfo[ $theme_name ]['premium'] ) && $themesInfo[ $theme_name ]['premium'] ) ? 1 : 0; ?>" updated="0">
 									<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?php if (in_array( $slug, $trustedThemes )) echo $trusted_icon; ?><?php echo esc_html($theme_upgrade['Name']); ?>
-										<input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $theme_name; ?>" value="0"/>
+										<input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_<?php echo $theme_name; ?>" value="0"/>
 									</div>
-									<div class="mainwp-left mainwp-cols-5 mainwp-padding-top-5 pluginsInfo" id="wp_upgrade_theme_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $theme_name; ?>">
+									<div class="mainwp-left mainwp-cols-5 mainwp-padding-top-5 pluginsInfo" id="wp_upgrade_theme_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_<?php echo $theme_name; ?>">
 										<?php echo esc_html($theme_upgrade['Version']); ?> to <?php echo esc_html($theme_upgrade['update']['new_version']); ?>
 									</div>
 
-									<div id="wp_upgradebuttons_theme_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $theme_name; ?>" site_id="<?php echo $website->id; ?>">
+									<div id="wp_upgradebuttons_theme_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_<?php echo $theme_name; ?>" site_id="<?php echo $website->id; ?>">
 										<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right pluginsAction">
 											<?php if ( mainwp_current_user_can( 'dashboard', 'update_themes' ) ) { ?>
 												&nbsp;
-												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_theme(<?php echo $website->id; ?>, '<?php echo $theme_name; ?>', <?php echo $group_id; ?> )"><?php _e( 'Update', 'mainwp' ); ?></a>
+												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_theme(<?php echo $website->id; ?>, '<?php echo $theme_name; ?>', <?php echo esc_attr($group_id); ?> )"><?php _e( 'Update', 'mainwp' ); ?></a>
 											<?php } ?>
 										</div>
 										<div class="mainwp-right mainwp-cols-6 mainwp-t-align-right pluginsAction">
 											<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
-												<a href="#" class="button" onClick="return rightnow_themes_ignore_detail('<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_upgrade['Name'] ); ?>', <?php echo $website->id; ?>, <?php echo $group_id; ?>)"><?php _e( 'Ignore', 'mainwp' ); ?></a>
+												<a href="#" class="button" onClick="return rightnow_themes_ignore_detail('<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_upgrade['Name'] ); ?>', <?php echo $website->id; ?>, <?php echo esc_attr($group_id); ?>)"><?php _e( 'Ignore', 'mainwp' ); ?></a>
 											<?php } ?>
 										</div>
 									</div>
@@ -2184,15 +2188,15 @@ class MainWP_Right_Now {
 				$group_name = $all_groups[$group_id];
 
 				?>
-					<div class="mainwp-sub-row"  id="top_row_translation_updates_group_<?php echo $group_id; ?>">
+					<div class="mainwp-sub-row"  id="top_row_translation_updates_group_<?php echo esc_attr($group_id); ?>">
 						<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5"><?php if ($group_id !== 0) { ?><a href="<?php echo admin_url( 'admin.php?page=managesites&g=' . $group_id ); ?>" title="<?php echo esc_attr($visit_group_title);?>"><?php echo stripslashes( $group_name ); ?></a><?php } else { echo stripslashes( $group_name ); } ?>
 						</div>
 						<div class="mainwp-cols-4 mainwp-left">
-							<a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('translation_upgrades_group', <?php echo intval($group_id); ?>);"> <span id="total_translation_updates_group_<?php echo $group_id; ?>"></span></a>
+							<a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('translation_upgrades_group', <?php echo intval($group_id); ?>);"> <span id="total_translation_updates_group_<?php echo esc_attr($group_id); ?>"></span></a>
 						</div>
 						<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'update_themes' ) ) { ?>
-								<a href="#" id="translation_updates_all_btn_group_<?php echo $group_id; ?>" style="display:none" class="mainwp-upgrade-button button" onClick="return rightnow_translations_global_upgrade_all(<?php echo $group_id; ?>)"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+								<a href="#" id="translation_updates_all_btn_group_<?php echo esc_attr($group_id); ?>" style="display:none" class="mainwp-upgrade-button button" onClick="return rightnow_translations_global_upgrade_all(<?php echo esc_attr($group_id); ?>)"><?php echo __( 'Update All', 'mainwp' ); ?></a>
 							<?php } ?>
 						</div>
 						<div class="mainwp-clear"></div>
@@ -2211,7 +2215,7 @@ class MainWP_Right_Now {
 
 				$total_group_translation_updates += count($translation_upgrades);
 				?>
-					<div class="wp_translation_upgrades_group_<?php echo $group_id; ?>" style="display: none" >
+					<div class="wp_translation_upgrades_group_<?php echo esc_attr($group_id); ?>" style="display: none" >
 						<div class="mainwp-sub-row">
 							<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_translation_<?php echo $website->id; ?>" value="<?php if ( count( $translation_upgrades ) > 0 ) {
 									echo '0';
@@ -2223,7 +2227,7 @@ class MainWP_Right_Now {
 								<?php
 								if ( count( $translation_upgrades ) > 0 ) {
 									?>
-									<a href="#" id="mainwp_translation_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_show" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_show('translation_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>', true);"> <?php echo count( $translation_upgrades ); ?> <?php echo _n( 'Update', 'Updates', count($translation_upgrades), 'mainwp' ); ?></a>
+									<a href="#" id="mainwp_translation_upgrades_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_show" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_show('translation_upgrades_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>', true);"> <?php echo count( $translation_upgrades ); ?> <?php echo _n( 'Update', 'Updates', count($translation_upgrades), 'mainwp' ); ?></a>
 									<?php
 								} else {
 									if ( $website->sync_errors != '' ) {
@@ -2239,7 +2243,7 @@ class MainWP_Right_Now {
 									<?php
 									if ( mainwp_current_user_can( 'dashboard', 'update_translations' ) ) {
 										if ( count( $translation_upgrades ) > 0 ) { ?>
-											<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_translation_all(<?php echo $website->id; ?>, <?php echo $group_id; ?>)"><?php echo _n( 'Update', 'Update All', count( $translation_upgrades ), 'mainwp' ); ?></a> &nbsp;
+											<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_translation_all(<?php echo $website->id; ?>, <?php echo esc_attr($group_id); ?>)"><?php echo _n( 'Update', 'Update All', count( $translation_upgrades ), 'mainwp' ); ?></a> &nbsp;
 										<?php } ?>
 									<?php } ?>
 								</div>
@@ -2247,7 +2251,7 @@ class MainWP_Right_Now {
 							<div class="mainwp-clear"></div>
 						</div>
 
-						<div class="mainwp-sub-section" id="wp_translation_upgrades_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
+						<div class="mainwp-sub-section" id="wp_translation_upgrades_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
 							<?php
 							foreach ( $translation_upgrades as $translation_upgrade) {
 								$translation_name = isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $translation_upgrade['slug'];
@@ -2257,16 +2261,16 @@ class MainWP_Right_Now {
 									<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">
 										<?php if ( $globalView ) { ?>&nbsp;&nbsp;&nbsp;<?php } ?>
 										<?php echo esc_html($translation_name); ?>
-										<input type="hidden" id="wp_upgraded_translation_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $translation_slug; ?>" value="0"/>
+										<input type="hidden" id="wp_upgraded_translation_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_<?php echo $translation_slug; ?>" value="0"/>
 									</div>
-									<div class="mainwp-left mainwp-cols-5 mainwp-padding-top-5 translationsInfo" id="wp_upgrade_translation_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $translation_slug; ?>">
+									<div class="mainwp-left mainwp-cols-5 mainwp-padding-top-5 translationsInfo" id="wp_upgrade_translation_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_<?php echo $translation_slug; ?>">
 										<?php echo esc_html($translation_upgrade['version']); ?>
 									</div>
 									<div class="mainwp-right mainwp-cols-3 mainwp-t-align-right translationsAction">
-										<div id="wp_upgradebuttons_translation_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_<?php echo $translation_slug; ?>">
+										<div id="wp_upgradebuttons_translation_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_<?php echo $translation_slug; ?>">
 											<?php if ( mainwp_current_user_can( 'dashboard', 'update_translations' ) ) { ?>
 												&nbsp;
-												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_translation(<?php echo $website->id; ?>, '<?php echo $translation_slug; ?>', <?php echo $group_id; ?>)"><?php _e( 'Update', 'mainwp' ); ?></a>
+												<a href="#" class="mainwp-upgrade-button button" onClick="return rightnow_group_upgrade_translation(<?php echo $website->id; ?>, '<?php echo $translation_slug; ?>', <?php echo esc_attr($group_id); ?>)"><?php _e( 'Update', 'mainwp' ); ?></a>
 											<?php } ?>
 										</div>
 									</div>
@@ -2566,11 +2570,11 @@ class MainWP_Right_Now {
 					$group_name = $all_groups[$group_id];
 
 					?>
-						<div class="mainwp-sub-row" id="top_row_plugins_outdate_group_<?php echo $group_id; ?>">
+						<div class="mainwp-sub-row" id="top_row_plugins_outdate_group_<?php echo esc_attr($group_id); ?>">
 							<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5"><?php if ($group_id !== 0) { ?><a href="<?php echo admin_url( 'admin.php?page=managesites&g=' . $group_id ); ?>" title="<?php echo esc_attr($visit_group_title);?>"><?php echo stripslashes( $group_name ); ?></a><?php } else { echo stripslashes( $group_name ); } ?>
 							</div>
 							<div class="mainwp-cols-4 mainwp-left">
-								<a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('plugins_outdate_group', <?php echo intval($group_id); ?>);"> <span id="total_plugins_outdate_group_<?php echo $group_id; ?>"></span></a>
+								<a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('plugins_outdate_group', <?php echo intval($group_id); ?>);"> <span id="total_plugins_outdate_group_<?php echo esc_attr($group_id); ?>"></span></a>
 							</div>
 							<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">&nbsp;
 							</div>
@@ -2604,7 +2608,7 @@ class MainWP_Right_Now {
 					$total_group_plugins_outdate += count($plugins_outdate);
 
 					?>
-						<div class="wp_plugins_outdate_group_<?php echo $group_id; ?>" style="display: none" >
+						<div class="wp_plugins_outdate_group_<?php echo esc_attr($group_id); ?>" style="display: none" >
 							<div class="mainwp-sub-row">
 								<div class="mainwp-left mainwp-cols-3">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>" value="<?php if ( count( $plugins_outdate ) > 0 ) {
 										echo '0';
@@ -2616,7 +2620,7 @@ class MainWP_Right_Now {
 									<?php
 									if ( count( $plugins_outdate ) > 0 ) {
 										?>
-										<a href="#" id="mainwp_plugins_outdate_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_show" onClick="return rightnow_show('plugins_outdate_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>', true);"> <?php echo count( $plugins_outdate ); ?> <?php echo _n( 'Plugin', 'Plugins', count( $plugins_outdate ), 'mainwp' ); ?></a>
+										<a href="#" id="mainwp_plugins_outdate_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_show" onClick="return rightnow_show('plugins_outdate_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>', true);"> <?php echo count( $plugins_outdate ); ?> <?php echo _n( 'Plugin', 'Plugins', count( $plugins_outdate ), 'mainwp' ); ?></a>
 										<?php
 									} else {
 										if ( $website->sync_errors != '' ) {
@@ -2635,7 +2639,7 @@ class MainWP_Right_Now {
 								<div class="mainwp-clear"></div>
 							</div>
 
-							<div id="wp_plugins_outdate_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" style="display: none">
+							<div id="wp_plugins_outdate_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" style="display: none">
 								<?php
 								foreach ( $plugins_outdate as $slug => $plugin_outdate ) {
 									$plugin_name = urlencode( $slug );
@@ -2698,7 +2702,7 @@ class MainWP_Right_Now {
 						<div class="mainwp-sub-row">
 							<div class="mainwp-left mainwp-cols-3">
 								<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $pluginsOutdateInfo[ $slug ]['uri-'] ) ? rawurlencode( $pluginsOutdateInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsOutdateInfo[ $slug ]['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-										   class="thickbox open-plugin-details-modal" title="More information about <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>">
+										   class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_html($pluginsOutdateInfo[ $slug ]['Name']); ?>">
 									<?php echo esc_html($pluginsOutdateInfo[ $slug ]['Name']); ?>
 								</a>
 							</div>
@@ -2757,14 +2761,14 @@ class MainWP_Right_Now {
 											<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a>
 										<?php } else { ?>
 											<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-											   class="thickbox open-plugin-details-modal" title="More information about <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>">
+											   class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_html($pluginsOutdateInfo[ $slug ]['Name']); ?>">
 												<?php echo esc_html($pluginsOutdateInfo[ $slug ]['Name']); ?>
 											</a>
 										<?php } ?>
 									</div>
 									<div class="mainwp-left mainwp-cols-3 pluginsInfo" id="wp_outdate_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
 										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&section=changelog&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-										   class="thickbox open-plugin-details-modal" title="Changelog about <?php echo $pluginsOutdateInfo[ $slug ]['Name']; ?>">
+										   class="thickbox open-plugin-details-modal" title="Changelog about <?php echo esc_html($pluginsOutdateInfo[ $slug ]['Name']); ?>">
 											<?php echo esc_html($plugin_outdate['Version']); ?> | <?php echo $outdate_notice; ?>
 										</a>
 									</div>
@@ -2904,11 +2908,11 @@ class MainWP_Right_Now {
 					$group_name = $all_groups[$group_id];
 
 					?>
-						<div class="mainwp-sub-row" id="top_row_themes_outdate_group_<?php echo $group_id; ?>">
+						<div class="mainwp-sub-row" id="top_row_themes_outdate_group_<?php echo esc_attr($group_id); ?>">
 							<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5"><?php if ($group_id !== 0) { ?><a href="<?php echo admin_url( 'admin.php?page=managesites&g=' . $group_id ); ?>" title="<?php echo esc_attr($visit_group_title);?>"><?php echo stripslashes( $group_name ); ?></a><?php } else { echo stripslashes( $group_name ); } ?>
 							</div>
 							<div class="mainwp-cols-4 mainwp-left">
-								<a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('themes_outdate_group', <?php echo intval($group_id); ?>);"> <span id="total_themes_outdate_group_<?php echo $group_id; ?>"></span></a>
+								<a href="#" title="<?php echo esc_attr($show_updates_title);?>" onClick="return rightnow_group_show('themes_outdate_group', <?php echo intval($group_id); ?>);"> <span id="total_themes_outdate_group_<?php echo esc_attr($group_id); ?>"></span></a>
 							</div>
 							<div class="mainwp-right mainwp-cols-4 mainwp-t-align-right">&nbsp;
 							</div>
@@ -2939,7 +2943,7 @@ class MainWP_Right_Now {
 					$total_group_themes_outdate += count($themes_outdate);
 
 					?>
-						<div class="wp_themes_outdate_group_<?php echo $group_id; ?>" style="display: none" >
+						<div class="wp_themes_outdate_group_<?php echo esc_attr($group_id); ?>" style="display: none" >
 							<div class="mainwp-sub-row">
 								<div class="mainwp-left mainwp-cols-3">&nbsp;&nbsp;&nbsp;<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a><input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>" value="<?php if ( count( $themes_outdate ) > 0 ) {
 										echo '0';
@@ -2951,7 +2955,7 @@ class MainWP_Right_Now {
 									<?php
 									if ( count( $themes_outdate ) > 0 ) {
 										?>
-										<a href="#" id="mainwp_themes_outdate_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>_show" onClick="return rightnow_show('themes_outdate_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>', true);"> <?php echo count( $themes_outdate ); ?> <?php echo _n( 'Theme', 'Themes', count( $themes_outdate ), 'mainwp' ); ?></a>
+										<a href="#" id="mainwp_themes_outdate_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_show" onClick="return rightnow_show('themes_outdate_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>', true);"> <?php echo count( $themes_outdate ); ?> <?php echo _n( 'Theme', 'Themes', count( $themes_outdate ), 'mainwp' ); ?></a>
 										<?php
 									} else {
 										if ( $website->sync_errors != '' ) {
@@ -2970,7 +2974,7 @@ class MainWP_Right_Now {
 								<div class="mainwp-clear"></div>
 							</div>
 
-							<div id="wp_themes_outdate_<?php echo $website->id; ?>_group_<?php echo $group_id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" style="display: none">
+							<div id="wp_themes_outdate_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" style="display: none">
 								<?php
 								foreach ( $themes_outdate as $slug => $theme_outdate ) {
 									$slug                    = urlencode( $slug );

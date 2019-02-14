@@ -17,7 +17,7 @@ class MainWP_Security_Issues {
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			return;
 		}
-			?>
+        ?>
 		<div class="mainwp-postbox-actions-top">
 			<?php _e( 'We highly suggest you make a full backup before you run the Security Update.', 'mainwp' ); ?>
 		</div>
@@ -141,6 +141,12 @@ class MainWP_Security_Issues {
 								</a></span><span id="registered_versions_unfix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Unfix', 'mainwp' ); ?>
 								</a></span></td>
 					</tr>
+                    <?php
+                    $is_wpengine = false;
+                    if ( property_exists( $website, 'wpe' ) && $website->wpe == 1 ) {
+                        $is_wpengine = true;
+                    }
+                    ?>
 					<tr>
 					<td class="mainwp-padding-10 mainwp-cols-10 mainwp-center">
 						<span id="readme_loading"><i class="fa fa-spinner fa-2x fa-pulse"></i></span><span id="readme_ok" class="mainwp-green" style="display: none;"><i class="fa fa-check fa-2x"></i></span><span id="readme_nok" class="mainwp-red" style="display: none;"><i class="fa fa-times fa-2x"></i></span>
@@ -150,11 +156,19 @@ class MainWP_Security_Issues {
 						<strong id="readme-status-ok" style="display: none;"><?php _e( 'readme.html file has been removed from WordPress root', 'mainwp' ); ?></strong>
 						<br />
 						<em><?php _e( 'After fixing this issue, the readme.html file will be removed from the Child Site root directory', 'mainwp' ); ?></em>
+                        <?php if ( $is_wpengine ) { ?>
+                        <strong id="readme-wpe-nok"><?php _e( 'Removing the file on WPEngine hosting can cause issues. If you need to remove the file, please consult the WPEngine support first.', 'mainwp' ); ?></strong>
+                        <?php } ?>
 					</td>
 					<td class="mainwp-padding-10 mainwp-cols-10">
+                        <?php if ( ! $is_wpengine ) { ?>
 							<span id="readme_fix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Fix', 'mainwp' ); ?>
 								</a></span><span id="readme_unfix" style="display: none"><a href="#" style="text-decoration: none;"><i class="fa fa-wrench"></i> <?php _e( 'Unfix', 'mainwp' ); ?>
 								</a> - <?php _e( 'You need to re-upload the readme.html file manually to unfix this.', 'mainwp' ); ?></span>
+                        <?php } else { ?>
+                                <span><i class="fa fa-wrench"></i> <?php _e( 'Fix', 'mainwp' ); ?></span>
+                        <?php }  ?>
+
 						</td>
 					</tr>
 					<tr>

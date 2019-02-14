@@ -656,6 +656,13 @@ public static function renderFooter( $shownPage ) {
 	}
 
 	public static function renderChild() {
+
+        if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+			mainwp_do_not_have_permissions( __( 'Child Site Server Information', 'mainwp' ) );
+
+			return;
+		}
+
 		self::renderHeader( 'ServerInformationChild' );
 
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
@@ -696,6 +703,12 @@ public static function renderFooter( $shownPage ) {
 	}
 
 	public static function renderCron() {
+        if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+			mainwp_do_not_have_permissions( __( 'cron schedules', 'mainwp' ) );
+
+			return;
+		}
+
 		self::renderHeader( 'ServerInformationCron' );
 
 		$schedules = array(
@@ -1282,6 +1295,11 @@ public static function renderFooter( $shownPage ) {
 	*/
 
 	public static function renderErrorLogPage() {
+        if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+			mainwp_do_not_have_permissions( __( 'error log', 'mainwp' ) );
+
+			return;
+		}
 
 		self::renderHeader( 'ErrorLog' );
 		?>
@@ -1425,6 +1443,12 @@ public static function renderFooter( $shownPage ) {
 	}
 
 	public static function renderWPConfig() {
+        if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+			mainwp_do_not_have_permissions( __( 'WP-Config.php', 'mainwp' ) );
+
+			return;
+		}
+
 		self::renderHeader( 'WPConfig' );
 		?>
 		<div class="postbox" id="mainwp-code-display">
@@ -1514,6 +1538,12 @@ public static function renderFooter( $shownPage ) {
 	}
 
 	public static function renderhtaccess() {
+        if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+			mainwp_do_not_have_permissions( __( '.htaccess', 'mainwp' ) );
+
+			return;
+		}
+
 		self::renderHeader( '.htaccess' );
 		?>
 		<div class="postbox" id="mainwp-code-display">

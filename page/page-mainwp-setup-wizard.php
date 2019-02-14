@@ -898,7 +898,7 @@ class MainWP_Setup_Wizard {
 				$return['retry_action'] = 1;
 			}
 		}
-		die(json_encode($return));
+		die(json_encode($return)); //ok
 	}
 
 	public static function ajax_download_and_install() {
@@ -1334,7 +1334,7 @@ class MainWP_Setup_Wizard {
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
 		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 50 );
         curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix very rare case
-        
+
 		$result = curl_exec( $ch );
 		curl_close( $ch );
 		if ( strpos( $result,'UptimeRobotApi' ) == false )

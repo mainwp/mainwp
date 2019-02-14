@@ -13,7 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
-	public static $version = '3.5.3';
+	public static $version = '3.5.4';
 	//Singleton
 	private static $instance = null;
 
@@ -324,8 +324,15 @@ class MainWP_System {
 			MainWP_Extensions::getClassName(),
 			'hookManagerGetExtensions',
 		) );
-		add_action( 'mainwp_bulkpost_metabox_handle', array( $this, 'hookBulkPostMetaboxHandle' ) );
-		add_action( 'mainwp_bulkpage_metabox_handle', array( $this, 'hookBulkPageMetaboxHandle' ) );
+
+
+        // deprecated from 3.5.3
+		add_action( 'mainwp_bulkpost_metabox_handle', array( $this, 'hookBulkPostMetaboxHandle' ), 10, 2 );
+		add_action( 'mainwp_bulkpage_metabox_handle', array( $this, 'hookBulkPageMetaboxHandle' ), 10, 2 );
+
+        // hook to support extensions: boilerplate, post dripper
+        add_filter( 'mainwp_bulkpost_metabox_handle', array( $this, 'bulkpost_metabox_handle' ), 10, 2 );
+        add_filter( 'mainwp_bulkpage_metabox_handle', array( $this, 'bulkpage_metabox_handle' ), 10, 2 );
 
 		$this->posthandler = new MainWP_Post_Handler();
 
@@ -378,37 +385,37 @@ class MainWP_System {
 				'mainwp_api_sslVerifyCertificate',
 				'mainwp_automaticDailyUpdate',
 				'mainwp_backup_before_upgrade',
-				'mainwp_backupwordpress_ext_enabled',
-				'mainwp_backwpup_ext_enabled',
-				'mainwp_branding_button_contact_label',
-				'mainwp_branding_child_hide',
-				'mainwp_branding_ext_enabled',
-				'mainwp_branding_extra_settings',
-				'mainwp_branding_plugin_header',
-				'mainwp_branding_remove_permalink',
-				'mainwp_branding_remove_setting',
-				'mainwp_branding_remove_wp_setting',
-				'mainwp_branding_remove_wp_tools',
-				'mainwp_creport_ext_branding_enabled',
+				//'mainwp_backupwordpress_ext_enabled',
+				//'mainwp_backwpup_ext_enabled',
+				//'mainwp_branding_button_contact_label',
+				//'mainwp_branding_child_hide',
+				//'mainwp_branding_ext_enabled',
+				//'mainwp_branding_extra_settings',
+				//'mainwp_branding_plugin_header',
+				//'mainwp_branding_remove_permalink',
+				//'mainwp_branding_remove_setting',
+				//'mainwp_branding_remove_wp_setting',
+				//'mainwp_branding_remove_wp_tools',
+				//'mainwp_creport_ext_branding_enabled',
 				'mainwp_enableLegacyBackupFeature',
-				'mainwp_ext_snippets_enabled',
+				//'mainwp_ext_snippets_enabled',
 				'mainwp_hide_footer',
 				'mainwp_hide_twitters_message',
-				'mainwp_ithemes_ext_enabled',
-				'mainwp_keyword_links_htaccess_set',
-				'mainwp_linkschecker_ext_enabled',
+				//'mainwp_ithemes_ext_enabled',
+				//'mainwp_keyword_links_htaccess_set',
+				//'mainwp_linkschecker_ext_enabled',
 				'mainwp_maximumInstallUpdateRequests',
 				'mainwp_maximumSyncRequests',
-				'mainwp_pagespeed_ext_enabled',
+				//'mainwp_pagespeed_ext_enabled',
 				'mainwp_primaryBackup',
 				'mainwp_refresh',
 				'mainwp_security',
-				'mainwp_updraftplus_ext_enabled',
+				//'mainwp_updraftplus_ext_enabled',
 				'mainwp_use_favicon',
-				'mainwp_wordfence_ext_enabled',
+				//'mainwp_wordfence_ext_enabled',
 				'mainwp_wp_cron',
 				'mainwp_wpcreport_extension',
-				'mainwp_wprocket_ext_enabled',
+				//'mainwp_wprocket_ext_enabled',
 				'mainwp_hide_tips');
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";
 			foreach ($options as $option) {
@@ -465,17 +472,35 @@ class MainWP_System {
 	}
 
 	function hookBulkPostMetaboxHandle( $post_id ) {
-		$this->metaboxes->select_sites_handle( $post_id, 'bulkpost' );
+		$output = $this->metaboxes->select_sites_handle( $post_id, 'bulkpost' );
 		$this->metaboxes->add_categories_handle( $post_id, 'bulkpost' );
 		$this->metaboxes->add_tags_handle( $post_id, 'bulkpost' );
 		$this->metaboxes->add_slug_handle( $post_id, 'bulkpost' );
 		MainWP_Post::add_sticky_handle( $post_id );
+        return $output;
 	}
 
 	function hookBulkPageMetaboxHandle( $post_id ) {
-		$this->metaboxes->select_sites_handle( $post_id, 'bulkpage' );
+		$output = $this->metaboxes->select_sites_handle( $post_id, 'bulkpage' );
 		$this->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
 		MainWP_Page::add_status_handle( $post_id );
+        return $output;
+	}
+
+    function bulkpost_metabox_handle( $boolean, $post_id ) {
+		$output = $this->metaboxes->select_sites_handle( $post_id, 'bulkpost' );
+		$this->metaboxes->add_categories_handle( $post_id, 'bulkpost' );
+		$this->metaboxes->add_tags_handle( $post_id, 'bulkpost' );
+		$this->metaboxes->add_slug_handle( $post_id, 'bulkpost' );
+		MainWP_Post::add_sticky_handle( $post_id );
+        return $output;
+	}
+
+	function bulkpage_metabox_handle( $boolean, $post_id ) {
+		$output = $this->metaboxes->select_sites_handle( $post_id, 'bulkpage' );
+		$this->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
+		MainWP_Page::add_status_handle( $post_id );
+        return $output;
 	}
 
 	public function after_extensions_plugin_row( $plugin_slug, $plugin_data, $status ) {
@@ -1975,7 +2000,12 @@ class MainWP_System {
                     });
 
                     function mainwp_open_hide_referrer(url) {
-                      var site = window.open("", "mainwp_hide_referrer");
+                      var ran = Math.floor(Math.random() * 100) + 1;
+                      var site = window.open("", "mainwp_hide_referrer_" + ran);
+                      var meta = site.document.createElement('meta');
+                      meta.name = "referrer";
+                      meta.content = "no-referrer";
+                      site.document.getElementsByTagName('head')[0].appendChild(meta);
                       site.document.open();
                       site.document.writeln('<script type="text/javascript">window.location = "' + url + '";<\/script>');
                       site.document.close();
@@ -2001,14 +2031,14 @@ class MainWP_System {
 
 			<?php
 			if ( isset( $_GET['hideall'] ) && $_GET['hideall'] == 1 ) {
-				$post_plus = apply_filters( 'mainwp-ext-post-plus-enabled', false );
+				$enable_save_draft = apply_filters( 'mainwp-ext-post-plus-enabled', false ); // deprecated
+                $enable_save_draft = apply_filters( 'mainwp-bulkpost-enable-save-draft', $enable_save_draft );
+				if ( ! $enable_save_draft ) { ?>
+                    #minor-publishing-actions {
+                        display: none;
+                    }
 
-				if ( ! $post_plus ) { ?>
-			#minor-publishing-actions {
-				display: none;
-			}
-
-			<?php   }
+			<?php }
 		$hide_footer = true;
 	?>
 			#screen-options-link-wrap {
@@ -2373,7 +2403,7 @@ class MainWP_System {
 			include_once( ABSPATH . WPINC . '/pluggable.php' );
 		}
 
-		if ( isset( $_GET['page'] ) ) {
+		if ( isset( $_GET['page'] ) && isset($_POST['wp_nonce']) ) {
 			if ( $_GET['page'] == 'DashboardOptions' ) {
 				if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'DashboardOptions' ) ) {
 					MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
@@ -2408,7 +2438,7 @@ class MainWP_System {
 			MainWP_DB::Instance()->updateUserExtension( $userExtension );
 		}
 
-		if ( isset( $_POST['submit'] )) {
+		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] )) {
 			if (wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 				$updated = MainWP_Options::handleSettingsPost();
 				$updated |= MainWP_Manage_Sites::handleSettingsPost();
@@ -2694,11 +2724,11 @@ class MainWP_System {
 	}
 
 	function admin_enqueue_scripts( $hook ) {
-		wp_register_script( 'mainwp-admin', MAINWP_PLUGIN_URL . 'js/mainwp-admin.js', array( 'select2' ), $this->current_version );
+//		wp_register_script( 'mainwp-admin', MAINWP_PLUGIN_URL . 'js/mainwp-admin.js', array( 'select2' ), $this->current_version );
 
-		if ( MainWP_Utility::isAdmin() ) {
-			wp_enqueue_script( 'mainwp-admin' );
-		}
+//		if ( MainWP_Utility::isAdmin() ) {
+//			wp_enqueue_script( 'mainwp-admin' );
+//		}
 
 		if ( self::isMainWP_Pages() ) {
 			wp_deregister_script( 'select2' );
@@ -2707,6 +2737,7 @@ class MainWP_System {
 			wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'js/mainwp-extensions.js', array(), $this->current_version );
 			wp_enqueue_script( 'select2', MAINWP_PLUGIN_URL . 'js/select2/js/select2.min.js', array( 'jquery' ), '4.0.3', true );
 			wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'js/moment.min.js', array(), $this->current_version );
+            wp_enqueue_script( 'mainwp-admin', MAINWP_PLUGIN_URL . 'js/mainwp-admin.js', array( 'select2' ), $this->current_version );
 		}
 
 		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'js/mainwp-ui.js', array(), $this->current_version );
@@ -3181,43 +3212,10 @@ class MainWP_System {
 				}
 			}
 		}
-    // not used this
-    if (false) {
-		?>
-		<div id="refresh-status-box" title="Syncing Websites" style="display: none; text-align: center">
-			<div id="refresh-status-progress"></div>
-			<span id="refresh-status-current">0</span> / <span id="refresh-status-total"><?php echo esc_html( $cntr ); ?></span>
-			<span id="refresh-status-text"><?php esc_html_e( 'synced', 'mainwp' ); ?></span>
 
-			<div style="height: 160px; overflow: auto; margin-top: 20px; margin-bottom: 10px; text-align: left" id="refresh-status-content">
-				<table style="width: 100%">
-					<?php
-					if ( is_array( $websites ) ) {
-						for ( $i = 0; $i < count( $websites ); $i ++ ) {
-							$website = $websites[ $i ];
-							if ( $website->sync_errors == '' ) {
-								echo '<tr><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">PENDING</span></td></tr>';
-							} else {
-								echo '<tr class="mainwp_wp_offline"><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">DISCONNECTED</span></td></tr>';
-							}
-						}
-					} else {
-						@MainWP_DB::data_seek( $websites, 0 );
-						while ( $website = @MainWP_DB::fetch_object( $websites ) ) {
-							if ( $website->sync_errors == '' ) {
-								echo '<tr><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">PENDING</span></td></tr>';
-							} else {
-								echo '<tr class="mainwp_wp_offline"><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">DISCONNECTED</span></td></tr>';
-							}
-						}
-					}
-					?>
-				</table>
-			</div>
-			<input class="mainwp-popup-close button" type="button" name="Close" value="<?php _e( 'Close' ); ?>"/>
-		</div>
-
-<?php } ?>
+        // to support processes at mainwp footer
+        do_action('mainwp_admin_footer');
+        ?>
 
         <div class="mainwp-popup-overlay-hidden" id="refresh-status-box" tabindex="0" role="dialog" style="text-align: center">
             <div class="mainwp-popup-backdrop"></div>

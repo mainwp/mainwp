@@ -139,6 +139,7 @@ class MainWP_Manage_Sites {
 						'normal',
 						'core'
 					);
+                    do_action('mainwp_postboxes_on_load_site_page', false);
 					return;
 				} else if ( 'bulknew' == $_REQUEST['do'] ) {
 					if ( isset($_FILES['mainwp_managesites_file_bulkupload']) && $_FILES['mainwp_managesites_file_bulkupload']['error'] == UPLOAD_ERR_OK ) {
@@ -1510,7 +1511,7 @@ class MainWP_Manage_Sites {
                         $http_pass = $_POST['mainwp_managesites_edit_http_pass'];
                         $url = $_POST['mainwp_managesites_edit_siteurl_protocol'] . '://' . MainWP_Utility::removeHttpPrefix( $website->url, true);
 
-                        MainWP_DB::Instance()->updateWebsite( $websiteid, $url, $current_user->ID, htmlentities( $_POST['mainwp_managesites_edit_sitename'] ), $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, '', $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass, $_POST['mainwp_managesites_edit_ssl_version'] );
+                        MainWP_DB::Instance()->updateWebsite( $websiteid, $url, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, '', $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass, $_POST['mainwp_managesites_edit_ssl_version'] );
                         do_action( 'mainwp_update_site', $websiteid );
 
                         $backup_before_upgrade = isset( $_POST['mainwp_backup_before_upgrade'] ) ? intval( $_POST['mainwp_backup_before_upgrade'] ) : 2;

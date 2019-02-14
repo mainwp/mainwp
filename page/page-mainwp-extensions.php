@@ -140,10 +140,8 @@ class MainWP_Extensions {
                     if( $disable_extensions_menu || MainWP_System::is_disable_menu_item(2, $extension['page']) )
                             continue;
 
-                        $menu_name = str_replace( array(
-							'Extension',
-							'MainWP',
-						), '', $extension['name'] );
+                        $menu_name =  self::polish_ext_name($extension);
+
 						if (MainWP_Extensions::addedOnMenu( $slug )) {
 							$_page = add_submenu_page( 'mainwp_tab', $extension['name'], $menu_name, 'read', $extension['page'], $extension['callback'] );
 						} else {
@@ -166,6 +164,18 @@ class MainWP_Extensions {
             MainWP_Extensions::init_sub_sub_left_menu($extsPages);
         }
 	}
+
+    static function polish_ext_name( $extension ) {
+        if ( isset( $extension['mainwp'] ) && $extension['mainwp'] ) {
+            $menu_name = str_replace( array(
+                'Extension',
+                'MainWP',
+            ), '', $extension['name'] );
+        } else {
+            $menu_name = $extension['name'];
+        }
+        return $menu_name;
+    }
 
     static function init_sub_sub_left_menu($extPages) {
         global $_mainwp_menu_active_slugs;
@@ -290,23 +300,21 @@ class MainWP_Extensions {
 				if (MainWP_Extensions::addedOnMenu( $extension['slug'] )) {
 					continue;
 				}
+
+                $menu_name =  self::polish_ext_name($extension);
+
 				if ( isset( $extension['direct_page'] ) ) {
                     if ( MainWP_System::is_disable_menu_item(2, $extension['direct_page']) )
                             continue;
 
 					$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['direct_page'] ) . '"
-							   class="mainwp-submenu">' . str_replace( array(
-							'Extension',
-							'MainWP',
-						), '', esc_html( $extension['name'] ) ) . '</a>';
+							   class="mainwp-submenu">' . $menu_name . '</a>';
 				} else {
                     if ( MainWP_System::is_disable_menu_item(2, $extension['page']) )
                             continue;
-					$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['page'] ) . '"
-							   class="mainwp-submenu">' . str_replace( array(
-							'Extension',
-							'MainWP',
-						), '', esc_html( $extension['name'] ) ) . '</a>';
+
+                    $html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['page'] ) . '"
+							   class="mainwp-submenu">' . $menu_name . '</a>';
 				}
 			}
 		}

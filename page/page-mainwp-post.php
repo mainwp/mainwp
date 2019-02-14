@@ -747,6 +747,11 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 	public static function PostsSearch_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$posts = unserialize( base64_decode( $results[1] ) );
+
+            if(is_array($posts) && isset($posts['error'])) {
+                return;
+            }
+
 			unset( $results );
 
 			$child_to_dash_array = array();
@@ -853,7 +858,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 							<?php if ( $post['status'] == 'publish' ) { ?>
 								<span class="view">
                             | <a
-										href="<?php echo $website->url . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . $post['id']; ?>"
+										href="<?php echo $website->url . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . $post['id']; ?>" class="mainwp-may-hide-referrer"
 										target="_blank" title="View â€œ<?php echo esc_attr($post['title']); ?>ï¿½?" rel="permalink"><?php _e( 'View', 'mainwp' ); ?></a>
                         </span>
 								<span class="unpublish">

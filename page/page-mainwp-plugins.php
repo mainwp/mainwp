@@ -849,8 +849,30 @@ class MainWP_Plugins {
 		}
         asort( $pluginsVersion );
 		?>
-		<div id="mainwp-table-overflow" style="overflow: auto !important ;">
-			<table class="ui-tinytable wp-list-table widefat fixed pages" id="plugins_fixedtable" style="width: auto; word-wrap: normal">
+        <script type="text/javascript">
+            jQuery(document).ready(function($)
+            {
+                $(".mainwp-wrapper-scroll-top").width($(".mainwp-wrapper-scroll-bottom").width());
+                $(".mainwp-wrapper-scroll-top .mainwp-scroll").width($(".mainwp-wrapper-scroll-bottom .mainwp-scroll").width());
+                $(".mainwp-wrapper-scroll-top").scroll(function(){
+                    console.log('top: ' + $(".mainwp-wrapper-scroll-top").scrollLeft());
+                    $(".mainwp-wrapper-scroll-bottom")
+                    .scrollLeft($(".mainwp-wrapper-scroll-top").scrollLeft());
+                });
+                $(".mainwp-wrapper-scroll-bottom").scroll(function(){
+                    console.log('bottom: ' + $(".mainwp-wrapper-scroll-bottom").scrollLeft());
+                    $(".mainwp-wrapper-scroll-top")
+                    .scrollLeft($(".mainwp-wrapper-scroll-bottom").scrollLeft());
+                });
+            });
+        </script>
+
+        <div class="mainwp-wrapper-scroll-top">
+            <div class="mainwp-scroll">
+            </div>
+        </div>
+		<div id="mainwp-table-overflow" class="mainwp-wrapper-scroll-bottom" style="overflow: auto !important ;">
+			<table class="ui-tinytable wp-list-table widefat fixed pages mainwp-scroll" id="plugins_fixedtable" style="width: auto; word-wrap: normal">
 				<thead>
 				<tr>
 					<th class="headcol" id="cb" style="vertical-align: top;text-align: center; border-bottom: 1px Solid #e1e1e1; font-size: 18px; z-index:999; padding: auto; width: 15em !important;"><?php _e( 'Child site / Plugin', 'mainwp' ); ?>

@@ -604,6 +604,11 @@ securityIssues_handle = function (response) {
                         jQuery('#' + issue + '_ok').show();
                         jQuery('#' + issue + '-status-ok').show();
                         jQuery('#' + issue + '-status-nok').hide();
+
+                        if (issue == 'readme') {
+                            jQuery('#readme-wpe-nok').hide();
+                        }
+                        
                     }
                     else {
                         jQuery('#' + issue + '_extra').hide();
@@ -684,7 +689,7 @@ mainwp_refresh_dashboard = function (syncSiteIds)
     mainwpPopup('#refresh-status-box').init({title: __('Syncing Websites'), total: allWebsiteIds.length, pMax: nrOfWebsites, callback: function() {bulkTaskRunning = false; location.href = location.href;}});
 
     dashboard_update(allWebsiteIds, globalSync);
-    if (globalSync && nrOfWebsites > 0) {
+    if ( nrOfWebsites > 0 ) {
         var data = {
             action:'mainwp_status_saving',
             status: 'last_sync_sites',
@@ -2631,6 +2636,20 @@ mainwp_managesites_add = function (event) {
                     managesites_add_http_pass:jQuery('#mainwp_managesites_add_http_pass').val(),
                 });
 
+                // to support add client reports tokens values
+                jQuery( "input[name^='creport_token_']" ).each(function(){
+                    var tname = jQuery(this).attr('name');
+                    var tvalue = jQuery(this).val();
+                    data[tname] = tvalue;
+                });
+
+                // support hooks fields
+                jQuery( ".mainwp_addition_fields_addsite input" ).each(function(){
+                    var tname = jQuery(this).attr('name');
+                    var tvalue = jQuery(this).val();
+                    data[tname] = tvalue;
+                });
+
                 jQuery.post(ajaxurl, data, function (res_things) {
                     var site_id = 0;
                     if (res_things.error)
@@ -2673,6 +2692,16 @@ mainwp_managesites_add = function (event) {
                         jQuery('#mainwp_managesites_verify_certificate').val(1);
                         jQuery('#mainwp_managesites_force_use_ipv4').val(0);
                         jQuery('#mainwp_managesites_ssl_version').val('auto');
+
+                        jQuery( "input[name^='creport_token_']" ).each(function(){
+                            jQuery(this).val('');
+                        });
+
+                        // support hooks fields
+                        jQuery( ".mainwp_addition_fields_addsite input" ).each(function(){
+                            jQuery(this).val('');
+                        });
+
                         if (res_things.redirectUrl != undefined)
                         {
                             setTimeout(function(pUrl) { return function() { location.href = pUrl; } }(res_things.redirectUrl), 1000);

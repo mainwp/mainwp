@@ -1138,7 +1138,7 @@ class MainWP_DB {
 			$values = array(
 				'userid'                  => $userid,
 				'adminname'               => $this->escape( $admin ),
-				'name'                    => htmlspecialchars( $name ), // escape by insert
+				'name'                    => $this->escape( strip_tags( $name ) ), // escape by insert
 				'url'                     => $this->escape( $url ),
 				'pubkey'                  => $this->escape( $pubkey ),
 				'privkey'                 => $this->escape( $privkey ),
@@ -1300,7 +1300,7 @@ class MainWP_DB {
 			$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				//update admin
-				$this->wpdb->query( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( $name ) . '", adminname="' . $this->escape( $siteadmin ) . '",offline_checks="' . $this->escape( $offlineChecks ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '"  WHERE id=' . $websiteid );
+				$this->wpdb->query( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( strip_tags($name) ) . '", adminname="' . $this->escape( $siteadmin ) . '",offline_checks="' . $this->escape( $offlineChecks ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '"  WHERE id=' . $websiteid );
 				$this->wpdb->query( 'UPDATE ' . $this->tableName( 'wp_settings_backup' ) . ' SET archiveFormat = "' . $this->escape( $archiveFormat ) . '" WHERE wpid=' . $websiteid );
 				//remove groups
 				$this->wpdb->query( 'DELETE FROM ' . $this->tableName( 'wp_group' ) . ' WHERE wpid=' . $websiteid );

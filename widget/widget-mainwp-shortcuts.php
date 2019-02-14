@@ -18,7 +18,8 @@ class MainWP_Shortcuts {
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $current_wpid, true );
         MainWP_UI::renderBeginReadyPopup();
-        $esc_note = MainWP_Utility::esc_content($website->note);
+        $note = html_entity_decode( $website->note ); // to compatible
+        $esc_note = MainWP_Utility::esc_content( $note );
 
 		?>
 		<div class="mainwp-row-top">

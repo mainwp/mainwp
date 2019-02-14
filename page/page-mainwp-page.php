@@ -648,6 +648,11 @@ class MainWP_Page {
 	public static function PagesSearch_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$pages = unserialize( base64_decode( $results[1] ) );
+
+            if(is_array($pages) && isset($pages['error'])) {
+                return;
+            }
+
 			unset( $results );
 
              // to fix for ajax call
@@ -701,7 +706,7 @@ class MainWP_Page {
 
 						<?php if ( $page['status'] == 'publish' ) { ?>
 						<span class="view">
-							| <a href="<?php echo $website->url . (substr( $website->url, -1 ) != '/' ? '/' : '') . '?p=' . $page['id']; ?>" target="_blank" title="View '<?php echo esc_html($page['title']); ?>'?" rel="permalink"><?php _e( 'View','mainwp' ); ?></a>
+							| <a href="<?php echo $website->url . (substr( $website->url, -1 ) != '/' ? '/' : '') . '?p=' . $page['id']; ?>" class="mainwp-may-hide-referrer" target="_blank" title="View '<?php echo esc_html($page['title']); ?>'?" rel="permalink"><?php _e( 'View','mainwp' ); ?></a>
 						</span>
 						<?php } ?>
 						<?php if ( $page['status'] == 'trash' ) { ?>

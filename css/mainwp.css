@@ -2303,7 +2303,7 @@ div.http-response-ok span.http-notok-status{
 }
 
 .mainwp-ui-leftmenu .mainwp_leftmenu_wrap {
-    width: 200px;       
+    width: 200px;
     background-color: #e5e5e5;
     margin: 0 20px 0 -20px;
     position: fixed;
@@ -2312,7 +2312,7 @@ div.http-response-ok span.http-notok-status{
     border-right: 1px solid #e5e5e5;
     box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
-.mainwp_leftmenu_content {    
+.mainwp_leftmenu_content {
     height: calc(100vh - 125px);
 }
 
@@ -2325,33 +2325,33 @@ div.http-response-ok span.http-notok-status{
     margin: 0px;
 }
 .mainwp_leftmenu_content > ul > li {
-    padding: 0; 
-    border-bottom: 1px solid #e5e5e5;  
-    background: #fff;  
+    padding: 0;
+    border-bottom: 1px solid #e5e5e5;
+    background: #fff;
     margin: 0px !important;
 }
 .mainwp_leftmenu_content > ul > li.mainwp-menu-first-item {
     border-top: 1px solid #e5e5e5;
 }
 .mainwp_leftmenu_content .mainwp-menu-name{
-    padding: 10px;   
-    display:inline-block;    
+    padding: 10px;
+    display:inline-block;
     width: 75%;
 }
 .mainwp-menu-sub-wrap{
-    background: #fafafa; 
+    background: #fafafa;
 }
 .mainwp-menu-sub-wrap > li {
     padding: 0;
     margin: 0px !important;
-    border-top: 1px dashed #e5e5e5; 
-   
+    border-top: 1px dashed #e5e5e5;
+
 }
 .menu-sites-wrap .mainwp-menu-sub-wrap > li{
     padding-right: 3px;
 }
 .mainwp-menu-sub-wrap .mainwp-menu-name{
-    padding: 10px 0px 10px 15px;  
+    padding: 10px 0px 10px 15px;
     width: 71%;
 }
 .mainwp-menu-sub-item .menu-icon{
@@ -2371,13 +2371,13 @@ div.http-response-ok span.http-notok-status{
 .mainwp-menu-sub2-wrap > li{
     padding: 0;
     margin: 0px !important;
-    border-top: 1px dashed #e5e5e5;    
+    border-top: 1px dashed #e5e5e5;
 }
 .mainwp-menu-sub2-wrap .mainwp-menu-name{
-    padding: 10px 10px 10px 30px;   
+    padding: 10px 10px 10px 30px;
 }
 
-.no-icon .mainwp-menu-item-desc {    
+.no-icon .mainwp-menu-item-desc {
     margin-left: 0;
 }
 .mainwp-menu-item-desc {
@@ -2421,7 +2421,7 @@ div.http-response-ok span.http-notok-status{
 
 .leftmenu_sites_actions{
     float: right;
-    margin: 10px 5px 0 0;    
+    margin: 10px 5px 0 0;
 }
 .mainwp-ui-leftmenu #wpbody-content > div.error {
     float:left;
@@ -2439,26 +2439,26 @@ div.http-response-ok span.http-notok-status{
 }
 
 .sidemenu-active .mainwp-menu-sub2-wrap > li{
-    background: #fafafa; 
+    background: #fafafa;
     width: calc(100% + 5px); /* to override border */
 }
 .menuitem-active{
     font-weight: bold;
 }
 .mainwp_leftmenu_content .sidemenu-active {
-    border-right: 5px solid #7fb100;   
+    border-right: 5px solid #7fb100;
 }
 
 #mainwp-sites-menu-filter {
     margin: 10px 0 0px 0;
 }
 li.mainwp-menu-sub-item-filer{
-    padding: 10px !important;        
+    padding: 10px !important;
 }
 /* to fix layout */
 .mainwp-ui-leftmenu .mainwp_admin_notices_wrap {
-    float: left !important; 
-    margin-left: 200px !important; 
+    float: left !important;
+    margin-left: 200px !important;
     width: calc(100% - 220px);
 }
 .mainwp-ui-leftmenu .mainwp_admin_notices_wrap div.updated {
@@ -2482,14 +2482,14 @@ li.mainwp-menu-sub-item-filer{
 
 .sites-navi-buttons .left::before{
     font: 400 20px/50px 'dashicons' !important;
-    content: "\f341"        
+    content: "\f341"
 }
 
 .sites-navi-buttons .right::before{
     font: 400 20px/50px 'dashicons' !important;
-    content: "\f345"        
+    content: "\f345"
 }
-.sites-navi-buttons .left.disabled, 
+.sites-navi-buttons .left.disabled,
 .sites-navi-buttons .right.disabled{
     color: #ccc;
     background: inherit;
@@ -2504,7 +2504,7 @@ li.mainwp-menu-sub-item-filer{
 	background-color: transparent;
 	height: 60px;
 	width: 50px;
-	padding: 0;	
+	padding: 0;
 	text-align: center;
 	border: 0;
 	border-left: 1px solid #ddd;
@@ -2514,7 +2514,7 @@ li.mainwp-menu-sub-item-filer{
 
 .postbox.mainwp-breadcrumb .inside{
     padding: 0 0 0 12px;
-    margin: 0;    
+    margin: 0;
 }
 
 .breadcrumb-wrap{
@@ -2525,11 +2525,19 @@ li.mainwp-menu-sub-item-filer{
 #mainwp_post_search_by_keyword,
 #mainwp_page_search_by_keyword {
     width: calc(100% - 145px);
-    
+
 }
 #mainwp_connection_status_wrap .mainwp_wp_sync:hover .mainwp-row-actions {
-    display: block;    
+    display: block;
 }
 #mainwp_connection_status_wrap .mainwp-row-actions {
     float: none;
 }
+
+.mainwp-wrapper-scroll-top {
+    height: 20px;
+    border: none;
+    overflow-x: scroll;
+    overflow-y:hidden;
+}
+.mainwp-wrapper-scroll-top .mainwp-scroll { height: 20px; }

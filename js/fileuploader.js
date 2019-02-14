@@ -255,7 +255,7 @@ qq.FileUploaderBasic = function(o){
         button: null,
         multiple: false,
         maxConnections: 3,
-        // validation        
+        // validation
         allowedExtensions: [],
         sizeLimit: 0,
         minSizeLimit: 0,
@@ -265,7 +265,7 @@ qq.FileUploaderBasic = function(o){
         onProgress: function(id, fileName, loaded, total){},
         onComplete: function(id, fileName, responseJSON){},
         onCancel: function(id, fileName){},
-        // messages                
+        // messages
         messages: {
             typeError: "{file} has invalid extension. Only {extensions} are allowed.",
             sizeError: "{file} is too large, maximum file size is {sizeLimit}.",
@@ -399,7 +399,7 @@ qq.FileUploaderBasic.prototype = {
         var name, size;
 
         if (file.value){
-            // it is a file input            
+            // it is a file input
             // get input value and remove path to normalize
             name = file.value.replace(/.*(\/|\\)/, "");
         } else {
@@ -482,7 +482,7 @@ qq.FileUploader = function(o){
     // call parent constructor
     qq.FileUploaderBasic.apply(this, arguments);
 
-    // additional options    
+    // additional options
     qq.extend(this._options, {
         element: null,
         // if set, will be used instead of qq-upload-list in template
@@ -523,7 +523,7 @@ qq.FileUploader = function(o){
             fail: 'qq-upload-fail'
         }
     });
-    // overwrite options with user supplied    
+    // overwrite options with user supplied
     qq.extend(this._options, o);
 
     this._element = this._options.element;
@@ -695,7 +695,7 @@ qq.UploadDropZone = function(o){
         element: null,
         onEnter: function(e){},
         onLeave: function(e){},
-        // is not fired when leaving element by hovering descendants   
+        // is not fired when leaving element by hovering descendants
         onLeaveNotDescendants: function(e){},
         onDrop: function(e){}
     };
@@ -730,7 +730,7 @@ qq.UploadDropZone.prototype = {
 
             var effect = e.dataTransfer.effectAllowed;
             if (effect == 'move' || effect == 'linkMove'){
-                e.dataTransfer.dropEffect = 'move'; // for FF (only move allowed)    
+                e.dataTransfer.dropEffect = 'move'; // for FF (only move allowed)
             } else {
                 e.dataTransfer.dropEffect = 'copy'; // for Chrome
             }
@@ -766,11 +766,11 @@ qq.UploadDropZone.prototype = {
     },
     _isValidFileDrag: function(e){
         var dt = e.dataTransfer,
-        // do not check dt.types.contains in webkit, because it crashes safari 4            
+        // do not check dt.types.contains in webkit, because it crashes safari 4
             isWebkit = navigator.userAgent.indexOf("AppleWebKit") > -1;
 
         // dt.effectAllowed is none in Safari 5
-        // dt.types.contains check is for firefox            
+        // dt.types.contains check is for firefox
         return dt && dt.effectAllowed != 'none' &&
             (dt.files || (!isWebkit && dt.types.contains && dt.types.contains('Files')));
 
@@ -780,7 +780,7 @@ qq.UploadDropZone.prototype = {
 qq.UploadButton = function(o){
     this._options = {
         element: null,
-        // if set to true adds multiple attribute to file input      
+        // if set to true adds multiple attribute to file input
         multiple: false,
         // name attribute of file input
         name: 'file',
@@ -882,7 +882,7 @@ qq.UploadHandlerAbstract = function(o){
     this._options = {
         debug: false,
         action: '/upload.php',
-        // maximum number of concurrent uploads        
+        // maximum number of concurrent uploads
         maxConnections: 999,
         onProgress: function(id, fileName, loaded, total){},
         onComplete: function(id, fileName, response){},
@@ -1146,7 +1146,7 @@ qq.UploadHandlerXhr = function(o){
     this._files = [];
     this._xhrs = [];
 
-    // current loaded size in bytes for each file 
+    // current loaded size in bytes for each file
     this._loaded = [];
 };
 

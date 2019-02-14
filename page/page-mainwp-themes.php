@@ -542,8 +542,29 @@ class MainWP_Themes {
 		}
         asort( $themesVersion );
 		?>
-		<div id="mainwp-table-overflow" style="overflow: auto !important ;">
-			<table class="wp-list-table widefat fixed pages" id="themes_fixedtable" style="width: auto; word-wrap: normal">
+        <script type="text/javascript">
+            jQuery(document).ready(function($)
+            {
+                $(".mainwp-wrapper-scroll-top").width($(".mainwp-wrapper-scroll-bottom").width());
+                $(".mainwp-wrapper-scroll-top .mainwp-scroll").width($(".mainwp-wrapper-scroll-bottom .mainwp-scroll").width());
+                $(".mainwp-wrapper-scroll-top").scroll(function(){
+                    console.log('top: ' + $(".mainwp-wrapper-scroll-top").scrollLeft());
+                    $(".mainwp-wrapper-scroll-bottom")
+                    .scrollLeft($(".mainwp-wrapper-scroll-top").scrollLeft());
+                });
+                $(".mainwp-wrapper-scroll-bottom").scroll(function(){
+                    console.log('bottom: ' + $(".mainwp-wrapper-scroll-bottom").scrollLeft());
+                    $(".mainwp-wrapper-scroll-top")
+                    .scrollLeft($(".mainwp-wrapper-scroll-bottom").scrollLeft());
+                });
+            });
+        </script>
+        <div class="mainwp-wrapper-scroll-top">
+            <div class="mainwp-scroll">
+            </div>
+        </div>
+		<div id="mainwp-table-overflow" class="mainwp-wrapper-scroll-bottom" style="overflow: auto !important ;">
+			<table class="wp-list-table widefat fixed pages mainwp-scroll" id="themes_fixedtable" style="width: auto; word-wrap: normal">
 				<thead>
 				<tr>
 					<th class="headcol" id="cb" style="vertical-align: top;text-align: center; border-bottom: 1px Solid #e1e1e1; font-size: 18px; z-index:999; padding: auto; width: 15em !important;"><?php _e( 'Child site / Theme', 'mainwp' ); ?>
@@ -573,7 +594,7 @@ class MainWP_Themes {
 					<tr>
 						<td class="headcol">
 							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($site_id); ?>"/>
-							<label for="<?php echo esc_url($site_url); ?>"><?php echo esc_html($site_url); ?></label>
+							<label for="<?php echo esc_attr($site_url); ?>"><?php echo esc_html($site_url); ?></label>
 							<input type="checkbox" value="" id="<?php echo esc_attr($site_url); ?>" class="mainwp_site_check_all" style="display: none ;"/>
 						</td>
 						<?php

@@ -204,6 +204,7 @@ class MainWP_Meta_Boxes {
 			//            update_post_meta($post_id, $saveto, base64_encode($_POST[$prefix]));
 			if ( isset( $_POST['post_category'] ) && is_array( $_POST['post_category'] ) ) {
 				update_post_meta( $post_id, '_categories', base64_encode( implode( ',', $_POST['post_category'] ) ) );
+                // hook for extensions: post plus
 				do_action( 'mainwp_bulkpost_categories_handle', $post_id, $_POST['post_category'] );
 			}
 

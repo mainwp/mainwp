@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 5.0
-Stable tag: 3.5.3
+Tested up to: 5.0.3
+Stable tag: 3.5.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -162,6 +162,17 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.5.4 - 2-14-19 =
+* Fixed: sorting issues caused by special characters in site name
+* Fixed: select2 library warnings
+* Fixed: issues with displaying extension name for 3rd party extensions
+* Fixed: issues with permissions for displaying server information page
+* Added: 'mainwp_admin_footer' hook
+* Added: 'mainwp_alter_login_user' hook
+* Added: 'mainwp_detect_premium_themes_update' hook
+* Added: 'mainwp_postboxes_on_load_site_page' hook
+* Updated: disabled the "Remove readme.html" security check feature for WPEngine hosted child sites
 
 = 3.5.3 - 12-7-18 =
 * Fixed: an issue with special characters in passwords

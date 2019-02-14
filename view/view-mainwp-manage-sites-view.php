@@ -1779,7 +1779,7 @@ class MainWP_Manage_Sites_View {
                 <tr>
                     <th scope="row"><?php _e( 'Friendly site name','mainwp' ); ?></th>
                     <td><input type="text" name="mainwp_managesites_edit_sitename"
-                               value="<?php echo stripslashes( $website->name ); ?>" class="regular-text"/></td>
+                               value="<?php echo esc_attr(stripslashes( $website->name )); ?>" class="regular-text"/></td>
                 </tr>
                 <tr>
                     <th scope="row"><?php _e( 'Groups','mainwp' ); ?></th>

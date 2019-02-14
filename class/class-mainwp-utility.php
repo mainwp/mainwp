@@ -126,7 +126,7 @@ class MainWP_Utility {
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
 		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-        curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix very rare case
+        curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 
 		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
             $http_pass = stripslashes($http_pass); // to fix
@@ -529,6 +529,17 @@ class MainWP_Utility {
 			}
 			$data['mainwpsignature'] = base64_encode( $signature );
 
+            global $current_user;
+
+            if ( (! defined( 'DOING_CRON' ) || false === DOING_CRON) && ( !defined('WP_CLI') || false === WP_CLI ) ) {
+                if ( is_object( $current_user ) && property_exists( $current_user, 'ID' ) && $current_user->ID ) {
+                    $alter_user = apply_filters('mainwp_alter_login_user', false, $website->id);
+                    if (!empty( $alter_user )) {
+                        $data['alt_user'] = rawurlencode($alter_user);
+                    }
+                }
+            }
+
 			return http_build_query( $data, '', '&' );
 		}
 
@@ -556,6 +567,17 @@ class MainWP_Utility {
 				'nossl'           => $nossl,
 				$paramName        => rawurlencode( $paramValue ),
 			);
+
+            global $current_user;
+            if ( (! defined( 'DOING_CRON' ) || false === DOING_CRON) && ( !defined('WP_CLI') || false === WP_CLI ) ) {
+                if ( $current_user && $current_user->ID ) {
+                    $alter_user = apply_filters('mainwp_alter_login_user', false, $current_user->ID, $website->id);
+                    if (!empty( $alter_user )) {
+                        $params['alt_user'] = rawurlencode($alter_user);
+                    }
+                }
+            }
+
 		}
 
 		if ( $asArray ) {
@@ -673,6 +695,7 @@ class MainWP_Utility {
 				$_new_post = null;
 				if ( isset( $params ) && isset( $params['new_post'] ) ) {
 					$_new_post = $params['new_post'];
+                    //hook for extension: boilerplate ...
 					$params    = apply_filters( 'mainwp-pre-posting-posts', ( is_array( $params ) ? $params : array() ), (object) array(
 						'id'   => $website->id,
 						'url'  => $website->url,
@@ -696,7 +719,7 @@ class MainWP_Utility {
                 }
 
 				//For WPE upgrades we require cookies too, for normal WPE syncing we do not require cookies, messes up the connection
-				if ( ( $website != null ) && ( ( $website->wpe != 1 ) || ( isset( $others['upgrade'] ) && ( $others['upgrade'] === true ) ) ) ) {
+				if ( ( $website != null ) && ( ( property_exists($website, 'wpe') && $website->wpe != 1 ) || ( isset( $others['upgrade'] ) && ( $others['upgrade'] === true ) ) ) ) {
 					$cookieFile = $cookieDir . '/' . sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
 					if ( ! file_exists( $cookieFile ) ) {
 						@file_put_contents( $cookieFile, '' );
@@ -987,7 +1010,7 @@ class MainWP_Utility {
             }
 
 			//For WPE upgrades we require cookies too, for normal WPE syncing we do not require cookies, messes up the connection
-			if ( ( $website != null ) && ( ( $website->wpe != 1 ) || ( isset( $others['upgrade'] ) && ( $others['upgrade'] === true ) ) ) ) {
+			if ( ( $website != null ) && ( ( property_exists($website, 'wpe') && $website->wpe != 1 ) || ( isset( $others['upgrade'] ) && ( $others['upgrade'] === true ) ) ) ) {
 				$cookieFile = $cookieDir . '/' . sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
 				if ( ! file_exists( $cookieFile ) ) {
 					@file_put_contents( $cookieFile, '' );
@@ -1115,35 +1138,45 @@ class MainWP_Utility {
 			$params = array();
 		}
 
-		if ( $what == 'stats' || ( $what == 'upgradeplugintheme' && isset( $params['type'] ) && 'plugin' == $params['type'] ) ) {
-			// to fix bug: update upgrade plugin information
-			$try_detect_premiums_updates = get_option( 'mainwp_request_plugins_page_' . $website->id );
-			if ('yes' == $try_detect_premiums_updates) {
-				$page_plugins_url = MainWP_Utility::getGetDataAuthed( $website, 'plugins.php?_detect_plugins_updates=yes' );
+        $others = array('force_use_ipv4' => $website->force_use_ipv4, 'upgrade' => ( $what == 'upgradeplugintheme' || $what == 'upgrade' || $what == 'upgradetranslation' ) );
 
-                $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-                $args = array(
-                    'timeout' => 25,
-                    'httpversion' => '1.1',
-                    'User-Agent'   => $agent,
-                );
+        // detect premiums plugins/themes update
+        if ( $what == 'stats' || ( $what == 'upgradeplugintheme' && isset( $params['type'] )) ) {
 
-                if (!empty($website->http_user) && !empty($website->http_pass) ) {
-                    $args['headers'] = array(
-                        'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . $website->http_pass )
-                    );
-                }
-				$ret = wp_remote_get( $page_plugins_url, $args );
-			}
+            $update_type = '';
+            if ($what == 'upgradeplugintheme') {
+                $update_type = (isset( $params['type'] )) ? $params['type'] : '';
+            }
+
+            $found_prem_plugin = $found_prem_theme = false;
+            if ( $website->plugins != '' ) {
+                $plugins = json_decode( $website->plugins, 1 );
+                $found_plugin = self::checkPremiumPlugins( $plugins );
+            }
+
+            if ( $website->themes != '' ) {
+                $themes = @json_decode( $website->themes, 1 );
+                $found_prem_theme = self::checkPremiumThemes( $themes );
+            }
+
+            // detect plugin
+            if ( $found_prem_plugin && ( $what == 'stats' || $update_type == 'plugin' ) ) {
+                self::try_to_detect_premiums_update( $website, 'plugin' );
+            }
+            // detect themes
+            if ( $found_prem_theme && ( $what == 'stats' || $update_type == 'theme' ) ) {
+                self::try_to_detect_premiums_update( $website, 'theme' );
+            }
 		}
+        // end detect
+
+        if (isset($rawResponse) && $rawResponse) {
+            $others['raw_response'] = 'yes';
+        }
 
 		$params['optimize'] = ( ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0 );
 
 		$postdata    = MainWP_Utility::getPostDataAuthed( $website, $what, $params );
-
-        $others = array('force_use_ipv4' => $website->force_use_ipv4, 'upgrade' => ( $what == 'upgradeplugintheme' || $what == 'upgrade' || $what == 'upgradetranslation' ) );
-        if (isset($rawResponse) && $rawResponse)
-            $others['raw_response'] = 'yes';
 
 		$information = MainWP_Utility::fetchUrl( $website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
 
@@ -1424,7 +1457,7 @@ class MainWP_Utility {
         }
 
 		//For WPE upgrades we require cookies too, for normal WPE syncing we do not require cookies, messes up the connection
-		if ( ( $website != null ) && ( ( $website->wpe != 1 ) || ( isset( $others['upgrade'] ) && ( $others['upgrade'] === true ) ) ) ) {
+		if ( ( $website != null ) && ( ( property_exists($website, 'wpe') && $website->wpe != 1 ) || ( isset( $others['upgrade'] ) && ( $others['upgrade'] === true ) ) ) ) {
 			$cookieFile = $cookieDir . '/' . sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
 			if ( ! file_exists( $cookieFile ) ) {
 				@file_put_contents( $cookieFile, '' );
@@ -1574,6 +1607,111 @@ class MainWP_Utility {
 			throw new MainWP_Exception( 'NOMAINWP', $url );
 		}
 	}
+
+    public static function checkPremiumPlugins( $plugins ){
+
+        if (!is_array($plugins) || empty($plugins)) {
+            return false;
+        }
+
+        $premiums = array(
+                'ithemes-security-pro/ithemes-security-pro.php',
+                'monarch/monarch.php',
+                'cornerstone/cornerstone.php',
+                'updraftplus/updraftplus.php',
+                'wp-all-import-pro/wp-all-import-pro.php',
+                'bbq-pro/bbq-pro.php',
+                'seedprod-coming-soon-pro-5/seedprod-coming-soon-pro-5.php',
+                'elementor-pro/elementor-pro.php',
+                'bbpowerpack/bb-powerpack.php',
+                'bb-ultimate-addon/bb-ultimate-addon.php',
+                'webarx/webarx.php',
+                'leco-client-portal/leco-client-portal.php',
+                'elementor-extras/elementor-extras.php',
+                'wp-schema-pro/wp-schema-pro.php',
+                'convertpro/convertpro.php',
+                'astra-addon/astra-addon.php',
+                'astra-portfolio/astra-portfolio.php',
+                'astra-pro-sites/astra-pro-sites.php',
+                'custom-facebook-feed-pro/custom-facebook-feed.php',
+                'convertpro/convertpro.php',
+                'convertpro-addon/convertpro-addon.php',
+                'wp-schema-pro/wp-schema-pro.php',
+                'ultimate-elementor/ultimate-elementor.php',
+                'gp-premium/gp-premium.php'
+        );
+
+        $premiums = apply_filters('mainwp_detect_premiums_updates', $premiums ); // deprecated 3.5.4
+
+        $premiums = apply_filters('mainwp_detect_premium_plugins_update', $premiums );
+
+        if ( is_array($premiums) && count($premiums) > 0 ) {
+            foreach( $plugins as $info ) {
+                if ( isset($info['slug']) ) {
+                    if ( in_array( $info['slug'], $premiums ) ) {
+                        return true;
+                    } else if ( false !== strpos( $info['slug'], 'yith-') ) { // detect for Yithemes plugins
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+	}
+
+    public static function checkPremiumThemes( $themes ) {
+
+        if (!is_array($themes) || empty($themes)) {
+            return false;
+        }
+
+        $premiums = array();
+
+        $premiums = apply_filters('mainwp_detect_premium_themes_update', $premiums );
+
+        if ( is_array($premiums) && count($premiums) > 0 ) {
+
+            foreach( $themes as $info ) {
+                if ( isset($info['slug']) ) {
+                    if ( in_array( $info['slug'], $premiums ) ) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+
+    }
+
+    static function try_to_detect_premiums_update( $website, $type ) {
+
+        if ($type == 'plugin' ) {
+            $where_url = 'plugins.php?_detect_plugins_updates=yes';
+        } else if ( $type == 'theme' ) {
+            $where_url = 'update-core.php?_detect_themes_updates=yes';
+        } else {
+            return false;
+        }
+
+        $request_url = MainWP_Utility::getGetDataAuthed( $website, $where_url );
+
+        $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
+        $args = array(
+            'timeout' => 25,
+            'httpversion' => '1.1',
+            'User-Agent'   => $agent,
+        );
+
+        if ( !empty($website->http_user) && !empty($website->http_pass) ) {
+            $args['headers'] = array(
+                'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . $website->http_pass )
+            );
+        }
+        $ret = wp_remote_get( $request_url, $args );
+    }
+
 
 	static function ctype_digit( $str ) {
 		return ( is_string( $str ) || is_int( $str ) || is_float( $str ) ) && preg_match( '/^\d+\z/', $str );
@@ -2102,22 +2240,6 @@ class MainWP_Utility {
 		}
 
 		return join( '', $stra );
-	}
-
-	public static function encrypt_legacy( $string, $key ) {
-		if ( function_exists( 'mcrypt_encrypt' ) ) {
-			return base64_encode( mcrypt_encrypt( MCRYPT_RIJNDAEL_256, md5( $key ), $string, MCRYPT_MODE_CBC, md5( md5( $key ) ) ) );
-		} else {
-			return base64_encode( $string );
-		}
-	}
-
-	public static function decrypt_legacy( $encrypted, $key ) {
-		if ( function_exists( 'mcrypt_encrypt' ) ) {
-			return rtrim( mcrypt_decrypt( MCRYPT_RIJNDAEL_256, md5( $key ), base64_decode( $encrypted ), MCRYPT_MODE_CBC, md5( md5( $key ) ) ), "\0" );
-		} else {
-			return base64_decode( $encrypted );
-		}
 	}
 
 	/**

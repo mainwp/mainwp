@@ -13,7 +13,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 			MainWP_Bulk_Update_Admin_Passwords::getClassName(),
 			'render',
 		) );
-		add_action( 'load-' . $_page, array('MainWP_Bulk_Update_Admin_Passwords', 'on_load_page'));	
+		add_action( 'load-' . $_page, array('MainWP_Bulk_Update_Admin_Passwords', 'on_load_page'));
 	}
 
 	public static function renderFooter( $shownPage ) {
@@ -22,14 +22,14 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		</div>
 		<?php
 	}
-	
-	public static function on_load_page() {		
-		MainWP_System::enqueue_postbox_scripts();		
+
+	public static function on_load_page() {
+		MainWP_System::enqueue_postbox_scripts();
 		self::add_meta_boxes();
 	}
-	
-	public static function add_meta_boxes() {			
-		$i = 1;	
+
+	public static function add_meta_boxes() {
+		$i = 1;
 		add_meta_box(
 			'mwp-password-contentbox-' . $i++,
 			'<i class="fa fa-key"></i> ' . __( 'Step 1: Bulk update administrator passwords', 'mainwp' ),
@@ -37,7 +37,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 			'mainwp_postboxes_bulk_update_passwords',
 			'normal',
 			'core'
-		);				
+		);
 	}
 
 	public static function render() {
@@ -168,9 +168,9 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				<div class="mainwp_config_box_right">
 					<?php MainWP_UI::select_sites_box( __( 'Step 2: Select Sites', 'mainwp' ) ); ?>
 				</div>
-				
+
 				<div class="mainwp_config_box_left mainwp-postbox">
-					<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_bulk_update_passwords'); ?>	
+					<?php MainWP_System::do_mainwp_meta_boxes('mainwp_postboxes_bulk_update_passwords'); ?>
 				</div>
 				<div class="mainwp-clear">
 					<input type="submit" name="updateadminpassword" id="bulk_updateadminpassword" class="button-primary button button-hero mainwp-right" value="<?php _e( 'Update Now', 'mainwp' ); ?>"/>
@@ -246,7 +246,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 			</tr>
 		</table>
 	<?php
-	}	
+	}
 }
 
 ?>

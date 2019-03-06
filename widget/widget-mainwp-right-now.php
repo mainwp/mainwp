@@ -361,7 +361,7 @@ class MainWP_Right_Now {
 				} else if ( isset( $information['error'] ) ) {
 					throw new MainWP_Exception( 'WPERROR', $information['error'] );
 				} else {
-					throw new MainWP_Exception( 'ERROR', 'Invalid response from site!' );
+					throw new MainWP_Exception( 'ERROR', __( 'Invalid response from site', 'mainwp' )  );
 				}
 			}
 		}

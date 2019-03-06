@@ -60,7 +60,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			case 'theme_update':
 			case 'site':
 			case 'url':
-			case 'groups':
+			//case 'groups':
 			case 'backup':
 			case 'last_sync':
 			case 'last_post':
@@ -69,6 +69,9 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			case 'phpversion':
 				//case 'site_actions':
 				return $item[ $column_name ];
+            case 'groups':
+				//case 'site_actions':
+				return $item[ 'wpgroups' ];
 			default:
 				return $item[ $column_name ];
 			// return print_r($item, true); //Show the whole array for troubleshooting purposes
@@ -831,7 +834,11 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 			'per_page'    => $perPage,//WE have to determine how many items to show on a page
 		) );
 
-        do_action('mainwp-sitestable-prepared-items', $websites);
+        $site_ids = array();
+        while ( $websites && ( $site = @MainWP_DB::fetch_object( $websites ) ) ) {
+            $site_ids[] = $site->id;
+        }
+        do_action('mainwp-sitestable-prepared-items', $websites, $site_ids);
 
 		$this->items = $websites;
 	}
@@ -948,8 +955,8 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 		$row_class = ( $row_class == '' ? 'alternate' : '' );
 
 		$classes = '';
-		if (isset($item['groups']) && !empty($item['groups'])) {
-			$group_class = $item['groups'];
+		if (isset($item['wpgroups']) && !empty($item['wpgroups'])) {
+			$group_class = $item['wpgroups'];
 			$group_class = explode(',', $group_class);
 			if(is_array($group_class)) {
 				foreach( $group_class as $_class) {

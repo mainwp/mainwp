@@ -577,10 +577,7 @@ public static function renderFooter( $shownPage ) {
 		return $currentVersion;
 	}
 
-	public static function getMainwpVersion() {
-//        if ( session_id() == '' ) {
-//            session_start();
-//        }
+	public static function getMainWPVersion() {
 		if ( ( isset( $_SESSION['cachedVersion'] ) ) && ( NULL !== $_SESSION['cachedVersion'] ) && ( ( $_SESSION['cachedTime'] + ( 60 * 30 ) ) > time() ) ) {
 			return $_SESSION['cachedVersion'];
 		}
@@ -601,7 +598,7 @@ public static function renderFooter( $shownPage ) {
 
 	public static function getMainWPVersionCheck() {
 		$current = get_option( 'mainwp_plugin_version' );
-		$latest  = self::getMainwpVersion();
+		$latest  = self::getMainWPVersion();
 		if ( $current == $latest ) {
 			return '<span class="mainwp-pass"><i class="fa fa-check-circle"></i> ' . __( 'Pass', 'mainwp' ) . '</span>';
 		} else {
@@ -961,7 +958,7 @@ public static function renderFooter( $shownPage ) {
 	}
 
 	public static function getSSLWarning() {
-		$conf = array( 'private_key_bits' => 384 );
+		$conf = array( 'private_key_bits' => 2048 );
 		$conf_loc = MainWP_System::get_openssl_conf();
 		if ( !empty( $conf_loc ) ) {
 			$conf['config'] = $conf_loc;

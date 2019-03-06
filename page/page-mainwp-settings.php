@@ -447,10 +447,11 @@ class MainWP_Settings {
 			MainWP_Utility::update_option('mainwp_sslVerifyCertificate', isset($_POST['mainwp_sslVerifyCertificate']) ? 1 : 0 );
 			MainWP_Utility::update_option('mainwp_forceUseIPv4', isset($_POST['mainwp_forceUseIPv4']) ? 1 : 0 );
 			if (isset($_POST['mainwp_openssl_lib_location'])) {
+                $openssl_loc = trim($_POST['mainwp_openssl_lib_location']);
 				if ( self::isLocalWindowConfig() ) {
-					MainWP_Utility::update_option('mwp_setup_opensslLibLocation', stripslashes($_POST['mainwp_openssl_lib_location']));
+					MainWP_Utility::update_option('mwp_setup_opensslLibLocation', stripslashes( $openssl_loc ));
 				} else {
-					MainWP_Utility::update_option('mainwp_opensslLibLocation', stripslashes($_POST['mainwp_openssl_lib_location']));
+					MainWP_Utility::update_option('mainwp_opensslLibLocation', stripslashes( $openssl_loc ));
 				}
 			}
 		}

@@ -438,7 +438,7 @@ class MainWP_Post_Handler {
 
 	function mainwp_post_get_edit() {
 		$this->secure_request( 'mainwp_post_get_edit' );
-		MainWP_Post::getPost();
+		MainWP_Post::getPost(); // to edit
 		die();
 	}
 

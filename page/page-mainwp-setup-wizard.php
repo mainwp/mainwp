@@ -1347,7 +1347,7 @@ class MainWP_Setup_Wizard {
 	}
 
 	private function mwp_setup_ready_actions() {
-		delete_site_option('mainwp_run_quick_setup');
+		delete_option('mainwp_run_quick_setup');
 	}
 
 	public function mwp_setup_ready() {

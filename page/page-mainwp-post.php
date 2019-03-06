@@ -1450,7 +1450,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 		$post_featured_image = base64_decode( $post_data['post_featured_image'] );
 		$post_gallery_images = base64_decode( $post_data['post_gallery_images'] );
 		$upload_dir          = maybe_unserialize( base64_decode( $post_data['child_upload_dir'] ) );
-		return MainWP_Post::createPost( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images );
+		return MainWP_Post::createPost( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images ); // to edit
 	}
 
 	static function createPost( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images) {
@@ -1515,7 +1515,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 					foreach($post_gallery_images as $gallery){
 						if (isset($gallery['src'])) {
 							try {
-								$upload = MainWP_Utility::uploadImage( $gallery['src'], $gallery ); //Upload image to WP
+								$upload = MainWP_Utility::uploadImage( $gallery['src'], $gallery, true ); //Upload image to WP, check if existed
 								if ( null !== $upload ) {
 									$replaceAttachedIds[$gallery['id']] = $upload['id'];
 								}

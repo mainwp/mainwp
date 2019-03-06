@@ -105,7 +105,9 @@ class MainWP_Extensions {
 			}
 
 			$extension['slug']             = $slug;
-			$extension['name']             = $plugin_data['Name'];
+            if (!isset($extension['name'])) {
+                $extension['name']             = $plugin_data['Name'];
+            }
 			$extension['version']          = $plugin_data['Version'];
 			$extension['description']      = $plugin_data['Description'];
 			$extension['author']           = $plugin_data['Author'];

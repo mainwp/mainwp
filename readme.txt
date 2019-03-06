@@ -6,8 +6,8 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 5.0.3
-Stable tag: 3.5.4
+Tested up to: 5.1
+Stable tag: 3.5.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -163,6 +163,14 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 3.5.5 - 3-6-19 =
+* Fixed: an issue with SQL 8.0 queries
+* Fixed: redirect issues on specific setups
+* Fixed: multiple PHP Warnings
+* Fixed: multiple typos
+* Updated: added improvements for detecting premium plugin updates
+* Updated: support for 3rd party extensions
+
 = 3.5.4 - 2-14-19 =
 * Fixed: sorting issues caused by special characters in site name
 * Fixed: select2 library warnings
@@ -190,7 +198,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: an issue with generating incorrect URL for the Test Connection feature
 * Fixed: an issue with redirecting to the Overview page
 * Fixed multiple PHP warnings
-* Fixed: an issue with updating stagings sites
+* Fixed: an issue with updating staging sites
 * Added: support for custom extension icons
 * Added: a new feature for refreshing site favicons
 * Added: multiple security enhancements
@@ -317,7 +325,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: redirect issue for users that don't have permission to access MainWP Dashboard
 * Fixed: an issue with sorting Posts and Pages by Date
 * Fixed: multiple layout issues
-* Fixed: an issue with email notificatios for available updates
+* Fixed: an issue with email notifications for available updates
 * Fixed: multiple translation issues
 * Added: MainWP Side menu
 * Added: mainwp_before_save_sync_result filter
@@ -370,13 +378,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: an issue with creating groups on the Add New Site form
 * Added: the ability to dismiss the Tour notices - [Trello Card](https://trello.com/c/nJfApKsn/48-hide-tours)
 * Added: plugin changelog link into the email notification
-* Added: new Font Awesome version version font awesome
+* Added: new Font Awesome version
 * Added: hook mainwp_format_email to custom notification email
 * Added: site note preview feature - [Trello Card](https://trello.com/c/KVrkXJZf/49-notes-section)
 * Added: new columns in the Mange Sites table WP Core, Plugins, Themes updates number - [Trello Card](https://trello.com/c/Amio60MQ/33-add-core-plugin-theme-update-columns-to-sites-list-view)
 * Added: icon for trusted plugins and themes in the Updates and Updates Overview sections - [Trello Card](https://trello.com/c/2Zk8aXDj/5-trusted-status-indicator-for-individual-plugins-and-themes-listed-in-main-dashboard-display)
 * Added: Sync Now button for all sites in the Connection Status widget - [Trello Card](https://trello.com/c/TEqC9ERt/52-sync-now-available-for-all-sites-in-the-connection-status-widget)
-* Updated: load Select2 Javascript library only on MainWP Dashboard pages
+* Updated: load Select2 JavaScript library only on MainWP Dashboard pages
 * Updated: auto request extensions update information
 * Updated: display child site favicon feature
 * Updated: Select2 library
@@ -457,7 +465,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Removed: How to widget
 * Removed: Help widget
 * Removed: Unreferenced CSS classes
-* Removed: Bsic SEO stats
+* Removed: Basic SEO stats
 * Removed: Documentation page
 
 = 3.1.8.1 - 9-8-16 =
@@ -492,7 +500,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: Incorrect tooltip text for the Backups on Server tooltip
 * Fixed: Issue with extensions auto activation in the Quick Setup process
 * Fixed: PHP Notices
-* Fixed: Variable naming issue that throws a ReferenceError
+* Fixed: Variable naming issue that throws a Reference Error
 * Added: Maximum sync request settings in Advanced Options
 * Added: Support for the new version of the MainWP Rocket Extension
 * Added: Support for the new version of the MainWP iThemes Security Extension
@@ -519,10 +527,10 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Quick Start Wizard steps
 * Removed: Plugin and Theme conflicts check feature
 * Removed: Unused old code
-* Cosmetic: Removed slashes added in sitenames with quotes
+* Cosmetic: Removed slashes added in site names with quotes
 
 = 3.1.2 - 3-15-16 =
-* Fixed: Slashes added in sitenames when using quotes
+* Fixed: Slashes added in site names when using quotes
 * Fixed: Multiple mixed content warnings
 * Fixed: Conflict with wpMandrill and Postman SMTP plugins
 * Added: Support for the new Team Control feature
@@ -541,9 +549,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: PHP notices
 * Fixed: Typo's
 * Fixed: Update issue for the iThemes Security Pro and the Monarch plugin
-* Fixed: Issue with localhost settups (Quick Setup Wizard)
-* Added: Basic WP-CLI support [MainWP WP-CLI Commands](http://docs.mainwp.com/wp-cli-commands/)
-* Added: Wordpress translation updates for child sites
+* Fixed: Issue with localhost setups (Quick Setup Wizard)
+* Added: Basic WP-CLI support
+* Added: WordPress translation updates for child sites
 * Added: Add/Remove to MainWP Menu function for Extensions
 * Added: Server self-connect check in the Server Information page
 * Added: Auto install plugin and apply extension settings when adding a new site
@@ -558,16 +566,16 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Extensions Icons
 * Fixed: Issue with reconnecting child site with unique ID
 * Fixed: PHP Warning
-* Fixed: Issue with displaying Twitter brag messges
-* Fixed: Issue with Availble Updates in email notification
-* Fixed: Backup task javascript error
+* Fixed: Issue with displaying Twitter brag messages
+* Fixed: Issue with Available Updates in email notification
+* Fixed: Backup task JavaScript error
 * Fixed: Setup wizard loop on multisite setup
 * Added: Warning message for multisite setup
 * Added: Hooks to enable extension logging
 
 = 3.0 - 1-12-16 =
 * Fixed: Issue with “empty” Theme Conflicts
-* Fixed: Issue with including incorrect file when configuring cron jobs
+* Fixed: Issue with including incorrect file when configuring Cron jobs
 * Fixed: Stripe Slashes for site names issue
 * Fixed: Various PHP warnings
 * Fixed: Various PHP notices
@@ -664,7 +672,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Welcome Panel layout on the main and individual child site dashboard
 
 = 2.0.26 - 8-31-2015 =
-* Fixed: Element title for the Available Updates status in the Manange Sites page
+* Fixed: Element title for the Available Updates status in the Manage Sites page
 * Added: Counts for Brag feature
 * Added: Unignore feature for Abandoned Plugins
 * Added: Unignore feature for Abandoned Themes
@@ -827,7 +835,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 = 2.0.10 - 4-06-15 =
 * Added: Display Favicon for child sites feature
 * Added: Support for upcoming extension
-* Added: New css style
+* Added: New CSS style
 * Fixed: Select sites by group bug in the Team Control Extension
 * Fixed: Multiple PHP Warnings
 
@@ -864,10 +872,10 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: Wrong sync-times displayed on Right Now widget
 * Fixed: Email notifications of updates not being sent
 * Fixed: Endless loop causing a lot of error log in our logger
-* Fixed: MySQL Database error when updatig from a previous version
+* Fixed: MySQL Database error when updating from a previous version
 * Added: Available extensions box on the Extensions page
 * Added: Disabled PHP functions check on the Server Information page
-* Tweaked: Test connection now performs a more robuust check to verify the connection
+* Tweaked: Test connection now performs a more robust check to verify the connection
 * Tweaked: Backup retry mechanism works better on larger sites
 * Tweaked: CSS on the extensions page
 * Tweaked: "Use MainWP Trigger" option moved to the MainWP Account Information box on the MainWP settings page
@@ -944,7 +952,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Tweak: “Backups” menu item renamed to “Schedule Backup”
 * Tweak: “All Backups” menu item renamed to “Manage Backups”
 * Tweak: Email Template updated to call images from user’s dashboard site
-* Tweak: Individual Sync Now action syncs on the Manage SItes page
+* Tweak: Individual Sync Now action syncs on the Manage Sites page
 * Tweak: MainWP Account login on the settings page encryption
 * Tweak: “Auto Update Trust” menu item renamed to “Auto Updates”
 * Tweak: “Child Unique Security Id” field moved to the Advanced Options field
@@ -957,7 +965,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Redesign: The redirection page style updated
 * Redesign: Update Admin Passwords page style updated
 * Refactor: Site Backup page added as a separate tab
-* Refactor: Site Security Scan tab added including Security issues box, WordFence box and Sucuri box
+* Refactor: Site Security Scan tab added including Security issues box, Wordfence box and Sucuri box
 * Refactor: MainWP Database table split into two tables, mainwp_wp_option and mainwp_wp_sync
 * Removed: jsapi link to Google
 
@@ -977,8 +985,8 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed contacting disconnected child sites
 * Fixed non https on https host for extensions
 * Fixed issues with self signed SSL certificates (added option in Advanced section)
-* Removed possibility to query disconnected childs
-* Removed link to Google url for jquery to prevent possible tracking
+* Removed possibility to query disconnected child sites
+* Removed link to Google URL for jQuery to prevent possible tracking
 * Removed old code references
 
 = 1.1 - 8-08-14 =
@@ -1061,9 +1069,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 = 1.0.8 - 4-28-14 =
 * Added Minimum delay between requests to Settings Advanced Options
-* Added Minimum delay between requests to the same ip Settings Advanced Options
+* Added Minimum delay between requests to the same IP Settings Advanced Options
 * Fixed issue with some premium plugins showing as Trusted in email when not Trusted
-* Added Wp-Config Page Viewer to Server Information
+* Added wp-config.php Page Viewer to Server Information
 * Added new German translations
 * Changed Max Request Error Message to provide link to more information
 

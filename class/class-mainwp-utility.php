@@ -1140,35 +1140,61 @@ class MainWP_Utility {
 
         $others = array('force_use_ipv4' => $website->force_use_ipv4, 'upgrade' => ( $what == 'upgradeplugintheme' || $what == 'upgrade' || $what == 'upgradetranslation' ) );
 
+        $request_update = false;
         // detect premiums plugins/themes update
         if ( $what == 'stats' || ( $what == 'upgradeplugintheme' && isset( $params['type'] )) ) {
 
             $update_type = '';
-            if ($what == 'upgradeplugintheme') {
+
+            $check_premi_plugins = $check_premi_themes = array();
+
+            if ($what == 'stats') {
+                if ( $website->plugins != '' ) {
+                    $check_premi_plugins = json_decode( $website->plugins, 1 );
+                }
+                if ( $website->themes != '' ) {
+                    $check_premi_themes = @json_decode( $website->themes, 1 );
+                }
+            } else if ( $what == 'upgradeplugintheme' ) {
+
                 $update_type = (isset( $params['type'] )) ? $params['type'] : '';
+                if ( $update_type == 'plugin' ) {
+                    if ( $website->plugins != '' ) {
+                        $check_premi_plugins = json_decode( $website->plugins, 1 );
+                    }
+                } else if ( $update_type == 'theme' ) {
+                    if ( $website->themes != '' ) {
+                        $check_premi_themes = @json_decode( $website->themes, 1 );
+                }
             }
 
-            $found_prem_plugin = $found_prem_theme = false;
-            if ( $website->plugins != '' ) {
-                $plugins = json_decode( $website->plugins, 1 );
-                $found_plugin = self::checkPremiumPlugins( $plugins );
             }
 
-            if ( $website->themes != '' ) {
-                $themes = @json_decode( $website->themes, 1 );
-                $found_prem_theme = self::checkPremiumThemes( $themes );
+            if ( is_array( $check_premi_plugins ) && count( $check_premi_plugins ) > 0 ) {
+                if (self::checkPremiumUpdates( $check_premi_plugins, 'plugin' )) {
+                    // detect plugin
+                    self::try_to_detect_premiums_update( $website, 'plugin' );
+                }
             }
 
-            // detect plugin
-            if ( $found_prem_plugin && ( $what == 'stats' || $update_type == 'plugin' ) ) {
-                self::try_to_detect_premiums_update( $website, 'plugin' );
+            if ( is_array( $check_premi_themes ) && count( $check_premi_themes ) > 0 ) {
+                if ( self::checkPremiumUpdates( $check_premi_themes, 'theme' ) ) {
+                    // detect themes
+                    self::try_to_detect_premiums_update( $website, 'theme' );
+                }
             }
-            // detect themes
-            if ( $found_prem_theme && ( $what == 'stats' || $update_type == 'theme' ) ) {
-                self::try_to_detect_premiums_update( $website, 'theme' );
+
+            if ( $what == 'upgradeplugintheme' ) {
+                if ( $update_type == 'plugin' || $update_type == 'theme' ) {
+                    // request premiums update
+                    if ( self::checkRequestUpdatePremium( $params['list'], $update_type ) ) {
+                        self::request_premiums_update( $website, $update_type, $params['list'] );
+                        $request_update = true;
+                    }
+                }
             }
 		}
-        // end detect
+        // end detect/request update
 
         if (isset($rawResponse) && $rawResponse) {
             $others['raw_response'] = 'yes';
@@ -1178,7 +1204,14 @@ class MainWP_Utility {
 
 		$postdata    = MainWP_Utility::getPostDataAuthed( $website, $what, $params );
 
-		$information = MainWP_Utility::fetchUrl( $website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
+        if ( ! $request_update ) {
+            $information = MainWP_Utility::fetchUrl( $website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
+        } else {
+            $slug = $params['list'];
+            // temporary set it is successful, see function upgradePluginThemeTranslation()
+            // need to re-sync to update info
+            $information['upgrades'] = array( $slug => 1 );
+        }
 
 		if ( is_array( $information ) && isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
 			MainWP_Sync::syncInformationArray( $website, $information['sync'] );
@@ -1599,7 +1632,9 @@ class MainWP_Utility {
 			$information = unserialize( base64_decode( $result ) );
 			MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'information: [OK]' );
 			return $information;
-		} else if ( $raw_response ) {
+		} else if ( $http_status == 200 && ! empty( $err ) ) { // unexpected http error
+            throw new MainWP_Exception( 'HTTPERROR', $err );
+        } else if ( $raw_response ) {
             MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'Response: [RAW]' );
             return $data;
 		} else {
@@ -1614,86 +1649,133 @@ class MainWP_Utility {
             return false;
         }
 
-        $premiums = array(
-                'ithemes-security-pro/ithemes-security-pro.php',
-                'monarch/monarch.php',
-                'cornerstone/cornerstone.php',
-                'updraftplus/updraftplus.php',
-                'wp-all-import-pro/wp-all-import-pro.php',
-                'bbq-pro/bbq-pro.php',
-                'seedprod-coming-soon-pro-5/seedprod-coming-soon-pro-5.php',
-                'elementor-pro/elementor-pro.php',
-                'bbpowerpack/bb-powerpack.php',
-                'bb-ultimate-addon/bb-ultimate-addon.php',
-                'webarx/webarx.php',
-                'leco-client-portal/leco-client-portal.php',
-                'elementor-extras/elementor-extras.php',
-                'wp-schema-pro/wp-schema-pro.php',
-                'convertpro/convertpro.php',
-                'astra-addon/astra-addon.php',
-                'astra-portfolio/astra-portfolio.php',
-                'astra-pro-sites/astra-pro-sites.php',
-                'custom-facebook-feed-pro/custom-facebook-feed.php',
-                'convertpro/convertpro.php',
-                'convertpro-addon/convertpro-addon.php',
-                'wp-schema-pro/wp-schema-pro.php',
-                'ultimate-elementor/ultimate-elementor.php',
-                'gp-premium/gp-premium.php'
-        );
-
-        $premiums = apply_filters('mainwp_detect_premiums_updates', $premiums ); // deprecated 3.5.4
-
-        $premiums = apply_filters('mainwp_detect_premium_plugins_update', $premiums );
-
-        if ( is_array($premiums) && count($premiums) > 0 ) {
-            foreach( $plugins as $info ) {
-                if ( isset($info['slug']) ) {
-                    if ( in_array( $info['slug'], $premiums ) ) {
-                        return true;
-                    } else if ( false !== strpos( $info['slug'], 'yith-') ) { // detect for Yithemes plugins
-                        return true;
-                    }
-                }
-            }
-        }
 
         return false;
 	}
 
-    public static function checkPremiumThemes( $themes ) {
+    public static function checkPremiumUpdates( $updates, $type ) {
 
-        if (!is_array($themes) || empty($themes)) {
+        if (!is_array($updates) || empty($updates)) {
             return false;
         }
 
-        $premiums = array();
+        if ( $type == 'plugin' ) {
 
-        $premiums = apply_filters('mainwp_detect_premium_themes_update', $premiums );
+            $premiums = array(
+                    'ithemes-security-pro/ithemes-security-pro.php',
+                    'monarch/monarch.php',
+                    'cornerstone/cornerstone.php',
+                    'updraftplus/updraftplus.php',
+                    'wp-all-import-pro/wp-all-import-pro.php',
+                    'bbq-pro/bbq-pro.php',
+                    'seedprod-coming-soon-pro-5/seedprod-coming-soon-pro-5.php',
+                    'elementor-pro/elementor-pro.php',
+                    'bbpowerpack/bb-powerpack.php',
+                    'bb-ultimate-addon/bb-ultimate-addon.php',
+                    'webarx/webarx.php',
+                    'leco-client-portal/leco-client-portal.php',
+                    'elementor-extras/elementor-extras.php',
+                    'wp-schema-pro/wp-schema-pro.php',
+                    'convertpro/convertpro.php',
+                    'astra-addon/astra-addon.php',
+                    'astra-portfolio/astra-portfolio.php',
+                    'astra-pro-sites/astra-pro-sites.php',
+                    'custom-facebook-feed-pro/custom-facebook-feed.php',
+                    'convertpro/convertpro.php',
+                    'convertpro-addon/convertpro-addon.php',
+                    'wp-schema-pro/wp-schema-pro.php',
+                    'ultimate-elementor/ultimate-elementor.php',
+                    'gp-premium/gp-premium.php'
+            );
 
-        if ( is_array($premiums) && count($premiums) > 0 ) {
+            $premiums = apply_filters('mainwp_detect_premiums_updates', $premiums ); // deprecated 3.5.4
 
-            foreach( $themes as $info ) {
-                if ( isset($info['slug']) ) {
-                    if ( in_array( $info['slug'], $premiums ) ) {
-                        return true;
+            $premiums = apply_filters('mainwp_detect_premium_plugins_update', $premiums );
+
+            if ( is_array($premiums) && count($premiums) > 0 ) {
+                foreach( $updates as $info ) {
+                    if ( isset($info['slug']) ) {
+                        if ( in_array( $info['slug'], $premiums ) ) {
+                            return true;
+                        } else if ( false !== strpos( $info['slug'], 'yith-') ) { // detect for Yithemes plugins
+                            return true;
+                        }
                     }
                 }
             }
+
+        } else if ( $type == 'theme') {
+
+            $premiums = array();
+
+            $premiums = apply_filters('mainwp_detect_premium_themes_update', $premiums );
+
+            if ( is_array($premiums) && count($premiums) > 0 ) {
+                foreach( $updates as $info ) {
+                    if ( isset($info['slug']) ) {
+                        if ( in_array( $info['slug'], $premiums ) ) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
         }
 
+        return false;
+    }
+
+    public static function checkRequestUpdatePremium( $list, $type ) {
+
+        $updates = explode( ",", $list );
+
+        if ( !is_array($updates) || empty($updates) ) {
+            return false;
+        }
+
+        // limit support request one premium one site at the moment
+        if ( count($updates) >1 ) {
+            return false;
+        }
+
+        if ( $type == 'plugin' ) {
+
+            $update_premiums = array(
+                'yith-woocommerce-request-a-quote-premium/init.php'
+            );
+
+            $update_premiums = apply_filters('mainwp_request_update_premium_plugins', $update_premiums );
+
+            if ( is_array($update_premiums) && count($update_premiums) > 0 ) {
+                foreach( $updates as $slug ) {
+                    if ( !empty($slug) ) {
+                        if ( in_array( $slug, $update_premiums ) ) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+        } else if ( $type == 'theme' ) {
+
+            $update_premiums = array();
+            $update_premiums = apply_filters('mainwp_request_update_premium_themes', $update_premiums );
+            if ( is_array($update_premiums) && count($update_premiums) > 0 ) {
+                foreach( $themes as $slug ) {
+                    if ( !empty($slug) ) {
+                        if ( in_array( $slug, $update_premiums ) ) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+        }
         return false;
 
     }
 
-    static function try_to_detect_premiums_update( $website, $type ) {
-
-        if ($type == 'plugin' ) {
-            $where_url = 'plugins.php?_detect_plugins_updates=yes';
-        } else if ( $type == 'theme' ) {
-            $where_url = 'update-core.php?_detect_themes_updates=yes';
-        } else {
-            return false;
-        }
+    static function redirect_request_site( $website, $where_url ) {
 
         $request_url = MainWP_Utility::getGetDataAuthed( $website, $where_url );
 
@@ -1709,7 +1791,30 @@ class MainWP_Utility {
                 'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . $website->http_pass )
             );
         }
-        $ret = wp_remote_get( $request_url, $args );
+        return wp_remote_get( $request_url, $args );
+    }
+
+    static function request_premiums_update( $website, $type, $list ) {
+        if ($type == 'plugin' ) {
+            $where_url = 'plugins.php?_request_update_premiums_type=plugin&list=' . $list;
+        } else if ( $type == 'theme' ) {
+            $where_url = 'update-core.php?_request_update_premiums_type=theme&list=' . $list;
+        } else {
+            return null; // need to null
+        }
+        self::redirect_request_site( $website, $where_url );
+        return true;
+    }
+
+    static function try_to_detect_premiums_update( $website, $type ) {
+        if ($type == 'plugin' ) {
+            $where_url = 'plugins.php?_detect_plugins_updates=yes';
+        } else if ( $type == 'theme' ) {
+            $where_url = 'update-core.php?_detect_themes_updates=yes';
+        } else {
+            return false;
+        }
+        self::redirect_request_site( $website, $where_url );
     }
 
 
@@ -1779,13 +1884,13 @@ class MainWP_Utility {
 		if (!is_array($img_data))
 			$img_data = array();
 		include_once( ABSPATH . 'wp-admin/includes/file.php' ); //Contains download_url
+        $upload_dir     = wp_upload_dir();
 		//Download $img_url
 		$temporary_file = download_url( $img_url );
 
 		if ( is_wp_error( $temporary_file ) ) {
 			throw new Exception( 'Error: ' . $temporary_file->get_error_message() );
 		} else {
-			$upload_dir     = wp_upload_dir();
 			$local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url ); //Local name
 			$local_img_url  = $upload_dir['url'] . '/' . basename( $img_url );
 			$moved          = @rename( $temporary_file, $local_img_path );

@@ -53,7 +53,7 @@ class MainWP_DB {
 
 		if ( empty( $currentVersion ) ) {
 			//set_transient( '_mainwp_activation_redirect', 1, 30 );
-			update_site_option( 'mainwp_run_quick_setup', 'yes' );
+			update_option( 'mainwp_run_quick_setup', 'yes' );
 			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
 		} else if (false === get_option('mainwp_enableLegacyBackupFeature')) {
 			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 1 );
@@ -364,7 +364,7 @@ class MainWP_DB {
 		if ( version_compare( $currentVersion, '6.2', '<' ) ) {
 			$options = array(
 				'mainwp_db_version',
-				'mainwp_requests',
+				//'mainwp_requests',
 				'mainwp_plugin_version',
 				'mainwp_upgradeVersionInfo',
 				'mainwp_cron_last_offlinecheck',
@@ -635,7 +635,7 @@ class MainWP_DB {
 			$where .= $this->getWhereAllowAccessSites( 'wp' );
 
 			if ( $selectgroups ) {
-				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
+				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups
                 FROM ' . $this->tableName( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->tableName( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->tableName( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -703,8 +703,9 @@ class MainWP_DB {
 			$orderBy = "replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www', '')";
 		}
 
+        // wpgroups to fix issue for mysql 8.0, as groups will generate error syntax
 		if ( $selectgroups ) {
-			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups' . $options_extra . '
+			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups' . $options_extra . '
             FROM ' . $this->tableName( 'wp' ) . ' wp
             LEFT JOIN ' . $this->tableName( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
             LEFT JOIN ' . $this->tableName( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -976,7 +977,7 @@ class MainWP_DB {
 			$where = $this->getWhereAllowAccessSites( 'wp', 'nocheckstaging' ); // no check staging
 			$options_extra = $this->getSQLWebsitesOptionsExtra($options);
 			if ( $selectGroups ) {
-				return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups' . $options_extra . '
+				return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups' . $options_extra . '
                 FROM ' . $this->tableName( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->tableName( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->tableName( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -1036,7 +1037,7 @@ class MainWP_DB {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			$where_allowed = $this->getWhereAllowAccessSites( 'wp', $is_staging );
 			if ( $selectgroups ) {
-				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as groups
+				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups
                  FROM ' . $this->tableName( 'wp' ) . ' wp
                  JOIN ' . $this->tableName( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid
                  LEFT JOIN ' . $this->tableName( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid

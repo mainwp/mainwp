@@ -702,11 +702,11 @@ public static function renderHeader( $shownPage ) {
 									<i>
 										<span id="info_site" class="archive_info" <?php if ( ! $useSite ) : ?>style="display: none;"<?php endif; ?>>Depends on the settings of the child site</span>
 					<span id="info_global" class="archive_info" <?php if ( ! $useGlobal ) : ?>style="display: none;"<?php endif; ?>><?php
-						if ( $globalArchiveFormat == 'zip' ) : ?>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)<?php
-						elseif ( $globalArchiveFormat == 'tar' ) : ?>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)<?php
+						if ( $globalArchiveFormat == 'zip' ) : ?>Uses PHP native Zip-library, when missing, the PCLZip library included in WordPress will be used. (Good compression, fast with native zip-library)<?php
+						elseif ( $globalArchiveFormat == 'tar' ) : ?>Uses PHP native Zip-library, when missing, the PCLZip library included in WordPress will be used. (Good compression, fast with native zip-library)<?php
 						elseif ( $globalArchiveFormat == 'tar.gz' ) : ?>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)<?php
 						elseif ( $globalArchiveFormat == 'tar.bz2' ) : ?>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)<?php endif; ?></span>
-										<span id="info_zip" class="archive_info" <?php if ( $archiveFormat != 'zip' ) : ?>style="display: none;"<?php endif; ?>>Uses PHP native Zip-library, when missing, the PCLZip library included in Wordpress will be used. (Good compression, fast with native zip-library)</span>
+										<span id="info_zip" class="archive_info" <?php if ( $archiveFormat != 'zip' ) : ?>style="display: none;"<?php endif; ?>>Uses PHP native Zip-library, when missing, the PCLZip library included in WordPress will be used. (Good compression, fast with native zip-library)</span>
 										<span id="info_tar" class="archive_info" <?php if ( $archiveFormat != 'tar' ) : ?>style="display: none;"<?php endif; ?>>Creates an uncompressed tar-archive. (No compression, fast, low memory usage)</span>
 										<span id="info_tar.gz" class="archive_info" <?php if ( $archiveFormat != 'tar.gz' ) : ?>style="display: none;"<?php endif; ?>>Creates a GZipped tar-archive. (Good compression, fast, low memory usage)</span>
 										<span id="info_tar.bz2" class="archive_info" <?php if ( $archiveFormat != 'tar.bz2' ) : ?>style="display: none;"<?php endif; ?>>Creates a BZipped tar-archive. (Best compression, fast, low memory usage)</span>

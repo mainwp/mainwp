@@ -180,7 +180,6 @@ class MainWP_Live_Reports_Class {
         if (empty($type)) {
             return;
         }
-        //error_log(print_r($information,true));
         global $mainWPCReportExtensionActivator;
 
         $backup_type = ('full' == $type) ? 'Full' : ('db' == $type ? 'Database' : '');
@@ -971,8 +970,8 @@ class MainWP_Live_Reports_Class {
               }
               $replace_tokens_values = array_intersect_key($replace_tokens_values, $newarrayallowedclienttokens);
               } */
-//            
-//            
+//
+//
 
             $result = self::parse_report_content($report_header, $replace_tokens_values, $allowed_tokens);
 
@@ -1249,7 +1248,7 @@ class MainWP_Live_Reports_Class {
 //                if(in_array($sec, $newarrayallowedtokens)){
 //                  $sections['section_token'][] = $sec;
 //                $sections['section_content_tokens'][] = $sec_tokens;
-//                } 
+//                }
 //            }else{
                 $sections['section_token'][] = $sec;
                 $sections['section_content_tokens'][] = $sec_tokens;
@@ -1258,7 +1257,7 @@ class MainWP_Live_Reports_Class {
         }
 
 
-//            
+//
 
 
 
@@ -1499,8 +1498,6 @@ class MainWP_Live_Reports_Class {
         }
 
         $values = apply_filters('mainwp_piwik_get_data', $site_id, $start_date, $end_date);
-        //        error_log(print_r($values, true));
-        //        print_r($values);
         $output = array();
         $output['piwik.visits'] = (is_array($values) && isset($values['aggregates']) && isset($values['aggregates']['nb_visits'])) ? $values['aggregates']['nb_visits'] : 'N/A';
         $output['piwik.pageviews'] = (is_array($values) && isset($values['aggregates']) && isset($values['aggregates']['nb_actions'])) ? $values['aggregates']['nb_actions'] : 'N/A';
@@ -1711,11 +1708,11 @@ class MainWP_Live_Reports_Class {
                 }
 
                 $input_name = 'creport_token_' . str_replace(array('.', ' ', '-'), '_', $token->token_name);
-                $html .= '<tr>                      
+                $html .= '<tr>
                             <th scope="row" class="token-name" >[' . esc_html(stripslashes($token->token_name)) . ']</th>
-                            <td>                                        
+                            <td>
                             <input type="text" value="' . esc_attr($token_value) . '" class="regular-text" name="' . esc_attr($input_name) . '"/>
-                            </td>                           
+                            </td>
                     </tr>';
             }
             $html .= '</table>';
@@ -1794,28 +1791,28 @@ class LiveReportResponder_DB {
             'body' => '<h3>Activity report for the [client.site.url]:</h3>
 <h3>Plugins</h3>
 <strong>Installed Plugins:</strong> [plugin.installed.count]
-<strong>Activated Plugins:</strong> [plugin.activated.count] 
+<strong>Activated Plugins:</strong> [plugin.activated.count]
 <strong>Edited Plugins:</strong> [plugin.edited.count]
 <strong>Deactivated Plugins:</strong> [plugin.deactivated.count]
-<strong>Updated Plugins:</strong> [plugin.updated.count] 
+<strong>Updated Plugins:</strong> [plugin.updated.count]
 <strong>Deleted Plugins:</strong> [plugin.deleted.count]
 <h3>Themes</h3>
-<strong>Installed Themes:</strong> [theme.installed.count] 
-<strong>Activated Themes:</strong> [theme.activated.count] 
+<strong>Installed Themes:</strong> [theme.installed.count]
+<strong>Activated Themes:</strong> [theme.activated.count]
 <strong>Edited Themes:</strong> [theme.edited.count]
-<strong>Updated Themes:</strong> [theme.updated.count] 
-<strong>Deleted Themes:</strong> [theme.deleted.count] 
+<strong>Updated Themes:</strong> [theme.updated.count]
+<strong>Deleted Themes:</strong> [theme.deleted.count]
 <h3>Posts</h3>
-<strong>Created Posts: </strong> [post.created.count] 
-<strong>Updated Posts: </strong> [post.updated.count] 
-<strong>Trashed Posts: </strong> [post.trashed.count] 
-<strong>Deleted Posts: </strong> [post.deleted.count] 
-<strong>Restored Posts: </strong> [post.restored.count] 
+<strong>Created Posts: </strong> [post.created.count]
+<strong>Updated Posts: </strong> [post.updated.count]
+<strong>Trashed Posts: </strong> [post.trashed.count]
+<strong>Deleted Posts: </strong> [post.deleted.count]
+<strong>Restored Posts: </strong> [post.restored.count]
 <h3>Pages</h3>
-<strong>Created Pages:</strong> [page.created.count] 
-<strong>Updated Pages:</strong> [page.updated.count] 
-<strong>Trashed Pages:</strong> [page.trashed.count] 
-<strong>Deleted Pages:</strong> [page.deleted.count] 
+<strong>Created Pages:</strong> [page.created.count]
+<strong>Updated Pages:</strong> [page.updated.count]
+<strong>Trashed Pages:</strong> [page.trashed.count]
+<strong>Deleted Pages:</strong> [page.deleted.count]
 <strong>Restored Pages: </strong> [page.restored.count]
 <h3>Users</h3>
 <strong>Created Users:</strong> [user.created.count]
@@ -2183,7 +2180,7 @@ PRIMARY KEY  (`clientid`)  ';
 
         $tbl = 'CREATE TABLE `' . $this->table_name('client_report_format') . '` (
 `id` int(11) NOT NULL AUTO_INCREMENT,
-`title` VARCHAR(512), 
+`title` VARCHAR(512),
 `content` longtext NOT NULL,
 `type` CHAR(1)';
         if ('' == $currentVersion || '1.3' == $currentVersion) {

@@ -13,7 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
-	public static $version = '3.5.4';
+	public static $version = '3.5.5';
 	//Singleton
 	private static $instance = null;
 
@@ -2256,7 +2256,7 @@ class MainWP_System {
 
 		if ( get_option( 'mainwp_activated' ) == 'yes' ) {
 			delete_option( 'mainwp_activated' );
-			wp_cache_delete( 'mainwp_activated' , 'options' );
+			wp_cache_delete( 'alloptions' , 'options' );
 			wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
 			return;
 		}
@@ -2360,7 +2360,7 @@ class MainWP_System {
 
 		//delete_transient( '_mainwp_activation_redirect' );
 
-		$quick_setup = get_site_option('mainwp_run_quick_setup', false);
+		$quick_setup = get_option('mainwp_run_quick_setup', false);
 		if ($quick_setup == 'yes') {
 			wp_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );
 			exit;
@@ -2369,7 +2369,7 @@ class MainWP_System {
 		$started = get_option('mainwp_getting_started');
 		if (!empty($started)) {
 			delete_option('mainwp_getting_started');
-            wp_cache_delete( 'mainwp_getting_started' , 'options' );
+            wp_cache_delete( 'alloptions' , 'options' );
 			if (! is_multisite()) {
 				if ( 'started' == $started ) {
 					wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=started' ) );
@@ -3329,7 +3329,7 @@ class MainWP_System {
 
 	//On activation install the database
 	function activation() {
-		delete_option( 'mainwp_requests' );
+		//delete_option( 'mainwp_requests' );
 		MainWP_DB::Instance()->update();
 		MainWP_DB::Instance()->install();
 

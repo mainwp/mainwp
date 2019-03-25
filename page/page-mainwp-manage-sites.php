@@ -1350,8 +1350,8 @@ class MainWP_Manage_Sites {
 			</form>
                 <script type="text/javascript">
                     jQuery( document ).ready( function () {
-                            var sitesColOrder = '<?php echo esc_attr($col_orders); ?>' ;
-                            mainwp_table_draggable_init('site', 'table.sites', sitesColOrder)
+                            var sitesColOrder = '<?php echo esc_attr( strip_tags($col_orders)); ?>' ;
+                            mainwp_table_draggable_init('site', 'table.sites', sitesColOrder);
                     })
                 </script>
 
@@ -1801,7 +1801,7 @@ class MainWP_Manage_Sites {
 				?>
 				<script type="text/javascript">
 					jQuery( document ).ready( function () {
-						mainwp_managesites_update_childsite_value( <?php echo esc_attr($website->id); ?>, '<?php echo esc_attr($website->uniqueId); ?>' );
+						mainwp_managesites_update_childsite_value( <?php echo esc_attr($website->id); ?>, '<?php echo esc_attr( strip_tags( $website->uniqueId) ); ?>' );
 					} );
 				</script>
 				<?php

@@ -13,7 +13,7 @@ define( 'MAINWP_API_INVALID', 'INVALID' );
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
 
 class MainWP_System {
-	public static $version = '3.5.5';
+	public static $version = '3.5.6';
 	//Singleton
 	private static $instance = null;
 
@@ -927,7 +927,16 @@ class MainWP_System {
 		$theme_automaticDailyUpdate = get_option( 'mainwp_themeAutomaticDailyUpdate' );
 
 		$mainwpLastAutomaticUpdate = get_option( 'mainwp_updatescheck_last' );
-		if ( $mainwpLastAutomaticUpdate == date( 'd/m/Y' ) ) {
+
+        $mainwpHoursIntervalAutomaticUpdate = apply_filters( 'mainwp_updatescheck_hours_interval' , false);
+        if ( $mainwpHoursIntervalAutomaticUpdate > 0 ) {
+            $lasttimeAutomaticUpdate = get_option( 'mainwp_updatescheck_last_timestamp' );
+
+            if ( $lasttimeAutomaticUpdate && ( $lasttimeAutomaticUpdate + $mainwpHoursIntervalAutomaticUpdate * 3600 > time() ) ) {
+                MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated hours interval' );
+                return;
+            }
+        } else if ( $mainwpLastAutomaticUpdate == date( 'd/m/Y' ) ) {
 			MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated today' );
 
 			return;
@@ -1149,6 +1158,7 @@ class MainWP_System {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_themes_new', '' );
 
 				MainWP_Utility::update_option( 'mainwp_updatescheck_last', date( 'd/m/Y' ) );
+                MainWP_Utility::update_option( 'mainwp_updatescheck_last_timestamp', time() );
 				MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', '' );
 
 				MainWP_Utility::update_option( 'mainwp_updatescheck_sites_icon', '' );
@@ -1898,11 +1908,13 @@ class MainWP_System {
 
 	public static function add_left_menu($title, $key, $href, $desc = '' ) {
 		global $mainwp_leftmenu;
+        $title = strip_tags($title);
 		$mainwp_leftmenu[] = array($title, $key, $href, $desc);
 	}
 
 	public static function add_sub_left_menu($title, $parent_key, $slug, $href, $icon = '', $desc = '' ) {
 		global $mainwp_sub_leftmenu, $_mainwp_menu_active_slugs;
+        $title = strip_tags($title);
 		$mainwp_sub_leftmenu[$parent_key][] = array($title, $slug, $href, $icon, $desc);
 		if (!empty($slug))
 			$_mainwp_menu_active_slugs[$slug] = $slug; // to get active menu
@@ -1910,6 +1922,7 @@ class MainWP_System {
 
 	public static function add_sub_sub_left_menu($title, $parent_key, $slug, $href, $right = '' ) {
 		global $mainwp_sub_subleftmenu, $_mainwp_menu_active_slugs;
+        $title = strip_tags($title);
 		$mainwp_sub_subleftmenu[$parent_key][] = array($title, $href, $right);
 		if (!empty($slug))
 			$_mainwp_menu_active_slugs[$slug] = $parent_key; // to get active menu
@@ -2249,10 +2262,38 @@ class MainWP_System {
 		<?php
 	}
 
+    public function activate_redirect( $location ) {
+        $location = admin_url( 'admin.php?page=Extensions' );
+        return $location;
+    }
+
+    function activate_extention( $ext_key, $info = array() ) {
+
+        add_filter( 'wp_redirect', array($this, 'activate_redirect'));
+
+        if ( is_array( $info ) && isset( $info['product_id'] ) && isset( $info['software_version'] ) ) {
+            $act_info = array(
+                'product_id' => $info['product_id'],
+                'software_version' => $info['software_version'],
+                'activated_key' => 'Deactivated',
+                'instance_id' => MainWP_Api_Manager_Password_Management::generate_password( 12, false )
+            );
+            MainWP_Api_Manager::instance()->set_activation_info($ext_key, $act_info);
+        }
+    }
+
+    function deactivate_extention( $ext_key ) {
+        MainWP_Api_Manager::instance()->set_activation_info($ext_key, '');
+    }
+
 	function admin_init() {
+
 		if ( ! MainWP_Utility::isAdmin() ) {
 			return;
 		}
+
+        add_action('mainwp_activate_extention', array($this, 'activate_extention'), 10 , 2 );
+        add_action('mainwp_deactivate_extention', array($this, 'deactivate_extention'), 10 , 1 );
 
 		if ( get_option( 'mainwp_activated' ) == 'yes' ) {
 			delete_option( 'mainwp_activated' );
@@ -3236,18 +3277,18 @@ class MainWP_System {
                             for ( $i = 0; $i < count( $websites ); $i ++ ) {
                                 $website = $websites[ $i ];
                                 if ( $website->sync_errors == '' ) {
-                                    echo '<tr><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">PENDING</span></td></tr>';
+                                    echo '<tr><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 100px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">PENDING</span></td></tr>';
                                 } else {
-                                    echo '<tr class="mainwp_wp_offline"><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">DISCONNECTED</span></td></tr>';
+                                    echo '<tr class="mainwp_wp_offline"><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 100px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">DISCONNECTED</span></td></tr>';
                                 }
                             }
                         } else {
                             @MainWP_DB::data_seek( $websites, 0 );
                             while ( $website = @MainWP_DB::fetch_object( $websites ) ) {
                                 if ( $website->sync_errors == '' ) {
-                                    echo '<tr><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">PENDING</span></td></tr>';
+                                    echo '<tr><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 100px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">PENDING</span></td></tr>';
                                 } else {
-                                    echo '<tr class="mainwp_wp_offline"><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 80px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">DISCONNECTED</span></td></tr>';
+                                    echo '<tr class="mainwp_wp_offline"><td>' . MainWP_Utility::getNiceURL( $website->url ) . '</td><td style="width: 100px"><span class="refresh-status-wp" niceurl="' . MainWP_Utility::getNiceURL( $website->url ) . '" siteid="' . $website->id . '">DISCONNECTED</span></td></tr>';
                                 }
                             }
                         }

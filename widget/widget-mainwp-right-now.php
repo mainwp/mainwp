@@ -1566,8 +1566,8 @@ class MainWP_Right_Now {
 						<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">
 							<?php if (in_array($slug, $trustedPlugins)) { echo $trusted_icon; } ; ?>
 							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode($pluginsInfo[ $slug ]['slug']) . '&url=' . ( isset( $pluginsInfo[ $slug ]['uri'] ) ? rawurlencode( $pluginsInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsInfo[ $slug ]['name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-									   class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_attr($pluginsInfo[ $slug ]['name']); ?>">
-								<?php echo esc_attr($pluginsInfo[ $slug ]['name']); ?>
+									   class="thickbox open-plugin-details-modal" title="More information about <?php echo strip_tags($pluginsInfo[ $slug ]['name']); ?>">
+								<?php echo esc_html($pluginsInfo[ $slug ]['name']); ?>
 							</a>
 						</div>
 						<div class="mainwp-left mainwp-padding-top-5">
@@ -2761,14 +2761,14 @@ class MainWP_Right_Now {
 											<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a>
 										<?php } else { ?>
 											<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-											   class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_html($pluginsOutdateInfo[ $slug ]['Name']); ?>">
+											   class="thickbox open-plugin-details-modal" title="More information about <?php echo strip_tags($pluginsOutdateInfo[ $slug ]['Name']); ?>">
 												<?php echo esc_html($pluginsOutdateInfo[ $slug ]['Name']); ?>
 											</a>
 										<?php } ?>
 									</div>
 									<div class="mainwp-left mainwp-cols-3 pluginsInfo" id="wp_outdate_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
 										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&section=changelog&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-										   class="thickbox open-plugin-details-modal" title="Changelog about <?php echo esc_html($pluginsOutdateInfo[ $slug ]['Name']); ?>">
+                                           class="thickbox open-plugin-details-modal" title="Changelog about <?php echo strip_tags($pluginsOutdateInfo[ $slug ]['Name']); ?>">
 											<?php echo esc_html($plugin_outdate['Version']); ?> | <?php echo $outdate_notice; ?>
 										</a>
 									</div>

@@ -608,7 +608,7 @@ securityIssues_handle = function (response) {
                         if (issue == 'readme') {
                             jQuery('#readme-wpe-nok').hide();
                         }
-                        
+
                     }
                     else {
                         jQuery('#' + issue + '_extra').hide();
@@ -2390,8 +2390,7 @@ jQuery(document).on('click', '.backuptaskschedule', function() {
     return false;
 });
 jQuery(document).ready(function () {
-
-    jQuery('#mainwp_managesites_add_wpurl').live('change', function (event) {
+    jQuery(document).on('click', '#mainwp_managesites_add_wpurl', function(event) {
         var url = jQuery('#mainwp_managesites_add_wpurl').val();
         var protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
         if (url.lastIndexOf('http://') === 0) {

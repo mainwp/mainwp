@@ -1202,8 +1202,26 @@ class MainWP_Utility {
 
 		$params['optimize'] = ( ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0 );
 
+        $updating_website = false;
+        $type = $list = '';
+        if ( $what == 'upgradeplugintheme' || $what == 'upgrade' || $what == 'upgradetranslation' ) {
+            $updating_website = true;
+            if ( $what == 'upgradeplugintheme' || $what == 'upgradetranslation' ) {
+                $type = $params['type'];
+                $list = $params['list'];
+            } else {
+                $type = 'wp';
+                $list = '';
+            }
+        }
+
+        if ($updating_website) {
+            do_action( 'mainwp_website_before_updated', $website, $type, $list );
+        }
+
 		$postdata    = MainWP_Utility::getPostDataAuthed( $website, $what, $params );
 
+        $information = array();
         if ( ! $request_update ) {
             $information = MainWP_Utility::fetchUrl( $website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
         } else {
@@ -1218,18 +1236,8 @@ class MainWP_Utility {
 			unset( $information['sync'] );
 		}
 
-        if ( $what == 'upgradeplugintheme' || $what == 'upgrade' || $what == 'upgradetranslation' ) {
-
-            if ( $what == 'upgradeplugintheme' || $what == 'upgradetranslation' ) {
-                $type = $params['type'];
-                $list = $params['list'];
-            } else {
-                $type = 'wp';
-                $list = '';
-            }
-
+        if ( $updating_website ) {
             do_action( 'mainwp_website_updated', $website, $type, $list, $information );
-
             if ( 1 == get_option( 'mainwp_check_http_response', 0 ) ) {
                 $result = MainWP_Utility::isWebsiteAvailable( $website );
                 $http_code = ( is_array($result) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;

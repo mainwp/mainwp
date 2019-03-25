@@ -835,17 +835,18 @@ class MainWP_Plugins {
 		$pluginsVersion = $pluginsName = $pluginsMainWP = array(); //name_version -> title_version
 		$pluginsRealVersion = array(); //name_version -> title_version
 		foreach ( $output->plugins as $plugin ) {
+            $pn = strip_tags($plugin['name'] . '_' . $plugin['version']);
 			$sites[ $plugin['websiteid'] ]                                = $plugin['websiteurl'];
-			$plugins[ $plugin['name'] . '_' . $plugin['version'] ]        = $plugin['slug'];
-			$muPlugins[ $plugin['name'] . '_' . $plugin['version'] ]      = isset($plugin['mu']) ? $plugin['mu'] : '';
-			$pluginsName[ $plugin['name'] . '_' . $plugin['version'] ]    = $plugin['name'];
-			$pluginsVersion[ $plugin['name'] . '_' . $plugin['version'] ] = $plugin['name'] . ' ' . $plugin['version'];
-			$pluginsMainWP[ $plugin['name'] . '_' . $plugin['version'] ]  = isset($plugin['mainwp']) ? $plugin['mainwp'] : 'F';
-			$pluginsRealVersion[ $plugin['name'] . '_' . $plugin['version'] ] = $plugin['version'];
+			$plugins[ $pn ]        = $plugin['slug'];
+			$muPlugins[ $pn ]      = isset($plugin['mu']) ? $plugin['mu'] : '';
+			$pluginsName[ $pn ]    = esc_html($plugin['name']);
+			$pluginsVersion[ $pn ] = esc_html($plugin['name'] . ' ' . $plugin['version']);
+			$pluginsMainWP[ $pn ]  = isset($plugin['mainwp']) ? $plugin['mainwp'] : 'F';
+			$pluginsRealVersion[ $pn ] = strip_tags($plugin['version']);
 			if ( ! isset( $sitePlugins[ $plugin['websiteid'] ] ) || ! is_array( $sitePlugins[ $plugin['websiteid'] ] ) ) {
 				$sitePlugins[ $plugin['websiteid'] ] = array();
 			}
-			$sitePlugins[ $plugin['websiteid'] ][ $plugin['name'] . '_' . $plugin['version'] ] = $plugin;
+			$sitePlugins[ $plugin['websiteid'] ][ $pn ] = $plugin;
 		}
         asort( $pluginsVersion );
 		?>
@@ -1081,10 +1082,6 @@ class MainWP_Plugins {
 			</div>
 			<div style="clear: both;"></div>
 		</div>
-
-		<script type="text/javascript">
-			//mainwp_install_set_install_links();
-		</script>
 
 		<?php MainWP_UI::select_sites_box(__("Step 2: Select sites", 'mainwp'), 'checkbox', true, true, 'mainwp_select_sites_box_right'); ?>
 

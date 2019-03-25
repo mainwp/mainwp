@@ -151,7 +151,7 @@ class MainWP_Page {
         global $current_screen;
         // fake pagenow to compatible with wp_ajax_hidden_columns
         ?>
-        <script type="text/javascript"> pagenow = '<?php echo strtolower($current_screen->id); ?>';</script>
+        <script type="text/javascript"> pagenow = '<?php echo strip_tags(strtolower($current_screen->id)); ?>';</script>
         <?php
 	}
     // to fix compatible with fake pagenow
@@ -343,7 +343,7 @@ class MainWP_Page {
                     $col_orders = $current_options['pages_col_order'];
                 }
                 ?>
-                <script type="text/javascript"> var pagesColOrder = '<?php echo esc_attr($col_orders); ?>';</script>
+                <script type="text/javascript"> var pagesColOrder = '<?php echo esc_attr( strip_tags($col_orders) ); ?>';</script>
 		<?php
 
 		if ( $cachedSearch != null ) { ?>
@@ -826,7 +826,7 @@ class MainWP_Page {
 			return;
 		}
 
-        $post_id = isset($_REQUEST['post_id']) ? $_REQUEST['post_id'] : 0;
+        $post_id = isset($_REQUEST['post_id']) ? intval($_REQUEST['post_id']) : 0;
         $src = get_site_url() . '/wp-admin/post.php?post_type=bulkpage&hideall=1&action=edit&post=' . esc_attr( $post_id );
         $src = apply_filters( 'mainwp_bulkpost_edit_source', $src );
 
@@ -865,7 +865,7 @@ class MainWP_Page {
 		if ( ! $skip_post ) {
 			//Posts the saved sites
 			if ( isset( $_GET['id'] ) ) {
-				$id = $_GET['id'];
+				$id = intval($_GET['id']);
 				$post = get_post( $id );
 				if ( $post ) {
 					$selected_by = get_post_meta( $id, '_selected_by', true );

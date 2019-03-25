@@ -48,9 +48,26 @@ class MainWP_Api_Manager {
 		return $url;
 	}
 
+    public function get_activation_info( $ext_key ) {
+        if (empty($ext_key))
+            return array();
+
+        return get_option( $ext_key . '_APIManAdder' );
+	}
+
+    public function set_activation_info( $ext_key, $info ) {
+
+        if (empty($ext_key))
+            return false;
+
+        update_option('mainwp_extensions_all_activation_cached', ''); // clear cached of all activations to reload for next loading
+
+        return MainWP_Utility::update_option( $ext_key . '_APIManAdder', $info );
+	}
+
 	public function license_key_activation( $api, $api_key, $api_email ) {
 
-		$options = get_option( $api . '_APIManAdder' );
+		$options = $this->get_activation_info( $api );
 
 		if ( ! is_array( $options ) ) {
 			$options = array();
@@ -113,7 +130,7 @@ class MainWP_Api_Manager {
 			if ( !empty( $error ) )
 				$return['error'] = $error;
 
-			MainWP_Utility::update_option( $api . '_APIManAdder', $options );
+            $this->set_activation_info( $api, $options );
 
 			return $return;
 		} else {
@@ -132,7 +149,7 @@ class MainWP_Api_Manager {
 
 	public function license_key_deactivation( $api ) {
 
-		$options = get_option( $api . '_APIManAdder' );
+		$options = $this->get_activation_info( $api );
 		if ( ! is_array( $options ) ) {
 			$options = array();
 		}
@@ -166,7 +183,8 @@ class MainWP_Api_Manager {
 			if ( !empty( $error ) )
 				$return['error'] = $error;
 
-			MainWP_Utility::update_option( $api . '_APIManAdder', $options );
+
+            $this->set_activation_info( $api, $options );
 
 			return $return;
 		}
@@ -212,7 +230,7 @@ class MainWP_Api_Manager {
 
 	public function grab_license_key( $api, $username, $password ) {
 
-		$options = get_option( $api . '_APIManAdder' );
+		$options = $this->get_activation_info( $api );
 		if ( ! is_array( $options ) ) {
 			$options = array();
 		}
@@ -264,7 +282,7 @@ class MainWP_Api_Manager {
 				if ( !empty( $error ) )
 					$return['error'] = $error;
 
-				MainWP_Utility::update_option( $api . '_APIManAdder', $options );
+                $this->set_activation_info( $api, $options );
 
 				return $return;
 			} else {
@@ -285,12 +303,12 @@ class MainWP_Api_Manager {
 			case '100':
 				$error = __( 'Invalid request! Please try to deactivate and re-activate the extension on the WP > Plugins page and try to activate API key again.', 'mainwp' );
 				break;
-			case '102':				
+			case '102':
 				$error = __( 'Activation error!  Download permission for this product could not be found.', 'mainwp' );
 				break;
-			case '101':		
+			case '101':
 				$error = __( 'Activation error! Matching API key could not be found.', 'mainwp' );
-				break;					
+				break;
 			case '103':
 			case '104':
 				$error = __( 'Invalid Instance ID! Please try to deactivate and re-activate the extension on the WP > Plugins page and try to activate API key again.', 'mainwp' );

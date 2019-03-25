@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Api_Manager_Password_Management {
 	private static $ENCRYPT = 'AMEncrypt';
 
-	private function rand( $min = 0, $max = 0 ) {
+	private static function rand( $min = 0, $max = 0 ) {
 		global $rnd_value;
 
 		// Reset $rnd_value after 14 uses
@@ -56,7 +56,7 @@ class MainWP_Api_Manager_Password_Management {
 	}
 
 	// Creates a unique instance ID
-	public function generate_password( $length = 12, $special_chars = true, $extra_special_chars = false ) {
+	public static function generate_password( $length = 12, $special_chars = true, $extra_special_chars = false ) {
 		$chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 		if ( $special_chars ) {
 			$chars .= '!@#$%^&*()';

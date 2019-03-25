@@ -320,7 +320,7 @@ class MainWP_User {
                     $col_orders = $current_options['users_col_order'];
                 }
                 ?>
-                <script type="text/javascript"> var usersColOrder = '<?php echo esc_attr($col_orders); ?>' ; </script>
+                <script type="text/javascript"> var usersColOrder = '<?php echo esc_attr( strip_tags( $col_orders ) ); ?>' ; </script>
 		<?php
 		if ( $cachedSearch != null ) {
                     ?>

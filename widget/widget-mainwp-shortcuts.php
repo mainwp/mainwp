@@ -24,7 +24,7 @@ class MainWP_Shortcuts {
 		?>
 		<div class="mainwp-row-top">
 			<div style="display: inline-block; width: 100px;"><?php _e( 'Groups:', 'mainwp' ); ?></div>
-			<?php echo( $website->groups == '' ? 'None' : $website->groups ); ?>
+			<?php echo( $website->wpgroups == '' ? 'None' : $website->wpgroups ); ?>
 		</div>
 		<div class="mainwp-row">
 			<div style="display: inline-block; width: 100px;"><?php _e( 'Notes:', 'mainwp' ); ?></div>

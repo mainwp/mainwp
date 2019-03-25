@@ -61,7 +61,7 @@ class MainWP_Install_Bulk {
 							$extraOptions = trim( $extraOptions );
 							$extraOptions = trim( trim( $extraOptions, ',' ) );
 							if ( $extraOptions != '' ) {
-								echo $extraOptions . ',';
+								echo strip_tags($extraOptions) . ',';
 							}
 							?>
 							params: {mainwp_do: 'MainWP_Install_Bulk-uploadfile'}
@@ -260,7 +260,7 @@ class MainWP_Install_Bulk {
 			MainWP_Install_Bulk::getClassName(),
 			'InstallPluginTheme_handler',
 		), $output, null, array( 'upgrade' => true ) );
-        
+
 		//die( json_encode( $output ) );
         wp_send_json( $output );
 	}

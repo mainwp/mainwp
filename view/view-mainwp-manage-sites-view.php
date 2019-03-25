@@ -113,13 +113,13 @@ class MainWP_Manage_Sites_View {
                 MainWP_System::add_sub_left_menu($website->name, 'childsites_menu', 'child_site_' . $website->id, 'admin.php?page=managesites&dashboard=' . $website->id, '', $website->url );
 
                 $init_sub_subleftmenu = array(
-                        array(  'title' => '<i class="fa fa-pencil-square-o" title="' . __('Edit', 'mainwp'). '"></i>',
+                        array(  'title' => 'site_edit', // to fix escape html
                                 'parent_key' => 'child_site_' . $website->id,
                                 'href' => 'admin.php?page=managesites&id=' . $website->id,
                                 'slug' => 'site_edit_' . $website->id ,
                                 'right' => ''
                             ),
-                        array(  'title' => '<i class="fa fa-refresh" aria-hidden="true" title="' . __('Updates', 'mainwp'). '"></i>',
+                        array(  'title' => 'site_updates', // to fix escape html
                                 'parent_key' => 'child_site_' . $website->id,
                                 'href' => 'admin.php?page=managesites&updateid=' . $website->id,
                                 'slug' => 'site_update_' . $website->id ,

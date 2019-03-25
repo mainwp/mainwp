@@ -8,7 +8,9 @@ class MainWP_Extensions {
 	public static $extensionsLoaded = false;
 	public static $extensions;
 
-	public static function getPluginSlug( $pSlug ) {
+    public static $activation_info = null;
+
+    public static function getPluginSlug( $pSlug ) {
 		$currentExtensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
 
 		if ( ! is_array( $currentExtensions ) || empty( $currentExtensions ) ) {
@@ -90,6 +92,15 @@ class MainWP_Extensions {
 		$all_extensions   = array();
 
 		$newExtensions = apply_filters( 'mainwp-getextensions', array() );
+
+        // to reduce database queries
+        $activations_cached = get_option('mainwp_extensions_all_activation_cached', array());
+
+        if (!is_array($activations_cached))
+            $activations_cached = array();
+
+        $is_cached = !empty( $activations_cached ) ? true : false;
+
 		$extraHeaders  = array(
 			'IconURI'          => 'Icon URI',
 			'SupportForumURI'  => 'Support Forum URI',
@@ -118,10 +129,18 @@ class MainWP_Extensions {
 
 			if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) {
 				$api     = dirname( $slug );
-				$options = get_option( $api . '_APIManAdder' );
+
+                if ( $is_cached ) {
+                    $options = isset($activations_cached[$api]) ? $activations_cached[$api] : array();
+                } else {
+                    $options = MainWP_Api_Manager::instance()->get_activation_info( $api );
+                    $activations_cached[$api] = $options; // to save this
+                }
+
 				if ( ! is_array( $options ) ) {
 					$options = array();
 				}
+
 				$extension['api_key']             = isset( $options['api_key'] ) ? $options['api_key'] : '';
 				$extension['activation_email']    = isset( $options['activation_email'] ) ? $options['activation_email'] : '';
 				$extension['activated_key']       = isset( $options['activated_key'] ) ? $options['activated_key'] : 'Deactivated';
@@ -157,9 +176,14 @@ class MainWP_Extensions {
 					}
 				}
 			}
-		}
+        }
 		MainWP_Utility::update_option( 'mainwp_extensions', self::$extensions );
 		MainWP_Utility::update_option( 'mainwp_manager_extensions', $all_extensions );
+
+        if ( ! $is_cached ) {
+            update_option( 'mainwp_extensions_all_activation_cached', $activations_cached );
+        }
+
 		self::$extensionsLoaded = true;
 
         if (!$disable_extensions_menu) {
@@ -283,9 +307,7 @@ class MainWP_Extensions {
 	}
 
 	public static function genApiPassword( $length = 12, $special_chars = true, $extra_special_chars = false ) {
-		$api_manager_password_management = new MainWP_Api_Manager_Password_Management();
-
-		return $api_manager_password_management->generate_password( $length, $special_chars, $extra_special_chars );
+		return MainWP_Api_Manager_Password_Management::generate_password( $length, $special_chars, $extra_special_chars );
 	}
 
 	public static function initMenuSubPages() {

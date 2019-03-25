@@ -212,8 +212,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						</label>
 					</th>
 					<td>
-						<input class="hidden" value=" "/><!-- #24364 workaround -->
-						<!--                   			<button type="button" class="button button-secondary wp-generate-pw hide-if-no-js">--><?php //_e( 'Show password' ); ?><!--</button>-->
+						<input class="hidden" value=" "/>
 						<div class="wp-pwd123">
 							<?php $initial_password = wp_generate_password( 24 ); ?>
 							<span class="password-input-wrapper">
@@ -223,9 +222,6 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								<span class="dashicons dashicons-hidden"></span>
 								<span class="text"><?php _e( 'Hide', 'mainwp' ); ?></span>
 							</button>
-							<!--                   				<button type="button" class="button button-secondary wp-cancel-pw hide-if-no-js" data-toggle="0" aria-label="--><?php //esc_attr_e( 'Cancel password change' ); ?><!--">-->
-							<!--                   					<span class="text">--><?php //_e( 'Cancel' ); ?><!--</span>-->
-							<!--                                </button>-->
 							<div style="display:none" id="pass-strength-result" aria-live="polite"></div>
 						</div>
 					</td>

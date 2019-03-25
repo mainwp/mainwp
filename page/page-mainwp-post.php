@@ -115,7 +115,7 @@ class MainWP_Post {
 		global $current_screen;
 		// fake pagenow to compatible with wp_ajax_hidden_columns
 		?>
-		<script type="text/javascript"> pagenow = '<?php echo strtolower($current_screen->id); ?>';</script>
+		<script type="text/javascript"> pagenow = '<?php echo strip_tags(strtolower($current_screen->id)); ?>';</script>
 		<?php
 	}
 	// to fix compatible with fake pagenow
@@ -302,9 +302,9 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			<input type="button" name="mainwp_show_posts" id="mainwp_show_posts" class="button-primary button button-hero mainwp-button-right" value="<?php _e( 'Show Posts', 'mainwp' ); ?>"/>
 			<?php
 			if ( isset( $_REQUEST['siteid'] ) && isset( $_REQUEST['postid'] ) ) {
-				echo '<script>jQuery(document).ready(function() { mainwp_show_post(' . esc_attr( esc_html( $_REQUEST['siteid'] ) ) . ', ' . esc_attr( esc_html( $_REQUEST['postid'] ) ) . ', undefined)});</script>';
+				echo '<script>jQuery(document).ready(function() { mainwp_show_post(' . intval( $_REQUEST['siteid'] ) . ', ' . intval( $_REQUEST['postid'] ) . ', undefined)});</script>';
 			} else if ( isset( $_REQUEST['siteid'] ) && isset( $_REQUEST['userid'] ) ) {
-				echo '<script>jQuery(document).ready(function() { mainwp_show_post(' . esc_attr( esc_html( $_REQUEST['siteid'] ) ) . ', undefined, ' . esc_attr( esc_html( $_REQUEST['userid'] ) ) . ')});</script>';
+				echo '<script>jQuery(document).ready(function() { mainwp_show_post(' . intval( $_REQUEST['siteid'] ) . ', undefined, ' . intval( $_REQUEST['userid'] )  . ')});</script>';
 			}
 			?>
 			<br/><br/>
@@ -347,7 +347,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			$col_orders = $current_options['posts_col_order'];
 		}
 		?>
-		<script type="text/javascript"> var postsColOrder = '<?php echo esc_attr($col_orders); ?>' ;</script>
+		<script type="text/javascript"> var postsColOrder = '<?php echo esc_attr( strip_tags($col_orders)); ?>' ;</script>
 		<?php
 
 		if ( $cachedSearch != null ) {
@@ -964,7 +964,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 			return;
 		}
 
-		$post_id = isset( $_REQUEST['post_id'] ) ? $_REQUEST['post_id'] : 0;
+		$post_id = isset( $_REQUEST['post_id'] ) ? intval($_REQUEST['post_id']) : 0;
 		$src = get_site_url() . '/wp-admin/post.php?post_type=bulkpost&hideall=1&action=edit&post=' . esc_attr( $post_id ) . ( isset( $_REQUEST['select'] ) ? '&select=' . esc_attr( $_REQUEST['select'] ) : '' ) ;
 		$src = apply_filters( 'mainwp_bulkpost_edit_source', $src );
 
@@ -1079,7 +1079,7 @@ public static function renderHeader( $shownPage, $post_id = null ) {
 
 			if ( ! $skip_post ) {
 				if ( isset( $_GET['id'] ) ) {
-					$id   = $_GET['id'];
+					$id   = intval($_GET['id']);
 					$post = get_post( $id );
 					if ( $post ) {
 						$selected_by     = get_post_meta( $id, '_selected_by', true );

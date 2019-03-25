@@ -1067,7 +1067,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 
 		<div class="alignleft actions">
 			<form method="GET" action="">
-				<input type="hidden" value="<?php echo esc_attr( $_REQUEST['page'] ); ?>" name="page"/>
+				<input type="hidden" value="<?php echo esc_attr( strip_tags($_REQUEST['page']) ); ?>" name="page"/>
 				<select name="g" class="mainwp-select2 allowclear" data-placeholder="<?php _e( 'All Groups', 'mainwp' ); ?>">
 					<option value=""></option>
 					<?php
@@ -1078,7 +1078,7 @@ class MainWP_Manage_Sites_List_Table extends WP_List_Table {
 					?>
 				</select>
 
-				<input type="hidden" value="<?php echo esc_attr($_REQUEST['page']); ?>" name="page"/>
+				<input type="hidden" value="<?php echo esc_attr( strip_tags($_REQUEST['page'])); ?>" name="page"/>
 				<select name="status"  class="mainwp-select2 allowclear" data-placeholder="<?php _e( 'All Statuses', 'mainwp' ); ?>">
 					<option value=""></option>
 					<option value="online" <?php echo( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'online' ? 'selected' : '' ); ?>><?php _e( 'Online', 'mainwp' ); ?></option>

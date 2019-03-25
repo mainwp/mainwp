@@ -111,17 +111,11 @@ class LiveReportResponder_Activator {
     }
 
     public function activate() {
-        $options = array(
-            'product_id' => $this->product_id,
-            'activated_key' => 'Deactivated',
-            'instance_id' => apply_filters('mainwp-extensions-apigeneratepassword', 12, false),
-            'software_version' => $this->software_version,
-        );
-        $this->update_option($this->plugin_handle . '_APIManAdder', $options);
+       
     }
 
     public function deactivate() {
-        $this->update_option($this->plugin_handle . '_APIManAdder', '');
+
     }
 
 }

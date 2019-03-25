@@ -30,6 +30,7 @@ class MainWP_UI {
         $edit_site_id = null;
         if ( $postId ) {
             $edit_site_id = get_post_meta( $postId, '_mainwp_edit_post_site_id', true );
+            $edit_site_id = intval( $edit_site_id );
             if ( empty( $edit_site_id ) ) {
 	            $edit_site_id = null;
             }
@@ -494,6 +495,7 @@ class MainWP_UI {
                                 if ($item_key == 'childsites_menu') {
                                     $arrow = '';
                                     $site_id =  str_replace('child_site_', '', $sub_key);
+                                    $site_id = intval( $site_id );
                                     $site_id = 'site-id="' . $site_id .'"';
                                 }
 //                                $sub_closed = '';
@@ -528,6 +530,7 @@ class MainWP_UI {
                                     }
 
                                     if ($active_siteid) {
+                                        $active_siteid = intval( $active_siteid );
                                         if($sub_key == 'child_site_' . $active_siteid) {
                                             $active_item = 'sidemenu-active';
                                             $set_actived = true;
@@ -548,7 +551,7 @@ class MainWP_UI {
                                     }
                                 }
 
-                                echo "<li class='mainwp-menu-sub-item $active_item $sub_closed " . (empty($icon) ? 'no-icon' : '') . ($has_sub ? ' mainwp-menu-has-submenu' : '') ."' $site_id item-key=\"" . esc_attr("$item_key-$sub_key") . "\"><div class='mainwp-menu-name'>" . $icon . "<a href='" . esc_url( $href ) . "'>" . esc_attr($title) . "</a></div>$arrow";
+                                echo "<li class='mainwp-menu-sub-item $active_item $sub_closed " . (empty($icon) ? 'no-icon' : '') . ($has_sub ? ' mainwp-menu-has-submenu' : '') ."' $site_id item-key=\"" . esc_attr( strip_tags( "$item_key-$sub_key" ) ) . "\"><div class='mainwp-menu-name'>" . $icon . "<a href='" . esc_url( $href ) . "'>" . esc_attr($title) . "</a></div>$arrow";
                                 if ($has_sub) {
                                     self::render_sub_sub_left_menu($sub_key, $item_key );
                                 }
@@ -605,11 +608,18 @@ class MainWP_UI {
             echo '<div class="leftmenu_sites_actions">';
              foreach($submenu_items as $sub_key => $sub_items ) {
                 $title = $sub_items[0];
+                if ( $title == 'site_edit' ) {
+                    $title = '<i class="fa fa-pencil-square-o" title="' . __('Edit', 'mainwp'). '"></i>';
+                } else if ( $title == 'site_updates' ) {
+                    $title = '<i class="fa fa-refresh" aria-hidden="true" title="' . __('Updates', 'mainwp'). '"></i>';
+                } else {
+                    $title = strip_tags($sub_items[0]);
+                }
                 $href = $sub_items[1];
                 $right = $sub_items[2];
                 if (empty($right) || (!empty($right) && mainwp_current_user_can( $right_group, $right ) )) {
                 ?>
-                    <a href="<?php echo esc_url($href); ?>"><?php echo $title; ?></a>
+                    <a href="<?php echo esc_url($href); ?>"><?php echo $title; // escaped html ?></a>
                 <?php
                 }
              }
@@ -623,7 +633,7 @@ class MainWP_UI {
         foreach($submenu_items as $sub_key => $sub_items ) {
             $title = $sub_items[0];
             $href = $sub_items[1];
-            $right = $sub_items[2];
+            $right = isset($sub_items[2]) ? $sub_items[2] : false ;
 
             $right_group = 'dashboard';
 

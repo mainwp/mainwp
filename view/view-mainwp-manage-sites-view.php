@@ -1310,7 +1310,7 @@ class MainWP_Manage_Sites_View {
                 <h3 class="mainwp_box_title">
                         <span><i class="fa fa-refresh" aria-hidden="true"></i> <?php _e( 'Updates', 'mainwp' ); ?></span></h3>
                             <div class="inside">
-                            <div id="rightnow_list" xmlns="http://www.w3.org/1999/html"><?php MainWP_Right_Now::renderSites($updates = true); ?></div>
+                            <div id="rightnow_list" xmlns="http://www.w3.org/1999/html"><?php MainWP_Right_Now::renderSites($updates = true, $individual = true); ?></div>
                     </div>
             </div>
             <?php

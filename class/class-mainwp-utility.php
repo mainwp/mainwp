@@ -158,6 +158,7 @@ class MainWP_Utility {
 
 		@curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
         @curl_setopt( $ch, CURLOPT_HTTPHEADER, array("X-Requested-With: XMLHttpRequest"));
+        @curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ));
 
         $force_use_ipv4 = false;
         if ( $forceUseIPv4 !== null ) {
@@ -772,6 +773,7 @@ class MainWP_Utility {
 
 				@curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
                 @curl_setopt( $ch, CURLOPT_HTTPHEADER, array("X-Requested-With: XMLHttpRequest"));
+                @curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ));
 
                 $force_use_ipv4 = false;
                 $forceUseIPv4 = isset( $website->force_use_ipv4 ) ? $website->force_use_ipv4 : null;
@@ -1549,6 +1551,7 @@ class MainWP_Utility {
 
 		@curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
         @curl_setopt( $ch, CURLOPT_HTTPHEADER, array("X-Requested-With: XMLHttpRequest"));
+        @curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ));
 
         $force_use_ipv4 = false;
         $forceUseIPv4 = isset($others['force_use_ipv4']) ? $others['force_use_ipv4'] : null;

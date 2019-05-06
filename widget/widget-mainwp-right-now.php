@@ -535,7 +535,51 @@ class MainWP_Right_Now {
 		die( json_encode( array( 'error' => $website->sync_errors ) ) );
 	}
 
-	public static function renderSites( $isUpdatesPage = false ) {
+
+    public static function renderSites( $isUpdatesPage = false, $isIndividual = false ) {
+
+        $optimize_loading = false;
+        if ( get_option( 'mainwp_optimize' ) == 1 && ! $isIndividual) {
+            $optimize_loading = true;
+        }
+
+        if ($optimize_loading) {
+        ?>
+            <script type="text/javascript">
+
+                mainwp_overview_optimize_loading = function (pIsUpdatePage) {
+
+                    var data = mainwp_secure_data({
+                        action:'mainwp_overview_optimize_loading',
+                        isUpdatePg: pIsUpdatePage
+                    });
+
+                    jQuery('.mainwp-wrap #rightnow_list').html('<p style="text-align: center"><i class="fa fa-spinner fa-pulse fa-4x"></i></p>');
+                    jQuery.post(ajaxurl, data, function (response) {
+                        jQuery('.mainwp-wrap #rightnow_list').html(response);
+                    });
+                }
+
+                jQuery(document).ready(function () {
+                    mainwp_overview_optimize_loading(<?php echo intval($isUpdatesPage); ?>);
+                })
+            </script>
+        <?php
+        } else {
+            self::_renderSites( $isUpdatesPage );
+        }
+    }
+
+
+    public static function ajax_render_sites( ) {
+
+        $isUpdatesPage = isset( $_POST['isUpdatePg'] ) &  $_POST['isUpdatePg'] ? true : false ;
+        self::_renderSites( $isUpdatesPage );
+        die();
+
+    }
+
+	public static function _renderSites( $isUpdatesPage = false ) {
 		$globalView = true;
         global $current_user;
 		$current_wpid = MainWP_Utility::get_current_wpid();
@@ -567,7 +611,7 @@ class MainWP_Right_Now {
 				<div class="mainwp-cols-s mainwp-right mainwp-t-align-right">
 					<form method="post" action="">
 						<label for="mainwp_select_options_siteview"><?php _e( 'View updates per: ', 'mainwp' ); ?></label>
-						<select class="mainwp-select2-mini" id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
+						<select class="mainwp-select2-mini" onchange="mainwp_siteview_onchange(this)" id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
 							<option value="1" <?php echo $userExtension->site_view == 1 ? 'selected' : ''; ?>><?php esc_html_e( 'Site', 'mainwp' ); ?></option>
 							<option value="0" <?php echo $userExtension->site_view == 0 ? 'selected' : ''; ?>><?php esc_html_e( 'Plugin/Theme', 'mainwp' ); ?></option>
 							<option value="2" <?php echo $userExtension->site_view == 2 ? 'selected' : ''; ?>><?php esc_html_e( 'Group', 'mainwp' ); ?></option>
@@ -834,17 +878,17 @@ class MainWP_Right_Now {
 			if ( $userExtension->site_view == 0 ) { //site view disabled
 				if ( is_array( $translation_upgrades ) ) {
 					foreach ( $translation_upgrades as $translation_upgrade ) {
-						$slug = $translation_upgrade['slug'];
+						$slug = esc_html($translation_upgrade['slug']);
 						if ( ! isset( $allTranslations[ $slug ] ) ) {
-							$allTranslations[ $slug ] = array('name' => isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $slug, 'cnt' => 1);
+							$allTranslations[ $slug ] = array('name' => isset( $translation_upgrade['name'] ) ? esc_html($translation_upgrade['name']) : $slug, 'cnt' => 1);
 						} else {
 							$allTranslations[ $slug ]['cnt'] ++;
 						}
 
 						$translationsInfo[ $slug ] = array(
-							'name'    => isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $slug,
+							'name'    => isset( $translation_upgrade['name'] ) ? esc_html($translation_upgrade['name']) : $slug,
 							'slug'    => $slug,
-							'version' => $translation_upgrade['version']
+							'version' => esc_html($translation_upgrade['version'])
 						);
 					}
 				}
@@ -855,16 +899,16 @@ class MainWP_Right_Now {
 				if ( is_array( $plugin_upgrades ) ) {
 					foreach ( $plugin_upgrades as $slug => $plugin_upgrade ) {
 						if ( ! isset( $allPlugins[ $slug ] ) ) {
-							$allPlugins[ $slug ] = array('name' => $plugin_upgrade['Name'], 'cnt' => 1);
+							$allPlugins[ $slug ] = array('name' => esc_html($plugin_upgrade['Name']), 'cnt' => 1);
 						} else {
 							$allPlugins[ $slug ]['cnt'] ++;
 						}
 
 						$pluginsInfo[ $slug ] = array(
-							'name'    => $plugin_upgrade['Name'],
-							'slug'    => $plugin_upgrade['update']['slug'],
+							'name'    => esc_html($plugin_upgrade['Name']),
+							'slug'    => esc_html($plugin_upgrade['update']['slug']),
 							'premium' => ( isset( $plugin_upgrade['premium'] ) ? $plugin_upgrade['premium'] : 0 ),
-							'uri'     => $plugin_upgrade['PluginURI'],
+							'uri'     => esc_html($plugin_upgrade['PluginURI']),
 						);
 					}
 				}
@@ -876,14 +920,14 @@ class MainWP_Right_Now {
 				if ( is_array( $theme_upgrades ) ) {
 					foreach ( $theme_upgrades as $slug => $theme_upgrade ) {
 						if ( ! isset( $allThemes[ $slug ] ) ) {
-							$allThemes[ $slug ] = array('name' => $theme_upgrade['Name'], 'cnt' => 1);
+							$allThemes[ $slug ] = array('name' => esc_html($theme_upgrade['Name']), 'cnt' => 1);
 						} else {
 							$allThemes[ $slug ]['cnt'] ++;
 						}
 
 						$themesInfo[ $slug ] = array(
-							'name'    => $theme_upgrade['Name'],
-							'premium' => ( isset( $theme_upgrade['premium'] ) ? $theme_upgrade['premium'] : 0 ),
+							'name'    => esc_html($theme_upgrade['Name']),
+							'premium' => ( isset( $theme_upgrade['premium'] ) ? esc_html($theme_upgrade['premium']) : 0 ),
 						);
 					}
 				}
@@ -893,15 +937,15 @@ class MainWP_Right_Now {
 				if ( is_array( $plugins_outdate ) ) {
 					foreach ( $plugins_outdate as $slug => $plugin_outdate ) {
 						if ( ! isset( $allPluginsOutdate[ $slug ] ) ) {
-							$allPluginsOutdate[ $slug ] = array( 'name' => $plugin_outdate['Name'], 'cnt' => 1);
+							$allPluginsOutdate[ $slug ] = array( 'name' => esc_html($plugin_outdate['Name']), 'cnt' => 1);
 						} else {
 							$allPluginsOutdate[ $slug ]['cnt'] ++;
 						}
 						$pluginsOutdateInfo[ $slug ] = array(
-							'Name'         => $plugin_outdate['Name'],
+							'Name'         => esc_html($plugin_outdate['Name']),
 							'last_updated' => ( isset( $plugin_outdate['last_updated'] ) ? $plugin_outdate['last_updated'] : 0 ),
 							'info'         => $plugin_outdate,
-							'uri'          => $plugin_outdate['PluginURI'],
+							'uri'          => esc_html($plugin_outdate['PluginURI']),
 						);
 					}
 				}
@@ -911,12 +955,12 @@ class MainWP_Right_Now {
 				if ( is_array( $themes_outdate ) ) {
 					foreach ( $themes_outdate as $slug => $theme_outdate ) {
 						if ( ! isset( $allThemesOutdate[ $slug ] ) ) {
-							$allThemesOutdate[ $slug ] = array('name' => $theme_outdate['Name'], 'cnt' => 1 );
+							$allThemesOutdate[ $slug ] = array('name' => esc_html($theme_outdate['Name']), 'cnt' => 1 );
 						} else {
 							$allThemesOutdate[ $slug ]['cnt'] ++;
 						}
 						$themesOutdateInfo[ $slug ] = array(
-							'name'         => $theme_outdate['Name'],
+							'name'         => esc_html($theme_outdate['Name']),
 							'slug'         => dirname( $slug ),
 							'last_updated' => ( isset( $theme_outdate['last_updated'] ) ? $theme_outdate['last_updated'] : 0 ),
 						);
@@ -1366,13 +1410,13 @@ class MainWP_Right_Now {
 							<div class="mainwp-sub-row" plugin_slug="<?php echo $plugin_name; ?>" premium="<?php echo ( isset( $plugin_upgrade['premium'] ) ? $plugin_upgrade['premium'] : 0 ) ? 1 : 0; ?>" updated="0">
 								<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-3">
 									<?php if ( $globalView ) { ?>&nbsp;&nbsp;&nbsp;<?php } ?><?php if (in_array( $slug, $trustedPlugins)) { echo $trusted_icon; } ; ?>
-									<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_attr($plugin_upgrade['Name']); ?>">
+									<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_html($plugin_upgrade['Name']); ?>">
 										<?php echo esc_html($plugin_upgrade['Name']); ?>
 									</a>
 									<input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" value="0"/>
 								</div>
 								<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-5 pluginsInfo" id="wp_upgrade_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
-									<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="Changelog <?php echo esc_attr($plugin_upgrade['Name']); ?>">
+									<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="Changelog <?php echo esc_html($plugin_upgrade['Name']); ?>">
 										<?php echo esc_html($plugin_upgrade['Version']); ?> to <?php echo esc_html($plugin_upgrade['update']['new_version']); ?>
 									</a>
 								</div>
@@ -1503,13 +1547,13 @@ class MainWP_Right_Now {
 								<div class="mainwp-sub-row" plugin_slug="<?php echo $plugin_name; ?>" premium="<?php echo ( isset( $plugin_upgrade['premium'] ) ? $plugin_upgrade['premium'] : 0 ) ? 1 : 0; ?>" updated="0">
 									<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-3">
 										&nbsp;&nbsp;&nbsp;<?php if (in_array($slug, $trustedPlugins)) { echo $trusted_icon; } ; ?>
-										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="More information about <?php echo $plugin_upgrade['Name']; ?>">
-											<?php echo $plugin_upgrade['Name']; ?>
+										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_html( $plugin_upgrade['Name'] ); ?>">
+											<?php echo esc_html($plugin_upgrade['Name']); ?>
 										</a>
 										<input type="hidden" id="wp_upgraded_plugin_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_<?php echo $plugin_name; ?>" value="0"/>
 									</div>
 									<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-5 pluginsInfo" id="wp_upgrade_plugin_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_<?php echo $plugin_name; ?>">
-										<?php echo $plugin_upgrade['Version']; ?> to <?php echo $plugin_upgrade['update']['new_version']; ?>
+										<?php echo esc_html($plugin_upgrade['Version']); ?> to <?php echo esc_html($plugin_upgrade['update']['new_version']); ?>
 									</div>
 
 									<div id="wp_upgradebuttons_plugin_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_<?php echo $plugin_name; ?>" site_id="<?php echo $website->id; ?>" >
@@ -1647,14 +1691,14 @@ class MainWP_Right_Now {
 									<?php } else { ?>
 										<?php if (in_array($slug, $trustedPlugins)) { echo $trusted_icon; } ; ?>
 										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $pluginsInfo[ $slug ]['slug'] . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-										   class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_attr($pluginsInfo[ $slug ]['name']); ?>">
+										   class="thickbox open-plugin-details-modal" title="More information about <?php echo strip_tags($pluginsInfo[ $slug ]['name']); ?>">
 											<?php echo esc_html($pluginsInfo[ $slug ]['name']); ?>
 										</a>
 									<?php } ?>
 								</div>
 								<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-5 pluginsInfo">
 									<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $pluginsInfo[ $slug ]['slug'] . '&section=changelog&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-									   class="thickbox open-plugin-details-modal" title="Changelog <?php echo esc_attr($pluginsInfo[ $slug ]['name']); ?>">
+									   class="thickbox open-plugin-details-modal" title="Changelog <?php echo strip_tags($pluginsInfo[ $slug ]['name']); ?>">
 										<?php echo esc_html($plugin_upgrade['Version']); ?> to <?php echo esc_html($plugin_upgrade['update']['new_version']); ?>
 									</a>
 								</div>
@@ -1784,7 +1828,7 @@ class MainWP_Right_Now {
 						foreach ( $theme_upgrades as $slug => $theme_upgrade ) {
 							$theme_name = urlencode( $slug );
 							?>
-							<div class="mainwp-sub-row" theme_slug="<?php echo $theme_name; ?>" theme_name="<?php echo $theme_upgrade['Name']; ?>" premium="<?php echo ( isset( $themesInfo[ $theme_name ]['premium'] ) && $themesInfo[ $theme_name ]['premium'] ) ? 1 : 0; ?>" updated="0">
+							<div class="mainwp-sub-row" theme_slug="<?php echo $theme_name; ?>" theme_name="<?php echo esc_html($theme_upgrade['Name']); ?>" premium="<?php echo ( isset( $themesInfo[ $theme_name ]['premium'] ) && $themesInfo[ $theme_name ]['premium'] ) ? 1 : 0; ?>" updated="0">
 								<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-3"><?php if ( $globalView ) { ?>&nbsp;&nbsp;&nbsp;<?php } ?><?php if (in_array( $slug, $trustedThemes )) echo $trusted_icon; ?><?php echo esc_html($theme_upgrade['Name']); ?>
 									<input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>_<?php echo $theme_name; ?>" value="0"/>
 								</div>
@@ -1906,7 +1950,7 @@ class MainWP_Right_Now {
 							foreach ( $theme_upgrades as $slug => $theme_upgrade ) {
 								$theme_name = urlencode( $slug );
 								?>
-								<div class="mainwp-sub-row" theme_slug="<?php echo $theme_name; ?>" theme_name="<?php echo $theme_upgrade['Name']; ?>" premium="<?php echo ( isset( $themesInfo[ $theme_name ]['premium'] ) && $themesInfo[ $theme_name ]['premium'] ) ? 1 : 0; ?>" updated="0">
+								<div class="mainwp-sub-row" theme_slug="<?php echo $theme_name; ?>" theme_name="<?php echo esc_html($theme_upgrade['Name']); ?>" premium="<?php echo ( isset( $themesInfo[ $theme_name ]['premium'] ) && $themesInfo[ $theme_name ]['premium'] ) ? 1 : 0; ?>" updated="0">
 									<div class="mainwp-left mainwp-padding-top-5 mainwp-cols-3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?php if (in_array( $slug, $trustedThemes )) echo $trusted_icon; ?><?php echo esc_html($theme_upgrade['Name']); ?>
 										<input type="hidden" id="wp_upgraded_theme_<?php echo $website->id; ?>_group_<?php echo esc_attr($group_id); ?>_<?php echo $theme_name; ?>" value="0"/>
 									</div>
@@ -2154,8 +2198,8 @@ class MainWP_Right_Now {
 					<div class="mainwp-sub-section" id="wp_translation_upgrades_<?php echo $website->id; ?>" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" <?php if ( $globalView ) { ?>style="display: none"<?php } ?>>
 						<?php
 						foreach ( $translation_upgrades as $translation_upgrade) {
-							$translation_name = isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $translation_upgrade['slug'];
-							$translation_slug = $translation_upgrade['slug'];
+							$translation_name = isset( $translation_upgrade['name'] ) ? esc_html($translation_upgrade['name']) : esc_html($translation_upgrade['slug']);
+							$translation_slug = esc_html($translation_upgrade['slug']);
 							?>
 							<div class="mainwp-sub-row" translation_slug="<?php echo $translation_slug; ?>" updated="0">
 								<div class="mainwp-left mainwp-cols-3 mainwp-padding-top-5">
@@ -2540,11 +2584,11 @@ class MainWP_Right_Now {
 									<div class="mainwp-left mainwp-cols-3">
 										<?php if ( $globalView ) { ?>&nbsp;&nbsp;&nbsp;<?php } ?>
 										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-										   class="thickbox open-plugin-details-modal" title="More information about <?php echo $plugin_outdate['Name']; ?>"><?php echo esc_html($plugin_outdate['Name']); ?></a><input type="hidden" id="wp_dismissed_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" value="0"/>
+										   class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_html( $plugin_outdate['Name'] ); ?>"><?php echo esc_html($plugin_outdate['Name']); ?></a><input type="hidden" id="wp_dismissed_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" value="0"/>
 									</div>
 									<div class="mainwp-left mainwp-cols-3 pluginsInfo" id="wp_outdate_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
 										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ) . '&section=changelog&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-										   class="thickbox open-plugin-details-modal" title="Changelog <?php echo $plugin_outdate['Name']; ?>">
+										   class="thickbox open-plugin-details-modal" title="Changelog <?php echo esc_html( $plugin_outdate['Name'] ); ?>">
 											<?php echo esc_html($plugin_outdate['Version']); ?> | <?php echo $outdate_notice; ?>
 										</a>
 									</div>
@@ -2655,7 +2699,7 @@ class MainWP_Right_Now {
 										<div class="mainwp-left mainwp-cols-3">
 											&nbsp;&nbsp;&nbsp;&nbsp;
 											<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-											   class="thickbox open-plugin-details-modal" title="More information about <?php echo $plugin_outdate['Name']; ?>"><?php echo $plugin_outdate['Name']; ?></a><input type="hidden" id="wp_dismissed_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" value="0"/>
+											   class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_html($plugin_outdate['Name']); ?>"><?php echo esc_html($plugin_outdate['Name']); ?></a><input type="hidden" id="wp_dismissed_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>" value="0"/>
 										</div>
 										<div class="mainwp-left mainwp-cols-3 pluginsInfo" id="wp_outdate_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
 											<?php echo esc_html($plugin_outdate['Version']); ?> | <?php echo $outdate_notice; ?>
@@ -2701,7 +2745,7 @@ class MainWP_Right_Now {
 					?>
 						<div class="mainwp-sub-row">
 							<div class="mainwp-left mainwp-cols-3">
-								<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $pluginsOutdateInfo[ $slug ]['uri-'] ) ? rawurlencode( $pluginsOutdateInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsOutdateInfo[ $slug ]['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
+								<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $pluginsOutdateInfo[ $slug ]['uri'] ) ? rawurlencode( $pluginsOutdateInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsOutdateInfo[ $slug ]['Name'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
 										   class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_html($pluginsOutdateInfo[ $slug ]['Name']); ?>">
 									<?php echo esc_html($pluginsOutdateInfo[ $slug ]['Name']); ?>
 								</a>
@@ -2761,14 +2805,14 @@ class MainWP_Right_Now {
 											<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" title="<?php echo esc_attr($visit_dashboard_title);?>"><?php echo stripslashes( $website->name ); ?></a>
 										<?php } else { ?>
 											<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-											   class="thickbox open-plugin-details-modal" title="More information about <?php echo strip_tags($pluginsOutdateInfo[ $slug ]['Name']); ?>">
+											   class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_html($pluginsOutdateInfo[ $slug ]['Name']); ?>">
 												<?php echo esc_html($pluginsOutdateInfo[ $slug ]['Name']); ?>
 											</a>
 										<?php } ?>
 									</div>
 									<div class="mainwp-left mainwp-cols-3 pluginsInfo" id="wp_outdate_plugin_<?php echo $website->id; ?>_<?php echo $plugin_name; ?>">
 										<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&section=changelog&TB_iframe=true&width=640&height=477'; ?>" target="_blank"
-                                           class="thickbox open-plugin-details-modal" title="Changelog about <?php echo strip_tags($pluginsOutdateInfo[ $slug ]['Name']); ?>">
+                                           class="thickbox open-plugin-details-modal" title="Changelog about <?php echo esc_html($pluginsOutdateInfo[ $slug ]['Name']); ?>">
 											<?php echo esc_html($plugin_outdate['Version']); ?> | <?php echo $outdate_notice; ?>
 										</a>
 									</div>

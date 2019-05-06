@@ -529,6 +529,13 @@ class MainWP_Themes {
 		$themesVersion     = array(); //name_version -> title_version
 		$themesRealVersion = $themesSlug = array(); //name_version -> title_version
 		foreach ( $output->themes as $theme ) {
+
+            $theme['name'] = esc_html($theme['name']);
+            $theme['version'] = esc_html($theme['version']);
+            $theme['title'] = esc_html($theme['title']);
+            $theme['slug'] = esc_html($theme['slug']);
+            $theme['websiteurl'] = esc_html($theme['websiteurl']);
+
 			$sites[ $theme['websiteid'] ]                                  = $theme['websiteurl'];
 			$themes[ $theme['name'] . '_' . $theme['version'] ]            = $theme['name'];
 			$themesSlug[ $theme['name'] . '_' . $theme['version'] ]        = $theme['slug'];
@@ -811,7 +818,7 @@ class MainWP_Themes {
 			<tbody id="the-posts-list" class="list:posts">
 			<?php
 			foreach ( $themes as $slug => $theme ) {
-				$name = $theme['name'];
+				$name = esc_html($theme['name']);
 				if ( ! empty( $search_status ) && $search_status != 'all' ) {
 					if ( $search_status == 'trust' && ! in_array( $slug, $trustedThemes ) ) {
 						continue;

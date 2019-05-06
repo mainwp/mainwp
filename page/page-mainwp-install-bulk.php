@@ -161,7 +161,6 @@ class MainWP_Install_Bulk {
 
 		//Fetch info..
 		$post_data = array(
-			'url'  => json_encode( $_POST['url'] ),
 			'type' => $_POST['type'],
 		);
 		if ( $_POST['activatePlugin'] == 'true' ) {
@@ -171,7 +170,13 @@ class MainWP_Install_Bulk {
 			$post_data['overwrite'] = true;
 		}
 
-                self::addition_post_data( $post_data );
+         // deprecated from 3.5.6
+        self::addition_post_data( $post_data );
+
+        // hook to support addition data: wpadmin_user, wpadmin_passwd
+        $post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
+
+        $post_data['url'] = json_encode( $_POST['url'] );
 
 		$output         = new stdClass();
 		$output->ok     = array();
@@ -242,7 +247,6 @@ class MainWP_Install_Bulk {
 
 		//Fetch info..
 		$post_data = array(
-			'url'  => json_encode( explode( '||', $_POST['urls'] ) ),
 			'type' => $_POST['type'],
 		);
 		if ( $_POST['activatePlugin'] == 'true' ) {
@@ -251,7 +255,15 @@ class MainWP_Install_Bulk {
 		if ( $_POST['overwrite'] == 'true' ) {
 			$post_data['overwrite'] = true;
 		}
-                self::addition_post_data( $post_data );
+
+        // deprecated from 3.5.6
+        self::addition_post_data( $post_data );
+
+        // hook to support addition data: wpadmin_user, wpadmin_passwd
+        $post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
+
+        $post_data['url'] = json_encode( explode( '||', $_POST['urls'] ) );
+
 		$output         = new stdClass();
 		$output->ok     = array();
 		$output->errors = array();

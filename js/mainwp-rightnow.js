@@ -3137,11 +3137,16 @@ rightnow_themes_abandoned_unignore_globally = function (slug) {
     return false;
 };
 
+mainwp_siteview_onchange = function(me) {
+    jQuery(me).closest("form").submit();
+}
+
 jQuery(document).ready(function ()
 {
-    jQuery('#mainwp_select_options_siteview').change(function() {
-        jQuery(this).closest("form").submit();
-    });
+    
+//    jQuery('#mainwp_select_options_siteview').change(function() {
+//        jQuery(this).closest("form").submit();
+//    });
 
     jQuery( '#mainwp_check_http_response' ).on('change', function () {
         var data = mainwp_secure_data({

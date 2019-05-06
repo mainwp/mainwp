@@ -105,6 +105,9 @@ class MainWP_Post_Handler {
 		$this->addAction( 'mainwp_trust_theme', array( &$this, 'mainwp_trust_theme' ) );
 		$this->addAction( 'mainwp_checkbackups', array( &$this, 'mainwp_checkbackups' ) );
 		$this->addAction( 'mainwp_syncerrors_dismiss', array( &$this, 'mainwp_syncerrors_dismiss' ) );
+        $this->addAction( 'mainwp_overview_optimize_loading', array( &$this, 'overview_optimize_loading' ) );
+
+
 
 		//Page: backup
 		if ( mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
@@ -1592,6 +1595,14 @@ class MainWP_Post_Handler {
 			die( json_encode( array( 'error' => $e->getMessage() ) ) );
 		}
 	}
+
+    function overview_optimize_loading() {
+		$this->secure_request( 'mainwp_overview_optimize_loading' );
+        MainWP_Right_Now::ajax_render_sites();
+        die();
+	}
+
+
 
 	function mainwp_serverInformation() {
 		$this->secure_request();

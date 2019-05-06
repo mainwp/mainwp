@@ -614,6 +614,43 @@ public static function renderFooter( $shownPage ) {
 				return __( 'This is not your website.', 'mainwp' );
 			}
 
+            $allowed = array(
+                'br' => array(),
+                'table' => array(
+                    'id' => array(),
+                    'class' => array(),
+                    'cellspacing' => array(),
+                ),
+                'thead' => array(),
+                'tbody' => array(
+                    'id' => array(),
+                    'class' => array()
+                ),
+                'th' => array(
+                    'scope' => array(),
+                    'class' => array(),
+                ),
+                'tr' => array(
+                    'scope' => array(),
+                    'class' => array(),
+                    'style' => array(),
+                ),
+                'td' => array(
+                    'style' => array(),
+                    'colspan' => array()
+                ),
+                'div' => array(
+                    'id' => array(),
+                    'class' => array(),
+                    'style' => array()
+                ),
+                'h3' => array(
+                    'class' => array(),
+                    'style' => array()
+                ),
+                'span' => array(),
+                'strong' => array()
+            );
 			$serverInformation = MainWP_Utility::fetchUrlAuthed( $website, 'serverInformation' );
 			?>
 
@@ -621,25 +658,30 @@ public static function renderFooter( $shownPage ) {
 				<h2><i class="fa fa-server"></i>
 					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Server Information' ); ?>
 				</h2>
-				<?php echo $serverInformation['information']; ?>
+				<?php echo wp_kses( $serverInformation['information'], $allowed );  ?>
 			</div>
 			<div id="mainwp-cron-schedules-section">
 				<h2><i class="fa fa-server"></i>
 					<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Cron Schedules', 'mainwp' ); ?>
 				</h2>
-				<?php echo $serverInformation['cron']; ?>
+				<?php echo wp_kses( $serverInformation['cron'], $allowed ); ?>
 			</div>
 			<?php if ( isset( $serverInformation['wpconfig'] ) ) { ?>
+                <style>
+                    #mainwp-code-display code {
+                        background: none !important;
+                    }
+                </style>
 				<div id="mainwp-wp-config-section">
 					<h2><i class="fa fa-server"></i>
 						<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'WP-Config File', 'mainwp' ); ?>
 					</h2>
-					<?php echo $serverInformation['wpconfig']; ?>
+					<?php echo wp_kses( $serverInformation['wpconfig'], $allowed ); ?>
 				</div>
 				<div id="mainwp-error-log-section">
 					<h2><i class="fa fa-server"></i>
 						<strong><?php echo stripslashes( $website->name ); ?></strong>&nbsp;<?php _e( 'Error Log', 'mainwp' ); ?></h2>
-					<?php echo $serverInformation['error']; ?>
+					<?php echo wp_kses( $serverInformation['error'], $allowed ); ?>
 				</div>
 			<?php } ?>
 			<?php

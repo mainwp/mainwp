@@ -47,8 +47,14 @@ class MainWP_Right_Now {
 	}
 
 	public static function render() {
+
+        $individual = false;
+        if (isset($_GET['dashboard'])) {
+            $individual = true;
+        }
+
 		?>
-		<div id="rightnow_list" xmlns="http://www.w3.org/1999/html"><?php MainWP_Right_Now::renderSites(); ?></div>
+		<div id="rightnow_list" xmlns="http://www.w3.org/1999/html"><?php MainWP_Right_Now::renderSites( false, $individual ); ?></div>
 		<?php
 	}
 
@@ -538,20 +544,15 @@ class MainWP_Right_Now {
 
     public static function renderSites( $isUpdatesPage = false, $isIndividual = false ) {
 
-        $optimize_loading = false;
-        if ( get_option( 'mainwp_optimize' ) == 1 && ! $isIndividual) {
-            $optimize_loading = true;
-        }
-
-        if ($optimize_loading) {
+        if ( get_option( 'mainwp_optimize' ) == 1 && ! $isIndividual && !$isUpdatesPage) {
+        // NOTE: do not optimize loading sites updates for individual overview
         ?>
             <script type="text/javascript">
 
-                mainwp_overview_optimize_loading = function (pIsUpdatePage) {
+                mainwp_overview_optimize_loading = function () {
 
                     var data = mainwp_secure_data({
-                        action:'mainwp_overview_optimize_loading',
-                        isUpdatePg: pIsUpdatePage
+                        action:'mainwp_overview_optimize_loading'
                     });
 
                     jQuery('.mainwp-wrap #rightnow_list').html('<p style="text-align: center"><i class="fa fa-spinner fa-pulse fa-4x"></i></p>');
@@ -561,7 +562,7 @@ class MainWP_Right_Now {
                 }
 
                 jQuery(document).ready(function () {
-                    mainwp_overview_optimize_loading(<?php echo intval($isUpdatesPage); ?>);
+                    mainwp_overview_optimize_loading();
                 })
             </script>
         <?php
@@ -572,11 +573,8 @@ class MainWP_Right_Now {
 
 
     public static function ajax_render_sites( ) {
-
-        $isUpdatesPage = isset( $_POST['isUpdatePg'] ) &  $_POST['isUpdatePg'] ? true : false ;
-        self::_renderSites( $isUpdatesPage );
+        self::_renderSites();
         die();
-
     }
 
 	public static function _renderSites( $isUpdatesPage = false ) {

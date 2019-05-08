@@ -1235,7 +1235,7 @@ class MainWP_Manage_Sites {
         ), self::$page, 'normal', 'core' );
 	}
 
-        public static function renderUpdates( $website ) {
+    public static function renderUpdates( $website ) {
 		MainWP_Utility::set_current_wpid( $website->id );
 		self::renderHeader( 'ManageSitesUpdates' );
 		MainWP_Manage_Sites_View::renderUpdates();

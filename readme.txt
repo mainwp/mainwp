@@ -7,7 +7,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.2
-Stable tag: 3.5.7
+Stable tag: 3.5.7.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -162,6 +162,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 3.5.7.1 - 5-8-19 =
+* Fixed: an issue with loading Updates Overview data in individual Overview page
 
 = 3.5.7 - 5-6-19 =
 * Added: performance enhancements

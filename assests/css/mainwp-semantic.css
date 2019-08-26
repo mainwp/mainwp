@@ -1,0 +1,105 @@
+.mainwp-widget .header {
+    margin-bottom: 15px;
+}
+.mainwp-widget .header .right {
+    float: right;
+}
+.mainwp-widget .header .inline{
+    display: inline;
+}
+.mainwp-ui .ui.menu {
+    padding-top: 0 !important;
+}
+
+.mainwp-ui #mainwp-main-menu .menu .item {
+  font-size: .95em;
+}
+
+.mainwp-ui .ui.message:last-child {
+  margin-bottom: 1em;
+}
+
+#mainwp_managesites_content .ui.table thead td,
+#mainwp_managesites_content .ui.table thead th,
+#mainwp_managesites_content .ui.table tfoot td,
+#mainwp_managesites_content .ui.table tfoot th {
+  background: #23282D;
+  color: white;
+}
+.iconlbl {
+  width: 40px;
+  display: inline-block;
+}
+
+.mainwp-ui .ui.toggle.checkbox input:checked ~ .box::before,
+.mainwp-ui .ui.toggle.checkbox input:checked ~ label::before {
+  background-color: #7fb100 !important;
+}
+
+.mainwp-ui .alternate { background-color: rgba( 255, 0, 0, 0 ) !important; }
+.mainwp-ui .ui.search, .mainwp-ui .icon.search { background: none !important; }
+
+.mainwp-ui .ui.segment {
+  border-radius: 0;
+  border: 0;
+  margin-top: 0;
+  margin-bottom: 10px;
+  box-shadow: none; }
+
+.mainwp-ui .ui.alt.segment {
+  border-top: none;
+  padding-top: 0; }
+
+#mainwp-ignored-abandoned-plugins,
+#mainwp-ignored-plugins,
+#mainwp-ignored-abandoned-themes,
+#mainwp-ignored-themes { padding-top: 1em; }
+
+#mainwp-general-settings .mainwp-main-content,
+#mainwp-advanced-settings .mainwp-main-content,
+#mainwp-tools-settings .mainwp-main-content,
+#mainwp-mcrwc-settings .mainwp-main-content,
+#mainwp-add-new-site .mainwp-main-content,
+#mainwp-edit-site .mainwp-main-content,
+#mainwp-manage-extensions .mainwp-main-content { padding-top: 1em; }
+
+.mainwp-ui .ui.alt.mainwp-posts.segment { padding: 0 !important; }
+.mainwp-ui .ui.alt.mainwp-posts.segment .mainwp-main-content { padding-right: 0em; }
+
+.mainwp-ui #mainwp-manage-plugins,
+.mainwp-ui #mainwp-manage-themes,
+.mainwp-ui #mainwp-install-plugins,
+.mainwp-ui #mainwp-install-themes,
+.mainwp-ui #mainwp-plugin-auto-updates,
+.mainwp-ui #mainwp-manage-posts,
+.mainwp-ui #mainwp-manage-pages,
+.mainwp-ui #mainwp-theme-auto-updates,
+.mainwp-ui #mainwp-manage-users { padding: 0 !important; }
+
+.mainwp-ui .mainwp-posts .mainwp-main-content,
+.mainwp-ui #mainwp-manage-pages .mainwp-main-content,
+.mainwp-ui #mainwp-manage-plugins .mainwp-main-content,
+.mainwp-ui #mainwp-manage-themes .mainwp-main-content,
+.mainwp-ui #mainwp-install-plugins .mainwp-main-content,
+.mainwp-ui #mainwp-install-themes .mainwp-main-content,
+.mainwp-ui #mainwp-plugin-auto-updates .mainwp-main-content,
+.mainwp-ui #mainwp-theme-auto-updates .mainwp-main-content,
+.mainwp-ui #mainwp-manage-users .mainwp-main-content { padding-right: 0 !important; }
+
+.mainwp-ui .mainwp-sidebar-left .mainwp-posts .mainwp-main-content,
+.mainwp-ui .mainwp-sidebar-left #mainwp-manage-pages .mainwp-main-content,
+.mainwp-ui .mainwp-sidebar-left #mainwp-manage-plugins .mainwp-main-content,
+.mainwp-ui .mainwp-sidebar-left #mainwp-manage-themes .mainwp-main-content,
+.mainwp-ui .mainwp-sidebar-left #mainwp-install-plugins .mainwp-main-content,
+.mainwp-ui .mainwp-sidebar-left #mainwp-install-themes .mainwp-main-content,
+.mainwp-ui .mainwp-sidebar-left #mainwp-plugin-auto-updates .mainwp-main-content,
+.mainwp-ui .mainwp-sidebar-left #mainwp-theme-auto-updates .mainwp-main-content,
+.mainwp-ui .mainwp-sidebar-left #mainwp-manage-users .mainwp-main-content { padding-left: 0 !important; }
+
+.mainwp-ui #mainwp-groups-table tr.active { background: #f9fafb !important; }
+
+.mainwp-ui .ui.message.green a:not(.button) { color: #7fb100; font-weight: bolder; text-decoration: underline !important;}
+.mainwp-ui .ui.message.yellow a:not(.button) { color: #b58105; font-weight: bolder; text-decoration: underline !important;}
+.mainwp-ui .ui.message.info a:not(.button) { color: #276f86; font-weight: bolder; text-decoration: underline !important;}
+.mainwp-ui .ui.message.red a:not(.button) { color: #a00000; font-weight: bolder; text-decoration: underline !important;}
+.mainwp-ui .ui.message a:not(.button) { color: rgba(0,0,0,.87); font-weight: bolder; text-decoration: underline !important;}

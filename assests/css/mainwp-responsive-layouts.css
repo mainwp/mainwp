@@ -1,0 +1,128 @@
+/*------------------------------------------------*/
+/*---------------[RESPONSIVE LAYOUTS]-------------*/
+/*------------------------------------------------*/
+
+@media only screen and ( min-width: 1441px ) {}
+
+@media only screen and ( min-width: 769px ) and ( max-width: 1440px ) {
+
+	#mainwp-main-menu {
+		max-height: 520px;
+		overflow-y: scroll;
+	}
+	#mainwp-updates-overview-menu,
+	#mainwp-updates-stats {
+		width: 100% !important;
+	}
+}
+
+@media screen and ( max-width: 768px ) {
+
+	/*--- WO Overrides ---*/
+
+	.mainwp-ui #wpcontent,
+	.mainwp-ui #wpbody {
+		padding: 0 !important;
+	}
+
+	/*--- General ---*/
+
+	.mainwp-nav-wrap {
+		width: 100%;
+		position: relative;
+	}
+
+	.mainwp-nav-wrap .ui.vertical.menu {
+		width: 100%;
+	}
+
+	.mainwp-content-wrap {
+		width: 100%;
+		margin: 0 !important;
+	}
+
+	.mainwp-main-content {
+		width: 100%;
+	}
+
+	.mainwp-actions-bar .ui.grid > [class*="two column"].row > .column,
+	.mainwp-actions-bar .ui.grid .column {
+		width: 100% !important;
+	}
+
+	.mainwp-actions-bar .ui.buttons {
+		width: 100% !important;
+		margin-top: 1rem;
+	}
+
+	.mainwp-actions-bar .ui.buttons .button:not(.mini) {
+		width: auto !important;
+	}
+
+	.mainwp-side-content {
+		width: 100%;
+		border: none !important;
+		margin-top: 1rem;
+	}
+
+	.mainwp-ui .ui.button:not(.mini) {
+		width: 80%;
+		display: block;
+		margin-left: auto !important;
+		margin-right: auto !important;
+		margin-bottom: 10px !important;
+
+	}
+
+	.mainwp-ui .ui.grid.field .column {
+		width: 100% !important;
+		display: block !important;
+	}
+
+	.mainwp-ui .ui.table tr td {
+		text-align: left !important;
+	}
+
+	/*--- Overview ---*/
+
+	.mainwp-ui .mainwp-grid-wrapper .grid-item.column {
+		margin-top: 1rem !important;
+		padding: 0px !important;
+	}
+
+	.mainwp-grid-wrapper .grid-item .ui.list .column,
+	.mainwp-grid-wrapper .grid-item .column {
+		text-align: left !important;
+		width: 100% !important;
+		display: block !important;
+	}
+
+	/*--- Sites ---*/
+
+	#mainwp-add-new-buttons {
+		display: none;
+	}
+
+	/* --- Posts --- */
+
+	/* --- Pages --- */
+
+	/* --- Themes & Plugins--- */
+
+	#mainwp-install-plugins-container,
+	#mainwp-install-themes-container {
+		margin-top: 1rem;
+	}
+	/* --- Users --- */
+
+	/*  -  Manage  -  */
+
+	/* --- Extensions --- */
+
+	#mainwp-extensions-list {
+		margin-top: 1rem;
+	}
+
+	/* --- Server Information --- */
+
+}

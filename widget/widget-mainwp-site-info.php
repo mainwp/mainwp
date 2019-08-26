@@ -32,6 +32,7 @@ class MainWP_Site_Info {
 
         $infor_items = array(
             'wpversion' => __('WordPress Version', 'mainwp'),
+            'debug_mode' => __('Debug Mode', 'mainwp'),
             'phpversion' => __('PHP Version', 'mainwp'),
             'child_version' => __('MainWP Child Version', 'mainwp'),
             'memory_limit' => __('PHP Memory Limit', 'mainwp'),
@@ -51,8 +52,18 @@ class MainWP_Site_Info {
                     <tbody>
                     <?php
                     foreach ( $infor_items as $index => $title ) {
+                        $val = '';
+                        if (isset($website_info[$index])) {
+                            if ($index == 'debug_mode' ) {
+                                $val = $website_info[$index] == 1 ? 'true' : 'false';
+                            } else {
+                                $val = $website_info[$index];
+                            }
+                        }
+
+
                         ?>
-                        <tr><td style="width: 40%"><?php echo esc_html($title); ?>:</td><td><strong><?php echo isset($website_info[$index]) ? esc_html($website_info[$index]) : '' ?></strong></td></tr>
+                        <tr><td style="width: 40%"><?php echo esc_html($title); ?>:</td><td><strong><?php echo esc_html($val); ?></strong></td></tr>
                         <?php
                     }
                     ?>

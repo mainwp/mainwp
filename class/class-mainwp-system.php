@@ -304,7 +304,7 @@ class MainWP_System {
 		 *
 		 * @see \MainWP_Extensions::hookGetSites
 		 */
-		add_filter( 'mainwp-getsites', array( MainWP_Extensions::getClassName(), 'hookGetSites' ), 10, 4 );
+		add_filter( 'mainwp-getsites', array( MainWP_Extensions::getClassName(), 'hookGetSites' ), 10, 5 );
 		add_filter( 'mainwp-getdbsites', array( MainWP_Extensions::getClassName(), 'hookGetDBSites' ), 10, 5 );
 
 		/**
@@ -978,6 +978,7 @@ class MainWP_System {
 
 		MainWP_Logger::Instance()->debug( 'CRON :: updates check :: found ' . count( $checkupdate_websites ) . ' websites' );
 		MainWP_Logger::Instance()->debug( 'CRON :: backup task running :: found ' . (count( $checkupdate_websites )  - count( $websites )) . ' websites' );
+        MainWP_Logger::Instance()->info_update( 'CRON :: updates check :: found ' . count( $checkupdate_websites ) . ' websites' );
 
 		$userid = null;
 		foreach ( $websites as $website ) {
@@ -995,6 +996,7 @@ class MainWP_System {
 
 		if ( count( $checkupdate_websites ) == 0 ) {
 			$busyCounter = MainWP_DB::Instance()->getWebsitesCountWhereDtsAutomaticSyncSmallerThenStart();
+            MainWP_Logger::Instance()->info_update( 'CRON :: busy counter :: found ' . $busyCounter . ' websites' );
 			if ( $busyCounter == 0 ) {
 				if ( 'Y' != get_option('mainwp_updatescheck_ready_sendmail') ) {
 					MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', 'Y' );
@@ -1624,6 +1626,7 @@ class MainWP_System {
 					if ( ( $sitesCheckCompleted != null ) && ( $sitesCheckCompleted[ $websiteId ] == false ) ) {
 						continue;
 					}
+                    MainWP_Logger::Instance()->info_update( 'CRON :: auto update :: websites id :: ' . $websiteId . " :: plugins :: " . implode( ',', $slugs ) );
 
 					try {
 						MainWP_Utility::fetchUrlAuthed( $allWebsites[ $websiteId ], 'upgradeplugintheme', array(
@@ -1715,6 +1718,7 @@ class MainWP_System {
 							@touch( $iconsDir . 'index.php' );
 						}
 						$filename = basename( $information['faviIconUrl'] );
+                        $filename = strtok($filename, "?"); // to fix: remove params
 						if ( $filename ) {
 							$filename = 'favi-' . $siteId . '-' . $filename;
 							if ( $size = file_put_contents( $iconsDir . $filename, $content ) ) {
@@ -3382,6 +3386,7 @@ class MainWP_System {
 	}
 
 	function deactivation() {
+        update_option('mainwp_extensions_all_activation_cached', ''); // clear cached of all activations to reload for next loading
 	}
 
 	//On update update the database

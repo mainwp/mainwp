@@ -170,7 +170,7 @@ class MainWP_Api_Manager {
 			) ); // reset license key activation
 
 			$activate_results = json_decode( $activate_results, true );
-			if ( $activate_results['deactivated'] == true ) {
+			if ( $activate_results['deactivated'] == true || (isset( $activate_results['activated'] ) && $activate_results['activated'] == 'inactive')) {
 				$options['api_key']              = '';
 				$options['activation_email']     = '';
 				$options['activated_key']        = 'Deactivated';
@@ -188,7 +188,7 @@ class MainWP_Api_Manager {
 
 			return $return;
 		}
-
+        update_option('mainwp_extensions_all_activation_cached', ''); // to fix: clear cached of all activations to reload for next loading
 		return array( 'result' => 'SUCCESS' );
 	}
 

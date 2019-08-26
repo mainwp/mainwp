@@ -1036,7 +1036,7 @@ class MainWP_Extensions {
 	 *
 	 * @return array|bool An array of arrays, the inner-array contains the id/url/name/totalsize of the website. False when something goes wrong.
 	 */
-	public static function hookGetSites( $pluginFile, $key, $websiteid = null, $for_manager = false ) {
+	public static function hookGetSites( $pluginFile, $key, $websiteid = null, $for_manager = false , $others = array()) {
 		if ( ! self::hookVerify( $pluginFile, $key ) ) {
 			return false;
 		}
@@ -1044,6 +1044,12 @@ class MainWP_Extensions {
 		if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! mainwp_current_user_can( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
 			return false;
 		}
+
+        $search_site = null;
+        $orderBy = 'wp.url';
+        $offset = false;
+        $rowcount = false;
+        $extraWhere = null;
 
 		if ( isset( $websiteid ) && ( $websiteid != null ) ) {
 			$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
@@ -1055,7 +1061,7 @@ class MainWP_Extensions {
 			if ( ! mainwp_current_user_can( 'site', $websiteid ) ) {
 				return false;
 			}
-
+            $dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, $data );
 			return array(
 				array(
 					'id'        => $websiteid,
@@ -1064,17 +1070,73 @@ class MainWP_Extensions {
 					'totalsize' => $website->totalsize,
 				),
 			);
-		}
+		} else {
+            // support simple order
+            if ( isset( $others['orderby'] ) ) {
+                if ( ( $others['orderby'] == 'site' ) ) {
+                    $orderBy = 'wp.name ' . ( $others['order'] == 'asc' ? 'asc' : 'desc' );
+                } else if ( ( $others['orderby'] == 'url' ) ) {
+                    $orderBy = 'wp.url ' . ( $others['order'] == 'asc' ? 'asc' : 'desc' );
+                }
+            }
+            if ( isset( $others['search'] ) ) {
+                $search_site = trim($others['search']);
+            }
 
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, $for_manager ) );
+            if ( is_array($others)) {
+                if (isset( $others['plugins_slug'] ) ) {
+
+                    $slugs = explode(",", $others['plugins_slug']);
+                    $extraWhere = "";
+                    foreach( $slugs as $slug ){
+                        $slug = json_encode( $slug );// to LIKE json_encode data
+                        $slug = trim( $slug , '"' );
+                        $slug = str_replace ( "\\", ".", $slug ); // so slug will in REGEXP pattern like this: "updraftplus./updraftplus.php"
+                        $extraWhere .= ' wp.plugins REGEXP "' . $slug. '" OR';
+                    }
+                    $extraWhere = trim( rtrim( $extraWhere, "OR" ) );
+
+                    if ($extraWhere == "") {
+                        $extraWhere = null;
+                    } else {
+                        $extraWhere = "(" . $extraWhere . ")";
+                    }
+                }
+            }
+        }
+        $sql =  MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, $search_site, $orderBy, false, false, $extraWhere, $for_manager );
+        $websites_total = MainWP_DB::Instance()->query( $sql );
+        $totalRecords = ( $websites_total ? MainWP_DB::num_rows( $websites_total ) : 0 );
+
+        if ( $websites_total ) {
+            @MainWP_DB::free_result( $websites_total );
+        }
+
+        $rowcount = isset( $others['per_page'] ) ? absint( $others['per_page'] ) : 25;
+        $pagenum = isset( $others['paged'] ) ? absint( $others['paged'] ) : 0;
+        if ($pagenum > $totalRecords)
+            $pagenum = $totalRecords;
+        $pagenum = max( 1, $pagenum );
+        $offset = ( $pagenum - 1 ) * $rowcount;
+
+        $sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager );
+		$websites = MainWP_DB::Instance()->query( $sql );
+
 		$output   = array();
 		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
-			$output[] = array(
+			$re = array(
 				'id'        => $website->id,
 				'url'       => MainWP_Utility::getNiceURL( $website->url, true ),
 				'name'      => $website->name,
 				'totalsize' => $website->totalsize,
 			);
+
+            if ($totalRecords > 0) {
+                $re['totalRecords'] = $totalRecords; // so asign totalRecords to first item
+                $totalRecords = 0;
+            }
+
+            $output[] = $re;
 		}
 		@MainWP_DB::free_result( $websites );
 

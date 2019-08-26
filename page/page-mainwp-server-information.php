@@ -1567,6 +1567,9 @@ public static function renderFooter( $shownPage ) {
 						<option value="<?php echo MainWP_Logger::DEBUG; ?>" <?php if ( MainWP_Logger::DEBUG == $enabled ) : echo 'selected';
 						endif; ?>>Debug
 						</option>
+                        <option value="<?php echo MainWP_Logger::INFO_UPDATE; ?>" <?php if ( MainWP_Logger::INFO_UPDATE == $enabled ) : echo 'selected';
+						endif; ?>>Info Update
+						</option>
 					</select> <input type="submit" class="button button-primary" value="Save"/> <input type="submit" class="button button-primary" name="actionlogs_clear" value="Clear"/>
 				</form>
 			</div>

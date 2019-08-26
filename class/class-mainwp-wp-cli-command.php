@@ -117,6 +117,67 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 		}
 	}
 
+
+    /**
+	 * Reconnect with Child Sites
+	 *
+	 * ## OPTIONS
+	 *
+	 * [<websiteid>]
+	 * : The id (or ids, comma separated) of the child sites that need to be reconnect.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp mainwp reconnect 2,5
+	 *
+	 * @synopsis [<websiteid>]
+	 */
+	public function reconnect( $args, $assoc_args ) {
+		$sites = array();
+		if ( count( $args ) > 0 ) {
+			$args_exploded = explode( ',', $args[0] );
+			foreach ($args_exploded as $arg) {
+				if ( ! is_numeric( trim( $arg ) ) ) {
+					WP_CLI::error('Child site ids should be numeric.');
+				}
+
+				$sites[] = trim( $arg );
+			}
+		}
+
+		if ( count($sites) == 0 )  WP_CLI::error('Please specify one or more child sites.');
+
+		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, true) );
+		WP_CLI::line( 'Reconnect started' );
+		$warnings = 0;
+		$errors   = 0;
+		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+			if ( ( count( $sites ) > 0 ) && ( !in_array( $website->id, $sites ) ) ) continue;
+			WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
+            try {
+                if ( MainWP_Manage_Sites::_reconnectSite( $website ) ) {
+                    //Reconnected
+                    WP_CLI::success( '  Reconnected successfully' );
+                } else {
+                    WP_CLI::warning( '  Reconnect failed' );
+                    $warnings++;
+                }
+            } catch ( Exception $e ) {
+                //something wrong
+                WP_CLI::error( '  Reconnect failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
+                $errors++;
+            }
+		}
+		@MainWP_DB::free_result( $websites );
+		if ( $errors > 0 ) {
+			WP_CLI::error( 'Reconnect completed with errors' );
+		} else if ( $warnings > 0 ) {
+			WP_CLI::warning( 'Reconnect completed with warnings' );
+		} else {
+			WP_CLI::success( 'Reconnect completed' );
+		}
+	}
+
 	/**
 	 * List information about plugin updates
 	 *

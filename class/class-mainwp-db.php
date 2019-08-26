@@ -1385,6 +1385,11 @@ class MainWP_DB {
 	}
 
 	public function backupFullTaskRunning( $wp_id ) {
+        
+        if (!get_option('mainwp_enableLegacyBackupFeature')) {
+			return false;
+		}
+
 		$progresses = $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp_backup_progress' ) . ' WHERE wp_id = ' . $wp_id . ' AND dtsFetched > ' . (time() - (30 * 60)) );
 		if ( is_array( $progresses ) ) {
 			foreach ( $progresses as $progress ) {

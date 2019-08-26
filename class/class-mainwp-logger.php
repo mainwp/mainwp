@@ -6,6 +6,7 @@ class MainWP_Logger {
 	const WARNING = 1;
 	const INFO = 2;
 	const DEBUG = 3;
+    const INFO_UPDATE = 10;
 
 	const LOG_COLOR = 'black';
 	const DEBUG_COLOR = 'gray';
@@ -63,6 +64,11 @@ class MainWP_Logger {
 		return $this->log( $pText, self::WARNING );
 	}
 
+    public function info_update( $pText ) {
+		return $this->log( $pText, self::INFO_UPDATE );
+	}
+
+
 	public function debugForWebsite( $pWebsite, $pAction, $pMessage ) {
 		if ( empty( $pWebsite ) ) {
 			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage, self::DEBUG );
@@ -94,7 +100,15 @@ class MainWP_Logger {
 	}
 
 	public function log( $pText, $pPriority ) {
-		if ( $this->logPriority >= $pPriority ) {
+        $do_log = false;
+
+        if ( ( $pPriority == self::INFO_UPDATE && $this->logPriority == self::INFO_UPDATE ) ||
+                ( $pPriority < self::INFO_UPDATE && $this->logPriority >= $pPriority ) )
+        {
+            $do_log = true;
+        }
+
+		if ( $do_log ) {
 			$this->logCurrentFile = $this->logDirectory . $this->logFileNamePrefix . $this->logFileNameSuffix;
 			$logCurrentHandle     = fopen( $this->logCurrentFile, 'a+' );
 
@@ -179,6 +193,8 @@ class MainWP_Logger {
 				return 'INFO';
 			case self::WARNING:
 				return 'WARNING';
+            case self::INFO_UPDATE:
+				return 'INFO UPDATE';
 			default:
 				return 'LOG';
 		}

@@ -1,6 +1,7 @@
 <?php
 
 class MainWP_Exception extends Exception {
+
 	protected $messageExtra;
 
 	public function __construct( $message, $extra = null ) {
@@ -11,5 +12,5 @@ class MainWP_Exception extends Exception {
 	public function getMessageExtra() {
 		return $this->messageExtra;
 	}
-}
 
+}

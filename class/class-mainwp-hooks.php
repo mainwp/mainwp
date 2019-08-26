@@ -1,6 +1,7 @@
 <?php
 
 class MainWP_Hooks {
+
 	public function __construct() {
 		add_filter( 'mainwp_getspecificdir', array( 'MainWP_Utility', 'getMainWPSpecificDir' ), 10, 1 );
         add_filter( 'mainwp_getmainwpdir', array( &$this, 'get_mainwp_dir' ), 10, 3 );
@@ -22,8 +23,8 @@ class MainWP_Hooks {
 		add_action( 'mainwp_upgradePluginTheme', array( &$this, 'upgradePluginTheme' ), 10, 0 );
 		add_action( 'mainwp_deletePlugin', array( &$this, 'deletePlugin' ), 10, 0 );
 		add_action( 'mainwp_deleteTheme', array( &$this, 'deleteTheme' ), 10, 0 );
-        add_action( 'mainwp_renderBeginPopup', array( 'MainWP_UI', 'renderBeginReadyPopup' ), 10, 0 );
-        add_action( 'mainwp_renderEndPopup', array( 'MainWP_UI', 'renderEndReadyPopup' ), 10, 2 );
+		add_action( 'mainwp_renderBeginModal', array( 'MainWP_UI', 'render_begin_modal' ), 10, 2 );
+		add_action( 'mainwp_renderEndModal', array( 'MainWP_UI', 'render_end_modal' ), 10, 2 );
 
 		//Internal hook - deprecated
 		add_filter( 'mainwp_getUserExtension', array( &$this, 'getUserExtension' ) );
@@ -54,22 +55,24 @@ class MainWP_Hooks {
 		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
 		add_action( 'mainwp_do_meta_boxes', array( &$this, 'mainwp_do_meta_boxes' ), 10, 1 );
 		add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
-        add_filter( 'mainwp_clonesite', array( &$this, 'filter_clone_site' ), 10, 6 );
-        add_filter( 'mainwp_deleteclonesite', array( &$this, '_deprecated_filter_delete_clone_site' ), 10, 5 ); //deprecated: remove later
+		add_filter( 'mainwp_clonesite', array( &$this, 'filter_clone_site' ), 10, 6 );
+		add_filter( 'mainwp_deleteclonesite', array( &$this, '_deprecated_filter_delete_clone_site' ), 10, 5 ); //deprecated: remove later
         add_filter( 'mainwp_delete_clonesite', array( &$this, 'filter_delete_clone_site' ), 10, 4 );
 		add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
 		add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hookAddSubLeftMenu' ), 10, 6 );
 		add_filter( 'mainwp_getwebsiteoptions', array( &$this, 'getWebsiteOptions' ), 10, 3 );
-        add_filter( 'mainwp_addgroup', array( 'MainWP_Extensions', 'hookAddGroup' ), 10, 3 );
-        add_filter( 'mainwp_getallposts', array( &$this, 'hookGetAllPosts' ), 10, 2 );
+		add_filter( 'mainwp_addgroup', array( 'MainWP_Extensions', 'hookAddGroup' ), 10, 3 );
+		add_filter( 'mainwp_getallposts', array( &$this, 'hookGetAllPosts' ), 10, 2 );
 	}
 
 	public function mainwp_log_debug( $pText ) {
 		MainWP_Logger::Instance()->debug( $pText );
 	}
+
 	public function mainwp_log_info( $pText ) {
 		MainWP_Logger::Instance()->info( $pText );
 	}
+
 	public function mainwp_log_warning( $pText ) {
 		MainWP_Logger::Instance()->warning( $pText );
 	}
@@ -78,6 +81,7 @@ class MainWP_Hooks {
 		MainWP_System::enqueue_postbox_scripts();
 	}
 
+    // going to retired
 	public function mainwp_do_meta_boxes( $postpage ) {
 		MainWP_System::do_mainwp_meta_boxes( $postpage );
 	}
@@ -95,26 +99,26 @@ class MainWP_Hooks {
 		$ret = array();
 
 		if ( is_array( $params ) ) {
-			if ( isset( $params[ 'websiteid' ] ) && MainWP_Utility::ctype_digit( $websiteid = $params['websiteid'] ) )  {
-				$ret['siteid'] = MainWP_Hooks::updateWPSite( $params );
+			if ( isset( $params[ 'websiteid' ] ) && MainWP_Utility::ctype_digit( $websiteid = $params[ 'websiteid' ] ) ) {
+				$ret[ 'siteid' ] = MainWP_Hooks::updateWPSite( $params );
 				return $ret;
-			} else if ( isset( $params['url'] ) && isset( $params['wpadmin'] ) ) {
+			} else if ( isset( $params[ 'url' ] ) && isset( $params[ 'wpadmin' ] ) ) {
 				//Check if already in DB
-				$website = MainWP_DB::Instance()->getWebsitesByUrl( $params['url'] );
+				$website = MainWP_DB::Instance()->getWebsitesByUrl( $params[ 'url' ] );
 				list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::addWPSite( $website, $params );
 
 				if ( $error != '' ) {
-					return array( 'error' => $error);
+					return array( 'error' => $error );
 				}
-				$ret['response'] = $message;
-				$ret['siteid'] = $site_id;
+				$ret[ 'response' ]	 = $message;
+				$ret[ 'siteid' ]	 = $site_id;
 			}
 		}
 
 		return $ret;
 	}
 
-    /**
+	/**
 	 * Hook to clone site
 	 *
 	 * @since 3.4.4
@@ -123,10 +127,10 @@ class MainWP_Hooks {
 	 * @return array
 	 *
 	 */
-
-    public function filter_clone_site( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update = false ) {
-		return MainWP_Extensions::hookCloneSite($pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update);
+	public function filter_clone_site( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update = false ) {
+		return MainWP_Extensions::hookCloneSite( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update );
 	}
+
 
     public function filter_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false) {
 		return MainWP_Extensions::hookDeleteCloneSite($pluginFile, $key, $clone_url, $clone_site_id );
@@ -147,34 +151,41 @@ class MainWP_Hooks {
 	 */
 	public function mainwp_edit_site( $params ) {
 		$ret = array();
-		if (is_array($params)) {
-			if (isset($params['websiteid']) && MainWP_Utility::ctype_digit( $websiteid = $params['websiteid'] ) )  {
-				$ret['siteid'] = MainWP_Hooks::updateWPSite( $params );
+		if ( is_array( $params ) ) {
+			if ( isset( $params[ 'websiteid' ] ) && MainWP_Utility::ctype_digit( $websiteid = $params[ 'websiteid' ] ) ) {
+				$ret[ 'siteid' ] = MainWP_Hooks::updateWPSite( $params );
 				return $ret;
 			}
 		}
 		return $ret;
 	}
 
-	public function hookAddSubLeftMenu( $title, $parent_key, $slug, $href, $icon = '', $desc = '' ) {
-		MainWP_System::add_sub_left_menu( $title, $parent_key, $slug, $href, $icon, $desc );
+	public function hookAddSubLeftMenu( $title, $slug, $href, $level = 1, $parent_key = 'mainwp_tab' ) {
+		$item = array(
+			'title'		 => $title,
+			'parent_key' => $parent_key,
+			'slug'		 => $slug,
+			'href'		 => $href
+		);
+		MainWP_Menu::add_left_menu( $item, $level );
 	}
 
 	public static function updateWPSite( $params ) {
-		if ( ! isset( $params['websiteid'] ) || !MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
+		if ( !isset( $params[ 'websiteid' ] ) || !MainWP_Utility::ctype_digit( $params[ 'websiteid' ] ) ) {
 			return 0;
 		}
+
 
         if ( isset( $params['is_staging'] ) ) {
 			unset($params['is_staging']); // do not allow change this value
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $params['websiteid'] );
+		$website = MainWP_DB::Instance()->getWebsiteById( $params[ 'websiteid' ] );
 		if ( $website == null ) {
 			return 0;
 		}
 
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( !MainWP_Utility::can_edit_website( $website ) ) {
 			return 0;
 		}
 
@@ -182,16 +193,16 @@ class MainWP_Hooks {
 
 		$uniqueId = null;
 
-		if ( isset( $params['name'] ) && !empty( $params['name'] ) ) {
-			$data['name'] =  htmlentities( $params['name'] );
+		if ( isset( $params[ 'name' ] ) && !empty( $params[ 'name' ] ) ) {
+			$data[ 'name' ] = htmlentities( $params[ 'name' ] );
 		}
 
-		if ( isset( $params['wpadmin'] ) && !empty( $params['wpadmin'] ) ) {
-			$data['adminname'] =  $params['wpadmin'];
+		if ( isset( $params[ 'wpadmin' ] ) && !empty( $params[ 'wpadmin' ] ) ) {
+			$data[ 'adminname' ] = $params[ 'wpadmin' ];
 		}
 
-		if ( isset( $params['unique_id'] ) ) {
-			$data['uniqueId'] = $uniqueId =  $params['unique_id'];
+		if ( isset( $params[ 'unique_id' ] ) ) {
+			$data[ 'uniqueId' ]	 = $uniqueId			 = $params[ 'unique_id' ];
 		}
 
 		if ( empty( $data ) ) {
@@ -212,28 +223,19 @@ class MainWP_Hooks {
 
 	public function get_activate_extension_notice( $pluginFile ) {
 		$active = MainWP_Extensions::isExtensionActivated( $pluginFile );
-		if ($active)
+		if ( $active )
 			return false;
 
-		$now = time();
-		$register_time = get_option( 'mainwp_setup_register_later_time', 0 );
-		if ($register_time > 0) {
-			if ($now - $register_time > 24 * 60 * 60){
-				delete_option('mainwp_setup_register_later_time');
-			} else {
-				return false;
-			}
-		}
 
 		$activate_notices = get_user_option( 'mainwp_hide_activate_notices' );
 		if ( is_array( $activate_notices ) ) {
-			$slug = basename($pluginFile, ".php");
-			if (isset($activate_notices[$slug])) {
+			$slug = basename( $pluginFile, ".php" );
+			if ( isset( $activate_notices[ $slug ] ) ) {
 				return false; // hide it
 			}
 		}
 
-		return sprintf(__("You have a MainWP extension that does not have an active API entered. This means you will not receive updates or support.  Please visit the %sExtensions%s page and enter your API key.", 'mainwp'), '<a href="admin.php?page=Extensions">', '</a>');
+		return sprintf( __( "You have a MainWP extension that does not have an active API entered. This means you will not receive updates or support.  Please visit the %sExtensions%s page and enter your API key.", 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' );
 	}
 
 	public function cache_getcontext( $page ) {
@@ -256,9 +258,9 @@ class MainWP_Hooks {
 		MainWP_Cache::addBody( $page, $body );
 	}
 
-
-	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', $selected_websites = array(), $selected_groups = array() ) {
-		MainWP_UI::select_sites_box( $title, $type, $show_group, $show_select_all, $class, $style, $selected_websites, $selected_groups );
+	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true,
+								   $class = '', $style = '', $selected_websites = array(), $selected_groups = array() ) {
+		MainWP_UI::select_sites_box( $type, $show_group, $show_select_all, $class, $style, $selected_websites, $selected_groups );
 	}
 
 	public function notifyUser( $userId, $subject, $content ) {
@@ -276,13 +278,13 @@ class MainWP_Hooks {
 		return MainWP_DB::Instance()->getUserExtension();
 	}
 
-	public function getWebsiteOptions($boolean, $website, $name = '') {
+	public function getWebsiteOptions( $boolean, $website, $name = '' ) {
 
-		if (empty($name))
+		if ( empty( $name ) )
 			return $boolean;
 
-		if(is_numeric($website)) {
-			$obj = new stdClass();
+		if ( is_numeric( $website ) ) {
+			$obj	 = new stdClass();
 			$obj->id = $website;
 			$website = $obj;
 		}
@@ -294,10 +296,7 @@ class MainWP_Hooks {
 		return MainWP_DB::Instance()->getWebsitesByUrl( $url );
 	}
 
-
-
-
-    /**
+	/**
 	 * Hook to get posts from sites
 	 *
 	 * @since 3.4.4
@@ -306,39 +305,39 @@ class MainWP_Hooks {
 	 * @return array
 	 *
 	 */
+	public function hookGetAllPosts( $sites, $post_data = array() ) {
 
-    public function hookGetAllPosts( $sites, $post_data = array()) {
-
-		$dbwebsites = array();
-		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass' );
+		$dbwebsites	 = array();
+		$data		 = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass' );
 
 		if ( $sites != '' ) {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
-					$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
-					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, $data );
+					$website					 = MainWP_DB::Instance()->getWebsiteById( $v );
+					$dbwebsites[ $website->id ]	 = MainWP_Utility::mapSite( $website, $data );
 				}
 			}
 		}
 
-        $default_data = array(
-            'post_type'     => 'post',
-            'status'     => 'publish',
-            'maxRecords' => 10
-        );
+		$default_data = array(
+			'post_type'	 => 'post',
+			'status'	 => 'publish',
+			'maxRecords' => 10
+		);
 
-        $post_data = array_merge($default_data, $post_data);
+		$post_data = array_merge( $default_data, $post_data );
 
-        $output         = new stdClass();
-        $output->results = array();
-        if ($dbwebsites) {
-            MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_posts', $post_data, array(
-                    MainWP_Post::getClassName(),
-                    'hookPostsSearch_handler',
-                ), $output );
-        }
-        return $output;
+		$output			 = new stdClass();
+		$output->results = array();
+		if ( $dbwebsites ) {
+			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_posts', $post_data, array(
+				MainWP_Post::getClassName(),
+				'hookPostsSearch_handler',
+			), $output );
+		}
+		return $output;
 	}
+
 
     public function get_mainwp_dir( $false = false, $dir = null, $direct_access = false) {
 
@@ -370,6 +369,7 @@ class MainWP_Hooks {
 		return array( $newdir, $url );
 	}
 
+
 	public function isMultiUser() {
 		return MainWP_System::Instance()->isMultiUser();
 	}
@@ -382,7 +382,7 @@ class MainWP_Hooks {
 		return MainWP_System::Instance()->metaboxes;
 	}
 
-	function get_format_email($body, $email, $title = '' ) {
+	function get_format_email( $body, $email, $title = '' ) {
 		return MainWP_Utility::formatEmail( $email, $body, $title );
 	}
 
@@ -408,27 +408,27 @@ class MainWP_Hooks {
 
 	function upgradePluginTheme() {
 		try {
-			$websiteId = $type = null;
-			$slugs     = array();
-			if ( isset( $_POST['websiteId'] ) ) {
-				$websiteId = $_POST['websiteId'];
+			$websiteId	 = $type		 = null;
+			$slugs		 = array();
+			if ( isset( $_POST[ 'websiteId' ] ) ) {
+				$websiteId = $_POST[ 'websiteId' ];
 			}
-			if ( isset( $_POST['slugs'] ) ) {
-				$slugs = $_POST['slugs'];
+			if ( isset( $_POST[ 'slugs' ] ) ) {
+				$slugs = $_POST[ 'slugs' ];
 			}
 
-			if ( isset( $_POST['type'] ) ) {
-				$type = $_POST['type'];
+			if ( isset( $_POST[ 'type' ] ) ) {
+				$type = $_POST[ 'type' ];
 			}
 
 			$error = '';
-			if ( $type == 'plugin' && ! mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) {
+			if ( $type == 'plugin' && !mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) {
 				$error = mainwp_do_not_have_permissions( __( 'update plugins', 'mainwp' ), false );
-			} else if ( $type == 'theme' && ! mainwp_current_user_can( 'dashboard', 'update_themes' ) ) {
+			} else if ( $type == 'theme' && !mainwp_current_user_can( 'dashboard', 'update_themes' ) ) {
 				$error = mainwp_do_not_have_permissions( __( 'update themes', 'mainwp' ), false );
 			}
 
-			if ( ! empty( $error ) ) {
+			if ( !empty( $error ) ) {
 				//die( json_encode( array( 'error' => $error ) ) );
                 wp_send_json( array( 'error' => $error ) );
 			}
@@ -437,11 +437,10 @@ class MainWP_Hooks {
 				$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 				if ( MainWP_Utility::can_edit_website( $website ) ) {
 					$information = MainWP_Utility::fetchUrlAuthed( $website, 'upgradeplugintheme', array(
-						'type' => $type,
-						'list' => urldecode( implode( ',', $slugs ) ),
+						'type'	 => $type,
+						'list'	 => urldecode( implode( ',', $slugs ) ),
 					) );
-
-                    if (isset($information['sync']))
+                     if (isset($information['sync']))
                         unset($information['sync']);
 
 					//die( json_encode( $information ) );
@@ -449,7 +448,7 @@ class MainWP_Hooks {
 				}
 			}
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage($e) ) ) );
+			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
 
 		die();
@@ -462,4 +461,5 @@ class MainWP_Hooks {
 	public function hookDecryptString( $enscrypt ) {
 		return MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt );
 	}
+
 }

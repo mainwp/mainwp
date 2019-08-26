@@ -9,15 +9,14 @@
  * @since 1.3
  *
  */
-
-if ( ! defined( 'ABSPATH' ) ) {
+if ( !defined( 'ABSPATH' ) ) {
 	exit;
 } // Exit if accessed directly
 
 class MainWP_Api_Manager_Key {
-	protected static $_instance = null;
 
-	protected static $apisslverify = 1;
+	protected static $_instance		 = null;
+	protected static $apisslverify	 = 1;
 
 	public static function instance() {
 
@@ -32,40 +31,40 @@ class MainWP_Api_Manager_Key {
 		self::$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
 	}
 
-    // not used
-	// API Key URL
-	public function create_software_api_url( $args, $wc_api = false ) {
-		if ($wc_api)
-			$api_url = esc_url_raw( add_query_arg( 'wc-api', 'am-software-api', MainWP_Api_Manager::instance()->getUpgradeUrl() ) );
-		else
-			$api_url = esc_url_raw( add_query_arg( 'mainwp-api', 'am-software-api', MainWP_Api_Manager::instance()->getUpgradeUrl() ) );
-
-		$query_url = '';
-		foreach ( $args as $key => $value ) {
-			$query_url .= $key . '=' . urlencode( $value ) . '&';
-		}
-		$query_url = rtrim( $query_url, '&' );
-
-		return $api_url . '&' . $query_url;
+	public function activate( $api_params ) {
+		$defaults = array(
+			'edd_action' => 'activate_license',
+		);
+		$api_params = wp_parse_args( $defaults, $api_params );
+		return wp_remote_post( MainWP_Api_Manager::instance()->get_license_url(), array( 'timeout' => 50, 'sslverify' => self::$apisslverify, 'body' => $api_params ) );
 	}
 
-	public function activate( $args ) {
+	public function deactivate( $api_params ) {
 
 		$defaults = array(
-			'request' => 'softwareactivation',
+			'edd_action' => 'deactivate_license',
 		);
 
-		$args = wp_parse_args( $defaults, $args );
+		$api_params = wp_parse_args( $defaults, $api_params );
+        return wp_remote_post( MainWP_Api_Manager::instance()->get_license_url() , array('body' => $api_params, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+	}
 
-		//$target_url = self::create_software_api_url( $args );
-		//$request = wp_remote_get( $target_url, array( 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+	public function grabapikey( $item_id, $public_key, $token ) {
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-        }
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+        $url = MainWP_Api_Manager::instance()->get_api_url();
 
-		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
+        $target_url = $url . 'grablicense/';
+
+        $args = array(
+            'key' => $public_key,
+            'token' => $token,
+            'item_id' => $item_id,
+            'url' => urlencode( MainWP_Api_Manager::instance()->get_domain() )
+        );
+
+        $request = wp_remote_post( $target_url , array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+
+        if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			// Request failed
 			return false;
 		}
@@ -75,81 +74,27 @@ class MainWP_Api_Manager_Key {
 		return $response;
 	}
 
-	public function deactivate( $args ) {
 
-		$defaults = array(
-			'request' => 'deactivation',
-		);
+    public function testverifyapi( $key, $token ) {
 
-		$args = wp_parse_args( $defaults, $args );
-		//$target_url = self::create_software_api_url( $args, true );
-		//$request    = wp_remote_get( $target_url, array( 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+        $url = MainWP_Api_Manager::instance()->get_api_url();
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-        }
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?wc-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+        $target_url = $url . 'testverifyapi/';
 
-		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
-			// Request failed
-			return false;
-		}
+        $args = array(
+            'key' => $key,
+            'token' => $token,
+        );
 
-		$response = wp_remote_retrieve_body( $request );
-
-		return $response;
-	}
-
-	public function grabapikey( $args ) {
-
-		$defaults = array(
-			'request' => 'grabapikey',
-		);
-
-		$args = wp_parse_args( $defaults, $args );
-        //$target_url = self::create_software_api_url( $args );
-		//$request    = wp_remote_get( $target_url, array( 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
-
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-        }
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
-
-
-		//                $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . 'wc-api/am-software-api/', array('body' => $args) );
-
-		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
-			// Request failed
-			return false;
-		}
-
-		$response = wp_remote_retrieve_body( $request );
-
-		return $response;
-	}
-
-	public function testloginapi( $args ) {
-
-		$defaults = array(
-			'request' => 'testloginapi',
-		);
-
-		$args = wp_parse_args( $defaults, $args );
-        $args['password'] = stripslashes($args['password']);
-
-//		$target_url = self::create_software_api_url( $args );
-//		$request    = wp_remote_get( $target_url, array( 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
-
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+        $request = wp_remote_post( $target_url , array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
 
         $log = $request;
+
         if ( is_array( $log ) && isset( $log['http_response'] ) ) {
             unset( $log['http_response'] );
-        }
+		}
 
-        MainWP_Logger::Instance()->debug( 'testloginapi:: RESULT :: ' . print_r( $log, true ) );
-
-		//                $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . 'wc-api/am-software-api/', array('body' => $args) );
+		MainWP_Logger::Instance()->debug( 'Test verify api:: RESULT :: ' . print_r( $log, true ) );
 
 		if ( is_wp_error( $request ) ) {
 			if ( self::$apisslverify == 1 ) {
@@ -164,6 +109,7 @@ class MainWP_Api_Manager_Key {
 		}
 
 		$code = wp_remote_retrieve_response_code( $request );
+
 		if ( $code != 200 ) {
 			throw new Exception( 'Error: code ' . $code );
 
@@ -176,24 +122,23 @@ class MainWP_Api_Manager_Key {
 	}
 
 
-	public function getpurchasedsoftware( $args ) {
+	public function get_purchasedsoftware( $args ) {
 
-		$defaults = array(
-			'request' => 'getpurchasedsoftware',
-		);
+        $url = MainWP_Api_Manager::instance()->get_api_url();
 
-		$args = wp_parse_args( $defaults, $args );
+        $target_url = $url . 'getpurchaseddownload/';
 
-//		$target_url = self::create_software_api_url( $args );
-//		$request    = wp_remote_get( $target_url, array( 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+        $params = array(
+            'key' => $args['public_key'],
+            'token' => $args['token'],
+            'url'  => urlencode( MainWP_Api_Manager::instance()->get_domain() )
+        );
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
+        if ( isset( $args['product_id'] ) ) {
+            $params['item_id'] = $args['product_id'];
         }
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
 
-
-		//                $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . 'wc-api/am-software-api/', array('body' => $args) );
+        $request = wp_remote_post( $target_url , array('body' => $params, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			// Request failed
@@ -201,25 +146,25 @@ class MainWP_Api_Manager_Key {
 		}
 
 		$response = wp_remote_retrieve_body( $request );
-
 		return $response;
 	}
 
-	public function purchasesoftware( $args ) {
-		$defaults = array(
-			'request' => 'purchasesoftware',
-		);
-		$args = wp_parse_args( $defaults, $args );
+	public function purchasesoftware( $item_id, $public_key,  $token) {
 
-//        $target_url = self::create_software_api_url( $args );
-//		$request = wp_remote_get( $target_url, array('timeout' => 50, 'sslverify' => self::$apisslverify));
+		$url = MainWP_Api_Manager::instance()->get_api_url();
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-        }
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+        $target_url = $url . 'purchasedownload/';
 
-		if( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
+        $params = array(
+            'key' => $public_key,
+            'token' => $token,
+            'item_id' => $item_id,
+            'url'  => urlencode( MainWP_Api_Manager::instance()->get_domain() )
+        );
+
+        $request = wp_remote_post( $target_url , array('body' => $params, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+
+		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			// Request failed
 			return false;
 		}

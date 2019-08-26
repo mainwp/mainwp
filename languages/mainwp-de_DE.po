@@ -1339,7 +1339,7 @@ msgstr "Plugins"
 #: page/MainWPPlugins.page.php:1194
 #@ mainwp
 msgid "Manage Plugins"
-msgstr "Verwalte Plugins"
+msgstr "Verwalte Plaugins"
 
 #: page/MainWPPlugins.page.php:48
 #: page/MainWPPlugins.page.php:78

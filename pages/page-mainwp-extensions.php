@@ -40,7 +40,7 @@ class MainWP_Extensions {
 				continue;
 			}
 
-			if ( isset( $extension['apiManager'] ) && ! empty( $extension['apiManager'] ) ) {
+			if ( isset( $extension['apiManager'] ) && ! empty( $extension['apiManager'] ) && $extension['activated_key'] == 'Activated' ) {
 				if ( $am_out != '' ) {
 					$am_out .= ',';
 				}
@@ -206,16 +206,19 @@ class MainWP_Extensions {
 				}
 
 				$extension['api_key']             = isset( $options['api_key'] ) ? $options['api_key'] : '';
+				$extension['activation_email']    = isset( $options['activation_email'] ) ? $options['activation_email'] : '';
 				$extension['activated_key']       = isset( $options['activated_key'] ) ? $options['activated_key'] : 'Deactivated';
+				$extension['deactivate_checkbox'] = isset( $options['deactivate_checkbox'] ) ? $options['deactivate_checkbox'] : 'off';
 				$extension['product_id']          = isset( $options['product_id'] ) ? $options['product_id'] : '';
-				$extension['version']    = isset( $options['version'] ) ? $options['version'] : '';
+				$extension['instance_id']         = isset( $options['instance_id'] ) ? $options['instance_id'] : '';
+				$extension['software_version']    = isset( $options['software_version'] ) ? $options['software_version'] : '';
 			}
 
 			$all_extensions[] = $extension;
 			if ( ( defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) && MWP_TEAMCONTROL_PLUGIN_SLUG == $slug ) ||
 			     mainwp_current_user_can( 'extension', dirname( $slug ) )
 			) {
-				self::$extensions[$slug] = $extension;
+				self::$extensions[] = $extension;
 				if ( mainwp_current_user_can( 'extension', dirname( $slug ) ) ) {
 					if ( isset( $extension['callback'] ) ) {
 
@@ -321,12 +324,27 @@ class MainWP_Extensions {
 			$ext['version']              = $extension['version'];
 			$ext['name']				 = $extension['name'];
 			$ext['page']				 = $extension['page'];
+			$ext['page']				 = $extension['page'];
 			if ( isset( $extension['activated_key'] ) && 'Activated' == $extension['activated_key'] ) {
 				$ext['activated_key']              = 'Activated';
 			}
 			$return[ $extension['slug'] ] = $ext;
 		}
 		return $return;
+	}
+
+	public static function getExtensionsPageSlug() {
+		$currentExtensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
+
+		if ( ! is_array( $currentExtensions ) || empty( $currentExtensions ) ) {
+			return array();
+		}
+		$pageSlugs = array();
+		foreach ( $currentExtensions as $extension ) {
+			$pageSlugs[] = $extension['page'];
+		}
+
+		return $pageSlugs;
 	}
 
 	public static function genApiPassword( $length = 12, $special_chars = true, $extra_special_chars = false ) {
@@ -405,17 +423,13 @@ class MainWP_Extensions {
 				MainWP_Extensions::getClassName(),
 				'grabapikeyExtension',
 			) );
-			MainWP_Post_Handler::Instance()->addAction( 'mainwp_extension_save_api_keys', array(
+			MainWP_Post_Handler::Instance()->addAction( 'mainwp_extension_saveextensionapilogin', array(
 				MainWP_Extensions::getClassName(),
 				'saveExtensionsApiLogin',
 			) );
-            MainWP_Post_Handler::Instance()->addAction( 'mainwp_extension_getpurchased', array(
+			add_action( 'wp_ajax_mainwp_extension_getpurchased', array(
 				MainWP_Extensions::getClassName(),
-				'getPurchasedExtensions',
-			) );
-            MainWP_Post_Handler::Instance()->addAction( 'mainwp_extension_activatelicense', array(
-				MainWP_Extensions::getClassName(),
-				'activateLicense',
+				'getPurchasedExts',
 			) );
 			MainWP_Post_Handler::Instance()->addAction( 'mainwp_extension_downloadandinstall', array(
 				MainWP_Extensions::getClassName(),
@@ -457,7 +471,8 @@ class MainWP_Extensions {
 		MainWP_Post_Handler::Instance()->secure_request( 'mainwp_extension_activate' );
 		$api       = dirname( $_POST['slug'] );
 		$api_key   = trim( $_POST['key'] );
-		$result    = MainWP_Api_Manager::instance()->license_key_activation( $api, $api_key );
+		$api_email = trim( $_POST['email'] );
+		$result    = MainWP_Api_Manager::instance()->license_key_activation( $api, $api_key, $api_email );
 		//die( json_encode( $result ) );
         wp_send_json( $result );
 	}
@@ -472,14 +487,16 @@ class MainWP_Extensions {
 
 
 	public static function grabapikeyExtension() {
+		$username = trim( $_POST['username'] );
+		$password = trim( $_POST['password'] );
 		$api      = dirname( $_POST['slug'] );
-		$result   = MainWP_Api_Manager::instance()->grab_license_key( $api );
+		$result   = MainWP_Api_Manager::instance()->grab_license_key( $api, $username, $password );
 		//die( json_encode( $result ) );
         wp_send_json( $result );
 	}
 
 	public static function saveExtensionsApiLogin() {
-		MainWP_Post_Handler::Instance()->secure_request('mainwp_extension_save_api_keys');
+		MainWP_Post_Handler::Instance()->secure_request('mainwp_extension_saveextensionapilogin');
 		$api_login_history = isset( $_SESSION['api_login_history'] ) ? $_SESSION['api_login_history'] : array();
 
 		$new_api_login_history = array();
@@ -500,17 +517,16 @@ class MainWP_Extensions {
 			$_SESSION['api_login_history'] = $new_api_login_history;
 		}
 
-		$public_key = trim( $_POST['public_key'] );
-		$token = trim( $_POST['token'] );
-
-		if ( ( $public_key == '' ) && ( $token == '' ) ) {
-			MainWP_Utility::update_option( 'mainwp_extensions_api_public_key', $public_key );
-			MainWP_Utility::update_option( 'mainwp_extensions_api_token', $token );
+		$username = trim( $_POST['username'] );
+		$password = trim( $_POST['password'] );
+		if ( ( $username == '' ) && ( $password == '' ) ) {
+			MainWP_Utility::update_option( 'mainwp_extensions_api_username', $username );
+			MainWP_Utility::update_option( 'mainwp_extensions_api_password', $password );
 			die( json_encode( array( 'saved' => 1 ) ) );
 		}
 		$result = array();
 		try {
-            $test = MainWP_Api_Manager::instance()->test_verify_api( $public_key, $token );
+			$test = MainWP_Api_Manager::instance()->test_login_api( $username, $password );
 		} catch ( Exception $e ) {
 			$return['error'] = $e->getMessage();
 			die( json_encode( $return ) );
@@ -522,13 +538,16 @@ class MainWP_Extensions {
 		}
 
 		$result     = json_decode( $test, true );
-		$save_login = ( isset( $_POST['saveKeys'] ) && ( $_POST['saveKeys'] == '1' ) ) ? true : false;
+		$save_login = ( isset( $_POST['saveLogin'] ) && ( $_POST['saveLogin'] == '1' ) ) ? true : false;
 		$return     = array();
 		if ( is_array( $result ) ) {
 			if ( isset( $result['success'] ) && $result['success'] ) {
 				if ( $save_login ) {
-					MainWP_Utility::update_option( 'mainwp_extensions_api_public_key', $public_key );
-					MainWP_Utility::update_option( 'mainwp_extensions_api_token', $token );
+					$enscrypt_u = MainWP_Api_Manager_Password_Management::encrypt_string( $username );
+					$enscrypt_p = MainWP_Api_Manager_Password_Management::encrypt_string( $password );
+					MainWP_Utility::update_option( 'mainwp_extensions_api_username', $enscrypt_u );
+					MainWP_Utility::update_option( 'mainwp_extensions_api_password', $enscrypt_p );
+					MainWP_Utility::update_option( 'mainwp_extensions_api_save_login', true );
 				}
 				$return['result'] = 'SUCCESS';
 			} else if ( isset( $result['error'] ) ) {
@@ -537,10 +556,11 @@ class MainWP_Extensions {
 		}
 
 		if ( ! $save_login ) {
-			MainWP_Utility::update_option( 'mainwp_extensions_api_public_key', '' );
-			MainWP_Utility::update_option( 'mainwp_extensions_api_token', '' );
-
+			MainWP_Utility::update_option( 'mainwp_extensions_api_username', '' );
+			MainWP_Utility::update_option( 'mainwp_extensions_api_password', '' );
+			MainWP_Utility::update_option( 'mainwp_extensions_api_save_login', '' );
 		}
+
 		die( json_encode( $return ) );
 	}
 
@@ -551,16 +571,18 @@ class MainWP_Extensions {
 
 
 	public static function testExtensionsApiLogin() {
-		$public_key = get_option( 'mainwp_extensions_api_public_key' );
-		$token = get_option( 'mainwp_extensions_api_token' );
+		$enscrypt_u = get_option( 'mainwp_extensions_api_username' );
+		$enscrypt_p = get_option( 'mainwp_extensions_api_password' );
+		$username   = ! empty( $enscrypt_u ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_u ) : '';
+		$password   = ! empty( $enscrypt_p ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_p ) : '';
 
-		if ( ( $public_key == '' ) || ( $token == '' ) ) {
-			die( json_encode( array( 'error' => __( 'API Keys Invalid.', 'mainwp' ) ) ) );
+		if ( ( $username == '' ) || ( $password == '' ) ) {
+			die( json_encode( array( 'error' => __( 'Login Invalid.', 'mainwp' ) ) ) );
 		}
 
 		$result = array();
 		try {
-			$test = MainWP_Api_Manager::instance()->test_verify_api( $public_key, $token );
+			$test = MainWP_Api_Manager::instance()->test_login_api( $username, $password );
 		} catch ( Exception $e ) {
 			$return['error'] = $e->getMessage();
 			die( json_encode( $return ) );
@@ -591,20 +613,16 @@ class MainWP_Extensions {
 	}
 
 
-	public static function getPurchasedExtensions() {
+	public static function getPurchasedExts() {
 
-		$public_key = get_option( 'mainwp_extensions_api_public_key' );
-		$token = get_option( 'mainwp_extensions_api_token' );
+		$username = trim( $_POST['username'] );
+		$password = trim( $_POST['password'] );
 
-		if ( ( $public_key == '' ) || ( $token == '' ) ) {
-			die( json_encode( array( 'error' => __( 'API Keys Invalid.', 'mainwp' ) ) ) );
+		if ( ( $username == '' ) || ( $password == '' ) ) {
+			die( json_encode( array( 'error' => __( 'Invalid login.', 'mainwp' ) ) ) );
 		}
 
-        $data = MainWP_Api_Manager_Key::instance()->get_purchasedsoftware( array(
-			'public_key'	 => $public_key,
-			'token'	 => $token
-		) );
-
+		$data   = MainWP_Api_Manager::instance()->get_purchased_software( $username, $password );
 		$result = json_decode( $data, true );
 		$return = array();
 
@@ -645,7 +663,7 @@ class MainWP_Extensions {
 				foreach( $installing_exts as $product_id => $product_info ) {
 					$item_html = '';
 					$error = '';
-					$software_title = isset( $all_available_exts[ $product_id ] ) ? $all_available_exts[ $product_id ]['title'] : '';
+					$software_title = isset( $all_available_exts[ $product_id ] ) ? $all_available_exts[ $product_id ]['title'] : $product_id;
 
 					if ( isset( $product_info['package'] ) && !empty( $product_info['package'] ) ) {
 

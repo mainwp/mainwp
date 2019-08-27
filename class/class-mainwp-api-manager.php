@@ -2,10 +2,9 @@
 
 class MainWP_Api_Manager {
 
-	private $api_url = 'https://mainwp.com/edd-mainwp-api/';
-	private $license_url = 'https://mainwp.com/';
-
-	public $domain = '';
+	private $upgrade_url		 = 'https://mainwp.com/';
+	private $renew_license_url	 = 'https://mainwp.com/my-account';
+	public $domain				 = '';
 
 	/**
 	 * @var The single instance of the class
@@ -47,13 +46,11 @@ class MainWP_Api_Manager {
 		return $this->domain;
 	}
 
-	public function get_license_url() {
-		return apply_filters( 'mainwp_api_manager_upgrade_url', $this->license_url );
+	public function getUpgradeUrl() {
+		$url = apply_filters( 'mainwp_api_manager_upgrade_url', $this->upgrade_url );
+		return $url;
 	}
 
-    public function get_api_url() {
-		return $this->api_url;
-	}
 
     public function get_activation_info( $ext_key ) {
         if (empty($ext_key))
@@ -72,37 +69,26 @@ class MainWP_Api_Manager {
         return MainWP_Utility::update_option( $ext_key . '_APIManAdder', $info );
 	}
 
-	public function license_key_activation( $api, $api_key ) {
+	public function license_key_activation( $api, $api_key, $api_email ) {
 
 		$options = $this->get_activation_info( $api );
 
 		if ( !is_array( $options ) ) {
 			$options = array();
 		}
-
 		$current_api_key			 = isset( $options[ 'api_key' ] ) ? $options[ 'api_key' ] : '';
+		$current_activation_email	 = isset( $options[ 'activation_email' ] ) ? $options[ 'activation_email' ] : '';
 		$activation_status			 = isset( $options[ 'activated_key' ] ) ? $options[ 'activated_key' ] : '';
 
-		if ( $activation_status == 'Deactivated' || $activation_status == '' || $api_key == '' || $current_api_key != $api_key ) {
-			if ( $current_api_key !== '' && $current_api_key != $api_key ) {
-
-                $reset = false;
-
-                $params = array(
-                    'license'	 => $current_api_key,
-                    'item_id'	 => $options[ 'product_id' ],
-                    'url'		 => $this->domain,
-                );
-
-                $response = MainWP_Api_Manager_Key::instance()->deactivate( $params ); // Deactivate the current license key before activating the new license key
-
-                $license_data = json_decode( wp_remote_retrieve_body( $response ) );
-
-                // $license_data->license will be either "deactivated" or "failed"
-                if( is_object( $license_data ) && $license_data->license == 'deactivated' ) {
-                    $reset = true;
-                }
-
+		if ( $activation_status == 'Deactivated' || $activation_status == '' || $api_key == '' || $api_email == '' || $current_api_key != $api_key ) {
+			if ( $current_api_key != $api_key ) {
+				$reset = $this->replace_license_key( array(
+					'email'			 => $current_activation_email,
+					'licence_key'	 => $current_api_key,
+					'product_id'	 => $options[ 'product_id' ],
+					'instance'		 => $options[ 'instance_id' ],
+					'platform'		 => $this->domain,
+				) );
 				if ( !$reset ) {
 					return array( 'error' => __( 'The license could not be deactivated.', 'mainwp' ) );
 				}
@@ -110,22 +96,25 @@ class MainWP_Api_Manager {
 
 			$return = array();
 
-            // data to send in our API request
-            $api_params = array(
-                'license'    => $api_key,
-                'item_id'  => $options[ 'product_id' ], // the id of our product in EDD
-                'url'        => $this->domain
+			$args = array(
+				'email'				 => $api_email,
+				'licence_key'		 => $api_key,
+				'product_id'		 => $options[ 'product_id' ],
+				'instance'			 => $options[ 'instance_id' ],
+				'software_version'	 => $options[ 'software_version' ],
+				'platform'			 => $this->domain,
             );
 
-			$response = MainWP_Api_Manager_Key::instance()->activate( $api_params );
+			$activate_results = json_decode( MainWP_Api_Manager_Key::instance()->activate( $args ), true );
 
-            $activate_results = json_decode( wp_remote_retrieve_body( $response ) );
-
-			if ( is_object($activate_results) && $activate_results->license == 'valid' && $activate_results->item_id == $options[ 'product_id' ] ) {
+			if ( $activate_results[ 'activated' ] == true ) {
 				$return[ 'result' ]					 = 'SUCCESS';
-				$return[ 'message' ]				 = __( 'The extension has been activated. ', 'mainwp' );
+				$mess								 = isset( $activate_results[ 'message' ] ) ? $activate_results[ 'message' ] : '';
+				$return[ 'message' ]				 = __( 'The extension has been activated. ', 'mainwp' ) . $mess;
 				$options[ 'api_key' ]				 = $api_key;
+				$options[ 'activation_email' ]		 = $api_email;
 				$options[ 'activated_key' ]			 = 'Activated';
+				$options[ 'deactivate_checkbox' ]	 = 'off';
 			}
 
 			if ( $activate_results == false ) {
@@ -137,11 +126,11 @@ class MainWP_Api_Manager {
 					$return[ 'error' ] = __( 'Connection failed to the License Key API server. Try again later.', 'mainwp' );
 				}
 				$options[ 'api_key' ]			 = '';
+				$options[ 'activation_email' ]	 = '';
 				$options[ 'activated_key' ]		 = 'Deactivated';
 			}
 
-			$error				 = $this->check_response_for_api_errors( $response );
-
+			$error				 = $this->check_response_for_api_errors( $activate_results );
 			if ( !empty( $error ) )
 				$return[ 'error' ]	 = $error;
 
@@ -150,6 +139,15 @@ class MainWP_Api_Manager {
 			return $return;
 		} else {
 			return array( 'result' => 'SUCCESS' );
+		}
+	}
+
+	// Deactivate the current license key before activating the new license key
+	private function replace_license_key( $args ) {
+		$reset = MainWP_Api_Manager_Key::instance()->deactivate( $args ); // reset license key activation
+
+		if ( $reset == true ) {
+			return true;
 		}
 	}
 
@@ -162,38 +160,30 @@ class MainWP_Api_Manager {
 
 		$activation_status			 = isset( $options[ 'activated_key' ] ) ? $options[ 'activated_key' ] : '';
 		$current_api_key			 = isset( $options[ 'api_key' ] ) ? $options[ 'api_key' ] : '';
+		$current_activation_email	 = isset( $options[ 'activation_email' ] ) ? $options[ 'activation_email' ] : '';
 
         $return = array();
 
-		if ( $activation_status == 'Activated' && $current_api_key != '' ) {
-
-			$response = MainWP_Api_Manager_Key::instance()->deactivate( array(
-				'license'	 => $current_api_key,
-				'item_id'	 => $options[ 'product_id' ],
-				'url'		 => $this->domain,
+		if ( $activation_status == 'Activated' && $current_api_key != '' && $current_activation_email != '' ) {
+			$activate_results = MainWP_Api_Manager_Key::instance()->deactivate( array(
+				'email'			 => $current_activation_email,
+				'licence_key'	 => $current_api_key,
+				'product_id'	 => $options[ 'product_id' ],
+				'instance'		 => $options[ 'instance_id' ],
+				'platform'		 => $this->domain,
 			) ); // reset license key activation
 
-            $activate_results = json_decode( wp_remote_retrieve_body( $response ) );
-
-            if ( is_object($activate_results) &&  $activate_results->license == 'deactivated' ) {
+			$activate_results = json_decode( $activate_results, true );
+            if ( $activate_results['deactivated'] == true || (isset( $activate_results['activated'] ) && $activate_results['activated'] == 'inactive')) {
 				$options[ 'api_key' ]				 = '';
+				$options[ 'activation_email' ]		 = '';
 				$options[ 'activated_key' ]			 = 'Deactivated';
-//				$options[ 'deactivate_checkbox' ]	 = 'on';
+				$options[ 'deactivate_checkbox' ]	 = 'on';
 				$return[ 'result' ]					 = 'SUCCESS';
-				$return[ 'activations_remaining' ]	 = '';
+				$return[ 'activations_remaining' ]	 = $activate_results[ 'activations_remaining' ];
 			}
 
-            $error = '';
-
-            // make sure the response came back okay
-            if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-                if ( is_wp_error( $response ) ) {
-                    $error = $response->get_error_message();
-                } else {
-                    $error = __( 'An error occurred, please try again.' );
-                }
-            }
-
+			$error				 = $this->check_response_for_api_errors( $activate_results );
 			if ( !empty( $error ) )
 				$return[ 'error' ]	 = $error;
 
@@ -205,73 +195,101 @@ class MainWP_Api_Manager {
 		return array( 'result' => 'SUCCESS' );
 	}
 
-    public function test_verify_api( $public_key, $token ) {
-		if ( empty( $public_key ) || empty( $token ) ) {
+	public function test_login_api( $username, $password ) {
+		if ( empty( $username ) || empty( $password ) ) {
 			return false;
 		}
-		return MainWP_Api_Manager_Key::instance()->testverifyapi( $public_key, $token );
+
+		return MainWP_Api_Manager_Key::instance()->testloginapi( array(
+			'username'	 => $username,
+			'password'	 => $password,
+		) );
 	}
 
-	public function purchase_software( $productId, $public_key, $token ) {
-		return MainWP_Api_Manager_Key::instance()->purchasesoftware( $productId, $public_key, $token );
+	public function purchase_software( $username, $password, $productId ) {
+		if ( empty( $username ) || empty( $password ) ) {
+			return false;
 	}
 
-    public function grab_license_key_by_id( $item_id ) {
-        $public_key = get_option( 'mainwp_extensions_api_public_key' );
-		$token = get_option( 'mainwp_extensions_api_token' );
-        return json_decode( MainWP_Api_Manager_Key::instance()->grabapikey( $item_id, $public_key, $token  ), true );
+		return MainWP_Api_Manager_Key::instance()->purchasesoftware( array(
+			'username'	 => $username,
+			'password'	 => $password,
+			'product_id' => $productId
+		) );
     }
 
-	public function grab_license_key( $api ) {
+	public function get_purchased_software( $username, $password, $productId = "", $no_register = false ) {
+		if ( empty( $username ) || empty( $password ) ) {
+			return false;
+		}
 
-        $public_key = get_option( 'mainwp_extensions_api_public_key' );
-		$token = get_option( 'mainwp_extensions_api_token' );
+		return MainWP_Api_Manager_Key::instance()->getpurchasedsoftware( array(
+			'username'	 => $username,
+			'password'	 => $password,
+			'product_id' => $productId,
+			'noauth'	 => $no_register ? 1 : 0
+		) );
+	}
+
+	public function grab_license_key( $api, $username, $password ) {
 
 		$options = $this->get_activation_info( $api );
-
 		if ( !is_array( $options ) ) {
 			$options = array();
 		}
-
 		$activation_status = isset( $options[ 'activated_key' ] ) ? $options[ 'activated_key' ] : '';
+
 		$api_key	 = isset( $options[ 'api_key' ] ) ? $options[ 'api_key' ] : '';
+		$api_email	 = isset( $options[ 'activation_email' ] ) ? $options[ 'activation_email' ] : '';
 
-        if ( $activation_status == 'Deactivated' || $activation_status == '' || $api_key == '' ) {
+		if ( $activation_status == 'Deactivated' || $activation_status == '' || $api_key == '' || $api_email == '' ) {
 			$return = array();
-			if ( $public_key != '' && $token != '' ) {
-                $item_id = isset( $options[ 'product_id' ] ) ? intval($options[ 'product_id' ]) : 0;
+			if ( $username != '' && $password != '' ) {
 
-				$activate_results				 = json_decode( MainWP_Api_Manager_Key::instance()->grabapikey( $item_id, $public_key, $token  ), true );
+				$args = array(
+					'username'			 => $username,
+					'password'			 => $password,
+					'product_id'		 => isset( $options[ 'product_id' ] ) ? $options[ 'product_id' ] : '',
+					'instance'			 => isset( $options[ 'instance_id' ] ) ? $options[ 'instance_id' ] : '',
+					'software_version'	 => isset( $options[ 'software_version' ] ) ? $options[ 'software_version' ] : '',
+					'platform'			 => $this->domain,
+				);
+
+				$activate_results				 = json_decode( MainWP_Api_Manager_Key::instance()->grabapikey( $args ), true );
                 $options[ 'api_key' ]			 = '';
+				$options[ 'activation_email' ]	 = '';
 				$options[ 'activated_key' ]		 = 'Deactivated';
 
-				if ( is_array( $activate_results ) && isset( $activate_results[ 'license' ] ) && ( $activate_results[ 'license' ] == 'valid' ) && !empty( $activate_results[ 'license_key' ] ) ) {
+				if ( is_array( $activate_results ) && isset( $activate_results[ 'activated' ] ) && ( $activate_results[ 'activated' ] == true ) && !empty( $activate_results[ 'api_key' ] ) ) {
 					$return[ 'result' ]					 = 'SUCCESS';
-					$return[ 'message' ]				 = __( 'Extension activated. ', 'mainwp' );
-					$options[ 'api_key' ]				 = $return[ 'api_key' ]				 = $activate_results[ 'license_key' ];
+					$mess								 = isset( $activate_results[ 'message' ] ) ? $activate_results[ 'message' ] : '';
+					$return[ 'message' ]				 = __( 'Extension activated. ', 'mainwp' ) . $mess;
+					$options[ 'api_key' ]				 = $return[ 'api_key' ]				 = $activate_results[ 'api_key' ];
+					$options[ 'activation_email' ]		 = $return[ 'activation_email' ]		 = $activate_results[ 'activation_email' ];
 					$options[ 'activated_key' ]			 = 'Activated';
+					$options[ 'deactivate_checkbox' ]	 = 'off';
 				} else {
 
 					if ( $activate_results == false ) {
 						$return[ 'error' ] = __( 'Connection with the API license server could not be established. Please, try again later.', "mainwp" );
 					} else if ( isset( $activate_results[ 'error' ] ) ) {
 						$return[ 'error' ] = $activate_results[ 'error' ];
-					} else if ( empty( $activate_results[ 'license_key' ] ) ) {
+					} else if ( empty( $activate_results[ 'api_key' ] ) ) {
 						$return[ 'error' ] = __( 'License key could not be found.', 'mainwp' );
 					} else {
 						$return[ 'error' ] = __( 'An undefined error occurred. Please try again later or contact MainWP Support.', 'mainwp' );
 					}
 				}
 
-//				$error				 = $this->check_response_for_api_errors( $activate_results );
-//				if ( !empty( $error ) )
-//					$return[ 'error' ]	 = $error;
+				$error				 = $this->check_response_for_api_errors( $activate_results );
+				if ( !empty( $error ) )
+					$return[ 'error' ]	 = $error;
 
 				$this->set_activation_info( $api, $options );
 
 				return $return;
 			} else {
-				return array( 'error' => __( 'API Keys are required in order to grab extensions license.', 'mainwp' ) );
+				return array( 'error' => __( 'Username and Password are required in order to grab extensions API keys.', 'mainwp' ) );
 			}
 		}
 
@@ -279,110 +297,42 @@ class MainWP_Api_Manager {
 	}
 
 	public function check_response_for_api_errors( $response ) {
+		if ( !is_array( $response ) || !isset( $response[ 'code' ] ) )
+			return false;
 
-        $message = '';
-
-        // make sure the response came back okay
-        if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-
-            if ( is_wp_error( $response ) ) {
-                $message = $response->get_error_message();
-            } else {
-                $message = __( 'An error occurred, please try again.', 'mainwp' );
-            }
-
-        } else {
-
-            $license_data = json_decode( wp_remote_retrieve_body( $response ) );
-
-            if ( false === $license_data->success ) {
-
-                switch( $license_data->error ) {
-
-                    case 'expired' :
-
-                        $message = sprintf(
-                            __( 'Your license key expired on %s.', 'mainwp' ),
-                            date_i18n( get_option( 'date_format' ), strtotime( $license_data->expires, current_time( 'timestamp' ) ) )
-                        );
+		$error = '';
+		switch ( $response[ 'code' ] ) {
+			case '100':
+				$error	 = __( 'Invalid request! Please try to deactivate and re-activate the extension on the WP > Plugins page and try to activate API key again.', 'mainwp' );
                         break;
-
-                    case 'disabled' :
-                    case 'revoked' :
-
-                        $message = __( 'Your license key has been disabled.', 'mainwp' );
+			case '102':
+				$error	 = __( 'Activation error!  Download permission for this product could not be found.', 'mainwp' );
                         break;
-
-                    case 'missing' :
-
-                        $message = __( 'Invalid license.', 'mainwp' );
+			case '101':
+				$error	 = __( 'Activation error! Matching API key could not be found.', 'mainwp' );
                         break;
-
-                    case 'invalid' :
-                    case 'site_inactive' :
-
-                        $message = __( 'Your license is not active for this URL.', 'mainwp'  );
+			case '103':
+			case '104':
+				$error	 = __( 'Invalid Instance ID! Please try to deactivate and re-activate the extension on the WP > Plugins page and try to activate API key again.', 'mainwp' );
                         break;
-
-                    case 'item_name_mismatch' :
-
-                        $message = __( 'This appears to be an invalid license key.', 'mainwp' );
+			case '105':
+			case '106':
+				$error	 = isset( $response[ 'error' ] ) ? $response[ 'error' ] : '';
+				$info	 = isset( $response[ 'additional info' ] ) ? ' ' . $response[ 'additional info' ] : '';
+				$error	 = $error . $info;
                         break;
-
-                    case 'no_activations_left':
-
-                        $message = __( 'Your license key has reached its activation limit.', 'mainwp' );
+			case '900' :
+				$error	 = __( 'Your membership is on hold. Reactivate your membership to activate MainWP extensions', 'mainwp' );
                         break;
-
-                    default :
-
-                        $message = __( 'An error occurred, please try again.', 'mainwp' );
+			case '901' :
+				$error	 = __( 'Your membership has been canceled. Reactivate your membership to activate MainWP extensions', 'mainwp' );
                         break;
+			case '902' :
+				$error	 = __( 'Your membership has expired. Reactivate your membership to activate MainWP extensions', 'mainwp' );
+				break;
                 }
-
+		return $error;
             }
-
-        }
-
-        return $message;
-
-
-//		if ( !is_array( $response ) || !isset( $response[ 'code' ] ) )
-//			return false;
-//
-//		$error = '';
-//		switch ( $response[ 'code' ] ) {
-//			case '100':
-//				$error	 = __( 'Invalid request! Please try to deactivate and re-activate the extension on the WP > Plugins page and try to activate API key again.', 'mainwp' );
-//				break;
-//			case '102':
-//				$error	 = __( 'Activation error!  Download permission for this product could not be found.', 'mainwp' );
-//				break;
-//			case '101':
-//				$error	 = __( 'Activation error! Matching API key could not be found.', 'mainwp' );
-//				break;
-//			case '103':
-//			case '104':
-//				$error	 = __( 'Invalid Instance ID! Please try to deactivate and re-activate the extension on the WP > Plugins page and try to activate API key again.', 'mainwp' );
-//				break;
-//			case '105':
-//			case '106':
-//				$error	 = isset( $response[ 'error' ] ) ? $response[ 'error' ] : '';
-//				$info	 = isset( $response[ 'additional info' ] ) ? ' ' . $response[ 'additional info' ] : '';
-//				$error	 = $error . $info;
-//				break;
-//			case '900' :
-//				$error	 = __( 'Your membership is on hold. Reactivate your membership to activate MainWP extensions', 'mainwp' );
-//				break;
-//			case '901' :
-//				$error	 = __( 'Your membership has been canceled. Reactivate your membership to activate MainWP extensions', 'mainwp' );
-//				break;
-//			case '902' :
-//				$error	 = __( 'Your membership has expired. Reactivate your membership to activate MainWP extensions', 'mainwp' );
-//				break;
-//		}
-//		return $error;
-	}
 
 	public function check_response_for_intall_errors( $response, $software_title = "" ) {
 		if ( !is_array( $response ) || !isset( $response[ 'error' ] ) )
@@ -399,11 +349,24 @@ class MainWP_Api_Manager {
 				return __( 'Your membership has expired. Reactivate your membership to install MainWP extensions.', 'mainwp' );
 				break;
 			default : //download_revoked
-				return sprintf( __( 'Download permission for %s has been revoked possibly due to a license key or membership expiring. You can reactivate or purchase a license key from your account <a href="https://mainwp.com/my-account" target="_blank">dashboard</a>.', 'mainwp' ), $software_title );
+				return sprintf( __( 'Download permission for %s has been revoked possibly due to a license key or membership expiring. You can reactivate or purchase a license key from your account <a href="%s" target="_blank">dashboard</a>.', 'mainwp' ), $software_title, $this->renew_license_url );
 				break;
 		}
 		return false;
 	}
+
+	public function update_check( $args ) {
+		$args[ 'domain' ] = $this->domain;
+
+		return MainWP_Api_Manager_Plugin_Update::instance()->update_check( $args );
+	}
+
+	public function request_plugin_information( $args ) {
+		$args[ 'domain' ] = $this->domain;
+
+		return MainWP_Api_Manager_Plugin_Update::instance()->request( $args );
+	}
+
 }
 
 // End of class

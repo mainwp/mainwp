@@ -511,14 +511,7 @@ class MainWP_DB {
 				$this->wpdb->suppress_errors( $suppress );
 			}
 		}
-
-
-        if ( version_compare( $currentVersion, '8.5', '<' ) ) {
-            delete_option( 'mainwp_extensions_api_username' );
-			delete_option( 'mainwp_extensions_api_password' );
-            delete_option( 'mainwp_extensions_api_save_login' );
         }
-	}
 
 	public function getFirstSyncedSite( $userId = null ) {
 		if ( ( $userId == null ) && MainWP_System::Instance()->isMultiUser() ) {

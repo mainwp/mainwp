@@ -377,6 +377,7 @@ class MainWP_UI {
 
 	public static function render_header_actions() {
 		$sites_count = MainWP_DB::Instance()->getWebsitesCount();
+		$website_id = '';
 		ob_start();
 		?>
 			<button class="ui button green <?php echo ( $sites_count > 0 ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>"><?php esc_html_e( 'Sync Dashboard with Child Sites', 'mainwp' ); ?></button>
@@ -393,6 +394,10 @@ class MainWP_UI {
           </div>
         </div>
 			</div>
+			<?php if ( isset( $_GET['dashboard'] ) ) : ?>
+				<?php $website_id = $_GET['dashboard']; ?>
+				<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><i class="sign in icon"></i></a>
+			<?php endif; ?>
 			<?php if ( ( isset( $_GET['page'] ) && $_GET[ 'page' ] == 'mainwp_tab' ) || isset( $_GET['dashboard'] ) ) : ?>
 			<a class="ui button basic icon" onclick="jQuery( '#mainwp-overview-screen-options-modal' ).modal( 'show' ); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_html_e( 'Screen Options', 'mainwp' ); ?>">
 			  <i class="cog icon"></i>

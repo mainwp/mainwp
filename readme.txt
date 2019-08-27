@@ -154,7 +154,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 4.0 - 8-26-19 =
+= 4.0 - 8-27-19 =
 * Fixed: various functionality problems
 * Fixed: various performance problems
 * Fixed: various cosmetic problems

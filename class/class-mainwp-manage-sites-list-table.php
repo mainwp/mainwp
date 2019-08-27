@@ -449,8 +449,6 @@ class MainWP_Manage_Sites_List_Table {
 
 		$where = null;
 
-        error_log($site_status);
-
 //        if ( isset( $_REQUEST[ 'status' ] ) && ( $_REQUEST[ 'status' ] != '' ) && ( $_REQUEST[ 'status' ] != 'all' )) {
 		if (  $site_status != '' &&  $site_status != 'all' ) {
             if ( $site_status == 'connected' ) {

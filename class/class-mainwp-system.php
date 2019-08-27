@@ -53,12 +53,18 @@ class MainWP_System {
 		$this->load_all_options();
 		$this->update();
 		$this->plugin_slug		 = plugin_basename( $mainwp_plugin_file );
+		list ( $t1, $t2 ) = explode( '/', $this->plugin_slug );
+		$this->slug				 = str_replace( '.php', '', $t2 );
 
 		if ( is_admin() ) {
 			include_once( ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php' ); //Version information from wordpress
 			$pluginData				 = get_plugin_data( $mainwp_plugin_file );
 			$this->current_version	 = $pluginData[ 'Version' ];
 			$currentVersion			 = get_option( 'mainwp_plugin_version' );
+			
+			if ( !empty( $currentVersion ) && version_compare( $currentVersion, '4.0', '<' ) && version_compare( $this->current_version, '4.0', '>=' ) ) {
+				add_action( 'mainwp_before_header', array( &$this, 'mainwp_4_update_notice' ) );
+			}
 			
 			if ( empty( $currentVersion ) ) {
 				MainWP_Utility::update_option( 'mainwp_getting_started', 'started' );
@@ -100,7 +106,7 @@ class MainWP_System {
 
 		// Define the alternative response for information checking
 		add_filter( 'pre_set_site_transient_update_plugins', array( &$this, 'pre_check_update_custom' ) );
-		add_filter( 'plugins_api', array( &$this, 'plugins_api_extension' ), 10, 3 );
+		add_filter( 'plugins_api', array( &$this, 'check_info' ), 10, 3 );
 
 		$this->metaboxes = new MainWP_Meta_Boxes();
 
@@ -337,12 +343,12 @@ class MainWP_System {
 				'mainwp_use_favicon',
 				'mainwp_wp_cron',
 				'mainwp_wpcreport_extension',
-                                'mainwp_daily_digest_plain_text',
-                                'mainwp_enable_managed_cr_for_wc',
-                                'mainwp_hide_update_everything',
-                                'mainwp_show_usersnap',
-                                'mainwp_number_overview_columns'
-                );
+				'mainwp_daily_digest_plain_text',
+				'mainwp_enable_managed_cr_for_wc',
+				'mainwp_hide_update_everything',
+				'mainwp_show_usersnap',
+				'mainwp_number_overview_columns'
+			);
 
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";
 			foreach ( $options as $option ) {
@@ -441,7 +447,7 @@ class MainWP_System {
 			}
 		}
 
-		$notice_html = sprintf( __( "You have a MainWP Extension that does not have an active License Key entered. This means you will not receive updates or support. Please visit the %sExtensions%s page and enter your License Keys.", 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' );
+		$notice_html = sprintf( __( "You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %sExtensions%s page and enter your API.", 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' );
 		?>
 		<style type="text/css">
 			tr[data-plugin="<?php echo esc_attr($plugin_slug); ?>"] {
@@ -752,8 +758,7 @@ class MainWP_System {
 		return $transient;
 	}
 
-	public function plugins_api_extension( $false, $action, $arg ) {
-
+	public function check_info( $false, $action, $arg ) {
 		if ( 'plugin_information' !== $action ) {
 			return $false;
 		}
@@ -762,15 +767,17 @@ class MainWP_System {
 			return $false;
 		}
 
-        $extensions	 = MainWP_Extensions::loadExtensions();
+		if ( $arg->slug === $this->slug ) {
+			return $false;
+		}
 
-        if (isset($extensions[$arg->slug])) {
-            $ext = $extensions[$arg->slug];
-            if ( isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
+		$result		 = MainWP_Extensions::getSlugs();
+		$am_slugs	 = $result[ 'am_slugs' ];
 
-                $api_slug	 = dirname( $ext[ 'slug' ] );
-                $info		 = MainWP_API_Settings::getUpgradeInformation( $api_slug );
-
+		if ( $am_slugs != '' ) {
+			$am_slugs = explode( ',', $am_slugs );
+			if ( in_array( $arg->slug, $am_slugs ) ) {
+				$info = MainWP_API_Settings::getPluginInformation( $arg->slug );
 				if ( is_object( $info ) && property_exists( $info, 'sections' ) ) {
 					if ( !is_array( $info->sections ) || !isset( $info->sections[ 'changelog' ] ) || empty( $info->sections[ 'changelog' ] ) ) {
 						$exts_data = MainWP_Extensions_View::getAvailableExtensions();
@@ -782,9 +789,8 @@ class MainWP_System {
 					}
                     return $info;
 				}
-
+				return $info;
             }
-
         }
 
 		return $false;
@@ -2174,8 +2180,9 @@ class MainWP_System {
         if ( is_array( $info ) && isset( $info['product_id'] ) && isset( $info['software_version'] ) ) {
             $act_info = array(
                 'product_id' => $info['product_id'],
-                'version' => $info['software_version'],
+                'software_version' => $info['software_version'],
                 'activated_key' => 'Deactivated',
+                'instance_id' => MainWP_Api_Manager_Password_Management::generate_password( 12, false )
             );
             MainWP_Api_Manager::instance()->set_activation_info($ext_key, $act_info);
         }

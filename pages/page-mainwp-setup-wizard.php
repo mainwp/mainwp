@@ -584,9 +584,13 @@ class MainWP_Setup_Wizard {
 			$ext_slug		 = $this->backup_extensions[ $backup_method ][ 'slug' ];
 		}
 
-		$public_key = get_option( 'mainwp_extensions_api_public_key' );
-		$token = get_option( 'mainwp_extensions_api_token' );
-
+		$username	 = $password	 = "";
+		if ( get_option( "mainwp_extensions_api_save_login" ) == true ) {
+			$enscrypt_u	 = get_option( 'mainwp_extensions_api_username' );
+			$enscrypt_p	 = get_option( 'mainwp_extensions_api_password' );
+			$username	 = !empty( $enscrypt_u ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_u ) : "";
+			$password	 = !empty( $enscrypt_p ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_p ) : "";
+		}
 
 		$error	 = get_option( 'mwp_setup_error_purchase_extension' );
 		$message = get_option( 'mwp_setup_message_purchase_extension' );
@@ -616,13 +620,13 @@ class MainWP_Setup_Wizard {
 				<h4 class="ui dividing header"><?php _e( 'MainWP Account Details', 'mainwp' ); ?></h4>
 				<div class="ui info message"><?php echo __( "This Extension if free, however it requires a free MainWP account to receive updates and support.", "mainwp" ); ?></div>
 				<div class="field">
-					<label><?php _e( 'Enter your MainWP API keys registered at mainwp.com', 'mainwp' ); ?></label>
+					<label><?php _e( 'Enter your Username & Password registered at mainwp.com', 'mainwp' ); ?></label>
 					<div class="two fields">
 						<div class="field">
-							<input type="text" placeholder="<?php esc_attr_e( 'Public Key', 'mainwp' ); ?>" id="mwp_setup_purchase_publickey" name="mwp_setup_purchase_publickey" value="<?php echo esc_attr( $public_key ); ?>" />
+							<input type="text" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" id="mwp_setup_purchase_username" name="mwp_setup_purchase_username" value="<?php echo esc_attr( $username ); ?>" />
 						</div>
 						<div class="field">
-							<input type="text" placeholder="<?php esc_attr_e( 'Token', 'mainwp' ); ?>" id="mwp_setup_purchase_token" name="mwp_setup_purchase_token" value="<?php echo esc_attr( $token ); ?>" />
+							<input type="password" placeholder="<?php esc_attr_e( 'Password', 'mainwp' ); ?>" id="mwp_setup_purchase_passwd" name="mwp_setup_purchase_passwd" value="<?php echo esc_attr( $password ); ?>" />
 						</div>
 					</div>
 				</div>
@@ -693,21 +697,23 @@ class MainWP_Setup_Wizard {
 		}
 
 		check_admin_referer( 'mwp-setup' );
+		$username	 = !empty( $_POST[ 'mwp_setup_purchase_username' ] ) ? trim( $_POST[ 'mwp_setup_purchase_username' ] ) : '';
+		$password	 = !empty( $_POST[ 'mwp_setup_purchase_passwd' ] ) ? trim( $_POST[ 'mwp_setup_purchase_passwd' ] ) : '';
 
-		$public_key	 = !empty( $_POST[ 'mwp_setup_purchase_publickey' ] ) ? trim( $_POST[ 'mwp_setup_purchase_publickey' ] ) : '';
-		$token	 = !empty( $_POST[ 'mwp_setup_purchase_token' ] ) ? trim( $_POST[ 'mwp_setup_purchase_token' ] ) : '';
-
-		if ( ($public_key == '') && ($token == '') ) {
-			MainWP_Utility::update_option( "mainwp_extensions_api_public_key", '' );
-			MainWP_Utility::update_option( "mainwp_extensions_api_token", '' );
+		if ( ($username == '') && ($password == '') ) {
+			MainWP_Utility::update_option( "mainwp_extensions_api_username", $username );
+			MainWP_Utility::update_option( "mainwp_extensions_api_password", $password );
 		} else {
-			MainWP_Utility::update_option( "mainwp_extensions_api_public_key", $public_key );
-			MainWP_Utility::update_option( "mainwp_extensions_api_token", $token );
+			$enscrypt_u	 = MainWP_Api_Manager_Password_Management::encrypt_string( $username );
+			$enscrypt_p	 = MainWP_Api_Manager_Password_Management::encrypt_string( $password );
+			MainWP_Utility::update_option( "mainwp_extensions_api_username", $enscrypt_u );
+			MainWP_Utility::update_option( "mainwp_extensions_api_password", $enscrypt_p );
+			MainWP_Utility::update_option( "mainwp_extensions_api_save_login", true );
 		}
 		$product_id = !empty( $_POST[ 'mwp_setup_purchase_product_id' ] ) ? sanitize_text_field( $_POST[ 'mwp_setup_purchase_product_id' ] ) : '';
 
-		if ( ( $public_key == '' ) || ( $token == '' ) ) {
-			update_option( 'mwp_setup_error_purchase_extension', __( 'Incorrect MainWP API Keys', 'mainwp' ) );
+		if ( ( $username == '' ) || ( $password == '' ) ) {
+			update_option( 'mwp_setup_error_purchase_extension', __( 'Incorrect login information', 'mainwp' ) );
 			return;
 		}
 
@@ -715,7 +721,7 @@ class MainWP_Setup_Wizard {
 			return array( 'error' => __( 'Invalid Product ID.', 'mainwp' ) );
 		}
 
-		$data			 			 = MainWP_Api_Manager::instance()->purchase_software( $product_id, $public_key, $token  );
+		$data			 			 = MainWP_Api_Manager::instance()->purchase_software( $username, $password, $product_id );
 		$result			 		 = json_decode( $data, true );
 
 		$undefined_error = false;
@@ -755,21 +761,18 @@ class MainWP_Setup_Wizard {
 
 		$product_id = trim( $_POST[ 'productId' ] );
 
-		$public_key = get_option( 'mainwp_extensions_api_public_key' );
-		$token = get_option( 'mainwp_extensions_api_token' );
+		$enscrypt_u = get_option( 'mainwp_extensions_api_username' );
+		$enscrypt_p = get_option( 'mainwp_extensions_api_password' );
+		$username = !empty( $enscrypt_u ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_u ) : "";
+		$password = !empty( $enscrypt_p ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_p ) : "";
 
-		if ( ( $public_key == '' ) || ( $token == '' ) ) {
-			die( json_encode( array( 'error' => __( 'API Keys Invalid.', 'mainwp' ) ) ) );
+		if ( ( $username == '' ) || ( $password == '' ) ) {
+			die( json_encode( array( 'error' => __( 'Invalid login. Please check your username and password.', 'mainwp' ) ) ) );
 		}
 
-        $data = MainWP_Api_Manager_Key::instance()->get_purchasedsoftware( array(
-			'public_key'	 => $public_key,
-			'token'	 => $token,
-			'product_id' => $product_id
-		) );
+		$data = MainWP_Api_Manager::instance()->get_purchased_software( $username, $password, $product_id );
 
 		$result	 = json_decode( $data, true );
-
 		$return	 = array();
 		if ( is_array( $result ) ) {
 			if ( isset( $result[ 'success' ] ) && $result[ 'success' ] ) {
@@ -846,8 +849,12 @@ class MainWP_Setup_Wizard {
 	}
 
 	public static function ajax_grab_api_key() {
+		$enscrypt_u = get_option( 'mainwp_extensions_api_username' );
+		$enscrypt_p = get_option( 'mainwp_extensions_api_password' );
+		$username = !empty( $enscrypt_u ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_u ) : "";
+		$password = !empty( $enscrypt_p ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_p ) : "";
 		$api = isset( $_POST[ 'slug' ] ) ? dirname( $_POST[ 'slug' ] ) : '';
-		$result = MainWP_Api_Manager::instance()->grab_license_key( $api );
+		$result = MainWP_Api_Manager::instance()->grab_license_key( $api, $username, $password );
          wp_send_json( $result );
 	}
 

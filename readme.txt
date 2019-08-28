@@ -170,7 +170,6 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Updates Overview widget simplified
 * Updated: the Updates page redesigned to provide easier updates management
 * Updated: redesigned Sites table
-* Updated: extensions license authentication to support EDD licensing system
 * Updated: disabled the "Managed Client Reports for WooCommerce" settings page by default and added the option to enable it
 * Updated: extensions icons
 * Updated: notifications texts

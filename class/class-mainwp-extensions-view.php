@@ -82,6 +82,21 @@ class MainWP_Extensions_View {
 		?>
 		<div id="mainwp-manage-extensions" class="ui alt segment">
 			<div class="mainwp-main-content">
+			<?php $deactivated_exts = get_transient( 'mainwp_transient_deactivated_incomtible_exts' ); ?>
+			<?php if ( $deactivated_exts && is_array( $deactivated_exts ) && count( $deactivated_exts ) > 0 ) : ?>
+				<?php delete_transient( 'mainwp_transient_deactivated_incomtible_exts' ); ?>
+				<div class="ui yellow message">
+					<div class="header"><?php _e( 'Important Note', 'mainwp' ); ?></div>
+					<p><?php echo __( 'MainWP Dashboard 4.0 or newer requires Extensions 4.0 or newer. MainWP will automatically deactivate older versions of MainWP Extensions in order to prevent compatibility problems.', 'mainwp' ); ?></p>
+					<div class="header"><?php _e( 'Steps to Update Extensions', 'mainwp' ); ?></div>
+					<div class="ui list">
+						<div class="item">1. <?php _e( 'Go to the WP Admin > Pulgins > Installed Plugins page', 'mainwp' ); ?></div>
+						<div class="item">2. <?php _e( 'Delete Version 3 Extensions (extensions older than version 4) from your MainWP Dashboard', 'mainwp' ); ?></div>
+						<div class="item">3. <?php _e( 'Go back to the MainWP > Extensions page and use the Install Extensions button', 'mainwp' ); ?></div>
+					</div>
+					<p><?php echo __( 'This process does not affect your extensions settings.', 'mainwp' ); ?></p>
+				</div>
+			<?php endif; ?>
 			<?php if ( count( $extensions ) == 0 ) : ?>
 				<div class="ui secondary segment">
 					<h2 class="header"><?php _e( 'What are extensions?', 'mainwp' ); ?></h2>

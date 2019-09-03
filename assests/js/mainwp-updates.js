@@ -64,7 +64,7 @@ updatesoverview_upgrade = function ( id, obj ) {
     var msg =  __( 'Are you sure you want to update the Wordpress core files on the selected site?' );
     mainwp_confirm(msg, function(){
         return mainwp_updatesoverview_checkBackups( sitesToUpdate, siteNames );
-    });
+    }, false, true);
 };
 
 /** Update bulk **/
@@ -176,7 +176,7 @@ updatesoverview_wordpress_global_upgrade_all = function ( groupId ) {
         }
       } );
       var confirmMsg = __( 'You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __( 'WordPress Core' ), sitesList.join( '<br />' ) );
-      mainwp_confirm( confirmMsg,_callback );
+      mainwp_confirm( confirmMsg,_callback, false, true );
     }
     return false;
   }
@@ -382,7 +382,7 @@ updatesoverview_translations_global_upgrade_all = function ( groupId )
                 }
             } );
             var confirmMsg = __( 'You are about to update %1 on the following site(s):\n%2?', 'translations', sitesList.join( ', ' ) );
-            mainwp_confirm(confirmMsg, _callback );
+            mainwp_confirm(confirmMsg, _callback, false, true );
         }
         return false;
     }
@@ -463,7 +463,7 @@ updatesoverview_translations_upgrade_all = function ( slug, translationName )
                 }
             } );
             var confirmMsg = __( 'You are about to update the %1 translation on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', translationName, sitesList.join( '<br />' ) );
-            mainwp_confirm(confirmMsg, _callback );
+            mainwp_confirm(confirmMsg, _callback, false, true );
         }
         return false;
     }
@@ -811,7 +811,7 @@ updatesoverview_plugins_global_upgrade_all = function ( groupId )
                 }
             } );
             var confirmMsg = __( 'You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __( 'plugins' ), sitesList.join( '<br />' ) );
-            mainwp_confirm(confirmMsg, _callback );
+            mainwp_confirm(confirmMsg, _callback, false, true );
         }
         return false;
     }
@@ -894,7 +894,7 @@ updatesoverview_plugins_upgrade_all = function ( slug, pluginName )
                 }
             } );
             var confirmMsg = __( 'You are about to update the %1 plugin on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', pluginName, sitesList.join( '<br />' ) );
-            mainwp_confirm(confirmMsg, _callback );
+            mainwp_confirm(confirmMsg, _callback, false, true );
         }
         return false;
     }
@@ -1257,7 +1257,7 @@ updatesoverview_themes_global_upgrade_all = function ( groupId )
                 }
             } );
             var confirmMsg = __( 'You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __( 'themes' ), sitesList.join( '<br />' ) );
-            mainwp_confirm(confirmMsg, _callback );
+            mainwp_confirm(confirmMsg, _callback, false, true );
         }
         return false;
     }
@@ -1335,7 +1335,7 @@ updatesoverview_themes_upgrade_all = function ( slug, themeName )
                 }
             } );
             var confirmMsg = __( 'You are about to update the %1 theme on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', themeName, sitesList.join( '<br />' ) );
-            mainwp_confirm(confirmMsg, _callback );
+            mainwp_confirm(confirmMsg, _callback, false, true );
         }
         return false;
     }
@@ -1782,7 +1782,7 @@ updatesoverview_global_upgrade_all = function ( which )
 
         var confirmMsg = __( 'You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', whichUpdates , sitesList.join( '<br />' ) );
 
-        mainwp_confirm(confirmMsg, _callback );
+        mainwp_confirm(confirmMsg, _callback, false, true );
         return false;
     } else {
         return false;

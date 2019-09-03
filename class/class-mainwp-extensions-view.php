@@ -252,7 +252,7 @@ class MainWP_Extensions_View {
 					<div class="actions">
 						<a class="ui basic button" id="mainwp-check-all-ext" href="#"><?php esc_html_e( 'Select all', 'mainwp' ); ?></a>
 						<a class="ui basic button" id="mainwp-uncheck-all-ext" href="#"><?php esc_html_e( 'Select none', 'mainwp' ); ?></a>
-						<div class="ui cancel button"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></div>
+						<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 						<input type="button" class="ui green button" id="mainwp-extensions-installnow" value="<?php esc_attr_e( 'Install', 'mainwp' ); ?>">
 					</div>
 				</div>

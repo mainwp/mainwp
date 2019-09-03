@@ -403,7 +403,12 @@ mainwp_extension_grab_purchased = function ( pObj, retring ) {
           var undefError = false;
           if ( response ) {
               if ( response.result == 'SUCCESS' ) {
-        jQuery( '#mainwp-get-purchased-extensions-modal' ).modal('show');
+                    jQuery( '#mainwp-get-purchased-extensions-modal' ).modal({
+                        closable: false,
+                        onHide: function() {
+                            location.href = 'admin.php?page=Extensions';
+                        }
+                    }).modal('show');
                     jQuery( '#mainwp-get-purchased-extensions-modal' ).find( '.content' ).html( response.data );
                     statusEl.hide();
               } else if ( response.error ) {

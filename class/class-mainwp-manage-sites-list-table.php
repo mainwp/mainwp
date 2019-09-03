@@ -264,27 +264,21 @@ class MainWP_Manage_Sites_List_Table {
   function no_items() {
 		?>
 		<div class="ui center aligned segment">
-		  <i class="globe massive icon"></i>
+		<?php if ( MainWP_DB::Instance()->getWebsitesCount( null, true ) == 0 ) : ?>
+			<i class="globe massive icon"></i>
 			<div class="ui header">
-		    <?php echo __( 'No websites connected to the MainWP Dashboard yet.', 'mainwp' ); ?>
-		  </div>
+				<?php echo __( 'No websites connected to the MainWP Dashboard yet.', 'mainwp' ); ?>
+			</div>
 			<a href="<?php echo admin_url( 'admin.php?page=managesites&do=new' ); ?>" class="ui big green button"><?php echo __( 'Connect Your WordPress Sites', 'mainwp' ); ?></a>
-			<?php if ( MainWP_DB::Instance()->getWebsitesCount() > 0 ) : ?>
+
 			<div class="ui sub header">
 				<?php printf( __( 'If all your child sites are missing from your MainWP Dashboard, please check this %shelp document%s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/all-child-sites-disappeared-from-my-mainwp-dashboard/" target="_blank">', '</a>' ); ?>
 			</div>
-			<?php endif; ?>
+		<?php else : ?>
+		<?php echo __( 'No websites found.', 'mainwp' ); ?>
+		<?php endif; ?>
 		</div>
 		<?php
-		//$out = __( 'No sites found.', 'mainwp' );
-		//if ( !isset( $_GET[ 's' ] ) ) {
-		//	$out .= '<br/><br/><em>' . __( 'If sites are missing from your display but you know those sites are connected to your dashboard be sure to check the Status drop down filter and adjust it to your needs.', 'mainwp' ) . '</em>';
-		//	if ( MainWP_DB::Instance()->getWebsitesCount() > 0 ) {
-		//		$out .= '<br/><br/>';
-		//		$out .= '<em>' . sprintf( __( 'If all your child sites are missing from your MainWP Dashboard, please check this %shelp document%s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/all-child-sites-disappeared-from-my-mainwp-dashboard/" target="_blank">', '</a>' ) . '</em>';
-		//	}
-		//}
-		//echo $out;
 	}
 
     public function has_items() {
@@ -384,12 +378,12 @@ class MainWP_Manage_Sites_List_Table {
                                             + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
                                             + (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
                                     END ' . ( $_GET[ 'order' ] == 'asc' ? 'asc' : 'desc' );
-                    } else if ( ( isset( $_REQUEST[ 'orderby' ] ) && ( $_REQUEST[ 'orderby' ] == 'last_post' ) ) ) {
+                    } else if ( ( isset( $_GET[ 'orderby' ] ) && ( $_GET[ 'orderby' ] == 'last_post' ) ) ) {
                         $orderby = 'wp_sync.last_post_gmt ' . ( $_GET[ 'order' ] == 'asc' ? 'asc' : 'desc' );
                     }
                 }
         }
-
+		
         if ( ! $optimize ) {
            $perPage	 = 9999; // paging by datatable js
            $start = 0;
@@ -702,7 +696,7 @@ public function display( $optimize = true ) {
 		</tr>
 		</thead>
 		<?php if ( ! $optimize ) { ?>
-	  <tbody id="mainwp-manage-sites-body-table">
+		<tbody id="mainwp-manage-sites-body-table">
 			<?php $this->display_rows_or_placeholder(); ?>
 		</tbody>
 		<?php } ?>
@@ -756,7 +750,7 @@ public function display( $optimize = true ) {
                 },
 				"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
                 "stateSave":  true,
-								"scrollX": true,
+				"scrollX": true,
                 "pagingType": "full_numbers",
                 "order": [],
                 "columnDefs": [ { "targets": 'no-sort', "orderable": false } ],

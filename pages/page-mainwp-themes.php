@@ -786,7 +786,8 @@ class MainWP_Themes {
 			mainwp_do_not_have_permissions( __( 'install themes', 'mainwp' ) );
 			return;
 		}
-        $favorites_enabled = apply_filters( 'mainwp_install_theme_favorites_enabled', false );
+        //$favorites_enabled = apply_filters( 'mainwp_install_theme_favorites_enabled', false );
+		$favorites_enabled = is_plugin_active( 'mainwp-favorites-extension/mainwp-favorites-extension.php' );
 		?>
 		<div class="ui alt segment" id="mainwp-install-themes">
 			<div class="mainwp-main-content">
@@ -815,7 +816,7 @@ class MainWP_Themes {
         <div class="ui segment">
           <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
           <div class="mainwp-upload-theme">
-            <?php MainWP_Install_Bulk::renderUpload( 'Themes' ); ?>
+            <?php MainWP_Install_Bulk::renderUpload( 'theme' ); ?>
           </div>
           <div id="themes-loading" class="ui large text loader"><?php esc_html_e( 'Loading Themes...', 'mainwp' ); ?></div>
             <form id="theme-filter" method="post">

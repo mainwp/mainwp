@@ -597,13 +597,15 @@ class MainWP_DB {
 	}
 
 	//Database actions
-	public function getWebsitesCount( $userId = null ) {
+	public function getWebsitesCount( $userId = null, $all_access = false ) {
 		if ( ( $userId == null ) && MainWP_System::Instance()->isMultiUser() ) {
 			global $current_user;
 			$userId = $current_user->ID;
 		}
 		$where	 = ( $userId == null ? '' : ' wp.userid = ' . $userId );
-		$where	 .= $this->getWhereAllowAccessSites( 'wp' );
+		if ( ! $all_access ) {
+			$where	 .= $this->getWhereAllowAccessSites( 'wp' );
+		}
 		$qry	 = 'SELECT COUNT(wp.id) FROM ' . $this->tableName( 'wp' ) . ' wp WHERE 1 ' . $where;
 
 		return $this->wpdb->get_var( $qry );

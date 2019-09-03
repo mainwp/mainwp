@@ -649,22 +649,24 @@ class MainWP_Post {
       jQuery('#mainwp-posts-table').DataTable({
 				"colReorder" : true,
 				"stateSave":  true,
-        "pagingType": "full_numbers",
-        "order": [],
-        "columnDefs": [ {
-          "targets": 'no-sort',
-          "orderable": false
-        } ],
-        "preDrawCallback": function( settings ) {
+				"pagingType": "full_numbers",
+				"order": [],
+				"scrollY" : 500,
+				"scrollX" : true,
+				"columnDefs": [ {
+					"targets": 'no-sort',
+					"orderable": false
+				} ],
+				"preDrawCallback": function( settings ) {
 				<?php
-				if ( ! $cached ) { // it is ajax request, so init ui dropdown
-		    ?>
-		    jQuery('#mainwp-posts-table .ui.dropdown').dropdown();
-		    jQuery('#mainwp-posts-table .ui.checkbox').checkbox();
-		    <?php
+					if ( ! $cached ) { // it is ajax request, so init ui dropdown
+						?>
+						jQuery('#mainwp-posts-table .ui.dropdown').dropdown();
+						jQuery('#mainwp-posts-table .ui.checkbox').checkbox();
+						<?php
+					}
+					?>
 				}
-				?>
-        }
       });
     } );
     </script>
@@ -915,7 +917,7 @@ class MainWP_Post {
 
 					<td class="website column-website"><a href="<?php echo esc_url($website->url); ?>" target="_blank"><?php echo esc_html($website->url); ?></a></td>
 					<td class="right aligned">
-						<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
+						<div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999">
 							<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 							<div class="menu">
 								<?php if ( $post[ 'status' ] == 'future' || $post[ 'status' ] == 'draft' ) : ?>

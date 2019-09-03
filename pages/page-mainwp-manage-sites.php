@@ -122,23 +122,11 @@ class MainWP_Manage_Sites {
 		$i = 1;
 		if ( isset( $_REQUEST[ 'do' ] ) ) {
 			if ( 'new' == $_REQUEST[ 'do' ] ) {
-				$sync_extensions_options = apply_filters( 'mainwp-sync-extensions-options', array() );
-				$working_extensions		 = MainWP_Extensions::getExtensions();
-				if ( count( $working_extensions ) > 0 && count( $sync_extensions_options ) > 0 ) {
-					add_meta_box(
-					'mwp-newsite-contentbox-' . $i++, '<i class="cog icon"></i> ' . __( 'Extensions Settings Synchronization', 'mainwp' ), array( 'MainWP_Manage_Sites_View', 'renderSyncExtsSettings' ), 'mainwp_postboxes_managesites_addnew', 'normal', 'core'
-					);
-				}
 				return;
 			}
-		} else if ( isset( $_GET[ 'backupid' ] ) && MainWP_Utility::ctype_digit( $_GET[ 'backupid' ] ) ) {
+		} else if ( isset( $_GET[ 'id' ] ) || isset( $_GET[ 'scanid' ] ) || isset( $_GET[ 'backupid' ] ) || isset( $_GET[ 'updateid' ] ) ) {			
 			return;
-		} else if ( isset( $_GET[ 'id' ] ) && MainWP_Utility::ctype_digit( $_GET[ 'id' ] ) ) {
-			$websiteid = $_GET[ 'id' ];
-
-			do_action( 'mainwp_postboxes_on_load_site_page', $websiteid );
-			return;
-		}
+		} 
 
         add_filter('mainwp_header_actions_right', array( 'MainWP_Manage_Sites', 'screen_options'), 10, 2);
         self::$sitesTable = new MainWP_Manage_Sites_List_Table();
@@ -360,16 +348,20 @@ class MainWP_Manage_Sites {
 						    </div>
 						  </div>
 						</div>
-
+						
+						<?php						
+						MainWP_Manage_Sites_View::renderSyncExtsSettings();
+						?>
+						
 						<h3 class="ui dividing header">
 							<?php esc_html_e( 'Advanced Options', 'mainwp' ); ?>
 							<div class="sub header"><?php esc_html_e( 'Use advanced options when needed. In most cases, you can leave the default values.', 'mainwp' ); ?></div>
 						</h3>
 						<div class="ui grid field">
-              <label class="six wide column middle aligned"><?php esc_html_e( 'Verify SSL certificate (optional)', 'mainwp' ); ?></label>
-              <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Do you want to verify SSL certificate.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                  <input type="checkbox" name="mainwp_managesites_verify_certificate" id="mainwp_managesites_verify_certificate" checked="true" />
-              </div>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Verify SSL certificate (optional)', 'mainwp' ); ?></label>
+							<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Do you want to verify SSL certificate.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<input type="checkbox" name="mainwp_managesites_verify_certificate" id="mainwp_managesites_verify_certificate" checked="true" />
+							</div>
 						</div>
 
 						<div class="ui grid field">
@@ -387,31 +379,33 @@ class MainWP_Manage_Sites {
 							</div>
 						</div>
 						<!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
-            <input style="display:none" type="text" name="fakeusernameremembered"/>
-            <input style="display:none" type="password" name="fakepasswordremembered"/>
-            <div class="ui grid field">
-              <label class="six wide column middle aligned"><?php esc_html_e( 'HTTP username (optional)', 'mainwp' ); ?></label>
-            	<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP username here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <div class="ui left labeled input">
-                  <input type="text" id="mainwp_managesites_add_http_user" name="mainwp_managesites_add_http_user" value="" autocomplete="new-http-user" />
-                </div>
-              </div>
-            </div>
-            <div class="ui grid field">
-              <label class="six wide column middle aligned"><?php esc_html_e( 'HTTP password (optional)', 'mainwp' ); ?></label>
-              <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP password here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <div class="ui left labeled input">
-                  <input type="password" id="mainwp_managesites_add_http_pass" name="mainwp_managesites_add_http_pass" value="" autocomplete="new-password" />
-                </div>
-              </div>
-            </div>
-            <div class="ui grid field">
-              <label class="six wide column middle aligned"><?php esc_html_e( 'Force IPv4 (optional)', 'mainwp' ); ?></label>
-              <div class="six wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'Do you want to force IPv4 for this child site?', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="checkbox" name="mainwp_managesites_force_use_ipv4" id="mainwp_managesites_force_use_ipv4" />
+							<input style="display:none" type="text" name="fakeusernameremembered"/>
+							<input style="display:none" type="password" name="fakepasswordremembered"/>
+							<div class="ui grid field">
+							  <label class="six wide column middle aligned"><?php esc_html_e( 'HTTP username (optional)', 'mainwp' ); ?></label>
+								<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP username here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<div class="ui left labeled input">
+								  <input type="text" id="mainwp_managesites_add_http_user" name="mainwp_managesites_add_http_user" value="" autocomplete="new-http-user" />
+								</div>
+							  </div>
 							</div>
+							<div class="ui grid field">
+							  <label class="six wide column middle aligned"><?php esc_html_e( 'HTTP password (optional)', 'mainwp' ); ?></label>
+							  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP password here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<div class="ui left labeled input">
+								  <input type="password" id="mainwp_managesites_add_http_pass" name="mainwp_managesites_add_http_pass" value="" autocomplete="new-password" />
+								</div>
+							  </div>
+							</div>
+							<div class="ui grid field">
+							  <label class="six wide column middle aligned"><?php esc_html_e( 'Force IPv4 (optional)', 'mainwp' ); ?></label>
+							  <div class="six wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'Do you want to force IPv4 for this child site?', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<input type="checkbox" name="mainwp_managesites_force_use_ipv4" id="mainwp_managesites_force_use_ipv4" />
+							</div>							  
 						</div>
 
+						<?php do_action( 'mainwp-manage-sites-edit', false ); ?>
+							
 						<div class="ui divider"></div>
 						<input type="button" name="mainwp_managesites_test" id="mainwp_managesites_test" class="ui button basic green big" value="<?php _e( 'Test Connection', 'mainwp' ); ?>"/>
 						<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big right floated" value="<?php _e( 'Add Site', 'mainwp' ); ?>" />
@@ -1672,7 +1666,7 @@ class MainWP_Manage_Sites {
 				$website = MainWP_DB::Instance()->getWebsiteById( $siteId );
 				self::_reconnectSite( $website );
 			} else {
-				throw new Exception( __( 'Invalid request! Please try again. If the process keeps failig, please contact the MainWP support.', 'mainwp' ) );
+				throw new Exception( __( 'Invalid request! Please try again. If the process keeps failing, please contact the MainWP support.', 'mainwp' ) );
 			}
 		} catch ( Exception $e ) {
 			die( 'ERROR ' . $e->getMessage() );

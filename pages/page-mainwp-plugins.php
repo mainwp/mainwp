@@ -831,7 +831,7 @@ public static function render() {
         <div class="ui segment">
           <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
           <div class="mainwp-upload-plugin" style="display:none;">
-            <?php MainWP_Install_Bulk::renderUpload( 'Plugins' ); ?>
+            <?php MainWP_Install_Bulk::renderUpload( 'plugin' ); ?>
           </div>
           <div class="mainwp-browse-plugins">
             <form id="plugin-filter" method="post"><?php self::$pluginsTable->display(); ?></form>

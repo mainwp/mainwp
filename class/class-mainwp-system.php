@@ -1,10 +1,10 @@
 <?php
 
-ini_set( 'display_errors', true );
-error_reporting( E_ALL | E_STRICT );
+//ini_set( 'display_errors', true );
+//error_reporting( E_ALL | E_STRICT );
 
-//@ini_set( 'display_errors', false );
-//@error_reporting( 0 );
+@ini_set( 'display_errors', false );
+@error_reporting( 0 );
 
 define( 'MAINWP_API_VALID', 'VALID' );
 define( 'MAINWP_API_INVALID', 'INVALID' );
@@ -15,7 +15,7 @@ const MAINWP_VIEW_PER_GROUP = 2;
 
 class MainWP_System {
 
-	public static $version = '4.0';
+	public static $version = '4.0.1';
 	//Singleton
 	private static $instance = null;
 	private $upgradeVersionInfo = null;
@@ -347,7 +347,8 @@ class MainWP_System {
 				'mainwp_enable_managed_cr_for_wc',
 				'mainwp_hide_update_everything',
 				'mainwp_show_usersnap',
-				'mainwp_number_overview_columns'
+				'mainwp_number_overview_columns',
+				'mainwp_disable_update_confirmations'
 			);
 
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";
@@ -1906,15 +1907,20 @@ class MainWP_System {
 		if ( !MainWP_Menu::is_disable_menu_item( 2, 'ServerInformation' ) ) {
 			MainWP_Server_Information::initMenuSubPages();
 		}
-
+		
         if ( self::isMainWP_Pages() ) {
+			$disabled_confirm = get_option( 'mainwp_disable_update_confirmations', 0 );			
             ?>
+			<input type="hidden" id="mainwp-disable-update-confirmations" value="<?php echo intval($disabled_confirm); ?>">						
+		
             <script type="text/javascript">
                 jQuery( document ).ready( function ()
                 {
                     jQuery( '#adminmenu #collapse-menu' ).hide();
                 } );
             </script>
+			
+			
             <?php
         }
 
@@ -2868,7 +2874,9 @@ class MainWP_System {
 		<div class="ui tiny modal" id="mainwp-modal-confirm">
 			<div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
 			<div class="content">
-			</div>
+				<div class="content-massage"></div>
+				<div class="ui mini yellow message hidden update-confirm-notice" ><?php echo sprintf( __( 'To disable update confirmations, go to the %sSettings%s page and disable the "Disable update confirmations" option', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
+			</div>			
 			<div class="actions">
 				<div class="ui cancel button"><?php _e('Cancel', 'mainwp'); ?></div>
 				<div class="ui positive right labeled icon button"><?php _e('Yes', 'mainwp'); ?><i class="checkmark icon"></i></div>

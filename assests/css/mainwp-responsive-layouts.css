@@ -97,6 +97,11 @@
 		display: block !important;
 	}
 
+	#widget-overview .ui.grid .two.column.row .column {
+		width: 100% !important;
+		text-align: center !important;
+	}
+
 	/*--- Sites ---*/
 
 	#mainwp-add-new-buttons {

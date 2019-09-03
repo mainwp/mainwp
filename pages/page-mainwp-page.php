@@ -467,6 +467,8 @@ class MainWP_Page {
         "colReorder" : true,
         "stateSave":  true,
         "pagingType": "full_numbers",
+		"scrollY" : 500,
+		"scrollX" : true,
         "order": [],
         "columnDefs": [ {
           "targets": 'no-sort',
@@ -662,7 +664,7 @@ class MainWP_Page {
 						<a href="<?php echo $website->url; ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $website->url; ?></a>
 					</td>
           <td class="right aligned">
-						<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
+						<div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999">
 							<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 							<div class="menu">
                 <?php if ( $page[ 'status' ] == 'future' || $page[ 'status' ] == 'draft' ) : ?>

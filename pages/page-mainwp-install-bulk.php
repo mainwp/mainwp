@@ -33,8 +33,11 @@ class MainWP_Install_Bulk {
 	}
 
 	//Renders the upload sub part
-	public static function renderUpload( $title ) {
-		$type = ( $title == 'Plugins' ) ? 'plugin' : 'theme';
+	public static function renderUpload( $type ) {
+		$title = ( $type == 'plugin' ) ? 'Plugins' : 'Themes';		
+		$favorites_enabled = is_plugin_active( 'mainwp-favorites-extension/mainwp-favorites-extension.php' );		
+		$cls = $favorites_enabled ? 'favorites-extension-enabled ' : '';
+		$cls .= ( $type == 'plugin' ) ? 'qq-upload-plugins' : '';
 		?>
 		<div class="ui secondary center aligned padded segment">
 			<h2 class="ui icon header">
@@ -45,7 +48,7 @@ class MainWP_Install_Bulk {
 				</div>
 			</h2>
 			<div class="ui divider"></div>
-				<div id="mainwp-file-uploader">
+				<div id="mainwp-file-uploader" class="<?php echo $cls; ?>" >
 					<noscript>
 					<div class="ui message red"><?php _e( 'Please enable JavaScript to use file uploader.', 'mainwp' ); ?></div>
 					</noscript>

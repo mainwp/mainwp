@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.2.2
 Requires PHP: 5.6
-Stable tag: 4.0
+Stable tag: 4.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -153,6 +153,19 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.0.1 - 9-3-19 =
+* Fixed: an issue with incorrect plugin info links
+* Fixed: an issue with clearing and preloading WP Rocket cache
+* Fixed: displaying child sites in the Manage Sites issue on some setups
+* Fixed: the extensions settings synchronization issue
+* Fixed: multiple typos
+* Fixed: multiple cosmetic issues
+* Added: option to disable updates confirmations popups
+* Added: the option to add plugins to favorites after upload
+* Updated: notification in the Manage Sites table when there is no results for selected filters
+* Updated: extensions installation modal logic
+* Updated: multiple text notifications
 
 = 4.0 - 8-27-19 =
 * Fixed: various functionality problems

@@ -274,7 +274,9 @@ class MainWP_Settings {
 				$val = ( !isset( $_POST[ 'mainwp_automaticDailyUpdate' ] ) ? 0 : $_POST[ 'mainwp_automaticDailyUpdate' ] );
 				MainWP_Utility::update_option( 'mainwp_automaticDailyUpdate', $val );
 				$val = ( !isset( $_POST[ 'mainwp_show_language_updates' ] ) ? 0 : 1 );
-				MainWP_Utility::update_option( 'mainwp_show_language_updates', $val );
+				MainWP_Utility::update_option( 'mainwp_show_language_updates', $val );				
+				$val = ( !isset( $_POST[ 'mainwp_disable_update_confirmations' ] ) ? 0 : 1 );
+				MainWP_Utility::update_option( 'mainwp_disable_update_confirmations', $val );				
 				$val = ( !isset( $_POST[ 'mainwp_backup_before_upgrade' ] ) ? 0 : 1 );
 				MainWP_Utility::update_option( 'mainwp_backup_before_upgrade', $val );
 				$val = ( !isset( $_POST[ 'mainwp_backup_before_upgrade_days' ] ) ? 7 : $_POST[ 'mainwp_backup_before_upgrade_days' ] );
@@ -489,6 +491,12 @@ class MainWP_Settings {
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Show WordPress language updates', 'mainwp' ); ?></label>
 						  <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to manage Translation updates', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="checkbox" name="mainwp_show_language_updates" id="mainwp_show_language_updates" <?php echo( $mainwp_show_language_updates == 1 ? 'checked="true"' : '' ); ?>/>
+							</div>
+						</div>
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Disable update confirmations', 'mainwp' ); ?></label>
+						  <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Disable update confirmations.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+								<input type="checkbox" name="mainwp_disable_update_confirmations" id="mainwp_check_http_response" <?php echo( ( get_option( 'mainwp_disable_update_confirmations', 0 ) == 1 ) ? 'checked="true"' : '' ); ?>/>
 							</div>
 						</div>
 						<div class="ui grid field">

@@ -76,7 +76,7 @@ class MainWP_UI {
 			  <a class="item active" data-tab="mainwp-select-sites"><?php esc_html_e( 'Sites', 'mainwp' ); ?></a>
 			  <a class="item" data-tab="mainwp-select-groups"><?php esc_html_e( 'Groups', 'mainwp' ); ?></a>
         <?php if ( $staging_enabled ) : ?>
-        <a class="item" data-tab="mainwp-select-stagging-sites"><?php esc_html_e( 'Stagging', 'mainwp' ); ?></a>
+        <a class="item" data-tab="mainwp-select-staging-sites"><?php esc_html_e( 'Staging', 'mainwp' ); ?></a>
         <?php endif; ?>
       </div>
     </div>
@@ -136,9 +136,9 @@ class MainWP_UI {
 		if ( $staging_enabled ) :
 			$websites	= MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), $is_staging = 'yes' ) );
 			?>
-            <div class="ui tab" data-tab="mainwp-select-stagging-sites" select-by="stagging">
+            <div class="ui tab" data-tab="mainwp-select-staging-sites" select-by="staging">
 			<div id="mainwp-select-sites-body">
-				<div class="ui relaxed divided list" id="mainwp-select-stagging-sites-list">
+				<div class="ui relaxed divided list" id="mainwp-select-staging-sites-list">
 				<?php if ( !$websites ): ?>
 						<h2 class="ui icon header">
 							<i class="folder open outline icon"></i>
@@ -405,7 +405,7 @@ class MainWP_UI {
 			<?php endif; ?>
         <?php
         $actions = apply_filters('mainwp_header_actions_right', '');
-        	if ( !empty( $actions ) )
+		if ( !empty( $actions ) )
           	echo $actions;
         ?>
         <a class="ui button basic icon" id="mainwp-help-sidebar" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_html_e( 'Need help?', 'mainwp' ); ?>">

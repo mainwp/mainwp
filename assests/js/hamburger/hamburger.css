@@ -119,6 +119,17 @@ By @betoayesa.
 	#mainwp-main-menu.open {
 		height:inherit
 	}
+        
+        #mainwp-main-menu.open {
+		height:inherit
+	}
+        
+        .mainwp-nav-menu #mainwp-main-menu .item-wp-admin{
+            position: inherit !important;
+        }        
+        #mainwp-top-header {
+            position: inherit !important;
+        }
 }
 
 

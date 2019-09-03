@@ -179,7 +179,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
             <div class="ui column grid">
                 <div class="column right aligned">
                     <div class="inline field">
-            <?php $this->display_tablenav('bottom'); ?>
+						<?php $this->display_tablenav('bottom'); ?>
                     </div>
                 </div>
             </div>

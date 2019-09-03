@@ -501,7 +501,7 @@ qq.FileUploader = function(o){
           '<div class="left aligned middle aligned column"><span class="qq-upload-file"></span></div>' +
           '<div class="middle aligned column"><span class="qq-upload-size"></span></div>' +
           '<div class="middle aligned column"><span class="qq-upload-spinner"><i class="notched circle loading icon"></i> Uploading...</span><span class="qq-upload-msg-success qq-upload-msg-fail"></span></div>' +
-          '<div class="right aligned middle aligned column"><a class="ui mini button basic red qq-upload-cancel" href="#">Cancel Upload</a> <a class="ui mini button basic red qq-upload-cancel-install" href="#">Remove Item</a></div>' +
+          '<div class="right aligned middle aligned column"><a class="ui mini button basic red qq-upload-cancel" href="#">Cancel Upload</a> <span class="qq-upload-add-to-favorites"><a class="ui mini button basic" href="#">Add to Favorites</a></span> <a class="ui mini button basic red qq-upload-cancel-install" href="#">Remove Item</a></div>' +
         '</div>' +
         '</div>',
 
@@ -517,6 +517,7 @@ qq.FileUploader = function(o){
             size: 'qq-upload-size',
             cancel: 'qq-upload-cancel',
             cancel_install: 'qq-upload-cancel-install',
+            add_to_favor:  'qq-upload-add-to-favorites',
 
             // added to list item when upload completes
             // used in css to hide progress spinner
@@ -538,7 +539,7 @@ qq.FileUploader = function(o){
     this._button = this._createUploadButton(this._find(this._element, 'button'));
 
     this._bindCancelEvent();
-    this._bindCancelInstallEvent();
+    this._bindCancelInstallEvent();    
     this._setupDragDrop();
 };
 
@@ -629,8 +630,11 @@ qq.extend(qq.FileUploader.prototype, {
             //MAINWP custom code
             totalSuccess++;
             this._find(item, 'file').setAttribute('filename', fileName);
-            this._find(item, 'cancel_install').style.display = 'inline';
-            this._find(item, 'success_msg' ).innerHTML = 'Upload completed.';
+            this._find(item, 'cancel_install').style.display = 'inline';                        
+            this._find(item, 'success_msg' ).innerHTML = 'Upload completed.';            
+            if (qq.hasClass(this._element, 'favorites-extension-enabled')){            
+                this._find(item, 'add_to_favor').style.display = 'inline';
+            }
             //MAINWP custom code
         } else {
             qq.addClass(item, this._classes.fail);
@@ -645,6 +649,7 @@ qq.extend(qq.FileUploader.prototype, {
         qq.setText(fileElement, this._formatFileName(fileName));
         this._find(item, 'size').style.display = 'none';
         this._find(item, 'cancel_install').style.display = 'none';
+        this._find(item, 'add_to_favor').style.display = 'none';
 
         this._listElement.appendChild(item);
     },
@@ -692,7 +697,7 @@ qq.extend(qq.FileUploader.prototype, {
                 qq.remove(item);
             }
         });
-    }
+    },    
 });
 
 qq.UploadDropZone = function(o){

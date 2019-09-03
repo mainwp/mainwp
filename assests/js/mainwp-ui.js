@@ -212,8 +212,16 @@ function shake_element( select ) {
 }
 
 
-mainwp_confirm = function( msg, confirmed_callback, cancelled_callback ) {
-    jQuery('#mainwp-modal-confirm .content').html(msg);
+mainwp_confirm = function( msg, confirmed_callback, cancelled_callback, isUpdateConfirm ) {    
+    if (jQuery('#mainwp-disable-update-confirmations').length > 0 && jQuery('#mainwp-disable-update-confirmations').val() == 1) {
+        // do not show confirm box
+        if (confirmed_callback && typeof confirmed_callback == 'function')
+            confirmed_callback();
+        return false;
+    }
+    
+    jQuery('#mainwp-modal-confirm .content-massage').html(msg);
+        
     jQuery('#mainwp-modal-confirm').modal({
         onApprove : function() {
             if (confirmed_callback && typeof confirmed_callback == 'function')
@@ -224,5 +232,10 @@ mainwp_confirm = function( msg, confirmed_callback, cancelled_callback ) {
                 cancelled_callback();
         }
     }).modal('show');
+    
+    if ( typeof isUpdateConfirm !== 'undefined' && isUpdateConfirm ) {    
+        jQuery('#mainwp-modal-confirm .update-confirm-notice').show();
+    }
+    
     return false;
 }

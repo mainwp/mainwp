@@ -330,13 +330,19 @@ class MainWP_Manage_Sites_View {
 		$available_exts_data	 = MainWP_Extensions_View::getAvailableExtensions();
 		if ( count( $working_extensions ) > 0 && count( $sync_extensions_options ) > 0 ) {
 			?>
-			<div class="mainwp-notice mainwp-notice-blue" id="mainwp_addnew_sync_exts_settings_notice"><?php _e( 'You have Extensions installed that require an additional plugin to be installed on this new Child site for the Extension to work correctly. From the list below select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
-			<div><a id="mainwp-check-all-sync-ext" href="javascript:void(0);"><i class="check square outline icon"></i> <?php echo __( 'Select All', 'mainwp' ); ?></a> | <a id="mainwp-uncheck-all-sync-ext" href="javascript:void(0);"><i class="square outline icon"></i> <?php echo __( 'Select None', 'mainwp' ); ?></a></div>
+					
+			<h3 class="ui dividing header">
+				<?php esc_html_e( ' Extensions Settings Synchronization', 'mainwp' ); ?>
+				<div class="sub header"><?php esc_html_e( 'You have Extensions installed that require an additional plugin to be installed on this new Child site for the Extension to work correctly. From the list below select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
+			</h3>
+
 			<?php
 			foreach ( $working_extensions as $slug => $data ) {
 				$dir_slug	 = dirname( $slug );
+				
 				if ( !isset( $sync_extensions_options[ $dir_slug ] ) )
 					continue;
+				
 				$sync_info	 = isset( $sync_extensions_options[ $dir_slug ] ) ? $sync_extensions_options[ $dir_slug ] : array();
 				$ext_name	 = str_replace( "MainWP", "", $data[ 'name' ] );
 				$ext_name	 = str_replace( "Extension", "", $ext_name );
@@ -344,26 +350,50 @@ class MainWP_Manage_Sites_View {
                 $ext_name = esc_html($ext_name);
 
 				$ext_data = isset( $available_exts_data[ dirname( $slug ) ] ) ? $available_exts_data[ dirname( $slug ) ] : array();
+				
 				if ( isset( $ext_data[ 'img' ] ) ) {
 					$img_url = $ext_data[ 'img' ];
 				} else {
 					$img_url = MAINWP_PLUGIN_URL . 'assests/images/extensions/placeholder.png';
 				}
-				$html	 = '<div class="sync-ext-row" slug="' . $dir_slug . '" ext_name = "' . esc_attr( $ext_name ) . '"status="queue">';
-				$html	 .= '<br/><img src="' . $img_url . '" height="24" style="margin-bottom: -5px;">' . '<h3 style="display: inline;">' . $ext_name . '</h3><br/><br/>';
+			  
+			  
+				$html	 = '<div class="ui grid field">';
+				$html	 .= '<div class="sync-ext-row" slug="' . $dir_slug . '" ext_name = "' . esc_attr( $ext_name ) . '"status="queue">';
+				$html	 .= '<h4>' . $ext_name . '</h4>';
+
 				if ( isset( $sync_info[ 'plugin_slug' ] ) && !empty( $sync_info[ 'plugin_slug' ] ) ) {
-					$html .= '<div class="sync-install-plugin" slug="' . esc_attr( dirname( $sync_info[ 'plugin_slug' ] ) ) . '" plugin_name="' . esc_attr( $sync_info[ 'plugin_name' ] ) . '"><label><input type="checkbox" class="chk-sync-install-plugin" /> ' . esc_html( sprintf( __( 'Install %s plugin', 'mainwp' ), esc_html($sync_info[ 'plugin_name' ]) ) ) . '</label> <i class="ui active inline loader tiny" style="display: none"></i> <span class="status"></span></div>';
+					
+					$html .= '<div class="sync-install-plugin" slug="' . esc_attr( dirname( $sync_info[ 'plugin_slug' ] ) ) . '" plugin_name="' . esc_attr( $sync_info[ 'plugin_name' ] ) . '">';
+					$html .= '<div class="ui checkbox"><input type="checkbox" class="chk-sync-install-plugin" /> <label>' . esc_html( sprintf( __( 'Install %s plugin', 'mainwp' ), esc_html($sync_info[ 'plugin_name' ]) ) ) . '</label></div> ';
+					$html .= '<i class="ui active inline loader tiny" style="display: none"></i> <span class="status"></span>';
+					$html .= '</div>';
+					
 					if ( !isset( $sync_info[ 'no_setting' ] ) || empty( $sync_info[ 'no_setting' ] ) ) {
-						$html .= '<div class="sync-options options-row"><label><input type="checkbox" /> ' . sprintf( __( 'Apply %s %ssettings%s', 'mainwp' ), esc_html($sync_info[ 'plugin_name' ]), '<a href="admin.php?page=' . $data[ 'page' ] . '">', '</a>' ) . '</label> <i class="ui active inline loader tiny" style="display: none"></i> <span class="status"></span></div>';
+						//$html .= '<div class="sync-options options-row"><label><input type="checkbox" /> ' . sprintf( __( 'Apply %s %ssettings%s', 'mainwp' ), esc_html($sync_info[ 'plugin_name' ]), '<a href="admin.php?page=' . $data[ 'page' ] . '">', '</a>' ) . '</label> <i class="ui active inline loader tiny" style="display: none"></i> <span class="status"></span></div>';
+						$html .= '<div class="sync-options options-row">';
+						$html .= '<div class="ui checkbox"><input type="checkbox" /><label> ';
+						$html .= sprintf( __( 'Apply %s %ssettings%s', 'mainwp' ), esc_html($sync_info[ 'plugin_name' ]), '<a href="admin.php?page=' . $data[ 'page' ] . '">', '</a>' );
+						$html .= '</label>';
+						$html .= '</div> ';
+						$html .= '<i class="ui active inline loader tiny" style="display: none"></i> <span class="status"></span>';
+						$html .= '</div>';
 					}
+					
 				} else {
-					$html .= '<div class="sync-global-options options-row"><label><input type="checkbox" /> ' . esc_html( sprintf( __( 'Apply global %s options', 'mainwp' ), trim( $ext_name ) ) ) . '</label> <i class="ui active inline loader tiny"  style="display: none"></i> <span class="status"></span></div>';
+					
+					$html .= '<div class="sync-global-options options-row">';
+					$html .= '<div class="ui checkbox"><input type="checkbox" /> <label>' . esc_html( sprintf( __( 'Apply global %s options', 'mainwp' ), trim( $ext_name ) ) ) . '</label></div> ';
+					$html .= '<i class="ui active inline loader tiny"  style="display: none"></i> <span class="status"></span>';
+					$html .= '</div>';
+					
 				}
+
 				$html .= '</div>';
+				$html .= '</div>';
+
 				echo $html;
-			}
-			?>
-			<?php
+			}			
 		}
 	}
 
@@ -1321,16 +1351,18 @@ class MainWP_Manage_Sites_View {
 
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'HTTP Password (optional)', 'mainwp' ); ?></label>
-				  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP password here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP password here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<div class="ui left labeled input">
 									<input type="password" id="mainwp_managesites_edit_http_pass" name="mainwp_managesites_edit_http_pass" value="<?php echo ( empty( $website->http_pass ) ? '' : $website->http_pass ); ?>" autocomplete="new-password" />
 								</div>
 							</div>
 						</div>
 
-						<?php do_action( 'mainwp-extension-sites-edit', $website ); ?>
+						<?php do_action( 'mainwp-manage-sites-edit', $website ); ?>
+						
+						<?php do_action( 'mainwp-extension-sites-edit', $website ); // deprecated ?>
 
-                        <?php do_action( 'mainwp_extension_sites_edit_tablerow', $website ); ?>
+                        <?php do_action( 'mainwp_extension_sites_edit_tablerow', $website ); // deprecated ?>
 
 						<div class="ui divider"></div>
 						<input type="submit" name="submit" id="submit" class="ui button green big right floated" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>

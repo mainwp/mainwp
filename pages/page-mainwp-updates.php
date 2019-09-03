@@ -333,7 +333,7 @@ class MainWP_Updates {
 							'name'		 => esc_html( $plugin_upgrade[ 'Name' ] ),
 							'slug'		 => esc_html( $plugin_upgrade[ 'update' ][ 'slug' ] ),
 							'premium'	 => ( isset( $plugin_upgrade[ 'premium' ] ) ? $plugin_upgrade[ 'premium' ] : 0 ),
-							'uri'		 => esc_html( $plugin_upgrade[ 'PluginURI' ] ),
+							'PluginURI'		 => esc_html( $plugin_upgrade[ 'PluginURI' ] ),
 						);
 					}
 				}
@@ -838,9 +838,9 @@ class MainWP_Updates {
 								$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
 							}
 
-              if ( ( count( $plugin_upgrades ) == 0 ) && ( $website->sync_errors == '' ) ) {
-                continue;
-              }
+							if ( ( count( $plugin_upgrades ) == 0 ) && ( $website->sync_errors == '' ) ) {
+							  continue;
+							}
 							?>
 							<tr class="ui title">
 								<td class="accordion-trigger"><i class="icon dropdown"></i></td>
@@ -1121,12 +1121,12 @@ class MainWP_Updates {
 							<?php
 							$cnt = intval( $val[ 'cnt' ] );
 							$plugin_name = urlencode( $slug );
-                            $trusted = in_array( $slug, $trustedPlugins ) ? 1 : 0;
+                            $trusted = in_array( $slug, $trustedPlugins ) ? 1 : 0;								
 							?>
 							<tr class="ui title">
                                 <td class="accordion-trigger"><i class="icon dropdown"></i></td>
 								<td>
-									<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade[ 'update' ][ 'slug' ] ) . '&url=' . ( isset( $plugin_upgrade[ 'PluginURI' ] ) ? rawurlencode( $plugin_upgrade[ 'PluginURI' ] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade[ 'Name' ] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal">
+									<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $pluginsInfo[ $slug ]['slug'] ) . '&url=' . ( isset( $pluginsInfo[ $slug ][ 'PluginURI' ] ) ? rawurlencode( $pluginsInfo[ $slug ][ 'PluginURI' ] ) : '' ) . '&name=' . rawurlencode( $pluginsInfo[ $slug ][ 'name' ] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal">
 										<?php echo esc_html( $pluginsInfo[ $slug ][ 'name' ] ); ?>
 									</a>
 								</td>

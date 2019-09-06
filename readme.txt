@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 5.2.2
+Tested up to: 5.2.3
 Requires PHP: 5.6
-Stable tag: 4.0.1
+Stable tag: 4.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -153,6 +153,19 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.0.2 - 9-6-19 =
+* Fixed: an issue with incorrect backups count number in the Client Reports system
+* Fixed: multiple cosmetic issues
+* Fixed: multiple typos
+* Fixed: an issue with short appearance for feedback message after reconnecting site
+* Fixed: an issue with displaying the Screen Options button in wrong screens
+* Added: the ability to disable update confirmations only for single updates
+* Added: the option to show sites favicons
+* Added: warning and button to the header element if any updates detected on the MainWP Dashboard site
+* Added: groups info in the Site Info widget
+* Added: individual site info about abandoned plugins and themes
+* Updated: Connection status widget view saves the last selection
 
 = 4.0.1 - 9-3-19 =
 * Fixed: an issue with incorrect plugin info links

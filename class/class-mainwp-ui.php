@@ -420,6 +420,16 @@ class MainWP_UI {
 			<a class="ui button basic icon" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_html_e( 'Go to your MainWP Account at MainWP.com', 'mainwp' ); ?>" target="_blank" href="https://mainwp.com/my-account/">
 				<i class="user icon"></i>
 			</a>
+			<?php
+			$all_updates = wp_get_update_data();
+			if ( is_array($all_updates) && isset($all_updates['counts']['total']) && $all_updates['counts']['total'] > 0  ) {
+				?>
+				<a class="ui red icon button" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_html_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" href="update-core.php">
+					<i class="exclamation triangle icon"></i>
+				</a>
+				<?php
+			}
+			?>			
       <?php if ( get_option( 'mainwp_show_usersnap', false ) ) : ?>
 			<a class="ui button black icon" id="usersnap-bug-report-button" data-position="bottom right" data-inverted="" data-tooltip="<?php esc_html_e( 'Click here (or use Ctrl + U keyboard shortcut) to open the Bug reporting mode.', 'mainwp' ); ?>" target="_blank" href="#">
 				<i class="bug icon"></i>
@@ -760,15 +770,15 @@ class MainWP_UI {
     public static function render_screen_options( $setting_page = true ) {
 
         $default_widgets = array(
-      'overview' 					=> __( 'Updates Overview', 'mainwp' ),
-      'recent_posts' 			=> __( 'Recent Posts', 'mainwp' ),
-      'recent_pages' 			=> __( 'Recent Pages', 'mainwp' ),
-      'plugins' 					=> __( 'Plugins (Individual Site Overview page)', 'mainwp' ),
-      'themes' 						=> __( 'Themes (Individual Site Overview page)', 'mainwp' ),
-            'connection_status' => __( 'Connection Status', 'mainwp' ),
-      'security_issues' 	=> __( 'Security Issues', 'mainwp' ),
-      'notes' 						=> __( 'Notes (Individual Site Overview page)', 'mainwp' ),
-      'child_site_info'	  => __( 'Child site info (Individual Site Overview page)', 'mainwp' ),
+			'overview' 					=> __( 'Updates Overview', 'mainwp' ),
+			'recent_posts' 			=> __( 'Recent Posts', 'mainwp' ),
+			'recent_pages' 			=> __( 'Recent Pages', 'mainwp' ),
+			'plugins' 					=> __( 'Plugins (Individual Site Overview page)', 'mainwp' ),
+			'themes' 						=> __( 'Themes (Individual Site Overview page)', 'mainwp' ),
+			'connection_status' => __( 'Connection Status', 'mainwp' ),
+			'security_issues' 	=> __( 'Security Issues', 'mainwp' ),
+			'notes' 						=> __( 'Notes (Individual Site Overview page)', 'mainwp' ),
+			'child_site_info'	  => __( 'Child site info (Individual Site Overview page)', 'mainwp' ),
         );
 
         $hide_widgets = get_user_option( 'mainwp_settings_hide_widgets' );
@@ -781,7 +791,7 @@ class MainWP_UI {
       <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the "Update Everything" button will be hidden in the Updates Overview widget.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
             <input type="checkbox" name="hide_update_everything" <?php echo ( ( get_option( 'mainwp_hide_update_everything' ) == 1 ) ? 'checked="true"' : ''); ?> />
       </div>
-    </div>            
+    </div> 
     <?php
     $overviewColumns = get_option('mainwp_number_overview_columns', 2);
     if ( $overviewColumns != 2 && $overviewColumns != 3 ) {

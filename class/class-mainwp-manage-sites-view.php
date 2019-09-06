@@ -151,11 +151,16 @@ class MainWP_Manage_Sites_View {
 			}
 		}
 
-		$pagetitle = __( 'Sites', 'mainwp' );
-
+		$pagetitle = __( 'Sites', 'mainwp' );				
+		
 		if ( $site_id != 0 ) {
-			$website = MainWP_DB::Instance()->getWebsiteById( $site_id );
-			$pagetitle = $website->url;
+			$website = MainWP_DB::Instance()->getWebsiteById( $site_id );						
+			$imgfavi = '';	
+			if ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) {
+				$favi_url	 = MainWP_Utility::get_favico_url( $website );
+				$imgfavi	 = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
+			}						
+			$pagetitle = $imgfavi . " " . $website->url;						
 		}
 
 		$params = array(
@@ -646,6 +651,12 @@ class MainWP_Manage_Sites_View {
             } else if ( $_GET['tab'] == "translations-updates" ) {
                 $active_tab = 'trans';
                 $active_text = esc_html__( 'Translations Updates', 'mainwp' );
+            } else if ( $_GET['tab'] == "abandoned-plugins" ) {
+                $active_tab = 'abandoned-plugins';
+                $active_text = esc_html__( 'Abandoned Plugins', 'mainwp' );
+            } else if ( $_GET['tab'] == "abandoned-themes" ) {
+                $active_tab = 'abandoned-themes';
+                $active_text = esc_html__( 'Abandoned Themes', 'mainwp' );
             }
         }
 		?>
@@ -667,6 +678,8 @@ class MainWP_Manage_Sites_View {
                                             <?php if ( $mainwp_show_language_updates ) : ?>
                                             <div class="<?php echo $active_tab == "trans" ? "active" : ""; ?> item" data-tab="translations" data-value="translations"><?php esc_html_e( 'Translations Updates', 'mainwp' ); ?></div>
                                             <?php endif; ?>
+											<div class="<?php echo $active_tab == "abandoned-plugins" ? "active" : ""; ?> item" data-tab="abandoned-plugins" data-value="abandoned-plugins"><?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?></div>
+											<div class="<?php echo $active_tab == "abandoned-themes" ? "active" : ""; ?> item" data-tab="abandoned-themes" data-value="abandoned-themes"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?></div>
                                         </div>
                                     </div>
                                 </div>
@@ -924,14 +937,140 @@ class MainWP_Manage_Sites_View {
 						</tr>
 					</tfoot>
 				</table>
-			</div>
+			</div>			
 			<?php endif; ?>
+			<?php
+			$plugins_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_info' ), true );
+			if ( !is_array( $plugins_outdate ) ) {
+				$plugins_outdate = array();
+			}
+			$pluginsOutdateDismissed = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_dismissed' ), true );
+			if ( is_array( $pluginsOutdateDismissed ) ) {
+				$plugins_outdate = array_diff_key( $plugins_outdate, $pluginsOutdateDismissed );
+			}
+			
+			$decodedDismissedPlugins = json_decode( $userExtension->dismissed_plugins, true );			
+			if ( is_array( $decodedDismissedPlugins ) ) {
+				$plugins_outdate = array_diff_key( $plugins_outdate, $decodedDismissedPlugins );
+			}
+			$str_format = __( 'Updated %s days ago', 'mainwp' );			
+			?>
+			
+			<div class="ui <?php echo $active_tab == "abandoned-plugins" ? "active" : ""; ?> tab" data-tab="abandoned-plugins">
+				<table class="ui stackable single line table" id="mainwp-abandoned-plugins-table">
+					<thead>
+						<tr>
+							<tr>
+								<th><?php echo __( 'Plugin', 'mainwp' ); ?></th>
+								<th><?php echo __( 'Version', 'mainwp' ); ?></th>
+								<th><?php echo __( 'Last Update', 'mainwp' ); ?></th>
+								<th class="no-sort"></th>
+							</tr>
+						</tr>
+					</thead>
+					<tbody id="wp_plugins_outdate_<?php echo esc_attr( $website->id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
+						<?php foreach ( $plugins_outdate as $slug => $plugin_outdate ) : ?>
+							<?php
+							$plugin_name = urlencode( $slug );
+							$now = new \DateTime();
+							$last_updated = $plugin_outdate[ 'last_updated' ];
+							$plugin_last_updated_date = new \DateTime( '@' . $last_updated );
+							$diff_in_days = $now->diff( $plugin_last_updated_date )->format( '%a' );
+							$outdate_notice = sprintf( $str_format, $diff_in_days );
+							?>
+							<tr dismissed="0">
+								<td>
+									<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate[ 'PluginURI' ] ) ? rawurlencode( $plugin_outdate[ 'PluginURI' ] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate[ 'Name' ] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal"><?php echo esc_html( $plugin_outdate[ 'Name' ] ); ?></a>
+									<input type="hidden" id="wp_dismissed_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>" value="0"/>
+								</td>
+								<td><?php echo esc_html( $plugin_outdate[ 'Version' ] ); ?></td>
+								<td><?php echo $outdate_notice; ?></td>
+								<td class="right aligned" id="wp_dismissbuttons_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>">
+									<?php if ( $user_can_ignore_unignore_updates ) { ?>
+									<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_outdate[ 'Name' ] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Ignore Now', 'mainwp' ); ?></a>
+								  <?php } ?>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>					
+					<tfoot>
+						<tr>
+							<tr>
+								<th><?php echo __( 'Plugin', 'mainwp' ); ?></th>
+								<th><?php echo __( 'Version', 'mainwp' ); ?></th>
+								<th><?php echo __( 'Last Update', 'mainwp' ); ?></th>
+								<th class="no-sort"></th>
+							</tr>
+						</tr>
+					</tfoot>
+					
+				</table>
+			</div>
+			
+			<?php
+			$themes_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_info' ), true );
+			if ( !is_array( $themes_outdate ) ) {
+				$themes_outdate = array();
+			}
+
+			if ( count( $themes_outdate ) > 0 ) {
+				$themesOutdateDismissed = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
+				if ( is_array( $themesOutdateDismissed ) ) {
+					$themes_outdate = array_diff_key( $themes_outdate, $themesOutdateDismissed );
+				}
+				
+				$decodedDismissedThemes	 = json_decode( $userExtension->dismissed_themes, true );			
+				if ( is_array( $decodedDismissedThemes ) ) {
+					$themes_outdate = array_diff_key( $themes_outdate, $decodedDismissedThemes );
+				}
+			}
+
+			?>			
+			<div class="ui <?php echo $active_tab == "abandoned-themes" ? "active" : ""; ?> tab" data-tab="abandoned-themes">
+				<table class="ui stackable single line table" id="mainwp-abandoned-themes-table">
+					<thead>
+						<tr>
+							<tr>
+								<th><?php echo __( 'Theme', 'mainwp' ); ?></th>
+								<th><?php echo __( 'Version', 'mainwp' ); ?></th>
+								<th><?php echo __( 'Last Update', 'mainwp' ); ?></th>
+								<th class="no-sort"></th>
+							</tr>
+						</tr>
+					</thead>
+					<tbody site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
+						<?php foreach ( $themes_outdate as $slug => $theme_outdate ) : ?>
+							<?php
+							$theme_name = urlencode( $slug );
+							$now = new \DateTime();
+							$last_updated = $theme_outdate[ 'last_updated' ];
+							$theme_last_updated_date = new \DateTime( '@' . $last_updated );
+							$diff_in_days = $now->diff( $theme_last_updated_date )->format( '%a' );
+							$outdate_notice = sprintf( $str_format, $diff_in_days );
+							?>
+							<tr dismissed="0">
+								<td>
+									<?php echo esc_html( $theme_outdate[ 'Name' ] ); ?>
+									<input type="hidden" id="wp_dismissed_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>" value="0"/>
+								</td>
+								<td><?php echo esc_html( $theme_outdate[ 'Version' ] ); ?></td>
+								<td><?php echo $outdate_notice; ?></td>
+								<td class="right aligned" id="wp_dismissbuttons_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>">
+									<?php if ( $user_can_ignore_unignore_updates ) { ?>
+									<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_outdate[ 'Name' ] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Ignore Now', 'mainwp' ); ?></a>
+								  <?php } ?>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
 		</div>
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
 			jQuery( '.ui.dropdown .item' ).tab();
 		} );
-		jQuery( 'table' ).DataTable( {
+		jQuery( 'table.ui.table' ).DataTable( {
 			"searching": true,
 			"paging" : false,
 			"info" : true,

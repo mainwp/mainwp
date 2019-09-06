@@ -585,29 +585,41 @@ class MainWP_Updates_Overview {
 		<div class="ui hidden divider"></div>
 		<div class="ui horizontal divider"><?php _e( 'Abandoned Plugins & Themes', 'mainwp' ); ?></div>
 		<div class="ui hidden divider"></div>
-
+		
 		<div class="ui grid">
 			<div class="two column row">
 				<div class="column">
 					<div class="ui horizontal statistic">
+						<?php
+						if ($globalView)
+							$detail_aban_plugins = "admin.php?page=UpdatesManage&tab=abandoned-plugins";
+						else
+							$detail_aban_plugins = "admin.php?page=managesites&updateid=" . $current_wpid . "&tab=abandoned-plugins";
+						?>
 						<div class="value">
 							<?php echo $total_plugins_outdate; ?>
-											</div>
-						<div class="label">
+							</div>
+							<div class="label">
 							<?php echo __( 'Abandoned Plugins', 'mainwp' ); ?>
-											</div>
-                                        </div>
-											</div>
-                                            <div class="right aligned column">
-                                                <a href="admin.php?page=UpdatesManage&tab=abandoned-plugins" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
-										</div>
+								</div>
 									</div>
+										</div>
+										<div class="right aligned column">
+											<a href="<?php echo $detail_aban_plugins; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
+									</div>
+								</div>
 							</div>
 
 		<div class="ui grid">
 			<div class="two column row">
 				<div class="column">
 					<div class="ui horizontal statistic">
+						<?php
+						if ($globalView)
+							$detail_aban_themes = "admin.php?page=UpdatesManage&tab=abandoned-themes";
+						else
+							$detail_aban_themes = "admin.php?page=managesites&updateid=" . $current_wpid . "&tab=abandoned-themes";
+						?>
 						<div class="value">
 							<?php echo $total_themes_outdate; ?>
 							</div>
@@ -617,7 +629,7 @@ class MainWP_Updates_Overview {
 										</div>
 										</div>
                                 <div class="right aligned column">
-                                    <a href="admin.php?page=UpdatesManage&tab=abandoned-themes" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
+                                    <a href="<?php echo $detail_aban_themes; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
                             </div>
                 </div>
             </div>

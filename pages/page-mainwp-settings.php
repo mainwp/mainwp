@@ -275,7 +275,7 @@ class MainWP_Settings {
 				MainWP_Utility::update_option( 'mainwp_automaticDailyUpdate', $val );
 				$val = ( !isset( $_POST[ 'mainwp_show_language_updates' ] ) ? 0 : 1 );
 				MainWP_Utility::update_option( 'mainwp_show_language_updates', $val );				
-				$val = ( !isset( $_POST[ 'mainwp_disable_update_confirmations' ] ) ? 0 : 1 );
+				$val = ( !isset( $_POST[ 'mainwp_disable_update_confirmations' ] ) ? 0 : intval( $_POST[ 'mainwp_disable_update_confirmations' ] ) );
 				MainWP_Utility::update_option( 'mainwp_disable_update_confirmations', $val );				
 				$val = ( !isset( $_POST[ 'mainwp_backup_before_upgrade' ] ) ? 0 : 1 );
 				MainWP_Utility::update_option( 'mainwp_backup_before_upgrade', $val );
@@ -287,7 +287,7 @@ class MainWP_Settings {
 					MainWP_Utility::update_option( 'mainwp_maximumComments', isset( $_POST[ 'mainwp_maximumComments' ] ) ? intval( $_POST[ 'mainwp_maximumComments' ] ) : 50  );
 				}
 				MainWP_Utility::update_option( 'mainwp_wp_cron', (!isset( $_POST[ 'mainwp_options_wp_cron' ] ) ? 0 : 1 ) );
-                MainWP_Utility::update_option( 'mainwp_use_favicon', (!isset($_POST['mainwp_use_favicon']) ? 0 : 1));
+//                MainWP_Utility::update_option( 'mainwp_use_favicon', (!isset($_POST['mainwp_use_favicon']) ? 0 : 1));
 
                 $val = ( isset( $_POST[ 'mainwp_sidebarPosition' ] ) ? intval($_POST[ 'mainwp_sidebarPosition' ]) : 1 );
                 if ( $user = wp_get_current_user() ) {
@@ -371,14 +371,7 @@ class MainWP_Settings {
 						  <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Disabling this option will disable the WP Cron so all scheduled events will stop working.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="checkbox" name="mainwp_options_wp_cron" id="mainwp_options_wp_cron" <?php echo( ( get_option( 'mainwp_wp_cron' ) == 1 ) || ( get_option( 'mainwp_wp_cron' ) === false ) ? 'checked="true"' : '' ); ?>/>
 							</div>
-						</div>
-						<!--
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Show favicons', 'mainwp' ); ?></label>
-                <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will download and show child sites favicons.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-								<input type="checkbox" name="mainwp_use_favicon" id="mainwp_use_favicon" <?php echo( ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) ? 'checked="true"' : '' ); ?> />
-							</div>
-						</div>-->
+						</div>					
             <?php
 
             $sidebarPosition = get_user_option("mainwp_sidebarPosition");
@@ -414,7 +407,8 @@ class MainWP_Settings {
 					  $nextAutomaticUpdate 									 = $update_time[ 'next' ];
 
 					  $enableLegacyBackupFeature	 					 = get_option( 'mainwp_enableLegacyBackupFeature' );
-					  $primaryBackup				 								 = get_option( 'mainwp_primaryBackup' );
+					  $primaryBackup				 								 = get_option( 'mainwp_primaryBackup' );					  
+					  $disableUpdateConfirmations				 			 	 = get_option( 'mainwp_disable_update_confirmations', 0);
 
 						$http_error_codes = array(
 							'200'	 => 'OK',
@@ -477,7 +471,7 @@ class MainWP_Settings {
 						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'WP Core automatic updates. If enabled, MainWP will update only Trusted sites.', 'mainwp' ); ?></label>
-                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic WordPress core updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic WordPress core updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<select name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" class="ui dropdown">
 									<option value="1" <?php if ( $snAutomaticDailyUpdate == 1 ) { ?>selected<?php } ?>><?php _e( 'Install Trusted Updates', 'mainwp' ); ?></option>
 									<option value="0" <?php if ( ( $snAutomaticDailyUpdate !== false && $snAutomaticDailyUpdate == 0 ) || $snAutomaticDailyUpdate == 2 ) { ?>selected<?php } ?>><?php _e( 'Disabled', 'mainwp' ); ?></option>
@@ -494,9 +488,13 @@ class MainWP_Settings {
 							</div>
 						</div>
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Disable update confirmations', 'mainwp' ); ?></label>
-						  <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Disable update confirmations.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-								<input type="checkbox" name="mainwp_disable_update_confirmations" id="mainwp_check_http_response" <?php echo( ( get_option( 'mainwp_disable_update_confirmations', 0 ) == 1 ) ? 'checked="true"' : '' ); ?>/>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Update confirmations', 'mainwp' ); ?></label>
+							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Choose if you want to disable the popup confirmations when performing updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<select name="mainwp_disable_update_confirmations" id="mainwp_disable_update_confirmations" class="ui dropdown">
+									<option value="0" <?php if ( $disableUpdateConfirmations == 0 ) { ?>selected<?php } ?>><?php _e( "Enable", 'mainwp' ); ?></option>
+									<option value="2" <?php if ( $disableUpdateConfirmations == 2 ) { ?>selected<?php } ?>><?php _e( 'Disable', 'mainwp' ); ?></option>
+									<option value="1" <?php if ( $disableUpdateConfirmations == 1 ) { ?>selected<?php } ?>><?php _e( 'Disable for single updates', 'mainwp' ); ?></option>
+								</select>
 							</div>
 						</div>
 						<div class="ui grid field">
@@ -741,8 +739,14 @@ class MainWP_Settings {
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php _e( 'Disconnect all child sites', 'mainwp' ); ?></label>
                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active and which makes your sites vulnerable. Use only if you attend to reconnect site to the same or a different dashboard right away.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo wp_create_nonce('disconnect_sites'); ?>" onclick="if (!confirm('<?php esc_html_e('Are you sure that you want to disconnect your sites?', 'mainwp');?>')) return false; mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php _e( 'Disconnect Websites', 'mainwp' ); ?></a></div>
-					</div>
+					</div>					
                     <?php echo MainWP_UI::render_screen_options(); ?>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Show favicons', 'mainwp' ); ?></label>
+						<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will download and show child sites favicons.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+							<input type="checkbox" name="mainwp_use_favicon" id="mainwp_use_favicon" <?php echo( ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) ? 'checked="true"' : '' ); ?> />
+						</div>
+					</div>  
                      <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Enable Managed Client Reports for WooCommerce', 'mainwp' ); ?></label>
                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable Managed Client Reports for WooCommerce', 'mainwp' ); ?>" data-inverted="" data-position="top left">

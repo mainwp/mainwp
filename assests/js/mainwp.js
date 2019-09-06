@@ -1103,7 +1103,7 @@ updatesoverview_plugins_ignore_detail = function ( slug, name, id, obj ) {
   var msg = __( 'Are you sure you want to ignore the %1 plugin updates? The updates will no longer be visible in your MainWP Dashboard.', name );
   mainwp_confirm(msg, function(){
       return updatesoverview_ignore_plugintheme_by_site( 'plugin', slug, name, id, obj );
-  }, false, true);
+  }, false, 1 );
   return false;
 };
 updatesoverview_plugins_unignore_detail = function ( slug, id ) {
@@ -1116,7 +1116,7 @@ updatesoverview_themes_ignore_detail = function ( slug, name, id, obj ) {
     var msg = __( 'Are you sure you want to ignore the %1 theme updates? The updates will no longer be visible in your MainWP Dashboard.', name );
     mainwp_confirm(msg, function(){
         return updatesoverview_ignore_plugintheme_by_site( 'theme', slug, name, id, obj );
-    }, false, true);
+    }, false, 1);
     return false;
 };
 updatesoverview_themes_unignore_detail = function ( slug, id ) {
@@ -1143,7 +1143,7 @@ updatesoverview_plugins_ignore_all = function ( slug, name, obj) {
                 jQuery( 'tr[plugin_slug="' + slug + '"]' ).find( 'table tr' ).attr( 'updated', '-1' );
             }
         }, 'json' );
-    }, false, true );
+    }, false, 1 );
     return false;
 };
 
@@ -1206,7 +1206,7 @@ updatesoverview_themes_ignore_all = function ( slug, name, obj ) {
                 jQuery( 'tr[theme_slug="' + slug + '"]' ).find('table tr').attr( 'updated', '-1' );
             }
         }, 'json' );
-    }, false, true );
+    }, false, 1);
     return false;
 };
 
@@ -1255,28 +1255,28 @@ updatesoverview_upgrade_translation = function ( id, slug ) {
     var msg =  __( 'Are you sure you want to update the translation on the selected site?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_translations_upgrade_int( slug, id );
-    }, false, true );
+    }, false, 1 );
 };
 
 updatesoverview_translations_upgrade = function ( slug, websiteid ) {
     var msg =  __( 'Are you sure you want to update the translation on the selected site?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_translations_upgrade_int( slug, websiteid );
-    }, false, true );
+    }, false, 1 );
 };
 
 updatesoverview_plugins_upgrade = function ( slug, websiteid ) {
     var msg =  __( 'Are you sure you want to update the plugin on the selected site?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_plugins_upgrade_int( slug, websiteid );
-    }, false, true );
+    }, false, 1 );
 };
 
 updatesoverview_themes_upgrade = function ( slug, websiteid ) {
     var msg =  __( 'Are you sure you want to update the theme on the selected site?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_themes_upgrade_int( slug, websiteid );
-    }, false, true );
+    }, false, 1 );
 };
 
 /** END NEW **/
@@ -1297,7 +1297,7 @@ updatesoverview_upgrade_translation_all = function ( id ) {
     var msg =  __( 'Are you sure you want to update all translations?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_upgrade_plugintheme_all( 'translation', id );
-    }, false, true );
+    }, false, 2 );
     return false;
 };
 
@@ -1305,7 +1305,7 @@ updatesoverview_group_upgrade_translation_all = function ( id, groupId, obj ) {
     var msg = __( 'Are you sure you want to update all translations?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_group_upgrade_plugintheme_all( 'translation', id, false, groupId );
-    }, false, true );
+    }, false, 2 );
     return false;
 };
 
@@ -1313,7 +1313,7 @@ updatesoverview_upgrade_plugin = function ( id, slug ) {
     var msg =  __( 'Are you sure you want to update the plugin on the selected site?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_upgrade_plugintheme( 'plugin', id, slug );
-    }, false, true );
+    }, false, 1 );
 };
 
 updatesoverview_group_upgrade_plugin = function ( id, slug, groupId ) {
@@ -1324,7 +1324,7 @@ updatesoverview_upgrade_plugin_all = function ( id ) {
     var msg = __( 'Are you sure you want to update all plugins?' );
     mainwp_confirm(msg, function(){
           return updatesoverview_upgrade_plugintheme_all( 'plugin', id );
-    });
+    }, false, 2 );
     return false;
 };
 
@@ -1332,7 +1332,7 @@ updatesoverview_group_upgrade_plugin_all = function ( id, groupId, obj ) {
     var msg = __( 'Are you sure you want to update all plugins?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_group_upgrade_plugintheme_all( 'plugin', id, false, groupId );
-    });
+    }, false, 2);
     return false;
 };
 
@@ -1340,7 +1340,7 @@ updatesoverview_upgrade_theme = function ( id, slug ) {
     var msg =  __( 'Are you sure you want to update the theme on the selected site?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_upgrade_plugintheme( 'theme', id, slug );
-    });
+    }, false, 1);
 };
 updatesoverview_group_upgrade_theme = function ( id, slug, groupId ) {
     return updatesoverview_upgrade_plugintheme( 'theme', id, slug, groupId );
@@ -1350,7 +1350,7 @@ updatesoverview_upgrade_theme_all = function ( id ) {
     var msg = __( 'Are you sure you want to update all themes?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_upgrade_plugintheme_all( 'theme', id );
-    });
+    }, false, 2);
     return false;
 };
 
@@ -1358,7 +1358,7 @@ updatesoverview_group_upgrade_theme_all = function ( id, groupId, obj ) {
     var msg = __( 'Are you sure you want to update all themes?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_group_upgrade_plugintheme_all( 'theme', id, false, groupId );
-    });
+    }, false, 2);
     return false;
 };
 
@@ -2533,7 +2533,7 @@ mainwp_managesites_reconnect = function ( pElement ) {
       }
       setTimeout( function () {
         window.location.reload()
-      }, 3000 );
+      }, 6000 );
     }
 
   }( wrapElement ) );
@@ -4908,7 +4908,7 @@ if (jQuery( '.ui.calendar' ).length > 0 ) {
                 var year = date.getFullYear();
                 return year + '-' + month + '-' + day;
               }
-            }
+            }           
         });
     }
 
@@ -5353,10 +5353,10 @@ mainwp_fetch_plugins = function () {
         jQuery( '#mainwp-loading-plugins-row' ).hide();
     jQuery( '#mainwp-plugins-main-content' ).show();
 
-    if ( response && response.result ) {
-      jQuery( '#mainwp-plugins-content' ).html( response.result );
+        if ( response && response.result ) {
+            jQuery( '#mainwp-plugins-content' ).html( response.result );
             jQuery( '#mainwp-plugins-bulk-actions-wapper' ).html( response.bulk_actions );
-      jQuery( '#mainwp-plugins-bulk-actions-wapper .ui.dropdown').dropdown();
+            jQuery( '#mainwp-plugins-bulk-actions-wapper .ui.dropdown').dropdown();
         }
     }, 'json' );
 };
@@ -5847,12 +5847,12 @@ mainwp_fetch_themes = function () {
     jQuery( '#mainwp-loading-themes-row' ).show();
 
     jQuery.post( ajaxurl, data, function ( response ) {
-        jQuery( '#mainwp-loading-themes-row' ).hide();
+    jQuery( '#mainwp-loading-themes-row' ).hide();
     jQuery( '#mainwp-themes-main-content' ).show();
     if ( response && response.result ) {
-      jQuery( '#mainwp-themes-content' ).html( response.result );
+        jQuery( '#mainwp-themes-content' ).html( response.result );
             jQuery( '#mainwp-themes-bulk-actions-wapper' ).html( response.bulk_actions );
-      jQuery( '#mainwp-themes-bulk-actions-wapper .ui.dropdown').dropdown();
+            jQuery( '#mainwp-themes-bulk-actions-wapper .ui.dropdown').dropdown();
         }
     }, 'json' );
 };
@@ -6631,54 +6631,108 @@ mainwp_managesites_bulk_remove_specific = function ( pCheckedBox ) {
 };
 
 
+mainwp_managesites_bulk_refresh_favico = function ( siteIds )
+{
+    var allWebsiteIds = jQuery( '.dashboard_wp_id' ).map( function ( indx, el ) {
+        return jQuery( el ).val();
+    } );
 
-mainwp_managesites_bulk_refresh_favico = function() {
-    while ((checkedBox = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0)  && (bulkManageSitesCurrentThreads < bulkManageSitesMaxThreads))
+    var selectedIds = [ ], excludeIds = [ ];
+    if ( siteIds instanceof Array ) {
+        jQuery.grep( allWebsiteIds, function ( el ) {
+            if ( jQuery.inArray( el, siteIds ) !== -1 ) {
+                selectedIds.push( el );
+            } else {
+                excludeIds.push( el );
+            }
+        } );
+        for ( var i = 0; i < excludeIds.length; i++ )
+        {
+            dashboard_update_site_hide( excludeIds[i] );
+        }
+        allWebsiteIds = selectedIds;
+        //jQuery('#refresh-status-total').text(allWebsiteIds.length);
+    }
+    
+    var nrOfWebsites = allWebsiteIds.length;
+
+    if ( nrOfWebsites == 0 )
+        return false;
+
+    var siteNames = { };
+
+    for ( var i = 0; i < allWebsiteIds.length; i++ )
     {
-        mainwp_managesites_refresh_favico_specific(checkedBox);
+        dashboard_update_site_status( allWebsiteIds[i], '<i class="clock outline icon"></i>');
+        siteNames[allWebsiteIds[i]] = jQuery( '.sync-site-status[siteid="' + allWebsiteIds[i] + '"]' ).attr( 'niceurl' );
     }
-    if ((bulkManageSitesTotal > 0) && (bulkManageSitesFinished == bulkManageSitesTotal)) {
-        setHtml('#mainwp-message-zone', __("Refresh favico finished."));
+    var initData = {
+        total: allWebsiteIds.length,
+        pMax: nrOfWebsites,
+        title: 'Refresh Favicon',
+        statusText: __( 'updated' ),
+        callback: function () {
+            bulkManageSitesTaskRunning = false;
+            location.href = location.href;
+        }
+    };
+    mainwpPopup( '#mainwp-sync-sites-modal' ).init( initData );
+    
+    mainwp_managesites_refresh_favico_all_int(allWebsiteIds);
+};
+
+mainwp_managesites_refresh_favico_all_int = function ( websiteIds )
+{
+    websitesToUpgrade = websiteIds;
+    currentWebsite = 0;
+    websitesDone = 0;
+    websitesTotal = websitesLeft = websitesToUpgrade.length;
+
+    bulkTaskRunning = true;
+    mainwp_managesites_refresh_favico_all_loop_next();
+};
+
+mainwp_managesites_refresh_favico_all_loop_next = function ()
+{
+    while ( bulkTaskRunning && ( currentThreads < maxThreads ) && ( websitesLeft > 0 ) )
+    {
+        mainwp_managesites_refresh_favico_all_upgrade_next();
     }
-}
+};
+mainwp_managesites_refresh_favico_all_upgrade_next = function ()
+{
+    currentThreads++;
+    websitesLeft--;
 
-mainwp_managesites_refresh_favico_specific = function(pCheckedBox) {
-    pCheckedBox.attr('status', 'running');
-    var rowObj = pCheckedBox.closest('tr');
+    var websiteId = websitesToUpgrade[currentWebsite++];
+    dashboard_update_site_status( websiteId, '<i class="sync alternate loading icon"></i>' );
 
-    bulkManageSitesCurrentThreads++;
-    var loadingEl = rowObj.find('.column-site-bulk i');
-    loadingEl.show();
-    var siteid = rowObj.attr('siteid');
+    mainwp_managesites_refresh_favico_int( websiteId );
+};
 
+mainwp_managesites_refresh_favico_int = function( siteid ) {    
+    
     var data = mainwp_secure_data({
         action:'mainwp_get_site_icon',
         siteId: siteid
     });
 
-    jQuery('#site-status-' + siteid).html( __('Downloading site icon...') ).show();
-
     jQuery.ajax({
         type: 'POST',
         url: ajaxurl,
         data: data,
-        success: function(pLoadingEl, pSiteid) { return function (response) {
-            bulkManageSitesCurrentThreads--;
-            bulkManageSitesFinished++;
-            pLoadingEl.hide();
-            var result = '';
-
+        success: function(pSiteid) { return function (response) {     
+            currentThreads--;
             if (response.error != undefined)
-            {
-                result = '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('Download site icon failed') + ': ' + getErrorMessage(response.error) + '</div>';
-            } else if (response.result && response.result == 'success') {
-                result = '<span class="mainwp-green"><i class="fa fa-check" aria-hidden="true"></i> ' +  __('Download site icon successful!') + '</div>';
-            } else {
-                result = '<span class="mainwp-red"><i class="fa fa-exclamation" aria-hidden="true"></i> ' + __('Download site icon failed') + '</div>';
-            }
-            jQuery('#site-status-' + pSiteid).html( result );
-            mainwp_managesites_bulk_refresh_favico();
-        } }(loadingEl, siteid),
+            {                
+                dashboard_update_site_status( pSiteid, '<i class="red times icon"></i>' );
+            } else if (response.result && response.result == 'success') {                
+                dashboard_update_site_status(pSiteid, '<i class="green check icon"></i>', true );
+            } else {                
+                dashboard_update_site_status( pSiteid, '<i class="red times icon"></i>' );
+            }            
+            mainwp_managesites_refresh_favico_all_loop_next();
+        } }( siteid),
         dataType: 'json'});
     return false;
 };
@@ -6771,8 +6825,8 @@ mainwp_managesites_doaction = function ( action ) {
         } );
         mainwp_update_pluginsthemes( 'translation', selectedIds );
       } else if (action == 'refresh_favico') {
-        var selectedIds = jQuery.map( jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked' ), function( el ) { return jQuery( el ).val(); });
-        mainwp_managesites_bulk_refresh_favico(selectedIds);
+        var selectedIds = jQuery.map( jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked' ), function( el ) { return jQuery( el ).val(); });        
+        mainwp_managesites_bulk_refresh_favico(selectedIds);        
       }
     }
 
@@ -7096,7 +7150,7 @@ jQuery( document ).ready( function () {
 
 jQuery( document ).ready( function () {
     if ( jQuery('body.mainwp-ui').length > 0 ) {
-        jQuery('.mainwp-ui-page .ui.dropdown').dropdown();
+        jQuery('.mainwp-ui-page .ui.dropdown:not(.not-auto-init)').dropdown();
         jQuery('.mainwp-ui-page .ui.checkbox').checkbox(); 
         jQuery('.mainwp-ui-page .ui.dropdown').filter('[init-value]').each(function(){
             var values = jQuery(this).attr('init-value').split(',');

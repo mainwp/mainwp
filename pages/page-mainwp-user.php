@@ -730,12 +730,13 @@ class MainWP_User {
 					<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
 						<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 						<div class="menu">
-            	<a class="item user_getedit" href="#"><?php _e( 'Edit', 'mainwp' ); ?></a>
-              <?php if ( ( $user['id'] != 1 ) && ( $user['login'] != $website->adminname ) ) { ?>
-              <a class="item user_submitdelete" href="#"><?php _e( 'Delete', 'mainwp' ); ?></a>
-              <?php } else if ( ( $user['id'] == 1 ) || ( $user['login'] == $website->adminname ) ) { ?>
-              <a href="javascript:void(0)" class="item" data-tooltip="This user is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php _e( 'Delete', 'mainwp' ); ?></a>
-              <?php } ?>
+							<a class="item user_getedit" href="#"><?php _e( 'Edit', 'mainwp' ); ?></a>
+							<?php if ( ( $user['id'] != 1 ) && ( $user['login'] != $website->adminname ) ) { ?>
+							<a class="item user_submitdelete" href="#"><?php _e( 'Delete', 'mainwp' ); ?></a>
+							<?php } else if ( ( $user['id'] == 1 ) || ( $user['login'] == $website->adminname ) ) { ?>
+							<a href="javascript:void(0)" class="item" data-tooltip="This user is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php _e( 'Delete', 'mainwp' ); ?></a>
+						  <?php } ?>
+							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php echo __( 'Go to WP Admin', 'mainwp' ) ?></a>									
 						</div>
 					</div>
         </td>

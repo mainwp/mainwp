@@ -946,6 +946,7 @@ class MainWP_Post {
 									<?php } ?>
 									<a class="item post_submitdelete" href="#"><?php _e( 'Trash', 'mainwp' ); ?></a>
 								<?php endif; ?>
+									<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php echo __( 'Go to WP Admin', 'mainwp' ) ?></a>									
 							</div>
 						</div>
 					</td>

@@ -163,13 +163,13 @@ class MainWP_Manage_Sites_List_Table {
 
 		$actions = array(
 			'sync'					 			=> __( 'Sync Data', 'mainwp' ),
-      'reconnect'				 		=> __( 'Reconnect', 'mainwp' ),
-      //'refresh_favico'    => __( 'Refresh Favico', 'mainwp' ),
+			'reconnect'				 		=> __( 'Reconnect', 'mainwp' ),
+			'refresh_favico'    => __( 'Refresh Favicon', 'mainwp' ),
 			'delete'				 			=> __( 'Remove', 'mainwp' ),
-      'seperator_1' 				=> '',
+			'seperator_1' 				=> '',
 			'open_wpadmin'			  => __( 'Jump to WP Admin', 'mainwp' ),
 			'open_frontpage'		  => __( 'Jump to Front Page', 'mainwp' ),
-      'seperator_2' 				=> '',
+			'seperator_2' 				=> '',
 			'update_plugins'		  => __( 'Update Plugins', 'mainwp' ),
 			'update_themes'			  => __( 'Update Themes', 'mainwp' ),
 			'update_wpcore'			  => __( 'Update WordPress', 'mainwp' ),
@@ -968,6 +968,7 @@ public function display_rows_or_placeholder() {
     public function get_datatable_rows() {
         $all_rows = array();
         $info_rows = array();
+		$use_favi = get_option( 'mainwp_use_favicon', 1) ;
         if ( $this->items ) {
             foreach ( $this->items as $website ) {
                     $rw_classes = '';
@@ -1146,7 +1147,15 @@ public function display_rows_or_placeholder() {
                                 <?php else : ?>
                                     <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website['id']; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="right center"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
                                 <?php endif; ?>
-                            <?php } else if ('url' === $column_name ) { ?>
+                            <?php } else if ('url' === $column_name ) { 
+								$imgfavi = '';
+								if ( $use_favi ) {
+									$siteObj  = (object) $website;
+									$favi_url = MainWP_Utility::get_favico_url( $siteObj );
+									$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
+								}
+								echo $imgfavi;
+								?>
                                 <!-- URL column -->
                                 <a href="<?php echo esc_url($website['url']); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html($website['url']); ?></a>
                             <?php } else if ('update' === $column_name ) { ?>
@@ -1381,7 +1390,9 @@ public function display_rows_or_placeholder() {
         $strip_note = strip_tags( $esc_note );
 
 		list( $columns ) = $this->get_column_info();
-
+		
+		$use_favi = get_option( 'mainwp_use_favicon', 1) ;
+		
 		foreach ( $columns as $column_name => $column_display_name ) {
 
             $classes = "collapsing center aligned $column_name column-$column_name";
@@ -1423,9 +1434,18 @@ public function display_rows_or_placeholder() {
                     <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website['id']; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>" data-position="right center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
                 <?php endif; ?>
                 </td>
-            <?php } else if ('url' === $column_name ) { ?>
+            <?php } else if ('url' === $column_name ) { 
+				
+				$imgfavi = '';
+				if ( $use_favi ) {
+					$siteObj  = (object) $website;
+					$favi_url = MainWP_Utility::get_favico_url( $siteObj );
+					$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
+				}
+
+				?>
                 <!-- URL column -->
-                <td><a href="<?php echo esc_url($website['url']); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html($website['url']); ?></a></td>
+                <td><?php echo $imgfavi; ?><a href="<?php echo esc_url($website['url']); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html($website['url']); ?></a></td>
             <?php } else if ('update' === $column_name ) { ?>
                 <!-- Total updates column -->
                 <td class="collapsing center aligned"><span><a class="ui mini compact button <?php echo $a_color; ?>" href="admin.php?page=managesites&updateid=<?php echo intval($website['id']); ?>"><?php echo $total_updates; ?></a></span></td>

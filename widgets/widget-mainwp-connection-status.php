@@ -182,17 +182,36 @@ class MainWP_Connection_Status {
 			</div>
 			<?php if ( empty( $current_wpid ) ) { ?>
 			<div class="four wide column right aligned">
-				<div class="ui dropdown right mainwp-dropdown-tab">
+				<div id="widget-connect-status-dropdown-selector" class="ui dropdown right not-auto-init mainwp-dropdown-tab">
 						<div class="text"><?php esc_html_e( 'All Sites', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
 							<a class="active item" data-tab="no-sites" data-value="" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Hide the child sites list', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Hide Details', 'mainwp' ); ?></a>
 							<a class="item" data-tab="all-sites" data-value="all-sites" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'See All Sites', 'mainwp' ); ?></a>
-							<a class="item" data-tab="connected" data-value="all-sites" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all connected child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'See All Connected', 'mainwp' ); ?></a>
+							<a class="item" data-tab="connected" data-value="connected" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all connected child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'See All Connected', 'mainwp' ); ?></a>
 							<a class="item" data-tab="disconnected" data-value="disconnected" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all disconnected child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'See All Disconnected', 'mainwp' ); ?></a>
 						</div>
 				</div>
 			</div>
+			
+			<script type="text/javascript">
+				jQuery( document ).ready( function () {					
+					jQuery('#widget-connect-status-dropdown-selector').dropdown({
+						onChange: function(val) {
+							if (typeof(Storage) !== 'undefined') {
+								localStorage.setItem('lsWidgetConnectStatusDropdownVal', val);
+							}							
+						}
+					});						
+					if (typeof(Storage) !== "undefined") {
+						if (val = localStorage.getItem('lsWidgetConnectStatusDropdownVal')) {
+							jQuery('#widget-connect-status-dropdown-selector').dropdown('set selected',val);							
+							jQuery('#widget-connect-status-dropdown-selector').closest('.mainwp-widget').find('div[data-tab="' + val + '"]').addClass('active'); 
+						}
+					}					
+				} );
+			</script>
+			
 			<?php } ?>
 		</div>
 

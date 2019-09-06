@@ -113,7 +113,7 @@ class MainWP_Widget_Plugins {
 				<?php
 
             for ( $i = 0; $i < count( $actived_plugins ); $i ++ ) {
-                    $outdate_notice = '';
+                    
                     $slug = strip_tags( $actived_plugins[ $i ][ 'slug' ] );
 
 					?>
@@ -143,7 +143,7 @@ class MainWP_Widget_Plugins {
 			<div class="ui middle aligned divided selection list">
 				<?php
 				for ( $i = 0; $i < count( $inactive_plugins ); $i ++ ) {
-		      $outdate_notice = '';
+		      
 		      $slug = $inactive_plugins[ $i ][ 'slug' ];
 
 					?>

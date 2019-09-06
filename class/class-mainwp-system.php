@@ -15,7 +15,7 @@ const MAINWP_VIEW_PER_GROUP = 2;
 
 class MainWP_System {
 
-	public static $version = '4.0.1';
+	public static $version = '4.0.2';
 	//Singleton
 	private static $instance = null;
 	private $upgradeVersionInfo = null;
@@ -1951,7 +1951,7 @@ class MainWP_System {
 		global $_mainwp_disable_menus_items;
 
         $_mainwp_disable_menus_items = apply_filters('mainwp_all_disablemenuitems', $_mainwp_disable_menus_items); // to support developer to debug
-
+		
 	}
 
 	function print_admin_styles($value = true) {
@@ -2340,7 +2340,7 @@ class MainWP_System {
             $update_screen_options = false;
 			if ( $_GET[ 'page' ] == 'DashboardOptions' ) {
 				if ( isset( $_POST[ 'submit' ] ) && wp_verify_nonce( $_POST[ 'wp_nonce' ], 'DashboardOptions' ) ) {
-					MainWP_Utility::update_option( 'mainwp_use_favicon', (!isset( $_POST[ 'mainwp_use_favicon' ] ) ? 0 : 1 ) );
+//					MainWP_Utility::update_option( 'mainwp_use_favicon', (!isset( $_POST[ 'mainwp_use_favicon' ] ) ? 0 : 1 ) );
 					$redirect_url = admin_url( 'admin.php?page=DashboardOptions&message=saved' );
 					wp_redirect( $redirect_url );
 					exit();
@@ -2349,6 +2349,7 @@ class MainWP_System {
 				if ( isset( $_POST[ 'submit' ] ) && wp_verify_nonce( $_POST[ 'wp_nonce' ], 'MainWPTools' ) ) {
                     $update_screen_options = true;
                     MainWP_Utility::update_option( 'mainwp_enable_managed_cr_for_wc', (!isset( $_POST[ 'enable_managed_cr_for_wc' ] ) ? 0 : 1 ) );
+					MainWP_Utility::update_option( 'mainwp_use_favicon', (!isset( $_POST[ 'mainwp_use_favicon' ] ) ? 0 : 1 ) );					
 				}
 			} else if ( $_GET[ 'page' ] == 'mainwp_tab' || isset( $_GET['dashboard'] ) ) {
 				if ( isset( $_POST[ 'submit' ] ) && wp_verify_nonce( $_POST[ 'wp_nonce' ], 'MainWPScrOptions' ) ) {

@@ -15,7 +15,7 @@ class MainWP_Site_Info {
 		if ( empty( $current_wpid ) )
 			return;
 
-		$sql = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid );
+		$sql = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid, true );
 
 		$websites = MainWP_DB::Instance()->query( $sql );
 		if ( empty( $websites ) )
@@ -27,12 +27,13 @@ class MainWP_Site_Info {
 
 		$child_site_info = array(
 			'wpversion'		 		=> __( 'WordPress Version', 'mainwp' ),
-      'debug_mode' 			=> __( 'Debug Mode', 'mainwp' ),
+			'debug_mode' 			=> __( 'Debug Mode', 'mainwp' ),
 			'phpversion'	 		=> __( 'PHP Version', 'mainwp' ),
 			'child_version'	  => __( 'MainWP Child Version', 'mainwp' ),
 			'memory_limit'	 	=> __( 'PHP Memory Limit', 'mainwp' ),
 			'mysql_version'	 	=> __( 'MySQL Version', 'mainwp' ),
 			'ip'			 				=> __( 'Server IP', 'mainwp' ),
+			'group' 		 			=> __( 'Groups', 'mainwp' ),
 		);
 		?>
 
@@ -44,7 +45,7 @@ class MainWP_Site_Info {
 		<div class="ui section hidden divider"></div>
 
 		<div class="mainwp-widget-site-info">
-			<?php do_action( 'mainwp-site-info-widget-top'); ?>
+			<?php do_action( 'mainwp_site_info_widget_top'); ?>
 			<?php
 			if ( !is_array( $website_info ) || !isset( $website_info[ 'wpversion' ] ) ) {
 				?>
@@ -57,18 +58,21 @@ class MainWP_Site_Info {
 				</h2>
 				<?php
 			} else {
+				
+				$website_info['group'] = ( $website->wpgroups == '' ? 'None' : $website->wpgroups );
+				
 			?>
 			<table class="ui celled striped table">
 				<tbody>
-				<?php do_action( 'mainwp-site-info-table-top'); ?>
+				<?php do_action( 'mainwp_site_info_table_top'); ?>
 				<?php foreach ( $child_site_info as $index => $title ) {
-          $val = '';
-          if ( isset( $child_site_info[$index] ) ) {
-            if ( $index == 'debug_mode' ) {
-              $val = $child_site_info[ $index ] == 1 ? 'Enabled' : 'Disabled';
-            } else {
-              $val = $website_info[ $index ];
-            }
+				$val = '';
+				if ( isset( $child_site_info[$index] ) ) {
+				  if ( $index == 'debug_mode' ) {
+					$val = $child_site_info[ $index ] == 1 ? 'Enabled' : 'Disabled';
+				  } else {
+					$val = $website_info[ $index ];
+				  }
           }
           ?>
           <tr>
@@ -76,11 +80,11 @@ class MainWP_Site_Info {
 						<td><?php echo $val; ?></td>
           </tr>
 				<?php } ?>
-				<?php do_action( 'mainwp-site-info-table-bottom'); ?>
+				<?php do_action( 'mainwp_site_info_table_bottom'); ?>
 				</tbody>
 			</table>
 			<?php } ?>
-			<?php do_action( 'mainwp-site-info-widget-bottom'); ?>
+			<?php do_action( 'mainwp_site_info_widget_bottom'); ?>
 		</div>
 		<?php
 		@MainWP_DB::free_result( $websites );

@@ -103,3 +103,5 @@
 .mainwp-ui .ui.message.info a:not(.button) { color: #276f86; font-weight: bolder; text-decoration: underline !important;}
 .mainwp-ui .ui.message.red a:not(.button) { color: #a00000; font-weight: bolder; text-decoration: underline !important;}
 .mainwp-ui .ui.message a:not(.button) { color: rgba(0,0,0,.87); font-weight: bolder; text-decoration: underline !important;}
+
+.mainwp-ui [data-tooltip][data-inverted]:after { z-index: 4 !important; }

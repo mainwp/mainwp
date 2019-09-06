@@ -212,12 +212,16 @@ function shake_element( select ) {
 }
 
 
-mainwp_confirm = function( msg, confirmed_callback, cancelled_callback, isUpdateConfirm ) {    
-    if (jQuery('#mainwp-disable-update-confirmations').length > 0 && jQuery('#mainwp-disable-update-confirmations').val() == 1) {
-        // do not show confirm box
-        if (confirmed_callback && typeof confirmed_callback == 'function')
-            confirmed_callback();
-        return false;
+mainwp_confirm = function( msg, confirmed_callback, cancelled_callback, updateType ) {    // updateType: 1 single update, 2 multi update
+    if ( jQuery('#mainwp-disable-update-confirmations').length > 0 ) {            
+        var confVal = jQuery('#mainwp-disable-update-confirmations').val();
+        if ( typeof updateType !== 'undefined' && (confVal == 2 || (confVal == 1 && updateType == 1 ) ) ) // disable for all update or disable for single updates only
+        {
+            // do not show confirm box
+            if (confirmed_callback && typeof confirmed_callback == 'function')
+                confirmed_callback();
+            return false;
+        }
     }
     
     jQuery('#mainwp-modal-confirm .content-massage').html(msg);
@@ -233,7 +237,8 @@ mainwp_confirm = function( msg, confirmed_callback, cancelled_callback, isUpdate
         }
     }).modal('show');
     
-    if ( typeof isUpdateConfirm !== 'undefined' && isUpdateConfirm ) {    
+    // if it is update confirm and then display the update confirm notice text
+    if ( typeof updateType !== 'undefined' && ( updateType == 1 || updateType == 2) ) { 
         jQuery('#mainwp-modal-confirm .update-confirm-notice').show();
     }
     

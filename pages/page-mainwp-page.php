@@ -681,6 +681,7 @@ class MainWP_Page {
 									<a class="item page_submitrestore" href="#"><?php _e( 'Restore', 'mainwp' ); ?></a>
 									<a class="item page_submitdelete_perm" href="#"><?php _e( 'Delete permanently', 'mainwp' ); ?></a>
                 <?php } ?>
+						<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php echo __( 'Go to WP Admin', 'mainwp' ) ?></a>									
 							</div>
 						</div>
 					</td>

@@ -781,6 +781,11 @@ class MainWP_UI {
 			'child_site_info'	  => __( 'Child site info (Individual Site Overview page)', 'mainwp' ),
         );
 
+		$custom_opts = apply_filters( 'mainwp-widgets-screen-options', array() );		
+		if (  is_array( $custom_opts ) && count( $custom_opts ) > 0 ) {
+			$default_widgets = array_merge( $default_widgets, $custom_opts );
+		}
+		
         $hide_widgets = get_user_option( 'mainwp_settings_hide_widgets' );
         if ( !is_array( $hide_widgets ) )
             $hide_widgets = array();
@@ -838,7 +843,7 @@ class MainWP_UI {
       </div>
     </div>
 
-		<div class="ui grid field">
+	<div class="ui grid field">
       <label class="six wide column middle aligned"></label>
       <div class="ten wide column">
 				<div class="ui info message">
@@ -860,7 +865,7 @@ class MainWP_UI {
 	    </div>
 		</div>
 
-		<div class="ui grid field">
+	<div class="ui grid field">
       <label class="six wide column middle aligned"><?php esc_html_e( 'Show Usersnap button', 'mainwp' ); ?></label>
       <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Usersnap button will show in the MainWP header.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
         <input type="checkbox" name="mainwp_show_usersnap" <?php echo ( ( get_option( 'mainwp_show_usersnap' ) != false ) ? 'checked="true"' : ''); ?> />

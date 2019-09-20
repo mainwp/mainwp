@@ -293,7 +293,7 @@ class MainWP_Page {
 
         <div id="mainwp-manage-pages"  class="ui alt segment">
             <div class="mainwp-main-content">
-              <div class="mainwp-actions-bar">
+              <div class="mainwp-actions-bar ui mini form">
                 <div class="ui grid">
                   <div class="ui two column row">
                     <div class="column">
@@ -303,7 +303,7 @@ class MainWP_Page {
                         <option value="restore"><?php _e( 'Restore', 'mainwp' ); ?></option>
                         <option value="delete"><?php _e( 'Delete permanently', 'mainwp' ); ?></option>
                       </select>
-                      <button class="ui button" id="mainwp-do-pages-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
+                      <button class="ui mini button" id="mainwp-do-pages-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
                       <?php do_action( 'mainwp_pages_actions_bar_left' ); ?>
                     </div>
                     <div class="right aligned column">
@@ -428,7 +428,7 @@ class MainWP_Page {
                 </div>
             </div>
 
-        	<table id="mainwp-pages-table" class="ui selectable single line table">
+        	<table id="mainwp-pages-table" class="ui selectable single line table" style="width:100%">
 			<thead class="full-width">
 				<tr>
                     <th  class="no-sort check-column collapsing"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
@@ -467,8 +467,7 @@ class MainWP_Page {
         "colReorder" : true,
         "stateSave":  true,
         "pagingType": "full_numbers",
-		"scrollY" : 500,
-		"scrollX" : true,
+				"scrollX" : true,
         "order": [],
         "columnDefs": [ {
           "targets": 'no-sort',
@@ -681,7 +680,7 @@ class MainWP_Page {
 									<a class="item page_submitrestore" href="#"><?php _e( 'Restore', 'mainwp' ); ?></a>
 									<a class="item page_submitdelete_perm" href="#"><?php _e( 'Delete permanently', 'mainwp' ); ?></a>
                 <?php } ?>
-						<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php echo __( 'Go to WP Admin', 'mainwp' ) ?></a>									
+						<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php echo __( 'Go to WP Admin', 'mainwp' ) ?></a>
 							</div>
 						</div>
 					</td>
@@ -875,7 +874,7 @@ class MainWP_Page {
 						$output			 = new stdClass();
 						$output->ok		 = array();
 						$output->errors	 = array();
-
+						$startTime = time();
 
 						if ( count( $dbwebsites ) > 0 ) {
 							$post_data	 = array(
@@ -932,6 +931,37 @@ class MainWP_Page {
 						if ( $do_not_del !== 'yes' ) {
 							wp_delete_post( $id, true );
 						}
+						
+						$countSites = 0;
+						$countRealItems = 0;
+						foreach ( $dbwebsites as $website ) {
+							if ( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ) {
+								$countSites++;
+								$countRealItems++;
+							}
+						}				
+						
+						if ( ! empty( $countSites ) ) {
+							$seconds = (time() - $startTime);
+							MainWP_Twitter::updateTwitterInfo( 'new_page', $countSites, $seconds, $countRealItems, $startTime, 1 );
+						}
+
+						if ( MainWP_Twitter::enabledTwitterMessages() ) {
+							$twitters = MainWP_Twitter::getTwitterNotice( 'new_page' );
+							if ( is_array( $twitters ) ) {
+								foreach ( $twitters as $timeid => $twit_mess ) {
+									if ( ! empty( $twit_mess ) ) {
+										$sendText = MainWP_Twitter::getTwitToSend( 'new_page', $timeid );
+									?>
+										<div class="mainwp-tips ui info message twitter" style="margin:0">
+											<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_page" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText );?>
+										</div>
+									<?php
+									}
+								}
+							}
+						}
+
                     } // if $post
 				} else {
 					?>

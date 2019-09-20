@@ -902,7 +902,7 @@ public static function renderAutoUpdate() {
       if ( $snPluginAutomaticDailyUpdate === false ) {
         $snPluginAutomaticDailyUpdate = get_option( 'mainwp_automaticDailyUpdate' );
         update_option( 'mainwp_pluginAutomaticDailyUpdate', $snPluginAutomaticDailyUpdate );
-            }
+		}
 
             $update_time = MainWP_Utility::getWebsitesAutomaticUpdateTime();
             $lastAutomaticUpdate = $update_time['last'];
@@ -1538,10 +1538,10 @@ public static function renderIgnore() {
                 return false;
             }
             $userExtension = MainWP_DB::Instance()->getUserExtension();
-            $trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
-            if ( is_array( $trustedPlugins ) && in_array( $slug, $trustedPlugins ) ) {
+            $trustedPlugins = json_decode( $userExtension->trusted_plugins, true );					
+            if ( is_array( $trustedPlugins ) && in_array( $slug, $trustedPlugins ) ) {						
                 return true;
-            }
+            }						
             return false;
     }
 

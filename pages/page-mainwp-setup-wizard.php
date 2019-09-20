@@ -230,10 +230,10 @@ class MainWP_Setup_Wizard {
 	public function mwp_setup_introduction() {
 		$this->mwp_setup_ready_actions();
 		?>
-		<h1 class="ui header"><?php _e( 'Welcome to MainWP Dashboard', 'mainwp' ); ?></h1>
+		<h1 class="ui header"><?php _e( 'MainWP Quick Setup Wizard', 'mainwp' ); ?></h1>
 		<p><?php _e( 'Thank you for choosing MainWP for managing your WordPress sites. This quick setup wizard will help you configure the basic settings. It\'s completely optional and shouldn\'t take longer than five minutes.', 'mainwp' ); ?></p>
 		<p><?php _e( 'If you don\'t want to go through the setup wizard, you can skip and proceed to your MainWP Dashboard by clicking the "Not right now" button. If you change your mind, you can come back later by starting the Setup Wizard from the MainWP > Settings > MainWP Tools page! ', 'mainwp' ); ?></p>
-		<p><?php _e( 'To go back to WordPress Admin section, click the "Back to WP Admin" button.', 'mainwp' ); ?></p>
+		<p><?php _e( 'To go back to the WordPress Admin section, click the "Back to WP Admin" button.', 'mainwp' ); ?></p>
 		<div class="ui hidden divider"></div>
 		<div class="ui hidden divider"></div>
 		<div class="ui hidden divider"></div>
@@ -495,12 +495,6 @@ class MainWP_Setup_Wizard {
 		<form method="post" class="ui form">
 			<div class="field">
 				<label><?php _e( 'Do you want to receive important email notifications from your MainWP Dashboard?', 'mainwp' ); ?></label>
-				<div class="ui info message">
-					<?php _e( 'These are emails from your MainWP Dashboard notifying you of available updates and other maintenance related messages. You can change this later in the MainWP Settings page.', 'mainwp' ); ?>
-					<strong>
-						<?php _e( 'These are NOT emails from the MainWP team and this does NOT sign you up for any mailing lists.', 'mainwp' ); ?>
-					</strong>
-						</div>
 				<div class="ui toggle checkbox">
 					<input type="checkbox" value="hidden" name="mwp_setup_options_important_notification" id="mwp_setup_options_important_notification" <?php echo ( $important_notification == 1 ? 'checked="true"' : '' ); ?> />
 					<label></label>
@@ -519,9 +513,16 @@ class MainWP_Setup_Wizard {
 						</div>
 						<div class="ui hidden fitted divider"></div>
 								<?php } ?>
-					<a href="#" id="mainwp-multi-emails-add" class="ui button basic green" data-tooltip="<?php esc_attr_e( 'Add another email address to receive email notifications to multiple email addresses.', 'mainwp' ); ?>" data-inverted=""><?php _e( 'Add Another Email', 'mainwp' ); ?></a>
-							</div>
+						<a href="#" id="mainwp-multi-emails-add" class="ui button basic green" data-tooltip="<?php esc_attr_e( 'Add another email address to receive email notifications to multiple email addresses.', 'mainwp' ); ?>" data-inverted=""><?php _e( 'Add Another Email', 'mainwp' ); ?></a>
+				</div>
+				<div class="ui info message">
+					<?php _e( 'These are emails from your MainWP Dashboard notifying you of available updates and other maintenance related messages. You can change this later in the MainWP Settings page.', 'mainwp' ); ?>
+					<strong>
+						<?php _e( 'These are NOT emails from the MainWP team and this does NOT sign you up for any mailing lists.', 'mainwp' ); ?>
+					</strong>
+				</div>
 			</div>
+			
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
 					jQuery( '#mainwp-multi-emails-add' ).on( 'click', function () {
@@ -549,8 +550,7 @@ class MainWP_Setup_Wizard {
 		check_admin_referer( 'mwp-setup' );
 		$important_notification							 = (!isset( $_POST[ 'mwp_setup_options_important_notification' ] ) ? 0 : 1);
 		update_option( 'mwp_setup_importantNotification', $important_notification );
-		MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', $important_notification );
-		MainWP_Utility::update_option( 'mainwp_automaticDailyUpdate', $important_notification ? 1 : 0 );
+		MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', $important_notification );		
 		$userExtension									 = MainWP_DB::Instance()->getUserExtension();
 		$userExtension->offlineChecksOnlineNotification	 = $important_notification;
 
@@ -573,7 +573,7 @@ class MainWP_Setup_Wizard {
 
 	public function mwp_setup_backup() {
 
-		$planning_backup = get_option( 'mwp_setup_planningBackup', 1 );
+		$planning_backup = get_option( 'mwp_setup_planningBackup', 0 );
 		$backup_method	 = get_option( 'mwp_setup_primaryBackup' );
 		$style = $planning_backup == 1 ? "" : 'style="display: none"';
 		$style_alt = ( !empty( $backup_method ) ) ? "" : 'style="display: none"';
@@ -631,7 +631,7 @@ class MainWP_Setup_Wizard {
 					</div>
 				</div>
 				<div class="ui hidden divider"></div>
-				<a href="https://mainwp.com/my-account/" class="ui button green basic tiny" target="_blank" data-inverted="" data-position="bottom center" data-tooltip="<?php esc_attr_e( 'If you don not have MainWP account, click here to go to the https://mainwp.com/my-account/ to register for a new account.', 'mainwp' ); ?>"><?php _e( 'Register for MainWP Account', 'mainwp' ); ?></a>
+				<a href="https://mainwp.com/my-account/" class="ui button green basic tiny" target="_blank" data-inverted="" data-position="bottom center" data-tooltip="<?php esc_attr_e( 'If you do not have MainWP account, click here to go to the https://mainwp.com/my-account/ to register for a new account.', 'mainwp' ); ?>"><?php _e( 'Register for MainWP Account', 'mainwp' ); ?></a>
 				<input type="hidden" name="mwp_setup_purchase_product_id"  value="<?php echo esc_attr( $ext_product_id ); ?>">
 				<div class="ui hidden divider"></div>
 				<?php

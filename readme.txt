@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.2.3
 Requires PHP: 5.6
-Stable tag: 4.0.2
+Stable tag: 4.0.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -153,6 +153,22 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.0.3 - 9-20-19 =
+* Fixed: broken Reconnect button in the Connection Status widget
+* Fixed: an issue with saving the MainWP Child auto update feature option in the Quick Start Wizard
+* Fixed: multiple typos
+* Fixed: various cosmetic issues
+* Fixed: an issue with ignoring individual updates
+* Fixed: redirection to Quick Start Wizard for new installations
+* Added: Twitter brag notifications
+* Added: additional links in the actions menu in the Posts, Pages and Users table
+* Added: 'mainwp-widgets-screen-options' filter for managing extensions widgets on the Overview page
+* Added: option to set specific time for automatic daily synchronization
+* Added: option to set automatic daily synchronization frequency
+* Added: support for the MainWP Custom Dashboard Extension
+* Updated: improved hiding unwanted Manage Sites table columns
+* Updated: default value for the "Are you planning to use MainWP for backups?" option
 
 = 4.0.2 - 9-6-19 =
 * Fixed: an issue with incorrect backups count number in the Client Reports system

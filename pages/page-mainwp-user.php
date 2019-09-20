@@ -239,7 +239,7 @@ class MainWP_User {
 
     <div id="mainwp-manage-users" class="ui alt segment">
 			<div class="mainwp-main-content">
-        <div class="mainwp-actions-bar">
+        <div class="mainwp-actions-bar ui mini form">
           <div class="ui grid">
             <div class="ui two column row">
               <div class="column">
@@ -247,7 +247,7 @@ class MainWP_User {
                   <option value="edit"><?php _e( 'Edit', 'mainwp' ); ?></option>
                   <option value="delete"><?php _e( 'Delete', 'mainwp' ); ?></option>
                 </select>
-                <button class="ui button" id="mainwp-do-users-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
+                <button class="ui mini button" id="mainwp-do-users-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
                 <?php do_action( 'mainwp_users_actions_bar_left' ); ?>
               </div>
               <div class="right aligned column">
@@ -1116,6 +1116,8 @@ class MainWP_User {
 					}
 				}
 			}
+			
+			$startTime = time();
 			if ( count( $dbwebsites ) > 0 ) {
 				$post_data      = array(
 					'new_user'      => base64_encode( serialize( $user_to_add ) ),
@@ -1129,6 +1131,36 @@ class MainWP_User {
 					'PostingBulk_handler',
 				), $output );
 			}
+			
+			$countSites = $countRealItems = 0;
+			foreach ( $dbwebsites as $website ) {
+				if ( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ) {
+					$countSites ++;
+                    $countRealItems++;
+				}
+			}
+
+			if ( ! empty( $countSites ) ) {
+				$seconds = ( time() - $startTime );
+				MainWP_Twitter::updateTwitterInfo( 'create_new_user', $countSites, $seconds, $countRealItems, $startTime, 1 );
+			}
+
+			if ( MainWP_Twitter::enabledTwitterMessages() ) {
+				$twitters = MainWP_Twitter::getTwitterNotice( 'create_new_user' );
+				if ( is_array( $twitters ) ) {
+					foreach ( $twitters as $timeid => $twit_mess ) {
+						if ( ! empty( $twit_mess ) ) {
+							$sendText = MainWP_Twitter::getTwitToSend( 'create_new_user', $timeid );
+							?>
+							<div class="mainwp-tips ui info message twitter" style="margin:0">
+								<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="create_new_user" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText ); ?>
+							</div>
+							<?php
+						}
+					}
+				}
+			}
+			
             ?>
 
 			<div id="mainwp-creating-new-user-modal" class="ui modal">

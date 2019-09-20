@@ -287,8 +287,9 @@ class MainWP_Settings {
 					MainWP_Utility::update_option( 'mainwp_maximumComments', isset( $_POST[ 'mainwp_maximumComments' ] ) ? intval( $_POST[ 'mainwp_maximumComments' ] ) : 50  );
 				}
 				MainWP_Utility::update_option( 'mainwp_wp_cron', (!isset( $_POST[ 'mainwp_options_wp_cron' ] ) ? 0 : 1 ) );
-//                MainWP_Utility::update_option( 'mainwp_use_favicon', (!isset($_POST['mainwp_use_favicon']) ? 0 : 1));
-
+				MainWP_Utility::update_option( 'mainwp_timeDailyUpdate', $_POST[ 'mainwp_timeDailyUpdate' ] );
+				MainWP_Utility::update_option( 'mainwp_frequencyDailyUpdate', intval( $_POST[ 'mainwp_frequencyDailyUpdate' ] ) );
+				
                 $val = ( isset( $_POST[ 'mainwp_sidebarPosition' ] ) ? intval($_POST[ 'mainwp_sidebarPosition' ]) : 1 );
                 if ( $user = wp_get_current_user() ) {
                     update_user_option($user->ID, "mainwp_sidebarPosition", $val, true);
@@ -372,6 +373,49 @@ class MainWP_Settings {
 								<input type="checkbox" name="mainwp_options_wp_cron" id="mainwp_options_wp_cron" <?php echo( ( get_option( 'mainwp_wp_cron' ) == 1 ) || ( get_option( 'mainwp_wp_cron' ) === false ) ? 'checked="true"' : '' ); ?>/>
 							</div>
 						</div>					
+					<?php
+					$timeDailyUpdate	= get_option( 'mainwp_timeDailyUpdate' );
+					$frequencyDailyUpdate = get_option( 'mainwp_frequencyDailyUpdate' );					
+					?>					  
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Automatic daily sync time', 'mainwp' ); ?></label>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set specific time for the automatic daily sync process.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<div class="time-selector">
+								<div class="ui input left icon">
+									<i class="clock icon"></i>
+									<input type="text" name="mainwp_timeDailyUpdate" id="mainwp_timeDailyUpdate" value="<?php echo esc_html( $timeDailyUpdate ); ?>" />
+								</div>
+							</div>
+							<script type="text/javascript">
+							jQuery( document ).ready( function() {
+									jQuery( '.time-selector' ).calendar( {
+										type: 'time',
+										ampm: false
+									} );
+							} );
+							</script>
+						</div>
+					</div>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Daily Update frequency', 'mainwp' ); ?></label>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Daily Update frequency', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<select name="mainwp_frequencyDailyUpdate" id="mainwp_frequencyDailyUpdate" class="ui dropdown">
+								<option value="1" <?php if ( $frequencyDailyUpdate == 1 ) { ?>selected<?php } ?>><?php _e( 'Once per day', 'mainwp' ); ?></option>
+								<option value="2" <?php if ( $frequencyDailyUpdate == 2 ) { ?>selected<?php } ?>><?php _e( 'Twice per day', 'mainwp' ); ?></option>
+								<option value="3" <?php if ( $frequencyDailyUpdate == 3 ) { ?>selected<?php } ?>><?php _e( 'Three times per day', 'mainwp' ); ?></option>
+								<option value="4" <?php if ( $frequencyDailyUpdate == 4 ) { ?>selected<?php } ?>><?php _e( 'Four times per day', 'mainwp' ); ?></option>
+								<option value="5" <?php if ( $frequencyDailyUpdate == 5 ) { ?>selected<?php } ?>><?php _e( 'Five times per day', 'mainwp' ); ?></option>
+								<option value="6" <?php if ( $frequencyDailyUpdate == 6 ) { ?>selected<?php } ?>><?php _e( 'Six times per day', 'mainwp' ); ?></option>
+								<option value="7" <?php if ( $frequencyDailyUpdate == 7 ) { ?>selected<?php } ?>><?php _e( 'Seven times per day', 'mainwp' ); ?></option>
+								<option value="8" <?php if ( $frequencyDailyUpdate == 8 ) { ?>selected<?php } ?>><?php _e( 'Eight times per day', 'mainwp' ); ?></option>
+								<option value="9" <?php if ( $frequencyDailyUpdate == 9 ) { ?>selected<?php } ?>><?php _e( 'Nine times per day', 'mainwp' ); ?></option>
+								<option value="10" <?php if ( $frequencyDailyUpdate == 10 ) { ?>selected<?php } ?>><?php _e( 'Ten times per day', 'mainwp' ); ?></option>
+								<option value="11" <?php if ( $frequencyDailyUpdate == 11 ) { ?>selected<?php } ?>><?php _e( 'Eleven times per day', 'mainwp' ); ?></option>
+								<option value="12" <?php if ( $frequencyDailyUpdate == 12 ) { ?>selected<?php } ?>><?php _e( 'Twelve times per day', 'mainwp' ); ?></option>
+							</select>
+						</div>
+					</div>
+					  
             <?php
 
             $sidebarPosition = get_user_option("mainwp_sidebarPosition");
@@ -747,6 +791,12 @@ class MainWP_Settings {
 							<input type="checkbox" name="mainwp_use_favicon" id="mainwp_use_favicon" <?php echo( ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) ? 'checked="true"' : '' ); ?> />
 						</div>
 					</div>  
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Turn off brag button', 'mainwp' ); ?></label>
+						<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, Twitter messages will be turn off.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+							<input type="checkbox" name="mainwp_hide_twitters_message" id="mainwp_hide_twitters_message" <?php echo( ( get_option( 'mainwp_hide_twitters_message', 0 ) == 1 ) ? 'checked="true"' : '' ); ?> />
+						</div>
+					</div>
                      <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Enable Managed Client Reports for WooCommerce', 'mainwp' ); ?></label>
                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable Managed Client Reports for WooCommerce', 'mainwp' ); ?>" data-inverted="" data-position="top left">

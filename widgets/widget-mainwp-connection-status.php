@@ -143,13 +143,13 @@ class MainWP_Connection_Status {
 							<span><?php echo esc_attr( $lastSyncTime ); ?></span>
 						</div>
 						<div class="four wide column middle aligned right aligned reconnect-wrapper">
-            <?php
+						<?php
 						if ( $md5Connection ) {
-              echo $output_md5;
-            } else {
+							echo $output_md5;
+						} else {
 						?>
-            	<a href="#" class="mainwp-updates-overview-reconnect-site" siteid="<?php echo $website->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php _e( 'Reconnect', 'mainwp' ); ?></a>
-            <?php } ?>
+							<a href="#" class="mainwp-updates-overview-reconnect-site" siteid="<?php echo $website->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php _e( 'Reconnect', 'mainwp' ); ?></a>
+					<?php } ?>
 						</div>
 					</div>
 				</div>
@@ -263,7 +263,7 @@ class MainWP_Connection_Status {
 					</div>
 				</div>
 			<?php else : ?>
-				<div class="ui two column stackable grid">
+				<div class="ui two column stackable grid mainwp_wp_sync" site_id="<?php echo $site->id; ?>">
 					<div class="column left aligned">
 						<h2 class="ui header">
 						  <i class="red unlink icon"></i>

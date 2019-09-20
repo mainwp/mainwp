@@ -178,8 +178,8 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						<script type="text/javascript">
 					    jQuery( document ).ready( function () {
 					      jQuery( '#mainwp-admin-users-table' ).DataTable( {
-									"colReorder" : true,
-									"stateSave":  true,
+							"colReorder" : true,
+							"stateSave":  true,
 					        "pagingType": "full_numbers",
 					        "order": [],
 					        "columnDefs": [ { "targets": 'no-sort', "orderable": false } ],

@@ -9,13 +9,15 @@
 define( 'MAINWP_API_VALID', 'VALID' );
 define( 'MAINWP_API_INVALID', 'INVALID' );
 
+define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
+
 const MAINWP_VIEW_PER_SITE = 1;
 const MAINWP_VIEW_PER_PLUGIN_THEME = 0;
 const MAINWP_VIEW_PER_GROUP = 2;
 
 class MainWP_System {
 
-	public static $version = '4.0.2';
+	public static $version = '4.0.3';
 	//Singleton
 	private static $instance = null;
 	private $upgradeVersionInfo = null;
@@ -335,6 +337,7 @@ class MainWP_System {
 				'mainwp_automaticDailyUpdate',
 				'mainwp_backup_before_upgrade',
 				'mainwp_enableLegacyBackupFeature',
+				'mainwp_hide_twitters_message',
 				'mainwp_maximumInstallUpdateRequests',
 				'mainwp_maximumSyncRequests',
 				'mainwp_primaryBackup',
@@ -342,13 +345,17 @@ class MainWP_System {
 				'mainwp_security',
 				'mainwp_use_favicon',
 				'mainwp_wp_cron',
+				'mainwp_timeDailyUpdate',
+				'mainwp_frequencyDailyUpdate',
 				'mainwp_wpcreport_extension',
 				'mainwp_daily_digest_plain_text',
 				'mainwp_enable_managed_cr_for_wc',
 				'mainwp_hide_update_everything',
 				'mainwp_show_usersnap',
 				'mainwp_number_overview_columns',
-				'mainwp_disable_update_confirmations'
+				'mainwp_disable_update_confirmations',
+				'mainwp_settings_hide_widgets',
+				'mainwp_settings_hide_manage_sites_columns'				
 			);
 
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";
@@ -838,6 +845,19 @@ class MainWP_System {
 
         return $output;
     }
+	
+	static function get_timestamp_from_hh_mm( $hh_mm ) {
+			$hh_mm	 = explode( ':', $hh_mm );
+			$_hour			 = isset( $hh_mm[ 0 ] ) ? intval( $hh_mm[ 0 ] ) : 0;
+			$_mins			 = isset( $hh_mm[ 1 ] ) ? intval( $hh_mm[ 1 ] ) : 0;
+			if ( $_hour < 0 || $_hour > 23 ) {
+				$_hour = 0;
+			}
+			if ( $_mins < 0 || $_mins > 59 ) {
+				$_mins = 0;
+			}
+			return strtotime( date( 'Y-m-d' ) . ' ' . $_hour . ':' . $_mins . ':59' );
+	}
 
 	function mainwp_cronupdatescheck_action() {
 		MainWP_Logger::Instance()->info( 'CRON :: updates check' );
@@ -848,6 +868,29 @@ class MainWP_System {
 		@ini_set( 'memory_limit', $mem );
 		@ini_set( 'max_execution_time', 0 );
 
+		$timeDailyUpdate	= get_option( 'mainwp_timeDailyUpdate' );	
+				
+		// to check time to run daily
+		$run_timestamp = 0; // 0 hour
+		if ( !empty($timeDailyUpdate) ) {
+			$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
+			if ( time() < $run_timestamp ) {
+				return; 
+			}
+		}
+		
+		
+		$lasttimeAutomaticUpdate = get_option( 'mainwp_updatescheck_last_timestamp' );	
+		$frequencyDailyUpdate = get_option( 'mainwp_frequencyDailyUpdate' );
+		if ( $frequencyDailyUpdate < 0 )
+			$frequencyDailyUpdate = 1;
+		
+		// to check frequency to run daily
+		$mins_between = 24 * 60 / $frequencyDailyUpdate; // mins
+		if (time() < $lasttimeAutomaticUpdate + $mins_between * 60) {
+			return;
+		}
+		
 		MainWP_Utility::update_option( 'mainwp_cron_last_updatescheck', time() );
 
 		$mainwpAutomaticDailyUpdate = get_option( 'mainwp_automaticDailyUpdate' );
@@ -857,9 +900,8 @@ class MainWP_System {
 
 		$mainwpLastAutomaticUpdate = get_option( 'mainwp_updatescheck_last' );
         $mainwpHoursIntervalAutomaticUpdate = apply_filters( 'mainwp_updatescheck_hours_interval' , false);
+		
         if ( $mainwpHoursIntervalAutomaticUpdate > 0 ) {
-            $lasttimeAutomaticUpdate = get_option( 'mainwp_updatescheck_last_timestamp' );
-
             if ( $lasttimeAutomaticUpdate && ( $lasttimeAutomaticUpdate + $mainwpHoursIntervalAutomaticUpdate * 3600 > time() ) ) {
                 MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated hours interval' );
                 return;
@@ -872,18 +914,8 @@ class MainWP_System {
 
 		if ( 'Y' == get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
 			$send_noti_at = apply_filters( 'mainwp_updatescheck_sendmail_at_time', false );
-			if ( !empty( $send_noti_at ) ) {
-				$send_noti_at	 = explode( ':', $send_noti_at );
-				$_hour			 = isset( $send_noti_at[ 0 ] ) ? intval( $send_noti_at[ 0 ] ) : 0;
-				$_mins			 = isset( $send_noti_at[ 1 ] ) ? intval( $send_noti_at[ 1 ] ) : 0;
-				if ( $_hour < 0 || $_hour > 23 ) {
-					$_hour = 0;
-				}
-				if ( $_mins < 0 || $_mins > 59 ) {
-					$_mins = 0;
-				}
-				$send_timestamp = strtotime( date( 'Y-m-d' ) . ' ' . $_hour . ':' . $_mins . ':59' );
-
+			if ( !empty( $send_noti_at ) ) {				
+				$send_timestamp = self::get_timestamp_from_hh_mm( $send_noti_at );
 				if ( time() < $send_timestamp ) {
 					return; // send notification later
 				}
@@ -1022,7 +1054,7 @@ class MainWP_System {
                         $mail_lines .= $this->print_digest_lines( $notTrustedThemesNewUpdate  );
                         $mail_lines .= $this->print_digest_lines( $notTrustedThemesToUpdate  );
 
-            if ( $text_format ) {
+					if ( $text_format ) {
                             $mail .= 'WordPress Themes Updates' . "\r\n";
                             $mail .= "\r\n";
                             $mail .= $mail_lines;
@@ -2199,21 +2231,21 @@ class MainWP_System {
     }
 
 	function admin_init() {
-		if ( !MainWP_Utility::isAdmin() ) {
+		if ( ! MainWP_Utility::isAdmin() ) {
 			return;
 		}
 
         add_action('mainwp_activate_extention', array($this, 'activate_extention'), 10 , 2 );
         add_action('mainwp_deactivate_extention', array($this, 'deactivate_extention'), 10 , 1 );
 
-		if ( get_option( 'mainwp_activated' ) == 'yes' ) {
-			delete_option( 'mainwp_activated' );
-			wp_cache_delete( 'mainwp_activated', 'options' );
-            wp_cache_delete( 'alloptions' , 'options' );
-			wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
-
-			return;
-		}
+//		if ( get_option( 'mainwp_activated' ) == 'yes' ) {
+//			delete_option( 'mainwp_activated' );
+//			wp_cache_delete( 'mainwp_activated', 'options' );
+//            wp_cache_delete( 'alloptions' , 'options' );
+//			wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+//
+//			return;
+//		}
 
 		global $mainwpUseExternalPrimaryBackupsMethod;
 
@@ -2258,6 +2290,8 @@ class MainWP_System {
 			'admin_url'							 => admin_url(),
 			'date_format'						 => get_option( 'date_format' ),
 			'time_format'						 => get_option( 'time_format' ),
+			'enabledTwit'           => MainWP_Twitter::enabledTwitterMessages(),
+			'maxSecondsTwit'        => MAINWP_TWITTER_MAX_SECONDS,
 			'installedBulkSettingsManager'		 => MainWP_Extensions::isExtensionAvailable( 'mainwp-bulk-settings-manager' ) ? 1 : 0,
 			'maximumSyncRequests'				 => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
 			'maximumInstallUpdateRequests'		 => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
@@ -2299,10 +2333,20 @@ class MainWP_System {
 			return;
 		}
 
+		// redirect on first install
 		$quick_setup = get_option( 'mainwp_run_quick_setup', false );
 		if ( $quick_setup == 'yes' ) {
 			wp_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );
 			exit;
+		}
+		
+		if ( get_option( 'mainwp_activated' ) == 'yes' ) {
+			delete_option( 'mainwp_activated' );
+			wp_cache_delete( 'mainwp_activated', 'options' );
+            wp_cache_delete( 'alloptions' , 'options' );
+			wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+
+			return;
 		}
 
 		$started = get_option( 'mainwp_getting_started' );
@@ -2338,25 +2382,24 @@ class MainWP_System {
 
 		if ( isset( $_GET['page'] ) && isset($_POST['wp_nonce']) ) {
             $update_screen_options = false;
-			if ( $_GET[ 'page' ] == 'DashboardOptions' ) {
-				if ( isset( $_POST[ 'submit' ] ) && wp_verify_nonce( $_POST[ 'wp_nonce' ], 'DashboardOptions' ) ) {
-//					MainWP_Utility::update_option( 'mainwp_use_favicon', (!isset( $_POST[ 'mainwp_use_favicon' ] ) ? 0 : 1 ) );
-					$redirect_url = admin_url( 'admin.php?page=DashboardOptions&message=saved' );
-					wp_redirect( $redirect_url );
-					exit();
-				}
-			} else if ( $_GET[ 'page' ] == 'MainWPTools' ) {
+			if ( $_GET[ 'page' ] == 'MainWPTools' ) {
 				if ( isset( $_POST[ 'submit' ] ) && wp_verify_nonce( $_POST[ 'wp_nonce' ], 'MainWPTools' ) ) {
                     $update_screen_options = true;
                     MainWP_Utility::update_option( 'mainwp_enable_managed_cr_for_wc', (!isset( $_POST[ 'enable_managed_cr_for_wc' ] ) ? 0 : 1 ) );
 					MainWP_Utility::update_option( 'mainwp_use_favicon', (!isset( $_POST[ 'mainwp_use_favicon' ] ) ? 0 : 1 ) );					
+					
+					$enabled_twit = ! isset( $_POST['mainwp_hide_twitters_message'] ) ? 0 : 1;
+					MainWP_Utility::update_option( 'mainwp_hide_twitters_message', $enabled_twit );
+					if ( ! $enabled_twit ) {
+						MainWP_Twitter::clearAllTwitterMessages();
+					}					
 				}
 			} else if ( $_GET[ 'page' ] == 'mainwp_tab' || isset( $_GET['dashboard'] ) ) {
 				if ( isset( $_POST[ 'submit' ] ) && wp_verify_nonce( $_POST[ 'wp_nonce' ], 'MainWPScrOptions' ) ) {
                     $update_screen_options = true;
 				}
 			}
-
+			
             if ( $update_screen_options ) {
                 $hide_wids = array();
                 if ( isset( $_POST[ 'mainwp_hide_widgets' ] ) && is_array( $_POST[ 'mainwp_hide_widgets' ] ) ) {
@@ -2373,6 +2416,24 @@ class MainWP_System {
                 MainWP_Utility::update_option( 'mainwp_show_usersnap', (!isset( $_POST[ 'mainwp_show_usersnap' ] ) ? 0 :  time() ) );
                 MainWP_Utility::update_option( 'mainwp_number_overview_columns', intval( $_POST[ 'number_overview_columns' ] ) );
             }
+			
+			
+			if ( isset( $_POST[ 'submit' ] ) && wp_verify_nonce( $_POST[ 'wp_nonce' ], 'ManageSitesScrOptions' ) ) {
+				$hide_cols = array();
+				foreach($_POST as $key => $val) {					
+					if ( strpos( $key, 'mainwp_hide_column_' ) !== false) {						
+						$col = str_replace( 'mainwp_hide_column_', '', $key );	
+						$hide_cols[] = $col;
+					}
+				}
+				
+				if ( $user = wp_get_current_user() ) {
+                    update_user_option($user->ID, "mainwp_settings_hide_manage_sites_columns", $hide_cols, true);					
+					update_option( 'mainwp_default_sites_per_page', intval( $_POST['mainwp_default_sites_per_page'] ) );
+                }
+				
+			}
+			
 		}
 
 		if ( isset( $_POST[ 'select_mainwp_options_siteview' ] ) ) {

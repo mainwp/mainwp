@@ -143,12 +143,18 @@ class MainWP_Post_Handler {
 		//Page: ManageTips
 		$this->addAction( 'mainwp_tips_update', array( &$this, 'mainwp_tips_update' ) ); //ok
 		$this->addAction( 'mainwp_notice_status_update', array( &$this, 'mainwp_notice_status_update' ) );
+		$this->addAction( 'mainwp_dismiss_twit', array( &$this, 'mainwp_dismiss_twit' ) );
 		$this->addAction( 'mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
 		$this->addAction( 'mainwp_status_saving', array( &$this, 'mainwp_status_saving' ) );
 		$this->addAction( 'mainwp_leftmenu_filter_group', array( &$this, 'mainwp_leftmenu_filter_group' ) );
         $this->addAction( 'mainwp_widgets_order', array( &$this, 'ajax_widgets_order' ) );
 		$this->addAction( 'mainwp_save_settings', array( &$this, 'ajax_mainwp_save_settings' ) );
-
+		
+		add_action( 'wp_ajax_mainwp_twitter_dashboard_action', array(
+			&$this,
+			'mainwp_twitter_dashboard_action',
+		) ); //ok
+		
 		add_action( 'wp_ajax_mainwp_reset_usercookies', array( &$this, 'mainwp_reset_usercookies' ) ); //ok
 		//Page: Recent Posts
 		if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
@@ -654,6 +660,17 @@ class MainWP_Post_Handler {
 		die( 1 );
 	}
 
+	
+	function mainwp_dismiss_twit() {
+		$this->secure_request( 'mainwp_dismiss_twit' );
+
+		global $current_user;
+		if ( ( $user_id = $current_user->ID ) && isset( $_POST['twitId'] ) && ! empty( $_POST['twitId'] ) && isset( $_POST['what'] ) && ! empty( $_POST['what'] ) ) {
+			MainWP_Twitter::clearTwitterInfo( $_POST['what'], $_POST['twitId'] );
+		}
+		die( 1 );
+	}
+	
 	function dismiss_activate_notice() {
 		$this->secure_request( 'mainwp_dismiss_activate_notice' );
 
@@ -668,7 +685,35 @@ class MainWP_Post_Handler {
 		}
 		die( 1 );
 	}
+		
+	function mainwp_twitter_dashboard_action() {
+		
+		$success = false;
+		if ( isset( $_POST['actionName'] ) && isset( $_POST['countSites'] ) && ! empty( $_POST['countSites'] ) ) {
+			$success = MainWP_Twitter::updateTwitterInfo( $_POST['actionName'], $_POST['countSites'], (int) $_POST['countSeconds'], ( isset( $_POST['countRealItems'] ) ? $_POST['countRealItems'] : 0 ), time(), ( isset( $_POST['countItems'] ) ? $_POST['countItems'] : 0 ) );
+		}
 
+		if ( isset( $_POST['showNotice'] ) && ! empty( $_POST['showNotice'] ) ) {
+			if ( MainWP_Twitter::enabledTwitterMessages() ) {
+				$twitters = MainWP_Twitter::getTwitterNotice( $_POST['actionName'] );
+				$html     = '';
+				if ( is_array( $twitters ) ) {
+					foreach ( $twitters as $timeid => $twit_mess ) {
+						if ( ! empty( $twit_mess ) ) {
+							$sendText = MainWP_Twitter::getTwitToSend( $_POST['actionName'], $timeid );
+							$html .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr($_POST['actionName']) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::genTwitterButton( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
+						}
+					}
+				}
+				die( $html );
+			}
+		} else if ( $success ) {
+			die( 'ok' );
+		}
+
+		die( '' );
+	}
+	
 	function mainwp_reset_usercookies() {
 		$this->secure_request();
 
@@ -1429,8 +1474,8 @@ class MainWP_Post_Handler {
 
 			if (!empty($website)) {
 				$info['site_url'] = esc_url($website->url);
-			}
-			//die( json_encode( $info ) );
+			}						
+//			die( json_encode( $info ) );
             wp_send_json( $info );
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(

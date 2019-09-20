@@ -477,6 +477,30 @@ class MainWP_Updates {
 		}
 
 		self::renderHeader( 'UpdatesManage' );
+		
+		if ( MainWP_Twitter::enabledTwitterMessages() ) {
+			$filter = array(
+				'upgrade_all_plugins',
+				'upgrade_all_themes',
+				'upgrade_all_wp_core'
+			);
+			foreach ( $filter as $what ) {
+				$twitters = MainWP_Twitter::getTwitterNotice( $what );
+				if ( is_array( $twitters ) ) {
+					foreach ( $twitters as $timeid => $twit_mess ) {
+						if ( !empty( $twit_mess ) ) {
+							$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
+							if ( !empty( $sendText ) ) {
+								?>
+								<div class="mainwp-tips ui info message twitter" style="margin:0"><i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText );?></div>
+								<?php
+							}
+						}
+					}
+				}
+			}
+		}
+		
 		?>
 		<div id="mainwp-page-navigation-wrapper">
 			<div class="ui secondary green pointing menu stackable mainwp-page-navigation">
@@ -497,7 +521,7 @@ class MainWP_Updates {
 						<?php echo apply_filters( 'mainwp_widgetupdates_actions_top', '' ); ?>
 					</div>
 	        <div class="right aligned middle aligned column">
-						<form method="post" action="">
+						<form method="post" action="" class="ui mini form">
 							<div class="inline field">
 								<label for="mainwp_select_options_siteview"><?php _e( 'Show updates per ', 'mainwp' ); ?></label>
 								<select class="ui dropdown" onchange="mainwp_siteview_onchange(this)"  id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">

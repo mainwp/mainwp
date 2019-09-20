@@ -1258,9 +1258,9 @@ class MainWP_Server_Information {
 			if ( false !== strpos( ini_get( 'disable_functions' ), 'show_source') ) {
 				echo __( 'File content could not be displayed.', 'mainwp' );
 				echo "<br />";
-				echo __( 'It appears that the show_soruce() PHP function has been disabled on the servre.', 'mainwp' );
+				echo __( 'It appears that the show_source() PHP function has been disabled on the servre.', 'mainwp' );
 				echo "<br />";
-				echo __( 'Please, contact your host support and have them enable the show_soruce() function for the proper functioning of this feature.', 'mainwp' );
+				echo __( 'Please, contact your host support and have them enable the show_source() function for the proper functioning of this feature.', 'mainwp' );
 			} else {
 				if ( file_exists( ABSPATH . 'wp-config.php' ) ) {
 					@show_source( ABSPATH . 'wp-config.php' );
@@ -1369,9 +1369,9 @@ class MainWP_Server_Information {
 			if ( false !== strpos( ini_get( 'disable_functions' ), 'show_source') ) {
  				echo __( 'File content could not be displayed.', 'mainwp' );
 				echo "<br />";
-				echo __( 'It appears that the show_soruce() PHP function has been disabled on the servre.', 'mainwp' );
+				echo __( 'It appears that the show_source() PHP function has been disabled on the servre.', 'mainwp' );
 				echo "<br />";
-				echo __( 'Please, contact your host support and have them enable the show_soruce() function for the proper functioning of this feature.', 'mainwp' );
+				echo __( 'Please, contact your host support and have them enable the show_source() function for the proper functioning of this feature.', 'mainwp' );
 			} else {
 				show_source( ABSPATH . '.htaccess' );
 			}

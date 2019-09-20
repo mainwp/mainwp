@@ -190,12 +190,39 @@ class MainWP_Overview {
 		}
 		$screen = get_current_screen();
 		?>
+		
+		<div id="mainwp-dashboard-info-box">
+			<?php if ( empty( $current_wp_id ) && MainWP_Twitter::enabledTwitterMessages() ) {
+				$filter = array(
+					'upgrade_everything',
+					'upgrade_all_wp_core',
+					'upgrade_all_plugins',
+					'upgrade_all_themes',
+				);
+				foreach ( $filter as $what ) {
+					$twitters = MainWP_Twitter::getTwitterNotice( $what );
+										
+					if ( is_array( $twitters ) ) {
+						foreach ( $twitters as $timeid => $twit_mess ) {
+							if ( ! empty( $twit_mess ) ) {
+								$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
+								if ( !empty( $sendText) ) {
+									?>
+									<div class="mainwp-tips ui info message twitter" style="margin:0">
+										<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr($what); ?>"twit-id="<?php echo esc_attr($timeid); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton($sendText); ?>
+									</div>
+									<?php
+								}
+							}
+						}
+					}
+				}
+				?>
+			<?php } ?>
+		</div>
+		
     <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 		<div class="mainwp-primary-content-wrap">
-
-			<?php do_action( 'mainwp_before_overview_widgets' ); ?>
-
-			<?php do_action( 'mainwp_before_updates_overview_widget' ); ?>
 
 			<?php if ( MainWP_Utility::showMainWPMessage( 'notice', 'widgets' ) ) : ?>
 				<div class="ui message">
@@ -204,31 +231,28 @@ class MainWP_Overview {
 				</div>
 			<?php endif; ?>
 
-			<?php do_action( 'mainwp_after_updates_overview_widget' ); ?>
-                        <?php
-                        $overviewColumns = get_option('mainwp_number_overview_columns', 2);
-                        
-                        $cls_grid = 'two';
-                        if ( $overviewColumns == 3 )
-                            $cls_grid = 'three';
-                            
-                        ?>
+			<?php do_action( 'mainwp_before_overview_widgets' ); ?>
+
+      <?php
+      $overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
+
+      $cls_grid = 'two';
+      if ( $overviewColumns == 3 )
+        $cls_grid = 'three';
+
+      ?>
 			<div class="ui <?php echo $cls_grid; ?> column stackable grid mainwp-grid-wrapper">
-                            <div class="column" id="mainwp-grid-left" widget-context="left">
-                                <?php MainWP_UI::do_widget_boxes( $screen->id, 'left' ) ; ?>
-                            </div>
-                            <?php
-                            if ($overviewColumns == 3) {
-                                ?>                            
-                                <div class="column" id="mainwp-grid-middle" widget-context="middle">
-                                    <?php MainWP_UI::do_widget_boxes( $screen->id, 'middle' ) ; ?>
-                                </div>                            
-                                <?php                                
-                            }
-                            ?>
-                            <div class="column" id="mainwp-grid-right" widget-context="right">
-                                <?php MainWP_UI::do_widget_boxes( $screen->id, 'right' ) ; ?>
-                            </div>
+        <div class="column" id="mainwp-grid-left" widget-context="left">
+          <?php MainWP_UI::do_widget_boxes( $screen->id, 'left' ) ; ?>
+        </div>
+        <?php if ( $overviewColumns == 3 ) : ?>
+        <div class="column" id="mainwp-grid-middle" widget-context="middle">
+          <?php MainWP_UI::do_widget_boxes( $screen->id, 'middle' ) ; ?>
+        </div>
+        <?php endif; ?>
+        <div class="column" id="mainwp-grid-right" widget-context="right">
+          <?php MainWP_UI::do_widget_boxes( $screen->id, 'right' ) ; ?>
+        </div>
 			</div>
 			<?php do_action( 'mainwp_after_overview_widgets' ); ?>
 

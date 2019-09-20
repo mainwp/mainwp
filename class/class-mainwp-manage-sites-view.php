@@ -598,8 +598,6 @@ class MainWP_Manage_Sites_View {
 		$website_id = MainWP_Utility::get_current_wpid();
 		$total_vulner = 0;
 		if ( $website_id ) {
-			//$website		 = MainWP_DB::Instance()->getWebsiteById( $website_id );
-			//MainWP_Overview::renderDashboardBody( array( $website ), null, null, true );
 			$total_vulner	 = apply_filters( 'mainwp_vulner_getvulner', 0, $website_id );
 		}
 
@@ -1382,7 +1380,7 @@ class MainWP_Manage_Sites_View {
                         ?>
 						<div class="ui grid field">
 						  <label class="six wide column middle aligned"><?php esc_html_e( 'Groups', 'mainwp' ); ?></label>
-				  <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing group(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing group(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						    <div class="ui multiple selection dropdown" init-value="<?php echo esc_attr($init_groups); ?>">
 						      <input name="mainwp_managesites_edit_addgroups" value="" type="hidden">
 						      <i class="dropdown icon"></i>
@@ -1410,7 +1408,7 @@ class MainWP_Manage_Sites_View {
 
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Auto update core', 'mainwp' ); ?></label>
-				  <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want MainWP to automatically update WP Core on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want MainWP to automatically update WP Core on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="checkbox" name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" <?php echo ($website->automatic_update == 1 ? 'checked="true"' : ''); ?>><label for="mainwp_automaticDailyUpdate"></label>
 							</div>
 						</div>

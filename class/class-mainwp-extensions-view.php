@@ -464,6 +464,17 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1551',
 				'group'		 => array( 'admin' )
 			),
+			'mainwp-custom-dashboard-extension'				 =>
+			array(
+				'slug'		 => 'mainwp-custom-dashboard-extension',
+				'title'		 => 'MainWP Custom Dashboard Extension',
+				'desc'		 => 'The purpose of this plugin is to contain your customisation snippets for your MainWP Dashboard.',
+				'link'		 => 'https://mainwp.com/extension/mainwp-custom-dashboard-extension/',
+				'img'		 => $folder_url . 'custom-dashboard.png',
+				'product_id' => 'MainWP Custom Dashboard Extension',
+				'catalog_id' => '1080528',
+				'group'		 => array( 'admin' )
+			),
 			'mainwp-favorites-extension'			 =>
 			array(
 				'slug'		 => 'mainwp-favorites-extension',

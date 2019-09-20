@@ -169,11 +169,12 @@ class MainWP_Manage_Sites {
             $columns['site_actions'] = __('Actions', 'mainwp'); // set title
 
 
-        ?>
-            <div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
-			<div class="header"><?php echo __( 'Screen Options', 'mainwp' ); ?></div>
-			<div class="scrolling content ui form">
-								
+        ?>			
+            <div class="ui modal" id="mainwp-manage-sites-screen-options-modal">			
+			<div class="header"><?php echo __( 'Screen Options', 'mainwp' ); ?></div>				
+					<div class="scrolling content ui form">					
+						<form method="POST" action="" id="manage-sites-screen-options-form">
+						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'ManageSitesScrOptions' ); ?>" />                 	
 						<div class="ui grid field">
                             <label class="six wide column"><?php esc_html_e( 'Default items per page value', 'mainwp' ); ?></label>
                             <div class="ten wide column">
@@ -188,20 +189,25 @@ class MainWP_Manage_Sites {
                                 <input type="text" name="mainwp_default_sites_per_page" id="mainwp_default_sites_per_page" saved-value="<?php echo intval($sites_per_page) ; ?>" value="<?php echo intval($sites_per_page) ; ?>"/>
                             </div>
                         </div>
+						<?php
 						
+						$hide_cols = get_user_option('mainwp_settings_hide_manage_sites_columns');
+						if (!is_array($hide_cols))
+							$hide_cols = array();
+						
+						?>
                         <div class="ui grid field">
                             <label class="six wide column"><?php _e( 'Hide unwanted columns', 'mainwp' ); ?></label>
                                 <div class="ten wide column">
                                       <ul class="mainwp_hide_wpmenu_checkboxes">
                                       <?php
                                       foreach ( $columns as $name => $title ) {
-						if ( empty( $title ) )
+											if ( empty( $title ) )
                                               continue;
-
-                                          ?>
+											?>
                                               <li>
                                                   <div class="ui checkbox">
-                                                      <input type="checkbox" id="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
+                                                      <input type="checkbox" <?php if (in_array( $name, $hide_cols)) echo 'checked="checked"'; ?> id="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" name="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
                                                       <label for="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" ><?php echo  $title ; ?></label>
                                                   </div>
                                               </li>
@@ -211,11 +217,14 @@ class MainWP_Manage_Sites {
                                       </ul>
                                 </div>
                             </div>
+					</div>				
+					<div class="actions">
+						<input type="submit" class="ui green button" name="submit" id="submit" value="<?php echo __( 'Save Settings', 'mainwp' ); ?>" />
+						<div class="ui cancel button"><?php echo __( 'Close', 'mainwp' ); ?></div>
+					</div>		
+				</form>
 			</div>
-						<div class="actions">
-							<div class="ui cancel button"><?php echo __( 'Close', 'mainwp' ); ?></div>
-						</div>
-				</div>
+			
         <?php
     }
 
@@ -1442,6 +1451,32 @@ class MainWP_Manage_Sites {
         }
 
 		self::renderHeader( '' );
+		
+		if ( MainWP_Twitter::enabledTwitterMessages() ) {
+			$filter = array(    
+				'upgrade_all_plugins',
+				'upgrade_all_themes',
+				'upgrade_all_wp_core'
+			);
+			foreach ( $filter as $what ) {
+				$twitters = MainWP_Twitter::getTwitterNotice( $what );				
+				if ( is_array( $twitters ) ) {
+					foreach ( $twitters as $timeid => $twit_mess ) {
+						if ( !empty( $twit_mess ) ) {
+							$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
+							if ( !empty( $sendText ) ) {
+								?>
+								<div class="mainwp-tips ui info message twitter" style="margin:0">
+									<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr($what); ?>" twit-id="<?php echo esc_attr( $timeid ); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText );?>
+								</div>
+								<?php
+							}
+						}
+					}
+				}
+			}
+		}
+		
 		?>
         <div id="mainwp-manage-sites-content" class="ui segment">
             <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>

@@ -61,7 +61,7 @@ class MainWP_Manage_Backups {
 
         } else {
           if ( $enable_legacy_backup ) {
-                    add_submenu_page( 'mainwp_tab', __( 'Schedule Backup', 'mainwp' ), '<span id="mainwp-Backups">' . __( 'Schedule Backup', 'mainwp' ) . '</span>', 'read', 'ManageBackups', array( MainWP_Manage_Backups::getClassName(), 'renderManager' ) );
+                    add_submenu_page( 'mainwp_tab', __( 'Backups', 'mainwp' ), '<span id="mainwp-Backups">' . __( 'Backups', 'mainwp' ) . '</span>', 'read', 'ManageBackups', array( MainWP_Manage_Backups::getClassName(), 'renderManager' ) );
                     if ( mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) {
                         if( !MainWP_Menu::is_disable_menu_item(3, 'ManageBackupsAddNew') ) {
                             add_submenu_page( 'mainwp_tab', __( 'Add New Schedule', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'ManageBackupsAddNew', array( MainWP_Manage_Backups::getClassName(), 'renderNew' ) );
@@ -126,7 +126,7 @@ class MainWP_Manage_Backups {
     static function init_left_menu( $subPages = array(), $enableLegacyBackup = true ) {
         if (!self::$hideSubmenuBackups && $enableLegacyBackup) {
 			MainWP_Menu::add_left_menu( array(
-				'title'		 		=> __('Schedule Backup', 'mainwp'),
+				'title'		 		=> __('Backups', 'mainwp'),
 				'parent_key'  => 'mainwp_tab',
 				'slug'			  => 'ManageBackups',
 				'href'		 		=> 'admin.php?page=ManageBackups',
@@ -429,7 +429,9 @@ public static function renderHeader( $shownPage = '') {
     }
 
     function single_row( $item, $columns ) {
-
+		?>
+		<tr>
+		<?php
         foreach( $columns as $column_name => $title) {
             if ( method_exists( $this, 'column_' . $column_name ) ) {
 				echo "<td>";
@@ -439,7 +441,9 @@ public static function renderHeader( $shownPage = '') {
                 echo "<td></td>";
             }
         }
-
+		?>
+		</tr>
+		<?php
     }
 
     function column_actions( $item ) {

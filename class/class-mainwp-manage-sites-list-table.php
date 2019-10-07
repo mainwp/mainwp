@@ -802,7 +802,7 @@ public function display( $optimize = true ) {
                             }
                             return json.data;
                         }
-                      },
+					},
                     "pagingType": "full_numbers",
                     "colReorder" : {
                         fixedColumnsLeft: 1,
@@ -827,7 +827,7 @@ public function display( $optimize = true ) {
                         if (data.syncError){
                           jQuery(row).find('td.column-site-bulk').addClass('site-sync-error');
                         };
-                  }
+					}
                 } );
     <?php  } ?>
             _init_manage_sites_screen = function(){

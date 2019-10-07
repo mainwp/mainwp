@@ -150,8 +150,8 @@ class MainWP_Overview {
 				}
 			}
 
-      $id = isset($metaBox['id']) ? $metaBox['id'] : $i++ ;
-      $id = 'advanced-' . $id;
+			$id = isset($metaBox['id']) ? $metaBox['id'] : $i++ ;
+			$id = 'advanced-' . $id;
 
 			if ( $enabled ) {
 				MainWP_UI::add_widget_box( $id, $metaBox[ 'callback' ], $page , 'right', $metaBox[ 'metabox_title' ] );

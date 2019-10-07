@@ -107,24 +107,25 @@ jQuery(document).ready( function($) {
 	 */
 	window.name = '';
 
+      // moved to mainwp.js  
     // review for new UI update
-    jQuery( document ).on( 'click', '#mainwp-category-add-submit', function() {
-        var newCat = jQuery( '#newcategory' ).val();
-        if ( jQuery( '#categorychecklist' ).find( 'option[value="' + encodeURIComponent( newCat ) + '"]' ).length > 0 )
-            return;
-        jQuery( '#categorychecklist' ).append( '<option value="' + encodeURIComponent( newCat ) + '">' + newCat + '</option>' );
-        jQuery( '#category-adder' ).addClass( 'wp-hidden-children' );
-        jQuery( '#newcategory' ).val( '' );
-    } );
+//    jQuery( document ).on( 'click', '#mainwp-category-add-submit', function() {
+//        var newCat = jQuery( '#newcategory' ).val();
+//        if ( jQuery( '#categorychecklist' ).find( 'option[value="' + encodeURIComponent( newCat ) + '"]' ).length > 0 )
+//            return;
+//        jQuery( '#categorychecklist' ).append( '<option value="' + encodeURIComponent( newCat ) + '">' + newCat + '</option>' );
+//        jQuery( '#category-adder' ).addClass( 'wp-hidden-children' );
+//        jQuery( '#newcategory' ).val( '' );
+//    } );
 
     // Add New Post
 
     // Show/Hide new category field and button
-    jQuery( '#category-add-toggle' ).on( 'click', function() {
-      jQuery( '#newcategory-field' ).toggle();
-      jQuery( '#mainwp-category-add-submit-field' ).toggle();
-      return false;
-    } );
+//    jQuery( '#category-add-toggle' ).on( 'click', function() {
+//      jQuery( '#newcategory-field' ).toggle();
+//      jQuery( '#mainwp-category-add-submit-field' ).toggle();
+//      return false;
+//    } );
 
     //Show/Hide visibility additional fields
     jQuery( 'input[name="visibility"' ).on( 'change', function() {

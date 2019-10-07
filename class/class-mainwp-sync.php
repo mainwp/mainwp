@@ -48,7 +48,7 @@ class MainWP_Sync {
 			$othersData	 = apply_filters( 'mainwp-sync-others-data', array(), $pWebsite );
 			$information = MainWP_Utility::fetchUrlAuthed( $pWebsite, 'stats', array(
 				'optimize'						 => ( ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0 ),
-				'heatMap'						 => ( MainWP_Extensions::isExtensionAvailable( 'mainwp-heatmap-extension' ) ? $userExtension->heatMap : 0 ),
+				'heatMap'						 => 0,
 				'cloneSites'					 => (!$cloneEnabled ? 0 : urlencode( json_encode( $cloneSites ) ) ),
 				'othersData'					 => json_encode( $othersData ),
 				'server'						 => get_admin_url(),

@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.2.3
 Requires PHP: 5.6
-Stable tag: 4.0.3
+Stable tag: 4.0.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -153,6 +153,15 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.0.4 - 10-7-19 =
+* Fixed: an issue with applying extensions settings when adding a new site.
+* Fixed: issues with the Custom Post Types extension
+* Fixed: multiple PHP warnings
+* Fixed: problem with loading styles and scripts in Custom Post Types
+* Fixed: problem with sites selection
+* Added: new Quick Setup Wizard steps
+* Updated: multiple usability and cosmetic updates
 
 = 4.0.3 - 9-20-19 =
 * Fixed: broken Reconnect button in the Connection Status widget

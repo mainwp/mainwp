@@ -48,6 +48,8 @@ class MainWP_UI {
 		if ( $edit_site_id ) {
 			$show_group	 = false;
 		}
+		// to fix layout with multi sites selector
+		$tab_id = rand();
 		?>
 
 
@@ -73,17 +75,17 @@ class MainWP_UI {
 
 		<div id="mainwp-select-sites-header">
 			<div class="ui pointing green secondary menu">
-			  <a class="item active" data-tab="mainwp-select-sites"><?php esc_html_e( 'Sites', 'mainwp' ); ?></a>
-			  <a class="item" data-tab="mainwp-select-groups"><?php esc_html_e( 'Groups', 'mainwp' ); ?></a>
+			  <a class="item active" data-tab="mainwp-select-sites-<?php echo $tab_id; ?>"><?php esc_html_e( 'Sites', 'mainwp' ); ?></a>
+			  <a class="item" data-tab="mainwp-select-groups-<?php echo $tab_id; ?>"><?php esc_html_e( 'Groups', 'mainwp' ); ?></a>
         <?php if ( $staging_enabled ) : ?>
-        <a class="item" data-tab="mainwp-select-staging-sites"><?php esc_html_e( 'Staging', 'mainwp' ); ?></a>
+				<a class="item" data-tab="mainwp-select-staging-sites-<?php echo $tab_id; ?>"><?php esc_html_e( 'Staging', 'mainwp' ); ?></a>
         <?php endif; ?>
       </div>
     </div>
 
 		<div class="ui divider hidden"></div>
 
-		<div class="ui tab active" data-tab="mainwp-select-sites" id="mainwp-select-sites" select-by="site">
+		<div class="ui tab active" data-tab="mainwp-select-sites-<?php echo $tab_id; ?>" id="mainwp-select-sites" select-by="site">
 			<div id="mainwp-select-sites-body">
 				<div class="ui relaxed divided list" id="mainwp-select-sites-list">
 					<?php if ( !$websites ): ?>
@@ -136,7 +138,7 @@ class MainWP_UI {
 		if ( $staging_enabled ) :
 			$websites	= MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), $is_staging = 'yes' ) );
 			?>
-            <div class="ui tab" data-tab="mainwp-select-staging-sites" select-by="staging">
+            <div class="ui tab" data-tab="mainwp-select-staging-sites-<?php echo $tab_id; ?>" select-by="staging">
 			<div id="mainwp-select-sites-body">
 				<div class="ui relaxed divided list" id="mainwp-select-staging-sites-list">
 				<?php if ( !$websites ): ?>
@@ -185,7 +187,7 @@ class MainWP_UI {
         </div>
 		<?php endif;
 		?>
-		<div class="ui tab" data-tab="mainwp-select-groups" id="mainwp-select-groups" select-by="group">
+		<div class="ui tab" data-tab="mainwp-select-groups-<?php echo $tab_id; ?>" id="mainwp-select-groups" select-by="group">
 			<div id="mainwp-select-sites-body">
 				<div class="ui relaxed divided list" id="mainwp-select-groups-list">
 				<?php

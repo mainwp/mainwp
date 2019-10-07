@@ -1065,9 +1065,9 @@ updatesoverview_plugins_upgrade_int = function ( slug, websiteId, bulkMode, noCh
                                 if ( res[slugParts[i]] )
                                 {
                                     if ( !done && pBulkMode )
-                                        updatesoverview_plugins_upgrade_all_update_site_status( pWebsiteId, '<i class="green check icon"></i>' );
+                                        updatesoverview_plugins_upgrade_all_update_site_status( pWebsiteId, '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId) );
                                     websiteHolder.attr( 'updated', 1 );
-                                    websiteHolder.find( 'td:last-child' ).html( '<i class="green check icon"></i>' );
+                                    websiteHolder.find( 'td:last-child' ).html( '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId) );
                                     
                                     countRealItemsUpdated++;
                                     if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
@@ -1479,9 +1479,9 @@ updatesoverview_themes_upgrade_int = function ( slug, websiteId, bulkMode )
                         if ( res[slugParts[i]] )
                         {
                             if ( !done && pBulkMode )
-                                updatesoverview_themes_upgrade_all_update_site_status( pWebsiteId, '<i class="green check icon"></i>' );
+                                updatesoverview_themes_upgrade_all_update_site_status( pWebsiteId, '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', websiteId) );
                             websiteHolder.attr( 'updated', 1 );
-                            websiteHolder.find( 'td:last-child' ).html( '<i class="green check icon"></i>' );
+                            websiteHolder.find( 'td:last-child' ).html( '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', websiteId) );
 
                             countRealItemsUpdated++;
                             if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);

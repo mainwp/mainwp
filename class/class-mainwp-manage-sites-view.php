@@ -524,10 +524,10 @@ class MainWP_Manage_Sites_View {
             <label class="six wide column middle aligned"><?php esc_html_e( 'Archive format', 'mainwp' ); ?></label>
 			<div class="ten wide column">
 				<select class="ui dropdown" name="mainwp_archiveFormat" id="mainwp_archiveFormat">
-									<option value="zip" <?php if ( $archiveFormat == 'zip' ) : ?>selected<?php endif; ?>>Zip</option>
-									<option value="tar" <?php if ( $archiveFormat == 'tar' ) : ?>selected<?php endif; ?>>Tar</option>
-									<option value="tar.gz" <?php if ( ($archiveFormat === false) || ($archiveFormat == 'tar.gz') ) : ?>selected<?php endif; ?>>Tar GZip</option>
-									<option value="tar.bz2" <?php if ( $archiveFormat == 'tar.bz2' ) : ?>selected<?php endif; ?>>Tar BZip2</option>
+					<option value="zip" <?php if ( $archiveFormat == 'zip' ) : ?>selected<?php endif; ?>>Zip</option>
+					<option value="tar" <?php if ( $archiveFormat == 'tar' ) : ?>selected<?php endif; ?>>Tar</option>
+					<option value="tar.gz" <?php if ( ($archiveFormat === false) || ($archiveFormat == 'tar.gz') ) : ?>selected<?php endif; ?>>Tar GZip</option>
+					<option value="tar.bz2" <?php if ( $archiveFormat == 'tar.bz2' ) : ?>selected<?php endif; ?>>Tar BZip2</option>
 				</select>
 			</div>
 		</div>
@@ -1351,8 +1351,8 @@ class MainWP_Manage_Sites_View {
 						</div>
 
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Site friendly name', 'mainwp' ); ?></label>
-				  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website friendly name.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Site title', 'mainwp' ); ?></label>
+				  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website title.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<div class="ui left labeled input">
 									<input type="text" id="mainwp_managesites_edit_sitename" name="mainwp_managesites_edit_sitename" value="<?php echo esc_attr( stripslashes( $website->name ) ); ?>" />
 								</div>
@@ -1579,7 +1579,11 @@ class MainWP_Manage_Sites_View {
 		$params[ 'http_pass' ]			 			= isset( $_POST[ 'managesites_add_http_pass' ] ) ? $_POST[ 'managesites_add_http_pass' ] : '';
 		$params[ 'groupids' ]			 				= isset( $_POST[ 'groupids' ] ) && !empty($_POST[ 'groupids' ]) ? explode(",", $_POST[ 'groupids' ] ) : array();
 		$params[ 'groupnames_import' ]	 	= isset( $_POST[ 'groupnames_import' ] ) ? $_POST[ 'groupnames_import' ] : '';
-
+		
+		if ( isset( $_POST[ 'qsw_page' ] ) ) {
+			$params['qsw_page'] = $_POST[ 'qsw_page' ];
+		}
+		
 		return MainWP_Manage_Sites_View::addWPSite( $website, $params );
 	}
 
@@ -1673,24 +1677,25 @@ class MainWP_Manage_Sites_View {
 						$http_user	 = isset( $params[ 'http_user' ] ) ? $params[ 'http_user' ] : '';
 						$http_pass	 = isset( $params[ 'http_pass' ] ) ? $params[ 'http_pass' ] : '';
 						global $current_user;
-						$id			 = MainWP_DB::Instance()->addWebsite( $current_user->ID, $params[ 'name' ], $params[ 'url' ], $params[ 'wpadmin' ], base64_encode( $pubkey ), base64_encode( $privkey ), $information[ 'nossl' ], (isset( $information[ 'nosslkey' ] ) ? $information[ 'nosslkey' ] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion );
-						$message	 = sprintf( __( 'Site successfully added - Visit the Site\'s %sDashboard%s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' );
+						$id = MainWP_DB::Instance()->addWebsite( $current_user->ID, $params[ 'name' ], $params[ 'url' ], $params[ 'wpadmin' ], base64_encode( $pubkey ), base64_encode( $privkey ), $information[ 'nossl' ], (isset( $information[ 'nosslkey' ] ) ? $information[ 'nosslkey' ] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion );
+
+						if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
+							$message = sprintf( __( '<div class="ui header">Congratulations you have connected %s.</div> You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<strong>' . $params[ 'name' ] . '</strong>'  );
+						} else {
+							$message = sprintf( __( 'Site successfully added - Visit the Site\'s %sDashboard%s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' );
+						}
 						do_action( 'mainwp_added_new_site', $id ); // must before getWebsiteById to update team control permisions
 						$website	 = MainWP_DB::Instance()->getWebsiteById( $id );
 						MainWP_Sync::syncInformationArray( $website, $information );
 					} else {
-						$error = __( 'Undefined error.', 'mainwp' );
+						$error = __( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' );
 					}
 				}
 			} catch ( MainWP_Exception $e ) {
 				if ( $e->getMessage() == 'HTTPERROR' ) {
-					$error = 'HTTP error' . ($e->getMessageExtra() != null ? ' - ' . $e->getMessageExtra() : '');
+					$error = 'HTTP error' . ( $e->getMessageExtra() != null ? ' - ' . $e->getMessageExtra() : '' );
 				} else if ( $e->getMessage() == 'NOMAINWP' ) {
-					$error = __( 'No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please ', 'mainwp' );
-					if ( $e->getMessageExtra() != null ) {
-						$error .= sprintf( __( 'test your connection %shere%s or ', 'mainwp' ), '<a href="' . admin_url( 'admin.php?page=managesites&do=test&site=' . urlencode( $e->getMessageExtra() ) ) . '">', '</a>' );
-					}
-					$error .= sprintf( __( 'post as much information as possible on the error in the %ssupport forum%s.', 'mainwp' ), '<a href="https://mainwp.com/forum/">', '</a>' );
+					$error = __( 'MainWP Child Plugin not detected! Please make sure that the MainWP Child plugin is installed and activated on the child site. For additional help, contact the MainWP Support.', 'mainwp' );
 				} else {
 					$error = $e->getMessage();
 				}

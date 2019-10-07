@@ -14,6 +14,27 @@ jQuery( document ).ready( function ()
 //    } );
 
 //    if (jQuery('#mainwp_options_loadFilesBeforeZip_container').length > 0) initTriStateCheckBox('mainwp_options_loadFilesBeforeZip_container', 'mainwp_options_loadFilesBeforeZip', true);
+
+
+    // review for new UI update
+    jQuery( document ).on( 'click', '#mainwp-category-add-submit', function() {
+        var newCat = jQuery( '#newcategory' ).val();
+        if ( jQuery( '#categorychecklist' ).find( 'option[value="' + encodeURIComponent( newCat ) + '"]' ).length > 0 )
+            return;
+        jQuery( '#categorychecklist' ).append( '<option value="' + encodeURIComponent( newCat ) + '">' + newCat + '</option>' );
+        jQuery( '#category-adder' ).addClass( 'wp-hidden-children' );
+        jQuery( '#newcategory' ).val( '' );
+    } );
+
+    // Add New Post
+
+    // Show/Hide new category field and button
+    jQuery( '#category-add-toggle' ).on( 'click', function() {
+      jQuery( '#newcategory-field' ).toggle();
+      jQuery( '#mainwp-category-add-submit-field' ).toggle();
+      return false;
+    } );
+    
 } );
 
 /**
@@ -1592,7 +1613,7 @@ updatesoverview_upgrade_plugintheme_list_popup  = function ( what, pId, pSiteNam
         }
         else
         {
-            updatesoverview_plugins_upgrade_all_update_site_status( pId, '<i class="green check icon"></i>' );
+            updatesoverview_plugins_upgrade_all_update_site_status( pId, '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', pId) );
         }
         mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressValue( 1 );
         setTimeout( function ()
@@ -2494,11 +2515,11 @@ jQuery( document ).ready( function () {
         var parent = jQuery( this ).closest( '.sync-ext-row' );
         var opts = parent.find( ".sync-options input[type='checkbox']" );
         if ( jQuery( this ).is( ':checked' ) ) {
-            opts.removeAttr( "disabled" );
+            //opts.removeAttr( "disabled" );
             opts.prop( "checked", true );
         } else {
             opts.prop( "checked", false );
-            opts.attr( "disabled", "disabled" );
+            ///opts.attr( "disabled", "disabled" );
         }
     } );
 
@@ -2770,11 +2791,14 @@ mainwp_managesites_sync_extension_start_specific = function ( pPluginToInstall, 
     pPluginToInstall.attr( 'status', 'progress' );
     var syncGlobalSettings = pPluginToInstall.find( ".sync-global-options input[type='checkbox']:checked" ).length > 0 ? true : false;
     var install_plugin = pPluginToInstall.find( ".sync-install-plugin input[type='checkbox']:checked" ).length > 0 ? true : false;
-
+    var apply_settings = pPluginToInstall.find( ".sync-options input[type='checkbox']:checked" ).length > 0 ? true : false;
+    
     if ( syncGlobalSettings ) {
         mainwp_extension_apply_plugin_settings( pPluginToInstall, pSiteId, true );
     } else if ( install_plugin ) {
         mainwp_extension_prepareinstallplugin( pPluginToInstall, pSiteId );
+    } else if ( apply_settings ) {
+        mainwp_extension_apply_plugin_settings( pPluginToInstall, pSiteId, false );
     } else {
         mainwp_managesites_sync_extension_start_next( pSiteId );
         return;
@@ -7002,8 +7026,14 @@ mainwp_managesites_doaction = function ( action ) {
           jQuery('#mainwp-sites-bulk-actions-menu').dropdown("set selected", "sync"); ; // default value
         };
       }
-
-      mainwp_confirm( confirmMsg, _callback, _cancelled_callback );
+      
+      var updateType; // undefined
+      
+      if ( action == 'update_plugins' || action == 'update_themes'  || action == 'update_translations' ) {
+          updateType = 2; // multi update
+      }
+      
+      mainwp_confirm( confirmMsg, _callback, _cancelled_callback, updateType );
       return false; // return those case
     }
 
@@ -7293,7 +7323,7 @@ jQuery( document ).ready( function () {
 jQuery( document ).ready( function () {
     if ( jQuery('body.mainwp-ui').length > 0 ) {
         jQuery('.mainwp-ui-page .ui.dropdown:not(.not-auto-init)').dropdown();
-        jQuery('.mainwp-ui-page .ui.checkbox').checkbox(); 
+        jQuery('.mainwp-ui-page .ui.checkbox:not(.not-auto-init)').checkbox(); 
         jQuery('.mainwp-ui-page .ui.dropdown').filter('[init-value]').each(function(){
             var values = jQuery(this).attr('init-value').split(',');
             jQuery(this).dropdown('set selected',values);

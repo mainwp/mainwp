@@ -17,7 +17,7 @@ const MAINWP_VIEW_PER_GROUP = 2;
 
 class MainWP_System {
 
-	public static $version = '4.0.3';
+	public static $version = '4.0.4';
 	//Singleton
 	private static $instance = null;
 	private $upgradeVersionInfo = null;
@@ -882,7 +882,7 @@ class MainWP_System {
 		
 		$lasttimeAutomaticUpdate = get_option( 'mainwp_updatescheck_last_timestamp' );	
 		$frequencyDailyUpdate = get_option( 'mainwp_frequencyDailyUpdate' );
-		if ( $frequencyDailyUpdate < 0 )
+		if ( $frequencyDailyUpdate <= 0 )
 			$frequencyDailyUpdate = 1;
 		
 		// to check frequency to run daily
@@ -2717,6 +2717,15 @@ class MainWP_System {
     }
 
 	function admin_enqueue_scripts( $hook ) {
+		
+		$load_cust_scripts = false;
+		
+		global $pagenow;
+				
+		if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) && ( $pagenow == 'post-new.php' || $pagenow == 'post.php') ) {
+			$load_cust_scripts = true;
+		}
+		
 		if ( self::isMainWP_Pages() ) {
 			wp_enqueue_script( 'mainwp-updates', MAINWP_PLUGIN_URL . 'assests/js/mainwp-updates.js', array(), $this->current_version );
 			wp_enqueue_script( 'mainwp-managesites', MAINWP_PLUGIN_URL . 'assests/js/mainwp-managesites.js', array(), $this->current_version );
@@ -2730,6 +2739,11 @@ class MainWP_System {
             wp_enqueue_script( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assests/js/calendar/calendar.min.js', array( 'jquery' ), $this->current_version );
             wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assests/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version );
 		}
+		
+		if ( $load_cust_scripts ) {
+			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assests/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version );            
+		}
+		
 		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assests/js/mainwp-ui.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-js-popup', MAINWP_PLUGIN_URL . 'assests/js/mainwp-popup.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assests/js/fileuploader.js', array(), $this->current_version );
@@ -2745,6 +2759,13 @@ class MainWP_System {
         if ( isset( $_GET['hideall'] ) && $_GET['hideall'] == 1 ) {
 			remove_action( 'admin_footer', 'wp_admin_bar_render', 1000 );
 		}
+		
+		global $pagenow; 
+	
+		$load_cust_scripts = false;
+		if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) && ( $pagenow == 'post-new.php' || $pagenow == 'post.php') ) {
+			$load_cust_scripts = true;
+		}
 
 		if ( self::isMainWP_Pages() ) {
 			wp_enqueue_style( 'mainwp-filetree', MAINWP_PLUGIN_URL . 'assests/css/jqueryFileTree.css', array(), $this->current_version );
@@ -2756,6 +2777,10 @@ class MainWP_System {
             wp_enqueue_style( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assests/js/calendar/calendar.min.css', array(), $this->current_version );
             wp_enqueue_style( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assests/js/hamburger/hamburger.css', array(), $this->current_version );
 		}
+		
+		if ( $load_cust_scripts ) {
+			wp_enqueue_style( 'semantic', MAINWP_PLUGIN_URL . 'assests/js/semantic-ui/semantic.min.css', array(), $this->current_version );
+		}		
 	}
 
 	function admin_head() {

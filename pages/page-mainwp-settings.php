@@ -280,8 +280,8 @@ class MainWP_Settings {
 				$val = ( !isset( $_POST[ 'mainwp_backup_before_upgrade' ] ) ? 0 : 1 );
 				MainWP_Utility::update_option( 'mainwp_backup_before_upgrade', $val );
 				$val = ( !isset( $_POST[ 'mainwp_backup_before_upgrade_days' ] ) ? 7 : $_POST[ 'mainwp_backup_before_upgrade_days' ] );
-				MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_days', $val );
-
+				MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_days', $val );								
+				
 
 				if ( MainWP_Extensions::isExtensionAvailable( 'mainwp-comments-extension' ) ) {
 					MainWP_Utility::update_option( 'mainwp_maximumComments', isset( $_POST[ 'mainwp_maximumComments' ] ) ? intval( $_POST[ 'mainwp_maximumComments' ] ) : 50  );
@@ -314,9 +314,8 @@ class MainWP_Settings {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 			return;
 		}
-
-		$userExtension	 = MainWP_DB::Instance()->getUserExtension();
-
+		
+		
 		self::renderHeader( '' );
 		?>
 		<div id="mainwp-general-settings" class="ui segment">
@@ -366,7 +365,7 @@ class MainWP_Settings {
 										return false;
 								} );
 							} );
-					  </script>
+					  </script>					  
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable WP Cron', 'mainwp' ); ?></label>
 						  <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Disabling this option will disable the WP Cron so all scheduled events will stop working.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -427,8 +426,8 @@ class MainWP_Settings {
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Sidebar position', 'mainwp' ); ?></label>
 						  <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select if you want to show sidebar with option on left or right.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
 								<select name="mainwp_sidebarPosition" id="mainwp_sidebarPosition" class="ui dropdown">
-                  <option value="1" <?php if ( $sidebarPosition == 1 ) { ?>selected<?php } ?>><?php _e( 'Right (default)', 'mainwp' ); ?></option>
-                  <option value="0" <?php if ( $sidebarPosition == 0 ) { ?>selected<?php } ?>><?php _e( 'Left', 'mainwp' ); ?></option>
+									<option value="1" <?php if ( $sidebarPosition == 1 ) { ?>selected<?php } ?>><?php _e( 'Right (default)', 'mainwp' ); ?></option>
+									<option value="0" <?php if ( $sidebarPosition == 0 ) { ?>selected<?php } ?>><?php _e( 'Left', 'mainwp' ); ?></option>
 								</select>
 							</div>
 						</div>
@@ -586,7 +585,7 @@ class MainWP_Settings {
 						  <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set how many days without an update before pulgin or theme will be considered as abandoned.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo( ( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) === false ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
 							</div>
-						</div>
+						</div>									
                     <?php MainWP_Manage_Sites_View::renderSettings(); ?>
 						<div class="ui divider"></div>
 						<input type="submit" name="submit" id="submit" class="ui button green big right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>

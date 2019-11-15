@@ -153,7 +153,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				<input type="hidden" name="security" value="<?php echo wp_create_nonce( 'mainwp_updateadminpassword' ); ?>"/>
 					<div class="mainwp-main-content">
 						<div class="ui hidden divider"></div>
-						<h3 class="ui dividing header"><?php esc_html_e( 'Conntected Admin Users', 'mainwp' ); ?></h3>
+						<h3 class="ui dividing header"><?php esc_html_e( 'Connected Admin Users', 'mainwp' ); ?></h3>
 						<table  id="mainwp-admin-users-table" class="ui padded selectable compact single line table">
 							<thead>
 								<tr>

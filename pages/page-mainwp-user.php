@@ -277,17 +277,33 @@ class MainWP_User {
           <div class="ui header"><?php _e( 'Select Sites', 'mainwp' ); ?></div>
           <?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
         </div>
+
+		<?php
+		  	$user_roles = array(
+				'subscriber' => __( 'Subscriber', 'mainwp' ),
+				'administrator' => __( 'Administrator', 'mainwp' ),
+				'editor' => __( 'Editor', 'mainwp' ),
+				'author' => __( 'Author', 'mainwp' ),
+				'contributor' => __( 'Contributor', 'mainwp' ),
+			);
+			$user_roles = apply_filters('mainwp-users-manage-roles' , $user_roles);
+		?>
+
         <div class="ui divider"></div>
 				<div class="mainwp-search-options">
 					<div class="ui mini form">
 						<div class="field">
 							<select multiple="" class="ui fluid dropdown" id="mainwp_user_roles">
 								<option value=""><?php _e( 'Select role', 'mainwp' ); ?></option>
-								<option value="administrator"><?php _e( 'Administrator', 'mainwp' ); ?></option>
-								<option value="editor"><?php _e( 'Editor', 'mainwp' ); ?></option>
-								<option value="author"><?php _e( 'Author', 'mainwp' ); ?></option>
-								<option value="contributor"><?php _e( 'Contributor', 'mainwp' ); ?></option>
-								<option value="subscriber"><?php _e( 'Subscriber', 'mainwp' ); ?></option>
+								<?php
+								foreach($user_roles as $r => $n) {
+									if (empty($r))
+										continue;
+									?>
+									<option value="<?php echo esc_html($r); ?>"><?php echo esc_html( $n ); ?></option>
+								<?php
+								}
+								?>
 							</select>
 						</div>
 					</div>
@@ -342,9 +358,12 @@ class MainWP_User {
                     'subscriber' => __('Subscriber', 'mainwp'),
                     'contributor' => __('Contributor', 'mainwp'),
                     'author' => __('Author', 'mainwp'),
-                    'editor' => __('Editor', 'mainwp'),
-                    '' => __('&mdash; No role for this site &mdash;', 'mainwp')
+                    'editor' => __('Editor', 'mainwp')
             );
+
+			$editable_roles = apply_filters('mainwp-users-manage-roles' , $editable_roles);
+			$editable_roles[''] = __('&mdash; No role for this site &mdash;', 'mainwp');
+
         ?>
         <div id="mainwp-edit-users-modal" class="ui modal">
             <div class="header"><?php esc_html_e( 'Edit User', 'mainwp' ); ?></div>
@@ -491,6 +510,7 @@ class MainWP_User {
 						"stateSave":  true,
 	          "pagingType": "full_numbers",
 	          "order": [],
+						"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
 	          "columnDefs": [ {
               "targets": 'no-sort',
               "orderable": false
@@ -736,7 +756,7 @@ class MainWP_User {
 							<?php } else if ( ( $user['id'] == 1 ) || ( $user['login'] == $website->adminname ) ) { ?>
 							<a href="javascript:void(0)" class="item" data-tooltip="This user is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php _e( 'Delete', 'mainwp' ); ?></a>
 						  <?php } ?>
-							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php echo __( 'Go to WP Admin', 'mainwp' ) ?></a>									
+							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php echo __( 'Go to WP Admin', 'mainwp' ) ?></a>
 						</div>
 					</div>
         </td>
@@ -937,16 +957,32 @@ class MainWP_User {
 									<input type="checkbox" name="send_password" id="send_password" <?php echo ( isset( $_POST['send_password'] ) ) ? 'checked' : ''; ?> >
 								</div>
 							</div>
+							
+							<?php 
+							$user_roles = array(
+								'subscriber' => __( 'Subscriber', 'mainwp' ),
+								'administrator' => __( 'Administrator', 'mainwp' ),
+								'editor' => __( 'Editor', 'mainwp' ),
+								'author' => __( 'Author', 'mainwp' ),
+								'contributor' => __( 'Contributor', 'mainwp' ),
+							);
+							$user_roles = apply_filters('mainwp-users-manage-roles' , $user_roles);
+
+							?>
 
 							<div class="ui grid field">
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Role', 'mainwp' ); ?></label>
 							  <div class="six wide column">
 									<select class="ui dropdown" name="role" id="role">
-										<option value="subscriber" <?php echo ( isset( $_POST['role'] ) && $_POST['role'] == 'subscriber' ) ? 'selected' : ''; ?>><?php esc_html_e( 'Subscriber', 'mainwp' ); ?></option>
-										<option value="administrator" <?php echo ( isset( $_POST['role'] ) && $_POST['role'] == 'administrator' ) ? 'selected' : ''; ?>><?php esc_html_e( 'Administrator', 'mainwp' ); ?></option>
-										<option value="editor" <?php echo ( isset( $_POST['role'] ) && $_POST['role'] == 'editor' ) ? 'selected' : ''; ?>><?php esc_html_e( 'Editor', 'mainwp' ); ?></option>
-										<option value="author" <?php echo ( isset( $_POST['role'] ) && $_POST['role'] == 'author' ) ? 'selected' : ''; ?>><?php esc_html_e( 'Author', 'mainwp' ); ?></option>
-										<option value="contributor" <?php echo ( isset( $_POST['role'] ) && $_POST['role'] == 'contributor' ) ? 'selected' : ''; ?>><?php esc_html_e( 'Contributor', 'mainwp' ); ?></option>
+										<?php
+										foreach($user_roles as $r => $n) {
+											if (empty($r))
+												continue;
+											?>
+											<option value="<?php echo esc_html($r); ?>" <?php echo ( isset( $_POST['role'] ) && $_POST['role'] == $r ) ? 'selected' : ''; ?>><?php echo esc_html( $n ); ?></option>
+										<?php											
+										}
+										?>										
 									</select>
 								</div>
 							</div>
@@ -1058,9 +1094,18 @@ class MainWP_User {
 //		} else if ( $_POST['pass1'] != $_POST['pass2'] ) {
 //			$errorFields[] = 'pass2';
 //		}
-
+		
+			
 		$allowed_roles = array( 'subscriber', 'administrator', 'editor', 'author', 'contributor' );
-
+		
+		// support custom roles
+		$cus_roles = array();	
+		$cus_roles = apply_filters('mainwp-users-manage-roles' , $cus_roles); 
+		if ( is_array($cus_roles) && count($cus_roles) > 0 ) {
+			$cus_roles = array_keys( $cus_roles );
+			$allowed_roles = array_merge( $allowed_roles, $cus_roles );
+		}
+		
 		if ( ! isset( $_POST['role'] ) || ! in_array( $_POST['role'], $allowed_roles ) ) {
 			$errorFields[] = 'role';
 		}

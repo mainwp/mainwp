@@ -395,28 +395,30 @@ public static function render() {
     if ( get_option( 'mainwp_optimize' ) == 1 ) {
       //Search in local cache
       if ( $sites != '' ) {
-        foreach ( $sites as $k => $v ) {
-          if ( MainWP_Utility::ctype_digit( $v ) ) {
-            $website    = MainWP_DB::Instance()->getWebsiteById( $v );
-            $allPlugins = json_decode( $website->plugins, true );
-            for ( $i = 0; $i < count( $allPlugins ); $i ++ ) {
-                        $plugin = $allPlugins[$i];
-              if ( ( $status == 'active' ) || ( $status == 'inactive' ) ) {
-                if ( $plugin['active'] != ( ( $status == 'active' ) ? 1 : 0 ) ) {
-                                continue;
-                            }
-                        }
-              if ( $keyword != '' && !stristr( $plugin['name'], $keyword ) ) {
-                            continue;
-                        }
+			foreach ( $sites as $k => $v ) {
+				if ( MainWP_Utility::ctype_digit( $v ) ) {
+					$website    = MainWP_DB::Instance()->getWebsiteById( $v );
+					$allPlugins = json_decode( $website->plugins, true );
+					for ( $i = 0; $i < count( $allPlugins ); $i ++ ) {
+							$plugin = $allPlugins[$i];
+							
+							if ( ( $status == 'active' ) || ( $status == 'inactive' ) ) {
+								if ( $plugin['active'] != ( ( $status == 'active' ) ? 1 : 0 ) ) {
+										continue;
+								}
+							}
+							
+							if ( $keyword != '' && !stristr( $plugin['name'], $keyword ) ) {
+								continue;
+							}
 
-              $plugin['websiteid']  = $website->id;
-                        $plugin['websiteurl'] = $website->url;
-              $output->plugins[]    = $plugin;
-                    }
-                }
-                }
-                }
+							$plugin['websiteid']  = $website->id;
+							$plugin['websiteurl'] = $website->url;
+							$output->plugins[]    = $plugin;
+						}
+				  }
+			}
+	}
 
       if ( $groups != '' ) {
         //Search in local cache
@@ -580,12 +582,12 @@ public static function render() {
     foreach ( $output->plugins as $plugin ) {
             $pn = esc_html($plugin['name'] . '_' . $plugin['version']);
             $sites[$plugin['websiteid']] = esc_html($plugin['websiteurl']);
-            $plugins[$pn] = esc_html( $plugin['slug'] );
+            $plugins[$pn] = urlencode( $plugin['slug'] );
             $muPlugins[$pn] = isset($plugin['mu']) ? esc_html($plugin['mu']) : '';
             $pluginsName[$pn] = esc_html($plugin['name']);
             $pluginsVersion[$pn] = esc_html($plugin['name'] . ' ' . $plugin['version']);
             $pluginsMainWP[$pn] = isset($plugin['mainwp']) ? esc_html($plugin['mainwp']) : 'F';
-            $pluginsRealVersion[$pn] = esc_html($plugin['version']);
+            $pluginsRealVersion[$pn] = urlencode($plugin['version']);
 
       if ( !isset( $sitePlugins[$plugin['websiteid']] ) || !is_array( $sitePlugins[$plugin['websiteid']] ) ) {
                 $sitePlugins[$plugin['websiteid']] = array();
@@ -621,7 +623,7 @@ public static function render() {
             <input class="websiteId" type="hidden" name="id" value="<?php echo intval( $site_id ); ?>"/>
             <div class="ui checkbox">
               <input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_plugins_site_check_all"/>
-              <label for="<?php echo esc_url( $site_url ); ?>"><?php echo esc_html( $site_url ) ; ?></label>
+              <label><?php echo esc_html( $site_url ) ; ?></label>
             </div>
           </td>
           <?php foreach ( $pluginsVersion as $plugin_name => $plugin_title ) : ?>
@@ -676,7 +678,7 @@ public static function render() {
   public static function PluginsSearch_handler( $data, $website, &$output ) {
     if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
       $plugins = unserialize( base64_decode( $results[1] ) );
-            unset($results);
+	unset($results);
       if ( isset( $plugins['error'] ) ) {
         $output->errors[$website->id] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( $plugins['error'], $website->url ) );
                 return;
@@ -762,6 +764,7 @@ public static function render() {
 
         try {
       $plugin = implode( '||', $_POST['plugins'] );
+	  $plugin = urldecode($plugin);
       $information = MainWP_Utility::fetchUrlAuthed( $website, 'plugin_action', array( 'action' => $pAction, 'plugin' => $plugin ) );
     } catch ( MainWP_Exception $e ) {
       die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
@@ -1167,7 +1170,7 @@ public static function renderAutoUpdate() {
           $strip_note = strip_tags( $esc_note );
         }
         ?>
-        <tr plugin-slug="<?php echo rawurlencode( $slug ); ?>" plugin-name="<?php echo strip_tags( $name ); ?>">
+        <tr plugin-slug="<?php echo urlencode( $slug ); ?>" plugin-name="<?php echo strip_tags( $name ); ?>">
           <td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo urlencode( $slug ); ?>"></span></td>
           <td><?php echo ( isset( $decodedIgnoredPlugins[$slug] ) ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
           <td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $slug ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $name ); ?></a></td>
@@ -1538,10 +1541,10 @@ public static function renderIgnore() {
                 return false;
             }
             $userExtension = MainWP_DB::Instance()->getUserExtension();
-            $trustedPlugins = json_decode( $userExtension->trusted_plugins, true );					
-            if ( is_array( $trustedPlugins ) && in_array( $slug, $trustedPlugins ) ) {						
+            $trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
+            if ( is_array( $trustedPlugins ) && in_array( $slug, $trustedPlugins ) ) {
                 return true;
-            }						
+            }
             return false;
     }
 

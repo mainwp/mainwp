@@ -468,6 +468,7 @@ class MainWP_Page {
         "stateSave":  true,
         "pagingType": "full_numbers",
 				"scrollX" : true,
+				"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
         "order": [],
         "columnDefs": [ {
           "targets": 'no-sort',
@@ -477,8 +478,8 @@ class MainWP_Page {
         <?php
         if ( ! $cached ) { // it is ajax request, so init ui dropdown
           ?>
-          jQuery('#mainwp-pages-table .ui.dropdown').dropdown();
-          jQuery('#mainwp-pages-table .ui.checkbox').checkbox();
+          jQuery('#mainwp_pages_wrap_table table .ui.dropdown').dropdown();
+          jQuery('#mainwp_pages_wrap_table table .ui.checkbox').checkbox();
           <?php
         }
         ?>

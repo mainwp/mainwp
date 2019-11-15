@@ -90,7 +90,7 @@ class MainWP_Extensions_View {
 					<p><?php echo __( 'MainWP Dashboard 4.0 or newer requires Extensions 4.0 or newer. MainWP will automatically deactivate older versions of MainWP Extensions in order to prevent compatibility problems.', 'mainwp' ); ?></p>
 					<div class="header"><?php _e( 'Steps to Update Extensions', 'mainwp' ); ?></div>
 					<div class="ui list">
-						<div class="item">1. <?php _e( 'Go to the WP Admin > Pulgins > Installed Plugins page', 'mainwp' ); ?></div>
+						<div class="item">1. <?php _e( 'Go to the WP Admin > Plugins > Installed Plugins page', 'mainwp' ); ?></div>
 						<div class="item">2. <?php _e( 'Delete Version 3 Extensions (extensions older than version 4) from your MainWP Dashboard', 'mainwp' ); ?></div>
 						<div class="item">3. <?php _e( 'Go back to the MainWP > Extensions page and use the Install Extensions button', 'mainwp' ); ?></div>
 					</div>

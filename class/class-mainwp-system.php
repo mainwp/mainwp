@@ -17,7 +17,7 @@ const MAINWP_VIEW_PER_GROUP = 2;
 
 class MainWP_System {
 
-	public static $version = '4.0.4';
+	public static $version = '4.0.5';
 	//Singleton
 	private static $instance = null;
 	private $upgradeVersionInfo = null;
@@ -858,6 +858,21 @@ class MainWP_System {
 			}
 			return strtotime( date( 'Y-m-d' ) . ' ' . $_hour . ':' . $_mins . ':59' );
 	}
+	
+	static function get_period_of_time_from_hh_mm( $hh_mm ) {
+			$hh_mm	 = explode( ':', $hh_mm );
+			$_hour			 = isset( $hh_mm[ 0 ] ) ? intval( $hh_mm[ 0 ] ) : 0;
+			$_mins			 = isset( $hh_mm[ 1 ] ) ? intval( $hh_mm[ 1 ] ) : 0;
+			
+			if ( $_hour < 0 || $_hour > 23 ) {
+				$_hour = 0;
+			}
+			
+			if ( $_mins < 0 || $_mins > 59 ) {
+				$_mins = 0;
+			}
+			return $_hour * 60 + $_mins; // mins			
+	}
 
 	function mainwp_cronupdatescheck_action() {
 		MainWP_Logger::Instance()->info( 'CRON :: updates check' );
@@ -885,10 +900,21 @@ class MainWP_System {
 		if ( $frequencyDailyUpdate <= 0 )
 			$frequencyDailyUpdate = 1;
 		
+		$period_of_time = $run_timestamp ? self::get_period_of_time_from_hh_mm( $timeDailyUpdate ) : 0; // mins		
+		// to valid period of time
+		if ($period_of_time > 24 * 60 )
+			$period_of_time = 0;
+		
+		$enableFrequencyAutomaticUpdate = false;
 		// to check frequency to run daily
-		$mins_between = 24 * 60 / $frequencyDailyUpdate; // mins
-		if (time() < $lasttimeAutomaticUpdate + $mins_between * 60) {
-			return;
+		// if the $period_of_time value is not valid then frequency run will avoid, automatic update will run one time per day as default
+		if ( $period_of_time > 0 ) {
+			$mins_between = ( 24 * 60 - $period_of_time ) / $frequencyDailyUpdate; // mins
+			if (time() < $lasttimeAutomaticUpdate + $mins_between * 60) {
+				return;				
+			} else {
+				$enableFrequencyAutomaticUpdate = true;
+			}
 		}
 		
 		MainWP_Utility::update_option( 'mainwp_cron_last_updatescheck', time() );
@@ -906,7 +932,9 @@ class MainWP_System {
                 MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated hours interval' );
                 return;
             }
-        } else if ( $mainwpLastAutomaticUpdate == date( 'd/m/Y' ) ) {
+        } else if ( $enableFrequencyAutomaticUpdate ) {
+			// ok go frequency sync 
+		} else if ( $mainwpLastAutomaticUpdate == date( 'd/m/Y' ) ) {
 			MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated today' );
 
 			return;
@@ -2255,11 +2283,13 @@ class MainWP_System {
 
 		add_action( 'mainwp_before_header', array( $this, 'mainwp_warning_notice' ) );
 		MainWP_Post_Handler::Instance()->init();
-
+		$use_wp_datepicker = apply_filters( 'mainwp_ui_use_wp_calendar', false );
 		//wp_enqueue_script( 'jquery-ui-tooltip' );
 		//wp_enqueue_script( 'jquery-ui-autocomplete' );
 		//wp_enqueue_script( 'jquery-ui-progressbar' );
-		//wp_enqueue_script( 'jquery-ui-datepicker' );
+		if ($use_wp_datepicker) {
+			wp_enqueue_script( 'jquery-ui-datepicker' );
+		}
 		wp_enqueue_script( 'jquery-ui-dialog' );
 
 		global $wp_scripts;
@@ -2271,13 +2301,11 @@ class MainWP_System {
 			wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assests/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
 //		}
 
-		wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assests/js/mainwp.js', array(
-			//'jquery-ui-tooltip',
-			//'jquery-ui-autocomplete',
-			//'jquery-ui-progressbar',
-			'jquery-ui-dialog',
-			//'jquery-ui-datepicker',
-		), $this->current_version );
+		$en_params = array('jquery-ui-dialog');	
+		if ($use_wp_datepicker) {
+			$en_params[] = 'jquery-ui-datepicker';
+		}
+		wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assests/js/mainwp.js', $en_params, $this->current_version );
 
 		$enableLegacyBackupFeature	 = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$primaryBackup				 = get_option( 'mainwp_primaryBackup' );
@@ -2288,6 +2316,7 @@ class MainWP_System {
 			'backup_before_upgrade'				 => ( get_option( 'mainwp_backup_before_upgrade' ) == 1 ),
 			'disable_checkBackupBeforeUpgrade'	 => $disable_backup_checking,
 			'admin_url'							 => admin_url(),
+			'use_wp_datepicker' => $use_wp_datepicker ? 1 : 0,
 			'date_format'						 => get_option( 'date_format' ),
 			'time_format'						 => get_option( 'time_format' ),
 			'enabledTwit'           => MainWP_Twitter::enabledTwitterMessages(),
@@ -2743,8 +2772,9 @@ class MainWP_System {
 		if ( $load_cust_scripts ) {
 			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assests/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version );            
 		}
-		
+				
 		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assests/js/mainwp-ui.js', array(), $this->current_version );
+//		wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assests/js/moment/moment.min.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-js-popup', MAINWP_PLUGIN_URL . 'assests/js/mainwp-popup.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assests/js/fileuploader.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-date', MAINWP_PLUGIN_URL . 'assests/js/date.js', array(), $this->current_version );

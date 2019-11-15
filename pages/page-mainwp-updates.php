@@ -2681,7 +2681,7 @@ class MainWP_Updates {
 			//	"paging" : false,
 			//	"info" : false,
 			//	"columnDefs" : [ { "orderable": false, "targets": "no-sort" } ],
-			//	"language" : { "emptyTable": "No available updates. Please sync your MainWP Dashbaord with Child Sites to see if there are any new updates available." }
+			//	"language" : { "emptyTable": "No available updates. Please sync your MainWP Dashboard with Child Sites to see if there are any new updates available." }
 		  //} );
 
             jQuery( 'table table:not( .mainwp-per-group-table )' ).DataTable( {
@@ -2690,7 +2690,7 @@ class MainWP_Updates {
 								stateSave: true,
                 info : false,
                 columnDefs : [ { "orderable": false, "targets": "no-sort" } ],
-                language : { "emptyTable": "No available updates. Please sync your MainWP Dashbaord with Child Sites to see if there are any new updates available." }
+                language : { "emptyTable": "No available updates. Please sync your MainWP Dashboard with Child Sites to see if there are any new updates available." }
             } );
 
             jQuery( document ).ready( function () {

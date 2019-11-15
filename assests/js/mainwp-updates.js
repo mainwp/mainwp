@@ -2855,7 +2855,7 @@ updatesoverview_ignore_http_response = function ( elem, id ) {
 
 // for semantic ui checkboxes
 jQuery( document ).ready( function () {    
-   mainwp_table_check_columns_init(); // call as function to support tables with ajax 
+   mainwp_table_check_columns_init(); // call as function to support tables with ajax, may check and call at extensions    
 } );
 
  mainwp_table_check_columns_init = function() {

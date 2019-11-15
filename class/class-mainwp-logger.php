@@ -100,7 +100,7 @@ class MainWP_Logger {
 
 		$do_log = false;
         if ( ( $pPriority == self::INFO_UPDATE && $this->logPriority == self::INFO_UPDATE ) ||
-                ( $pPriority < self::INFO_UPDATE && $this->logPriority >= $pPriority ) )
+                ( $pPriority != self::INFO_UPDATE && $this->logPriority >= $pPriority ) )
         {
             $do_log = true;
         }

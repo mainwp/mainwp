@@ -1073,7 +1073,7 @@ class MainWP_Manage_Sites_View {
 			"paging" : false,
 			"info" : true,
 			"columnDefs" : [ { "orderable": false, "targets": "no-sort" } ],
-			"language" : { "emptyTable": "No available updates. Please sync your MainWP Dashbaord with Child Sites to see if there are any new updates available." }
+			"language" : { "emptyTable": "No available updates. Please sync your MainWP Dashboard with Child Sites to see if there are any new updates available." }
 		} );
 		</script>
 		<?php

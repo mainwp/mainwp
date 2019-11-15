@@ -5028,20 +5028,31 @@ jQuery( document ).ready( function () {
     //jQuery( '.mainwp_datepicker' ).datepicker( { dateFormat: "yy-mm-dd" } );
 
 // to fix issue not loaded calendar js library
-if (jQuery( '.ui.calendar' ).length > 0 ) {
-    jQuery( '.ui.calendar' ).calendar({
-            type: 'date',
-            monthFirst: false,
-            formatter: {
-              date: function (date, settings) {
-                if (!date) return '';
-                var day = date.getDate();
-                var month = date.getMonth() + 1;
-                var year = date.getFullYear();
-                return year + '-' + month + '-' + day;
-              }
-            }           
-        });
+if (jQuery( '.ui.calendar' ).length > 0 ) {          
+            if (mainwpParams.use_wp_datepicker == 1) {
+                jQuery( '.ui.calendar input[type=text]' ).datepicker( { dateFormat: "yy-mm-dd" } );
+            } else {
+                jQuery( '.ui.calendar' ).calendar({
+                        type: 'date',
+                        monthFirst: false,                               
+                        formatter: {
+                            date: function (date, settings) {                                    
+                                if (!date) return '';                                              
+                                var day = date.getDate();
+                                var month = date.getMonth() + 1;
+                                var year = date.getFullYear();
+
+                                if (month < 10) {
+                                    month = '0' + month;
+                                }
+                                if (day < 10) {
+                                    day = '0' + day;
+                                }                
+                                return year + '-' + month + '-' + day;
+                            }
+                        }
+                });      
+            }
     }
 
     jQuery( '#mainwp_show_pages' ).live( 'click', function () {
@@ -5210,14 +5221,15 @@ mainwp_fetch_pages = function () {
             "colReorder" : true,
             "stateSave":  true,
             "pagingType": "full_numbers",
-            "scrollY" : 500,
             "scrollX" : true,
+            "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
             "order": [],
             "columnDefs": [ {
                 "targets": 'no-sort',
                 "orderable": false
             } ]
         });
+        mainwp_table_check_columns_init(); // ajax: to fix checkbox all
     } );
 };
 
@@ -5744,13 +5756,14 @@ mainwp_fetch_posts = function ( postId, userId ) {
             "stateSave":  true,
             "pagingType": "full_numbers",
             "order": [],
-            "scrollY" : 500,
             "scrollX" : true,
+            "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
             "columnDefs": [ {
               "targets": 'no-sort',
               "orderable": false
-            } ]
+            } ]                                                
         });
+        mainwp_table_check_columns_init(); // ajax: to fix checkbox all
     } );
 };
 
@@ -6287,6 +6300,7 @@ mainwp_fetch_users = function () {
         "stateSave":  true,
         "pagingType": "full_numbers",
         "order": [],
+        "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
         "columnDefs": [ {
           "targets": 'no-sort',
           "orderable": false
@@ -6623,6 +6637,11 @@ jQuery( document ).on( 'click', '#remove-mainwp-installation-warning', function 
     action: 'mainwp_installation_warning_hide'
   } );
   jQuery.post( ajaxurl, data, function ( res ) { } );
+  return false;
+} );
+
+jQuery( document ).on( 'click', '.mainwp-notice-hide', function () {
+  jQuery(this).closest('.ui.message').fadeOut("slow");  
   return false;
 } );
 

@@ -281,10 +281,12 @@ class MainWP_UI {
 						<div class="left floated column"><h4 class="mainwp-page-title"><?php echo $left; ?></h4></div>
 						<div class="right floated column right aligned"><?php echo $right; ?></div>
 					</div>
-				</div>
-				<script type="text/javascript">
-                    jQuery( document ).ready( function () {
-						jQuery( '.ui.sticky' ).sticky();
+				</div>				
+			</div>
+			
+			<script type="text/javascript">
+                    jQuery( document ).ready( function () {						
+						jQuery( '.ui.sticky' ).sticky();						
 						jQuery( '#mainwp-help-sidebar' ).on( 'click', function() {
 							jQuery( '.ui.sidebar' ).sidebar( {
 								transition: 'overlay'
@@ -294,7 +296,7 @@ class MainWP_UI {
 						} );
 					} );
 				</script>
-			</div>
+				
 			<?php do_action( "mainwp_after_header" ); ?>
 		<?php
 	}

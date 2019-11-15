@@ -92,7 +92,7 @@ function mainwp_extensions_activate( pObj, retring ) {
         if ( response ) {
             if ( response.result == 'SUCCESS' ) {
         loadingEl.find( '.message' ).addClass( 'green' );
-        loadingEl.find( '.message' ).html(  __( 'Extension licese activated successfully,' ) );
+        loadingEl.find( '.message' ).html(  __( 'Extension license activated successfully,' ) );
         statusEl.html( '<i class="ui green empty circular label"></i> ' + __( 'License activated' ) );
                 success = true;
             } else if ( response.error ) {
@@ -146,7 +146,7 @@ jQuery( document ).on( 'click', '.mainwp-extensions-deactivate', function () {
         if ( response ) {
             if ( response.result == 'SUCCESS' ) {
         loadingEl.find( '.message' ).addClass( 'green' );
-        loadingEl.find( '.message' ).html(  __( 'Extension licese Dectivated successfully.' ) );
+        loadingEl.find( '.message' ).html(  __( 'Extension license Dectivated successfully.' ) );
         statusEl.html( '<i class="ui green empty circular label"></i> ' + __( 'License activated' ) );
         success = true;
             } else if ( response.error ) {
@@ -353,7 +353,7 @@ extensions_activate_next = function ( pObj ) {
               if ( response.result == 'SUCCESS' ) {
                   countSuccessActivation++;
             loadingEl.find( '.message' ).addClass( 'green' );
-            loadingEl.find( '.message' ).html(  __( 'Extension licese activated successfully,' ) );
+            loadingEl.find( '.message' ).html(  __( 'Extension license activated successfully,' ) );
             statusEl.html( '<i class="ui green empty circular label"></i> ' + __( 'License activated' ) );
             apiEl.find( '.mainwp-extensions-deactivate-chkbox' ).attr( 'checked', false );
               } else if ( response.error ) {

@@ -556,10 +556,10 @@ class MainWP_Themes {
 		foreach ( $output->themes as $theme ) {
       $theme['name'] = esc_html($theme['name']);
       $theme['version'] = esc_html($theme['version']);
-      $theme['title'] = esc_html($theme['title']);
-      $theme['slug'] = esc_html($theme['slug']);
-      $theme['websiteurl'] = esc_html($theme['websiteurl']);
-
+			$theme['title'] = esc_html($theme['title']);
+			$theme['slug'] = esc_html($theme['slug']);
+			$theme['websiteurl'] = esc_html($theme['websiteurl']);
+			
 			$sites[ $theme['websiteid'] ]                                  = $theme['websiteurl'];
 			$themes[ $theme['name'] . '_' . $theme['version'] ]            = $theme['name'];
 			$themesSlug[ $theme['name'] . '_' . $theme['version'] ]        = $theme['slug'];
@@ -598,7 +598,7 @@ class MainWP_Themes {
               <input class="websiteId" type="hidden" name="id" value="<?php esc_attr_e( $site_id ); ?>"/>
               <div class="ui checkbox">
                 <input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_themes_site_check_all" />
-                <label for="<?php echo esc_url( $site_url ); ?>"><?php esc_html_e( $site_url ); ?></label>
+								<label><?php echo esc_html( $site_url ) ; ?></label>
               </div>
 						</td>
             <?php foreach ( $themesVersion as $theme_name => $theme_title ) : ?>

@@ -97,6 +97,7 @@ class MainWP_Manage_Sites {
 					continue;
 				}
 				$_page = add_submenu_page( 'mainwp_tab', $subPage[ 'title' ], '<div class="mainwp-hidden">' . $subPage[ 'title' ] . '</div>', 'read', 'ManageSites' . $subPage[ 'slug' ], $subPage[ 'callback' ] );
+				add_action( 'load-' . $_page, array( MainWP_Manage_Sites::getClassName(), 'on_load_subpages' ), 9 );
 				if ( isset( $subPage[ 'on_load_callback' ] ) && !empty( $subPage[ 'on_load_callback' ] ) ) {
 					add_action( 'load-' . $_page, $subPage[ 'on_load_callback' ] );
 				}
@@ -132,6 +133,12 @@ class MainWP_Manage_Sites {
         self::$sitesTable = new MainWP_Manage_Sites_List_Table();
 	}
 
+	public static function on_load_subpages() {
+		if (isset($_GET['id']) && $_GET['id']) {
+			MainWP_Utility::set_current_wpid( $_GET['id'] );
+		}
+	}
+	
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
@@ -1400,12 +1407,14 @@ class MainWP_Manage_Sites {
 	}
 
 	public static function renderBackupSite( $website ) {
+		MainWP_Utility::set_current_wpid( $website->id );
 		self::renderHeader( 'ManageSitesBackups' );
 		MainWP_Manage_Sites_View::renderBackupSite( $website );
 		self::renderFooter( 'ManageSitesBackups' );
 	}
 
 	public static function renderScanSite( $website ) {
+		MainWP_Utility::set_current_wpid( $website->id );
 		self::renderHeader( 'SecurityScan' );
 		MainWP_Manage_Sites_View::renderScanSite( $website );
 		self::renderFooter( 'SecurityScan' );
@@ -1659,6 +1668,8 @@ class MainWP_Manage_Sites {
 	}
 
 	public static function renderEditSite( $websiteid, $updated ) {
+		if ( $websiteid )
+			MainWP_Utility::set_current_wpid( $websiteid );
 		self::renderHeader( 'ManageSitesEdit' );
 		MainWP_Manage_Sites_View::renderEditSite( $websiteid, $updated );
 		self::renderFooter( 'ManageSitesEdit' );

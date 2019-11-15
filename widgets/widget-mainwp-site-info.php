@@ -66,19 +66,19 @@ class MainWP_Site_Info {
 				<tbody>
 				<?php do_action( 'mainwp_site_info_table_top'); ?>
 				<?php foreach ( $child_site_info as $index => $title ) {
-				$val = '';
-				if ( isset( $child_site_info[$index] ) ) {
-				  if ( $index == 'debug_mode' ) {
-					$val = $child_site_info[ $index ] == 1 ? 'Enabled' : 'Disabled';
-				  } else {
-					$val = $website_info[ $index ];
-				  }
-          }
-          ?>
-          <tr>
-          	<td><?php echo esc_html( $title ); ?></td>
-						<td><?php echo $val; ?></td>
-          </tr>
+						$val = '';
+						if ( isset( $website_info[$index] ) ) {
+						  if ( $index == 'debug_mode' ) {
+							$val = $website_info[ $index ] == 1 ? 'Enabled' : 'Disabled';
+						  } else {
+							$val = $website_info[ $index ];
+						  }
+						}
+						?>
+						<tr>
+						  <td><?php echo esc_html( $title ); ?></td>
+									  <td><?php echo $val; ?></td>
+						</tr>
 				<?php } ?>
 				<?php do_action( 'mainwp_site_info_table_bottom'); ?>
 				</tbody>

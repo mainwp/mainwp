@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 5.2.3
+Tested up to: 5.3
 Requires PHP: 5.6
-Stable tag: 4.0.4
+Stable tag: 4.0.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -153,6 +153,17 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.0.5 - 11-15-19 =
+* Fixed: an issue with daily sync frequency
+* Fixed: multiple PHP warnings
+* Fixed: multiple typos
+* Added: 'mainwp_ui_use_wp_calendar' filter to replace Semantic UI date picker with the WordPress default one
+* Added: 'mainwp-users-manage-roles' filter to add support for searching users with custom roles
+* Added: 'mainwp_deletesite' filter
+* Updated: multiple usability and cosmetic updates
+* Updated: multiple text notifications
+* Preventative: security improvements
 
 = 4.0.4 - 10-7-19 =
 * Fixed: an issue with applying extensions settings when adding a new site.

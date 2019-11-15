@@ -519,7 +519,7 @@ class MainWP_Server_Information {
 		return false;
 	}
 
-	// Compare the detected MainWP Dashbaord version agains the verion in WP.org
+	// Compare the detected MainWP Dashboard version agains the verion in WP.org
 	public static function getMainWPVersionCheck() {
 		$current = get_option( 'mainwp_plugin_version' );
 		$latest	 = self::getMainwpVersion();

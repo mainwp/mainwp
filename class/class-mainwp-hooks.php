@@ -55,8 +55,8 @@ class MainWP_Hooks {
 		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
 		add_action( 'mainwp_do_meta_boxes', array( &$this, 'mainwp_do_meta_boxes' ), 10, 1 );
 		add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
-		add_filter( 'mainwp_clonesite', array( &$this, 'filter_clone_site' ), 10, 6 );
-		add_filter( 'mainwp_deleteclonesite', array( &$this, '_deprecated_filter_delete_clone_site' ), 10, 5 ); //deprecated: remove later
+		add_filter( 'mainwp_deletesite', array( &$this, 'hook_delete_site' ), 10, 1 );
+		add_filter( 'mainwp_clonesite', array( &$this, 'filter_clone_site' ), 10, 6 );		
         add_filter( 'mainwp_delete_clonesite', array( &$this, 'filter_delete_clone_site' ), 10, 4 );
 		add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
 		add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hookAddSubLeftMenu' ), 10, 6 );
@@ -117,6 +117,34 @@ class MainWP_Hooks {
 
 		return $ret;
 	}
+	
+	public function hook_delete_site(  $site_id = false ) {
+		
+        if ( empty( $site_id ) )
+            return false;
+
+		$sql = MainWP_DB::Instance()->getSQLWebsiteById( $site_id );
+		$websites = MainWP_DB::Instance()->query( $sql );
+		$site       = @MainWP_DB::fetch_object( $websites );
+
+        if ( empty( $site )) {
+            return array('error' => __('Not found the website', 'mainwp'));
+        }
+
+		// delete icon file
+		$favi     = MainWP_DB::Instance()->getWebsiteOption( $site, 'favi_icon', '' );
+		if ( !empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $site->id . '-' ) ) ) {
+			$dirs      = MainWP_Utility::getIconsDir();
+			if ( file_exists( $dirs[0] . $favi ) ) {
+				unlink( $dirs[0] . $favi );
+			}
+		}
+		
+		//Remove from DB
+		MainWP_DB::Instance()->removeWebsite( $site->id );
+		do_action( 'mainwp_delete_site', $site );
+		return array( 'result' => 'SUCCESS');
+	}	
 
 	/**
 	 * Hook to clone site
@@ -133,10 +161,6 @@ class MainWP_Hooks {
 
 
     public function filter_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false) {
-		return MainWP_Extensions::hookDeleteCloneSite($pluginFile, $key, $clone_url, $clone_site_id );
-	}
-
-    public function _deprecated_filter_delete_clone_site( $pluginFile, $key, $websiteid, $clone_url = '', $clone_site_id = false) {
 		return MainWP_Extensions::hookDeleteCloneSite($pluginFile, $key, $clone_url, $clone_site_id );
 	}
 

@@ -596,7 +596,7 @@ class MainWP_Post {
         }
 	}
 
-	public static function renderTable( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '', $search_on = 'all' ) {
+	public static function renderTable( $cached = true, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '', $search_on = 'all' ) {
 	?>
 
 		<div id="mainwp-message-zone"></div>
@@ -610,7 +610,7 @@ class MainWP_Post {
 		<table id="mainwp-posts-table" class="ui stackable selectable single line table" style="width:100%">
 			<thead>
 				<tr>
-          <th  class="no-sort check-column collapsing"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
+          <th class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
 		      <th id="mainwp-title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
 		      <th id="mainwp-author"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
 		      <th id="mainwp-categories"><?php esc_html_e( 'Categories', 'mainwp' ); ?></th>
@@ -652,21 +652,18 @@ class MainWP_Post {
 				"pagingType": "full_numbers",
 				"order": [],
 				"scrollX" : true,
+				"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
 				"columnDefs": [ {
 					"targets": 'no-sort',
 					"orderable": false
 				} ],
 				"preDrawCallback": function( settings ) {
-				<?php
-					if ( ! $cached ) { // it is ajax request, so init ui dropdown
-						?>
-						jQuery('#mainwp-posts-table .ui.dropdown').dropdown();
-						jQuery('#mainwp-posts-table .ui.checkbox').checkbox();
-						<?php
-					}
-					?>
+				<?php if ( ! $cached ) { ?>
+				jQuery('#mainwp-posts-table-wrapper table .ui.dropdown').dropdown();
+				jQuery('#mainwp-posts-table-wrapper table .ui.checkbox' ).checkbox();
+				<?php } ?>
 				}
-      });
+      } );
     } );
     </script>
 

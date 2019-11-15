@@ -6,10 +6,9 @@ When contributing please ensure you follow the guidelines below to help us keep 
 
 __Please Note:__
 
-GitHub is for _bug reports and contributions only_ - if you have a support question or a request for a customization this is not the right place to post it. Use [MainWP Support](https://mainwp.com/support/) for customer support and for customizations we recommend one of the following services:
+GitHub is for _bug reports and contributions only_ - if you have a support question or a request for a customization this is not the right place to post it. Use [MainWP Support](https://mainwp.com/support/) for customer support and for customizations we recommend one of our MainWP trusted Experts:
 
-- [Codeable](https://codeable.io/)
-- [UpWork] (htpps://upwork.com)
+[MainWP Experts](https://mainwp.com/mainwp-experts/)
 
 
 ## Contributing To The Core

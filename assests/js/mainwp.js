@@ -4080,14 +4080,14 @@ mainwp_install_bulk_you_know_msg = function(pType, pTotal) {
     if (mainwpParams.installedBulkSettingsManager && mainwpParams.installedBulkSettingsManager == 1) {
         if (pType == 'plugin') {
             if (pTotal == 1)
-                msg = __('Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
+                msg = __('Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', '<a href="https://mainwp.com/help/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
             else
-                msg = __('Would you like to use the Bulk Settings Manager with these plugins? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
+                msg = __('Would you like to use the Bulk Settings Manager with these plugins? Check out the %1Documentation%2.', '<a href="https://mainwp.com/help/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
         } else {
             if (pTotal == 1)
-                msg = __('Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
+                msg = __('Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', '<a href="https://mainwp.com/help/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
             else
-                msg = __('Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
+                msg = __('Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', '<a href="https://mainwp.com/help/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
         }
     } else {
         if (pType == 'plugin') {

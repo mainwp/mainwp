@@ -17,7 +17,7 @@ const MAINWP_VIEW_PER_GROUP = 2;
 
 class MainWP_System {
 
-	public static $version = '4.0.5';
+	public static $version = '4.0.6';
 	//Singleton
 	private static $instance = null;
 	private $upgradeVersionInfo = null;
@@ -240,7 +240,8 @@ class MainWP_System {
 
 		add_action( 'mainwp_before_header', array( &$this, 'admin_notices' ) );
         add_action( 'admin_notices', array( &$this, 'wp_admin_notices' ) );
-
+		add_action( 'wp_mail_failed', array( &$this, 'wp_mail_failed' ) );
+		
 		// to fix layout
 
 		add_action( 'after_plugin_row', array( &$this, 'after_extensions_plugin_row' ), 10, 3 );
@@ -632,14 +633,25 @@ class MainWP_System {
 
     public function wp_admin_notices() {
         global $pagenow;
-
-    if ( $pagenow !== 'plugins.php' )
+		
+		$mail_failed = get_transient( 'mainwp_notice_wp_mail_failed' );		
+		if ($mail_failed) {
+			?>
+			<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
+				<i class="exclamation circle icon"></i>
+				<?php echo __( 'Send mail function may failed.', 'mainwp' ); ?>
+				<i class="close icon mainwp-notice-dismiss" notice-id="mail_failed"></i>
+			</div>		
+            <?php
+		}
+			
+		if ( $pagenow !== 'plugins.php' )
             return;
 
         $deactivated_exts = get_transient( 'mainwp_transient_deactivated_incomtible_exts' );
 
-    if ( $deactivated_exts && is_array( $deactivated_exts ) && count( $deactivated_exts ) > 0 ) {
-      //delete_transient( 'mainwp_transient_deactivated_incomtible_exts' );
+		if ( $deactivated_exts && is_array( $deactivated_exts ) && count( $deactivated_exts ) > 0 ) {
+			//delete_transient( 'mainwp_transient_deactivated_incomtible_exts' );
             ?>
             <div class='notice notice-error my-dismiss-notice is-dismissible'>
             <p><?php echo __( 'MainWP Dashboard 4.0 or newer requires Extensions 4.0 or newer. MainWP will automatically deactivate older versions of MainWP Extensions in order to prevent compatibility problems.', 'mainwp' ); ?></p>
@@ -648,6 +660,15 @@ class MainWP_System {
         }
 
     }
+	
+	public function wp_mail_failed( $error ) {
+		if ( is_object( $error )) {
+			set_transient( 'mainwp_notice_wp_mail_failed', true, 12 * HOUR_IN_SECONDS );
+			$er = $error->get_error_message();			
+			if ( !empty($er) )
+				MainWP_Logger::Instance()->debug( 'Error :: wp_mail :: [error=' . $er . ']' );
+		}
+	}
 
 	public function getVersion() {
 		return $this->current_version;
@@ -894,6 +915,7 @@ class MainWP_System {
 			}
 		}
 		
+		$updatecheck_running = ( 'Y' == get_option( 'mainwp_updatescheck_is_running' ) ? true : false );
 		
 		$lasttimeAutomaticUpdate = get_option( 'mainwp_updatescheck_last_timestamp' );	
 		$frequencyDailyUpdate = get_option( 'mainwp_frequencyDailyUpdate' );
@@ -911,14 +933,14 @@ class MainWP_System {
 		if ( $period_of_time > 0 ) {
 			$mins_between = ( 24 * 60 - $period_of_time ) / $frequencyDailyUpdate; // mins
 			if (time() < $lasttimeAutomaticUpdate + $mins_between * 60) {
-				return;				
+				// if update checking is running then continue do that
+				if ( !$updatecheck_running )
+					return; 			 
 			} else {
 				$enableFrequencyAutomaticUpdate = true;
 			}
 		}
-		
-		MainWP_Utility::update_option( 'mainwp_cron_last_updatescheck', time() );
-
+				
 		$mainwpAutomaticDailyUpdate = get_option( 'mainwp_automaticDailyUpdate' );
 
 		$plugin_automaticDailyUpdate = get_option( 'mainwp_pluginAutomaticDailyUpdate' );
@@ -929,16 +951,20 @@ class MainWP_System {
 		
         if ( $mainwpHoursIntervalAutomaticUpdate > 0 ) {
             if ( $lasttimeAutomaticUpdate && ( $lasttimeAutomaticUpdate + $mainwpHoursIntervalAutomaticUpdate * 3600 > time() ) ) {
-                MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated hours interval' );
-                return;
+				// if update checking is running then continue do that
+				if ( !$updatecheck_running ) {					
+					MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated hours interval' );
+					return;                 
+				}
+				
             }
         } else if ( $enableFrequencyAutomaticUpdate ) {
-			// ok go frequency sync 
+			// ok go to frequency sync 
 		} else if ( $mainwpLastAutomaticUpdate == date( 'd/m/Y' ) ) {
 			MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated today' );
 
 			return;
-		}
+		} 
 
 		if ( 'Y' == get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
 			$send_noti_at = apply_filters( 'mainwp_updatescheck_sendmail_at_time', false );
@@ -995,6 +1021,10 @@ class MainWP_System {
 					return; // to check time before send notification
 				}
 
+				// set checking to done, so will check for other settings to run
+				if ( $updatecheck_running )
+					MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', '' );	
+				
 				update_option( 'mainwp_last_synced_all_sites', time() );
 				MainWP_Logger::Instance()->debug( 'CRON :: updates check :: got to the mail part' );
 
@@ -1258,6 +1288,11 @@ class MainWP_System {
 				}
 			}
 		} else {
+			
+			if ( !$updatecheck_running ) {
+				MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', 'Y' );			
+			}
+			
 			$userExtension = MainWP_DB::Instance()->getUserExtensionByUserId( $userid );
 
 			$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
@@ -2759,7 +2794,7 @@ class MainWP_System {
 			wp_enqueue_script( 'mainwp-updates', MAINWP_PLUGIN_URL . 'assests/js/mainwp-updates.js', array(), $this->current_version );
 			wp_enqueue_script( 'mainwp-managesites', MAINWP_PLUGIN_URL . 'assests/js/mainwp-managesites.js', array(), $this->current_version );
 			wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assests/js/mainwp-extensions.js', array(), $this->current_version );
-			wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assests/js/moment.min.js', array(), $this->current_version );
+			wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assests/js/moment/moment.min.js', array(), $this->current_version );
             wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assests/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version );
             wp_enqueue_script( 'semantic-ui-datatables', MAINWP_PLUGIN_URL . 'assests/js/datatables/datatables.min.js', array( 'jquery' ), $this->current_version );
 			wp_enqueue_script( 'semantic-ui-datatables-colreorder', MAINWP_PLUGIN_URL . 'assests/js/colreorder/dataTables.colReorder.js', array( 'jquery' ), $this->current_version );

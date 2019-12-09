@@ -255,12 +255,14 @@ class MainWP_Extensions {
 		self::init_left_menu( $extsPages );
 	}
 
-    static function polish_ext_name( $extension ) {
+	// Trim extension name to remove 'MainWP' prefix and 'Extension' sufix
+    public static function polish_ext_name( $extension ) {
         if ( isset( $extension['mainwp'] ) && $extension['mainwp'] ) {
             $menu_name = str_replace( array(
                 'Extension',
                 'MainWP',
             ), '', $extension['name'] );
+			$menu_name = trim($menu_name);
         } else {
             $menu_name = $extension['name'];
         }

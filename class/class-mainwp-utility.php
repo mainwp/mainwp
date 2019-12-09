@@ -1824,8 +1824,11 @@ class MainWP_Utility {
             $args['headers'] = array(
                 'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . $website->http_pass )
             );
-        }
-        return wp_remote_get( $request_url, $args );
+        }		
+		
+		MainWP_Logger::Instance()->debug( ' :: tryRequest :: [website=' . $website->url . '] [url=' . $where_url . ']' );
+		
+        return  wp_remote_get( $request_url, $args );		
     }
 
     static function request_premiums_update( $website, $type, $list ) {

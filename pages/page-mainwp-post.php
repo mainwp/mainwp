@@ -1878,7 +1878,9 @@ static function meta_form( $post = null ) {
 			natcasesort( $allCategories );
 			foreach ( $allCategories as $category ) {
                 //echo '<li class="popular-category sitecategory"><label class="selectit"><input value="' . $category . '" type="checkbox" name="post_category[]" ' . ( in_array( $category, $selectedCategories ) || in_array( $category, $selectedCategories2 ) ? 'checked' : '' ) . '> ' . $category . '</label></li>';
-				echo '<option value="' . esc_html( $category ) . '" class="sitecategory">' . esc_html( $category ) . '</option>';
+				$category = rawurlencode( $category );
+				$category = str_replace( '%20',' ',$category );	// replaced space encoded			
+				echo '<option value="' . $category . '" class="sitecategory">' . $category . '</option>';
 			}
 		}
 		die();

@@ -189,7 +189,7 @@ class MainWP_Extensions_View {
 							<div class="content">
 					      <img class="right floated mini ui image" src="<?php echo esc_url( $img_url ); ?>">
 					      <div class="header">
-									<a href="<?php echo esc_url( $extension_page_url ); ?>"><?php echo esc_html( str_replace( array( "MainWP", "Extension" ), "", $extension[ 'name' ] ) ); ;?></a>
+									<a href="<?php echo esc_url( $extension_page_url ); ?>"><?php echo esc_html( MainWP_Extensions::polish_ext_name( $extension ) );?></a>
 										</div>
 					      <div class="meta">
 									<?php echo esc_html( 'Version ', 'mainwp' ) . $extension[ 'version' ]; ?> - <?php echo ( isset( $extension[ 'DocumentationURI' ] ) && !empty( $extension[ 'DocumentationURI' ] ) ) ? ' <a href="' . str_replace( array( 'http:', 'https:' ), '', $extension[ 'DocumentationURI' ] ) . '" target="_blank">' . __( 'Documentation', 'mainwp' ) . '</a>' : '';	?>
@@ -752,6 +752,17 @@ class MainWP_Extensions_View {
 				'product_id' => 'MainWP WP Compress Extension',
 				'catalog_id' => '1053988',
 				'group'		 => array( 'security' )
+			),
+			'mainwp-pro-reports-extension' =>
+			array(
+				'slug'		 => 'mainwp-pro-reports-extension',
+				'title'		 => 'MainWP Pro Reports Extension',
+				'desc'		 => 'The MainWP Pro Reports extension is a fully customizable reporting engine that allows you to create the type of report you are proud to send to your clients.',
+				'link'		 => 'https://mainwp.com/extension/pro-reports/',
+				'img'		 => $folder_url . 'pro-reports.png',
+				'product_id' => 'MainWP Pro Reports Extension',
+				'catalog_id' => '1133708',
+				'group'		 => array( 'admin' )
 			),
 		);
 	}

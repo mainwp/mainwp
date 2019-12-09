@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.3
 Requires PHP: 5.6
-Stable tag: 4.0.5
+Stable tag: 4.0.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -153,6 +153,16 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.0.6 - 12-9-19 =
+* Fixed: an issue with sending daily email notifications
+* Fixed: an issue with backup type selection
+* Fixed: MySQL 8 compatibility problems
+* Fixed: multiple typos
+* Added: 'mainwp_check_current_user_can' filter
+* Added: feature to check if the site can send emails
+* Added: support for the Pro Reports extension
+* Preventative: security improvements
 
 = 4.0.5 - 11-15-19 =
 * Fixed: an issue with daily sync frequency

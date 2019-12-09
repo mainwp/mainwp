@@ -62,7 +62,8 @@ class MainWP_Hooks {
 		add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hookAddSubLeftMenu' ), 10, 6 );
 		add_filter( 'mainwp_getwebsiteoptions', array( &$this, 'getWebsiteOptions' ), 10, 3 );
 		add_filter( 'mainwp_addgroup', array( 'MainWP_Extensions', 'hookAddGroup' ), 10, 3 );
-		add_filter( 'mainwp_getallposts', array( &$this, 'hookGetAllPosts' ), 10, 2 );
+		add_filter( 'mainwp_getallposts', array( &$this, 'hookGetAllPosts' ), 10, 2 );		
+		add_filter( 'mainwp_check_current_user_can', array( &$this, 'hookCurrentUserCan'), 10, 3);
 	}
 
 	public function mainwp_log_debug( $pText ) {
@@ -362,8 +363,16 @@ class MainWP_Hooks {
 		return $output;
 	}
 
+	public function hookCurrentUserCan( $input, $can_type, $which ) {	
+		
+		if ( function_exists( 'mainwp_current_user_can' )) {
+			return mainwp_current_user_can( $can_type , $which );
+		}
+		
+		return $input;
+	}
 
-    public function get_mainwp_dir( $false = false, $dir = null, $direct_access = false) {
+	public function get_mainwp_dir( $false = false, $dir = null, $direct_access = false) {
 
         $dirs   = MainWP_Utility::getMainWPDir();
 

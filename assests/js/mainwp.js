@@ -4301,7 +4301,8 @@ backup = function ()
         return { id: jQuery( el ).val(), title: jQuery( el ).attr( 'title' ), type: jQuery( el ).attr( 'destination_type' ) };
     } ) : [ ];
 
-    var type = ( jQuery( '#backup_type_full' ).hasClass( 'mainwp_action_down' ) ? 'full' : 'db' );
+    //var type = ( jQuery( '#backup_type_full' ).hasClass( 'mainwp_action_down' ) ? 'full' : 'db' );
+    var type = jQuery( '#mainwp-backup-type' ).val();    
     var size = jQuery( '#backup_site_' + type + '_size' ).val();
     if ( type == 'full' )
     {
@@ -6648,7 +6649,7 @@ jQuery( document ).on( 'click', '.mainwp-notice-hide', function () {
 // Hide after installtion notices (PHP version, Trust MainWP Child, Multisite Warning and OpenSSL warning)
 jQuery( document ).on( 'click', '.mainwp-notice-dismiss', function () {
   var notice_id = jQuery( this ).attr( 'notice-id' );
-  jQuery(this).closest('.mainwp-notice-wrap').fadeOut("slow");
+  jQuery(this).closest('.ui.message').fadeOut("slow");
   var data = {
     action: 'mainwp_notice_status_update'
   };

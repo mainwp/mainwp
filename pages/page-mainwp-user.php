@@ -946,7 +946,7 @@ class MainWP_User {
 									<div class="ui left labeled action input">
 										<input class="hidden" value=" "/>
 										<input type="text" id="password" name="password" autocomplete="off" value="<?php echo esc_attr( wp_generate_password( 24 ) ); ?>">
-										<button class="ui green right button wp-generate-pw"><?php esc_html_e( 'Genarate Password', 'mainwp' ); ?></button>
+										<button class="ui green right button wp-generate-pw"><?php esc_html_e( 'Generate Password', 'mainwp' ); ?></button>
 									</div>
 								</div>
 							</div>

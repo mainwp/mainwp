@@ -77,7 +77,7 @@ class MainWP_Site_Info {
 						?>
 						<tr>
 						  <td><?php echo esc_html( $title ); ?></td>
-									  <td><?php echo $val; ?></td>
+						  <td><?php echo esc_html($val); ?></td>
 						</tr>
 				<?php } ?>
 				<?php do_action( 'mainwp_site_info_table_bottom'); ?>

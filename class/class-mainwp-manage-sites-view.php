@@ -1535,7 +1535,7 @@ class MainWP_Manage_Sites_View {
 				$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array( 'pubkey' => $pubkey, 'server' => get_admin_url(), 'uniqueId' => $website->uniqueId ), true, $website->verify_certificate, $website->http_user, $website->http_pass, $website->ssl_version );
 
 				if ( isset( $information[ 'error' ] ) && $information[ 'error' ] != '' ) {
-					throw new Exception( $information[ 'error' ] );
+					throw new Exception( urlencode( $information[ 'error' ] ) );
 				} else {
 					if ( isset( $information[ 'register' ] ) && $information[ 'register' ] == 'OK' ) {
 						//Update website
@@ -1627,7 +1627,8 @@ class MainWP_Manage_Sites_View {
 				);
 
 				if ( isset( $information[ 'error' ] ) && $information[ 'error' ] != '' ) {
-					$error = $information[ 'error' ];
+					$error = urlencode( $information[ 'error' ] );
+					$error = str_replace( '%20',' ', $error ); // replaced spaces encoded
 				} else {
 					if ( isset( $information[ 'register' ] ) && $information[ 'register' ] == 'OK' ) {
 						//Add website to database

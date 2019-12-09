@@ -3,7 +3,7 @@
 class MainWP_DB {
 
 	//Config
-	private $mainwp_db_version	 = '8.14';
+	private $mainwp_db_version	 = '8.15';
 	//Private
 	private $table_prefix;
 	//Singleton
@@ -247,7 +247,7 @@ class MainWP_DB {
   type text NOT NULL,
   exclude text NOT NULL,
   sites text NOT NULL,
-  groups text NOT NULL,
+  `groups` text NOT NULL,
   last int(11) NOT NULL,
   last_run int(11) NOT NULL,
   lastStartNotificationSent int(11) NOT NULL DEFAULT 0,

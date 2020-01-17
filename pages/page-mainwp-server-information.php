@@ -229,6 +229,13 @@ class MainWP_Server_Information {
 			do_action( 'mainwp-before-server-info-table' );
 
 			?>
+			<div class="ui two column grid">
+			<div class="column"></div>
+			<div class="right aligned column">
+			<a href="#" style="margin-left:5px" class="ui small basic green button" id="mainwp-copy-meta-system-report" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Copy the system report to paste it to the MainWP Community.', 'mainwp' ); ?>"><?php _e( 'Copy System Report for the MainWP Community', 'mainwp' ); ?></a>
+			<a href="#" class="ui small green button" id="mainwp-download-system-report"><?php _e( 'Download System Report', 'mainwp' ); ?></a>
+			</div>
+			</div>
 			<table class="ui stackable celled table fixed mainwp-system-info-table">
 				<thead>
 					<tr>
@@ -335,11 +342,11 @@ class MainWP_Server_Information {
 						<td colspan="2"><?php echo defined( 'DB_CHARSET' ) ? DB_CHARSET : ''; ?></td>
 					</tr>
 					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'Server Info', 'mainwp' ); ?></div></td></tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php _e( 'WordPress Root Directory', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getWPRoot(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php _e( 'Server Name', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getServerName(); ?></td>
 					</tr>
@@ -355,7 +362,7 @@ class MainWP_Server_Information {
 						<td colspan="2"><?php _e( 'Architecture', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getArchitecture(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php _e( 'Server IP', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getServerIP(); ?></td>
 					</tr>
@@ -363,7 +370,7 @@ class MainWP_Server_Information {
 						<td colspan="2"><?php _e( 'Server Protocol', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getServerProtocol(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php _e( 'HTTP Host', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getHTTPHost(); ?></td>
 					</tr>
@@ -379,7 +386,7 @@ class MainWP_Server_Information {
 						<td colspan="2"><?php esc_html_e( 'User Agent', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getUserAgent(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php _e( 'Server Port', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getServerPort(); ?></td>
 					</tr>
@@ -391,7 +398,7 @@ class MainWP_Server_Information {
 						<td colspan="2"><?php esc_html_e( 'Memory Usage', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::memoryUsage(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Complete URL', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getCompleteURL(); ?></td>
 					</tr>
@@ -407,23 +414,23 @@ class MainWP_Server_Information {
 						<td colspan="2"><?php esc_html_e( 'Accept-Charset Content', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getServerAcceptCharset(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Currently Executing Script Pathname', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getScriptFileName(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Current Page URI', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getCurrentPageURI(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Remote Address', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getRemoteAddress(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php _e( 'Remote Host', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getRemoteHost(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php _e( 'Remote Port', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getRemotePort(); ?></td>
 					</tr>

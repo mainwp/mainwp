@@ -652,24 +652,40 @@ class MainWP_Utility {
 	 */
 
 	static function fetchUrlsAuthed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null,
-								  $others = array() ) {
+								  $others = array(), $is_external_hook = false ) {
 		if ( !is_array( $websites ) || empty( $websites ) ) {
 			return false;
 		}
 
+		if ( !is_array($params) ) {
+			$params = array();
+		}
+			
 		$chunkSize = 10;
 		if ( count( $websites ) > $chunkSize ) {
 			$total	 = count( $websites );
 			$loops	 = ceil( $total / $chunkSize );
 			for ( $i = 0; $i < $loops; $i ++ ) {
 				$newSites = array_slice( $websites, $i * $chunkSize, $chunkSize, true );
-				self::fetchUrlsAuthed( $newSites, $what, $params, $handler, $output, $whatPage, $others );
+				self::fetchUrlsAuthed( $newSites, $what, $params, $handler, $output, $whatPage, $others, $is_external_hook );
 				sleep( 5 );
 			}
 
 			return false;
 		}
 
+		
+		if ( $is_external_hook ) {
+			// to compatible with old extensions, will remove later
+			// using hook to config response format for external call (from extensions)  
+			// to prevent break communication between dashboard and child
+			$json_format = apply_filters( 'mainwp_response_json_format', false ); // for hook: mainwp_fetchurlsauthed
+		} else {
+			// config response format for internal dashboard call
+			$json_format = true;
+		}
+								
+				
 		$debug = false;
 		if ( $debug ) {
 			$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -762,6 +778,10 @@ class MainWP_Utility {
 				@curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 				@curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
 				@curl_setopt( $ch, CURLOPT_POST, true );
+				
+				// json_result: true/false to request response json format				
+				$params['json_result'] = $json_format; // ::fetchUrlsAuthed
+				
 				$postdata = MainWP_Utility::getPostDataAuthed( $website, $what, $params );
 				@curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
 				@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
@@ -1056,6 +1076,11 @@ class MainWP_Utility {
 			@curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 			@curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
 			@curl_setopt( $ch, CURLOPT_POST, true );
+			
+			if ( is_array( $params ) ) {				
+				$params['json_result'] = $json_format; // ::fetchUrlsAuthed
+			}
+		
 			$postdata = MainWP_Utility::getPostDataAuthed( $website, $what, $params );
 			@curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
 			@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
@@ -1164,7 +1189,7 @@ class MainWP_Utility {
 
 	static function fetchUrlAuthed( &$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false,
 								 $pRetryFailed = true, $rawResponse = null ) {
-		if ( $params == null ) {
+		if ( !is_array( $params ) ) {
 			$params = array();
 		}
 
@@ -1248,10 +1273,13 @@ class MainWP_Utility {
         if ($updating_website) {
             do_action( 'mainwp_website_before_updated', $website, $type, $list );
         }
-
+		
+		$params['json_result'] = true; // ::fetchUrlAuthed
 		$postdata    = MainWP_Utility::getPostDataAuthed( $website, $what, $params );
-
+		$others['function'] = $what;
+		
         $information = array();
+		
         if ( ! $request_update ) {
             $information = MainWP_Utility::fetchUrl( $website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
         } else {
@@ -1297,9 +1325,18 @@ class MainWP_Utility {
 
 	static function fetchUrlNotAuthed( $url, $admin, $what, $params = null, $pForceFetch = false,
 									$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
+		if ( empty($params) ) {
+			$params = array();
+		}	
+				
+		if ( is_array( $params ) ) {			
+			$params['json_result'] = true;	// ::fetchUrlNotAuthed, internal					
+		}		
+		
 		$postdata	 = MainWP_Utility::getPostDataNotAuthed( $url, $admin, $what, $params );
 		$website	 = null;
-
+		
+		$others['function'] = $what;
 		return MainWP_Utility::fetchUrl( $website, $url, $postdata, false, $pForceFetch, $verifyCertificate, true, $http_user, $http_pass, $sslVersion, $others );
 	}
 
@@ -1348,9 +1385,9 @@ class MainWP_Utility {
 
 	static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
 						   $verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null, $sslVersion = 0,
-						   $others = array() ) {
+						   $others = array() ) {		
 		$start = time();
-
+				
 		try {
 			$tmpUrl = $url;
 			if ( substr( $tmpUrl, - 1 ) != '/' ) {
@@ -1379,8 +1416,8 @@ class MainWP_Utility {
 	static function _fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
 							$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
 		//$agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
-		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-
+		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';		
+		
 		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'Request to [' . $url . '] [' . print_r( $postdata, 1 ) . ']' );
 
 		if ( !$pForceFetch ) {
@@ -1651,7 +1688,7 @@ class MainWP_Utility {
 			$err		 = @curl_error( $ch );
 			$real_url	 = @curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
 		}
-
+		
 		$host	 = parse_url( $real_url, PHP_URL_HOST );
 		$ip		 = gethostbyname( $host );
 
@@ -1671,9 +1708,10 @@ class MainWP_Utility {
 		} else if ( empty( $data ) && !empty( $err ) ) {
 			MainWP_Logger::Instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );
 			throw new MainWP_Exception( 'HTTPERROR', $err );
-		} else if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
+		} else if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {			
 			$result		 = $results[ 1 ];
-			$information = unserialize( base64_decode( $result ) );
+			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			
 			MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'information: [OK]' );
 			return $information;
 		} else if ( $http_status == 200 && ! empty( $err ) ) { // unexpected http error
@@ -1828,7 +1866,12 @@ class MainWP_Utility {
 		
 		MainWP_Logger::Instance()->debug( ' :: tryRequest :: [website=' . $website->url . '] [url=' . $where_url . ']' );
 		
-        return  wp_remote_get( $request_url, $args );		
+        $reponse =  wp_remote_get( $request_url, $args );	
+		$body = is_array( $reponse ) && isset($reponse['body']) ? $reponse['body'] : '';
+		
+		MainWP_Logger::Instance()->debug( ' :: Response :: ' . $body );
+		
+		return $reponse;
     }
 
     static function request_premiums_update( $website, $type, $list ) {
@@ -3414,5 +3457,12 @@ EOT;
 
 		return $randomString;
 	}
-
+	
+	public static function get_child_response( $data ) {	
+		if (is_serialized( $data )) {
+			return unserialize( $data, array('allowed_classes' => false) );
+		} else {
+			return json_decode( $data, true );
+		}		
+	}
 }

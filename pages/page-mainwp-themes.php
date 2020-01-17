@@ -554,8 +554,9 @@ class MainWP_Themes {
 		$themesRealVersion = $themesSlug = array(); //name_version -> title_version
 
 		foreach ( $output->themes as $theme ) {
-      $theme['name'] = esc_html($theme['name']);
-      $theme['version'] = esc_html($theme['version']);
+			
+			$theme['name'] = esc_html($theme['name']);
+			$theme['version'] = esc_html($theme['version']);
 			$theme['title'] = esc_html($theme['title']);
 			$theme['slug'] = esc_html($theme['slug']);
 			$theme['websiteurl'] = esc_html($theme['websiteurl']);
@@ -648,7 +649,8 @@ class MainWP_Themes {
 
 	public static function ThemesSearch_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
-			$themes = unserialize( base64_decode( $results[1] ) );
+			$result = $results[ 1 ];
+			$themes = MainWP_Utility::get_child_response( base64_decode( $result ) );			
 			unset( $results );
 			if ( isset( $themes['error'] ) ) {
 				$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( $themes['error'], $website->url ) );

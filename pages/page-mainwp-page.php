@@ -579,8 +579,9 @@ class MainWP_Page {
 
 	public static function PagesSearch_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
-			$pages = unserialize( base64_decode( $results[ 1 ] ) );
-
+			$result = $results[ 1 ];
+			$pages = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			
             if(is_array($pages) && isset($pages['error'])) {
                 $output->errors[ $website->id ] = $pages['error'];
                 return;

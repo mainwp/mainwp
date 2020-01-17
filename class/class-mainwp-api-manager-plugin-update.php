@@ -110,7 +110,7 @@ class MainWP_Api_Manager_Plugin_Update {
 
 		if ( $bulk_check ) {
 			$response	 = wp_remote_retrieve_body( $request );
-        $response	 = unserialize( base64_decode( $response ) );
+			$response	 = unserialize( base64_decode( $response ) );
 		} else {
 			$response = unserialize( wp_remote_retrieve_body( $request ) );
 		}

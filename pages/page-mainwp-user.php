@@ -772,9 +772,10 @@ class MainWP_User {
 	}
 
 	public static function UsersSearch_handler( $data, $website, &$output ) {
-		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
-			$users = unserialize( base64_decode( $results[1] ) );
-                        unset( $results );
+		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {			
+			$result = $results[ 1 ];
+			$users = MainWP_Utility::get_child_response( base64_decode( $result ) );			
+			unset( $results );
 			$output->users += self::usersSearchHandlerRenderer( $users, $website );
 			unset( $users );
 		} else {

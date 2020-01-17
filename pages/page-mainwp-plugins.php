@@ -676,9 +676,10 @@ public static function render() {
 }
 
   public static function PluginsSearch_handler( $data, $website, &$output ) {
-    if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
-      $plugins = unserialize( base64_decode( $results[1] ) );
-	unset($results);
+    if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {		
+		$result = $results[ 1 ];
+		$plugins = MainWP_Utility::get_child_response( base64_decode( $result ) );
+		unset($results);
       if ( isset( $plugins['error'] ) ) {
         $output->errors[$website->id] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( $plugins['error'], $website->url ) );
                 return;

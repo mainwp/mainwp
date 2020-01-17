@@ -10,8 +10,9 @@ class MainWP_Bulk_Add {
 
 	public static function PostingBulk_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
-			$result      = $results[1];
-			$information = unserialize( base64_decode( $result ) );
+			$result      = $results[1];							
+			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			
 			if ( isset( $information['added'] ) ) {
 				$output->ok[ $website->id ] = '1';
 				if ( isset( $information['link'] ) ) {

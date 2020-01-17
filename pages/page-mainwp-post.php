@@ -795,9 +795,10 @@ class MainWP_Post {
 	}
 
 	public static function PostsSearch_handler( $data, $website, &$output ) {
-		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
-			$posts = unserialize( base64_decode( $results[ 1 ] ) );
-
+		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {			
+			$result = $results[ 1 ];
+			$posts = MainWP_Utility::get_child_response( base64_decode( $result ) );
+		
             if(is_array($posts) && isset($posts['error'])) {
                 $output->errors[ $website->id ] = $posts['error'];
                 return;
@@ -1807,7 +1808,8 @@ static function meta_form( $post = null ) {
 	public static function hookPostsSearch_handler( $data, $website, &$output ) {
 		$posts = array();
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
-			$posts = unserialize( base64_decode( $results[ 1 ] ) );
+			$result = $results[ 1 ];
+			$posts = MainWP_Utility::get_child_response( base64_decode( $result ) );
 			unset( $results );
 		}
 		$output->results[ $website->id ] = $posts;
@@ -1865,7 +1867,7 @@ static function meta_form( $post = null ) {
 		$allCategories = array( 'Uncategorized' );
 		if ( count( $websites ) > 0 ) {
 			foreach ( $websites as $website ) {
-				$cats = json_decode( $website->categories, true );
+				$cats = json_decode( $website->categories, true );														
 				if ( is_array( $cats ) && ( count( $cats ) > 0 ) ) {
 					$allCategories = array_unique( array_merge( $allCategories, $cats ) );
 				}
@@ -1878,8 +1880,11 @@ static function meta_form( $post = null ) {
 			natcasesort( $allCategories );
 			foreach ( $allCategories as $category ) {
                 //echo '<li class="popular-category sitecategory"><label class="selectit"><input value="' . $category . '" type="checkbox" name="post_category[]" ' . ( in_array( $category, $selectedCategories ) || in_array( $category, $selectedCategories2 ) ? 'checked' : '' ) . '> ' . $category . '</label></li>';
-				$category = rawurlencode( $category );
-				$category = str_replace( '%20',' ',$category );	// replaced space encoded			
+				
+//				$category = rawurlencode( $category );
+//				$category = str_replace( '%20',' ',$category );	// replaced space encoded			
+//				$category  = str_replace( '%26', '&', $category );
+				
 				echo '<option value="' . $category . '" class="sitecategory">' . $category . '</option>';
 			}
 		}
@@ -2162,10 +2167,11 @@ static function meta_form( $post = null ) {
 	}
 
 	public static function PostsGetTerms_handler( $data, $website, &$output ) {
-		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
-			$result						 = $results[ 1 ];
-			$cats						 = unserialize( base64_decode( $result ) );
-			$output->cats[ $website->id ]	 = is_array( $cats ) ? $cats : array();
+		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {			
+			$result = $results[ 1 ];
+			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			
+			$output->cats[ $website->id ]	 = is_array( $information ) ? $information : array();
 		} else {
 			$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( 'NOMAINWP', $website->url ) );
 		}

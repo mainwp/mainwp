@@ -4080,26 +4080,26 @@ mainwp_install_bulk_you_know_msg = function(pType, pTotal) {
     if (mainwpParams.installedBulkSettingsManager && mainwpParams.installedBulkSettingsManager == 1) {
         if (pType == 'plugin') {
             if (pTotal == 1)
-                msg = __('Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', '<a href="https://mainwp.com/help/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
+                msg = __('Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
             else
-                msg = __('Would you like to use the Bulk Settings Manager with these plugins? Check out the %1Documentation%2.', '<a href="https://mainwp.com/help/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
+                msg = __('Would you like to use the Bulk Settings Manager with these plugins? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
         } else {
             if (pTotal == 1)
-                msg = __('Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', '<a href="https://mainwp.com/help/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
+                msg = __('Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
             else
-                msg = __('Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', '<a href="https://mainwp.com/help/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
+                msg = __('Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
         }
     } else {
         if (pType == 'plugin') {
             if (pTotal == 1)
-                msg = __('Did you know with the %1 you can control the settings of this plugin directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extension/bulk-settings-manager/" target="_blank">Bulk Settings Extension</a>');
+                msg = __('Did you know with the %1 you can control the settings of this plugin directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extensions/bulk-settings-manager" target="_blank">Bulk Settings Extension</a>');
             else
-                msg = __('Did you know with the %1 you can control the settings of these plugins directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extension/bulk-settings-manager/" target="_blank">Bulk Settings Extension</a>');
+                msg = __('Did you know with the %1 you can control the settings of these plugins directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extensions/bulk-settings-manager" target="_blank">Bulk Settings Extension</a>');
         } else {
             if (pTotal == 1)
-                msg = __('Did you know with the %1 you can control the settings of this theme directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extension/bulk-settings-manager/" target="_blank">Bulk Settings Extension</a>');
+                msg = __('Did you know with the %1 you can control the settings of this theme directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extensions/bulk-settings-manager" target="_blank">Bulk Settings Extension</a>');
             else
-                msg = __('Did you know with the %1 you can control the settings of these themes directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extension/bulk-settings-manager/" target="_blank">Bulk Settings Extension</a>');
+                msg = __('Did you know with the %1 you can control the settings of these themes directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extensions/bulk-settings-manager" target="_blank">Bulk Settings Extension</a>');
         }
     }
     return msg;
@@ -6319,7 +6319,7 @@ getErrorMessage = function ( pError )
         var error = '';
         if ( pError.extra )
         {
-            error = __('MainWP Child plugin not detected! First install and activate the MainWP Child plugin and add your site to MainWP Dashboard afterwards. If you continue experiencing this issue please test your connection <a href="admin.php?page=managesites&do=test&site=%1">here</a> or post as much information as possible on the error in the <a href="https://mainwp.com/forum/">support forum</a>.', pError.extra); // to fix incorrect encoding
+            error = __('MainWP Child plugin not detected! First, install and activate the plugin and add your site to your MainWP Dashboard afterwards. If you continue experiencing this issue, please test the site connection or contact <a href="https://mainwp.com/support/">MainWP Support</a>.', pError.extra); // to fix incorrect encoding
         } else
         {
             error = __( 'MainWP Child plugin not detected! First install and activate the MainWP Child plugin and add your site to MainWP Dashboard afterwards.' );
@@ -6518,7 +6518,7 @@ jQuery( document ).ready( function () {
  * Server Info
  */
 
-serverinfo_prepare_download_info = function () {
+serverinfo_prepare_download_info = function ( communi ) {
     var report = "";
     jQuery( '.mainwp-system-info-table thead, .mainwp-system-info-table tbody' ).each( function () {
         var td_len = [ 35, 55, 45, 12, 12 ];
@@ -6538,7 +6538,7 @@ serverinfo_prepare_download_info = function () {
             report = report + " ###\n\n";
         } else {
             jQuery( 'tr', jQuery( this ) ).each( function () {
-                if ( jQuery( this ).hasClass( 'mwp-not-generate-row' ) )
+                if ( communi && jQuery( this ).hasClass( 'mwp-not-generate-row' ) )
                     return;
                 i = 0;
                 jQuery( this ).find( 'td:not(".mwp-not-generate-row")' ).each( function () {
@@ -6557,18 +6557,36 @@ serverinfo_prepare_download_info = function () {
     } );
 
     try {
-        //jQuery( "#download-server-information" ).slideDown();
-        jQuery( "#download-server-information textarea" ).val( report ).focus().select();
+            if ( communi ) {
+                report = '```' +  "\n" + report +  "\n" + '```';
+            }
+            
+            //jQuery( "#download-server-information" ).slideDown();            
+            jQuery( "#download-server-information textarea" ).val( report ).focus().select();
     } catch ( e ) {
     }
     return false;
 }
 
 jQuery( document ).on( 'click', '#mainwp-download-system-report', function () {
-    serverinfo_prepare_download_info();
+    serverinfo_prepare_download_info( false );
     var server_info = jQuery( '#download-server-information textarea' ).val();
     var blob = new Blob( [ server_info ], { type: "text/plain;charset=utf-8" } );
     saveAs( blob, "mainwp-system-report.txt" );
+    return false;
+} );
+
+jQuery( document ).on( 'click', '#mainwp-copy-meta-system-report', function () {
+    jQuery( "#download-server-information" ).slideDown(); // to able to select and copy      
+    serverinfo_prepare_download_info( true );      
+    jQuery( "#download-server-information" ).slideUp();      
+    try {        
+        var successful = document.execCommand('copy');        
+        var msg = successful ? 'successful' : 'unsuccessful';
+        console.log('Copying text command was ' + msg);        
+    } catch (err) {
+        console.log('Oops, unable to copy');
+    }
     return false;
 } );
 

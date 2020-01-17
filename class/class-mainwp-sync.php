@@ -53,7 +53,8 @@ class MainWP_Sync {
 				'othersData'					 => json_encode( $othersData ),
 				'server'						 => get_admin_url(),
 				'numberdaysOutdatePluginTheme'	 => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
-				'primaryBackup'					 => $primaryBackup
+				'primaryBackup'					 => $primaryBackup,
+				'siteId'						=> $pWebsite->id
 			), true, $pForceFetch
 			);
 			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'primary_lasttime_backup', isset( $information[ 'primaryLasttimeBackup' ] ) ? $information[ 'primaryLasttimeBackup' ] : 0  );
@@ -206,8 +207,8 @@ class MainWP_Sync {
 			$done						 = true;
 		}
 
-		if ( isset( $information[ 'categories' ] ) ) {
-			$websiteValues[ 'categories' ]	 = @json_encode( $information[ 'categories' ] );
+		if ( isset( $information[ 'categories' ] ) ) {			
+			$websiteValues[ 'categories' ]	 = MainWP_Utility::safe_json_encode( $information[ 'categories' ] );
 			$done							 = true;
 		}
 

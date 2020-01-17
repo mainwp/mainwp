@@ -358,7 +358,7 @@ class MainWP_Hooks {
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_posts', $post_data, array(
 				MainWP_Post::getClassName(),
 				'hookPostsSearch_handler',
-			), $output );
+			), $output, $is_external_hook = true );
 		}
 		return $output;
 	}

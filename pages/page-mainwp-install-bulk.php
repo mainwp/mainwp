@@ -296,7 +296,8 @@ class MainWP_Install_Bulk {
 	public static function InstallPluginTheme_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result      = $results[1];
-			$information = unserialize( base64_decode( $result ) );
+			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );			
+			
 			if ( isset( $information['installation'] ) && $information['installation'] == 'SUCCESS' ) {
 				$output->ok[ $website->id ] = array( $website->name );
 			} else if ( isset( $information['error'] ) ) {

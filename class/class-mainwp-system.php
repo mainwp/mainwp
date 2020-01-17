@@ -407,10 +407,10 @@ class MainWP_System {
 	}
 
 	function filter_fetchUrlsAuthed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
-		return MainWP_Extensions::hookFetchUrlsAuthed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output );
+		return MainWP_Extensions::hookFetchUrlsAuthed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output, $is_external_hook = true );
 	}
 
-	function filter_fetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {
+	function filter_fetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {		
 		return MainWP_Extensions::hookFetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $raw_response );
 	}
 

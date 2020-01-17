@@ -346,7 +346,7 @@ class MainWP_Settings {
 				            ?>
 										<div class="ui action input">
 											<input type="text" class="" id="mainwp_options_email" name="mainwp_options_email[<?php echo $i; ?>]" value="<?php echo $email; ?>"/>
-											<a href="#" id="mainwp-multi-emails-remove" class="ui button basic red" data-tooltip="<?php esc_attr_e( 'Remove this email address', 'mainwp' ); ?>" data-inverted=""><?php _e( 'Delete', 'mainwp' ); ?></a>
+											<a href="#" class="ui button basic red mainwp-multi-emails-remove" data-tooltip="<?php esc_attr_e( 'Remove this email address', 'mainwp' ); ?>" data-inverted=""><?php _e( 'Delete', 'mainwp' ); ?></a>
 										</div>
 										<div class="ui hidden fitted divider"></div>
 									<?php } ?>
@@ -357,15 +357,15 @@ class MainWP_Settings {
 						<script type="text/javascript">
 							jQuery( document ).ready( function () {
 								jQuery( '#mainwp-multi-emails-add' ).on( 'click', function () {
-										jQuery( '#mainwp-multi-emails-add' ).before( '<div class="ui action input"><input type="text" name="mainwp_options_email[]" value=""/><a href="#" id="mainwp-multi-emails-remove" class="ui button basic red" data-tooltip="Remove this email address" data-inverted=""><?php _e( 'Delete', 'mainwp' ); ?></a></div><div class="ui hidden fitted divider"></div>' );
+										jQuery( '#mainwp-multi-emails-add' ).before( '<div class="ui action input"><input type="text" name="mainwp_options_email[]" value=""/><a href="#" class="ui button basic red mainwp-multi-emails-remove" data-tooltip="Remove this email address" data-inverted=""><?php _e( 'Delete', 'mainwp' ); ?></a></div><div class="ui hidden fitted divider"></div>' );
 										return false;
 								} );
-								jQuery( '#mainwp-multi-emails-remove' ).on( 'click', function () {
+								jQuery( '.mainwp-multi-emails-remove' ).on( 'click', function () {
 										jQuery( this ).closest( '.ui.action.input' ).remove();
 										return false;
 								} );
 							} );
-					  </script>					  
+					  </script>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable WP Cron', 'mainwp' ); ?></label>
 						  <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Disabling this option will disable the WP Cron so all scheduled events will stop working.', 'mainwp' ); ?>" data-inverted="" data-position="top left">

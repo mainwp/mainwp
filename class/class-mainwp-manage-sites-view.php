@@ -1535,7 +1535,11 @@ class MainWP_Manage_Sites_View {
 				$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array( 'pubkey' => $pubkey, 'server' => get_admin_url(), 'uniqueId' => $website->uniqueId ), true, $website->verify_certificate, $website->http_user, $website->http_pass, $website->ssl_version );
 
 				if ( isset( $information[ 'error' ] ) && $information[ 'error' ] != '' ) {
-					throw new Exception( urlencode( $information[ 'error' ] ) );
+					$err  = rawurlencode( urldecode( $information[ 'error' ] ) );
+					$err  = str_replace( '%2F', '/', $err );
+					$err  = str_replace( '%20', ' ', $err ); // replaced space encoded	
+					$err  = str_replace( '%26', '&', $err );
+					throw new Exception( $err );
 				} else {
 					if ( isset( $information[ 'register' ] ) && $information[ 'register' ] == 'OK' ) {
 						//Update website
@@ -1627,8 +1631,10 @@ class MainWP_Manage_Sites_View {
 				);
 
 				if ( isset( $information[ 'error' ] ) && $information[ 'error' ] != '' ) {
-					$error = urlencode( $information[ 'error' ] );
-					$error = str_replace( '%20',' ', $error ); // replaced spaces encoded
+					$error  = rawurlencode( urldecode( $information[ 'error' ] ) );
+					$error  = str_replace( '%2F', '/', $error );
+					$error  = str_replace( '%20', ' ', $error ); // replaced space encoded	
+					$err  = str_replace( '%26', '&', $error );
 				} else {
 					if ( isset( $information[ 'register' ] ) && $information[ 'register' ] == 'OK' ) {
 						//Add website to database

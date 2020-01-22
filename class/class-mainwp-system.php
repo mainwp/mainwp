@@ -17,7 +17,7 @@ const MAINWP_VIEW_PER_GROUP = 2;
 
 class MainWP_System {
 
-	public static $version = '4.0.7';
+	public static $version = '4.0.7.1';
 	//Singleton
 	private static $instance = null;
 	private $upgradeVersionInfo = null;
@@ -63,11 +63,11 @@ class MainWP_System {
 			$pluginData				 = get_plugin_data( $mainwp_plugin_file );
 			$this->current_version	 = $pluginData[ 'Version' ];
 			$currentVersion			 = get_option( 'mainwp_plugin_version' );
-			
+
 			if ( !empty( $currentVersion ) && version_compare( $currentVersion, '4.0', '<' ) && version_compare( $this->current_version, '4.0', '>=' ) ) {
 				add_action( 'mainwp_before_header', array( &$this, 'mainwp_4_update_notice' ) );
 			}
-			
+
 			if ( empty( $currentVersion ) ) {
 				MainWP_Utility::update_option( 'mainwp_getting_started', 'started' );
 			} else if ( version_compare( $currentVersion, $this->current_version, '<' ) ) {
@@ -241,7 +241,7 @@ class MainWP_System {
 		add_action( 'mainwp_before_header', array( &$this, 'admin_notices' ) );
         add_action( 'admin_notices', array( &$this, 'wp_admin_notices' ) );
 		add_action( 'wp_mail_failed', array( &$this, 'wp_mail_failed' ) );
-		
+
 		// to fix layout
 
 		add_action( 'after_plugin_row', array( &$this, 'after_extensions_plugin_row' ), 10, 3 );
@@ -356,7 +356,7 @@ class MainWP_System {
 				'mainwp_number_overview_columns',
 				'mainwp_disable_update_confirmations',
 				'mainwp_settings_hide_widgets',
-				'mainwp_settings_hide_manage_sites_columns'				
+				'mainwp_settings_hide_manage_sites_columns'
 			);
 
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";
@@ -410,7 +410,7 @@ class MainWP_System {
 		return MainWP_Extensions::hookFetchUrlsAuthed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output, $is_external_hook = true );
 	}
 
-	function filter_fetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {		
+	function filter_fetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {
 		return MainWP_Extensions::hookFetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $raw_response );
 	}
 
@@ -633,18 +633,18 @@ class MainWP_System {
 
     public function wp_admin_notices() {
         global $pagenow;
-		
-		$mail_failed = get_transient( 'mainwp_notice_wp_mail_failed' );		
+
+		$mail_failed = get_transient( 'mainwp_notice_wp_mail_failed' );
 		if ($mail_failed) {
 			?>
 			<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
 				<i class="exclamation circle icon"></i>
 				<?php echo __( 'Send mail function may failed.', 'mainwp' ); ?>
 				<i class="close icon mainwp-notice-dismiss" notice-id="mail_failed"></i>
-			</div>		
+			</div>
             <?php
 		}
-			
+
 		if ( $pagenow !== 'plugins.php' )
             return;
 
@@ -660,11 +660,11 @@ class MainWP_System {
         }
 
     }
-	
+
 	public function wp_mail_failed( $error ) {
 		if ( is_object( $error )) {
 			set_transient( 'mainwp_notice_wp_mail_failed', true, 12 * HOUR_IN_SECONDS );
-			$er = $error->get_error_message();			
+			$er = $error->get_error_message();
 			if ( !empty($er) )
 				MainWP_Logger::Instance()->debug( 'Error :: wp_mail :: [error=' . $er . ']' );
 		}
@@ -866,7 +866,7 @@ class MainWP_System {
 
         return $output;
     }
-	
+
 	static function get_timestamp_from_hh_mm( $hh_mm ) {
 			$hh_mm	 = explode( ':', $hh_mm );
 			$_hour			 = isset( $hh_mm[ 0 ] ) ? intval( $hh_mm[ 0 ] ) : 0;
@@ -879,20 +879,20 @@ class MainWP_System {
 			}
 			return strtotime( date( 'Y-m-d' ) . ' ' . $_hour . ':' . $_mins . ':59' );
 	}
-	
+
 	static function get_period_of_time_from_hh_mm( $hh_mm ) {
 			$hh_mm	 = explode( ':', $hh_mm );
 			$_hour			 = isset( $hh_mm[ 0 ] ) ? intval( $hh_mm[ 0 ] ) : 0;
 			$_mins			 = isset( $hh_mm[ 1 ] ) ? intval( $hh_mm[ 1 ] ) : 0;
-			
+
 			if ( $_hour < 0 || $_hour > 23 ) {
 				$_hour = 0;
 			}
-			
+
 			if ( $_mins < 0 || $_mins > 59 ) {
 				$_mins = 0;
 			}
-			return $_hour * 60 + $_mins; // mins			
+			return $_hour * 60 + $_mins; // mins
 	}
 
 	function mainwp_cronupdatescheck_action() {
@@ -904,29 +904,29 @@ class MainWP_System {
 		@ini_set( 'memory_limit', $mem );
 		@ini_set( 'max_execution_time', 0 );
 
-		$timeDailyUpdate	= get_option( 'mainwp_timeDailyUpdate' );	
-				
+		$timeDailyUpdate	= get_option( 'mainwp_timeDailyUpdate' );
+
 		// to check time to run daily
 		$run_timestamp = 0; // 0 hour
 		if ( !empty($timeDailyUpdate) ) {
 			$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
 			if ( time() < $run_timestamp ) {
-				return; 
+				return;
 			}
 		}
-		
+
 		$updatecheck_running = ( 'Y' == get_option( 'mainwp_updatescheck_is_running' ) ? true : false );
-		
-		$lasttimeAutomaticUpdate = get_option( 'mainwp_updatescheck_last_timestamp' );	
+
+		$lasttimeAutomaticUpdate = get_option( 'mainwp_updatescheck_last_timestamp' );
 		$frequencyDailyUpdate = get_option( 'mainwp_frequencyDailyUpdate' );
 		if ( $frequencyDailyUpdate <= 0 )
 			$frequencyDailyUpdate = 1;
-		
-		$period_of_time = $run_timestamp ? self::get_period_of_time_from_hh_mm( $timeDailyUpdate ) : 0; // mins		
+
+		$period_of_time = $run_timestamp ? self::get_period_of_time_from_hh_mm( $timeDailyUpdate ) : 0; // mins
 		// to valid period of time
 		if ($period_of_time > 24 * 60 )
 			$period_of_time = 0;
-		
+
 		$enableFrequencyAutomaticUpdate = false;
 		// to check frequency to run daily
 		// if the $period_of_time value is not valid then frequency run will avoid, automatic update will run one time per day as default
@@ -935,12 +935,12 @@ class MainWP_System {
 			if (time() < $lasttimeAutomaticUpdate + $mins_between * 60) {
 				// if update checking is running then continue do that
 				if ( !$updatecheck_running )
-					return; 			 
+					return;
 			} else {
 				$enableFrequencyAutomaticUpdate = true;
 			}
 		}
-				
+
 		$mainwpAutomaticDailyUpdate = get_option( 'mainwp_automaticDailyUpdate' );
 
 		$plugin_automaticDailyUpdate = get_option( 'mainwp_pluginAutomaticDailyUpdate' );
@@ -948,27 +948,27 @@ class MainWP_System {
 
 		$mainwpLastAutomaticUpdate = get_option( 'mainwp_updatescheck_last' );
         $mainwpHoursIntervalAutomaticUpdate = apply_filters( 'mainwp_updatescheck_hours_interval' , false);
-		
+
         if ( $mainwpHoursIntervalAutomaticUpdate > 0 ) {
             if ( $lasttimeAutomaticUpdate && ( $lasttimeAutomaticUpdate + $mainwpHoursIntervalAutomaticUpdate * 3600 > time() ) ) {
 				// if update checking is running then continue do that
-				if ( !$updatecheck_running ) {					
+				if ( !$updatecheck_running ) {
 					MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated hours interval' );
-					return;                 
+					return;
 				}
-				
+
             }
         } else if ( $enableFrequencyAutomaticUpdate ) {
-			// ok go to frequency sync 
+			// ok go to frequency sync
 		} else if ( $mainwpLastAutomaticUpdate == date( 'd/m/Y' ) ) {
 			MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated today' );
 
 			return;
-		} 
+		}
 
 		if ( 'Y' == get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
 			$send_noti_at = apply_filters( 'mainwp_updatescheck_sendmail_at_time', false );
-			if ( !empty( $send_noti_at ) ) {				
+			if ( !empty( $send_noti_at ) ) {
 				$send_timestamp = self::get_timestamp_from_hh_mm( $send_noti_at );
 				if ( time() < $send_timestamp ) {
 					return; // send notification later
@@ -1023,8 +1023,8 @@ class MainWP_System {
 
 				// set checking to done, so will check for other settings to run
 				if ( $updatecheck_running )
-					MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', '' );	
-				
+					MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', '' );
+
 				update_option( 'mainwp_last_synced_all_sites', time() );
 				MainWP_Logger::Instance()->debug( 'CRON :: updates check :: got to the mail part' );
 
@@ -1288,11 +1288,11 @@ class MainWP_System {
 				}
 			}
 		} else {
-			
+
 			if ( !$updatecheck_running ) {
-				MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', 'Y' );			
+				MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', 'Y' );
 			}
-			
+
 			$userExtension = MainWP_DB::Instance()->getUserExtensionByUserId( $userid );
 
 			$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
@@ -2002,20 +2002,20 @@ class MainWP_System {
 		if ( !MainWP_Menu::is_disable_menu_item( 2, 'ServerInformation' ) ) {
 			MainWP_Server_Information::initMenuSubPages();
 		}
-		
+
         if ( self::isMainWP_Pages() ) {
-			$disabled_confirm = get_option( 'mainwp_disable_update_confirmations', 0 );			
+			$disabled_confirm = get_option( 'mainwp_disable_update_confirmations', 0 );
             ?>
-			<input type="hidden" id="mainwp-disable-update-confirmations" value="<?php echo intval($disabled_confirm); ?>">						
-		
+			<input type="hidden" id="mainwp-disable-update-confirmations" value="<?php echo intval($disabled_confirm); ?>">
+
             <script type="text/javascript">
                 jQuery( document ).ready( function ()
                 {
                     jQuery( '#adminmenu #collapse-menu' ).hide();
                 } );
             </script>
-			
-			
+
+
             <?php
         }
 
@@ -2046,7 +2046,7 @@ class MainWP_System {
 		global $_mainwp_disable_menus_items;
 
         $_mainwp_disable_menus_items = apply_filters('mainwp_all_disablemenuitems', $_mainwp_disable_menus_items); // to support developer to debug
-		
+
 	}
 
 	function print_admin_styles($value = true) {
@@ -2336,7 +2336,7 @@ class MainWP_System {
 			wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assests/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
 //		}
 
-		$en_params = array('jquery-ui-dialog');	
+		$en_params = array('jquery-ui-dialog');
 		if ($use_wp_datepicker) {
 			$en_params[] = 'jquery-ui-datepicker';
 		}
@@ -2403,7 +2403,7 @@ class MainWP_System {
 			wp_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );
 			exit;
 		}
-		
+
 		if ( get_option( 'mainwp_activated' ) == 'yes' ) {
 			delete_option( 'mainwp_activated' );
 			wp_cache_delete( 'mainwp_activated', 'options' );
@@ -2450,20 +2450,20 @@ class MainWP_System {
 				if ( isset( $_POST[ 'submit' ] ) && wp_verify_nonce( $_POST[ 'wp_nonce' ], 'MainWPTools' ) ) {
                     $update_screen_options = true;
                     MainWP_Utility::update_option( 'mainwp_enable_managed_cr_for_wc', (!isset( $_POST[ 'enable_managed_cr_for_wc' ] ) ? 0 : 1 ) );
-					MainWP_Utility::update_option( 'mainwp_use_favicon', (!isset( $_POST[ 'mainwp_use_favicon' ] ) ? 0 : 1 ) );					
-					
+					MainWP_Utility::update_option( 'mainwp_use_favicon', (!isset( $_POST[ 'mainwp_use_favicon' ] ) ? 0 : 1 ) );
+
 					$enabled_twit = ! isset( $_POST['mainwp_hide_twitters_message'] ) ? 0 : 1;
 					MainWP_Utility::update_option( 'mainwp_hide_twitters_message', $enabled_twit );
 					if ( ! $enabled_twit ) {
 						MainWP_Twitter::clearAllTwitterMessages();
-					}					
+					}
 				}
 			} else if ( $_GET[ 'page' ] == 'mainwp_tab' || isset( $_GET['dashboard'] ) ) {
 				if ( isset( $_POST[ 'submit' ] ) && wp_verify_nonce( $_POST[ 'wp_nonce' ], 'MainWPScrOptions' ) ) {
                     $update_screen_options = true;
 				}
 			}
-			
+
             if ( $update_screen_options ) {
                 $hide_wids = array();
                 if ( isset( $_POST[ 'mainwp_hide_widgets' ] ) && is_array( $_POST[ 'mainwp_hide_widgets' ] ) ) {
@@ -2480,24 +2480,24 @@ class MainWP_System {
                 MainWP_Utility::update_option( 'mainwp_show_usersnap', (!isset( $_POST[ 'mainwp_show_usersnap' ] ) ? 0 :  time() ) );
                 MainWP_Utility::update_option( 'mainwp_number_overview_columns', intval( $_POST[ 'number_overview_columns' ] ) );
             }
-			
-			
+
+
 			if ( isset( $_POST[ 'submit' ] ) && wp_verify_nonce( $_POST[ 'wp_nonce' ], 'ManageSitesScrOptions' ) ) {
 				$hide_cols = array();
-				foreach($_POST as $key => $val) {					
-					if ( strpos( $key, 'mainwp_hide_column_' ) !== false) {						
-						$col = str_replace( 'mainwp_hide_column_', '', $key );	
+				foreach($_POST as $key => $val) {
+					if ( strpos( $key, 'mainwp_hide_column_' ) !== false) {
+						$col = str_replace( 'mainwp_hide_column_', '', $key );
 						$hide_cols[] = $col;
 					}
 				}
-				
+
 				if ( $user = wp_get_current_user() ) {
-                    update_user_option($user->ID, "mainwp_settings_hide_manage_sites_columns", $hide_cols, true);					
+                    update_user_option($user->ID, "mainwp_settings_hide_manage_sites_columns", $hide_cols, true);
 					update_option( 'mainwp_default_sites_per_page', intval( $_POST['mainwp_default_sites_per_page'] ) );
                 }
-				
+
 			}
-			
+
 		}
 
 		if ( isset( $_POST[ 'select_mainwp_options_siteview' ] ) ) {
@@ -2781,15 +2781,15 @@ class MainWP_System {
     }
 
 	function admin_enqueue_scripts( $hook ) {
-		
+
 		$load_cust_scripts = false;
-		
+
 		global $pagenow;
-				
+
 		if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) && ( $pagenow == 'post-new.php' || $pagenow == 'post.php') ) {
 			$load_cust_scripts = true;
 		}
-		
+
 		if ( self::isMainWP_Pages() ) {
 			wp_enqueue_script( 'mainwp-updates', MAINWP_PLUGIN_URL . 'assests/js/mainwp-updates.js', array(), $this->current_version );
 			wp_enqueue_script( 'mainwp-managesites', MAINWP_PLUGIN_URL . 'assests/js/mainwp-managesites.js', array(), $this->current_version );
@@ -2803,11 +2803,11 @@ class MainWP_System {
             wp_enqueue_script( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assests/js/calendar/calendar.min.js', array( 'jquery' ), $this->current_version );
             wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assests/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version );
 		}
-		
+
 		if ( $load_cust_scripts ) {
-			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assests/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version );            
+			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assests/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version );
 		}
-				
+
 		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assests/js/mainwp-ui.js', array(), $this->current_version );
 //		wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assests/js/moment/moment.min.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-js-popup', MAINWP_PLUGIN_URL . 'assests/js/mainwp-popup.js', array(), $this->current_version );
@@ -2824,9 +2824,9 @@ class MainWP_System {
         if ( isset( $_GET['hideall'] ) && $_GET['hideall'] == 1 ) {
 			remove_action( 'admin_footer', 'wp_admin_bar_render', 1000 );
 		}
-		
-		global $pagenow; 
-	
+
+		global $pagenow;
+
 		$load_cust_scripts = false;
 		if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) && ( $pagenow == 'post-new.php' || $pagenow == 'post.php') ) {
 			$load_cust_scripts = true;
@@ -2842,10 +2842,10 @@ class MainWP_System {
             wp_enqueue_style( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assests/js/calendar/calendar.min.css', array(), $this->current_version );
             wp_enqueue_style( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assests/js/hamburger/hamburger.css', array(), $this->current_version );
 		}
-		
+
 		if ( $load_cust_scripts ) {
 			wp_enqueue_style( 'semantic', MAINWP_PLUGIN_URL . 'assests/js/semantic-ui/semantic.min.css', array(), $this->current_version );
-		}		
+		}
 	}
 
 	function admin_head() {
@@ -3028,7 +3028,7 @@ class MainWP_System {
 			<div class="content">
 				<div class="content-massage"></div>
 				<div class="ui mini yellow message hidden update-confirm-notice" ><?php echo sprintf( __( 'To disable update confirmations, go to the %sSettings%s page and disable the "Disable update confirmations" option', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
-			</div>			
+			</div>
 			<div class="actions">
 				<div class="ui cancel button"><?php _e('Cancel', 'mainwp'); ?></div>
 				<div class="ui positive right labeled icon button"><?php _e('Yes', 'mainwp'); ?><i class="checkmark icon"></i></div>

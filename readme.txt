@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.3.2
 Requires PHP: 5.6
-Stable tag: 4.0.7
+Stable tag: 4.0.7.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -153,6 +153,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.0.7.1 - 1-22-20 =
+* Updated: multiple notification texts
 
 = 4.0.7 - 1-17-20 =
 * Fixed: encoding problem in error messages

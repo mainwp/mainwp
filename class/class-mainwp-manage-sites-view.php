@@ -151,16 +151,16 @@ class MainWP_Manage_Sites_View {
 			}
 		}
 
-		$pagetitle = __( 'Sites', 'mainwp' );				
-		
+		$pagetitle = __( 'Sites', 'mainwp' );
+
 		if ( $site_id != 0 ) {
-			$website = MainWP_DB::Instance()->getWebsiteById( $site_id );						
-			$imgfavi = '';	
+			$website = MainWP_DB::Instance()->getWebsiteById( $site_id );
+			$imgfavi = '';
 			if ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) {
 				$favi_url	 = MainWP_Utility::get_favico_url( $website );
 				$imgfavi	 = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
-			}						
-			$pagetitle = $imgfavi . " " . $website->url;						
+			}
+			$pagetitle = $imgfavi . " " . $website->url;
 		}
 
 		$params = array(
@@ -335,7 +335,7 @@ class MainWP_Manage_Sites_View {
 		$available_exts_data	 = MainWP_Extensions_View::getAvailableExtensions();
 		if ( count( $working_extensions ) > 0 && count( $sync_extensions_options ) > 0 ) {
 			?>
-					
+
 			<h3 class="ui dividing header">
 				<?php esc_html_e( ' Extensions Settings Synchronization', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'You have Extensions installed that require an additional plugin to be installed on this new Child site for the Extension to work correctly. From the list below select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
@@ -344,10 +344,10 @@ class MainWP_Manage_Sites_View {
 			<?php
 			foreach ( $working_extensions as $slug => $data ) {
 				$dir_slug	 = dirname( $slug );
-				
+
 				if ( !isset( $sync_extensions_options[ $dir_slug ] ) )
 					continue;
-				
+
 				$sync_info	 = isset( $sync_extensions_options[ $dir_slug ] ) ? $sync_extensions_options[ $dir_slug ] : array();
 				$ext_name	 = str_replace( "MainWP", "", $data[ 'name' ] );
 				$ext_name	 = str_replace( "Extension", "", $ext_name );
@@ -355,25 +355,25 @@ class MainWP_Manage_Sites_View {
                 $ext_name = esc_html($ext_name);
 
 				$ext_data = isset( $available_exts_data[ dirname( $slug ) ] ) ? $available_exts_data[ dirname( $slug ) ] : array();
-				
+
 				if ( isset( $ext_data[ 'img' ] ) ) {
 					$img_url = $ext_data[ 'img' ];
 				} else {
 					$img_url = MAINWP_PLUGIN_URL . 'assests/images/extensions/placeholder.png';
 				}
-			  
-			  
+
+
 				$html	 = '<div class="ui grid field">';
 				$html	 .= '<div class="sync-ext-row" slug="' . $dir_slug . '" ext_name = "' . esc_attr( $ext_name ) . '"status="queue">';
 				$html	 .= '<h4>' . $ext_name . '</h4>';
 
 				if ( isset( $sync_info[ 'plugin_slug' ] ) && !empty( $sync_info[ 'plugin_slug' ] ) ) {
-					
+
 					$html .= '<div class="sync-install-plugin" slug="' . esc_attr( dirname( $sync_info[ 'plugin_slug' ] ) ) . '" plugin_name="' . esc_attr( $sync_info[ 'plugin_name' ] ) . '">';
 					$html .= '<div class="ui checkbox"><input type="checkbox" class="chk-sync-install-plugin" /> <label>' . esc_html( sprintf( __( 'Install %s plugin', 'mainwp' ), esc_html($sync_info[ 'plugin_name' ]) ) ) . '</label></div> ';
 					$html .= '<i class="ui active inline loader tiny" style="display: none"></i> <span class="status"></span>';
 					$html .= '</div>';
-					
+
 					if ( !isset( $sync_info[ 'no_setting' ] ) || empty( $sync_info[ 'no_setting' ] ) ) {
 						//$html .= '<div class="sync-options options-row"><label><input type="checkbox" /> ' . sprintf( __( 'Apply %s %ssettings%s', 'mainwp' ), esc_html($sync_info[ 'plugin_name' ]), '<a href="admin.php?page=' . $data[ 'page' ] . '">', '</a>' ) . '</label> <i class="ui active inline loader tiny" style="display: none"></i> <span class="status"></span></div>';
 						$html .= '<div class="sync-options options-row">';
@@ -384,21 +384,21 @@ class MainWP_Manage_Sites_View {
 						$html .= '<i class="ui active inline loader tiny" style="display: none"></i> <span class="status"></span>';
 						$html .= '</div>';
 					}
-					
+
 				} else {
-					
+
 					$html .= '<div class="sync-global-options options-row">';
 					$html .= '<div class="ui checkbox"><input type="checkbox" /> <label>' . esc_html( sprintf( __( 'Apply global %s options', 'mainwp' ), trim( $ext_name ) ) ) . '</label></div> ';
 					$html .= '<i class="ui active inline loader tiny"  style="display: none"></i> <span class="status"></span>';
 					$html .= '</div>';
-					
+
 				}
 
 				$html .= '</div>';
 				$html .= '</div>';
 
 				echo $html;
-			}			
+			}
 		}
 	}
 
@@ -935,7 +935,7 @@ class MainWP_Manage_Sites_View {
 						</tr>
 					</tfoot>
 				</table>
-			</div>			
+			</div>
 			<?php endif; ?>
 			<?php
 			$plugins_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_info' ), true );
@@ -946,14 +946,14 @@ class MainWP_Manage_Sites_View {
 			if ( is_array( $pluginsOutdateDismissed ) ) {
 				$plugins_outdate = array_diff_key( $plugins_outdate, $pluginsOutdateDismissed );
 			}
-			
-			$decodedDismissedPlugins = json_decode( $userExtension->dismissed_plugins, true );			
+
+			$decodedDismissedPlugins = json_decode( $userExtension->dismissed_plugins, true );
 			if ( is_array( $decodedDismissedPlugins ) ) {
 				$plugins_outdate = array_diff_key( $plugins_outdate, $decodedDismissedPlugins );
 			}
-			$str_format = __( 'Updated %s days ago', 'mainwp' );			
+			$str_format = __( 'Updated %s days ago', 'mainwp' );
 			?>
-			
+
 			<div class="ui <?php echo $active_tab == "abandoned-plugins" ? "active" : ""; ?> tab" data-tab="abandoned-plugins">
 				<table class="ui stackable single line table" id="mainwp-abandoned-plugins-table">
 					<thead>
@@ -990,7 +990,7 @@ class MainWP_Manage_Sites_View {
 								</td>
 							</tr>
 						<?php endforeach; ?>
-					</tbody>					
+					</tbody>
 					<tfoot>
 						<tr>
 							<tr>
@@ -1001,10 +1001,10 @@ class MainWP_Manage_Sites_View {
 							</tr>
 						</tr>
 					</tfoot>
-					
+
 				</table>
 			</div>
-			
+
 			<?php
 			$themes_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_info' ), true );
 			if ( !is_array( $themes_outdate ) ) {
@@ -1016,14 +1016,14 @@ class MainWP_Manage_Sites_View {
 				if ( is_array( $themesOutdateDismissed ) ) {
 					$themes_outdate = array_diff_key( $themes_outdate, $themesOutdateDismissed );
 				}
-				
-				$decodedDismissedThemes	 = json_decode( $userExtension->dismissed_themes, true );			
+
+				$decodedDismissedThemes	 = json_decode( $userExtension->dismissed_themes, true );
 				if ( is_array( $decodedDismissedThemes ) ) {
 					$themes_outdate = array_diff_key( $themes_outdate, $decodedDismissedThemes );
 				}
 			}
 
-			?>			
+			?>
 			<div class="ui <?php echo $active_tab == "abandoned-themes" ? "active" : ""; ?> tab" data-tab="abandoned-themes">
 				<table class="ui stackable single line table" id="mainwp-abandoned-themes-table">
 					<thead>
@@ -1320,6 +1320,8 @@ class MainWP_Manage_Sites_View {
 
 		?>
 
+
+
 		<div class="ui segment mainwp-edit-site-<?php echo $website->id; ?>" id="mainwp-edit-site">
 				<?php if ( $updated) : ?>
 					<div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Child site settings saved successfully.', 'mainwp' ); ?></div>
@@ -1496,10 +1498,10 @@ class MainWP_Manage_Sites_View {
 						</div>
 
 						<?php do_action( 'mainwp-manage-sites-edit', $website ); ?>
-						
+
 						<?php do_action( 'mainwp-extension-sites-edit', $website ); // deprecated ?>
 
-                        <?php do_action( 'mainwp_extension_sites_edit_tablerow', $website ); // deprecated ?>
+            <?php do_action( 'mainwp_extension_sites_edit_tablerow', $website ); // deprecated ?>
 
 						<div class="ui divider"></div>
 						<input type="submit" name="submit" id="submit" class="ui button green big right floated" value="<?php _e( 'Save Settings', 'mainwp' ); ?>"/>
@@ -1537,7 +1539,7 @@ class MainWP_Manage_Sites_View {
 				if ( isset( $information[ 'error' ] ) && $information[ 'error' ] != '' ) {
 					$err  = rawurlencode( urldecode( $information[ 'error' ] ) );
 					$err  = str_replace( '%2F', '/', $err );
-					$err  = str_replace( '%20', ' ', $err ); // replaced space encoded	
+					$err  = str_replace( '%20', ' ', $err ); // replaced space encoded
 					$err  = str_replace( '%26', '&', $err );
 					throw new Exception( $err );
 				} else {
@@ -1554,12 +1556,7 @@ class MainWP_Manage_Sites_View {
 				if ( $e->getMessage() == 'HTTPERROR' ) {
 					throw new Exception( 'HTTP error' . ($e->getMessageExtra() != null ? ' - ' . $e->getMessageExtra() : '') );
 				} else if ( $e->getMessage() == 'NOMAINWP' ) {
-					$error = __( 'No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue please ', 'mainwp' );
-					if ( $e->getMessageExtra() != null ) {
-						$error .= sprintf( __( 'test your connection %shere%s or ', 'mainwp' ), '<a href="' . admin_url( 'admin.php?page=managesites&do=test&site=' . urlencode( $e->getMessageExtra() ) ) . '">', '</a>' );
-					}
-					$error .= sprintf( __( 'post as much information as possible on the error in the %ssupport forum%s.', 'mainwp' ), '<a href="https://mainwp.com/forum/">', '</a>' );
-
+					$error = sprintf( __( 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to your MainWP Dashboard afterward. If you continue experiencing this issue, check the child site for %sknown plugin conflicts%s, or check the %sMainWP Community%s for help.', 'mainwp' ), '<a href="https://meta.mainwp.com/t/known-plugin-conflicts/402">', '</a>', '<a href="https://meta.mainwp.com/c/community-support/5">', '</a>' );
 					throw new Exception( $error );
 				}
 			}
@@ -1583,11 +1580,11 @@ class MainWP_Manage_Sites_View {
 		$params[ 'http_pass' ]			 			= isset( $_POST[ 'managesites_add_http_pass' ] ) ? $_POST[ 'managesites_add_http_pass' ] : '';
 		$params[ 'groupids' ]			 				= isset( $_POST[ 'groupids' ] ) && !empty($_POST[ 'groupids' ]) ? explode(",", $_POST[ 'groupids' ] ) : array();
 		$params[ 'groupnames_import' ]	 	= isset( $_POST[ 'groupnames_import' ] ) ? $_POST[ 'groupnames_import' ] : '';
-		
+
 		if ( isset( $_POST[ 'qsw_page' ] ) ) {
 			$params['qsw_page'] = $_POST[ 'qsw_page' ];
 		}
-		
+
 		return MainWP_Manage_Sites_View::addWPSite( $website, $params );
 	}
 
@@ -1633,7 +1630,7 @@ class MainWP_Manage_Sites_View {
 				if ( isset( $information[ 'error' ] ) && $information[ 'error' ] != '' ) {
 					$error  = rawurlencode( urldecode( $information[ 'error' ] ) );
 					$error  = str_replace( '%2F', '/', $error );
-					$error  = str_replace( '%20', ' ', $error ); // replaced space encoded	
+					$error  = str_replace( '%20', ' ', $error ); // replaced space encoded
 					$err  = str_replace( '%26', '&', $error );
 				} else {
 					if ( isset( $information[ 'register' ] ) && $information[ 'register' ] == 'OK' ) {

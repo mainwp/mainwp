@@ -154,7 +154,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 4.0.7.2 - 1-22-20 =
+= 4.0.7.2 - 2-3-20 =
 * Fixed: an issue with loading Manage Sites table with AJAX
 * Fixed: an issue with dismissing the broken email functionality warning messages
 * Added: link to MainWP Community to the header element

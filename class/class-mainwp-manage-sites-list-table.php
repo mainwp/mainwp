@@ -292,40 +292,45 @@ class MainWP_Manage_Sites_List_Table {
 		}
 
         $orderby = 'wp.url';
-
+		
+		$req_orderby = null;
+		$req_order = null;
+		
         if ( $optimize ) {
 
                 if (isset($_REQUEST['order'])) {
                     $columns = $_REQUEST['columns'];
                     $ord_col =  $_REQUEST['order'][0]['column'];
                     if (isset($columns[$ord_col])) {
-                        $_GET[ 'orderby' ] = $columns[$ord_col]['data'];
-                        $_GET[ 'order' ] = $_REQUEST['order'][0]['dir'];
+//                        $_GET[ 'orderby' ] = $columns[$ord_col]['data'];
+//                        $_GET[ 'order' ] = $_REQUEST['order'][0]['dir'];						
+						$req_orderby = $columns[$ord_col]['data'];
+                        $req_order = $_REQUEST['order'][0]['dir'];
                     }
                 }
 
 
-//                if ( !isset( $_GET[ 'orderby' ] ) ) {
+//                if ( !isset( $req_orderby ) ) {
 //                    $_order_by	 = get_option( 'mainwp_managesites_orderby' );
 //                    $_order		 = get_option( 'mainwp_managesites_order' );
 //                    if ( !empty( $_order_by ) ) {
-//                        $_GET[ 'orderby' ]	 = $_order_by;
-//                        $_GET[ 'order' ]	 = $_order;
+//                        $req_orderby	 = $_order_by;
+//                        $req_order	 = $_order;
 //                    }
 //                } else {
-//                    MainWP_Utility::update_option( 'mainwp_managesites_orderby', $_GET[ 'orderby' ] );
-//                    MainWP_Utility::update_option( 'mainwp_managesites_order', $_GET[ 'order' ] );
+//                    MainWP_Utility::update_option( 'mainwp_managesites_orderby', $req_orderby );
+//                    MainWP_Utility::update_option( 'mainwp_managesites_order', $req_order );
 //                }
 
 
-                if ( isset( $_GET[ 'orderby' ] ) ) {
-                    if ( ( $_GET[ 'orderby' ] == 'site' ) ) {
-                        $orderby = 'wp.name ' . ( $_GET[ 'order' ] == 'asc' ? 'asc' : 'desc' );
-                    } else if ( ( $_GET[ 'orderby' ] == 'url' ) ) {
-                        $orderby = 'wp.url ' . ( $_GET[ 'order' ] == 'asc' ? 'asc' : 'desc' );
-                    } else if ( ( $_GET[ 'orderby' ] == 'groups' ) ) {
-                        $orderby = 'GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") ' . ( $_GET[ 'order' ] == 'asc' ? 'asc' : 'desc' );
-                    } else if ( ( $_GET[ 'orderby' ] == 'update' ) ) {
+                if ( isset( $req_orderby ) ) {
+                    if ( ( $req_orderby == 'site' ) ) {
+                        $orderby = 'wp.name ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
+                    } else if ( ( $req_orderby == 'url' ) ) {
+                        $orderby = 'wp.url ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
+                    } else if ( ( $req_orderby == 'groups' ) ) {
+                        $orderby = 'GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
+                    } else if ( ( $req_orderby == 'update' ) ) {
                         $orderby = 'CASE true
                                         WHEN (offline_check_result = -1)
                                             THEN 2
@@ -335,9 +340,9 @@ class MainWP_Manage_Sites_List_Table {
                                             + (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
                                             + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
                                             + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
-                                    END ' . ( $_GET[ 'order' ] == 'asc' ? 'asc' : 'desc' );
+                                    END ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
                     }
-        //			else if ( ( $_GET[ 'orderby' ] == 'wpcore_update' ) ) {
+        //			else if ( ( $req_orderby == 'wpcore_update' ) ) {
         //				$orderby = 'CASE true
         //                                WHEN (offline_check_result = -1)
         //                                    THEN 2
@@ -345,8 +350,8 @@ class MainWP_Manage_Sites_List_Table {
         //                                    THEN 3
         //                                ELSE 4
         //                                    + (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
-        //                            END ' . ( $_GET[ 'order' ] == 'asc' ? 'asc' : 'desc' );
-        //			} else if ( ( $_GET[ 'orderby' ] == 'plugin_update' ) ) {
+        //                            END ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
+        //			} else if ( ( $req_orderby == 'plugin_update' ) ) {
         //				$orderby = 'CASE true
         //                                WHEN (offline_check_result = -1)
         //                                    THEN 2
@@ -354,8 +359,8 @@ class MainWP_Manage_Sites_List_Table {
         //                                    THEN 3
         //                                ELSE 4
         //                                    + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
-        //                            END ' . ( $_GET[ 'order' ] == 'asc' ? 'asc' : 'desc' );
-        //			} else if ( ( $_GET[ 'orderby' ] == 'theme_update' ) ) {
+        //                            END ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
+        //			} else if ( ( $req_orderby == 'theme_update' ) ) {
         //				$orderby = 'CASE true
         //                                WHEN (offline_check_result = -1)
         //                                    THEN 2
@@ -363,11 +368,11 @@ class MainWP_Manage_Sites_List_Table {
         //                                    THEN 3
         //                                ELSE 4
         //                                    + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
-        //                            END ' . ( $_GET[ 'order' ] == 'asc' ? 'asc' : 'desc' );
+        //                            END ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
         //			}
-                    else if ( ( $_GET[ 'orderby' ] == 'phpversion' ) ) {
-                        $orderby = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) ' . ( $_GET[ 'order' ] == 'asc' ? 'asc' : 'desc' );
-                    } else if ( ( $_GET[ 'orderby' ] == 'status' ) ) {
+                    else if ( ( $req_orderby == 'phpversion' ) ) {
+                        $orderby = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
+                    } else if ( ( $req_orderby == 'status' ) ) {
                         $orderby = 'CASE true
                                         WHEN (offline_check_result = -1)
                                             THEN 2
@@ -377,9 +382,9 @@ class MainWP_Manage_Sites_List_Table {
                                             + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
                                             + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
                                             + (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
-                                    END ' . ( $_GET[ 'order' ] == 'asc' ? 'asc' : 'desc' );
-                    } else if ( ( isset( $_GET[ 'orderby' ] ) && ( $_GET[ 'orderby' ] == 'last_post' ) ) ) {
-                        $orderby = 'wp_sync.last_post_gmt ' . ( $_GET[ 'order' ] == 'asc' ? 'asc' : 'desc' );
+                                    END ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
+                    } else if ( ( isset( $req_orderby ) && ( $req_orderby == 'last_post' ) ) ) {
+                        $orderby = 'wp_sync.last_post_gmt ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
                     }
                 }
         }
@@ -784,7 +789,7 @@ public function display( $optimize = true ) {
                 }).DataTable( {
                     "ajax": {
                         "url": ajaxurl,
-                        "type": "GET",
+                        "type": "POST",
                         "data":  function ( d ) {
                             return $.extend( {}, d, mainwp_secure_data({
                                 action: 'mainwp_manage_display_rows',

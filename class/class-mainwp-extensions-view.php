@@ -157,7 +157,7 @@ class MainWP_Extensions_View {
 								} else if ( isset( $extension[ 'iconURI' ] ) && $extension[ 'iconURI' ] != '' ) {
 									$img_url = MainWP_Utility::removeHttpPrefix( $extension[ 'iconURI' ] );
 								} else {
-									$img_url = MAINWP_PLUGIN_URL . 'assests/images/extensions/placeholder.png';
+									$img_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/placeholder.png';
 								}
 
 								if ( isset( $extension[ 'direct_page' ] ) && !empty( $extension[ 'direct_page' ] ) ) {
@@ -317,7 +317,7 @@ class MainWP_Extensions_View {
 	}
 
 	public static function getAvailableExtensions() {
-		$folder_url = MAINWP_PLUGIN_URL . 'assests/images/extensions/';
+		$folder_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/';
 		return array(
 			'advanced-uptime-monitor-extension'		 =>
 			array(

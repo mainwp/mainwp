@@ -1772,7 +1772,7 @@ class LiveReportResponder_DB {
 			'client.phone'				 => 'Displays the Client Phone',
 			'client.email'				 => 'Displays the Client Email',
 		);
-		$default_report_logo	 = MAINWP_PLUGIN_URL . 'assests/images/default-report-logo.png';
+		$default_report_logo	 = MAINWP_PLUGIN_URL . 'assets/images/default-report-logo.png';
 		$this->default_reports[] = array(
 			'title'	 => 'Default Basic Report',
 			'header' => '<img style="float:left" src="' . $default_report_logo . '" alt="default-report-logo" width="300" height="56" /><br/><br/>Hello [client.contact.name],',

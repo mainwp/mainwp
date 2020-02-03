@@ -2381,7 +2381,7 @@ class MainWP_Utility {
 		return trim( $elem, '/' );
 	}
 
-	public static function renderToolTip( $pText, $pUrl = null, $pImage = 'assests/images/info.png', $style = null ) {
+	public static function renderToolTip( $pText, $pUrl = null, $pImage = 'assets/images/info.png', $style = null ) {
 		$output = '<span class="tooltipcontainer">';
 		if ( $pUrl != null ) {
 			$output .= '<a href="' . esc_url($pUrl) . '" target="_blank">';
@@ -3368,7 +3368,7 @@ EOT;
 			}
 		}
 		if ( empty( $faviurl ) ) {
-			$faviurl = MAINWP_PLUGIN_URL . 'assests/images/sitefavi.png';
+			$faviurl = MAINWP_PLUGIN_URL . 'assets/images/sitefavi.png';
 		}
 
 		return $faviurl;

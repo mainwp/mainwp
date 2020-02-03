@@ -477,55 +477,55 @@ class MainWP_User {
         <?php
     }
 
-    public static function renderTable( $cached = true, $role = '', $groups = '', $sites = '', $search = null ) {
-
-        ?>
-        <table id="mainwp-users-table" class="ui tablet stackable single line table">
-        <thead>
-            <tr>
-                <th class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
-                <th><?php _e( 'Name', 'mainwp' ); ?></th>
-                <th><?php _e( 'Username', 'mainwp' ); ?></th>
-                <th><?php _e( 'E-mail', 'mainwp' ); ?></th>
-                <th><?php _e( 'Role', 'mainwp' ); ?></th>
-                <th><?php _e( 'Posts', 'mainwp' ); ?></th>
-                <th><?php _e( 'Website', 'mainwp' ); ?></th>
-                <th id="mainwp-users-actions" class="no-sort collapsing"></th>
-            </tr>
-        </thead>
-        <tbody id="mainwp-users-list">
-            <?php
-                if ( $cached ) {
-                    MainWP_Cache::echoBody( 'Users' );
-                } else {
-                    MainWP_User::renderTableBody( $role, $groups, $sites, $search );
-                }
-            ?>
-            </tbody>
-        </table>
-        <script type="text/javascript">
-        jQuery( document ).ready( function () {
-          jQuery( '#mainwp-users-table' ).DataTable( {
-						"colReorder" : true,
-						"stateSave":  true,
-	          "pagingType": "full_numbers",
-	          "order": [],
-						"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-	          "columnDefs": [ {
-              "targets": 'no-sort',
-              "orderable": false
-	          } ],
-	          "preDrawCallback": function( settings ) {
-            <?php if ( ! $cached ) { ?>
-            jQuery('#mainwp-users-table .ui.dropdown').dropdown();
-            jQuery('#mainwp-users-table .ui.checkbox').checkbox();
-            <?php } ?>
-	          }
-          } );
+  public static function renderTable( $cached = true, $role = '', $groups = '', $sites = '', $search = null ) {
+		?>
+    <table id="mainwp-users-table" class="ui tablet stackable single line table" style="width:100%">
+      <thead>
+        <tr>
+          <th class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
+          <th><?php _e( 'Name', 'mainwp' ); ?></th>
+          <th><?php _e( 'Username', 'mainwp' ); ?></th>
+          <th><?php _e( 'E-mail', 'mainwp' ); ?></th>
+          <th><?php _e( 'Role', 'mainwp' ); ?></th>
+          <th><?php _e( 'Posts', 'mainwp' ); ?></th>
+          <th><?php _e( 'Website', 'mainwp' ); ?></th>
+          <th id="mainwp-users-actions" class="no-sort collapsing"></th>
+        </tr>
+      </thead>
+      <tbody id="mainwp-users-list">
+      <?php
+        if ( $cached ) {
+          MainWP_Cache::echoBody( 'Users' );
+        } else {
+          MainWP_User::renderTableBody( $role, $groups, $sites, $search );
+        }
+      ?>
+      </tbody>
+    </table>
+    <script type="text/javascript">
+      jQuery( document ).ready( function () {
+        jQuery( '#mainwp-users-table' ).DataTable( {
+					"colReorder" : true,
+					"stateSave":  true,
+          "pagingType": "full_numbers",
+          "order": [],
+					"scrollX" : true,
+					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+          "columnDefs": [ {
+            "targets": 'no-sort',
+            "orderable": false
+          } ],
+          "preDrawCallback": function( settings ) {
+          <?php if ( ! $cached ) { ?>
+          jQuery('#mainwp-users-table .ui.dropdown').dropdown();
+          jQuery('#mainwp-users-table .ui.checkbox').checkbox();
+          <?php } ?>
+          }
         } );
-        </script>
-            <?php
-    }
+      } );
+    </script>
+    <?php
+  }
 
     public static function renderTableBody( $role = '', $groups = '', $sites = '', $search = null ) {
 		MainWP_Cache::initCache( 'Users' );
@@ -747,7 +747,7 @@ class MainWP_User {
 				<td class="posts column-posts"><a href="<?php echo admin_url( 'admin.php?page=PostBulkManage&siteid=' . $website->id . '&userid=' . $user['id'] ); ?>"><?php echo esc_html( $user['post_count'] ); ?></a></td>
 				<td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
        	<td class="right aligned">
-					<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
+					<div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999">
 						<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 						<div class="menu">
 							<a class="item user_getedit" href="#"><?php _e( 'Edit', 'mainwp' ); ?></a>
@@ -772,9 +772,9 @@ class MainWP_User {
 	}
 
 	public static function UsersSearch_handler( $data, $website, &$output ) {
-		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {			
+		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result = $results[ 1 ];
-			$users = MainWP_Utility::get_child_response( base64_decode( $result ) );			
+			$users = MainWP_Utility::get_child_response( base64_decode( $result ) );
 			unset( $results );
 			$output->users += self::usersSearchHandlerRenderer( $users, $website );
 			unset( $users );
@@ -958,8 +958,8 @@ class MainWP_User {
 									<input type="checkbox" name="send_password" id="send_password" <?php echo ( isset( $_POST['send_password'] ) ) ? 'checked' : ''; ?> >
 								</div>
 							</div>
-							
-							<?php 
+
+							<?php
 							$user_roles = array(
 								'subscriber' => __( 'Subscriber', 'mainwp' ),
 								'administrator' => __( 'Administrator', 'mainwp' ),
@@ -981,9 +981,9 @@ class MainWP_User {
 												continue;
 											?>
 											<option value="<?php echo esc_html($r); ?>" <?php echo ( isset( $_POST['role'] ) && $_POST['role'] == $r ) ? 'selected' : ''; ?>><?php echo esc_html( $n ); ?></option>
-										<?php											
+										<?php
 										}
-										?>										
+										?>
 									</select>
 								</div>
 							</div>
@@ -1095,18 +1095,18 @@ class MainWP_User {
 //		} else if ( $_POST['pass1'] != $_POST['pass2'] ) {
 //			$errorFields[] = 'pass2';
 //		}
-		
-			
+
+
 		$allowed_roles = array( 'subscriber', 'administrator', 'editor', 'author', 'contributor' );
-		
+
 		// support custom roles
-		$cus_roles = array();	
-		$cus_roles = apply_filters('mainwp-users-manage-roles' , $cus_roles); 
+		$cus_roles = array();
+		$cus_roles = apply_filters('mainwp-users-manage-roles' , $cus_roles);
 		if ( is_array($cus_roles) && count($cus_roles) > 0 ) {
 			$cus_roles = array_keys( $cus_roles );
 			$allowed_roles = array_merge( $allowed_roles, $cus_roles );
 		}
-		
+
 		if ( ! isset( $_POST['role'] ) || ! in_array( $_POST['role'], $allowed_roles ) ) {
 			$errorFields[] = 'role';
 		}
@@ -1162,7 +1162,7 @@ class MainWP_User {
 					}
 				}
 			}
-			
+
 			$startTime = time();
 			if ( count( $dbwebsites ) > 0 ) {
 				$post_data      = array(
@@ -1177,7 +1177,7 @@ class MainWP_User {
 					'PostingBulk_handler',
 				), $output );
 			}
-			
+
 			$countSites = $countRealItems = 0;
 			foreach ( $dbwebsites as $website ) {
 				if ( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ) {
@@ -1206,7 +1206,7 @@ class MainWP_User {
 					}
 				}
 			}
-			
+
             ?>
 
 			<div id="mainwp-creating-new-user-modal" class="ui modal">

@@ -572,8 +572,8 @@ class MainWP_Post_Handler {
 	function mainwp_notice_status_update() {
 		$this->secure_request( 'mainwp_notice_status_update' );
 
-		if ( $_POST[ 'notice_id' ] == 'mail_failed' ) {
-			delete_transient('mainwp_notice_wp_mail_failed');
+		if ( $_POST[ 'notice_id' ] == 'mail_failed' ) {			
+			MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'hide' );
 			die( 'ok' );			
 		}
 		

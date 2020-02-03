@@ -108,7 +108,7 @@ class MainWP_Post {
 
         wp_enqueue_media( array( 'post' => $post_id ) );
 
-        wp_enqueue_script( 'mainwp-post', MAINWP_PLUGIN_URL . 'assests/js/mainwp-post.js', array(
+        wp_enqueue_script( 'mainwp-post', MAINWP_PLUGIN_URL . 'assets/js/mainwp-post.js', array(
 			'jquery',
             'postbox',
             'word-count',
@@ -1372,10 +1372,7 @@ static function meta_form( $post = null ) {
                                 }
                             }
 
-                            $i++;
-                            // get_hidden_meta_boxes() doesn't apply in the block editor.
-                            $hidden_class = ''; //( ! $screen->is_block_editor() && in_array( $box['id'], $hidden ) ) ? ' hide-if-js' : '';
-                            //' . postbox_classes($box['id'], $page) . $hidden_class . '
+                            $i++;                            
                             echo '<div id="' . $box['id'] . '" class="postbox " ' . ' ' . '>' . "\n";
                             if ( 'dashboard_browser_nag' != $box['id'] ) {
                                 $widget_title = $box[ 'title' ];

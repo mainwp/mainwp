@@ -537,7 +537,7 @@ public static function renderHeader( $shownPage = '') {
 	}
 
 	function column_trigger( $item ) {
-		return '<span class="backup_run_loading"><img src="' . MAINWP_PLUGIN_URL . 'assests/images/loader.gif" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="' . $item->id . '" task_type="' . $item->type . '">' . __( 'Run now', 'mainwp' ) . '</a>';
+		return '<span class="backup_run_loading"><img src="' . MAINWP_PLUGIN_URL . 'assets/images/loader.gif" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="' . $item->id . '" task_type="' . $item->type . '">' . __( 'Run now', 'mainwp' ) . '</a>';
 	}
 
 
@@ -1206,7 +1206,7 @@ public static function renderHeader( $shownPage = '') {
 			echo '<ul class="jqueryFileTree" style="display: none;">';
 			// All dirs
 			foreach ( $allFiles as $file ) {
-				echo '<li class="directory collapsed"><a href="#" rel="' . esc_attr( $_POST['dir'] . $file ) . '/">' . esc_html( $file ) . '<div title="Exclude form backup" class="exclude_folder_control"><img src="' . MAINWP_PLUGIN_URL . 'assests/images/exclude.png" /></div></a></li>';
+				echo '<li class="directory collapsed"><a href="#" rel="' . esc_attr( $_POST['dir'] . $file ) . '/">' . esc_html( $file ) . '<div title="Exclude form backup" class="exclude_folder_control"><img src="' . MAINWP_PLUGIN_URL . 'assets/images/exclude.png" /></div></a></li>';
 			}
 			echo '</ul>';
 

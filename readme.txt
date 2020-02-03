@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.3.2
 Requires PHP: 5.6
-Stable tag: 4.0.7.1
+Stable tag: 4.0.7.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -153,6 +153,14 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.0.7.2 - 1-22-20 =
+* Fixed: an issue with loading Manage Sites table with AJAX
+* Fixed: an issue with dismissing the broken email functionality warning messages
+* Added: link to MainWP Community to the header element
+* Updated: renamed the "assests" directory to "assets"
+* Updated: multiple cosmetic improvements
+* Updated: removed some steps from the quick setup wizard
 
 = 4.0.7.1 - 1-22-20 =
 * Updated: multiple notification texts

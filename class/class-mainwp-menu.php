@@ -128,7 +128,7 @@ class MainWP_Menu {
 
 
 			<div id="mainwp-logo">
-				<img src="<?php echo MAINWP_PLUGIN_URL . 'assests/images/logo.png'; ?>" alt="MainWP"/>
+				<img src="<?php echo MAINWP_PLUGIN_URL . 'assets/images/logo.png'; ?>" alt="MainWP"/>
 			</div>
 			<div class="ui hidden divider"></div>
 			<div class="mainwp-nav-menu">

@@ -17,7 +17,7 @@ const MAINWP_VIEW_PER_GROUP = 2;
 
 class MainWP_System {
 
-	public static $version = '4.0.7.1';
+	public static $version = '4.0.7.2';
 	//Singleton
 	private static $instance = null;
 	private $upgradeVersionInfo = null;
@@ -634,8 +634,8 @@ class MainWP_System {
     public function wp_admin_notices() {
         global $pagenow;
 
-		$mail_failed = get_transient( 'mainwp_notice_wp_mail_failed' );
-		if ($mail_failed) {
+		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );
+		if ($mail_failed == 'yes') {
 			?>
 			<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
 				<i class="exclamation circle icon"></i>
@@ -662,8 +662,9 @@ class MainWP_System {
     }
 
 	public function wp_mail_failed( $error ) {
-		if ( is_object( $error )) {
-			set_transient( 'mainwp_notice_wp_mail_failed', true, 12 * HOUR_IN_SECONDS );
+		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );
+		if ( is_object( $error ) && empty( $mail_failed ) ) {
+			MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'yes' );
 			$er = $error->get_error_message();
 			if ( !empty($er) )
 				MainWP_Logger::Instance()->debug( 'Error :: wp_mail :: [error=' . $er . ']' );
@@ -2331,23 +2332,23 @@ class MainWP_System {
 		$ui		 = $wp_scripts->query( 'jquery-ui-core' );
 		$version = $ui->ver;
 //		if ( MainWP_Utility::startsWith( $version, '1.10' ) ) {
-//			wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assests/css/1.10.4/jquery-ui.min.css', array(), '1.10.4' );
+//			wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.10.4/jquery-ui.min.css', array(), '1.10.4' );
 //		} else {
-			wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assests/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
+			wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
 //		}
 
 		$en_params = array('jquery-ui-dialog');
 		if ($use_wp_datepicker) {
 			$en_params[] = 'jquery-ui-datepicker';
 		}
-		wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assests/js/mainwp.js', $en_params, $this->current_version );
+		wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version );
 
 		$enableLegacyBackupFeature	 = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$primaryBackup				 = get_option( 'mainwp_primaryBackup' );
 		$disable_backup_checking	 = (empty( $enableLegacyBackupFeature ) && empty( $primaryBackup )) ? true : false;
 
 		$mainwpParams = array(
-			'image_url'							 => MAINWP_PLUGIN_URL . 'assests/images/',
+			'image_url'							 => MAINWP_PLUGIN_URL . 'assets/images/',
 			'backup_before_upgrade'				 => ( get_option( 'mainwp_backup_before_upgrade' ) == 1 ),
 			'disable_checkBackupBeforeUpgrade'	 => $disable_backup_checking,
 			'admin_url'							 => admin_url(),
@@ -2377,8 +2378,8 @@ class MainWP_System {
 
 		if ( isset( $_GET[ 'page' ] ) && ( $_GET[ 'page' ] == 'mainwp_tab' || ( $_GET[ 'page' ] == 'managesites' ) && isset($_GET[ 'dashboard' ])) ) {
             // draggabilly grid layout library
-            wp_enqueue_script( 'dragula', MAINWP_PLUGIN_URL . 'assests/js/dragula/dragula.min.js', array(), $this->current_version );
-            wp_enqueue_style( 'dragula', MAINWP_PLUGIN_URL . 'assests/js/dragula/dragula.min.css', array(), $this->current_version );
+            wp_enqueue_script( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.js', array(), $this->current_version );
+            wp_enqueue_style( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.css', array(), $this->current_version );
 		}
 
         $this->init_session();
@@ -2791,34 +2792,34 @@ class MainWP_System {
 		}
 
 		if ( self::isMainWP_Pages() ) {
-			wp_enqueue_script( 'mainwp-updates', MAINWP_PLUGIN_URL . 'assests/js/mainwp-updates.js', array(), $this->current_version );
-			wp_enqueue_script( 'mainwp-managesites', MAINWP_PLUGIN_URL . 'assests/js/mainwp-managesites.js', array(), $this->current_version );
-			wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assests/js/mainwp-extensions.js', array(), $this->current_version );
-			wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assests/js/moment/moment.min.js', array(), $this->current_version );
-            wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assests/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version );
-            wp_enqueue_script( 'semantic-ui-datatables', MAINWP_PLUGIN_URL . 'assests/js/datatables/datatables.min.js', array( 'jquery' ), $this->current_version );
-			wp_enqueue_script( 'semantic-ui-datatables-colreorder', MAINWP_PLUGIN_URL . 'assests/js/colreorder/dataTables.colReorder.js', array( 'jquery' ), $this->current_version );
-			wp_enqueue_script( 'semantic-ui-datatables-scroller', MAINWP_PLUGIN_URL . 'assests/js/scroller/scroller.dataTables.js', array( 'jquery' ), $this->current_version );
-			wp_enqueue_script( 'semantic-ui-datatables-fixedcolumns', MAINWP_PLUGIN_URL . 'assests/js/fixedcolumns/dataTables.fixedColumns.js', array( 'jquery' ), $this->current_version );
-            wp_enqueue_script( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assests/js/calendar/calendar.min.js', array( 'jquery' ), $this->current_version );
-            wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assests/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version );
+			wp_enqueue_script( 'mainwp-updates', MAINWP_PLUGIN_URL . 'assets/js/mainwp-updates.js', array(), $this->current_version );
+			wp_enqueue_script( 'mainwp-managesites', MAINWP_PLUGIN_URL . 'assets/js/mainwp-managesites.js', array(), $this->current_version );
+			wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assets/js/mainwp-extensions.js', array(), $this->current_version );
+			wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assets/js/moment/moment.min.js', array(), $this->current_version );
+            wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version );
+            wp_enqueue_script( 'semantic-ui-datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.min.js', array( 'jquery' ), $this->current_version );
+			wp_enqueue_script( 'semantic-ui-datatables-colreorder', MAINWP_PLUGIN_URL . 'assets/js/colreorder/dataTables.colReorder.js', array( 'jquery' ), $this->current_version );
+			wp_enqueue_script( 'semantic-ui-datatables-scroller', MAINWP_PLUGIN_URL . 'assets/js/scroller/scroller.dataTables.js', array( 'jquery' ), $this->current_version );
+			wp_enqueue_script( 'semantic-ui-datatables-fixedcolumns', MAINWP_PLUGIN_URL . 'assets/js/fixedcolumns/dataTables.fixedColumns.js', array( 'jquery' ), $this->current_version );
+            wp_enqueue_script( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assets/js/calendar/calendar.min.js', array( 'jquery' ), $this->current_version );
+            wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version );
 		}
 
 		if ( $load_cust_scripts ) {
-			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assests/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version );
+			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version );
 		}
 
-		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assests/js/mainwp-ui.js', array(), $this->current_version );
-//		wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assests/js/moment/moment.min.js', array(), $this->current_version );
-		wp_enqueue_script( 'mainwp-js-popup', MAINWP_PLUGIN_URL . 'assests/js/mainwp-popup.js', array(), $this->current_version );
-		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assests/js/fileuploader.js', array(), $this->current_version );
-		wp_enqueue_script( 'mainwp-date', MAINWP_PLUGIN_URL . 'assests/js/date.js', array(), $this->current_version );
+		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assets/js/mainwp-ui.js', array(), $this->current_version );
+//		wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assets/js/moment/moment.min.js', array(), $this->current_version );
+		wp_enqueue_script( 'mainwp-js-popup', MAINWP_PLUGIN_URL . 'assets/js/mainwp-popup.js', array(), $this->current_version );
+		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assets/js/fileuploader.js', array(), $this->current_version );
+		wp_enqueue_script( 'mainwp-date', MAINWP_PLUGIN_URL . 'assets/js/date.js', array(), $this->current_version );
 	}
 
 	function admin_enqueue_styles( $hook ) {
 		global $wp_version;
-		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assests/css/mainwp.css', array(), $this->current_version );
-		wp_enqueue_style( 'mainwp-responsive-layouts', MAINWP_PLUGIN_URL . 'assests/css/mainwp-responsive-layouts.css', array(), $this->current_version );
+		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp.css', array(), $this->current_version );
+		wp_enqueue_style( 'mainwp-responsive-layouts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-responsive-layouts.css', array(), $this->current_version );
 
         // to faster a bit
         if ( isset( $_GET['hideall'] ) && $_GET['hideall'] == 1 ) {
@@ -2833,25 +2834,25 @@ class MainWP_System {
 		}
 
 		if ( self::isMainWP_Pages() ) {
-			wp_enqueue_style( 'mainwp-filetree', MAINWP_PLUGIN_URL . 'assests/css/jqueryFileTree.css', array(), $this->current_version );
-            wp_enqueue_style( 'semantic', MAINWP_PLUGIN_URL . 'assests/js/semantic-ui/semantic.min.css', array(), $this->current_version );
-            wp_enqueue_style( 'semantic-mainwp', MAINWP_PLUGIN_URL . 'assests/css/mainwp-semantic.css', array(), $this->current_version );
-			wp_enqueue_style( 'semantic-ui-datatables', MAINWP_PLUGIN_URL . 'assests/js/datatables/datatables.min.css', array(), $this->current_version );
-			wp_enqueue_style( 'semantic-ui-datatables-colreorder', MAINWP_PLUGIN_URL . 'assests/js/colreorder/colReorder.semanticui.css', array(), $this->current_version );
-			wp_enqueue_style( 'semantic-ui-datatables-scroller', MAINWP_PLUGIN_URL . 'assests/js/scroller/scroller.dataTables.css', array(), $this->current_version );
-            wp_enqueue_style( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assests/js/calendar/calendar.min.css', array(), $this->current_version );
-            wp_enqueue_style( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assests/js/hamburger/hamburger.css', array(), $this->current_version );
+			wp_enqueue_style( 'mainwp-filetree', MAINWP_PLUGIN_URL . 'assets/css/jqueryFileTree.css', array(), $this->current_version );
+            wp_enqueue_style( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.css', array(), $this->current_version );
+            wp_enqueue_style( 'semantic-mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp-semantic.css', array(), $this->current_version );
+			wp_enqueue_style( 'semantic-ui-datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.min.css', array(), $this->current_version );
+			wp_enqueue_style( 'semantic-ui-datatables-colreorder', MAINWP_PLUGIN_URL . 'assets/js/colreorder/colReorder.semanticui.css', array(), $this->current_version );
+			wp_enqueue_style( 'semantic-ui-datatables-scroller', MAINWP_PLUGIN_URL . 'assets/js/scroller/scroller.dataTables.css', array(), $this->current_version );
+            wp_enqueue_style( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assets/js/calendar/calendar.min.css', array(), $this->current_version );
+            wp_enqueue_style( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.css', array(), $this->current_version );
 		}
 
 		if ( $load_cust_scripts ) {
-			wp_enqueue_style( 'semantic', MAINWP_PLUGIN_URL . 'assests/js/semantic-ui/semantic.min.css', array(), $this->current_version );
+			wp_enqueue_style( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.css', array(), $this->current_version );
 		}
 	}
 
 	function admin_head() {
 		echo '<script type="text/javascript">var mainwp_ajax_nonce = "' . wp_create_nonce( 'mainwp_ajax' ) . '"</script>';
-		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'assests/js/FileSaver.js' . '"></script>';
-		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'assests/js/jqueryFileTree.js' . '"></script>';
+		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'assets/js/FileSaver.js' . '"></script>';
+		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'assets/js/jqueryFileTree.js' . '"></script>';
 	}
 
 
@@ -2878,28 +2879,6 @@ class MainWP_System {
 		wp_enqueue_script( 'common' );
 		wp_enqueue_script( 'wp-lists' );
 		wp_enqueue_script( 'postbox' );
-	}
-
-    // going to retired
-	public static function do_mainwp_meta_boxes( $_postpage, $screen = 'normal', $force_show = true ) {
-		wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
-		wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
-		if ( $force_show ) {
-			add_filter( 'hidden_meta_boxes', array( self::$instance, 'force_show_meta_box' ), 10, 3 );
-		}
-		?>
-		<div class="metabox-holder columns-1">
-		<?php do_meta_boxes( $_postpage, $screen, null ); ?>
-		</div>
-		<script type="text/javascript"> var mainwp_postbox_page = '<?php echo esc_html( $_postpage ); ?>';</script>
-		<?php
-		if ( $force_show ) {
-			remove_filter( 'hidden_meta_boxes', array( self::$instance, 'force_show_meta_box' ) );
-		}
-	}
-
-	public function force_show_meta_box( $hidden, $screen ) {
-		return array();
 	}
 
 	function update_footer( $echo = false ) {

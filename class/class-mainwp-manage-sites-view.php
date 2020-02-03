@@ -359,7 +359,7 @@ class MainWP_Manage_Sites_View {
 				if ( isset( $ext_data[ 'img' ] ) ) {
 					$img_url = $ext_data[ 'img' ];
 				} else {
-					$img_url = MAINWP_PLUGIN_URL . 'assests/images/extensions/placeholder.png';
+					$img_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/placeholder.png';
 				}
 
 

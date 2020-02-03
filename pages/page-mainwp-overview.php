@@ -49,7 +49,7 @@ class MainWP_Overview {
 			$this->dashBoard = add_menu_page( 'MainWP', 'MainWP', 'read', 'mainwp_tab', array(
 				$this,
 				'on_show_page',
-			), MAINWP_PLUGIN_URL . 'assests/images/mainwpicon.png', '2.00001' );
+			), MAINWP_PLUGIN_URL . 'assets/images/mainwpicon.png', '2.00001' );
 
 			if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
 				add_submenu_page( 'mainwp_tab', 'MainWP', __( 'Overview', 'mainwp' ), 'read', 'mainwp_tab', array(

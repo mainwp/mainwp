@@ -13,8 +13,8 @@ class MainWP_Setup_Wizard {
 
 	private $step					 				 = '';
 	private $steps					 			 = array();
-	private $backup_extensions		 = array();
-	private $uptime_robot_api_url	 = 'https://api.uptimerobot.com/v2';
+	//private $backup_extensions		 = array();
+	//private $uptime_robot_api_url	 = 'https://api.uptimerobot.com/v2';
 
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'admin_menus' ) );
@@ -22,10 +22,10 @@ class MainWP_Setup_Wizard {
 	}
 
 	public static function init() {
-		add_action( 'wp_ajax_mainwp_setup_extension_getextension', array( 'MainWP_Setup_Wizard', 'ajax_get_backup_extension' ) );
-		add_action( 'wp_ajax_mainwp_setup_extension_downloadandinstall', array( 'MainWP_Setup_Wizard', 'ajax_download_and_install' ) );
-		add_action( 'wp_ajax_mainwp_setup_extension_grabapikey', array( 'MainWP_Setup_Wizard', 'ajax_grab_api_key' ) );
-		add_action( 'wp_ajax_mainwp_setup_extension_activate_plugin', array( 'MainWP_Setup_Wizard', 'ajax_activate_plugin' ) );
+		//add_action( 'wp_ajax_mainwp_setup_extension_getextension', array( 'MainWP_Setup_Wizard', 'ajax_get_backup_extension' ) );
+		//add_action( 'wp_ajax_mainwp_setup_extension_downloadandinstall', array( 'MainWP_Setup_Wizard', 'ajax_download_and_install' ) );
+		//add_action( 'wp_ajax_mainwp_setup_extension_grabapikey', array( 'MainWP_Setup_Wizard', 'ajax_grab_api_key' ) );
+		//add_action( 'wp_ajax_mainwp_setup_extension_activate_plugin', array( 'MainWP_Setup_Wizard', 'ajax_activate_plugin' ) );
 	}
 
 	public function admin_menus() {
@@ -62,11 +62,11 @@ class MainWP_Setup_Wizard {
 				'view'		 => array( $this, 'mwp_setup_connect_first_site' ),
 				'handler'	 => ''
 			),
-			'hosting_setup'		 => array(
-				'name'		 => __( 'Performance', 'mainwp' ),
-				'view'		 => array( $this, 'mwp_setup_hosting' ),
-				'handler'	 => array( $this, 'mwp_setup_hosting_save' )
-			),
+			//'hosting_setup'		 => array(
+			//	'name'		 => __( 'Performance', 'mainwp' ),
+			//	'view'		 => array( $this, 'mwp_setup_hosting' ),
+			//	'handler'	 => array( $this, 'mwp_setup_hosting_save' )
+			//),
 			'optimization'		 => array(
 				'name'		 => __( 'Optimization', 'mainwp' ),
 				'view'		 => array( $this, 'mwp_setup_optimization' ),
@@ -77,22 +77,22 @@ class MainWP_Setup_Wizard {
 				'view'		 => array( $this, 'mwp_setup_notification' ),
 				'handler'	 => array( $this, 'mwp_setup_notification_save' )
 			),
-			'backup'			 => array(
-				'name'		 => __( 'Backups', 'mainwp' ),
-				'view'		 => array( $this, 'mwp_setup_backup' ),
-				'handler'	 => array( $this, 'mwp_setup_backup_save' )
-			),
-			'install_extension' => array(
-				'name'    =>  __( 'Backups', 'mainwp' ),
-				'view'    => array( $this, 'mwp_setup_install_extension' ),
-				'handler' => array( $this, 'mwp_setup_install_extension_save' ),
-				'hidden' => true
-			),
-			'uptime_robot'		 => array(
-				'name'		 => __( 'WP Cron', 'mainwp' ),
-				'view'		 => array( $this, 'mwp_setup_uptime_robot' ),
-				'handler'	 => array( $this, 'mwp_setup_uptime_robot_save' ),
-			),
+			//'backup'			 => array(
+			//	'name'		 => __( 'Backups', 'mainwp' ),
+			//	'view'		 => array( $this, 'mwp_setup_backup' ),
+			//	'handler'	 => array( $this, 'mwp_setup_backup_save' )
+			//),
+			//'install_extension' => array(
+			//	'name'    =>  __( 'Backups', 'mainwp' ),
+			//	'view'    => array( $this, 'mwp_setup_install_extension' ),
+			//	'handler' => array( $this, 'mwp_setup_install_extension_save' ),
+			//	'hidden' => true
+			//),
+			//'uptime_robot'		 => array(
+			//	'name'		 => __( 'WP Cron', 'mainwp' ),
+			//	'view'		 => array( $this, 'mwp_setup_uptime_robot' ),
+			//	'handler'	 => array( $this, 'mwp_setup_uptime_robot_save' ),
+			//),
 			'next_steps'		 => array(
 				'name'		 => __( 'Finish', 'mainwp' ),
 				'view'		 => array( $this, 'mwp_setup_ready' ),
@@ -100,29 +100,29 @@ class MainWP_Setup_Wizard {
 			)
 		);
 
-		$this->backup_extensions = array(
-			'updraftplus'	 => array(
-				'name'		 	 => 'MainWP UpdraftPlus Extension',
-				'product_id' => 'MainWP UpdraftPlus Extension',
-				'slug'		 	 => 'mainwp-updraftplus-extension/mainwp-updraftplus-extension.php' ),
-			'backupwp'		 => array(
-				'name'		 	 => 'MainWP BackUpWordPress Extension',
-				'product_id' => 'MainWP BackUpWordPress Extension',
-				'slug'		 	 => 'mainwp-backupwordpress-extension/mainwp-backupwordpress-extension.php' ),
-			'backwpup'		 => array(
-				'name'		 	 => 'MainWP BackWPup Extension',
-				'product_id' => 'MainWP BackWPup Extension',
-				'slug'		 	 => 'mainwp-backwpup-extension/mainwp-backwpup-extension.php' )
-		);
+		//$this->backup_extensions = array(
+		//	'updraftplus'	 => array(
+		//		'name'		 	 => 'MainWP UpdraftPlus Extension',
+		//		'product_id' => 'MainWP UpdraftPlus Extension',
+		//		'slug'		 	 => 'mainwp-updraftplus-extension/mainwp-updraftplus-extension.php' ),
+		//	'backupwp'		 => array(
+		//		'name'		 	 => 'MainWP BackUpWordPress Extension',
+		//		'product_id' => 'MainWP BackUpWordPress Extension',
+		//		'slug'		 	 => 'mainwp-backupwordpress-extension/mainwp-backupwordpress-extension.php' ),
+		//	'backwpup'		 => array(
+		//		'name'		 	 => 'MainWP BackWPup Extension',
+		//		'product_id' => 'MainWP BackWPup Extension',
+		//		'slug'		 	 => 'mainwp-backwpup-extension/mainwp-backwpup-extension.php' )
+		//);
 
 		$this->step = isset( $_GET[ 'step' ] ) ? sanitize_key( $_GET[ 'step' ] ) : current( array_keys( $this->steps ) );
-		$this->check_redirect();
+		//$this->check_redirect();
 
-        wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'assests/js/mainwp-setup.js', array( 'jquery' ), MAINWP_VERSION );		
+    wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'assets/js/mainwp-setup.js', array( 'jquery' ), MAINWP_VERSION );
 		wp_localize_script( 'mainwp-setup', 'mainwpSetupLocalize', array( 'nonce' => wp_create_nonce( 'MainWPSetup' ) ) );
-		wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assests/js/semantic-ui/semantic.min.js', array( 'jquery' ), MAINWP_VERSION );
-		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assests/css/mainwp.css', array(), MAINWP_VERSION );
-		wp_enqueue_style( 'semantic', MAINWP_PLUGIN_URL . 'assests/js/semantic-ui/semantic.min.css', array(), MAINWP_VERSION );
+		wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.js', array( 'jquery' ), MAINWP_VERSION );
+		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp.css', array(), MAINWP_VERSION );
+		wp_enqueue_style( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.css', array(), MAINWP_VERSION );
 
 		if ( !empty( $_POST[ 'save_step' ] ) && isset( $this->steps[ $this->step ][ 'handler' ] ) ) {
 			call_user_func( $this->steps[ $this->step ][ 'handler' ] );
@@ -137,14 +137,14 @@ class MainWP_Setup_Wizard {
 		exit;
 	}
 
-	public function check_redirect() {
-		if ( $this->step == 'install_extension' ) {
-			$backup_method = get_option( 'mwp_setup_primaryBackup' );
-			if ( !isset( $this->backup_extensions[ $backup_method ] ) ) {
-				wp_redirect( $this->get_next_step_link( 'backup' ) );
-			}
-		}
-	}
+	//public function check_redirect() {
+	//	if ( $this->step == 'install_extension' ) {
+	//		$backup_method = get_option( 'mwp_setup_primaryBackup' );
+	//		if ( !isset( $this->backup_extensions[ $backup_method ] ) ) {
+	//			wp_redirect( $this->get_next_step_link( 'backup' ) );
+	//		}
+	//	}
+	//}
 
 	public function get_next_step_link( $step = '' ) {
 		if ( !empty( $step ) && isset( $step, $this->steps ) ) {
@@ -191,20 +191,15 @@ class MainWP_Setup_Wizard {
 							<a class="" href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>"><?php _e( 'Quit MainWP Quick Setup Wizard and Go to WP Admin', 'mainwp' ); ?></a> | <a class="" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp_tab' ) ); ?>"><?php _e( 'Quit MainWP Quick Setup Wizard and Go to MainWP', 'mainwp' ); ?></a>
 						</div>
 					</div>
-                    <?php
-                    if ( MainWP_UI::usersnap_integration() ) {
-                        ?>
-                        <div class="row" style="position:fixed !important; bottom: 10px;">
-                            <div class="right aligned column">
-                            <a class="ui button black icon" id="usersnap-bug-report-button" data-position="top right" data-inverted="" data-tooltip="<?php esc_html_e( 'Click here (or use Ctrl + U keyboard shortcut) to open the Bug reporting mode.', 'mainwp' ); ?>" target="_blank" href="#">
-                                <i class="bug icon"></i>
-                            </a>
-                            </div>
-                        </div>
-                        <?php
-
-                    }
-                    ?>
+          <?php if ( MainWP_UI::usersnap_integration() ) { ?>
+          <div class="row" style="position:fixed !important; bottom: 10px;">
+            <div class="right aligned column">
+            <a class="ui button black icon" id="usersnap-bug-report-button" data-position="top right" data-inverted="" data-tooltip="<?php esc_html_e( 'Click here (or use Ctrl + U keyboard shortcut) to open the Bug reporting mode.', 'mainwp' ); ?>" target="_blank" href="#">
+              <i class="bug icon"></i>
+            </a>
+            </div>
+          </div>
+          <?php } ?>
 				</div>
 			</body>
 		</html>
@@ -268,7 +263,7 @@ class MainWP_Setup_Wizard {
 					<div class="ui radio checkbox">
 						<input type="radio" name="mwp_setup_installation_hosting_type" required="required" <?php echo ( $hostingType == 1 ? 'checked="true"' : '' ); ?> value="1">
 						<label><?php _e( 'Web Host', 'mainwp' ); ?></label>
-			</div>
+					</div>
 				</div>
 				<div class="field">
 					<div class="ui radio checkbox">
@@ -324,6 +319,7 @@ class MainWP_Setup_Wizard {
 
 	public function mwp_setup_installation_save() {
 		check_admin_referer( 'mwp-setup' );
+
 		$hosting_type = intval( $_POST[ 'mwp_setup_installation_hosting_type' ] );
 		$system_type = isset( $_POST[ 'mwp_setup_installation_system_type' ] ) ? intval( $_POST[ 'mwp_setup_installation_system_type' ] ) : 0;
 
@@ -336,7 +332,7 @@ class MainWP_Setup_Wizard {
 		MainWP_Utility::update_option( 'mwp_setup_installationSystemType', $system_type );
 		MainWP_Utility::update_option( 'mwp_setup_opensslLibLocation', isset( $_POST[ 'mwp_setup_openssl_lib_location' ] ) ? stripslashes( $_POST[ 'mwp_setup_openssl_lib_location' ] ) : '' );
 
-			wp_redirect( $this->get_next_step_link( 'system_check' ) );
+		wp_redirect( $this->get_next_step_link( 'system_check' ) );
 
 		exit;
 	}
@@ -351,7 +347,7 @@ class MainWP_Setup_Wizard {
 		?>
 			<h1><?php _e( 'System Requirements Check', 'mainwp' ); ?></h1>
 			<div class="ui message warning"><?php _e( 'Any Warning here may cause the MainWP Dashboard to malfunction. After you complete the Quick Start setup it is recommended to contact your host’s support and updating your server configuration for optimal performance.', 'mainwp' ); ?></div>
-		<?php MainWP_Server_Information::renderQuickSetupSystemCheck(); ?>
+			<?php MainWP_Server_Information::renderQuickSetupSystemCheck(); ?>
 			<div class="ui hidden divider"></div>
 			<div class="ui hidden divider"></div>
 			<div class="ui hidden divider"></div>
@@ -392,52 +388,52 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1><?php _e( 'Connect Your First Child Site', 'mainwp' ); ?></h1>
 		<form method="post" class="ui form">
-				<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
-				<div class="ui red message" id="mainwp-error-zone" style="display:none"></div>
-				<div class="ui green message" id="mainwp-success-zone" style="display:none"></div>
-				<div class="ui info message" id="mainwp-info-zone" style="display:none"></div>
-				<div class="ui hidden divider"></div>
-				<div class="field">
-					<label><?php _e( "What is the site URL? ", "mainwp" ); ?></label>
-					<div class="ui grid">
-						<div class="four wide column">
-							<select class="ui dropdown" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol">
-								<option value="https">https://</option>
-								<option value="http">http://</option>
-							</select>
-						</div>
-						<div class="twelve wide column">
-							<input type="text"  id="mainwp_managesites_add_wpurl" name="mainwp_managesites_add_wpurl" value="" placeholder="yoursite.com" />
-						</div>
+			<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
+			<div class="ui red message" id="mainwp-error-zone" style="display:none"></div>
+			<div class="ui green message" id="mainwp-success-zone" style="display:none"></div>
+			<div class="ui info message" id="mainwp-info-zone" style="display:none"></div>
+			<div class="ui hidden divider"></div>
+			<div class="field">
+				<label><?php _e( "What is the site URL? ", "mainwp" ); ?></label>
+				<div class="ui grid">
+					<div class="four wide column">
+						<select class="ui dropdown" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol">
+							<option value="https">https://</option>
+							<option value="http">http://</option>
+						</select>
+					</div>
+					<div class="twelve wide column">
+						<input type="text"  id="mainwp_managesites_add_wpurl" name="mainwp_managesites_add_wpurl" value="" placeholder="yoursite.com" />
 					</div>
 				</div>
-				<div class="field">
-					<label><?php _e( "What is your Administrator username on that site? ", "mainwp" ); ?></label>
-					<input type="text" id="mainwp_managesites_add_wpadmin" name="mainwp_managesites_add_wpadmin" value="" />
+			</div>
+			<div class="field">
+				<label><?php _e( "What is your Administrator username on that site? ", "mainwp" ); ?></label>
+				<input type="text" id="mainwp_managesites_add_wpadmin" name="mainwp_managesites_add_wpadmin" value="" />
+			</div>
+			<div class="field">
+				<label><?php _e( "Add Site Title, if left blank URL is used", "mainwp" ); ?></label>
+				<input type="text" id="mainwp_managesites_add_wpname" name="mainwp_managesites_add_wpname" value="" />
+			</div>
+			<div class="ui hidden divider"></div>
+			<div class="ui hidden divider"></div>
+			<div class="ui horizontal divider"><?php _e( "Optional Settings", "mainwp" ); ?></div>
+			<div class="ui hidden divider"></div>
+			<div class="ui hidden divider"></div>
+			<div class="ui hidden divider"></div>
+			<div class="field">
+				<label><?php _e( "Did you generate Unique Security ID on the site? If yes, copy it here, if not, leve this field blank. ", "mainwp" ); ?></label>
+				<input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
+			</div>
+			<div class="field">
+				<label><?php esc_html_e( 'Do you have a valid SSL certificate on the site? If it\'s expired or self-sigend, disable this option.', 'mainwp' ); ?></label>
+				<div class="ui toggle checkbox">
+					<input type="checkbox" name="mainwp_managesites_verify_certificate" id="mainwp_managesites_verify_certificate" checked="true" />
+					<label></label>
 				</div>
-				<div class="field">
-					<label><?php _e( "Add Site Title, if left blank URL is used", "mainwp" ); ?></label>
-					<input type="text" id="mainwp_managesites_add_wpname" name="mainwp_managesites_add_wpname" value="" />
-				</div>
-				<div class="ui hidden divider"></div>
-				<div class="ui hidden divider"></div>
-				<div class="ui horizontal divider"><?php _e( "Optional Settings", "mainwp" ); ?></div>
-				<div class="ui hidden divider"></div>
-				<div class="ui hidden divider"></div>
-				<div class="ui hidden divider"></div>
-				<div class="field">
-					<label><?php _e( "Did you generate Unique Security ID on the site? If yes, copy it here, if not, leve this field blank. ", "mainwp" ); ?></label>
-					<input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
-				</div>
-				<div class="field">
-					<label><?php esc_html_e( 'Do you have a valid SSL certificate on the site? If it\'s expired or self-sigend, disable this option.', 'mainwp' ); ?></label>
-					<div class="ui toggle checkbox">
-						<input type="checkbox" name="mainwp_managesites_verify_certificate" id="mainwp_managesites_verify_certificate" checked="true" />
-						<label></label>
-					</div>
-				</div>
-				<div class="ui divider"></div>
-				<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big" value="<?php _e( 'Connect Site', 'mainwp' ); ?>" />
+			</div>
+			<div class="ui divider"></div>
+			<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big" value="<?php _e( 'Connect Site', 'mainwp' ); ?>" />
 
 			<div class="ui clearing hidden divider"></div>
 			<div class="ui hidden divider"></div>
@@ -445,10 +441,7 @@ class MainWP_Setup_Wizard {
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="ui big green right floated button"><?php _e( 'Continue', 'mainwp' ); ?></a>
 			<a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php _e( 'Back', 'mainwp' ); ?></a>
 			<?php wp_nonce_field( 'mwp-setup' ); ?>
-			<input type="hidden" id="nonce_secure_data"
-				  mainwp_addwp="<?php echo wp_create_nonce( 'mainwp_addwp' ); ?>"
-				  mainwp_checkwp="<?php echo wp_create_nonce( 'mainwp_checkwp' ); ?>"
-				  />
+			<input type="hidden" id="nonce_secure_data" mainwp_addwp="<?php echo wp_create_nonce( 'mainwp_addwp' ); ?>" mainwp_checkwp="<?php echo wp_create_nonce( 'mainwp_checkwp' ); ?>" />
 		</form>
 		<?php
 	}
@@ -592,7 +585,7 @@ class MainWP_Setup_Wizard {
 		$user_emails = explode( ',', $user_emails );
 		$i = 0;
 		?>
-		<h1 class="ui header"><?php _e( 'Notification', 'mainwp' ); ?></h1>
+		<h1 class="ui header"><?php _e( 'Notifications', 'mainwp' ); ?></h1>
 		<form method="post" class="ui form">
 			<div class="field">
 				<label><?php _e( 'Do you want to receive important email notifications from your MainWP Dashboard?', 'mainwp' ); ?></label>
@@ -623,7 +616,7 @@ class MainWP_Setup_Wizard {
 					</strong>
 				</div>
 			</div>
-			
+
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
 					jQuery( '#mainwp-multi-emails-add' ).on( 'click', function () {

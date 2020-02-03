@@ -274,7 +274,7 @@ class MainWP_Manage_Sites {
 					</div>
 					<p><?php echo __( 'The MainWP Dashboard is a WordPress plugin that utilizes a control dashboard for your managed sites. The Dashboard plugin allows you to connect and control completely independent WordPress sites even those on different hosts and servers.', 'mainwp' ); ?></p>
 					<div class="ui hidden divider"></div>
-					<img class="ui centered image" src="/wp-content/plugins/mainwp/assests/images/mainwp-demo-infographic.png" alt="How MainWP Works">
+					<img class="ui centered image" src="/wp-content/plugins/mainwp/assets/images/mainwp-demo-infographic.png" alt="How MainWP Works">
 					<div class="ui hidden divider"></div>
 					<div class="ui message">
 						<div class="header"><?php echo __( 'MainWP Dashboard requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect.', 'mainwp' ); ?></div>
@@ -506,7 +506,7 @@ class MainWP_Manage_Sites {
 										</div>
 									</div>
 									<div class="ui divider"></div>
-                                    <a href="<?php echo MAINWP_PLUGIN_URL . 'assests/csv/sample.csv'; ?>" class="ui big green basic button"><?php _e( 'Download Sample CSV file', 'mainwp' ); ?></a>
+                                    <a href="<?php echo MAINWP_PLUGIN_URL . 'assets/csv/sample.csv'; ?>" class="ui big green basic button"><?php _e( 'Download Sample CSV file', 'mainwp' ); ?></a>
 									<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green right floated button" value="<?php _e( 'Import Sites', 'mainwp' ); ?>"/>
 								</form>
 							</div>

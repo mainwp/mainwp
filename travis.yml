@@ -1,4 +1,16 @@
-language: ruby
-rvm:
- - 2.2
- - php
+language: php
+dist: xenial
+
+services:
+    - mysql
+
+cache:
+  directories:
+    - $HOME/.composer/cache
+
+php:
+  - 7.4
+  - 7.3
+  - 7.2
+  - 7.1
+  - 7.0

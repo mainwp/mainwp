@@ -12,7 +12,7 @@ If you are not a developer, please use the [MainWP Community](https://meta.mainw
 ## Documentation
 * [MainWP Help Documentation](https://mainwp.com/help/)
 * [MainWP Codex](https://mainwp.com/codex/)
-
+* [MainWP Dev Community](https://meta.mainwp.com/c/dev/15)
 
 ## Reporting Security Issues
 To disclose a security issue to our team, [please submit a report via HackerOne here](https://hackerone.com/mainwp).

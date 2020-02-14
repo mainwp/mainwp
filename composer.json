@@ -1,0 +1,60 @@
+{
+    "name": "mainwp/mainwp",
+    "description": "Manage WP sites from one central location! Much more than just updates",
+    "license": "GPL-3.0-or-later",
+    "type": "wordpress-plugin",
+    "readme": "README.md",
+    "authors": [
+        {
+            "name": "MainWP",
+            "homepage": "https://mainwp.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/mainwp/mainwp/issues",
+        "source": "https://github.com/mainwp/mainwp"
+    },
+    "require": {
+        "composer/installers": "^1.6",
+        "php": ">=5.6|>=7.0"
+    },
+    "require-dev": {
+        "dealerdirect/phpcodesniffer-composer-installer": "^0.5",
+        "phpcompatibility/php-compatibility": "^9.0",
+        "phpunit/phpunit": "^6.5",
+        "wp-cli/wp-cli": "^2.0",
+        "wp-coding-standards/wpcs": "^2.2.0"
+    },
+    "autoload-dev": {
+        "classmap": [
+            "tests/test-tools"
+        ],
+        "files": [
+            "tests/test-tools/utils.php"
+        ]
+    },
+     "scripts": {
+        "test": [
+            "phpunit --testsuite=plugin --testdox"
+        ],
+        "test:all": [
+            "phpunit --testdox"
+        ],
+        "test-coverage": [
+            "phpunit --testsuite=plugin --coverage-html=tests/coverage"
+        ]
+    },
+    "scripts-descriptions": {
+        "test": "Run the plugin test suite",
+        "test:all": "Run all test suites.",
+        "test-coverage": "Generate test coverage for the plugin"
+    },
+    "prefer-stable": true,
+    "config": {
+        "platform": {
+            "php": "7.3"
+        },
+        "preferred-install": "dist",
+        "sort-packages": true
+    }
+}

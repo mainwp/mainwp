@@ -1,4 +1,4 @@
-# How To contribute to MainWP
+# How to contribute to MainWP
 
 Community made patches, localizations, bug reports and contributions are always welcome. Your help making it even more awesome will be greatly appreciated :)
 

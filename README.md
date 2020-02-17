@@ -1,13 +1,19 @@
 <p align="center"><a href="https://mainwp.com"><img src="https://mainwp.com/images/mainwp-logo.png" alt="MainWP"></a></p>
 
 
-Welcome to the MainWP repository on GitHub. Here you can browse the source, look at open issues and keep track of development.
+Welcome to the [MainWP](https://mainwp.com) repository on GitHub. Here you can browse the source, look at open issues and keep track of development.
 
 # Not a Developer
 
 If you are not a developer, please use the [MainWP Community](https://meta.mainwp.com) for questions or issues.
 
 # Developer
+
+The MainWP WordPress management system consists of 2 core plugins containe the MainWP Dashboard plugin is containted in this repository.   The second plugin is the MainWP Child plugin, which can be found in [this repository](https://github.com/mainwp/mainwp-child).  
+
+The [MainWP Dashboard](https://wordpress.org/plugins/mainwp/) is a stand-alone plugin that is installed on its own WordPress site; no other plugins should be installed with it, and it should not be installed on an active WordPress site with visitors. 
+
+The [MainWP Child](https://wordpress.org/plugins/mainwp-child/) plugin is installed on the WordPress sites that you want to control from the MainWP Dashboard. 
 
 ## Documentation
 * [MainWP Help Documentation](https://mainwp.com/help/)

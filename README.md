@@ -9,7 +9,7 @@ If you are not a developer, please use the [MainWP Community](https://meta.mainw
 
 # Developer
 
-The MainWP WordPress management system consists of 2 core plugins containe the MainWP Dashboard plugin is containted in this repository.   The second plugin is the MainWP Child plugin, which can be found in [this repository](https://github.com/mainwp/mainwp-child).  
+The MainWP WordPress management system consists of 2 core plugins, the MainWP Dashboard plugin which is containted in this repository.   The second plugin is the MainWP Child plugin, which can be found in [this repository](https://github.com/mainwp/mainwp-child).  
 
 The [MainWP Dashboard](https://wordpress.org/plugins/mainwp/) is a stand-alone plugin that is installed on its own WordPress site; no other plugins should be installed with it, and it should not be installed on an active WordPress site with visitors. 
 

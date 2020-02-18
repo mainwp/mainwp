@@ -1,8 +1,10 @@
 {
     "name": "mainwp/mainwp",
-    "description": "Manage WP sites from one central location! Much more than just updates",
+    "description": "Manage multiple WordPress sites from the MainWP Dashboard",
     "license": "GPL-3.0-or-later",
     "type": "wordpress-plugin",
+    "prefer-stable": true,
+    "minimum-stability": "dev",
     "readme": "README.md",
     "authors": [
         {

@@ -1,3 +1,10 @@
+[![Latest Stable Version](https://poser.pugx.org/mainwp/mainwp/v/stable)](https://packagist.org/packages/mainwp/mainwp)
+[![Total Downloads](https://poser.pugx.org/mainwp/mainwp/downloads)](https://packagist.org/packages/mainwp/mainwp)
+[![Latest Unstable Version](https://poser.pugx.org/mainwp/mainwp/v/unstable)](https://packagist.org/packages/mainwp/mainwp)
+[![License](https://poser.pugx.org/mainwp/mainwp/license)](https://packagist.org/packages/mainwp/mainwp)
+[![Monthly Downloads](https://poser.pugx.org/mainwp/mainwp/d/monthly)](https://packagist.org/packages/mainwp/mainwp)
+[![Daily Downloads](https://poser.pugx.org/mainwp/mainwp/d/daily)](https://packagist.org/packages/mainwp/mainwp)
+[![composer.lock](https://poser.pugx.org/mainwp/mainwp/composerlock)](https://packagist.org/packages/mainwp/mainwp)
 <p align="center"><a href="https://mainwp.com"><img src="https://mainwp.com/images/mainwp-logo.png" alt="MainWP"></a></p>
 
 

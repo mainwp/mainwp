@@ -29,10 +29,10 @@
     },
     "autoload-dev": {
         "classmap": [
-            "tests/test-tools"
+            "tests"
         ],
         "files": [
-            "tests/test-tools/utils.php"
+            "tests/test-sample.php"
         ]
     },
      "scripts": {

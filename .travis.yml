@@ -1,65 +1,79 @@
-sudo: false
-dist: trusty
-
 language: php
 
-notifications:
-  email:
-    on_success: never
-    on_failure: change
-
-branches:
-  only:
-    - master
+services:
+  - mysql
 
 cache:
   directories:
     - $HOME/.composer/cache
 
-matrix:
-  include:
-    - php: 7.2
-      env: WP_VERSION=latest
-    - php: 7.1
-      env: WP_VERSION=latest
-    - php: 7.0
-      env: WP_VERSION=latest
-    - php: 5.6
-      env: WP_VERSION=latest
-    - php: 5.6
-      env: WP_VERSION=trunk
-    - php: 5.6
-      env: WP_TRAVISCI=phpcs
-    - php: 5.3
-      env: WP_VERSION=latest
-      dist: precise
+# Explicitly test against supported versions of PHP
+#
+# Reference: https://www.php.net/supported-versions.php
+php:
+  - 7.4snapshot
+  - 7.3
+  - 7.2
 
-before_script:
+# Test against the latest version of WordPress and one version back.
+env:
+  - WP_VERSION=latest
+  - WP_VERSION=5.2
+
+# Customize the build matrix.
+matrix:
+  fast_finish: true
+  include:
+    # Run PHP_CodeSniffer
+    - name: Coding standards
+      php: 7.3
+      env: WP_VERSION=latest WP_TRAVISCI=phpcs
+
+    # Canary for our oldest-supported version
+    - name: Legacy
+      php: 5.6
+      env: WP_VERSION=4.9
+
+    # Nightly versions of PHP and WordPress.
+    - name: Bleeding edge
+      php: 7.4snapshot
+      env: WP_VERSION=trunk
+
+  # Jobs that are permitted to fail without breaking the build
+  allow_failures:
+    - name: Bleeding edge
+
+before_install:
   - export PATH="$HOME/.composer/vendor/bin:$PATH"
+
+  # Unless we need XDebug, disable it for improved performance.
+  - phpenv config-rm xdebug.ini || return 0
+
+install:
+  # Install our Composer dependencies
+  - composer install --prefer-dist --no-interaction
+
+  # Install an older version of PHPUnit if we're still running PHP 5.6.
   - |
-    if [ -f ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/xdebug.ini ]; then
-      phpenv config-rm xdebug.ini
-    else
-      echo "xdebug.ini does not exist"
+    if [[ "$TRAVIS_PHP_VERSION" == "5.6" ]]; then
+      wget -O ./vendor/bin/phpunit https://phar.phpunit.de/phpunit-5.phar
+      chmod +x ./vendor/bin/phpunit
     fi
-  - |
-    if [[ ! -z "$WP_VERSION" ]] ; then
-      bash bin/install-wp-tests.sh wordpress_test root '' localhost $WP_VERSION
-      composer global require "phpunit/phpunit=4.8.*|5.7.*"
-    fi
-  - |
-    if [[ "$WP_TRAVISCI" == "phpcs" ]] ; then
-      composer global require wp-coding-standards/wpcs
-      phpcs --config-set installed_paths $HOME/.composer/vendor/wp-coding-standards/wpcs
-    fi
+
+  # Install the WordPress core test suite
+  - bash bin/install-wp-tests.sh wordpress_test root '' localhost $WP_VERSION
 
 script:
   - |
-    if [[ ! -z "$WP_VERSION" ]] ; then
-      phpunit
-      WP_MULTISITE=1 phpunit
-    fi
-  - |
-    if [[ "$WP_TRAVISCI" == "phpcs" ]] ; then
-      phpcs
+    # If we've set the $WP_TRAVISCI variable to run PHPCS, do that instead
+    # of running PHPUnit.
+    if [[ "$WP_TRAVISCI" == "phpcs" ]]; then
+      ./vendor/bin/phpcs
+
+    else
+      # Execute the test suite
+      ./vendor/bin/phpunit
+
+      # Optionally run the tests again in a multisite environment
+      #WP_MULTISITE=1 ./vendor/bin/phpunit
     fi

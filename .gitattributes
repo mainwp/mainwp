@@ -1,0 +1,3 @@
+# Ignore all test and documentation with “export-ignore”
+composer.* export-ignore
+tests export-ignore

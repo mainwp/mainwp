@@ -19,6 +19,8 @@ cache:
 matrix:
   include:
     - php: 7.3
+      env: WP_TRAVISCI=phpcs
+    - php: 7.3
       env: WP_VERSION=latest
     - php: 7.2
       env: WP_VERSION=latest
@@ -30,8 +32,6 @@ matrix:
       env: WP_VERSION=latest
     - php: 5.6
       env: WP_VERSION=trunk
-    - php: 5.6
-      env: WP_TRAVISCI=phpcs
       dist: precise
 
 before_script:

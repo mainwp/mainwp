@@ -21,7 +21,7 @@ The MainWP WordPress management system consists of 2 core plugins, the MainWP Da
 
 The [MainWP Dashboard](https://wordpress.org/plugins/mainwp/) is a stand-alone plugin that is installed on its own WordPress site; no other plugins should be installed with it, and it should not be installed on an active WordPress site with visitors. 
 
-The [MainWP Child](https://wordpress.org/plugins/mainwp-child/) plugin is installed on the WordPress sites that you want to control from the MainWP Dashboard. 
+The [MainWP Child](https://wordpress.org/plugins/mainwp-child/) plugin currently has an <img alt="WordPress Plugin Active Installs" src="https://img.shields.io/wordpress/plugin/installs/mainwp-child?label=active%20installs%20count%20of%20">.  The Child plugin is installed on the WordPress sites that you want to control from the MainWP Dashboard. 
 
 ## Documentation
 * [MainWP Help Documentation](https://mainwp.com/help/)

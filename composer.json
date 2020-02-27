@@ -32,7 +32,7 @@
             "tests"
         ],
         "files": [
-            "tests/test-sample.php"
+            "tests/test-case.php"
         ]
     },
      "scripts": {

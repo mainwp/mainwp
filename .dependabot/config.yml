@@ -1,6 +1,0 @@
-# This is tst with only required properties:
-version: 1
-update_configs:
-  - package_manager: "php:composer"
-    directory: "/"
-    update_schedule: "live"

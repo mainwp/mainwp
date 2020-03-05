@@ -27,7 +27,7 @@
 	<!-- https://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards/wiki/Customizable-sniff-properties -->
 	<config name="minimum_supported_wp_version" value="4.6"/>
 	<rule ref="WordPress">
-		<exclude name="WordPress.VIP"/>
+		<exclude name="WordPress-VIP"/>
 	</rule>
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>

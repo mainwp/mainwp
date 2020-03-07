@@ -21,8 +21,8 @@ class MainWP_About {
 		global $mainWP;
 
 		$showtab = 'whatsnew';
-		if ( isset( $_GET[ 'do' ] ) ) {
-			if ( 'changelog' == $_GET[ 'do' ] ) {
+		if ( isset( $_GET['do'] ) ) {
+			if ( 'changelog' == $_GET['do'] ) {
 				$showtab = 'changelog';
 			}
 		}
@@ -39,7 +39,7 @@ class MainWP_About {
 			<?php
 			if ( 'whatsnew' == $showtab ) {
 				self::renderWhatSNew();
-			} else if ( 'changelog' == $showtab ) {
+			} elseif ( 'changelog' == $showtab ) {
 				self::renderMainWPChangelog();
 			}
 			?>

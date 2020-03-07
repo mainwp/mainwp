@@ -7,16 +7,15 @@
  * @author Todd Lahman LLC
  * @copyright   Copyright (c) Todd Lahman LLC
  * @since 1.3
- *
  */
-if ( !defined( 'ABSPATH' ) ) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 } // Exit if accessed directly
 
 class MainWP_Api_Manager_Key {
 
-	protected static $_instance		 = null;
-	protected static $apisslverify	 = 1;
+	protected static $_instance    = null;
+	protected static $apisslverify = 1;
 
 	public static function instance() {
 
@@ -39,16 +38,20 @@ class MainWP_Api_Manager_Key {
 
 		$args = wp_parse_args( $defaults, $args );
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-	}
+		if ( isset($args['password']) ) {
+			$args['password'] = stripslashes($args['password']);
+		}
 
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+		$request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			'body'      => $args,
+			'timeout'   => 50,
+			'sslverify' => self::$apisslverify,
+		) );
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 
 			return false;
-	}
+		}
 
 		$response = wp_remote_retrieve_body( $request );
 
@@ -59,16 +62,20 @@ class MainWP_Api_Manager_Key {
 
 		$defaults = array(
 			'request' => 'deactivation',
-        );
+		);
 
 		$args = wp_parse_args( $defaults, $args );
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-        }
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?wc-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+		if ( isset($args['password']) ) {
+			$args['password'] = stripslashes($args['password']);
+		}
+		$request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?wc-api=am-software-api', array(
+			'body'      => $args,
+			'timeout'   => 50,
+			'sslverify' => self::$apisslverify,
+		) );
 
-        if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
+		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			// Request failed
 			return false;
 		}
@@ -86,10 +93,14 @@ class MainWP_Api_Manager_Key {
 
 		$args = wp_parse_args( $defaults, $args );
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-        }
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+		if ( isset($args['password']) ) {
+			$args['password'] = stripslashes($args['password']);
+		}
+		$request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			'body'      => $args,
+			'timeout'   => 50,
+			'sslverify' => self::$apisslverify,
+		) );
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			// Request failed
@@ -105,16 +116,20 @@ class MainWP_Api_Manager_Key {
 
 		$defaults = array(
 			'request' => 'testloginapi',
-        );
+		);
 
-		$args = wp_parse_args( $defaults, $args );
-        $args['password'] = stripslashes($args['password']);
+		$args             = wp_parse_args( $defaults, $args );
+		$args['password'] = stripslashes($args['password']);
 
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+		$request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			'body'      => $args,
+			'timeout'   => 50,
+			'sslverify' => self::$apisslverify,
+		) );
 
-        $log = $request;
-        if ( is_array( $log ) && isset( $log['http_response'] ) ) {
-            unset( $log['http_response'] );
+		$log = $request;
+		if ( is_array( $log ) && isset( $log['http_response'] ) ) {
+			unset( $log['http_response'] );
 		}
 
 		MainWP_Logger::Instance()->debug( 'testloginapi:: RESULT :: ' . print_r( $log, true ) );
@@ -152,10 +167,14 @@ class MainWP_Api_Manager_Key {
 
 		$args = wp_parse_args( $defaults, $args );
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-        }
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+		if ( isset($args['password']) ) {
+			$args['password'] = stripslashes($args['password']);
+		}
+		$request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			'body'      => $args,
+			'timeout'   => 50,
+			'sslverify' => self::$apisslverify,
+		) );
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			// Request failed
@@ -168,17 +187,21 @@ class MainWP_Api_Manager_Key {
 	}
 
 	public function purchasesoftware( $args ) {
-		$defaults	 = array(
+		$defaults = array(
 			'request' => 'purchasesoftware',
-        );
-		$args = wp_parse_args( $defaults, $args );
+		);
+		$args     = wp_parse_args( $defaults, $args );
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-        }
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+		if ( isset($args['password']) ) {
+			$args['password'] = stripslashes($args['password']);
+		}
+		$request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			'body'      => $args,
+			'timeout'   => 50,
+			'sslverify' => self::$apisslverify,
+		) );
 
-		if( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
+		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			// Request failed
 			return false;
 		}

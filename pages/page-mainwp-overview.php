@@ -9,12 +9,12 @@ class MainWP_Overview {
 	protected static $singleton = null;
 
 	private static $enable_widgets = array(
-		'overview' => true,
+		'overview'          => true,
 		'connection_status' => true,
-		'recent_posts' => true,
-		'recent_pages' => true,
-		'security_issues' => true,
-		'backup_tasks' => true,
+		'recent_posts'      => true,
+		'recent_pages'      => true,
+		'security_issues'   => true,
+		'backup_tasks'      => true,
 	);
 
 	public static function get() {
@@ -26,16 +26,16 @@ class MainWP_Overview {
 	}
 
 	public function __construct() {
-		//Prevent conflicts
+		// Prevent conflicts
 		add_filter( 'screen_layout_columns', array( &$this, 'on_screen_layout_columns' ), 10, 2 );
 		add_action( 'admin_menu', array( &$this, 'on_admin_menu' ) );
 		add_action( 'mainwp_help_sidebar_content', array( &$this, 'mainwp_help_content' ) ); // Hook the Help Sidebar content
-		//add_action( 'admin_post_save_howto_testPages_general', array( &$this, 'on_save_changes' ) );
+		// add_action( 'admin_post_save_howto_testPages_general', array( &$this, 'on_save_changes' ) );
 	}
 
 	function on_screen_layout_columns( $columns, $screen ) {
 		if ( $screen == $this->dashBoard ) {
-			$columns[ $this->dashBoard ] = 3; //Number of supported columns
+			$columns[ $this->dashBoard ] = 3; // Number of supported columns
 		}
 
 		return $columns;
@@ -45,7 +45,7 @@ class MainWP_Overview {
 		if ( MainWP_Utility::isAdmin() ) {
 			global $current_user;
 			delete_user_option( $current_user->ID, 'screen_layout_toplevel_page_mainwp_tab' );
-            // don't custom $page_title, $menu_title
+			// don't custom $page_title, $menu_title
 			$this->dashBoard = add_menu_page( 'MainWP', 'MainWP', 'read', 'mainwp_tab', array(
 				$this,
 				'on_show_page',
@@ -59,7 +59,7 @@ class MainWP_Overview {
 			}
 
 			$val = get_user_option( 'screen_layout_' . $this->dashBoard );
-			if ( !MainWP_Utility::ctype_digit( $val ) ) {
+			if ( ! MainWP_Utility::ctype_digit( $val ) ) {
 				update_user_option( $current_user->ID, 'screen_layout_' . $this->dashBoard, 2, true );
 			}
 			add_action( 'load-' . $this->dashBoard, array( &$this, 'on_load_page' ) );
@@ -70,11 +70,11 @@ class MainWP_Overview {
 
 	static function init_left_menu() {
 		MainWP_Menu::add_left_menu( array(
-			'title'		 => __( 'Overview', 'mainwp' ),
+			'title'      => __( 'Overview', 'mainwp' ),
 			'parent_key' => 'mainwp_tab',
-			'slug'		 => 'mainwp_tab',
-			'href'		 => 'admin.php?page=mainwp_tab',
-			'icon'		 => '<i class="tachometer alternate icon"></i>'
+			'slug'       => 'mainwp_tab',
+			'href'       => 'admin.php?page=mainwp_tab',
+			'icon'       => '<i class="tachometer alternate icon"></i>',
 		), 1 ); // level 1
 	}
 
@@ -92,76 +92,77 @@ class MainWP_Overview {
 
 		/**
 		 * This hook allows you to add extra metaboxes to the dashboard via the 'mainwp-getmetaboxes' filter.
+		 *
 		 * @link http://codex.mainwp.com/#mainwp-getmetaboxes
 		 */
 		$extMetaBoxs = MainWP_System::Instance()->apply_filter( 'mainwp-getmetaboxes', array() );
-		foreach ($extMetaBoxs as $box) {
-			if (isset($box[ 'plugin' ])) {
-				$name = basename( $box[ 'plugin' ], '.php' );
+		foreach ( $extMetaBoxs as $box ) {
+			if ( isset($box['plugin']) ) {
+				$name                          = basename( $box['plugin'], '.php' );
 				self::$enable_widgets[ $name ] = true;
 			}
 		}
 
 		$values = self::$enable_widgets;
 		// hook to support enable/disable overview widgets
-		$values = apply_filters('mainwp_overview_enabled_widgets', $values, null);
+		$values               = apply_filters('mainwp_overview_enabled_widgets', $values, null);
 		self::$enable_widgets = array_merge(self::$enable_widgets, $values);
 
 		// Load the Updates Overview widget
 		if ( self::$enable_widgets['overview'] ) {
-			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::getClassName(),'render' ), $page , 'left' , __( 'Updates Overview', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::getClassName(), 'render' ), $page, 'left', __( 'Updates Overview', 'mainwp' ) );
 		}
 
 		// Load the Recent Posts widget
 		if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
 			if ( self::$enable_widgets['recent_posts'] ) {
-				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::getClassName(), 'render'), $page, 'right', __( 'Recent Posts', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::getClassName(), 'render' ), $page, 'right', __( 'Recent Posts', 'mainwp' ) );
 			}
 		}
 
 		// Load the Recent Pages widget
 		if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
 			if ( self::$enable_widgets['recent_pages'] ) {
-				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::getClassName(),'render' ), $page, 'right', __( 'Recent Pages', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::getClassName(), 'render' ), $page, 'right', __( 'Recent Pages', 'mainwp' ) );
 			}
 		}
 
 		// Load the Connection Status widget
-		if ( !MainWP_Utility::get_current_wpid() ) {
+		if ( ! MainWP_Utility::get_current_wpid() ) {
 			if ( self::$enable_widgets['connection_status'] ) {
-				MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::getClassName(),'render' ), $page, 'left', __( 'Connection Status', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::getClassName(), 'render' ), $page, 'left', __( 'Connection Status', 'mainwp' ) );
 			}
 		}
 
 		// Load the Security Issues widget
 		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
 			if ( self::$enable_widgets['security_issues'] ) {
-				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::getClassName(),'renderWidget' ), $page, 'left', __( 'Security Issues', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::getClassName(), 'renderWidget' ), $page, 'left', __( 'Security Issues', 'mainwp' ) );
 			}
 		}
 
-    $i = 1;
+		$i = 1;
 		foreach ( $extMetaBoxs as $metaBox ) {
 			$enabled = true;
-			if (isset( $metaBox['plugin'] )) {
+			if ( isset( $metaBox['plugin'] ) ) {
 				$name = basename( $metaBox['plugin'], '.php' );
-				if ( isset(self::$enable_widgets[$name]) && ! self::$enable_widgets[$name]) {
+				if ( isset(self::$enable_widgets[ $name ]) && ! self::$enable_widgets[ $name ] ) {
 					$enabled = false;
 				}
 			}
 
-			$id = isset($metaBox['id']) ? $metaBox['id'] : $i++ ;
+			$id = isset($metaBox['id']) ? $metaBox['id'] : $i++;
 			$id = 'advanced-' . $id;
 
 			if ( $enabled ) {
-				MainWP_UI::add_widget_box( $id, $metaBox[ 'callback' ], $page , 'right', $metaBox[ 'metabox_title' ] );
+				MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, 'right', $metaBox['metabox_title'] );
 			}
 		}
 	}
 
 	function on_show_page() {
 
-		if ( !mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
+		if ( ! mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
 			mainwp_do_not_have_permissions( __( 'global dashboard', 'mainwp' ) );
 			return;
 		}
@@ -169,7 +170,7 @@ class MainWP_Overview {
 		global $screen_layout_columns;
 
 		$params = array(
-			'title' => __( 'Overview', 'mainwp' )
+			'title' => __( 'Overview', 'mainwp' ),
 		);
 		MainWP_UI::render_top_header($params);
 
@@ -183,16 +184,17 @@ class MainWP_Overview {
 
 	public static function renderDashboardBody( $websites, $pDashboard, $pScreenLayout ) {
 
-		$current_wp_id	 = MainWP_Utility::get_current_wpid();
-		$website		 = null;
-		if ( !empty( $current_wp_id ) ) {
-			$website = $websites[ 0 ];
+		$current_wp_id = MainWP_Utility::get_current_wpid();
+		$website       = null;
+		if ( ! empty( $current_wp_id ) ) {
+			$website = $websites[0];
 		}
 		$screen = get_current_screen();
 		?>
 		
 		<div id="mainwp-dashboard-info-box">
-			<?php if ( empty( $current_wp_id ) && MainWP_Twitter::enabledTwitterMessages() ) {
+			<?php
+			if ( empty( $current_wp_id ) && MainWP_Twitter::enabledTwitterMessages() ) {
 				$filter = array(
 					'upgrade_everything',
 					'upgrade_all_wp_core',
@@ -201,12 +203,12 @@ class MainWP_Overview {
 				);
 				foreach ( $filter as $what ) {
 					$twitters = MainWP_Twitter::getTwitterNotice( $what );
-										
+
 					if ( is_array( $twitters ) ) {
 						foreach ( $twitters as $timeid => $twit_mess ) {
 							if ( ! empty( $twit_mess ) ) {
 								$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
-								if ( !empty( $sendText) ) {
+								if ( ! empty( $sendText) ) {
 									?>
 									<div class="mainwp-tips ui info message twitter" style="margin:0">
 										<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr($what); ?>"twit-id="<?php echo esc_attr($timeid); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton($sendText); ?>
@@ -221,38 +223,39 @@ class MainWP_Overview {
 			<?php } ?>
 		</div>
 		
-    <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
+	<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 		<div class="mainwp-primary-content-wrap">
 
 			<?php if ( MainWP_Utility::showMainWPMessage( 'notice', 'widgets' ) ) : ?>
 				<div class="ui message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
-					<?php echo sprintf( __( 'To hide or show a widget, click the "Cog" icon or go to the %sMainWP Tools%s page and select options from "Hide unwanted widgets"', 'mainwp' ), '<a href="admin.php?page=MainWPTools">', '</a>' ); ?>
+					<?php echo sprintf( __( 'To hide or show a widget, click the "Cog" icon or go to the %1$sMainWP Tools%2$s page and select options from "Hide unwanted widgets"', 'mainwp' ), '<a href="admin.php?page=MainWPTools">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 
 			<?php do_action( 'mainwp_before_overview_widgets' ); ?>
 
-      <?php
-      $overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
+		<?php
+		$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
 
-      $cls_grid = 'two';
-      if ( $overviewColumns == 3 )
-        $cls_grid = 'three';
+		$cls_grid = 'two';
+		if ( $overviewColumns == 3 ) {
+			$cls_grid = 'three';
+		}
 
-      ?>
+		?>
 			<div class="ui <?php echo $cls_grid; ?> column stackable grid mainwp-grid-wrapper">
-        <div class="column" id="mainwp-grid-left" widget-context="left">
-          <?php MainWP_UI::do_widget_boxes( $screen->id, 'left' ) ; ?>
-        </div>
-        <?php if ( $overviewColumns == 3 ) : ?>
-        <div class="column" id="mainwp-grid-middle" widget-context="middle">
-          <?php MainWP_UI::do_widget_boxes( $screen->id, 'middle' ) ; ?>
-        </div>
-        <?php endif; ?>
-        <div class="column" id="mainwp-grid-right" widget-context="right">
-          <?php MainWP_UI::do_widget_boxes( $screen->id, 'right' ) ; ?>
-        </div>
+		<div class="column" id="mainwp-grid-left" widget-context="left">
+		  <?php MainWP_UI::do_widget_boxes( $screen->id, 'left' ); ?>
+		</div>
+		<?php if ( $overviewColumns == 3 ) : ?>
+		<div class="column" id="mainwp-grid-middle" widget-context="middle">
+			<?php MainWP_UI::do_widget_boxes( $screen->id, 'middle' ); ?>
+		</div>
+		<?php endif; ?>
+		<div class="column" id="mainwp-grid-right" widget-context="right">
+		  <?php MainWP_UI::do_widget_boxes( $screen->id, 'right' ); ?>
+		</div>
 			</div>
 			<?php do_action( 'mainwp_after_overview_widgets' ); ?>
 
@@ -261,7 +264,7 @@ class MainWP_Overview {
 				<div class="content ui form">
 					<form method="POST" action="">
 					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPScrOptions' ); ?>" />
-                        <?php echo MainWP_UI::render_screen_options( false ); ?>
+						<?php echo MainWP_UI::render_screen_options( false ); ?>
 				</div>
 						<div class="actions">
 						<input type="submit" class="ui green button" name="submit" id="submit" value="<?php echo __( 'Save Settings', 'mainwp' ); ?>" />
@@ -270,64 +273,68 @@ class MainWP_Overview {
 					</form>
 				</div>
 			</div>
-        <script type="text/javascript">
-            var page_sortablewidgets = '<?php echo esc_js( MainWP_Utility::get_page_id( $screen->id )); ?>';
-            jQuery( document ).ready( function ($) {
+		<script type="text/javascript">
+			var page_sortablewidgets = '<?php echo esc_js( MainWP_Utility::get_page_id( $screen->id )); ?>';
+			jQuery( document ).ready( function ($) {
 
-                var $mainwp_drake = dragula([document.getElementById('mainwp-grid-left'), <?php if ($overviewColumns == 3) { ?> document.getElementById('mainwp-grid-middle'), <?php }; ?> document.getElementById('mainwp-grid-right')], {
-                    moves: function (el, container, handle) {
-                      return handle.classList.contains('handle-drag');
-                    }
-                });
+				var $mainwp_drake = dragula([document.getElementById('mainwp-grid-left'), 
+				<?php
+				if ( $overviewColumns == 3 ) {
+					?>
+					 document.getElementById('mainwp-grid-middle'), <?php }; ?> document.getElementById('mainwp-grid-right')], {
+					moves: function (el, container, handle) {
+					  return handle.classList.contains('handle-drag');
+					}
+				});
 
-                $mainwp_drake.on('drop', function (el, target, source, sibling) {
-                    var conts = $mainwp_drake.containers;
-                    var order = new Array();
-                    for(var i = 0; i < conts.length; i++) {
-                        var context = jQuery(conts[i]).attr('widget-context');
-                        if (context === undefined || context == '')
-                            continue;
-                        var searchEles = conts[i].children;
-                        for(var idx = 0; idx < searchEles.length; idx++) {
-                            var itemElem = searchEles[idx];
-                            var wid = $( itemElem ).attr('id');
-                            wid = wid.replace("widget-", "");
-                            order.push(context + ":" + wid); // formated
-                        }
-                    }
+				$mainwp_drake.on('drop', function (el, target, source, sibling) {
+					var conts = $mainwp_drake.containers;
+					var order = new Array();
+					for(var i = 0; i < conts.length; i++) {
+						var context = jQuery(conts[i]).attr('widget-context');
+						if (context === undefined || context == '')
+							continue;
+						var searchEles = conts[i].children;
+						for(var idx = 0; idx < searchEles.length; idx++) {
+							var itemElem = searchEles[idx];
+							var wid = $( itemElem ).attr('id');
+							wid = wid.replace("widget-", "");
+							order.push(context + ":" + wid); // formated
+						}
+					}
 
-                    var postVars = {
-                        action:'mainwp_widgets_order',
-                        page: page_sortablewidgets
-                    };
-                    postVars['order'] = order.join(',');
-                    jQuery.post(ajaxurl, mainwp_secure_data(postVars), function (res) {
-                    });
+					var postVars = {
+						action:'mainwp_widgets_order',
+						page: page_sortablewidgets
+					};
+					postVars['order'] = order.join(',');
+					jQuery.post(ajaxurl, mainwp_secure_data(postVars), function (res) {
+					});
 
-                });
-                jQuery('.mainwp-widget .mainwp-dropdown-tab .item').tab();
-            });
-       </script>
+				});
+				jQuery('.mainwp-widget .mainwp-dropdown-tab .item').tab();
+			});
+	   </script>
 		<?php
 	}
 
-	//executed if the post arrives initiated by pressing the submit button of form
+	// executed if the post arrives initiated by pressing the submit button of form
 	function on_save_changes() {
-		//user permission check
-		if ( !current_user_can( 'manage_options' ) ) {
+		// user permission check
+		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( __( 'Cheatin&#8217; uh?' ) );
 		}
-		//cross check the given referer
+		// cross check the given referer
 		check_admin_referer( 'mainwp_tab-general' );
 
-		//process here your on $_POST validation and / or option saving
-		//lets redirect the post request into get request (you may add additional params at the url, if you need to show save results
-		wp_redirect( $_POST[ '_wp_http_referer' ] );
+		// process here your on $_POST validation and / or option saving
+		// lets redirect the post request into get request (you may add additional params at the url, if you need to show save results
+		wp_redirect( $_POST['_wp_http_referer'] );
 	}
 
 	// Hook the section help content to the Help Sidebar element
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && $_GET['page'] == "mainwp_tab" ) {
+		if ( isset( $_GET['page'] ) && $_GET['page'] == 'mainwp_tab' ) {
 			?>
 			<p><?php echo __( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">

@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
 <ruleset name="MainWP WordPress Coding Standards for Plugins">
 	<description>Sniffs for WordPress</description>
+	
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/bin/*</exclude-pattern>
+	<exclude-pattern>*/.github/*</exclude-pattern>
+	<exclude-pattern>*/tests/*</exclude-pattern>
 
 	<rule ref="WordPress-Core" />
 	<rule ref="WordPress-Docs" />
@@ -12,6 +17,4 @@
 	<!-- Show progress and sniff codes in all reports -->
 	<arg value="ps"/>
 
-	<exclude-pattern>*/node_modules/*</exclude-pattern>
-	<exclude-pattern>*/vendor/*</exclude-pattern>
 </ruleset>

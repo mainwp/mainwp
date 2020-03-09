@@ -1,5 +1,5 @@
 sudo: false
-dist: trusty
+dist: xenial
 
 language: php
 
@@ -32,7 +32,6 @@ matrix:
       env: WP_VERSION=trunk
     - php: nightly
       env: WP_VERSION=trunk
-      dist: xenial
 
 before_script:
   - export PATH="$HOME/.composer/vendor/bin:$PATH"

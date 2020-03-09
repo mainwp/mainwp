@@ -7062,7 +7062,7 @@ mainwp_managesites_doaction = function ( action ) {
         _cancelled_callback  = function() {
           console.log('_cancelled_callback');
           //jQuery('#bulk-action-selector-top').dropdown("set selected", "-1"); ; // default value
-          jQuery('#mainwp-sites-bulk-actions-menu').dropdown("set selected", "sync"); ; // default value
+          jQuery('#mainwp-sites-bulk-actions-menu').dropdown("set selected", "sync");  // default value
         };
       }
 

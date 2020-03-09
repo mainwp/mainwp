@@ -1,6 +1,6 @@
 <?php
 
-if ( !defined( 'ABSPATH' ) ) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 } // Exit if accessed directly
 
@@ -11,7 +11,6 @@ if ( !defined( 'ABSPATH' ) ) {
  * @author Todd Lahman LLC
  * @copyright   Copyright (c) Todd Lahman LLC
  * @since 1.0.0
- *
  */
 class MainWP_Api_Manager_Password_Management {
 
@@ -28,11 +27,11 @@ class MainWP_Api_Manager_Password_Management {
 			} else {
 				$seed = get_transient( 'random_seed' );
 			}
-			$rnd_value	 = md5( uniqid( microtime() . mt_rand(), true ) . $seed );
-			$rnd_value	 .= sha1( $rnd_value );
-			$rnd_value	 .= sha1( $rnd_value . $seed );
-			$seed		 = md5( $seed . $rnd_value );
-			if ( !defined( 'WP_SETUP_CONFIG' ) ) {
+			$rnd_value  = md5( uniqid( microtime() . mt_rand(), true ) . $seed );
+			$rnd_value .= sha1( $rnd_value );
+			$rnd_value .= sha1( $rnd_value . $seed );
+			$seed       = md5( $seed . $rnd_value );
+			if ( ! defined( 'WP_SETUP_CONFIG' ) ) {
 				set_transient( 'random_seed', $seed );
 			}
 		}

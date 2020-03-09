@@ -10,7 +10,7 @@ class MainWP_Utility {
 
 	public static function endsWith( $haystack, $needle ) {
 		$length = strlen( $needle );
-		if ( $length == 0 ) {
+		if ( 0 === $length ) {
 			return true;
 		}
 
@@ -58,11 +58,11 @@ class MainWP_Utility {
 
 	public static function isAdmin() {
 		global $current_user;
-		if ( $current_user->ID == 0 ) {
+		if ( 0 === $current_user->ID ) {
 			return false;
 		}
 
-		if ( $current_user->wp_user_level == 10 || ( isset( $current_user->user_level ) && $current_user->user_level == 10 ) || current_user_can( 'level_10' ) ) {
+		if ( 10 == $current_user->wp_user_level  || ( isset( $current_user->user_level ) && 10 == $current_user->user_level ) || current_user_can( 'level_10' ) ) {
 			return true;
 		}
 
@@ -133,16 +133,16 @@ class MainWP_Utility {
 		}
 
 		$ssl_verifyhost = false;
-		if ( $verifyCertificate !== null ) {
-			if ( $verifyCertificate == 1 ) {
+		if ( null !== $verifyCertificate ) {
+			if ( 1 === $verifyCertificate ) {
 				$ssl_verifyhost = true;
-			} elseif ( $verifyCertificate == 2 ) { // use global setting
-				if ( ( ( get_option( 'mainwp_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_sslVerifyCertificate' ) == 1 ) ) ) {
+			} elseif ( 2 === $verifyCertificate ) { // use global setting
+				if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
 					$ssl_verifyhost = true;
 				}
 			}
 		} else {
-			if ( ( ( get_option( 'mainwp_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_sslVerifyCertificate' ) == 1 ) ) ) {
+			if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
 				$ssl_verifyhost = true;
 			}
 		}
@@ -160,8 +160,8 @@ class MainWP_Utility {
 		@curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
 
 		$force_use_ipv4 = false;
-		if ( $forceUseIPv4 !== null ) {
-			if ( $forceUseIPv4 == 1 ) {
+		if ( null !== $forceUseIPv4 ) {
+			if ( 1 === $forceUseIPv4 ) {
 				$force_use_ipv4 = true;
 			} elseif ( 2 === $forceUseIPv4 ) { // use global setting
 				if ( 1 === get_option( 'mainwp_forceUseIPv4' ) ) {
@@ -235,7 +235,7 @@ class MainWP_Utility {
 			if ( ! isset( $dnsRecord['host'] ) ) {
 				foreach ( $dnsRecord as $dnsRec ) {
 					if ( $dnsRec['host'] == $host ) {
-						if ( $dnsRec['type'] == 'CNAME' ) {
+						if ( 'CNAME' === $dnsRec['type']  ) {
 							$target = $dnsRec['target'];
 						}
 						$found = true;
@@ -244,14 +244,13 @@ class MainWP_Utility {
 				}
 			} else {
 				$found = ( $dnsRecord['host'] == $host );
-				if ( $dnsRecord['type'] == 'CNAME' ) {
+				if ( 'CNAME' === $dnsRecord['type'] ) {
 					$target = $dnsRecord['target'];
 				}
 			}
 
 			if ( ! $found ) {
 				$data = false;
-				// return array( 'error' => ( $err == '' ? 'Invalid host.' : $err ) ); // Got redirected to: ' . $dnsRecord['host'])));
 			}
 		}
 
@@ -265,7 +264,7 @@ class MainWP_Utility {
 		$out = array(
 			'host'           => $host,
 			'httpCode'       => $http_status,
-			'error'          => ( $err == '' && $data === false ? 'Invalid host.' : $err ),
+			'error'          => ( '' == $err && false === $data ? 'Invalid host.' : $err ),
 			'httpCodeString' => self::getHttpStatusErrorString( $http_status ),
 		);
 		if ( false !== $ip ) {
@@ -518,7 +517,7 @@ class MainWP_Utility {
 		}
 
 		$userExt = MainWP_DB::Instance()->getUserExtension();
-		if ( $userExt->user_email != '' ) {
+		if ( '' != $userExt->user_email ) {
 			return $userExt->user_email;
 		}
 
@@ -609,7 +608,7 @@ class MainWP_Utility {
 			return $params;
 		}
 
-		$url  = ( isset( $website->url ) && $website->url != '' ? $website->url : $website->siteurl );
+		$url  = ( isset( $website->url ) && '' != $website->url ? $website->url : $website->siteurl );
 		$url .= ( substr( $url, - 1 ) != '/' ? '/' : '' );
 		$url .= '?';
 
@@ -632,7 +631,7 @@ class MainWP_Utility {
 			$data             = array();
 			$data['user']     = $admin;
 			$data['function'] = $what;
-			if ( $params != null ) {
+			if ( null != $params ) {
 				$data = array_merge( $data, $params );
 			}
 
@@ -984,7 +983,6 @@ class MainWP_Utility {
 			return true;
 		}
 
-		// $agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$mh    = curl_multi_init();
 
@@ -1197,7 +1195,7 @@ class MainWP_Utility {
 
 		 $others = array(
 			 'force_use_ipv4' => $website->force_use_ipv4,
-			 'upgrade'        => ( $what == 'upgradeplugintheme' || $what == 'upgrade' || $what == 'upgradetranslation' ),
+			 'upgrade'        => ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what ),
 		 );
 
 		 $request_update = false;
@@ -1345,7 +1343,6 @@ class MainWP_Utility {
 	}
 
 	static function fetchUrlClean( $url, $postdata ) {
-		// $agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
 		$ch = curl_init();
@@ -1419,7 +1416,6 @@ class MainWP_Utility {
 
 	static function _fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
 							$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
-		// $agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
 		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'Request to [' . $url . '] [' . print_r( $postdata, 1 ) . ']' );
@@ -1666,7 +1662,6 @@ class MainWP_Utility {
 					$lastRun = time();
 				}
 				@curl_multi_exec( $mh, $running ); // Execute handlers
-				// $ready = curl_multi_select($mh);
 				while ( $info = @curl_multi_info_read( $mh ) ) {
 					$data = @curl_multi_getcontent( $info['handle'] );
 
@@ -1694,7 +1689,7 @@ class MainWP_Utility {
 			MainWP_DB::Instance()->insertOrUpdateRequestLog( $website->id, $ip, null, microtime( true ) );
 		}
 
-		$raw_response = isset( $others['raw_response'] ) && $others['raw_response'] == 'yes' ? true : false;
+		$raw_response = isset( $others['raw_response'] ) && 'yes' === $others['raw_response'] ? true : false;
 
 		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
 		if ( '400' === $http_status ) {
@@ -1917,9 +1912,8 @@ class MainWP_Utility {
 		}
 
 		$fp = fopen( $file, 'a' );
-		// $agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-		if ( $size !== false ) {
+		if ( false !== $size ) {
 			if ( @file_exists( $file ) ) {
 				$size = @filesize( $file );
 				$url .= '&foffset=' . $size;
@@ -2205,7 +2199,6 @@ class MainWP_Utility {
 	}
 
 	protected static function file_get_contents_curl( $url ) {
-		// $agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$ch    = curl_init();
 
@@ -2338,8 +2331,7 @@ class MainWP_Utility {
 
 		if ( 'main' === $pApplication ) {
 			$pApplication = 'MainWP/1.1';
-		} //.MainWP_System::Instance()->getVersion();
-		else {
+		} else {
 			$pApplication = 'MainWPExtension/' . $pApplication . '/v';
 		}
 
@@ -2362,7 +2354,7 @@ class MainWP_Utility {
 
 		if ( empty( $response ) || is_wp_error( $response ) ) {
 			self::update_option( 'mainwp_versioncontrol_timeout', time() );
-		} elseif ( $connect_timeout !== false ) {
+		} elseif ( false !== $connect_timeout ) {
 			delete_option( 'mainwp_versioncontrol_timeout' );
 		}
 
@@ -3199,7 +3191,7 @@ EOT;
 			} else {
 				$backupSettings = MainWP_DB::Instance()->getWebsiteBackupSettings( $website->id );
 				$archiveFormat  = $backupSettings->archiveFormat;
-				$useGlobal      = ( $archiveFormat == 'global' );
+				$useGlobal      = ( 'global' === $archiveFormat );
 			}
 		}
 

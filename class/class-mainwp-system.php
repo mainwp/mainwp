@@ -683,7 +683,7 @@ class MainWP_System {
 	public function check_update_custom( $transient ) {
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
 			$extensions = MainWP_Extensions::getExtensions( array( 'activated' => true ) );
-			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action']  ) {
+			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action'] ) {
 				$plugin_slug = $_POST['plugin'];
 				// get download pakage url to prevent expire
 				if ( isset( $extensions[ $plugin_slug ] ) ) {
@@ -761,7 +761,7 @@ class MainWP_System {
 
 	private function checkUpgrade() {
 		$result = MainWP_API_Settings::checkUpgrade();
-		if ( null === $this->upgradeVersionInfo  ) {
+		if ( null === $this->upgradeVersionInfo ) {
 			$this->upgradeVersionInfo = new stdClass();
 		}
 		$this->upgradeVersionInfo->updated = time();
@@ -1020,7 +1020,7 @@ class MainWP_System {
 		if ( count( $checkupdate_websites ) == 0 ) {
 			$busyCounter = MainWP_DB::Instance()->getWebsitesCountWhereDtsAutomaticSyncSmallerThenStart();
 			MainWP_Logger::Instance()->info_update( 'CRON :: busy counter :: found ' . $busyCounter . ' websites' );
-			if ( 0 === $busyCounter  ) {
+			if ( 0 === $busyCounter ) {
 				if ( 'Y' != get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
 					MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', 'Y' );
 					return; // to check time before send notification
@@ -1238,7 +1238,7 @@ class MainWP_System {
 					}
 
 					$email = get_option( 'mainwp_updatescheck_mail_email' );
-					if ( ! $disable_send_noti && ! empty( $email ) &&  '' != $mail_offline ) {
+					if ( ! $disable_send_noti && ! empty( $email ) && '' != $mail_offline ) {
 						MainWP_Logger::Instance()->debug( 'CRON :: http check :: send mail to ' . $email );
 						$mail_offline                = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
                                 <div></div>
@@ -1642,7 +1642,7 @@ class MainWP_System {
 					$lastBackup = - 1;
 					if ( file_exists( $dir ) && ( $dh            = opendir( $dir ) ) ) {
 						while ( ( $file = readdir( $dh ) ) !== false ) {
-							if ( '.' !==  $file  && '..' !==  $file ) {
+							if ( '.' !== $file && '..' !== $file ) {
 								$theFile = $dir . $file;
 								if ( MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
 									$lastBackup = filemtime( $theFile );
@@ -1954,7 +1954,7 @@ class MainWP_System {
 					// Still something wrong
 					MainWP_Logger::Instance()->warningForWebsite( $website, 'reconnect', $e->getMessage() );
 				}
-			} elseif ( 0 === $website->nossl) {
+			} elseif ( 0 === $website->nossl ) {
 				// Try connecting to ssl!
 			}
 			sleep( 3 );

@@ -2286,7 +2286,7 @@ class MainWP_Utility {
 				$temp[ $key ] = $array[ $key ][ $index ];
 			}
 			if ( ! $natsort ) {
-				if ( 'asc' === $order  ) {
+				if ( 'asc' === $order ) {
 					asort( $temp );
 				} else {
 					arsort( $temp );
@@ -2332,7 +2332,7 @@ class MainWP_Utility {
 								   $throwException = false ) {
 
 		$connect_timeout = get_option( 'mainwp_versioncontrol_timeout' );
-		if ( false !== $connect_timeout && 60 * 60 * 12  > ( time() - $connect_timeout ) ) { // 12 hrs..
+		if ( false !== $connect_timeout && 60 * 60 * 12 > ( time() - $connect_timeout ) ) { // 12 hrs..
 			return false;
 		}
 

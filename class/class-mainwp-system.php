@@ -76,7 +76,6 @@ class MainWP_System {
 			} elseif ( version_compare( $currentVersion, $this->current_version, '<' ) ) {
 				update_option( 'mainwp_reset_user_tips', array() );
 				MainWP_Utility::update_option( 'mainwp_reset_user_cookies', array() );
-				// MainWP_Utility::update_option( 'mainwp_getting_started', 'whatnew' );
 			} else {
 				delete_option( 'mainwp_getting_started' );
 			}
@@ -175,70 +174,7 @@ class MainWP_System {
 
 		add_filter( 'cron_schedules', array( 'MainWP_Utility', 'getCronSchedules' ) );
 
-		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
-
-		if ( ( $sched = wp_next_scheduled( 'mainwp_cronstats_action' ) ) == false ) {
-			if ( $useWPCron ) {
-				wp_schedule_event( time(), 'hourly', 'mainwp_cronstats_action' );
-			}
-		} else {
-			if ( ! $useWPCron ) {
-				wp_unschedule_event( $sched, 'mainwp_cronstats_action' );
-			}
-		}
-
-		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-			if ( ( $sched = wp_next_scheduled( 'mainwp_cronbackups_action' ) ) == false ) {
-				if ( $useWPCron ) {
-					wp_schedule_event( time(), 'hourly', 'mainwp_cronbackups_action' );
-				}
-			} else {
-				if ( ! $useWPCron ) {
-					wp_unschedule_event( $sched, 'mainwp_cronbackups_action' );
-				}
-			}
-
-			if ( ( $sched = wp_next_scheduled( 'mainwp_cronbackups_continue_action' ) ) == false ) {
-				if ( $useWPCron ) {
-					wp_schedule_event( time(), '5minutely', 'mainwp_cronbackups_continue_action' );
-				}
-			} else {
-				if ( ! $useWPCron ) {
-					wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
-				}
-			}
-		} else {
-			if ( $sched = wp_next_scheduled( 'mainwp_cronbackups_action' ) ) {
-				wp_unschedule_event( $sched, 'mainwp_cronbackups_action' );
-			}
-			if ( $sched = wp_next_scheduled( 'mainwp_cronbackups_continue_action' ) ) {
-				wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
-			}
-		}
-
-		if ( ( $sched = wp_next_scheduled( 'mainwp_cronremotedestinationcheck_action' ) ) != false ) {
-			wp_unschedule_event( $sched, 'mainwp_cronremotedestinationcheck_action' );
-		}
-
-		if ( ( $sched = wp_next_scheduled( 'mainwp_cronpingchilds_action' ) ) == false ) {
-			if ( $useWPCron ) {
-				wp_schedule_event( time(), 'daily', 'mainwp_cronpingchilds_action' );
-			}
-		} else {
-			if ( ! $useWPCron ) {
-				wp_unschedule_event( $sched, 'mainwp_cronpingchilds_action' );
-			}
-		}
-
-		if ( ( $sched = wp_next_scheduled( 'mainwp_cronupdatescheck_action' ) ) == false ) {
-			if ( $useWPCron ) {
-				wp_schedule_event( time(), 'minutely', 'mainwp_cronupdatescheck_action' );
-			}
-		} else {
-			if ( ! $useWPCron ) {
-				wp_unschedule_event( $sched, 'mainwp_cronupdatescheck_action' );
-			}
-		}
+		$this->init_cron();
 
 		add_action( 'mainwp_before_header', array( &$this, 'admin_notices' ) );
 		add_action( 'admin_notices', array( &$this, 'wp_admin_notices' ) );
@@ -280,12 +216,6 @@ class MainWP_System {
 			MainWP_Extensions::getClassName(),
 			'hookManagerGetExtensions',
 		) );
-
-		// hook to support extensions: boilerplate, post dripper ==> may remove in future
-		add_filter( 'mainwp_bulkpost_metabox_handle', array( $this, 'bulkpost_metabox_handle' ), 10, 2 );
-		add_filter( 'mainwp_bulkpage_metabox_handle', array( $this, 'bulkpage_metabox_handle' ), 10, 2 );
-
-		// new MainWP_Post_Handler();
 
 		do_action( 'mainwp-activated' );
 
@@ -393,6 +323,74 @@ class MainWP_System {
 		return $alloptions;
 	}
 
+	function init_cron(){
+		
+		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
+
+		if ( ( $sched = wp_next_scheduled( 'mainwp_cronstats_action' ) ) == false ) {
+			if ( $useWPCron ) {
+				wp_schedule_event( time(), 'hourly', 'mainwp_cronstats_action' );
+			}
+		} else {
+			if ( ! $useWPCron ) {
+				wp_unschedule_event( $sched, 'mainwp_cronstats_action' );
+			}
+		}
+
+		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+			if ( ( $sched = wp_next_scheduled( 'mainwp_cronbackups_action' ) ) == false ) {
+				if ( $useWPCron ) {
+					wp_schedule_event( time(), 'hourly', 'mainwp_cronbackups_action' );
+				}
+			} else {
+				if ( ! $useWPCron ) {
+					wp_unschedule_event( $sched, 'mainwp_cronbackups_action' );
+				}
+			}
+
+			if ( ( $sched = wp_next_scheduled( 'mainwp_cronbackups_continue_action' ) ) == false ) {
+				if ( $useWPCron ) {
+					wp_schedule_event( time(), '5minutely', 'mainwp_cronbackups_continue_action' );
+				}
+			} else {
+				if ( ! $useWPCron ) {
+					wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
+				}
+			}
+		} else {
+			if ( $sched = wp_next_scheduled( 'mainwp_cronbackups_action' ) ) {
+				wp_unschedule_event( $sched, 'mainwp_cronbackups_action' );
+			}
+			if ( $sched = wp_next_scheduled( 'mainwp_cronbackups_continue_action' ) ) {
+				wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
+			}
+		}
+
+		if ( ( $sched = wp_next_scheduled( 'mainwp_cronremotedestinationcheck_action' ) ) != false ) {
+			wp_unschedule_event( $sched, 'mainwp_cronremotedestinationcheck_action' );
+		}
+
+		if ( ( $sched = wp_next_scheduled( 'mainwp_cronpingchilds_action' ) ) == false ) {
+			if ( $useWPCron ) {
+				wp_schedule_event( time(), 'daily', 'mainwp_cronpingchilds_action' );
+			}
+		} else {
+			if ( ! $useWPCron ) {
+				wp_unschedule_event( $sched, 'mainwp_cronpingchilds_action' );
+			}
+		}
+
+		if ( ( $sched = wp_next_scheduled( 'mainwp_cronupdatescheck_action' ) ) == false ) {
+			if ( $useWPCron ) {
+				wp_schedule_event( time(), 'minutely', 'mainwp_cronupdatescheck_action' );
+			}
+		} else {
+			if ( ! $useWPCron ) {
+				wp_unschedule_event( $sched, 'mainwp_cronupdatescheck_action' );
+			}
+		}
+	}
+	
 	function cron_active() {
 		if ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) {
 			return;
@@ -419,23 +417,6 @@ class MainWP_System {
 		return MainWP_Extensions::hookFetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $raw_response );
 	}
 
-	// may remove in future
-	function bulkpost_metabox_handle( $boolean, $post_id ) {
-		$output = $this->metaboxes->select_sites_handle( $post_id, 'bulkpost' );
-		$this->metaboxes->add_categories_handle( $post_id, 'bulkpost' );
-		$this->metaboxes->add_tags_handle( $post_id, 'bulkpost' );
-		$this->metaboxes->add_slug_handle( $post_id, 'bulkpost' );
-		MainWP_Post::add_sticky_handle( $post_id );
-		return $output;
-	}
-
-	// may remove in future
-	function bulkpage_metabox_handle( $boolean, $post_id ) {
-		$output = $this->metaboxes->select_sites_handle( $post_id, 'bulkpage' );
-		$this->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
-		MainWP_Page::add_status_handle( $post_id );
-		return $output;
-	}
 
 	public function after_extensions_plugin_row( $plugin_slug, $plugin_data, $status ) {
 		$extensions = MainWP_Extensions::getExtensions();
@@ -460,7 +441,7 @@ class MainWP_System {
 			}
 		}
 
-		$notice_html = sprintf( __( 'You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %1$sExtensions%2$s page and enter your API.', 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' );
+		$notice_html = sprintf( esc_html__( 'You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %1$sExtensions%2$s page and enter your API.', 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' );
 		?>
 		<style type="text/css">
 			tr[data-plugin="<?php echo esc_attr($plugin_slug); ?>"] {
@@ -469,7 +450,7 @@ class MainWP_System {
 		</style>
 		<tr class="plugin-update-tr active" slug="<?php echo esc_attr($slug); ?>"><td colspan="3" class="plugin-update colspanchange"><div class="update-message api-deactivate">
 					<?php echo $notice_html; ?>
-					<span class="mainwp-right"><a href="#" class="mainwp-activate-notice-dismiss" ><i class="times circle icon"></i> <?php _e( 'Dismiss', 'mainwp' ); ?></a></span>
+					<span class="mainwp-right"><a href="#" class="mainwp-activate-notice-dismiss" ><i class="times circle icon"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
 				</div></td></tr>
 		<?php
 	}
@@ -497,7 +478,7 @@ class MainWP_System {
 			?>
 			<div class="ui icon message yellow" style="margin-bottom: 0; border-radius: 0;">
 				<i class="exclamation circle icon"></i>
-				<strong><?php echo __( 'Important Notice: ', 'mainwp' ); ?></strong>&nbsp;<?php echo sprintf( __( 'MainWP Version 4 is a major upgrade from MainWP Version 3. Please, read this&nbsp; %1$supdating FAQ%2$s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/faq-on-upgrading-from-mainwp-version-3-to-mainwp-version-4/" target="_blank">', '</a>' ); ?>
+				<strong><?php echo esc_html__( 'Important Notice: ', 'mainwp' ); ?></strong>&nbsp;<?php echo sprintf( esc_html__( 'MainWP Version 4 is a major upgrade from MainWP Version 3. Please, read this&nbsp; %1$supdating FAQ%2$s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/faq-on-upgrading-from-mainwp-version-3-to-mainwp-version-4/" target="_blank">', '</a>' ); ?>
 				<i class="close icon mainwp-notice-dismiss" notice-id="upgrade_4"></i>
 			</div>
 			<?php
@@ -521,7 +502,7 @@ class MainWP_System {
 				?>
 				<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
 					<i class="exclamation circle icon"></i>
-					<?php echo sprintf( __( 'Your server is currently running PHP version %1$s. In the next few months your MainWP Dashboard will require PHP 5.6 as a minimum. Please upgrade your server to at least 5.6 but we recommend PHP 7 or newer. You can find a template email to send your host %2$shere%3$s.', 'mainwp' ), $phpver, '<a href="https://wordpress.org/about/requirements/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( esc_html__( 'Your server is currently running PHP version %1$s. In the next few months your MainWP Dashboard will require PHP 5.6 as a minimum. Please upgrade your server to at least 5.6 but we recommend PHP 7 or newer. You can find a template email to send your host %2$shere%3$s.', 'mainwp' ), $phpver, '<a href="https://wordpress.org/about/requirements/" target="_blank">', '</a>' ); ?>
 					<i class="close icon mainwp-notice-dismiss" notice-id="phpver_5_5"></i>
 				</div>
 				<?php
@@ -534,7 +515,7 @@ class MainWP_System {
 					?>
 					<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
 						<i class="exclamation circle icon"></i>
-						<?php echo sprintf( __( 'MainWP has detected that the <strong>OpenSSL.cnf</strong> file is not configured properly. It is required to configure this so you can start connecting your child sites. Please, %1$sclick here to configure it!%2$s', 'mainwp' ), '<a href="admin.php?page=SettingsAdvanced">', '</a>' ); ?>
+						<?php echo sprintf( esc_html__( 'MainWP has detected that the <strong>OpenSSL.cnf</strong> file is not configured properly. It is required to configure this so you can start connecting your child sites. Please, %1$sclick here to configure it!%2$s', 'mainwp' ), '<a href="admin.php?page=SettingsAdvanced">', '</a>' ); ?>
 						<i class="close icon mainwp-notice-dismiss" notice-id="ssl_warn"></i>
 					</div>
 					<?php
@@ -643,7 +624,7 @@ class MainWP_System {
 			?>
 			<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
 				<i class="exclamation circle icon"></i>
-				<?php echo __( 'Send mail function may failed.', 'mainwp' ); ?>
+				<?php echo esc_html__( 'Send mail function may failed.', 'mainwp' ); ?>
 				<i class="close icon mainwp-notice-dismiss" notice-id="mail_failed"></i>
 			</div>
 			<?php
@@ -659,7 +640,7 @@ class MainWP_System {
 			// delete_transient( 'mainwp_transient_deactivated_incomtible_exts' );
 			?>
 			<div class='notice notice-error my-dismiss-notice is-dismissible'>
-			<p><?php echo __( 'MainWP Dashboard 4.0 or newer requires Extensions 4.0 or newer. MainWP will automatically deactivate older versions of MainWP Extensions in order to prevent compatibility problems.', 'mainwp' ); ?></p>
+			<p><?php echo esc_html__( 'MainWP Dashboard 4.0 or newer requires Extensions 4.0 or newer. MainWP will automatically deactivate older versions of MainWP Extensions in order to prevent compatibility problems.', 'mainwp' ); ?></p>
 			</div>
 			<?php
 		}
@@ -1794,7 +1775,7 @@ class MainWP_System {
 						}
 						return array( 'undefined_error' => true );
 					} else {
-						return array( 'error' => __( 'Download icon file failed', 'mainwp' ) );
+						return array( 'error' => esc_html__( 'Download icon file failed', 'mainwp' ) );
 					}
 				} else {
 					return array( 'undefined_error' => true );
@@ -2077,10 +2058,10 @@ class MainWP_System {
 			}
 			?>
 			.mainwp-checkbox:before {
-				content: '<?php _e( 'YES', 'mainwp' ); ?>';
+				content: '<?php esc_html_e( 'YES', 'mainwp' ); ?>';
 			}
 			.mainwp-checkbox:after {
-				content: '<?php _e( 'NO', 'mainwp' ); ?>';
+				content: '<?php esc_html_e( 'NO', 'mainwp' ); ?>';
 			}
 		</style>
 		<?php
@@ -2233,8 +2214,8 @@ class MainWP_System {
 	}
 
 	function post_updated_messages( $messages ) {
-		$messages['post'][98] = __( 'WordPress SEO values have been saved.', 'mainwp' );
-		$messages['post'][99] = __( 'You have to select the sites you wish to publish to.', 'mainwp' );
+		$messages['post'][98] = esc_html__( 'WordPress SEO values have been saved.', 'mainwp' );
+		$messages['post'][99] = esc_html__( 'You have to select the sites you wish to publish to.', 'mainwp' );
 
 		return $messages;
 	}
@@ -2258,7 +2239,7 @@ class MainWP_System {
 			<i class="info circle icon"></i>
 			<div class="content">
 				<div class="header"><?php esc_html_e( 'This appears to be a production site', 'mainwp' ); ?></div>
-				<?php esc_html_e( 'We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.', 'mainwp' ); ?> <?php echo sprintf( __( 'Using a new WordPress install will help to cut down on plugin conflicts and other issues that can be caused by trying to run your MainWP Dashboard off an active site. Most hosting companies provide free subdomains %s and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.', 'mainwp' ), '("<strong>demo.yourdomain.com</strong>")' ); ?>
+				<?php esc_html_e( 'We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.', 'mainwp' ); ?> <?php echo sprintf( esc_html__( 'Using a new WordPress install will help to cut down on plugin conflicts and other issues that can be caused by trying to run your MainWP Dashboard off an active site. Most hosting companies provide free subdomains %s and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.', 'mainwp' ), '("<strong>demo.yourdomain.com</strong>")' ); ?>
 				<br /><br />
 				<a href="#" class="ui red mini button" id="remove-mainwp-installation-warning"><?php esc_html_e( 'I have read the warning and I want to proceed', 'mainwp' ); ?></a>
 			</div>
@@ -2298,15 +2279,6 @@ class MainWP_System {
 
 		add_action('mainwp_activate_extention', array( $this, 'activate_extention' ), 10, 2 );
 		add_action('mainwp_deactivate_extention', array( $this, 'deactivate_extention' ), 10, 1 );
-
-		// if ( get_option( 'mainwp_activated' ) == 'yes' ) {
-		// delete_option( 'mainwp_activated' );
-		// wp_cache_delete( 'mainwp_activated', 'options' );
-		// wp_cache_delete( 'alloptions' , 'options' );
-		// wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
-		//
-		// return;
-		// }
 
 		global $mainwpUseExternalPrimaryBackupsMethod;
 
@@ -2366,8 +2338,6 @@ class MainWP_System {
 
 		$security_nonces = MainWP_Post_Handler::Instance()->getSecurityNonces();
 		wp_localize_script( 'mainwp', 'security_nonces', $security_nonces );
-
-		// MainWP_Meta_Boxes::initMetaBoxes();
 
 		wp_enqueue_script( 'thickbox' );
 		wp_enqueue_script( 'user-profile' );
@@ -2572,6 +2542,9 @@ class MainWP_System {
 			return;
 		}
 
+		if ( ! isset( $_POST[ '_wpnonce' ] ) || ! wp_verify_nonce( $_POST[ '_wpnonce' ], 'update-post_' . $post_id ) )
+			return;
+		
 		if ( ! isset( $_POST['post_type'] ) || ( 'bulkpost' !== $_POST['post_type'] ) ) {
 			return;
 		}
@@ -2942,23 +2915,24 @@ class MainWP_System {
 					<?php
 					if ( is_array( $websites ) ) {
 						for ( $i = 0; $i < count( $websites ); $i ++ ) {
+							$nice_url = MainWP_Utility::getNiceURL( $website->url );
 							$website = $websites[ $i ];
 							if ( '' == $website->sync_errors ) {
 								?>
 								<div class="item">
 								<div class="right floated content">
-								  <div class="sync-site-status" niceurl="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>" siteid="<?php echo $website->id; ?>"><i class="clock outline icon"></i></div>
+								  <div class="sync-site-status" niceurl="<?php echo esc_html($nice_url); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="clock outline icon"></i></div>
 								</div>
-								<div class="content"><?php echo MainWP_Utility::getNiceURL( $website->url ); ?></div>
+								<div class="content"><?php echo esc_html($nice_url); ?></div>
 								</div>
 								<?php
 							} else {
 								?>
 								<div class="item disconnected-site">
 								<div class="right floated content">
-								  <div class="sync-site-status" niceurl="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>" siteid="<?php echo $website->id; ?>"><i class="exclamation red icon"></i></div>
+								  <div class="sync-site-status" niceurl="<?php echo esc_html($nice_url); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="exclamation red icon"></i></div>
 								</div>
-								<div class="content"><?php echo MainWP_Utility::getNiceURL( $website->url ); ?></div>
+								<div class="content"><?php echo esc_html($nice_url); ?></div>
 								</div>
 								<?php
 							}
@@ -2966,22 +2940,23 @@ class MainWP_System {
 					} else {
 						@MainWP_DB::data_seek( $websites, 0 );
 						while ( $website = @MainWP_DB::fetch_object( $websites ) ) {
+							$nice_url = MainWP_Utility::getNiceURL( $website->url );
 							if ( '' === $website->sync_errors ) {
 								?>
 								<div class="item">
 								<div class="right floated content">
-								  <div class="sync-site-status" niceurl="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>" siteid="<?php echo $website->id; ?>"><i class="clock outline icon"></i></div>
+								  <div class="sync-site-status" niceurl="<?php echo esc_html($nice_url); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="clock outline icon"></i></div>
 								</div>
-								<div class="content"><?php echo MainWP_Utility::getNiceURL( $website->url ); ?></div>
+								<div class="content"><?php echo esc_html($nice_url); ?></div>
 								</div>
 								<?php
 							} else {
 								?>
 								<div class="item disconnected-site">
 								<div class="right floated content">
-								  <div class="sync-site-status" niceurl="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>" siteid="<?php echo $website->id; ?>"><i class="exclamation red icon"></i></div>
+								  <div class="sync-site-status" niceurl="<?php echo esc_html($nice_url); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="exclamation red icon"></i></div>
 								</div>
-								<div class="content"><?php echo MainWP_Utility::getNiceURL( $website->url ); ?></div>
+								<div class="content"><?php echo esc_html($nice_url); ?></div>
 								</div>
 								<?php
 							}
@@ -2999,11 +2974,11 @@ class MainWP_System {
 			<div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
 			<div class="content">
 				<div class="content-massage"></div>
-				<div class="ui mini yellow message hidden update-confirm-notice" ><?php echo sprintf( __( 'To disable update confirmations, go to the %1$sSettings%2$s page and disable the "Disable update confirmations" option', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
+				<div class="ui mini yellow message hidden update-confirm-notice" ><?php echo sprintf( esc_html__( 'To disable update confirmations, go to the %1$sSettings%2$s page and disable the "Disable update confirmations" option', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
 			</div>
 			<div class="actions">
-				<div class="ui cancel button"><?php _e('Cancel', 'mainwp'); ?></div>
-				<div class="ui positive right labeled icon button"><?php _e('Yes', 'mainwp'); ?><i class="checkmark icon"></i></div>
+				<div class="ui cancel button"><?php esc_html_e('Cancel', 'mainwp'); ?></div>
+				<div class="ui positive right labeled icon button"><?php esc_html_e('Yes', 'mainwp'); ?><i class="checkmark icon"></i></div>
 			</div>
 		</div>
 

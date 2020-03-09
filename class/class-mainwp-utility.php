@@ -62,7 +62,7 @@ class MainWP_Utility {
 			return false;
 		}
 
-		if ( 10 == $current_user->wp_user_level  || ( isset( $current_user->user_level ) && 10 == $current_user->user_level ) || current_user_can( 'level_10' ) ) {
+		if ( 10 == $current_user->wp_user_level || ( isset( $current_user->user_level ) && 10 == $current_user->user_level ) || current_user_can( 'level_10' ) ) {
 			return true;
 		}
 
@@ -235,7 +235,7 @@ class MainWP_Utility {
 			if ( ! isset( $dnsRecord['host'] ) ) {
 				foreach ( $dnsRecord as $dnsRec ) {
 					if ( $dnsRec['host'] == $host ) {
-						if ( 'CNAME' === $dnsRec['type']  ) {
+						if ( 'CNAME' === $dnsRec['type'] ) {
 							$target = $dnsRec['target'];
 						}
 						$found = true;
@@ -1911,7 +1911,7 @@ class MainWP_Utility {
 			throw new MainWP_Exception( __( 'MainWP upload directory is not writable.', 'mainwp' ) );
 		}
 
-		$fp = fopen( $file, 'a' );
+		$fp    = fopen( $file, 'a' );
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		if ( false !== $size ) {
 			if ( @file_exists( $file ) ) {
@@ -2279,7 +2279,7 @@ class MainWP_Utility {
 				$temp[ $key ] = $array[ $key ][ $index ];
 			}
 			if ( ! $natsort ) {
-				if ( 'asc' === $order  ) {
+				if ( 'asc' === $order ) {
 					asort( $temp );
 				} else {
 					arsort( $temp );
@@ -2325,7 +2325,7 @@ class MainWP_Utility {
 								   $throwException = false ) {
 
 		$connect_timeout = get_option( 'mainwp_versioncontrol_timeout' );
-		if ( false !== $connect_timeout && 60 * 60 * 12  > ( time() - $connect_timeout ) ) { // 12 hrs..
+		if ( false !== $connect_timeout && 60 * 60 * 12 > ( time() - $connect_timeout ) ) { // 12 hrs..
 			return false;
 		}
 

@@ -1411,7 +1411,7 @@ class MainWP_System {
 				$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $slug => $premiumUpgrade ) {
-						if ( $premiumUpgrade['type'] == 'plugin' ) {
+						if ( 'plugin' === $premiumUpgrade['type'] ) {
 							if ( ! is_array( $websitePlugins ) ) {
 								$websitePlugins = array();
 							}
@@ -2417,7 +2417,7 @@ class MainWP_System {
 			wp_cache_delete( 'mainwp_getting_started', 'options' );
 			wp_cache_delete( 'alloptions', 'options' );
 			if ( ! is_multisite() ) {
-				if ( $started == 'started' ) {
+				if ( 'started' === $started ) {
 					wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=started' ) );
 					exit;
 				}
@@ -2453,7 +2453,7 @@ class MainWP_System {
 						MainWP_Twitter::clearAllTwitterMessages();
 					}
 				}
-			} elseif ( $_GET['page'] == 'mainwp_tab' || isset( $_GET['dashboard'] ) ) {
+			} elseif ( 'mainwp_tab' === $_GET['page'] || isset( $_GET['dashboard'] ) ) {
 				if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPScrOptions' ) ) {
 					$update_screen_options = true;
 				}

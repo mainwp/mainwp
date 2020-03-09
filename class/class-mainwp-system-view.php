@@ -5,17 +5,17 @@ class MainWP_System_View {
 	public static function getMainWPTranslations() {
 
 		function mainwpAddTranslation( &$pArray, $pKey, $pText ) {
-			if ( !is_array( $pArray ) ) {
+			if ( ! is_array( $pArray ) ) {
 				$pArray = array();
 			}
 
-			$strippedText	 = str_replace( ' ', '_', $pKey );
-			$strippedText	 = preg_replace( '/[^A-Za-z0-9_]/', '', $strippedText );
+			$strippedText = str_replace( ' ', '_', $pKey );
+			$strippedText = preg_replace( '/[^A-Za-z0-9_]/', '', $strippedText );
 
 			$pArray[ $strippedText ] = $pText;
 		}
 
-		$mainwpTranslations					 = array();
+		$mainwpTranslations = array();
 		mainwpAddTranslation( $mainwpTranslations, 'Update settings.', __( 'Update settings.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Settings have been updated.', __( 'Settings have been updated.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'An error occured.', __( 'An error occured.', 'mainwp' ) );
@@ -127,7 +127,7 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'All', __( 'All', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Any', __( 'Any', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'HTTP error', __( 'HTTP error', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Error on your child wordpress', __( 'Error on your child wordpress', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Error on your child WordPress', __( 'Error on your child WordPress', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, please, contact MainWP Support.', __( 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, please, contact MainWP Support.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Remove', __( 'Remove', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please reconnect to Dropbox', __( 'Please reconnect to Dropbox', 'mainwp' ) );
@@ -136,9 +136,10 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'Upgrading %1', __( 'Upgrading %1', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Updating your plan...', __( 'Updating your plan...', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Updated your plan', __( 'Updated your plan', 'mainwp' ) );
-		$mainwp_backup_before_upgrade_days	 = get_option( 'mainwp_backup_before_upgrade_days' );
-		if ( empty( $mainwp_backup_before_upgrade_days ) || !ctype_digit( $mainwp_backup_before_upgrade_days ) )
-			$mainwp_backup_before_upgrade_days	 = 7;
+		$mainwp_backup_before_upgrade_days = get_option( 'mainwp_backup_before_upgrade_days' );
+		if ( empty( $mainwp_backup_before_upgrade_days ) || ! ctype_digit( $mainwp_backup_before_upgrade_days ) ) {
+			$mainwp_backup_before_upgrade_days = 7;
+		}
 		mainwpAddTranslation( $mainwpTranslations, 'A full backup has not been taken in the last days for the following sites:', str_replace( '%1', '' . $mainwp_backup_before_upgrade_days, __( 'A full backup has not been taken in the last %1 days for the following sites:', 'mainwp' ) ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Starting required backup(s).', __( 'Starting required backup(s).', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Required backup(s) complete', __( 'Required backup(s) complete', 'mainwp' ) );

@@ -9,13 +9,13 @@ class MainWP_Security_Issues {
 	public static function render( $website = null ) {
 
 		if ( empty( $website ) ) {
-			if ( !isset( $_REQUEST[ 'id' ] ) || !MainWP_Utility::ctype_digit( $_REQUEST[ 'id' ] ) ) {
+			if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 				return;
 			}
-			$website = MainWP_DB::Instance()->getWebsiteById( $_REQUEST[ 'id' ] );
+			$website = MainWP_DB::Instance()->getWebsiteById( $_REQUEST['id'] );
 		}
 
-		if ( !MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			return;
 		}
 		?>
@@ -163,12 +163,12 @@ class MainWP_Security_Issues {
 						<span id="registered_versions_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php _e( 'Unfix', 'mainwp' ); ?></a></span>
 					</td>
 				</tr>
-                 <?php
-                    $is_wpengine = false;
-                    if ( property_exists( $website, 'wpe' ) && $website->wpe == 1 ) {
-                        $is_wpengine = true;
-                    }
-                ?>
+				 <?php
+					$is_wpengine = false;
+					if ( property_exists( $website, 'wpe' ) && $website->wpe == 1 ) {
+						$is_wpengine = true;
+					}
+					?>
 				<tr>
 					<td>
 						<span id="readme_loading"><i class="notched circle big loading icon"></i></span>
@@ -180,17 +180,17 @@ class MainWP_Security_Issues {
 						<strong id="readme-status-ok" style="display: none;"><?php _e( 'readme.html file has been removed from WordPress root', 'mainwp' ); ?></strong>
 						<br />
 						<em><?php _e( 'After fixing this issue, the readme.html file will be removed from the Child Site root directory', 'mainwp' ); ?></em>
-                        <?php if ( $is_wpengine ) { ?>
-                        <strong id="readme-wpe-nok"><?php _e( 'Removing the file on WPEngine hosting can cause issues. If you need to remove the file, please consult the WPEngine support first.', 'mainwp' ); ?></strong>
-                        <?php } ?>
+						<?php if ( $is_wpengine ) { ?>
+						<strong id="readme-wpe-nok"><?php _e( 'Removing the file on WPEngine hosting can cause issues. If you need to remove the file, please consult the WPEngine support first.', 'mainwp' ); ?></strong>
+						<?php } ?>
 					</td>
 					<td>
-                        <?php if ( ! $is_wpengine ) { ?>
+						<?php if ( ! $is_wpengine ) { ?>
 						<span id="readme_fix" style="display: none"><a href="#" class="ui mini green fluid button"><?php _e( 'Fix', 'mainwp' ); ?></a></span>
 						<span id="readme_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php _e( 'Unfix', 'mainwp' ); ?></a> - <?php _e( 'You need to re-upload the readme.html file manually to unfix this.', 'mainwp' ); ?></span>
-                        <?php } else { ?>
-                        <span><a href="javascript:void(0)" class="ui mini fluid button"><?php _e( 'Fix', 'mainwp' ); ?></a>
-                        <?php }  ?>
+						<?php } else { ?>
+						<span><a href="javascript:void(0)" class="ui mini fluid button"><?php _e( 'Fix', 'mainwp' ); ?></a>
+						<?php } ?>
 					</td>
 				</tr>
 				<tr>
@@ -222,12 +222,12 @@ class MainWP_Security_Issues {
 	}
 
 	public static function fetchSecurityIssues() {
-		if ( !isset( $_REQUEST[ 'id' ] ) || !MainWP_Utility::ctype_digit( $_REQUEST[ 'id' ] ) ) {
+		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 			return '';
 		}
-		$website = MainWP_DB::Instance()->getWebsiteById( $_REQUEST[ 'id' ] );
+		$website = MainWP_DB::Instance()->getWebsiteById( $_REQUEST['id'] );
 
-		if ( !MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			return '';
 		}
 
@@ -237,38 +237,38 @@ class MainWP_Security_Issues {
 	}
 
 	public static function fixSecurityIssue() {
-		if ( !isset( $_REQUEST[ 'id' ] ) || !MainWP_Utility::ctype_digit( $_REQUEST[ 'id' ] ) ) {
+		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 			return '';
 		}
-		$website = MainWP_DB::Instance()->getWebsiteById( $_REQUEST[ 'id' ] );
+		$website = MainWP_DB::Instance()->getWebsiteById( $_REQUEST['id'] );
 
-		if ( !MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			return '';
 		}
 
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'securityFix', array( 'feature' => $_REQUEST[ 'feature' ] ) );
-		if ( isset( $information[ 'sync' ] ) && !empty( $information[ 'sync' ] ) ) {
-			MainWP_Sync::syncInformationArray( $website, $information[ 'sync' ] );
-			unset( $information[ 'sync' ] );
+		$information = MainWP_Utility::fetchUrlAuthed( $website, 'securityFix', array( 'feature' => $_REQUEST['feature'] ) );
+		if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
+			MainWP_Sync::syncInformationArray( $website, $information['sync'] );
+			unset( $information['sync'] );
 		}
 
 		return $information;
 	}
 
 	public static function unfixSecurityIssue() {
-		if ( !isset( $_REQUEST[ 'id' ] ) || !MainWP_Utility::ctype_digit( $_REQUEST[ 'id' ] ) ) {
+		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 			return '';
 		}
-		$website = MainWP_DB::Instance()->getWebsiteById( $_REQUEST[ 'id' ] );
+		$website = MainWP_DB::Instance()->getWebsiteById( $_REQUEST['id'] );
 
-		if ( !MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			return '';
 		}
 
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'securityUnFix', array( 'feature' => $_REQUEST[ 'feature' ] ) );
-		if ( isset( $information[ 'sync' ] ) && !empty( $information[ 'sync' ] ) ) {
-			MainWP_Sync::syncInformationArray( $website, $information[ 'sync' ] );
-			unset( $information[ 'sync' ] );
+		$information = MainWP_Utility::fetchUrlAuthed( $website, 'securityUnFix', array( 'feature' => $_REQUEST['feature'] ) );
+		if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
+			MainWP_Sync::syncInformationArray( $website, $information['sync'] );
+			unset( $information['sync'] );
 		}
 
 		return $information;

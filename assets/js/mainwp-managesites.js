@@ -192,7 +192,7 @@ managesites_update_pluginsthemes_next_int = function ( websiteId, data, errors )
                         return;
                     } else {
                         dashboard_update_site_status(pWebsiteId, '<i class="green check icon"></i>', true );
-                    };
+                    }
                 }
 
                 managesites_update_pluginsthemes_done( pData['type'] );

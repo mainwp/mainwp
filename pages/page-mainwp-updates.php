@@ -85,7 +85,7 @@ class MainWP_Updates {
 		$userExtension = MainWP_DB::Instance()->getUserExtension();
 		$websites      = MainWP_DB::Instance()->query( $sql );
 
-		if ( $userExtension->site_view == MAINWP_VIEW_PER_GROUP ) {
+		if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) {
 			$site_offset = array();
 			$all_groups  = array();
 			$groups      = MainWP_DB::Instance()->getGroupsForCurrentUser();
@@ -295,7 +295,7 @@ class MainWP_Updates {
 				$total_themes_outdate += count( $themes_outdate );
 			}
 
-			if ( $userExtension->site_view == MAINWP_VIEW_PER_PLUGIN_THEME ) {
+			if ( MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ) {
 				if ( is_array( $translation_upgrades ) ) {
 					foreach ( $translation_upgrades as $translation_upgrade ) {
 						$slug = esc_html( $translation_upgrade['slug'] );
@@ -533,9 +533,9 @@ class MainWP_Updates {
 							<div class="inline field">
 								<label for="mainwp_select_options_siteview"><?php _e( 'Show updates per ', 'mainwp' ); ?></label>
 								<select class="ui dropdown" onchange="mainwp_siteview_onchange(this)"  id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
-									<option value="1" class="item" <?php echo $userExtension->site_view == MAINWP_VIEW_PER_SITE ? 'selected' : ''; ?>><?php esc_html_e( 'Site', 'mainwp' ); ?></option>
-									<option value="0" class="item" <?php echo $userExtension->site_view == MAINWP_VIEW_PER_PLUGIN_THEME ? 'selected' : ''; ?>><?php esc_html_e( 'Plugin/Theme', 'mainwp' ); ?></option>
-									<option value="2" class="item" <?php echo $userExtension->site_view == MAINWP_VIEW_PER_GROUP ? 'selected' : ''; ?>><?php esc_html_e( 'Group', 'mainwp' ); ?></option>
+									<option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE == $userExtension->site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Site', 'mainwp' ); ?></option>
+									<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Plugin/Theme', 'mainwp' ); ?></option>
+									<option value="2" class="item" <?php echo MAINWP_VIEW_PER_GROUP == $userExtension->site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Group', 'mainwp' ); ?></option>
 								</select>
 							</div>
 						</form>
@@ -614,7 +614,7 @@ class MainWP_Updates {
 				jQuery( '#mainwp-http-response-issues-table' ).DataTable( {
 					"searching": false,
 					"paging" : false,
-					stateSave: true,
+					"stateSave": true,
 					"info" : false,
 					"columnDefs" : [ { "orderable": false, "targets": "no-sort" } ],
 					"language" : { "emptyTable": "No HTTP issues detected." }
@@ -629,7 +629,7 @@ class MainWP_Updates {
 
 			<?php if ( 'wordpress-updates' === $current_tab ) : ?>
 			<div class="ui <?php echo( 'wordpress-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="wordpress-updates">
-				<?php if ( $userExtension->site_view == MAINWP_VIEW_PER_GROUP ) : ?>
+				<?php if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) : ?>
 				<table class="ui stackable single line table" id="mainwp-wordpress-updates-groups-table"> <!-- Per Group table -->
 					<thead>
 						<tr>
@@ -819,7 +819,7 @@ class MainWP_Updates {
 			<?php if ( 'plugins-updates' === $current_tab ) : ?>
 			<div class="ui <?php echo( 'plugins-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="plugins-updates">
 				<?php
-				if ( $userExtension->site_view == MAINWP_VIEW_PER_SITE ) :
+				if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
 					?>
 			  <!-- Per Site -->
 				<table class="ui stackable single line table" id="mainwp-plugins-updates-sites-table">
@@ -956,7 +956,7 @@ class MainWP_Updates {
 					</tfoot>
 				</table>
 					<?php
-				elseif ( $userExtension->site_view == MAINWP_VIEW_PER_GROUP ) :
+				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
 					?>
 				<!-- Per Group -->
 				<table class="ui stackable single line table" id="mainwp-plugins-updates-groups-table">
@@ -1184,7 +1184,7 @@ class MainWP_Updates {
 									<?php endif; ?>
 									<?php if ( $user_can_update_plugins ) : ?>
 										<?php if ( 0 < $cnt ) : ?>
-											<?php $continue_class = ( 'plugins_upgrade_all' === $continue_update && $continue_update_slug == $slug && $userExtension->site_view == MAINWP_VIEW_PER_PLUGIN_THEME ) ? 'updatesoverview_continue_update_me' : ''; ?>
+											<?php $continue_class = ( 'plugins_upgrade_all' === $continue_update && $continue_update_slug == $slug && MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ) ? 'updatesoverview_continue_update_me' : ''; ?>
 											<a href="javascript:void(0)" class="ui mini button green <?php echo $continue_class; ?>" onClick="return updatesoverview_plugins_upgrade_all( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $pluginsInfo[ $slug ]['name'] ); ?>' )"><?php echo __( 'Update All', 'mainwp' ); ?></a>
 										<?php endif; ?>
 									<?php endif; ?>
@@ -1284,7 +1284,7 @@ class MainWP_Updates {
 			<?php if ( 'themes-updates' === $current_tab ) : ?>
 			<div class="ui <?php echo( 'themes-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="themes-updates">
 				<?php
-				if ( $userExtension->site_view == MAINWP_VIEW_PER_SITE ) :
+				if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
 					?>
 				<!-- Per Site -->
 				<table class="ui stackable single line table" id="mainwp-themes-updates-sites-table">
@@ -1414,7 +1414,7 @@ class MainWP_Updates {
 					</tfoot>
 				</table>
 					<?php
-				elseif ( $userExtension->site_view == MAINWP_VIEW_PER_GROUP ) :
+				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
 					?>
 				<!-- Per Group -->
 				<table class="ui stackable single line table" id="mainwp-themes-updates-groups-table">
@@ -1632,7 +1632,7 @@ class MainWP_Updates {
 									<?php endif; ?>
 									<?php if ( $user_can_update_themes ) : ?>
 										<?php if ( 0 < $cnt ) : ?>
-											<?php $continue_class = ( 'themes_upgrade_all' === $continue_update && $continue_update_slug == $slug && $userExtension->site_view == MAINWP_VIEW_PER_PLUGIN_THEME ) ? 'updatesoverview_continue_update_me' : ''; ?>
+											<?php $continue_class = ( 'themes_upgrade_all' === $continue_update && $continue_update_slug == $slug && MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ) ? 'updatesoverview_continue_update_me' : ''; ?>
 											<a href="javascript:void(0)" class="ui mini button green <?php echo $continue_class; ?>" onClick="return updatesoverview_themes_upgrade_all( '<?php echo $theme_name; ?>', '<?php echo urlencode( $themesInfo[ $slug ]['name'] ); ?>' )"><?php echo __( 'Update All', 'mainwp' ); ?></a>
 										<?php endif; ?>
 									<?php endif; ?>
@@ -1726,7 +1726,7 @@ class MainWP_Updates {
 			<?php if ( 'translations-updates' === $current_tab ) : ?>
 				<?php if ( 1 === $mainwp_show_language_updates ) : ?>
 				<div class="ui <?php echo( 'translations-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="translations-updates">
-					<?php if ( $userExtension->site_view == MAINWP_VIEW_PER_SITE ) : ?>
+					<?php if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) : ?>
 						<table class="ui stackable single line table" id="mainwp-translations-sites-table">
 							<thead>
 								<tr>
@@ -1824,7 +1824,7 @@ class MainWP_Updates {
 								</tr>
 							</tfoot>
 						</table>
-					<?php elseif ( $userExtension->site_view == MAINWP_VIEW_PER_GROUP ) : ?>
+					<?php elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) : ?>
 						<table class="ui stackable single line table" id="mainwp-translations-groups-table">
 							<thead>
 								<tr>
@@ -1981,7 +1981,7 @@ class MainWP_Updates {
 										<td class="right aligned">
 										<?php if ( $user_can_update_translation ) : ?>
 											<?php if ( 0 < $cnt ) : ?>
-												<?php $continue_class = ( 'translations_upgrade_all' === $continue_update && $continue_update_slug == $slug && $userExtension->site_view == MAINWP_VIEW_PER_PLUGIN_THEME ) ? 'updatesoverview_continue_update_me' : ''; ?>
+												<?php $continue_class = ( 'translations_upgrade_all' === $continue_update && $continue_update_slug == $slug && MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ) ? 'updatesoverview_continue_update_me' : ''; ?>
 												<a href="javascript:void(0)" class="ui mini button green <?php echo $continue_class; ?>" onClick="return updatesoverview_translations_upgrade_all( '<?php echo $slug; ?>', '<?php echo urlencode( $translationsInfo[ $slug ]['name'] ); ?>' )"><?php echo __( 'Update All', 'mainwp' ); ?></a>
 											<?php endif; ?>
 										<?php endif; ?>
@@ -2060,7 +2060,7 @@ class MainWP_Updates {
 				<?php $str_format = __( 'Updated %s days ago', 'mainwp' ); ?>
 			<div class="ui <?php echo( 'abandoned-plugins' === $current_tab ? 'active' : '' ); ?> tab" data-tab="abandoned-plugins">
 				<?php
-				if ( $userExtension->site_view == MAINWP_VIEW_PER_SITE ) :
+				if ( MAINWP_VIEW_PER_SITE ==  $userExtension->site_view ) :
 					?>
 				<!-- Per Site -->
 				<table class="ui stackable single line table" id="mainwp-abandoned-plugins-sites-table">
@@ -2155,7 +2155,7 @@ class MainWP_Updates {
 					</tfoot>
 				</table>
 					<?php
-				elseif ( $userExtension->site_view == MAINWP_VIEW_PER_GROUP ) :
+				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
 					?>
 				<!-- Per Group -->
 				<table class="ui stackable single line table" id="mainwp-abandoned-plugins-groups-table">
@@ -2395,7 +2395,7 @@ class MainWP_Updates {
 				<?php $str_format = __( 'Updated %s days ago', 'mainwp' ); ?>
 			<div class="ui <?php echo( 'abandoned-themes' === $current_tab ? 'active' : '' ); ?> tab" data-tab="abandoned-themes">
 				<?php
-				if ( $userExtension->site_view == MAINWP_VIEW_PER_SITE ) :
+				if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
 					?>
 				<!-- Per Site -->
 				<table class="ui stackable single line table" id="mainwp-abandoned-themes-sites-table">
@@ -2488,7 +2488,7 @@ class MainWP_Updates {
 					</tfoot>
 				</table>
 					<?php
-				elseif ( $userExtension->site_view == MAINWP_VIEW_PER_GROUP ) :
+				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
 					?>
 				<!-- Per Group -->
 				<table class="ui stackable single line table" id="mainwp-abandoned-themes-groups-table">
@@ -2723,11 +2723,8 @@ class MainWP_Updates {
 			<!-- END Abandoned Themes -->
 
 			<script type="text/javascript">
-
-
-
+			
 			jQuery( document ).ready( function () {
-				
 				jQuery( 'table table:not( .mainwp-per-group-table )' ).DataTable( {
 					searching: false,
 					paging : false,
@@ -2736,7 +2733,6 @@ class MainWP_Updates {
 					columnDefs : [ { "orderable": false, "targets": "no-sort" } ],
 					language : { "emptyTable": "No available updates. Please sync your MainWP Dashboard with Child Sites to see if there are any new updates available." }
 				} );
-			
 				jQuery( '#mainwp-manage-updates .ui.accordion' ).accordion( {
 					exclusive: false,
 					duration: 200,
@@ -2777,7 +2773,7 @@ class MainWP_Updates {
 				<input id="updatesoverview-backup-ignore" type="button" name="Ignore" value="<?php _e( 'Ignore', 'mainwp' ); ?>" class="button"/>
 			</div>
 		</div>
-		<?php if ( $userExtension->site_view == MAINWP_VIEW_PER_GROUP ) : ?>
+		<?php if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) : ?>
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				updatesoverview_updates_init_group_view();

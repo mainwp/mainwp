@@ -820,7 +820,7 @@ class MainWP_Updates {
 			<div class="ui <?php echo( 'plugins-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="plugins-updates">
 				<?php
 				if ( $userExtension->site_view == MAINWP_VIEW_PER_SITE ) :
-				?>
+					?>
 			  <!-- Per Site -->
 				<table class="ui stackable single line table" id="mainwp-plugins-updates-sites-table">
 					<thead>
@@ -834,9 +834,9 @@ class MainWP_Updates {
 								if ( $user_can_update_plugins ) {
 									$continue_class = ( 'plugins_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 									if ( 0 < $total_plugin_upgrades ) {
-									?>
+										?>
 									<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php _e( 'Update all plugins.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php echo __( 'Update All Sites' ); ?></a>
-									<?php
+										<?php
 									}
 								}
 								?>
@@ -955,9 +955,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				elseif ( $userExtension->site_view == MAINWP_VIEW_PER_GROUP ) :
-				?>
+					?>
 				<!-- Per Group -->
 				<table class="ui stackable single line table" id="mainwp-plugins-updates-groups-table">
 					<thead>
@@ -971,9 +971,9 @@ class MainWP_Updates {
 								if ( $user_can_update_plugins ) {
 									$continue_class = ( 'plugins_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 									if ( 0 < $total_plugin_upgrades ) {
-									?>
+										?>
 									<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php _e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php echo __( 'Update All Plugins' ); ?></a>
-									<?php
+										<?php
 									}
 								}
 								?>
@@ -1136,9 +1136,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				else :
-				?>
+					?>
 				<!-- Per Item -->
 				<table class="ui stackable single line table" id="mainwp-plugins-updates-table">
 					<thead>
@@ -1153,9 +1153,9 @@ class MainWP_Updates {
 								if ( $user_can_update_plugins ) {
 									$continue_class = ( 'plugins_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 									if ( 0 < $total_plugin_upgrades ) {
-									?>
+										?>
 									<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php _e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php echo __( 'Update All Plugins' ); ?></a>
-									<?php
+										<?php
 									}
 								}
 								?>
@@ -1285,7 +1285,7 @@ class MainWP_Updates {
 			<div class="ui <?php echo( 'themes-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="themes-updates">
 				<?php
 				if ( $userExtension->site_view == MAINWP_VIEW_PER_SITE ) :
-				?>
+					?>
 				<!-- Per Site -->
 				<table class="ui stackable single line table" id="mainwp-themes-updates-sites-table">
 					<thead>
@@ -1299,9 +1299,9 @@ class MainWP_Updates {
 								if ( $user_can_update_themes ) {
 									$continue_class = ( 'themes_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 									if ( 0 < $total_theme_upgrades ) {
-									?>
+										?>
 									<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php _e( 'Update all themes.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php echo __( 'Update All Sites' ); ?></a>
-									<?php
+										<?php
 									}
 								}
 								?>
@@ -1413,9 +1413,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				elseif ( $userExtension->site_view == MAINWP_VIEW_PER_GROUP ) :
-				?>
+					?>
 				<!-- Per Group -->
 				<table class="ui stackable single line table" id="mainwp-themes-updates-groups-table">
 					<thead>
@@ -1429,9 +1429,9 @@ class MainWP_Updates {
 								if ( $user_can_update_themes ) {
 									$continue_class = ( 'themes_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 									if ( 0 < $total_theme_upgrades ) {
-									?>
+										?>
 									<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php _e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php echo __( 'Update All Themes' ); ?></a>
-									<?php
+										<?php
 									}
 								}
 								?>
@@ -1445,8 +1445,8 @@ class MainWP_Updates {
 								continue;
 							}
 
-							$total_group_theme_updates 	= 0;
-							$group_name            			= $all_groups[ $group_id ];
+							$total_group_theme_updates = 0;
+							$group_name                = $all_groups[ $group_id ];
 							?>
 							<tr class="title" row-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>">
 								<td class="accordion-trigger"><i class="icon dropdown"></i></td>
@@ -1588,9 +1588,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				else :
-				?>
+					?>
 				<!-- Per Item -->
 				<table class="ui stackable single line table" id="mainwp-themes-updates-table">
 					<thead>
@@ -1605,9 +1605,9 @@ class MainWP_Updates {
 								if ( $user_can_update_themes ) {
 									$continue_class = ( 'themes_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 									if ( 0 < $total_theme_upgrades ) {
-									?>
+										?>
 									<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php _e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php echo __( 'Update All Themes' ); ?></a>
-									<?php
+										<?php
 									}
 								}
 								?>
@@ -1953,7 +1953,7 @@ class MainWP_Updates {
 						</table>
 						<?php
 						else :
-						?>
+							?>
 						<!-- Per Item -->
 						<table class="ui stackable single line table" id="mainwp-translations-sites-table">
 							<thead>
@@ -2061,7 +2061,7 @@ class MainWP_Updates {
 			<div class="ui <?php echo( 'abandoned-plugins' === $current_tab ? 'active' : '' ); ?> tab" data-tab="abandoned-plugins">
 				<?php
 				if ( $userExtension->site_view == MAINWP_VIEW_PER_SITE ) :
-				?>
+					?>
 				<!-- Per Site -->
 				<table class="ui stackable single line table" id="mainwp-abandoned-plugins-sites-table">
 					<thead>
@@ -2154,9 +2154,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				elseif ( $userExtension->site_view == MAINWP_VIEW_PER_GROUP ) :
-				?>
+					?>
 				<!-- Per Group -->
 				<table class="ui stackable single line table" id="mainwp-abandoned-plugins-groups-table">
 					<thead>
@@ -2282,9 +2282,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				else :
-				?>
+					?>
 				<!-- Per Item -->
 				<table class="ui stackable single line table" id="mainwp-abandoned-plugins-items-table">
 					<thead>
@@ -2396,7 +2396,7 @@ class MainWP_Updates {
 			<div class="ui <?php echo( 'abandoned-themes' === $current_tab ? 'active' : '' ); ?> tab" data-tab="abandoned-themes">
 				<?php
 				if ( $userExtension->site_view == MAINWP_VIEW_PER_SITE ) :
-				?>
+					?>
 				<!-- Per Site -->
 				<table class="ui stackable single line table" id="mainwp-abandoned-themes-sites-table">
 					<thead>
@@ -2487,9 +2487,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				elseif ( $userExtension->site_view == MAINWP_VIEW_PER_GROUP ) :
-				?>
+					?>
 				<!-- Per Group -->
 				<table class="ui stackable single line table" id="mainwp-abandoned-themes-groups-table">
 					<thead>
@@ -2615,9 +2615,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				else :
-				?>
+					?>
 				<!-- Per Item -->
 				<table class="ui stackable single line table" id="mainwp-themes-updates-table">
 					<thead>

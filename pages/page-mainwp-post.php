@@ -387,9 +387,9 @@ class MainWP_Post {
 			$renderItems[] = array(
 				'title'  => __( 'Manage Posts', 'mainwp' ),
 				'href'   => 'admin.php?page=PostBulkManage',
-				'active' => ( $shownPage == 'BulkManage' ) ? true : false,
+				'active' => ( 'BulkManage' === $shownPage ) ? true : false,
 			);
-			if ( $shownPage == 'BulkEdit' ) {
+			if ( 'BulkEdit' === $shownPage ) {
 				$renderItems[] = array(
 					'title'  => __( 'Edit Post', 'mainwp' ),
 					'href'   => 'admin.php?page=PostBulkEdit&post_id=' . esc_attr( $post_id ),
@@ -400,7 +400,7 @@ class MainWP_Post {
 				$renderItems[] = array(
 					'title'      => __( 'Add New', 'mainwp' ),
 					'href'       => 'admin.php?page=PostBulkAdd',
-					'active'     => ( $shownPage == 'BulkAdd' ) ? true : false,
+					'active'     => ( 'BulkAdd' === $shownPage ) ? true : false,
 				);
 			}
 		}
@@ -804,8 +804,8 @@ class MainWP_Post {
 			'dtsstart'   => $dtsstart,
 			'dtsstop'    => $dtsstop,
 			'status'     => $status,
-			'sites'      => ( $sites != '' ) ? $sites : '',
-			'groups'     => ( $groups != '' ) ? $groups : '',
+			'sites'      => ( '' !== $sites ) ? $sites : '',
+			'groups'     => ( '' !== $groups ) ? $groups : '',
 			'search_on'  => $search_on,
 		) );
 
@@ -1603,7 +1603,7 @@ class MainWP_Post {
 						<label><?php echo __( 'Slug', 'mainwp' ); ?></label>
 						<?php MainWP_System::Instance()->metaboxes->add_slug( $post ); ?>
 				  </div>
-				<?php if ( $post_type == 'bulkpost' ) { ?>
+				<?php if ( 'bulkpost' === $post_type ) { ?>
 					<div class="field">
 						<label><?php echo __( 'Excerpt', 'mainwp' ); ?></label>
 							<textarea rows="1" name="excerpt" id="excerpt"></textarea>
@@ -1737,7 +1737,7 @@ class MainWP_Post {
 						<div class="field">
 							<label><?php echo esc_html( 'Status', 'mainwp' ); ?></label>
 							<select class="ui dropdown" name="mainwp_edit_post_status" id="post_status"> <?php // to fix: saving pending status ?>
-								<option value="draft" <?php echo ( 'draft' === $post->post_status || $post->post_status == 'publish' ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( 'Draft', 'mainwp' ); ?></option>
+								<option value="draft" <?php echo ( 'draft' === $post->post_status || 'publish' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( 'Draft', 'mainwp' ); ?></option>
 								<option value="pending" <?php echo ( 'pending' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( 'Pending review', 'mainwp' ); ?></option>
 							</select>
 						</div>
@@ -1903,7 +1903,7 @@ class MainWP_Post {
 		$selectedCategories  = array();
 		$selectedCategories2 = array();
 
-		if ( isset( $_REQUEST['selected_categories'] ) && ( $_REQUEST['selected_categories'] != '' ) ) {
+		if ( isset( $_REQUEST['selected_categories'] ) && ( '' !== $_REQUEST['selected_categories'] ) ) {
 			$selectedCategories = explode( ',', urldecode( $_REQUEST['selected_categories'] ) );
 		}
 
@@ -2133,7 +2133,7 @@ class MainWP_Post {
 								foreach ( $dbwebsites as $website ) {
 									?>
 									<div class="item"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-									: <?php echo( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ? $succes_message . ' <a href="' . $output->link[ $website->id ] . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>' : $output->errors[ $website->id ] ); ?>
+									: <?php echo( isset( $output->ok[ $website->id ] ) && 1 === $output->ok[ $website->id ] ? $succes_message . ' <a href="' . $output->link[ $website->id ] . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>' : $output->errors[ $website->id ] ); ?>
 									</div>
 							<?php } ?>
 							</div>

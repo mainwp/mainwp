@@ -137,15 +137,6 @@ class MainWP_Setup_Wizard {
 		exit;
 	}
 
-	// public function check_redirect() {
-	// if ( $this->step == 'install_extension' ) {
-	// $backup_method = get_option( 'mwp_setup_primaryBackup' );
-	// if ( !isset( $this->backup_extensions[ $backup_method ] ) ) {
-	// wp_redirect( $this->get_next_step_link( 'backup' ) );
-	// }
-	// }
-	// }
-
 	public function get_next_step_link( $step = '' ) {
 		if ( ! empty( $step ) && isset( $step, $this->steps ) ) {
 			return esc_url_raw( remove_query_arg( 'noregister', add_query_arg( 'step', $step ) ) );
@@ -341,7 +332,7 @@ class MainWP_Setup_Wizard {
 		MainWP_Utility::update_option( 'mwp_setup_installationSystemType', $system_type );
 		MainWP_Utility::update_option( 'mwp_setup_opensslLibLocation', isset( $_POST['mwp_setup_openssl_lib_location'] ) ? stripslashes( $_POST['mwp_setup_openssl_lib_location'] ) : '' );
 
-		wp_redirect( $this->get_next_step_link( 'system_check' ) );
+		wp_safe_redirect( $this->get_next_step_link( 'system_check' ) );
 
 		exit;
 	}
@@ -541,7 +532,7 @@ class MainWP_Setup_Wizard {
 
 		MainWP_Utility::update_option( 'mainwp_optimize', ( $manage_planning == 2 || $type_hosting == 3 ) ? 1 : 0 );
 
-		wp_redirect( $this->get_next_step_link() );
+		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
 	}
 
@@ -604,7 +595,7 @@ class MainWP_Setup_Wizard {
 
 		MainWP_DB::Instance()->updateUserExtension( $userExtension );
 
-		wp_redirect( $this->get_next_step_link() );
+		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
 	}
 
@@ -690,7 +681,7 @@ class MainWP_Setup_Wizard {
 		$save_emails               = implode( ',', $save_emails );
 		$userExtension->user_email = $save_emails;
 		MainWP_DB::Instance()->updateUserExtension( $userExtension );
-		wp_redirect( $this->get_next_step_link() );
+		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
 	}
 
@@ -804,7 +795,7 @@ class MainWP_Setup_Wizard {
 			$this->mwp_setup_purchase_extension_save(); // redirect here if needed
 		} else {
 			delete_option( 'mainwp_primaryBackup' );
-			wp_redirect( $this->get_next_step_link( 'uptime_robot' ) );
+			wp_safe_redirect( $this->get_next_step_link( 'uptime_robot' ) );
 			exit;
 		}
 	}
@@ -884,7 +875,7 @@ class MainWP_Setup_Wizard {
 			return;
 		}
 
-		wp_redirect( $this->get_next_step_link() );
+		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
 	}
 
@@ -1089,7 +1080,7 @@ class MainWP_Setup_Wizard {
 
 	public function mwp_setup_install_extension_save() {
 		check_admin_referer( 'mwp-setup' );
-		wp_redirect( $this->get_next_step_link() );
+		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
 	}
 
@@ -1206,7 +1197,7 @@ class MainWP_Setup_Wizard {
 			}
 		}
 
-		wp_redirect( $this->get_next_step_link() );
+		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
 	}
 

@@ -96,7 +96,7 @@ class MainWP_Plugins {
 		$total_pages = self::$pluginsTable->get_pagination_arg( 'total_pages' );
 
 		if ( $pagenum > $total_pages && $total_pages > 0 ) {
-			wp_redirect( esc_url_raw( add_query_arg( 'paged', $total_pages ) ) );
+			wp_safe_redirect( esc_url_raw( add_query_arg( 'paged', $total_pages ) ) );
 			exit;
 		}
 	}

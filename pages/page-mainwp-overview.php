@@ -29,8 +29,7 @@ class MainWP_Overview {
 		// Prevent conflicts
 		add_filter( 'screen_layout_columns', array( &$this, 'on_screen_layout_columns' ), 10, 2 );
 		add_action( 'admin_menu', array( &$this, 'on_admin_menu' ) );
-		add_action( 'mainwp_help_sidebar_content', array( &$this, 'mainwp_help_content' ) ); // Hook the Help Sidebar content
-		// add_action( 'admin_post_save_howto_testPages_general', array( &$this, 'on_save_changes' ) );
+		add_action( 'mainwp_help_sidebar_content', array( &$this, 'mainwp_help_content' ) ); // Hook the Help Sidebar content		
 	}
 
 	function on_screen_layout_columns( $columns, $screen ) {
@@ -316,20 +315,6 @@ class MainWP_Overview {
 			});
 	   </script>
 		<?php
-	}
-
-	// executed if the post arrives initiated by pressing the submit button of form
-	function on_save_changes() {
-		// user permission check
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( __( 'Cheatin&#8217; uh?' ) );
-		}
-		// cross check the given referer
-		check_admin_referer( 'mainwp_tab-general' );
-
-		// process here your on $_POST validation and / or option saving
-		// lets redirect the post request into get request (you may add additional params at the url, if you need to show save results
-		wp_redirect( $_POST['_wp_http_referer'] );
 	}
 
 	// Hook the section help content to the Help Sidebar element

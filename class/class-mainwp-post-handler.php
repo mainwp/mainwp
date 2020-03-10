@@ -851,7 +851,7 @@ class MainWP_Post_Handler {
 			$excludedFolder = array_map( 'htmlentities', $excludedFolder );
 			$excludedFolder = implode( ',', $excludedFolder );
 
-			$result = MainWP_Manage_Sites::backup( $_POST['site_id'], $_POST['type'], ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset( $_POST['fileNameUID'] ) ? $_POST['fileNameUID'] : '', $_POST['archiveFormat'], ( isset($_POST['maximumFileDescriptorsOverride']) && $_POST['maximumFileDescriptorsOverride'] == 1 ), ( $_POST['maximumFileDescriptorsAuto'] == 1 ), ( isset($_POST['maximumFileDescriptors']) ? $_POST['maximumFileDescriptors'] : '' ), ( isset( $_POST['loadFilesBeforeZip'] ) ? $_POST['loadFilesBeforeZip'] : '' ), $_POST['pid'], ( isset( $_POST['append'] ) && ( $_POST['append'] == 1 ) ) );
+			$result = MainWP_Manage_Sites::backup( $_POST['site_id'], $_POST['type'], ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset( $_POST['fileNameUID'] ) ? $_POST['fileNameUID'] : '', $_POST['archiveFormat'], ( isset($_POST['maximumFileDescriptorsOverride']) && 1 === $_POST['maximumFileDescriptorsOverride'] ), ( 1 === $_POST['maximumFileDescriptorsAuto'] ), ( isset($_POST['maximumFileDescriptors']) ? $_POST['maximumFileDescriptors'] : '' ), ( isset( $_POST['loadFilesBeforeZip'] ) ? $_POST['loadFilesBeforeZip'] : '' ), $_POST['pid'], ( isset( $_POST['append'] ) && ( 1 === $_POST['append'] ) ) );
 			wp_send_json( array( 'result' => $result ) );
 		} catch ( MainWP_Exception $e ) {
 			die( json_encode( array(

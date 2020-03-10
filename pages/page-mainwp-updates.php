@@ -317,7 +317,7 @@ class MainWP_Updates {
 						);
 					}
 				}
-				
+
 				MainWP_Utility::array_sort( $allTranslations, 'name' );
 
 				// Keep track of all the plugins & themes
@@ -340,7 +340,7 @@ class MainWP_Updates {
 						);
 					}
 				}
-				
+
 				MainWP_Utility::array_sort( $allPlugins, 'name' );
 
 				if ( is_array( $theme_upgrades ) ) {
@@ -360,7 +360,7 @@ class MainWP_Updates {
 						);
 					}
 				}
-				
+
 				MainWP_Utility::array_sort( $allThemes, 'name' );
 
 				if ( is_array( $plugins_outdate ) ) {
@@ -382,7 +382,7 @@ class MainWP_Updates {
 						);
 					}
 				}
-				
+
 				MainWP_Utility::array_sort( $allPluginsOutdate, 'name' );
 
 				if ( is_array( $themes_outdate ) ) {
@@ -404,7 +404,6 @@ class MainWP_Updates {
 					}
 				}
 
-				
 				MainWP_Utility::array_sort( $allThemesOutdate, 'name' );
 			}
 

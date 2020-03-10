@@ -29,7 +29,7 @@ class MainWP_Overview {
 		// Prevent conflicts
 		add_filter( 'screen_layout_columns', array( &$this, 'on_screen_layout_columns' ), 10, 2 );
 		add_action( 'admin_menu', array( &$this, 'on_admin_menu' ) );
-		add_action( 'mainwp_help_sidebar_content', array( &$this, 'mainwp_help_content' ) ); // Hook the Help Sidebar content		
+		add_action( 'mainwp_help_sidebar_content', array( &$this, 'mainwp_help_content' ) ); // Hook the Help Sidebar content
 	}
 
 	function on_screen_layout_columns( $columns, $screen ) {

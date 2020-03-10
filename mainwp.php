@@ -77,7 +77,7 @@ if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
 }
 
 $mainwp_is_secupress_scanning = false;
-if ( ! empty( $_GET ) && isset( $_GET['test'] ) && isset( $_GET['action'] ) && $_GET['action'] == 'secupress_scanner' ) {
+if ( ! empty( $_GET ) && isset( $_GET['test'] ) && isset( $_GET['action'] ) && 'secupress_scanner' === $_GET['action'] ) {
 	$mainwp_is_secupress_scanning = true;
 }
 

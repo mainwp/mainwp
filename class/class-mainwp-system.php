@@ -172,7 +172,7 @@ class MainWP_System {
 		add_action( 'mainwp_cronupdatescheck_action', array( $this, 'mainwp_cronupdatescheck_action' ) );
 		add_action( 'mainwp_cronpingchilds_action', array( $this, 'mainwp_cronpingchilds_action' ) );
 
-		add_filter( 'cron_schedules', array( 'MainWP_Utility', 'getCronSchedules' ) );
+		add_filter( 'cron_schedules', array( $this, 'getCronSchedules' ) );
 
 		$this->init_cron();
 
@@ -646,6 +646,19 @@ class MainWP_System {
 		}
 	}
 
+	public function getCronSchedules( $schedules ) {
+		$schedules['5minutely'] = array(
+			'interval'   => 5 * 60, // 5minutes in seconds
+			'display'    => __( 'Once every 5 minutes', 'mainwp' ),
+		);
+		$schedules['minutely']  = array(
+			'interval'   => 1 * 60, // 1minute in seconds
+			'display'    => __( 'Once every minute', 'mainwp' ),
+		);
+
+		return $schedules;
+	}
+	
 	public function wp_mail_failed( $error ) {
 		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );
 		if ( is_object( $error ) && empty( $mail_failed ) ) {
@@ -2086,7 +2099,7 @@ class MainWP_System {
 	}
 
 	public function init() {
-
+		
 		global $_mainwp_disable_menus_items;
 
 		// deprecate hook from 4.0

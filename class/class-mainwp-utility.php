@@ -2991,19 +2991,6 @@ EOT;
 		return $output;
 	}
 
-	public static function getCronSchedules( $schedules ) {
-		$schedules['5minutely'] = array(
-			'interval'   => 5 * 60, // 5minutes in seconds
-			'display'    => __( 'Once every 5 minutes', 'mainwp' ),
-		);
-		$schedules['minutely']  = array(
-			'interval'   => 1 * 60, // 1minute in seconds
-			'display'    => __( 'Once every minute', 'mainwp' ),
-		);
-
-		return $schedules;
-	}
-
 	public static function getWebsitesAutomaticUpdateTime() {
 		$lastAutomaticUpdate = MainWP_DB::Instance()->getWebsitesLastAutomaticSync();
 
@@ -3110,7 +3097,7 @@ EOT;
 	static function fix_option( $option_name ) {
 		global $wpdb;
 
-		if ( 'yes' == $wpdb->get_var( "SELECT autoload FROM $wpdb->options WHERE option_name = '" . $option_name . "'" ) ) {
+		if ( 'yes' == $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s", $option_name ) ) ) {
 			$option_value = get_option( $option_name );
 			delete_option( $option_name );
 			add_option( $option_name, $option_value, null, 'no' );

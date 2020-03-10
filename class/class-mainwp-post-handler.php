@@ -1302,13 +1302,13 @@ class MainWP_Post_Handler {
 
 		$rslt = MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
 
-		if ( isset( $rslt['error'] ) && ( '' != $rslt['error'] ) && ( 'wp-admin/' !== substr( $url, - 9 ) ) ) {
+		if ( isset( $rslt['error'] ) && ( '' !== $rslt['error'] ) && ( 'wp-admin/' !== substr( $url, - 9 ) ) ) {
 			if ( substr( $url, - 1 ) != '/' ) {
 				$url .= '/';
 			}
 			$url    .= 'wp-admin/';
 			$newrslt = MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
-			if ( isset( $newrslt['error'] ) && ( '' != $rslt['error'] ) ) {
+			if ( isset( $newrslt['error'] ) && ( '' !== $rslt['error'] ) ) {
 				$rslt = $newrslt;
 			}
 		}

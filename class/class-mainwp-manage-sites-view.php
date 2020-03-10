@@ -464,7 +464,7 @@ class MainWP_Manage_Sites_View {
 			$output      .= '<div class="ui grid field">';
 			$output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( filemtime( $fullBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $fullBackup ) ) . '</label>';
 			$output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . basename( $fullBackup ) . '" href="' . $downloadLink . '" class="button">Download</a>';
-			$output      .= '<a href="admin.php?page=SiteRestore&websiteid=' . $website->id . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . basename( $fullBackup ) . '">Restore</a>';
+			$output      .= '<a href="admin.php?page=SiteRestore&websiteid=' . intval($website->id) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . basename( $fullBackup ) . '">Restore</a>';
 			$output      .= '</div>';
 			$output      .= '</div>';
 		}
@@ -657,7 +657,7 @@ class MainWP_Manage_Sites_View {
 		<div>
 			<?php
 			if ( $website->mainwpdir == -1 ) {
-				echo '<div class="mainwp-notice mainwp-notice-yellow"><span class="mainwp_conflict" siteid="' . $website->id . '"><strong>Configuration issue detected</strong>: MainWP has no write privileges to the uploads directory. Because of this some of the functionality might not work, please check <a href="http://docs.mainwp.com/install-or-update-of-a-plugin-fails-on-managed-site/" target="_blank">this FAQ for further information</a></span></div>';
+				echo '<div class="mainwp-notice mainwp-notice-yellow"><span class="mainwp_conflict" siteid="' . intval($website->id) . '"><strong>Configuration issue detected</strong>: MainWP has no write privileges to the uploads directory. Because of this some of the functionality might not work, please check <a href="http://docs.mainwp.com/install-or-update-of-a-plugin-fails-on-managed-site/" target="_blank">this FAQ for further information</a></span></div>';
 			}
 			global $screen_layout_columns;
 			MainWP_Overview::renderDashboardBody( array( $website ), $page, $screen_layout_columns );

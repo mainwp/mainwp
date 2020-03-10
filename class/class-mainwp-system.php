@@ -2877,14 +2877,14 @@ class MainWP_System {
 				$website = $websites[ $i ];
 				if ( '' == $website->sync_errors ) {
 					$cntr ++;
-					echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="' . $website->id . '" />';
+					echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="' . intval($website->id) . '" />';
 				}
 			}
 		} elseif ( false !== $websites ) {
 			while ( $website = MainWP_DB::fetch_object( $websites ) ) {
 				if ( '' == $website->sync_errors ) {
 					$cntr ++;
-					echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="' . $website->id . '" />';
+					echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="' . intval($website->id) . '" />';
 				}
 			}
 		}

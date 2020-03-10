@@ -53,7 +53,7 @@ class MainWP_Child_Scan {
 						}
 
 						if ( $website->sync_errors == '' ) {
-							echo '<tr siteid="' . $website->id . '"><td title="' . $website->url . '">' . $imgfavi . ' ' . stripslashes( $website->name ) . ':</td><td></td></tr>';
+							echo '<tr siteid="' . intval($website->id) . '"><td title="' . $website->url . '">' . $imgfavi . ' ' . stripslashes( $website->name ) . ':</td><td></td></tr>';
 						} else {
 							echo '<tr><td title="' . $website->url . '">' . $imgfavi . ' ' . stripslashes( $website->name ) . ':</td><td>Sync errors</td></tr>';
 						}

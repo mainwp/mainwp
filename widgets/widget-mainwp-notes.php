@@ -34,7 +34,7 @@ class MainWP_Notes {
 					<i class="info circle icon"></i>
 					<div class="content">
 						<?php _e( 'No saved notes!', 'mainwp' ); ?>
-						<div class="sub header"><?php esc_html_e( 'No saved notes for the child site. ', 'mainwp' ); ?><?php echo '<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-' . $website->id . '">' . __( 'Click here to add a note.', 'mainwp' ) . '</a>'; ?></div>
+						<div class="sub header"><?php esc_html_e( 'No saved notes for the child site. ', 'mainwp' ); ?><?php echo '<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-' . intval($website->id) . '">' . __( 'Click here to add a note.', 'mainwp' ) . '</a>'; ?></div>
 					</div>
 				</h2>
 				<?php

@@ -927,7 +927,7 @@ class MainWP_Post {
 				<?php if ( is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) : ?>
 					<td class="comments column-comments">
 						<div class="post-com-count-wrapper">
-							<a href="<?php echo admin_url( 'admin.php?page=CommentBulkManage&siteid=' . $website->id . '&postid=' . $post['id'] ); ?>" title="0 pending" class="post-com-count"><span class="comment-count"><abbr title="<?php echo esc_attr($post['comment_count']); ?>"><?php echo esc_html($post['comment_count']); ?></abbr></span></a>
+							<a href="<?php echo admin_url( 'admin.php?page=CommentBulkManage&siteid=' . intval($website->id) . '&postid=' . $post['id'] ); ?>" title="0 pending" class="post-com-count"><span class="comment-count"><abbr title="<?php echo esc_attr($post['comment_count']); ?>"><?php echo esc_html($post['comment_count']); ?></abbr></span></a>
 						</div>
 					</td>
 		  <?php endif; ?>

@@ -1211,7 +1211,7 @@ class MainWP_Utility {
 					 $check_premi_plugins = json_decode( $website->plugins, 1 );
 				 }
 				 if ( '' != $website->themes ) {
-					 $check_premi_themes = @json_decode( $website->themes, 1 );
+					 $check_premi_themes = json_decode( $website->themes, 1 );
 				 }
 			 } elseif ( 'upgradeplugintheme' === $what ) {
 
@@ -1222,7 +1222,7 @@ class MainWP_Utility {
 					 }
 				 } elseif ( 'theme' === $update_type ) {
 					 if ( '' != $website->themes ) {
-						 $check_premi_themes = @json_decode( $website->themes, 1 );
+						 $check_premi_themes = json_decode( $website->themes, 1 );
 					 }
 				 }
 			 }
@@ -3330,7 +3330,7 @@ EOT;
 		$faviurl = '';
 
 		if ( ! empty( $favi ) ) {
-			if ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) {
+			if ( false !== strpos( $favi, 'favi-' . intval($website->id) . '-' ) ) {
 				$dirs = self::getIconsDir();
 				if ( file_exists( $dirs[0] . $favi ) ) {
 					$faviurl = $dirs[1] . $favi;

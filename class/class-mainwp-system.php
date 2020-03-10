@@ -323,8 +323,8 @@ class MainWP_System {
 		return $alloptions;
 	}
 
-	public function init_cron(){
-		
+	public function init_cron() {
+
 		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
 
 		if ( ( $sched = wp_next_scheduled( 'mainwp_cronstats_action' ) ) == false ) {
@@ -390,7 +390,7 @@ class MainWP_System {
 			}
 		}
 	}
-	
+
 	public function cron_active() {
 		if ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) {
 			return;
@@ -661,7 +661,7 @@ class MainWP_System {
 		return $this->current_version;
 	}
 
-	public function check_update_custom( $transient ) {		
+	public function check_update_custom( $transient ) {
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
 			$extensions = MainWP_Extensions::getExtensions( array( 'activated' => true ) );
 			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action'] ) {
@@ -885,7 +885,9 @@ class MainWP_System {
 
 		@ignore_user_abort( true );
 		@set_time_limit( 0 );
-		add_filter( 'admin_memory_limit', function(){ return '512M'; } );		
+		add_filter( 'admin_memory_limit', function() {
+			return '512M';
+		} );
 
 		$timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );
 
@@ -945,7 +947,7 @@ class MainWP_System {
 			}
 		} elseif ( $enableFrequencyAutomaticUpdate ) {
 			// ok go to frequency sync
-			$websites             = array();
+			$websites = array();
 		} elseif ( date( 'd/m/Y' ) === $mainwpLastAutomaticUpdate ) {
 			MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated today' );
 
@@ -1229,8 +1231,8 @@ class MainWP_System {
                                 <div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
 						wp_mail( $email, $mail_title = 'MainWP - HTTP response check', MainWP_Utility::formatEmail( $email, $mail_offline, $mail_title ), array(
 							'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
-								$content_type,
-								) );
+							$content_type,
+						) );
 					}
 					MainWP_Utility::update_option( 'mainwp_automaticUpdate_httpChecks', '' );
 				}
@@ -1818,8 +1820,10 @@ class MainWP_System {
 
 		@ignore_user_abort( true );
 		@set_time_limit( 0 );
-		add_filter( 'admin_memory_limit', function(){ return '512M'; } );
-		
+		add_filter( 'admin_memory_limit', function() {
+			return '512M';
+		} );
+
 		MainWP_Utility::update_option( 'mainwp_cron_last_backups_continue', time() );
 
 		// Fetch all tasks where complete < last & last checkup is more then 1minute ago! & last is more then 1 minute ago!
@@ -1852,9 +1856,11 @@ class MainWP_System {
 		MainWP_Logger::Instance()->info( 'CRON :: backups' );
 
 		@ignore_user_abort( true );
-		@set_time_limit( 0 );		
-		add_filter( 'admin_memory_limit', function(){ return '512M'; } );
-		
+		@set_time_limit( 0 );
+		add_filter( 'admin_memory_limit', function() {
+			return '512M';
+		} );
+
 		MainWP_Utility::update_option( 'mainwp_cron_last_backups', time() );
 
 		// Do cronjobs!
@@ -1931,7 +1937,7 @@ class MainWP_System {
 					// Still something wrong
 					MainWP_Logger::Instance()->warningForWebsite( $website, 'reconnect', $e->getMessage() );
 				}
-			} 
+			}
 			sleep( 3 );
 		}
 		@MainWP_DB::free_result( $websites );
@@ -2111,7 +2117,7 @@ class MainWP_System {
 				if ( empty( $current_user ) ) {
 					if ( ! function_exists( 'wp_get_current_user' ) ) {
 						require_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'pluggable.php';
-					}					
+					}
 				}
 
 				return apply_filters( 'mainwp_currentusercan', true, $cap_type, $cap );
@@ -2159,7 +2165,7 @@ class MainWP_System {
 		return @fclose( $handle );
 	}
 
-	public function parse_init() {		
+	public function parse_init() {
 		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
 			$mwpDir = MainWP_Utility::getMainWPDir();
 			$mwpDir = $mwpDir[0];
@@ -2275,7 +2281,7 @@ class MainWP_System {
 		}
 		wp_enqueue_script( 'jquery-ui-dialog' );
 		wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
-		
+
 		$en_params = array( 'jquery-ui-dialog' );
 		if ( $use_wp_datepicker ) {
 			$en_params[] = 'jquery-ui-datepicker';
@@ -2512,8 +2518,9 @@ class MainWP_System {
 			return;
 		}
 
-		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-post_' . $post_id ) )
+		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-post_' . $post_id ) ) {
 			return;
+		}
 
 		if ( ! isset( $_POST['post_type'] ) || ( 'bulkpost' !== $_POST['post_type'] ) ) {
 			return;
@@ -2557,9 +2564,10 @@ class MainWP_System {
 			return;
 		}
 
-		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-post_' . $post_id ) )
+		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-post_' . $post_id ) ) {
 			return;
-		
+		}
+
 		if ( ! isset( $_POST['post_type'] ) || ( 'bulkpage' !== $_POST['post_type'] ) ) {
 			return;
 		}
@@ -2593,9 +2601,9 @@ class MainWP_System {
 		}
 	}
 
-	public function create_post_type() {		
+	public function create_post_type() {
 		$queryable = is_plugin_active( 'mainwp-post-plus-extension/mainwp-post-plus-extension.php' ) ? true : false;
-		$labels = array(
+		$labels    = array(
 			'name'               => _x( 'Bulkpost', 'bulkpost' ),
 			'singular_name'      => _x( 'Bulkpost', 'bulkpost' ),
 			'add_new'            => _x( 'Add New', 'bulkpost' ),
@@ -2737,7 +2745,7 @@ class MainWP_System {
 			wp_enqueue_script( 'semantic-ui-datatables-scroller', MAINWP_PLUGIN_URL . 'assets/js/scroller/scroller.dataTables.js', array( 'jquery' ), $this->current_version, true );
 			wp_enqueue_script( 'semantic-ui-datatables-fixedcolumns', MAINWP_PLUGIN_URL . 'assets/js/fixedcolumns/dataTables.fixedColumns.js', array( 'jquery' ), $this->current_version, true );
 			wp_enqueue_script( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assets/js/calendar/calendar.min.js', array( 'jquery' ), $this->current_version, true );
-			wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version, true );						
+			wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version, true );
 		}
 
 		if ( $load_cust_scripts ) {
@@ -2842,7 +2850,7 @@ class MainWP_System {
 							$is_staging = 'yes';
 						}
 					}
-				} elseif ( 'UpdatesManage' == $_GET['page'] || 'mainwp_tab' == $_GET['page'] ) { // for Updates and Overview page					
+				} elseif ( 'UpdatesManage' == $_GET['page'] || 'mainwp_tab' == $_GET['page'] ) { // for Updates and Overview page
 					$staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) ? true : false;
 					if ( $staging_enabled ) {
 						$staging_view = get_user_option( 'mainwp_staging_options_updates_view' ) == 'staging' ? true : false;

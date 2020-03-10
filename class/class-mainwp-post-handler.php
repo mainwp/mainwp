@@ -9,7 +9,7 @@ class MainWP_Post_Handler {
 	}
 
 	static function Instance() {
-		if ( null == self::$instance  ) {
+		if ( null == self::$instance ) {
 			self::$instance = new MainWP_Post_Handler();
 		}
 		return self::$instance;

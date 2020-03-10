@@ -86,7 +86,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 					foreach ( $selected_groups as $k ) {
 						if ( MainWP_Utility::ctype_digit( $k ) ) {
 							$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
-							while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+							while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 								if ( $website->sync_errors != '' ) {
 									continue;
 								}
@@ -102,7 +102,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 									'http_pass',
 								) );
 							}
-							@MainWP_DB::free_result( $websites );
+							MainWP_DB::free_result( $websites );
 						}
 					}
 				}
@@ -164,7 +164,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				</tr>
 							</thead>
 							<tbody>
-								<?php while ( $websites && $website = @MainWP_DB::fetch_object( $websites ) ) : ?>
+								<?php while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) : ?>
 				<tr>
 									<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
 									<td><?php echo esc_html($website->adminname); ?></td>
@@ -172,7 +172,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 									<td><?php echo esc_html($website->admin_useremail); ?></td>
 				</tr>
 								<?php endwhile; ?>
-								<?php @MainWP_DB::free_result( $websites ); ?>
+								<?php MainWP_DB::free_result( $websites ); ?>
 							</tbody>
 			</table>
 						<script type="text/javascript">

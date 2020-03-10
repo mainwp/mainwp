@@ -419,7 +419,7 @@ class MainWP_Themes {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( $website->sync_errors != '' ) {
 								continue;
 							}
@@ -442,7 +442,7 @@ class MainWP_Themes {
 								$output->themes[]    = $theme;
 							}
 						}
-						@MainWP_DB::free_result( $websites );
+						MainWP_DB::free_result( $websites );
 					}
 				}
 			}
@@ -474,7 +474,7 @@ class MainWP_Themes {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( $website->sync_errors != '' ) {
 								continue;
 							}
@@ -490,7 +490,7 @@ class MainWP_Themes {
 								'http_pass',
 							) );
 						}
-						@MainWP_DB::free_result( $websites );
+						MainWP_DB::free_result( $websites );
 					}
 				}
 			}
@@ -1115,7 +1115,7 @@ class MainWP_Themes {
 				// Build websites array
 				// Search in local cache
 				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$allThemes = json_decode( $website->themes, true );
 					for ( $i = 0; $i < count( $allThemes ); $i ++ ) {
 						$theme = $allThemes[ $i ];
@@ -1134,13 +1134,13 @@ class MainWP_Themes {
 						$output->themes[]    = $theme;
 					}
 				}
-				@MainWP_DB::free_result( $websites );
+				MainWP_DB::free_result( $websites );
 			} else {
 				// Fetch all!
 				// Build websites array
 				$dbwebsites = array();
 				$websites   = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
 						'id',
 						'url',
@@ -1153,7 +1153,7 @@ class MainWP_Themes {
 						'http_pass',
 					) );
 				}
-				@MainWP_DB::free_result( $websites );
+				MainWP_DB::free_result( $websites );
 
 				$post_data = array( 'keyword' => $keyword );
 
@@ -1311,7 +1311,7 @@ class MainWP_Themes {
 
 		$cnt = 0;
 
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			if ( $website->is_ignoreThemeUpdates ) {
 				continue;
 			}
@@ -1388,9 +1388,9 @@ class MainWP_Themes {
 			<tbody id="ignored-themes-list">
 			<?php if ( $cnt > 0 ) : ?>
 				<?php
-				@MainWP_DB::data_seek( $websites, 0 );
+				MainWP_DB::data_seek( $websites, 0 );
 
-				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					if ( $website->is_ignoreThemeUpdates ) {
 						continue;
 					}
@@ -1420,7 +1420,7 @@ class MainWP_Themes {
 						<?php
 					}
 				}
-				@MainWP_DB::free_result( $websites );
+				MainWP_DB::free_result( $websites );
 				?>
 				<?php else : ?>
 					<tr><td colspan="999"><?php _e( 'No ignored themes', 'mainwp' ); ?></td></tr>
@@ -1451,7 +1451,7 @@ class MainWP_Themes {
 		$decodedIgnoredThemes = json_decode( $userExtension->dismissed_themes, true );
 		$ignoredThemes        = ( is_array( $decodedIgnoredThemes ) && ( count( $decodedIgnoredThemes ) > 0 ) );
 		$cnt                  = 0;
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			$tmpDecodedIgnoredThemes = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
 			if ( ! is_array( $tmpDecodedIgnoredThemes ) || count( $tmpDecodedIgnoredThemes ) == 0 ) {
 				continue;
@@ -1522,8 +1522,8 @@ class MainWP_Themes {
 				<tbody id="ignored-abandoned-themes-list">
 				<?php if ( $cnt > 0 ) : ?>
 					<?php
-					@MainWP_DB::data_seek( $websites, 0 );
-					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+					MainWP_DB::data_seek( $websites, 0 );
+					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						$decodedIgnoredThemes = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
 						if ( ! is_array( $decodedIgnoredThemes ) || count( $decodedIgnoredThemes ) == 0 ) {
 							continue;
@@ -1550,7 +1550,7 @@ class MainWP_Themes {
 							<?php
 						}
 					}
-					@MainWP_DB::free_result( $websites );
+					MainWP_DB::free_result( $websites );
 					?>
 				<?php else : ?>
 				<tr><td colspan="999"><?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?></td></tr>

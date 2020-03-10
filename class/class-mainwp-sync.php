@@ -24,7 +24,7 @@ class MainWP_Sync {
 				}
 				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 				if ( $websites ) {
-					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						if ( in_array( $website->id, $disallowedCloneSites ) ) {
 							continue;
 						}
@@ -39,7 +39,7 @@ class MainWP_Sync {
 							'size'       => $website->totalsize,
 						);
 					}
-					@MainWP_DB::free_result( $websites );
+					MainWP_DB::free_result( $websites );
 				}
 			}
 
@@ -117,7 +117,7 @@ class MainWP_Sync {
 			if ( is_array( $information['site_info'] ) && isset( $information['site_info']['phpversion'] ) ) {
 				$phpversion = $information['site_info']['phpversion'];
 			}
-			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'site_info', @json_encode( $information['site_info'] ) );
+			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'site_info', json_encode( $information['site_info'] ) );
 			$done = true;
 		} else {
 			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'site_info', $emptyArray );
@@ -125,7 +125,7 @@ class MainWP_Sync {
 		MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'phpversion', $phpversion );
 
 		if ( isset( $information['directories'] ) && is_array( $information['directories'] ) ) {
-			$websiteValues['directories'] = @json_encode( $information['directories'] );
+			$websiteValues['directories'] = json_encode( $information['directories'] );
 			$done                         = true;
 		} elseif ( isset( $information['directories'] ) ) {
 			$websiteValues['directories'] = $information['directories'];
@@ -133,7 +133,7 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['wp_updates'] ) && $information['wp_updates'] != null ) {
-			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'wp_upgrades', @json_encode( array(
+			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'wp_upgrades', json_encode( array(
 				'current'    => $information['wpversion'],
 				'new'        => $information['wp_updates'],
 			) ) );
@@ -143,22 +143,22 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['plugin_updates'] ) ) {
-			$websiteValues['plugin_upgrades'] = @json_encode( $information['plugin_updates'] );
+			$websiteValues['plugin_upgrades'] = json_encode( $information['plugin_updates'] );
 			$done                             = true;
 		}
 
 		if ( isset( $information['theme_updates'] ) ) {
-			$websiteValues['theme_upgrades'] = @json_encode( $information['theme_updates'] );
+			$websiteValues['theme_upgrades'] = json_encode( $information['theme_updates'] );
 			$done                            = true;
 		}
 
 		if ( isset( $information['translation_updates'] ) ) {
-			$websiteValues['translation_upgrades'] = @json_encode( $information['translation_updates'] );
+			$websiteValues['translation_upgrades'] = json_encode( $information['translation_updates'] );
 			$done                                  = true;
 		}
 
 		if ( isset( $information['premium_updates'] ) ) {
-			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'premium_upgrades', @json_encode( $information['premium_updates'] ) );
+			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'premium_upgrades', json_encode( $information['premium_updates'] ) );
 			$done = true;
 		} else {
 			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'premium_upgrades', $emptyArray );
@@ -170,28 +170,28 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['recent_comments'] ) ) {
-			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'recent_comments', @json_encode( $information['recent_comments'] ) );
+			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'recent_comments', json_encode( $information['recent_comments'] ) );
 			$done = true;
 		} else {
 			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'recent_comments', $emptyArray );
 		}
 
 		if ( isset( $information['recent_posts'] ) ) {
-			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'recent_posts', @json_encode( $information['recent_posts'] ) );
+			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'recent_posts', json_encode( $information['recent_posts'] ) );
 			$done = true;
 		} else {
 			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'recent_posts', $emptyArray );
 		}
 
 		if ( isset( $information['recent_pages'] ) ) {
-			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'recent_pages', @json_encode( $information['recent_pages'] ) );
+			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'recent_pages', json_encode( $information['recent_pages'] ) );
 			$done = true;
 		} else {
 			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'recent_pages', $emptyArray );
 		}
 
 		if ( isset( $information['themes'] ) ) {
-			$websiteValues['themes'] = @json_encode( $information['themes'] );
+			$websiteValues['themes'] = json_encode( $information['themes'] );
 			$done                    = true;
 		}
 
@@ -201,7 +201,7 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['users'] ) ) {
-			$websiteValues['users'] = @json_encode( $information['users'] );
+			$websiteValues['users'] = json_encode( $information['users'] );
 			$done                   = true;
 		}
 
@@ -261,14 +261,14 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['plugins_outdate_info'] ) ) {
-			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'plugins_outdate_info', @json_encode( $information['plugins_outdate_info'] ) );
+			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'plugins_outdate_info', json_encode( $information['plugins_outdate_info'] ) );
 			$done = true;
 		} else {
 			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'plugins_outdate_info', $emptyArray );
 		}
 
 		if ( isset( $information['themes_outdate_info'] ) ) {
-			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'themes_outdate_info', @json_encode( $information['themes_outdate_info'] ) );
+			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'themes_outdate_info', json_encode( $information['themes_outdate_info'] ) );
 			$done = true;
 		} else {
 			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'themes_outdate_info', $emptyArray );

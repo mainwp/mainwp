@@ -1101,10 +1101,10 @@ class MainWP_Extensions {
 			foreach ( $groups as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
-					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, $data );
 					}
-					@MainWP_DB::free_result( $websites );
+					MainWP_DB::free_result( $websites );
 				}
 			}
 		}
@@ -1202,7 +1202,7 @@ class MainWP_Extensions {
 			$totalRecords   = ( $websites_total ? MainWP_DB::num_rows( $websites_total ) : 0 );
 
 			if ( $websites_total ) {
-				@MainWP_DB::free_result( $websites_total );
+				MainWP_DB::free_result( $websites_total );
 			}
 
 			$rowcount = absint( $others['per_page'] );
@@ -1221,7 +1221,7 @@ class MainWP_Extensions {
 		$websites = MainWP_DB::Instance()->query( $sql );
 
 		$output = array();
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			$re = array(
 				'id'        => $website->id,
 				'url'       => MainWP_Utility::getNiceURL( $website->url, true ),
@@ -1236,7 +1236,7 @@ class MainWP_Extensions {
 
 			$output[] = $re;
 		}
-		@MainWP_DB::free_result( $websites );
+		MainWP_DB::free_result( $websites );
 
 		return $output;
 	}
@@ -1313,7 +1313,7 @@ class MainWP_Extensions {
 
 			$sql      = MainWP_DB::Instance()->getSQLWebsiteById( $websiteid );
 			$websites = MainWP_DB::Instance()->query( $sql );
-			$website  = @MainWP_DB::fetch_object( $websites );
+			$website  = MainWP_DB::fetch_object( $websites );
 
 			if ( empty($website) ) {
 				return array( 'error' => __('Not found website', 'mainwp') );
@@ -1409,7 +1409,7 @@ class MainWP_Extensions {
 		} elseif ( ! empty($clone_site_id) ) {
 			$sql        = MainWP_DB::Instance()->getSQLWebsiteById( $clone_site_id );
 			$websites   = MainWP_DB::Instance()->query( $sql );
-			$clone_site = @MainWP_DB::fetch_object( $websites );
+			$clone_site = MainWP_DB::fetch_object( $websites );
 		}
 
 		if ( empty($clone_site ) ) {

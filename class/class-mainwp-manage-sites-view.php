@@ -684,9 +684,9 @@ class MainWP_Manage_Sites_View {
 		$sql      = MainWP_DB::Instance()->getSQLWebsiteById( $id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 		$websites = MainWP_DB::Instance()->query( $sql );
 
-		@MainWP_DB::data_seek( $websites, 0 );
+		MainWP_DB::data_seek( $websites, 0 );
 		if ( $websites ) {
-			$website = @MainWP_DB::fetch_object( $websites );
+			$website = MainWP_DB::fetch_object( $websites );
 		}
 
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );

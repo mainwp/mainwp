@@ -96,7 +96,7 @@ class MainWP_UI {
 						</h2>
 						<?php
 					else :
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							$selected = false;
 							if ( $website->sync_errors == '' || $enableOfflineSites ) {
 								$selected = ( $selected_websites == 'all' || in_array( $website->id, $selected_websites ) );
@@ -127,7 +127,7 @@ class MainWP_UI {
 								<?php
 							}
 						}
-						@MainWP_DB::free_result( $websites );
+						MainWP_DB::free_result( $websites );
 				endif;
 					?>
 				</div>
@@ -149,7 +149,7 @@ class MainWP_UI {
 						</h2>
 					<?php
 					else :
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							$selected = false;
 							if ( $website->sync_errors == '' || $enableOfflineSites ) {
 									$selected = ( $selected_websites == 'all' || in_array( $website->id, $selected_websites ) );
@@ -178,7 +178,7 @@ class MainWP_UI {
 								<?php
 							}
 						}
-						@MainWP_DB::free_result( $websites );
+						MainWP_DB::free_result( $websites );
 			endif;
 
 					?>
@@ -353,7 +353,7 @@ class MainWP_UI {
 						<option value="" class="item"><?php esc_html_e( 'All Sites', 'mainwp' ); ?></option>
 						<option <?php echo ( $s == -1 ) ? 'selected' : ''; ?> value="-1" class="item" ><?php esc_html_e( 'All Sites', 'mainwp' ); ?></option>
 						<?php
-						while ( $websites && ( $website   = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website   = MainWP_DB::fetch_object( $websites ) ) ) {
 							?>
 							<option value="<?php echo $website->id; ?>" <?php echo ( $s == $website->id ) ? 'selected' : ''; ?> class="item" ><?php echo stripslashes( $website->name ); ?></option>
 							<?php
@@ -378,7 +378,7 @@ class MainWP_UI {
 				});
 			</script>
 		<?php
-		@MainWP_DB::free_result( $websites );
+		MainWP_DB::free_result( $websites );
 	}
 
 

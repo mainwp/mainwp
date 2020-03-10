@@ -43,7 +43,7 @@ class MainWP_Child_Scan {
 				<table id="mwp_child_scan_childsites">
 					<tr><th>Child</th><th>Status</th></tr>
 					<?php
-					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						$imgfavi = '';
 						if ( $website !== null ) {
 							if ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) {
@@ -58,7 +58,7 @@ class MainWP_Child_Scan {
 							echo '<tr><td title="' . $website->url . '">' . $imgfavi . ' ' . stripslashes( $website->name ) . ':</td><td>Sync errors</td></tr>';
 						}
 					}
-					@MainWP_DB::free_result( $websites );
+					MainWP_DB::free_result( $websites );
 					?>
 				</table>
 				<?php

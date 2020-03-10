@@ -441,7 +441,7 @@ class MainWP_Plugins {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( $website->sync_errors != '' ) {
 								continue;
 							}
@@ -463,7 +463,7 @@ class MainWP_Plugins {
 								$output->plugins[]    = $plugin;
 							}
 						}
-						@MainWP_DB::free_result($websites);
+						MainWP_DB::free_result($websites);
 					}
 				}
 			}
@@ -495,7 +495,7 @@ class MainWP_Plugins {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::Instance()->query(MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( $website->sync_errors != '' ) {
 								continue;
 							}
@@ -511,7 +511,7 @@ class MainWP_Plugins {
 								'http_pass',
 							) );
 						}
-						@MainWP_DB::free_result( $websites );
+						MainWP_DB::free_result( $websites );
 					}
 				}
 			}
@@ -1046,7 +1046,7 @@ class MainWP_Plugins {
 				// Build websites array
 				// Search in local cache
 				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$allPlugins = json_decode( $website->plugins, true );
 					for ( $i = 0; $i < count( $allPlugins ); $i ++ ) {
 						$plugin = $allPlugins[ $i ];
@@ -1065,13 +1065,13 @@ class MainWP_Plugins {
 						$output->plugins[]    = $plugin;
 					}
 				}
-				@MainWP_DB::free_result( $websites );
+				MainWP_DB::free_result( $websites );
 			} else {
 				// Fetch all!
 				// Build websites array
 				$dbwebsites = array();
 				$websites   = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-				while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
 						'id',
 						'url',
@@ -1084,7 +1084,7 @@ class MainWP_Plugins {
 						'http_pass',
 					) );
 				}
-				@MainWP_DB::free_result( $websites );
+				MainWP_DB::free_result( $websites );
 
 				$post_data = array( 'keyword' => $keyword );
 
@@ -1257,7 +1257,7 @@ class MainWP_Plugins {
 
 			$cnt = 0;
 
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			if ( $website->is_ignorePluginUpdates ) {
 					continue;
 			}
@@ -1334,9 +1334,9 @@ class MainWP_Plugins {
 		<tbody id="ignored-plugins-list">
 			<?php if ( $cnt > 0 ) : ?>
 					<?php
-					@MainWP_DB::data_seek( $websites, 0 );
+					MainWP_DB::data_seek( $websites, 0 );
 
-					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						if ( $website->is_ignorePluginUpdates ) {
 								continue;
 						}
@@ -1366,7 +1366,7 @@ class MainWP_Plugins {
 						}
 					}
 
-					@MainWP_DB::free_result( $websites );
+					MainWP_DB::free_result( $websites );
 					?>
 		<?php else : ?>
 		  <tr><td colspan="999"><?php esc_html_e( 'No ignored plugins', 'mainwp' ); ?></td></tr>
@@ -1397,7 +1397,7 @@ class MainWP_Plugins {
 		$decodedIgnoredPlugins = json_decode( $userExtension->dismissed_plugins, true );
 		$ignoredPlugins        = ( is_array( $decodedIgnoredPlugins ) && ( count( $decodedIgnoredPlugins ) > 0 ) );
 		$cnt                   = 0;
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			$tmpDecodedDismissedPlugins = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_dismissed' ), true );
 			if ( ! is_array( $tmpDecodedDismissedPlugins ) || count( $tmpDecodedDismissedPlugins ) == 0 ) {
 					continue;
@@ -1468,9 +1468,9 @@ class MainWP_Plugins {
 		<tbody id="ignored-abandoned-plugins-list">
 		<?php if ( $cnt > 0 ) : ?>
 					<?php
-						@MainWP_DB::data_seek($websites, 0);
+						MainWP_DB::data_seek($websites, 0);
 
-					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						$decodedIgnoredPlugins = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_dismissed' ), true );
 						if ( ! is_array( $decodedIgnoredPlugins ) || count( $decodedIgnoredPlugins ) == 0 ) {
 								continue;
@@ -1493,7 +1493,7 @@ class MainWP_Plugins {
 						}
 					}
 
-						@MainWP_DB::free_result($websites);
+						MainWP_DB::free_result($websites);
 					?>
 		<?php else : ?>
 		  <tr><td colspan="999"><?php esc_html_e( 'No ignored abandoned plugins', 'mainwp' ); ?></td></tr>

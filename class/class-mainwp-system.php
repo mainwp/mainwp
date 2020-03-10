@@ -1808,7 +1808,7 @@ class MainWP_System {
 		MainWP_Utility::update_option( 'mainwp_cron_last_ping', time() );
 
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsites() );
-		while ( $websites && ( $website  = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 			try {
 				$url = $website->siteurl;
 				if ( ! MainWP_Utility::endsWith( $url, '/' ) ) {
@@ -1820,7 +1820,7 @@ class MainWP_System {
 
 			}
 		}
-		@MainWP_DB::free_result( $websites );
+		MainWP_DB::free_result( $websites );
 	}
 
 	public function mainwp_cronbackups_continue_action() {
@@ -1924,7 +1924,7 @@ class MainWP_System {
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getWebsitesStatsUpdateSQL() );
 
 		$start = time();
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			if ( ( $start - time() ) > ( 60 * 60 * 2 ) ) {
 				// two hours passed, next cron will start!
 				break;
@@ -1947,7 +1947,7 @@ class MainWP_System {
 			} 
 			sleep( 3 );
 		}
-		@MainWP_DB::free_result( $websites );
+		MainWP_DB::free_result( $websites );
 	}
 
 	public function admin_footer() {
@@ -2881,7 +2881,7 @@ class MainWP_System {
 				}
 			}
 		} elseif ( false !== $websites ) {
-			while ( $website = @MainWP_DB::fetch_object( $websites ) ) {
+			while ( $website = MainWP_DB::fetch_object( $websites ) ) {
 				if ( '' == $website->sync_errors ) {
 					$cntr ++;
 					echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="' . $website->id . '" />';
@@ -2927,8 +2927,8 @@ class MainWP_System {
 							}
 						}
 					} else {
-						@MainWP_DB::data_seek( $websites, 0 );
-						while ( $website = @MainWP_DB::fetch_object( $websites ) ) {
+						MainWP_DB::data_seek( $websites, 0 );
+						while ( $website = MainWP_DB::fetch_object( $websites ) ) {
 							$nice_url = MainWP_Utility::getNiceURL( $website->url );
 							if ( '' === $website->sync_errors ) {
 								?>

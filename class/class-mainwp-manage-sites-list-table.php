@@ -317,26 +317,11 @@ class MainWP_Manage_Sites_List_Table {
 			if ( isset($_REQUEST['order']) ) {
 				$columns = $_REQUEST['columns'];
 				$ord_col = $_REQUEST['order'][0]['column'];
-				if ( isset($columns[ $ord_col ]) ) {
-					// $_GET[ 'orderby' ] = $columns[$ord_col]['data'];
-					// $_GET[ 'order' ] = $_REQUEST['order'][0]['dir'];
+				if ( isset($columns[ $ord_col ]) ) {					
 					$req_orderby = $columns[ $ord_col ]['data'];
 					$req_order   = $_REQUEST['order'][0]['dir'];
 				}
 			}
-
-			// if ( !isset( $req_orderby ) ) {
-			// $_order_by     = get_option( 'mainwp_managesites_orderby' );
-			// $_order        = get_option( 'mainwp_managesites_order' );
-			// if ( !empty( $_order_by ) ) {
-			// $req_orderby   = $_order_by;
-			// $req_order     = $_order;
-			// }
-			// } else {
-			// MainWP_Utility::update_option( 'mainwp_managesites_orderby', $req_orderby );
-			// MainWP_Utility::update_option( 'mainwp_managesites_order', $req_order );
-			// }
-
 			if ( isset( $req_orderby ) ) {
 				if ( ( $req_orderby == 'site' ) ) {
 					$orderby = 'wp.name ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
@@ -356,34 +341,6 @@ class MainWP_Manage_Sites_List_Table {
                                             + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
                                     END ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
 				}
-				// else if ( ( $req_orderby == 'wpcore_update' ) ) {
-				// $orderby = 'CASE true
-				// WHEN (offline_check_result = -1)
-				// THEN 2
-				// WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")
-				// THEN 3
-				// ELSE 4
-				// + (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
-				// END ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
-				// } else if ( ( $req_orderby == 'plugin_update' ) ) {
-				// $orderby = 'CASE true
-				// WHEN (offline_check_result = -1)
-				// THEN 2
-				// WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")
-				// THEN 3
-				// ELSE 4
-				// + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
-				// END ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
-				// } else if ( ( $req_orderby == 'theme_update' ) ) {
-				// $orderby = 'CASE true
-				// WHEN (offline_check_result = -1)
-				// THEN 2
-				// WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")
-				// THEN 3
-				// ELSE 4
-				// + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
-				// END ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
-				// }
 				elseif ( ( $req_orderby == 'phpversion' ) ) {
 					$orderby = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
 				} elseif ( ( $req_orderby == 'status' ) ) {
@@ -416,13 +373,6 @@ class MainWP_Manage_Sites_List_Table {
 
 		$search = isset( $_REQUEST['search']['value'] ) ? trim($_REQUEST['search']['value']) : '';
 
-		// if ($search != '') {
-		// $_REQUEST[ 's' ] = $search;
-		// }
-
-		// $no_request = (!isset( $_REQUEST[ 's' ] ) && !isset( $_REQUEST[ 'g' ] ) && !isset( $_REQUEST[ 'status' ] ) );
-		// $all_request = ($search == '') && (( isset( $_REQUEST[ 'status' ] ) && $_REQUEST[ 'status' ] == 'all') || (isset( $_REQUEST[ 'g' ] ) && $_REQUEST[ 'g' ] == -1 )) ? true : false;
-
 		$get_saved_state = empty( $search ) && ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] );
 		$get_all         = ( $search == '' ) && ( isset( $_REQUEST['status'] ) && $_REQUEST['status'] == 'all' ) && ( isset( $_REQUEST['g'] ) && $_REQUEST['g'] == -1 ) ? true : false;
 
@@ -430,11 +380,7 @@ class MainWP_Manage_Sites_List_Table {
 		$site_status = '';
 
 		if ( ! isset( $_REQUEST['status'] ) ) {
-			if ( $get_saved_state ) {
-				// $_status = get_option( 'mainwp_managesites_filter_status' );
-				// if ( !empty( $_status ) ) {
-				// $_REQUEST[ 'status' ] = $_status; // this also remember filter status when not optimize
-				// }
+			if ( $get_saved_state ) {				
 				$site_status = get_option( 'mainwp_managesites_filter_status' );
 			} else {
 				MainWP_Utility::update_option( 'mainwp_managesites_filter_status', '' ); // clear saved status
@@ -447,11 +393,7 @@ class MainWP_Manage_Sites_List_Table {
 		if ( $get_all ) {
 			MainWP_Utility::update_option( 'mainwp_managesites_filter_group', '' );
 		} elseif ( ! isset( $_REQUEST['g'] ) ) {
-			if ( $get_saved_state ) {
-				// $_g = get_option( 'mainwp_managesites_filter_group' );
-				// if ( !empty( $_g ) ) {
-				// $_REQUEST[ 'g' ] = $_g; // this also remember filter groups when not optimize
-				// }
+			if ( $get_saved_state ) {			
 				$group_id = get_option( 'mainwp_managesites_filter_group' );
 			} else {
 				MainWP_Utility::update_option( 'mainwp_managesites_filter_group', '' ); // clear saved status
@@ -463,17 +405,10 @@ class MainWP_Manage_Sites_List_Table {
 
 		$where = null;
 
-		// if ( isset( $_REQUEST[ 'status' ] ) && ( $_REQUEST[ 'status' ] != '' ) && ( $_REQUEST[ 'status' ] != 'all' )) {
 		if ( $site_status != '' && $site_status != 'all' ) {
 			if ( $site_status == 'connected' ) {
 				$where = 'wp_sync.sync_errors = ""';
-			}
-			// else if ( $site_status == 'connected' ) {
-			// $where = 'wp.offline_check_result = 1';
-			// }
-			// else if ( $site_status == 'offline' ) {
-			// $where = 'wp.offline_check_result = -1';
-			// }
+			}		
 			elseif ( $site_status == 'disconnected' ) {
 				$where = 'wp_sync.sync_errors != ""';
 			} elseif ( $site_status == 'update' ) {
@@ -496,35 +431,7 @@ class MainWP_Manage_Sites_List_Table {
 				'offset'       => $start,
 				'rowcount'     => $perPage,
 			);
-
-			// $websites        = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( true, null, $orderby ) );
-			//
-			// $totalRecords    = ( $websites ? MainWP_DB::num_rows( $websites ) : 0 );
-			//
-			// if ( $websites ) {
-			// @MainWP_DB::free_result( $websites );
-			// }
-
-			// $websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( true, null, $orderby, $start, $perPage ) );
 		}
-		// else if ( isset( $_REQUEST[ 'g' ] ) && ( $_REQUEST[ 'g' ] != '' ) && ( $_REQUEST[ 'g' ] != -1 )) {
-		// $websites      = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $_REQUEST[ 'g' ], true ) );
-		// $totalRecords    = ( $websites ? MainWP_DB::num_rows( $websites ) : 0 );
-		// if ( $websites ) {
-		// @MainWP_DB::free_result( $websites );
-		// }
-			// $websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $_REQUEST[ 'g' ], true, $orderby, $start, $perPage, $where, $search ) );
-
-		// }
-		// else if ( isset( $_REQUEST[ 'status' ] ) && ( $_REQUEST[ 'status' ] != '' ) && ( $_REQUEST[ 'status' ] != 'all' )) {
-		// $websites        = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( true, null, $orderby, false, false, $where ) );
-		// $totalRecords    = ( $websites ? MainWP_DB::num_rows( $websites ) : 0 );
-		//
-		// if ( $websites ) {
-		// @MainWP_DB::free_result( $websites );
-		// }
-		// $websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( true, null, $orderby, $start, $perPage, $where ) );
-		// }
 		else {
 
 			$total_params = array(
@@ -548,32 +455,23 @@ class MainWP_Manage_Sites_List_Table {
 				$total_params['extra_where'] = $where;
 				$params['extra_where']       = $where;
 			}
-
-			// $websites        = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( true, ( isset( $_REQUEST[ 's' ] ) && ( $_REQUEST[ 's' ] != '' ) ? $_REQUEST[ 's' ] : null ), $orderby ) );
-			// $totalRecords    = ( $websites ? MainWP_DB::num_rows( $websites ) : 0 );
-			//
-			// if ( $websites ) {
-			// @MainWP_DB::free_result( $websites );
-			// }
-			// $websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( true, ( isset( $_REQUEST[ 's' ] ) && ( $_REQUEST[ 's' ] != '' ) ? $_REQUEST[ 's' ] : null ), $orderby, $start, $perPage ) );
-
 		}
 
 		$total_websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLSearchWebsitesForCurrentUser( $total_params ) );
 		$totalRecords   = ( $total_websites ? MainWP_DB::num_rows( $total_websites ) : 0 );
 		if ( $total_websites ) {
-			@MainWP_DB::free_result( $total_websites );
+			MainWP_DB::free_result( $total_websites );
 		}
 
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLSearchWebsitesForCurrentUser( $params ) );
 
 		$site_ids = array();
-		while ( $websites && ( $site = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $site = MainWP_DB::fetch_object( $websites ) ) ) {
 			$site_ids[] = $site->id;
 		}
 		do_action('mainwp-sitestable-prepared-items', $websites, $site_ids);
 
-		@MainWP_DB::data_seek( $websites, 0 );
+		MainWP_DB::data_seek( $websites, 0 );
 
 		$this->items        = $websites;
 		$this->_total_items = $totalRecords;
@@ -583,7 +481,7 @@ class MainWP_Manage_Sites_List_Table {
 		$site_ids = array();
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			$hasSyncErrors = ( $website->sync_errors != '' );
 			$cnt           = 0;
 			if ( $website->offline_check_result == 1 && ! $hasSyncErrors ) {
@@ -992,7 +890,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	function clear_items() {
 		if ( MainWP_DB::is_result( $this->items ) ) {
-			@MainWP_DB::free_result( $this->items );
+			MainWP_DB::free_result( $this->items );
 		}
 	}
 
@@ -1262,7 +1160,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	function display_rows() {
 		if ( MainWP_DB::is_result( $this->items ) ) {
-			while ( $this->items && ( $item = @MainWP_DB::fetch_array( $this->items ) ) ) {
+			while ( $this->items && ( $item = MainWP_DB::fetch_array( $this->items ) ) ) {
 				$this->single_row( $item );
 			}
 		}

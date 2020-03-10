@@ -20,7 +20,7 @@ class MainWP_Widget_Themes {
 		$websites  = MainWP_DB::Instance()->query( $sql );
 		$allThemes = array();
 		if ( $websites ) {
-			$website = @MainWP_DB::fetch_object( $websites );
+			$website = MainWP_DB::fetch_object( $websites );
 			if ( $website && $website->themes != '' ) {
 				$themes = json_decode( $website->themes, 1 );
 				if ( is_array( $themes ) && count( $themes ) != 0 ) {
@@ -29,7 +29,7 @@ class MainWP_Widget_Themes {
 					}
 				}
 			}
-			@MainWP_DB::free_result( $websites );
+			MainWP_DB::free_result( $websites );
 		}
 
 		$actived_themes = MainWP_Utility::getSubArrayHaving( $allThemes, 'active', 1 );

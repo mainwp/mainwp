@@ -929,8 +929,8 @@ class MainWP_Settings {
 			$allowedHeaders = array( 'site name', 'url', 'admin name', 'group', 'security id', 'http username', 'http password', 'verify certificate', 'ssl version' );
 
 			$csv = implode(',', $allowedHeaders) . "\r\n"; // PHP_EOL;
-			@MainWP_DB::data_seek( $websites, 0 );
-			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+			MainWP_DB::data_seek( $websites, 0 );
+			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( empty( $website ) ) {
 					continue;
 				}

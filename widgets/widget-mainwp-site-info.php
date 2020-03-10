@@ -23,7 +23,7 @@ class MainWP_Site_Info {
 			return;
 		}
 
-		$website = @MainWP_DB::fetch_object( $websites );
+		$website = MainWP_DB::fetch_object( $websites );
 
 		$website_info = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'site_info' ), true );
 
@@ -90,7 +90,7 @@ class MainWP_Site_Info {
 			<?php do_action( 'mainwp_site_info_widget_bottom'); ?>
 		</div>
 		<?php
-		@MainWP_DB::free_result( $websites );
+		MainWP_DB::free_result( $websites );
 	}
 
 }

@@ -606,7 +606,7 @@ class MainWP_User {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( $website->sync_errors != '' ) {
 								continue;
 							}
@@ -640,7 +640,7 @@ class MainWP_User {
 								$output->users += self::usersSearchHandlerRenderer( $tmpUsers, $website );
 							}
 						}
-						@MainWP_DB::free_result( $websites );
+						MainWP_DB::free_result( $websites );
 					}
 				}
 			}
@@ -670,7 +670,7 @@ class MainWP_User {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( $website->sync_errors != '' ) {
 								continue;
 							}
@@ -686,7 +686,7 @@ class MainWP_User {
 								'http_pass',
 							) );
 						}
-						@MainWP_DB::free_result( $websites );
+						MainWP_DB::free_result( $websites );
 					}
 				}
 			}
@@ -1167,7 +1167,7 @@ class MainWP_User {
 				foreach ( $selected_groups as $k ) {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
 						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
 								'id',
 								'url',
@@ -1180,7 +1180,7 @@ class MainWP_User {
 								'http_pass',
 							) );
 						}
-						@MainWP_DB::free_result( $websites );
+						MainWP_DB::free_result( $websites );
 					}
 				}
 			}
@@ -1421,7 +1421,7 @@ class MainWP_User {
 				if ( MainWP_DB::Instance()->getGroupsByName( $group ) ) {
 					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupName( $group ) );
 					if ( $websites ) {
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
 								'id',
 								'url',
@@ -1434,7 +1434,7 @@ class MainWP_User {
 								'http_pass',
 							) );
 						}
-						@MainWP_DB::free_result( $websites );
+						MainWP_DB::free_result( $websites );
 					} else {
 						$not_valid[]  = __( 'No websites assigned to the selected group.', 'mainwp' ) . ' ' . $group;
 						$error_sites .= $group . ';';

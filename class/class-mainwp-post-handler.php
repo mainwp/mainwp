@@ -639,10 +639,10 @@ class MainWP_Post_Handler {
 		if ( isset( $_POST['group_id'] ) && ! empty( $_POST['group_id'] ) ) {
 			$ids      = '';
 			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $_POST['group_id'], true ) );
-			while ( $websites && ( $website  = @MainWP_DB::fetch_object( $websites ) ) ) {
+			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 				$ids .= $website->id . ',';
 			}
-			@MainWP_DB::free_result( $websites );
+			MainWP_DB::free_result( $websites );
 			$ids = rtrim( $ids, ',' );
 			die( $ids );
 		}

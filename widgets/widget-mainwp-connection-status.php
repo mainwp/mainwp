@@ -35,8 +35,8 @@ class MainWP_Connection_Status {
 		$disconnect_site_ids = array(); // to fix double display
 
 		for ( $j = 0; $j < 4; $j ++ ) {
-			@MainWP_DB::data_seek( $websites, 0 );
-			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+			MainWP_DB::data_seek( $websites, 0 );
+			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( empty( $website ) ) {
 					continue;
 				}
@@ -308,7 +308,7 @@ class MainWP_Connection_Status {
 		</div>
 		<?php
 
-		@MainWP_DB::free_result( $websites );
+		MainWP_DB::free_result( $websites );
 	}
 
 }

@@ -735,7 +735,7 @@ class MainWP_Post {
 			foreach ( $groups as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
-					while ( $websites && ( $website  = @MainWP_DB::fetch_object( $websites ) ) ) {
+					while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 						if ( $website->sync_errors != '' ) {
 							continue;
 						}
@@ -751,7 +751,7 @@ class MainWP_Post {
 							'http_pass',
 						) );
 					}
-					@MainWP_DB::free_result( $websites );
+					MainWP_DB::free_result( $websites );
 				}
 			}
 		}
@@ -2072,7 +2072,7 @@ class MainWP_Post {
 								foreach ( $selected_groups as $k ) {
 									if ( MainWP_Utility::ctype_digit( $k ) ) {
 										$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
-										while ( $websites && ( $website  = @MainWP_DB::fetch_object( $websites ) ) ) {
+										while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 											if ( $website->sync_errors != '' ) {
 												continue;
 											}
@@ -2088,7 +2088,7 @@ class MainWP_Post {
 												'http_pass',
 											) );
 										}
-										@MainWP_DB::free_result( $websites );
+										MainWP_DB::free_result( $websites );
 									}
 								}
 							}

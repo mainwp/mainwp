@@ -19,8 +19,8 @@ class MainWP_Security_Issues_Widget {
 
 		$total_securityIssues = 0;
 
-		@MainWP_DB::data_seek( $websites, 0 );
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+		MainWP_DB::data_seek( $websites, 0 );
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			if ( MainWP_Utility::ctype_digit( $website->securityIssues ) ) {
 				$total_securityIssues += $website->securityIssues;
 			}
@@ -61,8 +61,8 @@ class MainWP_Security_Issues_Widget {
 
 		<div id="mainwp-security-issues-widget-list" class="ui middle aligned divided selection list" style="display: none;">
 			<?php
-			@MainWP_DB::data_seek( $websites, 0 );
-			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+			MainWP_DB::data_seek( $websites, 0 );
+			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 				// if ( !MainWP_Utility::ctype_digit( $website->securityIssues ) || $website->securityIssues == 0 ) {
 				// continue;
 				// }

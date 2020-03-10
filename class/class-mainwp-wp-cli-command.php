@@ -34,7 +34,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 		$nameLength    = strlen( 'name' );
 		$urlLength     = strlen( 'url' );
 		$versionLength = strlen( 'version' );
-		while ( $websites && ( $website      = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website      = MainWP_DB::fetch_object( $websites ) ) ) {
 			if ( $idLength < strlen( $website->id ) ) {
 				$idLength = strlen( $website->id );
 			}
@@ -48,18 +48,18 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 				$versionLength = strlen( $website->version );
 			}
 		}
-		@MainWP_DB::data_seek( $websites, 0 );
+		MainWP_DB::data_seek( $websites, 0 );
 
 		WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $urlLength + 2 ) . "s+%'--" . ( $versionLength + 2 ) . 's+', '', '', '', '' ) );
 		WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $urlLength . 's | %-' . $versionLength . 's |', 'id', 'name', 'url', 'version' ) );
 		WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $urlLength + 2 ) . "s+%'--" . ( $versionLength + 2 ) . 's+', '', '', '', '' ) );
 
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $urlLength . 's | %-' . $versionLength . 's |', $website->id, $website->name, $website->url, $website->version ) );
 		}
 
 		WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $urlLength + 2 ) . "s+%'--" . ( $versionLength + 2 ) . 's+', '', '', '', '' ) );
-		@MainWP_DB::free_result( $websites );
+		MainWP_DB::free_result( $websites );
 	}
 
 	/**
@@ -101,7 +101,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 		WP_CLI::line( 'Sync started' );
 		$warnings = 0;
 		$errors   = 0;
-		while ( $websites && ( $website  = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 			if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
 				continue;
 			}
@@ -119,7 +119,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 				$errors++;
 			}
 		}
-		@MainWP_DB::free_result( $websites );
+		MainWP_DB::free_result( $websites );
 		if ( $errors > 0 ) {
 			WP_CLI::error( 'Sync completed with errors' );
 		} elseif ( $warnings > 0 ) {
@@ -164,7 +164,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 		WP_CLI::line( 'Reconnect started' );
 		$warnings = 0;
 		$errors   = 0;
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
 				continue;
 			}
@@ -183,7 +183,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 				$errors++;
 			}
 		}
-		@MainWP_DB::free_result( $websites );
+		MainWP_DB::free_result( $websites );
 		if ( $errors > 0 ) {
 			WP_CLI::error( 'Reconnect completed with errors' );
 		} elseif ( $warnings > 0 ) {
@@ -241,7 +241,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			$websites            = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
 			$userExtension       = MainWP_DB::Instance()->getUserExtension();
 			$websites_to_upgrade = array();
-			while ( $websites && ( $website          = @MainWP_DB::fetch_object( $websites ) ) ) {
+			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
 					continue;
 				}
@@ -329,7 +329,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			$websites         = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
 			$userExtension    = MainWP_DB::Instance()->getUserExtension();
 			$websites_to_list = array();
-			while ( $websites && ( $website          = @MainWP_DB::fetch_object( $websites ) ) ) {
+			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
 					continue;
 				}
@@ -407,7 +407,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 			$websites      = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
 			$userExtension = MainWP_DB::Instance()->getUserExtension();
-			while ( $websites && ( $website      = @MainWP_DB::fetch_object( $websites ) ) ) {
+			while ( $websites && ( $website      = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
 					continue;
 				}
@@ -502,7 +502,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			$websites            = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
 			$userExtension       = MainWP_DB::Instance()->getUserExtension();
 			$websites_to_upgrade = array();
-			while ( $websites && ( $website          = @MainWP_DB::fetch_object( $websites ) ) ) {
+			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
 					continue;
 				}
@@ -590,7 +590,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			$websites            = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
 			$userExtension       = MainWP_DB::Instance()->getUserExtension();
 			$websites_to_upgrade = array();
-			while ( $websites && ( $website          = @MainWP_DB::fetch_object( $websites ) ) ) {
+			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
 					continue;
 				}
@@ -669,7 +669,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 			$websites      = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
 			$userExtension = MainWP_DB::Instance()->getUserExtension();
-			while ( $websites && ( $website      = @MainWP_DB::fetch_object( $websites ) ) ) {
+			while ( $websites && ( $website      = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
 					continue;
 				}

@@ -41,7 +41,7 @@ class MainWP_Widget_Plugins {
 		$websites   = MainWP_DB::Instance()->query( $sql );
 		$allPlugins = array();
 		if ( $websites ) {
-			$website = @MainWP_DB::fetch_object( $websites );
+			$website = MainWP_DB::fetch_object( $websites );
 			if ( $website && $website->plugins != '' ) {
 				$plugins = json_decode( $website->plugins, 1 );
 				if ( is_array( $plugins ) && count( $plugins ) != 0 ) {
@@ -53,7 +53,7 @@ class MainWP_Widget_Plugins {
 					}
 				}
 			}
-			@MainWP_DB::free_result( $websites );
+			MainWP_DB::free_result( $websites );
 		}
 
 		$actived_plugins = MainWP_Utility::getSubArrayHaving( $allPlugins, 'active', 1 );

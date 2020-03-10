@@ -109,8 +109,8 @@ class MainWP_Updates {
 
 			$sites_not_in_groups = array();
 			$pos                 = 0;
-			@MainWP_DB::data_seek( $websites, 0 );
-			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+			MainWP_DB::data_seek( $websites, 0 );
+			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 				$site_offset[ $website->id ] = $pos;
 				$pos++;
 				if ( ! isset( $sites_in_groups[ $website->id ] ) ) {
@@ -158,9 +158,9 @@ class MainWP_Updates {
 		$allThemesOutdate  = array();
 		$themesOutdateInfo = array();
 
-		@MainWP_DB::data_seek( $websites, 0 );
+		MainWP_DB::data_seek( $websites, 0 );
 
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 
 			$pluginsIgnored_perSites          = $themesIgnored_perSites = array();
 			$pluginsIgnoredAbandoned_perSites = $themesIgnoredAbandoned_perSites = array();
@@ -571,8 +571,8 @@ class MainWP_Updates {
 					</thead>
 					<tbody>
 					<?php
-					@MainWP_DB::data_seek( $websites, 0 );
-					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+					MainWP_DB::data_seek( $websites, 0 );
+					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						if ( $website->offline_check_result == 1 || $website->http_response_code == '-1' ) {
 							continue;
 						}
@@ -684,8 +684,8 @@ class MainWP_Updates {
 											<?php foreach ( $site_ids as $site_id ) : ?>
 												<?php
 												$seek = $site_offset[ $site_id ];
-												@MainWP_DB::data_seek( $websites, $seek );
-												$website = @MainWP_DB::fetch_object( $websites );
+												MainWP_DB::data_seek( $websites, $seek );
+												$website = MainWP_DB::fetch_object( $websites );
 												if ( $website->is_ignoreCoreUpdates ) {
 													continue;
 												}
@@ -740,7 +740,7 @@ class MainWP_Updates {
 					</tfoot>
 				</table>
 				<?php else : // not view per group ?>
-					<?php @MainWP_DB::data_seek( $websites, 0 ); ?>
+					<?php MainWP_DB::data_seek( $websites, 0 ); ?>
 				<table class="ui stackable single line table" id="mainwp-wordpress-updates-table"> <!-- Per Site table -->					<thead>
 						<tr>
 							<th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo __( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
@@ -762,7 +762,7 @@ class MainWP_Updates {
 					</thead>
 					<tbody> <!-- per site or plugin -->
 						<?php
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( $website->is_ignoreCoreUpdates ) {
 								continue;
 							}
@@ -847,8 +847,8 @@ class MainWP_Updates {
 					</thead>
 					<tbody id="plugins-updates-global" class="ui accordion">
 						<?php
-						@MainWP_DB::data_seek( $websites, 0 );
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						MainWP_DB::data_seek( $websites, 0 );
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( $website->is_ignorePluginUpdates ) {
 								continue;
 							}
@@ -1017,9 +1017,9 @@ class MainWP_Updates {
 											<?php	foreach ( $site_ids as $site_id ) : ?>
 												<?php
 												$seek = $site_offset[ $site_id ];
-												@MainWP_DB::data_seek( $websites, $seek );
+												MainWP_DB::data_seek( $websites, $seek );
 
-												$website = @MainWP_DB::fetch_object( $websites );
+												$website = MainWP_DB::fetch_object( $websites );
 												if ( $website->is_ignorePluginUpdates ) {
 													continue;
 												}
@@ -1210,8 +1210,8 @@ class MainWP_Updates {
 										<tbody plugin_slug="<?php echo $plugin_name; ?>">
 											<?php
 											$count_limit_updates = 0;
-											@MainWP_DB::data_seek( $websites, 0 );
-											while ( $websites && ( $website          = @MainWP_DB::fetch_object( $websites ) ) ) {
+											MainWP_DB::data_seek( $websites, 0 );
+											while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
 												if ( $website->is_ignorePluginUpdates ) {
 													continue;
 												}
@@ -1316,8 +1316,8 @@ class MainWP_Updates {
 					</thead>
 					<tbody id="themes-updates-global" class="ui accordion">
 						<?php
-						@MainWP_DB::data_seek( $websites, 0 );
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						MainWP_DB::data_seek( $websites, 0 );
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( $website->is_ignoreThemeUpdates ) {
 								continue;
 							}
@@ -1480,9 +1480,9 @@ class MainWP_Updates {
 											<?php	foreach ( $site_ids as $site_id ) : ?>
 												<?php
 												$seek = $site_offset[ $site_id ];
-												@MainWP_DB::data_seek( $websites, $seek );
+												MainWP_DB::data_seek( $websites, $seek );
 
-												$website = @MainWP_DB::fetch_object( $websites );
+												$website = MainWP_DB::fetch_object( $websites );
 												if ( $website->is_ignoreThemeUpdates ) {
 													continue;
 												}
@@ -1662,8 +1662,8 @@ class MainWP_Updates {
 										<tbody theme_slug="<?php echo $theme_name; ?>">
 											<?php
 											$count_limit_updates = 0;
-											@MainWP_DB::data_seek( $websites, 0 );
-											while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+											MainWP_DB::data_seek( $websites, 0 );
+											while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 												if ( $website->is_ignoreThemeUpdates ) {
 													continue;
 												}
@@ -1755,8 +1755,8 @@ class MainWP_Updates {
 							</thead>
 							<tbody id="translations-updates-global"  class="ui accordion">
 								<?php
-								@MainWP_DB::data_seek( $websites, 0 );
-								while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+								MainWP_DB::data_seek( $websites, 0 );
+								while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 									$translation_upgrades = json_decode( $website->translation_upgrades, true );
 									if ( ( count( $translation_upgrades ) == 0 ) && ( $website->sync_errors == '' ) ) {
 										continue;
@@ -1884,8 +1884,8 @@ class MainWP_Updates {
 												<?php foreach ( $site_ids as $site_id ) : ?>
 													<?php
 													$seek = $site_offset[ $site_id ];
-													@MainWP_DB::data_seek( $websites, $seek );
-													$website                          = @MainWP_DB::fetch_object( $websites );
+													MainWP_DB::data_seek( $websites, $seek );
+													$website                          = MainWP_DB::fetch_object( $websites );
 													$translation_upgrades             = json_decode( $website->translation_upgrades, true );
 													$total_group_translation_updates += count( $translation_upgrades );
 
@@ -2011,8 +2011,8 @@ class MainWP_Updates {
 												</thead>
 												<tbody class="translations-bulk-updates" translation_slug="<?php echo $slug; ?>" translation_name="<?php echo urlencode( $translationsInfo[ $slug ]['name'] ); ?>">
 													<?php
-													@MainWP_DB::data_seek( $websites, 0 );
-													while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+													MainWP_DB::data_seek( $websites, 0 );
+													while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 														$translation_upgrades = json_decode( $website->translation_upgrades, true );
 														$translation_upgrade  = null;
 														foreach ( $translation_upgrades as $current_translation_upgrade ) {
@@ -2085,9 +2085,9 @@ class MainWP_Updates {
 						</tr>
 					</thead>
 					<tbody class="ui accordion">
-						<?php @MainWP_DB::data_seek( $websites, 0 ); ?>
+						<?php MainWP_DB::data_seek( $websites, 0 ); ?>
 						<?php
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							$plugins_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_info' ), true );
 
 							if ( ! is_array( $plugins_outdate ) ) {
@@ -2204,9 +2204,9 @@ class MainWP_Updates {
 									<?php foreach ( $site_ids as $site_id ) : ?>
 										<?php
 										$seek = $site_offset[ $site_id ];
-										@MainWP_DB::data_seek( $websites, $seek );
+										MainWP_DB::data_seek( $websites, $seek );
 
-										$website = @MainWP_DB::fetch_object( $websites );
+										$website = MainWP_DB::fetch_object( $websites );
 
 										$plugins_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_info' ), true );
 
@@ -2340,8 +2340,8 @@ class MainWP_Updates {
 									</thead>
 									<tbody class="abandoned-plugins-ignore-global" plugin_slug="<?php echo urlencode($slug); ?>" plugin_name="<?php echo urlencode( $pluginsOutdateInfo[ $slug ]['Name'] ); ?>" dismissed="0">
 									<?php
-										@MainWP_DB::data_seek( $websites, 0 );
-									while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+										MainWP_DB::data_seek( $websites, 0 );
+									while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 										$plugins_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_info' ), true );
 										if ( ! is_array( $plugins_outdate ) ) {
 											$plugins_outdate = array();
@@ -2421,9 +2421,9 @@ class MainWP_Updates {
 						</tr>
 					</thead>
 					<tbody class="ui accordion">
-						<?php @MainWP_DB::data_seek( $websites, 0 ); ?>
+						<?php MainWP_DB::data_seek( $websites, 0 ); ?>
 						<?php
-						while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							$themes_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_info' ), true );
 
 							if ( is_array( $themes_outdate ) ) {
@@ -2538,9 +2538,9 @@ class MainWP_Updates {
 									<?php foreach ( $site_ids as $site_id ) : ?>
 										<?php
 										$seek = $site_offset[ $site_id ];
-										@MainWP_DB::data_seek( $websites, $seek );
+										MainWP_DB::data_seek( $websites, $seek );
 
-										$website = @MainWP_DB::fetch_object( $websites );
+										$website = MainWP_DB::fetch_object( $websites );
 
 										$themes_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_info' ), true );
 
@@ -2673,8 +2673,8 @@ class MainWP_Updates {
 									</thead>
 									<tbody class="abandoned-themes-ignore-global" theme_slug="<?php echo $slug; ?>" theme_name="<?php echo urlencode( $val['name'] ); ?>">
 									<?php
-										@MainWP_DB::data_seek( $websites, 0 );
-									while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+										MainWP_DB::data_seek( $websites, 0 );
+									while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 										$themes_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_info' ), true );
 										if ( ! is_array( $themes_outdate ) ) {
 											$themes_outdate = array();
@@ -2745,16 +2745,17 @@ class MainWP_Updates {
 			//	"language" : { "emptyTable": "No available updates. Please sync your MainWP Dashboard with Child Sites to see if there are any new updates available." }
 		  //} );
 
-			jQuery( 'table table:not( .mainwp-per-group-table )' ).DataTable( {
-				searching: false,
-				paging : false,
-								stateSave: true,
-				info : false,
-				columnDefs : [ { "orderable": false, "targets": "no-sort" } ],
-				language : { "emptyTable": "No available updates. Please sync your MainWP Dashboard with Child Sites to see if there are any new updates available." }
-			} );
-
 			jQuery( document ).ready( function () {
+				
+				jQuery( 'table table:not( .mainwp-per-group-table )' ).DataTable( {
+					searching: false,
+					paging : false,
+									stateSave: true,
+					info : false,
+					columnDefs : [ { "orderable": false, "targets": "no-sort" } ],
+					language : { "emptyTable": "No available updates. Please sync your MainWP Dashboard with Child Sites to see if there are any new updates available." }
+				} );
+			
 				jQuery( '#mainwp-manage-updates .ui.accordion' ).accordion( {
 					exclusive: false,
 					duration: 200,
@@ -2868,14 +2869,14 @@ class MainWP_Updates {
 		if ( isset( $id ) ) {
 			if ( $id == '_ALL_' ) {
 				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-				while ( $websites && ( $website  = @MainWP_DB::fetch_object( $websites ) ) ) {
+				while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 					if ( $type == 'plugin' ) {
 						MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_plugins' => json_encode( array() ) ) );
 					} elseif ( $type == 'theme' ) {
 						MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_themes' => json_encode( array() ) ) );
 					}
 				}
-				@MainWP_DB::free_result( $websites );
+				MainWP_DB::free_result( $websites );
 			} elseif ( MainWP_Utility::ctype_digit( $id ) ) {
 				$website = MainWP_DB::Instance()->getWebsiteById( $id );
 				if ( MainWP_Utility::can_edit_website( $website ) ) {
@@ -2972,14 +2973,14 @@ class MainWP_Updates {
 		if ( isset( $id ) ) {
 			if ( $id == '_ALL_' ) {
 				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-				while ( $websites && ( $website  = @MainWP_DB::fetch_object( $websites ) ) ) {
+				while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 					if ( $type == 'plugin' ) {
-						MainWP_DB::Instance()->updateWebsiteOption( $website, 'plugins_outdate_dismissed', @json_encode( array() ) );
+						MainWP_DB::Instance()->updateWebsiteOption( $website, 'plugins_outdate_dismissed', json_encode( array() ) );
 					} elseif ( $type == 'theme' ) {
-						MainWP_DB::Instance()->updateWebsiteOption( $website, 'themes_outdate_dismissed', @json_encode( array() ) );
+						MainWP_DB::Instance()->updateWebsiteOption( $website, 'themes_outdate_dismissed', json_encode( array() ) );
 					}
 				}
-				@MainWP_DB::free_result( $websites );
+				MainWP_DB::free_result( $websites );
 			} elseif ( MainWP_Utility::ctype_digit( $id ) ) {
 				$website = MainWP_DB::Instance()->getWebsiteById( $id );
 				if ( MainWP_Utility::can_edit_website( $website ) ) {
@@ -2988,13 +2989,13 @@ class MainWP_Updates {
 						$decodedIgnoredPlugins = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_dismissed' ), true );
 						if ( isset( $decodedIgnoredPlugins[ $slug ] ) ) {
 							unset( $decodedIgnoredPlugins[ $slug ] );
-							MainWP_DB::Instance()->updateWebsiteOption( $website, 'plugins_outdate_dismissed', @json_encode( $decodedIgnoredPlugins ) );
+							MainWP_DB::Instance()->updateWebsiteOption( $website, 'plugins_outdate_dismissed', json_encode( $decodedIgnoredPlugins ) );
 						}
 					} elseif ( $type == 'theme' ) {
 						$decodedIgnoredThemes = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
 						if ( isset( $decodedIgnoredThemes[ $slug ] ) ) {
 							unset( $decodedIgnoredThemes[ $slug ] );
-							MainWP_DB::Instance()->updateWebsiteOption( $website, 'themes_outdate_dismissed', @json_encode( $decodedIgnoredThemes ) );
+							MainWP_DB::Instance()->updateWebsiteOption( $website, 'themes_outdate_dismissed', json_encode( $decodedIgnoredThemes ) );
 						}
 					}
 				}
@@ -3053,13 +3054,13 @@ class MainWP_Updates {
 					$decodedDismissedPlugins = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_dismissed' ), true );
 					if ( ! isset( $decodedDismissedPlugins[ $slug ] ) ) {
 						$decodedDismissedPlugins[ $slug ] = urldecode( $name );
-						MainWP_DB::Instance()->updateWebsiteOption( $website, 'plugins_outdate_dismissed', @json_encode( $decodedDismissedPlugins ) );
+						MainWP_DB::Instance()->updateWebsiteOption( $website, 'plugins_outdate_dismissed', json_encode( $decodedDismissedPlugins ) );
 					}
 				} elseif ( $type == 'theme' ) {
 					$decodedDismissedThemes = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
 					if ( ! isset( $decodedDismissedThemes[ $slug ] ) ) {
 						$decodedDismissedThemes[ $slug ] = urldecode( $name );
-						MainWP_DB::Instance()->updateWebsiteOption( $website, 'themes_outdate_dismissed', @json_encode( $decodedDismissedThemes ) );
+						MainWP_DB::Instance()->updateWebsiteOption( $website, 'themes_outdate_dismissed', json_encode( $decodedDismissedThemes ) );
 					}
 				}
 			}
@@ -3139,7 +3140,7 @@ class MainWP_Updates {
 		$userExtension = MainWP_DB::Instance()->getUserExtension();
 		$sql           = MainWP_DB::Instance()->getSQLWebsiteById( $id );
 		$websites      = MainWP_DB::Instance()->query( $sql );
-		$website       = @MainWP_DB::fetch_object( $websites );
+		$website       = MainWP_DB::fetch_object( $websites );
 
 		$slugs = array();
 		if ( $type == 'plugin' ) {

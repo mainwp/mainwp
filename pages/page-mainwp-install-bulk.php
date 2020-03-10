@@ -128,7 +128,7 @@ class MainWP_Install_Bulk {
 				$groupid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
 					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $groupid ) );
-					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						if ( $website->sync_errors != '' ) {
 							continue;
 						}
@@ -138,7 +138,7 @@ class MainWP_Install_Bulk {
 							'name',
 						) );
 					}
-					@MainWP_DB::free_result( $websites );
+					MainWP_DB::free_result( $websites );
 				}
 			}
 		}
@@ -217,7 +217,7 @@ class MainWP_Install_Bulk {
 				$groupid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
 					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $groupid ) );
-					while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						if ( $website->sync_errors != '' ) {
 							continue;
 						}
@@ -227,7 +227,7 @@ class MainWP_Install_Bulk {
 							'name',
 						) );
 					}
-					@MainWP_DB::free_result( $websites );
+					MainWP_DB::free_result( $websites );
 				}
 			}
 		}

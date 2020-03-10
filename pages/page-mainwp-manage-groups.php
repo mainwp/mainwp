@@ -54,7 +54,7 @@ class MainWP_Manage_Groups {
 	public static function getWebsiteListContent() {
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			?>
 			<div class="item ui checkbox">
 				<input type="checkbox" name="sites" value="<?php echo esc_attr($website->id); ?>" id="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>" >
@@ -62,7 +62,7 @@ class MainWP_Manage_Groups {
 			</div>
 			<?php
 		}
-		@MainWP_DB::free_result( $websites );
+		MainWP_DB::free_result( $websites );
 	}
 
 	public static function renderAllGroups() {

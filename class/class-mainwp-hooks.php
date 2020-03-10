@@ -120,7 +120,7 @@ class MainWP_Hooks {
 
 		$sql      = MainWP_DB::Instance()->getSQLWebsiteById( $site_id );
 		$websites = MainWP_DB::Instance()->query( $sql );
-		$site     = @MainWP_DB::fetch_object( $websites );
+		$site     = MainWP_DB::fetch_object( $websites );
 
 		if ( empty( $site ) ) {
 			return array( 'error' => __('Not found the website', 'mainwp') );

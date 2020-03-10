@@ -172,11 +172,11 @@ class MainWP_Updates_Overview {
 		$all_themes_updates       = array();
 		$all_translations_updates = array();
 
-		@MainWP_DB::data_seek( $websites, 0 );
+		MainWP_DB::data_seek( $websites, 0 );
 
 		$currentSite = null;
 
-		while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			if ( ! $globalView ) {
 				$currentSite = $website;
 			}
@@ -725,9 +725,9 @@ class MainWP_Updates_Overview {
 
 		<?php
 
-		@MainWP_DB::data_seek( $websites, 0 );
+		MainWP_DB::data_seek( $websites, 0 );
 		$site_ids = array();
-		while ( $websites && ( $website  = @MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 			$site_ids[] = $website->id;
 		}
 
@@ -745,7 +745,7 @@ class MainWP_Updates_Overview {
 			</div>
 
 			<?php
-			@MainWP_DB::free_result( $websites );
+			MainWP_DB::free_result( $websites );
 	}
 
 	// public static function renderIgnoredUpdates() {

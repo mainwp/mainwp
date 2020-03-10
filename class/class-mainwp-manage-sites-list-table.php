@@ -317,7 +317,7 @@ class MainWP_Manage_Sites_List_Table {
 			if ( isset($_REQUEST['order']) ) {
 				$columns = $_REQUEST['columns'];
 				$ord_col = $_REQUEST['order'][0]['column'];
-				if ( isset($columns[ $ord_col ]) ) {					
+				if ( isset($columns[ $ord_col ]) ) {
 					$req_orderby = $columns[ $ord_col ]['data'];
 					$req_order   = $_REQUEST['order'][0]['dir'];
 				}
@@ -340,8 +340,7 @@ class MainWP_Manage_Sites_List_Table {
                                             + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
                                             + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
                                     END ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
-				}
-				elseif ( ( $req_orderby == 'phpversion' ) ) {
+				} elseif ( ( $req_orderby == 'phpversion' ) ) {
 					$orderby = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) ' . ( $req_order == 'asc' ? 'asc' : 'desc' );
 				} elseif ( ( $req_orderby == 'status' ) ) {
 					$orderby = 'CASE true
@@ -380,7 +379,7 @@ class MainWP_Manage_Sites_List_Table {
 		$site_status = '';
 
 		if ( ! isset( $_REQUEST['status'] ) ) {
-			if ( $get_saved_state ) {				
+			if ( $get_saved_state ) {
 				$site_status = get_option( 'mainwp_managesites_filter_status' );
 			} else {
 				MainWP_Utility::update_option( 'mainwp_managesites_filter_status', '' ); // clear saved status
@@ -393,7 +392,7 @@ class MainWP_Manage_Sites_List_Table {
 		if ( $get_all ) {
 			MainWP_Utility::update_option( 'mainwp_managesites_filter_group', '' );
 		} elseif ( ! isset( $_REQUEST['g'] ) ) {
-			if ( $get_saved_state ) {			
+			if ( $get_saved_state ) {
 				$group_id = get_option( 'mainwp_managesites_filter_group' );
 			} else {
 				MainWP_Utility::update_option( 'mainwp_managesites_filter_group', '' ); // clear saved status
@@ -408,8 +407,7 @@ class MainWP_Manage_Sites_List_Table {
 		if ( $site_status != '' && $site_status != 'all' ) {
 			if ( $site_status == 'connected' ) {
 				$where = 'wp_sync.sync_errors = ""';
-			}		
-			elseif ( $site_status == 'disconnected' ) {
+			} elseif ( $site_status == 'disconnected' ) {
 				$where = 'wp_sync.sync_errors != ""';
 			} elseif ( $site_status == 'update' ) {
 				$available_update_ids = $this->get_available_update_siteids();
@@ -431,8 +429,7 @@ class MainWP_Manage_Sites_List_Table {
 				'offset'       => $start,
 				'rowcount'     => $perPage,
 			);
-		}
-		else {
+		} else {
 
 			$total_params = array(
 				'search' => $search,

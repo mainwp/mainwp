@@ -93,17 +93,17 @@ class MainWP_Post {
 	}
 
 	public static function on_load_add_edit() {
-		if ( isset($_GET['page']) && $_GET['page'] == 'PostBulkAdd' ) {
+		if ( isset( $_GET['page'] ) && 'PostBulkAdd' === $_GET['page'] ) {
 			global $_mainwp_default_post_to_edit;
 			$post_type                    = 'bulkpost';
 			$_mainwp_default_post_to_edit = get_default_post_to_edit( $post_type, true );
 			$post_id                      = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
 		} else {
-			$post_id = isset($_GET['post_id']) ? intval ($_GET['post_id']) : 0;
+			$post_id = isset( $_GET['post_id'] ) ? intval ( $_GET['post_id'] ) : 0;
 		}
 
 		if ( ! $post_id ) {
-			wp_die( __( 'Invalid post.' ) );
+			wp_die( __( 'Invalid post.', 'mainwp' ) );
 		}
 
 		self::on_load_bulkpost( $post_id );
@@ -156,13 +156,13 @@ class MainWP_Post {
 		global $current_screen;
 		// fake pagenow to compatible with wp_ajax_hidden_columns
 		?>
-		<script type="text/javascript"> pagenow = '<?php echo esc_html(strtolower( $current_screen->id )); ?>';</script>
+		<script type="text/javascript"> pagenow = '<?php echo esc_html( strtolower( $current_screen->id ) ); ?>';</script>
 		<?php
 	}
 
 	// to fix compatible with fake pagenow
 	public static function get_hidden_columns( $hidden, $screen ) {
-		if ( $screen && $screen->id == 'mainwp_page_PostBulkManage' ) {
+		if ( $screen && 'mainwp_page_PostBulkManage' === $screen->id ) {
 			$hidden = get_user_option( 'manage' . strtolower( $screen->id ) . 'columnshidden' );
 		}
 		return $hidden;
@@ -183,12 +183,12 @@ class MainWP_Post {
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
-							if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && $subPage['menu_hidden'] != true ) ) {
+							if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && true !== $subPage['menu_hidden'] ) ) {
 								if ( MainWP_Menu::is_disable_menu_item( 3, 'Post' . $subPage['slug'] ) ) {
 									continue;
 								}
 								?>
-								<a href="<?php echo admin_url( 'admin.php?page=Post' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html($subPage['title']); ?></a>
+								<a href="<?php echo admin_url( 'admin.php?page=Post' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 								<?php
 							}
 						}
@@ -232,22 +232,22 @@ class MainWP_Post {
 			if ( MainWP_Menu::is_disable_menu_item( 3, $item['slug'] ) ) {
 				continue;
 			}
-			MainWP_Menu::add_left_menu( $item, 2);
+			MainWP_Menu::add_left_menu( $item, 2 );
 		}
 	}
 
 	public static function admin_post_thumbnail_html( $content, $post_id, $thumbnail_id ) {
 		 $post = get_post( $post_id );
 
-		if ( empty($post) ) {
+		if ( empty( $post ) ) {
 			return $content;
 		}
 
-		if ( $post->post_type != 'bulkpost' && $post->post_type != 'bulkpage' ) {
+		if ( 'bulkpost' !== $post->post_type && 'bulkpage' !== $post->post_type ) {
 			return $content;
 		}
 
-		 return self::_wp_post_thumbnail_html($thumbnail_id, $post_id);
+		 return self::_wp_post_thumbnail_html( $thumbnail_id, $post_id );
 	}
 
 	/**
@@ -260,21 +260,21 @@ class MainWP_Post {
 	 */
 
 	static function add_meta( $post_ID ) {
-		$post_ID = (int) $post_ID;
+		$post_ID = ( int ) $post_ID;
 
-		$metakeyselect = isset($_POST['metakeyselect']) ? wp_unslash( trim( $_POST['metakeyselect'] ) ) : '';
-		$metakeyinput  = isset($_POST['metakeyinput']) ? wp_unslash( trim( $_POST['metakeyinput'] ) ) : '';
-		$metavalue     = isset($_POST['metavalue']) ? $_POST['metavalue'] : '';
+		$metakeyselect = isset( $_POST['metakeyselect'] ) ? wp_unslash( trim( $_POST['metakeyselect'] ) ) : '';
+		$metakeyinput  = isset( $_POST['metakeyinput'] ) ? wp_unslash( trim( $_POST['metakeyinput'] ) ) : '';
+		$metavalue     = isset( $_POST['metavalue'] ) ? $_POST['metavalue'] : '';
 		if ( is_string( $metavalue ) ) {
 			$metavalue = trim( $metavalue );
 		}
 
-		if ( ( ( '#NONE#' != $metakeyselect ) && ! empty( $metakeyselect ) ) || ! empty( $metakeyinput ) ) {
+		if ( ( ( '#NONE#' !== $metakeyselect ) && ! empty( $metakeyselect ) ) || ! empty( $metakeyinput ) ) {
 			/*
 			 * We have a key/value pair. If both the select and the input
 			 * for the key have data, the input takes precedence.
 			 */
-			if ( '#NONE#' != $metakeyselect ) {
+			if ( '#NONE#' !== $metakeyselect ) {
 				$metakey = $metakeyselect;
 			}
 
@@ -296,17 +296,17 @@ class MainWP_Post {
 
 	static function ajax_add_meta() {
 
-		MainWP_Post_Handler::Instance()->secure_request('mainwp_post_addmeta');
+		MainWP_Post_Handler::Instance()->secure_request( 'mainwp_post_addmeta' );
 
 		$c    = 0;
-		$pid  = (int) $_POST['post_id'];
+		$pid  = ( int ) $_POST['post_id'];
 		$post = get_post( $pid );
 
-		if ( isset($_POST['metakeyselect']) || isset($_POST['metakeyinput']) ) {
+		if ( isset( $_POST['metakeyselect'] ) || isset( $_POST['metakeyinput'] ) ) {
 			if ( ! current_user_can( 'edit_post', $pid ) ) {
 				wp_die( -1 );
 			}
-			if ( isset($_POST['metakeyselect']) && '#NONE#' == $_POST['metakeyselect'] && empty($_POST['metakeyinput']) ) {
+			if ( isset( $_POST['metakeyselect'] ) && '#NONE#' === $_POST['metakeyselect'] && empty( $_POST['metakeyinput'] ) ) {
 				wp_die( 1 );
 			}
 
@@ -315,18 +315,18 @@ class MainWP_Post {
 			}
 
 			$meta = get_metadata_by_mid( 'post', $mid );
-			$pid  = (int) $meta->post_id;
+			$pid  = ( int ) $meta->post_id;
 			$meta = get_object_vars( $meta );
 
 			$data = self::_list_meta_row( $meta, $c );
 
-		} elseif ( isset($_POST['delete_meta']) && $_POST['delete_meta'] == 'yes' ) {
+		} elseif ( isset( $_POST['delete_meta'] ) && 'yes' === $_POST['delete_meta'] ) {
 			$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
 
 			check_ajax_referer( "delete-meta_$id", 'meta_nonce' );
 
 			if ( ! $meta = get_metadata_by_mid( 'post', $id ) ) {
-				wp_send_json(array( 'ok' => 1 ));
+				wp_send_json( array( 'ok' => 1 ) );
 			}
 
 			if ( is_protected_meta( $meta->meta_key, 'post' ) || ! current_user_can( 'delete_post_meta', $meta->post_id, $meta->meta_key ) ) {
@@ -334,7 +334,7 @@ class MainWP_Post {
 			}
 
 			if ( delete_meta( $meta->meta_id ) ) {
-				wp_send_json(array( 'ok' => 1 ));
+				wp_send_json( array( 'ok' => 1 ) );
 			}
 
 			wp_die( 0 );
@@ -343,7 +343,7 @@ class MainWP_Post {
 			$mid   = (int) key( $_POST['meta'] );
 			$key   = wp_unslash( $_POST['meta'][ $mid ]['key'] );
 			$value = wp_unslash( $_POST['meta'][ $mid ]['value'] );
-			if ( '' == trim($key) ) {
+			if ( '' == trim( $key ) ) {
 				wp_send_json( array( 'error' => __( 'Please provide a custom field name.', 'mainwp' ) ));
 			}
 
@@ -368,7 +368,7 @@ class MainWP_Post {
 			), $c );
 		}
 
-		wp_send_json(array( 'result' => $data ));
+		wp_send_json( array( 'result' => $data ) );
 	}
 
 
@@ -411,10 +411,10 @@ class MainWP_Post {
 					continue;
 				}
 
-				if ( isset( $subPage['tab_link_hidden'] ) && $subPage['tab_link_hidden'] == true ) {
-					   $tab_link = '#';
+				if ( isset( $subPage['tab_link_hidden'] ) && true === $subPage['tab_link_hidden'] ) {
+			  	$tab_link = '#';
 				} else {
-						$tab_link = 'admin.php?page=Post' . $subPage['slug'];
+					$tab_link = 'admin.php?page=Post' . $subPage['slug'];
 				}
 
 						$item           = array();
@@ -425,7 +425,7 @@ class MainWP_Post {
 
 			}
 		}
-			MainWP_UI::render_page_navigation( $renderItems, __CLASS__ );
+		MainWP_UI::render_page_navigation( $renderItems, __CLASS__ );
 	}
 
 	/**
@@ -444,7 +444,7 @@ class MainWP_Post {
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Post' );
 
 		$selected_sites = $selected_groups = array();
-		if ( $cachedSearch != null ) {
+		if ( null != $cachedSearch ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
 				$selected_sites = $cachedSearch['sites'];
 			} elseif ( is_array( $cachedSearch['groups'] ) ) {
@@ -543,8 +543,9 @@ class MainWP_Post {
 				<div class="ui input fluid">
 					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_post_search_by_keyword" class="text" value="
 																	  <?php
-																		if ( $cachedSearch != null ) {
-																			echo esc_attr($cachedSearch['keyword']); }
+																		if ( null != $cachedSearch ) {
+																			echo esc_attr( $cachedSearch['keyword'] );
+																		}
 																		?>
 																		"/>
 				</div>
@@ -552,15 +553,15 @@ class MainWP_Post {
 			<div class="field">
 		<?php
 		$searchon = 'title';
-		if ( $cachedSearch != null ) {
+		if ( null != $cachedSearch ) {
 			$searchon = $cachedSearch['search_on'];
 		}
 		?>
 				<select class="ui dropdown fluid" id="mainwp_post_search_on">
 					<option value=""><?php esc_html_e( 'Search in...', 'mainwp' ); ?></option>
-					<option value="title" <?php echo $searchon == 'title' ? 'selected' : ''; ?>><?php esc_html_e( 'Title', 'mainwp' ); ?></option>
-					<option value="content" <?php echo $searchon == 'content' ? 'selected' : ''; ?>><?php esc_html_e( 'Body', 'mainwp' ); ?></option>
-					<option value="all" <?php echo $searchon == 'all' ? 'selected' : ''; ?>><?php esc_html_e( 'Title and Body', 'mainwp' ); ?></option>
+					<option value="title" <?php echo 'title' === $searchon ? 'selected' : ''; ?>><?php esc_html_e( 'Title', 'mainwp' ); ?></option>
+					<option value="content" <?php echo 'content' === $searchon ? 'selected' : ''; ?>><?php esc_html_e( 'Body', 'mainwp' ); ?></option>
+					<option value="all" <?php echo 'all' === $searchon ? 'selected' : ''; ?>><?php esc_html_e( 'Title and Body', 'mainwp' ); ?></option>
 				</select>
 			</div>
 			<div class="field">
@@ -572,8 +573,9 @@ class MainWP_Post {
 				<i class="calendar icon"></i>
 				<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstart" value="
 																  <?php
-																	if ( $cachedSearch != null ) {
-																		echo esc_attr($cachedSearch['dtsstart']); }
+																	if ( null != $cachedSearch ) {
+																		echo esc_attr( $cachedSearch['dtsstart'] );
+																	}
 																	?>
 																	"/>
 			  </div>
@@ -585,8 +587,9 @@ class MainWP_Post {
 				<i class="calendar icon"></i>
 				<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstop" value="
 																  <?php
-																	if ( $cachedSearch != null ) {
-																		echo esc_attr($cachedSearch['dtsstop']); }
+																	if ( null != $cachedSearch ) {
+																		echo esc_attr( $cachedSearch['dtsstop'] );
+																	}
 																	?>
 																	"/>
 			  </div>
@@ -612,21 +615,21 @@ class MainWP_Post {
 			<?php endif; ?>
 			<div class="field">
 				<label><?php _e( 'Max posts to return', 'mainwp' ); ?></label>
-				<input type="text" name="mainwp_maximumPosts"  id="mainwp_maximumPosts" value="<?php echo( ( get_option( 'mainwp_maximumPosts' ) === false ) ? 50 : get_option( 'mainwp_maximumPosts' ) ); ?>"/>
+				<input type="text" name="mainwp_maximumPosts"  id="mainwp_maximumPosts" value="<?php echo( ( false === get_option( 'mainwp_maximumPosts' ) ) ? 50 : get_option( 'mainwp_maximumPosts' ) ); ?>"/>
 			</div>
 		</div>
 		<?php
-		if ( is_array($statuses) && count($statuses) > 0 ) {
+		if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
 			$status = '';
 			foreach ( $statuses as $st ) {
-				$status .= "'" . esc_attr($st) . "',";
+				$status .= "'" . esc_attr( $st ) . "',";
 			}
-			$status = rtrim($status, ',');
+			$status = rtrim( $status, ',' );
 
 			?>
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
-					jQuery('#mainwp_post_search_type').dropdown('set selected',[<?php echo $status; ?>]);
+					jQuery( '#mainwp_post_search_type' ).dropdown( 'set selected', [<?php echo $status; ?>] );
 				})
 			</script>
 			<?php
@@ -681,28 +684,28 @@ class MainWP_Post {
 		?>
 			</tbody>
 		</table>
-	<script type="text/javascript">
-	jQuery( document ).ready( function () {
-	  jQuery('#mainwp-posts-table').DataTable({
-				"colReorder" : true,
-				"stateSave":  true,
-				"pagingType": "full_numbers",
-				"order": [],
-				"scrollX" : true,
-				"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-				"columnDefs": [ {
-					"targets": 'no-sort',
-					"orderable": false
-				} ],
-				"preDrawCallback": function( settings ) {
-				<?php if ( ! $cached ) { ?>
-				jQuery('#mainwp-posts-table-wrapper table .ui.dropdown').dropdown();
-				jQuery('#mainwp-posts-table-wrapper table .ui.checkbox' ).checkbox();
-				<?php } ?>
-				}
-	  } );
-	} );
-	</script>
+		<script type="text/javascript">
+		jQuery( document ).ready( function () {
+		  jQuery( '#mainwp-posts-table' ).DataTable({
+					"colReorder" : true,
+					"stateSave":  true,
+					"pagingType": "full_numbers",
+					"order": [],
+					"scrollX" : true,
+					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+					"columnDefs": [ {
+						"targets": 'no-sort',
+						"orderable": false
+					} ],
+					"preDrawCallback": function( settings ) {
+					<?php if ( ! $cached ) { ?>
+					jQuery('#mainwp-posts-table-wrapper table .ui.dropdown').dropdown();
+					jQuery('#mainwp-posts-table-wrapper table .ui.checkbox' ).checkbox();
+					<?php } ?>
+					}
+		  } );
+		} );
+		</script>
 
 		<?php
 	}
@@ -713,7 +716,7 @@ class MainWP_Post {
 		// Fetch all!
 		// Build websites array
 		$dbwebsites = array();
-		if ( $sites != '' ) {
+		if ( '' !== $sites ) {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
@@ -731,12 +734,12 @@ class MainWP_Post {
 				}
 			}
 		}
-		if ( $groups != '' ) {
+		if ( '' !== $groups ) {
 			foreach ( $groups as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
 					while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-						if ( $website->sync_errors != '' ) {
+						if ( '' !== $website->sync_errors ) {
 							continue;
 						}
 						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
@@ -760,20 +763,20 @@ class MainWP_Post {
 		$output->errors = array();
 		$output->posts  = 0;
 
-		if ( count( $dbwebsites ) > 0 ) {
+		if ( 0 < count( $dbwebsites ) ) {
 			$post_data = array(
 				'keyword'    => $keyword,
 				'dtsstart'   => $dtsstart,
 				'dtsstop'    => $dtsstop,
 				'status'     => $status,
 				'search_on'  => $search_on,
-				'maxRecords' => ( ( get_option( 'mainwp_maximumPosts' ) === false ) ? 50 : get_option( 'mainwp_maximumPosts' ) ),
+				'maxRecords' => ( ( false === get_option( 'mainwp_maximumPosts' ) ) ? 50 : get_option( 'mainwp_maximumPosts' ) ),
 			);
 
 			// Add support for custom post type
 			if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) ) {
 				$post_data['post_type'] = $post_type;
-				if ( $post_type == 'any' ) {
+				if ( 'any' === $post_type ) {
 					$post_data['exclude_page_type'] = 1; // to exclude pages in posts listing, custom post type extension
 				}
 			}
@@ -782,9 +785,9 @@ class MainWP_Post {
 				$post_data['WPSEOEnabled'] = 1;
 			}
 
-			if ( isset( $postId ) && ( $postId != '' ) ) {
+			if ( isset( $postId ) && ( '' !== $postId ) ) {
 				$post_data['postId'] = $postId;
-			} elseif ( isset( $userId ) && ( $userId != '' ) ) {
+			} elseif ( isset( $userId ) && ( '' !== $userId ) ) {
 				$post_data['userId'] = $userId;
 			}
 
@@ -807,7 +810,7 @@ class MainWP_Post {
 		) );
 
 		// Sort if required
-		if ( $output->posts == 0 ) {
+		if ( 0 === $output->posts ) {
 			ob_start();
 			?>
 			<tr>
@@ -824,7 +827,7 @@ class MainWP_Post {
 	}
 
 	private static function getStatus( $status ) {
-		if ( $status == 'publish' ) {
+		if ( 'publish' === $status ) {
 			return 'Published';
 		}
 
@@ -832,11 +835,11 @@ class MainWP_Post {
 	}
 
 	public static function PostsSearch_handler( $data, $website, &$output ) {
-		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
+		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
 			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) );
 
-			if ( is_array($posts) && isset($posts['error']) ) {
+			if ( is_array( $posts ) && isset( $posts['error'] ) ) {
 				$output->errors[ $website->id ] = $posts['error'];
 				return;
 			}
@@ -869,7 +872,7 @@ class MainWP_Post {
 					}
 				}
 
-				if ( ! isset( $post['title'] ) || ( $post['title'] == '' ) ) {
+				if ( ! isset( $post['title'] ) || ( '' === $post['title'] ) ) {
 					$post['title'] = '(No Title)';
 				}
 
@@ -877,19 +880,19 @@ class MainWP_Post {
 				?>
 
 				<tr>
-					<input class="postId" type="hidden" name="id" value="<?php echo esc_attr($post['id']); ?>"/>
+					<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $post['id'] ); ?>"/>
 					<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|
 					<?php
-					if ( $post['status'] == 'publish' ) {
+					if ( 'publish' === $post['status'] ) {
 						echo 'unpublish|';
 					}
-					if ( $post['status'] == 'pending' ) {
+					if ( 'pending' === $post['status'] ) {
 						echo 'approve|';
 					}
-					if ( $post['status'] == 'trash' ) {
+					if ( 'trash' === $post['status'] ) {
 						echo 'restore|';
 					}
-					if ( $post['status'] == 'future' || $post['status'] == 'draft' ) {
+					if ( 'future' === $post['status'] || 'draft' === $post['status'] ) {
 						echo 'publish|';
 					}
 					?>
@@ -901,7 +904,7 @@ class MainWP_Post {
 					<td class="title column-title">
 						<strong>
 						  <abbr title="<?php echo esc_attr( $post['title'] ); ?>">
-							<?php if ( $post['status'] != 'trash' ) { ?>
+							<?php if ( 'trash' !== $post['status'] ) { ?>
 							  <a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>" target="_blank">
 										 <?php echo esc_html( $post['title'] ); ?>
 									</a>
@@ -918,7 +921,7 @@ class MainWP_Post {
 
 					<td class="categories column-categories"><?php echo esc_attr( $post['categories'] ); ?></td>
 
-					<td class="tags"><?php echo( $post['tags'] == '' ? 'No Tags' : $post['tags'] ); ?></td>
+					<td class="tags"><?php echo( '' === $post['tags'] ? 'No Tags' : $post['tags'] ); ?></td>
 
 					<?php if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) ) : ?>
 						<td class="post-type column-post-type"><?php echo esc_html( $post['post_type'] ); ?></td>
@@ -927,12 +930,12 @@ class MainWP_Post {
 				<?php if ( is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) : ?>
 					<td class="comments column-comments">
 						<div class="post-com-count-wrapper">
-							<a href="<?php echo admin_url( 'admin.php?page=CommentBulkManage&siteid=' . intval($website->id) . '&postid=' . $post['id'] ); ?>" title="0 pending" class="post-com-count"><span class="comment-count"><abbr title="<?php echo esc_attr($post['comment_count']); ?>"><?php echo esc_html($post['comment_count']); ?></abbr></span></a>
+							<a href="<?php echo admin_url( 'admin.php?page=CommentBulkManage&siteid=' . intval( $website->id ) . '&postid=' . $post['id'] ); ?>" title="0 pending" class="post-com-count"><span class="comment-count"><abbr title="<?php echo esc_attr( $post['comment_count'] ); ?>"><?php echo esc_html( $post['comment_count'] ); ?></abbr></span></a>
 						</div>
 					</td>
-		  <?php endif; ?>
+		  	<?php endif; ?>
 
-					<td class="date column-date"><abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr($post['dts']); ?>"><?php echo esc_html($post['dts']); ?></abbr></td>
+					<td class="date column-date"><abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $post['dts'] ); ?>"><?php echo esc_html( $post['dts'] ); ?></abbr></td>
 
 					<td class="status column-status"><?php echo self::getStatus( $post['status'] ); ?></td>
 
@@ -948,36 +951,36 @@ class MainWP_Post {
 							$readability_score = $seo_data['readability_score'];
 						}
 						?>
-						<td class="column-seo-links" ><abbr raw_value="<?php echo $count_seo_links !== null ? $count_seo_links : -1; ?>" title=""><?php echo $count_seo_links !== null ? $count_seo_links : ''; ?></abbr></td>
-						<td class="column-seo-linked"><abbr raw_value="<?php echo $count_seo_linked !== null ? $count_seo_linked : -1; ?>" title=""><?php echo $count_seo_linked !== null ? $count_seo_linked : ''; ?></abbr></td>
+						<td class="column-seo-links" ><abbr raw_value="<?php echo null !== $count_seo_links ? $count_seo_links : -1; ?>" title=""><?php echo null !== $count_seo_links ? $count_seo_links : ''; ?></abbr></td>
+						<td class="column-seo-linked"><abbr raw_value="<?php echo null !== $count_seo_linked ? $count_seo_linked : -1; ?>" title=""><?php echo null !== $count_seo_linked ? $count_seo_linked : ''; ?></abbr></td>
 						<td class="column-seo-score"><abbr raw_value="<?php echo $seo_score ? 1 : 0; ?>" title=""><?php echo $seo_score; ?></abbr></td>
 						<td class="column-seo-readability"><abbr raw_value="<?php echo $readability_score ? 1 : 0; ?>" title=""><?php echo $readability_score; ?></abbr></td>
 					<?php endif; ?>
 
-					<td class="website column-website"><a href="<?php echo esc_url($website->url); ?>" target="_blank"><?php echo esc_html($website->url); ?></a></td>
+					<td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
 					<td class="right aligned">
 						<div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999">
 							<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 							<div class="menu">
-								<?php if ( $post['status'] == 'future' || $post['status'] == 'draft' ) : ?>
+								<?php if ( 'future' === $post['status'] || 'draft' === $post['status'] ) : ?>
 								  <a class="item post_submitpublish" href="#"><?php _e( 'Publish', 'mainwp' ); ?></a>
 								<?php endif; ?>
 
-								<?php if ( $post['status'] == 'pending' ) : ?>
+								<?php if ( 'pending' === $post['status'] ) : ?>
 									<a class="item post_submitapprove" href="#"><?php _e( 'Approve', 'mainwp' ); ?></a>
 								<?php endif; ?>
 
-								<?php if ( $post['status'] == 'publish' ) : ?>
+								<?php if ( 'publish' === $post['status'] ) : ?>
 									<a class="item post_submitunpublish" href="#"><?php _e( 'Unpublish', 'mainwp' ); ?></a>
-									<a class="item mainwp-may-hide-referrer" href="<?php echo $website->url . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr($post['id']); ?>" target="_blank" ><?php _e( 'View', 'mainwp' ); ?></a>
+									<a class="item mainwp-may-hide-referrer" href="<?php echo $website->url . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $post['id'] ); ?>" target="_blank" ><?php _e( 'View', 'mainwp' ); ?></a>
 								<?php endif; ?>
 
-								<?php if ( $post['status'] == 'trash' ) : ?>
+								<?php if ( 'trash' === $post['status'] ) : ?>
 									<a class="item post_submitrestore" href="#"><?php _e( 'Restore', 'mainwp' ); ?></a>
 									<a class="item post_submitdelete_perm" href="#"><?php _e( 'Delete', 'mainwp' ); ?></a>
 								<?php endif; ?>
 
-								<?php if ( $post['status'] != 'trash' ) : ?>
+								<?php if ( 'trash' !== $post['status'] ) : ?>
 									<?php if ( isset( $child_to_dash_array[ $post['id'] ] ) ) { ?>
 								   <a class="item" href="post.php?post=<?php echo (int) $child_to_dash_array[ $post['id'] ]; ?>&action=edit&select=<?php echo (int) $website->id; ?>"><?php _e( 'Edit', 'mainwp' ); ?></a>
 									<?php } else { ?>
@@ -985,7 +988,7 @@ class MainWP_Post {
 									<?php } ?>
 									<a class="item post_submitdelete" href="#"><?php _e( 'Trash', 'mainwp' ); ?></a>
 								<?php endif; ?>
-									<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php echo __( 'Go to WP Admin', 'mainwp' ); ?></a>									
+									<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php echo __( 'Go to WP Admin', 'mainwp' ); ?></a>
 							</div>
 						</div>
 					</td>
@@ -1123,14 +1126,14 @@ class MainWP_Post {
 				if ( is_protected_meta( $key, 'post' ) || ! current_user_can( 'add_post_meta', $post->ID, $key ) ) {
 					continue;
 				}
-				echo "\n<option value='" . esc_attr($key) . "'>" . esc_html($key) . '</option>';
+				echo "\n<option value='" . esc_attr( $key ) . "'>" . esc_html( $key ) . '</option>';
 			}
 			?>
 </select>
 <input class="hide-if-js" type="text" id="metakeyinput" name="metakeyinput" value="" />
 <a href="#postcustomstuff" class="hide-if-no-js" onclick="jQuery('#metakeyinput, #metakeyselect, #enternew, #cancelnew').toggle();return false;">
-<span id="enternew"><?php _e('Enter new'); ?></span>
-<span id="cancelnew" class="hidden"><?php _e('Cancel'); ?></span></a>
+<span id="enternew"><?php _e( 'Enter new' ); ?></span>
+<span id="cancelnew" class="hidden"><?php _e( 'Cancel' ); ?></span></a>
 <?php } else { ?>
 <input type="text" id="metakeyinput" name="metakeyinput" value="" />
 <?php } ?>
@@ -1161,11 +1164,11 @@ class MainWP_Post {
 	 */
 	static function post_custom_meta_box( $post ) {
 		?>
-		   <div class="ui secondary segment">
+		  <div class="ui secondary segment">
 			<div class="ui header"><?php echo esc_html( 'Custom Fields', 'mainwp' ); ?></div>
 			<div class="ui grid">
 			<?php
-			$metadata = has_meta($post->ID);
+			$metadata = has_meta( $post->ID );
 			foreach ( $metadata as $key => $value ) {
 				if ( is_protected_meta( $metadata[ $key ]['meta_key'], 'post' ) || ! current_user_can( 'edit_post_meta', $post->ID, $metadata[ $key ]['meta_key'] ) ) {
 					unset( $metadata[ $key ] );
@@ -1290,14 +1293,14 @@ class MainWP_Post {
 		}
 
 			$tab_index_attribute = '';
-		if ( (int) $tab_index > 0 ) {
+		if ( 0 < (int) $tab_index ) {
 			$tab_index_attribute = " tabindex=\"$tab_index\"";
 		}
 
 			// todo: Remove this?
 			// echo '<label for="timestamp" style="display: block;"><input type="checkbox" class="checkbox" name="edit_date" value="1" id="timestamp"'.$tab_index_attribute.' /> '.__( 'Edit timestamp' ).'</label><br />';
 
-			$time_adj  = current_time('timestamp');
+			$time_adj  = current_time( 'timestamp' );
 			$post_date = ( $for_post ) ? $post->post_date : get_comment()->comment_date;
 			$jj        = ( $edit ) ? mysql2date( 'd', $post_date, false ) : gmdate( 'd', $time_adj );
 			$mm        = ( $edit ) ? mysql2date( 'm', $post_date, false ) : gmdate( 'm', $time_adj );
@@ -1367,9 +1370,9 @@ class MainWP_Post {
 			$page = $screen->id;
 
 			// to show metaboxes to bulkpost/bulkpage pages
-		if ( $page == 'mainwp_page_PostBulkAdd' || $page == 'mainwp_page_PostBulkEdit' ) {
+		if ( 'mainwp_page_PostBulkAdd' === $page || 'mainwp_page_PostBulkEdit' === $page ) {
 			$page = 'bulkpost';
-		} elseif ( $page == 'mainwp_page_PageBulkAdd' || $page == 'mainwp_page_PageBulkEdit' ) {
+		} elseif ( 'mainwp_page_PageBulkAdd' === $page || 'mainwp_page_PageBulkEdit' === $page ) {
 			$page = 'bulkpage';
 		}
 
@@ -1388,9 +1391,9 @@ class MainWP_Post {
 			}
 		}
 
-			$already_sorted = true;
+		$already_sorted = true;
 
-			$i = 0;
+		$i = 0;
 
 		if ( isset( $wp_meta_boxes[ $page ][ $context ] ) ) {
 			foreach ( array( 'high', 'sorted', 'core', 'default', 'low' ) as $priority ) {
@@ -1426,7 +1429,7 @@ class MainWP_Post {
 
 						$i++;
 						echo '<div id="' . $box['id'] . '" class="postbox " ' . ' ' . '>' . "\n";
-						if ( 'dashboard_browser_nag' != $box['id'] ) {
+						if ( 'dashboard_browser_nag' !== $box['id'] ) {
 							$widget_title = $box['title'];
 
 							if ( is_array( $box['args'] ) && isset( $box['args']['__widget_basename'] ) ) {
@@ -1459,7 +1462,7 @@ class MainWP_Post {
 							}
 						}
 
-						call_user_func($box['callback'], $object, $box);
+						call_user_func( $box['callback'], $object, $box );
 						echo "</div>\n";
 						echo "</div>\n";
 					}
@@ -1467,9 +1470,9 @@ class MainWP_Post {
 			}
 		}
 
-			echo '</div>';
+		echo '</div>';
 
-			return $i;
+		return $i;
 	}
 
 	public static function render_bulkpost( $post_id, $input_type ) {
@@ -1481,7 +1484,7 @@ class MainWP_Post {
 			$post_type_object = get_post_type_object( $post_type );
 		}
 
-		if ( ! $post_type_object || $input_type !== $post_type || ( $post_type != 'bulkpost' && $post_type != 'bulkpage' ) ) {
+		if ( ! $post_type_object || $input_type !== $post_type || ( 'bulkpost' !== $post_type && 'bulkpage' !== $post_type ) ) {
 			echo __( 'Invalid post type.', 'mainwp' );
 			return;
 		}
@@ -1497,18 +1500,18 @@ class MainWP_Post {
 		$form_action  = 'mainwp_editpost'; // WP form action is: editpost, handle by admin_post_mainwp_editpost
 		$nonce_action = 'update-post_' . $post_ID;
 
-		$form_extra = "<input type='hidden' id='post_ID' name='post_ID' value='" . esc_attr($post_ID) . "' />";
+		$form_extra = "<input type='hidden' id='post_ID' name='post_ID' value='" . esc_attr( $post_ID ) . "' />";
 
 		$referer = wp_get_referer();
 
-		if ( $post->post_status == 'auto-draft' ) {
-			$note_title = ( $post_type == 'bulkpost' ) ? __('Create New Bulkpost', 'mainwp') : __('Create New Bulkpage', 'mainwp');
+		if ( 'auto-draft' === $post->post_status ) {
+			$note_title = ( 'bulkpost' === $post_type ) ? __('Create New Bulkpost', 'mainwp') : __('Create New Bulkpage', 'mainwp');
 		} else {
-			$note_title = ( $post_type == 'bulkpost' ) ? __('Edit Bulkpost', 'mainwp') : __('Edit Bulkpage', 'mainwp');
+			$note_title = ( 'bulkpost' === $post_type ) ? __('Edit Bulkpost', 'mainwp') : __('Edit Bulkpage', 'mainwp');
 		}
 		$message = '';
-		if ( isset($_GET['message']) && $_GET['message'] == 1 ) {
-			if ( $post_type == 'bulkpost' ) {
+		if ( isset( $_GET['message'] ) && 1 === $_GET['message'] ) {
+			if ( 'bulkpost' === $post_type ) {
 				$message = __( 'Post updated.', 'mainwp' );
 			} else {
 				$message = __( 'Page updated.', 'mainwp' );
@@ -1518,7 +1521,7 @@ class MainWP_Post {
 		?>
 		<div class="ui alt segment" id="mainwp-add-new-bulkpost">
 			<form name="post" action="<?php echo admin_url( 'admin-post.php' ); ?>" method="post" id="post" class="ui form">
-				<?php wp_nonce_field($nonce_action); ?>
+				<?php wp_nonce_field( $nonce_action ); ?>
 				<input type="hidden" id="user-id" name="user_ID" value="<?php echo (int) $user_ID; ?>" />
 				<input type="hidden" id="hiddenaction" name="action" value="<?php echo esc_attr( $form_action ); ?>" />
 				<input type="hidden" id="originalaction" name="originalaction" value="<?php echo esc_attr( $form_action ); ?>" />
@@ -1527,7 +1530,7 @@ class MainWP_Post {
 				<input type="hidden" id="original_post_status" name="original_post_status" value="<?php echo esc_attr( $post->post_status); ?>" />
 				<input type="hidden" id="referredby" name="referredby" value="<?php echo $referer ? esc_url( $referer ) : ''; ?>" />
 				<?php
-				if ( 'draft' != get_post_status( $post ) ) {
+				if ( 'draft' !== get_post_status( $post ) ) {
 					wp_original_referer_field(true, 'previous');
 				}
 				echo $form_extra;
@@ -1537,14 +1540,14 @@ class MainWP_Post {
 					<?php
 					if ( $message ) {
 						?>
-							<div class="ui yellow message"><?php echo esc_html($message); ?></div>
+							<div class="ui yellow message"><?php echo esc_html( $message ); ?></div>
 						<?php
 					}
 					?>
-					<h3 class="header"><?php echo esc_html($note_title); ?></h3>
+					<h3 class="header"><?php echo esc_html( $note_title ); ?></h3>
 					<div class="field">
 						<label><?php echo __( 'Title', 'mainwp' ); ?></label>
-					<input type="text" name="post_title" id="title"  value="<?php echo ( 'Auto Draft' != $post->post_title ) ? esc_attr( $post->post_title ) : ''; ?>" value="" autocomplete="off" spellcheck="true">
+					<input type="text" name="post_title" id="title"  value="<?php echo ( 'Auto Draft' !== $post->post_title ) ? esc_attr( $post->post_title ) : ''; ?>" value="" autocomplete="off" spellcheck="true">
 				  </div>
 					<div class="field">
 						<div id="postdivrich" class="postarea
@@ -1579,7 +1582,7 @@ class MainWP_Post {
 								<td class="autosave-info">
 								<span class="autosave-message">&nbsp;</span>
 							<?php
-							if ( 'auto-draft' != $post->post_status ) {
+							if ( 'auto-draft' !== $post->post_status ) {
 								echo '<span id="last-edit">';
 								if ( $last_user = get_userdata( get_post_meta( $post_ID, '_edit_last', true ) ) ) {
 									/* translators: 1: Name of most recent post author, 2: Post edited date, 3: Post edited time */
@@ -1613,7 +1616,7 @@ class MainWP_Post {
 				  </div>
 					<?php } ?>
 					<div class="field">
-				<?php self::post_custom_meta_box($post); ?>
+				<?php self::post_custom_meta_box( $post ); ?>
 				  </div>
 
 				<div class="field postbox-container">
@@ -1621,9 +1624,9 @@ class MainWP_Post {
 
 				do_action('mainwp_bulkpost_edit', $post, $post_type );
 
-				self::do_meta_boxes(null, 'normal', $post);
+				self::do_meta_boxes( null, 'normal', $post );
 
-				self::do_meta_boxes(null, 'advanced', $post);
+				self::do_meta_boxes( null, 'advanced', $post );
 
 				do_action( 'add_meta_boxes', $post_type, $post ); // to init metaboxes, for example WP SEO metabox
 				self::do_meta_boxes( $post_type, 'normal', $post ); // to display metaboxes
@@ -1642,7 +1645,7 @@ class MainWP_Post {
 					</div>
 					<div class="ui divider"></div>
 
-		<?php if ( $post_type == 'bulkpost' ) { ?>
+		<?php if ( 'bulkpost' === $post_type ) { ?>
 					<div class="mainwp-search-options">
 						<div class="ui header"><?php echo __( 'Select Categories', 'mainwp' ); ?></div>
 					<?php
@@ -1719,11 +1722,11 @@ class MainWP_Post {
 						<div class="ui header"><?php echo __( 'Discussion', 'mainwp' ); ?></div>
 						<div class="field">
 							<div class="ui checkbox">
-							  <input type="checkbox" name="comment_status" id="comment_status" value="open" <?php checked($post->comment_status, 'open'); ?>>
+							  <input type="checkbox" name="comment_status" id="comment_status" value="open" <?php checked( $post->comment_status, 'open'); ?>>
 							  <label><?php esc_html_e( 'Allow comments', 'mainwp' ); ?></label>
 							</div>
 							<div class="ui checkbox">
-							  <input type="checkbox" name="ping_status" id="ping_status" value="open" <?php checked($post->ping_status, 'open'); ?> >
+							  <input type="checkbox" name="ping_status" id="ping_status" value="open" <?php checked( $post->ping_status, 'open'); ?> >
 							  <label><?php esc_html_e( 'Allow trackbacks and pingbacks', 'mainwp' ); ?></label>
 							</div>
 						</div>
@@ -1734,20 +1737,20 @@ class MainWP_Post {
 						<div class="field">
 							<label><?php echo esc_html( 'Status', 'mainwp' ); ?></label>
 							<select class="ui dropdown" name="mainwp_edit_post_status" id="post_status"> <?php // to fix: saving pending status ?>
-								<option value="draft" <?php echo ( $post->post_status == 'draft' || $post->post_status == 'publish' ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( 'Draft', 'mainwp' ); ?></option>
-								<option value="pending" <?php echo ( $post->post_status == 'pending' ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( 'Pending review', 'mainwp' ); ?></option>
+								<option value="draft" <?php echo ( 'draft' === $post->post_status || $post->post_status == 'publish' ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( 'Draft', 'mainwp' ); ?></option>
+								<option value="pending" <?php echo ( 'pending'=== $post->post_status ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( 'Pending review', 'mainwp' ); ?></option>
 							</select>
 						</div>
 
 						 <?php
-							if ( 'private' == $post->post_status ) {
+							if ( 'private' === $post->post_status ) {
 								$post->post_password = '';
 								$visibility          = 'private';
 								$visibility_trans    = __('Private');
 							} elseif ( ! empty( $post->post_password ) ) {
 								$visibility       = 'password';
 								$visibility_trans = __('Password protected');
-							} elseif ( $post_type == 'post' && is_sticky( $post->ID ) ) {
+							} elseif ( 'post' === $post_type && is_sticky( $post->ID ) ) {
 								$visibility       = 'public';
 								$visibility_trans = __('Public, Sticky');
 							} else {
@@ -1760,7 +1763,7 @@ class MainWP_Post {
 							<label><?php echo esc_html( 'Visibility', 'mainwp' ); ?></label>
 							<div class="field">
 								<div class="ui radio checkbox">
-									<input type="radio" name="visibility" value="public" id="visibility-radio-public" <?php echo ( $visibility == 'public' ) ? 'checked="checked"' : ''; ?>>
+									<input type="radio" name="visibility" value="public" id="visibility-radio-public" <?php echo ( 'public' === $visibility ) ? 'checked="checked"' : ''; ?>>
 									<label><?php echo esc_html( 'Public', 'mainwp' ); ?></label>
 								</div>
 							</div>
@@ -1772,17 +1775,17 @@ class MainWP_Post {
 							</div>
 							<div class="field">
 								<div class="ui radio checkbox">
-									<input type="radio" name="visibility" value="password" id="visibility-radio-password" <?php echo ( $visibility == 'password' ) ? 'checked="checked"' : ''; ?>>
+									<input type="radio" name="visibility" value="password" id="visibility-radio-password" <?php echo ( 'password' === $visibility ) ? 'checked="checked"' : ''; ?>>
 									<label><?php echo esc_html( 'Password protected', 'mainwp' ); ?></label>
 								</div>
 							</div>
-							<div class="field" id="post_password-field" <?php echo ( $visibility == 'password' ) ? '' : 'style="display:none"'; ?>>
+							<div class="field" id="post_password-field" <?php echo ( 'password' === $visibility ) ? '' : 'style="display:none"'; ?>>
 								<label><?php echo esc_html( 'Password', 'mainwp' ); ?></label>
-								<input type="text" name="post_password" id="post_password" value="<?php echo esc_attr($post->post_password); ?>" />
+								<input type="text" name="post_password" id="post_password" value="<?php echo esc_attr( $post->post_password ); ?>" />
 							</div>
 							<div class="field">
 								<div class="ui radio checkbox">
-									<input type="radio" name="visibility" value="private" id="visibility-radio-private" <?php echo ( $visibility == 'private' ) ? 'checked="checked"' : ''; ?>>
+									<input type="radio" name="visibility" value="private" id="visibility-radio-private" <?php echo ( 'private' === $visibility ) ? 'checked="checked"' : ''; ?>>
 									<label><?php echo esc_html( 'Private', 'mainwp' ); ?></label>
 								</div>
 							</div>
@@ -1804,18 +1807,16 @@ class MainWP_Post {
 							</div>
 						</div>
 						<div style="display:none" id="timestampdiv">
-							<?php self::touch_time($post); ?>
+							<?php self::touch_time( $post ); ?>
 						</div>
 					</div>
-					<?php
-					self::do_meta_boxes( $post_type, 'side', $post );
-					?>
+					<?php self::do_meta_boxes( $post_type, 'side', $post ); ?>
 					<div class="ui divider"></div>
-					<?php do_action('mainwp_edit_posts_before_submit_button'); ?>
+					<?php do_action( 'mainwp_edit_posts_before_submit_button' ); ?>
 					<div class="mainwp-search-submit" id="bulkpost-publishing-action">
 						<input type="submit" name="publish" id="publish" class="ui big green fluid button" value="<?php esc_attr_e( 'Publish', 'mainwp' ); ?>">
 					</div>
-					<?php do_action('mainwp_edit_posts_after_submit_button'); ?>
+					<?php do_action( 'mainwp_edit_posts_after_submit_button' ); ?>
 				</div>
 			</form>
 			<script type="text/javascript">
@@ -1842,7 +1843,7 @@ class MainWP_Post {
 
 		global $_mainwp_default_post_to_edit;
 		$post_id = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
-		self::render_addedit($post_id, 'BulkAdd');
+		self::render_addedit( $post_id, 'BulkAdd' );
 	}
 
 	public static function renderBulkEdit() {
@@ -1850,7 +1851,7 @@ class MainWP_Post {
 			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
 			return;
 		}
-		$post_id = isset($_GET['post_id']) ? intval ($_GET['post_id']) : 0;
+		$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0;
 		self::render_addedit($post_id, 'BulkEdit');
 	}
 
@@ -1862,7 +1863,7 @@ class MainWP_Post {
 
 	public static function hookPostsSearch_handler( $data, $website, &$output ) {
 		$posts = array();
-		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
+		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
 			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) );
 			unset( $results );
@@ -1872,7 +1873,7 @@ class MainWP_Post {
 
 	public static function getCategories() {
 		$websites = array();
-		if ( isset( $_REQUEST['sites'] ) && ( $_REQUEST['sites'] != '' ) ) {
+		if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
 			$siteIds          = explode( ',', urldecode( $_REQUEST['sites'] ) );
 			$siteIdsRequested = array();
 			foreach ( $siteIds as $siteId ) {
@@ -1884,7 +1885,7 @@ class MainWP_Post {
 			}
 
 			$websites = MainWP_DB::Instance()->getWebsitesByIds( $siteIdsRequested );
-		} elseif ( isset( $_REQUEST['groups'] ) && ( $_REQUEST['groups'] != '' ) ) {
+		} elseif ( isset( $_REQUEST['groups'] ) && ( '' !== $_REQUEST['groups'] ) ) {
 			$groupIds          = explode( ',', urldecode( $_REQUEST['groups'] ) );
 			$groupIdsRequested = array();
 			foreach ( $groupIds as $groupId ) {
@@ -1921,10 +1922,10 @@ class MainWP_Post {
 		// $selectedCategories2 = array();
 
 		$allCategories = array( 'Uncategorized' );
-		if ( count( $websites ) > 0 ) {
+		if ( 0 < count( $websites ) ) {
 			foreach ( $websites as $website ) {
 				$cats = json_decode( $website->categories, true );
-				if ( is_array( $cats ) && ( count( $cats ) > 0 ) ) {
+				if ( is_array( $cats ) && ( 0 < count( $cats ) ) ) {
 					$allCategories = array_unique( array_merge( $allCategories, $cats ) );
 				}
 			}
@@ -1932,7 +1933,7 @@ class MainWP_Post {
 		// to fixed issue missing selected categories
 		$allCategories = array_unique( array_merge( $allCategories, $selectedCategories ) );
 
-		if ( count( $allCategories ) > 0 ) {
+		if ( 0 < count( $allCategories ) ) {
 			natcasesort( $allCategories );
 			foreach ( $allCategories as $category ) {
 				// echo '<li class="popular-category sitecategory"><label class="selectit"><input value="' . $category . '" type="checkbox" name="post_category[]" ' . ( in_array( $category, $selectedCategories ) || in_array( $category, $selectedCategories2 ) ? 'checked' : '' ) . '> ' . $category . '</label></li>';
@@ -1968,7 +1969,7 @@ class MainWP_Post {
 
 				$skip_post = false;
 				if ( isset( $_GET['id'] ) ) {
-					if ( 'yes' == get_post_meta( $_GET['id'], '_mainwp_skip_posting', true ) ) {
+					if ( 'yes' === get_post_meta( $_GET['id'], '_mainwp_skip_posting', true ) ) {
 						$skip_post = true;
 						wp_delete_post( $_GET['id'], true );
 					}
@@ -1976,10 +1977,9 @@ class MainWP_Post {
 
 				if ( ! $skip_post ) {
 					if ( isset( $_GET['id'] ) ) {
-						$id   = intval($_GET['id']);
+						$id   = intval( $_GET['id'] );
 						$post = get_post( $id );
 						if ( $post ) {
-							// die('<pre>'.print_r($post, 1).'</pre>');
 							$selected_by     = get_post_meta( $id, '_selected_by', true );
 							$selected_sites  = unserialize( base64_decode( get_post_meta( $id, '_selected_sites', true ) ) );
 							$selected_groups = unserialize( base64_decode( get_post_meta( $id, '_selected_groups', true ) ) );
@@ -1990,7 +1990,6 @@ class MainWP_Post {
 							$post_tags   = base64_decode( get_post_meta( $id, '_tags', true ) );
 							$post_slug   = base64_decode( get_post_meta( $id, '_slug', true ) );
 							$post_custom = get_post_custom( $id );
-							// if (isset($post_custom['_tags'])) $post_custom['_tags'] = base64_decode(trim($post_custom['_tags']));
 
 							$galleries           = get_post_gallery( $id, false );
 							$post_gallery_images = array();
@@ -2020,7 +2019,7 @@ class MainWP_Post {
 
 							$post_status = get_post_meta( $id, '_edit_post_status', true );
 							// to support saving as pending
-							if ( $post_status != 'pending' ) {
+							if ( 'pending' !== $post_status ) {
 								$post_status = $post->post_status;
 							}
 							$post_status = apply_filters('mainwp_posting_bulkpost_post_status', $post_status, $id ); // to support post plus extension
@@ -2038,7 +2037,7 @@ class MainWP_Post {
 								'mainwp_post_id' => $post->ID,
 							);
 
-							if ( $featured_image_id != null ) { // Featured image is set, retrieve URL
+							if ( null != $featured_image_id ) { // Featured image is set, retrieve URL
 								$img                 = wp_get_attachment_image_src( $featured_image_id, 'full' );
 								$post_featured_image = $img[0];
 								$attachment          = get_post( $featured_image_id );
@@ -2051,7 +2050,7 @@ class MainWP_Post {
 							}
 
 							$dbwebsites = array();
-							if ( $selected_by == 'site' ) { // Get all selected websites
+							if ( 'site' === $selected_by ) { // Get all selected websites
 								foreach ( $selected_sites as $k ) {
 									if ( MainWP_Utility::ctype_digit( $k ) ) {
 										$website                    = MainWP_DB::Instance()->getWebsiteById( $k );
@@ -2073,7 +2072,7 @@ class MainWP_Post {
 									if ( MainWP_Utility::ctype_digit( $k ) ) {
 										$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
 										while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-											if ( $website->sync_errors != '' ) {
+											if ( '' !== $website->sync_errors ) {
 												continue;
 											}
 											$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
@@ -2098,7 +2097,7 @@ class MainWP_Post {
 							$output->errors = array();
 							$startTime      = time();
 
-							if ( count( $dbwebsites ) > 0 ) {
+							if ( 0 < count( $dbwebsites ) ) {
 								$post_data = array(
 									'new_post'            => base64_encode( serialize( $new_post ) ),
 									'post_custom'         => base64_encode( serialize( $post_custom ) ),
@@ -2116,7 +2115,7 @@ class MainWP_Post {
 
 							$failed_posts = array();
 							foreach ( $dbwebsites as $website ) {
-								if ( isset($output->ok[ $website->id ]) && ( $output->ok[ $website->id ] == 1 ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
+								if ( isset($output->ok[ $website->id ]) && ( 1 === $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
 									do_action( 'mainwp-post-posting-post', $website, $output->added_id[ $website->id ], ( isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null ) ); // deprecated from 4.0
 									do_action( 'mainwp-bulkposting-done', $post, $website, $output );
 								} else {
@@ -2124,21 +2123,10 @@ class MainWP_Post {
 								}
 							}
 
-							// to support extensions, for example: boilerplace, post plus  ...
+							// to support extensions, for example: boilerplate, post plus  ...
 							$after_posting = apply_filters('mainwp-after-posting-bulkpost-result', false, $post, $dbwebsites, $output );
 
-							// $del_post    = true;
-							// $saved_draft = get_post_meta( $id, '_saved_as_draft', true ); // to support post plus extension
-							// if ( $saved_draft == 'yes' ) {
-							// if ( count( $failed_posts ) > 0 ) {
-							// $del_post = false;
-							// update_post_meta( $post->ID, '_selected_sites', base64_encode( serialize( $failed_posts ) ) );
-							// update_post_meta( $post->ID, '_selected_groups', '' );
-							// wp_update_post( array( 'ID' => $id, 'post_status' => 'draft' ) );
-							// }
-							// }
-
-							if ( $after_posting == false ) {
+							if ( false === $after_posting ) {
 								?>
 							<div class="ui relaxed list">
 								<?php
@@ -2153,14 +2141,14 @@ class MainWP_Post {
 							}
 
 							$do_not_del = get_post_meta( $id, '_bulkpost_do_not_del', true );
-							if ( $do_not_del !== 'yes' ) { // check $del_post to compatible
+							if ( 'yes' !== $do_not_del ) { // check $del_post to compatible
 								wp_delete_post( $id, true );
 							}
 
 							$countSites     = 0;
 							$countRealItems = 0;
 							foreach ( $dbwebsites as $website ) {
-								if ( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ) {
+								if ( isset( $output->ok[ $website->id ] ) && 1 === $output->ok[ $website->id ] ) {
 									$countSites++;
 									$countRealItems++;
 								}
@@ -2222,7 +2210,7 @@ class MainWP_Post {
 	}
 
 	public static function PostsGetTerms_handler( $data, $website, &$output ) {
-		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
+		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result      = $results[1];
 			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );
 
@@ -2237,7 +2225,7 @@ class MainWP_Post {
 		$output->errors = array();
 		$output->cats   = array();
 		$dbwebsites     = array();
-		if ( $what == 'group' ) {
+		if ( 'group' === $what ) {
 			$input_name = 'groups_selected_cats_' . $prefix . '[]';
 		} else {
 			$input_name = 'sites_selected_cats_' . $prefix . '[]';
@@ -2260,27 +2248,27 @@ class MainWP_Post {
 			}
 		}
 
-		if ( $gen_type == 'post' ) {
+		if ( 'post' === $gen_type ) {
 			$bkc_option_path = 'default_keywords_post';
 			$keyword_option  = 'keywords_page';
-		} elseif ( $gen_type == 'page' ) {
+		} elseif ( 'page' === $gen_type ) {
 			$bkc_option_path = 'default_keywords_page';
 			$keyword_option  = 'keywords_page';
 		}
 
-		if ( $prefix == 'bulk' ) {
-			$opt           = apply_filters( 'mainwp-get-options', $value           = '', 'mainwp_content_extension', 'bulk_keyword_cats', $bkc_option_path );
+		if ( 'bulk' === $prefix ) {
+			$opt           = apply_filters( 'mainwp-get-options', $value = '', 'mainwp_content_extension', 'bulk_keyword_cats', $bkc_option_path );
 			$selected_cats = unserialize( base64_decode( $opt ) );
 		} else { // is number 0,1,2, ...
-			$opt = apply_filters( 'mainwp-get-options', $value   = '', 'mainwp_content_extension', $keyword_option );
+			$opt = apply_filters( 'mainwp-get-options', $value = '', 'mainwp_content_extension', $keyword_option );
 			if ( is_array( $opt ) && is_array( $opt[ $prefix ] ) ) {
 				$selected_cats = unserialize( base64_decode( $opt[ $prefix ]['selected_cats'] ) );
 			}
 		}
 		$selected_cats = is_array( $selected_cats ) ? $selected_cats : array();
 		$ret           = '';
-		if ( count( $dbwebsites ) > 0 ) {
-			$opt       = apply_filters( 'mainwp-get-options', $value       = '', 'mainwp_content_extension', 'taxonomy' );
+		if ( 0 < count( $dbwebsites ) ) {
+			$opt       = apply_filters( 'mainwp-get-options', $value = '', 'mainwp_content_extension', 'taxonomy' );
 			$post_data = array(
 				'taxonomy' => base64_encode( $opt ),
 			);
@@ -2298,7 +2286,7 @@ class MainWP_Post {
 				if ( ! empty( $output->errors[ $siteid ] ) ) {
 					$ret .= '<p> ' . __( 'Error - ', 'mainwp' ) . $output->errors[ $siteid ] . '</p>';
 				} else {
-					if ( count( $output->cats[ $siteid ] ) > 0 ) {
+					if ( 0 < count( $output->cats[ $siteid ] ) ) {
 						foreach ( $output->cats[ $siteid ] as $cat ) {
 							if ( $cat->term_id ) {
 								if ( in_array( $cat->term_id, $cats ) ) {
@@ -2351,7 +2339,7 @@ class MainWP_Post {
 			die( json_encode( array( 'error' => $information['error'] ) ) );
 		}
 
-		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
+		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
 			die( json_encode( array( 'error' => 'Unexpected error.' ) ) );
 		} else {
 			$ret = self::newPost( $information['my_post'] );
@@ -2359,7 +2347,6 @@ class MainWP_Post {
 				update_post_meta( $ret['id'], '_selected_sites', base64_encode( serialize( array( $websiteId ) ) ) );
 				update_post_meta( $ret['id'], '_mainwp_edit_post_site_id', $websiteId );
 			}
-			// die( json_encode( $ret ) );
 			wp_send_json( $ret );
 		}
 	}
@@ -2386,12 +2373,12 @@ class MainWP_Post {
 
 		$post_author             = $current_user->ID;
 		$new_post['post_author'] = $post_author;
-		$new_post['post_type']   = isset( $new_post['post_type'] ) && ( $new_post['post_type'] == 'page' ) ? 'bulkpage' : 'bulkpost';
+		$new_post['post_type']   = isset( $new_post['post_type'] ) && ( 'page' === $new_post['post_type'] ) ? 'bulkpage' : 'bulkpost';
 
 		// Search for all the images added to the new post
 		// some images have a href tag to click to navigate to the image.. we need to replace this too
 		$foundMatches = preg_match_all( '/(<a[^>]+href=\"(.*?)\"[^>]*>)?(<img[^>\/]*src=\"((.*?)(png|gif|jpg|jpeg))\")/ix', $new_post['post_content'], $matches, PREG_SET_ORDER );
-		if ( $foundMatches > 0 ) {
+		if ( 0 < $foundMatches ) {
 			// We found images, now to download them so we can start balbal
 			foreach ( $matches as $match ) {
 				$hrefLink = $match[2];
@@ -2417,7 +2404,7 @@ class MainWP_Post {
 					if ( '' !== $hrefLink ) {
 						$server     = get_option( 'mainwp_child_server' );
 						$serverHost = parse_url( $server, PHP_URL_HOST );
-						if ( ! empty( $serverHost ) && strpos( $hrefLink, $serverHost ) !== false ) {
+						if ( ! empty( $serverHost ) && false !== strpos( $hrefLink, $serverHost ) ) {
 							$serverHref               = 'href="' . $serverHost;
 							$replaceServerHref        = 'href="' . parse_url( $localUrl, PHP_URL_SCHEME ) . '://' . parse_url( $localUrl, PHP_URL_HOST );
 							$new_post['post_content'] = str_replace( $serverHref, $replaceServerHref, $new_post['post_content'] );
@@ -2450,7 +2437,7 @@ class MainWP_Post {
 						}
 					}
 				}
-				if ( count( $replaceAttachedIds ) > 0 ) {
+				if ( 0 < count( $replaceAttachedIds ) ) {
 					foreach ( $matches as $match ) {
 						$idsToReplace     = $match[1];
 						$idsToReplaceWith = '';
@@ -2563,7 +2550,7 @@ class MainWP_Post {
 		} catch ( MainWP_Exception $e ) {
 			return;
 		}
-		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
+		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
 			return;
 		}
 	}
@@ -2594,13 +2581,13 @@ class MainWP_Post {
 	public static function add_sticky_handle( $post_id ) {
 		// OK, we're authenticated: we need to find and save the data
 		$post = get_post( $post_id );
-		if ( $post->post_type == 'bulkpost' && isset( $_POST['sticky'] ) ) {
+		if ( 'bulkpost' === $post->post_type && isset( $_POST['sticky'] ) ) {
 			update_post_meta( $post_id, '_sticky', base64_encode( $_POST['sticky'] ) );
 
 			return base64_encode( $_POST['sticky'] );
 		}
 
-		if ( $post->post_type == 'bulkpost' && isset( $_POST['mainwp_edit_post_status'] ) ) {
+		if ( 'bulkpost' === $post->post_type && isset( $_POST['mainwp_edit_post_status'] ) ) {
 			update_post_meta( $post_id, '_edit_post_status', $_POST['mainwp_edit_post_status'] );
 		}
 
@@ -2609,7 +2596,7 @@ class MainWP_Post {
 
 	// Hook the section help content to the Help Sidebar element
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && ( $_GET['page'] == 'PostBulkManage' || $_GET['page'] == 'PostBulkAdd' ) ) {
+		if ( isset( $_GET['page'] ) && ( 'PostBulkManage' === $_GET['page'] || 'PostBulkAdd' === $_GET['page'] ) ) {
 			?>
 			<p><?php echo __( 'If you need help with managing posts, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">

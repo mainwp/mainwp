@@ -49,7 +49,7 @@ class MainWP_System {
 	 * @static
 	 * @return MainWP_System
 	 */
-	static function Instance() {
+	public static function Instance() {
 		return self::$instance;
 	}
 
@@ -243,7 +243,7 @@ class MainWP_System {
 		add_action( 'mainwp_admin_footer', array( 'MainWP_UI', 'usersnap_integration' ) );
 	}
 
-	function load_all_options() {
+	public function load_all_options() {
 		global $wpdb;
 
 		if ( ! defined( 'WP_INSTALLING' ) || ! is_multisite() ) {
@@ -323,7 +323,7 @@ class MainWP_System {
 		return $alloptions;
 	}
 
-	function init_cron(){
+	public function init_cron(){
 		
 		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
 
@@ -391,7 +391,7 @@ class MainWP_System {
 		}
 	}
 	
-	function cron_active() {
+	public function cron_active() {
 		if ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) {
 			return;
 		}
@@ -409,11 +409,11 @@ class MainWP_System {
 		die( '' );
 	}
 
-	function filter_fetchUrlsAuthed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
+	public function filter_fetchUrlsAuthed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
 		return MainWP_Extensions::hookFetchUrlsAuthed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output, $is_external_hook = true );
 	}
 
-	function filter_fetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {
+	public function filter_fetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {
 		return MainWP_Extensions::hookFetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $raw_response );
 	}
 
@@ -661,7 +661,7 @@ class MainWP_System {
 		return $this->current_version;
 	}
 
-	public function check_update_custom( $transient ) {
+	public function check_update_custom( $transient ) {		
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
 			$extensions = MainWP_Extensions::getExtensions( array( 'activated' => true ) );
 			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action']  ) {
@@ -812,7 +812,7 @@ class MainWP_System {
 		return $false;
 	}
 
-	function print_digest_lines( $array, $backupChecks = null, $what = 'update' ) {
+	public function print_digest_lines( $array, $backupChecks = null, $what = 'update' ) {
 
 		$plain_text = apply_filters( 'mainwp_text_format_email', false );
 
@@ -852,7 +852,7 @@ class MainWP_System {
 		return $output;
 	}
 
-	static function get_timestamp_from_hh_mm( $hh_mm ) {
+	public static function get_timestamp_from_hh_mm( $hh_mm ) {
 			$hh_mm = explode( ':', $hh_mm );
 			$_hour = isset( $hh_mm[0] ) ? intval( $hh_mm[0] ) : 0;
 			$_mins = isset( $hh_mm[1] ) ? intval( $hh_mm[1] ) : 0;
@@ -865,7 +865,7 @@ class MainWP_System {
 			return strtotime( date( 'Y-m-d' ) . ' ' . $_hour . ':' . $_mins . ':59' );
 	}
 
-	static function get_period_of_time_from_hh_mm( $hh_mm ) {
+	public static function get_period_of_time_from_hh_mm( $hh_mm ) {
 			$hh_mm = explode( ':', $hh_mm );
 			$_hour = isset( $hh_mm[0] ) ? intval( $hh_mm[0] ) : 0;
 			$_mins = isset( $hh_mm[1] ) ? intval( $hh_mm[1] ) : 0;
@@ -880,14 +880,12 @@ class MainWP_System {
 			return $_hour * 60 + $_mins; // mins
 	}
 
-	function mainwp_cronupdatescheck_action() {
+	public function mainwp_cronupdatescheck_action() {
 		MainWP_Logger::Instance()->info( 'CRON :: updates check' );
 
 		@ignore_user_abort( true );
 		@set_time_limit( 0 );
-		$mem = '512M';
-		@ini_set( 'memory_limit', $mem );
-		@ini_set( 'max_execution_time', 0 );
+		add_filter( 'admin_memory_limit', function(){ return '512M'; } );		
 
 		$timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );
 
@@ -947,6 +945,7 @@ class MainWP_System {
 			}
 		} elseif ( $enableFrequencyAutomaticUpdate ) {
 			// ok go to frequency sync
+			$websites             = array();
 		} elseif ( date( 'd/m/Y' ) === $mainwpLastAutomaticUpdate ) {
 			MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated today' );
 
@@ -1230,8 +1229,8 @@ class MainWP_System {
                                 <div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
 						wp_mail( $email, $mail_title = 'MainWP - HTTP response check', MainWP_Utility::formatEmail( $email, $mail_offline, $mail_title ), array(
 							'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
-							$content_type,
-						) );
+								$content_type,
+								) );
 					}
 					MainWP_Utility::update_option( 'mainwp_automaticUpdate_httpChecks', '' );
 				}
@@ -1414,6 +1413,7 @@ class MainWP_System {
 					if ( $website->is_ignorePluginUpdates ) {
 						continue;
 					}
+					$infoTxt = $infoNewTxt = '';
 					if ( $text_format ) {
 						$infoTxt    = stripslashes( $website->name ) . ' - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'] . ' - ' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id );
 						$infoNewTxt = '*NEW* ' . stripslashes( $website->name ) . ' - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'] . ' - ' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id );
@@ -1785,7 +1785,7 @@ class MainWP_System {
 		return array( 'result' => 'NOSITE' );
 	}
 
-	function mainwp_cronpingchilds_action() {
+	public function mainwp_cronpingchilds_action() {
 		MainWP_Logger::Instance()->info( 'CRON :: ping childs' );
 
 		$lastPing = get_option( 'mainwp_cron_last_ping' );
@@ -1810,7 +1810,7 @@ class MainWP_System {
 		@MainWP_DB::free_result( $websites );
 	}
 
-	function mainwp_cronbackups_continue_action() {
+	public function mainwp_cronbackups_continue_action() {
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return;
 		}
@@ -1818,10 +1818,8 @@ class MainWP_System {
 
 		@ignore_user_abort( true );
 		@set_time_limit( 0 );
-		$mem = '512M';
-		@ini_set( 'memory_limit', $mem );
-		@ini_set( 'max_execution_time', 0 );
-
+		add_filter( 'admin_memory_limit', function(){ return '512M'; } );
+		
 		MainWP_Utility::update_option( 'mainwp_cron_last_backups_continue', time() );
 
 		// Fetch all tasks where complete < last & last checkup is more then 1minute ago! & last is more then 1 minute ago!
@@ -1846,7 +1844,7 @@ class MainWP_System {
 		}
 	}
 
-	function mainwp_cronbackups_action() {
+	public function mainwp_cronbackups_action() {
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return;
 		}
@@ -1854,11 +1852,9 @@ class MainWP_System {
 		MainWP_Logger::Instance()->info( 'CRON :: backups' );
 
 		@ignore_user_abort( true );
-		@set_time_limit( 0 );
-		$mem = '512M';
-		@ini_set( 'memory_limit', $mem );
-		@ini_set( 'max_execution_time', 0 );
-
+		@set_time_limit( 0 );		
+		add_filter( 'admin_memory_limit', function(){ return '512M'; } );
+		
 		MainWP_Utility::update_option( 'mainwp_cron_last_backups', time() );
 
 		// Do cronjobs!
@@ -1907,7 +1903,7 @@ class MainWP_System {
 		}
 	}
 
-	function mainwp_cronstats_action() {
+	public function mainwp_cronstats_action() {
 		MainWP_Logger::Instance()->info( 'CRON :: stats' );
 
 		MainWP_Utility::update_option( 'mainwp_cron_last_stats', time() );
@@ -1935,15 +1931,13 @@ class MainWP_System {
 					// Still something wrong
 					MainWP_Logger::Instance()->warningForWebsite( $website, 'reconnect', $e->getMessage() );
 				}
-			} elseif ( 0 === $website->nossl) {
-				// Try connecting to ssl!
-			}
+			} 
 			sleep( 3 );
 		}
 		@MainWP_DB::free_result( $websites );
 	}
 
-	function admin_footer() {
+	public function admin_footer() {
 
 		$this->update_footer(true); // will hide #wpfooter
 
@@ -2031,14 +2025,14 @@ class MainWP_System {
 		$_mainwp_disable_menus_items = apply_filters('mainwp_all_disablemenuitems', $_mainwp_disable_menus_items); // to support developer to debug
 	}
 
-	function print_admin_styles( $value = true ) {
+	public function print_admin_styles( $value = true ) {
 		if ( self::isMainWP_Pages() ) {
 			return false;
 		}
 		return $value;
 	}
 
-	function admin_print_styles() {
+	public function admin_print_styles() {
 		?>
 		<style>
 			<?php
@@ -2091,7 +2085,7 @@ class MainWP_System {
 		return $setup_conf_loc;
 	}
 
-	function init() {
+	public function init() {
 
 		global $_mainwp_disable_menus_items;
 
@@ -2117,12 +2111,7 @@ class MainWP_System {
 				if ( empty( $current_user ) ) {
 					if ( ! function_exists( 'wp_get_current_user' ) ) {
 						require_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'pluggable.php';
-					}
-					$current_user = wp_get_current_user();
-				}
-
-				if ( empty( $current_user ) ) {
-					return false;
+					}					
 				}
 
 				return apply_filters( 'mainwp_currentusercan', true, $cap_type, $cap );
@@ -2132,7 +2121,7 @@ class MainWP_System {
 		$this->handleSettingsPost();
 	}
 
-	function uploadFile( $file ) {
+	public function uploadFile( $file ) {
 		header( 'Content-Description: File Transfer' );
 		if ( MainWP_Utility::endsWith( $file, '.tar.gz' ) ) {
 			header( 'Content-Type: application/x-gzip' );
@@ -2152,7 +2141,7 @@ class MainWP_System {
 		exit();
 	}
 
-	function readfile_chunked( $filename ) {
+	public function readfile_chunked( $filename ) {
 		$chunksize = 1024; // how many bytes per chunk
 		$handle    = @fopen( $filename, 'rb' );
 		if ( false === $handle ) {
@@ -2170,19 +2159,8 @@ class MainWP_System {
 		return @fclose( $handle );
 	}
 
-	function parse_init() {
-		if ( isset( $_GET['do'] ) && 'testLog' === $_GET['do'] ) {
-			MainWP_Logger::Instance()->debug( 'ruben' );
-		}
-		if ( isset( $_GET['do'] ) && 'cronBackups' === $_GET['do'] ) {
-			$this->mainwp_cronbackups_action();
-		} elseif ( isset( $_GET['do'] ) && 'cronBackupsContinue' === $_GET['do'] ) {
-			$this->mainwp_cronbackups_continue_action();
-		} elseif ( isset( $_GET['do'] ) && 'cronStats' === $_GET['do'] ) {
-			$this->mainwp_cronstats_action();
-		} elseif ( isset( $_GET['do'] ) && 'cronUpdatesCheck' === $_GET['do'] ) {
-			$this->mainwp_cronupdatescheck_action();
-		} elseif ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
+	public function parse_init() {		
+		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
 			$mwpDir = MainWP_Utility::getMainWPDir();
 			$mwpDir = $mwpDir[0];
 			$file   = trailingslashit( $mwpDir ) . rawurldecode( $_REQUEST['mwpdl'] );
@@ -2206,21 +2184,21 @@ class MainWP_System {
 		}
 	}
 
-	function login_form() {
+	public function login_form() {
 		global $redirect_to;
 		if ( ! isset( $_GET['redirect_to'] ) ) {
 			$redirect_to = get_admin_url() . 'index.php';
 		}
 	}
 
-	function post_updated_messages( $messages ) {
+	public function post_updated_messages( $messages ) {
 		$messages['post'][98] = esc_html__( 'WordPress SEO values have been saved.', 'mainwp' );
 		$messages['post'][99] = esc_html__( 'You have to select the sites you wish to publish to.', 'mainwp' );
 
 		return $messages;
 	}
 
-	function mainwp_warning_notice() {
+	public function mainwp_warning_notice() {
 
 		if ( get_option( 'mainwp_installation_warning_hide_the_notice' ) == 'yes' ) {
 			return;
@@ -2253,7 +2231,7 @@ class MainWP_System {
 		return $location;
 	}
 
-	function activate_extention( $ext_key, $info = array() ) {
+	public function activate_extention( $ext_key, $info = array() ) {
 
 		add_filter( 'wp_redirect', array( $this, 'activate_redirect' ));
 
@@ -2268,11 +2246,11 @@ class MainWP_System {
 		}
 	}
 
-	function deactivate_extention( $ext_key ) {
+	public function deactivate_extention( $ext_key ) {
 		MainWP_Api_Manager::instance()->set_activation_info($ext_key, '');
 	}
 
-	function admin_init() {
+	public function admin_init() {
 		if ( ! MainWP_Utility::isAdmin() ) {
 			return;
 		}
@@ -2296,21 +2274,13 @@ class MainWP_System {
 			wp_enqueue_script( 'jquery-ui-datepicker' );
 		}
 		wp_enqueue_script( 'jquery-ui-dialog' );
-
-		global $wp_scripts;
-		$ui      = $wp_scripts->query( 'jquery-ui-core' );
-		$version = $ui->ver;
-		// if ( MainWP_Utility::startsWith( $version, '1.10' ) ) {
-		// wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.10.4/jquery-ui.min.css', array(), '1.10.4' );
-		// } else {
-			wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
-		// }
-
+		wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
+		
 		$en_params = array( 'jquery-ui-dialog' );
 		if ( $use_wp_datepicker ) {
 			$en_params[] = 'jquery-ui-datepicker';
 		}
-		wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version );
+		wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version, true );
 
 		$enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$primaryBackup             = get_option( 'mainwp_primaryBackup' );
@@ -2368,7 +2338,7 @@ class MainWP_System {
 		// redirect on first install
 		$quick_setup = get_option( 'mainwp_run_quick_setup', false );
 		if ( 'yes' === $quick_setup ) {
-			wp_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );
 			exit;
 		}
 
@@ -2376,7 +2346,7 @@ class MainWP_System {
 			delete_option( 'mainwp_activated' );
 			wp_cache_delete( 'mainwp_activated', 'options' );
 			wp_cache_delete( 'alloptions', 'options' );
-			wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
 
 			return;
 		}
@@ -2388,7 +2358,7 @@ class MainWP_System {
 			wp_cache_delete( 'alloptions', 'options' );
 			if ( ! is_multisite() ) {
 				if ( 'started' === $started ) {
-					wp_redirect( admin_url( 'admin.php?page=mainwp_about&do=started' ) );
+					wp_safe_redirect( admin_url( 'admin.php?page=mainwp_about&do=started' ) );
 					exit;
 				}
 			}
@@ -2398,13 +2368,13 @@ class MainWP_System {
 		// if open /wp-admin/ path then check to redirect to mainwp overview
 		if ( strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) == $_pos ) {
 			if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) { // to fix
-				wp_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+				wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
 				die();
 			}
 		}
 	}
 
-	function handleSettingsPost() {
+	public function handleSettingsPost() {
 		if ( ! function_exists( 'wp_create_nonce' ) ) {
 			include_once ABSPATH . WPINC . '/pluggable.php';
 		}
@@ -2438,7 +2408,7 @@ class MainWP_System {
 				}
 
 				if ( $user = wp_get_current_user() ) {
-					update_user_option($user->ID, 'mainwp_settings_hide_widgets', $hide_wids, true);
+					update_user_option( $user->ID, 'mainwp_settings_hide_widgets', $hide_wids, true );
 				}
 
 				MainWP_Utility::update_option( 'mainwp_hide_update_everything', ( ! isset( $_POST['hide_update_everything'] ) ? 0 : 1 ) );
@@ -2456,7 +2426,7 @@ class MainWP_System {
 				}
 
 				if ( $user = wp_get_current_user() ) {
-					update_user_option($user->ID, 'mainwp_settings_hide_manage_sites_columns', $hide_cols, true);
+					update_user_option( $user->ID, 'mainwp_settings_hide_manage_sites_columns', $hide_cols, true );
 					update_option( 'mainwp_default_sites_per_page', intval( $_POST['mainwp_default_sites_per_page'] ) );
 				}
 			}
@@ -2476,17 +2446,17 @@ class MainWP_System {
 				if ( $updated ) {
 					$msg = '&message=saved';
 				}
-				wp_redirect( admin_url( 'admin.php?page=Settings' . $msg ) );
+				wp_safe_redirect( admin_url( 'admin.php?page=Settings' . $msg ) );
 				exit();
 			} elseif ( wp_verify_nonce( $_POST['wp_nonce'], 'PluginAutoUpdate' ) ) {
 				$val = ( ! isset( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) ? 0 : $_POST['mainwp_pluginAutomaticDailyUpdate'] );
 				MainWP_Utility::update_option( 'mainwp_pluginAutomaticDailyUpdate', $val );
-				wp_redirect( admin_url( 'admin.php?page=PluginsAutoUpdate&message=saved' ) );
+				wp_safe_redirect( admin_url( 'admin.php?page=PluginsAutoUpdate&message=saved' ) );
 				exit();
 			} elseif ( wp_verify_nonce( $_POST['wp_nonce'], 'ThemeAutoUpdate' ) ) {
 				$val = ( ! isset( $_POST['mainwp_themeAutomaticDailyUpdate'] ) ? 0 : $_POST['mainwp_themeAutomaticDailyUpdate'] );
 				MainWP_Utility::update_option( 'mainwp_themeAutomaticDailyUpdate', $val );
-				wp_redirect( admin_url( 'admin.php?page=ThemesAutoUpdate&message=saved' ) );
+				wp_safe_redirect( admin_url( 'admin.php?page=ThemesAutoUpdate&message=saved' ) );
 				exit();
 			}
 		}
@@ -2509,7 +2479,7 @@ class MainWP_System {
 			// to handle parameters
 			// see more redirect_post() in the file wp-admin/includes/post.php
 			$location = apply_filters( 'redirect_post_location', $location, $post_id );
-			wp_redirect($location);
+			wp_safe_redirect($location);
 			exit();
 		}
 	}
@@ -2535,14 +2505,14 @@ class MainWP_System {
 		return $location;
 	}
 
-	function save_bulkpost( $post_id ) {
+	public function save_bulkpost( $post_id ) {
 		$post = get_post( $post_id );
 
 		if ( 'bulkpost' !== $post->post_type ) {
 			return;
 		}
 
-		if ( ! isset( $_POST[ '_wpnonce' ] ) || ! wp_verify_nonce( $_POST[ '_wpnonce' ], 'update-post_' . $post_id ) )
+		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-post_' . $post_id ) )
 			return;
 		
 		if ( ! isset( $_POST['post_type'] ) || ( 'bulkpost' !== $_POST['post_type'] ) ) {
@@ -2574,12 +2544,12 @@ class MainWP_System {
 			// that will do not go to posting process
 			do_action( 'mainwp_before_redirect_posting_bulkpost', $post );
 			// Redirect to handle page! (to actually post the messages)
-			wp_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&id=' . $post_id . '&hideall=1' );
+			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&id=' . $post_id . '&hideall=1' );
 			die();
 		}
 	}
 
-	function save_bulkpage( $post_id ) {
+	public function save_bulkpage( $post_id ) {
 
 		$post = get_post( $post_id );
 
@@ -2587,6 +2557,9 @@ class MainWP_System {
 			return;
 		}
 
+		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-post_' . $post_id ) )
+			return;
+		
 		if ( ! isset( $_POST['post_type'] ) || ( 'bulkpage' !== $_POST['post_type'] ) ) {
 			return;
 		}
@@ -2615,14 +2588,13 @@ class MainWP_System {
 		} else {
 			do_action( 'mainwp_before_redirect_posting_bulkpage', $post );
 			// Redirect to handle page! (to actually post the messages)
-			wp_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&id=' . $post_id . '&hideall=1');
+			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&id=' . $post_id . '&hideall=1');
 			die();
 		}
 	}
 
-	function create_post_type() {
-		$queryable = ( apply_filters( 'mainwp-ext-post-plus-enabled', false ) ) ? true : false;
-
+	public function create_post_type() {		
+		$queryable = is_plugin_active( 'mainwp-post-plus-extension/mainwp-post-plus-extension.php' ) ? true : false;
 		$labels = array(
 			'name'               => _x( 'Bulkpost', 'bulkpost' ),
 			'singular_name'      => _x( 'Bulkpost', 'bulkpost' ),
@@ -2728,7 +2700,7 @@ class MainWP_System {
 		register_post_type( 'bulkpage', $args );
 	}
 
-	function init_session() {
+	public function init_session() {
 		// to fix issue start session for all requests
 		if ( isset($_GET['page']) && in_array($_GET['page'], array(
 			'PostBulkManage',
@@ -2744,7 +2716,7 @@ class MainWP_System {
 		}
 	}
 
-	function admin_enqueue_scripts( $hook ) {
+	public function admin_enqueue_scripts( $hook ) {
 
 		$load_cust_scripts = false;
 
@@ -2755,31 +2727,33 @@ class MainWP_System {
 		}
 
 		if ( self::isMainWP_Pages() ) {
-			wp_enqueue_script( 'mainwp-updates', MAINWP_PLUGIN_URL . 'assets/js/mainwp-updates.js', array(), $this->current_version );
-			wp_enqueue_script( 'mainwp-managesites', MAINWP_PLUGIN_URL . 'assets/js/mainwp-managesites.js', array(), $this->current_version );
-			wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assets/js/mainwp-extensions.js', array(), $this->current_version );
-			wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assets/js/moment/moment.min.js', array(), $this->current_version );
-			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version );
-			wp_enqueue_script( 'semantic-ui-datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.min.js', array( 'jquery' ), $this->current_version );
-			wp_enqueue_script( 'semantic-ui-datatables-colreorder', MAINWP_PLUGIN_URL . 'assets/js/colreorder/dataTables.colReorder.js', array( 'jquery' ), $this->current_version );
-			wp_enqueue_script( 'semantic-ui-datatables-scroller', MAINWP_PLUGIN_URL . 'assets/js/scroller/scroller.dataTables.js', array( 'jquery' ), $this->current_version );
-			wp_enqueue_script( 'semantic-ui-datatables-fixedcolumns', MAINWP_PLUGIN_URL . 'assets/js/fixedcolumns/dataTables.fixedColumns.js', array( 'jquery' ), $this->current_version );
-			wp_enqueue_script( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assets/js/calendar/calendar.min.js', array( 'jquery' ), $this->current_version );
-			wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version );
+			wp_enqueue_script( 'mainwp-updates', MAINWP_PLUGIN_URL . 'assets/js/mainwp-updates.js', array(), $this->current_version, true );
+			wp_enqueue_script( 'mainwp-managesites', MAINWP_PLUGIN_URL . 'assets/js/mainwp-managesites.js', array(), $this->current_version, true );
+			wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assets/js/mainwp-extensions.js', array(), $this->current_version, true );
+			wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assets/js/moment/moment.min.js', array(), $this->current_version, true );
+			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version, true );
+			wp_enqueue_script( 'semantic-ui-datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.min.js', array( 'jquery' ), $this->current_version, true );
+			wp_enqueue_script( 'semantic-ui-datatables-colreorder', MAINWP_PLUGIN_URL . 'assets/js/colreorder/dataTables.colReorder.js', array( 'jquery' ), $this->current_version, true );
+			wp_enqueue_script( 'semantic-ui-datatables-scroller', MAINWP_PLUGIN_URL . 'assets/js/scroller/scroller.dataTables.js', array( 'jquery' ), $this->current_version, true );
+			wp_enqueue_script( 'semantic-ui-datatables-fixedcolumns', MAINWP_PLUGIN_URL . 'assets/js/fixedcolumns/dataTables.fixedColumns.js', array( 'jquery' ), $this->current_version, true );
+			wp_enqueue_script( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assets/js/calendar/calendar.min.js', array( 'jquery' ), $this->current_version, true );
+			wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version, true );						
 		}
 
 		if ( $load_cust_scripts ) {
-			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version );
+			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version, true );
 		}
 
-		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assets/js/mainwp-ui.js', array(), $this->current_version );
+		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assets/js/mainwp-ui.js', array(), $this->current_version, true );
 		// wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assets/js/moment/moment.min.js', array(), $this->current_version );
-		wp_enqueue_script( 'mainwp-js-popup', MAINWP_PLUGIN_URL . 'assets/js/mainwp-popup.js', array(), $this->current_version );
-		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assets/js/fileuploader.js', array(), $this->current_version );
-		wp_enqueue_script( 'mainwp-date', MAINWP_PLUGIN_URL . 'assets/js/date.js', array(), $this->current_version );
+		wp_enqueue_script( 'mainwp-js-popup', MAINWP_PLUGIN_URL . 'assets/js/mainwp-popup.js', array(), $this->current_version, true );
+		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assets/js/fileuploader.js', array(), $this->current_version, true );
+		wp_enqueue_script( 'mainwp-date', MAINWP_PLUGIN_URL . 'assets/js/date.js', array(), $this->current_version, true );
+		wp_enqueue_script( 'mainwp-filesaver', MAINWP_PLUGIN_URL . 'assets/js/FileSaver.js', array(), $this->current_version, true );
+		wp_enqueue_script( 'mainwp-jqueryfiletree', MAINWP_PLUGIN_URL . 'assets/js/jqueryFileTree.js', array(), $this->current_version, true );
 	}
 
-	function admin_enqueue_styles( $hook ) {
+	public function admin_enqueue_styles( $hook ) {
 		global $wp_version;
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp.css', array(), $this->current_version );
 		wp_enqueue_style( 'mainwp-responsive-layouts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-responsive-layouts.css', array(), $this->current_version );
@@ -2812,14 +2786,14 @@ class MainWP_System {
 		}
 	}
 
-	function admin_head() {
-		echo '<script type="text/javascript">var mainwp_ajax_nonce = "' . wp_create_nonce( 'mainwp_ajax' ) . '"</script>';
-		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'assets/js/FileSaver.js' . '"></script>';
-		echo '<script type="text/javascript" src="' . MAINWP_PLUGIN_URL . 'assets/js/jqueryFileTree.js' . '"></script>';
+	public function admin_head() {
+		?>
+		<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo wp_create_nonce( 'mainwp_ajax' ); ?>"</script>		
+		<?php
 	}
 
 
-	function admin_body_class( $class_string ) {
+	public function admin_body_class( $class_string ) {
 		if ( self::isMainWP_Pages() ) {
 			$class_string .= ' mainwp-ui mainwp-ui-page ';
 			$class_string .= ' mainwp-ui-leftmenu ';     // to enable MainWP custom menu
@@ -2827,7 +2801,7 @@ class MainWP_System {
 		return $class_string;
 	}
 
-	function admin_menu() {
+	public function admin_menu() {
 		global $menu;
 		foreach ( $menu as $k => $item ) {
 			if ( 'edit.php?post_type=bulkpost' === $item[2] ) { // Remove bulkpost
@@ -2844,7 +2818,7 @@ class MainWP_System {
 		wp_enqueue_script( 'postbox' );
 	}
 
-	function update_footer( $echo = false ) {
+	public function update_footer( $echo = false ) {
 		if ( ! self::isMainWP_Pages() ) {
 			return;
 		}
@@ -2868,8 +2842,8 @@ class MainWP_System {
 							$is_staging = 'yes';
 						}
 					}
-				} elseif ( 'UpdatesManage' == $_GET['page'] || 'mainwp_tab' == $_GET['page'] ) { // for Updates and Overview page
-					$staging_enabled = apply_filters( 'mainwp-extension-available-check', 'mainwp-staging-extension' );
+				} elseif ( 'UpdatesManage' == $_GET['page'] || 'mainwp_tab' == $_GET['page'] ) { // for Updates and Overview page					
+					$staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) ? true : false;
 					if ( $staging_enabled ) {
 						$staging_view = get_user_option( 'mainwp_staging_options_updates_view' ) == 'staging' ? true : false;
 						if ( $staging_view ) {
@@ -2885,7 +2859,8 @@ class MainWP_System {
 
 		$cntr = 0;
 		if ( is_array( $websites ) ) {
-			for ( $i = 0; $i < count( $websites ); $i ++ ) {
+			$count = count( $output );
+			for ( $i = 0; $i < $count; $i ++ ) {
 				$website = $websites[ $i ];
 				if ( '' == $website->sync_errors ) {
 					$cntr ++;
@@ -2914,25 +2889,26 @@ class MainWP_System {
 				<div class="ui middle aligned divided selection list" id="sync-sites-status">
 					<?php
 					if ( is_array( $websites ) ) {
-						for ( $i = 0; $i < count( $websites ); $i ++ ) {
+						$count = count( $websites );
+						for ( $i = 0; $i < $count; $i ++ ) {
 							$nice_url = MainWP_Utility::getNiceURL( $website->url );
 							$website = $websites[ $i ];
 							if ( '' == $website->sync_errors ) {
 								?>
 								<div class="item">
 								<div class="right floated content">
-								  <div class="sync-site-status" niceurl="<?php echo esc_html($nice_url); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="clock outline icon"></i></div>
+								  <div class="sync-site-status" niceurl="<?php echo esc_html( $nice_url ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="clock outline icon"></i></div>
 								</div>
-								<div class="content"><?php echo esc_html($nice_url); ?></div>
+								<div class="content"><?php echo esc_html( $nice_url ); ?></div>
 								</div>
 								<?php
 							} else {
 								?>
 								<div class="item disconnected-site">
 								<div class="right floated content">
-								  <div class="sync-site-status" niceurl="<?php echo esc_html($nice_url); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="exclamation red icon"></i></div>
+								  <div class="sync-site-status" niceurl="<?php echo esc_html( $nice_url ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="exclamation red icon"></i></div>
 								</div>
-								<div class="content"><?php echo esc_html($nice_url); ?></div>
+								<div class="content"><?php echo esc_html( $nice_url ); ?></div>
 								</div>
 								<?php
 							}
@@ -2945,18 +2921,18 @@ class MainWP_System {
 								?>
 								<div class="item">
 								<div class="right floated content">
-								  <div class="sync-site-status" niceurl="<?php echo esc_html($nice_url); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="clock outline icon"></i></div>
+								  <div class="sync-site-status" niceurl="<?php echo esc_html( $nice_url ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="clock outline icon"></i></div>
 								</div>
-								<div class="content"><?php echo esc_html($nice_url); ?></div>
+								<div class="content"><?php echo esc_html( $nice_url ); ?></div>
 								</div>
 								<?php
 							} else {
 								?>
 								<div class="item disconnected-site">
 								<div class="right floated content">
-								  <div class="sync-site-status" niceurl="<?php echo esc_html($nice_url); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="exclamation red icon"></i></div>
+								  <div class="sync-site-status" niceurl="<?php echo esc_html( $nice_url ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="exclamation red icon"></i></div>
 								</div>
-								<div class="content"><?php echo esc_html($nice_url); ?></div>
+								<div class="content"><?php echo esc_html( $nice_url ); ?></div>
 								</div>
 								<?php
 							}
@@ -2992,7 +2968,7 @@ class MainWP_System {
 		}
 	}
 
-	function new_menus() {
+	public function new_menus() {
 		if ( MainWP_Utility::isAdmin() ) {
 			// Adding the page to manage your added sites/groups
 			// The first page which will display the post area etc..
@@ -3042,7 +3018,7 @@ class MainWP_System {
 	}
 
 	// On activation install the database
-	function activation() {
+	public function activation() {
 		// delete_option( 'mainwp_requests' );
 		MainWP_DB::Instance()->update();
 		MainWP_DB::Instance()->install();
@@ -3051,24 +3027,24 @@ class MainWP_System {
 		MainWP_Utility::update_option( 'mainwp_activated', 'yes' );
 	}
 
-	function deactivation() {
+	public function deactivation() {
 		update_option('mainwp_extensions_all_activation_cached', ''); // clear cached of all activations to reload for next loading
 	}
 
 	// On update update the database
-	function update() {
+	public function update() {
 		MainWP_DB::Instance()->update();
 		MainWP_DB::Instance()->install();
 	}
 
-	function apply_filter( $filter, $value = array() ) {
+	public function apply_filter( $filter, $value = array() ) {
 		$output = apply_filters( $filter, $value );
 
 		if ( ! is_array( $output ) ) {
 			return array();
 		}
-
-		for ( $i = 0; $i < count( $output ); $i ++ ) {
+		$count = count( $output );
+		for ( $i = 0; $i < $count; $i ++ ) {
 			if ( ! isset( $output[ $i ]['plugin'] ) || ! isset( $output[ $i ]['key'] ) ) {
 				unset( $output[ $i ] );
 				continue;

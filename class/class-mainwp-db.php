@@ -332,7 +332,7 @@ class MainWP_DB {
 	function post_update() {
 		// get_site_option is multisite aware!
 		$currentVersion = get_site_option( 'mainwp_db_version' );
-		if ( $currentVersion === false ) {
+		if ( false === $currentVersion ) {
 			return;
 		}
 
@@ -1003,7 +1003,7 @@ class MainWP_DB {
 		}
 		$where = $this->getWhereAllowAccessSites();
 
-		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp' ) . ' WHERE id IN (' . implode( ',', $ids ) . ')' . ( $userId != null ? ' AND userid = ' . $userId : '' ) . $where, OBJECT );
+		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp' ) . ' WHERE id IN (' . implode( ',', $ids ) . ')' . ( null != $userId ? ' AND userid = ' . $userId : '' ) . $where, OBJECT );
 	}
 
 	public function getWebsitesByGroupIds( $ids, $userId = null ) {
@@ -1015,7 +1015,7 @@ class MainWP_DB {
 			$userId = $current_user->ID;
 		}
 
-		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp' ) . ' wp JOIN ' . $this->tableName( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . implode( ',', $ids ) . ') ' . ( $userId != null ? ' AND wp.userid = ' . $userId : '' ), OBJECT );
+		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp' ) . ' wp JOIN ' . $this->tableName( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . implode( ',', $ids ) . ') ' . ( null != $userId ? ' AND wp.userid = ' . $userId : '' ), OBJECT );
 	}
 
 	public function getWebsitesByGroupId( $id ) {
@@ -1151,7 +1151,7 @@ class MainWP_DB {
 				'pubkey'                 => $this->escape( $pubkey ),
 				'privkey'                => $this->escape( $privkey ),
 				'nossl'                  => $nossl,
-				'nosslkey'               => ( $nosslkey == null ? '' : $this->escape( $nosslkey ) ),
+				'nosslkey'               => ( null == $nosslkey ? '' : $this->escape( $nosslkey ) ),
 				'siteurl'                => '',
 				'ga_id'                  => '',
 				'gas_id'                 => 0,
@@ -1406,7 +1406,7 @@ class MainWP_DB {
 		$progresses = $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp_backup_progress' ) . ' WHERE wp_id = ' . $wp_id . ' AND dtsFetched > ' . ( time() - ( 30 * 60 ) ) );
 		if ( is_array( $progresses ) ) {
 			foreach ( $progresses as $progress ) {
-				if ( ( $progress->downloadedDBComplete == 0 ) && ( $progress->downloadedFULLComplete == 0 ) ) {
+				if ( ( 0 === $progress->downloadedDBComplete ) && ( 0 === $progress->downloadedFULLComplete ) ) {
 					if ( $task = $this->getBackupTaskById( $progress->task_id ) ) {
 						if ( ( 'full' === $task->type ) && ! $task->paused ) {
 							return true;
@@ -1437,7 +1437,7 @@ class MainWP_DB {
 	}
 
 	public function getBackupTasks( $userid = null, $orderBy = null ) {
-		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp_backup' ) . ' WHERE ' . ( $userid == null ? '' : 'userid= ' . $userid . ' AND ' ) . ' template = 0 ' . ( $orderBy != null ? 'ORDER BY ' . $orderBy : '' ), OBJECT );
+		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp_backup' ) . ' WHERE ' . ( null == $userid ? '' : 'userid= ' . $userid . ' AND ' ) . ' template = 0 ' . ( null != $orderBy ? 'ORDER BY ' . $orderBy : '' ), OBJECT );
 	}
 
 	public function addBackupTask( $userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename,

@@ -440,8 +440,7 @@ class MainWP_System {
 				return;
 			}
 		}
-
-		$notice_html = sprintf( esc_html__( 'You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %1$sExtensions%2$s page and enter your API.', 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' );
+		
 		?>
 		<style type="text/css">
 			tr[data-plugin="<?php echo esc_attr($plugin_slug); ?>"] {
@@ -449,7 +448,7 @@ class MainWP_System {
 			}
 		</style>
 		<tr class="plugin-update-tr active" slug="<?php echo esc_attr($slug); ?>"><td colspan="3" class="plugin-update colspanchange"><div class="update-message api-deactivate">
-					<?php echo $notice_html; ?>
+					<?php printf( __( 'You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %1$sExtensions%2$s page and enter your API.', 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' ); ?>
 					<span class="mainwp-right"><a href="#" class="mainwp-activate-notice-dismiss" ><i class="times circle icon"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
 				</div></td></tr>
 		<?php
@@ -478,7 +477,7 @@ class MainWP_System {
 			?>
 			<div class="ui icon message yellow" style="margin-bottom: 0; border-radius: 0;">
 				<i class="exclamation circle icon"></i>
-				<strong><?php echo esc_html__( 'Important Notice: ', 'mainwp' ); ?></strong>&nbsp;<?php echo sprintf( esc_html__( 'MainWP Version 4 is a major upgrade from MainWP Version 3. Please, read this&nbsp; %1$supdating FAQ%2$s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/faq-on-upgrading-from-mainwp-version-3-to-mainwp-version-4/" target="_blank">', '</a>' ); ?>
+				<strong><?php echo esc_html__( 'Important Notice: ', 'mainwp' ); ?></strong>&nbsp;<?php printf( __( 'MainWP Version 4 is a major upgrade from MainWP Version 3. Please, read this&nbsp; %1$supdating FAQ%2$s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/faq-on-upgrading-from-mainwp-version-3-to-mainwp-version-4/" target="_blank">', '</a>' ); ?>
 				<i class="close icon mainwp-notice-dismiss" notice-id="upgrade_4"></i>
 			</div>
 			<?php
@@ -502,7 +501,7 @@ class MainWP_System {
 				?>
 				<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
 					<i class="exclamation circle icon"></i>
-					<?php echo sprintf( esc_html__( 'Your server is currently running PHP version %1$s. In the next few months your MainWP Dashboard will require PHP 5.6 as a minimum. Please upgrade your server to at least 5.6 but we recommend PHP 7 or newer. You can find a template email to send your host %2$shere%3$s.', 'mainwp' ), $phpver, '<a href="https://wordpress.org/about/requirements/" target="_blank">', '</a>' ); ?>
+					<?php printf( __( 'Your server is currently running PHP version %1$s. In the next few months your MainWP Dashboard will require PHP 5.6 as a minimum. Please upgrade your server to at least 5.6 but we recommend PHP 7 or newer. You can find a template email to send your host %2$shere%3$s.', 'mainwp' ), $phpver, '<a href="https://wordpress.org/about/requirements/" target="_blank">', '</a>' ); ?>
 					<i class="close icon mainwp-notice-dismiss" notice-id="phpver_5_5"></i>
 				</div>
 				<?php
@@ -515,7 +514,7 @@ class MainWP_System {
 					?>
 					<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
 						<i class="exclamation circle icon"></i>
-						<?php echo sprintf( esc_html__( 'MainWP has detected that the <strong>OpenSSL.cnf</strong> file is not configured properly. It is required to configure this so you can start connecting your child sites. Please, %1$sclick here to configure it!%2$s', 'mainwp' ), '<a href="admin.php?page=SettingsAdvanced">', '</a>' ); ?>
+						<?php printf( __( 'MainWP has detected that the <strong>OpenSSL.cnf</strong> file is not configured properly. It is required to configure this so you can start connecting your child sites. Please, %1$sclick here to configure it!%2$s', 'mainwp' ), '<a href="admin.php?page=SettingsAdvanced">', '</a>' ); ?>
 						<i class="close icon mainwp-notice-dismiss" notice-id="ssl_warn"></i>
 					</div>
 					<?php
@@ -2230,7 +2229,7 @@ class MainWP_System {
 			<i class="info circle icon"></i>
 			<div class="content">
 				<div class="header"><?php esc_html_e( 'This appears to be a production site', 'mainwp' ); ?></div>
-				<?php esc_html_e( 'We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.', 'mainwp' ); ?> <?php echo sprintf( esc_html__( 'Using a new WordPress install will help to cut down on plugin conflicts and other issues that can be caused by trying to run your MainWP Dashboard off an active site. Most hosting companies provide free subdomains %s and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.', 'mainwp' ), '("<strong>demo.yourdomain.com</strong>")' ); ?>
+				<?php esc_html_e( 'We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.', 'mainwp' ); ?> <?php printf( __( 'Using a new WordPress install will help to cut down on plugin conflicts and other issues that can be caused by trying to run your MainWP Dashboard off an active site. Most hosting companies provide free subdomains %s and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.', 'mainwp' ), '("<strong>demo.yourdomain.com</strong>")' ); ?>
 				<br /><br />
 				<a href="#" class="ui red mini button" id="remove-mainwp-installation-warning"><?php esc_html_e( 'I have read the warning and I want to proceed', 'mainwp' ); ?></a>
 			</div>
@@ -2963,7 +2962,7 @@ class MainWP_System {
 			<div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
 			<div class="content">
 				<div class="content-massage"></div>
-				<div class="ui mini yellow message hidden update-confirm-notice" ><?php echo sprintf( esc_html__( 'To disable update confirmations, go to the %1$sSettings%2$s page and disable the "Disable update confirmations" option', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
+				<div class="ui mini yellow message hidden update-confirm-notice" ><?php printf( __( 'To disable update confirmations, go to the %1$sSettings%2$s page and disable the "Disable update confirmations" option', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
 			</div>
 			<div class="actions">
 				<div class="ui cancel button"><?php esc_html_e('Cancel', 'mainwp'); ?></div>

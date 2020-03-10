@@ -260,7 +260,7 @@ class MainWP_Post {
 	 */
 
 	static function add_meta( $post_ID ) {
-		$post_ID = ( int ) $post_ID;
+		$post_ID = (int) $post_ID;
 
 		$metakeyselect = isset( $_POST['metakeyselect'] ) ? wp_unslash( trim( $_POST['metakeyselect'] ) ) : '';
 		$metakeyinput  = isset( $_POST['metakeyinput'] ) ? wp_unslash( trim( $_POST['metakeyinput'] ) ) : '';
@@ -299,7 +299,7 @@ class MainWP_Post {
 		MainWP_Post_Handler::Instance()->secure_request( 'mainwp_post_addmeta' );
 
 		$c    = 0;
-		$pid  = ( int ) $_POST['post_id'];
+		$pid  = (int) $_POST['post_id'];
 		$post = get_post( $pid );
 
 		if ( isset( $_POST['metakeyselect'] ) || isset( $_POST['metakeyinput'] ) ) {
@@ -315,7 +315,7 @@ class MainWP_Post {
 			}
 
 			$meta = get_metadata_by_mid( 'post', $mid );
-			$pid  = ( int ) $meta->post_id;
+			$pid  = (int) $meta->post_id;
 			$meta = get_object_vars( $meta );
 
 			$data = self::_list_meta_row( $meta, $c );
@@ -412,7 +412,7 @@ class MainWP_Post {
 				}
 
 				if ( isset( $subPage['tab_link_hidden'] ) && true === $subPage['tab_link_hidden'] ) {
-			  	$tab_link = '#';
+					$tab_link = '#';
 				} else {
 					$tab_link = 'admin.php?page=Post' . $subPage['slug'];
 				}
@@ -933,7 +933,7 @@ class MainWP_Post {
 							<a href="<?php echo admin_url( 'admin.php?page=CommentBulkManage&siteid=' . intval( $website->id ) . '&postid=' . $post['id'] ); ?>" title="0 pending" class="post-com-count"><span class="comment-count"><abbr title="<?php echo esc_attr( $post['comment_count'] ); ?>"><?php echo esc_html( $post['comment_count'] ); ?></abbr></span></a>
 						</div>
 					</td>
-		  	<?php endif; ?>
+			<?php endif; ?>
 
 					<td class="date column-date"><abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $post['dts'] ); ?>"><?php echo esc_html( $post['dts'] ); ?></abbr></td>
 
@@ -1738,7 +1738,7 @@ class MainWP_Post {
 							<label><?php echo esc_html( 'Status', 'mainwp' ); ?></label>
 							<select class="ui dropdown" name="mainwp_edit_post_status" id="post_status"> <?php // to fix: saving pending status ?>
 								<option value="draft" <?php echo ( 'draft' === $post->post_status || 'publish' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( 'Draft', 'mainwp' ); ?></option>
-								<option value="pending" <?php echo ( 'pending'=== $post->post_status ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( 'Pending review', 'mainwp' ); ?></option>
+								<option value="pending" <?php echo ( 'pending' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php echo esc_html( 'Pending review', 'mainwp' ); ?></option>
 							</select>
 						</div>
 

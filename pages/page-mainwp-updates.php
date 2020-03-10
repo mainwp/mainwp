@@ -2060,7 +2060,7 @@ class MainWP_Updates {
 				<?php $str_format = __( 'Updated %s days ago', 'mainwp' ); ?>
 			<div class="ui <?php echo( 'abandoned-plugins' === $current_tab ? 'active' : '' ); ?> tab" data-tab="abandoned-plugins">
 				<?php
-				if ( MAINWP_VIEW_PER_SITE ==  $userExtension->site_view ) :
+				if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
 					?>
 				<!-- Per Site -->
 				<table class="ui stackable single line table" id="mainwp-abandoned-plugins-sites-table">

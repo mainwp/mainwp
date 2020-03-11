@@ -37,7 +37,7 @@ class MainWP_User {
 		 */
 		add_action( 'mainwp-pagefooter-user', array( self::getClassName(), 'renderFooter' ) );
 
-		add_action( 'mainwp_help_sidebar_content', array( self::getClassName(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content
+		add_action( 'mainwp_help_sidebar_content', array( self::getClassName(), 'mainwp_help_content' ) );
 	}
 
 	public static function initMenu() {
@@ -118,7 +118,7 @@ class MainWP_User {
 			'href'       => 'admin.php?page=UserBulkManage',
 			'icon'       => '<i class="user icon"></i>',
 			'desc'       => 'Manage users on your child sites',
-		), 1 ); // level 1
+		), 1 );
 
 		$init_sub_subleftmenu = array(
 			array(
@@ -568,14 +568,13 @@ class MainWP_User {
 				}
 			}
 
-			// Search in local cache
 			if ( '' !== $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$search_user_role = array();
 						$website          = MainWP_DB::Instance()->getWebsiteById( $v );
 						$allUsers         = json_decode( $website->users, true );
-						$allUsersCount    = count( $allUsers );
+						$allUsersCount		= count( $allUsers );
 
 						if ( $check_users_role ) {
 							for ( $i = 0; $i < $allUsersCount; $i ++ ) {
@@ -617,7 +616,7 @@ class MainWP_User {
 							if ( '' !== $website->sync_errors ) {
 								continue;
 							}
-							$allUsers      = json_decode( $website->users, true );
+							$allUsers = json_decode( $website->users, true );
 							$allUsersCount = count( $allUsers );
 							if ( $check_users_role ) {
 								for ( $i = 0; $i < $allUsersCount; $i ++ ) {
@@ -653,8 +652,6 @@ class MainWP_User {
 				}
 			}
 		} else {
-			// Fetch all!
-			// Build websites array
 			$dbwebsites = array();
 			if ( '' !== $sites ) {
 				foreach ( $sites as $k => $v ) {
@@ -862,12 +859,12 @@ class MainWP_User {
 			$user_data = $_POST['user_data'];
 			parse_str( $user_data, $extra);
 			if ( $website->adminname == $userName ) {
-				// This user is used for our secure link, you can not change the role.
+
 				if ( is_array( $extra ) && isset( $extra['role'] ) ) {
 					unset( $extra['role'] );
 				}
 			}
-			// to fix specical character issue
+
 			if ( ! empty($pass) ) {
 				$extra['pass1'] = $extra['pass2'] = $pass;
 			}
@@ -1121,8 +1118,6 @@ class MainWP_User {
 		}
 
 		$allowed_roles = array( 'subscriber', 'administrator', 'editor', 'author', 'contributor' );
-
-		// support custom roles
 		$cus_roles = array();
 		$cus_roles = apply_filters( 'mainwp-users-manage-roles', $cus_roles );
 		if ( is_array( $cus_roles ) && 0 < count( $cus_roles ) ) {
@@ -1147,7 +1142,7 @@ class MainWP_User {
 
 			$dbwebsites = array();
 
-			if ( 'site' === $_POST['select_by'] ) { // Get all selected websites
+			if ( 'site' === $_POST['select_by'] ) {
 				foreach ( $selected_sites as $k ) {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
 						$website                    = MainWP_DB::Instance()->getWebsiteById( $k );
@@ -1164,7 +1159,7 @@ class MainWP_User {
 						) );
 					}
 				}
-			} else { // Get all websites from the selected groups
+			} else {
 				foreach ( $selected_groups as $k ) {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
 						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
@@ -1262,7 +1257,7 @@ class MainWP_User {
 			if ( is_uploaded_file( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
 				$tmp_path = $_FILES['import_user_file_bulkupload']['tmp_name'];
 				$content  = file_get_contents( $tmp_path );
-				$lines    = explode( "\r\n", $content ); // PHP_EOL
+				$lines    = explode( "\r\n", $content );
 
 				if ( is_array( $lines ) && 0 < count( $lines ) ) {
 					$i = 0;
@@ -1485,7 +1480,10 @@ class MainWP_User {
 		die( json_encode( $ret ) );
 	}
 
-	// Hook the section help content to the Help Sidebar element
+	/*
+	 * Hook the section help content to the Help Sidebar element
+	 */
+
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'UserBulkManage' === $_GET['page'] || 'UserBulkAdd' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) {
 			?>

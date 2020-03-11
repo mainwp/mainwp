@@ -574,7 +574,7 @@ class MainWP_User {
 						$search_user_role = array();
 						$website          = MainWP_DB::Instance()->getWebsiteById( $v );
 						$allUsers         = json_decode( $website->users, true );
-						$allUsersCount		= count( $allUsers );
+						$allUsersCount    = count( $allUsers );
 
 						if ( $check_users_role ) {
 							for ( $i = 0; $i < $allUsersCount; $i ++ ) {
@@ -616,7 +616,7 @@ class MainWP_User {
 							if ( '' !== $website->sync_errors ) {
 								continue;
 							}
-							$allUsers = json_decode( $website->users, true );
+							$allUsers      = json_decode( $website->users, true );
 							$allUsersCount = count( $allUsers );
 							if ( $check_users_role ) {
 								for ( $i = 0; $i < $allUsersCount; $i ++ ) {
@@ -1118,8 +1118,8 @@ class MainWP_User {
 		}
 
 		$allowed_roles = array( 'subscriber', 'administrator', 'editor', 'author', 'contributor' );
-		$cus_roles = array();
-		$cus_roles = apply_filters( 'mainwp-users-manage-roles', $cus_roles );
+		$cus_roles     = array();
+		$cus_roles     = apply_filters( 'mainwp-users-manage-roles', $cus_roles );
 		if ( is_array( $cus_roles ) && 0 < count( $cus_roles ) ) {
 			$cus_roles     = array_keys( $cus_roles );
 			$allowed_roles = array_merge( $allowed_roles, $cus_roles );

@@ -22,7 +22,7 @@ class MainWP_UI {
 		<div id="mainwp-select-sites" class="mainwp_select_sites_wrapper">
 		<?php self::select_sites_box_body( $selected_websites, $selected_groups, $type, $show_group, $show_select_all, false, $enableOfflineSites, $postId ); ?>
 	</div>
-	<?php
+		<?php
 	}
 
 	public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false, $postId = 0 ) {
@@ -52,7 +52,7 @@ class MainWP_UI {
 		}
 		// to fix layout with multi sites selector
 		$tab_id = rand();
-	?>
+		?>
 
 	<div id="mainwp-select-sites-footer">
 			<div class="ui grid">
@@ -96,7 +96,7 @@ class MainWP_UI {
 							<div class="ui divider hidden"></div>
 							<a href="admin.php?page=managesites&do=new" class="ui green button basic"><?php esc_html_e( 'Add Site', 'mainwp'); ?></a>
 						</h2>
-					<?php
+						<?php
 					else :
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							$selected = false;
@@ -114,16 +114,16 @@ class MainWP_UI {
 				<div title="<?php echo $website->url; ?>" class="mainwp_selected_sites_item ui checkbox item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
 				  <input onClick="mainwp_site_select(this)" <?php echo $disabled; ?> type="<?php echo $type; ?>" name="<?php echo ( 'radio' === $type ? 'selected_site' : 'selected_sites[]' ); ?>" siteid="<?php echo $website->id; ?>" value="<?php echo $website->id; ?>" id="selected_sites_<?php echo $website->id; ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
 				  <label for="selected_sites_<?php echo $website->id; ?>">
-						<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo $website->url; ?></span>
+								<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo $website->url; ?></span>
 				  </label>
 				</div>
-				<?php
-					} else {
-				?>
+								<?php
+							} else {
+								?>
 			  <div title="<?php echo $website->url; ?>" class="mainwp_selected_sites_item item ui checkbox <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
 				  <input type="checkbox" disabled="disabled"/>
 				  <label for="selected_sites_<?php echo $website->id; ?>">
-						<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo $website->url; ?></span>
+								<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo $website->url; ?></span>
 				  </label>
 			  </div>
 								<?php
@@ -284,7 +284,7 @@ class MainWP_UI {
 			</div>
 
 			<script type="text/javascript">
-	  	jQuery( document ).ready( function () {
+		  jQuery( document ).ready( function () {
 				jQuery( '.ui.sticky' ).sticky();
 				jQuery( '#mainwp-help-sidebar' ).on( 'click', function() {
 					jQuery( '.ui.sidebar' ).sidebar( {
@@ -314,7 +314,7 @@ class MainWP_UI {
 				   </div>
 				   <?php endif; ?>
 					 <?php if ( 'managesites' === $which ) : ?>
-					   <?php do_action( 'mainwp_managesites_tabletop' ); ?>
+							<?php do_action( 'mainwp_managesites_tabletop' ); ?>
 				   <?php else : ?>
 					   <?php do_action( 'mainwp_subheader_actions' ); ?>
 				   <?php endif; ?>

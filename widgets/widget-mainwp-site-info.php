@@ -1,22 +1,20 @@
 <?php
 /**
  * MainWP Site Info Widget
- * 
+ *
  * Build the Child Site Info Widget
- * 
  */
 
 /**
  * Class MainWP_Site_Info
- * 
+ *
  * Grab Child Site info and build widget
- * 
  */
 class MainWP_Site_Info {
 
 	/**
 	 * getClassName()
-	 * 
+	 *
 	 * @return string __CLASS__
 	 */
 	public static function getClassName() {
@@ -25,7 +23,7 @@ class MainWP_Site_Info {
 
 	/**
 	 * render()
-	 * 
+	 *
 	 * @return mixed renderSiteInfo()
 	 */
 	public static function render() {
@@ -34,9 +32,8 @@ class MainWP_Site_Info {
 
 	/**
 	 * Method renderSiteInfo()
-	 * 
+	 *
 	 * Grab Child Site Info and render.
-	 * 
 	 */
 	public static function renderSiteInfo() {
 		$current_wpid = MainWP_Utility::get_current_wpid();

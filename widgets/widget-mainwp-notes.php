@@ -1,22 +1,20 @@
 <?php
 /**
  * MainWP Notes Widget
- * 
+ *
  * Display current Child Site Notes
- * 
  */
 
 /**
  * Class MainWP_Notes
- * 
+ *
  * Grab Child Site Notes & Build Notes Widget
- * 
  */
 class MainWP_Notes {
 
 	/**
 	 * getClassName()
-	 * 
+	 *
 	 * @return string __CLASS__
 	 */
 	public static function getClassName() {
@@ -25,7 +23,7 @@ class MainWP_Notes {
 
 	/**
 	 * render()
-	 * 
+	 *
 	 * Grab Child Site Notes & Render Widget
 	 */
 	public static function render() {

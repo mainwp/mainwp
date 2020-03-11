@@ -2,7 +2,7 @@
 
 /**
  * MainWP Themes Page
- * 
+ *
  * @uses MainWP_Install_Bulk
  */
 class MainWP_Themes {

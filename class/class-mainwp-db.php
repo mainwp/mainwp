@@ -1,9 +1,8 @@
 <?php
 /**
- * MainWP Database Controller 
- * 
- * This file handles all interactions with the DB. 
- * 
+ * MainWP Database Controller
+ *
+ * This file handles all interactions with the DB.
  */
 class MainWP_DB {
 

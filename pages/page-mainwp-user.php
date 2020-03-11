@@ -2,7 +2,7 @@
 
 /**
  * MainWP User Page
- * 
+ *
  * @uses MainWP_Bulk_Add
  */
 class MainWP_User {

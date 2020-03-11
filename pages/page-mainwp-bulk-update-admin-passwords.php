@@ -2,7 +2,7 @@
 
 /**
  * MainWP Bulk Update Admin Passwords
- * 
+ *
  * @uses MainWP_Bulk_Add
  */
 class MainWP_Bulk_Update_Admin_Passwords {

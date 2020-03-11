@@ -1,10 +1,9 @@
 <?php
 /**
  * HTTP Error Handler
- * 
- * Throw this error when MainWP is not detected 
+ *
+ * Throw this error when MainWP is not detected
  * due to either an HTTP error
- * 
  */
 class MainWP_Error_Helper {
 

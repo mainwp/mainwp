@@ -523,7 +523,7 @@ class MainWP_User {
 				self::renderTableBody( $role, $groups, $sites, $search );
 			}
 			?>
-		  </tbody>
+			</tbody>
 		</table>
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {

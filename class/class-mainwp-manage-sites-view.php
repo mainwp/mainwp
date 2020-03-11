@@ -334,7 +334,7 @@ class MainWP_Manage_Sites_View {
 						<?php
 						$row++;
 					}
-					$header_line == trim( $header_line );
+					$header_line = trim( $header_line );
 
 					?>
 					<input type="hidden" id="mainwp_managesites_do_import" value="1"/>
@@ -519,7 +519,7 @@ class MainWP_Manage_Sites_View {
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable legacy backup feature', 'mainwp' ); ?></label>
 			<div class="ten wide column ui toggle checkbox">
-				<input type="checkbox" name="mainwp_options_enableLegacyBackupFeature" id="mainwp_options_enableLegacyBackupFeature" <?php echo ( $enableLegacyBackupFeature == 0 ? '' : 'checked="true"' ); ?>/>
+				<input type="checkbox" name="mainwp_options_enableLegacyBackupFeature" id="mainwp_options_enableLegacyBackupFeature" <?php echo ( 0 === $enableLegacyBackupFeature ? '' : 'checked="true"' ); ?>/>
 			</div>
 		</div>
 
@@ -1242,7 +1242,7 @@ class MainWP_Manage_Sites_View {
 
 				$backupSettings = MainWP_DB::Instance()->getWebsiteBackupSettings( $website->id );
 				$archiveFormat  = $backupSettings->archiveFormat;
-				$useGlobal      = ( $archiveFormat == 'global' );
+				$useGlobal      = ( 'global' === $archiveFormat );
 				?>
 
 				<div class="ui grid field">

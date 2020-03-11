@@ -1279,7 +1279,7 @@ class MainWP_DB {
 	}
 
 	public function updateWebsiteOfflineCheckSetting( $websiteid, $offlineChecks ) {
-		return $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET offline_checks="' . $this->escape( $offlineChecks ) . '" WHERE id=%d', $websiteid ) , OBJECT );
+		return $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET offline_checks="' . $this->escape( $offlineChecks ) . '" WHERE id=%d', $websiteid ), OBJECT );
 	}
 
 	public function updateWebsiteValues( $websiteid, $fields ) {

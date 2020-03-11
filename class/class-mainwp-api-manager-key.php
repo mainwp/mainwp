@@ -1,57 +1,22 @@
 <?php
-/**
- * MainWP Api Manager Key Handler.
- * 
- * This class handles user authentication with MainWP.com License Servers
- * and provides the ability to grab license Keys automatically.
- *
- */
-
-// Exit if accessed directly
-if ( !defined( 'ABSPATH' ) ) {
-	exit;
-}
 
 /**
- * MainWP Api Manager Key Handler.
- * 
- * This class handles user authentication with MainWP.com License Servers
- * and providfes the ability to grab License Keys automatically.
+ * WooCommerce API Manager API Key Class
  *
- * @package MainWP API Manager/Key Handler
+ * @package Update API Manager/Key Handler
  * @author Todd Lahman LLC
  * @copyright   Copyright (c) Todd Lahman LLC
- * @since 1.3.0
- *
+ * @since 1.3
  */
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+} // Exit if accessed directly
+
 class MainWP_Api_Manager_Key {
-	
-	/**
-	 * $_instance
-	 * 
-	 * Set initial $_instance value
-	 * 
-	 * @var null
-	 */
-	protected static $_instance		 = null;
 
-	/**
-	 * $apisslverify
-	 * 
-	 * Set initial $apisslverify value
-	 * 
-	 * @var integer
-	 */
-	protected static $apisslverify	 = 1;
+	protected static $_instance    = null;
+	protected static $apisslverify = 1;
 
-	/**
-	 * Instance
-	 * 
-	 * Create a new Self Instance
-	 *
-	 * @return mixed self::$_instance
-	 * 
-	 */
 	public static function instance() {
 
 		if ( is_null( self::$_instance ) ) {
@@ -61,29 +26,10 @@ class MainWP_Api_Manager_Key {
 		return self::$_instance;
 	}
 
-	/**
-	 * __construct
-	 * 
-	 * Validate SSL Certificate
-	 *
-	 * @return bool 1|0
-	 * 
-	 */
 	public function __construct() {
 		self::$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
 	}
 
-	
-	/**
-	 * Extention Activate
-	 * 
-	 * This function checks the users login information & grabs the update URL 
-	 * for the specific extension & activates it.
-	 * 
-	 * @param mixed $args
-	 * @return mixed $response
-	 * 
-	 */
 	public function activate( $args ) {
 
 		$defaults = array(
@@ -92,46 +38,44 @@ class MainWP_Api_Manager_Key {
 
 		$args = wp_parse_args( $defaults, $args );
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-	}
+		if ( isset($args['password']) ) {
+			$args['password'] = stripslashes($args['password']);
+		}
 
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+		$request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			'body'      => $args,
+			'timeout'   => 50,
+			'sslverify' => self::$apisslverify,
+		) );
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 
 			return false;
-	}
+		}
 
 		$response = wp_remote_retrieve_body( $request );
 
 		return $response;
 	}
 
-	/**
-	 * Extention Deactivate
-	 * 
-	 * This function checks the users login information & grabs the update URL 
-	 * for the specific extension & deactivates it.
-	 * 
-	 * @param mixed $args
-	 * @return mixed $response
-	 * 
-	 */
 	public function deactivate( $args ) {
 
 		$defaults = array(
 			'request' => 'deactivation',
-        );
+		);
 
 		$args = wp_parse_args( $defaults, $args );
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-        }
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?wc-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+		if ( isset($args['password']) ) {
+			$args['password'] = stripslashes($args['password']);
+		}
+		$request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?wc-api=am-software-api', array(
+			'body'      => $args,
+			'timeout'   => 50,
+			'sslverify' => self::$apisslverify,
+		) );
 
-        if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
+		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			// Request failed
 			return false;
 		}
@@ -141,15 +85,6 @@ class MainWP_Api_Manager_Key {
 		return $response;
 	}
 
-	/**
-	 * Grab extention API Key
-	 * 
-	 * This function checks the users login information & grabs the update URL 
-	 * for the specific extension & returns the API Key.
-	 * 
-	 * @param mixed $args
-	 * @return mixed $response
-	 */
 	public function grabapikey( $args ) {
 
 		$defaults = array(
@@ -158,10 +93,14 @@ class MainWP_Api_Manager_Key {
 
 		$args = wp_parse_args( $defaults, $args );
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-        }
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+		if ( isset($args['password']) ) {
+			$args['password'] = stripslashes($args['password']);
+		}
+		$request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			'body'      => $args,
+			'timeout'   => 50,
+			'sslverify' => self::$apisslverify,
+		) );
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			// Request failed
@@ -173,29 +112,24 @@ class MainWP_Api_Manager_Key {
 		return $response;
 	}
 
-	/**
-	 * Test Login API
-	 * 
-	 * This function checks the users login information & Tests
-	 * it against the MainWP.com Login Credentials stored on the license server.
-	 * 
-	 * @param mixed $args
-	 * @return mixed $response
-	 */
 	public function testloginapi( $args ) {
 
 		$defaults = array(
 			'request' => 'testloginapi',
-        );
+		);
 
-		$args = wp_parse_args( $defaults, $args );
-        $args['password'] = stripslashes($args['password']);
+		$args             = wp_parse_args( $defaults, $args );
+		$args['password'] = stripslashes($args['password']);
 
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+		$request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			'body'      => $args,
+			'timeout'   => 50,
+			'sslverify' => self::$apisslverify,
+		) );
 
-        $log = $request;
-        if ( is_array( $log ) && isset( $log['http_response'] ) ) {
-            unset( $log['http_response'] );
+		$log = $request;
+		if ( is_array( $log ) && isset( $log['http_response'] ) ) {
+			unset( $log['http_response'] );
 		}
 
 		MainWP_Logger::Instance()->debug( 'testloginapi:: RESULT :: ' . print_r( $log, true ) );
@@ -224,16 +158,7 @@ class MainWP_Api_Manager_Key {
 		return $response;
 	}
 
-	/**
-	 * Get Purchased Software
-	 * 
-	 * This function grabs a list of purchased MainWP Extensions
-	 * that are available for download.
-	 * 
-	 * @param mixed $args
-	 * @return mixed $response
-	 * 
-	 */
+
 	public function getpurchasedsoftware( $args ) {
 
 		$defaults = array(
@@ -242,10 +167,14 @@ class MainWP_Api_Manager_Key {
 
 		$args = wp_parse_args( $defaults, $args );
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-        }
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+		if ( isset($args['password']) ) {
+			$args['password'] = stripslashes($args['password']);
+		}
+		$request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			'body'      => $args,
+			'timeout'   => 50,
+			'sslverify' => self::$apisslverify,
+		) );
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			// Request failed
@@ -257,25 +186,22 @@ class MainWP_Api_Manager_Key {
 		return $response;
 	}
 
-	/**
-	 * Purchase Software
-	 * 
-	 * @param mixed $args
-	 * @return mixed $response
-	 * 
-	 */
 	public function purchasesoftware( $args ) {
-		$defaults	 = array(
+		$defaults = array(
 			'request' => 'purchasesoftware',
-        );
-		$args = wp_parse_args( $defaults, $args );
+		);
+		$args     = wp_parse_args( $defaults, $args );
 
-        if (isset($args['password'])) {
-            $args['password'] = stripslashes($args['password']);
-        }
-        $request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array('body' => $args, 'timeout' => 50, 'sslverify' => self::$apisslverify ) );
+		if ( isset($args['password']) ) {
+			$args['password'] = stripslashes($args['password']);
+		}
+		$request = wp_remote_post( MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			'body'      => $args,
+			'timeout'   => 50,
+			'sslverify' => self::$apisslverify,
+		) );
 
-		if( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
+		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			// Request failed
 			return false;
 		}

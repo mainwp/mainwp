@@ -75,7 +75,7 @@ class MainWP_Twitter {
 				$message = sprintf( $message, $value['items'], $value['sites'] );
 				break;
 			case 'upgrade_all_themes':
-				$message = $first_word . ', ' . _n( 'you just updated <strong>%d</strong> theme', 'you just updated <strong>%d</strong> themes', $value['items'], 'mainwp' ) . ' ' . _n( 'on <strong>%d</strong> site',  'on <strong>%d</strong> sites', $value['sites'], 'mainwp' );
+				$message = $first_word . ', ' . _n( 'you just updated <strong>%d</strong> theme', 'you just updated <strong>%d</strong> themes', $value['items'], 'mainwp' ) . ' ' . _n( 'on <strong>%d</strong> site', 'on <strong>%d</strong> sites', $value['sites'], 'mainwp' );
 				$message = sprintf( $message, $value['items'], $value['sites'] );
 				break;
 			case 'new_post':
@@ -105,7 +105,7 @@ class MainWP_Twitter {
 			if ( $in_sec <= 60 ) {
 				if ( $what == 'upgrade_all_plugins' || $what == 'upgrade_all_themes' || $what == 'upgrade_everything' ) {
 					$real_updated = $value['real_items'];
-					$message .= ', ' . sprintf( _n( '<strong>%d</strong> total update', '<strong>%d</strong> total updates', $real_updated, 'mainwp' ), $real_updated );
+					$message     .= ', ' . sprintf( _n( '<strong>%d</strong> total update', '<strong>%d</strong> total updates', $real_updated, 'mainwp' ), $real_updated );
 				}
 				$message .= ' ' . sprintf( _n( 'in <strong>%d</strong> second', 'in <strong>%d</strong> seconds', $in_sec, 'mainwp' ), $in_sec );
 			}
@@ -119,7 +119,7 @@ class MainWP_Twitter {
 		ob_start();$content
 		?>
 		<button class="ui mini twitter button mainwp_tweet_this" msg="<?php echo urlencode($content); ?>">
-  		<i class="twitter icon"></i>
+		  <i class="twitter icon"></i>
 		  <?php _e( 'Brag on Twitter', 'mainwp' ); ?>
 		</button>
 		<?php
@@ -149,14 +149,23 @@ class MainWP_Twitter {
 		}
 
 		$opt_name = 'mainwp_tt_message_' . $what;
-		$user_id = get_current_user_id();
+		$user_id  = get_current_user_id();
 
 		if ( $clear_twit ) {
 			delete_user_option( $user_id, $opt_name );
 		} else {
-			if ( empty( $countSec ) ) $countSec = 1;
+			if ( empty( $countSec ) ) {
+				$countSec = 1;
+			}
 			// store one twitt info only
-			$data = array( $twId => array( 'sites' => $countSites, 'seconds' => $countSec, 'items' => $countItems, 'real_items' => $coutRealItems ) );
+			$data = array(
+				$twId => array(
+					'sites'      => $countSites,
+					'seconds'    => $countSec,
+					'items'      => $countItems,
+					'real_items' => $coutRealItems,
+				),
+			);
 			if ( update_user_option( $user_id, $opt_name, $data ) ) {
 				return true;
 			}
@@ -234,7 +243,7 @@ class MainWP_Twitter {
 		if ( ! in_array( $what, $filters ) ) {
 			return '';
 		}
-		//@MyMainWP I just quickly updated 3 plugins on 3 #WordPress sites, 5 total updates in 12 seconds
+		// @MyMainWP I just quickly updated 3 plugins on 3 #WordPress sites, 5 total updates in 12 seconds
 		$opt_name         = 'mainwp_tt_message_' . $what;
 		$twitter_messages = get_user_option( $opt_name );
 		if ( is_array( $twitter_messages[ $twId ] ) && isset( $twitter_messages[ $twId ] ) ) {
@@ -284,7 +293,7 @@ class MainWP_Twitter {
 					if ( $in_sec <= 60 ) {
 						if ( $what == 'upgrade_all_plugins' || $what == 'upgrade_all_themes' || $what == 'upgrade_everything' ) {
 							$real_updated = $value['real_items'];
-							$twit .= ', ' . sprintf( _n( '%d total update', '%d total updates', $real_updated, 'mainwp' ), $real_updated );
+							$twit        .= ', ' . sprintf( _n( '%d total update', '%d total updates', $real_updated, 'mainwp' ), $real_updated );
 						}
 						$twit .= ' ' . sprintf( _n( 'in %d second', 'in %d seconds', $in_sec, 'mainwp' ), $in_sec );
 					}

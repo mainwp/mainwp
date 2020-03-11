@@ -1,4 +1,4 @@
-;
+
 ( function ( $ ) {
     if ( !window.mainwpPopup ) {
         mainwpPopup = function ( selector ) {

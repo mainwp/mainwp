@@ -4,20 +4,20 @@
  */
 class MainWP_Cache {
 
-    public static function initSession() {
+	public static function initSession() {
 		if ( session_id() == '' ) {
-            session_start();
-        }
-    }
+			session_start();
+		}
+	}
 
 	public static function initCache( $page ) {
 		$_SESSION[ 'MainWP' . $page . 'Search' ]        = '';
 		$_SESSION[ 'MainWP' . $page . 'SearchContext' ] = '';
-        $_SESSION[ 'MainWP' . $page . 'SearchResult' ]  = ''; // extra cache
-    }
+		$_SESSION[ 'MainWP' . $page . 'SearchResult' ]  = ''; // extra cache
+	}
 
 	public static function addContext( $page, $context ) {
-		if ( !is_array( $context ) ) {
+		if ( ! is_array( $context ) ) {
 			$context = array();
 		}
 
@@ -34,10 +34,10 @@ class MainWP_Cache {
 
 		if ( $cachedSearch != null ) {
 			if ( $cachedSearch['time'] < ( time() - ( 2 * 60 * 60 ) ) ) {
-				//More then two hours ago, clean this cache
+				// More then two hours ago, clean this cache
 				unset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] );
 				unset( $_SESSION[ 'MainWP' . $page . 'Search' ] );
-                unset( $_SESSION[ 'MainWP' . $page . 'SearchResult' ] );
+				unset( $_SESSION[ 'MainWP' . $page . 'SearchResult' ] );
 				$cachedSearch = null;
 			}
 		}
@@ -54,11 +54,11 @@ class MainWP_Cache {
 		}
 	}
 
-    public static function addResult( $page, $result ) {
-        $_SESSION[ 'MainWP' . $page . 'SearchResult' ] = $result;
+	public static function addResult( $page, $result ) {
+		$_SESSION[ 'MainWP' . $page . 'SearchResult' ] = $result;
 	}
 
-    public static function getCachedResult( $page ) {
+	public static function getCachedResult( $page ) {
 		if ( isset( $_SESSION[ 'MainWP' . $page . 'SearchResult' ] ) ) {
 			return $_SESSION[ 'MainWP' . $page . 'SearchResult' ];
 		}

@@ -1,46 +1,21 @@
 <?php
-/**
- * WooCommerce API Password Handler
- * 
- * Encrypts & Decrypts API Passwords
- * 
- */
 
-// Exit if accessed directly
-if ( !defined( 'ABSPATH' ) ) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
-}
+} // Exit if accessed directly
 
 /**
- * WooCommerce API Password Handler
+ * WooCommerce API Manager Passwords Class
  *
- * @package MainWP API Manager/Passwords
+ * @package Update API Manager/Passwords
  * @author Todd Lahman LLC
  * @copyright   Copyright (c) Todd Lahman LLC
  * @since 1.0.0
- *
  */
 class MainWP_Api_Manager_Password_Management {
 
-
-	/**
-	 * Encryption type
-	 * 
-	 * Sets encryption type
-	 * 
-	 * @var string $ENCRYPT
-	 */
 	private static $ENCRYPT = 'AMEncrypt';
 
-	/**
-	 * Random Seed Value
-	 * 
-	 * Takes the min & max php integer values & calculates a new random integer value
-	 * 
-	 * @param integer $min The size of an integer in bytes PHP_INT_MIN
-	 * @param integer $max The size of an integer in bytes PHP_INT_MAX
-	 * @return integer $value
-	 */
 	private static function rand( $min = 0, $max = 0 ) {
 		global $rnd_value;
 
@@ -52,11 +27,11 @@ class MainWP_Api_Manager_Password_Management {
 			} else {
 				$seed = get_transient( 'random_seed' );
 			}
-			$rnd_value	 = md5( uniqid( microtime() . mt_rand(), true ) . $seed );
-			$rnd_value	 .= sha1( $rnd_value );
-			$rnd_value	 .= sha1( $rnd_value . $seed );
-			$seed		 = md5( $seed . $rnd_value );
-			if ( !defined( 'WP_SETUP_CONFIG' ) ) {
+			$rnd_value  = md5( uniqid( microtime() . mt_rand(), true ) . $seed );
+			$rnd_value .= sha1( $rnd_value );
+			$rnd_value .= sha1( $rnd_value . $seed );
+			$seed       = md5( $seed . $rnd_value );
+			if ( ! defined( 'WP_SETUP_CONFIG' ) ) {
 				set_transient( 'random_seed', $seed );
 			}
 		}
@@ -79,17 +54,7 @@ class MainWP_Api_Manager_Password_Management {
 		return abs( intval( $value ) );
 	}
 
-	/**
-	 * Generate Password
-	 * 
-	 * Creates a unique instance ID
-	 * 
-	 * @param integer $length
-	 * @param boolean $special_chars
-	 * @param boolean $extra_special_chars
-	 * 
-	 * @return mixed $password
-	 */
+	// Creates a unique instance ID
 	public static function generate_password( $length = 12, $special_chars = true, $extra_special_chars = false ) {
 		$chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 		if ( $special_chars ) {
@@ -108,27 +73,10 @@ class MainWP_Api_Manager_Password_Management {
 		return $password;
 	}
 
-	/**
-	 * Encrypt String
-	 * 
-	 * Encrypts $str
-	 * 
-	 * @param mixed $str
-	 * 
-	 */
 	public static function encrypt_string( $str ) {
 		return MainWP_Utility::encrypt( $str, self::$ENCRYPT );
 	}
 
-	/**
-	 * Decrypts String
-	 * 
-	 * Decrypts $encrypted
-	 * 
-	 * @param mixed $encrypted
-	 * 
-	 * @return void
-	 */
 	public static function decrypt_string( $encrypted ) {
 		return MainWP_Utility::decrypt( $encrypted, self::$ENCRYPT );
 	}

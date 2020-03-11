@@ -5,43 +5,43 @@
 class MainWP_Meta_Boxes {
 
 	public static function initMetaBoxes() {
-//		add_filter( 'postbox_classes_bulkpost_select-sites-div', array( 'MainWP_Meta_Boxes', 'add_metabox_classes' ) );
-//		add_filter( 'postbox_classes_bulkpage_select-sites-div', array( 'MainWP_Meta_Boxes', 'add_metabox_classes' ) );
-//
-//		//Add metaboxes to bulkpost
-//		add_meta_box( 'select-sites-div', __( 'Select sites', 'mainwp' ), array(
-//			&MainWP_System::Instance()->metaboxes,
-//			'select_sites',
-//		), 'bulkpost', 'side', 'default' );
-//		add_meta_box( 'add-categories-div', __( 'Categories', 'mainwp' ), array(
-//			&MainWP_System::Instance()->metaboxes,
-//			'add_categories',
-//		), 'bulkpost', 'side', 'default' );
-//		add_meta_box( 'add-tags-div', __( 'Tags', 'mainwp' ), array(
-//			&MainWP_System::Instance()->metaboxes,
-//			'add_tags',
-//		), 'bulkpost', 'side', 'default' );
-//		add_meta_box( 'add-slug-div', __( 'Slug', 'mainwp' ), array(
-//			&MainWP_System::Instance()->metaboxes,
-//			'add_slug',
-//		), 'bulkpost', 'side', 'default' );
-//
-//		//Add metaboxes to bulkpage
-//		add_meta_box( 'select-sites-div', __( 'Select sites', 'mainwp' ), array(
-//			&MainWP_System::Instance()->metaboxes,
-//			'select_sites',
-//		), 'bulkpage', 'side', 'default' );
-//		add_meta_box( 'add-slug-div', __( 'Slug', 'mainwp' ), array(
-//			&MainWP_System::Instance()->metaboxes,
-//			'add_slug',
-//		), 'bulkpage', 'side', 'default' );
+		// add_filter( 'postbox_classes_bulkpost_select-sites-div', array( 'MainWP_Meta_Boxes', 'add_metabox_classes' ) );
+		// add_filter( 'postbox_classes_bulkpage_select-sites-div', array( 'MainWP_Meta_Boxes', 'add_metabox_classes' ) );
+		//
+		// Add metaboxes to bulkpost
+		// add_meta_box( 'select-sites-div', __( 'Select sites', 'mainwp' ), array(
+		// &MainWP_System::Instance()->metaboxes,
+		// 'select_sites',
+		// ), 'bulkpost', 'side', 'default' );
+		// add_meta_box( 'add-categories-div', __( 'Categories', 'mainwp' ), array(
+		// &MainWP_System::Instance()->metaboxes,
+		// 'add_categories',
+		// ), 'bulkpost', 'side', 'default' );
+		// add_meta_box( 'add-tags-div', __( 'Tags', 'mainwp' ), array(
+		// &MainWP_System::Instance()->metaboxes,
+		// 'add_tags',
+		// ), 'bulkpost', 'side', 'default' );
+		// add_meta_box( 'add-slug-div', __( 'Slug', 'mainwp' ), array(
+		// &MainWP_System::Instance()->metaboxes,
+		// 'add_slug',
+		// ), 'bulkpost', 'side', 'default' );
+		//
+		// Add metaboxes to bulkpage
+		// add_meta_box( 'select-sites-div', __( 'Select sites', 'mainwp' ), array(
+		// &MainWP_System::Instance()->metaboxes,
+		// 'select_sites',
+		// ), 'bulkpage', 'side', 'default' );
+		// add_meta_box( 'add-slug-div', __( 'Slug', 'mainwp' ), array(
+		// &MainWP_System::Instance()->metaboxes,
+		// 'add_slug',
+		// ), 'bulkpage', 'side', 'default' );
 	}
 
-//	static function add_metabox_classes( $classes ) {
-//		array_push( $classes, 'mainwp_select_sites_wrapper' );
-//
-//		return $classes;
-//	}
+	// static function add_metabox_classes( $classes ) {
+	// array_push( $classes, 'mainwp_select_sites_wrapper' );
+	//
+	// return $classes;
+	// }
 
 	function select_sites( $post ) {
 		$selected_sites = unserialize( base64_decode( get_post_meta( $post->ID, '_selected_sites', true ) ) );
@@ -49,8 +49,8 @@ class MainWP_Meta_Boxes {
 			$selected_sites = array();
 		}
 
-		if ( isset( $_REQUEST[ 'select' ] ) ) {
-			$selected_sites = ( $_REQUEST[ 'select' ] == 'all' ? 'all' : array( $_REQUEST[ 'select' ] ) );
+		if ( isset( $_REQUEST['select'] ) ) {
+			$selected_sites = ( $_REQUEST['select'] == 'all' ? 'all' : array( $_REQUEST['select'] ) );
 		}
 		$selected_groups = unserialize( base64_decode( get_post_meta( $post->ID, '_selected_groups', true ) ) );
 		if ( $selected_groups == '' ) {
@@ -62,83 +62,83 @@ class MainWP_Meta_Boxes {
 
 				<div class="mainwp-select-sites">
 					<?php
-                    MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups, false, $post->ID  );
-                    ?>
-                </div>
+					MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups, false, $post->ID  );
+					?>
+				</div>
 
-        <?php
-    }
+		<?php
+	}
 
-    function select_sites_handle( $post_id, $post_type ) {
+	function select_sites_handle( $post_id, $post_type ) {
 
 			   // verify this came from the our screen and with proper authorization.
-			   if ( !isset( $_POST[ 'select_sites_nonce' ] ) || !wp_verify_nonce( $_POST[ 'select_sites_nonce' ], 'select_sites_' . $post_id ) ) {
-				   return $post_id;
-			   }
+		if ( ! isset( $_POST['select_sites_nonce'] ) || ! wp_verify_nonce( $_POST['select_sites_nonce'], 'select_sites_' . $post_id ) ) {
+			return $post_id;
+		}
 
 			   // verify if this is an auto save routine. If it is our form has not been submitted, so we dont want to do anything
-			   if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-				   return $post_id;
-			   }
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return $post_id;
+		}
 
 			   // Check permissions
-			   if ( !current_user_can( 'edit_post', $post_id ) ) {
-				   return $post_id;
-			   }
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return $post_id;
+		}
 
 			   // OK, we're authenticated: we need to find and save the data
 			   $post = get_post( $post_id );
-			   if ( $post->post_type == $post_type && isset( $_POST[ 'select_by' ] ) ) {
-				   //&& isset($_POST['selected_sites'])) {
+		if ( $post->post_type == $post_type && isset( $_POST['select_by'] ) ) {
+			// && isset($_POST['selected_sites'])) {
 
-				   $selected_wp = array();
-				   if ( isset( $_POST[ 'selected_sites' ] ) && is_array( $_POST[ 'selected_sites' ] ) ) {
-					   foreach ( $_POST[ 'selected_sites' ] as $selected ) {
-						   $selected_wp[] = $selected;
-					   }
-				   }
-				   update_post_meta( $post_id, '_selected_sites', base64_encode( serialize( $selected_wp ) ) );
+			$selected_wp = array();
+			if ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) {
+				foreach ( $_POST['selected_sites'] as $selected ) {
+					$selected_wp[] = $selected;
+				}
+			}
+			update_post_meta( $post_id, '_selected_sites', base64_encode( serialize( $selected_wp ) ) );
 
-				   $selected_group = array();
-				   if ( isset( $_POST[ 'selected_groups' ] ) && is_array( $_POST[ 'selected_groups' ] ) ) {
-					   foreach ( $_POST[ 'selected_groups' ] as $selected ) {
-						   $selected_group[] = $selected;
-					   }
-				   }
-				   update_post_meta( $post_id, '_selected_groups', base64_encode( serialize( $selected_group ) ) );
-				   update_post_meta( $post_id, '_selected_by', $_POST[ 'select_by' ] );
+			$selected_group = array();
+			if ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) {
+				foreach ( $_POST['selected_groups'] as $selected ) {
+					$selected_group[] = $selected;
+				}
+			}
+			update_post_meta( $post_id, '_selected_groups', base64_encode( serialize( $selected_group ) ) );
+			update_post_meta( $post_id, '_selected_by', $_POST['select_by'] );
 
-				   if ( ( $_POST[ 'select_by' ] == 'group' && count( $selected_group ) > 0 ) || ( $_POST[ 'select_by' ] == 'site' && count( $selected_wp ) > 0 ) ) {
-					   return $_POST[ 'select_by' ];
-				   }
-			   }
+			if ( ( $_POST['select_by'] == 'group' && count( $selected_group ) > 0 ) || ( $_POST['select_by'] == 'site' && count( $selected_wp ) > 0 ) ) {
+				return $_POST['select_by'];
+			}
+		}
 
 			   return $post_id;
-		   }
+	}
 
 
-           // not used ?
-		   function add_categories( $post ) {
+		   // not used ?
+	function add_categories( $post ) {
 
-			   // depdecated, 1.0.9.2-beta
-			   $categories = apply_filters( 'mainwp_bulkpost_saved_categories', $post, array() );
-			   if ( empty( $categories ) || !is_array( $categories ) || ( is_array( $categories ) && count( $categories ) == 1 && empty( $categories[ 0 ] ) ) ) { // to compatible
-				   if ( $post ) {
-					   $categories	 = base64_decode( get_post_meta( $post->ID, '_categories', true ) );
-					   $categories	 = explode( ',', $categories );
-				   }
-			   }
+		// depdecated, 1.0.9.2-beta
+		$categories = apply_filters( 'mainwp_bulkpost_saved_categories', $post, array() );
+		if ( empty( $categories ) || ! is_array( $categories ) || ( is_array( $categories ) && count( $categories ) == 1 && empty( $categories[0] ) ) ) { // to compatible
+			if ( $post ) {
+				$categories = base64_decode( get_post_meta( $post->ID, '_categories', true ) );
+				$categories = explode( ',', $categories );
+			}
+		}
 
-			   if ( !is_array( $categories ) ) {
-				   $categories = array();
-			   }
-			   $uncat = __( 'Uncategorized', 'mainwp' );
+		if ( ! is_array( $categories ) ) {
+			$categories = array();
+		}
+		$uncat = __( 'Uncategorized', 'mainwp' );
 
-			   $post_only = false;
-			   if ( $post ) {
-				   $post_only = get_post_meta( $post->ID, '_post_to_only_existing_categories', true );
-			   }
-			   ?>
+		$post_only = false;
+		if ( $post ) {
+			$post_only = get_post_meta( $post->ID, '_post_to_only_existing_categories', true );
+		}
+		?>
 		<input type="hidden" name="post_category_nonce"
 			   value="<?php echo esc_attr( wp_create_nonce( 'post_category_' . $post->ID ) ); ?>"/>
 
@@ -155,19 +155,19 @@ class MainWP_Meta_Boxes {
 			<div id="category-all" class="tabs-panel" style="display: block;">
 				<ul id="categorychecklist" data-wp-lists="list:category"
 					class="categorychecklist form-no-clear post_add_categories">
-						<?php if ( !in_array( $uncat, $categories ) ) { ?>
+				 <?php if ( ! in_array( $uncat, $categories ) ) { ?>
 						<li class="popular-category sitecategory"><label class="selectit"><input value="Uncategorized"
 																								 type="checkbox"
 																								 name="post_category[]"><?php esc_html_e( 'Uncategorized', 'mainwp' ); ?>
 							</label></li>
 					<?php } ?>
-					<?php
-					foreach ( $categories as $cat ) {
-						if ( empty( $cat ) ) {
-							continue;
-						}
+			 <?php
+				foreach ( $categories as $cat ) {
+					if ( empty( $cat ) ) {
+						continue;
+					}
 						$cat_name = rawurldecode( $cat );
-						?>
+					?>
 						<li class="popular-category sitecategory"><label class="selectit"><input
 									value="<?php echo esc_attr( $cat ); ?>" type="checkbox" checked
 									name="post_category[]"><?php echo esc_attr( $cat_name ); ?></label></li>
@@ -197,7 +197,7 @@ class MainWP_Meta_Boxes {
 
 	function add_categories_handle( $post_id, $post_type ) {
 		// verify this came from the our screen and with proper authorization.
-		if ( !isset( $_POST[ 'post_category_nonce' ] ) || !wp_verify_nonce( $_POST[ 'post_category_nonce' ], 'post_category_' . $post_id ) ) {
+		if ( ! isset( $_POST['post_category_nonce'] ) || ! wp_verify_nonce( $_POST['post_category_nonce'], 'post_category_' . $post_id ) ) {
 			return;
 		}
 
@@ -207,21 +207,21 @@ class MainWP_Meta_Boxes {
 		}
 
 		// Check permissions
-		if ( !current_user_can( 'edit_post', $post_id ) ) {
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return;
 		}
 
 		// OK, we're authenticated: we need to find and save the data
 		$post = get_post( $post_id );
 		if ( $post->post_type == $post_type ) {
-			//            update_post_meta($post_id, $saveto, base64_encode($_POST[$prefix]));
-			if ( isset( $_POST[ 'post_category' ] ) && is_array( $_POST[ 'post_category' ] ) ) {
-				update_post_meta( $post_id, '_categories', base64_encode( implode( ',', $_POST[ 'post_category' ] ) ) );
-                // hook for extensions: post plus
-				do_action( 'mainwp_bulkpost_categories_handle', $post_id, $_POST[ 'post_category' ] );
+			// update_post_meta($post_id, $saveto, base64_encode($_POST[$prefix]));
+			if ( isset( $_POST['post_category'] ) && is_array( $_POST['post_category'] ) ) {
+				update_post_meta( $post_id, '_categories', base64_encode( implode( ',', $_POST['post_category'] ) ) );
+				// hook for extensions: post plus
+				do_action( 'mainwp_bulkpost_categories_handle', $post_id, $_POST['post_category'] );
 			}
 
-			$post_existing = ( isset( $_POST[ 'post_only_existing' ] ) && $_POST[ 'post_only_existing' ] ) ? 1 : 0;
+			$post_existing = ( isset( $_POST['post_only_existing'] ) && $_POST['post_only_existing'] ) ? 1 : 0;
 			update_post_meta( $post_id, '_post_to_only_existing_categories', $post_existing );
 
 			return;
@@ -236,8 +236,8 @@ class MainWP_Meta_Boxes {
 
 	function add_tags_handle( $post_id, $post_type ) {
 		$this->add_extra_handle( 'Tags', '_tags', 'add_tags', $post_id, $post_type );
-		if ( isset( $_POST[ 'add_tags' ] ) ) {
-			do_action( 'mainwp_bulkpost_tags_handle', $post_id, $post_type, $_POST[ 'add_tags' ] );
+		if ( isset( $_POST['add_tags'] ) ) {
+			do_action( 'mainwp_bulkpost_tags_handle', $post_id, $post_type, $_POST['add_tags'] );
 		}
 	}
 
@@ -245,7 +245,7 @@ class MainWP_Meta_Boxes {
 		$this->add_extra( 'Slug', '_slug', 'add_slug', $post );
 	}
 
-    private function add_extra( $title, $saveto, $prefix, $post) {
+	private function add_extra( $title, $saveto, $prefix, $post ) {
 		$extra = base64_decode( get_post_meta( $post->ID, $saveto, true ) );
 		?>
 		<input type="hidden" name="<?php echo esc_attr( $prefix ); ?>_nonce"
@@ -261,7 +261,7 @@ class MainWP_Meta_Boxes {
 
 	private function add_extra_handle( $title, $saveto, $prefix, $post_id, $post_type ) {
 		// verify this came from the our screen and with proper authorization.
-		if ( !isset( $_POST[ $prefix . '_nonce' ] ) || !wp_verify_nonce( $_POST[ $prefix . '_nonce' ], $prefix . '_' . $post_id ) ) {
+		if ( ! isset( $_POST[ $prefix . '_nonce' ] ) || ! wp_verify_nonce( $_POST[ $prefix . '_nonce' ], $prefix . '_' . $post_id ) ) {
 			return $post_id;
 		}
 
@@ -271,7 +271,7 @@ class MainWP_Meta_Boxes {
 		}
 
 		// Check permissions
-		if ( !current_user_can( 'edit_post', $post_id ) ) {
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return $post_id;
 		}
 

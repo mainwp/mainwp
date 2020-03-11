@@ -112,7 +112,7 @@ Date.fullYearStart = '20';
 		if( !Date.prototype[name] ) {
 			Date.prototype[name] = method;
 		}
-	};
+	}
 	
 	/**
 	 * Checks if the year is a leap year.

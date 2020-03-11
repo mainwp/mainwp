@@ -23,16 +23,16 @@
     "require-dev": {
         "dealerdirect/phpcodesniffer-composer-installer": "^0.5",
         "phpcompatibility/php-compatibility": "^9.0",
-        "phpunit/phpunit": "^6.5",
+        "phpunit/phpunit": "^9.0",
         "wp-cli/wp-cli": "^2.0",
         "wp-coding-standards/wpcs": "^2.2.0"
     },
     "autoload-dev": {
         "classmap": [
-            "tests/test-tools"
+            "tests"
         ],
         "files": [
-            "tests/test-tools/utils.php"
+            "tests/test-sample.php"
         ]
     },
      "scripts": {
@@ -54,7 +54,7 @@
     "prefer-stable": true,
     "config": {
         "platform": {
-            "php": "7.3"
+            "php": "7.4"
         },
         "preferred-install": "dist",
         "sort-packages": true

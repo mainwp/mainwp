@@ -4,45 +4,45 @@
  */
 class MainWP_Logger {
 
-	const DISABLED		 = - 1;
-	const LOG				 = 0;
-	const WARNING			 = 1;
-	const INFO			 = 2;
-	const DEBUG			 = 3;
-    const INFO_UPDATE = 10;
+	const DISABLED    = - 1;
+	const LOG         = 0;
+	const WARNING     = 1;
+	const INFO        = 2;
+	const DEBUG       = 3;
+	const INFO_UPDATE = 10;
 
-	const LOG_COLOR		 = 'black';
-	const DEBUG_COLOR		 = 'gray';
-	const INFO_COLOR		 = 'gray';
-	const WARNING_COLOR	 = 'red';
+	const LOG_COLOR     = 'black';
+	const DEBUG_COLOR   = 'gray';
+	const INFO_COLOR    = 'gray';
+	const WARNING_COLOR = 'red';
 
-	private $logFileNamePrefix	 = 'mainwp';
-	private $logFileNameSuffix	 = '.log';
-	//    private $logMaxFiles = 5; //todo: future add log rotation
-	private $logMaxMB			 = 0.5;
-	private $logDateFormat		 = 'Y-m-d H:i:s';
-	private $logDirectory		 = null;
-	private $logPriority		 = MainWP_Logger::DISABLED; //default
-	private static $instance	 = null;
+	private $logFileNamePrefix = 'mainwp';
+	private $logFileNameSuffix = '.log';
+	// private $logMaxFiles = 5; //todo: future add log rotation
+	private $logMaxMB        = 0.5;
+	private $logDateFormat   = 'Y-m-d H:i:s';
+	private $logDirectory    = null;
+	private $logPriority     = self::DISABLED; // default
+	private static $instance = null;
 
 	/**
 	 * @return MainWP_Logger
 	 */
 	static function Instance() {
-		if ( MainWP_Logger::$instance == null ) {
-			MainWP_Logger::$instance = new MainWP_Logger();
+		if ( self::$instance == null ) {
+			self::$instance = new MainWP_Logger();
 		}
 
-		return MainWP_Logger::$instance;
+		return self::$instance;
 	}
 
 	private function __construct() {
-		$this->logDirectory	 = MainWP_Utility::getMainWPDir();
-		$this->logDirectory	 = $this->logDirectory[ 0 ];
+		$this->logDirectory = MainWP_Utility::getMainWPDir();
+		$this->logDirectory = $this->logDirectory[0];
 
 		$enabled = get_option( 'mainwp_actionlogs' );
 		if ( $enabled === false ) {
-			$enabled = MainWP_Logger::DISABLED;
+			$enabled = self::DISABLED;
 		}
 
 		$this->setLogPriority( $enabled );
@@ -64,7 +64,7 @@ class MainWP_Logger {
 		return $this->log( $pText, self::WARNING );
 	}
 
-    public function info_update( $pText ) {
+	public function info_update( $pText ) {
 		return $this->log( $pText, self::INFO_UPDATE );
 	}
 
@@ -101,23 +101,22 @@ class MainWP_Logger {
 	public function log( $pText, $pPriority ) {
 
 		$do_log = false;
-        if ( ( $pPriority == self::INFO_UPDATE && $this->logPriority == self::INFO_UPDATE ) ||
-                ( $pPriority != self::INFO_UPDATE && $this->logPriority >= $pPriority ) )
-        {
-            $do_log = true;
-        }
+		if ( ( $pPriority == self::INFO_UPDATE && $this->logPriority == self::INFO_UPDATE ) ||
+				( $pPriority != self::INFO_UPDATE && $this->logPriority >= $pPriority ) ) {
+			$do_log = true;
+		}
 
 		if ( $do_log ) {
-			$this->logCurrentFile	 = $this->logDirectory . $this->logFileNamePrefix . $this->logFileNameSuffix;
-			$logCurrentHandle		 = fopen( $this->logCurrentFile, 'a+' );
+			$this->logCurrentFile = $this->logDirectory . $this->logFileNamePrefix . $this->logFileNameSuffix;
+			$logCurrentHandle     = fopen( $this->logCurrentFile, 'a+' );
 
 			if ( $logCurrentHandle ) {
-				$time	 = date( $this->logDateFormat );
-				$prefix	 = '[' . $this->getLogText( $pPriority ) . ']';
+				$time   = date( $this->logDateFormat );
+				$prefix = '[' . $this->getLogText( $pPriority ) . ']';
 
 				global $current_user;
 
-				if ( !empty( $current_user ) && !empty( $current_user->user_login ) ) {
+				if ( ! empty( $current_user ) && ! empty( $current_user->user_login ) ) {
 					$prefix .= ' [' . $current_user->user_login . ']';
 				}
 
@@ -129,10 +128,10 @@ class MainWP_Logger {
 				$logCurrentHandle = fopen( $this->logCurrentFile, 'a+' );
 				if ( $logCurrentHandle ) {
 					fseek( $logCurrentHandle, 0 );
-					$newLogFile		 = $this->logCurrentFile . '.tmp';
-					$newLogHandle	 = false;
-					$chunkSize		 = filesize( $this->logCurrentFile ) - ( $this->logMaxMB * 1048576 );
-					while ( is_resource( $logCurrentHandle ) && !feof( $logCurrentHandle ) && ( $chunkSize > 0 ) ) {
+					$newLogFile   = $this->logCurrentFile . '.tmp';
+					$newLogHandle = false;
+					$chunkSize    = filesize( $this->logCurrentFile ) - ( $this->logMaxMB * 1048576 );
+					while ( is_resource( $logCurrentHandle ) && ! feof( $logCurrentHandle ) && ( $chunkSize > 0 ) ) {
 						$content = fread( $logCurrentHandle, $chunkSize );
 						if ( $content === false ) {
 							break;
@@ -140,8 +139,8 @@ class MainWP_Logger {
 
 						if ( $newLogHandle ) {
 							fwrite( $newLogHandle, $content );
-						} else if ( $pos = strrpos( $content, "\n" ) ) {
-							if ( !$newLogHandle ) {
+						} elseif ( $pos = strrpos( $content, "\n" ) ) {
+							if ( ! $newLogHandle ) {
 								$newLogHandle = fopen( $newLogFile, 'w+' );
 							}
 							fwrite( $newLogHandle, substr( $content, $pos + 1 ) );
@@ -155,8 +154,9 @@ class MainWP_Logger {
 					if ( $newLogHandle ) {
 						fclose( $newLogHandle );
 						unlink( $this->logCurrentFile );
-                        if (file_exists($newLogFile))
-                            rename( $newLogFile, $this->logCurrentFile );
+						if ( file_exists($newLogFile) ) {
+							rename( $newLogFile, $this->logCurrentFile );
+						}
 					}
 				}
 			}
@@ -169,7 +169,7 @@ class MainWP_Logger {
 
 	function prepend( $string, $filename ) {
 		$context = stream_context_create();
-		$fp		 = fopen( $filename, 'r', 1, $context );
+		$fp      = fopen( $filename, 'r', 1, $context );
 		$tmpname = md5( $string );
 		file_put_contents( $tmpname, $string );
 		file_put_contents( $tmpname, $fp, FILE_APPEND );
@@ -192,7 +192,7 @@ class MainWP_Logger {
 				return 'INFO';
 			case self::WARNING:
 				return 'WARNING';
-            case self::INFO_UPDATE:
+			case self::INFO_UPDATE:
 				return 'INFO UPDATE';
 			default:
 				return 'LOG';
@@ -200,8 +200,8 @@ class MainWP_Logger {
 	}
 
 	public static function clearLog() {
-		$logFile = MainWP_Logger::Instance()->getLogFile();
-		if ( !@unlink( $logFile, 'r' ) ) {
+		$logFile = self::Instance()->getLogFile();
+		if ( ! @unlink( $logFile, 'r' ) ) {
 			$fh = @fopen( $logFile, 'w' );
 			if ( $fh === false ) {
 				return;
@@ -212,34 +212,34 @@ class MainWP_Logger {
 	}
 
 	public static function showLog() {
-		$logFile = MainWP_Logger::Instance()->getLogFile();
-		$fh		 = @fopen( $logFile, 'r' );
+		$logFile = self::Instance()->getLogFile();
+		$fh      = @fopen( $logFile, 'r' );
 		if ( $fh === false ) {
 			return;
 		}
 
-		$previousColor				 = ''; //self::LOG_COLOR;
-		$fontOpen					 = false;
-		$firstLinePassedProcessed	 = false;
-		while ( ( $line						 = fgets( $fh ) ) !== false ) {
+		$previousColor            = ''; // self::LOG_COLOR;
+		$fontOpen                 = false;
+		$firstLinePassedProcessed = false;
+		while ( ( $line                      = fgets( $fh ) ) !== false ) {
 			$currentColor = $previousColor;
 			if ( stristr( $line, '[DEBUG]' ) ) {
-				$currentColor	 = self::DEBUG_COLOR;
+				$currentColor    = self::DEBUG_COLOR;
 				$firstLinePassed = true;
-			} else if ( stristr( $line, '[INFO]' ) ) {
-				$currentColor	 = self::INFO_COLOR;
+			} elseif ( stristr( $line, '[INFO]' ) ) {
+				$currentColor    = self::INFO_COLOR;
 				$firstLinePassed = true;
-			} else if ( stristr( $line, '[WARNING]' ) ) {
-				$currentColor	 = self::WARNING_COLOR;
+			} elseif ( stristr( $line, '[WARNING]' ) ) {
+				$currentColor    = self::WARNING_COLOR;
 				$firstLinePassed = true;
-			} else if ( stristr( $line, '[LOG]' ) ) {
-				$currentColor	 = self::LOG_COLOR;
+			} elseif ( stristr( $line, '[LOG]' ) ) {
+				$currentColor    = self::LOG_COLOR;
 				$firstLinePassed = true;
 			} else {
 				$firstLinePassed = false;
 			}
 
-			if ( $firstLinePassedProcessed && !$firstLinePassed ) {
+			if ( $firstLinePassedProcessed && ! $firstLinePassed ) {
 				echo ' <strong><span class="mainwp-green">[multiline, click to read full]</span></strong></div><div style="display: none;">';
 			} else {
 				echo '<br />';

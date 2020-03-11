@@ -31,7 +31,6 @@ class MainWP_About {
 	 * init
 	 */
 	public static function init() {
-
 	}
 
 	/**
@@ -42,7 +41,7 @@ class MainWP_About {
 	 */
 	public static function initMenu() {
 		add_submenu_page( 'mainwp_tab', __( 'About MainWP', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'About MainWP', 'mainwp' ) . '</div>', 'read', 'mainwp_about', array(
-			MainWP_About::getClassName(),
+			self::getClassName(),
 			'render',
 		) );
 	}
@@ -57,8 +56,8 @@ class MainWP_About {
 		global $mainWP;
 
 		$showtab = 'whatsnew';
-		if ( isset( $_GET[ 'do' ] ) ) {
-			if ( 'changelog' == $_GET[ 'do' ] ) {
+		if ( isset( $_GET['do'] ) ) {
+			if ( 'changelog' == $_GET['do'] ) {
 				$showtab = 'changelog';
 			}
 		}
@@ -75,7 +74,7 @@ class MainWP_About {
 			<?php
 			if ( 'whatsnew' == $showtab ) {
 				self::renderWhatSNew();
-			} else if ( 'changelog' == $showtab ) {
+			} elseif ( 'changelog' == $showtab ) {
 				self::renderMainWPChangelog();
 			}
 			?>

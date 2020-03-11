@@ -1,44 +1,15 @@
 <?php
-/**
- * MainWP Connection Status
- * 
- * Build the Connection Status Widget
- * 
- */
 
-/**
- * Class MainWP_Connection_Status
- * 
- * Build the Connection Status Widget
- * 
- */
 class MainWP_Connection_Status {
 
-	/**
-	 * getClassName()
-	 * 
-	 * @return string __CLASS__
-	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
-	/**
-	 * render()
-	 * 
-	 * @return mixed renderSites()
-	 */
 	public static function render() {
-		MainWP_Connection_Status::renderSites();
+		self::renderSites();
 	}
 
-	/**
-	 * renderSites()
-	 * 
-	 * Build the Connection Status Widget
-	 * Displays $SYNCERRORS|$DOWN|$UP|$ALL
-	 * 
-	 */
 	public static function renderSites() {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
@@ -51,51 +22,59 @@ class MainWP_Connection_Status {
 		$websites = MainWP_DB::Instance()->query( $sql );
 
 		$count_connected = $count_disconnected = 0;
-		//Loop 4 times, first we show the conflicts, then we show the down sites, then we show the up sites
+		// Loop 4 times, first we show the conflicts, then we show the down sites, then we show the up sites
 		$SYNCERRORS = 0;
 		$DOWN       = 1;
 		$UP         = 2;
 		$ALL        = 3;
 
 		$html_online_sites = '';
-		$html_other_sites = '';
-		$html_all_sites = '';
+		$html_other_sites  = '';
+		$html_all_sites    = '';
 
-   		$disconnect_site_ids = array(); // to fix double display
+		$disconnect_site_ids = array(); // to fix double display
 
 		for ( $j = 0; $j < 4; $j ++ ) {
-			@MainWP_DB::data_seek( $websites, 0 );
-			while ( $websites && ( $website = @MainWP_DB::fetch_object( $websites ) ) ) {
-				if ( empty( $website ) ) continue;
+			MainWP_DB::data_seek( $websites, 0 );
+			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+				if ( empty( $website ) ) {
+					continue;
+				}
 
 				$hasSyncErrors = ( $website->sync_errors != '' );
-				$isDown = ( ! $hasSyncErrors && ( $website->offline_check_result == - 1 ) );
-				$isUp   = ( ! $hasSyncErrors && ! $isDown );
-				$md5Connection = ($website->nossl == 1);
+				$isDown        = ( ! $hasSyncErrors && ( $website->offline_check_result == - 1 ) );
+				$isUp          = ( ! $hasSyncErrors && ! $isDown );
+				$md5Connection = ( $website->nossl == 1 );
 
-				if ( $j != $ALL) {
-				if ( $j == $SYNCERRORS ) {
-					if ( !$hasSyncErrors ) continue;
+				if ( $j != $ALL ) {
+					if ( $j == $SYNCERRORS ) {
+						if ( ! $hasSyncErrors ) {
+							continue;
+						}
+					}
+					if ( $j == $DOWN ) {
+						if ( ! $md5Connection && ! $isDown ) {
+							continue;
+						}
+					}
+					if ( $j == $UP ) {
+						if ( $md5Connection || ! $isUp ) {
+							continue;
+						}
+					}
 				}
-				if ( $j == $DOWN  ) {
-					if ( !$md5Connection && !$isDown ) continue;
-				}
-				if ( $j == $UP ) {
-					if ( $md5Connection || !$isUp ) continue;
-				}
-			}
 
-			$output_md5 = '';
+				$output_md5 = '';
 				if ( $md5Connection ) {
-				$output_md5 = '<div>' . __('MD5 Connection') . '<br /><a href="http://mainwp.com/help/docs/md5-connection-issue/" class="ui button mini green basic" target="_blank" data-tooltip="MD5 Connection" data-inverted="">' . __('Read More') . '</a></div>';
-			}
+					$output_md5 = '<div>' . __('MD5 Connection') . '<br /><a href="http://mainwp.com/help/docs/md5-connection-issue/" class="ui button mini green basic" target="_blank" data-tooltip="MD5 Connection" data-inverted="">' . __('Read More') . '</a></div>';
+				}
 
-        	$lastSyncTime = ! empty( $website->dtsSync ) ? MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $website->dtsSync ) ) : '';
+				$lastSyncTime = ! empty( $website->dtsSync ) ? MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $website->dtsSync ) ) : '';
 
-        	ob_start();
+				ob_start();
 
-        	if ( $j == $ALL ) {
-        	?>
+				if ( $j == $ALL ) {
+					?>
 
 				<div class="item mainwp_wp_sync" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
 					<div class="ui grid">
@@ -109,26 +88,26 @@ class MainWP_Connection_Status {
 							<a href="<?php echo $website->url; ?>" target="_blank" data-tooltip="<?php echo __( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><i class="external alternate icon"></i></a>
 						</div>
 						<div class="four wide column middle aligned">
-              				<span><?php echo esc_attr( $lastSyncTime ); ?></span>
+			  <span><?php echo esc_attr( $lastSyncTime ); ?></span>
 						</div>
 						<div class="four wide column middle aligned right aligned reconnect-wrapper">
-            <?php
-				if ( $md5Connection ) {
-               		echo $output_md5;
-          		} else if ( $hasSyncErrors ) {
-			?>
-                <a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site ui button mini green basic" siteid="<?php echo $website->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>." data-inverted=""><?php _e( 'Reconnect', 'mainwp' ); ?></a>
-					    <?php
-							} else {
-							?>
+					<?php
+					if ( $md5Connection ) {
+						echo $output_md5;
+					} elseif ( $hasSyncErrors ) {
+						?>
+				<a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site ui button mini green basic" siteid="<?php echo $website->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>." data-inverted=""><?php _e( 'Reconnect', 'mainwp' ); ?></a>
+						<?php
+					} else {
+						?>
 								<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo $website->id; ?>" onClick="updatesoverview_wp_sync('<?php echo $website->id; ?>')" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php _e( 'Sync Data', 'mainwp' ); ?></a>
-				    	<?php
-							}
-							?>
+						<?php
+					}
+					?>
 						</div>
 					</div>
 				</div>
-       		<?php } else if ( $j == $UP ) { ?>
+			<?php } elseif ( $j == $UP ) { ?>
 				<div class="item mainwp_wp_sync" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
 					<div class="ui grid">
 						<div class="six wide column middle aligned">
@@ -144,19 +123,19 @@ class MainWP_Connection_Status {
 							<span><?php echo esc_attr( $lastSyncTime ); ?></span>
 						</div>
 						<div class="four wide column middle aligned right aligned">
-	            <?php
+					<?php
 					if ( $md5Connection ) {
-                		echo $output_md5;
-             		 } else {
-				?>
-	            	<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo $website->id; ?>" onClick="updatesoverview_wp_sync('<?php echo $website->id; ?>')" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php _e( 'Sync Data', 'mainwp' ); ?></a>
-	            <?php
+						echo $output_md5;
+					} else {
+						?>
+					<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo $website->id; ?>" onClick="updatesoverview_wp_sync('<?php echo $website->id; ?>')" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php _e( 'Sync Data', 'mainwp' ); ?></a>
+						<?php
 					}
-				?>
+					?>
 						</div>
 					</div>
 				</div>
-        	<?php } else { ?>
+		<?php } else { ?>
 				<div class="item mainwp_wp_sync" site_id="<?php echo $website->id; ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
 					<div class="ui grid">
 						<div class="six wide column middle aligned">
@@ -176,29 +155,29 @@ class MainWP_Connection_Status {
 						if ( $md5Connection ) {
 							echo $output_md5;
 						} else {
-						?>
+							?>
 							<a href="#" class="mainwp-updates-overview-reconnect-site" siteid="<?php echo $website->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php _e( 'Reconnect', 'mainwp' ); ?></a>
 					<?php } ?>
 						</div>
 					</div>
 				</div>
-			<?php
-      		}
+				<?php
+		}
 
-        		$output = ob_get_clean();
+		$output = ob_get_clean();
 
-				if ( $j == $ALL ) {
-					$html_all_sites .= $output;
-				} else if ( $j == $UP ) {
-					$html_online_sites .= $output;
-					$count_connected++;
-				} else if ( !in_array( $website->id, $disconnect_site_ids ) ) {
-					$disconnect_site_ids[] = $website->id;
-					$html_other_sites .= $output;
-					$count_disconnected++;
-				}
-      		}
-   		}
+		if ( $j == $ALL ) {
+			$html_all_sites .= $output;
+		} elseif ( $j == $UP ) {
+			$html_online_sites .= $output;
+			$count_connected++;
+		} elseif ( ! in_array( $website->id, $disconnect_site_ids ) ) {
+			$disconnect_site_ids[] = $website->id;
+			$html_other_sites     .= $output;
+			$count_disconnected++;
+		}
+			}
+		}
 
 		?>
 
@@ -206,7 +185,7 @@ class MainWP_Connection_Status {
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
 					<?php esc_html_e('Connection Status', 'mainwp'); ?>
-					<div class="sub header"><?php esc_html_e( 'Child sites connection status', 'mainwp' );  ?></div>
+					<div class="sub header"><?php esc_html_e( 'Child sites connection status', 'mainwp' ); ?></div>
 				</h3>
 			</div>
 			<?php if ( empty( $current_wpid ) ) { ?>
@@ -329,7 +308,7 @@ class MainWP_Connection_Status {
 		</div>
 		<?php
 
-		@MainWP_DB::free_result( $websites );
+		MainWP_DB::free_result( $websites );
 	}
 
 }

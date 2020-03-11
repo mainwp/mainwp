@@ -1,12 +1,13 @@
-[![Latest Stable Version](https://poser.pugx.org/mainwp/mainwp/v/stable)](https://packagist.org/packages/mainwp/mainwp)
-[![Total Downloads](https://poser.pugx.org/mainwp/mainwp/downloads)](https://packagist.org/packages/mainwp/mainwp)
-[![Latest Unstable Version](https://poser.pugx.org/mainwp/mainwp/v/unstable)](https://packagist.org/packages/mainwp/mainwp)
-[![License](https://poser.pugx.org/mainwp/mainwp/license)](https://packagist.org/packages/mainwp/mainwp)
-[![Monthly Downloads](https://poser.pugx.org/mainwp/mainwp/d/monthly)](https://packagist.org/packages/mainwp/mainwp)
-[![Daily Downloads](https://poser.pugx.org/mainwp/mainwp/d/daily)](https://packagist.org/packages/mainwp/mainwp)
-[![composer.lock](https://poser.pugx.org/mainwp/mainwp/composerlock)](https://packagist.org/packages/mainwp/mainwp)
+
 <p align="center"><a href="https://mainwp.com"><img src="https://mainwp.com/images/mainwp-logo.png" alt="MainWP"></a></p>
 
+<p align="center">
+<a href="https://packagist.org/packages/mainwp/mainwp"><img src="https://poser.pugx.org/mainwp/mainwp/license" alt="license"></a> 
+ <a href="https://packagist.org/packages/mainwp/mainwp"><img src="https://poser.pugx.org/mainwp/mainwp/v/stable" alt="Latest Stable Version"></a>
+  <img alt="WordPress Plugin Active Installs" src="https://img.shields.io/wordpress/plugin/installs/mainwp?label=MainWP%20Dashboard%20Active%20Installs">
+  <img alt="WordPress Plugin Rating" src="https://img.shields.io/wordpress/plugin/stars/mainwp">
+  <a href="https://travis-ci.org/mainwp/mainwp"><img src="https://travis-ci.org/mainwp/mainwp.svg?branch=master" alt="Build Status"></a>
+</p>
 
 Welcome to the [MainWP](https://mainwp.com) repository on GitHub. Here you can browse the source, look at open issues and keep track of development.
 
@@ -20,7 +21,7 @@ The MainWP WordPress management system consists of 2 core plugins, the MainWP Da
 
 The [MainWP Dashboard](https://wordpress.org/plugins/mainwp/) is a stand-alone plugin that is installed on its own WordPress site; no other plugins should be installed with it, and it should not be installed on an active WordPress site with visitors. 
 
-The [MainWP Child](https://wordpress.org/plugins/mainwp-child/) plugin is installed on the WordPress sites that you want to control from the MainWP Dashboard. 
+The [MainWP Child](https://wordpress.org/plugins/mainwp-child/) plugin currently has an <img alt="WordPress Plugin Active Installs" src="https://img.shields.io/wordpress/plugin/installs/mainwp-child?label=active%20install%20count%20of%20">.  The Child plugin is installed on the WordPress sites that you want to control from the MainWP Dashboard. 
 
 ## Documentation
 * [MainWP Help Documentation](https://mainwp.com/help/)

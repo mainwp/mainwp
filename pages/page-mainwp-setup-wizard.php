@@ -1320,16 +1320,16 @@ class MainWP_Setup_Wizard {
 			}
 		}
 
-		@curl_setopt( $ch, CURLOPT_URL, $url );
-		@curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
-		@curl_setopt( $ch, CURLOPT_ENCODING, '' );
-		@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 240 );
-		@curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
-		@curl_setopt( $ch, CURLOPT_MAXREDIRS, 10 );
-		@curl_setopt( $ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
-		@curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'POST' );
-		@curl_setopt( $ch, CURLOPT_POSTFIELDS, $post_fields );
-		@curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
+		curl_setopt( $ch, CURLOPT_URL, $url );
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
+		curl_setopt( $ch, CURLOPT_ENCODING, '' );
+		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 240 );
+		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
+		curl_setopt( $ch, CURLOPT_MAXREDIRS, 10 );
+		curl_setopt( $ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
+		curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'POST' );
+		curl_setopt( $ch, CURLOPT_POSTFIELDS, $post_fields );
+		curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
 			'cache-control: no-cache',
 			'content-type: application/x-www-form-urlencoded',
 		) );

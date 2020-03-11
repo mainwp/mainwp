@@ -398,10 +398,10 @@ class MainWP_System {
 		if ( empty( $_GET['mainwp_run'] ) || 'test' !== $_GET['mainwp_run'] ) {
 			return;
 		}
-		@session_write_close();
-		@header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ), true );
-		@header( 'X-Robots-Tag: noindex, nofollow', true );
-		@header( 'X-MainWP-Version: ' . self::$version, true );
+		session_write_close();
+		header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ), true );
+		header( 'X-Robots-Tag: noindex, nofollow', true );
+		header( 'X-MainWP-Version: ' . self::$version, true );
 		nocache_headers();
 		if ( 'test' == $_GET['mainwp_run'] ) {
 			die( 'MainWP Test' );
@@ -2152,8 +2152,8 @@ class MainWP_System {
 		header( 'Cache-Control: must-revalidate' );
 		header( 'Pragma: public' );
 		header( 'Content-Length: ' . filesize( $file ) );
-		while ( @ob_get_level() ) {
-			@ob_end_clean();
+		while ( ob_get_level() ) {
+			ob_end_clean();
 		}
 		$this->readfile_chunked( $file );
 		exit();
@@ -2169,8 +2169,8 @@ class MainWP_System {
 		while ( ! @feof( $handle ) ) {
 			$buffer = @fread( $handle, $chunksize );
 			echo $buffer;
-			@ob_flush();
-			@flush();
+			ob_flush();
+			flush();
 			$buffer = null;
 		}
 

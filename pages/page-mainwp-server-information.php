@@ -794,8 +794,8 @@ class MainWP_Server_Information {
 		if ( ! empty( $conf_loc ) ) {
 			$conf['config'] = $conf_loc;
 		}
-		$res = @openssl_pkey_new( $conf );
-		@openssl_pkey_export( $res, $privkey, null, $conf );
+		$res = openssl_pkey_new( $conf );
+		openssl_pkey_export( $res, $privkey, null, $conf );
 
 		$str = openssl_error_string();
 

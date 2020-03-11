@@ -64,7 +64,7 @@ class MainWP_DB {
 		}
 
 		$rslt = self::Instance()->query( "SHOW TABLES LIKE '" . $this->tableName( 'wp' ) . "'" );
-		if ( 0 === @self::num_rows( $rslt ) ) {
+		if ( 0 === self::num_rows( $rslt ) ) {
 			$currentVersion = false;
 		}
 
@@ -433,8 +433,8 @@ class MainWP_DB {
 		$total_sites  = 0;
 		$synced_sites = 0;
 		$last_sync    = 0;
-		@self::data_seek( $websites, 0 );
-		while ( $websites && ( $website      = @self::fetch_object( $websites ) ) ) {
+		self::data_seek( $websites, 0 );
+		while ( $websites && ( $website      = self::fetch_object( $websites ) ) ) {
 			if ( empty( $website ) || '' !== $website->sync_errors ) {
 				continue;
 			}
@@ -466,8 +466,8 @@ class MainWP_DB {
 
 		$disc_sites = array();
 
-		@self::data_seek( $websites, 0 );
-		while ( $websites && ( $website      = @self::fetch_object( $websites ) ) ) {
+		self::data_seek( $websites, 0 );
+		while ( $websites && ( $website      = self::fetch_object( $websites ) ) ) {
 			if ( empty( $website ) ) {
 				continue;
 			}
@@ -1786,9 +1786,9 @@ class MainWP_DB {
 			return false;
 		}
 
-		$result = @self::_query( $sql, $this->wpdb->dbh );
+		$result = self::_query( $sql, $this->wpdb->dbh );
 
-		if ( ! $result || ( 0 == @self::num_rows( $result ) ) ) {
+		if ( ! $result || ( 0 == self::num_rows( $result ) ) ) {
 			return false;
 		}
 

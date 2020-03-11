@@ -150,16 +150,16 @@ class MainWP_Utility {
 		}
 
 		if ( $ssl_verifyhost ) {
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 		} else {
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		}
 
-		@curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
-		@curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
-		@curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
+		curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
+		curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
+		curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
 
 		$force_use_ipv4 = false;
 		if ( null !== $forceUseIPv4 ) {
@@ -178,7 +178,7 @@ class MainWP_Utility {
 
 		if ( $force_use_ipv4 ) {
 			if ( defined( 'CURLOPT_IPRESOLVE' ) and defined( 'CURL_IPRESOLVE_V4' ) ) {
-				@curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
+				curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
 			}
 		}
 
@@ -544,7 +544,7 @@ class MainWP_Utility {
 
 			if ( ( 0 == $website->nossl ) && function_exists( 'openssl_verify' ) ) {
 				$data['nossl'] = 0;
-				@openssl_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) );
+				openssl_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) );
 			} else {
 				$data['nossl'] = 1;
 				$signature     = md5( $what . $data['nonce'] . $website->nosslkey );
@@ -771,24 +771,24 @@ class MainWP_Utility {
 
 					if ( file_exists( $cookieFile ) ) {
 						@chmod( $cookieFile, 0644 );
-						@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
-						@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
+						curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
+						curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 					}
 				}
 
-				@curl_setopt( $ch, CURLOPT_URL, $url );
-				@curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-				@curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-				@curl_setopt( $ch, CURLOPT_POST, true );
+				curl_setopt( $ch, CURLOPT_URL, $url );
+				curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+				curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+				curl_setopt( $ch, CURLOPT_POST, true );
 
 				// json_result: true/false to request response json format
 				$params['json_result'] = $json_format; // ::fetchUrlsAuthed
 
 				$postdata = self::getPostDataAuthed( $website, $what, $params );
-				@curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-				@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
-				@curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-				@curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
+				curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
+				curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+				curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+				curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 				if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
 					$http_pass = stripslashes( $http_pass ); // to fix
 					curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
@@ -811,16 +811,16 @@ class MainWP_Utility {
 				}
 
 				if ( $ssl_verifyhost ) {
-					@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-					@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+					curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
+					curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 				} else {
-					@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-					@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+					curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+					curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 				}
 
-				@curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
-				@curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
-				@curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ));
+				curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
+				curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
+				curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ));
 
 				$force_use_ipv4 = false;
 				$forceUseIPv4   = isset( $website->force_use_ipv4 ) ? $website->force_use_ipv4 : null;
@@ -840,11 +840,11 @@ class MainWP_Utility {
 
 				if ( $force_use_ipv4 ) {
 					if ( defined( 'CURLOPT_IPRESOLVE' ) and defined( 'CURL_IPRESOLVE_V4' ) ) {
-						@curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
+						curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
 					}
 				}
 
-				@curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); // 20minutes
+				curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); // 20minutes
 				if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
 					@set_time_limit( $timeout );
 				} //20minutes
@@ -1069,25 +1069,25 @@ class MainWP_Utility {
 
 				if ( file_exists( $cookieFile ) ) {
 					@chmod( $cookieFile, 0644 );
-					@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
-					@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
+					curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
+					curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 				}
 			}
 
-			@curl_setopt( $ch, CURLOPT_URL, $url );
-			@curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-			@curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-			@curl_setopt( $ch, CURLOPT_POST, true );
+			curl_setopt( $ch, CURLOPT_URL, $url );
+			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+			curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+			curl_setopt( $ch, CURLOPT_POST, true );
 
 			if ( is_array( $params ) ) {
 				$params['json_result'] = $json_format; // ::fetchUrlsAuthed
 			}
 
 			$postdata = self::getPostDataAuthed( $website, $what, $params );
-			@curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-			@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
-			@curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-			@curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
+			curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
+			curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+			curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+			curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 			if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
 				$http_pass = stripslashes( $http_pass ); // to fix
 				curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
@@ -1110,16 +1110,16 @@ class MainWP_Utility {
 			}
 
 			if ( $ssl_verifyhost ) {
-				@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-				@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+				curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
+				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 			} else {
-				@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-				@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+				curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 			}
 
-			@curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
+			curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
 
-			@curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); // 20minutes
+			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); // 20minutes
 			if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
 				@set_time_limit( $timeout );
 			} //20minutes
@@ -1367,14 +1367,14 @@ class MainWP_Utility {
 		curl_setopt( $ch, CURLOPT_POST, true );
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		@curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
+		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 
 		if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 		} else {
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		}
 
 		$data = curl_exec( $ch );
@@ -1574,23 +1574,23 @@ class MainWP_Utility {
 
 			if ( file_exists( $cookieFile ) ) {
 				@chmod( $cookieFile, 0644 );
-				@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
-				@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
+				curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
+				curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 			}
 		}
 
-		@curl_setopt( $ch, CURLOPT_URL, $url );
-		@curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		@curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-		@curl_setopt( $ch, CURLOPT_POST, true );
-		@curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-		@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
-		@curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		@curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
+		curl_setopt( $ch, CURLOPT_URL, $url );
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+		curl_setopt( $ch, CURLOPT_POST, true );
+		curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
+		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 
 		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
 			$http_pass = stripslashes( $http_pass ); // to fix
-			@curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
+			curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
 		}
 
 		$ssl_verifyhost = false;
@@ -1609,16 +1609,16 @@ class MainWP_Utility {
 		}
 
 		if ( $ssl_verifyhost ) {
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 		} else {
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		}
 
-		@curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
-		@curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
-		@curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ));
+		curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
+		curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
+		curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ));
 
 		$force_use_ipv4 = false;
 		$forceUseIPv4   = isset( $others['force_use_ipv4'] ) ? $others['force_use_ipv4'] : null;
@@ -1638,12 +1638,12 @@ class MainWP_Utility {
 
 		if ( $force_use_ipv4 ) {
 			if ( defined( 'CURLOPT_IPRESOLVE' ) and defined( 'CURL_IPRESOLVE_V4' ) ) {
-				@curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
+				curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
 			}
 		}
 
 		$timeout = 20 * 60 * 60; // 20 minutes
-		@curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
+		curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
 		if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
 			@set_time_limit( $timeout );
 		}
@@ -1938,7 +1938,7 @@ class MainWP_Utility {
 
 		curl_setopt( $ch, CURLOPT_FILE, $fp );
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		@curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
+		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
 		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
 			$http_pass = stripslashes($http_pass); // to fix
@@ -2221,7 +2221,7 @@ class MainWP_Utility {
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 ); // Set curl to return the data instead of printing it to the browser.
 		curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		@curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
+		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 
 		$data     = @curl_exec( $ch );
 		$httpCode = @curl_getinfo($ch, CURLINFO_HTTP_CODE);

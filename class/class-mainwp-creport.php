@@ -2802,9 +2802,9 @@ PRIMARY KEY  (`id`)  ';
 		}
 		/** @var $wpdb wpdb */
 		global $wpdb;
-		$result = @self::_query( $sql, $wpdb->dbh );
+		$result = self::_query( $sql, $wpdb->dbh );
 
-		if ( ! $result || ( @self::num_rows( $result ) == 0 ) ) {
+		if ( ! $result || ( self::num_rows( $result ) == 0 ) ) {
 			return false;
 		}
 		return $result;

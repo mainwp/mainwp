@@ -126,7 +126,7 @@ class MainWP_Post {
 			'mainwp',
 		), MAINWP_VERSION );
 
-		$_post            = get_post( $post_id );
+		$_post           = get_post( $post_id );
 		$GLOBALS['post'] = $_post; // to fix: WP Seo metabox loading scripts
 	}
 
@@ -303,9 +303,9 @@ class MainWP_Post {
 
 		MainWP_Post_Handler::Instance()->secure_request( 'mainwp_post_addmeta' );
 
-		$c    = 0;
-		$pid  = (int) $_POST['post_id'];
-		
+		$c   = 0;
+		$pid = (int) $_POST['post_id'];
+
 		if ( isset( $_POST['metakeyselect'] ) || isset( $_POST['metakeyinput'] ) ) {
 			if ( ! current_user_can( 'edit_post', $pid ) ) {
 				wp_die( -1 );
@@ -545,7 +545,7 @@ class MainWP_Post {
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_post_search_by_keyword" class="text" value="<?php echo (null != $cachedSearch) ? esc_attr( $cachedSearch['keyword'] ) : ""; ?>"/>
+					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_post_search_by_keyword" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>"/>
 				</div>
 			</div>
 			<div class="field">
@@ -809,7 +809,7 @@ class MainWP_Post {
 		) );
 
 		// Sort if required
-		if ( 0 === $output->posts ) {			
+		if ( 0 === $output->posts ) {
 			MainWP_Cache::addBody( 'Post', '' );
 			return;
 		}
@@ -1192,7 +1192,7 @@ class MainWP_Post {
 
 		$_wp_additional_image_sizes = wp_get_additional_image_sizes();
 
-		$_post             = get_post( $post );
+		$_post            = get_post( $post );
 		$post_type_object = get_post_type_object( $_post->post_type );
 
 		$thumb_ok          = false;
@@ -1959,7 +1959,7 @@ class MainWP_Post {
 
 				if ( ! $skip_post ) {
 					if ( isset( $_GET['id'] ) ) {
-						$id   = intval( $_GET['id'] );
+						$id    = intval( $_GET['id'] );
 						$_post = get_post( $id );
 						if ( $_post ) {
 							$selected_by     = get_post_meta( $id, '_selected_by', true );
@@ -2093,7 +2093,7 @@ class MainWP_Post {
 									MainWP_Bulk_Add::getClassName(),
 									'PostingBulk_handler',
 								), $output );
-							}							
+							}
 
 							$failed_posts = array();
 							foreach ( $dbwebsites as $website ) {

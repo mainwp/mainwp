@@ -10,3 +10,4 @@ LICENSE.md export-ignore
 LICENSE.txt export-ignore
 README.md export-ignore
 phpunit.xml.dist export-ignore
+phpdoc.dist.xml export-ignore

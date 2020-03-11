@@ -263,7 +263,7 @@ class MainWP_Manage_Sites {
 		$websites            = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 		$referrer_page_check = false;
 		$referrer_page       = wp_get_referer();
-		if ( $referrer_page === admin_url( 'admin.php?page=mainwp-setup' ) ) {
+		if ( admin_url( 'admin.php?page=mainwp-setup' ) === $referrer_page ) {
 			$referrer_page_check = true;
 		}
 
@@ -485,7 +485,7 @@ class MainWP_Manage_Sites {
 			mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
 			return;
 		} else {
-			if ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && $_FILES['mainwp_managesites_file_bulkupload']['error'] == UPLOAD_ERR_OK ) {
+			if ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] ) {
 				?>
 				<div class="ui modal" id="mainwp-import-sites-modal">
 					<div class="header"><?php _e( 'Import Sites', 'mainwp' ); ?></div>
@@ -620,7 +620,7 @@ class MainWP_Manage_Sites {
 			$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
 			$loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
 		} else {
-			$loadFilesBeforeZip = ( $loadFilesBeforeZip == 2 );
+			$loadFilesBeforeZip = ( 2 === $loadFilesBeforeZip );
 		}
 
 		if ( ( 'zip' === $pTask->archiveFormat ) && ( 1 === $pTask->maximumFileDescriptorsOverride ) ) {
@@ -1165,7 +1165,7 @@ class MainWP_Manage_Sites {
 		// Normal flow: use website & fallback to global
 		if ( false === $pMaximumFileDescriptorsOverride ) {
 			if ( 1 === $website->maximumFileDescriptorsOverride ) {
-				$maximumFileDescriptorsAuto = ( $website->maximumFileDescriptorsAuto == 1 );
+				$maximumFileDescriptorsAuto = ( 1 === $website->maximumFileDescriptorsAuto );
 				$maximumFileDescriptors     = $website->maximumFileDescriptors;
 			} else {
 				$maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
@@ -1174,7 +1174,7 @@ class MainWP_Manage_Sites {
 			}
 		} //If not set to global & overriden, use these settings
 		elseif ( ( 'global' !== $pArchiveFormat ) && ( 1 === $pMaximumFileDescriptorsOverride ) ) {
-			$maximumFileDescriptorsAuto = ( $pMaximumFileDescriptorsAuto == 1 );
+			$maximumFileDescriptorsAuto = ( 1 === $pMaximumFileDescriptorsAuto );
 			$maximumFileDescriptors     = $pMaximumFileDescriptors;
 		} //Set to global or not overriden, use global settings
 		else {

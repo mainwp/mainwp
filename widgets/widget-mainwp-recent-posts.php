@@ -1,18 +1,50 @@
 <?php
+/**
+ * MainWP Recent Posts Widget
+ * 
+ * Displays the Child Sites most recent published draft, pending, trash & future posts
+ * 
+ */
 
+/**
+ * Class MainWP_Recent_Posts
+ * 
+ * 
+ * 
+ */
 class MainWP_Recent_Posts {
 
+	/**
+	 * getClassName()
+	 * 
+	 * @return string __CLASS__
+	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
+	/**
+	 * render()
+	 * 
+	 * Fire off renderSites()
+	 * 
+	 */
 	public static function render() {
 		MainWP_Recent_Posts::renderSites( false, false );
 	}
 
+	/**
+	 * renderSites()
+	 * 
+	 * Build the resent posts list
+	 * 
+	 * @param mixed $renew
+	 * @param boolean $pExit
+	 * 
+	 */
 	public static function renderSites( $renew, $pExit = true ) {
 
-    $recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 ); // $recent_number: support >=0 and <= 30
+    	$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 ); // $recent_number: support >=0 and <= 30
 
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
@@ -397,36 +429,78 @@ class MainWP_Recent_Posts {
 		}
 	}
 
+	/**
+	 * publish()
+	 * 
+	 * Publish Post
+	 */
 	public static function publish() {
 		MainWP_Recent_Posts::action( 'publish' );
 		die( json_encode( array( 'result' => __( 'Post has been published!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * approve()
+	 * 
+	 * Approve Post
+	 */
 	public static function approve() {
 		MainWP_Recent_Posts::action( 'publish' );
 		die( json_encode( array( 'result' => __( 'Post has been approved!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * unpublish()
+	 * 
+	 * Unpublish Post
+	 * 
+	 */
 	public static function unpublish() {
 		MainWP_Recent_Posts::action( 'unpublish' );
 		die( json_encode( array( 'result' => __( 'Post has been unpublished!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * trash()
+	 * 
+	 * Trash Post
+	 * 
+	 */
 	public static function trash() {
 		MainWP_Recent_Posts::action( 'trash' );
 		die( json_encode( array( 'result' => __( 'Post has been moved to trash!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * delete()
+	 * 
+	 * Delete Post
+	 * 
+	 */
 	public static function delete() {
 		MainWP_Recent_Posts::action( 'delete' );
 		die( json_encode( array( 'result' => __( 'Post has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * restore()
+	 * 
+	 * Restore Post
+	 * 
+	 */
 	public static function restore() {
 		MainWP_Recent_Posts::action( 'restore' );
 		die( json_encode( array( 'result' => __( 'Post has been restored!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * action()
+	 * 
+	 * Post action 
+	 * 
+	 * @param mixed $pAction
+	 *
+	 */
 	public static function action( $pAction ) {
 		$postId			 = $_POST[ 'postId' ];
 		$websiteIdEnc	 = $_POST[ 'websiteId' ];
@@ -458,6 +532,15 @@ class MainWP_Recent_Posts {
 		}
 	}
 
+	/**
+	 * action_update()
+	 * 
+	 * Update Post Action
+	 * 
+	 * @param mixed $pAction
+	 * 
+	 * @return void
+	 */
 	public static function action_update( $pAction ) {
 		$postId			 = $_POST[ 'postId' ];
 		$websiteIdEnc	 = $_POST[ 'websiteId' ];

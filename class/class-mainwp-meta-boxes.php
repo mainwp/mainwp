@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP Meta Boxes
+ */
 class MainWP_Meta_Boxes {
 
 	public static function initMetaBoxes() {

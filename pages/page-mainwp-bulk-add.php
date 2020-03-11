@@ -1,7 +1,14 @@
 <?php
 
 /**
- * Used in both BulkAddPage & BulkAddPost & BulkAddUser
+ * MainWP Bulk Add Handler
+ * 
+ * @used-by MainWP_Page::BulkAddPage 
+ * @used-by MainWP_Post::BulkAddPost 
+ * @used-by MainWP_User::doBukAdd
+ * @used-by MainWP_User::doImport
+ * @used-by MainWP_Bulk_Update_Admin_Passwords::BulkAddUser
+ * 
  */
 class MainWP_Bulk_Add {
 	public static function getClassName() {

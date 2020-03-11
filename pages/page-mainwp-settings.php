@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * MainWP Settings Page
+ */
 class MainWP_Settings {
 
 	public static function getClassName() {

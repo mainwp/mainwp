@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * MainWP Manage Backups
+ */
 class MainWP_Manage_Backups {
 	public static function getClassName() {
 		return __CLASS__;

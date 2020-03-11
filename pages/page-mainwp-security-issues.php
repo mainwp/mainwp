@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * MainWP Security Issues
+ */
 class MainWP_Security_Issues {
 
 	public static function getClassName() {

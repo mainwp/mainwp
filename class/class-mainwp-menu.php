@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP Main Menu
+ */
 class MainWP_Menu {
 
 	public function __construct() {

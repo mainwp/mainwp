@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * MainWP Child Scan
+ */
 class MainWP_Child_Scan {
 
 	public static function getClassName() {

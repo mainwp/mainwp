@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * MainWP API Settings Page
+ * 
+ * This page handles listing install MainWP Extensions 
+ * and activating / deactivating license keys
+ * 
+ */
 class MainWP_API_Settings {
 
 	public static function getClassName() {
@@ -64,7 +71,7 @@ class MainWP_API_Settings {
 		}
         return $output;
 	}
-
+	
 	public static function getUpgradeInformation( $pSlug ) {
 
 		$extensions	 = MainWP_Extensions::loadExtensions();

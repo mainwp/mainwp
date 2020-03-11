@@ -15,6 +15,9 @@ const MAINWP_VIEW_PER_SITE = 1;
 const MAINWP_VIEW_PER_PLUGIN_THEME = 0;
 const MAINWP_VIEW_PER_GROUP = 2;
 
+/**
+ * MainWP System
+ */
 class MainWP_System {
 
 	public static $version = '4.0.7.2';
@@ -117,7 +120,7 @@ class MainWP_System {
 		MainWP_Manage_Sites::init();
 		new MainWP_Hooks(); //Init the hooks
 		new MainWP_Menu(); // Init custom menu
-		//
+
 		//Change menu & widgets
 		add_action( 'admin_menu', array( &$this, 'new_menus' ) );
 

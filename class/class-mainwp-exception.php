@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP_Exception
+ */
 class MainWP_Exception extends Exception {
 
 	protected $messageExtra;

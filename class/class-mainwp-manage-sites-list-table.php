@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP Manage Sites List Table
+ */
 class MainWP_Manage_Sites_List_Table {
 
 	protected $userExtension = NULL;

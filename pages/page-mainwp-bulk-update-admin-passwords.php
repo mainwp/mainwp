@@ -1,7 +1,9 @@
 <?php
 
 /**
- * @see MainWP_Bulk_Add
+ * MainWP Bulk Update Admin Passwords
+ * 
+ * @uses MainWP_Bulk_Add
  */
 class MainWP_Bulk_Update_Admin_Passwords {
 	public static function getClassName() {

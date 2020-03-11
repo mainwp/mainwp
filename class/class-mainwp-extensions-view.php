@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP Extensions View
+ */
 class MainWP_Extensions_View {
 
 	public static function initMenu() {

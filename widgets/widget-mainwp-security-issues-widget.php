@@ -1,11 +1,35 @@
 <?php
+/**
+ * MainWP Security Widget
+ * 
+ * Displays detected security issues on Child Sites
+ * 
+ */
 
+
+/**
+ * Class MainWP_Security_Issues_Widget
+ * 
+ * Detect security issues on CHild Sites & Build Widget
+ * 
+ */
 class MainWP_Security_Issues_Widget {
 
+	/**
+	 * getClassName()
+	 * 
+	 * @return string __CLASS__
+	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
+	/**
+	 * renderWidget()
+	 * 
+	 * Fetch Child Site issues from db & build widget
+	 * 
+	 */
 	public static function renderWidget() {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 

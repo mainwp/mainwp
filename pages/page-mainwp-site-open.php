@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * MainWP Site Open
+ */
 class MainWP_Site_Open {
 
 	public static function getClassName() {

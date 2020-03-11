@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * MainWP Extensions Page
+ */
 class MainWP_Extensions {
 	public static function getClassName() {
 		return __CLASS__;

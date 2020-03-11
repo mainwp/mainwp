@@ -1,15 +1,48 @@
 <?php
+/**
+ * MainWP Updates Overview Widget
+ * 
+ * Grab Child Sites update status & build widget
+ * 
+ */
 
+/**
+ * MainWP Updates Overview
+ */
 class MainWP_Updates_Overview {
 
+	/**
+	 * getClassName()
+	 * 
+	 * Get Class Name
+	 * 
+	 * @return string __CLASS__
+	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
+	/**
+	 * init()
+	 * 
+	 * add plugins api filter
+	 * 
+	 */
 	public static function init() {
 		add_filter( 'plugins_api', array( 'MainWP_Updates_Overview', 'plugins_api' ), 10, 3 );
 	}
 
+	/**
+	 * plugins_api()
+	 * 
+	 * Grab Child Sites update status & build widget
+	 * 
+	 * @param mixed $default
+	 * @param mixed $action
+	 * @param mixed $args
+	 * 
+	 * @return mixed $default
+	 */
 	public static function plugins_api( $default, $action, $args ) {
 		if ( property_exists( $args, 'slug' ) && ( 'mainwp' === $args->slug ) )
 			return $default;
@@ -44,10 +77,22 @@ class MainWP_Updates_Overview {
 		return $default;
 	}
 
+	/**
+	 * getName()
+	 * 
+	 * Define Widget Title
+	 * 
+	 */
 	public static function getName() {
 		return __( 'Update Overview', 'mainwp' );
 	}
 
+	/**
+	 * render()
+	 * 
+	 * Check if $_GET['dashboard'] then run renderSites()
+	 * 
+	 */
 	public static function render() {
         $individual = false;
         if ( isset( $_GET['dashboard'] ) ) {
@@ -56,8 +101,12 @@ class MainWP_Updates_Overview {
 		MainWP_Updates_Overview::renderSites( false, $individual );
 	}
 
-
-
+	/**
+	 * renderLastUpdate()
+	 * 
+	 * Check when the Child Site was last synced
+	 * 
+	 */
 	public static function renderLastUpdate() {
 		$currentwp = MainWP_Utility::get_current_wpid();
 		if ( !empty( $currentwp ) ) {
@@ -75,6 +124,12 @@ class MainWP_Updates_Overview {
 		}
 	}
 
+	/**
+	 * syncSite()
+	 * 
+	 * Sync Child Site
+	 * 
+	 */
 	public static function syncSite() {
 		$website = null;
 		if ( isset( $_POST[ 'wp_id' ] ) ) {
@@ -102,6 +157,14 @@ class MainWP_Updates_Overview {
 		die( json_encode( array( 'error' => $website->sync_errors ) ) );
 	}
 
+    /**
+	 * renderSites()
+	 * 
+	 * Grab available Child Sites updates a build Widget
+	 * 
+     * @param boolean $isUpdatesPage
+     * 
+     */
     public static function renderSites( $isUpdatesPage = false ) {
 
 		$globalView		 = true;
@@ -724,6 +787,15 @@ class MainWP_Updates_Overview {
 	//	MainWP_Settings::renderFooter( 'IgnoredUpdates' );
 	//}
 
+	/**
+	 * dismissSyncErrors()
+	 * 
+	 * 
+	 * 
+	 * @param boolean $dismiss
+	 * 
+	 * @return void
+	 */
 	public static function dismissSyncErrors( $dismiss = true ) {
 		global $current_user;
 		update_user_option( $current_user->ID, 'mainwp_syncerrors_dismissed', $dismiss );
@@ -731,6 +803,13 @@ class MainWP_Updates_Overview {
 		return true;
 	}
 
+	/**
+	 * checkbackups()
+	 * 
+	 * Check if Child Site needs to be backed up before updates
+	 * 
+	 * @return mixed $output
+	 */
 	public static function checkBackups() {
 		//if (get_option('mainwp_backup_before_upgrade') != 1) return true;
 		if ( !is_array( $_POST[ 'sites' ] ) ) {

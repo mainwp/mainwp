@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP Manage Sites View
+ */
 class MainWP_Manage_Sites_View {
 
 	public static function initMenu() {

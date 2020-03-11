@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * MainWP Updates Page
+ */
 class MainWP_Updates {
 
 	public static function getClassName() {

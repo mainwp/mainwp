@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * Display custom fields form fields.
+ */
 class MainWP_Bulk_Post {
 
 	public static function getClassName() {

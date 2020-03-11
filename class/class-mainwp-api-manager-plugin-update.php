@@ -5,9 +5,9 @@ if ( !defined( 'ABSPATH' ) ) {
 } // Exit if accessed directly
 
 /**
- * Todd Lahman LLC Updater - Single Updater Class
+ * MainWP API Manager Update Handler
  *
- * @package Update API Manager/Update Handler
+ * @package MainWP API Manager/Update Handler
  * @author Todd Lahman LLC
  * @copyright   Copyright (c) Todd Lahman LLC
  * @since 1.0.0

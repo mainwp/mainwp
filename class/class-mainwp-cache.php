@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * Search Cache Handler
+ */
 class MainWP_Cache {
 
     public static function initSession() {

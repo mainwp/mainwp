@@ -26,7 +26,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *  : Get a list of all child sites
 	 *
 	 * @todo: allow to add or remove child sites
-	 * @synopsis [--list]
+	 * ## Syntax [--list]
 	 */
 	public function sites( $args, $assoc_args ) {
 		$websites		 = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
@@ -74,7 +74,8 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp sync 2,5
 	 *     wp mainwp sync --all
 	 *
-	 * @synopsis [<websiteid>] [--all]
+	 * ## Syntax [<websiteid>] [--all]
+	 * 
 	 */
 	public function sync( $args, $assoc_args ) {
 		$sites = array();
@@ -135,7 +136,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *
 	 *     wp mainwp reconnect 2,5
 	 *
-	 * @synopsis [<websiteid>]
+	 * ## Syntax [<websiteid>]
 	 */
 	public function reconnect( $args, $assoc_args ) {
 		$sites = array();
@@ -212,7 +213,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp plugin 2,5 --upgrade-all
 	 *     wp mainwp plugin 2,5 --upgrade=mainwpchild
 	 *
-	 * @synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<pluginslug>] [--upgrade-all]
+	 * ## Syntax [<websiteid>] [--list] [--list-all] [--upgrade=<pluginslug>] [--upgrade-all]
 	 */
 	public function plugin( $args, $assoc_args ) {
 		$sites = array();
@@ -447,7 +448,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp theme 2,5 --upgrade-all
 	 *     wp mainwp theme 2,5 --upgrade=twentysixteen
 	 *
-	 * @synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<theme>] [--upgrade-all]
+	 * ## Syntax [<websiteid>] [--list] [--list-all] [--upgrade=<theme>] [--upgrade-all]
 	 */
 	public function theme( $args, $assoc_args ) {
 		$sites = array();

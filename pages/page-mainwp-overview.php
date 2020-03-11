@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * MainWP Overview Page
+ */
 class MainWP_Overview {
 
 	public static function getClassName() {

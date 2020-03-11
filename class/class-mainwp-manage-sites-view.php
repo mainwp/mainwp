@@ -586,9 +586,9 @@ class MainWP_Manage_Sites_View {
 		</div>
 
 	<div class="ui grid field" <?php echo $hiddenCls; ?> <?php
-		if ( empty( $hiddenCls ) && 'zip' !== $archiveFormat ) {
-			echo 'style="display: none;"';}
-		?>
+	if ( empty( $hiddenCls ) && 'zip' !== $archiveFormat ) {
+		echo 'style="display: none;"';}
+	?>
 		 >
 	  <label class="six wide column middle aligned"><?php esc_html_e( 'Auto detect maximum file descriptors on child sites', 'mainwp' ); ?></label>
 		<div class="ten wide column ui toggle checkbox">
@@ -597,9 +597,9 @@ class MainWP_Manage_Sites_View {
 	</div>
 
 	<div class="ui grid field" <?php echo $hiddenCls; ?> <?php
-		if ( empty( $hiddenCls ) && 'zip' !== $archiveFormat ) {
-			echo 'style="display: none;"';}
-		?>
+	if ( empty( $hiddenCls ) && 'zip' !== $archiveFormat ) {
+		echo 'style="display: none;"';}
+	?>
 		 >
 	  <label class="six wide column middle aligned"><?php esc_html_e( 'Maximum file descriptors fallback value', 'mainwp' ); ?></label>
 		<div class="ten wide column">
@@ -608,9 +608,9 @@ class MainWP_Manage_Sites_View {
 	</div>
 
 	<div class="ui grid field" <?php echo $hiddenCls; ?> <?php
-		if ( empty( $hiddenCls ) && 'zip' !== $archiveFormat ) {
-			echo 'style="display: none;"';}
-		?>
+	if ( empty( $hiddenCls ) && 'zip' !== $archiveFormat ) {
+		echo 'style="display: none;"';}
+	?>
 		 >
 		<label class="six wide column middle aligned"><?php esc_html_e( 'Load files in memory before zipping', 'mainwp' ); ?></label>
 		<div class="ten wide column ui toggle checkbox">
@@ -638,7 +638,7 @@ class MainWP_Manage_Sites_View {
 			<input type="checkbox" name="mainwp_options_chunkedBackupTasks"  id="mainwp_options_chunkedBackupTasks" value="1" <?php echo ( $chunkedBackupTasks ? 'checked="checked"' : '' ); ?>/>
 		</div>
 	</div>
-	<?php
+		<?php
 	}
 
 	public static function renderDashboard( &$website, &$page ) {
@@ -673,8 +673,8 @@ class MainWP_Manage_Sites_View {
 	public static function renderIndividualUpdates( $id ) {
 		global $current_user;
 		$userExtension = MainWP_DB::Instance()->getUserExtension();
-		$sql      = MainWP_DB::Instance()->getSQLWebsiteById( $id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
-		$websites = MainWP_DB::Instance()->query( $sql );
+		$sql           = MainWP_DB::Instance()->getSQLWebsiteById( $id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
+		$websites      = MainWP_DB::Instance()->query( $sql );
 
 		MainWP_DB::data_seek( $websites, 0 );
 		if ( $websites ) {
@@ -1500,21 +1500,21 @@ class MainWP_Manage_Sites_View {
 						<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 							<div class="ui grid field">
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Ignore core updates', 'mainwp' ); ?></label>
-				  			<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore WP Core updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							  <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore WP Core updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 									<input type="checkbox" name="mainwp_is_ignoreCoreUpdates" id="mainwp_is_ignoreCoreUpdates" <?php echo ( 1 === $website->is_ignoreCoreUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignoreCoreUpdates"></label>
 								</div>
 							</div>
 
 							<div class="ui grid field">
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Ignore plugin updates', 'mainwp' ); ?></label>
-				  			<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore plugin updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							  <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore plugin updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 									<input type="checkbox" name="mainwp_is_ignorePluginUpdates" id="mainwp_is_ignorePluginUpdates" <?php echo ( 1 === $website->is_ignorePluginUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignorePluginUpdates"></label>
 								</div>
 							</div>
 
 							<div class="ui grid field">
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Ignore theme updates', 'mainwp' ); ?></label>
-				  			<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore theme updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							  <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore theme updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 									<input type="checkbox" name="mainwp_is_ignoreThemeUpdates" id="mainwp_is_ignoreThemeUpdates" <?php echo ( 1 === $website->is_ignoreThemeUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignoreThemeUpdates"></label>
 								</div>
 							</div>

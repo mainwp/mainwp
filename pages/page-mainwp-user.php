@@ -575,7 +575,7 @@ class MainWP_User {
 						$search_user_role = array();
 						$website          = MainWP_DB::Instance()->getWebsiteById( $v );
 						$allUsers         = json_decode( $website->users, true );
-						$allUsersCount		= count( $allUsers );
+						$allUsersCount    = count( $allUsers );
 
 						if ( $check_users_role ) {
 							for ( $i = 0; $i < $allUsersCount; $i ++ ) {
@@ -617,7 +617,7 @@ class MainWP_User {
 							if ( '' !== $website->sync_errors ) {
 								continue;
 							}
-							$allUsers = json_decode( $website->users, true );
+							$allUsers      = json_decode( $website->users, true );
 							$allUsersCount = count( $allUsers );
 							if ( $check_users_role ) {
 								for ( $i = 0; $i < $allUsersCount; $i ++ ) {

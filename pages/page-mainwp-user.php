@@ -176,7 +176,7 @@ class MainWP_User {
 			$renderItems[] = array(
 				'title'  => __( 'Manage Users', 'mainwp' ),
 				'href'   => 'admin.php?page=UserBulkManage',
-				'active' => ( $shownPage == '' ) ? true : false,
+				'active' => ( '' === $shownPage ) ? true : false,
 			);
 		}
 
@@ -184,7 +184,7 @@ class MainWP_User {
 				$renderItems[] = array(
 					'title'  => __( 'Add New', 'mainwp' ),
 					'href'   => 'admin.php?page=UserBulkAdd',
-					'active' => ( $shownPage == 'Add' ) ? true : false,
+					'active' => ( 'Add' === $shownPage ) ? true : false,
 				);
 		}
 
@@ -192,7 +192,7 @@ class MainWP_User {
 				$renderItems[] = array(
 					'title'  => __( 'Import Users', 'mainwp' ),
 					'href'   => 'admin.php?page=BulkImportUsers',
-					'active' => ( $shownPage == 'Import' ) ? true : false,
+					'active' => ( 'Import' === $shownPage ) ? true : false,
 				);
 		}
 
@@ -200,7 +200,7 @@ class MainWP_User {
 				$renderItems[] = array(
 					'title'  => __( 'Admin Passwords', 'mainwp' ),
 					'href'   => 'admin.php?page=UpdateAdminPasswords',
-					'active' => ( $shownPage == 'UpdateAdminPasswords' ) ? true : false,
+					'active' => ( 'UpdateAdminPasswords' === $shownPage ) ? true : false,
 				);
 		}
 
@@ -853,7 +853,7 @@ class MainWP_User {
 			die( json_encode( array( 'error' => __( 'You can not edit this website!', 'mainwp' ) ) ) );
 		}
 
-		if ( ( $pAction == 'delete' ) && ( $website->adminname == $userName ) ) {
+		if ( ( 'delete' === $pAction ) && ( $website->adminname == $userName ) ) {
 			die( json_encode( array( 'error' => __( 'This user is used for our secure link, it can not be deleted.', 'mainwp' ) ) ) );
 		}
 

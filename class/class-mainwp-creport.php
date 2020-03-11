@@ -918,13 +918,13 @@ class MainWP_Live_Reports_Class {
 				$result['other_tokens'] = array_intersect( $newarrayallowedtokens, $result['other_tokens'] );
 			}
 
-			$found_tokens = $result['sections']['section_token'];
+			$found_tokens                       = $result['sections']['section_token'];
 			self::$buffer['sections']['header'] = $sections['header']                     = $result['sections'];
 			$other_tokens['header']             = $result['other_tokens'];
 			$filtered_header                    = $result['filtered_content'];
 			unset( $result );
 
-			$result = self::parse_report_content( $report_body, $replace_tokens_values, $allowed_tokens );
+			$result                           = self::parse_report_content( $report_body, $replace_tokens_values, $allowed_tokens );
 			self::$buffer['sections']['body'] = $sections['body']                       = $result['sections'];
 			$other_tokens['body']             = $result['other_tokens'];
 			$filtered_body                    = $result['filtered_content'];
@@ -1309,8 +1309,8 @@ class MainWP_Live_Reports_Class {
 
 				$wire = '0,10,1,4';
 
-				$barcolor  = '508DDE';
-				$fillcolor = 'EDF5FF';
+				$barcolor   = '508DDE';
+				$fillcolor  = 'EDF5FF';
 				$lineformat = '1,0,0';
 
 				$output['ga.visits.chart'] = '<img src="http://chart.apis.google.com/chart?cht=lc&chs=600x250&chd=t:' . $graph_values . '&chds=' . $dimensions . '&chco=' . $barcolor . '&chm=B,' . $fillcolor . ',0,0,0&chls=' . $lineformat . '&chxt=x,y&chxl=0:|' . $graph_dates . '&chxr=' . $scale . '&chg=' . $wire . '">';
@@ -2208,7 +2208,6 @@ PRIMARY KEY  (`id`)  ';
 			return false;
 		}
 		return $wpdb->get_results( $wpdb->prepare( 'SELECT st.* FROM ' . $this->table_name( 'client_report_site_token' ) . ' st WHERE st.token_id = %d', $id ) );
-
 	}
 
 	public function get_site_tokens( $site_url, $index = 'id' ) {

@@ -473,7 +473,7 @@ class MainWP_Manage_Sites {
 				} );
 			} );
 		</script>
-		<?php
+			<?php
 		}
 		self::renderFooter( $showpage );
 	}

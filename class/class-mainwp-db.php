@@ -864,9 +864,9 @@ class MainWP_DB {
 
 	public function getGroupsByWebsiteId( $websiteid ) {
 		if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
-			return $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'group' ) . ' gr
+			return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->tableName( 'group' ) . ' gr
                 JOIN ' . $this->tableName( 'wp_group' ) . ' wpgr ON gr.id = wpgr.groupid
-                WHERE wpgr.wpid = ' . $websiteid . ' ORDER BY name', OBJECT_K );
+                WHERE wpgr.wpid = %d ORDER BY name', $websiteid ), OBJECT_K );
 		}
 
 		return null;
@@ -897,9 +897,9 @@ class MainWP_DB {
 	}
 
 	public function getGroupsByName( $name ) {
-		return $this->wpdb->get_results( 'SELECT gr.*
+		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT gr.*
             FROM ' . $this->tableName( 'group' ) . ' gr
-            WHERE gr.name = "' . $this->escape( $name ) . '"',
+            WHERE gr.name = %s', $this->escape( $name ) ),
 			 OBJECT_K );
 	}
 
@@ -935,7 +935,7 @@ class MainWP_DB {
 			$url .= '/';
 		}
 		$where   = '';
-		$results = $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp' ) . ' WHERE url = "' . $this->escape( $url ) . '"' . $where, OBJECT );
+		$results = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->tableName( 'wp' ) . ' WHERE url = %s ' . $where, $this->escape( $url ) ), OBJECT );
 		if ( $results ) {
 			return $results;
 		}
@@ -949,7 +949,7 @@ class MainWP_DB {
 			$url = str_replace( 'http://', 'http://www.', $url );
 		}
 
-		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp' ) . ' WHERE url = "' . $this->escape( $url ) . '"' . $where, OBJECT );
+		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->tableName( 'wp' ) . ' WHERE url = %s ' . $where, $this->escape( $url ) ), OBJECT );
 	}
 
 	public function getWebsiteBackupSettings( $websiteid ) {
@@ -957,7 +957,7 @@ class MainWP_DB {
 			return null;
 		}
 
-		return $this->getRowResult( 'SELECT * FROM ' . $this->tableName( 'wp_settings_backup' ) . ' WHERE wpid = ' . $websiteid );
+		return $this->getRowResult( $this->wpdb->prepare( 'SELECT * FROM ' . $this->tableName( 'wp_settings_backup' ) . ' WHERE wpid = %d ', $websiteid ) );
 	}
 
 	public function getWebsiteById( $id, $selectGroups = false ) {
@@ -1087,7 +1087,7 @@ class MainWP_DB {
 	}
 
 	public function getWPIp( $wpid ) {
-		return $this->wpdb->get_var( 'SELECT ip FROM ' . $this->tableName( 'request_log' ) . ' WHERE wpid = "' . $wpid . '"' );
+		return $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT ip FROM ' . $this->tableName( 'request_log' ) . ' WHERE wpid = %d', $wpid ) );
 	}
 
 	public function insertOrUpdateRequestLog( $wpid, $ip, $start, $stop ) {
@@ -1102,7 +1102,7 @@ class MainWP_DB {
 			$updateValues['micro_timestamp_stop'] = $stop;
 		}
 
-		$var = $this->wpdb->get_var( 'SELECT id FROM ' . $this->tableName( 'request_log' ) . ' WHERE wpid = "' . $wpid . '"' );
+		$var = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT id FROM ' . $this->tableName( 'request_log' ) . ' WHERE wpid = %d ', $wpid ) );
 		if ( null !== $var ) {
 			$this->wpdb->update( $this->tableName( 'request_log' ), $updateValues, array( 'wpid' => $wpid ) );
 		} else {
@@ -1129,7 +1129,7 @@ class MainWP_DB {
 			return $this->wpdb->get_var( 'select micro_timestamp_start from ' . $this->tableName( 'request_log' ) . ' order by micro_timestamp_start desc limit 1' );
 		}
 
-		return $this->wpdb->get_var( 'SELECT micro_timestamp_start FROM ' . $this->tableName( 'request_log' ) . ' WHERE ip = "' . esc_sql( $ip ) . '" order by micro_timestamp_start desc limit 1' );
+		return $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT micro_timestamp_start FROM ' . $this->tableName( 'request_log' ) . ' WHERE ip = %s order by micro_timestamp_start desc limit 1' , esc_sql( $ip ) ) );
 	}
 
 	public function addWebsite( $userid, $name, $url, $admin, $pubkey, $privkey, $nossl, $nosslkey, $groupids, $groupnames,
@@ -1275,11 +1275,7 @@ class MainWP_DB {
 	}
 
 	public function updateNote( $websiteid, $note ) {
-		$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET note="' . $this->escape( $note ) . '", note_lastupdate = ' . time() . ' WHERE id=%d', $websiteid ) );
-	}
-
-	public function updateWebsiteOfflineCheckSetting( $websiteid, $offlineChecks ) {
-		return $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET offline_checks="' . $this->escape( $offlineChecks ) . '" WHERE id=%d', $websiteid ) , OBJECT );
+		$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET note= %s, note_lastupdate = %d WHERE id=%d', $this->escape( $note ), time(), $websiteid ) );
 	}
 
 	public function updateWebsiteValues( $websiteid, $fields ) {
@@ -1344,7 +1340,7 @@ class MainWP_DB {
 	public function updateGroup( $groupid, $groupname ) {
 		if ( MainWP_Utility::ctype_digit( $groupid ) ) {
 			// update groupname
-			$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->tableName( 'group' ) . ' SET name="' . $this->escape( $groupname ) . '" WHERE id=%d', $groupid ) );
+			$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->tableName( 'group' ) . ' SET name=%s WHERE id=%d', $this->escape( $groupname ), $groupid ) );
 
 			return true;
 		}
@@ -1380,7 +1376,7 @@ class MainWP_DB {
 	}
 
 	public function getBackupTaskProgress( $task_id, $wp_id ) {
-		$progress = $this->wpdb->get_row( 'SELECT * FROM ' . $this->tableName( 'wp_backup_progress' ) . ' WHERE task_id= ' . $task_id . ' AND wp_id = ' . $wp_id );
+		$progress = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->tableName( 'wp_backup_progress' ) . ' WHERE task_id= %d AND wp_id = %d ', $task_id, $wp_id )  );
 
 		if ( '' !== $progress->fetchResult ) {
 			$progress->fetchResult = json_decode( $progress->fetchResult, true );
@@ -1395,12 +1391,12 @@ class MainWP_DB {
 			return false;
 		}
 
-		$progresses = $this->wpdb->get_results( 'SELECT * FROM ' . $this->tableName( 'wp_backup_progress' ) . ' WHERE wp_id = ' . $wp_id . ' AND dtsFetched > ' . ( time() - ( 30 * 60 ) ) );
+		$progresses = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->tableName( 'wp_backup_progress' ) . ' WHERE wp_id = %d AND dtsFetched > %d ', $wp_id, time() - ( 30 * 60 ) ) );
 		if ( is_array( $progresses ) ) {
 			foreach ( $progresses as $progress ) {
-				if ( ( 0 === $progress->downloadedDBComplete ) && ( 0 === $progress->downloadedFULLComplete ) ) {
+				if ( ( 0 == $progress->downloadedDBComplete ) && ( 0 == $progress->downloadedFULLComplete ) ) {
 					if ( $task = $this->getBackupTaskById( $progress->task_id ) ) {
-						if ( ( 'full' === $task->type ) && ! $task->paused ) {
+						if ( ( 'full' == $task->type ) && ! $task->paused ) {
 							return true;
 						}
 					}

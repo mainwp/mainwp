@@ -62,7 +62,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		if ( current_user_can( 'upload_plugins' ) ) {
 			// No longer a real tab. Here for filter compatibility.
 			// Gets skipped in get_views().
-			$tabs['upload'] = __( __( 'Upload Plugin', 'mainwp' ) );
+			$tabs['upload'] = __( 'Upload Plugin', 'mainwp' );
 		}
 
 		$nonmenu_tabs = array( 'plugin-information' );

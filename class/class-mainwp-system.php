@@ -2524,9 +2524,9 @@ class MainWP_System {
 	}
 
 	public function save_bulkpost( $post_id ) {
-		$post = get_post( $post_id );
+		$_post = get_post( $post_id );
 
-		if ( 'bulkpost' !== $post->post_type ) {
+		if ( 'bulkpost' !== $_post->post_type ) {
 			return;
 		}
 
@@ -2561,7 +2561,7 @@ class MainWP_System {
 		} else {
 			// to support external redirect for example post dripper extension,
 			// that will do not go to posting process
-			do_action( 'mainwp_before_redirect_posting_bulkpost', $post );
+			do_action( 'mainwp_before_redirect_posting_bulkpost', $_post );
 			// Redirect to handle page! (to actually post the messages)
 			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&id=' . $post_id . '&hideall=1' );
 			die();
@@ -2570,9 +2570,9 @@ class MainWP_System {
 
 	public function save_bulkpage( $post_id ) {
 
-		$post = get_post( $post_id );
+		$_post = get_post( $post_id );
 
-		if ( 'bulkpage' !== $post->post_type ) {
+		if ( 'bulkpage' !== $_post->post_type ) {
 			return;
 		}
 
@@ -2606,7 +2606,7 @@ class MainWP_System {
 			// $wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $post_id ) );
 			add_filter( 'redirect_post_location', array( $this, 'redirect_edit_bulkpage' ), 10, 2 );
 		} else {
-			do_action( 'mainwp_before_redirect_posting_bulkpage', $post );
+			do_action( 'mainwp_before_redirect_posting_bulkpage', $_post );
 			// Redirect to handle page! (to actually post the messages)
 			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&id=' . $post_id . '&hideall=1');
 			die();

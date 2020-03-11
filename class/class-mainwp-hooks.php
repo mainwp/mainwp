@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP Hooks
+ */
 class MainWP_Hooks {
 
 	public function __construct() {

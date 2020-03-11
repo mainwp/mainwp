@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP Utility
+ */
 class MainWP_Utility {
 
 	public static $enabled_wp_seo = null;

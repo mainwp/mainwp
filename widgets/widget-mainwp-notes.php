@@ -1,11 +1,31 @@
 <?php
+/**
+ * MainWP Notes Widget
+ *
+ * Display current Child Site Notes
+ */
 
+/**
+ * Class MainWP_Notes
+ *
+ * Grab Child Site Notes & Build Notes Widget
+ */
 class MainWP_Notes {
 
+	/**
+	 * getClassName()
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
+	/**
+	 * render()
+	 *
+	 * Grab Child Site Notes & Render Widget
+	 */
 	public static function render() {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 

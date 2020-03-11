@@ -1,7 +1,10 @@
 <?php
 
 /**
- * Used in both InstallPlugins & InstallThemes
+ * MainWP Install Bulk
+ *
+ * @used-by MainWP_Plugins::InstallPlugins
+ * @used-by MainWP_Themes::InstallThemes
  */
 class MainWP_Install_Bulk {
 	public static function getClassName() {

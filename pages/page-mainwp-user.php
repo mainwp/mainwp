@@ -1,7 +1,9 @@
 <?php
 
 /**
- * @see MainWP_Bulk_Add
+ * MainWP User Page
+ *
+ * @uses MainWP_Bulk_Add
  */
 class MainWP_User {
 	public static function getClassName() {

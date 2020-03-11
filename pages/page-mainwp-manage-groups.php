@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * MainWP Manage Groups
+ */
 class MainWP_Manage_Groups {
 
 	public static function getClassName() {

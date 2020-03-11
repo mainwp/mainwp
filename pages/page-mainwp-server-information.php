@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * MainWP Server Information Page
+ */
 class MainWP_Server_Information {
 
 	const WARNING = 1;

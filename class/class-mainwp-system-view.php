@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP Translations
+ */
 class MainWP_System_View {
 
 	public static function getMainWPTranslations() {

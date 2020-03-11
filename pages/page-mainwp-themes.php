@@ -1,7 +1,9 @@
 <?php
 
 /**
- * @see MainWP_Install_Bulk
+ * MainWP Themes Page
+ *
+ * @uses MainWP_Install_Bulk
  */
 class MainWP_Themes {
 	public static function getClassName() {

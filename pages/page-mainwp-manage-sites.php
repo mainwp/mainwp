@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * MainWP Manage Sites Page
+ */
 class MainWP_Manage_Sites {
 
 	public static function getClassName() {

@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP Twitter Bragger
+ */
 class MainWP_Twitter {
 	public static function getClassName() {
 		return __CLASS__;

@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP Logger
+ */
 class MainWP_Logger {
 
 	const DISABLED    = - 1;

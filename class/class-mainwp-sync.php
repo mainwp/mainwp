@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP Sync Handler
+ */
 class MainWP_Sync {
 
 	public static function syncSite( &$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true ) {

@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP Post Handler
+ */
 class MainWP_Post_Handler {
 
 	protected $security_nonces;

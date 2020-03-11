@@ -1,7 +1,9 @@
 <?php
 
 /**
- * @see MainWP_Install_Bulk
+ *  MainWP Plugins Page
+ *
+ * @uses MainWP_Install_Bulk
  */
 class MainWP_Plugins {
 

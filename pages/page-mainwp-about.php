@@ -1,14 +1,41 @@
 <?php
+/**
+ * MainWP About Page
+ *
+ * This page shows only when there has been an update to MainWP Dashboard
+ *
+ * @package MainWP/About
+ */
 
+/**
+ * Class MainWP_About
+ *
+ * Build the MainWP About Page
+ *
+ * @package MainWP/About
+ */
 class MainWP_About {
 
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
+	/**
+	 * init
+	 */
 	public static function init() {
 	}
 
+	/**
+	 * Initiate Menue item
+	 *
+	 * Add WP Submenu Page "About MainWP"
+	 */
 	public static function initMenu() {
 		add_submenu_page( 'mainwp_tab', __( 'About MainWP', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'About MainWP', 'mainwp' ) . '</div>', 'read', 'mainwp_about', array(
 			self::getClassName(),
@@ -16,6 +43,11 @@ class MainWP_About {
 		) );
 	}
 
+	/**
+	 * About Page Wrapper
+	 *
+	 * Create About Page Wrapper for the What's new & Changelog
+	 */
 	public static function render() {
 		global $mainWP;
 
@@ -48,6 +80,11 @@ class MainWP_About {
 		<?php
 	}
 
+	/**
+	 * Render What's New
+	 *
+	 * Render the What's new content block
+	 */
 	public static function renderWhatSNew() {
 		global $mainWP;
 		?>
@@ -66,6 +103,11 @@ class MainWP_About {
 		<?php
 	}
 
+	/**
+	 * Render MainWP Change Log
+	 *
+	 * Render the MainWP Change Log Block
+	 */
 	public static function renderMainWPChangelog() {
 		global $mainWP;
 		?>

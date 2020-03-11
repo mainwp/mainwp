@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * MainWP API Manager
+ *
+ * @package MainWP API Manager
+ * @author Todd Lahman LLC
+ * @copyright   Copyright (c) Todd Lahman LLC
+ * @since 1.0.0
+ */
 class MainWP_Api_Manager {
 
 	private $upgrade_url       = 'https://mainwp.com/';

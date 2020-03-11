@@ -1,8 +1,5 @@
 <?php
 
-// todo: refactor so it uses correct class files
-// todo: remove old plugin activator
-// todo: cleanup api.php + mainwp.php (hard includes)
 class LiveReportResponder {
 
 	public static $instance = null;
@@ -58,7 +55,7 @@ class LiveReportResponder_Activator {
 		$this->childFile           = __FILE__;
 		$this->mainwpMainActivated = apply_filters( 'mainwp-activated-check', false );
 
-		if ( $this->mainwpMainActivated !== false ) {
+		if ( false !== $this->mainwpMainActivated ) {
 			$this->activate_this_plugin();
 		} else {
 			add_action( 'mainwp-activated', array( &$this, 'activate_this_plugin' ) );
@@ -161,7 +158,7 @@ class MainWP_Live_Reports_Class {
 
 		global $mainWPCReportExtensionActivator;
 
-		$backup_type = ( 'full' == $type ) ? 'Full' : ( 'db' == $type ? 'Database' : '' );
+		$backup_type = ( 'full' === $type ) ? 'Full' : ( 'db' === $type ? 'Database' : '' );
 
 		$message       = '';
 		$backup_status = 'success';
@@ -169,16 +166,16 @@ class MainWP_Live_Reports_Class {
 		if ( isset( $information['error'] ) ) {
 			$message       = $information['error'];
 			$backup_status = 'failed';
-		} elseif ( 'db' == $type && ! $information['db'] ) {
+		} elseif ( 'db' === $type && ! $information['db'] ) {
 			$message       = 'Database backup failed.';
 			$backup_status = 'failed';
-		} elseif ( 'full' == $type && ! $information['full'] ) {
+		} elseif ( 'full' === $type && ! $information['full'] ) {
 			$message       = 'Full backup failed.';
 			$backup_status = 'failed';
 		} elseif ( isset( $information['db'] ) ) {
-			if ( false != $information['db'] ) {
+			if ( false !== $information['db'] ) {
 				$message = 'Backup database success.';
-			} elseif ( false != $information['full'] ) {
+			} elseif ( false !== $information['full'] ) {
 				$message = 'Full backup success.';
 			}
 			if ( isset( $information['size'] ) ) {
@@ -262,7 +259,7 @@ class MainWP_Live_Reports_Class {
 			$destination = $backupResult;
 		}
 
-		if ( 'full' == $type ) {
+		if ( 'full' === $type ) {
 			$message     = 'Schedule full backup.';
 			$backup_type = 'Full';
 		} else {
@@ -309,7 +306,7 @@ class MainWP_Live_Reports_Class {
 
 		$next_report_date_to = 0;
 
-		if ( 0 == $scheduleLastSend ) {
+		if ( 0 === $scheduleLastSend ) {
 			if ( $start_recurring_date > $end_today ) {
 				$next_report_date_to = $start_recurring_date;
 			} elseif ( $start_recurring_date > $start_today ) {
@@ -320,38 +317,38 @@ class MainWP_Live_Reports_Class {
 		}
 
 		// need to calc next send report date
-		if ( 0 == $next_report_date_to ) {
-			if ( 'daily' == $schedule ) {
+		if ( 0 === $next_report_date_to ) {
+			if ( 'daily' === $schedule ) {
 				$next_report_date_to = $scheduleLastSend + 24 * 3600;
 				while ( $next_report_date_to < $start_today ) {
 					$next_report_date_to += 24 * 3600;
 				}
-			} elseif ( 'weekly' == $schedule ) {
+			} elseif ( 'weekly' === $schedule ) {
 				$next_report_date_to = $scheduleLastSend + 7 * 24 * 3600;
 				while ( $next_report_date_to < $start_today ) {
 					$next_report_date_to += 24 * 3600;
 				}
-			} elseif ( 'biweekly' == $schedule ) {
+			} elseif ( 'biweekly' === $schedule ) {
 				$next_report_date_to = $scheduleLastSend + 2 * 7 * 24 * 3600;
 				while ( $next_report_date_to < $start_today ) {
 					$next_report_date_to += 2 * 7 * 24 * 3600;
 				}
-			} elseif ( 'monthly' == $schedule ) {
+			} elseif ( 'monthly' === $schedule ) {
 				$next_report_date_to = self::calc_next_schedule_send_date( $start_recurring_date, $scheduleLastSend, 1 );
 				while ( $next_report_date_to < $start_today ) {
 					$next_report_date_to = self::calc_next_schedule_send_date( $start_recurring_date, $next_report_date_to, 1 );
 				}
-			} elseif ( 'quarterly' == $schedule ) {
+			} elseif ( 'quarterly' === $schedule ) {
 				$next_report_date_to = self::calc_next_schedule_send_date( $start_recurring_date, $scheduleLastSend, 3 );
 				while ( $next_report_date_to < $start_today ) {
 					$next_report_date_to = self::calc_next_schedule_send_date( $start_recurring_date, $next_report_date_to, 3 );
 				}
-			} elseif ( 'twice_a_year' == $schedule ) {
+			} elseif ( 'twice_a_year' === $schedule ) {
 				$next_report_date_to = self::calc_next_schedule_send_date( $start_recurring_date, $scheduleLastSend, 6 );
 				while ( $next_report_date_to < $start_today ) {
 					$next_report_date_to = self::calc_next_schedule_send_date( $start_recurring_date, $next_report_date_to, 6 );
 				}
-			} elseif ( '' == $schedule ) {
+			} elseif ( '' === $schedule ) {
 				$next_report_date_to = self::calc_next_schedule_send_date( $start_recurring_date, $scheduleLastSend, 12 );
 				while ( $next_report_date_to < $start_today ) {
 					$next_report_date_to = self::calc_next_schedule_send_date( $start_recurring_date, $next_report_date_to, 12 );
@@ -388,7 +385,6 @@ class MainWP_Live_Reports_Class {
 			if ( isset( $_REQUEST['id'] ) && ! empty( $_REQUEST['id'] ) ) {
 				$report               = LiveReportResponder_DB::get_instance()->get_report_by( 'id', $_REQUEST['id'], null, null, ARRAY_A );
 				$current_attach_files = $report['attach_files'];
-				// print_r($report);
 			}
 
 			if ( isset( $_POST['mwp_creport_title'] ) && ( $title = trim( $_POST['mwp_creport_title'] ) ) != '' ) {
@@ -404,12 +400,12 @@ class MainWP_Live_Reports_Class {
 				$end_time = strtotime( $end_date );
 			}
 
-			if ( 0 == $end_time ) {
+			if ( 0 === $end_time ) {
 				$current  = time();
 				$end_time = mktime( 0, 0, 0, date( 'm', $current ), date( 'd', $current ), date( 'Y', $current ) );
 			}
 
-			if ( ( 0 != $start_time && 0 != $end_time ) && ( $start_time > $end_time ) ) {
+			if ( ( 0 !== $start_time && 0 !== $end_time ) && ( $start_time > $end_time ) ) {
 				$tmp        = $start_time;
 				$start_time = $end_time;
 				$end_time   = $tmp;
@@ -468,7 +464,7 @@ class MainWP_Live_Reports_Class {
 				}
 			}
 
-			if ( count( $valid_emails ) > 0 ) {
+			if ( 0 < count( $valid_emails ) ) {
 				$to_email = implode( ',', $valid_emails );
 			} else {
 				$to_email = '';
@@ -480,8 +476,6 @@ class MainWP_Live_Reports_Class {
 			if ( isset( $_POST['mwp_creport_email_subject'] ) ) {
 				$report['subject'] = trim( $_POST['mwp_creport_email_subject'] );
 			}
-
-			// print_r($_POST);
 			if ( isset( $_POST['mainwp_creport_recurring_schedule'] ) ) {
 				$report['recurring_schedule'] = trim( $_POST['mainwp_creport_recurring_schedule'] );
 			}
@@ -515,7 +509,7 @@ class MainWP_Live_Reports_Class {
 
 			$attach_files = 'NOTCHANGE';
 			$delete_files = false;
-			if ( isset( $_POST['mainwp_creport_delete_attach_files'] ) && '1' == $_POST['mainwp_creport_delete_attach_files'] ) {
+			if ( isset( $_POST['mainwp_creport_delete_attach_files'] ) && '1' === $_POST['mainwp_creport_delete_attach_files'] ) {
 				$attach_files = '';
 				if ( ! empty( $current_attach_files ) ) {
 					self::delete_attach_files( $current_attach_files, $creport_dir );
@@ -529,7 +523,6 @@ class MainWP_Live_Reports_Class {
 				}
 
 				$output = self::handle_upload_files( $_FILES['mainwp_creport_attach_files'], $creport_dir );
-				// print_r($output);
 				if ( isset( $output['error'] ) ) {
 					$return['error'] = $output['error'];
 				}
@@ -570,7 +563,6 @@ class MainWP_Live_Reports_Class {
 			'save_pdf' === $_POST['mwp_creport_report_submit_action'] ||
 			'schedule' === $_POST['mwp_creport_report_submit_action'] ||
 			'archive_report' === $_POST['mwp_creport_report_submit_action'] ) {
-				// print_r($report);
 				if ( $result = LiveReportResponder_DB::get_instance()->update_report( $report ) ) {
 					$return['id'] = $result->id;
 					$messages[]   = 'Report has been saved.';
@@ -589,11 +581,11 @@ class MainWP_Live_Reports_Class {
 				$return['id'] = $report['id'];
 			}
 
-			if ( count( $errors ) > 0 ) {
+			if ( 0 < count( $errors ) ) {
 				$return['error'] = $errors;
 			}
 
-			if ( count( $messages ) > 0 ) {
+			if ( 0 < count( $messages ) ) {
 				$return['message'] = $messages;
 			}
 
@@ -685,14 +677,7 @@ class MainWP_Live_Reports_Class {
 						}
 
 						$resize = false;
-						// if ($width > $max_width) {
-						// $dst_width = $max_width;
-						// if ($height > $max_height)
-						// $dst_height = $max_height;
-						// else
-						// $dst_height = $height;
-						// $resize = true;
-						// } else
+
 						if ( $height > $max_height ) {
 							$dst_height = $max_height;
 							$dst_width  = $width * $max_height / $height;
@@ -768,9 +753,7 @@ class MainWP_Live_Reports_Class {
 								<div style="display: block; width: 100% ; ">
 									<div style="display: block; width: 100% ; padding: .5em 0 ;">
 										<?php
-										// echo apply_filters( 'the_content', $report->filtered_header );
 										echo stripslashes( nl2br( $report->filtered_header ) );
-										// echo self::do_filter_content($report->filtered_header);
 										?>
 										<div style="clear: both;"></div>
 									</div>
@@ -778,17 +761,13 @@ class MainWP_Live_Reports_Class {
 								<br><br><br>
 								<div>
 									<?php
-									// echo apply_filters( 'the_content', $report->filtered_body );
 									echo stripslashes( nl2br( $report->filtered_body ) );
-									// echo self::do_filter_content($report->filtered_body);
 									?>
 								</div>
 								<br><br><br>
 								<div style="display: block; width: 100% ;">
 									<?php
-									// echo apply_filters( 'the_content', $report->filtered_footer );
 									echo stripslashes( nl2br( $report->filtered_footer ) );
-									// echo self::do_filter_content($report->filtered_footer);
 									?>
 								</div>
 
@@ -812,13 +791,6 @@ class MainWP_Live_Reports_Class {
 	}
 
 	static function do_filter_content( $content ) {
-		// if (preg_match("/(<ga_chart>(.+)<\/ga_chart>)/is", $content, $matches)) {
-		// $chart_content = $matches[2];
-		// $filtered_content = preg_replace("/(<ga_chart>.+<\/ga_chart>)/is",'[GA_CHART_MARKER]',$content);
-		// $filtered_content = stripslashes(nl2br($filtered_content));
-		// $filtered_content = preg_replace("/([GA_CHART_MARKER])/is",'$chart_content',$filtered_content);
-		// $content = $filtered_content;
-		// }
 		return $content;
 	}
 
@@ -841,7 +813,7 @@ class MainWP_Live_Reports_Class {
 			}
 		}
 		$filtered_reports = array();
-		if ( count( $websites ) == 0 ) {
+		if ( 0 === count( $websites ) ) {
 			return $filtered_reports;
 		}
 
@@ -857,15 +829,15 @@ class MainWP_Live_Reports_Class {
 		$output->filtered_body   = $report->body;
 		$output->filtered_footer = $report->footer;
 		$output->id              = isset( $report->id ) ? $report->id : 0;
-		$get_ga_tokens           = ( ( strpos( $report->header, '[ga.' ) !== false ) || ( strpos( $report->body, '[ga.' ) !== false ) || ( strpos( $report->footer, '[ga.' ) !== false ) ) ? true : false;
-		$get_ga_chart            = ( ( strpos( $report->header, '[ga.visits.chart]' ) !== false ) || ( strpos( $report->body, '[ga.visits.chart]' ) !== false ) || ( strpos( $report->footer, '[ga.visits.chart]' ) !== false ) ) ? true : false;
-		$get_ga_chart            = $get_ga_chart || ( ( ( strpos( $report->header, '[ga.visits.maximum]' ) !== false ) || ( strpos( $report->body, '[ga.visits.maximum]' ) !== false ) || ( strpos( $report->footer, '[ga.visits.maximum]' ) !== false ) ) ? true : false );
+		$get_ga_tokens           = ( ( false !== strpos( $report->header, '[ga.' ) ) || ( false !== strpos( $report->body, '[ga.' ) ) || ( false !== strpos( $report->footer, '[ga.' ) ) ) ? true : false;
+		$get_ga_chart            = ( ( false !== strpos( $report->header, '[ga.visits.chart]' ) ) || ( false !== strpos( $report->body, '[ga.visits.chart]' ) ) || ( false !== strpos( $report->footer, '[ga.visits.chart]' ) ) ) ? true : false;
+		$get_ga_chart            = $get_ga_chart || ( ( ( false !== strpos( $report->header, '[ga.visits.maximum]' ) ) || ( false !== strpos( $report->body, '[ga.visits.maximum]' ) ) || ( false !== strpos( $report->footer, '[ga.visits.maximum]' ) ) ) ? true : false );
 
-		$get_piwik_tokens       = ( ( strpos( $report->header, '[piwik.' ) !== false ) || ( strpos( $report->body, '[piwik.' ) !== false ) || ( strpos( $report->footer, '[piwik.' ) !== false ) ) ? true : false;
-		$get_aum_tokens         = ( ( strpos( $report->header, '[aum.' ) !== false ) || ( strpos( $report->body, '[aum.' ) !== false ) || ( strpos( $report->footer, '[aum.' ) !== false ) ) ? true : false;
-		$get_woocom_tokens      = ( ( strpos( $report->header, '[wcomstatus.' ) !== false ) || ( strpos( $report->body, '[wcomstatus.' ) !== false ) || ( strpos( $report->footer, '[wcomstatus.' ) !== false ) ) ? true : false;
-		$get_pagespeed_tokens   = ( ( strpos( $report->header, '[pagespeed.' ) !== false ) || ( strpos( $report->body, '[pagespeed.' ) !== false ) || ( strpos( $report->footer, '[pagespeed.' ) !== false ) ) ? true : false;
-		$get_brokenlinks_tokens = ( ( strpos( $report->header, '[brokenlinks.' ) !== false ) || ( strpos( $report->body, '[brokenlinks.' ) !== false ) || ( strpos( $report->footer, '[brokenlinks.' ) !== false ) ) ? true : false;
+		$get_piwik_tokens       = ( ( false !== strpos( $report->header, '[piwik.' ) ) || ( false !== strpos( $report->body, '[piwik.' ) ) || ( false !== strpos( $report->footer, '[piwik.' ) ) ) ? true : false;
+		$get_aum_tokens         = ( ( false !== strpos( $report->header, '[aum.' ) ) || ( false !== strpos( $report->body, '[aum.' ) ) || ( false !== strpos( $report->footer, '[aum.' ) ) ) ? true : false;
+		$get_woocom_tokens      = ( ( false !== strpos( $report->header, '[wcomstatus.' ) ) || ( false !== strpos( $report->body, '[wcomstatus.' ) ) || ( false !== strpos( $report->footer, '[wcomstatus.' ) ) ) ? true : false;
+		$get_pagespeed_tokens   = ( ( false !== strpos( $report->header, '[pagespeed.' ) ) || ( false !== strpos( $report->body, '[pagespeed.' ) ) || ( false !== strpos( $report->footer, '[pagespeed.' ) ) ) ? true : false;
+		$get_brokenlinks_tokens = ( ( false !== strpos( $report->header, '[brokenlinks.' ) ) || ( false !== strpos( $report->body, '[brokenlinks.' ) ) || ( false !== strpos( $report->footer, '[brokenlinks.' ) ) ) ? true : false;
 		if ( null !== $website ) {
 			$tokens                = LiveReportResponder_DB::get_instance()->get_tokens();
 			$site_tokens           = LiveReportResponder_DB::get_instance()->get_site_tokens( $website['url'] );
@@ -935,17 +907,6 @@ class MainWP_Live_Reports_Class {
 			$report_body   = $report->body;
 			$report_footer = $report->footer;
 
-			/*
-			 // Restrictions on Client Tokens
-			  if (!empty($allowed_tokens)) {
-			  $newarrayallowedclienttokens = array();
-			  $clienttokensarray = unserialize(stripslashes($allowed_tokens));
-			  foreach ($clienttokensarray as $key => $tname) {
-			  $newarrayallowedclienttokens["[" . $tname . "]"] = $key;
-			  }
-			  $replace_tokens_values = array_intersect_key($replace_tokens_values, $newarrayallowedclienttokens);
-			  } */
-
 			$result = self::parse_report_content( $report_header, $replace_tokens_values, $allowed_tokens );
 
 			if ( ! empty( $allowed_tokens ) ) {
@@ -958,28 +919,24 @@ class MainWP_Live_Reports_Class {
 			}
 
 			$found_tokens = $result['sections']['section_token'];
-			// print_r($result);
 			self::$buffer['sections']['header'] = $sections['header']                     = $result['sections'];
 			$other_tokens['header']             = $result['other_tokens'];
 			$filtered_header                    = $result['filtered_content'];
 			unset( $result );
 
 			$result = self::parse_report_content( $report_body, $replace_tokens_values, $allowed_tokens );
-			// print_r($result);
 			self::$buffer['sections']['body'] = $sections['body']                       = $result['sections'];
 			$other_tokens['body']             = $result['other_tokens'];
 			$filtered_body                    = $result['filtered_content'];
 			unset( $result );
 
 			$result = self::parse_report_content( $report_footer, $replace_tokens_values, $allowed_tokens );
-			// print_r($result);
 
 			self::$buffer['sections']['footer'] = $sections['footer']                     = $result['sections'];
 			$other_tokens['footer']             = $result['other_tokens'];
 			$filtered_footer                    = $result['filtered_content'];
 			unset( $result );
-			// print_r($sections);
-			// get data from stream plugin
+
 			$sections_data = $other_tokens_data                        = array();
 
 			$information = self::fetch_stream_data( $website, $report, $sections, $other_tokens );
@@ -990,7 +947,6 @@ class MainWP_Live_Reports_Class {
 				foreach ( $tokensarray as $key => $t ) {
 					$newarrayallowedtokens[ $key ] = '[' . $t . ']';
 				}
-				// $found_tokens = array("[section.plugins.installed]", "[section.plugins.edited]", "[section.plugins.deactivated]", "[section.plugins.activated]");
 
 				$checkdisallowedtokens = array();
 				if ( isset( $found_tokens ) && ! empty( $found_tokens ) ) {
@@ -1005,7 +961,7 @@ class MainWP_Live_Reports_Class {
 				$Newinformation_array = array();
 				if ( isset( $information['sections_data']['header'] ) && ! empty( $information['sections_data']['header'] ) ) {
 					foreach ( $information['sections_data']['header'] as $key => $value ) {
-						if ( $checkdisallowedtokens[ $key ] == 'yes' ) {
+						if ( 'yes' === $checkdisallowedtokens[ $key ] ) {
 							$Newinformation_array['header'][] = $value;
 						} else {
 							$Newinformation_array['header'][] = array();
@@ -1015,13 +971,6 @@ class MainWP_Live_Reports_Class {
 				}
 			}
 
-			// $file = fopen(dirname(__FILE__) . "/response.txt", "a+");
-			// fwrite($file, serialize($result['sections']['section_token']) . " \n");
-			// print_r($information);
-			// $information=array(
-			// "other_tokens_data"=>array("header"=>array(),"body"=>array(),"footer"=>array()),
-			// "sections_data" => array("header"=>array(array(),array(),array(),array(array("[plugin.name]"=>"MainWP Child Reports"),array("[plugin.name]"=>"WooCommerce Blacklister"))))
-			// );
 			if ( is_array( $information ) && ! isset( $information['error'] ) ) {
 				self::$buffer['sections_data'] = $sections_data                    = isset( $information['sections_data'] ) ? $information['sections_data'] : array();
 				$other_tokens_data             = isset( $information['other_tokens_data'] ) ? $information['other_tokens_data'] : array();
@@ -1032,19 +981,19 @@ class MainWP_Live_Reports_Class {
 			unset( $information );
 
 			self::$count_sec_header = self::$count_sec_body     = self::$count_sec_footer   = 0;
-			if ( isset( $sections_data['header'] ) && is_array( $sections_data['header'] ) && count( $sections_data['header'] ) > 0 ) {
+			if ( isset( $sections_data['header'] ) && is_array( $sections_data['header'] ) && 0 < count( $sections_data['header'] ) ) {
 				$filtered_header = preg_replace_callback( '/(\[section\.[^\]]+\])(.*?)(\[\/section\.[^\]]+\])/is', array( 'MainWP_Live_Reports_Class', 'section_mark_header' ), $filtered_header );
 			}
 
-			if ( isset( $sections_data['body'] ) && is_array( $sections_data['body'] ) && count( $sections_data['body'] ) > 0 ) {
+			if ( isset( $sections_data['body'] ) && is_array( $sections_data['body'] ) && 0 < count( $sections_data['body'] ) ) {
 				$filtered_body = preg_replace_callback( '/(\[section\.[^\]]+\])(.*?)(\[\/section\.[^\]]+\])/is', array( 'MainWP_Live_Reports_Class', 'section_mark_body' ), $filtered_body );
 			}
 
-			if ( isset( $sections_data['footer'] ) && is_array( $sections_data['footer'] ) && count( $sections_data['footer'] ) > 0 ) {
+			if ( isset( $sections_data['footer'] ) && is_array( $sections_data['footer'] ) && 0 < count( $sections_data['footer'] ) ) {
 				$filtered_footer = preg_replace_callback( '/(\[section\.[^\]]+\])(.*?)(\[\/section\.[^\]]+\])/is', array( 'MainWP_Live_Reports_Class', 'section_mark_footer' ), $filtered_footer );
 			}
 
-			if ( isset( $other_tokens_data['header'] ) && is_array( $other_tokens_data['header'] ) && count( $other_tokens_data['header'] ) > 0 ) {
+			if ( isset( $other_tokens_data['header'] ) && is_array( $other_tokens_data['header'] ) && 0 < count( $other_tokens_data['header'] ) ) {
 				$search = $replace = array();
 				foreach ( $other_tokens_data['header'] as $token => $value ) {
 					if ( in_array( $token, $other_tokens['header'] ) ) {
@@ -1055,7 +1004,7 @@ class MainWP_Live_Reports_Class {
 				$filtered_header = self::replace_content( $filtered_header, $search, $replace );
 			}
 
-			if ( isset( $other_tokens_data['body'] ) && is_array( $other_tokens_data['body'] ) && count( $other_tokens_data['body'] ) > 0 ) {
+			if ( isset( $other_tokens_data['body'] ) && is_array( $other_tokens_data['body'] ) && 0 < count( $other_tokens_data['body'] ) ) {
 				$search = $replace = array();
 				foreach ( $other_tokens_data['body'] as $token => $value ) {
 					if ( in_array( $token, $other_tokens['body'] ) ) {
@@ -1066,7 +1015,7 @@ class MainWP_Live_Reports_Class {
 				$filtered_body = self::replace_content( $filtered_body, $search, $replace );
 			}
 
-			if ( isset( $other_tokens_data['footer'] ) && is_array( $other_tokens_data['footer'] ) && count( $other_tokens_data['footer'] ) > 0 ) {
+			if ( isset( $other_tokens_data['footer'] ) && is_array( $other_tokens_data['footer'] ) && 0 < count( $other_tokens_data['footer'] ) ) {
 				$search = $replace = array();
 				foreach ( $other_tokens_data['footer'] as $token => $value ) {
 					if ( in_array( $token, $other_tokens['footer'] ) ) {
@@ -1097,7 +1046,6 @@ class MainWP_Live_Reports_Class {
 			$replaced_content = '';
 			if ( is_array( $loop ) ) {
 				foreach ( $loop as $replace ) {
-					// $replace = self::sucuri_replace_data($replace);;
 					$replaced          = self::replace_section_content( $sec_content, $search, $replace );
 					$replaced_content .= $replaced . '<br>';
 				}
@@ -1118,7 +1066,6 @@ class MainWP_Live_Reports_Class {
 			$replaced_content = '';
 			if ( is_array( $loop ) ) {
 				foreach ( $loop as $replace ) {
-					// $replace = self::sucuri_replace_data($replace);;
 					$replaced          = self::replace_section_content( $sec_content, $search, $replace );
 					$replaced_content .= $replaced . '<br>';
 				}
@@ -1140,7 +1087,6 @@ class MainWP_Live_Reports_Class {
 			$replaced_content = '';
 			if ( is_array( $loop ) ) {
 				foreach ( $loop as $replace ) {
-					// $replace = self::sucuri_replace_data($replace);
 					$replaced          = self::replace_section_content( $sec_content, $search, $replace );
 					$replaced_content .= $replaced . '<br>';
 				}
@@ -1205,22 +1151,8 @@ class MainWP_Live_Reports_Class {
 				if ( preg_match_all( '/\[[^\]]+\]/is', $sec_content, $matches2 ) ) {
 					$sec_tokens = $matches2[0];
 				}
-				// $sections[$sec] = $sec_tokens;
-				// if (!empty($allowed_tokens)) {
-				// $newarrayallowedtokens=array();
-				// $tokenssarray=unserialize(stripslashes($allowed_tokens));
-				//
-				// foreach($tokenssarray as $key=>$t){
-				// $newarrayallowedtokens[$key]="[".$t."]";
-				// }
-				// if(in_array($sec, $newarrayallowedtokens)){
-				// $sections['section_token'][] = $sec;
-				// $sections['section_content_tokens'][] = $sec_tokens;
-				// }
-				// }else{
 				$sections['section_token'][]          = $sec;
 				$sections['section_content_tokens'][] = $sec_tokens;
-				// }
 			}
 		}
 
@@ -1254,7 +1186,7 @@ class MainWP_Live_Reports_Class {
 	}
 
 	static function ga_data( $site_id, $start_date, $end_date, $chart = false ) {
-		// fix bug cron job
+
 		if ( null === self::$enabled_ga ) {
 			self::$enabled_ga = apply_filters( 'mainwp-extension-available-check', 'mainwp-google-analytics-extension' );
 		}
@@ -1262,12 +1194,6 @@ class MainWP_Live_Reports_Class {
 		if ( ! self::$enabled_ga ) {
 			return false;
 		}
-
-		// ===============================================================
-		// enym new
-		// $end_date = strtotime("-1 day", time());
-		// $start_date = strtotime( '-31 day', time() ); //31 days is more robust than "1 month" and this must match steprange in MainWPGA.class.php
-		// ===============================================================
 
 		if ( ! $site_id || ! $start_date || ! $end_date ) {
 			return false;
@@ -1329,111 +1255,101 @@ class MainWP_Live_Reports_Class {
 				$graph_dates = '';
 
 				$step = 1;
-				if ( count( $result['stats_graphdata'] ) > 20 ) {
+				if ( 20 < count( $result['stats_graphdata'] ) ) {
 					$step = 2;
 				}
 				$nro = 1;
 				foreach ( $result['stats_graphdata'] as $arr ) {
 					$nro = $nro + 1;
-					if ( 0 == ( $nro % $step ) ) {
+					if ( 0 === ( $nro % $step ) ) {
 
 						$teile = explode( ' ', $arr['0'] );
-						if ( 'Jan' == $teile[0] ) {
+						if ( 'Jan' === $teile[0] ) {
 							$teile[0] = '1';
 						}
-						if ( 'Feb' == $teile[0] ) {
+						if ( 'Feb' === $teile[0] ) {
 							$teile[0] = '2';
 						}
-						if ( 'Mar' == $teile[0] ) {
+						if ( 'Mar' === $teile[0] ) {
 							$teile[0] = '3';
 						}
-						if ( 'Apr' == $teile[0] ) {
+						if ( 'Apr' === $teile[0] ) {
 							$teile[0] = '4';
 						}
-						if ( 'May' == $teile[0] ) {
+						if ( 'May' === $teile[0] ) {
 							$teile[0] = '5';
 						}
-						if ( 'Jun' == $teile[0] ) {
+						if ( 'Jun' === $teile[0] ) {
 							$teile[0] = '6';
 						}
-						if ( 'Jul' == $teile[0] ) {
+						if ( 'Jul' === $teile[0] ) {
 							$teile[0] = '7';
 						}
-						if ( 'Aug' == $teile[0] ) {
+						if ( 'Aug' === $teile[0] ) {
 							$teile[0] = '8';
 						}
-						if ( 'Sep' == $teile[0] ) {
+						if ( 'Sep' === $teile[0] ) {
 							$teile[0] = '9';
 						}
-						if ( 'Oct' == $teile[0] ) {
+						if ( 'Oct' === $teile[0] ) {
 							$teile[0] = '10';
 						}
-						if ( 'Nov' == $teile[0] ) {
+						if ( 'Nov' === $teile[0] ) {
 							$teile[0] = '11';
 						}
-						if ( 'Dec' == $teile[0] ) {
+						if ( 'Dec' === $teile[0] ) {
 							$teile[0] = '12';
 						}
 						$graph_dates .= $teile[1] . '.' . $teile[0] . '.|';
 					}
 				}
-				// $graph_dates = urlencode($graph_dates);
 				$graph_dates = trim( $graph_dates, '|' );
 
-				// SCALE chxr=1,0,HIGHEST*2
 				$scale = '1,0,' . $vertical_max;
 
-				// WIREFRAME chg=0,10,1,4
 				$wire = '0,10,1,4';
 
-				// COLORS
-				$barcolor  = '508DDE'; // 4d89f9";
-				$fillcolor = 'EDF5FF'; // CCFFFF";
-				// LINEFORMAT chls=1,0,0
+				$barcolor  = '508DDE';
+				$fillcolor = 'EDF5FF';
 				$lineformat = '1,0,0';
-
-				// TITLE
-				// &chtt=Last+2+Weeks+Sales
-				// LEGEND
-				// &chdl=Sales
 
 				$output['ga.visits.chart'] = '<img src="http://chart.apis.google.com/chart?cht=lc&chs=600x250&chd=t:' . $graph_values . '&chds=' . $dimensions . '&chco=' . $barcolor . '&chm=B,' . $fillcolor . ',0,0,0&chls=' . $lineformat . '&chxt=x,y&chxl=0:|' . $graph_dates . '&chxr=' . $scale . '&chg=' . $wire . '">';
 
 				$date1 = explode( ' ', $maximum_value_date );
-				if ( 'Jan' == $date1[0] ) {
+				if ( 'Jan' === $date1[0] ) {
 					$date1[0] = '1';
 				}
-				if ( 'Feb' == $date1[0] ) {
+				if ( 'Feb' === $date1[0] ) {
 					$date1[0] = '2';
 				}
-				if ( 'Mar' == $date1[0] ) {
+				if ( 'Mar' === $date1[0] ) {
 					$date1[0] = '3';
 				}
-				if ( 'Apr' == $date1[0] ) {
+				if ( 'Apr' === $date1[0] ) {
 					$date1[0] = '4';
 				}
-				if ( 'May' == $date1[0] ) {
+				if ( 'May' === $date1[0] ) {
 					$date1[0] = '5';
 				}
-				if ( 'Jun' == $date1[0] ) {
+				if ( 'Jun' === $date1[0] ) {
 					$date1[0] = '6';
 				}
-				if ( 'Jul' == $date1[0] ) {
+				if ( 'Jul' === $date1[0] ) {
 					$date1[0] = '7';
 				}
-				if ( 'Aug' == $date1[0] ) {
+				if ( 'Aug' === $date1[0] ) {
 					$date1[0] = '8';
 				}
-				if ( 'Sep' == $date1[0] ) {
+				if ( 'Sep' === $date1[0] ) {
 					$date1[0] = '9';
 				}
-				if ( 'Oct' == $date1[0] ) {
+				if ( 'Oct' === $date1[0] ) {
 					$date1[0] = '10';
 				}
-				if ( 'Nov' == $date1[0] ) {
+				if ( 'Nov' === $date1[0] ) {
 					$date1[0] = '11';
 				}
-				if ( 'Dec' == $date1[0] ) {
+				if ( 'Dec' === $date1[0] ) {
 					$date1[0] = '12';
 				}
 				$maximum_value_date          = $date1[1] . '.' . $date1[0] . '.';
@@ -1442,9 +1358,7 @@ class MainWP_Live_Reports_Class {
 
 			$output['ga.startdate'] = date( 'd.m.Y', $start_date );
 			$output['ga.enddate']   = date( 'd.m.Y', $end_date );
-			// }
-			// enym end
-			// ===============================================================
+
 		}
 		self::$buffer[ $uniq ] = $output;
 		return $output;
@@ -1500,7 +1414,7 @@ class MainWP_Live_Reports_Class {
 		}
 
 		$values = apply_filters( 'mainwp_aum_get_data', $site_id, $start_date, $end_date );
-		// print_r($values);
+
 		$output                           = array();
 		$output['aum.alltimeuptimeratio'] = ( is_array( $values ) && isset( $values['aum.alltimeuptimeratio'] ) ) ? $values['aum.alltimeuptimeratio'] . '%' : 'N/A';
 		$output['aum.uptime7']            = ( is_array( $values ) && isset( $values['aum.uptime7'] ) ) ? $values['aum.uptime7'] . '%' : 'N/A';
@@ -1542,7 +1456,6 @@ class MainWP_Live_Reports_Class {
 			}
 		}
 
-		// print_r($values);
 		$output                                  = array();
 		$output['wcomstatus.sales']              = ( is_array( $values ) && isset( $values['wcomstatus.sales'] ) ) ? $values['wcomstatus.sales'] : 'N/A';
 		$output['wcomstatus.topseller']          = $top_seller;
@@ -1634,7 +1547,7 @@ class MainWP_Live_Reports_Class {
 		} else {
 			if ( isset( $information['error'] ) ) {
 				$error = $information['error'];
-				if ( 'NO_STREAM' == $error ) {
+				if ( 'NO_STREAM' === $error ) {
 					$error = __( 'Error: No Stream or MainWP Client Reports plugin installed.' );
 				}
 			} else {
@@ -1669,7 +1582,7 @@ class MainWP_Live_Reports_Class {
 
 		<h3 class="ui dividing header"><?php esc_html_e( 'Managed Client Reports Settings', 'mainwp' ); ?></h3>
 
-		<?php if ( is_array( $tokens ) && count( $tokens ) > 0 ) : ?>
+		<?php if ( is_array( $tokens ) && 0 < count( $tokens ) ) : ?>
 			<?php
 			foreach ( $tokens as $token ) {
 				if ( ! $token ) {
@@ -2135,7 +2048,7 @@ PRIMARY KEY  (`id`)  ';
 `sites` text NOT NULL,
 `groups` text NOT NULL';
 
-		if ( '' == $currentVersion ) {
+		if ( '' === $currentVersion ) {
 			$tbl .= ',
 PRIMARY KEY  (`id`)  ';
 		}
@@ -2160,22 +2073,19 @@ PRIMARY KEY  (`clientid`)  ';
 `title` VARCHAR(512),
 `content` longtext NOT NULL,
 `type` CHAR(1)';
-		if ( '' == $currentVersion || '1.3' == $currentVersion ) {
+		if ( '' === $currentVersion || '1.3' === $currentVersion ) {
 			$tbl .= ',
 PRIMARY KEY  (`id`)  ';
 		}
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
-		error_reporting( 0 ); // make sure to disable any error output
+		error_reporting( 0 );
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		foreach ( $sql as $query ) {
 			dbDelta( $query );
 		}
 
-		// global $wpdb;
-		// echo $wpdb->last_error;
-		// exit();
 		foreach ( $this->default_tokens as $token_name => $token_description ) {
 			$token = array(
 				'type'               => 1,
@@ -2251,14 +2161,14 @@ PRIMARY KEY  (`id`)  ';
 			return null;
 		}
 
-		if ( 'token_name' == $by ) {
+		if ( 'token_name' === $by ) {
 			$value = str_replace( array( '[', ']' ), '', $value );
 		}
 
 		$sql = '';
-		if ( 'id' == $by ) {
+		if ( 'id' === $by ) {
 			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_token' ) . ' WHERE `id`=%d ', $value );
-		} elseif ( 'token_name' == $by ) {
+		} elseif ( 'token_name' === $by ) {
 			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_token' ) . " WHERE `token_name` = '%s' ", $value );
 		}
 
@@ -2274,8 +2184,6 @@ PRIMARY KEY  (`id`)  ';
 		}
 
 		if ( $token && ! empty( $site_url ) ) {
-			// $sql = 'SELECT * FROM ' . $this->table_name( 'client_report_site_token' ) .
-			// " WHERE site_url = '" . $this->escape( $site_url ) . "' AND token_id = " . $token->id;
 			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_site_token' ) . ' WHERE site_url =%s  AND token_id = %d', $this->escape( $site_url ), $token->id );
 
 			$site_token = $wpdb->get_row( $sql );
@@ -2299,11 +2207,8 @@ PRIMARY KEY  (`id`)  ';
 		if ( empty( $id ) ) {
 			return false;
 		}
-		// $qry = ' SELECT st.* FROM ' . $this->table_name( 'client_report_site_token' ) . ' st ' .
-		// " WHERE st.token_id = '" . $id . "' ";
 		return $wpdb->get_results( $wpdb->prepare( 'SELECT st.* FROM ' . $this->table_name( 'client_report_site_token' ) . ' st WHERE st.token_id = %d', $id ) );
 
-		// return $wpdb->get_results( $qry );
 	}
 
 	public function get_site_tokens( $site_url, $index = 'id' ) {
@@ -2312,16 +2217,13 @@ PRIMARY KEY  (`id`)  ';
 		if ( empty( $site_url ) ) {
 			return false;
 		}
-		// $qry = ' SELECT st.*, t.token_name FROM ' . $this->table_name( 'client_report_site_token' ) . ' st , ' . $this->table_name( 'client_report_token' ) . ' t ' .
-		// " WHERE st.site_url = '" . $site_url . "' AND st.token_id = t.id ";
-		// echo $qry;
+
 		$site_tokens = $wpdb->get_results( $wpdb->prepare( ' SELECT st.*, t.token_name FROM ' . $this->table_name( 'client_report_site_token' ) . ' st , ' . $this->table_name( 'client_report_token' ) . ' t WHERE st.site_url = %s AND st.token_id = t.id', $site_url ) );
 
-		// $site_tokens = $wpdb->get_results( $qry );
 		$return = array();
 		if ( is_array( $site_tokens ) ) {
 			foreach ( $site_tokens as $token ) {
-				if ( 'id' == $index ) {
+				if ( 'id' === $index ) {
 					$return[ $token->token_id ] = $token;
 				} else {
 					$return[ $token->token_name ] = $token;
@@ -2334,15 +2236,15 @@ PRIMARY KEY  (`id`)  ';
 			foreach ( $tokens as $token ) {
 				// check default tokens if it is empty
 				if ( is_object( $token ) ) {
-					if ( 'id' == $index ) {
-						if ( 1 == $token->type && ( ! isset( $return[ $token->id ] ) || empty( $return[ $token->id ] ) ) ) {
+					if ( 'id' === $index ) {
+						if ( 1 === $token->type && ( ! isset( $return[ $token->id ] ) || empty( $return[ $token->id ] ) ) ) {
 							if ( ! isset( $return[ $token->id ] ) ) {
 								$return[ $token->id ] = new stdClass();
 							}
 							$return[ $token->id ]->token_value = $this->_get_default_token_site( $token->token_name, $site_url );
 						}
 					} else {
-						if ( $token->type == 1 && ( ! isset( $return[ $token->token_name ] ) || empty( $return[ $token->token_name ] ) ) ) {
+						if ( 1 === $token->type && ( ! isset( $return[ $token->token_name ] ) || empty( $return[ $token->token_name ] ) ) ) {
 							if ( ! isset( $return[ $token->token_name ] ) ) {
 								$return[ $token->token_name ] = new stdClass();
 							}
@@ -2419,11 +2321,6 @@ PRIMARY KEY  (`id`)  ';
 			return false;
 		}
 
-		// $sql = 'UPDATE ' . $this->table_name( 'client_report_site_token' ) .
-		// " SET token_value = '" . $this->escape( $token_value ) . "' " .
-		// ' WHERE token_id = ' . intval( $token_id ) .
-		// " AND site_url = '" . $this->escape( $site_url ) . "'";
-		// echo $sql."<br />";
 		$result = $wpdb->query( $wpdb->prepare( '
         UPDATE ' . $this->table_name( 'client_report_site_token' ) . '
         SET `token_value` = %s
@@ -2449,7 +2346,7 @@ PRIMARY KEY  (`id`)  ';
 
 	public function delete_token_by( $by = 'id', $value = null ) {
 		global $wpdb;
-		if ( 'id' == $by ) {
+		if ( 'id' === $by ) {
 			if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'client_report_token' ) . ' WHERE id=%d ', $value ) ) ) {
 				$this->delete_site_tokens( $value );
 				return true;
@@ -2463,7 +2360,7 @@ PRIMARY KEY  (`id`)  ';
 		global $wpdb;
 		$id            = isset( $report['id'] ) ? $report['id'] : 0;
 		$updatedClient = false;
-		if ( ! empty( $report['client'] ) || ! empty( $report['email'] ) ) { // client may be content tokens
+		if ( ! empty( $report['client'] ) || ! empty( $report['email'] ) ) {
 			$client_id = 0;
 			if ( ! empty( $report['client'] ) ) {
 				$update_client = array(
@@ -2508,13 +2405,6 @@ PRIMARY KEY  (`id`)  ';
 					}
 				}
 			}
-			// if (!isset($report['client_id']) || empty($report['client_id'])) {
-			// if ($updatedClient && $updatedClient->clientid) {
-			// $report['client_id'] = $updatedClient->clientid;
-			// } else if (isset($update_client['clientid'])) {
-			//
-			// }
-			// }
 			// to fix bug not save report client
 			if ( empty( $client_id ) && ! empty( $report['client_id'] ) ) {
 				$client_id = $report['client_id'];
@@ -2563,10 +2453,8 @@ PRIMARY KEY  (`id`)  ';
 				$update_report[ $key ] = $value;
 			}
 		}
-		// print_r($update_report);
 		if ( ! empty( $id ) ) {
 			$updatedReport = $wpdb->update( $this->table_name( 'client_report' ), $update_report, array( 'id' => intval( $id ) ) );
-			// print_r($update_report);
 			if ( ! empty( $updatedReport ) || ! empty( $updatedClient ) ) {
 				return $this->get_report_by( 'id', $id );
 			}
@@ -2599,37 +2487,36 @@ PRIMARY KEY  (`id`)  ';
 		}
 
 		$sql = '';
-		if ( 'id' == $by ) {
+		if ( 'id' === $by ) {
 			$sql = $wpdb->prepare( 'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp '
 			. ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c '
 			. ' ON rp.client_id = c.clientid '
 			. ' WHERE `id`=%d ' . $_order_by, $value );
-		} if ( 'client' == $by ) {
+		} if ( 'client' === $by ) {
 			$sql = $wpdb->prepare( 'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp '
 			. ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c '
 			. ' ON rp.client_id = c.clientid '
 			. ' WHERE `client_id` = %d ' . $_order_by, $value );
 			return $wpdb->get_results( $sql, $output );
-		} if ( 'site' == $by ) {
+		} if ( 'site' === $by ) {
 			$sql = $wpdb->prepare( 'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp '
 			. ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c '
 			. ' ON rp.client_id = c.clientid '
 			. ' WHERE `selected_site` = %d ' . $_order_by, $value );
 			return $wpdb->get_results( $sql, $output );
-		} if ( 'title' == $by ) {
+		} if ( 'title' === $by ) {
 			$sql = $wpdb->prepare( 'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp '
 			. ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c '
 			. ' ON rp.client_id = c.clientid '
 			. ' WHERE `title` = %s ' . $_order_by, $value );
 			return $wpdb->get_results( $sql, $output );
-		} elseif ( 'all' == $by ) {
+		} elseif ( 'all' === $by ) {
 			$sql = 'SELECT * FROM ' . $this->table_name( 'client_report' ) . ' rp '
 			. 'LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c '
 			. ' ON rp.client_id = c.clientid '
 			. ' WHERE 1 = 1 ' . $_order_by;
 			return $wpdb->get_results( $sql, $output );
 		}
-		// echo $sql;
 		if ( ! empty( $sql ) ) {
 			return $wpdb->get_row( $sql, $output );
 		}
@@ -2646,7 +2533,6 @@ PRIMARY KEY  (`id`)  ';
 		. ' AND rp.date_from <= ' . ( time() - 3600 * 24 * 30 ) . '  '
 		. ' AND rp.selected_site != 0 AND c.email IS NOT NULL '
 		. '';
-		// echo $sql;
 		return $wpdb->get_results( $sql );
 	}
 
@@ -2656,13 +2542,12 @@ PRIMARY KEY  (`id`)  ';
 		. ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c '
 		. ' ON rp.client_id = c.clientid '
 		. " WHERE rp.recurring_schedule != '' AND rp.scheduled = 1";
-		// echo $sql;
 		return $wpdb->get_results( $sql );
 	}
 
 	public function delete_report_by( $by = 'id', $value = null ) {
 		global $wpdb;
-		if ( 'id' == $by ) {
+		if ( 'id' === $by ) {
 			if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'client_report' ) . ' WHERE id=%d ', $value ) ) ) {
 				return true;
 			}
@@ -2683,13 +2568,13 @@ PRIMARY KEY  (`id`)  ';
 		}
 
 		$sql = '';
-		if ( 'clientid' == $by ) {
+		if ( 'clientid' === $by ) {
 			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_client' )
 			. ' WHERE `clientid` =%d ', $value );
-		} elseif ( 'client' == $by ) {
+		} elseif ( 'client' === $by ) {
 			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_client' )
 			. ' WHERE `client` = %s ', $value );
-		} elseif ( 'email' == $by ) {
+		} elseif ( 'email' === $by ) {
 			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_client' )
 			. ' WHERE `email` = %s ', $value );
 		}
@@ -2712,29 +2597,16 @@ PRIMARY KEY  (`id`)  ';
 			}
 		} else {
 			if ( $wpdb->insert( $this->table_name( 'client_report_client' ), $client ) ) {
-				// echo $wpdb->last_error;
 				return $this->get_client_by( 'clientid', $wpdb->insert_id );
 			}
-			// echo $wpdb->last_error;
 		}
 		return false;
 	}
-
-	// public function delete_clientnt( $by, $value ) {
-	// global $wpdb;
-	// if ( 'clientid' == $by ) {
-	// if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'client_report_client' ) . ' WHERE clientid=%d ', $value ) ) ) {
-	// return true;
-	// }
-	// }
-	// return false;
-	// }
 
 	public function get_formats( $type = null ) {
 		global $wpdb;
 		return $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_format' )
 		. ' WHERE `type` =%s ORDER BY title', $type );
-		// return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'client_report_format' ) . " WHERE type = '" . $type . "' ORDER BY title" );
 	}
 
 	public function get_format_by( $by, $value, $type = null ) {
@@ -2743,14 +2615,13 @@ PRIMARY KEY  (`id`)  ';
 			return false;
 		}
 		$sql = '';
-		if ( 'id' == $by ) {
+		if ( 'id' === $by ) {
 			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_format' )
 			. ' WHERE `id` =%d ', $value );
-		} elseif ( 'title' == $by ) {
+		} elseif ( 'title' === $by ) {
 			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_format' )
 			. ' WHERE `title` =%s AND type = %s', $value, $type );
 		}
-		// echo $sql;
 		if ( ! empty( $sql ) ) {
 			return $wpdb->get_row( $sql );
 		}
@@ -2768,17 +2639,15 @@ PRIMARY KEY  (`id`)  ';
 			}
 		} else {
 			if ( $wpdb->insert( $this->table_name( 'client_report_format' ), $format ) ) {
-				// echo $wpdb->last_error;
 				return $this->get_format_by( 'id', $wpdb->insert_id );
 			}
-			// echo $wpdb->last_error;
 		}
 		return false;
 	}
 
 	public function delete_format_by( $by = 'id', $value = null ) {
 		global $wpdb;
-		if ( 'id' == $by ) {
+		if ( 'id' === $by ) {
 			if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'client_report_format' ) . ' WHERE id=%d ', $value ) ) ) {
 				return true;
 			}
@@ -2804,7 +2673,7 @@ PRIMARY KEY  (`id`)  ';
 		global $wpdb;
 		$result = self::_query( $sql, $wpdb->dbh );
 
-		if ( ! $result || ( self::num_rows( $result ) == 0 ) ) {
+		if ( ! $result || ( 0 === self::num_rows( $result ) ) ) {
 			return false;
 		}
 		return $result;

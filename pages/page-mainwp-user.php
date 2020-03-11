@@ -575,9 +575,10 @@ class MainWP_User {
 						$search_user_role = array();
 						$website          = MainWP_DB::Instance()->getWebsiteById( $v );
 						$allUsers         = json_decode( $website->users, true );
+						$allUsersCount		= count( $allUsers );
 
 						if ( $check_users_role ) {
-							for ( $i = 0; $i < count( $allUsers ); $i ++ ) {
+							for ( $i = 0; $i < $allUsersCount; $i ++ ) {
 								$user = $allUsers[ $i ];
 								foreach ( $roles as $_role ) {
 									if ( stristr( $user['role'], $_role ) ) {
@@ -590,7 +591,7 @@ class MainWP_User {
 							}
 						}
 
-						for ( $i = 0; $i < count( $allUsers ); $i ++ ) {
+						for ( $i = 0; $i < $allUsersCount; $i ++ ) {
 							$user = $allUsers[ $i ];
 							if ( '' !== $search && ! stristr( $user['login'], trim( $search ) ) && ! stristr( $user['display_name'], trim( $search ) ) && ! stristr( $user['email'], trim( $search ) ) ) {
 								continue;
@@ -617,8 +618,9 @@ class MainWP_User {
 								continue;
 							}
 							$allUsers = json_decode( $website->users, true );
+							$allUsersCount = count( $allUsers );
 							if ( $check_users_role ) {
-								for ( $i = 0; $i < count( $allUsers ); $i ++ ) {
+								for ( $i = 0; $i < $allUsersCount; $i ++ ) {
 									$user = $allUsers[ $i ];
 									foreach ( $roles as $_role ) {
 										if ( stristr( $user['role'], $_role ) ) {
@@ -630,7 +632,7 @@ class MainWP_User {
 									}
 								}
 							}
-							for ( $i = 0; $i < count( $allUsers ); $i ++ ) {
+							for ( $i = 0; $i < $allUsersCount; $i ++ ) {
 								$user = $allUsers[ $i ];
 								if ( '' !== $search && ! stristr( $user['login'], trim( $search ) ) && ! stristr( $user['display_name'], trim( $search ) ) && ! stristr( $user['email'], trim( $search ) ) ) {
 									continue;

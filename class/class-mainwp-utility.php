@@ -1897,15 +1897,15 @@ class MainWP_Utility {
 	}
 
 	public static function downloadToFile( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
-		if ( @file_exists( $file ) && ( ( false === $size ) || ( @filesize( $file ) > $size ) ) ) {
+		if ( file_exists( $file ) && ( ( false === $size ) || ( @filesize( $file ) > $size ) ) ) {
 			@unlink( $file );
 		}
 
-		if ( ! @file_exists( @dirname( $file ) ) ) {
+		if ( ! file_exists( @dirname( $file ) ) ) {
 			@mkdir( @dirname( $file ), 0777, true );
 		}
 
-		if ( ! @file_exists( @dirname( $file ) ) ) {
+		if ( ! file_exists( @dirname( $file ) ) ) {
 			throw new MainWP_Exception( __( 'MainWP plugin could not create directory in order to download the file.', 'mainwp' ) );
 		}
 
@@ -1916,7 +1916,7 @@ class MainWP_Utility {
 		$fp    = fopen( $file, 'a' );
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		if ( false !== $size ) {
-			if ( @file_exists( $file ) ) {
+			if ( file_exists( $file ) ) {
 				$size = @filesize( $file );
 				$url .= '&foffset=' . $size;
 			}
@@ -2460,16 +2460,16 @@ class MainWP_Utility {
 		if ( $text_format ) {
 				$mail_send['header'] = '';
 
-				$mail_send['body']   = $title . "\r\n" . "\r\n" .
-									  $body . "\r\n" . "\r\n";
+				$mail_send['body']   = $title . "\r\n\r\n" .
+									  $body . "\r\n\r\n";
 				$mail_send['footer'] = 'MainWP: https://mainwp.com' . "\r\n" .
 										'Extensions: https://mainwp.com/mainwp-extensions/' . "\r\n" .
 										'Documentation: https://mainwp.com/help/' . "\r\n" .
 										'Blog: https://mainwp.com/mainwp-blog/' . "\r\n" .
 										'Codex: https://mainwp.com/codex/' . "\r\n" .
-										'Support: https://mainwp.com/support/' . "\r\n" . "\r\n" .
+										'Support: https://mainwp.com/support/' . "\r\n\r\n" .
 										'Follow us on Twitter: https://twitter.com/mymainwp' . "\r\n" .
-										'Friend us on Facebook: https://www.facebook.com/mainwp' . "\r\n" . "\r\n" .
+										'Friend us on Facebook: https://www.facebook.com/mainwp' . "\r\n\r\n" .
 										"Copyright {$current_year} MainWP, All rights reserved.";
 		} else {
 			$mail_send['header'] = <<<EOT
@@ -3254,38 +3254,6 @@ EOT;
 		}
 
 		return $content;
-	}
-
-	public static function showUserTip( $tip_id ) {
-		global $current_user;
-
-		if ( get_option( 'mainwp_hide_tips', 1 ) ) {
-			return false;
-		}
-
-		if ( $user_id = $current_user->ID ) {
-			$reset_tips = get_option( 'mainwp_reset_user_tips' );
-			if ( ! is_array( $reset_tips ) ) {
-				$reset_tips = array();
-			}
-			if ( ! isset( $reset_tips[ $user_id ] ) ) {
-				$reset_tips[ $user_id ] = 1;
-				update_option( 'mainwp_reset_user_tips', $reset_tips );
-				update_user_option( $user_id, 'mainwp_hide_user_tips', array() );
-
-				return true;
-			}
-
-			$hide_usertips = get_user_option( 'mainwp_hide_user_tips' );
-			if ( ! is_array( $hide_usertips ) ) {
-				$hide_usertips = array();
-			}
-			if ( isset( $hide_usertips[ $tip_id ] ) ) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	public static function showMainWPMessage( $type, $notice_id ) {

@@ -140,9 +140,7 @@ class MainWP_Post_Handler {
 			$this->addAction( 'mainwp_securityIssues_fix', array( &$this, 'mainwp_securityIssues_fix' ) ); // ok
 			$this->addAction( 'mainwp_securityIssues_unfix', array( &$this, 'mainwp_securityIssues_unfix' ) ); // ok
 		}
-
-		// Page: ManageTips
-		$this->addAction( 'mainwp_tips_update', array( &$this, 'mainwp_tips_update' ) ); // ok
+		
 		$this->addAction( 'mainwp_notice_status_update', array( &$this, 'mainwp_notice_status_update' ) );
 		$this->addAction( 'mainwp_dismiss_twit', array( &$this, 'mainwp_dismiss_twit' ) );
 		$this->addAction( 'mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
@@ -559,16 +557,6 @@ class MainWP_Post_Handler {
 		MainWP_Page::restore();
 	}
 
-	/**
-	 * Page: ManageTips
-	 */
-	function mainwp_managetips_update() {
-		$this->secure_request( 'mainwp_managetips_update' );
-
-		MainWP_Manage_Tips::updateTipSettings();
-		die();
-	}
-
 	// Hide after installtion notices (PHP version, Trust MainWP Child, Multisite Warning and OpenSSL warning)
 	function mainwp_notice_status_update() {
 		$this->secure_request( 'mainwp_notice_status_update' );
@@ -650,22 +638,6 @@ class MainWP_Post_Handler {
 		}
 		die( '' );
 	}
-
-	function mainwp_tips_update() {
-		$this->secure_request( 'mainwp_tips_update' );
-
-		global $current_user;
-		if ( ( $user_id = $current_user->ID ) && isset( $_POST['tipId'] ) && ! empty( $_POST['tipId'] ) ) {
-			$user_tips = get_user_option( 'mainwp_hide_user_tips' );
-			if ( ! is_array( $user_tips ) ) {
-				$user_tips = array();
-			}
-			$user_tips[ $_POST['tipId'] ] = time();
-			update_user_option( $user_id, 'mainwp_hide_user_tips', $user_tips );
-		}
-		die( 1 );
-	}
-
 
 	function mainwp_dismiss_twit() {
 		$this->secure_request( 'mainwp_dismiss_twit' );

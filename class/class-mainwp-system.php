@@ -1442,8 +1442,8 @@ class MainWP_System {
 						}
 						$change_log .= '#developers';
 						if ( ! $text_format ) {
-							$infoTxt    .= ' - ' . '<a href="' . $change_log . '" target="_blank">Changelog</a>';
-							$infoNewTxt .= ' - ' . '<a href="' . $change_log . '" target="_blank">Changelog</a>';
+							$infoTxt    .= ' - <a href="' . $change_log . '" target="_blank">Changelog</a>';
+							$infoNewTxt .= ' - <a href="' . $change_log . '" target="_blank">Changelog</a>';
 						}
 					}
 					$newUpdate = ! ( isset( $websiteLastPlugins[ $pluginSlug ] ) && ( $pluginInfo['Version'] == $websiteLastPlugins[ $pluginSlug ]['Version'] ) && ( $pluginInfo['update']['new_version'] == $websiteLastPlugins[ $pluginSlug ]['update']['new_version'] ) );

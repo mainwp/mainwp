@@ -1433,7 +1433,7 @@ class MainWP_Post {
 						}
 
 						$i++;
-						echo '<div id="' . $box['id'] . '" class="postbox " ' . ' ' . '>' . "\n";
+						echo '<div id="' . $box['id'] . '" class="postbox" >' . "\n";
 						if ( 'dashboard_browser_nag' !== $box['id'] ) {
 							$widget_title = $box['title'];
 

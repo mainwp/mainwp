@@ -916,7 +916,7 @@ class MainWP_Manage_Sites {
 				}
 
 				if ( $backupTaskProgress->downloadedFULLComplete == 0 ) {
-					if ( @file_exists( $localBackupFile ) ) {
+					if ( file_exists( $localBackupFile ) ) {
 						$time = @filemtime( $localBackupFile );
 
 						$minutes = date( 'i', time() );

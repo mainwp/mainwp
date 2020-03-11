@@ -988,9 +988,9 @@ class MainWP_Manage_Backups {
 				}
 
 				$output .= '<br />Backup details:<br /><br />';
-				$output .= '<strong>Backup task</strong>' . ' - ' . $task->name . '<br />';
-				$output .= '<strong>Backup type</strong>' . ' - ' . ( $task->type == 'db' ? 'DATABASE BACKUP' : 'FULL BACKUP' ) . '<br />';
-				$output .= '<strong>Backup schedule</strong>' . ' - ' . strtoupper( $task->schedule ) . '<br />';
+				$output .= '<strong>Backup task</strong> - ' . $task->name . '<br />';
+				$output .= '<strong>Backup type</strong> - ' . ( $task->type == 'db' ? 'DATABASE BACKUP' : 'FULL BACKUP' ) . '<br />';
+				$output .= '<strong>Backup schedule</strong> - ' . strtoupper( $task->schedule ) . '<br />';
 				wp_mail( $email, $mail_title = 'A Scheduled Backup has been Started - MainWP', MainWP_Utility::formatEmail( $email, $output, $mail_title ), 'content-type: text/html' );
 				MainWP_DB::Instance()->updateBackupTaskWithValues( $task->id, array( 'lastStartNotificationSent' => time() ) );
 			}

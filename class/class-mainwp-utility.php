@@ -695,7 +695,7 @@ class MainWP_Utility {
 			$handleToWebsite = array();
 			$requestUrls     = array();
 			$requestHandles  = array();
-			
+
 			self::init_cookiesdir();
 
 			foreach ( $websites as $website ) {
@@ -981,7 +981,7 @@ class MainWP_Utility {
 		$requestHandles     = array();
 
 		self::init_cookiesdir();
-				
+
 		foreach ( $websites as $website ) {
 			$url = $website->url;
 			if ( '/' != substr( $url, - 1 ) ) {
@@ -1999,84 +1999,82 @@ class MainWP_Utility {
 			$userid = $current_user->ID;
 		}
 
-		$hasWPFileSystem = MainWP_Utility::getWPFilesystem();
+		$hasWPFileSystem = self::getWPFilesystem();
 
 		global $wp_filesystem;
-				
+
 		$dirs   = self::getMainWPDir();
 		$newdir = $dirs[0] . $userid . ( null != $dir ? DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR : '' );
-		
-		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {	
-			
-			if ( ! $wp_filesystem->is_dir( $newdir ) ) {				
+
+		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+
+			if ( ! $wp_filesystem->is_dir( $newdir ) ) {
 				$wp_filesystem->mkdir( $newdir, 0777, true );
 			}
-			
+
 			if ( null != $dirs[0] . $userid && ! $wp_filesystem->exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {
 				$file_htaccess = trailingslashit( $dirs[0] . $userid ) . '.htaccess';
 				$wp_filesystem->put_contents( $file_htaccess, 'deny from all' );
-			}		
-		} else {		
-			
+			}
+		} else {
+
 			if ( ! file_exists( $newdir ) ) {
 				@mkdir( $newdir, 0777, true );
 			}
-			
+
 			if ( null != $dirs[0] . $userid && ! file_exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {
 				$file = @fopen( trailingslashit( $dirs[0] . $userid ) . '.htaccess', 'w+' );
 				@fwrite( $file, 'deny from all' );
-				@fclose( $file );			
+				@fclose( $file );
 			}
-		}			
+		}
 
 		return $newdir;
 	}
-	
-	public static function init_cookiesdir() {		
-					
-			$hasWPFileSystem = MainWP_Utility::getWPFilesystem();
+
+	public static function init_cookiesdir() {
+
+			$hasWPFileSystem = self::getWPFilesystem();
 
 			global $wp_filesystem;
-						
+
 			$dirs      = self::getMainWPDir();
 			$cookieDir = $dirs[0] . 'cookies';
-			
-			if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
-				
-				if ( ! $wp_filesystem->is_dir( $cookieDir ) ) {				
-					$wp_filesystem->mkdir( $cookieDir, 0777, true );
-				}		
-				
-				if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
-					// open and write the data to file.				
-					$file_htaccess = $cookieDir . '/.htaccess';
-					$wp_filesystem->put_contents( $file_htaccess, 'deny from all' );
-				}
 
-				if ( ! file_exists( $cookieDir . '/index.php' ) ) {
-					// If file doesn't exist, it will be created.					
-					$file_index = $cookieDir . '/index.php';
-					$wp_filesystem->touch( $file_index );
-				}
-			
-			} else {
-				
-				if ( ! file_exists( $cookieDir ) ) {
-					@mkdir( $cookieDir, 0777, true );
-				}
-		
-				if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
-					$file_htaccess = @fopen( $cookieDir . '/.htaccess', 'w+' );
-					@fwrite( $file_htaccess, 'deny from all' );
-					@fclose( $file_htaccess );
-				}
+		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 
-				if ( ! file_exists( $cookieDir . '/index.php' ) ) {
-					$file_index = @fopen( $cookieDir . '/index.php', 'w+' );
-					@fclose( $file_index );					
-				}
+			if ( ! $wp_filesystem->is_dir( $cookieDir ) ) {
+				$wp_filesystem->mkdir( $cookieDir, 0777, true );
 			}
-			
+
+			if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
+				// open and write the data to file.
+				$file_htaccess = $cookieDir . '/.htaccess';
+				$wp_filesystem->put_contents( $file_htaccess, 'deny from all' );
+			}
+
+			if ( ! file_exists( $cookieDir . '/index.php' ) ) {
+				// If file doesn't exist, it will be created.
+				$file_index = $cookieDir . '/index.php';
+				$wp_filesystem->touch( $file_index );
+			}
+		} else {
+
+			if ( ! file_exists( $cookieDir ) ) {
+				@mkdir( $cookieDir, 0777, true );
+			}
+
+			if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
+				$file_htaccess = @fopen( $cookieDir . '/.htaccess', 'w+' );
+				@fwrite( $file_htaccess, 'deny from all' );
+				@fclose( $file_htaccess );
+			}
+
+			if ( ! file_exists( $cookieDir . '/index.php' ) ) {
+				$file_index = @fopen( $cookieDir . '/index.php', 'w+' );
+				@fclose( $file_index );
+			}
+		}
 	}
 
 	public static function getMainWPSpecificUrl( $dir ) {

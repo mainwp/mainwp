@@ -375,36 +375,36 @@ class MainWP_Hooks {
 		$hasWPFileSystem = MainWP_Utility::getWPFilesystem();
 
 		global $wp_filesystem;
-	
+
 		if ( $dir != null ) {
-			
-			if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {	
-				
+
+			if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+
 				if ( ! $wp_filesystem->exists( $newdir ) ) {
 					$wp_filesystem->mkdir( $newdir, 0777, true );
 				}
-				
+
 				if ( $direct_access ) {
-					if ( !$wp_filesystem->exists( trailingslashit( $newdir ) . 'index.php' ) ) {
-						// If $file doesn't exist, it will be created.					
-						$wp_filesystem->touch( trailingslashit( $newdir ) . 'index.php' );				
-					}				
+					if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . 'index.php' ) ) {
+						// If $file doesn't exist, it will be created.
+						$wp_filesystem->touch( trailingslashit( $newdir ) . 'index.php' );
+					}
 					if ( $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
 						// Deletes .htaccess file
-						$wp_filesystem->delete(trailingslashit( $newdir  ) . '.htaccess' );				
+						$wp_filesystem->delete(trailingslashit( $newdir  ) . '.htaccess' );
 					}
 				} else {
-					if ( !$wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
-						// open and write the data to file.				
-						$wp_filesystem->put_contents(trailingslashit( $newdir  ) . '.htaccess', 'deny from all' );				
+					if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
+						// open and write the data to file.
+						$wp_filesystem->put_contents(trailingslashit( $newdir  ) . '.htaccess', 'deny from all' );
 					}
-				}		
+				}
 			} else {
-				
+
 				if ( ! file_exists( $newdir ) ) {
 					@mkdir( $newdir, 0777, true );
 				}
-				
+
 				if ( $direct_access ) {
 					if ( ! file_exists(trailingslashit( $newdir ) . 'index.php') ) {
 						@touch(trailingslashit( $newdir ) . 'index.php');
@@ -418,10 +418,10 @@ class MainWP_Hooks {
 						@fwrite( $file, 'deny from all' );
 						@fclose( $file );
 					}
-				}				
+				}
 			}
 		}
-		
+
 		return array( $newdir, $url );
 	}
 

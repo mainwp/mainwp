@@ -1057,11 +1057,11 @@ class MainWP_Post {
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
-	 * @param WP_Post $post Optional. The post being edited.
+	 * @param WP_Post $pos Optional. The post being edited.
 	 */
-	static function meta_form( $post = null ) {
+	static function meta_form( $pos = null ) {
 		global $wpdb;
-		$_post = get_post( $post );
+		$_post = get_post( $pos );
 
 		/**
 		 * Filters values for the meta key dropdown in the Custom Fields meta box.
@@ -1185,14 +1185,14 @@ class MainWP_Post {
 	 * @since 2.9.0
 	 *
 	 * @param int   $thumbnail_id ID of the attachment used for thumbnail
-	 * @param mixed $post The post ID or object associated with the thumbnail, defaults to global $post.
+	 * @param mixed $pos The post ID or object associated with the thumbnail, defaults to global $post.
 	 * @return string html
 	 */
-	static function _wp_post_thumbnail_html( $thumbnail_id = null, $post = null ) {
+	static function _wp_post_thumbnail_html( $thumbnail_id = null, $pos = null ) {
 
 		$_wp_additional_image_sizes = wp_get_additional_image_sizes();
 
-		$_post             = get_post( $post );
+		$_post             = get_post( $pos );
 		$post_type_object = get_post_type_object( $_post->post_type );
 
 		$thumb_ok          = false;
@@ -1266,16 +1266,16 @@ class MainWP_Post {
 		return apply_filters( 'mainwp_admin_post_thumbnail_html', $html, $_post->ID, $thumbnail_id );
 	}
 
-	static function post_thumbnail_meta_box( $post ) {
-		$thumbnail_id = get_post_meta( $post->ID, '_thumbnail_id', true );
-		echo self::_wp_post_thumbnail_html( $thumbnail_id, $post->ID );
+	static function post_thumbnail_meta_box( $pos ) {
+		$thumbnail_id = get_post_meta( $pos->ID, '_thumbnail_id', true );
+		echo self::_wp_post_thumbnail_html( $thumbnail_id, $pos->ID );
 	}
 
 	// invisible fields
 	static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) {
-			global $wp_locale;
+		global $wp_locale;
 
-			$_post = get_post( $post );
+		$_post = get_post( $post );
 
 		if ( $for_post ) {
 			$edit = ! ( in_array($_post->post_status, array( 'draft', 'pending' ) ) && ( ! $_post->post_date_gmt || '0000-00-00 00:00:00' == $post->post_date_gmt ) );
@@ -1465,7 +1465,8 @@ class MainWP_Post {
 	}
 
 	public static function render_bulkpost( $post_id, $input_type ) {
-		global $post;
+		// any issues?
+//		global $post;
 		$post = get_post( $post_id );
 
 		if ( $post ) {

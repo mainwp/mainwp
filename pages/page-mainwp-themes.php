@@ -250,7 +250,7 @@ class MainWP_Themes {
 	}
 
 	public static function render() {
-		$cachedSearch   = MainWP_Cache::getCachedContext( 'Themes' );
+		$cachedSearch    = MainWP_Cache::getCachedContext( 'Themes' );
 		$selected_sites  = array();
 		$selected_groups = array();
 
@@ -275,12 +275,12 @@ class MainWP_Themes {
 							<div class="column">
 								<div id="mainwp-themes-bulk-actions-wapper">
 								<?php
-									if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
-										echo $cachedResult['bulk_actions'];
-									} else {
-										echo MainWP_UI::get_empty_bulk_actions();
-									}
-									?>
+								if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
+									echo $cachedResult['bulk_actions'];
+								} else {
+									echo MainWP_UI::get_empty_bulk_actions();
+								}
+								?>
 								</div>
 								<?php do_action( 'mainwp_themes_actions_bar_left' ); ?>
 							</div>
@@ -1239,7 +1239,7 @@ class MainWP_Themes {
 					$strip_note = strip_tags( $esc_note );
 				}
 
-			?>
+				?>
 				<tr theme-slug="<?php echo rawurlencode( $slug ); ?>" theme-name="<?php echo esc_attr( $name ); ?>">
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="theme[]" value="<?php echo urlencode( $slug ); ?>"></span></td>
 					<td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span data-tooltip="Ignored themes will not be automatically updated." data-inverted=""><i class="info red circle icon"></i></span>' : ''; ?></td>
@@ -1285,7 +1285,7 @@ class MainWP_Themes {
 				} );
 			} );
 		</script>
-	<?php
+		<?php
 	}
 
 	public static function renderIgnore() {

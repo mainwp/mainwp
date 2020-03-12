@@ -38,12 +38,12 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 	public function prepare_items() {
 		include ABSPATH . 'wp-admin/includes/plugin-install.php';
 
-		global $tab; //, $paged, $type, $term;
-		
+		global $tab; // , $paged, $type, $term;
+
 		wp_reset_vars( array( 'tab' ) );
 
 		$paged = $this->get_pagenum();
-				
+
 		$per_page = 40;
 
 		// These are the tabs which are shown on the page

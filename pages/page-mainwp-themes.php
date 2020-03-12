@@ -394,7 +394,7 @@ class MainWP_Themes {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website   = MainWP_DB::Instance()->getWebsiteById( $v );
 						$allThemes = json_decode( $website->themes, true );
-						$_count = count( $allThemes );
+						$_count    = count( $allThemes );
 						for ( $i = 0; $i < $_count; $i ++ ) {
 							$theme = $allThemes[ $i ];
 							if ( $status == 'active' || $status == 'inactive' ) {
@@ -427,7 +427,7 @@ class MainWP_Themes {
 								continue;
 							}
 							$allThemes = json_decode( $website->themes, true );
-							$_count = count( $allThemes );
+							$_count    = count( $allThemes );
 							for ( $i = 0; $i < $_count; $i ++ ) {
 								$theme = $allThemes[ $i ];
 								if ( $status == 'active' || $status == 'inactive' ) {
@@ -1122,7 +1122,7 @@ class MainWP_Themes {
 				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$allThemes = json_decode( $website->themes, true );
-					$_count = count( $allThemes );
+					$_count    = count( $allThemes );
 					for ( $i = 0; $i < $_count; $i ++ ) {
 						$theme = $allThemes[ $i ];
 						if ( $search_theme_status != 'all' ) {

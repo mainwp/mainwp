@@ -417,7 +417,7 @@ class MainWP_Plugins {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website    = MainWP_DB::Instance()->getWebsiteById( $v );
 						$allPlugins = json_decode( $website->plugins, true );
-						$_count = count( $allPlugins );
+						$_count     = count( $allPlugins );
 						for ( $i = 0; $i < $_count; $i ++ ) {
 							$plugin = $allPlugins[ $i ];
 
@@ -449,7 +449,7 @@ class MainWP_Plugins {
 								continue;
 							}
 							$allPlugins = json_decode( $website->plugins, true );
-							$_count = count( $allPlugins );
+							$_count     = count( $allPlugins );
 							for ( $i = 0; $i < $_count; $i ++ ) {
 								$plugin = $allPlugins[ $i ];
 
@@ -1053,7 +1053,7 @@ class MainWP_Plugins {
 				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$allPlugins = json_decode( $website->plugins, true );
-					$_count = count( $allPlugins );
+					$_count     = count( $allPlugins );
 					for ( $i = 0; $i < $_count; $i ++ ) {
 						$plugin = $allPlugins[ $i ];
 						if ( $search_plugin_status != 'all' ) {

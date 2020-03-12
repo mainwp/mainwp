@@ -810,7 +810,7 @@ class MainWP_Page {
 			if ( ! $skip_post ) {
 				// Posts the saved sites
 				if ( isset( $_GET['id'] ) ) {
-					$id   = intval( $_GET['id'] );
+					$id    = intval( $_GET['id'] );
 					$_post = get_post( $id );
 					if ( $_post ) {
 						$selected_by     = get_post_meta( $id, '_selected_by', true );

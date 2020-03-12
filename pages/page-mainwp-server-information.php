@@ -1435,7 +1435,8 @@ class MainWP_Server_Information {
 		if ( $disabled_functions != '' ) {
 			$arr = explode( ',', $disabled_functions );
 			sort( $arr );
-			for ( $i = 0; $i < count( $arr ); $i ++ ) {
+			$_count = count( $arr );
+			for ( $i = 0; $i < $_count; $i ++ ) {
 				echo $arr[ $i ] . ', ';
 			}
 		} else {

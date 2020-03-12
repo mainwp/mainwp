@@ -98,7 +98,8 @@ class MainWP_Recent_Pages {
 				<?php endif; ?>
 				<div class="ui middle aligned divided selection list">
 				<?php
-				for ( $i = 0; $i < count( $recent_pages_published ) && $i < $recent_number; $i ++ ) {
+				$_count = count( $recent_pages_published );
+				for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 					if ( ! isset( $recent_pages_published[ $i ]['title'] ) || ( $recent_pages_published[ $i ]['title'] == '' ) ) {
 						$recent_pages_published[ $i ]['title'] = '(No Title)';
 					}
@@ -162,7 +163,8 @@ class MainWP_Recent_Pages {
 				?>
 				<div class="ui middle aligned divided selection list">
 				<?php
-				for ( $i = 0; $i < count( $recent_pages_draft ) && $i < $recent_number; $i ++ ) {
+				$_count = count( $recent_pages_draft );
+				for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 					if ( ! isset( $recent_pages_draft[ $i ]['title'] ) || ( $recent_pages_draft[ $i ]['title'] == '' ) ) {
 						$recent_pages_draft[ $i ]['title'] = '(No Title)';
 					}
@@ -223,7 +225,8 @@ class MainWP_Recent_Pages {
 				?>
 				<div class="ui middle aligned divided selection list">
 				<?php
-				for ( $i = 0; $i < count( $recent_pages_pending ) && $i < $recent_number; $i ++ ) {
+				$_count = count( $recent_pages_pending );
+				for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 					if ( ! isset( $recent_pages_pending[ $i ]['title'] ) || ( $recent_pages_pending[ $i ]['title'] == '' ) ) {
 						$recent_pages_pending[ $i ]['title'] = '(No Title)';
 					}
@@ -284,7 +287,8 @@ class MainWP_Recent_Pages {
 				?>
 				<div class="ui middle aligned divided selection list">
 				<?php
-				for ( $i = 0; $i < count( $recent_pages_future ) && $i < $recent_number; $i ++ ) {
+				$_count = count( $recent_pages_future );
+				for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 					if ( ! isset( $recent_pages_future[ $i ]['title'] ) || ( $recent_pages_future[ $i ]['title'] == '' ) ) {
 						$recent_pages_future[ $i ]['title'] = '(No Title)';
 					}
@@ -346,7 +350,8 @@ class MainWP_Recent_Pages {
 				?>
 				<div class="ui middle aligned divided selection list">
 				<?php
-				for ( $i = 0; $i < count( $recent_pages_trash ) && $i < $recent_number; $i ++ ) {
+				$_count = count( $recent_pages_trash );
+				for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 					if ( ! isset( $recent_pages_trash[ $i ]['title'] ) || ( $recent_pages_trash[ $i ]['title'] == '' ) ) {
 						$recent_pages_trash[ $i ]['title'] = '(No Title)';
 					}

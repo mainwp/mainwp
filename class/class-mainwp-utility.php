@@ -1999,7 +1999,7 @@ class MainWP_Utility {
 			$userid = $current_user->ID;
 		}
 
-		$hasWPFileSystem = MainWP_Utility::getWPFilesystem();
+		$hasWPFileSystem = self::getWPFilesystem();
 
 		global $wp_filesystem;
 				
@@ -2034,7 +2034,7 @@ class MainWP_Utility {
 	
 	public static function init_cookiesdir() {		
 					
-			$hasWPFileSystem = MainWP_Utility::getWPFilesystem();
+			$hasWPFileSystem = self::getWPFilesystem();
 
 			global $wp_filesystem;
 						

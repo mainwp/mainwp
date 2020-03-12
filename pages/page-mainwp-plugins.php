@@ -417,7 +417,8 @@ class MainWP_Plugins {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website    = MainWP_DB::Instance()->getWebsiteById( $v );
 						$allPlugins = json_decode( $website->plugins, true );
-						for ( $i = 0; $i < count( $allPlugins ); $i ++ ) {
+						$_count = count( $allPlugins );
+						for ( $i = 0; $i < $_count; $i ++ ) {
 							$plugin = $allPlugins[ $i ];
 
 							if ( ( $status == 'active' ) || ( $status == 'inactive' ) ) {
@@ -448,7 +449,8 @@ class MainWP_Plugins {
 								continue;
 							}
 							$allPlugins = json_decode( $website->plugins, true );
-							for ( $i = 0; $i < count( $allPlugins ); $i ++ ) {
+							$_count = count( $allPlugins );
+							for ( $i = 0; $i < $_count; $i ++ ) {
 								$plugin = $allPlugins[ $i ];
 
 								if ( ( $status == 'active' ) || ( $status == 'inactive' ) ) {
@@ -762,7 +764,8 @@ class MainWP_Plugins {
 		}
 
 		if ( is_array( $plugins ) ) {
-			for ( $i = 0; $i < count( $plugins ); $i ++ ) {
+			$_count = count( $plugins );
+			for ( $i = 0; $i < $_count; $i ++ ) {
 				$slug = $plugins[ $i ];
 				$name = $names[ $i ];
 				if ( ! isset( $decodedIgnoredPlugins[ $slug ] ) ) {
@@ -1050,7 +1053,8 @@ class MainWP_Plugins {
 				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$allPlugins = json_decode( $website->plugins, true );
-					for ( $i = 0; $i < count( $allPlugins ); $i ++ ) {
+					$_count = count( $allPlugins );
+					for ( $i = 0; $i < $_count; $i ++ ) {
 						$plugin = $allPlugins[ $i ];
 						if ( $search_plugin_status != 'all' ) {
 							if ( $plugin['active'] == 1 && $search_plugin_status !== 'active' ) {

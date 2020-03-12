@@ -100,7 +100,8 @@ class MainWP_Recent_Posts {
 				?>
 			<div class="ui middle aligned divided selection list">
 			<?php
-			for ( $i = 0; $i < count( $recent_posts_published ) && $i < $recent_number; $i ++ ) {
+			$_count = count( $recent_posts_published );
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 				if ( ! isset( $recent_posts_published[ $i ]['title'] ) || ( $recent_posts_published[ $i ]['title'] == '' ) ) {
 					$recent_posts_published[ $i ]['title'] = '(No Title)';
 				}
@@ -163,7 +164,8 @@ class MainWP_Recent_Posts {
 				?>
 			<div class="ui middle aligned divided selection list">
 			<?php
-			for ( $i = 0; $i < count( $recent_posts_draft ) && $i < $recent_number; $i ++ ) {
+			$_count = count( $recent_posts_draft );
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 				if ( ! isset( $recent_posts_draft[ $i ]['title'] ) || ( $recent_posts_draft[ $i ]['title'] == '' ) ) {
 					$recent_posts_draft[ $i ]['title'] = '(No Title)';
 				}
@@ -223,7 +225,8 @@ class MainWP_Recent_Posts {
 				?>
 			<div class="ui middle aligned divided selection list">
 			<?php
-			for ( $i = 0; $i < count( $recent_posts_pending ) && $i < $recent_number; $i ++ ) {
+			$_count = count( $recent_posts_pending );
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 				if ( ! isset( $recent_posts_pending[ $i ]['title'] ) || ( $recent_posts_pending[ $i ]['title'] == '' ) ) {
 					$recent_posts_pending[ $i ]['title'] = '(No Title)';
 				}
@@ -283,7 +286,8 @@ class MainWP_Recent_Posts {
 				?>
 			<div class="ui middle aligned divided selection list">
 			<?php
-			for ( $i = 0; $i < count( $recent_posts_future ) && $i < $recent_number; $i ++ ) {
+			$_count = count( $recent_posts_future );
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 				if ( ! isset( $recent_posts_future[ $i ]['title'] ) || ( $recent_posts_future[ $i ]['title'] == '' ) ) {
 					$recent_posts_future[ $i ]['title'] = '(No Title)';
 				}
@@ -344,7 +348,8 @@ class MainWP_Recent_Posts {
 				?>
 			<div class="ui middle aligned divided selection list">
 			<?php
-			for ( $i = 0; $i < count( $recent_posts_trash ) && $i < $recent_number; $i ++ ) {
+			$_count = count( $recent_posts_trash );
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 				if ( ! isset( $recent_posts_trash[ $i ]['title'] ) || ( $recent_posts_trash[ $i ]['title'] == '' ) ) {
 					$recent_posts_trash[ $i ]['title'] = '(No Title)';
 				}

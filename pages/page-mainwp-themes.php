@@ -394,7 +394,8 @@ class MainWP_Themes {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website   = MainWP_DB::Instance()->getWebsiteById( $v );
 						$allThemes = json_decode( $website->themes, true );
-						for ( $i = 0; $i < count( $allThemes ); $i ++ ) {
+						$_count = count( $allThemes );
+						for ( $i = 0; $i < $_count; $i ++ ) {
 							$theme = $allThemes[ $i ];
 							if ( $status == 'active' || $status == 'inactive' ) {
 								if ( $theme['active'] == 1 && $status !== 'active' ) {
@@ -426,7 +427,8 @@ class MainWP_Themes {
 								continue;
 							}
 							$allThemes = json_decode( $website->themes, true );
-							for ( $i = 0; $i < count( $allThemes ); $i ++ ) {
+							$_count = count( $allThemes );
+							for ( $i = 0; $i < $_count; $i ++ ) {
 								$theme = $allThemes[ $i ];
 								if ( $status == 'active' || $status == 'inactive' ) {
 									if ( $theme['active'] == 1 && $status !== 'active' ) {
@@ -765,7 +767,8 @@ class MainWP_Themes {
 		}
 
 		if ( is_array( $themes ) ) {
-			for ( $i = 0; $i < count( $themes ); $i ++ ) {
+			$_count = count( $themes );
+			for ( $i = 0; $i < $_count; $i ++ ) {
 				$slug = $themes[ $i ];
 				$name = $names[ $i ];
 				if ( ! isset( $decodedIgnoredThemes[ $slug ] ) ) {
@@ -1119,7 +1122,8 @@ class MainWP_Themes {
 				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$allThemes = json_decode( $website->themes, true );
-					for ( $i = 0; $i < count( $allThemes ); $i ++ ) {
+					$_count = count( $allThemes );
+					for ( $i = 0; $i < $_count; $i ++ ) {
 						$theme = $allThemes[ $i ];
 						if ( $search_theme_status != 'all' ) {
 							if ( $theme['active'] == 1 && $search_theme_status !== 'active' ) {

@@ -111,8 +111,8 @@ class MainWP_Widget_Plugins {
 		<div id="mainwp-widget-active-plugins" class="ui tab active" data-tab="active_plugins">
 			<div class="ui divided selection list">
 				<?php
-
-				for ( $i = 0; $i < count( $actived_plugins ); $i ++ ) {
+				$_count = count( $actived_plugins );
+				for ( $i = 0; $i < $_count; $i ++ ) {
 
 					$slug = strip_tags( $actived_plugins[ $i ]['slug'] );
 
@@ -142,7 +142,8 @@ class MainWP_Widget_Plugins {
 		<div id="mainwp-widget-inactive-plugins" class="ui tab" data-tab="inactive_plugins">
 			<div class="ui middle aligned divided selection list">
 				<?php
-				for ( $i = 0; $i < count( $inactive_plugins ); $i ++ ) {
+				$_count = count( $actived_plugins );
+				for ( $i = 0; $i < $_count; $i ++ ) {
 
 					$slug = $inactive_plugins[ $i ]['slug'];
 

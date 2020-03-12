@@ -1144,7 +1144,8 @@ class MainWP_Live_Reports_Class {
 		$filtered_content = $content          = str_replace( $client_tokens, $replace_values, $content );
 		$sections         = array();
 		if ( preg_match_all( '/(\[section\.[^\]]+\])(.*?)(\[\/section\.[^\]]+\])/is', $content, $matches ) ) {
-			for ( $i = 0; $i < count( $matches[1] ); $i++ ) {
+			$_count = count( $matches[1] );
+			for ( $i = 0; $i < $_count; $i++ ) {
 				$sec         = $matches[1][ $i ];
 				$sec_content = $matches[2][ $i ];
 				$sec_tokens  = array();

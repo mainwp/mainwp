@@ -84,7 +84,8 @@ class MainWP_Widget_Themes {
 		<div id="mainwp-widget-active-themes" class="ui tab active" data-tab="active_themes">
 			<div class="ui divided selection list">
 				<?php
-				for ( $i = 0; $i < count( $actived_themes ); $i ++ ) {
+				$_count = count( $actived_themes );
+				for ( $i = 0; $i < $_count; $i ++ ) {
 					$slug = $actived_themes[ $i ]['slug'];
 					?>
 					<div class="item">
@@ -108,7 +109,8 @@ class MainWP_Widget_Themes {
 		<div id="mainwp-widget-inactive-themes" class="ui tab" data-tab="inactive_themes">
 			<div class="ui divided selection list">
 				<?php
-				for ( $i = 0; $i < count( $inactive_themes ); $i ++ ) {
+				$_count = count( $inactive_themes );
+				for ( $i = 0; $i < $_count; $i ++ ) {
 					$slug = $inactive_themes[ $i ]['slug'];
 					?>
 					<div class="item">

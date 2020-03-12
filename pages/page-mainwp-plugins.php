@@ -745,13 +745,13 @@ class MainWP_Plugins {
 		$websiteId    = $websiteIdEnc;
 
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
 		}
 
 		$plugins = $_POST['plugins'];
@@ -772,10 +772,10 @@ class MainWP_Plugins {
 					$decodedIgnoredPlugins[ $slug ] = urldecode( $name );
 				}
 			}
-			MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_plugins' => json_encode( $decodedIgnoredPlugins ) ) );
+			MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_plugins' => wp_json_encode( $decodedIgnoredPlugins ) ) );
 		}
 
-		die( json_encode( array( 'result' => true ) ) );
+		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
 	public static function action( $pAction ) {
@@ -783,13 +783,13 @@ class MainWP_Plugins {
 		$websiteId    = $websiteIdEnc;
 
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
 		}
 
 		try {
@@ -800,14 +800,14 @@ class MainWP_Plugins {
 				'plugin' => $plugin,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
 
 		if ( ! isset( $information['status']) || ( $information['status'] != 'SUCCESS' ) ) {
-			die( json_encode( array( 'error' => __( 'Unexpected error. Please try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Unexpected error. Please try again.', 'mainwp' ) ) ) );
 		}
 
-		die( json_encode( array( 'result' => true ) ) );
+		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
 	// @see MainWP_Install_Bulk
@@ -1552,7 +1552,7 @@ class MainWP_Plugins {
 				}
 			}
 		}
-		$userExtension->trusted_plugins = json_encode( $trustedPlugins );
+		$userExtension->trusted_plugins = wp_json_encode( $trustedPlugins );
 		MainWP_DB::Instance()->updateUserExtension( $userExtension );
 	}
 
@@ -1566,7 +1566,7 @@ class MainWP_Plugins {
 		if ( $idx == false ) {
 			$trustedPlugins[] = urldecode( $slug );
 		}
-		$userExtension->trusted_plugins = json_encode( $trustedPlugins );
+		$userExtension->trusted_plugins = wp_json_encode( $trustedPlugins );
 		MainWP_DB::Instance()->updateUserExtension( $userExtension );
 	}
 
@@ -1592,7 +1592,7 @@ class MainWP_Plugins {
 			$trustedPluginsNotes = array();
 		}
 		$trustedPluginsNotes[ $slug ]         = $esc_note;
-		$userExtension->trusted_plugins_notes = json_encode( $trustedPluginsNotes );
+		$userExtension->trusted_plugins_notes = wp_json_encode( $trustedPluginsNotes );
 		MainWP_DB::Instance()->updateUserExtension( $userExtension );
 	}
 

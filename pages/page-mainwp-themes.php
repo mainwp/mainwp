@@ -742,7 +742,7 @@ class MainWP_Themes {
 			die( 'FAIL' );
 		}
 
-		die( json_encode( array( 'result' => true ) ) );
+		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
 	public static function ignoreUpdates() {
@@ -775,10 +775,10 @@ class MainWP_Themes {
 					$decodedIgnoredThemes[ $slug ] = urldecode( $name );
 				}
 			}
-			MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_themes' => json_encode( $decodedIgnoredThemes ) ) );
+			MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ) ) );
 		}
 
-		die( json_encode( array( 'result' => true ) ) );
+		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
 	// @see MainWP_Install_Bulk
@@ -1609,7 +1609,7 @@ class MainWP_Themes {
 				}
 			}
 		}
-		$userExtension->trusted_themes = json_encode( $trustedThemes );
+		$userExtension->trusted_themes = wp_json_encode( $trustedThemes );
 		MainWP_DB::Instance()->updateUserExtension( $userExtension );
 	}
 
@@ -1623,7 +1623,7 @@ class MainWP_Themes {
 			$trustedThemesNotes = array();
 		}
 		$trustedThemesNotes[ $slug ]         = $esc_note;
-		$userExtension->trusted_themes_notes = json_encode( $trustedThemesNotes );
+		$userExtension->trusted_themes_notes = wp_json_encode( $trustedThemesNotes );
 		MainWP_DB::Instance()->updateUserExtension( $userExtension );
 	}
 

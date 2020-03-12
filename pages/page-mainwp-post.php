@@ -2297,15 +2297,15 @@ class MainWP_Post {
 		$websiteId = $_POST['websiteId'];
 
 		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
-			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => 'You can not edit this website!' ) ) );
+			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
 		try {
@@ -2315,15 +2315,15 @@ class MainWP_Post {
 				'post_type'  => $postType,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
 
 		if ( is_array( $information ) && isset( $information['error'] ) ) {
-			die( json_encode( array( 'error' => $information['error'] ) ) );
+			die( wp_json_encode( array( 'error' => $information['error'] ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
-			die( json_encode( array( 'error' => 'Unexpected error.' ) ) );
+			die( wp_json_encode( array( 'error' => 'Unexpected error.' ) ) );
 		} else {
 			$ret = self::newPost( $information['my_post'] );
 			if ( is_array( $ret ) && isset( $ret['id'] ) ) {

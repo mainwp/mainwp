@@ -468,7 +468,7 @@ class MainWP_Extensions {
 
 	public static function ajaxAddExtensionMenu() {
 		 self::addExtensionMenu($_POST['slug']);
-		die(json_encode(array( 'result' => 'SUCCESS' )));
+		die(wp_json_encode(array( 'result' => 'SUCCESS' )));
 	}
 
 	public static function addExtensionMenu( $slug ) {
@@ -491,7 +491,7 @@ class MainWP_Extensions {
 		$api_key   = trim( $_POST['key'] );
 		$api_email = trim( $_POST['email'] );
 		$result    = MainWP_Api_Manager::instance()->license_key_activation( $api, $api_key, $api_email );
-		// die( json_encode( $result ) );
+		// die( wp_json_encode( $result ) );
 		wp_send_json( $result );
 	}
 
@@ -499,7 +499,7 @@ class MainWP_Extensions {
 		MainWP_Post_Handler::Instance()->secure_request( 'mainwp_extension_deactivate' );
 		$api    = dirname( $_POST['slug'] );
 		$result = MainWP_Api_Manager::instance()->license_key_deactivation( $api );
-		// die( json_encode( $result ) );
+		// die( wp_json_encode( $result ) );
 		wp_send_json( $result );
 	}
 
@@ -509,7 +509,7 @@ class MainWP_Extensions {
 		$password = trim( $_POST['password'] );
 		$api      = dirname( $_POST['slug'] );
 		$result   = MainWP_Api_Manager::instance()->grab_license_key( $api, $username, $password );
-		// die( json_encode( $result ) );
+		// die( wp_json_encode( $result ) );
 		wp_send_json( $result );
 	}
 
@@ -529,7 +529,7 @@ class MainWP_Extensions {
 
 		if ( $requests > 4 ) {
 			$_SESSION['api_login_history'] = $new_api_login_history;
-			die( json_encode( array( 'error' => __( 'Too many requests', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Too many requests', 'mainwp' ) ) ) );
 		} else {
 			$new_api_login_history[]       = array( 'time' => time() );
 			$_SESSION['api_login_history'] = $new_api_login_history;
@@ -540,18 +540,18 @@ class MainWP_Extensions {
 		if ( ( $username == '' ) && ( $password == '' ) ) {
 			MainWP_Utility::update_option( 'mainwp_extensions_api_username', $username );
 			MainWP_Utility::update_option( 'mainwp_extensions_api_password', $password );
-			die( json_encode( array( 'saved' => 1 ) ) );
+			die( wp_json_encode( array( 'saved' => 1 ) ) );
 		}
 		$result = array();
 		try {
 			$test = MainWP_Api_Manager::instance()->test_login_api( $username, $password );
 		} catch ( Exception $e ) {
 			$return['error'] = $e->getMessage();
-			die( json_encode( $return ) );
+			die( wp_json_encode( $return ) );
 		}
 
 		if ( is_array( $test ) && isset( $test['retry_action'] ) ) {
-			// die( json_encode( $test ) );
+			// die( wp_json_encode( $test ) );
 			wp_send_json( $test );
 		}
 
@@ -579,12 +579,12 @@ class MainWP_Extensions {
 			MainWP_Utility::update_option( 'mainwp_extensions_api_save_login', '' );
 		}
 
-		die( json_encode( $return ) );
+		die( wp_json_encode( $return ) );
 	}
 
 	public static function saveApiSSLVerify() {
 		MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', intval( $_POST['api_sslverify'] ) );
-		die( json_encode( array( 'saved' => 1 ) ) );
+		die( wp_json_encode( array( 'saved' => 1 ) ) );
 	}
 
 
@@ -595,7 +595,7 @@ class MainWP_Extensions {
 		$password   = ! empty( $enscrypt_p ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_p ) : '';
 
 		if ( ( $username == '' ) || ( $password == '' ) ) {
-			die( json_encode( array( 'error' => __( 'Login Invalid.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Login Invalid.', 'mainwp' ) ) ) );
 		}
 
 		$result = array();
@@ -603,11 +603,11 @@ class MainWP_Extensions {
 			$test = MainWP_Api_Manager::instance()->test_login_api( $username, $password );
 		} catch ( Exception $e ) {
 			$return['error'] = $e->getMessage();
-			die( json_encode( $return ) );
+			die( wp_json_encode( $return ) );
 		}
 
 		if ( is_array( $test ) && isset( $test['retry_action'] ) ) {
-			// die( json_encode( $test ) );
+			// die( wp_json_encode( $test ) );
 			wp_send_json( $test );
 		}
 
@@ -626,7 +626,7 @@ class MainWP_Extensions {
 				$return['retry_action'] = 1;
 			}
 		}
-		// die( json_encode( $return ) );
+		// die( wp_json_encode( $return ) );
 		wp_send_json( $return );
 	}
 
@@ -637,7 +637,7 @@ class MainWP_Extensions {
 		$password = trim( $_POST['password'] );
 
 		if ( ( $username == '' ) || ( $password == '' ) ) {
-			die( json_encode( array( 'error' => __( 'Invalid login.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Invalid login.', 'mainwp' ) ) ) );
 		}
 
 		$data   = MainWP_Api_Manager::instance()->get_purchased_software( $username, $password );
@@ -804,7 +804,7 @@ class MainWP_Extensions {
 				$return['retry_action'] = 1;
 			}
 		}
-		// die( json_encode( $return ) );
+		// die( wp_json_encode( $return ) );
 		wp_send_json( $return );
 	}
 
@@ -832,7 +832,7 @@ class MainWP_Extensions {
 		MainWP_Post_Handler::Instance()->secure_request( 'mainwp_extension_activatelicense' );
 		$item_id  = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
 		$response = MainWP_Api_Manager::instance()->grab_license_key_by_id( $item_id  );
-		die( json_encode($response) );
+		die( wp_json_encode($response) );
 	}
 
 	public static function downloadAndInstall() {
@@ -842,7 +842,7 @@ class MainWP_Extensions {
 
 		$return = self::installPlugin( $_POST['download_link'] );
 
-		die( '<mainwp>' . json_encode( $return ) . '</mainwp>' ); // ok
+		die( '<mainwp>' . wp_json_encode( $return ) . '</mainwp>' ); // ok
 	}
 
 	public static function installPlugin( $url, $activatePlugin = false ) {
@@ -957,7 +957,7 @@ class MainWP_Extensions {
 
 		MainWP_Utility::update_option( 'mainwp_extmenu', $snMenuExtensions );
 		do_action('mainwp_removed_extension_menu', $_POST['slug']);
-		die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
 
 	/**
@@ -1180,7 +1180,7 @@ class MainWP_Extensions {
 					$slugs      = explode(',', $others['plugins_slug']);
 					$extraWhere = '';
 					foreach ( $slugs as $slug ) {
-						$slug        = json_encode( $slug );// to LIKE json_encode data
+						$slug        = wp_json_encode( $slug );// to LIKE wp_json_encode data
 						$slug        = trim( $slug, '"' );
 						$slug        = str_replace ( '\\', '.', $slug ); // so slug will in REGEXP pattern like this: "updraftplus./updraftplus.php"
 						$extraWhere .= ' wp.plugins REGEXP "' . $slug . '" OR';

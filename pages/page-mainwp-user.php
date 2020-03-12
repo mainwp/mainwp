@@ -812,7 +812,7 @@ class MainWP_User {
 
 	public static function delete() {
 		self::action( 'delete' );
-		die( json_encode( array( 'result' => __( 'User has been deleted', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'User has been deleted', 'mainwp' ) ) ) );
 	}
 
 	public static function edit() {
@@ -822,12 +822,12 @@ class MainWP_User {
 
 	public static function updateUser() {
 		self::action( 'update_user' );
-		die( json_encode( array( 'result' => __( 'User has been updated', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'User has been updated', 'mainwp' ) ) ) );
 	}
 
 	public static function updatePassword() {
 		self::action( 'update_password' );
-		die( json_encode( array( 'result' => __( 'User password has been updated', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'User password has been updated', 'mainwp' ) ) ) );
 	}
 
 	public static function action( $pAction, $extra = '' ) {
@@ -837,22 +837,22 @@ class MainWP_User {
 		$pass         = stripslashes( utf8_decode( urldecode( $_POST['update_password'] ) ) );
 
 		if ( ! MainWP_Utility::ctype_digit( $userId ) ) {
-			die( json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
 
 		$websiteId = $websiteIdEnc;
 
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => __( 'You can not edit this website!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'You can not edit this website!', 'mainwp' ) ) ) );
 		}
 
 		if ( ( 'delete' === $pAction ) && ( $website->adminname == $userName ) ) {
-			die( json_encode( array( 'error' => __( 'This user is used for our secure link, it can not be deleted.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'This user is used for our secure link, it can not be deleted.', 'mainwp' ) ) ) );
 		}
 
 		if ( 'update_user' === $pAction ) {
@@ -881,7 +881,7 @@ class MainWP_User {
 				'optimize'  => $optimize,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
 
 		if ( is_array( $information ) && isset( $information['error'] ) ) {
@@ -889,10 +889,10 @@ class MainWP_User {
 		}
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
-			die( json_encode( array( 'error' => __( 'Unexpected error.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Unexpected error.', 'mainwp' ) ) ) );
 		} elseif ( 'update_user' === $pAction ) {
 			if ( $optimize && isset( $information['users'] ) ) {
-				$websiteValues['users'] = json_encode( $information['users'] );
+				$websiteValues['users'] = wp_json_encode( $information['users'] );
 				MainWP_DB::Instance()->updateWebsiteValues( $websiteId, $websiteValues );
 			}
 		}
@@ -1245,7 +1245,7 @@ class MainWP_User {
 			</div>
 			<?php
 		} else {
-			echo json_encode( array( $errorFields, $errors ) );
+			echo wp_json_encode( array( $errorFields, $errors ) );
 		}
 	}
 
@@ -1292,7 +1292,7 @@ class MainWP_User {
 							'select_sites'  => trim( $items[8] ),
 							'select_groups' => trim( $items[9] ),
 						);
-						$encoded     = json_encode( $import_data );
+						$encoded     = wp_json_encode( $import_data );
 						?>
 						<input type="hidden" id="user_import_csv_line_<?php echo ( $i + 1 ); ?>" original-line="<?php echo esc_html( $line ); ?>" encoded-data="<?php echo esc_html( $encoded ); ?>" />
 						<?php
@@ -1477,7 +1477,7 @@ class MainWP_User {
 		}
 
 		$ret['line_number'] = intval( $_POST['line_number'] );
-		die( json_encode( $ret ) );
+		die( wp_json_encode( $ret ) );
 	}
 
 	/*

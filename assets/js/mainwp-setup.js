@@ -219,9 +219,7 @@ mainwp_setup_extension_activate_plugin = function () {
         if ( response == 'SUCCESS' ) {
             jQuery( '#mwp_setup_active_extension' ).fadeIn( 500 );
             mainwp_setup_extension_activate( false );
-        } else {
-
-        }
+        } 
     } );
 }
 
@@ -269,7 +267,7 @@ mainwp_setup_extension_activate = function ( retring )
 };
 
 // Connect a new website
-mainwp_setup_managesites_add = function ( event ) {    
+mainwp_setup_managesites_add = function () {    
     
     jQuery( '#mainwp-message-zone' ).hide();
     var errors = [ ];
@@ -379,13 +377,11 @@ mainwp_setup_managesites_add = function ( event ) {
               data[tname] = tvalue;
           } );
 
-          jQuery.post( ajaxurl, data, function ( res_things ) {
-            var site_id = 0;
+          jQuery.post( ajaxurl, data, function ( res_things ) {            
             if ( res_things.error ) {
               response = res_things.error;
             } else {
-              response = res_things.response;
-              site_id = res_things.siteid;
+              response = res_things.response;              
             }
             response = jQuery.trim( response );
 
@@ -464,7 +460,7 @@ jQuery( document ).ready( function () {
         mainwp_setup_managesites_add( event );
     } );
     
-    jQuery(document).on('change', '#mainwp_managesites_add_wpurl', function(event) {
+    jQuery(document).on('change', '#mainwp_managesites_add_wpurl', function() {
         var url = jQuery( '#mainwp_managesites_add_wpurl' ).val();
         var protocol = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val();
         if ( url.lastIndexOf( 'http://' ) === 0 ) {

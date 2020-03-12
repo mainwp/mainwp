@@ -485,7 +485,7 @@ class MainWP_Hooks {
 			}
 
 			if ( ! empty( $error ) ) {
-				// die( json_encode( array( 'error' => $error ) ) );
+				// die( wp_json_encode( array( 'error' => $error ) ) );
 				wp_send_json( array( 'error' => $error ) );
 			}
 
@@ -500,12 +500,12 @@ class MainWP_Hooks {
 						unset($information['sync']);
 					}
 
-					// die( json_encode( $information ) );
+					// die( wp_json_encode( $information ) );
 					wp_send_json( $information );
 				}
 			}
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
 
 		die();

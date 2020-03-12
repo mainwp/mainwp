@@ -648,7 +648,7 @@ class MainWP_Manage_Sites {
 
 				MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array(
 					'dtsFetched'             => time(),
-					'fetchResult'            => json_encode( array() ),
+					'fetchResult'            => wp_json_encode( array() ),
 					'downloadedDB'           => '',
 					'downloadedDBComplete'   => 0,
 					'downloadedFULL'         => '',
@@ -683,7 +683,7 @@ class MainWP_Manage_Sites {
 				// Bigger then 30 seconds means a timeout
 				if ( 30 < ( $stop - $start ) ) {
 					MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array(
-						'last_error' => json_encode( array(
+						'last_error' => wp_json_encode( array(
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						) ),
@@ -699,7 +699,7 @@ class MainWP_Manage_Sites {
 				return false;
 			}
 
-			$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => json_encode( $information ) ) );
+			$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 		} //If not fetchResult, we had a timeout.. Retry this!
 		elseif ( empty( $backupTaskProgress->fetchResult ) ) {
 			try {
@@ -741,7 +741,7 @@ class MainWP_Manage_Sites {
 							return false;
 						}
 
-						$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => json_encode( $information ) ) );
+						$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 					} else {
 						throw new MainWP_Exception( 'Backup failed after 5 retries.' );
 					}
@@ -767,7 +767,7 @@ class MainWP_Manage_Sites {
 
 					$information['size'] = $temp['size'];
 
-					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => json_encode( $information ) ) );
+					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 				}
 			} else {
 				if ( 5 > $backupTaskProgress->attempts ) {
@@ -1703,7 +1703,7 @@ class MainWP_Manage_Sites {
 			}
 		}
 		$ret['check_me'] = ( isset( $_POST['check_me'] ) ? intval( $_POST['check_me'] ) : null );
-		die( json_encode( $ret ) ); // ok
+		die( wp_json_encode( $ret ) ); // ok
 	}
 
 	public static function reconnectSite() {
@@ -1742,7 +1742,7 @@ class MainWP_Manage_Sites {
 		$ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval( $_POST['add_me'] ) : null );
 		if ( '' !== $error ) {
 			$ret['response'] = 'ERROR ' . $error;
-			die( json_encode( $ret ) );
+			die( wp_json_encode( $ret ) );
 		}
 		$ret['response'] = $message;
 		$ret['siteid']   = $site_id;
@@ -1751,18 +1751,18 @@ class MainWP_Manage_Sites {
 			$ret['redirectUrl'] = admin_url( 'admin.php?page=managesites' );
 		}
 
-		die( json_encode( $ret ) );
+		die( wp_json_encode( $ret ) );
 	}
 
 	public static function apply_plugin_settings() {
 		$site_id      = $_POST['siteId'];
 		$ext_dir_slug = $_POST['ext_dir_slug'];
 		if ( empty( $site_id ) ) {
-			die( json_encode( array( 'error' => 'ERROR: empty site id' ) ) );
+			die( wp_json_encode( array( 'error' => 'ERROR: empty site id' ) ) );
 		}
 
 		do_action( 'mainwp_applypluginsettings_' . $ext_dir_slug, $site_id );
-		die( json_encode( array( 'error' => __( 'Undefined error!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'error' => __( 'Undefined error!', 'mainwp' ) ) ) );
 	}
 
 	public static function saveNote() {
@@ -1773,12 +1773,12 @@ class MainWP_Manage_Sites {
 				$esc_note = MainWP_Utility::esc_content( $note );
 				MainWP_DB::Instance()->updateNote( $website->id, $esc_note );
 
-				die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			} else {
-				die( json_encode( array( 'error' => 'Not your website!' ) ) );
+				die( wp_json_encode( array( 'error' => 'Not your website!' ) ) );
 			}
 		}
-		die( json_encode( array( 'undefined_error' => true ) ) );
+		die( wp_json_encode( array( 'undefined_error' => true ) ) );
 	}
 
 	public static function removeSite() {
@@ -1817,17 +1817,17 @@ class MainWP_Manage_Sites {
 				}
 
 				if ( '' !== $error ) {
-					die( json_encode( array( 'error' => $error ) ) );
+					die( wp_json_encode( array( 'error' => $error ) ) );
 				} elseif ( isset( $information['deactivated'] ) ) {
-					die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+					die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 				} elseif ( isset( $information['removed'] ) ) {
-					die( json_encode( array( 'result' => 'REMOVED' ) ) );
+					die( wp_json_encode( array( 'result' => 'REMOVED' ) ) );
 				} else {
-					die( json_encode( array( 'undefined_error' => true ) ) );
+					die( wp_json_encode( array( 'undefined_error' => true ) ) );
 				}
 			}
 		}
-		die( json_encode( array( 'result' => 'NOSITE' ) ) );
+		die( wp_json_encode( array( 'result' => 'NOSITE' ) ) );
 	}
 
 	public static function handleSettingsPost() {
@@ -1910,15 +1910,15 @@ class MainWP_Manage_Sites {
 				}
 
 				if ( '' !== $error ) {
-					die( json_encode( array( 'error' => $error ) ) );
+					die( wp_json_encode( array( 'error' => $error ) ) );
 				} elseif ( isset( $information['result'] ) && ( 'ok' === $information['result'] ) ) {
-					die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+					die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 				} else {
-					die( json_encode( array( 'undefined_error' => true ) ) );
+					die( wp_json_encode( array( 'undefined_error' => true ) ) );
 				}
 			}
 		}
-		die( json_encode( array( 'error' => 'NO_SIDE_ID' ) ) );
+		die( wp_json_encode( array( 'error' => 'NO_SIDE_ID' ) ) );
 	}
 
 	// Hook the section help content to the Help Sidebar element

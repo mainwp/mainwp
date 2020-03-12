@@ -1362,7 +1362,7 @@ class MainWP_DB {
 			'task_id'        => $task_id,
 			'wp_id'          => $wp_id,
 			'dtsFetched'     => time(),
-			'fetchResult'    => json_encode( $information ),
+			'fetchResult'    => wp_json_encode( $information ),
 			'removedFiles'   => 0,
 			'downloadedDB'   => '',
 			'downloadedFULL' => '',
@@ -1511,7 +1511,7 @@ class MainWP_DB {
 			return $this->wpdb->update( $this->tableName( 'wp_backup' ), array(
 				'last_run'           => time(),
 				'last'               => time(),
-				'completed_sites'    => json_encode( array() ),
+				'completed_sites'    => wp_json_encode( array() ),
 			), array( 'id' => $id ) );
 		}
 
@@ -1550,7 +1550,7 @@ class MainWP_DB {
 
 	public function updateCompletedSites( $id, $completedSites ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
-			return $this->wpdb->update( $this->tableName( 'wp_backup' ), array( 'completed_sites' => json_encode( $completedSites ) ), array( 'id' => $id ) );
+			return $this->wpdb->update( $this->tableName( 'wp_backup' ), array( 'completed_sites' => wp_json_encode( $completedSites ) ), array( 'id' => $id ) );
 		}
 
 		return false;

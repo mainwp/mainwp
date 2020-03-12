@@ -437,9 +437,9 @@ class MainWP_Utility {
 	}
 
 	public static function safe_json_encode( $value, $options = 0, $depth = 512 ) {
-		$encoded = json_encode( $value, $options, $depth );
+		$encoded = wp_json_encode( $value, $options, $depth );
 		if ( false === $encoded && $value && json_last_error() == JSON_ERROR_UTF8 ) {
-			$encoded = json_encode( self::utf8ize( $value ), $options, $depth );
+			$encoded = wp_json_encode( self::utf8ize( $value ), $options, $depth );
 		}
 		return $encoded;
 	}

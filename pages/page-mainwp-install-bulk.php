@@ -30,7 +30,7 @@ class MainWP_Install_Bulk {
 
 				$result = $uploader->handleUpload( $path, true );
 				// to pass data through iframe you will need to encode all html tags
-				die( htmlspecialchars( json_encode( $result ), ENT_NOQUOTES ) );
+				die( htmlspecialchars( wp_json_encode( $result ), ENT_NOQUOTES ) );
 			}
 		}
 	}
@@ -146,7 +146,7 @@ class MainWP_Install_Bulk {
 			}
 		}
 
-		// die( json_encode( $output ) );
+		// die( wp_json_encode( $output ) );
 		wp_send_json( $output );
 	}
 
@@ -181,7 +181,7 @@ class MainWP_Install_Bulk {
 		// hook to support addition data: wpadmin_user, wpadmin_passwd
 		$post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
 
-		$post_data['url'] = json_encode( $_POST['url'] );
+		$post_data['url'] = wp_json_encode( $_POST['url'] );
 
 		$output         = new stdClass();
 		$output->ok     = array();
@@ -192,7 +192,7 @@ class MainWP_Install_Bulk {
 			'InstallPluginTheme_handler',
 		), $output, null, array( 'upgrade' => true ) );
 
-		// die( json_encode( $output ) );
+		// die( wp_json_encode( $output ) );
 		wp_send_json( $output );
 	}
 
@@ -243,7 +243,7 @@ class MainWP_Install_Bulk {
 		$output['urls'] = implode( '||', $output['urls'] );
 		$output['urls'] = apply_filters( 'mainwp_installbulk_prepareupload', $output['urls'] );
 
-		// die( json_encode( $output ) );
+		// die( wp_json_encode( $output ) );
 		wp_send_json( $output );
 	}
 
@@ -267,7 +267,7 @@ class MainWP_Install_Bulk {
 		// hook to support addition data: wpadmin_user, wpadmin_passwd
 		$post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
 
-		$post_data['url'] = json_encode( explode( '||', $_POST['urls'] ) );
+		$post_data['url'] = wp_json_encode( explode( '||', $_POST['urls'] ) );
 
 		$output         = new stdClass();
 		$output->ok     = array();
@@ -278,7 +278,7 @@ class MainWP_Install_Bulk {
 			'InstallPluginTheme_handler',
 		), $output, null, array( 'upgrade' => true ) );
 
-		// die( json_encode( $output ) );
+		// die( wp_json_encode( $output ) );
 		wp_send_json( $output );
 	}
 
@@ -293,7 +293,7 @@ class MainWP_Install_Bulk {
 			closedir( $dh );
 		}
 
-		die( json_encode( array( 'ok' => true ) ) );
+		die( wp_json_encode( array( 'ok' => true ) ) );
 	}
 
 	public static function InstallPluginTheme_handler( $data, $website, &$output ) {

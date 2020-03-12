@@ -408,32 +408,32 @@ class MainWP_Recent_Posts {
 
 	public static function publish() {
 		self::action( 'publish' );
-		die( json_encode( array( 'result' => __( 'Post has been published!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Post has been published!', 'mainwp' ) ) ) );
 	}
 
 	public static function approve() {
 		self::action( 'publish' );
-		die( json_encode( array( 'result' => __( 'Post has been approved!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Post has been approved!', 'mainwp' ) ) ) );
 	}
 
 	public static function unpublish() {
 		self::action( 'unpublish' );
-		die( json_encode( array( 'result' => __( 'Post has been unpublished!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Post has been unpublished!', 'mainwp' ) ) ) );
 	}
 
 	public static function trash() {
 		self::action( 'trash' );
-		die( json_encode( array( 'result' => __( 'Post has been moved to trash!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Post has been moved to trash!', 'mainwp' ) ) ) );
 	}
 
 	public static function delete() {
 		self::action( 'delete' );
-		die( json_encode( array( 'result' => __( 'Post has been permanently deleted!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Post has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
 	public static function restore() {
 		self::action( 'restore' );
-		die( json_encode( array( 'result' => __( 'Post has been restored!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Post has been restored!', 'mainwp' ) ) ) );
 	}
 
 	public static function action( $pAction ) {
@@ -441,16 +441,16 @@ class MainWP_Recent_Posts {
 		$websiteIdEnc = $_POST['websiteId'];
 
 		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
-			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 		$websiteId = $websiteIdEnc;
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => 'You can not edit this website!' ) ) );
+			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
 		try {
@@ -459,11 +459,11 @@ class MainWP_Recent_Posts {
 				'id'     => $postId,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
-			die( json_encode( array( 'error' => 'Unexpected error!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Unexpected error!' ) ) );
 		}
 	}
 

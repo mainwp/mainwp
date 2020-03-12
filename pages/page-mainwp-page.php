@@ -729,27 +729,27 @@ class MainWP_Page {
 
 	public static function publish() {
 		MainWP_Recent_Posts::action( 'publish' );
-		die( json_encode( array( 'result' => 'Page has been published!' ) ) );
+		die( wp_json_encode( array( 'result' => 'Page has been published!' ) ) );
 	}
 
 	public static function unpublish() {
 		MainWP_Recent_Posts::action( 'unpublish' );
-		die( json_encode( array( 'result' => 'Page has been unpublished!' ) ) );
+		die( wp_json_encode( array( 'result' => 'Page has been unpublished!' ) ) );
 	}
 
 	public static function trash() {
 		MainWP_Recent_Posts::action( 'trash' );
-		die( json_encode( array( 'result' => 'Page has been moved to trash!' ) ) );
+		die( wp_json_encode( array( 'result' => 'Page has been moved to trash!' ) ) );
 	}
 
 	public static function delete() {
 		MainWP_Recent_Posts::action( 'delete' );
-		die( json_encode( array( 'result' => 'Page has been permanently deleted!' ) ) );
+		die( wp_json_encode( array( 'result' => 'Page has been permanently deleted!' ) ) );
 	}
 
 	public static function restore() {
 		MainWP_Recent_Posts::action( 'restore' );
-		die( json_encode( array( 'result' => 'Page has been restored!' ) ) );
+		die( wp_json_encode( array( 'result' => 'Page has been restored!' ) ) );
 	}
 
 	public static function renderBulkAdd() {

@@ -595,7 +595,7 @@ class MainWP_Setup_Wizard {
 
 		MainWP_Utility::update_option( 'mwp_setup_mainwpTrustedUpdate', isset( $_POST['mwp_setup_add_mainwp_to_trusted_update'] ) ? 1 : 0 );
 
-		$userExtension->trusted_plugins = json_encode( $trustedPlugins );
+		$userExtension->trusted_plugins = wp_json_encode( $trustedPlugins );
 
 		MainWP_DB::Instance()->updateUserExtension( $userExtension );
 
@@ -899,7 +899,7 @@ class MainWP_Setup_Wizard {
 		$password   = ! empty( $enscrypt_p ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_p ) : '';
 
 		if ( ( $username == '' ) || ( $password == '' ) ) {
-			die( json_encode( array( 'error' => __( 'Invalid login. Please check your username and password.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Invalid login. Please check your username and password.', 'mainwp' ) ) ) );
 		}
 
 		$data = MainWP_Api_Manager::instance()->get_purchased_software( $username, $password, $product_id );
@@ -955,7 +955,7 @@ class MainWP_Setup_Wizard {
 				$return['retry_action'] = 1;
 			}
 		}
-		die( json_encode( $return ) ); // ok
+		die( wp_json_encode( $return ) ); // ok
 	}
 
 	public static function ajax_download_and_install() {
@@ -965,7 +965,7 @@ class MainWP_Setup_Wizard {
 		}
 
 		$return = MainWP_Extensions::installPlugin( $_POST['download_link'], true );
-		die( '<mainwp>' . json_encode( $return ) . '</mainwp>' );
+		die( '<mainwp>' . wp_json_encode( $return ) . '</mainwp>' );
 	}
 
 	public static function ajax_activate_plugin() {

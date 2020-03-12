@@ -573,7 +573,7 @@ class MainWP_Live_Reports_Class {
 			} elseif ( 'preview' === (string) $_POST['mwp_creport_report_submit_action'] ||
 			'send_test_email' === (string) $_POST['mwp_creport_report_submit_action']
 			) {
-				$submit_report           = json_decode( json_encode( $report ) );
+				$submit_report           = json_decode( wp_json_encode( $report ) );
 				$return['submit_report'] = $submit_report;
 			}
 

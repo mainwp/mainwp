@@ -83,7 +83,7 @@ class MainWP_Updates_Overview {
 		}
 
 		if ( $website == null ) {
-			die( json_encode( array( 'error' => __( 'Invalid request. Please, try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please, try again.', 'mainwp' ) ) ) );
 		}
 
 		$maxRequestsInThirtySeconds = get_option( 'mainwp_maximumRequests' );
@@ -95,12 +95,12 @@ class MainWP_Updates_Overview {
 		MainWP_Utility::endSession();
 
 		if ( MainWP_Sync::syncSite( $website ) ) {
-			die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+			die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $website->id );
 
-		die( json_encode( array( 'error' => $website->sync_errors ) ) );
+		die( wp_json_encode( array( 'error' => $website->sync_errors ) ) );
 	}
 
 	public static function renderSites( $isUpdatesPage = false ) {

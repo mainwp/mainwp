@@ -73,12 +73,12 @@ class MainWP_Child_Scan {
 
 	public static function scan() {
 		if ( ! isset( $_POST['childId'] ) ) {
-			die( json_encode( array( 'error' => 'Wrong request' ) ) );
+			die( wp_json_encode( array( 'error' => 'Wrong request' ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $_POST['childId'] );
 		if ( ! $website ) {
-			die( json_encode( array( 'error' => 'Site not found' ) ) );
+			die( wp_json_encode( array( 'error' => 'Site not found' ) ) );
 		}
 
 		try {
@@ -104,11 +104,11 @@ class MainWP_Child_Scan {
 				$pluginfound = ! ( is_array( $rslt ) && count( $rslt ) == 0 );
 
 				if ( ! $pluginfound ) {
-					die( json_encode( array( 'success' => 'No issues found!' ) ) );
+					die( wp_json_encode( array( 'success' => 'No issues found!' ) ) );
 				}
 			}
 
-			die( json_encode( array( 'success' => 'mainwp-child-id users found' ) ) );
+			die( wp_json_encode( array( 'success' => 'mainwp-child-id users found' ) ) );
 		} catch ( Exception $e ) {
 			die( 'error' );
 		}

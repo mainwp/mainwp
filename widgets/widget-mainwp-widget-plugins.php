@@ -181,17 +181,17 @@ class MainWP_Widget_Plugins {
 
 	public static function activatePlugin() {
 		self::action( 'activate' );
-		die( json_encode( array( 'result' => __( 'Plugin has been activated!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Plugin has been activated!', 'mainwp' ) ) ) );
 	}
 
 	public static function deactivatePlugin() {
 		self::action( 'deactivate' );
-		die( json_encode( array( 'result' => __( 'Plugin has been deactivated!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Plugin has been deactivated!', 'mainwp' ) ) ) );
 	}
 
 	public static function deletePlugin() {
 		self::action( 'delete' );
-		die( json_encode( array( 'result' => __( 'Plugin has been permanently deleted!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Plugin has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
 	public static function action( $pAction ) {
@@ -199,16 +199,16 @@ class MainWP_Widget_Plugins {
 		$websiteIdEnc = $_POST['websiteId'];
 
 		if ( empty( $plugin ) ) {
-			die( json_encode( array( 'error' => 'Invalid Request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid Request!' ) ) );
 		}
 		$websiteId = $websiteIdEnc;
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => 'Invalid Request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid Request!' ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => 'You can not edit this website!' ) ) );
+			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
 		try {
@@ -217,11 +217,11 @@ class MainWP_Widget_Plugins {
 				'plugin' => $plugin,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
-			die( json_encode( array( 'error' => 'Unexpected error!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Unexpected error!' ) ) );
 		}
 	}
 

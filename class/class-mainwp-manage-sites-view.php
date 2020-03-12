@@ -328,7 +328,7 @@ class MainWP_Manage_Sites_View {
 							$import_data[ $field ] = $value;
 							$x++;
 						}
-						$encoded = json_encode( $import_data );
+						$encoded = wp_json_encode( $import_data );
 						?>
 						<input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo ( $row + 1 ); ?>" value="" encoded-data="<?php echo esc_html( $encoded ); ?>" original="<?php echo esc_attr( $originalLine ); ?>" />
 						<?php

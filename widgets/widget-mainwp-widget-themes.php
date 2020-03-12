@@ -145,12 +145,12 @@ class MainWP_Widget_Themes {
 
 	public static function activateTheme() {
 		self::action( 'activate' );
-		die( json_encode( array( 'result' => __( 'Theme has been activated!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Theme has been activated!', 'mainwp' ) ) ) );
 	}
 
 	public static function deleteTheme() {
 		self::action( 'delete' );
-		die( json_encode( array( 'result' => __( 'Theme has been permanently deleted!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Theme has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
 	public static function action( $pAction ) {
@@ -158,16 +158,16 @@ class MainWP_Widget_Themes {
 		$websiteIdEnc = $_POST['websiteId'];
 
 		if ( empty( $theme ) ) {
-			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 		$websiteId = $websiteIdEnc;
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => 'You can not edit this website!' ) ) );
+			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
 		try {
@@ -176,11 +176,11 @@ class MainWP_Widget_Themes {
 				'theme'  => $theme,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
-			die( json_encode( array( 'error' => 'Unexpected error!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Unexpected error!' ) ) );
 		}
 	}
 

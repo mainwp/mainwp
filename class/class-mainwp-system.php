@@ -1512,7 +1512,7 @@ class MainWP_System {
 				$email = MainWP_Utility::getNotificationEmail( $user );
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_email', $email );
 				MainWP_DB::Instance()->updateWebsiteSyncValues( $website->id, array( 'dtsAutomaticSync' => time() ) );
-				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_wp_upgrades', json_encode( $websiteCoreUpgrades ) );
+				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_wp_upgrades', wp_json_encode( $websiteCoreUpgrades ) );
 				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_plugin_upgrades', $website->plugin_upgrades );
 				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_theme_upgrades', $website->theme_upgrades );
 

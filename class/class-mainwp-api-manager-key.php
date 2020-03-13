@@ -6,7 +6,7 @@
  * and provides the ability to grab license Keys automatically.
  */
 
-// Exit if accessed directly
+// Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -27,7 +27,7 @@ class MainWP_Api_Manager_Key {
 	/**
 	 * $_instance
 	 *
-	 * Set initial $_instance value
+	 * Set initial $_instance value.
 	 *
 	 * @var null
 	 */
@@ -36,7 +36,7 @@ class MainWP_Api_Manager_Key {
 	/**
 	 * $apisslverify
 	 *
-	 * Set initial $apisslverify value
+	 * Set initial $apisslverify value.
 	 *
 	 * @var integer
 	 */
@@ -45,7 +45,7 @@ class MainWP_Api_Manager_Key {
 	/**
 	 * Instance
 	 *
-	 * Create a new Self Instance
+	 * Create a new Self Instance.
 	 *
 	 * @return mixed self::$_instance
 	 */
@@ -61,7 +61,7 @@ class MainWP_Api_Manager_Key {
 	/**
 	 * __construct
 	 *
-	 * Validate SSL Certificate
+	 * Validate SSL Certificate.
 	 *
 	 * @return bool 1|0
 	 */
@@ -70,12 +70,12 @@ class MainWP_Api_Manager_Key {
 	}
 
 	/**
-	 * Extention Activate
+	 * Extension Activate
 	 *
 	 * This function checks the users login information & grabs the update URL
 	 * for the specific extension & activates it.
 	 *
-	 * @param mixed $args
+	 * @param mixed $args Extension Arguments.
 	 * @return mixed $response
 	 */
 	public function activate( $args ) {
@@ -107,12 +107,12 @@ class MainWP_Api_Manager_Key {
 	}
 
 	/**
-	 * Extention Deactivate
+	 * Extension Deactivate
 	 *
 	 * This function checks the users login information & grabs the update URL
 	 * for the specific extension & deactivates it.
 	 *
-	 * @param mixed $args
+	 * @param mixed $args Extension Arguments.
 	 * @return mixed $response
 	 */
 	public function deactivate( $args ) {
@@ -148,7 +148,7 @@ class MainWP_Api_Manager_Key {
 	 * This function checks the users login information & grabs the update URL
 	 * for the specific extension & returns the API Key.
 	 *
-	 * @param mixed $args
+	 * @param mixed $args Extension Arguments.
 	 * @return mixed $response
 	 */
 	public function grabapikey( $args ) {
@@ -184,7 +184,8 @@ class MainWP_Api_Manager_Key {
 	 * This function checks the users login information & Tests
 	 * it against the MainWP.com Login Credentials stored on the license server.
 	 *
-	 * @param mixed $args
+	 * @param mixed $args Login Arguments.
+	 * @throws mixed Request error codes.
 	 * @return mixed $response
 	 */
 	public function testloginapi( $args ) {
@@ -239,7 +240,7 @@ class MainWP_Api_Manager_Key {
 	 * This function grabs a list of purchased MainWP Extensions
 	 * that are available for download.
 	 *
-	 * @param mixed $args
+	 * @param mixed $args Software Arguments.
 	 * @return mixed $response
 	 */
 	public function getpurchasedsoftware( $args ) {
@@ -272,7 +273,7 @@ class MainWP_Api_Manager_Key {
 	/**
 	 * Purchase Software
 	 *
-	 * @param mixed $args
+	 * @param mixed $args Software Arguments.
 	 * @return mixed $response
 	 */
 	public function purchasesoftware( $args ) {
@@ -300,4 +301,4 @@ class MainWP_Api_Manager_Key {
 	}
 }
 
-// Class is instantiated as an object by other classes on-demand
+// Class is instantiated as an object by other classes on-demand.

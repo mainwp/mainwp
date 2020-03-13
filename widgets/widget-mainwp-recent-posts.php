@@ -3,6 +3,8 @@
  * MainWP Recent Posts Widget
  *
  * Displays the Child Sites most recent published draft, pending, trash & future posts.
+ * 
+ * @package MainWP/Widget_Recent_Posts
  */
 
 /**
@@ -35,8 +37,8 @@ class MainWP_Recent_Posts {
 	 *
 	 * Build the resent posts list.
 	 *
-	 * @param mixed   $renew
-	 * @param boolean $pExit
+	 * @param mixed   $renew 
+	 * @param boolean $pExit ture|false If $pEixt is true then exit.
 	 */
 	public static function renderSites( $renew, $pExit = true ) {
 
@@ -499,7 +501,7 @@ class MainWP_Recent_Posts {
 	 *
 	 * Post action.
 	 *
-	 * @param mixed $pAction
+	 * @param mixed $pAction Post Action.
 	 */
 	public static function action( $pAction ) {
 		$postId       = $_POST['postId'];
@@ -537,9 +539,7 @@ class MainWP_Recent_Posts {
 	 *
 	 * Update Post Action.
 	 *
-	 * @param mixed $pAction
-	 *
-	 * @return void
+	 * @param mixed $pAction Post Action.
 	 */
 	public static function action_update( $pAction ) {
 		$postId       = $_POST['postId'];

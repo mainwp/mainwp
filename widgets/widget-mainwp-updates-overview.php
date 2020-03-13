@@ -35,11 +35,11 @@ class MainWP_Updates_Overview {
 	 *
 	 * Grab Child Sites update status & build widget.
 	 *
-	 * @param mixed $default
-	 * @param mixed $action
-	 * @param mixed $args
+	 * @param mixed $default Default.
+	 * @param mixed $action Action.
+	 * @param mixed $args Slug.
 	 *
-	 * @return mixed $default
+	 * @return mixed $default|$res
 	 */
 	public static function plugins_api( $default, $action, $args ) {
 		if ( property_exists( $args, 'slug' ) && ( 'mainwp' === $args->slug ) ) {
@@ -815,7 +815,7 @@ class MainWP_Updates_Overview {
 	 *
 	 * @param boolean $dismiss
 	 *
-	 * @return void
+	 * @return boolean true
 	 */
 	public static function dismissSyncErrors( $dismiss = true ) {
 		global $current_user;

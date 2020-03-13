@@ -3,6 +3,8 @@
  * MainWP Recent Pages Widget
  *
  * Displays the Child Sites most recent published draft, pending, trash & future Pages.
+ * 
+ * @package MainWP/Widget_Mainwp_Recent_Pages
  */
 
 /**
@@ -36,7 +38,7 @@ class MainWP_Recent_Pages {
 	 * Build the resent pages list.
 	 *
 	 * @param mixed   $renew
-	 * @param boolean $pExit
+	 * @param boolean $pExit true|false If $pExit is true exit.
 	 */
 	public static function renderSites( $renew, $pExit = true ) {
 
@@ -86,7 +88,7 @@ class MainWP_Recent_Pages {
 		$recent_pages_future    = MainWP_Utility::getSubArrayHaving( $allPages, 'status', 'future' );
 		$recent_pages_future    = MainWP_Utility::sortmulti( $recent_pages_future, 'dts', 'desc' );
 
-		// MainWP_UI::renderBeginReadyPopup().
+		// MainWP_UI::renderBeginReadyPopup();
 		?>
 
 		<div class="ui grid">

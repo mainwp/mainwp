@@ -914,9 +914,9 @@ class MainWP_Post {
 
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) :
-						$count_seo_links      = $count_seo_linked     = null;
-						$seo_score            = '';
-						$readability_score    = '';
+						$count_seo_links   = $count_seo_linked     = null;
+						$seo_score         = '';
+						$readability_score = '';
 						if ( isset( $post['seo_data'] ) ) {
 							$seo_data          = $post['seo_data'];
 							$count_seo_links   = esc_html( $seo_data['count_seo_links'] );
@@ -1287,7 +1287,7 @@ class MainWP_Post {
 			$monthnum  = zeroise( $i, 2 );
 			$monthtext = $wp_locale->get_month_abbrev( $wp_locale->get_month( $i ) );
 			$month    .= "\t\t\t" . '<option value="' . $monthnum . '" data-text="' . $monthtext . '" ' . selected( $monthnum, $mm, false ) . '>';
-			$month .= sprintf( __( '%1$s-%2$s', 'mainwp' ), $monthnum, $monthtext ) . "</option>\n";
+			$month    .= sprintf( __( '%1$s-%2$s', 'mainwp' ), $monthnum, $monthtext ) . "</option>\n";
 		}
 
 		$month .= '</select></label>';
@@ -2153,8 +2153,8 @@ class MainWP_Post {
 
 	public static function PostsGetTerms_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
-			$result      = $results[1];
-			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$result                       = $results[1];
+			$information                  = MainWP_Utility::get_child_response( base64_decode( $result ) );
 			$output->cats[ $website->id ] = is_array( $information ) ? $information : array();
 		} else {
 			$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( 'NOMAINWP', $website->url ) );

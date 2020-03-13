@@ -2,29 +2,29 @@
 /**
  * MainWP Notes Widget
  *
- * Display current Child Site Notes
+ * Display current Child Site Notes.
  */
 
 /**
  * Class MainWP_Notes
  *
- * Grab Child Site Notes & Build Notes Widget
+ * Grab Child Site Notes & Build Notes Widget.
  */
 class MainWP_Notes {
 
 	/**
-	 * getClassName()
+	 * Method getClassName()
 	 *
-	 * @return string __CLASS__
+	 * @return string __CLASS__ Class Name
 	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
 	/**
-	 * render()
+	 * Method render()
 	 *
-	 * Grab Child Site Notes & Render Widget
+	 * Grab Child Site Notes & Render Widget.
 	 */
 	public static function render() {
 		$current_wpid = MainWP_Utility::get_current_wpid();

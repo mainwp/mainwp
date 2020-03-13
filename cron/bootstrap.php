@@ -1,5 +1,15 @@
 <?php
+/**
+ * MainWP bootstrap.
+ *
+ * Set default php.ini variables
+ * check if load wp-load & wp-config exist & include them
+ * else exit due to "Unsupported WordPress Setup".
+ *
+ * @package MainWP/Bootstrap
+ */
 
+// set php.ini variables.
 @ignore_user_abort( true );
 @set_time_limit( 0 );
 $mem = '512M';

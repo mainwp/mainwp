@@ -2,7 +2,7 @@
 /**
  * MainWP Backup Tasks
  *
- * Displays the MainWP > Backups Page ( Legacy )
+ * Displays the MainWP > Backups Page ( Legacy ).
  *
  * @todo remove from widgets as this is not a widget but a page?
  */
@@ -14,20 +14,20 @@
 class MainWP_Backup_Tasks {
 
 	/**
-	 * getClassName()
+	 * Method getClassName()
 	 *
-	 * Get Class Name
+	 * Get Class Name.
 	 *
-	 * @return string CLASS
+	 * @return string CLASS Class Name.
 	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
 	/**
-	 * getName()
+	 * Method getName()
 	 *
-	 * Get backup tasks name
+	 * Get backup tasks name.
 	 *
 	 * @return string backup tasks
 	 */
@@ -36,7 +36,7 @@ class MainWP_Backup_Tasks {
 	}
 
 	/**
-	 * render()
+	 * Method render()
 	 *
 	 * Render MainWP Legacy Backups List
 	 */

@@ -1,15 +1,45 @@
 <?php
+/**
+ * MainWP Recent Pages Widget
+ *
+ * Displays the Child Sites most recent published draft, pending, trash & future Pages.
+ *
+ * @package MainWP/Widget_Mainwp_Recent_Pages
+ */
 
+/**
+ * Class MainWP_Recent_Pages
+ *
+ * Displays the Child Sites most recent published draft, pending, trash & future Pages.
+ */
 class MainWP_Recent_Pages {
 
+	/**
+	 * Method getClassName()
+	 *
+	 * @return string __CLASS__ Class Name
+	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
+	/**
+	 * Method render()
+	 *
+	 * Fire off Method renderSites().
+	 */
 	public static function render() {
 		self::renderSites( false, false );
 	}
 
+	/**
+	 * Method renderSites()
+	 *
+	 * Build the resent pages list.
+	 *
+	 * @param mixed   $renew Site Data.
+	 * @param boolean $pExit true|false If $pExit is true exit.
+	 */
 	public static function renderSites( $renew, $pExit = true ) {
 
 		$recent_number = apply_filters('mainwp_recent_posts_pages_number', 5);

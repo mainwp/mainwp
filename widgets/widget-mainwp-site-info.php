@@ -2,27 +2,27 @@
 /**
  * MainWP Site Info Widget
  *
- * Build the Child Site Info Widget
+ * Build the Child Site Info Widget.
  */
 
 /**
  * Class MainWP_Site_Info
  *
- * Grab Child Site info and build widget
+ * Grab Child Site info and build widget.
  */
 class MainWP_Site_Info {
 
 	/**
-	 * getClassName()
+	 * Method getClassName()
 	 *
-	 * @return string __CLASS__
+	 * @return string __CLASS__ Class name.
 	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
 	/**
-	 * render()
+	 * Method render()
 	 *
 	 * @return mixed renderSiteInfo()
 	 */

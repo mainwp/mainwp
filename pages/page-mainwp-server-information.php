@@ -295,7 +295,7 @@ class MainWP_Server_Information {
 					?>
 					<tr>
 						<td><?php _e( 'FileSystem Method', 'mainwp' ); ?></td>
-						<td><?php echo '= ' . 'direct'; ?></td>
+						<td><?php echo '= direct'; ?></td>
 						<td><?php echo self::getFileSystemMethod(); ?></td>
 						<td><?php echo self::getFileSystemMethodCheck(); ?></td>
 					</tr>

@@ -282,9 +282,7 @@ class MainWP_Live_Reports_Class {
 	}
 
 	public function mainwp_postprocess_backup_sites_feedback( $output, $unique ) {
-		if ( ! is_array( $output ) ) {
-
-		} else {
+		if ( is_array( $output ) ) {
 			foreach ( $output as $key => $value ) {
 				$output[ $key ] = $value;
 			}
@@ -386,8 +384,8 @@ class MainWP_Live_Reports_Class {
 				$report               = LiveReportResponder_DB::get_instance()->get_report_by( 'id', $_REQUEST['id'], null, null, ARRAY_A );
 				$current_attach_files = $report['attach_files'];
 			}
-
-			if ( isset( $_POST['mwp_creport_title'] ) && ( $title = trim( $_POST['mwp_creport_title'] ) ) != '' ) {
+			$title = isset( $_POST['mwp_creport_title'] ) ? trim( $_POST['mwp_creport_title'] ) : '';
+			if ( $title != '' ) {
 				$report['title'] = $title;
 			}
 
@@ -563,7 +561,8 @@ class MainWP_Live_Reports_Class {
 			'save_pdf' === $_POST['mwp_creport_report_submit_action'] ||
 			'schedule' === $_POST['mwp_creport_report_submit_action'] ||
 			'archive_report' === $_POST['mwp_creport_report_submit_action'] ) {
-				if ( $result = LiveReportResponder_DB::get_instance()->update_report( $report ) ) {
+				$result = LiveReportResponder_DB::get_instance()->update_report( $report );
+				if ( $result ) {
 					$return['id'] = $result->id;
 					$messages[]   = 'Report has been saved.';
 				} else {
@@ -2093,7 +2092,8 @@ PRIMARY KEY  (`id`)  ';
 				'token_name'         => $token_name,
 				'token_description'  => $token_description,
 			);
-			if ( $current = $this->get_tokens_by( 'token_name', $token_name ) ) {
+			$current = $this->get_tokens_by( 'token_name', $token_name );
+			if ( $current ) {
 				$this->update_token( $current->id, $token );
 			} else {
 				$this->add_token( $token );
@@ -2101,7 +2101,8 @@ PRIMARY KEY  (`id`)  ';
 		}
 
 		foreach ( $this->default_reports as $report ) {
-			if ( $current = $this->get_report_by( 'title', $report['title'] ) ) {
+			$current = $this->get_report_by( 'title', $report['title'] );
+			if ( $current ) {
 				$current               = current( $current );
 				$report['id']          = $current->id;
 				$report['is_archived'] = 0;
@@ -2112,7 +2113,8 @@ PRIMARY KEY  (`id`)  ';
 		}
 
 		foreach ( $this->default_formats as $format ) {
-			if ( $current = $this->get_format_by( 'title', $format['title'], $format['type'] ) ) {
+			$current = $this->get_format_by( 'title', $format['title'], $format['type'] );
+			if ( $current  ) {
 				$format['id'] = $current->id;
 				$this->update_format( $format );
 			} else {
@@ -2134,7 +2136,8 @@ PRIMARY KEY  (`id`)  ';
 		/** @var $wpdb wpdb */
 		global $wpdb;
 		if ( ! empty( $token['token_name'] ) && ! empty( $token['token_description'] ) ) {
-			if ( $current = $this->get_tokens_by( 'token_name', $token['token_name'] ) ) {
+			$current = $this->get_tokens_by( 'token_name', $token['token_name'] );
+			if ( $current ) {
 				return false;
 			}
 			if ( $wpdb->insert( $this->table_name( 'client_report_token' ), $token ) ) {
@@ -2384,8 +2387,9 @@ PRIMARY KEY  (`id`)  ';
 						$update_client['clientid'] = $client_id;
 					}
 				}
-
-				if ( $updatedClient = $this->update_client( $update_client ) ) {
+				
+				$updatedClient = $this->update_client( $update_client );
+				if ( $updatedClient ) {
 					$client_id = $updatedClient->clientid;
 				}
 			} elseif ( ! empty( $report['email'] ) ) {

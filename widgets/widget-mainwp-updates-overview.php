@@ -448,9 +448,7 @@ class MainWP_Updates_Overview {
 			$sync_status = $result['sync_status'];
 			$last_sync   = $last_dtsSync = $result['last_sync'];
 
-			if ( $sync_status === 'not_synced' ) {
-
-			} elseif ( $sync_status === 'all_synced' ) {
+			if ( $sync_status === 'all_synced' ) {
 				$now           = time();
 				$last_sync_all = get_option('mainwp_last_synced_all_sites', 0);
 				if ( $last_sync_all == 0 ) {

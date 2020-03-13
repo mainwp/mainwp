@@ -84,7 +84,7 @@ class MainWP_Api_Manager_Password_Management {
 	 * Creates a unique instance ID.
 	 *
 	 * @param integer $length Length of ID.
-	 * @param boolean $special_chars Valid special characters. 
+	 * @param boolean $special_chars Valid special characters.
 	 * @param boolean $extra_special_chars Extra special characters.
 	 *
 	 * @return mixed $password

@@ -2,7 +2,7 @@
 /**
  * MainWP Backup Tasks
  *
- * Displays the MainWP > Backups Page ( Legacy )
+ * Displays the MainWP > Backups Page ( Legacy ).
  *
  * @todo remove from widgets as this is not a widget but a page?
  */
@@ -14,9 +14,9 @@
 class MainWP_Backup_Tasks {
 
 	/**
-	 * getClassName()
+	 * Method getClassName()
 	 *
-	 * Get Class Name
+	 * Get Class Name.
 	 *
 	 * @return string CLASS
 	 */
@@ -25,9 +25,9 @@ class MainWP_Backup_Tasks {
 	}
 
 	/**
-	 * getName()
+	 * Method getName()
 	 *
-	 * Get backup tasks name
+	 * Get backup tasks name.
 	 *
 	 * @return string backup tasks
 	 */
@@ -36,14 +36,14 @@ class MainWP_Backup_Tasks {
 	}
 
 	/**
-	 * render()
+	 * Method render()
 	 *
 	 * Render MainWP Legacy Backups List
 	 */
 	public static function render() {
 
 		$tasks = MainWP_DB::Instance()->getBackupTasksForUser();
-		// MainWP_UI::renderBeginReadyPopup();
+		// MainWP_UI::renderBeginReadyPopup.
 		?>
 		<h3><?php _e('Backup tasks', 'mainwp'); ?></h3>
 		<?php
@@ -121,7 +121,7 @@ class MainWP_Backup_Tasks {
 			<?php
 		}
 
-		// MainWP_UI::renderEndReadyPopup();
+		// MainWP_UI::renderEndReadyPopup.
 	}
 
 }

@@ -2,45 +2,45 @@
 /**
  * MainWP Recent Posts Widget
  *
- * Displays the Child Sites most recent published draft, pending, trash & future posts
+ * Displays the Child Sites most recent published draft, pending, trash & future posts.
  */
 
 /**
  * Class MainWP_Recent_Posts
  *
- * Displays the Child Sites most recent published draft, pending, trash & future posts
+ * Displays the Child Sites most recent published draft, pending, trash & future posts.
  */
 class MainWP_Recent_Posts {
 
 	/**
-	 * getClassName()
+	 * Method getClassName()
 	 *
-	 * @return string __CLASS__
+	 * @return string __CLASS__ Class Name
 	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
 	/**
-	 * render()
+	 * Method render()
 	 *
-	 * Fire off renderSites()
+	 * Fire off renderSites().
 	 */
 	public static function render() {
 		self::renderSites( false, false );
 	}
 
 	/**
-	 * renderSites()
+	 * Method renderSites()
 	 *
-	 * Build the resent posts list
+	 * Build the resent posts list.
 	 *
 	 * @param mixed   $renew
 	 * @param boolean $pExit
 	 */
 	public static function renderSites( $renew, $pExit = true ) {
 
-		$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 ); // $recent_number: support >=0 and <= 30
+		$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 ); // $recent_number: support >=0 and <= 30.
 
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
@@ -435,9 +435,9 @@ class MainWP_Recent_Posts {
 	}
 
 	/**
-	 * publish()
+	 * Method publish()
 	 *
-	 * Publish Post
+	 * Publish Post.
 	 */
 	public static function publish() {
 		self::action( 'publish' );
@@ -445,9 +445,9 @@ class MainWP_Recent_Posts {
 	}
 
 	/**
-	 * approve()
+	 * Method approve()
 	 *
-	 * Approve Post
+	 * Approve Post.
 	 */
 	public static function approve() {
 		self::action( 'publish' );
@@ -455,9 +455,9 @@ class MainWP_Recent_Posts {
 	}
 
 	/**
-	 * unpublish()
+	 * Method unpublish()
 	 *
-	 * Unpublish Post
+	 * Unpublish Post.
 	 */
 	public static function unpublish() {
 		self::action( 'unpublish' );
@@ -465,9 +465,9 @@ class MainWP_Recent_Posts {
 	}
 
 	/**
-	 * trash()
+	 * Method trash()
 	 *
-	 * Trash Post
+	 * Trash Post.
 	 */
 	public static function trash() {
 		self::action( 'trash' );
@@ -475,9 +475,9 @@ class MainWP_Recent_Posts {
 	}
 
 	/**
-	 * delete()
+	 * Method delete()
 	 *
-	 * Delete Post
+	 * Delete Post.
 	 */
 	public static function delete() {
 		self::action( 'delete' );
@@ -485,9 +485,9 @@ class MainWP_Recent_Posts {
 	}
 
 	/**
-	 * restore()
+	 * Method restore()
 	 *
-	 * Restore Post
+	 * Restore Post.
 	 */
 	public static function restore() {
 		self::action( 'restore' );
@@ -495,9 +495,9 @@ class MainWP_Recent_Posts {
 	}
 
 	/**
-	 * action()
+	 * Method action()
 	 *
-	 * Post action
+	 * Post action.
 	 *
 	 * @param mixed $pAction
 	 */
@@ -533,9 +533,9 @@ class MainWP_Recent_Posts {
 	}
 
 	/**
-	 * action_update()
+	 * Method action_update()
 	 *
-	 * Update Post Action
+	 * Update Post Action.
 	 *
 	 * @param mixed $pAction
 	 *

@@ -2,38 +2,38 @@
 /**
  * MainWP Recent Pages Widget
  *
- * Displays the Child Sites most recent published draft, pending, trash & future Pages
+ * Displays the Child Sites most recent published draft, pending, trash & future Pages.
  */
 
 /**
  * Class MainWP_Recent_Pages
  *
- * Displays the Child Sites most recent published draft, pending, trash & future Pages
+ * Displays the Child Sites most recent published draft, pending, trash & future Pages.
  */
 class MainWP_Recent_Pages {
 
 	/**
-	 * getClassName()
+	 * Method getClassName()
 	 *
-	 * @return string __CLASS__
+	 * @return string __CLASS__ Class Name
 	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
 	/**
-	 * render()
+	 * Method render()
 	 *
-	 * Fire off renderSites()
+	 * Fire off Method renderSites().
 	 */
 	public static function render() {
 		self::renderSites( false, false );
 	}
 
 	/**
-	 * renderSites()
+	 * Method renderSites()
 	 *
-	 * Build the resent pages list
+	 * Build the resent pages list.
 	 *
 	 * @param mixed   $renew
 	 * @param boolean $pExit
@@ -86,7 +86,7 @@ class MainWP_Recent_Pages {
 		$recent_pages_future    = MainWP_Utility::getSubArrayHaving( $allPages, 'status', 'future' );
 		$recent_pages_future    = MainWP_Utility::sortmulti( $recent_pages_future, 'dts', 'desc' );
 
-		// MainWP_UI::renderBeginReadyPopup();
+		// MainWP_UI::renderBeginReadyPopup().
 		?>
 
 		<div class="ui grid">

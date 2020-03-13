@@ -2,27 +2,27 @@
 /**
  * MainWP Connection Status
  *
- * Build the Connection Status Widget
+ * Build the Connection Status Widget.
  */
 
 /**
  * Class MainWP_Connection_Status
  *
- * Build the Connection Status Widget
+ * Build the Connection Status Widget.
  */
 class MainWP_Connection_Status {
 
 	/**
-	 * getClassName()
+	 * Method getClassName()
 	 *
-	 * @return string __CLASS__
+	 * @return string __CLASS__ Class Namw
 	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
 	/**
-	 * render()
+	 * Method render()
 	 *
 	 * @return mixed renderSites()
 	 */
@@ -31,10 +31,10 @@ class MainWP_Connection_Status {
 	}
 
 	/**
-	 * renderSites()
+	 * Method renderSites()
 	 *
 	 * Build the Connection Status Widget
-	 * Displays $SYNCERRORS|$DOWN|$UP|$ALL
+	 * Displays $SYNCERRORS|$DOWN|$UP|$ALL.
 	 */
 	public static function renderSites() {
 		$current_wpid = MainWP_Utility::get_current_wpid();
@@ -48,7 +48,7 @@ class MainWP_Connection_Status {
 		$websites = MainWP_DB::Instance()->query( $sql );
 
 		$count_connected = $count_disconnected = 0;
-		// Loop 4 times, first we show the conflicts, then we show the down sites, then we show the up sites
+		// Loop 4 times, first we show the conflicts, then we show the down sites, then we show the up sites.
 		$SYNCERRORS = 0;
 		$DOWN       = 1;
 		$UP         = 2;
@@ -58,7 +58,7 @@ class MainWP_Connection_Status {
 		$html_other_sites  = '';
 		$html_all_sites    = '';
 
-		$disconnect_site_ids = array(); // to fix double display
+		$disconnect_site_ids = array(); // to fix double display.
 
 		for ( $j = 0; $j < 4; $j ++ ) {
 			MainWP_DB::data_seek( $websites, 0 );
@@ -279,7 +279,7 @@ class MainWP_Connection_Status {
 		</div>
 		<?php else : ?>
 			<?php
-			// Get site by ID $current_wpid
+			// Get site by ID $current_wpid.
 			$site = MainWP_DB::Instance()->getWebsiteById( $current_wpid );
 			?>
 			<?php if ( $count_connected > 0 ) : ?>

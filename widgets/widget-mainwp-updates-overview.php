@@ -2,7 +2,7 @@
 /**
  * MainWP Updates Overview Widget
  *
- * Grab Child Sites update status & build widget
+ * Grab Child Sites update status & build widget.
  */
 
 /**
@@ -11,29 +11,29 @@
 class MainWP_Updates_Overview {
 
 	/**
-	 * getClassName()
+	 * Method getClassName()
 	 *
 	 * Get Class Name
 	 *
-	 * @return string __CLASS__
+	 * @return string __CLASS__ Class Name.
 	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
 	/**
-	 * init()
+	 * Method init()
 	 *
-	 * add plugins api filter
+	 * Add plugins api filter.
 	 */
 	public static function init() {
 		add_filter( 'plugins_api', array( 'MainWP_Updates_Overview', 'plugins_api' ), 10, 3 );
 	}
 
 	/**
-	 * plugins_api()
+	 * Method plugins_api()
 	 *
-	 * Grab Child Sites update status & build widget
+	 * Grab Child Sites update status & build widget.
 	 *
 	 * @param mixed $default
 	 * @param mixed $action
@@ -77,18 +77,18 @@ class MainWP_Updates_Overview {
 	}
 
 	/**
-	 * getName()
+	 * Method getName()
 	 *
-	 * Define Widget Title
+	 * Define Widget Title.
 	 */
 	public static function getName() {
 		return __( 'Update Overview', 'mainwp' );
 	}
 
 	/**
-	 * render()
+	 * Method render()
 	 *
-	 * Check if $_GET['dashboard'] then run renderSites()
+	 * Check if $_GET['dashboard'] then run renderSites().
 	 */
 	public static function render() {
 		$individual = false;
@@ -99,9 +99,9 @@ class MainWP_Updates_Overview {
 	}
 
 	/**
-	 * renderLastUpdate()
+	 * Method renderLastUpdate()
 	 *
-	 * Check when the Child Site was last synced
+	 * Check when the Child Site was last synced.
 	 */
 	public static function renderLastUpdate() {
 		$currentwp = MainWP_Utility::get_current_wpid();
@@ -121,9 +121,9 @@ class MainWP_Updates_Overview {
 	}
 
 	/**
-	 * syncSite()
+	 * Method syncSite()
 	 *
-	 * Sync Child Site
+	 * Sync Child Site.
 	 */
 	public static function syncSite() {
 		$website = null;
@@ -153,9 +153,9 @@ class MainWP_Updates_Overview {
 	}
 
 	/**
-	 * renderSites()
+	 * Method renderSites()
 	 *
-	 * Grab available Child Sites updates a build Widget
+	 * Grab available Child Sites updates a build Widget.
 	 *
 	 * @param boolean $isUpdatesPage
 	 */
@@ -170,7 +170,7 @@ class MainWP_Updates_Overview {
 			$globalView = false;
 		} else {
 			$staging_enabled = apply_filters('mainwp-extension-available-check', 'mainwp-staging-extension') || apply_filters('mainwp-extension-available-check', 'mainwp-timecapsule-extension');
-			// To support staging extension
+			// To support staging extension.
 			$is_staging = 'no';
 			if ( $staging_enabled ) {
 				$staging_updates_view = get_user_option( 'mainwp_staging_options_updates_view', $current_user->ID );
@@ -178,7 +178,7 @@ class MainWP_Updates_Overview {
 					$is_staging = 'yes';
 				}
 			}
-			// end support
+			// end support.
 
 			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
 		}
@@ -407,10 +407,10 @@ class MainWP_Updates_Overview {
 			}
 		}
 
-		// WP Upgrades part:
+		// WP Upgrades part.
 		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
 
-		// to fix incorrect total updates
+		// to fix incorrect total updates.
 		if ( $mainwp_show_language_updates ) {
 			$total_upgrades += $total_translation_upgrades;
 		}
@@ -425,7 +425,7 @@ class MainWP_Updates_Overview {
 		}
 		$trusted_icon = '<i class="check circle outline icon"></i> ';
 
-		// the hook using to set maximum number of plugins/themes for huge number of updates
+		// the hook using to set maximum number of plugins/themes for huge number of updates.
 		$limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
 		$continue_update   = $continue_update_slug     = $continue_class           = '';
 		if ( $limit_updates_all > 0 ) {
@@ -722,7 +722,7 @@ class MainWP_Updates_Overview {
 
 
 
-		<?php // Invisible section to support global updates all ?>
+		<?php // Invisible section to support global updates all. ?>
 
 		<div style="display: none">
 
@@ -811,7 +811,7 @@ class MainWP_Updates_Overview {
 	// }
 
 	/**
-	 * dismissSyncErrors()
+	 * Method dismissSyncErrors()
 	 *
 	 * @param boolean $dismiss
 	 *
@@ -825,14 +825,14 @@ class MainWP_Updates_Overview {
 	}
 
 	/**
-	 * checkbackups()
+	 * Method checkbackups()
 	 *
-	 * Check if Child Site needs to be backed up before updates
+	 * Check if Child Site needs to be backed up before updates.
 	 *
 	 * @return mixed $output
 	 */
 	public static function checkBackups() {
-		// if (get_option('mainwp_backup_before_upgrade') != 1) return true;
+		// if (get_option('mainwp_backup_before_upgrade') != 1) return true;.
 		if ( ! is_array( $_POST['sites'] ) ) {
 			return true;
 		}

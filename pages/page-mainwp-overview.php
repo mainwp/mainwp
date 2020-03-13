@@ -70,7 +70,7 @@ class MainWP_Overview {
 		}
 	}
 
-	static function init_left_menu() {
+	public static function init_left_menu() {
 		MainWP_Menu::add_left_menu( array(
 			'title'      => __( 'Overview', 'mainwp' ),
 			'parent_key' => 'mainwp_tab',
@@ -80,7 +80,7 @@ class MainWP_Overview {
 		), 1 ); // level 1
 	}
 
-	function on_load_page() {
+	public function on_load_page() {
 		wp_enqueue_script( 'common' );
 		wp_enqueue_script( 'wp-lists' );
 		wp_enqueue_script( 'postbox' );
@@ -90,7 +90,7 @@ class MainWP_Overview {
 		self::add_meta_boxes( $this->dashBoard );
 	}
 
-	static function add_meta_boxes( $page ) {
+	public static function add_meta_boxes( $page ) {
 
 		/**
 		 * This hook allows you to add extra metaboxes to the dashboard via the 'mainwp-getmetaboxes' filter.

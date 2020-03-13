@@ -444,7 +444,7 @@ class MainWP_Utility {
 		return $encoded;
 	}
 
-	static function activated_primary_backup_plugin( $what, $website ) {
+	public static function activated_primary_backup_plugin( $what, $website ) {
 		$plugins = json_decode( $website->plugins, 1 );
 		if ( ! is_array( $plugins ) || 0 === count( $plugins ) ) {
 			return false;
@@ -504,7 +504,7 @@ class MainWP_Utility {
 		return false;
 	}
 
-	static function getNotificationEmail( $user = null ) {
+	public static function getNotificationEmail( $user = null ) {
 		if ( null == $user ) {
 			global $current_user;
 			$user = $current_user;
@@ -532,7 +532,7 @@ class MainWP_Utility {
 	 * $params: (Optional) array(key => value, key => value);
 	 */
 
-	static function getPostDataAuthed( &$website, $what, $params = null ) {
+	public static function getPostDataAuthed( &$website, $what, $params = null ) {
 		if ( $website && '' != $what ) {
 			$data             = array();
 			$data['user']     = $website->adminname;
@@ -573,7 +573,7 @@ class MainWP_Utility {
 		return null;
 	}
 
-	static function getGetDataAuthed( $website, $paramValue, $paramName = 'where', $asArray = false ) {
+	public static function getGetDataAuthed( $website, $paramValue, $paramName = 'where', $asArray = false ) {
 		$params = array();
 		if ( $website && '' != $paramValue ) {
 			$nonce = rand( 0, 9999 );
@@ -628,7 +628,7 @@ class MainWP_Utility {
 	 * $params: (Optional) array(key => value, key => value);
 	 */
 
-	static function getPostDataNotAuthed( $url, $admin, $what, $params = null ) {
+	public static function getPostDataNotAuthed( $url, $admin, $what, $params = null ) {
 		if ( '' != $url && '' != $admin && '' != $what ) {
 			$data             = array();
 			$data['user']     = $admin;
@@ -1159,7 +1159,7 @@ class MainWP_Utility {
 		return true;
 	}
 
-	static function fetchUrlAuthed( &$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false,
+	public static function fetchUrlAuthed( &$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false,
 								 $pRetryFailed = true, $rawResponse = null ) {
 		if ( ! is_array( $params ) ) {
 			$params = array();
@@ -1297,7 +1297,7 @@ class MainWP_Utility {
 		 return $information;
 	}
 
-	static function fetchUrlNotAuthed( $url, $admin, $what, $params = null, $pForceFetch = false,
+	public static function fetchUrlNotAuthed( $url, $admin, $what, $params = null, $pForceFetch = false,
 									$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
 		if ( empty( $params ) ) {
 			$params = array();
@@ -1314,7 +1314,7 @@ class MainWP_Utility {
 		return self::fetchUrl( $website, $url, $postdata, false, $pForceFetch, $verifyCertificate, true, $http_user, $http_pass, $sslVersion, $others );
 	}
 
-	static function fetchUrlClean( $url, $postdata ) {
+	public static function fetchUrlClean( $url, $postdata ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
 		$ch = curl_init();
@@ -1356,7 +1356,7 @@ class MainWP_Utility {
 		}
 	}
 
-	static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
+	public static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
 						   $verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null, $sslVersion = 0,
 						   $others = array() ) {
 		$start = time();
@@ -1386,7 +1386,7 @@ class MainWP_Utility {
 		}
 	}
 
-	static function _fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
+	public static function _fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
 							$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
@@ -1793,7 +1793,7 @@ class MainWP_Utility {
 		return false;
 	}
 
-	static function redirect_request_site( $website, $where_url ) {
+	public static function redirect_request_site( $website, $where_url ) {
 
 		$request_url = self::getGetDataAuthed( $website, $where_url );
 
@@ -1820,7 +1820,7 @@ class MainWP_Utility {
 		return $reponse;
 	}
 
-	static function request_premiums_update( $website, $type, $list ) {
+	public static function request_premiums_update( $website, $type, $list ) {
 		if ( 'plugin' === $type ) {
 			$where_url = 'plugins.php?_request_update_premiums_type=plugin&list=' . $list;
 		} elseif ( 'theme' === $type ) {
@@ -1832,7 +1832,7 @@ class MainWP_Utility {
 		return true;
 	}
 
-	static function try_to_detect_premiums_update( $website, $type ) {
+	public static function try_to_detect_premiums_update( $website, $type ) {
 		if ( 'plugin' === $type ) {
 			$where_url = 'plugins.php?_detect_plugins_updates=yes';
 		} elseif ( 'theme' === $type ) {
@@ -1844,11 +1844,11 @@ class MainWP_Utility {
 	}
 
 
-	static function ctype_digit( $str ) {
+	public static function ctype_digit( $str ) {
 		return ( is_string( $str ) || is_int( $str ) || is_float( $str ) ) && preg_match( '/^\d+\z/', $str );
 	}
 
-	static function log( $text ) {
+	public static function log( $text ) {
 	}
 
 	public static function downloadToFile( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
@@ -1904,7 +1904,7 @@ class MainWP_Utility {
 		fclose( $fp );
 	}
 
-	static function uploadImage( $img_url, $img_data = array() ) {
+	public static function uploadImage( $img_url, $img_data = array() ) {
 		if ( ! is_array( $img_data ) ) {
 			$img_data = array();
 		}
@@ -1949,7 +1949,7 @@ class MainWP_Utility {
 		return null;
 	}
 
-	static function getBaseDir() {
+	public static function getBaseDir() {
 		$upload_dir = wp_upload_dir();
 
 		return $upload_dir['basedir'] . DIRECTORY_SEPARATOR;
@@ -2388,7 +2388,7 @@ class MainWP_Utility {
 		return array( $response['headers'], $response['body'] );
 	}
 
-	static function trimSlashes( $elem ) {
+	public static function trimSlashes( $elem ) {
 		return trim( $elem, '/' );
 	}
 
@@ -3103,7 +3103,7 @@ EOT;
 		return 'application/octet-stream';
 	}
 
-	static function update_option( $option_name, $option_value ) {
+	public static function update_option( $option_name, $option_value ) {
 		$success = add_option( $option_name, $option_value, '', 'no' );
 
 		if ( ! $success ) {
@@ -3113,7 +3113,7 @@ EOT;
 		return $success;
 	}
 
-	static function fix_option( $option_name ) {
+	public static function fix_option( $option_name ) {
 		global $wpdb;
 
 		if ( 'yes' == $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s", $option_name ) ) ) {
@@ -3123,7 +3123,7 @@ EOT;
 		}
 	}
 
-	static function get_resource_id( $resource ) {
+	public static function get_resource_id( $resource ) {
 		if ( ! is_resource( $resource ) ) {
 			return false;
 		}
@@ -3407,7 +3407,7 @@ EOT;
 		return;
 	}
 
-	static function generate_random_string( $length = 8 ) {
+	public static function generate_random_string( $length = 8 ) {
 
 		$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 

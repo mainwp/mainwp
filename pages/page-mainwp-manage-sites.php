@@ -59,7 +59,7 @@ class MainWP_Manage_Sites {
 		add_action( 'mainwp_help_sidebar_content', array( self::getClassName(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content
 	}
 
-	static function on_screen_layout_columns( $columns, $screen ) {
+	public static function on_screen_layout_columns( $columns, $screen ) {
 		if ( $screen == self::$page ) {
 			$columns[ self::$page ] = 3; // Number of supported columns
 		}
@@ -1883,7 +1883,7 @@ class MainWP_Manage_Sites {
 		return false;
 	}
 
-	static function on_edit_site( $website ) {
+	public static function on_edit_site( $website ) {
 		if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {
 			if ( isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ) {
 				?>

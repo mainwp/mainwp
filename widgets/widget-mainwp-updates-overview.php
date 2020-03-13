@@ -748,12 +748,7 @@ class MainWP_Updates_Overview {
 			MainWP_DB::free_result( $websites );
 	}
 
-	// public static function renderIgnoredUpdates() {
-	// MainWP_Settings::renderHeader( 'IgnoredUpdates' );
-
-	// MainWP_Settings::renderFooter( 'IgnoredUpdates' );
-	// }
-
+	
 	public static function dismissSyncErrors( $dismiss = true ) {
 		global $current_user;
 		update_user_option( $current_user->ID, 'mainwp_syncerrors_dismissed', $dismiss );

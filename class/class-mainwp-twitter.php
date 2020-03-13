@@ -39,7 +39,7 @@ class MainWP_Twitter {
 		}
 	}
 
-	static function randomWord() {
+	public static function randomWord() {
 		$words = array(
 			__( 'Awesome', 'mainwp' ),
 			__( 'Fabulous', 'mainwp' ),
@@ -53,7 +53,7 @@ class MainWP_Twitter {
 		return $words[ rand( 0, 6 ) ];
 	}
 
-	static function getNotice( $what, $value ) {
+	public static function getNotice( $what, $value ) {
 
 		if ( ! is_array( $value ) || empty( $value['sites'] ) || ! isset( $value['seconds'] ) ) {
 			return '';

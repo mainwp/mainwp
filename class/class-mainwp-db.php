@@ -21,7 +21,7 @@ class MainWP_DB {
 	 * @static
 	 * @return MainWP_DB
 	 */
-	static function Instance() {
+	public static function Instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new MainWP_DB();
 		}
@@ -52,7 +52,7 @@ class MainWP_DB {
 	}
 
 	// Installs new DB
-	function install() {
+	public function install() {
 		// get_site_option is multisite aware!
 		$currentVersion = get_site_option( 'mainwp_db_version' );
 
@@ -295,10 +295,10 @@ class MainWP_DB {
 	}
 
 	// Check for update - if required, update..
-	function update() {
+	public function update() {
 	}
 
-	function getOptionView( $extra = array() ) {
+	public function getOptionView( $extra = array() ) {
 		$view = '(SELECT intwp.id AS wpid,
                          (SELECT recent_comments.value FROM ' . $this->tableName( 'wp_options' ) . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments" LIMIT 1) AS recent_comments,
                          (SELECT recent_posts.value FROM ' . $this->tableName( 'wp_options' ) . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts" LIMIT 1) AS recent_posts,
@@ -321,7 +321,7 @@ class MainWP_DB {
 		return $view;
 	}
 
-	function post_update() {
+	public function post_update() {
 		// get_site_option is multisite aware!
 		$currentVersion = get_site_option( 'mainwp_db_version' );
 		if ( false === $currentVersion ) {

@@ -205,7 +205,7 @@ class MainWP_Post {
 		<?php
 	}
 
-	static function init_left_menu( $subPages = array() ) {
+	public static function init_left_menu( $subPages = array() ) {
 
 		MainWP_Menu::add_left_menu( array(
 			'title'      => __( 'Posts', 'mainwp' ),
@@ -264,7 +264,7 @@ class MainWP_Post {
 	 * @return int|bool
 	 */
 
-	static function add_meta( $post_ID ) {
+	public static function add_meta( $post_ID ) {
 		$post_ID = (int) $post_ID;
 
 		$metakeyselect = isset( $_POST['metakeyselect'] ) ? wp_unslash( trim( $_POST['metakeyselect'] ) ) : '';
@@ -299,7 +299,7 @@ class MainWP_Post {
 		return false;
 	} // add_meta
 
-	static function ajax_add_meta() {
+	public static function ajax_add_meta() {
 
 		MainWP_Post_Handler::Instance()->secure_request( 'mainwp_post_addmeta' );
 
@@ -1007,7 +1007,7 @@ class MainWP_Post {
 	 * @param int   $count
 	 * @return string
 	 */
-	static function _list_meta_row( $entry, &$count ) {
+	public static function _list_meta_row( $entry, &$count ) {
 		static $update_nonce = '';
 
 		if ( is_protected_meta( $entry['meta_key'], 'post' ) ) {
@@ -1059,7 +1059,7 @@ class MainWP_Post {
 	 *
 	 * @param WP_Post $pos Optional. The post being edited.
 	 */
-	static function meta_form( $pos = null ) {
+	public static function meta_form( $pos = null ) {
 		global $wpdb;
 		$_post = get_post( $pos );
 
@@ -1151,7 +1151,7 @@ class MainWP_Post {
 	 *
 	 * @param object $post
 	 */
-	static function post_custom_meta_box( $post ) {
+	public static function post_custom_meta_box( $post ) {
 		?>
 		  <div class="ui secondary segment">
 			<div class="ui header"><?php echo esc_html( 'Custom Fields', 'mainwp' ); ?></div>
@@ -1188,7 +1188,7 @@ class MainWP_Post {
 	 * @param mixed $pos The post ID or object associated with the thumbnail, defaults to global $post.
 	 * @return string html
 	 */
-	static function _wp_post_thumbnail_html( $thumbnail_id = null, $pos = null ) {
+	public static function _wp_post_thumbnail_html( $thumbnail_id = null, $pos = null ) {
 
 		$_wp_additional_image_sizes = wp_get_additional_image_sizes();
 
@@ -1266,13 +1266,13 @@ class MainWP_Post {
 		return apply_filters( 'mainwp_admin_post_thumbnail_html', $html, $_post->ID, $thumbnail_id );
 	}
 
-	static function post_thumbnail_meta_box( $pos ) {
+	public static function post_thumbnail_meta_box( $pos ) {
 		$thumbnail_id = get_post_meta( $pos->ID, '_thumbnail_id', true );
 		echo self::_wp_post_thumbnail_html( $thumbnail_id, $pos->ID );
 	}
 
 	// invisible fields
-	static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) {
+	public static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) {
 		global $wp_locale;
 
 		$_post = get_post( $post );
@@ -1346,7 +1346,7 @@ class MainWP_Post {
 			}
 	}
 
-	static function do_meta_boxes( $screen, $context, $object ) {
+	public static function do_meta_boxes( $screen, $context, $object ) {
 			global $wp_meta_boxes;
 			static $already_sorted = false;
 
@@ -2334,7 +2334,7 @@ class MainWP_Post {
 		}
 	}
 
-	static function newPost( $post_data = array() ) {
+	public static function newPost( $post_data = array() ) {
 		// Read form data
 		$new_post            = maybe_unserialize( base64_decode( $post_data['new_post'] ) );
 		$post_custom         = maybe_unserialize( base64_decode( $post_data['post_custom'] ) );
@@ -2346,7 +2346,7 @@ class MainWP_Post {
 		return self::createPost( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images ); // to edit
 	}
 
-	static function createPost( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags,
+	public static function createPost( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags,
 							 $post_gallery_images ) {
 		global $current_user;
 

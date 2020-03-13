@@ -15,7 +15,7 @@ class MainWP_Manage_Backups {
 
 	private static $instance = null;
 
-	static function Instance() {
+	public static function Instance() {
 		if ( self::$instance == null ) {
 			self::$instance = new MainWP_Manage_Backups();
 		}
@@ -132,7 +132,7 @@ class MainWP_Manage_Backups {
 		<?php
 	}
 
-	static function init_left_menu( $subPages = array(), $enableLegacyBackup = true ) {
+	public static function init_left_menu( $subPages = array(), $enableLegacyBackup = true ) {
 		if ( ! self::$hideSubmenuBackups && $enableLegacyBackup ) {
 			MainWP_Menu::add_left_menu( array(
 				'title'             => __('Backups', 'mainwp'),
@@ -364,7 +364,7 @@ class MainWP_Manage_Backups {
 		}
 	}
 
-	function display( $backup_items ) {
+	public function display( $backup_items ) {
 		$can_trigger = true;
 		if ( ! mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
 			$can_trigger = false;
@@ -450,7 +450,7 @@ class MainWP_Manage_Backups {
 		<?php
 	}
 
-	function single_row( $item, $columns ) {
+	public function single_row( $item, $columns ) {
 		?>
 		<tr>
 		<?php
@@ -468,7 +468,7 @@ class MainWP_Manage_Backups {
 		<?php
 	}
 
-	function column_actions( $item ) {
+	public function column_actions( $item ) {
 
 		$actions = array(
 			'edit'   => sprintf( '<a class="item" href="admin.php?page=ManageBackups&id=%s">' . '<i class="edit outline icon"></i> ' . __( 'Edit', 'mainwp' ) . '</a>', $item->id ),
@@ -507,19 +507,19 @@ class MainWP_Manage_Backups {
 		return $out;
 	}
 
-	function column_task_name( $item ) {
+	public function column_task_name( $item ) {
 		return stripslashes( $item->name );
 	}
 
-	function column_type( $item ) {
+	public function column_type( $item ) {
 		return ( $item->type == 'db' ? __( 'DATABASE BACKUP', 'mainwp' ) : __( 'FULL BACKUP', 'mainwp' ) );
 	}
 
-	function column_schedule( $item ) {
+	public function column_schedule( $item ) {
 		return strtoupper( $item->schedule );
 	}
 
-	function column_destination( $item ) {
+	public function column_destination( $item ) {
 		$extraOutput = apply_filters( 'mainwp_backuptask_column_destination', '', $item->id );
 		if ( $extraOutput != '' ) {
 			return trim( $extraOutput, '<br />' );
@@ -528,7 +528,7 @@ class MainWP_Manage_Backups {
 		return __( 'SERVER', 'mainwp' );
 	}
 
-	function column_websites( $item ) {
+	public function column_websites( $item ) {
 		if ( count( $item->the_sites ) == 0 ) {
 			echo( '<span style="color: red; font-weight: bold; ">' . count( $item->the_sites ) . '</span>' );
 		} else {
@@ -536,7 +536,7 @@ class MainWP_Manage_Backups {
 		}
 	}
 
-	function column_details( $item ) {
+	public function column_details( $item ) {
 		$output  = '<strong>' . __( 'LAST RUN MANUALLY: ', 'mainwp' ) . '</strong>' . ( $item->last_run_manually == 0 ? '-' : MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $item->last_run_manually ) ) ) . '<br />';
 		$output .= '<strong>' . __( 'LAST RUN: ', 'mainwp' ) . '</strong>' . ( $item->last_run == 0 ? '-' : MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $item->last_run ) ) ) . '<br />';
 		$output .= '<strong>' . __( 'LAST COMPLETED: ', 'mainwp' ) . '</strong>' . ( $item->completed == 0 ? '-' : MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $item->completed ) ) ) . '<br />';
@@ -558,7 +558,7 @@ class MainWP_Manage_Backups {
 		return $output;
 	}
 
-	function column_trigger( $item ) {
+	public function column_trigger( $item ) {
 		return '<span class="backup_run_loading"><img src="' . MAINWP_PLUGIN_URL . 'assets/images/loader.gif" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="' . $item->id . '" task_type="' . $item->type . '">' . __( 'Run now', 'mainwp' ) . '</a>';
 	}
 

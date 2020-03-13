@@ -126,7 +126,7 @@ class MainWP_Page {
 		<?php
 	}
 
-	static function init_left_menu( $subPages = array() ) {
+	public static function init_left_menu( $subPages = array() ) {
 
 		MainWP_Menu::add_left_menu( array(
 			'title'      => __( 'Pages', 'mainwp' ),

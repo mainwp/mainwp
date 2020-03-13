@@ -37,13 +37,7 @@ class MainWP_Meta_Boxes {
 		// ), 'bulkpage', 'side', 'default' );
 	}
 
-	// static function add_metabox_classes( $classes ) {
-	// array_push( $classes, 'mainwp_select_sites_wrapper' );
-	//
-	// return $classes;
-	// }
-
-	function select_sites( $post ) {
+	public function select_sites( $post ) {
 		$selected_sites = unserialize( base64_decode( get_post_meta( $post->ID, '_selected_sites', true ) ) );
 		if ( $selected_sites == '' ) {
 			$selected_sites = array();
@@ -69,7 +63,7 @@ class MainWP_Meta_Boxes {
 		<?php
 	}
 
-	function select_sites_handle( $post_id, $post_type ) {
+	public function select_sites_handle( $post_id, $post_type ) {
 
 			   // verify this came from the our screen and with proper authorization.
 		if ( ! isset( $_POST['select_sites_nonce'] ) || ! wp_verify_nonce( $_POST['select_sites_nonce'], 'select_sites_' . $post_id ) ) {
@@ -118,7 +112,7 @@ class MainWP_Meta_Boxes {
 
 
 		   // not used ?
-	function add_categories( $post ) {
+	public function add_categories( $post ) {
 
 		// depdecated, 1.0.9.2-beta
 		$categories = apply_filters( 'mainwp_bulkpost_saved_categories', $post, array() );
@@ -195,7 +189,7 @@ class MainWP_Meta_Boxes {
 		<?php
 	}
 
-	function add_categories_handle( $post_id, $post_type ) {
+	public function add_categories_handle( $post_id, $post_type ) {
 		// verify this came from the our screen and with proper authorization.
 		if ( ! isset( $_POST['post_category_nonce'] ) || ! wp_verify_nonce( $_POST['post_category_nonce'], 'post_category_' . $post_id ) ) {
 			return;
@@ -230,18 +224,18 @@ class MainWP_Meta_Boxes {
 		return;
 	}
 
-	function add_tags( $post ) {
+	public function add_tags( $post ) {
 		$this->add_extra( 'Tags', '_tags', 'add_tags', $post );
 	}
 
-	function add_tags_handle( $post_id, $post_type ) {
+	public function add_tags_handle( $post_id, $post_type ) {
 		$this->add_extra_handle( 'Tags', '_tags', 'add_tags', $post_id, $post_type );
 		if ( isset( $_POST['add_tags'] ) ) {
 			do_action( 'mainwp_bulkpost_tags_handle', $post_id, $post_type, $_POST['add_tags'] );
 		}
 	}
 
-	function add_slug( $post ) {
+	public function add_slug( $post ) {
 		$this->add_extra( 'Slug', '_slug', 'add_slug', $post );
 	}
 
@@ -255,7 +249,7 @@ class MainWP_Meta_Boxes {
 	}
 
 
-	function add_slug_handle( $post_id, $post_type ) {
+	public function add_slug_handle( $post_id, $post_type ) {
 		$this->add_extra_handle( 'Slug', '_slug', 'add_slug', $post_id, $post_type );
 	}
 

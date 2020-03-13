@@ -46,7 +46,7 @@ class MainWP_Manage_Sites_View {
 		<?php
 	}
 
-	static function init_left_menu( $subPages = array() ) {
+	public static function init_left_menu( $subPages = array() ) {
 
 		MainWP_Menu::add_left_menu( array(
 			'title'      => __( 'Sites', 'mainwp' ),
@@ -103,9 +103,6 @@ class MainWP_Manage_Sites_View {
 			}
 			MainWP_Menu::add_left_menu( $item, 2);
 		}
-	}
-
-	static function getBreadcrumb( $pShowpage, $pSubPages ) {
 	}
 
 	public static function renderHeader( $shownPage = '', &$subPages = '' ) {

@@ -4,15 +4,16 @@
 /* Genaral Style */
 
 .mainwp-main-content {
-  width: calc( 100% - 300px);
-  padding-right: 1em;
-  float: left; }
+    width: calc( 100% - 300px);
+    padding-right: 1em;
+    float: left; }
 
 .mainwp-side-content {
-  width: 300px;
-  float: right;
-  border-left: 1px solid #dadada;
-  padding: 1em;
+    height: 100% !important;
+    width: 300px;
+    float: right;
+    border-left: 1px solid #dadada;
+    padding: 1em;
 }
 
 .mainwp-side-content.mainwp-no-padding {
@@ -20,7 +21,7 @@
 }
 
 .mainwp-sidebar-left .ui.alt.segment {
-  padding: 0;
+    padding: 0;
 }
 
 .mainwp-sidebar-left .mainwp-side-content {
@@ -43,9 +44,6 @@
 
 /* Content Wrap */
 
-.mainwp-content-wrap {
-
-}
 .mainwp-ui-leftmenu .mainwp-content-wrap {
   background: #fafafa;
   margin-left: 180px;
@@ -99,7 +97,7 @@
   .mainwp-nav-wrap #mainwp-logo {
       height: 35px;
       margin: .92857143em 1.14285714em; }
-  .mainwp-nav-menu { }
+
   .mainwp-nav-menu .ui.accordion.menu .item:hover,
   .mainwp-nav-menu .ui.accordion.menu .item.active {
       background: rgba(255,255,255,.15); }
@@ -141,10 +139,6 @@
 
 /* Sidebar */
 
-.mainwp-side-content {
-  height: 100% !important;
-}
-
 .mainwp-select-sites {
   margin-top: 1rem;
 }
@@ -180,13 +174,6 @@ table#mainwp-manage-sites-table .error a{
 
 
 /* Manage Groups */
-
-#mainwp-manage-groups .mainwp-group-sites-row .list {
-  max-height: 200px;
-  overflow-y: scroll;
-}
-
-/* Manage Extensions */
 
 #mainwp-manage-groups .mainwp-group-sites-row .list {
   max-height: 200px;
@@ -1102,22 +1089,15 @@ li.hoverli {
 
 .mainwp-extensions-api-row .api-row-div {
     display: none;
+    border-top: 1px solid #e5e5e5;
+    padding: 10px;
 }
 .mainwp-extensions-api-row input[type=text] {
     width: 100%;
 }
-.mainwp-extensions-api-row .api-row-div {
-    border-top: 1px solid #e5e5e5;
-    padding: 10px;
-}
 
 .mainwp_postbox .handlediv:before{
     content: '\f142';
-}
-.mainwp_postbox.closed .handlediv:before{
-    content: '\f140';
-}
-.mainwp_postbox .handlediv:before{
     right: 12px;
     font: normal 20px/1 'dashicons';
     speak: none;
@@ -1128,6 +1108,9 @@ li.hoverli {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-decoration: none !important;
+}
+.mainwp_postbox.closed .handlediv:before{
+    content: '\f140';
 }
 
 .mainwp-price {

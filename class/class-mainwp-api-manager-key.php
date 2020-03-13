@@ -1,19 +1,19 @@
 <?php
 /**
  * MainWP Api Manager Key Handler.
- * 
+ *
  * This class handles user authentication with MainWP.com License Servers
  * and provides the ability to grab license Keys automatically.
  */
 
 // Exit if accessed directly
-if ( !defined( 'ABSPATH' ) ) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
  * MainWP Api Manager Key Handler.
- * 
+ *
  * This class handles user authentication with MainWP.com License Servers
  * and providfes the ability to grab License Keys automatically.
  *
@@ -26,28 +26,28 @@ class MainWP_Api_Manager_Key {
 
 	/**
 	 * $_instance
-	 * 
+	 *
 	 * Set initial $_instance value
-	 * 
+	 *
 	 * @var null
 	 */
-	protected static $_instance    = null;
+	protected static $_instance = null;
 
 	/**
 	 * $apisslverify
-	 * 
+	 *
 	 * Set initial $apisslverify value
-	 * 
+	 *
 	 * @var integer
 	 */
 	protected static $apisslverify = 1;
 
 	/**
 	 * Instance
-	 * 
+	 *
 	 * Create a new Self Instance
 	 *
-	 * @return mixed self::$_instance 
+	 * @return mixed self::$_instance
 	 */
 	public static function instance() {
 
@@ -60,7 +60,7 @@ class MainWP_Api_Manager_Key {
 
 	/**
 	 * __construct
-	 * 
+	 *
 	 * Validate SSL Certificate
 	 *
 	 * @return bool 1|0
@@ -71,10 +71,10 @@ class MainWP_Api_Manager_Key {
 
 	/**
 	 * Extention Activate
-	 * 
-	 * This function checks the users login information & grabs the update URL 
+	 *
+	 * This function checks the users login information & grabs the update URL
 	 * for the specific extension & activates it.
-	 * 
+	 *
 	 * @param mixed $args
 	 * @return mixed $response
 	 */
@@ -108,10 +108,10 @@ class MainWP_Api_Manager_Key {
 
 	/**
 	 * Extention Deactivate
-	 * 
-	 * This function checks the users login information & grabs the update URL 
+	 *
+	 * This function checks the users login information & grabs the update URL
 	 * for the specific extension & deactivates it.
-	 * 
+	 *
 	 * @param mixed $args
 	 * @return mixed $response
 	 */
@@ -144,10 +144,10 @@ class MainWP_Api_Manager_Key {
 
 	/**
 	 * Grab extention API Key
-	 * 
-	 * This function checks the users login information & grabs the update URL 
+	 *
+	 * This function checks the users login information & grabs the update URL
 	 * for the specific extension & returns the API Key.
-	 * 
+	 *
 	 * @param mixed $args
 	 * @return mixed $response
 	 */
@@ -180,10 +180,10 @@ class MainWP_Api_Manager_Key {
 
 	/**
 	 * Test Login API
-	 * 
+	 *
 	 * This function checks the users login information & Tests
 	 * it against the MainWP.com Login Credentials stored on the license server.
-	 * 
+	 *
 	 * @param mixed $args
 	 * @return mixed $response
 	 */
@@ -235,10 +235,10 @@ class MainWP_Api_Manager_Key {
 
 	/**
 	 * Get Purchased Software
-	 * 
+	 *
 	 * This function grabs a list of purchased MainWP Extensions
 	 * that are available for download.
-	 * 
+	 *
 	 * @param mixed $args
 	 * @return mixed $response
 	 */
@@ -271,7 +271,7 @@ class MainWP_Api_Manager_Key {
 
 	/**
 	 * Purchase Software
-	 * 
+	 *
 	 * @param mixed $args
 	 * @return mixed $response
 	 */

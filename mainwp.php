@@ -22,7 +22,7 @@ if ( ! defined( 'MAINWP_PLUGIN_URL' ) ) {
 	define( 'MAINWP_PLUGIN_URL', plugin_dir_url( MAINWP_PLUGIN_FILE ) );
 }
 
-// Version information from wordpress
+// Version information from WordPress
 require_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'version.php'; // Version information from WordPress
 
 if ( ! function_exists( 'mainwp_autoload' ) ) {
@@ -78,9 +78,9 @@ if ( file_exists( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename( __DIR__
 if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
 
 	/**
-	 * Detect permision level & display message to end user. 
+	 * Detect permision level & display message to end user.
 	 *
-	 * @param string $where
+	 * @param string  $where
 	 * @param boolean $echo
 	 * @return void
 	 */

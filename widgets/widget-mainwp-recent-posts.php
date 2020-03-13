@@ -1,20 +1,20 @@
 <?php
 /**
  * MainWP Recent Posts Widget
- * 
+ *
  * Displays the Child Sites most recent published draft, pending, trash & future posts
  */
 
 /**
  * Class MainWP_Recent_Posts
- * 
+ *
  * Displays the Child Sites most recent published draft, pending, trash & future posts
  */
 class MainWP_Recent_Posts {
 
 	/**
 	 * getClassName()
-	 * 
+	 *
 	 * @return string __CLASS__
 	 */
 	public static function getClassName() {
@@ -23,7 +23,7 @@ class MainWP_Recent_Posts {
 
 	/**
 	 * render()
-	 * 
+	 *
 	 * Fire off renderSites()
 	 */
 	public static function render() {
@@ -32,10 +32,10 @@ class MainWP_Recent_Posts {
 
 	/**
 	 * renderSites()
-	 * 
+	 *
 	 * Build the resent posts list
-	 * 
-	 * @param mixed $renew
+	 *
+	 * @param mixed   $renew
 	 * @param boolean $pExit
 	 */
 	public static function renderSites( $renew, $pExit = true ) {
@@ -436,7 +436,7 @@ class MainWP_Recent_Posts {
 
 	/**
 	 * publish()
-	 * 
+	 *
 	 * Publish Post
 	 */
 	public static function publish() {
@@ -446,7 +446,7 @@ class MainWP_Recent_Posts {
 
 	/**
 	 * approve()
-	 * 
+	 *
 	 * Approve Post
 	 */
 	public static function approve() {
@@ -456,9 +456,8 @@ class MainWP_Recent_Posts {
 
 	/**
 	 * unpublish()
-	 * 
+	 *
 	 * Unpublish Post
-	 * 
 	 */
 	public static function unpublish() {
 		self::action( 'unpublish' );
@@ -467,9 +466,8 @@ class MainWP_Recent_Posts {
 
 	/**
 	 * trash()
-	 * 
+	 *
 	 * Trash Post
-	 * 
 	 */
 	public static function trash() {
 		self::action( 'trash' );
@@ -478,9 +476,8 @@ class MainWP_Recent_Posts {
 
 	/**
 	 * delete()
-	 * 
+	 *
 	 * Delete Post
-	 * 
 	 */
 	public static function delete() {
 		self::action( 'delete' );
@@ -489,9 +486,8 @@ class MainWP_Recent_Posts {
 
 	/**
 	 * restore()
-	 * 
+	 *
 	 * Restore Post
-	 * 
 	 */
 	public static function restore() {
 		self::action( 'restore' );
@@ -500,9 +496,9 @@ class MainWP_Recent_Posts {
 
 	/**
 	 * action()
-	 * 
-	 * Post action 
-	 * 
+	 *
+	 * Post action
+	 *
 	 * @param mixed $pAction
 	 */
 	public static function action( $pAction ) {
@@ -538,11 +534,11 @@ class MainWP_Recent_Posts {
 
 	/**
 	 * action_update()
-	 * 
+	 *
 	 * Update Post Action
-	 * 
+	 *
 	 * @param mixed $pAction
-	 * 
+	 *
 	 * @return void
 	 */
 	public static function action_update( $pAction ) {

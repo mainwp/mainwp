@@ -1,7 +1,7 @@
 <?php
 /**
  * MainWP Updates Overview Widget
- * 
+ *
  * Grab Child Sites update status & build widget
  */
 
@@ -12,9 +12,9 @@ class MainWP_Updates_Overview {
 
 	/**
 	 * getClassName()
-	 * 
+	 *
 	 * Get Class Name
-	 * 
+	 *
 	 * @return string __CLASS__
 	 */
 	public static function getClassName() {
@@ -23,7 +23,7 @@ class MainWP_Updates_Overview {
 
 	/**
 	 * init()
-	 * 
+	 *
 	 * add plugins api filter
 	 */
 	public static function init() {
@@ -32,13 +32,13 @@ class MainWP_Updates_Overview {
 
 	/**
 	 * plugins_api()
-	 * 
+	 *
 	 * Grab Child Sites update status & build widget
-	 * 
+	 *
 	 * @param mixed $default
 	 * @param mixed $action
 	 * @param mixed $args
-	 * 
+	 *
 	 * @return mixed $default
 	 */
 	public static function plugins_api( $default, $action, $args ) {
@@ -78,7 +78,7 @@ class MainWP_Updates_Overview {
 
 	/**
 	 * getName()
-	 * 
+	 *
 	 * Define Widget Title
 	 */
 	public static function getName() {
@@ -87,7 +87,7 @@ class MainWP_Updates_Overview {
 
 	/**
 	 * render()
-	 * 
+	 *
 	 * Check if $_GET['dashboard'] then run renderSites()
 	 */
 	public static function render() {
@@ -100,7 +100,7 @@ class MainWP_Updates_Overview {
 
 	/**
 	 * renderLastUpdate()
-	 * 
+	 *
 	 * Check when the Child Site was last synced
 	 */
 	public static function renderLastUpdate() {
@@ -122,7 +122,7 @@ class MainWP_Updates_Overview {
 
 	/**
 	 * syncSite()
-	 * 
+	 *
 	 * Sync Child Site
 	 */
 	public static function syncSite() {
@@ -154,11 +154,11 @@ class MainWP_Updates_Overview {
 
 	/**
 	 * renderSites()
-	 * 
+	 *
 	 * Grab available Child Sites updates a build Widget
-	 * 
-     * @param boolean $isUpdatesPage
-     */
+	 *
+	 * @param boolean $isUpdatesPage
+	 */
 	public static function renderSites( $isUpdatesPage = false ) {
 
 		$globalView = true;
@@ -809,12 +809,12 @@ class MainWP_Updates_Overview {
 
 	// MainWP_Settings::renderFooter( 'IgnoredUpdates' );
 	// }
-	
+
 	/**
 	 * dismissSyncErrors()
-	 * 
+	 *
 	 * @param boolean $dismiss
-	 * 
+	 *
 	 * @return void
 	 */
 	public static function dismissSyncErrors( $dismiss = true ) {
@@ -826,9 +826,9 @@ class MainWP_Updates_Overview {
 
 	/**
 	 * checkbackups()
-	 * 
+	 *
 	 * Check if Child Site needs to be backed up before updates
-	 * 
+	 *
 	 * @return mixed $output
 	 */
 	public static function checkBackups() {

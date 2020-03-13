@@ -1,22 +1,20 @@
 <?php
 /**
  * MainWP Connection Status
- * 
+ *
  * Build the Connection Status Widget
- * 
  */
 
 /**
  * Class MainWP_Connection_Status
- * 
+ *
  * Build the Connection Status Widget
- * 
  */
 class MainWP_Connection_Status {
 
 	/**
 	 * getClassName()
-	 * 
+	 *
 	 * @return string __CLASS__
 	 */
 	public static function getClassName() {
@@ -25,7 +23,7 @@ class MainWP_Connection_Status {
 
 	/**
 	 * render()
-	 * 
+	 *
 	 * @return mixed renderSites()
 	 */
 	public static function render() {
@@ -34,10 +32,9 @@ class MainWP_Connection_Status {
 
 	/**
 	 * renderSites()
-	 * 
+	 *
 	 * Build the Connection Status Widget
 	 * Displays $SYNCERRORS|$DOWN|$UP|$ALL
-	 * 
 	 */
 	public static function renderSites() {
 		$current_wpid = MainWP_Utility::get_current_wpid();

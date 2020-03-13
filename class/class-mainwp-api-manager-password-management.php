@@ -1,13 +1,12 @@
 <?php
 /**
  * WooCommerce API Password Handler
- * 
+ *
  * Encrypts & Decrypts API Passwords
- * 
  */
 
 // Exit if accessed directly
-if ( !defined( 'ABSPATH' ) ) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
@@ -18,24 +17,23 @@ if ( !defined( 'ABSPATH' ) ) {
  * @author Todd Lahman LLC
  * @copyright   Copyright (c) Todd Lahman LLC
  * @since 1.0.0
- *
  */
 class MainWP_Api_Manager_Password_Management {
 
 	/**
 	 * Encryption type
-	 * 
+	 *
 	 * Sets encryption type
-	 * 
+	 *
 	 * @var string $ENCRYPT
 	 */
 	private static $ENCRYPT = 'AMEncrypt';
 
 	/**
 	 * Random Seed Value
-	 * 
+	 *
 	 * Takes the min & max php integer values & calculates a new random integer value
-	 * 
+	 *
 	 * @param integer $min The size of an integer in bytes PHP_INT_MIN
 	 * @param integer $max The size of an integer in bytes PHP_INT_MAX
 	 * @return integer $value
@@ -80,13 +78,13 @@ class MainWP_Api_Manager_Password_Management {
 
 	/**
 	 * Generate Password
-	 * 
+	 *
 	 * Creates a unique instance ID
-	 * 
+	 *
 	 * @param integer $length
 	 * @param boolean $special_chars
 	 * @param boolean $extra_special_chars
-	 * 
+	 *
 	 * @return mixed $password
 	 */
 	public static function generate_password( $length = 12, $special_chars = true, $extra_special_chars = false ) {
@@ -109,11 +107,10 @@ class MainWP_Api_Manager_Password_Management {
 
 	/**
 	 * Encrypt String
-	 * 
+	 *
 	 * Encrypts $str
-	 * 
+	 *
 	 * @param mixed $str
-	 * 
 	 */
 	public static function encrypt_string( $str ) {
 		return MainWP_Utility::encrypt( $str, self::$ENCRYPT );
@@ -121,11 +118,11 @@ class MainWP_Api_Manager_Password_Management {
 
 	/**
 	 * Decrypts String
-	 * 
+	 *
 	 * Decrypts $encrypted
-	 * 
+	 *
 	 * @param mixed $encrypted
-	 * 
+	 *
 	 * @return void
 	 */
 	public static function decrypt_string( $encrypted ) {

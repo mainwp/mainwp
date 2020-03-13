@@ -1,9 +1,9 @@
 <?php
 /**
-* MainWP Updates Check Cron.
-* 
-* Include cron/bootstrap.php & run mainwp_cronupdatescheck_action
-*/
+ * MainWP Updates Check Cron.
+ *
+ * Include cron/bootstrap.php & run mainwp_cronupdatescheck_action
+ */
 
 // include cron/bootstrap.php
 require_once 'bootstrap.php';

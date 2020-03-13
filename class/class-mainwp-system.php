@@ -326,8 +326,8 @@ class MainWP_System {
 	public function init_cron() {
 
 		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
-
-		if ( ( $sched = wp_next_scheduled( 'mainwp_cronstats_action' ) ) == false ) {
+		$sched = wp_next_scheduled( 'mainwp_cronstats_action' );
+		if ( $sched == false ) {
 			if ( $useWPCron ) {
 				wp_schedule_event( time(), 'hourly', 'mainwp_cronstats_action' );
 			}
@@ -338,7 +338,8 @@ class MainWP_System {
 		}
 
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-			if ( ( $sched = wp_next_scheduled( 'mainwp_cronbackups_action' ) ) == false ) {
+			$sched = wp_next_scheduled( 'mainwp_cronbackups_action' );
+			if ( $sched == false ) {
 				if ( $useWPCron ) {
 					wp_schedule_event( time(), 'hourly', 'mainwp_cronbackups_action' );
 				}
@@ -347,8 +348,8 @@ class MainWP_System {
 					wp_unschedule_event( $sched, 'mainwp_cronbackups_action' );
 				}
 			}
-
-			if ( ( $sched = wp_next_scheduled( 'mainwp_cronbackups_continue_action' ) ) == false ) {
+			$sched = wp_next_scheduled( 'mainwp_cronbackups_continue_action' );
+			if ( $sched == false ) {
 				if ( $useWPCron ) {
 					wp_schedule_event( time(), '5minutely', 'mainwp_cronbackups_continue_action' );
 				}
@@ -358,19 +359,21 @@ class MainWP_System {
 				}
 			}
 		} else {
-			if ( $sched = wp_next_scheduled( 'mainwp_cronbackups_action' ) ) {
+			$sched = wp_next_scheduled( 'mainwp_cronbackups_action' );
+			if ( $sched ) {
 				wp_unschedule_event( $sched, 'mainwp_cronbackups_action' );
 			}
-			if ( $sched = wp_next_scheduled( 'mainwp_cronbackups_continue_action' ) ) {
+			$sched = wp_next_scheduled( 'mainwp_cronbackups_continue_action' );
+			if ( $sched ) {
 				wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
 			}
 		}
-
-		if ( ( $sched = wp_next_scheduled( 'mainwp_cronremotedestinationcheck_action' ) ) != false ) {
+		$sched = wp_next_scheduled( 'mainwp_cronremotedestinationcheck_action' );
+		if ( $sched != false ) {
 			wp_unschedule_event( $sched, 'mainwp_cronremotedestinationcheck_action' );
 		}
-
-		if ( ( $sched = wp_next_scheduled( 'mainwp_cronpingchilds_action' ) ) == false ) {
+		$sched = wp_next_scheduled( 'mainwp_cronpingchilds_action' );
+		if ( $sched == false ) {
 			if ( $useWPCron ) {
 				wp_schedule_event( time(), 'daily', 'mainwp_cronpingchilds_action' );
 			}
@@ -379,8 +382,8 @@ class MainWP_System {
 				wp_unschedule_event( $sched, 'mainwp_cronpingchilds_action' );
 			}
 		}
-
-		if ( ( $sched = wp_next_scheduled( 'mainwp_cronupdatescheck_action' ) ) == false ) {
+		$sched = wp_next_scheduled( 'mainwp_cronupdatescheck_action' );
+		if ( $sched == false ) {
 			if ( $useWPCron ) {
 				wp_schedule_event( time(), 'minutely', 'mainwp_cronupdatescheck_action' );
 			}
@@ -548,7 +551,8 @@ class MainWP_System {
 			}
 		}
 
-		$display_request1 = $display_request2     = false;
+		$display_request1 = false;
+		$display_request2 = false;
 
 		if ( isset( $current_options['request_reviews1'] ) ) {
 			if ( 'forever' == $current_options['request_reviews1'] ) {
@@ -1427,7 +1431,8 @@ class MainWP_System {
 					if ( $website->is_ignorePluginUpdates ) {
 						continue;
 					}
-					$infoTxt = $infoNewTxt = '';
+					$infoTxt = '';
+					$infoNewTxt = '';
 					if ( $text_format ) {
 						$infoTxt    = stripslashes( $website->name ) . ' - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'] . ' - ' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id );
 						$infoNewTxt = '*NEW* ' . stripslashes( $website->name ) . ' - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'] . ' - ' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id );
@@ -1633,9 +1638,10 @@ class MainWP_System {
 					}
 
 					$dir = MainWP_Utility::getMainWPSpecificDir( $siteId );
+					$dh            = opendir( $dir );
 					// Check if backup ok
 					$lastBackup = - 1;
-					if ( file_exists( $dir ) && ( $dh            = opendir( $dir ) ) ) {
+					if ( file_exists( $dir ) && $dh ) {
 						while ( ( $file = readdir( $dh ) ) !== false ) {
 							if ( '.' !== $file && '..' !== $file ) {
 								$theFile = $dir . $file;
@@ -1779,7 +1785,8 @@ class MainWP_System {
 						$filename = strtok($filename, '?'); // to fix: remove params
 						if ( $filename ) {
 							$filename = 'favi-' . $siteId . '-' . $filename;
-							if ( $size = file_put_contents( $iconsDir . $filename, $content ) ) {
+							$size = file_put_contents( $iconsDir . $filename, $content );
+							if ( $size ) {
 								MainWP_Logger::Instance()->debug( 'Icon size :: ' . $size );
 								MainWP_DB::Instance()->updateWebsiteOption( $website, 'favi_icon', $filename );
 								return array( 'result' => 'success' );
@@ -2424,8 +2431,8 @@ class MainWP_System {
 						$hide_wids[] = $value;
 					}
 				}
-
-				if ( $user = wp_get_current_user() ) {
+				$user = wp_get_current_user();
+				if ( $user ) {
 					update_user_option( $user->ID, 'mainwp_settings_hide_widgets', $hide_wids, true );
 				}
 
@@ -2442,8 +2449,8 @@ class MainWP_System {
 						$hide_cols[] = $col;
 					}
 				}
-
-				if ( $user = wp_get_current_user() ) {
+				$user = wp_get_current_user();
+				if ( $user ) {
 					update_user_option( $user->ID, 'mainwp_settings_hide_manage_sites_columns', $hide_cols, true );
 					update_option( 'mainwp_default_sites_per_page', intval( $_POST['mainwp_default_sites_per_page'] ) );
 				}

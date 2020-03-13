@@ -313,8 +313,8 @@ class MainWP_Post {
 			if ( isset( $_POST['metakeyselect'] ) && '#NONE#' === $_POST['metakeyselect'] && empty( $_POST['metakeyinput'] ) ) {
 				wp_die( 1 );
 			}
-
-			if ( ! $mid = self::add_meta( $pid ) ) {
+			$mid = self::add_meta( $pid );
+			if ( ! $mid ) {
 				wp_send_json( array( 'error' => __( 'Please provide a custom field value.', 'mainwp' ) ));
 			}
 
@@ -328,8 +328,8 @@ class MainWP_Post {
 			$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
 
 			check_ajax_referer( "delete-meta_$id", 'meta_nonce' );
-
-			if ( ! $meta = get_metadata_by_mid( 'post', $id ) ) {
+			$meta = get_metadata_by_mid( 'post', $id );
+			if ( ! $meta ) {
 				wp_send_json( array( 'ok' => 1 ) );
 			}
 
@@ -350,8 +350,8 @@ class MainWP_Post {
 			if ( '' == trim( $key ) ) {
 				wp_send_json( array( 'error' => __( 'Please provide a custom field name.', 'mainwp' ) ));
 			}
-
-			if ( ! $meta = get_metadata_by_mid( 'post', $mid ) ) {
+			$meta = get_metadata_by_mid( 'post', $mid );
+			if ( ! $meta ) {
 				wp_die( 0 ); // if meta doesn't exist
 			}
 			if ( is_protected_meta( $meta->meta_key, 'post' ) || is_protected_meta( $key, 'post' ) ||
@@ -360,7 +360,8 @@ class MainWP_Post {
 				wp_die( -1 );
 			}
 			if ( $meta->meta_value != $value || $meta->meta_key != $key ) {
-				if ( ! $u = update_metadata_by_mid( 'post', $mid, $value, $key ) ) {
+				$u = update_metadata_by_mid( 'post', $mid, $value, $key );
+				if ( ! $u ) {
 					wp_die( 0 ); // We know meta exists; we also know it's unchanged (or DB error, in which case there are bigger problems).
 				}
 			}
@@ -447,7 +448,8 @@ class MainWP_Post {
 
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Post' );
 
-		$selected_sites = $selected_groups = array();
+		$selected_sites = array();
+		$selected_groups = array();
 		if ( null != $cachedSearch ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
 				$selected_sites = $cachedSearch['sites'];
@@ -1370,7 +1372,8 @@ class MainWP_Post {
 			printf( '<div id="%s-sortables" class="meta-box-sortables">', esc_attr( $context ) );
 
 			// Grab the ones the user has manually sorted. Pull them out of their previous context/priority and into the one the user chose
-		if ( ! $already_sorted && $sorted = get_user_option( "meta-box-order_$page" ) ) {
+			$sorted = get_user_option( "meta-box-order_$page" );
+		if ( ! $already_sorted && $sorted ) {
 			foreach ( $sorted as $widget_context => $ids ) {
 				foreach ( explode( ',', $ids ) as $id ) {
 					if ( $id && 'dashboard_browser_nag' !== $id ) {
@@ -1484,7 +1487,8 @@ class MainWP_Post {
 		global $current_user;
 		$user_ID = $current_user->ID;
 
-		$_content_editor_dfw = $is_IE = false;
+		$_content_editor_dfw = false;
+		$is_IE = false;
 		$_wp_editor_expand   = true;
 
 		$form_action  = 'mainwp_editpost'; // WP form action is: editpost, handle by admin_post_mainwp_editpost
@@ -1574,7 +1578,8 @@ class MainWP_Post {
 							<?php
 							if ( 'auto-draft' !== $post->post_status ) {
 								echo '<span id="last-edit">';
-								if ( $last_user = get_userdata( get_post_meta( $post_ID, '_edit_last', true ) ) ) {
+								$last_user = get_userdata( get_post_meta( $post_ID, '_edit_last', true ) );
+								if ( $last_user ) {
 									/* translators: 1: Name of most recent post author, 2: Post edited date, 3: Post edited time */
 									printf( __( 'Last edited by %1$s on %2$s at %3$s' ), esc_html( $last_user->display_name ), mysql2date( __( 'F j, Y' ), $post->post_modified ), mysql2date( __( 'g:i a' ), $post->post_modified ) );
 								} else {
@@ -1625,7 +1630,8 @@ class MainWP_Post {
 				</div>
 			</div>
 				<?php
-				$sel_sites = $sel_groups = array();
+				$sel_sites = array();
+				$sel_groups = array();				
 				?>
 				<div class="mainwp-side-content mainwp-no-padding">
 					<div class="mainwp-select-sites">
@@ -2557,8 +2563,6 @@ class MainWP_Post {
 		} catch ( MainWP_Exception $e ) {
 			return;
 		}
-
-		return;
 	}
 
 	public static function add_sticky_handle( $post_id ) {

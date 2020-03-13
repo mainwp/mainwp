@@ -1042,7 +1042,7 @@ class MainWP_Manage_Sites_List_Table {
 
 					$note       = html_entity_decode( $website['note'] ); // to compatible
 					$esc_note   = MainWP_Utility::esc_content( $note );
-					$strip_note = strip_tags( $esc_note );
+					$strip_note = wp_strip_all_tags( $esc_note );
 
 					$columns = $this->get_columns();
 
@@ -1319,7 +1319,7 @@ class MainWP_Manage_Sites_List_Table {
 
 		$note       = html_entity_decode( $website['note'] ); // to compatible
 		$esc_note   = MainWP_Utility::esc_content( $note );
-		$strip_note = strip_tags( $esc_note );
+		$strip_note = wp_strip_all_tags( $esc_note );
 
 		list( $columns ) = $this->get_column_info();
 

@@ -405,10 +405,10 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 			$title = wp_kses( $plugin['name'], $plugins_allowedtags );
 
 			// Remove any HTML from the description.
-			$description = strip_tags( $plugin['short_description'] );
+			$description = wp_strip_all_tags( $plugin['short_description'] );
 			$version     = wp_kses( $plugin['version'], $plugins_allowedtags );
 
-			$name = strip_tags( $title . ' ' . $version );
+			$name = wp_strip_all_tags( $title . ' ' . $version );
 
 			$author = wp_kses( $plugin['author'], $plugins_allowedtags );
 			if ( ! empty( $author ) ) {
@@ -441,7 +441,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 						<?php echo $author; // html content ?>
 					</div>
 			  <div class="description">
-				<?php echo strip_tags( $description ); // html content ?>
+				<?php echo wp_strip_all_tags( $description ); // html content ?>
 				</div>
 					</div>
 				<div class="extra content">

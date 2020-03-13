@@ -66,7 +66,7 @@ class MainWP_Install_Bulk {
 							$extraOptions = trim( $extraOptions );
 							$extraOptions = trim( trim( $extraOptions, ',' ) );
 							if ( $extraOptions != '' ) {
-								echo strip_tags( $extraOptions ) . ',';
+								echo wp_strip_all_tags( $extraOptions ) . ',';
 							}
 							?>
 							params: {mainwp_do: 'MainWP_Install_Bulk-uploadfile'}

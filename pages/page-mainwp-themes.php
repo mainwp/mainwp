@@ -1236,7 +1236,7 @@ class MainWP_Themes {
 				$strip_note = '';
 				if ( isset( $trustedThemesNotes[ $slug ] ) ) {
 					$esc_note   = MainWP_Utility::esc_content( $trustedThemesNotes[ $slug ] );
-					$strip_note = strip_tags( $esc_note );
+					$strip_note = wp_strip_all_tags( $esc_note );
 				}
 
 				?>

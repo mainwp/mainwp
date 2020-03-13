@@ -479,7 +479,7 @@ class MainWP_Extensions {
 
 		$snMenuExtensions[] = $slug;
 
-		return MainWP_Utility::update_option( 'mainwp_extmenu', $snMenuExtensions );
+		MainWP_Utility::update_option( 'mainwp_extmenu', $snMenuExtensions );
 		do_action('mainwp_added_extension_menu', $slug);
 
 		return true;

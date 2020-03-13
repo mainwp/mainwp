@@ -128,7 +128,8 @@ class MainWP_Updates {
 			}
 		}
 
-		$total_themesIgnored = $total_pluginsIgnored = 0;
+		$total_themesIgnored = 0;
+		$total_pluginsIgnored = 0;
 
 		$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
 		$decodedIgnoredThemes  = json_decode( $userExtension->ignored_themes, true );
@@ -165,8 +166,10 @@ class MainWP_Updates {
 
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 
-			$pluginsIgnored_perSites          = $themesIgnored_perSites = array();
-			$pluginsIgnoredAbandoned_perSites = $themesIgnoredAbandoned_perSites = array();
+			$pluginsIgnored_perSites          = array();
+			$themesIgnored_perSites           = array();
+			$pluginsIgnoredAbandoned_perSites = array();
+			$themesIgnoredAbandoned_perSites  = array(); 
 
 			$wp_upgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true );
 
@@ -454,7 +457,9 @@ class MainWP_Updates {
 
 		// the hook using to set maximum number of plugins/themes for huge number of updates
 		$limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
-		$continue_update   = $continue_update_slug = $continue_class = '';
+		$continue_update   = '';
+		$continue_update_slug = '';
+		$continue_class = '';
 
 		if ( 0 < $limit_updates_all ) {
 			if ( isset( $_GET['continue_update'] ) && '' !== $_GET['continue_update'] ) {

@@ -48,7 +48,7 @@ class MainWP_Utility {
 	}
 
 	public static function limitString( $pInput, $pMax = 500 ) {
-		$output = strip_tags( $pInput );
+		$output = wp_strip_all_tags( $pInput );
 		if ( strlen( $output ) > $pMax ) {
 			// truncate string
 			$outputCut = substr( $output, 0, $pMax );
@@ -1176,7 +1176,8 @@ class MainWP_Utility {
 
 			 $update_type = '';
 
-			 $check_premi_plugins = $check_premi_themes = array();
+			 $check_premi_plugins = array();
+			 $check_premi_themes = array();
 
 			 if ( 'stats' === $what ) {
 				 if ( '' != $website->plugins ) {
@@ -1232,7 +1233,8 @@ class MainWP_Utility {
 		 $params['optimize'] = ( ( 1 === get_option( 'mainwp_optimize' ) ) ? 1 : 0 );
 
 		 $updating_website = false;
-		 $type             = $list = '';
+		 $type             = '';
+		 $list             = ''; 
 		 if ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what ) {
 			 $updating_website = true;
 			 if ( 'upgradeplugintheme' === $what || 'upgradetranslation' === $what ) {
@@ -2093,7 +2095,8 @@ class MainWP_Utility {
 		$remote_url = 'http://data.alexa.com/data?cli=10&dat=snbamz&url=' . trim( $domain );
 		$search_for = '<POPULARITY URL';
 		$part       = '';
-		if ( $handle         = @fopen( $remote_url, 'r' ) ) {
+		$handle         = @fopen( $remote_url, 'r' );
+		if ( $handle ) {
 			while ( ! feof( $handle ) ) {
 				$part .= fread( $handle, 100 );
 				$pos   = strpos( $part, $search_for );
@@ -3286,7 +3289,8 @@ EOT;
 
 	public static function resetUserCookie( $what, $value = '' ) {
 		global $current_user;
-		if ( $user_id = $current_user->ID ) {
+		$user_id = $current_user->ID;
+		if ( $user_id ) {
 			$reset_cookies = get_option( 'mainwp_reset_user_cookies' );
 			if ( ! is_array( $reset_cookies ) ) {
 				$reset_cookies = array();
@@ -3401,10 +3405,8 @@ EOT;
 			return;
 		}
 		if ( in_array( $col, $hidden ) ) {
-			echo 'hidden';
-			return;
-		}
-		return;
+			echo 'hidden';			
+		}		
 	}
 
 	public static function generate_random_string( $length = 8 ) {

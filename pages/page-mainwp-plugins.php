@@ -634,8 +634,8 @@ class MainWP_Plugins {
 					?>
 					<th id="<?php echo esc_html( $th_id ); ?>">
 						<div class="ui checkbox">
-							<input type="checkbox" value="<?php echo strip_tags( $plugins[ $plugin_name ] ); ?>" id="<?php echo strip_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>" version="<?php echo strip_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" class="mainwp_plugin_check_all" />
-							<label for="<?php echo strip_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>"><?php echo esc_html( $plugin_title ); ?></label>
+							<input type="checkbox" value="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] ); ?>" id="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>" version="<?php echo wp_strip_all_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" class="mainwp_plugin_check_all" />
+							<label for="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>"><?php echo esc_html( $plugin_title ); ?></label>
 						</div>
 					</th>
 				<?php endforeach; ?>
@@ -656,7 +656,7 @@ class MainWP_Plugins {
 				<?php if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( 0 == $muPlugins[ $plugin_name ] ) ) : ?>
 					<?php if ( ! isset( $pluginsMainWP[ $plugin_name ] ) || 'F' === $pluginsMainWP[ $plugin_name ] ) : ?>
 				<div class="ui checkbox">
-					<input type="checkbox" value="<?php echo strip_tags( $plugins[ $plugin_name ] ); ?>" name="<?php echo strip_tags( $pluginsName[ $plugin_name ] ); ?>" class="mainwp-selected-plugin" version="<?php echo strip_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" />
+					<input type="checkbox" value="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] ); ?>" name="<?php echo wp_strip_all_tags( $pluginsName[ $plugin_name ] ); ?>" class="mainwp-selected-plugin" version="<?php echo wp_strip_all_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" />
 				</div>
 			<?php elseif ( isset( $pluginsMainWP[ $plugin_name ] ) && 'T' === $pluginsMainWP[ $plugin_name ] ) : ?>
 				<div class="ui disabled checkbox"><input type="checkbox" disabled="disabled"><label></label></div>
@@ -1193,10 +1193,10 @@ class MainWP_Plugins {
 					$strip_note = '';
 					if ( isset( $trustedPluginsNotes[ $slug ] ) ) {
 						$esc_note   = MainWP_Utility::esc_content( $trustedPluginsNotes[ $slug ] );
-						$strip_note = strip_tags( $esc_note );
+						$strip_note = wp_strip_all_tags( $esc_note );
 					}
 					?>
-					<tr plugin-slug="<?php echo urlencode( $slug ); ?>" plugin-name="<?php echo strip_tags( $name ); ?>">
+					<tr plugin-slug="<?php echo urlencode( $slug ); ?>" plugin-name="<?php echo wp_strip_all_tags( $name ); ?>">
 						<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo urlencode( $slug ); ?>"></span></td>
 						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
 						<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $slug ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $name ); ?></a></td>

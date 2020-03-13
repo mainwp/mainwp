@@ -658,7 +658,8 @@ class MainWP_DB {
 		$group_id = isset( $params['group_id'] ) && $params['group_id'] ? intval( $params['group_id'] ) : false;
 
 		if ( $selectgroups ) {
-			if ( $staging_group = get_option( 'mainwp_stagingsites_group_id' ) ) {
+			$staging_group = get_option( 'mainwp_stagingsites_group_id' );
+			if ( $staging_group ) {
 				if ( $group_id == $staging_group ) {
 					$is_staging = 'yes'; // will list staging sites
 				}
@@ -1019,7 +1020,8 @@ class MainWP_DB {
 
 		$is_staging = 'no';
 		if ( $selectgroups ) {
-			if ( $staging_group = get_option( 'mainwp_stagingsites_group_id' ) ) {
+			$staging_group = get_option( 'mainwp_stagingsites_group_id' );
+			if ( $staging_group ) {
 				if ( $id == $staging_group ) {
 					$is_staging = 'yes'; // will list staging sites
 				}

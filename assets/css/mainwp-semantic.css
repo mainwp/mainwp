@@ -64,7 +64,7 @@
 #mainwp-manage-extensions .mainwp-main-content { padding-top: 1em; }
 
 .mainwp-ui .ui.alt.mainwp-posts.segment { padding: 0 !important; }
-.mainwp-ui .ui.alt.mainwp-posts.segment .mainwp-main-content { padding-right: 0em; }
+.mainwp-ui .ui.alt.mainwp-posts.segment .mainwp-main-content { padding-right: 0; }
 
 .mainwp-ui #mainwp-manage-plugins,
 .mainwp-ui #mainwp-manage-themes,

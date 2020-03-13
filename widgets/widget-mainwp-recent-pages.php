@@ -37,7 +37,7 @@ class MainWP_Recent_Pages {
 	 *
 	 * Build the resent pages list.
 	 *
-	 * @param mixed   $renew
+	 * @param mixed   $renew Site Data.
 	 * @param boolean $pExit true|false If $pExit is true exit.
 	 */
 	public static function renderSites( $renew, $pExit = true ) {

@@ -3,6 +3,8 @@
  * WooCommerce API Password Handler
  *
  * Encrypts & Decrypts API Passwords.
+ * 
+ * @package MainWP/API_Password_management
  */
 
 // Exit if accessed directly.

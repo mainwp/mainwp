@@ -3,6 +3,8 @@
  * MainWP Updates Overview Widget
  *
  * Grab Child Sites update status & build widget.
+ * 
+ * @package MainWP/Updates_Overview
  */
 
 /**
@@ -813,7 +815,7 @@ class MainWP_Updates_Overview {
 	/**
 	 * Method dismissSyncErrors()
 	 *
-	 * @param boolean $dismiss
+	 * @param boolean $dismiss true|false.
 	 *
 	 * @return boolean true
 	 */

@@ -185,6 +185,7 @@ class MainWP_Api_Manager_Key {
 	 * it against the MainWP.com Login Credentials stored on the license server.
 	 *
 	 * @param mixed $args Login Arguments.
+	 * @throws mixed Request error messages.
 	 * @throws mixed Request error codes.
 	 * @return mixed $response
 	 */

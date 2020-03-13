@@ -3,7 +3,7 @@
  * MainWP Recent Pages Widget
  *
  * Displays the Child Sites most recent published draft, pending, trash & future Pages.
- * 
+ *
  * @package MainWP/Widget_Mainwp_Recent_Pages
  */
 

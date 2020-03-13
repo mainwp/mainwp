@@ -3,7 +3,7 @@
  * MainWP Recent Posts Widget
  *
  * Displays the Child Sites most recent published draft, pending, trash & future posts.
- * 
+ *
  * @package MainWP/Widget_Recent_Posts
  */
 
@@ -37,7 +37,7 @@ class MainWP_Recent_Posts {
 	 *
 	 * Build the resent posts list.
 	 *
-	 * @param mixed   $renew 
+	 * @param mixed   $renew
 	 * @param boolean $pExit ture|false If $pEixt is true then exit.
 	 */
 	public static function renderSites( $renew, $pExit = true ) {

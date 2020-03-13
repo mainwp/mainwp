@@ -126,8 +126,8 @@ class MainWP_Post {
 			'mainwp',
 		), MAINWP_VERSION );
 
-		$post            = get_post( $post_id );
-		$GLOBALS['post'] = $post; // to fix: WP Seo metabox loading scripts
+		$_post           = get_post( $post_id );
+		$GLOBALS['post'] = $_post; // to fix: WP Seo metabox loading scripts
 	}
 
 	public static function get_manage_columns() {
@@ -242,13 +242,13 @@ class MainWP_Post {
 	}
 
 	public static function admin_post_thumbnail_html( $content, $post_id, $thumbnail_id ) {
-		 $post = get_post( $post_id );
+		 $_post = get_post( $post_id );
 
-		if ( empty( $post ) ) {
+		if ( empty( $_post ) ) {
 			return $content;
 		}
 
-		if ( 'bulkpost' !== $post->post_type && 'bulkpage' !== $post->post_type ) {
+		if ( 'bulkpost' !== $_post->post_type && 'bulkpage' !== $_post->post_type ) {
 			return $content;
 		}
 
@@ -303,9 +303,8 @@ class MainWP_Post {
 
 		MainWP_Post_Handler::Instance()->secure_request( 'mainwp_post_addmeta' );
 
-		$c    = 0;
-		$pid  = (int) $_POST['post_id'];
-		$post = get_post( $pid );
+		$c   = 0;
+		$pid = (int) $_POST['post_id'];
 
 		if ( isset( $_POST['metakeyselect'] ) || isset( $_POST['metakeyinput'] ) ) {
 			if ( ! current_user_can( 'edit_post', $pid ) ) {
@@ -546,13 +545,7 @@ class MainWP_Post {
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_post_search_by_keyword" class="text" value="
-																	  <?php
-																		if ( null != $cachedSearch ) {
-																			echo esc_attr( $cachedSearch['keyword'] );
-																		}
-																		?>
-																		"/>
+					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_post_search_by_keyword" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>"/>
 				</div>
 			</div>
 			<div class="field">
@@ -702,6 +695,7 @@ class MainWP_Post {
 						"targets": 'no-sort',
 						"orderable": false
 					} ],
+					"language" : { "emptyTable": "<?php esc_html_e( 'Please use the search options to find wanted posts.', 'mainwp' ); ?>" },
 					"preDrawCallback": function( settings ) {
 					<?php if ( ! $cached ) { ?>
 					jQuery('#mainwp-posts-table-wrapper table .ui.dropdown').dropdown();
@@ -816,17 +810,7 @@ class MainWP_Post {
 
 		// Sort if required
 		if ( 0 === $output->posts ) {
-			ob_start();
-			?>
-			<tr>
-		<td colspan="999"><?php esc_html_e( 'Please use the search options to find wanted posts.', 'mainwp' ); ?></td>
-	  </tr>
-
-			<?php
-			$newOutput = ob_get_clean();
-			echo $newOutput;
-			MainWP_Cache::addBody( 'Post', $newOutput );
-
+			MainWP_Cache::addBody( 'Post', '' );
 			return;
 		}
 	}
@@ -1073,11 +1057,11 @@ class MainWP_Post {
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
-	 * @param WP_Post $post Optional. The post being edited.
+	 * @param WP_Post $pos Optional. The post being edited.
 	 */
-	static function meta_form( $post = null ) {
+	static function meta_form( $pos = null ) {
 		global $wpdb;
-		$post = get_post( $post );
+		$_post = get_post( $pos );
 
 		/**
 		 * Filters values for the meta key dropdown in the Custom Fields meta box.
@@ -1088,9 +1072,9 @@ class MainWP_Post {
 		 * @since 4.4.0
 		 *
 		 * @param array|null $keys Pre-defined meta keys to be used in place of a postmeta query. Default null.
-		 * @param WP_Post    $post The current post object.
+		 * @param WP_Post    $_post The current post object.
 		 */
-		$keys = apply_filters( 'postmeta_form_keys', null, $post );
+		$keys = apply_filters( 'postmeta_form_keys', null, $_post );
 
 		if ( null === $keys ) {
 			/**
@@ -1128,7 +1112,7 @@ class MainWP_Post {
 			<?php
 
 			foreach ( $keys as $key ) {
-				if ( is_protected_meta( $key, 'post' ) || ! current_user_can( 'add_post_meta', $post->ID, $key ) ) {
+				if ( is_protected_meta( $key, 'post' ) || ! current_user_can( 'add_post_meta', $_post->ID, $key ) ) {
 					continue;
 				}
 				echo "\n<option value='" . esc_attr( $key ) . "'>" . esc_html( $key ) . '</option>';
@@ -1201,18 +1185,18 @@ class MainWP_Post {
 	 * @since 2.9.0
 	 *
 	 * @param int   $thumbnail_id ID of the attachment used for thumbnail
-	 * @param mixed $post The post ID or object associated with the thumbnail, defaults to global $post.
+	 * @param mixed $pos The post ID or object associated with the thumbnail, defaults to global $post.
 	 * @return string html
 	 */
-	static function _wp_post_thumbnail_html( $thumbnail_id = null, $post = null ) {
+	static function _wp_post_thumbnail_html( $thumbnail_id = null, $pos = null ) {
 
 		$_wp_additional_image_sizes = wp_get_additional_image_sizes();
 
-		$post             = get_post( $post );
-		$post_type_object = get_post_type_object( $post->post_type );
+		$_post            = get_post( $pos );
+		$post_type_object = get_post_type_object( $_post->post_type );
 
 		$thumb_ok          = false;
-		$upload_iframe_src = get_upload_iframe_src( 'image', $post->ID );
+		$upload_iframe_src = get_upload_iframe_src( 'image', $_post->ID );
 
 		if ( $thumbnail_id && get_post( $thumbnail_id ) ) {
 			$size = isset( $_wp_additional_image_sizes['post-thumbnail'] ) ? 'post-thumbnail' : array( 266, 266 );
@@ -1232,9 +1216,9 @@ class MainWP_Post {
 			 *                                   If the 'post-thumbnail' size is set, default is 'post-thumbnail'. Otherwise,
 			 *                                   default is an array with 266 as both the height and width values.
 			 * @param int          $thumbnail_id Post thumbnail attachment ID.
-			 * @param WP_Post      $post         The post object associated with the thumbnail.
+			 * @param WP_Post      $_post         The post object associated with the thumbnail.
 			 */
-			$size = apply_filters( 'admin_post_thumbnail_size', $size, $thumbnail_id, $post );
+			$size = apply_filters( 'admin_post_thumbnail_size', $size, $thumbnail_id, $_post );
 
 			$thumbnail_html = wp_get_attachment_image( $thumbnail_id, $size );
 
@@ -1279,22 +1263,22 @@ class MainWP_Post {
 		 * @param int    $post_id      Post ID.
 		 * @param int    $thumbnail_id Thumbnail ID.
 		 */
-		return apply_filters( 'mainwp_admin_post_thumbnail_html', $html, $post->ID, $thumbnail_id );
+		return apply_filters( 'mainwp_admin_post_thumbnail_html', $html, $_post->ID, $thumbnail_id );
 	}
 
-	static function post_thumbnail_meta_box( $post ) {
-		$thumbnail_id = get_post_meta( $post->ID, '_thumbnail_id', true );
-		echo self::_wp_post_thumbnail_html( $thumbnail_id, $post->ID );
+	static function post_thumbnail_meta_box( $pos ) {
+		$thumbnail_id = get_post_meta( $pos->ID, '_thumbnail_id', true );
+		echo self::_wp_post_thumbnail_html( $thumbnail_id, $pos->ID );
 	}
 
 	// invisible fields
 	static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) {
-			global $wp_locale;
+		global $wp_locale;
 
-			$post = get_post( $post );
+		$_post = get_post( $post );
 
 		if ( $for_post ) {
-			$edit = ! ( in_array($post->post_status, array( 'draft', 'pending' ) ) && ( ! $post->post_date_gmt || '0000-00-00 00:00:00' == $post->post_date_gmt ) );
+			$edit = ! ( in_array($_post->post_status, array( 'draft', 'pending' ) ) && ( ! $_post->post_date_gmt || '0000-00-00 00:00:00' == $post->post_date_gmt ) );
 		}
 
 			$tab_index_attribute = '';
@@ -1306,7 +1290,7 @@ class MainWP_Post {
 			// echo '<label for="timestamp" style="display: block;"><input type="checkbox" class="checkbox" name="edit_date" value="1" id="timestamp"'.$tab_index_attribute.' /> '.__( 'Edit timestamp' ).'</label><br />';
 
 			$time_adj  = current_time( 'timestamp' );
-			$post_date = ( $for_post ) ? $post->post_date : get_comment()->comment_date;
+			$post_date = ( $for_post ) ? $_post->post_date : get_comment()->comment_date;
 			$jj        = ( $edit ) ? mysql2date( 'd', $post_date, false ) : gmdate( 'd', $time_adj );
 			$mm        = ( $edit ) ? mysql2date( 'm', $post_date, false ) : gmdate( 'm', $time_adj );
 			$aa        = ( $edit ) ? mysql2date( 'Y', $post_date, false ) : gmdate( 'Y', $time_adj );
@@ -1433,7 +1417,7 @@ class MainWP_Post {
 						}
 
 						$i++;
-						echo '<div id="' . $box['id'] . '" class="postbox " ' . ' ' . '>' . "\n";
+						echo '<div id="' . $box['id'] . '" class="postbox" >' . "\n";
 						if ( 'dashboard_browser_nag' !== $box['id'] ) {
 							$widget_title = $box['title'];
 
@@ -1481,7 +1465,8 @@ class MainWP_Post {
 	}
 
 	public static function render_bulkpost( $post_id, $input_type ) {
-		global $post;
+		// any issues?
+		// global $post;
 		$post = get_post( $post_id );
 
 		if ( $post ) {
@@ -1515,7 +1500,7 @@ class MainWP_Post {
 			$note_title = ( 'bulkpost' === $post_type ) ? __('Edit Bulkpost', 'mainwp') : __('Edit Bulkpage', 'mainwp');
 		}
 		$message = '';
-		if ( isset( $_GET['message'] ) && 1 === $_GET['message'] ) {
+		if ( isset( $_GET['message'] ) && 1 == $_GET['message'] ) {
 			if ( 'bulkpost' === $post_type ) {
 				$message = __( 'Post updated.', 'mainwp' );
 			} else {
@@ -1912,13 +1897,6 @@ class MainWP_Post {
 			$selectedCategories = explode( ',', urldecode( $_REQUEST['selected_categories'] ) );
 		}
 
-		// if ( isset( $_REQUEST[ 'post_id' ] ) ) {
-		// $post_id = (int) $_REQUEST[ 'post_id' ];
-		// if ( current_user_can( 'edit_post', $post_id ) ) {
-		// $selectedCategories2 = get_post_meta( $post_id, '_categories', true );
-		// }
-		// }
-
 		if ( ! is_array( $selectedCategories ) ) {
 			$selectedCategories = array();
 		}
@@ -1982,9 +1960,9 @@ class MainWP_Post {
 
 				if ( ! $skip_post ) {
 					if ( isset( $_GET['id'] ) ) {
-						$id   = intval( $_GET['id'] );
-						$post = get_post( $id );
-						if ( $post ) {
+						$id    = intval( $_GET['id'] );
+						$_post = get_post( $id );
+						if ( $_post ) {
 							$selected_by     = get_post_meta( $id, '_selected_by', true );
 							$selected_sites  = unserialize( base64_decode( get_post_meta( $id, '_selected_sites', true ) ) );
 							$selected_groups = unserialize( base64_decode( get_post_meta( $id, '_selected_groups', true ) ) );
@@ -2025,21 +2003,21 @@ class MainWP_Post {
 							$post_status = get_post_meta( $id, '_edit_post_status', true );
 							// to support saving as pending
 							if ( 'pending' !== $post_status ) {
-								$post_status = $post->post_status;
+								$post_status = $_post->post_status;
 							}
 							$post_status = apply_filters('mainwp_posting_bulkpost_post_status', $post_status, $id ); // to support post plus extension
 							$new_post    = array(
-								'post_title'     => $post->post_title,
-								'post_content'   => $post->post_content,
+								'post_title'     => $_post->post_title,
+								'post_content'   => $_post->post_content,
 								'post_status'    => $post_status,
-								'post_date'      => $post->post_date,
-								'post_date_gmt'  => $post->post_date_gmt,
+								'post_date'      => $_post->post_date,
+								'post_date_gmt'  => $_post->post_date_gmt,
 								'post_tags'      => $post_tags,
 								'post_name'      => $post_slug,
-								'post_excerpt'   => $post->post_excerpt,
-								'comment_status' => $post->comment_status,
-								'ping_status'    => $post->ping_status,
-								'mainwp_post_id' => $post->ID,
+								'post_excerpt'   => $_post->post_excerpt,
+								'comment_status' => $_post->comment_status,
+								'ping_status'    => $_post->ping_status,
+								'mainwp_post_id' => $_post->ID,
 							);
 
 							if ( null != $featured_image_id ) { // Featured image is set, retrieve URL
@@ -2120,16 +2098,16 @@ class MainWP_Post {
 
 							$failed_posts = array();
 							foreach ( $dbwebsites as $website ) {
-								if ( isset($output->ok[ $website->id ]) && ( 1 === $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
+								if ( isset($output->ok[ $website->id ]) && ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
 									do_action( 'mainwp-post-posting-post', $website, $output->added_id[ $website->id ], ( isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null ) ); // deprecated from 4.0
-									do_action( 'mainwp-bulkposting-done', $post, $website, $output );
+									do_action( 'mainwp-bulkposting-done', $_post, $website, $output );
 								} else {
 									$failed_posts[] = $website->id;
 								}
 							}
 
 							// to support extensions, for example: boilerplate, post plus  ...
-							$after_posting = apply_filters('mainwp-after-posting-bulkpost-result', false, $post, $dbwebsites, $output );
+							$after_posting = apply_filters('mainwp-after-posting-bulkpost-result', false, $_post, $dbwebsites, $output );
 
 							if ( false === $after_posting ) {
 								?>
@@ -2138,7 +2116,7 @@ class MainWP_Post {
 								foreach ( $dbwebsites as $website ) {
 									?>
 									<div class="item"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-									: <?php echo( isset( $output->ok[ $website->id ] ) && 1 === $output->ok[ $website->id ] ? $succes_message . ' <a href="' . $output->link[ $website->id ] . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>' : $output->errors[ $website->id ] ); ?>
+									: <?php echo( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? $succes_message . ' <a href="' . $output->link[ $website->id ] . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>' : $output->errors[ $website->id ] ); ?>
 									</div>
 							<?php } ?>
 							</div>
@@ -2153,7 +2131,7 @@ class MainWP_Post {
 							$countSites     = 0;
 							$countRealItems = 0;
 							foreach ( $dbwebsites as $website ) {
-								if ( isset( $output->ok[ $website->id ] ) && 1 === $output->ok[ $website->id ] ) {
+								if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
 									$countSites++;
 									$countRealItems++;
 								}
@@ -2319,15 +2297,15 @@ class MainWP_Post {
 		$websiteId = $_POST['websiteId'];
 
 		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
-			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => 'You can not edit this website!' ) ) );
+			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
 		try {
@@ -2337,15 +2315,15 @@ class MainWP_Post {
 				'post_type'  => $postType,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
 
 		if ( is_array( $information ) && isset( $information['error'] ) ) {
-			die( json_encode( array( 'error' => $information['error'] ) ) );
+			die( wp_json_encode( array( 'error' => $information['error'] ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
-			die( json_encode( array( 'error' => 'Unexpected error.' ) ) );
+			die( wp_json_encode( array( 'error' => 'Unexpected error.' ) ) );
 		} else {
 			$ret = self::newPost( $information['my_post'] );
 			if ( is_array( $ret ) && isset( $ret['id'] ) ) {
@@ -2585,14 +2563,14 @@ class MainWP_Post {
 
 	public static function add_sticky_handle( $post_id ) {
 		// OK, we're authenticated: we need to find and save the data
-		$post = get_post( $post_id );
-		if ( 'bulkpost' === $post->post_type && isset( $_POST['sticky'] ) ) {
+		$_post = get_post( $post_id );
+		if ( 'bulkpost' === $_post->post_type && isset( $_POST['sticky'] ) ) {
 			update_post_meta( $post_id, '_sticky', base64_encode( $_POST['sticky'] ) );
 
 			return base64_encode( $_POST['sticky'] );
 		}
 
-		if ( 'bulkpost' === $post->post_type && isset( $_POST['mainwp_edit_post_status'] ) ) {
+		if ( 'bulkpost' === $_post->post_type && isset( $_POST['mainwp_edit_post_status'] ) ) {
 			update_post_meta( $post_id, '_edit_post_status', $_POST['mainwp_edit_post_status'] );
 		}
 

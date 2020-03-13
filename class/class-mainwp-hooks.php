@@ -372,22 +372,52 @@ class MainWP_Hooks {
 		$newdir = $dirs[0] . ( $dir != null ? $dir . DIRECTORY_SEPARATOR : '' );
 		$url    = $dirs[1] . '/' . $dir . '/';
 
+		$hasWPFileSystem = MainWP_Utility::getWPFilesystem();
+
+		global $wp_filesystem;
+
 		if ( $dir != null ) {
-			if ( ! file_exists( $newdir ) ) {
-				@mkdir( $newdir, 0777, true );
-			}
-			if ( $direct_access ) {
-				if ( ! file_exists(trailingslashit( $newdir ) . 'index.php') ) {
-					@touch(trailingslashit( $newdir ) . 'index.php');
+
+			if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+
+				if ( ! $wp_filesystem->exists( $newdir ) ) {
+					$wp_filesystem->mkdir( $newdir, 0777, true );
 				}
-				if ( file_exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
-					@unlink( trailingslashit( $newdir ) . '.htaccess' );
+
+				if ( $direct_access ) {
+					if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . 'index.php' ) ) {
+						// If $file doesn't exist, it will be created.
+						$wp_filesystem->touch( trailingslashit( $newdir ) . 'index.php' );
+					}
+					if ( $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
+						// Deletes .htaccess file
+						$wp_filesystem->delete(trailingslashit( $newdir  ) . '.htaccess' );
+					}
+				} else {
+					if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
+						// open and write the data to file.
+						$wp_filesystem->put_contents(trailingslashit( $newdir  ) . '.htaccess', 'deny from all' );
+					}
 				}
 			} else {
-				if ( ! file_exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
-					$file = @fopen( trailingslashit( $newdir  ) . '.htaccess', 'w+' );
-					@fwrite( $file, 'deny from all' );
-					@fclose( $file );
+
+				if ( ! file_exists( $newdir ) ) {
+					@mkdir( $newdir, 0777, true );
+				}
+
+				if ( $direct_access ) {
+					if ( ! file_exists(trailingslashit( $newdir ) . 'index.php') ) {
+						@touch(trailingslashit( $newdir ) . 'index.php');
+					}
+					if ( file_exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
+						@unlink( trailingslashit( $newdir ) . '.htaccess' );
+					}
+				} else {
+					if ( ! file_exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
+						$file = @fopen( trailingslashit( $newdir  ) . '.htaccess', 'w+' );
+						@fwrite( $file, 'deny from all' );
+						@fclose( $file );
+					}
 				}
 			}
 		}
@@ -455,7 +485,7 @@ class MainWP_Hooks {
 			}
 
 			if ( ! empty( $error ) ) {
-				// die( json_encode( array( 'error' => $error ) ) );
+				// die( wp_json_encode( array( 'error' => $error ) ) );
 				wp_send_json( array( 'error' => $error ) );
 			}
 
@@ -470,12 +500,12 @@ class MainWP_Hooks {
 						unset($information['sync']);
 					}
 
-					// die( json_encode( $information ) );
+					// die( wp_json_encode( $information ) );
 					wp_send_json( $information );
 				}
 			}
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
 
 		die();

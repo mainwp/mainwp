@@ -87,8 +87,8 @@ class MainWP_Meta_Boxes {
 		}
 
 			   // OK, we're authenticated: we need to find and save the data
-			   $post = get_post( $post_id );
-		if ( $post->post_type == $post_type && isset( $_POST['select_by'] ) ) {
+			   $_post = get_post( $post_id );
+		if ( $_post->post_type == $post_type && isset( $_POST['select_by'] ) ) {
 			// && isset($_POST['selected_sites'])) {
 
 			$selected_wp = array();
@@ -212,8 +212,8 @@ class MainWP_Meta_Boxes {
 		}
 
 		// OK, we're authenticated: we need to find and save the data
-		$post = get_post( $post_id );
-		if ( $post->post_type == $post_type ) {
+		$_post = get_post( $post_id );
+		if ( $_post->post_type == $post_type ) {
 			// update_post_meta($post_id, $saveto, base64_encode($_POST[$prefix]));
 			if ( isset( $_POST['post_category'] ) && is_array( $_POST['post_category'] ) ) {
 				update_post_meta( $post_id, '_categories', base64_encode( implode( ',', $_POST['post_category'] ) ) );
@@ -276,8 +276,8 @@ class MainWP_Meta_Boxes {
 		}
 
 		// OK, we're authenticated: we need to find and save the data
-		$post = get_post( $post_id );
-		if ( $post->post_type == $post_type && isset( $_POST[ $prefix ] ) ) {
+		$_post = get_post( $post_id );
+		if ( $_post->post_type == $post_type && isset( $_POST[ $prefix ] ) ) {
 			update_post_meta( $post_id, $saveto, base64_encode( $_POST[ $prefix ] ) );
 
 			return base64_encode( $_POST[ $prefix ] );

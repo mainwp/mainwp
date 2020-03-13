@@ -830,14 +830,14 @@ class MainWP_Manage_Backups {
 		$name = $_POST['name'];
 
 		if ( $name == '' ) {
-			die( json_encode( array( 'error' => __( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
 		}
 
 		$backupId = $_POST['id'];
 		$task     = MainWP_DB::Instance()->getBackupTaskById( $backupId );
 
 		if ( ! MainWP_Utility::can_edit_backuptask( $task ) ) {
-			die( json_encode( array( 'error' => __( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) ) ) );
 		}
 
 		$schedule       = $_POST['schedule'];
@@ -877,9 +877,9 @@ class MainWP_Manage_Backups {
 		$loadFilesBeforeZip             = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
 
 		if ( MainWP_DB::Instance()->updateBackupTask( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) === false ) {
-			die( json_encode( array( 'error' => __( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
 		} else {
-			die( json_encode( array( 'result' => __( 'Task updated successfully.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'result' => __( 'Task updated successfully.', 'mainwp' ) ) ) );
 		}
 	}
 
@@ -889,7 +889,7 @@ class MainWP_Manage_Backups {
 		$name = $_POST['name'];
 
 		if ( $name == '' ) {
-			die( json_encode( array( 'error' => __( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
 		}
 
 		$schedule       = $_POST['schedule'];
@@ -930,11 +930,11 @@ class MainWP_Manage_Backups {
 		$task = MainWP_DB::Instance()->addBackupTask( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], 0, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip);
 
 		if ( ! $task ) {
-			die( json_encode( array( 'error' => __( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
 		} else {
 			do_action( 'mainwp_add_backuptask', $task->id );
 
-			die( json_encode( array( 'result' => __( 'Task created successfully.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'result' => __( 'Task created successfully.', 'mainwp' ) ) ) );
 		}
 	}
 
@@ -988,9 +988,9 @@ class MainWP_Manage_Backups {
 				}
 
 				$output .= '<br />Backup details:<br /><br />';
-				$output .= '<strong>Backup task</strong>' . ' - ' . $task->name . '<br />';
-				$output .= '<strong>Backup type</strong>' . ' - ' . ( $task->type == 'db' ? 'DATABASE BACKUP' : 'FULL BACKUP' ) . '<br />';
-				$output .= '<strong>Backup schedule</strong>' . ' - ' . strtoupper( $task->schedule ) . '<br />';
+				$output .= '<strong>Backup task</strong> - ' . $task->name . '<br />';
+				$output .= '<strong>Backup type</strong> - ' . ( $task->type == 'db' ? 'DATABASE BACKUP' : 'FULL BACKUP' ) . '<br />';
+				$output .= '<strong>Backup schedule</strong> - ' . strtoupper( $task->schedule ) . '<br />';
 				wp_mail( $email, $mail_title = 'A Scheduled Backup has been Started - MainWP', MainWP_Utility::formatEmail( $email, $output, $mail_title ), 'content-type: text/html' );
 				MainWP_DB::Instance()->updateBackupTaskWithValues( $task->id, array( 'lastStartNotificationSent' => time() ) );
 			}
@@ -1437,10 +1437,10 @@ class MainWP_Manage_Backups {
 			if ( MainWP_Utility::can_edit_backuptask( $task ) ) {
 				// Remove from DB
 				MainWP_DB::Instance()->removeBackupTask( $task->id );
-				die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			}
 		}
-		die( json_encode( array( 'notask' => true ) ) );
+		die( wp_json_encode( array( 'notask' => true ) ) );
 	}
 
 	public static function resumeBackup() {
@@ -1448,10 +1448,10 @@ class MainWP_Manage_Backups {
 			$task = MainWP_DB::Instance()->getBackupTaskById( $_POST['id'] );
 			if ( MainWP_Utility::can_edit_backuptask( $task ) ) {
 				MainWP_DB::Instance()->updateBackupTaskWithValues( $task->id, array( 'paused' => 0 ) );
-				die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			}
 		}
-		die( json_encode( array( 'notask' => true ) ) );
+		die( wp_json_encode( array( 'notask' => true ) ) );
 	}
 
 	public static function pauseBackup() {
@@ -1459,10 +1459,10 @@ class MainWP_Manage_Backups {
 			$task = MainWP_DB::Instance()->getBackupTaskById( $_POST['id'] );
 			if ( MainWP_Utility::can_edit_backuptask( $task ) ) {
 				MainWP_DB::Instance()->updateBackupTaskWithValues( $task->id, array( 'paused' => 1 ) );
-				die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			}
 		}
-		die( json_encode( array( 'notask' => true ) ) );
+		die( wp_json_encode( array( 'notask' => true ) ) );
 	}
 
 }

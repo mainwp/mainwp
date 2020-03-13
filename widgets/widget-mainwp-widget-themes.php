@@ -84,7 +84,8 @@ class MainWP_Widget_Themes {
 		<div id="mainwp-widget-active-themes" class="ui tab active" data-tab="active_themes">
 			<div class="ui divided selection list">
 				<?php
-				for ( $i = 0; $i < count( $actived_themes ); $i ++ ) {
+				$_count = count( $actived_themes );
+				for ( $i = 0; $i < $_count; $i ++ ) {
 					$slug = $actived_themes[ $i ]['slug'];
 					?>
 					<div class="item">
@@ -108,7 +109,8 @@ class MainWP_Widget_Themes {
 		<div id="mainwp-widget-inactive-themes" class="ui tab" data-tab="inactive_themes">
 			<div class="ui divided selection list">
 				<?php
-				for ( $i = 0; $i < count( $inactive_themes ); $i ++ ) {
+				$_count = count( $inactive_themes );
+				for ( $i = 0; $i < $_count; $i ++ ) {
 					$slug = $inactive_themes[ $i ]['slug'];
 					?>
 					<div class="item">
@@ -143,12 +145,12 @@ class MainWP_Widget_Themes {
 
 	public static function activateTheme() {
 		self::action( 'activate' );
-		die( json_encode( array( 'result' => __( 'Theme has been activated!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Theme has been activated!', 'mainwp' ) ) ) );
 	}
 
 	public static function deleteTheme() {
 		self::action( 'delete' );
-		die( json_encode( array( 'result' => __( 'Theme has been permanently deleted!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Theme has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
 	public static function action( $pAction ) {
@@ -156,16 +158,16 @@ class MainWP_Widget_Themes {
 		$websiteIdEnc = $_POST['websiteId'];
 
 		if ( empty( $theme ) ) {
-			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 		$websiteId = $websiteIdEnc;
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => 'You can not edit this website!' ) ) );
+			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
 		try {
@@ -174,11 +176,11 @@ class MainWP_Widget_Themes {
 				'theme'  => $theme,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
-			die( json_encode( array( 'error' => 'Unexpected error!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Unexpected error!' ) ) );
 		}
 	}
 

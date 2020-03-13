@@ -43,7 +43,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 	public function prepare_items() {
 		include ABSPATH . 'wp-admin/includes/plugin-install.php';
 
-		global $tabs, $tab, $paged, $type, $term;
+		global $tab; // , $paged, $type, $term;
 
 		wp_reset_vars( array( 'tab' ) );
 
@@ -67,7 +67,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		if ( current_user_can( 'upload_plugins' ) ) {
 			// No longer a real tab. Here for filter compatibility.
 			// Gets skipped in get_views().
-			$tabs['upload'] = __( __( 'Upload Plugin', 'mainwp' ) );
+			$tabs['upload'] = __( 'Upload Plugin', 'mainwp' );
 		}
 
 		$nonmenu_tabs = array( 'plugin-information' );

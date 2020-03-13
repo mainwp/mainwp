@@ -107,26 +107,26 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 			$report->groups             = '';
 			$report->schedule_nextsend  = 0;
 			$filtered_reports           = MainWP_Live_Reports_Class::filter_report( $report, '' );
-			echo json_encode( array(
+			echo wp_json_encode( array(
 				'result' => 'success',
 				'data'   => html_entity_decode( stripslashes( $filtered_reports[ $_POST['siteid'] ]->filtered_header ) ),
 			) );
 			exit;
 		} else {
-			echo json_encode( array(
+			echo wp_json_encode( array(
 				'result'  => 'error',
 				'message' => 'Permission Denied',
 			) );
 			exit;
 		}
 	} elseif ( isset( $secureconnection['error'] ) ) {
-		echo json_encode( array(
+		echo wp_json_encode( array(
 			'result'  => 'error',
 			'message' => $secureconnection['error'],
 		) );
 		exit;
 	} else {
-		echo json_encode( array(
+		echo wp_json_encode( array(
 			'result'  => 'error',
 			'message' => 'Error - Invalid Request',
 		) );
@@ -166,33 +166,33 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 				$report->groups             = '';
 				$report->schedule_nextsend  = 0;
 				$filtered_reports           = MainWP_Live_Reports_Class::filter_report( $report, $_POST['allowed_tokens'] );
-				echo json_encode( array(
+				echo wp_json_encode( array(
 					'result' => 'success',
 					'data'   => html_entity_decode( stripslashes( $filtered_reports[ $_POST['siteid'] ]->filtered_header ) ),
 				) );
 				exit;
 			} else {
-				echo json_encode( array(
+				echo wp_json_encode( array(
 					'result'  => 'error',
 					'message' => 'No Report Found',
 				) );
 				exit;
 			}
 		} else {
-			echo json_encode( array(
+			echo wp_json_encode( array(
 				'result'  => 'error',
 				'message' => 'Permission Denied',
 			) );
 			exit;
 		}
 	} elseif ( isset( $secureconnection['error'] ) ) {
-		echo json_encode( array(
+		echo wp_json_encode( array(
 			'result'  => 'error',
 			'message' => $secureconnection['error'],
 		) );
 		exit;
 	} else {
-		echo json_encode( array(
+		echo wp_json_encode( array(
 			'result'  => 'error',
 			'message' => 'Error - Invalid Request',
 		) );
@@ -222,23 +222,23 @@ if ( isset( $_POST['email'] ) && isset( $_POST['action'] ) && ( 'getallsitesbyem
 				$result['result']  = 'error';
 				$result['message'] = 'No Site Found';
 			}
-			echo json_encode( $result );
+			echo wp_json_encode( $result );
 			exit;
 		} else {
-			echo json_encode( array(
+			echo wp_json_encode( array(
 				'result'  => 'error',
 				'message' => 'Permission Denied',
 			) );
 			exit;
 		}
 	} elseif ( isset( $secureconnection['error'] ) ) {
-		echo json_encode( array(
+		echo wp_json_encode( array(
 			'result'  => 'error',
 			'message' => $secureconnection['error'],
 		) );
 		exit;
 	} else {
-		echo json_encode( array(
+		echo wp_json_encode( array(
 			'result'  => 'error',
 			'message' => 'Error - Invalid Request',
 		) );
@@ -268,23 +268,23 @@ if ( isset( $_POST['action'] ) && ( 'getallsites' == $_POST['action'] ) ) {
 				$result['result']  = 'error';
 				$result['message'] = 'No Site Found';
 			}
-			echo json_encode( $result );
+			echo wp_json_encode( $result );
 			exit;
 		} else {
-			echo json_encode( array(
+			echo wp_json_encode( array(
 				'result'  => 'error',
 				'message' => 'Permission Denied',
 			) );
 			exit;
 		}
 	} elseif ( isset( $secureconnection['error'] ) ) {
-		echo json_encode( array(
+		echo wp_json_encode( array(
 			'result'  => 'error',
 			'message' => $secureconnection['error'],
 		) );
 		exit;
 	} else {
-		echo json_encode( array(
+		echo wp_json_encode( array(
 			'result'  => 'error',
 			'message' => 'Error - Invalid Request',
 		) );
@@ -296,26 +296,26 @@ if ( isset( $_POST['action'] ) && ( 'checkvalid_live_reports_responder_url' == $
 	if ( $secureconnection === true ) {
 		$checkPermission = checkLiveReportingAccess( $_POST['livereportingurl'] );
 		if ( $checkPermission ) {
-			echo json_encode( array(
+			echo wp_json_encode( array(
 				'result'  => 'success',
 				'message' => 'Access has been granted',
 			) );
 			exit;
 		} else {
-			echo json_encode( array(
+			echo wp_json_encode( array(
 				'result'  => 'error',
 				'message' => 'Error - Connection not allowed in the Managed Client Reports for WooCommerce Responder settings',
 			) );
 			exit;
 		}
 	} elseif ( isset( $secureconnection['error'] ) ) {
-		echo json_encode( array(
+		echo wp_json_encode( array(
 			'result'  => 'error',
 			'message' => $secureconnection['error'],
 		) );
 		exit;
 	} else {
-		echo json_encode( array(
+		echo wp_json_encode( array(
 			'result'  => 'error',
 			'message' => 'Error - Invalid Request',
 		) );

@@ -128,7 +128,7 @@ class MainWP_Manage_Sites {
 
 		$i = 1;
 		if ( isset( $_REQUEST['do'] ) ) {
-			if ( 'new' == $_REQUEST['do'] ) {
+			if ( 'new' === $_REQUEST['do'] ) {
 				return;
 			}
 		} elseif ( isset( $_GET['id'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) ) {
@@ -140,7 +140,7 @@ class MainWP_Manage_Sites {
 	}
 
 	public static function on_load_subpages() {
-		if ( isset($_GET['id']) && $_GET['id'] ) {
+		if ( isset( $_GET['id'] ) && $_GET['id'] ) {
 			MainWP_Utility::set_current_wpid( $_GET['id'] );
 		}
 	}
@@ -170,26 +170,26 @@ class MainWP_Manage_Sites {
 
 		$columns = self::$sitesTable->get_columns();
 
-		if ( isset($columns['cb']) ) {
-			unset($columns['cb']); // do not set this column
+		if ( isset( $columns['cb'] ) ) {
+			unset( $columns['cb'] );
 		}
 
-		if ( isset($columns['status']) ) {
-			$columns['status'] = __('Status', 'mainwp'); // set title
+		if ( isset( $columns['status'] ) ) {
+			$columns['status'] = __( 'Status', 'mainwp' );
 		}
 
 		$sites_per_page = get_option( 'mainwp_default_sites_per_page', 25 );
 
-		if ( isset($columns['site_actions']) && empty($columns['site_actions']) ) {
-			$columns['site_actions'] = __('Actions', 'mainwp'); // set title
+		if ( isset( $columns['site_actions'] ) && empty( $columns['site_actions'] ) ) {
+			$columns['site_actions'] = __( 'Actions', 'mainwp' );
 		}
 
-		?>			
-			<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">			
-			<div class="header"><?php echo __( 'Screen Options', 'mainwp' ); ?></div>				
-					<div class="scrolling content ui form">					
+		?>
+		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
+			<div class="header"><?php echo __( 'Screen Options', 'mainwp' ); ?></div>
+					<div class="scrolling content ui form">
 						<form method="POST" action="" id="manage-sites-screen-options-form">
-						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'ManageSitesScrOptions' ); ?>" />                 	
+						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'ManageSitesScrOptions' ); ?>" />
 						<div class="ui grid field">
 							<label class="six wide column"><?php esc_html_e( 'Default items per page value', 'mainwp' ); ?></label>
 							<div class="ten wide column">
@@ -206,8 +206,8 @@ class MainWP_Manage_Sites {
 						</div>
 						<?php
 
-						$hide_cols = get_user_option('mainwp_settings_hide_manage_sites_columns');
-						if ( ! is_array($hide_cols) ) {
+						$hide_cols = get_user_option( 'mainwp_settings_hide_manage_sites_columns' );
+						if ( ! is_array( $hide_cols ) ) {
 							$hide_cols = array();
 						}
 
@@ -224,10 +224,11 @@ class MainWP_Manage_Sites {
 											?>
 											  <li>
 												  <div class="ui checkbox">
-													  <input type="checkbox" 
+													  <input type="checkbox"
 													  <?php
-														if ( in_array( $name, $hide_cols) ) {
-															echo 'checked="checked"';}
+														if ( in_array( $name, $hide_cols ) ) {
+															echo 'checked="checked"';
+														}
 														?>
 														 id="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" name="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
 													  <label for="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; ?></label>
@@ -239,14 +240,14 @@ class MainWP_Manage_Sites {
 									  </ul>
 								</div>
 							</div>
-					</div>				
+					</div>
 					<div class="actions">
 						<input type="submit" class="ui green button" name="submit" id="submit" value="<?php echo __( 'Save Settings', 'mainwp' ); ?>" />
 						<div class="ui cancel button"><?php echo __( 'Close', 'mainwp' ); ?></div>
-					</div>		
+					</div>
 				</form>
 			</div>
-			
+
 		<?php
 	}
 
@@ -262,7 +263,7 @@ class MainWP_Manage_Sites {
 		$websites            = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 		$referrer_page_check = false;
 		$referrer_page       = wp_get_referer();
-		if ( $referrer_page === admin_url( 'admin.php?page=mainwp-setup' ) ) {
+		if ( admin_url( 'admin.php?page=mainwp-setup' ) === $referrer_page ) {
 			$referrer_page_check = true;
 		}
 
@@ -310,164 +311,168 @@ class MainWP_Manage_Sites {
 			</script>
 			<?php endif; ?>
 
-		<div class="ui hidden divider"></div>
-				<div id="mainwp-message-zone" style="display: none;" class="ui message"></div>
+			<div class="ui hidden divider"></div>
+			<div id="mainwp-message-zone" style="display: none;" class="ui message"></div>
 
-				<div id="mainwp_managesites_add_errors" style="display: none" class="mainwp-notice mainwp-notice-red"></div>
-				<div id="mainwp_managesites_add_message" style="display: none" class="mainwp-notice mainwp-notice-green"></div>
+			<div id="mainwp_managesites_add_errors" style="display: none" class="mainwp-notice mainwp-notice-red"></div>
+			<div id="mainwp_managesites_add_message" style="display: none" class="mainwp-notice mainwp-notice-green"></div>
 
-					<form method="POST" class="ui form" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
-						<h3 class="ui dividing header">
-							<?php esc_html_e( 'Add a Single Site', 'mainwp' ); ?>
-							<div class="sub header"><?php esc_html_e( 'Required fields.', 'mainwp' ); ?></div>
-						</h3>
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Site URL', 'mainwp' ); ?></label>
-						  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter your website URL.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<div class="ui left action input">
-									<select class="ui compact selection dropdown" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol">
-										<option value="http">http://</option>
-										<option selected="" value="https">https://</option>
-									</select>
-									<input type="text" id="mainwp_managesites_add_wpurl" name="mainwp_managesites_add_wpurl" value="" />
-								</div>
-							</div>
+			<form method="POST" class="ui form" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
+				<h3 class="ui dividing header">
+					<?php esc_html_e( 'Add a Single Site', 'mainwp' ); ?>
+					<div class="sub header"><?php esc_html_e( 'Required fields.', 'mainwp' ); ?></div>
+				</h3>
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Site URL', 'mainwp' ); ?></label>
+				  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter your website URL.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<div class="ui left action input">
+							<select class="ui compact selection dropdown" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol">
+								<option value="http">http://</option>
+								<option selected="" value="https">https://</option>
+							</select>
+							<input type="text" id="mainwp_managesites_add_wpurl" name="mainwp_managesites_add_wpurl" value="" />
 						</div>
-
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Administrator username', 'mainwp' ); ?></label>
-						  <div class="ui six wide column"  data-tooltip="<?php esc_attr_e( 'Enter the website Administrator username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<div class="ui left labeled input">
-									<input type="text" id="mainwp_managesites_add_wpadmin" name="mainwp_managesites_add_wpadmin" value="" />
-								</div>
-							</div>
-						</div>
-
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Site title', 'mainwp' ); ?></label>
-						  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website title.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<div class="ui left labeled input">
-									<input type="text" id="mainwp_managesites_add_wpname" name="mainwp_managesites_add_wpname" value="" />
-								</div>
-							</div>
-						</div>
-
-						<h3 class="ui dividing header">
-							<?php esc_html_e( 'Optional Settings', 'mainwp' ); ?>
-							<div class="sub header"><?php esc_html_e( 'Use these fields as per your perferrence.', 'mainwp' ); ?></div>
-						</h3>
-
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Unique security ID (optional)', 'mainwp' ); ?></label>
-						  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If in use, enter the website Unique ID.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<div class="ui left labeled input">
-									<input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
-								</div>
-							</div>
-						</div>
-
-						<div class="ui grid field">
-						  <label class="six wide column middle aligned"><?php esc_html_e( 'Groups (optional)', 'mainwp' ); ?></label>
-						  <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing group(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<div class="ui multiple search selection dropdown" init-value="" id="mainwp_managesites_add_addgroups">
-							  <i class="dropdown icon"></i>
-							  <div class="default text"></div>
-							  <div class="menu">
-								<?php foreach ( $groups as $group ) { ?>
-								  <div class="item" data-value="<?php echo $group->id; ?>"><?php echo $group->name; ?></div>
-								<?php } ?>
-							  </div>
-							</div>
-						  </div>
-						</div>
-						
-						<?php
-						MainWP_Manage_Sites_View::renderSyncExtsSettings();
-						?>
-						
-						<h3 class="ui dividing header">
-							<?php esc_html_e( 'Advanced Options', 'mainwp' ); ?>
-							<div class="sub header"><?php esc_html_e( 'Use advanced options when needed. In most cases, you can leave the default values.', 'mainwp' ); ?></div>
-						</h3>
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Verify SSL certificate (optional)', 'mainwp' ); ?></label>
-							<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Do you want to verify SSL certificate.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="checkbox" name="mainwp_managesites_verify_certificate" id="mainwp_managesites_verify_certificate" checked="true" />
-							</div>
-						</div>
-
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'SSL version (optional)', 'mainwp' ); ?></label>
-							<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select SSL version. If you are not sure, select "Auto Detect".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<select name="mainwp_managesites_ssl_version" id="mainwp_managesites_ssl_version" class="ui dropdown">
-									<option selected value="auto"><?php _e( 'Auto detect', 'mainwp' ); ?></option>
-									<option value="1.2"><?php _e( "Let's encrypt (TLS v1.2)", 'mainwp' ); ?></option>
-									<option value="1.x"><?php _e( 'TLS v1.x', 'mainwp' ); ?></option>
-									<option value="2"><?php _e( 'SSL v2', 'mainwp' ); ?></option>
-									<option value="3"><?php _e( 'SSL v3', 'mainwp' ); ?></option>
-									<option value="1.0"><?php _e( 'TLS v1.0', 'mainwp' ); ?></option>
-									<option value="1.1"><?php _e( 'TLS v1.1', 'mainwp' ); ?></option>
-								</select>
-							</div>
-						</div>
-						<!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
-							<input style="display:none" type="text" name="fakeusernameremembered"/>
-							<input style="display:none" type="password" name="fakepasswordremembered"/>
-							<div class="ui grid field">
-							  <label class="six wide column middle aligned"><?php esc_html_e( 'HTTP username (optional)', 'mainwp' ); ?></label>
-								<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP username here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<div class="ui left labeled input">
-								  <input type="text" id="mainwp_managesites_add_http_user" name="mainwp_managesites_add_http_user" value="" autocomplete="new-http-user" />
-								</div>
-							  </div>
-							</div>
-							<div class="ui grid field">
-							  <label class="six wide column middle aligned"><?php esc_html_e( 'HTTP password (optional)', 'mainwp' ); ?></label>
-							  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP password here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<div class="ui left labeled input">
-								  <input type="password" id="mainwp_managesites_add_http_pass" name="mainwp_managesites_add_http_pass" value="" autocomplete="new-password" />
-								</div>
-							  </div>
-							</div>
-							<div class="ui grid field">
-							  <label class="six wide column middle aligned"><?php esc_html_e( 'Force IPv4 (optional)', 'mainwp' ); ?></label>
-							  <div class="six wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'Do you want to force IPv4 for this child site?', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="checkbox" name="mainwp_managesites_force_use_ipv4" id="mainwp_managesites_force_use_ipv4" />
-							</div>							  
-						</div>
-
-						<?php do_action( 'mainwp-manage-sites-edit', false ); ?>
-							
-						<div class="ui divider"></div>
-						<input type="button" name="mainwp_managesites_test" id="mainwp_managesites_test" class="ui button basic green big" value="<?php _e( 'Test Connection', 'mainwp' ); ?>"/>
-						<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big right floated" value="<?php _e( 'Add Site', 'mainwp' ); ?>" />
-					</form>
-			</div>
-			<div class="ui modal" id="mainwp-test-connection-modal">
-				<div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
-				<div class="content">
-					<div class="ui active inverted dimmer">
-					<div class="ui text loader"><?php esc_html_e( 'Testing connection...', 'mainwp' ); ?></div>
-				  </div>
-					<div id="mainwp-test-connection-result" class="ui segment" style="display:none">
-						<h2 class="ui center aligned icon header">
-						  <i class=" icon"></i>
-						  <div class="content">
-								<span></span>
-							<div class="sub header"></div>
-						  </div>
-						</h2>
 					</div>
 				</div>
-				<div class="actions"><div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div></div>
+
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Administrator username', 'mainwp' ); ?></label>
+				  <div class="ui six wide column"  data-tooltip="<?php esc_attr_e( 'Enter the website Administrator username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<div class="ui left labeled input">
+							<input type="text" id="mainwp_managesites_add_wpadmin" name="mainwp_managesites_add_wpadmin" value="" />
+						</div>
+					</div>
+				</div>
+
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Site title', 'mainwp' ); ?></label>
+				  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website title.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<div class="ui left labeled input">
+							<input type="text" id="mainwp_managesites_add_wpname" name="mainwp_managesites_add_wpname" value="" />
+						</div>
+					</div>
+				</div>
+
+				<h3 class="ui dividing header">
+					<?php esc_html_e( 'Optional Settings', 'mainwp' ); ?>
+					<div class="sub header"><?php esc_html_e( 'Use these fields as per your perferrence.', 'mainwp' ); ?></div>
+				</h3>
+
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Unique security ID (optional)', 'mainwp' ); ?></label>
+				  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If in use, enter the website Unique ID.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<div class="ui left labeled input">
+							<input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
+						</div>
+					</div>
+				</div>
+
+				<div class="ui grid field">
+				  <label class="six wide column middle aligned"><?php esc_html_e( 'Groups (optional)', 'mainwp' ); ?></label>
+				  <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing group(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="ui multiple search selection dropdown" init-value="" id="mainwp_managesites_add_addgroups">
+					  <i class="dropdown icon"></i>
+					  <div class="default text"></div>
+					  <div class="menu">
+						<?php foreach ( $groups as $group ) { ?>
+						  <div class="item" data-value="<?php echo $group->id; ?>"><?php echo $group->name; ?></div>
+						<?php } ?>
+					  </div>
+					</div>
+				  </div>
+				</div>
+
+				<?php MainWP_Manage_Sites_View::renderSyncExtsSettings(); ?>
+
+				<h3 class="ui dividing header">
+					<?php esc_html_e( 'Advanced Options', 'mainwp' ); ?>
+					<div class="sub header"><?php esc_html_e( 'Use advanced options when needed. In most cases, you can leave the default values.', 'mainwp' ); ?></div>
+				</h3>
+
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Verify SSL certificate (optional)', 'mainwp' ); ?></label>
+					<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Do you want to verify SSL certificate.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<input type="checkbox" name="mainwp_managesites_verify_certificate" id="mainwp_managesites_verify_certificate" checked="true" />
+					</div>
+				</div>
+
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'SSL version (optional)', 'mainwp' ); ?></label>
+					<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select SSL version. If you are not sure, select "Auto Detect".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<select name="mainwp_managesites_ssl_version" id="mainwp_managesites_ssl_version" class="ui dropdown">
+							<option selected value="auto"><?php _e( 'Auto detect', 'mainwp' ); ?></option>
+							<option value="1.2"><?php _e( "Let's encrypt (TLS v1.2)", 'mainwp' ); ?></option>
+							<option value="1.x"><?php _e( 'TLS v1.x', 'mainwp' ); ?></option>
+							<option value="2"><?php _e( 'SSL v2', 'mainwp' ); ?></option>
+							<option value="3"><?php _e( 'SSL v3', 'mainwp' ); ?></option>
+							<option value="1.0"><?php _e( 'TLS v1.0', 'mainwp' ); ?></option>
+							<option value="1.1"><?php _e( 'TLS v1.1', 'mainwp' ); ?></option>
+						</select>
+					</div>
+				</div>
+
+				<!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
+				<input style="display:none" type="text" name="fakeusernameremembered"/>
+				<input style="display:none" type="password" name="fakepasswordremembered"/>
+
+				<div class="ui grid field">
+				  <label class="six wide column middle aligned"><?php esc_html_e( 'HTTP username (optional)', 'mainwp' ); ?></label>
+					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP username here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="ui left labeled input">
+					  <input type="text" id="mainwp_managesites_add_http_user" name="mainwp_managesites_add_http_user" value="" autocomplete="new-http-user" />
+					</div>
+				  </div>
+				</div>
+
+				<div class="ui grid field">
+				  <label class="six wide column middle aligned"><?php esc_html_e( 'HTTP password (optional)', 'mainwp' ); ?></label>
+				  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP password here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="ui left labeled input">
+					  <input type="password" id="mainwp_managesites_add_http_pass" name="mainwp_managesites_add_http_pass" value="" autocomplete="new-password" />
+					</div>
+				  </div>
+				</div>
+
+				<div class="ui grid field">
+				  <label class="six wide column middle aligned"><?php esc_html_e( 'Force IPv4 (optional)', 'mainwp' ); ?></label>
+					  <div class="six wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'Do you want to force IPv4 for this child site?', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<input type="checkbox" name="mainwp_managesites_force_use_ipv4" id="mainwp_managesites_force_use_ipv4" />
+					</div>
+				</div>
+
+				<?php do_action( 'mainwp-manage-sites-edit', false ); ?>
+
+				<div class="ui divider"></div>
+				<input type="button" name="mainwp_managesites_test" id="mainwp_managesites_test" class="ui button basic green big" value="<?php _e( 'Test Connection', 'mainwp' ); ?>"/>
+				<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big right floated" value="<?php _e( 'Add Site', 'mainwp' ); ?>" />
+			</form>
+		</div>
+
+		<div class="ui modal" id="mainwp-test-connection-modal">
+			<div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
+			<div class="content">
+				<div class="ui active inverted dimmer">
+				<div class="ui text loader"><?php esc_html_e( 'Testing connection...', 'mainwp' ); ?></div>
+			  </div>
+				<div id="mainwp-test-connection-result" class="ui segment" style="display:none">
+					<h2 class="ui center aligned icon header">
+					  <i class=" icon"></i>
+					  <div class="content">
+							<span></span>
+						<div class="sub header"></div>
+					  </div>
+					</h2>
+				</div>
 			</div>
-			<script type="text/javascript">
-				jQuery( document ).ready( function () {
-					jQuery('#mainwp_managesites_add_addgroups').dropdown({
-						allowAdditions: true
-					});
-				});
-			</script>
+			<div class="actions"><div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div></div>
+		</div>
+		<script type="text/javascript">
+			jQuery( document ).ready( function () {
+				jQuery( '#mainwp_managesites_add_addgroups' ).dropdown( {
+					allowAdditions: true
+				} );
+			} );
+		</script>
 			<?php
 		}
 		self::renderFooter( $showpage );
@@ -475,61 +480,61 @@ class MainWP_Manage_Sites {
 
 	public static function renderBulkNewSite() {
 		$showpage = 'BulkAddNew';
-			self::renderHeader( $showpage );
+		self::renderHeader( $showpage );
 		if ( ! mainwp_current_user_can( 'dashboard', 'add_sites' ) ) {
 			mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
 			return;
 		} else {
-			if ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && $_FILES['mainwp_managesites_file_bulkupload']['error'] == UPLOAD_ERR_OK ) {
+			if ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] ) {
 				?>
-					<div class="ui modal" id="mainwp-import-sites-modal">
-						<div class="header"><?php _e( 'Import Sites', 'mainwp' ); ?></div>
-						<div class="scrolling header">
-						<?php MainWP_Manage_Sites_View::renderImportSites(); ?>
-						</div>
-						<div class="actions">
-							<div class="ui cancel button"><?php _e( 'Close', 'mainwp' ); ?></div>
-							<input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php _e( 'Pause', 'mainwp' ); ?>"/>
-							<input type="button" name="mainwp_managesites_btn_save_csv" id="mainwp_managesites_btn_save_csv" disabled="disabled" class="ui basic green button" value="<?php _e( 'Save failed', 'mainwp' ); ?>"/>
-						</div>
+				<div class="ui modal" id="mainwp-import-sites-modal">
+					<div class="header"><?php _e( 'Import Sites', 'mainwp' ); ?></div>
+					<div class="scrolling header">
+					<?php MainWP_Manage_Sites_View::renderImportSites(); ?>
 					</div>
-					<script type="text/javascript">
-						jQuery( document ).ready( function () {
-							jQuery( "#mainwp-import-sites-modal" ).modal({
-								closable: false,
-								onHide: function() {
-									location.href = 'admin.php?page=managesites&do=bulknew';
-								}
-							}).modal( 'show' );
-						});
-					</script>
-					<?php
+					<div class="actions">
+						<div class="ui cancel button"><?php _e( 'Close', 'mainwp' ); ?></div>
+						<input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php _e( 'Pause', 'mainwp' ); ?>"/>
+						<input type="button" name="mainwp_managesites_btn_save_csv" id="mainwp_managesites_btn_save_csv" disabled="disabled" class="ui basic green button" value="<?php esc_attr_e( 'Save failed', 'mainwp' ); ?>"/>
+					</div>
+				</div>
+				<script type="text/javascript">
+					jQuery( document ).ready( function () {
+						jQuery( "#mainwp-import-sites-modal" ).modal( {
+							closable: false,
+							onHide: function() {
+								location.href = 'admin.php?page=managesites&do=bulknew';
+							}
+						} ).modal( 'show' );
+					} );
+				</script>
+				<?php
 			} else {
 				?>
-					<div class="ui segment" id="mainwp-import-sites">
-							<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
-							<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
-									<div class="ui grid field">
-										<label class="six wide column middle aligned"><?php _e( 'Uplod the CSV file', 'mainwp' ); ?></label>
-									  <div class="ten wide column">
-											<input type="file" name="mainwp_managesites_file_bulkupload" id="mainwp_managesites_file_bulkupload" accept="text/comma-separated-values"/>
-										</div>
-									</div>
-									<div class="ui grid field">
-										<label class="six wide column middle aligned"><?php _e( 'CSV file contains a header', 'mainwp' ); ?></label>
-										<div class="ui toggle checkbox">
-											<input type="checkbox" name="mainwp_managesites_chk_header_first" checked="checked" id="mainwp_managesites_chk_header_first" value="1"/>
-										</div>
-									</div>
-									<div class="ui divider"></div>
-									<a href="<?php echo MAINWP_PLUGIN_URL . 'assets/csv/sample.csv'; ?>" class="ui big green basic button"><?php _e( 'Download Sample CSV file', 'mainwp' ); ?></a>
-									<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green right floated button" value="<?php _e( 'Import Sites', 'mainwp' ); ?>"/>
-								</form>
+				<div class="ui segment" id="mainwp-import-sites">
+					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
+					<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php _e( 'Uplod the CSV file', 'mainwp' ); ?></label>
+						  <div class="ten wide column">
+								<input type="file" name="mainwp_managesites_file_bulkupload" id="mainwp_managesites_file_bulkupload" accept="text/comma-separated-values"/>
 							</div>
-					<?php
+						</div>
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php _e( 'CSV file contains a header', 'mainwp' ); ?></label>
+							<div class="ui toggle checkbox">
+								<input type="checkbox" name="mainwp_managesites_chk_header_first" checked="checked" id="mainwp_managesites_chk_header_first" value="1"/>
+							</div>
+						</div>
+						<div class="ui divider"></div>
+						<a href="<?php echo MAINWP_PLUGIN_URL . 'assets/csv/sample.csv'; ?>" class="ui big green basic button"><?php _e( 'Download Sample CSV file', 'mainwp' ); ?></a>
+						<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green right floated button" value="<?php _e( 'Import Sites', 'mainwp' ); ?>"/>
+					</form>
+				</div>
+				<?php
 			}
 		}
-				self::renderFooter( $showpage );
+		self::renderFooter( $showpage );
 	}
 
 	/**
@@ -550,7 +555,7 @@ class MainWP_Manage_Sites {
 		$excludezip    = $pTask->excludezip;
 		$pFilename     = $pTask->filename;
 
-		if ( trim( $pFilename ) == '' ) {
+		if ( '' === trim( $pFilename ) ) {
 			$pFilename = null;
 		}
 
@@ -572,12 +577,12 @@ class MainWP_Manage_Sites {
 		}
 
 		$websiteCleanUrl = $website->url;
-		if ( substr( $websiteCleanUrl, - 1 ) == '/' ) {
+		if ( '/' === substr( $websiteCleanUrl, - 1 ) ) {
 			$websiteCleanUrl = substr( $websiteCleanUrl, 0, - 1 );
 		}
 		$websiteCleanUrl = str_replace( array( 'http://', 'https://', '/' ), array( '', '', '-' ), $websiteCleanUrl );
 
-		if ( $type == 'db' ) {
+		if ( 'db' === $type ) {
 			$ext = '.sql.' . MainWP_Utility::getCurrentArchiveExtension( $website, $pTask );
 		} else {
 			$ext = '.' . MainWP_Utility::getCurrentArchiveExtension( $website, $pTask );
@@ -603,31 +608,31 @@ class MainWP_Manage_Sites {
 			$file .= $ext;
 		}
 
-		if ( $pTask->archiveFormat == 'zip' ) {
+		if ( 'zip' === $pTask->archiveFormat ) {
 			$loadFilesBeforeZip = $pTask->loadFilesBeforeZip;
-		} elseif ( $pTask->archiveFormat == '' || $pTask->archiveFormat == 'site' ) {
+		} elseif ( '' === $pTask->archiveFormat || 'site' === $pTask->archiveFormat ) {
 			$loadFilesBeforeZip = $website->loadFilesBeforeZip;
 		} else {
 			$loadFilesBeforeZip = 1;
 		}
 
-		if ( $loadFilesBeforeZip == 1 ) {
+		if ( 1 === $loadFilesBeforeZip ) {
 			$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
-			$loadFilesBeforeZip = ( $loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false );
+			$loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
 		} else {
-			$loadFilesBeforeZip = ( $loadFilesBeforeZip == 2 );
+			$loadFilesBeforeZip = ( 2 === $loadFilesBeforeZip );
 		}
 
-		if ( ( $pTask->archiveFormat == 'zip' ) && ( $pTask->maximumFileDescriptorsOverride == 1 ) ) {
-			$maximumFileDescriptorsAuto = ( $pTask->maximumFileDescriptorsAuto == 1 );
+		if ( ( 'zip' === $pTask->archiveFormat ) && ( 1 === $pTask->maximumFileDescriptorsOverride ) ) {
+			$maximumFileDescriptorsAuto = ( 1 === $pTask->maximumFileDescriptorsAuto );
 			$maximumFileDescriptors     = $pTask->maximumFileDescriptors;
-		} elseif ( ( $pTask->archiveFormat == '' || $pTask->archiveFormat == 'site' ) && ( $website->maximumFileDescriptorsOverride == 1 ) ) {
-			$maximumFileDescriptorsAuto = ( $website->maximumFileDescriptorsAuto == 1 );
+		} elseif ( ( '' === $pTask->archiveFormat || 'site' === $pTask->archiveFormat ) && ( 1 === $website->maximumFileDescriptorsOverride ) ) {
+			$maximumFileDescriptorsAuto = ( 1 === $website->maximumFileDescriptorsAuto );
 			$maximumFileDescriptors     = $website->maximumFileDescriptors;
 		} else {
 			$maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
 			$maximumFileDescriptors     = get_option( 'mainwp_maximumFileDescriptors' );
-			$maximumFileDescriptors     = ( $maximumFileDescriptors === false ? 150 : $maximumFileDescriptors );
+			$maximumFileDescriptors     = ( false === $maximumFileDescriptors ? 150 : $maximumFileDescriptors );
 		}
 
 		$information        = false;
@@ -643,7 +648,7 @@ class MainWP_Manage_Sites {
 
 				MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array(
 					'dtsFetched'             => time(),
-					'fetchResult'            => json_encode( array() ),
+					'fetchResult'            => wp_json_encode( array() ),
 					'downloadedDB'           => '',
 					'downloadedDBComplete'   => 0,
 					'downloadedFULL'         => '',
@@ -676,9 +681,9 @@ class MainWP_Manage_Sites {
 				MainWP_Logger::Instance()->warningForWebsite( $website, 'backup', 'ERROR: ' . $e->getMessage() . ' (' . $e->getMessageExtra() . ')' );
 				$stop = microtime( true );
 				// Bigger then 30 seconds means a timeout
-				if ( ( $stop - $start ) > 30 ) {
+				if ( 30 < ( $stop - $start ) ) {
 					MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array(
-						'last_error' => json_encode( array(
+						'last_error' => wp_json_encode( array(
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						) ),
@@ -694,7 +699,7 @@ class MainWP_Manage_Sites {
 				return false;
 			}
 
-			$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => json_encode( $information ) ) );
+			$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 		} //If not fetchResult, we had a timeout.. Retry this!
 		elseif ( empty( $backupTaskProgress->fetchResult ) ) {
 			try {
@@ -705,8 +710,8 @@ class MainWP_Manage_Sites {
 			}
 
 			if ( ! empty( $temp ) ) {
-				if ( $temp['status'] == 'stalled' ) {
-					if ( $backupTaskProgress->attempts < 5 ) {
+				if ( 'stalled' === $temp['status'] ) {
+					if ( 5 > $backupTaskProgress->attempts ) {
 						$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
 
 						try {
@@ -736,12 +741,12 @@ class MainWP_Manage_Sites {
 							return false;
 						}
 
-						$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => json_encode( $information ) ) );
+						$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 					} else {
 						throw new MainWP_Exception( 'Backup failed after 5 retries.' );
 					}
 				} //No retries on invalid status!
-				elseif ( $temp['status'] == 'invalid' ) {
+				elseif ( 'invalid' === $temp['status'] ) {
 					$error = json_decode( $backupTaskProgress->last_error );
 
 					if ( ! is_array( $error ) ) {
@@ -749,10 +754,10 @@ class MainWP_Manage_Sites {
 					} else {
 						throw new MainWP_Exception( $error['message'], $error['extra'] );
 					}
-				} elseif ( $temp['status'] == 'busy' ) {
+				} elseif ( 'busy' === $temp['status'] ) {
 					return false;
-				} elseif ( $temp['status'] == 'done' ) {
-					if ( $type == 'full' ) {
+				} elseif ( 'done' === $temp['status'] ) {
+					if ( 'full' === $type ) {
 						$information['full'] = $temp['file'];
 						$information['db']   = false;
 					} else {
@@ -762,10 +767,10 @@ class MainWP_Manage_Sites {
 
 					$information['size'] = $temp['size'];
 
-					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => json_encode( $information ) ) );
+					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 				}
 			} else {
-				if ( $backupTaskProgress->attempts < 5 ) {
+				if ( 5 > $backupTaskProgress->attempts ) {
 					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
 				} else {
 					throw new MainWP_Exception( 'Backup failed after 5 retries.' );
@@ -773,15 +778,15 @@ class MainWP_Manage_Sites {
 			}
 		}
 
-		if ( $information === false ) {
+		if ( false === $information ) {
 			$information = $backupTaskProgress->fetchResult;
 		}
 
 		if ( isset( $information['error'] ) ) {
 			throw new MainWP_Exception( $information['error'] );
-		} elseif ( $type == 'db' && ! $information['db'] ) {
+		} elseif ( 'db' === $type && ! $information['db'] ) {
 			throw new MainWP_Exception( 'Database backup failed.' );
-		} elseif ( $type == 'full' && ! $information['full'] ) {
+		} elseif ( 'full' === $type && ! $information['full'] ) {
 			throw new MainWP_Exception( 'Full backup failed.' );
 		} elseif ( isset( $information['db'] ) ) {
 			$dir = MainWP_Utility::getMainWPSpecificDir( $website->id );
@@ -794,16 +799,16 @@ class MainWP_Manage_Sites {
 
 			// Clean old backups from our system
 			$maxBackups = get_option( 'mainwp_backupsOnServer' );
-			if ( $maxBackups === false ) {
+			if ( false === $maxBackups ) {
 				$maxBackups = 1;
 			}
 
-			if ( $backupTaskProgress->removedFiles != 1 ) {
+			if ( 1 !== $backupTaskProgress->removedFiles ) {
 				$dbBackups   = array();
 				$fullBackups = array();
-				if ( file_exists( $dir ) && ( $dh            = opendir( $dir ) ) ) {
-					while ( ( $file = readdir( $dh ) ) !== false ) {
-						if ( $file != '.' && $file != '..' ) {
+				if ( file_exists( $dir ) && ( $dh = opendir( $dir ) ) ) {
+					while ( false !== ( $file = readdir( $dh ) ) ) {
+						if ( '.' !== $file && '..' !== $file ) {
 							$theFile = $dir . $file;
 							if ( $information['db'] && MainWP_Utility::isSQLFile( $file ) ) {
 								$dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
@@ -848,10 +853,10 @@ class MainWP_Manage_Sites {
 			if ( $information['db'] ) {
 				$what            = 'db';
 				$regexBackupFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
-				if ( $backupTaskProgress->downloadedDB == '' ) {
+				if ( '' === $backupTaskProgress->downloadedDB ) {
 					$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time;
 
-					if ( $pFilename != null ) {
+					if ( null != $pFilename ) {
 						$filename        = str_replace( array(
 							'%sitename%',
 							'%url%',
@@ -877,7 +882,7 @@ class MainWP_Manage_Sites {
 					$localBackupFile = $backupTaskProgress->downloadedDB;
 				}
 
-				if ( $backupTaskProgress->downloadedDBComplete == 0 ) {
+				if ( 0 === $backupTaskProgress->downloadedDBComplete ) {
 					MainWP_Utility::downloadToFile( MainWP_Utility::getGetDataAuthed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
 					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
 				}
@@ -887,10 +892,10 @@ class MainWP_Manage_Sites {
 				$realExt         = MainWP_Utility::getRealExtension( $information['full'] );
 				$what            = 'full';
 				$regexBackupFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
-				if ( $backupTaskProgress->downloadedFULL == '' ) {
+				if ( '' === $backupTaskProgress->downloadedFULL ) {
 					$localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . $realExt;
 
-					if ( $pFilename != null ) {
+					if ( null != $pFilename ) {
 						$filename        = str_replace( array(
 							'%sitename%',
 							'%url%',
@@ -915,8 +920,8 @@ class MainWP_Manage_Sites {
 					$localBackupFile = $backupTaskProgress->downloadedFULL;
 				}
 
-				if ( $backupTaskProgress->downloadedFULLComplete == 0 ) {
-					if ( @file_exists( $localBackupFile ) ) {
+				if ( 0 === $backupTaskProgress->downloadedFULLComplete ) {
+					if ( file_exists( $localBackupFile ) ) {
 						$time = @filemtime( $localBackupFile );
 
 						$minutes = date( 'i', time() );
@@ -926,12 +931,12 @@ class MainWP_Manage_Sites {
 						$file_seconds = date( 's', $time );
 
 						$minuteDiff = $minutes - $file_minutes;
-						if ( $minuteDiff == 59 ) {
+						if ( 59 === $minuteDiff ) {
 							$minuteDiff = 1;
 						}
 						$secondsdiff = ( $minuteDiff * 60 ) + $seconds - $file_seconds;
 
-						if ( $secondsdiff < 60 ) {
+						if ( 60 > $secondsdiff ) {
 							// still downloading..
 							return false;
 						}
@@ -977,7 +982,7 @@ class MainWP_Manage_Sites {
 		}
 		// Clean old backups from our system
 		$maxBackups = get_option( 'mainwp_backupsOnServer' );
-		if ( $maxBackups === false ) {
+		if ( false === $maxBackups ) {
 			$maxBackups = 1;
 		}
 
@@ -985,14 +990,14 @@ class MainWP_Manage_Sites {
 		$fullBackups = array();
 
 		if ( file_exists( $dir ) && ( $dh = opendir( $dir ) ) ) {
-			while ( ( $file = readdir( $dh ) ) !== false ) {
-				if ( $file != '.' && $file != '..' ) {
+			while ( false !== ( $file = readdir( $dh ) ) ) {
+				if ( '.' !== $file && '..' !== $file ) {
 					$theFile = $dir . $file;
-					if ( $pType == 'db' && MainWP_Utility::isSQLFile( $file ) ) {
+					if ( 'db' === $pType && MainWP_Utility::isSQLFile( $file ) ) {
 						$dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
 					}
 
-					if ( $pType == 'full' && MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) ) {
+					if ( 'full' === $pType && MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) ) {
 						$fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
 					}
 				}
@@ -1022,11 +1027,11 @@ class MainWP_Manage_Sites {
 		MainWP_Utility::endSession();
 
 		$what = null;
-		if ( $pType == 'db' ) {
+		if ( 'db' === $pType ) {
 			MainWP_Utility::downloadToFile( MainWP_Utility::getGetDataAuthed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
 		}
 
-		if ( $pType == 'full' ) {
+		if ( 'full' === $pType ) {
 			MainWP_Utility::downloadToFile( MainWP_Utility::getGetDataAuthed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
 		}
 
@@ -1046,11 +1051,10 @@ class MainWP_Manage_Sites {
 		MainWP_Utility::endSession();
 		$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup_checkpid', array( 'pid' => $pid ) );
 
-		// key: status/file
 		$status = $information['status'];
 
 		$result = isset( $information['file'] ) ? array( 'file' => $information['file'] ) : array();
-		if ( $status == 'done' ) {
+		if ( 'done' === $status ) {
 			$result['file'] = $information['file'];
 			$result['size'] = $information['size'];
 
@@ -1066,7 +1070,7 @@ class MainWP_Manage_Sites {
 			$result['subfolder'] = $subfolder;
 
 			$websiteCleanUrl = $website->url;
-			if ( substr( $websiteCleanUrl, - 1 ) == '/' ) {
+			if ( '/' === substr( $websiteCleanUrl, - 1 ) ) {
 				$websiteCleanUrl = substr( $websiteCleanUrl, 0, - 1 );
 			}
 			$websiteCleanUrl = str_replace( array( 'http://', 'https://', '/' ), array(
@@ -1080,7 +1084,7 @@ class MainWP_Manage_Sites {
 			$fm_date = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'date_format' ) ) );
 			$fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
 
-			if ( $type == 'db' ) {
+			if ( 'db' === $type ) {
 				$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::getRealExtension( $information['file'] );
 				$localRegexFile  = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
 			} else {
@@ -1088,7 +1092,7 @@ class MainWP_Manage_Sites {
 				$localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
 			}
 
-			if ( $pFilename != null ) {
+			if ( null != $pFilename ) {
 				$filename        = str_replace( array(
 					'%sitename%',
 					'%url%',
@@ -1106,7 +1110,7 @@ class MainWP_Manage_Sites {
 				$localBackupFile = $dir . $filename;
 				$localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
-				if ( $type == 'db' ) {
+				if ( 'db' === $type ) {
 					$localBackupFile .= MainWP_Utility::getRealExtension( $information['file'] );
 				} else {
 					$localBackupFile .= MainWP_Utility::getRealExtension( $information['file'] );
@@ -1131,7 +1135,7 @@ class MainWP_Manage_Sites {
 			return false;
 		}
 
-		if ( trim( $pFilename ) == '' ) {
+		if ( '' === trim( $pFilename ) ) {
 			$pFilename = null;
 		}
 
@@ -1153,30 +1157,30 @@ class MainWP_Manage_Sites {
 		}
 
 		$websiteCleanUrl = $website->url;
-		if ( substr( $websiteCleanUrl, - 1 ) == '/' ) {
+		if ( '/' === substr( $websiteCleanUrl, - 1 ) ) {
 			$websiteCleanUrl = substr( $websiteCleanUrl, 0, - 1 );
 		}
 		$websiteCleanUrl = str_replace( array( 'http://', 'https://', '/' ), array( '', '', '-' ), $websiteCleanUrl );
 
 		// Normal flow: use website & fallback to global
-		if ( $pMaximumFileDescriptorsOverride == false ) {
-			if ( $website->maximumFileDescriptorsOverride == 1 ) {
-				$maximumFileDescriptorsAuto = ( $website->maximumFileDescriptorsAuto == 1 );
+		if ( false === $pMaximumFileDescriptorsOverride ) {
+			if ( 1 === $website->maximumFileDescriptorsOverride ) {
+				$maximumFileDescriptorsAuto = ( 1 === $website->maximumFileDescriptorsAuto );
 				$maximumFileDescriptors     = $website->maximumFileDescriptors;
 			} else {
 				$maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
 				$maximumFileDescriptors     = get_option( 'mainwp_maximumFileDescriptors' );
-				$maximumFileDescriptors     = ( $maximumFileDescriptors === false ? 150 : $maximumFileDescriptors );
+				$maximumFileDescriptors     = ( false === $maximumFileDescriptors ? 150 : $maximumFileDescriptors );
 			}
 		} //If not set to global & overriden, use these settings
-		elseif ( ( $pArchiveFormat != 'global' ) && ( $pMaximumFileDescriptorsOverride == 1 ) ) {
-			$maximumFileDescriptorsAuto = ( $pMaximumFileDescriptorsAuto == 1 );
+		elseif ( ( 'global' !== $pArchiveFormat ) && ( 1 === $pMaximumFileDescriptorsOverride ) ) {
+			$maximumFileDescriptorsAuto = ( 1 === $pMaximumFileDescriptorsAuto );
 			$maximumFileDescriptors     = $pMaximumFileDescriptors;
 		} //Set to global or not overriden, use global settings
 		else {
 			$maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
 			$maximumFileDescriptors     = get_option( 'mainwp_maximumFileDescriptors' );
-			$maximumFileDescriptors     = ( $maximumFileDescriptors === false ? 150 : $maximumFileDescriptors );
+			$maximumFileDescriptors     = ( false === $maximumFileDescriptors ? 150 : $maximumFileDescriptors );
 		}
 
 		$file = str_replace( array(
@@ -1196,27 +1200,27 @@ class MainWP_Manage_Sites {
 		$file = MainWP_Utility::normalize_filename( $file );
 
 		// Normal flow: check site settings & fallback to global
-		if ( $pLoadFilesBeforeZip == false ) {
+		if ( false === $pLoadFilesBeforeZip ) {
 			$loadFilesBeforeZip = $website->loadFilesBeforeZip;
-			if ( $loadFilesBeforeZip == 1 ) {
+			if ( 1 === $loadFilesBeforeZip ) {
 				$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
-				$loadFilesBeforeZip = ( $loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false );
+				$loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
 			} else {
-				$loadFilesBeforeZip = ( $loadFilesBeforeZip == 2 );
+				$loadFilesBeforeZip = ( 2 === $loadFilesBeforeZip );
 			}
 		} //Overriden flow: only fallback to global
-		elseif ( $pArchiveFormat == 'global' || $pLoadFilesBeforeZip == 1 ) {
+		elseif ( 'global' === $pArchiveFormat || 1 === $pLoadFilesBeforeZip ) {
 			$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
-			$loadFilesBeforeZip = ( $loadFilesBeforeZip == 1 || $loadFilesBeforeZip === false );
+			$loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
 		} else {
-			$loadFilesBeforeZip = ( $pLoadFilesBeforeZip == 2 );
+			$loadFilesBeforeZip = ( 2 === $pLoadFilesBeforeZip );
 		}
 
 		// Nomral flow: check site settings & fallback to global
-		if ( $pArchiveFormat == false ) {
+		if ( false === $pArchiveFormat ) {
 			$archiveFormat = MainWP_Utility::getCurrentArchiveExtension( $website );
 		} //Overriden flow: only fallback to global
-		elseif ( $pArchiveFormat == 'global' ) {
+		elseif ( 'global' === $pArchiveFormat ) {
 			$archiveFormat = MainWP_Utility::getCurrentArchiveExtension();
 		} else {
 			$archiveFormat = $pArchiveFormat;
@@ -1248,15 +1252,15 @@ class MainWP_Manage_Sites {
 
 		if ( isset( $information['error'] ) ) {
 			throw new MainWP_Exception( $information['error'] );
-		} elseif ( $pType == 'db' && ! $information['db'] ) {
+		} elseif ( 'db' === $pType && ! $information['db'] ) {
 			throw new MainWP_Exception( 'Database backup failed.' );
-		} elseif ( $pType == 'full' && ! $information['full'] ) {
+		} elseif ( 'full' === $pType && ! $information['full'] ) {
 			throw new MainWP_Exception( 'Full backup failed.' );
 		} elseif ( isset( $information['db'] ) ) {
-			if ( $information['db'] != false ) {
+			if ( false !== $information['db'] ) {
 				$backup_result['url']  = $information['db'];
 				$backup_result['type'] = 'db';
-			} elseif ( $information['full'] != false ) {
+			} elseif ( false !== $information['full'] ) {
 				$backup_result['url']  = $information['full'];
 				$backup_result['type'] = 'full';
 			}
@@ -1271,7 +1275,7 @@ class MainWP_Manage_Sites {
 			$fm_date = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'date_format' ) ) );
 			$fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
 
-			if ( $pType == 'db' ) {
+			if ( 'db' === $pType ) {
 				$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::getRealExtension( $information['db'] );
 				$localRegexFile  = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
 			} else {
@@ -1279,7 +1283,7 @@ class MainWP_Manage_Sites {
 				$localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
 			}
 
-			if ( $pFilename != null ) {
+			if ( null != $pFilename ) {
 				$filename        = str_replace( array(
 					'%sitename%',
 					'%url%',
@@ -1297,7 +1301,7 @@ class MainWP_Manage_Sites {
 				$localBackupFile = $dir . $filename;
 				$localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
-				if ( $pType == 'db' ) {
+				if ( 'db' === $pType ) {
 					$localBackupFile .= MainWP_Utility::getRealExtension( $information['db'] );
 				} else {
 					$localBackupFile .= MainWP_Utility::getRealExtension( $information['full'] );
@@ -1331,7 +1335,7 @@ class MainWP_Manage_Sites {
 
 		$extMetaBoxs = MainWP_System::Instance()->apply_filter( 'mainwp-getmetaboxes', array() );
 		foreach ( $extMetaBoxs as $box ) {
-			if ( isset($box['plugin']) ) {
+			if ( isset( $box['plugin'] ) ) {
 				$name                          = basename( $box['plugin'], '.php' );
 				self::$enable_widgets[ $name ] = true;
 			}
@@ -1396,7 +1400,7 @@ class MainWP_Manage_Sites {
 			$enabled = true;
 			if ( isset( $metaBox['plugin'] ) ) {
 				$name = basename( $metaBox['plugin'], '.php' );
-				if ( isset(self::$enable_widgets[ $name ]) && ! self::$enable_widgets[ $name ] ) {
+				if ( isset( self::$enable_widgets[ $name ] ) && ! self::$enable_widgets[ $name ] ) {
 					$enabled = false;
 				}
 			}
@@ -1447,8 +1451,8 @@ class MainWP_Manage_Sites {
 		$dbBackups   = array();
 		$fullBackups = array();
 		if ( file_exists( $dir ) && ( $dh            = opendir( $dir ) ) ) {
-			while ( ( $file = readdir( $dh ) ) !== false ) {
-				if ( $file != '.' && $file != '..' ) {
+			while ( false !== ( $file = readdir( $dh ) ) ) {
+				if ( '.' !== $file && '..' !== $file ) {
 					$theFile = $dir . $file;
 					if ( MainWP_Utility::isSQLFile( $file ) ) {
 						$dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
@@ -1466,12 +1470,12 @@ class MainWP_Manage_Sites {
 	}
 
 	protected static function getOppositeOrderBy( $pOrderBy ) {
-		return ( $pOrderBy == 'asc' ? 'desc' : 'asc' );
+		return ( 'asc' === $pOrderBy ? 'desc' : 'asc' );
 	}
 
 	public static function renderAllSites( $showDelete = true, $showAddNew = true ) {
 
-		$optimize_for_sites_table = ( get_option('mainwp_optimize') == 1 );
+		$optimize_for_sites_table = ( 1 === get_option('mainwp_optimize') );
 
 		if ( ! $optimize_for_sites_table ) {
 			self::$sitesTable->prepare_items( false );
@@ -1534,9 +1538,9 @@ class MainWP_Manage_Sites {
 		global $current_user;
 
 		if ( isset( $_REQUEST['do'] ) ) {
-			if ( $_REQUEST['do'] == 'new' ) {
+			if ( 'new' === $_REQUEST['do'] ) {
 				self::renderNewSite();
-			} elseif ( $_REQUEST['do'] == 'bulknew' ) {
+			} elseif ( 'bulknew' === $_REQUEST['do'] ) {
 				self::renderBulkNewSite();
 			}
 
@@ -1596,41 +1600,20 @@ class MainWP_Manage_Sites {
 				global $current_user;
 				$updated = false;
 				// Edit website!
-				if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( $_POST['mainwp_managesites_edit_siteadmin'] != '' ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {
+				if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {
 					if ( mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
 						// update site
 						$groupids   = array();
 						$groupnames = array();
 						$tmpArr     = array();
-						if ( isset( $_POST['mainwp_managesites_edit_addgroups'] ) && ! empty($_POST['mainwp_managesites_edit_addgroups']) ) {
-							$groupids = explode(',', $_POST['mainwp_managesites_edit_addgroups']);
-							// foreach ( $groupids as $group ) {
-							// if ( is_numeric( $group ) ) {
-							// $groupids[] = $group;
-							// } else {
-							// $tmpArr[] = $group;
-							// }
-							// }
-							// foreach ( $tmpArr as $tmp ) {
-							// $tmp = trim( $tmp );
-							// if (empty($tmp))
-							// continue;
-							//
-							// $getgroup = MainWP_DB::Instance()->getGroupByNameForUser( $tmp );
-							// if ( $getgroup ) {
-							// if ( !in_array( $getgroup->id, $groupids ) ) {
-							// $groupids[] = $getgroup->id;
-							// }
-							// } else {
-							// $groupnames[] = $tmp;
-							// }
-							// }
+						if ( isset( $_POST['mainwp_managesites_edit_addgroups'] ) && ! empty( $_POST['mainwp_managesites_edit_addgroups'] ) ) {
+							$groupids = explode( ',', $_POST['mainwp_managesites_edit_addgroups'] );
 						}
 
 						// to fix update staging site
 						if ( $website->is_staging ) {
-							if ( $stag_gid = get_option('mainwp_stagingsites_group_id') ) {
-								if ( ! in_array($stag_gid, $groupids) ) {
+							if ( $stag_gid = get_option( 'mainwp_stagingsites_group_id' ) ) {
+								if ( ! in_array( $stag_gid, $groupids ) ) {
 									$groupids[] = $stag_gid; // staging site is always in Staging Sites group
 								}
 							}
@@ -1652,12 +1635,12 @@ class MainWP_Manage_Sites {
 						do_action( 'mainwp_update_site', $websiteid );
 
 						$backup_before_upgrade = isset( $_POST['mainwp_backup_before_upgrade'] ) ? intval( $_POST['mainwp_backup_before_upgrade'] ) : 2;
-						if ( $backup_before_upgrade > 2 ) {
+						if ( 2 < $backup_before_upgrade ) {
 							$backup_before_upgrade = 2;
 						}
 
 						$forceuseipv4 = isset( $_POST['mainwp_managesites_edit_forceuseipv4'] ) ? intval( $_POST['mainwp_managesites_edit_forceuseipv4'] ) : 0;
-						if ( $forceuseipv4 > 2 ) {
+						if ( 2 < $forceuseipv4 ) {
 							$forceuseipv4 = 0;
 						}
 
@@ -1701,11 +1684,11 @@ class MainWP_Manage_Sites {
 			$ret['response'] = 'ERROR You already added your site to MainWP';
 		} else {
 			try {
-				$verify_cert    = ( ! isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( $_POST['verify_certificate'] !== '0' ) ) ? null : $_POST['verify_certificate'] );
-				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( $_POST['force_use_ipv4'] !== '0' ) ) ? null : $_POST['force_use_ipv4'] );
+				$verify_cert    = ( ! isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( '0' !== $_POST['verify_certificate'] ) ) ? null : $_POST['verify_certificate'] );
+				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : $_POST['force_use_ipv4'] );
 				$http_user      = ( isset( $_POST['http_user'] ) ? $_POST['http_user'] : '' );
 				$http_pass      = ( isset( $_POST['http_pass'] ) ? $_POST['http_pass'] : '' );
-				$information    = MainWP_Utility::fetchUrlNotAuthed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion        = 0, $others            = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name
+				$information    = MainWP_Utility::fetchUrlNotAuthed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name
 
 				if ( isset( $information['wpversion'] ) ) { // Version found - able to add
 					$ret['response'] = 'OK';
@@ -1719,8 +1702,8 @@ class MainWP_Manage_Sites {
 				$ret['response'] = $e->getMessage();
 			}
 		}
-		$ret['check_me'] = ( isset( $_POST['check_me'] ) ? intval($_POST['check_me']) : null );
-		die( json_encode( $ret ) ); // ok
+		$ret['check_me'] = ( isset( $_POST['check_me'] ) ? intval( $_POST['check_me'] ) : null );
+		die( wp_json_encode( $ret ) ); // ok
 	}
 
 	public static function reconnectSite() {
@@ -1756,30 +1739,30 @@ class MainWP_Manage_Sites {
 			list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::addSite( $website );
 		}
 
-		$ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval($_POST['add_me']) : null );
-		if ( $error != '' ) {
+		$ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval( $_POST['add_me'] ) : null );
+		if ( '' !== $error ) {
 			$ret['response'] = 'ERROR ' . $error;
-			die( json_encode( $ret ) );
+			die( wp_json_encode( $ret ) );
 		}
 		$ret['response'] = $message;
 		$ret['siteid']   = $site_id;
 
-		if ( MainWP_DB::Instance()->getWebsitesCount() == 1 ) {
+		if ( 1 === MainWP_DB::Instance()->getWebsitesCount() ) {
 			$ret['redirectUrl'] = admin_url( 'admin.php?page=managesites' );
 		}
 
-		die( json_encode( $ret ) );
+		die( wp_json_encode( $ret ) );
 	}
 
 	public static function apply_plugin_settings() {
 		$site_id      = $_POST['siteId'];
 		$ext_dir_slug = $_POST['ext_dir_slug'];
 		if ( empty( $site_id ) ) {
-			die( json_encode( array( 'error' => 'ERROR: empty site id' ) ) );
+			die( wp_json_encode( array( 'error' => 'ERROR: empty site id' ) ) );
 		}
 
 		do_action( 'mainwp_applypluginsettings_' . $ext_dir_slug, $site_id );
-		die( json_encode( array( 'error' => __( 'Undefined error!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'error' => __( 'Undefined error!', 'mainwp' ) ) ) );
 	}
 
 	public static function saveNote() {
@@ -1790,14 +1773,12 @@ class MainWP_Manage_Sites {
 				$esc_note = MainWP_Utility::esc_content( $note );
 				MainWP_DB::Instance()->updateNote( $website->id, $esc_note );
 
-				// MainWP_DB::Instance()->updateNote( $website->id, esc_html( stripslashes( $_POST['note'] ) ) );
-				// MainWP_DB::Instance()->updateNote( $website->id, htmlentities( stripslashes( $_POST[ 'note' ] ) ) ); // to fix
-				die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			} else {
-				die( json_encode( array( 'error' => 'Not your website!' ) ) );
+				die( wp_json_encode( array( 'error' => 'Not your website!' ) ) );
 			}
 		}
-		die( json_encode( array( 'undefined_error' => true ) ) );
+		die( wp_json_encode( array( 'undefined_error' => true ) ) );
 	}
 
 	public static function removeSite() {
@@ -1831,35 +1812,35 @@ class MainWP_Manage_Sites {
 				MainWP_DB::Instance()->removeWebsite( $website->id );
 				do_action( 'mainwp_delete_site', $website );
 
-				if ( $error === 'NOMAINWP' ) {
+				if ( 'NOMAINWP' === $error ) {
 					$error = __( 'Be sure to deactivate the child plugin on the child site to avoid potential security issues.', 'mainwp' );
 				}
 
-				if ( $error != '' ) {
-					die( json_encode( array( 'error' => $error ) ) );
+				if ( '' !== $error ) {
+					die( wp_json_encode( array( 'error' => $error ) ) );
 				} elseif ( isset( $information['deactivated'] ) ) {
-					die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+					die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 				} elseif ( isset( $information['removed'] ) ) {
-					die( json_encode( array( 'result' => 'REMOVED' ) ) );
+					die( wp_json_encode( array( 'result' => 'REMOVED' ) ) );
 				} else {
-					die( json_encode( array( 'undefined_error' => true ) ) );
+					die( wp_json_encode( array( 'undefined_error' => true ) ) );
 				}
 			}
 		}
-		die( json_encode( array( 'result' => 'NOSITE' ) ) );
+		die( wp_json_encode( array( 'result' => 'NOSITE' ) ) );
 	}
 
 	public static function handleSettingsPost() {
 		if ( MainWP_Utility::isAdmin() ) {
 			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
-				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_backupOnServer'] ) && $_POST['mainwp_options_backupOnServer'] > 0 ) {
+				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
 					MainWP_Utility::update_option( 'mainwp_backupsOnServer', $_POST['mainwp_options_backupOnServer'] );
 				}
-				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_maximumFileDescriptors'] ) && $_POST['mainwp_options_maximumFileDescriptors'] > - 1 ) {
+				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_maximumFileDescriptors'] ) && - 1 < $_POST['mainwp_options_maximumFileDescriptors'] ) {
 					MainWP_Utility::update_option( 'mainwp_maximumFileDescriptors', $_POST['mainwp_options_maximumFileDescriptors'] );
 				}
 				MainWP_Utility::update_option( 'mainwp_maximumFileDescriptorsAuto', ( ! isset( $_POST['mainwp_maximumFileDescriptorsAuto'] ) ? 0 : 1 ) );
-				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_backupOnExternalSources'] ) && $_POST['mainwp_options_backupOnExternalSources'] >= 0 ) {
+				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_backupOnExternalSources'] ) && 0 <= $_POST['mainwp_options_backupOnExternalSources'] ) {
 					MainWP_Utility::update_option( 'mainwp_backupOnExternalSources', $_POST['mainwp_options_backupOnExternalSources'] );
 				}
 				MainWP_Utility::update_option( 'mainwp_archiveFormat', $_POST['mainwp_archiveFormat'] );
@@ -1903,12 +1884,12 @@ class MainWP_Manage_Sites {
 	}
 
 	static function on_edit_site( $website ) {
-		if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( $_POST['mainwp_managesites_edit_siteadmin'] != '' ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {
 			if ( isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ) {
 				?>
 				<script type="text/javascript">
 					jQuery( document ).ready( function () {
-						mainwp_managesites_update_childsite_value( <?php echo esc_attr($website->id); ?>, '<?php echo esc_js( $website->uniqueId); ?>' );
+						mainwp_managesites_update_childsite_value( <?php echo esc_attr( $website->id ); ?>, '<?php echo esc_js( $website->uniqueId ); ?>' );
 					} );
 				</script>
 				<?php
@@ -1928,22 +1909,22 @@ class MainWP_Manage_Sites {
 					$error = $e->getMessage();
 				}
 
-				if ( $error != '' ) {
-					die( json_encode( array( 'error' => $error ) ) );
-				} elseif ( isset( $information['result'] ) && ( $information['result'] == 'ok' ) ) {
-					die( json_encode( array( 'result' => 'SUCCESS' ) ) );
+				if ( '' !== $error ) {
+					die( wp_json_encode( array( 'error' => $error ) ) );
+				} elseif ( isset( $information['result'] ) && ( 'ok' === $information['result'] ) ) {
+					die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 				} else {
-					die( json_encode( array( 'undefined_error' => true ) ) );
+					die( wp_json_encode( array( 'undefined_error' => true ) ) );
 				}
 			}
 		}
-		die( json_encode( array( 'error' => 'NO_SIDE_ID' ) ) );
+		die( wp_json_encode( array( 'error' => 'NO_SIDE_ID' ) ) );
 	}
 
 	// Hook the section help content to the Help Sidebar element
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && $_GET['page'] == 'managesites' ) {
-			if ( isset( $_GET['do'] ) && $_GET['do'] == 'new' ) {
+		if ( isset( $_GET['page'] ) && 'managesites' === $_GET['page'] ) {
+			if ( isset( $_GET['do'] ) && 'new' === $_GET['do'] ) {
 				?>
 				<p><?php echo __( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
 				<div class="ui relaxed bulleted list">
@@ -1954,7 +1935,7 @@ class MainWP_Manage_Sites {
 					<div class="item"><a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/add-site-to-your-dashboard/import-sites/" target="_blank">Import Sites</a></div>
 				</div>
 				<?php
-			} elseif ( isset( $_GET['do'] ) && $_GET['do'] == 'bulknew' ) {
+			} elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) {
 				?>
 				<p><?php echo __( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
 				<div class="ui relaxed bulleted list">

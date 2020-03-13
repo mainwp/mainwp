@@ -128,7 +128,8 @@ class MainWP_Recent_Posts {
 				?>
 			<div class="ui middle aligned divided selection list">
 			<?php
-			for ( $i = 0; $i < count( $recent_posts_published ) && $i < $recent_number; $i ++ ) {
+			$_count = count( $recent_posts_published );
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 				if ( ! isset( $recent_posts_published[ $i ]['title'] ) || ( $recent_posts_published[ $i ]['title'] == '' ) ) {
 					$recent_posts_published[ $i ]['title'] = '(No Title)';
 				}
@@ -191,7 +192,8 @@ class MainWP_Recent_Posts {
 				?>
 			<div class="ui middle aligned divided selection list">
 			<?php
-			for ( $i = 0; $i < count( $recent_posts_draft ) && $i < $recent_number; $i ++ ) {
+			$_count = count( $recent_posts_draft );
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 				if ( ! isset( $recent_posts_draft[ $i ]['title'] ) || ( $recent_posts_draft[ $i ]['title'] == '' ) ) {
 					$recent_posts_draft[ $i ]['title'] = '(No Title)';
 				}
@@ -251,7 +253,8 @@ class MainWP_Recent_Posts {
 				?>
 			<div class="ui middle aligned divided selection list">
 			<?php
-			for ( $i = 0; $i < count( $recent_posts_pending ) && $i < $recent_number; $i ++ ) {
+			$_count = count( $recent_posts_pending );
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 				if ( ! isset( $recent_posts_pending[ $i ]['title'] ) || ( $recent_posts_pending[ $i ]['title'] == '' ) ) {
 					$recent_posts_pending[ $i ]['title'] = '(No Title)';
 				}
@@ -311,7 +314,8 @@ class MainWP_Recent_Posts {
 				?>
 			<div class="ui middle aligned divided selection list">
 			<?php
-			for ( $i = 0; $i < count( $recent_posts_future ) && $i < $recent_number; $i ++ ) {
+			$_count = count( $recent_posts_future );
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 				if ( ! isset( $recent_posts_future[ $i ]['title'] ) || ( $recent_posts_future[ $i ]['title'] == '' ) ) {
 					$recent_posts_future[ $i ]['title'] = '(No Title)';
 				}
@@ -372,7 +376,8 @@ class MainWP_Recent_Posts {
 				?>
 			<div class="ui middle aligned divided selection list">
 			<?php
-			for ( $i = 0; $i < count( $recent_posts_trash ) && $i < $recent_number; $i ++ ) {
+			$_count = count( $recent_posts_trash );
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
 				if ( ! isset( $recent_posts_trash[ $i ]['title'] ) || ( $recent_posts_trash[ $i ]['title'] == '' ) ) {
 					$recent_posts_trash[ $i ]['title'] = '(No Title)';
 				}
@@ -436,7 +441,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function publish() {
 		self::action( 'publish' );
-		die( json_encode( array( 'result' => __( 'Post has been published!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Post has been published!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -446,7 +451,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function approve() {
 		self::action( 'publish' );
-		die( json_encode( array( 'result' => __( 'Post has been approved!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Post has been approved!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -457,7 +462,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function unpublish() {
 		self::action( 'unpublish' );
-		die( json_encode( array( 'result' => __( 'Post has been unpublished!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Post has been unpublished!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -468,7 +473,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function trash() {
 		self::action( 'trash' );
-		die( json_encode( array( 'result' => __( 'Post has been moved to trash!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Post has been moved to trash!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -479,7 +484,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function delete() {
 		self::action( 'delete' );
-		die( json_encode( array( 'result' => __( 'Post has been permanently deleted!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Post has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -490,7 +495,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function restore() {
 		self::action( 'restore' );
-		die( json_encode( array( 'result' => __( 'Post has been restored!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => __( 'Post has been restored!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -505,16 +510,16 @@ class MainWP_Recent_Posts {
 		$websiteIdEnc = $_POST['websiteId'];
 
 		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
-			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 		$websiteId = $websiteIdEnc;
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
 		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( json_encode( array( 'error' => 'You can not edit this website!' ) ) );
+			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
 		try {
@@ -523,11 +528,11 @@ class MainWP_Recent_Posts {
 				'id'     => $postId,
 			) );
 		} catch ( MainWP_Exception $e ) {
-			die( json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
-			die( json_encode( array( 'error' => 'Unexpected error!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Unexpected error!' ) ) );
 		}
 	}
 

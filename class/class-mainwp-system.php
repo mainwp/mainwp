@@ -398,10 +398,10 @@ class MainWP_System {
 		if ( empty( $_GET['mainwp_run'] ) || 'test' !== $_GET['mainwp_run'] ) {
 			return;
 		}
-		@session_write_close();
-		@header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ), true );
-		@header( 'X-Robots-Tag: noindex, nofollow', true );
-		@header( 'X-MainWP-Version: ' . self::$version, true );
+		session_write_close();
+		header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ), true );
+		header( 'X-Robots-Tag: noindex, nofollow', true );
+		header( 'X-MainWP-Version: ' . self::$version, true );
 		nocache_headers();
 		if ( 'test' == $_GET['mainwp_run'] ) {
 			die( 'MainWP Test' );
@@ -1442,8 +1442,8 @@ class MainWP_System {
 						}
 						$change_log .= '#developers';
 						if ( ! $text_format ) {
-							$infoTxt    .= ' - ' . '<a href="' . $change_log . '" target="_blank">Changelog</a>';
-							$infoNewTxt .= ' - ' . '<a href="' . $change_log . '" target="_blank">Changelog</a>';
+							$infoTxt    .= ' - <a href="' . $change_log . '" target="_blank">Changelog</a>';
+							$infoNewTxt .= ' - <a href="' . $change_log . '" target="_blank">Changelog</a>';
 						}
 					}
 					$newUpdate = ! ( isset( $websiteLastPlugins[ $pluginSlug ] ) && ( $pluginInfo['Version'] == $websiteLastPlugins[ $pluginSlug ]['Version'] ) && ( $pluginInfo['update']['new_version'] == $websiteLastPlugins[ $pluginSlug ]['update']['new_version'] ) );
@@ -1512,7 +1512,7 @@ class MainWP_System {
 				$email = MainWP_Utility::getNotificationEmail( $user );
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_email', $email );
 				MainWP_DB::Instance()->updateWebsiteSyncValues( $website->id, array( 'dtsAutomaticSync' => time() ) );
-				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_wp_upgrades', json_encode( $websiteCoreUpgrades ) );
+				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_wp_upgrades', wp_json_encode( $websiteCoreUpgrades ) );
 				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_plugin_upgrades', $website->plugin_upgrades );
 				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_theme_upgrades', $website->theme_upgrades );
 
@@ -2152,8 +2152,8 @@ class MainWP_System {
 		header( 'Cache-Control: must-revalidate' );
 		header( 'Pragma: public' );
 		header( 'Content-Length: ' . filesize( $file ) );
-		while ( @ob_get_level() ) {
-			@ob_end_clean();
+		while ( ob_get_level() ) {
+			ob_end_clean();
 		}
 		$this->readfile_chunked( $file );
 		exit();
@@ -2169,8 +2169,8 @@ class MainWP_System {
 		while ( ! @feof( $handle ) ) {
 			$buffer = @fread( $handle, $chunksize );
 			echo $buffer;
-			@ob_flush();
-			@flush();
+			ob_flush();
+			flush();
 			$buffer = null;
 		}
 
@@ -2524,9 +2524,9 @@ class MainWP_System {
 	}
 
 	public function save_bulkpost( $post_id ) {
-		$post = get_post( $post_id );
+		$_post = get_post( $post_id );
 
-		if ( 'bulkpost' !== $post->post_type ) {
+		if ( 'bulkpost' !== $_post->post_type ) {
 			return;
 		}
 
@@ -2561,7 +2561,7 @@ class MainWP_System {
 		} else {
 			// to support external redirect for example post dripper extension,
 			// that will do not go to posting process
-			do_action( 'mainwp_before_redirect_posting_bulkpost', $post );
+			do_action( 'mainwp_before_redirect_posting_bulkpost', $_post );
 			// Redirect to handle page! (to actually post the messages)
 			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&id=' . $post_id . '&hideall=1' );
 			die();
@@ -2570,9 +2570,9 @@ class MainWP_System {
 
 	public function save_bulkpage( $post_id ) {
 
-		$post = get_post( $post_id );
+		$_post = get_post( $post_id );
 
-		if ( 'bulkpage' !== $post->post_type ) {
+		if ( 'bulkpage' !== $_post->post_type ) {
 			return;
 		}
 
@@ -2606,7 +2606,7 @@ class MainWP_System {
 			// $wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $post_id ) );
 			add_filter( 'redirect_post_location', array( $this, 'redirect_edit_bulkpage' ), 10, 2 );
 		} else {
-			do_action( 'mainwp_before_redirect_posting_bulkpage', $post );
+			do_action( 'mainwp_before_redirect_posting_bulkpage', $_post );
 			// Redirect to handle page! (to actually post the messages)
 			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&id=' . $post_id . '&hideall=1');
 			die();

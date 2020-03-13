@@ -724,8 +724,8 @@ class MainWP_Manage_Sites_List_Table {
 					"scrollX": true,
 					serverSide: true,
 					"pageLength": <?php echo intval($sites_per_page); ?>,                    
-					"columnDefs": <?php echo json_encode($this->get_columns_defines()); ?>,
-					"columns": <?php echo json_encode($this->get_columns_init()); ?>,
+					"columnDefs": <?php echo wp_json_encode($this->get_columns_defines()); ?>,
+					"columns": <?php echo wp_json_encode($this->get_columns_init()); ?>,
 					"drawCallback": function( settings ) {
 						this.api().tables().body().to$().attr('id', 'mainwp-manage-sites-body-table');
 					},

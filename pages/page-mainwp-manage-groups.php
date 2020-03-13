@@ -329,7 +329,7 @@ class MainWP_Manage_Groups {
 
 				// Reload group
 				$group = MainWP_DB::Instance()->getGroupById( $group->id );
-				die( json_encode( array( 'result' => $group->name ) ) );
+				die( wp_json_encode( array( 'result' => $group->name ) ) );
 			}
 		}
 	}
@@ -384,7 +384,7 @@ class MainWP_Manage_Groups {
 			self::createGroupItem( $group );
 			die();
 		}
-		die( json_encode( array( 'error' => 1 ) ) );
+		die( wp_json_encode( array( 'error' => 1 ) ) );
 	}
 
 	public static function getSites() {
@@ -399,7 +399,7 @@ class MainWP_Manage_Groups {
 					}
 				}
 
-				return json_encode( $websiteIds );
+				return wp_json_encode( $websiteIds );
 			}
 		}
 		die( 'ERROR' );
@@ -418,11 +418,11 @@ class MainWP_Manage_Groups {
 						}
 					}
 				}
-				die( json_encode( array( 'result' => true ) ) );
+				die( wp_json_encode( array( 'result' => true ) ) );
 			}
 		}
 
-		die( json_encode( array( 'result' => false ) ) );
+		die( wp_json_encode( array( 'result' => false ) ) );
 	}
 
 }

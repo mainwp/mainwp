@@ -207,8 +207,8 @@ class MainWP_Page {
 	}
 
 	public static function add_status_handle( $post_id ) {
-		$post = get_post( $post_id );
-		if ( $post->post_type == 'bulkpage' && isset( $_POST['mainwp_edit_post_status'] ) ) {
+		$_post = get_post( $post_id );
+		if ( $_post->post_type == 'bulkpage' && isset( $_POST['mainwp_edit_post_status'] ) ) {
 			update_post_meta( $post_id, '_edit_post_status', $_POST['mainwp_edit_post_status'] );
 		}
 		return $post_id;
@@ -729,27 +729,27 @@ class MainWP_Page {
 
 	public static function publish() {
 		MainWP_Recent_Posts::action( 'publish' );
-		die( json_encode( array( 'result' => 'Page has been published!' ) ) );
+		die( wp_json_encode( array( 'result' => 'Page has been published!' ) ) );
 	}
 
 	public static function unpublish() {
 		MainWP_Recent_Posts::action( 'unpublish' );
-		die( json_encode( array( 'result' => 'Page has been unpublished!' ) ) );
+		die( wp_json_encode( array( 'result' => 'Page has been unpublished!' ) ) );
 	}
 
 	public static function trash() {
 		MainWP_Recent_Posts::action( 'trash' );
-		die( json_encode( array( 'result' => 'Page has been moved to trash!' ) ) );
+		die( wp_json_encode( array( 'result' => 'Page has been moved to trash!' ) ) );
 	}
 
 	public static function delete() {
 		MainWP_Recent_Posts::action( 'delete' );
-		die( json_encode( array( 'result' => 'Page has been permanently deleted!' ) ) );
+		die( wp_json_encode( array( 'result' => 'Page has been permanently deleted!' ) ) );
 	}
 
 	public static function restore() {
 		MainWP_Recent_Posts::action( 'restore' );
-		die( json_encode( array( 'result' => 'Page has been restored!' ) ) );
+		die( wp_json_encode( array( 'result' => 'Page has been restored!' ) ) );
 	}
 
 	public static function renderBulkAdd() {
@@ -810,9 +810,9 @@ class MainWP_Page {
 			if ( ! $skip_post ) {
 				// Posts the saved sites
 				if ( isset( $_GET['id'] ) ) {
-					$id   = intval( $_GET['id'] );
-					$post = get_post( $id );
-					if ( $post ) {
+					$id    = intval( $_GET['id'] );
+					$_post = get_post( $id );
+					if ( $_post ) {
 						$selected_by     = get_post_meta( $id, '_selected_by', true );
 						$selected_sites  = unserialize( base64_decode( get_post_meta( $id, '_selected_sites', true ) ) );
 						$selected_groups = unserialize( base64_decode( get_post_meta( $id, '_selected_groups', true ) ) );
@@ -827,22 +827,22 @@ class MainWP_Page {
 						$post_status = get_post_meta( $id, '_edit_post_status', true );
 						// to support saving as pending
 						if ( $post_status != 'pending' ) {
-							$post_status = $post->post_status;
+							$post_status = $_post->post_status;
 						}
 						$post_status = apply_filters('mainwp_posting_bulkpost_post_status', $post_status, $id ); // to support post plus extension
 
 						$new_post = array(
-							'post_title'     => $post->post_title,
-							'post_content'   => $post->post_content,
+							'post_title'     => $_post->post_title,
+							'post_content'   => $_post->post_content,
 							'post_status'    => $post_status,
-							'post_date'      => $post->post_date,
-							'post_date_gmt'  => $post->post_date_gmt,
+							'post_date'      => $_post->post_date,
+							'post_date_gmt'  => $_post->post_date_gmt,
 							'post_type'      => 'page',
 							'post_name'      => $post_slug,
-							'post_excerpt'   => $post->post_excerpt,
-							'comment_status' => $post->comment_status,
-							'ping_status'    => $post->ping_status,
-							'mainwp_post_id' => $post->ID,
+							'post_excerpt'   => $_post->post_excerpt,
+							'comment_status' => $_post->comment_status,
+							'ping_status'    => $_post->ping_status,
+							'mainwp_post_id' => $_post->ID,
 						);
 
 						if ( $featured_image_id != null ) { // Featured image is set, retrieve URL
@@ -922,25 +922,14 @@ class MainWP_Page {
 						foreach ( $dbwebsites as $website ) {
 							if ( ( $output->ok[ $website->id ] == 1 ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
 								do_action( 'mainwp-post-posting-page', $website, $output->added_id[ $website->id ], ( isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null ) ); // deprecated from 4.0
-								do_action( 'mainwp-bulkposting-done', $post, $website, $output );
+								do_action( 'mainwp-bulkposting-done', $_post, $website, $output );
 							} else {
 								$failed_posts[] = $website->id;
 							}
 						}
 
 						// to support extensions, for example: boilerplace, post plus ...
-						$after_posting = apply_filters('mainwp-after-posting-bulkpage-result', false, $post, $dbwebsites, $output );
-
-						// $del_post    = true;
-						// $saved_draft = get_post_meta( $id, '_saved_as_draft', true );
-						// if ( $saved_draft == 'yes' ) {
-						// if ( count( $failed_posts ) > 0 ) {
-						// $del_post = false;
-						// update_post_meta( $post->ID, '_selected_sites', base64_encode( serialize( $failed_posts ) ) );
-						// update_post_meta( $post->ID, '_selected_groups', '' );
-						// wp_update_post( array( 'ID' => $id, 'post_status' => 'draft' ) );
-						// }
-						// }
+						$after_posting = apply_filters('mainwp-after-posting-bulkpage-result', false, $_post, $dbwebsites, $output );
 
 						if ( $after_posting == false ) {
 							?>

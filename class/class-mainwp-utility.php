@@ -150,16 +150,16 @@ class MainWP_Utility {
 		}
 
 		if ( $ssl_verifyhost ) {
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 		} else {
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		}
 
-		@curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
-		@curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
-		@curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
+		curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
+		curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
+		curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
 
 		$force_use_ipv4 = false;
 		if ( null !== $forceUseIPv4 ) {
@@ -178,7 +178,7 @@ class MainWP_Utility {
 
 		if ( $force_use_ipv4 ) {
 			if ( defined( 'CURLOPT_IPRESOLVE' ) and defined( 'CURL_IPRESOLVE_V4' ) ) {
-				@curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
+				curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
 			}
 		}
 
@@ -437,9 +437,9 @@ class MainWP_Utility {
 	}
 
 	public static function safe_json_encode( $value, $options = 0, $depth = 512 ) {
-		$encoded = json_encode( $value, $options, $depth );
+		$encoded = wp_json_encode( $value, $options, $depth );
 		if ( false === $encoded && $value && json_last_error() == JSON_ERROR_UTF8 ) {
-			$encoded = json_encode( self::utf8ize( $value ), $options, $depth );
+			$encoded = wp_json_encode( self::utf8ize( $value ), $options, $depth );
 		}
 		return $encoded;
 	}
@@ -544,7 +544,7 @@ class MainWP_Utility {
 
 			if ( ( 0 == $website->nossl ) && function_exists( 'openssl_verify' ) ) {
 				$data['nossl'] = 0;
-				@openssl_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) );
+				openssl_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) );
 			} else {
 				$data['nossl'] = 1;
 				$signature     = md5( $what . $data['nonce'] . $website->nosslkey );
@@ -696,22 +696,7 @@ class MainWP_Utility {
 			$requestUrls     = array();
 			$requestHandles  = array();
 
-			$dirs      = self::getMainWPDir();
-			$cookieDir = $dirs[0] . 'cookies';
-			if ( ! @is_dir( $cookieDir ) ) {
-				@mkdir( $cookieDir, 0777, true );
-			}
-
-			if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
-				$file_htaccess = @fopen( $cookieDir . '/.htaccess', 'w+' );
-				@fwrite( $file_htaccess, 'deny from all' );
-				@fclose( $file_htaccess );
-			}
-
-			if ( ! file_exists( $cookieDir . '/index.php' ) ) {
-				$file_index = @fopen( $cookieDir . '/index.php', 'w+' );
-				@fclose( $file_index );
-			}
+			self::init_cookiesdir();
 
 			foreach ( $websites as $website ) {
 				$url = $website->url;
@@ -771,24 +756,24 @@ class MainWP_Utility {
 
 					if ( file_exists( $cookieFile ) ) {
 						@chmod( $cookieFile, 0644 );
-						@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
-						@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
+						curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
+						curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 					}
 				}
 
-				@curl_setopt( $ch, CURLOPT_URL, $url );
-				@curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-				@curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-				@curl_setopt( $ch, CURLOPT_POST, true );
+				curl_setopt( $ch, CURLOPT_URL, $url );
+				curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+				curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+				curl_setopt( $ch, CURLOPT_POST, true );
 
 				// json_result: true/false to request response json format
 				$params['json_result'] = $json_format; // ::fetchUrlsAuthed
 
 				$postdata = self::getPostDataAuthed( $website, $what, $params );
-				@curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-				@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
-				@curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-				@curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
+				curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
+				curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+				curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+				curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 				if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
 					$http_pass = stripslashes( $http_pass ); // to fix
 					curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
@@ -811,16 +796,16 @@ class MainWP_Utility {
 				}
 
 				if ( $ssl_verifyhost ) {
-					@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-					@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+					curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
+					curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 				} else {
-					@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-					@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+					curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+					curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 				}
 
-				@curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
-				@curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
-				@curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ));
+				curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
+				curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
+				curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ));
 
 				$force_use_ipv4 = false;
 				$forceUseIPv4   = isset( $website->force_use_ipv4 ) ? $website->force_use_ipv4 : null;
@@ -840,11 +825,11 @@ class MainWP_Utility {
 
 				if ( $force_use_ipv4 ) {
 					if ( defined( 'CURLOPT_IPRESOLVE' ) and defined( 'CURL_IPRESOLVE_V4' ) ) {
-						@curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
+						curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
 					}
 				}
 
-				@curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); // 20minutes
+				curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); // 20minutes
 				if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
 					@set_time_limit( $timeout );
 				} //20minutes
@@ -995,22 +980,7 @@ class MainWP_Utility {
 		$requestUrls        = array();
 		$requestHandles     = array();
 
-		$dirs      = self::getMainWPDir();
-		$cookieDir = $dirs[0] . 'cookies';
-		if ( ! @is_dir( $cookieDir ) ) {
-			@mkdir( $cookieDir, 0777, true );
-		}
-
-		if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
-			$file_htaccess = @fopen( $cookieDir . '/.htaccess', 'w+' );
-			@fwrite( $file_htaccess, 'deny from all' );
-			@fclose( $file_htaccess );
-		}
-
-		if ( ! file_exists( $cookieDir . '/index.php' ) ) {
-			$file_index = @fopen( $cookieDir . '/index.php', 'w+' );
-			@fclose( $file_index );
-		}
+		self::init_cookiesdir();
 
 		foreach ( $websites as $website ) {
 			$url = $website->url;
@@ -1069,25 +1039,25 @@ class MainWP_Utility {
 
 				if ( file_exists( $cookieFile ) ) {
 					@chmod( $cookieFile, 0644 );
-					@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
-					@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
+					curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
+					curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 				}
 			}
 
-			@curl_setopt( $ch, CURLOPT_URL, $url );
-			@curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-			@curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-			@curl_setopt( $ch, CURLOPT_POST, true );
+			curl_setopt( $ch, CURLOPT_URL, $url );
+			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+			curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+			curl_setopt( $ch, CURLOPT_POST, true );
 
 			if ( is_array( $params ) ) {
 				$params['json_result'] = $json_format; // ::fetchUrlsAuthed
 			}
 
 			$postdata = self::getPostDataAuthed( $website, $what, $params );
-			@curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-			@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
-			@curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-			@curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
+			curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
+			curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+			curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+			curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 			if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
 				$http_pass = stripslashes( $http_pass ); // to fix
 				curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
@@ -1110,16 +1080,16 @@ class MainWP_Utility {
 			}
 
 			if ( $ssl_verifyhost ) {
-				@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-				@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+				curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
+				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 			} else {
-				@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-				@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+				curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 			}
 
-			@curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
+			curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
 
-			@curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); // 20minutes
+			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); // 20minutes
 			if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
 				@set_time_limit( $timeout );
 			} //20minutes
@@ -1367,14 +1337,14 @@ class MainWP_Utility {
 		curl_setopt( $ch, CURLOPT_POST, true );
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		@curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
+		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 
 		if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 		} else {
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		}
 
 		$data = curl_exec( $ch );
@@ -1533,22 +1503,7 @@ class MainWP_Utility {
 			self::release( $identifier );
 		}
 
-		$dirs      = self::getMainWPDir();
-		$cookieDir = $dirs[0] . 'cookies';
-		if ( ! @is_dir( $cookieDir ) ) {
-			@mkdir( $cookieDir, 0777, true );
-		}
-
-		if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
-			$file_htaccess = @fopen( $cookieDir . '/.htaccess', 'w+' );
-			@fwrite( $file_htaccess, 'deny from all' );
-			@fclose( $file_htaccess );
-		}
-
-		if ( ! file_exists( $cookieDir . '/index.php' ) ) {
-			$file_index = @fopen( $cookieDir . '/index.php', 'w+' );
-			@fclose( $file_index );
-		}
+		self::init_cookiesdir();
 
 		$ch = curl_init();
 
@@ -1574,23 +1529,23 @@ class MainWP_Utility {
 
 			if ( file_exists( $cookieFile ) ) {
 				@chmod( $cookieFile, 0644 );
-				@curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
-				@curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
+				curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
+				curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 			}
 		}
 
-		@curl_setopt( $ch, CURLOPT_URL, $url );
-		@curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		@curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-		@curl_setopt( $ch, CURLOPT_POST, true );
-		@curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-		@curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
-		@curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		@curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
+		curl_setopt( $ch, CURLOPT_URL, $url );
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+		curl_setopt( $ch, CURLOPT_POST, true );
+		curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
+		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 
 		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
 			$http_pass = stripslashes( $http_pass ); // to fix
-			@curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
+			curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
 		}
 
 		$ssl_verifyhost = false;
@@ -1609,16 +1564,16 @@ class MainWP_Utility {
 		}
 
 		if ( $ssl_verifyhost ) {
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 		} else {
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-			@curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		}
 
-		@curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
-		@curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
-		@curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ));
+		curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
+		curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
+		curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ));
 
 		$force_use_ipv4 = false;
 		$forceUseIPv4   = isset( $others['force_use_ipv4'] ) ? $others['force_use_ipv4'] : null;
@@ -1638,12 +1593,12 @@ class MainWP_Utility {
 
 		if ( $force_use_ipv4 ) {
 			if ( defined( 'CURLOPT_IPRESOLVE' ) and defined( 'CURL_IPRESOLVE_V4' ) ) {
-				@curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
+				curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
 			}
 		}
 
 		$timeout = 20 * 60 * 60; // 20 minutes
-		@curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
+		curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
 		if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
 			@set_time_limit( $timeout );
 		}
@@ -1897,15 +1852,15 @@ class MainWP_Utility {
 	}
 
 	public static function downloadToFile( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
-		if ( @file_exists( $file ) && ( ( false === $size ) || ( @filesize( $file ) > $size ) ) ) {
+		if ( file_exists( $file ) && ( ( false === $size ) || ( @filesize( $file ) > $size ) ) ) {
 			@unlink( $file );
 		}
 
-		if ( ! @file_exists( @dirname( $file ) ) ) {
+		if ( ! file_exists( @dirname( $file ) ) ) {
 			@mkdir( @dirname( $file ), 0777, true );
 		}
 
-		if ( ! @file_exists( @dirname( $file ) ) ) {
+		if ( ! file_exists( @dirname( $file ) ) ) {
 			throw new MainWP_Exception( __( 'MainWP plugin could not create directory in order to download the file.', 'mainwp' ) );
 		}
 
@@ -1916,7 +1871,7 @@ class MainWP_Utility {
 		$fp    = fopen( $file, 'a' );
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		if ( false !== $size ) {
-			if ( @file_exists( $file ) ) {
+			if ( file_exists( $file ) ) {
 				$size = @filesize( $file );
 				$url .= '&foffset=' . $size;
 			}
@@ -1938,7 +1893,7 @@ class MainWP_Utility {
 
 		curl_setopt( $ch, CURLOPT_FILE, $fp );
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		@curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
+		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
 		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
 			$http_pass = stripslashes($http_pass); // to fix
@@ -2044,20 +1999,82 @@ class MainWP_Utility {
 			$userid = $current_user->ID;
 		}
 
+		$hasWPFileSystem = self::getWPFilesystem();
+
+		global $wp_filesystem;
+
 		$dirs   = self::getMainWPDir();
 		$newdir = $dirs[0] . $userid . ( null != $dir ? DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR : '' );
 
-		if ( ! file_exists( $newdir ) ) {
-			@mkdir( $newdir, 0777, true );
-		}
+		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 
-		if ( null != $dirs[0] . $userid && ! file_exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {
-			$file = @fopen( trailingslashit( $dirs[0] . $userid ) . '.htaccess', 'w+' );
-			@fwrite( $file, 'deny from all' );
-			@fclose( $file );
+			if ( ! $wp_filesystem->is_dir( $newdir ) ) {
+				$wp_filesystem->mkdir( $newdir, 0777, true );
+			}
+
+			if ( null != $dirs[0] . $userid && ! $wp_filesystem->exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {
+				$file_htaccess = trailingslashit( $dirs[0] . $userid ) . '.htaccess';
+				$wp_filesystem->put_contents( $file_htaccess, 'deny from all' );
+			}
+		} else {
+
+			if ( ! file_exists( $newdir ) ) {
+				@mkdir( $newdir, 0777, true );
+			}
+
+			if ( null != $dirs[0] . $userid && ! file_exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {
+				$file = @fopen( trailingslashit( $dirs[0] . $userid ) . '.htaccess', 'w+' );
+				@fwrite( $file, 'deny from all' );
+				@fclose( $file );
+			}
 		}
 
 		return $newdir;
+	}
+
+	public static function init_cookiesdir() {
+
+			$hasWPFileSystem = self::getWPFilesystem();
+
+			global $wp_filesystem;
+
+			$dirs      = self::getMainWPDir();
+			$cookieDir = $dirs[0] . 'cookies';
+
+		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+
+			if ( ! $wp_filesystem->is_dir( $cookieDir ) ) {
+				$wp_filesystem->mkdir( $cookieDir, 0777, true );
+			}
+
+			if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
+				// open and write the data to file.
+				$file_htaccess = $cookieDir . '/.htaccess';
+				$wp_filesystem->put_contents( $file_htaccess, 'deny from all' );
+			}
+
+			if ( ! file_exists( $cookieDir . '/index.php' ) ) {
+				// If file doesn't exist, it will be created.
+				$file_index = $cookieDir . '/index.php';
+				$wp_filesystem->touch( $file_index );
+			}
+		} else {
+
+			if ( ! file_exists( $cookieDir ) ) {
+				@mkdir( $cookieDir, 0777, true );
+			}
+
+			if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
+				$file_htaccess = @fopen( $cookieDir . '/.htaccess', 'w+' );
+				@fwrite( $file_htaccess, 'deny from all' );
+				@fclose( $file_htaccess );
+			}
+
+			if ( ! file_exists( $cookieDir . '/index.php' ) ) {
+				$file_index = @fopen( $cookieDir . '/index.php', 'w+' );
+				@fclose( $file_index );
+			}
+		}
 	}
 
 	public static function getMainWPSpecificUrl( $dir ) {
@@ -2221,7 +2238,7 @@ class MainWP_Utility {
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 ); // Set curl to return the data instead of printing it to the browser.
 		curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		@curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
+		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
 
 		$data     = @curl_exec( $ch );
 		$httpCode = @curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -2460,16 +2477,16 @@ class MainWP_Utility {
 		if ( $text_format ) {
 				$mail_send['header'] = '';
 
-				$mail_send['body']   = $title . "\r\n" . "\r\n" .
-									  $body . "\r\n" . "\r\n";
+				$mail_send['body']   = $title . "\r\n\r\n" .
+									  $body . "\r\n\r\n";
 				$mail_send['footer'] = 'MainWP: https://mainwp.com' . "\r\n" .
 										'Extensions: https://mainwp.com/mainwp-extensions/' . "\r\n" .
 										'Documentation: https://mainwp.com/help/' . "\r\n" .
 										'Blog: https://mainwp.com/mainwp-blog/' . "\r\n" .
 										'Codex: https://mainwp.com/codex/' . "\r\n" .
-										'Support: https://mainwp.com/support/' . "\r\n" . "\r\n" .
+										'Support: https://mainwp.com/support/' . "\r\n\r\n" .
 										'Follow us on Twitter: https://twitter.com/mymainwp' . "\r\n" .
-										'Friend us on Facebook: https://www.facebook.com/mainwp' . "\r\n" . "\r\n" .
+										'Friend us on Facebook: https://www.facebook.com/mainwp' . "\r\n\r\n" .
 										"Copyright {$current_year} MainWP, All rights reserved.";
 		} else {
 			$mail_send['header'] = <<<EOT
@@ -3254,38 +3271,6 @@ EOT;
 		}
 
 		return $content;
-	}
-
-	public static function showUserTip( $tip_id ) {
-		global $current_user;
-
-		if ( get_option( 'mainwp_hide_tips', 1 ) ) {
-			return false;
-		}
-
-		if ( $user_id = $current_user->ID ) {
-			$reset_tips = get_option( 'mainwp_reset_user_tips' );
-			if ( ! is_array( $reset_tips ) ) {
-				$reset_tips = array();
-			}
-			if ( ! isset( $reset_tips[ $user_id ] ) ) {
-				$reset_tips[ $user_id ] = 1;
-				update_option( 'mainwp_reset_user_tips', $reset_tips );
-				update_user_option( $user_id, 'mainwp_hide_user_tips', array() );
-
-				return true;
-			}
-
-			$hide_usertips = get_user_option( 'mainwp_hide_user_tips' );
-			if ( ! is_array( $hide_usertips ) ) {
-				$hide_usertips = array();
-			}
-			if ( isset( $hide_usertips[ $tip_id ] ) ) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	public static function showMainWPMessage( $type, $notice_id ) {

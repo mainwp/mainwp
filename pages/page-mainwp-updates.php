@@ -2798,7 +2798,7 @@ class MainWP_Updates {
 				$information = MainWP_Utility::fetchUrlAuthed( $website, 'upgrade' );
 
 				if ( isset( $information['upgrade'] ) && ( 'SUCCESS' === $information['upgrade'] ) ) {
-					MainWP_DB::Instance()->updateWebsiteOption( $website, 'wp_upgrades', json_encode( array() ) );
+					MainWP_DB::Instance()->updateWebsiteOption( $website, 'wp_upgrades', wp_json_encode( array() ) );
 					return '<i class="green check icon"></i>';
 				} elseif ( isset( $information['upgrade'] ) ) {
 					$errorMsg = '';
@@ -2828,13 +2828,13 @@ class MainWP_Updates {
 					$decodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
 					if ( ! isset( $decodedIgnoredPlugins[ $slug ] ) ) {
 						$decodedIgnoredPlugins[ $slug ] = urldecode( $name );
-						MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_plugins' => json_encode( $decodedIgnoredPlugins ) ) );
+						MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_plugins' => wp_json_encode( $decodedIgnoredPlugins ) ) );
 					}
 				} elseif ( 'theme' === $type ) {
 					$decodedIgnoredThemes = json_decode( $website->ignored_themes, true );
 					if ( ! isset( $decodedIgnoredThemes[ $slug ] ) ) {
 						$decodedIgnoredThemes[ $slug ] = urldecode( $name );
-						MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_themes' => json_encode( $decodedIgnoredThemes ) ) );
+						MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ) ) );
 					}
 				}
 			}
@@ -2849,9 +2849,9 @@ class MainWP_Updates {
 				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 				while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 					if ( 'plugin' === $type ) {
-						MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_plugins' => json_encode( array() ) ) );
+						MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_plugins' => wp_json_encode( array() ) ) );
 					} elseif ( 'theme' === $type ) {
-						MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_themes' => json_encode( array() ) ) );
+						MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_themes' => wp_json_encode( array() ) ) );
 					}
 				}
 				MainWP_DB::free_result( $websites );
@@ -2863,13 +2863,13 @@ class MainWP_Updates {
 						$decodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
 						if ( isset( $decodedIgnoredPlugins[ $slug ] ) ) {
 							unset( $decodedIgnoredPlugins[ $slug ] );
-							MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_plugins' => json_encode( $decodedIgnoredPlugins ) ) );
+							MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_plugins' => wp_json_encode( $decodedIgnoredPlugins ) ) );
 						}
 					} elseif ( 'theme' === $type ) {
 						$decodedIgnoredThemes = json_decode( $website->ignored_themes, true );
 						if ( isset( $decodedIgnoredThemes[ $slug ] ) ) {
 							unset( $decodedIgnoredThemes[ $slug ] );
-							MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_themes' => json_encode( $decodedIgnoredThemes ) ) );
+							MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ) ) );
 						}
 					}
 				}
@@ -2890,7 +2890,7 @@ class MainWP_Updates {
 			$decodedIgnoredPlugins[ $slug ] = urldecode( $name );
 			MainWP_DB::Instance()->updateUserExtension( array(
 				'userid'             => null,
-				'ignored_plugins'    => json_encode( $decodedIgnoredPlugins ),
+				'ignored_plugins'    => wp_json_encode( $decodedIgnoredPlugins ),
 			) );
 		} elseif ( 'theme' === $type ) {
 			$decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
@@ -2900,7 +2900,7 @@ class MainWP_Updates {
 			$decodedIgnoredThemes[ $slug ] = urldecode( $name );
 			MainWP_DB::Instance()->updateUserExtension( array(
 				'userid'         => null,
-				'ignored_themes' => json_encode( $decodedIgnoredThemes ),
+				'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ),
 			) );
 		}
 
@@ -2924,7 +2924,7 @@ class MainWP_Updates {
 			}
 			MainWP_DB::Instance()->updateUserExtension( array(
 				'userid'             => null,
-				'ignored_plugins'    => json_encode( $decodedIgnoredPlugins ),
+				'ignored_plugins'    => wp_json_encode( $decodedIgnoredPlugins ),
 			) );
 		} elseif ( 'theme' === $type ) {
 			if ( '_ALL_' === $slug ) {
@@ -2940,7 +2940,7 @@ class MainWP_Updates {
 			}
 			MainWP_DB::Instance()->updateUserExtension( array(
 				'userid'         => null,
-				'ignored_themes' => json_encode( $decodedIgnoredThemes ),
+				'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ),
 			) );
 		}
 
@@ -2953,9 +2953,9 @@ class MainWP_Updates {
 				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 				while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 					if ( 'plugin' === $type ) {
-						MainWP_DB::Instance()->updateWebsiteOption( $website, 'plugins_outdate_dismissed', json_encode( array() ) );
+						MainWP_DB::Instance()->updateWebsiteOption( $website, 'plugins_outdate_dismissed', wp_json_encode( array() ) );
 					} elseif ( 'theme' === $type ) {
-						MainWP_DB::Instance()->updateWebsiteOption( $website, 'themes_outdate_dismissed', json_encode( array() ) );
+						MainWP_DB::Instance()->updateWebsiteOption( $website, 'themes_outdate_dismissed', wp_json_encode( array() ) );
 					}
 				}
 				MainWP_DB::free_result( $websites );
@@ -2967,13 +2967,13 @@ class MainWP_Updates {
 						$decodedIgnoredPlugins = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_dismissed' ), true );
 						if ( isset( $decodedIgnoredPlugins[ $slug ] ) ) {
 							unset( $decodedIgnoredPlugins[ $slug ] );
-							MainWP_DB::Instance()->updateWebsiteOption( $website, 'plugins_outdate_dismissed', json_encode( $decodedIgnoredPlugins ) );
+							MainWP_DB::Instance()->updateWebsiteOption( $website, 'plugins_outdate_dismissed', wp_json_encode( $decodedIgnoredPlugins ) );
 						}
 					} elseif ( 'theme' === $type ) {
 						$decodedIgnoredThemes = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
 						if ( isset( $decodedIgnoredThemes[ $slug ] ) ) {
 							unset( $decodedIgnoredThemes[ $slug ] );
-							MainWP_DB::Instance()->updateWebsiteOption( $website, 'themes_outdate_dismissed', json_encode( $decodedIgnoredThemes ) );
+							MainWP_DB::Instance()->updateWebsiteOption( $website, 'themes_outdate_dismissed', wp_json_encode( $decodedIgnoredThemes ) );
 						}
 					}
 				}
@@ -3000,7 +3000,7 @@ class MainWP_Updates {
 			}
 			MainWP_DB::Instance()->updateUserExtension( array(
 				'userid'             => null,
-				'dismissed_plugins'  => json_encode( $decodedIgnoredPlugins ),
+				'dismissed_plugins'  => wp_json_encode( $decodedIgnoredPlugins ),
 			) );
 		} elseif ( 'theme' === $type ) {
 			if ( '_ALL_' === $slug ) {
@@ -3016,7 +3016,7 @@ class MainWP_Updates {
 			}
 			MainWP_DB::Instance()->updateUserExtension( array(
 				'userid'             => null,
-				'dismissed_themes'   => json_encode( $decodedIgnoredThemes ),
+				'dismissed_themes'   => wp_json_encode( $decodedIgnoredThemes ),
 			) );
 		}
 
@@ -3032,13 +3032,13 @@ class MainWP_Updates {
 					$decodedDismissedPlugins = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_dismissed' ), true );
 					if ( ! isset( $decodedDismissedPlugins[ $slug ] ) ) {
 						$decodedDismissedPlugins[ $slug ] = urldecode( $name );
-						MainWP_DB::Instance()->updateWebsiteOption( $website, 'plugins_outdate_dismissed', json_encode( $decodedDismissedPlugins ) );
+						MainWP_DB::Instance()->updateWebsiteOption( $website, 'plugins_outdate_dismissed', wp_json_encode( $decodedDismissedPlugins ) );
 					}
 				} elseif ( 'theme' === $type ) {
 					$decodedDismissedThemes = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
 					if ( ! isset( $decodedDismissedThemes[ $slug ] ) ) {
 						$decodedDismissedThemes[ $slug ] = urldecode( $name );
-						MainWP_DB::Instance()->updateWebsiteOption( $website, 'themes_outdate_dismissed', json_encode( $decodedDismissedThemes ) );
+						MainWP_DB::Instance()->updateWebsiteOption( $website, 'themes_outdate_dismissed', wp_json_encode( $decodedDismissedThemes ) );
 					}
 				}
 			}
@@ -3058,7 +3058,7 @@ class MainWP_Updates {
 			$decodedDismissedPlugins[ $slug ] = urldecode( $name );
 			MainWP_DB::Instance()->updateUserExtension( array(
 				'userid'             => null,
-				'dismissed_plugins'  => json_encode( $decodedDismissedPlugins ),
+				'dismissed_plugins'  => wp_json_encode( $decodedDismissedPlugins ),
 			) );
 		} elseif ( 'theme' === $type ) {
 			$decodedDismissedThemes = json_decode( $userExtension->dismissed_themes, true );
@@ -3068,7 +3068,7 @@ class MainWP_Updates {
 			$decodedDismissedThemes[ $slug ] = urldecode( $name );
 			MainWP_DB::Instance()->updateUserExtension( array(
 				'userid'             => null,
-				'dismissed_themes'   => json_encode( $decodedDismissedThemes ),
+				'dismissed_themes'   => wp_json_encode( $decodedDismissedThemes ),
 			) );
 		}
 

@@ -157,7 +157,7 @@ class MainWP_Updates_Overview {
 	 *
 	 * Grab available Child Sites updates a build Widget.
 	 *
-	 * @param boolean $isUpdatesPage
+	 * @param boolean $isUpdatesPage Check if Updates Page True|False.
 	 */
 	public static function renderSites( $isUpdatesPage = false ) {
 
@@ -832,7 +832,7 @@ class MainWP_Updates_Overview {
 	 * @return mixed $output
 	 */
 	public static function checkBackups() {
-		// if (get_option('mainwp_backup_before_upgrade') != 1) return true;.
+		// if (get_option('mainwp_backup_before_upgrade') != 1) return true;
 		if ( ! is_array( $_POST['sites'] ) ) {
 			return true;
 		}

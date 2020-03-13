@@ -30,7 +30,7 @@ if ( ! function_exists( 'mainwp_autoload' ) ) {
 	/**
 	 * Autoloader for all classes, pages & widgets
 	 *
-	 * @param string $class_name Folder name class|pages|widgets
+	 * @param string $class_name Folder name class|pages|widgets.
 	 * @return require_once $autoload_path;
 	 */
 	function mainwp_autoload( $class_name ) {
@@ -80,8 +80,8 @@ if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
 	/**
 	 * Detect permision level & display message to end user.
 	 *
-	 * @param string  $where User's location
-	 * @param boolean $echo Defines weather or not to echo error message
+	 * @param string  $where User's location.
+	 * @param boolean $echo Defines weather or not to echo error message.
 	 * @return string|bool $msg|false
 	 */
 	function mainwp_do_not_have_permissions( $where = '', $echo = true ) {

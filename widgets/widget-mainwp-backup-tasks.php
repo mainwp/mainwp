@@ -18,7 +18,7 @@ class MainWP_Backup_Tasks {
 	 *
 	 * Get Class Name.
 	 *
-	 * @return string CLASS
+	 * @return string CLASS Class Name.
 	 */
 	public static function getClassName() {
 		return __CLASS__;
@@ -43,7 +43,7 @@ class MainWP_Backup_Tasks {
 	public static function render() {
 
 		$tasks = MainWP_DB::Instance()->getBackupTasksForUser();
-		// MainWP_UI::renderBeginReadyPopup.
+		// MainWP_UI::renderBeginReadyPopup();
 		?>
 		<h3><?php _e('Backup tasks', 'mainwp'); ?></h3>
 		<?php
@@ -121,7 +121,7 @@ class MainWP_Backup_Tasks {
 			<?php
 		}
 
-		// MainWP_UI::renderEndReadyPopup.
+		// MainWP_UI::renderEndReadyPopup();
 	}
 
 }

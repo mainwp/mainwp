@@ -15,7 +15,7 @@ class MainWP_Connection_Status {
 	/**
 	 * Method getClassName()
 	 *
-	 * @return string __CLASS__ Class Namw
+	 * @return string __CLASS__ Class Name
 	 */
 	public static function getClassName() {
 		return __CLASS__;

@@ -1,8 +1,16 @@
 <?php
+/**
+ * MainWP Client Reports Extension 
+ * 
+ * @todo refactor so it uses correct class files
+ * @todo remove old plugin activator
+ * @todo cleanup api.php + mainwp.php (hard includes)
+ * 
+ */
 
-// todo: refactor so it uses correct class files
-// todo: remove old plugin activator
-// todo: cleanup api.php + mainwp.php (hard includes)
+/**
+ * Live Report Responder 
+ */
 class LiveReportResponder {
 
 	public static $instance = null;

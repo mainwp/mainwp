@@ -1,16 +1,21 @@
 <?php
 /**
  * Plugin Installer List Table class.
+ */
+
+ // Include class-wp-list-table.php
+if ( ! class_exists( 'WP_List_Table' ) ) {
+	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+}
+
+/**
+ * Plugin Installer List Table class.
  *
  * @package WordPress
  * @subpackage List_Table
  * @since 3.1.0
  * @access private
  */
-if ( ! class_exists( 'WP_List_Table' ) ) {
-	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
-}
-
 class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 
 	public $order   = 'ASC';

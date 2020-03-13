@@ -1,15 +1,43 @@
 <?php
+/**
+ * MainWP Recent Posts Widget
+ * 
+ * Displays the Child Sites most recent published draft, pending, trash & future posts
+ */
 
+/**
+ * Class MainWP_Recent_Posts
+ * 
+ * Displays the Child Sites most recent published draft, pending, trash & future posts
+ */
 class MainWP_Recent_Posts {
 
+	/**
+	 * getClassName()
+	 * 
+	 * @return string __CLASS__
+	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
+	/**
+	 * render()
+	 * 
+	 * Fire off renderSites()
+	 */
 	public static function render() {
 		self::renderSites( false, false );
 	}
 
+	/**
+	 * renderSites()
+	 * 
+	 * Build the resent posts list
+	 * 
+	 * @param mixed $renew
+	 * @param boolean $pExit
+	 */
 	public static function renderSites( $renew, $pExit = true ) {
 
 		$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 ); // $recent_number: support >=0 and <= 30
@@ -401,36 +429,77 @@ class MainWP_Recent_Posts {
 		}
 	}
 
+	/**
+	 * publish()
+	 * 
+	 * Publish Post
+	 */
 	public static function publish() {
 		self::action( 'publish' );
 		die( json_encode( array( 'result' => __( 'Post has been published!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * approve()
+	 * 
+	 * Approve Post
+	 */
 	public static function approve() {
 		self::action( 'publish' );
 		die( json_encode( array( 'result' => __( 'Post has been approved!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * unpublish()
+	 * 
+	 * Unpublish Post
+	 * 
+	 */
 	public static function unpublish() {
 		self::action( 'unpublish' );
 		die( json_encode( array( 'result' => __( 'Post has been unpublished!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * trash()
+	 * 
+	 * Trash Post
+	 * 
+	 */
 	public static function trash() {
 		self::action( 'trash' );
 		die( json_encode( array( 'result' => __( 'Post has been moved to trash!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * delete()
+	 * 
+	 * Delete Post
+	 * 
+	 */
 	public static function delete() {
 		self::action( 'delete' );
 		die( json_encode( array( 'result' => __( 'Post has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * restore()
+	 * 
+	 * Restore Post
+	 * 
+	 */
 	public static function restore() {
 		self::action( 'restore' );
 		die( json_encode( array( 'result' => __( 'Post has been restored!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * action()
+	 * 
+	 * Post action 
+	 * 
+	 * @param mixed $pAction
+	 */
 	public static function action( $pAction ) {
 		$postId       = $_POST['postId'];
 		$websiteIdEnc = $_POST['websiteId'];
@@ -462,6 +531,15 @@ class MainWP_Recent_Posts {
 		}
 	}
 
+	/**
+	 * action_update()
+	 * 
+	 * Update Post Action
+	 * 
+	 * @param mixed $pAction
+	 * 
+	 * @return void
+	 */
 	public static function action_update( $pAction ) {
 		$postId       = $_POST['postId'];
 		$websiteIdEnc = $_POST['websiteId'];

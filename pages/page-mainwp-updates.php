@@ -128,7 +128,7 @@ class MainWP_Updates {
 			}
 		}
 
-		$total_themesIgnored = 0;
+		$total_themesIgnored  = 0;
 		$total_pluginsIgnored = 0;
 
 		$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
@@ -169,7 +169,7 @@ class MainWP_Updates {
 			$pluginsIgnored_perSites          = array();
 			$themesIgnored_perSites           = array();
 			$pluginsIgnoredAbandoned_perSites = array();
-			$themesIgnoredAbandoned_perSites  = array(); 
+			$themesIgnoredAbandoned_perSites  = array();
 
 			$wp_upgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true );
 
@@ -456,10 +456,10 @@ class MainWP_Updates {
 		$not_trusted_label = '<span class="ui tiny grey label">Not Trusted</span>';
 
 		// the hook using to set maximum number of plugins/themes for huge number of updates
-		$limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
-		$continue_update   = '';
+		$limit_updates_all    = apply_filters( 'mainwp_limit_updates_all', 0 );
+		$continue_update      = '';
 		$continue_update_slug = '';
-		$continue_class = '';
+		$continue_class       = '';
 
 		if ( 0 < $limit_updates_all ) {
 			if ( isset( $_GET['continue_update'] ) && '' !== $_GET['continue_update'] ) {

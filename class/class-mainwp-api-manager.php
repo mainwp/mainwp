@@ -350,8 +350,8 @@ class MainWP_Api_Manager {
 		if ( ! is_array( $response ) || ! isset( $response['error'] ) ) {
 			return false;
 		}
-		
-		$return = false;		
+
+		$return = false;
 		switch ( $response['error'] ) {
 			case 'subscription_on_hold':
 				$return = __( 'Your membership is on hold. Reactivate your membership to install MainWP extensions.', 'mainwp' );

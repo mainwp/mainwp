@@ -1177,7 +1177,7 @@ class MainWP_Utility {
 			 $update_type = '';
 
 			 $check_premi_plugins = array();
-			 $check_premi_themes = array();
+			 $check_premi_themes  = array();
 
 			 if ( 'stats' === $what ) {
 				 if ( '' != $website->plugins ) {
@@ -1234,7 +1234,7 @@ class MainWP_Utility {
 
 		 $updating_website = false;
 		 $type             = '';
-		 $list             = ''; 
+		 $list             = '';
 		 if ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what ) {
 			 $updating_website = true;
 			 if ( 'upgradeplugintheme' === $what || 'upgradetranslation' === $what ) {
@@ -2095,7 +2095,7 @@ class MainWP_Utility {
 		$remote_url = 'http://data.alexa.com/data?cli=10&dat=snbamz&url=' . trim( $domain );
 		$search_for = '<POPULARITY URL';
 		$part       = '';
-		$handle         = @fopen( $remote_url, 'r' );
+		$handle     = @fopen( $remote_url, 'r' );
 		if ( $handle ) {
 			while ( ! feof( $handle ) ) {
 				$part .= fread( $handle, 100 );
@@ -3405,8 +3405,8 @@ EOT;
 			return;
 		}
 		if ( in_array( $col, $hidden ) ) {
-			echo 'hidden';			
-		}		
+			echo 'hidden';
+		}
 	}
 
 	public static function generate_random_string( $length = 8 ) {

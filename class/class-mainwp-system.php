@@ -326,7 +326,7 @@ class MainWP_System {
 	public function init_cron() {
 
 		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
-		$sched = wp_next_scheduled( 'mainwp_cronstats_action' );
+		$sched     = wp_next_scheduled( 'mainwp_cronstats_action' );
 		if ( $sched == false ) {
 			if ( $useWPCron ) {
 				wp_schedule_event( time(), 'hourly', 'mainwp_cronstats_action' );
@@ -1431,7 +1431,7 @@ class MainWP_System {
 					if ( $website->is_ignorePluginUpdates ) {
 						continue;
 					}
-					$infoTxt = '';
+					$infoTxt    = '';
 					$infoNewTxt = '';
 					if ( $text_format ) {
 						$infoTxt    = stripslashes( $website->name ) . ' - ' . $pluginInfo['Name'] . ' ' . $pluginInfo['Version'] . ' to ' . $pluginInfo['update']['new_version'] . ' - ' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id );
@@ -1638,7 +1638,7 @@ class MainWP_System {
 					}
 
 					$dir = MainWP_Utility::getMainWPSpecificDir( $siteId );
-					$dh            = opendir( $dir );
+					$dh  = opendir( $dir );
 					// Check if backup ok
 					$lastBackup = - 1;
 					if ( file_exists( $dir ) && $dh ) {
@@ -1785,7 +1785,7 @@ class MainWP_System {
 						$filename = strtok($filename, '?'); // to fix: remove params
 						if ( $filename ) {
 							$filename = 'favi-' . $siteId . '-' . $filename;
-							$size = file_put_contents( $iconsDir . $filename, $content );
+							$size     = file_put_contents( $iconsDir . $filename, $content );
 							if ( $size ) {
 								MainWP_Logger::Instance()->debug( 'Icon size :: ' . $size );
 								MainWP_DB::Instance()->updateWebsiteOption( $website, 'favi_icon', $filename );

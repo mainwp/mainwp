@@ -312,38 +312,36 @@ extensions_activate_next = function ( pObj ) {
   var grabingEl = jQuery( "#mainwp-extensions-api-fields" );
   var username = grabingEl.find( '#mainwp_com_username' ).val();
   var pwd = grabingEl.find( '#mainwp_com_password' ).val();
-    var apiEl = pObj;
-    var statusEl = apiEl.find( ".activate-api-status" );
-    var loadingEl = apiEl.find( ".api-feedback" );
-  var apiForm = apiEl.find( '#mainwp-extensions-api-form' );
+  var apiEl = pObj;
+  var statusEl = apiEl.find( ".activate-api-status" );
+  var loadingEl = apiEl.find( ".api-feedback" );
 
-    apiEl.attr( "status", "running" );
 
-    var extensionSlug = apiEl.attr( 'extension-slug' );
-    var data = {
-        action: 'mainwp_extension_grabapikey',
-        username: username,
-        password: pwd,
-        slug: extensionSlug
-    };
+  apiEl.attr( "status", "running" );
 
-    currentActivateThreads++;
+  var extensionSlug = apiEl.attr( 'extension-slug' );
+  var data = {
+    action: 'mainwp_extension_grabapikey',
+    username: username,
+    password: pwd,
+    slug: extensionSlug
+  };
 
-    loadingEl.show();
-    loadingEl.find( '.message' ).removeClass( 'red green' );
-    loadingEl.find( '.message' ).html( '<i class="notched circle loading icon"></i>' + __( 'Activating...' ) );
+  currentActivateThreads++;
 
-    if ( apiEl.attr( 'license-status' ) == 'activated' ) {
-          finishedActivateThreads++;
-          currentActivateThreads--;
-          loadingEl.find( '.message' ).addClass( 'green' );
-          loadingEl.find( '.message' ).html(  __( 'Extension already activated.' ) );
-          countSuccessActivation++;
-          extensions_loop_next();
-          return;
-    }
+  loadingEl.show();
+  loadingEl.find( '.message' ).removeClass( 'red green' );
+  loadingEl.find( '.message' ).html( '<i class="notched circle loading icon"></i>' + __( 'Activating...' ) );
 
-    //apiForm.show();
+  if ( apiEl.attr( 'license-status' ) == 'activated' ) {
+    finishedActivateThreads++;
+    currentActivateThreads--;
+    loadingEl.find( '.message' ).addClass( 'green' );
+    loadingEl.find( '.message' ).html(  __( 'Extension already activated.' ) );
+    countSuccessActivation++;
+    extensions_loop_next();
+    return;
+  }
 
     jQuery.post( ajaxurl, data, function ( response ){
           finishedActivateThreads++;

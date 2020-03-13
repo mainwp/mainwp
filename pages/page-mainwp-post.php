@@ -448,7 +448,7 @@ class MainWP_Post {
 
 		$cachedSearch = MainWP_Cache::getCachedContext( 'Post' );
 
-		$selected_sites = array();
+		$selected_sites  = array();
 		$selected_groups = array();
 		if ( null != $cachedSearch ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
@@ -1488,7 +1488,7 @@ class MainWP_Post {
 		$user_ID = $current_user->ID;
 
 		$_content_editor_dfw = false;
-		$is_IE = false;
+		$is_IE               = false;
 		$_wp_editor_expand   = true;
 
 		$form_action  = 'mainwp_editpost'; // WP form action is: editpost, handle by admin_post_mainwp_editpost
@@ -1630,8 +1630,8 @@ class MainWP_Post {
 				</div>
 			</div>
 				<?php
-				$sel_sites = array();
-				$sel_groups = array();				
+				$sel_sites  = array();
+				$sel_groups = array();
 				?>
 				<div class="mainwp-side-content mainwp-no-padding">
 					<div class="mainwp-select-sites">

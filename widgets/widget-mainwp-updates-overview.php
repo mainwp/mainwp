@@ -3,7 +3,7 @@
  * MainWP Updates Overview Widget
  *
  * Grab Child Sites update status & build widget.
- * 
+ *
  * @package MainWP/Updates_Overview
  */
 

@@ -3,7 +3,7 @@
  * MainWP Ping Childs Cron.
  *
  * Include cron/bootstrap.php & run mainwp_cronpingchilds_action.
- * 
+ *
  * @package MainWP/PingChilds
  */
 

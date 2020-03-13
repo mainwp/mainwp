@@ -5,7 +5,7 @@
  * Set default php.ini variables
  * check if load wp-load & wp-config exist & include them
  * else exit due to "Unsupported WordPress Setup".
- * 
+ *
  * @package MainWP/Bootstrap
  */
 

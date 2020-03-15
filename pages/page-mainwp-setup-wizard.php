@@ -859,8 +859,10 @@ class MainWP_Setup_Wizard {
 			if ( isset( $result['success'] ) && ( $result['success'] == true ) ) {
 				if ( isset( $result['code'] ) && ( $result['code'] == 'PURCHASED' ) ) {
 					// success: do nothing
+					$ok = true;
 				} elseif ( isset( $result['order_id'] ) && ! empty( $result['order_id'] ) ) {
 					// success: do nothing
+					$ok = true;
 				} else {
 					$undefined_error = true;
 				}

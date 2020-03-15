@@ -567,7 +567,8 @@ class MainWP_Post_Handler {
 		}
 
 		global $current_user;
-		if ( ( $user_id = $current_user->ID ) ) {
+		$user_id = $current_user->ID;
+		if ( $user_id ) {
 			$status = get_user_option( 'mainwp_notice_saved_status' );
 			if ( ! is_array( $status ) ) {
 				$status = array();
@@ -643,7 +644,8 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_dismiss_twit' );
 
 		global $current_user;
-		if ( ( $user_id = $current_user->ID ) && isset( $_POST['twitId'] ) && ! empty( $_POST['twitId'] ) && isset( $_POST['what'] ) && ! empty( $_POST['what'] ) ) {
+		$user_id = $current_user->ID;
+		if ( $user_id && isset( $_POST['twitId'] ) && ! empty( $_POST['twitId'] ) && isset( $_POST['what'] ) && ! empty( $_POST['what'] ) ) {
 			MainWP_Twitter::clearTwitterInfo( $_POST['what'], $_POST['twitId'] );
 		}
 		die( 1 );
@@ -696,7 +698,8 @@ class MainWP_Post_Handler {
 		$this->secure_request();
 
 		global $current_user;
-		if ( ( $user_id = $current_user->ID ) && isset( $_POST['what'] ) && ! empty( $_POST['what'] ) ) {
+		$user_id = $current_user->ID;
+		if ( $user_id && isset( $_POST['what'] ) && ! empty( $_POST['what'] ) ) {
 			$user_cookies = get_user_option( 'mainwp_saved_user_cookies' );
 			if ( ! is_array( $user_cookies ) ) {
 				$user_cookies = array();

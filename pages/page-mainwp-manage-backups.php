@@ -471,8 +471,8 @@ class MainWP_Manage_Backups {
 	public function column_actions( $item ) {
 
 		$actions = array(
-			'edit'   => sprintf( '<a class="item" href="admin.php?page=ManageBackups&id=%s">' . '<i class="edit outline icon"></i> ' . __( 'Edit', 'mainwp' ) . '</a>', $item->id ),
-			'delete' => sprintf( '<a class="submitdelete item" href="#" task_id="%s" onClick="return managebackups_remove(this);">' . '<i class="trash alternate outline icon"></i> ' . __( 'Delete', 'mainwp' ) . '</a>', $item->id ),
+			'edit'   => sprintf( '<a class="item" href="admin.php?page=ManageBackups&id=%s"><i class="edit outline icon"></i> ' . __( 'Edit', 'mainwp' ) . '</a>', $item->id ),
+			'delete' => sprintf( '<a class="submitdelete item" href="#" task_id="%s" onClick="return managebackups_remove(this);"><i class="trash alternate outline icon"></i> ' . __( 'Delete', 'mainwp' ) . '</a>', $item->id ),
 		);
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
@@ -485,11 +485,11 @@ class MainWP_Manage_Backups {
 
 		if ( $item->paused == 1 ) {
 			if ( mainwp_current_user_can( 'dashboard', 'pause_resume_backup_tasks' ) ) {
-				$actions['resume'] = sprintf( '<a href="#" class="item" task_id="%s" onClick="return managebackups_resume(this)">' . '<i class="play icon"></i> ' . __( 'Resume', 'mainwp' ) . '</a>', $item->id );
+				$actions['resume'] = sprintf( '<a href="#" class="item" task_id="%s" onClick="return managebackups_resume(this)"><i class="play icon"></i> ' . __( 'Resume', 'mainwp' ) . '</a>', $item->id );
 			}
 		} else {
 			if ( mainwp_current_user_can( 'dashboard', 'pause_resume_backup_tasks' ) ) {
-				$actions['pause'] = sprintf( '<a href="#" class="item" task_id="%s" onClick="return managebackups_pause(this)">' . '<i class="pause icon"></i> ' . __( 'Pause', 'mainwp' ) . '</a>', $item->id );
+				$actions['pause'] = sprintf( '<a href="#" class="item" task_id="%s" onClick="return managebackups_pause(this)"><i class="pause icon"></i> ' . __( 'Pause', 'mainwp' ) . '</a>', $item->id );
 			}
 		}
 

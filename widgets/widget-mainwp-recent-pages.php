@@ -139,7 +139,7 @@ class MainWP_Recent_Pages {
 						}
 					}
 
-					$name = strip_tags( $recent_pages_published[ $i ]['website']->name );
+					$name = wp_strip_all_tags( $recent_pages_published[ $i ]['website']->name );
 
 					?>
 					<div class="item">
@@ -203,7 +203,7 @@ class MainWP_Recent_Pages {
 							$recent_pages_draft[ $i ]['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $recent_pages_draft[ $i ]['dts'] ) );
 						}
 					}
-					$name = strip_tags( $recent_pages_draft[ $i ]['website']->name );
+					$name = wp_strip_all_tags( $recent_pages_draft[ $i ]['website']->name );
 					?>
 					<div class="item">
 						<div class="ui grid">
@@ -265,7 +265,7 @@ class MainWP_Recent_Pages {
 							$recent_pages_pending[ $i ]['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $recent_pages_pending[ $i ]['dts'] ) );
 						}
 					}
-					$name = strip_tags( $recent_pages_pending[ $i ]['website']->name );
+					$name = wp_strip_all_tags( $recent_pages_pending[ $i ]['website']->name );
 					?>
 					<div class="item">
 						<div class="ui grid">
@@ -327,7 +327,7 @@ class MainWP_Recent_Pages {
 							$recent_pages_future[ $i ]['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $recent_pages_future[ $i ]['dts'] ) );
 						}
 					}
-					$name = strip_tags( $recent_pages_future[ $i ]['website']->name );
+					$name = wp_strip_all_tags( $recent_pages_future[ $i ]['website']->name );
 					?>
 					<div class="item">
 						<div class="ui grid">
@@ -391,7 +391,7 @@ class MainWP_Recent_Pages {
 						}
 					}
 
-					$name = strip_tags( $recent_pages_trash[ $i ]['website']->name );
+					$name = wp_strip_all_tags( $recent_pages_trash[ $i ]['website']->name );
 					?>
 					<div class="item">
 						<div class="ui grid">

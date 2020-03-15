@@ -114,11 +114,11 @@ class MainWP_Widget_Plugins {
 				$_count = count( $actived_plugins );
 				for ( $i = 0; $i < $_count; $i ++ ) {
 
-					$slug = strip_tags( $actived_plugins[ $i ]['slug'] );
+					$slug = wp_strip_all_tags( $actived_plugins[ $i ]['slug'] );
 
 					?>
 					<div class="item">
-						<input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( strip_tags( $actived_plugins[ $i ]['slug'] ) ); ?>"/>
+						<input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ); ?>"/>
 				<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($website->id); ?>"/>
 						<div class="right floated pluginsAction">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
@@ -126,7 +126,7 @@ class MainWP_Widget_Plugins {
 							<?php } ?>
 					</div>
 						<div class="middle aligned content">
-								<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( strip_tags( $actived_plugins[ $i ]['slug'] ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_html( $actived_plugins[ $i ]['name'] ); ?>">
+								<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="More information about <?php echo esc_html( $actived_plugins[ $i ]['name'] ); ?>">
 						<?php echo esc_html( $actived_plugins[ $i ]['name'] . ' ' . $actived_plugins[ $i ]['version'] ); ?>
 					  </a>
 							</div>
@@ -149,18 +149,18 @@ class MainWP_Widget_Plugins {
 
 					?>
 					<div class="item">
-						<input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( strip_tags( $inactive_plugins[ $i ]['slug'] ) ); ?>"/>
+						<input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_plugins[ $i ]['slug'] ) ); ?>"/>
 				<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($website->id); ?>"/>
 						<div class="right floated content pluginsAction">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-						  <a href="#" class="mainwp-plugin-activate ui mini green button" data-position="top right" data-tooltip="<?php echo __( 'Activate the ', 'mainwp') . strip_tags( $inactive_plugins[ $i ]['name'] ) . __( ' plugin on the child site.', 'mainwp'); ?>" data-inverted=""><?php _e( 'Activate', 'mainwp' ); ?></a>
+						  <a href="#" class="mainwp-plugin-activate ui mini green button" data-position="top right" data-tooltip="<?php echo __( 'Activate the ', 'mainwp') . wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ) . __( ' plugin on the child site.', 'mainwp'); ?>" data-inverted=""><?php _e( 'Activate', 'mainwp' ); ?></a>
 							<?php } ?>
 							<?php if ( mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
-					<a href="#" class="mainwp-plugin-delete ui mini basic button" data-position="top right" data-tooltip="<?php echo __( 'Delete the ', 'mainwp') . strip_tags( $inactive_plugins[ $i ]['name'] ) . __( ' plugin from the child site.', 'mainwp'); ?>" data-inverted=""><?php _e( 'Delete', 'mainwp' ); ?></a>
+					<a href="#" class="mainwp-plugin-delete ui mini basic button" data-position="top right" data-tooltip="<?php echo __( 'Delete the ', 'mainwp') . wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ) . __( ' plugin from the child site.', 'mainwp'); ?>" data-inverted=""><?php _e( 'Delete', 'mainwp' ); ?></a>
 				  <?php } ?>
 					</div>
 						<div class="middle aligned content">
-								<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="More information about <?php echo strip_tags($inactive_plugins[ $i ]['name']); ?>">
+								<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags($inactive_plugins[ $i ]['name']); ?>">
 									<?php echo esc_html($inactive_plugins[ $i ]['name'] . ' ' . $inactive_plugins[ $i ]['version']); ?>
 								  </a>
 							</div>

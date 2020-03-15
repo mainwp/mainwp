@@ -89,7 +89,7 @@ class MainWP_Widget_Themes {
 					$slug = $actived_themes[ $i ]['slug'];
 					?>
 					<div class="item">
-						<input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( strip_tags($actived_themes[ $i ]['slug'])); ?>"/>
+						<input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags($actived_themes[ $i ]['slug'])); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($website->id); ?>"/>
 						<div class="right floated content themesAction">
 								<a href="#" disabled class="button ui mini grey basic" data-position="top right" data-tooltip="<?php esc_attr_e( 'Active theme cannot be deactivated. If you need to activate another theme, go to the list of inactive themes and activate the wanted theme.', 'mainwp' ); ?>" data-inverted=""><?php _e( 'Deactivate', 'mainwp' ); ?></a>
@@ -114,15 +114,15 @@ class MainWP_Widget_Themes {
 					$slug = $inactive_themes[ $i ]['slug'];
 					?>
 					<div class="item">
-						<input class="themeName" type="hidden" name="slug" value="<?php echo esc_attr( strip_tags( $inactive_themes[ $i ]['name'] ) ); ?>"/>
-						<input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( strip_tags( $inactive_themes[ $i ]['slug'] ) ); ?>"/>
+						<input class="themeName" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) ); ?>"/>
+						<input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['slug'] ) ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
 						<div class="right floated content themesAction">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
-								<a href="#" class="mainwp-theme-activate ui mini green button" data-position="top right" data-tooltip="<?php echo __( 'Activate the ', 'mainwp') . strip_tags( $inactive_themes[ $i ]['name'] ) . __( ' theme on the child site.', 'mainwp'); ?>" data-inverted=""><?php _e( 'Activate', 'mainwp' ); ?></a>
+								<a href="#" class="mainwp-theme-activate ui mini green button" data-position="top right" data-tooltip="<?php echo __( 'Activate the ', 'mainwp') . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . __( ' theme on the child site.', 'mainwp'); ?>" data-inverted=""><?php _e( 'Activate', 'mainwp' ); ?></a>
 							<?php } ?>
 							<?php if ( mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) { ?>
-								<a href="#" class="mainwp-theme-delete ui mini basic button" data-position="top right" data-tooltip="<?php echo __( 'Delete the ', 'mainwp') . strip_tags ( $inactive_themes[ $i ]['name'] ) . __( ' theme from the child site.', 'mainwp'); ?>" data-inverted=""><?php _e( 'Delete', 'mainwp' ); ?></a>
+								<a href="#" class="mainwp-theme-delete ui mini basic button" data-position="top right" data-tooltip="<?php echo __( 'Delete the ', 'mainwp') . wp_strip_all_tags ( $inactive_themes[ $i ]['name'] ) . __( ' theme from the child site.', 'mainwp'); ?>" data-inverted=""><?php _e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">

@@ -2,8 +2,6 @@
 /*---------------[RESPONSIVE LAYOUTS]-------------*/
 /*------------------------------------------------*/
 
-@media only screen and ( min-width: 1441px ) {}
-
 @media only screen and ( min-width: 769px ) and ( max-width: 1440px ) {
 
 	#mainwp-main-menu {
@@ -66,12 +64,11 @@
 	}
 
 	.mainwp-ui .ui.button:not(.mini) {
-		width: 80%;
-		display: block;
-		margin-left: auto !important;
-		margin-right: auto !important;
+		width: auto;
+		display: inline-block;
+		margin-left: 0 !important;
+		margin-right: 0 !important;
 		margin-bottom: 10px !important;
-
 	}
 
 	.mainwp-ui .ui.grid.field .column {
@@ -132,13 +129,6 @@
 
 	/* ---  Contribution by Joris Kramer  --- */
 
-	.mainwp-ui .ui.button:not(.mini) {
-		width: auto;
-		display: inline-block;
-		margin-left: 0 !important;
-		margin-right: 0 !important;
-	}
-
 	.mainwp-ui #mainwp-top-header .ui.stackable.grid .left.floated.column {
 		display:none !important;
 	}
@@ -190,11 +180,7 @@
 	.mainwp-ui .ui.table:not(.unstackable) tr>td,
 	.mainwp-ui .ui.table:not(.unstackable) tr>th {
 		display: inline-block !important;
-	}
-
-	.mainwp-ui .ui.table:not(.unstackable) tr>td,
-	.mainwp-ui .ui.table:not(.unstackable) tr>th {
-			padding: .25em !important;
+		padding: .25em !important;
 	}
 
 	.mainwp-ui .ui.table#mainwp-plugins-updates-sites-inner-table td:first-child,

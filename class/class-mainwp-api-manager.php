@@ -351,21 +351,22 @@ class MainWP_Api_Manager {
 			return false;
 		}
 
+		$return = false;
 		switch ( $response['error'] ) {
 			case 'subscription_on_hold':
-				return __( 'Your membership is on hold. Reactivate your membership to install MainWP extensions.', 'mainwp' );
+				$return = __( 'Your membership is on hold. Reactivate your membership to install MainWP extensions.', 'mainwp' );
 				break;
 			case 'subscription_cancelled':
-				return __( 'Your membership has been canceled. Reactivate your membership to install MainWP extensions.', 'mainwp' );
+				$return = __( 'Your membership has been canceled. Reactivate your membership to install MainWP extensions.', 'mainwp' );
 				break;
 			case 'subscription_expired':
-				return __( 'Your membership has expired. Reactivate your membership to install MainWP extensions.', 'mainwp' );
+				$return = __( 'Your membership has expired. Reactivate your membership to install MainWP extensions.', 'mainwp' );
 				break;
 			default: // download_revoked
-				return sprintf( __( 'Download permission for %1$s has been revoked possibly due to a license key or membership expiring. You can reactivate or purchase a license key from your account <a href="%2$s" target="_blank">dashboard</a>.', 'mainwp' ), $software_title, $this->renew_license_url );
+				$return = sprintf( __( 'Download permission for %1$s has been revoked possibly due to a license key or membership expiring. You can reactivate or purchase a license key from your account <a href="%2$s" target="_blank">dashboard</a>.', 'mainwp' ), $software_title, $this->renew_license_url );
 				break;
 		}
-		return false;
+		return $return;
 	}
 
 	public function update_check( $args ) {

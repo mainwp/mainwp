@@ -220,8 +220,6 @@ class MainWP_Meta_Boxes {
 
 			return;
 		}
-
-		return;
 	}
 
 	public function add_tags( $post ) {

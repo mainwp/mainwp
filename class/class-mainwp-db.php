@@ -658,7 +658,8 @@ class MainWP_DB {
 		$group_id = isset( $params['group_id'] ) && $params['group_id'] ? intval( $params['group_id'] ) : false;
 
 		if ( $selectgroups ) {
-			if ( $staging_group = get_option( 'mainwp_stagingsites_group_id' ) ) {
+			$staging_group = get_option( 'mainwp_stagingsites_group_id' );
+			if ( $staging_group ) {
 				if ( $group_id == $staging_group ) {
 					$is_staging = 'yes'; // will list staging sites
 				}
@@ -1019,7 +1020,8 @@ class MainWP_DB {
 
 		$is_staging = 'no';
 		if ( $selectgroups ) {
-			if ( $staging_group = get_option( 'mainwp_stagingsites_group_id' ) ) {
+			$staging_group = get_option( 'mainwp_stagingsites_group_id' );
+			if ( $staging_group ) {
 				if ( $id == $staging_group ) {
 					$is_staging = 'yes'; // will list staging sites
 				}
@@ -1138,7 +1140,7 @@ class MainWP_DB {
 			$values = array(
 				'userid'                 => $userid,
 				'adminname'              => $this->escape( $admin ),
-				'name'                   => $this->escape( strip_tags( $name ) ), // escape by insert
+				'name'                   => $this->escape( wp_strip_all_tags( $name ) ), // escape by insert
 				'url'                    => $this->escape( $url ),
 				'pubkey'                 => $this->escape( $pubkey ),
 				'privkey'                => $this->escape( $privkey ),
@@ -1302,7 +1304,7 @@ class MainWP_DB {
 			$website = self::Instance()->getWebsiteById( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				// update admin
-				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( strip_tags($name) ) . '", adminname="' . $this->escape( $siteadmin ) . '",offline_checks="' . $this->escape( $offlineChecks ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '"  WHERE id=%d', $websiteid ) );
+				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->tableName( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( wp_strip_all_tags($name) ) . '", adminname="' . $this->escape( $siteadmin ) . '",offline_checks="' . $this->escape( $offlineChecks ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '"  WHERE id=%d', $websiteid ) );
 				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->tableName( 'wp_settings_backup' ) . ' SET archiveFormat = "' . $this->escape( $archiveFormat ) . '" WHERE wpid=%d', $websiteid ) );
 				// remove groups
 				$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->tableName( 'wp_group' ) . ' WHERE wpid=%d', $websiteid ) );

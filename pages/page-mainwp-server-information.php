@@ -295,7 +295,7 @@ class MainWP_Server_Information {
 					?>
 					<tr>
 						<td><?php _e( 'FileSystem Method', 'mainwp' ); ?></td>
-						<td><?php echo '= ' . 'direct'; ?></td>
+						<td><?php echo '= direct'; ?></td>
 						<td><?php echo self::getFileSystemMethod(); ?></td>
 						<td><?php echo self::getFileSystemMethodCheck(); ?></td>
 					</tr>
@@ -1037,7 +1037,7 @@ class MainWP_Server_Information {
 		} else {
 			$response_body = wp_remote_retrieve_body( $response );
 			if ( false === strstr( $response_body, 'MainWP Test' ) ) {
-				$test_result .= sprintf( __( 'Not expected HTTP response body: %s', 'mainwp' ), esc_attr( strip_tags( $response_body ) ) );
+				$test_result .= sprintf( __( 'Not expected HTTP response body: %s', 'mainwp' ), esc_attr( wp_strip_all_tags( $response_body ) ) );
 			}
 		}
 		if ( empty( $test_result ) ) {

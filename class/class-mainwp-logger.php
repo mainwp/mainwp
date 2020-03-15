@@ -28,7 +28,7 @@ class MainWP_Logger {
 	/**
 	 * @return MainWP_Logger
 	 */
-	static function Instance() {
+	public static function Instance() {
 		if ( self::$instance == null ) {
 			self::$instance = new MainWP_Logger();
 		}
@@ -167,7 +167,7 @@ class MainWP_Logger {
 		return false;
 	}
 
-	function prepend( $string, $filename ) {
+	public function prepend( $string, $filename ) {
 		$context = stream_context_create();
 		$fp      = fopen( $filename, 'r', 1, $context );
 		$tmpname = md5( $string );
@@ -178,7 +178,7 @@ class MainWP_Logger {
 		rename( $tmpname, $filename );
 	}
 
-	function getLogFile() {
+	public function getLogFile() {
 		return $this->logDirectory . $this->logFileNamePrefix . $this->logFileNameSuffix;
 	}
 

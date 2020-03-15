@@ -284,7 +284,7 @@ class MainWP_Extensions {
 	}
 
 
-	static function init_left_menu( $extPages ) {
+	public static function init_left_menu( $extPages ) {
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
 			MainWP_Menu::add_left_menu( array(
 				'title'             => __( 'Extensions', 'mainwp' ),

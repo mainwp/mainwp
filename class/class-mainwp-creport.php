@@ -10,7 +10,7 @@ class LiveReportResponder {
 	protected $option;
 	protected $option_handle = 'mainwp_wpcreport_extension';
 
-	static function get_instance() {
+	public static function get_instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new LiveReportResponder();
 		}
@@ -62,7 +62,7 @@ class LiveReportResponder_Activator {
 		}
 	}
 
-	function activate_this_plugin() {
+	public function activate_this_plugin() {
 
 		$this->mainwpMainActivated = apply_filters( 'mainwp-activated-check', $this->mainwpMainActivated );
 		$this->childEnabled        = apply_filters( 'mainwp-extension-enabled-check', __FILE__ );
@@ -147,7 +147,7 @@ class MainWP_Live_Reports_Class {
 		self::$enabled_brokenlinks  = apply_filters( 'mainwp-extension-available-check', 'mainwp-broken-links-checker-extension' );
 	}
 
-	function managesite_backup( $website, $args, $information ) {
+	public function managesite_backup( $website, $args, $information ) {
 		if ( empty( $website ) ) {
 			return;
 		}
@@ -281,7 +281,7 @@ class MainWP_Live_Reports_Class {
 		apply_filters( 'mainwp_fetchurlauthed', $mainWPCReportExtensionActivator->get_child_file(), $mainWPCReportExtensionActivator->get_child_key(), $website->id, 'client_report', $post_data );
 	}
 
-	function mainwp_postprocess_backup_sites_feedback( $output, $unique ) {
+	public function mainwp_postprocess_backup_sites_feedback( $output, $unique ) {
 		if ( ! is_array( $output ) ) {
 
 		} else {
@@ -594,7 +594,7 @@ class MainWP_Live_Reports_Class {
 		return null;
 	}
 
-	static function delete_attach_files( $files, $dir ) {
+	public static function delete_attach_files( $files, $dir ) {
 		$files = explode( ',', $files );
 		if ( is_array( $files ) ) {
 			foreach ( $files as $file ) {
@@ -790,7 +790,7 @@ class MainWP_Live_Reports_Class {
 		return $output;
 	}
 
-	static function do_filter_content( $content ) {
+	public static function do_filter_content( $content ) {
 		return $content;
 	}
 
@@ -1096,7 +1096,7 @@ class MainWP_Live_Reports_Class {
 		return '';
 	}
 
-	function sucuri_scan_done( $website_id, $scan_status, $data ) {
+	public function sucuri_scan_done( $website_id, $scan_status, $data ) {
 		$scan_result = array();
 		if ( is_array( $data ) ) {
 			$blacklisted    = isset( $data['BLACKLIST']['WARN'] ) ? true : false;
@@ -1186,7 +1186,7 @@ class MainWP_Live_Reports_Class {
 		);
 	}
 
-	static function ga_data( $site_id, $start_date, $end_date, $chart = false ) {
+	public static function ga_data( $site_id, $start_date, $end_date, $chart = false ) {
 
 		if ( null === self::$enabled_ga ) {
 			self::$enabled_ga = apply_filters( 'mainwp-extension-available-check', 'mainwp-google-analytics-extension' );
@@ -1365,7 +1365,7 @@ class MainWP_Live_Reports_Class {
 		return $output;
 	}
 
-	static function piwik_data( $site_id, $start_date, $end_date ) {
+	public static function piwik_data( $site_id, $start_date, $end_date ) {
 		// fix bug cron job
 		if ( null === self::$enabled_piwik ) {
 			self::$enabled_piwik = apply_filters( 'mainwp-extension-available-check', 'mainwp-piwik-extension' );
@@ -1396,7 +1396,7 @@ class MainWP_Live_Reports_Class {
 		return $output;
 	}
 
-	static function aum_data( $site_id, $start_date, $end_date ) {
+	public static function aum_data( $site_id, $start_date, $end_date ) {
 
 		if ( null === self::$enabled_aum ) {
 			self::$enabled_aum = apply_filters( 'mainwp-extension-available-check', 'advanced-uptime-monitor-extension' );
@@ -1429,7 +1429,7 @@ class MainWP_Live_Reports_Class {
 		return $output;
 	}
 
-	static function woocomstatus_data( $site_id, $start_date, $end_date ) {
+	public static function woocomstatus_data( $site_id, $start_date, $end_date ) {
 
 		// fix bug cron job
 		if ( null === self::$enabled_woocomstatus ) {
@@ -1468,7 +1468,7 @@ class MainWP_Live_Reports_Class {
 		return $output;
 	}
 
-	static function pagespeed_tokens( $site_id, $start_date, $end_date ) {
+	public static function pagespeed_tokens( $site_id, $start_date, $end_date ) {
 
 		// fix bug cron job
 		if ( null === self::$enabled_pagespeed ) {
@@ -1493,7 +1493,7 @@ class MainWP_Live_Reports_Class {
 		return $data;
 	}
 
-	static function brokenlinks_tokens( $site_id, $start_date, $end_date ) {
+	public static function brokenlinks_tokens( $site_id, $start_date, $end_date ) {
 
 		// fix bug cron job
 		if ( null === self::$enabled_brokenlinks ) {
@@ -1658,7 +1658,7 @@ class LiveReportResponder_DB {
 	private static $instance = null;
 
 	// Constructor
-	function __construct() {
+	public function __construct() {
 		global $wpdb;
 		$this->table_prefix      = $wpdb->prefix . 'mainwp_';
 		$this->default_tokens    = array(
@@ -1968,7 +1968,7 @@ class LiveReportResponder_DB {
 		);
 	}
 
-	function table_name( $suffix ) {
+	public function table_name( $suffix ) {
 		return $this->table_prefix . $suffix;
 	}
 
@@ -1984,7 +1984,7 @@ class LiveReportResponder_DB {
 	}
 
 	// Installs new DB
-	function install() {
+	public function install() {
 		global $wpdb;
 		$currentVersion = get_site_option( 'mainwp_wpcreport_db_version' );
 		if ( ! empty( $currentVersion ) ) {
@@ -2123,7 +2123,7 @@ PRIMARY KEY  (`id`)  ';
 		update_option( 'mainwp_wpcreport_db_version', $this->mainwp_wpcreport_db_version );
 	}
 
-	static function get_instance() {
+	public static function get_instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new LiveReportResponder_DB();
 		}
@@ -2758,7 +2758,7 @@ class MainWP_Live_Reports_Utility {
 		return date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
 	}
 
-	static function ctype_digit( $str ) {
+	public static function ctype_digit( $str ) {
 		return ( is_string( $str ) || is_int( $str ) || is_float( $str ) ) && preg_match( '/^\d+\z/', $str );
 	}
 
@@ -2770,7 +2770,7 @@ class MainWP_Live_Reports_Utility {
 		return $outputSite;
 	}
 
-	static function sec2hms( $sec, $padHours = false ) {
+	public static function sec2hms( $sec, $padHours = false ) {
 
 		// start with a blank string
 		$hms = '';
@@ -2802,7 +2802,7 @@ class MainWP_Live_Reports_Utility {
 		return $hms;
 	}
 
-	static function update_option( $option_name, $option_value ) {
+	public static function update_option( $option_name, $option_value ) {
 		$success = add_option( $option_name, $option_value, '', 'no' );
 
 		if ( ! $success ) {

@@ -15,7 +15,7 @@ class MainWP_Bulk_Post {
 	 *
 	 * @param object $post
 	 */
-	static function post_custom_meta_box( $post ) {
+	public static function post_custom_meta_box( $post ) {
 		?>
 		<div class="field">
 		<div id="postcustomstuff">

@@ -109,7 +109,7 @@ class MainWP_Server_Information {
 		<?php
 	}
 
-	static function init_left_menu( $subPages = array() ) {
+	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu( array(
 			'title'      => __( 'Status', 'mainwp' ),
 			'parent_key' => 'mainwp_tab',
@@ -1099,7 +1099,7 @@ class MainWP_Server_Information {
 		echo ABSPATH;
 	}
 
-	function formatSizeUnits( $bytes ) {
+	public function formatSizeUnits( $bytes ) {
 		if ( $bytes >= 1073741824 ) {
 			$bytes = number_format( $bytes / 1073741824, 2 ) . ' GB';
 		} elseif ( $bytes >= 1048576 ) {
@@ -1213,7 +1213,7 @@ class MainWP_Server_Information {
 		}
 	}
 
-	static function time_compare( $a, $b ) {
+	public static function time_compare( $a, $b ) {
 
 		if ( $a == $b ) {
 			return 0;
@@ -1222,7 +1222,7 @@ class MainWP_Server_Information {
 		return ( strtotime( $a['time'] ) > strtotime( $b['time'] ) ) ? - 1 : 1;
 	}
 
-	static function last_lines( $path, $line_count, $block_size = 512 ) {
+	public static function last_lines( $path, $line_count, $block_size = 512 ) {
 		$lines = array();
 
 		// we will always have a fragment of a non-complete line

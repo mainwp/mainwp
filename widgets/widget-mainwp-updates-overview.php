@@ -1,48 +1,15 @@
 <?php
-/**
- * MainWP Updates Overview Widget
- *
- * Grab Child Sites update status & build widget.
- *
- * @package MainWP/Updates_Overview
- */
 
-/**
- * MainWP Updates Overview
- */
 class MainWP_Updates_Overview {
 
-	/**
-	 * Method getClassName()
-	 *
-	 * Get Class Name
-	 *
-	 * @return string __CLASS__ Class Name.
-	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
-	/**
-	 * Method init()
-	 *
-	 * Add plugins api filter.
-	 */
 	public static function init() {
 		add_filter( 'plugins_api', array( 'MainWP_Updates_Overview', 'plugins_api' ), 10, 3 );
 	}
 
-	/**
-	 * Method plugins_api()
-	 *
-	 * Grab Child Sites update status & build widget.
-	 *
-	 * @param mixed $default Default.
-	 * @param mixed $action Action.
-	 * @param mixed $args Slug.
-	 *
-	 * @return mixed $default|$res
-	 */
 	public static function plugins_api( $default, $action, $args ) {
 		if ( property_exists( $args, 'slug' ) && ( 'mainwp' === $args->slug ) ) {
 			return $default;
@@ -78,20 +45,10 @@ class MainWP_Updates_Overview {
 		return $default;
 	}
 
-	/**
-	 * Method getName()
-	 *
-	 * Define Widget Title.
-	 */
 	public static function getName() {
 		return __( 'Update Overview', 'mainwp' );
 	}
 
-	/**
-	 * Method render()
-	 *
-	 * Check if $_GET['dashboard'] then run renderSites().
-	 */
 	public static function render() {
 		$individual = false;
 		if ( isset( $_GET['dashboard'] ) ) {
@@ -100,11 +57,8 @@ class MainWP_Updates_Overview {
 		self::renderSites( false, $individual );
 	}
 
-	/**
-	 * Method renderLastUpdate()
-	 *
-	 * Check when the Child Site was last synced.
-	 */
+
+
 	public static function renderLastUpdate() {
 		$currentwp = MainWP_Utility::get_current_wpid();
 		if ( ! empty( $currentwp ) ) {
@@ -122,11 +76,6 @@ class MainWP_Updates_Overview {
 		}
 	}
 
-	/**
-	 * Method syncSite()
-	 *
-	 * Sync Child Site.
-	 */
 	public static function syncSite() {
 		$website = null;
 		if ( isset( $_POST['wp_id'] ) ) {
@@ -154,13 +103,6 @@ class MainWP_Updates_Overview {
 		die( wp_json_encode( array( 'error' => $website->sync_errors ) ) );
 	}
 
-	/**
-	 * Method renderSites()
-	 *
-	 * Grab available Child Sites updates a build Widget.
-	 *
-	 * @param boolean $isUpdatesPage Check if Updates Page True|False.
-	 */
 	public static function renderSites( $isUpdatesPage = false ) {
 
 		$globalView = true;
@@ -172,7 +114,7 @@ class MainWP_Updates_Overview {
 			$globalView = false;
 		} else {
 			$staging_enabled = apply_filters('mainwp-extension-available-check', 'mainwp-staging-extension') || apply_filters('mainwp-extension-available-check', 'mainwp-timecapsule-extension');
-			// To support staging extension.
+			// To support staging extension
 			$is_staging = 'no';
 			if ( $staging_enabled ) {
 				$staging_updates_view = get_user_option( 'mainwp_staging_options_updates_view', $current_user->ID );
@@ -180,7 +122,7 @@ class MainWP_Updates_Overview {
 					$is_staging = 'yes';
 				}
 			}
-			// end support.
+			// end support
 
 			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
 		}
@@ -409,10 +351,10 @@ class MainWP_Updates_Overview {
 			}
 		}
 
-		// WP Upgrades part.
+		// WP Upgrades part:
 		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
 
-		// to fix incorrect total updates.
+		// to fix incorrect total updates
 		if ( $mainwp_show_language_updates ) {
 			$total_upgrades += $total_translation_upgrades;
 		}
@@ -427,7 +369,7 @@ class MainWP_Updates_Overview {
 		}
 		$trusted_icon = '<i class="check circle outline icon"></i> ';
 
-		// the hook using to set maximum number of plugins/themes for huge number of updates.
+		// the hook using to set maximum number of plugins/themes for huge number of updates
 		$limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
 		$continue_update   = $continue_update_slug     = $continue_class           = '';
 		if ( $limit_updates_all > 0 ) {
@@ -724,7 +666,7 @@ class MainWP_Updates_Overview {
 
 
 
-		<?php // Invisible section to support global updates all. ?>
+		<?php // Invisible section to support global updates all ?>
 
 		<div style="display: none">
 
@@ -806,19 +748,7 @@ class MainWP_Updates_Overview {
 			MainWP_DB::free_result( $websites );
 	}
 
-	// public static function renderIgnoredUpdates() {
-	// MainWP_Settings::renderHeader( 'IgnoredUpdates' );
-
-	// MainWP_Settings::renderFooter( 'IgnoredUpdates' );
-	// }
-
-	/**
-	 * Method dismissSyncErrors()
-	 *
-	 * @param boolean $dismiss true|false.
-	 *
-	 * @return boolean true
-	 */
+	
 	public static function dismissSyncErrors( $dismiss = true ) {
 		global $current_user;
 		update_user_option( $current_user->ID, 'mainwp_syncerrors_dismissed', $dismiss );
@@ -826,13 +756,6 @@ class MainWP_Updates_Overview {
 		return true;
 	}
 
-	/**
-	 * Method checkbackups()
-	 *
-	 * Check if Child Site needs to be backed up before updates.
-	 *
-	 * @return mixed $output
-	 */
 	public static function checkBackups() {
 		// if (get_option('mainwp_backup_before_upgrade') != 1) return true;
 		if ( ! is_array( $_POST['sites'] ) ) {

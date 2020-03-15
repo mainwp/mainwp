@@ -110,7 +110,7 @@ class MainWP_User {
 		<?php
 	}
 
-	static function init_left_menu( $subPages = array(), $level = 2 ) {
+	public static function init_left_menu( $subPages = array(), $level = 2 ) {
 		MainWP_Menu::add_left_menu( array(
 			'title'      => __( 'Users', 'mainwp' ),
 			'parent_key' => 'mainwp_tab',

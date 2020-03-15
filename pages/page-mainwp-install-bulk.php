@@ -335,7 +335,7 @@ class qq2UploadedFileXhr {
 	 *
 	 * @return boolean TRUE on success
 	 */
-	function save( $path ) {
+	public function save( $path ) {
 		$input    = fopen( 'php://input', 'r' );
 		$temp     = tmpfile();
 		$realSize = stream_copy_to_stream( $input, $temp );
@@ -390,11 +390,11 @@ class qq2UploadedFileXhr {
 		return true;
 	}
 
-	function getName() {
+	public function getName() {
 		return $_GET['qqfile'];
 	}
 
-	function getSize() {
+	public function getSize() {
 		if ( isset( $_SERVER['CONTENT_LENGTH'] ) ) {
 			return (int) $_SERVER['CONTENT_LENGTH'];
 		} else {
@@ -412,7 +412,7 @@ class qq2UploadedFileForm {
 	 *
 	 * @return boolean TRUE on success
 	 */
-	function save( $path ) {
+	public function save( $path ) {
 		$wpFileSystem = MainWP_Utility::getWPFilesystem();
 
 		if ( $wpFileSystem != null ) {
@@ -429,11 +429,11 @@ class qq2UploadedFileForm {
 		return true;
 	}
 
-	function getName() {
+	public function getName() {
 		return $_FILES['qqfile']['name'];
 	}
 
-	function getSize() {
+	public function getSize() {
 		return $_FILES['qqfile']['size'];
 	}
 }
@@ -444,7 +444,7 @@ class qq2FileUploader {
 	private $sizeLimit         = 8388608;
 	private $file;
 
-	function __construct( array $allowedExtensions = array(), $sizeLimit = 8388608 ) {
+	public function __construct( array $allowedExtensions = array(), $sizeLimit = 8388608 ) {
 		$allowedExtensions = array_map( 'strtolower', $allowedExtensions );
 
 		$this->allowedExtensions = $allowedExtensions;
@@ -480,7 +480,7 @@ class qq2FileUploader {
 	/**
 	 * Returns array('success'=>true) or array('error'=>'error message')
 	 */
-	function handleUpload( $uploadDirectory, $replaceOldFile = false ) {
+	public function handleUpload( $uploadDirectory, $replaceOldFile = false ) {
 		// if (!is_writable($uploadDirectory)){
 		// return array('error' => "Server error. Upload directory isn't writable.");
 		// }

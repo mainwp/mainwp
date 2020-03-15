@@ -7,17 +7,17 @@ class MainWP_Post_Handler {
 	protected $security_nonces;
 	private static $instance = null;
 
-	function __construct() {
+	public function __construct() {
 	}
 
-	static function Instance() {
+	public static function Instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new MainWP_Post_Handler();
 		}
 		return self::$instance;
 	}
 
-	function init() {
+	public function init() {
 		// Page: ManageBackups
 		$this->addAction( 'mainwp_addbackup', array( &$this, 'mainwp_addbackup' ) );
 		if ( mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
@@ -249,13 +249,13 @@ class MainWP_Post_Handler {
 		add_action( 'wp_ajax_mainwp_childscan', array( &$this, 'mainwp_childscan' ) ); // ok
 	}
 
-	function mainwp_childscan() {
+	public function mainwp_childscan() {
 		// todo: RS: secure action
 		MainWP_Child_Scan::scan();
 	}
 
 	// Hide the installation warning
-	function mainwp_installation_warning_hide() {
+	public function mainwp_installation_warning_hide() {
 		$this->secure_request( 'mainwp_installation_warning_hide' );
 
 		update_option( 'mainwp_installation_warning_hide_the_notice', 'yes' );
@@ -265,7 +265,7 @@ class MainWP_Post_Handler {
 	/**
 	 * Page: Users
 	 */
-	function mainwp_users_search() {
+	public function mainwp_users_search() {
 		$this->secure_request( 'mainwp_users_search' );
 		MainWP_Cache::initSession();
 		MainWP_User::renderTable( false, $_POST['role'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ), $_POST['search'] );
@@ -275,42 +275,42 @@ class MainWP_Post_Handler {
 	/**
 	 * Page: Themes
 	 */
-	function mainwp_themes_search() {
+	public function mainwp_themes_search() {
 		$this->secure_request( 'mainwp_themes_search' );
 		MainWP_Cache::initSession();
 		$result = MainWP_Themes::renderTable( $_POST['keyword'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ) );
 		wp_send_json( $result );
 	}
 
-	function mainwp_theme_activate() {
+	public function mainwp_theme_activate() {
 		$this->secure_request( 'mainwp_theme_activate' );
 
 		MainWP_Themes::activateTheme();
 		die();
 	}
 
-	function mainwp_theme_delete() {
+	public function mainwp_theme_delete() {
 		$this->secure_request( 'mainwp_theme_delete' );
 
 		MainWP_Themes::deleteThemes();
 		die();
 	}
 
-	function mainwp_theme_ignore_updates() {
+	public function mainwp_theme_ignore_updates() {
 		$this->secure_request( 'mainwp_theme_ignore_updates' );
 
 		MainWP_Themes::ignoreUpdates();
 		die();
 	}
 
-	function mainwp_themes_search_all() {
+	public function mainwp_themes_search_all() {
 		$this->secure_request( 'mainwp_themes_search_all' );
 		MainWP_Cache::initSession();
 		MainWP_Themes::renderAllThemesTable();
 		die();
 	}
 
-	function mainwp_trusted_theme_notes_save() {
+	public function mainwp_trusted_theme_notes_save() {
 		$this->secure_request( 'mainwp_trusted_theme_notes_save' );
 
 		MainWP_Themes::saveTrustedThemeNote();
@@ -320,49 +320,49 @@ class MainWP_Post_Handler {
 	/**
 	 * Page: Plugins
 	 */
-	function mainwp_plugins_search() {
+	public function mainwp_plugins_search() {
 		$this->secure_request( 'mainwp_plugins_search' );
 		MainWP_Cache::initSession();
 		$result = MainWP_Plugins::renderTable( $_POST['keyword'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ) );
 		wp_send_json( $result );
 	}
 
-	function mainwp_plugins_search_all_active() {
+	public function mainwp_plugins_search_all_active() {
 		$this->secure_request( 'mainwp_plugins_search_all_active' );
 		MainWP_Cache::initSession();
 		MainWP_Plugins::renderAllActiveTable();
 		die();
 	}
 
-	function mainwp_plugin_activate() {
+	public function mainwp_plugin_activate() {
 		$this->secure_request( 'mainwp_plugin_activate' );
 
 		MainWP_Plugins::activatePlugins();
 		die();
 	}
 
-	function mainwp_plugin_deactivate() {
+	public function mainwp_plugin_deactivate() {
 		$this->secure_request( 'mainwp_plugin_deactivate' );
 
 		MainWP_Plugins::deactivatePlugins();
 		die();
 	}
 
-	function mainwp_plugin_delete() {
+	public function mainwp_plugin_delete() {
 		$this->secure_request( 'mainwp_plugin_delete' );
 
 		MainWP_Plugins::deletePlugins();
 		die();
 	}
 
-	function mainwp_plugin_ignore_updates() {
+	public function mainwp_plugin_ignore_updates() {
 		$this->secure_request( 'mainwp_plugin_ignore_updates' );
 
 		MainWP_Plugins::ignoreUpdates();
 		die();
 	}
 
-	function mainwp_trusted_plugin_notes_save() {
+	public function mainwp_trusted_plugin_notes_save() {
 		$this->secure_request( 'mainwp_trusted_plugin_notes_save' );
 
 		MainWP_Plugins::saveTrustedPluginNote();
@@ -372,17 +372,17 @@ class MainWP_Post_Handler {
 	/**
 	 * Widget: Plugins
 	 */
-	function mainwp_widget_plugin_activate() {
+	public function mainwp_widget_plugin_activate() {
 		$this->secure_request( 'mainwp_widget_plugin_activate' );
 		MainWP_Widget_Plugins::activatePlugin();
 	}
 
-	function mainwp_widget_plugin_deactivate() {
+	public function mainwp_widget_plugin_deactivate() {
 		$this->secure_request( 'mainwp_widget_plugin_deactivate' );
 		MainWP_Widget_Plugins::deactivatePlugin();
 	}
 
-	function mainwp_widget_plugin_delete() {
+	public function mainwp_widget_plugin_delete() {
 		$this->secure_request( 'mainwp_widget_plugin_delete' );
 		MainWP_Widget_Plugins::deletePlugin();
 	}
@@ -390,12 +390,12 @@ class MainWP_Post_Handler {
 	/**
 	 * Widget: Themes
 	 */
-	function mainwp_widget_theme_activate() {
+	public function mainwp_widget_theme_activate() {
 		$this->secure_request( 'mainwp_widget_theme_activate' );
 		MainWP_Widget_Themes::activateTheme();
 	}
 
-	function mainwp_widget_theme_delete() {
+	public function mainwp_widget_theme_delete() {
 		$this->secure_request( 'mainwp_widget_theme_delete' );
 		MainWP_Widget_Themes::deleteTheme();
 	}
@@ -403,7 +403,7 @@ class MainWP_Post_Handler {
 	/**
 	 * Page: Posts
 	 */
-	function mainwp_posts_search() {
+	public function mainwp_posts_search() {
 		$this->secure_request();
 
 		$post_type = ( isset( $_POST['post_type'] ) && 0 < strlen( trim( $_POST['post_type'] ) ) ? $_POST['post_type'] : 'post' );
@@ -419,25 +419,25 @@ class MainWP_Post_Handler {
 		die();
 	}
 
-	function mainwp_posts_get_terms() {
+	public function mainwp_posts_get_terms() {
 		$this->secure_request();
 		MainWP_Post::getTerms( $_POST['selected_site'], $_POST['prefix'], $_POST['what'], $_POST['generate_type'] );
 		die();
 	}
 
-	function mainwp_posts_test_post() {
+	public function mainwp_posts_test_post() {
 		$this->secure_request();
 		MainWP_Post::testPost();
 		die();
 	}
 
-	function mainwp_get_categories() {
+	public function mainwp_get_categories() {
 		$this->secure_request();
 		MainWP_Post::getCategories();
 		die();
 	}
 
-	function mainwp_post_get_edit() {
+	public function mainwp_post_get_edit() {
 		$this->secure_request( 'mainwp_post_get_edit' );
 		MainWP_Post::getPost(); // to edit
 		die();
@@ -446,7 +446,7 @@ class MainWP_Post_Handler {
 	/**
 	 * Page: Pages
 	 */
-	function mainwp_pages_search() {
+	public function mainwp_pages_search() {
 		$this->secure_request();
 		if ( isset( $_POST['maximum'] ) ) {
 			MainWP_Utility::update_option( 'mainwp_maximumPages', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50  );
@@ -461,25 +461,25 @@ class MainWP_Post_Handler {
 	/**
 	 * Page: Users
 	 */
-	function mainwp_user_delete() {
+	public function mainwp_user_delete() {
 		$this->secure_request( 'mainwp_user_delete' );
 
 		MainWP_User::delete();
 	}
 
-	function mainwp_user_edit() {
+	public function mainwp_user_edit() {
 		$this->secure_request( 'mainwp_user_edit' );
 
 		MainWP_User::edit();
 	}
 
-	function mainwp_user_update_password() {
+	public function mainwp_user_update_password() {
 		$this->secure_request( 'mainwp_user_update_password' );
 
 		MainWP_User::updatePassword();
 	}
 
-	function mainwp_user_update_user() {
+	public function mainwp_user_update_user() {
 		$this->secure_request( 'mainwp_user_update_user' );
 
 		MainWP_User::updateUser();
@@ -488,37 +488,37 @@ class MainWP_Post_Handler {
 	/**
 	 * Page: Recent Posts
 	 */
-	function mainwp_post_unpublish() {
+	public function mainwp_post_unpublish() {
 		$this->secure_request( 'mainwp_post_unpublish' );
 
 		MainWP_Recent_Posts::unpublish();
 	}
 
-	function mainwp_post_publish() {
+	public function mainwp_post_publish() {
 		$this->secure_request( 'mainwp_post_publish' );
 
 		MainWP_Recent_Posts::publish();
 	}
 
-	function mainwp_post_approve() {
+	public function mainwp_post_approve() {
 		$this->secure_request( 'mainwp_post_approve' );
 
 		MainWP_Recent_Posts::approve();
 	}
 
-	function mainwp_post_trash() {
+	public function mainwp_post_trash() {
 		$this->secure_request( 'mainwp_post_trash' );
 
 		MainWP_Recent_Posts::trash();
 	}
 
-	function mainwp_post_delete() {
+	public function mainwp_post_delete() {
 		$this->secure_request( 'mainwp_post_delete' );
 
 		MainWP_Recent_Posts::delete();
 	}
 
-	function mainwp_post_restore() {
+	public function mainwp_post_restore() {
 		$this->secure_request( 'mainwp_post_restore' );
 
 		MainWP_Recent_Posts::restore();
@@ -527,38 +527,38 @@ class MainWP_Post_Handler {
 	/**
 	 * Page: Recent Pages
 	 */
-	function mainwp_page_unpublish() {
+	public function mainwp_page_unpublish() {
 		$this->secure_request( 'mainwp_page_unpublish' );
 
 		MainWP_Page::unpublish();
 	}
 
-	function mainwp_page_publish() {
+	public function mainwp_page_publish() {
 		$this->secure_request( 'mainwp_page_publish' );
 
 		MainWP_Page::publish();
 	}
 
-	function mainwp_page_trash() {
+	public function mainwp_page_trash() {
 		$this->secure_request( 'mainwp_page_trash' );
 
 		MainWP_Page::trash();
 	}
 
-	function mainwp_page_delete() {
+	public function mainwp_page_delete() {
 		$this->secure_request( 'mainwp_page_delete' );
 
 		MainWP_Page::delete();
 	}
 
-	function mainwp_page_restore() {
+	public function mainwp_page_restore() {
 		$this->secure_request( 'mainwp_page_restore' );
 
 		MainWP_Page::restore();
 	}
 
 	// Hide after installtion notices (PHP version, Trust MainWP Child, Multisite Warning and OpenSSL warning)
-	function mainwp_notice_status_update() {
+	public function mainwp_notice_status_update() {
 		$this->secure_request( 'mainwp_notice_status_update' );
 
 		if ( 'mail_failed' === $_POST['notice_id'] ) {
@@ -578,7 +578,7 @@ class MainWP_Post_Handler {
 		die( 1 );
 	}
 
-	function mainwp_status_saving() {
+	public function mainwp_status_saving() {
 		$this->secure_request( 'mainwp_status_saving' );
 		$values = get_option( 'mainwp_status_saved_values' );
 
@@ -604,7 +604,7 @@ class MainWP_Post_Handler {
 		die( 'ok' );
 	}
 
-	function ajax_widgets_order() {
+	public function ajax_widgets_order() {
 
 		$this->secure_request( 'mainwp_widgets_order' );
 		if ( $user = wp_get_current_user() ) {
@@ -614,7 +614,7 @@ class MainWP_Post_Handler {
 		die( -1 );
 	}
 
-	function ajax_mainwp_save_settings() {
+	public function ajax_mainwp_save_settings() {
 		$this->secure_request( 'mainwp_save_settings' );
 		$option_name = 'mainwp_' . $_POST['name'];
 		$val         = $_POST['value'];
@@ -624,7 +624,7 @@ class MainWP_Post_Handler {
 		die( 'ok' );
 	}
 
-	function mainwp_leftmenu_filter_group() {
+	public function mainwp_leftmenu_filter_group() {
 		$this->secure_request( 'mainwp_leftmenu_filter_group' );
 		if ( isset( $_POST['group_id'] ) && ! empty( $_POST['group_id'] ) ) {
 			$ids      = '';
@@ -639,7 +639,7 @@ class MainWP_Post_Handler {
 		die( '' );
 	}
 
-	function mainwp_dismiss_twit() {
+	public function mainwp_dismiss_twit() {
 		$this->secure_request( 'mainwp_dismiss_twit' );
 
 		global $current_user;
@@ -649,7 +649,7 @@ class MainWP_Post_Handler {
 		die( 1 );
 	}
 
-	function dismiss_activate_notice() {
+	public function dismiss_activate_notice() {
 		$this->secure_request( 'mainwp_dismiss_activate_notice' );
 
 		global $current_user;
@@ -664,7 +664,7 @@ class MainWP_Post_Handler {
 		die( 1 );
 	}
 
-	function mainwp_twitter_dashboard_action() {
+	public function mainwp_twitter_dashboard_action() {
 
 		$success = false;
 		if ( isset( $_POST['actionName'] ) && isset( $_POST['countSites'] ) && ! empty( $_POST['countSites'] ) ) {
@@ -692,7 +692,7 @@ class MainWP_Post_Handler {
 		die( '' );
 	}
 
-	function mainwp_reset_usercookies() {
+	public function mainwp_reset_usercookies() {
 		$this->secure_request();
 
 		global $current_user;
@@ -712,7 +712,7 @@ class MainWP_Post_Handler {
 	/**
 	 * Page: SecurityIssues
 	 */
-	function mainwp_securityIssues_request() {
+	public function mainwp_securityIssues_request() {
 		$this->secure_request( 'mainwp_securityIssues_request' );
 
 		try {
@@ -727,7 +727,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_securityIssues_fix() {
+	public function mainwp_securityIssues_fix() {
 		$this->secure_request( 'mainwp_securityIssues_fix' );
 
 		try {
@@ -742,7 +742,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_securityIssues_unfix() {
+	public function mainwp_securityIssues_unfix() {
 		$this->secure_request( 'mainwp_securityIssues_unfix' );
 
 		try {
@@ -791,7 +791,7 @@ class MainWP_Post_Handler {
 	/*
 	 * Page: Backup
 	 */
-	function mainwp_backup_run_site() {
+	public function mainwp_backup_run_site() {
 		$this->secure_request( 'mainwp_backup_run_site' );
 
 		try {
@@ -811,7 +811,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_backup() {
+	public function mainwp_backup() {
 		$this->secure_request( 'mainwp_backup' );
 
 		try {
@@ -837,7 +837,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_backup_checkpid() {
+	public function mainwp_backup_checkpid() {
 		$this->secure_request( 'mainwp_backup_checkpid' );
 
 		try {
@@ -856,7 +856,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_backup_download_file() {
+	public function mainwp_backup_download_file() {
 		$this->secure_request( 'mainwp_backup_download_file' );
 
 		try {
@@ -875,7 +875,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_backup_delete_file() {
+	public function mainwp_backup_delete_file() {
 		$this->secure_request( 'mainwp_backup_delete_file' );
 
 		try {
@@ -894,7 +894,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_createbackup_getfilesize() {
+	public function mainwp_createbackup_getfilesize() {
 		$this->secure_request( 'mainwp_createbackup_getfilesize' );
 
 		try {
@@ -935,7 +935,7 @@ class MainWP_Post_Handler {
 		die( wp_json_encode( $output ) );
 	}
 
-	function mainwp_backup_getfilesize() {
+	public function mainwp_backup_getfilesize() {
 		$this->secure_request( 'mainwp_backup_getfilesize' );
 
 		try {
@@ -950,7 +950,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_backup_upload_checkstatus() {
+	public function mainwp_backup_upload_checkstatus() {
 		$this->secure_request( 'mainwp_backup_upload_checkstatus' );
 
 		try {
@@ -990,7 +990,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_backup_upload_getprogress() {
+	public function mainwp_backup_upload_getprogress() {
 		$this->secure_request( 'mainwp_backup_upload_getprogress' );
 
 		try {
@@ -1017,7 +1017,7 @@ class MainWP_Post_Handler {
 	 * Page: BulkAddUser
 	 */
 
-	function mainwp_bulkadduser() {
+	public function mainwp_bulkadduser() {
 		if ( ! $this->check_security( 'mainwp_bulkadduser' ) ) {
 			die( 'ERROR ' . wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
@@ -1025,14 +1025,14 @@ class MainWP_Post_Handler {
 		die();
 	}
 
-	function mainwp_bulkuploadadduser() {
+	public function mainwp_bulkuploadadduser() {
 		$this->secure_request();
 
 		MainWP_User::renderBulkUpload();
 		die();
 	}
 
-	function mainwp_importuser() {
+	public function mainwp_importuser() {
 		$this->secure_request( 'mainwp_importuser' );
 
 		MainWP_User::doImport();
@@ -1042,31 +1042,31 @@ class MainWP_Post_Handler {
 	 * Page: InstallPlugins/Themes
 	 */
 
-	function mainwp_preparebulkinstallplugintheme() {
+	public function mainwp_preparebulkinstallplugintheme() {
 		$this->secure_request();
 
 		MainWP_Install_Bulk::prepareInstall();
 	}
 
-	function mainwp_installbulkinstallplugintheme() {
+	public function mainwp_installbulkinstallplugintheme() {
 		$this->secure_request( 'mainwp_installbulkinstallplugintheme' );
 
 		MainWP_Install_Bulk::performInstall();
 	}
 
-	function mainwp_preparebulkuploadplugintheme() {
+	public function mainwp_preparebulkuploadplugintheme() {
 		$this->secure_request();
 
 		MainWP_Install_Bulk::prepareUpload();
 	}
 
-	function mainwp_installbulkuploadplugintheme() {
+	public function mainwp_installbulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_installbulkuploadplugintheme' );
 
 		MainWP_Install_Bulk::performUpload();
 	}
 
-	function mainwp_cleanbulkuploadplugintheme() {
+	public function mainwp_cleanbulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_cleanbulkuploadplugintheme' );
 
 		MainWP_Install_Bulk::cleanUpload();
@@ -1076,31 +1076,31 @@ class MainWP_Post_Handler {
 	 * Page: ManageGroups
 	 */
 
-	function mainwp_group_rename() {
+	public function mainwp_group_rename() {
 		$this->secure_request( 'mainwp_group_rename' );
 
 		MainWP_Manage_Groups::renameGroup();
 	}
 
-	function mainwp_group_delete() {
+	public function mainwp_group_delete() {
 		$this->secure_request( 'mainwp_group_delete' );
 
 		MainWP_Manage_Groups::deleteGroup();
 	}
 
-	function mainwp_group_add() {
+	public function mainwp_group_add() {
 		$this->secure_request( 'mainwp_group_add' );
 
 		MainWP_Manage_Groups::addGroup();
 	}
 
-	function mainwp_group_getsites() {
+	public function mainwp_group_getsites() {
 		$this->secure_request();
 
 		die( MainWP_Manage_Groups::getSites() );
 	}
 
-	function mainwp_group_updategroup() {
+	public function mainwp_group_updategroup() {
 		$this->secure_request( 'mainwp_group_updategroup' );
 
 		MainWP_Manage_Groups::updateGroup();
@@ -1111,39 +1111,39 @@ class MainWP_Post_Handler {
 	 */
 
 	// Add task to the database
-	function mainwp_addbackup() {
+	public function mainwp_addbackup() {
 		$this->secure_request( 'mainwp_addbackup' );
 
 		MainWP_Manage_Backups::addBackup();
 	}
 
 	// Update task
-	function mainwp_updatebackup() {
+	public function mainwp_updatebackup() {
 		$this->secure_request( 'mainwp_updatebackup' );
 
 		MainWP_Manage_Backups::updateBackup();
 	}
 
 	// Remove a task from MainWP
-	function mainwp_removebackup() {
+	public function mainwp_removebackup() {
 		$this->secure_request( 'mainwp_removebackup' );
 
 		MainWP_Manage_Backups::removeBackup();
 	}
 
-	function mainwp_resumebackup() {
+	public function mainwp_resumebackup() {
 		$this->secure_request( 'mainwp_resumebackup' );
 
 		MainWP_Manage_Backups::resumeBackup();
 	}
 
-	function mainwp_pausebackup() {
+	public function mainwp_pausebackup() {
 		$this->secure_request( 'mainwp_pausebackup' );
 
 		MainWP_Manage_Backups::pauseBackup();
 	}
 
-	function mainwp_backuptask_get_sites() {
+	public function mainwp_backuptask_get_sites() {
 		$this->secure_request();
 
 		$taskID = $_POST['task_id'];
@@ -1151,7 +1151,7 @@ class MainWP_Post_Handler {
 		wp_send_json( array( 'result' => MainWP_Manage_Backups::getBackupTaskSites( $taskID ) ) );
 	}
 
-	function mainwp_backuptask_run_site() {
+	public function mainwp_backuptask_run_site() {
 		try {
 			$this->secure_request( 'mainwp_backuptask_run_site' );
 
@@ -1170,7 +1170,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_backup_upload_file() {
+	public function mainwp_backup_upload_file() {
 		try {
 			$this->secure_request( 'mainwp_backup_upload_file' );
 
@@ -1192,7 +1192,7 @@ class MainWP_Post_Handler {
 	 */
 
 	// Check if WP can be added
-	function mainwp_checkwp() {
+	public function mainwp_checkwp() {
 		if ( $this->check_security( 'mainwp_checkwp', 'security' ) ) {
 			MainWP_Manage_Sites::checkSite();
 		} else {
@@ -1201,7 +1201,7 @@ class MainWP_Post_Handler {
 	}
 
 	// Add WP to the database
-	function mainwp_addwp() {
+	public function mainwp_addwp() {
 		if ( $this->check_security( 'mainwp_addwp', 'security' ) ) {
 			MainWP_Manage_Sites::addSite();
 		} else {
@@ -1209,7 +1209,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function get_site_icon() {
+	public function get_site_icon() {
 		if ( $this->check_security( 'mainwp_get_site_icon', 'security' ) ) {
 			$result = MainWP_System::sync_site_icon();
 			wp_send_json( $result );
@@ -1218,17 +1218,17 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_ext_prepareinstallplugintheme() {
+	public function mainwp_ext_prepareinstallplugintheme() {
 
 		do_action( 'mainwp_prepareinstallplugintheme' );
 	}
 
-	function mainwp_ext_performinstallplugintheme() {
+	public function mainwp_ext_performinstallplugintheme() {
 
 		do_action( 'mainwp_performinstallplugintheme' );
 	}
 
-	function mainwp_ext_applypluginsettings() {
+	public function mainwp_ext_applypluginsettings() {
 		if ( $this->check_security( 'mainwp_ext_applypluginsettings', 'security' ) ) {
 			MainWP_Manage_Sites::apply_plugin_settings();
 		} else {
@@ -1236,7 +1236,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_testwp() {
+	public function mainwp_testwp() {
 		$this->secure_request( 'mainwp_testwp' );
 
 		$url               = null;
@@ -1295,7 +1295,7 @@ class MainWP_Post_Handler {
 	}
 
 	// Remove a website from MainWP
-	function mainwp_removesite() {
+	public function mainwp_removesite() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'delete_sites' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'delete sites', 'mainwp' ), false ) ) ) );
 		}
@@ -1306,19 +1306,19 @@ class MainWP_Post_Handler {
 	}
 
 	// Save note
-	function mainwp_notes_save() {
+	public function mainwp_notes_save() {
 		$this->secure_request( 'mainwp_notes_save' );
 
 		MainWP_Manage_Sites::saveNote();
 	}
 
-	function mainwp_reconnectwp() {
+	public function mainwp_reconnectwp() {
 		$this->secure_request();
 
 		MainWP_Manage_Sites::reconnectSite();
 	}
 
-	function mainwp_updatechildsite_value() {
+	public function mainwp_updatechildsite_value() {
 		$this->secure_request( 'mainwp_updatechildsite_value' );
 
 		MainWP_Manage_Sites::updateChildsiteValue();
@@ -1328,14 +1328,14 @@ class MainWP_Post_Handler {
 	 * Widget: RightNow
 	 */
 
-	function mainwp_syncsites() {
+	public function mainwp_syncsites() {
 		$this->secure_request( 'mainwp_syncsites' );
 		MainWP_Updates_Overview::dismissSyncErrors( false );
 		MainWP_Updates_Overview::syncSite();
 	}
 
 	// Update a specific WP
-	function mainwp_upgradewp() {
+	public function mainwp_upgradewp() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'update_wordpress' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update WordPress', 'mainwp' ), $echo = false ) ) ) );
 		}
@@ -1359,7 +1359,7 @@ class MainWP_Post_Handler {
 	}
 
 	// todo: rename
-	function mainwp_upgradeplugintheme() {
+	public function mainwp_upgradeplugintheme() {
 
 		if ( ! isset($_POST['type'] ) ) {
 			die( wp_json_encode( array( 'error' => '<i class="red times icon"></i> ' . __( 'Invalid request', 'mainwp' ) ) ) );
@@ -1448,7 +1448,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_ignoreplugintheme() {
+	public function mainwp_ignoreplugintheme() {
 		$this->secure_request( 'mainwp_ignoreplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
@@ -1457,7 +1457,7 @@ class MainWP_Post_Handler {
 		wp_send_json( array( 'result' => MainWP_Updates::ignorePluginTheme( $_POST['type'], $_POST['slug'], $_POST['name'], $_POST['id'] ) ) );
 	}
 
-	function mainwp_unignoreabandonedplugintheme() {
+	public function mainwp_unignoreabandonedplugintheme() {
 		$this->secure_request( 'mainwp_unignoreabandonedplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
@@ -1466,7 +1466,7 @@ class MainWP_Post_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates::unIgnoreAbandonedPluginTheme( $_POST['type'], $_POST['slug'], $_POST['id'] ) ) ) ); // ok
 	}
 
-	function mainwp_unignoreabandonedpluginsthemes() {
+	public function mainwp_unignoreabandonedpluginsthemes() {
 		$this->secure_request( 'mainwp_unignoreabandonedpluginsthemes' );
 
 		if ( ! isset( $_POST['slug'] ) ) {
@@ -1475,7 +1475,7 @@ class MainWP_Post_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates::unIgnoreAbandonedPluginsThemes( $_POST['type'], $_POST['slug'] ) ) ) );
 	}
 
-	function mainwp_dismissoutdateplugintheme() {
+	public function mainwp_dismissoutdateplugintheme() {
 		$this->secure_request( 'mainwp_dismissoutdateplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
@@ -1484,7 +1484,7 @@ class MainWP_Post_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates::dismissPluginTheme( $_POST['type'], $_POST['slug'], $_POST['name'], $_POST['id'] ) ) ) );
 	}
 
-	function mainwp_dismissoutdatepluginsthemes() {
+	public function mainwp_dismissoutdatepluginsthemes() {
 		$this->secure_request( 'mainwp_dismissoutdatepluginsthemes' );
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
@@ -1497,7 +1497,7 @@ class MainWP_Post_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates::dismissPluginsThemes( $_POST['type'], $_POST['slug'], $_POST['name'] ) ) ) );
 	}
 
-	function mainwp_unignoreplugintheme() {
+	public function mainwp_unignoreplugintheme() {
 		$this->secure_request( 'mainwp_unignoreplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
@@ -1506,7 +1506,7 @@ class MainWP_Post_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates::unIgnorePluginTheme( $_POST['type'], $_POST['slug'], $_POST['id'] ) ) ) );
 	}
 
-	function mainwp_ignorepluginsthemes() {
+	public function mainwp_ignorepluginsthemes() {
 		$this->secure_request( 'mainwp_ignorepluginsthemes' );
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
@@ -1519,7 +1519,7 @@ class MainWP_Post_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates::ignorePluginsThemes( $_POST['type'], $_POST['slug'], $_POST['name'] ) ) ) );
 	}
 
-	function mainwp_unignorepluginsthemes() {
+	public function mainwp_unignorepluginsthemes() {
 		$this->secure_request( 'mainwp_unignorepluginsthemes' );
 
 		if ( ! isset( $_POST['slug'] ) ) {
@@ -1528,21 +1528,21 @@ class MainWP_Post_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates::unIgnorePluginsThemes( $_POST['type'], $_POST['slug'] ) ) ) );
 	}
 
-	function mainwp_trust_plugin() {
+	public function mainwp_trust_plugin() {
 		$this->secure_request( 'mainwp_trust_plugin' );
 
 		MainWP_Plugins::trustPost();
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
-	function mainwp_trust_theme() {
+	public function mainwp_trust_theme() {
 		$this->secure_request( 'mainwp_trust_theme' );
 
 		MainWP_Themes::trustPost();
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
-	function mainwp_checkbackups() {
+	public function mainwp_checkbackups() {
 		$this->secure_request( 'mainwp_checkbackups' );
 
 		try {
@@ -1552,7 +1552,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function mainwp_syncerrors_dismiss() {
+	public function mainwp_syncerrors_dismiss() {
 		$this->secure_request( 'mainwp_syncerrors_dismiss' );
 
 		try {
@@ -1563,7 +1563,7 @@ class MainWP_Post_Handler {
 	}
 
 
-	function mainwp_events_notice_hide() {
+	public function mainwp_events_notice_hide() {
 		$this->secure_request( 'mainwp_events_notice_hide' );
 
 		if ( isset( $_POST['notice'] ) ) {
@@ -1592,7 +1592,7 @@ class MainWP_Post_Handler {
 		die( 'ok' );
 	}
 
-	function mainwp_showhide_sections() {
+	public function mainwp_showhide_sections() {
 		if ( isset( $_POST['sec'] ) && isset( $_POST['status'] ) ) {
 			$opts = get_option( 'mainwp_opts_showhide_sections' );
 			if ( ! is_array( $opts ) ) {
@@ -1605,7 +1605,7 @@ class MainWP_Post_Handler {
 		die( 'failed' );
 	}
 
-	function mainwp_saving_status() {
+	public function mainwp_saving_status() {
 		if ( ! isset( $_REQUEST['nonce'] ) || ! wp_verify_nonce( $_REQUEST['nonce'], 'mainwp_ajax' ) ) {
 			die( 'Invalid request.' );
 		}
@@ -1624,7 +1624,7 @@ class MainWP_Post_Handler {
 		die( 'ok' );
 	}
 
-	function mainwp_recheck_http() {
+	public function mainwp_recheck_http() {
 		if ( ! $this->check_security( 'mainwp_recheck_http' ) ) {
 			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
 		}
@@ -1652,7 +1652,7 @@ class MainWP_Post_Handler {
 		) ) );
 	}
 
-	function mainwp_ignore_http_response() {
+	public function mainwp_ignore_http_response() {
 		if ( ! $this->check_security( 'mainwp_ignore_http_response' ) ) {
 			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
 		}
@@ -1670,7 +1670,7 @@ class MainWP_Post_Handler {
 		die( wp_json_encode( array( 'ok' => 1 ) ) );
 	}
 
-	function mainwp_autoupdate_and_trust_child() {
+	public function mainwp_autoupdate_and_trust_child() {
 		$this->secure_request( 'mainwp_autoupdate_and_trust_child' );
 		if ( get_option( 'mainwp_automaticDailyUpdate' ) != 1 ) {
 			update_option( 'mainwp_automaticDailyUpdate', 1 );
@@ -1679,7 +1679,7 @@ class MainWP_Post_Handler {
 		die( 'ok' );
 	}
 
-	function secure_request( $action = '', $query_arg = 'security' ) {
+	public function secure_request( $action = '', $query_arg = 'security' ) {
 		if ( ! MainWP_Utility::isAdmin() ) {
 			die( 0 );
 		}
@@ -1707,7 +1707,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	function check_security( $action = - 1, $query_arg = 'security' ) {
+	public function check_security( $action = - 1, $query_arg = 'security' ) {
 		if ( - 1 === $action ) {
 			return false;
 		}
@@ -1722,12 +1722,12 @@ class MainWP_Post_Handler {
 		return true;
 	}
 
-	function addAction( $action, $callback ) {
+	public function addAction( $action, $callback ) {
 		add_action( 'wp_ajax_' . $action, $callback );
 		$this->addSecurityNonce( $action );
 	}
 
-	function addSecurityNonce( $action ) {
+	public function addSecurityNonce( $action ) {
 		if ( ! is_array( $this->security_nonces ) ) {
 			$this->security_nonces = array();
 		}
@@ -1738,11 +1738,11 @@ class MainWP_Post_Handler {
 		$this->security_nonces[ $action ] = wp_create_nonce( $action );
 	}
 
-	function getSecurityNonces() {
+	public function getSecurityNonces() {
 		return $this->security_nonces;
 	}
 
-	function mainwp_force_destroy_sessions() {
+	public function mainwp_force_destroy_sessions() {
 		$this->secure_request( 'mainwp_force_destroy_sessions' );
 
 		$website_id = ( isset( $_POST['website_id'] ) ? (int) $_POST['website_id'] : 0 );

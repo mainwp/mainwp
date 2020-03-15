@@ -11,7 +11,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	protected $_column_headers;
 
-	function __construct() {
+	public function __construct() {
 		add_action( 'mainwp_managesites_tabletop', array( &$this, 'generate_tabletop' ) );
 	}
 
@@ -19,7 +19,7 @@ class MainWP_Manage_Sites_List_Table {
 		return 'site';
 	}
 
-	function column_backup( $item ) {
+	public function column_backup( $item ) {
 
 		$lastBackup = MainWP_DB::Instance()->getWebsiteOption( $item, 'primary_lasttime_backup' );
 
@@ -56,7 +56,7 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 
-	function column_default( $item, $column_name ) {
+	public function column_default( $item, $column_name ) {
 
 		$item = apply_filters( 'mainwp-sitestable-item', $item, $item );
 
@@ -81,7 +81,7 @@ class MainWP_Manage_Sites_List_Table {
 		}
 	}
 
-	function get_sortable_columns() {
+	public function get_sortable_columns() {
 		$sortable_columns = array(
 			'site'                  => array( 'site', false ),
 			'url'                   => array( 'url', false ),
@@ -95,7 +95,7 @@ class MainWP_Manage_Sites_List_Table {
 		return $sortable_columns;
 	}
 
-	function get_default_columns() {
+	public function get_default_columns() {
 		return array(
 			'cb'                     => '<input type="checkbox" />',
 			'status'                 => '',
@@ -114,7 +114,7 @@ class MainWP_Manage_Sites_List_Table {
 		);
 	}
 
-	function get_columns() {
+	public function get_columns() {
 
 		$columns                 = $this->get_default_columns();
 		$columns                 = apply_filters( 'mainwp-sitestable-getcolumns', $columns, $columns );
@@ -138,7 +138,7 @@ class MainWP_Manage_Sites_List_Table {
 		return $columns;
 	}
 
-	function get_columns_init() {
+	public function get_columns_init() {
 		$cols      = $this->get_columns();
 		$init_cols = array();
 		foreach ( $cols as $key => $val ) {
@@ -147,7 +147,7 @@ class MainWP_Manage_Sites_List_Table {
 		return $init_cols;
 	}
 
-	function get_columns_defines() {
+	public function get_columns_defines() {
 		$defines   = array();
 		$defines[] = array(
 			'targets'   => 'no-sort',
@@ -172,11 +172,11 @@ class MainWP_Manage_Sites_List_Table {
 		return $defines;
 	}
 
-	function generate_tabletop() {
+	public function generate_tabletop() {
 		$this->renderManageSitesTableTop();
 	}
 
-	function get_bulk_actions() {
+	public function get_bulk_actions() {
 
 		$actions = array(
 			'sync'                    => __( 'Sync Data', 'mainwp' ),
@@ -279,7 +279,7 @@ class MainWP_Manage_Sites_List_Table {
 		<?php
 	}
 
-	function no_items() {
+	public function no_items() {
 		?>
 		<div class="ui center aligned segment">
 		<?php if ( MainWP_DB::Instance()->getWebsitesCount( null, true ) == 0 ) : ?>
@@ -303,7 +303,7 @@ class MainWP_Manage_Sites_List_Table {
 		return ! empty( $this->items );
 	}
 
-	function prepare_items( $optimize = true ) {
+	public function prepare_items( $optimize = true ) {
 
 		if ( null === $this->userExtension ) {
 			$this->userExtension = MainWP_DB::Instance()->getUserExtension();
@@ -476,7 +476,7 @@ class MainWP_Manage_Sites_List_Table {
 		$this->_total_items = $totalRecords;
 	}
 
-	function get_available_update_siteids() {
+	public function get_available_update_siteids() {
 		$site_ids = array();
 		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 
@@ -887,7 +887,7 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 
-	function clear_items() {
+	public function clear_items() {
 		if ( MainWP_DB::is_result( $this->items ) ) {
 			MainWP_DB::free_result( $this->items );
 		}
@@ -1157,7 +1157,7 @@ class MainWP_Manage_Sites_List_Table {
 		);
 	}
 
-	function display_rows() {
+	public function display_rows() {
 		if ( MainWP_DB::is_result( $this->items ) ) {
 			while ( $this->items && ( $item = MainWP_DB::fetch_array( $this->items ) ) ) {
 				$this->single_row( $item );
@@ -1165,7 +1165,7 @@ class MainWP_Manage_Sites_List_Table {
 		}
 	}
 
-	function single_row( $website ) {
+	public function single_row( $website ) {
 
 		$classes = '';
 		if ( isset( $website['groups'] ) && ! empty( $website['groups'] ) ) {

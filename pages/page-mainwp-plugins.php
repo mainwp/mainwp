@@ -141,7 +141,7 @@ class MainWP_Plugins {
 		<?php
 	}
 
-	static function init_left_menu( $subPages = array() ) {
+	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu( array(
 			'title'       => __( 'Plugins', 'mainwp' ),
 			'parent_key'  => 'mainwp_tab',

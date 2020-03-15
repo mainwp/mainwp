@@ -430,39 +430,39 @@ class MainWP_Hooks {
 		return MainWP_System::Instance()->isMultiUser();
 	}
 
-	function filter_qq2FileUploader( $allowedExtensions, $sizeLimit ) {
+	public function filter_qq2FileUploader( $allowedExtensions, $sizeLimit ) {
 		return new qq2FileUploader( $allowedExtensions, $sizeLimit );
 	}
 
-	function getMetaBoxes() {
+	public function getMetaBoxes() {
 		return MainWP_System::Instance()->metaboxes;
 	}
 
-	function get_format_email( $body, $email, $title = '' ) {
+	public function get_format_email( $body, $email, $title = '' ) {
 		return MainWP_Utility::formatEmail( $email, $body, $title );
 	}
 
-	function activePlugin() {
+	public function activePlugin() {
 		MainWP_Plugins::activatePlugins();
 		die();
 	}
 
-	function deactivePlugin() {
+	public function deactivePlugin() {
 		MainWP_Plugins::deactivatePlugins();
 		die();
 	}
 
-	function deletePlugin() {
+	public function deletePlugin() {
 		MainWP_Plugins::deletePlugins();
 		die();
 	}
 
-	function deleteTheme() {
+	public function deleteTheme() {
 		MainWP_Themes::deleteThemes();
 		die();
 	}
 
-	function upgradePluginTheme() {
+	public function upgradePluginTheme() {
 		try {
 			$websiteId = $type         = null;
 			$slugs     = array();

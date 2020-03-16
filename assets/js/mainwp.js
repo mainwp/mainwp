@@ -1,20 +1,4 @@
-jQuery( document ).ready( function ()
-{
-    // to fix conflict with bootstrap tooltip
-//    jQuery.widget.bridge( 'uitooltip', jQuery.ui.tooltip );
-//    jQuery( document ).uitooltip( {
-//        items: "span.tooltip",
-//        track: true,
-//        tooltipClass: "mainwp-tooltip",
-//        content: function ()
-//        {
-//            var element = jQuery( this );
-//            return element.parents( '.tooltipcontainer' ).children( '.tooltipcontent' ).html();
-//        }
-//    } );
-
-//    if (jQuery('#mainwp_options_loadFilesBeforeZip_container').length > 0) initTriStateCheckBox('mainwp_options_loadFilesBeforeZip_container', 'mainwp_options_loadFilesBeforeZip', true);
-
+jQuery( document ).ready( function () {
 
     // review for new UI update
     jQuery( document ).on( 'click', '#mainwp-category-add-submit', function() {
@@ -25,8 +9,6 @@ jQuery( document ).ready( function ()
         jQuery( '#category-adder' ).addClass( 'wp-hidden-children' );
         jQuery( '#newcategory' ).val( '' );
     } );
-
-    // Add New Post
 
     // Show/Hide new category field and button
     jQuery( '#category-add-toggle' ).on( 'click', function() {
@@ -719,7 +701,7 @@ mainwp_sync_sites_data = function ( syncSiteIds ) {
             isGlobalSync: globalSync
         };
         jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
-            
+
         });
     }
 
@@ -738,7 +720,7 @@ var globalSync = true;
 dashboard_update = function ( websiteIds, isGlobalSync) {
   websitesToUpdate = websiteIds;
   currentWebsite = 0;
-  websitesDone = 0;  
+  websitesDone = 0;
   websitesTotal = websitesLeft = websitesToUpdate.length;
   globalSync = isGlobalSync;
 
@@ -812,7 +794,7 @@ dashboard_update_next_int = function ( websiteId, data, errors ) {
     success: function ( pWebsiteId ) {
       return function ( response ) {
         if ( response.error ) {
-          dashboard_update_site_status( pWebsiteId, '<i class="exclamation red icon"></i>' );          
+          dashboard_update_site_status( pWebsiteId, '<i class="exclamation red icon"></i>' );
         } else {
           dashboard_update_site_status( websiteId, '<i class="check green icon"></i>', true );
         }
@@ -822,7 +804,7 @@ dashboard_update_next_int = function ( websiteId, data, errors ) {
     error: function ( pWebsiteId, pData, pErrors ) {
       return function () {
         if ( pErrors > 5 ) {
-          dashboard_update_site_status( pWebsiteId, '<i class="exclamation yellow icon"></i>' );          
+          dashboard_update_site_status( pWebsiteId, '<i class="exclamation yellow icon"></i>' );
           dashboard_update_done();
         } else {
           pErrors++;
@@ -858,7 +840,7 @@ mainwp_tool_disconnect_sites = function () {
 
   websitesToUpdate = allWebsiteIds;
   currentWebsite = 0;
-  websitesDone = 0;  
+  websitesDone = 0;
   websitesTotal = websitesLeft = websitesToUpdate.length;
 
   bulkTaskRunning = true;
@@ -909,7 +891,7 @@ mainwp_tool_disconnect_sites_next_int = function ( websiteId, data, errors ) {
     success: function ( pWebsiteId ) {
       return function ( response ) {
             if ( response && response.error ) {
-              dashboard_update_site_status( pWebsiteId, response.error + '<i class="exclamation red icon"></i>' );              
+              dashboard_update_site_status( pWebsiteId, response.error + '<i class="exclamation red icon"></i>' );
             } else if (response && response.result == 'success') {
               dashboard_update_site_status( websiteId, '<i class="check green icon"></i>', true );
             } else {
@@ -921,7 +903,7 @@ mainwp_tool_disconnect_sites_next_int = function ( websiteId, data, errors ) {
     error: function ( pWebsiteId, pData, pErrors ) {
       return function () {
         if ( pErrors > 5 ) {
-          dashboard_update_site_status( pWebsiteId, '<i class="exclamation yellow icon"></i>' );          
+          dashboard_update_site_status( pWebsiteId, '<i class="exclamation yellow icon"></i>' );
           mainwp_tool_disconnect_sites_done();
         } else {
           pErrors++;
@@ -1503,7 +1485,7 @@ updatesoverview_upgrade_plugintheme_list = function ( what, id, list, noCheck, g
                     var success = false;
                     if ( response.error ) {
                         console.log( response.error );
-                    } 
+                    }
                     else
                     {
                         var res = response.result;
@@ -2720,7 +2702,7 @@ mainwp_managesites_add = function () {
               jQuery( '#mainwp-message-zone' ).removeClass( 'red' );
               feedback( 'mainwp-message-zone', response, 'green' );
 
-              if ( site_id > 0 ) {                
+              if ( site_id > 0 ) {
                 jQuery( '.sync-ext-row' ).attr( 'status', 'queue' );
                 setTimeout( function () {
                   mainwp_managesites_sync_extension_start_next( site_id );
@@ -4605,7 +4587,7 @@ backup_download_file = function ( pSiteId, type, url, file, regexfile, size, sub
         url: ajaxurl,
         data: data,
         method: 'POST',
-        success: function ( pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pUrl, pData ) {
+        success: function ( pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pUrl ) {
             return function ( response ) {
                 backupDownloadRunning = false;
 
@@ -4629,7 +4611,7 @@ backup_download_file = function ( pSiteId, type, url, file, regexfile, size, sub
                 jQuery.post( ajaxurl, newData, function () {}, 'json' );
                 backup_upload_file( pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize );
             }
-        }( pSiteId, file, regexfile, subfolder, remote_destinations, size, type, url, data ),
+        }( pSiteId, file, regexfile, subfolder, remote_destinations, size, type, url ),
         error: function () {
             return function () {
                 //Try again in 10seconds
@@ -4637,7 +4619,7 @@ backup_download_file = function ( pSiteId, type, url, file, regexfile, size, sub
                  download_retry_fail(pSiteId, pData, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pUrl);
                  },10000);*/
             }
-        }( pSiteId, file, regexfile, subfolder, remote_destinations, size, type, url, data ),
+        }( pSiteId, file, regexfile, subfolder, remote_destinations, size, type, url, ),
         dataType: 'json' } );
 };
 
@@ -5446,9 +5428,9 @@ mainwp_fetch_plugins = function () {
       errors.push( __( 'Please select at least one website or group.' ) );
         }
     }
-    
+
     var _status;
-    
+
     var statuses = jQuery( "#mainwp_plugins_search_by_status" ).dropdown( "get value" );
 
     if ( statuses == null )
@@ -5947,7 +5929,7 @@ mainwp_fetch_themes = function () {
       errors.push( __( 'Please select at least one website or group.' ) );
         }
     }
-    
+
     var _status = '';
   var statuses = jQuery( "#mainwp_themes_search_by_status" ).dropdown( "get value" );
   if ( statuses == null )
@@ -6433,29 +6415,6 @@ jQuery( document ).on( 'click', '.mainwp-news-tab', function ()
     return false;
 } );
 
-function mainwp_setCookie( c_name, value, expiredays )
-{
-    var exdate = new Date();
-    exdate.setDate( exdate.getDate() + expiredays );
-    document.cookie = c_name + "=" + escape( value ) + ( ( expiredays == null ) ? "" : ";expires=" + exdate.toUTCString() );
-}
-function mainwp_getCookie( c_name )
-{
-    if ( document.cookie.length > 0 )
-    {
-        var c_start = document.cookie.indexOf( c_name + "=" );
-        if ( c_start != -1 )
-        {
-            c_start = c_start + c_name.length + 1;
-            var c_end = document.cookie.indexOf( ";", c_start );
-            if ( c_end == -1 )
-                c_end = document.cookie.length;
-            return unescape( document.cookie.substring( c_start, c_end ) );
-        }
-    }
-    return "";
-}
-
 mainwp_uid = function () {
     // always start with a letter (for DOM friendlyness)
     var idstr = String.fromCharCode( Math.floor( ( Math.random() * 25 ) + 65 ) );
@@ -6686,8 +6645,9 @@ mainwp_twitter_dismiss = function(obj) {
         action:'mainwp_dismiss_twit',
         twitId: jQuery(obj).closest('.mainwp-tips').find('.mainwp-tip').attr('twit-id'),
         what: jQuery(obj).closest('.mainwp-tips').find('.mainwp-tip').attr('twit-what')
-    });
-    jQuery.post(ajaxurl, data, function (res) {
+    } );
+
+    jQuery.post( ajaxurl, data, function (res) {
 
     });
 };

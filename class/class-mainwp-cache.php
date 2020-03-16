@@ -5,7 +5,7 @@
 class MainWP_Cache {
 
 	public static function initSession() {
-		if ( session_id() == '' ) {
+		if ( '' === session_id() ) {
 			session_start();
 		}
 	}
@@ -13,7 +13,7 @@ class MainWP_Cache {
 	public static function initCache( $page ) {
 		$_SESSION[ 'MainWP' . $page . 'Search' ]        = '';
 		$_SESSION[ 'MainWP' . $page . 'SearchContext' ] = '';
-		$_SESSION[ 'MainWP' . $page . 'SearchResult' ]  = ''; // extra cache
+		$_SESSION[ 'MainWP' . $page . 'SearchResult' ]  = '';
 	}
 
 	public static function addContext( $page, $context ) {
@@ -32,16 +32,15 @@ class MainWP_Cache {
 	public static function getCachedContext( $page ) {
 		$cachedSearch = ( isset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) && is_array( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) ? $_SESSION[ 'MainWP' . $page . 'SearchContext' ] : null );
 
-		if ( $cachedSearch != null ) {
-			if ( $cachedSearch['time'] < ( time() - ( 2 * 60 * 60 ) ) ) {
-				// More then two hours ago, clean this cache
+		if ( null != $cachedSearch ) {
+			if ( ( time() - ( 2 * 60 * 60 ) ) > $cachedSearch['time'] ) {
 				unset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] );
 				unset( $_SESSION[ 'MainWP' . $page . 'Search' ] );
 				unset( $_SESSION[ 'MainWP' . $page . 'SearchResult' ] );
 				$cachedSearch = null;
 			}
 		}
-		if ( $cachedSearch != null && isset( $cachedSearch['status'] ) ) {
+		if ( null != $cachedSearch && isset( $cachedSearch['status'] ) ) {
 			$cachedSearch['status'] = explode( ',', $cachedSearch['status'] );
 		}
 

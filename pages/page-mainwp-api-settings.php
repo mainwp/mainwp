@@ -19,7 +19,7 @@ class MainWP_API_Settings {
 		if ( is_array( $extensions ) ) {
 			$check_exts = array();
 			foreach ( $extensions as $ext ) {
-				if ( isset( $ext['activated_key'] ) && 'Activated' == $ext['activated_key'] ) {
+				if ( isset( $ext['activated_key'] ) && 'Activated' === $ext['activated_key'] ) {
 					$args                               = array();
 					$args['plugin_name']                = $ext['api'];
 					$args['version']                    = $ext['version'];
@@ -48,10 +48,10 @@ class MainWP_API_Settings {
 				$count++;
 				if ( $count == $max_check || $i == $total_check ) {
 					$results = MainWP_Api_Manager_Plugin_Update::instance()->bulk_update_check( $bulk_checks );
-					if ( is_array( $results ) && count( $results ) > 0 ) {
+					if ( is_array( $results ) && 0 < count( $results ) ) {
 						foreach ( $results as $slug => $response ) {
-								$rslt             = new stdClass();
-								$rslt->slug       = $slug;
+							$rslt                 = new stdClass();
+							$rslt->slug           = $slug;
 							$rslt->latest_version = $response->new_version;
 							$rslt->download_url   = $response->package;
 							$rslt->key_status     = '';
@@ -90,7 +90,7 @@ class MainWP_API_Settings {
 					$response                 = MainWP_Api_Manager::instance()->update_check( $args );
 					if ( ! empty( $response ) ) {
 						$rslt                 = new stdClass();
-						$rslt->slug           = $ext['api']; // $response->slug
+						$rslt->slug           = $ext['api'];
 						$rslt->latest_version = $response->new_version;
 						$rslt->download_url   = $response->package;
 						$rslt->key_status     = '';

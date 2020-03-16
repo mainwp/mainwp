@@ -1,13 +1,12 @@
 <?php
-
-/*
-  Plugin Name: MainWP Dashboard
-  Plugin URI: https://mainwp.com/
-  Description: Manage all of your WP sites, even those on different servers, from one central dashboard that runs off of your own self-hosted WordPress install.
-  Author: MainWP
-  Author URI: https://mainwp.com
-  Text Domain: mainwp
-  Version:  4.0.7.2
+/**
+ * Plugin Name: MainWP Dashboard
+ * Plugin URI: https://mainwp.com/
+ * Description: Manage all of your WP sites, even those on different servers, from one central dashboard that runs off of your own self-hosted WordPress install.
+ * Author: MainWP
+ * Author URI: https://mainwp.com
+ * Text Domain: mainwp
+ * Version:  4.0.7.2
  */
 
 if ( ! defined( 'MAINWP_PLUGIN_FILE' ) ) {
@@ -23,7 +22,7 @@ if ( ! defined( 'MAINWP_PLUGIN_URL' ) ) {
 }
 
 // Version information from WordPress.
-require_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'version.php'; // Version information from WordPress
+require_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'version.php';
 
 if ( ! function_exists( 'mainwp_autoload' ) ) {
 

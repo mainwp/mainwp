@@ -43,31 +43,41 @@ class MainWP_Plugins {
 	}
 
 	public static function initMenu() {
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<span id="mainwp-Plugins">' . __( 'Plugins', 'mainwp' ) . '</span>', 'read', 'PluginsManage', array(
-			self::getClassName(),
-			'render',
-		) );
-		if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) {
-			$page = add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install ', 'mainwp' ) . '</div>', 'read', 'PluginsInstall', array(
+		$_page = add_submenu_page( 
+			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<span id="mainwp-Plugins">' . __( 'Plugins', 'mainwp' ) . '</span>', 'read', 'PluginsManage', array(
 				self::getClassName(),
-				'renderInstall',
-			) );
+				'render',
+			) 
+		);
+		if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) {
+			$page = add_submenu_page(
+				'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install ', 'mainwp' ) . '</div>', 'read', 'PluginsInstall', array(
+					self::getClassName(),
+					'renderInstall',
+				) 
+			);
 
 			add_action( 'load-' . $page, array( self::getClassName(), 'load_page' ) );
 		}
 
-		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'PluginsAutoUpdate', array(
+		add_submenu_page(
+			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'PluginsAutoUpdate', array(
+				self::getClassName(),
+				'renderAutoUpdate',
+			) 
+		);
+		add_submenu_page(
+			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'PluginsIgnore', array(
+				self::getClassName(),
+				'renderIgnore',
+			) 
+		);
+		add_submenu_page(
+			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'PluginsIgnoredAbandoned', array(
 			self::getClassName(),
-			'renderAutoUpdate',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'PluginsIgnore', array(
-			self::getClassName(),
-			'renderIgnore',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'PluginsIgnoredAbandoned', array(
-			self::getClassName(),
-			'renderIgnoredAbandoned',
-		) );
+				'renderIgnoredAbandoned',
+			) 
+		);
 
 		/**
 		 * This hook allows you to add extra sub pages to the Plugins page via the 'mainwp-getsubpages-plugins' filter.
@@ -142,13 +152,15 @@ class MainWP_Plugins {
 	}
 
 	public static function init_left_menu( $subPages = array() ) {
-		MainWP_Menu::add_left_menu( array(
-			'title'       => __( 'Plugins', 'mainwp' ),
-			'parent_key'  => 'mainwp_tab',
-			'slug'        => 'PluginsManage',
-			'href'        => 'admin.php?page=PluginsManage',
-			'icon'        => '<i class="plug icon"></i>',
-		), 1 );
+		MainWP_Menu::add_left_menu(
+			array(
+				'title'       => __( 'Plugins', 'mainwp' ),
+				'parent_key'  => 'mainwp_tab',
+				'slug'        => 'PluginsManage',
+				'href'        => 'admin.php?page=PluginsManage',
+				'icon'        => '<i class="plug icon"></i>',
+			), 1 
+		);
 
 		$init_sub_subleftmenu = array(
 			array(
@@ -300,7 +312,7 @@ class MainWP_Plugins {
 									if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
 										echo $cachedResult['bulk_actions'];
 									} else {
-										echo MainWP_UI::get_empty_bulk_actions();
+										MainWP_UI::render_empty_bulk_actions();
 									}
 									?>
 								</div>
@@ -396,7 +408,7 @@ class MainWP_Plugins {
 			?>
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
-					jQuery( '#mainwp_plugins_search_by_status' ).dropdown( 'set selected', [<?php echo $status; ?>] );
+					jQuery( '#mainwp_plugins_search_by_status' ).dropdown( 'set selected', [<?php esc_html_e( $status ); ?>] );
 				} );
 			</script>
 			<?php
@@ -476,17 +488,20 @@ class MainWP_Plugins {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-							'id',
-							'url',
-							'name',
-							'adminname',
-							'nossl',
-							'privkey',
-							'nosslkey',
-							'http_user',
-							'http_pass',
-						) );
+						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+							$website, 
+							array(
+								'id',
+								'url',
+								'name',
+								'adminname',
+								'nossl',
+								'privkey',
+								'nosslkey',
+								'http_user',
+								'http_pass',
+							) 
+						);
 					}
 				}
 			}
@@ -499,17 +514,20 @@ class MainWP_Plugins {
 							if ( '' !== $website->sync_errors ) {
 								continue;
 							}
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-								'id',
-								'url',
-								'name',
-								'adminname',
-								'nossl',
-								'privkey',
-								'nosslkey',
-								'http_user',
-								'http_pass',
-							) );
+							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+								$website, 
+								array(
+									'id',
+									'url',
+									'name',
+									'adminname',
+									'nossl',
+									'privkey',
+									'nosslkey',
+									'http_user',
+									'http_pass',
+								) 
+							);
 						}
 						MainWP_DB::free_result( $websites );
 					}
@@ -542,12 +560,14 @@ class MainWP_Plugins {
 			}
 		}
 
-		MainWP_Cache::addContext( 'Plugins', array(
-			'keyword' => $keyword,
-			'status'  => $status,
-			'sites'   => ( '' !== $sites ) ? $sites : '',
-			'groups'  => ( '' !== $groups ) ? $groups : '',
-		) );
+		MainWP_Cache::addContext( 
+			'Plugins', array(
+				'keyword' => $keyword,
+				'status'  => $status,
+				'sites'   => ( '' !== $sites ) ? $sites : '',
+				'groups'  => ( '' !== $groups ) ? $groups : '',
+			) 
+		);
 
 		ob_start();
 		?>
@@ -792,10 +812,12 @@ class MainWP_Plugins {
 		try {
 			$plugin      = implode( '||', $_POST['plugins'] );
 			$plugin      = urldecode( $plugin );
-			$information = MainWP_Utility::fetchUrlAuthed( $website, 'plugin_action', array(
-				'action' => $pAction,
-				'plugin' => $plugin,
-			) );
+			$information = MainWP_Utility::fetchUrlAuthed( 
+				$website, 'plugin_action', array(
+					'action' => $pAction,
+					'plugin' => $plugin,
+				) 
+			);
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
@@ -1070,17 +1092,20 @@ class MainWP_Plugins {
 				$dbwebsites = array();
 				$websites   = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-						'id',
-						'url',
-						'name',
-						'adminname',
-						'nossl',
-						'privkey',
-						'nosslkey',
-						'http_user',
-						'http_pass',
-					) );
+					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+						$website, 
+						array(
+							'id',
+							'url',
+							'name',
+							'adminname',
+							'nossl',
+							'privkey',
+							'nosslkey',
+							'http_user',
+							'http_pass',
+						) 
+					);
 				}
 				MainWP_DB::free_result( $websites );
 

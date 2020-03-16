@@ -82,14 +82,18 @@ class MainWP_Manage_Sites {
 				update_user_option( $current_user->ID, 'screen_layout_' . self::$page, 2, true );
 			}
 		}
-		add_submenu_page( 'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteOpen', array(
-			MainWP_Site_Open::getClassName(),
-			'render',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteRestore', array(
-			MainWP_Site_Open::getClassName(),
-			'renderRestore',
-		) );
+		add_submenu_page(
+			'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteOpen', array(
+				MainWP_Site_Open::getClassName(),
+				'render',
+			) 
+		);
+		add_submenu_page(
+			'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteRestore', array(
+				MainWP_Site_Open::getClassName(),
+				'renderRestore',
+			) 
+		);
 
 		/**
 		 * This hook allows you to add extra sub pages to the Sites page via the 'mainwp-getsubpages-sites' filter.
@@ -646,18 +650,20 @@ class MainWP_Manage_Sites {
 					MainWP_DB::Instance()->addBackupTaskProgress( $taskId, $website->id, array() );
 				}
 
-				MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array(
-					'dtsFetched'             => time(),
-					'fetchResult'            => wp_json_encode( array() ),
-					'downloadedDB'           => '',
-					'downloadedDBComplete'   => 0,
-					'downloadedFULL'         => '',
-					'downloadedFULLComplete' => 0,
-					'removedFiles'           => 0,
-					'attempts'               => 0,
-					'last_error'             => '',
-					'pid'                    => $pid,
-				) );
+				MainWP_DB::Instance()->updateBackupTaskProgress(
+					$taskId, $website->id, array(
+						'dtsFetched'             => time(),
+						'fetchResult'            => wp_json_encode( array() ),
+						'downloadedDB'           => '',
+						'downloadedDBComplete'   => 0,
+						'downloadedFULL'         => '',
+						'downloadedFULLComplete' => 0,
+						'removedFiles'           => 0,
+						'attempts'               => 0,
+						'last_error'             => '',
+						'pid'                    => $pid,
+					) 
+				);
 
 				$params = array(
 					'type'                  => $type,
@@ -682,12 +688,14 @@ class MainWP_Manage_Sites {
 				$stop = microtime( true );
 				// Bigger then 30 seconds means a timeout
 				if ( 30 < ( $stop - $start ) ) {
-					MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array(
-						'last_error' => wp_json_encode( array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
-						) ),
-					) );
+					MainWP_DB::Instance()->updateBackupTaskProgress(
+						$taskId, $website->id, array(
+							'last_error' => wp_json_encode( array(
+								'message'    => $e->getMessage(),
+								'extra'      => $e->getMessageExtra(),
+							) ),
+						) 
+					);
 
 					return false;
 				}

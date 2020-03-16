@@ -171,10 +171,12 @@ class MainWP_Widget_Themes {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed( $website, 'theme_action', array(
-				'action' => $pAction,
-				'theme'  => $theme,
-			) );
+			$information = MainWP_Utility::fetchUrlAuthed(
+				$website, 'theme_action', array(
+					'action' => $pAction,
+					'theme'  => $theme,
+				) 
+			);
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}

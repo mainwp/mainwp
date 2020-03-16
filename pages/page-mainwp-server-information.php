@@ -15,42 +15,54 @@ class MainWP_Server_Information {
 	}
 
 	public static function initMenu() {
-		add_submenu_page( 'mainwp_tab', __( 'Server Information', 'mainwp' ), ' <span id="mainwp-ServerInformation">' . __( 'Server Information', 'mainwp' ) . '</span>', 'read', 'ServerInformation', array(
-			self::getClassName(),
-			'render',
-		) );
-		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) {
-			add_submenu_page( 'mainwp_tab', __( 'Cron Schedules', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Cron Schedules', 'mainwp' ) . '</div>', 'read', 'ServerInformationCron', array(
+		add_submenu_page(
+			'mainwp_tab', __( 'Server Information', 'mainwp' ), ' <span id="mainwp-ServerInformation">' . __( 'Server Information', 'mainwp' ) . '</span>', 'read', 'ServerInformation', array(
 				self::getClassName(),
-				'renderCron',
-			) );
+				'render',
+			) 
+		);
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) {
+			add_submenu_page(
+				'mainwp_tab', __( 'Cron Schedules', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Cron Schedules', 'mainwp' ) . '</div>', 'read', 'ServerInformationCron', array(
+					self::getClassName(),
+					'renderCron',
+				) 
+			);
 		}
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) {
-			add_submenu_page( 'mainwp_tab', __( 'Error Log', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Error Log', 'mainwp' ) . '</div>', 'read', 'ErrorLog', array(
-				self::getClassName(),
-				'renderErrorLogPage',
-			) );
+			add_submenu_page(
+				'mainwp_tab', __( 'Error Log', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Error Log', 'mainwp' ) . '</div>', 'read', 'ErrorLog', array(
+					self::getClassName(),
+					'renderErrorLogPage',
+				) 
+			);
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) {
-			add_submenu_page( 'mainwp_tab', __( 'WP-Config File', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'WP-Config File', 'mainwp' ) . '</div>', 'read', 'WPConfig', array(
-				self::getClassName(),
-				'renderWPConfig',
-			) );
+			add_submenu_page(
+				'mainwp_tab', __( 'WP-Config File', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'WP-Config File', 'mainwp' ) . '</div>', 'read', 'WPConfig', array(
+					self::getClassName(),
+					'renderWPConfig',
+				) 
+			);
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
 			if ( self::isApacheServerSoftware() ) {
-				add_submenu_page( 'mainwp_tab', __( '.htaccess File', 'mainwp' ), '<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>', 'read', '.htaccess', array(
-					self::getClassName(),
-					'renderhtaccess',
-				) );
+				add_submenu_page(
+					'mainwp_tab', __( '.htaccess File', 'mainwp' ), '<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>', 'read', '.htaccess', array(
+						self::getClassName(),
+						'renderhtaccess',
+					) 
+				);
 			}
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ActionLogs' ) ) {
-			add_submenu_page( 'mainwp_tab', __( 'Action logs', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Action logs', 'mainwp' ) . '</div>', 'read', 'ActionLogs', array(
-				self::getClassName(),
-				'renderActionLogs',
-			) );
+			add_submenu_page(
+				'mainwp_tab', __( 'Action logs', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Action logs', 'mainwp' ) . '</div>', 'read', 'ActionLogs', array(
+					self::getClassName(),
+					'renderActionLogs',
+				) 
+			);
 		}
 		self::$subPages = apply_filters( 'mainwp-getsubpages-server', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -110,13 +122,15 @@ class MainWP_Server_Information {
 	}
 
 	public static function init_left_menu( $subPages = array() ) {
-		MainWP_Menu::add_left_menu( array(
-			'title'      => __( 'Status', 'mainwp' ),
-			'parent_key' => 'mainwp_tab',
-			'slug'       => 'ServerInformation',
-			'href'       => 'admin.php?page=ServerInformation',
-			'icon'       => '<i class="server icon"></i>',
-		), 1 ); // level 1
+		MainWP_Menu::add_left_menu(
+			array(
+				'title'      => __( 'Status', 'mainwp' ),
+				'parent_key' => 'mainwp_tab',
+				'slug'       => 'ServerInformation',
+				'href'       => 'admin.php?page=ServerInformation',
+				'icon'       => '<i class="server icon"></i>',
+			), 1
+		); // level 1
 
 		global $_mainwp_menu_active_slugs;
 		$_mainwp_menu_active_slugs['ActionLogs'] = 'ServerInformation'; // hidden page
@@ -528,11 +542,13 @@ class MainWP_Server_Information {
 			return $_SESSION['cachedVersion'];
 		}
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
-		$api = plugins_api( 'plugin_information', array(
-			'slug'       => 'mainwp',
-			'fields'     => array( 'sections' => false ),
-			'timeout'    => 60,
-		) );
+		$api = plugins_api(
+			'plugin_information', array(
+				'slug'       => 'mainwp',
+				'fields'     => array( 'sections' => false ),
+				'timeout'    => 60,
+			) 
+		);
 		if ( is_object( $api ) && isset( $api->version ) ) {
 			$_SESSION['cachedTime']    = time();
 			$_SESSION['cachedVersion'] = $api->version;

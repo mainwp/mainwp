@@ -52,7 +52,7 @@ mainwp_update_pluginsthemes = function ( updateType, updateSiteIds )
                 statusText: __( 'updated' ),
                 callback: function () {
                     bulkManageSitesTaskRunning = false;
-                    location.href = location.href;
+                    window.location.href = location.href;
                 }
             };
 
@@ -199,7 +199,7 @@ managesites_update_pluginsthemes_next_int = function ( websiteId, data, errors )
             }
         }(websiteId, data, errors),
         error: function ( pWebsiteId, pData, pErrors ) {
-            return function ( response ) {
+            return function () {
                 if ( pErrors > 5 )
                 {
                     dashboard_update_site_status( pWebsiteId, '<i class="red times icon"></i>' );
@@ -255,7 +255,7 @@ mainwp_managesites_checkBackups = function ( sitesToUpdate, siteNames )
         jQuery( '#managesites-backup-ignore' ).hide();
         mainwpPopup( '#managesites-backup-box' ).init( { title: __( "Checking backup settings..." ), callback: function () {
                 bulkManageSitesTaskRunning = false;
-                location.href = location.href;
+                window.location.href = location.href;
             } } );
 
     };
@@ -340,7 +340,7 @@ mainwp_managesites_checkBackups = function ( sitesToUpdate, siteNames )
                     console.log( typeof managesitesContinueAfterBackup );
                     mainwpPopup( '#managesites-backup-box' ).init( { title: __( "Full backup required!" ), callback: function () {
                             managesitesContinueAfterBackup = undefined;
-                            location.href = location.href;
+                            window.location.href = location.href;
                         } } );
 
                     return false;
@@ -414,7 +414,7 @@ jQuery( document ).on( 'click', '#managesites-backup-all', function () {
     mainwpPopup( '#managesites-backup-box' ).setActionButtons( '<input id="managesites-backupnow-close" type="button" name="Ignore" value="' + __( 'Cancel' ) + '" class="button"/>' );
     mainwpPopup( '#managesites-backup-box' ).init( { title: __( "Full backup" ), callback: function () {
             managesitesContinueAfterBackup = undefined;
-            location.href = location.href;
+            window.location.href = location.href;
         } } );
     //var sitesToBackup = jQuery('.managesites-backup-site');
     var sitesToBackup = mainwpPopup( '#managesites-backup-box' ).getContentEl().find( '.managesites-backup-site' );
@@ -600,7 +600,7 @@ managesites_wordpress_global_upgrade_all = function ( updateSiteIds )
         {
             mainwpPopup( '#mainwp-sync-sites-modal' ).init( { title: __( "Updating WordPress" ), total: allWebsiteIds.length, pMax: sitesCount, statusText:  __( 'updated' ),callback: function () {
                     bulkManageSitesTaskRunning = false;
-                    location.href = location.href;
+                    window.location.href = location.href;
                 } } );
             
             var dateObj = new Date();

@@ -56,13 +56,15 @@ class MainWP_Manage_Backups {
 		if ( is_array( $customPage ) && isset( $customPage['slug'] ) && ! empty( $mainwp_primaryBackup) ) {
 			self::$hideSubmenuBackups = true;
 			add_submenu_page( 'mainwp_tab', $customPage['title'], '<span id="mainwp-Backups">' . $customPage['title'] . '</span>', 'read', 'ManageBackups' . $customPage['slug'], $customPage['callback'] );
-			MainWP_Menu::add_left_menu( array(
-				'title'      => $customPage['title'],
-				'parent_key' => 'mainwp_tab',
-				'slug'       => 'ManageBackups' . $customPage['slug'],
-				'href'       => 'admin.php?page=ManageBackups' . $customPage['slug'],
-				'icon'       => '<i class="hdd outline icon"></i>',
-			), 1 ); // level 1
+			MainWP_Menu::add_left_menu(
+				array(
+					'title'      => $customPage['title'],
+					'parent_key' => 'mainwp_tab',
+					'slug'       => 'ManageBackups' . $customPage['slug'],
+					'href'       => 'admin.php?page=ManageBackups' . $customPage['slug'],
+					'icon'       => '<i class="hdd outline icon"></i>',
+				), 1 
+			); // level 1
 
 		} else {
 			if ( $enable_legacy_backup ) {
@@ -134,13 +136,15 @@ class MainWP_Manage_Backups {
 
 	public static function init_left_menu( $subPages = array(), $enableLegacyBackup = true ) {
 		if ( ! self::$hideSubmenuBackups && $enableLegacyBackup ) {
-			MainWP_Menu::add_left_menu( array(
-				'title'             => __('Backups', 'mainwp'),
-				'parent_key'        => 'mainwp_tab',
-				'slug'              => 'ManageBackups',
-				'href'              => 'admin.php?page=ManageBackups',
-				'icon'              => '<i class="hdd outline icon"></i>',
-			), 1 ); // level 1
+			MainWP_Menu::add_left_menu(
+				array(
+					'title'             => __('Backups', 'mainwp'),
+					'parent_key'        => 'mainwp_tab',
+					'slug'              => 'ManageBackups',
+					'href'              => 'admin.php?page=ManageBackups',
+					'icon'              => '<i class="hdd outline icon"></i>',
+				), 1 
+			); // level 1
 
 			$init_sub_subleftmenu = array(
 				array(

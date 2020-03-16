@@ -669,8 +669,7 @@ class MainWP_UI {
 		}
 	}
 
-	public static function get_empty_bulk_actions() {
-		ob_start();
+	public static function render_empty_bulk_actions() {		
 		?>
 		<?php esc_html_e( 'Bulk Actions: ', 'mainwp' ); ?>
 		<div class="ui disabled dropdown" id="mainwp-bulk-actions">
@@ -678,9 +677,7 @@ class MainWP_UI {
 		  <div class="menu"></div>
 		</div>
 		<button class="ui tiny basic disabled button" href="javascript:void(0)" ><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
-		<?php
-		$output = ob_get_clean();
-		return $output;
+		<?php	
 	}
 
 	public static function render_modal_install_plugin_theme( $what = 'plugin' ) {

@@ -325,8 +325,8 @@ jQuery( document ).ready( function () {
     jQuery( 'span[id^=mainwp]' ).each( function () {
         jQuery( this ).parent().parent().hover( function () {
             var spanEl = jQuery( this ).find( 'span[id^=mainwp]' );
-            var spanId;
-            if ( spanId = /^mainwp-(.*)$/.exec( spanEl.attr( 'id' ) ) ) {
+            var spanId = /^mainwp-(.*)$/.exec( spanEl.attr( 'id' ) );
+            if ( spanId ) {
                 if ( hidingSubMenuTimers[spanId[1]] ) {
                     clearTimeout( hidingSubMenuTimers[spanId[1]] );
                 }
@@ -339,7 +339,8 @@ jQuery( document ).ready( function () {
             }
         }, function () {
             var spanEl = jQuery( this ).find( 'span[id^=mainwp]' );
-            if ( spanId = /^mainwp-(.*)$/.exec( spanEl.attr( 'id' ) ) ) {
+            var spanId = /^mainwp-(.*)$/.exec( spanEl.attr( 'id' ) );
+            if ( spanId ) {
                 hidingSubMenuTimers[spanId[1]] = setTimeout( function ( span ) {
                     return function () {
                         subMenuOut( span );
@@ -350,14 +351,16 @@ jQuery( document ).ready( function () {
     } );
     jQuery( '.mainwp-submenu-wrapper' ).on( {
         mouseenter: function () {
-            if ( spanId = /^menu-mainwp-(.*)$/.exec( jQuery( this ).attr( 'id' ) ) ) {
+            var spanId = /^menu-mainwp-(.*)$/.exec( jQuery( this ).attr( 'id' ) );
+            if ( spanId ) {
                 if ( hidingSubMenuTimers[spanId[1]] ) {
                     clearTimeout( hidingSubMenuTimers[spanId[1]] );
                 }
             }
         },
         mouseleave: function () {
-            if ( spanId = /^menu-mainwp-(.*)$/.exec( jQuery( this ).attr( 'id' ) ) ) {
+            var spanId = /^menu-mainwp-(.*)$/.exec( jQuery( this ).attr( 'id' ) );
+            if ( spanId ) {
                 hidingSubMenuTimers[spanId[1]] = setTimeout( function ( span ) {
                     return function () {
                         subMenuOut( span );
@@ -431,7 +434,7 @@ var securityIssues_fixes = [ 'listing', 'wp_version', 'rsd', 'wlw', 'core_update
 jQuery( document ).ready( function () {
   var securityIssueSite = jQuery( '#securityIssueSite' );
   if ( ( securityIssueSite.val() != null ) && ( securityIssueSite.val() != "" ) ) {
-    jQuery( '#securityIssues_fixAll' ).live( 'click', function ( event ) {
+    jQuery( '#securityIssues_fixAll' ).live( 'click', function () {
       securityIssues_fix( 'all' );
     } );
 
@@ -451,14 +454,14 @@ jQuery( document ).ready( function () {
 
     for ( var i = 0; i < securityIssues_fixes.length; i++ ) {
       jQuery( '#' + securityIssues_fixes[i] + '_fix' ).bind( 'click', function ( what ) {
-        return function ( event ) {
+        return function () {
           securityIssues_fix( what );
           return false;
         }
       }( securityIssues_fixes[i] ) );
 
       jQuery( '#' + securityIssues_fixes[i] + '_unfix' ).bind( 'click', function ( what ) {
-        return function ( event ) {
+        return function () {
           securityIssues_unfix( what );
           return false;
         }
@@ -546,11 +549,11 @@ mainwp_fix_all_security_issues = function ( siteId, refresh ) {
   jQuery( '.fix-all-site-security-issues' ).addClass( 'disabled' );
   jQuery( '.unfix-all-site-security-issues' ).addClass( 'disabled' );
 
-  jQuery.post( ajaxurl, data, function ( pRefresh, pElement ) {
-    return function ( response ) {
+  jQuery.post( ajaxurl, data, function ( pRefresh ) {
+    return function () {
       el.show();
       if ( pRefresh || ( completedSecurityIssues != undefined && --completedSecurityIssues <= 0 ) ) {
-        location.href = location.href;
+        window.location.href = location.href;
       }
     }
   }( refresh, el ), 'json' );
@@ -570,8 +573,8 @@ jQuery( document ).on( 'click', '.unfix-all-site-security-issues', function () {
   jQuery( '.fix-all-site-security-issues' ).addClass( 'disabled' );
   jQuery( '.unfix-all-site-security-issues' ).addClass( 'disabled' );
 
-  jQuery.post( ajaxurl, data, function ( response ) {
-    location.href = location.href;
+  jQuery.post( ajaxurl, data, function () {
+    window.location.href = location.href;
   }, 'json' );
 } );
 securityIssues_unfix = function ( feature ) {
@@ -660,12 +663,12 @@ securityIssues_handle = function ( response ) {
  */
 
 jQuery( document ).ready( function () {
-    jQuery( '#mainwp-sync-sites' ).on( 'click', function ( event ) {
+    jQuery( '#mainwp-sync-sites' ).on( 'click', function () {
       mainwp_sync_sites_data();
     } );
 
     // to compatible with extensions
-    jQuery('#dashboard_refresh').on('click', function (event) {
+    jQuery('#dashboard_refresh').on('click', function () {
         mainwp_sync_sites_data();
     });
 });
@@ -704,7 +707,7 @@ mainwp_sync_sites_data = function ( syncSiteIds ) {
     callback: function () {
       bulkTaskRunning = false;
       history.pushState("", document.title, window.location.pathname + window.location.search); // to fix issue for url with hash
-      location.href = location.href;
+      window.location.href = location.href;
   } } );
 
   dashboard_update(allWebsiteIds, globalSync);
@@ -715,7 +718,8 @@ mainwp_sync_sites_data = function ( syncSiteIds ) {
             status: 'last_sync_sites',
             isGlobalSync: globalSync
         };
-        jQuery.post(ajaxurl, mainwp_secure_data(data), function (res) {
+        jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
+            
         });
     }
 
@@ -725,7 +729,6 @@ var websitesToUpdate = [ ];
 var websitesTotal = 0;
 var websitesLeft = 0;
 var websitesDone = 0;
-var websitesError = 0;
 var currentWebsite = 0;
 var bulkTaskRunning = false;
 var currentThreads = 0;
@@ -735,8 +738,7 @@ var globalSync = true;
 dashboard_update = function ( websiteIds, isGlobalSync) {
   websitesToUpdate = websiteIds;
   currentWebsite = 0;
-  websitesDone = 0;
-  websitesError = 0;
+  websitesDone = 0;  
   websitesTotal = websitesLeft = websitesToUpdate.length;
   globalSync = isGlobalSync;
 
@@ -810,8 +812,7 @@ dashboard_update_next_int = function ( websiteId, data, errors ) {
     success: function ( pWebsiteId ) {
       return function ( response ) {
         if ( response.error ) {
-          dashboard_update_site_status( pWebsiteId, '<i class="exclamation red icon"></i>' );
-          websitesError++;
+          dashboard_update_site_status( pWebsiteId, '<i class="exclamation red icon"></i>' );          
         } else {
           dashboard_update_site_status( websiteId, '<i class="check green icon"></i>', true );
         }
@@ -819,10 +820,9 @@ dashboard_update_next_int = function ( websiteId, data, errors ) {
         }
     }( websiteId ),
     error: function ( pWebsiteId, pData, pErrors ) {
-      return function ( response ) {
+      return function () {
         if ( pErrors > 5 ) {
-          dashboard_update_site_status( pWebsiteId, '<i class="exclamation yellow icon"></i>' );
-          websitesError++;
+          dashboard_update_site_status( pWebsiteId, '<i class="exclamation yellow icon"></i>' );          
           dashboard_update_done();
         } else {
           pErrors++;
@@ -853,13 +853,12 @@ mainwp_tool_disconnect_sites = function () {
     pMax: nrOfWebsites,
     statusText: __( 'disconnected' ),
     callback: function () {
-      location.href = location.href;
+      window.location.href = location.href;
   } } );
 
   websitesToUpdate = allWebsiteIds;
   currentWebsite = 0;
-  websitesDone = 0;
-  websitesError = 0;
+  websitesDone = 0;  
   websitesTotal = websitesLeft = websitesToUpdate.length;
 
   bulkTaskRunning = true;
@@ -910,8 +909,7 @@ mainwp_tool_disconnect_sites_next_int = function ( websiteId, data, errors ) {
     success: function ( pWebsiteId ) {
       return function ( response ) {
             if ( response && response.error ) {
-              dashboard_update_site_status( pWebsiteId, response.error + '<i class="exclamation red icon"></i>' );
-              websitesError++;
+              dashboard_update_site_status( pWebsiteId, response.error + '<i class="exclamation red icon"></i>' );              
             } else if (response && response.result == 'success') {
               dashboard_update_site_status( websiteId, '<i class="check green icon"></i>', true );
             } else {
@@ -921,10 +919,9 @@ mainwp_tool_disconnect_sites_next_int = function ( websiteId, data, errors ) {
         }
     }( websiteId ),
     error: function ( pWebsiteId, pData, pErrors ) {
-      return function ( response ) {
+      return function () {
         if ( pErrors > 5 ) {
-          dashboard_update_site_status( pWebsiteId, '<i class="exclamation yellow icon"></i>' );
-          websitesError++;
+          dashboard_update_site_status( pWebsiteId, '<i class="exclamation yellow icon"></i>' );          
           mainwp_tool_disconnect_sites_done();
         } else {
           pErrors++;
@@ -943,7 +940,7 @@ mainwp_links_visit_site_and_admin = function(pUrl, pSiteId ) {
 
 //Ignore plugin
 jQuery( document ).ready( function () {
-    jQuery( document ).on( 'click', 'input[name="plugins"]', function ( event )
+    jQuery( document ).on( 'click', 'input[name="plugins"]', function ()
     {
         if ( jQuery( this ).is( ':checked' ) )
         {
@@ -955,7 +952,7 @@ jQuery( document ).ready( function () {
             jQuery( 'input[name="plugin[]"]' ).removeAttr( 'checked' );
         }
     } );
-    jQuery( document ).on( 'click', 'input[name="themes"]', function ( event )
+    jQuery( document ).on( 'click', 'input[name="themes"]', function ()
     {
         if ( jQuery( this ).is( ':checked' ) )
         {
@@ -968,7 +965,7 @@ jQuery( document ).ready( function () {
         }
     } );
 
-  jQuery( document ).on( 'click', '#mainwp-bulk-trust-plugins-action-apply', function ( event ) {
+  jQuery( document ).on( 'click', '#mainwp-bulk-trust-plugins-action-apply', function () {
 
     var action = jQuery( '#mainwp-bulk-actions' ).find( '.item.selected' ).attr( 'value' );
 
@@ -990,14 +987,14 @@ jQuery( document ).ready( function () {
             do: action
         } );
 
-        jQuery.post( ajaxurl, data, function ( resp ) {
+        jQuery.post( ajaxurl, data, function () {
             jQuery( '#mainwp-bulk-trust-plugins-action-apply' ).removeAttr( 'disabled' );
             mainwp_fetch_all_active_plugins();
         }, 'json' );
 
         return false;
     } );
-    jQuery( document ).on( 'click', '#mainwp-bulk-trust-themes-action-apply', function ( event ) {
+    jQuery( document ).on( 'click', '#mainwp-bulk-trust-themes-action-apply', function () {
         var action = jQuery("#mainwp-bulk-actions").dropdown( "get value" );
         if ( action == 'none' )
             return false;
@@ -1016,7 +1013,7 @@ jQuery( document ).ready( function () {
             do: action
         } );
 
-        jQuery.post( ajaxurl, data, function ( resp ) {
+        jQuery.post( ajaxurl, data, function () {
             jQuery( '#mainwp-bulk-trust-themes-action-apply' ).removeAttr( 'disabled' );
             mainwp_fetch_all_themes();
         }, 'json' );
@@ -1233,7 +1230,7 @@ updatesoverview_themes_ignore_all = function ( slug, name, obj ) {
 };
 
 // Unignore all globally ignored themes
-updatesoverview_themes_unignore_globally_all = function ( slug ) {
+updatesoverview_themes_unignore_globally_all = function () {
     var data = mainwp_secure_data( {
         action: 'mainwp_unignorepluginsthemes',
         type: 'theme',
@@ -1323,7 +1320,7 @@ updatesoverview_upgrade_translation_all = function ( id ) {
     return false;
 };
 
-updatesoverview_group_upgrade_translation_all = function ( id, groupId, obj ) {
+updatesoverview_group_upgrade_translation_all = function ( id, groupId ) {
     var msg = __( 'Are you sure you want to update all translations?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_group_upgrade_plugintheme_all( 'translation', id, false, groupId );
@@ -1350,7 +1347,7 @@ updatesoverview_upgrade_plugin_all = function ( id ) {
     return false;
 };
 
-updatesoverview_group_upgrade_plugin_all = function ( id, groupId, obj ) {
+updatesoverview_group_upgrade_plugin_all = function ( id, groupId ) {
     var msg = __( 'Are you sure you want to update all plugins?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_group_upgrade_plugintheme_all( 'plugin', id, false, groupId );
@@ -1376,7 +1373,7 @@ updatesoverview_upgrade_theme_all = function ( id ) {
     return false;
 };
 
-updatesoverview_group_upgrade_theme_all = function ( id, groupId, obj ) {
+updatesoverview_group_upgrade_theme_all = function ( id, groupId ) {
     var msg = __( 'Are you sure you want to update all themes?' );
     mainwp_confirm(msg, function(){
         return updatesoverview_group_upgrade_plugintheme_all( 'theme', id, false, groupId );
@@ -1395,7 +1392,7 @@ updatesoverview_upgrade_plugintheme_all = function ( what, id, noCheck ) {
         {
             var list = [ ];
             var slug_att = pWhat + '_slug';
-            jQuery( "#wp_" + pWhat + "_upgrades_" + pId + " tr[updated=0]" ).each( function ( index, value ) {
+            jQuery( "#wp_" + pWhat + "_upgrades_" + pId + " tr[updated=0]" ).each( function () {
                 var slug = jQuery(this).attr( slug_att );
                 if ( slug ) {
                     list.push( slug );
@@ -1431,7 +1428,7 @@ updatesoverview_group_upgrade_plugintheme_all = function ( what, id, noCheck, gr
         {
             var list = [ ];
             var slug_att = pWhat + '_slug';
-            jQuery( "#wp_" + pWhat + "_upgrades_" + pId + '_group_' + groupId + " tr[updated=0]" ).each( function ( index, value ) {
+            jQuery( "#wp_" + pWhat + "_upgrades_" + pId + '_group_' + groupId + " tr[updated=0]" ).each( function () {
                 var slug = jQuery(this).attr( slug_att );
                 if ( slug ) {
                     list.push( slug );
@@ -1503,11 +1500,11 @@ updatesoverview_upgrade_plugintheme_list = function ( what, id, list, noCheck, g
                     slug: newList.join( ',' )
                 } );
                 jQuery.post( ajaxurl, data, function ( response ) {
-                    var result, success = false;
+                    var success = false;
                     if ( response.error ) {
-//                        result = getErrorMessage( response.error );
-
-                    } else
+                        console.log( response.error );
+                    } 
+                    else
                     {
                         var res = response.result;
                         for ( var i = 0; i < newList.length; i++ ) {
@@ -1641,7 +1638,7 @@ updatesoverview_show = function ( what, leave_text ) {
  * Manage backups page
  */
 jQuery( document ).ready( function () {
-    jQuery( '.backup_destination_exclude' ).live( 'click', function ( event )
+    jQuery( '.backup_destination_exclude' ).live( 'click', function ()
     {
         jQuery( this ).parent().parent().animate( { height: 0 }, { duration: 'slow', complete: function () {
                 jQuery( this ).remove();
@@ -1653,12 +1650,12 @@ jQuery( document ).ready( function () {
     jQuery( '#mainwp_managebackups_update' ).on( 'click', function ( event ) {
         mainwp_managebackups_update( event );
     } );
-    jQuery( '.backup_run_now' ).live( 'click', function ( event )
+    jQuery( '.backup_run_now' ).live( 'click', function ()
     {
         managebackups_run_now( jQuery( this ) );
         return false;
     } );
-    jQuery( '#managebackups-task-status-close' ).live( 'click', function ( event )
+    jQuery( '#managebackups-task-status-close' ).live( 'click', function ()
     {
         backupDownloadRunning = false;
         mainwpPopup( '#managebackups-task-status-box' ).close(true);
@@ -1666,7 +1663,7 @@ jQuery( document ).ready( function () {
     managebackups_init();
 
 } );
-managebackups_exclude_folder = function ( pElement, pEvent )
+managebackups_exclude_folder = function ( pElement )
 {
     var folder = pElement.parent().attr( 'rel' ) + "\n";
     if ( jQuery( '#excluded_folders_list' ).val().indexOf( folder ) !== -1 )
@@ -1675,7 +1672,6 @@ managebackups_exclude_folder = function ( pElement, pEvent )
     jQuery( '#excluded_folders_list' ).val( jQuery( '#excluded_folders_list' ).val() + folder );
 };
 
-var manageBackupsTaskSites;
 var manageBackupsError = false;
 var manageBackupsTaskRemoteDestinations;
 var manageBackupsTaskId;
@@ -1981,7 +1977,7 @@ managebackups_backup_upload_file = function ( pSiteId, pSiteName, pFile, pRegexF
                 }
             }( pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, data, unique, remote_destination.id ),
             error: function ( pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId ) {
-                return function ( response ) {
+                return function () {
                     managebackups_backup_upload_file_retry_fail( pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId );
                 }
             }( pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, data, unique, remote_destination.id ),
@@ -2116,7 +2112,7 @@ managebackups_init = function () {
     jQuery( '#mainwp_managebackups_add_message' ).html();
 };
 
-mainwp_managebackups_update = function ( event ) {
+mainwp_managebackups_update = function () {
     managebackups_init();
 
     var errors = [ ];
@@ -2126,7 +2122,7 @@ mainwp_managebackups_update = function ( event ) {
 
     if ( jQuery( '#select_by' ).val() == 'site' ) {
         var selected_sites = [ ];
-        jQuery( "input[name='selected_sites[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
             selected_sites.push( jQuery( this ).val() );
         } );
         if ( selected_sites.length == 0 ) {
@@ -2134,7 +2130,7 @@ mainwp_managebackups_update = function ( event ) {
         }
     } else {
         var selected_groups = [ ];
-        jQuery( "input[name='selected_groups[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_groups[]']:checked" ).each( function () {
             selected_groups.push( jQuery( this ).val() );
         } );
         if ( selected_groups.length == 0 ) {
@@ -2189,7 +2185,7 @@ mainwp_managebackups_update = function ( event ) {
         }, 'json' );
     }
 };
-mainwp_managebackups_add = function ( event ) {
+mainwp_managebackups_add = function () {
     managebackups_init();
 
     var errors = [ ];
@@ -2199,7 +2195,7 @@ mainwp_managebackups_add = function ( event ) {
 
     if ( jQuery( '#select_by' ).val() == 'site' ) {
         var selected_sites = [ ];
-        jQuery( "input[name='selected_sites[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
             selected_sites.push( jQuery( this ).val() );
         } );
         if ( selected_sites.length == 0 ) {
@@ -2207,7 +2203,7 @@ mainwp_managebackups_add = function ( event ) {
         }
     } else {
         var selected_groups = [ ];
-        jQuery( "input[name='selected_groups[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_groups[]']:checked" ).each( function () {
             selected_groups.push( jQuery( this ).val() );
         } );
         if ( selected_groups.length == 0 ) {
@@ -2482,7 +2478,7 @@ jQuery( document ).on( 'click', '.backuptaskschedule', function () {
 } );
 jQuery( document ).ready( function () {
 
-    jQuery(document).on('change', '#mainwp_managesites_add_wpurl', function(event) {
+    jQuery(document).on('change', '#mainwp_managesites_add_wpurl', function() {
         var url = jQuery( '#mainwp_managesites_add_wpurl' ).val();
         var protocol = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val();
         if ( url.lastIndexOf( 'http://' ) === 0 ) {
@@ -2500,12 +2496,12 @@ jQuery( document ).ready( function () {
     } );
 
     // Trigger the single site reconnect process
-    jQuery('#mainwp-manage-sites-table').on( 'click', '.mainwp_site_reconnect', function ( event ) {
+    jQuery('#mainwp-manage-sites-table').on( 'click', '.mainwp_site_reconnect', function () {
       mainwp_managesites_reconnect( jQuery( this ) );
       return false;
     } );
 
-    jQuery( '.mainwp-updates-overview-reconnect-site' ).on( 'click', function ( event ) {
+    jQuery( '.mainwp-updates-overview-reconnect-site' ).on( 'click', function () {
         mainwp_overview_reconnect( jQuery( this ) );
         return false;
     } );
@@ -2596,7 +2592,7 @@ mainwp_managesites_reconnect = function ( pElement ) {
 };
 
 // Connect a new website
-mainwp_managesites_add = function ( event ) {
+mainwp_managesites_add = function () {
     managesites_init();
 
     var errors = [ ];
@@ -2724,8 +2720,7 @@ mainwp_managesites_add = function ( event ) {
               jQuery( '#mainwp-message-zone' ).removeClass( 'red' );
               feedback( 'mainwp-message-zone', response, 'green' );
 
-              if ( site_id > 0 ) {
-                mainwp_get_site_icon( site_id );
+              if ( site_id > 0 ) {                
                 jQuery( '.sync-ext-row' ).attr( 'status', 'queue' );
                 setTimeout( function () {
                   mainwp_managesites_sync_extension_start_next( site_id );
@@ -2940,15 +2935,8 @@ mainwp_extension_apply_plugin_settings = function ( pPluginToInstall, pSiteId, p
     }, 'json' );
 }
 
-mainwp_get_site_icon = function ( siteId ) {
-    var data = mainwp_secure_data( {
-        action: 'mainwp_get_site_icon',
-        siteId: siteId
-    } );
-}
-
 // Test Connection
-mainwp_managesites_test = function ( event ) {
+mainwp_managesites_test = function () {
     var errors = [ ];
 
     if ( jQuery( '#mainwp_managesites_add_wpurl' ).val() == '' ) {
@@ -3092,7 +3080,7 @@ jQuery( document ).ready( function () {
         mainwp_managesites_add( event );
     } );
 
-    jQuery( '#mainwp_managesites_bulkadd' ).live( 'click', function ( event ) {
+    jQuery( '#mainwp_managesites_bulkadd' ).live( 'click', function () {
         if ( jQuery( '#mainwp_managesites_file_bulkupload' ).val() == '' ) {
             setHtml( '#mainwp-message-zone', __( 'Please enter csv file for upload.' ), false );
         } else {
@@ -3363,10 +3351,10 @@ mainwp_selected_refresh_count = function ( me )
     parent.find( '.mainwp_sites_selectcount' ).html( value );
 };
 
-mainwp_site_select = function ( elem ) {
+mainwp_site_select = function () {
     mainwp_newpost_updateCategories();
 };
-mainwp_group_select = function ( elem ) {
+mainwp_group_select = function () {
     mainwp_newpost_updateCategories();
 };
 
@@ -3442,11 +3430,11 @@ mainwp_newpost_updateCategories = function ()
                 return jQuery( el ).val();
             } );
         } else if ( tab == 'staging') {
-            sites = jQuery.map( jQuery( '#mainwp-select-staging-sites-list INPUT:checkbox:checked' ), function ( el, i ) {
+            sites = jQuery.map( jQuery( '#mainwp-select-staging-sites-list INPUT:checkbox:checked' ), function ( el ) {
                 return jQuery( el ).val();
             } );
         } else { //group
-            groups = jQuery.map( jQuery( '#mainwp-select-staging-sites-list INPUT:checkbox:checked' ), function ( el, i ) {
+            groups = jQuery.map( jQuery( '#mainwp-select-staging-sites-list INPUT:checkbox:checked' ), function ( el ) {
                 return jQuery( el ).val();
             } );
         }
@@ -3529,7 +3517,7 @@ jQuery( document ).ready( function () {
     jQuery( '#bulk_add_createuser' ).live( 'click', function ( event ) {
         mainwp_createuser( event );
     } );
-    jQuery( '#bulk_import_createuser' ).on( 'click', function ( event ) {
+    jQuery( '#bulk_import_createuser' ).on( 'click', function () {
         mainwp_bulkupload_users();
     } );
 } );
@@ -3553,7 +3541,7 @@ mainwp_createuser = function () {
 
     if ( jQuery( '#select_by' ).val() == 'site' ) {
         var selected_sites = [ ];
-        jQuery( "input[name='selected_sites[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
             selected_sites.push( jQuery( this ).val() );
         } );
         if ( selected_sites.length == 0 ) {
@@ -3562,7 +3550,7 @@ mainwp_createuser = function () {
         }
     } else {
         var selected_groups = [ ];
-        jQuery( "input[name='selected_groups[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_groups[]']:checked" ).each( function () {
             selected_groups.push( jQuery( this ).val() );
         } );
         if ( selected_groups.length == 0 ) {
@@ -3624,7 +3612,6 @@ mainwp_createuser = function () {
 /**
  * Bulk upload new user
  */
-var import_user_stop_by_user = false;
 var import_user_current_line_number = 0;
 var import_user_total_import = 0;
 var import_user_count_created_users = 0;
@@ -3864,14 +3851,17 @@ jQuery( document ).ready( function () {
         }
     } );
 
-    jQuery( document ).on( 'click', '#mainwp_plugin_bulk_install_btn', function (event) {
+    jQuery( document ).on( 'click', '#mainwp_plugin_bulk_install_btn', function () {
         var act = jQuery(this).attr('bulk-action');
         if ( act == 'install' ) {
             var selected = jQuery( "input[type='radio'][name='install-plugin']:checked" );
             if ( selected.length == 0 ) {
                 feedback( 'mainwp-message-zone', __( 'Please select plugin to install files.' ), 'yellow' );
-            } else if ( selectedId = /^install-([^\-]*)-(.*)$/.exec( selected.attr( 'id' ) ) ) {
-                mainwp_install_bulk( 'plugin', selectedId[2] );
+            } else {
+                var selectedId = /^install-([^\-]*)-(.*)$/.exec( selected.attr( 'id' ) );
+                if ( selectedId ) {
+                    mainwp_install_bulk( 'plugin', selectedId[2] );
+                }
             }
         } else if ( act == 'upload' ) {
             mainwp_upload_bulk( 'plugins' );
@@ -3880,14 +3870,16 @@ jQuery( document ).ready( function () {
         return false;
     } );
 
-    jQuery( document ).on( 'click', '#mainwp_theme_bulk_install_btn', function (event) {
+    jQuery( document ).on( 'click', '#mainwp_theme_bulk_install_btn', function () {
         var act = jQuery(this).attr('bulk-action');
         if (act == 'install') {
             var selected = jQuery( "input[type='radio'][name='install-theme']:checked" );
             if ( selected.length == 0 ) {
                 feedback( 'mainwp-message-zone', __( 'Please select theme to install files.' ), 'yellow' );
-            } else if ( selectedId = /^install-([^\-]*)-(.*)$/.exec( selected.attr( 'id' ) ) ) {
-                mainwp_install_bulk( 'theme', selectedId[2] );
+            } else {
+                var selectedId = /^install-([^\-]*)-(.*)$/.exec( selected.attr( 'id' ) );
+                if ( selectedId )
+                    mainwp_install_bulk( 'theme', selectedId[2] );
             }
         } else if (act == 'upload') {
             mainwp_upload_bulk('themes');
@@ -3917,7 +3909,7 @@ mainwp_install_bulk = function ( type, slug ) {
 
     if ( jQuery( '#select_by' ).val() == 'site' ) {
         var selected_sites = [ ];
-        jQuery( "input[name='selected_sites[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
             selected_sites.push( jQuery( this ).val() );
         } );
 
@@ -3931,7 +3923,7 @@ mainwp_install_bulk = function ( type, slug ) {
     } else {
         var selected_groups = [ ];
 
-        jQuery( "input[name='selected_groups[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_groups[]']:checked" ).each( function () {
             selected_groups.push( jQuery( this ).val() );
         } );
 
@@ -4113,7 +4105,7 @@ mainwp_upload_bulk = function ( type ) {
 
     var files = [ ];
 
-    jQuery( ".qq-upload-file" ).each( function ( i ) {
+    jQuery( ".qq-upload-file" ).each( function () {
         if ( jQuery( this ).closest('.file-uploaded-item').hasClass( 'qq-upload-success' )) {
             files.push( jQuery( this ).attr( 'filename' ) );
         }
@@ -4135,7 +4127,7 @@ mainwp_upload_bulk = function ( type ) {
     };
     if ( jQuery( '#select_by' ).val() == 'site' ) {
         var selected_sites = [ ];
-        jQuery( "input[name='selected_sites[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
             selected_sites.push( jQuery( this ).val() );
         } );
 
@@ -4146,7 +4138,7 @@ mainwp_upload_bulk = function ( type ) {
         data['selected_sites[]'] = selected_sites;
     } else {
         var selected_groups = [ ];
-        jQuery( "input[name='selected_groups[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_groups[]']:checked" ).each( function () {
             selected_groups.push( jQuery( this ).val() );
         } );
         if ( selected_groups.length == 0 ) {
@@ -4213,8 +4205,7 @@ mainwp_upload_bulk_start_next = function ( pType, pUrls, pActivatePlugin, pOverw
             action: 'mainwp_cleanbulkuploadplugintheme'
         } );
 
-        jQuery.post( ajaxurl, data, function ( resp ) { } );
-
+        jQuery.post( ajaxurl, data, function () { } );
         var msg = mainwp_install_bulk_you_know_msg(pType, jQuery('#bulk_upload_info').attr('number-files'));
         jQuery('#bulk_upload_info').html('<div class="mainwp-notice mainwp-notice-blue">' + msg + '</div>');
     }
@@ -4639,7 +4630,7 @@ backup_download_file = function ( pSiteId, type, url, file, regexfile, size, sub
                 backup_upload_file( pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize );
             }
         }( pSiteId, file, regexfile, subfolder, remote_destinations, size, type, url, data ),
-        error: function ( pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pUrl, pData ) {
+        error: function () {
             return function () {
                 //Try again in 10seconds
                 /*setTimeout(function() {
@@ -4760,7 +4751,7 @@ backup_upload_file = function ( pSiteId, pFile, pRegexFile, pSubfolder, pRemoteD
                 }
             }( pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, data, unique, remote_destination.id ),
             error: function ( pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pUnique, pRemoteDestId ) {
-                return function ( response ) {
+                return function () {
                     backup_upload_file_retry_fail( pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId );
                 }
             }( pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, data, unique, remote_destination.id ),
@@ -4870,7 +4861,7 @@ backup_upload_file_retry_fail = function ( pData, pSiteId, pFile, pRegexFile, pS
                             }
                         }( pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pRemoteDestId ),
                         error: function ( pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pRemoteDestId ) {
-                            return function ( response ) {
+                            return function () {
                                 backup_upload_file_retry_fail( pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId );
                             }
                         }( pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pRemoteDestId ),
@@ -4920,13 +4911,7 @@ function setHtml( what, text, ptag ) {
         jQuery( what ).html( text );
     scrollToElement( what );
 }
-function getUrlParameters() {
-    var map = { };
-    var parts = window.location.href.replace( /[?&]+([^=&]+)=([^&]*)/gi, function ( m, key, value ) {
-        map[key] = value;
-    } );
-    return map;
-}
+
 
 /**
  * Notes
@@ -5034,7 +5019,7 @@ if (jQuery( '.ui.calendar' ).length > 0 ) {
                         type: 'date',
                         monthFirst: false,
                         formatter: {
-                            date: function (date, settings) {
+                            date: function ( date ) {
                                 if (!date) return '';
                                 var day = date.getDate();
                                 var month = date.getMonth() + 1;
@@ -5160,14 +5145,14 @@ mainwp_fetch_pages = function () {
     var selected_groups = [ ];
 
     if ( jQuery( '#select_by' ).val() == 'site' ) {
-        jQuery( "input[name='selected_sites[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
             selected_sites.push( jQuery( this ).val() );
         } );
         if ( selected_sites.length == 0 ) {
             errors.push( '<div class="mainwp-notice mainwp-notice-red">' + __( 'Please select websites or groups.' ) + '</div>' );
         }
     } else {
-        jQuery( "input[name='selected_groups[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_groups[]']:checked" ).each( function () {
             selected_groups.push( jQuery( this ).val() );
         } );
         if ( selected_groups.length == 0 ) {
@@ -5175,12 +5160,12 @@ mainwp_fetch_pages = function () {
         }
     }
 
-    var status = '';
+    var _status = '';
     var statuses = jQuery("#mainwp_page_search_type").dropdown("get value");
     if (statuses == null)
         errors.push( 'Please select a page status.' );
     else {
-        status = statuses.join(',');
+        _status = statuses.join(',');
     }
 
     if ( errors.length > 0 ) {
@@ -5197,7 +5182,7 @@ mainwp_fetch_pages = function () {
         keyword: jQuery( '#mainwp_page_search_by_keyword' ).val(),
         dtsstart: jQuery( '#mainwp_page_search_by_dtsstart' ).val(),
         dtsstop: jQuery( '#mainwp_page_search_by_dtsstop' ).val(),
-        status: status,
+        status: _status,
         'groups[]': selected_groups,
         'sites[]': selected_sites,
         maximum: jQuery( "#mainwp_maximumPages" ).val(),
@@ -5326,7 +5311,7 @@ jQuery( document ).ready( function () {
                 }
 
                 pluginCountSent++;
-                jQuery.post( ajaxurl, data, function ( response ) {
+                jQuery.post( ajaxurl, data, function () {
                     pluginCountReceived++;
                     if ( pluginResetAllowed && pluginCountReceived == pluginCountSent ) {
                         pluginCountReceived = 0;
@@ -5447,27 +5432,29 @@ mainwp_fetch_plugins = function () {
     var selected_groups = [ ];
 
     if ( jQuery( '#select_by' ).val() == 'site' ) {
-        jQuery( "input[name='selected_sites[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
             selected_sites.push( jQuery( this ).val() );
         } );
         if ( selected_sites.length == 0 ) {
       errors.push( __( 'Please select at least one website or group.' ) );
         }
     } else {
-        jQuery( "input[name='selected_groups[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_groups[]']:checked" ).each( function () {
             selected_groups.push( jQuery( this ).val() );
         } );
         if ( selected_groups.length == 0 ) {
       errors.push( __( 'Please select at least one website or group.' ) );
         }
     }
-
+    
+    var _status;
+    
     var statuses = jQuery( "#mainwp_plugins_search_by_status" ).dropdown( "get value" );
 
     if ( statuses == null )
         errors.push( __( 'Please select at least one plugin status.' ) );
     else {
-        status = statuses.join( ',' );
+        _status = statuses.join( ',' );
     }
 
     if ( errors.length > 0 ) {
@@ -5484,7 +5471,7 @@ mainwp_fetch_plugins = function () {
     var data = mainwp_secure_data( {
         action: 'mainwp_plugins_search',
         keyword: jQuery( '#mainwp_plugin_search_by_keyword' ).val(),
-        status: status,
+        status: _status,
         'groups[]': selected_groups,
         'sites[]': selected_sites
     } );
@@ -5522,7 +5509,7 @@ mainwp_fetch_all_active_plugins = function () {
 };
 
 // Fetch themes for the Auto Update feature
-mainwp_fetch_all_themes = function ( pSearch ) {
+mainwp_fetch_all_themes = function () {
     var data = mainwp_secure_data( {
         action: 'mainwp_themes_search_all',
         keyword: jQuery( "#mainwp_au_theme_keyword" ).val(),
@@ -5691,26 +5678,26 @@ mainwp_fetch_posts = function ( postId, userId ) {
     var selected_groups = [ ];
 
     if ( jQuery( '#select_by' ).val() == 'site' ) {
-        jQuery( "input[name='selected_sites[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
             selected_sites.push( jQuery( this ).val() );
         } );
         if ( selected_sites.length == 0 ) {
             errors.push( '<div class="ui yellow message">' + __( 'Please select at least one website or group.' ) + '</div>' );
         }
     } else {
-        jQuery( "input[name='selected_groups[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_groups[]']:checked" ).each( function () {
             selected_groups.push( jQuery( this ).val() );
         } );
         if ( selected_groups.length == 0 ) {
             errors.push( '<div class="ui yellow message">' + __( 'Please select at least one website or group.' ) + '</div>' );
         }
     }
-
+    var _status = '';
     var statuses = jQuery("#mainwp_post_search_type").dropdown("get value");
     if (statuses == null)
         errors.push( '<div class="ui yellow message">' + __( 'Please select at least one post status.' ) + '</div>' );
     else {
-        status = statuses.join(',');
+        _status = statuses.join(',');
     }
 
 
@@ -5728,7 +5715,7 @@ mainwp_fetch_posts = function ( postId, userId ) {
         keyword: jQuery( '#mainwp_post_search_by_keyword' ).val(),
         dtsstart: jQuery( '#mainwp_post_search_by_dtsstart' ).val(),
         dtsstop: jQuery( '#mainwp_post_search_by_dtsstop' ).val(),
-        status: status,
+        status: _status,
         'groups[]': selected_groups,
         'sites[]': selected_sites,
         postId: ( postId == undefined ? '' : postId ),
@@ -5864,7 +5851,7 @@ jQuery( document ).ready( function () {
                 }
 
                 themeCountSent++;
-                jQuery.post( ajaxurl, data, function ( response ) {
+                jQuery.post( ajaxurl, data, function () {
                     themeCountReceived++;
                     if ( themeResetAllowed && themeCountReceived == themeCountSent ) {
                         themeCountReceived = 0;
@@ -5886,7 +5873,7 @@ jQuery( document ).ready( function () {
                 } );
 
                 themeCountSent++;
-                jQuery.post( ajaxurl, data, function ( response ) {
+                jQuery.post( ajaxurl, data, function () {
                     themeCountReceived++;
                     if ( themeResetAllowed && themeCountReceived == themeCountSent ) {
                         themeCountReceived = 0;
@@ -5946,21 +5933,22 @@ mainwp_fetch_themes = function () {
     var selected_groups = [ ];
 
     if ( jQuery( '#select_by' ).val() == 'site' ) {
-        jQuery( "input[name='selected_sites[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
             selected_sites.push( jQuery( this ).val() );
         } );
         if ( selected_sites.length == 0 ) {
       errors.push( __( 'Please select at least one website or group.' ) );
         }
     } else {
-        jQuery( "input[name='selected_groups[]']:checked" ).each( function ( i ) {
+        jQuery( "input[name='selected_groups[]']:checked" ).each( function () {
             selected_groups.push( jQuery( this ).val() );
         } );
         if ( selected_groups.length == 0 ) {
       errors.push( __( 'Please select at least one website or group.' ) );
         }
     }
-
+    
+    var _status = '';
   var statuses = jQuery( "#mainwp_themes_search_by_status" ).dropdown( "get value" );
   if ( statuses == null )
     errors.push( __( 'Please select at least one theme status.' ) );
@@ -5982,7 +5970,7 @@ mainwp_fetch_themes = function () {
     var data = mainwp_secure_data( {
         action: 'mainwp_themes_search',
         keyword: jQuery( '#mainwp_theme_search_by_keyword' ).val(),
-        status: status,
+        status: _status,
         'groups[]': selected_groups,
         'sites[]': selected_sites
     } );
@@ -6239,14 +6227,14 @@ mainwp_fetch_users = function () {
   var selected_groups = [ ];
 
   if ( jQuery( '#select_by' ).val() == 'site' ) {
-    jQuery( "input[name='selected_sites[]']:checked" ).each( function ( i ) {
+    jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
       selected_sites.push( jQuery( this ).val() );
     } );
     if ( selected_sites.length == 0 ) {
       errors.push( __( 'Please select at least one website or group.' )  );
     }
   } else {
-    jQuery( "input[name='selected_groups[]']:checked" ).each( function ( i ) {
+    jQuery( "input[name='selected_groups[]']:checked" ).each( function () {
       selected_groups.push( jQuery( this ).val() );
     } );
     if ( selected_groups.length == 0 ) {
@@ -6483,7 +6471,7 @@ mainwp_uid = function () {
     return ( idstr );
 };
 
-scrollToElement = function ( pElement ) {
+scrollToElement = function () {
     jQuery( 'html,body' ).animate( {
         scrollTop: 0
     }, 1000 );
@@ -6627,7 +6615,7 @@ jQuery( document ).on( 'click', '.mainwp-events-notice-dismiss', function ()
         action: 'mainwp_events_notice_hide',
         notice: notice
     } );
-    jQuery.post( ajaxurl, data, function ( res ) {
+    jQuery.post( ajaxurl, data, function () {
     } );
     return false;
 } );
@@ -6654,7 +6642,7 @@ jQuery( document ).on( 'click', '#remove-mainwp-installation-warning', function 
   var data = mainwp_secure_data( {
     action: 'mainwp_installation_warning_hide'
   } );
-  jQuery.post( ajaxurl, data, function ( res ) { } );
+  jQuery.post( ajaxurl, data, function () { } );
   return false;
 } );
 
@@ -6671,7 +6659,7 @@ jQuery( document ).on( 'click', '.mainwp-notice-dismiss', function () {
     action: 'mainwp_notice_status_update'
   };
   data['notice_id'] = notice_id;
-  jQuery.post( ajaxurl, mainwp_secure_data( data ), function ( res ) { } );
+  jQuery.post( ajaxurl, mainwp_secure_data( data ), function () { } );
   return false;
 } );
 
@@ -6681,7 +6669,7 @@ jQuery( document ).on( 'click', '.mainwp-activate-notice-dismiss', function () {
         action: 'mainwp_dismiss_activate_notice',
         slug: jQuery( this ).closest( 'tr' ).attr( 'slug' )
     } );
-    jQuery.post( ajaxurl, data, function ( res ) {
+    jQuery.post( ajaxurl, data, function () {
     } );
     return false;
 } );
@@ -6726,7 +6714,7 @@ mainwp_managesites_update_childsite_value = function ( siteId, uniqueId ) {
         site_id: siteId,
         unique_id: uniqueId
     } );
-    jQuery.post( ajaxurl, data, function ( res ) {
+    jQuery.post( ajaxurl, data, function () {
     } );
     return false;
 };
@@ -6876,7 +6864,7 @@ mainwp_managesites_bulk_refresh_favico = function ( siteIds )
         statusText: __( 'updated' ),
         callback: function () {
             bulkManageSitesTaskRunning = false;
-            location.href = location.href;
+            window.location.href = location.href;
         }
     };
     mainwpPopup( '#mainwp-sync-sites-modal' ).init( initData );
@@ -7423,7 +7411,7 @@ mwp_childscan_next = function ()
             }
         }( childId ),
         error: function ( pId ) {
-            return function ( response ) {
+            return function () {
                 jQuery( 'tr[siteid="' + pId + '"]' ).children().last().html( 'Error while contacting site!' );
                 mwp_childscan_next();
             }

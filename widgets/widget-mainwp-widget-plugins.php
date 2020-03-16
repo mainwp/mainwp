@@ -212,10 +212,12 @@ class MainWP_Widget_Plugins {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed( $website, 'plugin_action', array(
-				'action' => $pAction,
-				'plugin' => $plugin,
-			) );
+			$information = MainWP_Utility::fetchUrlAuthed( 
+				$website, 'plugin_action', array(
+					'action' => $pAction,
+					'plugin' => $plugin,
+				) 
+			);
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}

@@ -1331,10 +1331,12 @@ class MainWP_Setup_Wizard {
 		curl_setopt( $ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
 		curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'POST' );
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $post_fields );
-		curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
-			'cache-control: no-cache',
-			'content-type: application/x-www-form-urlencoded',
-		) );
+		curl_setopt( 
+			$ch, CURLOPT_HTTPHEADER, array(
+				'cache-control: no-cache',
+				'content-type: application/x-www-form-urlencoded',
+			) 
+		);
 		$file_contents = curl_exec( $ch );
 		curl_close( $ch );
 

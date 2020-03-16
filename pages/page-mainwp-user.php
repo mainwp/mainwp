@@ -41,20 +41,26 @@ class MainWP_User {
 	}
 
 	public static function initMenu() {
-		add_submenu_page( 'mainwp_tab', __( 'Users', 'mainwp' ), '<span id="mainwp-Users">' . __( 'Users', 'mainwp' ) . '</span>', 'read', 'UserBulkManage', array(
-			self::getClassName(),
-			'render',
-		) );
+		add_submenu_page(
+			'mainwp_tab', __( 'Users', 'mainwp' ), '<span id="mainwp-Users">' . __( 'Users', 'mainwp' ) . '</span>', 'read', 'UserBulkManage', array(
+				self::getClassName(),
+				'render',
+			) 
+		);
 
-		add_submenu_page( 'mainwp_tab', __( 'Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'UserBulkAdd', array(
-			self::getClassName(),
-			'renderBulkAdd',
-		) );
+		add_submenu_page(
+			'mainwp_tab', __( 'Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'UserBulkAdd', array(
+				self::getClassName(),
+				'renderBulkAdd',
+			) 
+		);
 
-		add_submenu_page( 'mainwp_tab', __( 'Import Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Import Users', 'mainwp' ) . '</div>', 'read', 'BulkImportUsers', array(
-			self::getClassName(),
-			'renderBulkImportUsers',
-		) );
+		add_submenu_page(
+			'mainwp_tab', __( 'Import Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Import Users', 'mainwp' ) . '</div>', 'read', 'BulkImportUsers', array(
+				self::getClassName(),
+				'renderBulkImportUsers',
+			) 
+		);
 
 		/**
 		 * This hook allows you to add extra sub pages to the User page via the 'mainwp-getsubpages-user' filter.
@@ -111,14 +117,16 @@ class MainWP_User {
 	}
 
 	public static function init_left_menu( $subPages = array(), $level = 2 ) {
-		MainWP_Menu::add_left_menu( array(
-			'title'      => __( 'Users', 'mainwp' ),
-			'parent_key' => 'mainwp_tab',
-			'slug'       => 'UserBulkManage',
-			'href'       => 'admin.php?page=UserBulkManage',
-			'icon'       => '<i class="user icon"></i>',
-			'desc'       => 'Manage users on your child sites',
-		), 1 );
+		MainWP_Menu::add_left_menu(
+			array(
+				'title'      => __( 'Users', 'mainwp' ),
+				'parent_key' => 'mainwp_tab',
+				'slug'       => 'UserBulkManage',
+				'href'       => 'admin.php?page=UserBulkManage',
+				'icon'       => '<i class="user icon"></i>',
+				'desc'       => 'Manage users on your child sites',
+			), 1 
+		);
 
 		$init_sub_subleftmenu = array(
 			array(
@@ -363,7 +371,7 @@ class MainWP_User {
 			?>
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
-				jQuery( '#mainwp_user_roles' ).dropdown( 'set selected', [<?php echo $status; ?>] );
+				jQuery( '#mainwp_user_roles' ).dropdown( 'set selected', [<?php esc_html_e( $status ); ?>] );
 			} );
 			</script>
 			<?php
@@ -657,17 +665,20 @@ class MainWP_User {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-							'id',
-							'url',
-							'name',
-							'adminname',
-							'nossl',
-							'privkey',
-							'nosslkey',
-							'http_user',
-							'http_pass',
-						) );
+						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+							$website, 
+							array(
+								'id',
+								'url',
+								'name',
+								'adminname',
+								'nossl',
+								'privkey',
+								'nosslkey',
+								'http_user',
+								'http_pass',
+							) 
+						);
 					}
 				}
 			}
@@ -679,17 +690,20 @@ class MainWP_User {
 							if ( '' !== $website->sync_errors ) {
 								continue;
 							}
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-								'id',
-								'url',
-								'name',
-								'adminname',
-								'nossl',
-								'privkey',
-								'nosslkey',
-								'http_user',
-								'http_pass',
-							) );
+							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+								$website, 
+								array(
+									'id',
+									'url',
+									'name',
+									'adminname',
+									'nossl',
+									'privkey',
+									'nosslkey',
+									'http_user',
+									'http_pass',
+								) 
+							);
 						}
 						MainWP_DB::free_result( $websites );
 					}
@@ -708,13 +722,15 @@ class MainWP_User {
 			), $output );
 		}
 
-		MainWP_Cache::addContext( 'Users', array(
-			'count'   => $output->users,
-			'keyword' => $search,
-			'status'  => ( isset( $_POST['role'] ) ? $_POST['role'] : 'administrator' ),
-			'sites'   => '' !== $sites ? $sites : '',
-			'groups'  => '' !== $groups ? $groups : '',
-		) );
+		MainWP_Cache::addContext(
+			'Users', array(
+				'count'   => $output->users,
+				'keyword' => $search,
+				'status'  => ( isset( $_POST['role'] ) ? $_POST['role'] : 'administrator' ),
+				'sites'   => '' !== $sites ? $sites : '',
+				'groups'  => '' !== $groups ? $groups : '',
+			) 
+		);
 
 		// Sort if required
 
@@ -873,13 +889,15 @@ class MainWP_User {
 		$optimize = ( 1 == get_option( 'mainwp_optimize' ) ) ? 1 : 0;
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed( $website, 'user_action', array(
-				'action'    => $pAction,
-				'id'        => $userId,
-				'extra'     => $extra,
-				'user_pass' => $pass,
-				'optimize'  => $optimize,
-			) );
+			$information = MainWP_Utility::fetchUrlAuthed(
+				$website, 'user_action', array(
+					'action'    => $pAction,
+					'id'        => $userId,
+					'extra'     => $extra,
+					'user_pass' => $pass,
+					'optimize'  => $optimize,
+				) 
+			);
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
@@ -1146,25 +1164,9 @@ class MainWP_User {
 				foreach ( $selected_sites as $k ) {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
 						$website                    = MainWP_DB::Instance()->getWebsiteById( $k );
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-							'id',
-							'url',
-							'name',
-							'adminname',
-							'nossl',
-							'privkey',
-							'nosslkey',
-							'http_user',
-							'http_pass',
-						) );
-					}
-				}
-			} else {
-				foreach ( $selected_groups as $k ) {
-					if ( MainWP_Utility::ctype_digit( $k ) ) {
-						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
-						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
+						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+							$website, 
+							array(
 								'id',
 								'url',
 								'name',
@@ -1174,7 +1176,29 @@ class MainWP_User {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-							) );
+							) 
+						);
+					}
+				}
+			} else {
+				foreach ( $selected_groups as $k ) {
+					if ( MainWP_Utility::ctype_digit( $k ) ) {
+						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+								$website, 
+								array(
+									'id',
+									'url',
+									'name',
+									'adminname',
+									'nossl',
+									'privkey',
+									'nosslkey',
+									'http_user',
+									'http_pass',
+								) 
+							);
 						}
 						MainWP_DB::free_result( $websites );
 					}
@@ -1395,17 +1419,19 @@ class MainWP_User {
 				if ( ! empty( $url ) ) {
 					$website = MainWP_DB::Instance()->getWebsitesByUrl( $url );
 					if ( $website ) {
-						$dbwebsites[ $website[0]->id ] = MainWP_Utility::mapSite( $website[0], array(
-							'id',
-							'url',
-							'name',
-							'adminname',
-							'nossl',
-							'privkey',
-							'nosslkey',
-							'http_user',
-							'http_pass',
-						) );
+						$dbwebsites[ $website[0]->id ] = MainWP_Utility::mapSite(
+							$website[0], array(
+								'id',
+								'url',
+								'name',
+								'adminname',
+								'nossl',
+								'privkey',
+								'nosslkey',
+								'http_user',
+								'http_pass',
+							) 
+						);
 					} else {
 						$not_valid[]  = __( 'Unexisting website. Please try again.', 'mainwp' ) . ' ' . $url;
 						$error_sites .= $url . ';';
@@ -1418,17 +1444,20 @@ class MainWP_User {
 					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupName( $group ) );
 					if ( $websites ) {
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-								'id',
-								'url',
-								'name',
-								'adminname',
-								'nossl',
-								'privkey',
-								'nosslkey',
-								'http_user',
-								'http_pass',
-							) );
+							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+								$website, 
+								array(
+									'id',
+									'url',
+									'name',
+									'adminname',
+									'nossl',
+									'privkey',
+									'nosslkey',
+									'http_user',
+									'http_pass',
+								) 
+							);
 						}
 						MainWP_DB::free_result( $websites );
 					} else {

@@ -281,14 +281,16 @@ class MainWP_Extensions {
 
 	public static function init_left_menu( $extPages ) {
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
-			MainWP_Menu::add_left_menu( array(
-				'title'             => __( 'Extensions', 'mainwp' ),
-				'parent_key'        => 'mainwp_tab',
-				'slug'              => 'Extensions',
-				'href'              => 'admin.php?page=Extensions',
-				'icon'              => '<i class="plug icon"></i>',
-				'id'                => 'menu-item-extensions',
-			), 1 );
+			MainWP_Menu::add_left_menu(
+				array(
+					'title'             => __( 'Extensions', 'mainwp' ),
+					'parent_key'        => 'mainwp_tab',
+					'slug'              => 'Extensions',
+					'href'              => 'admin.php?page=Extensions',
+					'icon'              => '<i class="plug icon"></i>',
+					'id'                => 'menu-item-extensions',
+				),	1 
+			);
 
 			if ( 0 < count( $extPages ) ) {
 
@@ -405,48 +407,68 @@ class MainWP_Extensions {
 
 	public static function initAjaxHandlers() {
 		add_action( 'wp_ajax_mainwp_extension_add_menu', array( self::getClassName(), 'ajaxAddExtensionMenu' ) );
-		add_action( 'wp_ajax_mainwp_extension_remove_menu', array(
-			self::getClassName(),
-			'removeExtensionMenuFromMainWPMenu',
-		) );
-		MainWP_Post_Handler::Instance()->addAction( 'mainwp_extension_activate', array(
-			self::getClassName(),
-			'activateExtension',
-		) );
-		MainWP_Post_Handler::Instance()->addAction( 'mainwp_extension_deactivate', array(
-			self::getClassName(),
-			'deactivateExtension',
-		) );
-		add_action( 'wp_ajax_mainwp_extension_testextensionapilogin', array(
-			self::getClassName(),
-			'testExtensionsApiLogin',
-		) );
+		add_action(
+			'wp_ajax_mainwp_extension_remove_menu', array(
+				self::getClassName(),
+				'removeExtensionMenuFromMainWPMenu',
+			) 
+		);
+		MainWP_Post_Handler::Instance()->addAction(
+			'mainwp_extension_activate', array(
+				self::getClassName(),
+				'activateExtension',
+			) 
+		);
+		MainWP_Post_Handler::Instance()->addAction( 
+			'mainwp_extension_deactivate', array(
+				self::getClassName(),
+				'deactivateExtension',
+			) 
+		);
+		add_action(
+			'wp_ajax_mainwp_extension_testextensionapilogin', array(
+				self::getClassName(),
+				'testExtensionsApiLogin',
+			) 
+		);
 
 		if ( mainwp_current_user_can( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
-			add_action( 'wp_ajax_mainwp_extension_grabapikey', array(
-				self::getClassName(),
-				'grabapikeyExtension',
-			) );
-			MainWP_Post_Handler::Instance()->addAction( 'mainwp_extension_saveextensionapilogin', array(
-				self::getClassName(),
-				'saveExtensionsApiLogin',
-			) );
-			add_action( 'wp_ajax_mainwp_extension_getpurchased', array(
-				self::getClassName(),
-				'getPurchasedExts',
-			) );
-			MainWP_Post_Handler::Instance()->addAction( 'mainwp_extension_downloadandinstall', array(
-				self::getClassName(),
-				'downloadAndInstall',
-			) );
-			MainWP_Post_Handler::Instance()->addAction( 'mainwp_extension_bulk_activate', array(
-				self::getClassName(),
-				'bulkActivate',
-			) );
-			add_action( 'wp_ajax_mainwp_extension_apisslverifycertificate', array(
-				self::getClassName(),
-				'saveApiSSLVerify',
-			) );
+			add_action(
+				'wp_ajax_mainwp_extension_grabapikey', array(
+					self::getClassName(),
+					'grabapikeyExtension',
+				) 
+			);
+			MainWP_Post_Handler::Instance()->addAction(
+				'mainwp_extension_saveextensionapilogin', array(
+					self::getClassName(),
+					'saveExtensionsApiLogin',
+				) 
+			);
+			add_action(
+				'wp_ajax_mainwp_extension_getpurchased', array(
+					self::getClassName(),
+					'getPurchasedExts',
+				) 
+			);
+			MainWP_Post_Handler::Instance()->addAction(
+				'mainwp_extension_downloadandinstall', array(
+					self::getClassName(),
+					'downloadAndInstall',
+				)
+			);
+			MainWP_Post_Handler::Instance()->addAction(
+				'mainwp_extension_bulk_activate', array(
+					self::getClassName(),
+					'bulkActivate',
+				) 
+			);
+			add_action(
+				'wp_ajax_mainwp_extension_apisslverifycertificate', array(
+					self::getClassName(),
+					'saveApiSSLVerify',
+				) 
+			);
 		}
 	}
 
@@ -846,13 +868,15 @@ class MainWP_Extensions {
 
 		add_filter( 'http_request_args', array( self::getClassName(), 'http_request_reject_unsafe_urls' ), 99, 2 );
 
-		$result = $installer->run( array(
-			'package'           => $url,
-			'destination'       => WP_PLUGIN_DIR,
-			'clear_destination' => false,
-			'clear_working'     => true,
-			'hook_extra'        => array(),
-		) );
+		$result = $installer->run( 
+			array(
+				'package'           => $url,
+				'destination'       => WP_PLUGIN_DIR,
+				'clear_destination' => false,
+				'clear_working'     => true,
+				'hook_extra'        => array(),
+			) 
+		);
 
 		remove_filter( 'http_request_args', array( self::getClassName(), 'http_request_reject_unsafe_urls' ), 99, 2 );
 
@@ -1311,18 +1335,20 @@ class MainWP_Extensions {
 				$clone_site = current( $clone_sites );
 				if ( $clone_site && $clone_site->is_staging ) {
 					if ( $force_update ) {
-						MainWP_DB::Instance()->updateWebsiteValues( $clone_site->id, array(
-							'adminname'          => $website->adminname,
-							'pubkey'             => $website->pubkey,
-							'privkey'            => $website->privkey,
-							'nossl'              => $website->nossl,
-							'nosslkey'           => $website->nosslkey,
-							'verify_certificate' => $website->verify_certificate,
-							'uniqueId'           => ( null !== $website->uniqueId ? $website->uniqueId : '' ),
-							'http_user'          => $website->http_user,
-							'http_pass'          => $website->http_pass,
-							'ssl_version'        => $website->ssl_version,
-						) );
+						MainWP_DB::Instance()->updateWebsiteValues( 
+							$clone_site->id, array(
+								'adminname'          => $website->adminname,
+								'pubkey'             => $website->pubkey,
+								'privkey'            => $website->privkey,
+								'nossl'              => $website->nossl,
+								'nosslkey'           => $website->nosslkey,
+								'verify_certificate' => $website->verify_certificate,
+								'uniqueId'           => ( null !== $website->uniqueId ? $website->uniqueId : '' ),
+								'http_user'          => $website->http_user,
+								'http_pass'          => $website->http_pass,
+								'ssl_version'        => $website->ssl_version,
+							) 
+						);
 					}
 					$ret['siteid']   = $clone_site->id;
 					$ret['response'] = __( 'Site updated.', 'mainwp' );

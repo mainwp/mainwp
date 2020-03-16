@@ -32,18 +32,22 @@ class MainWP_Updates {
 	}
 
 	public static function initMenu() {
-		add_submenu_page( 'mainwp_tab', __( 'Updates', 'mainwp' ), '<span id="mainwp-Updates">' . __( 'Updates', 'mainwp' ) . '</span>', 'read', 'UpdatesManage', array(
-			self::getClassName(),
-			'render',
-		) );
+		add_submenu_page(
+			'mainwp_tab', __( 'Updates', 'mainwp' ), '<span id="mainwp-Updates">' . __( 'Updates', 'mainwp' ) . '</span>', 'read', 'UpdatesManage', array(
+				self::getClassName(),
+				'render',
+			) 
+		);
 
-		MainWP_Menu::add_left_menu( array(
-			'title'             => __( 'Updates', 'mainwp' ),
-			'parent_key'        => 'mainwp_tab',
-			'slug'              => 'UpdatesManage',
-			'href'              => 'admin.php?page=UpdatesManage',
-			'icon'              => '<i class="sync icon"></i>',
-		), 1 );
+		MainWP_Menu::add_left_menu(
+			array(
+				'title'             => __( 'Updates', 'mainwp' ),
+				'parent_key'        => 'mainwp_tab',
+				'slug'              => 'UpdatesManage',
+				'href'              => 'admin.php?page=UpdatesManage',
+				'icon'              => '<i class="sync icon"></i>',
+			), 1 
+		);
 	}
 
 	/**
@@ -2884,20 +2888,24 @@ class MainWP_Updates {
 				$decodedIgnoredPlugins = array();
 			}
 			$decodedIgnoredPlugins[ $slug ] = urldecode( $name );
-			MainWP_DB::Instance()->updateUserExtension( array(
-				'userid'             => null,
-				'ignored_plugins'    => wp_json_encode( $decodedIgnoredPlugins ),
-			) );
+			MainWP_DB::Instance()->updateUserExtension( 
+				array(
+					'userid'             => null,
+					'ignored_plugins'    => wp_json_encode( $decodedIgnoredPlugins ),
+				) 
+			);
 		} elseif ( 'theme' === $type ) {
 			$decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
 			if ( ! is_array( $decodedIgnoredThemes ) ) {
 				$decodedIgnoredThemes = array();
 			}
 			$decodedIgnoredThemes[ $slug ] = urldecode( $name );
-			MainWP_DB::Instance()->updateUserExtension( array(
-				'userid'         => null,
-				'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ),
-			) );
+			MainWP_DB::Instance()->updateUserExtension(
+				array(
+					'userid'         => null,
+					'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ),
+				) 
+			);
 		}
 
 		return 'success';
@@ -2918,10 +2926,12 @@ class MainWP_Updates {
 					unset( $decodedIgnoredPlugins[ $slug ] );
 				}
 			}
-			MainWP_DB::Instance()->updateUserExtension( array(
-				'userid'             => null,
-				'ignored_plugins'    => wp_json_encode( $decodedIgnoredPlugins ),
-			) );
+			MainWP_DB::Instance()->updateUserExtension(
+				array(
+					'userid'             => null,
+					'ignored_plugins'    => wp_json_encode( $decodedIgnoredPlugins ),
+				) 
+			);
 		} elseif ( 'theme' === $type ) {
 			if ( '_ALL_' === $slug ) {
 				$decodedIgnoredThemes = array();
@@ -2934,10 +2944,12 @@ class MainWP_Updates {
 					unset( $decodedIgnoredThemes[ $slug ] );
 				}
 			}
-			MainWP_DB::Instance()->updateUserExtension( array(
-				'userid'         => null,
-				'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ),
-			) );
+			MainWP_DB::Instance()->updateUserExtension(
+				array(
+					'userid'         => null,
+					'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ),
+				) 
+			);
 		}
 
 		return 'success';
@@ -2994,10 +3006,12 @@ class MainWP_Updates {
 					unset( $decodedIgnoredPlugins[ $slug ] );
 				}
 			}
-			MainWP_DB::Instance()->updateUserExtension( array(
-				'userid'             => null,
-				'dismissed_plugins'  => wp_json_encode( $decodedIgnoredPlugins ),
-			) );
+			MainWP_DB::Instance()->updateUserExtension(
+				array(
+					'userid'             => null,
+					'dismissed_plugins'  => wp_json_encode( $decodedIgnoredPlugins ),
+				) 
+			);
 		} elseif ( 'theme' === $type ) {
 			if ( '_ALL_' === $slug ) {
 				$decodedIgnoredThemes = array();
@@ -3010,10 +3024,12 @@ class MainWP_Updates {
 					unset( $decodedIgnoredThemes[ $slug ] );
 				}
 			}
-			MainWP_DB::Instance()->updateUserExtension( array(
-				'userid'             => null,
-				'dismissed_themes'   => wp_json_encode( $decodedIgnoredThemes ),
-			) );
+			MainWP_DB::Instance()->updateUserExtension(
+				array(
+					'userid'             => null,
+					'dismissed_themes'   => wp_json_encode( $decodedIgnoredThemes ),
+				) 
+			);
 		}
 
 		return 'success';
@@ -3052,20 +3068,24 @@ class MainWP_Updates {
 				$decodedDismissedPlugins = array();
 			}
 			$decodedDismissedPlugins[ $slug ] = urldecode( $name );
-			MainWP_DB::Instance()->updateUserExtension( array(
-				'userid'             => null,
-				'dismissed_plugins'  => wp_json_encode( $decodedDismissedPlugins ),
-			) );
+			MainWP_DB::Instance()->updateUserExtension(
+				array(
+					'userid'             => null,
+					'dismissed_plugins'  => wp_json_encode( $decodedDismissedPlugins ),
+				) 
+			);
 		} elseif ( 'theme' === $type ) {
 			$decodedDismissedThemes = json_decode( $userExtension->dismissed_themes, true );
 			if ( ! is_array( $decodedDismissedThemes ) ) {
 				$decodedDismissedThemes = array();
 			}
 			$decodedDismissedThemes[ $slug ] = urldecode( $name );
-			MainWP_DB::Instance()->updateUserExtension( array(
-				'userid'             => null,
-				'dismissed_themes'   => wp_json_encode( $decodedDismissedThemes ),
-			) );
+			MainWP_DB::Instance()->updateUserExtension(
+				array(
+					'userid'             => null,
+					'dismissed_themes'   => wp_json_encode( $decodedDismissedThemes ),
+				) 
+			);
 		}
 
 		return 'success';

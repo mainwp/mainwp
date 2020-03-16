@@ -46,31 +46,39 @@ class MainWP_Settings {
 	}
 
 	public static function initMenu() {
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Settings Global options', 'mainwp' ), ' <span id="mainwp-Settings">' . __( 'Settings', 'mainwp' ) . '</span>', 'read', 'Settings', array(
-			self::getClassName(),
-			'render',
-		) );
+		$_page = add_submenu_page(
+			'mainwp_tab', __( 'Settings Global options', 'mainwp' ), ' <span id="mainwp-Settings">' . __( 'Settings', 'mainwp' ) . '</span>', 'read', 'Settings', array(
+				self::getClassName(),
+				'render',
+			) 
+		);
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {
-			$_page = add_submenu_page( 'mainwp_tab', __( 'MainWP Tools', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'MainWP Tools', 'mainwp' ) . '</div>', 'read', 'MainWPTools', array(
-				self::getClassName(),
-				'renderMainWPTools',
-			) );
+			$_page = add_submenu_page(
+				'mainwp_tab', __( 'MainWP Tools', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'MainWP Tools', 'mainwp' ) . '</div>', 'read', 'MainWPTools', array(
+					self::getClassName(),
+					'renderMainWPTools',
+				) 
+			);
 		}
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) {
-			$_page = add_submenu_page( 'mainwp_tab', __( 'Advanced Options', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'Advanced Options', 'mainwp' ) . '</div>', 'read', 'SettingsAdvanced', array(
-				self::getClassName(),
-				'renderAdvanced',
-			) );
+			$_page = add_submenu_page(
+				'mainwp_tab', __( 'Advanced Options', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'Advanced Options', 'mainwp' ) . '</div>', 'read', 'SettingsAdvanced', array(
+					self::getClassName(),
+					'renderAdvanced',
+				) 
+			);
 		}
 
 		if ( get_option( 'mainwp_enable_managed_cr_for_wc' ) == 1 ) {
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
-				$_page = add_submenu_page( 'mainwp_tab', __( 'Managed Client Reports', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'Managed Client Reports', 'mainwp' ) . '</div>', 'read', 'SettingsClientReportsResponder', array(
-					self::getClassName(),
-					'renderReportResponder',
-				) );
+				$_page = add_submenu_page(
+					'mainwp_tab', __( 'Managed Client Reports', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'Managed Client Reports', 'mainwp' ) . '</div>', 'read', 'SettingsClientReportsResponder', array(
+						self::getClassName(),
+						'renderReportResponder',
+					) 
+				);
 			}
 		}
 
@@ -134,13 +142,15 @@ class MainWP_Settings {
 	}
 
 	public static function init_left_menu( $subPages = array() ) {
-		MainWP_Menu::add_left_menu( array(
-			'title'      => __( 'Settings', 'mainwp' ),
-			'parent_key' => 'mainwp_tab',
-			'slug'       => 'Settings',
-			'href'       => 'admin.php?page=Settings',
-			'icon'       => '<i class="cogs icon"></i>',
-		), 1 ); // level 1
+		MainWP_Menu::add_left_menu(
+			array(
+				'title'      => __( 'Settings', 'mainwp' ),
+				'parent_key' => 'mainwp_tab',
+				'slug'       => 'Settings',
+				'href'       => 'admin.php?page=Settings',
+				'icon'       => '<i class="cogs icon"></i>',
+			), 1 
+		); // level 1
 
 		$init_sub_subleftmenu = array(
 			array(

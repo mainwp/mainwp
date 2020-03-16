@@ -10,10 +10,12 @@ class MainWP_Manage_Groups {
 	}
 
 	public static function initMenu() {
-		add_submenu_page( 'mainwp_tab', __( 'Groups', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Groups', 'mainwp' ) . '</div>', 'read', 'ManageGroups', array(
-			self::getClassName(),
-			'renderAllGroups',
-		) );
+		add_submenu_page(
+			'mainwp_tab', __( 'Groups', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Groups', 'mainwp' ) . '</div>', 'read', 'ManageGroups', array(
+				self::getClassName(),
+				'renderAllGroups',
+			) 
+		);
 	}
 
 	public static function getGroupListContent() {

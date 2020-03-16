@@ -42,27 +42,37 @@ class MainWP_Themes {
 
 	public static function initMenu() {
 
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<span id="mainwp-Themes">' . __( 'Themes', 'mainwp' ) . '</span>', 'read', 'ThemesManage', array(
-			self::getClassName(),
-			'render',
-		) );
+		$_page = add_submenu_page( 
+			'mainwp_tab', __( 'Themes', 'mainwp' ), '<span id="mainwp-Themes">' . __( 'Themes', 'mainwp' ) . '</span>', 'read', 'ThemesManage', array(
+				self::getClassName(),
+				'render',
+			) 
+		);
 
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>', 'read', 'ThemesInstall', array(
-			self::getClassName(),
-			'renderInstall',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'ThemesAutoUpdate', array(
-			self::getClassName(),
-			'renderAutoUpdate',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'ThemesIgnore', array(
-			self::getClassName(),
-			'renderIgnore',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredAbandoned', array(
-			self::getClassName(),
-			'renderIgnoredAbandoned',
-		) );
+		add_submenu_page(
+			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>', 'read', 'ThemesInstall', array(
+				self::getClassName(),
+				'renderInstall',
+			) 
+		);
+		add_submenu_page(
+			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'ThemesAutoUpdate', array(
+				self::getClassName(),
+				'renderAutoUpdate',
+			) 
+		);
+		add_submenu_page(
+			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'ThemesIgnore', array(
+				self::getClassName(),
+				'renderIgnore',
+			) 
+		);
+		add_submenu_page(
+			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredAbandoned', array(
+				self::getClassName(),
+				'renderIgnoredAbandoned',
+			) 
+		);
 
 		/**
 		 * This hook allows you to add extra sub pages to the Themes page via the 'mainwp-getsubpages-themes' filter.
@@ -123,13 +133,15 @@ class MainWP_Themes {
 	}
 
 	public static function init_left_menu( $subPages = array() ) {
-		MainWP_Menu::add_left_menu( array(
-			'title'      => __( 'Themes', 'mainwp' ),
-			'parent_key' => 'mainwp_tab',
-			'slug'       => 'ThemesManage',
-			'href'       => 'admin.php?page=ThemesManage',
-			'icon'       => '<i class="paint brush icon"></i>',
-		), 1 );
+		MainWP_Menu::add_left_menu(
+			array(
+				'title'      => __( 'Themes', 'mainwp' ),
+				'parent_key' => 'mainwp_tab',
+				'slug'       => 'ThemesManage',
+				'href'       => 'admin.php?page=ThemesManage',
+				'icon'       => '<i class="paint brush icon"></i>',
+			), 1 
+		);
 
 		$init_sub_subleftmenu = array(
 			array(
@@ -278,7 +290,7 @@ class MainWP_Themes {
 								if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
 									echo $cachedResult['bulk_actions'];
 								} else {
-									echo MainWP_UI::get_empty_bulk_actions();
+									MainWP_UI::render_empty_bulk_actions();
 								}
 								?>
 								</div>
@@ -373,7 +385,7 @@ class MainWP_Themes {
 			?>
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
-				jQuery( '#mainwp_themes_search_by_status' ).dropdown(  'set selected', [<?php echo $status; ?>] );
+				jQuery( '#mainwp_themes_search_by_status' ).dropdown(  'set selected', [<?php esc_html_e( $status ); ?>] );
 			} );
 			</script>
 			<?php
@@ -455,17 +467,20 @@ class MainWP_Themes {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-							'id',
-							'url',
-							'name',
-							'adminname',
-							'nossl',
-							'privkey',
-							'nosslkey',
-							'http_user',
-							'http_pass',
-						) );
+						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+							$website, 
+							array(
+								'id',
+								'url',
+								'name',
+								'adminname',
+								'nossl',
+								'privkey',
+								'nosslkey',
+								'http_user',
+								'http_pass',
+							) 
+						);
 					}
 				}
 			}
@@ -478,17 +493,20 @@ class MainWP_Themes {
 							if ( '' !== $website->sync_errors ) {
 								continue;
 							}
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-								'id',
-								'url',
-								'name',
-								'adminname',
-								'nossl',
-								'privkey',
-								'nosslkey',
-								'http_user',
-								'http_pass',
-							) );
+							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+								$website, 
+								array(
+									'id',
+									'url',
+									'name',
+									'adminname',
+									'nossl',
+									'privkey',
+									'nosslkey',
+									'http_user',
+									'http_pass',
+								) 
+							);
 						}
 						MainWP_DB::free_result( $websites );
 					}
@@ -521,12 +539,14 @@ class MainWP_Themes {
 			}
 		}
 
-		MainWP_Cache::addContext( 'Themes', array(
-			'keyword' => $keyword,
-			'status'  => $status,
-			'sites'   => ( '' !== $sites ) ? $sites : '',
-			'groups'  => ( '' !== $groups ) ? $groups : '',
-		) );
+		MainWP_Cache::addContext( 
+			'Themes', array(
+				'keyword' => $keyword,
+				'status'  => $status,
+				'sites'   => ( '' !== $sites ) ? $sites : '',
+				'groups'  => ( '' !== $groups ) ? $groups : '',
+			) 
+		);
 
 		ob_start();
 		?>
@@ -722,10 +742,12 @@ class MainWP_Themes {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed( $website, 'theme_action', array(
-				'action' => $pAction,
-				'theme'  => $theme,
-			) );
+			$information = MainWP_Utility::fetchUrlAuthed(
+				$website, 'theme_action', array(
+					'action' => $pAction,
+					'theme'  => $theme,
+				) 
+			);
 		} catch ( MainWP_Exception $e ) {
 			die( 'FAIL' );
 		}
@@ -779,28 +801,31 @@ class MainWP_Themes {
 
 	public static function renderInstall() {
 		wp_enqueue_script( 'mainwp-theme', MAINWP_PLUGIN_URL . 'assets/js/mainwp-theme.js', array( 'wp-backbone', 'wp-a11y' ), MAINWP_VERSION );
-		wp_localize_script( 'mainwp-theme', '_mainwpThemeSettings', array(
-			'themes'          => false,
-			'settings'        => array(
-				'isInstall'     => true,
-				'canInstall'    => false,
-				'installURI'    => null,
-				'adminUrl'      => parse_url( self_admin_url(), PHP_URL_PATH ),
-			),
-			'l10n'            => array(
-				'addNew'            => __( 'Add new theme' ),
-				'search'            => __( 'Search themes' ),
-				'searchPlaceholder' => __( 'Search themes...' ),
-				'upload'            => __( 'Upload theme' ),
-				'back'              => __( 'Back' ),
-				'error'             => __( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="https://wordpress.org/support/">support forums</a>.' ),
-				'themesFound'       => __( 'Number of themes found: %d' ),
-				'noThemesFound'     => __( 'No themes found. Try a different search.' ),
-				'collapseSidebar'   => __( 'Collapse sidebar' ),
-				'expandSidebar'     => __( 'Expand sidebar' ),
-			),
-			'installedThemes' => array(),
-		) );
+		wp_localize_script( 
+			'mainwp-theme', '_mainwpThemeSettings',
+			array(
+				'themes'          => false,
+				'settings'        => array(
+					'isInstall'     => true,
+					'canInstall'    => false,
+					'installURI'    => null,
+					'adminUrl'      => parse_url( self_admin_url(), PHP_URL_PATH ),
+				),
+				'l10n'            => array(
+					'addNew'            => __( 'Add new theme' ),
+					'search'            => __( 'Search themes' ),
+					'searchPlaceholder' => __( 'Search themes...' ),
+					'upload'            => __( 'Upload theme' ),
+					'back'              => __( 'Back' ),
+					'error'             => __( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="https://wordpress.org/support/">support forums</a>.' ),
+					'themesFound'       => __( 'Number of themes found: %d' ),
+					'noThemesFound'     => __( 'No themes found. Try a different search.' ),
+					'collapseSidebar'   => __( 'Collapse sidebar' ),
+					'expandSidebar'     => __( 'Expand sidebar' ),
+				),
+				'installedThemes' => array(),
+			) 
+		);
 		self::renderHeader( 'Install' );
 		self::renderThemesTable();
 		self::renderFooter( 'Install' );
@@ -1127,17 +1152,20 @@ class MainWP_Themes {
 				$dbwebsites = array();
 				$websites   = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-						'id',
-						'url',
-						'name',
-						'adminname',
-						'nossl',
-						'privkey',
-						'nosslkey',
-						'http_user',
-						'http_pass',
-					) );
+					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+						$website, 
+						array(
+							'id',
+							'url',
+							'name',
+							'adminname',
+							'nossl',
+							'privkey',
+							'nosslkey',
+							'http_user',
+							'http_pass',
+						) 
+					);
 				}
 				MainWP_DB::free_result( $websites );
 

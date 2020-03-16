@@ -128,13 +128,15 @@ class MainWP_Page {
 
 	public static function init_left_menu( $subPages = array() ) {
 
-		MainWP_Menu::add_left_menu( array(
-			'title'      => __( 'Pages', 'mainwp' ),
-			'parent_key' => 'mainwp_tab',
-			'slug'       => 'PageBulkManage',
-			'href'       => 'admin.php?page=PageBulkManage',
-			'icon'       => '<i class="file icon"></i>',
-		), 1 ); // level 1
+		MainWP_Menu::add_left_menu(
+			array(
+				'title'      => __( 'Pages', 'mainwp' ),
+				'parent_key' => 'mainwp_tab',
+				'slug'       => 'PageBulkManage',
+				'href'       => 'admin.php?page=PageBulkManage',
+				'icon'       => '<i class="file icon"></i>',
+			), 1 
+		); // level 1
 
 		$init_sub_subleftmenu = array(
 			array(
@@ -436,7 +438,7 @@ class MainWP_Page {
 			?>
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
-					jQuery('#mainwp_page_search_type').dropdown('set selected',[<?php echo $status; ?>]);
+					jQuery('#mainwp_page_search_type').dropdown('set selected',[<?php esc_html_e( $status ); ?>]);
 				})
 			</script>
 			<?php
@@ -569,16 +571,18 @@ class MainWP_Page {
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_pages', $post_data, array( self::getClassName(), 'PagesSearch_handler' ), $output );
 		}
 
-		MainWP_Cache::addContext( 'Page', array(
-			'count'      => $output->pages,
-			'keyword'    => $keyword,
-			'dtsstart'   => $dtsstart,
-			'dtsstop'    => $dtsstop,
-			'status'     => $status,
-			'sites'      => ( $sites != '' ) ? $sites : '',
-			'groups'     => ( $groups != '' ) ? $groups : '',
-			'search_on'  => $search_on,
-		) );
+		MainWP_Cache::addContext( 
+			'Page', array(
+				'count'      => $output->pages,
+				'keyword'    => $keyword,
+				'dtsstart'   => $dtsstart,
+				'dtsstop'    => $dtsstop,
+				'status'     => $status,
+				'sites'      => ( $sites != '' ) ? $sites : '',
+				'groups'     => ( $groups != '' ) ? $groups : '',
+				'search_on'  => $search_on,
+			) 
+		);
 
 		// Sort if required
 

@@ -5,10 +5,12 @@
 class MainWP_Extensions_View {
 
 	public static function initMenu() {
-		$page = add_submenu_page( 'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
-			MainWP_Extensions::getClassName(),
-			'render',
-		) );
+		$page = add_submenu_page( 
+			'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
+				MainWP_Extensions::getClassName(),
+				'render',
+			) 
+		);
 
 		return $page;
 	}
